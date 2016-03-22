@@ -37,10 +37,9 @@ class DriverEvent : public SST::Event {
   private:
 };
 
-FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info, 
-        SST::Link* toProgressLink, std::map<std::string,ProtocolAPI*>& proto ) :
+FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj,
+        ProtocolAPI* proto ) :
     m_sm( NULL ),
-    m_info( info ),
     m_params( params ),
     m_owner( obj ),
     m_proto( proto )
@@ -62,11 +61,7 @@ FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info,
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleEnterEvent));
     assert( m_toMeLink );
 
-    std::map<std::string,ProtocolAPI*>::iterator iter = proto.begin();
-    while ( iter != proto.end() ) {
-        iter->second->setRetLink( m_toMeLink );
-        ++iter;
-    }
+    m_proto->setRetLink( m_toMeLink );
 }
 
 FunctionSM::~FunctionSM()
@@ -82,10 +77,10 @@ void FunctionSM::printStatus( Output& out )
     m_sm->printStatus(out); 
 }
 
-void FunctionSM::setup()
+void FunctionSM::setup( Info* info )
 {
     char buffer[100];
-    int nodeId =  m_info.worldRank();
+    int nodeId =  info->worldRank();
     snprintf(buffer,100,"@t:%d:FunctionSM::@p():@l ", nodeId );
     m_dbg.setPrefix(buffer);
 
@@ -107,7 +102,7 @@ void FunctionSM::setup()
         std::string name = functionName( (FunctionEnum) i );
         Params tmp = m_params.find_prefix_params( name + "." );  
         defaultParams[ "name" ] = name;
-        initFunction( m_owner, &m_info, (FunctionEnum) i,
+        initFunction( m_owner, info, (FunctionEnum) i,
                                         name, defaultParams, tmp ); 
     }
 }
@@ -148,9 +143,7 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
     m_smV[ num ]->setInfo( info ); 
 
     if ( ! m_smV[ num ]->protocolName().empty() ) {
-        ProtocolAPI* proto = m_proto[ m_smV[ num ]->protocolName() ];
-        assert(proto);
-        m_smV[ num ]->setProtocol( proto ); 
+        m_smV[ num ]->setProtocol( m_proto ); 
     }
 }
 
