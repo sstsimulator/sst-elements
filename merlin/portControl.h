@@ -97,6 +97,10 @@ private:
     // current virtual channel.
     int curr_out_vc;
 
+    // Represents the start of when a port was idle
+    // If the buffer was empty we instantiate this to the current time
+    SimTime_t idle_start;
+
     // Vairable to tell us if we are waiting for something to happen
     // before we begin more output.  The two things we are waiting on
     // is: 1 - adding new data to output buffers, or 2 - getting
@@ -114,6 +118,7 @@ private:
     Statistic<uint64_t>* send_bit_count;
     Statistic<uint64_t>* send_packet_count;
     Statistic<uint64_t>* output_port_stalls;
+    Statistic<uint64_t>* idle_time;
 
     Output& output;
     

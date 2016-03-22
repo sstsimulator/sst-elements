@@ -26,7 +26,7 @@ public:
 
 private:
     MessageResponse m_resp;
-    Communicator    m_newComm;
+    Communicator    m_newComm[2];
 
     uint32_t m_iterations;
     uint32_t m_messageSize;

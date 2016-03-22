@@ -166,7 +166,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
         if (memBuffer_ == MAP_FAILED) {
             int err = errno;
-            dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory: %s\n", strerror(err));
+            dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory: %s, errno = %d\n", strerror(err), err);
         }
     }
 

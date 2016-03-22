@@ -120,6 +120,18 @@ load_hadesMP(Component* comp, Params& params)
     return new HadesMP(comp, params);
 }
 
+static const ElementInfoParam hadesMPModule_params[] = {
+	{"verboseLevel", "Sets the output verbosity of the component", "1"},
+	{"verboseMask", "Sets the output mask of the component", "1"},
+	{"defaultEnterLatency","Sets the default function enter latency","30000"},
+	{"defaultReturnLatency","Sets the default function return latency","30000"},
+	{"nodeId", "internal", ""},
+	{"enterLatency","internal",""},
+	{"returnLatency","internal",""},
+	{"defaultModule","Sets the default function module","firefly"},
+	{NULL, NULL}
+};
+
 static const ElementInfoParam hadesModule_params[] = {
     {"mapType","Sets the type of data structure to use for mapping ranks to NICs", ""},
     {"netId","Sets the network id of the endpoint", ""},
@@ -128,19 +140,10 @@ static const ElementInfoParam hadesModule_params[] = {
     {"netMapName","Sets the network map Name of the endpoint", ""},
     {"nicModule", "Sets the NIC module", "firefly.VirtNic"},
 	{"verboseLevel", "Sets the output verbosity of the component", "1"},
-	{ "verboseMask", "Sets the output mask of the component", "1"},
+	{"verboseMask", "Sets the output mask of the component", "1"},
     {"debug", "Sets the messaging API of the end point", "0"},
-	{"loopBackPortName","Sets port name to use when connecting to the loopBack component","loop"},
 	{"defaultVerbose","Sets the default function verbose level","0"},
 	{"defaultDebug","Sets the default function debug level","0"},
-	{"defaultEnterLatency","Sets the default function enter latency","30000"},
-	{"defaultReturnLatency","Sets the default function return latency","30000"},
-	{"defaultModule","Sets the default function module","firefly"},
-	{"enterLatency","internal",""},
-	{"returnLatency","internal",""},
-	{"module","internal",""},
-    {"nodeId", "internal", ""},
-    {"name", "internal", ""},
 	{"flops", "Sets the FLOP rate of the endpoint ", "1"},
 	{"bandwidth", "Sets the bandwidth of the endpoint ", "1"},
 	{"nodePerf", "Sets the node performance module ", "1"},
@@ -327,6 +330,7 @@ static const ElementInfoParam ctrlMsgProtocolModule_params[] = {
     {"txFiniMod","Set the module used to calculate TX fini latency", ""},
     {"rxFiniMod","Set the module used to calculate RX fini latency", ""},
     {"rxPostMod","Set the module used to calculate RX post latency", ""},
+    {"loopBackPortName","Sets port name to use when connecting to the loopBack component","loop"},
     {"rxNicDelay_ns","", "0"},
     {"txNicDelay_ns","", "0"},
     {"sendReqFiniDelay_ns","", "0"},
@@ -370,7 +374,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       NULL,
       load_hadesMP,
-      NULL,
+      hadesMPModule_params,
       "SST::Hermes::MP::Interface"
     },
     { "VirtNic",

@@ -61,6 +61,10 @@ PortControl::send(internal_router_event* ev, int vc)
 	    // std::cout << "waking up the output" << std::endl;
 	    output_timing->send(1,NULL); 
 	    waiting = false;
+        if (idle_start) {
+            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            idle_start = 0;
+        }
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
@@ -145,6 +149,7 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     output_buf_count(NULL),
     port_ret_credits(NULL),
     port_out_credits(NULL),
+    idle_start(0),
     waiting(true),
     have_packets(false),
     start_block(0),
@@ -206,6 +211,7 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     send_bit_count = rif->registerStatistic<uint64_t>("send_bit_count", port_name);
     send_packet_count = rif->registerStatistic<uint64_t>("send_packet_count", port_name);
     output_port_stalls = rif->registerStatistic<uint64_t>("output_port_stalls", port_name);
+    idle_time = rif->registerStatistic<uint64_t>("idle_time", port_name);
 
     // Create any NetworkInspectors
     for ( unsigned int i = 0; i < inspector_names.size(); i++ ) {
@@ -338,6 +344,11 @@ PortControl::finish() {
             delete output_buf[i].front();
             output_buf[i].pop();
         }
+    }
+
+    // finish any inspectors
+    for ( unsigned int i = 0; i < network_inspectors.size(); i++ ) {
+        network_inspectors[i]->finish();
     }
 }
 
@@ -603,6 +614,12 @@ PortControl::handle_input_n2r(Event* ev)
             if ( have_packets) {
                 output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
             }
+            // In either case whether we didn't have credits or
+            // we didn't have packets we need to record it as idle time
+            if (idle_start) {
+                idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+                idle_start = 0;
+            }
 	    }
 	}
     break;
@@ -690,6 +707,12 @@ PortControl::handle_input_r2r(Event* ev)
             // packets, we need to add stall time
             if ( have_packets) {
                 output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
+            }
+            // In either case whether we didn't have credits or
+            // we didn't have packets we need to record it as idle time
+            if (idle_start) {
+                idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+                idle_start = 0;
             }
 	    }
 	}
@@ -889,6 +912,10 @@ PortControl::handle_output_r2r(Event* ev) {
 	    // to know that we got to this state.
         start_block = Simulation::getSimulation()->getCurrentSimCycle();
 	    waiting = true;
+        // Begin counting the amount of time this port was idle
+        if (!have_packets) {
+            idle_start = parent->getCurrentSimTimeNano();
+        }
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
@@ -1017,6 +1044,10 @@ PortControl::handle_output_n2r(Event* ev) {
 	    // to know that we got to this state.
         start_block = Simulation::getSimulation()->getCurrentSimCycle();
 	    waiting = true;
+        // Begin counting the amount of time this port was idle
+        if (!have_packets) {
+            idle_start = parent->getCurrentSimTimeNano();
+        }
 	}
 }
 

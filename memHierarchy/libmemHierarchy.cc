@@ -336,7 +336,7 @@ static const ElementInfoParam sieve_params[] = {
     {"profiler",                "Optional, string   - Name of profiling module. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
     {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",             "Optional, int      - Debugging level. Between 0 and 10", "0"},
-    {"output_file",             "Optional, string   – Name of file to output malloc information to", "sieveMallocRank.txt"},
+    {"output_file",             "Optional, string   – Name of file to output malloc information to. Will have sequence number (and optional marker number) and .txt appended to it. E.g. sieveMallocRank-3.txt", "sieveMallocRank"},
     {NULL, NULL, NULL}
 };
 

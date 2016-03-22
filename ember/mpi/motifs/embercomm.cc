@@ -41,13 +41,24 @@ bool EmberCommGenerator::generate( std::queue<EmberEvent*>& evQ)
         assert( size() > 2);
         assert( ! ( size() % 2 ) );
         enQ_commSplit( evQ, GroupWorld, rank()/(size()/2), 
-                                rank() % (size()/2), &m_newComm );
+                                rank() % (size()/2), &m_newComm[0] );
         m_workPhase = 1;
 
     } else if ( 1 == m_workPhase ) {
-        enQ_size( evQ, m_newComm, &m_new_size );
-        enQ_rank( evQ, m_newComm, &m_new_rank );
+        enQ_size( evQ, m_newComm[0], &m_new_size );
+        enQ_rank( evQ, m_newComm[0], &m_new_rank );
         m_workPhase = 2;
+    } else if ( 2 == m_workPhase ) {
+        verbose(CALL_INFO, 1, 0, "new size=%d rank=%d\n",
+                                            m_new_size, m_new_rank );
+        enQ_commSplit( evQ, m_newComm[0], m_new_rank/(m_new_size/2), 
+                                m_new_rank % (m_new_size/2), &m_newComm[1] );
+        m_workPhase = 3;
+    } else if ( 3 == m_workPhase ) {
+        enQ_size( evQ, m_newComm[1], &m_new_size );
+        enQ_rank( evQ, m_newComm[1], &m_new_rank );
+        m_workPhase = 4;
+
     } else {
         
         verbose(CALL_INFO, 1, 0, "new size=%d rank=%d\n",
@@ -58,14 +69,14 @@ bool EmberCommGenerator::generate( std::queue<EmberEvent*>& evQ)
 
         if(0 == m_new_rank) {
 	        enQ_send(evQ, m_sendBuf, m_messageSize, CHAR, to,
-                                            TAG, m_newComm);
+                                            TAG, m_newComm[1]);
 		    enQ_recv(evQ, m_recvBuf, m_messageSize, CHAR, from,
-                                            TAG, m_newComm, &m_resp);
+                                            TAG, m_newComm[1], &m_resp);
 		 } else {
 		    enQ_recv(evQ, m_recvBuf, m_messageSize, CHAR, from,
-                                            TAG, m_newComm, &m_resp);
+                                            TAG, m_newComm[1], &m_resp);
 		    enQ_send(evQ, m_sendBuf, m_messageSize, CHAR, to,
-                                            TAG, m_newComm);
+                                            TAG, m_newComm[1]);
 	    }
 
         if ( ++m_loopIndex == m_iterations ) {

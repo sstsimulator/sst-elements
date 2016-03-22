@@ -188,8 +188,6 @@ extern "C" int MPI_Init(int* argc, char** argv[]) {
 		}
 	}
 
-//	printf("MPI_INIT CALLED\n");
-
 	char buffer[1024];
 	sprintf(buffer, "%s-%d.stf.%d", (*argv)[0], sirius_npes, sirius_rank);
 
@@ -376,12 +374,17 @@ extern "C" int MPI_Irecv(void *buffer, int count, MPI_Datatype datatype, int src
 		}
 
 		printMPIComm(comm);
-		printUINT64((uint64_t) request);
 	}
 
 	const int result = PMPI_Irecv(buffer, count, datatype, src, tag, comm, request);
 
 	if(sirius_output) {
+		if( (NULL == request) || ( (*request) == MPI_REQUEST_NULL) ) {
+			printUINT64((uint64_t) SIRIUS_MPI_REQUEST_NULL);
+		} else {
+			printUINT64((uint64_t) (*request));
+		}
+
 		printTime();
 		printINT32((int32_t) result);
 	}
@@ -406,14 +409,19 @@ extern "C" int MPI_Isend(SIRIUS_MPI_CONST void *buffer, int count,
 		} else {
 			printINT32((int32_t) tag);
 		}
-
-		printMPIComm(comm);
-		printUINT64((uint64_t) request);
 	}
 
 	int result = PMPI_Isend(buffer, count, datatype, dest, tag, comm, request);
 
 	if(sirius_output) {
+		printMPIComm(comm);
+
+		if( (NULL == request) || ( (*request) = MPI_REQUEST_NULL) ) {
+			printUINT64((uint64_t) SIRIUS_MPI_REQUEST_NULL);
+		} else {
+			printUINT64((uint64_t) (*request));
+		}
+
 		printTime();
 		printINT32((int32_t) result);
 	}
@@ -507,7 +515,7 @@ extern "C" int MPI_Wait(MPI_Request *request, MPI_Status *status) {
 		if( (NULL == request) || MPI_REQUEST_NULL == (*request) ) {
                         printUINT64((uint64_t) SIRIUS_MPI_REQUEST_NULL);
                 } else {
-                        printUINT64((uint64_t) request);
+                        printUINT64((uint64_t) (*request));
                 }
 
 		printUINT64((uint64_t) status);
@@ -535,7 +543,7 @@ extern "C" int MPI_Waitall(int count, MPI_Request array_of_requests[],
 			if( MPI_REQUEST_NULL == (array_of_requests[i]) ) {
                         	printUINT64((uint64_t) SIRIUS_MPI_REQUEST_NULL);
                 	} else {
-                        	printUINT64((uint64_t) &array_of_requests[i]);
+                        	printUINT64((uint64_t) array_of_requests[i]);
                 	}
 		}
 	}
@@ -550,7 +558,7 @@ extern "C" int MPI_Waitall(int count, MPI_Request array_of_requests[],
 	return result;
 }
 
-extern "C" int MPI_Bast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
+extern "C" int MPI_Bcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
 
 	if(sirius_output) {
 		printUINT32((uint32_t) SIRIUS_MPI_BCAST);

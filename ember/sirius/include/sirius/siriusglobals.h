@@ -14,6 +14,8 @@
 #include <mach/mach.h>
 #endif
 
+#include <stdint.h>
+
 #define SIRIUS_MPI_CONST const
 
 #define SIRIUS_MPI_INIT 1
@@ -50,4 +52,4 @@
 #define SIRIUS_MPI_MAX 16
 #define SIRIUS_MPI_MIN 17
 
-#define SIRIUS_MPI_REQUEST_NULL 0
+#define SIRIUS_MPI_REQUEST_NULL UINT64_MAX

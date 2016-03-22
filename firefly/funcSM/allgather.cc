@@ -65,7 +65,8 @@ bool AllgatherFuncSM::setup( Retval& retval )
 
       case SetupState::PostStartMsgRecv:
 
-        src = calcSrc( m_setupState.offset );
+        src = m_info->getGroup(m_event->group)->getMapping( calcSrc( m_setupState.offset ) );
+
         m_dbg.verbose(CALL_INFO,1,0,"post recv for ready msg from %d\n", src);
         proto()->irecv( NULL, 0, src, genTag(), &m_recvReq );
         m_setupState.state = SetupState::PostStageRecv;
@@ -73,11 +74,12 @@ bool AllgatherFuncSM::setup( Retval& retval )
 
       case SetupState::PostStageRecv:
 
-        src = calcSrc( m_setupState.offset );
+        src = m_info->getGroup(m_event->group)->getMapping( calcSrc( m_setupState.offset ) );
         m_dest[m_setupState.stage] = mod(m_rank + m_setupState.offset, m_size);
 
         m_dbg.verbose(CALL_INFO,1,0,"setup stage %d, src %d, dest %d\n",
-                   m_setupState.stage, src, m_dest[m_setupState.stage] ); 
+                   m_setupState.stage, src, 
+					m_info->getGroup(m_event->group)->getMapping( m_dest[m_setupState.stage] ) ); 
 
         if ( m_setupState.stage < m_dest.size() - 1 ) {  
             m_numChunks[m_setupState.stage] = m_setupState.offset;
@@ -113,8 +115,10 @@ bool AllgatherFuncSM::setup( Retval& retval )
 
         memcpy( chunkPtr(m_rank), m_event->sendbuf, chunkSize(m_rank) );
 
-        m_dbg.verbose(CALL_INFO,1,0,"send ready message to %d\n",m_dest[0]);
-        proto()->send( NULL, 0, m_dest[0], genTag() );
+        m_dbg.verbose(CALL_INFO,1,0,"send ready message to %d\n",
+						m_info->getGroup(m_event->group)->getMapping(m_dest[0]));
+		
+        proto()->send( NULL, 0, m_info->getGroup(m_event->group)->getMapping( m_dest[0] ), genTag() );
     }
     return true;
 }
@@ -142,8 +146,8 @@ void AllgatherFuncSM::handleEnterEvent( Retval& retval )
                             m_numChunks[m_currentStage] );
 
         m_dbg.verbose(CALL_INFO,1,0,"send stage %d, dest %d\n",
-                        m_currentStage,m_dest[m_currentStage] );
-        proto()->sendv( ioVec, m_dest[m_currentStage], 
+                        m_currentStage,m_info->getGroup(m_event->group)->getMapping(m_dest[m_currentStage]) );
+        proto()->sendv( ioVec, m_info->getGroup(m_event->group)->getMapping(m_dest[m_currentStage]), 
                genTag() + m_currentStage + 1 );
         m_state = WaitRecvData;
         return;

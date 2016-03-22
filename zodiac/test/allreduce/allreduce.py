@@ -101,6 +101,7 @@ driverParams = ({
 		"sharedTrace" : "allred-128.stf",
 		"printStats" : 1,
 		"buffersize" : 140,
+		"os.name" : "hermesParams",
 		"hermesParams.debug" : 0,
 		"hermesParams.verboseLevel" : 1,
 		"hermesParams.nicModule" : "firefly.VirtNic",
