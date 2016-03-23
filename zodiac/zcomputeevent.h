@@ -20,7 +20,7 @@ using namespace SST::Hermes;
 namespace SST {
 namespace Zodiac {
 
-class ZodiacComputeEvent : public ZodiacEvent, public SST::Core::Serialization::serializable_type<ZodiacComputeEvent> {
+class ZodiacComputeEvent : public ZodiacEvent{
 
 	public:
 		ZodiacComputeEvent(double timeSeconds);
@@ -30,14 +30,6 @@ class ZodiacComputeEvent : public ZodiacEvent, public SST::Core::Serialization::
 
 	private:
 		double computeTime;
-    
-		ZodiacComputeEvent() {} // For serialization only
-    public:	
-        void serialize_order(SST::Core::Serialization::serializer &ser) {
-            Event::serialize_order(ser);
-        }
-        
-        ImplementSerializable(ZodiacComputeEvent);     
 };
 
 }
