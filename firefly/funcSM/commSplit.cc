@@ -30,6 +30,19 @@ void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     uint32_t cnt = oldGrp->getSize();
 
+    if (1 == cnt ) {
+
+        assert( m_commSplitEvent->key == 0 );
+        *m_commSplitEvent->newComm = m_info->newGroup(); 
+        Group* newGroup = m_info->getGroup( *m_commSplitEvent->newComm );
+        assert( newGroup );
+        newGroup->initMapping( 0, oldGrp->getMapping(0), 1 ); 
+        newGroup->setMyRank( 0 );
+
+        retval.setExit(0);
+        return;
+    }
+
     m_dbg.verbose(CALL_INFO,1,0,"grpSize=%d\n", cnt );
 
     m_sendbuf = (int*) malloc( sizeof(int) * 2 );
