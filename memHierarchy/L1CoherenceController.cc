@@ -314,6 +314,10 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
     
     State state = cacheLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);
+    
+    // Copy memflags through to processor
+    origRequest->setMemFlags(responseEvent->getMemFlags());
+    
     uint64_t sendTime = 0;
     switch (state) {
         case IS:
