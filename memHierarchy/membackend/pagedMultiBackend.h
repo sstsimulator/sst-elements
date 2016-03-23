@@ -161,6 +161,7 @@ private:
                   addMRPU, // threshold + most recent previous add
                   addMFRPU, // threshold + most recent previous add
                   addSC, // thresh + scan detection
+                  addSCF, // thresh + scan detection
                   addRAND // thresh + random
     } pageAddStrat_t;
     pageAddStrat_t addStrat;

@@ -69,6 +69,8 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
         addStrat = addMFRPU;
     } else if (stratStr == "SC") {
         addStrat = addSC;
+    } else if (stratStr == "SCF") {
+        addStrat = addSCF;
     } else if (stratStr == "RAND") {
         addStrat = addRAND;
     } else {
@@ -88,7 +90,7 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
     minAccTime = self_link->getDefaultTimeBase()->getFactor() / 
         Simulation::getSimulation()->getTimeLord()->getNano()->getFactor();
 
-    if (replaceStrat == BiLRU || addStrat == addRAND || addStrat == addSC) {
+    if (replaceStrat == BiLRU || addStrat == addRAND || addStrat == addSC || addStrat == addSCF) {
         const uint32_t seed = (uint32_t) params.find_integer("seed", 1447);
 
 	output->verbose(CALL_INFO, 1, 0, "Using Mersenne Generator with seed: %" PRIu32 "\n", seed);
@@ -155,6 +157,29 @@ bool pagedMultiMemory::checkAdd(pageInfo &page) {
         }
         break;
 
+    case addSCF:
+      {
+            if (pageList.empty()) return (page.lastTouch > threshold); // startup case
+            
+            if (page.touched > threshold) {
+	        SimTime_t myLastTouch = page.lastTouch;
+	        const auto &victimPage = pageList.back();
+
+		if (page.touched > victimPage->touched) {
+		  if (page.scanLeng > scanThreshold) {
+                    // roughly 1:1000 chance
+                    return (rng->generateNextUInt32() & 0x3ff) == 0;
+		  } else {
+                    return true;
+		  }
+		} else {
+		  return false;
+		}
+            } else {
+                return false;
+            }
+
+      }
     case addSC:
         {
             if (page.touched > threshold) {
