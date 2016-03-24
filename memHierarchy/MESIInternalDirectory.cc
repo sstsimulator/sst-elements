@@ -1075,6 +1075,8 @@ CacheAction MESIInternalDirectory::handleDataResponse(MemEvent* responseEvent, C
     State state = dirLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);    
     
+    origRequest->setMemFlags(responseEvent->getMemFlags());
+
     bool shouldRespond = !(origRequest->isPrefetch() && (origRequest->getRqstr() == name_));
     bool isCached = dirLine->getDataLine() != NULL;
     uint64_t sendTime = 0;
