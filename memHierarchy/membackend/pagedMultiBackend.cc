@@ -83,6 +83,8 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
       }
     }
 
+    dramBackpressure = (bool)params.find_integer("dramBackpressure", 1);    
+
     threshold = (unsigned int)params.find_integer("threshold", 4);    
     scanThreshold = (unsigned int)params.find_integer("scan_threshold", 6);    
 
@@ -127,7 +129,7 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
 // should we add it?
 bool pagedMultiMemory::checkAdd(pageInfo &page) {
     // only add if the dram isn't too busy
-    if (dramQ.size() >= 4) return false;
+    if (dramBackpressure && dramQ.size() >= 4) return false;
 
 
     switch (addStrat) {
@@ -515,7 +517,7 @@ void pagedMultiMemory::moveToFast(pageInfo &page) {
     assert(page.swapDir == pageInfo::NONE);
 
     uint64_t addr = page.pageAddr << pageShift;
-    const uint numTransfers = 1 << (pageShift - 6 - 1); // assume 2^6 byte cache liens
+    const uint numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
 
     // mark page as swapping
     page.swapDir = pageInfo::StoF;
@@ -539,7 +541,7 @@ void pagedMultiMemory::moveToSlow(pageInfo *page) {
     assert(page->swapDir == pageInfo::NONE);
 
     uint64_t addr = page->pageAddr << pageShift;
-    const uint numTransfers = 1 << (pageShift - 6 - 1); // assume 2^6 byte cache liens
+    const uint numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
 
     dbg.debug(_L10_, "moveToSlow(%p addr:%p)\n", page, (void*)(addr));
 

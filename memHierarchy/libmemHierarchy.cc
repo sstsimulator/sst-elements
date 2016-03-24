@@ -502,6 +502,7 @@ static const ElementInfoParam pagedMultiMem_params[] = {
     {"system_ini",      "Name of DRAMSim Device system file", NULL},
     {"collect_stats",      "Name of DRAMSim Device system file", "0"},
     {"transfer_delay",      "Time (in ns) to transfer page to fast mem", "250"},
+    {"dramBackpressure",    "Don't issue page swaps if DRAM is too busy", "1"},
     {"threshold",      "Threshold (touches/quantum)", "4"},
     {"scan_threshold",      "scan Threshold (for SC strategies)", "4"},
     {"seed",      "RNG Seed", "1447"},

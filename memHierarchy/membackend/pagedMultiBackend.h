@@ -175,6 +175,8 @@ private:
                   LAST_STRAT} pageReplaceStrat_t;
     pageReplaceStrat_t replaceStrat; 
 
+    bool dramBackpressure;
+
     bool checkAdd(pageInfo &page);
     void do_FIFO_LRU(DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
     void do_LFU(DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
