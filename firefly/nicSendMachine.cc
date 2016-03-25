@@ -38,10 +38,10 @@ void Nic::SendMachine::state_0( SendEntry* entry )
     hdr.dst_vNicId = entry->dst_vNic();
     hdr.src_vNicId = entry->local_vNic(); 
 
-    m_dbg.verbose(CALL_INFO,1,16,"0: setup hdr, src_vNic=%d, send dstNid=%d "
+    m_dbg.verbose(CALL_INFO,1,16,"%d: setup hdr, src_vNic=%d, send dstNid=%d "
                     "dst_vNic=%d tag=%#x bytes=%lu\n", m_vc,
-                    hdr.src_vNicId,entry->node(), 
-                    hdr.dst_vNicId, hdr.tag, entry->totalBytes()) ;
+                    hdr.src_vNicId, entry->node(), 
+                    hdr.dst_vNicId, hdr.tag, entry->totalBytes() ) ;
 
     FireflyNetworkEvent* ev = new FireflyNetworkEvent;
     ev->bufAppend( &hdr, sizeof(hdr) );
@@ -124,8 +124,7 @@ void Nic::SendMachine::state_2( SendEntry* entry, FireflyNetworkEvent *ev )
 void Nic::SendMachine::copyOut( Output& dbg,
                     FireflyNetworkEvent& event, Nic::Entry& entry )
 {
-    dbg.verbose(CALL_INFO,3,16,"%d: ioVec.size()=%lu\n", 
-                                    m_vc, entry.ioVec().size() );
+    dbg.verbose(CALL_INFO,3,16,"%d: ioVec.size()=%lu\n", m_vc, entry.ioVec().size() );
 
     for ( ; entry.currentVec < entry.ioVec().size() &&
                 event.bufSize() <  m_packetSizeInBytes;
