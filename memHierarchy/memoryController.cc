@@ -106,7 +106,9 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
     const uint64_t backendRamSizeMB = params.find_integer("backend.mem_size", 0);
 
-    if (params.find("mem_size") != params.end()) {
+    bool wasFound = false;
+    params.find_integer("mem_size", 0, wasFound);
+    if (wasFound) {
 	dbg.fatal(CALL_INFO, -1, "%s, Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n", getName().c_str());
     }
 
