@@ -156,25 +156,90 @@ void topo_dragonfly2::route(int port, int vc, internal_router_event* ev)
 {
     topo_dragonfly2_event *td_ev = static_cast<topo_dragonfly2_event*>(ev);
 
-    if ( (uint32_t)port >= (params.p + params.a-1) ) {
+    // Break this up by port type
+    uint32_t next_port = 0;
+    if ( (uint32_t)port < params.p ) { 
+        // Host ports
+
+        if ( td_ev->dest.group == td_ev->src_group ) {
+            // Packets stays within the group
+            if ( td_ev->dest.router == router_id ) {
+                // Stays within the router
+                next_port = td_ev->dest.host;
+            }
+            else {
+                // Route to the router specified by mid_group.  If
+                // this is a direct route then mid_group will equal
+                // router and packet will go direct.
+                next_port = port_for_router(td_ev->dest.mid_group);
+            }
+        }
+        else {
+            // Packet is leaving group.  Simply route to group
+            // specified by mid_group.  If this is a direct route then
+            // mid_group will be set to group.
+            next_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice);
+        }        
+    }
+    else if ( (uint32_t)port < ( params.p + params.a - 1) ) {
+        // Intragroup links
+
+        if ( td_ev->dest.group == group_id ) {
+            // In final group
+            if ( td_ev->dest.router == router_id ) {
+                // In final router, route to host port
+                next_port = td_ev->dest.host;
+            }
+            else {
+                // This is a valiantly routed packet within a group.
+                // Need to increment the VC and route to correct
+                // router.
+                td_ev->setVC(vc+1);
+                next_port = port_for_router(td_ev->dest.router);
+            }
+        }
+        else {
+            // Not in correct group, should route out one of the
+            // global links
+            if ( td_ev->dest.mid_group != group_id ) {
+                next_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice);
+            } else {
+                next_port = port_for_group(td_ev->dest.group, td_ev->global_slice);
+            }
+        }
+    }
+    else { // global
         /* Came in from another group.  Increment VC */
         td_ev->setVC(vc+1);
-    }
-
-
-    /* Minimal Route */
-    uint32_t next_port = 0;
-    if ( td_ev->dest.group != group_id ) {
-        if ( td_ev->dest.mid_group != group_id ) {
-            next_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice);
-        } else {
+        if ( td_ev->dest.group == group_id ) {
+            if ( td_ev->dest.router == router_id ) {
+                // In final router, route to host port
+                next_port = td_ev->dest.host;
+            }
+            else {
+                // Go to final router
+                next_port = port_for_router(td_ev->dest.router);
+            }
+        }
+        else {
+            // Just passing through on a valiant route.  Route
+            // directly to final group
             next_port = port_for_group(td_ev->dest.group, td_ev->global_slice);
         }
-    } else if ( td_ev->dest.router != router_id ) {
-        next_port = port_for_router(td_ev->dest.router);
-    } else {
-        next_port = td_ev->dest.host;
     }
+
+    // /* Minimal Route */
+    // if ( td_ev->dest.group != group_id ) {
+    //     if ( td_ev->dest.mid_group != group_id ) {
+    //         next_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice);
+    //     } else {
+    //         next_port = port_for_group(td_ev->dest.group, td_ev->global_slice);
+    //     }
+    // } else if ( td_ev->dest.router != router_id ) {
+    //     next_port = port_for_router(td_ev->dest.router);
+    // } else {
+    //     next_port = td_ev->dest.host;
+    // }
 
     // if ( td_ev->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
     //     output.output("TRACE(%d): route()\n",
@@ -188,14 +253,36 @@ void topo_dragonfly2::route(int port, int vc, internal_router_event* ev)
 void topo_dragonfly2::reroute(int port, int vc, internal_router_event* ev)
 {
     if ( algorithm != ADAPTIVE_LOCAL ) return;
-    
+
     // For now, we make the adaptive routing decision only at the
     // input to the network and at the input to a group for adaptively
     // routed packets
     if ( port >= params.p && port < (params.p + params.a-1) ) return;
+
     
     topo_dragonfly2_event *td_ev = static_cast<topo_dragonfly2_event*>(ev);
 
+    // Adaptive routing when packet stays in group
+    if ( port < params.p && td_ev->dest.group == group_id ) {
+        // If we're at the correct router, no adaptive needed
+        if ( td_ev->dest.router == router_id) return;
+
+        int direct_route_port = port_for_router(td_ev->dest.router);
+        int direct_route_credits = output_credits[direct_route_port * num_vcs + vc];
+
+        int valiant_route_port = port_for_router(td_ev->dest.mid_group);
+        int valiant_route_credits = output_credits[valiant_route_port * num_vcs + vc];
+
+        if ( valiant_route_credits > (int)((double)direct_route_credits * adaptive_threshold) ) {
+            td_ev->setNextPort(valiant_route_port);
+        }
+        else {
+            td_ev->setNextPort(direct_route_port);
+        }
+        
+        return;
+    }
+    
     // If the dest is in the same group, no need to adaptively route
     if ( td_ev->dest.group == group_id ) return;
 
@@ -302,13 +389,23 @@ internal_router_event* topo_dragonfly2::process_input(RtrEvent* ev)
     
     switch (algorithm) {
     case MINIMAL:
-        dstAddr.mid_group = dstAddr.group;
+        if ( dstAddr.group == group_id ) {
+            dstAddr.mid_group = dstAddr.router;
+        }
+        else {
+            dstAddr.mid_group = dstAddr.group;
+        }
         break;
     case VALIANT:
     case ADAPTIVE_LOCAL:
         if ( dstAddr.group == group_id ) {
-            // staying here.
-            dstAddr.mid_group = dstAddr.group;
+            // staying within group, set mid_group to be an intermediate router within group
+            do {
+                dstAddr.mid_group = rng->generateNextUInt32() % params.a;
+                // dstAddr.mid_group = router_id;
+            }
+            while ( dstAddr.mid_group == router_id );
+            // dstAddr.mid_group = dstAddr.group;
         } else {
             do {
                 dstAddr.mid_group = rng->generateNextUInt32() % params.g;
