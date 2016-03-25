@@ -123,7 +123,7 @@ Factory::Factory()
 
 Scheduler* Factory::getScheduler(SST::Params& params, int numNodes, const Machine & mach)
 {
-    if(params.find("scheduler") == params.end()){
+    if(params.find_string("scheduler").empty()){
         schedout.verbose(CALL_INFO, 1, 0, "Defaulting to Priority Scheduler with FIFO queue\n");
         return new PQScheduler(PQScheduler::JobComparator::Make("fifo"));
     }
@@ -224,10 +224,7 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
     double** D_matrix = NULL;
 
     //get the heat recirculation matrix if available
-    string dMatrixFile = "none";
-    if (params.find("dMatrixFile") != params.end()) {
-        dMatrixFile = params["dMatrixFile"];
-    }
+    string dMatrixFile = params.find_string("dMatrixFile", "none");
     if (dMatrixFile.compare("none") == 0 ) {
         //default: no recuirculation
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no heat recirculation\n");
@@ -236,13 +233,10 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
         D_matrix = dParser.readDMatrix();
     }
     
-    int coresPerNode = 1;
-    if( params.find("coresPerNode") != params.end() ){
-        coresPerNode = strtol(params["coresPerNode"].c_str(), NULL, 0);
-    }
+    int coresPerNode = params.find_integer("coresPerNode", 1);
     
     //get machine
-    if (params.find("machine") == params.end()) {
+    if (params.find_string("machine").empty()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Machine\n");
         retMachine = new SimpleMachine(numNodes, false, coresPerNode, D_matrix);
@@ -332,7 +326,7 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
 //returns the correct allocator based on the parameters
 Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent* sc)
 {
-    if (params.find("allocator") == params.end()) {
+    if (params.find_string("allocator").empty()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Allocator\n");
         SimpleMachine* mach = dynamic_cast<SimpleMachine*>(m);
@@ -448,10 +442,12 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
             //Constraint Allocator tries to separate nodes whose estimated failure rates are close
         case CONSTRAINT:
             {
-                if (params.find("ConstraintAllocatorDependencies") == params.end()) {
+                string depsFile = params.find_string("ConstraintAllocatorDependencies");
+                string constFile = params.find_string("ConstraintAllocatorConstraints");
+                if (depsFile.empty()) {
                     schedout.fatal(CALL_INFO, 1, "Constraint Allocator requires ConstraintAllocatorDependencies scheduler parameter");
                 }
-                if (params.find("ConstraintAllocatorConstraints") == params.end()) {
+                if (constFile.empty()) {
                     schedout.fatal(CALL_INFO, 1, "Constraint Allocator requires ConstraintAllocatorConstraints scheduler parameter");
                 }
                 SimpleMachine* mach = dynamic_cast<SimpleMachine*>(m);
@@ -459,11 +455,11 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
                     schedout.fatal(CALL_INFO, 1, "ConstraintAllocator requires SimpleMachine");
                 }
                 // will get these file names from schedparams eventually
-                return new ConstraintAllocator(mach, params.find("ConstraintAllocatorDependencies") -> second, params.find("ConstraintAllocatorConstraints") -> second, sc);
+                return new ConstraintAllocator(mach, depsFile, constFile, sc);
                 break;
             }
         case NEARESTAMAP:
-            if (params.find("taskMapper") != params.end()
+            if (!params.find_string("taskMapper").empty()
                && taskmappername(parseparams(params["taskMapper"])->at(0)) == NEARESTAMT) {
                 return new NearestAllocMapper(*m, true);
             } else {
@@ -471,7 +467,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
             }
             break;
         case SPECTRALAMAP:
-            if (params.find("taskMapper") != params.end()
+            if (!params.find_string("taskMapper").empty()
               && taskmappername(parseparams(params["taskMapper"])->at(0)) == SPECTRALAMT) {
                return new SpectralAllocMapper(*m, true);
             } else {
@@ -488,7 +484,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
 TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
 {
     TaskMapper* taskMapper;
-    if(params.find("taskMapper") == params.end()){
+    if(params.find_string("taskMapper").empty()){
         taskMapper = new SimpleTaskMapper(*mach);
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Task Mapper\n");
     } else {
@@ -514,7 +510,7 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             taskMapper = new TopoMapper(*mach, TopoMapper::R_C_M);
             break;  
         case NEARESTAMT:
-            if (params.find("allocator") != params.end()
+            if (!params.find_string("allocator").empty()
                 && allocatorname(parseparams(params["allocator"])->at(0)) == NEARESTAMAP ) {
                 taskMapper = new NearestAllocMapper(*mach, true);
             } else {
@@ -522,7 +518,7 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             }
             break;  
         case SPECTRALAMT:
-           if(params.find("allocator") != params.end()
+           if(!params.find_string("allocator").empty()
               && allocatorname(parseparams(params["allocator"])->at(0)) == SPECTRALAMAP ){
                 taskMapper = new SpectralAllocMapper(*mach, true);
             } else {
@@ -540,7 +536,7 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
 
 int Factory::getFST(SST::Params& params)
 {
-    if(params.find("FST") == params.end()){
+    if(params.find_string("FST").empty()){
         //default: FIFO queue priority scheduler
         //schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no FST");
         return 0;
@@ -568,7 +564,7 @@ vector<double>* Factory::getTimePerDistance(SST::Params& params)
     for (int x = 0; x < 5; x++) {
         ret -> push_back(0);
     }
-    if(params.find("timeperdistance") == params.end()){
+    if(params.find_string("timeperdistance").empty()){
         //default: FIFO queue priority scheduler
         //schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no FST");
         return ret;
