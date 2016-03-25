@@ -15,7 +15,7 @@
 namespace SST {
 namespace SimpleComponent {
 
-class simpleComponentEvent : public SST::Event, public SST::Core::Serialization::serializable_type<simpleComponentEvent> 
+class simpleComponentEvent : public SST::Event 
 {
 public:
     typedef std::vector<char> dataVec;
@@ -28,7 +28,7 @@ public:
         ser & payload;
     }
     
-    ImplementSerializable(simpleComponentEvent);     
+    ImplementSerializable(SST::SimpleComponent::simpleComponentEvent);     
 };
 
 } // namespace SimpleComponent

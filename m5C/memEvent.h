@@ -21,7 +21,7 @@
 namespace SST {
 namespace M5 {
 
-class MemEvent : public SST::Event, public SST::Core::Serialization::serializable_type<MemEvent> {
+class MemEvent : public SST::Event {
 
   public:
     enum Type {
@@ -279,7 +279,7 @@ class MemEvent : public SST::Event, public SST::Core::Serialization::serializabl
             ser & m_senderState;
     }
     
-        ImplementSerializable(MemEvent);     
+        ImplementSerializable(SST::M5::MemEvent);     
 };
 
 }

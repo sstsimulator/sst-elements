@@ -15,7 +15,7 @@
 namespace SST {
 namespace SimpleMessageGeneratorComponent {
 
-class simpleMessage : public SST::Event, public SST::Core::Serialization::serializable_type<simpleMessage> 
+class simpleMessage : public SST::Event 
 {
 public:
     simpleMessage() : SST::Event() { }
@@ -25,7 +25,7 @@ public:
         Event::serialize_order(ser);
     }
     
-    ImplementSerializable(simpleMessage);     
+    ImplementSerializable(SST::SimpleMessageGeneratorComponent::simpleMessage);     
 };
 
 } // namespace SimpleMessageGeneratorComponent

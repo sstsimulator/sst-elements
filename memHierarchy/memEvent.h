@@ -140,7 +140,7 @@ static const std::string NONE = "None";
  * The command list includes the needed commands to execute cache coherence protocols
  * as well as standard reads and writes to memory.
  */
-class MemEvent : public SST::Event, public SST::Core::Serialization::serializable_type<MemEvent>  {
+class MemEvent : public SST::Event  {
 public:
     static const uint32_t F_LOCKED        = 0x00000001;  /* Used in a Read-Lock, Write-Unlock atomicity scheme */
     static const uint32_t F_NONCACHEABLE  = 0x00000010;  /* Used to specify that this memory event should not be cached */
@@ -527,7 +527,7 @@ public:
 #endif
     }
      
-    ImplementSerializable(MemEvent);     
+    ImplementSerializable(SST::MemHierarchy::MemEvent);     
 };
 
 }}

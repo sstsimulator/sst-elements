@@ -25,7 +25,7 @@ extern "C" typedef struct _object PyObject;
 namespace SST {
 namespace PyProtoNS {
 
-class PyEvent : public SST::Event, public SST::Core::Serialization::serializable_type<PyEvent>
+class PyEvent : public SST::Event
 {
 public:
     PyEvent(PyEvent_t *e);
@@ -42,7 +42,7 @@ public:
         Event::serialize_order(ser);
     }
     
-    ImplementSerializable(PyEvent);     
+    ImplementSerializable(SST::PyProtoNS::PyEvent);     
 };
 
 

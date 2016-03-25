@@ -15,7 +15,7 @@
 namespace SST {
 namespace ArielComponent {
 
-class arielAllocTrackEvent : public SST::Event, public SST::Core::Serialization::serializable_type<arielAllocTrackEvent> 
+class arielAllocTrackEvent : public SST::Event 
 {
 public:
     enum arielAllocTrackType {
@@ -51,7 +51,7 @@ public:
         ser & level;
     }
     
-    ImplementSerializable(arielAllocTrackEvent);     
+    ImplementSerializable(SST::ArielComponent::arielAllocTrackEvent);     
 };
 
 } // namespace ArielComponent

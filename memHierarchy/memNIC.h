@@ -83,7 +83,7 @@ public:
 
 
 public:
-    class MemRtrEvent : public Event, public SST::Core::Serialization::serializable_type<MemRtrEvent> {
+    class MemRtrEvent : public Event {
     public:
         MemEvent *event;
 
@@ -106,10 +106,10 @@ public:
             ser & event;
         }
         
-        ImplementSerializable(MemRtrEvent);     
+        ImplementSerializable(SST::MemHierarchy::MemNIC::MemRtrEvent);     
     };
 
-    class InitMemRtrEvent : public MemRtrEvent, public SST::Core::Serialization::serializable_type<InitMemRtrEvent> {
+    class InitMemRtrEvent : public MemRtrEvent {
     public:
         std::string name;
         int address;
@@ -150,7 +150,7 @@ public:
                 ser & src;
             }
         
-        ImplementSerializable(InitMemRtrEvent);     
+        ImplementSerializable(SST::MemHierarchy::MemNIC::InitMemRtrEvent);     
     };
 
 

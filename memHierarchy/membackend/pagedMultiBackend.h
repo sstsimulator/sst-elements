@@ -166,7 +166,7 @@ private:
     int dumpNum;
     
 public:
-    class MemCtrlEvent : public SST::Event, public SST::Core::Serialization::serializable_type<MemCtrlEvent> {
+    class MemCtrlEvent : public SST::Event {
     public:
         MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
         { }
@@ -182,8 +182,7 @@ public:
 //            ser & req;  // Cannot serialize pointers unless they are a serializable object
         }
         
-        ImplementSerializable(MemCtrlEvent);     
-        // NOTE: This Event does not have a DeclareSerializable() defined, it will not serialize
+        ImplementSerializable(SST::MemHierarchy::pagedMultiMemory::MemCtrlEvent);     
 };
 
     typedef map<uint64_t, pageInfo> pageMap_t;

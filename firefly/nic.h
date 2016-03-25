@@ -27,7 +27,7 @@ namespace Firefly {
 
 typedef std::function<void()> Callback;
 
-class NicInitEvent : public Event, public SST::Core::Serialization::serializable_type<NicInitEvent> {
+class NicInitEvent : public Event {
 
   public:
     int node;
@@ -65,7 +65,7 @@ public:
         ser & num_vNics;
     }
     
-    ImplementSerializable(NicInitEvent);     
+    ImplementSerializable(SST::Firefly::NicInitEvent);     
 };
 
 class NicCmdEvent : public Event {

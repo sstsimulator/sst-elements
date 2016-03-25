@@ -19,7 +19,7 @@
 namespace SST {
     namespace Scheduler {
 
-        class JobStartEvent : public SST::Event, public SST::Core::Serialization::serializable_type<JobStartEvent> {
+        class JobStartEvent : public SST::Event {
             public:
 
                 JobStartEvent(unsigned long time, int jobNum) : SST::Event() {
@@ -42,7 +42,7 @@ namespace SST {
                     ser & jobNum;
                 }
                 
-                ImplementSerializable(JobStartEvent);     
+                ImplementSerializable(SST::Scheduler::JobStartEvent);     
         };
 
     }

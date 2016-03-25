@@ -19,7 +19,7 @@
 namespace SST {
 namespace M5 {
 
-class RawEvent : public SST::Event, public SST::Core::Serialization::serializable_type<RawEvent> {
+class RawEvent : public SST::Event {
   public:
     typedef uint64_t type_t;
     RawEvent( void* data, size_t len) :
@@ -84,7 +84,7 @@ class RawEvent : public SST::Event, public SST::Core::Serialization::serializabl
 //            }
         }
         
-        ImplementSerializable(RawEvent);     
+        ImplementSerializable(SST::M5::RawEvent);     
 };
 
 }

@@ -20,7 +20,7 @@ namespace Firefly {
 
 
 #define FOO 0 
-class FireflyNetworkEvent : public Event, public SST::Core::Serialization::serializable_type<FireflyNetworkEvent> {
+class FireflyNetworkEvent : public Event {
 
   public:
     uint16_t        seq;
@@ -119,7 +119,7 @@ class FireflyNetworkEvent : public Event, public SST::Core::Serialization::seria
         ser & src;
     }
     
-    ImplementSerializable(FireflyNetworkEvent);     
+    ImplementSerializable(SST::Firefly::FireflyNetworkEvent);     
     
 };
 
