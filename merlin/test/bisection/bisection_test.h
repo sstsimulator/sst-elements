@@ -64,7 +64,7 @@ private:
     
 };
 
-class bisection_test_event : public Event, public SST::Core::Serialization::serializable_type<bisection_test_event> {
+class bisection_test_event : public Event {
 
  public:
     SimTime_t start_time;
@@ -82,7 +82,7 @@ class bisection_test_event : public Event, public SST::Core::Serialization::seri
     }
 
 private:
-    ImplementSerializable(bisection_test_event)
+    ImplementSerializable(SST::Merlin::bisection_test_event)
     
 };
 } // namespace merlin

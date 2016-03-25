@@ -143,7 +143,7 @@ nic::init(unsigned int phase) {
     }
 }
 
-class MyRtrEvent : public Event, public SST::Core::Serialization::serializable_type<MyRtrEvent> {
+class MyRtrEvent : public Event {
 public:
     int seq;
     MyRtrEvent() {}
@@ -168,7 +168,7 @@ public:
 
 private:
 
-    ImplementSerializable(MyRtrEvent);
+    ImplementSerializable(SST::Merlin::MyRtrEvent);
 };
 
 

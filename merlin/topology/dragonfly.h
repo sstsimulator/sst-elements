@@ -85,7 +85,7 @@ private:
 
 
 
-class topo_dragonfly_event : public internal_router_event, public SST::Core::Serialization::serializable_type<topo_dragonfly_event> {
+class topo_dragonfly_event : public internal_router_event {
 
 public:
     uint32_t src_group;
@@ -110,7 +110,7 @@ public:
     }
     
 private:
-    ImplementSerializable(topo_dragonfly_event)
+    ImplementSerializable(SST::Merlin::topo_dragonfly_event)
 };
 
 }

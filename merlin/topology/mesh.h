@@ -26,7 +26,7 @@
 namespace SST {
 namespace Merlin {
 
-class topo_mesh_event : public internal_router_event, public SST::Core::Serialization::serializable_type<topo_mesh_event> {
+class topo_mesh_event : public internal_router_event {
 public:
     int dimensions;
     int routing_dim;
@@ -60,12 +60,12 @@ public:
 protected:
 
 private:
-    ImplementSerializable(topo_mesh_event)
+    ImplementSerializable(SST::Merlin::topo_mesh_event)
 
 };
 
 
-class topo_mesh_init_event : public topo_mesh_event, public SST::Core::Serialization::serializable_type<topo_mesh_init_event> {
+class topo_mesh_init_event : public topo_mesh_event {
 public:
     int phase;
 
@@ -86,7 +86,7 @@ public:
     }
 
 private:
-    ImplementSerializable(topo_mesh_init_event)
+    ImplementSerializable(SST::Merlin::topo_mesh_init_event)
 
 };
 

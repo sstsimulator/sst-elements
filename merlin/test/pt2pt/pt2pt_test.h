@@ -60,7 +60,7 @@ private:
     
 };
 
-class pt2pt_test_event : public Event, public SST::Core::Serialization::serializable_type<pt2pt_test_event> {
+class pt2pt_test_event : public Event {
 
  public:
     SimTime_t start_time;
@@ -72,7 +72,7 @@ class pt2pt_test_event : public Event, public SST::Core::Serialization::serializ
         return new pt2pt_test_event(*this);
     }
 
-    ImplementSerializable(pt2pt_test_event)
+    ImplementSerializable(SST::Merlin::pt2pt_test_event)
 };
 
 }

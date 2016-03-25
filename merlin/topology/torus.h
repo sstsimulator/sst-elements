@@ -26,7 +26,7 @@
 namespace SST {
 namespace Merlin {
 
-class topo_torus_event : public internal_router_event, public SST::Core::Serialization::serializable_type<topo_torus_event> {
+class topo_torus_event : public internal_router_event {
 public:
     int dimensions;
     int routing_dim;
@@ -59,7 +59,7 @@ public:
 
 private:
 
-    ImplementSerializable(topo_torus_event)
+    ImplementSerializable(SST::Merlin::topo_torus_event)
 };
 
 

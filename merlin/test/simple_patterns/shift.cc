@@ -124,7 +124,7 @@ shift_nic::init(unsigned int phase) {
     // }
 }
 
-class ShiftEvent : public Event, public SST::Core::Serialization::serializable_type<ShiftEvent> {
+class ShiftEvent : public Event {
 public:
     int seq;
     ShiftEvent() {}
@@ -143,7 +143,7 @@ public:
 
 private:
 
-    ImplementSerializable(ShiftEvent);
+    ImplementSerializable(SST::Merlin::ShiftEvent);
 
 };
 

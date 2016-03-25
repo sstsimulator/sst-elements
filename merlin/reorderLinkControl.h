@@ -32,7 +32,7 @@ class Component;
 namespace Merlin {
 
 // Need our own version of Request to add a sequence number
-class ReorderRequest : public SST::Interfaces::SimpleNetwork::Request, public SST::Core::Serialization::serializable_type<ReorderRequest> {
+class ReorderRequest : public SST::Interfaces::SimpleNetwork::Request {
 public:
     uint32_t seq;
 
@@ -78,7 +78,7 @@ public:
     }
 
 private:
-    ImplementSerializable(ReorderRequest)
+    ImplementSerializable(SST::Merlin::ReorderRequest)
 };
 
 

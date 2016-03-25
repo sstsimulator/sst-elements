@@ -79,14 +79,13 @@ public:
 #define MERLIN_ENABLE_TRACE
 
 
-class BaseRtrEvent : public Event, public SST::Core::Serialization::serializable_type<BaseRtrEvent> {
+class BaseRtrEvent : public Event {
 
 public:
     enum RtrEventType {CREDIT, PACKET, INTERNAL, TOPOLOGY, INITIALIZATION};
 
     inline RtrEventType getType() const { return type; }
 
-    BaseRtrEvent()  {} // For Serialization only
     void serialize_order(SST::Core::Serialization::serializer &ser) {
         Event::serialize_order(ser);
         ser & type;
@@ -99,13 +98,14 @@ protected:
     {}
 
 private:
+    BaseRtrEvent()  {} // For Serialization only
     RtrEventType type;
 
-    ImplementSerializable(BaseRtrEvent);
+    ImplementSerializable(SST::Merlin::BaseRtrEvent);
 };
     
 
-class RtrEvent : public BaseRtrEvent, public SST::Core::Serialization::serializable_type<RtrEvent> {
+class RtrEvent : public BaseRtrEvent {
 
 public:
     SST::Interfaces::SimpleNetwork::Request* request;
@@ -160,11 +160,11 @@ private:
     SimTime_t injectionTime;
     int size_in_flits;
 
-    ImplementSerializable(RtrEvent)
+    ImplementSerializable(SST::Merlin::RtrEvent)
     
 };
 
-class TopologyEvent : public BaseRtrEvent, public SST::Core::Serialization::serializable_type<TopologyEvent> {
+class TopologyEvent : public BaseRtrEvent {
     // Allows Topology events to consume bandwidth.  If this is set to
     // zero, then no bandwidth is consumed.
     int size_in_flits;
@@ -193,10 +193,10 @@ public:
         ser & size_in_flits;
     }
     
-    ImplementSerializable(TopologyEvent);
+    ImplementSerializable(SST::Merlin::TopologyEvent);
 };
 
-class credit_event : public BaseRtrEvent, public SST::Core::Serialization::serializable_type<credit_event> {
+class credit_event : public BaseRtrEvent {
 public:
     int vc;
     int credits;
@@ -224,11 +224,11 @@ public:
     
 private:
 
-    ImplementSerializable(credit_event)
+    ImplementSerializable(SST::Merlin::credit_event)
     
 };
 
-class RtrInitEvent : public BaseRtrEvent, public SST::Core::Serialization::serializable_type<RtrInitEvent> {
+class RtrInitEvent : public BaseRtrEvent {
 public:
 
     enum Commands { REQUEST_VNS, SET_VCS, REPORT_ID, REPORT_BW, REPORT_FLIT_SIZE, REPORT_PORT };
@@ -260,10 +260,10 @@ public:
     
     
 private:
-    ImplementSerializable(RtrInitEvent)
+    ImplementSerializable(SST::Merlin::RtrInitEvent)
 };
 
-class internal_router_event : public BaseRtrEvent, public SST::Core::Serialization::serializable_type<internal_router_event> {
+class internal_router_event : public BaseRtrEvent {
     int next_port;
     int next_vc;
     int vc;
@@ -331,7 +331,7 @@ public:
     }
     
 private:
-    ImplementSerializable(internal_router_event)
+    ImplementSerializable(SST::Merlin::internal_router_event)
 };
 
 class Topology : public Module {
