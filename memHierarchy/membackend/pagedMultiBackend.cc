@@ -92,14 +92,10 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
     minAccTime = self_link->getDefaultTimeBase()->getFactor() / 
         Simulation::getSimulation()->getTimeLord()->getNano()->getFactor();
 
-    if (replaceStrat == BiLRU || addStrat == addRAND || addStrat == addSC || addStrat == addSCF) {
-        const uint32_t seed = (uint32_t) params.find_integer("seed", 1447);
+    const uint32_t seed = (uint32_t) params.find_integer("seed", 1447);
 
-	output->verbose(CALL_INFO, 1, 0, "Using Mersenne Generator with seed: %" PRIu32 "\n", seed);
-        rng = new RNG::MersenneRNG(seed);
-    } else {
-        rng = 0;
-    }
+    output->verbose(CALL_INFO, 1, 0, "Using Mersenne Generator with seed: %" PRIu32 "\n", seed);
+    rng = new RNG::MersenneRNG(seed);
 
     // only applies to access pattern stats
     collectStats = (unsigned int)params.find_integer("collect_stats", 0);
@@ -284,10 +280,15 @@ void pagedMultiMemory::do_FIFO_LRU(DRAMReq *req, pageInfo &page, bool &inFast, b
     } else {
         // already in fast
         if (replaceStrat == LRU || replaceStrat == BiLRU || replaceStrat == SCLRU) {
-	  // move to the front of list
-	  pageList.erase(page.listEntry);
-	  pageList.push_front(&page);
-	  page.listEntry = pageList.begin();
+	  if ((replaceStrat == SCLRU) && (page.scanLeng > scanThreshold) && ((rng->generateNextUInt32() & 0x1ff))) {
+	    // leave 'scan-y' pages where they are
+	    ;
+	  } else {
+	    // move to the front of list
+	    pageList.erase(page.listEntry);
+	    pageList.push_front(&page);
+	    page.listEntry = pageList.begin();
+	  }
         }
 
         inFast = page.inFast;
