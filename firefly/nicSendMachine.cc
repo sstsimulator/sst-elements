@@ -66,7 +66,7 @@ void Nic::SendMachine::state_1( SendEntry* entry, FireflyNetworkEvent* ev )
     copyOut( m_dbg, *ev, *entry ); 
     m_nic.dmaRead( 
         std::bind( &Nic::SendMachine::state_2, this, entry, ev ),  
-        0,0
+        0,ev->bufSize()
     ); 
 }    
 
