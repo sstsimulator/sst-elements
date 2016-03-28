@@ -35,6 +35,8 @@ class SendMachine {
             m_sendQ.push_back( entry );
             if ( 1 == m_sendQ.size() ) {
                 state_0( m_sendQ.front() );
+            } else {
+                m_dbg.verbose(CALL_INFO,1,16,"%d: Q send entry\n",m_vc);
             }
         }
 
