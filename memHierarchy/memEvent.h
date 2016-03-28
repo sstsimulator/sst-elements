@@ -188,6 +188,7 @@ public:
         me->prefetch_     = prefetch_;
         me->instPtr_      = instPtr_;
         me->vAddr_        = vAddr_;
+        me->memFlags_     = memFlags_;
         return me;
     }
 
@@ -238,6 +239,7 @@ public:
         rqstr_              = NONE;
         size_               = 0;
         flags_              = 0;
+        memFlags_           = 0;
         groupID_            = 0;
         prefetch_           = false;
         atomic_             = false;
@@ -434,6 +436,9 @@ public:
     /** Sets the entire flag state */
     void setFlags(uint32_t flags) { flags_ = flags; }
 
+    void setMemFlags(uint32_t flags) { memFlags_ = flags; }
+    uint32_t getMemFlags() { return memFlags_; }
+
     /** Return the BaseAddr */
     Addr getBaseAddr() { return baseAddr_; }
     
@@ -455,20 +460,11 @@ public:
         }
     }
 
-#ifdef USE_VAULTSIM_HMC
-    /** Setter for HMC instruction type */
-    void setHMCInstType(uint8_t hmcInstType) { hmcInstType_ = hmcInstType; }
-    /** Getter for HMC instruction type */
-    uint8_t getHMCInstType() { return hmcInstType_; }
-
-private:
-    uint8_t         hmcInstType_;
-#endif
-
 private:
     id_type         eventID_;           // Unique ID for this event
     id_type         responseToID_;      // For responses, holds the ID to which this event matches
     uint32_t        flags_;             // Any flags (atomic, noncacheabel, etc.)
+    uint32_t        memFlags_;          // Memory flags - ignored by caches except to be copied through. Faciliates processor-memory communication
     uint32_t        size_;              // Size in bytes that are being requested
     uint32_t        groupID_;           // ???
     Addr            addr_;              // Address
@@ -500,6 +496,7 @@ public:
         ser & eventID_;
         ser & responseToID_;
         ser & flags_;
+        ser & memFlags_;
         ser & size_;
         ser & groupID_;
         ser & addr_;
@@ -522,9 +519,6 @@ public:
         ser & instPtr_;
         ser & vAddr_;
         ser & inProgress_;
-#ifdef USE_VAULTSIM_HMC
-        ser & hmcInstType_;
-#endif
     }
      
     ImplementSerializable(SST::MemHierarchy::MemEvent);     

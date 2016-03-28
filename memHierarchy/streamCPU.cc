@@ -28,48 +28,49 @@ using namespace SST::MemHierarchy;
 streamCPU::streamCPU(ComponentId_t id, Params& params) :
     Component(id), rng(id, 13)
 {
-	uint32_t outputLevel = (uint32_t) params.find_integer("verbose", 0);
-        out.init("StreamCPU:@p:@l: ", outputLevel, 0, Output::STDOUT);
+    uint32_t outputLevel = (uint32_t) params.find_integer("verbose", 0);
+    out.init("StreamCPU:@p:@l: ", outputLevel, 0, Output::STDOUT);
 
-	// get parameters
-	if ( params.find("commFreq") == params.end() ) {
-		out.fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
-	}
-	commFreq = strtol( params[ "commFreq" ].c_str(), NULL, 0 );
+    // get parameters
+    commFreq = params.find_integer("commFreq", -1);
+    if (commFreq < 0) {
+	out.fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
+    }
+    
+    maxAddr = (uint32_t)params.find_integer("memSize", -1) -1;
+    if ( !maxAddr ) {
+        out.fatal(CALL_INFO, -1, "Must set memSize\n");
+    }
 
-	maxAddr = (uint32_t)params.find_integer("memSize", -1) -1;
-	if ( !maxAddr ) {
-		out.fatal(CALL_INFO, -1, "Must set memSize\n");
-	}
-
-	do_write = (bool)params.find_integer("do_write", 1);
+    do_write = (bool)params.find_integer("do_write", 1);
 
     numLS = params.find_integer("num_loadstore", -1);
 
 
-	// tell the simulator not to end without us
+    // tell the simulator not to end without us
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
-	// configure out links
-	mem_link = configureLink( "mem_link",
-			new Event::Handler<streamCPU>(this,
-				&streamCPU::
-				handleEvent) );
-	if (!mem_link) {
-            out.fatal(CALL_INFO, -1, "Error creating mem_link\n");   
-        }
+    // configure out links
+    mem_link = configureLink( "mem_link",
+            new Event::Handler<streamCPU>(this,
+                &streamCPU::
+                handleEvent) );
+    
+    if (!mem_link) {
+        out.fatal(CALL_INFO, -1, "Error creating mem_link\n");   
+    }
 
-	addrOffset = (uint64_t) params.find_integer("addressoffset", 0);
+    addrOffset = (uint64_t) params.find_integer("addressoffset", 0);
 
-	registerTimeBase("1 ns", true);
-	//set our clock
+    registerTimeBase("1 ns", true);
+    //set our clock
     clockHandler = new Clock::Handler<streamCPU>(this, &streamCPU::clockTic);
-	clockTC = registerClock( "1GHz", clockHandler );
-	num_reads_issued = num_reads_returned = 0;
+    clockTC = registerClock( "1GHz", clockHandler );
+    num_reads_issued = num_reads_returned = 0;
 
-	// Start the next address from the offset
-	nextAddr = addrOffset;
+    // Start the next address from the offset
+    nextAddr = addrOffset;
 }
 
 streamCPU::streamCPU() :

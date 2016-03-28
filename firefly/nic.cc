@@ -279,7 +279,7 @@ bool Nic::sendNotify(int vc)
 
 bool Nic::recvNotify(int vc)
 {
-    m_dbg.verbose(CALL_INFO,1,1,"network event available vc=%d\n",vc);
+    m_dbg.verbose(CALL_INFO,2,1,"network event available vc=%d\n",vc);
 
     m_recvMachine.notify( vc );
 

@@ -24,40 +24,30 @@ class simpleComponent : public SST::Component
 public:
     simpleComponent(SST::ComponentId_t id, SST::Params& params);
     ~simpleComponent();
-    
+
     void setup() { }
     void finish() {
-        static int n = 0;
-        n++;
-        if (n == 10) {
-            printf("Several Simple Components Finished\n");
-        } else if (n > 10) {
-            ;
-        } else {
-            printf("Simple Component Finished\n");
-        }
-//        return 0;
+    	printf("Component Finished.\n");
     }
 
 private:
     simpleComponent();  // for serialization only
     simpleComponent(const simpleComponent&); // do not implement
     void operator=(const simpleComponent&); // do not implement
-    
+
     void handleEvent(SST::Event *ev);
     virtual bool clockTic(SST::Cycle_t);
-    
+
     int workPerCycle;
     int commFreq;
     int commSize;
     int neighbor;
-    
+
     SST::RNG::MarsagliaRNG* rng;
     SST::Link* N;
     SST::Link* S;
     SST::Link* E;
     SST::Link* W;
-   
 };
 
 } // namespace SimpleComponent

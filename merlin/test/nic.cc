@@ -234,6 +234,11 @@ nic::clock_handler(Cycle_t cycle)
             packets_recd++;
             // int src = net_map[req->src];
             int src = req->src;
+
+            if ( req->dest != net_id ) {
+                output.fatal(CALL_INFO,-1,"%d received packet intended for %d\n",net_id,(int)req->dest);
+            }
+
 #if 0
             if ( next_seq[src] != ev->seq ) {
                 output.output("%d received packet %d from %d Expected sequence number %d\n",

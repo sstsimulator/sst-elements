@@ -934,6 +934,9 @@ CacheAction MESIController::handleFetch(MemEvent * event, CacheLine * cacheLine,
  */
 CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest){
     
+    // Update memFlags so it's copied through on the way up
+    origRequest->setMemFlags(responseEvent->getMemFlags());
+
     if (!inclusive_ && (cacheLine == NULL || cacheLine->getState() == I)) {
         uint64_t sendTime = sendResponseUp(origRequest, responseEvent->getGrantedState(), &responseEvent->getPayload(), true, 0);
         if (cacheLine != NULL) cacheLine->setTimestamp(sendTime);

@@ -14,10 +14,6 @@
 #include <sst_config.h>
 #include "memHierarchyInterface.h"
 
-#ifdef USE_VAULTSIM_HMC    
-#include "simpleMemHMCExtension.h"
-#endif
-
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
@@ -93,11 +89,7 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *_req) const{
     me->setVirtualAddress(_req->getVirtualAddress());
     me->setInstructionPointer(_req->getInstructionPointer());
 
-#ifdef USE_VAULTSIM_HMC
-    MacSim::SimpleMemHMCExtension::HMCRequest *hmcReq = 
-        static_cast<MacSim::SimpleMemHMCExtension::HMCRequest *>(_req);
-    me->setHMCInstType(hmcReq->hmcInstType); 
-#endif
+    me->setMemFlags(_req->memFlags);
 
     //totalRequests_++;
     return me;
@@ -148,7 +140,8 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* _req, MemEvent *_m
     default:
         fprintf(stderr, "Don't know how to deal with command %s\n", CommandString[_me->getCmd()]);
     }
-    
+   // Always update memFlags to faciliate mem->processor communication
+    _req->memFlags = _me->getMemFlags();
     
 }
 
