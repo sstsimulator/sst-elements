@@ -58,17 +58,20 @@ class RangeLatMod : public LatencyMod {
 #endif
 
         Params range = params.find_prefix_params("range."); 
+        range.enableVerify(false);
 
-        Params::iterator iter = range.begin(); 
-        for ( ; iter != range.end(); ++iter ) {
+        std::set<std::string> keys = range.getKeys();
+        std::set<std::string>::iterator iter = keys.begin(); 
+        for ( ; iter != keys.end(); ++iter ) {
             Entry entry;
+            std::string value = range.find_string(*iter);
 
-            std::size_t pos = iter->second.find(":");
-            UnitAlgebra tmp( iter->second.substr( pos + 1 ) );
+            std::size_t pos = value.find(":");
+            UnitAlgebra tmp( value.substr( pos + 1 ) );
 
             entry.latency = tmp.getValue().convert_to<double>();
 
-            std::string range = iter->second.substr(0, pos );
+            std::string range = value.substr(0, pos );
             pos = range.find("-");
 
             entry.start = atoi(range.substr(0, pos ).c_str()); 
