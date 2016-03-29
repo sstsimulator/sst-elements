@@ -4,9 +4,7 @@ AM_CPPFLAGS = \
         $(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = libprospero.la
-
-libexec_PROGRAMS =
+comp_LTLIBRARIES = libprospero.la 
 
 libprospero_la_SOURCES = \
 	libprospero.cc \
@@ -55,22 +53,9 @@ sst_prospero_trace_SOURCES = runprosperotrace.cc
 
 if SST_COMPILE_OSX
 
-libexec_PROGRAMS += prosperotrace.dylib
-prosperotrace_dylib_SOURCES = tracetool/sstmemtrace.cc
-
-prosperotrace.dylib: prosperotrace.o
-        $(CXX) -shared \
-        -Wl,-exported_symbols_list \
-        -Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
-        -stdlib=libstdc++ \
-        -L$(PINTOOL_DIR)/intel64/lib \
-        -L$(PINTOOL_DIR)/intel64/lib-ext \
-        -L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-        -o prosperotrace.dylib prosperotrace.o  \
-        -lpin -lxed -lpindwarf -lpthread
-
-prosperotrace.o: tracetool/sstmemtrace.cc
-        $(CXX) -O3 \
+install-exec-hook: tracetool/sstmemtrace.cc
+        $(CXX) -O3 -shared \
+	-O3 \
         $(CPPFLAGS) \
         $(BOOST_CPPFLAGS) \
         -DBIGARRAY_MULTIPLIER=1 \
@@ -81,27 +66,22 @@ prosperotrace.o: tracetool/sstmemtrace.cc
         -I$(PINTOOL_DIR)/source/include/pin/gen/ \
         -I$(PINTOOL_DIR)/extras/xed-intel64/include \
         -fomit-frame-pointer -fno-stack-protector \
+        -Wl,-exported_symbols_list \
+        -Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
         -stdlib=libstdc++ \
-        -o prosperotrace.o -c \
-	tracetool/sstmemtrace.cc
+        -L$(PINTOOL_DIR)/intel64/lib \
+        -L$(PINTOOL_DIR)/intel64/lib-ext \
+        -L$(PINTOOL_DIR)/extras/xed-intel64/lib \
+        -o prosperotrace.dylib tracetool/sstmemtrace.cc \
+        -stdlib=libstdc++ \
+        -lpin -lxed -lpindwarf -lpthread && \
+	cp prosperotrace.dylib 4(libexecdir)/libexec/prosperotrace.dylib
 
 else
 
-libexec_PROGRAMS += prosperotrace.so
-prosperotrace_so_SOURCES = tracetool/sstmemtrace.cc
-
-prosperotrace.so: prosperotrace.o
+install-exec-hook: tracetool/sstmemtrace.cc
         $(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
-        -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
-        -L$(PINTOOL_DIR)/intel64/lib \
-        -L$(PINTOOL_DIR)/intel64/lib-ext \
-        -L$(PINTOOL_DIR)/intel64/runtime/glibc \
-        -L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-        -o prosperotrace.so prosperotrace.o  \
-        -ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt
-
-prosperotrace.o: tracetool/sstmemtrace.cc
-        $(CXX) -fPIC -O3 \
+	-fPIC -O3 \
         -fomit-frame-pointer \
         $(CPPFLAGS) \
         $(BOOST_CPPFLAGS) \
@@ -111,8 +91,14 @@ prosperotrace.o: tracetool/sstmemtrace.cc
         -I$(PINTOOL_DIR)/extras/components/include \
         -I$(PINTOOL_DIR)/source/include/pin/gen/ \
         -I$(PINTOOL_DIR)/extras/xed-intel64/include \
-        -o prosperotrace.o -c \
-        tracetool/sstmemtrace.cc
+        -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
+        -L$(PINTOOL_DIR)/intel64/lib \
+        -L$(PINTOOL_DIR)/intel64/lib-ext \
+        -L$(PINTOOL_DIR)/intel64/runtime/glibc \
+        -L$(PINTOOL_DIR)/extras/xed-intel64/lib \
+        -o prosperotrace.so tracetool/sstmemtrace.cc \
+        -ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt && \
+	cp prosperotrace.so $(libexecdir)/libexec/prosperotrace.so
 
 endif
 endif
