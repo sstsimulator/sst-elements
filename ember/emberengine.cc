@@ -49,7 +49,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     Params modParams = params.find_prefix_params( osName + "." );
     std::ostringstream tmp;
     tmp << m_jobId;
-    modParams["netMapName"] = "Ember" + tmp.str();
+    modParams.insert("netMapName", "Ember" + tmp.str(), true);
 
     m_os  = dynamic_cast<OS*>( loadSubComponent(
                             osModuleName, this, modParams ) );
@@ -177,9 +177,9 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 		output.fatal(CALL_INFO, -1, "Error: You did not specify a generator" 
                 "or Ember to use\n");
 	} else {
-		params[ "_jobId" ] = to_string( jobId ); 
-		params[ "_motifNum" ] = to_string( motifNum ); 
-		params[ "_apiName" ] = api; 
+		params.insert("_jobId", SST::to_string( jobId ), true);
+		params.insert("_motifNum", SST::to_string( motifNum ), true);
+		params.insert("_apiName", api, true);
 
 		gen = dynamic_cast<EmberGenerator*>(
                 loadSubComponent(gentype, this, params ) );
@@ -191,7 +191,7 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 	}
 
 	// Make sure we don't stop the simulation until we are ready
-    if ( gen->primary() ) {	
+    if ( gen->primary() ) {
         primaryComponentDoNotEndSim();
     }
 
@@ -200,7 +200,7 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 
 void EmberEngine::init(unsigned int phase) {
 	// Pass the init phases through to the OS layer
-	m_os->_componentInit(phase);	
+	m_os->_componentInit(phase);
 }
 
 void EmberEngine::finish() {
