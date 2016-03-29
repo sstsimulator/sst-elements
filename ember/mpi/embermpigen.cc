@@ -71,10 +71,8 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
     //string rankMapModule = params.find_string("rankmapper", "ember.CustomMap"); //NetworkSim
 
     //NetworkSim: each job has its own custom map, so pass jobId info
-    if(!rankMapModule.compare("ember.CustomMap")){
-        Params::value_type addedparam = std::make_pair("_mapjobId", params.find_string("_jobId", "-1"));
-        mapParams.insert( addedparam );
-        //std::cout << "rankMapModule is: " << rankMapModule.c_str() << std::endl;
+    if(!rankMapModule.compare("ember.CustomMap")) {
+    	mapParams.insert("_mapjobId", params.find_string("_jobId", "-1"), true);
     }
     //end->NetworkSim
 
