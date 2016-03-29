@@ -88,20 +88,20 @@ void FunctionSM::setup( Info* info )
 
     Params defaultParams;
     defaultParams.enableVerify(false);
-    defaultParams[ "module" ] = m_params.find_string("defaultModule","firefly");
-    defaultParams[ "enterLatency" ] = 
-                        m_params.find_string("defaultEnterLatency","0");
-    defaultParams[ "returnLatency" ] = 
-                        m_params.find_string("defaultReturnLatency","0");
-    defaultParams[ "verboseLevel" ] = m_params.find_string("verboseLevel","0"); 
+    defaultParams.insert( "module" , m_params.find_string("defaultModule","firefly"), true );
+    defaultParams.insert( "enterLatency", 
+                        m_params.find_string("defaultEnterLatency","0"), true );
+    defaultParams.insert( "returnLatency", 
+                        m_params.find_string("defaultReturnLatency","0"), true );
+    defaultParams.insert( "verboseLevel", m_params.find_string("verboseLevel","0"), true ); 
     std::ostringstream tmp;
     tmp <<  nodeId; 
-    defaultParams[ "nodeId" ] = tmp.str();
+    defaultParams.insert( "nodeId", tmp.str(), true );
 
     for ( int i = 0; i < NumFunctions; i++ ) {
         std::string name = functionName( (FunctionEnum) i );
         Params tmp = m_params.find_prefix_params( name + "." );  
-        defaultParams[ "name" ] = name;
+        defaultParams.insert( "name", name, true );
         initFunction( m_owner, info, (FunctionEnum) i,
                                         name, defaultParams, tmp ); 
     }
@@ -112,29 +112,29 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
 {
     std::string module = params.find_string("module"); 
     if ( module.empty() ) {
-        module = defaultParams["module"];
+        module = defaultParams.find_string("module");
     }
 
     m_dbg.verbose(CALL_INFO,3,0,"func=`%s` module=`%s`\n",
                             name.c_str(),module.c_str());
 
     if ( params.find_string("name").empty() ) {
-        params["name"] = defaultParams[ "name" ];
+        params.insert( "name",  defaultParams.find_string( "name" ), true );
     }
 
     if ( params.find_string("verboseLevel").empty() ) {
-        params["verboseLevel"] = defaultParams[ "verboseLevel" ];
+        params.insert( "verboseLevel", defaultParams.find_string( "verboseLevel" ), true );
     }
 
     if ( params.find_string("enterLatency").empty() ) {
-        params["enterLatency"] = defaultParams[ "enterLatency" ];
+        params.insert( "enterLatency", defaultParams.find_string( "enterLatency" ), true );
     }
 
     if ( params.find_string("returnLatency").empty() ) {
-        params["returnLatency"] = defaultParams[ "returnLatency" ];
+        params.insert( "returnLatency", defaultParams.find_string( "returnLatency" ), true );
     }
 
-    params["nodeId"] = defaultParams[ "nodeId" ];
+    params.insert( "nodeId", defaultParams.find_string( "nodeId" ), true );
 
     m_smV[ num ] = (FunctionSMInterface*)obj->loadModule( module + "." + name,
                              params );
