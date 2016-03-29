@@ -16,8 +16,8 @@
 
 int main(int argc, char* argv[]) {
 
-	char* pinToolMarker = "-t";
-	char* doubleDash = "--";
+	char* pinToolMarker = const_cast<char*>("-t");
+	char* doubleDash = const_cast<char*>("--");
 
 	bool foundMarker = false;
 	std::vector<char*> prosParams;
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
 	sprintf(toolPath, "%s/libexec/prospero.so", SST_INSTALL_PREFIX);
 #endif
 
-	appParams.push_back(PINTOOL_EXECUTABLE);
+	appParams.push_back(const_cast<char*>(PINTOOL_EXECUTABLE));
 	appParams.push_back(pinToolMarker);
 	appParams.push_back(toolPath);
 
