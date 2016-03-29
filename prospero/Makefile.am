@@ -5,6 +5,7 @@ AM_CPPFLAGS = \
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libprospero.la
+
 libprospero_la_SOURCES = \
 	libprospero.cc \
         proscpu.h \
@@ -37,10 +38,26 @@ EXTRA_DIST = \
 
 libprospero_la_LDFLAGS = -module -avoid-version
 
+bin_PROGRAMS = sst-prospero-trace
+
+sst_prospero_trace_SOURCES = runprosperotrace.cc
+
 if USE_LIBZ
 libprospero_la_LIBADD = -lz
 
 libprospero_la_SOURCES += \
 	prosbingzreader.h \
 	prosbingzreader.cc
+endif
+
+if SST_COMPILE_OSX
+
+libexec_PROGRAMS += fesimple.dylib
+prosperotrace_dylib_SOURCES = tracetool/sstmemtrace.cc
+
+else
+
+libexec_PROGRAMS += fesimple.so
+prosperotrace_so_SOURCES = tracetool/sstmemtrace.cc
+
 endif
