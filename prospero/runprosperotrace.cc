@@ -99,15 +99,11 @@ int main(int argc, char* argv[]) {
 		printf("===============================================================\n");
 
 		if( childRC > 0 ) {
-			fprintf(stderr, "Error: launch of PIN failed! Exit with: %d\n",
-				WEXITSTATUS(processStat));
-			exit(-1);
-		} else if( childRC < 0 ) {
+			printf("Child process(es) for profiling completed.\n");
+		} else {
 			fprintf(stderr, "Error: Unable to start PIN.\n");
 			perror("waitpid");
 			exit(-1);
-		} else {
-			printf("Child process has completed.\n");
 		}
 
 	} else {
