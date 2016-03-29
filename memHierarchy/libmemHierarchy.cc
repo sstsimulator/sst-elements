@@ -31,6 +31,8 @@
 #include "membackend/vaultSimBackend.h"
 #include "networkMemInspector.h"
 
+#include "DRAMReq.h"
+
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
 #endif
@@ -896,5 +898,6 @@ extern "C" {
 }
 
 DeclareSerializable(SST::MemHierarchy::MemEvent)
+DeclareSerializable(SST::MemHierarchy::DRAMReq)
 DeclareSerializable(SST::MemHierarchy::MemNIC::MemRtrEvent)
 DeclareSerializable(SST::MemHierarchy::MemNIC::InitMemRtrEvent)

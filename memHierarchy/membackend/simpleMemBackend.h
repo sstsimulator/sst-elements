@@ -38,7 +38,7 @@ public:
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser) {
             Event::serialize_order(ser);
-//            ser & req;  // Cannot serialize pointers unless they are a serializable object
+            ser & req;  // Cannot serialize pointers unless they are a serializable object
        }
         
         ImplementSerializable(SST::MemHierarchy::SimpleMemory::MemCtrlEvent);
