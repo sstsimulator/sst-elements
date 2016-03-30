@@ -105,9 +105,7 @@ public:
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser) {
             Event::serialize_order(ser);
-            std::cout << "Is it here?" << std::endl;
             ser & event;
-            std::cout << "Is it here?  Apparently not." << std::endl;
         }
         
         ImplementSerializable(SST::MemHierarchy::MemNIC::MemRtrEvent);     
