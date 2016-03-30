@@ -505,7 +505,6 @@ public:
         ser & dst_;
         ser & rqstr_;
         ser & cmd_;
-        if ( NACKedEvent_ == reinterpret_cast<MemEvent*>(0xFFFFFFFFFFFFFFFF) ) NACKedEvent_ = NULL;
         ser & NACKedEvent_;
         ser & retries_;
         ser & payload_;
