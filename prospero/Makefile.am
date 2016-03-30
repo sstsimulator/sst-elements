@@ -65,6 +65,7 @@ all-local: tracetool/sstmemtrace.cc
 	-I$(PINTOOL_DIR)/extras/components/include \
 	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
 	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
+	-I$(top_srcdir)/sst \
 	-fomit-frame-pointer -fno-stack-protector \
 	-Wl,-exported_symbols_list \
 	-Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
@@ -93,6 +94,7 @@ all-local: tracetool/sstmemtrace.cc
 	-I$(PINTOOL_DIR)/extras/components/include \
 	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
 	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
+	-I$(top_srcdir)/sst \
 	-Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
 	-L$(PINTOOL_DIR)/intel64/lib \
 	-L$(PINTOOL_DIR)/intel64/lib-ext \
