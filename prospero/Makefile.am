@@ -57,6 +57,7 @@ install-exec-hook: tracetool/sstmemtrace.cc
 	$(CXX) -O3 -shared \
 	$(CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
+	$(LIBZ_CPPFLAGS) \
 	-DBIGARRAY_MULTIPLIER=1 \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
 	-I$(PINTOOL_DIR)/source/include/pin \
@@ -72,7 +73,7 @@ install-exec-hook: tracetool/sstmemtrace.cc
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
 	-o prosperotrace.dylib tracetool/sstmemtrace.cc \
 	-stdlib=libstdc++ \
-	-lpin -lxed -lpindwarf -lpthread && \
+	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) && \
 	cp prosperotrace.dylib 4(libexecdir)/prosperotrace.dylib
 
 else
@@ -83,6 +84,7 @@ install-exec-hook: tracetool/sstmemtrace.cc
 	-fomit-frame-pointer \
 	$(CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
+	$(LIBZ_CPPFLAGS) \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
 	-I$(PINTOOL_DIR)/source/include/pin \
 	-I$(PINTOOL_DIR)/ \
@@ -95,7 +97,7 @@ install-exec-hook: tracetool/sstmemtrace.cc
 	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
 	-o prosperotrace.so tracetool/sstmemtrace.cc \
-	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt && \
+	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) && \
 	cp prosperotrace.so $(libexecdir)/prosperotrace.so
 
 endif
