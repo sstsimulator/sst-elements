@@ -53,7 +53,7 @@ sst_prospero_trace_SOURCES = runprosperotrace.cc
 
 if SST_COMPILE_OSX
 
-install-exec-hook: tracetool/sstmemtrace.cc
+all-local: tracetool/sstmemtrace.cc
 	$(CXX) -O3 -shared \
 	$(CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
@@ -73,17 +73,14 @@ install-exec-hook: tracetool/sstmemtrace.cc
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
 	-o prosperotrace.dylib tracetool/sstmemtrace.cc \
 	-stdlib=libstdc++ \
-<<<<<<< HEAD
-	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) && \
-	cp prosperotrace.dylib 4(libexecdir)/prosperotrace.dylib
-=======
-	-lpin -lxed -lpindwarf -lpthread && \
+	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS)
+	
+install-exec-hook: prosperotrace.dylib
 	cp prosperotrace.dylib $(libexecdir)/prosperotrace.dylib
->>>>>>> b3b37b85f8202f0c81d15adfebc384fae445ab0e
 
 else
 
-install-exec-hook: tracetool/sstmemtrace.cc
+all-local: tracetool/sstmemtrace.cc
 	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
 	-fPIC -O3 \
 	-fomit-frame-pointer \
@@ -102,7 +99,9 @@ install-exec-hook: tracetool/sstmemtrace.cc
 	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
 	-o prosperotrace.so tracetool/sstmemtrace.cc \
-	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) && \
+	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS)
+	
+install-exec-hook: prosperotrace.so
 	cp prosperotrace.so $(libexecdir)/prosperotrace.so
 
 endif
