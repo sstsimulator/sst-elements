@@ -4,7 +4,8 @@ AM_CPPFLAGS = \
         $(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = libprospero.la
+comp_LTLIBRARIES = libprospero.la 
+
 libprospero_la_SOURCES = \
 	libprospero.cc \
         proscpu.h \
@@ -43,4 +44,59 @@ libprospero_la_LIBADD = -lz
 libprospero_la_SOURCES += \
 	prosbingzreader.h \
 	prosbingzreader.cc
+endif
+
+if HAVE_PINTOOL
+
+bin_PROGRAMS = sst-prospero-trace
+sst_prospero_trace_SOURCES = runprosperotrace.cc
+
+if SST_COMPILE_OSX
+
+install-exec-hook: tracetool/sstmemtrace.cc
+	$(CXX) -O3 -shared \
+	$(CPPFLAGS) \
+	$(BOOST_CPPFLAGS) \
+	-DBIGARRAY_MULTIPLIER=1 \
+	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
+	-I$(PINTOOL_DIR)/source/include/pin \
+	-I$(PINTOOL_DIR)/ \
+	-I$(PINTOOL_DIR)/extras/components/include \
+	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
+	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
+	-fomit-frame-pointer -fno-stack-protector \
+	-Wl,-exported_symbols_list \
+	-Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
+	-L$(PINTOOL_DIR)/intel64/lib \
+	-L$(PINTOOL_DIR)/intel64/lib-ext \
+	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
+	-o prosperotrace.dylib tracetool/sstmemtrace.cc \
+	-stdlib=libstdc++ \
+	-lpin -lxed -lpindwarf -lpthread && \
+	cp prosperotrace.dylib $(libexecdir)/prosperotrace.dylib
+
+else
+
+install-exec-hook: tracetool/sstmemtrace.cc
+	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
+	-fPIC -O3 \
+	-fomit-frame-pointer \
+	$(CPPFLAGS) \
+	$(BOOST_CPPFLAGS) \
+	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
+	-I$(PINTOOL_DIR)/source/include/pin \
+	-I$(PINTOOL_DIR)/ \
+	-I$(PINTOOL_DIR)/extras/components/include \
+	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
+	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
+	-Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
+	-L$(PINTOOL_DIR)/intel64/lib \
+	-L$(PINTOOL_DIR)/intel64/lib-ext \
+	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
+	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
+	-o prosperotrace.so tracetool/sstmemtrace.cc \
+	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt && \
+	cp prosperotrace.so $(libexecdir)/prosperotrace.so
+
+endif
 endif
