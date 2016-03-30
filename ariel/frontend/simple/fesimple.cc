@@ -496,6 +496,14 @@ void mapped_ariel_output_stats() {
     tunnel->writeMessage(0, ac);
 }
 
+// same effect as mapped_ariel_output_stats(), but it also sends a user-defined reference number back
+void mapped_ariel_output_stats_buoy(uint64_t marker) {
+    ArielCommand ac;
+    ac.command = ARIEL_OUTPUT_STATS;
+    ac.instPtr = (uint64_t) marker; //user the instruction pointer slot to send the marker number
+    tunnel->writeMessage(0, ac);
+}
+
 #if ! defined(__APPLE__)
 int mapped_clockgettime(clockid_t clock, struct timespec *tp) {
     if (tp == NULL) { errno = EINVAL; return -1; }
@@ -799,6 +807,11 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
     } else if (RTN_Name(rtn) == "ariel_output_stats" || RTN_Name(rtn) == "_ariel_output_stats") {
         fprintf(stderr, "Identified routine: ariel_output_stats, replacing with Ariel equivalent..\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_output_stats);
+        fprintf(stderr, "Replacement complete\n");
+        return;
+    } else if (RTN_Name(rtn) == "ariel_output_stats_buoy" || RTN_Name(rtn) == "_ariel_output_stats_buoy") {
+        fprintf(stderr, "Identified routine: ariel_output_stats_buoy, replacing with Ariel equivalent..\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_ariel_output_stats_buoy);
         fprintf(stderr, "Replacement complete\n");
         return;
     }

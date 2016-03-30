@@ -515,6 +515,16 @@ public:
         schedEvent( new SelfEvent( callback ), delay);
     }
 
+    void setNotifyOnSend( int vc ) {
+        assert( ! m_sendNotify[vc] ); 
+        m_sendNotify[vc] = true;
+        ++m_sendNotifyCnt;
+        m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
+    }
+
+    std::vector<bool> m_sendNotify;
+    int m_sendNotifyCnt;
+
   private:
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
@@ -568,7 +578,7 @@ public:
     int NetToId( int x ) { return x; }
     int IdToNet( int x ) { return x; }
 
-    SendMachine m_sendMachine;
+    std::vector<SendMachine> m_sendMachine;
     RecvMachine m_recvMachine;
     ArbitrateDMA* m_arbitrateDMA;
 

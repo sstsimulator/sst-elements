@@ -76,6 +76,10 @@ void Sieve::processAllocEvent(SST::Event* event) {
             actAllocMap.erase(targ);
         }
         delete ev;
+    } else if (ev->getType() == ArielComponent::arielAllocTrackEvent::BUOY) {
+        // output stats
+        outputStats(ev->getInstructionPointer());
+        delete ev;
     } else {
         output_->fatal(CALL_INFO, -1, "Unrecognized Ariel Allocation Tracking Event Type \n");
     }
@@ -161,9 +165,18 @@ void Sieve::init(unsigned int phase) {
     }
 }
 
-void Sieve::finish(){
+void Sieve::outputStats(int marker) {
+    // create name <outFileName> + <sequence> + marker (optional)
+    stringstream fileName;
+    fileName << outFileName << "-" << outCount;
+    outCount++;
+    if (-1 != marker)  {
+        fileName << "-" << marker;
+    }
+    fileName << ".txt";
 
-    listener_->printStats(*output_);
+    // create new file
+    Output* output_file = new Output("",0,0,SST::Output::FILE, fileName.str());
 
     // print out all the allocations and how often they were touched
     output_file->output(CALL_INFO, "#Printing out allocation hits (addr, IP, len, reads, writes, 'density'):\n");
@@ -171,7 +184,7 @@ void Sieve::finish(){
     for(allocList_t::iterator i = allocList.begin(); 
         i != allocList.end(); ++i) {
         ArielComponent::arielAllocTrackEvent *ev = *i;
-	rwCount_t counts = allocMap[ev];
+	rwCount_t &counts = allocMap[ev];
 	double density = double(counts.first + counts.second) / double(ev->getAllocateLength());
         output_file->output(CALL_INFO, "%#" PRIx64 " %#" PRIu64 " %" PRId64 " %" PRId64 " %" PRId64 " %.3f\n", 
 			    ev->getVirtualAddress(), 
@@ -179,9 +192,22 @@ void Sieve::finish(){
 			    ev->getAllocateLength(),
 			    counts.first, counts.second, density);
         tMiss = tMiss + counts.first + counts.second;
+
+        // clear the counts
+        counts.first = 0;
+        counts.second = 0;
     }
     output_file->output(CALL_INFO, "#Unassociated Misses: %" PRId64 " (%.2f%%)\n", unassociatedMisses, 
 			double(100*unassociatedMisses)/(double(tMiss)+double(unassociatedMisses)));
+
+    // clean up
+    delete output_file;
+}
+
+void Sieve::finish(){
+    listener_->printStats(*output_);
+
+    outputStats(-1);
 }
 
 

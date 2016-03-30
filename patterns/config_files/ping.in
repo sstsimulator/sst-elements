@@ -1,4 +1,0 @@
-name = pingpong_pattern
-param num_msgs = 10
-param destination = 3
-param end_len = 10485760

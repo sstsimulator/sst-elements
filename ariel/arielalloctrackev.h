@@ -20,7 +20,8 @@ class arielAllocTrackEvent : public SST::Event
 public:
     enum arielAllocTrackType {
         ALLOC,
-        FREE
+        FREE,
+        BUOY
     };
 
     arielAllocTrackEvent(arielAllocTrackType t, uint64_t va, uint64_t len, uint32_t lev, uint64_t ip) : 
