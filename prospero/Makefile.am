@@ -73,8 +73,13 @@ install-exec-hook: tracetool/sstmemtrace.cc
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
 	-o prosperotrace.dylib tracetool/sstmemtrace.cc \
 	-stdlib=libstdc++ \
+<<<<<<< HEAD
 	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) && \
 	cp prosperotrace.dylib 4(libexecdir)/prosperotrace.dylib
+=======
+	-lpin -lxed -lpindwarf -lpthread && \
+	cp prosperotrace.dylib $(libexecdir)/prosperotrace.dylib
+>>>>>>> b3b37b85f8202f0c81d15adfebc384fae445ab0e
 
 else
 
