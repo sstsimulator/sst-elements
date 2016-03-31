@@ -74,7 +74,7 @@ all-local: tracetool/sstmemtrace.cc
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
 	-o prosperotrace.dylib tracetool/sstmemtrace.cc \
 	-stdlib=libstdc++ \
-	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS)
+	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 	
 install-exec-hook: prosperotrace.dylib
 	cp prosperotrace.dylib $(libexecdir)/prosperotrace.dylib
@@ -101,7 +101,7 @@ all-local: tracetool/sstmemtrace.cc
 	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
 	-o prosperotrace.so tracetool/sstmemtrace.cc \
-	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS)
+	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 	
 install-exec-hook: prosperotrace.so
 	cp prosperotrace.so $(libexecdir)/prosperotrace.so
