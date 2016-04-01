@@ -12,6 +12,7 @@
 // Uses PIN Tool Memory Trace as a basis for provide SST Memory Tracing output
 // directly to the tracing framework.
 
+#include <sst_config.h>
 #include "pin.H"
 
 #include <stdio.h>
@@ -20,7 +21,7 @@
 #include <iostream>
 #include <inttypes.h>
 
-#ifdef PROSPERO_LIBZ
+#ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
 
@@ -41,7 +42,7 @@ char RECORD_BUFFER[ sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + siz
 // "normal" (binary or text) traces
 FILE** trace;
 
-#ifdef PROSPERO_LIBZ
+#ifdef HAVE_LIBZ
 gzFile* traceZ;
 #endif
 
@@ -136,7 +137,7 @@ VOID RecordMemRead(VOID * addr, UINT32 size, THREADID thr)
 			thread_instr_id[thr].readCount++;
 		}
 	} else {
-#ifdef PROSPERO_LIBZ
+#ifdef HAVE_LIBZ
 		if(thr < max_thread_count && (traceEnabled > 0)) {
 			gzwrite(traceZ[thr], RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
 			thread_instr_id[thr].readCount++;
@@ -180,7 +181,7 @@ VOID RecordMemWrite(VOID * addr, UINT32 size, THREADID thr)
 			thread_instr_id[thr].writeCount++;
 		}
 	} else {
-#ifdef PROSPERO_LIBZ
+#ifdef HAVE_LIBZ
 		if(thr < max_thread_count && (traceEnabled > 0)) {
 			gzwrite(traceZ[thr], RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
 			thread_instr_id[thr].writeCount++;
@@ -217,7 +218,7 @@ VOID IncrementInstructionCount(THREADID id) {
                                 trace[id] = fopen(buffer, "wb");
 			}
 		}
-#ifdef PROSPERO_LIBZ
+#ifdef HAVE_LIBZ
 		else if(trace_format == 2) {
 			gzclose(traceZ[id]);
 			sprintf(buffer, "%s-%lu-%lu-gz.trace",
@@ -316,7 +317,7 @@ VOID Fini(INT32 code, VOID *v)
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
     		fclose(trace[i]);
 	}
-#ifdef PROSPERO_LIBZ
+#ifdef HAVE_LIBZ
     } else if (2 == trace_format) {
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
 		gzclose(traceZ[i]);
@@ -362,7 +363,7 @@ int main(int argc, char *argv[])
     }
 
     trace  = (FILE**) malloc(sizeof(FILE*) * max_thread_count);
-#ifdef PROSPERO_LIBZ
+#ifdef HAVE_LIBZ
     traceZ = (gzFile*) malloc(sizeof(gzFile) * max_thread_count);
 #endif
     fileBuffers = (char**) malloc(sizeof(char*) * max_thread_count);
@@ -395,7 +396,7 @@ int main(int argc, char *argv[])
 		fileBuffers[i] = (char*) malloc(sizeof(char) * KnobFileBufferSize.Value());
 		setvbuf(trace[i], fileBuffers[i], _IOFBF, (size_t) KnobFileBufferSize.Value());
 	}
-#ifdef PROSPERO_LIBZ
+#ifdef HAVE_LIBZ
     } else if(KnobTraceFormat.Value() == "compressed") {
 	printf("PROSPERO: Tracing will be recorded in compressed binary format.\n");
 	trace_format = 2;
