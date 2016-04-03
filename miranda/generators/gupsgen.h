@@ -38,7 +38,7 @@ private:
 	uint64_t maxAddr;
 	uint64_t issueCount;
 	uint64_t iterations;
-    uint64_t seed_a;
+	uint64_t seed_a;
 	uint64_t seed_b;
 	SSTRandom* rng;
 	Output*  out;

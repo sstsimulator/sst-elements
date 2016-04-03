@@ -28,7 +28,7 @@ GUPSGenerator::GUPSGenerator( Component* owner, Params& params ) :
 	issueCount = ((uint64_t) params.find_integer("count", 1000)) * iterations;
 	reqLength  = (uint64_t) params.find_integer("length", 8);
 	maxAddr    = (uint64_t) params.find_integer("max_address", 524288);
-    seed_a     = (uint64_t) params.find_integer("seed_a", 11);
+	seed_a     = (uint64_t) params.find_integer("seed_a", 11);
 	seed_b     = (uint64_t) params.find_integer("seed_b", 31);
 	rng = new MarsagliaRNG(seed_a, seed_b);
 
