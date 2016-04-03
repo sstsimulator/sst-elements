@@ -28,8 +28,9 @@ GUPSGenerator::GUPSGenerator( Component* owner, Params& params ) :
 	issueCount = ((uint64_t) params.find_integer("count", 1000)) * iterations;
 	reqLength  = (uint64_t) params.find_integer("length", 8);
 	maxAddr    = (uint64_t) params.find_integer("max_address", 524288);
-
-	rng = new MarsagliaRNG(11, 31);
+    seed_a     = (uint64_t) params.find_integer("seed_a", 11);
+	seed_b     = (uint64_t) params.find_integer("seed_b", 31);
+	rng = new MarsagliaRNG(seed_a, seed_b);
 
 	out->verbose(CALL_INFO, 1, 0, "Will issue %" PRIu64 " operations\n", issueCount);
 	out->verbose(CALL_INFO, 1, 0, "Request lengths: %" PRIu64 " bytes\n", reqLength);
