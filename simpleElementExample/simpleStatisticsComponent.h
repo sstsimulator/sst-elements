@@ -40,6 +40,7 @@ private:
     std::string rng_type;
     int rng_max_count;
     int rng_count;
+    Output& output;
     
     // Histogram Statistics
     Statistic<uint32_t>*  stat1_U32; 

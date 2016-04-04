@@ -19,7 +19,9 @@ using namespace SST;
 using namespace SST::RNG;
 using namespace SST::SimpleStatisticsComponent;
 
-simpleStatisticsComponent::simpleStatisticsComponent(ComponentId_t id, Params& params) : Component(id)
+simpleStatisticsComponent::simpleStatisticsComponent(ComponentId_t id, Params& params) :
+    Component(id),
+    output(Simulation::getSimulation()->getSimulationOutput())                                                                                     
 {
     // Get runtime parameters from the input file (.py),  
     // these will set the random number generation.
@@ -31,22 +33,22 @@ simpleStatisticsComponent::simpleStatisticsComponent(ComponentId_t id, Params& p
     if (rngType == "mersenne") {
         unsigned int seed =  params.find_integer("seed", 1447);
         
-        std::cout << "Using Mersenne Random Number Generator with seed = " << seed << std::endl;
+        output.output("Using Mersenne Random Number Generator with seed = %u\n",seed);
         rng = new MersenneRNG(seed);
     } else if (rngType == "marsaglia") {
         unsigned int m_w = params.find_integer("seed_w", 0);
         unsigned int m_z = params.find_integer("seed_z", 0);
         
         if(m_w == 0 || m_z == 0) {
-            std::cout << "Using Marsaglia Random Number Generator with no seeds ..." << std::endl;
+            output.output("Using Marsaglia Random Number Generator with no seeds ...\n");
             rng = new MarsagliaRNG();
         } else {
-            std::cout << "Using Marsaglia Random Number Generator with seeds m_z = " << m_z << ", m_w = " << m_w << std::endl;
+            output.output("Using Marsaglia Random Number Generator with seeds m_z = %u, m_w = %u\n",m_z,m_w);
             rng = new MarsagliaRNG(m_z, m_w);
         }
         
     } else {
-        std::cout << "RNG provided but unknown " << rngType << ", so using Mersenne with seed = 1447..." << std::endl;
+        output.output("RNG provided but unknown %s, so using Mersenne with seed = 1447...\n", rngType.c_str());
         rng = new MersenneRNG(1447);
     }
     
@@ -58,7 +60,7 @@ simpleStatisticsComponent::simpleStatisticsComponent(ComponentId_t id, Params& p
     // Register the Clock
 
     // First 1ns Clock 
-    std::cout << "REGISTER CLOCK #1 at 1 ns" << std::endl;
+    output.output("REGISTER CLOCK #1 at 1 ns\n");
     registerClock("1 ns", new Clock::Handler<simpleStatisticsComponent>(this, &simpleStatisticsComponent::Clock1Tick));
 
     /////////////////////////////////////////
@@ -81,7 +83,8 @@ simpleStatisticsComponent::simpleStatisticsComponent(ComponentId_t id, Params& p
 }
 
 simpleStatisticsComponent::simpleStatisticsComponent() :
-    Component(-1)
+    Component(-1),
+    output(Simulation::getSimulation()->getSimulationOutput())
 {
     // for serialization only
 }
@@ -122,8 +125,8 @@ bool simpleStatisticsComponent::Clock1Tick(Cycle_t CycleNum)
 ////////////////////////////////////////////////////////    
    
     if (CycleNum == 60) {
-        std::cout << "@ " << CycleNum << std::endl;
-        std::cout << "*** STATISTIC TESTING: DISABLE stat1_U32 OUTPUT FOR 15ns PERIOD" << std::endl;
+        output.output("@ %" PRIu64 "\n",CycleNum);
+        output.output("*** STATISTIC TESTING: DISABLE stat1_U32 OUTPUT FOR 15ns PERIOD\n");
         stat1_U32->delayOutput("15 ns");
     }
     
