@@ -21,8 +21,6 @@
 #include <string>
 #include <set>
 
-#include "sst/core/serialization.h"
-
 #include "Job.h"
 #include "AllocInfo.h"
 #include "MBSAllocClasses.h"

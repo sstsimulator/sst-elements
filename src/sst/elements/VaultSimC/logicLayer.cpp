@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 #include <logicLayer.h>
 
 #include <sst/core/interfaces/stringEvent.h>

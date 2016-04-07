@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include "sst/elements/SysC/common/MEmemtest.h"
 
 #include <iostream>

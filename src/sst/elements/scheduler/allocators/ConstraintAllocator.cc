@@ -22,8 +22,6 @@
 
 #include <boost/tokenizer.hpp>
 
-#include "sst/core/serialization.h"
-
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"

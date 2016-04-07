@@ -14,7 +14,6 @@
 
 #include <sys/mman.h>
 
-#include "sst/core/serialization.h"
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 

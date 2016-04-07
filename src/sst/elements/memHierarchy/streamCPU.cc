@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include "streamCPU.h"
 
 #include <assert.h>
@@ -164,6 +163,5 @@ bool streamCPU::clockTic( Cycle_t )
 
 // Element Libarary / Serialization stuff
 
-BOOST_CLASS_EXPORT(SST::MemHierarchy::streamCPU)
 
 

@@ -40,6 +40,7 @@ private:
     std::string rng_type;
     int rng_max_count;
     int rng_count;
+    Output& output;
     
     // Histogram Statistics
     Statistic<uint32_t>*  stat1_U32; 
@@ -52,42 +53,6 @@ private:
     Statistic<uint64_t>*  stat6_U64; 
     Statistic<uint32_t>*  stat7_U32_NOTUSED; 
     
-    friend class boost::serialization::access;
-    template<class Archive>
-    void save(Archive & ar, const unsigned int version) const
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(rng_count);
-        ar & BOOST_SERIALIZATION_NVP(rng_max_count);
-        ar & BOOST_SERIALIZATION_NVP(rng_type);
-        
-        ar & BOOST_SERIALIZATION_NVP(stat1_U32); 
-        ar & BOOST_SERIALIZATION_NVP(stat2_U64); 
-        ar & BOOST_SERIALIZATION_NVP(stat3_I32); 
-        ar & BOOST_SERIALIZATION_NVP(stat4_I64); 
-        ar & BOOST_SERIALIZATION_NVP(stat5_U32); 
-        ar & BOOST_SERIALIZATION_NVP(stat6_U64); 
-        ar & BOOST_SERIALIZATION_NVP(stat7_U32_NOTUSED); 
-    }
-    
-    template<class Archive>
-    void load(Archive & ar, const unsigned int version)
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(rng_count);
-        ar & BOOST_SERIALIZATION_NVP(rng_max_count);
-        ar & BOOST_SERIALIZATION_NVP(rng_type);
-        
-        ar & BOOST_SERIALIZATION_NVP(stat1_U32); 
-        ar & BOOST_SERIALIZATION_NVP(stat2_U64); 
-        ar & BOOST_SERIALIZATION_NVP(stat3_I32); 
-        ar & BOOST_SERIALIZATION_NVP(stat4_I64); 
-        ar & BOOST_SERIALIZATION_NVP(stat5_U32); 
-        ar & BOOST_SERIALIZATION_NVP(stat6_U64); 
-        ar & BOOST_SERIALIZATION_NVP(stat7_U32_NOTUSED); 
-    }
-    
-    BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 
 } // namespace SimpleStatistics

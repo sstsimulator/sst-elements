@@ -13,7 +13,6 @@
 // #define CHDL_TRANS   // (buggy) support for translation in fastsim
 
 #include "sst_config.h"
-#include "sst/core/serialization.h"
 #include "chdlComponent.h"
 
 #include <chdl/egress.h>
@@ -488,10 +487,6 @@ void chdlComponent::mmio_wr(const vector<uint8_t> &d, uint64_t addr) {
     mmio_wr(x, addr + i);
   }
 }
-
-BOOST_CLASS_EXPORT(SST::ChdlComponent::reqdata);
-BOOST_CLASS_EXPORT(SST::ChdlComponent::respdata);
-BOOST_CLASS_EXPORT(SST::ChdlComponent::chdlComponent);
 
 static Component* create_chdlComponent(ComponentId_t id, Params &p) {
   return new chdlComponent(id, p);

@@ -11,7 +11,6 @@
 
 #include "sst_config.h"
 #include "sst/core/element.h"
-//#include "sst/core/serialization.h"
 #include "../common/MEgenerator.h"
 #include "../common/MEanouncer.h"
 #include "../common/MEmemtest.h"

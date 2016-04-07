@@ -23,8 +23,6 @@
 #include <string>
 #include <map>
 
-#include "sst/core/serialization.h"
-
 #include "GranularMBSAllocator.h" 
 
 namespace SST {
