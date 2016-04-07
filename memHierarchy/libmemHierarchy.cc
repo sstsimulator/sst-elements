@@ -11,7 +11,6 @@
 
 #include <sst_config.h>
 
-#include "sst/core/serialization.h"
 #include "sst/core/element.h"
 #include "sst/core/component.h"
 
@@ -31,6 +30,8 @@
 #include "membackend/simpleMemBackend.h"
 #include "membackend/vaultSimBackend.h"
 #include "networkMemInspector.h"
+
+#include "DRAMReq.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
@@ -896,9 +897,7 @@ extern "C" {
 	};
 }
 
-BOOST_CLASS_EXPORT(SST::MemHierarchy::MemEvent)
-BOOST_CLASS_EXPORT(SST::MemHierarchy::DMACommand)
-
-
-BOOST_CLASS_EXPORT(SST::MemHierarchy::MemNIC::MemRtrEvent)
-BOOST_CLASS_EXPORT(SST::MemHierarchy::MemNIC::InitMemRtrEvent)
+DeclareSerializable(SST::MemHierarchy::MemEvent)
+DeclareSerializable(SST::MemHierarchy::DRAMReq)
+DeclareSerializable(SST::MemHierarchy::MemNIC::MemRtrEvent)
+DeclareSerializable(SST::MemHierarchy::MemNIC::InitMemRtrEvent)

@@ -16,7 +16,6 @@
 #include <stdlib.h>
 #include <stdlib.h>
 
-#include "sst/core/serialization.h"
 
 static unsigned int missRate[][3] = {{0,51,32},   //app 0
 				     {0,18,15}};  //app 1

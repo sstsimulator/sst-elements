@@ -31,6 +31,8 @@ namespace SST {
                            }
                        
                            SST::Component * payload;
+                           
+                      NotSerializable(ObjectRetrievalEvent)
             };
         
     }

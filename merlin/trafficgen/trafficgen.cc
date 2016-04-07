@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include "trafficgen/trafficgen.h"
 #include <unistd.h>
 #include <signal.h>

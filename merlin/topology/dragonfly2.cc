@@ -11,7 +11,6 @@
 //
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include <sst/core/sharedRegion.h>
 #include "sst/core/rng/xorshift.h"
 
@@ -583,3 +582,6 @@ uint32_t topo_dragonfly2::port_for_router(uint32_t router)
     if ( router > router_id ) tgt--;
     return tgt;
 }
+
+
+DeclareSerializable(SST::Merlin::topo_dragonfly2_event)

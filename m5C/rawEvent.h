@@ -41,35 +41,50 @@ class RawEvent : public SST::Event {
         m_data( NULL )
      { }
 
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void save(Archive & ar, const unsigned int version) const
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Event);
-        ar & BOOST_SERIALIZATION_NVP( m_numElements );
-
-        DBGX(2,"%s() data=%p numElements=%d\n",__func__,m_data,m_numElements);
-
-        for ( int i = 0; i < m_numElements; i++ ) {
-            ar & m_data[i];
-        }
-        delete m_data;
-    }
-    template<class Archive>
-    void load(Archive & ar, const unsigned int version)
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Event);
-        ar & BOOST_SERIALIZATION_NVP( m_numElements );
-
-        DBGX(2,"%s() data=%p numElements=%d\n",__func__,m_data,m_numElements);
-
-        m_data = new type_t[m_numElements];
-        for ( int i = 0; i < m_numElements; i++ ) {
-            ar & m_data[i];
-        }
-    }
+//    friend class boost::serialization::access;
+//
+//    template<class Archive>
+//    void save(Archive & ar, const unsigned int version) const
+//    {
+//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Event);
+//        ar & BOOST_SERIALIZATION_NVP( m_numElements );
+//
+//        DBGX(2,"%s() data=%p numElements=%d\n",__func__,m_data,m_numElements);
+//
+//        for ( int i = 0; i < m_numElements; i++ ) {
+//            ar & m_data[i];
+//        }
+//        delete m_data;
+//    }
+//    template<class Archive>
+//    void load(Archive & ar, const unsigned int version)
+//    {
+//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Event);
+//        ar & BOOST_SERIALIZATION_NVP( m_numElements );
+//
+//        DBGX(2,"%s() data=%p numElements=%d\n",__func__,m_data,m_numElements);
+//
+//        m_data = new type_t[m_numElements];
+//        for ( int i = 0; i < m_numElements; i++ ) {
+//            ar & m_data[i];
+//        }
+//    }
+    
     BOOST_SERIALIZATION_SPLIT_MEMBER()
+    public:	
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            Event::serialize_order(ser);
+            ser & m_numElements;
+            
+            DBGX(2,"%s() data=%p numElements=%d\n",__func__,m_data,m_numElements);
+    
+//            m_data = new type_t[m_numElements];
+//            for ( int i = 0; i < m_numElements; i++ ) {
+//                ar & m_data[i];
+//            }
+        }
+        
+        ImplementSerializable(SST::M5::RawEvent);     
 };
 
 }

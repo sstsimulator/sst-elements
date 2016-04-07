@@ -341,3 +341,5 @@ bool pagedMultiMemory::quantaClock(SST::Cycle_t _cycle) {
     }
     return false;
 }
+
+DeclareSerializable(SST::MemHierarchy::pagedMultiMemory::MemCtrlEvent)

@@ -9,7 +9,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 #include "sst/elements/merlin/test/route_test/route_test.h"
 
 #include <unistd.h>

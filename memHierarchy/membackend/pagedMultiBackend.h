@@ -164,23 +164,26 @@ private:
     void printAccStats();
     string accStatsPrefix;
     int dumpNum;
-
+    
+public:
     class MemCtrlEvent : public SST::Event {
     public:
         MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
         { }
 
         DRAMReq *req;
-    private:
-        friend class boost::serialization::access;
-        template<class Archive>
-        void
-        serialize(Archive & ar, const unsigned int version )
-        {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-            ar & BOOST_SERIALIZATION_NVP(req);
+
+    private:   
+        MemCtrlEvent() {} // For Serialization only
+        
+    public:
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            Event::serialize_order(ser);
+            ser & req;  // Cannot serialize pointers unless they are a serializable object
         }
-    };
+        
+        ImplementSerializable(SST::MemHierarchy::pagedMultiMemory::MemCtrlEvent);     
+};
 
     typedef map<uint64_t, pageInfo> pageMap_t;
     pageMap_t pageMap;

@@ -12,7 +12,6 @@
 
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 
 #include <sst/core/element.h>
 
@@ -35,8 +34,8 @@ create_Bounce(ComponentId_t id, Params& params)
     return new SST::M5::Bounce( id, params );
 }
 
-BOOST_CLASS_EXPORT(SST::M5::RawEvent);
-BOOST_CLASS_EXPORT(SST::M5::MemEvent);
+DeclareSerializable(SST::M5::RawEvent);
+DeclareSerializable(SST::M5::MemEvent);
 
 
 

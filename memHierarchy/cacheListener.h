@@ -18,7 +18,6 @@
 #ifndef _H_MEMHIERARCHY_CACHE_LISTENER
 #define _H_MEMHIERARCHY_CACHE_LISTENER
 
-#include <sst/core/serialization/element.h>
 #include <sst/core/simulation.h>
 #include <sst/core/element.h>
 #include <sst/core/event.h>
