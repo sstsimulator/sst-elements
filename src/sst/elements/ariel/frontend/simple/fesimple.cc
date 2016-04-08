@@ -31,8 +31,8 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
-#include <sst/elements/ariel/ariel_shmem.h>
-#include <sst/elements/ariel/ariel_inst_class.h>
+#include "ariel_shmem.h"
+#include "ariel_inst_class.h"
 
 #undef __STDC_FORMAT_MACROS
 

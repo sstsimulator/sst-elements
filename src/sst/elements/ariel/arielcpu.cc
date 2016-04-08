@@ -27,6 +27,8 @@
 
 #include <string.h>
 
+#define STRINGIZE(input) #input
+
 using namespace SST::ArielComponent;
 
 ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
@@ -146,7 +148,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     tunnel = new ArielTunnel(shmem_region_name, core_count, maxCoreQueueLen);
 
-    appLauncher = params.find_string("launcher", PINTOOL_EXECUTABLE);
+    appLauncher = params.find_string("launcher", STRINGIZE(PINTOOL_EXECUTABLE));
 
     const uint32_t launch_param_count = (uint32_t) params.find_integer("launchparamcount", 0);
     const uint32_t pin_arg_count = 23 + launch_param_count;

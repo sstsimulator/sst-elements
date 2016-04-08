@@ -1,7 +1,8 @@
 
 AM_CPPFLAGS = \
         $(BOOST_CPPFLAGS) \
-        $(MPI_CPPFLAGS)
+        $(MPI_CPPFLAGS) \
+        $(PINTOOL_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libariel.la
@@ -75,6 +76,7 @@ fesimple.o: frontend/simple/fesimple.cc
 	$(BOOST_CPPFLAGS) \
 	-DBIGARRAY_MULTIPLIER=1 \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
+	-I./ \
 	-I$(PINTOOL_DIR)/source/include/pin \
 	-I$(PINTOOL_DIR)/ \
 	-I$(PINTOOL_DIR)/extras/components/include \
@@ -107,6 +109,7 @@ fesimple.o: frontend/simple/fesimple.cc
 	$(CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
+	-I./ \
 	-I$(PINTOOL_DIR)/source/include/pin \
 	-I$(PINTOOL_DIR)/ \
 	-I$(PINTOOL_DIR)/extras/components/include \

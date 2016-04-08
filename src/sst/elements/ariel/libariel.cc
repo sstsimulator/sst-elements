@@ -22,6 +22,8 @@
 #include "arielgzbintracegen.h"
 #endif
 
+#define STRINGIZE(input) #input
+
 using namespace SST;
 using namespace SST::ArielComponent;
 
@@ -93,7 +95,7 @@ static const ElementInfoParam ariel_params[] = {
     {"pipetimeout", "Read timeout between Ariel and traced application", "10"},
     {"cachelinesize", "Line size of the attached caching strucutre", "64"},
     {"arieltool", "Path to the Ariel PIN-tool shared library", ""},
-    {"launcher", "Specify the launcher to be used for instrumentation, default is path to PIN", PINTOOL_EXECUTABLE},
+    {"launcher", "Specify the launcher to be used for instrumentation, default is path to PIN", STRINGIZE(PINTOOL_EXECUTABLE)},
     {"executable", "Executable to trace", ""},
     {"launchparamcount", "Number of parameters supplied for the launch tool", "0" },
     {"launchparam%(launchparamcount)", "Set the parameter to the launcher", "" },

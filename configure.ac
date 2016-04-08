@@ -1,5 +1,5 @@
 
-AC_INIT([SST Elements Library], [Devel], [sst@sandia.gov])
+AC_INIT([SST Elements Library], [devel], [sst@sandia.gov])
 AC_PREREQ([2.59])
 AC_COPYRIGHT([Copyright Sandia National Laboratories, 2004-2016])
 

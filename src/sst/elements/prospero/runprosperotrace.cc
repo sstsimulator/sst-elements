@@ -13,6 +13,8 @@
 #include <vector>
 #include <string>
 
+#define STRINGIZE(input) #input
+
 void printUsage() {
 	printf("sst-prospero-trace [trace options] -- [app] [app options]\n");
 	printf("\n");
@@ -54,7 +56,7 @@ int main(int argc, char* argv[]) {
 	sprintf(toolPath, "%s/libexec/prosperotrace.so", SST_INSTALL_PREFIX);
 #endif
 
-	appParams.push_back(const_cast<char*>(PINTOOL_EXECUTABLE));
+	appParams.push_back(const_cast<char*>(STRINGIZE(PINTOOL_EXECUTABLE)));
 	appParams.push_back(pinToolMarker);
 	appParams.push_back(toolPath);
 
@@ -215,7 +217,7 @@ int main(int argc, char* argv[]) {
 
 		printf("\n");
 
-		int executeRC = execvp(PINTOOL_EXECUTABLE, paramsArray);
+		int executeRC = execvp(STRINGIZE(PINTOOL_EXECUTABLE), paramsArray);
 		printf("Executing application returns %d.\n", executeRC);
 
 		free(paramsArray);
