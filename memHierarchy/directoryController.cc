@@ -81,7 +81,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     addrRangeEnd    = (uint64_t)params.find_integer("addr_range_end", 0);
     string ilSize   = params.find_string("interleave_size", "0B");
     string ilStep   = params.find_string("interleave_step", "0B");
-    protocol        = params.find_string("coherence_protocol", "");
+    protocol        = params.find_string("coherence_protocol", "MESI");
     dbg.debug(_L5_, "Directory controller using protocol: %s\n", protocol.c_str());
     
     int mshrSize    = params.find_integer("mshr_num_entries",-1);
@@ -174,6 +174,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
     defaultTimeBase = registerClock(params.find_string("clock", "1GHz"), clockHandler);
     clockOn = true;
+
+    // Requests per cycle
+    maxRequestsPerCycle = params.find_integer("max_requests_per_cycle", -1);
 
     // Timestamp - aka cycle count
     timestamp = 0;
@@ -438,11 +441,15 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
         dbg.debug(_L3_, "\n\n----------------------------------------------------------------------------------------\n");
     }
 #endif
-
-    while(!workQueue.empty()){
+    int requestsThisCycle = 0;
+    while(!workQueue.empty()) {
+        requestsThisCycle++;
         MemEvent *event = workQueue.front();
         workQueue.erase(workQueue.begin());
 	processPacket(event);
+        if (requestsThisCycle == maxRequestsPerCycle) {
+            break;
+        }
     }
 
     if (empty && netIdle && clockOn) {
@@ -1115,8 +1122,8 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
         handleDirEntryMemoryResponse(ev);
     } else if (memReqs.find(ev->getResponseToID()) != memReqs.end()){
         ev->setBaseAddr(memReqs[ev->getResponseToID()]);
-        Addr targetBlock = memReqs[ev->getResponseToID()];
 #ifdef __SST_DEBUG_OUTPUT__
+        Addr targetBlock = memReqs[ev->getResponseToID()];
         if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
             dbg.debug(_L3_, "RECV: %s, MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u, Time = %" PRIu64 "\n", 
                     getName().c_str(), CommandString[ev->getCmd()], targetBlock, ev->getSize(), getCurrentSimTimeNano());

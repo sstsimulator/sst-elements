@@ -73,6 +73,7 @@ class DirectoryController : public Component {
     uint64_t    timestamp;
     uint64_t    accessLatency;
     uint64_t    mshrLatency;
+    int         maxRequestsPerCycle;
 
     /* Turn clocks off when idle */
     bool        clockOn;
