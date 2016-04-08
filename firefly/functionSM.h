@@ -70,12 +70,11 @@ class FunctionSM  {
 
     const char *functionName( FunctionEnum x) {return m_functionName[x]; }
 
-    FunctionSM( SST::Params& params, SST::Component*, Info&, SST::Link*, 
-                        std::map<std::string,ProtocolAPI*>& );
+    FunctionSM( SST::Params& params, SST::Component*, ProtocolAPI* );
     ~FunctionSM();
     void printStatus( Output& );
 
-    void setup();
+    void setup( Info* );
     void start(int type, MP::Functor* retFunc,  SST::Event* );
     void enter( );
 
@@ -95,11 +94,10 @@ class FunctionSM  {
     SST::Link*          m_fromDriverLink;    
     SST::Link*          m_toDriverLink;    
     SST::Link*          m_toMeLink;
-    Info&               m_info;
     Output              m_dbg;
     SST::Params         m_params;
     SST::Component*     m_owner;
-    std::map<std::string,ProtocolAPI*>& m_proto;
+    ProtocolAPI*	m_proto;
 };
 
 }

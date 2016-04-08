@@ -267,6 +267,19 @@ bool ArielCore::refillQueue() {
 
         // There is data on the pipe
         switch(ac.command) {
+        case ARIEL_OUTPUT_STATS:
+            fprintf(stdout, "Performing statistics output at simulation time = %" PRIu64 "\n", owner->getCurrentSimTimeNano());
+            Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
+            if (allocLink) {
+                // tell the allocate montior to dump stats. We
+                // optionally pass a marker number back in the instruction field
+                arielAllocTrackEvent *e 
+                    = new arielAllocTrackEvent(arielAllocTrackEvent::BUOY,
+                                               0, 0, 0, ac.instPtr);
+                allocLink->send(e);
+            }
+            break;
+
         case ARIEL_START_INSTRUCTION:
 	    if(ARIEL_INST_SP_FP == ac.inst.instClass) {
 		statFPSPIns->addData(1);
@@ -333,11 +346,6 @@ bool ArielCore::refillQueue() {
 
         case ARIEL_SWITCH_POOL:
             createSwitchPoolEvent(ac.switchPool.pool);
-            break;
-
-        case ARIEL_OUTPUT_STATS:
-            fprintf(stdout, "Performing statistics output at simulation time = %" PRIu64 "\n", owner->getCurrentSimTimeNano());
-            Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
             break;
 
         case ARIEL_PERFORM_EXIT:
@@ -656,3 +664,5 @@ void ArielCore::tick() {
 		currentCycles++;
 	}
 }
+
+DeclareSerializable(SST::ArielComponent::arielAllocTrackEvent)

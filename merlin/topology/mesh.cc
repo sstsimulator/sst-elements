@@ -9,7 +9,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 #include "mesh.h"
 
 #include <algorithm>
@@ -308,5 +307,5 @@ topo_mesh::getEndpointID(int port)
     return (router_id * num_local_ports) + (port - local_port_start);
 }
 
-
-BOOST_CLASS_EXPORT(SST::Merlin::topo_mesh_init_event)
+DeclareSerializable(SST::Merlin::topo_mesh_event)
+DeclareSerializable(SST::Merlin::topo_mesh_init_event)

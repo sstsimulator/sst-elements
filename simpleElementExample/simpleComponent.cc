@@ -1,20 +1,20 @@
 // Copyright 2009-2015 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2015, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <assert.h>
-
 #include "sst_config.h"
+
 #include "simpleComponent.h"
 #include "simpleComponentEvent.h"
 
+#include <assert.h>
 #include "sst/core/event.h"
 
 using namespace SST;
@@ -156,7 +156,6 @@ bool simpleComponent::clockTic( Cycle_t )
 
 // Element Libarary / Serialization stuff
     
-BOOST_CLASS_EXPORT(SST::SimpleComponent::simpleComponentEvent)
-BOOST_CLASS_EXPORT(SST::SimpleComponent::simpleComponent)
+DeclareSerializable(SST::SimpleComponent::simpleComponentEvent)
 
 

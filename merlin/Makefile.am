@@ -10,7 +10,6 @@ comp_LTLIBRARIES = libmerlin.la
 libmerlin_la_SOURCES = \
 	merlin.h \
 	merlin.cc \
-	boostExports.cc \
 	router.h \
 	linkControl.h \
 	linkControl.cc \
@@ -49,6 +48,10 @@ libmerlin_la_SOURCES = \
 	hr_router/xbar_arb_rr.h \
 	trafficgen/trafficgen.h \
 	trafficgen/trafficgen.cc \
+	inspectors/circuitCounter.h \
+	inspectors/circuitCounter.cc \
+	inspectors/testInspector.cc \
+	inspectors/testInspector.h \
 	pymodule.h \
 	pymodule.c \
 	pymerlin.py

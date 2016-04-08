@@ -10,8 +10,6 @@
 // distribution.
 #include <sst_config.h>
 
-#include <sst/core/serialization.h>
-
 #include "portControl.h"
 #include "merlin.h"
 
@@ -346,6 +344,11 @@ PortControl::finish() {
             delete output_buf[i].front();
             output_buf[i].pop();
         }
+    }
+
+    // finish any inspectors
+    for ( unsigned int i = 0; i < network_inspectors.size(); i++ ) {
+        network_inspectors[i]->finish();
     }
 }
 

@@ -45,34 +45,6 @@ private:
     
     SST::Link* remote_component;
     
-    friend class boost::serialization::access;
-    template<class Archive>
-    void save(Archive & ar, const unsigned int version) const
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(clock_frequency_str);
-        ar & BOOST_SERIALIZATION_NVP(message_counter_sent);
-        ar & BOOST_SERIALIZATION_NVP(message_counter_recv);
-        ar & BOOST_SERIALIZATION_NVP(total_message_send_count);
-        ar & BOOST_SERIALIZATION_NVP(remote_component);
-        ar & BOOST_SERIALIZATION_NVP(output_message_info);
-    }
-    
-    template<class Archive>
-    void load(Archive & ar, const unsigned int version) 
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(clock_frequency_str);
-        ar & BOOST_SERIALIZATION_NVP(message_counter_sent);
-        ar & BOOST_SERIALIZATION_NVP(message_counter_recv);
-        ar & BOOST_SERIALIZATION_NVP(total_message_send_count);
-        ar & BOOST_SERIALIZATION_NVP(remote_component);
-        ar & BOOST_SERIALIZATION_NVP(output_message_info);
-        
-        remote_component->setFunctor(new SST::Event::Handler<simpleMessageGeneratorComponent>(this,&simpleMessageGeneratorComponent::handleEvent));
-    }
-      
-    BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 
 } // namespace SimpleMessageGeneratorComponent

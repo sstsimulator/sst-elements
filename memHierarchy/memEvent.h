@@ -13,7 +13,6 @@
 #define MEMHIERARHCY_MEMEVENT_H
 
 #include <sst/core/sst_types.h>
-#include <sst/core/serialization.h>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include "sst/core/element.h"
@@ -141,7 +140,7 @@ static const std::string NONE = "None";
  * The command list includes the needed commands to execute cache coherence protocols
  * as well as standard reads and writes to memory.
  */
-class MemEvent : public SST::Event {
+class MemEvent : public SST::Event  {
 public:
     static const uint32_t F_LOCKED        = 0x00000001;  /* Used in a Read-Lock, Write-Unlock atomicity scheme */
     static const uint32_t F_NONCACHEABLE  = 0x00000010;  /* Used to specify that this memory event should not be cached */
@@ -189,6 +188,7 @@ public:
         me->prefetch_     = prefetch_;
         me->instPtr_      = instPtr_;
         me->vAddr_        = vAddr_;
+        me->memFlags_     = memFlags_;
         return me;
     }
 
@@ -239,6 +239,7 @@ public:
         rqstr_              = NONE;
         size_               = 0;
         flags_              = 0;
+        memFlags_           = 0;
         groupID_            = 0;
         prefetch_           = false;
         atomic_             = false;
@@ -435,6 +436,9 @@ public:
     /** Sets the entire flag state */
     void setFlags(uint32_t flags) { flags_ = flags; }
 
+    void setMemFlags(uint32_t flags) { memFlags_ = flags; }
+    uint32_t getMemFlags() { return memFlags_; }
+
     /** Return the BaseAddr */
     Addr getBaseAddr() { return baseAddr_; }
     
@@ -456,20 +460,11 @@ public:
         }
     }
 
-#ifdef USE_VAULTSIM_HMC
-    /** Setter for HMC instruction type */
-    void setHMCInstType(uint8_t hmcInstType) { hmcInstType_ = hmcInstType; }
-    /** Getter for HMC instruction type */
-    uint8_t getHMCInstType() { return hmcInstType_; }
-
-private:
-    uint8_t         hmcInstType_;
-#endif
-
 private:
     id_type         eventID_;           // Unique ID for this event
     id_type         responseToID_;      // For responses, holds the ID to which this event matches
     uint32_t        flags_;             // Any flags (atomic, noncacheabel, etc.)
+    uint32_t        memFlags_;          // Memory flags - ignored by caches except to be copied through. Faciliates processor-memory communication
     uint32_t        size_;              // Size in bytes that are being requested
     uint32_t        groupID_;           // ???
     Addr            addr_;              // Address
@@ -495,41 +490,38 @@ private:
 
     MemEvent() {} // For serialization only
 
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP(eventID_);
-        ar & BOOST_SERIALIZATION_NVP(responseToID_);
-        ar & BOOST_SERIALIZATION_NVP(flags_);
-        ar & BOOST_SERIALIZATION_NVP(size_);
-        ar & BOOST_SERIALIZATION_NVP(groupID_);
-        ar & BOOST_SERIALIZATION_NVP(addr_);
-        ar & BOOST_SERIALIZATION_NVP(baseAddr_);
-        ar & BOOST_SERIALIZATION_NVP(src_);
-        ar & BOOST_SERIALIZATION_NVP(dst_);
-        ar & BOOST_SERIALIZATION_NVP(rqstr_);
-        ar & BOOST_SERIALIZATION_NVP(cmd_);
-        ar & BOOST_SERIALIZATION_NVP(NACKedEvent_);
-        ar & BOOST_SERIALIZATION_NVP(retries_);
-        ar & BOOST_SERIALIZATION_NVP(payload_);
-        ar & BOOST_SERIALIZATION_NVP(grantedState_);
-        ar & BOOST_SERIALIZATION_NVP(prefetch_);
-        ar & BOOST_SERIALIZATION_NVP(atomic_);
-        ar & BOOST_SERIALIZATION_NVP(loadLink_);
-        ar & BOOST_SERIALIZATION_NVP(storeConditional_);
-        ar & BOOST_SERIALIZATION_NVP(blocked_);
-        ar & BOOST_SERIALIZATION_NVP(initTime_);
-        ar & BOOST_SERIALIZATION_NVP(dirty_);
-        ar & BOOST_SERIALIZATION_NVP(instPtr_);
-        ar & BOOST_SERIALIZATION_NVP(vAddr_);
-        ar & BOOST_SERIALIZATION_NVP(inProgress_);
-#ifdef USE_VAULTSIM_HMC
-        ar & BOOST_SERIALIZATION_NVP(hmcInstType_);
-#endif
+public:
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        Event::serialize_order(ser);
+        ser & eventID_;
+        ser & responseToID_;
+        ser & flags_;
+        ser & memFlags_;
+        ser & size_;
+        ser & groupID_;
+        ser & addr_;
+        ser & baseAddr_;
+        ser & src_;
+        ser & dst_;
+        ser & rqstr_;
+        ser & cmd_;
+        ser & NACKedEvent_;
+        ser & retries_;
+        ser & payload_;
+        ser & grantedState_;
+        ser & prefetch_;
+        ser & atomic_;
+        ser & loadLink_;
+        ser & storeConditional_;
+        ser & blocked_;
+        ser & initTime_;
+        ser & dirty_;
+        ser & instPtr_;
+        ser & vAddr_;
+        ser & inProgress_;
     }
+     
+    ImplementSerializable(SST::MemHierarchy::MemEvent);     
 };
 
 }}

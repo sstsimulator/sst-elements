@@ -158,7 +158,7 @@ void ArielMemoryManager::allocate(const uint64_t size, const uint32_t level, con
 	
 	// We will do all of our allocated based on whole pages, inefficient maybe but much
 	// simpler to implement and debug
-	if(roundedSize > 0) {
+	if(remainder > 0) {
 		roundedSize += (pageSize - remainder);
 	}
 

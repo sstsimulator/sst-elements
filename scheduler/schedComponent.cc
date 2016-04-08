@@ -10,7 +10,6 @@
 // distribution.
 
 #include "sst_config.h"
-#include "sst/core/serialization.h"
 #include "sst/core/rng/mersenne.h"
 #include "schedComponent.h" 
 
@@ -74,9 +73,9 @@ schedComponent::~schedComponent()
 }
 
 int readSeed( Params & params, std::string paramName ){
-    if( params.find( paramName ) != params.end() ){
+    if( !params.find_string( paramName ).empty() ){
         return atoi( params[ paramName ].c_str() );
-    }else if( params.find( "seed" ) != params.end() ){
+    }else if( !params.find_string( "seed" ).empty() ){
         return atoi( params[ "seed" ].c_str() );
     }else{
         return time( NULL );
@@ -89,7 +88,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
 {
     lastfinaltime = ~0;
 
-    if (params.find("traceName") == params.end()) {
+    if (params.find_string("traceName").empty()) {
         Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find trace name\n");
     }
 
@@ -108,7 +107,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     yumyumJobKillRand48Seed = readSeed( params, std::string( "jobKillSeed" ) );
     // get running time RNG seed
     string runningTimeSeed = "none";
-    if( params.find("runningTimeSeed") != params.end() ){
+    if( !params.find_string("runningTimeSeed").empty() ){
         runningTimeSeed = params["runningTimeSeed"];
     }
     if( runningTimeSeed.compare("none") != 0 ){
@@ -160,18 +159,18 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
 
     //setup NetworkSim
     doDetailedNetworkSim = false;
-    if (params.find("detailedNetworkSim") != params.end()){
+    if (!params.find_string("detailedNetworkSim").empty()){
         string temp_string = params["detailedNetworkSim"].c_str();
         if (temp_string.compare("ON") == 0){
             doDetailedNetworkSim = true;
             schedout.output("schedComp:Detailed Network sim is ON\n");
             snapshot = new Snapshot();
             // look for a file that lists all jobs that has been completed in ember
-            if (params.find("completedJobsTrace") == params.end()){
+            if (params.find_string("completedJobsTrace").empty()){
                 schedout.fatal(CALL_INFO, 1, "detailedNetworkSim: You must specify a completedJobsTrace name!\n");
             }
             // look for a file that lists all jobs that are still running on ember
-            if (params.find("runningJobsTrace") == params.end()){
+            if (params.find_string("runningJobsTrace").empty()){
                 schedout.fatal(CALL_INFO, 1, "detailedNetworkSim: You must specify a runningJobsTrace name!\n");
             }
         }
@@ -190,18 +189,18 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         }
     }
 
-    useYumYumSimulationKill = params.find("useYumYumSimulationKill") != params.end();
+    useYumYumSimulationKill = !params.find_string("useYumYumSimulationKill").empty();
     YumYumSimulationKillFlag = false;
 
-    if (params.find("YumYumPollWait") != params.end()) {
-        YumYumPollWait = atoi(params.find("YumYumPollWait")->second.c_str() );
+    if (!params.find_string("YumYumPollWait").empty()) {
+        YumYumPollWait = atoi(params.find_string("YumYumPollWait").c_str() );
     }else{
         YumYumPollWait = 250;
     }
 
-    useYumYumTraceFormat = params.find("useYumYumTraceFormat") != params.end();
-    printYumYumJobLog = params.find("printYumYumJobLog") != params.end();
-    printJobLog = params.find("printJobLog") != params.end();
+    useYumYumTraceFormat = !params.find_string("useYumYumTraceFormat").empty();
+    printYumYumJobLog = !params.find_string("printYumYumJobLog").empty();
+    printJobLog = !params.find_string("printJobLog").empty();
 
     jobParser = new JobParser(machine, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag, &doDetailedNetworkSim);
 
@@ -798,5 +797,5 @@ void schedComponent::logJobFault(ITMI itmi, FaultEvent * faultEvent)
 // Element Libarary / Serialization stuff
 
 //BOOST_CLASS_EXPORT(SST::Scheduler::ArrivalEvent)
-BOOST_CLASS_EXPORT(SST::Scheduler::schedComponent)
+//BOOST_CLASS_EXPORT(SST::Scheduler::schedComponent)
 

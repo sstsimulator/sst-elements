@@ -45,6 +45,8 @@ class Syscall : public DmaDevice
         int64_t retval;
       private:
         Syscall* m_ptr;
+        
+        NotSerializable(DmaEvent)
     };
 
     class SyscallEvent : public ::Event
@@ -60,6 +62,8 @@ class Syscall : public DmaDevice
         }
       private:
         Syscall* m_ptr;
+        
+        NotSerializable(SyscallEvent)
     };
   
   public:

@@ -42,26 +42,6 @@ private:
     int rng_max_count;
     int rng_count;
     
-    friend class boost::serialization::access;
-    template<class Archive>
-    void save(Archive & ar, const unsigned int version) const
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(rng_count);
-        ar & BOOST_SERIALIZATION_NVP(rng_max_count);
-        ar & BOOST_SERIALIZATION_NVP(rng_type);
-    }
-    
-    template<class Archive>
-    void load(Archive & ar, const unsigned int version)
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(rng_count);
-        ar & BOOST_SERIALIZATION_NVP(rng_max_count);
-        ar & BOOST_SERIALIZATION_NVP(rng_type);
-    }
-    
-    BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 
 } // namespace SimpleRNGComponent

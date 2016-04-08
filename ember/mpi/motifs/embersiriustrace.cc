@@ -167,7 +167,7 @@ void EmberSIRIUSTraceGenerator::readMPICommSplit( std::queue<EmberEvent*>& evQ )
 	const double endTime = readTime();
 	const int32_t result = readINT32();
 
-	Communicator* newComm = NULL;
+	Communicator* newComm = new Communicator(0);
 
 	auto checkCommMapping = communicatorMap.find(newCommID);
 

@@ -11,7 +11,6 @@
 
 
 #include "sst_config.h"
-#include "sst/core/serialization.h"
 
 #include <assert.h>
 
@@ -665,8 +664,8 @@ static const ElementInfoParam commdbl_params[] = {
 };
 
 static const ElementInfoParam comm_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
-	{	"messagesize",		"Sets the size of the message in bytes",	 	"0"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.messagesize",		"Sets the size of the message in bytes",	 	"0"},
 	{	NULL,	NULL,	NULL	}
 };
 

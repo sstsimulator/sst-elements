@@ -16,7 +16,7 @@ class RecvMachine {
         RecvMachine( Nic& nic, Output& output ) :
             m_nic(nic), m_dbg(output), m_rxMatchDelay( 100 ),
             m_hostReadDelay( 200 ), m_blockedCallback( NULL ),
-            m_notifyCallback( NULL )
+            m_notifyCallback( false )
 #ifdef NIC_RECV_DEBUG
             , m_msgCount(0) 
 #endif
@@ -32,12 +32,8 @@ class RecvMachine {
         }
 
         void notify( int vc ) {
-            // for now the vc must be 0, if at some point it becomes
-            // dynamic we need to pass this value to getNetworkEvent()
-            assert( vc == 0 );
-            assert( m_notifyCallback );
-            m_nic.schedCallback( m_notifyCallback );
-            m_notifyCallback = NULL;
+            m_nic.schedCallback( std::bind( &Nic::RecvMachine::state_n0, this, vc ) );
+            m_notifyCallback = false;
         }
 
         void addDma( int vNic, int tag, RecvEntry* entry) {
@@ -52,9 +48,9 @@ class RecvMachine {
 
         void setNotify( ) {
             assert( ! m_notifyCallback );
-            m_notifyCallback = std::bind( &Nic::RecvMachine::state_n0, this );
             m_nic.m_linkControl->setNotifyOnReceive(
                                     m_nic.m_recvNotifyFunctor );
+            m_notifyCallback = true;
         }
 
       private:
@@ -72,8 +68,12 @@ class RecvMachine {
         size_t copyIn( Output& dbg, Nic::Entry& entry,
                     FireflyNetworkEvent& event );
 
-        void state_n0( ) {
-            state_0( getNetworkEvent( 0 ) );
+        void state_n0( int vc ) {
+            if ( vc == 0 ) {
+                state_0( getNetworkEvent( vc ) );
+            } else {
+                state_1( getNetworkEvent( vc ) );
+            }
         }
 
         void processNeedRecv( FireflyNetworkEvent* event, Callback callback ) {
@@ -106,7 +106,7 @@ class RecvMachine {
         int                 m_rxMatchDelay;
         int                 m_hostReadDelay;
         Callback            m_blockedCallback;
-        Callback            m_notifyCallback; 
+        bool            m_notifyCallback; 
         std::map< int, RecvEntry* >     m_activeRecvM;
 
         std::vector< std::map< int, std::deque<RecvEntry*> > > m_recvM;

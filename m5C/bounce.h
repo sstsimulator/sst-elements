@@ -12,7 +12,6 @@
 #ifndef _m5bounce_h
 #define _m5bounce_h
 
-#include <sst/core/serialization.h>
 #include <sst/core/output.h>
 
 #include <sst/core/component.h>

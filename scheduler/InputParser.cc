@@ -43,7 +43,7 @@ JobParser::JobParser(Machine* machine,
     this->useYumYumSimulationKill = useYumYumSimulationKill;
     this->YumYumSimulationKillFlag = YumYumSimulationKillFlag;
     this->doDetailedNetworkSim = doDetailedNetworkSim; //NetworkSim: added doDetailedNetworkSim parameter
-    useYumYumTraceFormat = params.find("useYumYumTraceFormat") != params.end();
+    useYumYumTraceFormat = !params.find_string("useYumYumTraceFormat").empty();
     jobTrace = params["traceName"].c_str();
 
     //NetworkSim: traces for completed/running jobs on ember

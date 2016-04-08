@@ -20,7 +20,7 @@ using namespace SST::Hermes;
 namespace SST {
 namespace Zodiac {
 
-class ZodiacComputeEvent : public ZodiacEvent {
+class ZodiacComputeEvent : public ZodiacEvent{
 
 	public:
 		ZodiacComputeEvent(double timeSeconds);
@@ -30,7 +30,6 @@ class ZodiacComputeEvent : public ZodiacEvent {
 
 	private:
 		double computeTime;
-
 };
 
 }

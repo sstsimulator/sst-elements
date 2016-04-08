@@ -35,12 +35,13 @@ class DriverEvent : public SST::Event {
     MP::Functor* retFunc;
     int retval;
   private:
+      
+    NotSerializable(DriverEvent)
 };
 
-FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info, 
-        SST::Link* toProgressLink, std::map<std::string,ProtocolAPI*>& proto ) :
+FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj,
+        ProtocolAPI* proto ) :
     m_sm( NULL ),
-    m_info( info ),
     m_params( params ),
     m_owner( obj ),
     m_proto( proto )
@@ -62,11 +63,7 @@ FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info,
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleEnterEvent));
     assert( m_toMeLink );
 
-    std::map<std::string,ProtocolAPI*>::iterator iter = proto.begin();
-    while ( iter != proto.end() ) {
-        iter->second->setRetLink( m_toMeLink );
-        ++iter;
-    }
+    m_proto->setRetLink( m_toMeLink );
 }
 
 FunctionSM::~FunctionSM()
@@ -82,10 +79,10 @@ void FunctionSM::printStatus( Output& out )
     m_sm->printStatus(out); 
 }
 
-void FunctionSM::setup()
+void FunctionSM::setup( Info* info )
 {
     char buffer[100];
-    int nodeId =  m_info.worldRank();
+    int nodeId =  info->worldRank();
     snprintf(buffer,100,"@t:%d:FunctionSM::@p():@l ", nodeId );
     m_dbg.setPrefix(buffer);
 
@@ -93,21 +90,21 @@ void FunctionSM::setup()
 
     Params defaultParams;
     defaultParams.enableVerify(false);
-    defaultParams[ "module" ] = m_params.find_string("defaultModule","firefly");
-    defaultParams[ "enterLatency" ] = 
-                        m_params.find_string("defaultEnterLatency","0");
-    defaultParams[ "returnLatency" ] = 
-                        m_params.find_string("defaultReturnLatency","0");
-    defaultParams[ "verboseLevel" ] = m_params.find_string("verboseLevel","0"); 
+    defaultParams.insert( "module" , m_params.find_string("defaultModule","firefly"), true );
+    defaultParams.insert( "enterLatency", 
+                        m_params.find_string("defaultEnterLatency","0"), true );
+    defaultParams.insert( "returnLatency", 
+                        m_params.find_string("defaultReturnLatency","0"), true );
+    defaultParams.insert( "verboseLevel", m_params.find_string("verboseLevel","0"), true ); 
     std::ostringstream tmp;
     tmp <<  nodeId; 
-    defaultParams[ "nodeId" ] = tmp.str();
+    defaultParams.insert( "nodeId", tmp.str(), true );
 
     for ( int i = 0; i < NumFunctions; i++ ) {
         std::string name = functionName( (FunctionEnum) i );
         Params tmp = m_params.find_prefix_params( name + "." );  
-        defaultParams[ "name" ] = name;
-        initFunction( m_owner, &m_info, (FunctionEnum) i,
+        defaultParams.insert( "name", name, true );
+        initFunction( m_owner, info, (FunctionEnum) i,
                                         name, defaultParams, tmp ); 
     }
 }
@@ -117,29 +114,29 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
 {
     std::string module = params.find_string("module"); 
     if ( module.empty() ) {
-        module = defaultParams["module"];
+        module = defaultParams.find_string("module");
     }
 
     m_dbg.verbose(CALL_INFO,3,0,"func=`%s` module=`%s`\n",
                             name.c_str(),module.c_str());
 
     if ( params.find_string("name").empty() ) {
-        params["name"] = defaultParams[ "name" ];
+        params.insert( "name",  defaultParams.find_string( "name" ), true );
     }
 
     if ( params.find_string("verboseLevel").empty() ) {
-        params["verboseLevel"] = defaultParams[ "verboseLevel" ];
+        params.insert( "verboseLevel", defaultParams.find_string( "verboseLevel" ), true );
     }
 
     if ( params.find_string("enterLatency").empty() ) {
-        params["enterLatency"] = defaultParams[ "enterLatency" ];
+        params.insert( "enterLatency", defaultParams.find_string( "enterLatency" ), true );
     }
 
     if ( params.find_string("returnLatency").empty() ) {
-        params["returnLatency"] = defaultParams[ "returnLatency" ];
+        params.insert( "returnLatency", defaultParams.find_string( "returnLatency" ), true );
     }
 
-    params["nodeId"] = defaultParams[ "nodeId" ];
+    params.insert( "nodeId", defaultParams.find_string( "nodeId" ), true );
 
     m_smV[ num ] = (FunctionSMInterface*)obj->loadModule( module + "." + name,
                              params );
@@ -148,9 +145,7 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
     m_smV[ num ]->setInfo( info ); 
 
     if ( ! m_smV[ num ]->protocolName().empty() ) {
-        ProtocolAPI* proto = m_proto[ m_smV[ num ]->protocolName() ];
-        assert(proto);
-        m_smV[ num ]->setProtocol( proto ); 
+        m_smV[ num ]->setProtocol( m_proto ); 
     }
 }
 

@@ -93,7 +93,7 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
 {
     schedout.init("", 8, ~0, Output::STDOUT);
 
-    if (params.find("nodeNum") == params.end()) {
+    if (params.find_string("nodeNum").empty()) {
         Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find the nodeNum param for this node\n");
     }
     nodeNum = strtol(params["nodeNum"].c_str(), NULL, 0);
@@ -557,6 +557,6 @@ void nodeComponent::logFault(FaultEvent * faultEvent)
 
 // Element Libarary / Serialization stuff
 
-BOOST_CLASS_EXPORT(SST::Scheduler::JobStartEvent)
-BOOST_CLASS_EXPORT(SST::Scheduler::nodeComponent)
+DeclareSerializable(SST::Scheduler::JobStartEvent)
+//BOOST_CLASS_EXPORT(SST::Scheduler::nodeComponent)
 

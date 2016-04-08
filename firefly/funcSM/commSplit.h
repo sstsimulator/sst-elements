@@ -21,7 +21,7 @@ class CommSplitFuncSM :  public AllgatherFuncSM
 {
   public:
     CommSplitFuncSM( SST::Params& params )
-        : AllgatherFuncSM( params ) {}
+        : AllgatherFuncSM( params ), m_commSplitEvent(0) {}
 
     virtual void handleStartEvent( SST::Event*, Retval& );
     virtual void handleEnterEvent( Retval& );

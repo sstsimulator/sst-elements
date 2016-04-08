@@ -15,7 +15,6 @@
 #include "reorderLinkControl.h"
 #include "linkControl.h"
 
-#include <sst/core/serialization.h>
 #include <sst/core/simulation.h>
 
 #include "merlin.h"
@@ -247,3 +246,4 @@ bool ReorderLinkControl::handle_event(int vn) {
 } // namespace Merlin
 } // namespace SST
 
+DeclareSerializable(SST::Merlin::ReorderRequest)

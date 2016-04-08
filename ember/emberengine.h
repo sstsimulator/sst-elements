@@ -90,21 +90,6 @@ private:
 	EmberEngine(const EmberEngine&);    // Do not implement
 	void operator=(const EmberEngine&); // Do not implement
 
-	////////////////////////////////////////////////////////
-    friend class boost::serialization::access;
-    template<class Archive>
-	void save(Archive & ar, const unsigned int version) const
-	{
-		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-    }
-
-    template<class Archive>
-	void load(Archive & ar, const unsigned int version)
-    {
-    	ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-    }
-
-	BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 
 }

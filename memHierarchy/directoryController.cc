@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include "directoryController.h"
 
 #include <assert.h>
@@ -612,6 +611,7 @@ void DirectoryController::issueMemoryRequest(MemEvent * ev, DirEntry * entry) {
     reqEv->setRqstr(ev->getRqstr());
     reqEv->setVirtualAddress(ev->getVirtualAddress());
     reqEv->setInstructionPointer(ev->getInstructionPointer());
+    reqEv->setMemFlags(ev->getMemFlags());
     memReqs[reqEv->getID()] = ev->getBaseAddr();
     entry->lastRequest      = reqEv->getID();
     profileRequestSent(reqEv);
@@ -1004,6 +1004,7 @@ void DirectoryController::handleDataResponse(MemEvent * ev) {
 
     respEv->setSize(cacheLineSize);
     respEv->setPayload(ev->getPayload());
+    respEv->setMemFlags(ev->getMemFlags());
     profileResponseSent(respEv);
     sendEventToCaches(respEv, timestamp + mshrLatency);
     

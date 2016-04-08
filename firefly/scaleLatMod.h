@@ -36,14 +36,18 @@ class ScaleLatMod : public LatencyMod {
 
     ScaleLatMod( Params& params)  {
         Params range = params.find_prefix_params("range.");
+        range.enableVerify(false);
 
-        Params::iterator iter = range.begin();
-        for ( ; iter != range.end(); ++iter ) {
+        std::set<std::string> keys = range.getKeys();
+
+        std::set<std::string>::iterator iter = keys.begin();
+        for ( ; iter != keys.end(); ++iter ) {
             Entry entry;
+            std::string tmp = range.find_string(*iter);
 
-            std::size_t pos = iter->second.find(":");
-            std::string range = iter->second.substr( 0, pos );
-            std::string value = iter->second.substr( pos + 1 );
+            std::size_t pos = tmp.find(":");
+            std::string range = tmp.substr( 0, pos );
+            std::string value = value.substr( pos + 1 );
 #if SCALELATMOD_DBG 
             printf("%s %s\n",range.c_str(), value.c_str());
 #endif

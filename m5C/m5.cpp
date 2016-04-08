@@ -12,7 +12,6 @@
 #include <sst_config.h>
 #include "m5.h"
 
-#include <sst/core/serialization.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/linkMap.h>

@@ -45,18 +45,27 @@ class NicInitEvent : public Event {
     {
     }
 
-  private:
-
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP(node);
-        ar & BOOST_SERIALIZATION_NVP(vNic);
-        ar & BOOST_SERIALIZATION_NVP(num_vNics);
+//  private:
+//
+//    friend class boost::serialization::access;
+//    template<class Archive>
+//    void
+//    serialize(Archive & ar, const unsigned int version )
+//    {
+//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+//        ar & BOOST_SERIALIZATION_NVP(node);
+//        ar & BOOST_SERIALIZATION_NVP(vNic);
+//        ar & BOOST_SERIALIZATION_NVP(num_vNics);
+//    }
+public:	
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        Event::serialize_order(ser);
+        ser & node;
+        ser & vNic;
+        ser & num_vNics;
     }
+    
+    ImplementSerializable(SST::Firefly::NicInitEvent);     
 };
 
 class NicCmdEvent : public Event {
@@ -81,21 +90,22 @@ class NicCmdEvent : public Event {
     {
     }
 
-  private:
-
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP(type);
-        ar & BOOST_SERIALIZATION_NVP(node);
-        ar & BOOST_SERIALIZATION_NVP(dst_vNic);
-        ar & BOOST_SERIALIZATION_NVP(tag);
-        ar & BOOST_SERIALIZATION_NVP(iovec);
-        ar & BOOST_SERIALIZATION_NVP(key);
-    }
+//  private:
+//
+//    friend class boost::serialization::access;
+//    template<class Archive>
+//    void
+//    serialize(Archive & ar, const unsigned int version )
+//    {
+//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+//        ar & BOOST_SERIALIZATION_NVP(type);
+//        ar & BOOST_SERIALIZATION_NVP(node);
+//        ar & BOOST_SERIALIZATION_NVP(dst_vNic);
+//        ar & BOOST_SERIALIZATION_NVP(tag);
+//        ar & BOOST_SERIALIZATION_NVP(iovec);
+//        ar & BOOST_SERIALIZATION_NVP(key);
+//    }
+    NotSerializable(NicCmdEvent)
 };
 
 class NicRespEvent : public Event {
@@ -138,21 +148,22 @@ class NicRespEvent : public Event {
     {
     }
 
-  private:
-
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP(type);
-        ar & BOOST_SERIALIZATION_NVP(src_vNic);
-        ar & BOOST_SERIALIZATION_NVP(node);
-        ar & BOOST_SERIALIZATION_NVP(tag);
-        ar & BOOST_SERIALIZATION_NVP(len);
-        ar & BOOST_SERIALIZATION_NVP(key);
-    }
+//  private:
+//
+//    friend class boost::serialization::access;
+//    template<class Archive>
+//    void
+//    serialize(Archive & ar, const unsigned int version )
+//    {
+//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+//        ar & BOOST_SERIALIZATION_NVP(type);
+//        ar & BOOST_SERIALIZATION_NVP(src_vNic);
+//        ar & BOOST_SERIALIZATION_NVP(node);
+//        ar & BOOST_SERIALIZATION_NVP(tag);
+//        ar & BOOST_SERIALIZATION_NVP(len);
+//        ar & BOOST_SERIALIZATION_NVP(key);
+//    }
+    NotSerializable(NicRespEvent)
 };
 
 class Nic : public SST::Component  {
@@ -182,6 +193,8 @@ class Nic : public SST::Component  {
         
         Entry*              entry;
         Callback            callback;
+        
+        NotSerializable(SelfEvent)
     };
 
     #include "nicVirtNic.h" 
@@ -515,6 +528,16 @@ public:
         schedEvent( new SelfEvent( callback ), delay);
     }
 
+    void setNotifyOnSend( int vc ) {
+        assert( ! m_sendNotify[vc] ); 
+        m_sendNotify[vc] = true;
+        ++m_sendNotifyCnt;
+        m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
+    }
+
+    std::vector<bool> m_sendNotify;
+    int m_sendNotifyCnt;
+
   private:
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
@@ -568,7 +591,7 @@ public:
     int NetToId( int x ) { return x; }
     int IdToNet( int x ) { return x; }
 
-    SendMachine m_sendMachine;
+    std::vector<SendMachine> m_sendMachine;
     RecvMachine m_recvMachine;
     ArbitrateDMA* m_arbitrateDMA;
 

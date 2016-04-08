@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include "trivialCPU.h"
 
 #include <assert.h>
@@ -36,17 +35,18 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 
     out.init("", 0, 0, Output::STDOUT);
 
-	if ( params.find("commFreq") == params.end() ) {
-		out.fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
-	}
-	commFreq = strtol( params[ "commFreq" ].c_str(), NULL, 0 );
+    commFreq = params.find_integer("commFreq", -1);
+    if (commFreq < 0) {
+        out.fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
+    }
+    
+    maxAddr = (uint64_t)params.find_integer("memSize", -1) -1;
+    
+    if ( !maxAddr ) {
+        out.fatal(CALL_INFO, -1, "Must set memSize\n");
+    }
 
-	maxAddr = (uint64_t)params.find_integer("memSize", -1) -1;
-	if ( !maxAddr ) {
-		out.fatal(CALL_INFO, -1, "Must set memSize\n");
-	}
-
-	do_write = (bool)params.find_integer("do_write", 1);
+    do_write = (bool)params.find_integer("do_write", 1);
 
     numLS = params.find_integer("num_loadstore", -1);
 
@@ -54,7 +54,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     noncacheableRangeEnd = (uint64_t)params.find_integer("noncacheableRangeEnd", 0);
 
 
-	// tell the simulator not to end without us
+    // tell the simulator not to end without us
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
