@@ -79,39 +79,6 @@ inline void fixByteUnits(std::string &unitstr) {
     }
 }
 
-inline long convertToBytes(std::string componentSize) {
-    trim(componentSize);
-    to_upper(componentSize);
-
-    Output &out = Simulation::getSimulation()->getSimulationOutput();
-
-    if(componentSize.size() < 2) out.fatal(CALL_INFO, -1, "Cache size is not correctly specified. \n");
-    
-    std::string value = componentSize.substr(0, componentSize.size() - 2);
-    trim(value);
-
-    std::string units = componentSize.substr(componentSize.size() - 2, componentSize.size());
-    trim(units);
-    boost::to_upper(units);
-    
-    long valueLong = atol(value.c_str());
-
-    if (ends_with(units, "PB"))      return valueLong * pebi;
-    else if (ends_with(units, "TB")) return valueLong * tebi;
-    else if (ends_with(units, "GB")) return valueLong * gibi;
-    else if (ends_with(units, "MB")) return valueLong * mebi;
-    else if (ends_with(units, "KB")) return valueLong * kibi;
-    else if (ends_with(units, "B")){
-        string valueStr2 = value.substr(0, value.size() - 1);
-        trim(valueStr2);
-        return atol(valueStr2.c_str());
-    }else{
-        out.fatal(CALL_INFO, -1, "Cache size is not correctly specified. String: %s. \n", value.c_str());
-    }
-
-    return 0L;
-}
-
 inline int log2Of(int x){
     int temp = x;
     int result = 0;

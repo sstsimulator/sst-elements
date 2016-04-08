@@ -143,7 +143,12 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
       ht = new PureIdHashFunction;
     }
     
-    long cacheSize  = SST::MemHierarchy::convertToBytes(sizeStr);
+    fixByteUnits(sizeStr); // Convert e.g., KB to KiB for unit alg
+    UnitAlgebra ua(sizeStr);
+    if (!ua.hasUnits("B")) {
+        dbg->fatal(CALL_INFO, -1, "Invalid param: cache_size - must have units of bytes (B). SI units are ok. You specified %s\n", sizeStr.c_str());
+    }
+    uint64_t cacheSize = ua.getRoundedValue();
     uint numLines = cacheSize/lineSize;
     uint protocol = 0;
     
