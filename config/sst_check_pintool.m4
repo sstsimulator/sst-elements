@@ -39,7 +39,7 @@ AC_DEFUN([SST_CHECK_PINTOOL],
   AC_SUBST([PINTOOL_DIR])
   AC_SUBST([PINTOOL_PATH])
   AC_DEFINE_UNQUOTED([PINTOOL_EXECUTABLE], ["$PINTOOL_RUNTIME"], [Defines the exectuable to run when we are performing integrated runs of the PIN engine])
-#  AM_CONDITIONAL([USE_PINTOOL], [test "$sst_check_pintool_happy" = "yes"])
+  AM_CONDITIONAL([HAVE_PINTOOL], [test "$sst_check_pintool_happy" = "yes"])
 
   AC_MSG_CHECKING([PIN Tool])
   AC_MSG_RESULT([$sst_check_pintool_happy])
