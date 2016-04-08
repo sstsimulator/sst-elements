@@ -1,6 +1,8 @@
 ![SST](http://sst-simulator.org/img/sst-logo-small.png)
 
-#### Copyright (c) 2009-2016, Sandia Corporation (See LICENSE file)
+# Structural Simulation Toolkit (SST)
+
+#### Copyright (c) 2009-2016, Sandia Corporation
 
 ---
 
@@ -10,3 +12,6 @@ The Structural Simulation Toolkit (SST) was developed to explore innovations in 
 
 Visit [sst-simulator.org](http://sst-simulator.org) to learn more about SST.
 
+See [Contributing](https://github.com/sstsimulator/sst-elements/blob/external-elements-devel/CONTRIBUTING.md) to learn how to contribute to SST.
+
+##### [LICENSE](https://github.com/sstsimulator/sst-elements/blob/external-elements-devel/LICENSE)
