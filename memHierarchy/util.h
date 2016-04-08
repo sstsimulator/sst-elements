@@ -63,7 +63,23 @@ const unsigned int exbi = pebi * 1024;
 using namespace boost::algorithm;
 using namespace std;
 
-inline long convertToBytes(std::string componentSize){
+/*
+ *  Replace uB or UB (where u/U is a SI unit)
+ *  with uiB or UiB for unit algebra
+ */
+inline void fixByteUnits(std::string &unitstr) {
+    trim(unitstr);
+    size_t pos;
+    string checkstring = "kKmMgGtTpP";
+    if ((pos = unitstr.find_first_of(checkstring)) != string::npos) {
+        pos++;
+        if (pos < unitstr.length() && unitstr[pos] == 'B') {
+            unitstr.insert(pos, "i");
+        }
+    }
+}
+
+inline long convertToBytes(std::string componentSize) {
     trim(componentSize);
     to_upper(componentSize);
 

@@ -28,6 +28,7 @@
 #include "memNIC.h"
 #include "membackend/memBackend.h"
 #include "membackend/simpleMemBackend.h"
+#include "membackend/memRequestLimiter.h"
 #include "membackend/vaultSimBackend.h"
 #include "networkMemInspector.h"
 
@@ -64,46 +65,46 @@ static Component* create_Cache(ComponentId_t id, Params& params)
 
 static const ElementInfoParam cache_params[] = {
     /* Required */
-    {"cache_frequency",         "Required, string   - Clock frequency with units. For L1s, this is usually the same as the CPU's frequency."},
-    {"cache_size",              "Required, string   - Cache size with units. Eg. 4KB or 1MB"},
-    {"associativity",           "Required, int      - Associativity of the cache. In set associative mode, this is the number of ways."},
-    {"access_latency_cycles",   "Required, int      - Latency (in cycles) to access the cache array."},
-    {"coherence_protocol",      "Required, string   - Coherence protocol. Options: MESI, MSI, NONE"},
-    {"cache_line_size",         "Required, int      - Size of a cache line (aka cache block) in bytes."},
-    {"hash_function",           "Optional, int      - 0 - none (default), 1 - linear, 2 - XOR"},
-    {"L1",                      "Required, int      - Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]"},
-    {"LLC",                     "Required, int      - NO LONGER NEEDED. Auto-detected by configure. Specifies whether cache is a last-level cache. Options: 0[not LLC], 1[LLC]"},
-    {"LL",                      "Required, int      - Required for LLCs, specifies whether an LLC is also the lowest-level coherence entity in the system (e.g., no dir below). Options: 0[not LL entity], 1[LL entity]"},
+    {"cache_frequency",         "Required, string - Clock frequency with units. For L1s, this is usually the same as the CPU's frequency."},
+    {"cache_size",              "Required, string - Cache size with units. Eg. 4KB or 1MB"},
+    {"associativity",           "Required, int - Associativity of the cache. In set associative mode, this is the number of ways."},
+    {"access_latency_cycles",   "Required, int - Latency (in cycles) to access the cache array."},
+    {"L1",                      "Required, int - Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]", "0"},
+    {"LL",                      "Required, int - Required for LLCs without a directory below - indicates LLC is the lowest-level coherence entity. Options: 0[not LL entity], 1[LL entity]", "0"},
     /* Not required */
-    {"replacement_policy",      "Optional, string   - Replacement policy of the cache array. Options:  LRU[least-recently-used], LFU[least-frequently-used], Random, MRU[most-recently-used], or NMRU[not-most-recently-used]. ", "lru"},
-    {"cache_type",              "Optional, string   - Cache type. Options: inclusive cache ('inclusive', required for L1s), non-inclusive cache ('noninclusive') or non-inclusive cache with a directory ('noninclusive_with_directory', required for non-inclusive caches with multiple upper level caches directly above them),", "inclusive"},
-    {"noninclusive_directory_repl",    "Optional, string   - If non-inclusive directory exists, its replacement policy. LRU, LFU, MRU, NMRU, or RANDOM. (not case-sensitive).", "LRU"},
-    {"noninclusive_directory_entries", "Optional, int  - Number of entries in the directory. Must be at least 1 if the non-inclusive directory exists.", "0"},
-    {"noninclusive_directory_associativity", "Optional, int    - For a set-associative directory, number of ways.", "1"},
-    {"mshr_num_entries",        "Optional, int      - Number of MSHR entries. Not valid for L1s because L1 MSHRs assumed to be sized for the CPU's load/store queue. Setting this to -1 will create a very large MSHR.", "-1"},
+    {"cache_line_size",         "Optional, int - Size of a cache line (aka cache block) in bytes.", "64"},
+    {"hash_function",           "Optional, int - 0 - none (default), 1 - linear, 2 - XOR", "0"},
+    {"coherence_protocol",      "Optional, string - Coherence protocol. Options: MESI, MSI, NONE", "MESI"},
+    {"replacement_policy",      "Optional, string - Replacement policy of the cache array. Options:  LRU[least-recently-used], LFU[least-frequently-used], Random, MRU[most-recently-used], or NMRU[not-most-recently-used]. ", "lru"},
+    {"cache_type",              "Optional, string - Cache type. Options: inclusive cache ('inclusive', required for L1s), non-inclusive cache ('noninclusive') or non-inclusive cache with a directory ('noninclusive_with_directory', required for non-inclusive caches with multiple upper level caches directly above them),", "inclusive"},
+    {"noninclusive_directory_repl",    "Optional, string - If non-inclusive directory exists, its replacement policy. LRU, LFU, MRU, NMRU, or RANDOM. (not case-sensitive).", "LRU"},
+    {"noninclusive_directory_entries", "Optional, int - Number of entries in the directory. Must be at least 1 if the non-inclusive directory exists.", "0"},
+    {"noninclusive_directory_associativity", "Optional, int - For a set-associative directory, number of ways.", "1"},
+    {"lower_is_noninclusive",   "Optional, int - Next lower level cache is non-inclusive, changes some coherence decisions (e.g., write back clean data)", "0"},
+    {"mshr_num_entries",        "Optional, int - Number of MSHR entries. Not valid for L1s because L1 MSHRs assumed to be sized for the CPU's load/store queue. Setting this to -1 will create a very large MSHR.", "-1"},
     {"stat_group_ids",          "Optional, int list - Stat grouping. Instructions with same IDs will be grouped for stats. Separated by commas.", ""},
-    {"tag_access_latency_cycles", "Optional, int     - Latency (in cycles) to access tag portion only of cache. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
-    {"mshr_latency_cycles",     "Optional, int      - Latency (in cycles) to process responses in the cache (MSHR response hits). If not specified, simple intrapolation is used based on the cache access latency", "-1"},
-    {"prefetcher",              "Optional, string   - Name of prefetcher module", ""},
-    {"directory_at_next_level", "Optional, int      - NO LONGER NEEDED. Auto-detected by configure. Specifies if there is a directory-controller as the next lower memory level; deprecated - set 'bottom_network' to 'directory' instead", "0"},
-    {"bottom_network",          "Optional, string   - NO LONGER NEEDED. Auto-detected by configure. Specifies whether the cache is connected to a network below and the entity type of the connection. Options: cache, directory, ''[no network below]", ""},
-    {"top_network",             "Optional, string   - NO LONGER NEEDED. Auto-detected by configure. Specifies whether the cache is connected to a network above and the entity type of the connection. Options: cache, ''[no network above]", ""},
-    {"num_cache_slices",        "Optional, int      - For a distributed, shared cache, total number of cache slices", "1"},
-    {"slice_id",                "Optional, int      - For distributed, shared caches, unique ID for this cache slice", "0"},
-    {"slice_allocation_policy", "Optional, string   - Policy for allocating addresses among distributed shared cache. Options: rr[round-robin]", "rr"},
-    {"statistics",              "DEPRECATED         - Use Statistics API to get statistics for caches.", "0"},
-    {"network_bw",              "Optional, int      - Network link bandwidth.", "1GB/s"},
-    {"network_address",         "Optional, int      - When connected to a network, the network address of this cache.", "0"},
-    {"network_num_vc",          "DEPRECATED         - Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
-    {"network_input_buffer_size", "Optional, int      - Size of the network's input buffer.", "1KB"},
-    {"network_output_buffer_size","Optional, int      - Size of the network's output buffer.", "1KB"},
-    {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",             "Optional, int      - Debugging level. Between 0 and 10", "0"},
-    {"debug_addr",              "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
-    {"force_noncacheable_reqs", "Optional, int      - Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "0"},
-    {"maxRequestDelay",         "Optional, int      - Set an error timeout if memory requests take longer than this in ns (0: disable)", "0"},
-    {"snoop_l1_invalidations",  "Optional, int      - Forward invalidations from L1s to processors. Options: 0[off], 1[on]", "0"},
-    {"lower_is_noninclusive",      "Optional, int      - Next lower level cache is non-inclusive, changes some coherence decisions (e.g., write back clean data)", "0"},
+    {"tag_access_latency_cycles", "Optional, int - Latency (in cycles) to access tag portion only of cache. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
+    {"mshr_latency_cycles",     "Optional, int - Latency (in cycles) to process responses in the cache (MSHR response hits). If not specified, simple intrapolation is used based on the cache access latency", "-1"},
+    {"prefetcher",              "Optional, string - Name of prefetcher module", ""},
+    {"num_cache_slices",        "Optional, int - For a distributed, shared cache, total number of cache slices", "1"},
+    {"slice_id",                "Optional, int - For distributed, shared caches, unique ID for this cache slice", "0"},
+    {"slice_allocation_policy", "Optional, string - Policy for allocating addresses among distributed shared cache. Options: rr[round-robin]", "rr"},
+    {"network_bw",              "Optional, int - When connected to a network, the network link bandwidth.", "80GB/s"},
+    {"network_address",         "Optional, int - When connected to a network, the network address of this cache.", "0"},
+    {"network_input_buffer_size", "Optional, int - When connected to a network, size of the network's input buffer.", "1KB"},
+    {"network_output_buffer_size","Optional, int - When connected to a network, size of the network;s output buffer.", "1KB"},
+    {"maxRequestDelay",         "Optional, int - Set an error timeout if memory requests take longer than this in ns (0: disable)", "0"},
+    {"snoop_l1_invalidations",  "Optional, int - Forward invalidations from L1s to processors. Options: 0[off], 1[on]", "0"},
+    {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
+    {"debug_addr",              "Optional, int - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
+    {"force_noncacheable_reqs", "Optional, int - Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "0"},
+    {"LLC",                     "DEPRECATED - Now auto-detected by configure. Specifies whether cache is a last-level cache. Options: 0[not LLC], 1[LLC]"},
+    {"statistics",              "DEPRECATED - Use Statistics API to get statistics for caches.", "0"},
+    {"network_num_vc",          "DEPRECATED - Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
+    {"directory_at_next_level", "DEPRECATED - Now auto-detected by configure. Specifies if there is a directory-controller as the next lower memory level; deprecated - set 'bottom_network' to 'directory' instead", "0"},
+    {"bottom_network",          "DEPRECATED - Now auto-detected by configure. Specifies whether the cache is connected to a network below and the entity type of the connection. Options: cache, directory, ''[no network below]", ""},
+    {"top_network",             "DEPRECATED - Now auto-detected by configure. Specifies whether the cache is connected to a network above and the entity type of the connection. Options: cache, ''[no network above]", ""},
     {NULL, NULL, NULL}
 };
 
@@ -331,21 +332,20 @@ static Component* create_Sieve(ComponentId_t id, Params& params)
 
 static const ElementInfoParam sieve_params[] = {
     /* Required */
-    {"cache_size",              "Required, string   - Cache size with units. Eg. 4KB or 1MB"},
-    {"associativity",           "Required, int      - Associativity of the cache. In set associative mode, this is the number of ways."},
-    {"cache_line_size",         "Required, int      - Size of a cache line (aka cache block) in bytes."},
+    {"cache_size",              "Required, string - Cache size with units. Eg. 4KB or 1MB"},
+    {"associativity",           "Required, int - Associativity of the cache. In set associative mode, this is the number of ways."},
     /* Not required */
-    {"profiler",                "Optional, string   - Name of profiling module. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
-    {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",             "Optional, int      - Debugging level. Between 0 and 10", "0"},
-    {"output_file",             "Optional, string   – Name of file to output malloc information to. Will have sequence number (and optional marker number) and .txt appended to it. E.g. sieveMallocRank-3.txt", "sieveMallocRank"},
+    {"cache_line_size",         "Optional, int - Size of a cache line (aka cache block) in bytes."},
+    {"profiler",                "Optional, string - Name of profiling module. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
+    {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
+    {"output_file",             "Optional, string – Name of file to output malloc information to. Will have sequence number (and optional marker number) and .txt appended to it. E.g. sieveMallocRank-3.txt", "sieveMallocRank"},
     {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort sieve_ports[] = {
     {"cpu_link_%(port)d", "Ports connected to the CPUs", memEvent_port_events},
-    {"alloc_link", "Connection to the CPU's allocation/free notification", 
-     arielAlloc_port_events},
+    {"alloc_link", "Connection to the CPU's allocation/free notification", arielAlloc_port_events},
     {NULL, NULL, NULL}
 };
 
@@ -418,32 +418,33 @@ static Component* create_MemController(ComponentId_t id, Params& params){
 }
 
 static const ElementInfoParam memctrl_params[] = {
-    {"mem_size",            "Size of physical memory in MB (*deprecated*)", "0"},
-    {"backend.mem_size",    "Size of physical memory in MB", "0"},
-    {"range_start",         "Address Range where physical memory begins", "0"},
-    {"interleave_size",     "Size of interleaved pages in KB.", "0"},
-    {"interleave_step",     "Distance between sucessive interleaved pages on this controller in KB.", "0"},
-    {"memory_file",         "Optional backing-store file to pre-load memory, or store resulting state", "N/A"},
+    /* Required parameters */
+    {"backend.mem_size",    "Size of physical memory in MB"},
     {"clock",               "Clock frequency of controller", NULL},
-    //{"divert_DC_lookups",   "Divert Directory controller table lookups from the memory system, use a fixed latency (access_time). Default:0", "0"},
+    /* Optional parameters */
     {"backend",             "Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
-    {"request_width",       "Size of a DRAM request in bytes.  Should be a power of 2 - default 64", "64"},
+    {"coherence_protocol",  "Coherence protocol.  Supported: MESI (default), MSI. Only used when a directory controller is not present.", "MESI"},
+    {"request_width",       "Size of a DRAM request in bytes. Default 64", "64"},
+    {"range_start",         "Address where physical memory begins", "0"},
+    {"interleave_size",     "Size of interleaved chunks in bytes with units (e.g., 64B or 4KB). Note: This definition has CHANGED (used to be specified in KB)", "0B"},
+    {"interleave_step",     "Distance between sucessive interleaved chunks on this controller in bytes (e.g., 512B or 16KB) Note: This definition has CHANGED (used to be specified in KB)", "0B"},
     {"direct_link_latency", "Latency when using the 'direct_link', rather than 'snoop_link'", "10 ns"},
+    {"memory_file",         "Optional backing-store file to pre-load memory, or store resulting state", "N/A"},
+    {"trace_file",          "File name (optional) of a trace-file to generate.", ""},
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
     {"debug_addr",          "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
-    {"statistics",          "DEPRECATED - use Statistics API to get statistics for memory controller","0"},
-    {"trace_file",          "File name (optional) of a trace-file to generate.", ""},
-    {"coherence_protocol",  "Coherence protocol.  Supported: MESI (default), MSI"},
     {"listenercount",       "Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
     {"listener%(listenercount)d", "Loads a listener module into the controller", ""},
-    {"direct_link",         "NO LONGER NEEDED. Auto-detected by configure. Specifies whether memory is directly connected to a directory/cache (1) or is connected via the network (0)","1"},
     {"network_bw",          "Network link bandwidth.", NULL},
     {"network_address",     "Network address of component.", ""},
-    {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"network_input_buffer_size",   "Size of the network's input buffer.", "1KB"},
     {"network_output_buffer_size",  "Size of the network's output buffer.", "1KB"},
     {"do_not_back",         "DO NOT use this parameter if simulation depends on correct memory values. Otherwise, set to '1' to reduce simulation's memory footprint", "0"},
+    {"mem_size",            "DEPRECATED. Use 'backend.mem_size' instead. Size of physical memory in MB", "0"},
+    {"statistics",          "DEPRECATED - use Statistics API to get statistics for memory controller","0"},
+    {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
+    {"direct_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether memory is directly connected to a directory/cache (1) or is connected via the network (0)","1"},
     {NULL, NULL, NULL}
 };
 
@@ -473,8 +474,19 @@ static SubComponent* create_Mem_SimpleSim(Component* comp, Params& params){
 }
 
 static const ElementInfoParam simpleMem_params[] = {
-    { "verbose",          "Sets the verbosity of the backend output", "0" },
+    {"verbose",          "Sets the verbosity of the backend output", "0" },
     {"access_time",     "Constant latency of memory operation.", "100 ns"},
+    {NULL, NULL}
+};
+
+
+static SubComponent* create_Mem_RequestLimiter(Component* comp, Params& params){
+    return new MemoryRequestLimiter(comp, params);
+}
+
+static const ElementInfoParam requestLimiter_params[] = {
+    {"max_requests_per_cycle",  "Maximum number of requests to accept per cycle", "1"},
+    {"backend",                 "Membackend to be limited by the requestLimiter", "memHierarchy.simpleMem"},
     {NULL, NULL}
 };
 
@@ -486,7 +498,7 @@ static SubComponent* create_Mem_DRAMSim(Component* comp, Params& params){
 
 
 static const ElementInfoParam dramsimMem_params[] = {
-    { "verbose",          "Sets the verbosity of the backend output", "0" },
+    {"verbose",          "Sets the verbosity of the backend output", "0" },
     {"device_ini",      "Name of DRAMSim Device config file", NULL},
     {"system_ini",      "Name of DRAMSim Device system file", NULL},
     {NULL, NULL, NULL}
@@ -609,28 +621,30 @@ static Component* create_DirectoryController(ComponentId_t id, Params& params){
 }
 
 static const ElementInfoParam dirctrl_params[] = {
-    {"network_bw",          "Network link bandwidth.", NULL},
-    {"network_address",     "Network address of component.", ""},
-    {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
+    /* Required parameters */
+    {"network_address",         "Network address of component.", ""},
+    /* Optional parameters */
+    {"network_bw",              "Network link bandwidth.", "80GB/s"},
     {"network_input_buffer_size",   "Size of the network's input buffer.", "1KB"},
     {"network_output_buffer_size",  "Size of the network's output buffer.", "1KB"},
-    {"addr_range_start",    "Start of Address Range, for this controller.", "0"},
-    {"addr_range_end",      "End of Address Range, for this controller.", NULL},
-    {"interleave_size",     "(optional) Size of interleaved pages in KB.", "0"},
-    {"interleave_step",     "(optional) Distance between sucessive interleaved pages on this controller in KB.", "0"},
-    {"clock",               "Clock rate of controller.", "1GHz"},
-    {"entry_cache_size",    "Size (in # of entries) the controller will cache.", "0"},
-    {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-    {"debug_level",         "Debugging level: 0 to 10", "0"},
-    {"debug_addr",              "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
-    {"statistics",          "DEPRECATED - Use the Statistics API to get statistics", "0"},
-    {"cache_line_size",     "Size of a cache line [aka cache block] in bytes.", "64"},
-    {"coherence_protocol",  "Coherence protocol.  Supported --MESI, MSI--"},
-    {"mshr_num_entries",    "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},
-    {"direct_mem_link",     "NO LONGER NEEDED. Auto-detected by configure. Specifies whether directory has a direct connection to memory (1) or is connected via a network (0)","1"},
-    {"net_memory_name",     "For directories connected to a memory over the network: name of the memory this directory owns", ""},
-    {"access_latency_cycles", "Latency of directory access in cycles", "0"},
-    {"mshr_latency_cycles", "Latency of mshr access in cycles", "0"},
+    {"addr_range_start",        "Start of Address Range, for this controller.", "0"},
+    {"addr_range_end",          "End of Address Range, for this controller.", NULL},
+    {"interleave_size",         "Size of interleaved chunks in bytes. Note: This definition has CHANGED (used to be specified in KB)", "0B"},
+    {"interleave_step",         "Distance between sucessive interleaved chunks on this controller in bytes. Note: This definition has CHANGED (used to be specified in KB)", "0B"},
+    {"clock",                   "Clock rate of controller.", "1GHz"},
+    {"entry_cache_size",        "Size (in # of entries) the controller will cache.", "0"},
+    {"debug",                   "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_level",             "Debugging level: 0 to 10", "0"},
+    {"debug_addr",              "Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
+    {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
+    {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--"},
+    {"mshr_num_entries",        "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},
+    {"net_memory_name",         "For directories connected to a memory over the network: name of the memory this directory owns", ""},
+    {"access_latency_cycles",   "Latency of directory access in cycles", "0"},
+    {"mshr_latency_cycles",     "Latency of mshr access in cycles", "0"},
+    {"direct_mem_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether directory has a direct connection to memory (1) or is connected via a network (0)","1"},
+    {"network_num_vc",          "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
+    {"statistics",              "DEPRECATED - Use the Statistics API to get statistics", "0"},
     {NULL, NULL, NULL}
 };
 
@@ -705,6 +719,15 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL, /* Advanced help */
         create_Mem_SimpleSim, /* Module Alloc w/ params */
         simpleMem_params,
+        NULL, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "requestLimiter",
+        "Request limiter, can be placed between controller and another backend",
+        NULL, /* Advanced help */
+        create_Mem_RequestLimiter, /* Module Alloc w/ params */
+        requestLimiter_params,
         NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
