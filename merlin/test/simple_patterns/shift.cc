@@ -9,7 +9,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 #include "sst/elements/merlin/test/simple_patterns/shift.h"
 
 #include <unistd.h>
@@ -128,6 +127,7 @@ shift_nic::init(unsigned int phase) {
 class ShiftEvent : public Event {
 public:
     int seq;
+    ShiftEvent() {}
     ShiftEvent(int seq) : seq(seq)
     {}
 
@@ -135,17 +135,16 @@ public:
     {
         return new ShiftEvent(*this);
     }
-private:
-    ShiftEvent() {}
 
-	friend class boost::serialization::access;
-	template<class Archive>
-	void
-	serialize(Archive & ar, const unsigned int version )
-	{
-		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-		ar & BOOST_SERIALIZATION_NVP(seq);
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        Event::serialize_order(ser);
+        ser & seq;
     }
+
+private:
+
+    ImplementSerializable(SST::Merlin::ShiftEvent);
+
 };
 
 
@@ -268,4 +267,4 @@ shift_nic::handle_event(int vn)
 } // namespace Merlin
 } // namespace SST
 
-BOOST_CLASS_EXPORT(SST::Merlin::ShiftEvent)
+DeclareSerializable(SST::Merlin::ShiftEvent)

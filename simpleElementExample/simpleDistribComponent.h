@@ -60,24 +60,6 @@ private:
     
     std::map<int64_t, uint64_t>* bins;
     
-    friend class boost::serialization::access;
-    template<class Archive>
-    void save(Archive & ar, const unsigned int version) const
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(rng_count);
-        ar & BOOST_SERIALIZATION_NVP(rng_max_count);
-    }
-    
-    template<class Archive>
-    void load(Archive & ar, const unsigned int version)
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(rng_count);
-        ar & BOOST_SERIALIZATION_NVP(rng_max_count);
-    }
-    
-    BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 
 } // namespace SimpleDistribComponent

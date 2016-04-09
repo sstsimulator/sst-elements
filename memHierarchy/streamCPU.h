@@ -68,31 +68,6 @@ private:
     TimeConverter *clockTC;
     Clock::HandlerBase *clockHandler;
 
-	friend class boost::serialization::access;
-	template<class Archive>
-	void save(Archive & ar, const unsigned int version) const
-	{
-		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-		ar & BOOST_SERIALIZATION_NVP(commFreq);
-		ar & BOOST_SERIALIZATION_NVP(maxAddr);
-		ar & BOOST_SERIALIZATION_NVP(mem_link);
-		ar & BOOST_SERIALIZATION_NVP(addrOffset);
-	}
-
-	template<class Archive>
-	void load(Archive & ar, const unsigned int version)
-	{
-		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-		ar & BOOST_SERIALIZATION_NVP(commFreq);
-		ar & BOOST_SERIALIZATION_NVP(maxAddr);
-		ar & BOOST_SERIALIZATION_NVP(mem_link);
-		ar & BOOST_SERIALIZATION_NVP(addrOffset);
-		//resture links
-		mem_link->setFunctor(new SST::Event::Handler<streamCPU>(this,&streamCPU::handleEvent));
-	}
-
-	BOOST_SERIALIZATION_SPLIT_MEMBER()
-
 };
 
 }

@@ -86,6 +86,11 @@ public:
 
     inline RtrEventType getType() const { return type; }
 
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        Event::serialize_order(ser);
+        ser & type;
+    }    
+    
 protected:
     BaseRtrEvent(RtrEventType type) :
         Event(),
@@ -96,15 +101,7 @@ private:
     BaseRtrEvent()  {} // For Serialization only
     RtrEventType type;
 
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP(type);
-    }
-
+    ImplementSerializable(SST::Merlin::BaseRtrEvent);
 };
     
 
@@ -113,6 +110,11 @@ class RtrEvent : public BaseRtrEvent {
 public:
     SST::Interfaces::SimpleNetwork::Request* request;
     
+    RtrEvent() :
+        BaseRtrEvent(BaseRtrEvent::PACKET),
+        injectionTime(0)
+    {}
+
     RtrEvent(SST::Interfaces::SimpleNetwork::Request* req) :
         BaseRtrEvent(BaseRtrEvent::PACKET),
         request(req),
@@ -141,8 +143,15 @@ public:
     inline int getSizeInFlits() { return size_in_flits; }
 
     virtual void print(const std::string& header, Output &out) const {
-        out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d\n",
-                header.c_str(), getDeliveryTime(), getPriority());
+        out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %lld, dest = %lld\n",
+                   header.c_str(), getDeliveryTime(), getPriority(), request->src, request->dest);
+        if ( request->inspectPayload() != NULL) request->inspectPayload()->print("  -> ", out);
+    }
+
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        BaseRtrEvent::serialize_order(ser);
+        ser & request;
+        ser & size_in_flits;
     }
     
 private:
@@ -151,22 +160,7 @@ private:
     SimTime_t injectionTime;
     int size_in_flits;
 
-    RtrEvent() :
-        BaseRtrEvent(BaseRtrEvent::PACKET),
-        injectionTime(0)
-    {
-        // request = new SST::Interfaces::SimpleNetwork::Request();
-    }
-
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
-        ar & BOOST_SERIALIZATION_NVP(request);
-        ar & BOOST_SERIALIZATION_NVP(size_in_flits);
-    }
+    ImplementSerializable(SST::Merlin::RtrEvent)
     
 };
 
@@ -174,15 +168,6 @@ class TopologyEvent : public BaseRtrEvent {
     // Allows Topology events to consume bandwidth.  If this is set to
     // zero, then no bandwidth is consumed.
     int size_in_flits;
-    
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
-        ar & BOOST_SERIALIZATION_NVP(size_in_flits);
-    }
     
 public:
     TopologyEvent(int size_in_flits) :
@@ -203,13 +188,22 @@ public:
                 header.c_str(), getDeliveryTime(), getPriority());
     }
 
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        BaseRtrEvent::serialize_order(ser);
+        ser & size_in_flits;
+    }
     
+    ImplementSerializable(SST::Merlin::TopologyEvent);
 };
 
 class credit_event : public BaseRtrEvent {
 public:
     int vc;
     int credits;
+
+    credit_event() :
+	BaseRtrEvent(BaseRtrEvent::CREDIT)
+    {}
 
     credit_event(int vc, int credits) :
 	BaseRtrEvent(BaseRtrEvent::CREDIT),
@@ -222,20 +216,16 @@ public:
                 header.c_str(), getDeliveryTime(), getPriority());
     }
 
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        BaseRtrEvent::serialize_order(ser);
+        ser & vc;
+        ser & credits;
+    }
+    
 private:
-    credit_event() :
-	BaseRtrEvent(BaseRtrEvent::CREDIT)
-    {}
 
-	friend class boost::serialization::access;
-	template<class Archive>
-	void
-	serialize(Archive & ar, const unsigned int version )
-	{
-		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
-		ar & BOOST_SERIALIZATION_NVP(vc);
-		ar & BOOST_SERIALIZATION_NVP(credits);
-	}
+    ImplementSerializable(SST::Merlin::credit_event)
+    
 };
 
 class RtrInitEvent : public BaseRtrEvent {
@@ -261,17 +251,16 @@ public:
                    header.c_str(), command, int_value, ua_value.toStringBestSI().c_str());
     }
 
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        BaseRtrEvent::serialize_order(ser);
+        ser & command;
+        ser & int_value;
+        ser & ua_value;
+    }
+    
+    
 private:
-	friend class boost::serialization::access;
-	template<class Archive>
-	void
-	serialize(Archive & ar, const unsigned int version )
-	{
-		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
-		ar & BOOST_SERIALIZATION_NVP(command);
-		ar & BOOST_SERIALIZATION_NVP(int_value);
-		ar & BOOST_SERIALIZATION_NVP(ua_value);
-	}
+    ImplementSerializable(SST::Merlin::RtrInitEvent)
 };
 
 class internal_router_event : public BaseRtrEvent {
@@ -320,30 +309,29 @@ public:
     inline void setEncapsulatedEvent(RtrEvent* ev) {encap_ev = ev;}
     inline RtrEvent* getEncapsulatedEvent() {return encap_ev;}
 
-    inline int getDest() {return encap_ev->request->dest;}
-    inline int getSrc() {return encap_ev->request->src;}
+    inline int getDest() const {return encap_ev->request->dest;}
+    inline int getSrc() const {return encap_ev->request->src;}
 
     inline SST::Interfaces::SimpleNetwork::Request::TraceType getTraceType() {return encap_ev->getTraceType();}
     inline int getTraceID() {return encap_ev->getTraceID();}
 
     virtual void print(const std::string& header, Output &out) const {
-        out.output("%s internal_router_event to be delivered at %" PRIu64 " with priority %d\n",
-                header.c_str(), getDeliveryTime(), getPriority());
+        out.output("%s internal_router_event to be delivered at %" PRIu64 " with priority %d.  src = %d, dest = %d\n",
+                   header.c_str(), getDeliveryTime(), getPriority(), getSrc(), getDest());
+        if ( encap_ev != NULL ) encap_ev->print(header + std::string("-> "),out);
     }
 
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        BaseRtrEvent::serialize_order(ser);
+        ser & next_port;
+        ser & next_vc;
+        ser & vc;
+        ser & credit_return_vc;
+        ser & encap_ev;
+    }
+    
 private:
-	friend class boost::serialization::access;
-	template<class Archive>
-	void
-	serialize(Archive & ar, const unsigned int version )
-	{
-		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
-		ar & BOOST_SERIALIZATION_NVP(next_port);
-		ar & BOOST_SERIALIZATION_NVP(next_vc);
-		ar & BOOST_SERIALIZATION_NVP(vc);
-		ar & BOOST_SERIALIZATION_NVP(credit_return_vc);
-		ar & BOOST_SERIALIZATION_NVP(encap_ev);
-	}
+    ImplementSerializable(SST::Merlin::internal_router_event)
 };
 
 class Topology : public Module {

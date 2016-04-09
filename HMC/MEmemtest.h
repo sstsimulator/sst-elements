@@ -16,7 +16,6 @@
 #include <sst/core/link.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 /*#include <sst_config.h>
-#include <sst/core/serialization.h>
 
 #include <sst/core/element.h>
 #include <sst/core/params.h>

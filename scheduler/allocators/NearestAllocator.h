@@ -34,8 +34,6 @@
 #include <vector>
 #include <string>
 
-#include "sst/core/serialization.h"
-
 #include "Allocator.h"
 
 namespace SST {

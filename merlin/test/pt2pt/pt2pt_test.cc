@@ -9,7 +9,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 
 #include <sst/core/element.h>
 #include <sst/core/params.h>
@@ -268,3 +267,5 @@ pt2pt_test::handle_complete(Event* ev) {
     primaryComponentOKToEndSim();
 
 }
+
+DeclareSerializable(SST::Merlin::pt2pt_test_event)

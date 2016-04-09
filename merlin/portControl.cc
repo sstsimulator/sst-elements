@@ -10,8 +10,6 @@
 // distribution.
 #include <sst_config.h>
 
-#include <sst/core/serialization.h>
-
 #include "portControl.h"
 #include "merlin.h"
 

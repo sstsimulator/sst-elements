@@ -16,7 +16,6 @@
 #ifndef SST_SCHEDULER_ARRIVALEVENT_H__
 #define SST_SCHEDULER_ARRIVALEVENT_H__
 
-#include "sst/core/serialization.h"
 #include <sst/core/event.h>
 
 namespace SST {
@@ -53,14 +52,7 @@ namespace SST {
 
                 int jobIndex;
 
-                friend class boost::serialization::access;
-                template<class Archive>
-                    void serialize(Archive & ar, const unsigned int version )
-                    {
-                        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-                        ar & BOOST_SERIALIZATION_NVP(time);
-                        ar & BOOST_SERIALIZATION_NVP(jobIndex);
-                    }
+                NotSerializable(ArrivalEvent)
         };
 
     }

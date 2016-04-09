@@ -180,6 +180,8 @@ class XXX  {
         {}
 
         Callback                callback;
+        
+        NotSerializable(DelayEvent)
     };
 
   private:
