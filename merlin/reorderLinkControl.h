@@ -72,15 +72,13 @@ public:
 
     typedef std::priority_queue<ReorderRequest*, std::vector<ReorderRequest*>, Priority> PriorityQueue;
 
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        SST::Interfaces::SimpleNetwork::Request::serialize_order(ser);
+        ser & seq;
+    }
+
 private:
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Interfaces::SimpleNetwork::Request);
-        ar & BOOST_SERIALIZATION_NVP(seq);
-    }        
+    ImplementSerializable(SST::Merlin::ReorderRequest)
 };
 
 

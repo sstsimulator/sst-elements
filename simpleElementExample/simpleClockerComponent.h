@@ -47,24 +47,6 @@ private:
     std::string clock_frequency_str;
     int clock_count;
     
-    friend class boost::serialization::access;
-    template<class Archive>
-    void save(Archive & ar, const unsigned int version) const
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(clock_frequency_str);
-        ar & BOOST_SERIALIZATION_NVP(clock_count);
-    }
-    
-    template<class Archive>
-    void load(Archive & ar, const unsigned int version) 
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(clock_frequency_str);
-        ar & BOOST_SERIALIZATION_NVP(clock_count);
-    }
-    
-    BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 
 } // namespace SimpleClockerComponent

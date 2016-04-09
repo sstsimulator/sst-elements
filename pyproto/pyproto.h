@@ -35,15 +35,14 @@ public:
 
 private:
     PyEvent_t *pyE;
+	PyEvent() {} // For serialization only
 
-#if 0   /* No serialization! */
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version)
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Event);
+public:	
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        Event::serialize_order(ser);
     }
-#endif
+    
+    ImplementSerializable(SST::PyProtoNS::PyEvent);     
 };
 
 

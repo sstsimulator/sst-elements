@@ -38,6 +38,7 @@ class ZodiacEvent : public SST::Event {
 		ZodiacEvent();
 		virtual ZodiacEventType getEventType() = 0;
 
+		NotSerializable(ZodiacEvent)
 };
 
 }

@@ -20,14 +20,12 @@ class simpleMessage : public SST::Event
 public:
     simpleMessage() : SST::Event() { }
 
-private:
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version)
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+public:	
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        Event::serialize_order(ser);
     }
+    
+    ImplementSerializable(SST::SimpleMessageGeneratorComponent::simpleMessage);     
 };
 
 } // namespace SimpleMessageGeneratorComponent

@@ -12,7 +12,6 @@
 #ifndef SST_SCHEDULER_NODECOMPONENT_H
 #define SST_SCHEDULER_NODECOMPONENT_H
 
-#include "sst/core/serialization.h"
 #include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
@@ -96,60 +95,60 @@ namespace SST {
             std::string ID;
             std::string nodeType;
 
-            friend class boost::serialization::access;
-            template<class Archive>
-                void save(Archive & ar, const unsigned int version) const
-                {
-                    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-                    ar & BOOST_SERIALIZATION_NVP(jobNum);
-                    ar & BOOST_SERIALIZATION_NVP(nodeNum);
-                    ar & BOOST_SERIALIZATION_NVP(Scheduler);
-                    ar & BOOST_SERIALIZATION_NVP(SelfLink);
-
-                    ar & BOOST_SERIALIZATION_NVP(ParentFaultLinks);
-                    ar & BOOST_SERIALIZATION_NVP(ChildFaultLinks);
-
-                    ar & BOOST_SERIALIZATION_NVP(Faults);
-                    ar & BOOST_SERIALIZATION_NVP(errorLogProbability);
-                    ar & BOOST_SERIALIZATION_NVP(faultLogFileName);
-                    ar & BOOST_SERIALIZATION_NVP(errorLogFileName);
-                }
-
-            template<class Archive>
-                void load(Archive & ar, const unsigned int version) 
-                {
-                    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-                    ar & BOOST_SERIALIZATION_NVP(jobNum);
-                    ar & BOOST_SERIALIZATION_NVP(nodeNum);
-                    ar & BOOST_SERIALIZATION_NVP(Scheduler);
-                    ar & BOOST_SERIALIZATION_NVP(SelfLink);
-
-                    ar & BOOST_SERIALIZATION_NVP(ParentFaultLinks);
-                    ar & BOOST_SERIALIZATION_NVP(ChildFaultLinks);
-
-                    ar & BOOST_SERIALIZATION_NVP(Faults);
-                    ar & BOOST_SERIALIZATION_NVP(errorLogProbability);
-                    ar & BOOST_SERIALIZATION_NVP(faultLogFileName);
-                    ar & BOOST_SERIALIZATION_NVP(errorLogFileName);
-
-                    //restore links
-                    Scheduler -> setFunctor(new SST::Event::Handler<nodeComponent>(this,
-                                                                                   &nodeComponent::handleEvent));
-                    SelfLink -> setFunctor(new SST::Event::Handler<nodeComponent>(this,
-                                                                                  &nodeComponent::handleSelfEvent));
-
-                    for (unsigned int counter = 0; counter < ParentFaultLinks.size(); counter++) {
-                        ParentFaultLinks.at( counter ) -> setFunctor(new SST::Event::Handler<nodeComponent>(this, 
-                                                                                                            &nodeComponent::handleEvent));
-                    }
-
-
-                    for (unsigned int counter = 0; counter < ChildFaultLinks.size(); counter ++) {
-                        ChildFaultLinks.at(counter) -> setFunctor(new SST::Event::Handler<nodeComponent>(this, 
-                                                                                                         &nodeComponent::handleEvent));
-                    }
-                }
-            BOOST_SERIALIZATION_SPLIT_MEMBER()
+//            friend class boost::serialization::access;
+//            template<class Archive>
+//                void save(Archive & ar, const unsigned int version) const
+//                {
+//                    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+//                    ar & BOOST_SERIALIZATION_NVP(jobNum);
+//                    ar & BOOST_SERIALIZATION_NVP(nodeNum);
+//                    ar & BOOST_SERIALIZATION_NVP(Scheduler);
+//                    ar & BOOST_SERIALIZATION_NVP(SelfLink);
+//
+//                    ar & BOOST_SERIALIZATION_NVP(ParentFaultLinks);
+//                    ar & BOOST_SERIALIZATION_NVP(ChildFaultLinks);
+//
+//                    ar & BOOST_SERIALIZATION_NVP(Faults);
+//                    ar & BOOST_SERIALIZATION_NVP(errorLogProbability);
+//                    ar & BOOST_SERIALIZATION_NVP(faultLogFileName);
+//                    ar & BOOST_SERIALIZATION_NVP(errorLogFileName);
+//                }
+//
+//            template<class Archive>
+//                void load(Archive & ar, const unsigned int version) 
+//                {
+//                    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+//                    ar & BOOST_SERIALIZATION_NVP(jobNum);
+//                    ar & BOOST_SERIALIZATION_NVP(nodeNum);
+//                    ar & BOOST_SERIALIZATION_NVP(Scheduler);
+//                    ar & BOOST_SERIALIZATION_NVP(SelfLink);
+//
+//                    ar & BOOST_SERIALIZATION_NVP(ParentFaultLinks);
+//                    ar & BOOST_SERIALIZATION_NVP(ChildFaultLinks);
+//
+//                    ar & BOOST_SERIALIZATION_NVP(Faults);
+//                    ar & BOOST_SERIALIZATION_NVP(errorLogProbability);
+//                    ar & BOOST_SERIALIZATION_NVP(faultLogFileName);
+//                    ar & BOOST_SERIALIZATION_NVP(errorLogFileName);
+//
+//                    //restore links
+//                    Scheduler -> setFunctor(new SST::Event::Handler<nodeComponent>(this,
+//                                                                                   &nodeComponent::handleEvent));
+//                    SelfLink -> setFunctor(new SST::Event::Handler<nodeComponent>(this,
+//                                                                                  &nodeComponent::handleSelfEvent));
+//
+//                    for (unsigned int counter = 0; counter < ParentFaultLinks.size(); counter++) {
+//                        ParentFaultLinks.at( counter ) -> setFunctor(new SST::Event::Handler<nodeComponent>(this, 
+//                                                                                                            &nodeComponent::handleEvent));
+//                    }
+//
+//
+//                    for (unsigned int counter = 0; counter < ChildFaultLinks.size(); counter ++) {
+//                        ChildFaultLinks.at(counter) -> setFunctor(new SST::Event::Handler<nodeComponent>(this, 
+//                                                                                                         &nodeComponent::handleEvent));
+//                    }
+//                }
+//            BOOST_SERIALIZATION_SPLIT_MEMBER()
         };
 
     }

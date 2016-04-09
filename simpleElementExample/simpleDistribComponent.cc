@@ -137,5 +137,4 @@ bool simpleDistribComponent::tick(Cycle_t cyc)
 
 // Element Library / Serialization stuff
 
-BOOST_CLASS_EXPORT(SST::SimpleDistribComponent::simpleDistribComponent)
 

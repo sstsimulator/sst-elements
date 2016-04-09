@@ -13,7 +13,6 @@
 #ifndef _H_SST_ARIEL_EVENT
 #define _H_SST_ARIEL_EVENT
 
-#include <sst/core/serialization.h>
 
 
 namespace SST {

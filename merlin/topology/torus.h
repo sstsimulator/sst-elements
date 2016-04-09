@@ -32,6 +32,7 @@ public:
     int routing_dim;
     int* dest_loc;
     
+    topo_torus_event() {}
     topo_torus_event(int dim) {	dimensions = dim; routing_dim = 0; dest_loc = new int[dim]; }
     ~topo_torus_event() { delete[] dest_loc; }
     virtual internal_router_event* clone(void)
@@ -42,37 +43,23 @@ public:
         return tte;
     }
 
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        internal_router_event::serialize_order(ser);
+        ser & dimensions;
+        ser & routing_dim;
+
+        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+            dest_loc = new int[dimensions];
+        }
+
+        for ( int i = 0 ; i < dimensions ; i++ ) {
+            ser & dest_loc[i];
+        }
+    }
+
 private:
-    topo_torus_event() {}
 
-    friend class boost::serialization::access;
-    template<class Archive>
-    void save(Archive & ar, const unsigned int version) const
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(internal_router_event);
-        ar & BOOST_SERIALIZATION_NVP(dimensions);
-        ar & BOOST_SERIALIZATION_NVP(routing_dim);
-        for ( int i = 0 ; i < dimensions ; i++ ) {
-            ar & BOOST_SERIALIZATION_NVP(dest_loc[i]);
-        }
-    }
-
-    template<class Archive>
-    void load(Archive & ar, const unsigned int version)
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(internal_router_event);
-        ar & BOOST_SERIALIZATION_NVP(dimensions);
-        ar & BOOST_SERIALIZATION_NVP(routing_dim);
-
-        dest_loc = new int[dimensions];
-        for ( int i = 0 ; i < dimensions ; i++ ) {
-            ar & BOOST_SERIALIZATION_NVP(dest_loc[i]);
-        }
-
-    }
-
-    BOOST_SERIALIZATION_SPLIT_MEMBER()
-
+    ImplementSerializable(SST::Merlin::topo_torus_event)
 };
 
 

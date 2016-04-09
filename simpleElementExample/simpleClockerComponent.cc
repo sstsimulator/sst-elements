@@ -112,6 +112,5 @@ void simpleClockerComponent::Oneshot2Callback()
 // Serialization 
 } // namespace simpleClockerComponent
 } // namespace SST
-BOOST_CLASS_EXPORT(SST::SimpleClockerComponent::simpleClockerComponent)
 
 

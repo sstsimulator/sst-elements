@@ -64,22 +64,6 @@ private:
   uint32_t core_count;
   SST::Link** cache_link;
 
-  friend class boost::serialization::access;
-  template<class Archive>
-  void save(Archive & ar, const unsigned int version) const
-  {
-    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-//    ar & BOOST_SERIALIZATION_NVP(max_trace_count);
-  }
-
-  template<class Archive>
-  void load(Archive & ar, const unsigned int version) 
-  {
-    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-//    ar & BOOST_SERIALIZATION_NVP(max_trace_count);
-  }
-  BOOST_SERIALIZATION_SPLIT_MEMBER()
- 
 };
 
 }
