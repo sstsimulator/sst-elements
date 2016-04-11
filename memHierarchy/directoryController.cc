@@ -176,7 +176,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     clockOn = true;
 
     // Requests per cycle
-    maxRequestsPerCycle = params.find_integer("max_requests_per_cycle", -1);
+    maxRequestsPerCycle = params.find_integer("max_requests_per_cycle", 0);
 
     // Timestamp - aka cycle count
     timestamp = 0;

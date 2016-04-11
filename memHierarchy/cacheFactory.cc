@@ -211,6 +211,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     tagLatency_                 = params.find_integer("tag_access_latency_cycles",accessLatency_);
     string prefetcher           = params.find_string("prefetcher");
     mshrLatency_                = params.find_integer("mshr_latency_cycles", 0);
+    maxRequestsPerCycle_        = params.find_integer("max_requests_per_cycle",-1);
     bool snoopL1Invs            = false;
     if (cf_.L1_) snoopL1Invs    = (params.find_integer("snoop_l1_invalidations", 0)) ? true : false;
     int dAddr                   = params.find_integer("debug_addr",-1);
@@ -219,6 +220,11 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     DEBUG_ADDR = (Addr)dAddr;
     int lowerIsNoninclusive        = params.find_integer("lower_is_noninclusive", 0);
     
+    if (maxRequestsPerCycle_ == 0) {
+        maxRequestsPerCycle_ = -1;  // Simplify compare
+    }
+    requestsThisCycle_ = 0;
+
     /* --------------- Check parameters -------------*/
     if (accessLatency_ < 1) d_->fatal(CALL_INFO,-1, "%s, Invalid param: access_latency_cycles - must be at least 1. You specified %" PRIu64 "\n", 
             this->Component::getName().c_str(), accessLatency_);

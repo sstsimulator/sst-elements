@@ -77,6 +77,7 @@ static const ElementInfoParam cache_params[] = {
     {"coherence_protocol",      "Optional, string - Coherence protocol. Options: MESI, MSI, NONE", "MESI"},
     {"replacement_policy",      "Optional, string - Replacement policy of the cache array. Options:  LRU[least-recently-used], LFU[least-frequently-used], Random, MRU[most-recently-used], or NMRU[not-most-recently-used]. ", "lru"},
     {"cache_type",              "Optional, string - Cache type. Options: inclusive cache ('inclusive', required for L1s), non-inclusive cache ('noninclusive') or non-inclusive cache with a directory ('noninclusive_with_directory', required for non-inclusive caches with multiple upper level caches directly above them),", "inclusive"},
+    {"max_requests_per_cycle",  "Maximum number of requests to accept per cycle. 0 or negative is unlimited.", "-1"},
     {"noninclusive_directory_repl",    "Optional, string - If non-inclusive directory exists, its replacement policy. LRU, LFU, MRU, NMRU, or RANDOM. (not case-sensitive).", "LRU"},
     {"noninclusive_directory_entries", "Optional, int - Number of entries in the directory. Must be at least 1 if the non-inclusive directory exists.", "0"},
     {"noninclusive_directory_associativity", "Optional, int - For a set-associative directory, number of ways.", "1"},
@@ -485,7 +486,7 @@ static SubComponent* create_Mem_RequestLimiter(Component* comp, Params& params){
 }
 
 static const ElementInfoParam requestLimiter_params[] = {
-    {"max_requests_per_cycle",  "Maximum number of requests to accept per cycle", "1"},
+    {"max_requests_per_cycle",  "Maximum number of requests to accept per cycle. 0 or negative is unlimited", "1"},
     {"backend",                 "Membackend to be limited by the requestLimiter", "memHierarchy.simpleMem"},
     {NULL, NULL}
 };
@@ -642,7 +643,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"net_memory_name",         "For directories connected to a memory over the network: name of the memory this directory owns", ""},
     {"access_latency_cycles",   "Latency of directory access in cycles", "0"},
     {"mshr_latency_cycles",     "Latency of mshr access in cycles", "0"},
-    {"max_requests_per_cycle",  "Maximum number of requests to process per cycle (0 or negative is unlimited)", "-1"},
+    {"max_requests_per_cycle",  "Maximum number of requests to process per cycle (0 or negative is unlimited)", "0"},
     {"direct_mem_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether directory has a direct connection to memory (1) or is connected via a network (0)","1"},
     {"network_num_vc",          "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"statistics",              "DEPRECATED - Use the Statistics API to get statistics", "0"},

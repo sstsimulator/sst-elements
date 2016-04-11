@@ -331,14 +331,14 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
 }
 
 
-void Cache::handlePrefetchEvent(SST::Event* event) {
-    selfLink_->send(1, event);
+void Cache::handlePrefetchEvent(SST::Event* ev) {
+    selfLink_->send(1, ev);
 }
 
 /* Handler for self events, namely prefetches */
-void Cache::handleSelfEvent(SST::Event* event) {
-    MemEvent* ev = static_cast<MemEvent*>(event);
-    ev->setBaseAddr(toBaseAddr(ev->getAddr()));
+void Cache::handleSelfEvent(SST::Event* ev) {
+    MemEvent* event = static_cast<MemEvent*>(ev);
+    event->setBaseAddr(toBaseAddr(event->getAddr()));
     
     if (!clockIsOn_) {
         Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
@@ -351,9 +351,14 @@ void Cache::handleSelfEvent(SST::Event* event) {
         //d_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), time, timestamp_, getCurrentSimTimeNano());
         clockIsOn_ = true;
     }
-    
-    if (ev->getCmd() != NULLCMD && !mshr_->isFull() && (cf_.L1_ || !mshr_->isAlmostFull()))
-        processEvent(ev, false);
+
+    // Drop prefetch if we can't handle it immediately or handling it would fill the mshr
+    if (requestsThisCycle_ != maxRequestsPerCycle_) {
+        if (event->getCmd() != NULLCMD && !mshr_->isFull() && (cf_.L1_ || !mshr_->isAlmostFull())) {
+            requestsThisCycle_++;
+            processEvent(event, false);
+        }
+    }
 }
 
 
@@ -363,8 +368,8 @@ void Cache::init(unsigned int phase) {
         bottomNetworkLink_->init(phase);
             
         /*  */
-        while(MemEvent *ev = bottomNetworkLink_->recvInitData()) {
-            delete ev;
+        while(MemEvent *event = bottomNetworkLink_->recvInitData()) {
+            delete event;
         }
         return;
     }
@@ -451,5 +456,10 @@ void Cache::processIncomingEvent(SST::Event* ev) {
         //d_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), time, timestamp_, getCurrentSimTimeNano());
         clockIsOn_ = true;
     }
-    processEvent(event, false);
+    if (requestsThisCycle_ == maxRequestsPerCycle_) {
+        requestBuffer_.push(event);
+    } else {
+        requestsThisCycle_++;
+        processEvent(event, false);
+    }
 }

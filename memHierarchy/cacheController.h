@@ -206,6 +206,18 @@ private:
         // MSHR occupancy
         statMSHROccupancy->addData(mshr_->getSize());
         
+        // If we have waiting requests send them now
+        requestsThisCycle_ = 0;
+        while (!requestBuffer_.empty()) {
+            if (requestsThisCycle_ == maxRequestsPerCycle_) {
+                break;
+            }
+            processEvent(requestBuffer_.front(), false);
+            requestBuffer_.pop();
+            requestsThisCycle_++;
+            queuesEmpty = false;
+        }
+
         // Disable lower-level cache clocks if they're idle
         if (queuesEmpty && nicIdle && clockIsOn_) {
             clockIsOn_ = false;
@@ -282,11 +294,13 @@ private:
     MSHR*                   mshr_;
     MSHR*                   mshrNoncacheable_;
     CoherencyController*    coherenceMgr;
-    queue<pair<SST::Event*, uint64> >   incomingEventQueue_;
     uint64                  accessLatency_;
     uint64                  tagLatency_;
     uint64                  mshrLatency_;
     uint64                  timestamp_;
+    int                     maxRequestsPerCycle_;
+    int                     requestsThisCycle_;
+    std::queue<MemEvent*>   requestBuffer_;
     Clock::Handler<Cache>*  clockHandler_;
     TimeConverter*          defaultTimeBase_;
     std::map<string, LinkId_t>     nameMap_;
