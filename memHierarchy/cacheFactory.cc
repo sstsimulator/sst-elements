@@ -46,21 +46,44 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     if (debugLevel < 0 || debugLevel > 10)     dbg->fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
     dbg->debug(_INFO_,"\n--------------------------- Initializing [Memory Hierarchy] --------------------------- \n\n");
 
+    // Find deprecated parameters and warn/fatal
+    // Currently deprecated parameters are: 'LLC', statistcs, network_num_vc, directory_at_next_level, bottom_network, top_network
+    Output out("", 1, 0, Output::STDOUT);
+    bool found;
+    params.find_integer("LLC", 0, found);
+    if (found) {
+        out.output("cacheFactory, ** Found deprecated parameter: LLC ** The value of this parameter is now auto-detected. Remove this parameter from your imput deck to eliminate this message.\n");
+    }
+    params.find_integer("bottom_network", 0, found);
+    if (found) {
+        out.output("cacheFactory, ** Found deprecated parameter: bottom_network ** The value of this parameter is now auto-detected. Remove this parameter from your imput deck to eliminate this message.\n");
+    }
+    params.find_integer("top_network", 0, found);
+    if (found) {
+        out.output("cacheFactory, ** Found deprecated parameter: top_network ** The value of this parameter is now auto-detected. Remove this parameter from your imput deck to eliminate this message.\n");
+    }
+    params.find_integer("directory_at_next_level", 0, found);
+    if (found) {
+        out.output("cacheFactory, ** Found deprecated parameter: directoy_at_next_level ** The value of this parameter is now auto-detected. Remove this parameter from your imput deck to eliminate this message.\n");
+    }
+    params.find_integer("network_num_vc", 0, found);
+    if (found) {
+        out.output("cacheFactory, ** Found deprecated parameter: network_num_vc ** MemHierarchy does not use multiple virtual channels. Remove this parameter from your input deck to eliminate this message.\n");
+    }
+
     /* --------------- Get Parameters --------------- */
     string frequency            = params.find_string("cache_frequency", "" );            //Hertz
     string replacement          = params.find_string("replacement_policy", "LRU");
     int associativity           = params.find_integer("associativity", -1);
     int hashFunc                = params.find_integer("hash_function", 0);
     string sizeStr              = params.find_string("cache_size", "");                  //Bytes
-    int lineSize                = params.find_integer("cache_line_size", -1);            //Bytes
+    int lineSize                = params.find_integer("cache_line_size", 64);            //Bytes
     int accessLatency           = params.find_integer("access_latency_cycles", -1);      //ns
     int mshrSize                = params.find_integer("mshr_num_entries", -1);           //number of entries
     string preF                 = params.find_string("prefetcher");
     int L1int                   = params.find_integer("L1", 0);
     int LLint                   = params.find_integer("LL", 0);
-    string coherenceProtocol    = params.find_string("coherence_protocol", "");
-    string bottomNetwork        = params.find_string("bottom_network", "");
-    string topNetwork           = params.find_string("top_network", "");
+    string coherenceProtocol    = params.find_string("coherence_protocol", "mesi");
     int noncacheableRequests    = params.find_integer("force_noncacheable_reqs", 0);
     string cacheType            = params.find_string("cache_type", "inclusive");
     SimTime_t maxWaitTime       = params.find_integer("maxRequestDelay", 0);  // Nanoseconds
@@ -74,8 +97,6 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     boost::algorithm::to_lower(coherenceProtocol);
     boost::algorithm::to_lower(replacement);
     boost::algorithm::to_lower(dirReplacement);
-    boost::algorithm::to_lower(bottomNetwork);
-    boost::algorithm::to_lower(topNetwork);
     boost::algorithm::to_lower(cacheType);
 
     /* Check user specified all required fields */
@@ -122,7 +143,12 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
       ht = new PureIdHashFunction;
     }
     
-    long cacheSize  = SST::MemHierarchy::convertToBytes(sizeStr);
+    fixByteUnits(sizeStr); // Convert e.g., KB to KiB for unit alg
+    UnitAlgebra ua(sizeStr);
+    if (!ua.hasUnits("B")) {
+        dbg->fatal(CALL_INFO, -1, "Invalid param: cache_size - must have units of bytes (B). SI units are ok. You specified %s\n", sizeStr.c_str());
+    }
+    uint64_t cacheSize = ua.getRoundedValue();
     uint numLines = cacheSize/lineSize;
     uint protocol = 0;
     
@@ -185,6 +211,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     tagLatency_                 = params.find_integer("tag_access_latency_cycles",accessLatency_);
     string prefetcher           = params.find_string("prefetcher");
     mshrLatency_                = params.find_integer("mshr_latency_cycles", 0);
+    maxRequestsPerCycle_        = params.find_integer("max_requests_per_cycle",-1);
     bool snoopL1Invs            = false;
     if (cf_.L1_) snoopL1Invs    = (params.find_integer("snoop_l1_invalidations", 0)) ? true : false;
     int dAddr                   = params.find_integer("debug_addr",-1);
@@ -193,6 +220,11 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     DEBUG_ADDR = (Addr)dAddr;
     int lowerIsNoninclusive        = params.find_integer("lower_is_noninclusive", 0);
     
+    if (maxRequestsPerCycle_ == 0) {
+        maxRequestsPerCycle_ = -1;  // Simplify compare
+    }
+    requestsThisCycle_ = 0;
+
     /* --------------- Check parameters -------------*/
     if (accessLatency_ < 1) d_->fatal(CALL_INFO,-1, "%s, Invalid param: access_latency_cycles - must be at least 1. You specified %" PRIu64 "\n", 
             this->Component::getName().c_str(), accessLatency_);
@@ -384,11 +416,8 @@ void Cache::configureLinks(Params &params) {
         // Configure low link
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "cache";
-        myInfo.link_bandwidth = params.find_string("network_bw", "1GB/s");
+        myInfo.link_bandwidth = params.find_string("network_bw", "80GB/s");
 	myInfo.num_vcs = 1;
-        if (params.find_integer("network_num_vc", 1) != 1) {
-            d_->debug(_WARNING_, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
-        }
         myInfo.name = getName();
         myInfo.network_addr = params.find_integer("network_address");
         myInfo.type = MemNIC::TypeCacheToCache; 
@@ -414,11 +443,8 @@ void Cache::configureLinks(Params &params) {
         // Configure low link
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory";
-        myInfo.link_bandwidth = params.find_string("network_bw", "1GB/s");
+        myInfo.link_bandwidth = params.find_string("network_bw", "80GB/s");
 	myInfo.num_vcs = 1;
-        if (params.find_integer("network_num_vc", 1) != 1) {
-            d_->debug(_WARNING_, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
-        }
         myInfo.name = getName();
         myInfo.network_addr = params.find_integer("network_address");
         myInfo.type = MemNIC::TypeCache; 
@@ -459,11 +485,8 @@ void Cache::configureLinks(Params &params) {
 
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory";
-        myInfo.link_bandwidth = params.find_string("network_bw", "1GB/s");
+        myInfo.link_bandwidth = params.find_string("network_bw", "80GB/s");
 	myInfo.num_vcs = 1;
-        if (params.find_integer("network_num_vc", 1) != 1) {
-            d_->debug(_WARNING_, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
-        }
         myInfo.name = getName();
         myInfo.network_addr = params.find_integer("network_address");
         myInfo.type = MemNIC::TypeNetworkCache; 
