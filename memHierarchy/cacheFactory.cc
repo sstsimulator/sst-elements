@@ -218,8 +218,17 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     if (dAddr != -1) DEBUG_ALL = false;
     else DEBUG_ALL = true;
     DEBUG_ADDR = (Addr)dAddr;
-    int lowerIsNoninclusive        = params.find_integer("lower_is_noninclusive", 0);
+    int lowerIsNoninclusive     = params.find_integer("lower_is_noninclusive", 0);
+    bool found;
     
+    maxOutstandingPrefetch_     = params.find_integer("max_outstanding_prefetch", cf_.MSHRSize_ / 2, found);
+    dropPrefetchLevel_          = params.find_integer("drop_prefetch_mshr_level", cf_.MSHRSize_ - 2, found);
+    if (!found && cf_.MSHRSize_ == 2) { // MSHR min size is 2
+        dropPrefetchLevel_ = cf_.MSHRSize_ - 1;
+    } else if (found && dropPrefetchLevel_ >= cf_.MSHRSize_) {
+        dropPrefetchLevel_ = cf_.MSHRSize_ - 1; // Always have to leave one free for deadlock avoidance
+    }
+
     if (maxRequestsPerCycle_ == 0) {
         maxRequestsPerCycle_ = -1;  // Simplify compare
     }
@@ -520,7 +529,7 @@ void Cache::configureLinks(Params &params) {
     }
 
     // Configure self link for prefetch/listener events
-    selfLink_ = configureSelfLink("Self", "50ps", new Event::Handler<Cache>(this, &Cache::handleSelfEvent));
+    prefetchLink_ = configureSelfLink("Self", "50ps", new Event::Handler<Cache>(this, &Cache::processPrefetchEvent));
 }
 
 

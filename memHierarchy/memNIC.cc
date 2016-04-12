@@ -211,7 +211,11 @@ bool MemNIC::clock(void)
                 }
 #endif
                 sendQueue.pop_front();
+            } else {
+                break;
             }
+        } else {
+            break;
         }
     }
 

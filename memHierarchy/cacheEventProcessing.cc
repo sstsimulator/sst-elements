@@ -332,11 +332,11 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
 
 
 void Cache::handlePrefetchEvent(SST::Event* ev) {
-    selfLink_->send(1, ev);
+    prefetchLink_->send(1, ev);
 }
 
 /* Handler for self events, namely prefetches */
-void Cache::handleSelfEvent(SST::Event* ev) {
+void Cache::processPrefetchEvent(SST::Event* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);
     event->setBaseAddr(toBaseAddr(event->getAddr()));
     
@@ -352,9 +352,9 @@ void Cache::handleSelfEvent(SST::Event* ev) {
         clockIsOn_ = true;
     }
 
-    // Drop prefetch if we can't handle it immediately or handling it would fill the mshr
+    // Drop prefetch if we can't handle it immediately or handling it would violate maxOustandingPrefetch or dropPrefetchLevel
     if (requestsThisCycle_ != maxRequestsPerCycle_) {
-        if (event->getCmd() != NULLCMD && !mshr_->isFull() && (cf_.L1_ || !mshr_->isAlmostFull())) {
+        if (event->getCmd() != NULLCMD && mshr_->getSize() < dropPrefetchLevel_ && mshr_->getPrefetchCount() < maxOutstandingPrefetch_) { 
             requestsThisCycle_++;
             processEvent(event, false);
         }

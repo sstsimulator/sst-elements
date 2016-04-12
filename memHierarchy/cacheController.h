@@ -91,8 +91,8 @@ private:
     /** Handler for incoming prefetching events. */
     void handlePrefetchEvent(SST::Event *event);
     
-    /** Self-Event handler for this component */
-    void handleSelfEvent(SST::Event *event);
+    /** Self-Event prefetch handler for this component */
+    void processPrefetchEvent(SST::Event *event);
     
     /** Function processes incomming access requests from HiLv$ or the CPU
         It appropriately redirects requests to Top and/or Bottom controllers.  */
@@ -283,7 +283,7 @@ private:
     CacheListener*          listener_;
     vector<Link*>*          lowNetPorts_;
     Link*                   highNetPort_;
-    Link*                   selfLink_;
+    Link*                   prefetchLink_;
     Link*                   maxWaitSelfLink_;
     MemNIC*                 bottomNetworkLink_;
     MemNIC*                 topNetworkLink_;
@@ -298,6 +298,8 @@ private:
     uint64                  tagLatency_;
     uint64                  mshrLatency_;
     uint64                  timestamp_;
+    int                     dropPrefetchLevel_;
+    int                     maxOutstandingPrefetch_;
     int                     maxRequestsPerCycle_;
     int                     requestsThisCycle_;
     std::queue<MemEvent*>   requestBuffer_;

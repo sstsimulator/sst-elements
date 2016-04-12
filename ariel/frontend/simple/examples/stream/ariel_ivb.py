@@ -54,7 +54,6 @@ ringstop_params = {
 }
 
 l1_params = {
-	"clock" : clock,
 	"coherence_protocol": coherence_protocol,
         "cache_frequency": clock,
         "replacement_policy": "lru",
@@ -62,15 +61,12 @@ l1_params = {
         "maxRequestDelay" : "1000000",
         "associativity": 8,
         "cache_line_size": 64,
-        "low_network_links": 1,
         "access_latency_cycles": 4,
        	"L1": 1,
-       	"statistics": 1,
        	"debug": 0
 }
 
 l2_params = {
-	"clock" : clock,
         "coherence_protocol": coherence_protocol,
         "cache_frequency": clock,
         "replacement_policy": "lru",
@@ -78,14 +74,9 @@ l2_params = {
         "associativity": 8,
         "cache_line_size": 64,
         "access_latency_cycles": 8,
-        "low_network_links": 1,
-        "high_network_links": 1,
         "mshr_num_entries" : 16,
         "L1": 0,
-        "statistics": 1,
         "debug": 0,
-	"bottom_network" : "cache",
-	"top_network" : ""
 }
 
 l3_params = {
@@ -100,30 +91,27 @@ l3_params = {
       	"L1" : "0",
       	"cache_size" : "128 KB",
       	"mshr_num_entries" : "4096",
-      	"top_network" : "cache",
-      	"bottom_network" : "directory",
       	"num_cache_slices" : str(groups * l3cache_blocks_per_group),
       	"slice_allocation_policy" : "rr"
 }
 
 mem_params = {
 	"coherence_protocol" : coherence_protocol,
-	"backend.access_time" : "30ns",
+        "backend" : "memHierarchy.requestLimiter",
+        "backend.backend.access_time" : "30ns",
 	"rangeStart" : 0,
 	"backend.mem_size" : memory_capacity / (groups * memory_controllers_per_group),
 	"clock" : memory_clock,
-	"statistics" : 1
 }
 
 dc_params = {
 	"coherence_protocol": coherence_protocol,
         "network_bw": memory_network_bandwidth,
-        "interleave_size": mem_interleave_size/1024,
-        "interleave_step": (groups * memory_controllers_per_group) * (mem_interleave_size / 1024),
+        "interleave_size": str(mem_interleave_size) + "B",
+        "interleave_step": str((groups * memory_controllers_per_group) * mem_interleave_size) + "B",
         "entry_cache_size": 256*1024*1024, #Entry cache size of mem/blocksize
         "clock": memory_clock,
        	"debug": 1,
-       	"statistics": 1,
 }
 
 print "Configuring Ariel processor model (" + str(groups * cores_per_group) + " cores)..."

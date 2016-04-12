@@ -28,7 +28,6 @@
 #include "memNIC.h"
 #include "membackend/memBackend.h"
 #include "membackend/simpleMemBackend.h"
-#include "membackend/memRequestLimiter.h"
 #include "membackend/vaultSimBackend.h"
 #include "networkMemInspector.h"
 
@@ -87,6 +86,8 @@ static const ElementInfoParam cache_params[] = {
     {"tag_access_latency_cycles", "Optional, int - Latency (in cycles) to access tag portion only of cache. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
     {"mshr_latency_cycles",     "Optional, int - Latency (in cycles) to process responses in the cache (MSHR response hits). If not specified, simple intrapolation is used based on the cache access latency", "-1"},
     {"prefetcher",              "Optional, string - Name of prefetcher module", ""},
+    {"max_outstanding_prefetch","Optional, int - Maximum number of prefetch misses that can be outstanding, additional prefetches will be dropped/NACKed. Default is 1/2 of MSHR entries.", "0.5*mshr_num_entries"},
+    {"drop_prefetch_mshr_level","Optional, int - Drop/NACK prefetches if the number of in-use mshrs is greater than or equal to this number. Default is mshr_num_entries - 2.", "mshr_num_entries-2"},
     {"num_cache_slices",        "Optional, int - For a distributed, shared cache, total number of cache slices", "1"},
     {"slice_id",                "Optional, int - For distributed, shared caches, unique ID for this cache slice", "0"},
     {"slice_allocation_policy", "Optional, string - Policy for allocating addresses among distributed shared cache. Options: rr[round-robin]", "rr"},
