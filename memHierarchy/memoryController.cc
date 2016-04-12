@@ -96,6 +96,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     string link_lat         = params.find_string("direct_link_latency", "100 ns");
     doNotBack_              = (params.find_integer("do_not_back",0) == 1);
 
+    // Requests per cycle -> limit to 1 per cycle for simpleMem, unlimited otherwise
+    maxReqsPerCycle_        = params.find_integer("max_requests_per_cycle", -1, found);
+    if (!found && backendName == "memHierarchy.simpleMem") {
+        maxReqsPerCycle_ = 1;
+    } else if (maxReqsPerCycle_ == 0) {
+        maxReqsPerCycle_ = -1;
+    }
+
     int addr = params.find_integer("network_address");
     std::string net_bw = params.find_string("network_bw", "80GB/s");
     
@@ -220,10 +228,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
 void MemController::handleEvent(SST::Event* event) {
     MemEvent *ev = static_cast<MemEvent*>(event);
+#ifdef __SST_DEBUG_OUTPUT__
     dbg.debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L10_,"Memory Controller: %s - Event Received. Cmd = %s\n", getName().c_str(), CommandString[ev->getCmd()]);
     dbg.debug(_L10_,"Event info: Addr: 0x%" PRIx64 ", dst = %s, src = %s, rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
         ev->getBaseAddr(), ev->getDst().c_str(), ev->getSrc().c_str(), ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
+#endif
     Command cmd = ev->getCmd();
 
     // Notify our listeners that we have received an event
@@ -281,7 +291,9 @@ void MemController::addRequest(MemEvent* ev) {
     requestPool_.insert(req);
     requestQueue_.push_back(req);
     
+#ifdef __SST_DEBUG_OUTPUT__
     dbg.debug(_L10_,"Creating DRAM Request. BsAddr = %" PRIx64 ", Size: %" PRIu64 ", %s\n", req->baseAddr_, req->size_, CommandString[cmd]);
+#endif
 }
 
 
@@ -291,22 +303,29 @@ bool MemController::clock(Cycle_t cycle) {
     backend_->clock();
     if (networkLink_) networkLink_->clock();
 
+    int reqsThisCycle = 0;
     while ( !requestQueue_.empty()) {
+        if (reqsThisCycle == maxReqsPerCycle_) {
+            break;
+        }
         DRAMReq *req = requestQueue_.front();
         req->status_ = DRAMReq::PROCESSING;
 
         bool issued = backend_->issueRequest(req);
         if (issued) {
-		cyclesWithIssue->addData(1);
-	} else {
-		cyclesAttemptIssueButRejected->addData(1);
-		break;
+    	    cyclesWithIssue->addData(1);
+        } else {
+    	    cyclesAttemptIssueButRejected->addData(1);
+	    break;
 	}
 
+	reqsThisCycle++;
         req->amtInProcess_ += requestSize_;
 
         if (req->amtInProcess_ >= req->size_) {
+#ifdef __SST_DEBUG_OUTPUT__
             dbg.debug(_L10_, "Completed issue of request\n");
+#endif
             performRequest(req);
             requestQueue_.pop_front();
         }
@@ -325,8 +344,9 @@ void MemController::performRequest(DRAMReq* req) {
     Addr localAddr;
 
     if (req->cmd_ == PutM) {  /* Write request to memory */
+#ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, req->reqEvent_->getSize(), noncacheable ? "true" : "false");
-	
+#endif	
         if (doNotBack_) return;
         
         for ( size_t i = 0 ; i < req->reqEvent_->getSize() ; i++) 
@@ -336,8 +356,9 @@ void MemController::performRequest(DRAMReq* req) {
         Addr localAbsAddr = convertAddressToLocalAddress(req->reqEvent_->getAddr());
         
         if (noncacheable && req->cmd_ == GetX) {
+#ifdef __SST_DEBUG_OUTPUT__
             dbg.debug(_L10_,"WRITE. Noncacheable request, Addr = %" PRIx64 ", Request size = %i\n", localAbsAddr, req->reqEvent_->getSize());
-            
+#endif            
             if (!doNotBack_) {
                 for ( size_t i = 0 ; i < req->reqEvent_->getSize() ; i++)
                     memBuffer_[localAbsAddr + i] = req->reqEvent_->getPayload()[i];
@@ -354,8 +375,9 @@ void MemController::performRequest(DRAMReq* req) {
 			(uint32_t) req->respEvent_->getSize(), (uint32_t) req->reqEvent_->getSize());
         }
 
+#ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L10_, "READ.  Addr = %" PRIx64 ", Request size = %i\n", localAddr, req->reqEvent_->getSize());
-    
+#endif    
         for ( size_t i = 0 ; i < req->respEvent_->getSize() ; i++) 
             req->respEvent_->getPayload()[i] = doNotBack_ ? 0 : memBuffer_[localAddr + i];
 
@@ -384,8 +406,10 @@ void MemController::sendResponse(DRAMReq* req) {
 
 
 void MemController::printMemory(DRAMReq* req, Addr localAddr) {
+#ifdef __SST_DEBUG_OUTPUT__
     dbg.debug(_L10_,"Resp. Data: ");
     for (unsigned int i = 0; i < cacheLineSize_; i++) dbg.debug(_L10_,"%d",(int)memBuffer_[localAddr + i]);
+#endif
 }
 
 
@@ -394,8 +418,9 @@ void MemController::handleMemResponse(DRAMReq* req) {
     req->amtProcessed_ += requestSize_;
     if (req->amtProcessed_ >= req->size_) req->status_ = DRAMReq::RETURNED;
 
+#ifdef __SST_DEBUG_OUTPUT__
     dbg.debug(_L10_, "Finishing processing.  BaseAddr = %" PRIx64 " %s\n", req->baseAddr_, req->status_ == DRAMReq::RETURNED ? "RETURNED" : "");
-
+#endif
     if (DRAMReq::RETURNED == req->status_) sendResponse(req);
 }
 
@@ -421,7 +446,9 @@ void MemController::init(unsigned int phase) {
             }
             /* Push data to memory */
             if (GetX == me->getCmd()) {
+#ifdef __SST_DEBUG_OUTPUT__
                 dbg.debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 "\n", getName().c_str(), me->getAddr());
+#endif
                 if (isRequestAddressValid(me) && !doNotBack_) {
                     Addr localAddr = convertAddressToLocalAddress(me->getAddr());
                     for ( size_t i = 0 ; i < me->getSize() ; i++) {
@@ -441,7 +468,9 @@ void MemController::init(unsigned int phase) {
             /* Push data to memory */
             if (ev->getDst() == getName()) {
                 if (GetX == ev->getCmd()) {
+#ifdef __SST_DEBUG_OUTPUT__
                     dbg.debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 "\n", getName().c_str(), ev->getAddr());
+#endif
                     if (isRequestAddressValid(ev) && !doNotBack_) {
                         Addr localAddr = convertAddressToLocalAddress(ev->getAddr());
                         for ( size_t i = 0 ; i < ev->getSize() ; i++) {

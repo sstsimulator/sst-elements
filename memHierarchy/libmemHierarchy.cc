@@ -426,6 +426,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"backend",             "Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
     {"coherence_protocol",  "Coherence protocol.  Supported: MESI (default), MSI. Only used when a directory controller is not present.", "MESI"},
     {"request_width",       "Size of a DRAM request in bytes. Default 64", "64"},
+    {"max_requests_per_cycle",  "Maximum number of requests to accept per cycle. 0 or negative is unlimited. Default is 1 for simpleMem backend, unlimited otherwise.", "1"},
     {"range_start",         "Address where physical memory begins", "0"},
     {"interleave_size",     "Size of interleaved chunks in bytes with units (e.g., 64B or 4KB). Note: This definition has CHANGED (used to be specified in KB)", "0B"},
     {"interleave_step",     "Distance between sucessive interleaved chunks on this controller in bytes (e.g., 512B or 16KB) Note: This definition has CHANGED (used to be specified in KB)", "0B"},
@@ -477,17 +478,6 @@ static SubComponent* create_Mem_SimpleSim(Component* comp, Params& params){
 static const ElementInfoParam simpleMem_params[] = {
     {"verbose",          "Sets the verbosity of the backend output", "0" },
     {"access_time",     "Constant latency of memory operation.", "100 ns"},
-    {NULL, NULL}
-};
-
-
-static SubComponent* create_Mem_RequestLimiter(Component* comp, Params& params){
-    return new MemoryRequestLimiter(comp, params);
-}
-
-static const ElementInfoParam requestLimiter_params[] = {
-    {"max_requests_per_cycle",  "Maximum number of requests to accept per cycle. 0 or negative is unlimited", "1"},
-    {"backend",                 "Membackend to be limited by the requestLimiter", "memHierarchy.simpleMem"},
     {NULL, NULL}
 };
 
@@ -721,15 +711,6 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL, /* Advanced help */
         create_Mem_SimpleSim, /* Module Alloc w/ params */
         simpleMem_params,
-        NULL, /* statistics */
-        "SST::MemHierarchy::MemBackend"
-    },
-    {
-        "requestLimiter",
-        "Request limiter, can be placed between controller and another backend",
-        NULL, /* Advanced help */
-        create_Mem_RequestLimiter, /* Module Alloc w/ params */
-        requestLimiter_params,
         NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
