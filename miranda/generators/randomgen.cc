@@ -28,7 +28,9 @@ RandomGenerator::RandomGenerator( Component* owner, Params& params ) :
 	reqLength  = (uint64_t) params.find_integer("length", 8);
 	maxAddr    = (uint64_t) params.find_integer("max_address", 524288);
 
-	rng = new MarsagliaRNG(11, 31);
+	const uint64_t newSeed = (uint64_t) params.find_integer("seed", 1111);
+	rng = new MarsagliaRNG();
+        rng.seed(newSeed);
 
 	out->verbose(CALL_INFO, 1, 0, "Will issue %" PRIu64 " operations\n", issueCount);
 	out->verbose(CALL_INFO, 1, 0, "Request lengths: %" PRIu64 " bytes\n", reqLength);
