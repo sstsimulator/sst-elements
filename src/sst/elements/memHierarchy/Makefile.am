@@ -114,6 +114,10 @@ AM_CPPFLAGS += $(DRAMSIM_CPPFLAGS) -DHAVE_LIBDRAMSIM
 libmemHierarchy_la_SOURCES += membackend/pagedMultiBackend.cc \
 	membackend/pagedMultiBackend.h
 nobase_sst_HEADERS += membackend/pagedMultiBackend.h
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) DRAMSIM LIBDIR=$(DRAMSIM_LIBDIR)
+
 endif
 
 if HAVE_HYBRIDSIM
