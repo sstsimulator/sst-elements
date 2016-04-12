@@ -69,7 +69,7 @@ struct pageInfo {
 	if (limitTouch) {
 	  if (touched > 64) touched == 64;
 	}
-        
+
         // detect scans
         addr >>= 6; // cacheline
         if (lastRef != 0) {
@@ -190,6 +190,26 @@ private:
     string accStatsPrefix;
     int dumpNum;
 
+    // swap tracking stuff
+    const bool modelSwaps = 1;
+    map<uint64_t, list<DRAMReq*> > waitingReqs;
+public:    
+    class MemCtrlEvent;
+private:    
+    typedef map<MemCtrlEvent *, pageInfo*> evToPage_t;
+    typedef map<DRAMReq *, pageInfo*> reqToPage_t;
+    evToPage_t swapToSlow_Reads;
+    evToPage_t swapToFast_Writes;
+    reqToPage_t swapToSlow_Writes;
+    reqToPage_t swapToFast_Reads;
+
+    void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
+    void swapDone(pageInfo *, uint64_t);
+    void moveToFast(pageInfo &);
+    void moveToSlow(pageInfo *);
+    bool pageIsSwapping(const pageInfo &page);
+
+public:    
     class MemCtrlEvent : public SST::Event {
     public:
         MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
