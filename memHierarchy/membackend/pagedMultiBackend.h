@@ -69,7 +69,7 @@ struct pageInfo {
 	if (limitTouch) {
 	  if (touched > 64) touched == 64;
 	}
-        
+
         // detect scans
         addr >>= 6; // cacheline
         if (lastRef != 0) {

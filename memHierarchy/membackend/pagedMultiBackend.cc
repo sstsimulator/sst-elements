@@ -27,10 +27,10 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
     string access = params.find_string("access_time", "35ns");
     self_link = ctrl->configureSelfLink("Self", access,
                                         new Event::Handler<pagedMultiMemory>(this, &pagedMultiMemory::handleSelfEvent));
-    
+
     maxFastPages = (unsigned int)params.find_integer("max_fast_pages", 256);
     pageShift = (unsigned int)params.find_integer("page_shift", 12);
-    
+
     accStatsPrefix = params.find_string("accStatsPrefix", "");
     dumpNum = 0;
 
