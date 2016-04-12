@@ -254,6 +254,11 @@ void Cache::processEvent(MemEvent* event, bool replay) {
             if (startTimeList.find(event) == startTimeList.end()) startTimeList.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
 
             if (mshr_->isHit(baseAddr) && canStall) {
+                // Drop local prefetches if there are outstanding requests for the same address NOTE this includes replacements/inv/etc.
+                if (event->isPrefetch() && event->getRqstr() == this->getName()) {
+                    delete event;
+                    break;
+                }
                 if (processRequestInMSHR(baseAddr, event)) {
 #ifdef __SST_DEBUG_OUTPUT__
                     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
@@ -357,7 +362,11 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
         if (event->getCmd() != NULLCMD && mshr_->getSize() < dropPrefetchLevel_ && mshr_->getPrefetchCount() < maxOutstandingPrefetch_) { 
             requestsThisCycle_++;
             processEvent(event, false);
+        } else {
+            delete event;
         }
+    } else {
+        delete event;
     }
 }
 
