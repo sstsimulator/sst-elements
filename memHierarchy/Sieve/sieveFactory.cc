@@ -46,7 +46,12 @@ Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params) {
     if(sizeStr.empty())             output->fatal(CALL_INFO, -1, "Param not specified: cache_size\n");
     if(-1 == lineSize)              output->fatal(CALL_INFO, -1, "Param not specified: cache_line_size - number of bytes in a cacheline (block size)\n");
     
-    long cacheSize = SST::MemHierarchy::convertToBytes(sizeStr);
+    fixByteUnits(sizeStr);
+    UnitAlgebra ua(sizeStr);
+    if (!ua.hasUnits("B")) {
+        output->fatal(CALL_INFO, -1, "Invalid param: cache_size - must have units of bytes (e.g., B, KB,etc.)\n");
+    }
+    uint64_t cacheSize = ua.getRoundedValue();
     uint numLines = cacheSize/lineSize;
 
     /* ---------------- Initialization ----------------- */

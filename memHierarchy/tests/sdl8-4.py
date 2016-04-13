@@ -135,7 +135,6 @@ comp_l3cache.addParams({
       "debug" : "",
       "network_address" : "1",
       "network_bw" : "25GB/s",
-      "directory_at_next_level" : "1"
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams({
