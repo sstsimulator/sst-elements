@@ -21,7 +21,6 @@ comp_l1cache.addParams({
       "coherence_protocol" : "MESI",
       "associativity" : "8",
       "cache_line_size" : "64",
-      "statistics" : "1",
       "L1" : "1",
       "cache_size" : "64 KB"
 })
@@ -29,7 +28,7 @@ comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MESI",
       "backend.access_time" : "1000 ns",
-      "mem_size" : "4906",
+      "backend.mem_size" : "4906",
       "clock" : "1GHz"
 })
 

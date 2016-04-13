@@ -507,6 +507,7 @@ static const ElementInfoParam pagedMultiMem_params[] = {
     {"system_ini",      "Name of DRAMSim Device system file", NULL},
     {"collect_stats",      "Name of DRAMSim Device system file", "0"},
     {"transfer_delay",      "Time (in ns) to transfer page to fast mem", "250"},
+    {"dramBackpressure",    "Don't issue page swaps if DRAM is too busy", "1"},
     {"threshold",      "Threshold (touches/quantum)", "4"},
     {"scan_threshold",      "scan Threshold (for SC strategies)", "4"},
     {"seed",      "RNG Seed", "1447"},
@@ -525,6 +526,8 @@ static const ElementInfoStatistic pagedMultiMem_statistics[] = {
     {"fast_swaps", "Number of pages swapped between 'fast' and 'slow' memory", "count", 1},
     {"fast_acc", "Number of total accesses to the memory backend", "count", 1},
     {"t_pages", "Number of total pages", "count", 1},
+    {"cant_swap", "Number of times a page could not be swapped in because no victim page could be found because all candidates were swapping", "count", 1},
+    {"swap_delays", "Number of an access is delayed because the page is swapping", "count", 1},
     { NULL, NULL, NULL, 0 }
 };
 

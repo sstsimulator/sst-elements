@@ -32,11 +32,9 @@ l1cache.addParams({
         "replacement_policy" : "lru",
         "associativity" : "8",
         "access_latency_cycles" : "1",
-        "low_network_links" : "1",
         "cache_line_size" : "64",
         "L1" : "1",
         "debug" : "0",
-        "statistics" : "1"
 	})
 
 memory = sst.Component("memory", "memHierarchy.MemController")
