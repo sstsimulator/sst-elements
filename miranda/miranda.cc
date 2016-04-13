@@ -120,6 +120,7 @@ static const ElementInfoParam randomGen_params[] = {
     { "verbose",          "Sets the verbosity output of the generator", "0" },
     { "count",            "Count for number of items being requested", "1024" },
     { "length",           "Length of requests", "8" },
+    { "seed",             "Set the seed for the random number generator", "1111" },
     { "max_address",      "Maximum address allowed for generation", "16384" },
     { "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" },
     { NULL, NULL, NULL }
