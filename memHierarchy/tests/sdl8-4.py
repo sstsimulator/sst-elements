@@ -24,7 +24,7 @@ comp_c0_l1cache.addParams({
       "cache_size" : "4 KB",
       "L1" : "1",
       "debug_level" : 10,
-      "debug" : ""
+      "debug" : "0"
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({
@@ -44,7 +44,7 @@ comp_c1_l1cache.addParams({
       "cache_size" : "4 KB",
       "L1" : "1",
       "debug_level" : 10,
-      "debug" : ""
+      "debug" : "0"
 })
 comp_n0_bus = sst.Component("n0.bus", "memHierarchy.Bus")
 comp_n0_bus.addParams({
@@ -60,7 +60,7 @@ comp_n0_l2cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
       "debug_level" : 10,
-      "debug" : ""
+      "debug" : "0"
 })
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
 comp_cpu2.addParams({
@@ -80,7 +80,7 @@ comp_c2_l1cache.addParams({
       "cache_size" : "4 KB",
       "L1" : "1",
       "debug_level" : 10,
-      "debug" : ""
+      "debug" : "0"
 })
 comp_cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
 comp_cpu3.addParams({
@@ -100,7 +100,7 @@ comp_c3_l1cache.addParams({
       "cache_size" : "4 KB",
       "L1" : "1",
       "debug_level" : 10,
-      "debug" : ""
+      "debug" : "0"
 })
 comp_n1_bus = sst.Component("n1.bus", "memHierarchy.Bus")
 comp_n1_bus.addParams({
@@ -116,7 +116,7 @@ comp_n1_l2cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
       "debug_level" : 10,
-      "debug" : ""
+      "debug" : "0"
 })
 comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
 comp_n2_bus.addParams({
@@ -132,7 +132,7 @@ comp_l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "debug_level" : 10,
-      "debug" : "",
+      "debug" : "0",
       "network_address" : "1",
       "network_bw" : "25GB/s",
       "directory_at_next_level" : "1"
@@ -151,7 +151,7 @@ comp_chiprtr.addParams({
 comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "",
+      "debug" : "0",
       "debug_level" : 10,
       "network_address" : "0",
       "entry_cache_size" : "1024",
@@ -163,7 +163,7 @@ comp_dirctrl.addParams({
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "",
+      "debug" : "0",
       "backend.access_time" : "100 ns",
       "clock" : "1GHz",
       "backend.mem_size" : "512",
