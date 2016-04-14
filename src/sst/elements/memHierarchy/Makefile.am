@@ -115,9 +115,6 @@ libmemHierarchy_la_SOURCES += membackend/pagedMultiBackend.cc \
 	membackend/pagedMultiBackend.h
 nobase_sst_HEADERS += membackend/pagedMultiBackend.h
 
-install-exec-hook:
-	$(SST_REGISTER_TOOL) DRAMSIM LIBDIR=$(DRAMSIM_LIBDIR)
-
 endif
 
 if HAVE_HYBRIDSIM
@@ -155,3 +152,10 @@ AM_CPPFLAGS += $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS)
 endif
 
 AM_CPPFLAGS += $(HMC_FLAG)
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) DRAMSIM LIBDIR=$(DRAMSIM_LIBDIR)
+	$(SST_REGISTER_TOOL) HYBRIDSIM LIBDIR=$(HYBRIDSIM_LIBDIR)
+	$(SST_REGISTER_TOOL) NVDIMMSIM LIBDIR=$(NVDIMMSIM_LIBDIR)
+	$(SST_REGISTER_TOOL) FDSIM LIBDIR=$(FDSIM_LIBDIR)
+
