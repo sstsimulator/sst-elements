@@ -23,7 +23,7 @@ comp_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : ""
+      "debug" : "0"
 })
 comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 comp_l2cache.addParams({
@@ -34,7 +34,7 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "debug" : ""
+      "debug" : "0"
 })
 comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
 comp_l3cache.addParams({
@@ -45,7 +45,7 @@ comp_l3cache.addParams({
       "associativity" : "16",
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
-      "debug" : "",
+      "debug" : "0",
       "network_address" : "1",
       "network_bw" : "25GB/s",
 })
@@ -74,7 +74,7 @@ comp_dirctrl.addParams({
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "",
+      "debug" : "0",
       "backend.access_time" : "100 ns",
       "clock" : "1GHz",
       "backend.mem_size" : "512"

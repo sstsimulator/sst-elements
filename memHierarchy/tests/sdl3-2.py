@@ -23,7 +23,7 @@ comp_c0_l1cache.addParams({
       "cache_line_size" : "64",
       "debug_level" : "6",
       "L1" : "1",
-      "debug" : "",
+      "debug" : "0",
       "cache_size" : "1 KB"
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
@@ -43,7 +43,7 @@ comp_c1_l1cache.addParams({
       "cache_line_size" : "64",
       "debug_level" : "6",
       "L1" : "1",
-      "debug" : "",
+      "debug" : "0",
       "cache_size" : "1 KB"
 })
 comp_bus = sst.Component("bus", "memHierarchy.Bus")
@@ -59,14 +59,14 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "debug_level" : "6",
-      "debug" : "",
+      "debug" : "0",
       "LL" : "1",
       "cache_size" : "2 KB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "",
+      "debug" : "0",
       "clock" : "1GHz",
       "backend.mem_size" : "512",
       "backend.access_time" : "100 ns",
