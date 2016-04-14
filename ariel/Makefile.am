@@ -73,11 +73,11 @@ all-local: frontend/simple/fesimple.cc
 	-L$(PINTOOL_DIR)/intel64/lib \
 	-L$(PINTOOL_DIR)/intel64/lib-ext \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-	-o fesimple.dylib frontend/simple/fesimple.cc \
+	-o fesimple.dylib $(top_builddir)/sst/elements/ariel/frontend/simple/fesimple.cc \
 	-stdlib=libstdc++ \
 	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 
-install-exec-hook: fesimple.dylib
+install-exec-hook:
 	$(INSTALL) fesimple.dylib $(libexecdir)/fesimple.dylib
 
 else
@@ -101,10 +101,10 @@ all-local: frontend/simple/fesimple.cc
 	-L$(PINTOOL_DIR)/intel64/lib-ext \
 	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-	-o fesimple.so frontend/simple/fesimple.cc \
+	-o fesimple.so $(top_builddir)/sst/elements/ariel/frontend/simple/fesimple.cc \
 	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 
-install-exec-hook: fesimple.so
+install-exec-hook:
 	$(INSTALL) fesimple.so $(libexecdir)/fesimple.so
 
 endif
