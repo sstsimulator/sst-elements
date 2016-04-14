@@ -78,7 +78,7 @@ all-local: frontend/simple/fesimple.cc
 	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 
 install-exec-hook: fesimple.dylib
-	cp fesimple.dylib $(libexecdir)/fesimple.dylib
+	$(INSTALL) fesimple.dylib $(libexecdir)/fesimple.dylib
 
 else
 
@@ -105,6 +105,6 @@ all-local: frontend/simple/fesimple.cc
 	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 
 install-exec-hook: fesimple.so
-	cp fesimple.so $(libexecdir)/fesimple.so
+	$(INSTALL) fesimple.so $(libexecdir)/fesimple.so
 
 endif
