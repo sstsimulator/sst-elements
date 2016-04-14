@@ -24,7 +24,6 @@ comp_l1cache.addParams({
       "coherence_protocol" : "MESI",
       "associativity" : "8",
       "cache_line_size" : "64",
-      "statistics" : "1",
       "L1" : "1",
       "cache_size" : "64 KB"
 })
@@ -36,7 +35,6 @@ comp_memory.addParams({
       "backend.system_ini" : "system.ini",
       "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
       "backend.mem_size" : "512",
-      "mem_size" : 512,
       "backend" : "memHierarchy.dramsim"
 })
 
