@@ -25,7 +25,7 @@ comp_c0_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : ""
+      "debug" : "0"
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({
@@ -46,7 +46,7 @@ comp_c1_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : ""
+      "debug" : "0"
 })
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
 comp_cpu2.addParams({
@@ -67,7 +67,7 @@ comp_c2_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : ""
+      "debug" : "0"
 })
 comp_cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
 comp_cpu3.addParams({
@@ -88,7 +88,7 @@ comp_c3_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : ""
+      "debug" : "0"
 })
 comp_n0_bus = sst.Component("n0.bus", "memHierarchy.Bus")
 comp_n0_bus.addParams({
@@ -103,7 +103,7 @@ comp_n0_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "debug" : ""
+      "debug" : "0"
 })
 comp_cpu4 = sst.Component("cpu4", "memHierarchy.trivialCPU")
 comp_cpu4.addParams({
@@ -124,7 +124,7 @@ comp_c4_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : ""
+      "debug" : "0"
 })
 comp_cpu5 = sst.Component("cpu5", "memHierarchy.trivialCPU")
 comp_cpu5.addParams({
@@ -145,7 +145,7 @@ comp_c5_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : ""
+      "debug" : "0"
 })
 comp_cpu6 = sst.Component("cpu6", "memHierarchy.trivialCPU")
 comp_cpu6.addParams({
@@ -166,7 +166,7 @@ comp_c6_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : ""
+      "debug" : "0"
 })
 comp_cpu7 = sst.Component("cpu7", "memHierarchy.trivialCPU")
 comp_cpu7.addParams({
@@ -187,7 +187,7 @@ comp_c7_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : ""
+      "debug" : "0"
 })
 comp_n1_bus = sst.Component("n1.bus", "memHierarchy.Bus")
 comp_n1_bus.addParams({
@@ -202,7 +202,7 @@ comp_n1_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "debug" : ""
+      "debug" : "0"
 })
 comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
 comp_n2_bus.addParams({
@@ -236,7 +236,7 @@ comp_chiprtr.addParams({
 comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "",
+      "debug" : "0",
       "network_address" : "0",
       "entry_cache_size" : "8192",
       "network_bw" : "25GB/s",
@@ -247,7 +247,7 @@ comp_dirctrl.addParams({
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "",
+      "debug" : "0",
       "backend.access_time" : "100 ns",
       "clock" : "1GHz",
       "backend.mem_size" : "512"

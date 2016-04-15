@@ -26,7 +26,6 @@ comp_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "debug" : "1",
-      "statistics" : "1",
       "L1" : "1",
       "cache_size" : "8 KB"
 })
