@@ -78,6 +78,7 @@ all-local: frontend/simple/fesimple.cc
 	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 
 install-exec-hook:
+	$(MKDIR_P) $(libexecdir)
 	$(INSTALL) fesimple.dylib $(libexecdir)/fesimple.dylib
 
 else
@@ -106,6 +107,7 @@ all-local: frontend/simple/fesimple.cc
 
 
 install-exec-hook:
+	$(MKDIR_P) $(libexecdir)
 	$(INSTALL) fesimple.so $(libexecdir)/fesimple.so
 
 endif
