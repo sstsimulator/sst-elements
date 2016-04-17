@@ -23,7 +23,7 @@ comp_c0_l1cache.addParams({
       "cache_line_size" : "64",
       "debug_level" : "8",
       "L1" : "1",
-      "debug" : "",
+      "debug" : "0",
       "cache_size" : "4 KB"
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
@@ -43,7 +43,7 @@ comp_c1_l1cache.addParams({
       "cache_line_size" : "64",
       "debug_level" : "8",
       "L1" : "1",
-      "debug" : "",
+      "debug" : "0",
       "cache_size" : "4 KB"
 })
 comp_n0_bus = sst.Component("n0.bus", "memHierarchy.Bus")
@@ -59,7 +59,7 @@ comp_n0_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "debug_level" : "8",
-      "debug" : "",
+      "debug" : "0",
       "cache_size" : "32 KB"
 })
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
@@ -79,7 +79,7 @@ comp_c2_l1cache.addParams({
       "cache_line_size" : "64",
       "debug_level" : "8",
       "L1" : "1",
-      "debug" : "",
+      "debug" : "0",
       "cache_size" : "4 KB"
 })
 comp_cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
@@ -99,7 +99,7 @@ comp_c3_l1cache.addParams({
       "cache_line_size" : "64",
       "debug_level" : "8",
       "L1" : "1",
-      "debug" : "",
+      "debug" : "0",
       "cache_size" : "4 KB"
 })
 comp_n1_bus = sst.Component("n1.bus", "memHierarchy.Bus")
@@ -115,7 +115,7 @@ comp_n1_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "debug_level" : "8",
-      "debug" : "",
+      "debug" : "0",
       "cache_size" : "32 KB"
 })
 comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
@@ -131,14 +131,14 @@ comp_l3cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "debug_level" : "8",
-      "debug" : "",
+      "debug" : "0",
       "LL" : "1",
       "cache_size" : "64 KB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "",
+      "debug" : "0",
       "clock" : "1GHz",
       "backend.mem_size" : "512",
       "backend.access_time" : "1000 ns",

@@ -79,6 +79,8 @@ public:
     bool isAlmostFull();                                    // external
     MemEvent* getOldestRequest() const;                     // external
     bool pendingWriteback(Addr baseAddr);
+    unsigned int getSize(){ return size_; }                 
+    unsigned int getPrefetchCount() { return prefetchCount_; }
 
     // Bookkeeping getters/setters
     int getAcksNeeded(Addr baseAddr);
@@ -93,11 +95,10 @@ public:
     bool insert(Addr baseAddr, mshrType entry);         // internal
     bool insert(Addr keyAddr, Addr ptrAddr);         // internal
     bool insertInv(Addr baseAddr, mshrType entry, bool inProgress);         // internal
-    void removeElement(Addr baseAddr, mshrType entry);  // internal
+    bool removeElement(Addr baseAddr, mshrType entry);  // internal
     
 
     // unimplemented or unused functions
-    unsigned int getSize(){ return size_; }                 
     void printEntry(Addr baseAddr);                         // not implemented
     MemEvent* lookupFront(Addr baseAddr);      
     void removeElement(Addr baseAddr, Addr pointer);
@@ -110,6 +111,7 @@ private:
     Output* d2_;
     int size_;
     int maxSize_;
+    int prefetchCount_;
     string ownerName_;
     bool DEBUG_ALL;
     Addr DEBUG_ADDR;

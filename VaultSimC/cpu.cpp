@@ -28,10 +28,7 @@ cpu::cpu( ComponentId_t id, Params& params ) :
 {
   printf("making cpu\n");
 
-  std::string frequency = "2.2 GHz";
-  if ( params.find( "clock" ) != params.end() ) {
-    frequency = params["clock"];
-  }
+  std::string frequency = params.find_string("clock", "2.2 Ghz");
 
   threads = params.find_integer( "threads", 0 );
   if (0 == threads) {

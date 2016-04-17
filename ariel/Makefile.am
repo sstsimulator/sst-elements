@@ -57,55 +57,58 @@ if SST_COMPILE_OSX
 
 all-local: frontend/simple/fesimple.cc
 	$(CXX) -O3 -shared \
-        $(CPPFLAGS) \
-        $(BOOST_CPPFLAGS) \
-        $(LIBZ_CPPFLAGS) \
-        -DBIGARRAY_MULTIPLIER=1 \
-        -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
-        -I$(PINTOOL_DIR)/source/include/pin \
-        -I$(PINTOOL_DIR)/ \
-        -I$(PINTOOL_DIR)/extras/components/include \
-        -I$(PINTOOL_DIR)/source/include/pin/gen/ \
-        -I$(PINTOOL_DIR)/extras/xed-intel64/include \
-        -I$(top_srcdir)/sst \
-        -fomit-frame-pointer -fno-stack-protector \
-        -Wl,-exported_symbols_list \
-        -Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
-        -L$(PINTOOL_DIR)/intel64/lib \
-        -L$(PINTOOL_DIR)/intel64/lib-ext \
-        -L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-        -o fesimple.dylib frontend/simple/fesimple.cc \
-        -stdlib=libstdc++ \
-        -lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB)
+	$(CPPFLAGS) \
+	$(BOOST_CPPFLAGS) \
+	$(LIBZ_CPPFLAGS) \
+	-DBIGARRAY_MULTIPLIER=1 \
+	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
+	-I$(PINTOOL_DIR)/source/include/pin \
+	-I$(PINTOOL_DIR)/ \
+	-I$(PINTOOL_DIR)/extras/components/include \
+	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
+	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
+	-I$(top_srcdir)/sst \
+	-fomit-frame-pointer -fno-stack-protector \
+	-Wl,-exported_symbols_list \
+	-Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
+	-L$(PINTOOL_DIR)/intel64/lib \
+	-L$(PINTOOL_DIR)/intel64/lib-ext \
+	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
+	-o fesimple.dylib $(top_builddir)/sst/elements/ariel/frontend/simple/fesimple.cc \
+	-stdlib=libstdc++ \
+	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 
-install-exec-hook: fesimple.dylib
-	cp fesimple.dylib $(libexecdir)/fesimple.dylib
+install-exec-hook:
+	$(MKDIR_P) $(libexecdir)
+	$(INSTALL) fesimple.dylib $(libexecdir)/fesimple.dylib
 
 else
 
 all-local: frontend/simple/fesimple.cc
-        $(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
-        -fPIC -O3 \
-        -fomit-frame-pointer \
-        $(CPPFLAGS) \
-        $(BOOST_CPPFLAGS) \
-        $(LIBZ_CPPFLAGS) \
-        -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
-        -I$(PINTOOL_DIR)/source/include/pin \
-        -I$(PINTOOL_DIR)/ \
-        -I$(PINTOOL_DIR)/extras/components/include \
-        -I$(PINTOOL_DIR)/source/include/pin/gen/ \
-        -I$(PINTOOL_DIR)/extras/xed-intel64/include \
-        -I$(top_srcdir)/sst \
-        -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
-        -L$(PINTOOL_DIR)/intel64/lib \
-        -L$(PINTOOL_DIR)/intel64/lib-ext \
-        -L$(PINTOOL_DIR)/intel64/runtime/glibc \
-        -L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-        -o fesimple.so frontend/simple/fesimple.cc \
-        -ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB)
+	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
+	-fPIC -O3 \
+	-fomit-frame-pointer \
+	$(CPPFLAGS) \
+	$(BOOST_CPPFLAGS) \
+	$(LIBZ_CPPFLAGS) \
+	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
+	-I$(PINTOOL_DIR)/source/include/pin \
+	-I$(PINTOOL_DIR)/ \
+	-I$(PINTOOL_DIR)/extras/components/include \
+	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
+	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
+	-I$(top_srcdir)/sst \
+	-Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
+	-L$(PINTOOL_DIR)/intel64/lib \
+	-L$(PINTOOL_DIR)/intel64/lib-ext \
+	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
+	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
+	-o fesimple.so $(top_builddir)/sst/elements/ariel/frontend/simple/fesimple.cc \
+	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 
-install-exec-hook: fesimple.so
-	cp fesimple.so $(libexecdir)/fesimple.so
+
+install-exec-hook:
+	$(MKDIR_P) $(libexecdir)
+	$(INSTALL) fesimple.so $(libexecdir)/fesimple.so
 
 endif
