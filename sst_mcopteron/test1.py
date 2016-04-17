@@ -18,12 +18,12 @@ McOpteron.addParams({
       "mixFile" : """mcopteron/usedist_new.all""",
       "appDirectory" : """.""",
       "seed" : """100""",
-      "traceFile" : """mcopteron/trace.txt""",
+      "traceFile" : """mcopteron/trace1.txt""",
       "traceOut" : """0""",
       "seperateSize" : """0""",
-      "newMixFile" : """mcopteron/instrMix.txt""",
+      "newMixFile" : """""",
       "instructionSizeFile" : """mcopteron/instrSizeDistr.txt""",
-      "repeatTrace" : """0"""
+      "repeatTrace" : """1"""
 })
 
 

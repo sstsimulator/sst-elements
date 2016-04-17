@@ -66,7 +66,6 @@ comp_l1cache.addParams({
       "coherence_protocol" : "MESI",
       "associativity" : "8",
       "cache_line_size" : "64",
-      "statistics" : "1",
       "L1" : "1",
       "cache_size" : "64 KB"
 })

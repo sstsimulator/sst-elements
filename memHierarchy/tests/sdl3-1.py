@@ -66,7 +66,7 @@ comp_l2cache.addParams({
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "",
+      "debug" : "0",
       "backend.mem_size" : "512",
       "printStats" : "1",
       "clock" : "1GHz",
