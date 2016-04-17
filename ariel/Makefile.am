@@ -30,6 +30,7 @@ libariel_la_SOURCES = \
 	arielgzbintracegen.h
 
 EXTRA_DIST = \
+	frontend/simple/fesimple.cc \
 	frontend/simple/examples/multicore.py \
 	frontend/simple/examples/stream/Makefile \
 	frontend/simple/examples/stream/Makefile \
