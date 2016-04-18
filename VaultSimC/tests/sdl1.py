@@ -27,7 +27,7 @@ comp_ll0.addParams({
       "vaults" : """8""",
       "terminal" : """1""",
       "llID" : """0""",
-      "LL_MASK" : """comp"""
+      "LL_MASK" : """0"""
 })
 comp_ll0.enableStatistics([
         "BW_recv_from_CPU"], {

@@ -30,7 +30,6 @@ comp_l1cache.addParams({
     "associativity"         : "4",
     "cache_line_size"       : "64",
     "debug_level"           : "8",
-    "statistics"            : "1",
     "L1"                    : "1",
     "debug"                 : "0",
     "cache_size"            : "4 KB",
@@ -45,7 +44,6 @@ comp_l2cache.addParams({
     "associativity"         : "4",
     "cache_line_size"       : "64",
     "debug_level"           : "8",
-    "statistics"            : "1",
     "L1"                    : "0",
     "debug"                 : "0",
     "cache_size"            : "64 KB",
@@ -59,7 +57,6 @@ comp_memory.addParams({
     "coherence_protocol"    : "MSI",
     "request_width"         : "64",
     "debug"                 : "0",
-    "statistics"            : "0",
     "backend"               : "memHierarchy.simpleMem"
 })
 

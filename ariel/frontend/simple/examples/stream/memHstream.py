@@ -86,7 +86,6 @@ def genMemHierarchy(cores):
       "backend.mem_size" : "512",
        "request_width"         : cacheLineSize,
        "backend"               : "memHierarchy.dramsim",
-       "statistics"            : "1",
        "device_ini"            : "DDR3_micron_32M_8B_x4_sg125.ini",
        "system_ini"            : "system.ini"
    })
@@ -104,7 +103,6 @@ def genMemHierarchy(cores):
            "L1"                    : "1",
            "debug"                 : memDebug,  
            "debug_level"           : memDebugLevel, 
-           "statistics"            : "1",
        })
 
        l2 = sst.Component("l2cache_%d"%core, "memHierarchy.Cache")
@@ -119,7 +117,6 @@ def genMemHierarchy(cores):
            "L1"                    : "0",
            "debug"                 : memDebug,  
            "debug_level"           : memDebugLevel, 
-           "statistics"            : "1",
            "mshr_num_entries"      : "16",
        })
        
@@ -145,7 +142,6 @@ def genMemHierarchy(cores):
        "L1"                    : "0",
        "debug"                 : memDebug,  
        "debug_level"           : memDebugLevel, 
-       "statistics"            : "1",
        "mshr_num_entries"      : "16",
    })
 
