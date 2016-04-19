@@ -28,7 +28,6 @@ comp_l1cache.addParams({
       "cache_line_size" : "64",
       "prefetcher" : "cassini.NextBlockPrefetcher",
       "debug" : "1",
-      "statistics" : "1",
       "L1" : "1",
       "cache_size" : "8 KB"
 })
