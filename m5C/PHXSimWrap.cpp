@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 
 #include <PHXSimWrap.h>
 #include <m5.h>

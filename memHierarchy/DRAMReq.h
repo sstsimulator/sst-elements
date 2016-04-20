@@ -3,6 +3,7 @@
 #define _H_SST_MEM_HIERARCHY_DRAMREQ
 
 #include "sst/elements/memHierarchy/memEvent.h"
+#include "sst/core/serialization/serializable.h"
 
 namespace SST {
 namespace MemHierarchy {
@@ -10,7 +11,7 @@ namespace MemHierarchy {
     /**
 	Creates a request to DRAM memory backends
     */
-    struct DRAMReq {
+    struct DRAMReq : public SST::Core::Serialization::serializable {
         enum Status_t {NEW, PROCESSING, RETURNED, DONE};
 
         MemEvent*   reqEvent_;
@@ -51,6 +52,26 @@ namespace MemHierarchy {
 
         void setSize(uint64_t _size){ size_ = _size; }
         void setAddr(Addr _baseAddr){ baseAddr_ = _baseAddr; }
+
+    
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            ser & reqEvent_;
+            ser & respEvent_;
+            ser & respSize_;
+            ser & cmd_;
+            ser & size_;
+            ser & amtInProcess_;
+            ser & amtProcessed_;
+            ser & status_;
+            ser & baseAddr_;
+            ser & addr_;
+            ser & isWrite_;
+            
+        }
+    private:
+        DRAMReq() {}
+        
+        ImplementSerializable(SST::MemHierarchy::DRAMReq)
 
     };
 

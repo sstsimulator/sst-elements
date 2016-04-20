@@ -13,7 +13,6 @@
 #define _MEMHIERARCHY_DMAENGINE_H_
 
 
-#include <sst/core/serialization.h>
 
 #include <vector>
 
@@ -47,16 +46,6 @@ public:
 
 private:
     DMACommand() {} // For serialization
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version)
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP(event_id);
-        ar & BOOST_SERIALIZATION_NVP(dst);
-        ar & BOOST_SERIALIZATION_NVP(src);
-        ar & BOOST_SERIALIZATION_NVP(size);
-    }
 };
 
 

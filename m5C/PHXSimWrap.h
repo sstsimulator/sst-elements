@@ -103,6 +103,8 @@ class PHXSimWrap : public PhysicalMemory
         const char *description() const {
             return "PHXSimWrap tick";
         }
+        
+        NotSerializable(TickEvent)
     };
 
     void tick();

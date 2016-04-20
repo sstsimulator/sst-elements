@@ -114,6 +114,7 @@ private:
     uint64_t    cacheLineSize_;
     uint64_t    requestWidth_;
     std::vector<CacheListener*> listeners_;
+    int         maxReqsPerCycle_;
 
     Statistic<uint64_t>* cyclesWithIssue;
     Statistic<uint64_t>* cyclesAttemptIssueButRejected;

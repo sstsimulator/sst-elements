@@ -11,7 +11,6 @@
 
 
 #include "sst_config.h"
-#include "sst/core/serialization.h"
 #include <assert.h>
 
 #include "sst/core/element.h"
@@ -54,4 +53,3 @@ bool ZodiacTraceReader::clockTic( Cycle_t ) {
   return false;
 }
 
-BOOST_CLASS_EXPORT(SST::Zodiac::ZodiacTraceReader)

@@ -39,6 +39,8 @@ namespace SST {
                 enum CommunicationTypes CommType;
                 bool reply;
                 void * payload;
+                
+                NotSerializable(CommunicationEvent)
         };
 
     }

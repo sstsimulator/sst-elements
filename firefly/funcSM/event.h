@@ -26,12 +26,16 @@ class InitStartEvent : public Event {
   public:
     InitStartEvent()
     { }
+    
+    NotSerializable(InitStartEvent)
 };
 
 class FiniStartEvent : public Event {
   public:
     FiniStartEvent()
     { }
+    
+    NotSerializable(FiniStartEvent)
 };
 
 class RankStartEvent : public Event {
@@ -43,6 +47,8 @@ class RankStartEvent : public Event {
 
     MP::Communicator group;
     int* rank;
+    
+    NotSerializable(RankStartEvent)
 };
 
 class SizeStartEvent : public Event {
@@ -54,6 +60,8 @@ class SizeStartEvent : public Event {
 
     MP::Communicator group;
     int* size;
+    
+    NotSerializable(SizeStartEvent)
 };
 
 class BarrierStartEvent : public Event {
@@ -63,6 +71,8 @@ class BarrierStartEvent : public Event {
     { }
 
     MP::Communicator group;
+    
+    NotSerializable(BarrierStartEvent)
 };
 
 class RecvStartEvent : public Event {
@@ -90,6 +100,8 @@ class RecvStartEvent : public Event {
     MP::Communicator        group;
     MP::MessageResponse*    resp;
     MP::MessageRequest*     req;
+    
+    NotSerializable(RecvStartEvent)
 };
 
 
@@ -116,6 +128,8 @@ class SendStartEvent : public Event {
     uint32_t                    tag;
     MP::Communicator        group;
     MP::MessageRequest*     req;
+    
+    NotSerializable(SendStartEvent)
 };
 
 class CollectiveStartEvent : public Event {
@@ -157,6 +171,8 @@ class CollectiveStartEvent : public Event {
     MP::RankID  root;
     MP::Communicator group;
     Type  type;
+    
+    NotSerializable(CollectiveStartEvent)
 };
 
 class GatherBaseStartEvent : public Event {
@@ -184,6 +200,8 @@ class GatherBaseStartEvent : public Event {
     MP::PayloadDataType recvtype;
     MP::RankID  root;
     MP::Communicator group;
+    
+    NotSerializable(GatherBaseStartEvent)
 };
 
 class GatherStartEvent : public GatherBaseStartEvent {
@@ -240,6 +258,8 @@ class GatherStartEvent : public GatherBaseStartEvent {
     MP::Addr recvcntPtr;
     MP::Addr displsPtr;
     uint32_t recvcnt;
+
+    NotSerializable(GatherStartEvent)
 };
 
 class AlltoallStartEvent: public Event {
@@ -291,6 +311,8 @@ class AlltoallStartEvent: public Event {
     MP::Addr            recvdispls;
     MP::PayloadDataType recvtype;
     MP::Communicator    group;
+
+    NotSerializable(AlltoallStartEvent)
 };
 
 class WaitStartEvent : public Event {
@@ -303,6 +325,8 @@ class WaitStartEvent : public Event {
 
     MP::MessageRequest req;
     MP::MessageResponse* resp;
+
+    NotSerializable(WaitStartEvent)
 };
 
 class WaitAnyStartEvent : public Event {
@@ -319,6 +343,8 @@ class WaitAnyStartEvent : public Event {
     MP::MessageRequest* req;
     int* index;
     MP::MessageResponse* resp;
+
+    NotSerializable(WaitAnyStartEvent)
 };
 
 class WaitAllStartEvent : public Event {
@@ -333,6 +359,8 @@ class WaitAllStartEvent : public Event {
     int count;
     MP::MessageRequest*  req;
     MP::MessageResponse** resp;
+
+    NotSerializable(WaitAllStartEvent)
 };
 
 
@@ -350,6 +378,8 @@ class CommSplitStartEvent : public Event {
     int color;
     int key;
     MP::Communicator* newComm;
+
+    NotSerializable(CommSplitStartEvent)
 };
 
 class CommCreateStartEvent : public Event {
@@ -366,6 +396,8 @@ class CommCreateStartEvent : public Event {
     size_t nRanks;
     int*   ranks;
     MP::Communicator* newComm;
+
+    NotSerializable(CommCreateStartEvent)
 };
 
 class CommDestroyStartEvent : public Event {
@@ -375,6 +407,8 @@ class CommDestroyStartEvent : public Event {
     { }
 
     MP::Communicator comm;
+
+    NotSerializable(CommDestroyStartEvent)
 };
 
 

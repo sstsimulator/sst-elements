@@ -12,7 +12,6 @@
 #ifndef _m5_h
 #define _m5_h
 
-#include <sst/core/serialization.h>
 #include <sst/core/introspectedComponent.h>
 #include <sst/core/params.h>
 

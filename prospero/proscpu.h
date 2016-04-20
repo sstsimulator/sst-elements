@@ -13,7 +13,6 @@
 #define _SST_PROSPERO_H
 
 #include "sst/core/output.h"
-#include "sst/core/serialization.h"
 #include "sst/core/component.h"
 #include "sst/core/element.h"
 #include "sst/core/params.h"
@@ -78,21 +77,6 @@ private:
   uint64_t totalBytesWritten;
   uint64_t cyclesWithIssue;
   uint64_t cyclesWithNoIssue;
-
-  friend class boost::serialization::access;
-  template<class Archive>
-  void save(Archive & ar, const unsigned int version) const
-  {
-    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-  }
-
-  template<class Archive>
-  void load(Archive & ar, const unsigned int version)
-  {
-    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-  }
-
-  BOOST_SERIALIZATION_SPLIT_MEMBER()
 
 };
 

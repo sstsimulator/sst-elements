@@ -664,3 +664,5 @@ void ArielCore::tick() {
 		currentCycles++;
 	}
 }
+
+DeclareSerializable(SST::ArielComponent::arielAllocTrackEvent)

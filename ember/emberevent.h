@@ -86,6 +86,8 @@ public:
     EmberEventTimeStatistic*  m_evStat;
     uint64_t            m_completeDelayNS;
     uint64_t            m_issueTime;
+    
+    NotSerializable(EmberEvent)
 };
 
 }

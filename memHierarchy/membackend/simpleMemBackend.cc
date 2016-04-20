@@ -38,3 +38,5 @@ bool SimpleMemory::issueRequest(DRAMReq *req){
     self_link->send(1, new MemCtrlEvent(req));
     return true;
 }
+
+DeclareSerializable(SST::MemHierarchy::SimpleMemory::MemCtrlEvent)

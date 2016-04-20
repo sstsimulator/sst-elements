@@ -19,7 +19,6 @@
 
 #include "sst/core/element.h"
 #include "sst/core/params.h"
-#include "sst/core/serialization.h"
 #include <sst/core/unitAlgebra.h>
 
 using namespace SST;

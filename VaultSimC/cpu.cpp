@@ -15,7 +15,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sst/core/serialization.h"
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 #include <sst/core/rng/mersenne.h>
@@ -29,10 +28,7 @@ cpu::cpu( ComponentId_t id, Params& params ) :
 {
   printf("making cpu\n");
 
-  std::string frequency = "2.2 GHz";
-  if ( params.find( "clock" ) != params.end() ) {
-    frequency = params["clock"];
-  }
+  std::string frequency = params.find_string("clock", "2.2 Ghz");
 
   threads = params.find_integer( "threads", 0 );
   if (0 == threads) {

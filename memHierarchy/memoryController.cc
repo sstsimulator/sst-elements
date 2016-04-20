@@ -16,7 +16,6 @@
  */
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
@@ -46,36 +45,67 @@ using namespace SST::MemHierarchy;
 MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     int debugLevel = params.find_integer("debug_level", 0);
     
+    // Output for debug
     dbg.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
     dbg.debug(_L10_,"---");
     
+    // Output for warnings
+    Output out("", 1, 0, Output::STDOUT);
     
-    int stats               = params.find_integer("statistics", 0);
-    if (stats != 0) {
-        Output out("", 0, 0, Output::STDOUT);
-        out.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sstinfo to view available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", getName().c_str());
+    
+    // Check for deprecated parameters and warn/fatal
+    // Currently deprecated - mem_size (replaced by backend.mem_size), network_num_vc, statistic, direct_link 
+    bool found;
+    params.find_integer("statistics", 0, found);
+    if (found) {
+        out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sstinfo to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
+    }
+    params.find_integer("mem_size", 0, found);
+    if (found) {
+        out.fatal(CALL_INFO, -1, "%s, Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n", getName().c_str());
+    }
+    params.find_integer("network_num_vc", 0, found);
+    if (found) {
+        out.output("%s, ** Found deprecated parameter: network_num_vc ** MemHierarchy does not use multiple virtual channels. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
+    }
+    params.find_integer("direct_link", 0, found);
+    if (found) {
+        out.output("%s, ** Found deprecated parameter: direct_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
 
-    
+    /* Check required parameters */
+    string clock_freq = params.find_string("clock", "", found);
+    if (!found) {
+        out.fatal(CALL_INFO, -1, "Param not specified (%s): clock - memory controller's clock rate (with units, e.g., MHz)\n", getName().c_str());
+    }
+    const uint64_t backendRamSizeMB = params.find_integer("backend.mem_size", 0, found);
+    if (!found) {
+        out.fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified (in MBs)\n");
+    }
+
     rangeStart_             = (Addr)params.find_integer("range_start", 0);
-    interleaveSize_         = (Addr)params.find_integer("interleave_size", 0);
-    interleaveSize_         *= 1024;
-    interleaveStep_         = (Addr)params.find_integer("interleave_step", 0);
-    interleaveStep_         *= 1024;
+    string ilSize           = params.find_string("interleave_size", "0B");
+    string ilStep           = params.find_string("interleave_step", "0B");
 
     string memoryFile       = params.find_string("memory_file", NO_STRING_DEFINED);
-    string clock_freq       = params.find_string("clock", "");
     cacheLineSize_          = params.find_integer("request_width", 64);
-    //divertDCLookups_        = params.find_integer("divert_DC_lookups", 0);
     string backendName      = params.find_string("backend", "memHierarchy.simpleMem");
-    string protocolStr      = params.find_string("coherence_protocol");
+    string protocolStr      = params.find_string("coherence_protocol", "MESI");
     string link_lat         = params.find_string("direct_link_latency", "100 ns");
     doNotBack_              = (params.find_integer("do_not_back",0) == 1);
 
+    // Requests per cycle -> limit to 1 per cycle for simpleMem, unlimited otherwise
+    maxReqsPerCycle_        = params.find_integer("max_requests_per_cycle", -1, found);
+    if (!found && backendName == "memHierarchy.simpleMem") {
+        maxReqsPerCycle_ = 1;
+    } else if (maxReqsPerCycle_ == 0) {
+        maxReqsPerCycle_ = -1;
+    }
+
     int addr = params.find_integer("network_address");
-    std::string net_bw = params.find_string("network_bw");
+    std::string net_bw = params.find_string("network_bw", "80GB/s");
     
     const uint32_t listenerCount  = (uint32_t) params.find_integer("listenercount", 0);
     char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
@@ -96,34 +126,40 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
     free(nextListenerName);
     free(nextListenerParams);
-
     string traceFileLoc     = params.find_string("trace_file", "");
-    if ("" != traceFileLoc) {
-	traceFP = fopen(traceFileLoc.c_str(), "wt");
+     if ("" != traceFileLoc) {
+        traceFP = fopen(traceFileLoc.c_str(), "wt");
     } else {
-	traceFP = NULL;
+        traceFP = NULL;
     }
 
-    const uint64_t backendRamSizeMB = params.find_integer("backend.mem_size", 0);
 
-    bool wasFound = false;
-    params.find_integer("mem_size", 0, wasFound);
-    if (wasFound) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n", getName().c_str());
+    // Check protocol string - note this is only used if directory controller is not present in system to ensure LLC gets the right permissions
+    if (protocolStr != "MESI" && protocolStr != "mesi" && protocolStr != "msi" && protocolStr != "MSI" && protocolStr != "none" && protocolStr != "NONE") {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): protocol - must be one of 'MESI', 'MSI', or 'NONE'. You specified '%s'\n", protocolStr.c_str());
     }
-
-    if (0 == backendRamSizeMB) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error - you specified 0MBs for backend.mem_size, the memory must have a non-zero size!\n", getName().c_str());
-    }
-
     // Convert into MBs
     memSize_ = backendRamSizeMB * (1024*1024ul);
+
+    // Check interleave parameters
+    fixByteUnits(ilSize);
+    fixByteUnits(ilStep);
+    interleaveSize_ = UnitAlgebra(ilSize).getRoundedValue();
+    interleaveStep_ = UnitAlgebra(ilStep).getRoundedValue();
+    if (!UnitAlgebra(ilSize).hasUnits("B") || interleaveSize_ % cacheLineSize_ != 0) {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this      to '1', change it to '1KB'. You specified %s\n",
+                getName().c_str(), ilSize.c_str());
+    }
+    if (!UnitAlgebra(ilStep).hasUnits("B") || interleaveStep_ % cacheLineSize_ != 0) {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this      to '4', change it to '4KB'. You specified %s\n",
+                getName().c_str(), ilStep.c_str());
+    }
 
     requestWidth_           = cacheLineSize_;
     requestSize_            = cacheLineSize_;
     numPages_               = (interleaveStep_ > 0 && interleaveSize_ > 0) ? memSize_ / interleaveSize_ : 0;
     protocol_               = (protocolStr == "mesi" || protocolStr == "MESI") ? 1 : 0;
-
+   
 
     // Ensure we can extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
@@ -140,9 +176,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         myInfo.link_port        = "network";
         myInfo.link_bandwidth   = net_bw;
         myInfo.num_vcs          = 1;
-        if (params.find_integer("network_num_vc", 1) != 1) {
-            dbg.debug(_WARNING_, "%s, WARNING Deprecated parameter: network_num_vc. memHierarchy only uses one virtual channel.\n", getName().c_str());
-        }
         myInfo.name             = getName();
         myInfo.network_addr     = addr;
         myInfo.type             = MemNIC::TypeMemory;
@@ -180,11 +213,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
     stat_PutMReqReceived    = registerStatistic<uint64_t>("requests_received_PutM");
     stat_outstandingReqs    = registerStatistic<uint64_t>("outstanding_requests");
-
-
-    if (protocolStr.empty()) {
-	dbg.fatal(CALL_INFO, -1, "Coherency protocol not specified, please specify MESI or MSI\n");
-    }
 
     cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
     cyclesAttemptIssueButRejected = registerStatistic<uint64_t>(
@@ -275,18 +303,23 @@ bool MemController::clock(Cycle_t cycle) {
     backend_->clock();
     if (networkLink_) networkLink_->clock();
 
+    int reqsThisCycle = 0;
     while ( !requestQueue_.empty()) {
+        if (reqsThisCycle == maxReqsPerCycle_) {
+            break;
+        }
         DRAMReq *req = requestQueue_.front();
         req->status_ = DRAMReq::PROCESSING;
 
         bool issued = backend_->issueRequest(req);
         if (issued) {
-		cyclesWithIssue->addData(1);
-	} else {
-		cyclesAttemptIssueButRejected->addData(1);
-		break;
+    	    cyclesWithIssue->addData(1);
+        } else {
+    	    cyclesAttemptIssueButRejected->addData(1);
+	    break;
 	}
 
+	reqsThisCycle++;
         req->amtInProcess_ += requestSize_;
 
         if (req->amtInProcess_ >= req->size_) {
@@ -313,8 +346,8 @@ void MemController::performRequest(DRAMReq* req) {
     if (req->cmd_ == PutM) {  /* Write request to memory */
 #ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, req->reqEvent_->getSize(), noncacheable ? "true" : "false");
-#endif
-
+#endif	
+        
         if (doNotBack_) return;
         
         for ( size_t i = 0 ; i < req->reqEvent_->getSize() ; i++) 
@@ -346,8 +379,8 @@ void MemController::performRequest(DRAMReq* req) {
 
 #ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L10_, "READ.  Addr = %" PRIx64 ", Request size = %i\n", localAddr, req->reqEvent_->getSize());
-#endif
-
+#endif    
+        
         for ( size_t i = 0 ; i < req->respEvent_->getSize() ; i++) 
             req->respEvent_->getPayload()[i] = doNotBack_ ? 0 : memBuffer_[localAddr + i];
 
@@ -467,12 +500,12 @@ void MemController::setup(void) {
 
 
 void MemController::finish(void) {
-	if (!doNotBack_) munmap(memBuffer_, memSize_);
-	if (-1 != backingFd_) close(backingFd_);
+    if (!doNotBack_) munmap(memBuffer_, memSize_);
+    if (-1 != backingFd_) close(backingFd_);
 
     // Close the trace file IF it is opened
     if (NULL != traceFP) {
-	fclose(traceFP);
+        fclose(traceFP);
     }
 
     backend_->finish();

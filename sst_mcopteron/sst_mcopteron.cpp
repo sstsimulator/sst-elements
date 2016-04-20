@@ -25,7 +25,6 @@
 #define NOTSTANDALONE 1
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include "sst_mcopteron.h"
 
 #include <string>
@@ -49,80 +48,63 @@ SSTMcOpteron::SSTMcOpteron(ComponentId_t id, Params& params):Component(id){
   primaryComponentDoNotEndSim();
 	//debugLevel (default=0)
 	//cout<<"  Reading debugLevel"<<endl;
-	if ( params.find("debugLevel") == params.end() ) debug=0;
-	else debug = strtol( params[ "debugLevel" ].c_str(), NULL, 0 );
+        debug = params.find_integer("debugLevel", 0);
 	//cycles (default=100000)
 	//cout<<"  Reading cycles"<<endl;
-	if ( params.find("cycles") == params.end() ) numSimCycles=100000;
-	else numSimCycles = strtol( params[ "cycles" ].c_str(), NULL, 0 );
+        numSimCycles = params.find_integer("cycles", 100000);
 	//converge (default=false)
 	//cout<<"  Reading converge"<<endl;
-	if ( params.find("converge") == params.end() ) untilConvergence=false;
-	else untilConvergence = (strtol( params[ "converge" ].c_str(), NULL, 0 ))!=0;
+	untilConvergence = (params.find_integer("converge", 0)) !=0;
 	//defFile (default=("opteron-insn.txt")
 	//cout<<"  Reading defFile"<<endl;
-	if ( params.find("defFile") == params.end() ) defFile="opteron-insn.txt";
-	else defFile = params[ "defFile" ];
+        defFile = params.find_string("defFile","opteron-insn.txt");
 	//debugCycles (default=0)
 	//cout<<"  Reading debugCycles"<<endl;
-	if ( params.find("debugCycles") == params.end() ) debugCycle=0;
-	else debugCycle = strtol( params[ "debugCycles" ].c_str(), NULL, 0 );
+        debugCycle = params.find_integer("debugCycles", 0);
 	//printStaticMix (default=false)
 	//cout<<"  Reading printStaticMix"<<endl;
-	if ( params.find("printStaticMix") == params.end() ) printStaticIMix=false;
-	else printStaticIMix = strtol( params[ "printStaticMix" ].c_str(), NULL, 0 )!=0;
+        printStaticIMix = (params.find_integer("printStaticMix", 0)) !=0;
 	//printInstructionMix (default=false)
 	//cout<<"  Reading printInstructionMix"<<endl;
-	if ( params.find("printInstructionMix") == params.end() ) printIMix=false;
-	else printIMix = strtol( params[ "printInstructionMix" ].c_str(), NULL, 0 )!=0;
+        printIMix = (params.find_integer("printInstructionMix", 0)) !=0;
 	//mixFile (default="usedist_new.all")
 	//cout<<"  Reading mixfile"<<endl;
-	if ( params.find("mixFile") == params.end() ) mixFile="usedist_new.all";
-	else mixFile = params[ "mixFile" ];
+        mixFile = params.find_string("mixFile", "usedist_new.all");
 	//appDirectory (default=".")
 	//cout<<"  Reading appDirectory"<<endl;
-	if ( params.find("appDirectory") == params.end() ) appDirectory=".";
-	else appDirectory = params[ "appDirectory" ];
+	appDirectory = params.find_string("appDirectory", ".");
 	//seed (default=100)
 	//cout<<"  Reading seed"<<endl;
-	if ( params.find("seed") == params.end() ) seed=100;
-	else seed = strtol( params[ "seed" ].c_str(), NULL, 0 );
+	seed = params.find_integer("seed", 100);
 	//traceFile (default=null)
 	//cout<<"  Reading traceFile"<<endl;
-	if ( params.find("traceFile") == params.end() ) traceFile="";
-	else traceFile = params[ "traceFile" ];
+        traceFile = params.find_string("traceFile", "");
 	//traceOut (default=false)
 	//cout<<"  Reading traceOut"<<endl;
-	if ( params.find("traceOut") == params.end() ) the_cpu->TraceTokens=0;
-	else the_cpu->TraceTokens = strtol( params[ "traceOut" ].c_str(), NULL, 0 )!=0;
+        the_cpu->TraceTokens = params.find_integer("traceOut", 0);
 	//seperateSize (default=false)
 	//cout<<"  Reading sepearateSize"<<endl;
-	if ( params.find("seperateSize") == params.end() ) McOpteron::InstructionInfo::separateSizeRecords = false;
-	else McOpteron::InstructionInfo::separateSizeRecords = strtol( params[ "seperateSize" ].c_str(), NULL, 0 )!=0;
+        McOpteron::InstructionInfo::separateSizeRecords = (params.find_integer("seperateSize", 0)) !=0;
 	//newMixFile (default=null)
 	//cout<<"  Reading newMixFile"<<endl;
-	if ( params.find("newMixFile") == params.end() ) newIMixFile="instrMix.txt";
-	else newIMixFile = params[ "newMixFile" ];
+        newIMixFile = params.find_string("newMixFile", "instrMix.txt");
 	//instructionSizeFile (default=null)
 	//cout<<"  Reading instructionSizeFile"<<endl;
-	if ( params.find("instructionSizeFile") == params.end() ) instrSizeFile="";
-	else instrSizeFile = params[ "instructionSizeFile" ];
+        instrSizeFile = params.find_string("instructionSizeFile", "");
 	//fetchSizeFile (default=null)
 	//cout<<"  Reading fetchSizeFile"<<endl;
-	if ( params.find("fetchSizeFile") == params.end() ) fetchSizeFile="";
-	else {fetchSizeFile = params[ "fetchSizeFile" ];}
+        fetchSizeFile = params.find_string("fetchSizeFile", "");
 	//transFile (default=null)
 	//cout<<"  Reading transFile"<<endl;
-	if ( params.find("transFile") == params.end() ) transFile="";
-	else transFile = params[ "transFile" ];
+        transFile = params.find_string("transFile", "");
 	//repeatTrace (default=false)
 	//cout<<"  Reading repeatTrace"<<endl;
-	if ( params.find("repeatTrace") == params.end() ) repeatTrace=false;
-	else repeatTrace = strtol( params[ "repeatTrace" ].c_str(), NULL, 0 )!=0;
+        repeatTrace = (params.find_integer("repeatTrace", 0)) !=0;
 	//treateImmediateAsNone (default=false)
 	//cout<<"  Reading treatImmediateAsNone"<<endl;
 	//if ( params.find("treatImmediateAsNone") == params.end() ) the_cpu->treatImmAsNone = false;
 	//else the_cpu->treatImmAsNone = strtol( params[ "treatImmediateAsNone" ].c_str(), NULL, 0 )!=0;
+        //JC: This was already commented out when I went to update deprecated params functions. 
 
 	//cout<<" Creating Clock"<<endl;
 	registerClock( "1GHz",

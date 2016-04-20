@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include "memNIC.h"
 
 #include <algorithm>
@@ -197,27 +196,30 @@ bool MemNIC::clock(void)
 {
     /* If stuff to send, and space to send it, send */
     bool empty = sendQueue.empty();
-    if (!empty) {
-        // MemRtrEvent *head = sendQueue.front();
+    while (!sendQueue.empty()) {
         SimpleNetwork::Request *head = sendQueue.front();
         if ( link_control->spaceToSend(0, head->size_in_bits) ) {
             bool sent = link_control->send(head, 0);
             if ( sent ) {
+#ifdef __SST_DEBUG_OUTPUT__
                 if ( static_cast<MemRtrEvent*>(head->inspectPayload())->hasClientData() ) {
                     MemEvent* event = static_cast<MemEvent*>((static_cast<MemRtrEvent*>(head->inspectPayload()))->event);
-#ifdef __SST_DEBUG_OUTPUT__
                     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) {
                         dbg->debug(_L8_, "Sent message ((%" PRIx64 ", %d) %s %" PRIx64 ") to (%" PRIu64 ") [%s]\n", 
                                 event->getID().first, event->getID().second, CommandString[event->getCmd()], event->getAddr(), head->dest, event->getDst().c_str());
                     }
-#endif
                 }
+#endif
                 sendQueue.pop_front();
+            } else {
+                break;
             }
+        } else {
+            break;
         }
     }
 
-    return (empty == true);
+    return empty;
 }
 
 /*  

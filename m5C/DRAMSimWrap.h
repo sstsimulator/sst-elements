@@ -113,6 +113,8 @@ class DRAMSimWrap : public PhysicalMemory
         const char *description() const {
             return "DRAMSimWrap tick";
         }
+        
+        NotSerializable(TickEvent)
     };
 
     void tick();

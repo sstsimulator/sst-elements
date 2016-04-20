@@ -37,8 +37,6 @@
 #include <sstream>
 #include <vector>
 
-//#include "sst/core/serialization.h"
-
 #include "StencilMachine.h"
 
 namespace SST {

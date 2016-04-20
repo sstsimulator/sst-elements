@@ -12,7 +12,6 @@
 //
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include "memHierarchyInterface.h"
 
 #include <sst/core/component.h>

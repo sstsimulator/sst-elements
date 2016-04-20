@@ -188,6 +188,8 @@ class Foo : public LoopBackEvent {
     std::vector<IoVec>  vec;
     void*               key;
     bool                response;
+    
+    NotSerializable(Foo)
 };
 
 static size_t calcLength( std::vector<IoVec>& ioVec )

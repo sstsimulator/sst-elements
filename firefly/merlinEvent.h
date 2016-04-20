@@ -98,17 +98,29 @@ class FireflyNetworkEvent : public Event {
     size_t          offset;
     size_t          bufLen;
 
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP(seq);
-        ar & BOOST_SERIALIZATION_NVP(bufLen);
-        ar & BOOST_SERIALIZATION_NVP(buf);
-        ar & BOOST_SERIALIZATION_NVP(src);
+//    friend class boost::serialization::access;
+//    template<class Archive>
+//    void
+//    serialize(Archive & ar, const unsigned int version )
+//    {
+//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+//        ar & BOOST_SERIALIZATION_NVP(seq);
+//        ar & BOOST_SERIALIZATION_NVP(bufLen);
+//        ar & BOOST_SERIALIZATION_NVP(buf);
+//        ar & BOOST_SERIALIZATION_NVP(src);
+//    }
+    
+  public:	
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        Event::serialize_order(ser);
+        ser & seq;
+        ser & bufLen;
+        ser & buf;
+        ser & src;
     }
+    
+    ImplementSerializable(SST::Firefly::FireflyNetworkEvent);     
+    
 };
 
 }

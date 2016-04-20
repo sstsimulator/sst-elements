@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include "directoryController.h"
 
 #include <assert.h>
@@ -34,13 +33,33 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     cacheLineSize = params.find_integer("cache_line_size", 64);
     
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
-    if(debugLevel < 0 || debugLevel > 10)     dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
-    
-    int printStatsLoc = params.find_integer("statistics", 0);
-    if (printStatsLoc != 0) {
-        dbg.output("**WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sstinfo to view available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n");
+    if (debugLevel < 0 || debugLevel > 10)     dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
+   
+
+    // Detect deprecated parameters and warn/fatal
+    // Currently deprecated - direct_mem_link, network_num_vc, statistics
+    bool found;
+    Output out("", 1, 0, Output::STDOUT);
+    params.find_integer("statistics", 0, found);
+    if (found) {
+        out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sstinfo to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
+    }
+    params.find_integer("direct_mem_link", 0, found);
+    if (found) {
+        out.output("%s, ** Found deprecated parameter: direct_mem_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
+    }
+    params.find_integer("network_num_vc", 0, found);
+    if (found) {
+        out.output("%s, ** Found deprecated parameter: network_num_vc ** MemHierarchy does not use multiple virtual channels. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
 
+    /* Find required parameters */
+    int netAddr = params.find_integer("network_address", 0, found);
+    if (!found) {
+        out.fatal(CALL_INFO, -1, "%s, ** Param not specified(%s): network_address - the port number (on the network router) that corresponds to this component\n", getName().c_str());
+    }
+
+    // Debug address
     int dAddr = params.find_integer("debug_addr", -1);
     if (dAddr == -1) {
         DEBUG_ADDR = (Addr) dAddr;
@@ -56,16 +75,13 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     
     entryCacheMaxSize = (size_t)params.find_integer("entry_cache_size", 32768);
     entryCacheSize = 0;
-    int addr = params.find_integer("network_address");
-    std::string net_bw = params.find_string("network_bw");
+    std::string net_bw = params.find_string("network_bw", "80GB/s");
 
     addrRangeStart  = (uint64_t)params.find_integer("addr_range_start", 0);
     addrRangeEnd    = (uint64_t)params.find_integer("addr_range_end", 0);
-    interleaveSize  = (Addr)params.find_integer("interleave_size", 0);
-    interleaveSize  *= 1024;
-    interleaveStep  = (Addr)params.find_integer("interleave_step", 0);
-    interleaveStep  *= 1024;
-    protocol        = params.find_string("coherence_protocol", "");
+    string ilSize   = params.find_string("interleave_size", "0B");
+    string ilStep   = params.find_string("interleave_step", "0B");
+    protocol        = params.find_string("coherence_protocol", "MESI");
     dbg.debug(_L5_, "Directory controller using protocol: %s\n", protocol.c_str());
     
     int mshrSize    = params.find_integer("mshr_num_entries",-1);
@@ -84,6 +100,22 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (protocol == "mesi") protocol = "MESI";
     if (protocol == "msi") protocol = "MSI";
 
+    /* Check interleaveSize & Step
+     * Both must be specified in B (SI units ok)
+     * Both must be divisible by the cache line size */
+    fixByteUnits(ilSize);
+    fixByteUnits(ilStep);
+    interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
+    interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
+    if (!UnitAlgebra(ilSize).hasUnits("B") || interleaveSize % cacheLineSize != 0) {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this to '1', change it to '1KB'. You specified %s\n",
+                getName().c_str(), ilSize.c_str());
+    }
+    if (!UnitAlgebra(ilStep).hasUnits("B") || interleaveStep % cacheLineSize != 0) {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this to '4', change it to '4KB'. You specified %s\n",
+                getName().c_str(), ilStep.c_str());
+    }
+
     /* Get latencies */
     accessLatency   = (uint64_t)params.find_integer("access_latency_cycles", 0);
     mshrLatency     = (uint64_t)params.find_integer("mshr_latency_cycles", 0);
@@ -98,11 +130,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         myInfo.link_port                        = "network";
         myInfo.link_bandwidth                   = net_bw;
         myInfo.num_vcs                          = 1;
-        if (params.find_integer("network_num_vc", 1) != 1) {
-            dbg.debug(_WARNING_, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
-        }
         myInfo.name                             = getName();
-        myInfo.network_addr                     = addr;
+        myInfo.network_addr                     = netAddr;
         myInfo.type                             = MemNIC::TypeDirectoryCtrl;
         myInfo.link_inbuf_size                  = params.find_string("network_input_buffer_size", "1KB");
         myInfo.link_outbuf_size                 = params.find_string("network_output_buffer_size", "1KB");
@@ -124,11 +153,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         myInfo.link_port                        = "network";
         myInfo.link_bandwidth                   = net_bw;
         myInfo.num_vcs                          = 1;
-        if (params.find_integer("network_num_vc", 1) != 1) {
-            dbg.debug(_WARNING_, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
-        }
         myInfo.name                             = getName();
-        myInfo.network_addr                     = addr;
+        myInfo.network_addr                     = netAddr;
         myInfo.type                             = MemNIC::TypeNetworkDirectory;
         myInfo.link_inbuf_size                  = params.find_string("network_input_buffer_size", "1KB");
         myInfo.link_outbuf_size                 = params.find_string("network_output_buffer_size", "1KB");
@@ -148,6 +174,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
     defaultTimeBase = registerClock(params.find_string("clock", "1GHz"), clockHandler);
     clockOn = true;
+
+    // Requests per cycle
+    maxRequestsPerCycle = params.find_integer("max_requests_per_cycle", 0);
 
     // Timestamp - aka cycle count
     timestamp = 0;
@@ -213,7 +242,7 @@ void DirectoryController::handlePacket(SST::Event *event){
             stat_MSHROccupancy->addData(mshr->getSize());
         }
     }
-    
+
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
         dbg.debug(_L3_, "RECV %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ", Src = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
@@ -376,11 +405,30 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 
     while (!netMsgQueue.empty() && netMsgQueue.begin()->first <= timestamp) {
         MemEvent * ev = netMsgQueue.begin()->second;
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
+            Addr baseAddr = ev->getBaseAddr();
+            if (ev->getDst() == memoryName) {
+                if (memReqs.find(ev->getID()) != memReqs.end()) baseAddr = memReqs[ev->getID()];
+            }
+            dbg.debug(_L3_, "SEND: %s %sCmd = %s, BaseAddr = 0x%" PRIx64 ",  Dst = %s, Size = %u, Time = %" PRIu64 "\n", 
+                    getName().c_str(), (ev->getDst() == memoryName ? "MemReq " : ""), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize(), getCurrentSimTimeNano());
+        }
+#endif
         network->send(ev);
         netMsgQueue.erase(netMsgQueue.begin());
     }
     while (!memMsgQueue.empty() && memMsgQueue.begin()->first <= timestamp) {
         MemEvent * ev = memMsgQueue.begin()->second;
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
+            Addr baseAddr = 0;
+            if (memReqs.find(ev->getID()) != memReqs.end())
+                baseAddr = memReqs[ev->getID()];
+            dbg.debug(_L3_, "SEND: %s MemReq Cmd = %s, BaseAddr = 0x%" PRIx64 ",  Dst = %s, Size = %u, Time = %" PRIu64 "\n", 
+                    getName().c_str(), CommandString[ev->getCmd()], baseAddr, ev->getDst().c_str(), ev->getSize(), getCurrentSimTimeNano());
+        }
+#endif
         memLink->send(ev);
         memMsgQueue.erase(memMsgQueue.begin());
     }
@@ -393,11 +441,15 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
         dbg.debug(_L3_, "\n\n----------------------------------------------------------------------------------------\n");
     }
 #endif
-
-    while(!workQueue.empty()){
+    int requestsThisCycle = 0;
+    while(!workQueue.empty()) {
+        requestsThisCycle++;
         MemEvent *event = workQueue.front();
         workQueue.erase(workQueue.begin());
 	processPacket(event);
+        if (requestsThisCycle == maxRequestsPerCycle) {
+            break;
+        }
     }
 
     if (empty && netIdle && clockOn) {
@@ -627,8 +679,6 @@ void DirectoryController::issueMemoryRequest(MemEvent * ev, DirEntry * entry) {
     }
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == entry->getBaseAddr()) {
-        dbg.debug(_L3_, "SEND: %s \tMemReq. Cmd = %s, BaseAddr = 0x%" PRIx64 ",  Time = %" PRIu64 "\n", 
-                getName().c_str(), CommandString[reqEv->getCmd()], entry->getBaseAddr(), getCurrentSimTimeNano());
         dbg.debug(_L5_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n", 
                 CommandString[reqEv->getCmd()], reqEv->getBaseAddr(), reqEv->getSize(), reqEv->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
     }
@@ -1044,7 +1094,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
 #ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) { 
                 dbg.debug(_L3_, "EVENT: %s, Received: MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u, Time = %" PRIu64 "\n", 
-                        getName().c_str(), CommandString[ev->getCmd()], globalBaseAddr, ev->getSize(),getCurrentSimTimeNano());
+                        getName().c_str(), CommandString[ev->getCmd()], globalBaseAddr, ev->getSize(), getCurrentSimTimeNano());
             }
 #endif
             ev->setBaseAddr(globalBaseAddr);
@@ -1064,7 +1114,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
 #ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
             dbg.debug(_L3_, "EVENT: %s, Received DirEntry: BaseAddr = 0x%" PRIx64 ", Src: Memory, Size = %u, Time = %" PRIu64 "\n", 
-                    getName().c_str(), ev->getBaseAddr(), ev->getSize(),getCurrentSimTimeNano());
+                    getName().c_str(), ev->getBaseAddr(), ev->getSize(), getCurrentSimTimeNano());
         }
 #endif
         ev->setBaseAddr(dirEntryMiss[ev->getResponseToID()]);
@@ -1072,10 +1122,11 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
         handleDirEntryMemoryResponse(ev);
     } else if (memReqs.find(ev->getResponseToID()) != memReqs.end()){
         ev->setBaseAddr(memReqs[ev->getResponseToID()]);
-        Addr targetBlock = memReqs[ev->getResponseToID()];
 #ifdef __SST_DEBUG_OUTPUT__
+        Addr targetBlock = memReqs[ev->getResponseToID()];
         if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
-            dbg.debug(_L3_, "RECV: %s, MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], targetBlock, ev->getSize(),getCurrentSimTimeNano());
+            dbg.debug(_L3_, "RECV: %s, MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u, Time = %" PRIu64 "\n", 
+                    getName().c_str(), CommandString[ev->getCmd()], targetBlock, ev->getSize(), getCurrentSimTimeNano());
         }
 #endif
         memReqs.erase(ev->getResponseToID());
@@ -1194,12 +1245,6 @@ void DirectoryController::sendInvalidate(int target, MemEvent * reqEv, DirEntry*
     
     uint64_t deliveryTime = timestamp + accessLatency;
     netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, me));
-    
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == reqEv->getBaseAddr()) {
-        dbg.debug(_L3_, "SEND: %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ",  Dst = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[me->getCmd()], me->getBaseAddr(), me->getDst().c_str(), getCurrentSimTimeNano());
-    }
-#endif
 }
 
 void DirectoryController::sendAckPut(MemEvent * event) {
@@ -1212,11 +1257,6 @@ void DirectoryController::sendAckPut(MemEvent * event) {
     uint64_t deliveryTime = timestamp + accessLatency;
     netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, me));
     
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) {
-        dbg.debug(_L3_, "SEND: %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ",  Dst = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[me->getCmd()], me->getBaseAddr(), me->getDst().c_str(), getCurrentSimTimeNano());
-    }
-#endif
 }
 
 
@@ -1331,7 +1371,7 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
     }
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == data_event->getBaseAddr()) {
-        dbg.debug(_L3_, "SEND: %s \tMemReq. Cmd = %s, BaseAddr = 0x%" PRIx64 ",  Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], data_event->getBaseAddr(), getCurrentSimTimeNano());
+        //dbg.debug(_L3_, "SEND: %s \tMemReq. Cmd = %s, BaseAddr = 0x%" PRIx64 ",  Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], data_event->getBaseAddr(), getCurrentSimTimeNano());
         dbg.debug(_L5_, "Writing back data. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize());
     }
 #endif
@@ -1366,12 +1406,6 @@ void DirectoryController::replayWaitingEvents(Addr addr) {
 }
 
 void DirectoryController::sendEventToCaches(MemEvent *ev, uint64_t deliveryTime){
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
-        dbg.debug(_L3_, "SEND: %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ",  Dst = %s, Size = %u, Time = %" PRIu64 "\n", 
-                getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize(), getCurrentSimTimeNano());
-    }
-#endif
     netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, ev));
 }
 
@@ -1379,48 +1413,29 @@ void DirectoryController::sendEventToCaches(MemEvent *ev, uint64_t deliveryTime)
 
 bool DirectoryController::isRequestAddressValid(MemEvent *ev){
     Addr addr = ev->getBaseAddr();
-    if(0 == interleaveSize){
-        return(addr >= addrRangeStart && addr < addrRangeEnd);
+    if(0 == interleaveSize) {
+        return (addr >= addrRangeStart && addr < addrRangeEnd);
     } else {
-        if(addr < addrRangeStart) return false;
-        if(addr >= addrRangeEnd) return false;
+        if (addr < addrRangeStart) return false;
+        if (addr >= addrRangeEnd) return false;
 
         addr        = addr - addrRangeStart;
         Addr offset = addr % interleaveStep;
         
-        if(offset >= interleaveSize) return false;
+        if (offset >= interleaveSize) return false;
         return true;
     }
 
 }
 
-Addr DirectoryController::convertAddressFromLocalAddress(Addr addr) {
-    if(interleaveStep > interleaveSize) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: in address conversion, interleaveStep (%" PRIu32 ") > interleaveSize (%" PRIu32 "). Addr = 0x%" PRIx64 ". Time = %" PRIu64 "\n",
-		getName().c_str(), (uint32_t) interleaveStep, (uint32_t) interleaveSize, addr, getCurrentSimTimeNano());
-    }
-
-    Addr res = 0;
-    if(0 == interleaveSize){
-        res = addr + addrRangeStart;
-    }
-    else {
-        Addr a 	    = addr;
-        Addr step   = a / interleaveSize; 
-        Addr offset = a % interleaveSize;
-        res = (step * interleaveStep) + offset;
-        res = res + addrRangeStart;
-
-    }
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || addr == DEBUG_ADDR) dbg.debug(_L10_, "Converted ACTUAL memory address 0x%" PRIx64 " to physical address 0x%" PRIx64 "\n", addr, res);
-#endif
-    return res;
-}
-
+/*
+ *  Note: Conversion assumes we are addressing a single MemController
+ *  with a contiguous address range from 0 to memSize
+ *
+ */
 Addr DirectoryController::convertAddressToLocalAddress(Addr addr){
     Addr res = 0;
-    if(0 == interleaveSize){
+    if (0 == interleaveSize) {
         res = addr - addrRangeStart;
     }
     else {

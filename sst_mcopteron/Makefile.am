@@ -49,6 +49,7 @@ EXTRA_DIST = \
         mcopteron/instrMix.txt \
         mcopteron/instrSizeDistr.txt \
         mcopteron/transition_prob.txt \
+        mcopteron/trace1.txt \
         mcopteron/usedist_new.all
 
 libsst_mcopteron_la_LDFLAGS = -module -avoid-version

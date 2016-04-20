@@ -35,6 +35,7 @@ struct pageInfo {
     typedef list<pageInfo*> pageList_t;
     typedef pageList_t::iterator pageListIter;
 
+    uint64_t pageAddr;
     uint touched; // how many times it is touched in quanta (used in LFU)
     pageListIter listEntry;
     bool inFast;
@@ -43,21 +44,32 @@ struct pageInfo {
     uint scanLeng; // number of consecutive unit-1-stride accesses
     SimTime_t pageDelay; // time when page will be in fast mem
 
+    typedef enum {NONE, FtoS, StoF} swapDir_t;
+    swapDir_t swapDir;
+    int swapsOut;
+
     // stats
     typedef enum {LT_NEG_ONE, NEG_ONE, ZERO, ONE, GT_ONE, LAST_CASE} AcCases;
     uint64_t accPat[LAST_CASE];
     set<string> rqstrs; // requestors who have touched this page
 
-    void record(const DRAMReq *req, const bool collectStats) {
+  void record(const DRAMReq *req, const bool collectStats, const uint64_t pAddr, const bool limitTouch) {
         uint64_t addr = req->baseAddr_ + req->amtInProcess_;
         bool isWrite = req->isWrite_;
         
+        // record the pageAddr
+        assert((pageAddr == 0) || (pAddr == pageAddr));
+        pageAddr = pAddr;
+
         //stats ignore writes
         if ((1 == collectStats) && isWrite) return;
 
         // record that we've been touched
         touched++;
-        
+	if (limitTouch) {
+	  if (touched > 64) touched == 64;
+	}
+
         // detect scans
         addr >>= 6; // cacheline
         if (lastRef != 0) {
@@ -74,10 +86,13 @@ struct pageInfo {
             return;
         }
         
-        // note: this is slow, and only works if directory controller is modified to send along the requestor info
-        const string &requestor = req->reqEvent_->getRqstr();
-        rqstrs.insert(requestor);
-        //printf("%s\n", requestor.c_str());
+        // note: this is slow, and only works if directory controller
+        // is modified to send along the requestor info
+        if (1 == collectStats) {
+            const string &requestor = req->reqEvent_->getRqstr();
+            rqstrs.insert(requestor);
+            //printf("%s\n", requestor.c_str());
+        }
 
         if (0 == lastRef) {
             // first touch, do nothing
@@ -119,8 +134,8 @@ struct pageInfo {
 	rqstrs.clear();
     }
 
-    pageInfo() : touched(0), inFast(0), lastTouch(0), lastRef(0), scanLeng(0),
-                 pageDelay(0) {
+    pageInfo() : pageAddr(0), touched(0), inFast(0), lastTouch(0), lastRef(0), scanLeng(0),
+                 pageDelay(0), swapDir(NONE), swapsOut(0) {
         for (int i = 0; i < LAST_CASE; ++i) {
             accPat[i] = 0;
         }
@@ -144,12 +159,15 @@ private:
     typedef enum {addMFU, // Most Frequent
                   addT, // threshold
                   addMRPU, // threshold + most recent previous add
+                  addMFRPU, // threshold + most recent previous add
                   addSC, // thresh + scan detection
+                  addSCF, // thresh + scan detection
                   addRAND // thresh + random
     } pageAddStrat_t;
     pageAddStrat_t addStrat;
     // replacement / insertion strategy
     typedef enum {LFU, // threshold + MFU addition, LFU replacement
+		  LFU8, // 8bit threshold + MFU addition, LFU replacement
                   FIFO, // FIFO replacement
                   LRU, // LRU replacement
                   BiLRU, // bimodal LRU
@@ -157,30 +175,59 @@ private:
                   LAST_STRAT} pageReplaceStrat_t;
     pageReplaceStrat_t replaceStrat; 
 
+    bool dramBackpressure;
+
     bool checkAdd(pageInfo &page);
     void do_FIFO_LRU(DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
     void do_LFU(DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
     
     void printAccStats();
+    queue<DRAMReq *> dramQ;
+    void queueRequest(DRAMReq *r) {
+        dramQ.push(r);
+    }
+
     string accStatsPrefix;
     int dumpNum;
 
+    // swap tracking stuff
+    const bool modelSwaps = 1;
+    map<uint64_t, list<DRAMReq*> > waitingReqs;
+public:    
+    class MemCtrlEvent;
+private:    
+    typedef map<MemCtrlEvent *, pageInfo*> evToPage_t;
+    typedef map<DRAMReq *, pageInfo*> reqToPage_t;
+    evToPage_t swapToSlow_Reads;
+    evToPage_t swapToFast_Writes;
+    reqToPage_t swapToSlow_Writes;
+    reqToPage_t swapToFast_Reads;
+
+    void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
+    void swapDone(pageInfo *, uint64_t);
+    void moveToFast(pageInfo &);
+    void moveToSlow(pageInfo *);
+    bool pageIsSwapping(const pageInfo &page);
+
+public:    
     class MemCtrlEvent : public SST::Event {
     public:
         MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
         { }
 
         DRAMReq *req;
-    private:
-        friend class boost::serialization::access;
-        template<class Archive>
-        void
-        serialize(Archive & ar, const unsigned int version )
-        {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-            ar & BOOST_SERIALIZATION_NVP(req);
+
+    private:   
+        MemCtrlEvent() {} // For Serialization only
+        
+    public:
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            Event::serialize_order(ser);
+            ser & req;  // Cannot serialize pointers unless they are a serializable object
         }
-    };
+        
+        ImplementSerializable(SST::MemHierarchy::pagedMultiMemory::MemCtrlEvent);     
+};
 
     typedef map<uint64_t, pageInfo> pageMap_t;
     pageMap_t pageMap;
@@ -203,6 +250,8 @@ private:
     Statistic<uint64_t> *fastSwaps;
     Statistic<uint64_t> *fastAccesses;
     Statistic<uint64_t> *tPages;
+    Statistic<uint64_t> *cantSwapOut;
+    Statistic<uint64_t> *swapDelays;
 };
 
 }

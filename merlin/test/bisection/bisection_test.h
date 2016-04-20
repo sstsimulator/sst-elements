@@ -69,20 +69,20 @@ class bisection_test_event : public Event {
  public:
     SimTime_t start_time;
 
+    bisection_test_event() {}
+    
     virtual Event* clone(void)
     {
         return new bisection_test_event(*this);
     }
 
-private:
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP(start_time);
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        Event::serialize_order(ser);
+        ser & start_time;
     }
+
+private:
+    ImplementSerializable(SST::Merlin::bisection_test_event)
     
 };
 } // namespace merlin

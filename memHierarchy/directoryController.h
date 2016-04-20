@@ -73,6 +73,7 @@ class DirectoryController : public Component {
     uint64_t    timestamp;
     uint64_t    accessLatency;
     uint64_t    mshrLatency;
+    int         maxRequestsPerCycle;
 
     /* Turn clocks off when idle */
     bool        clockOn;
@@ -219,9 +220,6 @@ class DirectoryController : public Component {
 
     /** Determines if request is valid in terms of address ranges */
     bool isRequestAddressValid(MemEvent *ev);
-    
-    /** Convert local address of the main memory section this directory controller owns to global address */
-    Addr convertAddressFromLocalAddress(Addr addr);
     
     /** Convert global address to local address of the main memory section this directory controller owns */
     Addr convertAddressToLocalAddress(Addr addr);
