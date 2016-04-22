@@ -250,9 +250,6 @@ void Cache::processEvent(MemEvent* event, bool replay) {
                 break;
             }
             
-            // track times in our separate queue
-            if (startTimeList.find(event) == startTimeList.end()) startTimeList.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
-
             if (mshr_->isHit(baseAddr) && canStall) {
                 // Drop local prefetches if there are outstanding requests for the same address NOTE this includes replacements/inv/etc.
                 if (event->isPrefetch() && event->getRqstr() == this->getName()) {
@@ -265,7 +262,17 @@ void Cache::processEvent(MemEvent* event, bool replay) {
 #endif
                     event->setBlocked(true);
                 }
+                // track times in our separate queue
+                if (startTimeList.find(event) == startTimeList.end()) {
+                    startTimeList.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
+                }
+
                 break;
+            }
+            
+            // track times in our separate queue
+            if (startTimeList.find(event) == startTimeList.end()) {
+                startTimeList.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
             }
             
             processCacheRequest(event, cmd, baseAddr, replay);

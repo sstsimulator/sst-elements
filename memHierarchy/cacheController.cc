@@ -594,23 +594,24 @@ void Cache::postReplacementProcessing(MemEvent * event, CacheAction action, bool
     if (action == DONE) activatePrevEvents(baseAddr);
     
     /* Clean up */
-    recordLatency(event);
     delete event;
 }
 
 
 void Cache::postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool replay) {
-    Command cmd    = event->getCmd();
+    Command cmd = event->getCmd();
+    Addr addr   = event->getBaseAddr();
+
+    /* Clean up */
+    recordLatency(event);
+    delete event;
     
     /* For atomic requests handled by the cache itself, GetX unlocks the cache line.  Therefore,
        we possibly need to 'replay' events that blocked due to an locked cacheline */
     if (cmd == GetX && cf_.L1_ && cacheLine->getEventsWaitingForLock() && !cacheLine->isLocked()) reActivateEventWaitingForUserLock(cacheLine);
 
-    if (mshr_->isHit(event->getBaseAddr())) activatePrevEvents(event->getBaseAddr());   // Replay any waiting events that blocked for this one
+    if (mshr_->isHit(addr)) activatePrevEvents(addr);   // Replay any waiting events that blocked for this one
 
-    /* Clean up */
-    recordLatency(event);
-    delete event;
 }
 
 
