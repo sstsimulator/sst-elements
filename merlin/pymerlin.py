@@ -222,7 +222,7 @@ class topoMesh(Topo):
                 self.dimwidths.append(dw)
             _params["mesh:width"] = self.formatShape(self.dimwidths)
         else:
-            self.dimwidths = [int(x) for x in _params["torus:width"].split('x')]
+            self.dimwidths = [int(x) for x in _params["mesh:width"].split('x')]
 
         local_ports = int(_params["mesh:local_ports"])
         radix = local_ports + 2 * sum(self.dimwidths)
@@ -299,11 +299,12 @@ class topoMesh(Topo):
                     port += self.dimwidths[dim]
 
             for n in xrange(_params["mesh:local_ports"]):
-                nicLink = sst.Link("nic.%d:%d"%(i, n))
-                rtr.addLink(nicLink, "port%d"%port, _params["link_lat"])
-                port = port+1
                 nodeID = int(_params["mesh:local_ports"]) * i + n
-                self._getEndPoint(nodeID).build(nodeID, nicLink, {})
+                ep = self._getEndPoint(nodeID).build(nodeID, {})
+                if ep:
+                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    nicLink.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
+                port = port+1
 
 
 
