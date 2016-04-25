@@ -775,7 +775,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         fprintf(stderr, "Replacement complete.\n");
         return;
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (
-                RTN_Name(rtn) == "malloc" || RTN_Name(rtn) == "_malloc")) {
+                RTN_Name(rtn) == "malloc" || RTN_Name(rtn) == "_malloc" || RTN_Name(rtn) == "__libc_malloc" || RTN_Name(rtn) == "__libc_memalign")) {
     		
         fprintf(stderr, "Identified routine: malloc/_malloc, replacing with Ariel equivalent...\n");
         RTN_Open(rtn);
