@@ -78,9 +78,10 @@ class topoSimple(Topo):
         rtr.addParam("id", 0)
 
         for l in xrange(_params["num_ports"]):
-            link = sst.Link("link:%d"%l)
-            rtr.addLink(link, "port%d"%l, _params["link_lat"])
-            self._getEndPoint(l).build(l, link, {})
+            ep = self._getEndPoint(l).build(l, {})
+            if ep:
+                link = sst.Link("link:%d"%l)
+                link.connect(ep, (rtr, "port%d"%l, _params["link_lat"]) )
             
 
 class topoTorus(Topo):
@@ -184,11 +185,12 @@ class topoTorus(Topo):
                     port = port+1
 
             for n in xrange(_params["torus:local_ports"]):
-                nicLink = sst.Link("nic.%d:%d"%(i, n))
-                rtr.addLink(nicLink, "port%d"%port, _params["link_lat"])
-                port = port+1
                 nodeID = int(_params["torus:local_ports"]) * i + n
-                self._getEndPoint(nodeID).build(nodeID, nicLink, {})
+                ep = self._getEndPoint(nodeID).build(nodeID, {})
+                if ep:
+                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    nicLink.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
+                port = port+1
 
 
 
@@ -385,12 +387,14 @@ class topoFatTree(Topo):
             for i in xrange(self.downs[0]):
                 node_id = id * self.downs[0] + i
                 #print "group: %d, id: %d, node_id: %d"%(group, id, node_id)
-                hlink = sst.Link("hostlink_%d"%node_id)
-                host_links.append(hlink)
+                ep = self._getEndPoint(node_id).build(node_id, {})
+                if ep:
+                    hlink = sst.Link("hostlink_%d"%node_id)
+                    ep[0].addLink(hlink, ep[1], ep[2])
+                    host_links.append(hlink)
                 #print "Instancing node " + str(node_id)
                 #self._getEndPoint(node_id).build(node_id, hlink, _params.subset(self.nicKeys, []))
                 #self._getEndPoint(node_id).build(node_id, hlink, _params.subset(self.nicKeys, []))
-                self._getEndPoint(node_id).build(node_id, hlink, {})
 
             # Create the edge router
             rtr_id = id
@@ -543,9 +547,10 @@ class topoDragonFly(Topo):
 
                 port = 0
                 for p in xrange(_params["dragonfly:hosts_per_router"]):
-                    link = sst.Link("link:g%dr%dh%d"%(g, r, p))
-                    rtr.addLink(link, "port%d"%port, _params["link_lat"])
-                    self._getEndPoint(nic_num).build(nic_num, link, {})
+                    ep = self._getEndPoint(nic_num).build(nic_num, {})
+                    if ep:
+                        link = sst.Link("link:g%dr%dh%d"%(g, r, p))
+                        link.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
                     nic_num = nic_num + 1
                     port = port + 1
 
@@ -691,9 +696,10 @@ class topoDragonFly2(Topo):
                     
                 port = 0
                 for p in xrange(_params["dragonfly:hosts_per_router"]):
-                    link = sst.Link("link:g%dr%dh%d"%(g, r, p))
-                    rtr.addLink(link, "port%d"%port, _params["link_lat"])
-                    self._getEndPoint(nic_num).build(nic_num, link, {})
+                    ep = self._getEndPoint(nic_num).build(nic_num, {})
+                    if ep:
+                        link = sst.Link("link:g%dr%dh%d"%(g, r, p))
+                        link.connect(ep, (rtr, "port%d"%port, _params["link_lat"]) )
                     nic_num = nic_num + 1
                     port = port + 1
 
@@ -728,8 +734,8 @@ class EndPoint:
         sys.exit(1)
     def prepParams(self):
         pass
-    def build(self, nID, link, extraKeys):
-        pass    
+    def build(self, nID, extraKeys):
+        return None
 
 class TestEndPoint(EndPoint):
     def __init__(self):
@@ -750,14 +756,14 @@ class TestEndPoint(EndPoint):
         #    _params["num_messages"] = "10"
         pass
 
-    def build(self, nID, link, extraKeys):
+    def build(self, nID, extraKeys):
         nic = sst.Component("testNic.%d"%nID, "merlin.test_nic")
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
-        nic.addLink(link, "rtr", _params["link_lat"])
         if self.enableAllStats:
             nic.enableAllStatistics({"type":"sst.AccumulatorStatistic","rate":self.statInterval})
+        return (nic, "rtr", _params["link_lat"])
         #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
     def enableAllStatistics(self,interval):
         self.enableAllStats = True;
@@ -779,14 +785,14 @@ class BisectionEndPoint(EndPoint):
         #    _params["checkerboard"] = "1"
         pass
         
-    def build(self, nID, link, extraKeys):
+    def build(self, nID, extraKeys):
         nic = sst.Component("bisectionNic.%d"%nID, "merlin.bisection_test")
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
-        nic.addLink(link, "rtr", _params["link_lat"])
         if self.enableAllStats:
             nic.enableAllStatistics({"type":"sst.AccumulatorStatistic", "rate":self.statInterval})
+        return (nic, "rtr", _params["link_lat"])
         #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
     def enableAllStatistics(self,interval):
         self.enableAllStats = True;
@@ -812,14 +818,14 @@ class ShiftEndPoint(EndPoint):
         #    _params["num_messages"] = "10"
         pass
 
-    def build(self, nID, link, extraKeys):
+    def build(self, nID, extraKeys):
         nic = sst.Component("shiftNic.%d"%nID, "merlin.shift_nic")
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
-        nic.addLink(link, "rtr", _params["link_lat"])
         if self.enableAllStats:
             nic.enableAllStatistics({"type":"sst.AccumulatorStatistic","rate":self.statInterval})
+        return (nic, "rtr", _params["link_lat"])
         #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
     def enableAllStatistics(self,interval):
         self.enableAllStats = True;
@@ -862,7 +868,7 @@ class TrafficGenEndPoint(EndPoint):
             self.nicKeys.append("PacketDest:Binomial:Mean")
             self.nicKeys.append("PacketDest:Binomial:Sigma")
 
-    def build(self, nID, link, extraKeys):
+    def build(self, nID, extraKeys):
         nic = sst.Component("TrafficGen.%d"%nID, "merlin.trafficgen")
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys, {}))
@@ -870,9 +876,9 @@ class TrafficGenEndPoint(EndPoint):
         #    if k in _params:
         #        nic.addParam(k, _params[k])
         nic.addParam("id", nID)
-        nic.addLink(link, "rtr", _params["link_lat"])
         if self.enableAllStats:
             nic.enableAllStatistics({"type":"sst.AccumulatorStatistic", "rate":self.statInterval})
+        return (nic, "rtr", _params["link_lat"])
 
     def enableAllStatistics(self,interval):
         self.enableAllStats = True;
