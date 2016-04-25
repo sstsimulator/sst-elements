@@ -496,7 +496,9 @@ PortControl::init(unsigned int phase) {
 void
 PortControl::sendInitData(Event *ev)
 {
-    port_link->sendInitData(ev);
+    if ( connected ) {
+        port_link->sendInitData(ev);
+    }
 }
 
 Event*

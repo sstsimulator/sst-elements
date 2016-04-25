@@ -267,4 +267,3 @@ shift_nic::handle_event(int vn)
 } // namespace Merlin
 } // namespace SST
 
-DeclareSerializable(SST::Merlin::ShiftEvent)

@@ -907,7 +907,3 @@ extern "C" {
 	};
 }
 
-DeclareSerializable(SST::MemHierarchy::MemEvent)
-DeclareSerializable(SST::MemHierarchy::DRAMReq)
-DeclareSerializable(SST::MemHierarchy::MemNIC::MemRtrEvent)
-DeclareSerializable(SST::MemHierarchy::MemNIC::InitMemRtrEvent)

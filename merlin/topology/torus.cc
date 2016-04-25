@@ -294,4 +294,3 @@ topo_torus::getEndpointID(int port)
 }
 
 
-DeclareSerializable(SST::Merlin::topo_torus_event)

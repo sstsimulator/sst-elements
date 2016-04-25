@@ -759,9 +759,3 @@ extern "C" {
     };
 }
 
-DeclareSerializable(SST::Merlin::BaseRtrEvent)
-DeclareSerializable(SST::Merlin::RtrEvent)
-DeclareSerializable(SST::Merlin::TopologyEvent)
-DeclareSerializable(SST::Merlin::credit_event)
-DeclareSerializable(SST::Merlin::RtrInitEvent)
-DeclareSerializable(SST::Merlin::internal_router_event)
