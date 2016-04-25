@@ -84,14 +84,12 @@ class EmberEP( EndPoint ):
     def prepParams( self ):
         pass
 
-    def build( self, nodeID, link, extraKeys ):
+    def build( self, nodeID, extraKeys ):
         nic = sst.Component( "nic" + str(nodeID), "firefly.nic" )
         nic.addParams( self.nicParams )
         nic.addParams( extraKeys)
         nic.addParam( "nid", nodeID )
-        nic.addLink( link, "rtr", sst.merlin._params["link_lat"] )
-
-        link.setNoCut()
+        retval = (nic, "rtr", sst.merlin._params["link_lat"] )
 
         loopBack = sst.Component("loopBack" + str(nodeID), "firefly.loopBack")
         loopBack.addParam( "numCores", self.numCores )
@@ -155,6 +153,7 @@ class EmberEP( EndPoint ):
 
             ep.addLink(loopLink, "loop", "1ns")
             loopBack.addLink(loopLink, "core" + str(x), "1ns")
+        return retval
 
 
 class LoadInfo:
