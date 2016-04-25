@@ -88,5 +88,4 @@ bool simpleMessageGeneratorComponent::tick( Cycle_t )
 
 // Element Libarary / Serialization stuff
     
-DeclareSerializable(SST::SimpleMessageGeneratorComponent::simpleMessage)
 

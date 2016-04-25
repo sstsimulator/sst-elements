@@ -34,8 +34,6 @@ create_Bounce(ComponentId_t id, Params& params)
     return new SST::M5::Bounce( id, params );
 }
 
-DeclareSerializable(SST::M5::RawEvent);
-DeclareSerializable(SST::M5::MemEvent);
 
 
 
