@@ -637,4 +637,3 @@ bool pagedMultiMemory::pageIsSwapping(const pageInfo &page) {
     return (page.swapDir != pageInfo::NONE);
 }
 
-DeclareSerializable(SST::MemHierarchy::pagedMultiMemory::MemCtrlEvent)

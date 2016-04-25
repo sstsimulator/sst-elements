@@ -161,4 +161,3 @@ std::atomic<size_t> PyProto::pyObjIdx(0);
 }
 }
 
-DeclareSerializable(SST::PyProtoNS::PyEvent)
