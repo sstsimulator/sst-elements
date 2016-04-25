@@ -170,7 +170,7 @@ class EmberEP(EndPoint):
             
 			ep.addLink(loopLink, "loop", "1ns")
 			loopBack.addLink(loopLink, "core" + str(x), "1ns")
-        return (nic, "rtr", "10ns")
+		return (nic, "rtr", "10ns")
 
 
 topo = topoTorus()
