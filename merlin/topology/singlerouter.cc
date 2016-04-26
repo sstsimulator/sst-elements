@@ -23,7 +23,7 @@ using namespace SST::Merlin;
 topo_singlerouter::topo_singlerouter(Component* comp, Params& params) :
     Topology()
 {
-    num_ports = params.find_integer("num_ports");
+    num_ports = params.find<int>("num_ports");
 }
 
 topo_singlerouter::~topo_singlerouter()

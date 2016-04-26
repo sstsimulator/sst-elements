@@ -35,15 +35,15 @@ route_test::route_test(ComponentId_t cid, Params& params) :
     done(false),
     initialized(false)
 {
-    id = params.find_integer("id");
+    id = params.find<int>("id",-1);
     if ( id == -1 ) {
     }
 
-    num_peers = params.find_integer("num_peers");
+    num_peers = params.find<int>("num_peers",-1);
     if ( num_peers == -1 ) {
     }
 
-    std::string link_bw_s = params.find_string("link_bw");
+    std::string link_bw_s = params.find<std::string>("link_bw");
     if ( link_bw_s == "" ) {
     }
     UnitAlgebra link_bw(link_bw_s);

@@ -46,12 +46,12 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 
     out.init(getName() + ": ", 0, 0, Output::STDOUT);
     
-    id = params.find_integer("id");
+    id = params.find<int>("id",-1);
     if ( id == -1 ) {
         out.fatal(CALL_INFO, -1, "id must be set!\n");
     }
 
-    num_peers = params.find_integer("num_peers");
+    num_peers = params.find<int>("num_peers",-1);
     if ( num_peers == -1 ) {
         out.fatal(CALL_INFO, -1, "num_peers must be set!\n");
     }
@@ -62,7 +62,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     // }
     num_vns = 1;
     
-    std::string link_bw_s = params.find_string("link_bw");
+    std::string link_bw_s = params.find<std::string>("link_bw");
     if ( link_bw_s == "" ) {
         out.fatal(CALL_INFO, -1, "link_bw must be set!\n");
     }
@@ -72,15 +72,9 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 
     addressMode = SEQUENTIAL;
 
-    // if ( !params.find_string("topology").compare("merlin.fattree") ) {
-    //     addressMode = FATTREE_IP;
-    //     ft_loading = params.find_integer("fattree:loading");
-    //     ft_radix = params.find_integer("fattree:radix");
-    // }
-
     // Create a LinkControl object
 
-    std::string buf_len = params.find_string("buffer_length", "1kB");
+    std::string buf_len = params.find<std::string>("buffer_length", "1kB");
     // NOTE:  This MUST be the same length as 'num_vns'
     // int *buf_size = new int[num_vns];
     // for ( int i = 0 ; i < num_vns ; i++ ) {
@@ -93,7 +87,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     link_control->initialize("rtr", link_bw, num_vns, buf_len, buf_len);
     // delete [] buf_size;
 
-    packets_to_send = (uint64_t)params.find_integer("packets_to_send", 1000);
+    packets_to_send = params.find<uint64_t>("packets_to_send", 1000);
 
     /* Distribution selection */
     packetDestGen = buildGenerator("PacketDest", params);
@@ -105,7 +99,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     packetSizeGen = buildGenerator("PacketSize", params);
     if ( packetSizeGen ) packetSizeGen->seed(id);
 
-    std::string packet_size_s = params.find_string("packet_size", "8B");
+    std::string packet_size_s = params.find<std::string>("packet_size", "8B");
     UnitAlgebra packet_size(packet_size_s);
     if ( packet_size.hasUnits("B") ) {
         packet_size *= UnitAlgebra("8b/B");
@@ -122,7 +116,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     packetDelayGen = buildGenerator("PacketDelay", params);
     if ( packetDelayGen ) packetDelayGen->seed(id);
 
-    std::string packet_delay_s = params.find_string("delay_between_packets", "0s");
+    std::string packet_delay_s = params.find<std::string>("delay_between_packets", "0s");
     UnitAlgebra packet_delay(packet_delay_s);
 
     if ( !packet_delay.hasUnits("s") ) {
@@ -134,7 +128,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
     clock_functor = new Clock::Handler<TrafficGen>(this,&TrafficGen::clock_handler);
-    clock_tc = registerClock( params.find_string("message_rate", "1GHz"), clock_functor, false);
+    clock_tc = registerClock( params.find<std::string>("message_rate", "1GHz"), clock_functor, false);
 
     // Register a receive handler which will simply strip the events as they arrive
     link_control->setNotifyOnReceive(new LinkControl::Handler<TrafficGen>(this,&TrafficGen::handle_receives));
@@ -151,34 +145,34 @@ TrafficGen::~TrafficGen()
 TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Params &params)
 {
     Generator* gen = NULL;
-    std::string pattern = params.find_string(prefix + ":pattern");
+    std::string pattern = params.find<std::string>(prefix + ":pattern");
     std::pair<int, int> range = std::make_pair(
-            params.find_integer(prefix + ":RangeMin", 0),
-            params.find_integer(prefix + ":RangeMax", INT_MAX));
+        params.find<int>(prefix + ":RangeMin", 0),
+        params.find<int>(prefix + ":RangeMax", INT_MAX));
 
-    uint32_t rng_seed = (uint32_t) params.find_integer(prefix + ":Seed", 1010101);
+    uint32_t rng_seed = params.find<uint32_t>(prefix + ":Seed", 1010101);
 
     if ( !pattern.compare("NearestNeighbor") ) {
-        std::string shape = params.find_string(prefix + ":NearestNeighbor:3DSize");
+        std::string shape = params.find<std::string>(prefix + ":NearestNeighbor:3DSize");
         int maxX, maxY, maxZ;
         assert (sscanf(shape.c_str(), "%d %d %d", &maxX, &maxY, &maxZ) == 3);
         gen = new NearestNeighbor(new UniformDist(0, 5), id, maxX, maxY, maxZ, 6);
     } else if ( !pattern.compare("Uniform") ) {
         gen = new UniformDist(range.first, range.second-1);
     } else if ( !pattern.compare("HotSpot") ) {
-        int target = params.find_integer(prefix + ":HotSpot:target");
-        float targetProb = params.find_floating(prefix + ":HotSpot:targetProbability");
+        int target = params.find<int>(prefix + ":HotSpot:target");
+        float targetProb = params.find<float>(prefix + ":HotSpot:targetProbability");
         gen = new DiscreteDist(range.first, range.second, target, targetProb);
     } else if ( !pattern.compare("Normal") ) {
-        float mean = params.find_floating(prefix + ":Normal:Mean", range.second/2.0f);
-        float sigma = params.find_floating(prefix + ":Normal:Sigma", 1.0f);
+        float mean = params.find<float>(prefix + ":Normal:Mean", range.second/2.0f);
+        float sigma = params.find<float>(prefix + ":Normal:Sigma", 1.0f);
         gen = new NormalDist(range.first, range.second, mean, sigma);
     } else if ( !pattern.compare("Exponential") ) {
-        float lambda = params.find_floating(prefix + ":Exponential:Lambda", range.first);
+        float lambda = params.find<float>(prefix + ":Exponential:Lambda", range.first);
         gen = new ExponentialDist(lambda);
     } else if ( !pattern.compare("Binomial") ) {
-        int trials = params.find_floating(prefix + ":Binomial:Mean", range.second);
-        float probability = params.find_floating(prefix + ":Binomial:Sigma", 0.5f);
+        int trials = params.find<int>(prefix + ":Binomial:Mean", range.second);
+        float probability = params.find<float>(prefix + ":Binomial:Sigma", 0.5f);
         gen = new BinomialDist(range.first, range.second, trials, probability);
     } else if ( pattern.compare("") ) { // Allow none - non-pattern
         out.fatal(CALL_INFO, -1, "Unknown pattern '%s'\n", pattern.c_str());
