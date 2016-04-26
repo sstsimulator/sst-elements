@@ -109,19 +109,23 @@ std::vector<std::vector<StackRecord> > arielStack; // Per-thread stacks
 VOID ariel_stack_call(THREADID thr, ADDRINT stackPtr, ADDRINT target, ADDRINT ip) {
     // Handle longjmp
     while (arielStack[thr].size() > 0 && stackPtr >= arielStack[thr].back().getStackPtr()) {
+        //fprintf(btfiles[thr], "RET ON CALL %s (0x%" PRIx64 ", 0x%" PRIx64 ")\n", RTN_FindNameByAddress(arielStack[thr].back().getTarget()).c_str(), arielStack[thr].back().getInstPtr(), arielStack[thr].back().getStackPtr());
         arielStack[thr].pop_back();
     }
     // Add new record
     arielStack[thr].push_back(StackRecord(stackPtr, target, ip));
+    //fprintf(btfiles[thr], "CALL %s (0x%" PRIx64 ", 0x%" PRIx64 ")\n", RTN_FindNameByAddress(target).c_str(), ip, stackPtr);
 }
 
 /* Instrumentation function to be called on function returns */
 VOID ariel_stack_return(THREADID thr, ADDRINT stackPtr) {
     // Handle longjmp
     while (arielStack[thr].size() > 0 && stackPtr >= arielStack[thr].back().getStackPtr()) {
+        //fprintf(btfiles[thr], "RET ON RET %s (0x%" PRIx64 ", 0x%" PRIx64 ")\n", RTN_FindNameByAddress(arielStack[thr].back().getTarget()).c_str(), arielStack[thr].back().getInstPtr(), arielStack[thr].back().getStackPtr());
         arielStack[thr].pop_back();
     }
     // Remove last record
+    //fprintf(btfiles[thr], "RET %s (0x%" PRIx64 ", 0x%" PRIx64 ")\n", RTN_FindNameByAddress(arielStack[thr].back().getTarget()).c_str(), arielStack[thr].back().getInstPtr(), arielStack[thr].back().getStackPtr());
     arielStack[thr].pop_back();
 }
 
@@ -711,7 +715,6 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation) {
         }
         tunnel->writeMessage(thr, ac);
         
-
     	/*printf("ARIEL: Created a malloc of size: %" PRIu64 " in Ariel\n",
          * (UINT64) allocationLength);*/
     }
@@ -793,7 +796,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 
         RTN_Close(rtn);
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (
-                RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free")) {
+                RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free" || RTN_Name(rtn) == "__libc_free")) {
 
         fprintf(stderr, "Identified routine: free/_free, replacing with Ariel equivalent...\n");
         RTN_Open(rtn);
