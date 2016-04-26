@@ -72,11 +72,11 @@ static std::string getLogicalGroupParam(const Params& params, Topology* topo, in
     std::string key = param;
     key.append(std::string(":")).append(group);
 
-    std::string value = params.find_string(key);
+    std::string value = params.find<std::string>(key);
 
     if ( value == "" ) {
         // Look for default value
-        value = params.find_string(param, default_val);
+        value = params.find<std::string>(param, default_val);
         if ( value == "" ) {
             // Abort
             merlin_abort.fatal(CALL_INFO, -1, "hr_router requires %s to be specified\n", param.c_str());
@@ -123,17 +123,17 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     output(Simulation::getSimulation()->getSimulationOutput())
 {
     // Get the options for the router
-    id = params.find_integer("id");
+    id = params.find<int>("id",-1);
     if ( id == -1 ) {
         merlin_abort.fatal(CALL_INFO, -1, "hr_router requires id to be specified\n");
     }
 
-    num_ports = params.find_integer("num_ports");
+    num_ports = params.find<int>("num_ports",-1);
     if ( num_ports == -1 ) {
         merlin_abort.fatal(CALL_INFO, -1, "hr_router requires num_poorts to be specified\n");
     }
 
-    num_vcs = params.find_integer("num_vcs");
+    num_vcs = params.find<int>("num_vcs",-1);
     if ( num_vcs != -1 ) {
         // merlin_abort.fatal(CALL_INFO,-1,"ERROR: hr_router requires num_vcs to be specified\n");
         merlin_abort.output("WARNING: hr_router no longer uses parameter num_vcs,\n"
@@ -142,7 +142,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     }
 
     // Get the topology
-    std::string topology = params.find_string("topology");
+    std::string topology = params.find<std::string>("topology");
 
     if ( topology == "" ) {
         merlin_abort.fatal(CALL_INFO, -1, "hr_router requires topology to be specified\n");
@@ -153,12 +153,12 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         merlin_abort.fatal(CALL_INFO, -1, "Unable to find topology '%s'\n", topology.c_str());
     }
 
-    std::string xbar_arb = params.find_string("xbar_arb","merlin.xbar_arb_lru");
+    std::string xbar_arb = params.find<std::string>("xbar_arb","merlin.xbar_arb_lru");
     
     // Parse all the timing parameters
 
     // Flit size
-    std::string flit_size_s = params.find_string("flit_size");
+    std::string flit_size_s = params.find<std::string>("flit_size");
     if ( flit_size_s == "" ) {
         merlin_abort.fatal(CALL_INFO, -1, "hr_router requires flit_size to be specified\n");
         abort();
@@ -171,7 +171,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     }
     
     // Link BW default.  Can be overwritten using logical groups
-    std::string link_bw_s = params.find_string("link_bw");
+    std::string link_bw_s = params.find<std::string>("link_bw");
     UnitAlgebra link_bw(link_bw_s);
 
     if ( link_bw.hasUnits("B/s") ) {
@@ -180,7 +180,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     }
     
     // Cross bar bandwidth
-    std::string xbar_bw_s = params.find_string("xbar_bw");
+    std::string xbar_bw_s = params.find<std::string>("xbar_bw");
     if ( xbar_bw_s == "" ) {
         merlin_abort.fatal(CALL_INFO, -1, "hr_router requires xbar_bw to be specified\n");
     }
@@ -195,15 +195,15 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     xbar_clock = xbar_bw_ua / flit_size;
 
 
-    std::string input_latency = params.find_string("input_latency", "0ns");
-    std::string output_latency = params.find_string("output_latency", "0ns");
+    std::string input_latency = params.find<std::string>("input_latency", "0ns");
+    std::string output_latency = params.find<std::string>("output_latency", "0ns");
 
 
     // Create all the PortControl blocks
     ports = new PortControl*[num_ports];
 
-    std::string input_buf_size = params.find_string("input_buf_size", "0");
-    std::string output_buf_size = params.find_string("output_buf_size", "0");
+    std::string input_buf_size = params.find<std::string>("input_buf_size", "0");
+    std::string output_buf_size = params.find<std::string>("output_buf_size", "0");
 
     
     // Naming convention is from point of view of the xbar.  So,
@@ -214,7 +214,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     
     progress_vcs = new int[num_ports];
 
-    std::string inspector_config = params.find_string("network_inspectors", "");
+    std::string inspector_config = params.find<std::string>("network_inspectors", "");
     split(inspector_config,",",inspector_names);
 
     params.enableVerify(false);

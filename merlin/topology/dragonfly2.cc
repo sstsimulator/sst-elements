@@ -56,27 +56,26 @@ RouteToGroup::setRouterPortPair(int group, int route_number, const RouterPortPai
 topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
     Topology()
 {
-    params.p = (uint32_t)p.find_integer("dragonfly:hosts_per_router");
-    params.a = (uint32_t)p.find_integer("dragonfly:routers_per_group");
-    params.k = (uint32_t)p.find_integer("num_ports");
-    params.h = (uint32_t)p.find_integer("dragonfly:intergroup_per_router");
-    params.g = (uint32_t)p.find_integer("dragonfly:num_groups");
-    params.n = (uint32_t)p.find_integer("dragonfly:intergroup_links");
+    params.p = (uint32_t)p.find<int>("dragonfly:hosts_per_router");
+    params.a = (uint32_t)p.find<int>("dragonfly:routers_per_group");
+    params.k = (uint32_t)p.find<int>("num_ports");
+    params.h = (uint32_t)p.find<int>("dragonfly:intergroup_per_router");
+    params.g = (uint32_t)p.find<int>("dragonfly:num_groups");
+    params.n = (uint32_t)p.find<int>("dragonfly:intergroup_links");
 
     
-    std::string route_algo = p.find_string("dragonfly:algorithm", "minimal");
+    std::string route_algo = p.find<std::string>("dragonfly:algorithm", "minimal");
 
-    adaptive_threshold = p.find_floating("dragonfly:adaptive_threshold",2.0);
+    adaptive_threshold = p.find<double>("dragonfly:adaptive_threshold",2.0);
     
     // Get the global link map
     std::vector<int64_t> global_link_map;
-    // p.find_integer_array("dragonfly:global_link_map",global_link_map);
 
     // For now, parse array ourselves so as not to create a dependency
     // on new core features.  Once we want to use new core features,
     // delete code below and uncomment line above (can also get rid of
     // #include <sstream> above).
-    std::string array = p.find_string("dragonfly:global_link_map");
+    std::string array = p.find<std::string>("dragonfly:global_link_map");
     if ( array != "" ) {
         array = array.substr(1,array.size()-2);
     
@@ -135,7 +134,7 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
         algorithm = MINIMAL;
     }
 
-    uint32_t id = p.find_integer("id");
+    uint32_t id = p.find<int>("id");
     group_id = id / params.a;
     router_id = id % params.a;
 

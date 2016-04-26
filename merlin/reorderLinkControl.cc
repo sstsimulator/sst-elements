@@ -28,7 +28,7 @@ ReorderLinkControl::ReorderLinkControl(Component* parent, Params &params) :
     SST::Interfaces::SimpleNetwork(parent),
     receiveFunctor(NULL)
 {
-    std::string networkIF = params.find_string("rlc:networkIF", "merlin.linkcontrol");
+    std::string networkIF = params.find<std::string>("rlc:networkIF", "merlin.linkcontrol");
     link_control = static_cast<SST::Interfaces::SimpleNetwork*>(loadSubComponent(networkIF, params));
 }
 
