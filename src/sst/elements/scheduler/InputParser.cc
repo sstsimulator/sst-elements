@@ -44,12 +44,12 @@ JobParser::JobParser(Machine* machine,
     this->YumYumSimulationKillFlag = YumYumSimulationKillFlag;
     this->doDetailedNetworkSim = doDetailedNetworkSim; //NetworkSim: added doDetailedNetworkSim parameter
     useYumYumTraceFormat = !params.find_string("useYumYumTraceFormat").empty();
-    jobTrace = params["traceName"].c_str();
+    jobTrace = params.find_string("traceName").c_str();
 
     //NetworkSim: traces for completed/running jobs on ember
     if (*(this->doDetailedNetworkSim)){
-        completedJobTrace = params["completedJobsTrace"].c_str();
-        runningJobTrace = params["runningJobsTrace"].c_str();
+        completedJobTrace = params.find_string("completedJobsTrace").c_str();
+        runningJobTrace = params.find_string("runningJobsTrace").c_str();
     }
     //end->NetworkSim
 
@@ -504,7 +504,7 @@ double** CommParser::readCoordFile(std::string fileName, int procsNeeded)
 DParser::DParser(int numNodes, SST::Params& params)
 {
     this->numNodes = numNodes;
-    fileName = params["dMatrixFile"].c_str();
+    fileName = params.find_string("dMatrixFile").c_str();
     
     char* inputDir = getenv("SIMINPUT");
     if (inputDir != NULL) {

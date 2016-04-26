@@ -130,7 +130,7 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numNodes, const Machin
     else
     {
         int filltimes = 0;
-        vector<string>* schedparams = parseparams(params["scheduler"]);
+        vector<string>* schedparams = parseparams(params.find_string("scheduler"));
         if(schedparams->size() == 0)
             schedout.fatal(CALL_INFO, 1, "Error in parsing scheduler parameter");
         switch(schedulername(schedparams->at(0)))
@@ -243,7 +243,7 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
     }
     else
     {
-        vector<string>* schedparams = parseparams(params["machine"]);
+        vector<string>* schedparams = parseparams(params.find_string("machine"));
         switch(machinename(schedparams -> at(0)))
         {
             //simple machine
@@ -335,7 +335,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
         }
         return new SimpleAllocator(mach);
     } else {
-        vector<string>* schedparams = parseparams(params["allocator"]);
+        vector<string>* schedparams = parseparams(params.find_string("allocator"));
         vector<string>* nearestparams = NULL;
         switch (allocatorname(schedparams -> at(0)))
         {
@@ -460,7 +460,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
             }
         case NEARESTAMAP:
             if (!params.find_string("taskMapper").empty()
-               && taskmappername(parseparams(params["taskMapper"])->at(0)) == NEARESTAMT) {
+                && taskmappername(parseparams(params.find_string("taskMapper"))->at(0)) == NEARESTAMT) {
                 return new NearestAllocMapper(*m, true);
             } else {
                 return new NearestAllocMapper(*m, false);
@@ -468,7 +468,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
             break;
         case SPECTRALAMAP:
             if (!params.find_string("taskMapper").empty()
-              && taskmappername(parseparams(params["taskMapper"])->at(0)) == SPECTRALAMT) {
+                && taskmappername(parseparams(params.find_string("taskMapper"))->at(0)) == SPECTRALAMT) {
                return new SpectralAllocMapper(*m, true);
             } else {
                 return new SpectralAllocMapper(*m, false);
@@ -489,7 +489,7 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Task Mapper\n");
     } else {
         StencilMachine *sMachine = dynamic_cast<StencilMachine*>(mach);
-        vector<string>* taskmapparams = parseparams(params["taskMapper"]);
+        vector<string>* taskmapparams = parseparams(params.find_string("taskMapper"));
         switch (taskmappername( taskmapparams->at(0) )){
         case SIMPLEMAP:
             taskMapper = new SimpleTaskMapper(*mach);
@@ -511,7 +511,7 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             break;  
         case NEARESTAMT:
             if (!params.find_string("allocator").empty()
-                && allocatorname(parseparams(params["allocator"])->at(0)) == NEARESTAMAP ) {
+                && allocatorname(parseparams(params.find_string("allocator"))->at(0)) == NEARESTAMAP ) {
                 taskMapper = new NearestAllocMapper(*mach, true);
             } else {
                 taskMapper = new NearestAllocMapper(*mach, false);
@@ -519,7 +519,7 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             break;  
         case SPECTRALAMT:
            if(!params.find_string("allocator").empty()
-              && allocatorname(parseparams(params["allocator"])->at(0)) == SPECTRALAMAP ){
+              && allocatorname(parseparams(params.find_string("allocator"))->at(0)) == SPECTRALAMAP ){
                 taskMapper = new SpectralAllocMapper(*mach, true);
             } else {
                 taskMapper = new SpectralAllocMapper(*mach, false);
@@ -541,7 +541,7 @@ int Factory::getFST(SST::Params& params)
         //schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no FST");
         return 0;
     } else {
-        vector<string>* FSTparams = parseparams(params["FST"]);
+        vector<string>* FSTparams = parseparams(params.find_string("FST"));
         switch (FSTname(FSTparams -> at(0)))
         {
         case NONE:
@@ -569,7 +569,7 @@ vector<double>* Factory::getTimePerDistance(SST::Params& params)
         //schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no FST");
         return ret;
     } else {
-        vector<string>* tpdparams = parseparams(params["timeperdistance"]);
+        vector<string>* tpdparams = parseparams(params.find_string("timeperdistance"));
         for (unsigned int x = 0; x < tpdparams -> size(); x++) {
             ret -> at(x) = atof(tpdparams -> at(x).c_str());
             //printf("%s %f %f\n", tpdparams -> at(x).c_str(), atof(tpdparams->at(x).c_str()), ret->at(x));

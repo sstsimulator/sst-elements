@@ -262,4 +262,3 @@ nic::clock_handler(Cycle_t cycle)
 } // namespace Merlin
 } // namespace SST
 
-DeclareSerializable(SST::Merlin::MyRtrEvent)

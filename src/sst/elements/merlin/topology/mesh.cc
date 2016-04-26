@@ -307,5 +307,3 @@ topo_mesh::getEndpointID(int port)
     return (router_id * num_local_ports) + (port - local_port_start);
 }
 
-DeclareSerializable(SST::Merlin::topo_mesh_event)
-DeclareSerializable(SST::Merlin::topo_mesh_init_event)

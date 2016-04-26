@@ -268,4 +268,3 @@ pt2pt_test::handle_complete(Event* ev) {
 
 }
 
-DeclareSerializable(SST::Merlin::pt2pt_test_event)
