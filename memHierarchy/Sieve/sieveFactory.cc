@@ -64,7 +64,7 @@ Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params) {
 
 
 
-Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output) : Component(id), unassociatedMisses(0) {
+Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output) : Component(id) {
     cacheArray_ = cacheArray;
     output_ = output;
     output_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
@@ -76,21 +76,8 @@ Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output *
     }
     outCount = 0;
     
-    /* --------------- Sieve profiler - implemented as a cassini prefetcher subcomponent ---------------*/
-    string listener   = params.find_string("profiler");
-    if (listener.empty()) {
-	  Params emptyParams;
-	  listener_ = new CacheListener(this, emptyParams);
-    } else {
-      if (listener != std::string("cassini.AddrHistogrammer")) {
-          output_->fatal(CALL_INFO, -1, "%s, Sieve does not support prefetching. It can only support "
-              "profiling through Cassini's AddrHistogrammer.",
-              getName().c_str());
-      }
-	  Params listenerParams = params.find_prefix_params("profiler." );
-	  listener_ = dynamic_cast<CacheListener*>(loadSubComponent(listener, this, listenerParams));
-    }
-    
+    resetStatsOnOutput = params.find_integer("reset_stats_at_buoy", 0) != 0;
+
     // optional link for allocation / free tracking
     configureLinks();
 
@@ -99,7 +86,8 @@ Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output *
     statReadMisses  = registerStatistic<uint64_t>("ReadMisses");
     statWriteHits   = registerStatistic<uint64_t>("WriteHits");
     statWriteMisses = registerStatistic<uint64_t>("WriteMisses");
-
+    statUnassocReadMisses   = registerStatistic<uint64_t>("UnassociatedReadMisses");
+    statUnassocWriteMisses  = registerStatistic<uint64_t>("UnassociatedWriteMisses");
 }
 
 void Sieve::configureLinks() {
