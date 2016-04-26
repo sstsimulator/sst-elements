@@ -202,4 +202,3 @@ bisection_test::handle_complete(Event* ev) {
 }
 }
 }
-DeclareSerializable(SST::Merlin::bisection_test_event)

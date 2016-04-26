@@ -39,4 +39,3 @@ bool SimpleMemory::issueRequest(DRAMReq *req){
     return true;
 }
 
-DeclareSerializable(SST::MemHierarchy::SimpleMemory::MemCtrlEvent)

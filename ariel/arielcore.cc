@@ -665,4 +665,3 @@ void ArielCore::tick() {
 	}
 }
 
-DeclareSerializable(SST::ArielComponent::arielAllocTrackEvent)

@@ -256,4 +256,3 @@ uint32_t topo_dragonfly::port_for_router(uint32_t router) const
     return tgt;
 }
 
-DeclareSerializable(SST::Merlin::topo_dragonfly_event)
