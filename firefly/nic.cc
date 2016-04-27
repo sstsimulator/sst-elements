@@ -287,4 +287,3 @@ bool Nic::recvNotify(int vc)
     return false;
 }
 
-DeclareSerializable( SST::Firefly::NicInitEvent )

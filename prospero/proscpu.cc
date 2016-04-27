@@ -24,10 +24,10 @@ using namespace SST::Prospero;
 ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	Component(id) {
 
-	const uint32_t output_level = (uint32_t) params.find_integer("verbose", 0);
+	const uint32_t output_level = (uint32_t) params.find<uint32_t>("verbose", 0);
 	output = new SST::Output("Prospero[@p:@l]: ", output_level, 0, SST::Output::STDOUT);
 
-	std::string traceModule = params.find_string("reader", "prospero.ProsperoTextTraceReader");
+	std::string traceModule = params.find<std::string>("reader", "prospero.ProsperoTextTraceReader");
 	output->verbose(CALL_INFO, 1, 0, "Reader module is: %s\n", traceModule.c_str());
 
 	Params readerParams = params.find_prefix_params("readerParams.");
@@ -39,22 +39,22 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 
 	reader->setOutput(output);
 
-	pageSize = (uint64_t) params.find_integer("pagesize", 4096);
+	pageSize = (uint64_t) params.find<uint64_t>("pagesize", 4096);
 	output->verbose(CALL_INFO, 1, 0, "Configured Prospero page size for %" PRIu64 " bytes.\n", pageSize);
 
-        cacheLineSize = (uint64_t) params.find_integer("cache_line_size", 64);
+        cacheLineSize = (uint64_t) params.find<uint64_t>("cache_line_size", 64);
 	output->verbose(CALL_INFO, 1, 0, "Configured Prospero cache line size for %" PRIu64 " bytes.\n", cacheLineSize);
 
-	std::string prosClock = params.find_string("clock", "2GHz");
+	std::string prosClock = params.find<std::string>("clock", "2GHz");
 	// Register the clock
 	registerClock(prosClock, new Clock::Handler<ProsperoComponent>(this, &ProsperoComponent::tick));
 
 	output->verbose(CALL_INFO, 1, 0, "Configured Prospero clock for %s\n", prosClock.c_str());
 
-	maxOutstanding = (uint32_t) params.find_integer("max_outstanding", 16);
+	maxOutstanding = (uint32_t) params.find<uint32_t>("max_outstanding", 16);
 	output->verbose(CALL_INFO, 1, 0, "Configured maximum outstanding transactions for %" PRIu32 "\n", maxOutstanding);
 
-	maxIssuePerCycle = (uint32_t) params.find_integer("max_issue_per_cycle", 2);
+	maxIssuePerCycle = (uint32_t) params.find<uint32_t>("max_issue_per_cycle", 2);
 	output->verbose(CALL_INFO, 1, 0, "Configured maximum transaction issue per cycle %" PRIu32 "\n", maxIssuePerCycle);
 
 	// tell the simulator not to end without us

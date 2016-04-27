@@ -10,7 +10,7 @@ CircNetworkInspector::CircNetworkInspector(SST::Component* parent,
                                            SST::Params &params) :
         SimpleNetwork::NetworkInspector(parent) {
     
-    outFileName = params.find_string("output_file");
+    outFileName = params.find<std::string>("output_file");
     if (outFileName.empty()) {
       outFileName = "RouterCircuits";
     }

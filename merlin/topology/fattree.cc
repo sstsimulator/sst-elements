@@ -60,16 +60,16 @@ topo_fattree::topo_fattree(Component* comp, Params& params) :
     num_vcs(-1),
     allow_adaptive(false)
 {
-    num_ports = params.find_integer("num_ports");
-    string shape = params.find_string("fattree:shape");
-    id = params.find_integer("id");
+    num_ports = params.find<int>("num_ports");
+    string shape = params.find<std::string>("fattree:shape");
+    id = params.find<int>("id");
 
-    string routing_alg = params.find_string("fattree:routing_alg", "deterministic");
+    string routing_alg = params.find<std::string>("fattree:routing_alg", "deterministic");
     if ( routing_alg == "adaptive" ) {
         allow_adaptive = true;
     }
 
-    adaptive_threshold = params.find_floating("fattree:adaptive_threshold", 0.5);
+    adaptive_threshold = params.find<double>("fattree:adaptive_threshold", 0.5);
     // std::cout << "routing_alg: " << routing_alg << std::endl;
     // std::cout << "adaptive_threshold: " << adaptive_threshold << std::endl;
     

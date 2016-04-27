@@ -40,33 +40,29 @@ nic::nic(ComponentId_t cid, Params& params) :
     initialized(false),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
-    net_id = params.find_integer("id");
+    net_id = params.find<int>("id",-1);
     if ( net_id == -1 ) {
     }
     // std::cout << "id: " << id << "\n";
     // std::cout << "Nic ID:  " << id << " has Component id " << cid << "\n";
 
-    num_peers = params.find_integer("num_peers");
+    num_peers = params.find<int>("num_peers",-1);
     if ( num_peers == -1 ) {
     }
     // std::cout << "num_peers: " << num_peers << "\n";
 
-    // num_vns = params.find_integer("num_vns");
-    // if ( num_vns == -1 ) {
-    // }
     num_vns = 1;
-    // std::cout << "num_vns: " << num_vns << "\n";
     
-    std::string link_bw_s = params.find_string("link_bw");
+    std::string link_bw_s = params.find<std::string>("link_bw");
     if ( link_bw_s == "" ) {
     }
     // std::cout << "link_bw: " << link_bw_s << std::endl;
     // TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
     UnitAlgebra link_bw(link_bw_s);
     
-    num_msg = params.find_integer("num_messages",10);
+    num_msg = params.find<int>("num_messages",10);
 
-    remap = params.find_integer("remap", 0);
+    remap = params.find<int>("remap", 0);
     id = (net_id + remap) % num_peers;
     
     // Create a LinkControl object
@@ -262,4 +258,3 @@ nic::clock_handler(Cycle_t cycle)
 } // namespace Merlin
 } // namespace SST
 
-DeclareSerializable(SST::Merlin::MyRtrEvent)

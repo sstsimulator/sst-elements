@@ -35,18 +35,18 @@ bisection_test::bisection_test(ComponentId_t cid, Params& params) :
     // }
     // cout << "id: " << id << endl;
 
-    num_peers = params.find_integer("num_peers");
+    num_peers = params.find<int>("num_peers");
 //    cout << "num_peers: " << num_peers << endl;
 
     // num_vns = params.find_int("num_vns",1);;
     num_vns = 1;
 //    cout << "num_vns: " << num_vns << endl;
 
-    string link_bw_s = params.find_string("link_bw","2GB/s");
+    string link_bw_s = params.find<std::string>("link_bw","2GB/s");
     UnitAlgebra link_bw(link_bw_s);
 //    cout << "link_bw: " << link_bw.toStringBestSI() << endl;
     
-    string packet_size_s = params.find_string("packet_size","512b");
+    string packet_size_s = params.find<std::string>("packet_size","512b");
     UnitAlgebra packet_size_ua(packet_size_s);
     
     if ( !packet_size_ua.hasUnits("b") && !packet_size_ua.hasUnits("B") ) {
@@ -56,14 +56,14 @@ bisection_test::bisection_test(ComponentId_t cid, Params& params) :
     if ( packet_size_ua.hasUnits("B") ) packet_size_ua *= UnitAlgebra("8b/B");
     packet_size = packet_size_ua.getRoundedValue();
     
-    packets_to_send = params.find_integer("packets_to_send",32);
+    packets_to_send = params.find<int>("packets_to_send",32);
 //    cout << "packets_to_send = " << packets_to_send << endl;
     
-    string buffer_size_s = params.find_string("buffer_size","128B");
+    string buffer_size_s = params.find<std::string>("buffer_size","128B");
     buffer_size = UnitAlgebra(buffer_size_s);
 
     // Create a LinkControl object
-    std::string networkIF = params.find_string("networkIF","merlin.linkcontrol");
+    std::string networkIF = params.find<std::string>("networkIF","merlin.linkcontrol");
     link_control = (SST::Interfaces::SimpleNetwork*)loadSubComponent(networkIF, this, params);
 
     link_control->initialize("rtr", link_bw, num_vns, buffer_size, buffer_size);
@@ -202,4 +202,3 @@ bisection_test::handle_complete(Event* ev) {
 }
 }
 }
-DeclareSerializable(SST::Merlin::bisection_test_event)

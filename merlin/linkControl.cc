@@ -34,8 +34,8 @@ LinkControl::LinkControl(Component* parent, Params &params) :
     network_initialized(false),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
-    checker_board_factor = params.find_integer("checkerboard", 1);
-    std::string checkerboard_alg = params.find_string("checkerboard_alg","deterministic");
+    checker_board_factor = params.find<int>("checkerboard", 1);
+    std::string checkerboard_alg = params.find<std::string>("checkerboard_alg","deterministic");
     if ( checkerboard_alg == "roundrobin" ) {
         cb_alg = ROUNDROBIN;
     }
