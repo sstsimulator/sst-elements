@@ -25,6 +25,7 @@ sstmemtrace.o: sstmemtrace.cc
         -Wl,-Bsymbolic \
         -Wl,--version-script=$(PINDIR)/source/include/pintool.ver \
 	-I $(PINDIR)/source/include/pin \
+	-I . \
 	-I $(PINDIR)/source/include/pin/gen \
 	-I $(PINDIR)/extras/xed-intel64/include \
 	-I $(PINDIR)/extras/components/include \
