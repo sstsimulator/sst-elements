@@ -17,7 +17,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
-    std::string access_time = params.find_string("access_time", "100 ns");
+    std::string access_time = params.find<std::string>("access_time", "100 ns");
     cube_link = ctrl->configureLink( "cube_link", access_time,
             new Event::Handler<VaultSimMemory>(this, &VaultSimMemory::handleCubeEvent));
 }

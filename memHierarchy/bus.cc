@@ -173,11 +173,11 @@ void Bus::configureLinks() {
 }
 
 void Bus::configureParameters(SST::Params& params) {
-    int debugLevel = params.find_integer("debug_level", 0);
+    int debugLevel = params.find<int>("debug_level", 0);
     
-    dbg_.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    dbg_.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)     dbg_.fatal(CALL_INFO, -1, "Debugging level must be betwee 0 and 10. \n");
-    int dAddr         = params.find_integer("debug_addr", -1);
+    int64_t dAddr         = params.find<int64_t>("debug_addr", -1);
     if (dAddr == -1) {
         DEBUG_ADDR = (Addr) dAddr;
         DEBUG_ALL = true;
@@ -189,11 +189,11 @@ void Bus::configureParameters(SST::Params& params) {
     numLowNetPorts_   = 0;
     maxNumPorts_      = 500;
     
-    latency_      = params.find_integer("bus_latency_cycles", 1);
-    idleMax_      = params.find_integer("idle_max", 6);
-    busFrequency_ = params.find_string("bus_frequency", "Invalid");
-    broadcast_    = params.find_integer("broadcast", 0);
-    fanout_       = params.find_integer("fanout", 0);  /* TODO:  Fanout: Only send messages to lower level caches */
+    latency_      = params.find<int>("bus_latency_cycles", 1);
+    idleMax_      = params.find<int>("idle_max", 6);
+    busFrequency_ = params.find<std::string>("bus_frequency", "Invalid");
+    broadcast_    = params.find<int>("broadcast", 0);
+    fanout_       = params.find<int>("fanout", 0);  /* TODO:  Fanout: Only send messages to lower level caches */
 
     if (busFrequency_ == "Invalid") dbg_.fatal(CALL_INFO, -1, "Bus Frequency was not specified\n");
     

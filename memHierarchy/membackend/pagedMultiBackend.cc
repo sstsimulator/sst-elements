@@ -20,27 +20,27 @@ using namespace SST::MemHierarchy;
 
 pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMemory(comp, params), pagesInFast(0), lastMin(0) {
     dbg.init("@R:pagedMultiMemory::@p():@l " + comp->getName() + ": ", 0, 0, 
-             (Output::output_location_t)params.find_integer("debug", 0));
+             (Output::output_location_t)params.find<int>("debug", 0));
     dbg.output(CALL_INFO, "making pagedMultiMemory controller\n");
 
 
-    string access = params.find_string("access_time", "35ns");
+    string access = params.find<std::string>("access_time", "35ns");
     self_link = ctrl->configureSelfLink("Self", access,
                                         new Event::Handler<pagedMultiMemory>(this, &pagedMultiMemory::handleSelfEvent));
 
-    maxFastPages = (unsigned int)params.find_integer("max_fast_pages", 256);
-    pageShift = (unsigned int)params.find_integer("page_shift", 12);
+    maxFastPages = params.find<unsigned int>("max_fast_pages", 256);
+    pageShift = params.find<unsigned int>("page_shift", 12);
 
-    accStatsPrefix = params.find_string("accStatsPrefix", "");
+    accStatsPrefix = params.find<std::string>("accStatsPrefix", "");
     dumpNum = 0;
 
-    string clock_freq = params.find_string("quantum", "5ms");
+    string clock_freq = params.find<std::string>("quantum", "5ms");
     comp->registerClock(clock_freq, 
                         new Clock::Handler<pagedMultiMemory>(this, 
                                                              &pagedMultiMemory::quantaClock));
 
     // determine page replacement / addition strategy
-    string stratStr = params.find_string("page_replace_strategy", "FIFO");
+    std::string stratStr = params.find<std::string>("page_replace_strategy", "FIFO");
     if (stratStr == "FIFO") {
         replaceStrat = FIFO;
     } else if (stratStr == "LFU") {
@@ -58,7 +58,7 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
     }
 
     // determin page addition strategy
-    stratStr = params.find_string("page_add_strategy", "T");
+    stratStr = params.find<std::string>("page_add_strategy", "T");
     if (stratStr == "MFU") {
         addStrat = addMFU;
     } else if (stratStr == "T") {
@@ -83,22 +83,22 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
       }
     }
 
-    dramBackpressure = (bool)params.find_integer("dramBackpressure", 1);    
+    dramBackpressure = params.find<bool>("dramBackpressure", 1);    
 
-    threshold = (unsigned int)params.find_integer("threshold", 4);    
-    scanThreshold = (unsigned int)params.find_integer("scan_threshold", 6);    
+    threshold = params.find<unsigned int>("threshold", 4);    
+    scanThreshold = params.find<unsigned int>("scan_threshold", 6);    
 
-    transferDelay = (unsigned int)params.find_integer("transfer_delay", 250);
+    transferDelay = params.find<unsigned int>("transfer_delay", 250);
     minAccTime = self_link->getDefaultTimeBase()->getFactor() / 
         Simulation::getSimulation()->getTimeLord()->getNano()->getFactor();
 
-    const uint32_t seed = (uint32_t) params.find_integer("seed", 1447);
+    const uint32_t seed = params.find<uint32_t>("seed", 1447);
 
     output->verbose(CALL_INFO, 1, 0, "Using Mersenne Generator with seed: %" PRIu32 "\n", seed);
     rng = new RNG::MersenneRNG(seed);
 
     // only applies to access pattern stats
-    collectStats = (unsigned int)params.find_integer("collect_stats", 0);
+    collectStats = params.find<unsigned int>("collect_stats", 0);
 
     // register stats
     fastHits = registerStatistic<uint64_t>("fast_hits","1");

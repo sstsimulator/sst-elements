@@ -28,23 +28,23 @@ using namespace SST::MemHierarchy;
 streamCPU::streamCPU(ComponentId_t id, Params& params) :
     Component(id), rng(id, 13)
 {
-    uint32_t outputLevel = (uint32_t) params.find_integer("verbose", 0);
+    uint32_t outputLevel = params.find<uint32_t>("verbose", 0);
     out.init("StreamCPU:@p:@l: ", outputLevel, 0, Output::STDOUT);
 
     // get parameters
-    commFreq = params.find_integer("commFreq", -1);
+    commFreq = params.find<int>("commFreq", -1);
     if (commFreq < 0) {
 	out.fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
     }
     
-    maxAddr = (uint32_t)params.find_integer("memSize", -1) -1;
+    maxAddr = params.find<uint32_t>("memSize", -1) -1;
     if ( !maxAddr ) {
         out.fatal(CALL_INFO, -1, "Must set memSize\n");
     }
 
-    do_write = (bool)params.find_integer("do_write", 1);
+    do_write = params.find<bool>("do_write", 1);
 
-    numLS = params.find_integer("num_loadstore", -1);
+    numLS = params.find<int>("num_loadstore", -1);
 
 
     // tell the simulator not to end without us
@@ -61,7 +61,7 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
         out.fatal(CALL_INFO, -1, "Error creating mem_link\n");   
     }
 
-    addrOffset = (uint64_t) params.find_integer("addressoffset", 0);
+    addrOffset = params.find<uint64_t>("addressoffset", 0);
 
     registerTimeBase("1 ns", true);
     //set our clock

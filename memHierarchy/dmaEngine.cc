@@ -24,10 +24,10 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) :
     Component(id)
 {
     dbg.init("@t:DMAEngine::@p():@l " + getName() + ": ", 0, 0,
-            (Output::output_location_t)params.find_integer("debug", 0));
-    statsOutputTarget = (Output::output_location_t)params.find_integer("printStats", 0);
+            (Output::output_location_t)params.find<int>("debug", 0));
+    statsOutputTarget = (Output::output_location_t)params.find<int>("printStats", 0);
 
-    TimeConverter *tc = registerClock(params.find_string("clockRate", "1 GHz"),
+    TimeConverter *tc = registerClock(params.find<std::string>("clockRate", "1 GHz"),
             new Clock::Handler<DMAEngine>(this, &DMAEngine::clock));
     commandLink = configureLink("cmdLink", tc, NULL);
     if ( NULL == commandLink ) dbg.fatal(CALL_INFO, 1, "Missing cmdLink\n");
@@ -36,10 +36,10 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) :
 
     MemNIC::ComponentInfo myInfo;
     myInfo.link_port = "netLink";
-    myInfo.link_bandwidth = "1GB/s";
-	myInfo.num_vcs = params.find_integer("network_num_vc", 1);
+    myInfo.link_bandwidth = "1GiB/s";
+	myInfo.num_vcs = params.find<int>("network_num_vc", 1);
     myInfo.name = getName();
-    myInfo.network_addr = params.find_integer("netAddr");
+    myInfo.network_addr = params.find<int>("netAddr");
     myInfo.type = MemNIC::TypeDMAEngine;
     networkLink = new MemNIC(this, &dbg, -1, myInfo);
 

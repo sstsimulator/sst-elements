@@ -18,44 +18,44 @@ using namespace SST::MemHierarchy;
 GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemBackend(comp, params),
 	owner(comp) {
 
-	int verbose = params.find_integer("verbose", 0);
+	int verbose = params.find<int>("verbose", 0);
 
 	output = new Output("HMCBackend[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-	hmc_dev_count    = (uint32_t) params.find_integer("device_count", 1);
-	hmc_link_count   = (uint32_t) params.find_integer("link_count",  HMC_MIN_LINKS);
-	hmc_vault_count  = (uint32_t) params.find_integer("vault_count", HMC_MIN_VAULTS);
-	hmc_queue_depth  = (uint32_t) params.find_integer("queue_depth", 32);
-	hmc_bank_count   = (uint32_t) params.find_integer("bank_count", HMC_MIN_BANKS);
-	hmc_dram_count   = (uint32_t) params.find_integer("dram_count", HMC_MIN_DRAMS);
-	hmc_capacity_per_device = (uint32_t) params.find_integer("capacity_per_device", HMC_MIN_CAPACITY);
-	hmc_xbar_depth   = (uint32_t) params.find_integer("xbar_depth", 4);
-	hmc_max_req_size = (uint32_t) params.find_integer("max_req_size", 64);
+	hmc_dev_count    = params.find<uint32_t>("device_count", 1);
+	hmc_link_count   = params.find<uint32_t>("link_count",  HMC_MIN_LINKS);
+	hmc_vault_count  = params.find<uint32_t>("vault_count", HMC_MIN_VAULTS);
+	hmc_queue_depth  = params.find<uint32_t>("queue_depth", 32);
+	hmc_bank_count   = params.find<uint32_t>("bank_count", HMC_MIN_BANKS);
+	hmc_dram_count   = params.find<uint32_t>("dram_count", HMC_MIN_DRAMS);
+	hmc_capacity_per_device = params.find<uint32_t>("capacity_per_device", HMC_MIN_CAPACITY);
+	hmc_xbar_depth   =  params.find<uint32_t>("xbar_depth", 4);
+	hmc_max_req_size =  params.find<uint32_t>("max_req_size", 64);
 	hmc_trace_level  = 0;
 
-	if("yes" == params.find_string("trace-banks", "no")) {
+	if (params.find<bool>("trace-banks", false)) {
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_BANK;
 	}
 
-	if("yes" == params.find_string("trace-queue", "no")) {
+	if (params.find<bool>("trace-queue", false)) {
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_QUEUE;
 	}
 
-	if("yes" == params.find_string("trace-cmds", "no")) {
+	if (params.find<bool>("trace-cmds", false)) {
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_CMD;
 	}
 
-	if("yes" == params.find_string("trace-latency", "no")) {
+	if(params.find<bool>("trace-latency", false)) {
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_LATENCY;
 	}
 
-	if("yes" == params.find_string("trace-stalls", "no")) {
+	if(params.find<bool>("trace-stalls", false)) {
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_STALL;
 	}
 
-	hmc_tag_count    = (uint32_t) params.find_integer("tag_count", 64);
+	hmc_tag_count    = params.find<uint32_t>("tag_count", 64);
 
-	hmc_trace_file   = params.find_string("trace_file", "hmc-trace.out");
+	hmc_trace_file   = params.find<std::string>("trace_file", "hmc-trace.out");
 
 	output->verbose(CALL_INFO, 1, 0, "Initializing HMC...\n");
 	int rc = hmcsim_init(&the_hmc,

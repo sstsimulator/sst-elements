@@ -17,11 +17,11 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 FlashDIMMSimMemory::FlashDIMMSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
-    std::string deviceIniFilename = params.find_string("device_ini", NO_STRING_DEFINED);
+    std::string deviceIniFilename = params.find<std::string>("device_ini", NO_STRING_DEFINED);
     if(NO_STRING_DEFINED == deviceIniFilename)
         output->fatal(CALL_INFO, -1, "Model must define a 'device_ini' file parameter\n");
 
-    maxPendingRequests = (uint32_t) params.find_integer("max_pending_reqs", 32);
+    maxPendingRequests = params.find<uint32_t>("max_pending_reqs", 32);
     pendingRequests = 0;
 
     // Create the acutal memory system
@@ -32,7 +32,7 @@ FlashDIMMSimMemory::FlashDIMMSimMemory(Component *comp, Params &params) : MemBac
 
     memSystem->RegisterCallbacks(readDataCB, writeDataCB);
 
-    std::string traceOutput = params.find_string("trace", "");
+    std::string traceOutput = params.find<std::string>("trace", "");
     if("" != traceOutput) {
 	output->verbose(CALL_INFO, 1, 0, "Set FlashDIMM trace output to: %s\n", traceOutput.c_str());
 	memSystem->SetOutputFileName(traceOutput);

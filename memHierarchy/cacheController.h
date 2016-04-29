@@ -294,10 +294,10 @@ private:
     MSHR*                   mshr_;
     MSHR*                   mshrNoncacheable_;
     CoherencyController*    coherenceMgr;
-    uint64                  accessLatency_;
-    uint64                  tagLatency_;
-    uint64                  mshrLatency_;
-    uint64                  timestamp_;
+    uint64_t                accessLatency_;
+    uint64_t                tagLatency_;
+    uint64_t                mshrLatency_;
+    uint64_t                timestamp_;
     int                     dropPrefetchLevel_;
     int                     maxOutstandingPrefetch_;
     int                     maxRequestsPerCycle_;
