@@ -180,9 +180,6 @@ private:
     /** Print cache line for debugging */
     void printLine(Addr addr);
 
-    /** Find out if number is a power of 2 */
-    bool isPowerOfTwo(uint x){ return (x & (x - 1)) == 0; }
-    
     /** Timestamp getter */
     uint64 getTimestamp(){ return timestamp_; }
 
