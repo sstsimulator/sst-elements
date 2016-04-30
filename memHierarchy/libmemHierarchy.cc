@@ -30,6 +30,7 @@
 #include "membackend/simpleMemBackend.h"
 #include "membackend/vaultSimBackend.h"
 #include "networkMemInspector.h"
+#include "memNetBridge.h"
 
 #include "DRAMReq.h"
 
@@ -708,6 +709,31 @@ static SubComponent* load_networkMemoryInspector(Component* parent,
     return new networkMemInspector(parent);
 }
 
+
+static Component* create_memNetBridge(ComponentId_t id, Params& params){
+	return new MemNetBridge( id, params );
+}
+
+static const ElementInfoParam bridge_params[] = {
+    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_level",     "Debugging level: 0 to 10", "0"},
+    {"network0_addr",         "Network address of component.", NULL},
+    {"network1_addr",         "Network address of component.", NULL},
+    {"network_bw",              "The network link bandwidth.", "80GiB/s"},
+    {"network_input_buffer_size", "Size of the network's input buffer.", "1KiB"},
+    {"network_output_buffer_size","Size of the network;s output buffer.", "1KiB"},
+    {NULL, NULL, NULL}
+};
+
+
+static const ElementInfoPort bridge_ports[] = {
+    {"network0",     "Network Link",     net_port_events},
+    {"network1",     "Network Link",     net_port_events},
+    {NULL, NULL, NULL}
+};
+
+
+
 static const ElementInfoSubComponent subcomponents[] = {
     {
         "simpleMem",
@@ -882,6 +908,14 @@ static const ElementInfoComponent components[] = {
             cpu_params,
             cpu_ports,
             COMPONENT_CATEGORY_PROCESSOR
+	},
+	{   "MemNetBridge",
+	    "Bridge between two Memory Networks",
+	    NULL,
+	    create_memNetBridge,
+        bridge_params,
+        bridge_ports,
+        COMPONENT_CATEGORY_NETWORK
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0}
 };
