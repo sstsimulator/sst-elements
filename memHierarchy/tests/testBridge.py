@@ -2,10 +2,11 @@ import sst
 
 num_cpu = 2
 num_mem = 2
-mem_size = 0x10000
+mem_size = 0x40000
+niter = 1000
 netBW = "80GiB/s"
 debug = 2
-debug_level = 2
+debug_level = 0
 
 
 # CPU0 -> L1 -> Net0
@@ -29,6 +30,7 @@ class Network:
             "output_latency" : "10ns",
             "input_buf_size" : "1KB",
             "output_buf_size" : "1KB",
+            "debug" : 1,
             })
 
 
@@ -45,7 +47,7 @@ def buildCPU(num, network):
     cpu.addParams({
         "commFreq": 1,
         "memSize": mem_size - 1,
-        "num_loadstore": 10,
+        "num_loadstore": niter,
         })
 
     l1 = sst.Component("l1_%d"%num, "memHierarchy.Cache")
@@ -78,7 +80,6 @@ def buildMem(num, network):
         "debug_level" : debug_level,
         "backend" : "memHierarchy.simpleMem",
         "backend.mem_size" : 1,
-        "do_not_back" : 1,
         "clock" : "1GHz"
         })
 
@@ -110,7 +111,7 @@ for cpu in range(num_cpu):
 
 net1 = Network("MEM_Net")
 for mem in range(num_mem):
-    buildMem(mem, net0)
+    buildMem(mem, net1)
 
 net0port = net0.getNextPort()
 net1port = net1.getNextPort()
@@ -121,8 +122,17 @@ bridge.addParams({
     "network0_addr" : net0port,
     "network1_addr" : net1port,
     "network_bw" : netBW,
-    })
+   })
 link = sst.Link("B0")
 link.connect( (bridge, "network0", "500ps"), (net0.rtr, "port%d"%net0port, "500ps") )
 link = sst.Link("B1")
 link.connect( (bridge, "network1", "500ps"), (net1.rtr, "port%d"%net1port, "500ps") )
+
+
+sst.setStatisticLoadLevel(16)
+sst.enableAllStatisticsForAllComponents({"type": "sst.AccumulatorStatistic"})
+sst.setStatisticOutput("sst.statOutputCSV")
+sst.setStatisticOutputOptions({
+    "filepath" : "stats.csv",
+    "separator" : ", ",
+    })

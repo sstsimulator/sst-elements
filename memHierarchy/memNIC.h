@@ -164,7 +164,6 @@ private:
     int num_vcs;
     size_t flitSize;
     bool typeInfoSent; // True if TypeInfo has already been sent
-    bool inInitPhase;
     bool checkRecvQueue;
 
     /* Debugging stuff */

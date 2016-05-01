@@ -82,7 +82,6 @@ MemNIC::MemNIC(Component *comp, Params& params) :
 
 void MemNIC::setup(void)
 {
-    inInitPhase = false;
     link_control->setup();
     while ( initQueue.size() ) {
         delete initQueue.front();
@@ -93,7 +92,7 @@ void MemNIC::setup(void)
 
 void MemNIC::init(unsigned int phase)
 {
-    inInitPhase = true;
+
     link_control->init(phase);
     if ( !phase ) {
         InitMemRtrEvent *ev;
@@ -303,23 +302,14 @@ void MemNIC::send(MemEvent *ev)
 
 void MemNIC::sendNewTypeInfo(const ComponentTypeInfo &cti)
 {
-    if ( inInitPhase ) {
-        InitMemRtrEvent *ev = new InitMemRtrEvent(comp->getName(), ci.network_addr, ci.type, cti);
+    for ( std::map<std::string, int>::const_iterator i = addrMap.begin() ; i != addrMap.end() ; ++i ) {
+        InitMemRtrEvent *imre = new InitMemRtrEvent(comp->getName(), ci.network_addr, ci.type, cti);
         SimpleNetwork::Request* req = new SimpleNetwork::Request();
-        req->dest = SimpleNetwork::INIT_BROADCAST_ADDR;
-        req->src = ci.network_addr;
-        req->givePayload(ev);
-        link_control->sendInitData(req);
-    } else {
-        for ( std::map<std::string, int>::const_iterator i = addrMap.begin() ; i != addrMap.end() ; ++i ) {
-            InitMemRtrEvent *imre = new InitMemRtrEvent(comp->getName(), ci.network_addr, ci.type, cti);
-            SimpleNetwork::Request* req = new SimpleNetwork::Request();
 
-            req->dest = i->second;
-            req->size_in_bits = 128;  // 2* 64bit address (for a range)
-            req->vn = 0;
-            req->givePayload(imre);
-            sendQueue.push_back(req);
-        }
+        req->dest = i->second;
+        req->size_in_bits = 128;  // 2* 64bit address (for a range)
+        req->vn = 0;
+        req->givePayload(imre);
+        sendQueue.push_back(req);
     }
 }

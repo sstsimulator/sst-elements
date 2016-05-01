@@ -715,6 +715,7 @@ static Component* create_memNetBridge(ComponentId_t id, Params& params){
 }
 
 static const ElementInfoParam bridge_params[] = {
+    {"clock",               "Clock frequency of controller", "1GHz"},
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",     "Debugging level: 0 to 10", "0"},
     {"network0_addr",         "Network address of component.", NULL},
@@ -732,6 +733,14 @@ static const ElementInfoPort bridge_ports[] = {
     {NULL, NULL, NULL}
 };
 
+static const ElementInfoStatistic bridge_statistics[] = {
+    /* Cache hits and misses */
+    {"pkts_received_net0",           "Total number of packets recived on NIC0", "count", 1},
+    {"pkts_received_net1",           "Total number of packets recived on NIC1", "count", 1},
+    {"pkts_sent_net0",           "Total number of packets sent on NIC0", "count", 1},
+    {"pkts_sent_net1",           "Total number of packets sent on NIC1", "count", 1},
+    {NULL, NULL, NULL, 0},
+};
 
 
 static const ElementInfoSubComponent subcomponents[] = {
@@ -915,7 +924,8 @@ static const ElementInfoComponent components[] = {
 	    create_memNetBridge,
         bridge_params,
         bridge_ports,
-        COMPONENT_CATEGORY_NETWORK
+        COMPONENT_CATEGORY_NETWORK,
+        bridge_statistics,
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0}
 };

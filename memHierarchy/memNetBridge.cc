@@ -12,6 +12,7 @@
 
 #include <sst_config.h>
 #include "memNetBridge.h"
+#include "memNIC.h"
 
 using namespace SST::MemHierarchy;
 
@@ -20,99 +21,185 @@ MemNetBridge::MemNetBridge(SST::ComponentId_t id, SST::Params &params) :
     SST::Component(id)
 {
     int debugLevel = params.find<int>("debug_level", 0);
-    dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
+    dbg.init("@t:Bridge::@p():@l " + getName() + ": ",
+            debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
     configureNIC(0, params);
     configureNIC(1, params);
 
-    peerCount[0] = peerCount[1] = 0;
+    clockHandler = new Clock::Handler<MemNetBridge>(this, &MemNetBridge::clock);
+    registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
+    clockOn = true;
 }
 
 
 MemNetBridge::~MemNetBridge()
 {
-    delete interfaces[0];
-    delete interfaces[1];
+    for ( int i = 0 ; i < 2 ; i++ ) {
+        //delete interfaces[i].stat_Send;
+        //delete interfaces[i].stat_Recv;
+        delete interfaces[i].nic;
+    }
 }
+
+
+void MemNetBridge::configureNIC(uint8_t id, SST::Params &params)
+{
+    dbg.debug(CALL_INFO, 2, 0, "Initializing network interface %d\n", id);
+    Nic_t &nic = interfaces[id];
+    nic.nic = (SimpleNetwork*)loadSubComponent("merlin.linkcontrol", this, params);
+    nic.nic->initialize( "network" + to_string(id),
+            params.find<SST::UnitAlgebra>("network_bw", SST::UnitAlgebra("80GiB/s")),
+            1, /* should be num VN */
+            params.find<SST::UnitAlgebra>("network_input_buffer_size", SST::UnitAlgebra("1KiB")),
+            params.find<SST::UnitAlgebra>("network_output_buffer_size", SST::UnitAlgebra("1KiB")));
+    nic.nic->setNotifyOnReceive(new SimpleNetwork::Handler<MemNetBridge, uint8_t>(this, &MemNetBridge::handleIncoming, id));
+
+    nic.stat_Recv = registerStatistic<uint64_t>("pkts_received_net" + to_string(id));
+    nic.stat_Send = registerStatistic<uint64_t>("pkts_sent_net" + to_string(id));
+}
+
+
 
 
 void MemNetBridge::init(unsigned int phase)
 {
-    interfaces[0]->init(phase);
-    interfaces[1]->init(phase);
 
-    updatePeerInfo(0);
-    updatePeerInfo(1);
+    bool ready = true;
+    for ( int i = 0 ; i < 2 ; i++ ) {
+        Nic_t &nic = interfaces[i];
+        nic.nic->init(phase);
+        ready &= nic.nic->isNetworkInitialized();
+    }
+
+    dbg.debug(CALL_INFO, 10, 0, "Init Phase %u.  Network %sready\n", phase, ready ? "" : "NOT ");
+
+    if ( ! ready ) return;
+
+    for ( int i = 0 ; i < 2 ; i++ ) {
+        Nic_t &nic = interfaces[i];
+        Nic_t &otherNic = interfaces[i^1];
+
+
+        while ( SimpleNetwork::Request *req = nic.nic->recvInitData() ) {
+            dbg.debug(CALL_INFO, 2, 0, "Received init phase event on interface %d\n", i);
+            Event *payload = req->inspectPayload();
+            MemNIC::InitMemRtrEvent *imre = dynamic_cast<MemNIC::InitMemRtrEvent*>(payload);
+            if ( imre ) {
+                nic.map[imre->name] = imre->address;
+                imre->address = otherNic.getAddr();
+            } else if ( req->dest != SimpleNetwork::INIT_BROADCAST_ADDR ) {
+                /* TODO */
+                dbg.fatal(CALL_INFO, 1, "I should't crash here.   This is a TODO\n");
+            }
+            req->vn = 0;
+            otherNic.nic->sendInitData(req);
+        }
+    }
+
 }
 
 
 void MemNetBridge::setup(void)
 {
-    interfaces[0]->setup();
-    interfaces[1]->setup();
+    interfaces[0].nic->setup();
+    interfaces[1].nic->setup();
+
+    for ( int i = 0 ; i < 2 ; i++ ) {
+        Nic_t &nic = interfaces[i];
+        dbg.debug(CALL_INFO, 2, 0, "Address Map on Interface %u:\n", i);
+        for ( auto a : nic.map ) {
+            dbg.debug(CALL_INFO, 2, 0, "\t%s -> %" PRIu64 "\n", a.first.c_str(), a.second);
+        }
+    }
 }
 
 
 void MemNetBridge::finish(void)
 {
-    interfaces[0]->finish();
-    interfaces[1]->finish();
+    interfaces[0].nic->finish();
+    interfaces[1].nic->finish();
 }
 
 
 
-void MemNetBridge::configureNIC(uint8_t nic, SST::Params &params)
+
+bool MemNetBridge::handleIncoming(int vn, uint8_t id)
 {
-    MemNIC::ComponentInfo myInfo;
-    myInfo.link_port         = "network" + to_string(nic);
-    myInfo.link_bandwidth    = params.find<std::string>("network_bw");
-    myInfo.num_vcs           = 1;
-    myInfo.name              = getName();
-    myInfo.network_addr      = params.find<uint64_t>("network" + to_string(nic) + "_addr");
-    myInfo.type              = MemNIC::TypeSmartMemory; /* Can send and receive */
-    myInfo.link_inbuf_size   = params.find<std::string>("network_input_buffer_size", "1KiB");
-    myInfo.link_outbuf_size  = params.find<std::string>("network_output_buffer_size", "1KiB");
-    interfaces[nic] = new MemNIC(this, &dbg, 0, myInfo, new Event::Handler<MemNetBridge, uint8_t>(this, &MemNetBridge::handleIncoming, nic));
-}
+    Nic_t &inNIC = interfaces[id];
+    Nic_t &outNIC = interfaces[id^1];
 
+    SimpleNetwork::Request* req = inNIC.nic->recv(vn);
 
-void MemNetBridge::updatePeerInfo(uint8_t nic)
-{
-    MemNIC *outNic = interfaces[(nic ^ 1)];
+    if ( NULL == req ) return false;
+    inNIC.stat_Recv->addData(1);
 
-    const std::vector<MemNIC::PeerInfo_t> &pi = interfaces[nic]->getPeerInfo();
-    while ( peerCount[nic] < pi.size() ) {
-        const MemNIC::ComponentInfo &ci = pi[peerCount[nic]].first;
-        switch ( ci.type ) {
-        case MemNIC::TypeDirectoryCtrl:
-        case MemNIC::TypeNetworkDirectory:
-        case MemNIC::TypeMemory:
-        case MemNIC::TypeSmartMemory: {
-            const MemNIC::ComponentTypeInfo &info = pi[peerCount[nic]].second;
-            outNic->addTypeInfo(info);
-            dbg.debug(CALL_INFO, 1, 0, "Bridge: Sending TypeInfo from nic %u to %u\n",
-                    nic, (nic^1));
-            dbg.debug(CALL_INFO, 2, 0, "\t%s @ %d  [%d]\t[0x%" PRIx64 " - 0x%" PRIx64 " [0x%" PRIx64 "/0x%" PRIx64 "]]\n",
-                    ci.name.c_str(), ci.network_addr, ci.type,
-                    info.rangeStart, info.rangeEnd, info.interleaveSize, info.interleaveStep);
-            break;
-        }
-        default:
-            break;
-        }
+    dbg.debug(CALL_INFO, 5, 0, "Received event on interface %u\n", id);
 
+    MemNIC::MemRtrEvent *mre = static_cast<MemNIC::MemRtrEvent*>(req->inspectPayload());
 
-        peerCount[nic]++;
+    SimpleNetwork::nid_t tgt;
+    if ( mre->hasClientData() ) {
+        tgt = getAddrFor(outNIC, mre->event->getDst());
+    } else {
+        MemNIC::InitMemRtrEvent *imre = static_cast<MemNIC::InitMemRtrEvent*>(mre);
+        imre->address = outNIC.getAddr();
+        /* IMRE's don't have a specific destination - They are broadcast. */
+        tgt = (outNIC.imreMap[imre->name]++) % outNIC.map.size();
     }
+
+    req->src  = outNIC.getAddr();
+    req->dest = tgt;
+    req->vn = 0;
+
+    /* TODO:  Delay? */
+
+    /* Send req */
+    if ( outNIC.nic->send(req, 0) ) {
+        outNIC.stat_Send->addData(1);
+    } else {
+        /* We failed to send. */
+        outNIC.sendQueue.push_back(req);
+        /* Turn on clock */
+        if ( !clockOn ) {
+            clockOn = true;
+            reregisterClock(defaultTimeBase, clockHandler);
+        }
+    }
+    return true;
 }
 
-
-void MemNetBridge::handleIncoming(SST::Event *event, uint8_t nic)
+bool MemNetBridge::clock(SST::Cycle_t cycle)
 {
-    MemNIC *outNic = interfaces[(nic ^ 1)];
+    bool empty = interfaces[0].sendQueue.empty() && interfaces[1].sendQueue.empty();
+    if ( !empty) {
+        for ( int i = 0 ; i < 2 ; i++ ) {
+            Nic_t &nic = interfaces[i];
+            while ( ! nic.sendQueue.empty() ) {
+                if ( nic.nic->send(nic.sendQueue.front(), 0) ) {
+                    nic.sendQueue.pop_front();
+                    nic.stat_Send->addData(1);
+                } else {
+                    break;
+                }
+            }
+        }
+    }
 
-    MemEvent *ev = static_cast<MemEvent*>(event);
-    ev->setDst(outNic->findTargetDestination(ev->getAddr()));
-    /* TODO:  send delay? */
-    outNic->send(ev);
+    if ( empty ) {
+        clockOn = false;
+        return true;
+    }
+    return false;
 }
+
+
+SimpleNetwork::nid_t MemNetBridge::getAddrFor(Nic_t &nic, const std::string &tgt)
+{
+    auto i = nic.map.find(tgt);
+    if ( i == nic.map.end() ) {
+        dbg.fatal(CALL_INFO, 1, "Unable to find mapping to %s\n", tgt.c_str());
+    }
+    return i->second;
+}
+
