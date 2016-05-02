@@ -14,9 +14,9 @@
 #define _MEMNETBRIDGE_H_
 
 
-#include <sst/core/Component.h>
-#include <sst/core/Event.h>
-#include <sst/core/Output.h>
+#include <sst/core/component.h>
+#include <sst/core/event.h>
+#include <sst/core/output.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
 #include <sst/elements/merlin/bridge.h>
@@ -42,8 +42,6 @@ public:
 
 private:
     Output dbg;
-
-    Merlin::Bridge *bridge;
 
     typedef std::map<std::string, SimpleNetwork::nid_t> addrMap_t;
     typedef std::map<std::string, uint64_t> imreMap_t;

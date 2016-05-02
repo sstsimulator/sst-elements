@@ -22,13 +22,11 @@ using SST::Interfaces::SimpleNetwork;
 
 
 MemNetBridge::MemNetBridge(SST::Component *comp, SST::Params &params) :
-    Bridge::Translator(comp, params), bridge(dynamic_cast<SST::Merlin::Bridge*>(comp))
+    Bridge::Translator(comp, params)
 {
     int debugLevel = params.find<int>("debug_level", 0);
     dbg.init("@t:Bridge::@p():@l " + comp->getName() + ": ",
             debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
-
-    if ( !bridge ) dbg.fatal(CALL_INFO, 1, "MemNetBridge must be loaded by a Merlin::Bridge\n");
 }
 
 
@@ -65,7 +63,7 @@ SimpleNetwork::Request* MemNetBridge::initTranslate(SimpleNetwork::Request *req,
     MemNIC::InitMemRtrEvent *imre = dynamic_cast<MemNIC::InitMemRtrEvent*>(payload);
     if ( imre ) {
         networks[fromNet].map[imre->name] = imre->address;
-        imre->address = bridge->getAddrForNetwork(fromNet^1);
+        imre->address = getAddrForNetwork(fromNet^1);
     } else if ( req->dest != SimpleNetwork::INIT_BROADCAST_ADDR ) {
         /* TODO */
         dbg.fatal(CALL_INFO, 1, "I should't crash here.   This is a TODO\n");
@@ -89,12 +87,12 @@ SimpleNetwork::Request* MemNetBridge::translate(SimpleNetwork::Request *req, uin
         tgt = getAddrFor(outNet, mre->event->getDst());
     } else {
         MemNIC::InitMemRtrEvent *imre = static_cast<MemNIC::InitMemRtrEvent*>(mre);
-        imre->address = bridge->getAddrForNetwork(fromNet^1);
+        imre->address = getAddrForNetwork(fromNet^1);
         /* IMRE's don't have a specific destination - They are broadcast. */
         tgt = (outNet.imreMap[imre->name]++) % outNet.map.size();
     }
 
-    req->src  = bridge->getAddrForNetwork(fromNet^1);
+    req->src  = getAddrForNetwork(fromNet^1);
     req->dest = tgt;
     req->vn = 0;
 

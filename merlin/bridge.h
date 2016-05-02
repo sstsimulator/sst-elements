@@ -14,9 +14,9 @@
 #define _MERLIN_BRIDGE_H_
 
 
-#include <sst/core/Component.h>
-#include <sst/core/Event.h>
-#include <sst/core/Output.h>
+#include <sst/core/component.h>
+#include <sst/core/event.h>
+#include <sst/core/output.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
 #include <deque>
@@ -61,6 +61,10 @@ public:
          * Return NULL if the packet should be be forwarded.
          */
         virtual SimpleNetwork::Request* initTranslate(SimpleNetwork::Request* req, uint8_t fromNetwork) = 0;
+
+        SimpleNetwork::nid_t getAddrForNetwork(uint8_t netID) {
+            return static_cast<Bridge*>(parent)->getAddrForNetwork(netID);
+        }
     };
 
 private:
