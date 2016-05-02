@@ -52,6 +52,8 @@ KNOB<UINT32> StartupMode(KNOB_MODE_WRITEONCE, "pintool",
     "s", "1", "Mode for configuring profile behavior, 1 = start enabled, 0 = start disabled, 2 = attempt auto detect");
 KNOB<UINT32> InterceptMultiLevelMemory(KNOB_MODE_WRITEONCE, "pintool",
     "m", "1", "Should intercept multi-level memory allocations, copies and frees, 1 = start enabled, 0 = start disabled");
+KNOB<UINT32> KeepMallocStackTrace(KNOB_MODE_WRITEONCE, "pintool",
+    "k", "1", "Should keep shadow stack and dump on malloc calls. 1 = enabled, 0 = disabled");
 KNOB<UINT32> DefaultMemoryPool(KNOB_MODE_WRITEONCE, "pintool",
     "d", "0", "Default SST Memory Pool");
 
@@ -69,12 +71,139 @@ ArielTunnel *tunnel = NULL;
 bool enable_output;
 std::vector<void*> allocated_list;
 PIN_LOCK mainLock;
+PIN_LOCK mallocIndexLock;
 UINT64* lastMallocSize;
 std::map<std::string, ArielFunctionRecord*> funcProfile;
 UINT64* lastMallocLoc;
 
 UINT32 overridePool;
 bool shouldOverride;
+
+
+/****************************************************************/
+/********************** SHADOW STACK ****************************/
+/* Used by 'sieve' to associate mallocs to the code they        */
+/* are called from. Turn on by turning on malloc_stack_trace    */
+/****************************************************************/
+/****************************************************************/
+std::vector<FILE*> btfiles; // Per-thread malloc file -> we don't have to lock the file this way
+INT32 mallocIndex;
+
+/* This is a record for each function call */ 
+class StackRecord {
+    private:
+        ADDRINT stackPtr;
+        ADDRINT target;
+        ADDRINT instPtr;
+    public:
+        StackRecord(ADDRINT sp, ADDRINT targ, ADDRINT ip) : stackPtr(sp), target(targ), instPtr(ip) {}
+        ADDRINT getStackPtr() const { return stackPtr; }
+        ADDRINT getTarget() {return target;}
+        ADDRINT getInstPtr() { return instPtr; }
+};
+
+
+std::vector<std::vector<StackRecord> > arielStack; // Per-thread stacks
+
+/* Instrumentation function to be called on function calls */
+VOID ariel_stack_call(THREADID thr, ADDRINT stackPtr, ADDRINT target, ADDRINT ip) {
+    // Handle longjmp
+    while (arielStack[thr].size() > 0 && stackPtr >= arielStack[thr].back().getStackPtr()) {
+        //fprintf(btfiles[thr], "RET ON CALL %s (0x%" PRIx64 ", 0x%" PRIx64 ")\n", RTN_FindNameByAddress(arielStack[thr].back().getTarget()).c_str(), arielStack[thr].back().getInstPtr(), arielStack[thr].back().getStackPtr());
+        arielStack[thr].pop_back();
+    }
+    // Add new record
+    arielStack[thr].push_back(StackRecord(stackPtr, target, ip));
+    //fprintf(btfiles[thr], "CALL %s (0x%" PRIx64 ", 0x%" PRIx64 ")\n", RTN_FindNameByAddress(target).c_str(), ip, stackPtr);
+}
+
+/* Instrumentation function to be called on function returns */
+VOID ariel_stack_return(THREADID thr, ADDRINT stackPtr) {
+    // Handle longjmp
+    while (arielStack[thr].size() > 0 && stackPtr >= arielStack[thr].back().getStackPtr()) {
+        //fprintf(btfiles[thr], "RET ON RET %s (0x%" PRIx64 ", 0x%" PRIx64 ")\n", RTN_FindNameByAddress(arielStack[thr].back().getTarget()).c_str(), arielStack[thr].back().getInstPtr(), arielStack[thr].back().getStackPtr());
+        arielStack[thr].pop_back();
+    }
+    // Remove last record
+    //fprintf(btfiles[thr], "RET %s (0x%" PRIx64 ", 0x%" PRIx64 ")\n", RTN_FindNameByAddress(arielStack[thr].back().getTarget()).c_str(), arielStack[thr].back().getInstPtr(), arielStack[thr].back().getStackPtr());
+    arielStack[thr].pop_back();
+}
+
+/* Function to print stack, called by malloc instrumentation code */
+VOID ariel_print_stack(UINT32 thr, UINT64 allocSize, UINT64 allocAddr, INT32 allocIndex) {
+    
+    unsigned int depth = arielStack[thr].size() - 1;
+    fprintf(btfiles[thr], "Malloc,0x%" PRIx64 ",%lu,%d\n", allocAddr, allocSize, allocIndex);
+    for (vector<StackRecord>::reverse_iterator rit = arielStack[thr].rbegin(); rit != arielStack[thr].rend(); rit++) {
+        ADDRINT ip = rit->getInstPtr();
+        string file;
+        int line;
+        
+        // Note this only works if app is compiled with debug on
+        PIN_LockClient();
+        PIN_GetSourceLocation(ip, NULL, &line, &file);
+        PIN_UnlockClient();
+
+        fprintf(btfiles[thr], "%d: %s (0x%" PRIx64 ", %s:%d)\n", 
+                depth, RTN_FindNameByAddress(rit->getTarget()).c_str(), rit->getInstPtr(), file.c_str(), line);
+        depth--;
+    }
+    fprintf(btfiles[thr], "\n");
+
+}
+
+/* Instrument traces to pick up calls and returns */
+VOID InstrumentTrace (TRACE trace, VOID* args) {
+    // For checking for jumps into shared libraries
+    RTN rtn = TRACE_Rtn(trace);
+    
+    // Check each basic block tail
+    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
+        INS tail = BBL_InsTail(bbl);
+
+        if (INS_IsCall(tail)) {
+            if (INS_IsDirectBranchOrCall(tail)) {
+                ADDRINT target = INS_DirectBranchOrCallTargetAddress(tail);
+                INS_InsertPredicatedCall(tail, IPOINT_BEFORE, (AFUNPTR)
+                    ariel_stack_call,
+                    IARG_THREAD_ID,
+                    IARG_REG_VALUE, REG_STACK_PTR,
+                    IARG_ADDRINT, target,
+		    IARG_INST_PTR,
+                    IARG_END);
+            } else if (!RTN_Valid(rtn) || ".plt" != SEC_Name(RTN_Sec(rtn))) {
+                INS_InsertPredicatedCall(tail, IPOINT_BEFORE,
+                    (AFUNPTR) ariel_stack_call,
+                    IARG_THREAD_ID,
+                    IARG_REG_VALUE, REG_STACK_PTR,
+                    IARG_BRANCH_TARGET_ADDR,
+		    IARG_INST_PTR,
+                    IARG_END);
+            }
+            
+        }
+        if (RTN_Valid(rtn) && ".plt" == SEC_Name(RTN_Sec(rtn))) {
+            INS_InsertCall(tail, IPOINT_BEFORE, (AFUNPTR)
+                ariel_stack_call,
+                    IARG_THREAD_ID,
+                    IARG_REG_VALUE, REG_STACK_PTR,
+                    IARG_BRANCH_TARGET_ADDR,
+		    IARG_INST_PTR,
+                    IARG_END);
+        }
+        if (INS_IsRet(tail)) {
+            INS_InsertPredicatedCall(tail, IPOINT_BEFORE, (AFUNPTR)
+                    ariel_stack_return,
+                    IARG_THREAD_ID,
+                    IARG_REG_VALUE, REG_STACK_PTR,
+                    IARG_END);
+        }        
+    }
+}
+
+/****************************************************************/
+/******************** END SHADOW STACK **************************/
+/****************************************************************/
 
 VOID Fini(INT32 code, VOID* v)
 {
@@ -99,6 +228,14 @@ VOID Fini(INT32 code, VOID* v)
     	}
 
     	fclose(funcProfileOutput);
+    }
+
+    // Close backtrace files if needed
+    if (KeepMallocStackTrace.Value() == 1) {
+        for (int i = 0; i < core_count; i++) {
+            if (btfiles[i] != NULL) 
+                fclose(btfiles[i]);
+        }
     }
 }
 
@@ -445,36 +582,36 @@ void ariel_mlm_set_pool(int new_pool) {
 }
 
 void* ariel_mlm_malloc(size_t size, int level) {
-	THREADID currentThread = PIN_ThreadId();
-	UINT32 thr = (UINT32) currentThread;
+    THREADID currentThread = PIN_ThreadId();
+    UINT32 thr = (UINT32) currentThread;
 
 #ifdef ARIEL_DEBUG
-	fprintf(stderr, "%u, Perform a mlm_malloc from Ariel %zu, level %d\n", thr, size, level);
+    fprintf(stderr, "%u, Perform a mlm_malloc from Ariel %zu, level %d\n", thr, size, level);
 #endif
-	if(0 == size) {
-		fprintf(stderr, "YOU REQUESTED ZERO BYTES\n");
-		void *bt_entries[64];
-		int entry_returned = backtrace(bt_entries, 64);
-		backtrace_symbols_fd(bt_entries, entry_returned, 1);
-		exit(-8);
-	}
+    if(0 == size) {
+        fprintf(stderr, "YOU REQUESTED ZERO BYTES\n");
+        void *bt_entries[64];
+        int entry_returned = backtrace(bt_entries, 64);
+	backtrace_symbols_fd(bt_entries, entry_returned, 1);
+        exit(-8);
+    }
 
-	size_t page_diff = size % ((size_t)4096);
-	size_t npages = size / ((size_t)4096);
+    size_t page_diff = size % ((size_t)4096);
+    size_t npages = size / ((size_t)4096);
 
     size_t real_req_size = 4096 * (npages + ((page_diff == 0) ? 0 : 1));
 
 #ifdef ARIEL_DEBUG
-	fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu) \n",
+    fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu) \n",
             size, real_req_size, thr);
 #endif
 
-	void* real_ptr = 0;
-	posix_memalign(&real_ptr, 4096, real_req_size);
+    void* real_ptr = 0;
+    posix_memalign(&real_ptr, 4096, real_req_size);
 
-	const uint64_t virtualAddress = (uint64_t) real_ptr;
-	const uint64_t allocationLength = (uint64_t) real_req_size;
-	const uint32_t allocationLevel = (uint32_t) level;
+    const uint64_t virtualAddress = (uint64_t) real_ptr;
+    const uint64_t allocationLength = (uint64_t) real_req_size;
+    const uint32_t allocationLevel = (uint32_t) level;
 
     ArielCommand ac;
     ac.command = ARIEL_ISSUE_TLM_MAP;
@@ -482,16 +619,16 @@ void* ariel_mlm_malloc(size_t size, int level) {
     ac.mlm_map.alloc_len = allocationLength;
 
     if(shouldOverride) {
-       ac.mlm_map.alloc_level = overridePool;
+        ac.mlm_map.alloc_level = overridePool;
     } else {
-		ac.mlm_map.alloc_level = allocationLevel;
+        ac.mlm_map.alloc_level = allocationLevel;
     }
 
     tunnel->writeMessage(thr, ac);
 
 #ifdef ARIEL_DEBUG
-	fprintf(stderr, "%u: Ariel mlm_malloc call allocates data at address: 0x%llx\n",
-		thr, (uint64_t) real_ptr);
+    fprintf(stderr, "%u: Ariel mlm_malloc call allocates data at address: 0x%llx\n",
+            thr, (uint64_t) real_ptr);
 #endif
 
     PIN_GetLock(&mainLock, thr);
@@ -547,32 +684,40 @@ VOID ariel_premalloc_instrument(ADDRINT allocSize, ADDRINT ip) {
 }
 
 VOID ariel_postmalloc_instrument(ADDRINT allocLocation) {
-		if(lastMallocSize >= 0) {
-				THREADID currentThread = PIN_ThreadId();
-				UINT32 thr = (UINT32) currentThread;
+    if(lastMallocSize >= 0) {
+        THREADID currentThread = PIN_ThreadId();
+        UINT32 thr = (UINT32) currentThread;
 		
-				const uint64_t virtualAddress = (uint64_t) allocLocation;
-				const uint64_t allocationLength = (uint64_t) lastMallocSize[thr];
-				const uint32_t allocationLevel = (uint32_t) default_pool;
+        const uint64_t virtualAddress = (uint64_t) allocLocation;
+        const uint64_t allocationLength = (uint64_t) lastMallocSize[thr];
+        const uint32_t allocationLevel = (uint32_t) default_pool;
 
-    			ArielCommand ac;
-                        ac.command = ARIEL_ISSUE_TLM_MAP;
-                        ac.instPtr = lastMallocLoc[thr];
-    			ac.mlm_map.vaddr = virtualAddress;
-    			ac.mlm_map.alloc_len = allocationLength;
+        int myIndex = 0;
+        // Dump stack if we need it
+        if (KeepMallocStackTrace.Value() == 1) {
+            PIN_GetLock(&mallocIndexLock, thr);
+            myIndex = mallocIndex;
+            mallocIndex++;
+            PIN_ReleaseLock(&mallocIndexLock);
+            ariel_print_stack(thr, allocationLength, allocLocation, myIndex);
+        }
+        ArielCommand ac;
+        ac.command = ARIEL_ISSUE_TLM_MAP;
+        ac.instPtr = myIndex;
+        ac.mlm_map.vaddr = virtualAddress;
+        ac.mlm_map.alloc_len = allocationLength;
 
 
-    			if(shouldOverride) {
-       				ac.mlm_map.alloc_level = overridePool;
-    			} else {
-					ac.mlm_map.alloc_level = allocationLevel;
-    			}
-
-    			tunnel->writeMessage(thr, ac);
-    			
-    			/*printf("ARIEL: Created a malloc of size: %" PRIu64 " in Ariel\n",
-			  (UINT64) allocationLength);*/
-		}
+        if(shouldOverride) {
+            ac.mlm_map.alloc_level = overridePool;
+        } else {
+            ac.mlm_map.alloc_level = allocationLevel;
+        }
+        tunnel->writeMessage(thr, ac);
+        
+    	/*printf("ARIEL: Created a malloc of size: %" PRIu64 " in Ariel\n",
+         * (UINT64) allocationLength);*/
+    }
 }
 
 VOID ariel_postfree_instrument(ADDRINT allocLocation) {
@@ -633,7 +778,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         fprintf(stderr, "Replacement complete.\n");
         return;
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (
-                RTN_Name(rtn) == "malloc" || RTN_Name(rtn) == "_malloc")) {
+                RTN_Name(rtn) == "malloc" || RTN_Name(rtn) == "_malloc" || RTN_Name(rtn) == "__libc_malloc" || RTN_Name(rtn) == "__libc_memalign")) {
     		
         fprintf(stderr, "Identified routine: malloc/_malloc, replacing with Ariel equivalent...\n");
         RTN_Open(rtn);
@@ -651,7 +796,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 
         RTN_Close(rtn);
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (
-                RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free")) {
+                RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free" || RTN_Name(rtn) == "__libc_free")) {
 
         fprintf(stderr, "Identified routine: free/_free, replacing with Ariel equivalent...\n");
         RTN_Open(rtn);
@@ -676,7 +821,8 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 
 }
 
-/* ===================================================================== */
+
+/*(===================================================================== */
 /* Print Help Message                                                    */
 /* ===================================================================== */
 
@@ -701,6 +847,7 @@ int main(int argc, char *argv[])
     PIN_AddFiniFunction(Fini, 0);
 
     PIN_InitLock(&mainLock);
+    PIN_InitLock(&mallocIndexLock);
 
     if(SSTVerbosity.Value() > 0) {
         std::cout << "SSTARIEL: Loading Ariel Tool to connect to SST on pipe: " <<
@@ -732,14 +879,27 @@ int main(int argc, char *argv[])
     tunnel = new ArielTunnel(SSTNamedPipe.Value());
     lastMallocSize = (UINT64*) malloc(sizeof(UINT64) * core_count);
     lastMallocLoc = (UINT64*) malloc(sizeof(UINT64) * core_count);
+    mallocIndex = 0;
+
+    if (KeepMallocStackTrace.Value() == 1)
+        arielStack.resize(core_count);  // Need core_count stacks
 
     for(int i = 0; i < core_count; i++) {
     	lastMallocSize[i] = (UINT64) 0;
     	lastMallocLoc[i] = (UINT64) 0;
+        
+        // Shadow stack - open per-thread backtrace file
+        if (KeepMallocStackTrace.Value() == 1) {
+            stringstream fn;
+            fn << "backtrace_" << i << ".txt";
+            string filename(fn.str());
+            btfiles.push_back(fopen(filename.c_str(), "wt"));
+            // TODO catch error (null fh)
+        }
     }
 
-	fprintf(stderr, "ARIEL-SST PIN tool activating with %" PRIu32 " threads\n", core_count);
-	fflush(stdout);
+    fprintf(stderr, "ARIEL-SST PIN tool activating with %" PRIu32 " threads\n", core_count);
+    fflush(stdout);
 
     sleep(1);
 
@@ -760,6 +920,10 @@ int main(int argc, char *argv[])
 
     INS_AddInstrumentFunction(InstrumentInstruction, 0);
     RTN_AddInstrumentFunction(InstrumentRoutine, 0);
+    
+    // Instrument traces to capture stack
+    if (KeepMallocStackTrace.Value() == 1)
+        TRACE_AddInstrumentFunction(InstrumentTrace, 0);
 
     fprintf(stderr, "ARIEL: Starting program.\n");
     fflush(stdout);
