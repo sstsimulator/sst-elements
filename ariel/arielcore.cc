@@ -63,7 +63,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 
 	free(subID);
 
-	std::string traceGenName = params.find_string("tracegen", "");
+	std::string traceGenName = params.find<std::string>("tracegen", "");
 	enableTracing = ("" != traceGenName);
 
 	// If we enabled tracing then open up the correct file.
