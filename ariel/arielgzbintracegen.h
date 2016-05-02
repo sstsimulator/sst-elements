@@ -26,7 +26,7 @@ public:
 	ArielCompressedBinaryTraceGenerator(Component* owner, Params& params) :
 		ArielTraceGenerator() {
 
-		tracePrefix = params.find_string("trace_prefix", "ariel-core");
+		tracePrefix = params.find<std::string>("trace_prefix", "ariel-core");
 		coreID = 0;
 
 		buffer = (char*) malloc(sizeof(uint64_t) + sizeof(uint64_t) + sizeof(char) + sizeof(uint32_t));
