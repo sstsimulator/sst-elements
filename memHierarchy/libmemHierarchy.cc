@@ -342,12 +342,13 @@ static const ElementInfoParam sieve_params[] = {
     {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
     {"output_file",             "Optional, string – Name of file to output malloc information to. Will have sequence number (and optional marker number) and .txt appended to it. E.g. sieveMallocRank-3.txt", "sieveMallocRank"},
+    {"reset_stats_at_buoy",     "Optional, int - Whether to reset allocation hit/miss stats when a buoy is found (i.e., when a new output file is dumped). Any value other than 0 is true." "0"},
     {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort sieve_ports[] = {
     {"cpu_link_%(port)d", "Ports connected to the CPUs", memEvent_port_events},
-    {"alloc_link", "Connection to the CPU's allocation/free notification", arielAlloc_port_events},
+    {"alloc_link_%(port)d", "Ports connected to the CPU's allocation/free notification", arielAlloc_port_events},
     {NULL, NULL, NULL}
 };
 
@@ -356,6 +357,8 @@ static const ElementInfoStatistic sieve_statistics[] = {
     {"ReadMisses",  "Number of read requests that missed in the sieve", "count", 1},
     {"WriteHits",   "Number of write requests that hit in the sieve", "count", 1},
     {"WriteMisses", "Number of write requests that missed in the sieve", "count", 1},
+    {"UnassociatedReadMisses", "Number of read misses that did not match a malloc", "count", 1},
+    {"UnassociatedWriteMisses", "Number of write misses that did not match a malloc", "count", 1},
     {NULL, NULL, NULL, 0},
 };
 

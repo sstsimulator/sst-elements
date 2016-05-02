@@ -64,7 +64,7 @@ Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params) {
 
 
 
-Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output) : Component(id), unassociatedMisses(0) {
+Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output) : Component(id) {
     cacheArray_ = cacheArray;
     output_ = output;
     output_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
@@ -76,23 +76,9 @@ Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output *
     }
     outCount = 0;
     
-    /* --------------- Sieve profiler - implemented as a cassini prefetcher subcomponent ---------------*/
-    string listener   = params.find<std::string>("profiler");
-    if (listener.empty()) {
-	  Params emptyParams;
-	  listener_ = new CacheListener(this, emptyParams);
-    } else {
-      if (listener != std::string("cassini.AddrHistogrammer")) {
-          output_->fatal(CALL_INFO, -1, "%s, Sieve does not support prefetching. It can only support "
-              "profiling through Cassini's AddrHistogrammer.",
-              getName().c_str());
-      }
-	  Params listenerParams = params.find_prefix_params("profiler." );
-	  listener_ = dynamic_cast<CacheListener*>(loadSubComponent(listener, this, listenerParams));
-    }
-    
+    resetStatsOnOutput = params.find<bool>("reset_stats_at_buoy", 0) != 0;
+
     // optional link for allocation / free tracking
-    alloc_link = configureLink("alloc_link", "50ps", new Event::Handler<Sieve>(this, &Sieve::processAllocEvent));
     configureLinks();
 
     /* Register statistics */
@@ -100,24 +86,35 @@ Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output *
     statReadMisses  = registerStatistic<uint64_t>("ReadMisses");
     statWriteHits   = registerStatistic<uint64_t>("WriteHits");
     statWriteMisses = registerStatistic<uint64_t>("WriteMisses");
-
+    statUnassocReadMisses   = registerStatistic<uint64_t>("UnassociatedReadMisses");
+    statUnassocWriteMisses  = registerStatistic<uint64_t>("UnassociatedWriteMisses");
 }
 
 void Sieve::configureLinks() {
     SST::Link* link;
     cpuLinkCount_ = 0;
-    for ( int i = 0 ; i < 200 ; i++ ) { // 200 is chosen to be reasonably large but no reason it can't be larger
+    while (true) {
         std::ostringstream linkName;
-        linkName << "cpu_link_" << i;
+        linkName << "cpu_link_" << cpuLinkCount_;
         std::string ln = linkName.str();
         link = configureLink(ln, "100 ps", new Event::Handler<Sieve>(this, &Sieve::processEvent));
         if (link) {
             cpuLinks_.push_back(link);
+            output_->output(CALL_INFO, "Port %lu = Link %d\n", cpuLinks_[cpuLinkCount_]->getId(), cpuLinkCount_);
             cpuLinkCount_++;
-            output_->output(CALL_INFO, "Port %lu = Link %d\n", cpuLinks_[i]->getId(), i);
+        } else {
+            break;
         }
     }
     if (cpuLinkCount_ < 1) output_->fatal(CALL_INFO, -1,"Did not find any connected links on ports cpu_link_n\n");
+
+    allocLinks_.resize(cpuLinkCount_);
+    for (int i = 0; i < cpuLinkCount_; i++) {
+        std::ostringstream linkName;
+        linkName << "alloc_link_" << i;
+        std::string ln = linkName.str();
+        allocLinks_[i] = configureLink(ln, "50ps", new Event::Handler<Sieve>(this, &Sieve::processAllocEvent));
+    }
 }
 
     }}

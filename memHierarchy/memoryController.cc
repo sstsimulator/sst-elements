@@ -347,6 +347,7 @@ void MemController::performRequest(DRAMReq* req) {
 #ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, req->reqEvent_->getSize(), noncacheable ? "true" : "false");
 #endif	
+        
         if (doNotBack_) return;
         
         for ( size_t i = 0 ; i < req->reqEvent_->getSize() ; i++) 
@@ -358,7 +359,8 @@ void MemController::performRequest(DRAMReq* req) {
         if (noncacheable && req->cmd_ == GetX) {
 #ifdef __SST_DEBUG_OUTPUT__
             dbg.debug(_L10_,"WRITE. Noncacheable request, Addr = %" PRIx64 ", Request size = %i\n", localAbsAddr, req->reqEvent_->getSize());
-#endif            
+#endif
+
             if (!doNotBack_) {
                 for ( size_t i = 0 ; i < req->reqEvent_->getSize() ; i++)
                     memBuffer_[localAbsAddr + i] = req->reqEvent_->getPayload()[i];
@@ -378,6 +380,7 @@ void MemController::performRequest(DRAMReq* req) {
 #ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L10_, "READ.  Addr = %" PRIx64 ", Request size = %i\n", localAddr, req->reqEvent_->getSize());
 #endif    
+        
         for ( size_t i = 0 ; i < req->respEvent_->getSize() ; i++) 
             req->respEvent_->getPayload()[i] = doNotBack_ ? 0 : memBuffer_[localAddr + i];
 

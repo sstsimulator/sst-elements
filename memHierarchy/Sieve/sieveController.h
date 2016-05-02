@@ -26,7 +26,6 @@
 #include "../cacheArray.h"
 #include "../replacementManager.h"
 #include "../util.h"
-#include "../cacheListener.h"
 #include "../../ariel/arielalloctrackev.h"
 
 
@@ -72,7 +71,6 @@ private:
     /** Active Allocations */
     allocMap_t actAllocMap; 
     /** misses not associated with an alloc'd region */
-    uint64_t unassociatedMisses;
 
     void recordMiss(Addr addr, bool isRead);
     
@@ -92,34 +90,35 @@ private:
 
     /** output and clear stats to file  */
     void outputStats(int marker);
-    
+    bool resetStatsOnOutput;
+
     CacheArray*         cacheArray_;
     Output*             output_;
-    CacheListener*      listener_;
     vector<SST::Link*>  cpuLinks_;
     uint32_t            cpuLinkCount_;
-    SST::Link* alloc_link;
+    vector<SST::Link*>  allocLinks_;
 
     /* Statistics */
     Statistic<uint64_t>* statReadHits;
     Statistic<uint64_t>* statReadMisses;
     Statistic<uint64_t>* statWriteHits;
     Statistic<uint64_t>* statWriteMisses;
-
+    Statistic<uint64_t>* statUnassocReadMisses;
+    Statistic<uint64_t>* statUnassocWriteMisses;
 
 };
 
 /*  Implementation Details
  
-    The Sieve class serves as the main cache controller.  It is in charge or handling incoming
-    SST-based events (cacheEventProcessing.cc) and forwarding the requests to the other system's
+    The Sieve class serves as the main cache controller.  It is in charge of handling incoming
+    memEvents and forwarding the requests to the other system's
     subcomponents:
         - Cache Array:  Class in charge keeping track of all the cache lines in the cache.  The 
         Cache Line inner class stores the data and state related to a particular cache line.
  
         - Replacement Manager:  Class handles work related to the replacement policy of the cache.  
         Similar to Cache Array, this class is OO-based so different replacement policies are simply
-        subclasses of the main based abstrac class (ReplacementMgr), therefore they need to implement 
+        subclasses of the main based abstract class (ReplacementMgr), therefore they need to implement 
         certain functions in order for them to work properly. Implemented policies are: least-recently-used (lru), 
         least-frequently-used (lfu), most-recently-used (mru), random, and not-most-recently-used (nmru).
  
