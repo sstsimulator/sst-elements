@@ -29,10 +29,10 @@ const MemEvent::id_type DirectoryController::DirEntry::NO_LAST_REQUEST = std::ma
 
 DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     Component(id), blocksize(0){
-    int debugLevel = params.find_integer("debug_level", 0);
-    cacheLineSize = params.find_integer("cache_line_size", 64);
+    int debugLevel = params.find<int>("debug_level", 0);
+    cacheLineSize = params.find<uint32_t>("cache_line_size", 64);
     
-    dbg.init("", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)     dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
    
 
@@ -40,27 +40,27 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     // Currently deprecated - direct_mem_link, network_num_vc, statistics
     bool found;
     Output out("", 1, 0, Output::STDOUT);
-    params.find_integer("statistics", 0, found);
+    params.find<int>("statistics", 0, found);
     if (found) {
         out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sstinfo to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
     }
-    params.find_integer("direct_mem_link", 0, found);
+    params.find<int>("direct_mem_link", 0, found);
     if (found) {
         out.output("%s, ** Found deprecated parameter: direct_mem_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
-    params.find_integer("network_num_vc", 0, found);
+    params.find<int>("network_num_vc", 0, found);
     if (found) {
         out.output("%s, ** Found deprecated parameter: network_num_vc ** MemHierarchy does not use multiple virtual channels. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
 
     /* Find required parameters */
-    int netAddr = params.find_integer("network_address", 0, found);
+    int netAddr = params.find<int>("network_address", 0, found);
     if (!found) {
         out.fatal(CALL_INFO, -1, "%s, ** Param not specified(%s): network_address - the port number (on the network router) that corresponds to this component\n", getName().c_str());
     }
 
     // Debug address
-    int dAddr = params.find_integer("debug_addr", -1);
+    int dAddr = params.find<int>("debug_addr", -1);
     if (dAddr == -1) {
         DEBUG_ADDR = (Addr) dAddr;
         DEBUG_ALL = true;
@@ -73,18 +73,18 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     registerTimeBase("1 ns", true);
     
-    entryCacheMaxSize = (size_t)params.find_integer("entry_cache_size", 32768);
+    entryCacheMaxSize = params.find<size_t>("entry_cache_size", 32768);
     entryCacheSize = 0;
-    std::string net_bw = params.find_string("network_bw", "80GB/s");
+    std::string net_bw = params.find<std::string>("network_bw", "80GiB/s");
 
-    addrRangeStart  = (uint64_t)params.find_integer("addr_range_start", 0);
-    addrRangeEnd    = (uint64_t)params.find_integer("addr_range_end", 0);
-    string ilSize   = params.find_string("interleave_size", "0B");
-    string ilStep   = params.find_string("interleave_step", "0B");
-    protocol        = params.find_string("coherence_protocol", "MESI");
+    addrRangeStart  = params.find<uint64_t>("addr_range_start", 0);
+    addrRangeEnd    = params.find<uint64_t>("addr_range_end", 0);
+    string ilSize   = params.find<std::string>("interleave_size", "0B");
+    string ilStep   = params.find<std::string>("interleave_step", "0B");
+    protocol        = params.find<std::string>("coherence_protocol", "MESI");
     dbg.debug(_L5_, "Directory controller using protocol: %s\n", protocol.c_str());
     
-    int mshrSize    = params.find_integer("mshr_num_entries",-1);
+    int mshrSize    = params.find<int>("mshr_num_entries",-1);
     if (mshrSize == -1) mshrSize = HUGE_MSHR;
     if (mshrSize < 1) dbg.fatal(CALL_INFO, -1, "Invalid param(%s): mshr_num_entries - must be at least 1 or else -1 to indicate a very large MSHR\n", getName().c_str());
     mshr                = new MSHR(&dbg, mshrSize, this->getName(), DEBUG_ALL, DEBUG_ADDR); 
@@ -108,17 +108,17 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
     interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
     if (!UnitAlgebra(ilSize).hasUnits("B") || interleaveSize % cacheLineSize != 0) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this to '1', change it to '1KB'. You specified %s\n",
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this to '1', change it to '1KiB'. You specified %s\n",
                 getName().c_str(), ilSize.c_str());
     }
     if (!UnitAlgebra(ilStep).hasUnits("B") || interleaveStep % cacheLineSize != 0) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this to '4', change it to '4KB'. You specified %s\n",
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this to '4', change it to '4KiB'. You specified %s\n",
                 getName().c_str(), ilStep.c_str());
     }
 
     /* Get latencies */
-    accessLatency   = (uint64_t)params.find_integer("access_latency_cycles", 0);
-    mshrLatency     = (uint64_t)params.find_integer("mshr_latency_cycles", 0);
+    accessLatency   = params.find<uint64_t>("access_latency_cycles", 0);
+    mshrLatency     = params.find<uint64_t>("mshr_latency_cycles", 0);
 
     /* Set up links/network to cache & memory */
     if (isPortConnected("memory")) {
@@ -133,8 +133,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         myInfo.name                             = getName();
         myInfo.network_addr                     = netAddr;
         myInfo.type                             = MemNIC::TypeDirectoryCtrl;
-        myInfo.link_inbuf_size                  = params.find_string("network_input_buffer_size", "1KB");
-        myInfo.link_outbuf_size                 = params.find_string("network_output_buffer_size", "1KB");
+        myInfo.link_inbuf_size                  = params.find<std::string>("network_input_buffer_size", "1KiB");
+        myInfo.link_outbuf_size                 = params.find<std::string>("network_output_buffer_size", "1KiB");
         network = new MemNIC(this, &dbg, DEBUG_ADDR, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
 
         MemNIC::ComponentTypeInfo typeInfo;
@@ -145,7 +145,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         typeInfo.blocksize      = 0;
         network->addTypeInfo(typeInfo);
     } else {
-        memoryName  = params.find_string("net_memory_name", "");
+        memoryName  = params.find<std::string>("net_memory_name", "");
         if (memoryName == "") 
             dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller. If you did not intend to connect to memory over the network, please connect memory to the 'memory' port and ignore this parameter.\n", getName().c_str());
 
@@ -156,8 +156,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         myInfo.name                             = getName();
         myInfo.network_addr                     = netAddr;
         myInfo.type                             = MemNIC::TypeNetworkDirectory;
-        myInfo.link_inbuf_size                  = params.find_string("network_input_buffer_size", "1KB");
-        myInfo.link_outbuf_size                 = params.find_string("network_output_buffer_size", "1KB");
+        myInfo.link_inbuf_size                  = params.find<std::string>("network_input_buffer_size", "1KiB");
+        myInfo.link_outbuf_size                 = params.find<std::string>("network_output_buffer_size", "1KiB");
         network = new MemNIC(this, &dbg, DEBUG_ADDR, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
         
         MemNIC::ComponentTypeInfo typeInfo;
@@ -172,11 +172,11 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     }
     
     clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
-    defaultTimeBase = registerClock(params.find_string("clock", "1GHz"), clockHandler);
+    defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
     clockOn = true;
 
     // Requests per cycle
-    maxRequestsPerCycle = params.find_integer("max_requests_per_cycle", 0);
+    maxRequestsPerCycle = params.find<int>("max_requests_per_cycle", 0);
 
     // Timestamp - aka cycle count
     timestamp = 0;

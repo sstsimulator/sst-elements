@@ -24,12 +24,12 @@ topo_mesh::topo_mesh(Component* comp, Params& params) :
 {
 
     // Get the various parameters
-    router_id = params.find_integer("id");
+    router_id = params.find<int>("id",-1);
     if ( router_id == -1 ) {
     }
 
     std::string shape;
-    shape = params.find_string("mesh:shape");
+    shape = params.find<std::string>("mesh:shape");
     if ( !shape.compare("") ) {
     }
 
@@ -43,7 +43,7 @@ topo_mesh::topo_mesh(Component* comp, Params& params) :
 
     parseDimString(shape, dim_size);
 
-    std::string width = params.find_string("mesh:width", "");
+    std::string width = params.find<std::string>("mesh:width", "");
     if ( width.compare("") == 0 ) {
         for ( int i = 0 ; i < dimensions ; i++ )
             dim_width[i] = 1;
@@ -59,14 +59,9 @@ topo_mesh::topo_mesh(Component* comp, Params& params) :
         }
     }
 
-    num_local_ports = params.find_integer("mesh:local_ports", 1);
+    num_local_ports = params.find<int>("mesh:local_ports", 1);
 
-    // int n_vc = params.find_integer("num_vcs");
-    // if ( n_vc < 2 || (n_vc & 1) ) {
-    //     output.fatal(CALL_INFO, -1, "Number of VC's must be a multiple of two for a mesh\n");
-    // }
-
-    int n_ports = params.find_integer("num_ports");
+    int n_ports = params.find<int>("num_ports",-1);
     if ( n_ports == -1 )
         output.fatal(CALL_INFO, -1, "Router must have 'num_ports' parameter set\n");
 

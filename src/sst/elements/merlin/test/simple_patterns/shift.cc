@@ -41,38 +41,39 @@ shift_nic::shift_nic(ComponentId_t cid, Params& params) :
     initialized(false),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
-    net_id = params.find_integer("id");
+    net_id = params.find<int>("id",-1);
     if ( net_id == -1 ) {
     }
 
-    num_peers = params.find_integer("num_peers");
+    num_peers = params.find<int>("num_peers",-1);
     if ( num_peers == -1 ) {
     }
     
-    shift = params.find_integer("shift");
+    shift = params.find<int>("shift",-1);
     if ( shift == -1 ) {
         // Abort
     }
 
     target = (net_id + shift) % num_peers;
     
-    num_msg = params.find_integer("packets_to_send",10);
+    num_msg = params.find<int>("packets_to_send",10);
 
-    std::string packet_size_s = params.find_string("packet_size", "64B");
-    UnitAlgebra packet_size(packet_size_s);
+    // std::string packet_size_s = params.find<std::string>("packet_size", "64B");
+    // UnitAlgebra packet_size(packet_size_s);
+    UnitAlgebra packet_size = params.find<UnitAlgebra>("packet_size", UnitAlgebra("64B"));
     if ( packet_size.hasUnits("B") ) {
         packet_size *= UnitAlgebra("8b/B");
     }
 
     size_in_bits = packet_size.getRoundedValue();
     
-    std::string link_bw_s = params.find_string("link_bw");
+    std::string link_bw_s = params.find<std::string>("link_bw");
     if ( link_bw_s == "" ) {
     }
     UnitAlgebra link_bw(link_bw_s);
     
 
-    // remap = params.find_integer("remap", 0);
+    // remap = params.find<int>("remap", 0);
     // id = (net_id + remap) % num_peers;
     
     // Create a LinkControl object

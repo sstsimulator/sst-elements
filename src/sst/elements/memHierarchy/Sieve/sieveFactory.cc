@@ -29,17 +29,17 @@ Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params) {
  
     /* --------------- Output Class --------------- */
     Output* output = new Output();
-    int debugLevel = params.find_integer("debug_level", 0);
+    int debugLevel = params.find<int>("debug_level", 0);
     
-    output->init("--->  ", debugLevel, 0,(Output::output_location_t)params.find_integer("debug", 0));
+    output->init("--->  ", debugLevel, 0,(Output::output_location_t)params.find<int>("debug", 0));
     if(debugLevel < 0 || debugLevel > 10)     output->fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
     output->debug(_INFO_,"\n--------------------------- Initializing [Memory Hierarchy] --------------------------- \n\n");
 
     /* --------------- Get Parameters --------------- */
     // LRU - default replacement policy
-    int associativity           = params.find_integer("associativity", -1);
-    string sizeStr              = params.find_string("cache_size", "");                  //Bytes
-    int lineSize                = params.find_integer("cache_line_size", -1);            //Bytes
+    int associativity           = params.find<int>("associativity", -1);
+    string sizeStr              = params.find<std::string>("cache_size", "");                  //Bytes
+    int lineSize                = params.find<int>("cache_line_size", -1);            //Bytes
 
     /* Check user specified all required fields */
     if(-1 >= associativity)         output->fatal(CALL_INFO, -1, "Param not specified: associativity\n");
@@ -70,14 +70,14 @@ Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output *
     output_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
 
     /* file output */ 
-    outFileName  = params.find_string("output_file");
+    outFileName  = params.find<std::string>("output_file");
     if (outFileName.empty()) {
       outFileName = "sieveMallocRank";
     }
     outCount = 0;
     
     /* --------------- Sieve profiler - implemented as a cassini prefetcher subcomponent ---------------*/
-    string listener   = params.find_string("profiler");
+    string listener   = params.find<std::string>("profiler");
     if (listener.empty()) {
 	  Params emptyParams;
 	  listener_ = new CacheListener(this, emptyParams);

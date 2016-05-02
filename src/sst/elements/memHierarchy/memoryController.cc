@@ -43,10 +43,10 @@ using namespace SST::MemHierarchy;
 
 /*************************** Memory Controller ********************/
 MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
-    int debugLevel = params.find_integer("debug_level", 0);
+    int debugLevel = params.find<int>("debug_level", 0);
     
     // Output for debug
-    dbg.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    dbg.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
     dbg.debug(_L10_,"---");
@@ -58,62 +58,62 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     // Check for deprecated parameters and warn/fatal
     // Currently deprecated - mem_size (replaced by backend.mem_size), network_num_vc, statistic, direct_link 
     bool found;
-    params.find_integer("statistics", 0, found);
+    params.find<int>("statistics", 0, found);
     if (found) {
         out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sstinfo to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
     }
-    params.find_integer("mem_size", 0, found);
+    params.find<int>("mem_size", 0, found);
     if (found) {
         out.fatal(CALL_INFO, -1, "%s, Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n", getName().c_str());
     }
-    params.find_integer("network_num_vc", 0, found);
+    params.find<int>("network_num_vc", 0, found);
     if (found) {
         out.output("%s, ** Found deprecated parameter: network_num_vc ** MemHierarchy does not use multiple virtual channels. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
-    params.find_integer("direct_link", 0, found);
+    params.find<int>("direct_link", 0, found);
     if (found) {
         out.output("%s, ** Found deprecated parameter: direct_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
 
     /* Check required parameters */
-    string clock_freq = params.find_string("clock", "", found);
+    string clock_freq = params.find<std::string>("clock", "", found);
     if (!found) {
         out.fatal(CALL_INFO, -1, "Param not specified (%s): clock - memory controller's clock rate (with units, e.g., MHz)\n", getName().c_str());
     }
-    const uint64_t backendRamSizeMB = params.find_integer("backend.mem_size", 0, found);
+    const uint64_t backendRamSizeMB = params.find<uint64_t>("backend.mem_size", 0, found);
     if (!found) {
-        out.fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified (in MBs)\n");
+        out.fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified (in MiBs)\n");
     }
 
-    rangeStart_             = (Addr)params.find_integer("range_start", 0);
-    string ilSize           = params.find_string("interleave_size", "0B");
-    string ilStep           = params.find_string("interleave_step", "0B");
+    rangeStart_             = params.find<Addr>("range_start", 0);
+    string ilSize           = params.find<std::string>("interleave_size", "0B");
+    string ilStep           = params.find<std::string>("interleave_step", "0B");
 
-    string memoryFile       = params.find_string("memory_file", NO_STRING_DEFINED);
-    cacheLineSize_          = params.find_integer("request_width", 64);
-    string backendName      = params.find_string("backend", "memHierarchy.simpleMem");
-    string protocolStr      = params.find_string("coherence_protocol", "MESI");
-    string link_lat         = params.find_string("direct_link_latency", "100 ns");
-    doNotBack_              = (params.find_integer("do_not_back",0) == 1);
+    string memoryFile       = params.find<std::string>("memory_file", NO_STRING_DEFINED);
+    cacheLineSize_          = params.find<uint64_t>("request_width", 64);
+    string backendName      = params.find<std::string>("backend", "memHierarchy.simpleMem");
+    string protocolStr      = params.find<std::string>("coherence_protocol", "MESI");
+    string link_lat         = params.find<std::string>("direct_link_latency", "100 ns");
+    doNotBack_              = params.find<bool>("do_not_back",false);
 
     // Requests per cycle -> limit to 1 per cycle for simpleMem, unlimited otherwise
-    maxReqsPerCycle_        = params.find_integer("max_requests_per_cycle", -1, found);
+    maxReqsPerCycle_        = params.find<int>("max_requests_per_cycle", -1, found);
     if (!found && backendName == "memHierarchy.simpleMem") {
         maxReqsPerCycle_ = 1;
     } else if (maxReqsPerCycle_ == 0) {
         maxReqsPerCycle_ = -1;
     }
 
-    int addr = params.find_integer("network_address");
-    std::string net_bw = params.find_string("network_bw", "80GB/s");
+    int addr = params.find<int>("network_address");
+    std::string net_bw = params.find<std::string>("network_bw", "80GiB/s");
     
-    const uint32_t listenerCount  = (uint32_t) params.find_integer("listenercount", 0);
+    const uint32_t listenerCount  = params.find<uint32_t>("listenercount", 0);
     char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
     char* nextListenerParams = (char*) malloc(sizeof(char) * 64);
 
     for (uint32_t i = 0; i < listenerCount; ++i) {
 	    sprintf(nextListenerName, "listener%" PRIu32, i);
-	    string listenerMod     = params.find_string(nextListenerName, "");
+	    string listenerMod     = params.find<std::string>(nextListenerName, "");
 
             if (listenerMod != "") {
 		sprintf(nextListenerParams, "listener%" PRIu32 ".", i);
@@ -126,7 +126,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
     free(nextListenerName);
     free(nextListenerParams);
-    string traceFileLoc     = params.find_string("trace_file", "");
+    string traceFileLoc     = params.find<std::string>("trace_file", "");
      if ("" != traceFileLoc) {
         traceFP = fopen(traceFileLoc.c_str(), "wt");
     } else {
@@ -147,11 +147,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     interleaveSize_ = UnitAlgebra(ilSize).getRoundedValue();
     interleaveStep_ = UnitAlgebra(ilStep).getRoundedValue();
     if (!UnitAlgebra(ilSize).hasUnits("B") || interleaveSize_ % cacheLineSize_ != 0) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this      to '1', change it to '1KB'. You specified %s\n",
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this      to '1', change it to '1KiB'. You specified %s\n",
                 getName().c_str(), ilSize.c_str());
     }
     if (!UnitAlgebra(ilStep).hasUnits("B") || interleaveStep_ % cacheLineSize_ != 0) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this      to '4', change it to '4KB'. You specified %s\n",
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this      to '4', change it to '4KiB'. You specified %s\n",
                 getName().c_str(), ilStep.c_str());
     }
 
@@ -179,8 +179,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         myInfo.name             = getName();
         myInfo.network_addr     = addr;
         myInfo.type             = MemNIC::TypeMemory;
-        myInfo.link_inbuf_size  = params.find_string("network_input_buffer_size", "1KB");
-        myInfo.link_outbuf_size = params.find_string("network_output_buffer_size", "1KB");
+        myInfo.link_inbuf_size  = params.find<std::string>("network_input_buffer_size", "1KiB");
+        myInfo.link_outbuf_size = params.find<std::string>("network_output_buffer_size", "1KiB");
         networkLink_ = new MemNIC(this, &dbg, -1, myInfo, new Event::Handler<MemController>(this, &MemController::handleEvent));
 
         MemNIC::ComponentTypeInfo typeInfo;

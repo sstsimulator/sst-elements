@@ -36,7 +36,7 @@ public:
     MemBackend(Component *comp, Params &params) :
 	SubComponent(comp) {
 
-	uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+	uint32_t verbose = params.find<uint32_t>("verbose", 0);
     	output = new SST::Output("MemoryBackend[@p:@l]: ", verbose, 0, SST::Output::STDOUT);
 
     	ctrl = dynamic_cast<MemController*>(comp);

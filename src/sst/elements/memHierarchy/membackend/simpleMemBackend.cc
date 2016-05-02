@@ -18,7 +18,7 @@ using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
 SimpleMemory::SimpleMemory(Component *comp, Params &params) : MemBackend(comp, params){
-    std::string access_time = params.find_string("access_time", "100 ns");
+    std::string access_time = params.find<std::string>("access_time", "100 ns");
     self_link = ctrl->configureSelfLink("Self", access_time,
             new Event::Handler<SimpleMemory>(this, &SimpleMemory::handleSelfEvent));
 }
