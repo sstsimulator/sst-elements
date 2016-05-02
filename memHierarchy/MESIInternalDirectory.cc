@@ -67,7 +67,7 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
             if (isCached) sendWritebackFromCache(PutS, replacementLine, origRqstr);
             else sendWritebackFromMSHR(PutS, replacementLine, origRqstr, mshr_->getTempData(wbBaseAddr));
             if (replacementLine->numSharers() == 0) replacementLine->setState(I); 
-            if (!LL_) mshr_->insertWriteback(wbBaseAddr);
+            if (expectWritebackAck_) mshr_->insertWriteback(wbBaseAddr);
             return DONE;
         case E:
             if (replacementLine->numSharers() > 0 && !fromDataCache) { // May or may not be cached
@@ -87,7 +87,7 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
                 if (isCached) sendWritebackFromCache(PutE, replacementLine, origRqstr);
                 else sendWritebackFromMSHR(PutE, replacementLine, origRqstr, mshr_->getTempData(wbBaseAddr));
                 if (replacementLine->numSharers() == 0 && !replacementLine->ownerExists()) replacementLine->setState(I);
-                if (!LL_) mshr_->insertWriteback(wbBaseAddr);
+                if (expectWritebackAck_) mshr_->insertWriteback(wbBaseAddr);
                 return DONE;
             }
         case M:
@@ -108,7 +108,7 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
                 if (isCached) sendWritebackFromCache(PutM, replacementLine, origRqstr);
                 else sendWritebackFromMSHR(PutM, replacementLine, origRqstr, mshr_->getTempData(wbBaseAddr));
                 if (replacementLine->numSharers() == 0 && !replacementLine->ownerExists()) replacementLine->setState(I);
-                if (!LL_) mshr_->insertWriteback(wbBaseAddr);
+                if (expectWritebackAck_) mshr_->insertWriteback(wbBaseAddr);
                 return DONE;
             }
         default:
@@ -240,7 +240,7 @@ bool MESIInternalDirectory::isRetryNeeded(MemEvent * event, CacheLine * dirLine)
         case PutS:
         case PutE:
         case PutM:
-            if (!LL_ && !mshr_->pendingWriteback(event->getBaseAddr())) return false;
+            if (expectWritebackAck_ && !mshr_->pendingWriteback(event->getBaseAddr())) return false;
             return true;
         case FetchInvX:
             if (state == I) return false;
@@ -475,21 +475,21 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
         case SI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                if (!LL_) mshr_->insertWriteback(event->getBaseAddr());
+                if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
                 dirLine->setState(I);
             }
             return action;
         case EI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                if (!LL_) mshr_->insertWriteback(event->getBaseAddr());
+                if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
                 dirLine->setState(I);
             }
             return action;
         case MI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutM, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                if (!LL_) mshr_->insertWriteback(event->getBaseAddr());
+                if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
                 dirLine->setState(I);
             }
             return action;
@@ -679,7 +679,7 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
             sendWritebackAck(event);
             if (!isCached) {
                 sendWritebackFromMSHR(((dirLine->getState() == E) ? PutE : PutM), dirLine, event->getRqstr(), &event->getPayload());
-                if (!LL_) mshr_->insertWriteback(dirLine->getBaseAddr());
+                if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
                 dirLine->setState(I);
             }
             break;
@@ -688,7 +688,7 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
         case MI:
             dirLine->clearOwner();
             sendWritebackFromMSHR(((dirLine->getState() == EI) ? PutE : PutM), dirLine, name_, &event->getPayload());
-            if (!LL_) mshr_->insertWriteback(dirLine->getBaseAddr());
+            if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
             dirLine->setState(I);
             break;
         case E_InvX:
@@ -697,7 +697,7 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
                 if (!isCached) {
                     sendWritebackFromMSHR(event->getDirty() ? PutM : PutE, dirLine, event->getRqstr(), &event->getPayload());
                     dirLine->setState(I);
-                    if (!LL_) mshr_->insertWriteback(event->getBaseAddr());
+                    if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
                 } else {
                     sendResponseDownFromMSHR(event, (event->getCmd() == PutM));
                     dirLine->setState(S);
@@ -724,7 +724,7 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
                 if (!isCached) {
                     sendWritebackFromMSHR(PutM, dirLine, event->getRqstr(), &event->getPayload());
                     dirLine->setState(I);
-                    if (!LL_) mshr_->insertWriteback(event->getBaseAddr());
+                    if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
                 } else {
                     sendResponseDownFromMSHR(event, true);
                     dirLine->setState(S);
@@ -1154,7 +1154,7 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
             mshr_->setTempData(responseEvent->getBaseAddr(), responseEvent->getPayload());
             if (action == DONE) {
                 sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), &responseEvent->getPayload());
-                if (!LL_) mshr_->insertWriteback(dirLine->getBaseAddr());
+                if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
                 dirLine->setState(I);
             }
             break;
@@ -1165,7 +1165,7 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
             if (dirLine->isSharer(responseEvent->getSrc())) dirLine->removeSharer(responseEvent->getSrc());
             if (action == DONE) {
                 sendWritebackFromMSHR(((dirLine->getState() == EI) ? PutE : PutM), dirLine, name_, &responseEvent->getPayload());
-                if (!LL_) mshr_->insertWriteback(dirLine->getBaseAddr());
+                if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
                 dirLine->setState(I);
             }
             break;
@@ -1294,19 +1294,19 @@ CacheAction MESIInternalDirectory::handleAckInv(MemEvent * ack, CacheLine * dirL
         case SI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), data);
-                if (!LL_) mshr_->insertWriteback(ack->getBaseAddr());
+                if (expectWritebackAck_) mshr_->insertWriteback(ack->getBaseAddr());
                 dirLine->setState(I);
             }
         case EI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), data);
-                if (!LL_) mshr_->insertWriteback(ack->getBaseAddr());
+                if (expectWritebackAck_) mshr_->insertWriteback(ack->getBaseAddr());
                 dirLine->setState(I);
             }
         case MI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutM, dirLine, reqEvent->getRqstr(), data);
-                if (!LL_) mshr_->insertWriteback(ack->getBaseAddr());
+                if (expectWritebackAck_) mshr_->insertWriteback(ack->getBaseAddr());
                 dirLine->setState(I);
             }
         default:

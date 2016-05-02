@@ -268,8 +268,6 @@ private:
         uint lineSize_;
         uint MSHRSize_;
         bool L1_;
-        bool LLC_;
-        bool LL_;
         bool allNoncacheableRequests_;
         SimTime_t maxWaitTime_;
         string type_;
