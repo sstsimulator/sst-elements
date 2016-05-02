@@ -18,6 +18,7 @@ debug_level = 0
 
 class Network:
     def __init__(self, name):
+        self.name = name
         self.ports = 0
         self.rtr = sst.Component("rtr_%s"%name, "merlin.hr_router")
         self.rtr.addParams({
@@ -103,30 +104,37 @@ def buildMem(num, network):
 
 
 
+def bridge(net0, net1):
+    net0port = net0.getNextPort()
+    net1port = net1.getNextPort()
+    name = "%s-%s"%(net0.name, net1.name)
+    bridge = sst.Component("Bridge:%s"%name, "merlin.Bridge")
+    bridge.addParams({
+        "translator": "memHierarchy.MemNetBridge",
+        "debug": debug,
+        "debug_level" : debug_level,
+        "network_bw" : netBW,
+    })
+    link = sst.Link("B0-%s"%name)
+    link.connect( (bridge, "network0", "500ps"), (net0.rtr, "port%d"%net0port, "500ps") )
+    link = sst.Link("B1-%s"%name)
+    link.connect( (bridge, "network1", "500ps"), (net1.rtr, "port%d"%net1port, "500ps") )
+
+
 # Network 0
 net0 = Network("CPU_Net")
 for cpu in range(num_cpu):
     buildCPU(cpu, net0)
 
-
+# Network 1
 net1 = Network("MEM_Net")
 for mem in range(num_mem):
     buildMem(mem, net1)
 
-net0port = net0.getNextPort()
-net1port = net1.getNextPort()
-bridge = sst.Component("Bridge", "memHierarchy.MemNetBridge")
-bridge.addParams({
-    "debug": debug,
-    "debug_level" : debug_level,
-    "network0_addr" : net0port,
-    "network1_addr" : net1port,
-    "network_bw" : netBW,
-   })
-link = sst.Link("B0")
-link.connect( (bridge, "network0", "500ps"), (net0.rtr, "port%d"%net0port, "500ps") )
-link = sst.Link("B1")
-link.connect( (bridge, "network1", "500ps"), (net1.rtr, "port%d"%net1port, "500ps") )
+net2 = Network("Middle_Net")
+
+bridge(net0, net2)
+bridge(net1, net2)
 
 
 sst.setStatisticLoadLevel(16)

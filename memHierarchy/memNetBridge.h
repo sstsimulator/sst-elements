@@ -19,51 +19,43 @@
 #include <sst/core/Output.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
-#include <deque>
+#include <sst/elements/merlin/bridge.h>
 
+#include <map>
 
 namespace SST {
 namespace MemHierarchy {
 
 using SST::Interfaces::SimpleNetwork;
 
-class MemNetBridge : public SST::Component {
+class MemNetBridge : public SST::Merlin::Bridge::Translator {
 public:
 
-    MemNetBridge(SST::ComponentId_t id, SST::Params &params);
+    MemNetBridge(SST::Component *comp, SST::Params &params);
     ~MemNetBridge();
     void init(unsigned int);
     void setup(void);
     void finish(void);
 
+    SimpleNetwork::Request* translate(SimpleNetwork::Request* req, uint8_t fromNetwork);
+    SimpleNetwork::Request* initTranslate(SimpleNetwork::Request* req, uint8_t fromNetwork);
 
 private:
     Output dbg;
 
+    Merlin::Bridge *bridge;
+
     typedef std::map<std::string, SimpleNetwork::nid_t> addrMap_t;
     typedef std::map<std::string, uint64_t> imreMap_t;
-    struct Nic_t {
-        SimpleNetwork *nic;
+
+    struct Net_t {
         addrMap_t map;
         imreMap_t imreMap;
-        std::deque<SimpleNetwork::Request*> sendQueue;
-
-
-        Statistic<uint64_t> *stat_Recv;
-        Statistic<uint64_t> *stat_Send;
-
-        SimpleNetwork::nid_t getAddr() const { return nic->getEndpointID(); }
     };
 
-    Nic_t interfaces[2];
-    bool clockOn;
-    TimeConverter* defaultTimeBase;
-    Clock::Handler<MemNetBridge>* clockHandler;
+    Net_t networks[2];
 
-    void configureNIC(uint8_t nic, SST::Params &params);
-    bool handleIncoming(int vn, uint8_t nic);
-    bool clock(SST::Cycle_t cycle);
-    SimpleNetwork::nid_t getAddrFor(Nic_t &nic, const std::string &tgt);
+    SimpleNetwork::nid_t getAddrFor(Net_t &nic, const std::string &tgt);
 
 };
 

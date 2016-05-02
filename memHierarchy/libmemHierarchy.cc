@@ -710,38 +710,15 @@ static SubComponent* load_networkMemoryInspector(Component* parent,
 }
 
 
-static Component* create_memNetBridge(ComponentId_t id, Params& params){
-	return new MemNetBridge( id, params );
+static SubComponent* create_MemNetBridge(Component* comp, Params& params){
+    return new MemNetBridge(comp, params);
 }
 
 static const ElementInfoParam bridge_params[] = {
-    {"clock",               "Clock frequency of controller", "1GHz"},
-    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-    {"debug_level",     "Debugging level: 0 to 10", "0"},
-    {"network0_addr",         "Network address of component.", NULL},
-    {"network1_addr",         "Network address of component.", NULL},
-    {"network_bw",              "The network link bandwidth.", "80GiB/s"},
-    {"network_input_buffer_size", "Size of the network's input buffer.", "1KiB"},
-    {"network_output_buffer_size","Size of the network;s output buffer.", "1KiB"},
-    {NULL, NULL, NULL}
+    {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
+    {NULL, NULL}
 };
-
-
-static const ElementInfoPort bridge_ports[] = {
-    {"network0",     "Network Link",     net_port_events},
-    {"network1",     "Network Link",     net_port_events},
-    {NULL, NULL, NULL}
-};
-
-static const ElementInfoStatistic bridge_statistics[] = {
-    /* Cache hits and misses */
-    {"pkts_received_net0",           "Total number of packets recived on NIC0", "count", 1},
-    {"pkts_received_net1",           "Total number of packets recived on NIC1", "count", 1},
-    {"pkts_sent_net0",           "Total number of packets sent on NIC0", "count", 1},
-    {"pkts_sent_net1",           "Total number of packets sent on NIC1", "count", 1},
-    {NULL, NULL, NULL, 0},
-};
-
 
 static const ElementInfoSubComponent subcomponents[] = {
     {
@@ -822,6 +799,14 @@ static const ElementInfoSubComponent subcomponents[] = {
       NULL,
       networkMemoryInspector_statistics,
       "SST::Interfaces::SimpleNetwork::NetworkInspector"
+    },
+    { "MemNetBridge",
+        "Merlin::Bridge::Translator for memory network bridging",
+        NULL,
+        create_MemNetBridge,
+        bridge_params,
+        NULL,
+        "SST::Merlin::Bridge::Translator"
     },
     {NULL, NULL, NULL, NULL, NULL, NULL}
 };
@@ -917,15 +902,6 @@ static const ElementInfoComponent components[] = {
             cpu_params,
             cpu_ports,
             COMPONENT_CATEGORY_PROCESSOR
-	},
-	{   "MemNetBridge",
-	    "Bridge between two Memory Networks",
-	    NULL,
-	    create_memNetBridge,
-        bridge_params,
-        bridge_ports,
-        COMPONENT_CATEGORY_NETWORK,
-        bridge_statistics,
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0}
 };
