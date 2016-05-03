@@ -19,6 +19,7 @@
 #include "merlin.h"
 #include "linkControl.h"
 #include "reorderLinkControl.h"
+#include "bridge.h"
 
 #include "hr_router/hr_router.h"
 #include "test/nic.h"
@@ -543,6 +544,42 @@ static const ElementInfoStatistic test_network_inspector_statistics[] = {
     { NULL, NULL, NULL, 0 }
 };
 
+
+/* Network Bridge */
+static Component* create_Bridge(ComponentId_t id, Params& params){
+	return new Bridge( id, params );
+}
+
+static const ElementInfoParam bridge_params[] = {
+    {"translator",                "Translator backend.  Inherit from SST::Merlin::Bridge::Translator.", NULL},
+    {"debug",                     "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_level",               "Debugging level: 0 to 10", "0"},
+    {"network_bw",                "The network link bandwidth.", "80GiB/s"},
+    {"network_input_buffer_size", "Size of the network's input buffer.", "1KiB"},
+    {"network_output_buffer_size","Size of the network;s output buffer.", "1KiB"},
+    {NULL, NULL, NULL}
+};
+
+
+static const ElementInfoPort bridge_ports[] = {
+    {"network0",     "Network Link",     NULL},
+    {"network1",     "Network Link",     NULL},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoStatistic bridge_statistics[] = {
+    /* Cache hits and misses */
+    {"pkts_received_net0",           "Total number of packets recived on NIC0", "count", 1},
+    {"pkts_received_net1",           "Total number of packets recived on NIC1", "count", 1},
+    {"pkts_sent_net0",           "Total number of packets sent on NIC0", "count", 1},
+    {"pkts_sent_net1",           "Total number of packets sent on NIC1", "count", 1},
+    {NULL, NULL, NULL, 0},
+};
+
+
+
+
+
 static const ElementInfoComponent components[] = {
     { "portals_nic",
       "NIC with offloaded Portals4 implementation.",
@@ -611,6 +648,15 @@ static const ElementInfoComponent components[] = {
       COMPONENT_CATEGORY_NETWORK,
       NULL
     },
+	{   "Bridge",
+	    "Bridge between two Memory Networks",
+	    NULL,
+	    create_Bridge,
+        bridge_params,
+        bridge_ports,
+        COMPONENT_CATEGORY_NETWORK,
+        bridge_statistics,
+	},
     { NULL, NULL, NULL, NULL }
 };
 

@@ -30,6 +30,7 @@
 #include "membackend/simpleMemBackend.h"
 #include "membackend/vaultSimBackend.h"
 #include "networkMemInspector.h"
+#include "memNetBridge.h"
 
 #include "DRAMReq.h"
 
@@ -711,6 +712,17 @@ static SubComponent* load_networkMemoryInspector(Component* parent,
     return new networkMemInspector(parent);
 }
 
+
+static SubComponent* create_MemNetBridge(Component* comp, Params& params){
+    return new MemNetBridge(comp, params);
+}
+
+static const ElementInfoParam bridge_params[] = {
+    {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
+    {NULL, NULL}
+};
+
 static const ElementInfoSubComponent subcomponents[] = {
     {
         "simpleMem",
@@ -790,6 +802,14 @@ static const ElementInfoSubComponent subcomponents[] = {
       NULL,
       networkMemoryInspector_statistics,
       "SST::Interfaces::SimpleNetwork::NetworkInspector"
+    },
+    { "MemNetBridge",
+        "Merlin::Bridge::Translator for memory network bridging",
+        NULL,
+        create_MemNetBridge,
+        bridge_params,
+        NULL,
+        "SST::Merlin::Bridge::Translator"
     },
     {NULL, NULL, NULL, NULL, NULL, NULL}
 };
