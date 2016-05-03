@@ -25,23 +25,37 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 void Sieve::recordMiss(Addr addr, bool isRead) {
-    const allocMap_t::iterator allocI = actAllocMap.lower_bound(addr);
+    allocMap_t::iterator allocI = actAllocMap.lower_bound(addr);
+    
+    // lower_bound returns iterator to address just above or equal to addr
+    if (allocI->first != addr) {
+        if (allocI == actAllocMap.begin()) {
+            allocI = actAllocMap.end(); // Not found
+        } else {
+            allocI--; // Actually want the address just below the one we got
+        }
+    }
     if (allocI != actAllocMap.end()) {
         // is it in range
-        if (addr <= (addr +  allocI->second->getAllocateLength())) {
+        if (addr < (allocI->first +  allocI->second->getAllocateLength())) {
             allocCountMap_t::iterator evI = allocMap.find(allocI->second);
             if (isRead) {
                 evI->second.first++;
+                statReadMisses->addData(1);
             } else {
                 evI->second.second++;
+                statWriteMisses->addData(1);
             }
-        } else {
-            // no alloc associated
-            unassociatedMisses++;
+            return;
         }
+    }
+    
+    if (isRead) {
+        statUnassocReadMisses->addData(1);
+        statReadMisses->addData(1);
     } else {
-        // no alloc associated
-        unassociatedMisses++;
+        statUnassocWriteMisses->addData(1);
+        statWriteMisses->addData(1);
     }
 }
 
@@ -102,33 +116,19 @@ void Sieve::processEvent(SST::Event* ev) {
         cacheArray_->replace(baseAddr, line->getIndex());
         line->setState(M);
 
-        auto cmdT = (GetS == cmd) ? READ : WRITE;
-        //std::cout << "VA: = " << event->getVirtualAddress() << "\n";
-        //exit(0);
-        // Notify listener (AddrHistogrammer) on a MISS
-        CacheListenerNotification notify(event->getBaseAddr(),
-			event->getVirtualAddress(), event->getInstructionPointer(),
-			event->getSize(), cmdT, MISS);
-        listener_->notifyAccess(notify);
-
-        recordMiss(event->getVirtualAddress(), (cmdT == READ));
-    }
-
-    // Debug output. Ifdef this for even better performance
-    output_->debug(_L4_, "%s, Src = %s, Cmd = %s, BaseAddr = %" PRIx64 ", Addr = %" PRIx64 ", VA = %" PRIx64 ", PC = %" PRIx64 ", Size = %d: %s\n",
-            getName().c_str(), event->getSrc().c_str(), CommandString[cmd], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getSize(), miss ? "MISS" : "HIT");
-    if (miss) output_->debug(_L5_, "%s, Replaced address %" PRIx64 "\n", getName().c_str(), replacementAddr);
- 
-    /* Record statistics */
-    if (miss) {
-        if (cmd == GetS) statReadMisses->addData(1);
-        else statWriteMisses->addData(1);
+        recordMiss(event->getVirtualAddress(), (cmd == GetS));
     } else {
         if (cmd == GetS) statReadHits->addData(1);
         else statWriteHits->addData(1);
     }
 
-        
+    // Debug output. Ifdef this for even better performance
+#ifdef __SST_DEBUG_OUTPUT__
+    output_->debug(_L4_, "%s, Src = %s, Cmd = %s, BaseAddr = %" PRIx64 ", Addr = %" PRIx64 ", VA = %" PRIx64 ", PC = %" PRIx64 ", Size = %d: %s\n",
+            getName().c_str(), event->getSrc().c_str(), CommandString[cmd], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getSize(), miss ? "MISS" : "HIT");
+    if (miss) output_->debug(_L5_, "%s, Replaced address %" PRIx64 "\n", getName().c_str(), replacementAddr);
+#endif
+
     MemEvent * responseEvent;
     if (cmd == GetS) {
         responseEvent = event->makeResponse(S);
@@ -178,34 +178,29 @@ void Sieve::outputStats(int marker) {
     Output* output_file = new Output("",0,0,SST::Output::FILE, fileName.str());
 
     // print out all the allocations and how often they were touched
-    output_file->output(CALL_INFO, "#Printing out allocation hits (addr, IP, len, reads, writes, 'density'):\n");
-    uint64_t tMiss = 0;
+    output_file->output(CALL_INFO, "#Printing out allocation hits (addr, mallocID, len, reads, writes, 'density'):\n");
     for(allocList_t::iterator i = allocList.begin(); 
         i != allocList.end(); ++i) {
         ArielComponent::arielAllocTrackEvent *ev = *i;
 	rwCount_t &counts = allocMap[ev];
 	double density = double(counts.first + counts.second) / double(ev->getAllocateLength());
-        output_file->output(CALL_INFO, "%#" PRIx64 " %#" PRIx64 " %" PRId64 " %" PRId64 " %" PRId64 " %.3f\n", 
+        output_file->output(CALL_INFO, "%#" PRIx64 " %#" PRIu64 " %" PRId64 " %" PRId64 " %" PRId64 " %.3f\n", 
 			    ev->getVirtualAddress(), 
 			    ev->getInstructionPointer(), 
 			    ev->getAllocateLength(),
 			    counts.first, counts.second, density);
-        tMiss = tMiss + counts.first + counts.second;
 
         // clear the counts
-        counts.first = 0;
-        counts.second = 0;
+        if (resetStatsOnOutput) {
+            counts.first = 0;
+            counts.second = 0;
+        }
     }
-    output_file->output(CALL_INFO, "#Unassociated Misses: %" PRId64 " (%.2f%%)\n", unassociatedMisses, 
-			double(100*unassociatedMisses)/(double(tMiss)+double(unassociatedMisses)));
-
     // clean up
     delete output_file;
 }
 
 void Sieve::finish(){
-    listener_->printStats(*output_);
-
     outputStats(-1);
 }
 

@@ -62,6 +62,8 @@ libmemHierarchy_la_SOURCES = \
 	Sieve/sieveController.h \
 	Sieve/sieveController.cc \
 	Sieve/sieveFactory.cc \
+	memNetBridge.h \
+	memNetBridge.cc \
 	libmemHierarchy.cc
 
 EXTRA_DIST = \
