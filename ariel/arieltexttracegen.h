@@ -25,7 +25,7 @@ public:
 	ArielTextTraceGenerator(Component* owner, Params& params) :
 		ArielTraceGenerator() {
 
-		tracePrefix = params.find_string("trace_prefix", "ariel-core");
+		tracePrefix = params.find<std::string>("trace_prefix", "ariel-core");
 		coreID = 0;
 	}
 

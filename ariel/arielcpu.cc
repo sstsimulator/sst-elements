@@ -105,16 +105,16 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     int fd = mkstemp(shmem_region_name);
     close(fd);
 
-	output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name);
+    output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name);
 
-	/////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////
 
-        char* tool_path = (char*) malloc(sizeof(char) * 1024);
+    char* tool_path = (char*) malloc(sizeof(char) * 1024);
 
 #ifdef SST_COMPILE_MACOSX
-        sprintf(tool_path, "%s/libexec/fesimple.dylib", SST_INSTALL_PREFIX);
+    sprintf(tool_path, "%s/libexec/fesimple.dylib", SST_INSTALL_PREFIX);
 #else
-        sprintf(tool_path, "%s/libexec/fesimple.so", SST_INSTALL_PREFIX);
+    sprintf(tool_path, "%s/libexec/fesimple.so", SST_INSTALL_PREFIX);
 #endif
 
 	std::string ariel_tool = params.find<std::string>("arieltool", tool_path);
@@ -122,7 +122,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		output->fatal(CALL_INFO, -1, "The arieltool parameter specifying which PIN tool to run was not specified\n");
 	}
 
-        free(tool_path);
+    free(tool_path);
 
 	std::string executable = params.find<std::string>("executable", "");
 	if("" == executable) {
@@ -135,21 +135,25 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	uint32_t pin_startup_mode = (uint32_t) params.find<uint32_t>("arielmode", 2);
 	uint32_t intercept_multilev_mem = (uint32_t) params.find<uint32_t>("arielinterceptcalls", 1);
 
-	switch(intercept_multilev_mem) {
-	case 0:
+    switch(intercept_multilev_mem) {
+        case 0:
 		output->verbose(CALL_INFO, 1, 0, "Interception and re-instrumentation of multi-level memory calls is DISABLED.\n");
 		break;
 	default:
-		output->verbose(CALL_INFO, 1, 0, "Interception and instrumentation of multi-level memory calls is ENABLED\n");
+		output->verbose(CALL_INFO, 1, 0, "Interception and instrumentation of multi-level memory calls is ENABLED.\n");
 		break;
-	}
+    }
+    
+    uint32_t keep_malloc_stack_trace = (uint32_t) params.find_integer("arielstack", 0);
+    output->verbose(CALL_INFO, 1, 0, "Tracking the stack and dumping on malloc calls is %s.\n", 
+            keep_malloc_stack_trace == 1 ? "ENABLED" : "DISABLED");
 
     tunnel = new ArielTunnel(shmem_region_name, core_count, maxCoreQueueLen);
 
     appLauncher = params.find<std::string>("launcher", PINTOOL_EXECUTABLE);
 
     const uint32_t launch_param_count = (uint32_t) params.find<uint32_t>("launchparamcount", 0);
-    const uint32_t pin_arg_count = 23 + launch_param_count;
+    const uint32_t pin_arg_count = 25 + launch_param_count;
 
     execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
@@ -209,6 +213,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-m");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%" PRIu32, intercept_multilev_mem);
+    execute_args[arg++] = const_cast<char*>("-k");
+    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
+    sprintf(execute_args[arg-1], "%" PRIu32, keep_malloc_stack_trace);
     execute_args[arg++] = const_cast<char*>("-d");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%" PRIu32, default_level);
