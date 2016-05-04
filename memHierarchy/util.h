@@ -86,6 +86,10 @@ inline int log2Of(int x){
     return result;
 }
 
+inline bool isPowerOfTwo(unsigned int x) {
+    return !(x & (x-1));   
+}
+
 inline void printData(Output* dbg, string msg, vector<uint8_t>* data){
     /*dbg->debug(_L10_,"%s: ", msg.c_str());
     unsigned int  j = 0;

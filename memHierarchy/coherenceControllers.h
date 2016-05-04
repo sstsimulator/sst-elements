@@ -70,8 +70,6 @@ public:
     uint64_t    tagLatency_;        // Cache tag access latency
     uint64_t    mshrLatency_;       // MSHR lookup latency
     string      name_;              // Name of cache we are associated with
-    bool        LLC_;               // True if this is the last-level-cache in the system
-    bool        LL_;                // True if this is both the last-level-cache AND there is no other coherence entity (e.g., a directory) below us
     MSHR *      mshr_;              // Pointer to cache's MSHR, coherence controllers are responsible for managing writeback acks
 
     list<Response> outgoingEventQueue_;
@@ -296,8 +294,6 @@ protected:
         accessLatency_          = accessLatency;
         tagLatency_             = tagLatency;
         mshrLatency_            = mshrLatency;
-        LLC_                    = LLC;
-        LL_                     = LL;
         mshr_                   = mshr;
         DEBUG_ALL               = debugAll;
         DEBUG_ADDR              = debugAddr;
@@ -306,7 +302,9 @@ protected:
         lowNetPorts_            = parentLinks;
         highNetPort_            = childLink;
         listener_               = listener;
-        writebackCleanBlocks_   = wbClean;
+        writebackCleanBlocks_   = wbClean;  // Writeback clean data (if lower is non-inclusive for e.g.)
+        silentEvictClean_       = LL;       // Silently evict clean blocks if there's just a memory below us
+        expectWritebackAck_     = !LL && (LLC || wbClean);  // Expect writeback ack if there's a dir below us or a cache that is non-inclusive
 
         // Register statistics - TODO register in a protocol-specific way??
         stat_evict_I = ((Component *)owner_)->registerStatistic<uint64_t>("evict_I");
@@ -488,8 +486,10 @@ protected:
 
     Output*         d_;
     uint            lineSize_;
-    bool            writebackCleanBlocks_;
-    
+    bool            writebackCleanBlocks_;  // Writeback clean data as opposed to just a coherence msg
+    bool            silentEvictClean_;      // Silently evict clean blocks (currently ok when just mem below us)
+    bool            expectWritebackAck_;    // Whether we should expect a writeback ack
+
     vector<Link*>*  lowNetPorts_;
     Link*           highNetPort_;
     vector<string>  lowerLevelCacheNames_;

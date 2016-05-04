@@ -257,9 +257,6 @@ public:
     /** Replace cache line */
     virtual void replace(Addr baseAddr, unsigned int candidate_id, bool cache=true, unsigned int newLinkID=0) = 0;
 
-    /** Determine if number is a power of 2 */
-    bool isPowerOfTwo(unsigned int x) { return (x & (x - 1)) == 0;}
-    
     /** Get line size.  Should not change at runtime */
     Addr getLineSize() { return lineSize_; }
     
