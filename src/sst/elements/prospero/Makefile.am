@@ -50,6 +50,7 @@ if HAVE_PINTOOL
 
 bin_PROGRAMS = sst-prospero-trace
 sst_prospero_trace_SOURCES = runprosperotrace.cc
+AM_CPPFLAGS +=  $(PINTOOL_CPPFLAGS)
 
 if SST_COMPILE_OSX
 
