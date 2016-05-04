@@ -146,7 +146,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		break;
     }
     
-    uint32_t keep_malloc_stack_trace = (uint32_t) params.find_integer("arielstack", 0);
+    uint32_t keep_malloc_stack_trace = (uint32_t) params.find<uint32_t>("arielstack", 0);
     output->verbose(CALL_INFO, 1, 0, "Tracking the stack and dumping on malloc calls is %s.\n", 
             keep_malloc_stack_trace == 1 ? "ENABLED" : "DISABLED");
 
