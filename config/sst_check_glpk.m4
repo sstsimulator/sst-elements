@@ -35,7 +35,6 @@ AC_DEFUN([SST_CHECK_GLPK], [
   AC_SUBST([GLPK_LDFLAGS])
   AC_SUBST([GLPK_LIB])
   AC_SUBST([GLPK_LIBDIR])
-  AC_SUBST([
   AM_CONDITIONAL([HAVE_GLPK], [test "$sst_check_glpk_happy" = "yes"])
   AS_IF([test "$sst_check_glpk_happy" = "yes"],
         [AC_DEFINE([HAVE_GLPK], [1], [Set to 1 if GLPK was found])])

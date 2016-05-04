@@ -17,7 +17,6 @@
 */
 
 #include "sst_config.h"
-#include "sst_element_config.h"
 #include "EnergyAllocator.h"
 
 #include <sstream>

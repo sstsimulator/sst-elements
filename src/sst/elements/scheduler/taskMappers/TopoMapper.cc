@@ -12,7 +12,6 @@
 #include "TopoMapper.h"
 
 #include "sst_config.h"
-#include "sst_element_config.h"
 
 #ifdef HAVE_METIS
 #include "metis.h"
