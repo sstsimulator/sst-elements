@@ -23,7 +23,7 @@ AC_DEFUN([SST_CHECK_METIS],
   LDFLAGS_saved="$LDFLAGS"
 
   AS_IF([test ! -z "$with_metis" -a "$with_metis" != "yes"],
-    [METIS_CPPFLAGS="-I$with_metis/include"
+    [METIS_CPPFLAGS="-I$with_metis/include -DHAVE_METIS"
      CPPFLAGS="$METIS_CPPFLAGS $CPPFLAGS"
      METIS_LDFLAGS="-L$with_metis/lib"
      LDFLAGS="$METIS_LDFLAGS $LDFLAGS"

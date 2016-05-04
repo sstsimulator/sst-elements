@@ -12,7 +12,7 @@ AC_DEFUN([SST_CHECK_GLPK], [
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_glpk" -a "$with_glpk" != "yes"],
-    [GLPK_CPPFLAGS="-I$with_glpk/include"
+    [GLPK_CPPFLAGS="-I$with_glpk/include -DHAVE_GLPK"
      CPPFLAGS="$GLPK_CPPFLAGS $CPPFLAGS"
      GLPK_LDFLAGS="-L$with_glpk/lib"
      GLPK_LIBDIR="$with_glpk/lib"
@@ -35,6 +35,7 @@ AC_DEFUN([SST_CHECK_GLPK], [
   AC_SUBST([GLPK_LDFLAGS])
   AC_SUBST([GLPK_LIB])
   AC_SUBST([GLPK_LIBDIR])
+  AC_SUBST([
   AM_CONDITIONAL([HAVE_GLPK], [test "$sst_check_glpk_happy" = "yes"])
   AS_IF([test "$sst_check_glpk_happy" = "yes"],
         [AC_DEFINE([HAVE_GLPK], [1], [Set to 1 if GLPK was found])])

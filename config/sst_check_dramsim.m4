@@ -12,7 +12,7 @@ AC_DEFUN([SST_CHECK_DRAMSIM], [
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_dramsim" -a "$with_dramsim" != "yes"],
-    [DRAMSIM_CPPFLAGS="-I$with_dramsim"
+    [DRAMSIM_CPPFLAGS="-I$with_dramsim -DHAVE_DRAMSIM"
      CPPFLAGS="$DRAMSIM_CPPFLAGS $CPPFLAGS"
      DRAMSIM_LDFLAGS="-L$with_dramsim"
      DRAMSIM_LIBDIR="$with_dramsim"
