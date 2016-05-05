@@ -12,7 +12,7 @@ AC_DEFUN([SST_CHECK_GLPK], [
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_glpk" -a "$with_glpk" != "yes"],
-    [GLPK_CPPFLAGS="-I$with_glpk/include -DHAVE_GLPK"
+    [GLPK_CPPFLAGS="-I$with_glpk/include -DHAVE_GLPK=1"
      CPPFLAGS="$GLPK_CPPFLAGS $CPPFLAGS"
      GLPK_LDFLAGS="-L$with_glpk/lib"
      GLPK_LIBDIR="$with_glpk/lib"
