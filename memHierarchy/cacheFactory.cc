@@ -82,7 +82,6 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     int mshrSize                = params.find<int>("mshr_num_entries", -1);           //number of entries
     string preF                 = params.find<std::string>("prefetcher");
     bool L1                     = params.find<bool>("L1", false);
-    bool LL                     = params.find<bool>("LL", false);
     string coherenceProtocol    = params.find<std::string>("coherence_protocol", "mesi");
     bool noncacheableRequests   = params.find<bool>("force_noncacheable_reqs", false);
     string cacheType            = params.find<std::string>("cache_type", "inclusive");
@@ -184,7 +183,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
 
     CacheConfig config = {frequency, cacheArray, dirArray, protocol, dbg, replManager, numLines,
 	static_cast<uint>(lineSize),
-	static_cast<uint>(mshrSize), L1, false, LL,
+	static_cast<uint>(mshrSize), L1,
 	noncacheableRequests, maxWaitTime, cacheType};
     return new Cache(id, params, config);
 }
@@ -210,6 +209,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     maxRequestsPerCycle_        = params.find<int>("max_requests_per_cycle",-1);
     bool snoopL1Invs            = false;
     if (cf_.L1_) snoopL1Invs    = params.find<bool>("snoop_l1_invalidations", false);
+    bool LL                     = params.find<bool>("LL", false);
     int64_t dAddr               = params.find<int64_t>("debug_addr",-1);
     if (dAddr != -1) DEBUG_ALL = false;
     else DEBUG_ALL = true;
@@ -240,8 +240,6 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     }
 
 
-    // Auto-detect LLC if we're connected to a directory
-    if (isPortConnected("directory")) cf_.LLC_ = true; 
     
     /* --------------- Prefetcher ---------------*/
     if (prefetcher.empty()) {
@@ -323,25 +321,27 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     /* --------------- Coherence Controllers --------------- */
     coherenceMgr = NULL;
     bool inclusive = cf_.type_ == "inclusive";
+    bool LLC = isPortConnected("directory");
+    
     if (!cf_.L1_) {
         if (cf_.protocol_ != 2) {
             if (cf_.type_ != "noninclusive_with_directory") {
-                coherenceMgr = new MESIController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, cf_.LLC_, cf_.LL_, mshr_, cf_.protocol_, 
+                coherenceMgr = new MESIController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, cf_.protocol_, 
                     inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
             } else {
-                coherenceMgr = new MESIInternalDirectory(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, cf_.LLC_, cf_.LL_, mshr_, cf_.protocol_,
+                coherenceMgr = new MESIInternalDirectory(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, cf_.protocol_,
                         lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
             }
         } else {
-            coherenceMgr = new IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, cf_.LLC_, cf_.LL_, mshr_,
+            coherenceMgr = new IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_,
                     inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
         }
     } else {
         if (cf_.protocol_ != 2) {
-            coherenceMgr = new L1CoherenceController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, cf_.LLC_, cf_.LL_, mshr_, cf_.protocol_, 
+            coherenceMgr = new L1CoherenceController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, cf_.protocol_, 
                 lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, snoopL1Invs);
         } else {
-            coherenceMgr = new L1IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, cf_.LLC_, cf_.LL_, mshr_, 
+            coherenceMgr = new L1IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, 
                     lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
         }
     }
