@@ -22,8 +22,10 @@ libmemHierarchy_la_SOURCES = \
 	memoryController.h \
 	memoryController.cc \
         membackend/memBackend.h \
-	membackend/simpleMemBackend.cc \
 	membackend/simpleMemBackend.h \
+	membackend/simpleMemBackend.cc \
+	membackend/simpleDRAMBackend.h \
+	membackend/simpleDRAMBackend.cc \
 	membackend/vaultSimBackend.h \
 	membackend/vaultSimBackend.cc \
 	memEvent.h \
@@ -97,6 +99,7 @@ nobase_sst_HEADERS = \
 	membackend/memBackend.h \
 	membackend/vaultSimBackend.h \
 	membackend/simpleMemBackend.h \
+	membackend/simpleDRAMBackend.h \
 	memoryController.h \
 	cacheListener.h \
 	bus.h \

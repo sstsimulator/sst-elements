@@ -28,6 +28,7 @@
 #include "memNIC.h"
 #include "membackend/memBackend.h"
 #include "membackend/simpleMemBackend.h"
+#include "membackend/simpleDRAMBackend.h"
 #include "membackend/vaultSimBackend.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
@@ -486,6 +487,29 @@ static const ElementInfoParam simpleMem_params[] = {
     {NULL, NULL}
 };
 
+static SubComponent* create_Mem_SimpleDRAM(Component* comp, Params& params) {
+    return new SimpleDRAM(comp, params);
+}
+
+static const ElementInfoParam simpleDRAM_params[] = {
+    {"cycle_time",  "Latency of a cycle or clock frequency (e.g., '4ns' and '250MHz' are both accepted)", "4ns"},
+    {"tCAS",        "Column access latency in cycles (i.e., access time if correct row is already open)", "9"},
+    {"tRCD",        "Row access latency in cycles (i.e., time to open a row)", "9"},
+    {"tRP",         "Precharge delay in cycles (i.e., time to close a row)", "9"},
+    {"banks",       "Number of banks", "8"},
+    {"bank_interleave_granularity", "Granularity of interleaving in bytes (B), generally a cache line. Must be a power of 2.", "64B"},
+    {"row_size",    "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
+    {"row_policy",  "Policy for managing the row buffer - open or closed.", "closed"},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoStatistic simpleDRAM_stats[] = {
+    {"row_already_open","Number of times a request arrived and the correct row was open", "count", 1},
+    {"no_row_open",     "Number of times a request arrived and no row was open", "count", 1},
+    {"wrong_row_open",  "Number of times a request arrived and the wrong row was open", "count", 1},
+    { NULL, NULL, NULL, 0 }
+};
+
 
 #if defined(HAVE_LIBDRAMSIM)
 static SubComponent* create_Mem_DRAMSim(Component* comp, Params& params){
@@ -731,6 +755,15 @@ static const ElementInfoSubComponent subcomponents[] = {
         create_Mem_SimpleSim, /* Module Alloc w/ params */
         simpleMem_params,
         NULL, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "simpleDRAM",
+        "Simplified timing model for DRAM",
+        NULL,
+        create_Mem_SimpleDRAM,
+        simpleDRAM_params,
+        NULL,
         "SST::MemHierarchy::MemBackend"
     },
 #if defined(HAVE_LIBDRAMSIM)
