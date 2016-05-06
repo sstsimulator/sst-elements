@@ -70,6 +70,8 @@ EXTRA_DIST = \
         Sieve/tests/StatisticOutput.csv.gold \
         Sieve/tests/sieveprospero-0.trace \
         Sieve/tests/trace-text.py \
+        Sieve/tests/Makefile \
+        Sieve/tests/ompsievetest.c \
 	tests/example.py \
 	tests/exampleM5.xml \
 	tests/sdl-1.py \
