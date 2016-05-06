@@ -72,6 +72,7 @@ EXTRA_DIST = \
         Sieve/tests/trace-text.py \
         Sieve/tests/Makefile \
         Sieve/tests/ompsievetest.c \
+        Sieve/tests/sieve-test.py \
 	tests/example.py \
 	tests/exampleM5.xml \
 	tests/sdl-1.py \
