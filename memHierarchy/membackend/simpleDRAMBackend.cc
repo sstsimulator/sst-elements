@@ -17,8 +17,8 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple DRAM ------------------------------- */
-/* SimpleDRAM is a very simplified DRAM timing model. It is concerned only with
- * latency differences between accessing open/closed banks and implements banking.
+/* SimpleDRAM is a very simplified DRAM timing model. It considers only the
+ * latency differences between accessing open/closed rows and implements banking.
  * The latencies are as follows:
  *      Correct row already open: tCAS
  *      No row open: tRCD + tCAS

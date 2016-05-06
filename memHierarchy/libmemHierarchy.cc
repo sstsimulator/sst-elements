@@ -492,6 +492,7 @@ static SubComponent* create_Mem_SimpleDRAM(Component* comp, Params& params) {
 }
 
 static const ElementInfoParam simpleDRAM_params[] = {
+    {"verbose",     "Sets the verbosity of the backend output", "0" },
     {"cycle_time",  "Latency of a cycle or clock frequency (e.g., '4ns' and '250MHz' are both accepted)", "4ns"},
     {"tCAS",        "Column access latency in cycles (i.e., access time if correct row is already open)", "9"},
     {"tRCD",        "Row access latency in cycles (i.e., time to open a row)", "9"},
