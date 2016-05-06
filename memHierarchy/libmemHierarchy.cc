@@ -764,7 +764,7 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL,
         create_Mem_SimpleDRAM,
         simpleDRAM_params,
-        NULL,
+        simpleDRAM_stats,
         "SST::MemHierarchy::MemBackend"
     },
 #if defined(HAVE_LIBDRAMSIM)

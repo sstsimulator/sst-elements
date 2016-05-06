@@ -44,16 +44,15 @@ using namespace SST::MemHierarchy;
 SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : MemBackend(comp, params){
 
     // Get parameters
-    std::string id = params.find<std::string>("backend");
-    Params myParams = params.find_prefix_params(id + ".");
-    tCAS = myParams.find<unsigned int>("tCAS", 9);
-    tRCD = myParams.find<unsigned int>("tRCD", 9);
-    tRP = myParams.find<unsigned int>("tRP", 9);
-    std::string cycTime = myParams.find<std::string>("cycle_time", "4ns");
-    int banks = myParams.find<int>("banks", 8);
-    UnitAlgebra lineSize(myParams.find<std::string>("bank_interleave_granularity", "64B"));
-    UnitAlgebra rowSize(myParams.find<std::string>("row_size", "8KiB"));
-    std::string policyStr = myParams.find<std::string>("row_policy", "closed");
+    tCAS = params.find<unsigned int>("tCAS", 9);
+    tRCD = params.find<unsigned int>("tRCD", 9);
+    tRP = params.find<unsigned int>("tRP", 9);
+    std::string cycTime = params.find<std::string>("cycle_time", "4ns");
+    int banks = params.find<int>("banks", 8);
+    UnitAlgebra lineSize(params.find<std::string>("bank_interleave_granularity", "64B"));
+    UnitAlgebra rowSize(params.find<std::string>("row_size", "8KiB"));
+    bool found = false;
+    std::string policyStr = params.find<std::string>("row_policy", "closed", found);
 
     output = new Output("SimpleDRAM[@p:@l]: ", 10, 0, Output::STDOUT);  // TODO if we start using this for output other than fatal messages, add verbose parameter
 
@@ -70,6 +69,7 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : MemBackend(comp, param
     if (policyStr != "closed" && policyStr != "open") {
         output->fatal(CALL_INFO, -1, "Invalid param(%s): row_policy - must be 'closed' or 'open'. You specified '%s'.\n", ctrl->getName().c_str(), policyStr.c_str());
     }
+    
     if (policyStr == "closed") policy = RowPolicy::CLOSED;
     else policy = RowPolicy::OPEN;
 
@@ -107,7 +107,11 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : MemBackend(comp, param
 
     // Self link for timing requests
     self_link = ctrl->configureSelfLink("Self", cycTime, new Event::Handler<SimpleDRAM>(this, &SimpleDRAM::handleSelfEvent));
-    
+   
+    // Some statistics
+    statRowHit = registerStatistic<uint64_t>("row_already_open");
+    statRowMissNoRP = registerStatistic<uint64_t>("no_row_open");
+    statRowMissRP = registerStatistic<uint64_t>("wrong_row_open");
 }
 
 /*
@@ -133,25 +137,32 @@ void SimpleDRAM::handleSelfEvent(SST::Event *event){
 
 bool SimpleDRAM::issueRequest(DRAMReq *req){
     Addr addr = req->baseAddr_ + req->amtInProcess_;
-#ifdef __SST_DEBUG_OUTPUT__
-    ctrl->dbg.debug(_L10_, "SimpleDRAM issued transaction for address %" PRIx64 "\n", addr);
-#endif
 
     // Determine bank & row for address
     //  Basic mapping: interleave cache lines across banks
     int bank = (addr >> lineOffset) & bankMask;
     int row = addr >> rowOffset;
 
+#ifdef __SST_DEBUG_OUTPUT__
+    ctrl->dbg.debug(_L10_, "SimpleDRAM received request for address %" PRIx64 " which maps to bank: %d, row: %d. Bank status: %s, open row is %d\n", 
+            addr, bank, row, (busy[bank] ? "busy" : "idle"), openRow[bank]);
+#endif
+
     // If bank is busy -> return false;
     if (busy[bank]) return false;
-    
+
     int latency = tCAS;
     if (openRow[bank] != row) {
         latency += tRCD; 
         if (openRow[bank] != -1) {
             latency += tRP;
+            statRowMissRP->addData(1);
+        } else {
+            statRowMissNoRP->addData(1);
         }
         openRow[bank] = row;
+    } else {
+        statRowHit->addData(1);
     }
     busy[bank] = true;
     self_link->send(latency, new MemCtrlEvent(req, bank));

@@ -46,7 +46,11 @@ private:
     unsigned int tRP;
 
     RowPolicy policy;
-    
+
+    Statistic<uint64_t> * statRowHit;
+    Statistic<uint64_t> * statRowMissNoRP;
+    Statistic<uint64_t> * statRowMissRP;
+
 public:
     class MemCtrlEvent : public SST::Event {
     public:
