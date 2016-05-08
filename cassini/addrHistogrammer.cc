@@ -26,7 +26,7 @@ using namespace SST::MemHierarchy;
 using namespace SST::Cassini;
 
 AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheListener(owner, params) {
-    std::string cutoff_s = params.find_string("addr_cutoff", "16GiB");
+    std::string cutoff_s = params.find<std::string>("addr_cutoff", "16GiB");
     UnitAlgebra cutoff_u(cutoff_s);
     cutoff = cutoff_u.getRoundedValue();
     
