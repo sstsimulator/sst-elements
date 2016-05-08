@@ -21,23 +21,23 @@ using namespace SST::Miranda;
 RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	Component(id) {
 
-	const int verbose = (int) params.find_integer("verbose", 0);
+	const int verbose = params.find<int>("verbose", 0);
 	out = new Output("RequestGenCPU[@p:@l]: ", verbose, 0, SST::Output::STDOUT);
 
-	maxRequestsPending = (uint32_t) params.find_integer("maxmemreqpending", 16);
+	maxRequestsPending = params.find<uint32_t>("maxmemreqpending", 16);
 	requestsPending = 0;
 
 	out->verbose(CALL_INFO, 1, 0, "Configured CPU to allow %" PRIu32 " maximum requests to be memory to be outstanding.\n",
 		maxRequestsPending);
 
-	std::string interfaceName = params.find_string("memoryinterface", "memHierarchy.memInterface");
+	std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
 	out->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
 
 	Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
 	cache_link = dynamic_cast<SimpleMem*>( loadModuleWithComponent(interfaceName,
 		this, interfaceParams) );
 
-	maxOpLookup = (uint64_t) params.find_integer("max_reorder_lookups", 16);
+	maxOpLookup = params.find<uint64_t>("max_reorder_lookups", 16);
 
 	if(NULL == cache_link) {
 		out->fatal(CALL_INFO, -1, "Error loading memory interface module.\n");
@@ -61,7 +61,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 		out->verbose(CALL_INFO, 1, 0, "Loaded memory interface successfully.\n");
 	}
 
-	std::string reqGenModName = params.find_string("generator", "");
+	std::string reqGenModName = params.find<std::string>("generator", "");
 	out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", reqGenModName.c_str());
 	Params genParams = params.find_prefix_params("generatorParams.");
 	reqGen = dynamic_cast<RequestGenerator*>( loadSubComponent(reqGenModName, this, genParams) );
@@ -72,14 +72,14 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 		out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
 	}
 
-	std::string cpuClock = params.find_string("clock", "2GHz");
+	std::string cpuClock = params.find<std::string>("clock", "2GHz");
 	registerClock(cpuClock, new Clock::Handler<RequestGenCPU>(this, &RequestGenCPU::clockTick));
 
 	out->verbose(CALL_INFO, 1, 0, "CPU clock configured for %s\n", cpuClock.c_str());
 	registerAsPrimaryComponent();
 	primaryComponentDoNotEndSim();
 
-	cacheLine = (uint64_t) params.find_integer("cache_line_size", 64);
+	cacheLine = params.find<uint64_t>("cache_line_size", 64);
 
 	statReadReqs   		  = registerStatistic<uint64_t>( "read_reqs" );
 	statWriteReqs  		  = registerStatistic<uint64_t>( "write_reqs" );
@@ -96,7 +96,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	statCyclesHitReorderLimit = registerStatistic<uint64_t>( "cycles_max_reorder" );
 	statCycles                = registerStatistic<uint64_t>( "cycles" );
 
-	reqMaxPerCycle = (uint32_t) params.find_integer("max_reqs_cycle", 2);
+	reqMaxPerCycle = params.find<uint32_t>("max_reqs_cycle", 2);
 
 	out->verbose(CALL_INFO, 1, 0, "Miranda CPU Configuration:\n");
 	out->verbose(CALL_INFO, 1, 0, "- Max reorder lookups             %" PRIu32 "\n", maxOpLookup);
