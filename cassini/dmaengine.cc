@@ -27,15 +27,15 @@ using namespace SST::Statistics;
 DMAEngine::DMAEngine(SST::ComponentId_t id, SST::Params& params) :
 	Component(id) {
 
-	const uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 	output = new Output("DMAEngine[@p:@l]: ", verbose, 0, SST::Output::STDOUT);
 
-	maxInFlight   = (uint32_t) params.find_integer("max_ops_in_flight", 32);
+	maxInFlight   = params.find<uint32_t>("max_ops_in_flight", 32);
 	opsInFlight = 0;
 
-	cacheLineSize = (uint64_t) params.find_integer("cache_line_size", 64);
+	cacheLineSize = params.find<uint64_t>("cache_line_size", 64);
 
-	std::string memInterfaceName = params.find_string("memoryinterface", "memHierarchy.memInterface");
+	std::string memInterfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
 	output->verbose(CALL_INFO, 2, 0, "Memory interface to be loaded: %s\n", memInterfaceName.c_str());
 
 	Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
@@ -48,7 +48,7 @@ DMAEngine::DMAEngine(SST::ComponentId_t id, SST::Params& params) :
 		output->verbose(CALL_INFO, 2, 0, "Memory interface loaded successfully.\n");
 	}
 
-	cpuLinkCount = (uint32_t) params.find_integer("cpu_link_count", 1);
+	cpuLinkCount = (uint32_t) params.find<uint32_t>("cpu_link_count", 1);
 
 	output->verbose(CALL_INFO, 2, 0, "Loading CPU links (total of %" PRIu32 " links requested).\n", cpuLinkCount);
 	char* linkNameBuffer = (char*) malloc(sizeof(char) * 256);
