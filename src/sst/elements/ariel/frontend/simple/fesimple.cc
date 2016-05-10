@@ -592,7 +592,7 @@ void* ariel_mlm_malloc(size_t size, int level) {
         fprintf(stderr, "YOU REQUESTED ZERO BYTES\n");
         void *bt_entries[64];
         int entry_returned = backtrace(bt_entries, 64);
-	backtrace_symbols_fd(bt_entries, entry_returned, 1);
+	backtrace_symbols(bt_entries, entry_returned);
         exit(-8);
     }
 

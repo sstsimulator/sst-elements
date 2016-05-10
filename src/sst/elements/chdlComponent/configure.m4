@@ -42,6 +42,7 @@ AC_DEFUN([SST_chdlComponent_CONFIG],[
   AC_SUBST([CHDL_CXXFLGAS])
   AC_SUBST([CHDL_LDFLAGS])
   AC_SUBST([CHDL_LIBS])
+  AC_SUBST([CHDL_LIBDIR])
   AM_CONDITIONAL([HAVE_CHDL], [test "$sst_check_chdl_happy" = "yes"])
   AS_IF([test "$sst_check_chdl_happy" = "yes"],
         [AC_DEFINE([HAVE_CHDL], [1], [Set to 1 if chdl was found])])
