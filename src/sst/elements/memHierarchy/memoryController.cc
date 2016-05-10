@@ -147,11 +147,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     interleaveSize_ = UnitAlgebra(ilSize).getRoundedValue();
     interleaveStep_ = UnitAlgebra(ilStep).getRoundedValue();
     if (!UnitAlgebra(ilSize).hasUnits("B") || interleaveSize_ % cacheLineSize_ != 0) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this      to '1', change it to '1KiB'. You specified %s\n",
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK) and must also be a multiple of request_size. This definition has CHANGED. Example: If you used to set this      to '1', change it to '1KiB'. You specified %s\n",
                 getName().c_str(), ilSize.c_str());
     }
     if (!UnitAlgebra(ilStep).hasUnits("B") || interleaveStep_ % cacheLineSize_ != 0) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this      to '4', change it to '4KiB'. You specified %s\n",
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK) and must also be a multiple of request_size. This definition has CHANGED. Example: If you used to set this      to '4', change it to '4KiB'. You specified %s\n",
                 getName().c_str(), ilStep.c_str());
     }
 
@@ -300,7 +300,6 @@ void MemController::addRequest(MemEvent* ev) {
 
 bool MemController::clock(Cycle_t cycle) {
     totalCycles->addData(1);
-    backend_->clock();
     if (networkLink_) networkLink_->clock();
 
     int reqsThisCycle = 0;
@@ -332,6 +331,8 @@ bool MemController::clock(Cycle_t cycle) {
     }
 
     stat_outstandingReqs->addData(requestPool_.size());
+    
+    backend_->clock();
 
     return false;
 }
