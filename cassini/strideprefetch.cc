@@ -168,7 +168,7 @@ void StridePrefetcher::DetectStride() {
 StridePrefetcher::StridePrefetcher(Component* owner, Params& params) : CacheListener(owner, params) {
 	Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
 
-	verbosity = params.find_integer("verbose", 0);
+	verbosity = params.find<int>("verbose", 0);
 
 	char* new_prefix = (char*) malloc(sizeof(char) * 128);
         sprintf(new_prefix, "StridePrefetcher[%s | @f:@p:@l] ", parent->getName().c_str());
@@ -176,17 +176,17 @@ StridePrefetcher::StridePrefetcher(Component* owner, Params& params) : CacheList
 	free(new_prefix);
 
 	recheckCountdown = 0;
-        blockSize = (uint64_t) params.find_integer("cache_line_size", 64);
+        blockSize = params.find<uint64_t>("cache_line_size", 64);
 
-	prefetchHistoryCount = (uint32_t) params.find_integer("history", 16);
+	prefetchHistoryCount = params.find<uint32_t>("history", 16);
 	prefetchHistory = new std::deque<uint64_t>();
 
-	strideReach = (uint32_t) params.find_integer("reach", 2);
-        strideDetectionRange = (uint64_t) params.find_integer("detect_range", 4);
-	recentAddrListCount = (uint32_t) params.find_integer("address_count", 64);
-	pageSize = (uint64_t) params.find_integer("page_size", 4096);
+	strideReach = params.find<uint32_t>("reach", 2);
+        strideDetectionRange = params.find<uint64_t>("detect_range", 4);
+	recentAddrListCount = params.find<uint32_t>("address_count", 64);
+	pageSize = params.find<uint64_t>("page_size", 4096);
 
-	uint32_t overrunPB = (uint32_t) params.find_integer("overrun_page_boundaries", 0);
+	uint32_t overrunPB = params.find<uint32_t>("overrun_page_boundaries", 0);
 	overrunPageBoundary = (overrunPB == 0) ? false : true;
 
 	nextRecentAddressIndex = 0;
