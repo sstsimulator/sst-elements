@@ -45,6 +45,7 @@ EXTRA_DIST = \
 
 libariel_la_LDFLAGS = -module -avoid-version
 libariel_la_CPPFLAGS = -DARIEL_TRACE_LIB=$(libdir)/sst \
+	-DPINTOOL_EXECUTABLE="$(PINTOOL_RUNTIME)" \
 	$(CPPFLAGS) $(AM_CPPFLAGS)
 
 sstdir = $(includedir)/sst/elements/ariel
@@ -69,14 +70,15 @@ all-local: frontend/simple/fesimple.cc
 	-I$(PINTOOL_DIR)/extras/components/include \
 	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
 	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
-	-I$(top_srcdir)/sst \
+	-I$(top_srcdir)/src/sst \
+	-I$(top_srcdir)/src/sst/elements/ariel \
 	-fomit-frame-pointer -fno-stack-protector \
 	-Wl,-exported_symbols_list \
 	-Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
 	-L$(PINTOOL_DIR)/intel64/lib \
 	-L$(PINTOOL_DIR)/intel64/lib-ext \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-	-o fesimple.dylib $(top_builddir)/src/sst/elements/ariel/frontend/simple/fesimple.cc \
+	-o fesimple.dylib $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc \
 	-stdlib=libstdc++ \
 	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 
@@ -100,13 +102,14 @@ all-local: frontend/simple/fesimple.cc
 	-I$(PINTOOL_DIR)/extras/components/include \
 	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
 	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
-	-I$(top_srcdir)/sst \
+	-I$(top_srcdir)/src/sst \
+	-I$(top_srcdir)/src/sst/elements/ariel \
 	-Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
 	-L$(PINTOOL_DIR)/intel64/lib \
 	-L$(PINTOOL_DIR)/intel64/lib-ext \
 	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-	-o fesimple.so $(top_builddir)/src/sst/elements/ariel/frontend/simple/fesimple.cc \
+	-o fesimple.so $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc \
 	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 
 
