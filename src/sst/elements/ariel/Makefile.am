@@ -88,7 +88,7 @@ install-exec-hook:
 
 else
 
-all-local: frontend/simple/fesimple.cc
+all-local:
 	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
 	-fPIC -O3 \
 	-fomit-frame-pointer \
