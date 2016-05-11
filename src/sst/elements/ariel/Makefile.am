@@ -2,8 +2,7 @@
 AM_CPPFLAGS = \
         $(BOOST_CPPFLAGS) \
         $(MPI_CPPFLAGS) \
-        $(PINTOOL_CPPFLAGS) \
-        -DARIEL_TOOL_DIR="$(libexecdir)"
+        $(PINTOOL_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libariel.la
@@ -45,7 +44,9 @@ EXTRA_DIST = \
 	frontend/simple/examples/stream/stream.c
 
 libariel_la_LDFLAGS = -module -avoid-version
-libariel_la_CPPFLAGS = -DARIEL_TRACE_LIB=$(libdir)/sst \
+libariel_la_CPPFLAGS = \
+	-DARIEL_TRACE_LIB=$(libdir)/sst \
+        -DARIEL_TOOL_DIR="$(libexecdir)" \
 	-DPINTOOL_EXECUTABLE="$(PINTOOL_RUNTIME)" \
 	$(CPPFLAGS) $(AM_CPPFLAGS)
 
