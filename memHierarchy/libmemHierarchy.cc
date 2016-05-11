@@ -18,6 +18,7 @@
 #include "memNIC.h"
 #include "cacheController.h"
 #include "Sieve/sieveController.h"
+#include "Sieve/broadcastShim.h"
 #include "bus.h"
 #include "trivialCPU.h"
 #include "streamCPU.h"
@@ -330,6 +331,16 @@ static const ElementInfoStatistic cache_statistics[] = {
     {NULL, NULL, NULL, 0}
 };
 
+static Component* create_BroadcastShim(ComponentId_t id, Params& params)
+{
+    return new BroadcastShim(id, params);
+}
+
+static const ElementInfoPort broadcastShim_ports[] = {
+    {"cpu_alloc_link_%(port)d", "Link to CPU's allocation port", arielAlloc_port_events},
+    {"sieve_alloc_link_%(port)d", "Link to sieve's allocation port", arielAlloc_port_events},
+    {NULL, NULL, NULL}
+};
 
 static Component* create_Sieve(ComponentId_t id, Params& params)
 {
@@ -938,6 +949,15 @@ static const ElementInfoComponent components[] = {
             sieve_ports,
             COMPONENT_CATEGORY_MEMORY,
             sieve_statistics	
+        },
+        {   "BroadcastShim",
+            "blahblah...",
+            NULL,
+            create_BroadcastShim,
+            NULL,
+            broadcastShim_ports,
+            COMPONENT_CATEGORY_MEMORY,
+            NULL
         },
 	{   "Bus",
 	    "Mem Hierarchy Bus Component",
