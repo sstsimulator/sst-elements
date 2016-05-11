@@ -144,10 +144,10 @@ bool SimpleDRAM::issueRequest(DRAMReq *req){
     int row = addr >> rowOffset;
 
 #ifdef __SST_DEBUG_OUTPUT__
-    ctrl->dbg.debug(_L10_, "SimpleDRAM received request for address %" PRIx64 " which maps to bank: %d, row: %d. Bank status: %s, open row is %d\n", 
-            addr, bank, row, (busy[bank] ? "busy" : "idle"), openRow[bank]);
+    ctrl->dbg.debug(_L10_, "SimpleDRAM (%s) received request for address %" PRIx64 " which maps to bank: %d, row: %d. Bank status: %s, open row is %d\n", 
+            ctrl->getName().c_str(), addr, bank, row, (busy[bank] ? "busy" : "idle"), openRow[bank]);
 #endif
-
+    
     // If bank is busy -> return false;
     if (busy[bank]) return false;
 
@@ -166,6 +166,6 @@ bool SimpleDRAM::issueRequest(DRAMReq *req){
     }
     busy[bank] = true;
     self_link->send(latency, new MemCtrlEvent(req, bank));
-
+    
     return true;
 }

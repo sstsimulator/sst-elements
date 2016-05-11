@@ -31,6 +31,7 @@
 #include "membackend/simpleDRAMBackend.h"
 #include "membackend/vaultSimBackend.h"
 #include "membackend/requestReorderSimple.h"
+#include "membackend/requestReorderByRow.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
 
@@ -526,6 +527,22 @@ static const ElementInfoParam requestReorderSimple_params[] = {
 };
 
 
+static SubComponent* create_Mem_RequestReorderRow(Component * comp, Params& params) {
+    return new RequestReorderRow(comp, params);
+}
+
+static const ElementInfoParam requestReorderRow_params[] = {
+    {"verbose",                 "Sets the verbosity of the backend output", "0" },
+    {"max_requests_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+    {"banks",                   "Number of banks", "8"},
+    {"bank_interleave_granularity", "Granularity of interleaving in bytes (B), generally a cache line. Must be a power of 2.", "64B"},
+    {"row_size",                "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
+    {"reorder_limit",           "Maximum number of request to reorder to a row before changing rows.", "1"},
+    {"backend",                 "Backend memory system.", "memHierarchy.simpleDRAM"},
+    { NULL, NULL, NULL }
+};
+
+
 #if defined(HAVE_LIBDRAMSIM)
 static SubComponent* create_Mem_DRAMSim(Component* comp, Params& params){
     return new DRAMSimMemory(comp, params);
@@ -787,6 +804,15 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL,
         create_Mem_RequestReorderSimple,
         requestReorderSimple_params,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "reorderByRow",
+        "Request re-orderer, groups requests by row.",
+        NULL,
+        create_Mem_RequestReorderRow,
+        requestReorderRow_params,
         NULL,
         "SST::MemHierarchy::MemBackend"
     },
