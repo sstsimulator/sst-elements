@@ -84,7 +84,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 	}
     } else {
 //        amrFile = new EmberAMRTextFile(blockFilePath, out);
-	out->fatal(CALL_INFO, -1, "Binary mesh files are the only type currently supported, use ssh-meshconvert\n");
+	out->fatal(CALL_INFO, -1, "Binary mesh files are the only type currently supported, use sst-meshconvert\n");
     }
 
 	maxLevel   = amrFile->getMaxRefinement();
