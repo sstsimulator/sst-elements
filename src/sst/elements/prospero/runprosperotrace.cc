@@ -52,9 +52,9 @@ int main(int argc, char* argv[]) {
 	char* toolPath = (char*) malloc(sizeof(char) * PATH_MAX);
 
 #ifdef SST_COMPILE_MACOSX
-	sprintf(toolPath, "%s/libexec/prosperotrace.dylib", PROSPERO_STRINGIZE(PROSPERO_TOOL_DIR));
+	sprintf(toolPath, "%s/prosperotrace.dylib", PROSPERO_STRINGIZE(PROSPERO_TOOL_DIR));
 #else
-	sprintf(toolPath, "%s/libexec/prosperotrace.so", PROSPERO_STRINGIZE(PROSPERO_TOOL_DIR));
+	sprintf(toolPath, "%s/prosperotrace.so", PROSPERO_STRINGIZE(PROSPERO_TOOL_DIR));
 #endif
 
 	appParams.push_back(const_cast<char*>(PROSPERO_STRINGIZE(PINTOOL_EXECUTABLE)));
