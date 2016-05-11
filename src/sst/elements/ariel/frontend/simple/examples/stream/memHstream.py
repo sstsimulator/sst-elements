@@ -62,7 +62,6 @@ ariel.addParams({
    "arielmode"           : "1",
    "corecount"           : corecount,
    "defaultlevel"        : defaultLevel,
-   "arieltool" : sst_root + "/sst/elements/ariel/fesimple.so"
 })
  
 ## MemHierarchy 
