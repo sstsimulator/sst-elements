@@ -13,7 +13,8 @@
 #include <vector>
 #include <string>
 
-#define STRINGIZE(input) #input
+#define PROSPERO_INNER_STRINGIZE(input) #input
+#define PROSPERO_STRINGIZE(input) PROSPERO_INNER_STRINGIZE(input)
 
 void printUsage() {
 	printf("sst-prospero-trace [trace options] -- [app] [app options]\n");
@@ -51,12 +52,12 @@ int main(int argc, char* argv[]) {
 	char* toolPath = (char*) malloc(sizeof(char) * PATH_MAX);
 
 #ifdef SST_COMPILE_MACOSX
-	sprintf(toolPath, "%s/libexec/prosperotrace.dylib", STRINGIZE(PROSPERO_TOOL_DIR));
+	sprintf(toolPath, "%s/libexec/prosperotrace.dylib", PROSPERO_STRINGIZE(PROSPERO_TOOL_DIR));
 #else
-	sprintf(toolPath, "%s/libexec/prosperotrace.so", STRINGIZE(PROSPERO_TOOL_DIR));
+	sprintf(toolPath, "%s/libexec/prosperotrace.so", PROSPERO_STRINGIZE(PROSPERO_TOOL_DIR));
 #endif
 
-	appParams.push_back(const_cast<char*>(STRINGIZE(PINTOOL_EXECUTABLE)));
+	appParams.push_back(const_cast<char*>(PROSPERO_STRINGIZE(PINTOOL_EXECUTABLE)));
 	appParams.push_back(pinToolMarker);
 	appParams.push_back(toolPath);
 
@@ -217,7 +218,7 @@ int main(int argc, char* argv[]) {
 
 		printf("\n");
 
-		int executeRC = execvp(STRINGIZE(PINTOOL_EXECUTABLE), paramsArray);
+		int executeRC = execvp(PROSPERO_STRINGIZE(PINTOOL_EXECUTABLE), paramsArray);
 		printf("Executing application returns %d.\n", executeRC);
 
 		free(paramsArray);
