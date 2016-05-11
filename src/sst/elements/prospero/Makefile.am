@@ -1,7 +1,8 @@
 
 AM_CPPFLAGS = \
         $(BOOST_CPPFLAGS) \
-        $(MPI_CPPFLAGS)
+        $(MPI_CPPFLAGS) \
+        -DPROSPERO_TOOL_DIR="$(libexecdir)"
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libprospero.la 

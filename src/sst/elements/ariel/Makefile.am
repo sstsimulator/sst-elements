@@ -2,7 +2,8 @@
 AM_CPPFLAGS = \
         $(BOOST_CPPFLAGS) \
         $(MPI_CPPFLAGS) \
-        $(PINTOOL_CPPFLAGS)
+        $(PINTOOL_CPPFLAGS) \
+        -DARIEL_TOOL_DIR="$(libexecdir)"
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libariel.la
