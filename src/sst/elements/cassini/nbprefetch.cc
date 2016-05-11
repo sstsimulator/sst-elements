@@ -25,7 +25,7 @@ using namespace SST::Cassini;
 NextBlockPrefetcher::NextBlockPrefetcher(Component* owner, Params& params) : CacheListener(owner, params) {
 	Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
 
-	blockSize = (uint64_t) params.find_integer("cache_line_size", 64);
+	blockSize = params.find<uint64_t>("cache_line_size", 64);
 
 	statPrefetchEventsIssued = registerStatistic<uint64_t>("prefetches_issued");
 	statMissEventsProcessed  = registerStatistic<uint64_t>("miss_events_processed");

@@ -47,6 +47,7 @@ bool EmberAllPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
                                 latency * 1000000.0,
                                 bandwidth / 1000000000.0 );
         }
+
         return true;
     }
 
@@ -58,23 +59,28 @@ bool EmberAllPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
         }
     }
 
-    enQ_compute( evQ, m_computeTime ); 
+    const bool participate = ( size() % 2 == 0 ) ? true :
+	( rank() == ( size() - 1 ) ) ? false : true;
 
-    if ( rank() < size()/2 ) {
-        enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, 
+    if( participate ) {
+    	enQ_compute( evQ, m_computeTime );
+
+	if ( rank() < size()/2 ) {
+        	enQ_send( evQ, m_sendBuf, m_messageSize, CHAR,
                     rank() + (size()/2), TAG, GroupWorld );
-        enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, 
+        	enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR,
                     rank() + (size()/2), TAG, GroupWorld, &m_resp );
 
-    } else {
-        enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, 
+    	} else {
+        	enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR,
                     rank() - (size()/2), TAG, GroupWorld, &m_resp );
-        enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, 
+        	enQ_send( evQ, m_sendBuf, m_messageSize, CHAR,
                     rank() - (size()/2), TAG, GroupWorld );
-    }
+    	}
 
-    if ( ++m_loopIndex == m_iterations ) {
-        enQ_getTime( evQ, &m_stopTime );
+    	if ( ++m_loopIndex == m_iterations ) {
+        	enQ_getTime( evQ, &m_stopTime );
+    	}
     }
     return false;
 }

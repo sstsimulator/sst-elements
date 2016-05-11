@@ -22,8 +22,10 @@ libmemHierarchy_la_SOURCES = \
 	memoryController.h \
 	memoryController.cc \
         membackend/memBackend.h \
-	membackend/simpleMemBackend.cc \
 	membackend/simpleMemBackend.h \
+	membackend/simpleMemBackend.cc \
+	membackend/simpleDRAMBackend.h \
+	membackend/simpleDRAMBackend.cc \
 	membackend/vaultSimBackend.h \
 	membackend/vaultSimBackend.cc \
 	memEvent.h \
@@ -70,6 +72,9 @@ EXTRA_DIST = \
         Sieve/tests/StatisticOutput.csv.gold \
         Sieve/tests/sieveprospero-0.trace \
         Sieve/tests/trace-text.py \
+        Sieve/tests/Makefile \
+        Sieve/tests/ompsievetest.c \
+        Sieve/tests/sieve-test.py \
 	tests/example.py \
 	tests/exampleM5.xml \
 	tests/sdl-1.py \
@@ -97,6 +102,7 @@ nobase_sst_HEADERS = \
 	membackend/memBackend.h \
 	membackend/vaultSimBackend.h \
 	membackend/simpleMemBackend.h \
+	membackend/simpleDRAMBackend.h \
 	memoryController.h \
 	cacheListener.h \
 	bus.h \
