@@ -90,10 +90,10 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : MemBackend(comp, param
 
     // row size (# columns) needs to be power of 2 and have units of bytes
     if (!(rowSize.hasUnits("B"))) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size_in_bytes - must have units of 'B' (bytes). You specified %s.\n", ctrl->getName().c_str(), rowSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must have units of 'B' (bytes). You specified %s.\n", ctrl->getName().c_str(), rowSize.toString().c_str());
     }
     if (!isPowerOfTwo(rowSize.getRoundedValue())) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size_in_bytes - must be a power of two. You specified %s.\n", ctrl->getName().c_str(), rowSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must be a power of two. You specified %s.\n", ctrl->getName().c_str(), rowSize.toString().c_str());
     }
     rowOffset = log2Of(rowSize.getRoundedValue());
 
