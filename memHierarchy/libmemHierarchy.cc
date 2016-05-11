@@ -30,6 +30,7 @@
 #include "membackend/simpleMemBackend.h"
 #include "membackend/simpleDRAMBackend.h"
 #include "membackend/vaultSimBackend.h"
+#include "membackend/requestReorderSimple.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
 
@@ -512,6 +513,19 @@ static const ElementInfoStatistic simpleDRAM_stats[] = {
 };
 
 
+static SubComponent* create_Mem_RequestReorderSimple(Component * comp, Params& params) {
+    return new RequestReorderSimple(comp, params);
+}
+
+static const ElementInfoParam requestReorderSimple_params[] = {
+    {"verbose",                 "Sets the verbosity of the backend output", "0" },
+    {"max_requests_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+    {"search_window_size",      "Maximum number of request to search each cycle. 0 or negative is unlimited.", "-1"},
+    {"backend",                 "Backend memory system", "memHierarchy.simpleDRAM"},
+    { NULL, NULL, NULL }
+};
+
+
 #if defined(HAVE_LIBDRAMSIM)
 static SubComponent* create_Mem_DRAMSim(Component* comp, Params& params){
     return new DRAMSimMemory(comp, params);
@@ -765,6 +779,15 @@ static const ElementInfoSubComponent subcomponents[] = {
         create_Mem_SimpleDRAM,
         simpleDRAM_params,
         simpleDRAM_stats,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "reorderSimple",
+        "Simple request re-orderer, issues the first N requests that are accepted by the backend",
+        NULL,
+        create_Mem_RequestReorderSimple,
+        requestReorderSimple_params,
+        NULL,
         "SST::MemHierarchy::MemBackend"
     },
 #if defined(HAVE_LIBDRAMSIM)
