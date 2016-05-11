@@ -90,10 +90,10 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : MemBackend(comp, param
 
     // row size (# columns) needs to be power of 2 and have units of bytes
     if (!(rowSize.hasUnits("B"))) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size_in_bytes - must have units of 'B' (bytes). You specified %s.\n", ctrl->getName().c_str(), rowSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must have units of 'B' (bytes). You specified %s.\n", ctrl->getName().c_str(), rowSize.toString().c_str());
     }
     if (!isPowerOfTwo(rowSize.getRoundedValue())) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size_in_bytes - must be a power of two. You specified %s.\n", ctrl->getName().c_str(), rowSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must be a power of two. You specified %s.\n", ctrl->getName().c_str(), rowSize.toString().c_str());
     }
     rowOffset = log2Of(rowSize.getRoundedValue());
 
@@ -144,10 +144,10 @@ bool SimpleDRAM::issueRequest(DRAMReq *req){
     int row = addr >> rowOffset;
 
 #ifdef __SST_DEBUG_OUTPUT__
-    ctrl->dbg.debug(_L10_, "SimpleDRAM received request for address %" PRIx64 " which maps to bank: %d, row: %d. Bank status: %s, open row is %d\n", 
-            addr, bank, row, (busy[bank] ? "busy" : "idle"), openRow[bank]);
+    ctrl->dbg.debug(_L10_, "SimpleDRAM (%s) received request for address %" PRIx64 " which maps to bank: %d, row: %d. Bank status: %s, open row is %d\n", 
+            ctrl->getName().c_str(), addr, bank, row, (busy[bank] ? "busy" : "idle"), openRow[bank]);
 #endif
-
+    
     // If bank is busy -> return false;
     if (busy[bank]) return false;
 
@@ -166,6 +166,6 @@ bool SimpleDRAM::issueRequest(DRAMReq *req){
     }
     busy[bank] = true;
     self_link->send(latency, new MemCtrlEvent(req, bank));
-
+    
     return true;
 }
