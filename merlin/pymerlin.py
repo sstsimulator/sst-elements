@@ -577,9 +577,10 @@ class topoDragonFly(Topo):
 class topoDragonFly2(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","dragonfly:intergroup_links","input_latency","output_latency","input_buf_size","output_buf_size"]
-        self.topoOptKeys = ["xbar_arb","link_bw:host","link_bw:group","link_bw:global","input_latency:host","input_latency:group","input_latency:global","output_latency:host","output_latency:group","output_latency:global","input_buf_size:host","input_buf_size:group","input_buf_size:global","output_buf_size:host","output_buf_size:group","output_buf_size:global",]
+        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","dragonfly:intergroup_links","input_latency","output_latency","input_buf_size","output_buf_size","dragonfly:global_route_mode"]
+        self.topoOptKeys = ["xbar_arb","link_bw:host","link_bw:group","link_bw:global","input_latency:host","input_latency:group","input_latency:global","output_latency:host","output_latency:group","output_latency:global","input_buf_size:host","input_buf_size:group","input_buf_size:global","output_buf_size:host","output_buf_size:group","output_buf_size:global"]
         self.global_link_map = None
+        self.global_routes = "absolute"
 
     def getName(self):
         return "Dragonfly2"
@@ -596,6 +597,7 @@ class topoDragonFly2(Topo):
         _params["dragonfly:intergroup_links"] = int(_params["dragonfly:intergroup_links"])
         _params["dragonfly:num_groups"] = int(_params["dragonfly:num_groups"])
         _params["num_peers"] = _params["dragonfly:hosts_per_router"] * _params["dragonfly:routers_per_group"] * _params["dragonfly:num_groups"]
+        _params["dragonfly:global_route_mode"] = self.global_routes
 
 
         self.total_intergroup_links = (_params["dragonfly:num_groups"] - 1) * _params["dragonfly:intergroup_links"]
@@ -612,6 +614,12 @@ class topoDragonFly2(Topo):
     def setGlobalLinkMap(self, glm):
         self.global_link_map = glm
             
+    def setRoutingModeAbsolute(self):
+        self.global_routes = "absolute"
+
+    def setRoutingModeRelative(self):
+        self.global_routes = "relative"
+        
     def build(self):
         links = dict()
 
@@ -664,11 +672,18 @@ class topoDragonFly2(Topo):
             link_num = raw_dest / ng;
             dest_grp = raw_dest - link_num * ng
 
-            # Compute dest group ignoring my own group id, for a
-            # dest_grp >= g, we need to add 1 to get the right group
-            if dest_grp >= g:
-                dest_grp = dest_grp + 1
-            
+            if ( self.global_routes == "absolute" ):
+                # Compute dest group ignoring my own group id, for a
+                # dest_grp >= g, we need to add 1 to get the right group
+                if dest_grp >= g:
+                    dest_grp = dest_grp + 1
+            elif ( self.global_routes == "relative"):
+                # For relative, add current group to dest_grp + 1 and
+                # do modulo of num_groups to get actual group
+                dest_grp = (dest_grp + g + 1) % (ng+1)
+            #else:
+                # should never happen
+                
             src = min(dest_grp, g)
             dest = max(dest_grp, g)
 
