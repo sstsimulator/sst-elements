@@ -387,6 +387,7 @@ static const ElementInfoParam dragonfly2_params[] = {
     {"dragonfly:algorithm","Routing algorithm to use [minmal (default) | valiant].", "minimal"},
     {"dragonfly:adaptive_threshold","Threshold to use when make adaptive routing decisions.", "2.0"},
     {"dragonfly:global_link_map","Array specifying connectivity of global links in each dragonfly group."},
+    {"dragonfly:global_route_mode","Mode for intepreting global link map [absolute (default) | relative].","absolute"},
     {NULL,NULL,NULL}
 };
 

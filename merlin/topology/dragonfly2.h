@@ -49,7 +49,7 @@ private:
     SharedRegion* region;
     size_t groups;
     size_t routes;
-
+    
     
 public:
     RouteToGroup() {}
@@ -96,6 +96,9 @@ class topo_dragonfly2: public Topology {
     int const* output_credits;
     int num_vcs;
     
+    enum global_route_mode_t { ABSOLUTE, RELATIVE };
+    global_route_mode_t global_route_mode;
+
 public:
     struct dgnfly2Addr {
         uint32_t group;
