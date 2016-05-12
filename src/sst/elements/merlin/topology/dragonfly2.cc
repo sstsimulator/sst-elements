@@ -63,6 +63,12 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
     params.g = (uint32_t)p.find<int>("dragonfly:num_groups");
     params.n = (uint32_t)p.find<int>("dragonfly:intergroup_links");
 
+    std::string global_route_mode_s = p.find<std::string>("dragonfly:global_route_mode","absolute");
+    if ( global_route_mode_s == "absolute" ) global_route_mode = ABSOLUTE;
+    else if ( global_route_mode_s == "relative" ) global_route_mode = RELATIVE;
+    else {
+        output.fatal(CALL_INFO, -1, "Invalid dragonfly:global_route_mode specified: %s.\n",global_route_mode_s.c_str());        
+    }
     
     std::string route_algo = p.find<std::string>("dragonfly:algorithm", "minimal");
 
@@ -547,7 +553,6 @@ void topo_dragonfly2::idToLocation(int id, dgnfly2Addr *location)
 uint32_t topo_dragonfly2::router_to_group(uint32_t group)
 {
 
-    /* For now, assume only 1 connection to each group */
     if ( group < group_id ) {
         return group / params.h;
     } else if ( group > group_id ) {
@@ -563,7 +568,22 @@ uint32_t topo_dragonfly2::router_to_group(uint32_t group)
 uint32_t topo_dragonfly2::port_for_group(uint32_t group, uint32_t slice, int id)
 {
     // Look up global port to use
-    if ( group >= group_id ) group--;
+    switch ( global_route_mode ) {
+    case ABSOLUTE:
+        if ( group >= group_id ) group--;
+        break;
+    case RELATIVE:
+        if ( group > group_id ) {
+            group = group - group_id - 1;
+        }
+        else {
+            group = params.g - group_id + group - 1;
+        }
+        break;
+    default:
+        break;
+    }
+
     const RouterPortPair& pair = group_to_global_port.getRouterPortPair(group,slice);
 
     if ( pair.router == router_id ) {
