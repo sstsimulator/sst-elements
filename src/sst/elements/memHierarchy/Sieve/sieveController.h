@@ -22,6 +22,7 @@
 #include <sst/core/link.h>
 #include <sst/core/output.h>
 
+#include <unordered_map>
 
 #include "../cacheArray.h"
 #include "../replacementManager.h"
@@ -56,10 +57,9 @@ public:
 private:
     struct SieveConfig;
     typedef map<Addr, ArielComponent::arielAllocTrackEvent*> allocMap_t;
-    typedef list<ArielComponent::arielAllocTrackEvent*> allocList_t;
     typedef pair<uint64_t, uint64_t> rwCount_t;
-    typedef map<ArielComponent::arielAllocTrackEvent*, 
-                rwCount_t > allocCountMap_t;
+    typedef std::unordered_map<ArielComponent::arielAllocTrackEvent*, rwCount_t > allocCountMap_t;
+    
     /** Name of the output file */
     string outFileName;
     /** output file counter */
@@ -67,7 +67,6 @@ private:
     /** All Allocations */
     allocCountMap_t allocMap;
      /** All allocations in list form */
-    allocList_t allocList;
     /** Active Allocations */
     allocMap_t actAllocMap; 
     /** misses not associated with an alloc'd region */

@@ -67,26 +67,39 @@ void Sieve::processAllocEvent(SST::Event* event) {
         // add to the big map and list of all allocations
         if (allocMap.find(ev) == allocMap.end()) {
             allocMap[ev] = rwCount_t();
-	    allocList.push_back(ev);
         } else {
             output_->fatal(CALL_INFO, -1, "Trying to add allocation event which has already been added. \n");
         }
         
         // add to the list of active allocations (i.e. not FREEd)
-        if (actAllocMap.find(ev->getVirtualAddress()) == actAllocMap.end()) {
-            actAllocMap[ev->getVirtualAddress()] = ev;
-        } else {
+        actAllocMap[ev->getVirtualAddress()] = ev;
+
+#ifdef __SST_DEBUG_OUTPUT__
+        if (actAllocMap.find(ev->getVirtualAddress()) != actAllocMap.end()) {
             // sometimes ariel replaces both malloc() and _malloc(), so we get two reports. Just ignore the first. 
             output_->debug(_INFO_, "Trying to add allocation event at an address (%p %" PRIx64") with an active allocation. %" PRIu64 "\n", ev, ev->getVirtualAddress(), (uint64_t)actAllocMap.size());
-	    // replace the 'old' alloc
-	  actAllocMap[ev->getVirtualAddress()] = ev;
         }
+#endif
+
     } else if (ev->getType() == ArielComponent::arielAllocTrackEvent::FREE) {
         allocMap_t::iterator targ = actAllocMap.find(ev->getVirtualAddress());
-        if (targ == actAllocMap.end()) {
-            output_->debug(_INFO_,"FREEing an address that was never ALLOCd\n");
+        if (targ != actAllocMap.end()) {
+            allocCountMap_t::iterator mapIt = allocMap.find(targ->second);
+            
+            // Free malloc partially if it has been accessed, fully otherwise
+            if (mapIt->second.first == 0 && mapIt->second.second == 0) {
+                ArielComponent::arielAllocTrackEvent* allocEv = targ->second;
+                actAllocMap.erase(targ);
+                allocMap.erase(mapIt);
+                delete allocEv;
+            } else {
+                actAllocMap.erase(targ);
+            }
+
+#ifdef __SST_DEBUG_OUTPUT__
         } else {
-            actAllocMap.erase(targ);
+            output_->debug(_INFO_,"FREEing an address that was never ALLOCd\n");
+#endif
         }
         delete ev;
     } else if (ev->getType() == ArielComponent::arielAllocTrackEvent::BUOY) {
@@ -179,11 +192,13 @@ void Sieve::outputStats(int marker) {
 
     // print out all the allocations and how often they were touched
     output_file->output(CALL_INFO, "#Printing out allocation hits (addr, mallocID, len, reads, writes, 'density'):\n");
-    for(allocList_t::iterator i = allocList.begin(); 
-        i != allocList.end(); ++i) {
-        ArielComponent::arielAllocTrackEvent *ev = *i;
-	rwCount_t &counts = allocMap[ev];
-	double density = double(counts.first + counts.second) / double(ev->getAllocateLength());
+    for (allocCountMap_t::iterator i = allocMap.begin(); i != allocMap.end(); i++) {
+        ArielComponent::arielAllocTrackEvent *ev = i->first;
+	rwCount_t &counts = i->second;
+
+        if (counts.first == 0 && counts.second == 0)
+            continue;
+        double density = double(counts.first + counts.second) / double(ev->getAllocateLength());
         output_file->output(CALL_INFO, "%#" PRIx64 " %#" PRIu64 " %" PRId64 " %" PRId64 " %" PRId64 " %.3f\n", 
 			    ev->getVirtualAddress(), 
 			    ev->getInstructionPointer(), 

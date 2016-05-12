@@ -18,6 +18,7 @@
 #include "memNIC.h"
 #include "cacheController.h"
 #include "Sieve/sieveController.h"
+#include "Sieve/broadcastShim.h"
 #include "bus.h"
 #include "trivialCPU.h"
 #include "streamCPU.h"
@@ -30,6 +31,8 @@
 #include "membackend/simpleMemBackend.h"
 #include "membackend/simpleDRAMBackend.h"
 #include "membackend/vaultSimBackend.h"
+#include "membackend/requestReorderSimple.h"
+#include "membackend/requestReorderByRow.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
 
@@ -328,6 +331,16 @@ static const ElementInfoStatistic cache_statistics[] = {
     {NULL, NULL, NULL, 0}
 };
 
+static Component* create_BroadcastShim(ComponentId_t id, Params& params)
+{
+    return new BroadcastShim(id, params);
+}
+
+static const ElementInfoPort broadcastShim_ports[] = {
+    {"cpu_alloc_link_%(port)d", "Link to CPU's allocation port", arielAlloc_port_events},
+    {"sieve_alloc_link_%(port)d", "Link to sieve's allocation port", arielAlloc_port_events},
+    {NULL, NULL, NULL}
+};
 
 static Component* create_Sieve(ComponentId_t id, Params& params)
 {
@@ -509,6 +522,35 @@ static const ElementInfoStatistic simpleDRAM_stats[] = {
     {"no_row_open",     "Number of times a request arrived and no row was open", "count", 1},
     {"wrong_row_open",  "Number of times a request arrived and the wrong row was open", "count", 1},
     { NULL, NULL, NULL, 0 }
+};
+
+
+static SubComponent* create_Mem_RequestReorderSimple(Component * comp, Params& params) {
+    return new RequestReorderSimple(comp, params);
+}
+
+static const ElementInfoParam requestReorderSimple_params[] = {
+    {"verbose",                 "Sets the verbosity of the backend output", "0" },
+    {"max_requests_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+    {"search_window_size",      "Maximum number of request to search each cycle. 0 or negative is unlimited.", "-1"},
+    {"backend",                 "Backend memory system", "memHierarchy.simpleDRAM"},
+    { NULL, NULL, NULL }
+};
+
+
+static SubComponent* create_Mem_RequestReorderRow(Component * comp, Params& params) {
+    return new RequestReorderRow(comp, params);
+}
+
+static const ElementInfoParam requestReorderRow_params[] = {
+    {"verbose",                 "Sets the verbosity of the backend output", "0" },
+    {"max_requests_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+    {"banks",                   "Number of banks", "8"},
+    {"bank_interleave_granularity", "Granularity of interleaving in bytes (B), generally a cache line. Must be a power of 2.", "64B"},
+    {"row_size",                "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
+    {"reorder_limit",           "Maximum number of request to reorder to a row before changing rows.", "1"},
+    {"backend",                 "Backend memory system.", "memHierarchy.simpleDRAM"},
+    { NULL, NULL, NULL }
 };
 
 
@@ -767,6 +809,24 @@ static const ElementInfoSubComponent subcomponents[] = {
         simpleDRAM_stats,
         "SST::MemHierarchy::MemBackend"
     },
+    {
+        "reorderSimple",
+        "Simple request re-orderer, issues the first N requests that are accepted by the backend",
+        NULL,
+        create_Mem_RequestReorderSimple,
+        requestReorderSimple_params,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "reorderByRow",
+        "Request re-orderer, groups requests by row.",
+        NULL,
+        create_Mem_RequestReorderRow,
+        requestReorderRow_params,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
 #if defined(HAVE_LIBDRAMSIM)
     {
         "dramsim",
@@ -889,6 +949,15 @@ static const ElementInfoComponent components[] = {
             sieve_ports,
             COMPONENT_CATEGORY_MEMORY,
             sieve_statistics	
+        },
+        {   "BroadcastShim",
+            "blahblah...",
+            NULL,
+            create_BroadcastShim,
+            NULL,
+            broadcastShim_ports,
+            COMPONENT_CATEGORY_MEMORY,
+            NULL
         },
 	{   "Bus",
 	    "Mem Hierarchy Bus Component",
