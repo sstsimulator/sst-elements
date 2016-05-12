@@ -75,7 +75,7 @@ PIN_LOCK mallocIndexLock;
 UINT64* lastMallocSize;
 std::map<std::string, ArielFunctionRecord*> funcProfile;
 UINT64* lastMallocLoc;
-
+std::vector< std::set<ADDRINT> > instPtrsList;
 UINT32 overridePool;
 bool shouldOverride;
 
@@ -88,7 +88,7 @@ bool shouldOverride;
 /****************************************************************/
 std::vector<FILE*> btfiles; // Per-thread malloc file -> we don't have to lock the file this way
 INT32 mallocIndex;
-
+FILE * rtnNameMap;
 /* This is a record for each function call */ 
 class StackRecord {
     private:
@@ -135,17 +135,21 @@ VOID ariel_print_stack(UINT32 thr, UINT64 allocSize, UINT64 allocAddr, INT32 all
     unsigned int depth = arielStack[thr].size() - 1;
     fprintf(btfiles[thr], "Malloc,0x%" PRIx64 ",%lu,%d\n", allocAddr, allocSize, allocIndex);
     for (vector<StackRecord>::reverse_iterator rit = arielStack[thr].rbegin(); rit != arielStack[thr].rend(); rit++) {
-        ADDRINT ip = rit->getInstPtr();
-        string file;
-        int line;
         
         // Note this only works if app is compiled with debug on
-        PIN_LockClient();
-        PIN_GetSourceLocation(ip, NULL, &line, &file);
-        PIN_UnlockClient();
-
-        fprintf(btfiles[thr], "%d: %s (0x%" PRIx64 ", %s:%d)\n", 
-                depth, RTN_FindNameByAddress(rit->getTarget()).c_str(), rit->getInstPtr(), file.c_str(), line);
+        if (instPtrsList[thr].find(rit->getInstPtr()) == instPtrsList[thr].end()) {
+            ADDRINT ip = rit->getInstPtr();
+            string file;
+            int line;
+            
+            PIN_LockClient();
+                PIN_GetSourceLocation(ip, NULL, &line, &file);
+            PIN_UnlockClient();
+            
+            instPtrsList[thr].insert(rit->getInstPtr());
+            fprintf(btfiles[thr], "NEW IP MAP: 0x%" PRIx64 ", %s:%d\n", ip, file.c_str(), line);
+        }
+        fprintf(btfiles[thr], "%d [0x%" PRIx64 ", 0x%" PRIx64 "]\n", depth, rit->getTarget(), rit->getInstPtr());
         depth--;
     }
     fprintf(btfiles[thr], "\n");
@@ -232,6 +236,7 @@ VOID Fini(INT32 code, VOID* v)
 
     // Close backtrace files if needed
     if (KeepMallocStackTrace.Value() == 1) {
+        fclose(rtnNameMap);
         for (int i = 0; i < core_count; i++) {
             if (btfiles[i] != NULL) 
                 fclose(btfiles[i]);
@@ -733,6 +738,10 @@ VOID ariel_postfree_instrument(ADDRINT allocLocation) {
 }
 
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
+    if (KeepMallocStackTrace.Value() == 1) {
+        fprintf(rtnNameMap, "0x%" PRIx64 ", %s\n", RTN_Address(rtn), RTN_Name(rtn).c_str());   
+
+    }
 
     if (RTN_Name(rtn) == "ariel_enable" || RTN_Name(rtn) == "_ariel_enable") {
         fprintf(stderr,"Identified routine: ariel_enable, replacing with Ariel equivalent...\n");
@@ -881,8 +890,11 @@ int main(int argc, char *argv[])
     lastMallocLoc = (UINT64*) malloc(sizeof(UINT64) * core_count);
     mallocIndex = 0;
 
-    if (KeepMallocStackTrace.Value() == 1)
+    if (KeepMallocStackTrace.Value() == 1) {
         arielStack.resize(core_count);  // Need core_count stacks
+        rtnNameMap = fopen("routine_name_map.txt", "wt");
+        instPtrsList.resize(core_count);    // Need core_count sets of instruction pointers (to avoid locks)
+    }
 
     for(int i = 0; i < core_count; i++) {
     	lastMallocSize[i] = (UINT64) 0;
