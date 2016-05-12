@@ -17,7 +17,6 @@ ariel.addParams({
         "pipetimeout" : "0",
         "executable" : sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream",
         "arielmode" : "1",
-        "arieltool" : sst_root + "/sst-elements/src/sst/elements/ariel/fesimple.so",
         "memorylevels" : "1",
         "defaultlevel" : "0"
         })
