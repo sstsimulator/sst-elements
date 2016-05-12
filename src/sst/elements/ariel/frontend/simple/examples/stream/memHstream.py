@@ -56,7 +56,7 @@ ariel.addParams({
    "maxcorequeue"        : "256",
    "maxissuepercycle"    : "2",
    "pipetimeout"         : "0",
-   "executable" : sst_root + "/sst/elements/ariel/frontend/simple/examples/stream/stream",
+   "executable" : sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream",
    "memorylevels"        : "1",
    "arielinterceptcalls" : "1",
    "arielmode"           : "1",
