@@ -18,7 +18,7 @@
 #include <sst/core/output.h>
 #include <sst/core/link.h>
 
-//#include "sst/elements/merlin/linkControl.h"
+#include "sst/elements/thornhill/detailedCompute.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
 
@@ -614,6 +614,7 @@ public:
 
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
+	Thornhill::DetailedCompute* m_detailedCompute;
 
     uint16_t m_getKey;
   public:

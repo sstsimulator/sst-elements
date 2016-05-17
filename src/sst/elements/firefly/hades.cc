@@ -13,8 +13,11 @@
 #include "hades.h"
 
 #include <sst/core/component.h>
+#include <sst/core/subcomponent.h>
 #include <sst/core/params.h>
 #include <sst/core/link.h>
+
+#include "sst/elements/thornhill/detailedCompute.h"
 
 #include <stdlib.h>
 
@@ -32,7 +35,8 @@ using namespace SST;
 
 Hades::Hades( Component* owner, Params& params ) :
     OS( owner ),	
-    m_virtNic(NULL)
+    m_virtNic(NULL),
+    m_detailedCompute(NULL)
 {
     m_dbg.init("@t:Hades::@p():@l ", 
         params.find<uint32_t>("verboseLevel",0),
@@ -58,6 +62,22 @@ Hades::Hades( Component* owner, Params& params ) :
     if ( !m_nodePerf ) {
         m_dbg.fatal(CALL_INFO,0," Unable to find nodePerf module'%s'\n",
                                         moduleName.c_str());
+    }
+
+    Params dtldParams = params.find_prefix_params( "detailedCompute." );
+    std::string dtldName =  dtldParams.find<std::string>( "name" );
+
+    if ( ! dtldName.empty() ) {
+
+        m_detailedCompute = dynamic_cast<Thornhill::DetailedCompute*>( loadSubComponent(
+                            dtldName, dtldParams ) );
+
+        assert( m_detailedCompute );
+        if ( ! m_detailedCompute->isConnected() ) {
+
+            delete m_detailedCompute;
+            m_detailedCompute = NULL;
+        }
     }
 
     m_netMapSize = params.find<int>("netMapSize",-1);
