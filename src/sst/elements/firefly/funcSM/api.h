@@ -51,19 +51,19 @@ class FunctionSMInterface : public Module {
     FunctionSMInterface( SST::Params& params ) :
         m_info( NULL ),
         m_proto( NULL ),
-        m_name( params.find_string("name","???") ),
-        m_enterLatency( params.find_integer("enterLatency",0) ),
-        m_returnLatency( params.find_integer("returnLatency",0) )
+        m_name( params.find<std::string>("name","???") ),
+        m_enterLatency( params.find<int>("enterLatency",0) ),
+        m_returnLatency( params.find<int>("returnLatency",0) )
     {
         char buffer[100];
 
         snprintf(buffer,100,"@t:%" PRId64 ":%sFunc::@p():@l ",
-                    params.find_integer("nodeId"), 
+                    params.find<int64_t>("nodeId"), 
                     m_name.c_str() );
 
         m_dbg.init( buffer, 
-            params.find_integer("verboseLevel",0), 
-            params.find_integer("verboseMask",-1), 
+            params.find<uint32_t>("verboseLevel",0), 
+            params.find<uint32_t>("verboseMask",-1), 
             Output::STDOUT );
     
         m_dbg.verbose(CALL_INFO,1,0,"\n");
