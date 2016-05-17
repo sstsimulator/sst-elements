@@ -32,8 +32,8 @@ XXX::XXX( Component* owner, Params& params ) :
     m_rxPostMod( NULL ),
     m_processQueuesState( NULL )
 {
-    m_dbg_level = params.find_integer("verboseLevel",0);
-    m_dbg_mask = params.find_integer("verboseMask",-1);
+    m_dbg_level = params.find<uint32_t>("verboseLevel",0);
+    m_dbg_mask = params.find<int32_t>("verboseMask",-1);
 
     m_dbg.init("@t:CtrlMsg::@p():@l ", 
         m_dbg_level, 
@@ -47,66 +47,66 @@ XXX::XXX( Component* owner, Params& params ) :
         "CtrlMsgSelfLink." + ss.str(), "1 ns",
         new Event::Handler<XXX>(this,&XXX::delayHandler));
 
-    m_matchDelay_ns = params.find_integer( "matchDelay_ns", 1 );
+    m_matchDelay_ns = params.find<int>( "matchDelay_ns", 1 );
 
-    std::string tmpName = params.find_string("txMemcpyMod");
+    std::string tmpName = params.find<std::string>("txMemcpyMod");
     Params tmpParams = params.find_prefix_params("txMemcpyModParams.");
     m_txMemcpyMod = dynamic_cast<LatencyMod*>( 
             owner->loadModule( tmpName, tmpParams ) );  
     assert( m_txMemcpyMod );
     
-    tmpName = params.find_string("rxMemcpyMod");
+    tmpName = params.find<std::string>("rxMemcpyMod");
     tmpParams = params.find_prefix_params("rxMemcpyModParams.");
     m_rxMemcpyMod = dynamic_cast<LatencyMod*>( 
             owner->loadModule( tmpName, tmpParams ) );  
     assert( m_rxMemcpyMod );
 
-    tmpName = params.find_string("txSetupMod");
+    tmpName = params.find<std::string>("txSetupMod");
     tmpParams = params.find_prefix_params("txSetupModParams.");
     m_txSetupMod = dynamic_cast<LatencyMod*>( 
             owner->loadModule( tmpName, tmpParams ) );  
     assert( m_txSetupMod );
     
-    tmpName = params.find_string("rxSetupMod");
+    tmpName = params.find<std::string>("rxSetupMod");
     tmpParams = params.find_prefix_params("rxSetupModParams.");
     m_rxSetupMod = dynamic_cast<LatencyMod*>( 
             owner->loadModule( tmpName, tmpParams ) );  
     assert( m_rxSetupMod );
 
-    tmpName = params.find_string("rxPostMod");
+    tmpName = params.find<std::string>("rxPostMod");
     if ( ! tmpName.empty() ) {
         tmpParams = params.find_prefix_params("rxPostModParams.");
         m_rxPostMod = dynamic_cast<LatencyMod*>( 
             owner->loadModule( tmpName, tmpParams ) );  
     }
 
-    m_regRegionBaseDelay_ns = params.find_integer( "regRegionBaseDelay_ns", 0 );
-    m_regRegionPerPageDelay_ns = params.find_integer( "regRegionPerPageDelay_ns", 0 );
-    m_regRegionXoverLength = params.find_integer( "regRegionXoverLength", 4096 );
+    m_regRegionBaseDelay_ns = params.find<int>( "regRegionBaseDelay_ns", 0 );
+    m_regRegionPerPageDelay_ns = params.find<int>( "regRegionPerPageDelay_ns", 0 );
+    m_regRegionXoverLength = params.find<int>( "regRegionXoverLength", 4096 );
     
-    m_shortMsgLength = params.find_integer( "shortMsgLength", 4096 );
+    m_shortMsgLength = params.find<size_t>( "shortMsgLength", 4096 );
 
-    tmpName = params.find_string("txFiniMod","firefly.LatencyMod");
+    tmpName = params.find<std::string>("txFiniMod","firefly.LatencyMod");
     tmpParams = params.find_prefix_params("txFiniModParams.");
     m_txFiniMod = dynamic_cast<LatencyMod*>( 
             owner->loadModule( tmpName, tmpParams ) );  
     assert( m_txFiniMod );
     
-    tmpName = params.find_string("rxFiniMod","firefly.LatencyMod");
+    tmpName = params.find<std::string>("rxFiniMod","firefly.LatencyMod");
     tmpParams = params.find_prefix_params("rxFiniModParams.");
     m_rxFiniMod = dynamic_cast<LatencyMod*>( 
             owner->loadModule( tmpName, tmpParams ) );  
     assert( m_rxFiniMod );
     
-    m_sendAckDelay = params.find_integer( "sendAckDelay_ns", 0 );
+    m_sendAckDelay = params.find<int>( "sendAckDelay_ns", 0 );
 
-    m_sendStateDelay = params.find_integer( "sendStateDelay_ps", 0 );
-    m_recvStateDelay = params.find_integer( "recvStateDelay_ps", 0 );
-    m_waitallStateDelay = params.find_integer( "waitallStateDelay_ps", 0 );
-    m_waitanyStateDelay = params.find_integer( "waitanyStateDelay_ps", 0 );
+    m_sendStateDelay = params.find<uint64_t>( "sendStateDelay_ps", 0 );
+    m_recvStateDelay = params.find<uint64_t>( "recvStateDelay_ps", 0 );
+    m_waitallStateDelay = params.find<uint64_t>( "waitallStateDelay_ps", 0 );
+    m_waitanyStateDelay = params.find<uint64_t>( "waitanyStateDelay_ps", 0 );
 
     m_loopLink = owner->configureLink(
-			params.find_string("loopBackPortName", "loop"), "1 ns",
+			params.find<std::string>("loopBackPortName", "loop"), "1 ns",
             new Event::Handler<XXX>(this,&XXX::loopHandler) );
     assert(m_loopLink);
 

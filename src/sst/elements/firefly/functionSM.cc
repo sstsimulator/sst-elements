@@ -48,7 +48,7 @@ FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj,
 {
 
     m_dbg.init("@t:FunctionSM::@p():@l ", 
-            params.find_integer("verboseLevel",0),
+            params.find<uint32_t>("verboseLevel",0),
             0,
             Output::STDOUT );
 
@@ -90,12 +90,12 @@ void FunctionSM::setup( Info* info )
 
     Params defaultParams;
     defaultParams.enableVerify(false);
-    defaultParams.insert( "module" , m_params.find_string("defaultModule","firefly"), true );
+    defaultParams.insert( "module" , m_params.find<std::string>("defaultModule","firefly"), true );
     defaultParams.insert( "enterLatency", 
-                        m_params.find_string("defaultEnterLatency","0"), true );
+                        m_params.find<std::string>("defaultEnterLatency","0"), true );
     defaultParams.insert( "returnLatency", 
-                        m_params.find_string("defaultReturnLatency","0"), true );
-    defaultParams.insert( "verboseLevel", m_params.find_string("verboseLevel","0"), true ); 
+                        m_params.find<std::string>("defaultReturnLatency","0"), true );
+    defaultParams.insert( "verboseLevel", m_params.find<std::string>("verboseLevel","0"), true ); 
     std::ostringstream tmp;
     tmp <<  nodeId; 
     defaultParams.insert( "nodeId", tmp.str(), true );
@@ -112,31 +112,31 @@ void FunctionSM::setup( Info* info )
 void FunctionSM::initFunction( SST::Component* obj, Info* info,
     FunctionEnum num, std::string name, Params& defaultParams, Params& params)
 {
-    std::string module = params.find_string("module"); 
+    std::string module = params.find<std::string>("module"); 
     if ( module.empty() ) {
-        module = defaultParams.find_string("module");
+        module = defaultParams.find<std::string>("module");
     }
 
     m_dbg.verbose(CALL_INFO,3,0,"func=`%s` module=`%s`\n",
                             name.c_str(),module.c_str());
 
-    if ( params.find_string("name").empty() ) {
-        params.insert( "name",  defaultParams.find_string( "name" ), true );
+    if ( params.find<std::string>("name").empty() ) {
+        params.insert( "name",  defaultParams.find<std::string>( "name" ), true );
     }
 
-    if ( params.find_string("verboseLevel").empty() ) {
-        params.insert( "verboseLevel", defaultParams.find_string( "verboseLevel" ), true );
+    if ( params.find<std::string>("verboseLevel").empty() ) {
+        params.insert( "verboseLevel", defaultParams.find<std::string>( "verboseLevel" ), true );
     }
 
-    if ( params.find_string("enterLatency").empty() ) {
-        params.insert( "enterLatency", defaultParams.find_string( "enterLatency" ), true );
+    if ( params.find<std::string>("enterLatency").empty() ) {
+        params.insert( "enterLatency", defaultParams.find<std::string>( "enterLatency" ), true );
     }
 
-    if ( params.find_string("returnLatency").empty() ) {
-        params.insert( "returnLatency", defaultParams.find_string( "returnLatency" ), true );
+    if ( params.find<std::string>("returnLatency").empty() ) {
+        params.insert( "returnLatency", defaultParams.find<std::string>( "returnLatency" ), true );
     }
 
-    params.insert( "nodeId", defaultParams.find_string( "nodeId" ), true );
+    params.insert( "nodeId", defaultParams.find<std::string>( "nodeId" ), true );
 
     m_smV[ num ] = (FunctionSMInterface*)obj->loadModule( module + "." + name,
                              params );

@@ -39,13 +39,13 @@ class RangeLatMod : public LatencyMod {
   public:
 
     RangeLatMod( Params& params) : op( None), base(0) {
-        std::string tmpStr = params.find_string( "base" );
+        std::string tmpStr = params.find<std::string>( "base" );
         if ( ! tmpStr.empty() ) {
             UnitAlgebra tmp( tmpStr );
             base = tmp.getValue().convert_to<double>();
         }
 
-        tmpStr = params.find_string("op","None");
+        tmpStr = params.find<std::string>("op","None");
 
         if ( 0 == tmpStr.compare("Mult") ) {
             op = Mult; 
@@ -64,7 +64,7 @@ class RangeLatMod : public LatencyMod {
         std::set<std::string>::iterator iter = keys.begin(); 
         for ( ; iter != keys.end(); ++iter ) {
             Entry entry;
-            std::string value = range.find_string(*iter);
+            std::string value = range.find<std::string>(*iter);
 
             std::size_t pos = value.find(":");
             UnitAlgebra tmp( value.substr( pos + 1 ) );

@@ -159,7 +159,7 @@ class Mem : public SST::Component  {
 inline Mem::Mem(ComponentId_t id, Params& params ) :
         Component( id ) 
 {
-    int numCores = params.find_integer("numCores", 1 );
+    int numCores = params.find<int>("numCores", 1 );
 
     for ( int i = 0; i < numCores; i++ ) {
         std::ostringstream tmp;

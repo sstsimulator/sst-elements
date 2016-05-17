@@ -43,7 +43,7 @@ class ScaleLatMod : public LatencyMod {
         std::set<std::string>::iterator iter = keys.begin();
         for ( ; iter != keys.end(); ++iter ) {
             Entry entry;
-            std::string tmp = range.find_string(*iter);
+            std::string tmp = range.find<std::string>(*iter);
 
             std::size_t pos = tmp.find(":");
             std::string range = tmp.substr( 0, pos );
