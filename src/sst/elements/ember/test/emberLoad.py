@@ -1,11 +1,5 @@
 
 import sys,getopt
-import defaultParams
-import defaultSim
-import chamaOpenIBParams
-import chamaPSMParams
-import bgqParams
-import exaParams
 
 import sst
 from sst.merlin import *
@@ -51,6 +45,8 @@ bgMsgSize = 1000
 detailedModelName = ""
 detailedModelNodes = [] 
 detailedModelParams = ""
+simConfig = ""
+platParams = ""
 
 motifDefaults = { 
 	'cmd' : "",
@@ -61,7 +57,7 @@ motifDefaults = {
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
-		"debug=","platform=","numNodes=",
+		"simConfig=","platParams=",",debug=","platform=","numNodes=",
 		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
 		"rtrArb=","embermotifLog=",	"rankmapper=",
@@ -126,15 +122,25 @@ for o, a in opts:
         detailedModelNodes = a
     elif o in ("--detailedModelParams"):
         detailedModelParams = a
+    elif o in ("--simConfig"):
+        simConfig = a
+    elif o in ("--platParams"):
+        platParams = a
     else:
         assert False, "unhandle option" 
 
-
-
 if 1 == len(sys.argv):
-	workFlow, numNodes, numCores = defaultSim.getWorkFlow( motifDefaults )
-	platform, netTopo, netShape = defaultSim.getNetwork( )
-	detailedModelName, detailedModelParams, detailedModelNodes = defaultSim.getDetailedModel()
+	simConfig = 'defaultSim'
+
+if simConfig:
+	try:
+		config = __import__( simConfig, fromlist=[''] )
+	except:
+		sys.exit('Failed: could not import sim configuration `{0}`'.format(simConfig) )
+
+	workFlow, numNodes, numCores = config.getWorkFlow( motifDefaults )
+	platform, netTopo, netShape = config.getNetwork( )
+	detailedModelName, detailedModelParams, detailedModelNodes = config.getDetailedModel()
 
 if workFlow:
 	workList.append( [jobid, workFlow] )
@@ -144,54 +150,39 @@ model = None
 
 if detailedModelName:
 
-	#print detailedModelName, detailedModelParams, detailedModelNodes
-	modelModule = __import__( detailedModelName, fromlist=[''] )
-	modelParams = __import__( detailedModelParams, fromlist=[''] )
+	try:
+		modelModule = __import__( detailedModelName, fromlist=[''] )
+	except:
+		sys.exit('Failed: could not import detailed model `{0}`'.format(detailedModelName) )
+
+	try:
+		modelParams = __import__( detailedModelParams, fromlist=[''] )
+	except:
+		sys.exit('Failed: could not import detailed model params `{0}`'.format(detailedModelNameParms) )
 
 	model = modelModule.getModel(modelParams.params,detailedModelNodes)
 
 print "EMBER: platform: {0}".format( platform )
 
-platNetConfig = {}
-if platform == "default":
-    nicParams = defaultParams.nicParams
-    networkParams = defaultParams.networkParams
-    hermesParams = defaultParams.hermesParams
-    emberParams = defaultParams.emberParams 
+if not platParams:
+	platParams = platform + 'Params'
+try:
+	config = __import__( platParams, fromlist=[''] )
+except:
+	sys.exit('Failed: could not import `{0}`'.format(platParams) )
 
-elif platform == "chamaPSM":
-    nicParams = chamaPSMParams.nicParams
-    networkParams = chamaPSMParams.networkParams
-    hermesParams = chamaPSMParams.hermesParams
-    emberParams = chamaPSMParams.emberParams 
-    platNetConfig = chamaPSMParams.netConfig
 
-elif platform == "chamaOpenIB":
-    nicParams = chamaOpenIBParams.nicParams
-    networkParams = chamaOpenIBParams.networkParams
-    hermesParams = chamaOpenIBParams.hermesParams
-    emberParams = chamaOpenIBParams.emberParams 
-    platNetConfig = chamaOpenIBParams.netConfig
-
-elif platform == "bgq":
-    nicParams = bgqParams.nicParams
-    networkParams = bgqParams.networkParams
-    hermesParams = bgqParams.hermesParams
-    emberParams = bgqParams.emberParams 
-    platNetConfig = bgqParams.netConfig
-
-elif platform == "exa":
-    nicParams = exaParams.nicParams
-    networkParams = exaParams.networkParams
-    hermesParams = exaParams.hermesParams
-    emberParams = exaParams.emberParams 
-    platNetConfig = exaParams.netConfig
+nicParams = config.nicParams
+networkParams = config.networkParams
+hermesParams = config.hermesParams
+emberParams = config.emberParams 
+platNetConfig = config.netConfig
 
 if netBW:
 	networkParams['link_bw'] = netBW
 
 if netInspect:
-        networkParams['network_inspectors'] = netInspect
+	networkParams['network_inspectors'] = netInspect
 
 if netFlitSize:
 	networkParams['flitSize'] = netFlitSize

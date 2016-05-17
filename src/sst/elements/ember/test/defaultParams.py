@@ -1,6 +1,9 @@
 
 debug = 0
 
+netConfig = {
+}
+
 networkParams = {
     "packetSize" : "2048B",
     "link_bw" : "4GB/s",
