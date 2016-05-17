@@ -43,11 +43,11 @@ public:
 
         EmberEvent::issue( time );
     
-        m_output->verbose(CALL_INFO, 1, 0, " %p\n",functor);
         std::function<int()> foo = [=](){ 
             (*functor)(0);
             return 0;
         }; 
+
         m_api.start( m_name, m_params, foo );
     }
 

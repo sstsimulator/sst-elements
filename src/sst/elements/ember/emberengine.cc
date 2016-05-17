@@ -26,7 +26,8 @@ using namespace SST::Hermes;
 EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     Component( id ),
 	currentMotif(0),
-	m_motifDone(false)
+	m_motifDone(false),
+	m_detailedCompute(NULL)
 {
 	// Get the level of verbosity the user is asking to print out, default is 1
 	// which means don't print much.
@@ -55,6 +56,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     assert( m_os );
 
     m_nodePerf = m_os->getNodePerf();
+    m_detailedCompute = m_os->getDetailedCompute();
 
     std::string motifLogFile = params.find_string("motifLog", "");
     if("" != motifLogFile) {
