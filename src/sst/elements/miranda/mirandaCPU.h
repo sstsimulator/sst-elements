@@ -58,12 +58,17 @@ private:
 	void handleEvent( SimpleMem::Request* ev );
 	bool clockTick( SST::Cycle_t );
 	void issueRequest(MemoryOpRequest* req);
+	void handleSrcEvent( SST::Event* );
 
-    	Output* out;
+ 	Output* out;
 
+	TimeConverter* timeConverter;
+	Clock::HandlerBase* clockHandler;
 	RequestGenerator* reqGen;
 	std::map<SimpleMem::Request::id_t, CPURequest*> requestsInFlight;
-    	SimpleMem* cache_link;
+	SimpleMem* cache_link;
+	Link* srcLink;
+	Event* srcRspEvent;	
 
 	MirandaRequestQueue<GeneratorRequest*> pendingRequests;
 

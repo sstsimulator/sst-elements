@@ -302,6 +302,7 @@ static const ElementInfoParam basecpu_params[] = {
 
 static const ElementInfoPort basecpu_ports[] = {
     	{ "cache_link",      "Link to Memory Controller", NULL },
+    	{ "src",        "Link to generator source", NULL },
     	{ NULL, NULL, NULL }
 };
 
