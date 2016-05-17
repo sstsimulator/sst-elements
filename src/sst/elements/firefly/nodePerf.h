@@ -21,8 +21,8 @@ class SimpleNodePerf : public NodePerf {
 
   public:
     SimpleNodePerf( Params& params ) {
-        m_flops = params.find_floating("flops",0);
-        m_bandwidth = params.find_floating("bandwidth",0);
+        m_flops = params.find<double>("flops",0);
+        m_bandwidth = params.find<double>("bandwidth",0);
     }
 
     virtual double getFlops() { return m_flops; }

@@ -35,13 +35,13 @@ Hades::Hades( Component* owner, Params& params ) :
     m_virtNic(NULL)
 {
     m_dbg.init("@t:Hades::@p():@l ", 
-        params.find_integer("verboseLevel",0),
-        params.find_integer("verboseMask",0),
+        params.find<uint32_t>("verboseLevel",0),
+        params.find<uint32_t>("verboseMask",0),
         Output::STDOUT );
 
     Params tmpParams = params.find_prefix_params("nicParams." );
 
-    std::string moduleName = params.find_string("nicModule"); 
+    std::string moduleName = params.find<std::string>("nicModule"); 
 
     m_virtNic = dynamic_cast<VirtNic*>(owner->loadModuleWithComponent( 
                         moduleName, owner, tmpParams ) );
@@ -50,7 +50,7 @@ Hades::Hades( Component* owner, Params& params ) :
                                         moduleName.c_str());
     }
 
-    moduleName = params.find_string("nodePerf", "firefly.SimpleNodePerf"); 
+    moduleName = params.find<std::string>("nodePerf", "firefly.SimpleNodePerf");
 
     tmpParams = params.find_prefix_params("nodePerf." );
     m_nodePerf = dynamic_cast<NodePerf*>(owner->loadModule( 
@@ -60,13 +60,13 @@ Hades::Hades( Component* owner, Params& params ) :
                                         moduleName.c_str());
     }
 
-    m_netMapSize = params.find_integer("netMapSize",-1);
+    m_netMapSize = params.find<int>("netMapSize",-1);
     assert(m_netMapSize > -1 );
 
 	if ( m_netMapSize > 0 ) {
 
-    	int netId = params.find_integer("netId",-1);
-    	int netMapId = params.find_integer("netMapId",-1);
+    	int netId = params.find<int>("netId",-1);
+    	int netMapId = params.find<int>("netMapId",-1);
 
     	if ( -1 == netMapId ) {
         	netMapId = netId; 
@@ -75,7 +75,7 @@ Hades::Hades( Component* owner, Params& params ) :
     	m_dbg.verbose(CALL_INFO,1,2,"netId=%d netMapId=%d netMapSize=%d\n",
             netId, netMapId, m_netMapSize );
 
-        m_netMapName = params.find_string( "netMapName" );
+        m_netMapName = params.find<std::string>( "netMapName" );
         assert( ! m_netMapName.empty() );
 
         m_sreg = getGlobalSharedRegion( m_netMapName,

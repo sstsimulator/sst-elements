@@ -32,25 +32,25 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_recvMachine( *this, m_dbg ),
     m_getKey(10)
 {
-    m_myNodeId = params.find_integer("nid", -1);
+    m_myNodeId = params.find<int>("nid", -1);
     assert( m_myNodeId != -1 );
 
     char buffer[100];
     snprintf(buffer,100,"@t:%d:Nic::@p():@l ",m_myNodeId);
 
     m_dbg.init(buffer, 
-        params.find_integer("verboseLevel",0),
-        params.find_integer("verboseMask",-1), 
+        params.find<uint32_t>("verboseLevel",0),
+        params.find<uint32_t>("verboseMask",-1), 
         Output::STDOUT);
 
-    int rxMatchDelay = params.find_integer( "rxMatchDelay_ns", 100 );
-    int txDelay =      params.find_integer( "txDelay_ns", 50 );
-    int hostReadDelay = params.find_integer( "hostReadDelay_ns", 200 );
+    int rxMatchDelay = params.find<int>( "rxMatchDelay_ns", 100 );
+    int txDelay =      params.find<int>( "txDelay_ns", 50 );
+    int hostReadDelay = params.find<int>( "hostReadDelay_ns", 200 );
 
-    m_tracedNode =     params.find_integer( "tracedNode", -1 );
-    m_tracedPkt  =     params.find_integer( "tracedPkt", -1 );
+    m_tracedNode =     params.find<int>( "tracedNode", -1 );
+    m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
 
-    UnitAlgebra xxx( params.find_string( "packetSize" ) );
+    UnitAlgebra xxx = params.find<SST::UnitAlgebra>( "packetSize" );
     int packetSizeInBytes;
     if ( xxx.hasUnits( "B" ) ) {
         packetSizeInBytes = xxx.getRoundedValue(); 
@@ -60,18 +60,18 @@ Nic::Nic(ComponentId_t id, Params &params) :
         assert(0);
     }
 
-	UnitAlgebra buf_size( params.find_string("buffer_size") );
-	UnitAlgebra link_bw( params.find_string("link_bw") );
+	UnitAlgebra buf_size = params.find<SST::UnitAlgebra>("buffer_size" );
+	UnitAlgebra link_bw = params.find<SST::UnitAlgebra>("link_bw" );
 
     m_dbg.verbose(CALL_INFO,1,1,"id=%d buffer_size=%s link_bw=%s "
 			"packetSize=%d\n", m_myNodeId, buf_size.toString().c_str(),
 			link_bw.toString().c_str(), packetSizeInBytes);
 
     m_linkControl = (SimpleNetwork*)loadSubComponent(
-                    params.find_string("module"), this, params);
+                    params.find<std::string>("module"), this, params);
     assert( m_linkControl );
 
-	m_linkControl->initialize(params.find_string("rtrPortName","rtr"),
+	m_linkControl->initialize(params.find<std::string>("rtrPortName","rtr"),
                               link_bw, 2, buf_size, buf_size);
 
     m_recvNotifyFunctor =
@@ -90,18 +90,18 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_dbg.verbose(CALL_INFO,2,1,"IdToNet()=%d\n", IdToNet( m_myNodeId ) );
 
-    m_num_vNics = params.find_integer("num_vNics", 1 );
+    m_num_vNics = params.find<int>("num_vNics", 1 );
     for ( int i = 0; i < m_num_vNics; i++ ) {
         m_vNicV.push_back( new VirtNic( *this, i,
-			params.find_string("corePortName","core") ) );
+			params.find<std::string>("corePortName","core") ) );
     }
     m_recvMachine.init( m_vNicV.size(), rxMatchDelay, hostReadDelay );
     m_sendMachine[0].init( txDelay, packetSizeInBytes, 0 );
     m_sendMachine[1].init( txDelay, packetSizeInBytes, 1 );
     m_memRgnM.resize( m_vNicV.size() );
 
-    float dmaBW  = params.find_floating( "dmaBW_GBs", 0.0 ); 
-    float dmaContentionMult = params.find_floating( "dmaContentionMult", 0.0 );
+    float dmaBW  = params.find<float>( "dmaBW_GBs", 0.0 ); 
+    float dmaContentionMult = params.find<float>( "dmaContentionMult", 0.0 );
     m_arbitrateDMA = new ArbitrateDMA( *this, m_dbg, dmaBW,
                                     dmaContentionMult, 100000 );
 }

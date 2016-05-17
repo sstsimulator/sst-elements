@@ -27,11 +27,11 @@ VirtNic::VirtNic( Component* owner, Params& params ) :
     m_notifyNeedRecv(NULL)
 {
     m_dbg.init("@t:VirtNic::@p():@l ", 
-        params.find_integer("verboseLevel",0),
+        params.find<uint32_t>("verboseLevel",0),
         0,
         Output::STDOUT );
 
-    m_toNicLink = owner->configureLink( params.find_string("portName","nic"), 
+    m_toNicLink = owner->configureLink( params.find<std::string>("portName","nic"), 
 			"1 ns", new Event::Handler<VirtNic>(this,&VirtNic::handleEvent) );
 
     assert( m_toNicLink );
