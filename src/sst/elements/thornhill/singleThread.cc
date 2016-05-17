@@ -24,28 +24,23 @@ using namespace SST::Thornhill;
 
 SingleThread::SingleThread( Component* owner, 
         Params& params, std::string name )
-        : DetailedCompute( owner )
+        : DetailedCompute( owner ), m_link(NULL)
 {
     std::stringstream linkName; 
     
     int id = 0;
     linkName << "detailed" << id++;
     while ( owner->isPortConnected( linkName.str() ) ) {
-		printf("%s() connect port %s\n",__func__,linkName.str().c_str());
-        Link* link = configureLink( linkName.str(), "0ps", 
+		//printf("%s() connect port %s\n",__func__,linkName.str().c_str());
+		assert( ! m_link );
+        m_link = configureLink( linkName.str(), "0ps", 
             new Event::Handler<SingleThread>(
                     this,&SingleThread::eventHandler ) ); 
-        assert(link);
-        m_links.push_back( link );
+        assert(m_link);
 		linkName.str("");
 		linkName.clear();
         linkName << "detailed"<< id++;
     }
-
-	// Can have 0 connected links if detailed model is not used 
-	// for this endpoing
-	
-	assert( 2 > m_links.size() );
 }
 
 void SingleThread::eventHandler( SST::Event* ev )
@@ -67,5 +62,5 @@ void SingleThread::start( std::string& name, Params& params,
 	event->generator = name;
 	event->params = params;
 
-	m_links[0]->send( 0, event );
+	m_link->send( 0, event );
 }

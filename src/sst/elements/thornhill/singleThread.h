@@ -31,11 +31,11 @@ class SingleThread : public DetailedCompute {
 
     virtual void start( std::string& name, Params& params, 
                  std::function<int()> );
-    virtual bool isConnected() { return !m_links.empty(); }
+    virtual bool isConnected() { return ( m_link ); }
 
   private:
     void eventHandler( SST::Event* ev ); 
-    std::vector<Link*> m_links;
+    Link*  m_link;
 	Entry* m_entry;
 };
 
