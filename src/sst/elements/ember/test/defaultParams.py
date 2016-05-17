@@ -12,6 +12,7 @@ networkParams = {
 }
 
 nicParams = {
+	"detailedCompute.name" : "thornhill.SingleThread",
     "module" : "merlin.linkcontrol",
     "packetSize" : networkParams['packetSize'],
     "link_bw" : networkParams['link_bw'],
@@ -29,6 +30,7 @@ emberParams = {
 }
 
 hermesParams = {
+	"hermesParams.detailedCompute.name" : "thornhill.SingleThread",
     "hermesParams.nicModule" : "firefly.VirtNic",
 
     "hermesParams.functionSM.defaultEnterLatency" : 30000,

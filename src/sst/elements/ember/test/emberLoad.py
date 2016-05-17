@@ -48,6 +48,10 @@ bgMean = 1000
 bgStddev = 300
 bgMsgSize = 1000
 
+detailedModelName = ""
+detailedModelNodes = [] 
+detailedModelParams = ""
+
 motifDefaults = { 
 	'cmd' : "",
 	'printStats' : 0, 
@@ -61,7 +65,8 @@ try:
 		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
 		"rtrArb=","embermotifLog=",	"rankmapper=",
-		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect="])
+		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
+        "detailedNameModel=","detailedModelParams=","detailedModelNodes="])
 
 except getopt.GetoptError as err:
     print str(err)
@@ -115,16 +120,35 @@ for o, a in opts:
         bgStddev = int(a) 
     elif o in ("--bgMsgSize"):
         bgMsgSize = int(a) 
+    elif o in ("--detailedModelName"):
+        detailedModelName = a
+    elif o in ("--detailedModelNodes"):
+        detailedModelNodes = a
+    elif o in ("--detailedModelParams"):
+        detailedModelParams = a
     else:
         assert False, "unhandle option" 
+
+
 
 if 1 == len(sys.argv):
 	workFlow, numNodes, numCores = defaultSim.getWorkFlow( motifDefaults )
 	platform, netTopo, netShape = defaultSim.getNetwork( )
+	detailedModelName, detailedModelParams, detailedModelNodes = defaultSim.getDetailedModel()
 
 if workFlow:
 	workList.append( [jobid, workFlow] )
 	jobid += 1
+
+model = None
+
+if detailedModelName:
+
+	#print detailedModelName, detailedModelParams, detailedModelNodes
+	modelModule = __import__( detailedModelName, fromlist=[''] )
+	modelParams = __import__( detailedModelParams, fromlist=[''] )
+
+	model = modelModule.getModel(modelParams.params,detailedModelNodes)
 
 print "EMBER: platform: {0}".format( platform )
 
@@ -323,7 +347,7 @@ epParams = {}
 epParams.update(emberParams)
 epParams.update(hermesParams)
 
-loadInfo = LoadInfo( nicParams, epParams, numNodes, numCores, topoInfo.getNumNodes()  )
+loadInfo = LoadInfo( nicParams, epParams, numNodes, numCores, topoInfo.getNumNodes(), model )
 
 if len(loadFile) > 0:
 	if len(workList) > 0:
