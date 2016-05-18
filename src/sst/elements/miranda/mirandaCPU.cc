@@ -10,6 +10,7 @@
 // distribution.
 
 #include <sst_config.h>
+#include <sstream>
 #include <sst/core/simulation.h>
 #include <sst/core/unitAlgebra.h>
 
@@ -23,7 +24,9 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	Component(id), srcLink(NULL) {
 
 	const int verbose = params.find<int>("verbose", 0);
-	out = new Output("RequestGenCPU[@p:@l]: ", verbose, 0, SST::Output::STDOUT);
+	std::stringstream prefix;
+	prefix <<  getName() << ":RequestGenCPU[@p:@l]: ";
+	out = new Output( prefix.str(), verbose, 0, SST::Output::STDOUT);
 
 	maxRequestsPending = params.find<uint32_t>("maxmemreqpending", 16);
 	requestsPending = 0;
