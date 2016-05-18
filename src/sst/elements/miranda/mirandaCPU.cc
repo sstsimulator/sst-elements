@@ -10,19 +10,23 @@
 // distribution.
 
 #include <sst_config.h>
+#include <sstream>
 #include <sst/core/simulation.h>
 #include <sst/core/unitAlgebra.h>
 
 #include "mirandaGenerator.h"
 #include "mirandaCPU.h"
+#include "mirandaEvent.h"
 
 using namespace SST::Miranda;
 
 RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
-	Component(id) {
+	Component(id), srcLink(NULL) {
 
 	const int verbose = params.find<int>("verbose", 0);
-	out = new Output("RequestGenCPU[@p:@l]: ", verbose, 0, SST::Output::STDOUT);
+	std::stringstream prefix;
+	prefix <<  getName() << ":RequestGenCPU[@p:@l]: ";
+	out = new Output( prefix.str(), verbose, 0, SST::Output::STDOUT);
 
 	maxRequestsPending = params.find<uint32_t>("maxmemreqpending", 16);
 	requestsPending = 0;
@@ -61,23 +65,41 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 		out->verbose(CALL_INFO, 1, 0, "Loaded memory interface successfully.\n");
 	}
 
-	std::string reqGenModName = params.find<std::string>("generator", "");
-	out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", reqGenModName.c_str());
-	Params genParams = params.find_prefix_params("generatorParams.");
-	reqGen = dynamic_cast<RequestGenerator*>( loadSubComponent(reqGenModName, this, genParams) );
-
-	if(NULL == reqGen) {
-		out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", reqGenModName.c_str());
-	} else {
-		out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
-	}
-
 	std::string cpuClock = params.find<std::string>("clock", "2GHz");
-	registerClock(cpuClock, new Clock::Handler<RequestGenCPU>(this, &RequestGenCPU::clockTick));
+	clockHandler = new Clock::Handler<RequestGenCPU>(this, &RequestGenCPU::clockTick);
+	timeConverter = registerClock(cpuClock, clockHandler );
 
 	out->verbose(CALL_INFO, 1, 0, "CPU clock configured for %s\n", cpuClock.c_str());
-	registerAsPrimaryComponent();
-	primaryComponentDoNotEndSim();
+
+	std::string reqGenModName = params.find<std::string>("generator", "");
+
+	if ( ! reqGenModName.empty() ) {
+
+		out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", reqGenModName.c_str());
+		Params genParams = params.find_prefix_params("generatorParams.");
+		reqGen = dynamic_cast<RequestGenerator*>( loadSubComponent(reqGenModName, this, genParams) );
+		if(NULL == reqGen) {
+			out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", reqGenModName.c_str());
+		} else {
+			out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
+		}
+
+	    registerAsPrimaryComponent();
+	    primaryComponentDoNotEndSim();
+
+	} else if ( isPortConnected("src") ) {
+
+		out->verbose(CALL_INFO, 1, 0, "getting generators from a link %s\n");
+		srcLink = configureLink( "src", "50ps", new Event::Handler<RequestGenCPU>(this, &RequestGenCPU::handleSrcEvent));
+		if ( NULL == srcLink ) {
+			out->fatal(CALL_INFO, -1, "Failed to configure src link\n");
+		}
+
+		unregisterClock( timeConverter, clockHandler );
+
+	} else {
+		out->fatal(CALL_INFO, -1, "Failed to find a generator or src port\n");
+	}
 
 	cacheLine = params.find<uint64_t>("cache_line_size", 64);
 
@@ -92,7 +114,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	statReqLatency 		  = registerStatistic<uint64_t>( "req_latency" );
 	statTime                  = registerStatistic<uint64_t>( "time" );
 	statCyclesHitFence        = registerStatistic<uint64_t>( "cycles_hit_fence" );
-        statMaxIssuePerCycle      = registerStatistic<uint64_t>( "cycles_max_issue" );
+	statMaxIssuePerCycle      = registerStatistic<uint64_t>( "cycles_max_issue" );
 	statCyclesHitReorderLimit = registerStatistic<uint64_t>( "cycles_max_reorder" );
 	statCycles                = registerStatistic<uint64_t>( "cycles" );
 
@@ -109,7 +131,6 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 RequestGenCPU::~RequestGenCPU() {
 	delete cache_link;
-	delete reqGen;
 	delete out;
 
 //	delete statReadReqs;
@@ -128,12 +149,28 @@ RequestGenCPU::~RequestGenCPU() {
 }
 
 void RequestGenCPU::finish() {
-	// Tell the generator we are completed.
-	reqGen->completed();
 }
 
 void RequestGenCPU::init(unsigned int phase) {
 
+}
+
+void RequestGenCPU::handleSrcEvent( Event* ev ) {
+	MirandaReqEvent* event = static_cast<MirandaReqEvent*>(ev);
+	out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", event->generator.c_str());
+
+	reqGen = dynamic_cast<RequestGenerator*>( loadSubComponent(event->generator, this, event->params) );
+	if(NULL == reqGen) {
+		out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", event->generator.c_str());
+	} else {
+		out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
+	}
+	clockTick( reregisterClock( timeConverter, clockHandler ) );
+
+	srcRspEvent = new MirandaRspEvent;
+	static_cast<MirandaRspEvent*>(srcRspEvent)->key = event->key;	
+
+	delete ev;
 }
 
 void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
@@ -272,8 +309,15 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 			// Tell the statistics engine how long we have executed for
 			statTime->addData(getCurrentSimTimeNano());
 
+			reqGen->completed();
+			delete reqGen;
+
+			if ( NULL == srcLink ) {
+				primaryComponentOKToEndSim();
+			} else {
+				srcLink->send(0,srcRspEvent);
+			}
 			// Deregister here
-			primaryComponentOKToEndSim();
 			return true;
 		}
 	}
