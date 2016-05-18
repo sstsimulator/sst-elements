@@ -49,6 +49,10 @@ class Hades : public OS
         return m_nodePerf;
     }
 
+    Thornhill::DetailedCompute* getDetailedCompute() {
+        return m_detailedCompute;
+    }
+
     VirtNic*            getNic() { return m_virtNic; }
     Info*                getInfo() { return &m_info; }
 
@@ -61,6 +65,7 @@ class Hades : public OS
     Output              m_dbg;
 
   private:
+    Thornhill::DetailedCompute*          m_detailedCompute;
     NodePerf*                            m_nodePerf;
     SharedRegion*                        m_sreg;
     int                                  m_netMapSize;

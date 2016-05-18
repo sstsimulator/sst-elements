@@ -104,6 +104,22 @@ Nic::Nic(ComponentId_t id, Params &params) :
     float dmaContentionMult = params.find<float>( "dmaContentionMult", 0.0 );
     m_arbitrateDMA = new ArbitrateDMA( *this, m_dbg, dmaBW,
                                     dmaContentionMult, 100000 );
+
+    Params dtldParams = params.find_prefix_params( "detailedCompute." );
+    std::string dtldName =  dtldParams.find<std::string>( "name" );
+
+    if ( ! dtldName.empty() ) {
+
+        m_detailedCompute = dynamic_cast<Thornhill::DetailedCompute*>( loadSubComponent(
+                            dtldName, this, dtldParams ) );
+
+        assert( m_detailedCompute );
+        if ( ! m_detailedCompute->isConnected() ) {
+
+            delete m_detailedCompute;
+            m_detailedCompute = NULL;
+        }
+    }
 }
 
 Nic::~Nic()

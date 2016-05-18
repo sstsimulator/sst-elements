@@ -18,16 +18,18 @@ using namespace SST::Ember;
 EmberGenerator::EmberGenerator( Component* owner, Params& params,
 		std::string name ) :
     SubComponent(owner),
+    m_detailedCompute( NULL ),
     m_dataMode( NoBacking ),
     m_motifName( name )
 {
 	EmberEngine* ee = static_cast<EmberEngine*>(owner);
     m_output = ee->getOutput();
     m_nodePerf = ee->getNodePerf();
-    m_api = ee->getAPI( params.find_string("_apiName") );
+    m_api = ee->getAPI( params.find<std::string>("_apiName") );
+    m_detailedCompute = ee->getDetailedCompute();
 
-    m_motifNum = params.find_integer( "_motifNum", -1 );	
-	  m_jobId = params.find_integer( "_jobId", -1 );	
+    m_motifNum = params.find<int>( "_motifNum", -1 );	
+    m_jobId = params.find<int>( "_jobId", -1 );	
 
     m_verbosePrefix << "@t:" << getJobId() << ":" << rank() << 
 						":EmberEngine:MPI:" << name << ":@p:@l: ";

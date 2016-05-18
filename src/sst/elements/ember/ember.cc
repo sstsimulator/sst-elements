@@ -34,6 +34,7 @@
 #include "mpi/motifs/emberbipingpong.h"
 #include "mpi/motifs/emberTrafficGen.h"
 #include "mpi/motifs/emberring.h"
+#include "mpi/motifs/emberdetailedring.h"
 #include "mpi/motifs/emberinit.h"
 #include "mpi/motifs/emberfini.h"
 #include "mpi/motifs/emberbarrier.h"
@@ -118,6 +119,11 @@ load_Barrier( Component* comp, Params& params ) {
 static SubComponent*
 load_Ring( Component* comp, Params& params ) {
 	return new EmberRingGenerator(comp, params);
+}
+
+static SubComponent*
+load_DetailedRing( Component* comp, Params& params ) {
+	return new EmberDetailedRingGenerator(comp, params);
 }
 
 static Module*
@@ -794,7 +800,15 @@ static const ElementInfoSubComponent subcomponents[] = {
 	load_Ring,
 	ring_params,
 	emberMotifTime_statistics,
-    "SST::Ember::EmberGenerator"
+	"SST::Ember::EmberGenerator"
+    },
+    { 	"DetailedRingMotif",
+	"Performs a Ring Motif with detailed model",
+	NULL,
+	load_DetailedRing,
+	ring_params,
+	emberMotifTime_statistics,
+	"SST::Ember::EmberGenerator"
     },
     { 	"BarrierMotif",
 	"Performs a Barrier Motif",
