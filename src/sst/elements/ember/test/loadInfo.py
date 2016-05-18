@@ -67,7 +67,7 @@ def calcMaxNode( nidList ):
     return max + 1 
 
 class EmberEP( EndPoint ):
-    def __init__( self, jobId, driverParams, nicParams, numCores, ranksPerNode, statNodes, nidList, motifLogNodes): # added motifLogNodes here
+    def __init__( self, jobId, driverParams, nicParams, numCores, ranksPerNode, statNodes, nidList, motifLogNodes, detailedModel ): # added motifLogNodes here
         self.driverParams = driverParams
         self.nicParams = nicParams
         self.numCores = numCores
@@ -77,6 +77,7 @@ class EmberEP( EndPoint ):
         self.numNids = calcNetMapSize( self.nidList )
         # in order to create motifLog files only for the desired nodes of a job
         self.motifLogNodes = motifLogNodes
+        self.detailedModel = detailedModel
 
     def getName( self ):
         return "EmberEP"
@@ -85,15 +86,24 @@ class EmberEP( EndPoint ):
         pass
 
     def build( self, nodeID, extraKeys ):
+
+
         nic = sst.Component( "nic" + str(nodeID), "firefly.nic" )
         nic.addParams( self.nicParams )
         nic.addParams( extraKeys)
         nic.addParam( "nid", nodeID )
         retval = (nic, "rtr", sst.merlin._params["link_lat"] )
+ 
+        built = False 
+        if self.detailedModel:
+            built = self.detailedModel.build( nodeID, self.numCores )
+
+        if built:
+            nic.addLink( self.detailedModel.getNicLink( ), "detailed0", "1ps" )
 
         loopBack = sst.Component("loopBack" + str(nodeID), "firefly.loopBack")
         loopBack.addParam( "numCores", self.numCores )
-        
+
         # Create a motifLog only for one core of the desired node(s)
         logCreatedforFirstCore = False
         # end
@@ -101,6 +111,13 @@ class EmberEP( EndPoint ):
         for x in xrange(self.numCores):
             ep = sst.Component("nic" + str(nodeID) + "core" + str(x) +
                                             "_EmberEP", "ember.EmberEngine")
+
+            if built:
+                links = self.detailedModel.getThreadLinks( x )
+                cpuNum = 0
+                for link in links: 
+                    ep.addLink(link,"detailed"+str(cpuNum),"1ps")
+                    cpuNum = cpuNum + 1
 
             # Create a motif log only for the desired list of nodes (endpoints)
             # Delete the 'motifLog' parameter from the param list of other endpoints
@@ -158,12 +175,13 @@ class EmberEP( EndPoint ):
 
 class LoadInfo:
 
-	def __init__(self, nicParams, epParams, numNodes, numCores, numNics ):
+	def __init__(self, nicParams, epParams, numNodes, numCores, numNics, detailedModel = None ):
 		self.nicParams = nicParams
 		self.epParams = epParams
 		self.numNodes = int(numNodes)
 		self.numCores = int(numCores)
 		self.numNics = int(numNics)
+		self.detailedModel = detailedModel
 		self.nicParams["num_vNics"] = numCores
 		self.map = []
 		nullMotif = [{
@@ -176,7 +194,7 @@ class LoadInfo:
 		self.nullEP, nidlist = self.foo( -1, self.readWorkList( nullMotif ), [] )
 		self.nullEP.prepParams()
 
-	def foo( self, jobId, x, statNodes ):
+	def foo( self, jobId, x, statNodes, detailedModel = None ):
 		nidList, ranksPerNode, params = x
 		
 		# In order to pass the motifLog parameter to only desired nodes of a job
@@ -197,7 +215,7 @@ class LoadInfo:
 				 ' is greater than available nodes ' + str(self.numNodes) ) 
 
 		params.update( self.epParams )
-		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statNodes, nidList, motifLogNodes ) # added motifLogNodes here
+		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statNodes, nidList, motifLogNodes, detailedModel ) # added motifLogNodes here
 
 		ep.prepParams()
 		return (ep, nidList)
@@ -234,13 +252,13 @@ class LoadInfo:
 		work = self.getWorkListFromFile( fileName, defaultParams  )
 		for item in work:
 			jobid, motifs = item
-			self.map.append( self.foo( jobid, self.readWorkList( motifs ), statNodeList ) )
+			self.map.append( self.foo( jobid, self.readWorkList( motifs ), statNodeList, self.detailedModel ) )
 
 		self.verifyLoadInfo()
 
 	def initWork(self, workList, statNodes ):
 		for jobid, work in workList:
-			self.map.append( self.foo( jobid, self.readWorkList( work ), statNodes ) )
+			self.map.append( self.foo( jobid, self.readWorkList( work ), statNodes, self.detailedModel ) )
 		self.verifyLoadInfo()
 
 	def readWorkList(self, workList ):

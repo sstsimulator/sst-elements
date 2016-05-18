@@ -33,3 +33,6 @@ def getNetwork():
 	shape = '4x4x4'
 
 	return platform, topo, shape 
+
+def getDetailedModel():
+    return "","",[]

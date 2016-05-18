@@ -1,0 +1,16 @@
+# -*- Makefile -*-
+#
+#
+
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS)
+
+compdir = $(pkglibdir)
+comp_LTLIBRARIES = libthornhill.la
+
+libthornhill_la_SOURCES = \
+	libthornhill.cc\
+	detailedCompute.h\
+	singleThread.h\
+	singleThread.cc
+
+libthornhill_la_LDFLAGS = -module -avoid-version

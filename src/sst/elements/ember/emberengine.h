@@ -48,6 +48,9 @@ public:
         return m_apiMap[name]->api; 
     }
 	Hermes::NodePerf* getNodePerf( ) { return m_nodePerf; } 
+	Thornhill::DetailedCompute* getDetailedCompute() {
+		return m_detailedCompute;
+	}
 
 private:
 	bool refillQueue() {
@@ -85,6 +88,7 @@ private:
 	EmberMotifLog*      m_motifLogger;
 
 	std::vector<SST::Params> motifParams;
+	Thornhill::DetailedCompute* m_detailedCompute;
 
 	EmberEngine();			    		// For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement

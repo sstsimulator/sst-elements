@@ -1,6 +1,9 @@
 
 debug = 0
 
+netConfig = {
+}
+
 networkParams = {
     "packetSize" : "2048B",
     "link_bw" : "4GB/s",
@@ -12,6 +15,7 @@ networkParams = {
 }
 
 nicParams = {
+	"detailedCompute.name" : "thornhill.SingleThread",
     "module" : "merlin.linkcontrol",
     "packetSize" : networkParams['packetSize'],
     "link_bw" : networkParams['link_bw'],
@@ -29,6 +33,7 @@ emberParams = {
 }
 
 hermesParams = {
+	"hermesParams.detailedCompute.name" : "thornhill.SingleThread",
     "hermesParams.nicModule" : "firefly.VirtNic",
 
     "hermesParams.functionSM.defaultEnterLatency" : 30000,
