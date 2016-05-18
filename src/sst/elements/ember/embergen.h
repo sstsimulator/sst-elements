@@ -21,6 +21,7 @@
 #include <sst/core/params.h>
 
 #include <sst/elements/hermes/msgapi.h>
+#include "sst/elements/thornhill/detailedCompute.h"
 
 #include "emberevent.h"
 #include "embermap.h"
@@ -90,11 +91,13 @@ class EmberGenerator : public SubComponent {
 
     virtual void* memAlloc( size_t );
     virtual void memFree( void* );
-	virtual void* memAddr( void * addr ) {
-		return  m_dataMode == Backing ? addr : NULL;
-	}
+    virtual void* memAddr( void * addr ) {
+        return  m_dataMode == Backing ? addr : NULL;
+    }
+    bool haveDetailed() { return m_detailedCompute; }
 
     Hermes::Interface*  	m_api;
+    Thornhill::DetailedCompute*   m_detailedCompute;
 
     enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
 

@@ -15,6 +15,7 @@
 #include <sst/core/module.h>
 #include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
+#include "sst/elements/thornhill/detailedCompute.h"
 
 #include "functor.h"
 
@@ -41,6 +42,7 @@ class OS : public SubComponent {
     virtual int  getNid() { assert(0); }
     virtual void finish() {}
     virtual NodePerf* getNodePerf() { assert(0); }
+    virtual Thornhill::DetailedCompute* getDetailedCompute() { assert(0); }
 };
 
 class Interface : public Module {

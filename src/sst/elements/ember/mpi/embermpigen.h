@@ -30,6 +30,7 @@
 #include "emberrankev.h"
 #include "embersizeev.h"
 #include "embercomputeev.h"
+#include "emberdetailedcomputeev.h"
 #include "embersendev.h"
 #include "emberrecvev.h"
 #include "emberisendev.h"
@@ -129,6 +130,7 @@ protected:
     inline void enQ_init( Queue& );
     inline void enQ_compute( Queue&, uint64_t nanoSecondDelay );
     inline void enQ_compute( Queue& q, std::function<uint64_t()> func );
+    inline void enQ_detailedCompute( Queue& q, std::string, Params& );
     inline void enQ_rank( Queue&, Communicator, uint32_t* rankPtr);
     inline void enQ_size( Queue&, Communicator, int* sizePtr);
     inline void enQ_send( Queue&, Addr payload, uint32_t count,
@@ -253,6 +255,14 @@ void EmberMessagePassingGenerator::enQ_compute( Queue& q, std::function<uint64_t
 {
     q.push( new EmberComputeEvent( &getOutput(),
                                 m_Stats[Compute], func, m_computeDistrib ) );
+}
+
+void EmberMessagePassingGenerator::enQ_detailedCompute( Queue& q, std::string name,
+        Params& params )
+{
+    assert( m_detailedCompute );
+    q.push( new EmberDetailedComputeEvent( &getOutput(),
+                      m_Stats[Compute], *m_detailedCompute, name, params ) );
 }
 
 void EmberMessagePassingGenerator::enQ_send( Queue& q, Addr payload,

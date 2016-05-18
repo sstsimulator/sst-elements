@@ -8,6 +8,7 @@ comp_LTLIBRARIES = libmiranda.la
 
 libmiranda_la_SOURCES = \
 	miranda.cc \
+	mirandaEvent.h \
 	mirandaGenerator.h \
 	mirandaCPU.cc \
 	mirandaCPU.h	\
