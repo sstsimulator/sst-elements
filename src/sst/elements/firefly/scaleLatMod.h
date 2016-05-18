@@ -47,7 +47,7 @@ class ScaleLatMod : public LatencyMod {
 
             std::size_t pos = tmp.find(":");
             std::string range = tmp.substr( 0, pos );
-            std::string value = value.substr( pos + 1 );
+            std::string value = tmp.substr( pos + 1 );
 #if SCALELATMOD_DBG 
             printf("%s %s\n",range.c_str(), value.c_str());
 #endif
