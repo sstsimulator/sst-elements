@@ -42,33 +42,33 @@ simpleDistribComponent::simpleDistribComponent(ComponentId_t id, Params& params)
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
     
-    rng_max_count = params.find_integer("count", 1000);
+    rng_max_count = params.find<int64_t>("count", 1000);
     rng_count = 0;
     
     bins = new std::map<int64_t, uint64_t>();
     
-    if ("1" == params.find_string("binresults", "1")) {
+    if ("1" == params.find<std::string>("binresults", "1")) {
         bin_results = true;
     } else {
         bin_results = false;
     }
 
-    dist_type = params.find_string("distrib", "gaussian");
+    dist_type = params.find<std::string>("distrib", "gaussian");
     if ("gaussian" == dist_type || "normal" == dist_type) {
-        double mean = params.find_floating("mean", 1.0);
-        double stddev = params.find_floating("stddev", 0.2);
+        double mean = params.find<double>("mean", 1.0);
+        double stddev = params.find<double>("stddev", 0.2);
 
         comp_distrib = new SSTGaussianDistribution(mean, stddev, new MersenneRNG(10111));
     } else if ("exponential" == dist_type) {
-        double lambda = params.find_floating("lambda", 1.0);
+        double lambda = params.find<double>("lambda", 1.0);
 
         comp_distrib = new SSTExponentialDistribution(lambda, new MersenneRNG(10111));
     } else if ("poisson" == dist_type) {
-        double lambda = params.find_floating("lambda", 3.0);
+        double lambda = params.find<double>("lambda", 3.0);
 
         comp_distrib = new SSTPoissonDistribution(lambda, new MersenneRNG(10111));
     } else if ("discrete" == dist_type) {
-	uint32_t prob_count = (uint32_t) params.find_integer("probcount", 1);
+	uint32_t prob_count = (uint32_t) params.find<int64_t>("probcount", 1);
 
 	double* probs = (double*) malloc(sizeof(double) * prob_count);
 
@@ -82,7 +82,7 @@ simpleDistribComponent::simpleDistribComponent(ComponentId_t id, Params& params)
 
 		for(uint32_t i = 0; i < prob_count; i++) {
 			sprintf(prob_name, "prob%" PRIu32, i);
-			double prob_tmp = (double) params.find_floating(prob_name, 1.0 / (double)(prob_count));
+			double prob_tmp = (double) params.find<double>(prob_name, 1.0 / (double)(prob_count));
 
 			//printf("Probability at %" PRIu32 " : %f\n", i, prob_tmp);
 

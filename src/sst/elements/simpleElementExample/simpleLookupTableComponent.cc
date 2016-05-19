@@ -31,7 +31,7 @@ SimpleLookupTableComponent::SimpleLookupTableComponent(SST::ComponentId_t id, SS
     snprintf(buffer, 128, "LookupTableComponent %3lu  [@t]  ", id);
     out.init(buffer, 0, 0, Output::STDOUT);
 
-    const std::string & fname = params.find_string("filename", "");
+    const std::string & fname = params.find<std::string>("filename", "");
     if ( !fname.empty() ) {
         struct stat buf;
         int ret = stat(fname.c_str(), &buf);
@@ -48,8 +48,8 @@ SimpleLookupTableComponent::SimpleLookupTableComponent(SST::ComponentId_t id, SS
             fclose(fp);
         }
     } else {
-        tableSize = (size_t)params.find_integer("num_entities", 1) * sizeof(size_t);
-        size_t myID = (size_t)params.find_integer("myid", 1);
+        tableSize = (size_t)params.find<int64_t>("num_entities", 1) * sizeof(size_t);
+        size_t myID = (size_t)params.find<int64_t>("myid", 1);
         sregion = getGlobalSharedRegion("SimpleLookupTable", tableSize, new SharedRegionMerger());
         sregion->modifyArray(myID, myID);
     }
