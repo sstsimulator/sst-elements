@@ -38,7 +38,6 @@ public:
         EmberEvent::issue( time );
     
         std::function<void(uint64_t)> callback = [=](uint64_t value){
-			printf("%s() %#lx\n",__func__,value);
 			m_addr->simVAddr = value;
             (*functor)(0);
             return 0;

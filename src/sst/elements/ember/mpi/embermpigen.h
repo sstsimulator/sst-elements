@@ -108,8 +108,6 @@ public:
         FOREACH_ENUM(GENERATE_ENUM)
     };
 
-    typedef std::queue<EmberEvent*> Queue;
-
 	EmberMessagePassingGenerator( Component* owner, Params& params, std::string name = "" );
 	~EmberMessagePassingGenerator();
     virtual void completed( const SST::Output*, uint64_t time );

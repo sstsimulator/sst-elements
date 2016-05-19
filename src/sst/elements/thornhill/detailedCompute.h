@@ -12,8 +12,6 @@
 #ifndef _H_THORNHILL_DETAILED_COMPUTE
 #define _H_THORNHILL_DETAILED_COMPUTE
 
-#include <sst/core/module.h>
-//#include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
 
 namespace SST {

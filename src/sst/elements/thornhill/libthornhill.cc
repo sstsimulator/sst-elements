@@ -10,38 +10,77 @@
 // distribution.
 
 
-#include <assert.h>
-
 #include "sst_config.h"
 
-#include "sst/core/subcomponent.h"
+#include <assert.h>
+
 #include "sst/core/element.h"
+#include "sst/core/component.h"
+#include "sst/core/subcomponent.h"
 
 #include "singleThread.h"
+#include "memoryHeapLink.h"
+#include "memoryHeap.h"
 
 using namespace SST;
 using namespace SST::Thornhill;
+
+static Component*
+create_MemoryHeap( ComponentId_t id, Params& params ) {
+    return new MemoryHeap( id, params);
+}
 
 static SubComponent*
 load_SingleThread( Component* comp, Params& params ) {
     return new SingleThread(comp, params);
 }
 
+static SubComponent*
+load_MemoryHeapLink( Component* comp, Params& params ) {
+    return new MemoryHeapLink(comp, params);
+}
+
 static const ElementInfoParam singleThread_params[] = {
-//    {   "arg.waitall",          "Sets the wait mode",   "1"},
     {   NULL,   NULL,   NULL    }
 };
 
+static const ElementInfoParam component_params[] = {
+    {   NULL,   NULL,   NULL    }
+};
+
+static const ElementInfoComponent components[] = {
+	{
+        "MemoryHeap",
+        "Memory Heap.",
+        NULL,
+        create_MemoryHeap,
+        component_params,
+        NULL,
+        COMPONENT_CATEGORY_UNCATEGORIZED,
+        NULL
+    },
+    { NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL}
+};
 
 static const ElementInfoSubComponent subcomponents[] = {
     { 	"SingleThread",
-    	"One one worker thread",
+    	"One worker thread",
     	NULL,
     	load_SingleThread,
     	singleThread_params,
 		NULL, // Statistics
     	"SST::Thornhill::SingleThread"
     },
+
+    { 	"MemoryHeapLink",
+    	"Link to Memory Heap",
+    	NULL,
+    	load_MemoryHeapLink,
+    	NULL, // Params,
+		NULL, // Statistics
+    	"SST::Thornhill::SingleThread"
+    },
+
 	{   NULL, NULL, NULL, NULL, NULL, NULL, NULL  }
 };
 
@@ -49,7 +88,7 @@ extern "C" {
     ElementLibraryInfo thornhill_eli = {
     "Thornhill",
     "Detailed Models Library",
-	NULL,		// Components
+	components,
     NULL,       // Events
     NULL,       // Introspector
 	NULL,		// Modules

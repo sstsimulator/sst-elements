@@ -31,7 +31,6 @@ class MemoryHeapLink : public SubComponent {
                                             std::string name ="" ) :
 		SubComponent(owner )
 	{
-		printf("%s\n",__func__);
 		m_link = configureLink( "memoryHeap", "0ps",
             new Event::Handler<MemoryHeapLink>(
                     this,&MemoryHeapLink::eventHandler ) );	
@@ -41,7 +40,6 @@ class MemoryHeapLink : public SubComponent {
 	void alloc( size_t length, std::function<void(uint64_t)> fini ) {
 		Entry* entry = new Entry( fini );
 
-		printf("%s\n",__func__);
 		MemoryHeapEvent* event = new MemoryHeapEvent;
 		event->key = (MemoryHeapEvent::Key) entry;
 		event->type = MemoryHeapEvent::Alloc;
@@ -53,7 +51,6 @@ class MemoryHeapLink : public SubComponent {
 	void free( SimVAddr addr, std::function<void(uint64_t)> fini ) {
 		Entry* entry = new Entry( fini );
 
-		printf("%s\n",__func__);
 		MemoryHeapEvent* event = new MemoryHeapEvent;
 		event->key = (MemoryHeapEvent::Key) entry;
 		event->type = MemoryHeapEvent::Free;
@@ -66,7 +63,6 @@ class MemoryHeapLink : public SubComponent {
 
   private:
 	void eventHandler( SST::Event* ev ) {
-		printf("%s\n",__func__);
 		MemoryHeapEvent* event = static_cast<MemoryHeapEvent*>(ev);
 		Entry* entry = (Entry*) event->key;
 		entry->fini(event->addr);

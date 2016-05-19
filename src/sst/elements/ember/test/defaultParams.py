@@ -34,6 +34,7 @@ emberParams = {
 
 hermesParams = {
 	"hermesParams.detailedCompute.name" : "thornhill.SingleThread",
+	"hermesParams.memoryHeapLink.name" : "thornhill.MemoryHeapLink",
     "hermesParams.nicModule" : "firefly.VirtNic",
 
     "hermesParams.functionSM.defaultEnterLatency" : 30000,

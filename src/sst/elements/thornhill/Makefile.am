@@ -10,6 +10,8 @@ comp_LTLIBRARIES = libthornhill.la
 libthornhill_la_SOURCES = \
 	libthornhill.cc\
 	detailedCompute.h\
+	memoryHeap.h\
+	memoryHeap.cc\
 	singleThread.h\
 	singleThread.cc
 

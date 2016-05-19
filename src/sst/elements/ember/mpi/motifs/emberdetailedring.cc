@@ -19,12 +19,10 @@ using namespace SST::Ember;
 
 EmberDetailedRingGenerator::EmberDetailedRingGenerator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params, "DetailedRing"),
-    m_loopIndex(0)
+    m_loopIndex(-1)
 {
 	m_messageSize = params.find<uint32_t>("arg.messagesize", 1024);
 	m_iterations = params.find<int32_t>("arg.iterations", 1);
-    m_sendBuf = memAlloc(m_messageSize);
-    m_recvBuf = memAlloc(m_messageSize);
 }
 
 inline long mod( long a, long b )
@@ -53,8 +51,15 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
         return true;
     }
 
-    if ( 0 == m_loopIndex ) {
+    if ( -1 == m_loopIndex ) {
         verbose( CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
+		enQ_memAlloc( evQ, &m_sendBuf, m_messageSize );
+		enQ_memAlloc( evQ, &m_recvBuf, m_messageSize );
+		++m_loopIndex;
+		return false;
+	}
+
+    if ( 0 == m_loopIndex ) {
 
         if ( 0 == rank() ) {
             enQ_getTime( evQ, &m_startTime );
@@ -86,14 +91,14 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
     verbose( CALL_INFO, 2, 0, "to=%d from=%d\n",to,from);
 
     if ( 0 == rank() ) {
-        enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
+        enQ_send( evQ, m_sendBuf.backing, m_messageSize, CHAR, to, TAG,
                                                 GroupWorld );
-	    enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG, 
+	    enQ_recv( evQ, m_recvBuf.backing, m_messageSize, CHAR, from, TAG, 
                                                 GroupWorld, &m_resp );
     } else {
-	    enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG, 
+	    enQ_recv( evQ, m_recvBuf.backing, m_messageSize, CHAR, from, TAG, 
                                                 GroupWorld, &m_resp );
-	   enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
+	   enQ_send( evQ, m_sendBuf.backing, m_messageSize, CHAR, to, TAG,
                                                 GroupWorld );
     }
 

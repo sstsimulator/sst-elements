@@ -57,6 +57,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
     m_nodePerf = m_os->getNodePerf();
     m_detailedCompute = m_os->getDetailedCompute();
+    m_memHeapLink = m_os->getMemHeapLink();
 
     std::string motifLogFile = params.find_string("motifLog", "");
     if("" != motifLogFile) {

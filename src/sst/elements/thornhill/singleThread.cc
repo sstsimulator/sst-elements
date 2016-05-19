@@ -29,7 +29,7 @@ SingleThread::SingleThread( Component* owner,
     std::stringstream linkName; 
     
     int id = 0;
-    linkName << "detailed" << id++;
+    linkName << "detailed" << id;
     while ( owner->isPortConnected( linkName.str() ) ) {
 		//printf("%s() connect port %s\n",__func__,linkName.str().c_str());
 		assert( ! m_link );
@@ -39,7 +39,7 @@ SingleThread::SingleThread( Component* owner,
         assert(m_link);
 		linkName.str("");
 		linkName.clear();
-        linkName << "detailed"<< id++;
+        linkName << "detailed"<< ++id;
     }
 }
 

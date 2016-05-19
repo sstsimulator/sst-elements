@@ -19,6 +19,7 @@
 #include <sst/core/sharedRegion.h>
 
 #include "sst/elements/hermes/hermes.h"
+#include "sst/elements/thornhill/memoryHeapLink.h"
 #include "group.h"
 #include "info.h"
 #include "protocolAPI.h"
@@ -53,6 +54,10 @@ class Hades : public OS
         return m_detailedCompute;
     }
 
+    Thornhill::MemoryHeapLink* getMemHeapLink() {
+        return m_memHeapLink;
+    }
+
     VirtNic*            getNic() { return m_virtNic; }
     Info*                getInfo() { return &m_info; }
 
@@ -66,6 +71,7 @@ class Hades : public OS
 
   private:
     Thornhill::DetailedCompute*          m_detailedCompute;
+    Thornhill::MemoryHeapLink*           m_memHeapLink;
     NodePerf*                            m_nodePerf;
     SharedRegion*                        m_sreg;
     int                                  m_netMapSize;

@@ -44,12 +44,12 @@ MemoryHeap::MemoryHeap(ComponentId_t id, Params& params ) :
 void MemoryHeap::eventHandler( Event* ev, int src ) {
 
 	MemoryHeapEvent* event = static_cast<MemoryHeapEvent*>(ev);
-    printf("%s %d\n",__func__,src);
+    //printf("%s %d\n",__func__,src);
 
     switch ( event->type ) {
       case MemoryHeapEvent::Alloc:
         event->addr = m_currentVaddr;
-        printf("%s Alloc length=%lu addr=%#lx\n",__func__,event->length,event->addr);
+        //printf("%s Alloc length=%lu addr=%#lx\n",__func__,event->length,event->addr);
         m_currentVaddr += event->length;
         break; 
       case MemoryHeapEvent::Free:

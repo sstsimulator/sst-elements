@@ -101,8 +101,11 @@ class EmberEP( EndPoint ):
         if built:
             nic.addLink( self.detailedModel.getNicLink( ), "detailed0", "1ps" )
 
+
         loopBack = sst.Component("loopBack" + str(nodeID), "firefly.loopBack")
         loopBack.addParam( "numCores", self.numCores )
+
+        memory = sst.Component("memory" + str(nodeID), "thornhill.MemoryHeap")
 
         # Create a motifLog only for one core of the desired node(s)
         logCreatedforFirstCore = False
@@ -170,6 +173,13 @@ class EmberEP( EndPoint ):
 
             ep.addLink(loopLink, "loop", "1ns")
             loopBack.addLink(loopLink, "core" + str(x), "1ns")
+
+            memoryLink = sst.Link( "memory" + str(nodeID) + "core" + str(x) + "_Link"  )
+            memoryLink.setNoCut()
+
+            ep.addLink(memoryLink, "memoryHeap", "0 ps")
+            memory.addLink(memoryLink, "detailed" + str(x), "0 ns")
+
         return retval
 
 
