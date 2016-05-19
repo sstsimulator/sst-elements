@@ -19,11 +19,11 @@ using namespace SST::SimpleMessageGeneratorComponent;
 simpleMessageGeneratorComponent::simpleMessageGeneratorComponent(ComponentId_t id, Params& params) :
   Component(id) 
 {
-    clock_frequency_str = params.find_string("clock", "1GHz");    
+    clock_frequency_str = params.find<std::string>("clock", "1GHz");    
     std::cout << "Clock is configured for: " << clock_frequency_str << std::endl;
     
-    total_message_send_count = params.find_integer("sendcount", 1000);
-    output_message_info = params.find_integer("outputinfo", 1);
+    total_message_send_count = params.find<int64_t>("sendcount", 1000);
+    output_message_info = params.find<int64_t>("outputinfo", 1);
     
     message_counter_recv = 0;
     message_counter_sent = 0;
