@@ -60,14 +60,17 @@ class XXX  {
 
     XXX( Component* owner, Params& params );
     ~XXX();
-    void init( Info* info, VirtNic* );
-    void setup();
+    void init( Info* info, VirtNic*, Thornhill::MemoryHeapLink* );
     void setRetLink( Link* link );
+
+    void setup();
     void finish();
 
     Info*      info() { return m_info; }
     VirtNic&   nic() { return *m_nic; }           
+    Thornhill::MemoryHeapLink& memHeap() { return *m_memHeapLink; }
 
+    void init();
     void sendv( std::vector<IoVec>&,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, CommReq* );
@@ -207,9 +210,9 @@ class XXX  {
 
     Output          m_dbg;
     Link*           m_retLink;
-    Link*           m_memLink;
     Link*           m_delayLink;
     Link*           m_loopLink;
+    Thornhill::MemoryHeapLink* m_memHeapLink;
     Info*           m_info;
     VirtNic*        m_nic;
 

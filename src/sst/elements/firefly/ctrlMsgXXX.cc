@@ -27,7 +27,7 @@ using namespace SST;
 
 XXX::XXX( Component* owner, Params& params ) :
     m_retLink( NULL ),
-    m_memLink( NULL ),
+    m_memHeapLink( NULL ),
     m_info( NULL ),
     m_rxPostMod( NULL ),
     m_processQueuesState( NULL )
@@ -109,12 +109,6 @@ XXX::XXX( Component* owner, Params& params ) :
 			params.find<std::string>("loopBackPortName", "loop"), "1 ns",
             new Event::Handler<XXX>(this,&XXX::loopHandler) );
     assert(m_loopLink);
-
-#if 0
-    m_memLink = owner->configureLink( params.find_string("memPortName","mem"),
-            "1 ns", new Event::Handler<XXX>(this,&XXX::memEventHandler) );
-    assert( m_memLink );
-#endif
 }
 
 void XXX::finish() { 
@@ -137,10 +131,11 @@ XXX::~XXX()
     }
 }
 
-void XXX::init( Info* info, VirtNic* nic )
+void XXX::init( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem  )
 {
     m_info = info;
     m_nic = nic;
+    m_memHeapLink = mem;
     nic->setNotifyOnGetDone(
         new VirtNic::Handler<XXX,void*>(this, &XXX::notifyGetDone )
     );
@@ -155,7 +150,9 @@ void XXX::init( Info* info, VirtNic* nic )
         new VirtNic::Handler3Args<XXX,int,int,size_t>(
                                 this, &XXX::notifyNeedRecv )
     );
+
 }
+
 
 void XXX::setup() 
 {
@@ -237,6 +234,15 @@ void XXX::memEventHandler( Event* ev )
 }
 
 // **********************************************************************
+
+
+void XXX::init() {
+	if ( m_memHeapLink ) {
+    	m_processQueuesState->enterInit();
+	} else {
+		passCtrlToFunction();
+	}
+}
 
 void XXX::sendv( std::vector<IoVec>& ioVec, 
     MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
@@ -371,8 +377,8 @@ void XXX::delayHandler( SST::Event* e )
 void XXX::memcpy( Callback callback, MemAddr to, MemAddr from, size_t length )
 {
     m_dbg.verbose(CALL_INFO,1,1,"\n");
-    if ( m_memLink ) {
-        m_memLink->send( 0, new MemCpyReqEvent( callback, 0, to, from, length ) );
+    if ( 0 ) {
+        //m_memLink->send( 0, new MemCpyReqEvent( callback, 0, to, from, length ) );
     } else {
         uint64_t delay; 
         if ( from ) {
@@ -389,8 +395,8 @@ void XXX::memcpy( Callback callback, MemAddr to, MemAddr from, size_t length )
 void XXX::memread( Callback callback, MemAddr addr, size_t length )
 {
     m_dbg.verbose(CALL_INFO,1,1,"\n");
-    if ( m_memLink ) {
-        m_memLink->send( 0, new MemReadReqEvent( callback, 0, addr, length ) );
+    if ( 0 ) {
+        //m_memLink->send( 0, new MemReadReqEvent( callback, 0, addr, length ) );
     } else {
         m_delayLink->send( txMemcpyDelay( length ), new DelayEvent(callback) );
     }
@@ -399,8 +405,8 @@ void XXX::memread( Callback callback, MemAddr addr, size_t length )
 void XXX::memwrite( Callback callback, MemAddr addr, size_t length )
 {
     m_dbg.verbose(CALL_INFO,1,1,"\n");
-    if ( m_memLink ) {
-        m_memLink->send( 0, new MemWriteReqEvent( callback, 0, addr, length ) );
+    if ( 0 ) {
+        //m_memLink->send( 0, new MemWriteReqEvent( callback, 0, addr, length ) );
     } else {
         m_delayLink->send( txMemcpyDelay( length ), new DelayEvent(callback) );
     }

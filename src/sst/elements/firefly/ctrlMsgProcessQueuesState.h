@@ -43,9 +43,6 @@ class ProcessQueuesState
         snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
                             obj.nic().getNodeId(), obj.info()->worldRank());
         dbg().setPrefix(buffer);
-        for ( unsigned long i = 0; i < MinPostedShortBuffers; i++ ) {
-            postShortRecvBuffer();
-        }
     }
 
     void finish() {
@@ -61,6 +58,9 @@ class ProcessQueuesState
             m_postedShortBuffers.erase( m_postedShortBuffers.begin() );
         }
     }
+
+    void enterInit( );
+    void enterInit_1( uint64_t addr, size_t length );
 
     void enterSend( _CommReq*, uint64_t exitDelay = 0 );
     void enterRecv( _CommReq*, uint64_t exitDelay = 0 );
@@ -336,11 +336,126 @@ class ProcessQueuesState
 
     std::deque< LoopResp* >         m_loopResp;
 
-    std::map< ShortRecvBuffer*, Callback2* >
-                                                    m_postedShortBuffers; 
+    std::map< ShortRecvBuffer*, Callback2* > m_postedShortBuffers; 
 	FuncCtxBase*	m_intCtx;
     uint64_t        m_exitDelay;
+
+    std::deque<Hermes::MemAddr*>   m_sendHdrQ;
+    std::deque<Hermes::MemAddr*>   m_sendBdyQ;
+    std::deque<Hermes::MemAddr*>   m_shortHdrQ;
+    std::deque<Hermes::MemAddr*>   m_shortBodyQ;
+
+    Hermes::MemAddr* allocShortBody( size_t len) {
+        assert( ! m_sendHdrQ.empty() );
+        Hermes::MemAddr* tmp = m_shortBodyQ.front();
+        tmp->backing = malloc(len);
+        m_shortBodyQ.pop_front();
+        return tmp;
+    }
+
+    void freeShortBody( Hermes::MemAddr* tmp ) {
+        free( tmp->backing );
+        m_shortBodyQ.push_back(tmp);
+    }
+
+    Hermes::MemAddr* allocShortHdr( size_t len) {
+        assert( ! m_sendHdrQ.empty() );
+        Hermes::MemAddr* tmp = m_shortHdrQ.front();
+        tmp->backing = malloc(len);
+        m_shortHdrQ.pop_front();
+        return tmp;
+    }
+
+    void freeShortHdr( Hermes::MemAddr* tmp ) {
+        free( tmp->backing );
+        m_shortHdrQ.push_back(tmp);
+    }
+
+    Hermes::MemAddr* allocSendHdr() {
+        assert( ! m_sendHdrQ.empty() );
+        Hermes::MemAddr* tmp = m_sendHdrQ.front();
+		tmp->backing = 0;
+        m_sendHdrQ.pop_front();
+        return tmp;
+    }
+    void freeSendHdr( Hermes::MemAddr* tmp ) {
+        m_sendHdrQ.push_back(tmp);
+    }
+
+    Hermes::MemAddr* allocSendBdy(  ) {
+        assert( ! m_sendBdyQ.empty() );
+        Hermes::MemAddr* tmp = m_sendBdyQ.front();
+		tmp->backing = 0;
+        m_sendBdyQ.pop_front();
+        return tmp;
+    }
+    void freeSendBdy( Hermes::MemAddr* tmp ) {
+        m_sendBdyQ.push_back(tmp);
+    }
 };
+
+template< class T1 >
+void ProcessQueuesState<T1>::enterInit( )
+{
+    size_t length = 0;
+    length += MaxPostedShortBuffers * (sizeof(MatchHdr) + 16 ) & ~15;
+    length += MaxPostedShortBuffers * (obj().shortMsgLength() + 16 ) & ~15;
+    length += MaxPostedShortBuffers * (sizeof(MatchHdr) + 16 ) & ~15;
+    length += MaxPostedShortBuffers * (obj().shortMsgLength() + 16 ) & ~15;
+
+    std::function<void(uint64_t)> callback = [=](uint64_t value){
+		enterInit_1( value, length );      
+        return 0;
+    };
+
+    obj().memHeap().alloc( length, callback );
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::enterInit_1( uint64_t addr, size_t length )
+{
+	uint64_t start = addr;  
+    dbg().verbose(CALL_INFO,1,1,"simVAddr %#lx\n", addr, length );
+
+    for ( unsigned i = 0; i < MaxPostedShortBuffers; i++ ) {
+        Hermes::MemAddr* tmp = new Hermes::MemAddr;
+		tmp->simVAddr = addr;
+
+        m_shortHdrQ.push_back( tmp );
+        addr += ( (sizeof(MatchHdr) + 16 ) & ~15);
+    }
+    for ( unsigned i = 0; i < MaxPostedShortBuffers; i++ ) {
+        Hermes::MemAddr* tmp = new Hermes::MemAddr;
+		tmp->simVAddr = addr;
+
+        m_shortBodyQ.push_back( tmp );
+
+        addr += ( (obj().shortMsgLength() + 16 ) & ~15);
+    }
+
+    for ( unsigned i = 0; i < MaxPostedShortBuffers; i++ ) {
+        Hermes::MemAddr* tmp = new Hermes::MemAddr;
+		tmp->simVAddr = addr;
+
+        m_sendHdrQ.push_back( tmp );
+        addr += ( (sizeof(MatchHdr) + 16 ) & ~15);
+    }
+
+    for ( unsigned i = 0; i < MaxPostedShortBuffers; i++ ) {
+        Hermes::MemAddr* tmp = new Hermes::MemAddr;
+		tmp->simVAddr = addr;
+
+        m_sendBdyQ.push_back( tmp );
+        addr  += ( (obj().shortMsgLength() + 16 ) & ~15);
+    }
+	assert( addr <= start + length); 
+
+    for ( unsigned long i = 0; i < MinPostedShortBuffers; i++ ) {
+        postShortRecvBuffer();
+    }
+
+    obj().passCtrlToFunction( );
+}
 
 template< class T1 >
 void ProcessQueuesState<T1>::enterSend( _CommReq* req, uint64_t exitDelay )

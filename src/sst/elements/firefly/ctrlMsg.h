@@ -54,7 +54,7 @@ class API : public ProtocolAPI {
     API( Component* owner, Params& );
     ~API();
 
-    virtual void init( Info* info, VirtNic* );
+    virtual void init( Info* info, VirtNic*, Thornhill::MemoryHeapLink* );
     virtual void setup();
     virtual Info* info();
     virtual void finish();
@@ -62,6 +62,7 @@ class API : public ProtocolAPI {
     virtual std::string name() { return "CtrlMsgProtocol"; }
     virtual void setRetLink( Link* link );
 
+    void init();
     void send( void* buf, size_t len, nid_t dest, uint64_t tag ); 
     void send( void* buf, size_t len, MP::RankID dest, uint64_t tag, 
                             MP::Communicator grp );

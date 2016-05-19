@@ -35,9 +35,9 @@ void API::finish() {
     m_xxx->finish();
 }
 
-void API::init( Info* info, VirtNic* nic )
+void API::init( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem )
 {
-    m_xxx->init( info, nic );
+    m_xxx->init( info, nic, mem );
 }
 
 void API::setup() 
@@ -55,6 +55,9 @@ void API::setRetLink( Link* link )
     m_xxx->setRetLink( link );
 }
 
+void API::init() {
+	m_xxx->init();
+}
 void API::send( void* buf, size_t len, nid_t dest, uint64_t tag )
 {
     std::vector<IoVec> ioVec(1);

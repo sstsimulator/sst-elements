@@ -13,6 +13,7 @@
 #define COMPONENTS_FIREFLY_PROTOCOLAPI_H
 
 #include <sst/core/module.h>
+#include "sst/elements/thornhill/memoryHeapLink.h"
 
 namespace SST {
 namespace Firefly {
@@ -28,7 +29,7 @@ class ProtocolAPI : public SST::Module
     virtual void printStatus( Output& ) {}
     virtual void setup() {};
     virtual void finish() {};
-    virtual void init( Info*, VirtNic* ) = 0;  
+    virtual void init( Info*, VirtNic*, Thornhill::MemoryHeapLink* ) = 0;  
     virtual std::string name() = 0;
     virtual void setRetLink(SST::Link* link) { assert(0); } 
 };
