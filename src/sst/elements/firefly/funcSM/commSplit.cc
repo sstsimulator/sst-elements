@@ -45,10 +45,12 @@ void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     m_dbg.verbose(CALL_INFO,1,0,"grpSize=%d\n", cnt );
 
-    m_sendbuf = (int*) malloc( sizeof(int) * 2 );
-    m_recvbuf = (int*) malloc( cnt * sizeof(int) * 2);
-    m_sendbuf[0] = m_commSplitEvent->color;
-    m_sendbuf[1] = m_commSplitEvent->key;
+	m_sendbuf.simVAddr = 0;
+    m_sendbuf.backing = (int*) malloc( sizeof(int) * 2 );
+	m_recvbuf.simVAddr = 0;
+    m_recvbuf.backing = (int*) malloc( cnt * sizeof(int) * 2);
+    ((int*)m_sendbuf.backing)[0] = m_commSplitEvent->color;
+    ((int*)m_sendbuf.backing)[1] = m_commSplitEvent->key;
 
     MP::PayloadDataType datatype = MP::INT;
 
@@ -77,22 +79,27 @@ void CommSplitFuncSM::handleEnterEvent( Retval& retval )
     
         for ( int i = 0; i < oldGrp->getSize(); i++ ) {
             m_dbg.verbose(CALL_INFO,1,0,"i=%d color=%#x key=%#x\n", i,
-                                 m_recvbuf[i*2], m_recvbuf[i*2 + 1] );
-            if ( m_commSplitEvent->color == m_recvbuf[i*2] ) {
+                 	((int*)m_recvbuf.backing)[i*2],
+					((int*)m_recvbuf.backing)[i*2 + 1] );
+            if ( m_commSplitEvent->color == 
+					((int*)m_recvbuf.backing)[i*2] ) {
             
                 m_dbg.verbose(CALL_INFO,1,0,"add: oldRank=%d newRank=%d\n",
-                                    i,m_recvbuf[i*2 + 1]);
-                newGroup->initMapping( m_recvbuf[i*2 + 1],
+                                    i,
+					((int*)m_recvbuf.backing)[i*2 + 1]);
+                newGroup->initMapping( 
+					((int*)m_recvbuf.backing)[i*2 + 1],
                                     oldGrp->getMapping(i), 1 ); 
 
                 if ( oldGrp->getMyRank() == i ) {
-                    newGroup->setMyRank( m_recvbuf[i*2 + 1] );
+                    newGroup->setMyRank( 
+						((int*)m_recvbuf.backing)[i*2 + 1] );
                 }
             }
         }  
 
         delete m_commSplitEvent;
-        free( m_sendbuf );
-        free( m_recvbuf );
+        free( m_sendbuf.backing );
+        free( m_recvbuf.backing );
     }
 }

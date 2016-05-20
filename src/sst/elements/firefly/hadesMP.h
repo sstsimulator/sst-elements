@@ -49,75 +49,77 @@ class HadesMP : public MP::Interface
                                                     MP::Functor*);
     virtual void size(MP::Communicator group, int* size, MP::Functor* );
 
-    virtual void send(MP::Addr buf, uint32_t count,
+    virtual void send(const Hermes::MemAddr&, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag, 
         MP::Communicator group, MP::Functor*);
 
-    virtual void isend(MP::Addr payload, uint32_t count, 
+    virtual void isend(const Hermes::MemAddr&, uint32_t count, 
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req,
         MP::Functor*);
 
-    virtual void recv(MP::Addr target, uint32_t count,
+    virtual void recv(const Hermes::MemAddr&, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID source, uint32_t tag,
         MP::Communicator group, MP::MessageResponse* resp,
         MP::Functor*);
 
-    virtual void irecv(MP::Addr target, uint32_t count, 
+    virtual void irecv(const Hermes::MemAddr&, uint32_t count, 
         MP::PayloadDataType dtype, MP::RankID source, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req,
         MP::Functor*);
 
-    virtual void allreduce(MP::Addr mydata, void* result, uint32_t count,
+    virtual void allreduce(const Hermes::MemAddr&, 
+		const Hermes::MemAddr& result, uint32_t count,
         MP::PayloadDataType dtype, MP::ReductionOperation op,
         MP::Communicator group, MP::Functor*);
 
-    virtual void reduce(MP::Addr mydata, MP::Addr result,
+    virtual void reduce(const Hermes::MemAddr&, 
+		const Hermes::MemAddr& result,
         uint32_t count, MP::PayloadDataType dtype, 
         MP::ReductionOperation op, MP::RankID root,
         MP::Communicator group, MP::Functor*);
 
-    virtual void bcast(MP::Addr mydata,
+    virtual void bcast(const Hermes::MemAddr&,
         uint32_t count, MP::PayloadDataType dtype, MP::RankID root,
         MP::Communicator group, MP::Functor*);
 
-    virtual void allgather( MP::Addr sendbuf, uint32_t sendcnt, 
+    virtual void allgather( const Hermes::MemAddr&, uint32_t sendcnt, 
         MP::PayloadDataType sendtype,
-        MP::Addr recvbuf, uint32_t recvcnt, 
+        const Hermes::MemAddr&, uint32_t recvcnt, 
         MP::PayloadDataType recvtype,
         MP::Communicator group, MP::Functor*);
 
-    virtual void allgatherv( MP::Addr sendbuf, uint32_t sendcnt,
+    virtual void allgatherv( const Hermes::MemAddr&, uint32_t sendcnt,
         MP::PayloadDataType sendtype,
-        MP::Addr recvbuf, MP::Addr recvcnt, MP::Addr displs,
+        const Hermes::MemAddr&, MP::Addr recvcnt, MP::Addr displs,
         MP::PayloadDataType recvtype,
         MP::Communicator group, MP::Functor*);
 
-    virtual void gather( MP::Addr sendbuf, uint32_t sendcnt, 
+    virtual void gather( const Hermes::MemAddr&, uint32_t sendcnt, 
         MP::PayloadDataType sendtype,
-        MP::Addr recvbuf, uint32_t recvcnt, 
+        const Hermes::MemAddr&, uint32_t recvcnt, 
         MP::PayloadDataType recvtype,
         MP::RankID root, MP::Communicator group, MP::Functor*);
 
-    virtual void gatherv( MP::Addr sendbuf, uint32_t sendcnt,
+    virtual void gatherv( const Hermes::MemAddr&, uint32_t sendcnt,
         MP::PayloadDataType sendtype,
-        MP::Addr recvbuf, MP::Addr recvcnt, MP::Addr displs,
+        const Hermes::MemAddr&, MP::Addr recvcnt, MP::Addr displs,
         MP::PayloadDataType recvtype,
         MP::RankID root, MP::Communicator group, MP::Functor*);
 
     virtual void barrier(MP::Communicator group, MP::Functor*);
 
     virtual void alltoall(
-        MP::Addr sendbuf, uint32_t sendcnt, 
+        const Hermes::MemAddr&, uint32_t sendcnt, 
                         MP::PayloadDataType sendtype,
-        MP::Addr recvbuf, uint32_t 
+        const Hermes::MemAddr&, uint32_t 
                         recvcnt, MP::PayloadDataType recvtype,
         MP::Communicator group, MP::Functor*);
 
     virtual void alltoallv(
-        MP::Addr sendbuf, MP::Addr sendcnts, 
+        const Hermes::MemAddr&, MP::Addr sendcnts, 
             MP::Addr senddispls, MP::PayloadDataType sendtype,
-        MP::Addr recvbuf, MP::Addr recvcnts, 
+        const Hermes::MemAddr&, MP::Addr recvcnts, 
             MP::Addr recvdispls, MP::PayloadDataType recvtype,
         MP::Communicator group, MP::Functor*);
 

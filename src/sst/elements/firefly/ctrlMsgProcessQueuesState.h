@@ -93,14 +93,17 @@ class ProcessQueuesState
         { 
             ioVec.resize(2);    
 
-            ioVec[0].ptr = &hdr;
+            ioVec[0].addr.simVAddr = 0;
+            ioVec[0].addr.backing = &hdr;
             ioVec[0].len = sizeof(hdr);
 
             if ( length ) {
                 buf.resize( length );
-            	ioVec[1].ptr = &buf[0];
+            	ioVec[1].addr.simVAddr = 0;
+            	ioVec[1].addr.backing = &buf[0];
             } else {
-            	ioVec[1].ptr = NULL; 
+            	ioVec[1].addr.simVAddr = 0; 
+            	ioVec[1].addr.backing = NULL; 
 			}
             ioVec[1].len = length;
 
@@ -114,7 +117,7 @@ class ProcessQueuesState
 
     struct LoopReq : public Msg {
         LoopReq(int _srcCore, std::vector<IoVec>& _vec, void* _key ) :
-            Msg( (MatchHdr*)_vec[0].ptr ), 
+            Msg( (MatchHdr*)_vec[0].addr.backing ), 
             srcCore( _srcCore ), vec(_vec), key( _key) 
         {
             ProcessQueuesState<T1>::Msg::m_ioVec.push_back( vec[1] ); 
@@ -510,10 +513,13 @@ void ProcessQueuesState<T1>::processSend_2( _CommReq* req )
     hdrVec.len = sizeof( req->hdr() ); 
 
     if ( length <= obj().shortMsgLength() ) {
-        hdrPtr = hdrVec.ptr = malloc( hdrVec.len );
-        memcpy( hdrVec.ptr, &req->hdr(), hdrVec.len );
+        hdrVec.addr.simVAddr = 0;
+		hdrVec.addr.backing = malloc( hdrVec.len );
+        hdrPtr = hdrVec.addr.backing;
+        memcpy( hdrVec.addr.backing, &req->hdr(), hdrVec.len );
     } else {
-        hdrVec.ptr = &req->hdr(); 
+        hdrVec.addr.simVAddr = 0; 
+        hdrVec.addr.backing = &req->hdr(); 
     }
 
     std::vector<IoVec> vec;
@@ -545,7 +551,8 @@ void ProcessQueuesState<T1>::processSend_2( _CommReq* req )
 
         std::vector<IoVec> hdrVec;
         hdrVec.resize(1);
-        hdrVec[0].ptr = &info->hdr; 
+        hdrVec[0].addr.simVAddr = 0; 
+        hdrVec[0].addr.backing = &info->hdr; 
         hdrVec[0].len = sizeof( info->hdr ); 
         
         obj().nic().dmaRecv( nid, req->hdr().key, hdrVec, callback ); 
@@ -570,7 +577,8 @@ void ProcessQueuesState<T1>::processSendLoop( _CommReq* req )
     dbg().verbose(CALL_INFO,2,2,"key=%p\n", req);
 
     IoVec hdrVec;
-    hdrVec.ptr = &req->hdr();
+	hdrVec.addr.simVAddr = 0;
+    hdrVec.addr.backing = &req->hdr();
     hdrVec.len = sizeof( req->hdr() );
 
     std::vector<IoVec> vec;
@@ -1092,7 +1100,8 @@ void ProcessQueuesState<T1>::processLongGetFini0( Stack* stack )
 
     IoVec hdrVec;   
     CtrlHdr* hdr = new CtrlHdr;
-    hdrVec.ptr = hdr; 
+	hdrVec.addr.simVAddr = 0;
+    hdrVec.addr.backing = hdr; 
     hdrVec.len = sizeof( *hdr ); 
 
     Callback* callback = new Callback;
@@ -1146,7 +1155,7 @@ template< class T1 >
 void ProcessQueuesState<T1>::loopHandler( int srcCore, std::vector<IoVec>& vec, void* key )
 {
         
-    MatchHdr* hdr = (MatchHdr*) vec[0].ptr;
+    MatchHdr* hdr = (MatchHdr*) vec[0].addr.backing;
 
     dbg().verbose(CALL_INFO,1,2,"req: srcCore=%d key=%p vec.size()=%lu srcRank=%d\n",
                                                     srcCore, key, vec.size(), hdr->rank);
@@ -1234,8 +1243,8 @@ void ProcessQueuesState<T1>::copyIoVec(
             dbg().verbose(CALL_INFO,3,1,"copied=%lu rV=%lu rP=%lu\n",
                                                         copied,rV,rP);
 
-            if ( dst[rV].ptr && src[i].ptr ) {
-                ((char*)dst[rV].ptr)[rP] = ((char*)src[i].ptr)[j];
+            if ( dst[rV].addr.backing && src[i].addr.backing ) {
+                ((char*)dst[rV].addr.backing)[rP] = ((char*)src[i].addr.backing)[j];
             }
             ++copied;
             ++rP;

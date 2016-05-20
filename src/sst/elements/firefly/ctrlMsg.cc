@@ -58,30 +58,30 @@ void API::setRetLink( Link* link )
 void API::init() {
 	m_xxx->init();
 }
-void API::send( void* buf, size_t len, nid_t dest, uint64_t tag )
+void API::send( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag )
 {
     std::vector<IoVec> ioVec(1);
-    ioVec[0].ptr = buf;
+    ioVec[0].addr = addr;
     ioVec[0].len = len;
 
     m_xxx->sendv( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, NULL );
 }
 
 
-void API::send( void* buf, size_t len, MP::RankID dest, uint64_t tag, 
+void API::send( const Hermes::MemAddr& addr, size_t len, MP::RankID dest, uint64_t tag, 
                         MP::Communicator grp ) 
 {
     std::vector<IoVec> ioVec(1);
-    ioVec[0].ptr = buf;
+    ioVec[0].addr = addr;
     ioVec[0].len = len;
 
     m_xxx->sendv( ioVec, MP::CHAR, dest, tag, grp, NULL );
 }
 
-void API::isend( void* buf, size_t len, nid_t dest, uint64_t tag, CommReq* req)
+void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag, CommReq* req)
 {
     std::vector<IoVec> ioVec(1);
-    ioVec[0].ptr = buf;
+    ioVec[0].addr = addr;
     ioVec[0].len = len;
 
     assert(req);
@@ -93,29 +93,29 @@ void API::sendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag )
     m_xxx->sendv( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, NULL );
 }
 
-void API::recv( void* buf, size_t len, nid_t src, uint64_t tag )
+void API::recv( const Hermes::MemAddr& addr, size_t len, nid_t src, uint64_t tag )
 {
     std::vector<IoVec> ioVec(1);
-    ioVec[0].ptr = buf;
+    ioVec[0].addr = addr; 
     ioVec[0].len = len;
     m_xxx->recvv( ioVec, MP::CHAR, src, tag, MP::GroupWorld, NULL );
 }
 
-void API::irecv( void* buf, size_t len, nid_t src, uint64_t tag, CommReq* req )
+void API::irecv( const Hermes::MemAddr& addr, size_t len, nid_t src, uint64_t tag, CommReq* req )
 {
     std::vector<IoVec> ioVec(1);
-    ioVec[0].ptr = buf;
+    ioVec[0].addr = addr;
     ioVec[0].len = len;
 
     assert(req);
     m_xxx->recvv( ioVec, MP::CHAR, src, tag, MP::GroupWorld, req );
 }
 
-void API::irecv( void* buf, size_t len, MP::RankID src, uint64_t tag, 
+void API::irecv( const Hermes::MemAddr& addr, size_t len, MP::RankID src, uint64_t tag, 
                                     MP::Communicator grp, CommReq* req )
 {
     std::vector<IoVec> ioVec(1);
-    ioVec[0].ptr = buf;
+    ioVec[0].addr = addr;
     ioVec[0].len = len;
     assert(req);
     m_xxx->recvv( ioVec, MP::CHAR, src, tag, grp, req );
@@ -140,28 +140,28 @@ void API::waitAll( std::vector<CommReq*>& reqs )
     m_xxx->waitAll( reqs );
 }
 
-void API::send(MP::Addr buf, uint32_t count,
+void API::send( const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group )
 {
 	m_xxx->send( buf, count, dtype, dest, tag, group );
 }
 
-void API::isend(MP::Addr buf, uint32_t count,
+void API::isend( const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req )
 {
 	m_xxx->isend( buf, count, dtype, dest, tag, group, req );
 }
 
-void API::recv(MP::Addr buf, uint32_t count,
+void API::recv( const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageResponse* resp )
 {
 	m_xxx->recv( buf, count, dtype, src, tag, group, resp ); 
 }
 
-void API::irecv(MP::Addr buf, uint32_t count,
+void API::irecv( const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req )
 {

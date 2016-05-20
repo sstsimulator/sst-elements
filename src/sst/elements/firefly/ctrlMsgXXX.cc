@@ -294,7 +294,7 @@ void XXX::waitAll( std::vector<CommReq*>& reqs )
 }
 
 // **********************************************************************
-void XXX::send(MP::Addr buf, uint32_t count,
+void XXX::send(const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group )
 {
@@ -304,7 +304,7 @@ void XXX::send(MP::Addr buf, uint32_t count,
             info()->sizeofDataType( dtype), dest, tag, group ) );
 }
 
-void XXX::isend(MP::Addr buf, uint32_t count,
+void XXX::isend(const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req )
 {
@@ -314,7 +314,7 @@ void XXX::isend(MP::Addr buf, uint32_t count,
     m_processQueuesState->enterSend( static_cast<_CommReq*>(*req) );
 }
 
-void XXX::recv(MP::Addr buf, uint32_t count,
+void XXX::recv(const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageResponse* resp )
 {
@@ -323,7 +323,7 @@ void XXX::recv(MP::Addr buf, uint32_t count,
             info()->sizeofDataType(dtype), src, tag, group, resp ) );
 }
 
-void XXX::irecv(MP::Addr buf, uint32_t count,
+void XXX::irecv(const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req )
 {

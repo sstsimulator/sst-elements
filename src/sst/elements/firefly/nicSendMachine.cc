@@ -144,10 +144,10 @@ void Nic::SendMachine::copyOut( Output& dbg,
                             "memcpy len=%lu\n", toLen,fromLen,len);
 
             const char* from = 
-                    (const char*) entry.ioVec()[entry.currentVec].ptr + 
+                    (const char*) entry.ioVec()[entry.currentVec].addr.backing + 
                                                         entry.currentPos;
 
-            if ( entry.ioVec()[entry.currentVec].ptr ) {
+            if ( entry.ioVec()[entry.currentVec].addr.backing) {
                 event.bufAppend( from, len );
             } else {
                 event.bufAppend( NULL, len );

@@ -445,7 +445,8 @@ class Nic : public SST::Component  {
             m_hdr.rgnNum = cmd->tag; 
             m_hdr.offset = -1;
             m_hdr.op = RdmaMsgHdr::Get;
-            m_rdmaVec[0].ptr = &m_hdr;
+            m_rdmaVec[0].addr.simVAddr = 0;
+            m_rdmaVec[0].addr.backing = &m_hdr;
             m_rdmaVec[0].len = sizeof( m_hdr );
             m_ioVec = &m_rdmaVec;
         }
@@ -474,7 +475,8 @@ class Nic : public SST::Component  {
             m_putVec.resize(1);
             m_hdr.respKey = respKey;
             m_hdr.op = RdmaMsgHdr::GetResp;
-            m_putVec[0].ptr = &m_hdr;
+            m_putVec[0].addr.simVAddr = 0;
+            m_putVec[0].addr.backing = &m_hdr;
             m_putVec[0].len = sizeof(m_hdr);
             for ( unsigned int i = 0; i < memRgn->iovec().size(); i++ ) {
                 m_putVec.push_back( memRgn->iovec()[i] );

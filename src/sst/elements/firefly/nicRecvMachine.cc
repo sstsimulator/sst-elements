@@ -317,13 +317,13 @@ size_t Nic::RecvMachine::copyIn( Output& dbg, Nic::Entry& entry,
             size_t fromLen = event.bufSize();
             size_t len = toLen < fromLen ? toLen : fromLen;
 
-            char* toPtr = (char*) entry.ioVec()[entry.currentVec].ptr +
+            char* toPtr = (char*) entry.ioVec()[entry.currentVec].addr.backing +
                                                         entry.currentPos;
             dbg.verbose(CALL_INFO,3,32,"toBufSpace=%lu fromAvail=%lu, "
                             "memcpy len=%lu\n", toLen,fromLen,len);
 
             entry.currentLen += len;
-            if ( entry.ioVec()[entry.currentVec].ptr ) {
+            if ( entry.ioVec()[entry.currentVec].addr.backing ) {
                 void *buf = event.bufPtr();
                 if ( buf ) {
                     memcpy( toPtr, buf, len );

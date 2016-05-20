@@ -81,19 +81,19 @@ class XXX  {
 
     void waitAll( std::vector<CommReq*>& reqs );
 
-    void send(MP::Addr buf, uint32_t count,
+    void send(const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group );
 
-    void isend(MP::Addr buf, uint32_t count,
+    void isend(const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req );
 
-    void recv(MP::Addr buf, uint32_t count,
+    void recv(const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageResponse* resp );
 
-    void irecv(MP::Addr buf, uint32_t count,
+    void irecv(const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req );
 
@@ -275,7 +275,7 @@ class _CommReq : public MP::MessageRequestBase {
         m_hdr.group = group;
     }
 
-    _CommReq( Type type, MP::Addr buf, uint32_t count,
+    _CommReq( Type type, const Hermes::MemAddr& buf, uint32_t count,
         unsigned int dtypeSize, MP::RankID rank, uint32_t tag, 
         MP::Communicator group, MP::MessageResponse* resp = NULL ) :
         m_type( type ),
@@ -301,7 +301,7 @@ class _CommReq : public MP::MessageRequestBase {
         m_hdr.tag = tag;
         m_hdr.group = group;
         m_ioVec.resize( 1 );
-        m_ioVec[0].ptr = buf;
+        m_ioVec[0].addr = buf;
         m_ioVec[0].len = dtypeSize * count;
     }
     ~_CommReq() {

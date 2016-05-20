@@ -83,62 +83,62 @@ class Interface : public Hermes::Interface {
     virtual void rank(Communicator group, RankID* rank, Functor*) {}
     virtual void size(Communicator group, int* size, Functor*) {}
 
-    virtual void send(Addr payload, uint32_t count, PayloadDataType dtype, 
+    virtual void send(const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, 
         RankID dest, uint32_t tag, Communicator group, 
         Functor* ) {}
 
-    virtual void isend(Addr payload, uint32_t count, PayloadDataType dtype, 
+    virtual void isend(const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, 
         RankID dest, uint32_t tag, Communicator group, 
         MessageRequest* req, Functor* ) {}
 
-    virtual void recv(Addr target, uint32_t count, PayloadDataType dtype,
+    virtual void recv(const Hermes::MemAddr&, uint32_t count, PayloadDataType dtype,
         RankID source, uint32_t tag, Communicator group, 
         MessageResponse* resp, Functor*) {}
 
-    virtual void irecv(Addr target, uint32_t count, PayloadDataType dtype, 
+    virtual void irecv(const Hermes::MemAddr&, uint32_t count, PayloadDataType dtype, 
         RankID source, uint32_t tag, Communicator group, 
         MessageRequest* req, Functor*) {}
 
-    virtual void allreduce(Addr mydata, Addr result, uint32_t count, 
+    virtual void allreduce(const Hermes::MemAddr&, const Hermes::MemAddr&, uint32_t count, 
         PayloadDataType dtype, ReductionOperation op, 
         Communicator group, Functor*) {}
 
-    virtual void reduce(Addr mydata, Addr result, uint32_t count, 
+    virtual void reduce(const Hermes::MemAddr&, const Hermes::MemAddr&, uint32_t count, 
         PayloadDataType dtype, ReductionOperation op, RankID root, 
         Communicator group, Functor*) {}
 
-    virtual void bcast(Addr mydata, uint32_t count, 
+    virtual void bcast(const Hermes::MemAddr&, uint32_t count, 
         PayloadDataType dtype, RankID root, 
         Communicator group, Functor*) {}
 
     virtual void allgather(
-        Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
-        Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
+        const Hermes::MemAddr&, uint32_t sendcnt, PayloadDataType sendtype,
+        const Hermes::MemAddr&, uint32_t recvcnt, PayloadDataType recvtype,
         Communicator group, Functor*) {}
 
     virtual void allgatherv(
-        Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
-        Addr recvbuf, Addr recvcnt, Addr displs, PayloadDataType recvtype,
+        const Hermes::MemAddr&, uint32_t sendcnt, PayloadDataType sendtype,
+        const Hermes::MemAddr&, Addr recvcnt, Addr displs, PayloadDataType recvtype,
         Communicator group, Functor*) {}
 
     virtual void gather(
-        Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
-        Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
+        const Hermes::MemAddr&, uint32_t sendcnt, PayloadDataType sendtype,
+        const Hermes::MemAddr&, uint32_t recvcnt, PayloadDataType recvtype,
         RankID root, Communicator group, Functor*) {}
 
     virtual void gatherv(
-        Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
-        Addr recvbuf, Addr recvcnt, Addr displs, PayloadDataType recvtype,
+        const Hermes::MemAddr&, uint32_t sendcnt, PayloadDataType sendtype,
+        const Hermes::MemAddr&, Addr recvcnt, Addr displs, PayloadDataType recvtype,
         RankID root, Communicator group, Functor*) {}
 
     virtual void alltoall(
-        Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
-        Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
+        const Hermes::MemAddr&, uint32_t sendcnt, PayloadDataType sendtype,
+        const Hermes::MemAddr&, uint32_t recvcnt, PayloadDataType recvtype,
         Communicator group, Functor*) {}
 
     virtual void alltoallv(
-        Addr sendbuf, Addr sendcnts, Addr senddispls, PayloadDataType sendtype,
-        Addr recvbuf, Addr recvcnts, Addr recvdispls, PayloadDataType recvtype,
+        const Hermes::MemAddr& sendbuf, Addr sendcnts, Addr senddispls, PayloadDataType sendtype,
+        const Hermes::MemAddr& recvbuf, Addr recvcnts, Addr recvdispls, PayloadDataType recvtype,
         Communicator group, Functor*) {}
 
     virtual void barrier(Communicator group, Functor*) {}
