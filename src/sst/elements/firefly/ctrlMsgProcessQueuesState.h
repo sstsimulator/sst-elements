@@ -465,6 +465,7 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req, uint64_t exitDelay )
 {
     m_exitDelay = exitDelay;
     req->setSrcRank( getMyRank( req ) );
+    dbg().verbose(CALL_INFO,1,1,"req=%p$ delay=%lu\n", req, exitDelay );
 
     uint64_t delay = obj().txDelay( req->getLength() );
 
@@ -599,7 +600,7 @@ void ProcessQueuesState<T1>::processSendLoop( _CommReq* req )
 template< class T1 >
 void ProcessQueuesState<T1>::enterRecv( _CommReq* req, uint64_t exitDelay )
 {
-    dbg().verbose(CALL_INFO,1,1,"new recv CommReq\n");
+    dbg().verbose(CALL_INFO,1,1,"req=%p$ delay=%lu\n", req, exitDelay );
     m_exitDelay = exitDelay;
 
     if ( m_postedShortBuffers.size() < MaxPostedShortBuffers ) {
