@@ -340,6 +340,7 @@ void EmberMessagePassingGenerator::enQ_isend( Queue& q, Addr payload,
 	Hermes::MemAddr addr;
 	addr.simVAddr = 0;
 	addr.backing = memAddr(payload);
+	enQ_isend(q,addr,count,dtype,dest,tag,group,req);
 }
 void EmberMessagePassingGenerator::enQ_isend( Queue& q, 
 	const Hermes::MemAddr& payload, 
