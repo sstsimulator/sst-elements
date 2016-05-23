@@ -67,7 +67,7 @@ struct pageInfo {
         // record that we've been touched
         touched++;
 	if (limitTouch) {
-	  if (touched > 64) touched == 64;
+	  if (touched > 64) touched = 64;
 	}
 
         // detect scans
