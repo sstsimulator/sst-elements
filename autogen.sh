@@ -68,6 +68,7 @@ done
 echo '   SST_ACTIVE_ELEMENT_LIBRARIES="$active_element_libraries"' >> config/sst_elements_config_output.m4
 echo '   SST_DIST_ELEMENT_LIBRARIES="$active_element_libraries"' >> config/sst_elements_config_output.m4
 echo "   AC_SUBST(SST_ACTIVE_ELEMENT_LIBRARIES)" >> config/sst_elements_config_output.m4
+echo "   AC_SUBST(SST_DIST_ELEMENT_LIBRARIES)" >> config/sst_elements_config_output.m4
 echo "])" >> config/sst_elements_config_output.m4
 
 # Delete the old libtool output
