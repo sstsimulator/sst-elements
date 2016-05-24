@@ -26,7 +26,7 @@ class BarrierFuncSM :  public CollectiveTreeFuncSM
         BarrierStartEvent* event = static_cast<BarrierStartEvent*>( e );
 
 		Hermes::MemAddr addr;
-		addr.simVAddr = 0;
+		addr.simVAddr = 1;
 		addr.backing = NULL;
         CollectiveStartEvent* tmp = new CollectiveStartEvent( addr, addr, 0,
                 MP::CHAR, MP::MAX, 0, MP::GroupWorld, 

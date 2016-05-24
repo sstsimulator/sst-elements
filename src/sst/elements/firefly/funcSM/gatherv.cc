@@ -88,7 +88,7 @@ bool GathervFuncSM::waitUp(Retval& retval)
         m_dbg.verbose(CALL_INFO,1,0,"post recv for child %d[%d]\n", 
                  m_waitUpState.count, m_qqq->calcChild(m_waitUpState.count) );
 
-		addr.simVAddr = 0;
+		addr.simVAddr = 1;
 		addr.backing = &m_waitUpSize[m_waitUpState.count];
         proto()->irecv( addr, 
                     sizeof(m_waitUpSize[m_waitUpState.count]),
@@ -139,7 +139,7 @@ bool GathervFuncSM::waitUp(Retval& retval)
 
         m_dbg.verbose(CALL_INFO,1,0,"post recv for child %d[%d]\n",
                    m_waitUpState.count, m_qqq->calcChild(m_waitUpState.count) );
-		addr.simVAddr = 0;
+		addr.simVAddr = 1;
 		addr.backing = &m_recvBuf[m_waitUpState.len];
         proto()->irecv( addr, 
                     m_waitUpSize[m_waitUpState.count],
@@ -160,7 +160,7 @@ bool GathervFuncSM::waitUp(Retval& retval)
         m_dbg.verbose(CALL_INFO,1,0,"send I'm ready message to"
                 " child %d[%d]\n", m_waitUpState.count, 
                 m_qqq->calcChild( m_waitUpState.count ) );
-		addr.simVAddr = 0;
+		addr.simVAddr = 1;
 		addr.backing = NULL;
         proto()->send( addr, 0, m_qqq->calcChild( m_waitUpState.count ),
                             genTag(3) );
@@ -262,7 +262,7 @@ bool GathervFuncSM::sendUp(Retval& retval)
         m_intBuf = m_recvBuf.size();
         m_dbg.verbose(CALL_INFO,1,0,"send Sening %d bytes message to %d\n", 
                                                 m_intBuf, m_qqq->parent());
-		addr.simVAddr = 0;
+		addr.simVAddr = 1;
 		addr.backing = &m_intBuf;
         proto()->send( addr, sizeof(m_intBuf), m_qqq->parent(),
                             genTag(1) );
@@ -273,7 +273,7 @@ bool GathervFuncSM::sendUp(Retval& retval)
     case SendUpState::RecvGo:
         m_dbg.verbose(CALL_INFO,1,0,"post receive for Go msg, parrent=%d\n",
                                         m_qqq->parent());
-		addr.simVAddr = 0;
+		addr.simVAddr = 1;
 		addr.backing = NULL;
         proto()->recv( addr, 0, m_qqq->parent(), genTag(3) );
 
@@ -284,7 +284,7 @@ bool GathervFuncSM::sendUp(Retval& retval)
 
         m_dbg.verbose(CALL_INFO,1,0,"sending body to parent %d\n", 
                                             m_qqq->parent());
-		addr.simVAddr = 0;
+		addr.simVAddr = 1;
 		addr.backing = &m_recvBuf[0];
         proto()->send( addr, m_recvBuf.size(), m_qqq->parent(),
                             genTag(2) );

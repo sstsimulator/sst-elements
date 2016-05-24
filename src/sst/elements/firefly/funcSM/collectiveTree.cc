@@ -102,7 +102,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                 }
 
                 m_dbg.verbose(CALL_INFO,1,0,"post irecv for child %d\n", child );
-				addr.simVAddr = 0;
+				addr.simVAddr = 1;
 				addr.backing = m_bufV[ child + 1 ];
                 proto()->irecv( addr, m_bufLen,
                         m_yyy->calcChild( child ), 
@@ -135,7 +135,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 
             m_dbg.verbose(CALL_INFO,1,0,"send message to parent %d\n",
                                                             m_yyy->parent());
-			addr.simVAddr = 0;
+			addr.simVAddr = 1;
 			addr.backing = ptr;
             proto()->send( addr, m_bufLen, m_yyy->parent(), genTag() );
             return;
@@ -148,7 +148,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 
             m_dbg.verbose(CALL_INFO,1,0,"post recv from parent %d\n",
                                                             m_yyy->parent());
-			addr.simVAddr = 0;
+			addr.simVAddr = 1;
 			addr.backing = m_event->result.backing;
             proto()->recv( addr, m_bufLen, m_yyy->parent(),
                                                          genTag() );
@@ -170,7 +170,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                 }
 
                 m_dbg.verbose(CALL_INFO,1,0,"isend to child %d\n", child );
-				addr.simVAddr = 0;
+				addr.simVAddr = 1;
 				addr.backing = m_event->result.backing;
                 proto()->isend( addr, m_bufLen,
                         m_yyy->calcChild( child ), 

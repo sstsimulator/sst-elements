@@ -155,7 +155,7 @@ void HadesMP::bcast(const Hermes::MemAddr& mydata, uint32_t count,
                 mydata,count,dtype);
 
 	Hermes::MemAddr addr;
-	addr.simVAddr = 0;
+	addr.simVAddr = 1;
 	addr.backing = NULL;
 
     functionSM().start( FunctionSM::Reduce, retFunc,

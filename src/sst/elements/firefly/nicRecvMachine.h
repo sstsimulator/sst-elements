@@ -59,14 +59,14 @@ class RecvMachine {
         void state_2( FireflyNetworkEvent* );
         void state_3( SendEntry* );
         void state_move_0( FireflyNetworkEvent* );
-        void state_move_1( FireflyNetworkEvent* );
+        void state_move_1( FireflyNetworkEvent*, bool );
         void checkNetwork();
 
         bool findRecv( int src, MsgHdr& );
         SendEntry* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
         bool findPut(int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
         size_t copyIn( Output& dbg, Nic::Entry& entry,
-                    FireflyNetworkEvent& event );
+                    FireflyNetworkEvent& event, std::vector<DmaVec>& vec );
 
         void state_n0( int vc ) {
             if ( vc == 0 ) {

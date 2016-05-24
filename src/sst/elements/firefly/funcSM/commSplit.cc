@@ -45,9 +45,9 @@ void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     m_dbg.verbose(CALL_INFO,1,0,"grpSize=%d\n", cnt );
 
-	m_sendbuf.simVAddr = 0;
+	m_sendbuf.simVAddr = 1;
     m_sendbuf.backing = (int*) malloc( sizeof(int) * 2 );
-	m_recvbuf.simVAddr = 0;
+	m_recvbuf.simVAddr = 1;
     m_recvbuf.backing = (int*) malloc( cnt * sizeof(int) * 2);
     ((int*)m_sendbuf.backing)[0] = m_commSplitEvent->color;
     ((int*)m_sendbuf.backing)[1] = m_commSplitEvent->key;

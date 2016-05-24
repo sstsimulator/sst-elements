@@ -69,7 +69,7 @@ bool AllgatherFuncSM::setup( Retval& retval )
         src = m_info->getGroup(m_event->group)->getMapping( calcSrc( m_setupState.offset ) );
 
         m_dbg.verbose(CALL_INFO,1,0,"post recv for ready msg from %d\n", src);
-		addr.simVAddr = 0;
+		addr.simVAddr = 1;
 		addr.backing = NULL;
         proto()->irecv( addr, 0, src, genTag(), &m_recvReq );
         m_setupState.state = SetupState::PostStageRecv;
@@ -121,7 +121,7 @@ bool AllgatherFuncSM::setup( Retval& retval )
         m_dbg.verbose(CALL_INFO,1,0,"send ready message to %d\n",
 						m_info->getGroup(m_event->group)->getMapping(m_dest[0]));
 		
-		addr.simVAddr = 0;
+		addr.simVAddr = 1;
 		addr.backing = NULL;
         proto()->send( addr, 0, m_info->getGroup(m_event->group)->getMapping( m_dest[0] ), genTag() );
     }
@@ -189,7 +189,7 @@ void AllgatherFuncSM::initIoVec( std::vector<IoVec>& ioVec,
     while ( countDown ) {  
         --countDown;
         IoVec jjj;
-		jjj.addr.simVAddr = 0;
+		jjj.addr.simVAddr = 1;
         jjj.addr.backing = chunkPtr( currentChunk ); 
         jjj.len = chunkSize( currentChunk );
         
