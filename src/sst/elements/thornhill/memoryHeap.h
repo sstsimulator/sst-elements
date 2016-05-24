@@ -31,8 +31,10 @@ class MemoryHeap : public Component {
 
     std::vector<Link*>  		m_links;
 	uint64_t                    m_currentVaddr;
+	Output						m_output;
 
 	MemoryHeap() : Component(-1) {}
+
 };
 
 }
