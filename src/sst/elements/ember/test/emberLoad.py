@@ -304,6 +304,7 @@ if rndmPlacement and bgPercentage > 0:
         count += 1
 
 nicParams['verboseLevel'] = debug
+nicParams['verboseMask'] = 1
 hermesParams['hermesParams.verboseLevel'] = debug
 hermesParams['hermesParams.nicParams.verboseLevel'] = debug
 hermesParams['hermesParams.functionSM.verboseLevel'] = debug
