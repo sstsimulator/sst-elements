@@ -24,12 +24,14 @@ class SingleThread : public DetailedCompute {
 	};
 
   public:
+
     SingleThread( Component* owner, Params& params, 
                                             std::string name ="" );
 
     ~SingleThread(){};
 
-    virtual void start( std::string& name, Params& params, 
+    virtual void start( const std::deque< 
+						std::pair< std::string, SST::Params > >&, 
                  std::function<int()> );
     virtual bool isConnected() { return ( m_link ); }
 

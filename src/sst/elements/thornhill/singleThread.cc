@@ -52,15 +52,14 @@ void SingleThread::eventHandler( SST::Event* ev )
 	delete entry;
 }
 
-void SingleThread::start( std::string& name, Params& params,
+void SingleThread::start( const std::deque< std::pair< std::string, SST::Params> >& generators,
                  std::function<int()> finiHandler )
 {
     MirandaReqEvent* event = new MirandaReqEvent;
 	
 	event->key = (uint64_t) new Entry( finiHandler );
 
-	event->generator = name;
-	event->params = params;
+	event->generators = generators;
 
 	m_link->send( 0, event );
 }
