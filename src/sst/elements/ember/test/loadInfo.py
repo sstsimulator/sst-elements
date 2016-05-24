@@ -106,6 +106,8 @@ class EmberEP( EndPoint ):
         loopBack.addParam( "numCores", self.numCores )
 
         memory = sst.Component("memory" + str(nodeID), "thornhill.MemoryHeap")
+        memory.addParam( "nid", nodeID )
+        #memory.addParam( "verboseLevel", 1 )
 
         # Create a motifLog only for one core of the desired node(s)
         logCreatedforFirstCore = False
