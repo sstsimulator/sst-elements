@@ -36,6 +36,7 @@ private:
 	uint64_t issueCount;
 	uint64_t nextAddr;
 	Output*  out;
+	ReqOperation memOp;
 
 };
 
