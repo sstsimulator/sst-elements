@@ -48,7 +48,9 @@ public:
             return 0;
         }; 
 
-        m_api.start( m_name, m_params, foo );
+        std::deque< std::pair< std::string, SST::Params> > tmp;
+        tmp.push_back( std::make_pair( m_name, m_params ) );
+        m_api.start( tmp, foo );
     }
 
 protected:
