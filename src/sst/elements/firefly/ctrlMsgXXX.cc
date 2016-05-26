@@ -237,11 +237,7 @@ void XXX::memEventHandler( Event* ev )
 
 
 void XXX::init() {
-	if ( m_memHeapLink ) {
-    	m_processQueuesState->enterInit();
-	} else {
-		passCtrlToFunction();
-	}
+   	m_processQueuesState->enterInit( (m_memHeapLink) );
 }
 
 void XXX::sendv( std::vector<IoVec>& ioVec, 

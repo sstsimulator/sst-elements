@@ -60,7 +60,7 @@ class ProcessQueuesState
         }
     }
 
-    void enterInit( );
+    void enterInit( bool );
     void enterInit_1( uint64_t addr, size_t length );
 
     void enterSend( _CommReq*, uint64_t exitDelay = 0 );
@@ -357,7 +357,7 @@ class ProcessQueuesState
 };
 
 template< class T1 >
-void ProcessQueuesState<T1>::enterInit( )
+void ProcessQueuesState<T1>::enterInit( bool haveGlobalMemHeap )
 {
     size_t length = 0;
     length += MaxPostedShortBuffers * (sizeof(MatchHdr) + 16 ) & ~15;
@@ -370,7 +370,11 @@ void ProcessQueuesState<T1>::enterInit( )
         return 0;
     };
 
-    obj().memHeap().alloc( length, callback );
+    if ( haveGlobalMemHeap ) {
+        obj().memHeap().alloc( length, callback );
+    } else {
+        enterInit_1( 0x1000, length );
+    }
 }
 
 template< class T1 >
