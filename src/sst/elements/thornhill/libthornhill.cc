@@ -48,6 +48,13 @@ static const ElementInfoParam component_params[] = {
     {   NULL,   NULL,   NULL    }
 };
 
+static const char * port_events[] = { "MemoryHeapEvent", NULL };
+
+static const ElementInfoPort component_ports[] = {
+    {"detailed%(num_ports)d", "Port connected to Memory Heap client", port_events },
+    {NULL, NULL, NULL}
+};
+
 static const ElementInfoComponent components[] = {
 	{
         "MemoryHeap",
@@ -55,7 +62,7 @@ static const ElementInfoComponent components[] = {
         NULL,
         create_MemoryHeap,
         component_params,
-        NULL,
+        component_ports,
         COMPONENT_CATEGORY_UNCATEGORIZED,
         NULL
     },
