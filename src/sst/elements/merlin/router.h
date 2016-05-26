@@ -18,7 +18,7 @@
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
-#include <sst/core/module.h>
+#include <sst/core/subcomponent.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/unitAlgebra.h>
 #include <sst/core/interfaces/simpleNetwork.h>
@@ -334,10 +334,10 @@ private:
     ImplementSerializable(SST::Merlin::internal_router_event)
 };
 
-class Topology : public Module {
+class Topology : public SubComponent {
 public:
     enum PortState {R2R, R2N, UNCONNECTED};
-    Topology() : output(Simulation::getSimulation()->getSimulationOutput()) {}
+    Topology(Component* comp) : SubComponent(comp), output(Simulation::getSimulation()->getSimulationOutput()) {}
     virtual ~Topology() {}
 
     virtual void route(int port, int vc, internal_router_event* ev) = 0;

@@ -56,7 +56,7 @@ topo_fattree::parseShape(const std::string &shape, int *downs, int *ups) const
 }
 
 topo_fattree::topo_fattree(Component* comp, Params& params) :
-    Topology(),
+    Topology(comp),
     num_vcs(-1),
     allow_adaptive(false)
 {
