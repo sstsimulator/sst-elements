@@ -1,8 +1,8 @@
-// Copyright 2009-2015 Sandia Corporation. Under the terms
+// Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2015, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -26,18 +26,18 @@ simpleStatisticsComponent::simpleStatisticsComponent(ComponentId_t id, Params& p
     // Get runtime parameters from the input file (.py),  
     // these will set the random number generation.
     rng_count = 0;
-    rng_max_count = params.find_integer("count", 1000);
+    rng_max_count = params.find<int64_t>("count", 1000);
 
-    std::string rngType = params.find_string("rng", "mersenne");
+    std::string rngType = params.find<std::string>("rng", "mersenne");
     
     if (rngType == "mersenne") {
-        unsigned int seed =  params.find_integer("seed", 1447);
+        unsigned int seed =  params.find<int64_t>("seed", 1447);
         
         output.output("Using Mersenne Random Number Generator with seed = %u\n",seed);
         rng = new MersenneRNG(seed);
     } else if (rngType == "marsaglia") {
-        unsigned int m_w = params.find_integer("seed_w", 0);
-        unsigned int m_z = params.find_integer("seed_z", 0);
+        unsigned int m_w = params.find<int64_t>("seed_w", 0);
+        unsigned int m_z = params.find<int64_t>("seed_z", 0);
         
         if(m_w == 0 || m_z == 0) {
             output.output("Using Marsaglia Random Number Generator with no seeds ...\n");

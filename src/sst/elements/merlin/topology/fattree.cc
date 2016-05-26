@@ -1,8 +1,8 @@
-// Copyright 2009-2015 Sandia Corporation. Under the terms
+// Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2015, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -56,7 +56,7 @@ topo_fattree::parseShape(const std::string &shape, int *downs, int *ups) const
 }
 
 topo_fattree::topo_fattree(Component* comp, Params& params) :
-    Topology(),
+    Topology(comp),
     num_vcs(-1),
     allow_adaptive(false)
 {

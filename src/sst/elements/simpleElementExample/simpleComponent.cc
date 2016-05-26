@@ -1,8 +1,8 @@
-// Copyright 2009-2015 Sandia Corporation. Under the terms
+// Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2015, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -28,17 +28,17 @@ simpleComponent::simpleComponent(ComponentId_t id, Params& params) :
     rng = new SST::RNG::MarsagliaRNG(11, 272727);
     
     // get parameters
-    workPerCycle = params.find_integer("workPerCycle", 0, found);
+    workPerCycle = params.find<int64_t>("workPerCycle", 0, found);
     if (!found) {
         Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find work per cycle\n");
     }
     
-    commFreq = params.find_integer("commFreq", 0, found);
+    commFreq = params.find<int64_t>("commFreq", 0, found);
     if (!found) {
         Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
     }
     
-    commSize = params.find_integer("commSize", 16);
+    commSize = params.find<int64_t>("commSize", 16);
     
     // init randomness
     srand(1);

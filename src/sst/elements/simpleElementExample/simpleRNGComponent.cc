@@ -1,8 +1,8 @@
-// Copyright 2009-2015 Sandia Corporation. Under the terms
+// Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2015, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -26,21 +26,21 @@ simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params& params) :
   Component(id) 
 {
     rng_count = 0;
-    rng_max_count = params.find_integer("count", 1000);
+    rng_max_count = params.find<int64_t>("count", 1000);
 
-    uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+    uint32_t verbose = (uint32_t) params.find<int64_t>("verbose", 0);
     output = new Output("RNGComponent", verbose, 0, Output::STDOUT);
 
-    std::string rngType = params.find_string("rng", "mersenne");
+    std::string rngType = params.find<std::string>("rng", "mersenne");
 
     if (rngType == "mersenne") {
-        const uint32_t seed = (uint32_t) params.find_integer("seed", 1447);
+        const uint32_t seed = (uint32_t) params.find<int64_t>("seed", 1447);
 
 	output->verbose(CALL_INFO, 1, 0, "Using Mersenne Generator with seed: %" PRIu32 "\n", seed);
         rng = new MersenneRNG(seed);
     } else if (rngType == "marsaglia") {
-        const uint32_t m_w = (uint32_t) params.find_integer("seed_w", 0);
-        const uint32_t m_z = (uint32_t) params.find_integer("seed_z", 0);
+        const uint32_t m_w = (uint32_t) params.find<int64_t>("seed_w", 0);
+        const uint32_t m_z = (uint32_t) params.find<int64_t>("seed_z", 0);
 
         if(m_w == 0 || m_z == 0) {
 	    output->verbose(CALL_INFO, 1, 0, "Using Marsaglia Generator with no seeds...\n");
@@ -51,7 +51,7 @@ simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params& params) :
             rng = new MarsagliaRNG(m_z, m_w);
         }
     } else if (rngType == "xorshift") {
-	uint32_t seed = (uint32_t) params.find_integer("seed", 57);
+	uint32_t seed = (uint32_t) params.find<int64_t>("seed", 57);
 	output->verbose(CALL_INFO, 1, 0, "Using XORShift Generator with seed: %" PRIu32 "\n", seed);
 	rng = new XORShiftRNG(seed);
     } else {

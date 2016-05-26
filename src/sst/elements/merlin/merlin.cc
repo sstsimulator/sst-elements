@@ -1,8 +1,8 @@
-// Copyright 2009-2015 Sandia Corporation. Under the terms
+// Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2015, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -71,7 +71,7 @@ static const ElementInfoParam hr_router_params[] = {
     {"id", "ID of the router."},
     {"num_ports", "Number of ports that the router has"},
     {"num_vcs", "DEPRECATED", ""},
-    {"topology", "Name of the topology module that should be loaded to control routing."},
+    {"topology", "Name of the topology subcomponent that should be loaded to control routing."},
     {"xbar_arb", "Arbitration unit to be used for crossbar.","merlin.xbar_arb_lru"},
     {"link_bw", "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
     {"flit_size", "Flit size specified in either b or B (can include SI prefix)."},
@@ -173,7 +173,7 @@ static const ElementInfoParam test_nic_params[] = {
     {"num_messages","Total number of messages to send to each endpoint."},
     {"num_vns","Number of requested virtual networks."},
     {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
-    {"topology", "Name of the topology module that should be loaded to control routing."},
+    {"topology", "Name of the topology subcomponent that should be loaded to control routing."},
     {"remap", "Creates a logical to physical mapping shifted by remap amount.", "0"},
     // {"packet_size","Packet size specified in either b or B (can include SI prefix)."},
     // {"packets_to_send","Number of packets to send in the test."},
@@ -256,7 +256,7 @@ static const ElementInfoParam traffic_generator_params[] = {
     {"num_peers","Total number of endpoints in network."},
     {"num_vns","Number of requested virtual networks."},
     {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
-    {"topology", "Name of the topology module that should be loaded to control routing."},
+    {"topology", "Name of the topology subcomponent that should be loaded to control routing."},
     {"buffer_length", "Length of input and output buffers.","1kB"},
     {"packets_to_send","Number of packets to send in the test.","1000"},
     {"packet_size","Packet size specified in either b or B (can include SI prefix).","5"},
@@ -312,7 +312,7 @@ static const ElementInfoPort traffic_generator_ports[] = {
 // MODULES
 
 // topo_torus
-static Module*
+static SubComponent*
 load_torus_topology(Component* comp, Params& params)
 {
     return new topo_torus(comp,params);
@@ -327,7 +327,7 @@ static const ElementInfoParam torus_params[] = {
 
 
 // topo_mesh
-static Module*
+static SubComponent*
 load_mesh_topology(Component* comp, Params& params)
 {
     return new topo_mesh(comp,params);
@@ -342,7 +342,7 @@ static const ElementInfoParam mesh_params[] = {
 
 
 // topo tree
-static Module*
+static SubComponent*
 load_fattree_topology(Component* comp, Params& params)
 {
     return new topo_fattree(comp,params);
@@ -356,7 +356,7 @@ static const ElementInfoParam fattree_params[] = {
 };
 
 // topo dragonfly
-static Module*
+static SubComponent*
 load_dragonfly_topology(Component* comp, Params& params)
 {
     return new topo_dragonfly(comp,params);
@@ -372,7 +372,7 @@ static const ElementInfoParam dragonfly_params[] = {
 };
 
 // topo dragonfly2
-static Module*
+static SubComponent*
 load_dragonfly2_topology(Component* comp, Params& params)
 {
     return new topo_dragonfly2(comp,params);
@@ -482,7 +482,7 @@ create_portals_nic(SST::ComponentId_t id,
 
 
 
-static Module*
+static SubComponent*
 load_singlerouter_topology(Component* comp, Params& params)
 {
     return new topo_singlerouter(comp,params);
@@ -662,54 +662,6 @@ static const ElementInfoComponent components[] = {
 };
 
 static const ElementInfoModule modules[] = {
-    { "torus",
-      "Torus topology object",
-      NULL,
-      NULL,
-      load_torus_topology,
-      torus_params,
-      "SST::Merlin::Topology"
-    },
-    { "mesh",
-      "Mesh topology object",
-      NULL,
-      NULL,
-      load_mesh_topology,
-      mesh_params,
-      "SST::Merlin::Topology"
-    },
-    { "singlerouter",
-      "Simple, single-router topology object",
-      NULL,
-      NULL,
-      load_singlerouter_topology,
-      NULL,
-      "SST::Merlin::Topology"
-    },
-    { "fattree",
-      "Fattree topology object",
-      NULL,
-      NULL,
-      load_fattree_topology,
-      fattree_params,
-      "SST::Merlin::Topology"
-    },
-    { "dragonfly",
-      "Dragonfly topology object",
-      NULL,
-      NULL,
-      load_dragonfly_topology,
-      dragonfly_params,
-      "SST::Merlin::Topology"
-    },
-    { "dragonfly2",
-      "Dragonfly2 topology object",
-      NULL,
-      NULL,
-      load_dragonfly2_topology,
-      dragonfly2_params,
-      "SST::Merlin::Topology"
-    },
     { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -786,6 +738,54 @@ static const ElementInfoSubComponent subcomponents[] = {
       xbar_arb_lru_infx_params,
       xbar_arb_lru_infx_statistics,
       "Merlin::XbarArbitration"
+    },
+    { "torus",
+      "Torus topology object",
+      NULL,
+      load_torus_topology,
+      torus_params,
+      NULL,
+      "SST::Merlin::Topology"
+    },
+    { "mesh",
+      "Mesh topology object",
+      NULL,
+      load_mesh_topology,
+      mesh_params,
+      NULL,
+      "SST::Merlin::Topology"
+    },
+    { "singlerouter",
+      "Simple, single-router topology object",
+      NULL,
+      load_singlerouter_topology,
+      NULL,
+      NULL,
+      "SST::Merlin::Topology"
+    },
+    { "fattree",
+      "Fattree topology object",
+      NULL,
+      load_fattree_topology,
+      fattree_params,
+      NULL,
+      "SST::Merlin::Topology"
+    },
+    { "dragonfly",
+      "Dragonfly topology object",
+      NULL,
+      load_dragonfly_topology,
+      dragonfly_params,
+      NULL,
+      "SST::Merlin::Topology"
+    },
+    { "dragonfly2",
+      "Dragonfly2 topology object",
+      NULL,
+      load_dragonfly2_topology,
+      dragonfly2_params,
+      NULL,
+      "SST::Merlin::Topology"
     },
     { NULL, NULL, NULL, NULL, NULL, NULL }
 };

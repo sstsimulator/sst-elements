@@ -1,8 +1,8 @@
-// Copyright 2009-2015 Sandia Corporation. Under the terms
+// Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2015, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -20,8 +20,8 @@ namespace SimpleClockerComponent {
 simpleClockerComponent::simpleClockerComponent(ComponentId_t id, Params& params) :
   Component(id) 
 {
-    clock_frequency_str = params.find_string("clock", "1GHz");
-    clock_count = params.find_integer("clockcount", 1000);
+    clock_frequency_str = params.find<std::string>("clock", "1GHz");
+    clock_count = params.find<int64_t>("clockcount", 1000);
     
     std::cout << "Clock is configured for: " << clock_frequency_str << std::endl;
     

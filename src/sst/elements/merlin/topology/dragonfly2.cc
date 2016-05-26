@@ -1,8 +1,8 @@
-// Copyright 2009-2015 Sandia Corporation. Under the terms
+// Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2015, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -54,7 +54,7 @@ RouteToGroup::setRouterPortPair(int group, int route_number, const RouterPortPai
  * [params.p+params.a-1, params.k)  // Other groups
  */
 topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
-    Topology()
+    Topology(comp)
 {
     params.p = (uint32_t)p.find<int>("dragonfly:hosts_per_router");
     params.a = (uint32_t)p.find<int>("dragonfly:routers_per_group");
