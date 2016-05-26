@@ -148,7 +148,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         merlin_abort.fatal(CALL_INFO, -1, "hr_router requires topology to be specified\n");
     }
 
-    topo = dynamic_cast<Topology*>(loadModuleWithComponent(topology,this,params));
+    topo = dynamic_cast<Topology*>(loadSubComponent(topology,this,params));
     if ( !topo ) {
         merlin_abort.fatal(CALL_INFO, -1, "Unable to find topology '%s'\n", topology.c_str());
     }

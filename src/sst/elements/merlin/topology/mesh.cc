@@ -20,7 +20,7 @@ using namespace SST::Merlin;
 
 
 topo_mesh::topo_mesh(Component* comp, Params& params) :
-    Topology()
+    Topology(comp)
 {
 
     // Get the various parameters

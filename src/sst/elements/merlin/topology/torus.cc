@@ -20,7 +20,7 @@ using namespace SST::Merlin;
 
 
 topo_torus::topo_torus(Component* comp, Params& params) :
-    Topology()
+    Topology(comp)
 {
 
     // Get the various parameters
