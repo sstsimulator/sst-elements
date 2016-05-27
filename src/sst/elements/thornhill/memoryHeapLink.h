@@ -34,8 +34,11 @@ class MemoryHeapLink : public SubComponent {
 		m_link = configureLink( "memoryHeap", "0ps",
             new Event::Handler<MemoryHeapLink>(
                     this,&MemoryHeapLink::eventHandler ) );	
-		assert(m_link);
 	}
+
+    bool isConnected() {
+        return (m_link);
+    }
 
 	void alloc( size_t length, std::function<void(uint64_t)> fini ) {
 		Entry* entry = new Entry( fini );

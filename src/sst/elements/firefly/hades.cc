@@ -75,7 +75,6 @@ Hades::Hades( Component* owner, Params& params ) :
 
         assert( m_detailedCompute );
         if ( ! m_detailedCompute->isConnected() ) {
-
             delete m_detailedCompute;
             m_detailedCompute = NULL;
         }
@@ -89,7 +88,10 @@ Hades::Hades( Component* owner, Params& params ) :
         m_memHeapLink = dynamic_cast<Thornhill::MemoryHeapLink*>( loadSubComponent(
                             memName, memParams ) );
 
-        assert( m_memHeapLink );
+        if ( ! m_memHeapLink->isConnected() ) {
+            delete m_memHeapLink;
+            m_memHeapLink = NULL;
+        }
     }
 
     m_netMapSize = params.find<int>("netMapSize",-1);
