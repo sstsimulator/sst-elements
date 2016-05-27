@@ -160,6 +160,7 @@ class HeapAddrs {
 				prev->length += next->length;
 				m_free.erase( next );
 				erase( next );
+				delete next;
 			}
 			erase( entry );
 			delete entry;
