@@ -1,0 +1,17 @@
+bungee14
+Scheduler looking for link... nodeLink0 nodeLink1 nodeLink2 nodeLink3 nodeLink4 nodeLink5 nodeLink6 nodeLink7 nodeLink8 nodeLink9 nodeLink10 nodeLink11 nodeLink12 nodeLink13 nodeLink14 nodeLink15 nodeLink16 nodeLink17 nodeLink18 nodeLink19 nodeLink20 nodeLink21 nodeLink22 nodeLink23 nodeLink24 nodeLink25 nodeLink26 nodeLink27 nodeLink28 nodeLink29 nodeLink30 nodeLink31 nodeLink32 nodeLink33 nodeLink34 nodeLink35 nodeLink36 nodeLink37 nodeLink38 nodeLink39 nodeLink40 nodeLink41 nodeLink42 nodeLink43 nodeLink44 nodeLink45 nodeLink46 nodeLink47 nodeLink48 nodeLink49 nodeLink50 nodeLink51 nodeLink52 nodeLink53 nodeLink54 nodeLink55 nodeLink56 nodeLink57 nodeLink58 nodeLink59 nodeLink60 nodeLink61 nodeLink62 nodeLink63 nodeLink64 nodeLink65 nodeLink66 nodeLink67 nodeLink68 nodeLink69 nodeLink70 nodeLink71 nodeLink72 nodeLink73 nodeLink74 nodeLink75 nodeLink76 nodeLink77 nodeLink78 nodeLink79 nodeLink80 nodeLink81 nodeLink82 nodeLink83 nodeLink84 nodeLink85 nodeLink86 nodeLink87 nodeLink88 nodeLink89 nodeLink90 nodeLink91 nodeLink92 nodeLink93 nodeLink94 nodeLink95 nodeLink96 nodeLink97 nodeLink98 nodeLink99 nodeLink100 nodeLink101 nodeLink102 nodeLink103 nodeLink104 nodeLink105 nodeLink106 nodeLink107 nodeLink108 nodeLink109 nodeLink110 nodeLink111 nodeLink112 nodeLink113 nodeLink114 nodeLink115 nodeLink116 nodeLink117 nodeLink118 nodeLink119 nodeLink120 nodeLink121 nodeLink122 nodeLink123 nodeLink124 nodeLink125 nodeLink126 nodeLink127 nodeLink128 nodeLink129 nodeLink130 nodeLink131 nodeLink132 nodeLink133 nodeLink134 nodeLink135 nodeLink136(no nodeLink136)
+Scheduler Detects 136 nodes
+Defaulting to no heat recirculation
+schedComp:Detailed Network sim is ON
+
+completedJobsTrace file is empty
+runningJobsTrace file is empty
+The jobs that have been completed in ember
+ignoreUntilTime: 0
+The jobs that are still running in ember
+Taking snapshot as Job 0 is starting...
+All jobs have arrived!
+0: Sent snapshot event to self
+0:Snapshot event received...Appending snapshot...
+In Sched component: sim paused
+Simulation is complete, simulated time: 0 s

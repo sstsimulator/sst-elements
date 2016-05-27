@@ -1,0 +1,12 @@
+# Simulation for trace jobtrace_files/bisection_N1.sim started Tue May 24 16:15:14 2016
+# [Machine] 
+# local topology: 0, global topology: 1, num links: 374, num routers: 68, num groups: 17, 2 cores per node
+# [Scheduler] 
+# EASY Scheduler (FIFOComparator)
+# [Allocator] 
+# Simple Allocator
+# [TaskMapper] 
+# Simple Task Mapper
+
+# Job	Procs	Actual Time	 Avg Pairwise L1 Distance	Job Congestion	Hop-Bytes
+0	272	550000	4.522491	1056.000000	44908178046976.000000
