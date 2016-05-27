@@ -654,6 +654,9 @@ class topoDragonFly2(Topo):
                     self.global_link_map[i*igpr+j] = count;
                     count = count + 1
 
+        print "Global link map array"
+        print self.global_link_map
+
         # End set global link map with default
             
 
