@@ -130,7 +130,9 @@ libember_la_SOURCES = \
 	mpi/motifs/emberrandomgen.cc \
 	sirius/include/sirius/siriusglobals.h \
 	shmem/emberShmemGen.cc \
-	shmem/emberShmemGen.h
+	shmem/emberShmemGen.h \
+	mpi/motifs/emberunstructured.h \
+	mpi/motifs/emberunstructured.cc
 
 bin_PROGRAMS = sst-spygen sst-meshconvert
 

@@ -23,6 +23,7 @@ EmberAlltoallGenerator::EmberAlltoallGenerator(SST::Component* owner,
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 	m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
 	m_bytes      = (uint32_t) params.find_integer("arg.bytes", 1);
+    jobId        = (int) params.find_integer("_jobId"); //NetworkSim
     m_sendBuf = NULL;
     m_recvBuf = NULL;
 }
@@ -35,6 +36,8 @@ bool EmberAlltoallGenerator::generate( std::queue<EmberEvent*>& evQ) {
 			latency /= 1000000000.0;
             output( "%s: ranks %d, loop %d, bytes %d, latency %.3f us\n", 
 					getMotifName().c_str(), size(), m_iterations, m_bytes, latency * 1000000.0  );
+            //NetworkSim: report total running time
+            output("Job Finished: JobNum:%d Time:%" PRIu64 " us\n", jobId,  getCurrentSimTimeMicro());
         }
         return true;
     }

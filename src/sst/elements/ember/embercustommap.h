@@ -42,8 +42,8 @@ public:
         // NetworkSim: added variables to construct the custom map
         std::string jobId;
         std::string mapFile;
-        std::map<int, int> CustomMap;
-        std::map<int, int> InvCustomMap;
+        std::map<int, int> CustomMap; //custom task mapping
+        std::map<int, int> InvCustomMap; //inverse of the custom task mapping
         // end->NetworkSim
 
         //NetworkSim: function that reads the custom mapping of the job with _mapjobId
@@ -53,7 +53,9 @@ public:
                 input.open( fileName.c_str() );
 
                 if(!input.is_open()){
-                        //fatal(CALL_INFO, -1, "Unable to open job task map file: %s\n", fileName.c_str());
+                        std::cerr << "Error: Unable to open job task map file: \'" 
+                                    << fileName.c_str() << "\'" << std::endl;
+                        exit(-1);
                 }
 
                 std::string line;

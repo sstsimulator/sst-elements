@@ -56,6 +56,7 @@
 #include "mpi/motifs/embercmt3d.h"
 #include "mpi/motifs/embercmtcr.h"
 #include "mpi/motifs/emberstop.h"
+#include "mpi/motifs/emberunstructured.h" //NetworkSim: added unstructured communication motif
 #include "mpi/motifs/embersiriustrace.h"
 #include "mpi/motifs/emberrandomgen.h"
 #include "emberconstdistrib.h"
@@ -270,6 +271,13 @@ load_Stop( Component* comp, Params& params ) {
 }
 //end->NetworkSim
 
+//NetworkSim: loader for the unstructured communication motif
+static SubComponent*
+load_Unstructured( Component* comp, Params& params ) {
+	return new EmberUnstructuredGenerator(comp, params);
+}
+//end->NetworkSim
+
 static const ElementInfoParam component_params[] = {
     { "module", "Sets the OS module", ""},
     { "verbose", "Sets the output verbosity of the component", "0" },
@@ -284,6 +292,8 @@ static const ElementInfoParam component_params[] = {
     { "distribModule", "Sets the distribution SST module for compute modeling, default is a constant distribution of mean 1", "1.0"},
 
     { "rankmapper", "Sets the rank mapping SST module to load to rank translations, default is linear mapping", "ember.LinearMap" },
+
+    { "mapFile", "Sets the name of the input file for custom map", "mapFile.txt" },
 
     { "motif%(motif_count)d", "Sets the event generator or motif for the engine", "ember.EmberPingPongGenerator" },
 
@@ -414,6 +424,18 @@ static const ElementInfoParam barrier_params[] = {
 static const ElementInfoParam stop_params[] = {
 	{	"arg.iterations",		"Sets the number of barrier operations to perform", 	"1024"},
 	{	"arg.compute",		"Sets the time spent computing",	 	"1"},
+	{	NULL,	NULL,	NULL	}
+};
+//end->NetworkSim
+
+//NetworkSim: unstructured motif params
+static const ElementInfoParam unstructured_params[] = {
+	{	"arg.iterations",		"Sets the number of unstructured motif operations to perform", 	"1"},
+	{	"arg.computetime",		"Sets the number of nanoseconds to compute for", 	"0"},
+	{	"arg.graphfile",		"Name of the file the includes the communication graph",	 	"-1"},
+	{	"arg.p_size",			"Sets the problem size",			"10000"},
+	{	"arg.fields_per_cell",	"Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
+	{	"arg.datatype_width",	"Specify the size of a single variable, single grid point, typically 8 for double, 4 for float, default is 8 (double). This scales message size to ensure byte count is correct.", "8"},
 	{	NULL,	NULL,	NULL	}
 };
 //end->NetworkSim
@@ -826,6 +848,15 @@ static const ElementInfoSubComponent subcomponents[] = {
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
+    { 	"UnstructuredMotif",
+	"NetworkSim: Performs an Unstructured Communication Motif based on an input graph",
+	NULL,
+	load_Unstructured,
+	unstructured_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+
     { 	"AllPingPongMotif",
 	"Performs a All Ping Pong Motif",
 	NULL,
