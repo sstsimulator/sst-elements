@@ -29,7 +29,6 @@ EmberGenerator::EmberGenerator( Component* owner, Params& params,
 
     m_detailedCompute = ee->getDetailedCompute();
 	m_memHeapLink = ee->getMemHeapLink();
-	assert(m_memHeapLink);
 
     m_motifNum = params.find<int>( "_motifNum", -1 );	
     m_jobId = params.find<int>( "_jobId", -1 );	
