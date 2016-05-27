@@ -272,7 +272,6 @@ int NearestAllocMapper::getCenterTask(const std::vector<std::map<int,int> > & in
     int minTask = max((long int) 0, jobSize / 2  - upperLimit / 2);
     int maxTask = min((long int) jobSize, jobSize / 2 + upperLimit / 2);
     for(int task = minTask; task < maxTask; task++){
-        //start from the middle task - higher probability of smallest distance
         newDist = dijkstraWithLimit(inCommGraph, task, minDist);
         if(newDist < minDist){
             minDist = newDist;

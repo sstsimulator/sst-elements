@@ -47,11 +47,24 @@ JobParser::JobParser(Machine* machine,
     jobTrace = params.find_string("traceName").c_str();
 
     //NetworkSim: traces for completed/running jobs on ember
-    if (*(this->doDetailedNetworkSim)){
-        completedJobTrace = params.find_string("completedJobsTrace").c_str();
-        runningJobTrace = params.find_string("runningJobsTrace").c_str();
+    char* dir = getenv("SIMOUTPUT");
+    std::string outputDirectory;
+    if (NULL == dir) {
+        outputDirectory = "./";
+    } else {
+        outputDirectory = dir;
     }
-    //end->NetworkSim
+
+    if (*(this->doDetailedNetworkSim)){
+        //initialize outputDirectory        
+        if (NULL == dir) {
+            completedJobTrace = params.find_string("completedJobsTrace").c_str();
+            runningJobTrace = params.find_string("runningJobsTrace").c_str();
+        } else {
+            completedJobTrace = outputDirectory + params.find_string("completedJobsTrace").c_str();
+            runningJobTrace = outputDirectory + params.find_string("runningJobsTrace").c_str();
+        }
+    }
 
     lastJobRead[ 0 ] = '\0';
     

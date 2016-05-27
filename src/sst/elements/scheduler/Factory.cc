@@ -41,6 +41,7 @@
 #include "allocators/RandomAllocator.h"
 #include "allocators/RoundUpMBSAllocator.h"
 #include "allocators/SimpleAllocator.h"
+#include "allocators/SimpleSpreadAllocator.h"
 #include "allocators/SortedFreeListAllocator.h"
 
 #include "schedulers/EASYScheduler.h"
@@ -98,6 +99,7 @@ const Factory::allocTableEntry Factory::allocTable[] = {
     {HYBRID, "hybrid"},
     {NEARESTAMAP, "nearestamap"},
     {SPECTRALAMAP, "spectralamap"},
+    {SIMPLESPREAD, "simplespread"},
 };
 
 const Factory::taskMapTableEntry Factory::taskMapTable[] = {
@@ -298,21 +300,31 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
         case DRAGONFLY:
         {
             if (schedparams -> size() < 7) {
-                schedout.fatal(CALL_INFO, 1, "Wrong number of arguments for Dragonfly Machine: routersPerGroup, portsPerRouter, opticalsPerRouter, nodesPerRouter, localTopology (opt), globalTopology (opt)");
+                schedout.fatal(CALL_INFO, 1, "Wrong number of arguments for Dragonfly Machine: Usage:"
+                "dragonfly[routersPerGroup, portsPerRouter, opticalsPerRouter, nodesPerRouter, localTopology, globalTopology]");
             }
             int routersPerGroup     = strtol(schedparams -> at(1).c_str(), NULL, 0);
             int portsPerRouter      = strtol(schedparams -> at(2).c_str(), NULL, 0);
             int opticalsPerRouter   = strtol(schedparams -> at(3).c_str(), NULL, 0);
             int nodesPerRouter      = strtol(schedparams -> at(4).c_str(), NULL, 0);
-            int lt = 0;
-            if (schedparams -> size() == 6)
-                lt = strtol(schedparams -> at(5).c_str(), NULL, 0);
-            int gt = 0;
-            if (schedparams -> size() == 7)
-                gt = strtol(schedparams -> at(6).c_str(), NULL, 0);
+            DragonflyMachine::localTopo lt;
+            if (schedparams->at(5).compare("all_to_all") == 0) {
+                lt = DragonflyMachine::ALLTOALL;
+            } else {
+                schedout.fatal(CALL_INFO, 1, "Unknown local topology for dragonfly machine.");
+            }
+            DragonflyMachine::globalTopo gt;
+            if (schedparams->at(6).compare("absolute") == 0) {
+                gt = DragonflyMachine::ABSOLUTE;
+            } else if (schedparams->at(6).compare("circulant") == 0) {
+                gt = DragonflyMachine::CIRCULANT;
+            } else if (schedparams->at(6).compare("relative") == 0) {
+                gt = DragonflyMachine::RELATIVE;
+            } else {
+                schedout.fatal(CALL_INFO, 1, "Unknown global topology for dragonfly machine.");
+            }
             retMachine = new DragonflyMachine(routersPerGroup, portsPerRouter, opticalsPerRouter,
-                nodesPerRouter, coresPerNode, (DragonflyMachine::localTopo) lt,
-                (DragonflyMachine::globalTopo) gt, D_matrix);
+                nodesPerRouter, coresPerNode, lt, gt, D_matrix);
             break;
         }
         default:
@@ -329,30 +341,17 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
     if (params.find_string("allocator").empty()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Allocator\n");
-        SimpleMachine* mach = dynamic_cast<SimpleMachine*>(m);
-        if (mach == NULL) {
-            schedout.fatal(CALL_INFO, 1, "Simple Allocator requires SimpleMachine");
-        }
-        return new SimpleAllocator(mach);
+        return new SimpleAllocator(m);
     } else {
         vector<string>* schedparams = parseparams(params.find_string("allocator"));
         vector<string>* nearestparams = NULL;
         switch (allocatorname(schedparams -> at(0)))
         {
-            //Simple Allocator for use with simple machine
+            //Simple Allocator 
         case SIMPLEALLOC:
-            {
-                schedout.debug(CALL_INFO, 4, 0, "Simple Allocator\n");
+            return new SimpleAllocator(m);
 
-                SimpleMachine* mach = dynamic_cast<SimpleMachine*>(m);
-                if (mach == NULL) {
-                    schedout.fatal(CALL_INFO, 1, "SimpleAllocator requires SimpleMachine");
-                }
-                return new SimpleAllocator(mach);
-                break;
-            }
-
-            //Random Allocator, allocates nodes randomly from a mesh
+            //Random Allocator, allocates nodes randomly
         case RANDOM:
             schedout.debug(CALL_INFO, 4, 0, "Random Allocator\n");
             return new RandomAllocator(m);
@@ -474,6 +473,16 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
                 return new SpectralAllocMapper(*m, false);
             }
             break;
+        case SIMPLESPREAD:
+            {
+                DragonflyMachine *dMachine = dynamic_cast<DragonflyMachine*>(m);
+                if (dMachine == NULL) {
+                    schedout.fatal(CALL_INFO, 1, "Simple Spread allocator requires dragonfly machine\n");
+                } else {
+                    return new SimpleSpreadAllocator(*dMachine);
+                }
+                break;
+            }
         default:
             schedout.fatal(CALL_INFO, 1, "Could not parse name of allocator\n");
         }

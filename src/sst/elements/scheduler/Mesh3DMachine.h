@@ -54,8 +54,8 @@ namespace SST {
                 int getLinkIndex(std::vector<int> nodeDims, int dimension) const;
 
                 //MeshMachine default routing is dimension ordered: first x, then y, then z, all in increasing direction
-                //@return vector of link indices
-                std::vector<int>* getRoute(int node0, int node1, double commWeight) const;
+                //@return list of link indices
+                std::list<int>* getRoute(int node0, int node1, double commWeight) const;
         };
     }
 }

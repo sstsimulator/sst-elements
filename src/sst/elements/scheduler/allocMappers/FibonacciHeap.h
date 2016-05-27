@@ -24,7 +24,6 @@ namespace SST {
                 struct Node {
                     unsigned int ID;
                     double key;
-                    unsigned int degree;
                     Node* left;
                     Node* right;
                     Node* parent;
@@ -42,14 +41,17 @@ namespace SST {
                 //makes merged node a root and returns it
                 Node* mergeRoots(Node *node0, Node *node1);
 
-            public:
+            public:            
+                //debug:
+                void printNode(Node* node, int shift) const;
+                void print() const;
 
                 //needs maximum size
                 FibonacciHeap(unsigned int size);
                 ~FibonacciHeap();
 
-                bool isEmpty() { return minRoot == NULL; }
-                int findMin();
+                bool isEmpty() const { return minRoot == NULL; }
+                int findMin() const;
                 //ID should be smaller than max size
                 void insert(unsigned int nodeID, double key);
                 int deleteMin();

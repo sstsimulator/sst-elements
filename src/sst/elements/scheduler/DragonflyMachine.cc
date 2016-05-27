@@ -42,13 +42,18 @@ DragonflyMachine::DragonflyMachine(int routersPerGroup, int portsPerRouter,
     //sanity check
     if (portsPerRouter < nodesPerRouter + opticalsPerRouter)
         schedout.fatal(CALL_INFO, 1, "DragonflyMachine: Too few ports!\n");
+    if (opticalsPerRouter % 2 != 0)
+        schedout.fatal(CALL_INFO, 1, "DragonflyMachine: opticalsPerRouter must be an even number!\n");
+
     int total;
     int dist_it;
     int linkCount = 0;
+    int localLinksPerRouter = -1;
 
     switch (ltopo) {
         case ALLTOALL:
-            if (portsPerRouter != nodesPerRouter + opticalsPerRouter + routersPerGroup - 1)
+            localLinksPerRouter = routersPerGroup - 1;
+            if (portsPerRouter != nodesPerRouter + opticalsPerRouter + localLinksPerRouter)
                 schedout.fatal(CALL_INFO, 1, "DragonflyMachine: # of ports does not match"
                     "all-to-all local topology!\n");
             break;
@@ -83,22 +88,66 @@ DragonflyMachine::DragonflyMachine(int routersPerGroup, int portsPerRouter,
         for (int gID = 0; gID < numGroups; gID++) {
             for (int lID = 0; lID < routersPerGroup; lID++) {
                 int rID = gID * routersPerGroup + lID;
-                int otherID = (rID + (lID + 1) * routersPerGroup) % numRouters;
-                routers[rID][otherID] = linkCount;
-                routers[otherID][rID] = linkCount;
-                linkCount++;
+                for (int opt = 1; opt <= opticalsPerRouter / 2; opt++) {
+                    int otherID = (rID + (lID * opticalsPerRouter / 2 + opt) * routersPerGroup)
+                      % numRouters;
+                    routers[rID][otherID] = linkCount;
+                    routers[otherID][rID] = linkCount;
+                    linkCount++;
+                }
             }
         }
-        break;        
+        break;
+    case ABSOLUTE:
+    {
+        int maxLinks = opticalsPerRouter + localLinksPerRouter;
+        for (int gID = 0; gID < numGroups; gID++) {
+            int targetgID = gID + 1;
+            for (int lID = 0; lID < routersPerGroup; lID++) {
+                int rID = gID * routersPerGroup + lID;
+                while(routers[rID].size() != maxLinks) {
+                    int otherID = targetgID * routersPerGroup;
+                    while (routers[otherID].size() == maxLinks) {
+                        otherID = (otherID + 1) % numRouters;
+                    }
+                    routers[rID][otherID] = linkCount;
+                    routers[otherID][rID] = linkCount;
+                    linkCount++;
+                    targetgID = (targetgID + 1) % numGroups;
+                }
+            }
+        }
+        break;
+    }
+    case RELATIVE:
+    {
+        for (int gID = 0; gID < numGroups; gID++) {
+            int targetgID = gID + 1;
+            for (int lID = 0; lID < routersPerGroup / 2; lID++) {
+                int rID = gID * routersPerGroup + lID;
+                int targetlID = routersPerGroup - lID - 1;
+                for (int opt = 0; opt < opticalsPerRouter; opt++) {
+                    int targetID = (targetgID * routersPerGroup + targetlID) % numRouters;
+                    routers[rID][targetID] = linkCount;
+                    routers[targetID][rID] = linkCount;
+                    linkCount++;
+                    targetgID++;
+                }
+            }
+        }
+        break;
+    }
     default:
         goto unknown_topo;
     }
     
     //node-to-router link indices are in-order starting from (numLinks - nodesPerRouter * numRouters)
     //sanity check
-    if (linkCount != numLinks - nodesPerRouter * numRouters)
+    if (linkCount != numLinks - nodesPerRouter * numRouters) {
         schedout.fatal(CALL_INFO, 1, "DragonflyMachine: Network setup failed!\n");
+    }
     
+    //For nearestAllocMapper:
     //Fill nodes at distances for fast access
     //Calculate with breadth-first from node 0. Assume symmetrical network
     total = 1;
@@ -150,7 +199,7 @@ std::string DragonflyMachine::getSetupInfo(bool comment)
 
 int DragonflyMachine::getNodeDistance(int node0, int node1) const
 {
-    vector<int>* links = getRoute(node0, node1, 1);
+    list<int>* links = getRoute(node0, node1, 1);
     int size = links->size();
     delete links;
     return size;
@@ -218,74 +267,200 @@ int DragonflyMachine::nodesAtDistance(int dist) const
         return nodesAtDistances[dist];
 }
 
-vector<int>* DragonflyMachine::getRoute(int node0, int node1, double commWeight) const
+list<int>* DragonflyMachine::getRoute(int node0, int node1, double commWeight) const
 {
-    vector<int>* links = new vector<int>();
-    if (node0 == node1)
+    int nInterRouterLinks;
+
+    list<int>* links = new list<int>();
+    
+    if(node0 == node1) {
         return links;
- 
-    //randomize when there is multiple equidistant paths
-    static SST::RNG::SSTRandom* rng = new SST::RNG::MarsagliaRNG();
-    int rand;
-
-    const int numInterRouterLinks = numLinks - nodesPerRouter * numRouters;
-
-    //node-to-router-hop
-    links->push_back(numInterRouterLinks + node0);
-
+    }
+    
     int rID0 = routerOf(node0);
     int rID1 = routerOf(node1);
-    int gID0 = rID0 / routersPerGroup;
-    int lID0 = rID0 % routersPerGroup;
-    int gID1 = rID1 / routersPerGroup;
-    int lID1 = rID1 % routersPerGroup;
     
-    switch (gtopo) {
-    case CIRCULANT:
-    {
-        int gdist = max(gID1 - gID0, gID0 - gID1);
-        gdist = min(gdist, numGroups - gdist);
-        if (gdist != 0) {
-            if (ltopo == ALLTOALL) {
-                //the local router id's with required global connections
-                int rmid0 = gID0 * routersPerGroup + gdist - 1;
-                int rmid1 = gID1 * routersPerGroup + gdist - 1;
-			 
-                //add local hop 1
-                if (rID0 != rmid0)
-                    links->push_back(routers[rID0].find(rmid0)->second);
-                //add global hop
-                links->push_back(routers[rmid0].find(rmid1)->second);
-                //add local hop 2
-                if (rID1 != rmid1){
-                    links->push_back(routers[rmid1].find(rID1)->second);
+    /*
+    //The below is the literal minimum path, and can use global-global hops
+    //  whereas the default minimum uses local-global-local
+    if (rID0 != rID1) {
+        //apply breadth-first search to get all links from rID0 to rID1
+  
+        list<int> routerQ;
+        vector<bool> marked(numRouters, false);
+        vector<int> prevRouter(numRouters, -1);
+        routerQ.push_back(rID0);
+        
+        while (!routerQ.empty()) {
+            int curNode = routerQ.front();
+            routerQ.pop_front();
+            for (map<int,int>::const_iterator it = routers[curNode].begin();
+                it != routers[curNode].end(); it++) {
+                if (!marked[it->first]){
+                    marked[it->first] = true;
+                    routerQ.push_back(it->first);
+                    prevRouter[it->first] = curNode;
+                    if (it->first == rID1) {
+                        routerQ.clear();
+                        break;
+                    }
                 }
-            } else {
-                goto unknown_topo;
-            }
-        } else if(lID0 != lID1) {
-            if (ltopo == ALLTOALL) {
-                links->push_back(routers[rID0].find(rID1)->second);
-            } else {
-                goto unknown_topo;
             }
         }
-        break;
+    
+        //Found the shortest route. Now add links
+        int cur = rID1;
+        int previous = prevRouter[rID1];
+        do {
+            links->push_back(routers.at(cur).at(previous));
+            cur = previous;
+            previous = prevRouter[cur];
+        } while (cur != rID0);
     }
-    default:
-        goto unknown_topo;
+    */
+
+    int gID0 = groupOf(rID0);
+    int gID1 = groupOf(rID1);
+    int lID0 = rID0 % routersPerGroup;
+    int lID1 = rID1 % routersPerGroup;
+    if (rID0 != rID1) {
+        switch (gtopo) {
+        case CIRCULANT:
+        {
+            int gdist = abs(gID1 - gID0);
+            gdist = min(gdist, numGroups - gdist);
+            if (gdist != 0) {
+                if (ltopo == ALLTOALL) {
+                    //the local router id's with required global connections
+                    int rmid0 = gID0 * routersPerGroup + (gdist - 1) * 2 / opticalsPerRouter;
+                    int rmid1 = gID1 * routersPerGroup + (gdist - 1) * 2 / opticalsPerRouter;
+                    //add local hop 1
+                    if (rID0 != rmid0) {
+                        links->push_back(routers[rID0].find(rmid0)->second);
+                    }
+                    //add global hop
+                    links->push_back(routers[rmid0].find(rmid1)->second);
+                    //add local hop 2
+                    if (rID1 != rmid1) {
+                        links->push_back(routers[rmid1].find(rID1)->second);
+                    }
+                } else {
+                    goto unknown_topo;
+                }
+            } else if (lID0 != lID1) {
+                if (ltopo == ALLTOALL) {
+                    links->push_back(routers[rID0].find(rID1)->second);
+                } else {
+                    goto unknown_topo;
+                }
+            }
+            break;
+        }
+        case ABSOLUTE:
+        {
+            if (gID0 != gID1) {
+                //check if we need a local hop
+                int rmid0 = -1;
+                int rmid1 = -1;
+                //check direct hops from rID0
+                for (map<int, int>::const_iterator linkIt = routers[rID0].begin();
+                  linkIt != routers[rID0].end(); linkIt++) {
+                    if(groupOf(linkIt->first) == gID1) {
+                        rmid0 = rID0;
+                        rmid1 = linkIt->first;
+                        break;
+                    }
+                }
+                //if no hop found, check local neighbors and add local hop
+                if (ltopo == ALLTOALL) {
+                    for (map<int, int>::const_iterator linkIt = routers[rID0].begin();
+                      rmid0 == -1 && linkIt != routers[rID0].end(); linkIt++) {
+                        int localNeighbor = linkIt->first;
+                        if (groupOf(localNeighbor) != gID0) {
+                            //skip global links
+                            continue;
+                        }
+                        //check whether this router is connected to gID1
+                        for (map<int, int>::const_iterator link2It = routers[localNeighbor].begin();
+                          link2It != routers[localNeighbor].end(); link2It++) {
+                            int remoteRouter = link2It->first;
+                            if (groupOf(remoteRouter) == gID1) {
+                                rmid0 = localNeighbor;
+                                rmid1 = remoteRouter;
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    goto unknown_topo;
+                }
+
+                //add local hop
+                if (rmid0 != rID0) {
+                    links->push_back(routers[rID0].find(rmid0)->second);
+                }
+
+                //add global hop
+                links->push_back(routers[rmid0].find(rmid1)->second);
+                
+                //add remote local hop
+                if (rmid1 != rID1) {
+                    links->push_back(routers[rmid1].find(rID1)->second);
+                }
+
+            } else if (lID0 != lID1) {
+                if (ltopo == ALLTOALL) {
+                    links->push_back(routers[rID0].find(rID1)->second);
+                } else {
+                    goto unknown_topo;
+                }
+            }
+            break;
+        }
+        case RELATIVE:
+        {
+            int gdist = abs(gID1 - gID0);
+            if (gdist != 0) {
+                //add local hop
+                int rmid0 = gID0 * routersPerGroup + (gdist - 1) / opticalsPerRouter;
+                if (rmid0 != rID0) {
+                    links->push_back(routers[rID0].find(rmid0)->second);
+                }
+
+                int rmid1 = (gID1 + 1) * routersPerGroup - 1 - (gdist - 1) / opticalsPerRouter;
+
+                //add global hop
+                links->push_back(routers[rmid0].find(rmid1)->second);
+
+                //add remote local hop
+                if (rmid1 != rID1) {
+                    links->push_back(routers[rmid1].find(rID1)->second);
+                }
+            } else if (lID0 != lID1) {
+                if (ltopo == ALLTOALL) {
+                    links->push_back(routers[rID0].find(rID1)->second);
+                } else {
+                    goto unknown_topo;
+                }
+            }
+            break;
+        }        
+        default:
+            goto unknown_topo;
+        }
     }
 
+    nInterRouterLinks = numLinks - nodesPerRouter * numRouters;
+    
+    //node-to-router-hop
+    links->push_front(nInterRouterLinks + node0);
+    
     //router-to-node hop
-    links->push_back(numInterRouterLinks + node1);
- 
+    links->push_back(nInterRouterLinks + node1);
+
     return links;
+
 unknown_topo:
     schedout.fatal(CALL_INFO, 1, "DragonflyMachine - getRoute(): Unknown topology\n");
     return NULL;
-}
-
-int DragonflyMachine::routerOf(int node) const
-{
-    return node / nodesPerRouter;
 }

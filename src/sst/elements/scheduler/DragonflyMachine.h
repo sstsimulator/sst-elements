@@ -27,11 +27,13 @@ namespace SST {
                 
             public:
                 enum localTopo{
-                    ALLTOALL = 0,
+                    ALLTOALL,
                 };
                 
                 enum globalTopo{
-                    CIRCULANT = 0,
+                    CIRCULANT,
+                    ABSOLUTE,
+                    RELATIVE,
                 };
                 
                 DragonflyMachine(int routersPerGroup, int portsPerRouter, int opticalsPerRouter,
@@ -52,9 +54,24 @@ namespace SST {
                 //max number of nodes at the given distance - NearestAllocMapper uses this
                 int nodesAtDistance(int dist) const;
                 
-                //DragonflyMachine default routing is local->(global->global->...)->local
-                //@return vector of link indices
-                std::vector<int>* getRoute(int node0, int node1, double commWeight) const;
+                //DragonflyMachine default routing is shortest path
+                //@return list of link indices
+                std::list<int>* getRoute(int node0, int node1, double commWeight) const;
+                
+                const localTopo ltopo;
+                const globalTopo gtopo;
+                const int routersPerGroup;
+                const int nodesPerRouter;
+                const int portsPerRouter;
+                const int opticalsPerRouter;
+                const int numGroups;
+                const int numNodes;
+                const int numRouters;
+                const int numLinks;
+
+                inline int routerOf(int nodeID) const { return nodeID / nodesPerRouter; }
+                inline int groupOf(int routerID) const { return routerID / routersPerGroup; }
+                inline int localIdOf(int routerID) const { return routerID % routersPerGroup; }
                 
             private:                
                 //constructor helpers
@@ -80,19 +97,7 @@ namespace SST {
 
                 //router graph: routers[routerID] = map<targetRouterID, linkInd>
                 std::vector<std::map<int,int> > routers;
-                int routerOf(int node) const;
-                std::vector<int> nodesAtDistances;
-                
-                const localTopo ltopo;
-                const globalTopo gtopo;
-                const int routersPerGroup;
-                const int nodesPerRouter;
-                const int portsPerRouter;
-                const int opticalsPerRouter;
-                const int numGroups;
-                const int numNodes;
-                const int numRouters;
-                const int numLinks;
+                std::vector<int> nodesAtDistances;                
         };
     }
 }
