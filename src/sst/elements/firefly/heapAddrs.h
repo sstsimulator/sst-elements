@@ -22,7 +22,7 @@
 #include <stddef.h>
 #include <assert.h>
 
-#define _H_HEAP_ADDRS_DBG  0
+#define _H_HEAP_ADDRS_DBG 0 
 
 namespace SST {
 namespace Firefly {
@@ -47,6 +47,9 @@ class HeapAddrs {
 
 	HeapAddrs( uint64_t start, size_t length ) {
 
+#if _H_HEAP_ADDRS_DBG
+		printf("%s() %#lx %lu\n",__func__,start,length);
+#endif
 		m_head = new Entry;
 		m_tail = new Entry;
 
@@ -127,11 +130,13 @@ class HeapAddrs {
 				printSet( "free", m_free );
 				printMap( "used", m_used );
 				print( m_head );
+				printf("%s() free=%lu used=%lu len=%lu\n",__func__,
+								m_free.size(),m_used.size(), length);
 #endif
-				//printf("%s() addr=%#lx\n",__func__,tmp->addr);
 				return tmp->addr;
 			}
 		} 
+		printf("%s() free=%lu used=%lu len=%lu\n",__func__,m_free.size(),m_used.size(), length);
 		assert(0);
 	}
 	void free( uint64_t addr ) {
@@ -139,6 +144,7 @@ class HeapAddrs {
 		
 		Entry* entry = m_used[addr];	
 		m_used.erase(addr);
+		size_t length = entry->length;
 
 #if _H_HEAP_ADDRS_DBG
 		printf("%s() %#x %lu \n",__func__,addr,entry->length);
@@ -171,6 +177,7 @@ class HeapAddrs {
 		printSet( "free", m_free );
 		printMap( "used", m_used );
 		print( m_head );
+		printf("%s() free=%lu used=%lu len=%lu\n",__func__,m_free.size(),m_used.size(), length);
 #endif
 	}
 
