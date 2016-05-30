@@ -2,7 +2,9 @@
 #
 #
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(PYTHON_CPPFLAGS) $(CPPFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
+	$(PYTHON_CPPFLAGS) $(CPPFLAGS) \
+	-I$(top_srcdir)/src
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmerlin.la
