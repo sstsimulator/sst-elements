@@ -18,7 +18,7 @@ using namespace SST::Prospero;
 ProsperoBinaryTraceReader::ProsperoBinaryTraceReader( Component* owner, Params& params ) :
 	ProsperoTraceReader(owner, params) {
 
-	std::string traceFile = params.find_string("file", "");
+	std::string traceFile = params.find<std::string>("file", "");
 	traceInput = fopen(traceFile.c_str(), "rb");
 
 	if(NULL == traceInput) {
