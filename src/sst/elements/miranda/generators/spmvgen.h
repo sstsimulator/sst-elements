@@ -27,37 +27,37 @@ class SPMVGenerator : public RequestGenerator {
 
 public:
 	SPMVGenerator( Component* owner, Params& params ) : RequestGenerator(owner, params) {
-		const uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+		const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 		out = new Output("SPMVGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-		matrixNx        = (uint64_t) params.find_integer("matrix_nx", 10);
-		matrixNy        = (uint64_t) params.find_integer("matrix_ny", 10);
+		matrixNx        = params.find<uint64_t>("matrix_nx", 10);
+		matrixNy        = params.find<uint64_t>("matrix_ny", 10);
 
-		elementWidth    = (uint64_t) params.find_integer("element_width", 8);
+		elementWidth    = params.find<uint64_t>("element_width", 8);
 
 		uint64_t nextStartAddr = 0;
 
-		lhsVecStartAddr = (uint64_t) params.find_integer("lhs_start_addr", nextStartAddr);
+		lhsVecStartAddr = params.find<uint64_t>("lhs_start_addr", nextStartAddr);
 		nextStartAddr += matrixNx * elementWidth;
 
-		rhsVecStartAddr = (uint64_t) params.find_integer("rhs_start_addr", nextStartAddr);
+		rhsVecStartAddr = params.find<uint64_t>("rhs_start_addr", nextStartAddr);
 		nextStartAddr += matrixNx * elementWidth;
 
-		localRowStart   = (uint64_t) params.find_integer("local_row_start", 0);
-		localRowEnd     = (uint64_t) params.find_integer("local_row_end", matrixNy);
+		localRowStart   = params.find<uint64_t>("local_row_start", 0);
+		localRowEnd     = params.find<uint64_t>("local_row_end", matrixNy);
 
-		ordinalWidth    = (uint64_t) params.find_integer("ordinal_width", 8);
-		matrixNNZPerRow = (uint64_t) params.find_integer("matrix_nnz_per_row", 4);
+		ordinalWidth    = params.find<uint64_t>("ordinal_width", 8);
+		matrixNNZPerRow = params.find<uint64_t>("matrix_nnz_per_row", 4);
 
-		matrixRowIndicesStartAddr = (uint64_t) params.find_integer("matrix_row_indices_start_addr", nextStartAddr);
+		matrixRowIndicesStartAddr = params.find<uint64_t>("matrix_row_indices_start_addr", nextStartAddr);
 		nextStartAddr  += (ordinalWidth * (matrixNy + 1));
 
-		matrixColumnIndicesStartAddr = (uint64_t) params.find_integer("matrix_col_indices_start_addr", nextStartAddr);
+		matrixColumnIndicesStartAddr = params.find<uint64_t>("matrix_col_indices_start_addr", nextStartAddr);
 		nextStartAddr  += (matrixNy * ordinalWidth * matrixNNZPerRow);
 
-		matrixElementsStartAddr = (uint64_t) params.find_integer("matrix_element_start_addr", nextStartAddr);
+		matrixElementsStartAddr = params.find<uint64_t>("matrix_element_start_addr", nextStartAddr);
 
-		iterations = (uint64_t) params.find_integer("iterations", 1);
+		iterations = params.find<uint64_t>("iterations", 1);
 	}
 
 	~SPMVGenerator() {

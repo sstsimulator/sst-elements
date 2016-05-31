@@ -19,14 +19,14 @@ using namespace SST::Miranda;
 ReverseSingleStreamGenerator::ReverseSingleStreamGenerator( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
 
-	const uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 
 	out = new Output("ReverseSingleStreamGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-	stopIndex   = (uint64_t) params.find_integer("stop_at", 0);
-	startIndex  = (uint64_t) params.find_integer("start_at", 1024);
-	datawidth   = (uint64_t) params.find_integer("datawidth", 8);
-	stride      = (uint64_t) params.find_integer("stride", 1);
+	stopIndex   = params.find<uint64_t>("stop_at", 0);
+	startIndex  = params.find<uint64_t>("start_at", 1024);
+	datawidth   = params.find<uint64_t>("datawidth", 8);
+	stride      = params.find<uint64_t>("stride", 1);
 
 	if(startIndex < stopIndex) {
 		out->fatal(CALL_INFO, -1, "Start address (%" PRIu64 ") must be greater than stop address (%" PRIu64 ") in reverse stream generator",

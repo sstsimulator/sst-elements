@@ -19,20 +19,20 @@ using namespace SST::Miranda;
 Stencil3DBenchGenerator::Stencil3DBenchGenerator( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
 
-	const uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 
 	out = new Output("Stencil3DBenchGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-	nX = (uint32_t) params.find_integer("nx", 10);
-	nY = (uint32_t) params.find_integer("ny", 10);
-	nZ = (uint32_t) params.find_integer("nz", 10);
+	nX = params.find<uint32_t>("nx", 10);
+	nY = params.find<uint32_t>("ny", 10);
+	nZ = params.find<uint32_t>("nz", 10);
 
-	datawidth = (uint32_t) params.find_integer("datawidth", 8);
+	datawidth = params.find<uint32_t>("datawidth", 8);
 
-	startZ = (uint32_t) params.find_integer("startz", 0);
-	endZ   = (uint32_t) params.find_integer("endz",   nZ);
+	startZ = params.find<uint32_t>("startz", 0);
+	endZ   = params.find<uint32_t>("endz",   nZ);
 
-	maxItr = (uint32_t) params.find_integer("iterations", 1);
+	maxItr = params.find<uint32_t>("iterations", 1);
 	currentItr = 0;
 
 	currentZ = startZ + 1;

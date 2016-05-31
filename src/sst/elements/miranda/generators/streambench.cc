@@ -19,22 +19,22 @@ using namespace SST::Miranda;
 STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
 
-	const uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 
 	out = new Output("STREAMBenchGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-	n = (uint64_t) params.find_integer("n", 10000);
-	reqLength = (uint64_t) params.find_integer("operandwidth", 8);
+	n = params.find<uint64_t>("n", 10000);
+	reqLength = params.find<uint64_t>("operandwidth", 8);
 
-	start_a = (uint64_t) params.find_integer("start_a", 0);
+	start_a = params.find<uint64_t>("start_a", 0);
 	const uint64_t def_b = start_a + (n * reqLength);
 
-	start_b = (uint64_t) params.find_integer("start_b", def_b);
+	start_b = params.find<uint64_t>("start_b", def_b);
 
 	const uint64_t def_c = start_b + (2 * (n * reqLength));
-	start_c = (uint64_t) params.find_integer("start_c", def_c);
+	start_c = params.find<uint64_t>("start_c", def_c);
 
-	n_per_call = (uint64_t) params.find_integer("n_per_call", 1);
+	n_per_call = params.find<uint64_t>("n_per_call", 1);
 
 	i = 0;
 
