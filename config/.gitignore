@@ -1,0 +1,16 @@
+compile
+config.guess
+config.sub
+depcomp
+install-sh
+libtool.m4
+ltargz.m4
+ltdl.m4
+ltmain.sh
+ltoptions.m4
+ltsugar.m4
+ltversion.m4
+lt~obsolete.m4
+missing
+sst_elements_config_output.m4
+sst_elements_include.m4
