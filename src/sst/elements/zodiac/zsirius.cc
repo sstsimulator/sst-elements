@@ -35,9 +35,9 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
   sendFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedSendFunction)),
   waitFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedWaitFunction))
 {
-    scaleCompute = params.find_floating("scalecompute", 1.0);
+    scaleCompute = params.find("scalecompute", 1.0);
 
-    string osModule = params.find_string("os.module");
+    string osModule = params.find<std::string>("os.module");
     assert( ! osModule.empty() );
 
    	Params hermesParams = params.find_prefix_params("hermesParams." );
@@ -48,7 +48,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
 
     params.print_all_params(std::cout);
     Params osParams = params.find_prefix_params("os.");
-    std::string osName = osParams.find_string("name");
+    std::string osName = osParams.find<std::string>("name");
     Params modParams = params.find_prefix_params( osName + "." );
     msgapi = dynamic_cast<MP::Interface*>(loadModuleWithComponent(
                             "firefly.hadesMP", this, modParams));
@@ -56,7 +56,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
 
     msgapi->setOS( os );
 
-    trace_file = params.find_string("trace");
+    trace_file = params.find<std::string>("trace");
     if("" == trace_file) {
         std::cerr << "Error: could not find a file contain a trace "
             "to simulate!" << std::endl;
@@ -67,7 +67,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
 
     eventQ = new std::queue<ZodiacEvent*>();
 
-    verbosityLevel = params.find_integer("verbose", 0);
+    verbosityLevel = params.find("verbose", 0);
     std::cout << "Set verbosity level to " << verbosityLevel << std::endl;
 
     selfLink = configureSelfLink("Self", "1ns", 
@@ -75,7 +75,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
 
     tConv = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
 
-    emptyBufferSize = (uint32_t) params.find_integer("buffer", 4096);
+    emptyBufferSize = (uint32_t) params.find("buffer", 4096);
     emptyBuffer = (char*) malloc(sizeof(char) * emptyBufferSize);
 
     // Make sure we don't stop the simulation until we are ready
@@ -83,7 +83,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
     primaryComponentDoNotEndSim();
 
     // Allow the user to control verbosity from the log file.
-    verbosityLevel = params.find_integer("verbose", 2);
+    verbosityLevel = params.find("verbose", 2);
     zOut.init("ZSirius", (uint32_t) verbosityLevel, (uint32_t) 1, Output::STDOUT);
 }
 
