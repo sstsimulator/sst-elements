@@ -20,8 +20,8 @@ using namespace SST::RNG;
 EmberRandomTrafficGenerator::EmberRandomTrafficGenerator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params) {
 
-	msgSize = (uint32_t) params.find_integer("arg.messagesize", 1);
-	maxIterations = (uint32_t) params.find_integer("arg.iterations", 1);
+	msgSize = (uint32_t) params.find("arg.messagesize", 1);
+	maxIterations = (uint32_t) params.find("arg.iterations", 1);
 	iteration = 0;
 }
 

@@ -20,9 +20,9 @@ EmberReduceGenerator::EmberReduceGenerator(SST::Component* owner,
 	EmberMessagePassingGenerator(owner, params, "Reduce"),
     m_loopIndex(0)
 {
-	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-	m_count      = (uint32_t) params.find_integer("arg.count", 1);
-	m_redRoot    = (uint32_t) params.find_integer("arg.root", 0);
+	m_iterations = (uint32_t) params.find("arg.iterations", 1);
+	m_count      = (uint32_t) params.find("arg.count", 1);
+	m_redRoot    = (uint32_t) params.find("arg.root", 0);
     m_sendBuf = NULL;
     m_recvBuf = NULL;
 

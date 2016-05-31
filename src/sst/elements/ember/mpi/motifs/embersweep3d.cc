@@ -24,21 +24,21 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& para
     m_loopIndex(0),
     m_InnerLoopIndex(0)
 {
-	px = (int32_t) params.find_integer("arg.pex", 0);
-	py = (int32_t) params.find_integer("arg.pey", 0);
+	px = (int32_t) params.find("arg.pex", 0);
+	py = (int32_t) params.find("arg.pey", 0);
 
-	iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+	iterations = (uint32_t) params.find("arg.iterations", 1);
 
-	nx  = (uint32_t) params.find_integer("arg.nx", 50);
-	ny  = (uint32_t) params.find_integer("arg.ny", 50);
-	nz  = (uint32_t) params.find_integer("arg.nz", 50);
-	kba = (uint32_t) params.find_integer("arg.kba", 1);
+	nx  = (uint32_t) params.find("arg.nx", 50);
+	ny  = (uint32_t) params.find("arg.ny", 50);
+	nz  = (uint32_t) params.find("arg.nz", 50);
+	kba = (uint32_t) params.find("arg.kba", 1);
 
-	data_width = (uint32_t) params.find_integer("arg.datatype_width", 8);
-	fields_per_cell = (uint32_t) params.find_integer("arg.fields_per_cell", 8);
+	data_width = (uint32_t) params.find("arg.datatype_width", 8);
+	fields_per_cell = (uint32_t) params.find("arg.fields_per_cell", 8);
 
-	double flops_per_cell = params.find_floating("arg.flops_per_cell", 275.0);
-	double node_flops = params.find_floating("arg.nodeflops", 1000000000);
+	double flops_per_cell = params.find("arg.flops_per_cell", 275.0);
+	double node_flops = params.find("arg.nodeflops", 1000000000);
 
 	const double mesh_slice_size = (double) (nx * ny);
 	double compute_time_d = mesh_slice_size * flops_per_cell;
@@ -48,7 +48,7 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& para
 
 	const double NANO_SECONDS = 1000000000;
 
-	nsCompute = (uint64_t) params.find_integer("arg.computetime",
+	nsCompute = (uint64_t) params.find("arg.computetime",
 		(compute_time_d / node_flops) * NANO_SECONDS);
 
 	assert(nsCompute != 0);

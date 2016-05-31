@@ -30,26 +30,26 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) 
 	m_backwardTotal(0),
     m_transCostPer(6)
 {
-	m_data.np0 = (uint32_t) params.find_integer("arg.nx", 100);
-	m_data.np1  = (uint32_t) params.find_integer("arg.ny", 100);
-	m_data.np2  = (uint32_t) params.find_integer("arg.nz", 100);
+	m_data.np0 = (uint32_t) params.find("arg.nx", 100);
+	m_data.np1  = (uint32_t) params.find("arg.ny", 100);
+	m_data.np2  = (uint32_t) params.find("arg.nz", 100);
 
     assert( m_data.np0 == m_data.np1 );
     assert( m_data.np1 == m_data.np2 );
 
-    m_data.nprow = (uint32_t) params.find_integer("arg.npRow", 0);
+    m_data.nprow = (uint32_t) params.find("arg.npRow", 0);
     assert( 0 < m_data.nprow );
 
-	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+	m_iterations = (uint32_t) params.find("arg.iterations", 1);
 
-    m_nsPerElement = (float) params.find_floating("arg.nsPerElement",1);
+    m_nsPerElement = (float) params.find("arg.nsPerElement",1);
 
-    m_transCostPer[0] = (float) params.find_floating("arg.fwd_fft1",1);
-    m_transCostPer[1] = (float) params.find_floating("arg.fwd_fft2",1);
-    m_transCostPer[2] = (float) params.find_floating("arg.fwd_fft3",1);
-    m_transCostPer[3] = (float) params.find_floating("arg.bwd_fft1",1);
-    m_transCostPer[4] = (float) params.find_floating("arg.bwd_fft2",1);
-    m_transCostPer[5] = (float) params.find_floating("arg.bwd_fft3",1);
+    m_transCostPer[0] = (float) params.find("arg.fwd_fft1",1);
+    m_transCostPer[1] = (float) params.find("arg.fwd_fft2",1);
+    m_transCostPer[2] = (float) params.find("arg.fwd_fft3",1);
+    m_transCostPer[3] = (float) params.find("arg.bwd_fft1",1);
+    m_transCostPer[4] = (float) params.find("arg.bwd_fft2",1);
+    m_transCostPer[5] = (float) params.find("arg.bwd_fft3",1);
 
 	configure();
 }

@@ -22,14 +22,14 @@ EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::Component* owner,
                                                     Params& params) :
 	EmberMessagePassingGenerator(owner, params, "TrafficGen")
 {
-	m_messageSize = (uint32_t) params.find_integer("arg.messageSize", 1024);
+	m_messageSize = (uint32_t) params.find("arg.messageSize", 1024);
 
     m_sendBuf = memAlloc(m_messageSize);
     m_recvBuf = memAlloc(m_messageSize);
 
-    m_mean = params.find_floating("arg.mean", 5000.0);
-    m_stddev = params.find_floating("arg.stddev", 300.0 );
-    m_startDelay = params.find_floating("arg.startDelay", .0 );
+    m_mean = params.find("arg.mean", 5000.0);
+    m_stddev = params.find("arg.stddev", 300.0 );
+    m_startDelay = params.find("arg.startDelay", .0 );
 
 	configure();
 }

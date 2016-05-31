@@ -30,24 +30,24 @@ EmberCMT1DGenerator::EmberCMT1DGenerator(SST::Component* owner, Params& params) 
 	EmberMessagePassingGenerator(owner, params, "CMT1D"), 
 	m_loopIndex(0)
 {
-    	iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-    	eltSize = (uint32_t) params.find_integer("arg.elementsize", 10); //polynomial degree = eltSize-1
-    	variables = (uint32_t) params.find_integer("arg.variables", 1); //no. of physical quantities
+    	iterations = (uint32_t) params.find("arg.iterations", 1);
+    	eltSize = (uint32_t) params.find("arg.elementsize", 10); //polynomial degree = eltSize-1
+    	variables = (uint32_t) params.find("arg.variables", 1); //no. of physical quantities
 
         // No. of ranks per process
-    	threads = (uint32_t) params.find_integer("arg.threads", 1);
+    	threads = (uint32_t) params.find("arg.threads", 1);
      
     	// Local distribution of elements on each MPI rank
-    	nelt = (uint32_t) params.find_integer("arg.nelt", 1000);
+    	nelt = (uint32_t) params.find("arg.nelt", 1000);
 
     	// Calculate computation time in nanoseconds
-    	procFlops = (uint64_t) params.find_integer("arg.processorflops", 4); // Nehalem 4 DP FLOPS/cycle
-    	procFreq = (uint64_t) params.find_integer("arg.processorfreq", 2);
+    	procFlops = (uint64_t) params.find("arg.processorflops", 4); // Nehalem 4 DP FLOPS/cycle
+    	procFreq = (uint64_t) params.find("arg.processorfreq", 2);
     	const int64_t flopCount	= pow(eltSize, 3) * (nelt) * (2*eltSize-1); // Not assuming FMAs
     	const double time = (double)flopCount / ( (double)procFlops * (double)procFreq ); //Time in ns
     	
-    	m_mean = params.find_floating("arg.nsComputeMean", time);
-        m_stddev = params.find_floating("arg.nsComputeStddev", (m_mean*0.05));
+    	m_mean = params.find("arg.nsComputeMean", time);
+        m_stddev = params.find("arg.nsComputeStddev", (m_mean*0.05));
 
     	xferSize = eltSize*eltSize;
     	
