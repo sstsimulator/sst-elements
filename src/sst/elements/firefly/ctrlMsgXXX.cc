@@ -356,7 +356,7 @@ void XXX::waitAll( int count, MP::MessageRequest req[],
 
 void XXX::schedCallback( Callback callback, uint64_t delay )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"delay=%lu\n",delay);
+    m_dbg.verbose(CALL_INFO,1,1,"delay=%" PRIu64 "\n",delay);
     m_delayLink->send( delay, new DelayEvent(callback) );
 }
 
