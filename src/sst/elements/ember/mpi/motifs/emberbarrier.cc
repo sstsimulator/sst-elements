@@ -20,8 +20,8 @@ EmberBarrierGenerator::EmberBarrierGenerator(SST::Component* owner,
 	EmberMessagePassingGenerator(owner, params, "Barrier"),
     m_loopIndex(0)
 {
-	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-    m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
+	m_iterations = (uint32_t) params.find("arg.iterations", 1);
+    m_compute    = (uint32_t) params.find("arg.compute", 0);
 }
 
 bool EmberBarrierGenerator::generate( std::queue<EmberEvent*>& evQ )

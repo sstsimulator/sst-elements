@@ -23,7 +23,7 @@ EmberSIRIUSTraceGenerator::EmberSIRIUSTraceGenerator(SST::Component* owner,
                                             Params& params) :
 	EmberMessagePassingGenerator(owner, params, "SIRIUSTrace")
 {
-	std::string trace_prefix = params.find_string("arg.traceprefix", "");
+	std::string trace_prefix = params.find<std::string>("arg.traceprefix", "");
 
 	if( "" == trace_prefix ) {
 		fatal(CALL_INFO, -1, "Error: trace prefix is empty, no way to load a trace!\n");

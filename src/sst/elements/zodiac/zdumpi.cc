@@ -24,7 +24,7 @@ using namespace SST::Zodiac;
 ZodiacDUMPITraceReader::ZodiacDUMPITraceReader(ComponentId_t id, Params& params) :
   Component(id) {
 
-    string msgiface = params.find_string("msgapi");
+    string msgiface = params.find<std::string>("msgapi");
 
     if ( msgiface == "" ) {
         msgapi = new SST::Hermes::MP::Interface();
@@ -37,13 +37,13 @@ ZodiacDUMPITraceReader::ZodiacDUMPITraceReader(ComponentId_t id, Params& params)
         }
     }
 
-    string trace_file = params.find_string("tracefile");
+    string trace_file = params.find<std::string>("tracefile");
     if("" == trace_file) {
 	std::cerr << "Error: could not find a file contain a trace to simulate!" << std::endl;
 	exit(-1);
     }
 
-    uint32_t rank = (uint32_t) params.find_integer("rank", 0);
+    uint32_t rank = params.find<uint32_t>("rank", 0);
     eventQ = new std::queue<ZodiacEvent*>();
     trace = new DUMPIReader(trace_file, rank, 64, eventQ);
 }

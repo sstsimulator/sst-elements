@@ -90,20 +90,20 @@ template <typename T> void VecLit(vector<node> &v, T &x) {
 chdlComponent::chdlComponent(ComponentId_t id, Params &p):
   Component(id), tog(0), stopSim(0), registered(false)
 {
-  debugLevel = p.find_integer("debugLevel", 1);
-  int debug(p.find_integer("debug", 0));
+  debugLevel = p.find("debugLevel", 1);
+  int debug(p.find("debug", 0));
   out.init("", debugLevel, 0, Output::output_location_t(debug));
 
   bool found;
-  netlFile = p.find_string("netlist", "", found);
+  netlFile = p.find<std::string>("netlist", "", found);
   if (!found) Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "No netlist specified.\n");
 
-  clockFreq = p.find_string("clockFreq", "2GHz");
-  memFile = p.find_string("memInit", "");
-  core_id = p.find_integer("id", 0);
-  core_count = p.find_integer("cores", 1);
+  clockFreq = p.find<std::string>("clockFreq", "2GHz");
+  memFile = p.find<std::string>("memInit", "");
+  core_id = p.find("id", 0);
+  core_count = p.find("cores", 1);
 
-  string vcdFilename = p.find_string("vcd", "", dumpVcd);
+  string vcdFilename = p.find<std::string>("vcd", "", dumpVcd);
   if (dumpVcd) vcd.open(vcdFilename);
 
   registerAsPrimaryComponent();
@@ -121,7 +121,7 @@ chdlComponent::chdlComponent(ComponentId_t id, Params &p):
   typedef Clock::Handler<chdlComponent> ch;
   registerClock(clockFreq, new ch(this, &chdlComponent::clockTick));
 
-  string memPorts = p.find_string("memPorts", "mem", found);
+  string memPorts = p.find<std::string>("memPorts", "mem", found);
   vector<char*> port_names;
   char s[80];
   strncpy(s, memPorts.c_str(), 80);

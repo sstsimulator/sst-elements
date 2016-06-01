@@ -18,7 +18,7 @@ using namespace SST::Prospero;
 ProsperoCompressedBinaryTraceReader::ProsperoCompressedBinaryTraceReader( Component* owner, Params& params ) :
 	ProsperoTraceReader(owner, params) {
 
-	std::string traceFile = params.find_string("file", "");
+	std::string traceFile = params.find<std::string>("file", "");
 	traceInput = gzopen(traceFile.c_str(), "rb");
 
 	if(Z_NULL == traceInput) {

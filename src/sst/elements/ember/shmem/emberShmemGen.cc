@@ -26,7 +26,7 @@ EmberShmemGenerator::EmberShmemGenerator(
     EmberGenerator(owner, params), 
     m_printStats( 0 )
 {
-    m_printStats = (uint32_t) (params.find_integer("printStats", 0));
+    m_printStats = (uint32_t) (params.find("printStats", 0));
 }
 
 EmberShmemGenerator::~EmberShmemGenerator()

@@ -27,18 +27,18 @@ public:
 	InOrderSTREAMBenchGenerator( Component* owner, Params& params ) :
 		RequestGenerator(owner, params) {
 
-		const uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+		const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 		out = new Output("InOrderSTREAMBench[@p:@l]: ", verbose, 0,
 			Output::STDOUT);
 
-		n = (uint64_t) params.find_integer("n", 10000);
-		requestLen = (uint64_t) params.find_integer("operandwidth", 8);
+		n = params.find<uint64_t>("n", 10000);
+		requestLen = params.find<uint64_t>("operandwidth", 8);
 
-		start_a = (uint64_t) params.find_integer("start_a", 0);
-		start_b = (uint64_t) params.find_integer("start_b", start_a + (n * requestLen));
-		start_c = (uint64_t) params.find_integer("start_c", start_b + (n * requestLen));
+		start_a = params.find<uint64_t>("start_a", 0);
+		start_b = params.find<uint64_t>("start_b", start_a + (n * requestLen));
+		start_c = params.find<uint64_t>("start_c", start_b + (n * requestLen));
 
-		block_per_call = (uint64_t) params.find_integer("block_per_call", 1);
+		block_per_call = params.find<uint64_t>("block_per_call", 1);
 
 		i = 0;
 	}

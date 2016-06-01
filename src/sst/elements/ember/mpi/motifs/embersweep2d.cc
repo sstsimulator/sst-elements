@@ -23,12 +23,12 @@ EmberSweep2DGenerator::EmberSweep2DGenerator(SST::Component* owner, Params& para
 	EmberMessagePassingGenerator(owner, params, "Sweep2D"),
 	m_loopIndex(0) 
 {
-	nsCompute = (uint64_t) params.find_integer("arg.computetime", 1000);
-	iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+	nsCompute = (uint64_t) params.find("arg.computetime", 1000);
+	iterations = (uint32_t) params.find("arg.iterations", 1);
 
-	nx  = (uint32_t) params.find_integer("arg.nx", 50);
-	ny  = (uint32_t) params.find_integer("arg.ny", 50);
-	y_block = (uint32_t) params.find_integer("arg.y_block", 1);
+	nx  = (uint32_t) params.find("arg.nx", 50);
+	ny  = (uint32_t) params.find("arg.ny", 50);
+	y_block = (uint32_t) params.find("arg.y_block", 1);
 
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(ny % y_block == 0);

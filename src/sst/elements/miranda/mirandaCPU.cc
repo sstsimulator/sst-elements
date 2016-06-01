@@ -89,7 +89,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	} else if ( isPortConnected("src") ) {
 
-		out->verbose(CALL_INFO, 1, 0, "getting generators from a link %s\n");
+		out->verbose(CALL_INFO, 1, 0, "getting generators from a link\n");
 		srcLink = configureLink( "src", "50ps", new Event::Handler<RequestGenCPU>(this, &RequestGenCPU::handleSrcEvent));
 		if ( NULL == srcLink ) {
 			out->fatal(CALL_INFO, -1, "Failed to configure src link\n");

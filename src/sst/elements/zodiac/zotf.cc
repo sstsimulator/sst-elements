@@ -26,7 +26,7 @@ ZodiacOTFTraceReader::ZodiacOTFTraceReader(ComponentId_t id, Params& params) :
   Component(id) {
 
     std::cout << "Creating a new ZOTFTrace Reader..." << std::endl;
-    string msgiface = params.find_string("msgapi");
+    string msgiface = params.find<std::string>("msgapi");
 
     if ( msgiface == "" ) {
         msgapi = new MessageInterface();
@@ -39,13 +39,13 @@ ZodiacOTFTraceReader::ZodiacOTFTraceReader(ComponentId_t id, Params& params) :
         }
     }
 
-    string trace_file = params.find_string("trace");
+    string trace_file = params.find<std::string>("trace");
     if("" == trace_file) {
 	std::cerr << "Error: could not find a file contain a trace to simulate!" << std::endl;
 	exit(-1);
     }
 
-    uint32_t rank = params.find_integer("rank", 0);
+    uint32_t rank = params.find<uint32_t>("rank", 0);
 
     std::cout << "Creating a new event queue..." << std::endl;
     eventQ = new std::queue<ZodiacEvent*>();

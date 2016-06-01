@@ -19,14 +19,14 @@ using namespace SST::Miranda;
 SingleStreamGenerator::SingleStreamGenerator( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
 
-	const uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 
 	out = new Output("SingleStreamGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-	issueCount = (uint64_t) params.find_integer("count", 1000);
-	reqLength  = (uint64_t) params.find_integer("length", 8);
-	nextAddr   = (uint64_t) params.find_integer("startat", 0);
-	maxAddr    = (uint64_t) params.find_integer("max_address", 524288);
+	issueCount = params.find<uint64_t>("count", 1000);
+	reqLength  = params.find<uint64_t>("length", 8);
+	nextAddr   = params.find<uint64_t>("startat", 0);
+	maxAddr    = params.find<uint64_t>("max_address", 524288);
 
 	out->verbose(CALL_INFO, 1, 0, "Will issue %" PRIu64 " operations\n", issueCount);
 	out->verbose(CALL_INFO, 1, 0, "Request lengths: %" PRIu64 " bytes\n", reqLength);

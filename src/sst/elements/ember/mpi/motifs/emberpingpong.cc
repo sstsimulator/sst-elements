@@ -26,15 +26,15 @@ EmberPingPongGenerator::EmberPingPongGenerator(SST::Component* owner,
     m_blockingRecv( true ),
     m_waitall( false )
 {
-	m_messageSize = (uint32_t) params.find_integer("arg.messageSize", 1024);
-	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-	m_rank2 = (uint32_t) params.find_integer("arg.rank2", 1);
+	m_messageSize = (uint32_t) params.find("arg.messageSize", 1024);
+	m_iterations = (uint32_t) params.find("arg.iterations", 1);
+	m_rank2 = (uint32_t) params.find("arg.rank2", 1);
 
     m_sendBuf = memAlloc(m_messageSize);
     m_recvBuf = memAlloc(m_messageSize);
-    m_blockingSend = (uint32_t) params.find_integer("arg.blockingSend", true);;
-    m_blockingRecv = (uint32_t) params.find_integer("arg.blockingRecv", true);;
-    m_waitall = (uint32_t) params.find_integer("arg.waitall", false);
+    m_blockingSend = (uint32_t) params.find("arg.blockingSend", true);;
+    m_blockingRecv = (uint32_t) params.find("arg.blockingRecv", true);;
+    m_waitall = (uint32_t) params.find("arg.waitall", false);
 
     if ( 0 == rank() )  {
         output("rank2=%d messageSize=%d iterations=%d\n",m_rank2, m_messageSize, m_iterations);

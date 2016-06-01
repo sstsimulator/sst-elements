@@ -27,15 +27,15 @@ class CopyGenerator : public RequestGenerator {
 
 public:
 	CopyGenerator( Component* owner, Params& params ) : RequestGenerator(owner, params) {
-		const uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+		const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 		out = new Output("CopyGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-		readAddr  = (uint64_t) params.find_integer("read_start_address",  0);
-		reqLength = (uint64_t) params.find_integer("request_size", 8);
-		itemCount = (uint64_t) params.find_integer("request_count", 1024);
+		readAddr  = params.find<uint64_t>("read_start_address",  0);
+		reqLength = params.find<uint64_t>("request_size", 8);
+		itemCount = params.find<uint64_t>("request_count", 1024);
 
 		// Write address default is sized for number of requests * req lengtgh
-		writeAddr = (uint64_t) params.find_integer("write_start_address",
+		writeAddr = params.find<uint64_t>("write_start_address",
 			readAddr + (reqLength * itemCount));
 
 		// Start generator at 0
