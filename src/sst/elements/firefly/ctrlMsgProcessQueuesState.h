@@ -114,7 +114,7 @@ class ProcessQueuesState
             ProcessQueuesState<T1>::Msg::m_ioVec.push_back( ioVec[1] ); 
         }
 		~ShortRecvBuffer() {
-			for ( unsigned i; i < ioVec.size(); i++) {
+			for ( unsigned i = 0; i < ioVec.size(); i++) {
 				heap.free( ioVec[i].addr.simVAddr );
 			}
 		}
@@ -380,7 +380,7 @@ void ProcessQueuesState<T1>::enterInit( bool haveGlobalMemHeap )
 template< class T1 >
 void ProcessQueuesState<T1>::enterInit_1( uint64_t addr, size_t length )
 {
-    dbg().verbose(CALL_INFO,1,1,"simVAddr %#lx\n", addr, length );
+    dbg().verbose(CALL_INFO,1,1,"simVAddr %" PRIx64 "  length=%zu\n", addr, length );
 
     m_simVAddrs = new HeapAddrs( addr, length );
 
@@ -396,7 +396,7 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req, uint64_t exitDelay )
 {
     m_exitDelay = exitDelay;
     req->setSrcRank( getMyRank( req ) );
-    dbg().verbose(CALL_INFO,1,1,"req=%p$ delay=%lu\n", req, exitDelay );
+    dbg().verbose(CALL_INFO,1,1,"req=%p$ delay=%" PRIu64 "\n", req, exitDelay );
 
     uint64_t delay = obj().txDelay( req->getLength() );
 
@@ -532,7 +532,7 @@ void ProcessQueuesState<T1>::processSendLoop( _CommReq* req )
 template< class T1 >
 void ProcessQueuesState<T1>::enterRecv( _CommReq* req, uint64_t exitDelay )
 {
-    dbg().verbose(CALL_INFO,1,1,"req=%p$ delay=%lu\n", req, exitDelay );
+    dbg().verbose(CALL_INFO,1,1,"req=%p$ delay=%" PRIu64 "\n", req, exitDelay );
     m_exitDelay = exitDelay;
 
     if ( m_postedShortBuffers.size() < MaxPostedShortBuffers ) {
