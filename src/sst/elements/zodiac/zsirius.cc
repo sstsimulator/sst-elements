@@ -288,8 +288,15 @@ void ZodiacSiriusTraceReader::handleAllreduceEvent(ZodiacEvent* zEv) {
 	zOut.verbose(__LINE__, __FILE__, "handleAllreduceEvent",
 		2, 1, "Processing an Allreduce event.\n");
 
-	msgapi->allreduce((Addr) emptyBuffer,
-		(Addr) (&emptyBuffer[zAEv->getLength()]),
+	Hermes::MemAddr addr0;
+	addr0.simVAddr = 0;
+	addr0.backing = emptyBuffer;
+	Hermes::MemAddr addr1;
+	addr1.simVAddr = 0;
+	addr1.backing = &emptyBuffer[zAEv->getLength()];
+
+	msgapi->allreduce( addr0,
+		addr1,
 		zAEv->getLength(),
 		zAEv->getDataType(),
 		zAEv->getOp(),
@@ -328,7 +335,11 @@ void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
 		2, 1, "Processing a Send event (length=%" PRIu32 ", tag=%d, dest=%" PRIu32 ")\n",
 		zSEv->getLength(), zSEv->getMessageTag(), zSEv->getDestination());
 
-	msgapi->send((Addr) emptyBuffer, zSEv->getLength(),
+	Hermes::MemAddr addr;
+	addr.simVAddr = 0;
+	addr.backing = emptyBuffer;
+
+	msgapi->send( addr, zSEv->getLength(),
 		zSEv->getDataType(), (RankID) zSEv->getDestination(),
 		zSEv->getMessageTag(), zSEv->getCommunicatorGroup(), &sendFunctor);
 
@@ -349,7 +360,11 @@ void ZodiacSiriusTraceReader::handleRecvEvent(ZodiacEvent* zEv) {
 		2, 1, "Processing a Recv event (length=%" PRIu32 ", tag=%d, source=%" PRIu32 ")\n",
 		zREv->getLength(), zREv->getMessageTag(), zREv->getSource());
 
-	msgapi->recv((Addr) emptyBuffer, zREv->getLength(),
+	Hermes::MemAddr addr;
+	addr.simVAddr = 0;
+	addr.backing = emptyBuffer;
+
+	msgapi->recv( addr, zREv->getLength(),
 		zREv->getDataType(), (RankID) zREv->getSource(),
 		zREv->getMessageTag(), zREv->getCommunicatorGroup(),
 		currentRecv, &recvFunctor);
@@ -391,7 +406,10 @@ void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
 		2, 1, "Processing a Irecv event (length=%" PRIu32 ", tag=%d, source=%" PRIu32 ")\n",
 		zREv->getLength(), zREv->getMessageTag(), zREv->getSource());
 
-	msgapi->irecv((Addr) emptyBuffer, zREv->getLength(),
+	Hermes::MemAddr addr;
+	addr.simVAddr = 0;
+	addr.backing = emptyBuffer;
+	msgapi->irecv( addr, zREv->getLength(),
 		zREv->getDataType(), (RankID) zREv->getSource(),
 		zREv->getMessageTag(), zREv->getCommunicatorGroup(),
 		msgReq, &irecvFunctor);

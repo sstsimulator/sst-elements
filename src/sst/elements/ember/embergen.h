@@ -22,9 +22,11 @@
 
 #include <sst/elements/hermes/msgapi.h>
 #include "sst/elements/thornhill/detailedCompute.h"
+#include "sst/elements/thornhill/memoryHeapLink.h"
 
 #include "emberevent.h"
 #include "embermap.h"
+#include "embermemoryev.h"
 
 namespace SST {
 namespace Ember {
@@ -32,6 +34,9 @@ namespace Ember {
 class EmberGenerator : public SubComponent {
 
   public:
+
+    typedef std::queue<EmberEvent*> Queue;
+
     EmberGenerator( Component* owner, Params& params, std::string name ="" );
 
 	~EmberGenerator(){};
@@ -98,6 +103,9 @@ class EmberGenerator : public SubComponent {
 
     Hermes::Interface*  	m_api;
     Thornhill::DetailedCompute*   m_detailedCompute;
+    Thornhill::MemoryHeapLink*    m_memHeapLink;
+
+    inline void enQ_memAlloc( Queue&, Hermes::MemAddr* addr, size_t length  );
 
     enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
 
@@ -109,6 +117,13 @@ class EmberGenerator : public SubComponent {
     int                     m_jobId;
     int                     m_motifNum;
 };
+
+void EmberGenerator::enQ_memAlloc( Queue& q, Hermes::MemAddr* addr, size_t length )
+{
+    assert( m_memHeapLink );
+    addr->backing = memAlloc(length);
+    q.push( new EmberMemAllocEvent( *m_memHeapLink, &getOutput(), addr, length  ) );
+}
 
 }
 }

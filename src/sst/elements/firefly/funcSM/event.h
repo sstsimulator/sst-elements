@@ -79,7 +79,7 @@ class RecvStartEvent : public Event {
 
   public:
     RecvStartEvent(
-            MP::Addr _buf, uint32_t _count,
+            const Hermes::MemAddr& _buf, uint32_t _count,
             MP::PayloadDataType _dtype, MP::RankID _src,
             uint32_t _tag, MP::Communicator _group, 
             MP::MessageRequest* _req, MP::MessageResponse* _resp ) :
@@ -92,7 +92,7 @@ class RecvStartEvent : public Event {
         resp( _resp ),
         req( _req )
     {}
-    MP::Addr                buf;
+    Hermes::MemAddr            buf;
     uint32_t                    count;
     MP::PayloadDataType     dtype;
     MP::RankID              src;
@@ -109,7 +109,7 @@ class SendStartEvent : public Event {
 
   public:
     SendStartEvent(
-                MP::Addr _buf, uint32_t _count,
+                const Hermes::MemAddr& _buf, uint32_t _count,
                 MP::PayloadDataType _dtype, MP::RankID _dest,
                 uint32_t _tag, MP::Communicator _group, 
                 MP::MessageRequest* _req ) :
@@ -121,11 +121,11 @@ class SendStartEvent : public Event {
         group( _group ),
         req( _req )
     {}
-    MP::Addr                buf;
-    uint32_t                    count;
+    Hermes::MemAddr         buf;
+    uint32_t                count;
     MP::PayloadDataType     dtype;
     MP::RankID              dest;
-    uint32_t                    tag;
+    uint32_t                tag;
     MP::Communicator        group;
     MP::MessageRequest*     req;
     
@@ -137,7 +137,7 @@ class CollectiveStartEvent : public Event {
   public:
     enum Type { Allreduce, Reduce, Bcast };
     CollectiveStartEvent(
-                MP::Addr _mydata, MP::Addr _result, uint32_t _count,
+                const Hermes::MemAddr& _mydata, const Hermes::MemAddr& _result, uint32_t _count,
                 MP::PayloadDataType _dtype, MP::ReductionOperation _op,
                 MP::RankID _root, MP::Communicator _group,
                 Type _type ) :
@@ -163,8 +163,8 @@ class CollectiveStartEvent : public Event {
         return NULL;
     }
 
-    MP::Addr mydata;
-    MP::Addr result;
+    Hermes::MemAddr mydata;
+    Hermes::MemAddr result;
     uint32_t count;
     MP::PayloadDataType dtype;
     MP::ReductionOperation op;
@@ -179,9 +179,9 @@ class GatherBaseStartEvent : public Event {
 
   public:
     GatherBaseStartEvent(
-                MP::Addr _sendbuf, uint32_t _sendcnt,
+                const Hermes::MemAddr& _sendbuf, uint32_t _sendcnt,
                 MP::PayloadDataType _sendtype,
-                MP::Addr _recvbuf,
+                const Hermes::MemAddr& _recvbuf,
                 MP::PayloadDataType _recvtype,
                 MP::RankID _root, MP::Communicator _group ) :
         sendbuf(_sendbuf),
@@ -193,8 +193,8 @@ class GatherBaseStartEvent : public Event {
         group(_group)
     {}
     
-    MP::Addr sendbuf;
-    MP::Addr recvbuf;
+    Hermes::MemAddr sendbuf;
+    Hermes::MemAddr recvbuf;
     uint32_t sendcnt;
     MP::PayloadDataType sendtype;
     MP::PayloadDataType recvtype;
@@ -207,9 +207,9 @@ class GatherBaseStartEvent : public Event {
 class GatherStartEvent : public GatherBaseStartEvent {
   public:
     GatherStartEvent(
-            MP::Addr sendbuf, uint32_t sendcnt,
+            const Hermes::MemAddr& sendbuf, uint32_t sendcnt,
             MP::PayloadDataType sendtype,
-            MP::Addr recvbuf, MP::Addr _recvcnt, MP::Addr _displs,
+            const Hermes::MemAddr& recvbuf, void* _recvcnt,  void* _displs,
             MP::PayloadDataType recvtype,
             MP::RankID root, MP::Communicator group ) :
         GatherBaseStartEvent( sendbuf, sendcnt, sendtype,
@@ -219,9 +219,9 @@ class GatherStartEvent : public GatherBaseStartEvent {
     { }
 
     GatherStartEvent(
-            MP::Addr sendbuf, uint32_t sendcnt,
+            const Hermes::MemAddr& sendbuf, uint32_t sendcnt,
             MP::PayloadDataType sendtype,
-            MP::Addr recvbuf, uint32_t _recvcnt,
+            const Hermes::MemAddr& recvbuf, uint32_t _recvcnt,
             MP::PayloadDataType recvtype,
             MP::RankID root, MP::Communicator group ) :
         GatherBaseStartEvent( sendbuf, sendcnt, sendtype,
@@ -232,9 +232,9 @@ class GatherStartEvent : public GatherBaseStartEvent {
     { }
 
     GatherStartEvent(
-            MP::Addr sendbuf, uint32_t sendcnt,
+            const Hermes::MemAddr& sendbuf, uint32_t sendcnt,
             MP::PayloadDataType sendtype,
-            MP::Addr recvbuf, uint32_t _recvcnt,
+            const Hermes::MemAddr& recvbuf, uint32_t _recvcnt,
             MP::PayloadDataType recvtype,
             MP::Communicator group ) :
         GatherBaseStartEvent( sendbuf, sendcnt, sendtype,
@@ -245,9 +245,9 @@ class GatherStartEvent : public GatherBaseStartEvent {
     { }
 
     GatherStartEvent(
-            MP::Addr sendbuf, uint32_t sendcnt,
+            const Hermes::MemAddr& sendbuf, uint32_t sendcnt,
             MP::PayloadDataType sendtype,
-            MP::Addr recvbuf, MP::Addr _recvcnt, MP::Addr _displs,
+            const Hermes::MemAddr& recvbuf,  void* _recvcnt, void* _displs,
             MP::PayloadDataType recvtype, MP::Communicator group ) :
         GatherBaseStartEvent( sendbuf, sendcnt, sendtype,
             recvbuf, recvtype, 0, group ),
@@ -255,8 +255,8 @@ class GatherStartEvent : public GatherBaseStartEvent {
             displsPtr( _displs )
     { }
 
-    MP::Addr recvcntPtr;
-    MP::Addr displsPtr;
+    void* recvcntPtr;
+    void* displsPtr;
     uint32_t recvcnt;
 
     NotSerializable(GatherStartEvent)
@@ -265,9 +265,9 @@ class GatherStartEvent : public GatherBaseStartEvent {
 class AlltoallStartEvent: public Event {
   public:
     AlltoallStartEvent(
-            MP::Addr _sendbuf, uint32_t _sendcnt, 
+            const Hermes::MemAddr& _sendbuf, uint32_t _sendcnt, 
             MP::PayloadDataType _sendtype, 
-            MP::Addr _recvbuf, uint32_t _recvcnt, 
+            const Hermes::MemAddr& _recvbuf, uint32_t _recvcnt, 
             MP::PayloadDataType _recvtype, 
             MP::Communicator _group  ) :
         sendbuf( _sendbuf ),
@@ -282,11 +282,11 @@ class AlltoallStartEvent: public Event {
     { } 
 
     AlltoallStartEvent(
-            MP::Addr _sendbuf, MP::Addr _sendcnts,  
-            MP::Addr _senddispls,
+            const Hermes::MemAddr& _sendbuf, void* _sendcnts,  
+            void* _senddispls,
             MP::PayloadDataType _sendtype, 
-            MP::Addr _recvbuf, MP::Addr _recvcnts, 
-            MP::Addr _recvdispls,
+            const Hermes::MemAddr& _recvbuf, void* _recvcnts, 
+            void* _recvdispls,
             MP::PayloadDataType _recvtype, 
             MP::Communicator _group ) :
         sendbuf( _sendbuf ),
@@ -300,15 +300,15 @@ class AlltoallStartEvent: public Event {
         group( _group )
     { } 
 
-    MP::Addr            sendbuf;
+    Hermes::MemAddr            sendbuf;
     uint32_t                sendcnt;
-    MP::Addr            sendcnts;
-    MP::Addr            senddispls;
+    void*            sendcnts;
+    void*            senddispls;
     MP::PayloadDataType sendtype;
-    MP::Addr            recvbuf;
+    Hermes::MemAddr            recvbuf;
     uint32_t                recvcnt;
-    MP::Addr            recvcnts;
-    MP::Addr            recvdispls;
+    void*            recvcnts;
+    void*            recvdispls;
     MP::PayloadDataType recvtype;
     MP::Communicator    group;
 

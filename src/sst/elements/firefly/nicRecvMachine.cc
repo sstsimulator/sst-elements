@@ -39,7 +39,7 @@ Nic::RecvMachine::~RecvMachine()
 
 void Nic::RecvMachine::state_0( FireflyNetworkEvent* ev )
 {
-    m_dbg.verbose(CALL_INFO,2,32,"got a network pkt\n");
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"got a network pkt\n");
     assert( ev );
 
     // is there an active stream for this src node?
@@ -58,7 +58,7 @@ void Nic::RecvMachine::state_1(  FireflyNetworkEvent* ev )
     MsgHdr& hdr = *(MsgHdr*) ev->bufPtr();
 
     if ( MsgHdr::Msg == hdr.op ) {
-        m_dbg.verbose(CALL_INFO,1,32,"Msg Operation\n");
+        m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Msg Operation\n");
 
         Callback callback;
         if ( findRecv( ev->src, hdr ) ) {
@@ -71,7 +71,7 @@ void Nic::RecvMachine::state_1(  FireflyNetworkEvent* ev )
         m_nic.schedCallback( callback, m_rxMatchDelay);
     } else if ( MsgHdr::Rdma == hdr.op ) {
 
-        m_dbg.verbose(CALL_INFO,1,32,"RDMA Operation\n");
+        m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"RDMA Operation\n");
 
         RdmaMsgHdr& rdmaHdr = *(RdmaMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
 
@@ -81,7 +81,7 @@ void Nic::RecvMachine::state_1(  FireflyNetworkEvent* ev )
 
           case RdmaMsgHdr::Put:
           case RdmaMsgHdr::GetResp:
-            m_dbg.verbose(CALL_INFO,2,32,"Put Op\n");
+            m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"Put Op\n");
 
             assert( findPut( ev->src, hdr, rdmaHdr ) );
             callback = std::bind( &Nic::RecvMachine::state_move_0, this, ev );
@@ -89,7 +89,7 @@ void Nic::RecvMachine::state_1(  FireflyNetworkEvent* ev )
 
           case RdmaMsgHdr::Get:
             {
-                m_dbg.verbose(CALL_INFO,2,32,"Get Op\n");
+                m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"Get Op\n");
                 SendEntry* entry = findGet( ev->src, hdr, rdmaHdr );
                 delay = m_hostReadDelay; // host read  delay
                 callback = std::bind( &Nic::RecvMachine::state_3, this, entry );
@@ -110,7 +110,7 @@ void Nic::RecvMachine::state_1(  FireflyNetworkEvent* ev )
 // Need Recv
 void Nic::RecvMachine::state_2( FireflyNetworkEvent* ev )
 {
-    m_dbg.verbose(CALL_INFO,1,32,"\n");
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
     processNeedRecv( 
         ev,
         std::bind( &Nic::RecvMachine::state_0, this, ev )
@@ -120,7 +120,7 @@ void Nic::RecvMachine::state_2( FireflyNetworkEvent* ev )
 // Need Get 
 void Nic::RecvMachine::state_3( SendEntry* entry )
 {
-    m_dbg.verbose(CALL_INFO,1,32,"\n");
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
     m_nic.m_sendMachine[0].run( entry );
 
     checkNetwork();
@@ -131,34 +131,39 @@ void Nic::RecvMachine::checkNetwork( )
     for ( int i = 0; i < 2; i++ ) {
         FireflyNetworkEvent* ev = getNetworkEvent(i);
         if ( ev ) {
-            m_dbg.verbose(CALL_INFO,2,32,"pulled a packet from the network"
+            m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+					"pulled a packet from the network"
                     " vc=%d\n", i);
             state_0( ev );
             return;
         }
     }
-    m_dbg.verbose(CALL_INFO,2,32,"nothing on the network, set notifier\n");
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+					"nothing on the network, set notifier\n");
     setNotify();
 }
 
 bool Nic::RecvMachine::findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )
 {
-    m_dbg.verbose(CALL_INFO,2,32,"src=%d len=%lu\n",src,hdr.len); 
-    m_dbg.verbose(CALL_INFO,2,32,"rgnNum=%d offset=%d respKey=%d\n",
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+					"src=%d len=%lu\n",src,hdr.len); 
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+					"rgnNum=%d offset=%d respKey=%d\n",
             rdmahdr.rgnNum, rdmahdr.offset, rdmahdr.respKey); 
 
     if ( RdmaMsgHdr::GetResp == rdmahdr.op ) {
-        m_dbg.verbose(CALL_INFO,2,32,"GetResp\n");
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"GetResp\n");
         m_activeRecvM[src] = m_nic.m_getOrgnM[ rdmahdr.respKey ];
 
 
-        m_dbg.verbose(CALL_INFO,2,32,"%p %lu\n", m_activeRecvM[src],
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+					"%p %lu\n", m_activeRecvM[src],
                     m_activeRecvM[src]->ioVec().size());
         m_nic.m_getOrgnM.erase(rdmahdr.respKey);
         return true;
 
     } else if ( RdmaMsgHdr::Put == rdmahdr.op ) {
-        m_dbg.verbose(CALL_INFO,2,32,"Put\n");
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"Put\n");
         assert(0);
     } else {
         assert(0);
@@ -170,7 +175,7 @@ bool Nic::RecvMachine::findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )
 Nic::SendEntry* Nic::RecvMachine::findGet( int src, 
                         MsgHdr& hdr, RdmaMsgHdr& rdmaHdr  )
 {
-    m_dbg.verbose(CALL_INFO,1,32,"\n");
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
 
     // Note that we are not doing a strong check here. We are only checking that
     // the tag matches. 
@@ -181,7 +186,8 @@ Nic::SendEntry* Nic::RecvMachine::findGet( int src,
 
     assert( hdr.tag == rdmaHdr.rgnNum );
     
-    m_dbg.verbose(CALL_INFO,1,32,"rgnNum %d offset=%d respKey=%d\n",
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,
+						"rgnNum %d offset=%d respKey=%d\n",
                         rdmaHdr.rgnNum, rdmaHdr.offset, rdmaHdr.respKey );
 
     MemRgnEntry* entry = m_nic.m_memRgnM[ hdr.dst_vNicId ][rdmaHdr.rgnNum]; 
@@ -197,28 +203,31 @@ Nic::SendEntry* Nic::RecvMachine::findGet( int src,
 
 bool Nic::RecvMachine::findRecv( int src, MsgHdr& hdr )
 {
-    m_dbg.verbose(CALL_INFO,2,32,"need a recv entry, srcNic=%d src_vNic=%d "
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+				"need a recv entry, srcNic=%d src_vNic=%d "
                 "dst_vNic=%d tag=%#x len=%lu\n", src, hdr.src_vNicId,
 						hdr.dst_vNicId, hdr.tag, hdr.len);
 
     if ( m_recvM[hdr.dst_vNicId].find( hdr.tag ) == m_recvM[hdr.dst_vNicId].end() ) {
-		m_dbg.verbose(CALL_INFO,2,32,"did't match tag\n");
+		m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"did't match tag\n");
         return false;
     }
 
     RecvEntry* entry = m_recvM[ hdr.dst_vNicId][ hdr.tag ].front();
     if ( entry->node() != -1 && entry->node() != src ) {
-		m_dbg.verbose(CALL_INFO,2,32,"didn't match node  want=%#x src=%#x\n",
+		m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+				"didn't match node  want=%#x src=%#x\n",
 											entry->node(), src );
         return false;
     } 
-    m_dbg.verbose(CALL_INFO,2,32,"recv entry size %lu\n",entry->totalBytes());
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+				"recv entry size %lu\n",entry->totalBytes());
 
     if ( entry->totalBytes() < hdr.len ) {
         assert(0);
     }
 
-    m_dbg.verbose(CALL_INFO,2,32,"found a receive entry\n");
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"found a receive entry\n");
 
     m_activeRecvM[src] = m_recvM[ hdr.dst_vNicId ][ hdr.tag ].front();
     m_recvM[ hdr.dst_vNicId ][ hdr.tag ].pop_front();
@@ -243,19 +252,14 @@ bool Nic::RecvMachine::findRecv( int src, MsgHdr& hdr )
 
 void Nic::RecvMachine::state_move_0( FireflyNetworkEvent* event )
 {
-    m_dbg.verbose(CALL_INFO,2,32,"event has %lu bytes\n", event->bufSize() );
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+				"event has %lu bytes\n", event->bufSize() );
 
-    m_nic.dmaWrite(
-            std::bind( &Nic::RecvMachine::state_move_1, this, event ), 
-            0, event->bufSize() );
-}
-        
-void Nic::RecvMachine::state_move_1( FireflyNetworkEvent* event )
-{
     int src = event->src;
     if ( 0 == m_activeRecvM[ src ]->currentVec && 
              0 == m_activeRecvM[ src ]->currentPos  ) {
-        m_dbg.verbose(CALL_INFO,2,32,"local_vNic %d, recv srcNic=%d "
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+				"local_vNic %d, recv srcNic=%d "
                     "src_vNic=%d tag=%x bytes=%lu\n", 
                         m_activeRecvM[ src ]->local_vNic(),
                         src,
@@ -263,15 +267,27 @@ void Nic::RecvMachine::state_move_1( FireflyNetworkEvent* event )
                         m_activeRecvM[ src ]->match_tag(),
                         m_activeRecvM[ src ]->match_len() );
     }
-    long tmp = event->bufSize();
-    if ( copyIn( m_dbg, *m_activeRecvM[ src ], *event ) || 
-        m_activeRecvM[src]->match_len() == 
-                        m_activeRecvM[src]->currentLen ) {
-        m_dbg.verbose(CALL_INFO,2,32,"recv entry done, srcNic=%d src_vNic=%d\n",
-                            src, m_activeRecvM[ src ]->src_vNic() );
+    std::vector< DmaVec > vec;
 
-        m_dbg.verbose(CALL_INFO,2,32,"copyIn %lu bytes\n",
-                                            tmp - event->bufSize());
+    long tmp = event->bufSize();
+    bool ret = copyIn( m_dbg, *m_activeRecvM[ src ], *event, vec );
+
+    m_nic.dmaWrite( vec,
+            std::bind( &Nic::RecvMachine::state_move_1, this, event, ret ) ); 
+
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+				"copyIn %lu bytes\n", tmp - event->bufSize());
+}
+
+void Nic::RecvMachine::state_move_1( FireflyNetworkEvent* event, bool done )
+{
+    int src = event->src;
+    if ( done || m_activeRecvM[src]->match_len() == 
+                        m_activeRecvM[src]->currentLen ) {
+
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+				"recv entry done, srcNic=%d src_vNic=%d\n",
+                            src, m_activeRecvM[ src ]->src_vNic() );
 
         m_activeRecvM[src]->notify();
 
@@ -284,10 +300,9 @@ void Nic::RecvMachine::state_move_1( FireflyNetworkEvent* event )
         }
     }
 
-    m_dbg.verbose(CALL_INFO,2,32,"copyIn %lu bytes\n", tmp - event->bufSize());
-
     if ( 0 == event->bufSize() ) {
-        m_dbg.verbose(CALL_INFO,2,32,"network event is done\n");
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
+				"network event is done\n");
         delete event;
     }
 
@@ -297,16 +312,18 @@ void Nic::RecvMachine::state_move_1( FireflyNetworkEvent* event )
 static void print( Output& dbg, char* buf, int len )
 {
     std::string tmp;
-    dbg.verbose(CALL_INFO,4,32,"addr=%p len=%d\n",buf,len);
+    dbg.verbose(CALL_INFO,4,NIC_DBG_RECV_MACHINE,"addr=%p len=%d\n",buf,len);
     for ( int i = 0; i < len; i++ ) {
-        dbg.verbose(CALL_INFO,3,32,"%#03x\n",(unsigned char)buf[i]);
+        dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
+				"%#03x\n",(unsigned char)buf[i]);
     }
 }
 
 size_t Nic::RecvMachine::copyIn( Output& dbg, Nic::Entry& entry,
-                                        FireflyNetworkEvent& event )
+                        FireflyNetworkEvent& event, std::vector<DmaVec>& vec )
 {
-    dbg.verbose(CALL_INFO,3,32,"ioVec.size()=%lu\n", entry.ioVec().size() );
+    dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
+				"ioVec.size()=%lu\n", entry.ioVec().size() );
 
 
     for ( ; entry.currentVec < entry.ioVec().size();
@@ -317,13 +334,20 @@ size_t Nic::RecvMachine::copyIn( Output& dbg, Nic::Entry& entry,
             size_t fromLen = event.bufSize();
             size_t len = toLen < fromLen ? toLen : fromLen;
 
-            char* toPtr = (char*) entry.ioVec()[entry.currentVec].ptr +
+			DmaVec tmp;
+			tmp.length = len;
+			tmp.addr = entry.ioVec()[entry.currentVec].addr.simVAddr +
+                                                    entry.currentPos;
+            vec.push_back( tmp );
+
+            char* toPtr = (char*) entry.ioVec()[entry.currentVec].addr.backing +
                                                         entry.currentPos;
-            dbg.verbose(CALL_INFO,3,32,"toBufSpace=%lu fromAvail=%lu, "
+            dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
+							"toBufSpace=%lu fromAvail=%lu, "
                             "memcpy len=%lu\n", toLen,fromLen,len);
 
             entry.currentLen += len;
-            if ( entry.ioVec()[entry.currentVec].ptr ) {
+            if ( entry.ioVec()[entry.currentVec].addr.backing ) {
                 void *buf = event.bufPtr();
                 if ( buf ) {
                     memcpy( toPtr, buf, len );
@@ -337,13 +361,15 @@ size_t Nic::RecvMachine::copyIn( Output& dbg, Nic::Entry& entry,
             if ( event.bufEmpty() &&
                     entry.currentPos != entry.ioVec()[entry.currentVec].len )
             {
-                dbg.verbose(CALL_INFO,3,32,"event buffer empty\n");
+                dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
+							"event buffer empty\n");
                 break;
             }
         }
     }
 
-    dbg.verbose(CALL_INFO,3,32,"currentVec=%lu, currentPos=%lu\n",
+    dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
+				"currentVec=%lu, currentPos=%lu\n",
                 entry.currentVec, entry.currentPos);
     return ( entry.currentVec == entry.ioVec().size() ) ;
 }

@@ -38,7 +38,7 @@ inline long mod( long a, long b )
 bool EmberCommGenerator::generate( std::queue<EmberEvent*>& evQ) 
 {
     if ( 0 == m_workPhase ) {
-        assert( size() > 2);
+        assert( size() > 7);
         assert( ! ( size() % 2 ) );
         enQ_commSplit( evQ, GroupWorld, rank()/(size()/2), 
                                 rank() % (size()/2), &m_newComm[0] );

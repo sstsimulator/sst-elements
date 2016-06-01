@@ -1,4 +1,5 @@
-##### New Issue for sst-elements
+New Issue for sst-elements
+
 `1` Detailed description of problem or enhancement
 
 `2` Describe how to reproduce
@@ -10,4 +11,3 @@
 `5` Provide sha1 of all relevant sst repositories (sst-core, sst-elements, etc)
 
 `6` Fill out Labels, Milestones, and Assignee fields as best possible
-

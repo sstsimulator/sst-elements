@@ -13,6 +13,8 @@
 #define COMPONENTS_FIREFLY_FUNCSM_INIT_H
 
 #include "funcSM/api.h"
+#include "funcSM/event.h"
+#include "ctrlMsg.h"
 
 namespace SST {
 namespace Firefly {
@@ -20,16 +22,32 @@ namespace Firefly {
 class InitFuncSM :  public FunctionSMInterface 
 {
   public:
-    InitFuncSM( SST::Params& params ) : FunctionSMInterface( params ) {}
+    InitFuncSM( SST::Params& params ) : FunctionSMInterface( params ), m_event(NULL) {}
+
+	virtual std::string protocolName() { return "CtrlMsgProtocol"; }
 
     virtual void handleStartEvent( SST::Event *e, Retval& retval ) {
 
+		assert( NULL == m_event );
         m_dbg.verbose(CALL_INFO,1,0,"\n");
 
+		m_event = static_cast<InitStartEvent*>(e);
+
+        proto()->init( );
+    }
+
+    void handleEnterEvent( Retval& retval ) {
+        delete m_event;
+        m_event = NULL;
         retval.setExit(0);
 
-        delete e;
     }
+  private:
+
+    CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
+
+    InitStartEvent* m_event;
+		
 };
 
 }

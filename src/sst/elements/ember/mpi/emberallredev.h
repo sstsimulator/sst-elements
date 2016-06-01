@@ -22,7 +22,9 @@ class EmberAllreduceEvent : public EmberMPIEvent {
 public:
     EmberAllreduceEvent( MP::Interface& api, Output* output,
                         EmberEventTimeStatistic* stat,
-            Addr mydata, Addr result, uint32_t count, PayloadDataType dtype,
+            const Hermes::MemAddr& mydata, 
+            const Hermes::MemAddr& result,
+            uint32_t count, PayloadDataType dtype,
             ReductionOperation op, Communicator group ) :
         EmberMPIEvent( api, output, stat ),
         m_mydata(mydata),
@@ -46,8 +48,8 @@ public:
     }
 
 private:
-    Addr                m_mydata;
-    Addr                m_result;
+    Hermes::MemAddr     m_mydata;
+    Hermes::MemAddr     m_result;
     uint32_t            m_count;
     PayloadDataType     m_dtype;
     ReductionOperation  m_op;

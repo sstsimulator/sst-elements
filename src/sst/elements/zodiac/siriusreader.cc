@@ -44,6 +44,7 @@ SiriusReader::SiriusReader(char* file, uint32_t focusOnRank, uint32_t maxQLen, s
 
 	prevEventTime = 0;
 	output = new Output("SiriusReader", verbose, 0, Output::STDOUT);
+	readInit();
 }
 
 void SiriusReader::close() {

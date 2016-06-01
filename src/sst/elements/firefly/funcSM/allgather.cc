@@ -57,6 +57,7 @@ void AllgatherFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
 bool AllgatherFuncSM::setup( Retval& retval )
 {
+	Hermes::MemAddr addr;
     std::vector<IoVec> ioVec;
     int recvStartChunk;
     int src; 
@@ -68,7 +69,9 @@ bool AllgatherFuncSM::setup( Retval& retval )
         src = m_info->getGroup(m_event->group)->getMapping( calcSrc( m_setupState.offset ) );
 
         m_dbg.verbose(CALL_INFO,1,0,"post recv for ready msg from %d\n", src);
-        proto()->irecv( NULL, 0, src, genTag(), &m_recvReq );
+		addr.simVAddr = 1;
+		addr.backing = NULL;
+        proto()->irecv( addr, 0, src, genTag(), &m_recvReq );
         m_setupState.state = SetupState::PostStageRecv;
         return false;
 
@@ -113,12 +116,14 @@ bool AllgatherFuncSM::setup( Retval& retval )
 
       case SetupState::SendStartMsg:
 
-        memcpy( chunkPtr(m_rank), m_event->sendbuf, chunkSize(m_rank) );
+        memcpy( chunkPtr(m_rank), m_event->sendbuf.backing, chunkSize(m_rank) );
 
         m_dbg.verbose(CALL_INFO,1,0,"send ready message to %d\n",
 						m_info->getGroup(m_event->group)->getMapping(m_dest[0]));
 		
-        proto()->send( NULL, 0, m_info->getGroup(m_event->group)->getMapping( m_dest[0] ), genTag() );
+		addr.simVAddr = 1;
+		addr.backing = NULL;
+        proto()->send( addr, 0, m_info->getGroup(m_event->group)->getMapping( m_dest[0] ), genTag() );
     }
     return true;
 }
@@ -184,14 +189,15 @@ void AllgatherFuncSM::initIoVec( std::vector<IoVec>& ioVec,
     while ( countDown ) {  
         --countDown;
         IoVec jjj;
-        jjj.ptr = chunkPtr( currentChunk ); 
+		jjj.addr.simVAddr = 1;
+        jjj.addr.backing = chunkPtr( currentChunk ); 
         jjj.len = chunkSize( currentChunk );
         
         m_dbg.verbose(CALL_INFO,2,0,"currentChunk=%d ptr=%p len=%lu\n",
-                    currentChunk, jjj.ptr,jjj.len);
+                    currentChunk, jjj.addr.backing, jjj.len);
     
         while ( countDown &&
-                (unsigned char*) jjj.ptr + jjj.len == chunkPtr( nextChunk ) )
+                (unsigned char*) jjj.addr.backing + jjj.len == chunkPtr( nextChunk ) )
         {
             jjj.len += chunkSize( nextChunk );
             m_dbg.verbose(CALL_INFO,2,0,"len=%lu\n", jjj.len );
@@ -200,13 +206,13 @@ void AllgatherFuncSM::initIoVec( std::vector<IoVec>& ioVec,
             --countDown;
         }
         if ( 0 == countDown || 
-                (unsigned char*) jjj.ptr + jjj.len != chunkPtr( nextChunk ) )
+                (unsigned char*) jjj.addr.backing + jjj.len != chunkPtr( nextChunk ) )
         {
 
             ioVec.push_back( jjj );
             m_dbg.verbose(CALL_INFO,2,0,"ioVec[%lu] ptr=%p len=%lu\n",
                                 ioVec.size()-1,
-                                ioVec[ioVec.size()-1].ptr,
+                                ioVec[ioVec.size()-1].addr.backing,
                                 ioVec[ioVec.size()-1].len); 
         }
         currentChunk = nextChunk;

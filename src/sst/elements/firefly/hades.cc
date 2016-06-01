@@ -36,7 +36,8 @@ using namespace SST;
 Hades::Hades( Component* owner, Params& params ) :
     OS( owner ),	
     m_virtNic(NULL),
-    m_detailedCompute(NULL)
+    m_detailedCompute(NULL),
+    m_memHeapLink(NULL)
 {
     m_dbg.init("@t:Hades::@p():@l ", 
         params.find<uint32_t>("verboseLevel",0),
@@ -74,9 +75,22 @@ Hades::Hades( Component* owner, Params& params ) :
 
         assert( m_detailedCompute );
         if ( ! m_detailedCompute->isConnected() ) {
-
             delete m_detailedCompute;
             m_detailedCompute = NULL;
+        }
+    }
+
+    Params memParams = params.find_prefix_params( "memoryHeapLink." );
+    std::string memName =  memParams.find<std::string>( "name" );
+
+    if ( ! memName.empty() ) {
+
+        m_memHeapLink = dynamic_cast<Thornhill::MemoryHeapLink*>( loadSubComponent(
+                            memName, memParams ) );
+
+        if ( ! m_memHeapLink->isConnected() ) {
+            delete m_memHeapLink;
+            m_memHeapLink = NULL;
         }
     }
 
