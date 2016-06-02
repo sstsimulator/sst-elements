@@ -13,7 +13,7 @@
 #ifndef _H_EMBER_DETAILED_COMPUTE_EVENT
 #define _H_EMBER_DETAILED_COMPUTE_EVENT
 
-#include "mpi/emberMPIEvent.h"
+#include "emberevent.h"
 #include "sst/elements/thornhill/detailedCompute.h"
 
 namespace SST {
@@ -23,11 +23,10 @@ class EmberDetailedComputeEvent : public EmberEvent {
 
 public:
 	EmberDetailedComputeEvent( Output* output,
-                        EmberEventTimeStatistic* stat,
                         Thornhill::DetailedCompute& api,
                         std::string& name,
                         Params& params ) :
-        EmberEvent(output, stat),
+        EmberEvent(output),
         m_api(api),
         m_name(name),
         m_params(params)

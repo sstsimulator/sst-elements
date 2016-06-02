@@ -22,7 +22,7 @@ using namespace Hermes::MP;
 namespace SST {
 namespace Ember {
 
-    typedef Statistic<uint32_t> EmberEventTimeStatistic;
+typedef Statistic<uint32_t> EmberEventTimeStatistic;
     
 class EmberMPIEvent : public EmberEvent {
 
