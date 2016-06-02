@@ -29,8 +29,6 @@
 #include "emberbarrierev.h"
 #include "emberrankev.h"
 #include "embersizeev.h"
-#include "embercomputeev.h"
-#include "emberdetailedcomputeev.h"
 #include "embersendev.h"
 #include "emberrecvev.h"
 #include "emberisendev.h"
@@ -126,9 +124,6 @@ protected:
     inline void enQ_barrier( Queue&, Communicator );
     inline void enQ_fini( Queue& );
     inline void enQ_init( Queue& );
-    inline void enQ_compute( Queue&, uint64_t nanoSecondDelay );
-    inline void enQ_compute( Queue& q, std::function<uint64_t()> func );
-    inline void enQ_detailedCompute( Queue& q, std::string, Params& );
     inline void enQ_rank( Queue&, Communicator, uint32_t* rankPtr);
     inline void enQ_size( Queue&, Communicator, int* sizePtr);
 
@@ -232,9 +227,7 @@ private:
     static const char*  m_eventName[];
 
 	EmberRankMap* 						m_rankMap;
-    EmberComputeDistribution*           m_computeDistrib; 
     std::vector< Statistic<uint32_t>* > m_Stats;
-	//std::map< std::string, Histo*>      m_histoM;
     std::map<int32_t, EmberSpyInfo*>*   m_spyinfo;
 };
 
@@ -278,26 +271,6 @@ void EmberMessagePassingGenerator::enQ_size( Queue& q, Communicator comm,
 {
     q.push( new EmberSizeEvent( *cast(m_api), &getOutput(), 
                                     m_Stats[Size], comm, sizePtr ) );
-}
-
-void EmberMessagePassingGenerator::enQ_compute( Queue& q, uint64_t delay )
-{
-    q.push( new EmberComputeEvent( &getOutput(),
-                                m_Stats[Compute], delay, m_computeDistrib ) );
-}
-
-void EmberMessagePassingGenerator::enQ_compute( Queue& q, std::function<uint64_t()> func )
-{
-    q.push( new EmberComputeEvent( &getOutput(),
-                                m_Stats[Compute], func, m_computeDistrib ) );
-}
-
-void EmberMessagePassingGenerator::enQ_detailedCompute( Queue& q, std::string name,
-        Params& params )
-{
-    assert( m_detailedCompute );
-    q.push( new EmberDetailedComputeEvent( &getOutput(),
-                      m_Stats[Compute], *m_detailedCompute, name, params ) );
 }
 
 void EmberMessagePassingGenerator::enQ_send( Queue& q, Addr payload,

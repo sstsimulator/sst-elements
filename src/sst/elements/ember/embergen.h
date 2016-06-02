@@ -27,6 +27,9 @@
 #include "emberevent.h"
 #include "embermap.h"
 #include "embermemoryev.h"
+#include "emberconstdistrib.h"
+#include "embercomputeev.h"
+#include "emberdetailedcomputeev.h"
 
 namespace SST {
 namespace Ember {
@@ -39,7 +42,9 @@ class EmberGenerator : public SubComponent {
 
     EmberGenerator( Component* owner, Params& params, std::string name ="" );
 
-	~EmberGenerator(){};
+	~EmberGenerator(){
+		delete m_computeDistrib;
+	};
     
     virtual void generate( const SST::Output* output, const uint32_t phase,
         std::queue<EmberEvent*>* evQ ) {
@@ -106,6 +111,9 @@ class EmberGenerator : public SubComponent {
     Thornhill::MemoryHeapLink*    m_memHeapLink;
 
     inline void enQ_memAlloc( Queue&, Hermes::MemAddr* addr, size_t length  );
+    inline void enQ_compute( Queue&, uint64_t nanoSecondDelay );
+    inline void enQ_compute( Queue& q, std::function<uint64_t()> func );
+    inline void enQ_detailedCompute( Queue& q, std::string, Params& );
 
     enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
 
@@ -116,8 +124,25 @@ class EmberGenerator : public SubComponent {
     Hermes::NodePerf*       m_nodePerf;
     int                     m_jobId;
     int                     m_motifNum;
+    EmberComputeDistribution*           m_computeDistrib;
 };
 
+void EmberGenerator::enQ_compute( Queue& q, uint64_t delay )
+{
+    q.push( new EmberComputeEvent( &getOutput(), delay, m_computeDistrib ) );
+}
+
+void EmberGenerator::enQ_compute( Queue& q, std::function<uint64_t()> func )
+{
+    q.push( new EmberComputeEvent( &getOutput(), func, m_computeDistrib ) );
+}
+
+void EmberGenerator::enQ_detailedCompute( Queue& q, std::string name,
+        Params& params )
+{
+    assert( m_detailedCompute );
+    q.push( new EmberDetailedComputeEvent( &getOutput(), *m_detailedCompute, name, params ) );
+}
 void EmberGenerator::enQ_memAlloc( Queue& q, Hermes::MemAddr* addr, size_t length )
 {
     assert( m_memHeapLink );
