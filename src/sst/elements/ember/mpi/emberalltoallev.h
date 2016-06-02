@@ -22,8 +22,10 @@ class EmberAlltoallEvent : public EmberMPIEvent {
 public:
     EmberAlltoallEvent( MP::Interface& api, Output* output,
                        EmberEventTimeStatistic* stat,
-        Addr sendData, int sendCnts, PayloadDataType senddtype,
-        Addr recvData, int recvCnts, PayloadDataType recvdtype, 
+        const Hermes::MemAddr& sendData, 
+        int sendCnts, PayloadDataType senddtype,
+        const Hermes::MemAddr& recvData,
+        int recvCnts, PayloadDataType recvdtype, 
         Communicator group ) :
 
         EmberMPIEvent( api, output, stat ),
@@ -49,10 +51,10 @@ public:
     }
 
 private:
-    Addr                m_senddata;
+    Hermes::MemAddr     m_senddata;
     int                 m_sendcnts;
     PayloadDataType     m_senddtype;
-    Addr                m_recvdata;
+    Hermes::MemAddr     m_recvdata;
     int                 m_recvcnts;
     PayloadDataType     m_recvdtype;
     Communicator        m_group;

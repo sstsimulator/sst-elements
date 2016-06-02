@@ -7,7 +7,7 @@ sst.setProgramOption("run-mode", "both")
 # Define the simulation components
 scheduler = sst.Component("myScheduler",             "scheduler.schedComponent")
 scheduler.addParams({
-      "traceName" : "./jobtrace_files/test_MappingImpact_alltoall.sim",
+      "traceName" : "test_MappingImpact_alltoall.sim",
       "machine" : "dragonfly[4,9,4,2,all_to_all,absolute]",
       "coresPerNode" : "2",
       "scheduler" : "easy",

@@ -19,12 +19,10 @@ using namespace SST::Ember;
 
 EmberDetailedRingGenerator::EmberDetailedRingGenerator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params, "DetailedRing"),
-    m_loopIndex(0)
+    m_loopIndex(-1)
 {
 	m_messageSize = params.find<uint32_t>("arg.messagesize", 1024);
 	m_iterations = params.find<int32_t>("arg.iterations", 1);
-    m_sendBuf = memAlloc(m_messageSize);
-    m_recvBuf = memAlloc(m_messageSize);
 }
 
 inline long mod( long a, long b )
@@ -53,12 +51,41 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
         return true;
     }
 
-    if ( 0 == m_loopIndex ) {
+    if ( -1 == m_loopIndex ) {
         verbose( CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
+		enQ_memAlloc( evQ, &m_sendBuf, m_messageSize );
+		enQ_memAlloc( evQ, &m_recvBuf, m_messageSize );
+		enQ_memAlloc( evQ, &m_streamBuf, m_messageSize );
+		++m_loopIndex;
+		return false;
+	}
+
+    if ( 0 == m_loopIndex ) {
 
         if ( 0 == rank() ) {
             enQ_getTime( evQ, &m_startTime );
         }
+    }
+
+
+	verbose( CALL_INFO, 2, 1, "sendbuff=%" PRIx64 "\n",m_sendBuf.simVAddr);
+	verbose( CALL_INFO, 2, 1, "recvbuff=%" PRIx64 "\n",m_recvBuf.simVAddr);
+	verbose( CALL_INFO, 2, 1, "streambuff=%" PRIx64 "\n",m_streamBuf.simVAddr);
+
+    int to = mod( rank() + 1, size());
+    int from = mod( (signed int) rank() - 1, size() );
+    verbose( CALL_INFO, 2, 0, "to=%d from=%d\n",to,from);
+
+    if ( 0 == rank() ) {
+        enQ_isend( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
+                                                GroupWorld, &m_req[0] );
+	    enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG, 
+                                                GroupWorld, &m_req[1] );
+    } else {
+	    enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG, 
+                                                GroupWorld, &m_req[0] );
+	    enQ_isend( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
+                                                GroupWorld, &m_req[1] );
     }
 
     if ( haveDetailed() ) {
@@ -67,11 +94,13 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
 
         std::string motif;
 
+#if 0
         motif = "miranda.CopyGenerator";
         params.insert("read_start_address", "0",true);
         params.insert("request_width", "16",true);
         params.insert("request_count", "65536",true);
         enQ_detailedCompute( evQ, motif, params );
+#endif
 
         motif = "miranda.SingleStreamGenerator";
         params.insert("startat", "3",true);
@@ -81,21 +110,8 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
         enQ_detailedCompute( evQ, motif, params );
     }
 
-    int to = mod( rank() + 1, size());
-    int from = mod( (signed int) rank() - 1, size() );
-    verbose( CALL_INFO, 2, 0, "to=%d from=%d\n",to,from);
-
-    if ( 0 == rank() ) {
-        enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
-                                                GroupWorld );
-	    enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG, 
-                                                GroupWorld, &m_resp );
-    } else {
-	    enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG, 
-                                                GroupWorld, &m_resp );
-	   enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
-                                                GroupWorld );
-    }
+	enQ_wait( evQ, &m_req[0] );
+	enQ_wait( evQ, &m_req[1] );
 
     if ( ++m_loopIndex == m_iterations ) {
         enQ_getTime( evQ, &m_stopTime );

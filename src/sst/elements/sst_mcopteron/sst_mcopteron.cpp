@@ -48,58 +48,58 @@ SSTMcOpteron::SSTMcOpteron(ComponentId_t id, Params& params):Component(id){
   primaryComponentDoNotEndSim();
 	//debugLevel (default=0)
 	//cout<<"  Reading debugLevel"<<endl;
-        debug = params.find_integer("debugLevel", 0);
+        debug = params.find("debugLevel", 0);
 	//cycles (default=100000)
 	//cout<<"  Reading cycles"<<endl;
-        numSimCycles = params.find_integer("cycles", 100000);
+        numSimCycles = params.find("cycles", 100000);
 	//converge (default=false)
 	//cout<<"  Reading converge"<<endl;
-	untilConvergence = (params.find_integer("converge", 0)) !=0;
+	untilConvergence = (params.find("converge", 0)) !=0;
 	//defFile (default=("opteron-insn.txt")
 	//cout<<"  Reading defFile"<<endl;
-        defFile = params.find_string("defFile","opteron-insn.txt");
+        defFile = params.find<std::string>("defFile","opteron-insn.txt");
 	//debugCycles (default=0)
 	//cout<<"  Reading debugCycles"<<endl;
-        debugCycle = params.find_integer("debugCycles", 0);
+        debugCycle = params.find("debugCycles", 0);
 	//printStaticMix (default=false)
 	//cout<<"  Reading printStaticMix"<<endl;
-        printStaticIMix = (params.find_integer("printStaticMix", 0)) !=0;
+        printStaticIMix = (params.find("printStaticMix", 0)) !=0;
 	//printInstructionMix (default=false)
 	//cout<<"  Reading printInstructionMix"<<endl;
-        printIMix = (params.find_integer("printInstructionMix", 0)) !=0;
+        printIMix = (params.find("printInstructionMix", 0)) !=0;
 	//mixFile (default="usedist_new.all")
 	//cout<<"  Reading mixfile"<<endl;
-        mixFile = params.find_string("mixFile", "usedist_new.all");
+        mixFile = params.find<std::string>("mixFile", "usedist_new.all");
 	//appDirectory (default=".")
 	//cout<<"  Reading appDirectory"<<endl;
-	appDirectory = params.find_string("appDirectory", ".");
+	appDirectory = params.find<std::string>("appDirectory", ".");
 	//seed (default=100)
 	//cout<<"  Reading seed"<<endl;
-	seed = params.find_integer("seed", 100);
+	seed = params.find("seed", 100);
 	//traceFile (default=null)
 	//cout<<"  Reading traceFile"<<endl;
-        traceFile = params.find_string("traceFile", "");
+        traceFile = params.find<std::string>("traceFile", "");
 	//traceOut (default=false)
 	//cout<<"  Reading traceOut"<<endl;
-        the_cpu->TraceTokens = params.find_integer("traceOut", 0);
+        the_cpu->TraceTokens = params.find("traceOut", 0);
 	//seperateSize (default=false)
 	//cout<<"  Reading sepearateSize"<<endl;
-        McOpteron::InstructionInfo::separateSizeRecords = (params.find_integer("seperateSize", 0)) !=0;
+        McOpteron::InstructionInfo::separateSizeRecords = (params.find("seperateSize", 0)) !=0;
 	//newMixFile (default=null)
 	//cout<<"  Reading newMixFile"<<endl;
-        newIMixFile = params.find_string("newMixFile", "instrMix.txt");
+        newIMixFile = params.find<std::string>("newMixFile", "instrMix.txt");
 	//instructionSizeFile (default=null)
 	//cout<<"  Reading instructionSizeFile"<<endl;
-        instrSizeFile = params.find_string("instructionSizeFile", "");
+        instrSizeFile = params.find<std::string>("instructionSizeFile", "");
 	//fetchSizeFile (default=null)
 	//cout<<"  Reading fetchSizeFile"<<endl;
-        fetchSizeFile = params.find_string("fetchSizeFile", "");
+        fetchSizeFile = params.find<std::string>("fetchSizeFile", "");
 	//transFile (default=null)
 	//cout<<"  Reading transFile"<<endl;
-        transFile = params.find_string("transFile", "");
+        transFile = params.find<std::string>("transFile", "");
 	//repeatTrace (default=false)
 	//cout<<"  Reading repeatTrace"<<endl;
-        repeatTrace = (params.find_integer("repeatTrace", 0)) !=0;
+        repeatTrace = (params.find("repeatTrace", 0)) !=0;
 	//treateImmediateAsNone (default=false)
 	//cout<<"  Reading treatImmediateAsNone"<<endl;
 	//if ( params.find("treatImmediateAsNone") == params.end() ) the_cpu->treatImmAsNone = false;

@@ -27,7 +27,7 @@ using namespace SST::Merlin;
  */
 
 topo_dragonfly::topo_dragonfly(Component* comp, Params &p) :
-    Topology()
+    Topology(comp)
 {
     params.p = (uint32_t)p.find<int>("dragonfly:hosts_per_router");
     params.a = (uint32_t)p.find<int>("dragonfly:routers_per_group");

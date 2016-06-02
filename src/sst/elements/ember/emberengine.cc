@@ -31,8 +31,8 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 {
 	// Get the level of verbosity the user is asking to print out, default is 1
 	// which means don't print much.
-	uint32_t verbosity = (uint32_t) params.find_integer("verbose", 1);
-	m_jobId = params.find_integer("jobId", -1);
+	uint32_t verbosity = (uint32_t) params.find("verbose", 1);
+	m_jobId = params.find("jobId", -1);
 
 	std::ostringstream prefix;
 	prefix << "@t:" << m_jobId << ":EmberEngine:@p:@l: ";
@@ -41,9 +41,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
     Params osParams = params.find_prefix_params("os.");
 
-    std::string osName = osParams.find_string("name");
+    std::string osName = osParams.find<std::string>("name");
     assert( ! osName.empty() );
-    std::string osModuleName = osParams.find_string("module");
+    std::string osModuleName = osParams.find<std::string>("module");
     assert( ! osModuleName.empty() );
 
     Params modParams = params.find_prefix_params( osName + "." );
@@ -57,8 +57,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
     m_nodePerf = m_os->getNodePerf();
     m_detailedCompute = m_os->getDetailedCompute();
+    m_memHeapLink = m_os->getMemHeapLink();
 
-    std::string motifLogFile = params.find_string("motifLog", "");
+    std::string motifLogFile = params.find<std::string>("motifLog", "");
     if("" != motifLogFile) {
         std::ostringstream logPrefix;
         logPrefix << motifLogFile << "-" << m_jobId << ".log";
@@ -73,7 +74,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	m_apiMap = createApiMap( m_os, this, params );
     assert( ! m_apiMap.empty() );
 
-	motifParams.resize( params.find_integer("motif_count", 1) );
+	motifParams.resize( params.find("motif_count", 1) );
 //	output.verbose(CALL_INFO, 2, 0, "Identified %" PRIu64 " motifs "
 //                                    "to be simulated.\n", motifParams.size());
 	output.verbose(CALL_INFO, 2, 0, "Identified %ld motifs "
@@ -144,10 +145,10 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
             break;
         }
 
-        std::string moduleName = apiParams.find_string( "module" );
+        std::string moduleName = apiParams.find<std::string>( "module" );
         assert( ! moduleName.empty() );
         Params osParams = params.find_prefix_params("os.");
-        std::string osName = osParams.find_string("name");
+        std::string osName = osParams.find<std::string>("name");
         Params modParams = params.find_prefix_params( osName + "." );
 
         Hermes::Interface* api = dynamic_cast<Interface*>(
@@ -171,7 +172,7 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
     EmberGenerator* gen = NULL;
 
     // get the name of the motif
-    std::string gentype = params.find_string( "name" );
+    std::string gentype = params.find<std::string>( "name" );
 	assert( !gentype.empty() );
 
     if(NULL != m_motifLogger) {
@@ -179,7 +180,7 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
     }
 
     // get the api the motif uses
-    std::string api = params.find_string("api" );
+    std::string api = params.find<std::string>("api" );
 
 	output.verbose(CALL_INFO, 2, 0, "api=`%s` motif=`%s`\n", 
 										api.c_str(), gentype.c_str());

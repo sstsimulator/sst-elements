@@ -47,33 +47,25 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
 	//m_histoM[ "RecvSize" ] = new Histogram<uint32_t, uint32_t>(
     //                                "Recv Sizes in Bytes", userBinWidth );
 
-    Params distribParams = params.find_prefix_params("distribParams.");
-    string distribModule = params.find_string("distribModule",
-                                                "ember.ConstDistrib");
-
-    m_computeDistrib = dynamic_cast<EmberComputeDistribution*>(
-        owner->loadModuleWithComponent(distribModule, owner, distribParams));
-
-    if(NULL == m_computeDistrib) {
-        std::cerr << "Error: Unable to load compute distribution: \'" 
-                                    << distribModule << "\'" << std::endl;
-        exit(-1);
-    }
-
-    m_spyplotMode = (uint32_t) params.find_integer("spyplotmode", 0);
+    m_spyplotMode = (uint32_t) params.find("spyplotmode", 0);
 
     if(m_spyplotMode != EMBER_SPYPLOT_NONE) {
         m_spyinfo = new std::map<int32_t, EmberSpyInfo*>();
     }
 
     Params mapParams = params.find_prefix_params("rankmap.");
+<<<<<<< HEAD
     string rankMapModule = params.find_string("rankmapper", "ember.LinearMap");
     //std::cout << "rankMapModule is: " << rankMapModule.c_str() << std::endl; //NetworkSim
     //std::cout << "In mpigen: " << params.find_string("_jobId", "-1").c_str() << " Name:" << name.c_str() << std::endl; //NetworkSim
+=======
+    string rankMapModule = params.find<std::string>("rankmapper", "ember.LinearMap");
+    //string rankMapModule = params.find<std::string>("rankmapper", "ember.CustomMap"); //NetworkSim
+>>>>>>> devel
 
     //NetworkSim: each job has its own custom map, so pass jobId info
     if(!rankMapModule.compare("ember.CustomMap")) {
-    	mapParams.insert("_mapjobId", params.find_string("_jobId", "-1"), true);
+    	mapParams.insert("_mapjobId", params.find<std::string>("_jobId", "-1"), true);
     }
     //end->NetworkSim
 
@@ -101,7 +93,6 @@ EmberMessagePassingGenerator::~EmberMessagePassingGenerator()
 	//delete m_histoM[ "SendSize" ];
 	//delete m_histoM[ "RecvSize" ];
 	delete m_rankMap;
-	delete m_computeDistrib;
 }
 
 void EmberMessagePassingGenerator::getPosition( int32_t rank, int32_t px, 

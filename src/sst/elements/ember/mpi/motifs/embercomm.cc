@@ -22,8 +22,8 @@ EmberCommGenerator::EmberCommGenerator(SST::Component* owner, Params& params) :
     m_workPhase(0),
     m_loopIndex(0)
 {
-    m_messageSize = (uint32_t) params.find_integer("arg.messagesize", 1024);
-    m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+    m_messageSize = (uint32_t) params.find("arg.messagesize", 1024);
+    m_iterations = (uint32_t) params.find("arg.iterations", 1);
 
     m_sendBuf = NULL;
     m_recvBuf = NULL;
@@ -38,7 +38,7 @@ inline long mod( long a, long b )
 bool EmberCommGenerator::generate( std::queue<EmberEvent*>& evQ) 
 {
     if ( 0 == m_workPhase ) {
-        assert( size() > 2);
+        assert( size() > 7);
         assert( ! ( size() % 2 ) );
         enQ_commSplit( evQ, GroupWorld, rank()/(size()/2), 
                                 rank() % (size()/2), &m_newComm[0] );

@@ -17,6 +17,7 @@
 #include <sst/core/statapi/stataccumulator.h>
 
 #include "mirandaGenerator.h"
+#include "mirandaEvent.h"
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -55,6 +56,8 @@ private:
 	void operator=(const RequestGenCPU&); // do not implement
 	~RequestGenCPU();
 
+	void loadGenerator( MirandaReqEvent* );
+	void loadGenerator( const std::string& name, SST::Params& params);
 	void handleEvent( SimpleMem::Request* ev );
 	bool clockTick( SST::Cycle_t );
 	void issueRequest(MemoryOpRequest* req);
@@ -68,7 +71,7 @@ private:
 	std::map<SimpleMem::Request::id_t, CPURequest*> requestsInFlight;
 	SimpleMem* cache_link;
 	Link* srcLink;
-	Event* srcRspEvent;	
+	MirandaReqEvent* srcReqEvent;	
 
 	MirandaRequestQueue<GeneratorRequest*> pendingRequests;
 

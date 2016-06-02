@@ -24,7 +24,7 @@ using namespace SST::Zodiac;
 ZodiacTraceReader::ZodiacTraceReader(ComponentId_t id, Params& params) :
   Component(id) {
 
-    std::string msgiface = params.find_string("msgapi");
+    std::string msgiface = params.find<std::string>("msgapi");
 
     if ( msgiface == "" ) {
         msgapi = new MP::Interface();

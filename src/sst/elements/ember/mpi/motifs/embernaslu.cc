@@ -23,17 +23,17 @@ EmberNASLUGenerator::EmberNASLUGenerator(SST::Component* owner, Params& params) 
 	EmberMessagePassingGenerator(owner, params, "NASLU"),
 	m_loopIndex(0) 
 {
-	nsCompute = (uint64_t) params.find_integer("arg.computetime", 1000);
+	nsCompute = (uint64_t) params.find("arg.computetime", 1000);
 
-	px = (int32_t) params.find_integer("arg.pex", 0);
-	py = (int32_t) params.find_integer("arg.pey", 0);
+	px = (int32_t) params.find("arg.pex", 0);
+	py = (int32_t) params.find("arg.pey", 0);
 
-	iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+	iterations = (uint32_t) params.find("arg.iterations", 1);
 
-	nx  = (uint32_t) params.find_integer("arg.nx", 50);
-	ny  = (uint32_t) params.find_integer("arg.ny", 50);
-	nz  = (uint32_t) params.find_integer("arg.nz", 50);
-	nzblock = (uint32_t) params.find_integer("arg.nzblock", 1);
+	nx  = (uint32_t) params.find("arg.nx", 50);
+	ny  = (uint32_t) params.find("arg.ny", 50);
+	nz  = (uint32_t) params.find("arg.nz", 50);
+	nzblock = (uint32_t) params.find("arg.nzblock", 1);
 
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(nz % nzblock == 0);

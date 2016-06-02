@@ -14,14 +14,17 @@
 
 #include <stddef.h>
 
+#include "sst/elements/hermes/hermes.h"
+
 namespace SST {
 namespace Firefly {
 
 struct IoVec {
     IoVec() {}
-    IoVec( void* _ptr, size_t _size ) : 
-        ptr( _ptr ), len( _size ) {}
-    void*  ptr;
+    IoVec( const Hermes::MemAddr& _addr, size_t _size ) : 
+        addr( _addr ), len( _size ) {}
+	Hermes::MemAddr addr;
+    //void*  ptr;
     size_t len;
 };
 }

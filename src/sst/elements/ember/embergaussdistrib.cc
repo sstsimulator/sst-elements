@@ -23,8 +23,8 @@ using namespace SST::RNG;
 EmberGaussianDistribution::EmberGaussianDistribution(Component* owner, Params& params) :
 	EmberComputeDistribution(owner, params) {
 
-	const double mean = (double) params.find_floating("mean", 1.0);
-	const double stddev = (double) params.find_floating("stddev", 0.25);
+	const double mean = (double) params.find("mean", 1.0);
+	const double stddev = (double) params.find("stddev", 0.25);
 
 	distrib = new SSTGaussianDistribution(mean, stddev);
 }

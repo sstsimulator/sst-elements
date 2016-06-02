@@ -58,11 +58,11 @@ void SavannahComponent::handleMemResponse(DRAMReq* resp) {
 SavannahComponent::SavannahComponent(ComponentId_t id, Params &params) :
 	Component(id) {
 
-	const int verbose = params.find_integer("verbose", 0);
+	const int verbose = params.find("verbose", 0);
 	output = new SST::Output("Savannah[@p:@l]: ",
 		verbose, 0, SST::Output::STDOUT);
 
-	std::string backend = params.find_string("backend", "memHierarchy.simpleMem");
+	std::string backend = params.find<std::string>("backend", "memHierarchy.simpleMem");
 	output->verbose(CALL_INFO, 1, 0, "Loading backend: %s ...\n", backend.c_str());
 
 	Params backendParams = params.find_prefix_params("backend.");
@@ -75,7 +75,7 @@ SavannahComponent::SavannahComponent(ComponentId_t id, Params &params) :
 		output->verbose(CALL_INFO, 1, 0, "Backend loaded successfully.\n");
 	}
 
-	std::string arbModule = params.find_string("arbitrator", "savannah.SavannahFIFOArbitrator");
+	std::string arbModule = params.find<std::string>("arbitrator", "savannah.SavannahFIFOArbitrator");
 	Params arbParams = params.find_prefix_params("arbitrator.");
 
 	output->verbose(CALL_INFO, 1, 0, "Loading arbitrator: %s ...\n", arbModule.c_str());
@@ -86,7 +86,7 @@ SavannahComponent::SavannahComponent(ComponentId_t id, Params &params) :
 		output->verbose(CALL_INFO, 1, 0, "Loaded arbitrator (%s) successfully.\n", arbModule.c_str());
 	}
 
-	incomingLinkCount = (uint32_t) params.find_integer("link_count", 0);
+	incomingLinkCount = (uint32_t) params.find("link_count", 0);
 	output->verbose(CALL_INFO, 1, 0, "Will search for %" PRIu32 " links.", incomingLinkCount);
 
 	incomingLinks = (SST::Link**) malloc( sizeof(SST::Link*) * incomingLinkCount);
@@ -106,7 +106,7 @@ SavannahComponent::SavannahComponent(ComponentId_t id, Params &params) :
 
 	output->verbose(CALL_INFO, 1, 0, "Link configuration completed.\n");
 
-	std::string pollClock = params.find_string("clock", "625MHz");
+	std::string pollClock = params.find<std::string>("clock", "625MHz");
 	output->verbose(CALL_INFO, 1, 0, "Register clock at %s\n", pollClock.c_str());
 	registerClock( pollClock, new Clock::Handler<SavannahComponent>(this, &SavannahComponent::tick) );
 	output->verbose(CALL_INFO, 1, 0, "Clock registration done.\n");

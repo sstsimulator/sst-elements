@@ -28,9 +28,9 @@ EmberMsgRateGenerator::EmberMsgRateGenerator(SST::Component* owner, Params& para
     m_recvStopTime( 0 ),
     m_loopIndex( 0 )
 {
-	m_msgSize    = (uint32_t) params.find_integer("arg.msgSize", 0);
-	m_numMsgs    = (uint32_t) params.find_integer("arg.numMsgs", 1);
-	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+	m_msgSize    = (uint32_t) params.find("arg.msgSize", 0);
+	m_numMsgs    = (uint32_t) params.find("arg.numMsgs", 1);
+	m_iterations = (uint32_t) params.find("arg.iterations", 1);
     m_reqs.resize( m_numMsgs );
     m_resp.resize( m_numMsgs );
 }

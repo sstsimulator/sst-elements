@@ -20,10 +20,10 @@ EmberBcastGenerator::EmberBcastGenerator(SST::Component* owner,
 	EmberMessagePassingGenerator(owner, params, "Bcast"),
     m_loopIndex(0)
 {
-	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-	m_count      = (uint32_t) params.find_integer("arg.count", 1);
-    m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
-	m_root    = (uint32_t) params.find_integer("arg.root", 0);
+	m_iterations = (uint32_t) params.find("arg.iterations", 1);
+	m_count      = (uint32_t) params.find("arg.count", 1);
+    m_compute    = (uint32_t) params.find("arg.compute", 0);
+	m_root    = (uint32_t) params.find("arg.root", 0);
     m_sendBuf = NULL;
 }
 

@@ -12,8 +12,6 @@
 #ifndef _H_THORNHILL_DETAILED_COMPUTE
 #define _H_THORNHILL_DETAILED_COMPUTE
 
-#include <sst/core/module.h>
-//#include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
 
 namespace SST {
@@ -22,10 +20,17 @@ namespace Thornhill {
 class DetailedCompute : public SubComponent {
 
   public:
+
+	struct Generator {
+		std::string name;
+		SST::Params params;
+	};
+
     DetailedCompute( SST::Component* owner ) : SubComponent( owner ) {}
 
     virtual ~DetailedCompute(){};
-    virtual void start( std::string& name, SST::Params& params,
+    virtual void start( const std::deque< 
+								std::pair< std::string, SST::Params > >&,
                  std::function<int()> ) = 0;
     virtual bool isConnected() = 0;
 };

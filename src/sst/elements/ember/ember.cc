@@ -340,6 +340,7 @@ static const ElementInfoParam component_params[] = {
 static const ElementInfoPort component_ports[] = {
     {"nic", "Port connected to the nic", NULL},
     {"loop", "Port connected to the loopBack", NULL},
+	{"memoryHeap", "Port connected to the memory heap", NULL},
     {NULL, NULL, NULL}
 };
 

@@ -25,7 +25,10 @@ class BarrierFuncSM :  public CollectiveTreeFuncSM
     virtual void handleStartEvent( SST::Event* e, Retval& retval ) {
         BarrierStartEvent* event = static_cast<BarrierStartEvent*>( e );
 
-        CollectiveStartEvent* tmp = new CollectiveStartEvent( NULL, NULL, 0,
+		Hermes::MemAddr addr;
+		addr.simVAddr = 1;
+		addr.backing = NULL;
+        CollectiveStartEvent* tmp = new CollectiveStartEvent( addr, addr, 0,
                 MP::CHAR, MP::MAX, 0, MP::GroupWorld, 
                                 CollectiveStartEvent::Allreduce );
 

@@ -19,25 +19,25 @@ EmberHalo3D26Generator::EmberHalo3D26Generator(SST::Component* owner, Params& pa
 	EmberMessagePassingGenerator(owner, params, "Halo3D26"),
 	m_loopIndex(0) 
 {
-	nx  = (uint32_t) params.find_integer("arg.nx", 100);
-	ny  = (uint32_t) params.find_integer("arg.ny", 100);
-	nz  = (uint32_t) params.find_integer("arg.nz", 100);
+	nx  = (uint32_t) params.find("arg.nx", 100);
+	ny  = (uint32_t) params.find("arg.ny", 100);
+	nz  = (uint32_t) params.find("arg.nz", 100);
 
-	peX = (uint32_t) params.find_integer("arg.pex", 0);
-	peY = (uint32_t) params.find_integer("arg.pey", 0);
-	peZ = (uint32_t) params.find_integer("arg.pez", 0);
+	peX = (uint32_t) params.find("arg.pex", 0);
+	peY = (uint32_t) params.find("arg.pey", 0);
+	peZ = (uint32_t) params.find("arg.pez", 0);
 
-	items_per_cell = (uint32_t) params.find_integer("arg.fields_per_cell", 1);
-	performReduction = (params.find_integer("arg.doreduce", 1) == 1);
-	sizeof_cell = (uint32_t) params.find_integer("arg.datatype_width", 8);
+	items_per_cell = (uint32_t) params.find("arg.fields_per_cell", 1);
+	performReduction = (params.find("arg.doreduce", 1) == 1);
+	sizeof_cell = (uint32_t) params.find("arg.datatype_width", 8);
 
-	uint64_t flops_per_cell = (uint64_t) params.find_integer("arg.flopspercell", 26);
+	uint64_t flops_per_cell = (uint64_t) params.find("arg.flopspercell", 26);
 
 	const uint64_t total_grid_points = (uint64_t) (nx * ny * nz);
 
 	uint64_t nsCompute = 0;
-	if ( ! params.find_string("arg.computetime").empty() ) {
-		nsCompute  = (uint64_t) params.find_integer("arg.computetime");
+	if ( params.contains("arg.computetime") ) {
+		nsCompute  = (uint64_t) params.find<uint64_t>("arg.computetime");
 #ifdef HAVE_STDCXX_LAMBDAS
 		compute_the_time = [ nsCompute ] { return nsCompute; };
 #else
@@ -54,8 +54,8 @@ EmberHalo3D26Generator::EmberHalo3D26Generator(SST::Component* owner, Params& pa
 #endif
 	}
 
-	nsCopyTime = (uint32_t) params.find_integer("arg.copytime", 0);
-	iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+	nsCopyTime = (uint32_t) params.find("arg.copytime", 0);
+	iterations = (uint32_t) params.find("arg.iterations", 1);
 
 	xface_down = -1;
         xface_up = -1;

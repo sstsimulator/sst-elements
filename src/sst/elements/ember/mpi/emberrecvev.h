@@ -23,7 +23,8 @@ class EmberRecvEvent : public EmberMPIEvent {
   public:
 	EmberRecvEvent( MP::Interface& api, Output* output,
                    EmberEventTimeStatistic* stat,
-        Addr payload, uint32_t count, PayloadDataType dtype, RankID src, 
+        const Hermes::MemAddr& payload,
+		uint32_t count, PayloadDataType dtype, RankID src, 
         uint32_t tag, Communicator group, MessageResponse* resp ) :
         EmberMPIEvent( api, output, stat ),
         m_payload(payload),
@@ -48,7 +49,7 @@ class EmberRecvEvent : public EmberMPIEvent {
 	~EmberRecvEvent() {}
 
   private:
-    Addr            m_payload;
+    Hermes::MemAddr m_payload;
     uint32_t        m_count;
     PayloadDataType m_dtype;
     RankID          m_src;

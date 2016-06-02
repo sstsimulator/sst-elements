@@ -29,9 +29,9 @@ public:
 
 	EmberCustomRankMap(Component* owner, Params& params) : EmberRankMap(owner, params) 
         {
-                jobId    = params.find_string("_mapjobId", "-1");
+                jobId    = params.find<std::string>("_mapjobId", "-1");
                 //std::cout << "EmberCustommap: mapjobId: " << jobId << std::endl;
-                mapFile  = params.find_string("mapFile", "mapFile.txt");
+                mapFile  = params.find<std::string>("mapFile", "mapFile.txt");
                 //std::cout << "EmberCustommap: mapFile: " << mapFile.c_str() << std::endl;
                 if(jobId.compare("-1")){
                         readMapFile(mapFile);

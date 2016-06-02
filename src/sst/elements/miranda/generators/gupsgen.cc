@@ -20,23 +20,23 @@ using namespace SST::Miranda;
 GUPSGenerator::GUPSGenerator( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
 
-	const uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 
 	out = new Output("GUPSGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-	iterations = (uint64_t) params.find_integer("iterations", 1);
-	issueCount = ((uint64_t) params.find_integer("count", 1000)) * iterations;
-	reqLength  = (uint64_t) params.find_integer("length", 8);
-	maxAddr    = (uint64_t) params.find_integer("max_address", 524288);
-	seed_a     = (uint64_t) params.find_integer("seed_a", 11);
-	seed_b     = (uint64_t) params.find_integer("seed_b", 31);
+	iterations = params.find<uint64_t>("iterations", 1);
+	issueCount = (params.find<uint64_t>("count", 1000)) * iterations;
+	reqLength  = params.find<uint64_t>("length", 8);
+	maxAddr    = params.find<uint64_t>("max_address", 524288);
+	seed_a     = params.find<uint64_t>("seed_a", 11);
+	seed_b     = params.find<uint64_t>("seed_b", 31);
 	rng = new MarsagliaRNG(seed_a, seed_b);
 
 	out->verbose(CALL_INFO, 1, 0, "Will issue %" PRIu64 " operations\n", issueCount);
 	out->verbose(CALL_INFO, 1, 0, "Request lengths: %" PRIu64 " bytes\n", reqLength);
 	out->verbose(CALL_INFO, 1, 0, "Maximum address: %" PRIu64 "\n", maxAddr);
 
-	issueOpFences = params.find_string("issue_op_fences", "yes") == "yes";
+	issueOpFences = params.find<std::string>("issue_op_fences", "yes") == "yes";
 }
 
 GUPSGenerator::~GUPSGenerator() {

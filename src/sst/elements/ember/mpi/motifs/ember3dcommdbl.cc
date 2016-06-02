@@ -19,16 +19,16 @@ Ember3DCommDoublingGenerator::Ember3DCommDoublingGenerator(SST::Component* owner
 	EmberMessagePassingGenerator(owner, params, "3DCommDoubling"), 
 	phase(0)
 {
-	peX = (uint32_t) params.find_integer("arg.pex", 0);
-	peY = (uint32_t) params.find_integer("arg.pey", 0);
-	peZ = (uint32_t) params.find_integer("arg.pez", 0);
+	peX = (uint32_t) params.find("arg.pex", 0);
+	peY = (uint32_t) params.find("arg.pey", 0);
+	peZ = (uint32_t) params.find("arg.pez", 0);
 
-	basePhase = (uint32_t) params.find_integer("arg.basephase", 0);
+	basePhase = (uint32_t) params.find("arg.basephase", 0);
 
-	items_per_node = (uint32_t) params.find_integer("arg.items_per_node", 64);
+	items_per_node = (uint32_t) params.find("arg.items_per_node", 64);
 	itemsThisPhase = items_per_node;
 
-	computeBetweenSteps = (uint32_t) params.find_integer("arg.compute_at_step", 2000);
+	computeBetweenSteps = (uint32_t) params.find("arg.compute_at_step", 2000);
 
 	requests = (MessageRequest*) malloc(sizeof(MessageRequest) * 52);
 

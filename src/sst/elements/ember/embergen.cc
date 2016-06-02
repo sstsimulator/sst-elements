@@ -26,7 +26,9 @@ EmberGenerator::EmberGenerator( Component* owner, Params& params,
     m_output = ee->getOutput();
     m_nodePerf = ee->getNodePerf();
     m_api = ee->getAPI( params.find<std::string>("_apiName") );
+
     m_detailedCompute = ee->getDetailedCompute();
+	m_memHeapLink = ee->getMemHeapLink();
 
     m_motifNum = params.find<int>( "_motifNum", -1 );	
     m_jobId = params.find<int>( "_jobId", -1 );	
@@ -34,6 +36,19 @@ EmberGenerator::EmberGenerator( Component* owner, Params& params,
     m_verbosePrefix << "@t:" << getJobId() << ":" << rank() << 
 						":EmberEngine:MPI:" << name << ":@p:@l: ";
     //std::cout << "Job:" << getJobId() << " Rank:" << rank() << std::endl;//NetworkSim
+    
+    Params distribParams = params.find_prefix_params("distribParams.");
+    std::string distribModule = params.find<std::string>("distribModule",
+                                                "ember.ConstDistrib");
+
+    m_computeDistrib = dynamic_cast<EmberComputeDistribution*>(
+        owner->loadModuleWithComponent(distribModule, owner, distribParams));
+
+    if(NULL == m_computeDistrib) {
+        std::cerr << "Error: Unable to load compute distribution: \'"
+                                    << distribModule << "\'" << std::endl;
+        exit(-1);
+    } 
 }
 
 #if defined(__clang__)

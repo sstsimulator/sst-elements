@@ -4,8 +4,7 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
-	-g
-
+	-I$(top_srcdir)/src
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmemHierarchy.la

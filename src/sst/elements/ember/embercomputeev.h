@@ -13,7 +13,7 @@
 #ifndef _H_EMBER_COMPUTE_EVENT
 #define _H_EMBER_COMPUTE_EVENT
 
-#include "mpi/emberMPIEvent.h"
+#include "emberevent.h"
 #include "emberconstdistrib.h"
 
 namespace SST {
@@ -22,19 +22,17 @@ namespace Ember {
 class EmberComputeEvent : public EmberEvent {
 
 public:
-	EmberComputeEvent( Output* output,
-                      EmberEventTimeStatistic* stat, uint64_t nanoSecondDelay,
+	EmberComputeEvent( Output* output, uint64_t nanoSecondDelay,
                 EmberComputeDistribution* dist) :
-        EmberEvent(output, stat),
+        EmberEvent(output),
         m_nanoSecondDelay( nanoSecondDelay ),
         m_computeDistrib(dist),
         m_calcFunc(NULL)
     {}  
 
-	EmberComputeEvent( Output* output,
-                      EmberEventTimeStatistic* stat, std::function<uint64_t()> func,
+	EmberComputeEvent( Output* output, std::function<uint64_t()> func,
                 EmberComputeDistribution* dist) :
-        EmberEvent(output, stat),
+        EmberEvent(output),
         m_computeDistrib(dist),
         m_calcFunc(func)
     {}  

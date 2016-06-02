@@ -14,7 +14,6 @@
 import sys
 import sst
 
-
 class Params(dict):
     def __missing__(self, key):
         print "Please enter %s: "%key

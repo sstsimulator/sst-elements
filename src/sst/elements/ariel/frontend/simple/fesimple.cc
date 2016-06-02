@@ -22,10 +22,22 @@
 #include <iostream>
 #include <fstream>
 #include <map>
-#include <set>
 #include <stack>
 #include <ctime>
 #include <bitset>
+#include <set>
+#include <sst_config.h>
+
+#ifdef HAVE_LIBZ
+
+#include "zlib.h"
+#define BT_PRINTF(fmt, args...) gzprintf(btfiles[thr], fmt, ##args);
+
+#else 
+
+#define BT_PRINTF(fmt, args...) fprintf(btfiles[thr], fmt, ##args);
+
+#endif
 
 //This must be defined before inclusion of intttypes.h
 #ifndef __STDC_FORMAT_MACROS
@@ -87,8 +99,16 @@ bool shouldOverride;
 /* are called from. Turn on by turning on malloc_stack_trace    */
 /****************************************************************/
 /****************************************************************/
-std::vector<FILE*> btfiles; // Per-thread malloc file -> we don't have to lock the file this way
-INT32 mallocIndex;
+
+// Per-thread malloc file -> we don't have to lock the file this way
+// Compress it if possible
+#ifdef HAVE_LIBZ
+std::vector<gzFile> btfiles;
+#else
+std::vector<FILE*> btfiles; 
+#endif
+
+UINT64 mallocIndex;
 FILE * rtnNameMap;
 /* This is a record for each function call */ 
 class StackRecord {
@@ -131,30 +151,33 @@ VOID ariel_stack_return(THREADID thr, ADDRINT stackPtr) {
 }
 
 /* Function to print stack, called by malloc instrumentation code */
-VOID ariel_print_stack(UINT32 thr, UINT64 allocSize, UINT64 allocAddr, INT32 allocIndex) {
+VOID ariel_print_stack(UINT32 thr, UINT64 allocSize, UINT64 allocAddr, UINT64 allocIndex) {
     
     unsigned int depth = arielStack[thr].size() - 1;
-    fprintf(btfiles[thr], "Malloc,0x%" PRIx64 ",%lu,%d\n", allocAddr, allocSize, allocIndex);
+    BT_PRINTF("Malloc,0x%" PRIx64 ",%lu,%" PRIu64 "\n", allocAddr, allocSize, allocIndex);
+    
+    vector<ADDRINT> newMappings;
     for (vector<StackRecord>::reverse_iterator rit = arielStack[thr].rbegin(); rit != arielStack[thr].rend(); rit++) {
         
         // Note this only works if app is compiled with debug on
         if (instPtrsList[thr].find(rit->getInstPtr()) == instPtrsList[thr].end()) {
-            ADDRINT ip = rit->getInstPtr();
-            string file;
-            int line;
-            
-            PIN_LockClient();
-                PIN_GetSourceLocation(ip, NULL, &line, &file);
-            PIN_UnlockClient();
-            
+            newMappings.push_back(rit->getInstPtr());
             instPtrsList[thr].insert(rit->getInstPtr());
-            fprintf(btfiles[thr], "NEW IP MAP: 0x%" PRIx64 ", %s:%d\n", ip, file.c_str(), line);
         }
-        fprintf(btfiles[thr], "%d [0x%" PRIx64 ", 0x%" PRIx64 "]\n", depth, rit->getTarget(), rit->getInstPtr());
+
+        BT_PRINTF("0x%" PRIx64 ",0x%" PRIx64 ",%s", rit->getTarget(), rit->getInstPtr(), ((depth == 0) ? "\n" : ""));
         depth--;
     }
-    fprintf(btfiles[thr], "\n");
+    // Generate any new mappings
+    for (std::vector<ADDRINT>::iterator it = newMappings.begin(); it != newMappings.end(); it++) {
+        string file;
+        int line;
+        PIN_LockClient();
+            PIN_GetSourceLocation(*it, NULL, &line, &file);
+        PIN_UnlockClient();
+        BT_PRINTF("MAP: 0x%" PRIx64 ", %s:%d\n", *it, file.c_str(), line);
 
+    }
 }
 
 /* Instrument traces to pick up calls and returns */
@@ -240,7 +263,11 @@ VOID Fini(INT32 code, VOID* v)
         fclose(rtnNameMap);
         for (int i = 0; i < core_count; i++) {
             if (btfiles[i] != NULL) 
+#ifdef HAVE_LIBZ
+                gzclose(btfiles[i]);
+#else
                 fclose(btfiles[i]);
+#endif
         }
     }
 }
@@ -698,7 +725,7 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation) {
         const uint64_t allocationLength = (uint64_t) lastMallocSize[thr];
         const uint32_t allocationLevel = (uint32_t) default_pool;
 
-        int myIndex = 0;
+        uint64_t myIndex = 0;
         // Dump stack if we need it
         if (KeepMallocStackTrace.Value() == 1) {
             PIN_GetLock(&mallocIndexLock, thr);
@@ -744,7 +771,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 
     }
 
-    if (RTN_Name(rtn) == "ariel_enable" || RTN_Name(rtn) == "_ariel_enable") {
+    if (RTN_Name(rtn) == "ariel_enable" || RTN_Name(rtn) == "_ariel_enable" || RTN_Name(rtn) == "__arielfort_MOD_ariel_enable") {
         fprintf(stderr,"Identified routine: ariel_enable, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_enable);
         fprintf(stderr,"Replacement complete.\n");
@@ -788,7 +815,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         fprintf(stderr, "Replacement complete.\n");
         return;
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (
-                RTN_Name(rtn) == "malloc" || RTN_Name(rtn) == "_malloc" || RTN_Name(rtn) == "__libc_malloc" || RTN_Name(rtn) == "__libc_memalign")) {
+                RTN_Name(rtn) == "malloc" || RTN_Name(rtn) == "_malloc" || RTN_Name(rtn) == "__libc_malloc" || RTN_Name(rtn) == "__libc_memalign" || RTN_Name(rtn) == "_gfortran_malloc")) {
     		
         fprintf(stderr, "Identified routine: malloc/_malloc, replacing with Ariel equivalent...\n");
         RTN_Open(rtn);
@@ -806,7 +833,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 
         RTN_Close(rtn);
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (
-                RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free" || RTN_Name(rtn) == "__libc_free")) {
+                RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free" || RTN_Name(rtn) == "__libc_free" || RTN_Name(rtn) == "_gfortran_free")) {
 
         fprintf(stderr, "Identified routine: free/_free, replacing with Ariel equivalent...\n");
         RTN_Open(rtn);
@@ -817,7 +844,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
                 IARG_END);
 
         RTN_Close(rtn);
-    } else if (RTN_Name(rtn) == "ariel_output_stats" || RTN_Name(rtn) == "_ariel_output_stats") {
+    } else if (RTN_Name(rtn) == "ariel_output_stats" || RTN_Name(rtn) == "_ariel_output_stats" || RTN_Name(rtn) == "__arielfort_MOD_ariel_output_stats") {
         fprintf(stderr, "Identified routine: ariel_output_stats, replacing with Ariel equivalent..\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_output_stats);
         fprintf(stderr, "Replacement complete\n");
@@ -906,8 +933,16 @@ int main(int argc, char *argv[])
             stringstream fn;
             fn << "backtrace_" << i << ".txt";
             string filename(fn.str());
-            btfiles.push_back(fopen(filename.c_str(), "wt"));
-            // TODO catch error (null fh)
+#ifdef HAVE_LIBZ
+            filename += ".gz";
+            btfiles.push_back(gzopen(filename.c_str(), "w"));
+#else
+            btfiles.push_back(fopen(filename.c_str(), "w"));
+#endif
+            if (btfiles.back() == NULL) {
+                fprintf(stderr, "ARIEL ERROR: could not create and/or open backtrace file: %s\n", filename.c_str());
+                return 73;  // EX_CANTCREATE
+            }
         }
     }
 

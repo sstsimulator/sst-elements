@@ -27,7 +27,7 @@ libVaultSimC_la_SOURCES = \
 	vaultGlobals.h
 
 libVaultSimC_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
-	$(LIBPHX_CPPFLAGS)
+	$(LIBPHX_CPPFLAGS) -I$(top_srcdir)/src
 libVaultSimC_la_LDFLAGS = -module -avoid-version \
 	$(LIBPHX_LDFLAGS) $(LIBPHX_LIBDIR) 
 libVaultSimC_la_LIBADD = $(LIBPHX_LIB)

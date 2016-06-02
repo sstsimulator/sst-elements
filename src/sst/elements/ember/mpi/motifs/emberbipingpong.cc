@@ -22,8 +22,8 @@ EmberBiPingPongGenerator::EmberBiPingPongGenerator(SST::Component* owner,
 	EmberMessagePassingGenerator(owner, params, "BiPingPong"),
     m_loopIndex(0) 
 {
-	m_messageSize = (uint32_t) params.find_integer("arg.messageSize", 1024);
-	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+	m_messageSize = (uint32_t) params.find("arg.messageSize", 1024);
+	m_iterations = (uint32_t) params.find("arg.iterations", 1);
 
     m_sendBuf = memAlloc(m_messageSize);
     m_recvBuf = memAlloc(m_messageSize);
