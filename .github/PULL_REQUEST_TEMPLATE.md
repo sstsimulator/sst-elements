@@ -1,8 +1,9 @@
-Erase this information and put your Pull Request comments here <BR><BR><BR>
+Erase this information and put your Pull Request comments here 
 
 
 ---
-##### Instructions for Issuing a Pull Request to sst-elements
+Instructions for Issuing a Pull Request to sst-elements
+
 `1` Verify that the Pull Request is targeted to the **devel** branch of sstsimulator/sst-elements
 
 `2` Verify that Source branch is up to date with the devel branch of sst-elements

@@ -19,19 +19,29 @@ using namespace SST::Miranda;
 SingleStreamGenerator::SingleStreamGenerator( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
 
-	const uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 
 	out = new Output("SingleStreamGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-	issueCount = (uint64_t) params.find_integer("count", 1000);
-	reqLength  = (uint64_t) params.find_integer("length", 8);
-	nextAddr   = (uint64_t) params.find_integer("startat", 0);
-	maxAddr    = (uint64_t) params.find_integer("max_address", 524288);
+	issueCount = params.find<uint64_t>("count", 1000);
+	reqLength  = params.find<uint64_t>("length", 8);
+	nextAddr   = params.find<uint64_t>("startat", 0);
+	maxAddr    = params.find<uint64_t>("max_address", 524288);
 
-	out->verbose(CALL_INFO, 1, 0, "Will issue %" PRIu64 " operations\n", issueCount);
+	std::string op = params.find<std::string>( "memOp", "Read" );	
+	if ( ! op.compare( "Read" ) ) {
+		memOp = READ;
+	} else if ( ! op.compare( "Write" ) ) {
+		memOp = WRITE;
+	} else {
+		assert( 0 );
+	}
+
+	out->verbose(CALL_INFO, 1, 0, "Will issue %" PRIu64 " %s operations\n", 
+				issueCount, memOp == READ ? "Read": "Write");
 	out->verbose(CALL_INFO, 1, 0, "Request lengths: %" PRIu64 " bytes\n", reqLength);
-	out->verbose(CALL_INFO, 1, 0, "Maximum address: %" PRIu64 "\n", maxAddr);
-	out->verbose(CALL_INFO, 1, 0, "First address: %" PRIu64 "\n", nextAddr);
+	out->verbose(CALL_INFO, 1, 0, "Maximum address: %" PRIx64 "\n", maxAddr);
+	out->verbose(CALL_INFO, 1, 0, "First address: %" PRIx64 "\n", nextAddr);
 }
 
 SingleStreamGenerator::~SingleStreamGenerator() {
@@ -41,7 +51,7 @@ SingleStreamGenerator::~SingleStreamGenerator() {
 void SingleStreamGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 	out->verbose(CALL_INFO, 4, 0, "Generating next request number: %" PRIu64 "\n", issueCount);
 
-	q->push_back(new MemoryOpRequest(nextAddr, reqLength, READ));
+	q->push_back(new MemoryOpRequest(nextAddr, reqLength, memOp));
 
 	// What is the next address?
 	nextAddr = (nextAddr + reqLength) % maxAddr;

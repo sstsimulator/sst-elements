@@ -33,29 +33,29 @@ EmberCMT2DGenerator::EmberCMT2DGenerator(SST::Component* owner, Params& params) 
         sendx_pos(false), sendx_neg(false),
         sendy_pos(false), sendy_neg(false)
 {
-    	iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-    	eltSize = (uint32_t) params.find_integer("arg.elementsize", 10);  //polynomial degree = eltSize-1
-    	variables = (uint32_t) params.find_integer("arg.variables", 1); //no. of physical quantities
+    	iterations = (uint32_t) params.find("arg.iterations", 1);
+    	eltSize = (uint32_t) params.find("arg.elementsize", 10);  //polynomial degree = eltSize-1
+    	variables = (uint32_t) params.find("arg.variables", 1); //no. of physical quantities
 
     	// Distribution of MPI ranks
-    	px  = (uint32_t) params.find_integer("arg.px", 8);
-    	py  = (uint32_t) params.find_integer("arg.py", 8);
-    	threads = (uint32_t) params.find_integer("arg.threads", 1);
+    	px  = (uint32_t) params.find("arg.px", 8);
+    	py  = (uint32_t) params.find("arg.py", 8);
+    	threads = (uint32_t) params.find("arg.threads", 1);
 
     	// Local distribution of elements on each MPI rank
-    	mx = (uint32_t) params.find_integer("arg.mx", 10);
-    	my = (uint32_t) params.find_integer("arg.my", 10);
-    	mz = (uint32_t) params.find_integer("arg.mz", 10);
+    	mx = (uint32_t) params.find("arg.mx", 10);
+    	my = (uint32_t) params.find("arg.my", 10);
+    	mz = (uint32_t) params.find("arg.mz", 10);
     	nelt  = mx * my * mz; //Default : 1000
 
     	// Calculate computation time in nanoseconds
-    	procFlops = (uint64_t) params.find_integer("arg.processorflops", 4); //4 DP FLOPS/cycle
-    	procFreq = (uint64_t) params.find_integer("arg.processorfreq", 2);
+    	procFlops = (uint64_t) params.find("arg.processorflops", 4); //4 DP FLOPS/cycle
+    	procFreq = (uint64_t) params.find("arg.processorfreq", 2);
     	const int64_t flopCount		= pow(eltSize, 3) * (nelt) * (2*eltSize-1); // Not assuming FMAs
     	const double time = (double)flopCount / ( (double)procFlops * (double)procFreq ); //Time in ns
 
-        m_mean = params.find_floating("arg.nsComputeMean", time);
-        m_stddev = params.find_floating("arg.nsComputeStddev", (m_mean*0.05));
+        m_mean = params.find("arg.nsComputeMean", time);
+        m_stddev = params.find("arg.nsComputeStddev", (m_mean*0.05));
     	
     	x_xferSize = eltSize*eltSize*my*mz;
     	y_xferSize = eltSize*eltSize*mx*mz;

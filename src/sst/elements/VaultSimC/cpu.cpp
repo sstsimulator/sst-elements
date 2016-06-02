@@ -28,9 +28,9 @@ cpu::cpu( ComponentId_t id, Params& params ) :
 {
   printf("making cpu\n");
 
-  std::string frequency = params.find_string("clock", "2.2 Ghz");
+  std::string frequency = params.find<std::string>("clock", "2.2 Ghz");
 
-  threads = params.find_integer( "threads", 0 );
+  threads = params.find( "threads", 0 );
   if (0 == threads) {
     out.fatal(CALL_INFO, -1, "no <threads> tag defined for cpu\n");
   } else {
@@ -41,12 +41,12 @@ cpu::cpu( ComponentId_t id, Params& params ) :
     }
   }
 
-  app = params.find_integer( "app", -1 );
+  app = params.find( "app", -1 );
   if ( -1 == app ) {
     out.fatal(CALL_INFO, -1, " no <app> tag defined for cpu\n");
   }
 
-  bwlimit = params.find_integer( "bwlimit", 0 );
+  bwlimit = params.find( "bwlimit", 0 );
   if (0 == bwlimit) {
     out.fatal(CALL_INFO, -1, " no <bwlimit> tag defined for cpu\n");
   }
@@ -59,7 +59,7 @@ cpu::cpu( ComponentId_t id, Params& params ) :
   //printf("made cpu %p\n", toMem);
 
   // init random number generator
-  unsigned seed = params.find_integer("seed", 0);
+  unsigned seed = params.find("seed", 0);
   if (0 != seed) {
     rng = new MersenneRNG(seed);
   } else {

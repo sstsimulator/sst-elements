@@ -23,15 +23,15 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params
 	EmberMessagePassingGenerator(owner, params, "Halo2D"),
 	m_loopIndex(0)
 {
-	iterations = (uint32_t) params.find_integer("arg.iterations", 10);
-	nsCompute = (uint32_t) params.find_integer("arg.computenano", 10);
-	messageSizeX = (uint32_t) params.find_integer("arg.messagesizey", 128);
-	messageSizeY = (uint32_t) params.find_integer("arg.messagesizex", 128);
+	iterations = (uint32_t) params.find("arg.iterations", 10);
+	nsCompute = (uint32_t) params.find("arg.computenano", 10);
+	messageSizeX = (uint32_t) params.find("arg.messagesizey", 128);
+	messageSizeY = (uint32_t) params.find("arg.messagesizex", 128);
 
-	nsCopyTime = (uint32_t) params.find_integer("arg.computecopy", 5);
+	nsCopyTime = (uint32_t) params.find("arg.computecopy", 5);
 
-	sizeX = (uint32_t) params.find_integer("arg.sizex", 0);
-	sizeY = (uint32_t) params.find_integer("arg.sizey", 0);
+	sizeX = (uint32_t) params.find("arg.sizex", 0);
+	sizeY = (uint32_t) params.find("arg.sizey", 0);
 
 	// Set configuration so we do not exchange messages
 	procWest  = 0;

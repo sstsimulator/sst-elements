@@ -22,7 +22,7 @@ using namespace SST::Ember;
 EmberConstDistribution::EmberConstDistribution(Component* owner, Params& params) :
 	EmberComputeDistribution(owner, params) {
 
-	the_value = params.find_floating("constant", 1.0);
+	the_value = params.find("constant", 1.0);
 }
 
 EmberConstDistribution::~EmberConstDistribution() {

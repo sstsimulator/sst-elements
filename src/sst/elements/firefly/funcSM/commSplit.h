@@ -27,8 +27,8 @@ class CommSplitFuncSM :  public AllgatherFuncSM
     virtual void handleEnterEvent( Retval& );
     
   private:
-    int* m_sendbuf; 
-    int* m_recvbuf;
+    Hermes::MemAddr m_sendbuf; 
+    Hermes::MemAddr m_recvbuf;
     CommSplitStartEvent* m_commSplitEvent;
 };
 

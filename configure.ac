@@ -1,11 +1,19 @@
+# -*- Autoconf -*-
+#
+#
 
-AC_INIT([SST Elements Library], [devel], [sst@sandia.gov])
+# Set Version of SST Elements Library
+AC_INIT([SST Elements Library], [6.0.0], [sst@sandia.gov])
+
 AC_PREREQ([2.59])
 AC_COPYRIGHT([Copyright Sandia National Laboratories, 2004-2016])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config])
 AM_INIT_AUTOMAKE([1.9.6 foreign dist-bzip2 subdir-objects no-define tar-ustar])
+
+# If Automake supports silent rules, enable them.
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 AC_CONFIG_HEADER([src/sst_element_config.h])
 

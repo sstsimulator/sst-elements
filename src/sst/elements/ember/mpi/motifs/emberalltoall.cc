@@ -20,9 +20,9 @@ EmberAlltoallGenerator::EmberAlltoallGenerator(SST::Component* owner,
 	EmberMessagePassingGenerator(owner, params, "Alltoall"),
     m_loopIndex(0)
 {
-	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-	m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
-	m_bytes      = (uint32_t) params.find_integer("arg.bytes", 1);
+	m_iterations = (uint32_t) params.find("arg.iterations", 1);
+	m_compute    = (uint32_t) params.find("arg.compute", 0);
+	m_bytes      = (uint32_t) params.find("arg.bytes", 1);
     m_sendBuf = NULL;
     m_recvBuf = NULL;
 }

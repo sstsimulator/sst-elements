@@ -26,34 +26,34 @@ using namespace SST::MemHierarchy;
 logicLayer::logicLayer( ComponentId_t id, Params& params ) :
   IntrospectedComponent( id ), memOps(0)
 {
-  dbg.init("@R:LogicLayer::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+  dbg.init("@R:LogicLayer::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find("debug", 0));
   dbg.output(CALL_INFO, "making logicLayer\n");
 
   std::string frequency = "2.2 GHz";
-  frequency = params.find_string("clock", "2.2 Ghz");
+  frequency = params.find<std::string>("clock", "2.2 Ghz");
 
-  int ident = params.find_integer("llID", -1);
+  int ident = params.find("llID", -1);
   if (-1 == ident) {
     dbg.fatal(CALL_INFO, -1, "no llID defined\n");
   }
   llID = ident;
 
-  bwlimit = params.find_integer( "bwlimit", -1 );
+  bwlimit = params.find( "bwlimit", -1 );
   if (-1 == bwlimit ) {
     dbg.fatal(CALL_INFO, -1, 
 	   " no <bwlimit> tag defined for logiclayer\n");
   }
 
-  int mask = params.find_integer( "LL_MASK", -1 );
+  int mask = params.find( "LL_MASK", -1 );
   if ( -1 == mask ) {
     dbg.fatal(CALL_INFO, -1, 
 	   " no <LL_MASK> tag defined for logiclayer\n");
   }
   LL_MASK = mask;
 
-  bool terminal = params.find_integer("terminal", 0);
+  bool terminal = params.find("terminal", 0);
 
-  int numVaults = params.find_integer("vaults", -1);
+  int numVaults = params.find("vaults", -1);
   if ( -1 != numVaults) {
     // connect up our vaults
     for (int i = 0; i < numVaults; ++i) {

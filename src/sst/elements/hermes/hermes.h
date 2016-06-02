@@ -16,6 +16,7 @@
 #include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
 #include "sst/elements/thornhill/detailedCompute.h"
+#include "sst/elements/thornhill/memoryHeapLink.h"
 
 #include "functor.h"
 
@@ -24,6 +25,11 @@ using namespace SST;
 namespace SST {
 
 namespace Hermes {
+
+struct MemAddr {
+    uint64_t simVAddr;
+    void*	 backing;
+};
 
 class NodePerf : public Module {
   public:
@@ -43,6 +49,7 @@ class OS : public SubComponent {
     virtual void finish() {}
     virtual NodePerf* getNodePerf() { assert(0); }
     virtual Thornhill::DetailedCompute* getDetailedCompute() { assert(0); }
+	virtual Thornhill::MemoryHeapLink*  getMemHeapLink() { assert(0); }
 };
 
 class Interface : public Module {

@@ -23,7 +23,8 @@ class EmberSendEvent : public EmberMPIEvent {
   public:
 	EmberSendEvent( MP::Interface& api, Output* output,
                    EmberEventTimeStatistic* stat,
-        Addr payload, uint32_t count, PayloadDataType dtype, RankID dest,
+        const Hermes::MemAddr& payload,
+		uint32_t count, PayloadDataType dtype, RankID dest,
         uint32_t tag, Communicator group ) :
         EmberMPIEvent( api, output, stat ),
         m_payload(payload),
@@ -48,7 +49,7 @@ class EmberSendEvent : public EmberMPIEvent {
 
 
   private:
-    Addr            m_payload;
+    Hermes::MemAddr m_payload;
     uint32_t        m_count;
     PayloadDataType m_dtype;
     RankID          m_dest;

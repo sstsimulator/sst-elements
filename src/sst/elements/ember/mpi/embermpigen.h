@@ -29,8 +29,6 @@
 #include "emberbarrierev.h"
 #include "emberrankev.h"
 #include "embersizeev.h"
-#include "embercomputeev.h"
-#include "emberdetailedcomputeev.h"
 #include "embersendev.h"
 #include "emberrecvev.h"
 #include "emberisendev.h"
@@ -108,8 +106,6 @@ public:
         FOREACH_ENUM(GENERATE_ENUM)
     };
 
-    typedef std::queue<EmberEvent*> Queue;
-
 	EmberMessagePassingGenerator( Component* owner, Params& params, std::string name = "" );
 	~EmberMessagePassingGenerator();
     virtual void completed( const SST::Output*, uint64_t time );
@@ -128,21 +124,34 @@ protected:
     inline void enQ_barrier( Queue&, Communicator );
     inline void enQ_fini( Queue& );
     inline void enQ_init( Queue& );
-    inline void enQ_compute( Queue&, uint64_t nanoSecondDelay );
-    inline void enQ_compute( Queue& q, std::function<uint64_t()> func );
-    inline void enQ_detailedCompute( Queue& q, std::string, Params& );
     inline void enQ_rank( Queue&, Communicator, uint32_t* rankPtr);
     inline void enQ_size( Queue&, Communicator, int* sizePtr);
+
     inline void enQ_send( Queue&, Addr payload, uint32_t count,
         PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group);
+    inline void enQ_send(Queue&, const Hermes::MemAddr& payload, uint32_t count,
+        PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group);
+
     inline void enQ_recv( Queue&, Addr payload, uint32_t count,
         PayloadDataType dtype, RankID src, uint32_t tag, Communicator group,
         MessageResponse* resp = NULL );
+    inline void enQ_recv(Queue&, const Hermes::MemAddr& payload, uint32_t count,
+        PayloadDataType dtype, RankID src, uint32_t tag, Communicator group,
+        MessageResponse* resp = NULL );
+
     inline void enQ_getTime( Queue&, uint64_t* time );
+
     inline void enQ_isend( Queue&, Addr payload, uint32_t count,
         PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group,
         MessageRequest* req );
+    inline void enQ_isend( Queue&, const Hermes::MemAddr& payload, uint32_t count,
+        PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group,
+        MessageRequest* req );
+
     inline void enQ_irecv( Queue&, Addr target, uint32_t count,
+        PayloadDataType dtype, RankID source, uint32_t tag, Communicator group,
+        MessageRequest* req );
+    inline void enQ_irecv( Queue&, const Hermes::MemAddr& target, uint32_t count,
         PayloadDataType dtype, RankID source, uint32_t tag, Communicator group,
         MessageRequest* req );
 
@@ -160,19 +169,40 @@ protected:
     inline void enQ_allreduce( Queue&, Addr mydata, Addr result, uint32_t count,
                 PayloadDataType dtype, ReductionOperation op,
                 Communicator group );
+    inline void enQ_allreduce( Queue&, const Hermes::MemAddr& mydata,
+				const Hermes::MemAddr& result, uint32_t count,
+                PayloadDataType dtype, ReductionOperation op,
+                Communicator group );
+
     inline void enQ_reduce( Queue&, Addr mydata, Addr result, uint32_t count,
                 PayloadDataType dtype, ReductionOperation op,
                 int root, Communicator group );
+    inline void enQ_reduce( Queue&, const Hermes::MemAddr& mydata,
+				const Hermes::MemAddr& result, uint32_t count,
+                PayloadDataType dtype, ReductionOperation op,
+                int root, Communicator group );
+
     inline void enQ_bcast( Queue&, Addr mydata, uint32_t count,
                 PayloadDataType dtype, int root, Communicator group );
+    inline void enQ_bcast( Queue&, const Hermes::MemAddr& mydata, uint32_t count,
+                PayloadDataType dtype, int root, Communicator group );
+
     inline void enQ_alltoall( Queue&, 
         Addr sendData, int sendCnts, PayloadDataType senddtype,
         Addr recvData, int recvCnts, PayloadDataType recvdtype,
+        Communicator group );
+    inline void enQ_alltoall( Queue&, 
+        const Hermes::MemAddr& sendData, int sendCnts, PayloadDataType senddtype,
+        const Hermes::MemAddr& recvData, int recvCnts, PayloadDataType recvdtype,
         Communicator group );
 
     inline void enQ_alltoallv( Queue&, 
         Addr sendData, Addr sendCnts, Addr sendDsp, PayloadDataType senddtype,
         Addr recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
+        Communicator group );
+    inline void enQ_alltoallv( Queue&, 
+        const Hermes::MemAddr& sendData, Addr sendCnts, Addr sendDsp, PayloadDataType senddtype,
+        const Hermes::MemAddr& recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
         Communicator group );
 
     inline int sizeofDataType( PayloadDataType );
@@ -197,9 +227,7 @@ private:
     static const char*  m_eventName[];
 
 	EmberRankMap* 						m_rankMap;
-    EmberComputeDistribution*           m_computeDistrib; 
     std::vector< Statistic<uint32_t>* > m_Stats;
-	//std::map< std::string, Histo*>      m_histoM;
     std::map<int32_t, EmberSpyInfo*>*   m_spyinfo;
 };
 
@@ -245,33 +273,24 @@ void EmberMessagePassingGenerator::enQ_size( Queue& q, Communicator comm,
                                     m_Stats[Size], comm, sizePtr ) );
 }
 
-void EmberMessagePassingGenerator::enQ_compute( Queue& q, uint64_t delay )
-{
-    q.push( new EmberComputeEvent( &getOutput(),
-                                m_Stats[Compute], delay, m_computeDistrib ) );
-}
-
-void EmberMessagePassingGenerator::enQ_compute( Queue& q, std::function<uint64_t()> func )
-{
-    q.push( new EmberComputeEvent( &getOutput(),
-                                m_Stats[Compute], func, m_computeDistrib ) );
-}
-
-void EmberMessagePassingGenerator::enQ_detailedCompute( Queue& q, std::string name,
-        Params& params )
-{
-    assert( m_detailedCompute );
-    q.push( new EmberDetailedComputeEvent( &getOutput(),
-                      m_Stats[Compute], *m_detailedCompute, name, params ) );
-}
-
 void EmberMessagePassingGenerator::enQ_send( Queue& q, Addr payload,
+    uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag,
+    Communicator group)
+{
+	Hermes::MemAddr addr;
+	addr.simVAddr = 0;
+	addr.backing = memAddr(payload);
+
+	enQ_send( q, addr, count, dtype, dest, tag, group );
+}
+void EmberMessagePassingGenerator::enQ_send( Queue& q, 
+	const Hermes::MemAddr& payload,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag,
     Communicator group)
 {
 	verbose(CALL_INFO,2,0,"payload=%p dest=%d tag=%#x\n",payload, dest, tag);
     q.push( new EmberSendEvent( *cast(m_api), &getOutput(), m_Stats[Send],
-		memAddr(payload), count, dtype, dest, tag, group ) );
+		payload, count, dtype, dest, tag, group ) );
 
     size_t bytes = cast(m_api)->sizeofDataType(dtype);
 
@@ -291,9 +310,19 @@ void EmberMessagePassingGenerator::enQ_isend( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, 
     Communicator group, MessageRequest* req )
 {
+	Hermes::MemAddr addr;
+	addr.simVAddr = 0;
+	addr.backing = memAddr(payload);
+	enQ_isend(q,addr,count,dtype,dest,tag,group,req);
+}
+void EmberMessagePassingGenerator::enQ_isend( Queue& q, 
+	const Hermes::MemAddr& payload, 
+    uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, 
+    Communicator group, MessageRequest* req )
+{
 	verbose(CALL_INFO,2,0,"payload=%p dest=%d tag=%#x req=%p\n",payload, dest, tag, req );
     q.push( new EmberISendEvent( *cast(m_api), &getOutput(), m_Stats[Isend],
-        memAddr(payload), count, dtype, dest, tag, group, req ) );
+        payload, count, dtype, dest, tag, group, req ) );
     
     size_t bytes = cast(m_api)->sizeofDataType(dtype);
 
@@ -314,11 +343,19 @@ void EmberMessagePassingGenerator::enQ_recv( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag,
     Communicator group, MessageResponse* resp )
 {
+	Hermes::MemAddr addr;
+	addr.simVAddr = 0;
+	addr.backing = memAddr(payload);
+	enQ_recv( q, addr, count, dtype, src, tag, group, resp );
+}
+void EmberMessagePassingGenerator::enQ_recv( Queue& q,
+	const Hermes::MemAddr& payload,
+    uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag,
+    Communicator group, MessageResponse* resp )
+{
 	verbose(CALL_INFO,2,0,"src=%d tag=%#x\n",src,tag);
     q.push( new EmberRecvEvent( *cast(m_api), &getOutput(), m_Stats[Recv],
 		payload, count, dtype, src, tag, group, resp ) );
-
-	//m_histoM["RecvSize"]->add( count * cast(m_api)->sizeofDataType(dtype) );
 }
 
 inline void EmberMessagePassingGenerator::enQ_recv( Queue& q, uint32_t src,
@@ -331,11 +368,20 @@ void EmberMessagePassingGenerator::enQ_irecv( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID source, uint32_t tag,
     Communicator group, MessageRequest* req )
 {
+	Hermes::MemAddr addr;
+	addr.simVAddr = 0;
+	addr.backing = memAddr(payload);
+	enQ_irecv( q, addr, count, dtype, source, tag, group, req );
+}
+
+void EmberMessagePassingGenerator::enQ_irecv( Queue& q,
+	const Hermes::MemAddr& payload,
+    uint32_t count, PayloadDataType dtype, RankID source, uint32_t tag,
+    Communicator group, MessageRequest* req )
+{
 	verbose(CALL_INFO,2,0,"src=%d tag=%x req=%p\n",source,tag,req);
     q.push( new EmberIRecvEvent( *cast(m_api), &getOutput(), m_Stats[Irecv],
-        memAddr(payload), count, dtype, source, tag, group, req ) );
-
-	//m_histoM["RecvSize"]->add( count * cast(m_api)->sizeofDataType(dtype) );
+        payload, count, dtype, source, tag, group, req ) );
 }
 
 void EmberMessagePassingGenerator::enQ_irecv( Queue& q, uint32_t src,
@@ -383,50 +429,118 @@ void EmberMessagePassingGenerator::enQ_commDestroy( Queue& q,
         m_Stats[Commsplit], comm ) );
 }
 
-void EmberMessagePassingGenerator::enQ_allreduce( Queue& q, Addr mydata,
-    Addr result, uint32_t count, PayloadDataType dtype, ReductionOperation op,
+void EmberMessagePassingGenerator::enQ_allreduce( Queue& q, Addr _mydata,
+    Addr _result, uint32_t count, PayloadDataType dtype, ReductionOperation op,
+    Communicator group )
+{
+	Hermes::MemAddr mydata;
+	mydata.simVAddr = 0;
+	mydata.backing = memAddr( _mydata );
+	Hermes::MemAddr result;
+	result.simVAddr = 0;
+	result.backing = memAddr( _result );
+	enQ_allreduce( q, mydata, result, count, dtype, op, group );
+}
+	
+void EmberMessagePassingGenerator::enQ_allreduce( Queue& q, 
+	const Hermes::MemAddr& mydata,
+    const Hermes::MemAddr& result,
+	uint32_t count, PayloadDataType dtype, ReductionOperation op,
     Communicator group )
 {
     q.push( new EmberAllreduceEvent( *cast(m_api), &getOutput(), 
-        m_Stats[Allreduce], memAddr(mydata), memAddr(result),
-					count, dtype, op, group ) );
+        m_Stats[Allreduce], mydata, result, count, dtype, op, group ) );
 }
 
-void EmberMessagePassingGenerator::enQ_reduce( Queue& q, Addr mydata,
-    Addr result, uint32_t count, PayloadDataType dtype, ReductionOperation op,
+void EmberMessagePassingGenerator::enQ_reduce( Queue& q, Addr _mydata,
+    Addr _result, uint32_t count, PayloadDataType dtype, ReductionOperation op,
+    int root, Communicator group )
+{
+	Hermes::MemAddr mydata;
+	mydata.simVAddr = 0;
+	mydata.backing = memAddr( _mydata );
+	Hermes::MemAddr result;
+	result.simVAddr = 0;
+	result.backing = memAddr( _result );
+	enQ_reduce( q, mydata, result, count, dtype, op, root, group );
+}
+
+void EmberMessagePassingGenerator::enQ_reduce( Queue& q, 
+	const Hermes::MemAddr& mydata,
+    const Hermes::MemAddr& result,
+	uint32_t count, PayloadDataType dtype, ReductionOperation op,
     int root, Communicator group )
 {
     q.push( new EmberReduceEvent( *cast(m_api), &getOutput(), 
-        m_Stats[Reduce], memAddr(mydata), memAddr(result),
-					count, dtype, op, root, group ) );
+        m_Stats[Reduce], mydata, result, count, dtype, op, root, group ) );
 }
 
 void EmberMessagePassingGenerator::enQ_bcast( Queue& q, Addr mydata,
     uint32_t count, PayloadDataType dtype, int root, Communicator group )
 {
+	Hermes::MemAddr addr;
+	addr.simVAddr = 0;
+	addr.backing = memAddr(mydata);
+	enQ_bcast( q, addr, count, dtype, root, group );
+}
+void EmberMessagePassingGenerator::enQ_bcast( Queue& q, 
+	const Hermes::MemAddr& mydata,
+    uint32_t count, PayloadDataType dtype, int root, Communicator group )
+{
     q.push( new EmberBcastEvent( *cast(m_api), &getOutput(), 
-        m_Stats[Reduce], memAddr(mydata), count, dtype, root, group ) );
+        m_Stats[Reduce], mydata, count, dtype, root, group ) );
 }
 
 void EmberMessagePassingGenerator::enQ_alltoall( Queue& q, 
-        Addr sendData, int sendCnts, PayloadDataType senddtype,
-        Addr recvData, int recvCnts, PayloadDataType recvdtype,
+        Addr _sendData, int sendCnts, PayloadDataType senddtype,
+        Addr _recvData, int recvCnts, PayloadDataType recvdtype,
+        Communicator group )
+{
+	Hermes::MemAddr sendData;
+	sendData.simVAddr = 0;
+	sendData.backing = memAddr( _sendData );
+	Hermes::MemAddr recvData;
+	recvData.simVAddr = 0;
+	recvData.backing = memAddr( _recvData );
+	enQ_alltoall( q, sendData, sendCnts, senddtype,
+				recvData, recvCnts, recvdtype, group );
+}
+
+void EmberMessagePassingGenerator::enQ_alltoall( Queue& q, 
+    const Hermes::MemAddr& sendData, int sendCnts, PayloadDataType senddtype,
+    const Hermes::MemAddr& recvData, int recvCnts, PayloadDataType recvdtype,
         Communicator group )
 {
     q.push( new EmberAlltoallEvent( *cast(m_api), &getOutput(), 
-        m_Stats[Alltoall], memAddr(sendData), sendCnts, senddtype,
-        memAddr(recvData), recvCnts, recvdtype, group ) );
+        m_Stats[Alltoall], sendData, sendCnts, senddtype,
+        recvData, recvCnts, recvdtype, group ) );
 }
 
 void EmberMessagePassingGenerator::enQ_alltoallv( Queue& q, 
-        Addr sendData, Addr sendCnts, Addr sendDsp, PayloadDataType senddtype,
-        Addr recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
+        Addr _sendData, Addr sendCnts, Addr sendDsp, PayloadDataType senddtype,
+        Addr _recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
+        Communicator group )
+{
+	Hermes::MemAddr sendData;
+	sendData.simVAddr = 0;
+	sendData.backing = memAddr( _sendData );
+	Hermes::MemAddr recvData;
+	recvData.simVAddr = 0;
+	recvData.backing = memAddr( _recvData );
+	enQ_alltoallv( q, sendData, sendCnts, sendDsp, senddtype,
+					  recvData, recvCnts, recvDsp, recvdtype, group );
+}
+void EmberMessagePassingGenerator::enQ_alltoallv( Queue& q, 
+        const Hermes::MemAddr& sendData,
+		Addr sendCnts, Addr sendDsp, PayloadDataType senddtype,
+        const Hermes::MemAddr& recvData,
+		Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
         Communicator group )
 {
     q.push( new EmberAlltoallvEvent( *cast(m_api), &getOutput(), 
         m_Stats[Alltoallv],
-            memAddr(sendData), sendCnts, sendDsp, senddtype, 
-            memAddr(recvData), recvCnts, recvDsp, recvdtype, 
+            sendData, sendCnts, sendDsp, senddtype, 
+            recvData, recvCnts, recvDsp, recvdtype, 
                 group ) );
 }
 

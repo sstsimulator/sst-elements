@@ -13,6 +13,7 @@
 #ifndef COMPONENTS_FIREFLY_NIC_H 
 #define COMPONENTS_FIREFLY_NIC_H 
 
+#include <sstream>
 #include <sst/core/module.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
@@ -24,6 +25,11 @@
 
 namespace SST {
 namespace Firefly {
+
+#define NIC_DBG_DMA_ARBITRATE 1<<1
+#define NIC_DBG_DETAILED_MEM 1<<2
+#define NIC_DBG_SEND_MACHINE 1<<3
+#define NIC_DBG_RECV_MACHINE 1<<4
 
 typedef std::function<void()> Callback;
 
@@ -445,7 +451,8 @@ class Nic : public SST::Component  {
             m_hdr.rgnNum = cmd->tag; 
             m_hdr.offset = -1;
             m_hdr.op = RdmaMsgHdr::Get;
-            m_rdmaVec[0].ptr = &m_hdr;
+            m_rdmaVec[0].addr.simVAddr = 100;
+            m_rdmaVec[0].addr.backing = &m_hdr;
             m_rdmaVec[0].len = sizeof( m_hdr );
             m_ioVec = &m_rdmaVec;
         }
@@ -474,7 +481,8 @@ class Nic : public SST::Component  {
             m_putVec.resize(1);
             m_hdr.respKey = respKey;
             m_hdr.op = RdmaMsgHdr::GetResp;
-            m_putVec[0].ptr = &m_hdr;
+            m_putVec[0].addr.simVAddr = 101;
+            m_putVec[0].addr.backing = &m_hdr;
             m_putVec[0].len = sizeof(m_hdr);
             for ( unsigned int i = 0; i < memRgn->iovec().size(); i++ ) {
                 m_putVec.push_back( memRgn->iovec()[i] );
@@ -502,6 +510,11 @@ class Nic : public SST::Component  {
         std::vector<IoVec>  m_putVec;
     };
 
+	struct DmaVec {
+		uint64_t addr;
+		size_t   length;
+	};
+
     #include "nicSendMachine.h"
     #include "nicRecvMachine.h"
     #include "nicArbitrateDMA.h"
@@ -516,12 +529,104 @@ public:
     int getNum_vNics() { return m_num_vNics; }
     void printStatus(Output &out);
 
-    void dmaRead( Callback callback, uint64_t addr, size_t len ) {
-        m_arbitrateDMA->canIRead( callback, len );
+    void detailedMemOp( std::vector<DmaVec>& vec, std::string op,
+													Callback callback ) {
+
+        std::deque< std::pair< std::string, SST::Params> > gens;
+        m_dbg.verbose(CALL_INFO,1,NIC_DBG_DETAILED_MEM,
+						"%s %" PRIu64 " vectors\n", op.c_str(), vec.size());
+
+		for ( unsigned i = 0; i < vec.size(); i++ ) {
+
+			Params params;
+			std::stringstream tmp;
+
+			if ( 0 == vec[i].addr ) {
+				m_dbg.fatal(CALL_INFO,-1,"Invalid addr %" PRIx64 "\n", vec[i].addr);	
+			}
+			if ( vec[i].addr < 0x100 ) {
+				m_dbg.output(CALL_INFO,"Warn addr %" PRIx64 " ignored\n", vec[i].addr);	
+				i++;
+				continue;	
+			}
+
+			if ( 0 == vec[i].length ) {
+				i++;
+				m_dbg.verbose(CALL_INFO,-1,NIC_DBG_DETAILED_MEM,
+						"skip 0 length vector addr=0x%" PRIx64 "\n",vec[i].addr);
+				continue;	
+			}
+
+			int opWidth = 8;
+			m_dbg.verbose(CALL_INFO,1,NIC_DBG_DETAILED_MEM,
+				"addr=0x%" PRIx64 " length=%" PRIu64 "\n",
+				vec[i].addr,vec[i].length);
+			size_t count = vec[i].length / opWidth;
+			count += vec[i].length % opWidth ? 1 : 0;
+			tmp << count; 
+			params.insert( "count", tmp.str() );		
+
+			tmp.str( std::string() ); tmp.clear();
+			tmp << opWidth;
+			params.insert( "length", tmp.str() );		
+
+			tmp.str( std::string() ); tmp.clear();
+			tmp << vec[i].addr;
+			params.insert( "startat", tmp.str() );		
+
+			tmp.str( std::string() ); tmp.clear();
+			tmp << 0x100000000;
+			params.insert( "max_address", tmp.str() );		
+
+			params.insert( "memOp", op );		
+			#if 0
+			params.insert( "generatorParams.verbose", "1" );		
+			params.insert( "verbose", "1" );		
+			#endif
+			
+        	gens.push_back( std::make_pair( "miranda.SingleStreamGenerator", params ) );
+		}
+
+		if ( gens.empty() ) {
+			schedCallback( callback, 0 );
+		} else {
+	    	std::function<int()> foo = [=](){
+           		callback( );
+				return 0;
+			};
+			m_detailedCompute->start( gens, foo );	
+		}
+		
+	}
+
+    void dmaRead( std::vector<DmaVec>& vec, Callback callback ) {
+
+		if ( m_detailedCompute ) {
+			
+			detailedMemOp( vec, "Read", callback );
+
+		} else {
+			size_t len = 0;	
+			for ( unsigned i = 0; i < vec.size(); i++ ) {
+				len += vec[i].length;
+			} 
+        	m_arbitrateDMA->canIRead( callback, len );
+		}
     }
 
-    void dmaWrite( Callback callback, uint64_t addr, size_t len ) {
-        m_arbitrateDMA->canIWrite( callback, len );
+    void dmaWrite( std::vector<DmaVec>& vec, Callback callback ) {
+
+		if ( m_detailedCompute ) {
+			
+			detailedMemOp( vec, "Write", callback );
+
+		} else {
+			size_t len = 0;	
+			for ( unsigned i = 0; i < vec.size(); i++ ) {
+				len += vec[i].length;
+			} 
+        	m_arbitrateDMA->canIWrite( callback, len );
+		}
     }
 
     void schedCallback(  Callback callback, uint64_t delay = 0 ) {

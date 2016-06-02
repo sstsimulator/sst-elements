@@ -20,9 +20,9 @@ EmberStopGenerator::EmberStopGenerator(SST::Component* owner,
 	EmberMessagePassingGenerator(owner, params, "Stop"),
     m_loopIndex(0)
 {
-	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-    m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
-    jobId        = (int) params.find_integer("_jobId");
+	m_iterations = (uint32_t) params.find("arg.iterations", 1);
+    m_compute    = (uint32_t) params.find("arg.compute", 0);
+    jobId        = (int) params.find<int>("_jobId");
 }
 
 bool EmberStopGenerator::generate( std::queue<EmberEvent*>& evQ )

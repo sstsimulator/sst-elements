@@ -24,20 +24,20 @@ static std::map<uint32_t, int32_t>  blockToNodeMap;
 Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params, "3DAMR")
 {
-	int verbose = params.find_integer("arg.verbose", 0);
+	int verbose = params.find("arg.verbose", 0);
 	out = new Output("AMR3D [@p:@l]: ", verbose, 0, Output::STDOUT);
 
 	// Get block sizes
-	blockNx = (uint32_t) params.find_integer("arg.nx", 8);
-	blockNy = (uint32_t) params.find_integer("arg.ny", 8);
-	blockNz = (uint32_t) params.find_integer("arg.nz", 8);
+	blockNx = (uint32_t) params.find("arg.nx", 8);
+	blockNy = (uint32_t) params.find("arg.ny", 8);
+	blockNz = (uint32_t) params.find("arg.nz", 8);
 
-	items_per_cell = (uint32_t) params.find_integer("arg.fieldspercell", 1);
+	items_per_cell = (uint32_t) params.find("arg.fieldspercell", 1);
 
 	out->verbose(CALL_INFO, 2, 0, "Block sizes are X=%" PRIu32 ", Y=%" PRIu32 ", Z=%" PRIu32 "\n",
 		blockNz, blockNy, blockNz);
 
-	std::string blockpath = params.find_string("arg.blockfile", "blocks.amr");
+	std::string blockpath = params.find<std::string>("arg.blockfile", "blocks.amr");
 
         blockFilePath = (char*) malloc(sizeof(char) * (blockpath.size() + 1));
         strcpy(blockFilePath, blockpath.c_str());
@@ -45,13 +45,13 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 
 	out->verbose(CALL_INFO, 2, 0, "Block file to load mesh %s\n", blockFilePath);
 
-        if("binary" == params.find_string("arg.filetype") ) {
+        if("binary" == params.find<std::string>("arg.filetype") ) {
         	meshType = 2;
         } else {
         	meshType = 1;
     	}
 
-	printMaps = params.find_string("arg.printmap", "no") == "yes";
+	printMaps = params.find<std::string>("arg.printmap", "no") == "yes";
 	if(printMaps) {
 		out->verbose(CALL_INFO, 16, 0, "Configured to print rank to block maps\n");
 	} else {
@@ -63,7 +63,7 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 	nextBlockToBeProcessed = 0;
 	nextRequestID = 0;
 
-	maxIterations = (uint32_t) params.find_integer("arg.iterations", 1);
+	maxIterations = (uint32_t) params.find("arg.iterations", 1);
 	out->verbose(CALL_INFO, 2, 0, "Motif will run %" PRIu32 " iterations\n", maxIterations);
 
 	// We are complete, let the user know

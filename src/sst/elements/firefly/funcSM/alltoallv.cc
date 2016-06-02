@@ -52,7 +52,8 @@ void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
 void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
 {
-   MP:: RankID rank;
+	Hermes::MemAddr addr;
+    MP:: RankID rank;
     switch ( m_state ) {
       case PostRecv:
 
@@ -68,7 +69,9 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
         m_dbg.verbose(CALL_INFO,1,0,"count=%d irecv src=%d\n", 
                                                         m_count, rank );
 
-        proto()->irecv( recvChunkPtr(rank), recvChunkSize(rank), 
+		addr.simVAddr = 1; 
+		addr.backing = recvChunkPtr(rank); 
+        proto()->irecv( addr, recvChunkSize(rank), 
                         rank, genTag(), m_event->group, &m_recvReq ); 
         m_state = Send;
         break;
@@ -79,7 +82,10 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
         m_dbg.verbose(CALL_INFO,1,0,"count=%d send dest=%d\n", 
                                                         m_count, rank );
 
-        proto()->send( sendChunkPtr(rank), sendChunkSize(rank), 
+		
+		addr.simVAddr = 1; 
+		addr.backing = sendChunkPtr(rank); 
+        proto()->send( addr, sendChunkSize(rank), 
                                             rank, genTag(), m_event->group ); 
         m_state = WaitRecv;
         break;

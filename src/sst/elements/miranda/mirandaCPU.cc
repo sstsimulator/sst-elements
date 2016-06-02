@@ -89,7 +89,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	} else if ( isPortConnected("src") ) {
 
-		out->verbose(CALL_INFO, 1, 0, "getting generators from a link %s\n");
+		out->verbose(CALL_INFO, 1, 0, "getting generators from a link\n");
 		srcLink = configureLink( "src", "50ps", new Event::Handler<RequestGenCPU>(this, &RequestGenCPU::handleSrcEvent));
 		if ( NULL == srcLink ) {
 			out->fatal(CALL_INFO, -1, "Failed to configure src link\n");
@@ -156,22 +156,38 @@ void RequestGenCPU::init(unsigned int phase) {
 }
 
 void RequestGenCPU::handleSrcEvent( Event* ev ) {
-	MirandaReqEvent* event = static_cast<MirandaReqEvent*>(ev);
-	out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", event->generator.c_str());
 
-	reqGen = dynamic_cast<RequestGenerator*>( loadSubComponent(event->generator, this, event->params) );
+	MirandaReqEvent* event = static_cast<MirandaReqEvent*>(ev); 
+
+	out->verbose(CALL_INFO, 1, 0, "got %lu generators\n", event->generators.size() );
+	loadGenerator( event );
+
+	clockTick( reregisterClock( timeConverter, clockHandler ) );
+
+	srcReqEvent = event;
+}
+
+void RequestGenCPU::loadGenerator( MirandaReqEvent* event ) {
+
+	std::string& generator = event->generators.front().first;
+	SST::Params& params = event->generators.front().second;
+	loadGenerator( generator, params );
+	event->generators.pop_front();
+}
+
+void RequestGenCPU::loadGenerator( const std::string& name, SST::Params& params) {
+
+	out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", name.c_str());
+
+	reqGen = dynamic_cast<RequestGenerator*>( loadSubComponent( name, this, params ) );
+
 	if(NULL == reqGen) {
-		out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", event->generator.c_str());
+		out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", name.c_str());
 	} else {
 		out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
 	}
-	clockTick( reregisterClock( timeConverter, clockHandler ) );
-
-	srcRspEvent = new MirandaRspEvent;
-	static_cast<MirandaRspEvent*>(srcRspEvent)->key = event->key;	
-
-	delete ev;
 }
+
 
 void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 	out->verbose(CALL_INFO, 2, 0, "Recv event for processing from interface\n");
@@ -315,7 +331,20 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 			if ( NULL == srcLink ) {
 				primaryComponentOKToEndSim();
 			} else {
-				srcLink->send(0,srcRspEvent);
+				if ( srcReqEvent->generators.empty() ) {
+					MirandaRspEvent* event = new MirandaRspEvent;
+					event->key = static_cast<MirandaReqEvent*>(srcReqEvent)->key;	
+					delete srcReqEvent;
+
+					srcLink->send(0,event);
+
+					return true;
+				} else {  
+					
+					loadGenerator( srcReqEvent );
+					return false;
+				}
+	 
 			}
 			// Deregister here
 			return true;

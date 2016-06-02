@@ -2,7 +2,8 @@
 #
 #
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/src
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libthornhill.la
@@ -10,6 +11,8 @@ comp_LTLIBRARIES = libthornhill.la
 libthornhill_la_SOURCES = \
 	libthornhill.cc\
 	detailedCompute.h\
+	memoryHeap.h\
+	memoryHeap.cc\
 	singleThread.h\
 	singleThread.cc
 

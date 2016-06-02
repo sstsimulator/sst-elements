@@ -29,7 +29,7 @@ SingleThread::SingleThread( Component* owner,
     std::stringstream linkName; 
     
     int id = 0;
-    linkName << "detailed" << id++;
+    linkName << "detailed" << id;
     while ( owner->isPortConnected( linkName.str() ) ) {
 		//printf("%s() connect port %s\n",__func__,linkName.str().c_str());
 		assert( ! m_link );
@@ -39,7 +39,7 @@ SingleThread::SingleThread( Component* owner,
         assert(m_link);
 		linkName.str("");
 		linkName.clear();
-        linkName << "detailed"<< id++;
+        linkName << "detailed"<< ++id;
     }
 }
 
@@ -52,15 +52,14 @@ void SingleThread::eventHandler( SST::Event* ev )
 	delete entry;
 }
 
-void SingleThread::start( std::string& name, Params& params,
+void SingleThread::start( const std::deque< std::pair< std::string, SST::Params> >& generators,
                  std::function<int()> finiHandler )
 {
     MirandaReqEvent* event = new MirandaReqEvent;
 	
 	event->key = (uint64_t) new Entry( finiHandler );
 
-	event->generator = name;
-	event->params = params;
+	event->generators = generators;
 
 	m_link->send( 0, event );
 }

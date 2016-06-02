@@ -14,6 +14,7 @@
 
 #include <sst/core/output.h>
 #include "ctrlMsgXXX.h"
+#include "heapAddrs.h"
 
 namespace SST {
 namespace Firefly {
@@ -43,9 +44,6 @@ class ProcessQueuesState
         snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
                             obj.nic().getNodeId(), obj.info()->worldRank());
         dbg().setPrefix(buffer);
-        for ( unsigned long i = 0; i < MinPostedShortBuffers; i++ ) {
-            postShortRecvBuffer();
-        }
     }
 
     void finish() {
@@ -61,6 +59,9 @@ class ProcessQueuesState
             m_postedShortBuffers.erase( m_postedShortBuffers.begin() );
         }
     }
+
+    void enterInit( bool );
+    void enterInit_1( uint64_t addr, size_t length );
 
     void enterSend( _CommReq*, uint64_t exitDelay = 0 );
     void enterRecv( _CommReq*, uint64_t exitDelay = 0 );
@@ -89,32 +90,44 @@ class ProcessQueuesState
 
     class ShortRecvBuffer : public Msg {
       public:
-        ShortRecvBuffer(size_t length ) : Msg( &hdr ) 
+        ShortRecvBuffer(size_t length, HeapAddrs& _heap  ) : Msg( &hdr ), heap(_heap) 
         { 
-            ioVec.resize(2);    
+			if ( length ) {
+            	ioVec.resize(2);    
+			} else {
+            	ioVec.resize(1);    
+			}
 
-            ioVec[0].ptr = &hdr;
             ioVec[0].len = sizeof(hdr);
+            ioVec[0].addr.simVAddr = heap.alloc(ioVec[0].len);
+            ioVec[0].addr.backing = &hdr;
 
             if ( length ) {
                 buf.resize( length );
-            	ioVec[1].ptr = &buf[0];
+            	ioVec[1].len = length;
+            	ioVec[1].addr.simVAddr = heap.alloc(length);;
+            	ioVec[1].addr.backing = &buf[0];
             } else {
-            	ioVec[1].ptr = NULL; 
+				assert(0);
 			}
-            ioVec[1].len = length;
 
             ProcessQueuesState<T1>::Msg::m_ioVec.push_back( ioVec[1] ); 
         }
+		~ShortRecvBuffer() {
+			for ( unsigned i = 0; i < ioVec.size(); i++) {
+				heap.free( ioVec[i].addr.simVAddr );
+			}
+		}
 
         MatchHdr                hdr;
         std::vector<IoVec>      ioVec; 
         std::vector<unsigned char> buf;
+        HeapAddrs& 				heap;
     };
 
     struct LoopReq : public Msg {
         LoopReq(int _srcCore, std::vector<IoVec>& _vec, void* _key ) :
-            Msg( (MatchHdr*)_vec[0].ptr ), 
+            Msg( (MatchHdr*)_vec[0].addr.backing ), 
             srcCore( _srcCore ), vec(_vec), key( _key) 
         {
             ProcessQueuesState<T1>::Msg::m_ioVec.push_back( vec[1] ); 
@@ -274,10 +287,10 @@ class ProcessQueuesState
 
     void postShortRecvBuffer();
 
-    void pioSendFiniVoid( void* );
-    void pioSendFiniCtrlHdr( CtrlHdr* );
+    void pioSendFiniVoid( void*, uint64_t );
+    void pioSendFiniCtrlHdr( CtrlHdr*, uint64_t );
     void getFini( _CommReq* );
-    void dmaRecvFiniGI( GetInfo*, nid_t, uint32_t, size_t );
+    void dmaRecvFiniGI( GetInfo*, uint64_t, nid_t, uint32_t, size_t );
     void dmaRecvFiniSRB( ShortRecvBuffer*, nid_t, uint32_t, size_t );
 
     bool        checkMatchHdr( MatchHdr& hdr, MatchHdr& wantHdr,
@@ -336,17 +349,54 @@ class ProcessQueuesState
 
     std::deque< LoopResp* >         m_loopResp;
 
-    std::map< ShortRecvBuffer*, Callback2* >
-                                                    m_postedShortBuffers; 
+    std::map< ShortRecvBuffer*, Callback2* > m_postedShortBuffers; 
 	FuncCtxBase*	m_intCtx;
     uint64_t        m_exitDelay;
+
+    HeapAddrs*      m_simVAddrs;
 };
+
+template< class T1 >
+void ProcessQueuesState<T1>::enterInit( bool haveGlobalMemHeap )
+{
+    size_t length = 0;
+    length += MaxPostedShortBuffers * (sizeof(MatchHdr) + 16 ) & ~15;
+    length += MaxPostedShortBuffers * (obj().shortMsgLength() + 16 ) & ~15;
+    length += MaxPostedShortBuffers * (sizeof(MatchHdr) + 16 ) & ~15;
+    length += MaxPostedShortBuffers * (obj().shortMsgLength() + 16 ) & ~15;
+
+    std::function<void(uint64_t)> callback = [=](uint64_t value){
+		enterInit_1( value, length );      
+        return 0;
+    };
+
+    if ( haveGlobalMemHeap ) {
+        obj().memHeap().alloc( length, callback );
+    } else {
+        enterInit_1( 0x1000, length );
+    }
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::enterInit_1( uint64_t addr, size_t length )
+{
+    dbg().verbose(CALL_INFO,1,1,"simVAddr %" PRIx64 "  length=%zu\n", addr, length );
+
+    m_simVAddrs = new HeapAddrs( addr, length );
+
+    for ( unsigned long i = 0; i < MinPostedShortBuffers; i++ ) {
+        postShortRecvBuffer();
+    }
+
+    obj().passCtrlToFunction( );
+}
 
 template< class T1 >
 void ProcessQueuesState<T1>::enterSend( _CommReq* req, uint64_t exitDelay )
 {
     m_exitDelay = exitDelay;
     req->setSrcRank( getMyRank( req ) );
+    dbg().verbose(CALL_INFO,1,1,"req=%p$ delay=%" PRIu64 "\n", req, exitDelay );
 
     uint64_t delay = obj().txDelay( req->getLength() );
 
@@ -394,11 +444,14 @@ void ProcessQueuesState<T1>::processSend_2( _CommReq* req )
     IoVec hdrVec;   
     hdrVec.len = sizeof( req->hdr() ); 
 
+    hdrVec.addr.simVAddr = m_simVAddrs->alloc( hdrVec.len );
+
     if ( length <= obj().shortMsgLength() ) {
-        hdrPtr = hdrVec.ptr = malloc( hdrVec.len );
-        memcpy( hdrVec.ptr, &req->hdr(), hdrVec.len );
+		hdrVec.addr.backing = malloc( hdrVec.len );
+        hdrPtr = hdrVec.addr.backing;
+        memcpy( hdrVec.addr.backing, &req->hdr(), hdrVec.len );
     } else {
-        hdrVec.ptr = &req->hdr(); 
+        hdrVec.addr.backing = &req->hdr(); 
     }
 
     std::vector<IoVec> vec;
@@ -418,27 +471,29 @@ void ProcessQueuesState<T1>::processSend_2( _CommReq* req )
 
         GetInfo* info = new GetInfo;
 
-        Callback2* callback = new Callback2;
-        *callback = std::bind( 
-            &ProcessQueuesState<T1>::dmaRecvFiniGI, this, info, 
-            std::placeholders::_1,
-            std::placeholders::_2,
-            std::placeholders::_3
-        );
 
         info->req = req;
 
         std::vector<IoVec> hdrVec;
         hdrVec.resize(1);
-        hdrVec[0].ptr = &info->hdr; 
         hdrVec[0].len = sizeof( info->hdr ); 
+        hdrVec[0].addr.simVAddr = m_simVAddrs->alloc( hdrVec[0].len ); 
+        hdrVec[0].addr.backing = &info->hdr; 
         
+        Callback2* callback = new Callback2;
+        *callback = std::bind( 
+            &ProcessQueuesState<T1>::dmaRecvFiniGI, this, info, hdrVec[0].addr.simVAddr, 
+            std::placeholders::_1,
+            std::placeholders::_2,
+            std::placeholders::_3
+        );
+
         obj().nic().dmaRecv( nid, req->hdr().key, hdrVec, callback ); 
         obj().nic().regMem( nid, req->hdr().key, req->ioVec(), NULL );
     }
 
     Callback* callback = new Callback;
-    *callback = std::bind( &ProcessQueuesState::pioSendFiniVoid, this, hdrPtr );
+    *callback = std::bind( &ProcessQueuesState::pioSendFiniVoid, this, hdrPtr, hdrVec.addr.simVAddr );
 
     obj().nic().pioSend( nid, ShortMsgQ, vec, callback);
 
@@ -455,8 +510,9 @@ void ProcessQueuesState<T1>::processSendLoop( _CommReq* req )
     dbg().verbose(CALL_INFO,2,2,"key=%p\n", req);
 
     IoVec hdrVec;
-    hdrVec.ptr = &req->hdr();
     hdrVec.len = sizeof( req->hdr() );
+    hdrVec.addr.simVAddr = 1; //m_simVAddrs->alloc( hdrVec.len );
+    hdrVec.addr.backing = &req->hdr();
 
     std::vector<IoVec> vec;
     vec.insert( vec.begin(), hdrVec );
@@ -476,7 +532,7 @@ void ProcessQueuesState<T1>::processSendLoop( _CommReq* req )
 template< class T1 >
 void ProcessQueuesState<T1>::enterRecv( _CommReq* req, uint64_t exitDelay )
 {
-    dbg().verbose(CALL_INFO,1,1,"new recv CommReq\n");
+    dbg().verbose(CALL_INFO,1,1,"req=%p$ delay=%" PRIu64 "\n", req, exitDelay );
     m_exitDelay = exitDelay;
 
     if ( m_postedShortBuffers.size() < MaxPostedShortBuffers ) {
@@ -840,12 +896,13 @@ void ProcessQueuesState<T1>::getFini( _CommReq* req )
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::dmaRecvFiniGI( GetInfo* info, nid_t nid, 
+void ProcessQueuesState<T1>::dmaRecvFiniGI( GetInfo* info, uint64_t simVAddr, nid_t nid, 
                                             uint32_t tag, size_t length )
 {
     dbg().verbose(CALL_INFO,1,1,"nid=%d tag=%#x length=%lu\n",
                                                     nid, tag, length );
     assert( ( tag & LongAckKey ) == LongAckKey );
+    m_simVAddrs->free( simVAddr );
     info->nid = nid;
     info->tag = tag;
     info->length = length;
@@ -933,18 +990,20 @@ void ProcessQueuesState<T1>::foo0( Stack* stack )
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::pioSendFiniVoid( void* hdr )
+void ProcessQueuesState<T1>::pioSendFiniVoid( void* hdr, uint64_t simVAddr )
 {
     dbg().verbose(CALL_INFO,1,1,"hdr=%p\n", hdr );
     if ( hdr ) {
         free( hdr );
     }
+    m_simVAddrs->free( simVAddr );
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::pioSendFiniCtrlHdr( CtrlHdr* hdr )
+void ProcessQueuesState<T1>::pioSendFiniCtrlHdr( CtrlHdr* hdr, uint64_t simVAddr )
 {
     dbg().verbose(CALL_INFO,1,1,"MsgHdr, Ack sent key=%#x\n", hdr->key);
+	m_simVAddrs->free(simVAddr);
     delete hdr;
     foo();
 }
@@ -977,12 +1036,13 @@ void ProcessQueuesState<T1>::processLongGetFini0( Stack* stack )
 
     IoVec hdrVec;   
     CtrlHdr* hdr = new CtrlHdr;
-    hdrVec.ptr = hdr; 
     hdrVec.len = sizeof( *hdr ); 
+    hdrVec.addr.simVAddr = m_simVAddrs->alloc(hdrVec.len);
+    hdrVec.addr.backing = hdr; 
 
     Callback* callback = new Callback;
     *callback = std::bind( 
-                &ProcessQueuesState<T1>::pioSendFiniCtrlHdr, this, hdr ); 
+                &ProcessQueuesState<T1>::pioSendFiniCtrlHdr, this, hdr, hdrVec.addr.simVAddr ); 
 
     std::vector<IoVec> vec;
     vec.insert( vec.begin(), hdrVec );
@@ -1031,7 +1091,7 @@ template< class T1 >
 void ProcessQueuesState<T1>::loopHandler( int srcCore, std::vector<IoVec>& vec, void* key )
 {
         
-    MatchHdr* hdr = (MatchHdr*) vec[0].ptr;
+    MatchHdr* hdr = (MatchHdr*) vec[0].addr.backing;
 
     dbg().verbose(CALL_INFO,1,2,"req: srcCore=%d key=%p vec.size()=%lu srcRank=%d\n",
                                                     srcCore, key, vec.size(), hdr->rank);
@@ -1119,8 +1179,8 @@ void ProcessQueuesState<T1>::copyIoVec(
             dbg().verbose(CALL_INFO,3,1,"copied=%lu rV=%lu rP=%lu\n",
                                                         copied,rV,rP);
 
-            if ( dst[rV].ptr && src[i].ptr ) {
-                ((char*)dst[rV].ptr)[rP] = ((char*)src[i].ptr)[j];
+            if ( dst[rV].addr.backing && src[i].addr.backing ) {
+                ((char*)dst[rV].addr.backing)[rP] = ((char*)src[i].addr.backing)[j];
             }
             ++copied;
             ++rP;
@@ -1147,7 +1207,7 @@ template< class T1 >
 void ProcessQueuesState<T1>::postShortRecvBuffer( )
 {
     ShortRecvBuffer* buf =
-            new ShortRecvBuffer( obj().shortMsgLength() + sizeof(MatchHdr));
+            new ShortRecvBuffer( obj().shortMsgLength() + sizeof(MatchHdr), *m_simVAddrs );
 
     Callback2* callback = new Callback2;
     *callback = std::bind( 

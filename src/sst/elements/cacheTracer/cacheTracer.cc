@@ -29,25 +29,25 @@ using namespace SST::CACHETRACER;
 cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
 
     //Get Input parameters
-    unsigned int debug = params.find_integer("debug", 0);
+    unsigned int debug = params.find("debug", 0);
     out = new Output("cacheTracer[@f:@l:@p] ", debug, 0, Output::STDOUT);
     out->debug(CALL_INFO, 1, 0, "Debugging set at %d Level\n", debug);
 
-    stats = params.find_integer("statistics", 0);
+    stats = params.find("statistics", 0);
     out->debug(CALL_INFO, 1, 0, "statistics and histogram reporting is %s\n", (stats ? "enabled" : "disabled"));
 
-    pageSize = params.find_integer("pageSize", 4096);
+    pageSize = params.find("pageSize", 4096);
     out->debug(CALL_INFO, 1, 0, "Address histogram bins are multiples of %d\n", pageSize);
 
-    accessLatBins = params.find_integer("accessLatencyBins", 10);
+    accessLatBins = params.find("accessLatencyBins", 10);
     out->debug(CALL_INFO, 1, 0, "Number of access latency bins set to %d\n", accessLatBins);
 
-    string frequency = params.find_string("clock", "1 Ghz");
+    string frequency = params.find<std::string>("clock", "1 Ghz");
     out->debug(CALL_INFO, 1, 0, "Registering cacheTracer clock at %s\n", frequency.c_str());
     registerClock( frequency, new Clock::Handler<cacheTracer>(this, &cacheTracer::clock) );
     out->debug(CALL_INFO, 1, 0, "Clock registered\n");
 
-    string tracePrefix = params.find_string("tracePrefix", "");
+    string tracePrefix = params.find<std::string>("tracePrefix", "");
     if("" == tracePrefix){
         out->debug(CALL_INFO, 1, 0, "Tracing Not Enabled.\n");
         writeTrace = false;
@@ -61,7 +61,7 @@ cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
         writeTrace = true;
     }
 
-    string statsPrefix = params.find_string("statsPrefix", "");
+    string statsPrefix = params.find<std::string>("statsPrefix", "");
     if("" == statsPrefix){
         out->debug(CALL_INFO, 1, 0, "Stats Not directed to file.\n");
         writeStats = false;

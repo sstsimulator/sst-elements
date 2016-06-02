@@ -54,7 +54,7 @@ class API : public ProtocolAPI {
     API( Component* owner, Params& );
     ~API();
 
-    virtual void init( Info* info, VirtNic* );
+    virtual void init( Info* info, VirtNic*, Thornhill::MemoryHeapLink* );
     virtual void setup();
     virtual Info* info();
     virtual void finish();
@@ -62,32 +62,33 @@ class API : public ProtocolAPI {
     virtual std::string name() { return "CtrlMsgProtocol"; }
     virtual void setRetLink( Link* link );
 
-    void send( void* buf, size_t len, nid_t dest, uint64_t tag ); 
-    void send( void* buf, size_t len, MP::RankID dest, uint64_t tag, 
+    void init();
+    void send( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag ); 
+    void send( const Hermes::MemAddr&, size_t len, MP::RankID dest, uint64_t tag, 
                             MP::Communicator grp );
-    void isend( void* buf, size_t len, nid_t dest, uint64_t tag, CommReq* );
+    void isend( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag, CommReq* );
     void sendv( std::vector<IoVec>&, nid_t dest, uint64_t tag );
-    void recv( void* buf, size_t len, nid_t src, uint64_t tag );
-    void irecv( void* buf, size_t len, nid_t src, uint64_t tag, CommReq* );
-    void irecv( void* buf, size_t len, MP::RankID src, uint64_t tag, 
+    void recv( const Hermes::MemAddr&, size_t len, nid_t src, uint64_t tag );
+    void irecv( const Hermes::MemAddr&, size_t len, nid_t src, uint64_t tag, CommReq* );
+    void irecv( const Hermes::MemAddr&, size_t len, MP::RankID src, uint64_t tag, 
                 MP::Communicator grp, CommReq* );
     void irecvv( std::vector<IoVec>&, nid_t src, uint64_t tag, CommReq* );
     void wait( CommReq* );
     void waitAll( std::vector<CommReq*>& );
 
-	void send(MP::Addr buf, uint32_t count, 
+	void send( const Hermes::MemAddr& buf, uint32_t count, 
 		MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group );
 
-	void isend(MP::Addr buf, uint32_t count,
+	void isend( const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req );
 
-    void recv(MP::Addr buf, uint32_t count,
+    void recv( const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageResponse* resp );
 
-    void irecv(MP::Addr _buf, uint32_t _count,
+    void irecv( const Hermes::MemAddr& _buf, uint32_t _count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req );
 

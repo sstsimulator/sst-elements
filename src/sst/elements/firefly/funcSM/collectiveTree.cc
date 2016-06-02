@@ -59,10 +59,10 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_bufLen = m_event->count * m_info->sizeofDataType( m_event->dtype );  
 
 
-    m_bufV[0] = m_event->mydata;
+    m_bufV[0] = m_event->mydata.backing;
      
     for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
-        if ( m_event->mydata ) {
+        if ( m_event->mydata.backing ) {
             m_bufV[i+1] = malloc( m_bufLen );
             assert( m_bufV[i+1] );
         } else {
@@ -82,6 +82,7 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
 void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 {
+	Hermes::MemAddr addr;
     int child;
     m_dbg.verbose(CALL_INFO,1,0,"%s state\n", stateName(m_state).c_str());
 
@@ -101,7 +102,9 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                 }
 
                 m_dbg.verbose(CALL_INFO,1,0,"post irecv for child %d\n", child );
-                proto()->irecv( m_bufV[ child + 1 ], m_bufLen,
+				addr.simVAddr = 1;
+				addr.backing = m_bufV[ child + 1 ];
+                proto()->irecv( addr, m_bufLen,
                         m_yyy->calcChild( child ), 
                         genTag(), &m_recvReqV[ child ] );
                 return;
@@ -115,7 +118,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                 m_dbg.verbose(CALL_INFO,1,0,"all children have checked in\n");
                     if ( m_bufV[0] ) {
                         collectiveOp( &m_bufV[0], m_yyy->numChildren() + 1,
-                            m_event->result, m_event->count,
+                            m_event->result.backing, m_event->count,
                             m_event->dtype, m_event->op );  
                     }
             }
@@ -128,11 +131,13 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 
             m_state = WaitDown;
 
-            ptr = m_yyy->numChildren() ?  m_event->result : m_event->mydata;
+            ptr = m_yyy->numChildren() ?  m_event->result.backing : m_event->mydata.backing;
 
             m_dbg.verbose(CALL_INFO,1,0,"send message to parent %d\n",
                                                             m_yyy->parent());
-            proto()->send( ptr, m_bufLen, m_yyy->parent(), genTag() );
+			addr.simVAddr = 1;
+			addr.backing = ptr;
+            proto()->send( addr, m_bufLen, m_yyy->parent(), genTag() );
             return;
         }
 
@@ -143,7 +148,9 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 
             m_dbg.verbose(CALL_INFO,1,0,"post recv from parent %d\n",
                                                             m_yyy->parent());
-            proto()->recv( m_event->result, m_bufLen, m_yyy->parent(),
+			addr.simVAddr = 1;
+			addr.backing = m_event->result.backing;
+            proto()->recv( addr, m_bufLen, m_yyy->parent(),
                                                          genTag() );
             return;
         }
@@ -163,7 +170,9 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                 }
 
                 m_dbg.verbose(CALL_INFO,1,0,"isend to child %d\n", child );
-                proto()->isend( m_event->result, m_bufLen,
+				addr.simVAddr = 1;
+				addr.backing = m_event->result.backing;
+                proto()->isend( addr, m_bufLen,
                         m_yyy->calcChild( child ), 
                         genTag(), &m_sendReqV[ child ] );
 			

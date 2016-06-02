@@ -32,13 +32,13 @@ using namespace SST::MemHierarchy;
 VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
     IntrospectedComponent( id ), numOutstanding(0) {
     dbg.init("@R:Vault::@p():@l " + getName() + ": ", 0, 0, 
-             (Output::output_location_t)params.find_integer("debug", 0));  
+             (Output::output_location_t)params.find<uint32_t>("debug", 0));  
     
     std::string frequency = "1.0 GHz";
-    frequency = params.find_string("clock", "1.0 Ghz");
+    frequency = params.find<std::string>("clock", "1.0 Ghz");
     
     // number of bits to determin vault address
-    int nv2 = params.find_integer( "numVaults2", -1 );
+    int nv2 = params.find( "numVaults2", -1 );
     if ( -1 == nv2) {
         dbg.fatal(CALL_INFO, -1,"numVaults2 (number of bits to determine vault "
                "address) not set! Should be log2(number of vaults per cube)\n");
@@ -50,7 +50,7 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
   
     m_memChan = configureLink( "bus", "1 ns" );
   
-    int vid = params.find_integer("VaultID", -1);
+    int vid = params.find("VaultID", -1);
     if ( -1 == vid) {
         dbg.fatal(CALL_INFO, -1,"not VaultID Set\n");
     } else {
@@ -81,7 +81,7 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
                    new Clock::Handler<VaultSimC>(this, &VaultSimC::clock) );
 
     std::string delay = "40ns";
-    delay = params.find_string("delay", "40ns");
+    delay = params.find<std::string>("delay", "40ns");
     delayLine = configureSelfLink( "delayLine", delay);
 #endif /* HAVE_LIBPHX */
 

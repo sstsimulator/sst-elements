@@ -22,7 +22,8 @@ class EmberBcastEvent : public EmberMPIEvent {
 public:
     EmberBcastEvent( MP::Interface& api, Output* output,
                     EmberEventTimeStatistic* stat,
-            Addr mydata, uint32_t count, PayloadDataType dtype,
+            const Hermes::MemAddr& mydata,
+            uint32_t count, PayloadDataType dtype,
             int root, Communicator group ) :
         EmberMPIEvent( api, output, stat ),
         m_mydata(mydata),
@@ -44,7 +45,7 @@ public:
     }
 
 private:
-    Addr                m_mydata;
+    Hermes::MemAddr     m_mydata;
     uint32_t            m_count;
     PayloadDataType     m_dtype;
     int                 m_root;

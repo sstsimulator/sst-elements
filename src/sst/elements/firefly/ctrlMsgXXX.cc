@@ -27,7 +27,7 @@ using namespace SST;
 
 XXX::XXX( Component* owner, Params& params ) :
     m_retLink( NULL ),
-    m_memLink( NULL ),
+    m_memHeapLink( NULL ),
     m_info( NULL ),
     m_rxPostMod( NULL ),
     m_processQueuesState( NULL )
@@ -109,12 +109,6 @@ XXX::XXX( Component* owner, Params& params ) :
 			params.find<std::string>("loopBackPortName", "loop"), "1 ns",
             new Event::Handler<XXX>(this,&XXX::loopHandler) );
     assert(m_loopLink);
-
-#if 0
-    m_memLink = owner->configureLink( params.find_string("memPortName","mem"),
-            "1 ns", new Event::Handler<XXX>(this,&XXX::memEventHandler) );
-    assert( m_memLink );
-#endif
 }
 
 void XXX::finish() { 
@@ -137,10 +131,11 @@ XXX::~XXX()
     }
 }
 
-void XXX::init( Info* info, VirtNic* nic )
+void XXX::init( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem  )
 {
     m_info = info;
     m_nic = nic;
+    m_memHeapLink = mem;
     nic->setNotifyOnGetDone(
         new VirtNic::Handler<XXX,void*>(this, &XXX::notifyGetDone )
     );
@@ -155,7 +150,9 @@ void XXX::init( Info* info, VirtNic* nic )
         new VirtNic::Handler3Args<XXX,int,int,size_t>(
                                 this, &XXX::notifyNeedRecv )
     );
+
 }
+
 
 void XXX::setup() 
 {
@@ -238,6 +235,11 @@ void XXX::memEventHandler( Event* ev )
 
 // **********************************************************************
 
+
+void XXX::init() {
+   	m_processQueuesState->enterInit( (m_memHeapLink) );
+}
+
 void XXX::sendv( std::vector<IoVec>& ioVec, 
     MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
     MP::Communicator group, CommReq* commReq )
@@ -288,7 +290,7 @@ void XXX::waitAll( std::vector<CommReq*>& reqs )
 }
 
 // **********************************************************************
-void XXX::send(MP::Addr buf, uint32_t count,
+void XXX::send(const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group )
 {
@@ -298,7 +300,7 @@ void XXX::send(MP::Addr buf, uint32_t count,
             info()->sizeofDataType( dtype), dest, tag, group ) );
 }
 
-void XXX::isend(MP::Addr buf, uint32_t count,
+void XXX::isend(const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req )
 {
@@ -308,7 +310,7 @@ void XXX::isend(MP::Addr buf, uint32_t count,
     m_processQueuesState->enterSend( static_cast<_CommReq*>(*req) );
 }
 
-void XXX::recv(MP::Addr buf, uint32_t count,
+void XXX::recv(const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageResponse* resp )
 {
@@ -317,7 +319,7 @@ void XXX::recv(MP::Addr buf, uint32_t count,
             info()->sizeofDataType(dtype), src, tag, group, resp ) );
 }
 
-void XXX::irecv(MP::Addr buf, uint32_t count,
+void XXX::irecv(const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req )
 {
@@ -354,7 +356,7 @@ void XXX::waitAll( int count, MP::MessageRequest req[],
 
 void XXX::schedCallback( Callback callback, uint64_t delay )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"delay=%lu\n",delay);
+    m_dbg.verbose(CALL_INFO,1,1,"delay=%" PRIu64 "\n",delay);
     m_delayLink->send( delay, new DelayEvent(callback) );
 }
 
@@ -371,8 +373,8 @@ void XXX::delayHandler( SST::Event* e )
 void XXX::memcpy( Callback callback, MemAddr to, MemAddr from, size_t length )
 {
     m_dbg.verbose(CALL_INFO,1,1,"\n");
-    if ( m_memLink ) {
-        m_memLink->send( 0, new MemCpyReqEvent( callback, 0, to, from, length ) );
+    if ( 0 ) {
+        //m_memLink->send( 0, new MemCpyReqEvent( callback, 0, to, from, length ) );
     } else {
         uint64_t delay; 
         if ( from ) {
@@ -389,8 +391,8 @@ void XXX::memcpy( Callback callback, MemAddr to, MemAddr from, size_t length )
 void XXX::memread( Callback callback, MemAddr addr, size_t length )
 {
     m_dbg.verbose(CALL_INFO,1,1,"\n");
-    if ( m_memLink ) {
-        m_memLink->send( 0, new MemReadReqEvent( callback, 0, addr, length ) );
+    if ( 0 ) {
+        //m_memLink->send( 0, new MemReadReqEvent( callback, 0, addr, length ) );
     } else {
         m_delayLink->send( txMemcpyDelay( length ), new DelayEvent(callback) );
     }
@@ -399,8 +401,8 @@ void XXX::memread( Callback callback, MemAddr addr, size_t length )
 void XXX::memwrite( Callback callback, MemAddr addr, size_t length )
 {
     m_dbg.verbose(CALL_INFO,1,1,"\n");
-    if ( m_memLink ) {
-        m_memLink->send( 0, new MemWriteReqEvent( callback, 0, addr, length ) );
+    if ( 0 ) {
+        //m_memLink->send( 0, new MemWriteReqEvent( callback, 0, addr, length ) );
     } else {
         m_delayLink->send( txMemcpyDelay( length ), new DelayEvent(callback) );
     }

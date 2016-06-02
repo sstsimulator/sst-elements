@@ -20,13 +20,13 @@ using namespace SST::Miranda;
 RandomGenerator::RandomGenerator( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
 
-	const uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 
 	out = new Output("RandomGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-	issueCount = (uint64_t) params.find_integer("count", 1000);
-	reqLength  = (uint64_t) params.find_integer("length", 8);
-	maxAddr    = (uint64_t) params.find_integer("max_address", 524288);
+	issueCount = params.find<uint64_t>("count", 1000);
+	reqLength  = params.find<uint64_t>("length", 8);
+	maxAddr    = params.find<uint64_t>("max_address", 524288);
 
 	rng = new MarsagliaRNG(11, 31);
 
@@ -34,7 +34,7 @@ RandomGenerator::RandomGenerator( Component* owner, Params& params ) :
 	out->verbose(CALL_INFO, 1, 0, "Request lengths: %" PRIu64 " bytes\n", reqLength);
 	out->verbose(CALL_INFO, 1, 0, "Maximum address: %" PRIu64 "\n", maxAddr);
 
-	issueOpFences = params.find_string("issue_op_fences", "yes") == "yes";
+	issueOpFences = params.find<std::string>("issue_op_fences", "yes") == "yes";
 }
 
 RandomGenerator::~RandomGenerator() {
