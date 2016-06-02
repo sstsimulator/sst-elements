@@ -55,9 +55,14 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
 
     Params mapParams = params.find_prefix_params("rankmap.");
 <<<<<<< HEAD
+<<<<<<< HEAD
     string rankMapModule = params.find_string("rankmapper", "ember.LinearMap");
     //std::cout << "rankMapModule is: " << rankMapModule.c_str() << std::endl; //NetworkSim
     //std::cout << "In mpigen: " << params.find_string("_jobId", "-1").c_str() << " Name:" << name.c_str() << std::endl; //NetworkSim
+=======
+    string rankMapModule = params.find<std::string>("rankmapper", "ember.LinearMap");
+    //string rankMapModule = params.find<std::string>("rankmapper", "ember.CustomMap"); //NetworkSim
+>>>>>>> devel
 =======
     string rankMapModule = params.find<std::string>("rankmapper", "ember.LinearMap");
     //string rankMapModule = params.find<std::string>("rankmapper", "ember.CustomMap"); //NetworkSim

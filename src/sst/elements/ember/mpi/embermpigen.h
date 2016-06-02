@@ -227,8 +227,12 @@ private:
     static const char*  m_eventName[];
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     //EmberRankMap*                         m_rankMap; //NetworkSim: moved to protected for use in unstructured motif configure
     EmberComputeDistribution*           m_computeDistrib; 
+=======
+	EmberRankMap* 						m_rankMap;
+>>>>>>> devel
 =======
 	EmberRankMap* 						m_rankMap;
 >>>>>>> devel
