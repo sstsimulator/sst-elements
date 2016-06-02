@@ -13,6 +13,7 @@ libthornhill_la_SOURCES = \
 	detailedCompute.h\
 	memoryHeap.h\
 	memoryHeap.cc\
+	memoryHeapLink.h\
 	singleThread.h\
 	singleThread.cc
 
