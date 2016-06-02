@@ -33,6 +33,7 @@ libember_la_SOURCES = \
 	emberdetailedcomputeev.h \
 	embermotiflog.h \
 	embermotiflog.cc \
+	embermemoryev.h \
 	mpi/embermpigen.h \
 	mpi/embermpigen.cc \
 	mpi/emberrecvev.h \
