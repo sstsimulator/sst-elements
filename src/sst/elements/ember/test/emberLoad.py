@@ -16,6 +16,8 @@ debug    = 0
 emberVerbose = 0
 embermotifLog = ''
 emberrankmapper = ''
+embermapFile = ''
+networkStatOut = ''
 
 statNodeList = []
 jobid = 0
@@ -34,6 +36,10 @@ netTopo = ''
 netShape = ''
 netInspect = ''
 rtrArb = ''
+routingAlg = ''
+host_bw = ''
+group_bw = ''
+global_bw = ''
 
 rndmPlacement = False
 #rndmPlacement = True
@@ -56,12 +62,13 @@ motifDefaults = {
 }
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
-		"simConfig=","platParams=",",debug=","platform=","numNodes=",
-		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
-		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
-		"rtrArb=","embermotifLog=",	"rankmapper=",
-		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
+    opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=", "routingAlg=", 
+        "simConfig=","platParams=","debug=","platform=","numNodes=",
+        "numCores=","loadFile=","cmdLine=","printStats=","networkStatOut=","randomPlacement=",
+        "emberVerbose=","netBW=","netPktSize=","netFlitSize=",
+        "rtrArb=","embermotifLog=", "rankmapper=", "mapFile=",
+        "host_bw=","group_bw=","global_bw=",
+        "bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
         "detailedNameModel=","detailedModelParams=","detailedModelNodes="])
 
 except getopt.GetoptError as err:
@@ -73,6 +80,8 @@ for o, a in opts:
         netShape = a
     elif o in ("--platform"):
         platform = a
+    elif o in ("--routingAlg"):
+        routingAlg = a
     elif o in ("--numCores"):
         numCores = a
     elif o in ("--numNodes"):
@@ -89,14 +98,24 @@ for o, a in opts:
         netTopo = a
     elif o in ("--printStats"):
         motifDefaults['printStats'] = a
+    elif o in ("--networkStatOut"):
+        networkStatOut = a
     elif o in ("--emberVerbose"):
         emberVerbose = a
     elif o in ("--embermotifLog"):
         embermotifLog = a
     elif o in ("--rankmapper"):
         emberrankmapper = a
+    elif o in ("--mapFile"):
+        embermapFile = a
     elif o in ("--netBW"):
         netBW = a
+    elif o in ("--host_bw"):
+        host_bw = a
+    elif o in ("--group_bw"):
+        group_bw = a
+    elif o in ("--global_bw"):
+        global_bw = a
     elif o in ("--netFlitSize"):
         netFlitSize = a
     elif o in ("--netPktSize"):
@@ -180,6 +199,7 @@ platNetConfig = config.netConfig
 
 if netBW:
 	networkParams['link_bw'] = netBW
+    nicParams['link_bw'] = netBW
 
 if netInspect:
 	networkParams['network_inspectors'] = netInspect
@@ -215,11 +235,33 @@ elif "fattree" == netTopo:
 elif "dragonfly" == netTopo:
 		
 	topoInfo = DragonFlyInfo(netShape)
+    if "" != routingAlg:
+        topoInfo.params["dragonfly:algorithm"] = routingAlg
+        if routingAlg == "valiant":
+            nicParams['module'] = "merlin.reorderlinkcontrol"
+    if "" != host_bw:
+        topoInfo.params["link_bw:host"] = host_bw
+    if "" != group_bw:
+        topoInfo.params["link_bw:group"] = group_bw
+    if "" != global_bw:
+        topoInfo.params["link_bw:global"] = global_bw
+
 	topo = topoDragonFly()
 
 elif "dragonfly2" == netTopo:
 
 	topoInfo = DragonFly2Info(netShape)
+    if "" != routingAlg:
+        topoInfo.params["dragonfly:algorithm"] = routingAlg
+        if routingAlg == "valiant":
+            nicParams['module'] = "merlin.reorderlinkcontrol"
+    if "" != host_bw:
+        topoInfo.params["link_bw:host"] = host_bw
+    if "" != group_bw:
+        topoInfo.params["link_bw:group"] = group_bw
+    if "" != global_bw:
+        topoInfo.params["link_bw:global"] = global_bw
+
 	topo = topoDragonFly2()
 
 else:
@@ -314,6 +356,8 @@ if embermotifLog:
     emberParams['motifLog'] = embermotifLog
 if emberrankmapper:
     emberParams['rankmapper'] = emberrankmapper
+if embermapFile:
+    emberParams['mapFile'] = embermapFile
 
 print "EMBER: network: BW={0} pktSize={1} flitSize={2}".format(
         networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize'])
