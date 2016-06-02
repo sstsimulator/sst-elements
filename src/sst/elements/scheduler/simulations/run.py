@@ -19,7 +19,7 @@ def run(cmd):
     os.system(cmd)
 
 def submit_job(options):
-    exp_name = "N%s_alpha%s_%s_%s_%s_iter%s_motifiter%s" %(options.N, options.alpha, options.application, options.allocator, options.mapper, options.iteration, options.motif_iteration)
+    exp_name = "N%s_alpha%s_%s_%s_%s_iter%s" %(options.N, options.alpha, options.application, options.allocator, options.mapper, options.iteration)
 
     options.outdir = "%s/%s/%s" %(options.main_sim_path, options.exp_folder, exp_name)
     #os.environ['SIMOUTPUT'] = folder
@@ -27,7 +27,7 @@ def submit_job(options):
     execcommand += "date\n"
     execcommand += "source %s\n" %(options.env_script)
     execcommand += "export SIMOUTPUT=%s/\n" %(options.outdir)
-    execcommand += "python run_DetailedNetworkSim.py --emberOut ember.out --alpha %s --schedPy ./%s_%s_%s_N%s_%siter.py\n" %(options.alpha, options.allocator, options.mapper, options.application, options.N, options.motif_iteration)
+    execcommand += "python run_DetailedNetworkSim.py --emberOut ember.out --alpha %s --schedPy ./%s_%s_%s_N%s.py\n" %(options.alpha, options.allocator, options.mapper, options.application, options.N)
     execcommand += "date\n"
 
     shfile = "%s/%s.sh" %(options.outdir, exp_name)
@@ -85,13 +85,25 @@ def main():
                 for allocator in ['simple', 'spread', 'random']:
                     for mapper in ['libtopomap']:
     '''
-    '''
 
+    '''
     for N in [1]: # Each job uses 1/N of the machine
-        for alpha in [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]: 
-            for application in ['bisection']:
-                for allocator in ['simple']:
-                    for mapper in ['simple']:
+        for alpha in [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]:
+            if N == 1:
+                applications = ['alltoall', 'bisection', 'mesh']
+            else:
+                applications = ['alltoall', 'mesh']
+
+            for application in applications:
+                if application == 'bisection':
+                    allocators = ['simple']
+                    mappers = ['simple']
+                else:
+                    allocators = ['simple', 'spread', 'random']
+                    mappers = ['libtopomap']
+
+                for allocator in allocators:
+                    for mapper in mappers:
                         if allocator == 'random':
                             num_iters = 100
                         else:
@@ -106,6 +118,26 @@ def main():
                             submit_job(options)
     '''
     for N in [1]: # Each job uses 1/N of the machine
+        for alpha in [1]:
+            for application in ['mesh']:
+                for allocator in ['random']:
+                    for mapper in ['libtopomap']:
+                        if allocator == 'random':
+                            num_iters = 1
+                        else:
+                            num_iters = 1
+                        for iteration in range(num_iters):
+                            options.N = N
+                            options.alpha = alpha
+                            options.application = application
+                            options.allocator = allocator
+                            options.mapper = mapper
+                            options.iteration = iteration
+                            submit_job(options)
+
+    '''
+    #Network steady state analysis
+    for N in [1]: # Each job uses 1/N of the machine
         for alpha in [4]: 
             for application in ['alltoall']:
                 for allocator in ['simple']:
@@ -115,7 +147,7 @@ def main():
                         else:
                             num_iters = 1
                         for iteration in range(num_iters):
-                            for motif_iteration in range(10,11,10):
+                            for motif_iteration in range(10,110,10):
                                 options.N = N
                                 options.alpha = alpha
                                 options.application = application
@@ -124,6 +156,7 @@ def main():
                                 options.iteration = iteration
                                 options.motif_iteration = motif_iteration
                                 submit_job(options)
+    '''
 
 
 if __name__ == '__main__':

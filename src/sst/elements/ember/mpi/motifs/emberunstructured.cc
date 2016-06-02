@@ -160,6 +160,11 @@ std::vector<std::map<int,int> >* EmberUnstructuredGenerator::readCommFile(std::s
 	MatrixMarketReader2D<int> reader = MatrixMarketReader2D<int>();
 	vector<int*>* dataVec = reader.readMatrix(fileName.c_str(), true); //current version ignores edge weights
 
+    //NetworkSim
+    if(dataVec == NULL)
+        fatal(CALL_INFO, -1, "Could not read the matrix file properly\n");
+    //end->NetworkSim
+
 	//check size
 	if(reader.xdim != reader.ydim){
 		fatal(CALL_INFO, -1, "Given matrix in file %s is not a square matrix\n", fileName.c_str());
@@ -186,6 +191,7 @@ template <class T>
 vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignoreValues)
 {
     //TODO: make this function faster by reading the file all at once
+    //TODO: print the errors inside this function instead of returning NULL
 
     //open file
     ifstream inputFile;

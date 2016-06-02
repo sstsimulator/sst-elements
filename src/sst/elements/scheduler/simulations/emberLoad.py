@@ -382,8 +382,9 @@ else:
 
 topo.prepParams()
 if "dragonfly2" == netTopo:
-    topo.setRoutingModeRelative()
-    global_link_map = "circulant"
+    global_link_map = "absolute"
+    if global_link_map == "relative" or global_link_map == "circulant":
+        topo.setRoutingModeRelative()
     if global_link_map == "circulant":
         ngrp = int(topoInfo.params["dragonfly:num_groups"])
         glm = []
