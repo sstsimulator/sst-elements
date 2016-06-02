@@ -36,7 +36,7 @@ class SendMachine {
             if ( 1 == m_sendQ.size() ) {
                 state_0( m_sendQ.front() );
             } else {
-                m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE,
+                m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"Send: "
 							"%d: Q send entry\n",m_vc);
             }
         }
@@ -66,7 +66,7 @@ class SendMachine {
         void state_2( SendEntry*, FireflyNetworkEvent* );
         void state_3( ) {
             if ( ! canSend( m_packetSizeInBytes ) ) {
-                m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE,
+                m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"Send: "
 							"%d: send busy\n",m_vc);
                     setCanSendCallback(
                     std::bind( &Nic::SendMachine::state_3, this )

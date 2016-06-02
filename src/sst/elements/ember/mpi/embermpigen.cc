@@ -47,19 +47,6 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
 	//m_histoM[ "RecvSize" ] = new Histogram<uint32_t, uint32_t>(
     //                                "Recv Sizes in Bytes", userBinWidth );
 
-    Params distribParams = params.find_prefix_params("distribParams.");
-    string distribModule = params.find<std::string>("distribModule",
-                                                "ember.ConstDistrib");
-
-    m_computeDistrib = dynamic_cast<EmberComputeDistribution*>(
-        owner->loadModuleWithComponent(distribModule, owner, distribParams));
-
-    if(NULL == m_computeDistrib) {
-        std::cerr << "Error: Unable to load compute distribution: \'" 
-                                    << distribModule << "\'" << std::endl;
-        exit(-1);
-    }
-
     m_spyplotMode = (uint32_t) params.find("spyplotmode", 0);
 
     if(m_spyplotMode != EMBER_SPYPLOT_NONE) {
@@ -100,7 +87,6 @@ EmberMessagePassingGenerator::~EmberMessagePassingGenerator()
 	//delete m_histoM[ "SendSize" ];
 	//delete m_histoM[ "RecvSize" ];
 	delete m_rankMap;
-	delete m_computeDistrib;
 }
 
 void EmberMessagePassingGenerator::getPosition( int32_t rank, int32_t px, 
