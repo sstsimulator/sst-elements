@@ -62,6 +62,7 @@ echo "SST Elements Configuration completed."
 echo "-------------------------------------------------------"
 echo "Build Environment:"
 echo ""
+printf "%38s : %s\n" "Prefix" "$prefix"
 printf "%38s : %s\n" "Preprocessor" "$CPP"
 printf "%38s : %s\n" "C++ Compiler" "$CXX"
 printf "%38s : %s\n" "C Compiler" "$CC"
@@ -85,45 +86,29 @@ echo "-------------------------------------------------------"
 echo "Configuration Information (Dependencies):"
 echo ""
 
-###prefix="sst_check_"
+prefix="sst_check_"
 
 list=`ls ./config/sst_check*.m4`
-###echo "list="$list
 
 for depfilepath in $list; do
-###    echo "depfilepath = "$depfilepath
-    
     depfile=`basename -s .m4 $depfilepath`
 
-###    # Extract the subname from the depfile string name
-###    debsubname=$depfile
-###    debsubname=${debsubname#$prefix}
+    # Extract the subname from the depfile string name
+    depsubname=$depfile
+    depsubname=${depsubname#$prefix}
     
-    
-####    string="/scripts/log/mount_hello_kitty.log"
-####    prefix="/scripts/log/mount_"
-####    string=${string#$prefix}
-####    suffix=".log"
-####    string=${string%$suffix}
-####    echo $string
-    
-    
-###    echo "Processing = " $depfile
-###    echo "SubName = " $depsubname
     happytest=${depfile}_happy
-###    echo "happytest = " $happytest  ${!happytest}
     
     if test "x${!happytest}" = "xyes" ; then
-        printf "%38s : YES\n" $depfile
+        printf "%38s : YES\n" $depsubname
     else
-        printf "%38s : No\n" $depfile
+        printf "%38s : No\n" $depsubname
     fi
     
 done
 
-echo ""
 echo "-------------------------------------------------------" 
-echo "Configuration Information (Will build the following elements):"
+echo "Configuration Information (Make will build the following elements):"
 echo ""
 
 for e in $dist_element_libraries
