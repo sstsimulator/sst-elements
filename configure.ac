@@ -55,3 +55,87 @@ AC_CONFIG_FILES([
 ])
 
 AC_OUTPUT
+
+echo ""
+echo "-------------------------------------------------------"
+echo "SST Elements Configuration completed."
+echo "-------------------------------------------------------"
+echo "Build Environment:"
+echo ""
+printf "%38s : %s\n" "Preprocessor" "$CPP"
+printf "%38s : %s\n" "C++ Compiler" "$CXX"
+printf "%38s : %s\n" "C Compiler" "$CC"
+printf "%38s : %s\n" "MPI C Compiler" "$MPICC"
+printf "%38s : %s\n" "MPI C++ Compiler" "$MPICXX"
+printf "%38s : %s\n" "Linker" "$LD"
+printf "%38s : %s\n" "Preprocessor Options" "$CPPFLAGS"
+printf "%38s : %s\n" "C Compiler Options" "$CFLAGS"
+printf "%38s : %s\n" "C++ Compiler Options" "$CXXFLAGS"
+
+if test "x$found_cxx1y" = "xyes"; then
+printf "%38s : %s\n" "C++ Standard Compliance" "C++1Y/14"
+else
+printf "%38s : %s\n" "C++ Standard Compliance" "C++11"
+fi
+
+printf "%38s : %s\n" "Linker Options" "$LDFLAGS"
+printf "%38s : %s\n" "Boost Library Preprocessor" "$BOOST_CPPFLAGS"
+printf "%38s : %s\n" "Boost Library Linker Options" "$BOOST_LDFLAGS"
+echo "-------------------------------------------------------"
+echo "Configuration Information (Dependencies):"
+echo ""
+
+###prefix="sst_check_"
+
+list=`ls ./config/sst_check*.m4`
+###echo "list="$list
+
+for depfilepath in $list; do
+###    echo "depfilepath = "$depfilepath
+    
+    depfile=`basename -s .m4 $depfilepath`
+
+###    # Extract the subname from the depfile string name
+###    debsubname=$depfile
+###    debsubname=${debsubname#$prefix}
+    
+    
+####    string="/scripts/log/mount_hello_kitty.log"
+####    prefix="/scripts/log/mount_"
+####    string=${string#$prefix}
+####    suffix=".log"
+####    string=${string%$suffix}
+####    echo $string
+    
+    
+###    echo "Processing = " $depfile
+###    echo "SubName = " $depsubname
+    happytest=${depfile}_happy
+###    echo "happytest = " $happytest  ${!happytest}
+    
+    if test "x${!happytest}" = "xyes" ; then
+        printf "%38s : YES\n" $depfile
+    else
+        printf "%38s : No\n" $depfile
+    fi
+    
+done
+
+echo ""
+echo "-------------------------------------------------------" 
+echo "Configuration Information (Will build the following elements):"
+echo ""
+
+for e in $dist_element_libraries
+do
+    echo "$active_element_libraries" | grep "$e" >/dev/null
+    if test $? -eq 0 ; then
+        msg="YES"
+    else
+        msg="no"
+    fi
+    printf "%38s : $msg\n" "$e"
+done
+
+echo "-------------------------------------------------------"
+echo ""

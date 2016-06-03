@@ -85,6 +85,8 @@ for file in `ls $BASE_DIR/src/sst/elements`; do
                     echo "   dist_element_libraries=\"\$dist_element_libraries $file\"" >> config/sst_elements_config_output.m4
                 else
                     echo "   AC_MSG_WARN([Element library ]$file[ will build, but will not be distributed.])"  >> config/sst_elements_config_output.m4
+                    echo 
+                    echo "***WARNING: Element library $file will build, but will not be distributed via make dist due to .nodist file in directory."
                 fi
             fi
             echo "   " >> config/sst_elements_config_output.m4
@@ -117,7 +119,7 @@ echo "========================================================="
 echo 
 
 
-
+echo "Generating configure files..."
 # Delete the old libtool output
 rm -rf libltdl src/libltdl
 
