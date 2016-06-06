@@ -501,7 +501,8 @@ static const ElementInfoParam linkcontrol_params[] = {
 static const ElementInfoStatistic linkcontrol_statistics[] = {
     { "packet_latency", "Histogram of latencies for received packets", "latency", 1},
     { "send_bit_count", "Count number of bits sent on link", "bits", 1},
-    { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
+    { "output_port_stalls", "Time output NIC port is stalled (in units of core timebase)", "time in stalls", 1},
+    { "idle_time", "number of nanoseconds that port was idle", "nanoseconds", 1},
     { NULL, NULL, NULL, 0 }
 };
 

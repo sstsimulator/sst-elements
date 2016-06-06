@@ -334,3 +334,11 @@ topo.prepParams()
 
 topo.setEndPointFunc( loadInfo.setNode )
 topo.build()
+
+sst.setStatisticLoadLevel(1)
+sst.setStatisticOutput("sst.statOutputCSV", {"filepath" : "./Stats.csv",
+                                         "separator" : ", " } )
+sst.enableAllStatisticsForComponentType("merlin.hr_router", {"type":"sst.HistogramStatistic",
+                                         "minvalue":0,
+                                         "binwidth":10,
+                                         "numbins":50});

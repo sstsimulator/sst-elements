@@ -100,6 +100,7 @@ private:
     // Represents the start of when a port was idle
     // If the buffer was empty we instantiate this to the current time
     SimTime_t idle_start;
+    bool is_idle;
 
     // Vairable to tell us if we are waiting for something to happen
     // before we begin more output.  The two things we are waiting on
@@ -139,11 +140,11 @@ public:
     }
     
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
-    PortControl(Router* rif, int rtr_id, std::string link_port_name,
+    PortControl(Router* rif, int rtr_id, std::string&& link_port_name,
                 int port_number, const UnitAlgebra& link_bw, const UnitAlgebra& flit_size,
                 Topology *topo, 
-                SimTime_t input_latency_cycles, std::string input_latency_timebase,
-                SimTime_t output_latency_cycles, std::string output_latency_timebase,
+                SimTime_t input_latency_cycles, std::string&& input_latency_timebase,
+                SimTime_t output_latency_cycles, std::string&& output_latency_timebase,
                 const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size,
                 std::vector<std::string>& inspector_names);
 
