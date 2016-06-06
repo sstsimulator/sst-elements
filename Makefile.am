@@ -2,6 +2,13 @@
 #
 #
 
-DIST_SUBDIRS = $(SST_DIST_ELEMLIBS)
-SUBDIRS = $(SST_ACTIVE_ELEMLIBS)
+ACLOCAL_AMFLAGS = -I config
 
+SUBDIRS = \
+	src
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_LIBRARY SST_ELEMENT_LIBRARY_LIBDIR=$(pkglibdir)
+
+EXTRA_DIST = \
+	autogen.sh
