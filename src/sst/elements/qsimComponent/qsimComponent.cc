@@ -28,7 +28,7 @@ using namespace Qsim;
 using namespace std;
 
 namespace SST { namespace QsimComponent {
-class IPIEvent : public Event {
+class IPIEvent : public SST::Event {
 public:
   IPIEvent(int dest, uint8_t vec): dest(dest), vec(vec) {}
   int dest;
@@ -37,11 +37,14 @@ public:
 private:
   friend class boost::serialization::access;
   IPIEvent() {}
-  template <class A> void serialize(A &ar, const unsigned int version) {
-    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-    ar & BOOST_SERIALIZATION_NVP(dest);
-    ar & BOOST_SERIALIZATION_NVP(vec);
+  
+  void serialize_order(SST::Core::Serialization::serializer &ser) {
+      Event::serialize_order(ser);
+      ser & dest;
+      ser & vec;
   }
+  
+  ImplementSerializable(SST::QsimComponent::IPIEvent);     
 };
 }}
 
