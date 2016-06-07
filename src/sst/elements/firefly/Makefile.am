@@ -19,6 +19,9 @@ libfirefly_la_SOURCES = \
 	ctrlMsgXXX.h \
 	ctrlMsgFunctors.h \
 	ctrlMsgProcessQueuesState.h \
+	heapAddrs.h \
+	ioapi.h \
+	nicTester.h \
 	mem.h \
 	latencyMod.h \
 	rangeLatMod.h \

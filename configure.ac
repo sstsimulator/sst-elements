@@ -1,11 +1,19 @@
+# -*- Autoconf -*-
+#
+#
 
-AC_INIT([SST Elements Library], [devel], [sst@sandia.gov])
+# Set Version of SST Elements Library
+AC_INIT([SST Elements Library], [6.0.0], [sst@sandia.gov])
+
 AC_PREREQ([2.59])
 AC_COPYRIGHT([Copyright Sandia National Laboratories, 2004-2016])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config])
 AM_INIT_AUTOMAKE([1.9.6 foreign dist-bzip2 subdir-objects no-define tar-ustar])
+
+# If Automake supports silent rules, enable them.
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 AC_CONFIG_HEADER([src/sst_element_config.h])
 
@@ -47,3 +55,72 @@ AC_CONFIG_FILES([
 ])
 
 AC_OUTPUT
+
+echo ""
+echo "-------------------------------------------------------"
+echo "SST Elements Configuration completed."
+echo "-------------------------------------------------------"
+echo "Build Environment:"
+echo ""
+printf "%38s : %s\n" "Prefix" "$prefix"
+printf "%38s : %s\n" "Preprocessor" "$CPP"
+printf "%38s : %s\n" "C++ Compiler" "$CXX"
+printf "%38s : %s\n" "C Compiler" "$CC"
+printf "%38s : %s\n" "MPI C Compiler" "$MPICC"
+printf "%38s : %s\n" "MPI C++ Compiler" "$MPICXX"
+printf "%38s : %s\n" "Linker" "$LD"
+printf "%38s : %s\n" "Preprocessor Options" "$CPPFLAGS"
+printf "%38s : %s\n" "C Compiler Options" "$CFLAGS"
+printf "%38s : %s\n" "C++ Compiler Options" "$CXXFLAGS"
+
+if test "x$found_cxx1y" = "xyes"; then
+printf "%38s : %s\n" "C++ Standard Compliance" "C++1Y/14"
+else
+printf "%38s : %s\n" "C++ Standard Compliance" "C++11"
+fi
+
+printf "%38s : %s\n" "Linker Options" "$LDFLAGS"
+printf "%38s : %s\n" "Boost Library Preprocessor" "$BOOST_CPPFLAGS"
+printf "%38s : %s\n" "Boost Library Linker Options" "$BOOST_LDFLAGS"
+echo "-------------------------------------------------------"
+echo "Configuration Information (Dependencies):"
+echo ""
+
+prefix="sst_check_"
+
+list=`ls ./config/sst_check*.m4`
+
+for depfilepath in $list; do
+    depfile=`basename -s .m4 $depfilepath`
+
+    # Extract the subname from the depfile string name
+    depsubname=$depfile
+    depsubname=${depsubname#$prefix}
+    
+    happytest=${depfile}_happy
+    
+    if test "x${!happytest}" = "xyes" ; then
+        printf "%38s : YES\n" $depsubname
+    else
+        printf "%38s : No\n" $depsubname
+    fi
+    
+done
+
+echo "-------------------------------------------------------" 
+echo "Configuration Information (Make will build the following elements):"
+echo ""
+
+for e in $dist_element_libraries
+do
+    echo "$active_element_libraries" | grep "$e" >/dev/null
+    if test $? -eq 0 ; then
+        msg="YES"
+    else
+        msg="no"
+    fi
+    printf "%38s : $msg\n" "$e"
+done
+
+echo "-------------------------------------------------------"
+echo ""
