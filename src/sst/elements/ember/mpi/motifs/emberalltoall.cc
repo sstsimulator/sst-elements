@@ -22,10 +22,14 @@ EmberAlltoallGenerator::EmberAlltoallGenerator(SST::Component* owner,
 {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/scheduler
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 	m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
 	m_bytes      = (uint32_t) params.find_integer("arg.bytes", 1);
     jobId        = (int) params.find_integer("_jobId"); //NetworkSim
+<<<<<<< HEAD
 =======
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);
 	m_compute    = (uint32_t) params.find("arg.compute", 0);
@@ -36,6 +40,8 @@ EmberAlltoallGenerator::EmberAlltoallGenerator(SST::Component* owner,
 	m_compute    = (uint32_t) params.find("arg.compute", 0);
 	m_bytes      = (uint32_t) params.find("arg.bytes", 1);
 >>>>>>> devel
+=======
+>>>>>>> origin/scheduler
     m_sendBuf = NULL;
     m_recvBuf = NULL;
 }
