@@ -42,43 +42,6 @@ namespace QsimComponent {
     void init(unsigned phase);
     void finish();
 
-    friend class boost::serialization::access;
-    template <class Archive>
-      void save(Archive &ar, const unsigned version) const
-    {
-      ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-      ar & BOOST_SERIALIZATION_NVP(stateFile);
-      ar & BOOST_SERIALIZATION_NVP(appFile);
-      ar & BOOST_SERIALIZATION_NVP(clockFreq);
-      ar & BOOST_SERIALIZATION_NVP(hwThreadId);
-      ar & BOOST_SERIALIZATION_NVP(icount);
-      ar & BOOST_SERIALIZATION_NVP(rcount);
-      ar & BOOST_SERIALIZATION_NVP(memLink);
-      ar & BOOST_SERIALIZATION_NVP(iMemLink);
-      ar & BOOST_SERIALIZATION_NVP(stalled);
-      ar & BOOST_SERIALIZATION_NVP(lock);
-      ar & BOOST_SERIALIZATION_NVP(pc);
-    }
-
-    template <class Archive>
-      void load(Archive &ar, const unsigned version)
-    {
-      ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-      ar & BOOST_SERIALIZATION_NVP(stateFile);
-      ar & BOOST_SERIALIZATION_NVP(appFile);
-      ar & BOOST_SERIALIZATION_NVP(clockFreq);
-      ar & BOOST_SERIALIZATION_NVP(hwThreadId);
-      ar & BOOST_SERIALIZATION_NVP(icount);
-      ar & BOOST_SERIALIZATION_NVP(rcount);
-      ar & BOOST_SERIALIZATION_NVP(memLink);
-      ar & BOOST_SERIALIZATION_NVP(iMemLink);
-      ar & BOOST_SERIALIZATION_NVP(stalled);
-      ar & BOOST_SERIALIZATION_NVP(lock);
-      ar & BOOST_SERIALIZATION_NVP(pc);
-    }
-
-    BOOST_SERIALIZATION_SPLIT_MEMBER()
-
   private:
     void handleEvent(Interfaces::SimpleMem::Request *);
     void handleEvent(Event *);
