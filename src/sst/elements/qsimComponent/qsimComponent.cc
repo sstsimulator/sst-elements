@@ -55,15 +55,15 @@ qsimComponent::qsimComponent(ComponentId_t id, Params &p):
   out.init("", 0, 0, Output::STDOUT);
 
   bool found;
-  stateFile = p.find_string("state", "", found);
+  stateFile = p.find<std::string>("state", "", found);
   if (!found) out.fatal(CALL_INFO, -1, "State file not provided\n");
 
-  appFile = p.find_string("app", "", found);
+  appFile = p.find<std::string>("app", "", found);
   if (!found) out.fatal(CALL_INFO, -1, "Application .tar file not provided\n");
 
-  clockFreq = p.find_string("clock", "5GHz", found);
+  clockFreq = p.find<std::string>("clock", "5GHz", found);
 
-  hwThreadId = p.find_integer("hwthread", 0, found);
+  hwThreadId = p.find<int64_t>("hwthread", 0, found);
   if (!found) hwThreadId = 0;
 
   registerAsPrimaryComponent();
