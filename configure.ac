@@ -84,16 +84,23 @@ fi
 printf "%38s : %s\n" "Linker Options" "$LDFLAGS"
 printf "%38s : %s\n" "Boost Library Preprocessor" "$BOOST_CPPFLAGS"
 printf "%38s : %s\n" "Boost Library Linker Options" "$BOOST_LDFLAGS"
+echo ""
 echo "-------------------------------------------------------"
 echo "Configuration Information (Found Dependencies):"
 echo ""
 
 prefix="sst_check_"
+suffix=".m4"
 
 list=`ls ./config/sst_check*.m4`
 
 for depfilepath in $list; do
-    depfile=`basename -s .m4 $depfilepath`
+
+    # Get the basename of the file
+    depfilename=`basename $depfilepath`
+   
+    # Strip off the .m4 from the filename 
+    depfile=${depfilename%$suffix}
 
     # Extract the subname from the depfile string name
     depsubname=$depfile
@@ -109,6 +116,7 @@ for depfilepath in $list; do
     
 done
 
+echo ""
 echo "-------------------------------------------------------" 
 echo "Configuration Information (Make will build the following elements):"
 echo ""
@@ -124,5 +132,6 @@ do
     printf "%38s : $msg\n" "$e"
 done
 
+echo ""
 echo "-------------------------------------------------------"
 echo ""
