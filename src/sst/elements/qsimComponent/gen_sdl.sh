@@ -89,7 +89,6 @@ print_l2_cache() {
   echo "      <cache_line_size>$CACHEBLOCK</cache_line_size>"
   echo "      <access_latency_cycles>$L2ATIME</access_latency_cycles>"
   echo "      <L1>0</L1>"
-  echo "      <directory_at_next_level> 1 </directory_at_next_level>"
   echo "      <network_address>$j</network_address>"
   echo "      <network_bw>$NET_BW</network_bw>"
   echo "      <mode>INCLUSIVE</mode>"
