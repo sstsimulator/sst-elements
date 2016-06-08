@@ -64,23 +64,23 @@ faultInjectionComponent::faultInjectionComponent( ComponentId_t id, Params& para
 		}
 	}
 
-	if( !params.find_string( "faultInjectionFilename" ).empty() )
-		failFilename = params.find_string("faultInjectionFilename");
+	if( !params.find<std::string>( "faultInjectionFilename" ).empty() )
+		failFilename = params.find<std::string>("faultInjectionFilename");
 	else
 		schedout.fatal( CALL_INFO, 1, "faultInjectionComponent: faultInjectionFilename must be provided\n" );
 
 	resumeSimulationToken = "YYRESUME";
-	if( !params.find_string( "resumeSimToken" ).empty() )
-		resumeSimulationToken = params.find_string("resumeSimToken");
+	if( !params.find<std::string>( "resumeSimToken" ).empty() )
+		resumeSimulationToken = params.find<std::string>("resumeSimToken");
 
-	if( !params.find_string( "injectionFrequency" ).empty() )
-		failFrequency = atoi( params.find_string("injectionFrequency").c_str() );
+	if( !params.find<std::string>( "injectionFrequency" ).empty() )
+		failFrequency = atoi( params.find<std::string>("injectionFrequency").c_str() );
 	else
 		schedout.fatal( CALL_INFO, 1, "faultInjectionComponent: injectionFrequency must be specified\n" );
 
 	failPollFreq = 1000;
-	if( !params.find_string( "filePollFreq" ).empty() )
-		failPollFreq = atoi( params.find_string("filePollFreq").c_str() );
+	if( !params.find<std::string>( "filePollFreq" ).empty() )
+		failPollFreq = atoi( params.find<std::string>("filePollFreq").c_str() );
 
 	fileLastWritten = 0;
 }

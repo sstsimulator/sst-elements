@@ -24,11 +24,11 @@ public:
 	SavannahInOrderArbitrator(Component* comp, Params& params) :
 		SavannahIssueArbitrator(comp, params) {
 
-		const int verbose = params.find_integer("verbose");
+		const int verbose = params.find<int64_t>("verbose");
 		output = new SST::Output("SavannahFIFOArb[@p:@l]: ",
 			verbose, 0, SST::Output::STDOUT);
 
-		maxIssuePerCycle = params.find_integer("max_issue_per_cycle");
+		maxIssuePerCycle = params.find<int64_t>("max_issue_per_cycle");
 	}
 
 	~SavannahInOrderArbitrator() {

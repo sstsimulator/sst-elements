@@ -123,14 +123,14 @@ Factory::Factory()
 
 Scheduler* Factory::getScheduler(SST::Params& params, int numNodes, const Machine & mach)
 {
-    if(params.find_string("scheduler").empty()){
+    if(params.find<std::string>("scheduler").empty()){
         schedout.verbose(CALL_INFO, 1, 0, "Defaulting to Priority Scheduler with FIFO queue\n");
         return new PQScheduler(PQScheduler::JobComparator::Make("fifo"));
     }
     else
     {
         int filltimes = 0;
-        vector<string>* schedparams = parseparams(params.find_string("scheduler"));
+        vector<string>* schedparams = parseparams(params.find<std::string>("scheduler"));
         if(schedparams->size() == 0)
             schedout.fatal(CALL_INFO, 1, "Error in parsing scheduler parameter");
         switch(schedulername(schedparams->at(0)))
@@ -224,7 +224,7 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
     double** D_matrix = NULL;
 
     //get the heat recirculation matrix if available
-    string dMatrixFile = params.find_string("dMatrixFile", "none");
+    string dMatrixFile = params.find<std::string>("dMatrixFile", "none");
     if (dMatrixFile.compare("none") == 0 ) {
         //default: no recuirculation
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no heat recirculation\n");
@@ -233,17 +233,17 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
         D_matrix = dParser.readDMatrix();
     }
     
-    int coresPerNode = params.find_integer("coresPerNode", 1);
+    int coresPerNode = params.find<int64_t>("coresPerNode", 1);
     
     //get machine
-    if (params.find_string("machine").empty()) {
+    if (params.find<std::string>("machine").empty()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Machine\n");
         retMachine = new SimpleMachine(numNodes, false, coresPerNode, D_matrix);
     }
     else
     {
-        vector<string>* schedparams = parseparams(params.find_string("machine"));
+        vector<string>* schedparams = parseparams(params.find<std::string>("machine"));
         switch(machinename(schedparams -> at(0)))
         {
             //simple machine
@@ -326,7 +326,7 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
 //returns the correct allocator based on the parameters
 Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent* sc)
 {
-    if (params.find_string("allocator").empty()) {
+    if (params.find<std::string>("allocator").empty()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Allocator\n");
         SimpleMachine* mach = dynamic_cast<SimpleMachine*>(m);
@@ -335,7 +335,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
         }
         return new SimpleAllocator(mach);
     } else {
-        vector<string>* schedparams = parseparams(params.find_string("allocator"));
+        vector<string>* schedparams = parseparams(params.find<std::string>("allocator"));
         vector<string>* nearestparams = NULL;
         switch (allocatorname(schedparams -> at(0)))
         {
@@ -442,8 +442,8 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
             //Constraint Allocator tries to separate nodes whose estimated failure rates are close
         case CONSTRAINT:
             {
-                string depsFile = params.find_string("ConstraintAllocatorDependencies");
-                string constFile = params.find_string("ConstraintAllocatorConstraints");
+                string depsFile = params.find<std::string>("ConstraintAllocatorDependencies");
+                string constFile = params.find<std::string>("ConstraintAllocatorConstraints");
                 if (depsFile.empty()) {
                     schedout.fatal(CALL_INFO, 1, "Constraint Allocator requires ConstraintAllocatorDependencies scheduler parameter");
                 }
@@ -459,16 +459,16 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
                 break;
             }
         case NEARESTAMAP:
-            if (!params.find_string("taskMapper").empty()
-                && taskmappername(parseparams(params.find_string("taskMapper"))->at(0)) == NEARESTAMT) {
+            if (!params.find<std::string>("taskMapper").empty()
+                && taskmappername(parseparams(params.find<std::string>("taskMapper"))->at(0)) == NEARESTAMT) {
                 return new NearestAllocMapper(*m, true);
             } else {
                 return new NearestAllocMapper(*m, false);
             }
             break;
         case SPECTRALAMAP:
-            if (!params.find_string("taskMapper").empty()
-                && taskmappername(parseparams(params.find_string("taskMapper"))->at(0)) == SPECTRALAMT) {
+            if (!params.find<std::string>("taskMapper").empty()
+                && taskmappername(parseparams(params.find<std::string>("taskMapper"))->at(0)) == SPECTRALAMT) {
                return new SpectralAllocMapper(*m, true);
             } else {
                 return new SpectralAllocMapper(*m, false);
@@ -484,12 +484,12 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
 TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
 {
     TaskMapper* taskMapper;
-    if(params.find_string("taskMapper").empty()){
+    if(params.find<std::string>("taskMapper").empty()){
         taskMapper = new SimpleTaskMapper(*mach);
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Task Mapper\n");
     } else {
         StencilMachine *sMachine = dynamic_cast<StencilMachine*>(mach);
-        vector<string>* taskmapparams = parseparams(params.find_string("taskMapper"));
+        vector<string>* taskmapparams = parseparams(params.find<std::string>("taskMapper"));
         switch (taskmappername( taskmapparams->at(0) )){
         case SIMPLEMAP:
             taskMapper = new SimpleTaskMapper(*mach);
@@ -510,16 +510,16 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             taskMapper = new TopoMapper(*mach, TopoMapper::R_C_M);
             break;  
         case NEARESTAMT:
-            if (!params.find_string("allocator").empty()
-                && allocatorname(parseparams(params.find_string("allocator"))->at(0)) == NEARESTAMAP ) {
+            if (!params.find<std::string>("allocator").empty()
+                && allocatorname(parseparams(params.find<std::string>("allocator"))->at(0)) == NEARESTAMAP ) {
                 taskMapper = new NearestAllocMapper(*mach, true);
             } else {
                 taskMapper = new NearestAllocMapper(*mach, false);
             }
             break;  
         case SPECTRALAMT:
-           if(!params.find_string("allocator").empty()
-              && allocatorname(parseparams(params.find_string("allocator"))->at(0)) == SPECTRALAMAP ){
+           if(!params.find<std::string>("allocator").empty()
+              && allocatorname(parseparams(params.find<std::string>("allocator"))->at(0)) == SPECTRALAMAP ){
                 taskMapper = new SpectralAllocMapper(*mach, true);
             } else {
                 taskMapper = new SpectralAllocMapper(*mach, false);
@@ -536,12 +536,12 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
 
 int Factory::getFST(SST::Params& params)
 {
-    if(params.find_string("FST").empty()){
+    if(params.find<std::string>("FST").empty()){
         //default: FIFO queue priority scheduler
         //schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no FST");
         return 0;
     } else {
-        vector<string>* FSTparams = parseparams(params.find_string("FST"));
+        vector<string>* FSTparams = parseparams(params.find<std::string>("FST"));
         switch (FSTname(FSTparams -> at(0)))
         {
         case NONE:
@@ -564,12 +564,12 @@ vector<double>* Factory::getTimePerDistance(SST::Params& params)
     for (int x = 0; x < 5; x++) {
         ret -> push_back(0);
     }
-    if(params.find_string("timeperdistance").empty()){
+    if(params.find<std::string>("timeperdistance").empty()){
         //default: FIFO queue priority scheduler
         //schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no FST");
         return ret;
     } else {
-        vector<string>* tpdparams = parseparams(params.find_string("timeperdistance"));
+        vector<string>* tpdparams = parseparams(params.find<std::string>("timeperdistance"));
         for (unsigned int x = 0; x < tpdparams -> size(); x++) {
             ret -> at(x) = atof(tpdparams -> at(x).c_str());
             //printf("%s %f %f\n", tpdparams -> at(x).c_str(), atof(tpdparams->at(x).c_str()), ret->at(x));
