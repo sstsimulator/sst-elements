@@ -19,4 +19,4 @@ libchdlComponent_la_LDFLAGS = -module -avoid-version $(CHDL_LDFLAGS)
 libchdlComponent_la_LIBADD = -lchdl -lchdl-module
 
 install-exec-hook:
-	$(SST_REGISTER_TOOL) CHLD LIBDIR=$(CHDL_LIBDIR)
+	$(SST_REGISTER_TOOL) CHDL LIBDIR=$(CHDL_LIBDIR)

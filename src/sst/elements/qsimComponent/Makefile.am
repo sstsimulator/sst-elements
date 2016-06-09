@@ -17,3 +17,6 @@ EXTRA_DIST = gen_sdl.sh README test/Makefile test/runme.sh test/state.4.bz2 test
 
 libqsimComponent_la_LDFLAGS = -module -avoid-version $(QSIM_LDFLAGS)
 libqsimComponent_la_LIBADD = -lqsim
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) QSIM LIBDIR=$(QSIM_LIBDIR)
