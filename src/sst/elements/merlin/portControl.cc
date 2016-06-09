@@ -61,10 +61,6 @@ PortControl::send(internal_router_event* ev, int vc)
 	    // std::cout << "waking up the output" << std::endl;
 	    output_timing->send(1,NULL); 
 	    waiting = false;
-        if (idle_start) {
-            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
-            idle_start = 0;
-        }
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
@@ -150,6 +146,7 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     port_ret_credits(NULL),
     port_out_credits(NULL),
     idle_start(0),
+    is_idle(true),
     waiting(true),
     have_packets(false),
     start_block(0),
@@ -307,6 +304,9 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
         init_ev->int_value = vcs;
         port_link->sendInitData(init_ev);
     }
+    // Need to start the timer for links that never send data
+    idle_start = parent->getCurrentSimTimeNano();
+    is_idle = true;
 }
 
 PortControl::~PortControl() {
@@ -332,6 +332,13 @@ PortControl::setup() {
 
 void
 PortControl::finish() {
+
+    // Any links that ended in an idle state need to add stats
+    if (is_idle && connected) {
+        idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+        is_idle = false;
+    }
+
     // Clean up all the events left in the queues.  This will help
     // track down real memory leaks as all this events won't be in the
     // way.
@@ -519,6 +526,8 @@ PortControl::dumpState(std::ostream& stream)
 {
 	stream << "Router id: " << rtr_id << ", port " << port_number << ":" << std::endl;
 	stream << "  Waiting = " << waiting << std::endl;
+    if (is_idle)
+        stream << "Time since last active = " << (parent->getCurrentSimTimeNano() - idle_start) << std::endl;
     stream << "  have_packets = " << have_packets << std::endl;
     stream << "  start_block = " << start_block << std::endl;
 	stream << "  curr_out_vc = " << curr_out_vc << std::endl;
@@ -615,12 +624,6 @@ PortControl::handle_input_n2r(Event* ev)
             // packets, we need to add stall time
             if ( have_packets) {
                 output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
-            }
-            // In either case whether we didn't have credits or
-            // we didn't have packets we need to record it as idle time
-            if (idle_start) {
-                idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
-                idle_start = 0;
             }
 	    }
 	}
@@ -863,6 +866,11 @@ PortControl::handle_output_r2r(Event* ev) {
 	    // Subtract credits
 	    port_out_credits[vc_to_send] -= size;
 	    output_buf_count[vc_to_send]++;
+
+        if (is_idle) {
+            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            is_idle = false;
+        }
         
 	    if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Sent and event to router from PortControl in router: %d"
@@ -915,8 +923,14 @@ PortControl::handle_output_r2r(Event* ev) {
         start_block = Simulation::getSimulation()->getCurrentSimCycle();
 	    waiting = true;
         // Begin counting the amount of time this port was idle
-        if (!have_packets) {
+        if (!have_packets && !is_idle) {
             idle_start = parent->getCurrentSimTimeNano();
+            is_idle = true;
+        }
+		// Should be in a stalled state rather than idle
+		if (have_packets && is_idle){
+            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            is_idle = false;
         }
 	}
 #if TRACK
@@ -1003,6 +1017,11 @@ PortControl::handle_output_n2r(Event* ev) {
 	    // port_out_credits[vc_to_send] -= size;
 	    port_out_credits[send_event->getVN()] -= size;
 	    output_buf_count[vc_to_send]++;
+
+        if (is_idle) {
+            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            is_idle = false;
+        }
         
 	    if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Sent and event to router from PortControl in router: %d"
@@ -1022,10 +1041,8 @@ PortControl::handle_output_n2r(Event* ev) {
             //           << " to dest " << send_event->getDest()
             //           << "." << std::endl;
 	    }
-#if 1        
-        // send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
-        // send_packet_count->addData(1);
-#endif
+        send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
+        send_packet_count->addData(1);
 	    if ( host_port ) {
             // std::cout << "Found an event to send on host port " << port_number << std::endl;
             port_link->send(1,send_event->getEncapsulatedEvent()); 
@@ -1047,8 +1064,14 @@ PortControl::handle_output_n2r(Event* ev) {
         start_block = Simulation::getSimulation()->getCurrentSimCycle();
 	    waiting = true;
         // Begin counting the amount of time this port was idle
-        if (!have_packets) {
+        if (!have_packets && !is_idle) {
             idle_start = parent->getCurrentSimTimeNano();
+            is_idle = true;
+        }
+		// Should be in a stalled state rather than idle
+		if (have_packets && is_idle){
+            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            is_idle = false;
         }
 	}
 }
