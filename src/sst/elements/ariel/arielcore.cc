@@ -322,7 +322,7 @@ bool ArielCore::refillQueue() {
 
                 default:
                     // Not sure what this is
-                    assert(0);
+		    output->fatal(CALL_INFO, -1, "Error: Ariel did not understand command (%d) provided during instruction queue refill.\n", (int)(ac.command));
                     break;
                 }
             }
@@ -353,7 +353,7 @@ bool ArielCore::refillQueue() {
             break;
         default:
             // Not sure what this is
-            assert(0);
+	    output->fatal(CALL_INFO, -1, "Error: Ariel did not understand command (%d) provided during instruction queue refill.\n", (int)(ac.command));
             break;
         }
     }
