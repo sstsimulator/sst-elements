@@ -52,19 +52,19 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     bool found;
     params.find<int>("LLC", 0, found);
     if (found) {
-        out.output("cacheFactory, ** Found deprecated parameter: LLC ** The value of this parameter is now auto-detected. Remove this parameter from your imput deck to eliminate this message.\n");
+        out.output("cacheFactory, ** Found deprecated parameter: LLC ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
     }
     params.find<int>("bottom_network", 0, found);
     if (found) {
-        out.output("cacheFactory, ** Found deprecated parameter: bottom_network ** The value of this parameter is now auto-detected. Remove this parameter from your imput deck to eliminate this message.\n");
+        out.output("cacheFactory, ** Found deprecated parameter: bottom_network ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
     }
     params.find<int>("top_network", 0, found);
     if (found) {
-        out.output("cacheFactory, ** Found deprecated parameter: top_network ** The value of this parameter is now auto-detected. Remove this parameter from your imput deck to eliminate this message.\n");
+        out.output("cacheFactory, ** Found deprecated parameter: top_network ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
     }
     params.find<int>("directory_at_next_level", 0, found);
     if (found) {
-        out.output("cacheFactory, ** Found deprecated parameter: directoy_at_next_level ** The value of this parameter is now auto-detected. Remove this parameter from your imput deck to eliminate this message.\n");
+        out.output("cacheFactory, ** Found deprecated parameter: directory_at_next_level ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
     }
     params.find<int>("network_num_vc", 0, found);
     if (found) {

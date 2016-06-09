@@ -93,14 +93,14 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
 {
     schedout.init("", 8, ~0, Output::STDOUT);
 
-    if (params.find_string("nodeNum").empty()) {
+    if (params.find<std::string>("nodeNum").empty()) {
         Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find the nodeNum param for this node\n");
     }
-    nodeNum = params.find_integer("nodeNum",0);
-    ID = params.find_string("id");
-    nodeType = params.find_string("type");
-    faultLogFileName = params.find_string("faultLogFileName");
-    errorLogFileName = params.find_string("errorLogFileName");
+    nodeNum = params.find<int64_t>("nodeNum",0);
+    ID = params.find<std::string>("id");
+    nodeType = params.find<std::string>("type");
+    faultLogFileName = params.find<std::string>("faultLogFileName");
+    errorLogFileName = params.find<std::string>("errorLogFileName");
 
     Scheduler = configureLink("Scheduler", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleEvent));
     Builder = configureLink("Builder", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>( this, &nodeComponent::handleEvent ));
@@ -138,11 +138,11 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
 
     SelfLink -> setDefaultTimeBase(registerTimeBase(SCHEDULER_TIME_BASE));
 
-    readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find_string("faultActivationRate")), &Faults);
-    readDelaysIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find_string("errorPropagationDelay")), &FaultLatencyBounds, nodeNum);
-    readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find_string("errorCorrectionProbability")), &errorCorrectionProbability);
-    readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find_string("errorMessageProbability")), &errorLogProbability);
-    readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find_string("jobFailureProbability")), &jobKillProbability);
+    readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find<std::string>("faultActivationRate")), &Faults);
+    readDelaysIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find<std::string>("errorPropagationDelay")), &FaultLatencyBounds, nodeNum);
+    readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find<std::string>("errorCorrectionProbability")), &errorCorrectionProbability);
+    readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find<std::string>("errorMessageProbability")), &errorLogProbability);
+    readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find<std::string>("jobFailureProbability")), &jobKillProbability);
 
 	yumyumFaultRand48State = (unsigned short *) malloc(3 * sizeof(short));
 	yumyumErrorLogRand48State = (unsigned short *) malloc(3 * sizeof(short));
