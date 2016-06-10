@@ -61,6 +61,10 @@ class EmberGenerator : public SubComponent {
 
     virtual bool primary( ) { return true; }
 
+   virtual std::string getComputeModelName() {
+       return "";
+   }
+
   protected:
 
     Output& getOutput() { return *m_output; }

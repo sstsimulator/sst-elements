@@ -23,6 +23,12 @@ EmberDetailedRingGenerator::EmberDetailedRingGenerator(SST::Component* owner, Pa
 {
 	m_messageSize = params.find<uint32_t>("arg.messagesize", 1024);
 	m_iterations = params.find<int32_t>("arg.iterations", 1);
+	m_stream_n = params.find<int32_t>("arg.stream_n", 1000);
+}
+
+std::string EmberDetailedRingGenerator::getComputeModelName()
+{
+	return "thornhill.SingleThread";
 }
 
 inline long mod( long a, long b )
@@ -35,18 +41,8 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
    if ( m_loopIndex == m_iterations ) {
         if ( 0 == rank()) {
-            double totalTime = (double)(m_stopTime - m_startTime)/1000000000.0;
-
-            double latency = ((totalTime/m_iterations)/size());
-            double bandwidth = (double) m_messageSize / latency;
-
-            output("%s total time %.3f us, loop %d, bufLen %d"
-                    ", latency %.3f us. bandwidth %f GB/s\n", 
-                                getMotifName().c_str(),
-                                totalTime * 1000000.0, m_iterations,
-                                m_messageSize,
-                                latency * 1000000.0,
-                                bandwidth / 1000000000.0 );
+            double computeTime = (double)(m_stopCompute - m_startCompute)/1000000000.0;
+            output("%s total compute %.3f sec\n", getMotifName().c_str(),computeTime * 1000000.0 );
         }
         return true;
     }
@@ -55,17 +51,10 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
         verbose( CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
 		enQ_memAlloc( evQ, &m_sendBuf, m_messageSize );
 		enQ_memAlloc( evQ, &m_recvBuf, m_messageSize );
-		enQ_memAlloc( evQ, &m_streamBuf, m_messageSize );
+		enQ_memAlloc( evQ, &m_streamBuf, m_stream_n * 8 * 3);
 		++m_loopIndex;
 		return false;
 	}
-
-    if ( 0 == m_loopIndex ) {
-
-        if ( 0 == rank() ) {
-            enQ_getTime( evQ, &m_startTime );
-        }
-    }
 
 
 	verbose( CALL_INFO, 2, 1, "sendbuff=%" PRIx64 "\n",m_sendBuf.simVAddr);
@@ -102,19 +91,39 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
         enQ_detailedCompute( evQ, motif, params );
 #endif
 
+#if 0
         motif = "miranda.SingleStreamGenerator";
         params.insert("startat", "3",true);
         params.insert("count", "500000",true);
         params.insert("max_address", "512000",true);
+#endif
+		std::stringstream tmp;	
 
+        motif = "miranda.STREAMBenchGenerator";
+
+		tmp.str( std::string() ); tmp.clear();
+		tmp << m_stream_n;
+        params.insert("n", tmp.str() );
+
+		tmp.str( std::string() ); tmp.clear();
+		tmp << m_streamBuf.simVAddr;
+        params.insert("start_a", tmp.str() );
+
+        params.insert("operandwidth", "8",true);
+
+        params.insert( "generatorParams.verbose", "1" );
+        params.insert( "verbose", "1" );
+
+
+        enQ_getTime( evQ, &m_startCompute );
         enQ_detailedCompute( evQ, motif, params );
+        enQ_getTime( evQ, &m_stopCompute );
+
     }
 
 	enQ_wait( evQ, &m_req[0] );
 	enQ_wait( evQ, &m_req[1] );
 
-    if ( ++m_loopIndex == m_iterations ) {
-        enQ_getTime( evQ, &m_stopTime );
-    }
+    ++m_loopIndex;
     return false;
 }
