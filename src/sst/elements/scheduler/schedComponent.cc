@@ -73,10 +73,10 @@ schedComponent::~schedComponent()
 }
 
 int readSeed( Params & params, std::string paramName ){
-    if( !params.find_string( paramName ).empty() ){
-        return params.find_integer(paramName);
-    }else if( !params.find_string( "seed" ).empty() ){
-        return params.find_integer( "seed" );
+    if( !params.find<std::string>( paramName ).empty() ){
+        return params.find<int64_t>(paramName);
+    }else if( !params.find<std::string>( "seed" ).empty() ){
+        return params.find<int64_t>( "seed" );
     }else{
         return time( NULL );
     }
@@ -88,7 +88,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
 {
     lastfinaltime = ~0;
 
-    if (params.find_string("traceName").empty()) {
+    if (params.find<std::string>("traceName").empty()) {
         Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find trace name\n");
     }
 
@@ -107,8 +107,8 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     yumyumJobKillRand48Seed = readSeed( params, std::string( "jobKillSeed" ) );
     // get running time RNG seed
     string runningTimeSeed = "none";
-    if( !params.find_string("runningTimeSeed").empty() ){
-        runningTimeSeed = params.find_string("runningTimeSeed");
+    if( !params.find<std::string>("runningTimeSeed").empty() ){
+        runningTimeSeed = params.find<std::string>("runningTimeSeed");
     }
     if( runningTimeSeed.compare("none") != 0 ){
          rng = new SST::RNG::MersenneRNG( strtol(runningTimeSeed.c_str(), NULL, 0) );
@@ -150,7 +150,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     FSTtype = factory.getFST(params);
     timePerDistance = factory.getTimePerDistance(params);
 
-    string trace = params.find_string("traceName");
+    string trace = params.find<std::string>("traceName");
     if (FSTtype > 0) {
         calcFST = new FST(FSTtype);  //must call calcFST -> setup() once we know the number of jobs (in other words, in setup())
     } else {
@@ -159,18 +159,18 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
 
     //setup NetworkSim
     doDetailedNetworkSim = false;
-    if (!params.find_string("detailedNetworkSim").empty()){
-        string temp_string = params.find_string("detailedNetworkSim");
+    if (!params.find<std::string>("detailedNetworkSim").empty()){
+        string temp_string = params.find<std::string>("detailedNetworkSim");
         if (temp_string.compare("ON") == 0){
             doDetailedNetworkSim = true;
             schedout.output("schedComp:Detailed Network sim is ON\n");
             snapshot = new Snapshot();
             // look for a file that lists all jobs that has been completed in ember
-            if (params.find_string("completedJobsTrace").empty()){
+            if (params.find<std::string>("completedJobsTrace").empty()){
                 schedout.fatal(CALL_INFO, 1, "detailedNetworkSim: You must specify a completedJobsTrace name!\n");
             }
             // look for a file that lists all jobs that are still running on ember
-            if (params.find_string("runningJobsTrace").empty()){
+            if (params.find<std::string>("runningJobsTrace").empty()){
                 schedout.fatal(CALL_INFO, 1, "detailedNetworkSim: You must specify a runningJobsTrace name!\n");
             }
         }
@@ -189,25 +189,25 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         }
     }
 
-    useYumYumSimulationKill = !params.find_string("useYumYumSimulationKill").empty();
+    useYumYumSimulationKill = !params.find<std::string>("useYumYumSimulationKill").empty();
     YumYumSimulationKillFlag = false;
 
-    if (!params.find_string("YumYumPollWait").empty()) {
-        YumYumPollWait = atoi(params.find_string("YumYumPollWait").c_str() );
+    if (!params.find<std::string>("YumYumPollWait").empty()) {
+        YumYumPollWait = atoi(params.find<std::string>("YumYumPollWait").c_str() );
     }else{
         YumYumPollWait = 250;
     }
 
-    useYumYumTraceFormat = !params.find_string("useYumYumTraceFormat").empty();
-    printYumYumJobLog = !params.find_string("printYumYumJobLog").empty();
-    printJobLog = !params.find_string("printJobLog").empty();
+    useYumYumTraceFormat = !params.find<std::string>("useYumYumTraceFormat").empty();
+    printYumYumJobLog = !params.find<std::string>("printYumYumJobLog").empty();
+    printJobLog = !params.find<std::string>("printJobLog").empty();
 
     jobParser = new JobParser(machine, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag, &doDetailedNetworkSim);
 
     machine -> reset();
     scheduler -> reset();
 
-    jobLogFileName = params.find_string("jobLogFileName");
+    jobLogFileName = params.find<std::string>("jobLogFileName");
     
     schedout.output("\n");
 }

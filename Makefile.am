@@ -11,4 +11,11 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_LIBRARY SST_ELEMENT_LIBRARY_LIBDIR=$(pkglibdir)
 
 EXTRA_DIST = \
-	autogen.sh
+	autogen.sh \
+	CONTRIBUTING.md \
+	INSTALL \ 
+	ISSUES \ 
+	LICENSE \
+	PLATFORMS \
+	README.md \
+	VERSION
