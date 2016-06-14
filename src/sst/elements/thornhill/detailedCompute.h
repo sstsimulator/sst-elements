@@ -33,6 +33,7 @@ class DetailedCompute : public SubComponent {
 								std::pair< std::string, SST::Params > >&,
                  std::function<int()> ) = 0;
     virtual bool isConnected() = 0;
+	virtual std::string getModelName() = 0;
 };
 
 }

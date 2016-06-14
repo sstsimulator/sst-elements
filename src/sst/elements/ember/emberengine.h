@@ -59,6 +59,14 @@ private:
 	bool refillQueue() {
 		return m_generator->generate( evQueue );
 	}
+
+    std::string getComputeModelName() {
+       if ( m_detailedCompute ) {
+           return m_detailedCompute->getModelName();
+       }
+       return "";
+    }
+
 	void handleEvent(SST::Event* ev);
 	void issueNextEvent(uint64_t nanoSecDelay);
     bool completeFunctor( int retval, EmberEvent* ev ); 
