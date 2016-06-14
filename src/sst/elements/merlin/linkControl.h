@@ -51,6 +51,8 @@ private:
     UnitAlgebra link_bw;
     UnitAlgebra inbuf_size;
     UnitAlgebra outbuf_size;
+	int input_buf_flit_count;
+	int output_buf_flit_count;
     int flit_size; // in bits
     
     std::deque<RtrEvent*> init_events;
@@ -141,6 +143,13 @@ public:
     // Returns true if there is space in the output buffer and false
     // otherwise.
     bool spaceToSend(int vn, int flits);
+
+	// Returns the number of flits in the input buffer
+	int getInputBufSum();
+
+	// Returns the number of flits in the output buffer
+	int getInputBufSum(); 
+
 
     // Returns NULL if no event in input_buf[vn]. Otherwise, returns
     // the next event.

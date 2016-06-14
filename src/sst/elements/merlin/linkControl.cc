@@ -64,6 +64,8 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
     // Input and output buffers
     input_buf = new network_queue_t[req_vns];
     output_buf = new network_queue_t[total_vns];
+	input_buf_flit_count = 0;
+	output_buf_flit_count = 0;
 
     // Initialize credit arrays.  Credits are in flits, and we don't
     // yet know the flit size, so can't initialize in_ret_credits and
@@ -327,6 +329,7 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     // std::cout << std::endl;
     
     output_buf[ev->request->vn].push(ev);
+	output_buf_flit_count += ev->getSizeInFlits();
     if ( waiting && !have_packets ) {
         output_timing->send(1,NULL);
         waiting = false;
@@ -353,6 +356,14 @@ bool LinkControl::spaceToSend(int vn, int bits) {
 }
 
 
+// Returns the number of flits in the input buffer
+int LinkControl::getInputBufSum() {
+}
+
+// Returns the number of flits in the output buffer
+int LinkControl::getOutputBufSum() {
+}
+
 // Returns NULL if no event in input_buf[vn]. Otherwise, returns
 // the next event.
 SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
@@ -364,6 +375,8 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     // Figure out how many credits to return
     int flits = event->getSizeInFlits();
     in_ret_credits[event->request->vn] += flits;
+
+	input_buf_flit_count -= flits;
 
     // For now, we're just going to send the credits back to the
     // other side.  The required BW to do this will not be taken
@@ -446,6 +459,7 @@ void LinkControl::handle_input(Event* ev)
         // std::cout << std::endl;
 
         input_buf[actual_vn].push(event);
+		input_buf_flit_count += event->getSizeInFlits();
         if (is_idle) {
             idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
             is_idle = false;
@@ -499,6 +513,7 @@ void LinkControl::handle_output(Event* ev)
         if ( rtr_credits[i] < send_event->getSizeInFlits() ) continue;
         vn_to_send = i;
         output_buf[i].pop();
+		output_buf_flit_count -= send_event->getSizeInFlits();
         found = true;
         break;
     }
@@ -512,6 +527,7 @@ void LinkControl::handle_output(Event* ev)
             if ( rtr_credits[i] < send_event->getSizeInFlits() ) continue;
             vn_to_send = i;
             output_buf[i].pop();
+			output_buf_flit_count -= send_event->getSizeInFlits();
             found = true;
             break;
         }
