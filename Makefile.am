@@ -13,8 +13,8 @@ install-exec-hook:
 EXTRA_DIST = \
 	autogen.sh \
 	CONTRIBUTING.md \
-	INSTALL \ 
-	ISSUES \ 
+	INSTALL \
+	ISSUES \
 	LICENSE \
 	PLATFORMS \
 	README.md \
