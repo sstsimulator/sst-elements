@@ -28,7 +28,7 @@ class SandyBridgeModel(DetailedModel):
     def _createThreads( self, prefix, cpuL1s, cpu_params ):
         
         prefix += "thread"
-        print prefix
+        #print prefix
         links = []
         for i in range(len(cpuL1s)):
             name = prefix + str(i) 
@@ -49,7 +49,7 @@ class SandyBridgeModel(DetailedModel):
 
     def _createNic( self, prefix, nicL1, cpu_params ):
         name = prefix + "nic_"
-        print "createNic() ", name
+        #print "createNic() ", name
 
         cpu = sst.Component( name + "cpu", "miranda.BaseCPU")
         cpu.addParams( cpu_params )

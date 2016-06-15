@@ -16,7 +16,7 @@ def _createRouters( prefix, numRouters, ringstop_params) :
                 "id" : next_ring_stop
                 })
         router_map[name] = ring_rtr
-        print 'add', name
+        #print 'add', name
 
     return router_map
 
@@ -57,7 +57,6 @@ def _configureL1L2(prefix, id, l1_params, l1_prefetch_params, l2_params, l2_pref
         "network_address" : network_id })
     l2.addParams(l2_params)
     l2.addParams(l2_prefetch_params)
-    pp.pprint(l2_params)
 
     name = prefix + "l2cache_" + id+ "_link"
     #print 'create', name
@@ -87,7 +86,6 @@ def _configureL3( prefix, id, l3_params, network_id, ring_latency, rtr ):
         "network_address" : network_id,
         "slice_id" : id
     })
-    pp.pprint(l3_params)
 
     name = prefix + "l3_ring_link_" + id
     #print 'create', name
