@@ -23,8 +23,8 @@ shape = '2'
 
 detailedNodes = [0]
 
-detailedModel = "basicDetailedModel" 
-detailedModelParams = "basicDetailedModelParams" 
+detailedModel = "sandyBridgeModel" 
+detailedModelParams = "sandyBridgeModelParams" 
 
 xxx = "Ring n=100"
 yyy = "DetailedRing n=100"
