@@ -21,7 +21,7 @@ platform = 'defaultParams'
 topo = 'torus'
 shape = '2'
 
-detailedNodes = []
+detailedNodes = [0]
 
 detailedModel = "basicDetailedModel" 
 detailedModelParams = "basicDetailedModelParams" 
