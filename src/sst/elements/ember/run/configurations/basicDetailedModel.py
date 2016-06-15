@@ -24,7 +24,7 @@ class BasicDetailedModel(DetailedModel):
     def getName(self):
         return self.name
 
-    def createThreads(self, prefix, bus, numThreads, cpu_params, l1_params ):
+    def _createThreads(self, prefix, bus, numThreads, cpu_params, l1_params ):
         #print "createThreads() ", prefix 
         prefix += "thread"
         links = []
@@ -50,7 +50,7 @@ class BasicDetailedModel(DetailedModel):
 
         return links
 
-    def createNic( self, prefix, bus, cpu_params, l1_params ):
+    def _createNic( self, prefix, bus, cpu_params, l1_params ):
         name = prefix + "nic_"
         #print "createNic() ", name
 
@@ -73,8 +73,8 @@ class BasicDetailedModel(DetailedModel):
 
         return link
 
-    def build(self,nodeID,numCores):
-        #print 'BasicDetailedModel.build( nodeID={0}, numCores={1} )'.format( nodeID, numCores ) 
+    def build(self,nodeID,ransPerNode):
+        #print 'BasicDetailedModel.build( nodeID={0}, ransPerNode={1} )'.format( nodeID, ransPerNode ) 
 
         self.links = []
 
@@ -97,14 +97,14 @@ class BasicDetailedModel(DetailedModel):
         link.setNoCut();
         link.connect( (l2, "low_network_0", "50ps"), (memory, "direct_link", "50ps") ) 
 
-        for i in range(numCores):
+        for i in range(ransPerNode):
             name = prefix + "core" + str(i) + "_" 
             self.links.append( \
-                self.createThreads( name, bus, int(self.params['numThreads']), \
+                self._createThreads( name, bus, int(self.params['numThreads']), \
                                     self.params['cpu_params'], \
                                     self.params['l1_params']  ) )
             
-        self.nicLink = self.createNic( prefix, bus, self.params['nic_cpu_params'],\
+        self.nicLink = self._createNic( prefix, bus, self.params['nic_cpu_params'],\
                                     self.params['nic_l1_params'] )
 
         return True 
