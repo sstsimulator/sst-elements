@@ -21,7 +21,7 @@ platform = 'defaultParams'
 topo = 'torus'
 shape = '2'
 
-detailedNodes = [0,1]
+detailedNodes = [0]
 
 detailedModel = "sandyBridgeModel" 
 detailedModelParams = "sandyBridgeModelParams" 
