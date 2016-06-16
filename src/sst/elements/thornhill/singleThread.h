@@ -25,8 +25,7 @@ class SingleThread : public DetailedCompute {
 
   public:
 
-    SingleThread( Component* owner, Params& params, 
-                                            std::string name ="" );
+    SingleThread( Component* owner, Params& params );
 
     ~SingleThread(){};
 
