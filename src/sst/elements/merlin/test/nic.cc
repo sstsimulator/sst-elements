@@ -108,8 +108,6 @@ void nic::setup()
     if ( !initialized ) {
         output.output("Nic %d: Broadcast failed!\n", id);
     }
-
-    net_map.bind("global");
 }
 
 void
