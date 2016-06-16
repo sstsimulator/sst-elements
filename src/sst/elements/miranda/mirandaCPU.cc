@@ -21,7 +21,7 @@
 using namespace SST::Miranda;
 
 RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
-	Component(id), srcLink(NULL) {
+	Component(id), srcLink(NULL), reqGen(NULL) {
 
 	const int verbose = params.find<int>("verbose", 0);
 	std::stringstream prefix;
@@ -94,8 +94,6 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 		if ( NULL == srcLink ) {
 			out->fatal(CALL_INFO, -1, "Failed to configure src link\n");
 		}
-
-		unregisterClock( timeConverter, clockHandler );
 
 	} else {
 		out->fatal(CALL_INFO, -1, "Failed to find a generator or src port\n");
@@ -316,6 +314,11 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 }
 
 bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
+
+    if ( ! reqGen ) {
+        return true;
+    }
+
 	statCycles->addData(1);
 
 	if(reqGen->isFinished()) {
@@ -327,6 +330,7 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 
 			reqGen->completed();
 			delete reqGen;
+			reqGen = NULL;
 
 			if ( NULL == srcLink ) {
 				primaryComponentOKToEndSim();
@@ -335,7 +339,6 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 					MirandaRspEvent* event = new MirandaRspEvent;
 					event->key = static_cast<MirandaReqEvent*>(srcReqEvent)->key;	
 					delete srcReqEvent;
-
 					srcLink->send(0,event);
 
 					return true;
