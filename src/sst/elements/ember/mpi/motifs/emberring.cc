@@ -23,8 +23,11 @@ EmberRingGenerator::EmberRingGenerator(SST::Component* owner, Params& params) :
 {
 	m_messageSize = (uint32_t) params.find("arg.messagesize", 1024);
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);
+	m_computeTime = (uint64_t) params.find("arg.computeTime", 0);
+	m_printRank = params.find<uint32_t>("arg.printRank", 0 );
     m_sendBuf = memAlloc(m_messageSize);
     m_recvBuf = memAlloc(m_messageSize);
+    
 }
 
 inline long mod( long a, long b )
@@ -36,7 +39,7 @@ inline long mod( long a, long b )
 bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ) 
 {
    if ( m_loopIndex == m_iterations ) {
-        if ( 0 == rank()) {
+        if ( rank() == m_printRank || -1 == m_printRank ) {
             double totalTime = (double)(m_stopTime - m_startTime)/1000000000.0;
 
             double latency = ((totalTime/m_iterations)/size());
@@ -49,6 +52,8 @@ bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ)
                                 m_messageSize,
                                 latency * 1000000.0,
                                 bandwidth / 1000000000.0 );
+            output("%s: compute time %" PRIu64" ns\n",
+                                getMotifName().c_str(), m_computeTime);
         }
         return true;
     }
@@ -56,9 +61,7 @@ bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ)
     if ( 0 == m_loopIndex ) {
         verbose( CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
 
-        if ( 0 == rank() ) {
-            enQ_getTime( evQ, &m_startTime );
-        }
+        enQ_getTime( evQ, &m_startTime );
     }
 
     int to = mod( rank() + 1, size());
@@ -66,16 +69,21 @@ bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ)
     verbose( CALL_INFO, 2, 0, "to=%d from=%d\n",to,from);
 
     if ( 0 == rank() ) {
-        enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
-                                                GroupWorld );
-	    enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG, 
-                                                GroupWorld, &m_resp );
+        enQ_isend( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
+                                                GroupWorld, &m_req[0] );
+        enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG,
+                                                GroupWorld, &m_req[1] );
     } else {
-	    enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG, 
-                                                GroupWorld, &m_resp );
-	   enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
-                                                GroupWorld );
+        enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG,
+                                                GroupWorld, &m_req[0] );
+        enQ_isend( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
+                                                GroupWorld, &m_req[1] );
     }
+
+    enQ_compute( evQ, m_computeTime );
+
+    enQ_wait( evQ, &m_req[0] );
+    enQ_wait( evQ, &m_req[1] );
 
     if ( ++m_loopIndex == m_iterations ) {
         enQ_getTime( evQ, &m_stopTime );
