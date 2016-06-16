@@ -34,7 +34,7 @@ public:
 
     void issue( uint64_t time, FOO* functor ) {
 
-        m_output->verbose(CALL_INFO, 2, 0, "length=%" PRIu64 "\n", m_length );
+        m_output->verbose(CALL_INFO, 2, 0, "length=%zu\n", m_length );
         EmberEvent::issue( time );
     
         std::function<void(uint64_t)> callback = [=](uint64_t value){
