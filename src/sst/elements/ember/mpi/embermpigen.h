@@ -217,8 +217,13 @@ protected:
 									Communicator, MessageRequest* req );
 	inline void enQ_irecv( Queue&, uint32_t src, uint32_t nBytes, int tag,
 									Communicator, MessageRequest* req );
+<<<<<<< HEAD
     EmberRankMap*                         m_rankMap;
     
+=======
+    EmberRankMap*                       m_rankMap;
+
+>>>>>>> devel
 private:
 
     void updateSpyplot( RankID remoteRank, size_t bytesSent );
@@ -227,7 +232,11 @@ private:
     uint32_t            m_spyplotMode;
     static const char*  m_eventName[];
 
+<<<<<<< HEAD
     //EmberRankMap*                         m_rankMap; //NetworkSim: moved to protected for use in unstructured motif configure
+=======
+	//EmberRankMap* 						m_rankMap; //NetworkSim: moved to protected for use in unstructured motif configure
+>>>>>>> devel
     std::vector< Statistic<uint32_t>* > m_Stats;
     std::map<int32_t, EmberSpyInfo*>*   m_spyinfo;
 };

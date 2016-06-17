@@ -31,8 +31,10 @@ SingleThread::SingleThread( Component* owner,
     int id = 0;
     linkName << "detailed" << id;
     while ( owner->isPortConnected( linkName.str() ) ) {
-		//printf("%s() connect port %s\n",__func__,linkName.str().c_str());
-		assert( ! m_link );
+        if ( m_link ) {
+            Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO,1,
+                        "Thornhill::SingleTread() more than 1 link detected\n");
+        }
         m_link = configureLink( linkName.str(), "0ps", 
             new Event::Handler<SingleThread>(
                     this,&SingleThread::eventHandler ) ); 

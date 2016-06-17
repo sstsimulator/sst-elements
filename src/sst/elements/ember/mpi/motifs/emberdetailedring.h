@@ -23,18 +23,20 @@ class EmberDetailedRingGenerator : public EmberMessagePassingGenerator {
 public:
 	EmberDetailedRingGenerator(SST::Component* owner, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
+	std::string getComputeModelName(); 
 
 private:
     MessageRequest  m_req[2];
 	uint32_t m_messageSize;
 	uint32_t m_iterations;
     uint32_t m_loopIndex;
+	uint32_t m_stream_n;
     MessageResponse m_resp;
     Hermes::MemAddr    m_sendBuf;
     Hermes::MemAddr    m_recvBuf;
     Hermes::MemAddr    m_streamBuf;
-    uint64_t m_startTime;
-    uint64_t m_stopTime;
+    uint64_t m_startCompute;
+    uint64_t m_stopCompute;
 };
 
 }
