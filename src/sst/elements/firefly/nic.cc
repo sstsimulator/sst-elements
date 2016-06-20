@@ -118,7 +118,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
         assert( detailed );
         if ( ! detailed->isConnected() ) {
-
             delete detailed;
         } else {
             m_detailedCompute[0] = detailed;
