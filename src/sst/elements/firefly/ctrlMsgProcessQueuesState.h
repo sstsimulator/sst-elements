@@ -66,6 +66,7 @@ class ProcessQueuesState
     void enterSend( _CommReq*, uint64_t exitDelay = 0 );
     void enterRecv( _CommReq*, uint64_t exitDelay = 0 );
     void enterWait( WaitReq*, uint64_t exitDelay = 0 );
+    void enterMakeProgress( uint64_t exitDelay = 0 );
 
     void needRecv( int, int, size_t );
 
@@ -259,6 +260,8 @@ class ProcessQueuesState
 
     void processRecv_0( _CommReq* );
     void processRecv_1( _CommReq* );
+
+    void processMakeProgress( Stack* );
 
     void processWait_0( Stack* );
     void processWaitCtx_0( WaitCtx*, _CommReq* req );
@@ -581,6 +584,39 @@ void ProcessQueuesState<T1>::processRecv_1( _CommReq* req )
     } else {
         enterWait( new WaitReq( req ), m_exitDelay );
     }
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::enterMakeProgress(  uint64_t exitDelay  )
+{
+    dbg().verbose(CALL_INFO,1,1,"num pstd %lu, num short %lu\n",
+                            m_pstdRcvQ.size(), m_recvdMsgQ.size() );
+
+    m_exitDelay = exitDelay;
+
+    WaitCtx* ctx = new WaitCtx ( NULL,
+        std::bind( &ProcessQueuesState<T1>::processMakeProgress, this, &m_funcStack ) 
+    );
+
+    m_funcStack.push_back( ctx );
+
+    processQueues( &m_funcStack );
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::processMakeProgress( Stack* stack )
+{
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
+    dbg().verbose(CALL_INFO,1,1,"num pstd %lu, num short %lu\n",
+                            m_pstdRcvQ.size(), m_recvdMsgQ.size() );
+    WaitCtx* ctx = static_cast<WaitCtx*>( stack->back() );
+
+	delete ctx;
+    stack->pop_back();
+
+	assert( stack->empty() );
+
+	exit();
 }
 
 template< class T1 >
