@@ -534,7 +534,7 @@ public:
 
         std::deque< std::pair< std::string, SST::Params> > gens;
         m_dbg.verbose(CALL_INFO,1,NIC_DBG_DETAILED_MEM,
-						"%s %" PRIu64 " vectors\n", op.c_str(), vec.size());
+						"%s %zu vectors\n", op.c_str(), vec.size());
 
 		for ( unsigned i = 0; i < vec.size(); i++ ) {
 
@@ -559,7 +559,7 @@ public:
 
 			int opWidth = 8;
 			m_dbg.verbose(CALL_INFO,1,NIC_DBG_DETAILED_MEM,
-				"addr=0x%" PRIx64 " length=%" PRIu64 "\n",
+				"addr=0x%" PRIx64 " length=%zu\n",
 				vec[i].addr,vec[i].length);
 			size_t count = vec[i].length / opWidth;
 			count += vec[i].length % opWidth ? 1 : 0;
@@ -579,10 +579,10 @@ public:
 			params.insert( "max_address", tmp.str() );		
 
 			params.insert( "memOp", op );		
-			#if 0
+            #if 0 
 			params.insert( "generatorParams.verbose", "1" );		
 			params.insert( "verbose", "5" );		
-			#endif
+            #endif
 			
         	gens.push_back( std::make_pair( "miranda.SingleStreamGenerator", params ) );
 		}
@@ -591,7 +591,6 @@ public:
 			schedCallback( callback, 0 );
 		} else {
 	    	std::function<int()> foo = [=](){
-                printf("mem op done\n");
            		callback( );
 				return 0;
 			};
