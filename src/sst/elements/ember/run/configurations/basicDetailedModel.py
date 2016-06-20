@@ -19,7 +19,6 @@ class BasicDetailedModel(DetailedModel):
     def __init__(self, params ):
         self.name = 'BasicDetailedModel' 
         self.params = params
-        self.links = []
 
     def getName(self):
         return self.name
@@ -77,6 +76,7 @@ class BasicDetailedModel(DetailedModel):
         #print 'BasicDetailedModel.build( nodeID={0}, ransPerNode={1} )'.format( nodeID, ransPerNode ) 
 
         self.links = []
+        self.nicLinks = []
 
         prefix = "basicModel_node" + str(nodeID) + "_"
 
@@ -104,8 +104,11 @@ class BasicDetailedModel(DetailedModel):
                                     self.params['cpu_params'], \
                                     self.params['l1_params']  ) )
             
-        self.nicLink = self._createNic( prefix, bus, self.params['nic_cpu_params'],\
-                                    self.params['nic_l1_params'] )
+        self.nicLinks.append( self._createNic( prefix + 'read', bus, self.params['nic_cpu_params'],\
+                                    self.params['nic_l1_params'] ) )
+
+        self.nicLinks.append( self._createNic( prefix + 'write', bus, self.params['nic_cpu_params'],\
+                                    self.params['nic_l1_params'] ) )
 
         return True 
 
@@ -115,7 +118,7 @@ class BasicDetailedModel(DetailedModel):
 
     def getNicLink(self ):
         #print 'BasicDetailedModel.getNicLink()' 
-        return self.nicLink 
+        return self.nicLinks[0], self.nicLinks[1] 
 
 def getModel(params):
     return BasicDetailedModel(params)

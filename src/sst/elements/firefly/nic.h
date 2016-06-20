@@ -529,8 +529,8 @@ public:
     int getNum_vNics() { return m_num_vNics; }
     void printStatus(Output &out);
 
-    void detailedMemOp( std::vector<DmaVec>& vec, std::string op,
-													Callback callback ) {
+    void detailedMemOp( Thornhill::DetailedCompute* detailed,
+            std::vector<DmaVec>& vec, std::string op, Callback callback ) {
 
         std::deque< std::pair< std::string, SST::Params> > gens;
         m_dbg.verbose(CALL_INFO,1,NIC_DBG_DETAILED_MEM,
@@ -581,7 +581,7 @@ public:
 			params.insert( "memOp", op );		
 			#if 0
 			params.insert( "generatorParams.verbose", "1" );		
-			params.insert( "verbose", "1" );		
+			params.insert( "verbose", "5" );		
 			#endif
 			
         	gens.push_back( std::make_pair( "miranda.SingleStreamGenerator", params ) );
@@ -591,19 +591,20 @@ public:
 			schedCallback( callback, 0 );
 		} else {
 	    	std::function<int()> foo = [=](){
+                printf("mem op done\n");
            		callback( );
 				return 0;
 			};
-			m_detailedCompute->start( gens, foo );	
+			detailed->start( gens, foo );	
 		}
 		
 	}
 
     void dmaRead( std::vector<DmaVec>& vec, Callback callback ) {
 
-		if ( m_detailedCompute ) {
+		if ( m_detailedCompute[0] ) {
 			
-			detailedMemOp( vec, "Read", callback );
+			detailedMemOp( m_detailedCompute[0], vec, "Read", callback );
 
 		} else {
 			size_t len = 0;	
@@ -616,9 +617,9 @@ public:
 
     void dmaWrite( std::vector<DmaVec>& vec, Callback callback ) {
 
-		if ( m_detailedCompute ) {
+		if ( m_detailedCompute[1] ) {
 			
-			detailedMemOp( vec, "Write", callback );
+			detailedMemOp( m_detailedCompute[1], vec, "Write", callback );
 
 		} else {
 			size_t len = 0;	
@@ -719,7 +720,7 @@ public:
 
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
-	Thornhill::DetailedCompute* m_detailedCompute;
+    std::vector<Thornhill::DetailedCompute*> m_detailedCompute;
 
     uint16_t m_getKey;
   public:

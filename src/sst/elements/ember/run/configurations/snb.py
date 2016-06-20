@@ -188,11 +188,16 @@ def _configCache( prefix,
 
     print 'Creating NIC L1/L2'
 
-    nicL1 = _configureL1L2( prefix, 'nic', l1_params, l1_prefetch_params,
+    nicL1_read = _configureL1L2( prefix, 'nic_read', l1_params, l1_prefetch_params,
+                                l2_params, l2_prefetch_params, next_network_id, ring_latency,
+                                router_map[prefix + "rtr." + str(next_network_id)])
+    
+    next_network_id = next_network_id + 1
+    nicL1_write = _configureL1L2( prefix, 'nic_write', l1_params, l1_prefetch_params,
                                 l2_params, l2_prefetch_params, next_network_id, ring_latency,
                                 router_map[prefix + "rtr." + str(next_network_id)])
 
-    return cpuL1s, nicL1
+    return cpuL1s, nicL1_read, nicL1_write
 
 
 def configure( prefix, params ):

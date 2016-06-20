@@ -31,10 +31,13 @@ private:
 	uint32_t m_iterations;
     uint32_t m_loopIndex;
 	uint32_t m_stream_n;
+	uint32_t m_printRank;
     MessageResponse m_resp;
     Hermes::MemAddr    m_sendBuf;
     Hermes::MemAddr    m_recvBuf;
     Hermes::MemAddr    m_streamBuf;
+    uint64_t m_startTime;
+    uint64_t m_stopTime;
     uint64_t m_startCompute;
     uint64_t m_stopCompute;
 };

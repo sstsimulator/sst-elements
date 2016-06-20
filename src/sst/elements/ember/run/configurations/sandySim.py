@@ -26,8 +26,10 @@ detailedNodes = [0]
 detailedModel = "sandyBridgeModel" 
 detailedModelParams = "sandyBridgeModelParams" 
 
-xxx = "Ring n=100"
-yyy = "DetailedRing n=100"
+arguments = 'messagesize=100000 printRank=-1' 
+
+xxx = "Ring computeTime=10998000 " + arguments 
+yyy = "DetailedRing " + arguments 
 
 def genWorkFlow( defaults, nodeNum = None ):
 

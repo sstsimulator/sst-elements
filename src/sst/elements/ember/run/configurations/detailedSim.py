@@ -21,13 +21,15 @@ platform = 'defaultParams'
 topo = 'torus'
 shape = '2'
 
-detailedNodes = [0]
+detailedNodes = [1]
 
 detailedModel = "basicDetailedModel" 
 detailedModelParams = "basicDetailedModelParams" 
 
-xxx = "Ring n=100"
-yyy = "DetailedRing n=100"
+arguments = 'messagesize=80000 printRank=-1'
+
+xxx = "Ring computeTime=0 " + arguments
+yyy = "DetailedRing " + arguments
 
 def genWorkFlow( defaults, nodeNum = None ):
 

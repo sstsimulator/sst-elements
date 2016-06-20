@@ -51,7 +51,9 @@ class EmberEP( EndPoint ):
 
         if detailed:
             detailed.build(nodeID,ranksPerNode)
-            nic.addLink( detailed.getNicLink( ), "detailed0", "1ps" )
+            read, write = detailed.getNicLink( )
+            nic.addLink( read, "detailed0", "1ps" )
+            nic.addLink( write, "detailed1", "1ps" )
 
             memory = sst.Component("memory" + str(nodeID), "thornhill.MemoryHeap")
             memory.addParam( "nid", nodeID )

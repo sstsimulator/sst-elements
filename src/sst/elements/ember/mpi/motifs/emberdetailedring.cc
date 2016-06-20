@@ -24,6 +24,7 @@ EmberDetailedRingGenerator::EmberDetailedRingGenerator(SST::Component* owner, Pa
 	m_messageSize = params.find<uint32_t>("arg.messagesize", 1024);
 	m_iterations = params.find<int32_t>("arg.iterations", 1);
 	m_stream_n = params.find<int32_t>("arg.stream_n", 1000);
+	m_printRank = params.find<int32_t>("arg.printRank", 0);
 }
 
 std::string EmberDetailedRingGenerator::getComputeModelName()
@@ -40,9 +41,24 @@ inline long mod( long a, long b )
 bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ) 
 {
    if ( m_loopIndex == m_iterations ) {
-        if ( 0 == rank()) {
+        if ( m_printRank == rank() || -1 == m_printRank ) {
+            double totalTime = (double)(m_stopTime - m_startTime)/1000000000.0;
+
+            double latency = ((totalTime/m_iterations)/size());
+            double bandwidth = (double) m_messageSize / latency;
+
+            output("%s total time %.3f us, loop %d, bufLen %d"
+                    ", latency %.3f us. bandwidth %f GB/s\n",
+                                getMotifName().c_str(),
+                                totalTime * 1000000.0, m_iterations,
+                                m_messageSize,
+                                latency * 1000000.0,
+                                bandwidth / 1000000000.0 );
+
             double computeTime = (double)(m_stopCompute - m_startCompute)/1000000000.0;
-            output("%s total compute %.3f sec\n", getMotifName().c_str(),computeTime * 1000000.0 );
+
+            output("%s total compute %.3f us\n", getMotifName().c_str(),
+                                computeTime * 1000000.0 );
         }
         return true;
     }
@@ -64,6 +80,12 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
     int to = mod( rank() + 1, size());
     int from = mod( (signed int) rank() - 1, size() );
     verbose( CALL_INFO, 2, 0, "to=%d from=%d\n",to,from);
+
+    if ( 0 == m_loopIndex ) {
+        verbose( CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
+
+        enQ_getTime( evQ, &m_startTime );
+    }
 
     if ( 0 == rank() ) {
         enQ_isend( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
@@ -114,16 +136,16 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
         params.insert( "generatorParams.verbose", "1" );
         params.insert( "verbose", "1" );
 
-
         enQ_getTime( evQ, &m_startCompute );
         enQ_detailedCompute( evQ, motif, params );
         enQ_getTime( evQ, &m_stopCompute );
-
     }
 
 	enQ_wait( evQ, &m_req[0] );
 	enQ_wait( evQ, &m_req[1] );
 
-    ++m_loopIndex;
+    if ( ++m_loopIndex == m_iterations ) {
+        enQ_getTime( evQ, &m_stopTime );
+    }
     return false;
 }
