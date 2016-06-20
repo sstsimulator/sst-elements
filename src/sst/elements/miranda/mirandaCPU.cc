@@ -118,6 +118,8 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	reqMaxPerCycle = params.find<uint32_t>("max_reqs_cycle", 2);
 
+    
+
 	out->verbose(CALL_INFO, 1, 0, "Miranda CPU Configuration:\n");
 	out->verbose(CALL_INFO, 1, 0, "- Max reorder lookups             %" PRIu32 "\n", maxOpLookup);
 	out->verbose(CALL_INFO, 1, 0, "- Clock:                          %s\n", cpuClock.c_str());
