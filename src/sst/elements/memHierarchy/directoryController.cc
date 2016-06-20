@@ -1154,8 +1154,10 @@ void DirectoryController::handleDirEntryMemoryResponse(MemEvent * ev) {
             break;
         case S_d:
             entry->setState(S);
+            break;
         case M_d:
             entry->setState(M);
+            break;
         default:
             dbg.fatal(CALL_INFO, -1, "Directory Controller %s: DirEntry response received for addr 0x%" PRIx64 " but state is %s\n", getName().c_str(), entry->getBaseAddr(), StateString[st]);
     }
@@ -1172,8 +1174,10 @@ void DirectoryController::getDirEntryFromMemory(DirEntry * entry) {
             break;
         case S:
             entry->setState(S_d);
+            break;
         case M:
             entry->setState(M_d);
+            break;
         default:
             dbg.fatal(CALL_INFO,-1,"Direcctory Controller %s: cache miss for addr 0x%" PRIx64 " but state is %s\n",getName().c_str(),entry->getBaseAddr(), StateString[st]);
     }
