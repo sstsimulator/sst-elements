@@ -48,6 +48,7 @@ class HadesMP : public MP::Interface
     virtual void rank(MP::Communicator group, MP::RankID* rank,
                                                     MP::Functor*);
     virtual void size(MP::Communicator group, int* size, MP::Functor* );
+    virtual void makeProgress(MP::Functor*);
 
     virtual void send(const Hermes::MemAddr&, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag, 

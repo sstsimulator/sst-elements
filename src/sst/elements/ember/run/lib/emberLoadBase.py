@@ -14,7 +14,7 @@ import sys,pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 import topoConfig as TopoConfig
-import platform as Platform
+import platConfig as Platform
 import merlin as Merlin
 import loadUtils as LoadUtils
 import loadInfo as LoadInfo
