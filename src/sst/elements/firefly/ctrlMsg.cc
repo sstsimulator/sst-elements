@@ -58,6 +58,11 @@ void API::setRetLink( Link* link )
 void API::init() {
 	m_xxx->init();
 }
+
+void API::makeProgress() {
+	m_xxx->makeProgress();
+}
+
 void API::send( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag )
 {
     std::vector<IoVec> ioVec(1);
