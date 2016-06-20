@@ -96,7 +96,7 @@ void Nic::SendMachine::state_2( SendEntry* entry, FireflyNetworkEvent *ev )
     }
     ++m_packetId;
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"Send: "
-					"%d: dst=%d sending event with %lu bytes\n",m_vc,req->dest,
+					"%d: dst=%" PRIu64 " sending event with %zu bytes\n",m_vc,req->dest,
                                                         ev->bufSize());
     bool sent = m_nic.m_linkControl->send( req, m_vc );
     assert( sent );
