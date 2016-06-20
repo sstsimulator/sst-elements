@@ -289,7 +289,7 @@ void EmberMessagePassingGenerator::enQ_send( Queue& q,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag,
     Communicator group)
 {
-	verbose(CALL_INFO,2,0,"payload=%p dest=%d tag=%#x\n",payload, dest, tag);
+	verbose(CALL_INFO,2,0,"payload=0x%" PRIx64 " dest=%d tag=%#x\n",(uint64_t) &payload, dest, tag);
     q.push( new EmberSendEvent( *cast(m_api), &getOutput(), m_Stats[Send],
 		payload, count, dtype, dest, tag, group ) );
 
@@ -321,7 +321,7 @@ void EmberMessagePassingGenerator::enQ_isend( Queue& q,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, 
     Communicator group, MessageRequest* req )
 {
-	verbose(CALL_INFO,2,0,"payload=%p dest=%d tag=%#x req=%p\n",payload, dest, tag, req );
+	verbose(CALL_INFO,2,0,"payload=0x%" PRIx64" dest=%d tag=%#x req=%p\n",(uint64_t)&payload, dest, tag, req );
     q.push( new EmberISendEvent( *cast(m_api), &getOutput(), m_Stats[Isend],
         payload, count, dtype, dest, tag, group, req ) );
     
