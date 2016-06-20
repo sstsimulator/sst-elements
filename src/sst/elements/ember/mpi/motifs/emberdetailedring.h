@@ -26,12 +26,18 @@ public:
 	std::string getComputeModelName(); 
 
 private:
+    void computeDetailed( std::queue<EmberEvent*>& evQ);
+    void computeSimple( std::queue<EmberEvent*>& evQ);
+    void (EmberDetailedRingGenerator::*m_computeFunc)( std::queue<EmberEvent*>& evQ );
+    
     MessageRequest  m_req[2];
 	uint32_t m_messageSize;
 	uint32_t m_iterations;
     uint32_t m_loopIndex;
 	uint32_t m_stream_n;
 	uint32_t m_printRank;
+    uint64_t m_computeTime;
+    uint64_t m_computeWindow;
     MessageResponse m_resp;
     Hermes::MemAddr    m_sendBuf;
     Hermes::MemAddr    m_recvBuf;
@@ -40,6 +46,7 @@ private:
     uint64_t m_stopTime;
     uint64_t m_startCompute;
     uint64_t m_stopCompute;
+    uint32_t m_doCompute;
 };
 
 }
