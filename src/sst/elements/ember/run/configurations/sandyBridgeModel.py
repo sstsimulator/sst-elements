@@ -81,9 +81,9 @@ class SandyBridgeModel(DetailedModel):
 
         self.links.append( self._createThreads( prefix, cpuL1s, self.params['cpu_params']  ) )
 
-        self.nicLink = []    
-        self.nicLink.append( self._createNic( prefix + 'read', nicL1_read, self.params['nic_cpu_params']) ) 
-        self.nicLink.append( self._createNic( prefix + 'write', nicL1_write, self.params['nic_cpu_params']) )
+        self.nicLink = []
+        self.nicLink.append( self._createNic( prefix + 'read', nicL1_read, self.params['nic_cpu_params'] ) )
+        self.nicLink.append( self._createNic( prefix + 'write', nicL1_write, self.params['nic_cpu_params'] ) )
 
         return True 
 
