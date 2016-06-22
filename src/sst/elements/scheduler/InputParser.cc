@@ -55,16 +55,7 @@ JobParser::JobParser(Machine* machine,
         outputDirectory = dir;
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
     //NetworkSim: traces for completed/running jobs on ember
->>>>>>> origin/scheduler
-=======
-    //NetworkSim: traces for completed/running jobs on ember
->>>>>>> devel
     if (*(this->doDetailedNetworkSim)){
         //initialize outputDirectory        
         if (NULL == dir) {
@@ -74,35 +65,6 @@ JobParser::JobParser(Machine* machine,
             completedJobTrace = outputDirectory + params.find<std::string>("completedJobsTrace").c_str();
             runningJobTrace = outputDirectory + params.find<std::string>("runningJobsTrace").c_str();
         }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        completedJobTrace = params.find<std::string>("completedJobsTrace").c_str();
-        runningJobTrace = params.find<std::string>("runningJobsTrace").c_str();
->>>>>>> devel
-=======
-    //NetworkSim: traces for completed/running jobs on ember
-    if (*(this->doDetailedNetworkSim)){
-=======
-    //NetworkSim: traces for completed/running jobs on ember
-    if (*(this->doDetailedNetworkSim)){
->>>>>>> devel
-        //initialize outputDirectory        
-        if (NULL == dir) {
-            completedJobTrace = params.find<std::string>("completedJobsTrace").c_str();
-            runningJobTrace = params.find<std::string>("runningJobsTrace").c_str();
-        } else {
-            completedJobTrace = outputDirectory + params.find<std::string>("completedJobsTrace").c_str();
-            runningJobTrace = outputDirectory + params.find<std::string>("runningJobsTrace").c_str();
-        }
-<<<<<<< HEAD
->>>>>>> devel
-=======
->>>>>>> devel
-=======
->>>>>>> origin/scheduler
-=======
->>>>>>> devel
     }
     //end->NetworkSim
 

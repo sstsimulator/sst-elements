@@ -229,10 +229,6 @@ private:
 
     uint32_t            m_spyplotMode;
     static const char*  m_eventName[];
-<<<<<<< HEAD
-=======
-
->>>>>>> devel
     std::vector< Statistic<uint32_t>* > m_Stats;
     std::map<int32_t, EmberSpyInfo*>*   m_spyinfo;
 };
