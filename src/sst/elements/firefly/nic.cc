@@ -111,6 +111,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     if ( ! dtldName.empty() ) {
 
+
         dtldParams.insert( "portName", "read", true );
         Thornhill::DetailedCompute* detailed;
         detailed = dynamic_cast<Thornhill::DetailedCompute*>( loadSubComponent(
@@ -129,11 +130,12 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
         assert( detailed );
         if ( ! detailed->isConnected() ) {
-
             delete detailed;
         } else {
             m_detailedCompute[1] = detailed;
         }
+
+	    m_useDetailedCompute = params.find<bool>("useDetailed", false );
     }
 }
 
