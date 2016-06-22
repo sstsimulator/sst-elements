@@ -26,7 +26,7 @@ import nullEmber as NullEmber
 def getOptions():
 	return NicConfig.getOptions() + RtrConfig.getOptions() + EmberConfig.getOptions()
 
-def run( opts, platParamsName, topo, shape, jobs ):
+def run( opts, platParamsName, topo, shape, jobs, perNicParams = None ):
 
 	topoInfo = TopoConfig.getTopoInfo( topo, shape )	
 	topoObj = TopoConfig.getTopoObj( topo )
@@ -36,7 +36,7 @@ def run( opts, platParamsName, topo, shape, jobs ):
 
 	platParams = Platform.getParams( platParamsName )
 
-	nicConfig = NicConfig.NicConfig( platParams.nicParams, opts )
+	nicConfig = NicConfig.NicConfig( platParams.nicParams, opts, perNicParams )
 	rtrConfig = RtrConfig.RtrConfig( platParams.networkParams, opts )
 
 	hermesParams = platParams.hermesParams

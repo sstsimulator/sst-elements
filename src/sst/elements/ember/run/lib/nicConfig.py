@@ -17,8 +17,9 @@ def getOptions():
 	return ['netPktSize=','nicVerboseLevel=','nicVerboseMask=']
 
 class NicConfig(componentConfig.ComponentConfig):
-	def __init__( self, params, opts ):
+	def __init__( self, params, opts, getNicParams = None ):
 		self.params = params 
+		self.getNicParams = getNicParams
 		for o,a in opts:
 			if o in ('--netPktSize'):
 				self.params['packetSize'] = a
@@ -33,6 +34,9 @@ class NicConfig(componentConfig.ComponentConfig):
 		extra = copy.deepcopy(self.params)
 		extra["nid"] =  nodeNum	
 		extra["num_vNics"] = ranksPerNode	
+
+		if self.getNicParams:
+			extra.update(self.getNicParams( nodeNum ) )
 	
 		return extra
 

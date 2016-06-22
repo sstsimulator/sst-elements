@@ -72,20 +72,13 @@ class BasicDetailedModel(DetailedModel):
 
         return link
 
-    def build(self,nodeID,ransPerNode,connectThreads,connectNic):
+    def build(self,nodeID,ransPerNode):
         #print 'BasicDetailedModel.build( nodeID={0}, ransPerNode={1} )'.format( nodeID, ransPerNode ) 
 
-        if not connectThreads and not connectNic:
-            sys.exit('FATAL: must connect something to the detailed model ' )
-
-        numThreads = 0
-        if connectThreads:
-            numThreads = int(self.params['numThreads']) 
-
-        print 'connect {0} threads'.format(numThreads)
+        numThreads = int(self.params['numThreads']) 
 
         self.links = []
-        self.nicLinks = [None,None]
+        self.nicLinks = []
 
         prefix = "basicModel_node" + str(nodeID) + "_"
 
@@ -111,13 +104,11 @@ class BasicDetailedModel(DetailedModel):
             self.links.append( \
                 self._createThreads( name, bus, numThreads, self.params['cpu_params'], self.params['l1_params']  ) )
             
-        if connectNic:
-            print 'connect NIC'
-            self.nicLinks[0] = self._createNic( prefix + 'read', bus, numThreads, self.params['nic_cpu_params'],\
-                                    self.params['nic_l1_params'] )
+        self.nicLinks.append( self._createNic( prefix + 'read', bus, numThreads, self.params['nic_cpu_params'],\
+                                    self.params['nic_l1_params'] ) )
 
-            self.nicLinks[1] = self._createNic( prefix + 'write', bus, numThreads+1, self.params['nic_cpu_params'],\
-                                    self.params['nic_l1_params'] )
+        self.nicLinks.append( self._createNic( prefix + 'write', bus, numThreads+1, self.params['nic_cpu_params'],\
+                                    self.params['nic_l1_params'] ) )
 
         return True 
 
