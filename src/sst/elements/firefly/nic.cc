@@ -30,7 +30,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_sendNotifyCnt(0),
     m_sendMachine( 2, SendMachine( *this, m_dbg ) ),
     m_recvMachine( *this, m_dbg ),
-    m_detailedCompute(NULL),
+    m_detailedCompute( 2, NULL ),
     m_getKey(10)
 {
     m_myNodeId = params.find<int>("nid", -1);
@@ -111,15 +111,31 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     if ( ! dtldName.empty() ) {
 
-        m_detailedCompute = dynamic_cast<Thornhill::DetailedCompute*>( loadSubComponent(
+
+        dtldParams.insert( "portName", "read", true );
+        Thornhill::DetailedCompute* detailed;
+        detailed = dynamic_cast<Thornhill::DetailedCompute*>( loadSubComponent(
                             dtldName, this, dtldParams ) );
 
-        assert( m_detailedCompute );
-        if ( ! m_detailedCompute->isConnected() ) {
-
-            delete m_detailedCompute;
-            m_detailedCompute = NULL;
+        assert( detailed );
+        if ( ! detailed->isConnected() ) {
+            delete detailed;
+        } else {
+            m_detailedCompute[0] = detailed;
         }
+
+        dtldParams.insert( "portName", "write", true );
+        detailed = dynamic_cast<Thornhill::DetailedCompute*>( loadSubComponent(
+                            dtldName, this, dtldParams ) );
+
+        assert( detailed );
+        if ( ! detailed->isConnected() ) {
+            delete detailed;
+        } else {
+            m_detailedCompute[1] = detailed;
+        }
+
+	    m_useDetailedCompute = params.find<bool>("useDetailed", false );
     }
 }
 

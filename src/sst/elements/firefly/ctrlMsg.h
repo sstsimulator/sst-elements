@@ -63,6 +63,7 @@ class API : public ProtocolAPI {
     virtual void setRetLink( Link* link );
 
     void init();
+    void makeProgress();
     void send( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag ); 
     void send( const Hermes::MemAddr&, size_t len, MP::RankID dest, uint64_t tag, 
                             MP::Communicator grp );

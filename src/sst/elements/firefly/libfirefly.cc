@@ -22,6 +22,7 @@
 #include <funcSM/fini.h>
 #include <funcSM/rank.h>
 #include <funcSM/size.h>
+#include <funcSM/makeProgress.h>
 #include <funcSM/alltoallv.h>
 #include <funcSM/barrier.h>
 #include <funcSM/allreduce.h>
@@ -83,6 +84,8 @@ static const char * core_port_events[] = { "NicRespEvent", NULL };
 
 static const ElementInfoPort nic_ports[] = {
     {"rtr", "Port connected to the router", nic_port_events},
+    {"read", "Port connected to the detailed model", nic_port_events},
+    {"write", "Port connected to the detailed model", nic_port_events},
     {"core%(num_vNics)d", "Ports connected to the network driver", core_port_events},
     {NULL, NULL, NULL}
 };
@@ -217,6 +220,13 @@ load_hermesSizeSM(Params& params)
 {
     return new SizeFuncSM(params);
 }
+
+static Module*
+load_hermesMakeProgressSM(Params& params)
+{
+    return new MakeProgressFuncSM(params);
+}
+
 
 static Module*
 load_hermesAlltoallvSM(Params& params)
@@ -439,6 +449,14 @@ static const ElementInfoModule modules[] = {
       "Hermes Size Function State Machine",
       NULL,
       load_hermesSizeSM,
+      NULL,
+      funcSMModule_params,
+      "SST::Firefly::FunctionSMInterface"
+    },
+    { "MakeProgress",
+      "Hermes MakeProgress Function State Machine",
+      NULL,
+      load_hermesMakeProgressSM,
       NULL,
       funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"

@@ -241,7 +241,7 @@ void schedComponent::setup()
             schedout.output("Job %d: %lu\n", it->first, it->second);
         }
 
-        schedout.output("ignoreUntilTime: %lu\n", this->ignoreUntilTime);
+        schedout.output("ignoreUntilTime: %llu\n", this->ignoreUntilTime);
 
         schedout.output("The jobs that are still running in ember\n");
         for(std::map<int, std::pair<unsigned long, int>>::iterator iter = emberRunningJobs.begin(); iter != emberRunningJobs.end(); iter++){
@@ -590,7 +590,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
         startNextJob();
     } else if (NULL != sev){ //snapshot event
         //dump snapshot to file
-        schedout.output("%lu:Snapshot event received...Appending snapshot...\n", getCurrentSimTime());        
+        schedout.output("%llu:Snapshot event received...Appending snapshot...\n", getCurrentSimTime());        
         snapshot->append(sev->time, sev->nextJobArrivalTime, sev->runningJobs);
         delete ev;
         unregisterYourself();
@@ -701,7 +701,7 @@ void schedComponent::startJob(Job* job)
         SnapshotEvent *se = new SnapshotEvent(getCurrentSimTime(), job->getJobNum());
         se->runningJobs = runningJobs;
 
-        schedout.output("Taking snapshot as Job %d is starting...\n", job->getJobNum());
+        schedout.output("Taking snapshot as Job %ld is starting...\n", job->getJobNum());
 
         int ii;
         for(ii = (jobNumLastArrived + 1); ii < numJobs; ii++){
@@ -714,10 +714,10 @@ void schedComponent::startJob(Job* job)
         if (ii == numJobs) {
             schedout.output("All jobs have arrived!\n");
         } else {
-            schedout.output("Next Job: %d is arriving at %lu\n", jobs[ii]->getJobNum(), se->nextJobArrivalTime);
+            schedout.output("Next Job: %ld is arriving at %lu\n", jobs[ii]->getJobNum(), se->nextJobArrivalTime);
         }
         selfLink->send(se);
-        schedout.output("%lu: Sent snapshot event to self\n", getCurrentSimTime());
+        schedout.output("%llu: Sent snapshot event to self\n", getCurrentSimTime());
     }
 }
 
