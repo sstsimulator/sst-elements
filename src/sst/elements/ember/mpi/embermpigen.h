@@ -230,7 +230,6 @@ private:
     uint32_t            m_spyplotMode;
     static const char*  m_eventName[];
 
-	//EmberRankMap* 						m_rankMap; //NetworkSim: moved to protected for use in unstructured motif configure
     std::vector< Statistic<uint32_t>* > m_Stats;
     std::map<int32_t, EmberSpyInfo*>*   m_spyinfo;
 };
