@@ -32,6 +32,7 @@ class ProtocolAPI;
         NAME(Fini)  \
         NAME(Rank)   \
         NAME(Size)   \
+        NAME(MakeProgress)   \
         NAME(Barrier)   \
         NAME(Allreduce)   \
         NAME(Reduce)   \

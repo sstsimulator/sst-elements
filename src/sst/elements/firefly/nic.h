@@ -529,12 +529,12 @@ public:
     int getNum_vNics() { return m_num_vNics; }
     void printStatus(Output &out);
 
-    void detailedMemOp( std::vector<DmaVec>& vec, std::string op,
-													Callback callback ) {
+    void detailedMemOp( Thornhill::DetailedCompute* detailed,
+            std::vector<DmaVec>& vec, std::string op, Callback callback ) {
 
         std::deque< std::pair< std::string, SST::Params> > gens;
         m_dbg.verbose(CALL_INFO,1,NIC_DBG_DETAILED_MEM,
-						"%s %" PRIu64 " vectors\n", op.c_str(), vec.size());
+						"%s %zu vectors\n", op.c_str(), vec.size());
 
 		for ( unsigned i = 0; i < vec.size(); i++ ) {
 
@@ -559,7 +559,7 @@ public:
 
 			int opWidth = 8;
 			m_dbg.verbose(CALL_INFO,1,NIC_DBG_DETAILED_MEM,
-				"addr=0x%" PRIx64 " length=%" PRIu64 "\n",
+				"addr=0x%" PRIx64 " length=%zu\n",
 				vec[i].addr,vec[i].length);
 			size_t count = vec[i].length / opWidth;
 			count += vec[i].length % opWidth ? 1 : 0;
@@ -579,10 +579,10 @@ public:
 			params.insert( "max_address", tmp.str() );		
 
 			params.insert( "memOp", op );		
-			#if 0
+            #if 0 
 			params.insert( "generatorParams.verbose", "1" );		
-			params.insert( "verbose", "1" );		
-			#endif
+			params.insert( "verbose", "5" );		
+            #endif
 			
         	gens.push_back( std::make_pair( "miranda.SingleStreamGenerator", params ) );
 		}
@@ -594,16 +594,16 @@ public:
            		callback( );
 				return 0;
 			};
-			m_detailedCompute->start( gens, foo );	
+			detailed->start( gens, foo );	
 		}
 		
 	}
 
     void dmaRead( std::vector<DmaVec>& vec, Callback callback ) {
 
-		if ( m_detailedCompute ) {
+		if ( m_detailedCompute[0] ) {
 			
-			detailedMemOp( vec, "Read", callback );
+			detailedMemOp( m_detailedCompute[0], vec, "Read", callback );
 
 		} else {
 			size_t len = 0;	
@@ -616,9 +616,9 @@ public:
 
     void dmaWrite( std::vector<DmaVec>& vec, Callback callback ) {
 
-		if ( m_detailedCompute ) {
+		if ( m_detailedCompute[1] ) {
 			
-			detailedMemOp( vec, "Write", callback );
+			detailedMemOp( m_detailedCompute[1], vec, "Write", callback );
 
 		} else {
 			size_t len = 0;	
@@ -719,7 +719,7 @@ public:
 
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
-	Thornhill::DetailedCompute* m_detailedCompute;
+    std::vector<Thornhill::DetailedCompute*> m_detailedCompute;
 
     uint16_t m_getKey;
   public:

@@ -239,6 +239,9 @@ void XXX::memEventHandler( Event* ev )
 void XXX::init() {
    	m_processQueuesState->enterInit( (m_memHeapLink) );
 }
+void XXX::makeProgress() {
+   	m_processQueuesState->enterMakeProgress( );
+}
 
 void XXX::sendv( std::vector<IoVec>& ioVec, 
     MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,

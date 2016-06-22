@@ -63,6 +63,7 @@ libfirefly_la_SOURCES = \
 	funcSM/commCreate.h \
 	funcSM/commDestroy.h \
 	funcSM/init.h \
+	funcSM/makeProgress.h \
 	hades.h \
 	hades.h \
 	hades.cc \

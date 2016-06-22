@@ -71,7 +71,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
             ptr += rank * sendChunkSize( rank );
         }
         m_dbg.verbose(CALL_INFO,2,0,"rank %d, buf %p, ptr %p\n", rank, 
-                                    m_event->sendbuf,ptr);
+                                    &m_event->sendbuf,ptr);
 
         return ptr;
     }
@@ -98,7 +98,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
             ptr += rank * recvChunkSize( rank );
         }
         m_dbg.verbose(CALL_INFO,2,0,"rank %d, buf %p, ptr %p\n", rank, 
-                    m_event->recvbuf, ptr);
+                    &m_event->recvbuf, ptr);
 
         return ptr;
     }
