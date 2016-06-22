@@ -22,14 +22,18 @@ topo = 'torus'
 shape = '2'
 
 detailedNodes = [0]
+detailedMotifs = [0]
+detailedNics = [0]
 
 detailedModel = "sandyBridgeModel" 
 detailedModelParams = "sandyBridgeModelParams" 
 
 arguments = 'messagesize=100000 printRank=-1' 
 
-xxx = "Ring computeTime=10998000 " + arguments 
-yyy = "DetailedRing " + arguments 
+detailedMotif = "DetailedRing " + arguments
+#detailedMotif = "DetailedRing computeTime=1000 " + arguments
+
+nonDetailedMotif = "Ring computeTime=1000 " + arguments
 
 def genWorkFlow( defaults, nodeNum = None ):
 
@@ -41,10 +45,10 @@ def genWorkFlow( defaults, nodeNum = None ):
 	workFlow.append( motif )
 
 	motif = dict.copy( defaults )
-	if nodeNum in detailedNodes:
-		motif['cmd'] = yyy 
+	if nodeNum in detailedMotifs:
+		motif['cmd'] = detailedMotif
 	else:
-		motif['cmd'] = xxx
+		motif['cmd'] = nonDetailedMotif
 	workFlow.append( motif )
 
 	motif = dict.copy( defaults )
@@ -64,6 +68,13 @@ def getTopo():
 
 def getPlatform():
 	return platform 
+
+def getPerNicParams(nodeNum):
+    params = {}
+    if nodeNum in detailedNics:
+        params['useDetailed'] = 'True'
+
+    return params
 
 def getDetailedModel():
     return detailedModel,detailedModelParams,detailedNodes

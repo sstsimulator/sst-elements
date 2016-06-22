@@ -58,9 +58,9 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
             double latency = ((totalTime/m_iterations)/size());
             double bandwidth = (double) m_messageSize / latency;
 
-            output("%s total time %.3f us, loop %d, bufLen %d"
+            output("%s rank %d, total time %.3f us, loop %d, bufLen %d"
                     ", latency %.3f us. bandwidth %f GB/s\n",
-                                getMotifName().c_str(),
+                                getMotifName().c_str(), rank(),
                                 totalTime * 1000000.0, m_iterations,
                                 m_messageSize,
                                 latency * 1000000.0,
@@ -69,7 +69,7 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
             if (m_computeFunc) {
                 double computeTime = (double)(m_stopCompute - m_startCompute)/1000000000.0;
 
-                output("%s `%s` total compute %.3f us\n", getMotifName().c_str(),
+                output("%s rank %d, `%s` total compute %.3f us\n", getMotifName().c_str(), rank(),
                     m_computeFunc == &EmberDetailedRingGenerator::computeSimple  ? "Simple": "Detailed" ,
                     computeTime * 1000000.0 );
             }
@@ -100,8 +100,8 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
 
         if ( m_printRank == rank() || -1 == m_printRank ) {
             if ( m_computeTime ) {
-                output("%s 'Simple' computeTime=%" PRIu64" computeWindow=%" PRIu64 "\n",
-                                getMotifName().c_str(),m_computeTime,m_computeWindow);
+                output("%s rank %d, 'Simple' computeTime=%" PRIu64" computeWindow=%" PRIu64 "\n",
+                                getMotifName().c_str(),rank(),m_computeTime,m_computeWindow);
             }
         }
         enQ_getTime( evQ, &m_startTime );

@@ -13,6 +13,9 @@
 
 # numNodes = -1 implies use all nodes on network
 
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+
 numNodes = -1 
 ranksPerNode = 1 
 
@@ -21,15 +24,22 @@ platform = 'defaultParams'
 topo = 'torus'
 shape = '2'
 
-detailedNodes = [1]
+# what nodes that have the detailed models
+detailedNodes = [0]
+
+# what nodes run the detailed motif
+detailedMotifs = [0]
+
+# what nodes use the detailed model
+detailedNics = [0]
 
 detailedModel = "basicDetailedModel" 
 detailedModelParams = "basicDetailedModelParams" 
 
 arguments = 'messagesize=80000 printRank=-1'
 
-xxx = "Ring computeTime=0 " + arguments
-yyy = "DetailedRing " + arguments
+detailedMotif = "DetailedRing " + arguments
+nonDetailedMotif = "Ring " + arguments
 
 def genWorkFlow( defaults, nodeNum = None ):
 
@@ -41,10 +51,10 @@ def genWorkFlow( defaults, nodeNum = None ):
 	workFlow.append( motif )
 
 	motif = dict.copy( defaults )
-	if nodeNum in detailedNodes:
-		motif['cmd'] = yyy 
+	if nodeNum in detailedMotifs:
+		motif['cmd'] = detailedMotif 
 	else:
-		motif['cmd'] = xxx
+		motif['cmd'] = nonDetailedMotif 
 	workFlow.append( motif )
 
 	motif = dict.copy( defaults )
@@ -64,6 +74,13 @@ def getTopo():
 
 def getPlatform():
 	return platform 
+
+def getPerNicParams(nodeNum):
+	params = {}
+	if nodeNum in detailedNics: 
+		params['useDetailed'] = 'True'
+
+	return params 
 
 def getDetailedModel():
     return detailedModel,detailedModelParams,detailedNodes

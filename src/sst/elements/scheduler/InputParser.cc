@@ -55,21 +55,49 @@ JobParser::JobParser(Machine* machine,
         outputDirectory = dir;
     }
 
-    if (*(this->doDetailedNetworkSim)){
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    //NetworkSim: traces for completed/running jobs on ember
+>>>>>>> origin/scheduler
+    if (*(this->doDetailedNetworkSim)){
         //initialize outputDirectory        
         if (NULL == dir) {
-            completedJobTrace = params.find_string("completedJobsTrace").c_str();
-            runningJobTrace = params.find_string("runningJobsTrace").c_str();
+            completedJobTrace = params.find<std::string>("completedJobsTrace").c_str();
+            runningJobTrace = params.find<std::string>("runningJobsTrace").c_str();
         } else {
-            completedJobTrace = outputDirectory + params.find_string("completedJobsTrace").c_str();
-            runningJobTrace = outputDirectory + params.find_string("runningJobsTrace").c_str();
+            completedJobTrace = outputDirectory + params.find<std::string>("completedJobsTrace").c_str();
+            runningJobTrace = outputDirectory + params.find<std::string>("runningJobsTrace").c_str();
         }
+<<<<<<< HEAD
 =======
         completedJobTrace = params.find<std::string>("completedJobsTrace").c_str();
         runningJobTrace = params.find<std::string>("runningJobsTrace").c_str();
 >>>>>>> devel
+=======
+    //NetworkSim: traces for completed/running jobs on ember
+    if (*(this->doDetailedNetworkSim)){
+=======
+    //NetworkSim: traces for completed/running jobs on ember
+    if (*(this->doDetailedNetworkSim)){
+>>>>>>> devel
+        //initialize outputDirectory        
+        if (NULL == dir) {
+            completedJobTrace = params.find<std::string>("completedJobsTrace").c_str();
+            runningJobTrace = params.find<std::string>("runningJobsTrace").c_str();
+        } else {
+            completedJobTrace = outputDirectory + params.find<std::string>("completedJobsTrace").c_str();
+            runningJobTrace = outputDirectory + params.find<std::string>("runningJobsTrace").c_str();
+        }
+<<<<<<< HEAD
+>>>>>>> devel
+=======
+>>>>>>> devel
+=======
+>>>>>>> origin/scheduler
     }
+    //end->NetworkSim
 
     lastJobRead[ 0 ] = '\0';
     
