@@ -58,9 +58,13 @@ JobParser::JobParser(Machine* machine,
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     //NetworkSim: traces for completed/running jobs on ember
 >>>>>>> origin/scheduler
+=======
+    //NetworkSim: traces for completed/running jobs on ember
+>>>>>>> devel
     if (*(this->doDetailedNetworkSim)){
         //initialize outputDirectory        
         if (NULL == dir) {
@@ -70,6 +74,7 @@ JobParser::JobParser(Machine* machine,
             completedJobTrace = outputDirectory + params.find<std::string>("completedJobsTrace").c_str();
             runningJobTrace = outputDirectory + params.find<std::string>("runningJobsTrace").c_str();
         }
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
         completedJobTrace = params.find<std::string>("completedJobsTrace").c_str();
@@ -96,6 +101,8 @@ JobParser::JobParser(Machine* machine,
 >>>>>>> devel
 =======
 >>>>>>> origin/scheduler
+=======
+>>>>>>> devel
     }
     //end->NetworkSim
 
