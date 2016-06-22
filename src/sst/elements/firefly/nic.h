@@ -601,7 +601,7 @@ public:
 
     void dmaRead( std::vector<DmaVec>& vec, Callback callback ) {
 
-		if ( m_detailedCompute[0] ) {
+		if ( m_useDetailedCompute && m_detailedCompute[0] ) {
 			
 			detailedMemOp( m_detailedCompute[0], vec, "Read", callback );
 
@@ -616,7 +616,7 @@ public:
 
     void dmaWrite( std::vector<DmaVec>& vec, Callback callback ) {
 
-		if ( m_detailedCompute[1] ) {
+		if ( m_useDetailedCompute && m_detailedCompute[1] ) {
 			
 			detailedMemOp( m_detailedCompute[1], vec, "Write", callback );
 
@@ -720,6 +720,7 @@ public:
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
     std::vector<Thornhill::DetailedCompute*> m_detailedCompute;
+	bool m_useDetailedCompute;
 
     uint16_t m_getKey;
   public:
