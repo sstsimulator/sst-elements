@@ -152,7 +152,7 @@ void Bus::configureLinks() {
             highNetPorts_.push_back(link);
             numHighNetPorts_++;
             linkIdMap_[highNetPorts_[i]->getId()] = highNetPorts_[i];
-            dbg_.output(CALL_INFO, "Port %lu = Link %d\n", highNetPorts_[i]->getId(), i);
+            dbg_.output(CALL_INFO, "Port %d = Link %d\n", i, highNetPorts_[i]->getId());
         }
     }
     
@@ -165,7 +165,7 @@ void Bus::configureLinks() {
             lowNetPorts_.push_back(link);
             numLowNetPorts_++;
             linkIdMap_[lowNetPorts_[i]->getId()] = lowNetPorts_[i];
-            dbg_.output(CALL_INFO, "Port %lu = Link %d\n", lowNetPorts_[i]->getId(), i);
+            dbg_.output(CALL_INFO, "Port %d = Link %d\n", i, lowNetPorts_[i]->getId());
         }
     }
     if (numLowNetPorts_ < 1 || numHighNetPorts_ < 1) dbg_.fatal(CALL_INFO, -1,"couldn't find number of Ports (numPorts)\n");

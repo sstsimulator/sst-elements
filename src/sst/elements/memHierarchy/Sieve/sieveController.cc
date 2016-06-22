@@ -199,7 +199,7 @@ void Sieve::outputStats(int marker) {
         if (counts.first == 0 && counts.second == 0)
             continue;
         double density = double(counts.first + counts.second) / double(ev->getAllocateLength());
-        output_file->output(CALL_INFO, "%#" PRIx64 " %#" PRIu64 " %" PRId64 " %" PRId64 " %" PRId64 " %.3f\n", 
+        output_file->output(CALL_INFO, "%#" PRIx64 " %" PRIu64 " %" PRId64 " %" PRId64 " %" PRId64 " %.3f\n", 
 			    ev->getVirtualAddress(), 
 			    ev->getInstructionPointer(), 
 			    ev->getAllocateLength(),
