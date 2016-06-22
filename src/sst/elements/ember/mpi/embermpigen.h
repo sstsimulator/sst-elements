@@ -220,13 +220,8 @@ protected:
 									Communicator, MessageRequest* req );
 	inline void enQ_irecv( Queue&, uint32_t src, uint32_t nBytes, int tag,
 									Communicator, MessageRequest* req );
-<<<<<<< HEAD
-    EmberRankMap*                         m_rankMap;
-    
-=======
     EmberRankMap*                       m_rankMap;
 
->>>>>>> devel
 private:
 
     void updateSpyplot( RankID remoteRank, size_t bytesSent );
