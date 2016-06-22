@@ -261,7 +261,7 @@ void LinkControl::init(unsigned int phase)
         break;
     }
     // Need to start the timer for links that never send data
-    idle_start = parent->getCurrentSimTimeNano();
+    idle_start = Simulation::getSimulation()->getCurrentSimCycle();
     is_idle = true;
 }
 
@@ -269,7 +269,7 @@ void LinkControl::init(unsigned int phase)
 void LinkControl::finish(void)
 {
     if (is_idle) {
-        idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+        idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
         is_idle = false;
     }
     // Clean up all the events left in the queues.  This will help
@@ -447,7 +447,7 @@ void LinkControl::handle_input(Event* ev)
 
         input_buf[actual_vn].push(event);
         if (is_idle) {
-            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
         if ( event->request->getTraceType() == SimpleNetwork::Request::FULL ) {
@@ -542,7 +542,7 @@ void LinkControl::handle_output(Event* ev)
         rtr_credits[vn_to_send] -= size;
 
 		if (is_idle){
-            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
         // printf("%d: Sending packet to %llu on VN: %d",id, send_event->request->dest, send_event->request->vn);
@@ -584,12 +584,12 @@ void LinkControl::handle_output(Event* ev)
         waiting = true;
         // Begin counting the amount of time this port was idle
         if (!have_packets && !is_idle) {
-            idle_start = parent->getCurrentSimTimeNano();
+            idle_start = Simulation::getSimulation()->getCurrentSimCycle();
             is_idle = true;
         }
 		// Should be in a stalled state rather than idle
 		if (have_packets && is_idle){
-            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
     }
