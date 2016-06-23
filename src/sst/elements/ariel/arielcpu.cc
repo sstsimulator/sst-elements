@@ -15,7 +15,7 @@
 #include "arielcpu.h"
 
 #include <signal.h>
-#ifndef TARGET_MAC_OS
+#if !defined(SST_COMPILE_MACOSX)
 #include <sys/prctl.h>
 #endif
 #include <sys/types.h>
@@ -457,7 +457,7 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 	            		unsetenv("DYLD_LIBRARY_PATH");
 	       	 	}
 #endif
-#ifndef TARGET_MAC_OS
+#if !defined(SST_COMPILE_MACOSX)
                         prctl(PR_SET_PTRACER, getppid(), 0, 0 ,0);
 #endif
 			int ret_code = execvp(app, args);
