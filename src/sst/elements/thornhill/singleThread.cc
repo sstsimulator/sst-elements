@@ -23,25 +23,16 @@ using namespace SST::Miranda;
 using namespace SST::Thornhill;
 
 SingleThread::SingleThread( Component* owner, 
-        Params& params, std::string name )
+        Params& params )
         : DetailedCompute( owner ), m_link(NULL)
 {
-    std::stringstream linkName; 
+    std::string portName = params.find<std::string>( "portName", "detailed0" );
     
-    int id = 0;
-    linkName << "detailed" << id;
-    while ( owner->isPortConnected( linkName.str() ) ) {
-        if ( m_link ) {
-            Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO,1,
-                        "Thornhill::SingleTread() more than 1 link detected\n");
-        }
-        m_link = configureLink( linkName.str(), "0ps", 
+    if ( owner->isPortConnected( portName.c_str() ) ) {
+        m_link = configureLink( portName.c_str(), "0ps", 
             new Event::Handler<SingleThread>(
                     this,&SingleThread::eventHandler ) ); 
         assert(m_link);
-		linkName.str("");
-		linkName.clear();
-        linkName << "detailed"<< ++id;
     }
 }
 

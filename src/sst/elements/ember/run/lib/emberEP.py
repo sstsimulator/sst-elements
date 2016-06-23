@@ -19,9 +19,10 @@ import myprint
 
 pp = pprint.PrettyPrinter(indent=4)
 
-def foo( ep, detailedModel, rank ):
+def foo( ep, nodeID, detailedModel, rank ):
     links = detailedModel.getThreadLinks( rank )
     cpuNum = 0
+    print 'EmberEP: node {0} connect {1} threads'.format(nodeID, len(links))
     for link in links: 
        ep.addLink(link,"detailed"+str(cpuNum),"1ps")
        cpuNum = cpuNum + 1
@@ -50,8 +51,12 @@ class EmberEP( EndPoint ):
         detailed = emberConfig.getDetailed(nodeID)
 
         if detailed:
-            detailed.build(nodeID,ranksPerNode)
-            nic.addLink( detailed.getNicLink( ), "detailed0", "1ps" )
+            detailed.build(nodeID,ranksPerNode) 
+
+            read, write = detailed.getNicLink( )
+            print 'EmberEP: node {0} connect NIC'.format(nodeID)
+            nic.addLink( read, "read", "1ps" )
+            nic.addLink( write, "write", "1ps" )
 
             memory = sst.Component("memory" + str(nodeID), "thornhill.MemoryHeap")
             memory.addParam( "nid", nodeID )
@@ -67,7 +72,7 @@ class EmberEP( EndPoint ):
             #myprint.printParams( 'EmberParams:', emberParams ) 
 
             if detailed:
-				foo( ep, detailed, x )
+				foo( ep, nodeID, detailed, x )
 
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
             nicLink.setNoCut()

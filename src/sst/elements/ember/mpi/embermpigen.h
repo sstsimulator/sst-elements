@@ -23,6 +23,7 @@
 #include "emberMPIEvent.h"
 #include "emberconstdistrib.h"
 #include "emberinitev.h"
+#include "embermakeprogressev.h"
 #include "emberfinalizeev.h"
 #include "emberalltoallvev.h"
 #include "emberalltoallev.h"
@@ -126,6 +127,8 @@ protected:
     inline void enQ_init( Queue& );
     inline void enQ_rank( Queue&, Communicator, uint32_t* rankPtr);
     inline void enQ_size( Queue&, Communicator, int* sizePtr);
+    inline void enQ_makeProgress( Queue& );
+
 
     inline void enQ_send( Queue&, Addr payload, uint32_t count,
         PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group);
@@ -227,7 +230,6 @@ private:
     uint32_t            m_spyplotMode;
     static const char*  m_eventName[];
 
-	//EmberRankMap* 						m_rankMap; //NetworkSim: moved to protected for use in unstructured motif configure
     std::vector< Statistic<uint32_t>* > m_Stats;
     std::map<int32_t, EmberSpyInfo*>*   m_spyinfo;
 };
@@ -274,6 +276,12 @@ void EmberMessagePassingGenerator::enQ_size( Queue& q, Communicator comm,
                                     m_Stats[Size], comm, sizePtr ) );
 }
 
+void EmberMessagePassingGenerator::enQ_makeProgress( Queue& q )
+{
+    q.push( new EmberMakeProgressEvent( *cast(m_api), &getOutput(),
+                                    m_Stats[Init] ) );
+}
+
 void EmberMessagePassingGenerator::enQ_send( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag,
     Communicator group)
@@ -289,7 +297,7 @@ void EmberMessagePassingGenerator::enQ_send( Queue& q,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag,
     Communicator group)
 {
-	verbose(CALL_INFO,2,0,"payload=%p dest=%d tag=%#x\n",payload, dest, tag);
+	verbose(CALL_INFO,2,0,"payload=0x%" PRIx64 " dest=%d tag=%#x\n",(uint64_t) &payload, dest, tag);
     q.push( new EmberSendEvent( *cast(m_api), &getOutput(), m_Stats[Send],
 		payload, count, dtype, dest, tag, group ) );
 
@@ -321,7 +329,7 @@ void EmberMessagePassingGenerator::enQ_isend( Queue& q,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, 
     Communicator group, MessageRequest* req )
 {
-	verbose(CALL_INFO,2,0,"payload=%p dest=%d tag=%#x req=%p\n",payload, dest, tag, req );
+	verbose(CALL_INFO,2,0,"payload=0x%" PRIx64" dest=%d tag=%#x req=%p\n",(uint64_t)&payload, dest, tag, req );
     q.push( new EmberISendEvent( *cast(m_api), &getOutput(), m_Stats[Isend],
         payload, count, dtype, dest, tag, group, req ) );
     

@@ -64,6 +64,14 @@ class SizeStartEvent : public Event {
     NotSerializable(SizeStartEvent)
 };
 
+class MakeProgressStartEvent : public Event {
+  public:
+    MakeProgressStartEvent()
+    { }
+    
+    NotSerializable(InitStartEvent)
+};
+
 class BarrierStartEvent : public Event {
   public:
     BarrierStartEvent( MP::Communicator _group ) :

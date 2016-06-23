@@ -77,12 +77,13 @@ class SandyBridgeModel(DetailedModel):
 
         prefix = "sandyBridgeModel_node" + str(nodeID) + "_"
 
-        cpuL1s, nicL1 = snb.configure(prefix,self.params)
+        cpuL1s, nicL1_read, nicL1_write = snb.configure(prefix,self.params)
 
         self.links.append( self._createThreads( prefix, cpuL1s, self.params['cpu_params']  ) )
 
-            
-        self.nicLink = self._createNic( prefix, nicL1, self.params['nic_cpu_params']) 
+        self.nicLink = []
+        self.nicLink.append( self._createNic( prefix + 'read', nicL1_read, self.params['nic_cpu_params'] ) )
+        self.nicLink.append( self._createNic( prefix + 'write', nicL1_write, self.params['nic_cpu_params'] ) )
 
         return True 
 
@@ -92,7 +93,7 @@ class SandyBridgeModel(DetailedModel):
 
     def getNicLink(self ):
         #print 'SandyBridgeModel.getNicLink()' 
-        return self.nicLink 
+        return self.nicLink[0], self.nicLink[1] 
 
 def getModel(params):
     return SandyBridgeModel(params)

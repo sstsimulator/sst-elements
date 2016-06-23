@@ -71,6 +71,7 @@ class XXX  {
     Thornhill::MemoryHeapLink& memHeap() { return *m_memHeapLink; }
 
     void init();
+    void makeProgress();
     void sendv( std::vector<IoVec>&,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, CommReq* );

@@ -85,9 +85,7 @@ class EmberConfig(componentConfig.ComponentConfig):
 		extra['hermesParams.netMapSize'] = \
 			loadUtils.calcNetMapSize( self.jobInfo.getNidlist() ) 
 	
-		tmp = loadUtils.getMotifParams( self.jobInfo.genWorkFlow( nodeNum ) )
-
-		extra.update( tmp )
+		extra.update( loadUtils.getMotifParams( self.jobInfo.genWorkFlow( nodeNum ) ) )
 
 		return extra
 
