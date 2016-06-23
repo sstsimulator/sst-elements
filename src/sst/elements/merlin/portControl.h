@@ -101,6 +101,11 @@ private:
     // If the buffer was empty we instantiate this to the current time
     SimTime_t idle_start;
 
+	// Tells us whether the link was in an idle state.
+	// Used to let us know when we need to record an idle window
+	// as a statistic.
+	bool is_idle;
+
     // Vairable to tell us if we are waiting for something to happen
     // before we begin more output.  The two things we are waiting on
     // is: 1 - adding new data to output buffers, or 2 - getting

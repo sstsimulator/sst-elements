@@ -30,6 +30,8 @@ LinkControl::LinkControl(Component* parent, Params &params) :
     rr(0), input_buf(NULL), output_buf(NULL),
     rtr_credits(NULL), in_ret_credits(NULL),
     curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
+    idle_start(0),
+    is_idle(true),
     receiveFunctor(NULL), sendFunctor(NULL),
     network_initialized(false),
     output(Simulation::getSimulation()->getSimulationOutput())
@@ -103,6 +105,7 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
     packet_latency = registerStatistic<uint64_t>("packet_latency");
     send_bit_count = registerStatistic<uint64_t>("send_bit_count");
     output_port_stalls = registerStatistic<uint64_t>("output_port_stalls");
+    idle_time = registerStatistic<uint64_t>("idle_time");
     
     return true;
 }
@@ -257,11 +260,18 @@ void LinkControl::init(unsigned int phase)
         }
         break;
     }
+    // Need to start the timer for links that never send data
+    idle_start = Simulation::getSimulation()->getCurrentSimCycle();
+    is_idle = true;
 }
 
 
 void LinkControl::finish(void)
 {
+    if (is_idle) {
+        idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+        is_idle = false;
+    }
     // Clean up all the events left in the queues.  This will help
     // track down real memory leaks as all this events won't be in the
     // way.
@@ -436,6 +446,10 @@ void LinkControl::handle_input(Event* ev)
         // std::cout << std::endl;
 
         input_buf[actual_vn].push(event);
+        if (is_idle) {
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+            is_idle = false;
+        }
         if ( event->request->getTraceType() == SimpleNetwork::Request::FULL ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Received and event on LinkControl in NIC: %s"
                           " on VN %d from src %" PRIu64 "\n",
@@ -527,6 +541,10 @@ void LinkControl::handle_output(Event* ev)
         // Subtract credits
         rtr_credits[vn_to_send] -= size;
 
+		if (is_idle){
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+            is_idle = false;
+        }
         // printf("%d: Sending packet to %llu on VN: %d",id, send_event->request->dest, send_event->request->vn);
         // std::cout << std::endl;
 
@@ -564,6 +582,16 @@ void LinkControl::handle_output(Event* ev)
         // std::cout << "Waiting ..." << std::endl;
         start_block = Simulation::getSimulation()->getCurrentSimCycle();
         waiting = true;
+        // Begin counting the amount of time this port was idle
+        if (!have_packets && !is_idle) {
+            idle_start = Simulation::getSimulation()->getCurrentSimCycle();
+            is_idle = true;
+        }
+		// Should be in a stalled state rather than idle
+		if (have_packets && is_idle){
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+            is_idle = false;
+        }
     }
 }
 
