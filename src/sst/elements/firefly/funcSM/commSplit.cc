@@ -54,7 +54,7 @@ void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     MP::PayloadDataType datatype = MP::INT;
 
-    m_dbg.verbose(CALL_INFO,1,0,"send=%p recv=%p\n",m_sendbuf,m_recvbuf);
+    m_dbg.verbose(CALL_INFO,1,0,"send=%p recv=%p\n",&m_sendbuf,&m_recvbuf);
 
     GatherStartEvent* tmp = new GatherStartEvent( m_sendbuf, 2,
            datatype, m_recvbuf, 2, datatype, m_commSplitEvent->oldComm );

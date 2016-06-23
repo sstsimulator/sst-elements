@@ -333,6 +333,9 @@ void ArielCPU::init(unsigned int phase)
 {
     if ( phase == 0 ) {
         output->verbose(CALL_INFO, 1, 0, "Launching PIN...\n");
+        // Init the child_pid = 0, this prevents problems in emergencyShutdown()
+        // if forkPINChild() calls fatal (i.e. the child_pid would not be set)
+        child_pid = 0;
         child_pid = forkPINChild(appLauncher.c_str(), execute_args, execute_env);
         output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.  Waiting for child to attach.\n");
 
@@ -395,23 +398,49 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 	the_child = fork();
     if ( the_child < 0 ) {
         perror("fork");
-        output->fatal(CALL_INFO, 1, "Fork failed to launch the traced process.\n");
+        output->fatal(CALL_INFO, 1, "Fork failed to launch the traced process. errno = %d\n", errno);
     }
 
 	if(the_child != 0) {
+	    // Set the member variable child_pid in case the waitpid() below fails
+	    // this allows the fatal process to kill the process and prevent it 
+	    // from becoming a zombie process.  Because as we all know, zombies are 
+	    // bad and eat your brains...
+	    child_pid = the_child;
+	    
 		// This is the parent, return the PID of our child process
         /* Wait a second, and check to see that the child actually started */
         sleep(1);
         int pstat;
         pid_t check = waitpid(the_child, &pstat, WNOHANG);
         if ( check > 0 ) {
-            output->fatal(CALL_INFO, 1,
-                    "Launching trace child failed!  Exited with status %d\n",
-                    WEXITSTATUS(pstat));
+            // The child process is Stopped or Terminated.
+            // Ther are 3 possible results
+            if (WIFEXITED(pstat) == true) {
+                output->fatal(CALL_INFO, 1,
+                        "Launching trace child failed!  Child Exited with status %d\n",
+                        WEXITSTATUS(pstat));
+            }
+            else if (WIFSIGNALED(pstat) == true) {
+                output->fatal(CALL_INFO, 1,
+                        "Launching trace child failed!  Child Terminated With Signal %d; Core Dump File Created = %d\n",
+                        WTERMSIG(pstat), WCOREDUMP(pstat));
+            }
+            else if (WIFSTOPPED(pstat) == true) {
+                output->fatal(CALL_INFO, 1,
+                        "Launching trace child failed!  Child Stopped with Signal  %d\n",
+                        WSTOPSIG(pstat));
+            }
+            else { 
+                output->fatal(CALL_INFO, 1,
+                    "Launching trace child failed!  Unknown Problem; pstat = %d\n",
+                    pstat);
+            }
+            
         } else if ( check < 0 ) {
             perror("waitpid");
             output->fatal(CALL_INFO, 1,
-                    "Waitpid returned an error.  Did the child ever even start?\n");
+                    "Waitpid returned an error, errno = %d.  Did the child ever even start?\n", errno);
         }
 		return (int) the_child;
 	} else {
@@ -512,7 +541,10 @@ ArielCPU::~ArielCPU() {
 void ArielCPU::emergencyShutdown() {
     tunnel->shutdown(true);
     unlink(shmem_region_name);
-    kill(child_pid, SIGKILL);
+    // If child_pid = 0, dont kill (this would kill all processes of the group)
+    if (child_pid != 0) {
+        kill(child_pid, SIGKILL);
+    }
 
     /* Ask the cores to finish up.  This should flush logging */
 	for(uint32_t i = 0; i < core_count; ++i) {

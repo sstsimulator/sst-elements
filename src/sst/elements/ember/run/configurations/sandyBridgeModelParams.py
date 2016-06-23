@@ -35,7 +35,7 @@ mem_interleave_size = 4096  # Do 4K page level interleaving
 memory_capacity = 16384     # Size of memory in MBs
 
 
-num_routers = groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) + 1
+num_routers = groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) + 2 
 
 l1_prefetch_params = {
 }

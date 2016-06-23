@@ -39,4 +39,4 @@ job = jobInfo.JobInfo( 0, jobConfig.getNumNodes(), jobConfig.getRanksPerNode(),
 		jobConfig.genWorkFlow ) 
 job.setDetailed( jobConfig.getDetailedModel() )
 
-emberLoadBase.run( opts, platParams, topo, shape, [job] )
+emberLoadBase.run( opts, platParams, topo, shape, [job], jobConfig.getPerNicParams )

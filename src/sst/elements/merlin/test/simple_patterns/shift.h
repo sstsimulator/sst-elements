@@ -53,7 +53,6 @@ private:
     SST::Interfaces::SimpleNetwork* link_control;
 
     int remap;
-    SST::Interfaces::SimpleNetwork::Mapping net_map;
 
     Output& output;
     

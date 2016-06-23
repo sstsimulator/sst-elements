@@ -82,6 +82,7 @@ class Interface : public Hermes::Interface {
     virtual void fini(Functor*) {}
     virtual void rank(Communicator group, RankID* rank, Functor*) {}
     virtual void size(Communicator group, int* size, Functor*) {}
+    virtual void makeProgress(Functor*) {}
 
     virtual void send(const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, 
         RankID dest, uint32_t tag, Communicator group, 
