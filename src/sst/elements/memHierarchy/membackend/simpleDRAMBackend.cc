@@ -57,14 +57,6 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : MemBackend(comp, param
     output = new Output("SimpleDRAM[@p:@l]: ", 10, 0, Output::STDOUT);  // TODO if we start using this for output other than fatal messages, add verbose parameter
 
     // Check parameters
-    // Latencies must be 0 or more
-    if (tCAS < 0) 
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): tCAS - must be a positive integer number of cycles. You specified %d.\n", ctrl->getName().c_str(), tCAS);
-    if (tRP < 0) 
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): tRP - must be a positive integer number of cycles. You specified %d.\n", ctrl->getName().c_str(), tRP);
-    if (tRCD < 0) 
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): tRCD - must be a positive integer number of cycles. You specified %d.\n", ctrl->getName().c_str(), tRCD);
-
     // Supported policies are 'open', 'closed' or 'dynamic'
     if (policyStr != "closed" && policyStr != "open") {
         output->fatal(CALL_INFO, -1, "Invalid param(%s): row_policy - must be 'closed' or 'open'. You specified '%s'.\n", ctrl->getName().c_str(), policyStr.c_str());

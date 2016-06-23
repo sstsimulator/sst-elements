@@ -82,7 +82,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     }
     const uint64_t backendRamSizeMB = params.find<uint64_t>("backend.mem_size", 0, found);
     if (!found) {
-        out.fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified (in MiBs)\n");
+        out.fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified (in MiBs)\n", getName().c_str());
     }
 
     rangeStart_             = params.find<Addr>("range_start", 0);
@@ -136,7 +136,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
     // Check protocol string - note this is only used if directory controller is not present in system to ensure LLC gets the right permissions
     if (protocolStr != "MESI" && protocolStr != "mesi" && protocolStr != "msi" && protocolStr != "MSI" && protocolStr != "none" && protocolStr != "NONE") {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): protocol - must be one of 'MESI', 'MSI', or 'NONE'. You specified '%s'\n", protocolStr.c_str());
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): protocol - must be one of 'MESI', 'MSI', or 'NONE'. You specified '%s'\n", getName().c_str(), protocolStr.c_str());
     }
     // Convert into MBs
     memSize_ = backendRamSizeMB * (1024*1024ul);
