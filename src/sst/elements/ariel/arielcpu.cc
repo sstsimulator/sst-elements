@@ -15,6 +15,7 @@
 #include "arielcpu.h"
 
 #include <signal.h>
+#include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -425,6 +426,7 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 	            		unsetenv("DYLD_LIBRARY_PATH");
 	       	 	}
 #endif
+                        prctl(PR_SET_PTRACER, getppid(), 0, 0 ,0);
 			int ret_code = execvp(app, args);
 			perror("execve");
 
