@@ -881,6 +881,13 @@ class TrafficGenEndPoint(EndPoint):
         elif _params["PacketDest:pattern"] == "Binomial":
             self.nicKeys.append("PacketDest:Binomial:Mean")
             self.nicKeys.append("PacketDest:Binomial:Sigma")
+        elif _params["PacketDest:pattern"] == "Exponential":
+            self.nicKeys.append("PacketDest:Exponential:Lambda")
+        elif _params["PacketDest:pattern"] == "Uniform":
+            pass
+        else:
+            print "Unknown pattern" + _params["PacketDest:pattern"]
+            sys.exit(1)
 
     def build(self, nID, extraKeys):
         nic = sst.Component("TrafficGen.%d"%nID, "merlin.trafficgen")
