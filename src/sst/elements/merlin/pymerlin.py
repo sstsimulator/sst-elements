@@ -885,6 +885,7 @@ class TrafficGenEndPoint(EndPoint):
     def build(self, nID, extraKeys):
         nic = sst.Component("TrafficGen.%d"%nID, "merlin.trafficgen")
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
+        nic.addParams(_params.subset(self.nicKeys))
         nic.addParams(_params.subset(extraKeys, {}))
         #for k in self.optionalKeys:
         #    if k in _params:
