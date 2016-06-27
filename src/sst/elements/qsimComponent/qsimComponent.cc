@@ -10,7 +10,6 @@
 // distribution.
 
 #include "sst_config.h"
-#include "sst/core/serialization.h"
 #include "qsimComponent.h"
 
 #include <sst/core/params.h>
@@ -35,7 +34,6 @@ public:
   uint8_t vec;
 
 private:
-  friend class boost::serialization::access;
   IPIEvent() {}
   
   void serialize_order(SST::Core::Serialization::serializer &ser) {
@@ -259,9 +257,6 @@ int qsimComponent::magic_cb(int c, uint64_t a) {
 
   return 0;
 }
-
-BOOST_CLASS_EXPORT(SST::QsimComponent::IPIEvent);
-BOOST_CLASS_EXPORT(SST::QsimComponent::qsimComponent);
 
 static Component* create_qsimComponent(ComponentId_t id, Params &p) {
   return new qsimComponent(id, p);
