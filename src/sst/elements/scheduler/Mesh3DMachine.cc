@@ -17,6 +17,7 @@
 #include "output.h"
 
 #include <sstream>
+#include <cmath>
 
 using namespace SST::Scheduler;
 
