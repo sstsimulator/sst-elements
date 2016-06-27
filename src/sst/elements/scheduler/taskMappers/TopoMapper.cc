@@ -18,6 +18,7 @@
 #endif
 #include "Rcm.h"
 
+#include <assert.h>
 #include <climits>
 #include <numeric>
 #include <vector>
