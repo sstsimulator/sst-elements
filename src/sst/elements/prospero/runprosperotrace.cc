@@ -156,7 +156,7 @@ int main(int argc, char* argv[]) {
 		} else {
 			prosParams.push_back(pinToolMarker);
 			char* ompThreadCount = (char*) malloc(sizeof(char) * 8);
-			sprintf(ompThreadCount, "%d", getenv("OMP_NUM_THREADS"));
+			sprintf(ompThreadCount, "%s", getenv("OMP_NUM_THREADS"));
 			prosParams.push_back(ompThreadCount);
 		}
 	}
@@ -194,34 +194,31 @@ int main(int argc, char* argv[]) {
 		}
 
 	} else {
-		printf("IN THE ZERO CASE!\n");
-
 		appParams.push_back(NULL);
 
-		char** paramsArray = (char**) malloc(sizeof(char*) * (appParams.size() + prosParams.size()));
-		int nextParamsArray = 0;
+		std::vector<char*> execParams;
 
-		for(auto i = 0; i < appParams.size(); ++i) {
-			printf("Iteration: %d [%s]\n", i, appParams[i]);
+		execParams.push_back(appParams[0]);
+		execParams.push_back("-injection");
+		execParams.push_back("dynamic");
 
+		for(auto i = 1; i < appParams.size(); ++i) {
 			// Before we copy in the application parameters, we need to copy in the
 			// the options for the tool itself
 			if( (NULL != appParams[i]) && (std::strcmp(appParams[i], "--") == 0) ) {
 				for(auto j = 0; j < prosParams.size(); j++) {
-					paramsArray[nextParamsArray] = prosParams[j];
-					nextParamsArray++;
+					execParams.push_back(prosParams[j]);
 				}
 			}
 
-			paramsArray[nextParamsArray] = appParams[i];
-			nextParamsArray++;
+			execParams.push_back(appParams[i]);
 		}
 
 		printf("Prospero will run the tracing command:\n");
 
-		for(auto i = 0; i < (appParams.size() + prosParams.size()); ++i) {
-			if(NULL != paramsArray[i]) {
-				printf("%s ", paramsArray[i]);
+		for(auto nextExecParam : execParams) {
+			if( NULL != nextExecParam ) {
+				printf("%s ", nextExecParam);
 			} else {
 				printf("(NULL) ");
 			}
@@ -229,10 +226,8 @@ int main(int argc, char* argv[]) {
 
 		printf("\n");
 
-		int executeRC = execvp(PROSPERO_STRINGIZE(PINTOOL_EXECUTABLE), paramsArray);
+		int executeRC = execvp(PROSPERO_STRINGIZE(PINTOOL_EXECUTABLE), &execParams[0]);
 		printf("Executing application returns %d.\n", executeRC);
-
-		free(paramsArray);
 	}
 
 	return 0;
