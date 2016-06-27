@@ -1,0 +1,88 @@
+# -*- Makefile -*-
+#
+#
+
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
+	$(PYTHON_CPPFLAGS) $(CPPFLAGS) \
+	-I$(top_srcdir)/src
+
+compdir = $(pkglibdir)
+comp_LTLIBRARIES = libmerlin.la
+
+libmerlin_la_SOURCES = \
+	merlin.h \
+	merlin.cc \
+	router.h \
+	linkControl.h \
+	linkControl.cc \
+	portControl.h \
+	portControl.cc \
+	reorderLinkControl.h \
+	reorderLinkControl.cc \
+	bridge.h \
+	bridge.cc \
+	test/nic.h \
+	test/nic.cc \
+	test/route_test/route_test.h \
+	test/route_test/route_test.cc \
+	test/pt2pt/pt2pt_test.h \
+	test/pt2pt/pt2pt_test.cc \
+	test/bisection/bisection_test.h \
+	test/bisection/bisection_test.cc \
+	test/simple_patterns/shift.h \
+	test/simple_patterns/shift.cc \
+	topology/torus.h \
+	topology/torus.cc \
+	topology/mesh.h \
+	topology/mesh.cc \
+	topology/fattree.h \
+	topology/fattree.cc \
+	topology/dragonfly.h \
+	topology/dragonfly.cc \
+	topology/dragonfly2.h \
+	topology/dragonfly2.cc \
+	topology/singlerouter.h \
+	topology/singlerouter.cc \
+	hr_router/hr_router.h \
+	hr_router/hr_router.cc \
+	hr_router/xbar_arb_age.h \
+	hr_router/xbar_arb_lru.h \
+	hr_router/xbar_arb_lru_infx.h \
+	hr_router/xbar_arb_rand.h \
+	hr_router/xbar_arb_rr.h \
+	trafficgen/trafficgen.h \
+	trafficgen/trafficgen.cc \
+	inspectors/circuitCounter.h \
+	inspectors/circuitCounter.cc \
+	inspectors/testInspector.cc \
+	inspectors/testInspector.h \
+	pymodule.h \
+	pymodule.c \
+	pymerlin.py
+
+sstdir = $(includedir)/sst/elements/merlin
+nobase_sst_HEADERS = \
+	linkControl.h \
+	router.h
+
+libmerlin_la_LDFLAGS = -module -avoid-version $(PYTHON_LDFLAGS)
+
+BUILT_SOURCES = pymerlin.inc
+
+# This sed script converts 'od' output to a comma-separated list of byte-
+# values, suitable for #include'ing into an array definition.
+# This can be done much more simply with xxd or hexdump, but those tools
+# are not installed by default on all supported platforms.
+#
+# od:	-v:		Print all data
+#		-t x1:	Print as byte-values, in hex
+# sed:	Script 1:  Remove base-address column from od output
+# 		Script 2:  Remove trailing blank line resulting from script 1
+# 		Script 3:  Add '0x' prefix, and ',' suffix to each value
+%.inc: %.py
+	od -v -t x1 < $< | sed -e 's/^[^ ]*[ ]*//g' -e '/^\s*$$/d' -e 's/\([0-9a-f]*\)[ $$]*/0x\1,/g' > $@
+
+clean-local: clean-local-check
+.PHONY: clean-local-check
+clean-local-check:
+	-rm -rf pymerlin.inc
