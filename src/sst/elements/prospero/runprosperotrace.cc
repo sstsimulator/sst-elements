@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
 
 		execParams.push_back(appParams[0]);
 		execParams.push_back("-injection");
-		execParams.push_back("dynamic");
+		execParams.push_back("child");
 
 		for(auto i = 1; i < appParams.size(); ++i) {
 			// Before we copy in the application parameters, we need to copy in the
