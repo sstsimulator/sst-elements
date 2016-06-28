@@ -37,12 +37,13 @@ private:
     PyEvent_t *pyE;
 	PyEvent() {} // For serialization only
 
-public:	
+public:
     void serialize_order(SST::Core::Serialization::serializer &ser) {
         Event::serialize_order(ser);
+        // TODO:  Serialize pyE
     }
-    
-    ImplementSerializable(SST::PyProtoNS::PyEvent);     
+
+    ImplementSerializable(SST::PyProtoNS::PyEvent);
 };
 
 
