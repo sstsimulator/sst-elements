@@ -11,6 +11,9 @@
 
 
 #include <sst_config.h>
+
+#include <limits>
+
 #include "membackend/pagedMultiBackend.h"
 #include "sst/core/rng/mersenne.h"
 #include "sst/core/timeLord.h" // is this allowed?
@@ -313,7 +316,7 @@ void pagedMultiMemory::do_LFU(DRAMReq *req, pageInfo &page, bool &inFast, bool &
             if (maxFastPages > 0) {
 	      if(page.touched > lastMin) {
                 // we're full, search for someone to bump
-	        lastMin = UINT_MAX;
+	        lastMin = std::numeric_limits<uint>::max(); // UINT_MAX;
 	        const auto endP = pageMap.end();
                 bool found = 0;
                 for (auto p = pageMap.begin(); p != endP; ++p) {
