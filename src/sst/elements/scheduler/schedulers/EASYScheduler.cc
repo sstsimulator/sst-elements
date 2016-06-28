@@ -22,7 +22,8 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <stdio.h>
+#include <cstdio>
+#include <cmath>
 
 #include <iostream> //debug
 

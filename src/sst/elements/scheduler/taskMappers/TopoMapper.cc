@@ -18,10 +18,11 @@
 #endif
 #include "Rcm.h"
 
-#include <assert.h>
+#include <cassert>
 #include <climits>
 #include <numeric>
 #include <vector>
+#include <cmath>
 
 #include "AllocInfo.h"
 #include "Job.h"

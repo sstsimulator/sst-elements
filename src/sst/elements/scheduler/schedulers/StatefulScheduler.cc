@@ -19,8 +19,9 @@
 
 #include <functional>
 #include <set>
-#include <stdio.h>
+#include <cstdio>
 #include <string>
+#include <cmath>
 
 #include "Job.h"
 #include "Machine.h"
