@@ -14,6 +14,7 @@
  */
 
 #include <string>
+#include <climits>
 
 #ifndef SST_SCHEDULER_ALLOCINFO_H__
 #define SST_SCHEDULER_ALLOCINFO_H__
