@@ -199,8 +199,12 @@ int main(int argc, char* argv[]) {
 		std::vector<char*> execParams;
 
 		execParams.push_back(appParams[0]);
-		execParams.push_back("-injection");
-		execParams.push_back("child");
+
+		char* injectionPtr = const_cast<char*>("-injection");
+		execParams.push_back(injectionPtr);
+
+		char* childPtr     = const_cast<char*>("child");
+		execParams.push_back(childPtr);
 
 		for(auto i = 1; i < appParams.size(); ++i) {
 			// Before we copy in the application parameters, we need to copy in the
