@@ -22,7 +22,8 @@
 #include <vector>
 #include <string>
 #include <set>
-#include <stdio.h>
+#include <cstdio>
+#include <algorithm>
 
 #include "AllocInfo.h"
 #include "Job.h"
