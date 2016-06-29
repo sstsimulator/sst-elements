@@ -87,7 +87,7 @@ echo "SST Elements Configuration completed."
 echo "-------------------------------------------------------"
 echo "Build Environment:"
 echo ""
-printf "%38s : %s\n" "SST-Core Version" "$PACKAGE_VERSION"
+printf "%38s : %s\n" "SST-Elements Version" "$PACKAGE_VERSION"
 if test "x$SSTELEMENTS_GIT_HEADSHA" != "x$PACKAGE_VERSION"; then
 printf "%38s : %s\n" "Git HEAD SHA" "$SSTELEMENTS_GIT_HEADSHA"
 printf "%38s : %s\n" "Branch Commit Count" "$SSTELEMENTS_GIT_COMMITCOUNT"
