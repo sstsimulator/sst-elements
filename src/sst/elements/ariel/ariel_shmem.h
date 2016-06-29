@@ -100,6 +100,7 @@ public:
     {
         /* Ideally, this would be done atomically, but we'll only have 1 child */
         sharedData->child_attached++;
+        unlink(getRegionName().c_str());
     }
 
     void waitForChild(void)

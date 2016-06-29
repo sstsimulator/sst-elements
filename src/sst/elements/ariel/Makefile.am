@@ -61,6 +61,7 @@ if SST_COMPILE_OSX
 
 all-local: frontend/simple/fesimple.cc
 	$(CXX) -O3 -shared \
+	$(CXXFLAGS) \
 	$(CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
 	$(LIBZ_CPPFLAGS) \
@@ -94,6 +95,7 @@ all-local:
 	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
 	-fPIC -O3 \
 	-fomit-frame-pointer \
+	$(CXXFLAGS) \
 	$(CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
 	$(LIBZ_CPPFLAGS) \

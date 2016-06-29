@@ -104,16 +104,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	/////////////////////////////////////////////////////////////////////////////////////
 
-	shmem_region_name = (char*) malloc(sizeof(char) * 1024);
-    const char *tmpdir = getenv("TMPDIR");
-    if ( !tmpdir ) tmpdir = "/tmp";
-    sprintf(shmem_region_name, "%s/ariel_shmem_%u_%lu_XXXXXX", tmpdir, getpid(), id);
-    int fd = mkstemp(shmem_region_name);
-    close(fd);
-
-    output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name);
-
-    /////////////////////////////////////////////////////////////////////////////////////
 
     char* tool_path = (char*) malloc(sizeof(char) * 1024);
 
@@ -154,7 +144,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     output->verbose(CALL_INFO, 1, 0, "Tracking the stack and dumping on malloc calls is %s.\n", 
             keep_malloc_stack_trace == 1 ? "ENABLED" : "DISABLED");
 
-    tunnel = new ArielTunnel(shmem_region_name, core_count, maxCoreQueueLen);
+    tunnel = new ArielTunnel("", core_count, maxCoreQueueLen);
+    std::string shmem_region_name = tunnel->getRegionName();
+    output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name.c_str());
 
     appLauncher = params.find<std::string>("launcher", ARIEL_STRINGIZE(PINTOOL_EXECUTABLE));
 
@@ -199,8 +191,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = (char*) malloc(sizeof(char) * (ariel_tool.size() + 1));
     strcpy(execute_args[arg-1], ariel_tool.c_str());
     execute_args[arg++] = const_cast<char*>("-p");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * (strlen(shmem_region_name) + 1));
-    strcpy(execute_args[arg-1], shmem_region_name);
+    execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name.length() + 1));
+    strcpy(execute_args[arg-1], shmem_region_name.c_str());
     execute_args[arg++] = const_cast<char*>("-v");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%d", verbosity);
@@ -357,7 +349,6 @@ void ArielCPU::finish() {
 	}
 
 	memmgr->printStats();
-	unlink(shmem_region_name);
 }
 
 int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env) {
@@ -533,14 +524,12 @@ ArielCPU::~ArielCPU() {
 
 	delete memmgr;
 	delete tunnel;
-        unlink(shmem_region_name);
 	free(page_sizes);
 	free(page_counts);
 }
 
 void ArielCPU::emergencyShutdown() {
     tunnel->shutdown(true);
-    unlink(shmem_region_name);
     // If child_pid = 0, dont kill (this would kill all processes of the group)
     if (child_pid != 0) {
         kill(child_pid, SIGKILL);
