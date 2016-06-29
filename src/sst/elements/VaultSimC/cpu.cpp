@@ -23,7 +23,7 @@ using namespace SST;
 using namespace SST::RNG;
 
 cpu::cpu( ComponentId_t id, Params& params ) :
-  IntrospectedComponent( id ), outstanding(0), memOps(0), inst(0),
+  Component( id ), outstanding(0), memOps(0), inst(0),
     out(Simulation::getSimulation()->getSimulationOutput())
 {
   printf("making cpu\n");

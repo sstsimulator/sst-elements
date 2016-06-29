@@ -30,7 +30,7 @@ static size_t MEMSIZE = size_t(4096)*size_t(1024*1024);
 using namespace SST::MemHierarchy;
 
 VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
-    IntrospectedComponent( id ), numOutstanding(0) {
+    Component( id ), numOutstanding(0) {
     dbg.init("@R:Vault::@p():@l " + getName() + ": ", 0, 0, 
              (Output::output_location_t)params.find<uint32_t>("debug", 0));  
     
