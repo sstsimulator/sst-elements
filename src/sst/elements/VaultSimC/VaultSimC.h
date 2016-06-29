@@ -14,7 +14,7 @@
 #define _VAULTSIMC_H
 
 #include <sst/core/event.h>
-#include <sst/core/introspectedComponent.h>
+#include <sst/core/component.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/core/output.h>
 
@@ -36,7 +36,7 @@ using namespace PHXSim;
 
 //#define STUPID_DEBUG 
 
-class VaultSimC : public IntrospectedComponent {
+class VaultSimC : public Component {
 
 public: // functions
 

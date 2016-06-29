@@ -14,7 +14,7 @@
 #define _LOGICLAYER_H
 
 #include <sst/core/event.h>
-#include <sst/core/introspectedComponent.h>
+#include <sst/core/component.h>
 #include <sst/core/output.h>
 #include <sst/core/statapi/stataccumulator.h>
 #include <sst/core/statapi/stathistogram.h>
@@ -25,7 +25,7 @@ using namespace SST;
 
 //#define STUPID_DEBUG 
 
-class logicLayer : public IntrospectedComponent {
+class logicLayer : public Component {
   
 public: // functions
   
