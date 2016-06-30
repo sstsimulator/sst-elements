@@ -144,7 +144,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     output->verbose(CALL_INFO, 1, 0, "Tracking the stack and dumping on malloc calls is %s.\n", 
             keep_malloc_stack_trace == 1 ? "ENABLED" : "DISABLED");
 
-    tunnel = new ArielTunnel("", core_count, maxCoreQueueLen);
+    tunnel = new ArielTunnel(id, core_count, maxCoreQueueLen);
     std::string shmem_region_name = tunnel->getRegionName();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name.c_str());
 
