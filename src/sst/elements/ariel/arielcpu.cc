@@ -456,10 +456,11 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 	            		setenv("PIN_DYLD_RESTORE_REQUIRED", "t", 1);
 	            		unsetenv("DYLD_LIBRARY_PATH");
 	       	 	}
-#endif
-#if !defined(SST_COMPILE_MACOSX)
+#else
+#if defined(HAVE_SET_PTRACER)
                         prctl(PR_SET_PTRACER, getppid(), 0, 0 ,0);
-#endif
+#endif // End of HAVE_SET_PTRACER
+#endif // End SST_COMPILE_MACOSX (else branch)
 			int ret_code = execvp(app, args);
 			perror("execve");
 
