@@ -72,6 +72,8 @@ AC_SUBST(CC_VERSION)
 MPICC_VERSION=`$MPICC --version | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/%/g' | awk -F'%' '{print $1}'`
 AC_SUBST(MPICC_VERSION)
 
+SST_CHECK_PTRACE_SET_TRACER()
+
 AC_CONFIG_FILES([
   Makefile
   src/Makefile

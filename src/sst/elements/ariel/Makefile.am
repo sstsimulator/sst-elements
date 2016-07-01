@@ -4,6 +4,10 @@ AM_CPPFLAGS = \
         $(MPI_CPPFLAGS) \
         $(PINTOOL_CPPFLAGS)
 
+if HAVE_SET_PTRACER
+	AM_CPPFLAGS += "-DHAVE_SET_PTRACER=1"
+endif
+
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libariel.la
 libariel_la_SOURCES = \
