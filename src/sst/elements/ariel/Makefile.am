@@ -5,7 +5,7 @@ AM_CPPFLAGS = \
         $(PINTOOL_CPPFLAGS)
 
 if HAVE_SET_PTRACER
-	AM_CPPFLAGS += "-DHAVE_SET_PTRACER=1"
+AM_CPPFLAGS += "-DHAVE_SET_PTRACER=1"
 endif
 
 compdir = $(pkglibdir)
