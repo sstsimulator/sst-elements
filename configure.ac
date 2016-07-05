@@ -69,9 +69,6 @@ AC_DEFINE_UNQUOTED([SSTELEMENTS_GIT_COMMITCOUNT], ["$SSTELEMENTS_GIT_COMMITCOUNT
 CC_VERSION=`$CC --version | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/%/g' | awk -F'%' '{print $1}'`
 AC_SUBST(CC_VERSION)
 
-MPICC_VERSION=`$MPICC --version | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/%/g' | awk -F'%' '{print $1}'`
-AC_SUBST(MPICC_VERSION)
-
 SST_CHECK_PTRACE_SET_TRACER()
 
 AC_CONFIG_FILES([
@@ -103,9 +100,6 @@ printf "%38s : %s\n" "Preprocessor" "$CPP"
 printf "%38s : %s\n" "C++ Compiler" "$CXX"
 printf "%38s : %s\n" "C Compiler" "$CC"
 printf "%38s : %s\n" "Compiler Version" "$CC_VERSION"
-printf "%38s : %s\n" "MPI C Compiler" "$MPICC"
-printf "%38s : %s\n" "MPI C++ Compiler" "$MPICXX"
-printf "%38s : %s\n" "MPI Compiler Version" "$MPICC_VERSION"
 printf "%38s : %s\n" "Linker" "$LD"
 printf "%38s : %s\n" "Preprocessor Options" "$CPPFLAGS"
 printf "%38s : %s\n" "C Compiler Options" "$CFLAGS"
@@ -128,7 +122,7 @@ echo ""
 prefix="sst_check_"
 suffix=".m4"
 
-list=`ls ./config/sst_check*.m4`
+list=`ls $srcdir/config/sst_check*.m4`
 
 for depfilepath in $list; do
 
