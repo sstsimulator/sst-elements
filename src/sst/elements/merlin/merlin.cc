@@ -95,7 +95,7 @@ static const ElementInfoStatistic hr_router_statistics[] = {
     { "send_packet_count", "Count number of packets sent on link", "packets", 1},
     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
     { "xbar_stalls", "Count number of cycles the xbar is stalled", "cycles", 1},
-    { "idle_time", "number of nanoseconds that port was idle", "nanoseconds", 1},
+    { "idle_time", "number of (in unites of core timebas) that port was idle", "time spent idle", 1},
     { NULL, NULL, NULL, 0 }
 };
 
@@ -506,6 +506,7 @@ static const ElementInfoStatistic linkcontrol_statistics[] = {
     { "packet_latency", "Histogram of latencies for received packets", "latency", 1},
     { "send_bit_count", "Count number of bits sent on link", "bits", 1},
     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
+    { "idle_time", "number of (in unites of core timebas) that port was idle", "time spent idle", 1},
     { NULL, NULL, NULL, 0 }
 };
 

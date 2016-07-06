@@ -15,6 +15,9 @@
 #include "arielcpu.h"
 
 #include <signal.h>
+#if !defined(SST_COMPILE_MACOSX)
+#include <sys/prctl.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -453,7 +456,11 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 	            		setenv("PIN_DYLD_RESTORE_REQUIRED", "t", 1);
 	            		unsetenv("DYLD_LIBRARY_PATH");
 	       	 	}
-#endif
+#else
+#if defined(HAVE_SET_PTRACER)
+                        prctl(PR_SET_PTRACER, getppid(), 0, 0 ,0);
+#endif // End of HAVE_SET_PTRACER
+#endif // End SST_COMPILE_MACOSX (else branch)
 			int ret_code = execvp(app, args);
 			perror("execve");
 

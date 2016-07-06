@@ -18,7 +18,8 @@
 
 #include <vector>
 #include <string>
-#include <stdio.h>
+#include <cstdio>
+#include <algorithm>
 
 #include "AllocInfo.h"
 #include "Job.h"

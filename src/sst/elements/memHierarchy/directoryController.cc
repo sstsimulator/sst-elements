@@ -56,7 +56,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     /* Find required parameters */
     int netAddr = params.find<int>("network_address", 0, found);
     if (!found) {
-        out.fatal(CALL_INFO, -1, "%s, ** Param not specified(%s): network_address - the port number (on the network router) that corresponds to this component\n", getName().c_str());
+        out.fatal(CALL_INFO, -1, "Param not specified(%s): network_address - the port number (on the network router) that corresponds to this component\n", getName().c_str());
     }
 
     // Debug address

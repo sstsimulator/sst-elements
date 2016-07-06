@@ -24,7 +24,7 @@ using namespace SST::MemHierarchy;
 //typedef  VaultCompleteFn; 
 
 logicLayer::logicLayer( ComponentId_t id, Params& params ) :
-  IntrospectedComponent( id ), memOps(0)
+  Component( id ), memOps(0)
 {
   dbg.init("@R:LogicLayer::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find("debug", 0));
   dbg.output(CALL_INFO, "making logicLayer\n");

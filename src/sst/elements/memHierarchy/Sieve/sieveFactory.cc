@@ -100,7 +100,7 @@ void Sieve::configureLinks() {
         link = configureLink(ln, "100 ps", new Event::Handler<Sieve>(this, &Sieve::processEvent));
         if (link) {
             cpuLinks_.push_back(link);
-            output_->output(CALL_INFO, "Port %lu = Link %d\n", cpuLinks_[cpuLinkCount_]->getId(), cpuLinkCount_);
+            output_->output(CALL_INFO, "Port %d = Link %d\n", cpuLinks_[cpuLinkCount_]->getId(), cpuLinkCount_);
             cpuLinkCount_++;
         } else {
             break;
