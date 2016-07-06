@@ -82,8 +82,8 @@ public:
     /**
      * Create a new Ariel Tunnel
      */
-    ArielTunnel(const std::string &region_name, size_t numCores, size_t bufferSize) :
-        SST::Core::Interprocess::IPCTunnel<ArielSharedData, ArielCommand>(region_name, numCores, bufferSize)
+    ArielTunnel(uint32_t comp_id, size_t numCores, size_t bufferSize) :
+        SST::Core::Interprocess::IPCTunnel<ArielSharedData, ArielCommand>(comp_id, numCores, bufferSize)
     {
         sharedData->numCores = numCores;
         sharedData->simTime = 0;
@@ -100,6 +100,7 @@ public:
     {
         /* Ideally, this would be done atomically, but we'll only have 1 child */
         sharedData->child_attached++;
+        unlink(getRegionName().c_str());
     }
 
     void waitForChild(void)
@@ -115,11 +116,11 @@ public:
 
     /** Increment current cycle count */
     void incrementCycles() {
-	sharedData->cycles++;
+        sharedData->cycles++;
     }
 
     uint64_t getCycles() const {
-	return sharedData->cycles;
+        return sharedData->cycles;
     }
 
     /** Return the current time (in seconds) of the simulation */
