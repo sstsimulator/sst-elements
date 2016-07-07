@@ -317,7 +317,11 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     statInv_recv                = registerStatistic<uint64_t>("Inv_recv");
     statNACK_recv               = registerStatistic<uint64_t>("NACK_recv");
     statMSHROccupancy           = registerStatistic<uint64_t>("MSHR_occupancy");
-
+    if (!prefetcher.empty()) {
+        statPrefetchRequest         = registerStatistic<uint64_t>("Prefetch_requests");
+        statPrefetchHit             = registerStatistic<uint64_t>("Prefetch_hits");
+        statPrefetchDrop            = registerStatistic<uint64_t>("Prefetch_drops");
+    }
     /* --------------- Coherence Controllers --------------- */
     coherenceMgr = NULL;
     bool inclusive = cf_.type_ == "inclusive";
