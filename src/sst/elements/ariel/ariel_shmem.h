@@ -87,7 +87,7 @@ public:
     {
         sharedData->numCores = numCores;
         sharedData->simTime = 0;
-	sharedData->cycles = 0;
+        sharedData->cycles = 0;
         sharedData->child_attached = 0;
     }
 
@@ -100,7 +100,6 @@ public:
     {
         /* Ideally, this would be done atomically, but we'll only have 1 child */
         sharedData->child_attached++;
-        unlink(getRegionName().c_str());
     }
 
     void waitForChild(void)
