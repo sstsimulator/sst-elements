@@ -161,7 +161,8 @@ void StridePrefetcher::DetectStride() {
 	} else {
 		statPrefetchIssueCanceledByHistory->addData(1);
 		output->verbose(CALL_INFO, 2, 0, "Prefetch canceled - same cache line is found in the recent prefetch history.\n");
-	}
+	        delete ev;
+        }
     }
 }
 
