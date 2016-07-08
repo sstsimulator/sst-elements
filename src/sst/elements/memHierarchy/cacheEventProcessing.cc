@@ -253,6 +253,7 @@ void Cache::processEvent(MemEvent* event, bool replay) {
             if (mshr_->isHit(baseAddr) && canStall) {
                 // Drop local prefetches if there are outstanding requests for the same address NOTE this includes replacements/inv/etc.
                 if (event->isPrefetch() && event->getRqstr() == this->getName()) {
+                    statPrefetchDrop->addData(1);
                     delete event;
                     break;
                 }
@@ -352,6 +353,7 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);
     event->setBaseAddr(toBaseAddr(event->getAddr()));
     
+
     if (!clockIsOn_) {
         Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
         timestamp_ = time - 1;
@@ -364,15 +366,20 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
         clockIsOn_ = true;
     }
 
+    // Record received prefetch
+    statPrefetchRequest->addData(1);
+
     // Drop prefetch if we can't handle it immediately or handling it would violate maxOustandingPrefetch or dropPrefetchLevel
     if (requestsThisCycle_ != maxRequestsPerCycle_) {
         if (event->getCmd() != NULLCMD && mshr_->getSize() < dropPrefetchLevel_ && mshr_->getPrefetchCount() < maxOutstandingPrefetch_) { 
             requestsThisCycle_++;
             processEvent(event, false);
         } else {
+            statPrefetchDrop->addData(1);
             delete event;
         }
     } else {
+        statPrefetchDrop->addData(1);
         delete event;
     }
 }
