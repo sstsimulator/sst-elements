@@ -84,7 +84,7 @@ int readSeed( Params & params, std::string paramName ){
 
 
 schedComponent::schedComponent(ComponentId_t id, Params& params) :
-    Component(id) 
+    Component(id), snapshot(NULL)
 {
     lastfinaltime = ~0;
 
