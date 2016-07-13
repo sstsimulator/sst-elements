@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <cmath>
 
 #include "AllocInfo.h"
 #include "Job.h"

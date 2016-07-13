@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <cmath>
 
 using namespace SST::Scheduler;
 using namespace std;
