@@ -14,6 +14,7 @@
 clock = "2660MHz"
 memory_clock = "200MHz"
 coherence_protocol = "MESI"
+maxmemreqpending = 53
 
 cores_per_group = 1 
 #cores_per_group = 2
@@ -136,6 +137,7 @@ dc_params = {
 
 
 cpu_params = {
+	"maxmemreqpending" : maxmemreqpending,
     "verbose" : 0,
     "printStats" : 1,
 }
