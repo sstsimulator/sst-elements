@@ -142,6 +142,9 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"TotalEventsReceived", "Total number of events received by this cache", "events", 1},
     {"TotalEventsReplayed", "Total number of events that were initially blocked and then were replayed", "events", 1},
     {"MSHR_occupancy",      "Number of events in MSHR each cycle", "events", 1},
+    {"Prefetch_requests",   "Number of prefetches received from prefetcher at this cache", "events", 1},
+    {"Prefetch_hits",       "Number of prefetches that were cancelled due to cache or MSHR hit", "events", 1},
+    {"Prefetch_drops",      "Number of prefetches that were cancelled because the cache was too busy or too many prefetches were outstanding", "events", 1},
     /* Coherence events - break down GetS between S/E */
     {"SharedReadResponse",      "Coherence: Received shared response to a GetS request", "count", 2},
     {"ExclusiveReadResponse",   "Coherence: Received exclusive response to a GetS request", "count", 2},

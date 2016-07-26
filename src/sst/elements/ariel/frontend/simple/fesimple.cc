@@ -17,6 +17,7 @@
 #include "pin.H"
 #include <time.h>
 #include <string.h>
+#include <sstream>
 #include <fcntl.h>
 #include <unistd.h>
 #include <iostream>

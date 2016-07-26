@@ -12,9 +12,6 @@
 #ifndef SST_MEMHIERARCHY_BUS_H
 #define SST_MEMHIERARCHY_BUS_H
 
-#include <boost/serialization/deque.hpp>
-#include <boost/serialization/map.hpp>
-
 #include <queue>
 #include <map>
 
