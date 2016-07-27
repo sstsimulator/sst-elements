@@ -248,6 +248,19 @@ elif "dragonfly2" == netTopo:
 
 	topo = topoDragonFly2()
 
+    #Set global link arrangements
+    global_link_map = "relative"
+    if global_link_map == "relative" or global_link_map == "circulant":
+        topo.setRoutingModeRelative()
+    if global_link_map == "circulant":
+        ngrp = int(topoInfo.params["dragonfly:num_groups"])
+        glm = []
+        for i in range(int(ngrp/2)):
+            glm.append(i)
+            if ngrp - 2 - i != i:
+                glm.append(ngrp - 2 - i)
+        topo.setGlobalLinkMap(glm)
+
 else:
 	sys.exit("how did we get here")
 
@@ -381,18 +394,6 @@ else:
 
 
 topo.prepParams()
-if "dragonfly2" == netTopo:
-    global_link_map = "absolute"
-    if global_link_map == "relative" or global_link_map == "circulant":
-        topo.setRoutingModeRelative()
-    if global_link_map == "circulant":
-        ngrp = int(topoInfo.params["dragonfly:num_groups"])
-        glm = []
-        for i in range(int(ngrp/2)):
-            glm.append(i)
-            if ngrp - 2 - i != i:
-                glm.append(ngrp - 2 - i)
-        topo.setGlobalLinkMap(glm)
 
 topo.setEndPointFunc( loadInfo.setNode )
 topo.build()

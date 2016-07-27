@@ -29,8 +29,8 @@ def get_runtime(options):
         if line.startswith('Simulation is complete, simulated time'):
             InfoPair.append(grep_timeInfo(line, 'SimComplete'))
             break
-        elif line.startswith('Job Finished'):
-            InfoPair.append(grep_timeInfo(line, 'JobFinished'))
+        #elif line.startswith('Job Finished'):
+        #    InfoPair.append(grep_timeInfo(line, 'JobFinished'))
     
     fo.close()
 
@@ -105,10 +105,11 @@ def convertToMicro(number, unit):
 
 
 def set_file_name(options):
-    exp_name = "N%s_alpha%s_%s_%s_%s_iter%s_motifiter%s" %(options.N, options.alpha, options.application, options.allocator, options.mapper, options.iteration, options.motif_iteration)
+    exp_name = "N%s_alpha%s_%s_%s_%s_iter%s" %(options.N, options.alpha, options.application, options.allocator, options.mapper, options.iteration)
     options.outdir = "%s/%s/%s" %(options.main_sim_path, options.exp_folder, exp_name)
     
     options.runtimeFile = "%s/ember.out" %(options.outdir)
+    print options.runtimeFile
     options.networkFile = "%s/networkStats.csv" %(options.outdir)    
 
 def main():
@@ -119,7 +120,7 @@ def main():
 
     (options, args) = parser.parse_args()
 
-    options.main_sim_path = "/mnt/nokrb/fkaplan3/SST/git/sst/sst/elements/scheduler/simulations"
+    options.main_sim_path = "/mnt/nokrb/fkaplan3/SST/git/sst/sst-elements/src/sst/elements/scheduler/simulations"
     
     '''    
     for N in [1, 2, 4, 8]: # Each job uses 1/N of the machine
@@ -128,10 +129,48 @@ def main():
                 for allocator in ['simple', 'spread', 'random']:
                     for mapper in ['libtopomap']:
     '''
+    fileName = options.outFile
 
     InfoPair = []
 
-    for N in [1]: # Each job uses 1/N of the machine
+    for N in [17]: # Each job uses 1/N of the machine
+        for alpha in [4]:
+            if N == 1:
+                applications = ['alltoall', 'bisection', 'mesh']
+            else:
+                applications = ['alltoall', 'mesh']
+
+            for application in applications:
+                if application == 'bisection':
+                    allocators = ['simple']
+                    mappers = ['simple']
+                else:
+                    allocators = ['simple', 'spread', 'random']
+                    mappers = ['libtopomap']
+
+                for allocator in allocators:
+                    InfoPair = []
+                    for mapper in mappers:
+                        #fo = open(fileName, "a")
+                        #fo.writelines("%s, %s, %s\n" %(application, allocator, mapper))
+                        #fo.close()
+                        if allocator == 'random':
+                            num_iters = 100
+                        else:
+                            num_iters = 1
+                        for iteration in range(num_iters):
+                            options.N = N
+                            options.alpha = alpha
+                            options.application = application
+                            options.allocator = allocator
+                            options.mapper = mapper
+                            options.iteration = iteration
+
+                            set_file_name(options)
+                            InfoPair.append(get_runtime(options))
+                        record_runtime(options, InfoPair)
+
+    '''
         for alpha in [4]: 
             for application in ['alltoall']:
                 for allocator in ['simple']:
@@ -153,6 +192,7 @@ def main():
                                 InfoPair.append(get_runtime(options))
 
     record_runtime(options, InfoPair)
+    '''
 
 
 if __name__ == '__main__':

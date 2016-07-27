@@ -57,7 +57,8 @@ def submit_job(options):
 
         cmd = "chmod +x %s" %(shfile)
         run(cmd)
-        cmd = ("qsub -q bungee.q,budge.q -cwd -S /bin/bash -o %s -j y %s" % (outfile, shfile))
+        #cmd = ("qsub -q bungee.q,budge.q -cwd -l mem_free=4G,s_vmem=4G -S /bin/bash -o %s -j y %s" % (outfile, shfile))
+        cmd = ("qsub -q me.q -cwd -S /bin/bash -o %s -j y %s" % (outfile, shfile))
         run(cmd)
         #run("%s" %(shfile))
 
@@ -85,12 +86,12 @@ def main():
                 for allocator in ['simple', 'spread', 'random']:
                     for mapper in ['libtopomap']:
     '''
-
-    '''
     for N in [1]: # Each job uses 1/N of the machine
-        for alpha in [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]:
+        #for alpha in [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]:
+        for alpha in [4]:
             if N == 1:
-                applications = ['alltoall', 'bisection', 'mesh']
+                #applications = ['alltoall', 'bisection', 'mesh']
+                applications = ['alltoall']
             else:
                 applications = ['alltoall', 'mesh']
 
@@ -99,13 +100,14 @@ def main():
                     allocators = ['simple']
                     mappers = ['simple']
                 else:
-                    allocators = ['simple', 'spread', 'random']
+                    #allocators = ['simple', 'spread', 'random']
+                    allocators = ['simple']
                     mappers = ['libtopomap']
 
                 for allocator in allocators:
                     for mapper in mappers:
                         if allocator == 'random':
-                            num_iters = 100
+                            num_iters = 1
                         else:
                             num_iters = 1
                         for iteration in range(num_iters):
@@ -118,9 +120,10 @@ def main():
                             submit_job(options)
     '''
     for N in [1]: # Each job uses 1/N of the machine
-        for alpha in [1]:
-            for application in ['mesh']:
-                for allocator in ['random']:
+        #for alpha in [0.125, 0.25, 0.5, 0.625, 0.75, 0.875, 1]:
+        for alpha in [4]:
+            for application in ['alltoall']:
+                for allocator in ['simple']:
                     for mapper in ['libtopomap']:
                         if allocator == 'random':
                             num_iters = 1
@@ -134,7 +137,7 @@ def main():
                             options.mapper = mapper
                             options.iteration = iteration
                             submit_job(options)
-
+    '''
     '''
     #Network steady state analysis
     for N in [1]: # Each job uses 1/N of the machine

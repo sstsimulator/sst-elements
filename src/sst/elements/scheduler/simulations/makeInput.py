@@ -7,10 +7,10 @@ Setting a parameter to "default" or "" will select the default option
 import os
 
 # Input workload trace path:
-traceName = 'test_MappingImpact.sim'
+traceName = 'jobtrace_files/alltoall_N17.sim'
 
 # Output file name:
-outFile = 'test_MappingImpact_libtopomap.py'
+outFile = 'simple_libtopomap_alltoall_N17.py'
 
 # Machine (cluster) configuration:
 # mesh[xdim, ydim, zdim], torus[xdim, ydim, zdim], simple,
@@ -19,7 +19,7 @@ outFile = 'test_MappingImpact_libtopomap.py'
 #           localTopology:[all_to_all]
 #           globalTopology:[absolute,circulant,relative]
 # (default: simple)
-machine = 'dragonfly[4,9,4,2,all_to_all,absolute]'
+machine = 'dragonfly[8,11,2,2,all_to_all,absolute]'
 
 # Number of machine nodes
 # The script calculates the number of nodes if mesh or torus machine is provided.
@@ -141,7 +141,7 @@ if __name__ == '__main__':
         nums = machine.split('[')[1]
         nums = nums.split(']')[0]
         nums = nums.split(',')
-        numberNodes = (int(nums[0])*int(nums[0])+1) *int(nums[0])*int(nums[3])
+        numberNodes = (int(nums[0])*int(nums[2])+1) *int(nums[0])*int(nums[3])
 
     numberNodes = int(numberNodes)
     for i in range(0, numberNodes):

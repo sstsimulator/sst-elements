@@ -123,7 +123,7 @@ def run_ember (execcommand):
 
 def get_runtime(options):
 
-    fileName = options.emberOutFile
+    fileName = "%s/%s" %(options.folder, options.emberOutFile)
     fo = open(fileName, "r")
 
     InfoPair = []
@@ -222,17 +222,20 @@ def main():
     for application in ['alltoall']:
     #for application in ['GD99_b']:
         InfoPair = []
-        for mapper in ['PaCMap']:
+        #for alpha in [0.125, 0.25, 0.5, 0.625, 0.75, 0.875, 1]:
+        for alpha in [1, 1.5, 2, 2.5, 3, 3.5, 4]:
+        #for mapper in ['PaCMap']:
         #for mapper in ['spread', 'simple', 'PaCMap', 'random']:
         #for mapper in ['libtopomap', 'nearestamap', 'PaCMap', 'random']:
+            mapper = 'random'
             if mapper == 'random':
                 num_iters = 1
             else:
                 num_iters = 1 
             for iteration in range(num_iters):
-
-                execcommand = "./run_DetailedNetworkSim.py --emberOut ember.out --schedPy test_MappingImpact_%s_%s.py " % (mapper, application)
-                run(execcommand)
+                options.folder = "N1_allexperiments_absolute/N1_alpha%s_alltoall_simple_libtopomap_iter0" %(alpha)
+                #execcommand = "./run_DetailedNetworkSim.py --emberOut ember.out --schedPy test_MappingImpact_%s_%s.py " % (mapper, application)
+                #run(execcommand)
                 InfoPair.append(get_runtime(options))
         record_runtime(options, InfoPair)
 
