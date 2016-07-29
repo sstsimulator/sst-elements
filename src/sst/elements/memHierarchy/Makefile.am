@@ -21,6 +21,8 @@ libmemHierarchy_la_SOURCES = \
 	memoryController.h \
 	memoryController.cc \
         membackend/memBackend.h \
+	membackend/delayBuffer.h \
+	membackend/delayBuffer.cc \
 	membackend/simpleMemBackend.h \
 	membackend/simpleMemBackend.cc \
 	membackend/simpleDRAMBackend.h \
@@ -110,6 +112,7 @@ nobase_sst_HEADERS = \
 	membackend/simpleDRAMBackend.h \
 	membackend/requestReorderSimple.h \
 	membackend/requestReorderByRow.h \
+	membackend/delayBuffer.h \
 	memoryController.h \
 	cacheListener.h \
 	bus.h \

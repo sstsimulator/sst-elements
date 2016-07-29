@@ -33,6 +33,7 @@
 #include "membackend/vaultSimBackend.h"
 #include "membackend/requestReorderSimple.h"
 #include "membackend/requestReorderByRow.h"
+#include "membackend/delayBuffer.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
 
@@ -528,6 +529,17 @@ static const ElementInfoStatistic simpleDRAM_stats[] = {
 };
 
 
+static SubComponent* create_Mem_DelayBuffer(Component * comp, Params& params) {
+    return new DelayBuffer(comp, params);
+}
+
+static const ElementInfoParam delayBuffer_params[] = {
+    {"verbose",     "Sets teh verbosity of the backend output", "0" },
+    {"backend",     "Backend memory system", "memHierarchy.simpleMem"},
+    {"request_delay", "Constant delay to be added to requests with units (e.g., 1us)", "0ns"},
+    {NULL, NULL, NULL}
+};
+
 static SubComponent* create_Mem_RequestReorderSimple(Component * comp, Params& params) {
     return new RequestReorderSimple(comp, params);
 }
@@ -810,6 +822,15 @@ static const ElementInfoSubComponent subcomponents[] = {
         create_Mem_SimpleDRAM,
         simpleDRAM_params,
         simpleDRAM_stats,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "DelayBuffer",
+        "Delays requests by specified time",
+        NULL,
+        create_Mem_DelayBuffer,
+        delayBuffer_params,
+        NULL,
         "SST::MemHierarchy::MemBackend"
     },
     {
