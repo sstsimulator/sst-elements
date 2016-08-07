@@ -9,4 +9,4 @@ sst --model-options="\
 --topo=torus \
 --shape=16 \
 --jobFile=loadfile \
-" ../script/emberLoadFIle.py
+" ../script/emberLoadFile.py
