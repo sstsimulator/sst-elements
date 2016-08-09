@@ -674,10 +674,6 @@ void ProcessQueuesState<T1>::processWaitCtx_1( WaitCtx* ctx, _CommReq* req )
 
     dbg().verbose(CALL_INFO,1,1,"\n");
 
-    if ( req->isMine() ) {
-        delete req;
-    }
-
     if ( length > obj().shortMsgLength() ) {
         // this is a hack, to get point to point latencies to match Chama
         // we need to not add delay for unpinning the send buffer for long msg  
@@ -690,6 +686,10 @@ void ProcessQueuesState<T1>::processWaitCtx_1( WaitCtx* ctx, _CommReq* req )
         ); 
     } else {
         processWaitCtx_2( ctx );
+    }
+
+    if ( req->isMine() ) {
+        delete req;
     }
 }
 
