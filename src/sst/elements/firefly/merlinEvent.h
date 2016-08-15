@@ -114,6 +114,7 @@ class FireflyNetworkEvent : public Event {
     void serialize_order(SST::Core::Serialization::serializer &ser) {
         Event::serialize_order(ser);
         ser & seq;
+        ser & offset;
         ser & bufLen;
         ser & buf;
         ser & src;
