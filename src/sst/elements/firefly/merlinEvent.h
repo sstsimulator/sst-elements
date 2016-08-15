@@ -75,7 +75,7 @@ class FireflyNetworkEvent : public Event {
         buf = me.buf;
         seq = me.seq;
         src = me.src;
-        offset = me->offset;
+        offset = me.offset;
     }
 
     virtual Event* clone(void)
