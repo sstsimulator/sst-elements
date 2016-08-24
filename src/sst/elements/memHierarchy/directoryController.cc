@@ -198,8 +198,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_PutMRespReceived           = registerStatistic<uint64_t>("responses_received_PutM");
     stat_PutERespReceived           = registerStatistic<uint64_t>("responses_received_PutE");
     stat_PutSRespReceived           = registerStatistic<uint64_t>("responses_received_PutS");
-    stat_dataReads                  = registerStatistic<uint64_t>("memory_requests_data_write");
-    stat_dataWrites                 = registerStatistic<uint64_t>("memory_requests_data_read");
+    stat_dataReads                  = registerStatistic<uint64_t>("memory_requests_data_read");
+    stat_dataWrites                 = registerStatistic<uint64_t>("memory_requests_data_write");
     stat_dirEntryReads              = registerStatistic<uint64_t>("memory_requests_directory_entry_read");
     stat_dirEntryWrites             = registerStatistic<uint64_t>("memory_requests_directory_entry_write");
     stat_InvSent                    = registerStatistic<uint64_t>("requests_sent_Inv"); 

@@ -475,14 +475,18 @@ static const ElementInfoParam memctrl_params[] = {
 
 static const ElementInfoStatistic memctrl_statistics[] = {
     /* Cache hits and misses */
-    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles", 1 },
+    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles",   1 },
     { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
-    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles", 1 },
-    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1},
-    { "requests_received_GetSEx",           "Number of GetSEx (read) requests received",        "requests", 1},
-    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1},
-    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1},
-    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1},
+    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles",   1 },
+    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1 },
+    { "requests_received_GetSEx",           "Number of GetSEx (read) requests received",        "requests", 1 },
+    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },
+    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },
+    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },
+    { "latency_GetS",                       "Total latency of handled GetS requests",           "ns",       1 },
+    { "latency_GetSEx",                     "Total latency of handled GetSEx requests",         "ns",       1 },
+    { "latency_GetX",                       "Total latency of handled GetX requests",           "ns",       1 },
+    { "latency_PutM",                       "Total latency of handled PutM requests",           "ns",       1 },
     { NULL, NULL, NULL, 0 }
 };
 

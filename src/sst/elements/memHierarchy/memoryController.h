@@ -124,7 +124,10 @@ private:
     Statistic<uint64_t>* stat_PutMReqReceived;
     Statistic<uint64_t>* stat_GetSExReqReceived;
     Statistic<uint64_t>* stat_outstandingReqs;
-
+    Statistic<uint64_t>* stat_GetSLatency;
+    Statistic<uint64_t>* stat_GetSExLatency;
+    Statistic<uint64_t>* stat_GetXLatency;
+    Statistic<uint64_t>* stat_PutMLatency;
 
     Output::output_location_t statsOutputTarget_;
 //#ifdef HAVE_LIBZ
