@@ -213,6 +213,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
     stat_PutMReqReceived    = registerStatistic<uint64_t>("requests_received_PutM");
     stat_outstandingReqs    = registerStatistic<uint64_t>("outstanding_requests");
+    stat_GetSLatency        = registerStatistic<uint64_t>("latency_GetS");
+    stat_GetSExLatency      = registerStatistic<uint64_t>("latency_GetSEx");
+    stat_GetXLatency        = registerStatistic<uint64_t>("latency_GetX");
+    stat_PutMLatency        = registerStatistic<uint64_t>("latency_PutM");
 
     cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
     cyclesAttemptIssueButRejected = registerStatistic<uint64_t>(
@@ -403,6 +407,25 @@ void MemController::sendResponse(DRAMReq* req) {
     }
     req->status_ = DRAMReq::DONE;
     
+    uint64_t latency = getCurrentSimTimeNano() - req->reqEvent_->getDeliveryTime(); 
+    switch (req->reqEvent_->getCmd()) {
+        case GetS:
+            stat_GetSLatency->addData(latency);
+            break;
+        case GetSEx:
+            stat_GetSExLatency->addData(latency);
+            break;
+        case GetX:
+            stat_GetXLatency->addData(latency);
+            break;
+        case PutM:
+            stat_PutMLatency->addData(latency);
+            break;
+        default:
+            break;
+    }
+    
+
     requestPool_.erase(req);
     delete req;
 }
