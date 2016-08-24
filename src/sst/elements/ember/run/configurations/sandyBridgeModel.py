@@ -11,6 +11,10 @@
 # distribution.
 
 import sst
+import sys,pprint
+
+pp = pprint.PrettyPrinter(indent=4)
+
 
 from detailedModel import *
 
@@ -77,6 +81,7 @@ class SandyBridgeModel(DetailedModel):
 
         prefix = "sandyBridgeModel_node" + str(nodeID) + "_"
 
+        pp.pprint( self.params )
         cpuL1s, nicL1_read, nicL1_write = snb.configure(prefix,self.params)
 
         self.links.append( self._createThreads( prefix, cpuL1s, self.params['cpu_params']  ) )
