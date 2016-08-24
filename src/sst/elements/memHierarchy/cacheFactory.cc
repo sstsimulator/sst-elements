@@ -236,7 +236,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
   
     if (stats != 0) {
         SST::Output outputStd("",1,0,SST::Output::STDOUT);
-        outputStd.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sstinfo for available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", this->Component::getName().c_str());
+        outputStd.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sst-info for available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", this->Component::getName().c_str());
     }
 
 
