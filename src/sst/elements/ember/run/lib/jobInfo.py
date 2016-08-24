@@ -80,7 +80,15 @@ class JobInfoBase:
 		pass
 
 	def getDetailed(self,nodeId):
-		pass	
+		#print 'JobLoad::getDetailded()',nodeId
+		if self._detailedModel:
+			model,params,nodes = self._detailedModel
+			if nodeId in nodes:
+				return detailedModel.getModel( model, params )
+			else:
+				return None
+		else:
+			return None
 
 	def setDetailed(self,detailed):
 		self._detailedModel = detailed
@@ -132,14 +140,4 @@ class JobInfo(JobInfoBase):
 	def genWorkFlow( self, nodeNum ):
 		return self._genWorkFlow( self._motifDefaults, nodeNum )
 
-	def getDetailed(self,nodeId):
-		#print 'JobLoad::getDetailded()',nodeId
-		if self._detailedModel:
-			model,params,nodes = self._detailedModel
-			if nodeId in nodes:
-				return detailedModel.getModel( model, params )
-			else:
-				return None
-		else:
-			return None
 

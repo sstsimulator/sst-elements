@@ -13,6 +13,7 @@
 #include <sstream>
 #include <sst/core/simulation.h>
 #include <sst/core/unitAlgebra.h>
+#include <sst/core/timeConverter.h>
 
 #include "mirandaGenerator.h"
 #include "mirandaCPU.h"
@@ -25,7 +26,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	const int verbose = params.find<int>("verbose", 0);
 	std::stringstream prefix;
-	prefix <<  getName() << ":RequestGenCPU[@p:@l]: ";
+	prefix << "@t:" <<getName() << ":RequestGenCPU[@p:@l]: ";
 	out = new Output( prefix.str(), verbose, 0, SST::Output::STDOUT);
 
 	maxRequestsPending = params.find<uint32_t>("maxmemreqpending", 16);
@@ -121,11 +122,11 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
     
 
 	out->verbose(CALL_INFO, 1, 0, "Miranda CPU Configuration:\n");
+	out->verbose(CALL_INFO, 1, 0, "- Max requests per cycle:         %" PRIu32 "\n", reqMaxPerCycle);
 	out->verbose(CALL_INFO, 1, 0, "- Max reorder lookups             %" PRIu32 "\n", maxOpLookup);
 	out->verbose(CALL_INFO, 1, 0, "- Clock:                          %s\n", cpuClock.c_str());
 	out->verbose(CALL_INFO, 1, 0, "- Cache line size:                %" PRIu64 " bytes\n", cacheLine);
-	out->verbose(CALL_INFO, 1, 0, "- Max requests per cycle:         %" PRIu32 "\n", reqMaxPerCycle);
-
+	out->verbose(CALL_INFO, 1, 0, "- Max requests pending:           %" PRIu32 "\n", maxRequestsPending);
 	out->verbose(CALL_INFO, 1, 0, "Configuration completed.\n");
 }
 
@@ -159,10 +160,12 @@ void RequestGenCPU::handleSrcEvent( Event* ev ) {
 
 	MirandaReqEvent* event = static_cast<MirandaReqEvent*>(ev); 
 
-	out->verbose(CALL_INFO, 1, 0, "got %lu generators\n", event->generators.size() );
+	out->verbose(CALL_INFO, 2, 0, "got %lu generators\n", event->generators.size() );
 	loadGenerator( event );
 
-	clockTick( reregisterClock( timeConverter, clockHandler ) );
+	if ( 0 != timeConverter->convertFromCoreTime( Simulation::getSimulation()->getCurrentSimCycle()) ) {
+		clockTick( reregisterClock( timeConverter, clockHandler ) );
+	}	
 
 	srcReqEvent = event;
 }
@@ -177,14 +180,12 @@ void RequestGenCPU::loadGenerator( MirandaReqEvent* event ) {
 
 void RequestGenCPU::loadGenerator( const std::string& name, SST::Params& params) {
 
-	out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", name.c_str());
+	out->verbose(CALL_INFO, 1, 0, "generator to be loaded is: %s\n", name.c_str());
 
 	reqGen = dynamic_cast<RequestGenerator*>( loadSubComponent( name, this, params ) );
 
 	if(NULL == reqGen) {
 		out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", name.c_str());
-	} else {
-		out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
 	}
 }
 
@@ -236,7 +237,7 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 	bool isRead               = req->isRead();
 	const uint64_t lineOffset = reqAddress % cacheLine;
 
-	out->verbose(CALL_INFO, 4, 0, "Issue request: address=%" PRIu64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
+	out->verbose(CALL_INFO, 4, 0, "Issue request: address=0x%" PRIx64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
 		reqAddress, reqLength, (isRead ? "READ" : "WRITE"), lineOffset);
 
 	if(isRead) {
@@ -318,6 +319,7 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 
     if ( ! reqGen ) {
+        out->verbose(CALL_INFO, 2,0, "unregister\n");
         return true;
     }
 
