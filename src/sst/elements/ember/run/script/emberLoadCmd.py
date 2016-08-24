@@ -1,14 +1,14 @@
 import sys, getopt, os
 
 import topoConfig
-import platform
+import platConfig
 import jobInfo
 import emberLoadBase
 import rtrConfig
 
 myOptions = jobInfo.getOptions() 
 myOptions += topoConfig.getOptions()
-myOptions += platform.getOptions() 
+myOptions += platConfig.getOptions() 
 myOptions += emberLoadBase.getOptions() 
 
 try:
@@ -23,7 +23,7 @@ for o,a in opts:
 		sys.exit( 'emberLoadJob: options {0} '.format(myOptions) )
 
 topo, shape = topoConfig.parseOptions(opts)
-params = platform.parseOptions(opts)
+params = platConfig.parseOptions(opts)
 
 numNodes, ranksPerNode, motifs, random = jobInfo.parseOptions(opts)
 
