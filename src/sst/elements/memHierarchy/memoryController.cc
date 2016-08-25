@@ -239,6 +239,7 @@ void MemController::handleEvent(SST::Event* event) {
         ev->getBaseAddr(), ev->getDst().c_str(), ev->getSrc().c_str(), ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
 #endif
     Command cmd = ev->getCmd();
+    ev->setDeliveryTime(getCurrentSimTimeNano());
 
     // Notify our listeners that we have received an event
     switch (cmd) {
