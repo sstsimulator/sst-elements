@@ -31,6 +31,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_sendMachine( 2, SendMachine( *this, m_dbg ) ),
     m_recvMachine( *this, m_dbg ),
     m_detailedCompute( 2, NULL ),
+    m_useDetailedCompute(false),
     m_getKey(10)
 {
     m_myNodeId = params.find<int>("nid", -1);
