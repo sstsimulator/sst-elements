@@ -11,34 +11,57 @@
 # information, see the LICENSE file in the top level directory of the
 # distribution.
 
+debug = 0 
+debug_level = 0 
+#debug_addr = 0x40280
+#debug_addr = 0x100000
+debug_addr = 0x100a00
+
 clock = "2660MHz"
 memory_clock = "200MHz"
+#memory_clock = "800MHz"
 coherence_protocol = "MESI"
-maxmemreqpending = 53
 
-cores_per_group = 1 
-#cores_per_group = 2
-memory_controllers_per_group = 1
-#groups = 8 
-groups = 1
+cores_per_group = 2 
+memory_controllers_per_group = 1 
+groups = 4 
 
-#l3cache_blocks_per_group = 5
-l3cache_blocks_per_group = 1 
-l3cache_block_size = "1MB"
+l3cache_blocks_per_group = 2
+l3cache_block_size = "2MB"
 
-ring_latency = "50ps"
-ring_bandwidth = "85GB/s"
-ring_flit_size = "72B"
 
-memory_network_bandwidth = "85GB/s"
+l3cache_blocks_per_group = 2
+l3cache_block_size = "2MB"
 
-mem_interleave_size = 4096  # Do 4K page level interleaving
+l3_cache_per_core  = int(l3cache_blocks_per_group / cores_per_group)
+l3_cache_remainder = l3cache_blocks_per_group - (l3_cache_per_core * cores_per_group)
+
+# Intel actually has four rings -> request, response, ack, data
+ring_latency = "300ps" # 2.66 GHz time period plus slack for ringstop latency
+ring_bandwidth = "96GB/s" # 2.66GHz clock, moves 64-bytes per cycle, plus overhead = 36B/c
+ring_flit_size = "8B"
+
+memory_network_bandwidth = "96GB/s"
+
+mem_interleave_size = 64    # Do 4K page level interleaving
 memory_capacity = 16384     # Size of memory in MBs
 
-
 num_routers = groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) + 2 
+#num_routers = groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) 
+
+cpu_params = {
+	"max_reqs_cycle": 2,
+	"maxmemreqpending" : 16,
+	"max_reorder_lookups": 168,
+    "verbose" : 1,
+    "printStats" : 1,
+	"clock" : clock 
+}
 
 l1_prefetch_params = {
+    "prefetcher": "cassini.StridePrefetcher",
+    "reach": 4,
+    "detect_range" : 1
 }
 
 l2_prefetch_params = {
@@ -48,13 +71,13 @@ l2_prefetch_params = {
 }
 
 rtr_params = {
+        "debug" : "0",
         "torus:shape" : str(num_routers), 
-        "output_latency" : "100ps",
+        "output_latency" : "25ps",
         "xbar_bw" : ring_bandwidth,
         "input_buf_size" : "2KB",
-        "input_latency" : "100ps",
+        "input_latency" : "25ps",
         "num_ports" : "3",
-        "debug" : "0",
         "torus:local_ports" : "1",
         "flit_size" : ring_flit_size,
         "output_buf_size" : "2KB",
@@ -64,8 +87,11 @@ rtr_params = {
 }
 
 l1_params = {
-    "clock" : clock,
-    "coherence_protocol": coherence_protocol,
+		"debug_addr" : debug_addr,
+    	"debug" : debug,
+        "debug_level" : debug_level,
+    	"clock" : clock,
+    	"coherence_protocol": coherence_protocol,
         "cache_frequency": clock,
         "replacement_policy": "lru",
         "cache_size": "32KB",
@@ -75,72 +101,76 @@ l1_params = {
         "low_network_links": 1,
         "access_latency_cycles": 4,
         "L1": 1,
-        "debug": 0
 }
 
 l2_params = {
-    "clock" : clock,
+		"debug_addr" : debug_addr,
+    	"debug" : debug,
+        "debug_level" : debug_level,
+    	"clock" : clock,
         "coherence_protocol": coherence_protocol,
         "cache_frequency": clock,
         "replacement_policy": "lru",
         "cache_size": "256KB",
         "associativity": 8,
         "cache_line_size": 64,
-        "access_latency_cycles": 8,
+        "access_latency_cycles": 6,
         "low_network_links": 1,
         "high_network_links": 1,
         "mshr_num_entries" : 16,
-        "L1": 0,
-        "debug": 10,
-    #"bottom_network" : "cache",
-    #"top_network" : ""
+		"network_bw": ring_bandwidth,
 }
 
 l3_params = {
-    "debug" : "0",
-        "access_latency_cycles" : "6",
-        "cache_frequency" : "2GHz",
+		"debug_addr" : debug_addr,
+    	"debug" : debug,
+        "debug_level" : debug_level,
+        "access_latency_cycles" : "12",
+        "cache_frequency" : clock,
         "replacement_policy" : "lru",
-        "coherence_protocol" : "MSI",
-        "associativity" : "4",
+        "coherence_protocol" : coherence_protocol,
+        "associativity" : "16",
         "cache_line_size" : "64",
-        "debug_level" : "10",
-        "debug" : "10",
-        "L1" : "0",
-        "cache_size" : "128 KB",
+        "cache_size" : l3cache_block_size,
         "mshr_num_entries" : "4096",
-        #"top_network" : "cache",
-        #"bottom_network" : "directory",
+		"network_bw": ring_bandwidth,
         "num_cache_slices" : str(groups * l3cache_blocks_per_group),
-        "slice_allocation_policy" : "rr"
+        "slice_allocation_policy" : "rr",
 }
 
 mem_params = {
+		"debug_addr" : debug_addr,
+    	"debug" : debug,
+        "debug_level" : debug_level,
     "coherence_protocol" : coherence_protocol,
-    "backend.access_time" : "30ns",
-    "rangeStart" : 0,
-    "backend.mem_size" : memory_capacity / (groups * memory_controllers_per_group),
     "clock" : memory_clock,
+   	"request_width" : "32",
+
+    "backend.mem_size" : memory_capacity / (groups * memory_controllers_per_group),
+
+	#"backend": 'memHierarchy.dramsim',
+	#"backend.device_ini" : "ini/DDR3_micron_32M_8B_x4_sg125.ini",
+   	#"backend.system_ini" : "ini/system.ini",
+
+	# simple memory
+    "backend.access_time" : "45ns",
 }
 
 dc_params = {
-    "coherence_protocol": coherence_protocol,
-        "network_bw": memory_network_bandwidth,
-        "interleave_size": str(mem_interleave_size/1024)+'KiB',
-        "interleave_step": str( (groups * memory_controllers_per_group) * (mem_interleave_size / 1024) ) +'KiB',
+		"debug_addr" : debug_addr,
+    	"debug" : debug,
+        "debug_level" : debug_level,
+    	"debug" : "0",
+    	"coherence_protocol": coherence_protocol,
+        "network_bw": ring_bandwidth,
+        "interleave_size": str(mem_interleave_size) + "B",
+        "interleave_step": str((groups * memory_controllers_per_group) * (mem_interleave_size))+ "B",
         "entry_cache_size": 256*1024*1024, #Entry cache size of mem/blocksize
         "clock": memory_clock,
-        "debug": 10,
 }
 
 #######
 
-
-cpu_params = {
-	"maxmemreqpending" : maxmemreqpending,
-    "verbose" : 0,
-    "printStats" : 1,
-}
 
 
 params = {
