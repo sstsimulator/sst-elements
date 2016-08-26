@@ -207,6 +207,8 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     string prefetcher           = params.find<std::string>("prefetcher");
     mshrLatency_                = params.find<uint64_t>("mshr_latency_cycles", 0);
     maxRequestsPerCycle_        = params.find<int>("max_requests_per_cycle",-1);
+    string reqWidth             = params.find<std::string>("request_link_width","0B");
+    string respWidth            = params.find<std::string>("response_link_width","0B");
     bool snoopL1Invs            = false;
     if (cf_.L1_) snoopL1Invs    = params.find<bool>("snoop_l1_invalidations", false);
     bool LL                     = params.find<bool>("LL", false);
@@ -239,6 +241,15 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         outputStd.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sst-info for available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", this->Component::getName().c_str());
     }
 
+    /* Check link widths */
+    UnitAlgebra reqWidth_ua(reqWidth);
+    UnitAlgebra respWidth_ua(respWidth);
+    if (!reqWidth_ua.hasUnits("B")) {
+        d_->fatal(CALL_INFO, -1, "Invalid param: request_link_width - must have units of bytes (B). SI units are ok. You specified %s\n", reqWidth.c_str());
+    }
+    if (!respWidth_ua.hasUnits("B")) {
+        d_->fatal(CALL_INFO, -1, "Invalid param: response_link_width - must have units of bytes (B). SI units are ok. You specified %s\n", respWidth.c_str());
+    }
 
     
     /* --------------- Prefetcher ---------------*/
@@ -331,22 +342,22 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         if (cf_.protocol_ != 2) {
             if (cf_.type_ != "noninclusive_with_directory") {
                 coherenceMgr = new MESIController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, cf_.protocol_, 
-                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
+                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue());
             } else {
                 coherenceMgr = new MESIInternalDirectory(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, cf_.protocol_,
-                        lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
+                        lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue());
             }
         } else {
             coherenceMgr = new IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_,
-                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
+                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue());
         }
     } else {
         if (cf_.protocol_ != 2) {
             coherenceMgr = new L1CoherenceController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, cf_.protocol_, 
-                lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, snoopL1Invs);
+                lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, snoopL1Invs, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue());
         } else {
             coherenceMgr = new L1IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, 
-                    lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
+                    lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue());
         }
     }
     

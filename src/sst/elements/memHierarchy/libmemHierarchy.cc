@@ -83,6 +83,8 @@ static const ElementInfoParam cache_params[] = {
     {"replacement_policy",      "Optional, string - Replacement policy of the cache array. Options:  LRU[least-recently-used], LFU[least-frequently-used], Random, MRU[most-recently-used], or NMRU[not-most-recently-used]. ", "lru"},
     {"cache_type",              "Optional, string - Cache type. Options: inclusive cache ('inclusive', required for L1s), non-inclusive cache ('noninclusive') or non-inclusive cache with a directory ('noninclusive_with_directory', required for non-inclusive caches with multiple upper level caches directly above them),", "inclusive"},
     {"max_requests_per_cycle",  "Maximum number of requests to accept per cycle. 0 or negative is unlimited.", "-1"},
+    {"request_link_width",      "Optional, string - Limits number of request bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
+    {"response_link_width",     "Optional, string - Limits number of response bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
     {"noninclusive_directory_repl",    "Optional, string - If non-inclusive directory exists, its replacement policy. LRU, LFU, MRU, NMRU, or RANDOM. (not case-sensitive).", "LRU"},
     {"noninclusive_directory_entries", "Optional, int - Number of entries in the directory. Must be at least 1 if the non-inclusive directory exists.", "0"},
     {"noninclusive_directory_associativity", "Optional, int - For a set-associative directory, number of ways.", "1"},

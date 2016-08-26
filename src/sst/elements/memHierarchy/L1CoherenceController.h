@@ -23,9 +23,9 @@ public:
     /** Constructor for L1CoherenceController */
     L1CoherenceController(const Cache* cache, string ownerName, Output* dbg, vector<Link*>* parentLinks, Link* childLink, CacheListener* listener, 
             unsigned int lineSize, uint64 accessLatency, uint64 tagLatency, uint64 mshrLatency, bool LLC, bool LL, MSHR * mshr, bool protocol, bool wbClean,
-            MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, bool debugAll, Addr debugAddr, bool snoopL1Invs) :
+            MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, bool debugAll, Addr debugAddr, bool snoopL1Invs, unsigned int reqWidth, unsigned int respWidth) :
                  CoherencyController(cache, dbg, ownerName, lineSize, accessLatency, tagLatency, mshrLatency, LLC, LL, parentLinks, childLink, bottomNetworkLink, topNetworkLink, listener, mshr, 
-                         wbClean, debugAll, debugAddr) {
+                         wbClean, debugAll, debugAddr, reqWidth, respWidth) {
         d_->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
         snoopL1Invs_        = snoopL1Invs;
         protocol_           = protocol;
