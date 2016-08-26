@@ -206,8 +206,12 @@ public:
                     break; 
                 } else if (outgoingEventQueue_.front().bytesLeft > bytesLeftThisCycle) {
                     outgoingEventQueue_.front().bytesLeft -= bytesLeftThisCycle;
+                   // printf("(%s) Sending %u bytes (%u left) for request (%s, %" PRIx64 ", %s) at time %" PRIu64 "\n", 
+                   //         name_.c_str(), bytesLeftThisCycle, outgoingEventQueue_.front().bytesLeft, CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getRqstr().c_str(), timestamp_);
                     break;
                 } else {
+                   // printf("(%s) Sending last %u bytes for request (%s, %" PRIx64 ", %s) at time %" PRIu64 "\n", 
+                   //         name_.c_str(), outgoingEventQueue_.front().bytesLeft, CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getRqstr().c_str(), timestamp_);
                     bytesLeftThisCycle -= outgoingEventQueue_.front().bytesLeft;
                 }
             }
@@ -233,14 +237,18 @@ public:
         bytesLeftThisCycle = maxBytesUpPerCycle_;
         while(!outgoingEventQueueUp_.empty() && outgoingEventQueueUp_.front().deliveryTime <= timestamp_) {
             MemEvent * outgoingEvent = outgoingEventQueueUp_.front().event;
-            if (maxBytesUpPerCycle_ != 0) {
+            if (maxBytesDownPerCycle_ != 0) {
                 if (bytesLeftThisCycle == 0) { 
                     break; 
-                } else if (outgoingEventQueue_.front().bytesLeft > bytesLeftThisCycle) {
-                    outgoingEventQueue_.front().bytesLeft -= bytesLeftThisCycle;
+                } else if (outgoingEventQueueUp_.front().bytesLeft > bytesLeftThisCycle) {
+                    outgoingEventQueueUp_.front().bytesLeft -= bytesLeftThisCycle;
+                   // printf("(%s) Sending %u bytes (%u left) for response (%s, %" PRIx64 ", %s) at time %" PRIu64 "\n", 
+                   //         name_.c_str(), bytesLeftThisCycle, outgoingEventQueueUp_.front().bytesLeft, CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getRqstr().c_str(), timestamp_);
                     break;
                 } else {
-                    bytesLeftThisCycle -= outgoingEventQueue_.front().bytesLeft;
+                   // printf("(%s) Sending last %u bytes for response (%s, %" PRIx64 ", %s) at time %" PRIu64 "\n", 
+                   //         name_.c_str(), outgoingEventQueueUp_.front().bytesLeft, CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getRqstr().c_str(), timestamp_);
+                    bytesLeftThisCycle -= outgoingEventQueueUp_.front().bytesLeft;
                 }
             }
 
