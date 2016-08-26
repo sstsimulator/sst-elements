@@ -237,7 +237,7 @@ public:
         bytesLeftThisCycle = maxBytesUpPerCycle_;
         while(!outgoingEventQueueUp_.empty() && outgoingEventQueueUp_.front().deliveryTime <= timestamp_) {
             MemEvent * outgoingEvent = outgoingEventQueueUp_.front().event;
-            if (maxBytesDownPerCycle_ != 0) {
+            if (maxBytesUpPerCycle_ != 0) {
                 if (bytesLeftThisCycle == 0) { 
                     break; 
                 } else if (outgoingEventQueueUp_.front().bytesLeft > bytesLeftThisCycle) {
