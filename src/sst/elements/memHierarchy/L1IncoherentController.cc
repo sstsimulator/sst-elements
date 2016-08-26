@@ -329,7 +329,7 @@ uint64_t L1IncoherentController::sendResponseUp(MemEvent * event, State grantedS
     // Debugging
     if (baseTime < timestamp_) baseTime = timestamp_;
     uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : accessLatency_);
-    Response resp = {responseEvent, deliveryTime, true};
+    Response resp = {responseEvent, deliveryTime, true, 8 + responseEvent->getPayloadSize()};
     addToOutgoingQueueUp(resp);
     
 #ifdef __SST_DEBUG_OUTPUT__
@@ -356,7 +356,7 @@ void L1IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, st
     
     
     uint64 deliveryTime = timestamp_ + accessLatency_;
-    Response resp = {writeback, deliveryTime, false};
+    Response resp = {writeback, deliveryTime, false, 8 + writeback->getPayloadSize()};
     addToOutgoingQueue(resp);
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) d_->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s\n", deliveryTime, CommandString[cmd]);
