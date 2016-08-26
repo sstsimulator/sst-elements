@@ -297,6 +297,8 @@ private:
     int                     maxOutstandingPrefetch_;
     int                     maxRequestsPerCycle_;
     int                     requestsThisCycle_;
+    unsigned int            maxBytesUpPerCycle_;
+    unsigned int            maxBytesDownPerCycle_;
     std::queue<MemEvent*>   requestBuffer_;
     Clock::Handler<Cache>*  clockHandler_;
     TimeConverter*          defaultTimeBase_;

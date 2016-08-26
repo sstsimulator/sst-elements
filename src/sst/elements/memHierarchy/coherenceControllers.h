@@ -61,6 +61,7 @@ public:
         MemEvent* event;
         uint64_t deliveryTime;
         bool cpuResponse;
+        unsigned int bytesLeft;
     };
     
     MemNIC*     bottomNetworkLink_; // Ptr to memNIC for our lower link (if network-connected)
@@ -71,7 +72,9 @@ public:
     uint64_t    mshrLatency_;       // MSHR lookup latency
     string      name_;              // Name of cache we are associated with
     MSHR *      mshr_;              // Pointer to cache's MSHR, coherence controllers are responsible for managing writeback acks
-
+    unsigned int maxBytesDownPerCycle_; // Number of bytes we can send down (request link width)    
+    unsigned int maxBytesUpPerCycle_;   // Number of bytes we can send up (response link width)    
+    
     list<Response> outgoingEventQueue_;
     list<Response> outgoingEventQueueUp_;
 
@@ -97,7 +100,7 @@ public:
         MemEvent *NACKevent = event->makeNACKResponse((Component*)owner_, event);
     
         uint64 deliveryTime      = timestamp_ + tagLatency_;
-        Response resp = {NACKevent, deliveryTime, true};
+        Response resp = {NACKevent, deliveryTime, true, 8};
         if (up) {
             addToOutgoingQueueUp(resp);
         } else {
@@ -118,7 +121,7 @@ public:
     
         if (baseTime < timestamp_) baseTime = timestamp_;
         uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : accessLatency_);
-        Response resp = {responseEvent, deliveryTime, true};
+        Response resp = {responseEvent, deliveryTime, true, 8 + responseEvent->getPayloadSize()};
         addToOutgoingQueueUp(resp);
     
 #ifdef __SST_DEBUG_OUTPUT__
@@ -137,7 +140,7 @@ public:
         event->incrementRetries();
 
         uint64 deliveryTime =  timestamp_ + mshrLatency_ + backoff;
-        Response resp = {event, deliveryTime, false};
+        Response resp = {event, deliveryTime, false, 8 + event->getPayloadSize()};
         if (!up) addToOutgoingQueue(resp);
         else addToOutgoingQueueUp(resp);
 #ifdef __SST_DEBUG_OUTPUT__
@@ -166,7 +169,7 @@ public:
             deliveryTime = timestamp_ + mshrLatency_;
         } else deliveryTime = baseTime + tagLatency_; 
     
-        Response fwdReq = {forwardEvent, deliveryTime, false};
+        Response fwdReq = {forwardEvent, deliveryTime, false, 8 + forwardEvent->getPayloadSize()};
         addToOutgoingQueue(fwdReq);
 #ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Forwarding request at cycle = %" PRIu64 "\n", deliveryTime);        
@@ -194,9 +197,24 @@ public:
         // Update timestamp
         timestamp_++;
         
+        unsigned int bytesLeftThisCycle = maxBytesDownPerCycle_;
         // Send events down
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
             MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
+            if (maxBytesDownPerCycle_ != 0) {
+                if (bytesLeftThisCycle == 0) { 
+                    break; 
+                } else if (outgoingEventQueue_.front().bytesLeft > bytesLeftThisCycle) {
+                    outgoingEventQueue_.front().bytesLeft -= bytesLeftThisCycle;
+                   // printf("(%s) Sending %u bytes (%u left) for request (%s, %" PRIx64 ", %s) at time %" PRIu64 "\n", 
+                   //         name_.c_str(), bytesLeftThisCycle, outgoingEventQueue_.front().bytesLeft, CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getRqstr().c_str(), timestamp_);
+                    break;
+                } else {
+                   // printf("(%s) Sending last %u bytes for request (%s, %" PRIx64 ", %s) at time %" PRIu64 "\n", 
+                   //         name_.c_str(), outgoingEventQueue_.front().bytesLeft, CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getRqstr().c_str(), timestamp_);
+                    bytesLeftThisCycle -= outgoingEventQueue_.front().bytesLeft;
+                }
+            }
             recordEventSentDown(outgoingEvent->getCmd());
 #ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
@@ -214,10 +232,26 @@ public:
             }
             outgoingEventQueue_.pop_front();
         }
-
+        
         // Send events up
+        bytesLeftThisCycle = maxBytesUpPerCycle_;
         while(!outgoingEventQueueUp_.empty() && outgoingEventQueueUp_.front().deliveryTime <= timestamp_) {
             MemEvent * outgoingEvent = outgoingEventQueueUp_.front().event;
+            if (maxBytesUpPerCycle_ != 0) {
+                if (bytesLeftThisCycle == 0) { 
+                    break; 
+                } else if (outgoingEventQueueUp_.front().bytesLeft > bytesLeftThisCycle) {
+                    outgoingEventQueueUp_.front().bytesLeft -= bytesLeftThisCycle;
+                   // printf("(%s) Sending %u bytes (%u left) for response (%s, %" PRIx64 ", %s) at time %" PRIu64 "\n", 
+                   //         name_.c_str(), bytesLeftThisCycle, outgoingEventQueueUp_.front().bytesLeft, CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getRqstr().c_str(), timestamp_);
+                    break;
+                } else {
+                   // printf("(%s) Sending last %u bytes for response (%s, %" PRIx64 ", %s) at time %" PRIu64 "\n", 
+                   //         name_.c_str(), outgoingEventQueueUp_.front().bytesLeft, CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getRqstr().c_str(), timestamp_);
+                    bytesLeftThisCycle -= outgoingEventQueueUp_.front().bytesLeft;
+                }
+            }
+
             recordEventSentUp(outgoingEvent->getCmd());
 #ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
@@ -288,7 +322,7 @@ public:
 protected:
     CoherencyController(const Cache* cache, Output* dbg, string name, uint lineSize, uint64_t accessLatency, uint64_t tagLatency, uint64_t mshrLatency, bool LLC, bool LL, 
             vector<Link*>* parentLinks, Link* childLink, MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, CacheListener* listener, MSHR * mshr, bool wbClean, 
-            bool debugAll, Addr debugAddr):
+            bool debugAll, Addr debugAddr, unsigned int reqWidth, unsigned int respWidth):
                         timestamp_(0), accessLatency_(1), tagLatency_(1), owner_(cache), d_(dbg), lineSize_(lineSize), sentEvents_(0) {
         name_                   = name;
         accessLatency_          = accessLatency;
@@ -305,6 +339,8 @@ protected:
         writebackCleanBlocks_   = wbClean;  // Writeback clean data (if lower is non-inclusive for e.g.)
         silentEvictClean_       = LL;       // Silently evict clean blocks if there's just a memory below us
         expectWritebackAck_     = !LL && (LLC || wbClean);  // Expect writeback ack if there's a dir below us or a cache that is non-inclusive
+        maxBytesUpPerCycle_     = respWidth;
+        maxBytesDownPerCycle_   = reqWidth;
 
         // Register statistics - TODO register in a protocol-specific way??
         stat_evict_I = ((Component *)owner_)->registerStatistic<uint64_t>("evict_I");
