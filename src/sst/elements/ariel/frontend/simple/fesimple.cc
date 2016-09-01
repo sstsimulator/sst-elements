@@ -17,6 +17,7 @@
 #include "pin.H"
 #include <time.h>
 #include <string.h>
+#include <sstream>
 #include <fcntl.h>
 #include <unistd.h>
 #include <iostream>
@@ -527,18 +528,20 @@ int mapped_gettimeofday(struct timeval *tp, void *tzp) {
 }
 
 void mapped_ariel_output_stats() {
+    THREADID thr = PIN_ThreadId();
     ArielCommand ac;
     ac.command = ARIEL_OUTPUT_STATS;
     ac.instPtr = (uint64_t) 0;
-    tunnel->writeMessage(0, ac);
+    tunnel->writeMessage(thr, ac);
 }
 
 // same effect as mapped_ariel_output_stats(), but it also sends a user-defined reference number back
 void mapped_ariel_output_stats_buoy(uint64_t marker) {
+    THREADID thr = PIN_ThreadId();
     ArielCommand ac;
     ac.command = ARIEL_OUTPUT_STATS;
     ac.instPtr = (uint64_t) marker; //user the instruction pointer slot to send the marker number
-    tunnel->writeMessage(0, ac);
+    tunnel->writeMessage(thr, ac);
 }
 
 #if ! defined(__APPLE__)

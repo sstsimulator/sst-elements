@@ -18,11 +18,12 @@
 #include "sst_config.h"
 #include "RoundUpMBSAllocator.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <sstream>
-#include <time.h>
-#include <math.h>
+#include <ctime>
+#include <cmath>
+#include <algorithm>
 
 #include "AllocInfo.h"
 #include "Job.h"

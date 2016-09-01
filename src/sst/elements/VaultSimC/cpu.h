@@ -13,7 +13,7 @@
 #ifndef _CPU_H
 #define _CPU_H
 
-#include <sst/core/introspectedComponent.h>
+#include <sst/core/component.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/core/rng/sstrng.h>
 #include <sst/core/output.h>
@@ -27,7 +27,7 @@ using namespace SST;
 
 //#define STUPID_DEBUG 
 
-class cpu : public IntrospectedComponent {
+class cpu : public Component {
 
 public: // functions
 

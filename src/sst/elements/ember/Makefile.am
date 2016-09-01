@@ -54,6 +54,7 @@ libember_la_SOURCES = \
 	mpi/emberMPIEvent.h \
 	mpi/emberrankev.h \
 	mpi/embersizeev.h \
+	mpi/embermakeprogressev.h \
 	mpi/emberCommCreateEv.h \
 	mpi/emberCommDestroyEv.h \
 	mpi/emberCommSplitEv.h \
@@ -75,6 +76,8 @@ libember_la_SOURCES = \
 	mpi/motifs/emberring.cc  \
 	mpi/motifs/emberdetailedring.h  \
 	mpi/motifs/emberdetailedring.cc  \
+	mpi/motifs/emberdetailedstream.h  \
+	mpi/motifs/emberdetailedstream.cc  \
 	mpi/motifs/emberpingpong.cc \
 	mpi/motifs/emberpingpong.h \
 	mpi/motifs/emberbipingpong.cc \

@@ -5,7 +5,7 @@ import sys,getopt,pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 import topoConfig
-import platform
+import platConfig
 import rtrConfig
 import jobInfo
 import emberLoadBase
@@ -14,7 +14,7 @@ import nicConfig
 
 myOptions = ['jobFile='] 
 myOptions += topoConfig.getOptions() 
-myOptions += platform.getOptions()
+myOptions += platConfig.getOptions()
 myOptions += emberLoadBase.getOptions() 
 
 try:
@@ -36,7 +36,7 @@ if not jobFile:
 	sys.exit('FATAL: must specify --jobFile')
 
 topo, shape = topoConfig.parseOptions(opts)
-platParams = platform.parseOptions(opts)
+platParams = platConfig.parseOptions(opts)
 
 jobs = []
 

@@ -271,7 +271,7 @@ void LinkControl::init(unsigned int phase)
         break;
     }
     // Need to start the timer for links that never send data
-    idle_start = parent->getCurrentSimTimeNano();
+    idle_start = Simulation::getSimulation()->getCurrentSimCycle();
     is_idle = true;
 }
 
@@ -279,7 +279,7 @@ void LinkControl::init(unsigned int phase)
 void LinkControl::finish(void)
 {
     if (is_idle) {
-        idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+        idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
         is_idle = false;
 		// Extra code for dynamic link additions
 		// makes sure we don't count idle time outside of the window
@@ -477,7 +477,7 @@ void LinkControl::handle_input(Event* ev)
         input_buf[actual_vn].push(event);
 		input_buf_flit_count += event->getSizeInFlits();
         if (is_idle) {
-            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
 			// Extra code for dynamic link additions
 			// makes sure we don't count idle time outside of the window
@@ -645,7 +645,7 @@ void LinkControl::handle_output(Event* ev)
         rtr_credits[vn_to_send] -= size;
 
 		if (is_idle){
-            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
 			// Extra code for dynamic link additions
 			// makes sure we don't count idle time outside of the window
@@ -696,12 +696,12 @@ void LinkControl::handle_output(Event* ev)
         waiting = true;
         // Begin counting the amount of time this port was idle
         if (!have_packets && !is_idle) {
-            idle_start = parent->getCurrentSimTimeNano();
+            idle_start = Simulation::getSimulation()->getCurrentSimCycle();
             is_idle = true;
         }
 		// Should be in a stalled state rather than idle
 		if (have_packets && is_idle){
-            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
 			// Extra code for dynamic link additions
 			// makes sure we don't count idle time outside of the window

@@ -4,6 +4,10 @@ AM_CPPFLAGS = \
         $(MPI_CPPFLAGS) \
         $(PINTOOL_CPPFLAGS)
 
+if HAVE_SET_PTRACER
+AM_CPPFLAGS += "-DHAVE_SET_PTRACER=1"
+endif
+
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libariel.la
 libariel_la_SOURCES = \
@@ -61,6 +65,7 @@ if SST_COMPILE_OSX
 
 all-local: frontend/simple/fesimple.cc
 	$(CXX) -O3 -shared \
+	$(CXXFLAGS) \
 	$(CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
 	$(LIBZ_CPPFLAGS) \
@@ -94,6 +99,7 @@ all-local:
 	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
 	-fPIC -O3 \
 	-fomit-frame-pointer \
+	$(CXXFLAGS) \
 	$(CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
 	$(LIBZ_CPPFLAGS) \

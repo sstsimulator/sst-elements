@@ -12,9 +12,9 @@
 # distribution.
 
 
-clock = "4000MHz"
-memory_clock = "4000MHz"
-coherence_protocol = "MSI"
+clock = "2600MHz"
+memory_clock = "200MHz"
+coherence_protocol = "MESI"
 
 
 memory_controllers_per_group = 1

@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <sst/core/event.h>
+#include <sst/core/serialization/serialize.h>
 
 #include "pymodule.h"
 #include "pyproto.h"
@@ -30,12 +31,14 @@ PyEvent_t *convertEventToPython(SST::Event *event)
     if ( pe ) {
         return pe->getPyObj();
     } else {
+#if 0
         PyEvent_t *out = NULL;
         polymorphic_PyEvent_oarchive oa(std::cout, boost::archive::no_header|boost::archive::no_codecvt);
 
         oa << event;
 
         return oa.getEvent();
+#endif
     }
     return NULL;
 }

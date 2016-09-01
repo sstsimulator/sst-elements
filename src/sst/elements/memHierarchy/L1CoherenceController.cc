@@ -128,7 +128,7 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
         MemEvent* snoop = new MemEvent((Component*)owner_, event->getAddr(), event->getBaseAddr(), Inv);
         uint64_t baseTime = timestamp_ > cacheLine->getTimestamp() ? timestamp_ : cacheLine->getTimestamp();
         uint64_t deliveryTime = (replay) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-        Response resp = {snoop, deliveryTime, true};
+        Response resp = {snoop, deliveryTime, true, 8 + snoop->getPayloadSize()};
         addToOutgoingQueueUp(resp);
     }
 
@@ -548,7 +548,7 @@ void L1CoherenceController::sendResponseDown(MemEvent* event, CacheLine* cacheLi
 
     uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
     uint64_t deliveryTime = replay ? baseTime + mshrLatency_ :baseTime + accessLatency_;
-    Response resp  = {responseEvent, deliveryTime, true};
+    Response resp  = {responseEvent, deliveryTime, true, 8 + responseEvent->getPayloadSize()};
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime-1);
 
@@ -589,7 +589,7 @@ uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, State grantedSt
     // Compute latency, accounting for serialization of requests to the address
     if (baseTime < timestamp_) baseTime = timestamp_;
     uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : accessLatency_);
-    Response resp = {responseEvent, deliveryTime, true};
+    Response resp = {responseEvent, deliveryTime, true, 8 + responseEvent->getPayloadSize()};
     addToOutgoingQueueUp(resp);
     
     // Debugging
@@ -622,7 +622,7 @@ void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, str
     
     uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
     uint64 deliveryTime = baseTime + accessLatency_;
-    Response resp = {writeback, deliveryTime, false};
+    Response resp = {writeback, deliveryTime, false, 8 + writeback->getPayloadSize()};
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime-1);
     
@@ -645,7 +645,7 @@ void L1CoherenceController::sendAckInv(Addr baseAddr, string origRqstr, CacheLin
     
     uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
     uint64 deliveryTime = baseTime + tagLatency_;
-    Response resp = {ack, deliveryTime, false};
+    Response resp = {ack, deliveryTime, false, 8 + ack->getPayloadSize()};
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime-1);
     

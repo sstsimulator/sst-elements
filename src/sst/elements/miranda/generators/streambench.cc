@@ -31,7 +31,7 @@ STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
 
 	start_b = params.find<uint64_t>("start_b", def_b);
 
-	const uint64_t def_c = start_b + (2 * (n * reqLength));
+	const uint64_t def_c = start_b + (n * reqLength);
 	start_c = params.find<uint64_t>("start_c", def_c);
 
 	n_per_call = params.find<uint64_t>("n_per_call", 1);
@@ -39,9 +39,10 @@ STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
 	i = 0;
 
 	out->verbose(CALL_INFO, 1, 0, "STREAM-N length is %" PRIu64 "\n", n);
-	out->verbose(CALL_INFO, 1, 0, "Start of array a @ %" PRIu64 "\n", start_a);
-	out->verbose(CALL_INFO, 1, 0, "Start of array b @ %" PRIu64 "\n", start_b);
-	out->verbose(CALL_INFO, 1, 0, "Start of array c @ %" PRIu64 "\n", start_c);
+	out->verbose(CALL_INFO, 1, 0, "operandwidth       %" PRIu64 "\n", reqLength);
+	out->verbose(CALL_INFO, 1, 0, "Start of array a @ 0x%" PRIx64 "\n", start_a);
+	out->verbose(CALL_INFO, 1, 0, "Start of array b @ 0x%" PRIx64 "\n", start_b);
+	out->verbose(CALL_INFO, 1, 0, "Start of array c @ 0x%" PRIx64 "\n", start_c);
 	out->verbose(CALL_INFO, 1, 0, "Array Length:      %" PRIu64 " bytes\n", (n * reqLength));
 	out->verbose(CALL_INFO, 1, 0, "Total arrays:      %" PRIu64 " bytes\n", (3 * n * reqLength));
 	out->verbose(CALL_INFO, 1, 0, "N-per-generate     %" PRIu64 "\n", n_per_call);

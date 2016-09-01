@@ -14,7 +14,7 @@ import sys,pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 import topoConfig as TopoConfig
-import platform as Platform
+import platConfig as Platform
 import merlin as Merlin
 import loadUtils as LoadUtils
 import loadInfo as LoadInfo
@@ -26,17 +26,17 @@ import nullEmber as NullEmber
 def getOptions():
 	return NicConfig.getOptions() + RtrConfig.getOptions() + EmberConfig.getOptions()
 
-def run( opts, platParamsName, topo, shape, jobs ):
+def run( opts, platParamsName, topo, shape, jobs, perNicParams = None ):
 
 	topoInfo = TopoConfig.getTopoInfo( topo, shape )	
 	topoObj = TopoConfig.getTopoObj( topo )
 
 	print 'Platform: configuration "{0}"'.format( platParamsName )
-	print 'Network: topo={0} shape={1} numNodes{2}'.format( topo, shape, topoInfo.getNumNodes() )
+	print 'Network: topo={0} shape={1} numNodes={2}'.format( topo, shape, topoInfo.getNumNodes() )
 
 	platParams = Platform.getParams( platParamsName )
 
-	nicConfig = NicConfig.NicConfig( platParams.nicParams, opts )
+	nicConfig = NicConfig.NicConfig( platParams.nicParams, opts, perNicParams )
 	rtrConfig = RtrConfig.RtrConfig( platParams.networkParams, opts )
 
 	hermesParams = platParams.hermesParams

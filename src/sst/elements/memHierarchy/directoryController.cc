@@ -42,7 +42,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     Output out("", 1, 0, Output::STDOUT);
     params.find<int>("statistics", 0, found);
     if (found) {
-        out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sstinfo to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
+        out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sst-info to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
     }
     params.find<int>("direct_mem_link", 0, found);
     if (found) {
@@ -56,7 +56,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     /* Find required parameters */
     int netAddr = params.find<int>("network_address", 0, found);
     if (!found) {
-        out.fatal(CALL_INFO, -1, "%s, ** Param not specified(%s): network_address - the port number (on the network router) that corresponds to this component\n", getName().c_str());
+        out.fatal(CALL_INFO, -1, "Param not specified(%s): network_address - the port number (on the network router) that corresponds to this component\n", getName().c_str());
     }
 
     // Debug address
@@ -198,8 +198,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_PutMRespReceived           = registerStatistic<uint64_t>("responses_received_PutM");
     stat_PutERespReceived           = registerStatistic<uint64_t>("responses_received_PutE");
     stat_PutSRespReceived           = registerStatistic<uint64_t>("responses_received_PutS");
-    stat_dataReads                  = registerStatistic<uint64_t>("memory_requests_data_write");
-    stat_dataWrites                 = registerStatistic<uint64_t>("memory_requests_data_read");
+    stat_dataReads                  = registerStatistic<uint64_t>("memory_requests_data_read");
+    stat_dataWrites                 = registerStatistic<uint64_t>("memory_requests_data_write");
     stat_dirEntryReads              = registerStatistic<uint64_t>("memory_requests_directory_entry_read");
     stat_dirEntryWrites             = registerStatistic<uint64_t>("memory_requests_directory_entry_write");
     stat_InvSent                    = registerStatistic<uint64_t>("requests_sent_Inv"); 
@@ -1154,8 +1154,10 @@ void DirectoryController::handleDirEntryMemoryResponse(MemEvent * ev) {
             break;
         case S_d:
             entry->setState(S);
+            break;
         case M_d:
             entry->setState(M);
+            break;
         default:
             dbg.fatal(CALL_INFO, -1, "Directory Controller %s: DirEntry response received for addr 0x%" PRIx64 " but state is %s\n", getName().c_str(), entry->getBaseAddr(), StateString[st]);
     }
@@ -1172,8 +1174,10 @@ void DirectoryController::getDirEntryFromMemory(DirEntry * entry) {
             break;
         case S:
             entry->setState(S_d);
+            break;
         case M:
             entry->setState(M_d);
+            break;
         default:
             dbg.fatal(CALL_INFO,-1,"Direcctory Controller %s: cache miss for addr 0x%" PRIx64 " but state is %s\n",getName().c_str(),entry->getBaseAddr(), StateString[st]);
     }

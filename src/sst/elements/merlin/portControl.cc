@@ -305,7 +305,7 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
         port_link->sendInitData(init_ev);
     }
     // Need to start the timer for links that never send data
-    idle_start = parent->getCurrentSimTimeNano();
+    idle_start = Simulation::getSimulation()->getCurrentSimCycle();
     is_idle = true;
 }
 
@@ -335,7 +335,7 @@ PortControl::finish() {
 
     // Any links that ended in an idle state need to add stats
     if (is_idle && connected) {
-        idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+        idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
         is_idle = false;
     }
 
@@ -527,7 +527,7 @@ PortControl::dumpState(std::ostream& stream)
 	stream << "Router id: " << rtr_id << ", port " << port_number << ":" << std::endl;
 	stream << "  Waiting = " << waiting << std::endl;
     if (is_idle)
-        stream << "Time since last active = " << (parent->getCurrentSimTimeNano() - idle_start) << std::endl;
+        stream << "Time since last active = " << (Simulation::getSimulation()->getCurrentSimCycle() - idle_start) << std::endl;
     stream << "  have_packets = " << have_packets << std::endl;
     stream << "  start_block = " << start_block << std::endl;
 	stream << "  curr_out_vc = " << curr_out_vc << std::endl;
@@ -716,7 +716,7 @@ PortControl::handle_input_r2r(Event* ev)
             // In either case whether we didn't have credits or
             // we didn't have packets we need to record it as idle time
             if (idle_start) {
-                idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+                idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
                 idle_start = 0;
             }
 	    }
@@ -868,7 +868,7 @@ PortControl::handle_output_r2r(Event* ev) {
 	    output_buf_count[vc_to_send]++;
 
         if (is_idle) {
-            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
         
@@ -924,12 +924,12 @@ PortControl::handle_output_r2r(Event* ev) {
 	    waiting = true;
         // Begin counting the amount of time this port was idle
         if (!have_packets && !is_idle) {
-            idle_start = parent->getCurrentSimTimeNano();
+            idle_start = Simulation::getSimulation()->getCurrentSimCycle();
             is_idle = true;
         }
 		// Should be in a stalled state rather than idle
 		if (have_packets && is_idle){
-            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
 	}
@@ -1019,7 +1019,7 @@ PortControl::handle_output_n2r(Event* ev) {
 	    output_buf_count[vc_to_send]++;
 
         if (is_idle) {
-            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
         
@@ -1065,12 +1065,12 @@ PortControl::handle_output_n2r(Event* ev) {
 	    waiting = true;
         // Begin counting the amount of time this port was idle
         if (!have_packets && !is_idle) {
-            idle_start = parent->getCurrentSimTimeNano();
+            idle_start = Simulation::getSimulation()->getCurrentSimCycle();
             is_idle = true;
         }
 		// Should be in a stalled state rather than idle
 		if (have_packets && is_idle){
-            idle_time->addData(parent->getCurrentSimTimeNano() - idle_start);
+            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
 	}

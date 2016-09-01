@@ -60,7 +60,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     bool found;
     params.find<int>("statistics", 0, found);
     if (found) {
-        out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sstinfo to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
+        out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sst-info to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
     }
     params.find<int>("mem_size", 0, found);
     if (found) {
@@ -82,7 +82,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     }
     const uint64_t backendRamSizeMB = params.find<uint64_t>("backend.mem_size", 0, found);
     if (!found) {
-        out.fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified (in MiBs)\n");
+        out.fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified (in MiBs)\n", getName().c_str());
     }
 
     rangeStart_             = params.find<Addr>("range_start", 0);
@@ -136,7 +136,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
     // Check protocol string - note this is only used if directory controller is not present in system to ensure LLC gets the right permissions
     if (protocolStr != "MESI" && protocolStr != "mesi" && protocolStr != "msi" && protocolStr != "MSI" && protocolStr != "none" && protocolStr != "NONE") {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): protocol - must be one of 'MESI', 'MSI', or 'NONE'. You specified '%s'\n", protocolStr.c_str());
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): protocol - must be one of 'MESI', 'MSI', or 'NONE'. You specified '%s'\n", getName().c_str(), protocolStr.c_str());
     }
     // Convert into MBs
     memSize_ = backendRamSizeMB * (1024*1024ul);
@@ -213,6 +213,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
     stat_PutMReqReceived    = registerStatistic<uint64_t>("requests_received_PutM");
     stat_outstandingReqs    = registerStatistic<uint64_t>("outstanding_requests");
+    stat_GetSLatency        = registerStatistic<uint64_t>("latency_GetS");
+    stat_GetSExLatency      = registerStatistic<uint64_t>("latency_GetSEx");
+    stat_GetXLatency        = registerStatistic<uint64_t>("latency_GetX");
+    stat_PutMLatency        = registerStatistic<uint64_t>("latency_PutM");
 
     cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
     cyclesAttemptIssueButRejected = registerStatistic<uint64_t>(
@@ -235,6 +239,7 @@ void MemController::handleEvent(SST::Event* event) {
         ev->getBaseAddr(), ev->getDst().c_str(), ev->getSrc().c_str(), ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
 #endif
     Command cmd = ev->getCmd();
+    ev->setDeliveryTime(getCurrentSimTimeNano());
 
     // Notify our listeners that we have received an event
     switch (cmd) {
@@ -403,6 +408,25 @@ void MemController::sendResponse(DRAMReq* req) {
     }
     req->status_ = DRAMReq::DONE;
     
+    uint64_t latency = getCurrentSimTimeNano() - req->reqEvent_->getDeliveryTime(); 
+    switch (req->reqEvent_->getCmd()) {
+        case GetS:
+            stat_GetSLatency->addData(latency);
+            break;
+        case GetSEx:
+            stat_GetSExLatency->addData(latency);
+            break;
+        case GetX:
+            stat_GetXLatency->addData(latency);
+            break;
+        case PutM:
+            stat_PutMLatency->addData(latency);
+            break;
+        default:
+            break;
+    }
+    
+
     requestPool_.erase(req);
     delete req;
 }

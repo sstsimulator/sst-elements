@@ -334,7 +334,7 @@ void IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, stri
     if (cacheLine->getState() == M) newCommandEvent->setDirty(true);
     
     uint64 deliveryTime = timestamp_ + accessLatency_;
-    Response resp = {newCommandEvent, deliveryTime, false};
+    Response resp = {newCommandEvent, deliveryTime, false, 8 + newCommandEvent->getPayloadSize()};
     addToOutgoingQueue(resp);
     
 #ifdef __SST_DEBUG_OUTPUT__

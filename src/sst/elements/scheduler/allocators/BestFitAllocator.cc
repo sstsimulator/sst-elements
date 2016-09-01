@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <string>
+#include <limits>
 #include <stdio.h>
 
 #include "AllocInfo.h"
@@ -66,7 +67,7 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
 
     int bestInterval = -1;  //index of best interval found so far
     //(-1 = none)
-    int bestSize = INT_MAX;  //its size
+    int bestSize = std::numeric_limits<int>::max(); //its size
 
     //look for smallest sufficiently-large interval
     for (int i = 0; i < (int)intervals -> size(); i++) {

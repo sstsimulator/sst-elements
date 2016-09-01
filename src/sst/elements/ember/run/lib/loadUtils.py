@@ -21,7 +21,10 @@ def getCommand( key, cmd ):
 	x.pop(0)
 
 	for arg in x:
-		argName, value = arg.split('=')
+		try:
+			argName, value = arg.split('=')
+		except: 
+			break
 		params[ key + '.arg.' + argName ] = value 
 	return params 
 

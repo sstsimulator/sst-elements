@@ -53,7 +53,6 @@ private:
     int *next_seq;
 
     int remap;
-    SST::Interfaces::SimpleNetwork::Mapping net_map;
 
     Output& output;
     

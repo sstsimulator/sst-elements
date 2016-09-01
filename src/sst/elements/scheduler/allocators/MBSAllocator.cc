@@ -19,8 +19,9 @@
 #include "MBSAllocator.h"
 
 #include <sstream>
-#include <stdio.h>
+#include <cstdio>
 #include <string>
+#include <algorithm>
 
 #include "AllocInfo.h"
 #include "Job.h"

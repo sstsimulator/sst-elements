@@ -18,9 +18,12 @@
 #endif
 #include "Rcm.h"
 
+#include <cassert>
 #include <climits>
 #include <numeric>
 #include <vector>
+#include <cmath>
+#include <algorithm>
 
 #include "AllocInfo.h"
 #include "Job.h"

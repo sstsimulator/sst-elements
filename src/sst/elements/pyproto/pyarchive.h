@@ -16,9 +16,15 @@
 #include <numeric>
 
 #include <cstddef>
+
+#include <sst/core/serialization/serializer.h>
+
+
+#if 0
 #include <boost/archive/basic_archive.hpp>
 #include <boost/archive/detail/common_oarchive.hpp>
 #include <boost/archive/detail/polymorphic_oarchive_route.hpp>
+#endif
 
 #include "pymodule.h"
 #include "pyproto.h"
@@ -26,6 +32,7 @@
 namespace SST {
 namespace PyProtoNS {
 
+#if 0
 class PyEvent_oarchive : public boost::archive::detail::common_oarchive<PyEvent_oarchive>
 {
     // permit serialization system privileged access to permit
@@ -174,9 +181,13 @@ public:
 
 typedef boost::archive::detail::polymorphic_oarchive_route<PyEvent_oarchive> polymorphic_PyEvent_oarchive;
 
+#endif
 }
 }
 
+#if 0
 BOOST_SERIALIZATION_REGISTER_ARCHIVE(
     SST::PyProtoNS::polymorphic_PyEvent_oarchive
 )
+
+#endif

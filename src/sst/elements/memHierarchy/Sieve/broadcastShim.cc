@@ -34,7 +34,7 @@ BroadcastShim::BroadcastShim(ComponentId_t id, Params &params) : Component(id) {
         link = configureLink(linkName, "100 ps", new Event::Handler<BroadcastShim>(this, &BroadcastShim::processCoreEvent));
         if (link) {
             cpuAllocLinks_.push_back(link);
-            output_->output(CALL_INFO, "Port %lu = Link %d\n", link->getId(), linkCPU);
+            output_->output(CALL_INFO, "Port %d = Link %d\n", link->getId(), linkCPU);
             linkCPU++;
         } else {
             break;
@@ -46,7 +46,7 @@ BroadcastShim::BroadcastShim(ComponentId_t id, Params &params) : Component(id) {
         link = configureLink(linkName, "100 ps", new Event::Handler<BroadcastShim>(this, &BroadcastShim::processSieveEvent));
         if (link) {
             sieveAllocLinks_.push_back(link);
-            output_->output(CALL_INFO, "Port %lu = Link %d\n", link->getId(), linkSieve);
+            output_->output(CALL_INFO, "Port %d = Link %d\n", link->getId(), linkSieve);
             linkSieve++;
         } else {
             break;

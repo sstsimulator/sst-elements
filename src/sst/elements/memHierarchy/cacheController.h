@@ -297,6 +297,8 @@ private:
     int                     maxOutstandingPrefetch_;
     int                     maxRequestsPerCycle_;
     int                     requestsThisCycle_;
+    unsigned int            maxBytesUpPerCycle_;
+    unsigned int            maxBytesDownPerCycle_;
     std::queue<MemEvent*>   requestBuffer_;
     Clock::Handler<Cache>*  clockHandler_;
     TimeConverter*          defaultTimeBase_;
@@ -316,10 +318,7 @@ private:
 
 
     /* 
-     * Statistics API stats  - 
-     * Note: these duplicate some of the existing stats that are output 
-     * at the end of the run with the cache option "statistics". 
-     * Eventually the two statistics will merge. 
+     * Statistics API stats 
      */
     // Cache hits
     Statistic<uint64_t>* statCacheHits;
@@ -355,6 +354,11 @@ private:
     Statistic<uint64_t>* statInvStalledByLockedLine;
 
     Statistic<uint64_t>* statMSHROccupancy;
+
+    // Prefetch statistics
+    Statistic<uint64_t>* statPrefetchRequest;
+    Statistic<uint64_t>* statPrefetchHit;
+    Statistic<uint64_t>* statPrefetchDrop;
 };
 
 

@@ -33,6 +33,7 @@
 #include "membackend/vaultSimBackend.h"
 #include "membackend/requestReorderSimple.h"
 #include "membackend/requestReorderByRow.h"
+#include "membackend/delayBuffer.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
 
@@ -82,6 +83,8 @@ static const ElementInfoParam cache_params[] = {
     {"replacement_policy",      "Optional, string - Replacement policy of the cache array. Options:  LRU[least-recently-used], LFU[least-frequently-used], Random, MRU[most-recently-used], or NMRU[not-most-recently-used]. ", "lru"},
     {"cache_type",              "Optional, string - Cache type. Options: inclusive cache ('inclusive', required for L1s), non-inclusive cache ('noninclusive') or non-inclusive cache with a directory ('noninclusive_with_directory', required for non-inclusive caches with multiple upper level caches directly above them),", "inclusive"},
     {"max_requests_per_cycle",  "Maximum number of requests to accept per cycle. 0 or negative is unlimited.", "-1"},
+    {"request_link_width",      "Optional, string - Limits number of request bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
+    {"response_link_width",     "Optional, string - Limits number of response bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
     {"noninclusive_directory_repl",    "Optional, string - If non-inclusive directory exists, its replacement policy. LRU, LFU, MRU, NMRU, or RANDOM. (not case-sensitive).", "LRU"},
     {"noninclusive_directory_entries", "Optional, int - Number of entries in the directory. Must be at least 1 if the non-inclusive directory exists.", "0"},
     {"noninclusive_directory_associativity", "Optional, int - For a set-associative directory, number of ways.", "1"},
@@ -142,6 +145,9 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"TotalEventsReceived", "Total number of events received by this cache", "events", 1},
     {"TotalEventsReplayed", "Total number of events that were initially blocked and then were replayed", "events", 1},
     {"MSHR_occupancy",      "Number of events in MSHR each cycle", "events", 1},
+    {"Prefetch_requests",   "Number of prefetches received from prefetcher at this cache", "events", 1},
+    {"Prefetch_hits",       "Number of prefetches that were cancelled due to cache or MSHR hit", "events", 1},
+    {"Prefetch_drops",      "Number of prefetches that were cancelled because the cache was too busy or too many prefetches were outstanding", "events", 1},
     /* Coherence events - break down GetS between S/E */
     {"SharedReadResponse",      "Coherence: Received shared response to a GetS request", "count", 2},
     {"ExclusiveReadResponse",   "Coherence: Received exclusive response to a GetS request", "count", 2},
@@ -471,14 +477,18 @@ static const ElementInfoParam memctrl_params[] = {
 
 static const ElementInfoStatistic memctrl_statistics[] = {
     /* Cache hits and misses */
-    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles", 1 },
+    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles",   1 },
     { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
-    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles", 1 },
-    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1},
-    { "requests_received_GetSEx",           "Number of GetSEx (read) requests received",        "requests", 1},
-    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1},
-    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1},
-    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1},
+    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles",   1 },
+    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1 },
+    { "requests_received_GetSEx",           "Number of GetSEx (read) requests received",        "requests", 1 },
+    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },
+    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },
+    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },
+    { "latency_GetS",                       "Total latency of handled GetS requests",           "ns",       1 },
+    { "latency_GetSEx",                     "Total latency of handled GetSEx requests",         "ns",       1 },
+    { "latency_GetX",                       "Total latency of handled GetX requests",           "ns",       1 },
+    { "latency_PutM",                       "Total latency of handled PutM requests",           "ns",       1 },
     { NULL, NULL, NULL, 0 }
 };
 
@@ -524,6 +534,17 @@ static const ElementInfoStatistic simpleDRAM_stats[] = {
     { NULL, NULL, NULL, 0 }
 };
 
+
+static SubComponent* create_Mem_DelayBuffer(Component * comp, Params& params) {
+    return new DelayBuffer(comp, params);
+}
+
+static const ElementInfoParam delayBuffer_params[] = {
+    {"verbose",     "Sets teh verbosity of the backend output", "0" },
+    {"backend",     "Backend memory system", "memHierarchy.simpleMem"},
+    {"request_delay", "Constant delay to be added to requests with units (e.g., 1us)", "0ns"},
+    {NULL, NULL, NULL}
+};
 
 static SubComponent* create_Mem_RequestReorderSimple(Component * comp, Params& params) {
     return new RequestReorderSimple(comp, params);
@@ -807,6 +828,15 @@ static const ElementInfoSubComponent subcomponents[] = {
         create_Mem_SimpleDRAM,
         simpleDRAM_params,
         simpleDRAM_stats,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "DelayBuffer",
+        "Delays requests by specified time",
+        NULL,
+        create_Mem_DelayBuffer,
+        delayBuffer_params,
+        NULL,
         "SST::MemHierarchy::MemBackend"
     },
     {

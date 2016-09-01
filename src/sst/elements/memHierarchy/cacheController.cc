@@ -603,6 +603,9 @@ void Cache::postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool re
     Addr addr   = event->getBaseAddr();
 
     /* Clean up */
+    if (event->isPrefetch() && event->getRqstr() == this->getName() && !replay) {
+        statPrefetchHit->addData(1);
+    }
     recordLatency(event);
     delete event;
     

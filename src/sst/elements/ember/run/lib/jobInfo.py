@@ -80,7 +80,15 @@ class JobInfoBase:
 		pass
 
 	def getDetailed(self,nodeId):
-		pass	
+		#print 'JobLoad::getDetailded()',nodeId
+		if self._detailedModel:
+			model,params,nodes = self._detailedModel
+			if nodeId in nodes:
+				return detailedModel.getModel( model, params )
+			else:
+				return None
+		else:
+			return None
 
 	def setDetailed(self,detailed):
 		self._detailedModel = detailed
@@ -95,6 +103,8 @@ class JobInfoBase:
 		print 'JobInfo: jobId={0} numNodes={1} numRanksPerNode={2}'.\
 			format( self.jobId(), self.getNumNodes(), self.ranksPerNode() )		
 		print 'JobInfo: nidList="{0}"'.format( self.getNidlist() ) 
+		if self._detailedModel:
+			print 'JobInfo: detailed model {0}'.format(self._detailedModel)
 		self.printWork()
 
 class JobInfoCmd(JobInfoBase):
@@ -123,20 +133,11 @@ class JobInfo(JobInfoBase):
 
 	def printWork(self):
 		motifs = self._genWorkFlow( self._motifDefaults, 0 )
+		print 'JobInfo: showing work for node 0 only '
 		for cmd in motifs:
 			print 'JobInfo:    cmdLine: "{0}"'.format(cmd['cmd'])
 
 	def genWorkFlow( self, nodeNum ):
 		return self._genWorkFlow( self._motifDefaults, nodeNum )
 
-	def getDetailed(self,nodeId):
-		#print 'JobLoad::getDetailded()',nodeId
-		if self._detailedModel:
-			model,params,nodes = self._detailedModel
-			if nodeId in nodes:
-				return detailedModel.getModel( model, params )
-			else:
-				return None
-		else:
-			return None
 
