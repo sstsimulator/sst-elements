@@ -75,8 +75,10 @@ private:
 
 	MirandaRequestQueue<GeneratorRequest*> pendingRequests;
 
-	uint32_t maxRequestsPending;
-	uint32_t requestsPending;
+	uint32_t maxLoadRequestsPending;
+	uint32_t maxStoreRequestsPending;
+	uint32_t requestsLoadPending;
+	uint32_t requestsStorePending;
 	uint32_t reqMaxPerCycle;
 	uint64_t cacheLine;
 	uint32_t maxOpLookup;
