@@ -25,6 +25,7 @@ EmberDetailedStreamGenerator::EmberDetailedStreamGenerator(SST::Component* owner
 	m_n_per_call_copy = params.find<int32_t>("arg.n_per_call_copy", 1000);
 	m_n_per_call_triad = params.find<int32_t>("arg.n_per_call_triad", 1000);
 	m_operandwidth = params.find<int32_t>("arg.operandwidth", 8);
+	m_numLoops = params.find<int32_t>("arg.n_loops", 2);
 
 	assert( ! ( m_stream_n % ( m_operandwidth / 8 ) ) );
 }
@@ -36,7 +37,7 @@ std::string EmberDetailedStreamGenerator::getComputeModelName()
 
 void EmberDetailedStreamGenerator::print( ) 
 {
-	output("%s, Array Size %lu, Total Memory Required %.3f MB\n", 
+	output("%s, Array Size %d, Total Memory Required %.3f MB\n", 
 					getMotifName().c_str(), 
 					m_stream_n,
 					(m_stream_n * 3 * 8) / 1048576.0
@@ -44,7 +45,7 @@ void EmberDetailedStreamGenerator::print( )
 	for ( unsigned i = 0; i < m_benchName.size(); i++ ) {
 		double computeTime = (double)(m_stopTime[i] - m_startTime[i]);
 
- 		output("%s, %lu, %s %f MB/s, Time=%.3f us\n",
+ 		output("%s, %d, %s %f MB/s, Time=%.3f us\n",
 					getMotifName().c_str(), 
 					m_stream_n,
 					m_benchName[i].c_str(), 
@@ -69,10 +70,12 @@ bool EmberDetailedStreamGenerator::generate( std::queue<EmberEvent*>& evQ)
 	verbose( CALL_INFO, 2, 1, "streambuff=%" PRIx64 "\n",m_streamBuf.simVAddr);
 
     enQ_getTime( evQ, &m_startTime[0] );
+    Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
     computeDetailedCopy( evQ ); 
     enQ_getTime( evQ, &m_stopTime[0] );
 
     enQ_getTime( evQ, &m_startTime[1] );
+    Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
   	computeDetailedTriad( evQ ); 
     enQ_getTime( evQ, &m_stopTime[1] );
 
