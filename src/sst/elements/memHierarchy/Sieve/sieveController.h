@@ -56,10 +56,17 @@ public:
     
 private:
     struct SieveConfig;
-    typedef map<Addr, ArielComponent::arielAllocTrackEvent*> allocMap_t;
-    typedef pair<uint64_t, uint64_t> rwCount_t;
-    typedef std::unordered_map<ArielComponent::arielAllocTrackEvent*, rwCount_t > allocCountMap_t;
+    struct mallocEntry {
+        uint64_t id;    // ID assigned by ariel
+        uint64_t size;  // Number of bytes
+    };
     
+        
+    typedef map<Addr, mallocEntry> allocMap_t;
+    typedef pair<uint64_t, uint64_t> rwCount_t;
+    typedef std::unordered_map<uint64_t, rwCount_t > allocCountMap_t;
+    
+
     /** Name of the output file */
     string outFileName;
     /** output file counter */
@@ -68,7 +75,7 @@ private:
     allocCountMap_t allocMap;
      /** All allocations in list form */
     /** Active Allocations */
-    allocMap_t actAllocMap; 
+    allocMap_t activeAllocMap; 
     /** misses not associated with an alloc'd region */
 
     void recordMiss(Addr addr, bool isRead);
