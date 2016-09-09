@@ -337,6 +337,7 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
             }
             coherenceMgr->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
             delete origRequest;
+            delete event;
             break;
         default:
             d_->fatal(CALL_INFO, -1, "Command does not exist. Command: %s, Src: %s\n", CommandString[cmd], event->getSrc().c_str());
