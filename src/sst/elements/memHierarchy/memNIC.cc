@@ -56,7 +56,6 @@ void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
 
     num_vcs = ci.num_vcs;
 
-    flitSize = 16; // 16 Bytes as a default:  TODO: Parameterize this
     last_recv_vc = 0;
 
     Params params; // LinkControl doesn't actually use the params

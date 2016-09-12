@@ -162,7 +162,6 @@ private:
 
     Output* dbg;
     int num_vcs;
-    size_t flitSize;
     bool typeInfoSent; // True if TypeInfo has already been sent
     bool checkRecvQueue;
     unsigned int packetHeaderBytes = 8; // default
