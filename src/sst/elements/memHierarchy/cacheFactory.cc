@@ -141,7 +141,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     fixByteUnits(sizeStr); // Convert e.g., KB to KiB for unit alg
     UnitAlgebra ua(sizeStr);
     if (!ua.hasUnits("B")) {
-        dbg->fatal(CALL_INFO, -1, "Invalid param: cache_size - must have units of bytes (B). SI units are ok. You specified %s\n", sizeStr.c_str());
+        dbg->fatal(CALL_INFO, -1, "Invalid param: cache_size - must have units of bytes (B). Ex: '32KiB'. SI units are ok. You specified '%s'\n", sizeStr.c_str());
     }
     uint64_t cacheSize = ua.getRoundedValue();
     uint numLines = cacheSize/lineSize;
@@ -243,17 +243,17 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     }
     UnitAlgebra packetSize_ua(packetSize);
     if (!packetSize_ua.hasUnits("B")) {
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packetSize.c_str());
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packetSize.c_str());
     }
 
     /* Check link widths */
     UnitAlgebra reqWidth_ua(reqWidth);
     UnitAlgebra respWidth_ua(respWidth);
     if (!reqWidth_ua.hasUnits("B")) {
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B). SI units are ok. You specified %s\n", this->Component::getName().c_str(), reqWidth.c_str());
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B). Ex: '32B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), reqWidth.c_str());
     }
     if (!respWidth_ua.hasUnits("B")) {
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B). SI units are ok. You specified %s\n", this->Component::getName().c_str(), respWidth.c_str());
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B). Ex: '32B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), respWidth.c_str());
     }
 
     
@@ -455,7 +455,7 @@ void Cache::configureLinks(Params &params) {
         bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
         UnitAlgebra packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
-        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
+        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
         bottomNetworkLink_->setMinPacketSize(packet.getRoundedValue());
         
         // Configure high link
@@ -485,7 +485,7 @@ void Cache::configureLinks(Params &params) {
         bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
         UnitAlgebra packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
-        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
+        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
         bottomNetworkLink_->setMinPacketSize(packet.getRoundedValue());
 
         // Configure high link
@@ -507,7 +507,7 @@ void Cache::configureLinks(Params &params) {
         else if (cacheSliceCount > 1) {
             if (sliceID >= cacheSliceCount) d_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_id - should be between 0 and num_cache_slices-1. You specified %d.\n",
                     getName().c_str(), sliceID);
-            if (sliceAllocPolicy != "rr") d_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified %s.\n",
+            if (sliceAllocPolicy != "rr") d_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified '%s'.\n",
                     getName().c_str(), sliceAllocPolicy.c_str());
         } else {
             d2_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %d.\n", 
@@ -545,7 +545,7 @@ void Cache::configureLinks(Params &params) {
         bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
         UnitAlgebra packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
-        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
+        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
         bottomNetworkLink_->setMinPacketSize(packet.getRoundedValue());
 
         // Configure high link
@@ -582,10 +582,11 @@ void Cache::intrapolateMSHRLatency() {
     for(uint64 idx = 68; idx < N;  idx++) y[idx] = 32;
     
     if (accessLatency_ > N) {
-        d_->fatal(CALL_INFO, -1, "%s, Error: cannot intrapolate MSHR latency if cache latency > 200. Cache latency: %" PRIu64 "\n", getName().c_str(), accessLatency_);
+        d_->fatal(CALL_INFO, -1, "%s, Error: cannot intrapolate MSHR latency if cache latency > 200. Set 'mshr_latency_cycles' or reduce cache latency. Cache latency: %" PRIu64 "\n", getName().c_str(), accessLatency_);
     }
     mshrLatency_ = y[accessLatency_];
 
+    dbg->verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %u cycles.\n", getName().c_str(), mshrLatency_);
 }
 
 }}
