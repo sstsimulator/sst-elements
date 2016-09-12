@@ -362,7 +362,7 @@ static const ElementInfoParam sieve_params[] = {
     {"cache_line_size",         "Optional, int - Size of a cache line (aka cache block) in bytes."},
     {"profiler",                "Optional, string - Name of profiling module. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
     {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
+    {"debug_level",             "Optional, int - Debugging/verbosity level. Between 0 and 10", "1"},
     {"output_file",             "Optional, string – Name of file to output malloc information to. Will have sequence number (and optional marker number) and .txt appended to it. E.g. sieveMallocRank-3.txt", "sieveMallocRank"},
     {"reset_stats_at_buoy",     "Optional, int - Whether to reset allocation hit/miss stats when a buoy is found (i.e., when a new output file is dumped). Any value other than 0 is true." "0"},
     {NULL, NULL, NULL}

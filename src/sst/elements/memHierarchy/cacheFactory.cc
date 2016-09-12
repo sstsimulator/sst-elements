@@ -40,7 +40,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
  
     /* --------------- Output Class --------------- */
     Output* dbg = new Output();
-    int debugLevel = params.find<int>("debug_level", 0);
+    int debugLevel = params.find<int>("debug_level", 1);
     
     dbg->init("--->  ", debugLevel, 0,(Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)     dbg->fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
@@ -198,7 +198,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     errorChecking();
     
     d2_ = new Output();
-    d2_->init("", params.find<int>("debug_level", 0), 0,(Output::output_location_t)params.find<int>("debug", 0));
+    d2_->init("", params.find<int>("debug_level", 1), 0,(Output::output_location_t)params.find<int>("debug", SST::Output::STDOUT));
     
     
     int stats                   = params.find<int>("statistics", 0);
@@ -586,7 +586,7 @@ void Cache::intrapolateMSHRLatency() {
     }
     mshrLatency_ = y[accessLatency_];
 
-    dbg->verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %u cycles.\n", getName().c_str(), mshrLatency_);
+    d2_->verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %u cycles.\n", getName().c_str(), mshrLatency_);
 }
 
 }}
