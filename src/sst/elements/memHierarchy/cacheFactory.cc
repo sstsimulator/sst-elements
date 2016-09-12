@@ -122,7 +122,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     }
 
     /* NACKing to from L1 to the CPU doesnt really happen in CPUs*/
-    if (L1 && mshrSize != -1)   dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be -1 for L1s, memHierarchy assumes L1 MSHR is sized to match the CPU's load/store queue. You specified %d\n", mshrSize);
+    //if (L1 && mshrSize != -1)   dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be -1 for L1s, memHierarchy assumes L1 MSHR is sized to match the CPU's load/store queue. You specified %d\n", mshrSize);
     
     /* Ensure mshr size is large enough to avoid deadlock*/
     if (-1 == mshrSize) mshrSize = HUGE_MSHR;
@@ -209,6 +209,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     maxRequestsPerCycle_        = params.find<int>("max_requests_per_cycle",-1);
     string reqWidth             = params.find<std::string>("request_link_width","0B");
     string respWidth            = params.find<std::string>("response_link_width","0B");
+    string packetSize           = params.find<std::string>("min_packet_size", "8B");
     bool snoopL1Invs            = false;
     if (cf_.L1_) snoopL1Invs    = params.find<bool>("snoop_l1_invalidations", false);
     bool LL                     = params.find<bool>("LL", false);
@@ -240,15 +241,19 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         SST::Output outputStd("",1,0,SST::Output::STDOUT);
         outputStd.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sst-info for available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", this->Component::getName().c_str());
     }
+    UnitAlgebra packetSize_ua(packetSize);
+    if (!packetSize_ua.hasUnits("B")) {
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packetSize.c_str());
+    }
 
     /* Check link widths */
     UnitAlgebra reqWidth_ua(reqWidth);
     UnitAlgebra respWidth_ua(respWidth);
     if (!reqWidth_ua.hasUnits("B")) {
-        d_->fatal(CALL_INFO, -1, "Invalid param: request_link_width - must have units of bytes (B). SI units are ok. You specified %s\n", reqWidth.c_str());
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B). SI units are ok. You specified %s\n", this->Component::getName().c_str(), reqWidth.c_str());
     }
     if (!respWidth_ua.hasUnits("B")) {
-        d_->fatal(CALL_INFO, -1, "Invalid param: response_link_width - must have units of bytes (B). SI units are ok. You specified %s\n", respWidth.c_str());
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B). SI units are ok. You specified %s\n", this->Component::getName().c_str(), respWidth.c_str());
     }
 
     
@@ -342,22 +347,22 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         if (cf_.protocol_ != 2) {
             if (cf_.type_ != "noninclusive_with_directory") {
                 coherenceMgr = new MESIController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, cf_.protocol_, 
-                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue());
+                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
             } else {
                 coherenceMgr = new MESIInternalDirectory(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, cf_.protocol_,
-                        lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue());
+                        lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
             }
         } else {
             coherenceMgr = new IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_,
-                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue());
+                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
         }
     } else {
         if (cf_.protocol_ != 2) {
             coherenceMgr = new L1CoherenceController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, cf_.protocol_, 
-                lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, snoopL1Invs, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue());
+                lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, snoopL1Invs, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
         } else {
             coherenceMgr = new L1IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, 
-                    lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue());
+                    lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
         }
     }
     
@@ -449,7 +454,10 @@ void Cache::configureLinks(Params &params) {
 
         bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
-
+        UnitAlgebra packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
+        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
+        bottomNetworkLink_->setMinPacketSize(packet.getRoundedValue());
+        
         // Configure high link
         SST::Link * link = configureLink("high_network_0", "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         d_->debug(_INFO_, "High Network Link ID: %u\n", (uint)link->getId());
@@ -476,6 +484,9 @@ void Cache::configureLinks(Params &params) {
 
         bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
+        UnitAlgebra packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
+        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
+        bottomNetworkLink_->setMinPacketSize(packet.getRoundedValue());
 
         // Configure high link
         SST::Link * link = configureLink("high_network_0", "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
@@ -533,6 +544,9 @@ void Cache::configureLinks(Params &params) {
         
         bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
+        UnitAlgebra packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
+        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
+        bottomNetworkLink_->setMinPacketSize(packet.getRoundedValue());
 
         // Configure high link
         topNetworkLink_ = bottomNetworkLink_;

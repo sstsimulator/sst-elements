@@ -37,11 +37,15 @@ bool MemNIC::isValidDestination(std::string target) {
     return (addrMap.find(target) != addrMap.end());
 }
 
+void MemNIC::setMinPacketSize(unsigned int bytes) {
+    packetHeaderBytes = bytes;
+}
+
 /* Get size in bytes for a MemEvent */
-int MemNIC::getFlitSize(MemEvent *ev)
+int MemNIC::getSizeInBits(MemEvent *ev)
 {
     /* addr (8B) + cmd (1B) + size */
-    return 8 + ev->getPayloadSize();
+    return 8 * (packetHeaderBytes + ev->getPayloadSize());
 }
 
 
@@ -287,7 +291,7 @@ void MemNIC::send(MemEvent *ev)
     MemRtrEvent *mre = new MemRtrEvent(ev);
     req->src = ci.network_addr;
     req->dest = addrForDest(ev->getDst());
-    req->size_in_bits = 8 * getFlitSize(ev);
+    req->size_in_bits = getSizeInBits(ev);
     req->vn = 0;
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr())

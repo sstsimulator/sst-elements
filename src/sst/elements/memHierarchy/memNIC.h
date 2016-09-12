@@ -165,6 +165,7 @@ private:
     size_t flitSize;
     bool typeInfoSent; // True if TypeInfo has already been sent
     bool checkRecvQueue;
+    unsigned int packetHeaderBytes = 8; // default
 
     /* Debugging stuff */
     Addr DEBUG_ADDR;
@@ -189,13 +190,12 @@ private:
     /* Built during init -> available for lookups later */
     std::map<MemNIC::ComponentTypeInfo, std::string> destinations;
 
-
     /* Translates a MemEvent string destination to an network address
        (integer) */
     int addrForDest(const std::string &target) const;
 
-    /* Get size in flits for a MemEvent */
-    int getFlitSize(MemEvent *ev);
+    /* Get size in bits for a MemEvent */
+    int getSizeInBits(MemEvent *ev);
 
     /* Used during run to send updated address ranges */
     void sendNewTypeInfo(const ComponentTypeInfo &cti);
@@ -217,6 +217,9 @@ public:
 
     /* Allow parent to register a callback function so it can de-clock itself safely */
     void registerRecvCallback(Event::HandlerBase * handler);
+
+    /* Sets the minimum packet size/header size */
+    void setMinPacketSize(unsigned int);
 
     /* Call these from their respective calls in the component */
     void setup(void);

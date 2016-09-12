@@ -109,6 +109,7 @@ static const ElementInfoParam cache_params[] = {
     {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
     {"debug_addr",              "Optional, int - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {"force_noncacheable_reqs", "Optional, bool - Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "false"},
+    {"min_packet_size",         "Optional, int - Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
     {"LLC",                     "DEPRECATED - Now auto-detected by configure. Specifies whether cache is a last-level cache. Options: 0[not LLC], 1[LLC]"},
     {"statistics",              "DEPRECATED - Use Statistics API to get statistics for caches.", "0"},
     {"network_num_vc",          "DEPRECATED - Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},

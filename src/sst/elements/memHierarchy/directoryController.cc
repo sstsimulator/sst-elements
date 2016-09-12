@@ -83,7 +83,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     string ilStep   = params.find<std::string>("interleave_step", "0B");
     protocol        = params.find<std::string>("coherence_protocol", "MESI");
     dbg.debug(_L5_, "Directory controller using protocol: %s\n", protocol.c_str());
-    
+  
+    UnitAlgebra packetSize = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
+    if (!packetSize.hasUnits("B")) dbg.fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). SI units are ok. You specified '%s'\n", getName().c_str(), packetSize.toString().c_str());
+
     int mshrSize    = params.find<int>("mshr_num_entries",-1);
     if (mshrSize == -1) mshrSize = HUGE_MSHR;
     if (mshrSize < 1) dbg.fatal(CALL_INFO, -1, "Invalid param(%s): mshr_num_entries - must be at least 1 or else -1 to indicate a very large MSHR\n", getName().c_str());
@@ -136,6 +139,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         myInfo.link_inbuf_size                  = params.find<std::string>("network_input_buffer_size", "1KiB");
         myInfo.link_outbuf_size                 = params.find<std::string>("network_output_buffer_size", "1KiB");
         network = new MemNIC(this, &dbg, DEBUG_ADDR, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        network->setMinPacketSize(packetSize.getRoundedValue());
 
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.rangeStart     = addrRangeStart;
@@ -159,6 +163,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         myInfo.link_inbuf_size                  = params.find<std::string>("network_input_buffer_size", "1KiB");
         myInfo.link_outbuf_size                 = params.find<std::string>("network_output_buffer_size", "1KiB");
         network = new MemNIC(this, &dbg, DEBUG_ADDR, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        network->setMinPacketSize(packetSize.getRoundedValue());
         
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.rangeStart     = addrRangeStart;

@@ -74,7 +74,8 @@ public:
     MSHR *      mshr_;              // Pointer to cache's MSHR, coherence controllers are responsible for managing writeback acks
     unsigned int maxBytesDownPerCycle_; // Number of bytes we can send down (request link width)    
     unsigned int maxBytesUpPerCycle_;   // Number of bytes we can send up (response link width)    
-    
+    unsigned int packetHeaderBytes_;    // Number of bytes in a packet header/control message (8B by default)
+
     list<Response> outgoingEventQueue_;
     list<Response> outgoingEventQueueUp_;
 
@@ -100,7 +101,7 @@ public:
         MemEvent *NACKevent = event->makeNACKResponse((Component*)owner_, event);
     
         uint64 deliveryTime      = timestamp_ + tagLatency_;
-        Response resp = {NACKevent, deliveryTime, true, 8};
+        Response resp = {NACKevent, deliveryTime, true, packetHeaderBytes_};
         if (up) {
             addToOutgoingQueueUp(resp);
         } else {
@@ -121,7 +122,7 @@ public:
     
         if (baseTime < timestamp_) baseTime = timestamp_;
         uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : accessLatency_);
-        Response resp = {responseEvent, deliveryTime, true, 8 + responseEvent->getPayloadSize()};
+        Response resp = {responseEvent, deliveryTime, true, packetHeaderBytes_ + responseEvent->getPayloadSize()};
         addToOutgoingQueueUp(resp);
     
 #ifdef __SST_DEBUG_OUTPUT__
@@ -140,7 +141,7 @@ public:
         event->incrementRetries();
 
         uint64 deliveryTime =  timestamp_ + mshrLatency_ + backoff;
-        Response resp = {event, deliveryTime, false, 8 + event->getPayloadSize()};
+        Response resp = {event, deliveryTime, false, packetHeaderBytes_ + event->getPayloadSize()};
         if (!up) addToOutgoingQueue(resp);
         else addToOutgoingQueueUp(resp);
 #ifdef __SST_DEBUG_OUTPUT__
@@ -169,7 +170,7 @@ public:
             deliveryTime = timestamp_ + mshrLatency_;
         } else deliveryTime = baseTime + tagLatency_; 
     
-        Response fwdReq = {forwardEvent, deliveryTime, false, 8 + forwardEvent->getPayloadSize()};
+        Response fwdReq = {forwardEvent, deliveryTime, false, packetHeaderBytes_ + forwardEvent->getPayloadSize()};
         addToOutgoingQueue(fwdReq);
 #ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Forwarding request at cycle = %" PRIu64 "\n", deliveryTime);        
@@ -322,7 +323,7 @@ public:
 protected:
     CoherencyController(const Cache* cache, Output* dbg, string name, uint lineSize, uint64_t accessLatency, uint64_t tagLatency, uint64_t mshrLatency, bool LLC, bool LL, 
             vector<Link*>* parentLinks, Link* childLink, MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, CacheListener* listener, MSHR * mshr, bool wbClean, 
-            bool debugAll, Addr debugAddr, unsigned int reqWidth, unsigned int respWidth):
+            bool debugAll, Addr debugAddr, unsigned int reqWidth, unsigned int respWidth, unsigned int packetSize):
                         timestamp_(0), accessLatency_(1), tagLatency_(1), owner_(cache), d_(dbg), lineSize_(lineSize), sentEvents_(0) {
         name_                   = name;
         accessLatency_          = accessLatency;
@@ -341,6 +342,7 @@ protected:
         expectWritebackAck_     = !LL && (LLC || wbClean);  // Expect writeback ack if there's a dir below us or a cache that is non-inclusive
         maxBytesUpPerCycle_     = respWidth;
         maxBytesDownPerCycle_   = reqWidth;
+        packetHeaderBytes_      = packetSize;
 
         // Register statistics - TODO register in a protocol-specific way??
         stat_evict_I = ((Component *)owner_)->registerStatistic<uint64_t>("evict_I");
