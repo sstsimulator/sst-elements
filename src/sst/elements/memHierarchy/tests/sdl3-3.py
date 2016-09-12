@@ -57,7 +57,6 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "8 KB",
-      "LL" : 1,
       "debug" : "0"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")

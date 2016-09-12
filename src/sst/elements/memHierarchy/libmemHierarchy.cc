@@ -75,7 +75,6 @@ static const ElementInfoParam cache_params[] = {
     {"associativity",           "Required, int - Associativity of the cache. In set associative mode, this is the number of ways."},
     {"access_latency_cycles",   "Required, int - Latency (in cycles) to access the cache data array. This latency is paid by cache hits and coherence requests that need to return data."},
     {"L1",                      "Required, bool - Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]", "false"},
-    {"LL",                      "Required, bool - Required for LLCs without a directory below - indicates LLC is the lowest-level coherence entity. Options: 0[not LL entity], 1[LL entity]", "false"},
     /* Not required */
     {"cache_line_size",         "Optional, int - Size of a cache line (aka cache block) in bytes.", "64"},
     {"hash_function",           "Optional, int - 0 - none (default), 1 - linear, 2 - XOR", "0"},
@@ -110,12 +109,13 @@ static const ElementInfoParam cache_params[] = {
     {"debug_addr",              "Optional, int - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {"force_noncacheable_reqs", "Optional, bool - Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "false"},
     {"min_packet_size",         "Optional, int - Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
-    {"LLC",                     "DEPRECATED - Now auto-detected by configure. Specifies whether cache is a last-level cache. Options: 0[not LLC], 1[LLC]"},
+    {"LL",                      "DEPRECATED - Now auto-detected during init."},
+    {"LLC",                     "DEPRECATED - Now auto-detected by configure."},
     {"statistics",              "DEPRECATED - Use Statistics API to get statistics for caches.", "0"},
     {"network_num_vc",          "DEPRECATED - Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
-    {"directory_at_next_level", "DEPRECATED - Now auto-detected by configure. Specifies if there is a directory-controller as the next lower memory level; deprecated - set 'bottom_network' to 'directory' instead", "0"},
-    {"bottom_network",          "DEPRECATED - Now auto-detected by configure. Specifies whether the cache is connected to a network below and the entity type of the connection. Options: cache, directory, ''[no network below]", ""},
-    {"top_network",             "DEPRECATED - Now auto-detected by configure. Specifies whether the cache is connected to a network above and the entity type of the connection. Options: cache, ''[no network above]", ""},
+    {"directory_at_next_level", "DEPRECATED - Now auto-detected by configure."},
+    {"bottom_network",          "DEPRECATED - Now auto-detected by configure."},
+    {"top_network",             "DEPRECATED - Now auto-detected by configure."},
     {NULL, NULL, NULL}
 };
 

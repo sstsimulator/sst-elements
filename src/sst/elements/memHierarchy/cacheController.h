@@ -309,6 +309,8 @@ private:
     bool                    DEBUG_ALL;
     Addr                    DEBUG_ADDR;
 
+    bool                    isLL;
+
     /* Performance enhancement: turn clocks off when idle */
     bool                    clockIsOn_;                 // Tell us whether clock is on or off
     SimTime_t               lastActiveClockCycle_;      // Cycle we turned the clock off at - for re-syncing stats

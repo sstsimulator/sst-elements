@@ -388,6 +388,8 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
 
 
 void Cache::init(unsigned int phase) {
+    // Look to see if we get a NULLCMD with addr 0 on our lowNetPorts (and we don't have a network attached).
+    // If above is true, we are an LL -> no directory
     if (topNetworkLink_) { // I'm connected to the network ONLY via a single NIC
         bottomNetworkLink_->init(phase);
             
@@ -441,6 +443,9 @@ void Cache::init(unsigned int phase) {
             while ((ev = lowNetPorts_->at(i)->recvInitData())) {
                 MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
                 if (memEvent && memEvent->getCmd() == NULLCMD) {
+                    if (memEvent->getAddr() == 0) {
+                        isLL = false;
+                    }
                     lowerLevelCacheNames_.push_back(memEvent->getSrc());
                 }
                 delete memEvent;
@@ -455,6 +460,7 @@ void Cache::setup() {
     if (upperLevelCacheNames_.size() == 0) upperLevelCacheNames_.push_back(""); // avoid segfault on accessing this
     coherenceMgr->setLowerLevelCache(&lowerLevelCacheNames_);
     coherenceMgr->setUpperLevelCache(&upperLevelCacheNames_);
+    coherenceMgr->setupLLStatus(isLL && !bottomNetworkLink_);
 }
 
 

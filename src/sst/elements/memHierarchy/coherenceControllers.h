@@ -190,6 +190,12 @@ public:
     }
     
 
+    void setupLLStatus(bool isLL) {
+        silentEvictClean_       = isLL;         // Silently evict clean blocks if there's just a memory below us
+        expectWritebackAck_     = !isLL && (expectWritebackAck_);  // Expect writeback ack if there's a dir below us or a cache that is non-inclusive
+    }
+
+
     /**
      *  Send outgoing commands if the arey ready (according to timestamp)
      *  @return Whether queue is empty or not
@@ -321,7 +327,7 @@ public:
 
 
 protected:
-    CoherencyController(const Cache* cache, Output* dbg, string name, uint lineSize, uint64_t accessLatency, uint64_t tagLatency, uint64_t mshrLatency, bool LLC, bool LL, 
+    CoherencyController(const Cache* cache, Output* dbg, string name, uint lineSize, uint64_t accessLatency, uint64_t tagLatency, uint64_t mshrLatency, bool LLC, 
             vector<Link*>* parentLinks, Link* childLink, MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, CacheListener* listener, MSHR * mshr, bool wbClean, 
             bool debugAll, Addr debugAddr, unsigned int reqWidth, unsigned int respWidth, unsigned int packetSize):
                         timestamp_(0), accessLatency_(1), tagLatency_(1), owner_(cache), d_(dbg), lineSize_(lineSize), sentEvents_(0) {
@@ -338,8 +344,7 @@ protected:
         highNetPort_            = childLink;
         listener_               = listener;
         writebackCleanBlocks_   = wbClean;  // Writeback clean data (if lower is non-inclusive for e.g.)
-        silentEvictClean_       = LL;       // Silently evict clean blocks if there's just a memory below us
-        expectWritebackAck_     = !LL && (LLC || wbClean);  // Expect writeback ack if there's a dir below us or a cache that is non-inclusive
+        expectWritebackAck_     = (LLC || wbClean);  // Expect writeback ack if there's a dir below us or a cache that is non-inclusive
         maxBytesUpPerCycle_     = respWidth;
         maxBytesDownPerCycle_   = reqWidth;
         packetHeaderBytes_      = packetSize;

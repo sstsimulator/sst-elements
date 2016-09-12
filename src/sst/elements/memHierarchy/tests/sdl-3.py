@@ -23,8 +23,7 @@ comp_l1cache.addParams({
       "cache_line_size" : "64",
       "debug" : "0",
       "L1" : "1",
-      "LL" : "1",
-      "cache_size" : "4 KB"
+      "cache_size" : "4KiB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({

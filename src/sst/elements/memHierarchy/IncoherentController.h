@@ -22,9 +22,9 @@ class IncoherentController : public CoherencyController{
 public:
     /** Constructor for IncoherentController. */
     IncoherentController(const Cache* cache, string ownerName, Output* dbg, vector<Link*>* parentLinks, Link* childLink, CacheListener* listener, 
-            unsigned int lineSize, uint64 accessLatency, uint64 tagLatency, uint64 mshrLatency, bool LLC, bool LL, MSHR * mshr, bool inclusive, bool wbClean,
+            unsigned int lineSize, uint64 accessLatency, uint64 tagLatency, uint64 mshrLatency, bool LLC, MSHR * mshr, bool inclusive, bool wbClean,
             MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, bool debugAll, Addr debugAddr, unsigned int reqWidth,  unsigned int respWidth, unsigned int packetSize) :
-                 CoherencyController(cache, dbg, ownerName, lineSize, accessLatency, tagLatency, mshrLatency, LLC, LL, parentLinks, childLink, 
+                 CoherencyController(cache, dbg, ownerName, lineSize, accessLatency, tagLatency, mshrLatency, LLC, parentLinks, childLink, 
                          bottomNetworkLink, topNetworkLink, listener, mshr, wbClean, debugAll, debugAddr, reqWidth, respWidth, packetSize) {
         d_->debug(_INFO_,"--------------------------- Initializing [Incoherent Controller] ... \n\n");
         inclusive_           = inclusive;
