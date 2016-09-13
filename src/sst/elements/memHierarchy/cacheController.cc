@@ -148,7 +148,7 @@ void Cache::processCacheReplacement(MemEvent* event, Command cmd, Addr baseAddr,
 
 
     // May need to allocate for non-inclusive or incoherent caches
-    if (cf_.type_ == "noninclusive" || cf_.protocol_ == 2) {
+    if (cf_.type_ == "noninclusive" || cf_.protocol_ == CoherenceProtocol::NONE) {
         int index = cf_.cacheArray_->find(baseAddr, true); // Update replacement metadata
         if (isCacheMiss(index)) {
 #ifdef __SST_DEBUG_OUTPUT__
@@ -660,7 +660,8 @@ void Cache::errorChecking() {
 
 void Cache::pMembers() {
     string protocolStr;
-    if (cf_.protocol_) protocolStr = "MESI";
+    if (cf_.protocol_ == CoherenceProtocol::MESI) protocolStr = "MESI";
+    else if (cf_.protocol_ == CoherenceProtocol::NONE) protocolStr = "NONE";
     else protocolStr = "MSI";
     
     d_->debug(_INFO_,"Coherence Protocol: %s \n", protocolStr.c_str());

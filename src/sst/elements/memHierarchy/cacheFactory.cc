@@ -52,7 +52,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     bool found;
     params.find<int>("LL", 0, found);
     if (found) {
-        out.output("cacheFactory, ** Found deprecated parameter: LL ** The vaule of this paramter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
+        out.output("cacheFactory, ** Found deprecated parameter: LL ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
     }
     params.find<int>("LLC", 0, found);
     if (found) {
@@ -73,6 +73,10 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     params.find<int>("network_num_vc", 0, found);
     if (found) {
         out.output("cacheFactory, ** Found deprecated parameter: network_num_vc ** MemHierarchy does not use multiple virtual channels. Remove this parameter from your input deck to eliminate this message.\n");
+    }
+    params.find<int>("lower_is_noninclusive", 0, found);
+    if (found) {
+        out.output("cacheFactory, ** Found deprecated parameter: lower_is_noninclusive ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
     }
 
     /* --------------- Get Parameters --------------- */
@@ -149,11 +153,11 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     }
     uint64_t cacheSize = ua.getRoundedValue();
     uint numLines = cacheSize/lineSize;
-    uint protocol = 0;
+    CoherenceProtocol protocol = CoherenceProtocol::MSI;
     
-    if (coherenceProtocol == "mesi")      protocol = 1;
-    else if (coherenceProtocol == "msi")  protocol = 0;
-    else if (coherenceProtocol == "none") protocol = 2;
+    if (coherenceProtocol == "mesi")      protocol = CoherenceProtocol::MESI;
+    else if (coherenceProtocol == "msi")  protocol = CoherenceProtocol::MSI;
+    else if (coherenceProtocol == "none") protocol = CoherenceProtocol::NONE;
     else dbg->fatal(CALL_INFO,-1, "Invalid param: coherence_protocol - must be 'msi', 'mesi', or 'none'\n");
 
     CacheArray * cacheArray = NULL;
@@ -220,7 +224,6 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     if (dAddr != -1) DEBUG_ALL = false;
     else DEBUG_ALL = true;
     DEBUG_ADDR = (Addr)dAddr;
-    bool lowerIsNoninclusive    = params.find<bool>("lower_is_noninclusive", false);
     bool found;
     
     maxOutstandingPrefetch_     = params.find<int>("max_outstanding_prefetch", cf_.MSHRSize_ / 2, found);
@@ -344,29 +347,29 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     /* --------------- Coherence Controllers --------------- */
     coherenceMgr = NULL;
     bool inclusive = cf_.type_ == "inclusive";
-    bool LLC = isPortConnected("directory");
     isLL = true;
+    lowerIsNoninclusive = false;
 
     if (!cf_.L1_) {
-        if (cf_.protocol_ != 2) {
+        if (cf_.protocol_ != CoherenceProtocol::NONE) {
             if (cf_.type_ != "noninclusive_with_directory") {
-                coherenceMgr = new MESIController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, mshr_, cf_.protocol_, 
-                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
+                coherenceMgr = new MESIController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, mshr_, cf_.protocol_, 
+                    inclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
             } else {
-                coherenceMgr = new MESIInternalDirectory(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, mshr_, cf_.protocol_,
-                        lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
+                coherenceMgr = new MESIInternalDirectory(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, mshr_, cf_.protocol_,
+                        bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
             }
         } else {
-            coherenceMgr = new IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, mshr_,
-                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
+            coherenceMgr = new IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, mshr_,
+                    inclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
         }
     } else {
-        if (cf_.protocol_ != 2) {
-            coherenceMgr = new L1CoherenceController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, mshr_, cf_.protocol_, 
-                lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, snoopL1Invs, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
+        if (cf_.protocol_ != CoherenceProtocol::NONE) {
+            coherenceMgr = new L1CoherenceController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, mshr_, cf_.protocol_, 
+                bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, snoopL1Invs, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
         } else {
-            coherenceMgr = new L1IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, mshr_, 
-                    lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
+            coherenceMgr = new L1IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, mshr_, 
+                    bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
         }
     }
     
@@ -455,6 +458,8 @@ void Cache::configureLinks(Params &params) {
 
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.blocksize = cf_.lineSize_;
+        typeInfo.coherenceProtocol = cf_.protocol_;
+        typeInfo.cacheType = cf_.type_;
 
         bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
@@ -485,6 +490,8 @@ void Cache::configureLinks(Params &params) {
 
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.blocksize = cf_.lineSize_;
+        typeInfo.coherenceProtocol = cf_.protocol_;
+        typeInfo.cacheType = cf_.type_;
 
         bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
@@ -545,6 +552,8 @@ void Cache::configureLinks(Params &params) {
         typeInfo.interleaveSize = interleaveSize;
         typeInfo.interleaveStep = interleaveStep;
         typeInfo.blocksize      = cf_.lineSize_;
+        typeInfo.coherenceProtocol = cf_.protocol_;
+        typeInfo.cacheType = cf_.type_;
         
         bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);

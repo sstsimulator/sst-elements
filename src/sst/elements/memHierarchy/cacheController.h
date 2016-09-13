@@ -261,7 +261,7 @@ private:
         string cacheFrequency_;
         CacheArray* cacheArray_;
         CacheArray* directoryArray_;
-        uint protocol_;
+        CoherenceProtocol protocol_;
         Output* dbg_;
         ReplacementMgr* rm_;
         uint numLines_;
@@ -309,7 +309,9 @@ private:
     bool                    DEBUG_ALL;
     Addr                    DEBUG_ADDR;
 
+    // These parameters are for the coherence controller and are detected during init
     bool                    isLL;
+    bool                    lowerIsNoninclusive;
 
     /* Performance enhancement: turn clocks off when idle */
     bool                    clockIsOn_;                 // Tell us whether clock is on or off

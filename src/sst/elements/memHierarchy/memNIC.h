@@ -52,6 +52,8 @@ public:
         uint64_t interleaveSize;
         uint64_t interleaveStep;
         uint32_t blocksize;    
+        CoherenceProtocol coherenceProtocol;
+        std::string cacheType;
         bool contains(uint64_t addr) const {
             if ( addr >= rangeStart && addr < rangeEnd ) {
                 if ( interleaveSize == 0 ) return true;
@@ -149,6 +151,8 @@ public:
                 ser & compInfo.interleaveSize;
                 ser & compInfo.interleaveStep;
                 ser & compInfo.blocksize;
+                ser & compInfo.coherenceProtocol;
+                ser & compInfo.cacheType;
                 ser & src;
             }
         
@@ -233,6 +237,7 @@ public:
     MemEvent* recvInitData(void);
     bool initDataReady();
     const std::vector<PeerInfo_t>& getPeerInfo(void) const { return peers; }
+    const ComponentInfo& getComponentInfo(void) const { return ci; }
     // translate a memory address to a network target (string)
     std::string findTargetDestination(Addr addr);
     // NOTE: does not clear the listing of destinations which are used for address lookups
@@ -240,6 +245,7 @@ public:
 
     // Callback function for linkControl
     bool recvNotify(int vn);
+
 };
 
 } //namespace memHierarchy
