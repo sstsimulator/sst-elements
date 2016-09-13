@@ -81,8 +81,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     addrRangeEnd    = params.find<uint64_t>("addr_range_end", 0);
     string ilSize   = params.find<std::string>("interleave_size", "0B");
     string ilStep   = params.find<std::string>("interleave_step", "0B");
-    protocol        = params.find<std::string>("coherence_protocol", "MESI");
-    dbg.debug(_L5_, "Directory controller using protocol: %s\n", protocol.c_str());
+    string protstr  = params.find<std::string>("coherence_protocol", "MESI");
+    dbg.debug(_L5_, "Directory controller using protocol: %s\n", protstr.c_str());
   
     UnitAlgebra packetSize = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
     if (!packetSize.hasUnits("B")) dbg.fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). SI units are ok. You specified '%s'\n", getName().c_str(), packetSize.toString().c_str());
@@ -96,12 +96,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     numTargets = 0;
 	
     /* Check parameter validity */
-    if(! ("MESI" == protocol || "mesi" == protocol || "MSI" == protocol || "msi" == protocol) ) {
-	dbg.fatal(CALL_INFO, -1, "Invalid param(%s): coherence_protocol - must be 'MESI' or 'MSI'. You specified: %s\n", getName().c_str(), protocol.c_str());
-    }
-
-    if (protocol == "mesi") protocol = "MESI";
-    if (protocol == "msi") protocol = "MSI";
+    if (protstr == "mesi" || protstr == "MESI") protocol = CoherenceProtocol::MESI;
+    else if (protstr == "msi" || protstr == "MSI") protocol = CoherenceProtocol::MSI;
+    else dbg.fatal(CALL_INFO, -1, "Invalid param(%s): coherence_protocol - must be 'MESI' or 'MSI'. You specified: %s\n", getName().c_str(), protstr.c_str());
 
     /* Check interleaveSize & Step
      * Both must be specified in B (SI units ok)
@@ -923,7 +920,7 @@ void DirectoryController::handleFetchResp(MemEvent * ev) {
             entry->setState(M);
             break;
         case M_InvX:    // GetS request
-            if (protocol == "MESI" && entry->getSharerCount() == 0) {
+            if (protocol == CoherenceProtocol::MESI && entry->getSharerCount() == 0) {
                 entry->setOwner(node_id(reqEv->getSrc()));
                 respEv = reqEv->makeResponse(E);
                 entry->setState(M);
@@ -1037,7 +1034,7 @@ void DirectoryController::handleDataResponse(MemEvent * ev) {
     switch (state) {
         case IS:
         case S_D:
-            if (protocol == "MESI" && entry->getSharerCount() == 0) {
+            if (protocol == CoherenceProtocol::MESI && entry->getSharerCount() == 0) {
                 respEv = reqEv->makeResponse(E);
                 entry->setState(M);
                 entry->setOwner(node_id(reqEv->getSrc()));
