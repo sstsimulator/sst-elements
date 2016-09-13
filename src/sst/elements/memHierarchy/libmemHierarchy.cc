@@ -446,7 +446,7 @@ static Component* create_MemController(ComponentId_t id, Params& params){
 
 static const ElementInfoParam memctrl_params[] = {
     /* Required parameters */
-    {"backend.mem_size",    "Size of physical memory in MiB"},
+    {"backend.mem_size",    "Size of physical memory. NEW REQUIREMENT: must include units in 'B' (SI ok). Simple fix: add 'MiB' to old value."},
     {"clock",               "Clock frequency of controller", NULL},
     /* Optional parameters */
     {"backend",             "Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},

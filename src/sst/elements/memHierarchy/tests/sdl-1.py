@@ -32,7 +32,7 @@ comp_memory.addParams({
       "debug" : "0",
       "backend.access_time" : "1000 ns",
       "clock" : "1GHz",
-      "backend.mem_size" : "512"
+      "backend.mem_size" : "512MiB"
 })
 
 # Enable statistics
