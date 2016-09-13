@@ -388,6 +388,8 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
 
 
 void Cache::init(unsigned int phase) {
+    // See if we can determine whether the lower entity is non-inclusive
+    // For direct-connect cache, 
     if (topNetworkLink_) { // I'm connected to the network ONLY via a single NIC
         bottomNetworkLink_->init(phase);
             
@@ -407,7 +409,11 @@ void Cache::init(unsigned int phase) {
         if (cf_.L1_) {
             highNetPort_->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
         } else {
-            highNetPort_->sendInitData(new MemEvent(this, 0, 0, NULLCMD));
+            if (cf_.type_ == "inclusive") {
+                highNetPort_->sendInitData(new MemEvent(this, 0, 0, NULLCMD));
+            } else {
+                highNetPort_->sendInitData(new MemEvent(this, 1, 0, NULLCMD));
+            }
         }
         if (!bottomNetworkLink_) {
             for (uint i = 0; i < lowNetPorts_->size(); i++) {
@@ -441,6 +447,12 @@ void Cache::init(unsigned int phase) {
             while ((ev = lowNetPorts_->at(i)->recvInitData())) {
                 MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
                 if (memEvent && memEvent->getCmd() == NULLCMD) {
+                    if (memEvent->getBaseAddr() == 0) {
+                        isLL = false;
+                        if (memEvent->getAddr() == 1) {
+                            lowerIsNoninclusive = true; // TODO better checking if we have multiple caches below us
+                        }
+                    }
                     lowerLevelCacheNames_.push_back(memEvent->getSrc());
                 }
                 delete memEvent;
@@ -455,6 +467,26 @@ void Cache::setup() {
     if (upperLevelCacheNames_.size() == 0) upperLevelCacheNames_.push_back(""); // avoid segfault on accessing this
     coherenceMgr->setLowerLevelCache(&lowerLevelCacheNames_);
     coherenceMgr->setUpperLevelCache(&upperLevelCacheNames_);
+    bool isDirBelow = false; // is a directory below?
+    if (bottomNetworkLink_) { 
+        isLL = false;   // Either a directory or a cache below us
+        lowerIsNoninclusive = false; // Assume the cache below us is inclusive or it's a directory
+        isDirBelow = true; // Assume a directory is below
+        const std::vector<MemNIC::PeerInfo_t> &ci = bottomNetworkLink_->getPeerInfo();
+        const MemNIC::ComponentInfo &myCI = bottomNetworkLink_->getComponentInfo();
+        // Search peer info to determine if we have inclusive or noninclusive caches below us
+        if (MemNIC::TypeCacheToCache == myCI.type) { // I'm a cache with a cache below
+            isDirBelow = false; // Cache not directory below us
+            for (std::vector<MemNIC::PeerInfo_t>::const_iterator i = ci.begin() ; i != ci.end() ; ++i) {
+                if (MemNIC::TypeNetworkCache == i->first.type) { // This would be any cache that is 'below' us
+                    if (i->second.cacheType != "inclusive") {
+                        lowerIsNoninclusive = true;
+                    }
+                }
+            }
+        }
+    }
+    coherenceMgr->setupLowerStatus(isLL && !bottomNetworkLink_, lowerIsNoninclusive, isDirBelow);
 }
 
 

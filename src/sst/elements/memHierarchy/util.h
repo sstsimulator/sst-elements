@@ -119,6 +119,8 @@ inline void printData(Output* dbg, string msg, vector<uint8_t>* data, Addr offse
  */
 typedef enum {IGNORE, DONE, STALL, BLOCK } CacheAction;
 
+enum class CoherenceProtocol {MSI, MESI, NONE};
+
 }}
 #endif	/* UTIL_H */
 

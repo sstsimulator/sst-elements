@@ -261,7 +261,7 @@ private:
         string cacheFrequency_;
         CacheArray* cacheArray_;
         CacheArray* directoryArray_;
-        uint protocol_;
+        CoherenceProtocol protocol_;
         Output* dbg_;
         ReplacementMgr* rm_;
         uint numLines_;
@@ -308,6 +308,10 @@ private:
     std::map<MemEvent*,int> missTypeList;
     bool                    DEBUG_ALL;
     Addr                    DEBUG_ADDR;
+
+    // These parameters are for the coherence controller and are detected during init
+    bool                    isLL;
+    bool                    lowerIsNoninclusive;
 
     /* Performance enhancement: turn clocks off when idle */
     bool                    clockIsOn_;                 // Tell us whether clock is on or off
@@ -446,6 +450,24 @@ private:
         - An L1 cache handles as many requests as are sent by the CPU per cycle.  
          
         - Use a 'no wrapping' editor to view MH files, as many comments are on the 'side' and fall off the window 
+
+
+    Latencies
+        - access_latency_cycles - Time to access the cache data array. Assumed to be longer than or equal to tag_access_latency_cycles so that a 
+                                miss pays the lesser of the two and a hit the greater. This latency is paid by cache hits and coherence requests that need to return data.
+        - tag_access_latency_cycles - Time to access the cache tag array. This latency is paid by caches misses and by coherence requests like invalidations which don't need to touch the data array.
+        - mshr_latency_cycles - Time to access the mshrs - used instead of the tag_access_latency and/or access_latency_cycles for replayed events and MSHR hits.
+        
+        Examples:
+        L1 miss + L2 hit: L1 tag_access_latency_cycles + L2 access_latency_cycles + L1 mshr_latency_cycles + (any transit time over buses/network/etc.)
+        L1 hit: access_latency_cycles
+        Invalidation request: tag_access_latency_cycles
+        Invalidation + data (Fetch) request: access_latency_cycles
+
+
+        Other notes:
+            Accesses to a single address are serialized in time by their access latency. So for a cache with a 4 cycle access, 
+            if requests A and B for the same block are received at cycles 1 and 2 respectively, A will return at 5 and B will return at 9. 
 */
 
 

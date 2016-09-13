@@ -25,13 +25,14 @@ DRAMSimMemory::DRAMSimMemory(Component *comp, Params &params) : MemBackend(comp,
         ctrl->dbg.fatal(CALL_INFO, -1, "Model must define a 'system_ini' file parameter\n");
 
 
-    unsigned int ramSize = params.find<unsigned int>("mem_size", 0);
-    if(0 == ramSize) {
-	ctrl->dbg.fatal(CALL_INFO, -1, "DRAMSim backend.mem_size parameter set to zero. Not allowed, must be power of two.\n");
+    UnitAlgebra ramSize = UnitAlgebra(params.find<std::string>("mem_size", "0B"));
+    if (ramSize.getRoundedValue() % (1024*1024) != 0) {
+        ctrl->dbg.fatal(CALL_INFO, -1, "For DRAMSim, backend.mem_size must be a multiple of 1MiB. Note: for units in base-10 use 'MB', for base-2 use 'MiB'. You specified '%s'\n", ramSize.toString().c_str());
     }
+    unsigned int ramSizeMiB = ramSize.getRoundedValue() / (1024*1024);
 
     memSystem = DRAMSim::getMemorySystemInstance(
-            deviceIniFilename, systemIniFilename, "", "", ramSize);
+            deviceIniFilename, systemIniFilename, "", "", ramSizeMiB);
 
     DRAMSim::Callback<DRAMSimMemory, void, unsigned int, uint64_t, uint64_t>
         *readDataCB, *writeDataCB;

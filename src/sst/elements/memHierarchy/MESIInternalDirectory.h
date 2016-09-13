@@ -23,12 +23,12 @@ class MESIInternalDirectory : public CoherencyController {
 public:
     /** Constructor for MESIInternalDirectory. */
     MESIInternalDirectory(const Cache* directory, string ownerName, Output* dbg, vector<Link*>* parentLinks, Link* childLink, CacheListener* listener, 
-            unsigned int lineSize, uint64 accessLatency, uint64 tagLatency, uint64 mshrLatency, bool LLC, bool LL, MSHR * mshr, bool protocol,
-            bool wbClean, MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, bool debugAll, Addr debugAddr, unsigned int reqWidth, unsigned int respWidth) :
-                 CoherencyController(directory, dbg, ownerName, lineSize, accessLatency, tagLatency, mshrLatency, LLC, LL, parentLinks, childLink, 
-                         bottomNetworkLink, topNetworkLink, listener, mshr, wbClean, debugAll, debugAddr, reqWidth, respWidth) {
+            unsigned int lineSize, uint64 accessLatency, uint64 tagLatency, uint64 mshrLatency, MSHR * mshr, CoherenceProtocol protocol,
+            MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, bool debugAll, Addr debugAddr, unsigned int reqWidth, unsigned int respWidth, unsigned int packetSize) :
+                 CoherencyController(directory, dbg, ownerName, lineSize, accessLatency, tagLatency, mshrLatency, parentLinks, childLink, 
+                         bottomNetworkLink, topNetworkLink, listener, mshr, debugAll, debugAddr, reqWidth, respWidth, packetSize) {
         d_->debug(_INFO_,"--------------------------- Initializing [MESI + Directory Controller] ... \n\n");
-        protocol_           = protocol;
+        protocol_           = protocol == CoherenceProtocol::MESI;
 
     }
 

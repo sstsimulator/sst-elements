@@ -62,9 +62,9 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     if (found) {
         out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sst-info to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
     }
-    params.find<int>("mem_size", 0, found);
+    params.find<std::string>("mem_size", "0B", found);
     if (found) {
-        out.fatal(CALL_INFO, -1, "%s, Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n", getName().c_str());
+        out.fatal(CALL_INFO, -1, "%s, Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size WITH UNITS (e.g., 8GiB or 1024MiB), change the parameter name in your input deck.\n", getName().c_str());
     }
     params.find<int>("network_num_vc", 0, found);
     if (found) {
@@ -80,9 +80,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     if (!found) {
         out.fatal(CALL_INFO, -1, "Param not specified (%s): clock - memory controller's clock rate (with units, e.g., MHz)\n", getName().c_str());
     }
-    const uint64_t backendRamSizeMB = params.find<uint64_t>("backend.mem_size", 0, found);
+    UnitAlgebra backendRamSize = UnitAlgebra(params.find<std::string>("backend.mem_size", "0B", found));
     if (!found) {
-        out.fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified (in MiBs)\n", getName().c_str());
+        out.fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified, (NEW) WITH units. E.g., 8GiB or 1024MiB. \n", getName().c_str());
+    }
+    if (!backendRamSize.hasUnits("B")) {
+        out.fatal(CALL_INFO, -1, "Invalid param (%s): backend.mem_size - definition has CHANGED! Now requires units in 'B' (SI OK, ex: 8GiB or 1024MiB).\nSince previous definition was implicitly MiB, you may simply append 'MiB' to the existing value. You specified '%s'\n", getName().c_str(), backendRamSize.toString().c_str());
     }
 
     rangeStart_             = params.find<Addr>("range_start", 0);
@@ -139,7 +142,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         dbg.fatal(CALL_INFO, -1, "Invalid param(%s): protocol - must be one of 'MESI', 'MSI', or 'NONE'. You specified '%s'\n", getName().c_str(), protocolStr.c_str());
     }
     // Convert into MBs
-    memSize_ = backendRamSizeMB * (1024*1024ul);
+    memSize_ = backendRamSize.getRoundedValue();
+    if (memSize_ % cacheLineSize_ != 0) {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): backend.mem_size - must be a multiple of request_size. Note: use 'MB' for base-10 and 'MiB' for base-2. Please change one of these parameters. You specified backend.mem_size='%s' and request_size='%d' B\n", getName().c_str(), backendRamSize.toString().c_str(), cacheLineSize_);
+    }
 
     // Check interleave parameters
     fixByteUnits(ilSize);

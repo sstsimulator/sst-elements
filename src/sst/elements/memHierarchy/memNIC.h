@@ -52,6 +52,8 @@ public:
         uint64_t interleaveSize;
         uint64_t interleaveStep;
         uint32_t blocksize;    
+        CoherenceProtocol coherenceProtocol;
+        std::string cacheType;
         bool contains(uint64_t addr) const {
             if ( addr >= rangeStart && addr < rangeEnd ) {
                 if ( interleaveSize == 0 ) return true;
@@ -149,6 +151,8 @@ public:
                 ser & compInfo.interleaveSize;
                 ser & compInfo.interleaveStep;
                 ser & compInfo.blocksize;
+                ser & compInfo.coherenceProtocol;
+                ser & compInfo.cacheType;
                 ser & src;
             }
         
@@ -162,9 +166,9 @@ private:
 
     Output* dbg;
     int num_vcs;
-    size_t flitSize;
     bool typeInfoSent; // True if TypeInfo has already been sent
     bool checkRecvQueue;
+    unsigned int packetHeaderBytes = 8; // default
 
     /* Debugging stuff */
     Addr DEBUG_ADDR;
@@ -189,13 +193,12 @@ private:
     /* Built during init -> available for lookups later */
     std::map<MemNIC::ComponentTypeInfo, std::string> destinations;
 
-
     /* Translates a MemEvent string destination to an network address
        (integer) */
     int addrForDest(const std::string &target) const;
 
-    /* Get size in flits for a MemEvent */
-    int getFlitSize(MemEvent *ev);
+    /* Get size in bits for a MemEvent */
+    int getSizeInBits(MemEvent *ev);
 
     /* Used during run to send updated address ranges */
     void sendNewTypeInfo(const ComponentTypeInfo &cti);
@@ -218,6 +221,9 @@ public:
     /* Allow parent to register a callback function so it can de-clock itself safely */
     void registerRecvCallback(Event::HandlerBase * handler);
 
+    /* Sets the minimum packet size/header size */
+    void setMinPacketSize(unsigned int);
+
     /* Call these from their respective calls in the component */
     void setup(void);
     void init(unsigned int phase);
@@ -231,6 +237,7 @@ public:
     MemEvent* recvInitData(void);
     bool initDataReady();
     const std::vector<PeerInfo_t>& getPeerInfo(void) const { return peers; }
+    const ComponentInfo& getComponentInfo(void) const { return ci; }
     // translate a memory address to a network target (string)
     std::string findTargetDestination(Addr addr);
     // NOTE: does not clear the listing of destinations which are used for address lookups
@@ -238,6 +245,7 @@ public:
 
     // Callback function for linkControl
     bool recvNotify(int vn);
+
 };
 
 } //namespace memHierarchy

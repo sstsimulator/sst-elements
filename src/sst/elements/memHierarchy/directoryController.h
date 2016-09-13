@@ -60,7 +60,7 @@ class DirectoryController : public Component {
     Addr        interleaveSize;
     Addr        interleaveStep;
     
-    string      protocol;
+    CoherenceProtocol protocol;
     
     /* MSHRs */
     MSHR*       mshr;

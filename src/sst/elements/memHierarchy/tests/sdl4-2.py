@@ -57,7 +57,6 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "LL" : "1",
       "debug" : "0"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
@@ -65,7 +64,7 @@ comp_memory.addParams({
       "coherence_protocol" : "MSI",
       "debug" : "0",
       "clock" : "1GHz",
-      "backend.mem_size" : "512",
+      "backend.mem_size" : "512MiB",
       "backend.access_time" : "100 ns",
       "backend.system_ini" : "system.ini",
       "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
