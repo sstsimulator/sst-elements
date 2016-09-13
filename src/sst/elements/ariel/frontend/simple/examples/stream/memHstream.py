@@ -82,7 +82,7 @@ def genMemHierarchy(cores):
       "backend.access_time" : "100 ns",
       "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
       "backend.system_ini" : "system.ini",
-      "backend.mem_size" : "512",
+      "backend.mem_size" : "512MiB",
        "request_width"         : cacheLineSize,
        "backend"               : "memHierarchy.dramsim",
        "device_ini"            : "DDR3_micron_32M_8B_x4_sg125.ini",

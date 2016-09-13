@@ -43,7 +43,7 @@ comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MESI",
       "backend.access_time" : "100 ns",
-      "backend.mem_size" : "4096",
+      "backend.mem_size" : "4096MiB",
       "clock" : "1GHz"
 })
 
