@@ -382,82 +382,87 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 	out->verbose(CALL_INFO, 2, 0, "Store Requests pending %" PRIu32 ", maximum permitted %" PRIu32 ".\n",
 		requestsStorePending, maxStoreRequestsPending);
 
-		bool issued = false;
-		uint32_t reqsIssuedThisCycle = 0;
-		std::vector<uint32_t> delReqs;
+	bool issued = false;
+	uint32_t reqsIssuedThisCycle = 0;
+	std::vector<uint32_t> delReqs;
 
-		if(pendingRequests.size() < reqMaxPerCycle) {
-			if(! reqGen->isFinished()) {
-				reqGen->generate(&pendingRequests);
-			}
-		} 
+	if(pendingRequests.size() < reqMaxPerCycle) {
+		if(! reqGen->isFinished()) {
+			reqGen->generate(&pendingRequests);
+		}
+	} 
 
-		for(uint32_t i = 0; i < pendingRequests.size(); ++i) {
-			if(reqsIssuedThisCycle == reqMaxPerCycle) {
-				statMaxIssuePerCycle->addData(1);
-				break;
-			}
-
-			// Only a certain number of lookups are allowed, if we exceed this then we
-			// must exit the issue loop
-			if(i == maxOpLookup) {
-				out->verbose(CALL_INFO, 2, 0, "Hit maximum reorder limit this cycle, no further operations will issue.\n");
-				statCyclesHitReorderLimit->addData(1);
-				break;
-			}
-
-			GeneratorRequest* nxtRq = pendingRequests.at(i);
-			MemoryOpRequest* memOpReq = dynamic_cast<MemoryOpRequest*>(nxtRq);
-
-			if( ( memOpReq->isRead() && requestsLoadPending < maxLoadRequestsPending )
-				|| ( ( ! memOpReq->isRead() ) && requestsStorePending < maxStoreRequestsPending) ) {
-				out->verbose(CALL_INFO, 4, 0, "Will attempt to issue as free slots in the load/store unit.\n");
-
-
-				if(nxtRq->getOperation() == REQ_FENCE) {
-					if(0 == requestsInFlight.size()) {
-						out->verbose(CALL_INFO, 4, 0, "Fence operation completed, no pending requests, will be retired.\n");
-
-						// Keep record we will delete fence at i
-						delReqs.push_back(i);
-
-						// Delete the fence
-						delete nxtRq;
-					} else {
-						out->verbose(CALL_INFO, 4, 0, "Fence operation in flight (>0 pending requests), stall.\n");
-					}
-
-					statCyclesHitFence->addData(1);
-
-					// Fence operations do now allow anything else to complete in this cycle
-					break;
-
-				} else {
-					if(nxtRq->canIssue()) {
-						reqsIssuedThisCycle++;
-
-						out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " encountered, cleared to be issued, %" PRIu32 " issued this cycle.\n",
-                                                nxtRq->getRequestID(), reqsIssuedThisCycle);
-
-						// Keep record we will delete at index i
-						delReqs.push_back(i);
-
-						//MemoryOpRequest* memOpReq = dynamic_cast<MemoryOpRequest*>(nxtRq);
-						issueRequest(memOpReq);
-
-						delete nxtRq;
-					} else {
-						out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " in queue, has dependencies which are not satisfied, wait.\n",
-                                                        nxtRq->getRequestID());
-                    }
-				}
-			} else {
-				out->verbose(CALL_INFO, 4, 0, "All load/store slots occupied, no more issues will be attempted.\n");
-				break;
-			}
+	for(uint32_t i = 0; i < pendingRequests.size(); ++i) {
+		if(reqsIssuedThisCycle == reqMaxPerCycle) {
+			statMaxIssuePerCycle->addData(1);
+			break;
 		}
 
-		pendingRequests.erase(delReqs);
+		// Only a certain number of lookups are allowed, if we exceed this then we
+		// must exit the issue loop
+		if(i == maxOpLookup) {
+			out->verbose(CALL_INFO, 2, 0, "Hit maximum reorder limit this cycle, no further operations will issue.\n");
+			statCyclesHitReorderLimit->addData(1);
+			break;
+		}
+
+        MemoryOpRequest* memOpReq;
+		GeneratorRequest* nxtRq = pendingRequests.at(i);
+
+		if(nxtRq->getOperation() == REQ_FENCE) {
+			if(0 == requestsInFlight.size()) {
+				out->verbose(CALL_INFO, 4, 0, "Fence operation completed, no pending requests, will be retired.\n");
+
+				// Keep record we will delete fence at i
+				delReqs.push_back(i);
+
+				// Delete the fence
+				delete nxtRq;
+			} else {
+				out->verbose(CALL_INFO, 4, 0, "Fence operation in flight (>0 pending requests), stall.\n");
+			}
+
+			statCyclesHitFence->addData(1);
+
+			// Fence operations do now allow anything else to complete in this cycle
+			break;
+
+        } else if ( ( memOpReq = dynamic_cast<MemoryOpRequest*>(nxtRq) ) ) {
+
+            if( ( memOpReq->isRead() && requestsLoadPending < maxLoadRequestsPending ) || 
+                ( ( ! memOpReq->isRead() ) && requestsStorePending < maxStoreRequestsPending) ) {
+                out->verbose(CALL_INFO, 4, 0, "Will attempt to issue as free slots in the load/store unit.\n");
+
+
+				if(nxtRq->canIssue()) {
+                    issued = true;
+					reqsIssuedThisCycle++;
+
+					out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " encountered, cleared to be issued, %" PRIu32 " issued this cycle.\n",
+                                                nxtRq->getRequestID(), reqsIssuedThisCycle);
+
+					// Keep record we will delete at index i
+					delReqs.push_back(i);
+
+					//MemoryOpRequest* memOpReq = dynamic_cast<MemoryOpRequest*>(nxtRq);
+					issueRequest(memOpReq);
+
+					delete nxtRq;
+				} else {
+					out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " in queue, has dependencies which are not satisfied, wait.\n",
+                                                        nxtRq->getRequestID());
+                }
+			} else {
+			    out->verbose(CALL_INFO, 4, 0, "All load/store slots occupied, no more issues will be attempted.\n");
+			    break;
+            }
+		} else {
+	        out->fatal(CALL_INFO, -1, "Error, invalid operation \n");
+		}
+	}
+
+	pendingRequests.erase(delReqs);
+
 	if(issued) {
 		statCyclesWithIssue->addData(1);
 	} else {
