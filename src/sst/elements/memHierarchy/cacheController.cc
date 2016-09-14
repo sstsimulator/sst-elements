@@ -229,6 +229,38 @@ void Cache::processCacheInvalidate(MemEvent* event, Addr baseAddr, bool replay) 
 }
 
 
+void Cache::processCacheFlush(MemEvent* event, Addr baseAddr, bool replay) {
+    int index = cf_.cacheArray_->find(baseAddr, false);
+    bool miss = (index == -1);
+    // Find line
+    //      If hit and in transition: buffer in MSHR
+    //      If hit and dirty: writeback (issue cacheFlush w/ data, wait for flushresp)
+    //      If hit and clean: forward cacheFlush w/o data, wait for flushresp
+    //      If miss: forward cacheFlush, wait for flushresp
+    
+    if (!miss) {
+        if (getLine(baseAddr)->inTransition()) {
+            processRequestInMSHR(baseAddr, event);
+            return;
+        }
+        CacheLine * line = getLine(baseAddr);
+        CacheAction action = coherenceMgr->handleRequest(event, line, replay);
+        if (action != DONE) {
+            processRequestInMSHR(baseAddr, event);
+            event->setInProgress(true);
+        } else {
+            delete event;
+            activatePrevEvents(baseAddr);
+        }
+    } else {
+        processRequestInMSHR(baseAddr, event);
+        coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, NULL); // Event to forward, address, requested size, data (if any)
+        event->setInProgress(true);
+        return;
+    }
+}
+
+
 /*************************
  * Cache responses 
  * ***********************/

@@ -82,6 +82,9 @@ private:
     /** Handle GetS request. Request block if needed */
     CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
     
+    /** Handle FlushLine request. Forward if needed */
+    CacheAction handleFlushLineRequest(MemEvent * event, CacheLine * cacheLine);
+
     /** Handle PutM request. Write data to cache line.  Update E->M state if necessary */
     CacheAction handlePutMRequest(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent);
     
@@ -136,7 +139,12 @@ private:
     
     /** Invalidate all sharers of a block except the requestor (rqstr). Used for upgrade requests. */
     bool invalidateSharersExceptRequestor(CacheLine * cacheLine, string rqstr, string origRqstr, bool replay);
-
+    
+    /** Send a flush response */
+    void sendFlushResponse(MemEvent * reqEent, bool success);
+    
+    /** Forward a FlushLine request with or without data */
+    void forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine);
 
 /* Helper methods */
    

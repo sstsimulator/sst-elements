@@ -84,6 +84,8 @@ CacheAction L1CoherenceController::handleRequest(MemEvent* event, CacheLine* cac
         case GetX:
         case GetSEx:
             return handleGetXRequest(event, cacheLine, replay);
+        case FlushLine:
+            return handleFlushLineRequest(event, cacheLine, replay);
         default:
 	    d_->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
                     name_.c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
@@ -164,6 +166,10 @@ CacheAction L1CoherenceController::handleResponse(MemEvent * respEvent, CacheLin
         case AckPut:
             recordStateEventCount(respEvent->getCmd(), I);
             mshr_->removeWriteback(respEvent->getBaseAddr());
+            break;
+        case FlushLineResp:
+            recordStateEventCount(respEvent->getCmd(), I);
+            sendFlushResponse(reqEvent, respEvent->success(), timestamp_, true);
             break;
         default:
             d_->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
@@ -302,6 +308,29 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
                     name_.c_str(), CommandString[cmd], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), ((Component*)owner_)->getCurrentSimTimeNano());
     }
     return STALL; // Eliminate compiler warning
+}
+
+/**
+ *  Handle a FlushLine request by writing back/invalidating line and forwarding request if needed
+ */
+CacheAction L1CoherenceController::handleFlushLineRequest(MemEvent * requestEvent, CacheLine* cacheLine, bool replay) {
+    State state = cacheLine->getState();
+    recordStateEventCount(requestEvent->getCmd(), state);
+   
+    // If line is locked, return failure
+    if (cacheLine->isLocked()) {
+        sendFlushResponse(requestEvent, false, cacheLine->getTimestamp(), replay);
+        return DONE;
+    }
+
+    if (silentEvictClean_ && state != M) {
+        sendFlushResponse(requestEvent, true, cacheLine->getTimestamp(), replay);
+        cacheLine->setState(I);
+        return DONE;
+    }
+    forwardFlushLine(requestEvent->getBaseAddr(), requestEvent->getRqstr(), cacheLine);
+    cacheLine->setState(I);
+    return STALL;   // wait for response
 }
 
 
@@ -609,19 +638,21 @@ void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, str
     MemEvent* writeback = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
     writeback->setDst(getDestination(cacheLine->getBaseAddr()));
     writeback->setSize(cacheLine->getSize());
+    uint64_t latency = tagLatency_;
     if (cmd == PutM || writebackCleanBlocks_) {
         writeback->setPayload(*cacheLine->getData());
         //printf("Sending writeback data: ");
         if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) {
             printData(cacheLine->getData(), false);
         }
+        latency = accessLatency_;
     }
 
     writeback->setRqstr(origRqstr);
     if (cacheLine->getState() == M) writeback->setDirty(true);
     
     uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
-    uint64 deliveryTime = baseTime + accessLatency_;
+    uint64 deliveryTime = baseTime + latency;
     Response resp = {writeback, deliveryTime, false, packetHeaderBytes_ + writeback->getPayloadSize()};
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime-1);
@@ -654,6 +685,46 @@ void L1CoherenceController::sendAckInv(Addr baseAddr, string origRqstr, CacheLin
 #endif
 }
 
+
+void L1CoherenceController::forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine) {
+    MemEvent * flush = new MemEvent((SST::Component*)owner_, baseAddr, baseAddr, FlushLine);
+    flush->setDst(getDestination(baseAddr));
+    flush->setRqstr(origRqstr);
+    flush->setSize(cacheLine->getSize());
+    uint64_t latency = tagLatency_;
+    if (cacheLine->getState() == M) {
+        flush->setDirty(true);
+        flush->setPayload(*cacheLine->getData());
+        latency = accessLatency_;
+    }
+    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
+    uint64_t deliveryTime = baseTime + latency;
+    Response resp = {flush, deliveryTime, false, packetHeaderBytes_ + flush->getPayloadSize()};
+    addToOutgoingQueue(resp);
+    cacheLine->setTimestamp(deliveryTime-1);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) { 
+        d_->debug(_L3_,"Forwarding Flush at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[flush->getCmd()], flush->getSrc().c_str());
+    }
+#endif
+}
+
+
+void L1CoherenceController::sendFlushResponse(MemEvent * requestEvent, bool success, uint64_t baseTime, bool replay) {
+    MemEvent * flushResponse = requestEvent->makeResponse();
+    flushResponse->setSuccess(success);
+    flushResponse->setDst(requestEvent->getSrc());
+    flushResponse->setRqstr(requestEvent->getRqstr());
+    
+    uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : tagLatency_);
+    Response resp = {flushResponse, deliveryTime, true, packetHeaderBytes_ + flushResponse->getPayloadSize()};
+    addToOutgoingQueueUp(resp);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == requestEvent->getBaseAddr()) { 
+        d_->debug(_L3_,"Sending Flush Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[flushResponse->getCmd()], flushResponse->getSrc().c_str());
+    }
+#endif
+}
 
 
 /********************

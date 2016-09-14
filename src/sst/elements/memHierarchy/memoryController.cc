@@ -271,6 +271,19 @@ void MemController::handleEvent(SST::Event* event) {
 
             addRequest(ev);
             break;
+        case FlushLine:
+            if (ev->getDirty()) {
+                if ( ! listeners_.empty()) {
+		    CacheListenerNotification notify(ev->getAddr(),	ev->getVirtualAddress(),
+		    	ev->getInstructionPointer(), ev->getSize(), READ, HIT);
+
+		    for (unsigned long int i = 0; i < listeners_.size(); ++i) {
+	            	listeners_[i]->notifyAccess(notify);
+	    	    }
+	        }
+                addRequest(ev);
+            }
+            break;
         case PutS:
         case PutE:
             break;
@@ -355,11 +368,14 @@ void MemController::performRequest(DRAMReq* req) {
     Addr localBaseAddr = convertAddressToLocalAddress(req->baseAddr_);
     Addr localAddr;
 
-    if (req->cmd_ == PutM) {  /* Write request to memory */
+    if (req->cmd_ == PutM || req->cmd_ == FlushLine) {  /* Write request to memory */
 #ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, req->reqEvent_->getSize(), noncacheable ? "true" : "false");
 #endif	
-        
+        if (req->cmd_ == FlushLine) {
+            req->respEvent_ = req->reqEvent_->makeResponse();
+            req->respEvent_->setSuccess(true);
+        }
         if (doNotBack_) return;
         
         for ( size_t i = 0 ; i < req->reqEvent_->getSize() ; i++) 

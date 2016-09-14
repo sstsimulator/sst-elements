@@ -148,6 +148,8 @@ CacheAction MESIController::handleRequest(MemEvent* event, CacheLine* cacheLine,
         case GetX:
         case GetSEx:
             return handleGetXRequest(event, cacheLine, replay);
+        case FlushLine:
+            return handleFlushLineRequest(event, cacheLine);
         default:
 	    d_->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
                     name_.c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
@@ -252,6 +254,10 @@ CacheAction MESIController::handleResponse(MemEvent * respEvent, CacheLine * cac
             recordStateEventCount(respEvent->getCmd(), I);
             mshr_->removeWriteback(respEvent->getBaseAddr());
             return DONE;    // Retry any events that were stalled for ack
+        case FlushLineResp:
+            recordStateEventCount(respEvent->getCmd(), I);
+            sendFlushResponse(reqEvent, respEvent->success());
+            return DONE;
         default:
             d_->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
                     name_.c_str(), CommandString[cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), ((Component*)owner_)->getCurrentSimTimeNano());
@@ -469,6 +475,25 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
                     name_.c_str(), CommandString[cmd], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), ((Component*)owner_)->getCurrentSimTimeNano());
     }
     return STALL; // Eliminate compiler warning
+}
+
+
+/**
+ *  Handle a FlushLine request by writing back/invalidating line and forwarding request
+ */
+CacheAction MESIController::handleFlushLineRequest(MemEvent * requestEvent, CacheLine* cacheLine) {
+    State state = cacheLine->getState();
+    recordStateEventCount(requestEvent->getCmd(), state);
+   
+    if (state != M && silentEvictClean_) {
+        sendFlushResponse(requestEvent, true);
+        cacheLine->setState(I);
+        return DONE;
+    }
+
+    forwardFlushLine(requestEvent->getBaseAddr(), requestEvent->getRqstr(), cacheLine);
+    cacheLine->setState(I);
+    return STALL;   // wait for response
 }
 
 
@@ -1452,6 +1477,52 @@ void MESIController::sendAckInv(Addr baseAddr, string origRqstr) {
     addToOutgoingQueue(resp);
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L3_,"Sending AckInv at cycle = %" PRIu64 "\n", deliveryTime);
+#endif
+}
+
+
+/**
+ *  Forward a flush line request, with or without data
+ */
+void MESIController::forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine) {
+    MemEvent * flush = new MemEvent((SST::Component*)owner_, baseAddr, baseAddr, FlushLine);
+    flush->setDst(getDestination(baseAddr));
+    flush->setRqstr(origRqstr);
+    flush->setSize(cacheLine->getSize());
+    uint64_t latency = tagLatency_;
+    if (cacheLine->getState() == M) {
+        flush->setDirty(true);
+        flush->setPayload(*cacheLine->getData());
+        latency = accessLatency_;
+    }
+    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
+    uint64_t deliveryTime = baseTime + latency;
+    Response resp = {flush, deliveryTime, false, packetHeaderBytes_ + flush->getPayloadSize()};
+    addToOutgoingQueue(resp);
+    cacheLine->setTimestamp(deliveryTime-1);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) {
+        d_->debug(_L3_,"Forwarding FlushLine at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[flush->getCmd()], flush->getSrc().c_str());
+    }
+#endif
+}
+
+
+/**
+ *  Send a flush response up
+ */
+void MESIController::sendFlushResponse(MemEvent * requestEvent, bool success) {
+    MemEvent * flushResponse = requestEvent->makeResponse();
+    flushResponse->setSuccess(success);
+    flushResponse->setDst(requestEvent->getSrc());
+
+    uint64_t deliveryTime = timestamp_ + mshrLatency_;
+    Response resp = {flushResponse, deliveryTime, false, packetHeaderBytes_ + flushResponse->getPayloadSize()};
+    addToOutgoingQueueUp(resp);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == requestEvent->getBaseAddr()) { 
+        d_->debug(_L3_,"Sending Flush Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[flushResponse->getCmd()], flushResponse->getSrc().c_str());
+    }
 #endif
 }
 

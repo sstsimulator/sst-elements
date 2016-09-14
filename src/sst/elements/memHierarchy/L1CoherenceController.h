@@ -79,6 +79,9 @@ private:
     /** Handle GetS request. Request block if needed */
     CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
     
+    /** Handle FlushLine request. */
+    CacheAction handleFlushLineRequest(MemEvent *event, CacheLine* cacheLine, bool replay);
+
     /** Handle Inv request */
     CacheAction handleInv(MemEvent * event, CacheLine * cacheLine, bool replay);
     
@@ -105,6 +108,11 @@ private:
     /** Send AckInv response to lower level caches */
     void sendAckInv(Addr baseAddr, string origRqstr, CacheLine * cacheLine);
 
+    /** Forward a flush line request, with or without data */
+    void forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine);
+    
+    /** Send response to a flush request */
+    void sendFlushResponse(MemEvent * requestEvent, bool success, uint64_t baseTime, bool replay);
 };
 
 
