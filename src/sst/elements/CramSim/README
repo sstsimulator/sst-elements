@@ -41,6 +41,8 @@ VERIMEM:
   granularity of this simulator are 1, 4, 5, and 6. Suites 2, 3, and 7 require a model that includes bank rows and columns to provide any insights that
   1, 4, 5, and 6 don't already.
 
+  NOTE: VeriMem tests will not run. SST directory structure mandated that the VeriMem traces cannot be checked in into the sst-elements directory. Traces will be checked into a separate directory and the links to the verimem traces will be updated. After the update the directions below will apply for VeriMem.
+ 
   To run Verimem (from within /sstcramsim/sst/elements/MemBankTxn/):
       python ./tests/VeriMem/test_verimem1.py BOOL_DEBUG_OUTPUT
     BOOL_DEBUG_OUTPUT should be either 0 or 1, depending on if debugging output is wanted or not.

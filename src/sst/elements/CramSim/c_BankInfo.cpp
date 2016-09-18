@@ -14,7 +14,7 @@
 #include <memory>
 #include <assert.h>
 
-#include "sst_config.h"
+#include "sst/sst_config.h"
 
 //local includes
 #include "c_BankInfo.hpp"
