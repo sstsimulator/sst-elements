@@ -25,15 +25,15 @@ g_txnParams = {
 # Define the simulation components
 
 # txn gen
-comp_txnGen0 = sst.Component("TxnGen0", "MemBankTxn.c_TxnGenSeq")
+comp_txnGen0 = sst.Component("TxnGen0", "CramSim.c_TxnGenSeq")
 comp_txnGen0.addParams(g_txnParams)
 
 # txn unit
-comp_txnUnit0 = sst.Component("TxnUnit0", "MemBankTxn.c_TxnUnit")
+comp_txnUnit0 = sst.Component("TxnUnit0", "CramSim.c_TxnUnit")
 comp_txnUnit0.addParams(g_txnParams)
 
 # cmd driver
-comp_cmdDriver0 = sst.Component("CmdDriver0", "MemBankTxn.c_CmdDriver")
+comp_cmdDriver0 = sst.Component("CmdDriver0", "CramSim.c_CmdDriver")
 comp_cmdDriver0.addParams(g_txnParams)
 
 # Define simulation links

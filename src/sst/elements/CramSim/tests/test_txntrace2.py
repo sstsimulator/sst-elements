@@ -95,9 +95,9 @@ def setup_config_params():
 def setup_txn_generator(params):
     l_txnGenStr = ""
     if g_boolUseRandomTrace:
-        l_txnGen = "MemBankTxn.c_TxnGenRand"
+        l_txnGen = "CramSim.c_TxnGenRand"
     else:
-        l_txnGen = "MemBankTxn.c_DramSimTraceReader"
+        l_txnGen = "CramSim.c_DramSimTraceReader"
     l_txnGen = sst.Component("TxnGen0", l_txnGen)
     l_txnGen.addParams(params)
     return l_txnGen
@@ -124,15 +124,15 @@ sst.setProgramOption("stopAtCycle", g_params["stopAtCycle"])
 comp_txnGen0 = setup_txn_generator(g_params)
 
 # txn unit
-comp_txnUnit0 = sst.Component("TxnUnit0", "MemBankTxn.c_TxnUnit")
+comp_txnUnit0 = sst.Component("TxnUnit0", "CramSim.c_TxnUnit")
 comp_txnUnit0.addParams(g_params)
 
 # cmd unit
-comp_cmdUnit0 = sst.Component("CmdUnit0", "MemBankTxn.c_CmdUnit")
+comp_cmdUnit0 = sst.Component("CmdUnit0", "CramSim.c_CmdUnit")
 comp_cmdUnit0.addParams(g_params)
 
 # bank receiver
-comp_dimm0 = sst.Component("Dimm0", "MemBankTxn.c_Dimm")
+comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
 comp_dimm0.addParams(g_params)
 
 # Define simulation links

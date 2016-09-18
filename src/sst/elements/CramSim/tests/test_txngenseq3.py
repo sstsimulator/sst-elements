@@ -31,19 +31,19 @@ g_txnParams = {
 # Define the simulation components
 
 # txn gen
-comp_txnGen0 = sst.Component("TxnGen0", "MemBankTxn.c_TxnGenSeq")
+comp_txnGen0 = sst.Component("TxnGen0", "CramSim.c_TxnGenSeq")
 comp_txnGen0.addParams(g_txnParams)
 
 # txn unit
-comp_txnUnit0 = sst.Component("TxnUnit0", "MemBankTxn.c_TxnUnit")
+comp_txnUnit0 = sst.Component("TxnUnit0", "CramSim.c_TxnUnit")
 comp_txnUnit0.addParams(g_txnParams)
 
 # cmd unit
-comp_cmdUnit0 = sst.Component("CmdUnit0", "MemBankTxn.c_CmdUnit")
+comp_cmdUnit0 = sst.Component("CmdUnit0", "CramSim.c_CmdUnit")
 comp_cmdUnit0.addParams(g_txnParams)
 
 # bank receiver
-comp_dimm0 = sst.Component("Dimm0", "MemBankTxn.c_Dimm")
+comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
 comp_dimm0.addParams(g_txnParams)
 
 # Define simulation links
