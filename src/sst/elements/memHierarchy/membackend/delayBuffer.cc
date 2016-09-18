@@ -37,7 +37,7 @@ DelayBuffer::DelayBuffer(Component *comp, Params &params) : MemBackend(comp, par
     if (delay.getRoundedValue() == 0) {
         delay_self_link = ctrl->configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler<DelayBuffer>(this, &DelayBuffer::handleNextRequest));
     } else {
-        delay_self_link == NULL;
+        delay_self_link = NULL;
     }
 }
 

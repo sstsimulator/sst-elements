@@ -144,7 +144,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     // Convert into MBs
     memSize_ = backendRamSize.getRoundedValue();
     if (memSize_ % cacheLineSize_ != 0) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): backend.mem_size - must be a multiple of request_size. Note: use 'MB' for base-10 and 'MiB' for base-2. Please change one of these parameters. You specified backend.mem_size='%s' and request_size='%d' B\n", getName().c_str(), backendRamSize.toString().c_str(), cacheLineSize_);
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): backend.mem_size - must be a multiple of request_size. Note: use 'MB' for base-10 and 'MiB' for base-2. Please change one of these parameters. You specified backend.mem_size='%s' and request_size='%" PRIu64 "' B\n", getName().c_str(), backendRamSize.toString().c_str(), cacheLineSize_);
     }
 
     // Check interleave parameters

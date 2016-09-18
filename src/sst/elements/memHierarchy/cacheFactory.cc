@@ -599,7 +599,7 @@ void Cache::intrapolateMSHRLatency() {
     }
     mshrLatency_ = y[accessLatency_];
 
-    d2_->verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %u cycles.\n", getName().c_str(), mshrLatency_);
+    d2_->verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %" PRIu64 " cycles.\n", getName().c_str(), mshrLatency_);
 }
 
 }}
