@@ -78,6 +78,8 @@ void c_BankInfo::print() {
 	case e_BankState::REF:
 		printf("REF\n");
 		break;
+	default:
+	    break;
 	}
 	std::cout << "m_nextCommandCycleMap: " << std::endl;
 	for (auto l_mapEntry : m_nextCommandCycleMap) {

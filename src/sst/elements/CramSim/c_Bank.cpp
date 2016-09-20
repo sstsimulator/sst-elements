@@ -31,181 +31,181 @@ unsigned c_Bank::k_banks = 0;
 c_Bank::c_Bank(SST::Params& x_params) {
 	// read params here
 
-/*	k_nRC = x_params.find_integer("nRC", 55, l_found);
+/*	k_nRC = (uint32_t)x_params.find<uint32_t>("nRC", 55, l_found);
 	if (!l_found) {
 		std::cout << "nRC value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nRRD = x_params.find_integer("nRRD", 4, l_found);
+	k_nRRD = (uint32_t)x_params.find<uint32_t>("nRRD", 4, l_found);
 	if (!l_found) {
 		std::cout << "nRRD value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nRRD_L = x_params.find_integer("nRRD_L", 6, l_found);
+	k_nRRD_L = (uint32_t)x_params.find<uint32_t>("nRRD_L", 6, l_found);
 	if (!l_found) {
 		std::cout << "nRRD_L value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nRRD_S = x_params.find_integer("nRRD_S", 4, l_found);
+	k_nRRD_S = (uint32_t)x_params.find<uint32_t>("nRRD_S", 4, l_found);
 	if (!l_found) {
 		std::cout << "nRRD_S value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nRCD = x_params.find_integer("nRCD", 16, l_found);
+	k_nRCD = (uint32_t)x_params.find<uint32_t>("nRCD", 16, l_found);
 	if (!l_found) {
 		std::cout << "nRRD_L value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nCCD = x_params.find_integer("nCCD", 4, l_found);
+	k_nCCD = (uint32_t)x_params.find<uint32_t>("nCCD", 4, l_found);
 	if (!l_found) {
 		std::cout << "nCCD value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nCCD_L = x_params.find_integer("nCCD_L", 5, l_found);
+	k_nCCD_L = (uint32_t)x_params.find<uint32_t>("nCCD_L", 5, l_found);
 	if (!l_found) {
 		std::cout << "nCCD_L value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nCCD_L_WR = x_params.find_integer("nCCD_L_WR", 1, l_found);
+	k_nCCD_L_WR = (uint32_t)x_params.find<uint32_t>("nCCD_L_WR", 1, l_found);
 	if (!l_found) {
 		std::cout << "nCCD_L_WR value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nCCD_S = x_params.find_integer("nCCD_S", 4, l_found);
+	k_nCCD_S = (uint32_t)x_params.find<uint32_t>("nCCD_S", 4, l_found);
 	if (!l_found) {
 		std::cout << "nCCD_S value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nAL = x_params.find_integer("nAL", 15, l_found);
+	k_nAL = (uint32_t)x_params.find<uint32_t>("nAL", 15, l_found);
 	if (!l_found) {
 		std::cout << "nAL value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nCL = x_params.find_integer("nCL", 16, l_found);
+	k_nCL = (uint32_t)x_params.find<uint32_t>("nCL", 16, l_found);
 	if (!l_found) {
 		std::cout << "nCL value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nCWL = x_params.find_integer("nCWL", 16, l_found);
+	k_nCWL = (uint32_t)x_params.find<uint32_t>("nCWL", 16, l_found);
 	if (!l_found) {
 		std::cout << "nCWL value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nWR = x_params.find_integer("nWR", 16, l_found);
+	k_nWR = (uint32_t)x_params.find<uint32_t>("nWR", 16, l_found);
 	if (!l_found) {
 		std::cout << "nWR value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nWTR = x_params.find_integer("nWTR", 3, l_found);
+	k_nWTR = (uint32_t)x_params.find<uint32_t>("nWTR", 3, l_found);
 	if (!l_found) {
 		std::cout << "nWTR value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nWTR_L = x_params.find_integer("nWTR_L", 9, l_found);
+	k_nWTR_L = (uint32_t)x_params.find<uint32_t>("nWTR_L", 9, l_found);
 	if (!l_found) {
 		std::cout << "nWTR_L value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nWTR_S = x_params.find_integer("nWTR_S", 3, l_found);
+	k_nWTR_S = (uint32_t)x_params.find<uint32_t>("nWTR_S", 3, l_found);
 	if (!l_found) {
 		std::cout << "nWTR_S value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nRTW = x_params.find_integer("nRTW", 4, l_found);
+	k_nRTW = (uint32_t)x_params.find<uint32_t>("nRTW", 4, l_found);
 	if (!l_found) {
 		std::cout << "nRTW value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nEWTR = x_params.find_integer("nEWTR", 6, l_found);
+	k_nEWTR = (uint32_t)x_params.find<uint32_t>("nEWTR", 6, l_found);
 	if (!l_found) {
 		std::cout << "nEWTR value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nERTW = x_params.find_integer("nERTW", 6, l_found);
+	k_nERTW = (uint32_t)x_params.find<uint32_t>("nERTW", 6, l_found);
 	if (!l_found) {
 		std::cout << "nERTW value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nEWTW = x_params.find_integer("nEWTW", 6, l_found);
+	k_nEWTW = (uint32_t)x_params.find<uint32_t>("nEWTW", 6, l_found);
 	if (!l_found) {
 		std::cout << "nEWTW value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nERTR = x_params.find_integer("nERTR", 6, l_found);
+	k_nERTR = (uint32_t)x_params.find<uint32_t>("nERTR", 6, l_found);
 	if (!l_found) {
 		std::cout << "nERTR value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nRAS = x_params.find_integer("nRAS", 39, l_found);
+	k_nRAS = (uint32_t)x_params.find<uint32_t>("nRAS", 39, l_found);
 	if (!l_found) {
 		std::cout << "nRAS value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nRTP = x_params.find_integer("nRTP", 9, l_found);
+	k_nRTP = (uint32_t)x_params.find<uint32_t>("nRTP", 9, l_found);
 	if (!l_found) {
 		std::cout << "nRTP value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nRP = x_params.find_integer("nRP", 16, l_found);
+	k_nRP = (uint32_t)x_params.find<uint32_t>("nRP", 16, l_found);
 	if (!l_found) {
 		std::cout << "nRP value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nRFC = x_params.find_integer("nRFC", 420, l_found);
+	k_nRFC = (uint32_t)x_params.find<uint32_t>("nRFC", 420, l_found);
 	if (!l_found) {
 		std::cout << "nRFC value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nREFI = x_params.find_integer("nREFI", 9360, l_found);
+	k_nREFI = (uint32_t)x_params.find<uint32_t>("nREFI", 9360, l_found);
 	if (!l_found) {
 		std::cout << "nREFI value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nFAW = x_params.find_integer("nFAW", 16, l_found);
+	k_nFAW = (uint32_t)x_params.find<uint32_t>("nFAW", 16, l_found);
 	if (!l_found) {
 		std::cout << "nFAW value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_nBL = x_params.find_integer("nBL", 4, l_found);
+	k_nBL = (uint32_t)x_params.find<uint32_t>("nBL", 4, l_found);
 	if (!l_found) {
 		std::cout << "nBL value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_numRows = x_params.find_integer("numRows", 16384, l_found);
+	k_numRows = (uint32_t)x_params.find<uint32_t>("numRows", 16384, l_found);
 	if (!l_found) {
 		std::cout << "numRows value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_numCols = x_params.find_integer("numCols", 128, l_found);
+	k_numCols = (uint32_t)x_params.find<uint32_t>("numCols", 128, l_found);
 	if (!l_found) {
 		std::cout << "numCols value is missing ... exiting" << std::endl;
 		exit(-1);
@@ -213,32 +213,32 @@ c_Bank::c_Bank(SST::Params& x_params) {
 	bool l_found = false;
 
 	/* BUFFER ALLOCATION PARAMETERS */
-	k_allocateCmdResQACT = x_params.find_integer("boolAllocateCmdResACT", 1, l_found);
+	k_allocateCmdResQACT = (uint32_t)x_params.find<uint32_t>("boolAllocateCmdResACT", 1, l_found);
 	if (!l_found){
 		std::cout << "boolAllocateCmdResACT value is missing... exiting" << std::endl;
 	}
 
-	k_allocateCmdResQREAD = x_params.find_integer("boolAllocateCmdResREAD", 1, l_found);
+	k_allocateCmdResQREAD = (uint32_t)x_params.find<uint32_t>("boolAllocateCmdResREAD", 1, l_found);
 	if (!l_found){
 		std::cout << "boolAllocateCmdResREAD value is missing... exiting" << std::endl;
 	}
 
-	k_allocateCmdResQREADA = x_params.find_integer("boolAllocateCmdResREADA", 1, l_found);
+	k_allocateCmdResQREADA = (uint32_t)x_params.find<uint32_t>("boolAllocateCmdResREADA", 1, l_found);
 	if (!l_found){
 		std::cout << "boolAllocateCmdResREADA value is missing... exiting" << std::endl;
 	}
 
-	k_allocateCmdResQWRITE = x_params.find_integer("boolAllocateCmdResWRITE", 1, l_found);
+	k_allocateCmdResQWRITE = (uint32_t)x_params.find<uint32_t>("boolAllocateCmdResWRITE", 1, l_found);
 	if (!l_found){
 		std::cout << "boolAllocateCmdResWRITE value is missing... exiting" << std::endl;
 	}
 
-	k_allocateCmdResQWRITEA = x_params.find_integer("boolAllocateCmdResWRITEA", 1, l_found);
+	k_allocateCmdResQWRITEA = (uint32_t)x_params.find<uint32_t>("boolAllocateCmdResWRITEA", 1, l_found);
 	if (!l_found){
 		std::cout << "boolAllocateCmdResWRITEA value is missing... exiting" << std::endl;
 	}
 
-	k_allocateCmdResQPRE = x_params.find_integer("boolAllocateCmdResPRE", 1, l_found);
+	k_allocateCmdResQPRE = (uint32_t)x_params.find<uint32_t>("boolAllocateCmdResPRE", 1, l_found);
 	if (!l_found){
 		std::cout << "boolAllocateCmdResPRE value is missing... exiting" << std::endl;
 	}

@@ -37,7 +37,7 @@ c_CmdDriver::c_CmdDriver(ComponentId_t x_id, Params& x_params) :
 	bool l_found = false;
 
 	//internal queue sizes
-	k_cmdDrvBufferQEntries = x_params.find_integer("numCmdReqQEntries", 100,
+	k_cmdDrvBufferQEntries = (uint32_t)x_params.find<uint32_t>("numCmdReqQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout

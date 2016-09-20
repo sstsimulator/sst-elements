@@ -54,6 +54,8 @@ void c_BankStateIdle::handleCommand(c_BankInfo* x_bank,
 	case e_BankCommandType::REF:
 		x_bank->setLastCommandCycle(e_BankCommandType::REF, l_time);
 		break;
+	default:
+	    break;
 	}
 	if (nullptr == m_receivedCommandPtr) {
 		m_timer = 1;
@@ -105,6 +107,8 @@ void c_BankStateIdle::clockTic(c_BankInfo* x_bank) {
 					l_p = new c_BankStateRefresh(m_bankParams);
 //					x_bank->setLastCommandCycle(e_BankCommandType::REF, l_time);
 					break;
+				default:
+				break;
 				}
 
 				assert(nullptr != m_receivedCommandPtr);
