@@ -20,7 +20,7 @@
 #include <sst/core/link.h>
 
 // local includes
-#include <sst/elements/CramSim/c_Transaction.hpp>
+#include "c_Transaction.hpp"
 
 namespace SST {
 namespace n_CmdDriver {
