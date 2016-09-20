@@ -21,7 +21,7 @@
 #include <sst/core/link.h>
 
 // local includes
-#include <sst/elements/CramSim/c_BankCommand.hpp>
+#include "c_BankCommand.hpp"
 
 namespace SST {
 namespace n_BankReceiver {

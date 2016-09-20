@@ -54,7 +54,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	// read params here
 	bool l_found = false;
 
-	k_numRanksPerChannel = x_params.find_integer("numRanksPerChannel", 100,
+	k_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numRanksPerChannel value is missing... exiting"
@@ -62,7 +62,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_numBankGroupsPerRank = x_params.find_integer("numBankGroupsPerRank", 100,
+	k_numBankGroupsPerRank = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numBankGroupsPerRank value is missing... exiting"
@@ -70,7 +70,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_numBanksPerBankGroup = x_params.find_integer("numBanksPerBankGroup", 100,
+	k_numBanksPerBankGroup = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numBanksPerBankGroup value is missing... exiting"

@@ -53,7 +53,7 @@ public:
 		printf("Total Write-Txns Requests send: %lu\n", m_reqWriteCount);
 		printf("Total Read-Txns Responses received: %lu\n", m_resReadCount);
 		printf("Total Write-Txns Responses received: %lu\n", m_resWriteCount);
-		printf("Total Cycles: %lu\n", Simulation::getSimulation()->getCurrentSimCycle());
+		printf("Total Cycles: %" PRIu64 "\n", Simulation::getSimulation()->getCurrentSimCycle());
 		printf("Component Finished.\n");
 	}
 

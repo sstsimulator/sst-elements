@@ -46,7 +46,7 @@ public:
 		// printf("\n\t CmdUnit Res Q:\n");
 		// for (unsigned l_i = 0; l_i != k_cmdResQEntries+1; ++l_i)
 		// 	printf("%u\n", m_statsResQ[l_i]);
-		printf("Refresh's sent out: %lu\n", m_refsSent);
+		printf("Refresh's sent out: %" PRIu32 "\n", m_refsSent);
 
 	}
 
