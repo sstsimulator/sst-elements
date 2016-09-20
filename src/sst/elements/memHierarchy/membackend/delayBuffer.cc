@@ -34,7 +34,7 @@ DelayBuffer::DelayBuffer(Component *comp, Params &params) : MemBackend(comp, par
     backend = dynamic_cast<MemBackend*>(loadSubComponent(backendName, backendParams));
 
     // Set up self links
-    if (delay.getRoundedValue() == 0) {
+    if (delay.getValue() != 0) {
         delay_self_link = ctrl->configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler<DelayBuffer>(this, &DelayBuffer::handleNextRequest));
     } else {
         delay_self_link = NULL;
@@ -43,16 +43,18 @@ DelayBuffer::DelayBuffer(Component *comp, Params &params) : MemBackend(comp, par
 
 void DelayBuffer::handleNextRequest(SST::Event *event) {
     DRAMReq * req = requestBuffer.front();
-    requestBuffer.pop();
-    backend->issueRequest(req);
+    if (!backend->issueRequest(req)) {
+        delay_self_link->send(1, NULL);
+    } else requestBuffer.pop();
 }
 
 bool DelayBuffer::issueRequest(DRAMReq *req) {
     if (delay_self_link != NULL) {
         requestBuffer.push(req);
         delay_self_link->send(1, NULL);   // Just need a wakeup
+        return true;
     } else {
-        backend->issueRequest(req);
+        return backend->issueRequest(req);
     }
 }
 
