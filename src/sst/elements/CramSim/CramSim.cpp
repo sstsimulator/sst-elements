@@ -485,7 +485,7 @@ static const ElementInfoComponent CramSimComponents[] = {
 		{ NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL } };
 
 extern "C" {
-ElementLibraryInfo CramSim_eli = { "TxnGen", // Name
+ElementLibraryInfo CramSim_eli = { "CramSim", // Name
 		"Library with transaction generation components", // Description
 		CramSimComponents, // Components
 		NULL, // Events
