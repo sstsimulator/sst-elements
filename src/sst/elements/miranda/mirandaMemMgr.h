@@ -59,6 +59,9 @@ public:
 					const uint64_t pageA = pageMap[selectA];
 					pageMap[selectA] = pageMap[selectB];
 					pageMap[selectB] = pageA;
+					
+					output->verbose(CALL_INFO, 64, 0, "Swapping index %" PRIu64 " with index %" PRIu64 ", pageA=%" PRIu64 ", pageB=%" PRIu64 "\n",
+						selectA, selectB, pageA, pageMap[selectA]);
 				}
 			}
 			
@@ -73,8 +76,9 @@ public:
 	}
 	
 	uint64_t mapAddress(const uint64_t addrIn) const {
-		if(addrIn >= maxMemoryAddress) {
-			// ERROR
+		if( __builtin_expect(addrIn >= maxMemoryAddress, 0) ) {
+			output->fatal(CALL_INFO, -1, "Error: address %" PRIu64 " exceeds the maximum address in Miranda calculated by pageSize (%" PRIu64 ") * pageCount (%" PRIu64 ") = %" PRIu64 "\n",
+				addrIn, pageSize, pageCount, maxMemoryAddress);
 		}
 		
 		const uint64_t pageOffset       = addrIn % pageSize;
@@ -83,8 +87,14 @@ public:
 		const uint64_t physPageStart    = pageMap[virtualPageStart];
 		const uint64_t physAddress      = physPageStart + pageOffset;
 		
-		output->verbose(CALL_INFO, 16, 0, "Mapping v-addr: %" PRIu64 " pageOffset: %" PRIu64 " -> (%" PRIu64 " - %" PRIu64 ")/%" PRIu64 " = v-page-index: %" PRIu64 ", p-start: %" PRIu64 " + poffset %" PRIu64 " = %" PRIu64 "\n",
-			addrIn, pageOffset, addrIn, pageOffset, pageSize, virtualPageStart, physPageStart, pageOffset, physAddress);
+		#define MIRANDA_MAP_ADDRESS_VERBOSE_LEVEL 16
+		
+		if( __builtin_expect(output->getVerboseLevel() >= MIRANDA_MAP_ADDRESS_VERBOSE_LEVEL, 0) ) {
+			output->verbose(CALL_INFO, MIRANDA_MAP_ADDRESS_VERBOSE_LEVEL, 0, "Mapping v-addr: %" PRIu64 " pageOffset: %" PRIu64 " -> (%" PRIu64 " - %" PRIu64 ")/%" PRIu64 " = v-page-index: %" PRIu64 ", p-start: %" PRIu64 " + poffset %" PRIu64 " = %" PRIu64 "\n",
+				addrIn, pageOffset, addrIn, pageOffset, pageSize, virtualPageStart, physPageStart, pageOffset, physAddress);
+		}
+		
+		#undef MIRANDA_MAP_ADDRESS_VERBOSE_LEVEL
 		
 		return physAddress;
 	}
