@@ -278,9 +278,9 @@ static const ElementInfoStatistic basecpu_stats[] = {
 	{ "total_bytes_read",   "Count the total bytes requested by read operations",		"bytes",    1 },
 	{ "total_bytes_write",  "Count the total bytes requested by write operations",      	"bytes",    1 },
 	{ "req_latency",        "Running total of all latency for all requests",                "ns",       2 },
-        { "cycles_with_issue",  "Number of cycles which CPU was able to issue requests",        "cycles",   1 },
-        { "cycles_no_issue",    "Number of cycles which CPU was not able to issue requests",    "cycles",   1 },
-        { "time",               "Nanoseconds spent issuing requests",                           "ns",       1 },
+    { "cycles_with_issue",  "Number of cycles which CPU was able to issue requests",        "cycles",   1 },
+    { "cycles_no_issue",    "Number of cycles which CPU was not able to issue requests",    "cycles",   1 },
+    { "time",               "Nanoseconds spent issuing requests",                           "ns",       1 },
 	{ "cycles_hit_fence",   "Number of issue cycles which stop issue at a fence",           "cycles",   2 },
 	{ "cycles_max_reorder", "Number of issue cycles which hit maximum reorder lookup",      "cycles",   2 },
 	{ "cycles_max_issue",   "Cycles with maximum operation issue",                          "cycles",   2 },
@@ -297,6 +297,9 @@ static const ElementInfoParam basecpu_params[] = {
      { "generator",        "The generator to be loaded for address creation", "miranda.SingleStreamGenerator" },
      { "clock",            "Clock for the base CPU", "2GHz" },
      { "memoryinterface",  "Sets the memory interface module to use", "memHierarchy.memInterface" },
+     { "pagecount", "Sets the number of pages the system can allocate", "4194304" },
+     { "pagesize", "Sets the size of the page in the system, MUST be a multiple of cache_line_size", "4096" },
+     { "pagemap", "Mapping scheme, string set to LINEAR or RANDOMIZED, default is LINEAR (virtual==physical), RANDOMIZED randomly shuffles virtual to physical map.", "LINEAR" },
      { NULL, NULL, NULL }
 };
 

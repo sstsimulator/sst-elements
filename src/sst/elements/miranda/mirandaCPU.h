@@ -18,6 +18,7 @@
 
 #include "mirandaGenerator.h"
 #include "mirandaEvent.h"
+#include "mirandaMemMgr.h"
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -74,6 +75,7 @@ private:
 	MirandaReqEvent* srcReqEvent;	
 
 	MirandaRequestQueue<GeneratorRequest*> pendingRequests;
+	MirandaMemoryManager* memMgr;
 
 	uint32_t maxLoadRequestsPending;
 	uint32_t maxStoreRequestsPending;
