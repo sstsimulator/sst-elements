@@ -152,6 +152,7 @@ public:
         BaseRtrEvent::serialize_order(ser);
         ser & request;
         ser & size_in_flits;
+        ser & injectionTime;
     }
     
 private:
