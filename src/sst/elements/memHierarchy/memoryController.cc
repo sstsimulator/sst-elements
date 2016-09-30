@@ -272,17 +272,15 @@ void MemController::handleEvent(SST::Event* event) {
             addRequest(ev);
             break;
         case FlushLine:
-            if (ev->getDirty()) {
-                if ( ! listeners_.empty()) {
-		    CacheListenerNotification notify(ev->getAddr(),	ev->getVirtualAddress(),
-		    	ev->getInstructionPointer(), ev->getSize(), READ, HIT);
+            if ( ! listeners_.empty()) {
+                CacheListenerNotification notify(ev->getAddr(),	ev->getVirtualAddress(), 
+                        ev->getInstructionPointer(), ev->getSize(), READ, HIT);
 
-		    for (unsigned long int i = 0; i < listeners_.size(); ++i) {
-	            	listeners_[i]->notifyAccess(notify);
-	    	    }
-	        }
-                addRequest(ev);
-            }
+		for (unsigned long int i = 0; i < listeners_.size(); ++i) {
+                    listeners_[i]->notifyAccess(notify);
+	    	}
+	    }
+            addRequest(ev);
             break;
         case PutS:
         case PutE:

@@ -83,7 +83,7 @@ private:
     CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
     
     /** Handle FlushLine request. Forward if needed */
-    CacheAction handleFlushLineRequest(MemEvent * event, CacheLine * cacheLine);
+    CacheAction handleFlushLineRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay);
 
     /** Handle PutM request. Write data to cache line.  Update E->M state if necessary */
     CacheAction handlePutMRequest(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent);

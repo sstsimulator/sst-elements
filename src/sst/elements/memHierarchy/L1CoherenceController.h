@@ -80,7 +80,7 @@ private:
     CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
     
     /** Handle FlushLine request. */
-    CacheAction handleFlushLineRequest(MemEvent *event, CacheLine* cacheLine, bool replay);
+    CacheAction handleFlushLineRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
 
     /** Handle Inv request */
     CacheAction handleInv(MemEvent * event, CacheLine * cacheLine, bool replay);
