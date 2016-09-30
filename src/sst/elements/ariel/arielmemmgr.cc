@@ -11,14 +11,17 @@
 
 #include <sst_config.h>
 #include <stdio.h>
+#include <sst/core/rng/marsaglia.h>
 
 #include "arielmemmgr.h"
 
+using namespace SST::RNG;
 using namespace SST::ArielComponent;
 
 ArielMemoryManager::ArielMemoryManager(SST::Component* ownMe,
 		uint32_t mLevels, uint64_t* pSizes, uint64_t* stdPCounts, Output* out,
-		uint32_t defLevel, uint32_t translateCacheEntryCount) :
+		uint32_t defLevel, uint32_t translateCacheEntryCount,
+		ArielPageMappingPolicy mapPolicy) :
 	owner(ownMe),
 	translationCacheEntries(translateCacheEntryCount),
 	translationEnabled(true),
@@ -41,13 +44,49 @@ ArielMemoryManager::ArielMemoryManager(SST::Component* ownMe,
 	for(uint32_t i = 0; i < mLevels; ++i) {
 		freePages[i] = new std::deque<uint64_t>();
 
-		output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " page count is %" PRIu64 "\n", i, stdPCounts[i]);
-		for(uint64_t j = 0; j < stdPCounts[i]; ++j) {
-			freePages[i]->push_back(nextMemoryAddress);
-			nextMemoryAddress += pageSizes[i];
+		if( ArielPageMappingPolicy::LINEAR == mapPolicy ){
+			output->verbose(CALL_INFO, 2, 0, "Page mapping policy is LINEAR map...\n");
+			output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " page count is %" PRIu64 "\n", i, stdPCounts[i]);
+			for(uint64_t j = 0; j < stdPCounts[i]; ++j) {
+				freePages[i]->push_back(nextMemoryAddress);
+				nextMemoryAddress += pageSizes[i];
+			}
+			output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " usable (free) page queue contains %" PRIu32 " entries\n", i, 
+				(uint32_t) freePages[i]->size());
+		} else if( ArielPageMappingPolicy::RANDOMIZED == mapPolicy ) {
+			output->verbose(CALL_INFO, 2, 0, "Page mapping policy in RANDOMIZED map...\n");
+			output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " page count is %" PRIu64 "\n", i, stdPCounts[i]);
+
+			std::vector<uint64_t> preRandomizedPages;
+			preRandomizedPages.resize(stdPCounts[i]);
+			
+			MarsagliaRNG pageRandomizer(11, 201010101);
+			
+			for(uint64_t j = 0; j < stdPCounts[i]; ++j) {
+				preRandomizedPages[j] = nextMemoryAddress;
+				nextMemoryAddress += pageSizes[i];
+			}
+
+			for(uint64_t j = 0; j < (stdPCounts[i] * 2); ++j) {
+				const uint64_t swapLeft  = (pageRandomizer.generateNextUInt64() % stdPCounts[i]);
+				const uint64_t swapRight = (pageRandomizer.generateNextUInt64() % stdPCounts[i]);
+				
+				if( swapLeft != swapRight ) {
+					const uint64_t tmp = preRandomizedPages[swapRight];
+					preRandomizedPages[swapRight] = preRandomizedPages[swapLeft];
+					preRandomizedPages[swapLeft] = tmp;
+				}
+			}
+
+			for(uint64_t j = 0; j < stdPCounts[i]; ++j) {
+				output->verbose(CALL_INFO, 64, 0, "Page[%" PRIu64 ", Level: %" PRIu32 "] Physical Start=%" PRIu64 "\n",
+					j, i, preRandomizedPages[j]);
+				freePages[i]->push_back(preRandomizedPages[j]);
+			}
+			
+			output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " usable (free) page queue contains %" PRIu32 " entries\n", i, 
+				(uint32_t) freePages[i]->size());
 		}
-		output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " usable (free) page queue contains %" PRIu32 " entries\n", i, 
-			(uint32_t) freePages[i]->size());
 	}
 
 	pageAllocations = (std::unordered_map<uint64_t, uint64_t>**) malloc(sizeof(std::unordered_map<uint64_t, uint64_t>*) * memoryLevels);
