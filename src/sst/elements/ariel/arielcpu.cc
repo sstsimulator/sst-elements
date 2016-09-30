@@ -71,9 +71,20 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	uint32_t default_level = (uint32_t) params.find<uint32_t>("defaultlevel", 0);
 	uint32_t translateCacheSize = (uint32_t) params.find<uint32_t>("translatecacheentries", 4096);
 
+	std::string mappingPolicy = params.find<std::string>("pagemappolicy", "linear");
+	ArielPageMappingPolicy mapPolicy = ArielPageMappingPolicy::LINEAR;
+	
+	if(mappingPolicy == "LINEAR" || mappingPolicy == "linear") {
+		mapPolicy = ArielPageMappingPolicy::LINEAR;
+	} else if(  mappingPolicy == "RANDOMIZED" || mappingPolicy == "randomized" ) {
+		mapPolicy = ArielPageMappingPolicy::RANDOMIZED;
+	} else {
+		output->fatal(CALL_INFO, -8, "Ariel memory manager - unknown page mapping policy \"%s\"\n", mappingPolicy.c_str());
+	}
+
 	output->verbose(CALL_INFO, 1, 0, "Creating memory manager, default allocation from %" PRIu32 " memory pool.\n", default_level);
 	memmgr = new ArielMemoryManager(this, memory_levels,
-		page_sizes, page_counts, output, default_level, translateCacheSize);
+		page_sizes, page_counts, output, default_level, translateCacheSize, mapPolicy);
 
 	// Prepopulate any page tables as we find them
 	for(uint32_t i = 0; i < memory_levels; ++i) {

@@ -26,11 +26,17 @@ using namespace SST;
 namespace SST {
 namespace ArielComponent {
 
+enum ArielPageMappingPolicy {
+	LINEAR,
+	RANDOMIZED
+};
+
 class ArielMemoryManager {
 
 	public:
 		ArielMemoryManager(SST::Component* ownMe, uint32_t memoryLevels, uint64_t* pageSize, uint64_t* stdPageCount, Output* output,
-			uint32_t defLevel, uint32_t translateCacheEntryCount);
+			uint32_t defLevel, uint32_t translateCacheEntryCount, 
+			ArielPageMappingPolicy mapPolicy);
 		~ArielMemoryManager();
 		void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
 		void free(const uint64_t vAddr);
