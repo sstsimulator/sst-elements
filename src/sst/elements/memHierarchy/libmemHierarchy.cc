@@ -656,7 +656,7 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 	{ "link_count", 	"Sets the number of links being simulated, min=4, max=8, default=4", "4" },
 	{ "vault_count",	"Sets the number of vaults being simulated, min=16, max=32, default=16", "16" },
 	{ "queue_depth",	"Sets the depth of the HMC request queue, min=2, max=65536, default=2", "2" },
-  	{ "dram_count",         "Sets the number of DRAM blocks per cube\n", "20" },
+  	{ "dram_count",         "Sets the number of DRAM blocks per cube", "20" },
 	{ "xbar_depth",         "Sets the queue depth for the HMC X-bar", "8" },
         { "max_req_size",       "Sets the maximum requests which can be inflight from the controller side at any time", "32" },
 	{ "trace-banks", 	"Decides where tracing for memory banks is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
