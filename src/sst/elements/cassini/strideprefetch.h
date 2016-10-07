@@ -6,7 +6,7 @@
 // All rights reserved.
 //
 // Portions are copyright of other developers:
-// See the file CONTRIBUTITORS.TXT in the top level directory
+// See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
 //
 // This file is part of the SST software package. For license
