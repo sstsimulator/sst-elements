@@ -13,6 +13,7 @@ install-exec-hook:
 EXTRA_DIST = \
 	autogen.sh \
 	CONTRIBUTING.md \
+	CONTRIBUTORS.TXT \
 	INSTALL \
 	ISSUES \
 	LICENSE \
