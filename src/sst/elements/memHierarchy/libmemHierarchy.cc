@@ -47,6 +47,10 @@
 #include "membackend/goblinHMCBackend.h"
 #endif
 
+#ifdef HAVE_LIBRAMULATOR
+#include "membackend/ramulatorBackend.h"
+#endif
+
 #ifdef HAVE_LIBDRAMSIM
 #include "membackend/dramSimBackend.h"
 #include "membackend/pagedMultiBackend.h"
@@ -579,6 +583,18 @@ static const ElementInfoParam requestReorderRow_params[] = {
     { NULL, NULL, NULL }
 };
 
+#if defined(HAVE_LIBRAMULATOR)
+static SubComponent* create_Mem_Ramulator(Component* comp, Params& params){
+    return new ramulatorMemory(comp, params);
+}
+
+static const ElementInfoParam ramulatorMem_params[] = {
+    {"verbose",          "Sets the verbosity of the backend output", "0" },
+    {"configFile",      "Name of Ramulator Device config file", NULL},
+    {NULL, NULL, NULL}
+};
+
+#endif
 
 #if defined(HAVE_LIBDRAMSIM)
 static SubComponent* create_Mem_DRAMSim(Component* comp, Params& params){
@@ -862,6 +878,17 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL,
         "SST::MemHierarchy::MemBackend"
     },
+#if defined(HAVE_LIBRAMULATOR)
+    {
+        "ramulator",
+        "Ramulator-driven memory timings",
+        NULL, /* Advanced help */
+        create_Mem_Ramulator, /* alloc subcomponent */
+        ramulatorMem_params,
+        NULL, /* stats */
+        "SST::MemHierarchy::MemBackend"
+    },
+#endif
 #if defined(HAVE_LIBDRAMSIM)
     {
         "dramsim",
