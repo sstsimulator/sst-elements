@@ -306,6 +306,7 @@ void Cache::processEvent(MemEvent* event, bool replay) {
             processFetchResp(event, baseAddr);
             break;
         case FlushLine:
+        case FlushLineInv:
             processCacheFlush(event, baseAddr, replay);
             break;
         default:

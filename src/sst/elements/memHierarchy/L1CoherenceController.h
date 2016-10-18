@@ -52,7 +52,7 @@ public:
     CacheAction handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * origRequest, bool replay);
     
     /** Process Inv */
-    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* cacheLine, bool replay);
+    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* cacheLine, MemEvent * collisionEvent, bool replay);
 
     /** Process responses */
     CacheAction handleResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest);
@@ -81,6 +81,9 @@ private:
     
     /** Handle FlushLine request. */
     CacheAction handleFlushLineRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
+    
+    /** Handle FlushLineInv request */
+    CacheAction handleFlushLineInvRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
 
     /** Handle Inv request */
     CacheAction handleInv(MemEvent * event, CacheLine * cacheLine, bool replay);
@@ -103,13 +106,13 @@ private:
     void sendResponseDown(MemEvent* event, CacheLine* cacheLine, bool replay);
 
     /** Send writeback request to lower level caches */
-    void sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr);
+    void sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string origRqstr);
 
     /** Send AckInv response to lower level caches */
     void sendAckInv(Addr baseAddr, string origRqstr, CacheLine * cacheLine);
 
     /** Forward a flush line request, with or without data */
-    void forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine);
+    void forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine);
     
     /** Send response to a flush request */
     void sendFlushResponse(MemEvent * requestEvent, bool success, uint64_t baseTime, bool replay);

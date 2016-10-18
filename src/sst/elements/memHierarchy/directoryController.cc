@@ -502,11 +502,13 @@ void DirectoryController::processPacket(MemEvent * ev) {
             handleFetchResp(ev, false);
             break;
         case FetchXResp:
-            handleFetchXResp(ev);
+            handleFetchXResp(ev, false);
             break;
         case AckInv:
             handleAckInv(ev);
             break;
+        case FlushLineInv:
+            handleFlushLineInv(ev);
         case FlushLine:
             handleFlushLine(ev);
             break;
@@ -671,7 +673,6 @@ void DirectoryController::issueMemoryRequest(MemEvent * ev, DirEntry * entry) {
     reqEv->setInstructionPointer(ev->getInstructionPointer());
     reqEv->setMemFlags(ev->getMemFlags());
     memReqs[reqEv->getID()] = ev->getBaseAddr();
-    entry->lastRequest      = reqEv->getID();
     profileRequestSent(reqEv);
     
     uint64_t deliveryTime = timestamp + accessLatency;
@@ -720,9 +721,115 @@ void DirectoryController::handleNACK(MemEvent * ev) {
 
 /*
  *  Handle FlushLine
- *  Wait for mem ack if dirty, else local OK.
+ *  Only flush dirty data
  */
 void DirectoryController::handleFlushLine(MemEvent * ev) {
+    DirEntry * entry = getDirEntry(ev->getBaseAddr());
+    if (!entry) {
+        entry = createDirEntry(ev->getBaseAddr(), ev->getAddr(), ev->getSize());
+        entry->setCached(true);
+    }
+    if (!entry->isCached()) {
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || entry->getBaseAddr() == DEBUG_ADDR) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+#endif
+        getDirEntryFromMemory(entry);
+        return;
+    }
+
+    bool shouldNACK = false;
+    bool inMSHR = mshr->elementIsHit(ev->getBaseAddr(), ev);
+    bool mshrConflict = !inMSHR && mshr->isHit(ev->getBaseAddr());
+
+    int srcID = node_name_to_id(ev->getSrc());
+    State state = entry->getState();
+
+    switch(state) {
+        case I:
+            if (!inMSHR) {
+                if (!mshr->insert(ev->getBaseAddr(), ev)) {
+                    mshrNACKRequest(ev);
+                    break;
+                } else profileRequestRecv(ev, entry);
+                if (mshrConflict) break;
+            }
+            forwardFlushRequest(ev);
+            break;
+        case S:
+            if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) {
+                mshrNACKRequest(ev);
+                break;
+            }
+            forwardFlushRequest(ev);
+            break;
+        case M:
+            if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) {
+                mshrNACKRequest(ev);
+                break;
+            }
+            if (entry->getOwner() == srcID) {
+                entry->clearOwner();
+                entry->addSharer(srcID);
+                entry->setState(S);
+                if (ev->getDirty()) {
+                    writebackData(ev, FlushLine);
+                } else {
+                    forwardFlushRequest(ev);
+                }
+            } else {
+                entry->setState(M_InvX);
+                issueFetch(ev, entry, FetchInvX);
+            }
+            break;
+        case IS:        // Sharer in progress
+        case IM:        // Owner in progress
+        case S_D:       // Sharer in progress
+        case S_Inv:     // Owner in progress, waiting on AckInv
+            if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
+            break;
+        case M_Inv:     // Owner in progress, waiting on FetchInvResp
+            // Assume that the sender will treat our outstanding FetchInv as an Inv and clean up accordingly
+            if (entry->getOwner() == srcID) {
+                entry->clearOwner();
+                entry->addSharer(srcID);
+                entry->setState(S_Inv);
+                entry->incrementWaitingAcks();
+                if (ev->getDirty()) {
+                    writebackData(ev, PutM); 
+                    ev->setPayload(0, NULL);
+                    ev->setDirty(false);
+                }
+            }
+            if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
+            break;
+        case M_InvX:    // Sharer in progress, waiting on FetchInvXResp
+            // Clear owner, add owner as sharer
+            if (entry->getOwner() == srcID) {
+                if (ev->getDirty()) {
+                    handleFetchXResp(ev, true);
+                    ev->setPayload(0, NULL);
+                    ev->setDirty(false);
+                } else {
+                    entry->clearOwner();
+                    entry->addSharer(srcID);
+                    entry->setState(S);
+                }
+                if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
+                replayWaitingEvents(entry->getBaseAddr());
+                updateCache(entry);
+            } else if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
+            break;
+        default:
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received FlushLine but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+}
+
+/*
+ *  Handle FlushLineInv
+ *  Wait for mem ack if dirty, else local OK.
+ */
+void DirectoryController::handleFlushLineInv(MemEvent * ev) {
     /* Get directory entry (create if it didn't exist, or pull from memory */
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
     if (!entry){
@@ -746,49 +853,40 @@ void DirectoryController::handleFlushLine(MemEvent * ev) {
 
     switch (state) {
         case I:
-            if (mshrConflict) {
-                if (!mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
-                else profileRequestRecv(ev, entry);  // New request since not already in MSHR
-                break;
-            }
-            sendFlushResponse(ev);
-            if (inMSHR) mshr->removeElement(ev->getBaseAddr(), ev);
-            postRequestProcessing(ev, entry);
-            break;
-        case S:
-            if (entry->isSharer(srcID)) entry->removeSharer(srcID);
-            if (entry->getSharerCount() == 0) {
-                sendFlushResponse(ev);
-                if (inMSHR) mshr->removeElement(ev->getBaseAddr(), ev);
-                entry->setState(I);
-                postRequestProcessing(ev, entry);
-                updateCache(entry);
-            } else {
-                if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) {
+            if (!inMSHR) {
+                if (!mshr->insert(ev->getBaseAddr(), ev)) {
                     mshrNACKRequest(ev);
                     break;
-                }
+                } else profileRequestRecv(ev, entry);
+                if (mshrConflict) break;
+            }
+            forwardFlushRequest(ev);
+            break;
+        case S:
+            if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) {
+                mshrNACKRequest(ev);
+                break;
+            }
+            if (entry->isSharer(srcID)) entry->removeSharer(srcID);
+            if (entry->getSharerCount() == 0) {
+                forwardFlushRequest(ev);
+            } else {
                 entry->setState(S_Inv);
                 issueInvalidates(ev, entry);
             }
             break;
         case M:
-            if (ev->getDirty() || entry->getOwner() != srcID) {
-                if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) {
-                    mshrNACKRequest(ev);
-                    break;
-                }
+            if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) {
+                mshrNACKRequest(ev);
+                break;
             }
             if (entry->getOwner() == srcID) {
                 entry->clearOwner();
                 entry->setState(I);
                 if (ev->getDirty()) {
-                    writebackData(ev);
+                    writebackData(ev, FlushLine);
                 } else {
-                    sendFlushResponse(ev);
-                    if (inMSHR) mshr->removeElement(ev->getBaseAddr(), ev);
-                    postRequestProcessing(ev, entry);
-                    updateCache(entry);
+                    forwardFlushRequest(ev);
                 }
             } else {
                 entry->setState(M_Inv);
@@ -801,26 +899,34 @@ void DirectoryController::handleFlushLine(MemEvent * ev) {
             if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
             break;
         case S_Inv:     // Owner in progress, waiting on AckInv
-            profileResponseRecv(ev);
-            if (entry->isSharer(srcID)) entry->removeSharer(srcID);
-            entry->decrementWaitingAcks();
             if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
-            if (entry->getWaitingAcks() == 0) {
-                entry->getSharerCount() > 0 ? entry->setState(S) : entry->setState(I);
-                replayWaitingEvents(ev->getBaseAddr());
+            if (entry->isSharer(srcID)) {
+                profileResponseRecv(ev);
+                entry->removeSharer(srcID);
+                entry->decrementWaitingAcks();
+                if (entry->getWaitingAcks() == 0) {
+                    entry->getSharerCount() > 0 ? entry->setState(S) : entry->setState(I);
+                    replayWaitingEvents(ev->getBaseAddr());
+                    updateCache(entry);
+                }
             }
             break;
         case M_Inv:     // Owner in progress, waiting on FetchInvResp
         case M_InvX:    // Sharer in progress, waiting on FetchInvXResp
-            if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
-            if (ev->getDirty()) handleFetchResp(ev, true); // don't delete the event! we need it!
-            else {
-                entry->clearOwner();
-                // Don't have data, set state to I & retry
-                entry->setState(I);
+            if (entry->getOwner() == srcID) {
+                if (ev->getDirty()) {
+                    handleFetchResp(ev, true); // don't delete the event! we need it!
+                    ev->setDirty(false);        // Don't writeback data when event is replayed
+                    ev->setPayload(0, NULL);
+                } else {
+                    entry->clearOwner();
+                    // Don't have data, set state to I & retry
+                    entry->setState(I);
+                }
+                if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
                 replayWaitingEvents(entry->getBaseAddr());
                 updateCache(entry);
-            }
+            } else if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
             break;
         default:
             dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received FlushLine but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
@@ -884,7 +990,7 @@ void DirectoryController::handlePutE(MemEvent * ev) {
                 getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
     }
     if (!((uint32_t)entry->getOwner() == node_name_to_id(ev->getSrc()))) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: received PutM from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+	dbg.fatal(CALL_INFO, -1, "%s, Error: received PutE from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
                 getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
     }
 
@@ -935,10 +1041,11 @@ void DirectoryController::handlePutE(MemEvent * ev) {
             postRequestProcessing(ev, entry);  // profile & delete ev
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutM but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutE but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
     }
 }
+
 
 void DirectoryController::handlePutM(MemEvent * ev) {
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
@@ -980,7 +1087,7 @@ void DirectoryController::handlePutM(MemEvent * ev) {
     switch  (state) {
         case M:
             profileRequestRecv(ev, entry);
-            writebackData(ev);
+            writebackData(ev, PutM);
             entry->clearOwner();
             entry->setState(I);
             sendAckPut(ev);
@@ -1021,7 +1128,7 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
 
     /* Clear previous owner state and writeback block. */
     entry->clearOwner();
-    writebackData(ev);
+    writebackData(ev, PutM);
 
     MemEvent * respEv = NULL;
     State state = entry->getState(); 
@@ -1059,7 +1166,7 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
     updateCache(entry);
 }
 
-void DirectoryController::handleFetchXResp(MemEvent * ev) {
+void DirectoryController::handleFetchXResp(MemEvent * ev, bool keepEvent) {
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L4_, "Finishing Fetch.\n");
 #endif
@@ -1084,7 +1191,7 @@ void DirectoryController::handleFetchXResp(MemEvent * ev) {
     entry->clearOwner();
     entry->addSharer(node_name_to_id(ev->getSrc()));
     entry->setState(S);
-    if (ev->getDirty()) writebackData(ev);
+    if (ev->getDirty()) writebackData(ev, PutM);
 
     MemEvent * respEv = reqEv->makeResponse(); 
     entry->addSharer(node_id(reqEv->getSrc()));
@@ -1093,7 +1200,7 @@ void DirectoryController::handleFetchXResp(MemEvent * ev) {
     profileResponseSent(respEv);
     sendEventToCaches(respEv, timestamp + mshrLatency);
     
-    delete ev;
+    if (!keepEvent) delete ev;
 
     postRequestProcessing(reqEv, entry);
     replayWaitingEvents(entry->getBaseAddr());
@@ -1195,7 +1302,17 @@ void DirectoryController::handleFlushLineResponse(MemEvent * ev) {
     //dbg.debug(_L9_, "\t%s\tHandling stalled event: %s, %s\n", CommandString[reqEv->getCmd()], reqEv->getSrc().c_str());
 #endif
     reqEv->setMemFlags(ev->getMemFlags()); // Copy anything back up that needs to be
-    sendFlushResponse(reqEv);
+    
+    MemEvent * me = new MemEvent(this, reqEv->getBaseAddr(), reqEv->getBaseAddr(), FlushLineResp);
+    me->setDst(reqEv->getSrc());
+    me->setRqstr(reqEv->getRqstr());
+    me->setSuccess(true);
+    me->setMemFlags(reqEv->getMemFlags());
+
+    profileResponseSent(me);
+    uint64_t deliveryTime = timestamp + accessLatency;
+    netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, me));
+    
     delete reqEv;
 }
 
@@ -1395,18 +1512,33 @@ void DirectoryController::sendAckPut(MemEvent * event) {
 }
 
 
-void DirectoryController::sendFlushResponse(MemEvent * event) {
-    MemEvent * me = new MemEvent(this, event->getBaseAddr(), event->getBaseAddr(), FlushLineResp);
-    me->setDst(event->getSrc());
-    me->setRqstr(event->getRqstr());
-    me->setSuccess(true);
-    me->setMemFlags(event->getMemFlags());
+void DirectoryController::forwardFlushRequest(MemEvent * event) {
+    Addr localAddr      = convertAddressToLocalAddress(event->getAddr());
+    Addr localBaseAddr  = convertAddressToLocalAddress(event->getBaseAddr());
+    MemEvent *reqEv     = new MemEvent(this, localAddr, localBaseAddr, FlushLine, cacheLineSize);
+    reqEv->setRqstr(event->getRqstr());
+    reqEv->setVirtualAddress(event->getVirtualAddress());
+    reqEv->setInstructionPointer(event->getInstructionPointer());
+    reqEv->setMemFlags(event->getMemFlags());
+    memReqs[reqEv->getID()] = event->getBaseAddr();
+    profileRequestSent(reqEv);
+    
 
-    profileResponseSent(me);
     uint64_t deliveryTime = timestamp + accessLatency;
-    netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, me));
-}
 
+    if (memLink) {
+        memMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, reqEv));
+    } else {
+        reqEv->setDst(memoryName);
+        netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, reqEv));
+    }
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) {
+        dbg.debug(_L5_, "Forwarding FlushLine to memory.  BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n", 
+                reqEv->getBaseAddr(), reqEv->getSize(), reqEv->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
+    }
+#endif
+}
 
 uint32_t DirectoryController::node_id(const std::string &name){
 	uint32_t id;
@@ -1497,9 +1629,8 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry){
 
 
 
-MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
+MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event, Command wbCmd) {
     Addr localBaseAddr = convertAddressToLocalAddress(data_event->getBaseAddr());
-    Command wbCmd = (data_event->getCmd() == FlushLine) ? FlushLine : PutM;
     MemEvent *ev       = new MemEvent(this, localBaseAddr, localBaseAddr, wbCmd, cacheLineSize);
 
     if(data_event->getPayload().size() != cacheLineSize) {

@@ -58,6 +58,8 @@ CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, strin
             return DONE;
         case IS:
         case IM:
+        case I_B:
+        case S_B:
             return STALL;
         default:
 	    d_->fatal(CALL_INFO,-1,"%s, Error: State is invalid during eviction: %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
@@ -108,7 +110,7 @@ CacheAction L1IncoherentController::handleReplacement(MemEvent* event, CacheLine
  *  Handle invalidation - Inv, FetchInv, or FetchInvX
  *  Return: whether Inv was successful (true) or we are waiting on further actions (false). L1 returns true (no sharers/owners).
  */
-CacheAction L1IncoherentController::handleInvalidationRequest(MemEvent * event, CacheLine * cacheLine, bool replay) {
+CacheAction L1IncoherentController::handleInvalidationRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * collisonEvent, bool replay) {
     d_->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
             name_.c_str(), CommandString[event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
     return IGNORE;

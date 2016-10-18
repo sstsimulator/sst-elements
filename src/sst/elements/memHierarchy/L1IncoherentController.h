@@ -52,7 +52,7 @@ public:
     CacheAction handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent, bool replay);
     
     /** Process Inv */
-    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* cacheLine, bool replay);
+    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* cacheLine, MemEvent * collisionEvent, bool replay);
 
     /** Process responses */
     CacheAction handleResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest);

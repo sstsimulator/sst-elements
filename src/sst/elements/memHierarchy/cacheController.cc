@@ -140,7 +140,11 @@ void Cache::processCacheRequest(MemEvent* event, Command cmd, Addr baseAddr, boo
 }
 
 
-/* Handles processing for all replacements - PutS, PutE, PutM, etc. */
+/* 
+ *  Handles processing for all replacements - PutS, PutE, PutM, etc. 
+ *  For non-inclusive/incoherent caches, may need to allocate a new line
+ *  If Put conflicts with existing request, will still call handleReplacement to resolve any races
+ */
 void Cache::processCacheReplacement(MemEvent* event, Command cmd, Addr baseAddr, bool replay) {
 #ifdef __SST_DEBUG_OUTPUT__
     printLine(baseAddr);
@@ -210,8 +214,10 @@ void Cache::processCacheInvalidate(MemEvent* event, Addr baseAddr, bool replay) 
         return;
     }
     
+    MemEvent * collisionEvent = NULL;
+    if (mshr_->exists(baseAddr)) collisionEvent = mshr_->lookupFront(baseAddr);
     CacheLine * line = getLine(baseAddr);
-    CacheAction action = coherenceMgr->handleInvalidationRequest(event, line, replay);
+    CacheAction action = coherenceMgr->handleInvalidationRequest(event, line, collisionEvent, replay);
         
 #ifdef __SST_DEBUG_OUTPUT__
     printLine(baseAddr);
@@ -230,6 +236,9 @@ void Cache::processCacheInvalidate(MemEvent* event, Addr baseAddr, bool replay) 
 
 
 void Cache::processCacheFlush(MemEvent* event, Addr baseAddr, bool replay) {
+#ifdef __SST_DEBUG_OUTPUT__
+    printLine(baseAddr);
+#endif
     int index = cf_.cacheArray_->find(baseAddr, false);
     bool miss = (index == -1);
     // Find line
@@ -238,6 +247,14 @@ void Cache::processCacheFlush(MemEvent* event, Addr baseAddr, bool replay) {
     //      If hit and clean: forward cacheFlush w/o data, wait for flushresp
     //      If miss: forward cacheFlush w/o data, wait for flushresp
     
+    if (event->inProgress()) {
+        processRequestInMSHR(baseAddr, event);
+#ifdef __SST_DEBUG_OUTPUT__
+        d_->debug(_L8_, "Attempted retry too early, continue stalling\n");
+#endif
+        return;
+    }
+
     MemEvent * origRequest = NULL;
     if (mshr_->exists(baseAddr)) origRequest = mshr_->lookupFront(baseAddr);
     
@@ -248,6 +265,9 @@ void Cache::processCacheFlush(MemEvent* event, Addr baseAddr, bool replay) {
     /* If origRequest, put flush in mshr and replay */
     /* Stall the request if we are waiting on a response to a forwarded Flush */
     
+#ifdef __SST_DEBUG_OUTPUT__
+    printLine(baseAddr);
+#endif
     if (origRequest != NULL) {
         processRequestInMSHR(baseAddr, event);
         if (action == DONE) {

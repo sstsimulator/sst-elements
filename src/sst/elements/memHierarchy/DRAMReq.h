@@ -28,17 +28,18 @@ namespace MemHierarchy {
         MemEvent*   respEvent_;
         int         respSize_;
         Command     cmd_;
-        uint64_t      size_;
-        uint64_t      amtInProcess_;
-        uint64_t      amtProcessed_;
+        uint64_t    size_;
+        uint64_t    amtInProcess_;
+        uint64_t    amtProcessed_;
         Status_t    status_;
         Addr        baseAddr_;
         Addr        addr_;
         bool        isWrite_;
+        bool        checkFlushes_;
 
         DRAMReq(MemEvent *ev, const uint64_t busWidth, const uint64_t cacheLineSize) :
             reqEvent_(new MemEvent(*ev)), respEvent_(NULL), amtInProcess_(0),
-            amtProcessed_(0), status_(NEW){
+            amtProcessed_(0), status_(NEW), checkFlushes_(false) {
 
             cmd_      = ev->getCmd();
             isWrite_  = (cmd_ == PutM) ? true : false;
@@ -49,7 +50,7 @@ namespace MemHierarchy {
 
         DRAMReq(const uint64_t baseAddress, Command reqCmd, const uint64_t busWidth, const uint64_t cacheLineSize) :
 	    reqEvent_(NULL), respEvent_(NULL), amtInProcess_(0),
-            amtProcessed_(0), status_(NEW) {
+            amtProcessed_(0), status_(NEW), checkFlushes_(false) {
 
 	    addr_ = baseAddress;
             baseAddr_ = baseAddress;
@@ -76,6 +77,7 @@ namespace MemHierarchy {
             ser & baseAddr_;
             ser & addr_;
             ser & isWrite_;
+            ser & checkFlushes_;
             
         }
     private:

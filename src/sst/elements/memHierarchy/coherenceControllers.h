@@ -87,7 +87,7 @@ public:
     virtual int isCoherenceMiss(MemEvent * event, CacheLine * line) =0;
     virtual CacheAction handleRequest(MemEvent * event, CacheLine * line, bool replay) =0;
     virtual CacheAction handleReplacement(MemEvent * event, CacheLine * line, MemEvent * reqEvent, bool replay) =0;
-    virtual CacheAction handleInvalidationRequest(MemEvent * event, CacheLine * line, bool replay) =0;
+    virtual CacheAction handleInvalidationRequest(MemEvent * event, CacheLine * line, MemEvent * collisionEvent, bool replay) =0;
     virtual CacheAction handleEviction(CacheLine * line, string rqstr, bool fromDataCache=false) =0;
     virtual CacheAction handleResponse(MemEvent * event, CacheLine * line, MemEvent * request) =0;
     

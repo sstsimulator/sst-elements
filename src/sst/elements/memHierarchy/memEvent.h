@@ -35,6 +35,7 @@ typedef uint64_t Addr;
     X(GetSEx)           /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
                         /*        GetSEx sets the LOCK, GetX removes the LOCK  */\
     X(FlushLine)        /* Request to flush a cache line */\
+    X(FlushLineInv)     /* Request to flush and invalidate a cache line */\
     X(FlushAll)         /* Request to flush entire cache - similar to wbinvd */\
     /* Request Responses */\
     X(GetSResp)         /* Response to a GetS request */\
@@ -45,8 +46,6 @@ typedef uint64_t Addr;
     X(PutS)             /* Clean replacement from S->I:      Remove sharer */\
     X(PutM)             /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
     X(PutE)             /* Clean replacement from E->I:      Remove owner but don't writeback data */\
-    X(PutX)             /* Dirty downgrade from M->O/S:      Remove exclusive ownership, add as sharer (MSI/MESI) or non-exclusive owner (MOESI), writeback data */\
-    X(PutXE)            /* Clean downgrade from E->O/S:      Remove exclusive ownership, add as sharer (MSI/MESI) or non-exclusive owner (MOESI), don't writeback data */\
     /* Invalidates - sent by caches or directory controller */\
     X(Inv)              /* Other write request:  Invalidate cache line */\
     /* Invalidates - sent by directory controller */\
@@ -116,6 +115,9 @@ static const ElementInfoStatistic networkMemoryInspector_statistics[] = {
     X(MI) \
     X(EI) \
     X(SI) \
+    X(S_B)      /* S, blocked while waiting for a response (currently used for flushes) */\
+    X(I_B)      /* I, blocked while waiting for a response (currently used for flushes) */\
+    X(SB_Inv)   /* Was in S_B, got an Inv, resolving Inv first */\
     X(NULLST)
 
 typedef enum {
@@ -319,7 +321,7 @@ public:
     bool success() { return queryFlag(MemEvent::F_SUCCESS); }
 
     bool isHighNetEvent() {
-        if (cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx || isWriteback() || cmd_ == FlushLine || cmd_ == FlushAll) {
+        if (cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx || isWriteback() || cmd_ == FlushLine || cmd_ == FlushLineInv || cmd_ == FlushAll) {
             return true;
         }
         return false;
@@ -334,7 +336,7 @@ public:
     
     bool isWriteback() {
         if (cmd_ == PutS || cmd_ == PutM ||
-           cmd_ == PutE || cmd_ == PutX || cmd_ == PutXE) {
+           cmd_ == PutE ) {
             return true;
         }
         return false;
@@ -396,7 +398,7 @@ public:
     static bool isResponse(Command cmd) { return (cmd == GetSResp || cmd == GetXResp || cmd == FlushLineResp);}
     bool isResponse(void) const { return MemEvent::isResponse(cmd_); }
     /** Returns true if this is a 'writeback' command type */
-    static bool isWriteback(Command cmd) { return (cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE || cmd == PutS); }
+    static bool isWriteback(Command cmd) { return (cmd == PutM || cmd == PutE || cmd == PutS); }
     bool isWriteback(void) const { return MemEvent::isWriteback(cmd_); }
    
 
@@ -463,6 +465,7 @@ public:
             case FetchInvX:
                 return FetchXResp;
             case FlushLine:
+            case FlushLineInv:
                 return FlushLineResp;
             default:
                 return NULLCMD;
