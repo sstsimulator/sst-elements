@@ -115,14 +115,13 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : MemBackend(comp, param
  */
 void SimpleDRAM::handleSelfEvent(SST::Event *event){
     MemCtrlEvent *ev = static_cast<MemCtrlEvent*>(event);
-    if (ev->req != NULL) {
-        DRAMReq *req = ev->req;
+    if ( ! ev->close ) {
         if (policy == RowPolicy::CLOSED) {
-            self_link->send(tRP, new MemCtrlEvent(NULL, ev->bank));
+            self_link->send(tRP, new MemCtrlEvent(ev->bank));
         } else {
             busy[ev->bank] = false;
         }
-        ctrl->handleMemResponse(req);
+        ctrl->handleMemResponse(ev->reqId);
         delete event;
     } else {
         openRow[ev->bank] = -1;
@@ -131,8 +130,7 @@ void SimpleDRAM::handleSelfEvent(SST::Event *event){
     }
 }
 
-bool SimpleDRAM::issueRequest(DRAMReq *req){
-    Addr addr = req->baseAddr_ + req->amtInProcess_;
+bool SimpleDRAM::issueRequest( ReqId reqId, Addr addr, bool isWrite, unsigned numBytes ){
 
     // Determine bank & row for address
     //  Basic mapping: interleave cache lines across banks
@@ -161,7 +159,7 @@ bool SimpleDRAM::issueRequest(DRAMReq *req){
         statRowHit->addData(1);
     }
     busy[bank] = true;
-    self_link->send(latency, new MemCtrlEvent(req, bank));
+    self_link->send(latency, new MemCtrlEvent( bank, reqId ));
     
     return true;
 }

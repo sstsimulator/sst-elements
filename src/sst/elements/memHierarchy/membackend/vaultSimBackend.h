@@ -25,12 +25,16 @@ namespace MemHierarchy {
 class VaultSimMemory : public MemBackend {
 public:
     VaultSimMemory(Component *comp, Params &params);
-    bool issueRequest(DRAMReq *req);
+	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
 private:
+#if 0
     void handleCubeEvent(SST::Event *event);
+#endif
 
+#if 0
     typedef std::map<MemEvent::id_type,DRAMReq*> memEventToDRAMMap_t;
     memEventToDRAMMap_t outToCubes; // map of events sent out to the cubes
+#endif
     SST::Link *cube_link;
 };
 

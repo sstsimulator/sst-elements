@@ -26,7 +26,7 @@ class SimpleDRAM : public MemBackend {
 public:
     SimpleDRAM();
     SimpleDRAM(Component *comp, Params &params);
-    bool issueRequest(DRAMReq *req);
+    bool issueRequest( ReqId, Addr, bool, unsigned );
     
     typedef enum {OPEN, CLOSED, DYNAMIC, TIMEOUT } RowPolicy;
 
@@ -57,19 +57,22 @@ private:
 
 public:
     class MemCtrlEvent : public SST::Event {
-    public:
-        MemCtrlEvent(DRAMReq* req, int bank) : SST::Event(), req(req), bank(bank) { }
+	public:
+        MemCtrlEvent(int bank, ReqId reqId ) : SST::Event(), bank(bank), close(false), reqId(reqId) { }
+        MemCtrlEvent(int bank ) : SST::Event(), bank(bank), close(true) { }
         
-        DRAMReq *req;
         int bank;
+		bool close;
+        ReqId reqId;
     private:
         MemCtrlEvent() {} // For Serialization only
     
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser) {
             Event::serialize_order(ser);
-            ser & req;  // Cannot serialize pointers unless they are a serializable object
+            ser & reqId;  // Cannot serialize pointers unless they are a serializable object
             ser & bank;
+			ser & close;
         }
         ImplementSerializable(SST::MemHierarchy::SimpleDRAM::MemCtrlEvent);
     };

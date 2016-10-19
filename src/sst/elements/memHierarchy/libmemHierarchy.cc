@@ -41,8 +41,6 @@
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
 
-#include "DRAMReq.h"
-
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
 #endif

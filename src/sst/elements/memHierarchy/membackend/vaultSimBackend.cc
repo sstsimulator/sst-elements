@@ -22,17 +22,19 @@ using namespace SST::MemHierarchy;
 
 VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
     std::string access_time = params.find<std::string>("access_time", "100 ns");
+#if 0
     cube_link = ctrl->configureLink( "cube_link", access_time,
             new Event::Handler<VaultSimMemory>(this, &VaultSimMemory::handleCubeEvent));
+#endif
 }
 
 
 
-bool VaultSimMemory::issueRequest(DRAMReq *req){
+bool VaultSimMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes ){
 #ifdef __SST_DEBUG_OUTPUT__
-    uint64_t addr = req->baseAddr_ + req->amtInProcess_;
     ctrl->dbg.debug(_L10_, "Issued transaction to Cube Chain for address %" PRIx64 "\n", (Addr)addr);
 #endif
+#if 0
     // TODO:  FIX THIS:  ugly hardcoded limit on outstanding requests
     if (outToCubes.size() > 255) {
         req->status_ = DRAMReq::NEW;
@@ -44,10 +46,12 @@ bool VaultSimMemory::issueRequest(DRAMReq *req){
     outToCubes[reqID] = req; // associate the memEvent w/ the DRAMReq
     MemEvent *outgoingEvent = new MemEvent(*req->reqEvent_); // we make a copy, because the dramreq keeps to 'original'
     cube_link->send(outgoingEvent); // send the event off
+#endif
     return true;
 }
 
 
+#if 0
 void VaultSimMemory::handleCubeEvent(SST::Event *event){
   MemEvent *ev = dynamic_cast<MemEvent*>(event);
   if (ev) {
@@ -62,3 +66,4 @@ void VaultSimMemory::handleCubeEvent(SST::Event *event){
   else ctrl->dbg.fatal(CALL_INFO, -1, "Recived wrong event type from cubes\n");
 
 }
+#endif

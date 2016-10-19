@@ -13,7 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-
 #include <sst_config.h>
 #include "membackend/dramSimBackend.h"
 
@@ -50,17 +49,15 @@ DRAMSimMemory::DRAMSimMemory(Component *comp, Params &params) : MemBackend(comp,
 }
 
 
-
-bool DRAMSimMemory::issueRequest(DRAMReq *req){
-    uint64_t addr = req->baseAddr_ + req->amtInProcess_;
+bool DRAMSimMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned ){
     bool ok = memSystem->willAcceptTransaction(addr);
     if(!ok) return false;
-    ok = memSystem->addTransaction(req->isWrite_, addr);
+    ok = memSystem->addTransaction(isWrite, addr);
     if(!ok) return false;  // This *SHOULD* always be ok
 #ifdef __SST_DEBUG_OUTPUT__
     ctrl->dbg.debug(_L10_, "Issued transaction for address %" PRIx64 "\n", (Addr)addr);
 #endif
-    dramReqs[addr].push_back(req);
+    dramReqs[addr].push_back(id);
     return true;
 }
 
@@ -79,15 +76,15 @@ void DRAMSimMemory::finish(){
 
 
 void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
-    std::deque<DRAMReq *> &reqs = dramReqs[addr];
+    std::deque<ReqId> &reqs = dramReqs[addr];
 #ifdef __SST_DEBUG_OUTPUT__
     ctrl->dbg.debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
 #endif
     assert(reqs.size());
-    DRAMReq *req = reqs.front();
+    ReqId reqId = reqs.front();
     reqs.pop_front();
     if(0 == reqs.size())
         dramReqs.erase(addr);
 
-    ctrl->handleMemResponse(req);
+    ctrl->handleMemResponse(reqId);
 }
