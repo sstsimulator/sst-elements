@@ -25,8 +25,10 @@
 
 #include "sst/elements/memHierarchy/memoryController.h"
 #include "sst/elements/memHierarchy/membackend/memBackend.h"
+#if 0
 #include "sst/elements/memHierarchy/memResponseHandler.h"
 #include "sst/elements/memHierarchy/DRAMReq.h"
+#endif
 
 #include "savarb.h"
 #include "savevent.h"
@@ -37,12 +39,16 @@ using namespace SST::MemHierarchy;
 namespace SST {
 namespace Savannah {
 
+class SavannahComponent : public SST::Component {
+#if 0
 class SavannahComponent : public SST::Component, public MemResponseHandler {
+#endif
 
 public:
 	SavannahComponent(ComponentId_t id, Params &params);
 	void handleIncomingEvent(SST::Event* ev);
 	bool tick(Cycle_t cycle);
+#if 0
 	virtual void handleMemResponse(DRAMReq* resp);
 	~SavannahComponent();
 
@@ -59,6 +65,7 @@ private:
 	uint32_t    incomingLinkCount;
 	Output*     output;
 	MemBackend* backend_;
+#endif
 };
 
 }

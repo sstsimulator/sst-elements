@@ -19,7 +19,9 @@
 
 #include "sst/elements/memHierarchy/memoryController.h"
 #include "sst/elements/memHierarchy/membackend/memBackend.h"
+#if 0
 #include "sst/elements/memHierarchy/DRAMReq.h"
+#endif
 
 using namespace SST::MemHierarchy;
 
@@ -28,6 +30,7 @@ namespace Savannah {
 
 class SavannahRequestEvent : public SST::Event {
 public:
+#if 0
 	SavannahRequestEvent(DRAMReq& req) :
 		request(req) {
 
@@ -53,6 +56,7 @@ public:
 private:
 	DRAMReq request;
 	uint32_t recvLink;
+#endif
 };
 
 }
