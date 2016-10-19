@@ -30,6 +30,9 @@ ramulatorMemory::ramulatorMemory(Component *comp, Params &params) :
 {
     std::string ramulatorCfg = params.find<std::string>("configFile",
                                                         NO_STRING_DEFINED);
+    if (ramulatorCfg == NO_STRING_DEFINED) {
+        ctrl->dbg.fatal(CALL_INFO, -1, "Ramulator Backend must define a 'configFile' file parameter\n");
+    } 
     ramulator::Config configs(ramulatorCfg);
     
     configs.set_core_num(1); // ?
