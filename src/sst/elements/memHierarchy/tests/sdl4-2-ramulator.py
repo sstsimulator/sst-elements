@@ -8,9 +8,10 @@ sst.setProgramOption("stopAtCycle", "300000ns")
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
 comp_cpu0.addParams({
-      "memSize" : "0x1000",
+      "memSize" : "0x100000",
       "num_loadstore" : "1000",
-      "commFreq" : "100",
+      "maxOutstanding" : "64",
+      "commFreq" : "1",
       "do_write" : "1"
 })
 comp_c0_l1cache = sst.Component("c0.l1cache", "memHierarchy.Cache")
@@ -27,9 +28,10 @@ comp_c0_l1cache.addParams({
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({
-      "memSize" : "0x1000",
+      "memSize" : "0x100000",
       "num_loadstore" : "1000",
-      "commFreq" : "100",
+      "maxOutstanding" : "64",
+      "commFreq" : "1",
       "do_write" : "1"
 })
 comp_c1_l1cache = sst.Component("c1.l1cache", "memHierarchy.Cache")
@@ -67,7 +69,10 @@ comp_memory.addParams({
       "backend.mem_size" : "512MiB",
       "backend.access_time" : "100 ns",
       "backend.configFile" : "/Users/afrodri/Public/ramulator-afrodri/configs/DDR3-config.cfg",
-      "backend" : "memHierarchy.ramulator"
+      "backend" : "memHierarchy.ramulator",
+      #"backend.system_ini" : "system.ini",
+      #"backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+      #"backend" : "memHierarchy.dramsim"
 })
 
 # Enable statistics
