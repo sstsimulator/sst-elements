@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -110,6 +114,7 @@ static const ElementInfoParam ariel_params[] = {
     {"tracePrefix", "Prefix when tracing is enable", ""},
     {"clock", "Clock rate at which events are generated and processed", "1GHz"},
     {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
+    {"pagemappolicy", "Select the page mapping policy for Ariel [LINEAR|RANDOMIZED]", "LINEAR"},
     {NULL, NULL, NULL}
 };
 

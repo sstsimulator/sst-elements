@@ -1,3 +1,18 @@
+// Copyright 2009-2016 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2016, Sandia Corporation
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 // Copyright 2015 IBM Corporation
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,16 +57,16 @@ public:
 
 	void finish() {
 		printf("Bank %u\n", m_bankNum);
-		printf("\tTotal ACT-Cmd received: %lu\n", m_ACTCmdsReceived);
-		printf("\tTotal READ-Cmd received: %lu\n", m_READCmdsReceived);
-		printf("\tTotal WRITE-Cmd received: %lu\n", m_WRITECmdsReceived);
-		printf("\tTotal PRE-Cmd received: %lu\n", m_PRECmdsReceived);
-		printf("\t\tTotal CMDs received: %lu\n", (m_ACTCmdsReceived + m_READCmdsReceived + m_WRITECmdsReceived + m_PRECmdsReceived));
-		// printf("\tTotal ACT-Cmd sent: %lu\n", m_ACTCmdsSent);
-		// printf("\tTotal READ-Cmd sent: %lu\n", m_READCmdsSent);
-		// printf("\tTotal WRITE-Cmd sent: %lu\n", m_WRITECmdsSent);
-		// printf("\tTotal PRE-Cmd sent: %lu\n", m_PRECmdsSent);
-		printf("\t\tTotal CMDs sent: %lu\n", (m_ACTCmdsSent + m_READCmdsSent + m_WRITECmdsSent + m_PRECmdsSent));
+		printf("\tTotal ACT-Cmd received: %" PRIu32 "\n", m_ACTCmdsReceived);
+		printf("\tTotal READ-Cmd received: %" PRIu32 "\n", m_READCmdsReceived);
+		printf("\tTotal WRITE-Cmd received: %" PRIu32 "\n", m_WRITECmdsReceived);
+		printf("\tTotal PRE-Cmd received: %" PRIu32 "\n", m_PRECmdsReceived);
+		printf("\t\tTotal CMDs received: %" PRIu32 "\n", (m_ACTCmdsReceived + m_READCmdsReceived + m_WRITECmdsReceived + m_PRECmdsReceived));
+		// printf("\tTotal ACT-Cmd sent: %" PRIu32 "\n", m_ACTCmdsSent);
+		// printf("\tTotal READ-Cmd sent: %" PRIu32 "\n", m_READCmdsSent);
+		// printf("\tTotal WRITE-Cmd sent: %" PRIu32 "\n", m_WRITECmdsSent);
+		// printf("\tTotal PRE-Cmd sent: %" PRIu32 "\n", m_PRECmdsSent);
+		printf("\t\tTotal CMDs sent: %" PRIu32 "\n", (m_ACTCmdsSent + m_READCmdsSent + m_WRITECmdsSent + m_PRECmdsSent));
 		printf("Component Finished.\n");
 	}
 

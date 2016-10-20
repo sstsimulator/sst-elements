@@ -1,3 +1,18 @@
+// Copyright 2009-2016 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2016, Sandia Corporation
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 /*
  * c_Dimm.cpp
  *
@@ -54,7 +69,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	// read params here
 	bool l_found = false;
 
-	k_numRanksPerChannel = x_params.find_integer("numRanksPerChannel", 100,
+	k_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numRanksPerChannel value is missing... exiting"
@@ -62,7 +77,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_numBankGroupsPerRank = x_params.find_integer("numBankGroupsPerRank", 100,
+	k_numBankGroupsPerRank = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numBankGroupsPerRank value is missing... exiting"
@@ -70,7 +85,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_numBanksPerBankGroup = x_params.find_integer("numBanksPerBankGroup", 100,
+	k_numBanksPerBankGroup = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numBanksPerBankGroup value is missing... exiting"

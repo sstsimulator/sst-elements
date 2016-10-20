@@ -1,9 +1,13 @@
-// Copyright 2009-2015 Sandia Corporation. Under the terms
+// Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2015, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -36,7 +40,7 @@ c_TxnDriver::c_TxnDriver(ComponentId_t x_id, Params& x_params) :
 	bool l_found = false;
 
 	//internal queue sizes
-	k_txnDrvBufferQEntries = x_params.find_integer("numTxnDrvBufferQEntries",
+	k_txnDrvBufferQEntries = (uint32_t)x_params.find<uint32_t>("numTxnDrvBufferQEntries",
 			100, l_found);
 	if (!l_found) {
 		std::cout
@@ -46,7 +50,7 @@ c_TxnDriver::c_TxnDriver(ComponentId_t x_id, Params& x_params) :
 	}
 
 	//transaction gen queue entries
-	k_txnGenResQEntries = x_params.find_integer("numTxnGenResQEntries", 100,
+	k_txnGenResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenResQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout

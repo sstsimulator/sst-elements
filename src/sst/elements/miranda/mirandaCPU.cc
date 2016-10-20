@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -76,6 +80,29 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	out->verbose(CALL_INFO, 1, 0, "CPU clock configured for %s\n", cpuClock.c_str());
 
 	std::string reqGenModName = params.find<std::string>("generator", "");
+	
+	cacheLine = params.find<uint64_t>("cache_line_size", 64);
+	const uint64_t pageSize  = params.find<uint64_t>("pagesize", 4096);
+	const uint64_t pageCount = params.find<uint64_t>("pagecount", 4194304);
+	
+	if( pageSize % cacheLine > 0 ) {
+		out->fatal(CALL_INFO, -8, "Error: Miranda memory configuration. Page size=%" PRIu64 ", is not a multiple of cache line size: %" PRIu64 "\n",
+			pageSize, cacheLine);
+	}
+	
+	MirandaPageMappingPolicy policy = MirandaPageMappingPolicy::LINEAR;
+	
+	std::string policyStr = params.find<std::string>("pagemap", "linear");
+	
+	if(policyStr == "RANDOMIZED" || policyStr == "randomized") {
+		policy = MirandaPageMappingPolicy::RANDOMIZED;
+	} else if (policyStr == "LINEAR" || policyStr == "linear" ) {
+		policy = MirandaPageMappingPolicy::LINEAR;
+	} else {
+		out->fatal(CALL_INFO, -8, "Error: unknown page mapping type: \'%s\'\n", policyStr.c_str());
+	}
+	
+	memMgr = new MirandaMemoryManager(out, pageSize, pageCount, policy);
 
 	if ( ! reqGenModName.empty() ) {
 
@@ -103,7 +130,6 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 		out->fatal(CALL_INFO, -1, "Failed to find a generator or src port\n");
 	}
 
-	cacheLine = params.find<uint64_t>("cache_line_size", 64);
 
 	statReadReqs   		  = registerStatistic<uint64_t>( "read_reqs" );
 	statWriteReqs  		  = registerStatistic<uint64_t>( "write_reqs" );
@@ -263,9 +289,9 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 		// Ensure that lengths are calculated correctly.
 		assert(lowerLength + upperLength == reqLength);
 
-		const uint64_t lowerAddress = reqAddress;
-		const uint64_t upperAddress = (lowerAddress - lowerAddress % cacheLine) +
-						cacheLine;
+		const uint64_t lowerAddress = memMgr->mapAddress(reqAddress);
+		const uint64_t upperAddress = memMgr->mapAddress((lowerAddress - lowerAddress % cacheLine) +
+						cacheLine);
 
 		out->verbose(CALL_INFO, 4, 0, "Issuing a split cache line operation:\n");
 		out->verbose(CALL_INFO, 4, 0, "L -> Address: %" PRIu64 ", Length=%" PRIu64 "\n",
@@ -310,7 +336,7 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 		// This is not a split laod, i.e. issue in a single transaction
 		SimpleMem::Request* request = new SimpleMem::Request(
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
-			reqAddress, reqLength);
+			memMgr->mapAddress(reqAddress), reqLength);
 
 		CPURequest* newCPUReq = new CPURequest(req->getRequestID());
 		newCPUReq->incPartCount();

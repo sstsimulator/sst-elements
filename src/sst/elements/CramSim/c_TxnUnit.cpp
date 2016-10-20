@@ -1,3 +1,18 @@
+// Copyright 2009-2016 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2016, Sandia Corporation
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 /*
  * c_TxnUnit.cpp
  *
@@ -41,7 +56,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	bool l_found = false;
 
 	// load internal params
-	k_txnReqQEntries = x_params.find_integer("numTxnUnitReqQEntries", 100,
+	k_txnReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitReqQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numTxnUnitReqQEntries param value is missing... exiting"
@@ -49,7 +64,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_txnResQEntries = x_params.find_integer("numTxnUnitResQEntries", 100,
+	k_txnResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitResQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numTxnUnitResQEntries param value is missing... exiting"
@@ -57,7 +72,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_numBytesPerTransaction = x_params.find_integer("numBytesPerTransaction",
+	k_numBytesPerTransaction = (uint32_t)x_params.find<uint32_t>("numBytesPerTransaction",
 			32, l_found);
 	if (!l_found) {
 		std::cout << "numBytesPerTransaction value is missing... exiting"
@@ -65,7 +80,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_numChannelsPerDimm = x_params.find_integer("numChannelsPerDimm", 1,
+	k_numChannelsPerDimm = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,
 			l_found);
 	if (!l_found) {
 		std::cout << "numChannelsPerDimm value is missing... exiting"
@@ -73,7 +88,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_numRanksPerChannel = x_params.find_integer("numRanksPerChannel", 2,
+	k_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 2,
 			l_found);
 	if (!l_found) {
 		std::cout << "numRanksPerChannel value is missing... exiting"
@@ -81,7 +96,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_numBankGroupsPerRank = x_params.find_integer("numBankGroupsPerRank", 100,
+	k_numBankGroupsPerRank = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numBankGroupsPerRank value is missing... exiting"
@@ -89,7 +104,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_numBanksPerBankGroup = x_params.find_integer("numBanksPerBankGroup", 100,
+	k_numBanksPerBankGroup = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numBanksPerBankGroup value is missing... exiting"
@@ -97,26 +112,26 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_numColsPerBank = x_params.find_integer("numColsPerBank", 100, l_found);
+	k_numColsPerBank = (uint32_t)x_params.find<uint32_t>("numColsPerBank", 100, l_found);
 	if (!l_found) {
 		std::cout << "numColsPerBank value is missing... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_numRowsPerBank = x_params.find_integer("numRowsPerBank", 100, l_found);
+	k_numRowsPerBank = (uint32_t)x_params.find<uint32_t>("numRowsPerBank", 100, l_found);
 	if (!l_found) {
 		std::cout << "numRowsPerBank value is missing... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_relCommandWidth = x_params.find_integer("relCommandWidth", 1, l_found);
+	k_relCommandWidth = (uint32_t)x_params.find<uint32_t>("relCommandWidth", 1, l_found);
 	if (!l_found) {
 		std::cout << "relCommandWidth value is missing ... exiting"
 				<< std::endl;
 		exit(-1);
 	}
 
-	k_REFI = x_params.find_integer("nREFI", 1, l_found);
+	k_REFI = (uint32_t)x_params.find<uint32_t>("nREFI", 1, l_found);
 	if (!l_found) {
 		std::cout << "nREFI value is missing ... exiting" << std::endl;
 		exit(-1);
@@ -125,7 +140,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	// calculate total number of banks
 
-	int l_numRanksPerChannel = x_params.find_integer("numRanksPerChannel", 100,
+	int l_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numRanksPerChannel value is missing... exiting"
@@ -133,7 +148,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	int l_numBankGroupsPerRank = x_params.find_integer("numBankGroupsPerRank",
+	int l_numBankGroupsPerRank = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank",
 			100, l_found);
 	if (!l_found) {
 		std::cout << "numBankGroupsPerRank value is missing... exiting"
@@ -141,7 +156,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	int l_numBanksPerBankGroup = x_params.find_integer("numBanksPerBankGroup",
+	int l_numBanksPerBankGroup = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup",
 			100, l_found);
 	if (!l_found) {
 		std::cout << "numBanksPerBankGroup value is missing... exiting"
@@ -153,7 +168,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 			* l_numBanksPerBankGroup;
 
 	//load neighboring component's params
-	k_txnGenResQEntries = x_params.find_integer("numTxnGenResQEntries", 100,
+	k_txnGenResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenResQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numTxnGenResQEntries param value is missing... exiting"
@@ -162,7 +177,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	}
 	m_txnGenResQTokens = k_txnGenResQEntries;
 
-	k_cmdUnitReqQEntries = x_params.find_integer("numCmdReqQEntries", 100,
+	k_cmdUnitReqQEntries = (uint32_t)x_params.find<uint32_t>("numCmdReqQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numCmdReqQEntries param value is missing... exiting"
@@ -171,21 +186,21 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	}
 	m_cmdUnitReqQTokens = k_cmdUnitReqQEntries;
 
-	k_useReadA = x_params.find_integer("boolUseReadA", 1, l_found);
+	k_useReadA = (uint32_t)x_params.find<uint32_t>("boolUseReadA", 1, l_found);
 	if (!l_found) {
 		std::cout << "boolUseWriteA param value is missing... exiting"
 				<< std::endl;
 		exit(-1);
 	}
 
-	k_useWriteA = x_params.find_integer("boolUseWriteA", 1, l_found);
+	k_useWriteA = (uint32_t)x_params.find<uint32_t>("boolUseWriteA", 1, l_found);
 	if (!l_found) {
 		std::cout << "boolUseWriteA param value is missing... exiting"
 				<< std::endl;
 		exit(-1);
 	}
 
-	k_bankPolicy = x_params.find_integer("bankPolicy", 0, l_found);
+	k_bankPolicy = (uint32_t)x_params.find<uint32_t>("bankPolicy", 0, l_found);
 	if (!l_found) {
 		std::cout << "bankPolicy value is missing... exiting" << std::endl;
 		exit(-1);
@@ -197,7 +212,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_useRefresh = x_params.find_integer("boolUseRefresh", 1, l_found);
+	k_useRefresh = (uint32_t)x_params.find<uint32_t>("boolUseRefresh", 1, l_found);
 	if (!l_found) {
 		std::cout << "boolUseRefresh param value is missing... exiting"
 				<< std::endl;

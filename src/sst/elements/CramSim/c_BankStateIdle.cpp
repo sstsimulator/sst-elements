@@ -1,3 +1,18 @@
+// Copyright 2009-2016 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2016, Sandia Corporation
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 // Copyright 2016 IBM Corporation
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,6 +69,8 @@ void c_BankStateIdle::handleCommand(c_BankInfo* x_bank,
 	case e_BankCommandType::REF:
 		x_bank->setLastCommandCycle(e_BankCommandType::REF, l_time);
 		break;
+	default:
+	    break;
 	}
 	if (nullptr == m_receivedCommandPtr) {
 		m_timer = 1;
@@ -105,6 +122,8 @@ void c_BankStateIdle::clockTic(c_BankInfo* x_bank) {
 					l_p = new c_BankStateRefresh(m_bankParams);
 //					x_bank->setLastCommandCycle(e_BankCommandType::REF, l_time);
 					break;
+				default:
+				break;
 				}
 
 				assert(nullptr != m_receivedCommandPtr);

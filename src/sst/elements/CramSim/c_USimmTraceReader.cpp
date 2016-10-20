@@ -2,8 +2,12 @@
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2015, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -44,7 +48,7 @@ c_USimmTraceReader::c_USimmTraceReader(ComponentId_t x_id, Params& x_params) :
 	m_resWriteCount = 0;
 
 	//internal queues' sizes
-	k_txnGenReqQEntries = x_params.find_integer("numTxnGenReqQEntries", 100,
+	k_txnGenReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenReqQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout
@@ -53,7 +57,7 @@ c_USimmTraceReader::c_USimmTraceReader(ComponentId_t x_id, Params& x_params) :
 		exit(-1);
 	}
 
-	k_txnGenResQEntries = x_params.find_integer("numTxnGenResQEntries", 100,
+	k_txnGenResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenResQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout
@@ -63,7 +67,7 @@ c_USimmTraceReader::c_USimmTraceReader(ComponentId_t x_id, Params& x_params) :
 	}
 
 	//transaction unit queue entries
-	k_txnUnitReqQEntries = x_params.find_integer("numTxnUnitReqQEntries", 100,
+	k_txnUnitReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitReqQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "TxnGen:: numTxnUnitReqQEntries value is missing... exiting"
@@ -73,7 +77,7 @@ c_USimmTraceReader::c_USimmTraceReader(ComponentId_t x_id, Params& x_params) :
 	m_txnUnitReqQTokens = k_txnUnitReqQEntries;
 
   // trace file param
-  m_traceFileName = x_params.find_string("traceFile", "nil", l_found);
+  m_traceFileName = x_params.find<std::string>("traceFile", "nil", l_found);
   if (!l_found) {
     std::cout << "TxnGen:: traceFile name is missing... exiting" << std::endl;
     exit(-1);
