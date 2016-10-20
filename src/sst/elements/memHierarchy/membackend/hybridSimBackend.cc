@@ -36,17 +36,16 @@ HybridSimMemory::HybridSimMemory(Component *comp, Params &params) : MemBackend(c
 
 
 
-bool HybridSimMemory::issueRequest(DRAMReq *req){
-    uint64_t addr = req->baseAddr_ + req->amtInProcess_;
-
+bool HybridSimMemory::issueRequest( ReqId reqId, Addr addr, bool isWrite, unsigned )
+{
     bool ok = memSystem->WillAcceptTransaction();
     if(!ok) return false;
-    ok = memSystem->addTransaction(req->isWrite_, addr);
+    ok = memSystem->addTransaction(isWrite, addr);
     if(!ok) return false;  // This *SHOULD* always be ok
 #ifdef __SST_DEBUG_OUTPUT__
     ctrl->dbg.debug(_L10_, "Issued transaction for address %" PRIx64 "\n", (Addr)addr);
 #endif
-    dramReqs[addr].push_back(req);
+    dramReqs[addr].push_back(reqId);
     return true;
 }
 
@@ -65,12 +64,12 @@ void HybridSimMemory::finish(){
 
 
 void HybridSimMemory::hybridSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
-    std::deque<DRAMReq *> &reqs = dramReqs[addr];
+    std::deque<ReqId> &reqs = dramReqs[addr];
 #ifdef __SST_DEBUG_OUTPUT__
     ctrl->dbg.debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", addr, reqs.size());
 #endif
     assert(reqs.size());
-    DRAMReq *req = reqs.front();
+    ReqId req = reqs.front();
     reqs.pop_front();
     if(reqs.size() == 0)
         dramReqs.erase(addr);
