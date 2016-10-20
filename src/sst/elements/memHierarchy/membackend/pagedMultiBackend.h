@@ -57,7 +57,8 @@ struct pageInfo {
     uint64_t accPat[LAST_CASE];
     set<string> rqstrs; // requestors who have touched this page
 
-    void record( Addr addr, bool isWrite, const bool collectStats, const uint64_t pAddr, const bool limitTouch) {
+    void record( Addr addr, bool isWrite, const std::string& requestor, 
+                    const bool collectStats, const uint64_t pAddr, const bool limitTouch) {
         
         // record the pageAddr
         assert((pageAddr == 0) || (pAddr == pageAddr));
@@ -90,13 +91,10 @@ struct pageInfo {
         
         // note: this is slow, and only works if directory controller
         // is modified to send along the requestor info
-#if 0	
         if (1 == collectStats) {
-            const string &requestor = req->reqEvent_->getRqstr();
             rqstrs.insert(requestor);
             //printf("%s\n", requestor.c_str());
         }
-#endif
 
         if (0 == lastRef) {
             // first touch, do nothing

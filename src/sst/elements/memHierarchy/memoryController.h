@@ -53,7 +53,8 @@ public:
     void finish();
 
     Output dbg;
-    virtual void handleMemResponse(ReqId);
+    virtual void handleMemResponse( ReqId );
+    virtual const std::string& getRequestor( ReqId );
 
 private:
 

@@ -366,7 +366,7 @@ bool pagedMultiMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned 
     SimTime_t extraDelay = 0;
     auto &page = pageMap[pageAddr];
 
-    page.record(addr, isWrite, collectStats, pageAddr, replaceStrat == LFU8);
+    page.record(addr, isWrite, ctrl->getRequestor(id), collectStats, pageAddr, replaceStrat == LFU8);
 
     if (maxFastPages > 0) {
         if (modelSwaps && pageIsSwapping(page)) {

@@ -466,6 +466,16 @@ void MemController::handleMemResponse( ReqId reqId ) {
 	}
 }
 
+const std::string& MemController::getRequestor( ReqId reqId )
+{
+	uint32_t id = MemReq::getBaseId(reqId);
+	if ( pendingRequests_.find( id ) == pendingRequests_.end() ) {
+        dbg.fatal(CALL_INFO, -1, "memory request not found\n");
+	}
+
+    return pendingRequests_[id]->getMemEvent()->getRqstr();
+}
+
 
 MemController::~MemController() {
     while ( requestQueue_.size()) {
