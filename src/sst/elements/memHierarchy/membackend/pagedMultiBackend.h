@@ -209,11 +209,6 @@ private:
         dramQ.push(r);
     }
 
-	ReqId genReqId() { return ++curReqId; } 
-	ReqId curReqId;
-
-	std::map<ReqId,Req*>	pendingReqs;
-
     string accStatsPrefix;
     int dumpNum;
 

@@ -25,7 +25,7 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMemory(comp, params), curReqId(0), pagesInFast(0), lastMin(0) {
+pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMemory(comp, params), pagesInFast(0), lastMin(0) {
     dbg.init("@R:pagedMultiMemory::@p():@l " + comp->getName() + ": ", 0, 0, 
              (Output::output_location_t)params.find<int>("debug", 0));
     dbg.output(CALL_INFO, "making pagedMultiMemory controller\n");
@@ -425,9 +425,7 @@ bool pagedMultiMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned 
             }
             return true;
         } else {
-            ReqId reqId = genReqId();
-            pendingReqs[ reqId ] = req;
-            return DRAMSimMemory::issueRequest(reqId, addr, isWrite, numBytes);
+            return DRAMSimMemory::issueRequest((ReqId)req, addr, isWrite, numBytes);
         }
     }
 }
@@ -438,11 +436,8 @@ void pagedMultiMemory::clock(){
     // put things in the DRAM 
     while (!dramQ.empty()) {
         Req *req = dramQ.front();
-        ReqId reqId = genReqId();
-        pendingReqs[ reqId ] = req;
-        bool inserted = DRAMSimMemory::issueRequest(reqId,req->addr,req->isWrite,req->numBytes);
+        bool inserted = DRAMSimMemory::issueRequest((ReqId)req,req->addr,req->isWrite,req->numBytes);
         if (inserted) {
-            delete req;
             dramQ.pop();
         } else {
             break;
@@ -579,13 +574,11 @@ void pagedMultiMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t cloc
     ctrl->dbg.debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
     assert(reqs.size());
     int rs = reqs.size();
-    ReqId reqId = reqs.front();
+    Req* req = (Req*) reqs.front();
     reqs.pop_front();
 
     if(0 == reqs.size())
         dramReqs.erase(addr);
-
-    Req* req = pendingReqs[reqId];
 
     auto si = swapToSlow_Writes.find(req);
     auto si_r = swapToFast_Reads.find(req);
@@ -614,6 +607,7 @@ void pagedMultiMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t cloc
         assert(req);
         assert(ctrl);
         ctrl->handleMemResponse(req->id);
+        delete req;
     }
 }
 
