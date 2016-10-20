@@ -76,6 +76,12 @@ private:
     /** Handle GetS request. Request block if needed */
     CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
     
+    /** Handle FlushLine request. */
+    CacheAction handleFlushLineRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
+    
+    /** Handle FlushLineInv request */
+    CacheAction handleFlushLineInvRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
+
     /** Handle data response - GetSResp or GetXResp */
     void handleDataResponse(MemEvent* responseEvent, CacheLine * cacheLine, MemEvent * reqEvent);
 
@@ -84,6 +90,11 @@ private:
     /** Send writeback request to lower level caches */
     void sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr);
 
+    /** Forward a flush line request, with or without data */
+    void forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine);
+    
+    /** Send response to a flush request */
+    void sendFlushResponse(MemEvent * requestEvent, bool success, uint64_t baseTime, bool replay);
 };
 
 
