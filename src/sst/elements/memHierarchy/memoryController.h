@@ -40,9 +40,6 @@ namespace MemHierarchy {
 class MemBackend;
 using namespace std;
 
-#if 0
-class MemController : public SST::Component, public MemResponseHandler {
-#endif
 class MemController : public SST::Component {
 public:
 	typedef uint64_t ReqId;
