@@ -7,6 +7,10 @@
 # Copyright (c) 2009-2016, Sandia Corporation
 # All rights reserved.
 #
+# Portions are copyright of other developers:
+# See the file CONTRIBUTORS.TXT in the top level directory
+# the distribution for more information.
+#
 # This file is part of the SST software package. For license
 # information, see the LICENSE file in the top level directory of the
 # distribution.
@@ -51,7 +55,8 @@ num_routers = groups * (cores_per_group + memory_controllers_per_group + l3cache
 
 cpu_params = {
 	"max_reqs_cycle": 2,
-	"maxmemreqpending" : 16,
+    "maxloadmemreqpending" : 8,
+    "maxstorememreqpending" : 8,
 	"max_reorder_lookups": 168,
     "verbose" : 1,
     "printStats" : 1,
