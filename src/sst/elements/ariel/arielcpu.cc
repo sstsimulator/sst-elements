@@ -57,60 +57,17 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	uint32_t perform_checks = (uint32_t) params.find<uint32_t>("checkaddresses", 0);
 	output->verbose(CALL_INFO, 1, 0, "Configuring for check addresses = %s\n", (perform_checks > 0) ? "yes" : "no");
 
-	memory_levels = (uint32_t) params.find<uint32_t>("memorylevels", 1);
-	output->verbose(CALL_INFO, 1, 0, "Configuring for %" PRIu32 " memory levels.\n", memory_levels);
-
-	page_sizes = (uint64_t*) malloc( sizeof(uint64_t) * memory_levels );
-	page_counts = (uint64_t*) malloc( sizeof(uint64_t) * memory_levels );
-
-	char* level_buffer = (char*) malloc(sizeof(char) * 256);
-	for(uint32_t i = 0; i < memory_levels; ++i) {
-		sprintf(level_buffer, "pagesize%" PRIu32, i);
-		page_sizes[i] = (uint64_t) params.find<uint64_t>(level_buffer, 4096);
-
-		sprintf(level_buffer, "pagecount%" PRIu32, i);
-		page_counts[i] = (uint64_t) params.find<uint64_t>(level_buffer, 131072);
-	}
-
-	uint32_t default_level = (uint32_t) params.find<uint32_t>("defaultlevel", 0);
-	uint32_t translateCacheSize = (uint32_t) params.find<uint32_t>("translatecacheentries", 4096);
-
-	std::string mappingPolicy = params.find<std::string>("pagemappolicy", "linear");
-	ArielPageMappingPolicy mapPolicy = ArielPageMappingPolicy::LINEAR;
+        std::string memorymanager = params.find<std::string>("memorymanager", "ariel.MemoryManagerSimple");
+        if (!memorymanager.empty()) {
+            output->verbose(CALL_INFO, 1, 0, "Loading memory manger: %s\n", memorymanager.c_str());
+            Params mmParams = params.find_prefix_params("memmgr.");
+            memmgr = dynamic_cast<ArielMemoryManager*>( loadSubComponent(memorymanager, this, mmParams));
+            if (NULL == memmgr) output->fatal(CALL_INFO, -1, "Failed to load memory manager: %s\n", memorymanager.c_str());
+        } else {
+            output->fatal(CALL_INFO, -1, "Failed to load memory manager: no manager specified. Please set the 'memorymanager' param in your configuration file\n");
+        }
 	
-	if(mappingPolicy == "LINEAR" || mappingPolicy == "linear") {
-		mapPolicy = ArielPageMappingPolicy::LINEAR;
-	} else if(  mappingPolicy == "RANDOMIZED" || mappingPolicy == "randomized" ) {
-		mapPolicy = ArielPageMappingPolicy::RANDOMIZED;
-	} else {
-		output->fatal(CALL_INFO, -8, "Ariel memory manager - unknown page mapping policy \"%s\"\n", mappingPolicy.c_str());
-	}
-
-	output->verbose(CALL_INFO, 1, 0, "Creating memory manager, default allocation from %" PRIu32 " memory pool.\n", default_level);
-	memmgr = new ArielMemoryManager(this, memory_levels,
-		page_sizes, page_counts, output, default_level, translateCacheSize, mapPolicy);
-
-	// Prepopulate any page tables as we find them
-	for(uint32_t i = 0; i < memory_levels; ++i) {
-		sprintf(level_buffer, "page_populate_%" PRIu32, i);
-		std::string popFilePath = params.find<std::string>(level_buffer, "");
-
-		if(popFilePath != "") {
-			output->verbose(CALL_INFO, 1, 0, "Populating page tables for level %" PRIu32 " from %s...\n",
-				i, popFilePath.c_str());
-			memmgr->populateTables(popFilePath.c_str(), i);
-		}
-	}
-	free(level_buffer);
-
-	bool enableTLBTranslate = params.find<bool>("vtop_translate", true);
-	if(enableTLBTranslate) {
-		memmgr->enableTranslation();
-	} else {
-		memmgr->disableTranslation();
-	}
-
-	output->verbose(CALL_INFO, 1, 0, "Memory manager construction is completed.\n");
+        output->verbose(CALL_INFO, 1, 0, "Memory manager construction is completed.\n");
 
 	uint32_t maxIssuesPerCycle   = (uint32_t) params.find<uint32_t>("maxissuepercycle", 1);
 	uint32_t maxCoreQueueLen     = (uint32_t) params.find<uint32_t>("maxcorequeue", 64);
@@ -231,7 +188,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     sprintf(execute_args[arg-1], "%" PRIu32, keep_malloc_stack_trace);
     execute_args[arg++] = const_cast<char*>("-d");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, default_level);
+    sprintf(execute_args[arg-1], "%" PRIu32, memmgr->getDefaultPool());
     execute_args[arg++] = const_cast<char*>("--");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (executable.size() + 1));
     strcpy(execute_args[arg-1], executable.c_str());
@@ -538,10 +495,7 @@ ArielCPU::~ArielCPU() {
 		delete cpu_cores[i];
 	}
 
-	delete memmgr;
 	delete tunnel;
-	free(page_sizes);
-	free(page_counts);
 }
 
 void ArielCPU::emergencyShutdown() {
