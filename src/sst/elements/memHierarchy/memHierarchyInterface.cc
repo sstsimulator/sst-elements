@@ -66,6 +66,7 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
         case SimpleMem::Request::ReadResp:      cmd = GetXResp;     break;
         case SimpleMem::Request::WriteResp:     cmd = GetSResp;     break;
         case SimpleMem::Request::FlushLine:     cmd = FlushLine;    break;
+        case SimpleMem::Request::FlushLineInv:  cmd = FlushLineInv; break;
         case SimpleMem::Request::FlushLineResp: cmd = FlushLineResp; break;
     }
     

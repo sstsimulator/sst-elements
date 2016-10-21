@@ -276,6 +276,8 @@ void MemController::handleEvent(SST::Event* event) {
             addRequest(ev);
             break;
         case FlushLine:
+        case FlushLineInv:
+            ev->setCmd(FlushLine);  // Same diff at this point
             addRequest(ev); // Flush -> will return when all outstanding requests are done
             if (ev->getPayloadSize() != 0) { // Writeback
                 if (!listeners_.empty()) {
