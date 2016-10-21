@@ -21,8 +21,9 @@
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 
-using namespace SST::Interfaces;
+using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace SST::VaultSim;
 
 #define DBG( fmt, args... )m_dbg.write( "%s():%d: " fmt, __FUNCTION__, __LINE__, ##args)
 //typedef  VaultCompleteFn; 
@@ -171,7 +172,6 @@ void logicLayer::init(unsigned int phase) {
             }
         }
     }
-    
 }
 
 

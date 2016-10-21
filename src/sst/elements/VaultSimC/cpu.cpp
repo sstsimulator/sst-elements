@@ -24,6 +24,7 @@
 #include <sst/core/rng/mersenne.h>
 
 using namespace SST;
+using namespace SST::VaultSim;
 using namespace SST::RNG;
 
 cpu::cpu( ComponentId_t id, Params& params ) :
