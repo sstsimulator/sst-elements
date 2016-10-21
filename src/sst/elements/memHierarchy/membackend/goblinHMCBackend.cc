@@ -151,7 +151,7 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 	output->verbose(CALL_INFO, 1, 0, "Completed HMC Simulation Backend Initialization.\n");
 }
 
-bool GOBLINHMCSimBackend::issueRequest(DRAMReq* req) {
+bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes) {
 	// We have run out of tags
 	if(tag_queue.empty()) {
 		output->verbose(CALL_INFO, 4, 0, "Will not issue request this call, tag queue has no free entries.\n");
@@ -164,7 +164,6 @@ bool GOBLINHMCSimBackend::issueRequest(DRAMReq* req) {
 	output->verbose(CALL_INFO, 4, 0, "Queue front is: %" PRIu16 "\n", tag_queue.front());
 
 	const uint8_t		req_dev  = 0;
-	const uint64_t		addr     = req->baseAddr_ + req->amtInProcess_;
 	const uint16_t          req_tag  = (uint16_t) tag_queue.front();
 	tag_queue.pop();
 
@@ -172,7 +171,7 @@ bool GOBLINHMCSimBackend::issueRequest(DRAMReq* req) {
 
 	// Check if the request is for a read or write then transform this into something
 	// for HMC simulator to use, right now lets just try 64-byte lengths
-	if(req->isWrite_) {
+	if(isWrite) {
 		req_type = WR64;
 	} else {
 		req_type = RD64;
@@ -186,7 +185,7 @@ bool GOBLINHMCSimBackend::issueRequest(DRAMReq* req) {
 	uint64_t                req_tail   = (uint64_t) 0;
 
 	output->verbose(CALL_INFO, 8, 0, "Issuing request: %" PRIu64 " %s tag: %" PRIu16 " dev: %" PRIu8 " link: %" PRIu8 "\n",
-		addr, (req->isWrite_ ? "WRITE" : "READ"), req_tag, req_dev, req_dev);
+		addr, (isWrite ? "WRITE" : "READ"), req_tag, req_dev, req_dev);
 
 	int rc = hmcsim_build_memrequest(&the_hmc,
 			req_dev,
@@ -220,7 +219,7 @@ bool GOBLINHMCSimBackend::issueRequest(DRAMReq* req) {
 		output->verbose(CALL_INFO, 4, 0, "Issue of request for address %" PRIu64 " successfully accepted by HMC.\n", addr);
 
 		// Create the request entry which we keep in a table
-		HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(req, owner->getCurrentSimTimeNano());
+		HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr, owner->getCurrentSimTimeNano());
 
 		// Add the tag and request into our table of pending
 		tag_req_map.insert( std::pair<uint16_t, HMCSimBackEndReq*>(req_tag, reqEntry) );
@@ -307,14 +306,12 @@ void GOBLINHMCSimBackend::processResponses() {
 					} else {
 						HMCSimBackEndReq* matchedReq = locate_tag->second;
 
-						DRAMReq* orig_req = matchedReq->getRequest();
-
 						output->verbose(CALL_INFO, 4, 0, "Matched tag %" PRIu16 " to request for address: %" PRIu64 ", processing time: %" PRIu64 "ns\n",
-							resp_tag, (orig_req->baseAddr_ + orig_req->amtInProcess_),
+							resp_tag, matchedReq->getAddr(),
 							owner->getCurrentSimTimeNano() - matchedReq->getStartTime());
 
 						// Pass back to the controller to be handled, HMC sim is finished with it
-						ctrl->handleMemResponse(orig_req);
+						ctrl->handleMemResponse(matchedReq->getRequest());
 
 						// Clear element from our map, it has been processed so no longer needed
 						tag_req_map.erase(resp_tag);
@@ -365,6 +362,6 @@ void GOBLINHMCSimBackend::printPendingRequests() {
 
 	for(pending_itr = tag_req_map.begin(); pending_itr != tag_req_map.end(); pending_itr++) {
 		output->verbose(CALL_INFO, 8, 0, "Tag: %8" PRIu16 " for address %" PRIu64 "\n",
-			pending_itr->first, pending_itr->second->getRequest()->addr_);
+			pending_itr->first, pending_itr->second->getAddr());
 	}
 }
