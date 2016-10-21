@@ -66,9 +66,7 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
         case SimpleMem::Request::ReadResp:      cmd = GetXResp;     break;
         case SimpleMem::Request::WriteResp:     cmd = GetSResp;     break;
         case SimpleMem::Request::FlushLine:     cmd = FlushLine;    break;
-        case SimpleMem::Request::FlushCache:    cmd = FlushAll;     break;
         case SimpleMem::Request::FlushLineResp: cmd = FlushLineResp; break;
-        case SimpleMem::Request::FlushCacheResp: cmd = FlushAllResp; break;
     }
     
     MemEvent *me = new MemEvent(owner_, req->addr, req->addr, cmd);
