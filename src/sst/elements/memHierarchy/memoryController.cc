@@ -302,12 +302,10 @@ void MemController::addRequest(MemEvent* ev) {
                 interleaveStep_, interleaveSize_);
     }
 
-#if 0
 	if( cacheLineSize_ != ev->getSize() ) {
-        dbg.fatal(CALL_INFO, -1, "CacheLineSize %d does not match request size %d\n",
-													cacheLineSize_, ev->getSize() );
+        dbg.fatal(CALL_INFO, -1, "CacheLineSize %d does not match request size %d, requestor=%s\n",
+													cacheLineSize_, ev->getSize(), ev->getRqstr().c_str());
 	}		
-#endif
 
 	uint32_t id = genReqId();
 	MemReq* req = new MemReq( ev, id );
