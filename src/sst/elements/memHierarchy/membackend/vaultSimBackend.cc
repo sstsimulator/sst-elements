@@ -16,9 +16,11 @@
 
 #include <sst_config.h>
 #include "membackend/vaultSimBackend.h"
+#include "sst/elements/VaultSimC/memReqEvent.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace SST::VaultSim;
 
 VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
     std::string access_time = params.find<std::string>("access_time", "100 ns");
@@ -28,37 +30,36 @@ VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : MemBackend(com
 
 
 
-bool VaultSimMemory::issueRequest(DRAMReq *req){
+bool VaultSimMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes ){
 #ifdef __SST_DEBUG_OUTPUT__
-    uint64_t addr = req->baseAddr_ + req->amtInProcess_;
     ctrl->dbg.debug(_L10_, "Issued transaction to Cube Chain for address %" PRIx64 "\n", (Addr)addr);
 #endif
     // TODO:  FIX THIS:  ugly hardcoded limit on outstanding requests
     if (outToCubes.size() > 255) {
-        req->status_ = DRAMReq::NEW;
         return false;
     }
-    MemEvent::id_type reqID = req->reqEvent_->getID();
-    if (outToCubes.find(reqID) != outToCubes.end())
+
+    if (outToCubes.find(reqId) != outToCubes.end())
         ctrl->dbg.fatal(CALL_INFO, -1, "Assertion failed");
-    outToCubes[reqID] = req; // associate the memEvent w/ the DRAMReq
-    MemEvent *outgoingEvent = new MemEvent(*req->reqEvent_); // we make a copy, because the dramreq keeps to 'original'
-    cube_link->send(outgoingEvent); // send the event off
+
+    outToCubes.insert( reqId );
+    cube_link->send( new VaultSim::MemReqEvent(reqId,addr,isWrite,numBytes) ); 
     return true;
 }
 
 
 void VaultSimMemory::handleCubeEvent(SST::Event *event){
-  MemEvent *ev = dynamic_cast<MemEvent*>(event);
-  if (ev) {
-    memEventToDRAMMap_t::iterator ri = outToCubes.find(ev->getResponseToID());
-    if (ri != outToCubes.end()) {
-      ctrl->handleMemResponse(ri->second);
-      outToCubes.erase(ri);
-      delete event;
-    }
-    else ctrl->dbg.fatal(CALL_INFO, -1, "Could not match incoming request from cubes\n");
-  }
-  else ctrl->dbg.fatal(CALL_INFO, -1, "Recived wrong event type from cubes\n");
+    VaultSim::MemRespEvent *ev = dynamic_cast<VaultSim::MemRespEvent*>(event);
 
+    if (ev) {
+        if ( outToCubes.find( ev->reqId ) != outToCubes.end() ) {
+            outToCubes.erase( ev->reqId );
+            ctrl->handleMemResponse( ev->reqId );
+      		delete event;
+        } else {  
+            ctrl->dbg.fatal(CALL_INFO, -1, "Could not match incoming request from cubes\n");
+		}
+    } else {
+        ctrl->dbg.fatal(CALL_INFO, -1, "Recived wrong event type from cubes\n");
+    }
 }

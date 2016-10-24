@@ -46,19 +46,19 @@ DelayBuffer::DelayBuffer(Component *comp, Params &params) : MemBackend(comp, par
 }
 
 void DelayBuffer::handleNextRequest(SST::Event *event) {
-    DRAMReq * req = requestBuffer.front();
-    if (!backend->issueRequest(req)) {
+    Req& req = requestBuffer.front();
+    if (!backend->issueRequest(req.id,req.addr,req.isWrite,req.numBytes)) {
         delay_self_link->send(1, NULL);
     } else requestBuffer.pop();
 }
 
-bool DelayBuffer::issueRequest(DRAMReq *req) {
+bool DelayBuffer::issueRequest( ReqId req, Addr addr, bool isWrite, unsigned numBytes) {
     if (delay_self_link != NULL) {
-        requestBuffer.push(req);
+        requestBuffer.push(Req(req,addr,isWrite,numBytes));
         delay_self_link->send(1, NULL);   // Just need a wakeup
         return true;
     } else {
-        return backend->issueRequest(req);
+        return backend->issueRequest(req,addr,isWrite,numBytes);
     }
 }
 
@@ -77,4 +77,3 @@ void DelayBuffer::setup() {
 void DelayBuffer::finish() {
     backend->finish();
 }
-

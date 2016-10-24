@@ -27,17 +27,28 @@ class DelayBuffer : public MemBackend {
 public:
     DelayBuffer();
     DelayBuffer(Component *comp, Params &params);
-    bool issueRequest(DRAMReq *req);
+	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void handleNextRequest(SST::Event * ev);
     void setup();
     void finish();
     void clock();
 
 private:
+	struct Req {
+		Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) : 
+			id(id), addr(addr), isWrite(isWrite), numBytes(numBytes) 
+		{ }
+		ReqId id;
+		Addr addr;
+		bool isWrite;
+		unsigned numBytes;
+	};
+
     MemBackend* backend;
     unsigned int fwdDelay;
     Link * delay_self_link;
-    std::queue<DRAMReq*> requestBuffer;
+
+    std::queue<Req> requestBuffer;
 };
 
 }

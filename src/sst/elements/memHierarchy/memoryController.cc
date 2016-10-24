@@ -44,9 +44,14 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
+#ifdef __SST_DEBUG_OUTPUT__
+#define Debug(level, fmt, ... ) dbg.debug( level, fmt, ##__VA_ARGS__  )
+#else
+#define Debug(level, fmt, ... )
+#endif
 
 /*************************** Memory Controller ********************/
-MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
+MemController::MemController(ComponentId_t id, Params &params) : Component(id), reqId_(0) {
     int debugLevel = params.find<int>("debug_level", 0);
     
     // Output for debug
@@ -97,7 +102,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     string ilStep           = params.find<std::string>("interleave_step", "0B");
 
     string memoryFile       = params.find<std::string>("memory_file", NO_STRING_DEFINED);
-    cacheLineSize_          = params.find<uint64_t>("request_width", 64);
+    cacheLineSize_          = params.find<uint32_t>("request_width", 64);
     string backendName      = params.find<std::string>("backend", "memHierarchy.simpleMem");
     string protocolStr      = params.find<std::string>("coherence_protocol", "MESI");
     string link_lat         = params.find<std::string>("direct_link_latency", "100 ns");
@@ -148,7 +153,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     // Convert into MBs
     memSize_ = backendRamSize.getRoundedValue();
     if (memSize_ % cacheLineSize_ != 0) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): backend.mem_size - must be a multiple of request_size. Note: use 'MB' for base-10 and 'MiB' for base-2. Please change one of these parameters. You specified backend.mem_size='%s' and request_size='%" PRIu64 "' B\n", getName().c_str(), backendRamSize.toString().c_str(), cacheLineSize_);
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): backend.mem_size - must be a multiple of request_size. Note: use 'MB' for base-10 and 'MiB' for base-2. Please change one of these parameters. You specified backend.mem_size='%s' and request_size='%" PRIu32 "' B\n", getName().c_str(), backendRamSize.toString().c_str(), cacheLineSize_);
     }
 
     // Check interleave parameters
@@ -166,7 +171,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     }
 
     requestWidth_           = cacheLineSize_;
-    requestSize_            = cacheLineSize_;
+	requestSize_            = cacheLineSize_;
     numPages_               = (interleaveStep_ > 0 && interleaveSize_ > 0) ? memSize_ / interleaveSize_ : 0;
     protocol_               = (protocolStr == "mesi" || protocolStr == "MESI") ? 1 : 0;
    
@@ -239,15 +244,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 }
 
 
-
 void MemController::handleEvent(SST::Event* event) {
     MemEvent *ev = static_cast<MemEvent*>(event);
-#ifdef __SST_DEBUG_OUTPUT__
-    dbg.debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
-    dbg.debug(_L10_,"Memory Controller: %s - Event Received. Cmd = %s\n", getName().c_str(), CommandString[ev->getCmd()]);
-    dbg.debug(_L10_,"Event info: Addr: 0x%" PRIx64 ", dst = %s, src = %s, rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
+
+    Debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
+    Debug(_L10_,"Memory Controller: %s - Event Received. Cmd = %s\n", getName().c_str(), CommandString[ev->getCmd()]);
+    Debug(_L10_,"Event info: Addr: 0x%" PRIx64 ", dst = %s, src = %s, rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
         ev->getBaseAddr(), ev->getDst().c_str(), ev->getSrc().c_str(), ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
-#endif
+
     Command cmd = ev->getCmd();
     ev->setDeliveryTime(getCurrentSimTimeNano());
 
@@ -281,10 +285,7 @@ void MemController::handleEvent(SST::Event* event) {
         default:
             dbg.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[cmd]);
     }
-
-    delete event;
 }
-
 
 
 void MemController::addRequest(MemEvent* ev) {
@@ -300,17 +301,20 @@ void MemController::addRequest(MemEvent* ev) {
                 rangeStart_, (rangeStart_ + memSize_),
                 interleaveStep_, interleaveSize_);
     }
-    Command cmd   = ev->getCmd();
-    DRAMReq* req = new DRAMReq(ev, requestWidth_, cacheLineSize_);
-    
-    requestPool_.insert(req);
-    requestQueue_.push_back(req);
-    
-#ifdef __SST_DEBUG_OUTPUT__
-    dbg.debug(_L10_,"Creating DRAM Request. BsAddr = %" PRIx64 ", Size: %" PRIu64 ", %s\n", req->baseAddr_, req->size_, CommandString[cmd]);
-#endif
-}
 
+	if( cacheLineSize_ != ev->getSize() ) {
+        dbg.fatal(CALL_INFO, -1, "CacheLineSize %d does not match request size %d, requestor=%s\n",
+													cacheLineSize_, ev->getSize(), ev->getRqstr().c_str());
+	}		
+
+	uint32_t id = genReqId();
+	MemReq* req = new MemReq( ev, id );
+	requestQueue_.push_back( req );
+	pendingRequests_[id] = req;
+    
+    Debug(_L10_,"Creating MemReq. BaseAddr = %" PRIx64 ", Size: %" PRIu64 ", %s\n", 
+						req->baseAddr(), req->getSize(), CommandString[ev->getCmd()]);
+}
 
 
 bool MemController::clock(Cycle_t cycle) {
@@ -322,30 +326,28 @@ bool MemController::clock(Cycle_t cycle) {
         if (reqsThisCycle == maxReqsPerCycle_) {
             break;
         }
-        DRAMReq *req = requestQueue_.front();
-        req->status_ = DRAMReq::PROCESSING;
 
-        bool issued = backend_->issueRequest(req);
+		MemReq* req = requestQueue_.front();
+
+        bool issued = backend_->issueRequest( req->id(), req->addr(), req->isWrite(), requestSize_ );
         if (issued) {
     	    cyclesWithIssue->addData(1);
         } else {
     	    cyclesAttemptIssueButRejected->addData(1);
-	    break;
-	}
+	        break;
+        }
 
-	reqsThisCycle++;
-        req->amtInProcess_ += requestSize_;
+        reqsThisCycle++;
+        req->increment( requestSize_ );		
 
-        if (req->amtInProcess_ >= req->size_) {
-#ifdef __SST_DEBUG_OUTPUT__
-            dbg.debug(_L10_, "Completed issue of request\n");
-#endif
-            performRequest(req);
+        if ( req->processed() >= cacheLineSize_ ) {
+            Debug(_L10_, "Completed issue of request\n");
+            req->setResponse( performRequest( req->getMemEvent() ) );
             requestQueue_.pop_front();
         }
     }
 
-    stat_outstandingReqs->addData(requestPool_.size());
+    stat_outstandingReqs->addData(pendingRequests_.size());
     
     backend_->clock();
 
@@ -353,73 +355,75 @@ bool MemController::clock(Cycle_t cycle) {
 }
 
 
-
-void MemController::performRequest(DRAMReq* req) {
-    bool noncacheable  = req->reqEvent_->queryFlag(MemEvent::F_NONCACHEABLE);
-    Addr localBaseAddr = convertAddressToLocalAddress(req->baseAddr_);
+MemEvent* MemController::performRequest(MemEvent* event) {
+	bool noncacheable  = event->queryFlag(MemEvent::F_NONCACHEABLE);
+    Addr localBaseAddr = convertAddressToLocalAddress(event->getBaseAddr());
     Addr localAddr;
 
-    if (req->cmd_ == PutM) {  /* Write request to memory */
-#ifdef __SST_DEBUG_OUTPUT__
-        dbg.debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, req->reqEvent_->getSize(), noncacheable ? "true" : "false");
-#endif	
-        
-        if (doNotBack_) return;
-        
-        for ( size_t i = 0 ; i < req->reqEvent_->getSize() ; i++) 
-            memBuffer_[localBaseAddr + i] = req->reqEvent_->getPayload()[i];
-        
+	MemEvent* respEvent = NULL;
+
+    if (event->getCmd() == PutM) {  /* Write request to memory */
+        Debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, event->getSize(), noncacheable ? "true" : "false");
+
+        if ( ! doNotBack_) {
+        	for ( size_t i = 0 ; i < event->getSize() ; i++)
+            	memBuffer_[localBaseAddr + i] = event->getPayload()[i];
+		}
+
     } else {
-        Addr localAbsAddr = convertAddressToLocalAddress(req->reqEvent_->getAddr());
-        
-        if (noncacheable && req->cmd_ == GetX) {
-#ifdef __SST_DEBUG_OUTPUT__
-            dbg.debug(_L10_,"WRITE. Noncacheable request, Addr = %" PRIx64 ", Request size = %i\n", localAbsAddr, req->reqEvent_->getSize());
-#endif
+        Addr localAbsAddr = convertAddressToLocalAddress(event->getAddr());
+
+        if (noncacheable && event->getCmd()== GetX) {
+            Debug(_L10_,"WRITE. Noncacheable request, Addr = %" PRIx64 ", Request size = %i\n", localAbsAddr, event->getSize());
 
             if (!doNotBack_) {
-                for ( size_t i = 0 ; i < req->reqEvent_->getSize() ; i++)
-                    memBuffer_[localAbsAddr + i] = req->reqEvent_->getPayload()[i];
+                for ( size_t i = 0 ; i < event->getSize() ; i++)
+                    memBuffer_[localAbsAddr + i] = event->getPayload()[i];
             }
         }
-        
+
         if (noncacheable)   localAddr = localAbsAddr;
         else                localAddr = localBaseAddr;
-        
-    	req->respEvent_ = req->reqEvent_->makeResponse();
 
-	if (req->respEvent_->getSize() != req->reqEvent_->getSize()) {
-		dbg.fatal(CALL_INFO, -1, "Request and response sizes do not match: %" PRIu32 " != %" PRIu32 "\n",
-			(uint32_t) req->respEvent_->getSize(), (uint32_t) req->reqEvent_->getSize());
+        respEvent = event->makeResponse();
+
+    if (respEvent->getSize() != event->getSize()) {
+        dbg.fatal(CALL_INFO, -1, "Request and response sizes do not match: %" PRIu32 " != %" PRIu32 "\n",
+            (uint32_t) respEvent->getSize(), (uint32_t) event->getSize());
         }
 
-#ifdef __SST_DEBUG_OUTPUT__
-        dbg.debug(_L10_, "READ.  Addr = %" PRIx64 ", Request size = %i\n", localAddr, req->reqEvent_->getSize());
-#endif    
-        
-        for ( size_t i = 0 ; i < req->respEvent_->getSize() ; i++) 
-            req->respEvent_->getPayload()[i] = doNotBack_ ? 0 : memBuffer_[localAddr + i];
+        Debug(_L10_, "READ.  Addr = %" PRIx64 ", Request size = %i\n", localAddr, event->getSize());
 
-        if (noncacheable) req->respEvent_->setFlag(MemEvent::F_NONCACHEABLE);
-        
-        if (req->reqEvent_->getCmd() == GetX) req->respEvent_->setGrantedState(M);
+        for ( size_t i = 0 ; i < respEvent->getSize() ; i++)
+            respEvent->getPayload()[i] = doNotBack_ ? 0 : memBuffer_[localAddr + i];
+
+        if (noncacheable) respEvent->setFlag(MemEvent::F_NONCACHEABLE);
+
+        if (event->getCmd() == GetX) respEvent->setGrantedState(M);
         else {
-            if (protocol_) req->respEvent_->setGrantedState(E); // Directory controller supersedes this; only used if DirCtrl does not exist
-            else req->respEvent_->setGrantedState(S);
+            if (protocol_) respEvent->setGrantedState(E); // Directory controller supersedes this; only used if DirCtrl does not exist
+            else respEvent->setGrantedState(S);
         }
-	}
+    }
+	return respEvent;
 }
 
 
-void MemController::sendResponse(DRAMReq* req) {
-    if (req->reqEvent_->getCmd() != PutM) {
-        if (networkLink_) networkLink_->send(req->respEvent_);
-        else cacheLink_->send(req->respEvent_);
-    }
-    req->status_ = DRAMReq::DONE;
+void MemController::sendResponse( MemReq* req) {
+
+	MemEvent* event = req->getMemEvent();
+	MemEvent* resp = req->getResponse();
+    if ( resp ) {
+        if ( networkLink_ ) {
+			networkLink_->send( resp );
+		} else {
+			cacheLink_->send( resp );
+		}
+	}
     
-    uint64_t latency = getCurrentSimTimeNano() - req->reqEvent_->getDeliveryTime(); 
-    switch (req->reqEvent_->getCmd()) {
+    uint64_t latency = getCurrentSimTimeNano() - event->getDeliveryTime(); 
+
+    switch (event->getCmd()) {
         case GetS:
             stat_GetSLatency->addData(latency);
             break;
@@ -435,41 +439,53 @@ void MemController::sendResponse(DRAMReq* req) {
         default:
             break;
     }
-    
 
-    requestPool_.erase(req);
+	// MemReq deletes it's MemEvent
     delete req;
 }
 
 
+void MemController::handleMemResponse( ReqId reqId ) {
 
-void MemController::printMemory(DRAMReq* req, Addr localAddr) {
-#ifdef __SST_DEBUG_OUTPUT__
-    dbg.debug(_L10_,"Resp. Data: ");
-    for (unsigned int i = 0; i < cacheLineSize_; i++) dbg.debug(_L10_,"%d",(int)memBuffer_[localAddr + i]);
-#endif
+	uint32_t id = MemReq::getBaseId(reqId);
+
+	if ( pendingRequests_.find( id ) == pendingRequests_.end() ) {
+        dbg.fatal(CALL_INFO, -1, "memory request not found\n");
+	}
+
+	MemReq* req = pendingRequests_[id];
+	
+    Debug(_L10_, "Finishing processing MemReq. Addr = %" PRIx64 "\n", req->addr( ) );
+
+	req->decrement( );
+
+    if ( req->isDone() ) {
+    	Debug(_L10_, "Finishing processing MemEvent. Addr = %" PRIx64 "\n", req->baseAddr( ) );
+		sendResponse( req );
+		pendingRequests_.erase(id);
+	}
 }
 
+const std::string& MemController::getRequestor( ReqId reqId )
+{
+	uint32_t id = MemReq::getBaseId(reqId);
+	if ( pendingRequests_.find( id ) == pendingRequests_.end() ) {
+        dbg.fatal(CALL_INFO, -1, "memory request not found\n");
+	}
 
-
-void MemController::handleMemResponse(DRAMReq* req) {
-    req->amtProcessed_ += requestSize_;
-    if (req->amtProcessed_ >= req->size_) req->status_ = DRAMReq::RETURNED;
-
-#ifdef __SST_DEBUG_OUTPUT__
-    dbg.debug(_L10_, "Finishing processing.  BaseAddr = %" PRIx64 " %s\n", req->baseAddr_, req->status_ == DRAMReq::RETURNED ? "RETURNED" : "");
-#endif
-    if (DRAMReq::RETURNED == req->status_) sendResponse(req);
+    return pendingRequests_[id]->getMemEvent()->getRqstr();
 }
-
 
 
 MemController::~MemController() {
-    while ( requestPool_.size()) {
-        DRAMReq *req = *(requestPool_.begin());
-        requestPool_.erase(req);
-        delete req;
+    while ( requestQueue_.size()) {
+        delete requestQueue_.front();
+		requestQueue_.pop_front();
     }
+	PendingRequests::iterator iter = pendingRequests_.begin();	
+	for ( ; iter != pendingRequests_.end(); ++ iter ) {
+		delete iter->second; 
+	}
 }
 
 
@@ -484,9 +500,7 @@ void MemController::init(unsigned int phase) {
             }
             /* Push data to memory */
             if (GetX == me->getCmd()) {
-#ifdef __SST_DEBUG_OUTPUT__
-                dbg.debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 "\n", getName().c_str(), me->getAddr());
-#endif
+                Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 "\n", getName().c_str(), me->getAddr());
                 if (isRequestAddressValid(me) && !doNotBack_) {
                     Addr localAddr = convertAddressToLocalAddress(me->getAddr());
                     for ( size_t i = 0 ; i < me->getSize() ; i++) {
@@ -506,9 +520,7 @@ void MemController::init(unsigned int phase) {
             /* Push data to memory */
             if (ev->getDst() == getName()) {
                 if (GetX == ev->getCmd()) {
-#ifdef __SST_DEBUG_OUTPUT__
-                    dbg.debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 "\n", getName().c_str(), ev->getAddr());
-#endif
+                    Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 "\n", getName().c_str(), ev->getAddr());
                     if (isRequestAddressValid(ev) && !doNotBack_) {
                         Addr localAddr = convertAddressToLocalAddress(ev->getAddr());
                         for ( size_t i = 0 ; i < ev->getSize() ; i++) {
@@ -526,12 +538,10 @@ void MemController::init(unsigned int phase) {
 }
 
 
-
 void MemController::setup(void) {
     backend_->setup();
     if (networkLink_) networkLink_->setup();
 }
-
 
 
 void MemController::finish(void) {
@@ -547,6 +557,13 @@ void MemController::finish(void) {
     if (networkLink_) networkLink_->finish();
 }
 
+
+void MemController::printMemory(Addr localAddr) {
+#ifdef __SST_DEBUG_OUTPUT__
+    dbg.debug(_L10_,"Resp. Data: ");
+    for (unsigned int i = 0; i < cacheLineSize_; i++) dbg.debug(_L10_,"%d",(int)memBuffer_[localAddr + i]);
+#endif
+}
 
 
 int MemController::setBackingFile(string memoryFile) {

@@ -175,7 +175,7 @@ libmemHierarchy_la_SOURCES += \
 	membackend/flashSimBackend.h
 libmemHierarchy_la_LDFLAGS += $(FDSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(FDSIM_LIB)
-AM_CPPFLAGS += $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS)
+AM_CPPFLAGS += $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS) -DHAVE_LIBFDSIM
 endif
 
 AM_CPPFLAGS += $(HMC_FLAG)

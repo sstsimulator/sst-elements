@@ -41,8 +41,6 @@
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
 
-#include "DRAMReq.h"
-
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
 #endif
@@ -60,7 +58,7 @@
 #include "membackend/hybridSimBackend.h"
 #endif
 
-#ifdef HAVE_FDSIM
+#ifdef HAVE_LIBFDSIM
 #include "membackend/flashSimBackend.h"
 #endif
 
@@ -691,7 +689,7 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 };
 #endif
 
-#ifdef HAVE_FDSIM
+#ifdef HAVE_LIBFDSIM
 
 static SubComponent* create_Mem_FDSim(Component* comp, Params& params){
     return new FlashDIMMSimMemory(comp, params);
@@ -932,7 +930,7 @@ static const ElementInfoSubComponent subcomponents[] = {
         "SST::MemHierarchy::MemBackend"
     },
 #endif
-#ifdef HAVE_FDSIM
+#ifdef HAVE_LIBFDSIM
     {
         "flashDIMMSim",
         "FlashDIMM Simulator driven memory timings",

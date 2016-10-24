@@ -26,15 +26,15 @@ class SimpleMemory : public MemBackend {
 public:
     SimpleMemory();
     SimpleMemory(Component *comp, Params &params);
-    bool issueRequest(DRAMReq *req);
+    bool issueRequest(ReqId, Addr, bool, unsigned );
     
 public:
     class MemCtrlEvent : public SST::Event {
     public:
-        MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
+        MemCtrlEvent( ReqId id_) : SST::Event(), reqId(id_)
         { }
 
-        DRAMReq *req;
+		ReqId reqId;
      
     private:   
         MemCtrlEvent() {} // For Serialization only
@@ -42,7 +42,7 @@ public:
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser) {
             Event::serialize_order(ser);
-            ser & req;  // Cannot serialize pointers unless they are a serializable object
+            ser & reqId;  // Cannot serialize pointers unless they are a serializable object
        }
         
         ImplementSerializable(SST::MemHierarchy::SimpleMemory::MemCtrlEvent);

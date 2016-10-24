@@ -27,16 +27,25 @@ class RequestReorderSimple : public MemBackend {
 public:
     RequestReorderSimple();
     RequestReorderSimple(Component *comp, Params &params);
-    bool issueRequest(DRAMReq *req);
+	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void setup();
     void finish();
     void clock();
 
 private:
+    struct Req {
+        Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) :
+            id(id), addr(addr), isWrite(isWrite), numBytes(numBytes)
+        { }
+        ReqId id;
+        Addr addr;
+        bool isWrite;
+        unsigned numBytes;
+    };
     MemBackend* backend;
     int reqsPerCycle;       // Number of requests to issue per cycle (max) -> memCtrl limits how many we accept
     int searchWindowSize;   // Number of requests to search when looking for requests to issue
-    std::list<DRAMReq*> requestQueue;   // List of requests waiting to be issued
+    std::list<Req> requestQueue;   // List of requests waiting to be issued
 };
 
 }

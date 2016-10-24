@@ -28,12 +28,21 @@ class RequestReorderRow : public MemBackend {
 public:
     RequestReorderRow();
     RequestReorderRow(Component *comp, Params &params);
-    bool issueRequest(DRAMReq *req);
+	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void setup();
     void finish();
     void clock();
 
 private:
+	struct Req {
+        Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) :
+            id(id), addr(addr), isWrite(isWrite), numBytes(numBytes)
+        { }
+		ReqId id;
+		Addr addr;
+		bool isWrite;
+		unsigned numBytes;
+	};	
     MemBackend* backend;
     unsigned int maxReqsPerRow; // Maximum number of requests to issue per row before moving to a new row
     unsigned int banks;         // Number of banks we're issuing to
@@ -42,7 +51,7 @@ private:
     unsigned int rowOffset;     // Offset for determining request row
     unsigned int lineOffset;    // Offset for determining line (needed for finding bank)
     int reqsPerCycle;           // Number of requests to issue per cycle (max) -> memCtrl limits how many we accept
-    std::vector< std::list<DRAMReq* >* > requestQueue;
+    std::vector< std::list<Req>* > requestQueue;
     std::vector<unsigned int> reorderCount;
     std::vector<unsigned int> lastRow;
 

@@ -25,7 +25,9 @@
 #include "vaultGlobals.h"
 
 using namespace std;
-using namespace SST;
+
+namespace SST {
+namespace VaultSim {
 
 //#define STUPID_DEBUG 
 
@@ -64,5 +66,8 @@ private:
     Statistic<uint64_t>*  bwUsedToCpu[2]; 
     Statistic<uint64_t>*  bwUsedToMem[2]; 
 };
+
+}
+}
 
 #endif

@@ -24,17 +24,17 @@
 #include <map>
 
 #include "sst/elements/memHierarchy/memoryController.h"
-#include "sst/elements/memHierarchy/DRAMReq.h"
 
 #define NO_STRING_DEFINED "N/A"
 
 namespace SST {
 namespace MemHierarchy {
 
-class MemController;
-
 class MemBackend : public SubComponent {
 public:
+
+	typedef MemController::ReqId ReqId;
+
     MemBackend();
 
     MemBackend(Component *comp, Params &params) :
@@ -53,7 +53,7 @@ public:
 	delete output;
     }
 
-    virtual bool issueRequest(DRAMReq *req) = 0;
+    virtual bool issueRequest( MemController::ReqId, Addr, bool isWrite, unsigned numBytes ) = 0;
     virtual void setup() {}
     virtual void finish() {}
     virtual void clock() {}

@@ -37,14 +37,14 @@ namespace MemHierarchy {
 class HybridSimMemory : public MemBackend {
 public:
     HybridSimMemory(Component *comp, Params &params);
-    bool issueRequest(DRAMReq *req);
+    bool issueRequest( ReqId, Addr, bool, unsigned );
     void clock();
     void finish();
 private:
     void hybridSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
     HybridSim::HybridSystem *memSystem;
-    std::map<uint64_t, std::deque<DRAMReq*> > dramReqs;
+    std::map<uint64_t, std::deque<ReqId> > dramReqs;
 };
 
 }

@@ -33,12 +33,11 @@ RequestReorderSimple::RequestReorderSimple(Component *comp, Params &params) : Me
     backend = dynamic_cast<MemBackend*>(loadSubComponent(backendName, backendParams));
 }
 
-bool RequestReorderSimple::issueRequest(DRAMReq *req) {
+bool RequestReorderSimple::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned numBytes ) {
 #ifdef __SST_DEBUG_OUTPUT__
-    uint64_t addr = req->baseAddr_ + req->amtInProcess_;
     ctrl->dbg.debug(_L10_, "Reorderer received request for 0x%" PRIx64 "\n", (Addr)addr);
 #endif
-    requestQueue.push_back(req);
+    requestQueue.push_back(Req(id,addr,isWrite,numBytes));
     return true;
 }
 
@@ -53,24 +52,22 @@ void RequestReorderSimple::clock() {
         int reqsIssuedThisCycle = 0;
         int reqsSearchedThisCycle = 0;
         
-        std::list<DRAMReq*>::iterator it = requestQueue.begin();
+        std::list<Req>::iterator it = requestQueue.begin();
         
         while (it != requestQueue.end()) {
             
-            bool issued = backend->issueRequest(*it);
+            bool issued = backend->issueRequest( (*it).id, (*it).addr, (*it).isWrite, (*it).numBytes );
             
             if (issued) {
 #ifdef __SST_DEBUG_OUTPUT__
-    uint64_t addr = (*it)->baseAddr_ + (*it)->amtInProcess_;
-    ctrl->dbg.debug(_L10_, "Reorderer issued request for 0x%" PRIx64 "\n", (Addr)addr);
+    ctrl->dbg.debug(_L10_, "Reorderer issued request for 0x%" PRIx64 "\n", (Addr)(*it).addr);
 #endif
                 reqsIssuedThisCycle++;
                 it = requestQueue.erase(it);
                 if (reqsIssuedThisCycle == reqsPerCycle) break;
             } else {
 #ifdef __SST_DEBUG_OUTPUT__
-    uint64_t addr = (*it)->baseAddr_ + (*it)->amtInProcess_;
-    ctrl->dbg.debug(_L10_, "Reorderer could not issue 0x%" PRIx64 "\n", (Addr)addr);
+    ctrl->dbg.debug(_L10_, "Reorderer could not issue 0x%" PRIx64 "\n", (Addr)(*it).addr);
 #endif
                 it++;
             }
