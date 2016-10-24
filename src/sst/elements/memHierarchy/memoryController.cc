@@ -347,7 +347,7 @@ bool MemController::clock(Cycle_t cycle) {
         }
     }
 
-    stat_outstandingReqs->addData(requestQueue_.size());
+    stat_outstandingReqs->addData(pendingRequests_.size());
     
     backend_->clock();
 
