@@ -76,6 +76,17 @@ private:
 	uint32_t hmc_tag_count;
 	uint32_t hmc_trace_level;
 
+        float link_phy;
+        float link_local_route;
+        float link_remote_route;
+        float xbar_rqst_slot;
+        float xbar_rsp_slot;
+        float xbar_route_extern;
+        float vault_rqst_slot;
+        float vault_rsp_slot;
+        float vault_ctrl;
+        float row_access;
+
 	uint32_t nextLink;
 
         std::vector<std::string> cmclibs;
