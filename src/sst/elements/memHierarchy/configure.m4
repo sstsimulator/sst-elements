@@ -5,6 +5,9 @@ dnl
 AC_DEFUN([SST_memHierarchy_CONFIG], [
 	mh_happy="yes"
 
+  # Use global Ramulator check
+  SST_CHECK_RAMULATOR([],[],[AC_MSG_ERROR([Ramulator requested but could not be found])])
+
   # Use global DRAMSim check
   SST_CHECK_DRAMSIM([],[],[AC_MSG_ERROR([DRAMSim requested but could not be found])])
 

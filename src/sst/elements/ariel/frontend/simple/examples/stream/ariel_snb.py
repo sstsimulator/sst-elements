@@ -13,6 +13,7 @@ cores_per_group = 2
 active_cores_per_group = 2
 memory_controllers_per_group = 1
 groups = 4
+os.environ["OMP_NUM_THREADS"]=str(groups * cores_per_group)
 
 l3cache_blocks_per_group = 5
 l3cache_block_size = "1MB"
@@ -95,6 +96,7 @@ l3_params = {
 
 mem_params = {
 	"coherence_protocol" : coherence_protocol,
+	"do_not_back" : 1,
 	"backend.access_time" : "30ns",
 	"rangeStart" : 0,
 	"backend.mem_size" : str(memory_capacity / (groups * memory_controllers_per_group)) + "MiB",
