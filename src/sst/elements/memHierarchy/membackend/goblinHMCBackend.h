@@ -78,6 +78,8 @@ private:
 
 	uint32_t nextLink;
 
+        std::vector<std::string> cmclibs;
+
 	std::string hmc_trace_file;
 	FILE* hmc_trace_file_handle;
 

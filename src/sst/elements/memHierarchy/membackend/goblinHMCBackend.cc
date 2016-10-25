@@ -65,6 +65,8 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 
 	hmc_trace_file   = params.find<std::string>("trace_file", "hmc-trace.out");
 
+        params.find_array<std::string>("cmc-lib", cmclibs);
+
 	output->verbose(CALL_INFO, 1, 0, "Initializing HMC...\n");
 	int rc = hmcsim_init(&the_hmc,
 		hmc_dev_count,
@@ -81,6 +83,24 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 	} else {
 		output->verbose(CALL_INFO, 1, 0, "Initialized successfully.\n");
 	}
+
+        // load the cmc libs
+        for( unsigned i=0; i< cmclibs.size(); i++ ){
+          if( cmclibs[i].length() > 0 ){
+            // attempt to add the cmc lib
+            output->verbose(CALL_INFO, 1, 0,
+                            "Initializing HMC-Sim CMC Library...\n" );
+            std::vector<char> libchars(cmclibs[i].c_str(),
+                                       cmclibs[i].c_str() +
+                                        cmclibs[i].size() +
+                                        1u);
+            //if( hmcsim_load_cmc(&the_hmc, cmclibs[i].c_str() ) != 0 ){
+            if( hmcsim_load_cmc(&the_hmc, &libchars[0] ) != 0 ){
+	      output->fatal(CALL_INFO, -1,
+                            "Unable to HMC-Sim CMC Library and the return code is %d\n", rc);
+            }
+          }
+        }
 
 	for(uint32_t i = 0; i < hmc_link_count; ++i) {
 		output->verbose(CALL_INFO, 1, 0, "Configuring link: %" PRIu32 "...\n", i);
