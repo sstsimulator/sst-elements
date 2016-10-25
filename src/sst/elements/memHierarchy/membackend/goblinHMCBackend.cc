@@ -119,11 +119,7 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
             // attempt to add the cmc lib
             output->verbose(CALL_INFO, 1, 0,
                             "Initializing HMC-Sim CMC Library...\n" );
-            std::vector<char> libchars(cmclibs[i].c_str(),
-                                       cmclibs[i].c_str() +
-                                        cmclibs[i].size() +
-                                        1u);
-            //if( hmcsim_load_cmc(&the_hmc, cmclibs[i].c_str() ) != 0 ){
+            std::vector<char> libchars( cmclibs[i].begin(), cmclibs[i].end() );
             rc = hmcsim_load_cmc(&the_hmc, &libchars[0] );
             if( rc != 0 ){
 	      output->fatal(CALL_INFO, -1,
