@@ -59,6 +59,7 @@ private:
 	int commFreq;
 	bool do_write;
 	uint32_t maxAddr;
+	uint32_t maxOutstanding;
 	uint32_t nextAddr;
 	uint64_t num_reads_issued, num_reads_returned;
 	uint64_t addrOffset;

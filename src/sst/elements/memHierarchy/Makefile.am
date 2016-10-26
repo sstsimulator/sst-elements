@@ -121,6 +121,15 @@ nobase_sst_HEADERS = \
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
 libmemHierarchy_la_LIBADD = 
 
+if HAVE_RAMULATOR
+libmemHierarchy_la_LDFLAGS += $(RAMULATOR_LDFLAGS)
+libmemHierarchy_la_LIBADD += $(RAMULATOR_LIB)
+libmemHierarchy_la_SOURCES += membackend/ramulatorBackend.cc \
+	membackend/ramulatorBackend.h
+nobase_sst_HEADERS += membackend/ramulatorBackend.h
+AM_CPPFLAGS += $(RAMULATOR_CPPFLAGS) -DHAVE_LIBRAMULATOR
+endif
+
 if HAVE_DRAMSIM
 libmemHierarchy_la_LDFLAGS += $(DRAMSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(DRAMSIM_LIB)
