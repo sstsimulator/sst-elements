@@ -275,18 +275,37 @@ void MemController::handleEvent(SST::Event* event) {
 
             addRequest(ev);
             break;
+        case FlushLine:
+        case FlushLineInv:
+            ev->setCmd(FlushLine);  // Same diff at this point
+            addRequest(ev); // Flush -> will return when all outstanding requests are done
+            if (ev->getPayloadSize() != 0) { // Writeback
+                if (!listeners_.empty()) {
+                    CacheListenerNotification notify(ev->getAddr(), ev->getVirtualAddress(),
+                            ev->getInstructionPointer(), ev->getSize(), READ, HIT);
+                    for (unsigned long int i = 0; i < listeners_.size(); ++i) {
+                        listeners_[i]->notifyAccess(notify);
+                    }
+                }
+                ev->setCmd(PutM);
+                addRequest(ev);
+            }
+            break;
         case PutS:
         case PutE:
             break;
         default:
             dbg.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[cmd]);
     }
+    delete event;   // addRequest copies event so delete this one
 
-    delete event;
 }
 
 
-
+/*
+ *  Enqueue new request
+ *  Will be handled on the clock tick
+ */
 void MemController::addRequest(MemEvent* ev) {
     if ( !isRequestAddressValid(ev) ) {
         dbg.fatal(CALL_INFO, 1, "MemoryController \"%s\" received request from \"%s\" with invalid address.\n"
@@ -303,14 +322,14 @@ void MemController::addRequest(MemEvent* ev) {
     Command cmd   = ev->getCmd();
     DRAMReq* req = new DRAMReq(ev, requestWidth_, cacheLineSize_);
     
-    requestPool_.insert(req);
-    requestQueue_.push_back(req);
+    if (cmd != FlushLine) requestPool_.insert(req); // All outstanding requests
+    else flushPool_.insert(req);                    // Set of pending flushes
+    requestQueue_.push_back(req);                   // Requests waiting to be issued
     
-#ifdef __SST_DEBUG_OUTPUT__
+#ifdef __SST_DEBUG_OURequest_
     dbg.debug(_L10_,"Creating DRAM Request. BsAddr = %" PRIx64 ", Size: %" PRIu64 ", %s\n", req->baseAddr_, req->size_, CommandString[cmd]);
 #endif
 }
-
 
 
 bool MemController::clock(Cycle_t cycle) {
@@ -325,51 +344,82 @@ bool MemController::clock(Cycle_t cycle) {
         DRAMReq *req = requestQueue_.front();
         req->status_ = DRAMReq::PROCESSING;
 
-        bool issued = backend_->issueRequest(req);
-        if (issued) {
-    	    cyclesWithIssue->addData(1);
+        if (req->cmd_ == FlushLine) {
+           handleFlush(req);
+           requestQueue_.pop_front();
         } else {
-    	    cyclesAttemptIssueButRejected->addData(1);
-	    break;
-	}
 
-	reqsThisCycle++;
-        req->amtInProcess_ += requestSize_;
+            bool issued = backend_->issueRequest(req);
+            if (issued) {
+    	        cyclesWithIssue->addData(1);
+            } else {
+    	        cyclesAttemptIssueButRejected->addData(1);
+	        break;
+            }
+	    reqsThisCycle++;
+            req->amtInProcess_ += requestSize_;
 
-        if (req->amtInProcess_ >= req->size_) {
+            if (req->amtInProcess_ >= req->size_) {
 #ifdef __SST_DEBUG_OUTPUT__
-            dbg.debug(_L10_, "Completed issue of request\n");
+                dbg.debug(_L10_, "Completed issue of request\n");
 #endif
-            performRequest(req);
-            requestQueue_.pop_front();
+                performRequest(req);
+                requestQueue_.pop_front();
+            }
         }
     }
 
     stat_outstandingReqs->addData(requestPool_.size());
     
-    backend_->clock();
+    backend_->clock();  // TODO We aren't declocking memory when idle because backend might rely on this clock call. Future work -> turn off for backends that support it or require backends to have their own clock
 
     return false;
 }
 
 
+/*
+ *  Handle flush request
+ *  Check if outstanding requests -> if not, complete
+ *  If outstanding, flag them
+ */
+void MemController::handleFlush(DRAMReq* req) {
+    // Create response
+    req->respEvent_ = req->reqEvent_->makeResponse();
+    req->respEvent_->setSuccess(true);
+    
+    // Check how many we are actually waiting for
+    int waitingFor = 0;
+    for (std::set<DRAMReq*>::iterator it = requestPool_.begin(); it != requestPool_.end(); it++) {
+        if ((*it)->baseAddr_ == req->baseAddr_) {
+            waitingFor++;
+            (*it)->checkFlushes_ = true;
+        }
+    }
+    if (waitingFor == 0) sendResponse(req);
+    else req->amtInProcess_ = waitingFor;
+}
 
+/*
+ *  Perform request locally
+ *  Update backing store & generate response message
+ *  Wait for backend to complete before sending response though
+ */
 void MemController::performRequest(DRAMReq* req) {
     bool noncacheable  = req->reqEvent_->queryFlag(MemEvent::F_NONCACHEABLE);
     Addr localBaseAddr = convertAddressToLocalAddress(req->baseAddr_);
     Addr localAddr;
 
-    if (req->cmd_ == PutM) {  /* Write request to memory */
+    if (req->cmd_ == PutM) {    /* Memory write request */
 #ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, req->reqEvent_->getSize(), noncacheable ? "true" : "false");
 #endif	
-        
         if (doNotBack_) return;
         
+        // Update local backing store
         for ( size_t i = 0 ; i < req->reqEvent_->getSize() ; i++) 
             memBuffer_[localBaseAddr + i] = req->reqEvent_->getPayload()[i];
         
-    } else {
+    } else { /* Memory read request */
         Addr localAbsAddr = convertAddressToLocalAddress(req->reqEvent_->getAddr());
         
         if (noncacheable && req->cmd_ == GetX) {
@@ -407,7 +457,7 @@ void MemController::performRequest(DRAMReq* req) {
             if (protocol_) req->respEvent_->setGrantedState(E); // Directory controller supersedes this; only used if DirCtrl does not exist
             else req->respEvent_->setGrantedState(S);
         }
-	}
+    }
 }
 
 
@@ -437,7 +487,17 @@ void MemController::sendResponse(DRAMReq* req) {
     }
     
 
-    requestPool_.erase(req);
+    if (req->cmd_ == FlushLine) flushPool_.erase(req);
+    else requestPool_.erase(req);
+    if (req->checkFlushes_) {
+        for (std::set<DRAMReq*>::iterator it = flushPool_.begin(); it != flushPool_.end(); it++) {
+            if ((*it)->baseAddr_ == req->baseAddr_) {
+                (*it)->amtInProcess_--;
+                if ((*it)->amtInProcess_ == 0) sendResponse(*it);
+                break;
+            }
+        }
+    }
     delete req;
 }
 
@@ -468,6 +528,11 @@ MemController::~MemController() {
     while ( requestPool_.size()) {
         DRAMReq *req = *(requestPool_.begin());
         requestPool_.erase(req);
+        delete req;
+    }
+    while (flushPool_.size()) {
+        DRAMReq *req = *(flushPool_.begin());
+        flushPool_.erase(req);
         delete req;
     }
 }

@@ -57,7 +57,7 @@ public:
     CacheAction handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent, bool replay);
     
     /** Process invalidation requests - Inv, FetchInv, FetchInvX */
-    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* cacheLine, bool replay);
+    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* cacheLine, MemEvent * collisionEvent, bool replay);
 
     /** Process responses - GetSResp, GetXResp, FetchResp */
     CacheAction handleResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest);
@@ -86,6 +86,12 @@ private:
     /** Handle GetS request. Request block if needed */
     CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
     
+    /** Handle FlushLine request. Forward if needed */
+    CacheAction handleFlushLineRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay);
+
+    /** Handle FlushLineInv request. Forward if needed */
+    CacheAction handleFlushLineInvRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay);
+
     /** Handle PutM request. Write data to cache line.  Update E->M state if necessary */
     CacheAction handlePutMRequest(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent);
     
@@ -99,10 +105,10 @@ private:
     CacheAction handleFetch(MemEvent * event, CacheLine * cacheLine, bool replay);
     
     /** Handle FetchInv */
-    CacheAction handleFetchInv(MemEvent * event, CacheLine * cacheLine, bool replay);
+    CacheAction handleFetchInv(MemEvent * event, CacheLine * cacheLine, MemEvent * collisionEvent, bool replay);
     
     /** Handle FetchInvX */
-    CacheAction handleFetchInvX(MemEvent * event, CacheLine * cacheLine, bool replay);
+    CacheAction handleFetchInvX(MemEvent * event, CacheLine * cacheLine, MemEvent * collisionEvent, bool replay);
 
     /** Process GetSResp/GetXResp.  Update the cache line */
     CacheAction handleDataResponse(MemEvent* responseEvent, CacheLine * cacheLine, MemEvent * reqEvent);
@@ -140,7 +146,12 @@ private:
     
     /** Invalidate all sharers of a block except the requestor (rqstr). Used for upgrade requests. */
     bool invalidateSharersExceptRequestor(CacheLine * cacheLine, string rqstr, string origRqstr, bool replay);
-
+    
+    /** Send a flush response */
+    void sendFlushResponse(MemEvent * reqEent, bool success);
+    
+    /** Forward a FlushLine request with or without data */
+    void forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine, Command cmd);
 
 /* Helper methods */
    

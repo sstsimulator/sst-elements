@@ -57,7 +57,7 @@ public:
     CacheAction handleReplacement(MemEvent* event, CacheLine* dirLine, MemEvent * reqEvent, bool replay);
     
     /** Process invalidation requests - Inv, FetchInv, FetchInvX */
-    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* dirLine, bool replay);
+    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* dirLine, MemEvent * collisionEvent, bool replay);
 
     /** Process responses - GetSResp, GetXResp, FetchResp */
     CacheAction handleResponse(MemEvent* responseEvent, CacheLine* dirLine, MemEvent* origRequest);
@@ -87,6 +87,12 @@ private:
     
     /** Handle PutM request. Possibly complete a waiting request if it raced with the PutM */
     CacheAction handlePutMRequest(MemEvent* event, CacheLine * dirLine, MemEvent * origReq);
+
+    /** Handle FlushLine request. */
+    CacheAction handleFlushLineRequest(MemEvent* event, CacheLine * dirLine, MemEvent * origReq, bool replay);
+
+    /** Handle FlushLineInv request. */
+    CacheAction handleFlushLineInvRequest(MemEvent* event, CacheLine * dirLine, MemEvent * origReq, bool replay);
 
     /** Handle Inv */
     CacheAction handleInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent);
@@ -138,6 +144,12 @@ private:
 
     /** Fetch data from sharer */
     void sendFetch(CacheLine * dirLine, string rqstr, bool replay);
+
+    /** Send a flush response */
+    void sendFlushResponse(MemEvent * reqEvent, bool success);
+    
+    /** Forward a FlushLine request with or without data */
+    void forwardFlushLine(MemEvent * origFlush, CacheLine * dirLine, bool dirty, Command cmd);
 
     /** Invalidate all sharers of a block. Used for invalidations and evictions */
     void invalidateAllSharers(CacheLine * dirLine, string rqstr, bool replay);
