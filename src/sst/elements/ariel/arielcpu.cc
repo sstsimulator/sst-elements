@@ -57,7 +57,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	uint32_t perform_checks = (uint32_t) params.find<uint32_t>("checkaddresses", 0);
 	output->verbose(CALL_INFO, 1, 0, "Configuring for check addresses = %s\n", (perform_checks > 0) ? "yes" : "no");
 
-        std::string memorymanager = params.find<std::string>("memorymanager", "ariel.MemoryManagerSimple");
+        std::string memorymanager = params.find<std::string>("memmgr", "ariel.MemoryManagerSimple");
         if (!memorymanager.empty()) {
             output->verbose(CALL_INFO, 1, 0, "Loading memory manger: %s\n", memorymanager.c_str());
             Params mmParams = params.find_prefix_params("memmgr.");

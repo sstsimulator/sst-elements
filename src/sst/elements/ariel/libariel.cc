@@ -114,7 +114,7 @@ static const ElementInfoParam ariel_params[] = {
     {"tracePrefix", "Prefix when tracing is enable", ""},
     {"clock", "Clock rate at which events are generated and processed", "1GHz"},
     {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
-    {"memorymanager", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
+    {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
     {NULL, NULL, NULL}
 };
 
