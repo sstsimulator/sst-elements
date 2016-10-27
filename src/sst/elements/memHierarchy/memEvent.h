@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -28,33 +32,36 @@ typedef uint64_t Addr;
  *  Not all coherence protocols use all types
  */
 #define X_TYPES \
-    X(NULLCMD)         /* Dummy command */\
+    X(NULLCMD)          /* Dummy command */\
     /* Requests */ \
-    X(GetS)            /* Read:  Request to get cache line in S state */\
-    X(GetX)            /* Write: Request to get cache line in M state */\
-    X(GetSEx)          /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
-                       /*        GetSEx sets the LOCK, GetX removes the LOCK  */\
+    X(GetS)             /* Read:  Request to get cache line in S state */\
+    X(GetX)             /* Write: Request to get cache line in M state */\
+    X(GetSEx)           /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
+                        /*        GetSEx sets the LOCK, GetX removes the LOCK  */\
+    X(FlushLine)        /* Request to flush a cache line */\
+    X(FlushLineInv)     /* Request to flush and invalidate a cache line */\
+    X(FlushAll)         /* Request to flush entire cache - similar to wbinvd */\
     /* Request Responses */\
-    X(GetSResp)        /* Response to a GetS request */\
-    X(GetXResp)        /* Response to a GetX request */\
+    X(GetSResp)         /* Response to a GetS request */\
+    X(GetXResp)         /* Response to a GetX request */\
+    X(FlushLineResp)    /* Response to FlushLine request */\
+    X(FlushAllResp)     /* Response to FlushAll request */\
     /* Writebacks, these commands also serve as invalidation acknowledgments */\
-    X(PutS)            /* Clean replacement from S->I:      Remove sharer */\
-    X(PutM)            /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
-    X(PutE)            /* Clean replacement from E->I:      Remove owner but don't writeback data */\
-    X(PutX)            /* Dirty downgrade from M->O/S:      Remove exclusive ownership, add as sharer (MSI/MESI) or non-exclusive owner (MOESI), writeback data */\
-    X(PutXE)           /* Clean downgrade from E->O/S:      Remove exclusive ownership, add as sharer (MSI/MESI) or non-exclusive owner (MOESI), don't writeback data */\
+    X(PutS)             /* Clean replacement from S->I:      Remove sharer */\
+    X(PutM)             /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
+    X(PutE)             /* Clean replacement from E->I:      Remove owner but don't writeback data */\
     /* Invalidates - sent by caches or directory controller */\
-    X(Inv)             /* Other write request:  Invalidate cache line */\
+    X(Inv)              /* Other write request:  Invalidate cache line */\
     /* Invalidates - sent by directory controller */\
-    X(Fetch)           /* Other read request to sharer:  Get data but don't invalidate cache line */\
-    X(FetchInv)        /* Other write request to owner:  Invalidate cache line */\
-    X(FetchInvX)       /* Other read request to owner:   Downgrade cache line to O/S (Remove exclusivity) */\
-    X(FetchResp)       /* response to a Fetch, FetchInv or FetchInvX request */\
-    X(FetchXResp)      /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
+    X(Fetch)            /* Other read request to sharer:  Get data but don't invalidate cache line */\
+    X(FetchInv)         /* Other write request to owner:  Invalidate cache line */\
+    X(FetchInvX)        /* Other read request to owner:   Downgrade cache line to O/S (Remove exclusivity) */\
+    X(FetchResp)        /* response to a Fetch, FetchInv or FetchInvX request */\
+    X(FetchXResp)       /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
     /* Others */\
-    X(NACK)\
-    X(AckInv)\
-    X(AckPut) \
+    X(NACK)             /* NACK response to a message */\
+    X(AckInv)           /* Acknowledgement response to an invalidation request */\
+    X(AckPut)           /* Acknowledgement response to a replacement (Put*) request */\
     X(LAST_CMD)
 
 /** Valid commands for the MemEvent */
@@ -112,6 +119,9 @@ static const ElementInfoStatistic networkMemoryInspector_statistics[] = {
     X(MI) \
     X(EI) \
     X(SI) \
+    X(S_B)      /* S, blocked while waiting for a response (currently used for flushes) */\
+    X(I_B)      /* I, blocked while waiting for a response (currently used for flushes) */\
+    X(SB_Inv)   /* Was in S_B, got an Inv, resolving Inv first */\
     X(NULLST)
 
 typedef enum {
@@ -145,6 +155,7 @@ public:
     static const uint32_t F_LOCKED        = 0x00000001;  /* Used in a Read-Lock, Write-Unlock atomicity scheme */
     static const uint32_t F_NONCACHEABLE  = 0x00000010;  /* Used to specify that this memory event should not be cached */
     static const uint32_t F_LLSC          = 0x00000100;  /* Load Link / Store Conditional */
+    static const uint32_t F_SUCCESS       = 0x00001000;  /* Indicates a successful response (used for flushes, TODO use for LLSC) */
 
     typedef std::vector<uint8_t> dataVec;       /** Data Payload type */
 
@@ -242,7 +253,6 @@ public:
         memFlags_           = 0;
         groupID_            = 0;
         prefetch_           = false;
-        atomic_             = false;
         loadLink_           = false;
         storeConditional_   = false;
         grantedState_       = NULLST;
@@ -311,8 +321,11 @@ public:
     void setAtomic(bool b) { b ? setFlag(MemEvent::F_LLSC) : clearFlag(MemEvent::F_LLSC); }
     bool isAtomic() { return queryFlag(MemEvent::F_LLSC); }
     
+    void setSuccess(bool b) { b ? setFlag(MemEvent::F_SUCCESS) : clearFlag(MemEvent::F_SUCCESS); }
+    bool success() { return queryFlag(MemEvent::F_SUCCESS); }
+
     bool isHighNetEvent() {
-        if (cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx || isWriteback()) {
+        if (cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx || isWriteback() || cmd_ == FlushLine || cmd_ == FlushLineInv || cmd_ == FlushAll) {
             return true;
         }
         return false;
@@ -327,7 +340,7 @@ public:
     
     bool isWriteback() {
         if (cmd_ == PutS || cmd_ == PutM ||
-           cmd_ == PutE || cmd_ == PutX || cmd_ == PutXE) {
+           cmd_ == PutE ) {
             return true;
         }
         return false;
@@ -386,10 +399,10 @@ public:
     static bool isCPURequest(Command cmd) { return (cmd == GetS || cmd == GetX || cmd == GetSEx);}
     bool isCPURequest(void) const { return MemEvent::isCPURequest(cmd_); }
     /** Returns true if this is of response type */
-    static bool isResponse(Command cmd) { return (cmd == GetSResp || cmd == GetXResp);}
+    static bool isResponse(Command cmd) { return (cmd == GetSResp || cmd == GetXResp || cmd == FlushLineResp);}
     bool isResponse(void) const { return MemEvent::isResponse(cmd_); }
     /** Returns true if this is a 'writeback' command type */
-    static bool isWriteback(Command cmd) { return (cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE || cmd == PutS); }
+    static bool isWriteback(Command cmd) { return (cmd == PutM || cmd == PutE || cmd == PutS); }
     bool isWriteback(void) const { return MemEvent::isWriteback(cmd_); }
    
 
@@ -455,6 +468,9 @@ public:
                 return FetchResp;
             case FetchInvX:
                 return FetchXResp;
+            case FlushLine:
+            case FlushLineInv:
+                return FlushLineResp;
             default:
                 return NULLCMD;
         }
@@ -478,7 +494,6 @@ private:
     dataVec         payload_;           // Data
     State           grantedState_;      // For data responses, the cohrence state that the request is granted in
     bool            prefetch_;          // Whether this request came from a prefetcher
-    bool            atomic_;            // Whether this request is atomic
     bool            loadLink_;          // Whether this request in a LL
     bool            storeConditional_;  // Whether this request is a SC
     bool            blocked_;           // Whether this request blocked for another pending request (for profiling)
@@ -510,7 +525,6 @@ public:
         ser & payload_;
         ser & grantedState_;
         ser & prefetch_;
-        ser & atomic_;
         ser & loadLink_;
         ser & storeConditional_;
         ser & blocked_;

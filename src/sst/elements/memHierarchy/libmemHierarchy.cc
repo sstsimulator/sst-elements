@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -43,6 +47,10 @@
 #include "membackend/goblinHMCBackend.h"
 #endif
 
+#ifdef HAVE_LIBRAMULATOR
+#include "membackend/ramulatorBackend.h"
+#endif
+
 #ifdef HAVE_LIBDRAMSIM
 #include "membackend/dramSimBackend.h"
 #include "membackend/pagedMultiBackend.h"
@@ -70,12 +78,11 @@ static Component* create_Cache(ComponentId_t id, Params& params)
 
 static const ElementInfoParam cache_params[] = {
     /* Required */
-    {"cache_frequency",         "Required, string - Clock frequency with units. For L1s, this is usually the same as the CPU's frequency."},
+    {"cache_frequency",         "Required, string - Clock frequency or period with units (Hz or s; SI units OK). For L1s, this is usually the same as the CPU's frequency."},
     {"cache_size",              "Required, string - Cache size with units. Eg. 4KiB or 1MiB"},
     {"associativity",           "Required, int - Associativity of the cache. In set associative mode, this is the number of ways."},
-    {"access_latency_cycles",   "Required, int - Latency (in cycles) to access the cache array."},
+    {"access_latency_cycles",   "Required, int - Latency (in cycles) to access the cache data array. This latency is paid by cache hits and coherence requests that need to return data."},
     {"L1",                      "Required, bool - Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]", "false"},
-    {"LL",                      "Required, bool - Required for LLCs without a directory below - indicates LLC is the lowest-level coherence entity. Options: 0[not LL entity], 1[LL entity]", "false"},
     /* Not required */
     {"cache_line_size",         "Optional, int - Size of a cache line (aka cache block) in bytes.", "64"},
     {"hash_function",           "Optional, int - 0 - none (default), 1 - linear, 2 - XOR", "0"},
@@ -88,11 +95,9 @@ static const ElementInfoParam cache_params[] = {
     {"noninclusive_directory_repl",    "Optional, string - If non-inclusive directory exists, its replacement policy. LRU, LFU, MRU, NMRU, or RANDOM. (not case-sensitive).", "LRU"},
     {"noninclusive_directory_entries", "Optional, int - Number of entries in the directory. Must be at least 1 if the non-inclusive directory exists.", "0"},
     {"noninclusive_directory_associativity", "Optional, int - For a set-associative directory, number of ways.", "1"},
-    {"lower_is_noninclusive",   "Optional, bool - Next lower level cache is non-inclusive, changes some coherence decisions (e.g., write back clean data)", "false"},
     {"mshr_num_entries",        "Optional, int - Number of MSHR entries. Not valid for L1s because L1 MSHRs assumed to be sized for the CPU's load/store queue. Setting this to -1 will create a very large MSHR.", "-1"},
-    {"stat_group_ids",          "Optional, int list - Stat grouping. Instructions with same IDs will be grouped for stats. Separated by commas.", ""},
-    {"tag_access_latency_cycles", "Optional, int - Latency (in cycles) to access tag portion only of cache. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
-    {"mshr_latency_cycles",     "Optional, int - Latency (in cycles) to process responses in the cache (MSHR response hits). If not specified, simple intrapolation is used based on the cache access latency", "-1"},
+    {"tag_access_latency_cycles", "Optional, int - Latency (in cycles) to access tag portion only of cache. Paid by misses and coherence requests that don't need data. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
+    {"mshr_latency_cycles",     "Optional, int - Latency (in cycles) to process responses in the cache and replay requests. Paid on the return/response path for misses instead of access_latency_cycles. If not specified, simple intrapolation is used based on the cache access latency", "-1"},
     {"prefetcher",              "Optional, string - Name of prefetcher module", ""},
     {"max_outstanding_prefetch","Optional, int - Maximum number of prefetch misses that can be outstanding, additional prefetches will be dropped/NACKed. Default is 1/2 of MSHR entries.", "0.5*mshr_num_entries"},
     {"drop_prefetch_mshr_level","Optional, int - Drop/NACK prefetches if the number of in-use mshrs is greater than or equal to this number. Default is mshr_num_entries - 2.", "mshr_num_entries-2"},
@@ -105,16 +110,20 @@ static const ElementInfoParam cache_params[] = {
     {"network_output_buffer_size","Optional, int - When connected to a network, size of the network;s output buffer.", "1KiB"},
     {"maxRequestDelay",         "Optional, int - Set an error timeout if memory requests take longer than this in ns (0: disable)", "0"},
     {"snoop_l1_invalidations",  "Optional, bool - Forward invalidations from L1s to processors. Options: 0[off], 1[on]", "false"},
-    {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
+    {"debug",                   "Optional, int - Where to send output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",             "Optional, int - Output/debug verbosity level. Between 0 (no output) and 10 (everything). 1-3 gives warnings/info; 4-10 gives debug.", "1"},
     {"debug_addr",              "Optional, int - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {"force_noncacheable_reqs", "Optional, bool - Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "false"},
-    {"LLC",                     "DEPRECATED - Now auto-detected by configure. Specifies whether cache is a last-level cache. Options: 0[not LLC], 1[LLC]"},
-    {"statistics",              "DEPRECATED - Use Statistics API to get statistics for caches.", "0"},
+    {"min_packet_size",         "Optional, int - Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
+    {"LL",                      "DEPRECATED - Now auto-detected during init."},
+    {"LLC",                     "DEPRECATED - Now auto-detected by configure."},
+    {"lower_is_noninclusive",   "DEPRECATED - Now auto-detected during init."},
+    {"statistics",              "DEPRECATED - Use Statistics API to get statistics for caches."},
+    {"stat_group_ids",          "DEPRECATED - Use Statistics API to get statistics for caches."},
     {"network_num_vc",          "DEPRECATED - Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
-    {"directory_at_next_level", "DEPRECATED - Now auto-detected by configure. Specifies if there is a directory-controller as the next lower memory level; deprecated - set 'bottom_network' to 'directory' instead", "0"},
-    {"bottom_network",          "DEPRECATED - Now auto-detected by configure. Specifies whether the cache is connected to a network below and the entity type of the connection. Options: cache, directory, ''[no network below]", ""},
-    {"top_network",             "DEPRECATED - Now auto-detected by configure. Specifies whether the cache is connected to a network above and the entity type of the connection. Options: cache, ''[no network above]", ""},
+    {"directory_at_next_level", "DEPRECATED - Now auto-detected by configure."},
+    {"bottom_network",          "DEPRECATED - Now auto-detected by configure."},
+    {"top_network",             "DEPRECATED - Now auto-detected by configure."},
     {NULL, NULL, NULL}
 };
 
@@ -361,7 +370,7 @@ static const ElementInfoParam sieve_params[] = {
     {"cache_line_size",         "Optional, int - Size of a cache line (aka cache block) in bytes."},
     {"profiler",                "Optional, string - Name of profiling module. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
     {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
+    {"debug_level",             "Optional, int - Debugging/verbosity level. Between 0 and 10", "0"},
     {"output_file",             "Optional, string – Name of file to output malloc information to. Will have sequence number (and optional marker number) and .txt appended to it. E.g. sieveMallocRank-3.txt", "sieveMallocRank"},
     {"reset_stats_at_buoy",     "Optional, int - Whether to reset allocation hit/miss stats when a buoy is found (i.e., when a new output file is dumped). Any value other than 0 is true." "0"},
     {NULL, NULL, NULL}
@@ -424,6 +433,7 @@ static const ElementInfoParam cpu_params[] = {
     {"rngseed",                 "Set a seed for the random generation of addresses", "7"},
     {"commFreq",                "How often to do a memory operation."},
     {"memSize",                 "Size of physical memory."},
+    {"maxOutstanding",          "Maximum Number of Outstanding memory requests."},
     {"do_write",                "Enable writes to memory (versus just reads).", "1"},
     {"num_loadstore",           "Stop after this many reads and writes.", "-1"},
     {"noncacheableRangeStart",  "Beginning of range of addresses that are noncacheable.", "0x0"},
@@ -445,7 +455,7 @@ static Component* create_MemController(ComponentId_t id, Params& params){
 
 static const ElementInfoParam memctrl_params[] = {
     /* Required parameters */
-    {"backend.mem_size",    "Size of physical memory in MiB"},
+    {"backend.mem_size",    "Size of physical memory. NEW REQUIREMENT: must include units in 'B' (SI ok). Simple fix: add 'MiB' to old value."},
     {"clock",               "Clock frequency of controller", NULL},
     /* Optional parameters */
     {"backend",             "Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
@@ -574,6 +584,18 @@ static const ElementInfoParam requestReorderRow_params[] = {
     { NULL, NULL, NULL }
 };
 
+#if defined(HAVE_LIBRAMULATOR)
+static SubComponent* create_Mem_Ramulator(Component* comp, Params& params){
+    return new ramulatorMemory(comp, params);
+}
+
+static const ElementInfoParam ramulatorMem_params[] = {
+    {"verbose",          "Sets the verbosity of the backend output", "0" },
+    {"configFile",      "Name of Ramulator Device config file", NULL},
+    {NULL, NULL, NULL}
+};
+
+#endif
 
 #if defined(HAVE_LIBDRAMSIM)
 static SubComponent* create_Mem_DRAMSim(Component* comp, Params& params){
@@ -655,7 +677,7 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 	{ "link_count", 	"Sets the number of links being simulated, min=4, max=8, default=4", "4" },
 	{ "vault_count",	"Sets the number of vaults being simulated, min=16, max=32, default=16", "16" },
 	{ "queue_depth",	"Sets the depth of the HMC request queue, min=2, max=65536, default=2", "2" },
-  	{ "dram_count",         "Sets the number of DRAM blocks per cube\n", "20" },
+  	{ "dram_count",         "Sets the number of DRAM blocks per cube", "20" },
 	{ "xbar_depth",         "Sets the queue depth for the HMC X-bar", "8" },
         { "max_req_size",       "Sets the maximum requests which can be inflight from the controller side at any time", "32" },
 	{ "trace-banks", 	"Decides where tracing for memory banks is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
@@ -857,6 +879,17 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL,
         "SST::MemHierarchy::MemBackend"
     },
+#if defined(HAVE_LIBRAMULATOR)
+    {
+        "ramulator",
+        "Ramulator-driven memory timings",
+        NULL, /* Advanced help */
+        create_Mem_Ramulator, /* alloc subcomponent */
+        ramulatorMem_params,
+        NULL, /* stats */
+        "SST::MemHierarchy::MemBackend"
+    },
+#endif
 #if defined(HAVE_LIBDRAMSIM)
     {
         "dramsim",

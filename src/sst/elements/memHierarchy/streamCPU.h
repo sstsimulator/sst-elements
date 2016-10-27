@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -55,6 +59,7 @@ private:
 	int commFreq;
 	bool do_write;
 	uint32_t maxAddr;
+	uint32_t maxOutstanding;
 	uint32_t nextAddr;
 	uint64_t num_reads_issued, num_reads_returned;
 	uint64_t addrOffset;

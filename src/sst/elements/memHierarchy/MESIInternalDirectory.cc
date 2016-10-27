@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -111,6 +115,15 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
                 if (expectWritebackAck_) mshr_->insertWriteback(wbBaseAddr);
                 return DONE;
             }
+        case SI:
+        case S_Inv:
+        case E_Inv:
+        case M_Inv:
+        case SM_Inv:
+        case E_InvX:
+        case S_B:
+        case I_B:
+            return STALL;
         default:
 	    d_->fatal(CALL_INFO,-1,"%s (dir), Error: State is invalid during eviction: %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
                     name_.c_str(), StateString[state], replacementLine->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
@@ -148,6 +161,10 @@ CacheAction MESIInternalDirectory::handleReplacement(MemEvent* event, CacheLine*
         case PutE:
         case PutM:
             return handlePutMRequest(event, dirLine, reqEvent);
+        case FlushLineInv:
+            return handleFlushLineInvRequest(event, dirLine, reqEvent, replay);
+        case FlushLine:
+            return handleFlushLineRequest(event, dirLine, reqEvent, replay);
         default:
 	    d_->fatal(CALL_INFO,-1,"%s (dir), Error: Received an unrecognized replacement: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
                     name_.c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
@@ -165,30 +182,28 @@ CacheAction MESIInternalDirectory::handleReplacement(MemEvent* event, CacheLine*
  *  Special case for when an inv races with a replacement -> 
  *  treat Inv request as the AckPut (the Put request will likewise be treated as the AckInv/FetchResp)
  */
-CacheAction MESIInternalDirectory::handleInvalidationRequest(MemEvent * event, CacheLine * dirLine, bool replay) {
+CacheAction MESIInternalDirectory::handleInvalidationRequest(MemEvent * event, CacheLine * dirLine, MemEvent * collisionEvent, bool replay) {
     
 
-    MemEvent * waitingEvent;
     bool collision = false;
     if (mshr_->pendingWriteback(event->getBaseAddr())) {
         // Case 1: Inv raced with a Put -> treat Inv as the AckPut
         mshr_->removeWriteback(event->getBaseAddr());
         return DONE;
     } else {
-        waitingEvent = (mshr_->isHit(event->getBaseAddr())) ? mshr_->lookupFront(event->getBaseAddr()) : NULL;
-        collision = (waitingEvent != NULL && (waitingEvent->getCmd() == PutS || waitingEvent->getCmd() == PutE || waitingEvent->getCmd() == PutM));
+        collision = (collisionEvent != NULL && (collisionEvent->getCmd() == PutS || collisionEvent->getCmd() == PutE || collisionEvent->getCmd() == PutM));
     }
 
     Command cmd = event->getCmd();
     switch (cmd) {
         case Inv: 
-            return handleInv(event, dirLine, replay, collision ? waitingEvent : NULL);
+            return handleInv(event, dirLine, replay, collisionEvent);
         case Fetch:
-            return handleFetch(event, dirLine, replay, collision ? waitingEvent : NULL);
+            return handleFetch(event, dirLine, replay, collision ? collisionEvent : NULL);
         case FetchInv:
-            return handleFetchInv(event, dirLine, replay, collision ? waitingEvent : NULL);
+            return handleFetchInv(event, dirLine, replay, collisionEvent);
         case FetchInvX:
-            return handleFetchInvX(event, dirLine, replay, collision ? waitingEvent : NULL);
+            return handleFetchInvX(event, dirLine, replay, collisionEvent);
         default:
 	    d_->fatal(CALL_INFO,-1,"%s (dir), Error: Received an unrecognized invalidation: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
                     name_.c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
@@ -219,6 +234,12 @@ CacheAction MESIInternalDirectory::handleResponse(MemEvent * respEvent, CacheLin
             recordStateEventCount(respEvent->getCmd(), I);
             mshr_->removeWriteback(respEvent->getBaseAddr());
             return DONE;    // Retry any events that were stalled for ack
+        case FlushLineResp:
+            recordStateEventCount(respEvent->getCmd(), dirLine ? dirLine->getState() : I);
+            sendFlushResponse(reqEvent, respEvent->success());
+            if (dirLine && dirLine->getState() == S_B) dirLine->setState(S);
+            else if (dirLine) dirLine->setState(I);
+            return DONE;
         default:
             d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
                     name_.c_str(), CommandString[cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), ((Component*)owner_)->getCurrentSimTimeNano());
@@ -465,190 +486,178 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
     uint64_t sendTime = 0;
 
     CacheAction action = (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) ? DONE : IGNORE;
+    if (action == IGNORE) return action;
     switch(state) {
         case I:
         case S:
         case E:
         case M:
+        case S_B:
             sendWritebackAck(event);
-            return action;
+            return DONE;
         case SI:
-            if (action == DONE) {
-                sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
-                dirLine->setState(I);
-            }
-            return action;
+            sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), &event->getPayload());
+            if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
+            dirLine->setState(I);
+            return DONE;
         case EI:
-            if (action == DONE) {
-                sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
-                dirLine->setState(I);
-            }
-            return action;
+            sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
+            if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
+            dirLine->setState(I);
+            return DONE;
         case MI:
-            if (action == DONE) {
-                sendWritebackFromMSHR(PutM, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
-                dirLine->setState(I);
+            sendWritebackFromMSHR(PutM, dirLine, reqEvent->getRqstr(), &event->getPayload());
+            if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
+            dirLine->setState(I);
+            return DONE;
+        case S_Inv: // PutS raced with Inv or FetchInv request
+            if (reqEvent->getCmd() == Inv) {
+                sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
+            } else {
+                sendResponseDownFromMSHR(event, false);
             }
-            return action;
-        case S_Inv: // PutS raced with Inv request
-            if (action == DONE) {
-                if (reqEvent->getCmd() == Inv) {
-                    sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
+            dirLine->setState(I);
+            return DONE;
+        case SB_Inv:
+            sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
+            dirLine->setState(I_B);
+            return DONE;
+        case S_D: // PutS raced with Fetch
+            dirLine->setState(S);
+            if (reqEvent->getCmd() == Fetch) {
+                if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
+                    sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), &event->getPayload());
+                    dirLine->setState(I);
                 } else {
                     sendResponseDownFromMSHR(event, false);
                 }
+            } else if (reqEvent->getCmd() == GetS) {    // GetS
+                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
+                dirLine->addSharer(reqEvent->getSrc());
+                sendTime = sendResponseUp(reqEvent, S, &event->getPayload(), true, dirLine->getTimestamp());
+                dirLine->setTimestamp(sendTime);
+                if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
+            } else {
+                d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
+                        name_.c_str(), StateString[state], CommandString[reqEvent->getCmd()], event->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
+            }
+            return DONE;
+        case E_Inv:
+            if (reqEvent->getCmd() == FetchInv) {
+                sendResponseDown(reqEvent, dirLine, &event->getPayload(), event->getDirty(), true);
                 dirLine->setState(I);
             }
-            return action;
-        case S_D: // PutS raced with Fetch
-            if (action == DONE) {
-                dirLine->setState(S);
-                if (reqEvent->getCmd() == Fetch) {
-                    if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
-                        sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                        dirLine->setState(I);
-                    } else {
-                        sendResponseDownFromMSHR(event, false);
-                    }
-                } else if (reqEvent->getCmd() == GetS) {    // GetS
-                    notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
+            return DONE;
+        case E_D: // PutS raced with Fetch from GetS
+            dirLine->setState(E);
+            if (reqEvent->getCmd() == Fetch) {
+                if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
+                    sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
+                    dirLine->setState(I);
+                } else {
+                    sendResponseDownFromMSHR(event, false);
+                }
+            } else if (reqEvent->getCmd() == GetS) {
+                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
+                if (dirLine->numSharers() == 0) {
+                    dirLine->setOwner(reqEvent->getSrc());
+                    sendTime = sendResponseUp(reqEvent, E, &event->getPayload(), true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
+                } else {
                     dirLine->addSharer(reqEvent->getSrc());
                     sendTime = sendResponseUp(reqEvent, S, &event->getPayload(), true, dirLine->getTimestamp());
                     dirLine->setTimestamp(sendTime);
-                    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
-                } else {
-                    d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                            name_.c_str(), StateString[state], CommandString[reqEvent->getCmd()], event->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
                 }
+                if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
+            } else {
+                d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
+                        name_.c_str(), StateString[state], CommandString[reqEvent->getCmd()], event->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
             }
-            return action;
-        case E_Inv:
-            if (action == DONE) {
-                if (reqEvent->getCmd() == FetchInv) {
-                    sendResponseDown(reqEvent, dirLine, &event->getPayload(), event->getDirty(), true);
-                    dirLine->setState(I);
-                }
-            }
-            return action;
-        case E_D: // PutS raced with Fetch from GetS
-            if (action == DONE) {
-                dirLine->setState(E);
-                if (reqEvent->getCmd() == Fetch) {
-                    if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
-                        sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                        dirLine->setState(I);
-                    } else {
-                        sendResponseDownFromMSHR(event, false);
-                    }
-                } else if (reqEvent->getCmd() == GetS) {
-                    notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                    if (dirLine->numSharers() == 0) {
-                        dirLine->setOwner(reqEvent->getSrc());
-                        sendTime = sendResponseUp(reqEvent, E, &event->getPayload(), true, dirLine->getTimestamp());
-                        dirLine->setTimestamp(sendTime);
-                    } else {
-                        dirLine->addSharer(reqEvent->getSrc());
-                        sendTime = sendResponseUp(reqEvent, S, &event->getPayload(), true, dirLine->getTimestamp());
-                        dirLine->setTimestamp(sendTime);
-                    }
-                    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
-                } else {
-                    d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                            name_.c_str(), StateString[state], CommandString[reqEvent->getCmd()], event->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
-                }
-            }
-            return action;
+            return DONE;
         case E_InvX: // PutS raced with Fetch from FetchInvX
-            if (action == DONE) {
-                dirLine->setState(S);
-                if (reqEvent->getCmd() == FetchInvX) {
-                    if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
-                        sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                        dirLine->setState(I);
-                    } else {
-                        sendResponseDownFromMSHR(event, false);
-                    }
-                } else {
-                    d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                            name_.c_str(), StateString[state], CommandString[reqEvent->getCmd()], event->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
-                }
-            }
-            return action;
-        case M_Inv: // PutS raced with AckInv from GetX, PutS raced with AckInv from FetchInv
-            if (action == DONE) {
-                if (reqEvent->getCmd() == FetchInv) {
-                    sendResponseDown(reqEvent, dirLine, &event->getPayload(), true, true);
+            dirLine->setState(S);
+            if (reqEvent->getCmd() == FetchInvX) {
+                if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
+                    sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
                     dirLine->setState(I);
                 } else {
-                    notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
-                    dirLine->setOwner(reqEvent->getSrc());
-                    if (dirLine->isSharer(reqEvent->getSrc())) dirLine->removeSharer(reqEvent->getSrc());
-                    sendTime = sendResponseUp(reqEvent, M, &event->getPayload(), true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                    if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(&event->getPayload(), false);
-                    dirLine->setState(M);
-                }
-            }
-            return action;
-        case M_D:   // PutS raced with Fetch from GetS
-            if (action == DONE) {
-                dirLine->setState(M);
-                if (reqEvent->getCmd() == Fetch) {
-                    if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
-                        sendWritebackFromMSHR(PutM, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                        dirLine->setState(I);
-                    } else {
-                        sendResponseDownFromMSHR(event, false);
-                    }
-                } else if (reqEvent->getCmd() == GetS) {
-                    notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                    if (dirLine->numSharers() == 0) {
-                        dirLine->setOwner(reqEvent->getSrc());
-                        sendTime = sendResponseUp(reqEvent, E, &event->getPayload(), true, dirLine->getTimestamp());
-                        dirLine->setTimestamp(sendTime);
-                    } else {
-                        dirLine->addSharer(reqEvent->getSrc());
-                        sendTime = sendResponseUp(reqEvent, S, &event->getPayload(), true, dirLine->getTimestamp());
-                        dirLine->setTimestamp(sendTime);
-                    }
-                    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
-                } else {
-                    d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                            name_.c_str(), StateString[state], CommandString[reqEvent->getCmd()], event->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
-                }
-            }
-            return action;
-        case SM_Inv:
-            if (action == DONE) {
-                if (reqEvent->getCmd() == Inv) {    // Completed Inv so handle
-                    if (dirLine->numSharers() > 0) {
-                        invalidateAllSharers(dirLine, event->getRqstr(), true);
-                        return IGNORE;
-                    }
-                    sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
-                    dirLine->setState(IM);
-                } else if (reqEvent->getCmd() == FetchInv) {
-                    if (dirLine->numSharers() > 0) {
-                        invalidateAllSharers(dirLine, event->getRqstr(), true);
-                        return IGNORE;
-                    }
                     sendResponseDownFromMSHR(event, false);
-                    dirLine->setState(IM);
-                } else {    // Waiting on data for upgrade
-                    dirLine->setState(SM);
-                    action = IGNORE;
                 }
+            } else {
+                d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
+                        name_.c_str(), StateString[state], CommandString[reqEvent->getCmd()], event->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
             }
-            return action;  
+            return DONE;
+        case M_Inv: // PutS raced with AckInv from GetX, PutS raced with AckInv from FetchInv
+            if (reqEvent->getCmd() == FetchInv) {
+                sendResponseDown(reqEvent, dirLine, &event->getPayload(), true, true);
+                dirLine->setState(I);
+            } else {
+                notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
+                dirLine->setOwner(reqEvent->getSrc());
+                if (dirLine->isSharer(reqEvent->getSrc())) dirLine->removeSharer(reqEvent->getSrc());
+                sendTime = sendResponseUp(reqEvent, M, &event->getPayload(), true, dirLine->getTimestamp());
+                dirLine->setTimestamp(sendTime);
+#ifdef __SST_DEBUG_OUTPUT__ 
+                if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(&event->getPayload(), false);
+#endif
+                dirLine->setState(M);
+            }
+            return DONE;
+        case M_D:   // PutS raced with Fetch from GetS
+            dirLine->setState(M);
+            if (reqEvent->getCmd() == Fetch) {
+                if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
+                    sendWritebackFromMSHR(PutM, dirLine, reqEvent->getRqstr(), &event->getPayload());
+                    dirLine->setState(I);
+                } else {
+                    sendResponseDownFromMSHR(event, false);
+                }
+            } else if (reqEvent->getCmd() == GetS) {
+                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
+                if (dirLine->numSharers() == 0) {
+                    dirLine->setOwner(reqEvent->getSrc());
+                    sendTime = sendResponseUp(reqEvent, E, &event->getPayload(), true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
+                } else {
+                    dirLine->addSharer(reqEvent->getSrc());
+                    sendTime = sendResponseUp(reqEvent, S, &event->getPayload(), true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
+                }
+#ifdef __SST_DEBUG_OUTPUT__
+                if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
+#endif
+            } else {
+                d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
+                        name_.c_str(), StateString[state], CommandString[reqEvent->getCmd()], event->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
+            }
+            return DONE;
+        case SM_Inv:
+            if (reqEvent->getCmd() == Inv) {    // Completed Inv so handle
+                if (dirLine->numSharers() > 0) {
+                    invalidateAllSharers(dirLine, event->getRqstr(), true);
+                    return IGNORE;
+                }
+                sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
+                dirLine->setState(IM);
+            } else if (reqEvent->getCmd() == FetchInv) {
+                if (dirLine->numSharers() > 0) {
+                    invalidateAllSharers(dirLine, event->getRqstr(), true);
+                    return IGNORE;
+                }
+                sendResponseDownFromMSHR(event, false);
+                dirLine->setState(IM);
+            } else {    // Waiting on data for upgrade
+                dirLine->setState(SM);
+                action = IGNORE;
+            }
+            return DONE;
         case SM_D:
-            if (action == DONE && reqEvent->getCmd() == Fetch) {
+            if (reqEvent->getCmd() == Fetch) {
                 sendResponseDownFromMSHR(event, false);
                 dirLine->setState(SM);
             } 
-            return action;
+            return DONE;
         default:
             d_->fatal(CALL_INFO, -1, "%s, Error: Received PutS in unhandled state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
                     name_.c_str(), event->getBaseAddr(), CommandString[event->getCmd()], event->getSrc().c_str(),
@@ -768,6 +777,411 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
 }
 
 
+
+CacheAction MESIInternalDirectory::handleFlushLineRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent, bool replay) {
+    State state = dirLine ? dirLine->getState() : I;
+    if (!replay) recordStateEventCount(event->getCmd(), state);
+
+    bool isCached = dirLine && dirLine->getDataLine() != NULL;
+    if (event->getPayloadSize() != 0) {
+        if (isCached) dirLine->getDataLine()->setData(event->getPayload(), event);
+        else if (mshr_->isHit(event->getBaseAddr())) mshr_->setTempData(event->getBaseAddr(), event->getPayload());
+    }
+
+    CacheAction reqEventAction; // What to do with the reqEvent
+    uint64_t sendTime = 0;
+    // Handle flush at local level
+    switch (state) {
+        case I:
+        case S:
+        case I_B:
+        case S_B:
+            if (reqEvent != NULL) return STALL;
+            break;
+        case E:
+        case M:
+            if (dirLine->getOwner() == event->getSrc()) {
+                dirLine->clearOwner();
+                dirLine->addSharer(event->getSrc());
+                if (event->getDirty()) {
+                    dirLine->setState(M);
+                }
+            }
+            if (dirLine->ownerExists()) {
+                sendFetchInvX(dirLine, event->getRqstr(), replay);
+                mshr_->incrementAcksNeeded(event->getBaseAddr());
+                state == E ? dirLine->setState(E_InvX) : dirLine->setState(M_InvX);
+                return STALL;
+            }
+            break;
+        case IM:
+        case IS:
+        case SM:
+            return STALL; // Wait for the Get* request to finish
+        case SM_D:
+        case S_D:
+        case E_D:
+        case M_D:
+            return STALL; // Flush raced with Fetch 
+        case S_Inv:
+        case SI:
+            return STALL; // Flush raced with Inv
+        case SM_Inv:
+            return STALL; // Flush raced with Inv
+        case MI:
+        case EI:
+        case M_Inv:
+        case E_Inv:
+            if (dirLine->getOwner() == event->getSrc()) {
+                dirLine->clearOwner();
+                dirLine->addSharer(event->getSrc()); // Other cache will treat FetchInv as Inv
+            }
+            if (event->getDirty()) {
+                if (state == EI) dirLine->setState(MI);
+                else if (state == E_Inv) dirLine->setState(M_Inv);
+            }
+            return STALL;
+        case M_InvX:
+        case E_InvX:
+            if (dirLine->getOwner() == event->getSrc()) {
+                dirLine->clearOwner();
+                dirLine->addSharer(event->getSrc());
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+                if (event->getDirty()) {
+                    dirLine->setState(M_InvX);
+                    state = M_InvX;
+                }
+            }
+            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
+                if (reqEvent->getCmd() == FetchInvX) {
+                    sendResponseDownFromMSHR(event, state == M_InvX);
+                    dirLine->setState(S);
+                } else if (reqEvent->getCmd() == FlushLine) {
+                    dirLine->getState() == E_InvX ? dirLine->setState(E) : dirLine->setState(M);
+                    return handleFlushLineRequest(reqEvent, dirLine, NULL, true);
+                } else if (reqEvent->getCmd() == FetchInv) {
+                    dirLine->getState() == E_InvX ? dirLine->setState(E) : dirLine->setState(M);
+                    return handleFetchInv(reqEvent, dirLine, true, NULL);
+                } else {
+                    notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
+                    dirLine->addSharer(reqEvent->getSrc());
+                    sendTime = sendResponseUp(reqEvent, S, (isCached ? dirLine->getDataLine()->getData() : mshr_->getTempData(event->getBaseAddr())), true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
+                    if (state == M_InvX) dirLine->setState(M);
+                    else dirLine->setState(E);
+                }
+                return DONE;
+            } else return STALL;
+        default:
+            d_->fatal(CALL_INFO, -1, "%s, Error: Received %s in unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    name_.c_str(), CommandString[event->getCmd()], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), ((Component*)owner_)->getCurrentSimTimeNano());
+    }
+
+    forwardFlushLine(event, dirLine, dirLine && dirLine->getState() == M, FlushLine);
+    if (dirLine && dirLine->getState() != I) dirLine->setState(S_B);
+    else if (dirLine) dirLine->setState(I_B);
+    event->setInProgress(true);
+    return STALL;   // wait for response
+}
+
+
+/**
+ * Handler for cache line flush requests
+ * Invalidate owner/sharers
+ * Invalidate local
+ * Forward
+ */
+
+CacheAction MESIInternalDirectory::handleFlushLineInvRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent, bool replay) {
+    State state = dirLine ? dirLine->getState() : I;
+    if (!replay) recordStateEventCount(event->getCmd(), state);
+
+    bool isCached = dirLine && dirLine->getDataLine() != NULL;
+    if (event->getPayloadSize() != 0) {
+        if (isCached) dirLine->getDataLine()->setData(event->getPayload(), event);
+        else if (mshr_->isHit(event->getBaseAddr())) mshr_->setTempData(event->getBaseAddr(), event->getPayload());
+    }
+
+    // Apply incoming flush -> remove if owner
+    if (state == M || state == E) {
+        if (dirLine->getOwner() == event->getSrc()) {
+            dirLine->clearOwner();
+            if (event->getDirty()) {
+                dirLine->setState(M);
+                state = M;
+            }
+        }
+    }
+    CacheAction reqEventAction; // What to do with the reqEvent
+    uint64_t sendTime = 0;
+    // Handle flush at local level
+    switch (state) {
+        case I:
+            if (reqEvent != NULL) return STALL;
+            break;
+        case S:
+            if (dirLine->isSharer(event->getSrc())) dirLine->removeSharer(event->getSrc());
+            if (dirLine->numSharers() > 0) {
+                invalidateAllSharers(dirLine, event->getRqstr(), replay);
+                dirLine->setState(S_Inv);
+                return STALL;
+            }
+            break;
+        case E:
+        case M:
+            if (dirLine->isSharer(event->getSrc())) dirLine->removeSharer(event->getSrc());
+            if (dirLine->ownerExists()) {
+                sendFetchInv(dirLine, event->getRqstr(), replay);
+                mshr_->incrementAcksNeeded(event->getBaseAddr());
+                state == E ? dirLine->setState(E_Inv) : dirLine->setState(M_Inv);
+                return STALL;
+            }
+            if (dirLine->numSharers() > 0) {
+                invalidateAllSharers(dirLine, event->getRqstr(), replay);
+                state == E ? dirLine->setState(E_Inv) : dirLine->setState(M_Inv);
+                return STALL;
+            }
+            break;
+        case IM:
+        case IS:
+        case SM:
+            return STALL; // Wait for the Get* request to finish
+        case SM_D:
+            if (*(dirLine->getSharers()->begin()) == event->getSrc()) { // Flush raced with Fetch
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+            }
+            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
+                if (reqEvent->getCmd() == Fetch) {
+                    dirLine->setState(SM);
+                    sendResponseDownFromMSHR(event, false);
+                    return DONE;
+                }
+            } 
+            return STALL;
+        
+        case S_D:
+        case E_D:
+        case M_D:
+            if (*(dirLine->getSharers()->begin()) == event->getSrc()) {
+                mshr_->decrementAcksNeeded(event->getBaseAddr()); 
+            }
+            if (dirLine->isSharer(event->getSrc())) {
+                dirLine->removeSharer(event->getSrc());
+            }
+            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
+                if (state == S_D) dirLine->setState(S);
+                if (state == E_D) dirLine->setState(E);
+                if (state == M_D) dirLine->setState(M);
+                if (reqEvent->getCmd() == Fetch) {
+                    if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
+                        if (state == M_D || event->getDirty()) sendWritebackFromMSHR(PutM, dirLine, reqEvent->getRqstr(), &event->getPayload());
+                        else if (state == E_D) sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
+                        else if (state == S_D) sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), &event->getPayload());
+                        dirLine->setState(I);
+                    } else {
+                        sendResponseDownFromMSHR(event, (state == M_D || event->getDirty()) ? true : false);
+                    }
+                } else if (reqEvent->getCmd() == GetS) {
+                    notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
+                    if (dirLine->numSharers() > 0 || state == S_D) {
+                        dirLine->addSharer(reqEvent->getSrc());
+                        sendTime = sendResponseUp(reqEvent, S, &event->getPayload(), true, dirLine->getTimestamp());
+                        dirLine->setTimestamp(sendTime);
+                    } else {
+                        dirLine->setOwner(reqEvent->getSrc());
+                        sendTime = sendResponseUp(reqEvent, E, &event->getPayload(), true, dirLine->getTimestamp());
+                        dirLine->setTimestamp(sendTime);
+                    }
+#ifdef __SST_DEBUG_OUTPUT__
+                    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
+#endif
+                } else {
+                    d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received FlushLineInv in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
+                            name_.c_str(), StateString[state], CommandString[reqEvent->getCmd()], event->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
+                }
+                return DONE;
+            }
+            return STALL;
+        case S_Inv:
+            if (dirLine->isSharer(event->getSrc())) {
+                dirLine->removeSharer(event->getSrc());
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+            }
+            reqEventAction = (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) ? DONE : STALL;
+            if (reqEventAction == DONE) {
+                if (reqEvent->getCmd() == Inv) {
+                    sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
+                    dirLine->setState(I);
+                } else if (reqEvent->getCmd() == Fetch || reqEvent->getCmd() == FetchInv || reqEvent->getCmd() == FetchInvX) {
+                    sendResponseDownFromMSHR(event, false);
+                    dirLine->setState(I);
+                } else if (reqEvent->getCmd() == FlushLineInv) {
+                    forwardFlushLine(reqEvent, dirLine, false, FlushLineInv);
+                    reqEventAction = STALL;
+                    dirLine->setState(I_B);
+                }
+            }
+            return reqEventAction;
+        case SM_Inv:
+            if (dirLine->isSharer(event->getSrc())) {
+                dirLine->removeSharer(event->getSrc());
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+            }
+            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
+                if (reqEvent->getCmd() == Inv) {
+                    if (dirLine->numSharers() > 0) {  // May not have invalidated GetX requestor -> cannot also be the FlushLine requestor since that one is in I and blocked on flush
+                        invalidateAllSharers(dirLine, reqEvent->getRqstr(), true);
+                        return STALL;
+                    } else {
+                        sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
+                        dirLine->setState(IM);
+                        return DONE;
+                    }
+                } else if (reqEvent->getCmd() == GetXResp) {
+                    dirLine->setState(SM);
+                    return STALL; // Waiting for GetXResp
+                }
+                d_->fatal(CALL_INFO, -1, "%s, Error: Received %s in state SM_Inv but case does not match an implemented handler. Addr = 0x%" PRIx64 ", Src = %s, OrigEvent = %s. Time = %" PRIu64 "ns\n",
+                        name_.c_str(), CommandString[event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), CommandString[reqEvent->getCmd()], ((Component*)owner_)->getCurrentSimTimeNano());
+            }
+            return STALL;
+        case MI:
+            if (dirLine->getOwner() == event->getSrc()) {
+                dirLine->clearOwner();
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+            } else if (dirLine->isSharer(event->getSrc())) {
+                dirLine->removeSharer(event->getSrc());
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+            }
+            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
+                if (isCached) sendWritebackFromCache(PutM, dirLine, name_);
+                else sendWritebackFromMSHR(PutM, dirLine, name_, mshr_->getTempData(event->getBaseAddr()));
+                if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
+                dirLine->setState(I);
+                return DONE;
+            } else return STALL;
+        case EI:
+            if (dirLine->getOwner() == event->getSrc()) {
+                dirLine->clearOwner();
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+            } else if (dirLine->isSharer(event->getSrc())) {
+                dirLine->removeSharer(event->getSrc());
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+            }
+            if (event->getDirty()) dirLine->setState(MI);
+            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
+                if (isCached && event->getDirty()) sendWritebackFromCache(PutM, dirLine, name_);
+                else if (isCached) sendWritebackFromCache(PutE, dirLine, name_);
+                else if (event->getDirty()) sendWritebackFromMSHR(PutM, dirLine, name_, mshr_->getTempData(event->getBaseAddr()));
+                else sendWritebackFromMSHR(PutE, dirLine, name_, mshr_->getTempData(event->getBaseAddr()));
+                if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
+                dirLine->setState(I);
+                return DONE;
+            } else return STALL;
+        case SI:
+            if (dirLine->isSharer(event->getSrc())) {
+                dirLine->removeSharer(event->getSrc());
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+            }
+            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
+                if (isCached) sendWritebackFromCache(PutS, dirLine, name_);
+                else sendWritebackFromMSHR(PutS, dirLine, name_, mshr_->getTempData(event->getBaseAddr()));
+                if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
+                dirLine->setState(I);
+                return DONE;
+            } else return STALL;
+        case M_Inv:
+            if (dirLine->isSharer(event->getSrc())) {
+                dirLine->removeSharer(event->getSrc());
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+            } else if (dirLine->getOwner() == event->getSrc()) {
+                dirLine->clearOwner();
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+            }
+            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
+                if (reqEvent->getCmd() == FetchInv) {
+                    sendResponseDown(reqEvent, dirLine, &event->getPayload(), true, true);
+                    dirLine->setState(I);
+                    return DONE;
+                } else if (reqEvent->getCmd() == GetX || reqEvent->getCmd() == GetSEx) {
+                    dirLine->setOwner(reqEvent->getSrc());
+                    if (dirLine->isSharer(reqEvent->getSrc())) dirLine->removeSharer(reqEvent->getSrc());
+                    sendTime = sendResponseUp(reqEvent, M, (isCached ? dirLine->getDataLine()->getData() : mshr_->getTempData(event->getBaseAddr())), true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
+                    dirLine->setState(M);
+                    return DONE;
+                } else if (reqEvent->getCmd() == FlushLineInv) {
+                    forwardFlushLine(reqEvent, dirLine, true, FlushLineInv);
+                    dirLine->setState(I_B);
+                    return STALL;
+                }
+            } else return STALL;
+        case E_Inv:
+            if (dirLine->isSharer(event->getSrc())) {
+                dirLine->removeSharer(event->getSrc());
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+            } else if (dirLine->getOwner() == event->getSrc()) {
+                dirLine->clearOwner();
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+            }
+            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
+                if (reqEvent->getCmd() == FetchInv) {
+                    sendResponseDown(reqEvent, dirLine, &event->getPayload(), event->getDirty(), true);
+                    dirLine->setState(I);
+                    return DONE;
+                } else if (reqEvent->getCmd() == FlushLineInv) {
+                    forwardFlushLine(reqEvent, dirLine, reqEvent->getDirty(), FlushLineInv);
+                    dirLine->setState(I_B);
+                    return STALL;
+
+                }
+            } else return STALL;
+        case M_InvX:
+        case E_InvX:
+            if (dirLine->getOwner() == event->getSrc()) {
+                mshr_->decrementAcksNeeded(event->getBaseAddr());
+                dirLine->clearOwner();
+            }
+            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
+                if (reqEvent->getCmd() == FetchInvX) {
+                    if (!isCached) {
+                        sendWritebackFromMSHR((event->getDirty() || state == M_InvX) ? PutM : PutE, dirLine, event->getRqstr(), &event->getPayload());
+                        dirLine->setState(I);
+                        if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
+                    } else {
+                        sendResponseDownFromMSHR(event, (state == M_InvX || event->getDirty()));
+                        dirLine->setState(S);
+                    }   
+                } else {
+                    notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
+                    if (protocol_) {
+                        sendTime = sendResponseUp(reqEvent, E, &event->getPayload(), true, dirLine->getTimestamp());
+                        dirLine->setTimestamp(sendTime);
+                        dirLine->addSharer(reqEvent->getSrc());
+                    } else {
+                        sendTime = sendResponseUp(reqEvent, S, &event->getPayload(), true, dirLine->getTimestamp());
+                        dirLine->setTimestamp(sendTime);
+                        dirLine->addSharer(reqEvent->getSrc());
+                    }
+#ifdef __SST_DEBUG_OUTPUT__
+                    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
+#endif
+                }
+
+                (state == M_InvX || event->getDirty()) ? dirLine->setState(M) : dirLine->setState(E);
+                return DONE;
+            } else return STALL;
+        default:
+            d_->fatal(CALL_INFO, -1, "%s, Error: Received %s in unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    name_.c_str(), CommandString[event->getCmd()], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), ((Component*)owner_)->getCurrentSimTimeNano());
+    }
+
+    forwardFlushLine(event, dirLine, dirLine && dirLine->getState() == M, FlushLineInv);
+    if (dirLine) dirLine->setState(I_B);
+    return STALL;   // wait for response
+}
+
+
 /**
  *  Handler for 'Inv' requests
  *  Invalidate sharers if needed
@@ -779,34 +1193,44 @@ CacheAction MESIInternalDirectory::handleInv(MemEvent* event, CacheLine* dirLine
     recordStateEventCount(event->getCmd(), state);    
     
     switch(state) {
+        case I_B:   // Already forwarded our flush
+            return DONE;
+        case S_B:
         case S:
             if (dirLine->numSharers() > 0) {
                 invalidateAllSharers(dirLine, event->getRqstr(), replay);
-                dirLine->setState(S_Inv);
+                state == S_B ? dirLine->setState(SB_Inv) : dirLine->setState(S_Inv);
+                // Resolve races with waiting PutS requests
                 while (collisionEvent != NULL) {
-                    mshr_->removeFront(event->getBaseAddr());   // We've sent an inv to them so no need for AckPut
-                    delete collisionEvent;
-                    collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? mshr_->lookupFront(event->getBaseAddr()) : NULL;
-                    mshr_->decrementAcksNeeded(event->getBaseAddr());
-                    if (collisionEvent == NULL || collisionEvent->getCmd() != PutS) collisionEvent = NULL;
+                    if (collisionEvent->getCmd() == PutS) {
+                        dirLine->removeSharer(collisionEvent->getSrc());
+                        mshr_->decrementAcksNeeded(event->getBaseAddr());
+                        mshr_->removeElement(event->getBaseAddr(), collisionEvent);   
+                        delete collisionEvent;
+                        collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? mshr_->lookupFront(event->getBaseAddr()) : NULL;
+                        if (collisionEvent && collisionEvent->getCmd() != PutS) collisionEvent = NULL;
+                    } else collisionEvent = NULL;
                 }
                 if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) return STALL;
             }
             sendAckInv(event->getBaseAddr(), event->getRqstr());
-            dirLine->setState(I);
+            state == S_B ? dirLine->setState(I_B) : dirLine->setState(I);
             return DONE;
         case SM:
             if (dirLine->numSharers() > 0) {
                 invalidateAllSharers(dirLine, event->getRqstr(), replay);
                 dirLine->setState(SM_Inv);
                 while (collisionEvent != NULL) {
-                    mshr_->removeFront(event->getBaseAddr());   // We've sent an inv to them so no need for AckPut
-                    delete collisionEvent;
-                    collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? mshr_->lookupFront(event->getBaseAddr()) : NULL;
-                    mshr_->decrementAcksNeeded(event->getBaseAddr());
-                    if (collisionEvent == NULL || collisionEvent->getCmd() != PutS) collisionEvent = NULL;
+                    if (collisionEvent->getCmd() == PutS) {
+                        dirLine->removeSharer(collisionEvent->getSrc());
+                        mshr_->decrementAcksNeeded(event->getBaseAddr());
+                        mshr_->removeFront(event->getBaseAddr());   // We've sent an inv to them so no need for AckPut
+                        delete collisionEvent;
+                        collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? mshr_->lookupFront(event->getBaseAddr()) : NULL;
+                        if (collisionEvent == NULL || collisionEvent->getCmd() != PutS) collisionEvent = NULL;
+                    } else collisionEvent = NULL;
                 }
-                if (mshr_->getAcksNeeded(event->getBaseAddr())) return STALL;
+                if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) return STALL;
             }
             sendAckInv(event->getBaseAddr(), event->getRqstr());
             dirLine->setState(IM);
@@ -869,14 +1293,17 @@ CacheAction MESIInternalDirectory::handleFetch(MemEvent * event, CacheLine * dir
  *  Handler for FetchInv requests
  *  Invalidate owner and/or sharers if needed
  *  Send FetchResp if no further invalidations are needed
+ *  Collision can be a Put waiting for an AckPut or a Flush waiting for a FlushResp
  */
 CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
     State state = dirLine->getState();
     recordStateEventCount(event->getCmd(), state);    
     
     bool isCached = dirLine->getDataLine() != NULL;
-    bool collision = collisionEvent != NULL;
-    if (collision) {   // Treat the replacement as if it had already occured/raced with an earlier FetchInv
+    bool collision = false;
+    // If colliding event is a replacement, treat the replacement as if it had aleady occured/raced with an earlier FetchInv
+    if (collisionEvent && collisionEvent->isWriteback()) {
+        collision = true;
         if (dirLine->isSharer(collisionEvent->getSrc())) dirLine->removeSharer(collisionEvent->getSrc());
         if (dirLine->ownerExists()) dirLine->clearOwner();
         mshr_->setTempData(collisionEvent->getBaseAddr(), collisionEvent->getPayload());
@@ -884,12 +1311,13 @@ CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * 
         state = M;
         mshr_->removeFront(dirLine->getBaseAddr());
         delete collisionEvent;
-    }
+    } 
 
     switch (state) {
         case I:
         case IS:
         case IM:
+        case I_B:
             return IGNORE;
         case S:
             if (dirLine->numSharers() > 0) {
@@ -910,10 +1338,19 @@ CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * 
                 dirLine->setState(SM_Inv);
                 return STALL;
             }
-            if (dirLine->getDataLine() == NULL && !collision) d_->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
+            if (dirLine->getDataLine() == NULL) d_->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
                     name_.c_str(), event->getAddr(), StateString[state]);
             sendResponseDown(event, dirLine, collision ? mshr_->getTempData(dirLine->getBaseAddr()) : dirLine->getDataLine()->getData(), false, replay);
             dirLine->setState(IM);
+            return DONE;
+        case S_B:
+            if (dirLine->numSharers() > 0) {
+                invalidateAllSharers(dirLine, event->getRqstr(), replay);
+                dirLine->setState(SB_Inv);
+                return STALL;
+            }
+            sendAckInv(event->getBaseAddr(), event->getRqstr());
+            dirLine->setState(I_B);
             return DONE;
         case E:
             if (dirLine->ownerExists()) {
@@ -964,6 +1401,8 @@ CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * 
         case E_InvX:
         case M_Inv:
         case M_InvX:
+            // Handle incoming Inv before a pending flushline to avoid deadlock
+            if (collisionEvent->getCmd() == FlushLine || collisionEvent->getCmd() == FlushLineInv) return STALL;
             return BLOCK;
         default:
             d_->fatal(CALL_INFO,-1,"%s (dir), Error: Received FetchInv but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
@@ -983,7 +1422,7 @@ CacheAction MESIInternalDirectory::handleFetchInvX(MemEvent * event, CacheLine *
     recordStateEventCount(event->getCmd(), state);    
     
     bool isCached = dirLine->getDataLine() != NULL;
-    bool collision = collisionEvent != NULL;
+    bool collision = collisionEvent && collisionEvent->isWriteback();
     if (collision) {   // Treat the replacement as if it had already occured/raced with an earlier FetchInv
         if (state == E && collisionEvent->getDirty()) dirLine->setState(M);
         state = M;
@@ -993,6 +1432,8 @@ CacheAction MESIInternalDirectory::handleFetchInvX(MemEvent * event, CacheLine *
         case I:
         case IS:
         case IM:
+        case I_B:
+        case S_B:
             return IGNORE;
         case E:
             if (collision) {
@@ -1056,9 +1497,11 @@ CacheAction MESIInternalDirectory::handleFetchInvX(MemEvent * event, CacheLine *
         case E_InvX:
         case M_Inv:
         case M_InvX:
+            // Handle incoming Inv before FlushLine to avoid deadlock
+            if (collisionEvent->getCmd() == FlushLine || collisionEvent->getCmd() == FlushLineInv) return STALL;
             return BLOCK;
         default:
-            d_->fatal(CALL_INFO,-1,"%s (dir), Error: Received FetchInv but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
+            d_->fatal(CALL_INFO,-1,"%s (dir), Error: Received FetchInvX but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
                         name_.c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], ((Component *)owner_)->getCurrentSimTimeNano());
     }
     return DONE;
@@ -1123,9 +1566,11 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
     // Check acks needed
     if (mshr_->getAcksNeeded(responseEvent->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(responseEvent->getBaseAddr());
     CacheAction action = (mshr_->getAcksNeeded(responseEvent->getBaseAddr()) == 0) ? DONE : IGNORE;
+    
     bool isCached = dirLine->getDataLine() != NULL;
     if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), responseEvent);    // Update local data if needed
     recordStateEventCount(responseEvent->getCmd(), state);
+    
     uint64_t sendTime = 0; 
     switch (state) {
         case S_D:
@@ -1169,15 +1614,27 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
                 dirLine->setState(I);
             }
             break;
-        case E_InvX:    // FetchXResp for a GetS or FetchInvX
-        case M_InvX:    // FetchXResp for FetchInvX or GetS
+        case E_InvX:    // FetchXResp for a GetS, FetchInvX, or FlushLine
+        case M_InvX:    // FetchXResp for a GetS, FetchInvX, or FlushLine
             if (dirLine->getOwner() == responseEvent->getSrc()) {
                 dirLine->clearOwner();
                 dirLine->addSharer(responseEvent->getSrc());
             }
+            if (!isCached) mshr_->setTempData(responseEvent->getBaseAddr(), responseEvent->getPayload());
             if (reqEvent->getCmd() == FetchInvX) {
                 sendResponseDownFromMSHR(responseEvent, (state == M_InvX || responseEvent->getDirty()));
                 dirLine->setState(S);
+            } else if (reqEvent->getCmd() == FetchInv) {    // External FetchInv raced with our FlushLine, handle it first
+                if (dirLine->numSharers() > 0) {
+                    invalidateAllSharers(dirLine, reqEvent->getRqstr(), true);
+                    (state == M_InvX || responseEvent->getDirty())?  dirLine->setState(M_Inv) : dirLine->setState(E_Inv);
+                    return STALL;
+                }
+                (state == M_InvX || responseEvent->getDirty()) ? dirLine->setState(M) : dirLine->setState(E);
+                sendResponseDownFromMSHR(responseEvent, (state == M_InvX || responseEvent->getDirty()));
+            } else if (reqEvent->getCmd() == FlushLine) {
+                (state == M_InvX || responseEvent->getDirty()) ? dirLine->setState(M) : dirLine->setState(E);
+                action = handleFlushLineRequest(reqEvent, dirLine, NULL, true);
             } else {
                 notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
                 dirLine->addSharer(reqEvent->getSrc());
@@ -1188,8 +1645,8 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
                 else dirLine->setState(E);
             }
             break;
-        case E_Inv: // FetchResp for FetchInv, may also be waiting for acks
-        case M_Inv: // FetchResp for FetchInv or GetX, may also be waiting for acks
+        case E_Inv: // FetchResp for FetchInv/flush, may also be waiting for acks
+        case M_Inv: // FetchResp for FetchInv/flush or GetX, may also be waiting for acks
             if (dirLine->isSharer(responseEvent->getSrc())) dirLine->removeSharer(responseEvent->getSrc());
             if (dirLine->getOwner() == responseEvent->getSrc()) dirLine->clearOwner();
             if (action != DONE) {
@@ -1203,6 +1660,18 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
                     sendTime = sendResponseUp(reqEvent, M, &responseEvent->getPayload(), true, dirLine->getTimestamp());
                     dirLine->setTimestamp(sendTime);
                     dirLine->setState(M);
+                } else if (reqEvent->getCmd() == FlushLineInv) {
+                    if (responseEvent->getDirty()) {
+                        if (dirLine->getDataLine() != NULL) dirLine->getDataLine()->setData(responseEvent->getPayload(), responseEvent);
+                        else mshr_->setTempData(responseEvent->getBaseAddr(), responseEvent->getPayload());
+                    }
+                    if (responseEvent->getDirty() || state == M_Inv) dirLine->setState(M);
+                    else dirLine->setState(E);
+                    if (action != DONE) { // Sanity check...
+                        d_->fatal(CALL_INFO, -1, "%s, Error: Received a FetchResp to a FlushLineInv but still waiting on more acks. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                            name_.c_str(), responseEvent->getBaseAddr(), CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str(), ((Component*)owner_)->getCurrentSimTimeNano()); 
+                    }
+                    action = handleFlushLineInvRequest(reqEvent, dirLine, NULL, true);
                 } else {
                     sendResponseDownFromMSHR(responseEvent, (state == M_Inv || responseEvent->getDirty()));
                     dirLine->setState(I);
@@ -1291,6 +1760,16 @@ CacheAction MESIInternalDirectory::handleAckInv(MemEvent * ack, CacheLine * dirL
                 }
             }
             return action;  
+        case SB_Inv:
+            if (action == DONE) {
+                if (dirLine->numSharers() > 0) {
+                    invalidateAllSharers(dirLine, reqEvent->getRqstr(), true);
+                    return IGNORE;
+                }
+                sendAckInv(ack->getBaseAddr(), ack->getRqstr());
+                dirLine->setState(I_B);
+            }
+            return action;
         case SI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), data);
@@ -1335,7 +1814,7 @@ void MESIInternalDirectory::invalidateAllSharers(CacheLine * dirLine, string rqs
         inv->setDst(*it);
         inv->setRqstr(rqstr);
     
-        Response resp = {inv, deliveryTime, false, 8 + inv->getPayloadSize()};
+        Response resp = {inv, deliveryTime, false, packetHeaderBytes_ + inv->getPayloadSize()};
         addToOutgoingQueueUp(resp);
 
         mshr_->incrementAcksNeeded(dirLine->getBaseAddr());
@@ -1368,7 +1847,7 @@ void MESIInternalDirectory::invalidateAllSharersAndFetch(CacheLine * cacheLine, 
         inv->setRqstr(rqstr);
         inv->setSize(cacheLine->getSize());
     
-        Response resp = {inv, deliveryTime, false, 8 + inv->getPayloadSize()};
+        Response resp = {inv, deliveryTime, false, packetHeaderBytes_ + inv->getPayloadSize()};
         addToOutgoingQueueUp(resp);
         invSent = true;
 
@@ -1409,7 +1888,7 @@ bool MESIInternalDirectory::invalidateSharersExceptRequestor(CacheLine * cacheLi
         inv->setRqstr(origRqstr);
         inv->setSize(cacheLine->getSize());
 
-        Response resp = {inv, deliveryTime, false, 8 + inv->getPayloadSize()};
+        Response resp = {inv, deliveryTime, false, packetHeaderBytes_ + inv->getPayloadSize()};
         addToOutgoingQueueUp(resp);
         sentInv = true;
 
@@ -1435,7 +1914,7 @@ void MESIInternalDirectory::sendFetchInv(CacheLine * cacheLine, string rqstr, bo
     
     uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
     uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
-    Response resp = {fetch, deliveryTime, false, 8 + fetch->getPayloadSize()};
+    Response resp = {fetch, deliveryTime, false, packetHeaderBytes_ + fetch->getPayloadSize()};
     addToOutgoingQueueUp(resp);
     cacheLine->setTimestamp(deliveryTime);
    
@@ -1454,7 +1933,7 @@ void MESIInternalDirectory::sendFetchInvX(CacheLine * cacheLine, string rqstr, b
     
     uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
     uint64_t deliveryTime = (replay) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-    Response resp = {fetch, deliveryTime, false, 8 + fetch->getPayloadSize()};
+    Response resp = {fetch, deliveryTime, false, packetHeaderBytes_ + fetch->getPayloadSize()};
     addToOutgoingQueueUp(resp);
     cacheLine->setTimestamp(deliveryTime);
     
@@ -1472,7 +1951,7 @@ void MESIInternalDirectory::sendFetch(CacheLine * cacheLine, string rqstr, bool 
     
     uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
     uint64_t deliveryTime = baseTime + tagLatency_;
-    Response resp = {fetch, deliveryTime, false, 8 + fetch->getPayloadSize()};
+    Response resp = {fetch, deliveryTime, false, packetHeaderBytes_ + fetch->getPayloadSize()};
     addToOutgoingQueueUp(resp);
     cacheLine->setTimestamp(deliveryTime);
     
@@ -1497,7 +1976,7 @@ void MESIInternalDirectory::sendResponseDown(MemEvent* event, CacheLine * cacheL
 
     uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
     uint64 deliveryTime = replay ? baseTime + mshrLatency_ : baseTime + accessLatency_;
-    Response resp  = {responseEvent, deliveryTime, false, 8 + responseEvent->getPayloadSize()};
+    Response resp  = {responseEvent, deliveryTime, false, packetHeaderBytes_ + responseEvent->getPayloadSize()};
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime);
     
@@ -1517,7 +1996,7 @@ void MESIInternalDirectory::sendResponseDownFromMSHR(MemEvent * event, bool dirt
     responseEvent->setDirty(dirty);
 
     uint64_t deliveryTime = timestamp_ + mshrLatency_;
-    Response resp = {responseEvent, deliveryTime, false, 8 + responseEvent->getPayloadSize()};
+    Response resp = {responseEvent, deliveryTime, false, packetHeaderBytes_ + responseEvent->getPayloadSize()};
     addToOutgoingQueue(resp);
     
 #ifdef __SST_DEBUG_OUTPUT__
@@ -1533,7 +2012,7 @@ void MESIInternalDirectory::sendAckInv(Addr baseAddr, string origRqstr) {
     ack->setRqstr(origRqstr);
     
     uint64_t deliveryTime = timestamp_ + tagLatency_;
-    Response resp = {ack, deliveryTime, false, 8 + ack->getPayloadSize()};
+    Response resp = {ack, deliveryTime, false, packetHeaderBytes_ + ack->getPayloadSize()};
     addToOutgoingQueue(resp);
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L3_,"Sending AckInv at cycle = %" PRIu64 "\n", deliveryTime);
@@ -1548,7 +2027,7 @@ void MESIInternalDirectory::sendWritebackAck(MemEvent * event) {
     ack->setSize(event->getSize());
 
     uint64_t deliveryTime = timestamp_ + tagLatency_;
-    Response resp = {ack, deliveryTime, false, 8 + ack->getPayloadSize()};
+    Response resp = {ack, deliveryTime, false, packetHeaderBytes_ + ack->getPayloadSize()};
     addToOutgoingQueueUp(resp);
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_, "Sending AckPut at cycle = %" PRIu64 "\n", deliveryTime);
@@ -1566,7 +2045,7 @@ void MESIInternalDirectory::sendWritebackFromCache(Command cmd, CacheLine * dirL
     if (cmd == PutM) writeback->setDirty(true);
     uint64_t baseTime = (timestamp_ > dirLine->getTimestamp()) ? timestamp_ : dirLine->getTimestamp();
     uint64_t deliveryTime = baseTime + accessLatency_;
-    Response resp = {writeback, deliveryTime, false, 8 + writeback->getPayloadSize()};
+    Response resp = {writeback, deliveryTime, false, packetHeaderBytes_ + writeback->getPayloadSize()};
     addToOutgoingQueue(resp);
     dirLine->setTimestamp(deliveryTime);
     
@@ -1585,10 +2064,54 @@ void MESIInternalDirectory::sendWritebackFromMSHR(Command cmd, CacheLine * dirLi
     writeback->setRqstr(rqstr);
     if (cmd == PutM) writeback->setDirty(true);
     uint64_t deliveryTime = timestamp_ + accessLatency_;
-    Response resp = {writeback, deliveryTime, false, 8 + writeback->getPayloadSize()};
+    Response resp = {writeback, deliveryTime, false, packetHeaderBytes_ + writeback->getPayloadSize()};
     addToOutgoingQueue(resp);
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == dirLine->getBaseAddr()) d_->debug(_L3_, "Sending writeback at cycle = %" PRIu64 ", Cmd = %s. From MSHR\n", deliveryTime, CommandString[cmd]);
+#endif
+}
+
+void MESIInternalDirectory::sendFlushResponse(MemEvent * requestEvent, bool success) {
+    MemEvent * flushResponse = requestEvent->makeResponse();
+    flushResponse->setSuccess(success);
+    flushResponse->setDst(requestEvent->getSrc());
+
+    uint64_t deliveryTime = timestamp_ + mshrLatency_;
+    Response resp = {flushResponse, deliveryTime, false, packetHeaderBytes_ + flushResponse->getPayloadSize()};
+    addToOutgoingQueueUp(resp);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == requestEvent->getBaseAddr()) { 
+        d_->debug(_L3_,"Sending Flush Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[flushResponse->getCmd()], flushResponse->getSrc().c_str());
+    }
+#endif
+}
+
+/**
+ *  Forward a flush line request, with or without data
+ */
+void MESIInternalDirectory::forwardFlushLine(MemEvent * origFlush, CacheLine * dirLine, bool dirty, Command cmd) {
+    MemEvent * flush = new MemEvent((SST::Component*)owner_, origFlush->getBaseAddr(), origFlush->getBaseAddr(), cmd);
+    flush->setDst(getDestination(origFlush->getBaseAddr()));
+    flush->setRqstr(origFlush->getRqstr());
+    flush->setSize(lineSize_);
+    uint64_t latency = tagLatency_;
+    if (dirty) flush->setDirty(true);
+    // Always forward data if available
+    if (dirLine) {
+        if (dirLine->getDataLine() != NULL) flush->setPayload(*dirLine->getDataLine()->getData());
+        else if (mshr_->isHit(origFlush->getBaseAddr())) flush->setPayload(*mshr_->getTempData(origFlush->getBaseAddr()));
+        else if (origFlush->getPayloadSize() != 0) flush->setPayload(origFlush->getPayload());
+    }
+    uint64_t baseTime = timestamp_;
+    if (dirLine && dirLine->getTimestamp() > baseTime) baseTime = dirLine->getTimestamp();
+    uint64_t deliveryTime = baseTime + latency;
+    Response resp = {flush, deliveryTime, false, packetHeaderBytes_ + flush->getPayloadSize()};
+    addToOutgoingQueue(resp);
+    if (dirLine) dirLine->setTimestamp(deliveryTime-1);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == origFlush->getBaseAddr()) {
+        d_->debug(_L3_,"Forwarding %s at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", CommandString[cmd], deliveryTime, CommandString[flush->getCmd()], flush->getSrc().c_str());
+    }
 #endif
 }
 

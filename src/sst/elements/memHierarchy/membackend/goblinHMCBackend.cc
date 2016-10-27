@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -52,6 +56,10 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 	if(params.find<bool>("trace-stalls", false)) {
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_STALL;
 	}
+
+        if(params.find<bool>("trace-power", false)) {
+          hmc_trace_level = hmc_trace_level | HMC_TRACE_POWER;
+        }
 
 	hmc_tag_count    = params.find<uint32_t>("tag_count", 64);
 

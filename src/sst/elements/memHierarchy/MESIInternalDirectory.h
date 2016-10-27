@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -23,12 +27,12 @@ class MESIInternalDirectory : public CoherencyController {
 public:
     /** Constructor for MESIInternalDirectory. */
     MESIInternalDirectory(const Cache* directory, string ownerName, Output* dbg, vector<Link*>* parentLinks, Link* childLink, CacheListener* listener, 
-            unsigned int lineSize, uint64 accessLatency, uint64 tagLatency, uint64 mshrLatency, bool LLC, bool LL, MSHR * mshr, bool protocol,
-            bool wbClean, MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, bool debugAll, Addr debugAddr, unsigned int reqWidth, unsigned int respWidth) :
-                 CoherencyController(directory, dbg, ownerName, lineSize, accessLatency, tagLatency, mshrLatency, LLC, LL, parentLinks, childLink, 
-                         bottomNetworkLink, topNetworkLink, listener, mshr, wbClean, debugAll, debugAddr, reqWidth, respWidth) {
+            unsigned int lineSize, uint64 accessLatency, uint64 tagLatency, uint64 mshrLatency, MSHR * mshr, CoherenceProtocol protocol,
+            MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, bool debugAll, Addr debugAddr, unsigned int reqWidth, unsigned int respWidth, unsigned int packetSize) :
+                 CoherencyController(directory, dbg, ownerName, lineSize, accessLatency, tagLatency, mshrLatency, parentLinks, childLink, 
+                         bottomNetworkLink, topNetworkLink, listener, mshr, debugAll, debugAddr, reqWidth, respWidth, packetSize) {
         d_->debug(_INFO_,"--------------------------- Initializing [MESI + Directory Controller] ... \n\n");
-        protocol_           = protocol;
+        protocol_           = protocol == CoherenceProtocol::MESI;
 
     }
 
@@ -53,7 +57,7 @@ public:
     CacheAction handleReplacement(MemEvent* event, CacheLine* dirLine, MemEvent * reqEvent, bool replay);
     
     /** Process invalidation requests - Inv, FetchInv, FetchInvX */
-    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* dirLine, bool replay);
+    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* dirLine, MemEvent * collisionEvent, bool replay);
 
     /** Process responses - GetSResp, GetXResp, FetchResp */
     CacheAction handleResponse(MemEvent* responseEvent, CacheLine* dirLine, MemEvent* origRequest);
@@ -83,6 +87,12 @@ private:
     
     /** Handle PutM request. Possibly complete a waiting request if it raced with the PutM */
     CacheAction handlePutMRequest(MemEvent* event, CacheLine * dirLine, MemEvent * origReq);
+
+    /** Handle FlushLine request. */
+    CacheAction handleFlushLineRequest(MemEvent* event, CacheLine * dirLine, MemEvent * origReq, bool replay);
+
+    /** Handle FlushLineInv request. */
+    CacheAction handleFlushLineInvRequest(MemEvent* event, CacheLine * dirLine, MemEvent * origReq, bool replay);
 
     /** Handle Inv */
     CacheAction handleInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent);
@@ -134,6 +144,12 @@ private:
 
     /** Fetch data from sharer */
     void sendFetch(CacheLine * dirLine, string rqstr, bool replay);
+
+    /** Send a flush response */
+    void sendFlushResponse(MemEvent * reqEvent, bool success);
+    
+    /** Forward a FlushLine request with or without data */
+    void forwardFlushLine(MemEvent * origFlush, CacheLine * dirLine, bool dirty, Command cmd);
 
     /** Invalidate all sharers of a block. Used for invalidations and evictions */
     void invalidateAllSharers(CacheLine * dirLine, string rqstr, bool replay);

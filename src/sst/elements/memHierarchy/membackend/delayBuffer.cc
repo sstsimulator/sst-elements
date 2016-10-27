@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -34,25 +38,27 @@ DelayBuffer::DelayBuffer(Component *comp, Params &params) : MemBackend(comp, par
     backend = dynamic_cast<MemBackend*>(loadSubComponent(backendName, backendParams));
 
     // Set up self links
-    if (delay.getRoundedValue() == 0) {
+    if (delay.getValue() != 0) {
         delay_self_link = ctrl->configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler<DelayBuffer>(this, &DelayBuffer::handleNextRequest));
     } else {
-        delay_self_link == NULL;
+        delay_self_link = NULL;
     }
 }
 
 void DelayBuffer::handleNextRequest(SST::Event *event) {
     DRAMReq * req = requestBuffer.front();
-    requestBuffer.pop();
-    backend->issueRequest(req);
+    if (!backend->issueRequest(req)) {
+        delay_self_link->send(1, NULL);
+    } else requestBuffer.pop();
 }
 
 bool DelayBuffer::issueRequest(DRAMReq *req) {
     if (delay_self_link != NULL) {
         requestBuffer.push(req);
         delay_self_link->send(1, NULL);   // Just need a wakeup
+        return true;
     } else {
-        backend->issueRequest(req);
+        return backend->issueRequest(req);
     }
 }
 

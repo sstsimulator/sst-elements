@@ -23,8 +23,7 @@ comp_l1cache.addParams({
       "cache_line_size" : "64",
       "debug" : "0",
       "L1" : "1",
-      "LL" : "1",
-      "cache_size" : "4 KB"
+      "cache_size" : "4KiB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
@@ -36,7 +35,7 @@ comp_memory.addParams({
       "backend" : "memHierarchy.dramsim",
       "backend.system_ini" : "system.ini",
       "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
-      "backend.mem_size" : "512"
+      "backend.mem_size" : "512MiB"
 })
 
 # Enable statistics

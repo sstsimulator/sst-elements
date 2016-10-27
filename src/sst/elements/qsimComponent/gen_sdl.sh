@@ -143,7 +143,7 @@ print_dirmem() {
   echo "    <params>"
   echo "      <coherence_protocol>$COHERENCEPROTO</coherence_protocol>"
   echo "      <access_time>$DRAM_ATIME</access_time>"
-  echo "      <backend.mem_size>4096</backend.mem_size>"
+  echo "      <backend.mem_size>4096MiB</backend.mem_size>"
   echo "      <clock>$DRAM_CLOCK</clock>"
   echo "    </params>"
   echo "    <link name=dir_mem_link_0 port=direct_link latency=$BUSLAT />"

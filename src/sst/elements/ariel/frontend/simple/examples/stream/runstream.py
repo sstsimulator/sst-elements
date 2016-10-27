@@ -36,7 +36,7 @@ memory = sst.Component("memory", "memHierarchy.MemController")
 memory.addParams({
         "coherence_protocol" : "MSI",
         "access_time" : "10ns",
-        "backend.mem_size" : "2048",
+        "backend.mem_size" : "2048MiB",
         "clock" : "1GHz",
         "use_dramsim" : "0",
         "device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
