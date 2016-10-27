@@ -210,6 +210,18 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     output_port_stalls = rif->registerStatistic<uint64_t>("output_port_stalls", port_name);
     idle_time = rif->registerStatistic<uint64_t>("idle_time", port_name);
 
+	// set the SAI metrics to 0
+	memset(stalled, 0.0, sizeof(stalled));
+	memset(active, 0.0, sizeof(active));
+	memset(idle, 0.0, sizeof(idle));
+	
+	sai_win_length="10us";
+	sai_win_start=Simulation::getSimulation()->getElapsedSimTime();
+
+	// reasonable values for IB are 4 or 12
+	max_link_width = 4;
+	cur_link_width = max_link_width;
+
     // Create any NetworkInspectors
     for ( unsigned int i = 0; i < inspector_names.size(); i++ ) {
         Params empty;
@@ -892,6 +904,11 @@ PortControl::handle_output_r2r(Event* ev) {
 	    }
         send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
         send_packet_count->addData(1);
+		// Convert to Gap (msg_size over bandwidth)
+		// TLG stopping point, need to figure out conversion betweeen UA of link_bw and bits
+		size_t bits_sent = send_event->getEncapsulatedEvent()->request->size_in_bits;
+		UnitAlgebra gap = bits_sent / link_bw;
+		active[1] += gap / sai_win_length;
 
         // Send the request to all the registered NetworkInspectors
         for ( unsigned int i = 0; i < network_inspectors.size(); i++ ) {
@@ -1077,3 +1094,45 @@ PortControl::handle_output_n2r(Event* ev) {
 }
 
 
+// If we are idle or stalled beyond some threshold,
+// we want to reduce the bandwidth of the outgoing traffic.
+// Each port monitors the amount of outgoing traffic.
+// Since links are bidirectional we can assume that we can configure output ports independently.
+// This should translate into potential power savings, 
+// which a power constrained system can take advantage of.
+// 
+// returns 
+bool
+PortControl::decreaseLinkWidth() {
+// We don't want to reduce the link width below 1
+if ( cur_link_width == max_link_width )
+{
+	cur_link_width = cur_link_width/2;
+	link_bw = link_bw/2;
+	UnitAlgebra link_clock = link_bw / flit_size;
+	TimeConverter* tc = parent->getTimeConverter(link_clock);
+	output_timing->setDefaultTimeBase(tc);
+}
+else return false;
+
+}
+
+// If we are active beyond some threshold,
+// we want to increase the bandwidth of the outgoing traffic.
+// Each port monitors the amount of outgoing traffic.
+// Since links are bidirectional we can assume that we can configure output ports independently.
+// This should translate into potential performance savings.
+bool
+PortControl::increaseLinkWidth() {
+// We don't want to increase the link width above the max_link_width
+if ( cur_link_width < max_link_width )
+{
+	cur_link_width = max_link_width;
+	link_bw = link_bw*2;
+	UnitAlgebra link_clock = link_bw / flit_size;
+	TimeConverter* tc = parent->getTimeConverter(link_clock);
+	output_timing->setDefaultTimeBase(tc);
+}
+else return false;
+
+}

@@ -53,6 +53,12 @@ private:
     // Number of virtual channels
     int num_vcs;
 
+	int max_link_width;
+	int cur_link_width;
+
+	// Delay before a link width can be increased (limited by PLL ~400ns to 1us).
+	UnitAlgebra link_width_transition_delay;
+
     UnitAlgebra link_bw;
     UnitAlgebra flit_size;
     UnitAlgebra input_buf_size;
@@ -125,6 +131,19 @@ private:
     Statistic<uint64_t>* output_port_stalls;
     Statistic<uint64_t>* idle_time;
 
+	// SAI Metrics (S+A+I=1) corresponds to 
+	// sai_win_start to (sai_win_start + sai_win_length)
+	// the 2nd value in each array is the next current window's values.
+	// At the end of a window these are moved to index 0.
+	float stalled[2];
+	float active[2];
+	float idle[2];
+
+	// The length of time SAI represents
+	UnitAlgebra sai_win_length;
+	// The start time of the window
+	UnitAlgebra sai_win_start;
+
     Output& output;
     
 public:
@@ -168,6 +187,9 @@ public:
     void printStatus(Output& out, int out_port_busy, int in_port_busy);
     
     // void setupVCs(int vcs, internal_router_event** vc_heads
+	
+	bool decreaseLinkWidth();
+	bool increaseLinkWidth();
     
 private:
 
