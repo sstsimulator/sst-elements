@@ -1264,7 +1264,7 @@ CacheAction MESIController::handleFetchInvX(MemEvent * event, CacheLine * cacheL
         case E_InvX:
         case M_Inv:
         case M_InvX:
-            if (collisionEvent->getCmd() == FlushLine || collisionEvent->getCmd() == FlushLineInv) return STALL;    // Handle the incoming Inv first
+            if (collisionEvent && (collisionEvent->getCmd() == FlushLine || collisionEvent->getCmd() == FlushLineInv)) return STALL;    // Handle the incoming Inv first
             return BLOCK;
         default:
             d_->fatal(CALL_INFO,-1,"%s, Error: Received FetchInvX but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
