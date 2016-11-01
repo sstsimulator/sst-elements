@@ -51,7 +51,8 @@ c_BankInfo::c_BankInfo() :
 c_BankInfo::c_BankInfo(std::map<std::string, unsigned>* x_bankParams,
 		unsigned x_bankId) :
 		m_bankParams(x_bankParams), m_bankId(x_bankId), m_bankState(
-				new c_BankStateIdle(x_bankParams)) {
+				new c_BankStateIdle(x_bankParams)),
+                m_autoPrechargeTimer(0) {
 
 	reset();
 	m_bankState->enter(this, nullptr, nullptr);
