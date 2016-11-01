@@ -58,6 +58,42 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Configuring for check addresses = %s\n", (perform_checks > 0) ? "yes" : "no");
 
         std::string memorymanager = params.find<std::string>("memmgr", "ariel.MemoryManagerSimple");
+
+        // Warn about the parameters that have moved to the subcomponent
+        bool found;
+        params.find<bool>("vtop", 0, found);
+        if (found) {
+            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'vtop' to 'memmgr.vtop' in your input.\n");
+        }
+        params.find<std::string>("pagemappolicy", "", found);
+        if (found) {
+            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'pagemappolicy' to 'memmgr.pagemappolicy' in your input.\n");
+        }
+        params.find<int>("translatecacheentries", 0, found);
+        if (found) {
+            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'translatecacheentries' to 'memmgr.translatecacheentries' in your input.\n");
+        }
+        params.find<int>("memorylevels", 0, found);
+        if (found) {
+            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'memorylevels' to 'memmgr.memorylevels' in your input.\n");
+        }
+        params.find<int>("defaultlevel", 0, found);
+        if (found) {
+            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'defaultlevel' to 'memmgr.defaultlevel' in your input.\n");
+        }
+        params.find<int>("pagesize0", 0, found);
+        if (found) {
+            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'pagesize%(memorylevels)d' to 'memmgr.pagesize%(memorylevels)d' in your input.\n");
+        }
+        params.find<int>("pagecount0", 0, found);
+        if (found) {
+            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'pagecount%(memorylevels)d' to 'memmgr.pagecount%(memorylevels)d' in your input.\n");
+        }
+        params.find<std::string>("pagepopulate0", "", found);
+        if (found) {
+            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'pagepopulate%(memorylevels)d' to 'memmgr.pagepopulate%(memorylevels)d' in your input.\n");
+        }
+
         if (!memorymanager.empty()) {
             output->verbose(CALL_INFO, 1, 0, "Loading memory manger: %s\n", memorymanager.c_str());
             Params mmParams = params.find_prefix_params("memmgr.");
