@@ -17,6 +17,8 @@
 #ifndef _H_SST_MEMH_GOBLIN_HMC_BACKEND
 #define _H_SST_MEMH_GOBLIN_HMC_BACKEND
 
+#include <queue>
+
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/output.h>
@@ -51,10 +53,10 @@ class HMCSimBackEndReq {
 		uint64_t startTime;
 };
 
-class GOBLINHMCSimBackend : public MemBackend {
+class GOBLINHMCSimBackend : public SimpleMemBackend {
 
 public:
-	GOBLINHMCSimBackend() : MemBackend() {};
+	GOBLINHMCSimBackend() : SimpleMemBackend() {};
 	GOBLINHMCSimBackend(Component* comp, Params& params);
 	~GOBLINHMCSimBackend();
 	bool issueRequest(ReqId, Addr, bool, unsigned);
@@ -64,7 +66,6 @@ public:
 
 private:
 	Component* owner;
-	Output* output;
 	struct hmcsim_t the_hmc;
 
 	uint32_t hmc_link_count;

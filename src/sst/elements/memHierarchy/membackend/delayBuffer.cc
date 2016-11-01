@@ -15,31 +15,33 @@
 
 
 #include <sst_config.h>
+#include <sst/core/link.h>
 #include "membackend/delayBuffer.h"
+
 
 using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-DelayBuffer::DelayBuffer(Component *comp, Params &params) : MemBackend(comp, params){
+DelayBuffer::DelayBuffer(Component *comp, Params &params) : SimpleMemBackend(comp, params){
     
     // Get parameters
     
     UnitAlgebra delay = params.find<UnitAlgebra>("request_delay", UnitAlgebra("0ns"));
     
     if (!(delay.hasUnits("s"))) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): request_delay - must have units of 's' (seconds). You specified %s.\n", ctrl->getName().c_str(), delay.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): request_delay - must have units of 's' (seconds). You specified %s.\n", comp->getName().c_str(), delay.toString().c_str());
     }
     
     // Create our backend & copy 'mem_size' through for now
     std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
     Params backendParams = params.find_prefix_params("backend.");
     backendParams.insert("mem_size", params.find<std::string>("mem_size"));
-    backend = dynamic_cast<MemBackend*>(loadSubComponent(backendName, backendParams));
+    backend = dynamic_cast<SimpleMemBackend*>(loadSubComponent(backendName, backendParams));
 
     // Set up self links
     if (delay.getValue() != 0) {
-        delay_self_link = ctrl->configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler<DelayBuffer>(this, &DelayBuffer::handleNextRequest));
+        delay_self_link = comp->configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler<DelayBuffer>(this, &DelayBuffer::handleNextRequest));
     } else {
         delay_self_link = NULL;
     }

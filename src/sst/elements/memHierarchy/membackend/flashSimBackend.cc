@@ -20,7 +20,7 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-FlashDIMMSimMemory::FlashDIMMSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
+FlashDIMMSimMemory::FlashDIMMSimMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){
     std::string deviceIniFilename = params.find<std::string>("device_ini", NO_STRING_DEFINED);
     if(NO_STRING_DEFINED == deviceIniFilename)
         output->fatal(CALL_INFO, -1, "Model must define a 'device_ini' file parameter\n");
@@ -86,6 +86,6 @@ void FlashDIMMSimMemory::FlashDIMMSimDone(unsigned int id, uint64_t addr, uint64
     if(0 == reqs.size())
         dramReqs.erase(addr);
 
-    ctrl->handleMemResponse(req);
+    getConvertor()->handleMemResponse(req);
     pendingRequests--;
 }

@@ -15,13 +15,14 @@
 
 
 #include <sst_config.h>
+#include "sst/elements/memHierarchy/util.h"
 #include "membackend/requestReorderSimple.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-RequestReorderSimple::RequestReorderSimple(Component *comp, Params &params) : MemBackend(comp, params){
+RequestReorderSimple::RequestReorderSimple(Component *comp, Params &params) : SimpleMemBackend(comp, params){
     
     reqsPerCycle = params.find<int>("max_requests_per_cycle", -1);
     searchWindowSize = params.find<int>("search_window_size", -1);
@@ -30,12 +31,12 @@ RequestReorderSimple::RequestReorderSimple(Component *comp, Params &params) : Me
     std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
     Params backendParams = params.find_prefix_params("backend.");
     backendParams.insert("mem_size", params.find<std::string>("mem_size"));
-    backend = dynamic_cast<MemBackend*>(loadSubComponent(backendName, backendParams));
+    backend = dynamic_cast<SimpleMemBackend*>(loadSubComponent(backendName, backendParams));
 }
 
 bool RequestReorderSimple::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned numBytes ) {
 #ifdef __SST_DEBUG_OUTPUT__
-    ctrl->dbg.debug(_L10_, "Reorderer received request for 0x%" PRIx64 "\n", (Addr)addr);
+    output->debug(_L10_, "Reorderer received request for 0x%" PRIx64 "\n", (Addr)addr);
 #endif
     requestQueue.push_back(Req(id,addr,isWrite,numBytes));
     return true;
@@ -60,14 +61,14 @@ void RequestReorderSimple::clock() {
             
             if (issued) {
 #ifdef __SST_DEBUG_OUTPUT__
-    ctrl->dbg.debug(_L10_, "Reorderer issued request for 0x%" PRIx64 "\n", (Addr)(*it).addr);
+    output->debug(_L10_, "Reorderer issued request for 0x%" PRIx64 "\n", (Addr)(*it).addr);
 #endif
                 reqsIssuedThisCycle++;
                 it = requestQueue.erase(it);
                 if (reqsIssuedThisCycle == reqsPerCycle) break;
             } else {
 #ifdef __SST_DEBUG_OUTPUT__
-    ctrl->dbg.debug(_L10_, "Reorderer could not issue 0x%" PRIx64 "\n", (Addr)(*it).addr);
+    output->debug(_L10_, "Reorderer could not issue 0x%" PRIx64 "\n", (Addr)(*it).addr);
 #endif
                 it++;
             }

@@ -34,7 +34,7 @@
 namespace SST {
 namespace MemHierarchy {
 
-class DRAMSimMemory : public MemBackend {
+class DRAMSimMemory : public SimpleMemBackend {
 public:
     DRAMSimMemory(Component *comp, Params &params);
 	virtual bool issueRequest(ReqId, Addr, bool, unsigned );

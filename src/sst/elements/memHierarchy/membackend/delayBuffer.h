@@ -23,7 +23,7 @@
 namespace SST {
 namespace MemHierarchy {
 
-class DelayBuffer : public MemBackend {
+class DelayBuffer : public SimpleMemBackend {
 public:
     DelayBuffer();
     DelayBuffer(Component *comp, Params &params);
@@ -44,7 +44,7 @@ private:
 		unsigned numBytes;
 	};
 
-    MemBackend* backend;
+    SimpleMemBackend* backend;
     unsigned int fwdDelay;
     Link * delay_self_link;
 

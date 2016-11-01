@@ -24,7 +24,7 @@
 namespace SST {
 namespace MemHierarchy {
 
-class RequestReorderRow : public MemBackend {
+class RequestReorderRow : public SimpleMemBackend {
 public:
     RequestReorderRow();
     RequestReorderRow(Component *comp, Params &params);
@@ -43,7 +43,7 @@ private:
 		bool isWrite;
 		unsigned numBytes;
 	};	
-    MemBackend* backend;
+    SimpleMemBackend* backend;
     unsigned int maxReqsPerRow; // Maximum number of requests to issue per row before moving to a new row
     unsigned int banks;         // Number of banks we're issuing to
     unsigned int nextBank;      // Next bank to issue to

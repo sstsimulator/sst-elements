@@ -22,7 +22,7 @@
 namespace SST {
 namespace MemHierarchy {
 
-class SimpleMemory : public MemBackend {
+class SimpleMemory : public SimpleMemBackend {
 public:
     SimpleMemory();
     SimpleMemory(Component *comp, Params &params);

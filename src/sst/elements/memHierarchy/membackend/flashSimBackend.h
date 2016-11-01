@@ -34,7 +34,7 @@
 namespace SST {
 namespace MemHierarchy {
 
-class FlashDIMMSimMemory : public MemBackend {
+class FlashDIMMSimMemory : public SimpleMemBackend {
 public:
     FlashDIMMSimMemory(Component *comp, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );

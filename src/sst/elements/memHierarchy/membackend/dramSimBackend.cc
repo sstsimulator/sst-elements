@@ -14,23 +14,24 @@
 // distribution.
 
 #include <sst_config.h>
+#include "sst/elements/memHierarchy/util.h"
 #include "membackend/dramSimBackend.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-DRAMSimMemory::DRAMSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
+DRAMSimMemory::DRAMSimMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){
     std::string deviceIniFilename = params.find<std::string>("device_ini", NO_STRING_DEFINED);
     if(NO_STRING_DEFINED == deviceIniFilename)
-        ctrl->dbg.fatal(CALL_INFO, -1, "Model must define a 'device_ini' file parameter\n");
+        output->fatal(CALL_INFO, -1, "Model must define a 'device_ini' file parameter\n");
     std::string systemIniFilename = params.find<std::string>("system_ini", NO_STRING_DEFINED);
     if(NO_STRING_DEFINED == systemIniFilename)
-        ctrl->dbg.fatal(CALL_INFO, -1, "Model must define a 'system_ini' file parameter\n");
+        output->fatal(CALL_INFO, -1, "Model must define a 'system_ini' file parameter\n");
 
 
     UnitAlgebra ramSize = UnitAlgebra(params.find<std::string>("mem_size", "0B"));
     if (ramSize.getRoundedValue() % (1024*1024) != 0) {
-        ctrl->dbg.fatal(CALL_INFO, -1, "For DRAMSim, backend.mem_size must be a multiple of 1MiB. Note: for units in base-10 use 'MB', for base-2 use 'MiB'. You specified '%s'\n", ramSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "For DRAMSim, backend.mem_size must be a multiple of 1MiB. Note: for units in base-10 use 'MB', for base-2 use 'MiB'. You specified '%s'\n", ramSize.toString().c_str());
     }
     unsigned int ramSizeMiB = ramSize.getRoundedValue() / (1024*1024);
 
@@ -55,7 +56,7 @@ bool DRAMSimMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned ){
     ok = memSystem->addTransaction(isWrite, addr);
     if(!ok) return false;  // This *SHOULD* always be ok
 #ifdef __SST_DEBUG_OUTPUT__
-    ctrl->dbg.debug(_L10_, "Issued transaction for address %" PRIx64 "\n", (Addr)addr);
+    output->debug(_L10_, "Issued transaction for address %" PRIx64 "\n", (Addr)addr);
 #endif
     dramReqs[addr].push_back(id);
     return true;
@@ -78,7 +79,7 @@ void DRAMSimMemory::finish(){
 void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
     std::deque<ReqId> &reqs = dramReqs[addr];
 #ifdef __SST_DEBUG_OUTPUT__
-    ctrl->dbg.debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
+    output->debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
 #endif
     assert(reqs.size());
     ReqId reqId = reqs.front();
@@ -86,5 +87,5 @@ void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcy
     if(0 == reqs.size())
         dramReqs.erase(addr);
 
-    ctrl->handleMemResponse(reqId);
+    getConvertor()->handleMemResponse(reqId);
 }

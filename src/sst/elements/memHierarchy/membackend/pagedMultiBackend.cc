@@ -18,9 +18,12 @@
 
 #include <limits>
 
-#include "membackend/pagedMultiBackend.h"
+#include <sst/core/link.h>
+#include <sst/core/timeConverter.h>
 #include "sst/core/rng/mersenne.h"
 #include "sst/core/timeLord.h" // is this allowed?
+#include "sst/elements/memHierarchy/util.h"
+#include "membackend/pagedMultiBackend.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -32,7 +35,7 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
 
 
     string access = params.find<std::string>("access_time", "35ns");
-    self_link = ctrl->configureSelfLink("Self", access,
+    self_link = comp->configureSelfLink("Self", access,
                                         new Event::Handler<pagedMultiMemory>(this, &pagedMultiMemory::handleSelfEvent));
 
     maxFastPages = params.find<unsigned int>("max_fast_pages", 256);
@@ -101,7 +104,7 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
 
     const uint32_t seed = params.find<uint32_t>("seed", 1447);
 
-    output->verbose(CALL_INFO, 1, 0, "Using Mersenne Generator with seed: %" PRIu32 "\n", seed);
+    dbg.verbose(CALL_INFO, 1, 0, "Using Mersenne Generator with seed: %" PRIu32 "\n", seed);
     rng = new RNG::MersenneRNG(seed);
 
     // only applies to access pattern stats
@@ -504,7 +507,7 @@ void pagedMultiMemory::handleSelfEvent(SST::Event *event){
         delete ev;
     } else {
         // 'normal' event
-        ctrl->handleMemResponse(req->id);
+        getConvertor()->handleMemResponse(req->id);
         delete req;
         delete event;
     }
@@ -571,7 +574,7 @@ void pagedMultiMemory::moveToSlow(pageInfo *page) {
 void pagedMultiMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
     assert(dramReqs.find(addr) != dramReqs.end());
     std::deque<ReqId> &reqs = dramReqs[addr];
-    ctrl->dbg.debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
+    dbg.debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
     assert(reqs.size());
     int rs = reqs.size();
     Req* req = (Req*) reqs.front();
@@ -606,7 +609,7 @@ void pagedMultiMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t cloc
         // normal request
         assert(req);
         assert(ctrl);
-        ctrl->handleMemResponse(req->id);
+        getConvertor()->handleMemResponse(req->id);
         delete req;
     }
 }

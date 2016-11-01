@@ -20,7 +20,13 @@ libmemHierarchy_la_SOURCES = \
 	bus.cc \
 	memoryController.h \
 	memoryController.cc \
-        membackend/memBackend.h \
+    membackend/memBackend.h \
+    membackend/memBackendConvertor.h \
+    membackend/memBackendConvertor.cc \
+    membackend/simpleMemBackendConvertor.h \
+    membackend/simpleMemBackendConvertor.cc \
+    membackend/hmcMemBackendConvertor.h \
+    membackend/hmcMemBackendConvertor.cc \
 	membackend/delayBuffer.h \
 	membackend/delayBuffer.cc \
 	membackend/simpleMemBackend.h \

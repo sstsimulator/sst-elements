@@ -23,7 +23,7 @@
 namespace SST {
 namespace MemHierarchy {
 
-class RequestReorderSimple : public MemBackend {
+class RequestReorderSimple : public SimpleMemBackend {
 public:
     RequestReorderSimple();
     RequestReorderSimple(Component *comp, Params &params);
@@ -42,7 +42,7 @@ private:
         bool isWrite;
         unsigned numBytes;
     };
-    MemBackend* backend;
+    SimpleMemBackend* backend;
     int reqsPerCycle;       // Number of requests to issue per cycle (max) -> memCtrl limits how many we accept
     int searchWindowSize;   // Number of requests to search when looking for requests to issue
     std::list<Req> requestQueue;   // List of requests waiting to be issued

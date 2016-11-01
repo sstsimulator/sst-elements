@@ -15,6 +15,8 @@
 
 
 #include <sst_config.h>
+#include <sst/core/link.h>
+#include "sst/elements/memHierarchy/util.h"
 #include "membackend/vaultSimBackend.h"
 #include "sst/elements/VaultSimC/memReqEvent.h"
 
@@ -22,17 +24,19 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::VaultSim;
 
-VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
+VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : HMCMemBackend(comp, params){
     std::string access_time = params.find<std::string>("access_time", "100 ns");
-    cube_link = ctrl->configureLink( "cube_link", access_time,
+    cube_link = comp->configureLink( "cube_link", access_time,
             new Event::Handler<VaultSimMemory>(this, &VaultSimMemory::handleCubeEvent));
+
+    output->init("VaultSimMemory[@p:@l]: ", 10, 0, Output::STDOUT);
 }
 
 
 
-bool VaultSimMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes ){
+bool VaultSimMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, uint32_t flags, unsigned numBytes ){
 #ifdef __SST_DEBUG_OUTPUT__
-    ctrl->dbg.debug(_L10_, "Issued transaction to Cube Chain for address %" PRIx64 "\n", (Addr)addr);
+    output->debug(_L10_, "Issued transaction to Cube Chain for address %" PRIx64 "\n", (Addr)addr);
 #endif
     // TODO:  FIX THIS:  ugly hardcoded limit on outstanding requests
     if (outToCubes.size() > 255) {
@@ -40,7 +44,7 @@ bool VaultSimMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned
     }
 
     if (outToCubes.find(reqId) != outToCubes.end())
-        ctrl->dbg.fatal(CALL_INFO, -1, "Assertion failed");
+        output->fatal(CALL_INFO, -1, "Assertion failed");
 
     outToCubes.insert( reqId );
     cube_link->send( new VaultSim::MemReqEvent(reqId,addr,isWrite,numBytes) ); 
@@ -54,12 +58,12 @@ void VaultSimMemory::handleCubeEvent(SST::Event *event){
     if (ev) {
         if ( outToCubes.find( ev->reqId ) != outToCubes.end() ) {
             outToCubes.erase( ev->reqId );
-            ctrl->handleMemResponse( ev->reqId );
+            getConvertor()->handleMemResponse( ev->reqId, ev->flags );
       		delete event;
         } else {  
-            ctrl->dbg.fatal(CALL_INFO, -1, "Could not match incoming request from cubes\n");
+            output->fatal(CALL_INFO, -1, "Could not match incoming request from cubes\n");
 		}
     } else {
-        ctrl->dbg.fatal(CALL_INFO, -1, "Recived wrong event type from cubes\n");
+        output->fatal(CALL_INFO, -1, "Recived wrong event type from cubes\n");
     }
 }

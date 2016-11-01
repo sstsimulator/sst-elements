@@ -22,7 +22,7 @@
 namespace SST {
 namespace MemHierarchy {
 
-class SimpleDRAM : public MemBackend {
+class SimpleDRAM : public SimpleMemBackend {
 public:
     SimpleDRAM();
     SimpleDRAM(Component *comp, Params &params);
@@ -34,7 +34,6 @@ private:
     void handleSelfEvent(SST::Event *event);
 
     Link *self_link;
-    Output * output;
 
     int * openRow;
     bool * busy;

@@ -34,7 +34,7 @@
 namespace SST {
 namespace MemHierarchy {
 
-class HybridSimMemory : public MemBackend {
+class HybridSimMemory : public SimpleMemBackend {
 public:
     HybridSimMemory(Component *comp, Params &params);
     bool issueRequest( ReqId, Addr, bool, unsigned );

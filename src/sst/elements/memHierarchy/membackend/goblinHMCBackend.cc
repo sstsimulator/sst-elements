@@ -19,7 +19,7 @@
 
 using namespace SST::MemHierarchy;
 
-GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemBackend(comp, params),
+GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : SimpleMemBackend(comp, params),
 	owner(comp) {
 
 	int verbose = params.find<int>("verbose", 0);
@@ -311,7 +311,7 @@ void GOBLINHMCSimBackend::processResponses() {
 							owner->getCurrentSimTimeNano() - matchedReq->getStartTime());
 
 						// Pass back to the controller to be handled, HMC sim is finished with it
-						ctrl->handleMemResponse(matchedReq->getRequest());
+						getConvertor()->handleMemResponse(matchedReq->getRequest());
 
 						// Clear element from our map, it has been processed so no longer needed
 						tag_req_map.erase(resp_tag);
