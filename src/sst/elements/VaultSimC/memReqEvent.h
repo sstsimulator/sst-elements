@@ -56,6 +56,7 @@ class MemRespEvent : public SST::Event {
     MemRespEvent(ReqId id) : SST::Event(), reqId(id) { }
 
 	ReqId reqId;
+    uint32_t flags;
 
   private:
     MemRespEvent() {} // For Serialization only
@@ -64,6 +65,7 @@ class MemRespEvent : public SST::Event {
     void serialize_order(SST::Core::Serialization::serializer &ser) {
         Event::serialize_order(ser);
         ser & reqId;  
+        ser & flags;
     }
 
     ImplementSerializable(MemRespEvent);
