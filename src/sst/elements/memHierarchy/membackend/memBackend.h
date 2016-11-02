@@ -44,11 +44,6 @@ public:
                 params.find<uint32_t>("debug_level", 0),
                 params.find<uint32_t>("debug_mask", 0),
                 (Output::output_location_t)params.find<int>("debug_location", 0) );
-#if 0
-                params.find<uint32_t>("debug_level", 10),
-                params.find<uint32_t>("debug_mask", -1),
-                (Output::output_location_t)params.find<int>("debug_mask", 1) );
-#endif
 
         m_clockFreq = params.find<std::string>("clock");
 
