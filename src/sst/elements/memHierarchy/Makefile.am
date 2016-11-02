@@ -165,14 +165,14 @@ libmemHierarchy_la_LIBADD += $(LIBZ_LIB)
 AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
 endif
 
-if USE_GOBLIN_HMCSIM
+if HAVE_GOBLIN_HMCSIM
 libmemHierarchy_la_SOURCES += \
 	membackend/goblinHMCBackend.cc \
 	membackend/goblinHMCBackend.h
 nobase_sst_HEADERS += membackend/goblinHMCBackend.h
 libmemHierarchy_la_LDFLAGS += $(GOBLIN_HMCSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(GOBLIN_HMCSIM_LIB)
-AM_CPPFLAGS += $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
+AM_CPPFLAGS += $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_LIBGOBLIN_HMCSIM
 endif
 
 if HAVE_FDSIM

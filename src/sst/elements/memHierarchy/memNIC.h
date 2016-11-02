@@ -250,6 +250,52 @@ public:
     // Callback function for linkControl
     bool recvNotify(int vn);
 
+    void setRecvHandler( Event::HandlerBase *handler ) {
+        recvHandler = handler;
+    }
+    void setOutput( Output* output ) { 
+        dbg = output;
+    }
+
+
+    bool isRequestAddressValid(MemEvent *ev){
+        Addr addr = ev->getAddr();
+        Addr step;
+
+        if(0 == numPages_)     return (addr >= rangeStart_ && addr < (rangeStart_ + memSize_));
+        if(addr < rangeStart_) return false;
+
+        addr = addr - rangeStart_;
+        step = addr / interleaveStep_;
+        if(step >= numPages_)  return false;
+
+        Addr offset = addr % interleaveStep_;
+        if (offset >= interleaveSize_) return false;
+
+        return true;
+    }
+#if 0
+    // A memory controller should only know about contiguous memory
+    // the MemNIC should convert to a contiguous address before the MemEvent 
+    // hits the memory controller 
+    Addr convertAddressToLocalAddress(Addr addr){
+        if (0 == numPages_) return addr - rangeStart_;
+
+        addr = addr - rangeStart_;
+        Addr step = addr / interleaveStep_;
+        Addr offset = addr % interleaveStep_;
+        return (step * interleaveSize_) + offset;
+        return 0;
+    }
+#endif
+
+    std::string name_;
+    Addr        memSize_;
+    Addr        rangeStart_;
+    uint64_t    numPages_;
+    Addr        interleaveSize_;
+    Addr        interleaveStep_;
+    uint32_t    cacheLineSize_;
 };
 
 } //namespace memHierarchy

@@ -29,6 +29,44 @@ class MemBackendConvertor : public SubComponent {
   public:
     typedef uint64_t ReqId; 
 
+    class MemReq {
+      public:
+        MemReq( MemEvent* event, uint32_t reqId  ) : m_event(event), m_respEvent( NULL),
+            m_reqId(reqId), m_offset(0), m_numReq(0)
+        { }
+        ~MemReq() {
+            delete m_event;
+        }
+
+        static uint32_t getBaseId( ReqId id) { return id >> 32; }
+        Addr baseAddr() { return m_event->getBaseAddr(); }
+        Addr addr()     { return m_event->getBaseAddr() + m_offset; }
+
+        uint32_t processed()    { return m_offset; }
+        uint64_t id()           { return ((uint64_t)m_reqId << 32) | m_offset; }
+        MemEvent* getMemEvent() { return m_event; }
+        bool isWrite()          { return (m_event->getCmd() == PutM) ? true : false; }
+
+        void setResponse( MemEvent* event ) { m_respEvent = event; }
+        MemEvent* getResponse() { return m_respEvent; }
+
+        void increment( uint32_t bytes ) {
+            m_offset += bytes;
+            ++m_numReq;
+        }
+        void decrement( ) { --m_numReq; }
+        bool isDone( ) {
+            return ( m_offset == m_event->getSize() && 0 == m_numReq );
+        }
+
+      private:
+        MemEvent*   m_event;
+        MemEvent*   m_respEvent;
+        uint32_t    m_reqId;
+        uint32_t    m_offset;
+        uint32_t    m_numReq;
+    };
+
   public:
 
     MemBackendConvertor();
@@ -42,6 +80,10 @@ class MemBackendConvertor : public SubComponent {
 
   protected:
     ~MemBackendConvertor() {}
+
+    void doClockStat( ) {
+        totalCycles->addData(1);        
+    }
 
     void doReceiveStat( Command cmd) {
         switch (cmd ) { 

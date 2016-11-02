@@ -51,12 +51,11 @@ void SimpleMemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
     MemReq* req = new MemReq( ev, id );
     m_requestQueue.push_back( req );
     m_pendingRequests[id] = req;
-
 }
 
 bool SimpleMemBackendConvertor::clock(Cycle_t cycle) {
 
-    totalCycles->addData(1);
+    doClockStat();
 
     int reqsThisCycle = 0;
     while ( !m_requestQueue.empty()) {
@@ -67,6 +66,7 @@ bool SimpleMemBackendConvertor::clock(Cycle_t cycle) {
         MemReq* req = m_requestQueue.front();
 
         bool issued = static_cast<SimpleMemBackend*>(m_backend)->issueRequest( req->id(), req->addr(), req->isWrite(), m_backendRequestWidth );
+
         if (issued) {
             cyclesWithIssue->addData(1);
         } else {

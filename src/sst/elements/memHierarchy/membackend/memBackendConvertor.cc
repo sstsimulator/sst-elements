@@ -51,9 +51,9 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : Sub
     stat_GetXLatency        = registerStatistic<uint64_t>("latency_GetX");
     stat_PutMLatency        = registerStatistic<uint64_t>("latency_PutM");
 
-    totalCycles     = registerStatistic<uint64_t>( "total_cycles" );
     cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
     cyclesAttemptIssueButRejected = registerStatistic<uint64_t>( "cycles_attempted_issue_but_rejected" );
+    totalCycles     = registerStatistic<uint64_t>( "total_cycles" );
 }
 
 void MemBackendConvertor::finish(void) {

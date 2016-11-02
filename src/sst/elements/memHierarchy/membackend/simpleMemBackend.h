@@ -27,6 +27,7 @@ public:
     SimpleMemory();
     SimpleMemory(Component *comp, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
+    virtual int32_t getMaxReqPerCycle() { return 1; }
     
 public:
     class MemCtrlEvent : public SST::Event {

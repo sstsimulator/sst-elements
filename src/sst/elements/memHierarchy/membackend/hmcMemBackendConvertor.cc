@@ -31,7 +31,7 @@ using namespace SST::MemHierarchy;
 
 bool HMCMemBackendConvertor::clock(Cycle_t cycle) {
 
-    totalCycles->addData(1);
+    doClockStat();
 
     int reqsThisCycle = 0;
     while ( !m_requestQueue.empty()) {
