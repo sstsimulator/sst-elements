@@ -69,9 +69,11 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_STALL;
 	}
 
+#if defined( HMC_TRACE_POWER )
         if(params.find<bool>("trace-power", false)) {
           hmc_trace_level = hmc_trace_level | HMC_TRACE_POWER;
         }
+#endif
 
 	hmc_tag_count    = params.find<uint32_t>("tag_count", 64);
 
@@ -96,6 +98,7 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 		output->verbose(CALL_INFO, 1, 0, "Initialized successfully.\n");
 	}
 
+#if defined( HMC_TRACE_POWER )
         // load the power config
         rc = hmcsim_power_config( &the_hmc,
                                  link_phy,
@@ -112,6 +115,7 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 	    output->fatal(CALL_INFO, -1,
                           "Unable to initialize the HMC-Sim power configuration; return code is %d\n", rc);
         }
+#endif
 
         // load the cmc libs
         for( unsigned i=0; i< cmclibs.size(); i++ ){
