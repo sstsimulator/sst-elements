@@ -74,12 +74,39 @@ class MemBackendConvertor : public SubComponent {
     void finish(void);
     virtual const std::string& getClockFreq();
     virtual size_t getMemSize();
-    virtual bool clock( Cycle_t cycle ) = 0;
-    virtual void handleMemEvent(  MemEvent* ) = 0;
-    virtual const std::string& getRequestor( ReqId ) { assert(0); };
+    virtual bool clock( Cycle_t cycle );
+    virtual void handleMemEvent(  MemEvent* );
+
+    virtual const std::string& getRequestor( ReqId reqId ) { 
+        uint32_t id = MemReq::getBaseId(reqId);
+        if ( m_pendingRequests.find( id ) == m_pendingRequests.end() ) {
+            m_dbg.fatal(CALL_INFO, -1, "memory request not found\n");
+        }
+
+        return m_pendingRequests[id]->getMemEvent()->getRqstr();
+    }
 
   protected:
-    ~MemBackendConvertor() {}
+    ~MemBackendConvertor() {
+        while ( m_requestQueue.size()) {
+            delete m_requestQueue.front();
+            m_requestQueue.pop_front();
+        }
+
+        PendingRequests::iterator iter = m_pendingRequests.begin();
+        for ( ; iter != m_pendingRequests.end(); ++ iter ) {
+            delete iter->second;
+        }
+    }
+
+    MemEvent* doResponse( ReqId reqId );
+    void sendResponse( MemEvent* event );
+
+    MemBackend* m_backend;
+    uint32_t    m_backendRequestWidth;
+
+  private:
+    virtual bool issue(MemReq*) = 0;
 
     void doClockStat( ) {
         totalCycles->addData(1);        
@@ -124,7 +151,16 @@ class MemBackendConvertor : public SubComponent {
     }
 
     Output      m_dbg;
-    MemBackend* m_backend;
+
+    uint32_t genReqId( ) { return ++m_reqId; }
+
+    uint32_t    m_reqId;
+
+    typedef std::map<uint32_t,MemReq*>    PendingRequests;
+
+    std::deque<MemReq*>     m_requestQueue;
+    PendingRequests         m_pendingRequests;
+    uint32_t                m_frontendRequestWidth;
 
     Statistic<uint64_t>* stat_GetSLatency;
     Statistic<uint64_t>* stat_GetSExLatency;

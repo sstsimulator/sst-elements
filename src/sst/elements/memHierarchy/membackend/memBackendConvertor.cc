@@ -15,6 +15,8 @@
 
 
 #include <sst_config.h>
+#include "sst/elements/memHierarchy/util.h"
+#include "sst/elements/memHierarchy/memoryController.h"
 #include "membackend/memBackendConvertor.h"
 #include "membackend/memBackend.h"
 
@@ -41,6 +43,9 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : Sub
     m_backend = dynamic_cast<MemBackend*>( comp->loadSubComponent( backendName, comp, backendParams ) );
     m_backend->setConvertor(this);
 
+    m_frontendRequestWidth =  params.find<uint32_t>("request_width",64);
+    m_backendRequestWidth = static_cast<SimpleMemBackend*>(m_backend)->getRequestWidth();
+
     stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
     stat_GetSExReqReceived  = registerStatistic<uint64_t>("requests_received_GetSEx");
     stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
@@ -54,6 +59,91 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : Sub
     cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
     cyclesAttemptIssueButRejected = registerStatistic<uint64_t>( "cycles_attempted_issue_but_rejected" );
     totalCycles     = registerStatistic<uint64_t>( "total_cycles" );
+}
+
+void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
+
+    ev->setDeliveryTime(getCurrentSimTimeNano());
+
+    doReceiveStat( ev->getCmd() );
+
+    Debug(_L10_,"Creating MemReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
+                        ev->getBaseAddr(), ev->getSize(), CommandString[ev->getCmd()]);
+
+    uint32_t id = genReqId();
+    MemReq* req = new MemReq( ev, id );
+    m_requestQueue.push_back( req );
+    m_pendingRequests[id] = req;
+}
+
+bool MemBackendConvertor::clock(Cycle_t cycle) {
+
+    doClockStat();
+
+    int reqsThisCycle = 0;
+    while ( !m_requestQueue.empty()) {
+        if ( reqsThisCycle == m_backend->getMaxReqPerCycle() ) {
+            break;
+        }
+
+        MemReq* req = m_requestQueue.front();
+
+        if ( issue( req ) ) {
+            cyclesWithIssue->addData(1);
+        } else {
+            cyclesAttemptIssueButRejected->addData(1);
+            break;
+        }
+
+        reqsThisCycle++;
+        req->increment( m_backendRequestWidth );
+
+        if ( req->processed() >= m_backendRequestWidth ) {
+            Debug(_L10_, "Completed issue of request\n");
+            m_requestQueue.pop_front();
+        }
+    }
+
+    stat_outstandingReqs->addData( m_pendingRequests.size() );
+
+    m_backend->clock();
+
+    return false;
+}
+
+MemEvent* MemBackendConvertor::doResponse( ReqId reqId ) {
+        uint32_t id = MemReq::getBaseId(reqId);
+
+        if ( m_pendingRequests.find( id ) == m_pendingRequests.end() ) {
+            m_dbg.fatal(CALL_INFO, -1, "memory request not found\n");
+        }
+
+        MemReq* req = m_pendingRequests[id];
+
+        req->decrement( );
+
+        if ( req->isDone() ) {
+            m_pendingRequests.erase(id);
+            MemEvent* event = req->getMemEvent();
+            MemEvent* resp = NULL;
+            if ( PutM != event->getCmd()  ) {
+                resp = event->makeResponse();
+            }
+            Cycle_t latency = getCurrentSimTimeNano() - event->getDeliveryTime();
+
+            doResponseStat( event->getCmd(), latency );
+
+            // MemReq deletes it's MemEvent
+            delete req;
+            return resp;
+        }
+        return NULL;
+    }
+
+void MemBackendConvertor::sendResponse( MemEvent* resp ) {
+
+    Debug(_L10_, "send response\n");
+    static_cast<MemController*>(parent)->handleMemResponse( resp );
 }
 
 void MemBackendConvertor::finish(void) {

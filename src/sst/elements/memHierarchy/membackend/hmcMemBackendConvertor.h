@@ -17,25 +17,25 @@
 #ifndef __SST_MEMH_HMCMEMBACKENDCONVERTOR__
 #define __SST_MEMH_HMCMEMBACKENDCONVERTOR__
 
-#include "sst/elements/memHierarchy/membackend/simpleMemBackendConvertor.h"
+#include "sst/elements/memHierarchy/membackend/memBackendConvertor.h"
 
 namespace SST {
 namespace MemHierarchy {
 
-class HMCMemBackendConvertor : public SimpleMemBackendConvertor {
+class HMCMemBackendConvertor : public MemBackendConvertor {
  
   public:
     HMCMemBackendConvertor(Component *comp, Params &params) : 
-        SimpleMemBackendConvertor(comp,params) {}
+        MemBackendConvertor(comp,params) {}
 
-    virtual bool clock( Cycle_t cycle );
-
-    virtual void handleMemResponse( ReqId, uint32_t  );
-
-    ~HMCMemBackendConvertor() {} 
-
-  protected:
-    void sendResponse( MemReq*, uint32_t flags );
+    virtual bool issue( MemReq* req );
+    virtual void handleMemResponse( ReqId reqId, uint32_t flags  ) {
+        MemEvent* resp;
+        if ( ( resp = doResponse( reqId ) ) ) {
+            resp->setFlags(flags);
+            sendResponse( resp );
+        }
+    }
 };
 
 }

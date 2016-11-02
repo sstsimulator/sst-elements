@@ -24,66 +24,19 @@ namespace MemHierarchy {
 
 class SimpleMemBackendConvertor : public MemBackendConvertor {
  
-  protected:
-
-    class MemReq {
-      public:
-        MemReq( MemEvent* event, uint32_t reqId  ) : m_event(event), m_respEvent( NULL),
-            m_reqId(reqId), m_offset(0), m_numReq(0)
-        { }
-        ~MemReq() {
-            delete m_event;
-        }
-
-        static uint32_t getBaseId( ReqId id) { return id >> 32; }
-        Addr baseAddr() { return m_event->getBaseAddr(); }
-        Addr addr()     { return m_event->getBaseAddr() + m_offset; }
-
-        uint32_t processed()    { return m_offset; }
-        uint64_t id()           { return ((uint64_t)m_reqId << 32) | m_offset; }
-        MemEvent* getMemEvent() { return m_event; }
-        bool isWrite()          { return (m_event->getCmd() == PutM) ? true : false; }
-
-        void setResponse( MemEvent* event ) { m_respEvent = event; }
-        MemEvent* getResponse() { return m_respEvent; }
-
-        void increment( uint32_t bytes ) {
-            m_offset += bytes;
-            ++m_numReq;
-        }
-        void decrement( ) { --m_numReq; }
-        bool isDone( ) {
-            return ( m_offset == m_event->getSize() && 0 == m_numReq );
-        }
-
-      private:
-        MemEvent*   m_event;
-        MemEvent*   m_respEvent;
-        uint32_t    m_reqId;
-        uint32_t    m_offset;
-        uint32_t    m_numReq;
-    };
 
   public:
-    SimpleMemBackendConvertor(Component *comp, Params &params);
-    virtual bool clock( Cycle_t cycle );
-    virtual void handleMemEvent(  MemEvent* );
+    SimpleMemBackendConvertor(Component *comp, Params &params) :
+         MemBackendConvertor(comp,params) {}
 
-    virtual void handleMemResponse( ReqId );
-    virtual const std::string& getRequestor( ReqId );
+    virtual bool issue( MemReq* req );
 
-  protected:
-    ~SimpleMemBackendConvertor();
-
-    void sendResponse( MemReq* );
-    uint32_t genReqId( ) { return ++m_reqId; }
-
-    uint32_t    m_reqId;
-    typedef std::map<uint32_t,MemReq*>    PendingRequests;
-    std::deque<MemReq*>     m_requestQueue;
-    PendingRequests         m_pendingRequests;
-    uint32_t                m_frontendRequestWidth;
-    uint32_t                m_backendRequestWidth;
+    virtual void handleMemResponse( ReqId reqId ) {
+        MemEvent* resp;
+        if ( ( resp = doResponse( reqId ) ) ) {
+            sendResponse( resp );
+        }
+    }
 };
 
 }
