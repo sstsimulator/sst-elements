@@ -35,6 +35,18 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 	hmc_capacity_per_device = params.find<uint32_t>("capacity_per_device", HMC_MIN_CAPACITY);
 	hmc_xbar_depth   =  params.find<uint32_t>("xbar_depth", 4);
 	hmc_max_req_size =  params.find<uint32_t>("max_req_size", 64);
+
+        link_phy = params.find<float>("link_phy_power", 0.1);
+        link_local_route = params.find<float>("link_local_route_power", 0.1);
+        link_remote_route = params.find<float>("link_remote_route_power", 0.1);
+        xbar_rqst_slot = params.find<float>("xbar_rqst_slot_power", 0.1);
+        xbar_rsp_slot = params.find<float>("xbar_rsp_slot_power", 0.1);
+        xbar_route_extern = params.find<float>("xbar_route_extern_power", 0.1);
+        vault_rqst_slot = params.find<float>("vault_rqst_slot_power", 0.1);
+        vault_rsp_slot = params.find<float>("vault_rsp_slot_power", 0.1);
+        vault_ctrl = params.find<float>("vault_ctrl_power", 0.1);
+        row_access = params.find<float>("row_access_power", 0.1);
+
 	hmc_trace_level  = 0;
 
 	if (params.find<bool>("trace-banks", false)) {
@@ -57,13 +69,17 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_STALL;
 	}
 
+#if defined( HMC_TRACE_POWER )
         if(params.find<bool>("trace-power", false)) {
           hmc_trace_level = hmc_trace_level | HMC_TRACE_POWER;
         }
+#endif
 
 	hmc_tag_count    = params.find<uint32_t>("tag_count", 64);
 
 	hmc_trace_file   = params.find<std::string>("trace_file", "hmc-trace.out");
+
+        params.find_array<std::string>("cmc-lib", cmclibs);
 
 	output->verbose(CALL_INFO, 1, 0, "Initializing HMC...\n");
 	int rc = hmcsim_init(&the_hmc,
@@ -81,6 +97,40 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 	} else {
 		output->verbose(CALL_INFO, 1, 0, "Initialized successfully.\n");
 	}
+
+#if defined( HMC_TRACE_POWER )
+        // load the power config
+        rc = hmcsim_power_config( &the_hmc,
+                                 link_phy,
+                                 link_local_route,
+                                 link_remote_route,
+                                 xbar_rqst_slot,
+                                 xbar_rsp_slot,
+                                 xbar_route_extern,
+                                 vault_rqst_slot,
+                                 vault_rsp_slot,
+                                 vault_ctrl,
+                                 row_access );
+        if( rc != 0 ){
+	    output->fatal(CALL_INFO, -1,
+                          "Unable to initialize the HMC-Sim power configuration; return code is %d\n", rc);
+        }
+#endif
+
+        // load the cmc libs
+        for( unsigned i=0; i< cmclibs.size(); i++ ){
+          if( cmclibs[i].length() > 0 ){
+            // attempt to add the cmc lib
+            output->verbose(CALL_INFO, 1, 0,
+                            "Initializing HMC-Sim CMC Library...\n" );
+            std::vector<char> libchars( cmclibs[i].begin(), cmclibs[i].end() );
+            rc = hmcsim_load_cmc(&the_hmc, &libchars[0] );
+            if( rc != 0 ){
+	      output->fatal(CALL_INFO, -1,
+                            "Unable to HMC-Sim CMC Library and the return code is %d\n", rc);
+            }
+          }
+        }
 
 	for(uint32_t i = 0; i < hmc_link_count; ++i) {
 		output->verbose(CALL_INFO, 1, 0, "Configuring link: %" PRIu32 "...\n", i);
