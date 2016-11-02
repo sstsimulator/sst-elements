@@ -29,17 +29,18 @@
 namespace SST {
 namespace MemHierarchy {
 
-class ramulatorMemory : public MemBackend {
+class ramulatorMemory : public SimpleMemBackend {
 public:
     ramulatorMemory(Component *comp, Params &params);
-    virtual bool issueRequest(DRAMReq *req);
+    bool issueRequest(ReqId, Addr, bool, unsigned );
+    //virtual bool issueRequest(DRAMReq *req);
     virtual void clock();
     virtual void finish();
 
 protected:
     ramulator::Gem5Wrapper *memSystem;
     std::function<void(ramulator::Request&)> callBackFunc;
-    std::map<uint64_t, std::deque<DRAMReq*> > dramReqs;
+    std::map<uint64_t, std::deque<ReqId> > dramReqs;
     void ramulatorDone(ramulator::Request& req);
 };
 
