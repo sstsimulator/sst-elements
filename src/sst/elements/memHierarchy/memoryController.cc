@@ -51,10 +51,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             
     int debugLevel = params.find<int>("debug_level", 0);
 
-#if 0
-    fixupParams( params, "backend", "backendConvertor.backend" );
+    fixupParams( params, "backend.", "backendConvertor.backend." );
     fixupParams( params, "clock", "backendConvertor.backend.clock" );
-#endif
 
     // Output for debug
     dbg.init("@t:--->  ", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
@@ -87,7 +85,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         out.output("%s, ** Found deprecated parameter: direct_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
 
-    std::string name        = params.find<std::string>("backend", "memHierarchy.simpleMemBackendConvertor");
+    std::string name        = params.find<std::string>("backendConvertor", "memHierarchy.simpleMemBackendConvertor");
     string protocolStr      = params.find<std::string>("coherence_protocol", "MESI");
     string link_lat         = params.find<std::string>("direct_link_latency", "100 ns");
 

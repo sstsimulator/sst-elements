@@ -53,7 +53,7 @@ private:
         std::string value = params.find<std::string>(oldKey,found);
         if ( found ) {
             params.insert( newKey , value );
-            params.erase( oldKey );
+        //    params.erase( oldKey );
         }
     }
 
@@ -65,7 +65,7 @@ private:
         for ( ; iter != keys.end(); ++iter ) {
             std::string value = tmp.find<std::string>( (*iter) );
             params.insert( newKey + (*iter), value );
-            params.erase( oldKey + (*iter) );
+        //    params.erase( oldKey + (*iter) );
         }
     }
 
