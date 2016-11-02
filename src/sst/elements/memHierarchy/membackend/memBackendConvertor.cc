@@ -138,13 +138,13 @@ MemEvent* MemBackendConvertor::doResponse( ReqId reqId ) {
 
         // MemReq deletes it's MemEvent
         delete req;
-    }
 
-    if ( m_waitFlush && m_pendingRequests.empty() ) {
-        m_waitFlush = false;
-        while ( ! m_waiting.empty() && ! m_waitFlush ) {
-            m_waitFlush = setupMemReq( m_waiting.front( ) ); 
-            m_waiting.pop_front();
+        if ( m_waitFlush && m_pendingRequests.empty() ) {
+            m_waitFlush = false;
+            while ( ! m_waiting.empty() && ! m_waitFlush ) {
+                m_waitFlush = setupMemReq( m_waiting.front( ) ); 
+                m_waiting.pop_front();
+            }
         }
     }
     return resp;
