@@ -108,6 +108,17 @@ class MemBackendConvertor : public SubComponent {
   private:
     virtual bool issue(MemReq*) = 0;
 
+    bool setupMemReq( MemEvent* ev ) {
+        if ( FlushLine == ev->getCmd() || FlushLineInv == ev->getCmd() ) {
+            return true; 
+        }
+        uint32_t id = genReqId();
+        MemReq* req = new MemReq( ev, id );
+        m_requestQueue.push_back( req );
+        m_pendingRequests[id] = req;
+        return false;
+    }
+
     void doClockStat( ) {
         totalCycles->addData(1);        
     }
@@ -161,6 +172,9 @@ class MemBackendConvertor : public SubComponent {
     std::deque<MemReq*>     m_requestQueue;
     PendingRequests         m_pendingRequests;
     uint32_t                m_frontendRequestWidth;
+
+    bool m_waitFlush;
+    std::deque<MemEvent*> m_waiting;
 
     Statistic<uint64_t>* stat_GetSLatency;
     Statistic<uint64_t>* stat_GetSExLatency;

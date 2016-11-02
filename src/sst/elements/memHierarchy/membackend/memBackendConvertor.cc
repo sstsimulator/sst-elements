@@ -29,7 +29,8 @@ using namespace SST::MemHierarchy;
 #define Debug(level, fmt, ... )
 #endif
 
-MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : SubComponent(comp) 
+MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : 
+    SubComponent(comp), m_waitFlush(false)
 {
     m_dbg.init("--->  ", 
             params.find<uint32_t>("debug_level", 0),
@@ -70,10 +71,11 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
     Debug(_L10_,"Creating MemReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
                         ev->getBaseAddr(), ev->getSize(), CommandString[ev->getCmd()]);
 
-    uint32_t id = genReqId();
-    MemReq* req = new MemReq( ev, id );
-    m_requestQueue.push_back( req );
-    m_pendingRequests[id] = req;
+    if ( ! m_waitFlush ) {
+        m_waitFlush = setupMemReq( ev );
+    } else {
+        m_waiting.push_back( ev );
+    } 
 }
 
 bool MemBackendConvertor::clock(Cycle_t cycle) {
@@ -112,33 +114,41 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
 }
 
 MemEvent* MemBackendConvertor::doResponse( ReqId reqId ) {
-        uint32_t id = MemReq::getBaseId(reqId);
 
-        if ( m_pendingRequests.find( id ) == m_pendingRequests.end() ) {
-            m_dbg.fatal(CALL_INFO, -1, "memory request not found\n");
-        }
+    uint32_t id = MemReq::getBaseId(reqId);
+    MemEvent* resp = NULL;
 
-        MemReq* req = m_pendingRequests[id];
-
-        req->decrement( );
-
-        if ( req->isDone() ) {
-            m_pendingRequests.erase(id);
-            MemEvent* event = req->getMemEvent();
-            MemEvent* resp = NULL;
-            if ( PutM != event->getCmd()  ) {
-                resp = event->makeResponse();
-            }
-            Cycle_t latency = getCurrentSimTimeNano() - event->getDeliveryTime();
-
-            doResponseStat( event->getCmd(), latency );
-
-            // MemReq deletes it's MemEvent
-            delete req;
-            return resp;
-        }
-        return NULL;
+    if ( m_pendingRequests.find( id ) == m_pendingRequests.end() ) {
+        m_dbg.fatal(CALL_INFO, -1, "memory request not found\n");
     }
+
+    MemReq* req = m_pendingRequests[id];
+
+    req->decrement( );
+
+    if ( req->isDone() ) {
+        m_pendingRequests.erase(id);
+        MemEvent* event = req->getMemEvent();
+        if ( PutM != event->getCmd()  ) {
+            resp = event->makeResponse();
+        }
+        Cycle_t latency = getCurrentSimTimeNano() - event->getDeliveryTime();
+
+        doResponseStat( event->getCmd(), latency );
+
+        // MemReq deletes it's MemEvent
+        delete req;
+    }
+
+    if ( m_waitFlush && m_pendingRequests.empty() ) {
+        m_waitFlush = false;
+        while ( ! m_waiting.empty() && ! m_waitFlush ) {
+            m_waitFlush = setupMemReq( m_waiting.front( ) ); 
+            m_waiting.pop_front();
+        }
+    }
+    return resp;
+}
 
 void MemBackendConvertor::sendResponse( MemEvent* resp ) {
 
