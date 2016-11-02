@@ -57,6 +57,10 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : Simp
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_STALL;
 	}
 
+        if(params.find<bool>("trace-power", false)) {
+          hmc_trace_level = hmc_trace_level | HMC_TRACE_POWER;
+        }
+
 	hmc_tag_count    = params.find<uint32_t>("tag_count", 64);
 
 	hmc_trace_file   = params.find<std::string>("trace_file", "hmc-trace.out");

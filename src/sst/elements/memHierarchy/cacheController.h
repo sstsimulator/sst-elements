@@ -102,7 +102,8 @@ private:
         It appropriately redirects requests to Top and/or Bottom controllers.  */
     void processCacheRequest(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit);
     void processCacheReplacement(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit);
-    
+    void processCacheFlush(MemEvent * event, Addr baseAddr, bool mshrHit);
+
     /** Function processes incomming invalidate messages.  Redirects message 
         to Top and Bottom controllers appropriately  */
     void processCacheInvalidate(MemEvent *event, Addr baseAddr, bool mshrHit);

@@ -18,4 +18,5 @@ Instructions for Issuing a Pull Request to sst-elements
       * If testing fails, You will be notified of the test results.  
          * The Pull Request will be retested on a regular basis - Changes to the source branch can be made to correct problems
          
+4 - DO NOT DELETE THE BRANCH (OR FORKED REPO) UNTIL THE PULL REQUEST IS MERGED.
 ----

@@ -47,9 +47,15 @@ using namespace SST::MemHierarchy;
 #endif
 
 /*************************** Memory Controller ********************/
-MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
+MemController::MemController(ComponentId_t id, Params &params) : Component(id), networkLink_(NULL), cacheLink_(NULL) {
+            
     int debugLevel = params.find<int>("debug_level", 0);
-    
+
+#if 0
+    fixupParams( params, "backend", "backendConvertor.backend" );
+    fixupParams( params, "clock", "backendConvertor.backend.clock" );
+#endif
+
     // Output for debug
     dbg.init("@t:--->  ", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)
@@ -58,7 +64,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     
     // Output for warnings
     Output out("", 1, 0, Output::STDOUT);
-    
     
     // Check for deprecated parameters and warn/fatal
     // Currently deprecated - mem_size (replaced by backend.mem_size), network_num_vc, statistic, direct_link 
@@ -82,26 +87,13 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         out.output("%s, ** Found deprecated parameter: direct_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
 
-#if 0
-    rangeStart_         = params.find<Addr>("range_start", 0);
-    string ilSize           = params.find<std::string>("interleave_size", "0B");
-    string ilStep           = params.find<std::string>("interleave_step", "0B");
-#endif
-
-#if 0
-    uint32_t cacheLineSize =  params.find<uint32_t>("request_width", 64); 
-#endif
-    std::string name = params.find<std::string>("backend", "memHierarchy.simpleMemBackendConvertor");
+    std::string name        = params.find<std::string>("backend", "memHierarchy.simpleMemBackendConvertor");
     string protocolStr      = params.find<std::string>("coherence_protocol", "MESI");
     string link_lat         = params.find<std::string>("direct_link_latency", "100 ns");
 
-    int addr = params.find<int>("network_address");
-    std::string net_bw = params.find<std::string>("network_bw", "80GiB/s");
-    
     Params tmpParams = params.find_prefix_params("backendConvertor.");
     memBackendConvertor_  = dynamic_cast<MemBackendConvertor*>(loadSubComponent(name, this, tmpParams));
 
-    if (!memBackendConvertor_)          dbg.fatal(CALL_INFO,-1,"Unable to load Module %s as backend convertor\n", name.c_str());
     memSize_ = memBackendConvertor_->getMemSize();
 
     const uint32_t listenerCount  = params.find<uint32_t>("listenercount", 0);
@@ -112,12 +104,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         sprintf(nextListenerName, "listener%" PRIu32, i);
         string listenerMod     = params.find<std::string>(nextListenerName, "");
 
-            if (listenerMod != "") {
-        sprintf(nextListenerParams, "listener%" PRIu32 ".", i);
-        Params listenerParams = params.find_prefix_params(nextListenerParams);
+        if (listenerMod != "") {
+            sprintf(nextListenerParams, "listener%" PRIu32 ".", i);
+            Params listenerParams = params.find_prefix_params(nextListenerParams);
 
-        CacheListener* loadedListener = dynamic_cast<CacheListener*>(loadSubComponent(listenerMod, this, listenerParams));
-        listeners_.push_back(loadedListener);
+            CacheListener* loadedListener = dynamic_cast<CacheListener*>(loadSubComponent(listenerMod, this, listenerParams));
+            listeners_.push_back(loadedListener);
         }
     }
 
@@ -129,62 +121,22 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         dbg.fatal(CALL_INFO, -1, "Invalid param(%s): protocol - must be one of 'MESI', 'MSI', or 'NONE'. You specified '%s'\n", getName().c_str(), protocolStr.c_str());
     }
 
-#if 0
-    // Check interleave parameters
-    fixByteUnits(ilSize);
-    fixByteUnits(ilStep);
-    uint32_t interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
-    uint32_t interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
-
-    if (!UnitAlgebra(ilSize).hasUnits("B") || interleaveSize % cacheLineSize != 0) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK) and must also be a multiple of request_size. This definition has CHANGED. Example: If you used to set this      to '1', change it to '1KiB'. You specified %s\n",
-                getName().c_str(), ilSize.c_str());
-    }
-
-    if (!UnitAlgebra(ilStep).hasUnits("B") || interleaveStep % cacheLineSize != 0) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK) and must also be a multiple of request_size. This definition has CHANGED. Example: If you used to set this      to '4', change it to '4KiB'. You specified %s\n",
-                getName().c_str(), ilStep.c_str());
-    }
-#endif
-
-#if 0
-    requestWidth_           = cacheLineSize_;
-    requestSize_            = cacheLineSize_;
-    numPages_               = (interleaveStep_ > 0 && interleaveSize_ > 0) ? memSize_ / interleaveSize_ : 0;
-#endif
-    protocol_               = (protocolStr == "mesi" || protocolStr == "MESI") ? 1 : 0;
+    protocol_ = (protocolStr == "mesi" || protocolStr == "MESI") ? 1 : 0;
 
     if (isPortConnected("direct_link")) {
         cacheLink_   = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
-#if 0
-        networkLink_ = NULL;
-#endif
     } else {
 
-        assert(0);
-#if 0
         if (!isPortConnected("network")) {
             dbg.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
         }
-        MemNIC::ComponentInfo myInfo;
-        myInfo.link_port        = "network";
-        myInfo.link_bandwidth   = net_bw;
-        myInfo.num_vcs          = 1;
-        myInfo.name             = getName();
-        myInfo.network_addr     = addr;
-        myInfo.type             = MemNIC::TypeMemory;
-        myInfo.link_inbuf_size  = params.find<std::string>("network_input_buffer_size", "1KiB");
-        myInfo.link_outbuf_size = params.find<std::string>("network_output_buffer_size", "1KiB");
-        networkLink_ = new MemNIC(this, &dbg, -1, myInfo, new Event::Handler<MemController>(this, &MemController::handleEvent));
 
-        MemNIC::ComponentTypeInfo typeInfo;
-        typeInfo.rangeStart       = rangeStart_;
-        typeInfo.rangeEnd         = rangeStart_ + memSize_;
-        typeInfo.interleaveSize   = interleaveSize;
-        typeInfo.interleaveStep   = interleaveStep;
-        networkLink_->addTypeInfo(typeInfo);
-        cacheLink_ = NULL;
-#endif
+        Params tmpParams = params.find_prefix_params( "memNIC.");
+        tmpParams.insert("mem_size", params.find<std::string>("backendConvertor.backend.mem_size"));
+
+        networkLink_ = new MemNIC( this, tmpParams );
+        networkLink_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
+        networkLink_->setOutput( &dbg );
     }
 
     // Set up backing store if needed
@@ -193,8 +145,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         if ( 0 == memoryFile.compare( NO_STRING_DEFINED ) ) {
             memoryFile.clear();
         }
-        m_backing = new Backend::Backing( memoryFile, memBackendConvertor_->getMemSize() );
-        if ( ! m_backing ) {
+        try { 
+            backing_ = new Backend::Backing( memoryFile, memBackendConvertor_->getMemSize() );
+        }
+        catch ( int ) {
             dbg.fatal(CALL_INFO, -1, "%s, Error - conflicting parameters. 'do_not_back' cannot be true if 'memory_file' is specified.  memory_file = %s\n",
                 "MemBackendConvertor", memoryFile.c_str());
         }
@@ -204,13 +158,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     registerClock(memBackendConvertor_->getClockFreq(), new Clock::Handler<MemController>(this, &MemController::clock));
     registerTimeBase("1 ns", true);
 }
-
-#if 0
-    if( cacheLineSize_ != ev->getSize() ) {
-        dbg.fatal(CALL_INFO, -1, "CacheLineSize %d does not match request size %d, requestor=%s\n",
-                                                    cacheLineSize_, ev->getSize(), ev->getRqstr().c_str());
-    }
-#endif
 
 void MemController::handleEvent(SST::Event* event) {
     MemEvent *ev = static_cast<MemEvent*>(event);
@@ -247,6 +194,11 @@ void MemController::handleEvent(SST::Event* event) {
             performRequest( ev );
             memBackendConvertor_->handleMemEvent( ev );
             break;
+
+        case FlushLine:
+        case FlushLineInv:
+            assert(0);
+
         case PutS:
         case PutE:
             break;
@@ -257,9 +209,7 @@ void MemController::handleEvent(SST::Event* event) {
 
 bool MemController::clock(Cycle_t cycle) {
 
-#if 0
     if (networkLink_) networkLink_->clock();
-#endif
 
     memBackendConvertor_->clock( cycle );
 
@@ -272,23 +222,18 @@ void MemController::handleMemResponse( MemEvent* ev ) {
     Debug(_L10_,"Memory Controller: %s - Response Received. Cmd = %s\n", getName().c_str(), CommandString[ev->getCmd()]);
     Debug(_L10_,"Event info: Addr: 0x%" PRIx64 ", dst = %s, src = %s, rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
         ev->getBaseAddr(), ev->getDst().c_str(), ev->getSrc().c_str(), ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
+
     performResponse( ev );
 
-#if 0
     if ( networkLink_ ) {
         networkLink_->send( ev );
     } else {
-#endif
         cacheLink_->send( ev );
-#if 0
 	}
-#endif
 }
     
 void MemController::init(unsigned int phase) {
-#if 0
     if (! networkLink_ ) {
-#endif
         SST::Event *ev = NULL;
         while (NULL != (ev = cacheLink_->recvInitData())) {
             MemEvent *me = dynamic_cast<MemEvent*>(ev);
@@ -299,7 +244,6 @@ void MemController::init(unsigned int phase) {
             /* Push data to memory */
             processInitEvent( me );
         }
-#if 0
     } else {
         networkLink_->init(phase);
 
@@ -310,27 +254,22 @@ void MemController::init(unsigned int phase) {
             }
         }
     }
-#endif
 }
 
 void MemController::setup(void) {
     memBackendConvertor_->setup();
-#if 0
     if (networkLink_) networkLink_->setup();
-#endif
 }
 
 
 void MemController::finish(void) {
     memBackendConvertor_->finish();
-#if 0
     if (networkLink_) networkLink_->finish();
-#endif  
 }
 
 void MemController::performRequest(MemEvent* event) {
 
-    if ( ! m_backing ) {
+    if ( ! backing_ ) {
         return;
     }
 
@@ -339,7 +278,7 @@ void MemController::performRequest(MemEvent* event) {
         Debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i\n", addr, event->getSize());
 
         for ( size_t i = 0 ; i < event->getSize() ; i++)
-             m_backing->set( addr + i, event->getPayload()[i] );
+             backing_->set( addr + i, event->getPayload()[i] );
 
     } else {
         bool noncacheable  = event->queryFlag(MemEvent::F_NONCACHEABLE);
@@ -348,7 +287,7 @@ void MemController::performRequest(MemEvent* event) {
             Debug(_L10_,"WRITE. Noncacheable request, Addr = %" PRIx64 ", Request size = %i\n", addr, event->getSize());
 
             for ( size_t i = 0 ; i < event->getSize() ; i++)
-                    m_backing->set( addr + i, event->getPayload()[i] );
+                    backing_->set( addr + i, event->getPayload()[i] );
         }
     }
 }
@@ -358,7 +297,7 @@ void MemController::performResponse(MemEvent* event) {
     Addr localAddr = event->getAddr();
 
     for ( size_t i = 0 ; i < event->getSize() ; i++)
-        event->getPayload()[i] = ! m_backing ? 0 : m_backing->get( localAddr + i );
+        event->getPayload()[i] = ! backing_ ? 0 : backing_->get( localAddr + i );
 
     if (noncacheable) event->setFlag(MemEvent::F_NONCACHEABLE);
 
@@ -379,9 +318,9 @@ void MemController::processInitEvent( MemEvent* me ) {
     if (GetX == me->getCmd()) {
         Addr addr = me->getAddr();
         Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 "\n", getName().c_str(), me->getAddr());
-        if ( isRequestAddressValid(addr) && ! m_backing ) {
+        if ( isRequestAddressValid(addr) && ! backing_ ) {
             for ( size_t i = 0 ; i < me->getSize() ; i++) {
-                m_backing->set( addr + i,  me->getPayload()[i] );
+                backing_->set( addr + i,  me->getPayload()[i] );
             }
         }
     } else {
@@ -391,3 +330,4 @@ void MemController::processInitEvent( MemEvent* me ) {
 
     delete me;
 }
+

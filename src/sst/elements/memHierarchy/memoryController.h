@@ -47,6 +47,28 @@ private:
     MemController();  // for serialization only
     ~MemController() {}
 
+    void fixupParam( Params& params, const std::string oldKey, const std::string newKey ) {
+        bool found;
+
+        std::string value = params.find<std::string>(oldKey,found);
+        if ( found ) {
+            params.insert( newKey , value );
+            params.erase( oldKey );
+        }
+    }
+
+    void fixupParams( Params& params, const std::string oldKey, const std::string newKey ) {
+        Params tmp = params.find_prefix_params( oldKey );
+
+        std::set<std::string> keys = tmp.getKeys();   
+        std::set<std::string>::iterator iter = keys.begin();
+        for ( ; iter != keys.end(); ++iter ) {
+            std::string value = tmp.find<std::string>( (*iter) );
+            params.insert( newKey + (*iter), value );
+            params.erase( oldKey + (*iter) );
+        }
+    }
+
     void handleEvent( SST::Event* );
     bool clock( SST::Cycle_t );
     void performRequest( MemEvent* );
@@ -55,63 +77,21 @@ private:
 
     Output dbg;
 
-    MemBackendConvertor*  memBackendConvertor_;
+    MemBackendConvertor*    memBackendConvertor_;
+    Backend::Backing*       backing_; 
 
     SST::Link*  cacheLink_;         // Link to the rest of memHierarchy 
-#if 0
     MemNIC*     networkLink_;       // Link to the rest of memHierarchy if we're communicating over a network
-#endif
 
     std::vector<CacheListener*> listeners_;
 
-    Backend::Backing* m_backing; 
 
     bool isRequestAddressValid(Addr addr){
         return (addr < memSize_);
     }
-#if 0
-    bool isRequestAddressValid(MemEvent *ev){
-        Addr addr = ev->getAddr();
-        return (addr >= rangeStart_ && addr < rangeStart_ + memSize_);
-        Addr step;
 
-        if(0 == numPages_)     return (addr >= rangeStart_ && addr < (rangeStart_ + memSize_));
-        if(addr < rangeStart_) return false;
-
-        addr = addr - rangeStart_;
-        step = addr / interleaveStep_;
-        if(step >= numPages_)  return false;
-
-        Addr offset = addr % interleaveStep_;
-        if (offset >= interleaveSize_) return false;
-
-        return true;
-    }
-#endif
-#if 0
-    Addr convertAddressToLocalAddress(Addr addr){
-        return addr - rangeStart_;
-        if (0 == numPages_) return addr - rangeStart_;
-
-        addr = addr - rangeStart_;
-        Addr step = addr / interleaveStep_;
-        Addr offset = addr % interleaveStep_;
-        return (step * interleaveSize_) + offset;
-        return 0;
-    }
-#endif
     int         protocol_;
     size_t      memSize_;
-#if 0
-    size_t      rangeStart_;
-    uint64_t    requestSize_;
-    uint64_t    numPages_;
-    Addr        interleaveSize_;
-    Addr        interleaveStep_;
-    uint32_t    cacheLineSize_;
-    uint32_t    requestWidth_;
-#endif
-
 };
 
 }}

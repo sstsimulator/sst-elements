@@ -46,6 +46,8 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
         out.fatal(CALL_INFO, -1, "Must set memSize\n");
     }
 
+    maxOutstanding = params.find<uint64_t>("maxOutstanding", 10);
+
     do_write = params.find<bool>("do_write", 1);
 
     numLS = params.find<int>("num_loadstore", -1);
@@ -122,7 +124,7 @@ bool streamCPU::clockTic( Cycle_t )
 {
 	// communicate?
 	if ((numLS != 0) && ((rng.generateNextUInt32() % commFreq) == 0)) {
-		if ( requests.size() > 10 ) {
+		if ( requests.size() > maxOutstanding ) {
 			out.verbose(CALL_INFO, 1, 0, "Not issuing operation, too many outstanding requests are in flight.\n");
 		} else {
 

@@ -45,6 +45,8 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     }
     
     maxAddr = params.find<uint64_t>("memSize", -1) -1;
+
+    maxOutstanding = params.find<uint64_t>("maxOutstanding", 10);
     
     if ( !maxAddr ) {
         out.fatal(CALL_INFO, -1, "Must set memSize\n");
@@ -121,7 +123,7 @@ bool trivialCPU::clockTic( Cycle_t )
 
 	// communicate?
 	if ((0 != numLS) && (0 == (rng.generateNextUInt32() % commFreq))) {
-		if ( requests.size() > 10 ) {
+		if ( requests.size() > maxOutstanding ) {
 			out.output("%s: Not issuing read.  Too many outstanding requests.\n",
 					getName().c_str());
 		} else {

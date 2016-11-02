@@ -284,6 +284,7 @@ void Cache::processEvent(MemEvent* event, bool replay) {
             break;
         case GetSResp:
         case GetXResp:
+        case FlushLineResp:
             processCacheResponse(event, baseAddr);
             break;
         case PutS:
@@ -307,6 +308,10 @@ void Cache::processEvent(MemEvent* event, bool replay) {
         case FetchResp:
         case FetchXResp:
             processFetchResp(event, baseAddr);
+            break;
+        case FlushLine:
+        case FlushLineInv:
+            processCacheFlush(event, baseAddr, replay);
             break;
         default:
             d_->fatal(CALL_INFO, -1, "Command not supported, cmd = %s", CommandString[cmd]);
