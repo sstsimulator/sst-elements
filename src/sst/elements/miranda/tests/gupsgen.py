@@ -17,7 +17,6 @@ comp_cpu.addParams({
 	"generatorParams.verbose" : 0,
 	"generatorParams.count" : 10000,
 	"generatorParams.max_address" : ((memory_mb) / 2) * 1024 * 1024,
-	"printStats" : 1,
 })
 
 # Enable statistics outputs
@@ -32,9 +31,9 @@ comp_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "prefetcher" : "cassini.StridePrefetcher",
-      "debug" : "1",
       "L1" : "1",
-      "cache_size" : "8KB"
+      "cache_size" : "8KB",
+      "do_not_back" : 1
 })
 
 # Enable statistics outputs
