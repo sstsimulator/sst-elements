@@ -21,9 +21,73 @@
 using namespace SST::ArielComponent;
 
 ArielMemoryManagerMalloc::ArielMemoryManagerMalloc(SST::Component* owner, Params& params) : 
-    ArielMemoryManager(owner, params) { }
+    ArielMemoryManager(owner, params) { 
+    
+        memoryLevels = (uint32_t) params.find<uint32_t>("memorylevels", 1);
+        defaultLevel = (uint32_t) params.find<uint32_t>("defaultlevel", 0);
+        output->verbose(CALL_INFO, 1, 0, "Configuring for %" PRIu32 " memory levels; default level is %" PRIu32 ".\n", memoryLevels, defaultLevel);
+
+        // Configure each memory level's free page pool
+        freePages = (std::deque<uint64_t>**) malloc(sizeof(std::deque<uint64_t>*) * memoryLevels);
+        pageSizes = (uint64_t*) malloc(sizeof(uint64_t) * memoryLevels);
+
+        // PageAllocation and PageTable structures
+        pageAllocations = (std::unordered_map<uint64_t, uint64_t>**) malloc(sizeof(std::unordered_map<uint64_t, uint64_t>*) * memoryLevels);
+        pageTables = (std::unordered_map<uint64_t, uint64_t>**) malloc(sizeof(std::unordered_map<uint64_t, uint64_t>*) * memoryLevels);
+        for (uint32_t i = 0; i <memoryLevels; ++i) {
+            pageAllocations[i] = new std::unordered_map<uint64_t, uint64_t>();
+            pageTables[i] = new std::unordered_map<uint64_t, uint64_t>();
+        }
+        
+        // Initialize data structures
+        char * level_buffer = (char*) malloc(sizeof(char) * 256);
+        uint64_t nextMemoryAddress = 0;        
+        for (uint32_t i = 0; i < memoryLevels; ++i) {
+            // Page size
+            sprintf(level_buffer, "pagesize%" PRIu32, i);
+            pageSizes[i] = (uint64_t) params.find<uint64_t>(level_buffer, 4096);
+            output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " page size is %" PRIu64 "\n", i, pageSizes[i]);
+
+            // Page count
+            sprintf(level_buffer, "pagecount%" PRIu32, i);
+            uint64_t pageCount = (uint64_t) params.find<uint64_t>(level_buffer, 131072);
+            output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " page count is %" PRIu64 "\n", i, pageCount);
+
+            // Configure page pool
+            freePages[i] = new std::deque<uint64_t>();
+
+            if (ArielPageMappingPolicy::LINEAR == mapPolicy) {
+                mapPagesLinear(pageCount, pageSizes[i], nextMemoryAddress, freePages[i]);
+            } else {
+                mapPagesRandom(pageCount, pageSizes[i], nextMemoryAddress, freePages[i]);
+            }
+            nextMemoryAddress += pageCount * pageSizes[i];
+
+            output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " usable (free) page queue contains %" PRIu32 " entries\n", i, (uint32_t) freePages[i]->size());
+            
+            // Populate page table if needed
+            sprintf(level_buffer, "page_populate_%" PRIu32, i);
+            std::string popFilePath = params.find<std::string>(level_buffer, "");
+            if (popFilePath != "") {
+                output->verbose(CALL_INFO, 1, 0, "Populating page tables for level %" PRIu32 " from %s...\n", i, popFilePath.c_str());
+                populatePageTable(popFilePath, pageTables[i], freePages[i], pageSizes[i]);
+            }
+        }
+
+        free(level_buffer);
+
+}
 
 ArielMemoryManagerMalloc::~ArielMemoryManagerMalloc() { }
+
+
+void ArielMemoryManagerMalloc::setDefaultPool(uint32_t pool) {
+    defaultLevel = pool;
+}
+
+uint32_t ArielMemoryManagerMalloc::getDefaultPool() {
+    return defaultLevel;
+}
 
 void ArielMemoryManagerMalloc::cacheTranslation(uint64_t virtualA, uint64_t physicalA) {
 	// Remove the oldest entry if we do not have enough slots

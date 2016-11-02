@@ -36,7 +36,10 @@ class ArielMemoryManagerMalloc : public ArielMemoryManager {
 	public:
 	    ArielMemoryManagerMalloc(SST::Component* owner, Params& params);
     	    ~ArielMemoryManagerMalloc();
-		
+	
+            void setDefaultPool(uint32_t pool);
+            uint32_t getDefaultPool();
+
 	    uint64_t translateAddress(uint64_t virtAddr);
 	    void printStats();
 
@@ -59,6 +62,13 @@ class ArielMemoryManagerMalloc : public ArielMemoryManager {
             std::map<uint64_t, uint64_t> mallocTranslations;    // Map VA to PA for mallocs -> primary lookup
             std::map<uint64_t, mallocInfo> mallocInformation;   // Map mallocID to information about the malloc -> use for frees/allocs
 
+            uint32_t defaultLevel;
+            uint32_t memoryLevels;
+            uint64_t* pageSizes;
+
+            std::deque<uint64_t>** freePages;
+            std::unordered_map<uint64_t, uint64_t>** pageAllocations;
+            std::unordered_map<uint64_t, uint64_t>** pageTables;
 };
 
 }

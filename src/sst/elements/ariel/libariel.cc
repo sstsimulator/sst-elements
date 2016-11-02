@@ -109,7 +109,7 @@ static const ElementInfoParam ariel_params[] = {
     {"appargcount", "Number of arguments to the traced executable", "0"},
     {"apparg%(appargcount)d", "Arguments for the traced executable", ""},
     {"arielmode", "Tool interception mode, set to 1 to trace entire program (default), set to 0 to delay tracing until ariel_enable() call., set to 2 to attempt auto-detect", "2"},
-    {"arielinterceptcalls", "Toggle intercepting library calls", "1"},
+    {"arielinterceptcalls", "Toggle intercepting library calls", "0"},
     {"arielstack", "Dump stack on malloc calls (also requires enabling arielinterceptcalls). May increase overhead due to keeping a shadow stack.", "0"},
     {"tracePrefix", "Prefix when tracing is enable", ""},
     {"clock", "Clock rate at which events are generated and processed", "1GHz"},
@@ -124,7 +124,18 @@ static const ElementInfoPort ariel_ports[] = {
     {NULL, NULL, NULL}
 };
 
-static const ElementInfoParam ArielMemoryManager_params[] = {
+static const ElementInfoParam ArielMemoryManagerSimple_params[] = {
+    {"verbose",         "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
+    {"vtop_translate",  "Set to yes to perform virt-phys translation (TLB) or no to disable", "yes"},
+    {"pagemappolicy",   "Select the page mapping policy for Ariel [LINEAR|RANDOMIZED]", "LINEAR"},
+    {"translatecacheentries", "Keep a translation cache of this many entries to improve emulated core performance", "4096"},
+    {"pagesize0", "Page size", "4096"},
+    {"pagecount0", "Page count", "131072"},
+    {"page_populate_0", "Pre-populate/partially pre-poulate the page table, this is the file to read in.", ""},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoParam ArielMemoryManagerMalloc_params[] = {
     {"verbose",         "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
     {"vtop_translate",  "Set to yes to perform virt-phys translation (TLB) or no to disable", "yes"},
     {"pagemappolicy",   "Select the page mapping policy for Ariel [LINEAR|RANDOMIZED]", "LINEAR"},
@@ -190,7 +201,7 @@ static const ElementInfoSubComponent subcomponents[] = {
         "Simple allocate-on-first-touch memory manager",
         NULL,
         load_ArielMemoryManagerSimple,
-        ArielMemoryManager_params,
+        ArielMemoryManagerSimple_params,
         ArielMemoryManager_statistics,
         "SST::ArielComponent::ArielMemoryManager"
     },
@@ -199,7 +210,7 @@ static const ElementInfoSubComponent subcomponents[] = {
         "MLM memory manager which supports malloc/free in different memory pools",
         NULL,
         load_ArielMemoryManagerMalloc,
-        ArielMemoryManager_params,
+        ArielMemoryManagerMalloc_params,
         ArielMemoryManager_statistics,
         "SST::ArielComponent::ArielMemoryManager"
     },

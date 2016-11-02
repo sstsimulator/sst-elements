@@ -57,50 +57,92 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	uint32_t perform_checks = (uint32_t) params.find<uint32_t>("checkaddresses", 0);
 	output->verbose(CALL_INFO, 1, 0, "Configuring for check addresses = %s\n", (perform_checks > 0) ? "yes" : "no");
 
-        std::string memorymanager = params.find<std::string>("memmgr", "ariel.MemoryManagerSimple");
-
+/** This section of code preserves backward compability from the old memorymanager parameters to the new subcomponent structure. */
         // Warn about the parameters that have moved to the subcomponent
         bool found;
-        params.find<bool>("vtop", 0, found);
+        std::string paramStr = params.find<std::string>("vtop", "", found);
         if (found) {
-            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'vtop' to 'memmgr.vtop' in your input.\n");
-        }
-        params.find<std::string>("pagemappolicy", "", found);
-        if (found) {
-            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'pagemappolicy' to 'memmgr.pagemappolicy' in your input.\n");
-        }
-        params.find<int>("translatecacheentries", 0, found);
-        if (found) {
-            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'translatecacheentries' to 'memmgr.translatecacheentries' in your input.\n");
-        }
-        params.find<int>("memorylevels", 0, found);
-        if (found) {
-            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'memorylevels' to 'memmgr.memorylevels' in your input.\n");
-        }
-        params.find<int>("defaultlevel", 0, found);
-        if (found) {
-            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'defaultlevel' to 'memmgr.defaultlevel' in your input.\n");
-        }
-        params.find<int>("pagesize0", 0, found);
-        if (found) {
-            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'pagesize%(memorylevels)d' to 'memmgr.pagesize%(memorylevels)d' in your input.\n");
-        }
-        params.find<int>("pagecount0", 0, found);
-        if (found) {
-            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'pagecount%(memorylevels)d' to 'memmgr.pagecount%(memorylevels)d' in your input.\n");
-        }
-        params.find<std::string>("pagepopulate0", "", found);
-        if (found) {
-            output->fatal(CALL_INFO, -1, "Error - ariel parameter name change: change 'pagepopulate%(memorylevels)d' to 'memmgr.pagepopulate%(memorylevels)d' in your input.\n");
+            output->verbose(CALL_INFO, 0, 0, "WARNING - ariel parameter name change: change 'vtop' to 'memmgr.vtop' in your input. The old parameter will continue to work for now but may not be supported in future releases.\n");
+            // Check if both parameters are defined - if so, ignore the old one
+            params.find<bool>("memmgr.vtop", 0, found);
+            if (!found) params.insert("memmgr.vtop", paramStr, true);
         }
 
+        paramStr = params.find<std::string>("pagemappolicy", "", found);
+        if (found) {
+            output->verbose(CALL_INFO, 0, 0, "WARNING - ariel parameter name change: change 'pagemappolicy' to 'memmgr.pagemappolicy' in your input. The old parameter will continue to work for now but may not be supported in future releases.\n");
+            params.find<std::string>("memmgr.pagemappolicy", "", found);
+            if (!found) params.insert("memmgr.pagemappolicy", paramStr, true);
+        }
+
+        paramStr = params.find<std::string>("translatecacheentries", "", found);
+        if (found) {
+            output->verbose(CALL_INFO, 0, 0, "WARNING - ariel parameter name change: change 'translatecacheentries' to 'memmgr.translatecacheentries' in your input. The old parameter will continue to work for now but may not be supported in future releases.\n");
+            params.find<std::string>("memmgr.translatecacheentries", "", found);
+            if (!found) params.insert("memmgr.translatecacheentries", paramStr, true);
+        }
+        paramStr = params.find<std::string>("memorylevels", "", found);
+        if (found) {
+            output->verbose(CALL_INFO, 0, 0, "WARNING - ariel parameter name change: change 'memorylevels' to 'memmgr.memorylevels' in your input. The old parameter will continue to work for now but may not be supported in future releases.\n");
+            params.find<std::string>("memmgr.memorylevels", "", found);
+            if (!found) params.insert("memmgr.memorylevels", paramStr, true);
+        }
+        paramStr = params.find<std::string>("defaultlevel", "", found);
+        if (found) {
+            output->verbose(CALL_INFO, 0, 0, "WARNING - ariel parameter name change: change 'defaultlevel' to 'memmgr.defaultlevel' in your input. The old parameter will continue to work for now but may not be supported in future releases.\n");
+            params.find<std::string>("memmgr.defaultlevel", "", found);
+            if (!found) params.insert("memmgr.defaultlevel", paramStr, true);
+        }
+        uint32_t memLevels = params.find<uint32_t>("memmgr.memorylevels", 1, found);
+        if (!found) memLevels = params.find<int>("memorylevels", 1);
+        char * level_buffer = (char*) malloc(sizeof(char) * 256);
+        for (uint32_t i = 0; i < memLevels; i++) {
+            // Check pagesize/pagecount/pagepopulate for each level
+            sprintf(level_buffer, "pagesize%" PRIu32, i);
+            paramStr = params.find<std::string>(level_buffer, "", found);
+            if (found) {
+                output->verbose(CALL_INFO, 0, 0, "WARNING - ariel parameter name change: change '%s' to 'memmgr.%s' in your input. The old parameter will continue to work for now but may not be supported in future releases.\n", level_buffer, level_buffer);
+                sprintf(level_buffer, "memmgr.pagesize%" PRIu32, i);
+                params.find<std::string>(level_buffer, "", found);
+                if (!found) params.insert(level_buffer, paramStr, true);
+            }
+            sprintf(level_buffer, "pagecount%" PRIu32, i);
+            paramStr = params.find<std::string>(level_buffer, "", found);
+            if (found) {
+                output->verbose(CALL_INFO, 0, 0, "WARNING - ariel parameter name change: change '%s' to 'memmgr.%s' in your input. The old parameter will continue to work for now but may not be supported in future releases.\n", level_buffer, level_buffer);
+                sprintf(level_buffer, "memmgr.pagecount%" PRIu32, i);
+                params.find<std::string>(level_buffer, "", found);
+                if (!found) params.insert(level_buffer, paramStr, true);
+            }
+            sprintf(level_buffer, "page_populate_%" PRIu32, i);
+            paramStr = params.find<std::string>(level_buffer, "", found);
+            if (found) {
+                output->verbose(CALL_INFO, 0, 0, "WARNING - ariel parameter name change: change '%s' to 'memmgr.%s' in your input. The old parameter will continue to work for now but may not be supported in future releases.\n", level_buffer, level_buffer);
+                sprintf(level_buffer, "memmgr.pagepopulate%" PRIu32, i);
+                params.find<std::string>(level_buffer, "", found);
+                if (!found) params.insert(level_buffer, paramStr, true);
+            }
+        }
+        free(level_buffer);
+/** End memory manager subcomponent parameter translation */
+        
+        std::string memorymanager = params.find<std::string>("memmgr", "ariel.MemoryManagerSimple");
         if (!memorymanager.empty()) {
+            // Warn about memory levels and the selected memory manager if needed
+            if (memorymanager == "ariel.MemoryManagerSimple" && memLevels > 1) {
+                output->verbose(CALL_INFO, 1, 0, "Warning - the default 'ariel.MemoryManagerSimple' does not support multiple memory levels. Configuring anyways but memorylevels will be 1.\n");
+                params.insert("memmgr.memorylevels", "1", true);
+            } else if (memorymanager == "ariel.MemoryManagerMalloc" && memLevels == 1) {
+                output->verbose(CALL_INFO, 1, 0, "Warning - 'ariel.MemoryManagerMalloc' should only be used if memLevels > 1. Reverting to 'ariel.MemoryManagerSimple'\n");
+                memorymanager = "ariel.MemoryManagerSimple";
+            }
+
             output->verbose(CALL_INFO, 1, 0, "Loading memory manger: %s\n", memorymanager.c_str());
             Params mmParams = params.find_prefix_params("memmgr.");
             memmgr = dynamic_cast<ArielMemoryManager*>( loadSubComponent(memorymanager, this, mmParams));
             if (NULL == memmgr) output->fatal(CALL_INFO, -1, "Failed to load memory manager: %s\n", memorymanager.c_str());
         } else {
-            output->fatal(CALL_INFO, -1, "Failed to load memory manager: no manager specified. Please set the 'memorymanager' param in your configuration file\n");
+            output->fatal(CALL_INFO, -1, "Failed to load memory manager: no manager specified. Please set the 'memmgr' parameter in your input deck\n");
         }
 	
         output->verbose(CALL_INFO, 1, 0, "Memory manager construction is completed.\n");
@@ -137,7 +179,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Model specifies that there are %" PRIu32 " application arguments\n", app_argc);
 
 	uint32_t pin_startup_mode = (uint32_t) params.find<uint32_t>("arielmode", 2);
-	uint32_t intercept_multilev_mem = (uint32_t) params.find<uint32_t>("arielinterceptcalls", 1);
+	uint32_t intercept_multilev_mem = (uint32_t) params.find<uint32_t>("arielinterceptcalls", 0);
 
     switch(intercept_multilev_mem) {
         case 0:
