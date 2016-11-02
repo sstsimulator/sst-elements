@@ -196,6 +196,17 @@ class ArielMemoryManager : public SubComponent {
                     fclose(popFile);
                 }
 
+                void cacheTranslation(uint64_t virtualA, uint64_t physicalA) {
+	            // Remove the oldest entry if we do not have enough slots TODO is begin() really the oldest...?
+	            if(translationCache->size() == translationCacheEntries) {
+		        statTranslationCacheEvict->addData(1);
+		        translationCache->erase(translationCache->begin());
+	            }
+
+	            // Insert the translated entry into the cache
+	            translationCache->insert(std::pair<uint64_t, uint64_t>(virtualA, physicalA));
+                }
+
 };
 
 }

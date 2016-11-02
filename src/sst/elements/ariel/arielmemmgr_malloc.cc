@@ -89,16 +89,6 @@ uint32_t ArielMemoryManagerMalloc::getDefaultPool() {
     return defaultLevel;
 }
 
-void ArielMemoryManagerMalloc::cacheTranslation(uint64_t virtualA, uint64_t physicalA) {
-	// Remove the oldest entry if we do not have enough slots
-	if (translationCache->size() == translationCacheEntries) {
-		statTranslationCacheEvict->addData(1);
-		translationCache->erase(translationCache->begin());
-	}
-
-	// Insert the translated entry into the cache
-	translationCache->insert(std::pair<uint64_t, uint64_t>(virtualA, physicalA));
-}
 
 /*
  *  Determine whether there are enough free pages in a level for an allocation request

@@ -47,7 +47,6 @@ class ArielMemoryManagerMalloc : public ArielMemoryManager {
             bool allocateMalloc(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
         
         private:
-	    void cacheTranslation(uint64_t virtualA, uint64_t physicalA);
             void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
             bool canAllocateInLevel(const uint64_t size, const uint32_t level);
 

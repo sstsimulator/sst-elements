@@ -49,16 +49,6 @@ ArielMemoryManagerSimple::~ArielMemoryManagerSimple() {
 
 }
 
-void ArielMemoryManagerSimple::cacheTranslation(uint64_t virtualA, uint64_t physicalA) {
-	// Remove the oldest entry if we do not have enough slots
-	if(translationCache->size() == translationCacheEntries) {
-		statTranslationCacheEvict->addData(1);
-		translationCache->erase(translationCache->begin());
-	}
-
-	// Insert the translated entry into the cache
-	translationCache->insert(std::pair<uint64_t, uint64_t>(virtualA, physicalA));
-}
 
 void ArielMemoryManagerSimple::allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress) {
         // Simple manager ignores 'level' parameter	

@@ -41,7 +41,6 @@ class ArielMemoryManagerSimple : public ArielMemoryManager {
 	    void printStats();
         
         private:
-	    void cacheTranslation(uint64_t virtualA, uint64_t physicalA);
             void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
             
             uint64_t pageSize;
