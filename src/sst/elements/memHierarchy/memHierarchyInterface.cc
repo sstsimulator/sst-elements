@@ -72,7 +72,6 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
     
     MemEvent *me = new MemEvent(owner_, req->addr, req->addr, cmd);
     
-    me->setGroupId(req->groupId);
     me->setSize(req->size);
 
     if (SimpleMem::Request::Write == req->cmd)  me->setPayload(req->data);
@@ -87,10 +86,7 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
     }
     
     if(req->flags & SimpleMem::Request::F_LLSC){
-        if (req->cmd == SimpleMem::Request::Read)
-            me->setLoadLink();
-        else if(req->cmd == SimpleMem::Request::Write)
-            me->setStoreConditional();
+        me->setFlag(MemEvent::F_LLSC);
     }
 
     me->setVirtualAddress(req->getVirtualAddress());
@@ -142,7 +138,7 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me)
         break;
     case GetXResp:
         req->cmd   = SimpleMem::Request::WriteResp;
-        if(me->isAtomic()) req->flags |= (SimpleMem::Request::F_LLSC_RESP);
+        if(me->success()) req->flags |= (SimpleMem::Request::F_LLSC_RESP);
         break;
     case FlushLineResp:
         req->cmd = SimpleMem::Request::FlushLineResp;

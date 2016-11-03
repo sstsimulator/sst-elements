@@ -251,10 +251,7 @@ public:
         size_               = 0;
         flags_              = 0;
         memFlags_           = 0;
-        groupID_            = 0;
         prefetch_           = false;
-        loadLink_           = false;
-        storeConditional_   = false;
         grantedState_       = NULLST;
         NACKedEvent_        = NULL;
         retries_            = 0;
@@ -312,14 +309,11 @@ public:
     bool inProgress() { return inProgress_; }
     void setInProgress(bool value) { inProgress_ = value; }
 
-    void setLoadLink() { loadLink_ = true; }
-    bool isLoadLink() { return loadLink_; }
+    void setLoadLink() { setFlag(MemEvent::F_LLSC); }
+    bool isLoadLink() { return cmd_ == GetS && queryFlag(MemEvent::F_LLSC); }
     
-    void setStoreConditional() { storeConditional_ = true;}
-    bool isStoreConditional() { return storeConditional_; }
-    
-    void setAtomic(bool b) { b ? setFlag(MemEvent::F_LLSC) : clearFlag(MemEvent::F_LLSC); }
-    bool isAtomic() { return queryFlag(MemEvent::F_LLSC); }
+    void setStoreConditional() { setFlag(MemEvent::F_LLSC); }
+    bool isStoreConditional() { return cmd_ == GetX && queryFlag(MemEvent::F_LLSC); }
     
     void setSuccess(bool b) { b ? setFlag(MemEvent::F_SUCCESS) : clearFlag(MemEvent::F_SUCCESS); }
     bool success() { return queryFlag(MemEvent::F_SUCCESS); }
@@ -407,11 +401,6 @@ public:
    
 
     
-    /** Setter for GroupId */
-    void setGroupId(uint32_t groupID) { groupID_ = groupID; }
-    /** Getter for GroupId */
-    uint32_t getGroupId() { return groupID_; }
-    
     void setDirty(bool status) { dirty_ = status; }
     bool getDirty() { return dirty_; }
 
@@ -482,7 +471,6 @@ private:
     uint32_t        flags_;             // Any flags (atomic, noncacheabel, etc.)
     uint32_t        memFlags_;          // Memory flags - ignored by caches except to be copied through. Faciliates processor-memory communication
     uint32_t        size_;              // Size in bytes that are being requested
-    uint32_t        groupID_;           // ???
     Addr            addr_;              // Address
     Addr            baseAddr_;          // Base (line) address
     string          src_;               // Source ID
@@ -494,14 +482,12 @@ private:
     dataVec         payload_;           // Data
     State           grantedState_;      // For data responses, the cohrence state that the request is granted in
     bool            prefetch_;          // Whether this request came from a prefetcher
-    bool            loadLink_;          // Whether this request in a LL
-    bool            storeConditional_;  // Whether this request is a SC
-    bool            blocked_;           // Whether this request blocked for another pending request (for profiling)
-    SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts
+    bool            blocked_;           // Whether this request blocked for another pending request (for profiling) TODO move to mshrs
+    SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts TODO move to mshrs
     bool            dirty_;             // For a replacement, whether the data is dirty or not
     Addr	    instPtr_;           // Instruction pointer associated with the request
     Addr 	    vAddr_;             // Virtual address associated with the request
-    bool            inProgress_;        // Whether this request is currently being handled, if in MSHR
+    bool            inProgress_;        // Whether this request is currently being handled, if in MSHR TODO move to mshrs
 
     MemEvent() {} // For serialization only
 
@@ -513,7 +499,6 @@ public:
         ser & flags_;
         ser & memFlags_;
         ser & size_;
-        ser & groupID_;
         ser & addr_;
         ser & baseAddr_;
         ser & src_;
@@ -525,8 +510,6 @@ public:
         ser & payload_;
         ser & grantedState_;
         ser & prefetch_;
-        ser & loadLink_;
-        ser & storeConditional_;
         ser & blocked_;
         ser & initTime_;
         ser & dirty_;
