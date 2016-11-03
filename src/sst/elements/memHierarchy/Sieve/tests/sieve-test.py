@@ -31,11 +31,10 @@ ariel.addParams({
     "pipetimeout" : 0,
     "corecount" : corecount,
     "arielmode" : 1,
-    "memorylevels" : 1,
-    "pagecount0" : num_pages,
-    "pagesize0" : pageSize * 1024,
+    "memmgr.pagecount0" : num_pages,
+    "memmgr.pagesize0" : pageSize * 1024,
     "arielstack" : 1,
-    "defaultlevel" : 0
+    "arielinterceptcalls" : 1
 })
 
 sieveId = sst.Component("sieve", "memHierarchy.Sieve")
