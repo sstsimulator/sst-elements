@@ -31,7 +31,7 @@
 
 #include "TLBhierarchy.h"
 
-#include "../memHierarchy/memEvent.h"
+#include "sst/elements/memHierarchy/memEvent.h"
 #include <sst/core/simulation.h>
 
 using namespace SST::Interfaces;
