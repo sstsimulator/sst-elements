@@ -38,6 +38,7 @@ EXTRA_DIST = \
 	tests/stencil3dbench.py \
 	tests/streambench.py \
 	tests/inorderstream.py \
-	tests/copybench.py
+	tests/copybench.py \
+	tests/gupsgen.py
 
 libmiranda_la_LDFLAGS = -module -avoid-version
