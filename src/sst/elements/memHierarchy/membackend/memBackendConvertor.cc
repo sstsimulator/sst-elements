@@ -30,7 +30,7 @@ using namespace SST::MemHierarchy;
 #endif
 
 MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : 
-    SubComponent(comp), m_waitFlush(false)
+    SubComponent(comp), m_flushEvent(NULL)
 {
     m_dbg.init("--->  ", 
             params.find<uint32_t>("debug_level", 0),
@@ -71,8 +71,8 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
     Debug(_L10_,"Creating MemReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
                         ev->getBaseAddr(), ev->getSize(), CommandString[ev->getCmd()]);
 
-    if ( ! m_waitFlush ) {
-        m_waitFlush = setupMemReq( ev );
+    if ( ! m_flushEvent ) {
+        m_flushEvent = setupMemReq( ev );
     } else {
         m_waiting.push_back( ev );
     } 
@@ -139,13 +139,6 @@ MemEvent* MemBackendConvertor::doResponse( ReqId reqId ) {
         // MemReq deletes it's MemEvent
         delete req;
 
-        if ( m_waitFlush && m_pendingRequests.empty() ) {
-            m_waitFlush = false;
-            while ( ! m_waiting.empty() && ! m_waitFlush ) {
-                m_waitFlush = setupMemReq( m_waiting.front( ) ); 
-                m_waiting.pop_front();
-            }
-        }
     }
     return resp;
 }
@@ -154,6 +147,22 @@ void MemBackendConvertor::sendResponse( MemEvent* resp ) {
 
     Debug(_L10_, "send response\n");
     static_cast<MemController*>(parent)->handleMemResponse( resp );
+
+    if ( m_flushEvent && m_pendingRequests.empty() ) {
+
+        MemEvent* flush = m_flushEvent->makeResponse();
+
+        flush->setSuccess(true);
+        static_cast<MemController*>(parent)->handleMemResponse( flush );
+
+        delete m_flushEvent; 
+        m_flushEvent = NULL;
+
+        while ( ! m_waiting.empty() && ! m_flushEvent ) {
+            m_flushEvent = setupMemReq( m_waiting.front( ) ); 
+            m_waiting.pop_front();
+        }
+    }
 }
 
 void MemBackendConvertor::finish(void) {
