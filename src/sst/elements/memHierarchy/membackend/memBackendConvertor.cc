@@ -135,10 +135,6 @@ MemEvent* MemBackendConvertor::doResponse( ReqId reqId ) {
 
         if ( PutM != event->getCmd()  ) {
             resp = event->makeResponse();
-
-            if ( event->queryFlag(MemEvent::F_NONCACHEABLE) ) {
-                resp->setFlag(MemEvent::F_NONCACHEABLE);
-            }    
         }
 
         Cycle_t latency = getCurrentSimTimeNano() - event->getDeliveryTime();
