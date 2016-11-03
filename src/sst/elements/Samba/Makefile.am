@@ -1,7 +1,7 @@
-AM_CPPFLAGS = -Wall \
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src \
 	$(BOOST_CPPFLAGS) \
-	$(MPIT_CPPFLAGS) \
-	-I$(top_srcdir)/src
+	$(MPIT_CPPFLAGS) 
 
 AM_LDFLAGS = -lm 
 compdir = $(pkglibdir)
