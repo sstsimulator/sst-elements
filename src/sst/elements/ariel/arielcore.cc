@@ -369,7 +369,7 @@ bool ArielCore::refillQueue() {
 void ArielCore::handleFreeEvent(ArielFreeEvent* rFE) {
 	output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a free event (for virtual address=%" PRIu64 ")\n", coreID, rFE->getVirtualAddress());
 
-	memmgr->free(rFE->getVirtualAddress());
+	memmgr->freeMalloc(rFE->getVirtualAddress());
 
         if (allocLink) {
             // tell the allocate montior (e.g. mem sieve that a free has occured)
@@ -523,9 +523,6 @@ void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
 	output->verbose(CALL_INFO, 2, 0, "Handling a memory allocation event, vAddr=%" PRIu64 ", length=%" PRIu64 ", at level=%" PRIu32 " with malloc ID=%" PRIu64 "\n",
                         aEv->getVirtualAddress(), aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getInstructionPointer());
 
-	// Remove because we can rely on on-demand page allocation
-	// memmgr->allocate(aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getVirtualAddress());
-
         if (allocLink) {
 	  output->verbose(CALL_INFO, 2, 0, " Sending memory allocation event to allocate monitor\n");
             // tell the allocate montior (e.g. mem sieve that an
@@ -537,6 +534,8 @@ void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
                                            aEv->getAllocationLevel(),
                                            aEv->getInstructionPointer());
             allocLink->send(e);
+        } else {    // As a config convience, we're not supporting allocLink + allocate-on-malloc but there's no real reason not to
+            memmgr->allocateMalloc(aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getVirtualAddress());
         }
 }
 

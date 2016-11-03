@@ -17,10 +17,14 @@
 
 #include "sst/core/element.h"
 #include "sst/core/component.h"
+#include "sst/core/subcomponent.h"
 
 //#include "ariel.h"
 #include "arielcpu.h"
 #include "arieltexttracegen.h"
+
+#include "arielmemmgr_simple.h"
+#include "arielmemmgr_malloc.h"
 
 #ifdef HAVE_LIBZ
 #include "arielgzbintracegen.h"
@@ -40,6 +44,14 @@ static Module* load_TextTrace( Component* comp, Params& params) {
 	return new ArielTextTraceGenerator(comp, params);
 };
 
+static SubComponent* load_ArielMemoryManagerSimple(Component * owner, Params& params) {
+    return new ArielMemoryManagerSimple(owner, params);
+};
+
+static SubComponent* load_ArielMemoryManagerMalloc(Component * owner, Params& params) {
+    return new ArielMemoryManagerMalloc(owner, params);
+};
+
 static const ElementInfoStatistic ariel_statistics[] = {
     { "read_requests",        "Stat read_requests", "requests", 1},   // Name, Desc, Enable Level 
     { "write_requests",       "Stat write_requests", "requests", 1},
@@ -56,11 +68,6 @@ static const ElementInfoStatistic ariel_statistics[] = {
     { "fp_sp_scalar_ins",     "Statistic for counting SP-FP Non-SIMD instructons", "instructions", 1 },
     { "fp_sp_ops",            "Statistic for counting SP-FP operations (inst * SIMD width)", "instructions", 1 },
     { "no_ops",               "Stat no_ops", "instructions", 1},
-    { "tlb_hits",             "Hits in the simple Ariel TLB", "hits", 2 },
-    { "tlb_evicts",           "Number of evictions in the simple Ariel TLB", "evictions", 2 },
-    { "tlb_translate_queries","Number of TLB translations performed", "translations", 2 },
-    { "tlb_shootdown",        "Number of TLB clears because of page-frees", "shootdowns", 2 },
-    { "tlb_page_allocs",      "Number of pages allocated by the memory manager", "pages", 2 },
     { NULL, NULL, NULL, 0 }
 };
 
@@ -86,13 +93,6 @@ static const ElementInfoParam ariel_params[] = {
     {"alloctracker", "Use an allocation tracker (e.g. memSieve)", "0"},
     {"corecount", "Number of CPU cores to emulate", "1"},
     {"checkaddresses", "Verify that addresses are valid with respect to cache lines", "0"},
-    {"vtop_translate", "Set to yes to perform virt-phys translation (TLB) or no to disable", "yes"},
-    {"translatecacheentries", "Keep a translation cache of this many entries to improve emulated core performance", "4096"},
-    {"memorylevels", "Number of memory levels in the system", "1"},
-    {"pagesize%(memorylevels)d", "Page size for memory Level x", "4096"},
-    {"pagecount%(memorylevels)d", "Page count for memory Level x", "131072"},
-    {"page_populate_%(memorylevels)d", "Pre-populate/partially pre-populate a page table for a level in memory, this is the file to read in.", ""},
-    {"defaultlevel", "Default memory level", "0"},
     {"maxissuepercycle", "Maximum number of requests to issue per cycle, per core", "1"},
     {"maxcorequeue", "Maximum queue depth per core", "64"},
     {"maxtranscore", "Maximum number of pending transactions", "16"},
@@ -109,12 +109,12 @@ static const ElementInfoParam ariel_params[] = {
     {"appargcount", "Number of arguments to the traced executable", "0"},
     {"apparg%(appargcount)d", "Arguments for the traced executable", ""},
     {"arielmode", "Tool interception mode, set to 1 to trace entire program (default), set to 0 to delay tracing until ariel_enable() call., set to 2 to attempt auto-detect", "2"},
-    {"arielinterceptcalls", "Toggle intercepting library calls", "1"},
+    {"arielinterceptcalls", "Toggle intercepting library calls", "0"},
     {"arielstack", "Dump stack on malloc calls (also requires enabling arielinterceptcalls). May increase overhead due to keeping a shadow stack.", "0"},
     {"tracePrefix", "Prefix when tracing is enable", ""},
     {"clock", "Clock rate at which events are generated and processed", "1GHz"},
     {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
-    {"pagemappolicy", "Select the page mapping policy for Ariel [LINEAR|RANDOMIZED]", "LINEAR"},
+    {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
     {NULL, NULL, NULL}
 };
 
@@ -122,6 +122,39 @@ static const ElementInfoPort ariel_ports[] = {
     {"cache_link_%(corecount)d", "Each core's link to its cache", NULL},
     {"alloc_link_%(corecount)d", "Each core's link to an allocation tracker (e.g. memSieve)", NULL},
     {NULL, NULL, NULL}
+};
+
+static const ElementInfoParam ArielMemoryManagerSimple_params[] = {
+    {"verbose",         "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
+    {"vtop_translate",  "Set to yes to perform virt-phys translation (TLB) or no to disable", "yes"},
+    {"pagemappolicy",   "Select the page mapping policy for Ariel [LINEAR|RANDOMIZED]", "LINEAR"},
+    {"translatecacheentries", "Keep a translation cache of this many entries to improve emulated core performance", "4096"},
+    {"pagesize0", "Page size", "4096"},
+    {"pagecount0", "Page count", "131072"},
+    {"page_populate_0", "Pre-populate/partially pre-poulate the page table, this is the file to read in.", ""},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoParam ArielMemoryManagerMalloc_params[] = {
+    {"verbose",         "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
+    {"vtop_translate",  "Set to yes to perform virt-phys translation (TLB) or no to disable", "yes"},
+    {"pagemappolicy",   "Select the page mapping policy for Ariel [LINEAR|RANDOMIZED]", "LINEAR"},
+    {"translatecacheentries", "Keep a translation cache of this many entries to improve emulated core performance", "4096"},
+    {"memorylevels",    "Number of memory levels in the system", "1"},
+    {"defaultlevel",    "Default memory level", "0"},
+    {"pagesize%(memorylevels)d", "Page size for memory Level x", "4096"},
+    {"pagecount%(memorylevels)d", "Page count for memory Level x", "131072"},
+    {"page_populate_%(memorylevels)d", "Pre-populate/partially pre-populate a page table for a level in memory, this is the file to read in.", ""},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoStatistic ArielMemoryManager_statistics[] = {
+    { "tlb_hits",             "Hits in the simple Ariel TLB", "hits", 2 },
+    { "tlb_evicts",           "Number of evictions in the simple Ariel TLB", "evictions", 2 },
+    { "tlb_translate_queries","Number of TLB translations performed", "translations", 2 },
+    { "tlb_shootdown",        "Number of TLB clears because of page-frees", "shootdowns", 2 },
+    { "tlb_page_allocs",      "Number of pages allocated by the memory manager", "pages", 2 },
+    { NULL, NULL, NULL, 0 }
 };
 
 static const ElementInfoModule modules[] = {
@@ -162,6 +195,27 @@ static const ElementInfoComponent components[] = {
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0 }
 };
 
+static const ElementInfoSubComponent subcomponents[] = {
+    {
+        "MemoryManagerSimple",
+        "Simple allocate-on-first-touch memory manager",
+        NULL,
+        load_ArielMemoryManagerSimple,
+        ArielMemoryManagerSimple_params,
+        ArielMemoryManager_statistics,
+        "SST::ArielComponent::ArielMemoryManager"
+    },
+    {   
+        "MemoryManagerMalloc",
+        "MLM memory manager which supports malloc/free in different memory pools",
+        NULL,
+        load_ArielMemoryManagerMalloc,
+        ArielMemoryManagerMalloc_params,
+        ArielMemoryManager_statistics,
+        "SST::ArielComponent::ArielMemoryManager"
+    },
+    { NULL, NULL, NULL, NULL, NULL, NULL }
+};
 
 extern "C" {
 	ElementLibraryInfo ariel_eli = {
@@ -170,6 +224,7 @@ extern "C" {
 		components,
         	NULL, /* Events */
         	NULL, /* Introspectors */
-        	modules
+        	modules,
+                subcomponents
 	};
 }

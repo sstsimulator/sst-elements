@@ -17,8 +17,8 @@ ariel.addParams({
         "pipetimeout" : "0",
         "executable" : sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream",
         "arielmode" : "1",
-        "memorylevels" : "1",
-        "defaultlevel" : "0"
+        "memmgr.memorylevels" : "1",
+        "memmgr.defaultlevel" : "0"
         })
 
 corecount = 1;
