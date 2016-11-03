@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -674,10 +678,6 @@ void ProcessQueuesState<T1>::processWaitCtx_1( WaitCtx* ctx, _CommReq* req )
 
     dbg().verbose(CALL_INFO,1,1,"\n");
 
-    if ( req->isMine() ) {
-        delete req;
-    }
-
     if ( length > obj().shortMsgLength() ) {
         // this is a hack, to get point to point latencies to match Chama
         // we need to not add delay for unpinning the send buffer for long msg  
@@ -690,6 +690,10 @@ void ProcessQueuesState<T1>::processWaitCtx_1( WaitCtx* ctx, _CommReq* req )
         ); 
     } else {
         processWaitCtx_2( ctx );
+    }
+
+    if ( req->isMine() ) {
+        delete req;
     }
 }
 

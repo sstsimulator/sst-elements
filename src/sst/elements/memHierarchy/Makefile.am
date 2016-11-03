@@ -21,6 +21,8 @@ libmemHierarchy_la_SOURCES = \
 	memoryController.h \
 	memoryController.cc \
         membackend/memBackend.h \
+	membackend/delayBuffer.h \
+	membackend/delayBuffer.cc \
 	membackend/simpleMemBackend.h \
 	membackend/simpleMemBackend.cc \
 	membackend/simpleDRAMBackend.h \
@@ -110,6 +112,7 @@ nobase_sst_HEADERS = \
 	membackend/simpleDRAMBackend.h \
 	membackend/requestReorderSimple.h \
 	membackend/requestReorderByRow.h \
+	membackend/delayBuffer.h \
 	memoryController.h \
 	cacheListener.h \
 	bus.h \
@@ -117,6 +120,15 @@ nobase_sst_HEADERS = \
 
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
 libmemHierarchy_la_LIBADD = 
+
+if HAVE_RAMULATOR
+libmemHierarchy_la_LDFLAGS += $(RAMULATOR_LDFLAGS)
+libmemHierarchy_la_LIBADD += $(RAMULATOR_LIB)
+libmemHierarchy_la_SOURCES += membackend/ramulatorBackend.cc \
+	membackend/ramulatorBackend.h
+nobase_sst_HEADERS += membackend/ramulatorBackend.h
+AM_CPPFLAGS += $(RAMULATOR_CPPFLAGS) -DHAVE_LIBRAMULATOR
+endif
 
 if HAVE_DRAMSIM
 libmemHierarchy_la_LDFLAGS += $(DRAMSIM_LDFLAGS)

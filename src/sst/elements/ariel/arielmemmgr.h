@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -26,11 +30,17 @@ using namespace SST;
 namespace SST {
 namespace ArielComponent {
 
+enum ArielPageMappingPolicy {
+	LINEAR,
+	RANDOMIZED
+};
+
 class ArielMemoryManager {
 
 	public:
 		ArielMemoryManager(SST::Component* ownMe, uint32_t memoryLevels, uint64_t* pageSize, uint64_t* stdPageCount, Output* output,
-			uint32_t defLevel, uint32_t translateCacheEntryCount);
+			uint32_t defLevel, uint32_t translateCacheEntryCount, 
+			ArielPageMappingPolicy mapPolicy);
 		~ArielMemoryManager();
 		void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
 		void free(const uint64_t vAddr);

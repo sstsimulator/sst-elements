@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -140,7 +144,11 @@ void Cache::processCacheRequest(MemEvent* event, Command cmd, Addr baseAddr, boo
 }
 
 
-/* Handles processing for all replacements - PutS, PutE, PutM, etc. */
+/* 
+ *  Handles processing for all replacements - PutS, PutE, PutM, etc. 
+ *  For non-inclusive/incoherent caches, may need to allocate a new line
+ *  If Put conflicts with existing request, will still call handleReplacement to resolve any races
+ */
 void Cache::processCacheReplacement(MemEvent* event, Command cmd, Addr baseAddr, bool replay) {
 #ifdef __SST_DEBUG_OUTPUT__
     printLine(baseAddr);
@@ -148,7 +156,7 @@ void Cache::processCacheReplacement(MemEvent* event, Command cmd, Addr baseAddr,
 
 
     // May need to allocate for non-inclusive or incoherent caches
-    if (cf_.type_ == "noninclusive" || cf_.protocol_ == 2) {
+    if (cf_.type_ == "noninclusive" || cf_.protocol_ == CoherenceProtocol::NONE) {
         int index = cf_.cacheArray_->find(baseAddr, true); // Update replacement metadata
         if (isCacheMiss(index)) {
 #ifdef __SST_DEBUG_OUTPUT__
@@ -210,8 +218,10 @@ void Cache::processCacheInvalidate(MemEvent* event, Addr baseAddr, bool replay) 
         return;
     }
     
+    MemEvent * collisionEvent = NULL;
+    if (mshr_->exists(baseAddr)) collisionEvent = mshr_->lookupFront(baseAddr);
     CacheLine * line = getLine(baseAddr);
-    CacheAction action = coherenceMgr->handleInvalidationRequest(event, line, replay);
+    CacheAction action = coherenceMgr->handleInvalidationRequest(event, line, collisionEvent, replay);
         
 #ifdef __SST_DEBUG_OUTPUT__
     printLine(baseAddr);
@@ -225,6 +235,58 @@ void Cache::processCacheInvalidate(MemEvent* event, Addr baseAddr, bool replay) 
         activatePrevEvents(baseAddr);  // Inv acted as ackPut, retry any stalled requests
     } else {    // IGNORE
         delete event;
+    }
+}
+
+
+void Cache::processCacheFlush(MemEvent* event, Addr baseAddr, bool replay) {
+#ifdef __SST_DEBUG_OUTPUT__
+    printLine(baseAddr);
+#endif
+    int index = cf_.cacheArray_->find(baseAddr, false);
+    bool miss = (index == -1);
+    // Find line
+    //      If hit and in transition: buffer in MSHR
+    //      If hit and dirty: forward cacheFlush w/ data, wait for flushresp
+    //      If hit and clean: forward cacheFlush w/o data, wait for flushresp
+    //      If miss: forward cacheFlush w/o data, wait for flushresp
+    
+    if (event->inProgress()) {
+        processRequestInMSHR(baseAddr, event);
+#ifdef __SST_DEBUG_OUTPUT__
+        d_->debug(_L8_, "Attempted retry too early, continue stalling\n");
+#endif
+        return;
+    }
+
+    MemEvent * origRequest = NULL;
+    if (mshr_->exists(baseAddr)) origRequest = mshr_->lookupFront(baseAddr);
+    
+    CacheLine * line = getLine(baseAddr);
+    CacheAction action = coherenceMgr->handleReplacement(event, line, origRequest, replay);
+    
+    /* Action returned is for the origRequest if it exists, otherwise for the flush */
+    /* If origRequest, put flush in mshr and replay */
+    /* Stall the request if we are waiting on a response to a forwarded Flush */
+    
+#ifdef __SST_DEBUG_OUTPUT__
+    printLine(baseAddr);
+#endif
+    if (origRequest != NULL) {
+        processRequestInMSHR(baseAddr, event);
+        if (action == DONE) {
+            mshr_->removeFront(baseAddr);
+            recordLatency(origRequest);
+            delete origRequest;
+            activatePrevEvents(baseAddr);
+        }
+    } else {
+        if (action == STALL) {
+            processRequestInMSHR(baseAddr, event);
+        } else {
+            delete event;
+            activatePrevEvents(baseAddr);
+        }
     }
 }
 
@@ -660,7 +722,8 @@ void Cache::errorChecking() {
 
 void Cache::pMembers() {
     string protocolStr;
-    if (cf_.protocol_) protocolStr = "MESI";
+    if (cf_.protocol_ == CoherenceProtocol::MESI) protocolStr = "MESI";
+    else if (cf_.protocol_ == CoherenceProtocol::NONE) protocolStr = "NONE";
     else protocolStr = "MSI";
     
     d_->debug(_INFO_,"Coherence Protocol: %s \n", protocolStr.c_str());

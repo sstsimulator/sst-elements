@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -60,11 +64,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     bool found;
     params.find<int>("statistics", 0, found);
     if (found) {
-        out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sstinfo to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
+        out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sst-info to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
     }
-    params.find<int>("mem_size", 0, found);
+    params.find<std::string>("mem_size", "0B", found);
     if (found) {
-        out.fatal(CALL_INFO, -1, "%s, Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n", getName().c_str());
+        out.fatal(CALL_INFO, -1, "%s, Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size WITH UNITS (e.g., 8GiB or 1024MiB), change the parameter name in your input deck.\n", getName().c_str());
     }
     params.find<int>("network_num_vc", 0, found);
     if (found) {
@@ -80,9 +84,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     if (!found) {
         out.fatal(CALL_INFO, -1, "Param not specified (%s): clock - memory controller's clock rate (with units, e.g., MHz)\n", getName().c_str());
     }
-    const uint64_t backendRamSizeMB = params.find<uint64_t>("backend.mem_size", 0, found);
+    UnitAlgebra backendRamSize = UnitAlgebra(params.find<std::string>("backend.mem_size", "0B", found));
     if (!found) {
-        out.fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified (in MiBs)\n", getName().c_str());
+        out.fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified, (NEW) WITH units. E.g., 8GiB or 1024MiB. \n", getName().c_str());
+    }
+    if (!backendRamSize.hasUnits("B")) {
+        out.fatal(CALL_INFO, -1, "Invalid param (%s): backend.mem_size - definition has CHANGED! Now requires units in 'B' (SI OK, ex: 8GiB or 1024MiB).\nSince previous definition was implicitly MiB, you may simply append 'MiB' to the existing value. You specified '%s'\n", getName().c_str(), backendRamSize.toString().c_str());
     }
 
     rangeStart_             = params.find<Addr>("range_start", 0);
@@ -139,7 +146,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         dbg.fatal(CALL_INFO, -1, "Invalid param(%s): protocol - must be one of 'MESI', 'MSI', or 'NONE'. You specified '%s'\n", getName().c_str(), protocolStr.c_str());
     }
     // Convert into MBs
-    memSize_ = backendRamSizeMB * (1024*1024ul);
+    memSize_ = backendRamSize.getRoundedValue();
+    if (memSize_ % cacheLineSize_ != 0) {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): backend.mem_size - must be a multiple of request_size. Note: use 'MB' for base-10 and 'MiB' for base-2. Please change one of these parameters. You specified backend.mem_size='%s' and request_size='%" PRIu64 "' B\n", getName().c_str(), backendRamSize.toString().c_str(), cacheLineSize_);
+    }
 
     // Check interleave parameters
     fixByteUnits(ilSize);
@@ -204,6 +214,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
             int err = errno;
             dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory: %s, errno = %d\n", strerror(err), err);
         }
+    } else {
+	backingFd_  = -1;
     }
 
     if (!backend_)          dbg.fatal(CALL_INFO,-1,"Unable to load Module %s as backend\n", backendName.c_str());
@@ -213,6 +225,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
     stat_PutMReqReceived    = registerStatistic<uint64_t>("requests_received_PutM");
     stat_outstandingReqs    = registerStatistic<uint64_t>("outstanding_requests");
+    stat_GetSLatency        = registerStatistic<uint64_t>("latency_GetS");
+    stat_GetSExLatency      = registerStatistic<uint64_t>("latency_GetSEx");
+    stat_GetXLatency        = registerStatistic<uint64_t>("latency_GetX");
+    stat_PutMLatency        = registerStatistic<uint64_t>("latency_PutM");
 
     cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
     cyclesAttemptIssueButRejected = registerStatistic<uint64_t>(
@@ -235,6 +251,7 @@ void MemController::handleEvent(SST::Event* event) {
         ev->getBaseAddr(), ev->getDst().c_str(), ev->getSrc().c_str(), ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
 #endif
     Command cmd = ev->getCmd();
+    ev->setDeliveryTime(getCurrentSimTimeNano());
 
     // Notify our listeners that we have received an event
     switch (cmd) {
@@ -260,18 +277,37 @@ void MemController::handleEvent(SST::Event* event) {
 
             addRequest(ev);
             break;
+        case FlushLine:
+        case FlushLineInv:
+            ev->setCmd(FlushLine);  // Same diff at this point
+            addRequest(ev); // Flush -> will return when all outstanding requests are done
+            if (ev->getPayloadSize() != 0) { // Writeback
+                if (!listeners_.empty()) {
+                    CacheListenerNotification notify(ev->getAddr(), ev->getVirtualAddress(),
+                            ev->getInstructionPointer(), ev->getSize(), READ, HIT);
+                    for (unsigned long int i = 0; i < listeners_.size(); ++i) {
+                        listeners_[i]->notifyAccess(notify);
+                    }
+                }
+                ev->setCmd(PutM);
+                addRequest(ev);
+            }
+            break;
         case PutS:
         case PutE:
             break;
         default:
             dbg.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[cmd]);
     }
+    delete event;   // addRequest copies event so delete this one
 
-    delete event;
 }
 
 
-
+/*
+ *  Enqueue new request
+ *  Will be handled on the clock tick
+ */
 void MemController::addRequest(MemEvent* ev) {
     if ( !isRequestAddressValid(ev) ) {
         dbg.fatal(CALL_INFO, 1, "MemoryController \"%s\" received request from \"%s\" with invalid address.\n"
@@ -288,14 +324,14 @@ void MemController::addRequest(MemEvent* ev) {
     Command cmd   = ev->getCmd();
     DRAMReq* req = new DRAMReq(ev, requestWidth_, cacheLineSize_);
     
-    requestPool_.insert(req);
-    requestQueue_.push_back(req);
+    if (cmd != FlushLine) requestPool_.insert(req); // All outstanding requests
+    else flushPool_.insert(req);                    // Set of pending flushes
+    requestQueue_.push_back(req);                   // Requests waiting to be issued
     
-#ifdef __SST_DEBUG_OUTPUT__
+#ifdef __SST_DEBUG_OURequest_
     dbg.debug(_L10_,"Creating DRAM Request. BsAddr = %" PRIx64 ", Size: %" PRIu64 ", %s\n", req->baseAddr_, req->size_, CommandString[cmd]);
 #endif
 }
-
 
 
 bool MemController::clock(Cycle_t cycle) {
@@ -310,51 +346,82 @@ bool MemController::clock(Cycle_t cycle) {
         DRAMReq *req = requestQueue_.front();
         req->status_ = DRAMReq::PROCESSING;
 
-        bool issued = backend_->issueRequest(req);
-        if (issued) {
-    	    cyclesWithIssue->addData(1);
+        if (req->cmd_ == FlushLine) {
+           handleFlush(req);
+           requestQueue_.pop_front();
         } else {
-    	    cyclesAttemptIssueButRejected->addData(1);
-	    break;
-	}
 
-	reqsThisCycle++;
-        req->amtInProcess_ += requestSize_;
+            bool issued = backend_->issueRequest(req);
+            if (issued) {
+    	        cyclesWithIssue->addData(1);
+            } else {
+    	        cyclesAttemptIssueButRejected->addData(1);
+	        break;
+            }
+	    reqsThisCycle++;
+            req->amtInProcess_ += requestSize_;
 
-        if (req->amtInProcess_ >= req->size_) {
+            if (req->amtInProcess_ >= req->size_) {
 #ifdef __SST_DEBUG_OUTPUT__
-            dbg.debug(_L10_, "Completed issue of request\n");
+                dbg.debug(_L10_, "Completed issue of request\n");
 #endif
-            performRequest(req);
-            requestQueue_.pop_front();
+                performRequest(req);
+                requestQueue_.pop_front();
+            }
         }
     }
 
     stat_outstandingReqs->addData(requestPool_.size());
     
-    backend_->clock();
+    backend_->clock();  // TODO We aren't declocking memory when idle because backend might rely on this clock call. Future work -> turn off for backends that support it or require backends to have their own clock
 
     return false;
 }
 
 
+/*
+ *  Handle flush request
+ *  Check if outstanding requests -> if not, complete
+ *  If outstanding, flag them
+ */
+void MemController::handleFlush(DRAMReq* req) {
+    // Create response
+    req->respEvent_ = req->reqEvent_->makeResponse();
+    req->respEvent_->setSuccess(true);
+    
+    // Check how many we are actually waiting for
+    int waitingFor = 0;
+    for (std::set<DRAMReq*>::iterator it = requestPool_.begin(); it != requestPool_.end(); it++) {
+        if ((*it)->baseAddr_ == req->baseAddr_) {
+            waitingFor++;
+            (*it)->checkFlushes_ = true;
+        }
+    }
+    if (waitingFor == 0) sendResponse(req);
+    else req->amtInProcess_ = waitingFor;
+}
 
+/*
+ *  Perform request locally
+ *  Update backing store & generate response message
+ *  Wait for backend to complete before sending response though
+ */
 void MemController::performRequest(DRAMReq* req) {
     bool noncacheable  = req->reqEvent_->queryFlag(MemEvent::F_NONCACHEABLE);
     Addr localBaseAddr = convertAddressToLocalAddress(req->baseAddr_);
     Addr localAddr;
 
-    if (req->cmd_ == PutM) {  /* Write request to memory */
+    if (req->cmd_ == PutM) {    /* Memory write request */
 #ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, req->reqEvent_->getSize(), noncacheable ? "true" : "false");
 #endif	
-        
         if (doNotBack_) return;
         
+        // Update local backing store
         for ( size_t i = 0 ; i < req->reqEvent_->getSize() ; i++) 
             memBuffer_[localBaseAddr + i] = req->reqEvent_->getPayload()[i];
         
-    } else {
+    } else { /* Memory read request */
         Addr localAbsAddr = convertAddressToLocalAddress(req->reqEvent_->getAddr());
         
         if (noncacheable && req->cmd_ == GetX) {
@@ -392,7 +459,7 @@ void MemController::performRequest(DRAMReq* req) {
             if (protocol_) req->respEvent_->setGrantedState(E); // Directory controller supersedes this; only used if DirCtrl does not exist
             else req->respEvent_->setGrantedState(S);
         }
-	}
+    }
 }
 
 
@@ -403,7 +470,36 @@ void MemController::sendResponse(DRAMReq* req) {
     }
     req->status_ = DRAMReq::DONE;
     
-    requestPool_.erase(req);
+    uint64_t latency = getCurrentSimTimeNano() - req->reqEvent_->getDeliveryTime(); 
+    switch (req->reqEvent_->getCmd()) {
+        case GetS:
+            stat_GetSLatency->addData(latency);
+            break;
+        case GetSEx:
+            stat_GetSExLatency->addData(latency);
+            break;
+        case GetX:
+            stat_GetXLatency->addData(latency);
+            break;
+        case PutM:
+            stat_PutMLatency->addData(latency);
+            break;
+        default:
+            break;
+    }
+    
+
+    if (req->cmd_ == FlushLine) flushPool_.erase(req);
+    else requestPool_.erase(req);
+    if (req->checkFlushes_) {
+        for (std::set<DRAMReq*>::iterator it = flushPool_.begin(); it != flushPool_.end(); it++) {
+            if ((*it)->baseAddr_ == req->baseAddr_) {
+                (*it)->amtInProcess_--;
+                if ((*it)->amtInProcess_ == 0) sendResponse(*it);
+                break;
+            }
+        }
+    }
     delete req;
 }
 
@@ -434,6 +530,11 @@ MemController::~MemController() {
     while ( requestPool_.size()) {
         DRAMReq *req = *(requestPool_.begin());
         requestPool_.erase(req);
+        delete req;
+    }
+    while (flushPool_.size()) {
+        DRAMReq *req = *(flushPool_.begin());
+        flushPool_.erase(req);
         delete req;
     }
 }

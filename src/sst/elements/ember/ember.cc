@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -35,6 +39,7 @@
 #include "mpi/motifs/emberTrafficGen.h"
 #include "mpi/motifs/emberring.h"
 #include "mpi/motifs/emberdetailedring.h"
+#include "mpi/motifs/emberdetailedstream.h"
 #include "mpi/motifs/emberinit.h"
 #include "mpi/motifs/emberfini.h"
 #include "mpi/motifs/emberbarrier.h"
@@ -124,6 +129,11 @@ load_Ring( Component* comp, Params& params ) {
 static SubComponent*
 load_DetailedRing( Component* comp, Params& params ) {
 	return new EmberDetailedRingGenerator(comp, params);
+}
+
+static SubComponent*
+load_DetailedStream( Component* comp, Params& params ) {
+	return new EmberDetailedStreamGenerator(comp, params);
 }
 
 static Module*
@@ -328,7 +338,7 @@ static const ElementInfoParam component_params[] = {
 };
 
 static const ElementInfoPort component_ports[] = {
-    {"detailed0", "Port connected to the detailed model", NULL},
+    {"detailed%(num_vNics)d", "Port connected to the detailed model", NULL},
     {"nic", "Port connected to the nic", NULL},
     {"loop", "Port connected to the loopBack", NULL},
 	{"memoryHeap", "Port connected to the memory heap", NULL},
@@ -535,6 +545,10 @@ static const ElementInfoParam halo3d26_params[] = {
 static const ElementInfoParam ring_params[] = {
 	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
 	{	"arg.messagesize",		"Sets the size of the message in bytes",	 	"1024"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam stream_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
@@ -809,6 +823,14 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_DetailedRing,
 	ring_params,
+	emberMotifTime_statistics,
+	"SST::Ember::EmberGenerator"
+    },
+    { 	"DetailedStreamMotif",
+	"Performs a Stream Motif with detailed model",
+	NULL,
+	load_DetailedStream,
+	stream_params,
 	emberMotifTime_statistics,
 	"SST::Ember::EmberGenerator"
     },

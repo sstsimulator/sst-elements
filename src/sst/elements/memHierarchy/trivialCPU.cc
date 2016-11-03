@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -41,6 +45,8 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     }
     
     maxAddr = params.find<uint64_t>("memSize", -1) -1;
+
+    maxOutstanding = params.find<uint64_t>("maxOutstanding", 10);
     
     if ( !maxAddr ) {
         out.fatal(CALL_INFO, -1, "Must set memSize\n");
@@ -117,7 +123,7 @@ bool trivialCPU::clockTic( Cycle_t )
 
 	// communicate?
 	if ((0 != numLS) && (0 == (rng.generateNextUInt32() % commFreq))) {
-		if ( requests.size() > 10 ) {
+		if ( requests.size() > maxOutstanding ) {
 			out.output("%s: Not issuing read.  Too many outstanding requests.\n",
 					getName().c_str());
 		} else {

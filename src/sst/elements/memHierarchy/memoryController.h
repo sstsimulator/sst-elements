@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -46,20 +50,21 @@ public:
     void finish();
 
     Output dbg;
-    virtual void handleMemResponse(DRAMReq* _req);
+    virtual void handleMemResponse(DRAMReq* req);
 
 private:
 
     MemController();  // for serialization only
     ~MemController();
 
-    void handleEvent(SST::Event* _event);
-    void addRequest(MemEvent* _ev);
-    bool clock(SST::Cycle_t _cycle);
-    void performRequest(DRAMReq* _req);
-    void sendResponse(DRAMReq* _req);
-    void printMemory(DRAMReq* _req, Addr _localAddr);
+    void handleEvent(SST::Event* event);
+    void addRequest(MemEvent* ev);
+    bool clock(SST::Cycle_t cycle);
+    void performRequest(DRAMReq* req);
+    void sendResponse(DRAMReq* req);
+    void printMemory(DRAMReq* req, Addr localAddr);
     int setBackingFile(string memoryFile);
+    void handleFlush(DRAMReq* req);
 
     bool isRequestAddressValid(MemEvent *ev){
         Addr addr = ev->getAddr();
@@ -102,6 +107,7 @@ private:
     int         protocol_;
     dramReq_t   requestQueue_;      // Requests waiting to be issued
     set<DRAMReq*>   requestPool_;   // All requests that are in flight at the memory controller (including those waiting to be issued) 
+    set<DRAMReq*>   flushPool_;     // All flush requests that are in flight at the memory controller
     int         backingFd_;
     uint8_t*    memBuffer_;
     uint64_t    memSize_;
@@ -124,7 +130,10 @@ private:
     Statistic<uint64_t>* stat_PutMReqReceived;
     Statistic<uint64_t>* stat_GetSExReqReceived;
     Statistic<uint64_t>* stat_outstandingReqs;
-
+    Statistic<uint64_t>* stat_GetSLatency;
+    Statistic<uint64_t>* stat_GetSExLatency;
+    Statistic<uint64_t>* stat_GetXLatency;
+    Statistic<uint64_t>* stat_PutMLatency;
 
     Output::output_location_t statsOutputTarget_;
 //#ifdef HAVE_LIBZ

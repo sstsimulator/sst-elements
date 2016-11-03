@@ -5,6 +5,10 @@
 // Copyright (c) 2013-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -37,11 +41,15 @@ bool MemNIC::isValidDestination(std::string target) {
     return (addrMap.find(target) != addrMap.end());
 }
 
+void MemNIC::setMinPacketSize(unsigned int bytes) {
+    packetHeaderBytes = bytes;
+}
+
 /* Get size in bytes for a MemEvent */
-int MemNIC::getFlitSize(MemEvent *ev)
+int MemNIC::getSizeInBits(MemEvent *ev)
 {
     /* addr (8B) + cmd (1B) + size */
-    return 8 + ev->getPayloadSize();
+    return 8 * (packetHeaderBytes + ev->getPayloadSize());
 }
 
 
@@ -52,7 +60,6 @@ void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
 
     num_vcs = ci.num_vcs;
 
-    flitSize = 16; // 16 Bytes as a default:  TODO: Parameterize this
     last_recv_vc = 0;
 
     Params params; // LinkControl doesn't actually use the params
@@ -287,7 +294,7 @@ void MemNIC::send(MemEvent *ev)
     MemRtrEvent *mre = new MemRtrEvent(ev);
     req->src = ci.network_addr;
     req->dest = addrForDest(ev->getDst());
-    req->size_in_bits = 8 * getFlitSize(ev);
+    req->size_in_bits = getSizeInBits(ev);
     req->vn = 0;
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr())

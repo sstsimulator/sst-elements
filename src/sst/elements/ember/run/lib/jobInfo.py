@@ -5,6 +5,10 @@
 # Copyright (c) 2009-2016, Sandia Corporation
 # All rights reserved.
 #
+# Portions are copyright of other developers:
+# See the file CONTRIBUTORS.TXT in the top level directory
+# the distribution for more information.
+#
 # This file is part of the SST software package. For license
 # information, see the LICENSE file in the top level directory of the
 # distribution.
@@ -80,7 +84,15 @@ class JobInfoBase:
 		pass
 
 	def getDetailed(self,nodeId):
-		pass	
+		#print 'JobLoad::getDetailded()',nodeId
+		if self._detailedModel:
+			model,params,nodes = self._detailedModel
+			if nodeId in nodes:
+				return detailedModel.getModel( model, params )
+			else:
+				return None
+		else:
+			return None
 
 	def setDetailed(self,detailed):
 		self._detailedModel = detailed
@@ -132,14 +144,4 @@ class JobInfo(JobInfoBase):
 	def genWorkFlow( self, nodeNum ):
 		return self._genWorkFlow( self._motifDefaults, nodeNum )
 
-	def getDetailed(self,nodeId):
-		#print 'JobLoad::getDetailded()',nodeId
-		if self._detailedModel:
-			model,params,nodes = self._detailedModel
-			if nodeId in nodes:
-				return detailedModel.getModel( model, params )
-			else:
-				return None
-		else:
-			return None
 
