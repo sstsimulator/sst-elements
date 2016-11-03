@@ -189,15 +189,22 @@ void MemController::handleEvent(SST::Event* event) {
         case FlushLine:
         case FlushLineInv:
 
-            ev->setCmd(FlushLine);
-            memBackendConvertor_->handleMemEvent( ev );
+            {
+                MemEvent* put = NULL;
 
-            if ( ev->getPayloadSize() != 0 ) {
-                notifyListeners(ev);
+                ev->setCmd(FlushLine);
 
-                MemEvent* put = new MemEvent( *ev );
-                put->setCmd(PutM);
-                memBackendConvertor_->handleMemEvent( put );
+                if ( ev->getPayloadSize() != 0 ) {
+                    put = new MemEvent( *ev );
+                    put->setCmd(PutM);
+                }
+
+                memBackendConvertor_->handleMemEvent( ev );
+
+                if ( put ) {
+                    notifyListeners(ev);
+                    memBackendConvertor_->handleMemEvent( put );
+                }
             }
 
             break;
