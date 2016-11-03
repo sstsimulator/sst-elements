@@ -188,7 +188,6 @@ void MemController::handleEvent(SST::Event* event) {
 
         case FlushLine:
         case FlushLineInv:
-
             {
                 MemEvent* put = NULL;
                 if ( ev->getPayloadSize() != 0 ) {
