@@ -180,20 +180,26 @@ void MemController::handleEvent(SST::Event* event) {
         case GetX:
         case GetSEx:
         case PutM:
+
             performRequest( ev );
+            notifyListeners( ev );
+            memBackendConvertor_->handleMemEvent( ev );
+            break;
 
         case FlushLine:
         case FlushLineInv:
-            // Notify listeners that we have equiv. of a read
-            if ( ! listeners_.empty()) {
-                CacheListenerNotification notify(ev->getAddr(), ev->getVirtualAddress(), ev->getInstructionPointer(), ev->getSize(), READ, HIT);
 
-                for (unsigned long int i = 0; i < listeners_.size(); ++i) {
-                    listeners_[i]->notifyAccess(notify);
-                }
+            ev->setCmd(FlushLine);
+            memBackendConvertor_->handleMemEvent( ev );
+
+            if ( ev->getPayloadSize() != 0 ) {
+                notifyListeners(ev);
+
+                MemEvent* put = new MemEvent( *ev );
+                put->setCmd(PutM);
+                memBackendConvertor_->handleMemEvent( put );
             }
 
-            memBackendConvertor_->handleMemEvent( ev );
             break;
 
         case PutS:

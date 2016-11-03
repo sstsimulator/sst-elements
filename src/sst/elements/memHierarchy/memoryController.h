@@ -47,6 +47,17 @@ private:
     MemController();  // for serialization only
     ~MemController() {}
 
+    void notifyListeners( MemEvent* ev ) {
+        if (  ! listeners_.empty()) {
+            CacheListenerNotification notify(ev->getAddr(), ev->getVirtualAddress(), 
+                        ev->getInstructionPointer(), ev->getSize(), READ, HIT);
+
+            for (unsigned long int i = 0; i < listeners_.size(); ++i) {
+                listeners_[i]->notifyAccess(notify);
+            }
+        }
+    }
+
     void fixupParam( Params& params, const std::string oldKey, const std::string newKey ) {
         bool found;
 
