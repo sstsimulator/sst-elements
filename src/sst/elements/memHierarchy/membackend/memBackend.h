@@ -25,7 +25,7 @@
 
 #include "sst/elements/memHierarchy/membackend/memBackendConvertor.h"
 #include "sst/elements/memHierarchy/membackend/simpleMemBackendConvertor.h"
-#include "sst/elements/memHierarchy/membackend/HMCMemBackendConvertor.h"
+#include "sst/elements/memHierarchy/membackend/hmcMemBackendConvertor.h"
 
 #define NO_STRING_DEFINED "N/A"
 
