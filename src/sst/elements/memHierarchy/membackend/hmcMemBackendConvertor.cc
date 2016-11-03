@@ -14,52 +14,24 @@
 // distribution.
 
 
-#ifndef _H_SST_SAVANNAH_EVENT
-#define _H_SST_SAVANNAH_EVENT
-
+#include <sst_config.h>
+#include "sst/elements/memHierarchy/util.h"
 #include "sst/elements/memHierarchy/memoryController.h"
-#include "sst/elements/memHierarchy/membackend/memBackend.h"
-#if 0
-#include "sst/elements/memHierarchy/DRAMReq.h"
-#endif
+#include "membackend/hmcMemBackendConvertor.h"
+#include "membackend/memBackend.h"
 
+using namespace SST;
 using namespace SST::MemHierarchy;
 
-namespace SST {
-namespace Savannah {
-
-class SavannahRequestEvent : public SST::Event {
-public:
-#if 0
-	SavannahRequestEvent(DRAMReq& req) :
-		request(req) {
-
-		recvLink = 0;
-	};
-
-	DRAMReq& getRequest() {
-		return request;
-	}
-
-	DRAMReq* getRequestPtr() {
-		return &request;
-	}
-
-	uint32_t getLink() const {
-		return recvLink;
-	}
-
-	void setLink(const uint32_t linkID) {
-		recvLink = linkID;
-	}
-
-private:
-	DRAMReq request;
-	uint32_t recvLink;
+#ifdef __SST_DEBUG_OUTPUT__
+#define Debug(level, fmt, ... ) m_dbg.debug( level, fmt, ##__VA_ARGS__  )
+#else
+#define Debug(level, fmt, ... )
 #endif
-};
 
-}
-}
+bool HMCMemBackendConvertor::issue(MemReq *req ) {
 
-#endif
+    MemEvent* event = req->getMemEvent();
+
+    return static_cast<HMCMemBackend*>(m_backend)->issueRequest( req->id(), req->addr(), req->isWrite(), event->getFlags(), m_backendRequestWidth );
+}

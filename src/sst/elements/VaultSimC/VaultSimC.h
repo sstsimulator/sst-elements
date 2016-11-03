@@ -31,9 +31,11 @@
 
 #include "vaultGlobals.h"
 
-
 using namespace std;
-using namespace SST;
+
+namespace SST {
+namespace VaultSim {
+
 #if HAVE_LIBPHX == 1
 using namespace PHXSim; 
 #endif  /* HAVE_LIBPHX */
@@ -115,5 +117,8 @@ inline PHXSim::TransactionType VaultSimC::convertType( SST::MemHierarchy::Comman
     */
 }
 #endif /* HAVE_LIBPHX */
+}
+}
+
 
 #endif

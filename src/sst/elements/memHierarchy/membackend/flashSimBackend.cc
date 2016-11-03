@@ -20,7 +20,7 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-FlashDIMMSimMemory::FlashDIMMSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
+FlashDIMMSimMemory::FlashDIMMSimMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){
     std::string deviceIniFilename = params.find<std::string>("device_ini", NO_STRING_DEFINED);
     if(NO_STRING_DEFINED == deviceIniFilename)
         output->fatal(CALL_INFO, -1, "Model must define a 'device_ini' file parameter\n");
@@ -45,22 +45,21 @@ FlashDIMMSimMemory::FlashDIMMSimMemory(Component *comp, Params &params) : MemBac
     output->verbose(CALL_INFO, 2, 0, "Flash DIMM Backend Initialization complete.\n");
 }
 
-bool FlashDIMMSimMemory::issueRequest(DRAMReq *req){
+bool FlashDIMMSimMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned ){
     // If we are up to the max pending requests, tell controller
     // we will not accept this transaction
     if(pendingRequests == maxPendingRequests) {
 	return false;
     }
 
-    uint64_t addr = req->baseAddr_ + req->amtInProcess_;
-    bool ok = memSystem->addTransaction(req->isWrite_, addr);
+    bool ok = memSystem->addTransaction(isWrite, addr);
 
     if(!ok) {
 	return false;  // This *SHOULD* always be OK
     }
 
     output->verbose(CALL_INFO, 4, 0, "Backend issuing transaction for address %" PRIx64 "\n", (Addr) addr);
-    dramReqs[addr].push_back(req);
+    dramReqs[addr].push_back(id);
 
     pendingRequests++;
 
@@ -76,17 +75,17 @@ void FlashDIMMSimMemory::finish() {
 }
 
 void FlashDIMMSimMemory::FlashDIMMSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
-    std::deque<DRAMReq *> &reqs = dramReqs[addr];
+    std::deque<ReqId> &reqs = dramReqs[addr];
 
     output->verbose(CALL_INFO, 4, 0, "Backend retiring request for address %" PRIx64 ", Reqs: %" PRIu64 "\n",
 		(Addr) addr, (uint64_t) reqs.size());
 
     assert(reqs.size());
-    DRAMReq *req = reqs.front();
+    ReqId req = reqs.front();
     reqs.pop_front();
     if(0 == reqs.size())
         dramReqs.erase(addr);
 
-    ctrl->handleMemResponse(req);
+    getConvertor()->handleMemResponse(req);
     pendingRequests--;
 }

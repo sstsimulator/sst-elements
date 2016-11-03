@@ -20,6 +20,7 @@
 using namespace SST;
 using namespace SST::Savannah;
 
+#if 0
 bool SavannahComponent::tick(Cycle_t cycle) {
 	// Poll each link ONCE for a new pending event
 	for(uint32_t i = 0; i < incomingLinkCount; i++) {
@@ -58,10 +59,12 @@ void SavannahComponent::handleMemResponse(DRAMReq* resp) {
 	SavannahRequestEvent* respEv = respMatch->second;
 	incomingLinks[respEv->getLink()]->send(respEv);
 }
+#endif
 
 SavannahComponent::SavannahComponent(ComponentId_t id, Params &params) :
 	Component(id) {
 
+#if 0
 	const int verbose = params.find("verbose", 0);
 	output = new SST::Output("Savannah[@p:@l]: ",
 		verbose, 0, SST::Output::STDOUT);
@@ -117,9 +120,12 @@ SavannahComponent::SavannahComponent(ComponentId_t id, Params &params) :
 
 	// Tell user we are all done
 	output->verbose(CALL_INFO, 1, 0, "Initialization of Savannah complete.\n");
+#endif
 }
 
+#if 0
 SavannahComponent::~SavannahComponent() {
 	delete backend_;
 	delete output;
 }
+#endif
