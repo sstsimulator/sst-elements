@@ -18,7 +18,7 @@
 #include "sst/elements/memHierarchy/util.h"
 #include "sst/elements/memHierarchy/memoryController.h"
 #include "membackend/hmcMemBackendConvertor.h"
-#include "membackend/membackend.h"
+#include "membackend/memBackend.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
