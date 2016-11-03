@@ -191,14 +191,12 @@ void MemController::handleEvent(SST::Event* event) {
 
             {
                 MemEvent* put = NULL;
-
-                ev->setCmd(FlushLine);
-
                 if ( ev->getPayloadSize() != 0 ) {
                     put = new MemEvent( *ev );
                     put->setCmd(PutM);
                 }
 
+                ev->setCmd(FlushLine);
                 memBackendConvertor_->handleMemEvent( ev );
 
                 if ( put ) {
@@ -206,7 +204,6 @@ void MemController::handleEvent(SST::Event* event) {
                     memBackendConvertor_->handleMemEvent( put );
                 }
             }
-
             break;
 
         case PutS:
