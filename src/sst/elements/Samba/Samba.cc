@@ -111,5 +111,5 @@ bool Samba::tick(SST::Cycle_t x)
 		TLB[i]->tick(x);
 
 
-
+	return false;
 }

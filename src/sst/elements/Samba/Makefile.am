@@ -1,5 +1,4 @@
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/src \
 	$(BOOST_CPPFLAGS) \
 	$(MPIT_CPPFLAGS) 
 
@@ -19,6 +18,7 @@ libSamba_la_SOURCES = \
 
 
 libSamba_la_CPPFLAGS = \
+	-I$(top_srcdir)/src \
 	$(SST_CXX0X_FLAGS) -fPIC -Wall \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS)
