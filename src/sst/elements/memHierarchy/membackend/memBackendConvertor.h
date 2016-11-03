@@ -56,7 +56,7 @@ class MemBackendConvertor : public SubComponent {
         }
         void decrement( ) { --m_numReq; }
         bool isDone( ) {
-            return ( m_offset == m_event->getSize() && 0 == m_numReq );
+            return ( m_offset >= m_event->getSize() && 0 == m_numReq );
         }
 
       private:

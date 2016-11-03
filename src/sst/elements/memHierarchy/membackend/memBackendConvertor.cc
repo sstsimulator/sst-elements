@@ -46,6 +46,9 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
 
     m_frontendRequestWidth =  params.find<uint32_t>("request_width",64);
     m_backendRequestWidth = static_cast<SimpleMemBackend*>(m_backend)->getRequestWidth();
+    if ( m_backendRequestWidth > m_frontendRequestWidth ) {
+        m_backendRequestWidth = m_frontendRequestWidth;
+    }
 
     stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
     stat_GetSExReqReceived  = registerStatistic<uint64_t>("requests_received_GetSEx");
@@ -129,9 +132,15 @@ MemEvent* MemBackendConvertor::doResponse( ReqId reqId ) {
     if ( req->isDone() ) {
         m_pendingRequests.erase(id);
         MemEvent* event = req->getMemEvent();
+
         if ( PutM != event->getCmd()  ) {
             resp = event->makeResponse();
+
+            if ( event->queryFlag(MemEvent::F_NONCACHEABLE) ) {
+                resp->setFlag(MemEvent::F_NONCACHEABLE);
+            }    
         }
+
         Cycle_t latency = getCurrentSimTimeNano() - event->getDeliveryTime();
 
         doResponseStat( event->getCmd(), latency );
