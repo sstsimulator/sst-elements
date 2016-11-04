@@ -51,6 +51,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             
     int debugLevel = params.find<int>("debug_level", 0);
 
+    fixupParam( params, "backend", "backendConvertor.backend" );
     fixupParams( params, "backend.", "backendConvertor.backend." );
     fixupParams( params, "clock", "backendConvertor.backend.clock" );
     fixupParams( params, "request_width", "backendConvertor.request_width" );
