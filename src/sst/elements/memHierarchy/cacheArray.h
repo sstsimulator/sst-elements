@@ -40,6 +40,8 @@ class ReplacementMgr;
 class CacheArray {
 public:
 
+    class CacheLine; // Forward declaration so DataLine/CacheLine can point to each other
+
     /* Data line used for split coherence/data (i.e., directories ) */
     class DataLine {
     private:
@@ -48,9 +50,9 @@ public:
         Output * dbg_;
 
         vector<uint8_t> data_;
-        int dirIndex_;
+        CacheArray::CacheLine * dirLine_;
     public:
-        DataLine(unsigned int size, int index, Output * dbg) : size_(size), index_(index), dbg_(dbg), dirIndex_(-1) {
+        DataLine(unsigned int size, int index, Output * dbg) : size_(size), index_(index), dbg_(dbg), dirLine_(nullptr) {
             data_.resize(size_/sizeof(uint8_t));
         }
 
@@ -69,8 +71,8 @@ public:
         }
 
         // dirIndex getter/setter
-        void setDirIndex(int dirIndex) { dirIndex_ = dirIndex; }
-        int getDirIndex() { return dirIndex_; }
+        void setDirLine(CacheArray::CacheLine * dirLine) { dirLine_ = dirLine; }
+        CacheArray::CacheLine* getDirLine() { return dirLine_; }
         
         // index getter
         int getIndex() { return index_; }
@@ -253,13 +255,13 @@ public:
 
     /** Function returns the cacheline tag's ID if its valid (-1 if unvalid).
         If updateReplacement is set, the replacement stats are updated */
-    virtual int find(Addr baseAddr, bool updateReplacement) = 0;
+    virtual CacheLine * lookup(Addr baseAddr, bool updateReplacement) = 0;
 
     /** Determine a replacement candidate using the replacement manager */
     virtual CacheLine * findReplacementCandidate(Addr baseAddr, bool cache) = 0;
     
     /** Replace cache line */
-    virtual void replace(Addr baseAddr, unsigned int candidate_id, bool cache=true, unsigned int newLinkID=0) = 0;
+    virtual void replace(Addr baseAddr, CacheArray::CacheLine * candidate, CacheArray::DataLine * dataCandidate=nullptr) = 0;
 
     /** Get line size.  Should not change at runtime */
     Addr getLineSize() { return lineSize_; }
@@ -332,9 +334,9 @@ public:
 
     ~SetAssociativeArray();
 
-    int find(Addr baseAddr, bool updateReplacement);
+    CacheLine * lookup(Addr baseAddr, bool updateReplacement);
     CacheLine * findReplacementCandidate(Addr baseAddr, bool cache);
-    void replace(Addr baseAddr, unsigned int candidate_id, bool cache, unsigned int newLinkID);
+    void replace(Addr baseAddr, CacheLine * candidate_id, DataLine * dataCandidate);
     unsigned int preReplace(Addr baseAddr);
     void deallocate(unsigned int index);
     State * setStates;
@@ -354,9 +356,9 @@ public:
     DualSetAssociativeArray(Output * dbg, unsigned int lineSize, HashFunction * hf, bool sharersAware, unsigned int dirNumLines, unsigned int dirAssociativity, ReplacementMgr* dirRp, 
             unsigned int cacheNumLines, unsigned int cacheAssociativity, ReplacementMgr * cacheRp);
 
-    int find(Addr baseAddr, bool updateReplacement);
+    CacheLine * lookup(Addr baseAddr, bool updateReplacement);
     CacheLine * findReplacementCandidate(Addr baseAddr, bool cache);
-    void replace(Addr baseAddr, unsigned int candidate_id, bool cache, unsigned int newLinkID);
+    void replace(Addr baseAddr, CacheLine * candidate, DataLine * dataCandidate);
     unsigned int preReplaceDir(Addr baseAddr);
     unsigned int preReplaceCache(Addr baseAddr);
     void deallocateCache(unsigned int index);

@@ -139,21 +139,8 @@ private:
         and need to be reactivated */
     inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine);
 
-    /** Check if there a cache miss */
-    inline bool isCacheMiss(int lineIndex);
-
-    /** Find cache line by base addr */
-    inline CacheLine* getLine(Addr baseAddr);
-    inline CacheLine* getCacheLine(Addr baseAddr);
-    inline CacheLine* getDirLine(Addr baseAddr);
-    
-    /** Find cache line by line index */
-    inline CacheLine* getLine(int lineIndex);
-    inline CacheLine* getCacheLine(int lineIndex);
-    inline CacheLine* getDirLine(int lineIndex);
-
     /** Check whether this request will hit or miss in the cache - including correct coherence permission */
-    int isCacheHit(MemEvent* _event, Command _cmd, Addr _baseAddr);
+    int isCacheHit(MemEvent* event, Command cmd, Addr baseAddr);
 
     /** Insert to MSHR wrapper */
     inline bool insertToMSHR(Addr baseAddr, MemEvent* event);
@@ -163,7 +150,7 @@ private:
     bool processInvRequestInMSHR(Addr baseAddr, MemEvent* event, bool inProgress);
     
     /** Determines what CC will send the NACK. */
-    void sendNACK(MemEvent* _event);
+    void sendNACK(MemEvent* event);
 
     /** In charge of processng incoming NACK.  
         Currently, it simply retries event */
