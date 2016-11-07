@@ -47,7 +47,7 @@ using namespace SST::MemHierarchy;
 #endif
 
 /*************************** Memory Controller ********************/
-MemController::MemController(ComponentId_t id, Params &params) : Component(id), networkLink_(NULL), cacheLink_(NULL) {
+MemController::MemController(ComponentId_t id, Params &params) : Component(id), networkLink_(NULL), cacheLink_(NULL), backing_(NULL) {
             
     int debugLevel = params.find<int>("debug_level", 0);
 
