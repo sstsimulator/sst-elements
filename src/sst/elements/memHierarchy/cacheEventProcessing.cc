@@ -235,10 +235,8 @@ void Cache::processEvent(MemEvent* event, bool replay) {
     // Cannot stall if this is a GetX to L1 and the line is locked because GetX is the unlock!
     bool canStall = !cf_.L1_ || event->getCmd() != GetX;
     if (!canStall) {
-        CacheLine * cacheLine = NULL;
-        int lineIndex = cf_.cacheArray_->find(baseAddr, false);
-        if (lineIndex != -1) cacheLine = cf_.cacheArray_->lines_[lineIndex];
-        canStall = cacheLine == NULL || !(cacheLine->isLocked());
+        CacheLine * cacheLine = cf_.cacheArray_->lookup(baseAddr, false);
+        canStall = cacheLine == nullptr || !(cacheLine->isLocked());
     }
 
     profileEvent(event, cmd, replay, canStall);

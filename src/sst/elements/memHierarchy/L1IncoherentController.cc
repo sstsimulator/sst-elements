@@ -385,8 +385,8 @@ uint64_t L1IncoherentController::sendResponseUp(MemEvent * event, State grantedS
             responseEvent->setPayload(event->getSize(), &data->at(offset));
         } else {
             /* If write (GetX) and LLSC set, then check if operation was Atomic */
-  	    if (finishedAtomically) responseEvent->setAtomic(true);
-            else responseEvent->setAtomic(false);
+  	    if (finishedAtomically) responseEvent->setSuccess(true);
+            else responseEvent->setSuccess(false);
             responseEvent->setSize(event->getSize()); // Return size that was written
         }
     } else {
