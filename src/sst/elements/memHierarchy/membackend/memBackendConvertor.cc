@@ -30,7 +30,7 @@ using namespace SST::MemHierarchy;
 #endif
 
 MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : 
-    SubComponent(comp), m_flushEvent(NULL)
+    SubComponent(comp), m_flushEvent(NULL), m_reqId(0)
 {
     m_dbg.init("--->  ", 
             params.find<uint32_t>("debug_level", 0),
