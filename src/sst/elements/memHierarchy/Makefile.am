@@ -20,6 +20,7 @@ libmemHierarchy_la_SOURCES = \
 	bus.cc \
 	memoryController.h \
 	memoryController.cc \
+    membackend/backing.h \
     membackend/memBackend.h \
     membackend/memBackendConvertor.h \
     membackend/memBackendConvertor.cc \
