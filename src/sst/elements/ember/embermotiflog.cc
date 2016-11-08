@@ -15,6 +15,10 @@
 
 #include <sst_config.h>
 
+#ifndef _SST_EMBER_DISABLE_PARALLEL
+#include <mutex>
+#endif
+
 #include <unordered_map>
 #include "embermotiflog.h"
 
