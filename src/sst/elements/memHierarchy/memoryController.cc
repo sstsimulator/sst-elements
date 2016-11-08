@@ -237,7 +237,7 @@ void MemController::handleMemResponse( MemEvent* ev ) {
         networkLink_->send( ev );
     } else {
         cacheLink_->send( ev );
-	}
+    }
 }
     
 void MemController::init(unsigned int phase) {
@@ -281,7 +281,8 @@ void MemController::performRequest(MemEvent* event) {
         return;
     }
 
-    Addr addr = event->getAddr();
+    Addr addr = event->queryFlag(MemEvent::F_NONCACHEABLE) ?  event->getAddr() : event->getBaseAddr();
+
     if (event->getCmd() == PutM) {  /* Write request to memory */
         Debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i\n", addr, event->getSize());
 
@@ -302,7 +303,7 @@ void MemController::performRequest(MemEvent* event) {
 
 void MemController::performResponse(MemEvent* event) { 
     bool noncacheable  = event->queryFlag(MemEvent::F_NONCACHEABLE);
-    Addr localAddr = event->getBaseAddr();
+    Addr localAddr = noncacheable ? event->getAddr() : event->getBaseAddr();
 
     for ( size_t i = 0 ; i < event->getSize() ; i++)
         event->getPayload()[i] = ! backing_ ? 0 : backing_->get( localAddr + i );
