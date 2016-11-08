@@ -77,5 +77,7 @@ void EmberMotifLog::logMotifStart(const std::string name, const int motifNum) {
 		const char* timeChar = Simulation::getSimulation()->getElapsedSimTime().toStringBestSI().c_str();
 
 		fprintf(logFile, "%d %s %s\n", motifNum, nameChar, timeChar);
+		fflush(logFile);
+
 	}
 }
