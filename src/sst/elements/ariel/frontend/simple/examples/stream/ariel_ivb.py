@@ -125,12 +125,12 @@ ariel.addParams({
         "pipetimeout"         : "0",
         "executable"          : str(os.environ['OMP_EXE']),
         "appargcount"         : "0",
-       	"memorylevels"        : "1",
+       	"memmgr.memorylevels" : "1",
         "arielinterceptcalls" : "1",
        	"arielmode"           : "1",
-	"pagecount0"          : "1048576",
+	"memmgr.pagecount0"   : "1048576",
         "corecount"           : groups * cores_per_group,
-        "defaultlevel"        : 0,
+        "memmgr.defaultlevel" : 0,
         "clock"               : str(clock)
 })
 

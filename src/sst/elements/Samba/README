@@ -1,0 +1,5 @@
+
+Next steps:
+
+1- Huge pages support.
+2- Page walking structure to be connected to the last level TLB.
