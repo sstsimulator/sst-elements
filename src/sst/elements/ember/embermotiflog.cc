@@ -22,7 +22,17 @@ using namespace SST::Ember;
 
 static std::unordered_map<uint32_t, EmberMotifLogRecord*>* logHandles = NULL;
 
+#ifndef _SST_EMBER_DISABLE_PARALLEL
+static std::mutex mapLock;
+#endif
+
 EmberMotifLog::EmberMotifLog(const std::string logPath, const uint32_t jobID) {
+#ifndef _SST_EMBER_DISABLE_PARALLEL
+	// Lock the map for the duration of the constructor to ensure we do not
+	// trample over each other
+	std::lock_guard<std::mutex> lock(mapLock);
+#endif
+
 	if(NULL == logHandles) {
 		logHandles = new std::unordered_map<uint32_t, EmberMotifLogRecord*>();
 	}
@@ -41,6 +51,12 @@ EmberMotifLog::EmberMotifLog(const std::string logPath, const uint32_t jobID) {
 }
 
 EmberMotifLog::~EmberMotifLog() {
+#ifndef _SST_EMBER_DISABLE_PARALLEL
+	// Lock the map for the duration of the destructor to ensure we do not
+        // trample over each other
+        std::lock_guard<std::mutex> lock(mapLock);
+#endif
+
 	logRecord->decrement();
 
 	if(0 == logRecord->getCount()) {
