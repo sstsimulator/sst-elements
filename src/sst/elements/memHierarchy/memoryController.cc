@@ -302,7 +302,7 @@ void MemController::performRequest(MemEvent* event) {
 
 void MemController::performResponse(MemEvent* event) { 
     bool noncacheable  = event->queryFlag(MemEvent::F_NONCACHEABLE);
-    Addr localAddr = event->getAddr();
+    Addr localAddr = event->getBaseAddr();
 
     for ( size_t i = 0 ; i < event->getSize() ; i++)
         event->getPayload()[i] = ! backing_ ? 0 : backing_->get( localAddr + i );
@@ -325,8 +325,8 @@ void MemController::processInitEvent( MemEvent* me ) {
     /* Push data to memory */
     if (GetX == me->getCmd()) {
         Addr addr = me->getAddr();
-        Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 "\n", getName().c_str(), me->getAddr());
-        if ( isRequestAddressValid(addr) && ! backing_ ) {
+        Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 " size %" PRIu64 "\n", getName().c_str(), me->getAddr(),me->getSize());
+        if ( isRequestAddressValid(addr) && backing_ ) {
             for ( size_t i = 0 ; i < me->getSize() ; i++) {
                 backing_->set( addr + i,  me->getPayload()[i] );
             }
