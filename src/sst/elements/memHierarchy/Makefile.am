@@ -20,14 +20,19 @@ libmemHierarchy_la_SOURCES = \
 	bus.cc \
 	memoryController.h \
 	memoryController.cc \
-    membackend/backing.h \
-    membackend/memBackend.h \
-    membackend/memBackendConvertor.h \
-    membackend/memBackendConvertor.cc \
-    membackend/simpleMemBackendConvertor.h \
-    membackend/simpleMemBackendConvertor.cc \
-    membackend/hmcMemBackendConvertor.h \
-    membackend/hmcMemBackendConvertor.cc \
+	membackend/timingDRAMBackend.cc \
+	membackend/timingDRAMBackend.h \
+	membackend/timingAddrMapper.h \
+	membackend/timingPagePolicy.h \
+	membackend/timingTransaction.h \
+	membackend/backing.h \
+	membackend/memBackend.h \
+	membackend/memBackendConvertor.h \
+	membackend/memBackendConvertor.cc \
+	membackend/simpleMemBackendConvertor.h \
+	membackend/simpleMemBackendConvertor.cc \
+	membackend/hmcMemBackendConvertor.h \
+	membackend/hmcMemBackendConvertor.cc \
 	membackend/delayBuffer.h \
 	membackend/delayBuffer.cc \
 	membackend/simpleMemBackend.h \
@@ -46,8 +51,8 @@ libmemHierarchy_la_SOURCES = \
 	directoryController.h \
 	directoryController.cc \
 	coherenceControllers.h \
-        memHierarchyInterface.cc \
-        memHierarchyInterface.h \
+	memHierarchyInterface.cc \
+	memHierarchyInterface.h \
 	MESIInternalDirectory.h \
 	MESIInternalDirectory.cc \
 	MESICoherenceController.h \
