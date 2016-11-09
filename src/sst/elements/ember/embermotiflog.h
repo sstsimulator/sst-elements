@@ -35,11 +35,19 @@ class EmberMotifLogRecord {
 		}
 
 		void increment() {
+#ifndef _SST_EMBER_DISABLE_PARALLEL
+			__sync_fetch_and_add(&motifCount, 1);
+#else
 			motifCount++;
+#endif
 		}
 
 		void decrement() {
+#ifndef _SST_EMBER_DISABLE_PARALLEL
+			__sync_fetch_and_sub(&motifCount, 1);
+#else
 			motifCount--;
+#endif
 		}
 
 		uint32_t getCount() const {
