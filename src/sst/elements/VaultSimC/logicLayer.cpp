@@ -4,7 +4,11 @@
 // 
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
-// 
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -17,8 +21,9 @@
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 
-using namespace SST::Interfaces;
+using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace SST::VaultSim;
 
 #define DBG( fmt, args... )m_dbg.write( "%s():%d: " fmt, __FUNCTION__, __LINE__, ##args)
 //typedef  VaultCompleteFn; 
@@ -167,7 +172,6 @@ void logicLayer::init(unsigned int phase) {
             }
         }
     }
-    
 }
 
 

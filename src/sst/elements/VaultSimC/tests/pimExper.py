@@ -205,7 +205,7 @@ def doFakeDC(rtr, nextPort, netAddr, dcNum):
     memory.addParams({
             "coherence_protocol": coherence_protocol,
             "rangeStart": 0,
-            "mem_size": rank_size,
+            "mem_size": str(rank_size) + "MiB",
             "clock": memclock,
             "statistics": 1,
             "debug": memDebug

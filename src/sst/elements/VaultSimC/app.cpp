@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -22,6 +26,7 @@ static unsigned int missRate[][3] = {{0,51,32},   //app 0
 static unsigned int isLoad[] = {3,32}; // out of 64
 
 using namespace SST::MemHierarchy;
+using namespace SST::VaultSim;
 
 MemEvent *cpu::getInst(int cacheLevel, int app, int core) {
   /*

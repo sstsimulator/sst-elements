@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -18,15 +22,14 @@
 namespace SST {
 namespace MemHierarchy {
 
-class VaultSimMemory : public MemBackend {
+class VaultSimMemory : public HMCMemBackend {
 public:
     VaultSimMemory(Component *comp, Params &params);
-    bool issueRequest(DRAMReq *req);
+	virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes );
 private:
     void handleCubeEvent(SST::Event *event);
 
-    typedef std::map<MemEvent::id_type,DRAMReq*> memEventToDRAMMap_t;
-    memEventToDRAMMap_t outToCubes; // map of events sent out to the cubes
+	std::set<ReqId> outToCubes;
     SST::Link *cube_link;
 };
 

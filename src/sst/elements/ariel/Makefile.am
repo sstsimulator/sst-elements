@@ -16,8 +16,11 @@ libariel_la_SOURCES = \
 	arielcpu.h \
 	arielcore.cc \
 	arielcore.h \
-	arielmemmgr.cc \
 	arielmemmgr.h \
+	arielmemmgr_simple.cc \
+	arielmemmgr_simple.h \
+	arielmemmgr_malloc.cc \
+	arielmemmgr_malloc.h \
 	arielreadev.h \
 	arielexitev.h \
 	arielwriteev.h \

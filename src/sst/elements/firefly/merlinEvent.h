@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -66,6 +70,7 @@ class FireflyNetworkEvent : public Event {
         buf = me->buf;
         seq = me->seq;
         src = me->src;
+        offset = me->offset;
     }
 
     FireflyNetworkEvent(const FireflyNetworkEvent &me) :
@@ -74,6 +79,7 @@ class FireflyNetworkEvent : public Event {
         buf = me.buf;
         seq = me.seq;
         src = me.src;
+        offset = me.offset;
     }
 
     virtual Event* clone(void)
@@ -114,6 +120,7 @@ class FireflyNetworkEvent : public Event {
     void serialize_order(SST::Core::Serialization::serializer &ser) {
         Event::serialize_order(ser);
         ser & seq;
+        ser & offset;
         ser & bufLen;
         ser & buf;
         ser & src;

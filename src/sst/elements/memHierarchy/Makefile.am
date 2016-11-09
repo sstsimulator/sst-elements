@@ -20,7 +20,21 @@ libmemHierarchy_la_SOURCES = \
 	bus.cc \
 	memoryController.h \
 	memoryController.cc \
-        membackend/memBackend.h \
+	membackend/timingDRAMBackend.cc \
+	membackend/timingDRAMBackend.h \
+	membackend/timingAddrMapper.h \
+	membackend/timingPagePolicy.h \
+	membackend/timingTransaction.h \
+	membackend/backing.h \
+	membackend/memBackend.h \
+	membackend/memBackendConvertor.h \
+	membackend/memBackendConvertor.cc \
+	membackend/simpleMemBackendConvertor.h \
+	membackend/simpleMemBackendConvertor.cc \
+	membackend/hmcMemBackendConvertor.h \
+	membackend/hmcMemBackendConvertor.cc \
+	membackend/delayBuffer.h \
+	membackend/delayBuffer.cc \
 	membackend/simpleMemBackend.h \
 	membackend/simpleMemBackend.cc \
 	membackend/simpleDRAMBackend.h \
@@ -37,8 +51,8 @@ libmemHierarchy_la_SOURCES = \
 	directoryController.h \
 	directoryController.cc \
 	coherenceControllers.h \
-        memHierarchyInterface.cc \
-        memHierarchyInterface.h \
+	memHierarchyInterface.cc \
+	memHierarchyInterface.h \
 	MESIInternalDirectory.h \
 	MESIInternalDirectory.cc \
 	MESICoherenceController.h \
@@ -63,7 +77,6 @@ libmemHierarchy_la_SOURCES = \
 	networkMemInspector.h \
 	networkMemInspector.cc \
 	memResponseHandler.h \
-	DRAMReq.h \
 	Sieve/sieveController.h \
 	Sieve/sieveController.cc \
 	Sieve/sieveFactory.cc \
@@ -110,6 +123,7 @@ nobase_sst_HEADERS = \
 	membackend/simpleDRAMBackend.h \
 	membackend/requestReorderSimple.h \
 	membackend/requestReorderByRow.h \
+	membackend/delayBuffer.h \
 	memoryController.h \
 	cacheListener.h \
 	bus.h \
@@ -117,6 +131,15 @@ nobase_sst_HEADERS = \
 
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
 libmemHierarchy_la_LIBADD = 
+
+if HAVE_RAMULATOR
+libmemHierarchy_la_LDFLAGS += $(RAMULATOR_LDFLAGS)
+libmemHierarchy_la_LIBADD += $(RAMULATOR_LIB)
+libmemHierarchy_la_SOURCES += membackend/ramulatorBackend.cc \
+	membackend/ramulatorBackend.h
+nobase_sst_HEADERS += membackend/ramulatorBackend.h
+AM_CPPFLAGS += $(RAMULATOR_CPPFLAGS) -DHAVE_LIBRAMULATOR
+endif
 
 if HAVE_DRAMSIM
 libmemHierarchy_la_LDFLAGS += $(DRAMSIM_LDFLAGS)
@@ -163,7 +186,7 @@ libmemHierarchy_la_SOURCES += \
 	membackend/flashSimBackend.h
 libmemHierarchy_la_LDFLAGS += $(FDSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(FDSIM_LIB)
-AM_CPPFLAGS += $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS)
+AM_CPPFLAGS += $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS) -DHAVE_LIBFDSIM
 endif
 
 AM_CPPFLAGS += $(HMC_FLAG)
@@ -173,4 +196,5 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) HYBRIDSIM LIBDIR=$(HYBRIDSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) NVDIMMSIM LIBDIR=$(NVDIMMSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) FDSIM LIBDIR=$(FDSIM_LIBDIR)
+	$(SST_REGISTER_TOOL) GOBLIN_HMCSIM LIBDIR=$(GOBLIN_HMCSIM_LIBDIR)
 

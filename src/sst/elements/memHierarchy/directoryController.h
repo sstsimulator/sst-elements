@@ -5,6 +5,10 @@
 // Copyright (c) 2013-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -60,7 +64,7 @@ class DirectoryController : public Component {
     Addr        interleaveSize;
     Addr        interleaveStep;
     
-    string      protocol;
+    CoherenceProtocol protocol;
     
     /* MSHRs */
     MSHR*       mshr;
@@ -154,17 +158,23 @@ class DirectoryController : public Component {
     /** Handle incoming PutM */
     void handlePutM(MemEvent * ev);
 
-    /** Handle incoming FetchResp (or PutM that is treated as FetchResp) */
-    void handleFetchResp(MemEvent * ev);
+    /** Handle incoming FetchResp (or PutM or FlushLine that is treated as FetchResp) */
+    void handleFetchResp(MemEvent * ev, bool keepEvent);
 
     /** Handle incoming FetchXResp */
-    void handleFetchXResp(MemEvent * ev);
+    void handleFetchXResp(MemEvent * ev, bool keepEvent);
 
     /** Handle incoming AckInv */
     void handleAckInv(MemEvent * ev);
     
     /** Handle incoming NACK */
     void handleNACK(MemEvent * ev);
+
+    /** Handle incoming FlushLine */
+    void handleFlushLine(MemEvent * ev);
+    
+    /** Handle incoming FlushLineInv */
+    void handleFlushLineInv(MemEvent * ev);
 
     /** Identify and issue invalidates to sharers */
     void issueInvalidates(MemEvent * ev, DirEntry * entry);
@@ -177,8 +187,14 @@ class DirectoryController : public Component {
     /** Send AckPut to a replacing cache */
     void sendAckPut(MemEvent * event);
 
+    /** Forward flush request to memory */
+    void forwardFlushRequest(MemEvent * event);
+
     /** Send data request to memory */
     void issueMemoryRequest(MemEvent * ev, DirEntry * entry);
+
+    /** Handle incoming flush response from memory */
+    void handleFlushLineResponse(MemEvent * event);
 
     /** Handle incoming data response from memory */
     void handleDataResponse(MemEvent * ev);
@@ -216,7 +232,7 @@ class DirectoryController : public Component {
     void sendEventToCaches(MemEvent *ev, uint64_t deliveryTime);
 
     /** Writes data packet to Memory. Returns the MemEvent ID of the data written to memory */
-    MemEvent::id_type writebackData(MemEvent *data_event);
+    MemEvent::id_type writebackData(MemEvent *data_event, Command wbCmd);
 
     /** Determines if request is valid in terms of address ranges */
     bool isRequestAddressValid(MemEvent *ev);

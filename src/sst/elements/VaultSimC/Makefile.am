@@ -24,6 +24,7 @@ libVaultSimC_la_SOURCES = \
 	app.cpp \
 	VaultSimC.cpp \
 	VaultSimC.h \
+	memReqEvent.h \
 	vaultGlobals.h
 
 libVaultSimC_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \

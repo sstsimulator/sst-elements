@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -22,13 +26,13 @@ class L1CoherenceController : public CoherencyController {
 public:
     /** Constructor for L1CoherenceController */
     L1CoherenceController(const Cache* cache, string ownerName, Output* dbg, vector<Link*>* parentLinks, Link* childLink, CacheListener* listener, 
-            unsigned int lineSize, uint64 accessLatency, uint64 tagLatency, uint64 mshrLatency, bool LLC, bool LL, MSHR * mshr, bool protocol, bool wbClean,
-            MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, bool debugAll, Addr debugAddr, bool snoopL1Invs) :
-                 CoherencyController(cache, dbg, ownerName, lineSize, accessLatency, tagLatency, mshrLatency, LLC, LL, parentLinks, childLink, bottomNetworkLink, topNetworkLink, listener, mshr, 
-                         wbClean, debugAll, debugAddr) {
+            unsigned int lineSize, uint64 accessLatency, uint64 tagLatency, uint64 mshrLatency, MSHR * mshr, CoherenceProtocol protocol,
+            MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, bool debugAll, Addr debugAddr, bool snoopL1Invs, unsigned int reqWidth, unsigned int respWidth, unsigned int packetSize) :
+                 CoherencyController(cache, dbg, ownerName, lineSize, accessLatency, tagLatency, mshrLatency, parentLinks, childLink, bottomNetworkLink, topNetworkLink, listener, mshr, 
+                         debugAll, debugAddr, reqWidth, respWidth, packetSize) {
         d_->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
         snoopL1Invs_        = snoopL1Invs;
-        protocol_           = protocol;
+        protocol_           = protocol == CoherenceProtocol::MESI;
     }
 
     ~L1CoherenceController() {}
@@ -52,7 +56,7 @@ public:
     CacheAction handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * origRequest, bool replay);
     
     /** Process Inv */
-    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* cacheLine, bool replay);
+    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* cacheLine, MemEvent * collisionEvent, bool replay);
 
     /** Process responses */
     CacheAction handleResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest);
@@ -79,6 +83,12 @@ private:
     /** Handle GetS request. Request block if needed */
     CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
     
+    /** Handle FlushLine request. */
+    CacheAction handleFlushLineRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
+    
+    /** Handle FlushLineInv request */
+    CacheAction handleFlushLineInvRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
+
     /** Handle Inv request */
     CacheAction handleInv(MemEvent * event, CacheLine * cacheLine, bool replay);
     
@@ -100,11 +110,16 @@ private:
     void sendResponseDown(MemEvent* event, CacheLine* cacheLine, bool replay);
 
     /** Send writeback request to lower level caches */
-    void sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr);
+    void sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string origRqstr);
 
     /** Send AckInv response to lower level caches */
     void sendAckInv(Addr baseAddr, string origRqstr, CacheLine * cacheLine);
 
+    /** Forward a flush line request, with or without data */
+    void forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine);
+    
+    /** Send response to a flush request */
+    void sendFlushResponse(MemEvent * requestEvent, bool success, uint64_t baseTime, bool replay);
 };
 
 

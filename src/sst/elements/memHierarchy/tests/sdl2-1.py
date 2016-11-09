@@ -36,7 +36,6 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "16 KB",
-      "LL" : 1,
       #"debug" : "1",
       "debug_level" : "10"
 })
@@ -46,7 +45,7 @@ comp_memory.addParams({
       "debug" : "0",
       "backend.access_time" : "100 ns",
       "clock" : "1GHz",
-      "backend.mem_size" : "512"
+      "backend.mem_size" : "512MiB"
 })
 
 # Enable statistics

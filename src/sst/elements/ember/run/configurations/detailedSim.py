@@ -7,6 +7,10 @@
 # Copyright (c) 2009-2015, Sandia Corporation
 # All rights reserved.
 #
+# Portions are copyright of other developers:
+# See the file CONTRIBUTORS.TXT in the top level directory
+# the distribution for more information.
+#
 # This file is part of the SST software package. For license
 # information, see the LICENSE file in the top level directory of the
 # distribution.
@@ -24,7 +28,7 @@ platform = 'defaultParams'
 topo = 'torus'
 shape = '2'
 
-# what nodes that have the detailed models
+# what nodes have the detailed models
 detailedNodes = [0]
 
 # what nodes run the detailed motif
@@ -33,8 +37,10 @@ detailedMotifs = [0]
 # what nodes use the detailed model
 detailedNics = [0]
 
-detailedModel = "basicDetailedModel" 
-detailedModelParams = "basicDetailedModelParams" 
+detailedModel = "sandyBridgeModel"
+detailedModelParams = "sandyBridgeModelParams"
+#detailedModel = "basicDetailedModel" 
+#detailedModelParams = "basicDetailedModelParams" 
 
 arguments = 'messagesize=80000 printRank=-1'
 
