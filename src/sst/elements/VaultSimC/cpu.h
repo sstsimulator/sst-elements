@@ -18,7 +18,7 @@
 #define _CPU_H
 
 #include <sst/core/component.h>
-#include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/elements/VaultSimC/memReqEvent.h>
 #include <sst/core/rng/sstrng.h>
 #include <sst/core/output.h>
 
@@ -64,7 +64,7 @@ private:
   thrSet_t thrOutstanding;
   coreVec_t coreAddr;
 
-  SST::MemHierarchy::MemEvent *getInst(int cacheLevel, int app, int core);
+  MemReqEvent *getInst(int cacheLevel, int app, int core);
 
 protected:
   Output &out;

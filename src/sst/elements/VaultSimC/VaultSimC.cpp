@@ -114,7 +114,6 @@ void VaultSimC::init(unsigned int phase)
     SST::Event *ev = NULL;
     while ( (ev = m_memChan->recvInitData()) != NULL ) {
         assert(0);
-#if 0
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if ( me ) {
             /* Push data to memory */
@@ -133,7 +132,6 @@ void VaultSimC::init(unsigned int phase)
         } else {
             dbg.fatal(CALL_INFO, -1, "vault got bad init event\n");
         }
-#endif
         delete ev;
     }
 }
@@ -256,15 +254,9 @@ bool VaultSimC::clock_phx( Cycle_t current ) {
 
 bool VaultSimC::clock( Cycle_t current ) {
     SST::Event *e = 0;
-        printf("%s():%d \n",__func__,__LINE__);
     while (NULL != (e = m_memChan->recv())) {
         // process incoming events
-        assert(0);
-#if 0 
-        MemEvent *event  = dynamic_cast<MemEvent*>(e);
-#endif
         MemReqEvent *event  = dynamic_cast<MemReqEvent*>(e);
-        printf("%s() %p \n",__func__,event);
         if (NULL == event) {
             dbg.fatal(CALL_INFO, -1, "vault got bad event\n");
         }
@@ -273,28 +265,21 @@ bool VaultSimC::clock( Cycle_t current ) {
         numOutstanding++;
     }
 
-        printf("%s():%d \n",__func__,__LINE__);
     e = 0;
     while (NULL != (e = delayLine->recv())) {
         // process returned events
-        assert(0);
-        printf("%s():%d \n",__func__,__LINE__);
-#if 0 
-        MemEvent *event  = dynamic_cast<MemEvent*>(e);
-#endif
         MemReqEvent *event  = dynamic_cast<MemReqEvent*>(e);
-        printf("%s() %p \n",__func__,event);
         if (NULL == event) {
             dbg.fatal(CALL_INFO, -1, "vault got bad event from delay line\n");
         } else {
-            MemRespEvent *respEvent = new MemRespEvent( event->reqId, event->flags );
+            MemRespEvent *respEvent = new MemRespEvent( 
+				event->getReqId(), event->getAddr(), event->getFlags() );
 
             m_memChan->send(respEvent);
             numOutstanding--;
             delete event;
         }
     }
-        printf("%s():%d \n",__func__,__LINE__);
 
     memOutStat->addData(numOutstanding);
     return false;
