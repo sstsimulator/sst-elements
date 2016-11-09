@@ -72,7 +72,6 @@ libmemHierarchy_la_SOURCES = \
 	networkMemInspector.h \
 	networkMemInspector.cc \
 	memResponseHandler.h \
-	DRAMReq.h \
 	Sieve/sieveController.h \
 	Sieve/sieveController.cc \
 	Sieve/sieveFactory.cc \
