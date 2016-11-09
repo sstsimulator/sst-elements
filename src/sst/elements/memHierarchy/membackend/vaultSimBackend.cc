@@ -47,7 +47,7 @@ bool VaultSimMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, uint32_t
         output->fatal(CALL_INFO, -1, "Assertion failed");
 
     outToCubes.insert( reqId );
-    cube_link->send( new VaultSim::MemReqEvent(reqId,addr,isWrite,numBytes) ); 
+    cube_link->send( new VaultSim::MemReqEvent(reqId,addr,isWrite,numBytes,flags) ); 
     return true;
 }
 

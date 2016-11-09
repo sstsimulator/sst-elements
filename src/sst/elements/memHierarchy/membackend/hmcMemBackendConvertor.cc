@@ -29,7 +29,7 @@ using namespace SST::MemHierarchy;
 #define Debug(level, fmt, ... )
 #endif
 
-bool HMCMemBackendConvertor::issue(MemReq *req ) {
+bool HMCMemBackendConvertor::issue( MemReq *req ) {
 
     MemEvent* event = req->getMemEvent();
 

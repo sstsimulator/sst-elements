@@ -27,14 +27,15 @@ typedef uint64_t ReqId;
 
 class MemReqEvent : public SST::Event {
   public:
-    MemReqEvent(ReqId id, Addr addr, bool isWrite, unsigned numBytes) : 
-		SST::Event(), reqId(id), addr(addr), isWrite(isWrite), numBytes(numBytes) 
+    MemReqEvent(ReqId id, Addr addr, bool isWrite, unsigned numBytes, uint32_t flags) : 
+		SST::Event(), reqId(id), addr(addr), isWrite(isWrite), numBytes(numBytes), flags(flags) 
     { }
 
 	ReqId reqId;
 	Addr addr;
 	bool isWrite;
 	unsigned numBytes;
+    uint32_t flags;
 
   private:
     MemReqEvent() {} // For Serialization only
@@ -46,6 +47,7 @@ class MemReqEvent : public SST::Event {
         ser & addr;
         ser & isWrite;
         ser & numBytes;
+        ser & flags;
     }
 
     ImplementSerializable(MemReqEvent);
@@ -53,7 +55,7 @@ class MemReqEvent : public SST::Event {
 
 class MemRespEvent : public SST::Event {
   public:
-    MemRespEvent(ReqId id) : SST::Event(), reqId(id) { }
+    MemRespEvent(ReqId id,uint32_t flags) : SST::Event(), reqId(id),flags(flags) { }
 
 	ReqId reqId;
     uint32_t flags;
