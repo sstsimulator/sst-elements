@@ -39,6 +39,10 @@
 #include "membackend/requestReorderByRow.h"
 #include "membackend/delayBuffer.h"
 #include "membackend/simpleMemBackendConvertor.h"
+#include "membackend/timingDRAMBackend.h"
+#include "membackend/timingTransaction.h"
+#include "membackend/timingPagePolicy.h"
+#include "membackend/timingAddrMapper.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
 
@@ -528,6 +532,26 @@ static const ElementInfoParam simpleMem_params[] = {
     {NULL, NULL}
 };
 
+static SubComponent* create_Mem_TimingDRAM(Component* comp, Params& params) {
+    return new TimingDRAM(comp, params);
+}
+
+static SubComponent* create_Mem_TransactionQ(Component* comp, Params& params) {
+    return new TransactionQ(comp, params);
+}
+
+static SubComponent* create_Mem_ReorderTransactionQ(Component* comp, Params& params) {
+    return new ReorderTransactionQ(comp, params);
+}
+
+static SubComponent* create_Mem_SimplePagePolicy(Component* comp, Params& params) {
+    return new SimplePagePolicy(comp, params);
+}
+
+static SubComponent* create_Mem_TimeoutPagePolicy(Component* comp, Params& params) {
+    return new TimeoutPagePolicy(comp, params);
+}
+
 static SubComponent* create_Mem_SimpleDRAM(Component* comp, Params& params) {
     return new SimpleDRAM(comp, params);
 }
@@ -732,6 +756,13 @@ static Module* create_MemNIC(Component *comp, Params &params) {
     return new MemNIC(comp, params);
 }
 
+static Module* create_SandyBridgeAddrMapper(Params &params) {
+    return new SandyBridgeAddrMapper(params);
+}
+
+static Module* create_SimpleAddrMapper(Params &params) {
+    return new SimpleAddrMapper(params);
+}
 
 static Component* create_DirectoryController(ComponentId_t id, Params& params){
 	return new DirectoryController( id, params );
@@ -870,6 +901,51 @@ static const ElementInfoSubComponent subcomponents[] = {
         "SST::MemHierarchy::MemBackend"
     },
     {
+        "timingDRAM",
+        "Moderate timing model for DRAM",
+        NULL,
+        create_Mem_TimingDRAM,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "fifoTransactionQ",
+        "fifo transaction queue",
+        NULL,
+        create_Mem_TransactionQ,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "reorderTransactionQ",
+        "reorder transaction queue",
+        NULL,
+        create_Mem_ReorderTransactionQ,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "simplePagePolicy",
+        "static page open or close policy",
+        NULL,
+        create_Mem_SimplePagePolicy,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "timeoutPagePolicy",
+        "timeout based page open or close policy",
+        NULL,
+        create_Mem_TimeoutPagePolicy,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
         "DelayBuffer",
         "Delays requests by specified time",
         NULL,
@@ -1004,6 +1080,24 @@ static const ElementInfoModule modules[] = {
         NULL, /* Advanced help */
         NULL, /* ModuleAlloc */
         create_MemNIC, /* Module Alloc w/ params */
+        NULL, /* Params */
+        NULL, /* Interface */
+    },
+    {
+        "simpleAddrMapper",
+        "simple address mapper",
+        NULL, /* Advanced help */
+        create_SimpleAddrMapper,
+        NULL,
+        NULL, /* Params */
+        NULL, /* Interface */
+    },
+    {
+        "sandyBridgeAddrMapper",
+        "Sandy Bridge address mapper",
+        NULL, /* Advanced help */
+        create_SandyBridgeAddrMapper,
+        NULL,
         NULL, /* Params */
         NULL, /* Interface */
     },
