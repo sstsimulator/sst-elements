@@ -22,8 +22,11 @@
 #include <sst/core/rng/sstrng.h>
 #include <sst/core/output.h>
 
+
 using namespace std;
-using namespace SST;
+
+namespace SST { 
+namespace VaultSim {
 
 #ifndef VAULTSIMC_DBG
 #define VAULTSIMC_DBG 0
@@ -66,5 +69,8 @@ private:
 protected:
   Output &out;
 };
+
+}
+}
 
 #endif

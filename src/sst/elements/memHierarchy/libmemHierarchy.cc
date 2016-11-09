@@ -38,10 +38,9 @@
 #include "membackend/requestReorderSimple.h"
 #include "membackend/requestReorderByRow.h"
 #include "membackend/delayBuffer.h"
+#include "membackend/simpleMemBackendConvertor.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
-
-#include "DRAMReq.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
@@ -60,7 +59,7 @@
 #include "membackend/hybridSimBackend.h"
 #endif
 
-#ifdef HAVE_FDSIM
+#ifdef HAVE_LIBFDSIM
 #include "membackend/flashSimBackend.h"
 #endif
 
@@ -487,6 +486,23 @@ static const ElementInfoParam memctrl_params[] = {
 
 static const ElementInfoStatistic memctrl_statistics[] = {
     /* Cache hits and misses */
+    { NULL, NULL, NULL, 0 }
+};
+
+
+static const ElementInfoPort memctrl_ports[] = {
+    {"direct_link",     "Directly connect to another component (like a Directory Controller).", memEvent_port_events},
+    {"cube_link",       "Link to VaultSim.", NULL}, /* TODO:  Make this generic */
+    {"network",         "Network link to another component", net_port_events},
+    {NULL, NULL, NULL}
+};
+
+static SubComponent* create_Mem_SimpleBackendConvertor(Component* comp, Params& params){
+    return new SimpleMemBackendConvertor(comp, params);
+}
+
+static const ElementInfoStatistic memBackendConvertor_statistics[] = {
+    /* Cache hits and misses */
     { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles",   1 },
     { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
     { "total_cycles",                       "Total cycles called at the memory controller",     "cycles",   1 },
@@ -501,14 +517,6 @@ static const ElementInfoStatistic memctrl_statistics[] = {
     { "latency_PutM",                       "Total latency of handled PutM requests",           "ns",       1 },
     { NULL, NULL, NULL, 0 }
 };
-
-static const ElementInfoPort memctrl_ports[] = {
-    {"direct_link",     "Directly connect to another component (like a Directory Controller).", memEvent_port_events},
-    {"cube_link",       "Link to VaultSim.", NULL}, /* TODO:  Make this generic */
-    {"network",         "Network link to another component", net_port_events},
-    {NULL, NULL, NULL}
-};
-
 
 static SubComponent* create_Mem_SimpleSim(Component* comp, Params& params){
     return new SimpleMemory(comp, params);
@@ -691,7 +699,7 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 };
 #endif
 
-#ifdef HAVE_FDSIM
+#ifdef HAVE_LIBFDSIM
 
 static SubComponent* create_Mem_FDSim(Component* comp, Params& params){
     return new FlashDIMMSimMemory(comp, params);
@@ -835,6 +843,15 @@ static const ElementInfoParam bridge_params[] = {
 
 static const ElementInfoSubComponent subcomponents[] = {
     {
+        "simpleMemBackendConvertor",
+        "convert MemEvent to base mem backend",
+        NULL, /* Advanced help */
+        create_Mem_SimpleBackendConvertor, /* Module Alloc w/ params */
+        NULL,
+        memBackendConvertor_statistics, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
         "simpleMem",
         "Simple constant-access time memory",
         NULL, /* Advanced help */
@@ -932,7 +949,7 @@ static const ElementInfoSubComponent subcomponents[] = {
         "SST::MemHierarchy::MemBackend"
     },
 #endif
-#ifdef HAVE_FDSIM
+#ifdef HAVE_LIBFDSIM
     {
         "flashDIMMSim",
         "FlashDIMM Simulator driven memory timings",

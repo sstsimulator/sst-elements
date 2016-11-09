@@ -17,6 +17,8 @@
 #ifndef _H_SST_MEMH_GOBLIN_HMC_BACKEND
 #define _H_SST_MEMH_GOBLIN_HMC_BACKEND
 
+#include <queue>
+
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/output.h>
@@ -31,36 +33,39 @@ namespace MemHierarchy {
 
 class HMCSimBackEndReq {
 	public:
-		HMCSimBackEndReq(DRAMReq* r, uint64_t sTime) :
-			req(r), startTime(sTime) {}
+		HMCSimBackEndReq(MemBackend::ReqId r, Addr a, uint64_t sTime) :
+			req(r), addr(a), startTime(sTime) {}
 		~HMCSimBackEndReq() {}
 
 		uint64_t getStartTime() const {
 			return startTime;
 		}
 
-		DRAMReq* getRequest() const {
+        MemBackend::ReqId getRequest() const {
 			return req;
 		}
+        Addr getAddr() const {
+			return addr;
+		}
 	private:
-		DRAMReq* req;
+        MemBackend::ReqId req;
+        Addr addr;
 		uint64_t startTime;
 };
 
-class GOBLINHMCSimBackend : public MemBackend {
+class GOBLINHMCSimBackend : public SimpleMemBackend {
 
 public:
-	GOBLINHMCSimBackend() : MemBackend() {};
+	GOBLINHMCSimBackend() : SimpleMemBackend() {};
 	GOBLINHMCSimBackend(Component* comp, Params& params);
 	~GOBLINHMCSimBackend();
-	bool issueRequest(DRAMReq* req);
+	bool issueRequest(ReqId, Addr, bool, unsigned);
 	void setup();
 	void finish();
 	void clock();
 
 private:
 	Component* owner;
-	Output* output;
 	struct hmcsim_t the_hmc;
 
 	uint32_t hmc_link_count;

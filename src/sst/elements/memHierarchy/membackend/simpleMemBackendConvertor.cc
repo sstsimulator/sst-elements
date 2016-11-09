@@ -14,26 +14,16 @@
 // distribution.
 
 
-#ifndef _H_SST_MEMH_VAULT_SIM_BACKEND
-#define _H_SST_MEMH_VAULT_SIM_BACKEND
-
+#include <sst_config.h>
+#include <sst/core/params.h>
+#include "sst/elements/memHierarchy/util.h"
+#include "membackend/simpleMemBackendConvertor.h"
 #include "membackend/memBackend.h"
 
-namespace SST {
-namespace MemHierarchy {
+using namespace SST;
+using namespace SST::MemHierarchy;
 
-class VaultSimMemory : public HMCMemBackend {
-public:
-    VaultSimMemory(Component *comp, Params &params);
-	virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes );
-private:
-    void handleCubeEvent(SST::Event *event);
+bool SimpleMemBackendConvertor::issue( MemReq* req ) {
 
-	std::set<ReqId> outToCubes;
-    SST::Link *cube_link;
-};
-
+    return static_cast<SimpleMemBackend*>(m_backend)->issueRequest( req->id(), req->addr(), req->isWrite(), m_backendRequestWidth );
 }
-}
-
-#endif

@@ -16,136 +16,94 @@
 #ifndef _MEMORYCONTROLLER_H
 #define _MEMORYCONTROLLER_H
 
-
-#include <sst/core/event.h>
-#include <sst/core/module.h>
 #include <sst/core/sst_types.h>
+
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/core/output.h>
-#include <map>
-
-#ifdef HAVE_LIBZ
-#include <zlib.h>
-#endif
 
 #include "sst/elements/memHierarchy/memEvent.h"
-#include "sst/elements/memHierarchy/bus.h"
 #include "sst/elements/memHierarchy/cacheListener.h"
 #include "sst/elements/memHierarchy/memNIC.h"
-#include "sst/elements/memHierarchy/memResponseHandler.h"
-#include "sst/elements/memHierarchy/DRAMReq.h"
+#include "sst/elements/memHierarchy/membackend/backing.h"
 
 namespace SST {
 namespace MemHierarchy {
 
-class MemBackend;
-using namespace std;
+class MemBackendConvertor;
 
-class MemController : public SST::Component, public MemResponseHandler {
+class MemController : public SST::Component {
 public:
+	typedef uint64_t ReqId;
+
     MemController(ComponentId_t id, Params &params);
     void init(unsigned int);
     void setup();
     void finish();
 
-    Output dbg;
-    virtual void handleMemResponse(DRAMReq* req);
+    virtual void handleMemResponse( MemEvent* );
 
 private:
 
     MemController();  // for serialization only
-    ~MemController();
+    ~MemController() {}
 
-    void handleEvent(SST::Event* event);
-    void addRequest(MemEvent* ev);
-    bool clock(SST::Cycle_t cycle);
-    void performRequest(DRAMReq* req);
-    void sendResponse(DRAMReq* req);
-    void printMemory(DRAMReq* req, Addr localAddr);
-    int setBackingFile(string memoryFile);
-    void handleFlush(DRAMReq* req);
+    void notifyListeners( MemEvent* ev ) {
+        if (  ! listeners_.empty()) {
+            CacheListenerNotification notify(ev->getAddr(), ev->getVirtualAddress(), 
+                        ev->getInstructionPointer(), ev->getSize(), READ, HIT);
 
-    bool isRequestAddressValid(MemEvent *ev){
-        Addr addr = ev->getAddr();
-        Addr step;
-
-        if(0 == numPages_)     return (addr >= rangeStart_ && addr < (rangeStart_ + memSize_));
-        if(addr < rangeStart_) return false;
-        
-        addr = addr - rangeStart_;
-        step = addr / interleaveStep_;
-        if(step >= numPages_)  return false;
-
-        Addr offset = addr % interleaveStep_;
-        if (offset >= interleaveSize_) return false;
-
-        return true;
+            for (unsigned long int i = 0; i < listeners_.size(); ++i) {
+                listeners_[i]->notifyAccess(notify);
+            }
+        }
     }
 
+    void fixupParam( Params& params, const std::string oldKey, const std::string newKey ) {
+        bool found;
 
-    Addr convertAddressToLocalAddress(Addr addr){
-        if (0 == numPages_) return addr - rangeStart_;
-        
-        addr = addr - rangeStart_;
-        Addr step = addr / interleaveStep_;
-        Addr offset = addr % interleaveStep_;
-        return (step * interleaveSize_) + offset;
+        std::string value = params.find<std::string>(oldKey,found);
+        if ( found ) {
+            params.insert( newKey , value );
+        //    params.erase( oldKey );
+        }
     }
-    
-    void cancelEvent(MemEvent *ev) {}
-    void sendBusPacket(Bus::key_t key){}
-    void sendBusCancel(Bus::key_t key){}
-    void handleBusEvent(SST::Event *event){}
-    
-    typedef deque<DRAMReq*> dramReq_t;
-    
-    bool        divertDCLookups_;
+
+    void fixupParams( Params& params, const std::string oldKey, const std::string newKey ) {
+        Params tmp = params.find_prefix_params( oldKey );
+
+        std::set<std::string> keys = tmp.getKeys();   
+        std::set<std::string>::iterator iter = keys.begin();
+        for ( ; iter != keys.end(); ++iter ) {
+            std::string value = tmp.find<std::string>( (*iter) );
+            params.insert( newKey + (*iter), value );
+        //    params.erase( oldKey + (*iter) );
+        }
+    }
+
+    void handleEvent( SST::Event* );
+    bool clock( SST::Cycle_t );
+    void performRequest( MemEvent* );
+    void performResponse( MemEvent* );
+    void processInitEvent( MemEvent* );
+
+    Output dbg;
+
+    MemBackendConvertor*    memBackendConvertor_;
+    Backend::Backing*       backing_; 
+
     SST::Link*  cacheLink_;         // Link to the rest of memHierarchy 
     MemNIC*     networkLink_;       // Link to the rest of memHierarchy if we're communicating over a network
-    MemBackend* backend_;
-    int         protocol_;
-    dramReq_t   requestQueue_;      // Requests waiting to be issued
-    set<DRAMReq*>   requestPool_;   // All requests that are in flight at the memory controller (including those waiting to be issued) 
-    set<DRAMReq*>   flushPool_;     // All flush requests that are in flight at the memory controller
-    int         backingFd_;
-    uint8_t*    memBuffer_;
-    uint64_t    memSize_;
-    uint64_t    requestSize_;
-    Addr        rangeStart_;
-    uint64_t    numPages_;
-    Addr        interleaveSize_;
-    Addr        interleaveStep_;
-    bool        doNotBack_;
-    uint64_t    cacheLineSize_;
-    uint64_t    requestWidth_;
+
     std::vector<CacheListener*> listeners_;
-    int         maxReqsPerCycle_;
-
-    Statistic<uint64_t>* cyclesWithIssue;
-    Statistic<uint64_t>* cyclesAttemptIssueButRejected;
-    Statistic<uint64_t>* totalCycles;
-    Statistic<uint64_t>* stat_GetSReqReceived;
-    Statistic<uint64_t>* stat_GetXReqReceived;
-    Statistic<uint64_t>* stat_PutMReqReceived;
-    Statistic<uint64_t>* stat_GetSExReqReceived;
-    Statistic<uint64_t>* stat_outstandingReqs;
-    Statistic<uint64_t>* stat_GetSLatency;
-    Statistic<uint64_t>* stat_GetSExLatency;
-    Statistic<uint64_t>* stat_GetXLatency;
-    Statistic<uint64_t>* stat_PutMLatency;
-
-    Output::output_location_t statsOutputTarget_;
-//#ifdef HAVE_LIBZ
-//    gzFile traceFP;
-//#else
-    FILE *traceFP;
-//#endif
 
 
+    bool isRequestAddressValid(Addr addr){
+        return (addr < memSize_);
+    }
+
+    int         protocol_;
+    size_t      memSize_;
 };
-
-
 
 }}
 

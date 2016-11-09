@@ -21,7 +21,7 @@ AC_DEFUN([SST_memHierarchy_CONFIG], [
   SST_CHECK_NVDIMMSIM([],[],[AC_MSG_ERROR([NVDIMMSim requested but could not be found])])
 
   # Use FlashDIMMSim
-  SST_CHECK_FDSIM([],[],[AC_MSG_ERROR([HybridSim requested but could not be found])])
+  SST_CHECK_FDSIM([],[],[AC_MSG_ERROR([FlashDIMMSim requested but could not be found])])
 
   AS_IF([test "$mh_happy" = "yes"], [$1], [$2])
 ])

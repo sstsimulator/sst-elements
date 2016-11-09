@@ -34,10 +34,10 @@
 namespace SST {
 namespace MemHierarchy {
 
-class FlashDIMMSimMemory : public MemBackend {
+class FlashDIMMSimMemory : public SimpleMemBackend {
 public:
     FlashDIMMSimMemory(Component *comp, Params &params);
-    bool issueRequest(DRAMReq *req);
+    bool issueRequest(ReqId, Addr, bool, unsigned );
     void clock();
     void finish();
 
@@ -47,7 +47,7 @@ private:
     uint32_t maxPendingRequests;
 
     FDSim::FlashDIMM *memSystem;
-    std::map<uint64_t, std::deque<DRAMReq*> > dramReqs;
+    std::map<uint64_t, std::deque<ReqId> > dramReqs;
 
 };
 

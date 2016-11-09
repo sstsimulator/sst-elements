@@ -17,6 +17,7 @@
 #ifndef _H_SST_MEMH_PAGEDMULTI_BACKEND
 #define _H_SST_MEMH_PAGEDMULTI_BACKEND
 
+#include <queue>
 #include "membackend/dramSimBackend.h"
 #include "sst/core/rng/sstrng.h"
 
@@ -57,9 +58,8 @@ struct pageInfo {
     uint64_t accPat[LAST_CASE];
     set<string> rqstrs; // requestors who have touched this page
 
-  void record(const DRAMReq *req, const bool collectStats, const uint64_t pAddr, const bool limitTouch) {
-        uint64_t addr = req->baseAddr_ + req->amtInProcess_;
-        bool isWrite = req->isWrite_;
+    void record( Addr addr, bool isWrite, const std::string& requestor, 
+                    const bool collectStats, const uint64_t pAddr, const bool limitTouch) {
         
         // record the pageAddr
         assert((pageAddr == 0) || (pAddr == pageAddr));
@@ -93,7 +93,6 @@ struct pageInfo {
         // note: this is slow, and only works if directory controller
         // is modified to send along the requestor info
         if (1 == collectStats) {
-            const string &requestor = req->reqEvent_->getRqstr();
             rqstrs.insert(requestor);
             //printf("%s\n", requestor.c_str());
         }
@@ -149,7 +148,7 @@ struct pageInfo {
 class pagedMultiMemory : public DRAMSimMemory {
 public:
     pagedMultiMemory(Component *comp, Params &params);
-    virtual bool issueRequest(DRAMReq *req);
+	virtual bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual void clock();
     virtual void finish();
 
@@ -157,6 +156,24 @@ private:
     Output dbg;
     RNG::SSTRandom*  rng;
 
+	struct Req : public SST::Core::Serialization::serializable {
+        Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) :
+            id(id), addr(addr), isWrite(isWrite), numBytes(numBytes)
+        { }
+        ReqId id;
+        Addr addr;
+        bool isWrite;
+        unsigned numBytes;
+		void serialize_order(SST::Core::Serialization::serializer &ser) {
+			ser & id;
+			ser & addr;
+			ser & isWrite;
+			ser & numBytes;
+		}
+	  private:
+        Req() {}
+		ImplementSerializable(SST::MemHierarchy::pagedMultiMemory::Req)
+    };
     pageInfo::pageList_t pageList; // used in FIFO
 
     // addition strategy
@@ -182,12 +199,12 @@ private:
     bool dramBackpressure;
 
     bool checkAdd(pageInfo &page);
-    void do_FIFO_LRU(DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
-    void do_LFU(DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
+    void do_FIFO_LRU( pageInfo &page, bool &inFast, bool &swapping);
+    void do_LFU( Addr, pageInfo &page, bool &inFast, bool &swapping);
     
     void printAccStats();
-    queue<DRAMReq *> dramQ;
-    void queueRequest(DRAMReq *r) {
+    queue<Req *> dramQ;
+    void queueRequest(Req *r) {
         dramQ.push(r);
     }
 
@@ -196,12 +213,12 @@ private:
 
     // swap tracking stuff
     const bool modelSwaps = 1;
-    map<uint64_t, list<DRAMReq*> > waitingReqs;
+    map<uint64_t, list<Req*> > waitingReqs;
 public:    
     class MemCtrlEvent;
 private:    
     typedef map<MemCtrlEvent *, pageInfo*> evToPage_t;
-    typedef map<DRAMReq *, pageInfo*> reqToPage_t;
+    typedef map<Req *, pageInfo*> reqToPage_t;
     evToPage_t swapToSlow_Reads;
     evToPage_t swapToFast_Writes;
     reqToPage_t swapToSlow_Writes;
@@ -216,10 +233,10 @@ private:
 public:    
     class MemCtrlEvent : public SST::Event {
     public:
-        MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
+        MemCtrlEvent(Req* req) : SST::Event(), req(req)
         { }
 
-        DRAMReq *req;
+        Req* req;
 
     private:   
         MemCtrlEvent() {} // For Serialization only
@@ -231,7 +248,7 @@ public:
         }
         
         ImplementSerializable(SST::MemHierarchy::pagedMultiMemory::MemCtrlEvent);     
-};
+    };
 
     typedef map<uint64_t, pageInfo> pageMap_t;
     pageMap_t pageMap;

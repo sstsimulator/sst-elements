@@ -15,31 +15,35 @@
 
 
 #include <sst_config.h>
+#include <sst/core/link.h>
+#include "sst/elements/memHierarchy/util.h"
 #include "membackend/simpleMemBackend.h"
+#include "membackend/simpleMemBackendConvertor.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-SimpleMemory::SimpleMemory(Component *comp, Params &params) : MemBackend(comp, params){
+SimpleMemory::SimpleMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){
     std::string access_time = params.find<std::string>("access_time", "100 ns");
-    self_link = ctrl->configureSelfLink("Self", access_time,
+    self_link = comp->configureSelfLink("Self", access_time,
             new Event::Handler<SimpleMemory>(this, &SimpleMemory::handleSelfEvent));
 }
 
 void SimpleMemory::handleSelfEvent(SST::Event *event){
     MemCtrlEvent *ev = static_cast<MemCtrlEvent*>(event);
-    DRAMReq *req = ev->req;
-    ctrl->handleMemResponse(req);
+#ifdef __SST_DEBUG_OUTPUT__
+    output->debug(_L10_, "%s: Transaction done for id %" PRIx64 "\n", parent->getName().c_str(),ev->reqId);
+#endif
+    getConvertor()->handleMemResponse(ev->reqId);
     delete event;
 }
 
-bool SimpleMemory::issueRequest(DRAMReq *req){
+bool SimpleMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned numBytes ){
 #ifdef __SST_DEBUG_OUTPUT__
-    uint64_t addr = req->baseAddr_ + req->amtInProcess_;
-    ctrl->dbg.debug(_L10_, "Issued transaction for address %" PRIx64 "\n", (Addr)addr);
+    output->debug(_L10_, "%s: Issued transaction for address %" PRIx64 " id %" PRIx64"\n", parent->getName().c_str(),(Addr)addr,id);
 #endif
-    self_link->send(1, new MemCtrlEvent(req));
+    self_link->send(1, new MemCtrlEvent(id));
     return true;
 }
 
