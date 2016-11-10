@@ -56,9 +56,9 @@ void VaultSimMemory::handleCubeEvent(SST::Event *event){
     VaultSim::MemRespEvent *ev = dynamic_cast<VaultSim::MemRespEvent*>(event);
 
     if (ev) {
-        if ( outToCubes.find( ev->reqId ) != outToCubes.end() ) {
-            outToCubes.erase( ev->reqId );
-            getConvertor()->handleMemResponse( ev->reqId, ev->flags );
+        if ( outToCubes.find( ev->getReqId() ) != outToCubes.end() ) {
+            outToCubes.erase( ev->getReqId() );
+            getConvertor()->handleMemResponse( ev->getReqId(), ev->getFlags() );
       		delete event;
         } else {  
             output->fatal(CALL_INFO, -1, "Could not match incoming request from cubes\n");
