@@ -18,6 +18,7 @@
 
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/elements/VaultSimC/memReqEvent.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 
@@ -184,7 +185,7 @@ bool logicLayer::clock( Cycle_t current )
 
   // check for events from the CPU
   while((tc[0] < bwlimit) && (e = toCPU->recv())) {
-    MemEvent *event  = dynamic_cast<MemEvent*>(e);
+    MemReqEvent *event  = dynamic_cast<MemReqEvent*>(e);
 //    dbg.output(CALL_INFO, "LL%d got req for %p (%lld %d)\n", llID, 
     dbg.output(CALL_INFO, "LL%d got req for %p (%" PRIu64 " %d)\n", llID, 
 	       (void*)event->getAddr(), event->getID().first, event->getID().second);
@@ -215,7 +216,7 @@ bool logicLayer::clock( Cycle_t current )
   // check for events from the memory chain
   if (toMem) {
     while((tm[0] < bwlimit) && (e = toMem->recv())) {
-      MemEvent *event  = dynamic_cast<MemEvent*>(e);
+      MemRespEvent *event  = dynamic_cast<MemRespEvent*>(e);
       if (event == NULL) {
 	dbg.fatal(CALL_INFO, -1, "logic layer got bad event\n");
       }
@@ -235,7 +236,7 @@ bool logicLayer::clock( Cycle_t current )
        i != m_memChans.end(); ++i) {
     memChan_t *m_memChan = *i;
     while ((e = m_memChan->recv())) {
-      MemEvent *event  = dynamic_cast<MemEvent*>(e);
+      MemRespEvent *event  = dynamic_cast<MemRespEvent*>(e);
       if (event == NULL) {
         dbg.fatal(CALL_INFO, -1, "logic layer got bad event from vaults\n");
       }
