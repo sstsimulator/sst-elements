@@ -69,10 +69,10 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
 
     addrOffset = params.find<uint64_t>("addressoffset", 0);
 
-    registerTimeBase("1 ns", true);
     //set our clock
+    std::string clockFreq = params.find<std::string>("clock", "1GHz");
     clockHandler = new Clock::Handler<streamCPU>(this, &streamCPU::clockTic);
-    clockTC = registerClock( "1GHz", clockHandler );
+    clockTC = registerClock(clockFreq, clockHandler);
     num_reads_issued = num_reads_returned = 0;
 
     // Start the next address from the offset
@@ -125,7 +125,7 @@ bool streamCPU::clockTic( Cycle_t )
 	// communicate?
 	if ((numLS != 0) && ((rng.generateNextUInt32() % commFreq) == 0)) {
 		if ( requests.size() > maxOutstanding ) {
-			out.verbose(CALL_INFO, 1, 0, "Not issuing operation, too many outstanding requests are in flight.\n");
+//			out.verbose(CALL_INFO, 1, 0, "Not issuing operation, too many outstanding requests are in flight.\n");
 		} else {
 
 			// yes, communicate

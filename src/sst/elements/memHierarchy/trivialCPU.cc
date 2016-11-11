@@ -71,12 +71,13 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     memory->initialize("mem_link",
 			new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent) );
 
-	registerTimeBase("1 ns", true);
-	//set our clock
+    //set our clock
+    std::string clockFreq = params.find<std::string>("clock", "1GHz");
     clockHandler = new Clock::Handler<trivialCPU>(this, &trivialCPU::clockTic);
-	clockTC = registerClock( "1GHz", clockHandler );
-	num_reads_issued = num_reads_returned = 0;
+    clockTC = registerClock( clockFreq, clockHandler );
+    
     clock_ticks = 0;
+    num_reads_issued = num_reads_returned = 0;
     noncacheableReads = noncacheableWrites = 0;
 }
 
@@ -124,8 +125,8 @@ bool trivialCPU::clockTic( Cycle_t )
 	// communicate?
 	if ((0 != numLS) && (0 == (rng.generateNextUInt32() % commFreq))) {
 		if ( requests.size() > maxOutstanding ) {
-			out.output("%s: Not issuing read.  Too many outstanding requests.\n",
-					getName().c_str());
+		/*	out.output("%s: Not issuing read.  Too many outstanding requests.\n",
+					getName().c_str());*/
 		} else {
 
 			// yes, communicate

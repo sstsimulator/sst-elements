@@ -433,6 +433,7 @@ static const ElementInfoPort cpu_ports[] = {
 
 static const ElementInfoParam cpu_params[] = {
     {"verbose",                 "Determine how verbose the output from the CPU is", "1"},
+    {"clock",                   "Clock frequency", "1GHz"},
     {"rngseed",                 "Set a seed for the random generation of addresses", "7"},
     {"commFreq",                "How often to do a memory operation."},
     {"memSize",                 "Size of physical memory."},
