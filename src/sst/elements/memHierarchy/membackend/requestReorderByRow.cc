@@ -23,6 +23,8 @@ using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
 RequestReorderRow::RequestReorderRow(Component *comp, Params &params) : SimpleMemBackend(comp, params){
+
+    fixupParams( params, "clock", "backend.clock" );
     
     // Get parameters
     reqsPerCycle = params.find<int>("max_requests_per_cycle", -1);
@@ -54,6 +56,9 @@ RequestReorderRow::RequestReorderRow(Component *comp, Params &params) : SimpleMe
     Params backendParams = params.find_prefix_params("backend.");
     backendParams.insert("mem_size", params.find<std::string>("mem_size"));
     backend = dynamic_cast<SimpleMemBackend*>(loadSubComponent(backendName, backendParams));
+    MemBackend::NotifyFunctor_1<RequestReorderRow,ReqId>* handler =
+        new MemBackend::NotifyFunctor_1<RequestReorderRow,ReqId>( this, &RequestReorderRow::handleMemResponse);
+    backend->setResponseHandler( handler );
 
     // Set up local variables
     nextBank = 0;

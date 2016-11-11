@@ -82,5 +82,5 @@ void ramulatorMemory::ramulatorDone(ramulator::Request& ramReq) {
     if(0 == reqs.size())
         dramReqs.erase(addr);
 
-    getConvertor()->handleMemResponse(req);
+    handleMemResponse(req);
 }

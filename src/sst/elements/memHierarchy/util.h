@@ -115,6 +115,28 @@ inline void printData(Output* dbg, string msg, vector<uint8_t>* data, Addr offse
     dbg->debug(_L10_,"\n");
     */
 }
+
+inline void fixupParam( Params& params, const std::string oldKey, const std::string newKey ) {
+    bool found;
+
+    std::string value = params.find<std::string>(oldKey,found);
+    if ( found ) {
+        params.insert( newKey , value );
+    //    params.erase( oldKey );
+    }
+}
+
+inline void fixupParams( Params& params, const std::string oldKey, const std::string newKey ) {
+    Params tmp = params.find_prefix_params( oldKey );
+
+    std::set<std::string> keys = tmp.getKeys();
+    std::set<std::string>::iterator iter = keys.begin();
+    for ( ; iter != keys.end(); ++iter ) {
+        std::string value = tmp.find<std::string>( (*iter) );
+        params.insert( newKey + (*iter), value );
+    //    params.erase( oldKey + (*iter) );
+    }
+}
 /*
  *  IGNORE - ignore this request, drop it, do not retry any waiting requests
  *  DONE - this request finished, should retry

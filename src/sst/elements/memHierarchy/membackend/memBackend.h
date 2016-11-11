@@ -34,11 +34,49 @@ namespace MemHierarchy {
 
 class MemBackend : public SubComponent {
 public:
+    class NotifyFunctorBase {
+    public:
+        virtual ~NotifyFunctorBase() {}
+    };
+
+    template < class T1, class A1, class TRetval = void >
+    class NotifyFunctor_1 : public NotifyFunctorBase {
+      private:
+        T1* m_obj;
+        TRetval ( T1::*m_fptr )( A1 );
+
+      public:
+        NotifyFunctor_1( T1* obj, TRetval (T1::*fptr)(A1) ) :
+            m_obj( obj ),
+            m_fptr( fptr )
+        {}
+
+        virtual TRetval operator()( A1 a1 ) {
+            return (*m_obj.*m_fptr)( a1  );
+        }
+    };
+
+    template < class T1, class A1, class A2, class TRetval = void >
+    class NotifyFunctor_2 : public NotifyFunctorBase {
+      private:
+        T1* m_obj;
+        TRetval ( T1::*m_fptr )( A1, A2 );
+
+      public:
+        NotifyFunctor_2( T1* obj, TRetval (T1::*fptr)(A1,A2) ) :
+            m_obj( obj ),
+            m_fptr( fptr )
+        {}
+
+        virtual TRetval operator()( A1 a1, A2 a2 ) {
+            return (*m_obj.*m_fptr)( a1, a2 );
+        }
+    };
 
     typedef MemBackendConvertor::ReqId ReqId;
     MemBackend();
 
-    MemBackend(Component *comp, Params &params) : SubComponent(comp), ctrl(NULL)
+    MemBackend(Component *comp, Params &params) : SubComponent(comp), m_handleMemResponse(NULL)
     {
     	output = new SST::Output("@t:MemoryBackend[@p:@l]: ", 
                 params.find<uint32_t>("debug_level", 0),
@@ -70,12 +108,17 @@ public:
         delete output;
     }
 
-    virtual void setConvertor( MemBackendConvertor* convertor ) { 
-    	ctrl = dynamic_cast<MemBackendConvertor*>(convertor);
-    	if (!ctrl) {
-            output->fatal(CALL_INFO, -1, "MemBackends expect to be loaded into MemBackendConvertor.\n");
-        }
-   }
+    virtual void setResponseHandler( NotifyFunctorBase* functor ) {
+        m_handleMemResponse = functor;
+    } 
+
+    virtual void setGetRequestorHandler( NotifyFunctor_1<MemBackendConvertor,ReqId,const std::string&>* functor ) {
+        m_getRequestor = functor;
+    } 
+
+    std::string getRequestor( ReqId id ) {
+        return (*m_getRequestor)( id );
+    }
 
     virtual void setup() {}
     virtual void finish() {}
@@ -91,7 +134,8 @@ protected:
     size_t          m_memSize;
     int32_t         m_reqWidth;
 
-    MemBackendConvertor *ctrl;
+    NotifyFunctorBase*  m_handleMemResponse; 
+    NotifyFunctor_1<MemBackendConvertor,ReqId,const std::string&>*  m_getRequestor; 
 };
 
 class SimpleMemBackend : public MemBackend {
@@ -100,18 +144,26 @@ class SimpleMemBackend : public MemBackend {
     SimpleMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
 
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes ) = 0; 
-    virtual SimpleMemBackendConvertor* getConvertor( ) {
-        return static_cast<SimpleMemBackendConvertor*>(ctrl);
-    };
+
+    void handleMemResponse( ReqId id ) {
+           
+        NotifyFunctor_1< SimpleMemBackendConvertor,ReqId>*  tmp;
+        tmp = static_cast< NotifyFunctor_1< SimpleMemBackendConvertor,ReqId>* >( m_handleMemResponse ); 
+        (*tmp)( id );  
+    }
 };
 
 class HMCMemBackend : public MemBackend {
   public:
     HMCMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
-    virtual HMCMemBackendConvertor* getConvertor( ) {
-        return static_cast<HMCMemBackendConvertor*>(ctrl);
-    };
+
+    void handleMemResponse( ReqId id, uint32_t flags ) {
+
+        NotifyFunctor_2< HMCMemBackendConvertor,ReqId,uint32_t>*  tmp;
+        tmp = static_cast< NotifyFunctor_2< HMCMemBackendConvertor,ReqId,uint32_t>* >( m_handleMemResponse ); 
+        (*tmp)( id, flags );  
+    }
 };
 
 }}

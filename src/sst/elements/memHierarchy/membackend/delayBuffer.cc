@@ -17,7 +17,7 @@
 #include <sst_config.h>
 #include <sst/core/link.h>
 #include "membackend/delayBuffer.h"
-
+#include "sst/elements/memHierarchy/util.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -26,6 +26,7 @@ using namespace SST::MemHierarchy;
 DelayBuffer::DelayBuffer(Component *comp, Params &params) : SimpleMemBackend(comp, params){
     
     // Get parameters
+    fixupParams( params, "clock", "backend.clock" ); 
     
     UnitAlgebra delay = params.find<UnitAlgebra>("request_delay", UnitAlgebra("0ns"));
     
@@ -38,6 +39,10 @@ DelayBuffer::DelayBuffer(Component *comp, Params &params) : SimpleMemBackend(com
     Params backendParams = params.find_prefix_params("backend.");
     backendParams.insert("mem_size", params.find<std::string>("mem_size"));
     backend = dynamic_cast<SimpleMemBackend*>(loadSubComponent(backendName, backendParams));
+
+    MemBackend::NotifyFunctor_1<DelayBuffer,ReqId>* handler =
+                        new MemBackend::NotifyFunctor_1<DelayBuffer,ReqId>( this, &DelayBuffer::handleMemResponse);
+    backend->setResponseHandler( handler );
 
     // Set up self links
     if (delay.getValue() != 0) {

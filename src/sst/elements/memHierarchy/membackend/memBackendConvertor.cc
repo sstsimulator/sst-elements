@@ -42,7 +42,12 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
     // extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
     m_backend = dynamic_cast<MemBackend*>( comp->loadSubComponent( backendName, comp, backendParams ) );
-    m_backend->setConvertor(this);
+
+    MemBackend::NotifyFunctor_1<MemBackendConvertor,ReqId,const std::string&>* functor; 
+
+    functor = new MemBackend::NotifyFunctor_1<MemBackendConvertor,ReqId,const std::string&>( this, &MemBackendConvertor::getRequestor );
+
+    m_backend->setGetRequestorHandler( functor );
 
     m_frontendRequestWidth =  params.find<uint32_t>("request_width",64);
     m_backendRequestWidth = static_cast<SimpleMemBackend*>(m_backend)->getRequestWidth();

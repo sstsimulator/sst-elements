@@ -26,8 +26,7 @@ class SimpleMemBackendConvertor : public MemBackendConvertor {
  
 
   public:
-    SimpleMemBackendConvertor(Component *comp, Params &params) :
-         MemBackendConvertor(comp,params) {}
+    SimpleMemBackendConvertor(Component *comp, Params &params);
 
     virtual bool issue( MemReq* req );
 

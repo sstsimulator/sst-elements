@@ -35,7 +35,7 @@ void SimpleMemory::handleSelfEvent(SST::Event *event){
 #ifdef __SST_DEBUG_OUTPUT__
     output->debug(_L10_, "%s: Transaction done for id %" PRIx64 "\n", parent->getName().c_str(),ev->reqId);
 #endif
-    getConvertor()->handleMemResponse(ev->reqId);
+    handleMemResponse(ev->reqId);
     delete event;
 }
 
