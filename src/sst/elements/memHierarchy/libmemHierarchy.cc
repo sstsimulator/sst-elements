@@ -438,6 +438,7 @@ static const ElementInfoParam cpu_params[] = {
     {"commFreq",                "How often to do a memory operation."},
     {"memSize",                 "Size of physical memory."},
     {"maxOutstanding",          "Maximum Number of Outstanding memory requests."},
+    {"reqsPerIssue",            "Maximum number of requests to issue at a time"},
     {"do_write",                "Enable writes to memory (versus just reads).", "1"},
     {"num_loadstore",           "Stop after this many reads and writes.", "-1"},
     {"noncacheableRangeStart",  "Beginning of range of addresses that are noncacheable.", "0x0"},

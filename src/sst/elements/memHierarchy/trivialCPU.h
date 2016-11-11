@@ -71,6 +71,7 @@ private:
     bool do_write;
     uint64_t maxAddr;
     uint64_t maxOutstanding;
+    uint32_t maxReqsPerIssue;
     uint64_t num_reads_issued, num_reads_returned;
     uint64_t noncacheableRangeStart, noncacheableRangeEnd;
     uint64_t clock_ticks;

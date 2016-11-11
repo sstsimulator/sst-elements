@@ -58,7 +58,12 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 
     noncacheableRangeStart = params.find<uint64_t>("noncacheableRangeStart", 0);
     noncacheableRangeEnd = params.find<uint64_t>("noncacheableRangeEnd", 0);
-
+    
+    maxReqsPerIssue = params.find<uint32_t>("reqsPerIssue", 1);
+    if (maxReqsPerIssue < 1) {
+        out.fatal(CALL_INFO, -1, "Cannot issue less than one request per cycle...fix your input deck\n");
+    }
+    maxReqsPerIssue--;
 
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
@@ -117,60 +122,64 @@ void trivialCPU::handleEvent(Interfaces::SimpleMem::Request *req)
 
 bool trivialCPU::clockTic( Cycle_t )
 {
-        ++clock_ticks;
+    ++clock_ticks;
 
-	// Histogram bin the requests pending per cycle
-        requestsPendingCycle->add((uint64_t) requests.size());
+    // Histogram bin the requests pending per cycle
+    requestsPendingCycle->add((uint64_t) requests.size());
 
-	// communicate?
-	if ((0 != numLS) && (0 == (rng.generateNextUInt32() % commFreq))) {
-		if ( requests.size() > maxOutstanding ) {
-		/*	out.output("%s: Not issuing read.  Too many outstanding requests.\n",
-					getName().c_str());*/
-		} else {
+    // communicate?
+    if ((0 != numLS) && (0 == (rng.generateNextUInt32() % commFreq))) {
+        if ( requests.size() < maxOutstanding ) {
+            // yes, communicate
+            // create event
+            // x4 to prevent splitting blocks
+            uint32_t reqsToSend = 1;
+            if (maxReqsPerIssue > 0) reqsToSend += rng.generateNextUInt32() % maxReqsPerIssue;
+            if (reqsToSend > (maxOutstanding - requests.size())) reqsToSend = maxOutstanding - requests.size();
+            if (reqsToSend > numLS) reqsToSend = numLS;
 
-			// yes, communicate
-			// create event
-			// x4 to prevent splitting blocks
-            Interfaces::SimpleMem::Addr addr = ((((Interfaces::SimpleMem::Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
+            for (int i = 0; i < reqsToSend; i++) {
 
-			bool doWrite = do_write && ((0 == (rng.generateNextUInt32() % 10)));
+                Interfaces::SimpleMem::Addr addr = ((((Interfaces::SimpleMem::Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
 
-            Interfaces::SimpleMem::Request *req = new Interfaces::SimpleMem::Request((doWrite ? Interfaces::SimpleMem::Request::Write : Interfaces::SimpleMem::Request::Read), addr, 4 /*4 bytes*/);
-			if ( doWrite ) {
-				req->data.resize(4);
-                req->data[0] = (addr >> 24) & 0xff;
-                req->data[1] = (addr >> 16) & 0xff;
-                req->data[2] = (addr >>  8) & 0xff;
-                req->data[3] = (addr >>  0) & 0xff;
-			}
+                bool doWrite = do_write && ((0 == (rng.generateNextUInt32() % 10)));
+
+                Interfaces::SimpleMem::Request *req = new Interfaces::SimpleMem::Request((doWrite ? Interfaces::SimpleMem::Request::Write : Interfaces::SimpleMem::Request::Read), addr, 4 /*4 bytes*/);
+		if ( doWrite ) {
+		    req->data.resize(4);
+                    req->data[0] = (addr >> 24) & 0xff;
+                    req->data[1] = (addr >> 16) & 0xff;
+                    req->data[2] = (addr >>  8) & 0xff;
+                    req->data[3] = (addr >>  0) & 0xff;
+	        }
             
-            bool noncacheable = ( addr >= noncacheableRangeStart && addr < noncacheableRangeEnd );
-            if ( noncacheable ) {
-                req->flags |= Interfaces::SimpleMem::Request::F_NONCACHEABLE;
-                if ( doWrite ) { ++noncacheableWrites; } else { ++noncacheableReads; }
-            }
+                bool noncacheable = ( addr >= noncacheableRangeStart && addr < noncacheableRangeEnd );
+                if ( noncacheable ) {
+                    req->flags |= Interfaces::SimpleMem::Request::F_NONCACHEABLE;
+                    if ( doWrite ) { ++noncacheableWrites; } else { ++noncacheableReads; }
+                }
 
-			memory->sendRequest(req);
-			requests[req->id] =  getCurrentSimTime();
+		memory->sendRequest(req);
+		requests[req->id] =  getCurrentSimTime();
 
-			out.output("%s: %d Issued %s%s (%" PRIu64 ") for address 0x%" PRIx64 "\n",
-					getName().c_str(), numLS, noncacheable ? "Noncacheable " : "" , doWrite ? "Write" : "Read", req->id, addr);
-			num_reads_issued++;
+		out.output("%s: %d Issued %s%s (%" PRIu64 ") for address 0x%" PRIx64 "\n",
+                        getName().c_str(), numLS, noncacheable ? "Noncacheable " : "" , doWrite ? "Write" : "Read", req->id, addr);
+		num_reads_issued++;
 
-            numLS--;
-		}
+                numLS--;
+	    }
+        }
+    }
 
-	}
-
+    // Check whether to end the simulation
     if ( 0 == numLS && requests.empty() ) {
         out.output("TrivialCPU: Test Completed Successfuly\n");
         primaryComponentOKToEndSim();
-        return true;
+        return true;    // Turn our clock off while we wait for any other CPUs to end
     }
 
-	// return false so we keep going
-	return false;
+    // return false so we keep going
+    return false;
 }
 
 
