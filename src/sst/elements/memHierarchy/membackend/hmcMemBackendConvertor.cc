@@ -32,9 +32,10 @@ using namespace SST::MemHierarchy;
 HMCMemBackendConvertor::HMCMemBackendConvertor(Component *comp, Params &params) :
     MemBackendConvertor(comp,params) 
 {
-    MemBackend::NotifyFunctor_2<HMCMemBackendConvertor,ReqId,uint32_t>* handler =
-        new MemBackend::NotifyFunctor_2<HMCMemBackendConvertor,ReqId,uint32_t>( this, &HMCMemBackendConvertor::handleMemResponse);
-    m_backend->setResponseHandler( handler );
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    static_cast<HMCMemBackend*>(m_backend)->setResponseHandler( std::bind( &HMCMemBackendConvertor::handleMemResponse, this, _1,_2 ) );
+
 }
 
 bool HMCMemBackendConvertor::issue( MemReq *req ) {

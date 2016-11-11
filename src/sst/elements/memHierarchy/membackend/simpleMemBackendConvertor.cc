@@ -26,9 +26,8 @@ using namespace SST::MemHierarchy;
 SimpleMemBackendConvertor::SimpleMemBackendConvertor(Component *comp, Params &params) :
         MemBackendConvertor(comp,params) 
 {
-    MemBackend::NotifyFunctor_1<SimpleMemBackendConvertor,ReqId>* handler =
-            new MemBackend::NotifyFunctor_1<SimpleMemBackendConvertor,ReqId>( this, &SimpleMemBackendConvertor::handleMemResponse);
-    m_backend->setResponseHandler( handler );
+    using std::placeholders::_1;
+    static_cast<SimpleMemBackend*>(m_backend)->setResponseHandler( std::bind( &SimpleMemBackendConvertor::handleMemResponse, this, _1 ) );
 }
 
 bool SimpleMemBackendConvertor::issue( MemReq* req ) {

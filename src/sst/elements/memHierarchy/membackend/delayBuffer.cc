@@ -40,9 +40,8 @@ DelayBuffer::DelayBuffer(Component *comp, Params &params) : SimpleMemBackend(com
     backendParams.insert("mem_size", params.find<std::string>("mem_size"));
     backend = dynamic_cast<SimpleMemBackend*>(loadSubComponent(backendName, backendParams));
 
-    MemBackend::NotifyFunctor_1<DelayBuffer,ReqId>* handler =
-                        new MemBackend::NotifyFunctor_1<DelayBuffer,ReqId>( this, &DelayBuffer::handleMemResponse);
-    backend->setResponseHandler( handler );
+    using std::placeholders::_1;
+    backend->setResponseHandler( std::bind( &DelayBuffer::handleMemResponse, this, _1 )  );
 
     // Set up self links
     if (delay.getValue() != 0) {

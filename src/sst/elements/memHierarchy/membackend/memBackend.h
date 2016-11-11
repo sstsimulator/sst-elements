@@ -34,49 +34,11 @@ namespace MemHierarchy {
 
 class MemBackend : public SubComponent {
 public:
-    class NotifyFunctorBase {
-    public:
-        virtual ~NotifyFunctorBase() {}
-    };
-
-    template < class T1, class A1, class TRetval = void >
-    class NotifyFunctor_1 : public NotifyFunctorBase {
-      private:
-        T1* m_obj;
-        TRetval ( T1::*m_fptr )( A1 );
-
-      public:
-        NotifyFunctor_1( T1* obj, TRetval (T1::*fptr)(A1) ) :
-            m_obj( obj ),
-            m_fptr( fptr )
-        {}
-
-        virtual TRetval operator()( A1 a1 ) {
-            return (*m_obj.*m_fptr)( a1  );
-        }
-    };
-
-    template < class T1, class A1, class A2, class TRetval = void >
-    class NotifyFunctor_2 : public NotifyFunctorBase {
-      private:
-        T1* m_obj;
-        TRetval ( T1::*m_fptr )( A1, A2 );
-
-      public:
-        NotifyFunctor_2( T1* obj, TRetval (T1::*fptr)(A1,A2) ) :
-            m_obj( obj ),
-            m_fptr( fptr )
-        {}
-
-        virtual TRetval operator()( A1 a1, A2 a2 ) {
-            return (*m_obj.*m_fptr)( a1, a2 );
-        }
-    };
 
     typedef MemBackendConvertor::ReqId ReqId;
     MemBackend();
 
-    MemBackend(Component *comp, Params &params) : SubComponent(comp), m_handleMemResponse(NULL)
+    MemBackend(Component *comp, Params &params) : SubComponent(comp)
     {
     	output = new SST::Output("@t:MemoryBackend[@p:@l]: ", 
                 params.find<uint32_t>("debug_level", 0),
@@ -108,16 +70,12 @@ public:
         delete output;
     }
 
-    virtual void setResponseHandler( NotifyFunctorBase* functor ) {
-        m_handleMemResponse = functor;
-    } 
-
-    virtual void setGetRequestorHandler( NotifyFunctor_1<MemBackendConvertor,ReqId,const std::string&>* functor ) {
-        m_getRequestor = functor;
+    virtual void setGetRequestorHandler( std::function<const std::string&(ReqId)> func ) {
+        m_getRequestor = func;
     } 
 
     std::string getRequestor( ReqId id ) {
-        return (*m_getRequestor)( id );
+        return m_getRequestor( id );
     }
 
     virtual void setup() {}
@@ -134,8 +92,7 @@ protected:
     size_t          m_memSize;
     int32_t         m_reqWidth;
 
-    NotifyFunctorBase*  m_handleMemResponse; 
-    NotifyFunctor_1<MemBackendConvertor,ReqId,const std::string&>*  m_getRequestor; 
+    std::function<const std::string&(ReqId)> m_getRequestor;
 };
 
 class SimpleMemBackend : public MemBackend {
@@ -146,11 +103,15 @@ class SimpleMemBackend : public MemBackend {
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes ) = 0; 
 
     void handleMemResponse( ReqId id ) {
-           
-        NotifyFunctor_1< SimpleMemBackendConvertor,ReqId>*  tmp;
-        tmp = static_cast< NotifyFunctor_1< SimpleMemBackendConvertor,ReqId>* >( m_handleMemResponse ); 
-        (*tmp)( id );  
+        m_respFunc( id );
     }
+
+    virtual void setResponseHandler( std::function<void(ReqId)> func ) {
+        m_respFunc = func;
+    }
+
+  private:
+    std::function<void(ReqId)> m_respFunc;
 };
 
 class HMCMemBackend : public MemBackend {
@@ -159,11 +120,15 @@ class HMCMemBackend : public MemBackend {
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
 
     void handleMemResponse( ReqId id, uint32_t flags ) {
-
-        NotifyFunctor_2< HMCMemBackendConvertor,ReqId,uint32_t>*  tmp;
-        tmp = static_cast< NotifyFunctor_2< HMCMemBackendConvertor,ReqId,uint32_t>* >( m_handleMemResponse ); 
-        (*tmp)( id, flags );  
+        m_respFunc( id, flags );
     }
+
+    virtual void setResponseHandler( std::function<void(ReqId,uint32_t)> func ) {
+        m_respFunc = func;
+    }
+
+  private:
+    std::function<void(ReqId,uint32_t)> m_respFunc;
 };
 
 }}
