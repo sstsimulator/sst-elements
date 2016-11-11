@@ -61,13 +61,16 @@ static const ElementInfoParam Samba_params[] = {
 
     {"corecount", "Number of CPU cores to emulate, i.e., number of private Sambas", "1"},
     {"levels", "Number of TLB levels per Samba", "1"},
-    {"page_size_L%(levels)d", "the default page size in KB","4"},
+    {"os_page_size", "This represents the size of frames the OS allocates in KB", "4"}, // This is a hack, assuming the OS allocated only one page size, this will change later
+    {"sizes_L%(levels)", "Number of page sizes supported by Samba", "1"},
+    {"page_size%(sizes)_L%(levels)d", "the page size of the supported page size number x in level y","4"},
     {"max_outstanding_L%(levels)d", "the number of max outstanding misses","1"},
     {"max_width_L%(levels)d", "the number of accesses on the same cycle","1"},
-    {"size_L%(levels)d", "the number of entries","1"},
+    {"size%(sizes)_L%(levels)d", "the number of entries of page size number x on level y","1"},
     {"upper_link_L%(levels)d", "the latency of the upper link connects to this structure","1"},
-    {"assoc_L%(levels)d", "the associativity", "1"},
+    {"assoc%(sizes)_L%(levels)d", "the associativity of size number X in Level Y", "1"},
     {"clock", "the clock frequency", "1GHz"},
+
     {"latency_L%(levels)d", "the access latency in cycles for this level of memory","1"},
     {"parallel_mode_L%(levels)d", "this is for the corner case of having a one cycle overlap with accessing cache","0"},
     {"page_walk_latency", "This is the page walk latency in cycles just in case no page walker", "50"},

@@ -88,11 +88,16 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 	}
 
 	for(int level=2; level <=levels; level++)
-		TLB_CACHE[level]->setServiceBack(TLB_CACHE[level-1]->getPushedBack());
-
+	{
+		TLB_CACHE[level]->setServiceBack(TLB_CACHE[level-1]->getPushedBack());	
+		TLB_CACHE[level]->setServiceBackSize(TLB_CACHE[level-1]->getPushedBackSize());
+	
+	}
 
 
 	TLB_CACHE[1]->setServiceBack(&mem_reqs);
+	TLB_CACHE[1]->setServiceBackSize(&mem_reqs_sizes);
+
 
 //	registerClock( cpu_clock, new Clock::Handler<TLBhierarchy>(this, &TLBhierarchy::tick ) );
 	curr_time = 0;
@@ -162,6 +167,10 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 		time_tracker.erase(event);
 		total_waiting->addData(time_diff);
 		to_cache->send(event);
+
+		// We remove the size of that translation, we might for future versions use the translation size to obtain statistics
+		mem_reqs_sizes.erase(event);
+
 		mem_reqs.pop_back();
 
 		// Take it and submit it to L1 TLB, then retire
