@@ -74,6 +74,9 @@ namespace SST { namespace SambaComponent{
 		// This vector holds the current requests to be translated
 		std::vector<SST::Event *> mem_reqs;
 
+		// This vector holds the current requests to be translated
+		std::map<SST::Event *, long long int> mem_reqs_sizes;
+
 
 		// This mapping is used to track the time spent of translating each request
 		std::map<SST::Event *, uint64_t> time_tracker;
