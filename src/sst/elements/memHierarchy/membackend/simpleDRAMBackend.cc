@@ -123,7 +123,7 @@ void SimpleDRAM::handleSelfEvent(SST::Event *event){
         } else {
             busy[ev->bank] = false;
         }
-        getConvertor()->handleMemResponse(ev->reqId);
+        handleMemResponse(ev->reqId);
         delete event;
     } else {
         openRow[ev->bank] = -1;

@@ -278,7 +278,7 @@ public:
     virtual bool issueRequest( ReqId, Addr, bool, unsigned );
     void handleResponse(ReqId  id ) {
         output->verbose(CALL_INFO, 2, DBG_MASK, "req=%p\n", id ); 
-        getConvertor()->handleMemResponse( id );
+        handleMemResponse( id );
     }
     virtual void clock();
     virtual void finish() {}
