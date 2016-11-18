@@ -78,7 +78,7 @@ libCramSim_la_SOURCES = \
 
 EXTRA_DIST = \
 	README \
-	ddr4_debug.cfg \
+	ddr4_verimem.cfg \
 	tests/test_txngenseq1.py \
 	tests/test_txngenrand1.py
 
