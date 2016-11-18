@@ -29,7 +29,16 @@ using namespace SST::MemHierarchy;
 #define Debug(level, fmt, ... )
 #endif
 
-bool HMCMemBackendConvertor::issue(MemReq *req ) {
+HMCMemBackendConvertor::HMCMemBackendConvertor(Component *comp, Params &params) :
+    MemBackendConvertor(comp,params) 
+{
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    static_cast<HMCMemBackend*>(m_backend)->setResponseHandler( std::bind( &HMCMemBackendConvertor::handleMemResponse, this, _1,_2 ) );
+
+}
+
+bool HMCMemBackendConvertor::issue( MemReq *req ) {
 
     MemEvent* event = req->getMemEvent();
 

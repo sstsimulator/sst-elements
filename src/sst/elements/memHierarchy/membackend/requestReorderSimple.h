@@ -31,8 +31,12 @@ public:
     void setup();
     void finish();
     void clock();
+    virtual const std::string& getClockFreq() { return backend->getClockFreq(); }
 
 private:
+    void handleMemReponse( ReqId id ) {
+        SimpleMemBackend::handleMemResponse( id );
+    }
     struct Req {
         Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) :
             id(id), addr(addr), isWrite(isWrite), numBytes(numBytes)

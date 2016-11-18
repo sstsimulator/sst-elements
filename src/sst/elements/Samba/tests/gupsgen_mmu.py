@@ -50,26 +50,43 @@ comp_memory.addParams({
 
 mmu = sst.Component("mmu0", "Samba")
 mmu.addParams({
-        "corecount":  1,
-        "page_size_L1": 4,
-        "assoc_L1": 2,
-        "size_L1": 2,
-        "clock": "2GHz",
+        "os_page_size": 2048,
+        "corecount": 1,
+        "sizes_L1": 3,
+        "page_size1_L1": 4,
+        "page_size2_L1": 2048,
+        "page_size3_L1": 1024*1024,
+        "assoc1_L1": 4,
+        "size1_L1": 64,
+        "assoc2_L1": 4,
+        "size2_L1": 32,
+        "assoc3_L1": 4,
+        "size3_L1": 4,
+        "sizes_L2": 3,
+        "page_size1_L2": 4,
+        "page_size2_L2": 2048,
+        "page_size3_L2": 1024*1024,
+        "assoc1_L2": 12,
+        "size1_L2": 1536,
+        "assoc2_L2": 12,
+        "size2_L2": 1536,
+        "assoc3_L2": 4,
+        "size3_L2": 16,
+        "clock": "2 Ghz",
         "levels": 2,
-        "max_width_L1": 1,
-        "max_outstanding_L1": 1,
-        "latency_L1": 5,
-        "parallel_mode_L1": 0,
-        "page_size_L2": 4,
-        "assoc_L2": 8,
-        "size_L2": 128,
-        "max_outstanding_L2": 8,
-        "max_width_L2": 8,
-        "latency_L2": 5,
-        "upper_link_L1": 0, # we assume same link latency of up and down traffic of the link
-        "upper_link_L2": 0,
-        "parallel_mode_L2": 0
+        "max_width_L1": 16,
+        "max_outstanding_L1": 2,
+        "latency_L1": 1,
+        "parallel_mode_L1": 1,
+        "max_outstanding_L2": 2,
+        "max_width_L2": 4,
+        "latency_L2": 10,
+        "parallel_mode_L2": 0,
+        "page_walk_latency": 50,
+
 });
+
+
 
 
 mmu.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
@@ -90,7 +107,7 @@ arielMMULink = sst.Link("cpu_mmu_link_" + str(next_core_id))
 '''
 
 
-link_cpu_mmu_link.connect( (comp_cpu, "cache_link", "50ps"), (mmu, "cpu_to_mmu0", "50ps") )
+link_cpu_mmu_link.connect( (comp_cpu, "cache_link", "0ps"), (mmu, "cpu_to_mmu0", "0ps") )
 link_cpu_mmu_link.setNoCut()
 
 link_mmu_cache_link.connect( (mmu, "mmu_to_cache0", "50ps"), (comp_l1cache, "high_network_0", "50ps") )

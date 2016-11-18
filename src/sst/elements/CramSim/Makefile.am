@@ -77,9 +77,10 @@ libCramSim_la_SOURCES = \
 	c_CmdResEvent.hpp
 
 EXTRA_DIST = \
-    README \
-    tests/test_txngenseq1.py \
-    tests/test_txngenrand1.py
+	README \
+	ddr4_verimem.cfg \
+	tests/test_txngenseq1.py \
+	tests/test_txngenrand1.py
 
 libCramSim_la_LDFLAGS = -module -avoid-version
 

@@ -86,6 +86,6 @@ void FlashDIMMSimMemory::FlashDIMMSimDone(unsigned int id, uint64_t addr, uint64
     if(0 == reqs.size())
         dramReqs.erase(addr);
 
-    getConvertor()->handleMemResponse(req);
+    handleMemResponse(req);
     pendingRequests--;
 }

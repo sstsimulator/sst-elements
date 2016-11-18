@@ -24,6 +24,8 @@ using namespace SST::MemHierarchy;
 /*------------------------------- Simple Backend ------------------------------- */
 RequestReorderSimple::RequestReorderSimple(Component *comp, Params &params) : SimpleMemBackend(comp, params){
     
+    fixupParams( params, "clock", "backend.clock" );
+
     reqsPerCycle = params.find<int>("max_requests_per_cycle", -1);
     searchWindowSize = params.find<int>("search_window_size", -1);
 
@@ -32,6 +34,8 @@ RequestReorderSimple::RequestReorderSimple(Component *comp, Params &params) : Si
     Params backendParams = params.find_prefix_params("backend.");
     backendParams.insert("mem_size", params.find<std::string>("mem_size"));
     backend = dynamic_cast<SimpleMemBackend*>(loadSubComponent(backendName, backendParams));
+    using std::placeholders::_1;
+    backend->setResponseHandler( std::bind( &RequestReorderSimple::handleMemResponse, this, _1 )  );
 }
 
 bool RequestReorderSimple::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned numBytes ) {

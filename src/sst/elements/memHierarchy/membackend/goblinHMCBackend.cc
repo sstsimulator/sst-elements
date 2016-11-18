@@ -365,7 +365,7 @@ void GOBLINHMCSimBackend::processResponses() {
 							owner->getCurrentSimTimeNano() - matchedReq->getStartTime());
 
 						// Pass back to the controller to be handled, HMC sim is finished with it
-						getConvertor()->handleMemResponse(matchedReq->getRequest());
+						handleMemResponse(matchedReq->getRequest());
 
 						// Clear element from our map, it has been processed so no longer needed
 						tag_req_map.erase(resp_tag);
