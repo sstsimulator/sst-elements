@@ -78,9 +78,17 @@ libCramSim_la_SOURCES = \
 
 EXTRA_DIST = \
 	README \
-	ddr4_debug.cfg \
+	ddr4_verimem.cfg \
+	tests/VeriMem/test_verimem1.py
+	tests/test_txngenrand1.py \
+	tests/test_txngenseq3.py \
 	tests/test_txngenseq1.py \
-	tests/test_txngenrand1.py
+	tests/test_txntrace3.py \
+	tests/test_txntrace1.py \
+	tests/test_txntrace2.py \
+	tests/test_txngenseq2.py \
+	tests/test_txngenrand2.py \
+	tests/test_txntrace4.py
 
 libCramSim_la_LDFLAGS = -module -avoid-version
 
