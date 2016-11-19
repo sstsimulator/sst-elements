@@ -81,8 +81,6 @@ EXTRA_DIST = \
 	ddr4_verimem.cfg \
 	tests/VeriMem/test_verimem1.py
 	tests/test_txngenrand1.py \
-	tests/test_txngenseq3.py \
-	tests/test_txngenseq1.py \
 	tests/test_txntrace3.py \
 	tests/test_txntrace1.py \
 	tests/test_txntrace2.py \
