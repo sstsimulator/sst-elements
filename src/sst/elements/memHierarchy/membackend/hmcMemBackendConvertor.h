@@ -25,8 +25,7 @@ namespace MemHierarchy {
 class HMCMemBackendConvertor : public MemBackendConvertor {
  
   public:
-    HMCMemBackendConvertor(Component *comp, Params &params) : 
-        MemBackendConvertor(comp,params) {}
+    HMCMemBackendConvertor(Component *comp, Params &params);
 
     virtual bool issue( MemReq* req );
     virtual void handleMemResponse( ReqId reqId, uint32_t flags  ) {

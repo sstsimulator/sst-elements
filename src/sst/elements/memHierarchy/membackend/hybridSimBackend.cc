@@ -77,5 +77,5 @@ void HybridSimMemory::hybridSimDone(unsigned int id, uint64_t addr, uint64_t clo
     if(reqs.size() == 0)
         dramReqs.erase(addr);
 
-    getConvertor()->handleMemResponse(req);
+    handleMemResponse(req);
 }

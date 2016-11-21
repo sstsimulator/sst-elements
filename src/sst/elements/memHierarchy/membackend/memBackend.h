@@ -38,7 +38,7 @@ public:
     typedef MemBackendConvertor::ReqId ReqId;
     MemBackend();
 
-    MemBackend(Component *comp, Params &params) : SubComponent(comp), ctrl(NULL)
+    MemBackend(Component *comp, Params &params) : SubComponent(comp)
     {
     	output = new SST::Output("@t:MemoryBackend[@p:@l]: ", 
                 params.find<uint32_t>("debug_level", 0),
@@ -70,12 +70,13 @@ public:
         delete output;
     }
 
-    virtual void setConvertor( MemBackendConvertor* convertor ) { 
-    	ctrl = dynamic_cast<MemBackendConvertor*>(convertor);
-    	if (!ctrl) {
-            output->fatal(CALL_INFO, -1, "MemBackends expect to be loaded into MemBackendConvertor.\n");
-        }
-   }
+    virtual void setGetRequestorHandler( std::function<const std::string&(ReqId)> func ) {
+        m_getRequestor = func;
+    } 
+
+    std::string getRequestor( ReqId id ) {
+        return m_getRequestor( id );
+    }
 
     virtual void setup() {}
     virtual void finish() {}
@@ -91,7 +92,7 @@ protected:
     size_t          m_memSize;
     int32_t         m_reqWidth;
 
-    MemBackendConvertor *ctrl;
+    std::function<const std::string&(ReqId)> m_getRequestor;
 };
 
 class SimpleMemBackend : public MemBackend {
@@ -100,18 +101,34 @@ class SimpleMemBackend : public MemBackend {
     SimpleMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
 
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes ) = 0; 
-    virtual SimpleMemBackendConvertor* getConvertor( ) {
-        return static_cast<SimpleMemBackendConvertor*>(ctrl);
-    };
+
+    void handleMemResponse( ReqId id ) {
+        m_respFunc( id );
+    }
+
+    virtual void setResponseHandler( std::function<void(ReqId)> func ) {
+        m_respFunc = func;
+    }
+
+  private:
+    std::function<void(ReqId)> m_respFunc;
 };
 
 class HMCMemBackend : public MemBackend {
   public:
     HMCMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
-    virtual HMCMemBackendConvertor* getConvertor( ) {
-        return static_cast<HMCMemBackendConvertor*>(ctrl);
-    };
+
+    void handleMemResponse( ReqId id, uint32_t flags ) {
+        m_respFunc( id, flags );
+    }
+
+    virtual void setResponseHandler( std::function<void(ReqId,uint32_t)> func ) {
+        m_respFunc = func;
+    }
+
+  private:
+    std::function<void(ReqId,uint32_t)> m_respFunc;
 };
 
 }}

@@ -30,24 +30,29 @@ class TLB
 {
 
 
-	int page_size; // By default, lets assume 4KB pages
+	int sizes; // This indicates the number of sizes supported
 
-	int assoc; // This represents the associativiety
+	int * page_size; // By default, lets assume 4KB pages
 
-	long long int ** tags; // This will hold the tags
+	int * assoc; // This represents the associativiety
 
-	int ** lru; // This will hold the lru positions
+	long long int *** tags; // This will hold the tags
+
+	int *** lru; // This will hold the lru positions
 
 	TLB * next_level; // a pointer to the next level Samba structure
 
+	std::map<long long int, int> SIZE_LOOKUP; // This structure checks if a size is supported inside the structure, and its index structure
 
-	int  sets; //stores the number of sets
+	int  * sets; //stores the number of sets
 
-	int size; // Number of entries
+	int* size; // Number of entries
 
 	int hits; // number of hits
 
 	int misses; // number of misses
+
+	int os_page_size; // This is a hack for the size of the frames returned by the OS, by default
 
 	int latency; // indicates the latency in cycles
 
@@ -61,10 +66,15 @@ class TLB
 
 	std::vector<SST::Event *> * service_back; // This is used to pass ready requests back to the previous level
 
+	std::map<SST::Event *, long long int> * service_back_size; // This is used to pass the size of the  requests back to the previous level
+
 	std::map<SST::Event *, SST::Cycle_t > ready_by; // this one is used to keep track of requests that are delayed inside this structure, compensating for latency
 
-	std::vector<SST::Event *> pushed_back; // This what we got returned from other structures
+	std::map<SST::Event *, long long int> ready_by_size; // this one is used to keep track of requests' sizes inside this structure
 
+	std::vector<SST::Event *> pushed_back; // This is what we got returned from other structures
+
+	std::map<SST::Event *, long long int> pushed_back_size; // This is the sizes of the translations we got returned from other structures
 
 	std::vector<SST::Event *> pending_misses; // This the number of pending misses, only erased when pushed back from next level
 
@@ -85,15 +95,20 @@ class TLB
 	void finish(){}
 
 	// Find if it exists
-	bool check_hit(long long int vadd);
+	bool check_hit(long long int vadd, int struct_id);
 
 	// To insert the translaiton
-	int find_victim_way(long long int vadd);
+	int find_victim_way(long long int vadd, int struct_id);
 
 	void setServiceBack( std::vector<SST::Event *> * x) { service_back = x;}
 
+	void setServiceBackSize( std::map<SST::Event *, long long int> * x) { service_back_size = x;}
+
 	std::vector<SST::Event *> * getPushedBack(){return & pushed_back;}
-	void update_lru(long long int vaddr);
+
+	std::map<SST::Event *, long long int> * getPushedBackSize(){return & pushed_back_size;}
+
+	void update_lru(long long int vaddr, int struct_id);
 
 
 	Statistic<uint64_t>* statTLBHits;
@@ -104,7 +119,7 @@ class TLB
 	int getHits(){return hits;}
 	int getMisses(){return misses;}
 
-	void insert_way(long long int vaddr, int way);
+	void insert_way(long long int vaddr, int way, int struct_id);
 
 	// This one is to push a request to this structure
 	void push_request(SST::Event * x) { not_serviced.push_back(x);}

@@ -87,5 +87,5 @@ void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcy
     if(0 == reqs.size())
         dramReqs.erase(addr);
 
-    getConvertor()->handleMemResponse(reqId);
+    handleMemResponse(reqId);
 }

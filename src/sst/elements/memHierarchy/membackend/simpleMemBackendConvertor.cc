@@ -23,7 +23,13 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-bool SimpleMemBackendConvertor::issue( MemReq* req ) {
+SimpleMemBackendConvertor::SimpleMemBackendConvertor(Component *comp, Params &params) :
+        MemBackendConvertor(comp,params) 
+{
+    using std::placeholders::_1;
+    static_cast<SimpleMemBackend*>(m_backend)->setResponseHandler( std::bind( &SimpleMemBackendConvertor::handleMemResponse, this, _1 ) );
+}
 
+bool SimpleMemBackendConvertor::issue( MemReq* req ) {
     return static_cast<SimpleMemBackend*>(m_backend)->issueRequest( req->id(), req->addr(), req->isWrite(), m_backendRequestWidth );
 }
