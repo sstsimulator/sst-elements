@@ -78,7 +78,8 @@ libCramSim_la_SOURCES = \
 
 EXTRA_DIST = \
 	README \
-	tests/VeriMem/test_verimem1.py
+	ddr4_verimem.cfg \
+	tests/VeriMem/test_verimem1.py \
 	tests/test_txngenrand1.py \
 	tests/test_txntrace3.py \
 	tests/test_txntrace1.py \
