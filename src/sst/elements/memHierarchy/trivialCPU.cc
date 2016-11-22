@@ -32,8 +32,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 {
     requestsPendingCycle = new Histogram<uint64_t, uint64_t>("Requests Pending Per Cycle", 2);
 
-    // Restart the RNG to ensure completely consistent results (XML->Python causes
-    // changes in the ComponentId_t ordering which fails to pass tests correctly.
+    // Restart the RNG to ensure completely consistent results 
     uint32_t z_seed = params.find<uint32_t>("rngseed", 7);
     rng.restart(z_seed, 13);
 
@@ -51,6 +50,10 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     if ( !maxAddr ) {
         out.fatal(CALL_INFO, -1, "Must set memSize\n");
     }
+    
+    lineSize = params.find<uint64_t>("lineSize", 64);
+
+    do_flush = params.find<bool>("do_flush", 0);
 
     do_write = params.find<bool>("do_write", 1);
 
@@ -61,7 +64,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     
     maxReqsPerIssue = params.find<uint32_t>("reqsPerIssue", 1);
     if (maxReqsPerIssue < 1) {
-        out.fatal(CALL_INFO, -1, "Cannot issue less than one request per cycle...fix your input deck\n");
+        out.fatal(CALL_INFO, -1, "TrivialCPU cannot issue less than one request at a time...fix your input deck\n");
     }
     maxReqsPerIssue--;
 
@@ -141,11 +144,29 @@ bool trivialCPU::clockTic( Cycle_t )
             for (int i = 0; i < reqsToSend; i++) {
 
                 Interfaces::SimpleMem::Addr addr = ((((Interfaces::SimpleMem::Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
+                
+                Interfaces::SimpleMem::Request::Command cmd = Interfaces::SimpleMem::Request::Read;
 
-                bool doWrite = do_write && ((0 == (rng.generateNextUInt32() % 10)));
+                uint32_t instNum = rng.generateNextUInt32() % 20;
+                uint64_t size = 4;
+                std::string cmdString = "Read";
+                if (do_write && 0 == instNum || 1 == instNum) {
+                    cmd = Interfaces::SimpleMem::Request::Write;
+                    cmdString = "Write";
+                } else if (do_flush && 2 == instNum) {
+                    cmd = Interfaces::SimpleMem::Request::FlushLine;
+                    size = lineSize;
+                    addr = addr - (addr % lineSize);
+                    cmdString = "FlushLine";
+                } else if (do_flush && 3 == instNum) {
+                    cmd = Interfaces::SimpleMem::Request::FlushLineInv;
+                    size = lineSize;
+                    addr = addr - (addr % lineSize);
+                    cmdString = "FlushLineInv";
+                }
 
-                Interfaces::SimpleMem::Request *req = new Interfaces::SimpleMem::Request((doWrite ? Interfaces::SimpleMem::Request::Write : Interfaces::SimpleMem::Request::Read), addr, 4 /*4 bytes*/);
-		if ( doWrite ) {
+                Interfaces::SimpleMem::Request *req = new Interfaces::SimpleMem::Request(cmd, addr, 4 /*4 bytes*/);
+		if ( cmd == Interfaces::SimpleMem::Request::Write ) {
 		    req->data.resize(4);
                     req->data[0] = (addr >> 24) & 0xff;
                     req->data[1] = (addr >> 16) & 0xff;
@@ -156,14 +177,15 @@ bool trivialCPU::clockTic( Cycle_t )
                 bool noncacheable = ( addr >= noncacheableRangeStart && addr < noncacheableRangeEnd );
                 if ( noncacheable ) {
                     req->flags |= Interfaces::SimpleMem::Request::F_NONCACHEABLE;
-                    if ( doWrite ) { ++noncacheableWrites; } else { ++noncacheableReads; }
+                    if ( cmd == Interfaces::SimpleMem::Request::Write ) { ++noncacheableWrites; } 
+                    else if (cmd == Interfaces::SimpleMem::Request::Read ) { ++noncacheableReads; }
                 }
 
 		memory->sendRequest(req);
 		requests[req->id] =  getCurrentSimTime();
 
 		out.output("%s: %d Issued %s%s (%" PRIu64 ") for address 0x%" PRIx64 "\n",
-                        getName().c_str(), numLS, noncacheable ? "Noncacheable " : "" , doWrite ? "Write" : "Read", req->id, addr);
+                        getName().c_str(), numLS, noncacheable ? "Noncacheable " : "" , cmdString.c_str(), req->id, addr);
 		num_reads_issued++;
 
                 numLS--;

@@ -101,6 +101,7 @@ class MemBackendConvertor : public SubComponent {
 
     MemEvent* doResponse( ReqId reqId );
     void sendResponse( MemEvent* event );
+    void sendFlushResponse( MemEvent* event );
 
     MemBackend* m_backend;
     uint32_t    m_backendRequestWidth;
@@ -108,15 +109,34 @@ class MemBackendConvertor : public SubComponent {
   private:
     virtual bool issue(MemReq*) = 0;
 
-    MemEvent* setupMemReq( MemEvent* ev ) {
+    bool setupMemReq( MemEvent* ev ) {
         if ( FlushLine == ev->getCmd() || FlushLineInv == ev->getCmd() ) {
-            return ev; 
+            // TODO optimize if this becomes a problem, it is slow
+            std::unordered_set<MemEvent*> dependsOn;
+            for (std::deque<MemReq*>::iterator it = m_requestQueue.begin(); it != m_requestQueue.end(); it++) {
+                if ((*it)->baseAddr() == ev->getBaseAddr()) {
+                    MemEvent * req = (*it)->getMemEvent();
+                    dependsOn.insert(req);
+                    if (m_dependentRequests.find(req) != m_dependentRequests.end()) {
+                        std::unordered_set<MemEvent*> flushSet;
+                        flushSet.insert(ev);
+                        m_dependentRequests.insert(std::make_pair(req, flushSet));
+                    } else {
+                        m_dependentRequests.find(req)->second.insert(ev);
+                    }
+                }
+            }
+
+            if (dependsOn.empty()) return false;
+            m_waitingFlushes.insert(std::make_pair(ev, dependsOn));
+            return true; 
         }
+
         uint32_t id = genReqId();
         MemReq* req = new MemReq( ev, id );
         m_requestQueue.push_back( req );
         m_pendingRequests[id] = req;
-        return NULL;
+        return true;
     }
 
     void doClockStat( ) {
@@ -173,8 +193,8 @@ class MemBackendConvertor : public SubComponent {
     PendingRequests         m_pendingRequests;
     uint32_t                m_frontendRequestWidth;
 
-    MemEvent*  m_flushEvent;
-    std::deque<MemEvent*> m_waiting;
+    std::map<MemEvent*, std::unordered_set<MemEvent*> > m_waitingFlushes; // Set of request events for each flush
+    std::map<MemEvent*, std::unordered_set<MemEvent*> > m_dependentRequests; // Reverse map, set of flushes for each request ID, for faster lookup
 
     Statistic<uint64_t>* stat_GetSLatency;
     Statistic<uint64_t>* stat_GetSExLatency;

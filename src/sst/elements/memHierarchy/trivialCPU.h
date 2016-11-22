@@ -69,7 +69,9 @@ private:
     int numLS;
     int commFreq;
     bool do_write;
+    bool do_flush;
     uint64_t maxAddr;
+    uint64_t lineSize;
     uint64_t maxOutstanding;
     uint32_t maxReqsPerIssue;
     uint64_t num_reads_issued, num_reads_returned;

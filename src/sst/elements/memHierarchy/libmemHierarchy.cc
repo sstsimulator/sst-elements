@@ -437,9 +437,11 @@ static const ElementInfoParam cpu_params[] = {
     {"rngseed",                 "Set a seed for the random generation of addresses", "7"},
     {"commFreq",                "How often to do a memory operation."},
     {"memSize",                 "Size of physical memory."},
+    {"lineSize",                "Size of a cache line - used for flushes"},
     {"maxOutstanding",          "Maximum Number of Outstanding memory requests."},
     {"reqsPerIssue",            "Maximum number of requests to issue at a time"},
     {"do_write",                "Enable writes to memory (versus just reads).", "1"},
+    {"do_flush",                "Enable flushes", "0"},
     {"num_loadstore",           "Stop after this many reads and writes.", "-1"},
     {"noncacheableRangeStart",  "Beginning of range of addresses that are noncacheable.", "0x0"},
     {"noncacheableRangeEnd",    "End of range of addresses that are noncacheable.", "0x0"},
@@ -584,7 +586,7 @@ static SubComponent* create_Mem_DelayBuffer(Component * comp, Params& params) {
 }
 
 static const ElementInfoParam delayBuffer_params[] = {
-    {"verbose",     "Sets teh verbosity of the backend output", "0" },
+    {"verbose",     "Sets the verbosity of the backend output", "0" },
     {"backend",     "Backend memory system", "memHierarchy.simpleMem"},
     {"request_delay", "Constant delay to be added to requests with units (e.g., 1us)", "0ns"},
     {NULL, NULL, NULL}

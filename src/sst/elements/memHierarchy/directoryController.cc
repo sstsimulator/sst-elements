@@ -513,6 +513,7 @@ void DirectoryController::processPacket(MemEvent * ev) {
             break;
         case FlushLineInv:
             handleFlushLineInv(ev);
+            break;
         case FlushLine:
             handleFlushLine(ev);
             break;
@@ -602,7 +603,6 @@ void DirectoryController::handleGetX(MemEvent * ev) {
     }
 
     MemEvent * respEv;
-
     State state = entry->getState();
     switch (state) {
         case I:
@@ -745,7 +745,7 @@ void DirectoryController::handleFlushLine(MemEvent * ev) {
     bool inMSHR = mshr->elementIsHit(ev->getBaseAddr(), ev);
     bool mshrConflict = !inMSHR && mshr->isHit(ev->getBaseAddr());
 
-    int srcID = node_name_to_id(ev->getSrc());
+    int srcID = node_id(ev->getSrc());
     State state = entry->getState();
 
     switch(state) {
@@ -852,7 +852,7 @@ void DirectoryController::handleFlushLineInv(MemEvent * ev) {
     bool inMSHR = mshr->elementIsHit(ev->getBaseAddr(), ev);
     bool mshrConflict = !inMSHR && mshr->isHit(ev->getBaseAddr());
 
-    int srcID = node_name_to_id(ev->getSrc());
+    int srcID = node_id(ev->getSrc());
     State state = entry->getState();
 
     switch (state) {
@@ -873,6 +873,7 @@ void DirectoryController::handleFlushLineInv(MemEvent * ev) {
             }
             if (entry->isSharer(srcID)) entry->removeSharer(srcID);
             if (entry->getSharerCount() == 0) {
+                entry->setState(I);
                 forwardFlushRequest(ev);
             } else {
                 entry->setState(S_Inv);
@@ -933,10 +934,9 @@ void DirectoryController::handleFlushLineInv(MemEvent * ev) {
             } else if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received FlushLine but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received FlushLineInv but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
     }
-    
 }
 
 
