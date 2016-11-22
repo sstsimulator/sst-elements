@@ -117,12 +117,12 @@ class MemBackendConvertor : public SubComponent {
                 if ((*it)->baseAddr() == ev->getBaseAddr()) {
                     MemEvent * req = (*it)->getMemEvent();
                     dependsOn.insert(req);
-                    if (m_dependentRequests.find(req) != m_dependentRequests.end()) {
+                    if (m_dependentRequests.find(req) == m_dependentRequests.end()) {
                         std::unordered_set<MemEvent*> flushSet;
                         flushSet.insert(ev);
                         m_dependentRequests.insert(std::make_pair(req, flushSet));
                     } else {
-                        m_dependentRequests.find(req)->second.insert(ev);
+                        (m_dependentRequests.find(req)->second).insert(ev);
                     }
                 }
             }
