@@ -56,7 +56,6 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
     if (maxReqsPerIssue < 1) {
         out.fatal(CALL_INFO, -1, "Cannot issue less than one request per cycle...fix your input deck\n");
     }
-    maxReqsPerIssue--;
 
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
@@ -133,7 +132,7 @@ bool streamCPU::clockTic( Cycle_t )
 	// create event
 	// x8 to prevent splitting blocks
         uint32_t reqsToSend = 1;
-        if (maxReqsPerIssue > 0) reqsToSend += rng.generateNextUInt32() % maxReqsPerIssue;
+        if (maxReqsPerIssue > 1) reqsToSend += rng.generateNextUInt32() % maxReqsPerIssue;
         if (reqsToSend > (maxOutstanding - requests.size())) reqsToSend = maxOutstanding - requests.size();
         if (reqsToSend > numLS) reqsToSend = numLS;
 

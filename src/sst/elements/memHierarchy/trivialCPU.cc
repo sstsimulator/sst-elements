@@ -66,7 +66,6 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     if (maxReqsPerIssue < 1) {
         out.fatal(CALL_INFO, -1, "TrivialCPU cannot issue less than one request at a time...fix your input deck\n");
     }
-    maxReqsPerIssue--;
 
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
@@ -137,7 +136,7 @@ bool trivialCPU::clockTic( Cycle_t )
             // create event
             // x4 to prevent splitting blocks
             uint32_t reqsToSend = 1;
-            if (maxReqsPerIssue > 0) reqsToSend += rng.generateNextUInt32() % maxReqsPerIssue;
+            if (maxReqsPerIssue > 1) reqsToSend += rng.generateNextUInt32() % maxReqsPerIssue;
             if (reqsToSend > (maxOutstanding - requests.size())) reqsToSend = maxOutstanding - requests.size();
             if (reqsToSend > numLS) reqsToSend = numLS;
 
