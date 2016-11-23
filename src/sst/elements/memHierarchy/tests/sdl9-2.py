@@ -1,10 +1,6 @@
 # Automatically generated SST Python input
 import sst
 
-# Define SST core options
-sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "500000ns")
-
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
 comp_cpu0.addParams({
