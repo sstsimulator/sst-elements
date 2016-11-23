@@ -20,7 +20,7 @@ comp_c0_l1cache.addParams({
       "cache_size" : "4 KB",
       "L1" : "1",
       #"debug" : "1",
-      "debug_level" : 10
+      #"debug_level" : 10
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({

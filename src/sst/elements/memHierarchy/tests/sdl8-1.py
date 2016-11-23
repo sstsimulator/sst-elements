@@ -59,7 +59,7 @@ comp_chiprtr.addParams({
 comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "1",
+      #"debug" : "1",
       "debug_level" : "10",
       "network_address" : "0",
       "entry_cache_size" : "16384",
