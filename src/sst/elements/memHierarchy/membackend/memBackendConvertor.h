@@ -183,6 +183,8 @@ class MemBackendConvertor : public SubComponent {
 
     Output      m_dbg;
 
+    uint64_t m_cycleCount;
+
     uint32_t genReqId( ) { return ++m_reqId; }
 
     uint32_t    m_reqId;

@@ -69,7 +69,7 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
 
 void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
 
-    ev->setDeliveryTime(getCurrentSimTimeNano());
+    ev->setDeliveryTime(m_cycleCount);
 
     doReceiveStat( ev->getCmd() );
 
@@ -83,6 +83,7 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
 
 bool MemBackendConvertor::clock(Cycle_t cycle) {
 
+    m_cycleCount++;
     doClockStat();
 
     int reqsThisCycle = 0;
@@ -137,7 +138,7 @@ MemEvent* MemBackendConvertor::doResponse( ReqId reqId ) {
             resp = event->makeResponse();
         }
 
-        Cycle_t latency = getCurrentSimTimeNano() - event->getDeliveryTime();
+        Cycle_t latency = m_cycleCount - event->getDeliveryTime();
 
         doResponseStat( event->getCmd(), latency );
 
