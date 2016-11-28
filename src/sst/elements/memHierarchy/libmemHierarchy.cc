@@ -433,11 +433,15 @@ static const ElementInfoPort cpu_ports[] = {
 
 static const ElementInfoParam cpu_params[] = {
     {"verbose",                 "Determine how verbose the output from the CPU is", "1"},
+    {"clock",                   "Clock frequency", "1GHz"},
     {"rngseed",                 "Set a seed for the random generation of addresses", "7"},
     {"commFreq",                "How often to do a memory operation."},
     {"memSize",                 "Size of physical memory."},
+    {"lineSize",                "Size of a cache line - used for flushes"},
     {"maxOutstanding",          "Maximum Number of Outstanding memory requests."},
+    {"reqsPerIssue",            "Maximum number of requests to issue at a time"},
     {"do_write",                "Enable writes to memory (versus just reads).", "1"},
+    {"do_flush",                "Enable flushes", "0"},
     {"num_loadstore",           "Stop after this many reads and writes.", "-1"},
     {"noncacheableRangeStart",  "Beginning of range of addresses that are noncacheable.", "0x0"},
     {"noncacheableRangeEnd",    "End of range of addresses that are noncacheable.", "0x0"},
@@ -473,7 +477,6 @@ static const ElementInfoParam memctrl_params[] = {
     {"trace_file",          "File name (optional) of a trace-file to generate.", ""},
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
-    {"debug_addr",          "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {"listenercount",       "Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
     {"listener%(listenercount)d", "Loads a listener module into the controller", ""},
     {"network_bw",          "Network link bandwidth.", NULL},
@@ -515,10 +518,10 @@ static const ElementInfoStatistic memBackendConvertor_statistics[] = {
     { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },
     { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },
     { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },
-    { "latency_GetS",                       "Total latency of handled GetS requests",           "ns",       1 },
-    { "latency_GetSEx",                     "Total latency of handled GetSEx requests",         "ns",       1 },
-    { "latency_GetX",                       "Total latency of handled GetX requests",           "ns",       1 },
-    { "latency_PutM",                       "Total latency of handled PutM requests",           "ns",       1 },
+    { "latency_GetS",                       "Total latency of handled GetS requests",           "cycles",   1 },
+    { "latency_GetSEx",                     "Total latency of handled GetSEx requests",         "cycles",   1 },
+    { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },
+    { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 },
     { NULL, NULL, NULL, 0 }
 };
 
@@ -582,7 +585,7 @@ static SubComponent* create_Mem_DelayBuffer(Component * comp, Params& params) {
 }
 
 static const ElementInfoParam delayBuffer_params[] = {
-    {"verbose",     "Sets teh verbosity of the backend output", "0" },
+    {"verbose",     "Sets the verbosity of the backend output", "0" },
     {"backend",     "Backend memory system", "memHierarchy.simpleMem"},
     {"request_delay", "Constant delay to be added to requests with units (e.g., 1us)", "0ns"},
     {NULL, NULL, NULL}

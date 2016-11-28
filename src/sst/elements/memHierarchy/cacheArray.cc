@@ -190,7 +190,7 @@ unsigned int DualSetAssociativeArray::preReplaceCache(const Addr baseAddr) {
     int setBegin    = set * cacheAssociativity_;
     
     for (unsigned int id = 0; id < cacheAssociativity_; id++) {
-        int dirIndex = dataLines_[id+setBegin]->getDirLine()->getIndex();
+        int dirIndex = dataLines_[id+setBegin]->getDirLine() ? dataLines_[id+setBegin]->getDirLine()->getIndex() : -1;
         if (dirIndex == -1) {
             cacheSetStates[id] = I;
             cacheSetSharers[id] = 0;

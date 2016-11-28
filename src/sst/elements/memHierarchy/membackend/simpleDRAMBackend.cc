@@ -59,8 +59,9 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp,
     UnitAlgebra rowSize(params.find<std::string>("row_size", "8KiB"));
     bool found = false;
     std::string policyStr = params.find<std::string>("row_policy", "closed", found);
+    int verbose = params.find<int>("verbose", 0);
 
-    output = new Output("SimpleDRAM[@p:@l]: ", 10, 0, Output::STDOUT);  // TODO if we start using this for output other than fatal messages, add verbose parameter
+    output = new Output("SimpleDRAM[@p:@l]: ", verbose, 0, Output::STDOUT);
 
     // Check parameters
     // Supported policies are 'open', 'closed' or 'dynamic'

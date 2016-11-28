@@ -30,7 +30,7 @@ using namespace SST::MemHierarchy;
 #endif
 
 MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : 
-    SubComponent(comp), m_flushEvent(NULL), m_reqId(0)
+    SubComponent(comp), m_reqId(0)
 {
     m_dbg.init("--->  ", 
             params.find<uint32_t>("debug_level", 0),
@@ -69,22 +69,21 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
 
 void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
 
-    ev->setDeliveryTime(getCurrentSimTimeNano());
+    ev->setDeliveryTime(m_cycleCount);
 
     doReceiveStat( ev->getCmd() );
 
     Debug(_L10_,"Creating MemReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
                         ev->getBaseAddr(), ev->getSize(), CommandString[ev->getCmd()]);
 
-    if ( ! m_flushEvent ) {
-        m_flushEvent = setupMemReq( ev );
-    } else {
-        m_waiting.push_back( ev );
-    } 
+    if (!setupMemReq(ev)) {
+        sendFlushResponse(ev);
+    }
 }
 
 bool MemBackendConvertor::clock(Cycle_t cycle) {
 
+    m_cycleCount++;
     doClockStat();
 
     int reqsThisCycle = 0;
@@ -139,15 +138,41 @@ MemEvent* MemBackendConvertor::doResponse( ReqId reqId ) {
             resp = event->makeResponse();
         }
 
-        Cycle_t latency = getCurrentSimTimeNano() - event->getDeliveryTime();
+        Cycle_t latency = m_cycleCount - event->getDeliveryTime();
 
         doResponseStat( event->getCmd(), latency );
 
-        // MemReq deletes it's MemEvent
+        // Check for matching flushes -> requires that doResponse always be called just before sendResponse!
+        // TODO clock responses
+        if (m_dependentRequests.find(event) != m_dependentRequests.end()) {
+            std::unordered_set<MemEvent*> flushes = m_dependentRequests.find(event)->second;
+            for (std::unordered_set<MemEvent*>::iterator it = flushes.begin(); it != flushes.end(); it++) {
+               (m_waitingFlushes.find(*it)->second).erase(event);
+               if ((m_waitingFlushes.find(*it)->second).empty()) {
+                    sendFlushResponse(*it);
+               }
+            }
+            m_dependentRequests.erase(event);
+        }
+
+        // MemReq deletes its MemEvent
         delete req;
 
     }
     return resp;
+}
+
+void MemBackendConvertor::sendFlushResponse(MemEvent * flush) {
+    
+    Debug(_L10_, "send response\n");
+    MemEvent * resp = flush->makeResponse();
+    resp->setSuccess(true);
+    static_cast<MemController*>(parent)->handleMemResponse(resp);
+
+    // Clean up
+    m_waitingFlushes.erase(flush);
+
+    delete flush;
 }
 
 void MemBackendConvertor::sendResponse( MemEvent* resp ) {
@@ -155,21 +180,6 @@ void MemBackendConvertor::sendResponse( MemEvent* resp ) {
     Debug(_L10_, "send response\n");
     static_cast<MemController*>(parent)->handleMemResponse( resp );
 
-    if ( m_flushEvent && m_pendingRequests.empty() ) {
-
-        MemEvent* flush = m_flushEvent->makeResponse();
-
-        flush->setSuccess(true);
-        static_cast<MemController*>(parent)->handleMemResponse( flush );
-
-        delete m_flushEvent; 
-        m_flushEvent = NULL;
-
-        while ( ! m_waiting.empty() && ! m_flushEvent ) {
-            m_flushEvent = setupMemReq( m_waiting.front( ) ); 
-            m_waiting.pop_front();
-        }
-    }
 }
 
 void MemBackendConvertor::finish(void) {

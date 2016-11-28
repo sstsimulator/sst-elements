@@ -1,10 +1,6 @@
 # Automatically generated SST Python input
 import sst
 
-# Define SST core options
-sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "0 ns")
-
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
@@ -22,14 +18,14 @@ comp_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       #"debug" : "1",
-      "debug_level" : "10",
+      #"debug_level" : "10",
       "L1" : "1",
       "cache_size" : "2 KB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "1",
+      #"debug" : "1",
       "backend.access_time" : "1000 ns",
       "clock" : "1GHz",
       "backend.mem_size" : "512MiB"

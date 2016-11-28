@@ -110,6 +110,23 @@ EXTRA_DIST = \
 	tests/sdl8-4.py \
 	tests/sdl9-1.py \
 	tests/sdl9-2.py \
+	tests/testBackendChaining.py \
+	tests/testBackendDelayBuffer.py \
+	tests/testBackendPagedMulti.py \
+	tests/testBackendReorderRow.py \
+	tests/testBackendReorderSimple.py \
+	tests/testBackendSimpleDRAM-1.py \
+	tests/testBackendSimpleDRAM-2.py \
+	tests/testBackendVaultSim.py \
+	tests/testDistributedCaches.py \
+	tests/testFlushes.py \
+	tests/testFlushes-2.py \
+	tests/testHashXor.py \
+	tests/testIncoherent.py \
+	tests/testNoninclusive-1.py \
+	tests/testNoninclusive-2.py \
+	tests/testPrefetchParams.py \
+	tests/testThroughputThrottling.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini
 

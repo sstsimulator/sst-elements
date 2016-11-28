@@ -325,6 +325,8 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
         case GetS:
         case GetX:
         case GetSEx:
+        case FlushLine:
+        case FlushLineInv:  // Note that noncacheable flushes currently ignore the cache - they just flush any buffers at memory
 #ifdef __SST_DEBUG_OUTPUT__
 	    if (cmd == GetSEx) d_->debug(_WARNING_, "WARNING: Noncachable atomics have undefined behavior; atomicity not preserved\n"); 
 #endif
@@ -337,6 +339,7 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
             break;
         case GetSResp:
         case GetXResp:
+        case FlushLineResp:
             origRequest = mshrNoncacheable_->removeFront(baseAddr);
             if (origRequest->getID().second != event->getResponseToID().second) {
                 d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match request at front of mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",

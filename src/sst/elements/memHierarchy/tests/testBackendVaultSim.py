@@ -1,6 +1,9 @@
 # Automatically generated SST Python input
 import sst
 
+# Define SST core options
+sst.setProgramOption("timebase", "1ps")
+
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
 comp_cpu0.addParams({
@@ -154,10 +157,76 @@ comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
       "debug" : "0",
-      "backend.access_time" : "100 ns",
+      "backend" : "memHierarchy.vaultsim",
+      "backend.access_time" : "2 ns",   # Phy latency
       "backend.mem_size" : "512MiB",
       "clock" : "1GHz",
       "request_width" : "64"
+})
+comp_logic_layer = sst.Component("logic_layer", "VaultSimC.logicLayer")
+comp_logic_layer.addParams({
+    "clock" : "1GHz",
+    "bwlimit" : "32",
+    "vaults" : "8",
+    "terminal" : 1,
+    "llID" : 0,
+    "LL_MASK" : 0
+})
+
+comp_vault0 = sst.Component("vault_0", "VaultSimC.VaultSimC")
+comp_vault0.addParams({
+    "clock" : "500MHz",
+    "VaultID" : 0,
+    "numVaults2" : 3
+})
+
+comp_vault1 = sst.Component("vault_1", "VaultSimC.VaultSimC")
+comp_vault1.addParams({
+    "clock" : "500MHz",
+    "VaultID" : 1,
+    "numVaults2" : 3
+})
+
+comp_vault2 = sst.Component("vault_2", "VaultSimC.VaultSimC")
+comp_vault2.addParams({
+    "clock" : "500MHz",
+    "VaultID" : 2,
+    "numVaults2" : 3
+})
+
+comp_vault3 = sst.Component("vault_3", "VaultSimC.VaultSimC")
+comp_vault3.addParams({
+    "clock" : "500MHz",
+    "VaultID" : 3,
+    "numVaults2" : 3
+})
+
+comp_vault4 = sst.Component("vault_4", "VaultSimC.VaultSimC")
+comp_vault4.addParams({
+    "clock" : "500MHz",
+    "VaultID" : 4,
+    "numVaults2" : 3
+})
+
+comp_vault5 = sst.Component("vault_5", "VaultSimC.VaultSimC")
+comp_vault5.addParams({
+    "clock" : "500MHz",
+    "VaultID" : 5,
+    "numVaults2" : 3
+})
+
+comp_vault6 = sst.Component("vault_6", "VaultSimC.VaultSimC")
+comp_vault6.addParams({
+    "clock" : "500MHz",
+    "VaultID" : 6,
+    "numVaults2" : 3
+})
+
+comp_vault7 = sst.Component("vault_7", "VaultSimC.VaultSimC")
+comp_vault7.addParams({
+    "clock" : "500MHz",
+    "VaultID" : 7,
+    "numVaults2" : 3
 })
 
 # Enable statistics
@@ -201,4 +270,22 @@ link_dir_net_0 = sst.Link("link_dir_net_0")
 link_dir_net_0.connect( (comp_chiprtr, "port0", "2000ps"), (comp_dirctrl, "network", "2000ps") )
 link_dir_mem_link = sst.Link("link_dir_mem_link")
 link_dir_mem_link.connect( (comp_dirctrl, "memory", "10000ps"), (comp_memory, "direct_link", "10000ps") )
+link_dir_cube_link = sst.Link("link_dir_cube_link")
+link_dir_cube_link.connect( (comp_memory, "cube_link", "2ns"), (comp_logic_layer, "toCPU", "2ns") )
+link_logic_v0 = sst.Link("link_logic_v0")
+link_logic_v0.connect( (comp_logic_layer, "bus_0", "500ps"), (comp_vault0, "bus", "500ps") )
+link_logic_v1 = sst.Link("link_logic_v1")
+link_logic_v1.connect( (comp_logic_layer, "bus_1", "500ps"), (comp_vault1, "bus", "500ps") )
+link_logic_v2 = sst.Link("link_logic_v2")
+link_logic_v2.connect( (comp_logic_layer, "bus_2", "500ps"), (comp_vault2, "bus", "500ps") )
+link_logic_v3 = sst.Link("link_logic_v3")
+link_logic_v3.connect( (comp_logic_layer, "bus_3", "500ps"), (comp_vault3, "bus", "500ps") )
+link_logic_v4 = sst.Link("link_logic_v4")
+link_logic_v4.connect( (comp_logic_layer, "bus_4", "500ps"), (comp_vault4, "bus", "500ps") )
+link_logic_v5 = sst.Link("link_logic_v5")
+link_logic_v5.connect( (comp_logic_layer, "bus_5", "500ps"), (comp_vault5, "bus", "500ps") )
+link_logic_v6 = sst.Link("link_logic_v6")
+link_logic_v6.connect( (comp_logic_layer, "bus_6", "500ps"), (comp_vault6, "bus", "500ps") )
+link_logic_v7 = sst.Link("link_logic_v7")
+link_logic_v7.connect( (comp_logic_layer, "bus_7", "500ps"), (comp_vault7, "bus", "500ps") )
 # End of generated output.

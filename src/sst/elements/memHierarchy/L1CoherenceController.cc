@@ -199,6 +199,8 @@ bool L1CoherenceController::isRetryNeeded(MemEvent * event, CacheLine * cacheLin
         case GetS:
         case GetX:
         case GetSEx:
+        case FlushLine:
+        case FlushLineInv:
             return true;
         case PutS:
         case PutE:
