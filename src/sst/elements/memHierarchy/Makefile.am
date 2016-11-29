@@ -94,7 +94,6 @@ EXTRA_DIST = \
         Sieve/tests/ompsievetest.c \
         Sieve/tests/sieve-test.py \
 	tests/example.py \
-	tests/exampleM5.xml \
 	tests/sdl-1.py \
 	tests/sdl2-1.py \
 	tests/sdl-2.py \
