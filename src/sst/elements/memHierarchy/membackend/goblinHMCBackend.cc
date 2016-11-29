@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -15,7 +19,7 @@
 
 using namespace SST::MemHierarchy;
 
-GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemBackend(comp, params),
+GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : SimpleMemBackend(comp, params),
 	owner(comp) {
 
 	int verbose = params.find<int>("verbose", 0);
@@ -31,6 +35,18 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 	hmc_capacity_per_device = params.find<uint32_t>("capacity_per_device", HMC_MIN_CAPACITY);
 	hmc_xbar_depth   =  params.find<uint32_t>("xbar_depth", 4);
 	hmc_max_req_size =  params.find<uint32_t>("max_req_size", 64);
+
+        link_phy = params.find<float>("link_phy_power", 0.1);
+        link_local_route = params.find<float>("link_local_route_power", 0.1);
+        link_remote_route = params.find<float>("link_remote_route_power", 0.1);
+        xbar_rqst_slot = params.find<float>("xbar_rqst_slot_power", 0.1);
+        xbar_rsp_slot = params.find<float>("xbar_rsp_slot_power", 0.1);
+        xbar_route_extern = params.find<float>("xbar_route_extern_power", 0.1);
+        vault_rqst_slot = params.find<float>("vault_rqst_slot_power", 0.1);
+        vault_rsp_slot = params.find<float>("vault_rsp_slot_power", 0.1);
+        vault_ctrl = params.find<float>("vault_ctrl_power", 0.1);
+        row_access = params.find<float>("row_access_power", 0.1);
+
 	hmc_trace_level  = 0;
 
 	if (params.find<bool>("trace-banks", false)) {
@@ -53,9 +69,17 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_STALL;
 	}
 
+#if defined( HMC_TRACE_POWER )
+        if(params.find<bool>("trace-power", false)) {
+          hmc_trace_level = hmc_trace_level | HMC_TRACE_POWER;
+        }
+#endif
+
 	hmc_tag_count    = params.find<uint32_t>("tag_count", 64);
 
 	hmc_trace_file   = params.find<std::string>("trace_file", "hmc-trace.out");
+
+        params.find_array<std::string>("cmc-lib", cmclibs);
 
 	output->verbose(CALL_INFO, 1, 0, "Initializing HMC...\n");
 	int rc = hmcsim_init(&the_hmc,
@@ -73,6 +97,40 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 	} else {
 		output->verbose(CALL_INFO, 1, 0, "Initialized successfully.\n");
 	}
+
+#if defined( HMC_TRACE_POWER )
+        // load the power config
+        rc = hmcsim_power_config( &the_hmc,
+                                 link_phy,
+                                 link_local_route,
+                                 link_remote_route,
+                                 xbar_rqst_slot,
+                                 xbar_rsp_slot,
+                                 xbar_route_extern,
+                                 vault_rqst_slot,
+                                 vault_rsp_slot,
+                                 vault_ctrl,
+                                 row_access );
+        if( rc != 0 ){
+	    output->fatal(CALL_INFO, -1,
+                          "Unable to initialize the HMC-Sim power configuration; return code is %d\n", rc);
+        }
+#endif
+
+        // load the cmc libs
+        for( unsigned i=0; i< cmclibs.size(); i++ ){
+          if( cmclibs[i].length() > 0 ){
+            // attempt to add the cmc lib
+            output->verbose(CALL_INFO, 1, 0,
+                            "Initializing HMC-Sim CMC Library...\n" );
+            std::vector<char> libchars( cmclibs[i].begin(), cmclibs[i].end() );
+            rc = hmcsim_load_cmc(&the_hmc, &libchars[0] );
+            if( rc != 0 ){
+	      output->fatal(CALL_INFO, -1,
+                            "Unable to HMC-Sim CMC Library and the return code is %d\n", rc);
+            }
+          }
+        }
 
 	for(uint32_t i = 0; i < hmc_link_count; ++i) {
 		output->verbose(CALL_INFO, 1, 0, "Configuring link: %" PRIu32 "...\n", i);
@@ -147,7 +205,7 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 	output->verbose(CALL_INFO, 1, 0, "Completed HMC Simulation Backend Initialization.\n");
 }
 
-bool GOBLINHMCSimBackend::issueRequest(DRAMReq* req) {
+bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes) {
 	// We have run out of tags
 	if(tag_queue.empty()) {
 		output->verbose(CALL_INFO, 4, 0, "Will not issue request this call, tag queue has no free entries.\n");
@@ -160,7 +218,6 @@ bool GOBLINHMCSimBackend::issueRequest(DRAMReq* req) {
 	output->verbose(CALL_INFO, 4, 0, "Queue front is: %" PRIu16 "\n", tag_queue.front());
 
 	const uint8_t		req_dev  = 0;
-	const uint64_t		addr     = req->baseAddr_ + req->amtInProcess_;
 	const uint16_t          req_tag  = (uint16_t) tag_queue.front();
 	tag_queue.pop();
 
@@ -168,7 +225,7 @@ bool GOBLINHMCSimBackend::issueRequest(DRAMReq* req) {
 
 	// Check if the request is for a read or write then transform this into something
 	// for HMC simulator to use, right now lets just try 64-byte lengths
-	if(req->isWrite_) {
+	if(isWrite) {
 		req_type = WR64;
 	} else {
 		req_type = RD64;
@@ -182,7 +239,7 @@ bool GOBLINHMCSimBackend::issueRequest(DRAMReq* req) {
 	uint64_t                req_tail   = (uint64_t) 0;
 
 	output->verbose(CALL_INFO, 8, 0, "Issuing request: %" PRIu64 " %s tag: %" PRIu16 " dev: %" PRIu8 " link: %" PRIu8 "\n",
-		addr, (req->isWrite_ ? "WRITE" : "READ"), req_tag, req_dev, req_dev);
+		addr, (isWrite ? "WRITE" : "READ"), req_tag, req_dev, req_dev);
 
 	int rc = hmcsim_build_memrequest(&the_hmc,
 			req_dev,
@@ -216,7 +273,7 @@ bool GOBLINHMCSimBackend::issueRequest(DRAMReq* req) {
 		output->verbose(CALL_INFO, 4, 0, "Issue of request for address %" PRIu64 " successfully accepted by HMC.\n", addr);
 
 		// Create the request entry which we keep in a table
-		HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(req, owner->getCurrentSimTimeNano());
+		HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr, owner->getCurrentSimTimeNano());
 
 		// Add the tag and request into our table of pending
 		tag_req_map.insert( std::pair<uint16_t, HMCSimBackEndReq*>(req_tag, reqEntry) );
@@ -303,14 +360,12 @@ void GOBLINHMCSimBackend::processResponses() {
 					} else {
 						HMCSimBackEndReq* matchedReq = locate_tag->second;
 
-						DRAMReq* orig_req = matchedReq->getRequest();
-
 						output->verbose(CALL_INFO, 4, 0, "Matched tag %" PRIu16 " to request for address: %" PRIu64 ", processing time: %" PRIu64 "ns\n",
-							resp_tag, (orig_req->baseAddr_ + orig_req->amtInProcess_),
+							resp_tag, matchedReq->getAddr(),
 							owner->getCurrentSimTimeNano() - matchedReq->getStartTime());
 
 						// Pass back to the controller to be handled, HMC sim is finished with it
-						ctrl->handleMemResponse(orig_req);
+						handleMemResponse(matchedReq->getRequest());
 
 						// Clear element from our map, it has been processed so no longer needed
 						tag_req_map.erase(resp_tag);
@@ -361,6 +416,6 @@ void GOBLINHMCSimBackend::printPendingRequests() {
 
 	for(pending_itr = tag_req_map.begin(); pending_itr != tag_req_map.end(); pending_itr++) {
 		output->verbose(CALL_INFO, 8, 0, "Tag: %8" PRIu16 " for address %" PRIu64 "\n",
-			pending_itr->first, pending_itr->second->getRequest()->addr_);
+			pending_itr->first, pending_itr->second->getAddr());
 	}
 }

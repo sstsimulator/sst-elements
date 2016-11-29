@@ -5,6 +5,10 @@
 # Copyright (c) 2009-2016, Sandia Corporation
 # All rights reserved.
 #
+# Portions are copyright of other developers:
+# See the file CONTRIBUTORS.TXT in the top level directory
+# the distribution for more information.
+#
 # This file is part of the SST software package. For license
 # information, see the LICENSE file in the top level directory of the
 # distribution.
@@ -32,7 +36,7 @@ def run( opts, platParamsName, topo, shape, jobs, perNicParams = None ):
 	topoObj = TopoConfig.getTopoObj( topo )
 
 	print 'Platform: configuration "{0}"'.format( platParamsName )
-	print 'Network: topo={0} shape={1} numNodes{2}'.format( topo, shape, topoInfo.getNumNodes() )
+	print 'Network: topo={0} shape={1} numNodes={2}'.format( topo, shape, topoInfo.getNumNodes() )
 
 	platParams = Platform.getParams( platParamsName )
 

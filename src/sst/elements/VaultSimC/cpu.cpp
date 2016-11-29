@@ -4,7 +4,11 @@
 // 
 // Copyright (c) 2014, Sandia Corporation
 // All rights reserved.
-// 
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -19,7 +23,10 @@
 #include <sst/core/params.h>
 #include <sst/core/rng/mersenne.h>
 
+#include <sst/elements/VaultSimC/memReqEvent.h>
+
 using namespace SST;
+using namespace SST::VaultSim;
 using namespace SST::RNG;
 
 cpu::cpu( ComponentId_t id, Params& params ) :
@@ -83,8 +90,8 @@ bool cpu::clock( Cycle_t current )
 
   // check for events from the memory chain
   while((e = toMem->recv())) {
-    SST::MemHierarchy::MemEvent *event = 
-      dynamic_cast<SST::MemHierarchy::MemEvent*>(e);
+    MemRespEvent *event = 
+      dynamic_cast<MemRespEvent*>(e);
     if (event == NULL) {
       out.fatal(CALL_INFO, -1, "CPU got bad event\n");
     }
@@ -107,13 +114,13 @@ bool cpu::clock( Cycle_t current )
     for (int c = 0; c < threads; ++c) {
       if (outstanding < MAX_OUT && Missued <= bwlimit) {    
 	if (thrOutstanding[c].size() <= MAX_OUT_THR) {
-	  SST::MemHierarchy::MemEvent *event = getInst(1,app,c); // L1
+	  MemReqEvent *event = getInst(1,app,c); // L1
 	  inst++;
 	  if (event) {
 	    toMem->send( event );
 	    outstanding++;
 	    Missued++;
-	    if (event->getCmd() == SST::MemHierarchy::GetS) {
+	    if (! event->getIsWrite()) {
 	      thrOutstanding[c].insert(event->getAddr());
 	    }
 	  }

@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -30,14 +34,14 @@ public:
     HashFunction() {};
     virtual ~HashFunction() {};
 
-    virtual uint64_t hash(uint32_t _ID, uint64_t _value) = 0;
+    virtual uint64_t hash(uint32_t ID, uint64_t value) = 0;
 };
 
 /* Simplest ID hashing */
 class PureIdHashFunction : public HashFunction {
 public:
-    inline uint64_t hash(uint32_t _ID, uint64_t _value) {
-        return _value;
+    inline uint64_t hash(uint32_t ID, uint64_t value) {
+        return value;
     }
 };
 
@@ -45,15 +49,15 @@ public:
    each input to an output. */
 class LinearHashFunction : public HashFunction {
 public:
-  uint64_t hash(uint32_t _ID, uint64_t x) {
-    return 1103515245*x + 12345;
+  uint64_t hash(uint32_t ID, uint64_t x) {
+      return 1103515245*x + 12345;
   }
 };
 
 /* Just a simple xor-based hash. */
 class XorHashFunction : public HashFunction {
 public:
-  uint64_t hash(uint32_t _ID, uint64_t x) {
+  uint64_t hash(uint32_t ID, uint64_t x) {
     unsigned char b[8];
     for (unsigned i = 0; i < 8; ++i)
       b[i] = (x >> (i*8))&0xff;
@@ -64,7 +68,7 @@ public:
     uint64_t result = 0;
     for (unsigned i = 0; i < 8; ++i)
       result |= (b[i]<<(i*8));
-
+    
     return result;
   }
 };

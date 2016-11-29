@@ -13,6 +13,7 @@ libmiranda_la_SOURCES = \
 	mirandaGenerator.h \
 	mirandaCPU.cc \
 	mirandaCPU.h	\
+	mirandaMemMgr.h \
 	generators/singlestream.h \
 	generators/singlestream.cc \
 	generators/randomgen.h \
@@ -37,6 +38,7 @@ EXTRA_DIST = \
 	tests/stencil3dbench.py \
 	tests/streambench.py \
 	tests/inorderstream.py \
-	tests/copybench.py
+	tests/copybench.py \
+	tests/gupsgen.py
 
 libmiranda_la_LDFLAGS = -module -avoid-version

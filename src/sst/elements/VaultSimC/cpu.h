@@ -4,7 +4,11 @@
 // 
 // Copyright (c) 2012-2016, Sandia Corporation
 // All rights reserved.
-// 
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -14,12 +18,15 @@
 #define _CPU_H
 
 #include <sst/core/component.h>
-#include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/elements/VaultSimC/memReqEvent.h>
 #include <sst/core/rng/sstrng.h>
 #include <sst/core/output.h>
 
+
 using namespace std;
-using namespace SST;
+
+namespace SST { 
+namespace VaultSim {
 
 #ifndef VAULTSIMC_DBG
 #define VAULTSIMC_DBG 0
@@ -57,10 +64,13 @@ private:
   thrSet_t thrOutstanding;
   coreVec_t coreAddr;
 
-  SST::MemHierarchy::MemEvent *getInst(int cacheLevel, int app, int core);
+  MemReqEvent *getInst(int cacheLevel, int app, int core);
 
 protected:
   Output &out;
 };
+
+}
+}
 
 #endif

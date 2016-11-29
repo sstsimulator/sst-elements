@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -12,6 +16,8 @@
 
 #ifndef _H_SST_MEMH_GOBLIN_HMC_BACKEND
 #define _H_SST_MEMH_GOBLIN_HMC_BACKEND
+
+#include <queue>
 
 #include <sst/core/component.h>
 #include <sst/core/params.h>
@@ -27,36 +33,39 @@ namespace MemHierarchy {
 
 class HMCSimBackEndReq {
 	public:
-		HMCSimBackEndReq(DRAMReq* r, uint64_t sTime) :
-			req(r), startTime(sTime) {}
+		HMCSimBackEndReq(MemBackend::ReqId r, Addr a, uint64_t sTime) :
+			req(r), addr(a), startTime(sTime) {}
 		~HMCSimBackEndReq() {}
 
 		uint64_t getStartTime() const {
 			return startTime;
 		}
 
-		DRAMReq* getRequest() const {
+        MemBackend::ReqId getRequest() const {
 			return req;
 		}
+        Addr getAddr() const {
+			return addr;
+		}
 	private:
-		DRAMReq* req;
+        MemBackend::ReqId req;
+        Addr addr;
 		uint64_t startTime;
 };
 
-class GOBLINHMCSimBackend : public MemBackend {
+class GOBLINHMCSimBackend : public SimpleMemBackend {
 
 public:
-	GOBLINHMCSimBackend() : MemBackend() {};
+	GOBLINHMCSimBackend() : SimpleMemBackend() {};
 	GOBLINHMCSimBackend(Component* comp, Params& params);
 	~GOBLINHMCSimBackend();
-	bool issueRequest(DRAMReq* req);
+	bool issueRequest(ReqId, Addr, bool, unsigned);
 	void setup();
 	void finish();
 	void clock();
 
 private:
 	Component* owner;
-	Output* output;
 	struct hmcsim_t the_hmc;
 
 	uint32_t hmc_link_count;
@@ -72,7 +81,20 @@ private:
 	uint32_t hmc_tag_count;
 	uint32_t hmc_trace_level;
 
+        float link_phy;
+        float link_local_route;
+        float link_remote_route;
+        float xbar_rqst_slot;
+        float xbar_rsp_slot;
+        float xbar_route_extern;
+        float vault_rqst_slot;
+        float vault_rsp_slot;
+        float vault_ctrl;
+        float row_access;
+
 	uint32_t nextLink;
+
+        std::vector<std::string> cmclibs;
 
 	std::string hmc_trace_file;
 	FILE* hmc_trace_file_handle;

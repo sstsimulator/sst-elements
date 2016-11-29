@@ -1,0 +1,107 @@
+~~~~~~~~~~~~~~~~~~~~ README ~~~~~~~~~~~~~~~~~~
+CramSim - ControlleR And Memory SIMulator
+Developed using the Structural Simulation Toolkit
+
+PREREQUISITES TO INSTALLATION:
+  - Boost 1.57
+  - OpenMPI 1.8.8
+  - SST Release Version
+
+INSTALLATION:
+  - Once the repo is cloned, cd to main folder (sstcramsim/)
+  - Run "./autogen.sh"
+  - Run "cd sst/elements/MemBankTxn"
+  - Run "make"
+
+  When editing the simulator:
+  - If adding a new class:
+    - Add class files to Makefile.am
+    - cd to parent directory "sstcramsim"
+    - Run "./autogen.sh"
+    - Run "cd sst/elements/MemBankTxn"
+    - Run "make"
+  - If modifying existing files:
+    - Run "make"
+
+RUNNING A SIMULATION:
+  - Syntax:
+    sst --lib-path:./libs/ PYTHON_TEST_FILE.py --model-options="--configfile=CONFIG.cfg --tracefile=TRACE.trc"
+
+  Python file instantiates SST components and links them together. It also provides the simulator with access to "parameter knobs". Many different test
+  python files exist in ./tests/ . Here are some highlights
+    - test_txngenrand2.py: Runs simulation using a series of randomly generated instructions. --model-options flag not required
+    - test_txngenseq3.py: Runs simulation using a series of sequentially generated instructions --model-options flag not required
+    - test_txntrace1.py: Runs simulation with a commandline-provided trace file and config file. Trace format is "INTERVAL TXN_TYPE TXN_ADDRESS TXN_WIDTH"
+    - test_txntrace2.py: Runs simulation with a commandline-provided trace file and config file. Trace format is the same as DRAMSim2's
+    - test_txntrace3.py: Runs simulation with a commandline-provided trace file and config file. Trace format is the same as USimm's
+    - test_txntrace4.py: Similar to test_txntrace3.py but is intended to be used as part of the Verimem test suite
+
+VERIMEM:
+  Verimem is a series of traces intended to be run to confirm the validity of the results of a simulator. Verimem's test traces that apply to the
+  granularity of this simulator are 1, 4, 5, and 6. Suites 2, 3, and 7 require a model that includes bank rows and columns to provide any insights that
+  1, 4, 5, and 6 don't already.
+
+  NOTE: VeriMem tests will not run. SST directory structure mandated that the VeriMem traces cannot be checked in into the sst-elements directory. Traces will be checked into a separate directory and the links to the verimem traces will be updated. After the update the directions below will apply for VeriMem.
+ 
+  To run Verimem (from within /sstcramsim/sst/elements/MemBankTxn/):
+      python ./tests/VeriMem/test_verimem1.py BOOL_DEBUG_OUTPUT
+    BOOL_DEBUG_OUTPUT should be either 0 or 1, depending on if debugging output is wanted or not.
+  This script runs simulations using a config file (to edit, change the variable "config_file") and a series of different trace files specifically structured to
+  test the validity of the simulator's results. CURRENT ISSUE: Due to bugs inherent to SST, "VeriMem Suite 5 - Writes only" causes the simulation to crash. We
+  are still not 100% sure what causes this crash but SST's team is aware of it.
+
+SST BASICS:
+  SST allows the usage of isolated components. Each component has its own internal clockCycle. Every cycle, each component runs its clockTic() method.
+    The simulator is cycle-based in that in a given cycle, all the clockTics are to be seen as running concurrently.
+  Components can be connected using SST-provided links. A link must be registered (and named) by the two components it connects. Once both components register the link,
+    SST-provided Event objects can be sent on the link. The Event class can be subclassed to include specific event types that carry specific payloads (e.g. c_TxnReqEvent).
+    The simulator is event-based in that components respond discretely to events as they arrive.
+
+MemBankTxn.cpp:
+  This is the factory-pattern class that is used to instantiate SST components. Link names and parameters are explicitly defined here so that the python file
+  can properly map them together.
+
+MODEL OVERVIEW:
+  Each SST component listed is connected to the component above it and below it using a group of unidirectional links
+
+  - Txn Generator (multiple options):
+    - c_TxnGenSeq
+      - Generates Txns in sequential-address order
+    - c_TxnGenRand
+      - Generates Txns in random-address order
+    - c_TracefileReader
+      - Reads Txns from a trace file
+    - c_DramSimTraceReader
+      - Reads Txns from a DRAMSim22 trace file
+    - c_USimmTraceReader
+      - Reads Txns from a USimm trace file
+
+    - Generates txn requests and buffers them. Every cycle a txn is removed from the buffer and sent to TxnUnit
+    - Receives txn responses from TxnUnit. Every cycle a txn is removed from the buffer and marked as complete.
+
+  - c_TxnUnit
+    - Receives Txn requests from TxnGen and stores them. Every cycle a txn is removed from the buffer, converted to Cmds, and sent to CmdUnit
+    - Receives Cmd responses from CmdUnit and updates the Txn that Cmd "belonged" to. Every cycle a completed txn is removed from the response buffer and returned to TxnGen
+
+  - c_CmdUnit
+    - Receives Cmd requests from TxnUnit and stores them. Every cycle a cmd is removed, mapped to its correct bank, and sent to DIMM. In addition, the cmd is
+        fed to the CmdUnit's internal reference to each bank's BankState.
+        - c_BankState:
+          - Implemented using State Design Pattern. Current states supported: IDLE, ACTIVATING, ACTIVE, READ, READA, WRITE, WRITEA, PRECHARGE, REFRESH
+    - Receives Cmd responses from DIMM and stores them. Every cycle a cmd is removed and sent to TxnUnit
+
+  - c_DIMM:
+    - Receives a Cmd request from CmdUnit and maps it to its particular bank before sending it to that bank.
+    - Receives a Cmd response from its internal banks and sends it back to CmdUnit
+
+
+  ADDITIONAL INFO:
+    - Bank addresses are mapped from the singleton class c_AddressHasher. The current hashing algorithm used is borrowed from USimm.
+    - It is highly recommended that simulator output is piped to an external file. There is usually a lot of output to decypher
+    - The C++ file test_addresses.cpp uses the c_AddressHasher class to map a trace file's instructions to the banks they would theoretically go to.
+      this program is useful for construction of trace files as it reveals which bank a particular address would map to given the total number of banks.
+      to run:
+        g++ -std=c++11 -o trace_addresses test_addresses.cpp c_AddressHasher.cpp
+        ./trace_addresses TRACE_FILE.trc NUM_BANKS
+
+      where NUM_BANKS is the total number of banks expected in simulation.

@@ -37,7 +37,6 @@ for x in range(0, corecount):
 		"access_time" : "1ns",
 		"num_upstream" : "1",
 		"next_level" : "l2cache_" + str(x),
-		"printStats" : "1"
 		} )
 	ariel_l1d_link = sst.Link("cpu_cache_link_" + str(x))
 	ariel_l1d_link.connect( (ariel, "cache_link_" + str(x), "50ps"), (l1d, "upstream0", "50ps") )
@@ -52,7 +51,6 @@ for x in range(0, corecount):
                 "blocksize" : "64",
                 "access_time" :	"1ns",
                 "next_level" : "l3cache",
-		"printStats" : "1",
 		} )
 	ariel_l2_link = sst.Link("l2cache_link_" + str(x) )
 	ariel_l2_link.connect( (l2, "snoop_link", "50ps"), (membus, "port" + str(corecount + x), "50ps") )
@@ -63,7 +61,6 @@ l3.addParams( {
                 "num_rows" : "256",
                	"blocksize" : "64",
                	"access_time" : "1ns",
-               	"printStats" : "1",
 	} )
 
 l3_membus_link = sst.Link("l3cache_link")
@@ -73,7 +70,7 @@ memory = sst.Component("fastmemory", "memHierarchy.MemController")
 memory.addParams( {
 		"access_time" : "70ns",
 		"rangeStart" : "0x00000000",
-		"mem_size" : "512",
+		"backend.mem_size" : "512MiB",
 		"clock" : "1GHz",
 		"printStats" : "1"
 	} )

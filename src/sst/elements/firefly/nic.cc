@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -31,6 +35,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_sendMachine( 2, SendMachine( *this, m_dbg ) ),
     m_recvMachine( *this, m_dbg ),
     m_detailedCompute( 2, NULL ),
+    m_useDetailedCompute(false),
     m_getKey(10)
 {
     m_myNodeId = params.find<int>("nid", -1);

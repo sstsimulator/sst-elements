@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -18,6 +22,7 @@
 
 #include "mirandaGenerator.h"
 #include "mirandaEvent.h"
+#include "mirandaMemMgr.h"
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -74,9 +79,12 @@ private:
 	MirandaReqEvent* srcReqEvent;	
 
 	MirandaRequestQueue<GeneratorRequest*> pendingRequests;
+	MirandaMemoryManager* memMgr;
 
-	uint32_t maxRequestsPending;
-	uint32_t requestsPending;
+	uint32_t maxLoadRequestsPending;
+	uint32_t maxStoreRequestsPending;
+	uint32_t requestsLoadPending;
+	uint32_t requestsStorePending;
 	uint32_t reqMaxPerCycle;
 	uint64_t cacheLine;
 	uint32_t maxOpLookup;

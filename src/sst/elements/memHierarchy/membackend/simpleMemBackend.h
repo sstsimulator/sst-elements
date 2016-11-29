@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -18,19 +22,20 @@
 namespace SST {
 namespace MemHierarchy {
 
-class SimpleMemory : public MemBackend {
+class SimpleMemory : public SimpleMemBackend {
 public:
     SimpleMemory();
     SimpleMemory(Component *comp, Params &params);
-    bool issueRequest(DRAMReq *req);
+    bool issueRequest(ReqId, Addr, bool, unsigned );
+    virtual int32_t getMaxReqPerCycle() { return 1; }
     
 public:
     class MemCtrlEvent : public SST::Event {
     public:
-        MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
+        MemCtrlEvent( ReqId id_) : SST::Event(), reqId(id_)
         { }
 
-        DRAMReq *req;
+		ReqId reqId;
      
     private:   
         MemCtrlEvent() {} // For Serialization only
@@ -38,7 +43,7 @@ public:
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser) {
             Event::serialize_order(ser);
-            ser & req;  // Cannot serialize pointers unless they are a serializable object
+            ser & reqId;  // Cannot serialize pointers unless they are a serializable object
        }
         
         ImplementSerializable(SST::MemHierarchy::SimpleMemory::MemCtrlEvent);

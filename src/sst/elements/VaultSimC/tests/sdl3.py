@@ -251,7 +251,7 @@ def doFakeDC(rtr, nextPort, netAddr, dcNum):
             "coherence_protocol": coherence_protocol,
             "rangeStart": 0,
             "backend" : "memHierarchy.simpleMem",
-            "backend.mem_size": rank_size,
+            "backend.mem_size": str(rank_size) + "MiB",
             "clock": memclock,
             "statistics": 1,
             "debug": memDebug

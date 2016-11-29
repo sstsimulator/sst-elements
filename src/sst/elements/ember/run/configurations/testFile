@@ -1,6 +1,4 @@
 
-sst --model-options="--help" ../script/emberLoadFile.py
-
 sst --model-options="\
 --rtrArb=merlin.xbar_arb_lru \
 --netBW=8GB/s \
@@ -9,4 +7,4 @@ sst --model-options="\
 --topo=torus \
 --shape=16 \
 --jobFile=loadfile \
-" ../script/emberLoadFIle.py
+" ../script/emberLoadFile.py

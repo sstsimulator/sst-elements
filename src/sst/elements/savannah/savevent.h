@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -15,7 +19,9 @@
 
 #include "sst/elements/memHierarchy/memoryController.h"
 #include "sst/elements/memHierarchy/membackend/memBackend.h"
+#if 0
 #include "sst/elements/memHierarchy/DRAMReq.h"
+#endif
 
 using namespace SST::MemHierarchy;
 
@@ -24,6 +30,7 @@ namespace Savannah {
 
 class SavannahRequestEvent : public SST::Event {
 public:
+#if 0
 	SavannahRequestEvent(DRAMReq& req) :
 		request(req) {
 
@@ -49,6 +56,7 @@ public:
 private:
 	DRAMReq request;
 	uint32_t recvLink;
+#endif
 };
 
 }

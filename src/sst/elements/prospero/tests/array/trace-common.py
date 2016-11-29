@@ -73,7 +73,7 @@ comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MESI",
       "access_time" : "1000 ns",
-      "backend.mem_size" : memSize,
+      "backend.mem_size" : str(memSize) + "MiB",
       "clock" : "1GHz"
 })
 if useDramSim == "yes":

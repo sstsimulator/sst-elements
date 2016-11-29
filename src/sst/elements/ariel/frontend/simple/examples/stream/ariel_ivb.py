@@ -97,9 +97,10 @@ l3_params = {
 
 mem_params = {
 	"coherence_protocol" : coherence_protocol,
-        "backend.access_time" : "30ns",
+	"backend.access_time" : "30ns",
+	"do_not_back" : 1,
 	"rangeStart" : 0,
-	"backend.mem_size" : memory_capacity / (groups * memory_controllers_per_group),
+	"backend.mem_size" : str(memory_capacity / (groups * memory_controllers_per_group)) + "MiB",
 	"clock" : memory_clock,
 }
 
@@ -124,12 +125,12 @@ ariel.addParams({
         "pipetimeout"         : "0",
         "executable"          : str(os.environ['OMP_EXE']),
         "appargcount"         : "0",
-       	"memorylevels"        : "1",
+       	"memmgr.memorylevels" : "1",
         "arielinterceptcalls" : "1",
        	"arielmode"           : "1",
-	"pagecount0"          : "1048576",
+	"memmgr.pagecount0"   : "1048576",
         "corecount"           : groups * cores_per_group,
-        "defaultlevel"        : 0,
+        "memmgr.defaultlevel" : 0,
         "clock"               : str(clock)
 })
 
