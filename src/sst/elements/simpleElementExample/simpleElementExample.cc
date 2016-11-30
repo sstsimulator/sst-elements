@@ -20,6 +20,7 @@
 #include "simpleStatisticsComponent.h"
 #include "simpleMessageGeneratorComponent.h"
 #include "simpleLookupTableComponent.h"
+#include "simpleCarWash.h"
 
 
 using namespace SST;
@@ -30,6 +31,7 @@ using namespace SST::SimpleRNGComponent;
 using namespace SST::SimpleStatisticsComponent;
 using namespace SST::SimpleMessageGeneratorComponent;
 using namespace SST::SimpleElementExample;
+using namespace SST::SimpleCarWash;
 
 static Component* create_simpleComponent(SST::ComponentId_t id, SST::Params& params) 
 {
@@ -39,6 +41,11 @@ static Component* create_simpleComponent(SST::ComponentId_t id, SST::Params& par
 static Component* create_simpleClockerComponent(SST::ComponentId_t id, SST::Params& params) 
 {
     return new simpleClockerComponent(id, params);
+}
+
+static Component* create_simpleCarWash(SST::ComponentId_t id, SST::Params& params) 
+{
+    return new simpleCarWash(id, params);
 }
 
 static Component* create_simpleDistribComponent(SST::ComponentId_t id, SST::Params& params) 
@@ -75,6 +82,12 @@ static const ElementInfoParam simpleComponent_params[] = {
 };
 
 static const ElementInfoParam simpleClockerComponent_params[] = {
+    { "clock", "Clock frequency", "1GHz" },
+    { "clockcount", "Number of clock ticks to execute", "100000"},
+    { NULL, NULL, NULL }
+};
+
+static const ElementInfoParam simpleCarWash_params[] = {
     { "clock", "Clock frequency", "1GHz" },
     { "clockcount", "Number of clock ticks to execute", "100000"},
     { NULL, NULL, NULL }
@@ -170,6 +183,15 @@ static const ElementInfoComponent simpleElementComponents[] = {
       NULL,                                              // PrintHelp
       create_simpleClockerComponent,                     // Allocator
       simpleClockerComponent_params,                     // Parameters
+      NULL,                                              // Ports
+      COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
+      NULL                                               // Statistics
+    },
+    { "simpleCarWash",		                         // Name
+      "Car Wash Simulator",                              // Description
+      NULL,                                              // PrintHelp
+      create_simpleCarWash,	                         // Allocator
+      simpleCarWash_params,                     // Parameters
       NULL,                                              // Ports
       COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
       NULL                                               // Statistics
