@@ -234,6 +234,7 @@ bool MSHR::insertWriteback(Addr keyAddr) {
 
     vector<mshrType>::iterator itv = map_[keyAddr].mshrQueue.begin();
     map_[keyAddr].mshrQueue.insert(itv, mshrElement);
+    //printTable();
     
     return true;
 }
@@ -275,6 +276,7 @@ bool MSHR::insertAll(Addr baseAddr, vector<mshrType>& events) {
 
     prefetchCount_ += prefetches;
     size_ += trueSize;
+    //printTable();
     return true;
 }
 
@@ -289,6 +291,7 @@ bool MSHR::insert(Addr baseAddr, mshrType entry) {
         map_[baseAddr] = entry;
     }
     map_[baseAddr].mshrQueue.push_back(entry);
+    //printTable();
     
     return true;
 }
@@ -335,6 +338,14 @@ MemEvent* MSHR::getOldestRequest() const {
     }
 
     return ev;
+}
+
+vector<mshrType>* MSHR::getAll(Addr baseAddr) {
+    mshrTable::iterator it = map_.find(baseAddr);
+    if (it == map_.end()) {
+        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
+    }
+    return &((it->second).mshrQueue); 
 }
 
 
@@ -400,6 +411,7 @@ MemEvent* MSHR::removeFront(Addr baseAddr) {
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"MSHR: Removed front event, Key Addr = %" PRIx64 "\n", baseAddr);
 #endif
+    //printTable();
     return ret;
 }
 
@@ -445,6 +457,7 @@ bool MSHR::removeElement(Addr baseAddr, mshrType entry) {
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_, "MSHR Removed Event\n");
 #endif
+    //printTable();
     return true;
 }
 
