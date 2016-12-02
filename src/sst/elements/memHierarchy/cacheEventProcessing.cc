@@ -325,6 +325,8 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
         case GetS:
         case GetX:
         case GetSEx:
+        case FlushLine:
+        case FlushLineInv:  // Note that noncacheable flushes currently ignore the cache - they just flush any buffers at memory
 #ifdef __SST_DEBUG_OUTPUT__
 	    if (cmd == GetSEx) d_->debug(_WARNING_, "WARNING: Noncachable atomics have undefined behavior; atomicity not preserved\n"); 
 #endif
@@ -338,7 +340,7 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
         case GetSResp:
         case GetXResp:
             origRequest = mshrNoncacheable_->removeFront(baseAddr);
-            if (origRequest->getID().second != event->getResponseToID().second) {
+            if (origRequest->getID().first != event->getResponseToID().first || origRequest->getID().second != event->getResponseToID().second) {
                 d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match request at front of mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
                         getName().c_str(),CommandString[cmd],baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
             }
@@ -346,6 +348,28 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
             delete origRequest;
             delete event;
             break;
+        case FlushLineResp: {
+            // Flushes can be returned out of order since they don't neccessarily require a memory access so we need to actually search the MSHRs
+            vector<mshrType> * entries = mshrNoncacheable_->getAll(baseAddr);
+            for (vector<mshrType>::iterator it = entries->begin(); it != entries->end(); it++) {
+                MemEvent * candidate = boost::get<MemEvent*>(it->elem);
+                if (candidate->getCmd() == FlushLine || candidate->getCmd() == FlushLineInv) { // All entries are events so no checking for pointer vs event needed
+                    if (candidate->getID().first == event->getResponseToID().first && candidate->getID().second == event->getResponseToID().second) {
+                        origRequest = candidate;
+                        break;
+                    }
+                }
+            }
+            if (origRequest == nullptr) {
+                d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match any request in the mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
+                        getName().c_str(),CommandString[cmd],baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
+            }
+            coherenceMgr->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
+            mshrNoncacheable_->removeElement(baseAddr, origRequest);
+            delete origRequest;
+            delete event;
+            break;
+            }
         default:
             d_->fatal(CALL_INFO, -1, "Command does not exist. Command: %s, Src: %s\n", CommandString[cmd], event->getSrc().c_str());
     }

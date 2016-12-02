@@ -61,7 +61,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     if (debugLevel < 0 || debugLevel > 10)
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
     dbg.debug(_L10_,"---");
-    
+
     // Output for warnings
     Output out("", 1, 0, Output::STDOUT);
     
@@ -89,7 +89,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     std::string name        = params.find<std::string>("backendConvertor", "memHierarchy.simpleMemBackendConvertor");
     string protocolStr      = params.find<std::string>("coherence_protocol", "MESI");
-    string link_lat         = params.find<std::string>("direct_link_latency", "100 ns");
+    string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
     Params tmpParams = params.find_prefix_params("backendConvertor.");
     memBackendConvertor_  = dynamic_cast<MemBackendConvertor*>(loadSubComponent(name, this, tmpParams));

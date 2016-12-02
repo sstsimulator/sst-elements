@@ -64,6 +64,7 @@ public:
     // used externally
     MSHR(Output* dbg, int maxSize, string cacheName, bool debugAll, Addr debugAddr);                                     
     bool exists(Addr baseAddr);                             
+    vector<mshrType>* getAll(Addr);                       
     
     bool insertAll(Addr, vector<mshrType>&);                 
     bool insert(Addr baseAddr, MemEvent* event);            

@@ -210,8 +210,9 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     errorChecking();
     
     d2_ = new Output();
-    d2_->init("", params.find<int>("debug_level", 1), 0,(Output::output_location_t)params.find<int>("debug", SST::Output::STDOUT));
-    
+    d2_->init("", params.find<int>("debug_level", 1), 0,(Output::output_location_t)params.find<int>("debug", SST::Output::NONE));
+   
+    Output out("", 1, 0, Output::STDOUT);
     
     int stats                   = params.find<int>("statistics", 0);
     accessLatency_              = params.find<uint64_t>("access_latency_cycles", 0);
@@ -248,8 +249,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
             this->Component::getName().c_str(), accessLatency_);
   
     if (stats != 0) {
-        SST::Output outputStd("",1,0,SST::Output::STDOUT);
-        outputStd.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sst-info for available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", this->Component::getName().c_str());
+        out.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sst-info for available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", this->Component::getName().c_str());
     }
     UnitAlgebra packetSize_ua(packetSize);
     if (!packetSize_ua.hasUnits("B")) {
@@ -603,7 +603,8 @@ void Cache::intrapolateMSHRLatency() {
     }
     mshrLatency_ = y[accessLatency_];
 
-    d2_->verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %" PRIu64 " cycles.\n", getName().c_str(), mshrLatency_);
+    Output out("", 1, 0, Output::STDOUT);
+    out.verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %" PRIu64 " cycles.\n", getName().c_str(), mshrLatency_);
 }
 
 }}
