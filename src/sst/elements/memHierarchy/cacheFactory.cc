@@ -27,7 +27,6 @@
 #include "util.h"
 #include "cacheListener.h"
 #include <sst/core/params.h>
-#include <boost/lexical_cast.hpp>
 #include "mshr.h"
 #include "L1CoherenceController.h"
 #include "L1IncoherentController.h"
@@ -435,7 +434,7 @@ void Cache::configureLinks(Params &params) {
             d_->debug(_INFO_, "Low Network Link ID: %u\n", (uint)link->getId());
             lowNetPorts_->push_back(link);
             id++;
-            linkName = "low_network_" + boost::lexical_cast<std::string>(id);
+            linkName = "low_network_" + std::to_string(id);
         }
         bottomNetworkLink_ = NULL;
     
