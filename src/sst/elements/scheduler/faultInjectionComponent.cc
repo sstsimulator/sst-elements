@@ -32,6 +32,7 @@
 
 
 #include <sst/core/params.h>
+#include <sst/core/stringize.h>
 
 using namespace SST;
 using namespace SST::Scheduler;
@@ -164,8 +165,8 @@ std::map<std::string, std::string> * faultInjectionComponent::readFailFile(){
 				schedout.fatal( CALL_INFO, 1, "malformed line in failure file: %s\n", fileLine.c_str() );
 			}
 
-			boost::algorithm::trim( tokens.at( 0 ) );
-			boost::algorithm::trim( tokens.at( 1 ) );
+			trim( tokens.at( 0 ) );
+			trim( tokens.at( 1 ) );
 
 			nodes->insert( std::pair<std::string, std::string>( tokens.at( 0 ), tokens.at( 1 ) ) );
 		}else{

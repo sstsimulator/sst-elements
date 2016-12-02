@@ -23,6 +23,7 @@
 #include <boost/tokenizer.hpp>        // for reading YumYum jobs
 
 #include <sst/core/params.h>
+#include <sst/core/stringize.h>
 
 #include "util.h"
 #include "InputParser.h"
@@ -255,7 +256,7 @@ bool JobParser::checkJobFile()
    */
 bool JobParser::newYumYumJobLine(std::string line, SimTime_t currSimTime)
 {
-    boost::algorithm::trim(line);
+    trim(line);
 
     if (line.compare("YYKILL") == 0) {
         *YumYumSimulationKillFlag = true;
@@ -274,9 +275,9 @@ bool JobParser::newYumYumJobLine(std::string line, SimTime_t currSimTime)
     vector<string> tokens;
     tokens.assign(Tokenizer.begin(), Tokenizer.end());
 
-    boost::algorithm::trim(tokens.at(0));
-    boost::algorithm::trim(tokens.at(1));
-    boost::algorithm::trim(tokens.at(2));
+    trim(tokens.at(0));
+    trim(tokens.at(1));
+    trim(tokens.at(2));
 
     strncpy(ID, tokens.at(0).c_str(), JobIDlength);
     if (JobIDlength > 0) {

@@ -29,6 +29,7 @@
 
 #include "sst/core/element.h"
 #include <sst/core/params.h>
+#include <sst/core/stringize.h>
 
 #include "events/CommunicationEvent.h"
 #include "events/CompletionEvent.h"
@@ -59,8 +60,8 @@ void readCSVpairsIntoMap( boost::tokenizer< boost::escaped_list_separator<char> 
     tokens.assign( Tokenizer.begin(), Tokenizer.end() );
 
     for ( unsigned int counter = 0; counter < tokens.size(); counter += 2 ){
-        boost::algorithm::trim( tokens.at( counter ) );
-        boost::algorithm::trim( tokens.at( counter + 1 ) );
+        trim( tokens.at( counter ) );
+        trim( tokens.at( counter + 1 ) );
         Map -> insert( std::pair<std::string, float>( tokens.at( counter ), atof( tokens.at( counter + 1 ).c_str() ) ) );
     }
 }
@@ -72,9 +73,9 @@ void readDelaysIntoMap( boost::tokenizer< boost::escaped_list_separator<char> > 
     tokens.assign(Tokenizer.begin(), Tokenizer.end());
 
     for(unsigned int counter = 0; counter + 2 < tokens.size(); counter += 3){
-        boost::algorithm::trim(tokens.at(counter));
-        boost::algorithm::trim(tokens.at(counter + 1));
-        boost::algorithm::trim(tokens.at(counter + 2));
+        trim(tokens.at(counter));
+        trim(tokens.at(counter + 1));
+        trim(tokens.at(counter + 2));
 
         std::string faultName = tokens.at(counter);
         unsigned int lowerLatencyBound = atoi(tokens.at(counter + 1).c_str());
