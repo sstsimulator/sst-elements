@@ -26,7 +26,8 @@
 
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/thread.hpp>
+#include <thread>
+#include <chrono>
 
 #include <sst/core/params.h>
 
@@ -141,7 +142,7 @@ std::map<std::string, std::string> * faultInjectionComponent::readFailFile(){
 			if( fileContainsToken ){
 				fileLastWritten = boost::filesystem::last_write_time( failFilename );
 			}else{
-				boost::this_thread::sleep( boost::posix_time::milliseconds( failPollFreq ) );
+				std::this_thread::sleep_for( std::chrono::milliseconds( failPollFreq ) );
 			}
 		}
 	}

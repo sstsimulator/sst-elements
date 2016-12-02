@@ -142,7 +142,7 @@ EXTRA_DIST = \
     simulations/test_DetailedNetwork.sim
 
 libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS)
-libscheduler_la_LIBADD = -lboost_filesystem$(BOOST_LIB_SUFFIX) -lboost_thread$(BOOST_LIB_SUFFIX)
+libscheduler_la_LIBADD = -lboost_filesystem$(BOOST_LIB_SUFFIX)
 
 if HAVE_GLPK
 libscheduler_la_LDFLAGS += $(GLPK_LDFLAGS)
