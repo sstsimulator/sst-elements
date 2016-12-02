@@ -23,7 +23,6 @@
 #define	UTIL_H
 
 #include <boost/algorithm/string.hpp>
-#include <boost/variant.hpp>
 #include <string>
 #include <assert.h>
 

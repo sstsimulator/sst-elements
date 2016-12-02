@@ -26,7 +26,6 @@
 #include <sst/core/interfaces/stringEvent.h>
 
 #include <csignal>
-#include <boost/variant.hpp>
 
 #include "cacheController.h"
 #include "memEvent.h"

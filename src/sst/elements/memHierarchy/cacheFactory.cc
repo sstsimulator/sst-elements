@@ -21,6 +21,7 @@
 
 
 #include <sst_config.h>
+#include <sst/core/stringize.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include "hash.h"
 #include "cacheController.h"
@@ -102,10 +103,10 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     int dirNumEntries           = params.find<int>("noninclusive_directory_entries", 0);
     
     /* Convert all strings to lower case */
-    boost::algorithm::to_lower(coherenceProtocol);
-    boost::algorithm::to_lower(replacement);
-    boost::algorithm::to_lower(dirReplacement);
-    boost::algorithm::to_lower(cacheType);
+    to_lower(coherenceProtocol);
+    to_lower(replacement);
+    to_lower(dirReplacement);
+    to_lower(cacheType);
 
     /* Check user specified all required fields */
     if (frequency.empty())           dbg->fatal(CALL_INFO, -1, "Param not specified: frequency - cache frequency.\n");
@@ -168,25 +169,25 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     ReplacementMgr* replManager = NULL;
     ReplacementMgr* dirReplManager = NULL;
     if (cacheType == "inclusive" || cacheType == "noninclusive") {
-        if (boost::iequals(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (boost::iequals(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
-        else if (boost::iequals(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
-        else if (boost::iequals(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (boost::iequals(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
+        if (SST::strcasecmp(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
+        else if (SST::strcasecmp(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
+        else if (SST::strcasecmp(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
+        else if (SST::strcasecmp(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
+        else if (SST::strcasecmp(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
         else dbg->fatal(CALL_INFO, -1, "Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
         cacheArray = new SetAssociativeArray(dbg, numLines, lineSize, associativity, replManager, ht, !L1);
     } else if (cacheType == "noninclusive_with_directory") {
-        if (boost::iequals(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (boost::iequals(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
-        else if (boost::iequals(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
-        else if (boost::iequals(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (boost::iequals(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
+        if (SST::strcasecmp(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
+        else if (SST::strcasecmp(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
+        else if (SST::strcasecmp(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
+        else if (SST::strcasecmp(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
+        else if (SST::strcasecmp(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
         else dbg->fatal(CALL_INFO, -1, "Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
-        if (boost::iequals(dirReplacement, "lru"))          dirReplManager = new LRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
-        else if (boost::iequals(dirReplacement, "lfu"))     dirReplManager = new LFUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
-        else if (boost::iequals(dirReplacement, "random"))  dirReplManager = new RandomReplacementMgr(dbg, dirAssociativity);
-        else if (boost::iequals(dirReplacement, "mru"))     dirReplManager = new MRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
-        else if (boost::iequals(dirReplacement, "nmru"))    dirReplManager = new NMRUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
+        if (SST::strcasecmp(dirReplacement, "lru"))          dirReplManager = new LRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
+        else if (SST::strcasecmp(dirReplacement, "lfu"))     dirReplManager = new LFUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
+        else if (SST::strcasecmp(dirReplacement, "random"))  dirReplManager = new RandomReplacementMgr(dbg, dirAssociativity);
+        else if (SST::strcasecmp(dirReplacement, "mru"))     dirReplManager = new MRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
+        else if (SST::strcasecmp(dirReplacement, "nmru"))    dirReplManager = new NMRUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
         else dbg->fatal(CALL_INFO, -1, "Invalid param: directory_replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
         cacheArray = new DualSetAssociativeArray(dbg, static_cast<uint>(lineSize), ht, true, dirNumEntries, dirAssociativity, dirReplManager, numLines, associativity, replManager);
     }
