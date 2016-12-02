@@ -21,10 +21,10 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>        // for reading YumYum jobs
-#include <boost/filesystem.hpp>
 
 #include <sst/core/params.h>
 
+#include "util.h"
 #include "InputParser.h"
 #include "Job.h"
 #include "Machine.h"
@@ -82,9 +82,7 @@ JobParser::JobParser(Machine* machine,
         fileName = jobTrace;
     }
 
-    fileNamePath = boost::filesystem::path(fileName.c_str());
-    folderPath = boost::filesystem::path(fileNamePath);
-    folderPath.remove_leaf();
+    fileNamePath = fileName;
 }
 
 std::vector<Job*> JobParser::parseJobs(SimTime_t currSimTime)
@@ -100,7 +98,7 @@ std::vector<Job*> JobParser::parseJobs(SimTime_t currSimTime)
     
     jobs.clear();
 
-    LastJobFileModTime = boost::filesystem::last_write_time( fileNamePath );
+    LastJobFileModTime = Utils::file_time_last_written( fileNamePath );
 
     //read line by line
     string line;
@@ -237,8 +235,8 @@ std::map<int, std::pair<unsigned long, int> > JobParser::parseJobsEmberRunning()
  */
 bool JobParser::checkJobFile()
 {
-    if( boost::filesystem::exists( fileNamePath ) ){
-        time_t lastWritten = boost::filesystem::last_write_time( fileNamePath );
+    if( Utils::file_exists( fileNamePath ) ){
+        time_t lastWritten = Utils::file_time_last_written( fileNamePath );
         if( lastWritten > LastJobFileModTime ){
             LastJobFileModTime = lastWritten;
             return true;

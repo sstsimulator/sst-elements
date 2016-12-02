@@ -19,7 +19,6 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <boost/filesystem.hpp>
 
 #include <sst/core/component.h>
 #include <sst/core/link.h>

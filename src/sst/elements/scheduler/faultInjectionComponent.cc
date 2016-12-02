@@ -19,6 +19,7 @@
 #include "events/CommunicationEvent.h"
 #include "output.h"
 #include "misc.h"
+#include "util.h"
 
 #include <fstream>
 #include <iostream>
@@ -28,6 +29,7 @@
 #include <boost/algorithm/string.hpp>
 #include <thread>
 #include <chrono>
+
 
 #include <sst/core/params.h>
 
@@ -126,7 +128,7 @@ std::map<std::string, std::string> * faultInjectionComponent::readFailFile(){
 
 	// block until the token exists in the file.  It should be the last line.
 	while( !fileContainsToken ){
-		if( boost::filesystem::exists( failFilename ) && fileLastWritten < boost::filesystem::last_write_time( failFilename ) ){
+		if( Utils::file_exists( failFilename ) && fileLastWritten < Utils::file_time_last_written( failFilename ) ){
 			fileContainsToken = false;
 			std::ifstream failFile;
 			std::string fileLine;
@@ -140,7 +142,7 @@ std::map<std::string, std::string> * faultInjectionComponent::readFailFile(){
 			failFile.close();
 
 			if( fileContainsToken ){
-				fileLastWritten = boost::filesystem::last_write_time( failFilename );
+				fileLastWritten = Utils::file_time_last_written( failFilename );
 			}else{
 				std::this_thread::sleep_for( std::chrono::milliseconds( failPollFreq ) );
 			}
