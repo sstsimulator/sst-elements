@@ -19,7 +19,7 @@ libpyproto_la_SOURCES = \
 
 
 libpyproto_la_LDFLAGS = -module -avoid-version \
-						  $(PYTHON_LDFLAGS) \
-						  $(BOOST_LDFLAGS)
-libpyproto_la_LIBADD = -lboost_serialization$(BOOST_LIB_SUFFIX)
+						  $(PYTHON_LDFLAGS)
+#						  $(BOOST_LDFLAGS)
+#libpyproto_la_LIBADD = -lboost_serialization$(BOOST_LIB_SUFFIX)
 
