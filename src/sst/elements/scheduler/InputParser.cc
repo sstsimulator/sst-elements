@@ -19,8 +19,6 @@
 #include <string>
 #include <typeinfo>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/tokenizer.hpp>        // for reading YumYum jobs
 
 #include <sst/core/params.h>
 #include <sst/core/stringize.h>
@@ -271,7 +269,7 @@ bool JobParser::newYumYumJobLine(std::string line, SimTime_t currSimTime)
     uint64_t duration;
     uint64_t procs;
 
-    boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer(line);
+    Tokenizer< escaped_list_separator > Tokenizer(line);
     vector<string> tokens;
     tokens.assign(Tokenizer.begin(), Tokenizer.end());
 

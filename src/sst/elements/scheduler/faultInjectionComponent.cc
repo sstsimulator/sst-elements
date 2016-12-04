@@ -25,8 +25,6 @@
 #include <iostream>
 #include <stdlib.h>
 
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string.hpp>
 #include <thread>
 #include <chrono>
 
@@ -157,9 +155,9 @@ std::map<std::string, std::string> * faultInjectionComponent::readFailFile(){
 	
 	while( std::getline( failFile, fileLine ) ){
 		if( fileLine.find( resumeSimulationToken ) == std::string::npos ){
-			boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer( fileLine );
+			Tokenizer<escaped_list_separator> tokenizer( fileLine );
 			std::vector<std::string> tokens;
-			tokens.assign( Tokenizer.begin(), Tokenizer.end() );
+			tokens.assign( tokenizer.begin(), tokenizer.end() );
 
 			if( 2 != tokens.size() ){
 				schedout.fatal( CALL_INFO, 1, "malformed line in failure file: %s\n", fileLine.c_str() );

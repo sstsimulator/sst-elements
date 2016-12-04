@@ -24,9 +24,6 @@
 #include <cmath>
 #include <stdio.h>
 
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string.hpp>
-
 #include "sst/core/element.h"
 #include <sst/core/params.h>
 #include <sst/core/stringize.h>
@@ -54,7 +51,7 @@ int yumyumJobKillRand48Seed;
 static std::ofstream faultLog;
 static std::ofstream errorLog;
 
-void readCSVpairsIntoMap( boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer, std::map<std::string, float> * Map )
+void readCSVpairsIntoMap( Tokenizer< escaped_list_separator > Tokenizer, std::map<std::string, float> * Map )
 {
     std::vector<std::string> tokens;
     tokens.assign( Tokenizer.begin(), Tokenizer.end() );
@@ -68,7 +65,7 @@ void readCSVpairsIntoMap( boost::tokenizer< boost::escaped_list_separator<char> 
 
 
 
-void readDelaysIntoMap( boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer, std::map<std::string, std::pair<unsigned int, unsigned int> > * FaultLatencyBounds, int nodeNum ){
+void readDelaysIntoMap( Tokenizer< escaped_list_separator > Tokenizer, std::map<std::string, std::pair<unsigned int, unsigned int> > * FaultLatencyBounds, int nodeNum ){
     std::vector<std::string> tokens;
     tokens.assign(Tokenizer.begin(), Tokenizer.end());
 
@@ -143,11 +140,11 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
 
     SelfLink -> setDefaultTimeBase(registerTimeBase(SCHEDULER_TIME_BASE));
 
-    readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find<std::string>("faultActivationRate")), &Faults);
-    readDelaysIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find<std::string>("errorPropagationDelay")), &FaultLatencyBounds, nodeNum);
-    readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find<std::string>("errorCorrectionProbability")), &errorCorrectionProbability);
-    readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find<std::string>("errorMessageProbability")), &errorLogProbability);
-    readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params.find<std::string>("jobFailureProbability")), &jobKillProbability);
+    readCSVpairsIntoMap(Tokenizer< escaped_list_separator >(params.find<std::string>("faultActivationRate")), &Faults);
+    readDelaysIntoMap(Tokenizer< escaped_list_separator >(params.find<std::string>("errorPropagationDelay")), &FaultLatencyBounds, nodeNum);
+    readCSVpairsIntoMap(Tokenizer< escaped_list_separator >(params.find<std::string>("errorCorrectionProbability")), &errorCorrectionProbability);
+    readCSVpairsIntoMap(Tokenizer< escaped_list_separator >(params.find<std::string>("errorMessageProbability")), &errorLogProbability);
+    readCSVpairsIntoMap(Tokenizer< escaped_list_separator >(params.find<std::string>("jobFailureProbability")), &jobKillProbability);
 
 	yumyumFaultRand48State = (unsigned short *) malloc(3 * sizeof(short));
 	yumyumErrorLogRand48State = (unsigned short *) malloc(3 * sizeof(short));

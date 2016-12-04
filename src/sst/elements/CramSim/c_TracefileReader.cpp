@@ -20,6 +20,7 @@
 #include <iostream>
 #include <stdlib.h>
 
+#include <sst/core/stringize.h>
 
 
 //local includes
@@ -160,7 +161,7 @@ void c_TracefileReader::createTxn() {
 	if (m_txnReqQ.size() < k_txnGenReqQEntries) {
     std::string l_line;
     if (std::getline(m_traceFileStream, l_line)) {
-      boost::tokenizer<> l_tok(l_line);
+      Tokenizer<> l_tok(l_line);
       unsigned l_numTokens = std::distance(l_tok.begin(), l_tok.end());
       assert((3==l_numTokens) || (4==l_numTokens));
       unsigned l_tokNum = 0;
@@ -169,7 +170,7 @@ void c_TracefileReader::createTxn() {
       unsigned l_txnAddress = 0;
       unsigned l_txnDataWidth = 0;
 
-      for (boost::tokenizer<>::iterator l_iter = l_tok.begin();
+      for (Tokenizer<>::iterator l_iter = l_tok.begin();
         l_iter != l_tok.end(); ++l_iter){
             switch (l_tokNum) {
               case 0:
