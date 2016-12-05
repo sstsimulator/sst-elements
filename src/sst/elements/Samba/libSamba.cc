@@ -61,7 +61,7 @@ static const ElementInfoParam Samba_params[] = {
     {"latency_L%(levels)d", "the access latency in cycles for this level of memory","1"},
     {"parallel_mode_L%(levels)d", "this is for the corner case of having a one cycle overlap with accessing cache","0"},
     {"page_walk_latency", "Each page table walk latency in nanoseconds", "50"},
-    {"self_connected", "Determines if the page walkers are acutally connected to memory hierarcy or just add fixed latency (self-connected)", "0"},
+    {"self_connected", "Determines if the page walkers are acutally connected to memory hierarcy or just add fixed latency (self-connected)", "1"},
     {NULL, NULL, NULL},
 };
 

@@ -68,7 +68,7 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 
 
 
-	self_connected = ((uint32_t) params.find<uint32_t>("self_connected", 0));
+	self_connected = ((uint32_t) params.find<uint32_t>("self_connected", 1));
 
 	page_walk_latency = ((uint32_t) params.find<uint32_t>("page_walk_latency", 50));
 
@@ -114,9 +114,9 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 	for(int i=0; i < sizes; i++)
 	{
 
-		size[i] =  ((uint32_t) params.find<uint32_t>("size"+std::to_string(i+1) + "_PTWC", 1));
+		size[i] =  ((uint32_t) params.find<uint32_t>("size"+std::to_string(i+1) + "_PTWC", 16));
 
-		assoc[i] =  ((uint32_t) params.find<uint32_t>("assoc"+std::to_string(i+1) +  "_PTWC", 1));
+		assoc[i] =  ((uint32_t) params.find<uint32_t>("assoc"+std::to_string(i+1) +  "_PTWC", 4));
 
 		// We define the number of sets for that structure of page size number i
 		sets[i] = size[i]/assoc[i];
