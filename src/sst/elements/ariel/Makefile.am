@@ -51,6 +51,7 @@ EXTRA_DIST = \
 	frontend/simple/examples/stream/stream.c
 
 libariel_la_LDFLAGS = -module -avoid-version
+libariel_la_LIBADD = -lrt
 libariel_la_CPPFLAGS = \
 	-DARIEL_TRACE_LIB=$(libdir)/sst \
         -DARIEL_TOOL_DIR="$(libexecdir)" \
