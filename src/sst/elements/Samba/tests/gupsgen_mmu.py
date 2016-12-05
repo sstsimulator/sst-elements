@@ -93,7 +93,6 @@ mmu.addParams({
         "assoc4_PTWC": 4, # this just indicates the associtativit the page table walk cache level 1 (PGD)
         "latency_PTWC": 10, # This is the latency of checking the page table walk cache
 	"max_outstanding_PTWC": 4,
-	"self_connected": 1,
 });
 
 
@@ -116,8 +115,7 @@ arielMMULink = sst.Link("cpu_mmu_link_" + str(next_core_id))
 '''
 
 
-#ptw_to_mem.connect((mmu, "ptw_to_mem0","100ns"), (mmu, "ptw_to_mem0","100ns"))
-#ptw_to_mem.setNoCut()
+#ptw_to_mem.connect((mmu, "ptw_to_mem0","100ps"), (mmu, "ptw_to_mem0","100ps"))
 
 link_cpu_mmu_link.connect( (comp_cpu, "cache_link", "0ps"), (mmu, "cpu_to_mmu0", "0ps") )
 link_cpu_mmu_link.setNoCut()
