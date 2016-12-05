@@ -23,43 +23,27 @@
 using namespace SST::MemHierarchy;
 using namespace SST;
 
-TLB::TLB(int Page_size, int Assoc, TLB * Next_level, int Size)
+// Find the absoulute value
+int abs_int(int x)
 {
 
-	// Initializing the TLB structure
-
-	/*
-	   page_size=Page_size;
-
-	   assoc=Assoc;
-
-	   next_level=Next_level;
-
-	   size=Size;
-
-	   hits=misses=0;
-
-	   sets= size/assoc;
-
-	   tags = new long long int*[sets];
-
-	   lru = new int*[sets];
-
-	   for(int i=0; i < sets; i++)
-	   {
-	   tags[i]=new long long int[assoc];
-	   lru[i]=new int[assoc];
-	   for(int j=0; j<assoc;j++)
-	   {
-	   tags[i][j]=-1;
-	   lru[i][j]=j;
-	   }
-	   }
-	   */
+	if(x<0)
+		return -1*x;
+	else
+		return x;
 
 }
 
 
+// Not needed for now, probably will be removed soon, if doesn't cause any compaitability issues
+TLB::TLB(int Page_size, int Assoc, TLB * Next_level, int Size)
+{
+
+}
+
+
+
+// The constructer mainly used when creating TLBUnits
 TLB::TLB(int tlb_id, TLB * Next_level, int level, SST::Component * owner, SST::Params& params)
 {
 
@@ -85,7 +69,7 @@ TLB::TLB(int tlb_id, TLB * Next_level, int level, SST::Component * owner, SST::P
 
 	parallel_mode = ((uint32_t) params.find<uint32_t>("parallel_mode_L"+LEVEL, 0));
 
-	upper_link_latency = ((uint32_t) params.find<uint32_t>("upper_link_L"+LEVEL, 1));
+	upper_link_latency = ((uint32_t) params.find<uint32_t>("upper_link_L"+LEVEL, 0));
 
 	//std::cout<<"Page size is "<<page_size<<std::endl;
 
@@ -164,7 +148,20 @@ TLB::TLB(int tlb_id, TLB * Next_level, int level, SST::Component * owner, SST::P
 
 }
 
+// This constructer is only used for creating the last-level TLB Unit, hence the PageTableWalker argument passed to it
+TLB::TLB(int tlb_id, PageTableWalker * Next_level, int level, SST::Component * owner, SST::Params& params)
+{
 
+std::cout<<"Assigning the PTW correctly"<<std::endl;
+
+PTW=Next_level;
+
+new (this) TLB(tlb_id, (TLB *) NULL, level, owner, params);
+
+}
+
+
+// This is the most important function, which works like the heart of the TLBUnit, called on every cycle to check if any completed requests or new requests at this cycle.
 bool TLB::tick(SST::Cycle_t x)
 {
 
@@ -175,7 +172,6 @@ bool TLB::tick(SST::Cycle_t x)
 
 
 		SST::Event * ev = pushed_back.back();
-		//service_back->push_back(ev);
 
 		uint64_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
@@ -228,11 +224,13 @@ bool TLB::tick(SST::Cycle_t x)
 	en_1 = not_serviced.end();
 
 	int dispatched=0;
+
+	// Iteravte over the requests passed from higher levels
 	for(;st_1!=not_serviced.end(); st_1++)
 	{
 		dispatched++;
 
-		// Checking that we never dispatch more accesses than the port width
+		// Checking that we never dispatch more accesses than the port width of accesses per cycle
 		if(dispatched > max_width)
 			break;
 
@@ -253,6 +251,7 @@ bool TLB::tick(SST::Cycle_t x)
 				break;
 			}
 
+		// If it hist in any page size structure, we update the lru position of the translation and update statistics
 		if(hit)
 		{
 
@@ -269,26 +268,27 @@ bool TLB::tick(SST::Cycle_t x)
 
 			st_1 = not_serviced.erase(st_1);
 		}
-		else
+		else // We know the translation doesn't exist, so we need to service a miss
 		{
 
+			// Making sure we have a room for an additional miss, i.e., less than the maximum outstanding misses
 			if(pending_misses.size() < max_outstanding)
 			{	
 				statTLBMisses->addData(1);
 				misses++;
 				pending_misses.push_back(*st_1);
+
+
+				// Check if the last level TLB or not, if last-level, pass the request to the page table walker
 				if(next_level!=NULL)
 				{
-
+					
 					next_level->push_request(ev);
 					st_1 = not_serviced.erase(st_1);
 				}
-				else
+				else // Passs it to the page table walker
 				{
-					ready_by[ev] = x + latency + 2*upper_link_latency + page_walk_latency;  // the upper link latency is substituted for sending the miss request and reciving it, Note this is hard coded for the last-level as memory access walk latency, this ****definitely**** needs to change
-
-					ready_by_size[ev] = os_page_size; // FIXME: This hardcoded for now assuming the OS maps virtual pages to 4KB pages only
-
+					PTW->push_request(ev);
 					st_1 = not_serviced.erase(st_1);
 				}
 
@@ -306,6 +306,7 @@ bool TLB::tick(SST::Cycle_t x)
 	st = ready_by.begin();
 	en = ready_by.end();
 
+	// We iterate over the list of being serviced request to see if any has finished by this cycle
 	while(st!=en)
 	{
 
@@ -320,14 +321,14 @@ bool TLB::tick(SST::Cycle_t x)
 
 			if(SIZE_LOOKUP.find(ready_by_size[st->first])!= SIZE_LOOKUP.end())
 			{
-			// Double checking that we actually still don't have it inserted
-			if(!check_hit(addr, SIZE_LOOKUP[ready_by_size[st->first]]))
-			{
-				insert_way(addr, find_victim_way(addr, SIZE_LOOKUP[ready_by_size[st->first]]), SIZE_LOOKUP[ready_by_size[st->first]]);
-				update_lru(addr, SIZE_LOOKUP[ready_by_size[st->first]]);
-			}
-			else
-				update_lru(addr, SIZE_LOOKUP[ready_by_size[st->first]]);
+				// Double checking that we actually still don't have it inserted
+				if(!check_hit(addr, SIZE_LOOKUP[ready_by_size[st->first]]))
+				{
+					insert_way(addr, find_victim_way(addr, SIZE_LOOKUP[ready_by_size[st->first]]), SIZE_LOOKUP[ready_by_size[st->first]]);
+					update_lru(addr, SIZE_LOOKUP[ready_by_size[st->first]]);
+				}
+				else
+					update_lru(addr, SIZE_LOOKUP[ready_by_size[st->first]]);
 			}
 
 
@@ -374,58 +375,35 @@ bool TLB::tick(SST::Cycle_t x)
 }
 
 
-
+// Used to insert a new translation on a specific way of the TLB structure
 void TLB::insert_way(long long int vaddr, int way, int struct_id)
 {
 
-	int set=(vaddr/page_size[struct_id])%sets[struct_id];
+	int set=abs_int((vaddr/page_size[struct_id])%sets[struct_id]);
 	tags[struct_id][set][way]=vaddr/page_size[struct_id];
 
 
 }
 
 
-// Does the translation and updating the statistics of miss/hit
+
+// This function will be used later to get the translation of a specific virtual address (if cached)
 long long int TLB::translate(long long int vadd)
 {
-/*
-	bool hit= check_hit(vadd);
-
-	if(hit)
-	{
-
-		statTLBHits->addData(1);
-		hits++;	 
-		update_lru(vadd);
-
-	}
-	else
-	{
-
-		statTLBMisses->addData(1);
-		misses++;
-		insert_way(vadd, find_victim_way(vadd));
-		update_lru(vadd);
-
-
-
-	}
-*/
 	return 1;
 
 }
 
 
 
-// Find if it exists
+// Find if the translation  exists on structure struct_id
 bool TLB::check_hit(long long int vadd, int struct_id)
 {
 
 
-	int set= (vadd/page_size[struct_id])%sets[struct_id];
+	int set= abs_int((vadd/page_size[struct_id])%sets[struct_id]);
 	for(int i=0; i<assoc[struct_id];i++)
 		if(tags[struct_id][set][i]==vadd/page_size[struct_id])
-
 			return true;
 
 	return false;
@@ -435,7 +413,7 @@ bool TLB::check_hit(long long int vadd, int struct_id)
 int TLB::find_victim_way(long long int vadd, int struct_id)
 {
 
-	int set= (vadd/page_size[struct_id])%sets[struct_id];
+	int set= abs_int((vadd/page_size[struct_id])%sets[struct_id]);
 
 	for(int i=0; i<assoc[struct_id]; i++)
 		if(lru[struct_id][set][i]==(assoc[struct_id]-1))
@@ -445,13 +423,13 @@ int TLB::find_victim_way(long long int vadd, int struct_id)
 	return 0;
 }
 
-// This function updates the LRU policy for a given address
+// This function updates the LRU position for a given address of a specific structure
 void TLB::update_lru(long long int vaddr, int struct_id)
 {
 
 	int lru_place=assoc[struct_id]-1;
 
-	int set= (vaddr/page_size[struct_id])%sets[struct_id];
+	int set= abs_int((vaddr/page_size[struct_id])%sets[struct_id]);
 	for(int i=0; i<assoc[struct_id];i++)
 		if(tags[struct_id][set][i]==vaddr/page_size[struct_id])
 		{

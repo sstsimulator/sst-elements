@@ -23,14 +23,9 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
-//#include "sst_config.h"
-//
 #include "sst/core/element.h"
-
 #include <sst/core/interfaces/stringEvent.h>
-
 #include "TLBhierarchy.h"
-
 #include "sst/elements/memHierarchy/memEvent.h"
 #include <sst/core/simulation.h>
 
@@ -77,12 +72,15 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 	sprintf(subID, "%" PRIu32, coreID);
 
 
+	PTW = new PageTableWalker(coreID, NULL, 0, owner, params);
+
 	total_waiting = owner->registerStatistic<uint64_t>( "total_waiting", subID );	
 	// Initiating all levels of this hierarcy
-	TLB * prev=NULL;
-	for(int level=levels; level >= 1; level--)
+	TLB_CACHE[levels] = new TLB(coreID, PTW, levels, owner, params);
+	TLB * prev=TLB_CACHE[levels];
+	for(int level=levels-1; level >= 1; level--)
 	{
-		TLB_CACHE[level] = new TLB(coreID, prev, level, owner, params);
+		TLB_CACHE[level] = new TLB(coreID, (TLB *) prev, level, owner, params);
 		prev = TLB_CACHE[level];
 
 	}
@@ -95,11 +93,14 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 	}
 
 
+	PTW->setServiceBack(TLB_CACHE[levels]->getPushedBack());
+	PTW->setServiceBackSize(TLB_CACHE[levels]->getPushedBackSize());
+
+
 	TLB_CACHE[1]->setServiceBack(&mem_reqs);
 	TLB_CACHE[1]->setServiceBackSize(&mem_reqs_sizes);
 
 
-//	registerClock( cpu_clock, new Clock::Handler<TLBhierarchy>(this, &TLBhierarchy::tick ) );
 	curr_time = 0;
 
 }
@@ -150,19 +151,22 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 
 	}
 
+	PTW->tick(x);
 
 	curr_time = x;
 	// Step 1, check if not empty, then propogate it to L1 TLB
 	while(!mem_reqs.empty())
 	{
 
-
-		//		std::cout<<"We have just completed a translation at "<<x<<std::endl;
 		SST::Event * event= mem_reqs.back();
 		
 		if(time_tracker.find(event)==time_tracker.end())
-		   std::cout<<"Something wrong happened"<<std::endl;
-
+		{ 
+		  std::cout<<"Something wrong happened"<<std::endl;
+		   mem_reqs_sizes.erase(event);
+		   mem_reqs.pop_back();
+		   continue;
+		}
 		uint64_t time_diff = (uint64_t ) x - time_tracker[event];
 		time_tracker.erase(event);
 		total_waiting->addData(time_diff);

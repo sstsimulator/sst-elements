@@ -74,19 +74,27 @@ mmu.addParams({
         "size3_L2": 16,
         "clock": "2 Ghz",
         "levels": 2,
-        "max_width_L1": 16,
+        "max_width_L1": 3,
         "max_outstanding_L1": 2,
-        "latency_L1": 1,
+        "latency_L1": 4,
         "parallel_mode_L1": 1,
         "max_outstanding_L2": 2,
         "max_width_L2": 4,
         "latency_L2": 10,
         "parallel_mode_L2": 0,
-        "page_walk_latency": 50,
-
+        "page_walk_latency": 30,
+        "size1_PTWC": 32, # this just indicates the number entries of the page table walk cache level 1 (PTEs)
+        "assoc1_PTWC": 4, # this just indicates the associtativit the page table walk cache level 1 (PTEs)
+        "size2_PTWC": 32, # this just indicates the number entries of the page table walk cache level 1 (PMDs)
+        "assoc2_PTWC": 4, # this just indicates the associtativit the page table walk cache level 1 (PMDs)
+        "size3_PTWC": 32, # this just indicates the number entries of the page table walk cache level 1 (PUDs)
+        "assoc3_PTWC": 4, # this just indicates the associtativit the page table walk cache level 1 (PUDs)
+        "size4_PTWC": 32, # this just indicates the number entries of the page table walk cache level 1 (PGD)
+        "assoc4_PTWC": 4, # this just indicates the associtativit the page table walk cache level 1 (PGD)
+        "latency_PTWC": 10, # This is the latency of checking the page table walk cache
+	"max_outstanding_PTWC": 4,
+	"self_connected": 1,
 });
-
-
 
 
 mmu.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
@@ -96,6 +104,7 @@ link_cpu_mmu_link = sst.Link("link_cpu_mmu_link")
 
 link_mmu_cache_link = sst.Link("link_mmu_cache_link")
 
+#ptw_to_mem = sst.Link("ptw_to_mem_link")
 
 '''
 arielMMULink = sst.Link("cpu_mmu_link_" + str(next_core_id))
@@ -106,6 +115,9 @@ arielMMULink = sst.Link("cpu_mmu_link_" + str(next_core_id))
                 MMUCacheLink.setNoCut()
 '''
 
+
+#ptw_to_mem.connect((mmu, "ptw_to_mem0","100ns"), (mmu, "ptw_to_mem0","100ns"))
+#ptw_to_mem.setNoCut()
 
 link_cpu_mmu_link.connect( (comp_cpu, "cache_link", "0ps"), (mmu, "cpu_to_mmu0", "0ps") )
 link_cpu_mmu_link.setNoCut()
