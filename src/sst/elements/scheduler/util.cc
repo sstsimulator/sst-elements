@@ -35,7 +35,7 @@ bool file_exists(const std::string &path) {
 time_t file_time_last_written(const std::string &path) {
     struct stat sb;
     if ( stat(path.c_str(), &sb) == 0 ) {
-        return sb.st_mtim.tv_sec;
+        return sb.st_mtime;
     }
     return (time_t)-1;
 }
