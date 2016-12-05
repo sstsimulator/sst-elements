@@ -51,6 +51,12 @@ private:
     // usage
     Link* output_timing;
 
+	// Self link for dynamic link additions
+	Link* dynlink_timing;
+
+	// Self link for disabling a port temporarily
+	Link* disable_timing;
+
     std::deque<Event*> init_events;
 
     int rtr_id;
@@ -110,11 +116,14 @@ private:
     // Represents the start of when a port was idle
     // If the buffer was empty we instantiate this to the current time
     SimTime_t idle_start;
+	// Represents the start of a data transmit
+	SimTime_t active_start;
 
-	// Tells us whether the link was in an idle state.
+	// Tells us whether the link was in an idle or active state.
 	// Used to let us know when we need to record an idle window
 	// as a statistic.
 	bool is_idle;
+	bool is_active;
 
     // Vairable to tell us if we are waiting for something to happen
     // before we begin more output.  The two things we are waiting on
@@ -134,19 +143,28 @@ private:
     Statistic<uint64_t>* send_packet_count;
     Statistic<uint64_t>* output_port_stalls;
     Statistic<uint64_t>* idle_time;
+    Statistic<uint64_t>* width_adj_count;
 
 	// SAI Metrics (S+A+I=1) corresponds to 
 	// sai_win_start to (sai_win_start + sai_win_length)
-	// the 2nd value in each array is the next current window's values.
-	// At the end of a window these are moved to index 0.
-	float stalled[2];
-	float active[2];
-	float idle[2];
+	double stalled;
+	double active;
+	double idle;
 
 	// The length of time SAI represents
-	UnitAlgebra sai_win_length;
+	double sai_win_length;
+	uint64_t sai_win_length_nano;
+	uint64_t sai_win_length_pico;
 	// The start time of the window
-	UnitAlgebra sai_win_start;
+	SimTime_t sai_win_start;
+	// The amount of delay from adjusting a link width
+	SimTime_t sai_adj_delay;
+	// After adjusting a link the port is disable for sai_adj_delay
+	bool sai_port_disabled;
+
+    // Specifies if the active time is going past the window	
+	bool ongoing_transmit;
+	uint64_t time_active_nano_remaining;
 
     Output& output;
     
@@ -191,7 +209,6 @@ public:
     void printStatus(Output& out, int out_port_busy, int in_port_busy);
     
     // void setupVCs(int vcs, internal_router_event** vc_heads
-	
 	bool decreaseLinkWidth();
 	bool increaseLinkWidth();
     
@@ -206,6 +223,11 @@ private:
     void handle_input_r2r(Event* ev);
     void handle_output_n2r(Event* ev);
     void handle_output_r2r(Event* ev);
+	void handleSAIWindow(Event* ev);
+	void reenablePort(Event* ev);
+
+	uint64_t increaseActive();
+
 };
 
 }  // Namespace merlin
