@@ -9,20 +9,15 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+/* Author: Amro Awad
+ * E-mail: aawad@sandia.gov
+*/
+
+
 #include <sst_config.h>
 
 #include "sst/core/element.h"
 #include "sst/core/component.h"
-
-//#include "ariel.h"
-//#include "arielcpu.h"
-//#include "arieltexttracegen.h"
-
-//#ifdef HAVE_LIBZ
-//#include "arielgzbintracegen.h"
-//#endif
-
-//#define STRINGIZE(input) #input
 
 #include "Samba.h"
 #include "TLBhierarchy.h"
@@ -32,17 +27,10 @@ using namespace SST;
 using namespace SST::SambaComponent;
 
 
-
-
-
 static Component* create_Samba(ComponentId_t id, Params& params)
 {
-
-
-return new Samba(id,params); //dynamic_cast<SST::Component*>( Samba(id,params));
-
+return new Samba(id,params);
 };
-
 
 
 static const ElementInfoStatistic Samba_statistics[] = {
@@ -67,13 +55,13 @@ static const ElementInfoParam Samba_params[] = {
     {"max_outstanding_L%(levels)d", "the number of max outstanding misses","1"},
     {"max_width_L%(levels)d", "the number of accesses on the same cycle","1"},
     {"size%(sizes)_L%(levels)d", "the number of entries of page size number x on level y","1"},
-    {"upper_link_L%(levels)d", "the latency of the upper link connects to this structure","1"},
+    {"upper_link_L%(levels)d", "the latency of the upper link connects to this structure","0"},
     {"assoc%(sizes)_L%(levels)d", "the associativity of size number X in Level Y", "1"},
     {"clock", "the clock frequency", "1GHz"},
-
     {"latency_L%(levels)d", "the access latency in cycles for this level of memory","1"},
     {"parallel_mode_L%(levels)d", "this is for the corner case of having a one cycle overlap with accessing cache","0"},
-    {"page_walk_latency", "This is the page walk latency in cycles just in case no page walker", "50"},
+    {"page_walk_latency", "Each page table walk latency in nanoseconds", "50"},
+    {"self_connected", "Determines if the page walkers are acutally connected to memory hierarcy or just add fixed latency (self-connected)", "1"},
     {NULL, NULL, NULL},
 };
 
@@ -82,6 +70,7 @@ static const ElementInfoParam Samba_params[] = {
 static const ElementInfoPort Samba_ports[] = {
     {"cpu_to_mmu%(corecount)d", "Each Samba link to its core", NULL},
     {"mmu_to_cache%(corecount)d", "Each Samba to its corresponding cache", NULL},
+    {"ptw_to_mem%(corecount)d", "Each TLB hierarchy has a link to the memory for page walking", NULL},
     {"alloc_link_%(corecount)d", "Each core's link to an allocation tracker (e.g. memSieve)", NULL},
     {NULL, NULL, NULL}
 };
