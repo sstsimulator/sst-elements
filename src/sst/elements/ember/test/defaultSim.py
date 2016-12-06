@@ -7,7 +7,8 @@ def getWorkFlow( defaults ):
     workFlow.append( motif )
 
     motif = dict.copy( defaults )
-    motif['cmd'] = "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=2 pey=4 pez=0 kba=10"     
+    #motif['cmd'] = "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=2 pey=4 pez=0 kba=10"     
+	motif['cmd'] = "Halo3D26Motif nx=100 ny=100 nz=100 pex=4 pey=4 pez=4"
     workFlow.append( motif )
 
     motif = dict.copy( defaults )

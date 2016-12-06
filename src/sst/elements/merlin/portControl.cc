@@ -860,25 +860,10 @@ PortControl::handle_output_r2r(Event* ev) {
     have_packets = false;
     // trace.getOutput().output(CALL_INFO, "Got to here 2\n");
     
-	for ( int i = curr_out_vc; i < num_vcs; i++ ) {
-		if ( output_buf[i].empty() ) continue;
-		have_packets = true;
-		if (sai_port_disabled) break;
-		send_event = output_buf[i].front();
-		// Check to see if the needed VC has enough space
-		if ( port_out_credits[i] < send_event->getFlitCount() ) continue;
-		vc_to_send = i;
-		output_buf[i].pop();
-		found = true;
-		break;
-	}
-	// trace.getOutput().output(CALL_INFO, "Got to here 3\n");
-		
-	if (!found)  {
-		for ( int i = 0; i < curr_out_vc; i++ ) {
+	if (!sai_port_disabled){
+		for ( int i = curr_out_vc; i < num_vcs; i++ ) {
 			if ( output_buf[i].empty() ) continue;
 			have_packets = true;
-			if (sai_port_disabled) break;
 			send_event = output_buf[i].front();
 			// Check to see if the needed VC has enough space
 			if ( port_out_credits[i] < send_event->getFlitCount() ) continue;
@@ -886,6 +871,21 @@ PortControl::handle_output_r2r(Event* ev) {
 			output_buf[i].pop();
 			found = true;
 			break;
+		}
+		// trace.getOutput().output(CALL_INFO, "Got to here 3\n");
+			
+		if (!found)  {
+			for ( int i = 0; i < curr_out_vc; i++ ) {
+				if ( output_buf[i].empty() ) continue;
+				have_packets = true;
+				send_event = output_buf[i].front();
+				// Check to see if the needed VC has enough space
+				if ( port_out_credits[i] < send_event->getFlitCount() ) continue;
+				vc_to_send = i;
+				output_buf[i].pop();
+				found = true;
+				break;
+			}
 		}
 	}
     // trace.getOutput().output(CALL_INFO, "Got to here 4\n");
@@ -1019,24 +1019,10 @@ PortControl::handle_output_n2r(Event* ev) {
 	internal_router_event* send_event = NULL;
     have_packets = false;
    	
-	for ( int i = curr_out_vc; i < num_vcs; i++ ) {
-		if ( output_buf[i].empty() ) continue;
-		have_packets = true;
-		if (sai_port_disabled) break;
-		send_event = output_buf[i].front();
-		// Check to see if the needed VC has enough space
-		if ( port_out_credits[send_event->getVN()] < send_event->getFlitCount() ) continue;
-		vc_to_send = i;
-		output_buf[i].pop();
-		found = true;
-		break;
-	}
-		
-	if (!found)  {
-		for ( int i = 0; i < curr_out_vc; i++ ) {
+	if (!sai_port_disabled){
+		for ( int i = curr_out_vc; i < num_vcs; i++ ) {
 			if ( output_buf[i].empty() ) continue;
 			have_packets = true;
-			if (sai_port_disabled) break;
 			send_event = output_buf[i].front();
 			// Check to see if the needed VC has enough space
 			if ( port_out_credits[send_event->getVN()] < send_event->getFlitCount() ) continue;
@@ -1044,6 +1030,20 @@ PortControl::handle_output_n2r(Event* ev) {
 			output_buf[i].pop();
 			found = true;
 			break;
+		}
+			
+		if (!found)  {
+			for ( int i = 0; i < curr_out_vc; i++ ) {
+				if ( output_buf[i].empty() ) continue;
+				have_packets = true;
+				send_event = output_buf[i].front();
+				// Check to see if the needed VC has enough space
+				if ( port_out_credits[send_event->getVN()] < send_event->getFlitCount() ) continue;
+				vc_to_send = i;
+				output_buf[i].pop();
+				found = true;
+				break;
+			}
 		}
 	}
 	
@@ -1164,7 +1164,7 @@ PortControl::handleSAIWindow(Event* ev) {
 	
 	// There should be a flag based off an input parameter enabling disabling dynamic link width.
 	// Here's the logic for adjusting link width based on idle time.
-	if (idle > .95){
+	if (idle > .99){
 		decreaseLinkWidth();
 	}
 	else if (cur_link_width < max_link_width){
