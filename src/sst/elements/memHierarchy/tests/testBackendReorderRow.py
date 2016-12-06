@@ -166,7 +166,7 @@ comp_memory.addParams({
     "max_requests_per_cycle" : 50,
     "do_not_back" : 1,
     "backend" : "memHierarchy.reorderByRow",
-    "backend.max_requests_per_cycle" : 2,
+    "backend.max_issue_per_cycle" : 2,
     "backend.reorder_limit" : "20",
     "backend.backend" : "memHierarchy.simpleDRAM",
     "backend.backend.tCAS" : 3, # 11@800MHz roughly coverted to 200MHz
