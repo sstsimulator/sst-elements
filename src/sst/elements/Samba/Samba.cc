@@ -17,6 +17,7 @@
 
 
 #include <sst_config.h>
+#include <string>
 #include "Samba.h"
 
 
@@ -34,26 +35,28 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	core_count = (uint32_t) params.find<uint32_t>("corecount", 1);
 
+	int self = (uint32_t) params.find<uint32_t>("self_connected", 0);
+
 	int levels = (uint32_t) params.find<uint32_t>("levels", 1);
 
-
+	int  page_walk_latency = ((uint32_t) params.find<uint32_t>("page_walk_latency", 50));
 
 	TLB = new TLBhierarchy*[core_count];
 	std::cout<<"Initialized with "<<core_count<<" cores"<<std::endl;
-
-
-
-
 
 
 	cpu_to_mmu = (SST::Link **) malloc( sizeof(SST::Link*) * core_count );
 
 	mmu_to_cache = (SST::Link **) malloc( sizeof(SST::Link *) * core_count );
 
+	ptw_to_mem = (SST::Link **) malloc( sizeof(SST::Link *) * core_count );
+
+
 	char* link_buffer = (char*) malloc(sizeof(char) * 256);
 
 	char* link_buffer2 = (char*) malloc(sizeof(char) * 256);
 
+	char* link_buffer3 = (char*) malloc(sizeof(char) * 256);
 
 
 
@@ -77,10 +80,23 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		mmu_to_cache[i] = link;
 
 
+		sprintf(link_buffer3, "ptw_to_mem%" PRIu32, i);
+		SST::Link * link3;
+
+		if(self==0)
+			link3 = configureLink(link_buffer3, "30ps", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
+		else
+			link3 = configureSelfLink(link_buffer3, std::to_string(page_walk_latency)+ "ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
+
+		ptw_to_mem[i] = link3;
+
+		TLB[i]->setPTWLink(link3); // We make a connection from the TLB hierarchy to the memory hierarchy, for page table walking purposes
 		TLB[i]->setCacheLink(mmu_to_cache[i]);
 		TLB[i]->setCPULink(cpu_to_mmu[i]);
 
 	}
+
+
 
 	std::cout<<"After initialization "<<std::endl;
 
@@ -91,6 +107,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	free(link_buffer);
 	free(link_buffer2);
+	free(link_buffer3);
 
 }
 
@@ -107,6 +124,7 @@ Samba::Samba() : Component(-1)
 bool Samba::tick(SST::Cycle_t x)
 {
 
+	// We tick the MMU hierarchy of each core
 	for(uint32_t i = 0; i < core_count; ++i)
 		TLB[i]->tick(x);
 

@@ -36,6 +36,7 @@
 #include <poll.h>
 
 #include "TLBhierarchy.h"
+#include "PageTableWalker.h"
 
 //#include "arielcore.h"
 
@@ -67,6 +68,8 @@ namespace SST {
 
 				SST::Link ** mmu_to_cache;
 
+				SST::Link ** ptw_to_mem;
+			
 				long long int max_inst;
 				char* named_pipe;
 				int* pipe_id;

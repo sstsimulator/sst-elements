@@ -31,6 +31,7 @@
 
 #include "TLBentry.h"
 #include "TLBUnit.h"
+#include "PageTableWalker.h"
 
 #include<map>
 #include<vector>
@@ -65,6 +66,10 @@ namespace SST { namespace SambaComponent{
 
 
 		std::map<int, TLB *> TLB_CACHE;
+
+		// Here is the defintion of the page table walker of the TLB hierarchy
+		PageTableWalker * PTW;
+		
 
 		std::string clock_frequency_str;
 
@@ -103,6 +108,7 @@ namespace SST { namespace SambaComponent{
 		TLBhierarchy(int tlb_id,SST::Component * owner);
 		TLBhierarchy(int tlb_id, int level, SST::Component * owner, Params& params);
 
+		PageTableWalker * getPTW(){return PTW;}
 
 		bool tick(SST::Cycle_t x);
 
@@ -120,7 +126,8 @@ namespace SST { namespace SambaComponent{
 		// Sets the to cpu link, this should be called from Samba component when creating links between TLB structures and CPUs 
 		bool setCPULink(SST::Link * TO_CPU) { to_cpu = TO_CPU; return true;}
 
-
+		// Setting the memory link of the page table walker
+		bool setPTWLink(SST::Link * l) { PTW->set_ToMem(l);};
 
 
 	};
