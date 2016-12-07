@@ -1,10 +1,10 @@
 // Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -13,34 +13,20 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef COMPONENTS_FIREFLY_LOOPBACK_H
-#define COMPONENTS_FIREFLY_LOOPBACK_H
+#ifndef SST_SCHEDULER_UTIL_H__
+#define SST_SCHEDULER_UTIL_H__
 
-#include <sst/core/component.h>
+#include <string>
+#include <sys/types.h>
 
 namespace SST {
-namespace Firefly {
+namespace Scheduler {
+namespace Utils {
 
-class LoopBackEvent : public Event {
-
-  public:
-    LoopBackEvent( int _core ) : Event(), core( _core ) {}
-    int core;
-
-    NotSerializable(LoopBackEvent)
-};
-
-class LoopBack : public SST::Component  {
-  public:
-    LoopBack(ComponentId_t id, Params& params );
-    ~LoopBack() {}
-    void handleCoreEvent( Event* ev, int );
-
-  private:
-    std::vector<Link*>          m_links;   
-};
+bool file_exists(const std::string &path);
+time_t file_time_last_written(const std::string &path);
 
 }
 }
-
+}
 #endif

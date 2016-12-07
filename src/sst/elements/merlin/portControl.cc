@@ -17,8 +17,6 @@
 #include "portControl.h"
 #include "merlin.h"
 
-#include <boost/lexical_cast.hpp>
-
 #define TRACK 0
 #define TRACK_ID 131
 #define TRACK_PORT 4
@@ -207,7 +205,7 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
 
     // Register statistics
     std::string port_name("port");
-    port_name = port_name + boost::lexical_cast<std::string>(port_number);
+    port_name = port_name + std::to_string(port_number);
 
     send_bit_count = rif->registerStatistic<uint64_t>("send_bit_count", port_name);
     send_packet_count = rif->registerStatistic<uint64_t>("send_packet_count", port_name);

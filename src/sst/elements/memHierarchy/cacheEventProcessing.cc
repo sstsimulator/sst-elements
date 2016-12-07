@@ -23,7 +23,6 @@
 #include "cacheController.h"
 #include "coherenceControllers.h"
 #include "hash.h"
-#include <boost/lexical_cast.hpp>
 #include <csignal>
 
 #include "memEvent.h"
