@@ -8,7 +8,7 @@ AC_DEFUN([SST_CHECK_SHM], [
   LIBS_saved="$LIBS"
 
   AC_LANG_PUSH(C)
-  AC_SEARCH_LIBS([shm_open], [rt], [SHM_LIB="$LIBS"], [sst_check_shmhappy="no"])
+  AC_SEARCH_LIBS([shm_open], [rt], [SHM_LIB="$LIBS"], [sst_check_shm_happy="no"])
   AC_LANG_POP(C)
 
   CPPFLAGS="$CPPFLAGS_saved"

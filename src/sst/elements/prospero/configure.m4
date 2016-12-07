@@ -9,5 +9,4 @@ AC_DEFUN([SST_prospero_CONFIG], [
   SST_CHECK_SHM()
 
   AS_IF([test "$prospero_happy" = "yes"], [$1], [$2])
-  AS_IF([test "$sst_check_shm" = "yes"], [$1], [$2])
 ])
