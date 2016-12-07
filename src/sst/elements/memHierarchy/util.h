@@ -22,8 +22,7 @@
 #ifndef UTIL_H
 #define	UTIL_H
 
-#include <boost/algorithm/string.hpp>
-#include <boost/variant.hpp>
+#include <sst/core/stringize.h>
 #include <string>
 #include <assert.h>
 
@@ -64,7 +63,6 @@ const unsigned int pebi = tebi * 1024;
 const unsigned int exbi = pebi * 1024;
 
 
-using namespace boost::algorithm;
 using namespace std;
 
 /*

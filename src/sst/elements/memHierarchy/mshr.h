@@ -29,6 +29,7 @@
 #include <boost/assert.hpp>
 #include <string>
 #include <sstream>
+#include <boost/variant.hpp>
 
 namespace SST { namespace MemHierarchy {
 
