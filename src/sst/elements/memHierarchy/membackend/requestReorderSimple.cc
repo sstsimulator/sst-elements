@@ -26,7 +26,7 @@ RequestReorderSimple::RequestReorderSimple(Component *comp, Params &params) : Si
     
     fixupParams( params, "clock", "backend.clock" );
 
-    reqsPerCycle = params.find<int>("max_requests_per_cycle", -1);
+    reqsPerCycle = params.find<int>("max_issue_per_cycle", -1);
     searchWindowSize = params.find<int>("search_window_size", -1);
 
     // Create our backend & copy 'mem_size' through for now

@@ -20,8 +20,8 @@
 #include <assert.h>
 #include <iostream>
 #include <stdlib.h>
-#include <boost/tokenizer.hpp>
 
+#include <sst/core/stringize.h>
 
 //local includes
 #include "c_USimmTraceReader.hpp"
@@ -177,8 +177,8 @@ void c_USimmTraceReader::createTxn() {
 	if (m_txnReqQ.size() < k_txnGenReqQEntries) {
     std::string l_line;
     if (std::getline(m_traceFileStream, l_line)) {
-      boost::char_separator<char> sep(" ");
-      boost::tokenizer<boost::char_separator<char>> l_tok(l_line, sep);
+      char_delimiter sep(" ");
+      Tokenizer<> l_tok(l_line, sep);
       unsigned l_numTokens = std::distance(l_tok.begin(), l_tok.end());
       unsigned l_tokNum = 0;
       unsigned l_txnInterval = 0;
@@ -186,7 +186,7 @@ void c_USimmTraceReader::createTxn() {
       unsigned l_txnAddress = 0;
       unsigned l_txnDataWidth = 0;
 
-      for (boost::tokenizer<boost::char_separator<char>>::iterator l_iter = l_tok.begin();
+      for (Tokenizer<>::iterator l_iter = l_tok.begin();
         l_iter != l_tok.end(); ++l_iter){
             switch (l_tokNum) {
               case 0:

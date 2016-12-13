@@ -169,7 +169,7 @@ comp_memory.addParams({
     "backend" : "memHierarchy.DelayBuffer",
     "backend.request_delay" : "20ns",
     "backend.backend" : "memHierarchy.reorderByRow",
-    "backend.backendmax_requests_per_cycle" : 2,
+    "backend.backend.max_issue_per_cycle" : 2,
     "backend.backend.reorder_limit" : "20",
     "backend.backend.backend" : "memHierarchy.simpleDRAM",
     "backend.backend.backend.tCAS" : 3, # 11@800MHz roughly coverted to 200MHz

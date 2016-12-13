@@ -111,9 +111,9 @@ void trivialCPU::handleEvent(Interfaces::SimpleMem::Request *req)
     } else {
         SimTime_t et = getCurrentSimTime() - i->second;
         requests.erase(i);
-        out.output("%s: Received Request with command %d (response to %" PRIu64 ", addr 0x%" PRIx64 ") [Time: %" PRIu64 "] [%zu outstanding requests]\n",
+        out.output("%s: Received Request with command %d (addr 0x%" PRIx64 ") [Time: %" PRIu64 "] [%zu outstanding requests]\n",
                 getName().c_str(),
-                req->cmd, req->id, req->addr, et,
+                req->cmd, req->addr, et,
                 requests.size());
         num_reads_returned++;
     }
@@ -183,8 +183,8 @@ bool trivialCPU::clockTic( Cycle_t )
 		memory->sendRequest(req);
 		requests[req->id] =  getCurrentSimTime();
 
-		out.output("%s: %d Issued %s%s (%" PRIu64 ") for address 0x%" PRIx64 "\n",
-                        getName().c_str(), numLS, noncacheable ? "Noncacheable " : "" , cmdString.c_str(), req->id, addr);
+		out.output("%s: %d Issued %s%s for address 0x%" PRIx64 "\n",
+                        getName().c_str(), numLS, noncacheable ? "Noncacheable " : "" , cmdString.c_str(), addr);
 		num_reads_issued++;
 
                 numLS--;

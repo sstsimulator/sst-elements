@@ -24,14 +24,14 @@
 #include <vector>
 #include <algorithm>
 
-#include <boost/tokenizer.hpp>
-
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
 #include "output.h"
 #include "SimpleMachine.h"
 #include "schedComponent.h"
+
+#include <sst/core/stringize.h>
 
 #define DEBUG false
 
@@ -209,7 +209,7 @@ bool ConstraintAllocator::constraints_changed(){
 
 
 void ConstraintAllocator::read_constraints(){
-	boost::char_separator<char> space_separator( " " );
+    SST::char_delimiter space_separator( " " );
 	std::ifstream ConstraintsStream(ConstraintsFileName.c_str(), std::ifstream::in );
 
 	while( !constraint_leaves.empty() ){
@@ -227,8 +227,8 @@ void ConstraintAllocator::read_constraints(){
 		std::vector<std::string> * CurrentCluster = new std::vector<std::string>();
 
 		getline(ConstraintsStream, curline);
-		boost::tokenizer< boost::char_separator<char> > tok( curline, space_separator );
-		for (boost::tokenizer< boost::char_separator<char> >::iterator iter = tok.begin(); iter != tok.end(); ++iter) {
+        SST::Tokenizer<> tok( curline, space_separator );
+		for (SST::Tokenizer<>::iterator iter = tok.begin(); iter != tok.end(); ++iter) {
 			CurrentCluster->push_back(*iter);
 		}
 

@@ -27,7 +27,6 @@
 #include "bus.h"
 
 #include <csignal>
-#include <boost/variant.hpp>
 
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>

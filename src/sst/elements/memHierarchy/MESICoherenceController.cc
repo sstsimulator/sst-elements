@@ -693,7 +693,7 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
                         cacheLine->setState(IM);
                         return DONE;
                     }
-                } else if (reqEvent->getCmd() == GetXResp) {
+                } else if (reqEvent->getCmd() == GetX) {
                     cacheLine->setState(SM);
                     return STALL; // Waiting for GetXResp
                 }
