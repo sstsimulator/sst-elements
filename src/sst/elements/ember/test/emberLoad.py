@@ -1,5 +1,15 @@
 
 import sys,getopt
+import defaultParams
+import defaultSim
+import chamaOpenIBParams
+import chamaPSMParams
+import bgqParams
+import testParams
+#import exa1Params
+#import exa3Params
+#import exa6Params
+#import exa12Params
 
 import sst
 from sst.merlin import *
@@ -34,6 +44,7 @@ netTopo = ''
 netShape = ''
 netInspect = ''
 rtrArb = ''
+dfAlg = ''
 
 rndmPlacement = False
 #rndmPlacement = True
@@ -42,6 +53,7 @@ bgMean = 1000
 bgStddev = 300
 bgMsgSize = 1000
 
+#These are new since the SAI paper -- TLG
 detailedModelName = ""
 detailedModelNodes = [] 
 detailedModelParams = ""
@@ -60,7 +72,7 @@ try:
 		"simConfig=","platParams=",",debug=","platform=","numNodes=",
 		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
-		"rtrArb=","embermotifLog=",	"rankmapper=",
+		"rtrArb=", "dfAlg=", "embermotifLog=",	"rankmapper=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
         "detailedNameModel=","detailedModelParams=","detailedModelNodes="])
 
@@ -101,10 +113,13 @@ for o, a in opts:
         netFlitSize = a
     elif o in ("--netPktSize"):
         netPktSize = a
+	# New since SAI -- TLG
     elif o in ("--netInspect"):
         netInspect = a
     elif o in ("--rtrArb"):
         rtrArb = a
+    elif o in ("--dfAlg"):
+        dfAlg = a
     elif o in ("--randomPlacement"):
         if a == "True":
             rndmPlacement = True
@@ -219,12 +234,16 @@ elif "dragonfly" == netTopo:
 
 elif "dragonfly2" == netTopo:
 
+	#Retrieves routing algorithm + topo info from NetworkConfig.py 
 	topoInfo = DragonFly2Info(netShape)
 	topo = topoDragonFly2()
 
 else:
 	sys.exit("how did we get here")
 
+if "dragonfly2" == netTopo:
+	if dfAlg:
+		print "EMBER: network: topology={0} shape={1} arbitration={2}, routing={3}".format(netTopo,netShape,rtrArb,dfAlg)
 if rtrArb:
 	print "EMBER: network: topology={0} shape={1} arbitration={2}".format(netTopo,netShape,rtrArb)
 else:
@@ -333,7 +352,13 @@ if "network_inspectors" in networkParams.keys():
 if rtrArb:
 	sst.merlin._params["xbar_arb"] = "merlin." + rtrArb 
 
+# params.update will overwrite sst.merlin._params
+# to make sure we get the adaptive routing algorithm we want,
+# I've moved the update to before dragonly:algorithm is set.
 sst.merlin._params.update( topoInfo.getNetworkParams() )
+
+if netTopo == "dragonfly2" and dfAlg:
+	sst.merlin._params["dragonfly:algorithm"] = dfAlg
 
 epParams = {} 
 epParams.update(emberParams)
@@ -359,3 +384,12 @@ topo.prepParams()
 
 topo.setEndPointFunc( loadInfo.setNode )
 topo.build()
+
+print("Merlin parameters: (key, value)")
+for k in sst.merlin._params.keys():
+	print "{0}, {1}".format(k, sst.merlin._params[k])
+
+#sst.setStatisticLoadLevel(1)
+#sst.setStatisticOutput("sst.statOutputCSV", {"filepath" : "./stats.csv",
+#                                         "separator" : ", " } )
+#sst.enableAllStatisticsForComponentType("merlin.hr_router", {"type":"sst.AccumulatorStatistic"});
