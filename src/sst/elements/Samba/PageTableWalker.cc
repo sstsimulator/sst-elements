@@ -25,6 +25,7 @@ using namespace SST::MemHierarchy;
 using namespace SST;
 
 
+
 // This is and ID used to merely identify page walking requests
 long long int mmu_id=0;
 
@@ -68,7 +69,7 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 
 
 
-	self_connected = ((uint32_t) params.find<uint32_t>("self_connected", 1));
+	self_connected = ((uint32_t) params.find<uint32_t>("self_connected", 0));
 
 	page_walk_latency = ((uint32_t) params.find<uint32_t>("page_walk_latency", 50));
 
@@ -114,9 +115,9 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 	for(int i=0; i < sizes; i++)
 	{
 
-		size[i] =  ((uint32_t) params.find<uint32_t>("size"+std::to_string(i+1) + "_PTWC", 16));
+		size[i] =  ((uint32_t) params.find<uint32_t>("size"+std::to_string(i+1) + "_PTWC", 1));
 
-		assoc[i] =  ((uint32_t) params.find<uint32_t>("assoc"+std::to_string(i+1) +  "_PTWC", 4));
+		assoc[i] =  ((uint32_t) params.find<uint32_t>("assoc"+std::to_string(i+1) +  "_PTWC", 1));
 
 		// We define the number of sets for that structure of page size number i
 		sets[i] = size[i]/assoc[i];
@@ -172,6 +173,9 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 	WSR_READY[pw_id]=true;
 
+	// Avoiding memory leak by deleting the newly generated dummy requests
+	MEM_REQ.erase(((MemEvent*) ev)->getID());
+	delete ev;
 
 	if(WSR_COUNT[pw_id]==0)
 	{
@@ -181,6 +185,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 	}
 	else
 	{
+
 
 		long long int dummy_add = rand()%10000000;
 		MemEvent *e = new MemEvent(Owner, dummy_add, dummy_add, GetS);
@@ -195,6 +200,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 
 }
+
 
 bool PageTableWalker::tick(SST::Cycle_t x)
 {
@@ -232,6 +238,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				hit_id=k;
 				break;
 			}
+
 
 		// Check if we found the entry in the PTWC of PTEs
 		if(k==0)
