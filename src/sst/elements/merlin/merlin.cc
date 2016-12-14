@@ -458,6 +458,10 @@ static const ElementInfoParam xbar_arb_rand_params[] = {
     {NULL,NULL,NULL}
 };
 
+static const ElementInfoStatistic dragonfly2_stats[] = {
+	{ "reroute_count", "number of times that a port rerouted.", "reroutes", 1},
+    { NULL, NULL, NULL, 0 }
+};
 
 // least recently used, "infinte" crossbar
 static SubComponent*
@@ -510,7 +514,7 @@ static const ElementInfoStatistic linkcontrol_statistics[] = {
     { "packet_latency", "Histogram of latencies for received packets", "latency", 1},
     { "send_bit_count", "Count number of bits sent on link", "bits", 1},
     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
-    { "idle_time", "number of (in unites of core timebas) that port was idle", "time spent idle", 1},
+    { "idle_time", "number of (in unites of core timebase) that port was idle", "time spent idle", 1},
     { NULL, NULL, NULL, 0 }
 };
 
@@ -786,10 +790,10 @@ static const ElementInfoSubComponent subcomponents[] = {
     },
     { "dragonfly2",
       "Dragonfly2 topology object",
-      NULL,
+	  NULL,
       load_dragonfly2_topology,
       dragonfly2_params,
-      NULL,
+      dragonfly2_stats,
       "SST::Merlin::Topology"
     },
     { NULL, NULL, NULL, NULL, NULL, NULL }
