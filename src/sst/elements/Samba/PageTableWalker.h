@@ -89,6 +89,7 @@ class PageTableWalker
 
 	std::vector<SST::Event *> not_serviced; // This holds those accesses not serviced yet
 
+
 	int self_connected; // his parameter indidicates if the PTW is self-connected or actually connected to the memory hierarchy
 
 	int page_walk_latency; // this is really nothing than the page walk latency in case of having no walkers
