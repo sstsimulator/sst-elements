@@ -25,9 +25,7 @@ libsimpleElementExample_la_SOURCES = \
 	simpleMessageGeneratorComponent.h \
 	simpleMessageGeneratorComponent.cc \
 	simpleLookupTableComponent.h \
-	simpleLookupTableComponent.cc \
-	simpleCarWash.h \
-	simpleCarWash.cc
+	simpleLookupTableComponent.cc 
 	
 EXTRA_DIST = \
     README \
@@ -42,7 +40,6 @@ EXTRA_DIST = \
     tests/test_simpleRNGComponent_marsaglia.py \
     tests/test_simpleRNGComponent_xorshift.py \
     tests/test_simpleStatisticsComponent.py \
-    tests/test_simpleCarWash.py \
     tests/test_simpleMessageGeneratorComponent.py
 
 libsimpleElementExample_la_LDFLAGS = -module -avoid-version
