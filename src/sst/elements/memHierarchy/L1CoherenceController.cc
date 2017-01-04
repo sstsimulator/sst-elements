@@ -199,6 +199,8 @@ bool L1CoherenceController::isRetryNeeded(MemEvent * event, CacheLine * cacheLin
         case GetS:
         case GetX:
         case GetSEx:
+        case FlushLine:
+        case FlushLineInv:
             return true;
         case PutS:
         case PutE:
@@ -653,8 +655,8 @@ uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, State grantedSt
             responseEvent->setPayload(event->getSize(), &data->at(offset));
         } else {
             /* If write (GetX) and LLSC set, then check if operation was Atomic */
-  	    if (finishedAtomically) responseEvent->setAtomic(true);
-            else responseEvent->setAtomic(false);
+  	    if (finishedAtomically) responseEvent->setSuccess(true);
+            else responseEvent->setSuccess(false);
             responseEvent->setSize(event->getSize()); // Return size that was written
         }
     } else {

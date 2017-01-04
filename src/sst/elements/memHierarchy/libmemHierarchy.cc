@@ -38,10 +38,13 @@
 #include "membackend/requestReorderSimple.h"
 #include "membackend/requestReorderByRow.h"
 #include "membackend/delayBuffer.h"
+#include "membackend/simpleMemBackendConvertor.h"
+#include "membackend/timingDRAMBackend.h"
+#include "membackend/timingTransaction.h"
+#include "membackend/timingPagePolicy.h"
+#include "membackend/timingAddrMapper.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
-
-#include "DRAMReq.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
@@ -60,7 +63,7 @@
 #include "membackend/hybridSimBackend.h"
 #endif
 
-#ifdef HAVE_FDSIM
+#ifdef HAVE_LIBFDSIM
 #include "membackend/flashSimBackend.h"
 #endif
 
@@ -430,11 +433,15 @@ static const ElementInfoPort cpu_ports[] = {
 
 static const ElementInfoParam cpu_params[] = {
     {"verbose",                 "Determine how verbose the output from the CPU is", "1"},
+    {"clock",                   "Clock frequency", "1GHz"},
     {"rngseed",                 "Set a seed for the random generation of addresses", "7"},
     {"commFreq",                "How often to do a memory operation."},
     {"memSize",                 "Size of physical memory."},
+    {"lineSize",                "Size of a cache line - used for flushes"},
     {"maxOutstanding",          "Maximum Number of Outstanding memory requests."},
+    {"reqsPerIssue",            "Maximum number of requests to issue at a time"},
     {"do_write",                "Enable writes to memory (versus just reads).", "1"},
+    {"do_flush",                "Enable flushes", "0"},
     {"num_loadstore",           "Stop after this many reads and writes.", "-1"},
     {"noncacheableRangeStart",  "Beginning of range of addresses that are noncacheable.", "0x0"},
     {"noncacheableRangeEnd",    "End of range of addresses that are noncacheable.", "0x0"},
@@ -470,7 +477,6 @@ static const ElementInfoParam memctrl_params[] = {
     {"trace_file",          "File name (optional) of a trace-file to generate.", ""},
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
-    {"debug_addr",          "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {"listenercount",       "Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
     {"listener%(listenercount)d", "Loads a listener module into the controller", ""},
     {"network_bw",          "Network link bandwidth.", NULL},
@@ -487,20 +493,9 @@ static const ElementInfoParam memctrl_params[] = {
 
 static const ElementInfoStatistic memctrl_statistics[] = {
     /* Cache hits and misses */
-    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles",   1 },
-    { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
-    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles",   1 },
-    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1 },
-    { "requests_received_GetSEx",           "Number of GetSEx (read) requests received",        "requests", 1 },
-    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },
-    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },
-    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },
-    { "latency_GetS",                       "Total latency of handled GetS requests",           "ns",       1 },
-    { "latency_GetSEx",                     "Total latency of handled GetSEx requests",         "ns",       1 },
-    { "latency_GetX",                       "Total latency of handled GetX requests",           "ns",       1 },
-    { "latency_PutM",                       "Total latency of handled PutM requests",           "ns",       1 },
     { NULL, NULL, NULL, 0 }
 };
+
 
 static const ElementInfoPort memctrl_ports[] = {
     {"direct_link",     "Directly connect to another component (like a Directory Controller).", memEvent_port_events},
@@ -509,6 +504,26 @@ static const ElementInfoPort memctrl_ports[] = {
     {NULL, NULL, NULL}
 };
 
+static SubComponent* create_Mem_SimpleBackendConvertor(Component* comp, Params& params){
+    return new SimpleMemBackendConvertor(comp, params);
+}
+
+static const ElementInfoStatistic memBackendConvertor_statistics[] = {
+    /* Cache hits and misses */
+    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles",   1 },
+    { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
+    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles",   1 },
+    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1 },
+    { "requests_received_GetSEx",           "Number of GetSEx (read) requests received",        "requests", 1 },
+    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },
+    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },
+    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },
+    { "latency_GetS",                       "Total latency of handled GetS requests",           "cycles",   1 },
+    { "latency_GetSEx",                     "Total latency of handled GetSEx requests",         "cycles",   1 },
+    { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },
+    { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 },
+    { NULL, NULL, NULL, 0 }
+};
 
 static SubComponent* create_Mem_SimpleSim(Component* comp, Params& params){
     return new SimpleMemory(comp, params);
@@ -519,6 +534,26 @@ static const ElementInfoParam simpleMem_params[] = {
     {"access_time",     "Constant latency of memory operation.", "100 ns"},
     {NULL, NULL}
 };
+
+static SubComponent* create_Mem_TimingDRAM(Component* comp, Params& params) {
+    return new TimingDRAM(comp, params);
+}
+
+static SubComponent* create_Mem_TransactionQ(Component* comp, Params& params) {
+    return new TransactionQ(comp, params);
+}
+
+static SubComponent* create_Mem_ReorderTransactionQ(Component* comp, Params& params) {
+    return new ReorderTransactionQ(comp, params);
+}
+
+static SubComponent* create_Mem_SimplePagePolicy(Component* comp, Params& params) {
+    return new SimplePagePolicy(comp, params);
+}
+
+static SubComponent* create_Mem_TimeoutPagePolicy(Component* comp, Params& params) {
+    return new TimeoutPagePolicy(comp, params);
+}
 
 static SubComponent* create_Mem_SimpleDRAM(Component* comp, Params& params) {
     return new SimpleDRAM(comp, params);
@@ -550,7 +585,7 @@ static SubComponent* create_Mem_DelayBuffer(Component * comp, Params& params) {
 }
 
 static const ElementInfoParam delayBuffer_params[] = {
-    {"verbose",     "Sets teh verbosity of the backend output", "0" },
+    {"verbose",     "Sets the verbosity of the backend output", "0" },
     {"backend",     "Backend memory system", "memHierarchy.simpleMem"},
     {"request_delay", "Constant delay to be added to requests with units (e.g., 1us)", "0ns"},
     {NULL, NULL, NULL}
@@ -562,7 +597,7 @@ static SubComponent* create_Mem_RequestReorderSimple(Component * comp, Params& p
 
 static const ElementInfoParam requestReorderSimple_params[] = {
     {"verbose",                 "Sets the verbosity of the backend output", "0" },
-    {"max_requests_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+    {"max_issue_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
     {"search_window_size",      "Maximum number of request to search each cycle. 0 or negative is unlimited.", "-1"},
     {"backend",                 "Backend memory system", "memHierarchy.simpleDRAM"},
     { NULL, NULL, NULL }
@@ -575,7 +610,7 @@ static SubComponent* create_Mem_RequestReorderRow(Component * comp, Params& para
 
 static const ElementInfoParam requestReorderRow_params[] = {
     {"verbose",                 "Sets the verbosity of the backend output", "0" },
-    {"max_requests_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+    {"max_issue_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
     {"banks",                   "Number of banks", "8"},
     {"bank_interleave_granularity", "Granularity of interleaving in bytes (B), generally a cache line. Must be a power of 2.", "64B"},
     {"row_size",                "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
@@ -691,7 +726,7 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 };
 #endif
 
-#ifdef HAVE_FDSIM
+#ifdef HAVE_LIBFDSIM
 
 static SubComponent* create_Mem_FDSim(Component* comp, Params& params){
     return new FlashDIMMSimMemory(comp, params);
@@ -724,6 +759,13 @@ static Module* create_MemNIC(Component *comp, Params &params) {
     return new MemNIC(comp, params);
 }
 
+static Module* create_SandyBridgeAddrMapper(Params &params) {
+    return new SandyBridgeAddrMapper(params);
+}
+
+static Module* create_SimpleAddrMapper(Params &params) {
+    return new SimpleAddrMapper(params);
+}
 
 static Component* create_DirectoryController(ComponentId_t id, Params& params){
 	return new DirectoryController( id, params );
@@ -835,6 +877,15 @@ static const ElementInfoParam bridge_params[] = {
 
 static const ElementInfoSubComponent subcomponents[] = {
     {
+        "simpleMemBackendConvertor",
+        "convert MemEvent to base mem backend",
+        NULL, /* Advanced help */
+        create_Mem_SimpleBackendConvertor, /* Module Alloc w/ params */
+        NULL,
+        memBackendConvertor_statistics, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
         "simpleMem",
         "Simple constant-access time memory",
         NULL, /* Advanced help */
@@ -850,6 +901,51 @@ static const ElementInfoSubComponent subcomponents[] = {
         create_Mem_SimpleDRAM,
         simpleDRAM_params,
         simpleDRAM_stats,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "timingDRAM",
+        "Moderate timing model for DRAM",
+        NULL,
+        create_Mem_TimingDRAM,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "fifoTransactionQ",
+        "fifo transaction queue",
+        NULL,
+        create_Mem_TransactionQ,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "reorderTransactionQ",
+        "reorder transaction queue",
+        NULL,
+        create_Mem_ReorderTransactionQ,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "simplePagePolicy",
+        "static page open or close policy",
+        NULL,
+        create_Mem_SimplePagePolicy,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "timeoutPagePolicy",
+        "timeout based page open or close policy",
+        NULL,
+        create_Mem_TimeoutPagePolicy,
+        NULL,
+        NULL,
         "SST::MemHierarchy::MemBackend"
     },
     {
@@ -932,7 +1028,7 @@ static const ElementInfoSubComponent subcomponents[] = {
         "SST::MemHierarchy::MemBackend"
     },
 #endif
-#ifdef HAVE_FDSIM
+#ifdef HAVE_LIBFDSIM
     {
         "flashDIMMSim",
         "FlashDIMM Simulator driven memory timings",
@@ -987,6 +1083,24 @@ static const ElementInfoModule modules[] = {
         NULL, /* Advanced help */
         NULL, /* ModuleAlloc */
         create_MemNIC, /* Module Alloc w/ params */
+        NULL, /* Params */
+        NULL, /* Interface */
+    },
+    {
+        "simpleAddrMapper",
+        "simple address mapper",
+        NULL, /* Advanced help */
+        create_SimpleAddrMapper,
+        NULL,
+        NULL, /* Params */
+        NULL, /* Interface */
+    },
+    {
+        "sandyBridgeAddrMapper",
+        "Sandy Bridge address mapper",
+        NULL, /* Advanced help */
+        create_SandyBridgeAddrMapper,
+        NULL,
         NULL, /* Params */
         NULL, /* Interface */
     },

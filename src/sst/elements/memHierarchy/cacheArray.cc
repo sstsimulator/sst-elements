@@ -41,7 +41,7 @@ SetAssociativeArray::~SetAssociativeArray() {
     delete [] setOwned;
 }
 
-int SetAssociativeArray::find(const Addr baseAddr, bool update) {
+CacheArray::CacheLine* SetAssociativeArray::lookup(const Addr baseAddr, bool update) {
     Addr lineAddr = toLineAddr(baseAddr);
     int set = hash_->hash(0, lineAddr) & setMask_;
     int setBegin = set * associativity_;
@@ -50,10 +50,10 @@ int SetAssociativeArray::find(const Addr baseAddr, bool update) {
     for (int i = setBegin; i < setEnd; i++) {
         if (lines_[i]->getBaseAddr() == baseAddr) {
             if (update) replacementMgr_->update(i);
-            return i;
+            return lines_[i];
         }
     }
-    return -1;
+    return nullptr;
 }
 
 CacheArray::CacheLine* SetAssociativeArray::findReplacementCandidate(const Addr baseAddr, bool cache) {
@@ -74,11 +74,12 @@ unsigned int SetAssociativeArray::preReplace(const Addr baseAddr) {
     return replacementMgr_->findBestCandidate(setBegin, setStates, setSharers, setOwned, sharersAware_? true: false);
 }
 
-void SetAssociativeArray::replace(const Addr baseAddr, unsigned int candidate_id, bool ignoreParam1, unsigned int ignoreParam2) {
-    replacementMgr_->replaced(candidate_id);
-    lines_[candidate_id]->reset();
-    lines_[candidate_id]->setBaseAddr(baseAddr);
-    replacementMgr_->update(candidate_id);
+void SetAssociativeArray::replace(const Addr baseAddr, CacheArray::CacheLine * candidate, CacheArray::DataLine * dataCandidate) {
+    unsigned int index = candidate->getIndex();
+    replacementMgr_->replaced(index);
+    candidate->reset();
+    candidate->setBaseAddr(baseAddr);
+    replacementMgr_->update(index);
 }
 
 void SetAssociativeArray::deallocate(unsigned int index) {
@@ -111,7 +112,7 @@ DualSetAssociativeArray::DualSetAssociativeArray(Output* dbg, unsigned int lineS
     }
 
 
-int DualSetAssociativeArray::find(const Addr baseAddr, bool update) {
+CacheArray::CacheLine* DualSetAssociativeArray::lookup(const Addr baseAddr, bool update) {
     Addr lineAddr = toLineAddr(baseAddr);
     int set = hash_->hash(0, lineAddr) & setMask_;
     int setBegin = set * associativity_;
@@ -125,27 +126,26 @@ int DualSetAssociativeArray::find(const Addr baseAddr, bool update) {
                     cacheReplacementMgr_->update(lines_[i]->getDataLine()->getIndex());
                 }
             }
-            return i;
+            return lines_[i];
         }
     }
-    return -1;
+    return nullptr;
 }
 
 CacheArray::CacheLine * DualSetAssociativeArray::findReplacementCandidate(const Addr baseAddr, bool cache) {
     int index = cache ? preReplaceDir(baseAddr) : preReplaceCache(baseAddr);
 
-    // Handle invalid case for cache allocations -> then dataLines_[index]->getDirIndex() == -1
+    // Handle invalid case for cache allocations -> then dataLines_[index]->getDirLine() == nullptr
     // and we can just link that cache entry to the dir entry for baseAddr
-    if (!cache && dataLines_[index]->getDirIndex() == -1) {
-        int dirIndex = find(baseAddr, false);
-        CacheLine * currentDirEntry = lines_[dirIndex];
+    if (!cache && dataLines_[index]->getDirLine() == nullptr) {
+        CacheLine * currentDirEntry = lookup(baseAddr, false);
         if (currentDirEntry->getDataLine() != NULL) {
             dbg_->fatal(CALL_INFO, -1, "Error: Attempting to allocate a data line for a directory entry that already has an associated data line. Addr = 0x%" PRIx64 "\n", baseAddr);
         }
-        currentDirEntry->setDataLine(dataLines_[index]);    // Don't need to set dirIndex, "replace" will do that
+        currentDirEntry->setDataLine(dataLines_[index]);    // Don't need to set dirLine, "replace" will do that
         return currentDirEntry;
     }
-    return cache ? lines_[index] : lines_[dataLines_[index]->getDirIndex()];
+    return cache ? lines_[index] : dataLines_[index]->getDirLine();
 }
 
 unsigned int DualSetAssociativeArray::preReplaceDir(const Addr baseAddr) {
@@ -161,24 +161,26 @@ unsigned int DualSetAssociativeArray::preReplaceDir(const Addr baseAddr) {
     return replacementMgr_->findBestCandidate(setBegin, dirSetStates, dirSetSharers, dirSetOwned, sharersAware_);
 }
 
-void DualSetAssociativeArray::replace(const Addr baseAddr, unsigned int id, bool cache, unsigned int newLinkID) {
-    if (cache) {
-        replacementMgr_->replaced(id);
-        if (lines_[id]->getDataLine() != NULL) {
-            deallocateCache(lines_[id]->getDataLine()->getIndex());
+void DualSetAssociativeArray::replace(const Addr baseAddr, CacheArray::CacheLine * candidate, CacheArray::DataLine * dataCandidate) {
+    unsigned int index = candidate->getIndex();
+    if (dataCandidate == nullptr) {
+        replacementMgr_->replaced(index);
+        if (lines_[index]->getDataLine() != NULL) {
+            deallocateCache(candidate->getDataLine()->getIndex());
         }
-        lines_[id]->reset();
-        lines_[id]->setBaseAddr(baseAddr);
-        replacementMgr_->update(id); 
+        candidate->reset();
+        candidate->setBaseAddr(baseAddr);
+        replacementMgr_->update(index); 
     } else {
-        cacheReplacementMgr_->replaced(id);
-        if (dataLines_[id]->getDirIndex() != -1) {
-            DataLine * dataLine = NULL;
-            lines_[dataLines_[id]->getDirIndex()]->setDataLine(dataLine);
+        unsigned int dIndex = dataCandidate->getIndex();
+        cacheReplacementMgr_->replaced(dIndex);
+        
+        if (dataCandidate->getDirLine() != nullptr) {   // break existing dir->data link
+            dataCandidate->getDirLine()->setDataLine(nullptr);
         }
-        dataLines_[id]->setDirIndex(newLinkID);
-        lines_[newLinkID]->setDataLine(dataLines_[id]);
-        cacheReplacementMgr_->update(id);
+        dataCandidate->setDirLine(candidate); // set new dir->data link
+        candidate->setDataLine(dataCandidate);
+        cacheReplacementMgr_->update(dIndex);
     }
 }
 
@@ -188,7 +190,7 @@ unsigned int DualSetAssociativeArray::preReplaceCache(const Addr baseAddr) {
     int setBegin    = set * cacheAssociativity_;
     
     for (unsigned int id = 0; id < cacheAssociativity_; id++) {
-        int dirIndex = dataLines_[id+setBegin]->getDirIndex();
+        int dirIndex = dataLines_[id+setBegin]->getDirLine() ? dataLines_[id+setBegin]->getDirLine()->getIndex() : -1;
         if (dirIndex == -1) {
             cacheSetStates[id] = I;
             cacheSetSharers[id] = 0;
@@ -204,7 +206,7 @@ unsigned int DualSetAssociativeArray::preReplaceCache(const Addr baseAddr) {
 
 void DualSetAssociativeArray::deallocateCache(unsigned int index) {
     cacheReplacementMgr_->replaced(index);
-    dataLines_[index]->setDirIndex(-1);
+    dataLines_[index]->setDirLine(nullptr);
 }
 
 

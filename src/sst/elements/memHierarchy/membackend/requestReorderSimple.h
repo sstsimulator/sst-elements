@@ -23,20 +23,33 @@
 namespace SST {
 namespace MemHierarchy {
 
-class RequestReorderSimple : public MemBackend {
+class RequestReorderSimple : public SimpleMemBackend {
 public:
     RequestReorderSimple();
     RequestReorderSimple(Component *comp, Params &params);
-    bool issueRequest(DRAMReq *req);
+	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void setup();
     void finish();
     void clock();
+    virtual const std::string& getClockFreq() { return backend->getClockFreq(); }
 
 private:
-    MemBackend* backend;
+    void handleMemReponse( ReqId id ) {
+        SimpleMemBackend::handleMemResponse( id );
+    }
+    struct Req {
+        Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) :
+            id(id), addr(addr), isWrite(isWrite), numBytes(numBytes)
+        { }
+        ReqId id;
+        Addr addr;
+        bool isWrite;
+        unsigned numBytes;
+    };
+    SimpleMemBackend* backend;
     int reqsPerCycle;       // Number of requests to issue per cycle (max) -> memCtrl limits how many we accept
     int searchWindowSize;   // Number of requests to search when looking for requests to issue
-    std::list<DRAMReq*> requestQueue;   // List of requests waiting to be issued
+    std::list<Req> requestQueue;   // List of requests waiting to be issued
 };
 
 }

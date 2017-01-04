@@ -19,16 +19,18 @@
 #include "events/CommunicationEvent.h"
 #include "output.h"
 #include "misc.h"
+#include "util.h"
 
 #include <fstream>
 #include <iostream>
 #include <stdlib.h>
 
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/thread.hpp>
+#include <thread>
+#include <chrono>
+
 
 #include <sst/core/params.h>
+#include <sst/core/stringize.h>
 
 using namespace SST;
 using namespace SST::Scheduler;
@@ -125,7 +127,7 @@ std::map<std::string, std::string> * faultInjectionComponent::readFailFile(){
 
 	// block until the token exists in the file.  It should be the last line.
 	while( !fileContainsToken ){
-		if( boost::filesystem::exists( failFilename ) && fileLastWritten < boost::filesystem::last_write_time( failFilename ) ){
+		if( Utils::file_exists( failFilename ) && fileLastWritten < Utils::file_time_last_written( failFilename ) ){
 			fileContainsToken = false;
 			std::ifstream failFile;
 			std::string fileLine;
@@ -139,9 +141,9 @@ std::map<std::string, std::string> * faultInjectionComponent::readFailFile(){
 			failFile.close();
 
 			if( fileContainsToken ){
-				fileLastWritten = boost::filesystem::last_write_time( failFilename );
+				fileLastWritten = Utils::file_time_last_written( failFilename );
 			}else{
-				boost::this_thread::sleep( boost::posix_time::milliseconds( failPollFreq ) );
+				std::this_thread::sleep_for( std::chrono::milliseconds( failPollFreq ) );
 			}
 		}
 	}
@@ -153,16 +155,16 @@ std::map<std::string, std::string> * faultInjectionComponent::readFailFile(){
 	
 	while( std::getline( failFile, fileLine ) ){
 		if( fileLine.find( resumeSimulationToken ) == std::string::npos ){
-			boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer( fileLine );
+			Tokenizer<escaped_list_separator> tokenizer( fileLine );
 			std::vector<std::string> tokens;
-			tokens.assign( Tokenizer.begin(), Tokenizer.end() );
+			tokens.assign( tokenizer.begin(), tokenizer.end() );
 
 			if( 2 != tokens.size() ){
 				schedout.fatal( CALL_INFO, 1, "malformed line in failure file: %s\n", fileLine.c_str() );
 			}
 
-			boost::algorithm::trim( tokens.at( 0 ) );
-			boost::algorithm::trim( tokens.at( 1 ) );
+			trim( tokens.at( 0 ) );
+			trim( tokens.at( 1 ) );
 
 			nodes->insert( std::pair<std::string, std::string>( tokens.at( 0 ), tokens.at( 1 ) ) );
 		}else{

@@ -15,6 +15,7 @@
 
 
 #include <sst_config.h>
+#include "sst/elements/memHierarchy/util.h"
 #include "membackend/ramulatorBackend.h"
 
 #include "Config.h"
@@ -25,13 +26,13 @@ using namespace SST::MemHierarchy;
 using namespace ramulator;
 
 ramulatorMemory::ramulatorMemory(Component *comp, Params &params) : 
-    MemBackend(comp, params),
+    SimpleMemBackend(comp, params),
     callBackFunc(std::bind(&ramulatorMemory::ramulatorDone, this, std::placeholders::_1))
 {
     std::string ramulatorCfg = params.find<std::string>("configFile",
                                                         NO_STRING_DEFINED);
     if (ramulatorCfg == NO_STRING_DEFINED) {
-        ctrl->dbg.fatal(CALL_INFO, -1, "Ramulator Backend must define a 'configFile' file parameter\n");
+        output->fatal(CALL_INFO, -1, "Ramulator Backend must define a 'configFile' file parameter\n");
     } 
     ramulator::Config configs(ramulatorCfg);
     
@@ -42,9 +43,8 @@ ramulatorMemory::ramulatorMemory(Component *comp, Params &params) :
     output->output(CALL_INFO, "Instantiated Ramulator from config file %s\n", ramulatorCfg.c_str());
 }
 
-bool ramulatorMemory::issueRequest(DRAMReq *req){
-    uint64_t addr = req->baseAddr_ + req->amtInProcess_;
-    ramulator::Request::Type type = (req->isWrite_) 
+bool ramulatorMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes){
+    ramulator::Request::Type type = (isWrite) 
         ? (ramulator::Request::Type::WRITE) : (ramulator::Request::Type::READ);
 
     ramulator::Request request(addr, 
@@ -55,7 +55,7 @@ bool ramulatorMemory::issueRequest(DRAMReq *req){
     if(!ok) return false;
 
     // save this DRAM Request
-    dramReqs[addr].push_back(req); 
+    dramReqs[addr].push_back(reqId); 
 
     return ok;
 }
@@ -71,16 +71,16 @@ void ramulatorMemory::finish(){
 
 void ramulatorMemory::ramulatorDone(ramulator::Request& ramReq) {
     uint64_t addr = ramReq.addr;
-    std::deque<DRAMReq *> &reqs = dramReqs[addr];
+    std::deque<ReqId> &reqs = dramReqs[addr];
 
 #ifdef __SST_DEBUG_OUTPUT__
-    ctrl->dbg.debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
+    output->debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
 #endif
     assert(reqs.size());
-    DRAMReq *req = reqs.front();
+    ReqId req = reqs.front();
     reqs.pop_front();
     if(0 == reqs.size())
         dramReqs.erase(addr);
 
-    ctrl->handleMemResponse(req);
+    handleMemResponse(req);
 }

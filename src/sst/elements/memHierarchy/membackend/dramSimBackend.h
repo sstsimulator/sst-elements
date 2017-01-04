@@ -34,10 +34,10 @@
 namespace SST {
 namespace MemHierarchy {
 
-class DRAMSimMemory : public MemBackend {
+class DRAMSimMemory : public SimpleMemBackend {
 public:
     DRAMSimMemory(Component *comp, Params &params);
-    virtual bool issueRequest(DRAMReq *req);
+	virtual bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual void clock();
     virtual void finish();
 
@@ -45,7 +45,7 @@ protected:
     void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
     DRAMSim::MultiChannelMemorySystem *memSystem;
-    std::map<uint64_t, std::deque<DRAMReq*> > dramReqs;
+    std::map<uint64_t, std::deque<ReqId> > dramReqs;
 };
 
 }

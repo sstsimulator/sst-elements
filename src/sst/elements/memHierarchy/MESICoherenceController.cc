@@ -693,7 +693,7 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
                         cacheLine->setState(IM);
                         return DONE;
                     }
-                } else if (reqEvent->getCmd() == GetXResp) {
+                } else if (reqEvent->getCmd() == GetX) {
                     cacheLine->setState(SM);
                     return STALL; // Waiting for GetXResp
                 }
@@ -1101,7 +1101,7 @@ CacheAction MESIController::handleInv(MemEvent* event, CacheLine* cacheLine, boo
         case IS:
         case IM:
         case I_B:
-            return DONE;    // Eviction raced with Inv, IS/IM only happen if we don't use AckPuts
+            return IGNORE;    // Eviction raced with Inv, IS/IM only happen if we don't use AckPuts
         case S_B:
         case S:
             if (cacheLine->numSharers() > 0) {
@@ -1264,7 +1264,7 @@ CacheAction MESIController::handleFetchInvX(MemEvent * event, CacheLine * cacheL
         case E_InvX:
         case M_Inv:
         case M_InvX:
-            if (collisionEvent->getCmd() == FlushLine || collisionEvent->getCmd() == FlushLineInv) return STALL;    // Handle the incoming Inv first
+            if (collisionEvent && (collisionEvent->getCmd() == FlushLine || collisionEvent->getCmd() == FlushLineInv)) return STALL;    // Handle the incoming Inv first
             return BLOCK;
         default:
             d_->fatal(CALL_INFO,-1,"%s, Error: Received FetchInvX but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 

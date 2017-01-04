@@ -19,8 +19,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/filesystem.hpp>
-
 #include <sst/core/sst_types.h>
 
 namespace SST {
@@ -56,8 +54,7 @@ namespace SST {
                 std::vector<Job*> jobs;
 
                 std::string fileName;
-                boost::filesystem::path fileNamePath;
-                boost::filesystem::path folderPath;
+                std::string fileNamePath;
                 std::string jobTrace;
 
                 std::string completedJobTrace; // NetworkSim: File that lists all jobs that has been completed in ember

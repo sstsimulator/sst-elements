@@ -55,18 +55,6 @@ class NicInitEvent : public Event {
     {
     }
 
-//  private:
-//
-//    friend class boost::serialization::access;
-//    template<class Archive>
-//    void
-//    serialize(Archive & ar, const unsigned int version )
-//    {
-//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-//        ar & BOOST_SERIALIZATION_NVP(node);
-//        ar & BOOST_SERIALIZATION_NVP(vNic);
-//        ar & BOOST_SERIALIZATION_NVP(num_vNics);
-//    }
 public:	
     void serialize_order(SST::Core::Serialization::serializer &ser) {
         Event::serialize_order(ser);
@@ -100,21 +88,6 @@ class NicCmdEvent : public Event {
     {
     }
 
-//  private:
-//
-//    friend class boost::serialization::access;
-//    template<class Archive>
-//    void
-//    serialize(Archive & ar, const unsigned int version )
-//    {
-//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-//        ar & BOOST_SERIALIZATION_NVP(type);
-//        ar & BOOST_SERIALIZATION_NVP(node);
-//        ar & BOOST_SERIALIZATION_NVP(dst_vNic);
-//        ar & BOOST_SERIALIZATION_NVP(tag);
-//        ar & BOOST_SERIALIZATION_NVP(iovec);
-//        ar & BOOST_SERIALIZATION_NVP(key);
-//    }
     NotSerializable(NicCmdEvent)
 };
 
@@ -158,21 +131,6 @@ class NicRespEvent : public Event {
     {
     }
 
-//  private:
-//
-//    friend class boost::serialization::access;
-//    template<class Archive>
-//    void
-//    serialize(Archive & ar, const unsigned int version )
-//    {
-//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-//        ar & BOOST_SERIALIZATION_NVP(type);
-//        ar & BOOST_SERIALIZATION_NVP(src_vNic);
-//        ar & BOOST_SERIALIZATION_NVP(node);
-//        ar & BOOST_SERIALIZATION_NVP(tag);
-//        ar & BOOST_SERIALIZATION_NVP(len);
-//        ar & BOOST_SERIALIZATION_NVP(key);
-//    }
     NotSerializable(NicRespEvent)
 };
 

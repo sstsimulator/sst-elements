@@ -20,7 +20,19 @@ libmemHierarchy_la_SOURCES = \
 	bus.cc \
 	memoryController.h \
 	memoryController.cc \
-        membackend/memBackend.h \
+	membackend/timingDRAMBackend.cc \
+	membackend/timingDRAMBackend.h \
+	membackend/timingAddrMapper.h \
+	membackend/timingPagePolicy.h \
+	membackend/timingTransaction.h \
+	membackend/backing.h \
+	membackend/memBackend.h \
+	membackend/memBackendConvertor.h \
+	membackend/memBackendConvertor.cc \
+	membackend/simpleMemBackendConvertor.h \
+	membackend/simpleMemBackendConvertor.cc \
+	membackend/hmcMemBackendConvertor.h \
+	membackend/hmcMemBackendConvertor.cc \
 	membackend/delayBuffer.h \
 	membackend/delayBuffer.cc \
 	membackend/simpleMemBackend.h \
@@ -39,8 +51,8 @@ libmemHierarchy_la_SOURCES = \
 	directoryController.h \
 	directoryController.cc \
 	coherenceControllers.h \
-        memHierarchyInterface.cc \
-        memHierarchyInterface.h \
+	memHierarchyInterface.cc \
+	memHierarchyInterface.h \
 	MESIInternalDirectory.h \
 	MESIInternalDirectory.cc \
 	MESICoherenceController.h \
@@ -65,7 +77,6 @@ libmemHierarchy_la_SOURCES = \
 	networkMemInspector.h \
 	networkMemInspector.cc \
 	memResponseHandler.h \
-	DRAMReq.h \
 	Sieve/sieveController.h \
 	Sieve/sieveController.cc \
 	Sieve/sieveFactory.cc \
@@ -83,7 +94,6 @@ EXTRA_DIST = \
         Sieve/tests/ompsievetest.c \
         Sieve/tests/sieve-test.py \
 	tests/example.py \
-	tests/exampleM5.xml \
 	tests/sdl-1.py \
 	tests/sdl2-1.py \
 	tests/sdl-2.py \
@@ -99,6 +109,23 @@ EXTRA_DIST = \
 	tests/sdl8-4.py \
 	tests/sdl9-1.py \
 	tests/sdl9-2.py \
+	tests/testBackendChaining.py \
+	tests/testBackendDelayBuffer.py \
+	tests/testBackendPagedMulti.py \
+	tests/testBackendReorderRow.py \
+	tests/testBackendReorderSimple.py \
+	tests/testBackendSimpleDRAM-1.py \
+	tests/testBackendSimpleDRAM-2.py \
+	tests/testBackendVaultSim.py \
+	tests/testDistributedCaches.py \
+	tests/testFlushes.py \
+	tests/testFlushes-2.py \
+	tests/testHashXor.py \
+	tests/testIncoherent.py \
+	tests/testNoninclusive-1.py \
+	tests/testNoninclusive-2.py \
+	tests/testPrefetchParams.py \
+	tests/testThroughputThrottling.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini
 
@@ -175,7 +202,7 @@ libmemHierarchy_la_SOURCES += \
 	membackend/flashSimBackend.h
 libmemHierarchy_la_LDFLAGS += $(FDSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(FDSIM_LIB)
-AM_CPPFLAGS += $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS)
+AM_CPPFLAGS += $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS) -DHAVE_LIBFDSIM
 endif
 
 AM_CPPFLAGS += $(HMC_FLAG)
@@ -185,4 +212,5 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) HYBRIDSIM LIBDIR=$(HYBRIDSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) NVDIMMSIM LIBDIR=$(NVDIMMSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) FDSIM LIBDIR=$(FDSIM_LIBDIR)
+	$(SST_REGISTER_TOOL) GOBLIN_HMCSIM LIBDIR=$(GOBLIN_HMCSIM_LIBDIR)
 

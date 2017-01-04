@@ -23,44 +23,113 @@
 #include <iostream>
 #include <map>
 
-#include "sst/elements/memHierarchy/memoryController.h"
-#include "sst/elements/memHierarchy/DRAMReq.h"
+#include "sst/elements/memHierarchy/membackend/memBackendConvertor.h"
+#include "sst/elements/memHierarchy/membackend/simpleMemBackendConvertor.h"
+#include "sst/elements/memHierarchy/membackend/hmcMemBackendConvertor.h"
 
 #define NO_STRING_DEFINED "N/A"
 
 namespace SST {
 namespace MemHierarchy {
 
-class MemController;
-
 class MemBackend : public SubComponent {
 public:
+
+    typedef MemBackendConvertor::ReqId ReqId;
     MemBackend();
 
-    MemBackend(Component *comp, Params &params) :
-	SubComponent(comp) {
+    MemBackend(Component *comp, Params &params) : SubComponent(comp)
+    {
+    	output = new SST::Output("@t:MemoryBackend[@p:@l]: ", 
+                params.find<uint32_t>("debug_level", 0),
+                params.find<uint32_t>("debug_mask", 0),
+                (Output::output_location_t)params.find<int>("debug_location", 0) );
 
-	uint32_t verbose = params.find<uint32_t>("verbose", 0);
-    	output = new SST::Output("MemoryBackend[@p:@l]: ", verbose, 0, SST::Output::STDOUT);
+        m_clockFreq = params.find<std::string>("clock");
 
-    	ctrl = dynamic_cast<MemController*>(comp);
-    	if (!ctrl) {
-        	output->fatal(CALL_INFO, -1, "MemBackends expect to be loaded into MemControllers.\n");
-	}
+        if ( m_clockFreq.empty() ) {
+            output->fatal(CALL_INFO, -1, "MemBackend: clock is not set\n");
+        }
+
+        m_maxReqPerCycle = params.find<>("max_requests_per_cycle",-1);
+        if (m_maxReqPerCycle == 0) m_maxReqPerCycle = -1;
+        m_reqWidth = params.find<>("request_width",64);
+
+        bool found;
+        UnitAlgebra backendRamSize = UnitAlgebra(params.find<std::string>("mem_size", "0B", found));
+        if (!found) {
+            output->fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified, (NEW) WITH units. E.g., 8GiB or 1024MiB. \n", "MemBackendConvertor");
+        }
+
+        if (!backendRamSize.hasUnits("B")) {
+            output->fatal(CALL_INFO, -1, "Invalid param (%s): backend.mem_size - definition has CHANGED! Now requires units in 'B' (SI OK, ex: 8GiB or 1024MiB).\nSince previous definition was implicitly MiB, you may simply append 'MiB' to the existing value. You specified '%s'\n", "MemBackendConvertor", backendRamSize.toString().c_str());
+        }
+        m_memSize = backendRamSize.getRoundedValue();
     }
 
     virtual ~MemBackend() {
-	delete output;
+        delete output;
     }
 
-    virtual bool issueRequest(DRAMReq *req) = 0;
+    virtual void setGetRequestorHandler( std::function<const std::string&(ReqId)> func ) {
+        m_getRequestor = func;
+    } 
+
+    std::string getRequestor( ReqId id ) {
+        return m_getRequestor( id );
+    }
+
     virtual void setup() {}
     virtual void finish() {}
-    virtual void clock() {}
+    virtual void clock() {} 
+    virtual size_t getMemSize() { return m_memSize; }
+    virtual uint32_t getRequestWidth() { return m_reqWidth; }
+    virtual int32_t getMaxReqPerCycle() { return m_maxReqPerCycle; } 
+    virtual const std::string& getClockFreq() { return m_clockFreq; } 
 protected:
-    MemController *ctrl;
-    Output* output;
+    Output*         output;
+    std::string     m_clockFreq;
+    int32_t         m_maxReqPerCycle;
+    size_t          m_memSize;
+    int32_t         m_reqWidth;
 
+    std::function<const std::string&(ReqId)> m_getRequestor;
+};
+
+class SimpleMemBackend : public MemBackend {
+  public:
+    SimpleMemBackend() : MemBackend() {} 
+    SimpleMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+
+    virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes ) = 0; 
+
+    void handleMemResponse( ReqId id ) {
+        m_respFunc( id );
+    }
+
+    virtual void setResponseHandler( std::function<void(ReqId)> func ) {
+        m_respFunc = func;
+    }
+
+  private:
+    std::function<void(ReqId)> m_respFunc;
+};
+
+class HMCMemBackend : public MemBackend {
+  public:
+    HMCMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+    virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
+
+    void handleMemResponse( ReqId id, uint32_t flags ) {
+        m_respFunc( id, flags );
+    }
+
+    virtual void setResponseHandler( std::function<void(ReqId,uint32_t)> func ) {
+        m_respFunc = func;
+    }
+
+  private:
+    std::function<void(ReqId,uint32_t)> m_respFunc;
 };
 
 }}

@@ -15,50 +15,56 @@
 
 
 #include <sst_config.h>
+#include <sst/core/link.h>
 #include "membackend/delayBuffer.h"
+#include "sst/elements/memHierarchy/util.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-DelayBuffer::DelayBuffer(Component *comp, Params &params) : MemBackend(comp, params){
+DelayBuffer::DelayBuffer(Component *comp, Params &params) : SimpleMemBackend(comp, params){
     
     // Get parameters
+    fixupParams( params, "clock", "backend.clock" ); 
     
     UnitAlgebra delay = params.find<UnitAlgebra>("request_delay", UnitAlgebra("0ns"));
     
     if (!(delay.hasUnits("s"))) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): request_delay - must have units of 's' (seconds). You specified %s.\n", ctrl->getName().c_str(), delay.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): request_delay - must have units of 's' (seconds). You specified %s.\n", comp->getName().c_str(), delay.toString().c_str());
     }
     
     // Create our backend & copy 'mem_size' through for now
     std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
     Params backendParams = params.find_prefix_params("backend.");
     backendParams.insert("mem_size", params.find<std::string>("mem_size"));
-    backend = dynamic_cast<MemBackend*>(loadSubComponent(backendName, backendParams));
+    backend = dynamic_cast<SimpleMemBackend*>(loadSubComponent(backendName, backendParams));
+
+    using std::placeholders::_1;
+    backend->setResponseHandler( std::bind( &DelayBuffer::handleMemResponse, this, _1 )  );
 
     // Set up self links
     if (delay.getValue() != 0) {
-        delay_self_link = ctrl->configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler<DelayBuffer>(this, &DelayBuffer::handleNextRequest));
+        delay_self_link = comp->configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler<DelayBuffer>(this, &DelayBuffer::handleNextRequest));
     } else {
         delay_self_link = NULL;
     }
 }
 
 void DelayBuffer::handleNextRequest(SST::Event *event) {
-    DRAMReq * req = requestBuffer.front();
-    if (!backend->issueRequest(req)) {
+    Req& req = requestBuffer.front();
+    if (!backend->issueRequest(req.id,req.addr,req.isWrite,req.numBytes)) {
         delay_self_link->send(1, NULL);
     } else requestBuffer.pop();
 }
 
-bool DelayBuffer::issueRequest(DRAMReq *req) {
+bool DelayBuffer::issueRequest( ReqId req, Addr addr, bool isWrite, unsigned numBytes) {
     if (delay_self_link != NULL) {
-        requestBuffer.push(req);
+        requestBuffer.push(Req(req,addr,isWrite,numBytes));
         delay_self_link->send(1, NULL);   // Just need a wakeup
         return true;
     } else {
-        return backend->issueRequest(req);
+        return backend->issueRequest(req,addr,isWrite,numBytes);
     }
 }
 
@@ -77,4 +83,3 @@ void DelayBuffer::setup() {
 void DelayBuffer::finish() {
     backend->finish();
 }
-

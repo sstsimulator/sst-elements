@@ -338,6 +338,8 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			memMgr->mapAddress(reqAddress), reqLength);
 
+		request->setVirtualAddress(memMgr->mapAddress(reqAddress));
+
 		CPURequest* newCPUReq = new CPURequest(req->getRequestID());
 		newCPUReq->incPartCount();
 		newCPUReq->setIssueTime(getCurrentSimTimeNano());

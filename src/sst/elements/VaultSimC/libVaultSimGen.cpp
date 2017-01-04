@@ -17,6 +17,9 @@
 #include "sst/core/element.h"
 #include <VaultSimC.h>
 
+using namespace SST;
+using namespace SST::VaultSim;
+
 extern "C" {
   Component* VaultSimCAllocComponent( SST::ComponentId_t id,  SST::Params& params );
   Component* create_logicLayer( SST::ComponentId_t id,  SST::Params& params );

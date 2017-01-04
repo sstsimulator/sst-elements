@@ -1,10 +1,6 @@
 # Automatically generated SST Python input
 import sst
 
-# Define SST core options
-sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "10000ns")
-
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
@@ -63,7 +59,7 @@ comp_chiprtr.addParams({
 comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "1",
+      #"debug" : "1",
       "debug_level" : "10",
       "network_address" : "0",
       "entry_cache_size" : "16384",
