@@ -27,7 +27,8 @@ RequestReorderRow::RequestReorderRow(Component *comp, Params &params) : SimpleMe
     fixupParams( params, "clock", "backend.clock" );
     
     // Get parameters
-    reqsPerCycle = params.find<int>("max_requests_per_cycle", -1);
+    reqsPerCycle = params.find<int>("max_issue_per_cycle", -1);
+
     banks = params.find<unsigned int>("banks", 8);
     UnitAlgebra rowSize(params.find<std::string>("row_size", "8KiB"));
     maxReqsPerRow = params.find<unsigned int>("reorder_limit", 1);    // No re-ordering

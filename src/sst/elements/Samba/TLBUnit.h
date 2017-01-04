@@ -32,6 +32,9 @@ using namespace SST::SambaComponent;
 class TLB 
 {
 
+	int level; // This indicates the level of the TLB Unit
+
+	int perfect; // This indidicates if the TLB is perfect or not, perfect is used to measure performance overhead over an ideal TLB hierarchy
 
 	int sizes; // This indicates the number of sizes supported
 
@@ -48,6 +51,9 @@ class TLB
 	PageTableWalker * PTW; // This is a pointer to the PTW in case of being last level
 
 	std::map<long long int, int> SIZE_LOOKUP; // This structure checks if a size is supported inside the structure, and its index structure
+
+	std::map< long long int, std::map< SST::Event *, int>> SAME_MISS; // This tracks the misses for the same location and deduplicates them
+	std::map<long long int, int> PENDING_MISS; // This tracks the addresses of the current master misses (other contained misses are tracked in SAME_MISS)
 
 	int  * sets; //stores the number of sets
 

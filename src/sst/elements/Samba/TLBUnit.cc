@@ -44,9 +44,11 @@ TLB::TLB(int Page_size, int Assoc, TLB * Next_level, int Size)
 
 
 // The constructer mainly used when creating TLBUnits
-TLB::TLB(int tlb_id, TLB * Next_level, int level, SST::Component * owner, SST::Params& params)
+TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::Params& params)
 {
 
+
+	level = Level;
 
 	next_level = Next_level;
 
@@ -65,15 +67,10 @@ TLB::TLB(int tlb_id, TLB * Next_level, int level, SST::Component * owner, SST::P
 	// This indicates the number of page sizes supported for this level
 	sizes = ((uint32_t) params.find<uint32_t>("sizes_L"+LEVEL, 1));
 
-	//std::cout<<"The latency of "<<"latency_L"+LEVEL<<"is "<<latency<<std::endl;
-
 	parallel_mode = ((uint32_t) params.find<uint32_t>("parallel_mode_L"+LEVEL, 0));
 
 	upper_link_latency = ((uint32_t) params.find<uint32_t>("upper_link_L"+LEVEL, 0));
 
-	//std::cout<<"Page size is "<<page_size<<std::endl;
-
-	//std::cout<<"Max # of outstanding requests is "<<max_outstanding<<std::endl;
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
 	sprintf(subID, "Core%d_L%d", tlb_id,level);
@@ -85,6 +82,8 @@ TLB::TLB(int tlb_id, TLB * Next_level, int level, SST::Component * owner, SST::P
 
 	max_width = ((uint32_t) params.find<uint32_t>("max_width_L"+LEVEL, 4));
 
+
+	perfect = ((uint32_t) params.find<uint32_t>("perfect", 0));
 
 	os_page_size = ((uint32_t) params.find<uint32_t>("os_page_size", 4));
 
@@ -101,11 +100,9 @@ TLB::TLB(int tlb_id, TLB * Next_level, int level, SST::Component * owner, SST::P
 
 		size[i] =  ((uint32_t) params.find<uint32_t>("size"+std::to_string(i+1) + "_L"+LEVEL, 1));
 
-		//std::cout<<"Size is "<<size<<std::endl;
 
 		assoc[i] =  ((uint32_t) params.find<uint32_t>("assoc"+std::to_string(i+1) +  "_L"+LEVEL, 1));
 
-		//std::cout<<"Associativity is "<<assoc<<std::endl;
 
 		page_size[i] = 1024 * ((uint32_t) params.find<uint32_t>("page_size"+ std::to_string(i+1) + "_L" + LEVEL, 4));
 
@@ -152,11 +149,11 @@ TLB::TLB(int tlb_id, TLB * Next_level, int level, SST::Component * owner, SST::P
 TLB::TLB(int tlb_id, PageTableWalker * Next_level, int level, SST::Component * owner, SST::Params& params)
 {
 
-std::cout<<"Assigning the PTW correctly"<<std::endl;
+	std::cout<<"Assigning the PTW correctly"<<std::endl;
 
-PTW=Next_level;
+	PTW=Next_level;
 
-new (this) TLB(tlb_id, (TLB *) NULL, level, owner, params);
+	new (this) TLB(tlb_id, (TLB *) NULL, level, owner, params);
 
 }
 
@@ -176,19 +173,27 @@ bool TLB::tick(SST::Cycle_t x)
 		uint64_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
 
-		// Double checking that we actually still don't have it inserted
-		if(SIZE_LOOKUP.find(pushed_back_size[ev])!= SIZE_LOOKUP.end())
-		{
 
-			// Find the id of the structure holds those entries of the page size of this request
-			int struct_id = SIZE_LOOKUP[pushed_back_size[ev]];
-			if(!check_hit(addr, struct_id))
+		// Double checking that we actually still don't have it inserted
+		// Insert the translation into all structures with same or smaller size page support. Note that smaller page sizes will still have the same translation with offset derived from address
+		std::map<long long int, int>::iterator lu_st, lu_en;
+		lu_st=SIZE_LOOKUP.begin();
+		lu_en=SIZE_LOOKUP.end();
+		while(lu_st!=lu_en)
+		{
+			if(pushed_back_size[ev] >= lu_st->first)
 			{
-				insert_way(addr, find_victim_way(addr, struct_id), struct_id);
-				update_lru(addr, struct_id);
+				if(!check_hit(addr, lu_st->second))
+				{
+					insert_way(addr, find_victim_way(addr, lu_st->second), lu_st->second);
+					update_lru(addr, lu_st->second);
+				}
+
 			}
 
+			lu_st++;
 		}
+
 		// Deleting it from pending requests
 		std::vector<SST::Event *>::iterator st, en;
 		st = pending_misses.begin();
@@ -210,6 +215,25 @@ bool TLB::tick(SST::Cycle_t x)
 
 		// We also track the size of tthe ready request
 		ready_by_size[ev]= pushed_back_size[ev];
+
+
+		// Check if there are other misses that were going to the same translation and waiting for the response of this miss
+		if((level==1) && (SAME_MISS.find(addr/4096)!=SAME_MISS.end()))
+		{
+		  std::map< SST::Event *, int>::iterator same_st, same_en; 
+		  same_st = SAME_MISS[addr/4096].begin();
+    		  same_en = SAME_MISS[addr/4096].end();
+   		   while(same_st!=same_en)
+		    {
+
+	    		ready_by[same_st->first] = x + latency + 2*upper_link_latency;
+	    		ready_by_size[same_st->first] = pushed_back_size[ev];
+			same_st++;
+		    }	
+		  SAME_MISS.erase(addr/4096);
+		 // PENDING_MISS.erase(addr/4096);
+		}
+		PENDING_MISS.erase(addr/4096);
 
 		pushed_back_size.erase(ev);
 		pushed_back.pop_back();
@@ -244,7 +268,7 @@ bool TLB::tick(SST::Cycle_t x)
 
 		// We check the structures in parallel to find if it hits
 		for(int k=0; k < sizes; k++)
-			if(check_hit(addr, k))
+			if(check_hit(addr, k) || (perfect==1))
 			{
 				hit=true;
 				hit_id=k;
@@ -274,21 +298,44 @@ bool TLB::tick(SST::Cycle_t x)
 			// Making sure we have a room for an additional miss, i.e., less than the maximum outstanding misses
 			if(pending_misses.size() < max_outstanding)
 			{	
+
+				// Check if the miss is not currently being handled
+				bool currently_handled=false;
+				if((level==1) && (PENDING_MISS.find(addr/4096) != PENDING_MISS.end()))
+				{
+
+					SAME_MISS[addr/4096][ev]=1; // Just adding it to the 2D map, so we later hand it back once the master miss is complete
+					currently_handled = true;
+				}
+				else if(level==1)
+				{
+
+					PENDING_MISS[addr/4096]=1;
+
+				}
+
 				statTLBMisses->addData(1);
 				misses++;
-				pending_misses.push_back(*st_1);
 
-
-				// Check if the last level TLB or not, if last-level, pass the request to the page table walker
-				if(next_level!=NULL)
+				if(!currently_handled)
 				{
-					
-					next_level->push_request(ev);
-					st_1 = not_serviced.erase(st_1);
+
+					pending_misses.push_back(*st_1);
+					// Check if the last level TLB or not, if last-level, pass the request to the page table walker
+					if(next_level!=NULL)
+					{
+
+						next_level->push_request(ev);
+						st_1 = not_serviced.erase(st_1);
+					}
+					else // Passs it to the page table walker
+					{
+						PTW->push_request(ev);
+						st_1 = not_serviced.erase(st_1);
+					}
 				}
-				else // Passs it to the page table walker
+				else
 				{
-					PTW->push_request(ev);
 					st_1 = not_serviced.erase(st_1);
 				}
 

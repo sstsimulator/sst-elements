@@ -51,8 +51,9 @@ public:
             output->fatal(CALL_INFO, -1, "MemBackend: clock is not set\n");
         }
 
-        m_maxReqPerCycle = params.find<>("maxReqPerCycle",-1);
-        m_reqWidth = params.find<>("reqWidth",64);
+        m_maxReqPerCycle = params.find<>("max_requests_per_cycle",-1);
+        if (m_maxReqPerCycle == 0) m_maxReqPerCycle = -1;
+        m_reqWidth = params.find<>("request_width",64);
 
         bool found;
         UnitAlgebra backendRamSize = UnitAlgebra(params.find<std::string>("mem_size", "0B", found));
