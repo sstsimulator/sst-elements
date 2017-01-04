@@ -597,7 +597,7 @@ static SubComponent* create_Mem_RequestReorderSimple(Component * comp, Params& p
 
 static const ElementInfoParam requestReorderSimple_params[] = {
     {"verbose",                 "Sets the verbosity of the backend output", "0" },
-    {"max_requests_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+    {"max_issue_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
     {"search_window_size",      "Maximum number of request to search each cycle. 0 or negative is unlimited.", "-1"},
     {"backend",                 "Backend memory system", "memHierarchy.simpleDRAM"},
     { NULL, NULL, NULL }
@@ -610,7 +610,7 @@ static SubComponent* create_Mem_RequestReorderRow(Component * comp, Params& para
 
 static const ElementInfoParam requestReorderRow_params[] = {
     {"verbose",                 "Sets the verbosity of the backend output", "0" },
-    {"max_requests_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+    {"max_issue_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
     {"banks",                   "Number of banks", "8"},
     {"bank_interleave_granularity", "Granularity of interleaving in bytes (B), generally a cache line. Must be a power of 2.", "64B"},
     {"row_size",                "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},

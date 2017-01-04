@@ -49,6 +49,7 @@ static const ElementInfoParam Samba_params[] = {
 
     {"corecount", "Number of CPU cores to emulate, i.e., number of private Sambas", "1"},
     {"levels", "Number of TLB levels per Samba", "1"},
+    {"perfect", "This is set to 1, when modeling an ideal TLB hierachy with 100\% hit rate", "0"},
     {"os_page_size", "This represents the size of frames the OS allocates in KB", "4"}, // This is a hack, assuming the OS allocated only one page size, this will change later
     {"sizes_L%(levels)", "Number of page sizes supported by Samba", "1"},
     {"page_size%(sizes)_L%(levels)d", "the page size of the supported page size number x in level y","4"},
@@ -61,7 +62,7 @@ static const ElementInfoParam Samba_params[] = {
     {"latency_L%(levels)d", "the access latency in cycles for this level of memory","1"},
     {"parallel_mode_L%(levels)d", "this is for the corner case of having a one cycle overlap with accessing cache","0"},
     {"page_walk_latency", "Each page table walk latency in nanoseconds", "50"},
-    {"self_connected", "Determines if the page walkers are acutally connected to memory hierarcy or just add fixed latency (self-connected)", "1"},
+    {"self_connected", "Determines if the page walkers are acutally connected to memory hierarcy or just add fixed latency (self-connected)", "0"},
     {NULL, NULL, NULL},
 };
 
