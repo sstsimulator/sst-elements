@@ -48,7 +48,7 @@ comp_memory.addParams({
       "backend" : "memHierarchy.goblinHMCSim",
       "backend.device_count" : "1",
       "backend.link_count" : "8",
-      "backend.vault_count" : "32",
+      "backend.vault_count" : "64",
       "backend.queue_depth" : "64",
       "backend.bank_count" : "16",
       "backend.dram_count" : "20",
