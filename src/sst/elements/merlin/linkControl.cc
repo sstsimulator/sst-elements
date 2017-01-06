@@ -36,11 +36,6 @@ LinkControl::LinkControl(Component* parent, Params &params) :
     curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
     idle_start(0),
     is_idle(true),
-	dynlink_start(0),
-	active_past(0), idle_past(0), stalled_past(0),
-	active_cur(0), idle_cur(0), stalled_cur(0),
-	active_wma(0), idle_wma(0), stalled_wma(0),
-	dl_bits_sent(0),
     receiveFunctor(NULL), sendFunctor(NULL),
     network_initialized(false),
     output(Simulation::getSimulation()->getSimulationOutput())
@@ -73,8 +68,6 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
     // Input and output buffers
     input_buf = new network_queue_t[req_vns];
     output_buf = new network_queue_t[total_vns];
-	input_buf_flit_count = 0;
-	output_buf_flit_count = 0;
 
     // Initialize credit arrays.  Credits are in flits, and we don't
     // yet know the flit size, so can't initialize in_ret_credits and
@@ -111,9 +104,6 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
     //         new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
             new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
-	
-	dynlink_timing = configureSelfLink(port_name + "_dynlink_timing", "1MHz", 
-			new Event::Handler<LinkControl>(this,&LinkControl::summarize_link_state));
 
     // Register statistics
     packet_latency = registerStatistic<uint64_t>("packet_latency");
@@ -285,14 +275,6 @@ void LinkControl::finish(void)
     if (is_idle) {
         idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
         is_idle = false;
-		// Extra code for dynamic link additions
-		// makes sure we don't count idle time outside of the window
-		if (idle_start < dynlink_start){
-			idle_cur += parent->getCurrentSimTimeNano() - dynlink_start;
-		}
-		else {
-			idle_cur += parent->getCurrentSimTimeNano() - idle_start;
-		}
     }
     // Clean up all the events left in the queues.  This will help
     // track down real memory leaks as all this events won't be in the
@@ -349,7 +331,6 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     // std::cout << std::endl;
     
     output_buf[ev->request->vn].push(ev);
-	output_buf_flit_count += ev->getSizeInFlits();
     if ( waiting && !have_packets ) {
         output_timing->send(1,NULL);
         waiting = false;
@@ -376,14 +357,6 @@ bool LinkControl::spaceToSend(int vn, int bits) {
 }
 
 
-// Returns the number of flits in the input buffer
-int LinkControl::getInputBufSum() {
-}
-
-// Returns the number of flits in the output buffer
-int LinkControl::getOutputBufSum() {
-}
-
 // Returns NULL if no event in input_buf[vn]. Otherwise, returns
 // the next event.
 SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
@@ -395,8 +368,6 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     // Figure out how many credits to return
     int flits = event->getSizeInFlits();
     in_ret_credits[event->request->vn] += flits;
-
-	input_buf_flit_count -= flits;
 
     // For now, we're just going to send the credits back to the
     // other side.  The required BW to do this will not be taken
@@ -479,18 +450,9 @@ void LinkControl::handle_input(Event* ev)
         // std::cout << std::endl;
 
         input_buf[actual_vn].push(event);
-		input_buf_flit_count += event->getSizeInFlits();
         if (is_idle) {
             idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
-			// Extra code for dynamic link additions
-			// makes sure we don't count idle time outside of the window
-			if (idle_start < dynlink_start){
-				idle_cur += parent->getCurrentSimTimeNano() - dynlink_start;
-			}
-			else {
-				idle_cur += parent->getCurrentSimTimeNano() - idle_start;
-			}
         }
         if ( event->request->getTraceType() == SimpleNetwork::Request::FULL ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Received and event on LinkControl in NIC: %s"
@@ -517,69 +479,6 @@ void LinkControl::handle_input(Event* ev)
     }
 }
 
-// This function is here to periodically collect measurements of the link
-// so that we can summarize performance for some time interval.
-// These summaries can be fed into other algorithms for dynamically setting link properties
-// e.g. link width, frequency, etc
-//This code should probably be abstracted away 
-//so that other methods can be plugged in for predicting link behvaior.
-//But this first bit will use a weighted moving average.
-void LinkControl::summarize_link_state(Event* ev)
-{
-	uint64_t giga = 1000*1000*1000;
-	double micro = 1/(1000*1000);
-	double nano = 1/(1000*1000*1000);
-	double window = micro;
-	float weight = 4;
-	
-	//Need to know the frequency this is called to
-	//determine percents below
-
-	//We need a measure of percent time active
-	int64_t bw_val = link_bw.getRoundedValue();
-	//I'm hardcoding this in to start but this should automatically adjust
-	//using the UnitAlgebra methods and micro shoudl be adjustable by the user.
-	active_cur = (dl_bits_sent / (bw_val*8*giga)) / window;
-	
-	// If the idle interval extends over more than one window, 
-	// we only capture the amount of time idle in this window.
-	if (is_idle){
-		if (idle_start < dynlink_start){
-			idle_cur = parent->getCurrentSimTimeNano() - dynlink_start;
-		}
-		else {
-			idle_cur += parent->getCurrentSimTimeNano() - idle_start;
-		}
-	}
-	//We need a measure of percent time idle
-	//idle_cur is collected in nano seconds
-	//so divide by 1000 if we are reporting 1 micsecond windows
-	idle_cur = idle_cur / (window/nano);	
-	
-	//We need a measure of percent time stalled
-	stalled_cur = 1 - (idle_cur + active_cur);
-	
-	active_wma = (weight * active_cur + active_past)/(weight + 1);
-	idle_wma = (weight * idle_cur + idle_past)/(weight + 1);
-	stalled_wma = (weight * stalled_cur + stalled_past)/(weight + 1);
-
-	fprintf(stderr, "Current active:%f, idle:%f stalled:%f\n",
-		active_cur, idle_cur, stalled_cur);
-
-	//The present becomes the past
-	active_past = active_cur;
-	idle_past = idle_cur;
-	stalled_past = stalled_cur;
-
-	//Reset current parameters to 0
-	active_cur = 0;
-	idle_cur = 0;
-	stalled_cur = 0;
-	dl_bits_sent = 0;
-	dynlink_start = parent->getCurrentSimTimeNano();
-
-	//Insert code to adjust links
-}
 
 void LinkControl::handle_output(Event* ev)
 {
@@ -604,7 +503,6 @@ void LinkControl::handle_output(Event* ev)
         if ( rtr_credits[i] < send_event->getSizeInFlits() ) continue;
         vn_to_send = i;
         output_buf[i].pop();
-		output_buf_flit_count -= send_event->getSizeInFlits();
         found = true;
         break;
     }
@@ -618,7 +516,6 @@ void LinkControl::handle_output(Event* ev)
             if ( rtr_credits[i] < send_event->getSizeInFlits() ) continue;
             vn_to_send = i;
             output_buf[i].pop();
-			output_buf_flit_count -= send_event->getSizeInFlits();
             found = true;
             break;
         }
@@ -651,14 +548,6 @@ void LinkControl::handle_output(Event* ev)
 		if (is_idle){
             idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
-			// Extra code for dynamic link additions
-			// makes sure we don't count idle time outside of the window
-			if (idle_start < dynlink_start){
-				idle_cur += parent->getCurrentSimTimeNano() - dynlink_start;
-			}
-			else {
-				idle_cur += parent->getCurrentSimTimeNano() - idle_start;
-			}
         }
         // printf("%d: Sending packet to %llu on VN: %d",id, send_event->request->dest, send_event->request->vn);
         // std::cout << std::endl;
@@ -681,7 +570,6 @@ void LinkControl::handle_output(Event* ev)
             //           << "." << std::endl;
         }
         send_bit_count->addData(send_event->request->size_in_bits);
-		dl_bits_sent += send_event->request->size_in_bits;
         if (sendFunctor != NULL ) {
             bool keep = (*sendFunctor)(vn_to_send / checker_board_factor);
             if ( !keep ) sendFunctor = NULL;
@@ -707,14 +595,6 @@ void LinkControl::handle_output(Event* ev)
 		if (have_packets && is_idle){
             idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
-			// Extra code for dynamic link additions
-			// makes sure we don't count idle time outside of the window
-			if (idle_start < dynlink_start){
-				idle_cur += parent->getCurrentSimTimeNano() - dynlink_start;
-			}
-			else {
-				idle_cur += parent->getCurrentSimTimeNano() - idle_start;
-			}
         }
     }
 }
