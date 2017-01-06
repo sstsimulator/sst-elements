@@ -35,6 +35,9 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : Simp
 	hmc_capacity_per_device = params.find<uint32_t>("capacity_per_device", HMC_MIN_CAPACITY);
 	hmc_xbar_depth   =  params.find<uint32_t>("xbar_depth", 4);
 	hmc_max_req_size =  params.find<uint32_t>("max_req_size", 64);
+#if defined( HMC_DEF_DRAM_LATENCY )
+        hmc_dram_latency = params.find<uint32_t>("dram_latency", HMC_DEF_DRAM_LATENCY );
+#endif
 
         link_phy = params.find<float>("link_phy_power", 0.1);
         link_local_route = params.find<float>("link_local_route_power", 0.1);
@@ -114,6 +117,13 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : Simp
         if( rc != 0 ){
 	    output->fatal(CALL_INFO, -1,
                           "Unable to initialize the HMC-Sim power configuration; return code is %d\n", rc);
+        }
+#endif
+#if defined( HMC_DEF_DRAM_LATENCY )
+        rc = hmcsim_init_dram_latency( &the_hmc, hmc_dram_latency );
+        if( rc != 0 ){
+	    output->fatal(CALL_INFO, -1,
+                          "Unable to initialize the HMC-Sim dram latency configuration; return code is %d\n", rc);
         }
 #endif
 
