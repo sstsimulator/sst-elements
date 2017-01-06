@@ -386,7 +386,7 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	}
 
 	for (int l_i = 0; l_i != m_numBankGroups; ++l_i) {
-		c_BankGroup* l_entry = new c_BankGroup(&m_bankParams);
+	        c_BankGroup* l_entry = new c_BankGroup(&m_bankParams, l_i);
 		m_bankGroups.push_back(l_entry);
 	}
 
@@ -483,6 +483,28 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	//set our clock
 	registerClock("1GHz",
 			new Clock::Handler<c_CmdUnit>(this, &c_CmdUnit::clockTic));
+
+	// set up cmd trace output
+	k_printCmdTrace = (uint32_t)x_params.find<uint32_t>("boolPrintCmdTrace", 0, l_found);
+	
+	k_cmdTraceFileName = (std::string)x_params.find<std::string>("boolCmdTraceFile", "-", l_found);
+	k_cmdTraceFileName.pop_back(); // remove trailing newline (??)
+	if(k_printCmdTrace) {
+	  if(k_cmdTraceFileName.compare("-") == 0) {// set output to std::cout
+	    std::cout << "Setting cmd trace output to std::cout" << std::endl;
+	    m_cmdTraceStreamBuf = std::cout.rdbuf();
+	  } else { // open the file and direct the cmdTraceStream to it
+	    std::cout << "Setting cmd trace output to " << k_cmdTraceFileName << std::endl;
+	    m_cmdTraceOFStream.open(k_cmdTraceFileName);
+	    if(m_cmdTraceOFStream) {
+	      m_cmdTraceStreamBuf = m_cmdTraceOFStream.rdbuf();
+	    } else {
+	      std::cerr << "Failed to open cmd trace output file " << k_cmdTraceFileName << ", redirecting to stdout";
+	      m_cmdTraceStreamBuf = std::cout.rdbuf();
+	    }
+	  }
+	  m_cmdTraceStream = new std::ostream(m_cmdTraceStreamBuf);
+	}
 }
 
 c_CmdUnit::~c_CmdUnit() {
@@ -1259,16 +1281,29 @@ bool c_CmdUnit::sendCommand(c_BankCommand* x_bankCommandPtr,
 	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 	if (x_bank->isCommandAllowed(x_bankCommandPtr, l_time)) {
+	  if(k_printCmdTrace) {
+	    c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
+	    unsigned l_bankNum = l_hasher->getBankFromAddress1(x_bankCommandPtr->getAddress(), m_numBanks);
+	    (*m_cmdTraceStream) << "@" << std::dec
+				<< Simulation::getSimulation()->getCurrentSimCycle()
+				<< " " << (x_bankCommandPtr)->getCommandString()
+				<< " " << std::dec << (x_bankCommandPtr)->getSeqNum()
+				<< " 0x" << std::hex << (x_bankCommandPtr)->getAddress()
+				<< " " << std::dec << x_bank->getBankGroup()->getBankGroupId()
+				<< " " << std::dec << l_bankNum
+				<< " " << std::dec << (x_bankCommandPtr)->getRow()
+				<< std::endl;
+	  }
 
-//		std::cout << std::endl << "@" << std::dec
-//				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//				<< __PRETTY_FUNCTION__ << ": Sent command " << std::endl;
-//		(x_bankCommandPtr)->print();
-//		c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
-//		unsigned l_bankNum = l_hasher->getBankFromAddress1(
-//				x_bankCommandPtr->getAddress(), m_numBanks);
-//		std::cout << " going to bank " << std::dec << l_bankNum << std::endl;
-//		std::cout << std::endl;
+	  //		std::cout << std::endl << "@" << std::dec
+	  //				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
+	  //				<< __PRETTY_FUNCTION__ << ": Sent command " << std::endl;
+	  //		(x_bankCommandPtr)->print();
+	  //		c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
+	  //		unsigned l_bankNum = l_hasher->getBankFromAddress1(
+	  //				x_bankCommandPtr->getAddress(), m_numBanks);
+	  //		std::cout << " going to bank " << std::dec << l_bankNum << std::endl;
+	  //		std::cout << std::endl;	  
 
 		// send command to BankState
 		x_bank->handleCommand(x_bankCommandPtr, l_time);
