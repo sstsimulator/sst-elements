@@ -53,6 +53,9 @@ private:
 
 	// Self link for dynamic link additions
 	Link* dynlink_timing;
+	// Threshold of how idle a link is before it reduces link width 0 to 1 (negative means no link adjustments).
+	// i.e. if (idle > dlink_thresh) then reduce link width.
+	float dlink_thresh;
 
 	// Self link for disabling a port temporarily
 	Link* disable_timing;
@@ -191,7 +194,8 @@ public:
                 SimTime_t input_latency_cycles, std::string input_latency_timebase,
                 SimTime_t output_latency_cycles, std::string output_latency_timebase,
                 const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size,
-                std::vector<std::string>& inspector_names);
+                std::vector<std::string>& inspector_names,
+				const float dlink_thresh);
 
     void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits);
 

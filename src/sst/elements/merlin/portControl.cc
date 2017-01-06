@@ -133,7 +133,8 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
                          SimTime_t input_latency_cycles, std::string input_latency_timebase,
                          SimTime_t output_latency_cycles, std::string output_latency_timebase,
                          const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size,
-                         std::vector<std::string>& inspector_names) :
+                         std::vector<std::string>& inspector_names,
+						 const float dlink_thresh) :
     rtr_id(rtr_id),
     num_vcs(-1),
     link_bw(link_bw),
@@ -149,6 +150,7 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     port_out_credits(NULL),
     idle_start(0),
 	sai_win_start(0),
+	dlink_thresh(dlink_thresh),
 	sai_port_disabled(false),
 	ongoing_transmit(false),
     is_idle(true),
@@ -188,7 +190,6 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     
 	// This is the self link to enable the logic for adaptive link widths.
 	// The initial call to the handler dynlink_timing->send is made in setup.
-	// TODO adjust 10us to run off of sai_win_length.
 	dynlink_timing = rif->configureSelfLink(link_port_name + "_dynlink_timing", "10us",
 													new Event::Handler<PortControl>(this,&PortControl::handleSAIWindow));
 
@@ -354,7 +355,7 @@ PortControl::~PortControl() {
 void
 PortControl::setup() {
 	
-	dynlink_timing->send(1,NULL);
+	if (dlink_thresh >= 0) dynlink_timing->send(1,NULL);
     while ( init_events.size() ) {
         delete init_events.front();
         init_events.pop_front();
@@ -364,7 +365,7 @@ PortControl::setup() {
 void
 PortControl::finish() {
 
-	std::cerr << "Link was adjusted " << width_adj_count->getCollectionCount() << " times.\n";
+	//std::cerr << "Link was adjusted " << width_adj_count->getCollectionCount() << " times.\n";
     // Any links that ended in an idle state need to add stats
     if (is_idle && connected) {
         idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
@@ -1162,7 +1163,7 @@ PortControl::handleSAIWindow(Event* ev) {
 	
 	// There should be a flag based off an input parameter enabling disabling dynamic link width.
 	// Here's the logic for adjusting link width based on idle time.
-	if (idle > .99){
+	if (idle > dlink_thresh){
 		decreaseLinkWidth();
 	}
 	else if (cur_link_width < max_link_width){
@@ -1182,49 +1183,6 @@ PortControl::handleSAIWindow(Event* ev) {
 
 	dynlink_timing->send(1,NULL);
 	sai_win_start = cur_time;
-}
-
-// Whenever data is sent we need to call this function to add the amount of time active for a particular window.
-// This function needs to account for any additional time active that extend past the current window.
-// Currently unused and still a work in progress.
-uint64_t
-PortControl::increaseActive(){
-	// Convert to Gap (msg_size over bandwidth)
-	double bits_sent = 0; //send_event->getEncapsulatedEvent()->request->size_in_bits;
-	if (bits_sent == 0){
-		std::cerr << "PortControl: error! should not send 0 bits\n";
-	}
-	if (link_bw.hasUnits("b/s")){
-	// Gap is just the time (in seconds) to send k bits
-		double gap = bits_sent / link_bw.getRoundedValue();
-		// Add gap to current time to determine when we are done with send
-		//std::cout << "gap is :" << std::scientific;
-		//std::cout << tmp_d << '\n';
-		std::string tmp_s = std::to_string(gap);
-		double time_active = gap / sai_win_length;
-		//convert seconds to nano seconds
-		uint64_t time_active_nano = time_active * 1000 * 1000 * 1000;
-		
-		SimTime_t active_start = Simulation::getSimulation()->getCurrentSimCycle();
-		uint64_t active_finish = active_start + time_active_nano;
-		if (active_finish > (sai_win_start + sai_win_length_nano)){
-			ongoing_transmit = true;
-			// determine time left in window (nano seconds)
-			uint64_t effective_time_active_nano = (sai_win_start + sai_win_length_nano) - active_start;
-			// determine active time remaining in next window
-			time_active_nano_remaining = time_active_nano - effective_time_active_nano;
-		}
-
-		if (time_active > 1){
-		
-		}
-		// Note: gap may be larger than the window
-		active += time_active;
-	}
-	else {
-		std::cerr << "PortControl: was expecting link_bw to be in units b/s\n";
-	}
-
 }
 
 // If we are idle or stalled beyond some threshold,
