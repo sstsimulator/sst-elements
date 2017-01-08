@@ -32,6 +32,8 @@
 #include <vector>
 #include <list>
 #include <set>
+#include <iostream>
+#include <fstream>
 
 // SST includes
 #include <sst/core/component.h>
@@ -139,6 +141,13 @@ private:
 	std::vector<c_BankGroup*> m_bankGroups;
 	std::vector<c_Rank*> m_ranks;
 	std::vector<c_Channel*> m_channel;
+
+        bool k_printCmdTrace;
+        std::string k_cmdTraceFileName;
+        std::filebuf m_cmdTraceFileBuf;
+        std::streambuf *m_cmdTraceStreamBuf;
+        std::ofstream m_cmdTraceOFStream;
+        std::ostream *m_cmdTraceStream;
 
 	// token change in this unit this cycle
 	// beginning of every cycle these variables are reset
