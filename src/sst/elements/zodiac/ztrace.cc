@@ -31,7 +31,7 @@ ZodiacTraceReader::ZodiacTraceReader(ComponentId_t id, Params& params) :
     std::string msgiface = params.find<std::string>("msgapi");
 
     if ( msgiface == "" ) {
-        msgapi = new MP::Interface();
+        msgapi = new MP::Interface( this );
     } else {
 	msgapi = dynamic_cast<MP::Interface*>(loadModule(msgiface, params));
 
