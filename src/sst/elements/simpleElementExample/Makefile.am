@@ -25,8 +25,8 @@ libsimpleElementExample_la_SOURCES = \
 	simpleMessageGeneratorComponent.h \
 	simpleMessageGeneratorComponent.cc \
 	simpleLookupTableComponent.h \
-	simpleLookupTableComponent.cc 
-	
+	simpleLookupTableComponent.cc
+
 EXTRA_DIST = \
     README \
     tests/test_simpleComponent.py \
