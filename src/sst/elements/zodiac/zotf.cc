@@ -35,7 +35,7 @@ ZodiacOTFTraceReader::ZodiacOTFTraceReader(ComponentId_t id, Params& params) :
     if ( msgiface == "" ) {
         msgapi = new MessageInterface();
     } else {
-	msgapi = dynamic_cast<MessageInterface*>(loadModule(msgiface, params));
+	msgapi = dynamic_cast<MessageInterface*>(loadSubComponent(msgiface, this, params));
 
         if(NULL == msgapi) {
 		std::cerr << "Message API: " << msgiface << " could not be loaded." << std::endl;

@@ -54,7 +54,7 @@ static const int    ShortMsgQ       = 0xf00d;
 
 class ShortRecvBuffer;
 
-class XXX  {
+class XXX : SubComponent  {
 
   public:
 
@@ -170,6 +170,9 @@ class XXX  {
         return m_waitanyStateDelay;
     }
 
+    Statistic<uint64_t>* statRcvdMsg() { return m_statRcvdMsg; }
+    Statistic<uint64_t>* statPstdRcv() { return m_statPstdRcv; }
+
     void memcpy( Callback, MemAddr to, MemAddr from, size_t );
     void memwrite( Callback, MemAddr to, size_t );
     void memread( Callback, MemAddr to, size_t );
@@ -219,6 +222,9 @@ class XXX  {
     Thornhill::MemoryHeapLink* m_memHeapLink;
     Info*           m_info;
     VirtNic*        m_nic;
+
+    Statistic<uint64_t>* m_statRcvdMsg;
+    Statistic<uint64_t>* m_statPstdRcv;
 
     int                         m_dbg_level;
     int                         m_dbg_mask;

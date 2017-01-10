@@ -24,7 +24,7 @@ using namespace SST::Firefly;
 using namespace SST;
 using namespace SST::Firefly::CtrlMsg;
 
-API::API( Component* owner, Params& params ) 
+API::API( Component* owner, Params& params ) : ProtocolAPI( owner ) 
 {
     m_xxx = new XXX( owner, params );
     assert( m_xxx );

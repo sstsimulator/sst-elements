@@ -119,7 +119,7 @@ load_hades(Component* comp, Params& params)
     return new Hades(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_hadesMP(Component* comp, Params& params)
 {
     return new HadesMP(comp, params);
@@ -324,7 +324,7 @@ static const ElementInfoParam funcSMModule_params[] = {
     {NULL, NULL}
 };
 
-static Module*
+static SubComponent*
 load_ctrlMsgProtocol( Component* comp, Params& params )
 {
     return new CtrlMsg::API( comp, params );
@@ -381,14 +381,6 @@ static const ElementInfoComponent components[] = {
 };
 
 static const ElementInfoModule modules[] = {
-    { "hadesMP",
-      "Firefly Hermes MP module",
-      NULL,
-      NULL,
-      load_hadesMP,
-      hadesMPModule_params,
-      "SST::Hermes::MP::Interface"
-    },
     { "VirtNic",
       "Firefly VirtNic module",
       NULL,
@@ -617,18 +609,12 @@ static const ElementInfoModule modules[] = {
       funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
-    { "CtrlMsgProto",
-      "Ctrl Message Pootocol",
-      NULL,
-      NULL,
-      load_ctrlMsgProtocol,
-	  ctrlMsgProtocolModule_params,
-      "SST::Firefly::ProtocolAPI"
-    },
     { NULL, NULL, NULL, NULL, NULL, NULL}
 };
 
 static const ElementInfoStatistic hades_statistics[] = {
+    { "posted_receive_list", "xxx", "requests", 1 },
+    { "received_msg_list", "yyy", "requests", 1 },
     { NULL, NULL, NULL, 0 }
 };
 
@@ -638,8 +624,24 @@ static const ElementInfoSubComponent subcomponents[] = {
       NULL,
       load_hades,
       hadesModule_params,
-      hades_statistics,
+      NULL,
       "SST::Hermes::OS"
+    },
+    { "hadesMP",
+      "Firefly Hermes MP module",
+      NULL,
+      load_hadesMP,
+      hadesMPModule_params,
+      NULL,
+      "SST::Hermes::MP::Interface"
+    },
+    { "CtrlMsgProto",
+      "Ctrl Message Pootocol",
+      NULL,
+      load_ctrlMsgProtocol,
+	  ctrlMsgProtocolModule_params,
+      hades_statistics,
+      "SST::Firefly::ProtocolAPI"
     },
     { NULL, NULL, NULL, NULL}
 };
