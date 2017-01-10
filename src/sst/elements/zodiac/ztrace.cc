@@ -29,12 +29,13 @@ using namespace SST::Zodiac;
 ZodiacTraceReader::ZodiacTraceReader(ComponentId_t id, Params& params) :
   Component(id) {
 
+      assert(0);
     std::string msgiface = params.find<std::string>("msgapi");
 
     if ( msgiface == "" ) {
         msgapi = new MP::Interface( this );
     } else {
-	msgapi = dynamic_cast<MP::Interface*>(loadSubComponent(msgiface, this, params));
+        msgapi = dynamic_cast<MP::Interface*>(loadSubComponent(msgiface, this, params));
 
         if(NULL == msgapi) {
 		std::cerr << "Message API: " << msgiface << " could not be loaded." << std::endl;
