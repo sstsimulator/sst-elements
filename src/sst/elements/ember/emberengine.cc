@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -142,7 +146,7 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
         Params modParams = params.find_prefix_params( osName + "." );
 
         Hermes::Interface* api = dynamic_cast<Interface*>(
-                        owner->loadModuleWithComponent( 
+                        owner->loadSubComponent( 
                             moduleName, owner, modParams ) );
         assert( tmp.find( api->getName() ) == tmp.end() );
 

@@ -4,7 +4,11 @@
 // 
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
-// 
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -14,11 +18,13 @@
 
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/elements/VaultSimC/memReqEvent.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 
-using namespace SST::Interfaces;
+using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace SST::VaultSim;
 
 #define DBG( fmt, args... )m_dbg.write( "%s():%d: " fmt, __FUNCTION__, __LINE__, ##args)
 //typedef  VaultCompleteFn; 
@@ -167,7 +173,6 @@ void logicLayer::init(unsigned int phase) {
             }
         }
     }
-    
 }
 
 
@@ -180,7 +185,7 @@ bool logicLayer::clock( Cycle_t current )
 
   // check for events from the CPU
   while((tc[0] < bwlimit) && (e = toCPU->recv())) {
-    MemEvent *event  = dynamic_cast<MemEvent*>(e);
+    MemReqEvent *event  = dynamic_cast<MemReqEvent*>(e);
 //    dbg.output(CALL_INFO, "LL%d got req for %p (%lld %d)\n", llID, 
     dbg.output(CALL_INFO, "LL%d got req for %p (%" PRIu64 " %d)\n", llID, 
 	       (void*)event->getAddr(), event->getID().first, event->getID().second);
@@ -211,7 +216,7 @@ bool logicLayer::clock( Cycle_t current )
   // check for events from the memory chain
   if (toMem) {
     while((tm[0] < bwlimit) && (e = toMem->recv())) {
-      MemEvent *event  = dynamic_cast<MemEvent*>(e);
+      MemRespEvent *event  = dynamic_cast<MemRespEvent*>(e);
       if (event == NULL) {
 	dbg.fatal(CALL_INFO, -1, "logic layer got bad event\n");
       }
@@ -231,7 +236,7 @@ bool logicLayer::clock( Cycle_t current )
        i != m_memChans.end(); ++i) {
     memChan_t *m_memChan = *i;
     while ((e = m_memChan->recv())) {
-      MemEvent *event  = dynamic_cast<MemEvent*>(e);
+      MemRespEvent *event  = dynamic_cast<MemRespEvent*>(e);
       if (event == NULL) {
         dbg.fatal(CALL_INFO, -1, "logic layer got bad event from vaults\n");
       }

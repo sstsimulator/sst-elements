@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -22,12 +26,12 @@ class MESIController : public CoherencyController{
 public:
     /** Constructor for MESIController. Note that MESIController handles both MESI & MSI protocols */
     MESIController(const Cache* cache, string ownerName, Output* dbg, vector<Link*>* parentLinks, Link* childLink, CacheListener* listener, 
-            unsigned int lineSize, uint64 accessLatency, uint64 tagLatency, uint64 mshrLatency, bool LLC, bool LL, MSHR * mshr, bool protocol, bool inclusive, bool wbClean,
-            MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, bool debugAll, Addr debugAddr) :
-                 CoherencyController(cache, dbg, ownerName, lineSize, accessLatency, tagLatency, mshrLatency, LLC, LL, parentLinks, childLink, bottomNetworkLink, topNetworkLink, 
-                         listener, mshr, wbClean, debugAll, debugAddr) {
+            unsigned int lineSize, uint64 accessLatency, uint64 tagLatency, uint64 mshrLatency, MSHR * mshr, CoherenceProtocol protocol, bool inclusive,
+            MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, bool debugAll, Addr debugAddr, unsigned int reqWidth, unsigned int respWidth, unsigned int packetSize) :
+                 CoherencyController(cache, dbg, ownerName, lineSize, accessLatency, tagLatency, mshrLatency, parentLinks, childLink, bottomNetworkLink, topNetworkLink, 
+                         listener, mshr, debugAll, debugAddr, reqWidth, respWidth, packetSize) {
         d_->debug(_INFO_,"--------------------------- Initializing [MESI Controller] ... \n\n");
-        protocol_           = protocol;         // 1 for MESI, 0 for MSI
+        protocol_           = protocol == CoherenceProtocol::MESI;         // 1 for MESI, 0 for MSI
         inclusive_          = inclusive;
         
     }
@@ -53,7 +57,7 @@ public:
     CacheAction handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent, bool replay);
     
     /** Process invalidation requests - Inv, FetchInv, FetchInvX */
-    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* cacheLine, bool replay);
+    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* cacheLine, MemEvent * collisionEvent, bool replay);
 
     /** Process responses - GetSResp, GetXResp, FetchResp */
     CacheAction handleResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest);
@@ -82,6 +86,12 @@ private:
     /** Handle GetS request. Request block if needed */
     CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
     
+    /** Handle FlushLine request. Forward if needed */
+    CacheAction handleFlushLineRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay);
+
+    /** Handle FlushLineInv request. Forward if needed */
+    CacheAction handleFlushLineInvRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay);
+
     /** Handle PutM request. Write data to cache line.  Update E->M state if necessary */
     CacheAction handlePutMRequest(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent);
     
@@ -95,10 +105,10 @@ private:
     CacheAction handleFetch(MemEvent * event, CacheLine * cacheLine, bool replay);
     
     /** Handle FetchInv */
-    CacheAction handleFetchInv(MemEvent * event, CacheLine * cacheLine, bool replay);
+    CacheAction handleFetchInv(MemEvent * event, CacheLine * cacheLine, MemEvent * collisionEvent, bool replay);
     
     /** Handle FetchInvX */
-    CacheAction handleFetchInvX(MemEvent * event, CacheLine * cacheLine, bool replay);
+    CacheAction handleFetchInvX(MemEvent * event, CacheLine * cacheLine, MemEvent * collisionEvent, bool replay);
 
     /** Process GetSResp/GetXResp.  Update the cache line */
     CacheAction handleDataResponse(MemEvent* responseEvent, CacheLine * cacheLine, MemEvent * reqEvent);
@@ -136,7 +146,12 @@ private:
     
     /** Invalidate all sharers of a block except the requestor (rqstr). Used for upgrade requests. */
     bool invalidateSharersExceptRequestor(CacheLine * cacheLine, string rqstr, string origRqstr, bool replay);
-
+    
+    /** Send a flush response */
+    void sendFlushResponse(MemEvent * reqEent, bool success);
+    
+    /** Forward a FlushLine request with or without data */
+    void forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine, Command cmd);
 
 /* Helper methods */
    

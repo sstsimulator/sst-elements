@@ -1,6 +1,4 @@
 
-sst --model-options="--help" ../script/emberLoadCmd.py
-
 sst --model-options="\
 --cmdLine=Init --cmdLine=\"Ring interations=100\" --cmdLine=Fini \
 --numNodes=8 \

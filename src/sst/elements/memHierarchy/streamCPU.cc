@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -42,10 +46,16 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
         out.fatal(CALL_INFO, -1, "Must set memSize\n");
     }
 
+    maxOutstanding = params.find<uint64_t>("maxOutstanding", 10);
+
     do_write = params.find<bool>("do_write", 1);
 
     numLS = params.find<int>("num_loadstore", -1);
 
+    maxReqsPerIssue = params.find<uint32_t>("reqsPerIssue", 1);
+    if (maxReqsPerIssue < 1) {
+        out.fatal(CALL_INFO, -1, "Cannot issue less than one request per cycle...fix your input deck\n");
+    }
 
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
@@ -63,10 +73,10 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
 
     addrOffset = params.find<uint64_t>("addressoffset", 0);
 
-    registerTimeBase("1 ns", true);
     //set our clock
+    std::string clockFreq = params.find<std::string>("clock", "1GHz");
     clockHandler = new Clock::Handler<streamCPU>(this, &streamCPU::clockTic);
-    clockTC = registerClock( "1GHz", clockHandler );
+    clockTC = registerClock(clockFreq, clockHandler);
     num_reads_issued = num_reads_returned = 0;
 
     // Start the next address from the offset
@@ -116,52 +126,49 @@ void streamCPU::handleEvent(Event *ev)
 
 bool streamCPU::clockTic( Cycle_t )
 {
-	// communicate?
-	if ((numLS != 0) && ((rng.generateNextUInt32() % commFreq) == 0)) {
-		if ( requests.size() > 10 ) {
-			out.verbose(CALL_INFO, 1, 0, "Not issuing operation, too many outstanding requests are in flight.\n");
-		} else {
+    // communicate?
+    if ((numLS != 0) && ((rng.generateNextUInt32() % commFreq) == 0) && requests.size() <= maxOutstanding) {
+	// yes, communicate
+	// create event
+	// x8 to prevent splitting blocks
+        uint32_t reqsToSend = 1;
+        if (maxReqsPerIssue > 1) reqsToSend += rng.generateNextUInt32() % maxReqsPerIssue;
+        if (reqsToSend > (maxOutstanding - requests.size())) reqsToSend = maxOutstanding - requests.size();
+        if (reqsToSend > numLS) reqsToSend = numLS;
 
-			// yes, communicate
-			// create event
-			// x4 to prevent splitting blocks
-			//Addr addr = ((((Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
+        for (int i = 0; i < reqsToSend; i++) {
 
-			bool doWrite = do_write && (((rng.generateNextUInt32() % 10) == 0));
+    	    bool doWrite = do_write && (((rng.generateNextUInt32() % 10) == 0));
 
-			MemEvent *e = new MemEvent(this, nextAddr, nextAddr, doWrite ? GetX : GetS);
-			e->setSize(4); // Load 4 bytes
-			if ( doWrite ) {
-				e->setPayload(4, (uint8_t*)&nextAddr);
-			}
-			mem_link->send(e);
-			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
+	    MemEvent *e = new MemEvent(this, nextAddr, nextAddr, doWrite ? GetX : GetS);
+            e->setSize(4); // Load 4 bytes
+	    if ( doWrite ) {
+	        e->setPayload(4, (uint8_t*)&nextAddr);
+	    }
+	    
+            mem_link->send(e);
+            requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
 
-			out.verbose(CALL_INFO, 1, 0, "Issued request %10d: %5s for address %20d.\n",
-				numLS, (doWrite ? "write" : "read"), nextAddr);
+	    out.verbose(CALL_INFO, 1, 0, "Issued request %10d: %5s for address %20d.\n", numLS, (doWrite ? "write" : "read"), nextAddr);
 
-			num_reads_issued++;
-			nextAddr = (nextAddr + 8);
+	    num_reads_issued++;
+            nextAddr = (nextAddr + 8);
 
-			if(nextAddr > (maxAddr - 4)) {
-				nextAddr = addrOffset;
-			}
+            if (nextAddr > (maxAddr - 4)) {
+		nextAddr = addrOffset;
+	    }
 
-	        	numLS--;
-		}
-
+	    numLS--;
 	}
+    }
 
     if ( numLS == 0 && requests.size() == 0 ) {
         primaryComponentOKToEndSim();
         return true;
     }
 
-	// return false so we keep going
-	return false;
+    // return false so we keep going
+    return false;
 }
-
-// Element Libarary / Serialization stuff
-
 
 

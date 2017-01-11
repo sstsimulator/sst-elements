@@ -1,6 +1,4 @@
 
-sst --model-options="--help" ../script/emberLoadJob.py
-
 sst --model-options="\
 --rtrArb=merlin.xbar_arb_lru \
 --netBW=8GB/s \
@@ -10,8 +8,8 @@ sst --model-options="\
 --nicVerboseMask=0 \
 --hermesVerbose=0 \
 --emberVerbose=0 \
---emberVerboseNode=1 \
+--emberVerboseNode=0 \
 --emberMotifLogFile=foobar \
---emberMotifLogNode=1 \
+--emberMotifLogNode=0 \
 --jobConfig=detailedSim \
 " ../script/emberLoadJob.py

@@ -5,6 +5,10 @@
 // Copyright (c) 2013-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -20,7 +24,7 @@ using namespace SST::Firefly;
 using namespace SST;
 using namespace SST::Firefly::CtrlMsg;
 
-API::API( Component* owner, Params& params ) 
+API::API( Component* owner, Params& params ) : ProtocolAPI( owner ) 
 {
     m_xxx = new XXX( owner, params );
     assert( m_xxx );

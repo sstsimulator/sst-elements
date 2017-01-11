@@ -6,6 +6,10 @@
 // Copyright (c) 2011-2016, Sandia Corporation                                      
 // All rights reserved.                                                        
 //                                                                             
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license                  
 // information, see the LICENSE file in the top level directory of the         
 // distribution.                                                               
@@ -20,14 +24,14 @@
 #include <vector>
 #include <algorithm>
 
-#include <boost/tokenizer.hpp>
-
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
 #include "output.h"
 #include "SimpleMachine.h"
 #include "schedComponent.h"
+
+#include <sst/core/stringize.h>
 
 #define DEBUG false
 
@@ -205,7 +209,7 @@ bool ConstraintAllocator::constraints_changed(){
 
 
 void ConstraintAllocator::read_constraints(){
-	boost::char_separator<char> space_separator( " " );
+    SST::char_delimiter space_separator( " " );
 	std::ifstream ConstraintsStream(ConstraintsFileName.c_str(), std::ifstream::in );
 
 	while( !constraint_leaves.empty() ){
@@ -223,8 +227,8 @@ void ConstraintAllocator::read_constraints(){
 		std::vector<std::string> * CurrentCluster = new std::vector<std::string>();
 
 		getline(ConstraintsStream, curline);
-		boost::tokenizer< boost::char_separator<char> > tok( curline, space_separator );
-		for (boost::tokenizer< boost::char_separator<char> >::iterator iter = tok.begin(); iter != tok.end(); ++iter) {
+        SST::Tokenizer<> tok( curline, space_separator );
+		for (SST::Tokenizer<>::iterator iter = tok.begin(); iter != tok.end(); ++iter) {
 			CurrentCluster->push_back(*iter);
 		}
 

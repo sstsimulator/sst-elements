@@ -4,7 +4,11 @@
 // 
 // Copyright (c) 2009-2016 Sandia Corporation
 // All rights reserved.
-// 
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -16,6 +20,7 @@
 
 #include <sst/core/link.h>
 #include <sst/core/params.h>
+#include <sst/elements/VaultSimC/memReqEvent.h>
 
 #if HAVE_LIBPHX == 1
 #include "Globals.h"
@@ -27,6 +32,7 @@
 
 static size_t MEMSIZE = size_t(4096)*size_t(1024*1024);
 
+using namespace SST::VaultSim;
 using namespace SST::MemHierarchy;
 
 VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
@@ -107,6 +113,7 @@ void VaultSimC::init(unsigned int phase)
 {
     SST::Event *ev = NULL;
     while ( (ev = m_memChan->recvInitData()) != NULL ) {
+        assert(0);
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if ( me ) {
             /* Push data to memory */
@@ -249,7 +256,7 @@ bool VaultSimC::clock( Cycle_t current ) {
     SST::Event *e = 0;
     while (NULL != (e = m_memChan->recv())) {
         // process incoming events
-        MemEvent *event  = dynamic_cast<MemEvent*>(e);
+        MemReqEvent *event  = dynamic_cast<MemReqEvent*>(e);
         if (NULL == event) {
             dbg.fatal(CALL_INFO, -1, "vault got bad event\n");
         }
@@ -261,11 +268,13 @@ bool VaultSimC::clock( Cycle_t current ) {
     e = 0;
     while (NULL != (e = delayLine->recv())) {
         // process returned events
-        MemEvent *event  = dynamic_cast<MemEvent*>(e);
+        MemReqEvent *event  = dynamic_cast<MemReqEvent*>(e);
         if (NULL == event) {
             dbg.fatal(CALL_INFO, -1, "vault got bad event from delay line\n");
         } else {
-            MemEvent *respEvent = event->makeResponse();
+            MemRespEvent *respEvent = new MemRespEvent( 
+				event->getReqId(), event->getAddr(), event->getFlags() );
+
             m_memChan->send(respEvent);
             numOutstanding--;
             delete event;

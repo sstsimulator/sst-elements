@@ -1,0 +1,4 @@
+
+Next steps:
+
+- Instead of sending the page table walks to random physical address, using the content of a real page table. This is important for RISC-V processor model and full-system efforts.

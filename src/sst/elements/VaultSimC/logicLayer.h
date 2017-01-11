@@ -4,7 +4,11 @@
 // 
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
-// 
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -21,7 +25,9 @@
 #include "vaultGlobals.h"
 
 using namespace std;
-using namespace SST;
+
+namespace SST {
+namespace VaultSim {
 
 //#define STUPID_DEBUG 
 
@@ -60,5 +66,8 @@ private:
     Statistic<uint64_t>*  bwUsedToCpu[2]; 
     Statistic<uint64_t>*  bwUsedToMem[2]; 
 };
+
+}
+}
 
 #endif

@@ -16,8 +16,11 @@ libariel_la_SOURCES = \
 	arielcpu.h \
 	arielcore.cc \
 	arielcore.h \
-	arielmemmgr.cc \
 	arielmemmgr.h \
+	arielmemmgr_simple.cc \
+	arielmemmgr_simple.h \
+	arielmemmgr_malloc.cc \
+	arielmemmgr_malloc.h \
 	arielreadev.h \
 	arielexitev.h \
 	arielwriteev.h \
@@ -48,6 +51,7 @@ EXTRA_DIST = \
 	frontend/simple/examples/stream/stream.c
 
 libariel_la_LDFLAGS = -module -avoid-version
+libariel_la_LIBADD = $(SHM_LIB)
 libariel_la_CPPFLAGS = \
 	-DARIEL_TRACE_LIB=$(libdir)/sst \
         -DARIEL_TOOL_DIR="$(libexecdir)" \

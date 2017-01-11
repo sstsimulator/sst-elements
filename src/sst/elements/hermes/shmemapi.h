@@ -5,6 +5,10 @@
 // Copyright (c) 2013-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -27,7 +31,7 @@ typedef Arg_FunctorBase< int, bool > Functor;
 class Interface : public Hermes::Interface {
     public:
 
-    Interface() {}
+    Interface( Component* parent ) : Hermes::Interface(parent) {}
     virtual ~Interface() {}
     virtual void setOS( OS* ) { assert(0); }
 

@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -95,60 +99,6 @@ namespace SST {
             std::string ID;
             std::string nodeType;
 
-//            friend class boost::serialization::access;
-//            template<class Archive>
-//                void save(Archive & ar, const unsigned int version) const
-//                {
-//                    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-//                    ar & BOOST_SERIALIZATION_NVP(jobNum);
-//                    ar & BOOST_SERIALIZATION_NVP(nodeNum);
-//                    ar & BOOST_SERIALIZATION_NVP(Scheduler);
-//                    ar & BOOST_SERIALIZATION_NVP(SelfLink);
-//
-//                    ar & BOOST_SERIALIZATION_NVP(ParentFaultLinks);
-//                    ar & BOOST_SERIALIZATION_NVP(ChildFaultLinks);
-//
-//                    ar & BOOST_SERIALIZATION_NVP(Faults);
-//                    ar & BOOST_SERIALIZATION_NVP(errorLogProbability);
-//                    ar & BOOST_SERIALIZATION_NVP(faultLogFileName);
-//                    ar & BOOST_SERIALIZATION_NVP(errorLogFileName);
-//                }
-//
-//            template<class Archive>
-//                void load(Archive & ar, const unsigned int version) 
-//                {
-//                    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-//                    ar & BOOST_SERIALIZATION_NVP(jobNum);
-//                    ar & BOOST_SERIALIZATION_NVP(nodeNum);
-//                    ar & BOOST_SERIALIZATION_NVP(Scheduler);
-//                    ar & BOOST_SERIALIZATION_NVP(SelfLink);
-//
-//                    ar & BOOST_SERIALIZATION_NVP(ParentFaultLinks);
-//                    ar & BOOST_SERIALIZATION_NVP(ChildFaultLinks);
-//
-//                    ar & BOOST_SERIALIZATION_NVP(Faults);
-//                    ar & BOOST_SERIALIZATION_NVP(errorLogProbability);
-//                    ar & BOOST_SERIALIZATION_NVP(faultLogFileName);
-//                    ar & BOOST_SERIALIZATION_NVP(errorLogFileName);
-//
-//                    //restore links
-//                    Scheduler -> setFunctor(new SST::Event::Handler<nodeComponent>(this,
-//                                                                                   &nodeComponent::handleEvent));
-//                    SelfLink -> setFunctor(new SST::Event::Handler<nodeComponent>(this,
-//                                                                                  &nodeComponent::handleSelfEvent));
-//
-//                    for (unsigned int counter = 0; counter < ParentFaultLinks.size(); counter++) {
-//                        ParentFaultLinks.at( counter ) -> setFunctor(new SST::Event::Handler<nodeComponent>(this, 
-//                                                                                                            &nodeComponent::handleEvent));
-//                    }
-//
-//
-//                    for (unsigned int counter = 0; counter < ChildFaultLinks.size(); counter ++) {
-//                        ChildFaultLinks.at(counter) -> setFunctor(new SST::Event::Handler<nodeComponent>(this, 
-//                                                                                                         &nodeComponent::handleEvent));
-//                    }
-//                }
-//            BOOST_SERIALIZATION_SPLIT_MEMBER()
         };
 
     }

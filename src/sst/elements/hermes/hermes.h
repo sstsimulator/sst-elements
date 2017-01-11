@@ -5,6 +5,10 @@
 // Copyright (c) 2013-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -13,6 +17,7 @@
 #define _H_HERMES
 
 #include <sst/core/module.h>
+#include <sst/core/subcomponent.h>
 #include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
 #include "sst/elements/thornhill/detailedCompute.h"
@@ -52,8 +57,9 @@ class OS : public SubComponent {
 	virtual Thornhill::MemoryHeapLink*  getMemHeapLink() { assert(0); }
 };
 
-class Interface : public Module {
+class Interface : public SubComponent {
   public:
+    Interface( Component* owner ) : SubComponent(owner), _rank(-1), _size(0) {}
     virtual void setup() {} 
     virtual void finish() {} 
     virtual void setOS( OS* ) { assert(0); }

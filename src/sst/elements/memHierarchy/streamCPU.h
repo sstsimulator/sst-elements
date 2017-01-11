@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -42,26 +46,28 @@ public:
 	}
 
 private:
-	streamCPU();  // for serialization only
-	streamCPU(const streamCPU&); // do not implement
-	void operator=(const streamCPU&); // do not implement
-	void init(unsigned int phase);
-
-	void handleEvent( SST::Event *ev );
-	virtual bool clockTic( SST::Cycle_t );
+    streamCPU();  // for serialization only
+    streamCPU(const streamCPU&); // do not implement
+    void operator=(const streamCPU&); // do not implement
+    void init(unsigned int phase);
+    
+    void handleEvent( SST::Event *ev );
+    virtual bool clockTic( SST::Cycle_t );
 
     Output out;
     int numLS;
-	int commFreq;
-	bool do_write;
-	uint32_t maxAddr;
-	uint32_t nextAddr;
-	uint64_t num_reads_issued, num_reads_returned;
-	uint64_t addrOffset;
+    int commFreq;
+    bool do_write;
+    uint32_t maxAddr;
+    uint32_t maxOutstanding;
+    uint32_t maxReqsPerIssue;
+    uint32_t nextAddr;
+    uint64_t num_reads_issued, num_reads_returned;
+    uint64_t addrOffset;
 
-	std::map<MemEvent::id_type, SimTime_t> requests;
+    std::map<MemEvent::id_type, SimTime_t> requests;
 
-	SST::Link* mem_link;
+    SST::Link* mem_link;
 
     SST::RNG::MarsagliaRNG rng;
 

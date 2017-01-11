@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -25,6 +29,7 @@
 #include <boost/assert.hpp>
 #include <string>
 #include <sstream>
+#include <boost/variant.hpp>
 
 namespace SST { namespace MemHierarchy {
 
@@ -60,6 +65,7 @@ public:
     // used externally
     MSHR(Output* dbg, int maxSize, string cacheName, bool debugAll, Addr debugAddr);                                     
     bool exists(Addr baseAddr);                             
+    vector<mshrType>* getAll(Addr);                       
     
     bool insertAll(Addr, vector<mshrType>&);                 
     bool insert(Addr baseAddr, MemEvent* event);            

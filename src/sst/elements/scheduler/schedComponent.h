@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -15,7 +19,6 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <boost/filesystem.hpp>
 
 #include <sst/core/component.h>
 #include <sst/core/link.h>
@@ -133,33 +136,6 @@ namespace SST {
                 int YumYumPollWait;                   // this is the length of time in ms to wait between checks for new jobs
                 
                 SST::RNG::SSTRandom* rng;  //random number generator
-
-//                friend class boost::serialization::access;
-//                template<class Archive>
-//                    void save(Archive & ar, const unsigned int version) const
-//                    {
-//                        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-//                        ar & BOOST_SERIALIZATION_NVP(nodes);
-//                        ar & BOOST_SERIALIZATION_NVP(selfLink);
-//                    }
-//
-//                template<class Archive>
-//                    void load(Archive & ar, const unsigned int version) 
-//                    {
-//                        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-//                        ar & BOOST_SERIALIZATION_NVP(nodes);
-//                        ar & BOOST_SERIALIZATION_NVP(selfLink);
-//                        //restore links
-//                        for (unsigned int i = 0; i < nodes.size(); ++i) {
-//                            nodes[i] -> setFunctor(new SST::Event::Handler<schedComponent,int>(this,
-//                                                                                             &schedComponent::handleCompletionEvent,i));
-//                        }
-//
-//                        selfLink -> setFunctor(new SST::Event::Handler<schedComponent>(this,
-//                                                                                     &schedComponent::handleJobArrivalEvent));
-//                    }
-//
-//                BOOST_SERIALIZATION_SPLIT_MEMBER()
 
         };
 

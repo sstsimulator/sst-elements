@@ -5,6 +5,10 @@
 // Copyright (c) 2013-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -37,11 +41,15 @@ bool MemNIC::isValidDestination(std::string target) {
     return (addrMap.find(target) != addrMap.end());
 }
 
+void MemNIC::setMinPacketSize(unsigned int bytes) {
+    packetHeaderBytes = bytes;
+}
+
 /* Get size in bytes for a MemEvent */
-int MemNIC::getFlitSize(MemEvent *ev)
+int MemNIC::getSizeInBits(MemEvent *ev)
 {
     /* addr (8B) + cmd (1B) + size */
-    return 8 + ev->getPayloadSize();
+    return 8 * (packetHeaderBytes + ev->getPayloadSize());
 }
 
 
@@ -52,7 +60,6 @@ void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
 
     num_vcs = ci.num_vcs;
 
-    flitSize = 16; // 16 Bytes as a default:  TODO: Parameterize this
     last_recv_vc = 0;
 
     Params params; // LinkControl doesn't actually use the params
@@ -77,6 +84,60 @@ MemNIC::MemNIC(Component *comp, Output* output, Addr dAddr, ComponentInfo &ci, E
 MemNIC::MemNIC(Component *comp, Params& params) :
     typeInfoSent(false), comp(comp)
 {
+    rangeStart_     = params.find<Addr>("range_start", 0);
+    string ilSize   = params.find<std::string>("interleave_size", "0B");
+    string ilStep   = params.find<std::string>("interleave_step", "0B");
+
+    cacheLineSize_  =  params.find<uint32_t>("cacheLineSize", 64);
+
+    // Check interleave parameters
+    fixByteUnits(ilSize);
+    fixByteUnits(ilStep);
+    interleaveSize_ = UnitAlgebra(ilSize).getRoundedValue();
+    interleaveStep_ = UnitAlgebra(ilStep).getRoundedValue();
+
+    bool found;
+    UnitAlgebra backendRamSize = UnitAlgebra(params.find<std::string>("mem_size", "0B", found));
+    if (!found) {
+        dbg->fatal(CALL_INFO, -1, "Param not specified (%s): backend.mem_size - memory controller must have a size specified, (NEW) WITH units. E.g., 8GiB or 1024MiB. \n", comp->getName().c_str());
+    }
+    if (!backendRamSize.hasUnits("B")) {
+        dbg->fatal(CALL_INFO, -1, "Invalid param (%s): backend.mem_size - definition has CHANGED! Now requires units in 'B' (SI OK, ex: 8GiB or 1024MiB).\nSince previous definition was implicitly MiB, you may simply append 'MiB' to the existing value. You specified '%s'\n", comp->getName().c_str(), backendRamSize.toString().c_str());
+    }
+
+
+    if (!UnitAlgebra(ilSize).hasUnits("B") || interleaveSize_ % cacheLineSize_ != 0) {
+        dbg->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK) and must also be a multiple of request_size. This definition has CHANGED. Example: If you used to set this      to '1', change it to '1KiB'. You specified %s\n",
+                comp->getName().c_str(), ilSize.c_str());
+    }
+
+    if (!UnitAlgebra(ilStep).hasUnits("B") || interleaveStep_ % cacheLineSize_ != 0) {
+        dbg->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK) and must also be a multiple of request_size. This definition has CHANGED. Example: If you used to set this      to '4', change it to '4KiB'. You specified %s\n",
+                comp->getName().c_str(), ilStep.c_str());
+    }
+
+    numPages_               = (interleaveStep_ > 0 && interleaveSize_ > 0) ? memSize_ / interleaveSize_ : 0;
+
+    int addr = params.find<int>("network_address");
+    std::string net_bw = params.find<std::string>("network_bw", "80GiB/s");
+
+    MemNIC::ComponentInfo myInfo;
+    myInfo.link_port        = "network";
+    myInfo.link_bandwidth   = net_bw;
+    myInfo.num_vcs          = 1;
+    myInfo.name             = comp->getName();
+    myInfo.network_addr     = addr;
+    myInfo.type             = MemNIC::TypeMemory;
+    myInfo.link_inbuf_size  = params.find<std::string>("network_input_buffer_size", "1KiB");
+    myInfo.link_outbuf_size = params.find<std::string>("network_output_buffer_size", "1KiB");
+    moduleInit( myInfo, NULL );
+
+    MemNIC::ComponentTypeInfo typeInfo;
+    typeInfo.rangeStart       = rangeStart_;
+    typeInfo.rangeEnd         = memSize_;
+    typeInfo.interleaveSize   = interleaveSize_;
+    typeInfo.interleaveStep   = interleaveStep_;
+    addTypeInfo( typeInfo );
 }
 
 
@@ -228,11 +289,33 @@ bool MemNIC::clock(void)
 bool MemNIC::recvNotify(int) {
     MemEvent * me = recv();
     if (me) {
+#if 0
+        if ( !isRequestAddressValid(me) ) {
+            dbg->fatal(CALL_INFO, 1, "MemoryController \"%s\" received request from \"%s\" with invalid address.\n"
+                "\t\tRequested Address:   0x%" PRIx64 "\n"
+                "\t\tMC Range Start:      0x%" PRIx64 "\n"
+                "\t\tMC Range End:        0x%" PRIx64 "\n"
+                "\t\tMC Interleave Step:  0x%" PRIx64 "\n"
+                "\t\tMC Interleave Size:  0x%" PRIx64 "\n",
+                comp->getName().c_str(),
+                me->getSrc().c_str(), me->getAddr(),
+                rangeStart_, (rangeStart_ + memSize_),
+                interleaveStep_, interleaveSize_);
+        }
+#endif
+
+        // A memory controller should only know about a contiguous memory space
+        // the MemNIC should convert to a contiguous address before the MemEvent
+        // hits the memory controller and probably needs to fixup the response
+        // Addr convertAddressToLocalAddress(Addr addr)
+        
+       
 #ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == me->getBaseAddr())
             dbg->debug(_L9_, "%s, memNIC recv: src: %s. (Cmd: %s, Rqst size: %u, Payload size: %u)\n", 
                     comp->getName().c_str(), me->getSrc().c_str(), CommandString[me->getCmd()], me->getSize(), me->getPayloadSize());
 #endif
+        
         (*recvHandler)(me);
     }
     return true;
@@ -287,7 +370,7 @@ void MemNIC::send(MemEvent *ev)
     MemRtrEvent *mre = new MemRtrEvent(ev);
     req->src = ci.network_addr;
     req->dest = addrForDest(ev->getDst());
-    req->size_in_bits = 8 * getFlitSize(ev);
+    req->size_in_bits = getSizeInBits(ev);
     req->vn = 0;
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr())

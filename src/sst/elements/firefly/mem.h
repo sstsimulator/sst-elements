@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -40,19 +44,6 @@ class MemCpyReqEvent : public Event {
     Addr from;
     size_t length;
 
-//  private:
-//        friend class boost::serialization::access;
-//    template<class Archive>
-//    void
-//    serialize(Archive & ar, const unsigned int version )
-//    {
-//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-//        ar & BOOST_SERIALIZATION_NVP(callback);
-//        ar & BOOST_SERIALIZATION_NVP(core);
-//        ar & BOOST_SERIALIZATION_NVP(to);
-//        ar & BOOST_SERIALIZATION_NVP(from);
-//        ar & BOOST_SERIALIZATION_NVP(length);
-//    }
     NotSerializable(MemCpyReqEvent)
 };
 
@@ -74,18 +65,6 @@ class MemReadReqEvent : public Event {
     Addr addr;
     size_t length;
 
-//  private:
-//        friend class boost::serialization::access;
-//    template<class Archive>
-//    void
-//    serialize(Archive & ar, const unsigned int version )
-//    {
-//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-//        ar & BOOST_SERIALIZATION_NVP(callback);
-//        ar & BOOST_SERIALIZATION_NVP(core);
-//        ar & BOOST_SERIALIZATION_NVP(addr);
-//        ar & BOOST_SERIALIZATION_NVP(length);
-//    }
     NotSerializable(MemReadReqEvent)
 };
 
@@ -107,18 +86,6 @@ class MemWriteReqEvent : public Event {
     Addr addr;
     size_t length;
 
-//  private:
-//        friend class boost::serialization::access;
-//    template<class Archive>
-//    void
-//    serialize(Archive & ar, const unsigned int version )
-//    {
-//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-//        ar & BOOST_SERIALIZATION_NVP(callback);
-//        ar & BOOST_SERIALIZATION_NVP(core);
-//        ar & BOOST_SERIALIZATION_NVP(addr);
-//        ar & BOOST_SERIALIZATION_NVP(length);
-//    }
     NotSerializable(MemWriteReqEvent)
 };
 
@@ -132,15 +99,6 @@ class MemRespEvent : public Event {
 
     Callback callback;
 
-//  private:
-//        friend class boost::serialization::access;
-//    template<class Archive>
-//    void
-//    serialize(Archive & ar, const unsigned int version )
-//    {
-//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-//        ar & BOOST_SERIALIZATION_NVP(callback);
-//    }
     NotSerializable(MemRespEvent)
 };
 
