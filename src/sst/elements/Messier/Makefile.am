@@ -16,7 +16,6 @@ libMessier_la_SOURCES = \
 	WriteBuffer.h \
 	WriteBuffer.cc \
 	NVM_Request.h \
-	NVM_Parser.h \
 	NVM_DIMM.h \
 	NVM_DIMM.cc \
 	NVM_Params.h 

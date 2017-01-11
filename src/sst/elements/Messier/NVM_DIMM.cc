@@ -121,17 +121,17 @@ bool NVM_DIMM::tick()
 		if(st->second <= cycles)
 		{
 
-//			completed_requests.push_back(st->first);	
+			//			completed_requests.push_back(st->first);	
 
 			if(NVM_EVENT_MAP.find(st->first)!= NVM_EVENT_MAP.end())
 			{
-			NVM_Request * temp = st->first;
-			MemRespEvent *respEvent = new MemRespEvent(
-                                NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
+				NVM_Request * temp = st->first;
+				MemRespEvent *respEvent = new MemRespEvent(
+						NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
 
-			m_memChan->send((SST::Event *) respEvent);
+				m_memChan->send((SST::Event *) respEvent);
 
-			NVM_EVENT_MAP.erase(st->first);
+				NVM_EVENT_MAP.erase(st->first);
 			}
 
 			(getBank(add))->setLocked(false);
@@ -189,7 +189,7 @@ bool NVM_DIMM::tick()
 
 	}
 	// Here we should check if the write buffer is full or exceeds the threshold and try to flush at least a request
-	if(WB->flush())
+	if(WB->flush() || (transactions.empty() && !WB->empty()))
 	{	
 		NVM_Request * temp = WB->getFront();
 		long long int add = temp->Address;
@@ -211,9 +211,9 @@ bool NVM_DIMM::tick()
 			(getBank(add))->setBusyUntil(cycles + params->tCMD + params->tCL_W + params->tBURST);
 			curr_writes++;
 			WRITES_COMPLETE[cycles + params->tCMD + params->tCL_W + params->tBURST]++;
-		
+
 			MemRespEvent *respEvent = new MemRespEvent(
-                                NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
+					NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
 
 			m_memChan->send(respEvent);
 			NVM_EVENT_MAP.erase(temp);
@@ -249,12 +249,12 @@ bool NVM_DIMM::tick()
 			{
 				removed = true;
 				transactions.pop_front();
-			//	completed_requests.push_back(temp);
-			//	NVM_EVENT_MAP[temp]->makeResponse(this);
+				//	completed_requests.push_back(temp);
+				//	NVM_EVENT_MAP[temp]->makeResponse(this);
 				//MemEvent *event  = dynamic_cast<MemEvent*>(NVM_EVENT_MAP[temp]);
 				//event->makeResponse();
-				  MemRespEvent *respEvent = new MemRespEvent(
-                                NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
+				MemRespEvent *respEvent = new MemRespEvent(
+						NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
 				m_memChan->send(respEvent); //(SST::Event *)NVM_EVENT_MAP[temp]);
 				NVM_EVENT_MAP.erase(temp);	
 			}
@@ -276,15 +276,17 @@ bool NVM_DIMM::tick()
 
 					// DEBUG
 					// Allocate the Rank circuitary to submit the command
-					corresp_rank->setBusyUntil(cycles + params->tCMD);
+					//corresp_rank->setBusyUntil(cycles + params->tCMD);
 
 					long long int time_ready;
 					// Check if row buffer hit
+					bool issued=false;
+
 					if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
 					{	
 						//corresp_bank->setBusyUntil(cycles);
 						time_ready = cycles;
-
+						issued = true;
 					}
 					else if((params->write_weight*curr_writes + params->read_weight*curr_reads) <= (params->max_current_weight - params->read_weight)) 
 					{
@@ -298,17 +300,20 @@ bool NVM_DIMM::tick()
 						curr_reads++;
 						READS_COMPLETE[cycles + params->tRCD + params->tCMD]++;
 						corresp_bank->setRB(temp->Address/params->row_buffer_size);
+						issued = true;
 
 					}
 
-					outstanding.push_back(temp);
-					transactions.pop_front();
-					removed=true;
-					// Lock the bank so no other request comes in and try to activate another row while waiting for the activation
+					if(issued)
+					{
+						outstanding.push_back(temp);
+						transactions.pop_front();
+						removed=true;
+						// Lock the bank so no other request comes in and try to activate another row while waiting for the activation
 
-					corresp_bank->setLocked(true);
-					ready_at_NVM[temp] = time_ready;
-
+						corresp_bank->setLocked(true);
+						ready_at_NVM[temp] = time_ready;
+					}
 
 				}
 			}
@@ -367,6 +372,6 @@ void NVM_DIMM::handleRequest(SST::Event* e)
 	tmp->Size = event->getNumBytes();
 	tmp->Address = event->getAddr() ;
 	push_request(tmp);
-        // Push the request
+	// Push the request
 }
 
