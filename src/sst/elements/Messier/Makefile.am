@@ -17,10 +17,10 @@ libMessier_la_SOURCES = \
 	WriteBuffer.cc \
 	NVM_Request.h \
 	NVM_Parser.h \
-	memReqEvent.h \
 	NVM_DIMM.h \
-	NVM_DIMM.cc	
-	NVM_Params.h
+	NVM_DIMM.cc \
+	NVM_Params.h 
+	
 
 
 libMessier_la_CPPFLAGS = \
