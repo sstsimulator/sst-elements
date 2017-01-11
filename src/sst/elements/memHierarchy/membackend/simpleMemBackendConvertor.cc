@@ -31,6 +31,5 @@ SimpleMemBackendConvertor::SimpleMemBackendConvertor(Component *comp, Params &pa
 }
 
 bool SimpleMemBackendConvertor::issue( MemReq* req ) {
-    std::cout<<"It calss the simpleMemBackend issue one :( "<<std::endl;
     return static_cast<SimpleMemBackend*>(m_backend)->issueRequest( req->id(), req->addr(), req->isWrite(), m_backendRequestWidth );
 }

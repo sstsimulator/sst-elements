@@ -90,13 +90,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     std::string name        = params.find<std::string>("backendConvertor", "memHierarchy.simpleMemBackendConvertor");
 
-    std::cout<<"The backend converter is the "<<name<<std::endl;
     string protocolStr      = params.find<std::string>("coherence_protocol", "MESI");
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
     Params tmpParams = params.find_prefix_params("backendConvertor.");
     
-    std::cout<<"Now generating the backendconverter from memoryController.cc"<<std::endl;
     memBackendConvertor_  = dynamic_cast<MemBackendConvertor*>(loadSubComponent(name, this, tmpParams));
 
     memSize_ = memBackendConvertor_->getMemSize();

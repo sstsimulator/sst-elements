@@ -47,7 +47,6 @@ public:
 
         m_clockFreq = params.find<std::string>("clock");
 	
-	std::cout<<"The clock frequency is : "<<m_clockFreq<<std::endl;
 
         if ( m_clockFreq.empty() ) {
             output->fatal(CALL_INFO, -1, "MemBackend: clock is not set\n");

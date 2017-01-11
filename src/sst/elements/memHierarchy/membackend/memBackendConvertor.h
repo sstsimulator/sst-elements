@@ -107,9 +107,8 @@ class MemBackendConvertor : public SubComponent {
     uint32_t    m_backendRequestWidth;
 
   private:
-    //virtual bool issue(MemReq*) = 0;
+    virtual bool issue(MemReq*) = 0;
 
-    virtual bool issue(MemReq*){ std::cout<<"The converter one "<<std::endl; return true;}
 
 
 
@@ -138,7 +137,6 @@ class MemBackendConvertor : public SubComponent {
 
         uint32_t id = genReqId();
         MemReq* req = new MemReq( ev, id );
-	std::cout<<"Pushed to the request queue in the backend converter "<<std::endl;
         m_requestQueue.push_back( req );
         m_pendingRequests[id] = req;
         return true;

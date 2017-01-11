@@ -39,15 +39,11 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
 
     string backendName  = params.find<std::string>("backend", "memHierarchy.simpleMem");
 
-    std::cout<<"The backend name is "<<backendName<<std::endl;
 
     // extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
 
-    std::cout<<"Now it loads the memBackend component from the MemBackendConvertor.cc "<<std::endl;
-    std::cout<<"Before loading"<<std::endl;
     m_backend = dynamic_cast<MemBackend*>( comp->loadSubComponent( backendName, comp, backendParams ) );
-    std::cout<<"After loading"<<std::endl;
 
     using std::placeholders::_1;
     m_backend->setGetRequestorHandler( std::bind( &MemBackendConvertor::getRequestor, this, _1 )  );
@@ -82,7 +78,6 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
     Debug(_L10_,"Creating MemReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
                         ev->getBaseAddr(), ev->getSize(), CommandString[ev->getCmd()]);
 
-    std::cout<<"Come to Membackend Converter "<<std::endl;
 
     if (!setupMemReq(ev)) {
         sendFlushResponse(ev);
@@ -92,7 +87,6 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
 bool MemBackendConvertor::clock(Cycle_t cycle) {
 
 
-    //std::cout<<"Converter clocks :) "<<std::endl;
     m_cycleCount++;
     doClockStat();
 
@@ -104,7 +98,6 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
 
         MemReq* req = m_requestQueue.front();
 
-	std::cout<<"Hey, it issues "<<std::endl;
         if ( issue( req ) ) {
             cyclesWithIssue->addData(1);
         } else {

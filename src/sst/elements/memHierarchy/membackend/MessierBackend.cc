@@ -50,7 +50,6 @@ bool Messier::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numByt
 
 	//    if (outToCubes.find(reqId) != outToCubes.end())
 	//      output->fatal(CALL_INFO, -1, "Assertion failed");
-	//std::cout<<"Finally, this is sent to Messier "<<std::endl;
 
 	outToNVM.insert( reqId );
 	nvm_link->send( new SST::MessierComponent::MemReqEvent(reqId,addr,isWrite,numBytes, 0) ); 
@@ -61,12 +60,10 @@ bool Messier::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numByt
 void Messier::handleMessierResp(SST::Event *event){
 
 
-	//std::cout<<"Comes at handleMessierRes"<<std::endl;
 	MessierComponent::MemRespEvent *ev = dynamic_cast<MessierComponent::MemRespEvent*>(event);
 
 	if (ev) {
 		if ( outToNVM.find( ev->getReqId() ) != outToNVM.end() ) {
-			std::cout<<"Found the response ID "<<std::endl;
 			outToNVM.erase( ev->getReqId() );
 			handleMemResponse( ev->getReqId() );
 			delete event;
@@ -78,15 +75,4 @@ void Messier::handleMessierResp(SST::Event *event){
 	}
 }
 
-/*
-bool Messier::issue( MemReq *req ) {
-
-	std::cout<<"Here is a request from backend"<<std::endl;
-	MemEvent* event = req->getMemEvent();
-
-return static_cast<MessierBackend*>(m_backend)->issueRequest( req->id(), req->addr(), req->isWrite(), event->getFlags(), 64 );
-
-
-}
-*/
 

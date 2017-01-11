@@ -24,24 +24,8 @@ namespace SST {
 
 		class Messier : public SimpleMemBackend {
 			public:
-				// virtual bool issue( MemReq* req );
 				Messier(Component *comp, Params &params);
-				//virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes );
-				//			private:
-				//void Messier(SST::Event *event){};
-				//bool issue( MemReq* req );
-				//	 bool issue( MemReq *req ) ;
 				virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
-			/*
-					void handleMemResponse( ReqId reqId, uint32_t flags  ) {
-					MemEvent* resp;
-					if ( ( resp = doResponse( reqId ) ) ) {
-						resp->setFlags(flags);
-						sendResponse( resp );
-
-					}
-				}
-			*/
 				void handleMessierResp(SST::Event *event);
 
 

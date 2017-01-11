@@ -703,8 +703,6 @@ static SubComponent* create_Mem_VaultSim(Component* comp, Params& params){
 }
 
 static SubComponent* create_Mem_Messier(Component* comp, Params& params){
-    std::cout<<"Creating the subcomponenet "<<std::endl;
-    //return NULL;
     return new Messier(comp, params);
 }
 

@@ -89,7 +89,6 @@ bool NVM_DIMM::tick()
 {
 
 
-//	std::cout<<"Tikcing the NVDIMM "<<std::endl;
 	// Incrementing the cycles count
 	cycles++;
 
@@ -135,7 +134,6 @@ bool NVM_DIMM::tick()
 			NVM_EVENT_MAP.erase(st->first);
 			}
 			else
-			std::cout<<"Couldn't find the event "<<std::endl;
 
 			(getBank(add))->setLocked(false);
 			ready_trans.erase(st);
@@ -162,7 +160,6 @@ bool NVM_DIMM::tick()
 		if(st_1->second <= cycles)
 		{
 
-//				std::cout<<"Something is ready at the NVM Chips"<<std::endl;
 
 			bool ready = false;
 			// Check if the bank and rank are free to submit the command there
@@ -180,7 +177,6 @@ bool NVM_DIMM::tick()
 				getRank(add)->setBusyUntil(cycles + params->tCMD + params->tCL + params->tBURST);
 				(getBank(add))->setBusyUntil(cycles + params->tCMD + params->tCL + params->tBURST);
 				ready_trans[st_1->first] = cycles + params->tCMD + params->tCL + params->tBURST;
-				//std::cout<<"The request was scheduled to be read at "<<ready_trans[st_1->first]<<std::endl;
 				ready_at_NVM.erase(st_1);
 				break;		
 				//st_1 = ready_at_NVM.begin();
@@ -231,7 +227,6 @@ bool NVM_DIMM::tick()
 	// Checking if there is any pending requests	
 	if(!transactions.empty())
 	{
-		//std::cout<<"Messier received a command :) :) "<<std::endl;
 
 		NVM_Request * temp = transactions.front();  
 		bool removed = false;
@@ -241,13 +236,10 @@ bool NVM_DIMM::tick()
 		{
 			if(!WB->full())
 			{
-				std::cout<<"Write buffer is not full "<<std::endl;
 				WB->insert_write_request(temp); 
 				transactions.pop_front();
 				removed = true;
 			}
-			else
-				std::cout<<"The write buffer is full :( "<<std::endl;
 
 		}
 		else  // if read request
@@ -284,7 +276,6 @@ bool NVM_DIMM::tick()
 				{
 
 					// DEBUG
-					//std::cout<<"We could submit the request"<<std::endl;
 					// Allocate the Rank circuitary to submit the command
 					corresp_rank->setBusyUntil(cycles + params->tCMD);
 
@@ -292,7 +283,6 @@ bool NVM_DIMM::tick()
 					// Check if row buffer hit
 					if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
 					{	
-						std::cout<<"Row buffer hit :) "<<std::endl;
 						//corresp_bank->setBusyUntil(cycles);
 						time_ready = cycles;
 
@@ -301,7 +291,6 @@ bool NVM_DIMM::tick()
 					{
 
 
-						std::cout<<"Row buffer miss :( "<<std::endl;
 						// Allocate the Rank circuitary to submit the command
 						corresp_rank->setBusyUntil(cycles + params->tCMD);
 						// Set the bank busy until we read it
@@ -319,7 +308,6 @@ bool NVM_DIMM::tick()
 					// Lock the bank so no other request comes in and try to activate another row while waiting for the activation
 
 					corresp_bank->setLocked(true);
-					//std::cout<<"The time this is ready is "<<time_ready<<std::endl;
 					ready_at_NVM[temp] = time_ready;
 
 
@@ -376,7 +364,6 @@ void NVM_DIMM::handleRequest(SST::Event* e)
 
 	NVM_EVENT_MAP[tmp]= event;
 
-	std::cout<<"The address is "<<event->getAddr()<<std::endl;
 
 	tmp->Size = event->getNumBytes();
 	tmp->Address = event->getAddr() ;
