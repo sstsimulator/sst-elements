@@ -63,6 +63,8 @@ class NVM_WRITE_BUFFER
 	// This checks if the writebuffer is in the flush mode (entries exceed threshold)
 	bool flush();
 
+	// Check if empty
+	bool empty() { if (curr_entries == 0) return true; else return false;}
 	// Get the current size
 	int getSize(){ return curr_entries;}
 
