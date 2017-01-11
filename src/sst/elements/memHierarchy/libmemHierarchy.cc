@@ -35,6 +35,7 @@
 #include "membackend/simpleMemBackend.h"
 #include "membackend/simpleDRAMBackend.h"
 #include "membackend/vaultSimBackend.h"
+#include "membackend/MessierBackend.h"
 #include "membackend/requestReorderSimple.h"
 #include "membackend/requestReorderByRow.h"
 #include "membackend/delayBuffer.h"
@@ -701,6 +702,12 @@ static SubComponent* create_Mem_VaultSim(Component* comp, Params& params){
     return new VaultSimMemory(comp, params);
 }
 
+static SubComponent* create_Mem_Messier(Component* comp, Params& params){
+    std::cout<<"Creating the subcomponenet "<<std::endl;
+    //return NULL;
+    return new Messier(comp, params);
+}
+
 #ifdef HAVE_GOBLIN_HMCSIM
 static SubComponent* create_Mem_GOBLINHMCSim(Component* comp, Params& params){
     return new GOBLINHMCSimBackend(comp, params);
@@ -745,6 +752,13 @@ static const ElementInfoParam fdsimMem_params[] = {
 static const ElementInfoParam vaultsimMem_params[] = {
     { "verbose",          "Sets the verbosity of the backend output", "0" },
     {"access_time",     "When not using DRAMSim, latency of memory operation.", "100 ns"},
+    {NULL, NULL, NULL}
+};
+
+
+static const ElementInfoParam Messier_params[] = {
+    { "verbose",          "Sets the verbosity of the backend output", "0" },
+    {"access_time",     "When not using DRAMSim, latency of memory operation.", "1 ns"},
     {NULL, NULL, NULL}
 };
 
@@ -1048,6 +1062,16 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
+    {
+        "Messier",
+        "Messier Memory timings",
+        NULL, /* Advanced help */
+        create_Mem_Messier, /* Module Alloc w/ params */
+        Messier_params,
+        NULL, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+
     { "networkMemoryInspector",
       "Used to classify memory traffic going through a network router",
       NULL,
