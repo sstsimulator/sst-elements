@@ -39,8 +39,10 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
 
     string backendName  = params.find<std::string>("backend", "memHierarchy.simpleMem");
 
+
     // extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
+
     m_backend = dynamic_cast<MemBackend*>( comp->loadSubComponent( backendName, comp, backendParams ) );
 
     using std::placeholders::_1;
@@ -76,12 +78,14 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
     Debug(_L10_,"Creating MemReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
                         ev->getBaseAddr(), ev->getSize(), CommandString[ev->getCmd()]);
 
+
     if (!setupMemReq(ev)) {
         sendFlushResponse(ev);
     }
 }
 
 bool MemBackendConvertor::clock(Cycle_t cycle) {
+
 
     m_cycleCount++;
     doClockStat();
