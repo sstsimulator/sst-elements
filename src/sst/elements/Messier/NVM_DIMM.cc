@@ -133,7 +133,6 @@ bool NVM_DIMM::tick()
 
 			NVM_EVENT_MAP.erase(st->first);
 			}
-			else
 
 			(getBank(add))->setLocked(false);
 			ready_trans.erase(st);
