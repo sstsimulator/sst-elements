@@ -1,0 +1,6 @@
+README for simpleSimulation
+-------------------------------
+
+The simpleSimulation provides real-world examples of various simulators that can be used as learning tools or resources:
+
+- simpleCarWash		: queing simulation tool used as a two bay carwash simulation for 24 hours
