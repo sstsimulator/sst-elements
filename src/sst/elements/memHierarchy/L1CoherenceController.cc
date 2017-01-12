@@ -806,25 +806,6 @@ void L1CoherenceController::addToOutgoingQueueUp(Response& resp) {
     recordEventSentUp(resp.event->getCmd());
 }
 
-void L1CoherenceController::sendNACK(MemEvent* event, bool up, SimTime_t timeInNano) {
-    CoherenceController::sendNACK(event, up, timeInNano);
-    if (up) recordEventSentUp(NACK);
-    else recordEventSentDown(NACK);
-}
-
-void L1CoherenceController::resendEvent(MemEvent * event, bool up) {
-    CoherenceController::resendEvent(event, up);
-    if (up) recordEventSentUp(event->getCmd());
-    else recordEventSentDown(event->getCmd());
-}
-
-uint64_t L1CoherenceController::forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data) {
-    uint64_t retval = CoherenceController::forwardMessage(event, baseAddr, requestSize, baseTime, data);
-    recordEventSentDown(event->getCmd());
-    return retval;
-}
-
-
 /********************
  * Helper functions
  ********************/

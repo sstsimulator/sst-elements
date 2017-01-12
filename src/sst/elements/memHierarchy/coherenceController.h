@@ -70,16 +70,16 @@ public:
     /***** Functions for sending events *****/
 
     /* Send a NACK event. Used by child classes and cache controller */
-    virtual void sendNACK(MemEvent * event, bool up, SimTime_t timeInNano);
+    void sendNACK(MemEvent * event, bool up, SimTime_t timeInNano);
 
     /* Resend an event after a NACK */
-    virtual void resendEvent(MemEvent * event, bool towardsCPU);
+    void resendEvent(MemEvent * event, bool towardsCPU);
 
     /* Send a response event up (towards CPU). L1s need to implement their own to split out requested bytes. */
-    virtual uint64_t sendResponseUp(MemEvent * event, State grantedState, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic=false);
+    uint64_t sendResponseUp(MemEvent * event, State grantedState, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic=false);
 
     /* Forward a message to a lower memory level (towards memory) */
-    virtual uint64_t forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data);
+    uint64_t forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data);
 
 
     /***** Manage outgoing event queuest *****/

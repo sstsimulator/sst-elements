@@ -2021,32 +2021,6 @@ void MESIController::addToOutgoingQueueUp(Response& resp) {
     recordEventSentUp(resp.event->getCmd());
 }
 
-void MESIController::sendNACK(MemEvent* event, bool up, SimTime_t timeInNano) {
-    CoherenceController::sendNACK(event, up, timeInNano);
-    if (up) recordEventSentUp(NACK);
-    else recordEventSentDown(NACK);
-}
-
-void MESIController::resendEvent(MemEvent * event, bool up) {
-    CoherenceController::resendEvent(event, up);
-    if (up) recordEventSentUp(event->getCmd());
-    else recordEventSentDown(event->getCmd());
-}
-
-uint64_t MESIController::forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data) {
-    uint64_t retval = CoherenceController::forwardMessage(event, baseAddr, requestSize, baseTime, data);
-    recordEventSentDown(event->getCmd());
-    return retval;
-}
-
-uint64_t MESIController::sendResponseUp(MemEvent * event, State grantedState, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic) {
-    uint64_t retval = CoherenceController::sendResponseUp(event, grantedState, data, replay, baseTime, atomic);
-    recordEventSentUp(MemEvent::commandResponse(event->getCmd()));
-    return retval;
-}
-
-
-
 /*---------------------------------------------------------------------------------------------------
  * Helper Functions
  *--------------------------------------------------------------------------------------------------*/

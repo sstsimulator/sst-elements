@@ -121,10 +121,6 @@ public:
     /** Message send: Call through to coherenceController with statistic recording */
     void addToOutgoingQueue(Response& resp);
     void addToOutgoingQueueUp(Response& resp);
-    void sendNACK(MemEvent* event, bool up, SimTime_t timeInNano);
-    void resendEvent(MemEvent * event, bool up);
-    uint64_t forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data);
-    uint64_t sendResponseUp(MemEvent * event, State grantedState, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic=false);
 
 private:
 /* Private data members */

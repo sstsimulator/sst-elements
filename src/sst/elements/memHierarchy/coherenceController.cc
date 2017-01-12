@@ -39,7 +39,7 @@ CoherenceController::CoherenceController(Component * comp, Params &params) : Sub
     }
 
     tagLatency_ = params.find<uint64_t>("tag_access_latency_cycles", accessLatency_);
-    mshrLatency_ = params.find<uint64_t>("mshr_latency", 1); /* cacheFactory is currently checking/setting this for us */
+    mshrLatency_ = params.find<uint64_t>("mshr_latency_cycles", 1); /* cacheFactory is currently checking/setting this for us */
 
     /* Get line size - already error checked by cacheFactory */
     lineSize_ = params.find<unsigned int>("cache_line_size", 64, found);
@@ -59,7 +59,7 @@ CoherenceController::CoherenceController(Component * comp, Params &params) : Sub
     maxBytesUp = upLinkBW.getRoundedValue();
     maxBytesDown = downLinkBW.getRoundedValue();
     packetHeaderBytes = packetSize.getRoundedValue();
-
+    
     /* Initialize variables */
     timestamp_ = 0;
 
@@ -225,10 +225,10 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
         MemEvent * outgoingEvent = outgoingEventQueueUp_.front().event;
         if (maxBytesUp != 0) {
             if (bytesLeft == 0) break;
-            if (bytesLeft >= outgoingEventQueue_.front().size) {
-                bytesLeft -= outgoingEventQueue_.front().size;
+            if (bytesLeft >= outgoingEventQueueUp_.front().size) {
+                bytesLeft -= outgoingEventQueueUp_.front().size;
             } else {
-                outgoingEventQueue_.front().size -= bytesLeft;
+                outgoingEventQueueUp_.front().size -= bytesLeft;
                 break;
             }
         }

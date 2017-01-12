@@ -55,7 +55,6 @@ public:
         stat_stateEvent_Inv_SB =        registerStatistic<uint64_t>("stateEvent_Inv_SB");
         stat_stateEvent_Inv_IB =        registerStatistic<uint64_t>("stateEvent_Inv_IB");
         stat_stateEvent_FetchInvX_I =   registerStatistic<uint64_t>("stateEvent_FetchInvX_I");
-        stat_stateEvent_FetchInvX_E =   registerStatistic<uint64_t>("stateEvent_FetchInvX_E");
         stat_stateEvent_FetchInvX_M =   registerStatistic<uint64_t>("stateEvent_FetchInvX_M");
         stat_stateEvent_FetchInvX_IS =  registerStatistic<uint64_t>("stateEvent_FetchInvX_IS");
         stat_stateEvent_FetchInvX_IM =  registerStatistic<uint64_t>("stateEvent_FetchInvX_IM");
@@ -70,7 +69,6 @@ public:
         stat_stateEvent_Fetch_SB =      registerStatistic<uint64_t>("stateEvent_Fetch_SB");
         stat_stateEvent_FetchInv_I =    registerStatistic<uint64_t>("stateEvent_FetchInv_I");
         stat_stateEvent_FetchInv_S =    registerStatistic<uint64_t>("stateEvent_FetchInv_S");
-        stat_stateEvent_FetchInv_E =    registerStatistic<uint64_t>("stateEvent_FetchInv_E");
         stat_stateEvent_FetchInv_M =    registerStatistic<uint64_t>("stateEvent_FetchInv_M");
         stat_stateEvent_FetchInv_IS =   registerStatistic<uint64_t>("stateEvent_FetchInv_IS");
         stat_stateEvent_FetchInv_IM =   registerStatistic<uint64_t>("stateEvent_FetchInv_IM");
@@ -129,6 +127,8 @@ public:
             stat_stateEvent_GetSEx_E =      registerStatistic<uint64_t>("stateEvent_GetSEx_E");
             stat_stateEvent_FlushLine_E =   registerStatistic<uint64_t>("stateEvent_FlushLine_E");
             stat_stateEvent_FlushLineInv_E =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_E");
+            stat_stateEvent_FetchInv_E =    registerStatistic<uint64_t>("stateEvent_FetchInv_E");
+            stat_stateEvent_FetchInvX_E =   registerStatistic<uint64_t>("stateEvent_FetchInvX_E");
         }
     }
 
@@ -163,9 +163,6 @@ public:
     /** Call through to coherenceController with statistic recording */
     void addToOutgoingQueue(Response& resp);
     void addToOutgoingQueueUp(Response& resp);
-    void sendNACK(MemEvent* event, bool up, SimTime_t timeInNano);
-    void resendEvent(MemEvent * event, bool up);
-    uint64_t forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data);
 
 /* Miscellaneous */
     /** Determine whether a retry of a NACKed event is needed */
