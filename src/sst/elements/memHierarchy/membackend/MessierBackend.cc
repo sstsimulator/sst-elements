@@ -44,8 +44,9 @@ Messier::Messier(Component *comp, Params &params) : SimpleMemBackend(comp,params
 
 bool Messier::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes ){
 	// TODO:  FIX THIS:  ugly hardcoded limit on outstanding requests
-	//   if (outToCubes.size() > 255) {
-	//     return false;
+	   if (outToNVM.size() > 64) {
+	     return false;
+	   }
 	//  }
 
 	//    if (outToCubes.find(reqId) != outToCubes.end())

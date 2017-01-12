@@ -121,7 +121,6 @@ bool NVM_DIMM::tick()
 		if(st->second <= cycles)
 		{
 
-			//			completed_requests.push_back(st->first);	
 
 			if(NVM_EVENT_MAP.find(st->first)!= NVM_EVENT_MAP.end())
 			{
@@ -198,26 +197,32 @@ bool NVM_DIMM::tick()
 		if (getRank(add)->getBusyUntil() < cycles)
 		{
 			if(getBank(add)->getBusyUntil() < cycles)
-			{ready = true;
-				WB->pop_entry();
+			{
+				ready = true;
+			//	WB->pop_entry();
 				//	transactions.remove(temp);
 			}
 		}
 		// Occupy the rank for the write time
 		if(ready && ((params->write_weight*curr_writes + params->read_weight*curr_reads) <= (params->max_current_weight - params->write_weight)))
 		{
+
+
+			WB->pop_entry();
+				//	transactions.remove(temp);
 			// Note that the rank will be busy for the time of sending the data to the bank, in addition to sending the command 
 			getRank(add)->setBusyUntil(cycles + params->tCMD + params->tBURST);
 			(getBank(add))->setBusyUntil(cycles + params->tCMD + params->tCL_W + params->tBURST);
 			curr_writes++;
 			WRITES_COMPLETE[cycles + params->tCMD + params->tCL_W + params->tBURST]++;
 
-			MemRespEvent *respEvent = new MemRespEvent(
-					NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
+			/*
+			   MemRespEvent *respEvent = new MemRespEvent(
+			   NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
 
-			m_memChan->send(respEvent);
-			NVM_EVENT_MAP.erase(temp);
-
+			   m_memChan->send(respEvent);
+			 			NVM_EVENT_MAP.erase(temp);
+			 */
 		}
 
 	}
@@ -237,6 +242,13 @@ bool NVM_DIMM::tick()
 			{
 				WB->insert_write_request(temp); 
 				transactions.pop_front();
+				MemRespEvent *respEvent = new MemRespEvent(
+						NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
+
+				m_memChan->send(respEvent);
+				NVM_EVENT_MAP.erase(temp);
+
+
 				removed = true;
 			}
 
@@ -318,6 +330,7 @@ bool NVM_DIMM::tick()
 				}
 			}
 		}
+
 
 		if(!removed)
 		{
