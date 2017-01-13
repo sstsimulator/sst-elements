@@ -77,7 +77,7 @@ enum Retval {
 class Interface : public Hermes::Interface {
     public:
 
-    Interface() {}
+    Interface( Component* parent ) : Hermes::Interface( parent )  {}
     virtual ~Interface() {}
 
     virtual int sizeofDataType( PayloadDataType ) { assert(0); }

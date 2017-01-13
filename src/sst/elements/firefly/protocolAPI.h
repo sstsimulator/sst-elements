@@ -16,7 +16,7 @@
 #ifndef COMPONENTS_FIREFLY_PROTOCOLAPI_H
 #define COMPONENTS_FIREFLY_PROTOCOLAPI_H
 
-#include <sst/core/module.h>
+#include <sst/core/subcomponent.h>
 #include "sst/elements/thornhill/memoryHeapLink.h"
 
 namespace SST {
@@ -25,10 +25,11 @@ namespace Firefly {
 class Info;
 class VirtNic;
 
-class ProtocolAPI : public SST::Module 
+class ProtocolAPI : public SST::SubComponent 
 {
   public:
 
+    ProtocolAPI( Component* parent ) : SubComponent( parent ) {}
     virtual ~ProtocolAPI() {}
     virtual void printStatus( Output& ) {}
     virtual void setup() {};
