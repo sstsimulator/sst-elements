@@ -52,9 +52,14 @@ private:
     // usage
     Link* output_timing;
 
+	//self link for dynamic link additions
+	Link* dynlink_timing;
+
     UnitAlgebra link_bw;
     UnitAlgebra inbuf_size;
     UnitAlgebra outbuf_size;
+	int input_buf_flit_count;
+	int output_buf_flit_count;
     int flit_size; // in bits
     
     std::deque<RtrEvent*> init_events;
@@ -96,6 +101,17 @@ private:
     // If the buffer was empty we instantiate this to the current time
     SimTime_t idle_start;
     bool is_idle;
+	
+	// The start time of a window for measuring dynamic link parameters
+    SimTime_t dynlink_start;
+	// These are for the weighted moving average strategy 
+	// to dynamically adjust link width
+	float active_past, idle_past, stalled_past,
+		  active_cur, idle_cur, stalled_cur,
+		  active_wma, idle_wma, stalled_wma;
+
+	// This is the number of bits sent over a dynamic link window
+	uint64_t dl_bits_sent;
 
     // Vairable to tell us if we are waiting for something to happen
     // before we begin more output.  The two things we are waiting on
@@ -146,6 +162,13 @@ public:
     // otherwise.
     bool spaceToSend(int vn, int flits);
 
+	// Returns the number of flits in the input buffer
+	int getInputBufSum();
+
+	// Returns the number of flits in the output buffer
+	int getOutputBufSum(); 
+
+
     // Returns NULL if no event in input_buf[vn]. Otherwise, returns
     // the next event.
     SST::Interfaces::SimpleNetwork::Request* recv(int vn);
@@ -172,8 +195,7 @@ private:
 
     void handle_input(Event* ev);
     void handle_output(Event* ev);
-
-    
+	void summarize_link_state(Event* ev);
     
 };
 
