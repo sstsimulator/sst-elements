@@ -45,12 +45,15 @@ libmemHierarchy_la_SOURCES = \
 	membackend/requestReorderByRow.cc \
 	membackend/vaultSimBackend.h \
 	membackend/vaultSimBackend.cc \
+	membackend/MessierBackend.h \
+	membackend/MessierBackend.cc \
 	memEvent.h \
 	memNIC.h \
 	memNIC.cc \
 	directoryController.h \
 	directoryController.cc \
-	coherenceControllers.h \
+	coherenceController.h \
+	coherenceController.cc \
 	memHierarchyInterface.cc \
 	memHierarchyInterface.h \
 	MESIInternalDirectory.h \
@@ -63,6 +66,8 @@ libmemHierarchy_la_SOURCES = \
 	L1IncoherentController.cc \
 	L1CoherenceController.h \
 	L1CoherenceController.cc \
+	multithreadL1Shim.h \
+	multithreadL1Shim.cc \
 	cacheArray.cc \
 	cacheArray.h \
 	mshr.h \
@@ -135,6 +140,7 @@ nobase_sst_HEADERS = \
 	memNIC.h \
 	membackend/memBackend.h \
 	membackend/vaultSimBackend.h \
+	membackend/MessierBackend.h \
 	membackend/simpleMemBackend.h \
 	membackend/simpleDRAMBackend.h \
 	membackend/requestReorderSimple.h \
@@ -195,6 +201,8 @@ libmemHierarchy_la_LDFLAGS += $(GOBLIN_HMCSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(GOBLIN_HMCSIM_LIB)
 AM_CPPFLAGS += $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
 endif
+
+
 
 if HAVE_FDSIM
 libmemHierarchy_la_SOURCES += \

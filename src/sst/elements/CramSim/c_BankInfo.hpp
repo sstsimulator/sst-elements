@@ -99,6 +99,13 @@ public:
 	}
 
 	void print();
+        unsigned getBankId() {
+	  return m_bankId;
+	}
+  
+        c_BankGroup *getBankGroup() {
+	  return m_bankGroupPtr;
+	}
 private:
 	void reset();
 

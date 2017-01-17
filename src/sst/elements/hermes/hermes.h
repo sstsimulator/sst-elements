@@ -17,6 +17,7 @@
 #define _H_HERMES
 
 #include <sst/core/module.h>
+#include <sst/core/subcomponent.h>
 #include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
 #include "sst/elements/thornhill/detailedCompute.h"
@@ -56,9 +57,9 @@ class OS : public SubComponent {
 	virtual Thornhill::MemoryHeapLink*  getMemHeapLink() { assert(0); }
 };
 
-class Interface : public Module {
+class Interface : public SubComponent {
   public:
-    Interface() : _rank(-1), _size(0) {}
+    Interface( Component* owner ) : SubComponent(owner), _rank(-1), _size(0) {}
     virtual void setup() {} 
     virtual void finish() {} 
     virtual void setOS( OS* ) { assert(0); }

@@ -23,11 +23,11 @@ using namespace Hermes;
 using namespace Hermes::MP;
 
 HadesMP::HadesMP(Component* owner, Params& params) :
-	m_os(NULL)
+    Interface(owner), m_os(NULL)
 {
     Params tmpParams = params.find_prefix_params("ctrlMsg.");
 	m_proto =
-        dynamic_cast<ProtocolAPI*>(owner->loadModuleWithComponent(
+        dynamic_cast<ProtocolAPI*>(owner->loadSubComponent(
                             "firefly.CtrlMsgProto", owner, tmpParams ) );
 
 	Params funcParams = params.find_prefix_params("functionSM.");

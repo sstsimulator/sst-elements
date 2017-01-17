@@ -80,6 +80,7 @@ private:
 	uint32_t hmc_max_trace_level;
 	uint32_t hmc_tag_count;
 	uint32_t hmc_trace_level;
+        uint32_t hmc_dram_latency;
 
         float link_phy;
         float link_local_route;

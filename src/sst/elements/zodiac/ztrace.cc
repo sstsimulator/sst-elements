@@ -17,6 +17,7 @@
 #include "sst_config.h"
 #include <assert.h>
 
+#include "sst/core/subcomponent.h"
 #include "sst/core/element.h"
 #include "sst/core/params.h"
 
@@ -28,12 +29,13 @@ using namespace SST::Zodiac;
 ZodiacTraceReader::ZodiacTraceReader(ComponentId_t id, Params& params) :
   Component(id) {
 
+      assert(0);
     std::string msgiface = params.find<std::string>("msgapi");
 
     if ( msgiface == "" ) {
-        msgapi = new MP::Interface();
+        msgapi = new MP::Interface( this );
     } else {
-	msgapi = dynamic_cast<MP::Interface*>(loadModule(msgiface, params));
+        msgapi = dynamic_cast<MP::Interface*>(loadSubComponent(msgiface, this, params));
 
         if(NULL == msgapi) {
 		std::cerr << "Message API: " << msgiface << " could not be loaded." << std::endl;

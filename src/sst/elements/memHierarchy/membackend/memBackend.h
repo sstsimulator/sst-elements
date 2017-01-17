@@ -46,6 +46,7 @@ public:
                 (Output::output_location_t)params.find<int>("debug_location", 0) );
 
         m_clockFreq = params.find<std::string>("clock");
+	
 
         if ( m_clockFreq.empty() ) {
             output->fatal(CALL_INFO, -1, "MemBackend: clock is not set\n");
@@ -131,6 +132,26 @@ class HMCMemBackend : public MemBackend {
   private:
     std::function<void(ReqId,uint32_t)> m_respFunc;
 };
+
+class MessierBackend : public MemBackend {
+  public:
+    MessierBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+    virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
+
+    void handleMemResponse( ReqId id, uint32_t flags ) {
+        m_respFunc( id, flags );
+    }
+
+    virtual void setResponseHandler( std::function<void(ReqId,uint32_t)> func ) {
+        m_respFunc = func;
+    }
+
+  private:
+    std::function<void(ReqId,uint32_t)> m_respFunc;
+};
+
+
+
 
 }}
 

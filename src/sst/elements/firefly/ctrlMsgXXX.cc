@@ -29,7 +29,8 @@ using namespace SST::Firefly::CtrlMsg;
 using namespace SST::Firefly;
 using namespace SST;
 
-XXX::XXX( Component* owner, Params& params ) :
+XXX::XXX( Component* parent, Params& params ) :
+    SubComponent( parent ),
     m_retLink( NULL ),
     m_memHeapLink( NULL ),
     m_info( NULL ),
@@ -39,6 +40,9 @@ XXX::XXX( Component* owner, Params& params ) :
     m_dbg_level = params.find<uint32_t>("verboseLevel",0);
     m_dbg_mask = params.find<int32_t>("verboseMask",-1);
 
+    m_statPstdRcv = registerStatistic<uint64_t>("posted_receive_list");
+    m_statRcvdMsg = registerStatistic<uint64_t>("received_msg_list");
+
     m_dbg.init("@t:CtrlMsg::@p():@l ", 
         m_dbg_level, 
         m_dbg_mask,
@@ -47,7 +51,7 @@ XXX::XXX( Component* owner, Params& params ) :
     std::stringstream ss;
     ss << this;
 
-    m_delayLink = owner->configureSelfLink( 
+    m_delayLink = configureSelfLink( 
         "CtrlMsgSelfLink." + ss.str(), "1 ns",
         new Event::Handler<XXX>(this,&XXX::delayHandler));
 
@@ -56,32 +60,32 @@ XXX::XXX( Component* owner, Params& params ) :
     std::string tmpName = params.find<std::string>("txMemcpyMod");
     Params tmpParams = params.find_prefix_params("txMemcpyModParams.");
     m_txMemcpyMod = dynamic_cast<LatencyMod*>( 
-            owner->loadModule( tmpName, tmpParams ) );  
+            loadModule( tmpName, tmpParams ) );  
     assert( m_txMemcpyMod );
     
     tmpName = params.find<std::string>("rxMemcpyMod");
     tmpParams = params.find_prefix_params("rxMemcpyModParams.");
     m_rxMemcpyMod = dynamic_cast<LatencyMod*>( 
-            owner->loadModule( tmpName, tmpParams ) );  
+            loadModule( tmpName, tmpParams ) );  
     assert( m_rxMemcpyMod );
 
     tmpName = params.find<std::string>("txSetupMod");
     tmpParams = params.find_prefix_params("txSetupModParams.");
     m_txSetupMod = dynamic_cast<LatencyMod*>( 
-            owner->loadModule( tmpName, tmpParams ) );  
+            loadModule( tmpName, tmpParams ) );  
     assert( m_txSetupMod );
     
     tmpName = params.find<std::string>("rxSetupMod");
     tmpParams = params.find_prefix_params("rxSetupModParams.");
     m_rxSetupMod = dynamic_cast<LatencyMod*>( 
-            owner->loadModule( tmpName, tmpParams ) );  
+            loadModule( tmpName, tmpParams ) );  
     assert( m_rxSetupMod );
 
     tmpName = params.find<std::string>("rxPostMod");
     if ( ! tmpName.empty() ) {
         tmpParams = params.find_prefix_params("rxPostModParams.");
         m_rxPostMod = dynamic_cast<LatencyMod*>( 
-            owner->loadModule( tmpName, tmpParams ) );  
+            loadModule( tmpName, tmpParams ) );  
     }
 
     m_regRegionBaseDelay_ns = params.find<int>( "regRegionBaseDelay_ns", 0 );
@@ -93,13 +97,13 @@ XXX::XXX( Component* owner, Params& params ) :
     tmpName = params.find<std::string>("txFiniMod","firefly.LatencyMod");
     tmpParams = params.find_prefix_params("txFiniModParams.");
     m_txFiniMod = dynamic_cast<LatencyMod*>( 
-            owner->loadModule( tmpName, tmpParams ) );  
+            loadModule( tmpName, tmpParams ) );  
     assert( m_txFiniMod );
     
     tmpName = params.find<std::string>("rxFiniMod","firefly.LatencyMod");
     tmpParams = params.find_prefix_params("rxFiniModParams.");
     m_rxFiniMod = dynamic_cast<LatencyMod*>( 
-            owner->loadModule( tmpName, tmpParams ) );  
+            loadModule( tmpName, tmpParams ) );  
     assert( m_rxFiniMod );
     
     m_sendAckDelay = params.find<int>( "sendAckDelay_ns", 0 );
@@ -109,7 +113,7 @@ XXX::XXX( Component* owner, Params& params ) :
     m_waitallStateDelay = params.find<uint64_t>( "waitallStateDelay_ps", 0 );
     m_waitanyStateDelay = params.find<uint64_t>( "waitanyStateDelay_ps", 0 );
 
-    m_loopLink = owner->configureLink(
+    m_loopLink = configureLink(
 			params.find<std::string>("loopBackPortName", "loop"), "1 ns",
             new Event::Handler<XXX>(this,&XXX::loopHandler) );
     assert(m_loopLink);
