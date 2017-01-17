@@ -161,27 +161,27 @@ public:
 
     /** Creates a new MemEvent - Generic */
     MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd) : SST::Event() {
-        initialize(src, addr, baseAddr, cmd);
+        initialize(src->getName(), addr, baseAddr, cmd, src->getCurrentSimTimeNano());
     }
 
     /** MemEvent constructor - Reads */
     MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) : SST::Event() {
-        initialize(src, addr, baseAddr, cmd, size);
+        initialize(src->getName(), addr, baseAddr, cmd, src->getCurrentSimTimeNano(), size);
     }
 
     /** MemEvent constructor - Writes */
     MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) : SST::Event() {
-        initialize(src, addr, baseAddr, cmd, data);
+        initialize(src->getName(), addr, baseAddr, cmd, src->getCurrentSimTimeNano(), data);
     }
 
     /** Create a new MemEvent instance, pre-configured to act as a NACK response */
-    MemEvent* makeNACKResponse(const Component *source, MemEvent* NACKedEvent) {
+    MemEvent* makeNACKResponse(MemEvent* NACKedEvent, SimTime_t timeInNano) {
         MemEvent *me      = new MemEvent(*this);
         me->responseToID_ = eventID_;
         me->dst_          = src_;
         me->NACKedEvent_  = NACKedEvent;
         me->cmd_          = NACK;
-        me->initTime_     = source->getCurrentSimTimeNano();
+        me->initTime_     = timeInNano;
         me->rqstr_        = rqstr_;
         me->instPtr_      = instPtr_;
         me->vAddr_        = vAddr_;
@@ -210,32 +210,32 @@ public:
         return me;
     }
 
-    void initialize(const Component *src, Addr addr, Addr baseAddr, Command cmd) {
+    void initialize(std::string name, Addr addr, Addr baseAddr, Command cmd, SimTime_t timeInNano) {
         initialize();
-        src_  = src->getName();
+        src_  = name;
         addr_ = addr;
         baseAddr_ = baseAddr;
         cmd_  = cmd;
-        initTime_ = src->getCurrentSimTimeNano();
+        initTime_ = timeInNano;
      }
 
-     void initialize(const Component *src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) {
+     void initialize(std::string name, Addr addr, Addr baseAddr, Command cmd, SimTime_t timeInNano, uint32_t size) {
         initialize();
-        src_      = src->getName();
+        src_      = name;
         addr_     = addr;
         baseAddr_ = baseAddr;
         cmd_      = cmd;
         size_     = size;
-        initTime_ = src->getCurrentSimTimeNano();
+        initTime_ = timeInNano;
      }
 
-    void initialize(const Component *src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) {
+    void initialize(std::string name, Addr addr, Addr baseAddr, Command cmd, SimTime_t timeInNano, std::vector<uint8_t>& data) {
         initialize();
-        src_         = src->getName();
-        addr_        = addr;
-        baseAddr_    = baseAddr;
-        cmd_         = cmd;
-        initTime_ = src->getCurrentSimTimeNano();
+        src_        = name;
+        addr_       = addr;
+        baseAddr_   = baseAddr;
+        cmd_        = cmd;
+        initTime_   = timeInNano;
         setPayload(data);
     }
 

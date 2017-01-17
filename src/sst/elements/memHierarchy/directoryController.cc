@@ -1455,7 +1455,7 @@ void DirectoryController::getDirEntryFromMemory(DirEntry * entry) {
 
 
 void DirectoryController::mshrNACKRequest(MemEvent* ev) {
-    MemEvent * nackEv = ev->makeNACKResponse(this,ev);
+    MemEvent * nackEv = ev->makeNACKResponse(ev, getCurrentSimTimeNano());
     profileResponseSent(nackEv);
     sendEventToCaches(nackEv, timestamp + 1);
 }

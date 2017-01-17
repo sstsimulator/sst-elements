@@ -14,7 +14,6 @@
 // distribution.
 
 /*
- * File:   coherenceControllers.cc
  * Author: Caesar De la Paz III
  * Email:  caesar.sst@gmail.com
  */

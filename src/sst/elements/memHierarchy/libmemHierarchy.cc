@@ -31,6 +31,12 @@
 #include "dmaEngine.h"
 #include "memHierarchyInterface.h"
 #include "memNIC.h"
+#include "coherenceController.h"
+#include "MESICoherenceController.h"
+#include "MESIInternalDirectory.h"
+#include "IncoherentController.h"
+#include "L1CoherenceController.h"
+#include "L1IncoherentController.h"
 #include "membackend/memBackend.h"
 #include "membackend/simpleMemBackend.h"
 #include "membackend/simpleDRAMBackend.h"
@@ -46,6 +52,7 @@
 #include "membackend/timingAddrMapper.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
+#include "multithreadL1Shim.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
@@ -177,6 +184,10 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"FetchInvX_recv",          "Event received: FetchInvX", "count", 2},
     {"Inv_recv",                "Event received: Inv", "count", 2},
     {"NACK_recv",               "Event: NACK received", "count", 2},
+    {NULL, NULL, NULL, 0}
+};
+
+static const ElementInfoStatistic coherence_statistics[] = {
     /* Event sends */
     {"eventSent_GetS",          "Number of GetS requests sent", "events", 2},
     {"eventSent_GetX",          "Number of GetX requests sent", "events", 2},
@@ -196,6 +207,9 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"eventSent_AckPut",        "Number of AckPuts sent", "events", 2},
     {"eventSent_NACK_up",       "Number of NACKs sent up (towards CPU)", "events", 2},
     {"eventSent_NACK_down",     "Number of NACKs sent down (towards main memory)", "events", 2},
+    {"eventSent_FlushLine",     "Number of FlushLine requests sent", "events", 2},
+    {"eventSent_FlushLineInv",  "Number of FlushLineInv requests sent", "events", 2},
+    {"eventSent_FlushLineResp", "Number of FlushLineResp responses sent", "events", 2},
     /* Event/State combinations - Count how many times an event was seen in particular state */
     {"stateEvent_GetS_I",           "Event/State: Number of times a GetS was seen in state I (Miss)", "count", 3},
     {"stateEvent_GetS_S",           "Event/State: Number of times a GetS was seen in state S (Hit)", "count", 3},
@@ -211,8 +225,6 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_GetSEx_M",         "Event/State: Number of times a GetSEx was seen in state M (Hit)", "count", 3},
     {"stateEvent_GetSResp_IS",      "Event/State: Number of times a GetSResp was seen in state IS", "count", 3},
     {"stateEvent_GetSResp_IM",      "Event/State: Number of times a GetSResp was seen in state IM", "count", 3},
-    {"stateEvent_GetSResp_SMInv",   "Event/State: Number of times a GetSResp was seen in state SM_Inv", "count", 3},
-    {"stateEvent_GetSResp_SM",      "Event/State: Number of times a GetSResp was seen in state SM", "count", 3},
     {"stateEvent_GetXResp_IM",      "Event/State: Number of times a GetXResp was seen in state IM", "count", 3},
     {"stateEvent_GetXResp_SM",      "Event/State: Number of times a GetXResp was seen in state SM", "count", 3},
     {"stateEvent_GetXResp_SMInv",   "Event/State: Number of times a GetXResp was seen in state SM_Inv", "count", 3},
@@ -232,33 +244,54 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_PutS_MInv",        "Event/State: Number of times a PutS was seen in state M_Inv", "count", 3},
     {"stateEvent_PutS_SMInv",       "Event/State: Number of times a PutS was seen in state SM_Inv", "count", 3},
     {"stateEvent_PutS_EInvX",       "Event/State: Number of times a PutS was seen in state E_InvX", "count", 3},
+    {"stateEvent_PutS_IB",          "Event/State: Number of times a PutS was seen in state I_B", "count", 3},
+    {"stateEvent_PutS_SB",          "Event/State: Number of times a PutS was seen in state S_B", "count", 3},
+    {"stateEvent_PutS_SBInv",       "Event/State: Number of times a PutS was seen in state SB_Inv", "count", 3},
     {"stateEvent_PutE_I",           "Event/State: Number of times a PutE was seen in state I", "count", 3},
     {"stateEvent_PutE_E",           "Event/State: Number of times a PutE was seen in state E", "count", 3},
     {"stateEvent_PutE_M",           "Event/State: Number of times a PutE was seen in state M", "count", 3},
+    {"stateEvent_PutE_IM",          "Event/State: Number of times a PutE was seen in state IM", "count", 3},
+    {"stateEvent_PutE_IS",          "Event/State: Number of times a PutE was seen in state IS", "count", 3},
     {"stateEvent_PutE_EI",          "Event/State: Number of times a PutE was seen in state EI", "count", 3},
     {"stateEvent_PutE_MI",          "Event/State: Number of times a PutE was seen in state MI", "count", 3},
     {"stateEvent_PutE_EInv",        "Event/State: Number of times a PutE was seen in state E_Inv", "count", 3},
     {"stateEvent_PutE_MInv",        "Event/State: Number of times a PutE was seen in state M_Inv", "count", 3},
     {"stateEvent_PutE_EInvX",       "Event/State: Number of times a PutE was seen in state E_InvX", "count", 3},
     {"stateEvent_PutE_MInvX",       "Event/State: Number of times a PutE was seen in state M_InvX", "count", 3},
+    {"stateEvent_PutE_IB",          "Event/State: Number of times a PutE was seen in state I_B", "count", 3},
+    {"stateEvent_PutE_SB",          "Event/State: Number of times a PutE was seen in state S_B", "count", 3},
     {"stateEvent_PutM_I",           "Event/State: Number of times a PutM was seen in state I", "count", 3},
     {"stateEvent_PutM_E",           "Event/State: Number of times a PutM was seen in state E", "count", 3},
     {"stateEvent_PutM_M",           "Event/State: Number of times a PutM was seen in state M", "count", 3},
+    {"stateEvent_PutM_IS",          "Event/State: Number of times a PutM was seen in state IS", "count", 3},
+    {"stateEvent_PutM_IM",          "Event/State: Number of times a PutM was seen in state IM", "count", 3},
     {"stateEvent_PutM_EI",          "Event/State: Number of times a PutM was seen in state EI", "count", 3},
     {"stateEvent_PutM_MI",          "Event/State: Number of times a PutM was seen in state MI", "count", 3},
     {"stateEvent_PutM_EInv",        "Event/State: Number of times a PutM was seen in state E_Inv", "count", 3},
     {"stateEvent_PutM_MInv",        "Event/State: Number of times a PutM was seen in state M_Inv", "count", 3},
     {"stateEvent_PutM_EInvX",       "Event/State: Number of times a PutM was seen in state E_InvX", "count", 3},
     {"stateEvent_PutM_MInvX",       "Event/State: Number of times a PutM was seen in state M_InvX", "count", 3},
+    {"stateEvent_PutM_IB",          "Event/State: Number of times a PutM was seen in state I_B", "count", 3},
+    {"stateEvent_PutM_SB",          "Event/State: Number of times a PutM was seen in state S_B", "count", 3},
     {"stateEvent_Inv_I",            "Event/State: Number of times an Inv was seen in state I", "count", 3},
     {"stateEvent_Inv_IS",           "Event/State: Number of times an Inv was seen in state IS", "count", 3},
     {"stateEvent_Inv_IM",           "Event/State: Number of times an Inv was seen in state IM", "count", 3},
+    {"stateEvent_Inv_IB",           "Event/State: Number of times an Inv was seen in state I_B", "count", 3},
     {"stateEvent_Inv_S",            "Event/State: Number of times an Inv was seen in state S", "count", 3},
     {"stateEvent_Inv_SM",           "Event/State: Number of times an Inv was seen in state SM", "count", 3},
     {"stateEvent_Inv_SInv",         "Event/State: Number of times an Inv was seen in state S_Inv", "count", 3},
     {"stateEvent_Inv_SI",           "Event/State: Number of times an Inv was seen in state SI", "count", 3},
     {"stateEvent_Inv_SMInv",        "Event/State: Number of times an Inv was seen in state SM_Inv", "count", 3},
     {"stateEvent_Inv_SD",           "Event/State: Number of times an Inv was seen in state S_D", "count", 3},
+    {"stateEvent_Inv_SB",           "Event/State: Number of times an Inv was seen in state S_B", "count", 3},
+    {"stateEvent_Inv_ED",           "Event/State: Number of times an Inv was seen in state E_D", "count", 3},
+    {"stateEvent_Inv_EI",           "Event/State: Number of times an Inv was seen in state EI", "count", 3},
+    {"stateEvent_Inv_EInv",         "Event/State: Number of times an Inv was seen in state E_Inv", "count", 3},
+    {"stateEvent_Inv_EInvX",        "Event/State: Number of times an Inv was seen in state E_InvX", "count", 3},
+    {"stateEvent_Inv_MD",           "Event/State: Number of times an Inv was seen in state M_D", "count", 3},
+    {"stateEvent_Inv_MI",           "Event/State: Number of times an Inv was seen in state MI", "count", 3},
+    {"stateEvent_Inv_MInv",         "Event/State: Number of times an Inv was seen in state M_Inv", "count", 3},
+    {"stateEvent_Inv_MInvX",        "Event/State: Number of times an Inv was seen in state M_InvX", "count", 3},
     {"stateEvent_FetchInv_I",       "Event/State: Number of times a FetchInv was seen in state I", "count", 3},
     {"stateEvent_FetchInv_IS",      "Event/State: Number of times a FetchInv was seen in state IS", "count", 3},
     {"stateEvent_FetchInv_IM",      "Event/State: Number of times a FetchInv was seen in state IM", "count", 3},
@@ -272,13 +305,15 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_FetchInv_EInvX",   "Event/State: Number of times a FetchInv was seen in state E_InvX", "count", 3},
     {"stateEvent_FetchInv_MInv",    "Event/State: Number of times a FetchInv was seen in state M_Inv", "count", 3},
     {"stateEvent_FetchInv_MInvX",   "Event/State: Number of times a FetchInv was seen in state M_InvX", "count", 3},
+    {"stateEvent_FetchInv_SInv",    "Event/State: Number of times a FetchInv was seen in state S_Inv", "count", 3},
     {"stateEvent_FetchInv_SD",      "Event/State: Number of times a FetchInv was seen in state S_D", "count", 3},
     {"stateEvent_FetchInv_ED",      "Event/State: Number of times a FetchInv was seen in state E_D", "count", 3},
     {"stateEvent_FetchInv_MD",      "Event/State: Number of times a FetchInv was seen in state M_D", "count", 3},
+    {"stateEvent_FetchInv_IB",      "Event/State: Number of times a FetchInv was seen in state I_B", "count", 3},
+    {"stateEvent_FetchInv_SB",      "Event/State: Number of times a FetchInv was seen in state S_B", "count", 3},
     {"stateEvent_FetchInvX_I",      "Event/State: Number of times a FetchInvX was seen in state I", "count", 3},
     {"stateEvent_FetchInvX_IS",     "Event/State: Number of times a FetchInvX was seen in state IS", "count", 3},
     {"stateEvent_FetchInvX_IM",     "Event/State: Number of times a FetchInvX was seen in state IM", "count", 3},
-    {"stateEvent_FetchInvX_SM",     "Event/State: Number of times a FetchInvX was seen in state SM", "count", 3},
     {"stateEvent_FetchInvX_E",      "Event/State: Number of times a FetchInvX was seen in state E", "count", 3},
     {"stateEvent_FetchInvX_M",      "Event/State: Number of times a FetchInvX was seen in state M", "count", 3},
     {"stateEvent_FetchInvX_EI",     "Event/State: Number of times a FetchInvX was seen in state EI", "count", 3},
@@ -287,8 +322,8 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_FetchInvX_EInvX",  "Event/State: Number of times a FetchInvX was seen in state E_InvX", "count", 3},
     {"stateEvent_FetchInvX_MInv",   "Event/State: Number of times a FetchInvX was seen in state M_Inv", "count", 3},
     {"stateEvent_FetchInvX_MInvX",  "Event/State: Number of times a FetchInvX was seen in state M_InvX", "count", 3},
-    {"stateEvent_FetchInvX_ED",     "Event/State: Number of times a FetchInvX was seen in state E_D", "count", 3},
-    {"stateEvent_FetchInvX_MD",     "Event/State: Number of times a FetchInvX was seen in state M_D", "count", 3},
+    {"stateEvent_FetchInvX_IB",     "Event/State: Number of times a FetchInvX was seen in state I_B", "count", 3},
+    {"stateEvent_FetchInvX_SB",     "Event/State: Number of times a FetchInvX was seen in state S_B", "count", 3},
     {"stateEvent_Fetch_I",          "Event/State: Number of times a Fetch was seen in state I", "count", 3},
     {"stateEvent_Fetch_IS",         "Event/State: Number of times a Fetch was seen in state IS", "count", 3},
     {"stateEvent_Fetch_IM",         "Event/State: Number of times a Fetch was seen in state IM", "count", 3},
@@ -297,6 +332,8 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_Fetch_SInv",       "Event/State: Number of times a Fetch was seen in state S_Inv", "count", 3},
     {"stateEvent_Fetch_SI",         "Event/State: Number of times a Fetch was seen in state SI", "count", 3},
     {"stateEvent_Fetch_SD",         "Event/State: Number of times a Fetch was seen in state S_D", "count", 3},
+    {"stateEvent_Fetch_IB",         "Event/State: Number of times a Fetch was seen in state I_B", "count", 3},
+    {"stateEvent_Fetch_SB",         "Event/State: Number of times a Fetch was seen in state S_B", "count", 3},
     {"stateEvent_FetchResp_I",      "Event/State: Number of times a FetchResp was seen in state I", "count", 3},
     {"stateEvent_FetchResp_SI",     "Event/State: Number of times a FetchResp was seen in state SI", "count", 3},
     {"stateEvent_FetchResp_EI",     "Event/State: Number of times a FetchResp was seen in state EI", "count", 3},
@@ -304,14 +341,27 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_FetchResp_SInv",   "Event/State: Number of times a FetchResp was seen in state S_Inv", "count", 3},
     {"stateEvent_FetchResp_SMInv",  "Event/State: Number of times a FetchResp was seen in state SM_Inv", "count", 3},
     {"stateEvent_FetchResp_EInv",   "Event/State: Number of times a FetchResp was seen in state E_Inv", "count", 3},
+    {"stateEvent_FetchResp_EInvX",  "Event/State: Number of times a FetchResp was seen in state E_Inv", "count", 3},
     {"stateEvent_FetchResp_MInv",   "Event/State: Number of times a FetchResp was seen in state M_Inv", "count", 3},
+    {"stateEvent_FetchResp_MInvX",  "Event/State: Number of times a FetchResp was seen in state M_InvX", "count", 3},
     {"stateEvent_FetchResp_SD",     "Event/State: Number of times a FetchResp was seen in state S_D", "count", 3},
     {"stateEvent_FetchResp_SMD",    "Event/State: Number of times a FetchResp was seen in state SM_D", "count", 3},
     {"stateEvent_FetchResp_ED",     "Event/State: Number of times a FetchResp was seen in state E_D", "count", 3},
     {"stateEvent_FetchResp_MD",     "Event/State: Number of times a FetchResp was seen in state M_D", "count", 3},
     {"stateEvent_FetchXResp_I",     "Event/State: Number of times a FetchXResp was seen in state I", "count", 3},
+    {"stateEvent_FetchXResp_EInv",  "Event/State: Number of times a FetchXResp was seen in state E_Inv", "count", 3},
     {"stateEvent_FetchXResp_EInvX", "Event/State: Number of times a FetchXResp was seen in state E_InvX", "count", 3},
     {"stateEvent_FetchXResp_MInvX", "Event/State: Number of times a FetchXResp was seen in state M_InvX", "count", 3},
+    {"stateEvent_FetchXResp_MInv",  "Event/State: Number of times a FetchXResp was seen in state M_Inv", "count", 3},
+    {"stateEvent_FetchXResp_MI",    "Event/State: Number of times a FetchXResp was seen in state MI", "count", 3},
+    {"stateEvent_FetchXResp_EI",    "Event/State: Number of times a FetchXResp was seen in state EI", "count", 3},
+    {"stateEvent_FetchXResp_SI",    "Event/State: Number of times a FetchXResp was seen in state SI", "count", 3},
+    {"stateEvent_FetchXResp_SD",    "Event/State: Number of times a FetchXResp was seen in state S_D", "count", 3},
+    {"stateEvent_FetchXResp_ED",    "Event/State: Number of times a FetchXResp was seen in state E_D", "count", 3},
+    {"stateEvent_FetchXResp_MD",    "Event/State: Number of times a FetchXResp was seen in state M_D", "count", 3},
+    {"stateEvent_FetchXResp_SMD",   "Event/State: Number of times a FetchXResp was seen in state SM_D", "count", 3},
+    {"stateEvent_FetchXResp_SInv",  "Event/State: Number of times a FetchXResp was seen in state S_Inv", "count", 3},
+    {"stateEvent_FetchXResp_SMInv", "Event/State: Number of times a FetchXResp was seen in state SM_Inv", "count", 3},
     {"stateEvent_AckInv_I",         "Event/State: Number of times an AckInv was seen in state I", "count", 3},
     {"stateEvent_AckInv_SInv",      "Event/State: Number of times an AckInv was seen in state S_Inv", "count", 3},
     {"stateEvent_AckInv_SMInv",     "Event/State: Number of times an AckInv was seen in state SM_Inv", "count", 3},
@@ -319,8 +369,60 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_AckInv_EI",        "Event/State: Number of times an AckInv was seen in state EI", "count", 3},
     {"stateEvent_AckInv_MI",        "Event/State: Number of times an AckInv was seen in state MI", "count", 3},
     {"stateEvent_AckInv_EInv",      "Event/State: Number of times an AckInv was seen in state E_Inv", "count", 3},
+    {"stateEvent_AckInv_EInvX",     "Event/State: Number of times an AckInv was seen in state E_InvX", "count", 3},
     {"stateEvent_AckInv_MInv",      "Event/State: Number of times an AckInv was seen in state M_Inv", "count", 3},
+    {"stateEvent_AckInv_MInvX",     "Event/State: Number of times an AckInv was seen in state M_InvX", "count", 3},
+    {"stateEvent_AckInv_SBInv",     "Event/State: Number of times an AckInv was seen in state SB_Inv", "count", 3},
     {"stateEvent_AckPut_I",         "Event/State: Number of times an AckPut was seen in state I", "count", 3},
+    {"stateEvent_FlushLine_I",      "Event/State: Number of times a FlushLine was seen in state I", "count", 3},
+    {"stateEvent_FlushLine_S",      "Event/State: Number of times a FlushLine was seen in state S", "count", 3},
+    {"stateEvent_FlushLine_E",      "Event/State: Number of times a FlushLine was seen in state E", "count", 3},
+    {"stateEvent_FlushLine_M",      "Event/State: Number of times a FlushLine was seen in state M", "count", 3},
+    {"stateEvent_FlushLine_IS",     "Event/State: Number of times a FlushLine was seen in state IS", "count", 3},
+    {"stateEvent_FlushLine_IM",     "Event/State: Number of times a FlushLine was seen in state IM", "count", 3},
+    {"stateEvent_FlushLine_SM",     "Event/State: Number of times a FlushLine was seen in state SM", "count", 3},
+    {"stateEvent_FlushLine_MInv",   "Event/State: Number of times a FlushLine was seen in state M_Inv", "count", 3},
+    {"stateEvent_FlushLine_MInvX",  "Event/State: Number of times a FlushLine was seen in state M_InvX", "count", 3},
+    {"stateEvent_FlushLine_EInv",   "Event/State: Number of times a FlushLine was seen in state E_Inv", "count", 3},
+    {"stateEvent_FlushLine_EInvX",  "Event/State: Number of times a FlushLine was seen in state E_InvX", "count", 3},
+    {"stateEvent_FlushLine_SInv",   "Event/State: Number of times a FlushLine was seen in state S_Inv", "count", 3},
+    {"stateEvent_FlushLine_SMInv",  "Event/State: Number of times a FlushLine was seen in state SM_Inv", "count", 3},
+    {"stateEvent_FlushLine_SD",     "Event/State: Number of times a FlushLine was seen in state S_D", "count", 3},
+    {"stateEvent_FlushLine_ED",     "Event/State: Number of times a FlushLine was seen in state E_D", "count", 3},
+    {"stateEvent_FlushLine_MD",     "Event/State: Number of times a FlushLine was seen in state M_D", "count", 3},
+    {"stateEvent_FlushLine_SMD",    "Event/State: Number of times a FlushLine was seen in state SM_D", "count", 3},
+    {"stateEvent_FlushLine_MI",     "Event/State: Number of times a FlushLine was seen in state MI", "count", 3},
+    {"stateEvent_FlushLine_EI",     "Event/State: Number of times a FlushLine was seen in state EI", "count", 3},
+    {"stateEvent_FlushLine_SI",     "Event/State: Number of times a FlushLine was seen in state SI", "count", 3},
+    {"stateEvent_FlushLine_IB",     "Event/State: Number of times a FlushLine was seen in state I_B", "count", 3},
+    {"stateEvent_FlushLine_SB",     "Event/State: Number of times a FlushLine was seen in state S_B", "count", 3},
+    {"stateEvent_FlushLineInv_I",       "Event/State: Number of times a FlushLineInv was seen in state I", "count", 3},
+    {"stateEvent_FlushLineInv_S",       "Event/State: Number of times a FlushLineInv was seen in state S", "count", 3},
+    {"stateEvent_FlushLineInv_E",       "Event/State: Number of times a FlushLineInv was seen in state E", "count", 3},
+    {"stateEvent_FlushLineInv_M",       "Event/State: Number of times a FlushLineInv was seen in state M", "count", 3},
+    {"stateEvent_FlushLineInv_IS",      "Event/State: Number of times a FlushLineInv was seen in state IS", "count", 3},
+    {"stateEvent_FlushLineInv_IM",      "Event/State: Number of times a FlushLineInv was seen in state IM", "count", 3},
+    {"stateEvent_FlushLineInv_SM",      "Event/State: Number of times a FlushLineInv was seen in state SM", "count", 3},
+    {"stateEvent_FlushLineInv_MInv",    "Event/State: Number of times a FlushLineInv was seen in state M_Inv", "count", 3},
+    {"stateEvent_FlushLineInv_MInvX",   "Event/State: Number of times a FlushLineInv was seen in state M_InvX", "count", 3},
+    {"stateEvent_FlushLineInv_EInv",    "Event/State: Number of times a FlushLineInv was seen in state E_Inv", "count", 3},
+    {"stateEvent_FlushLineInv_EInvX",   "Event/State: Number of times a FlushLineInv was seen in state E_InvX", "count", 3},
+    {"stateEvent_FlushLineInv_SInv",    "Event/State: Number of times a FlushLineInv was seen in state S_Inv", "count", 3},
+    {"stateEvent_FlushLineInv_SMInv",   "Event/State: Number of times a FlushLineInv was seen in state SM_Inv", "count", 3},
+    {"stateEvent_FlushLineInv_SD",      "Event/State: Number of times a FlushLineInv was seen in state S_D", "count", 3},
+    {"stateEvent_FlushLineInv_ED",      "Event/State: Number of times a FlushLineInv was seen in state E_D", "count", 3},
+    {"stateEvent_FlushLineInv_MD",      "Event/State: Number of times a FlushLineInv was seen in state M_D", "count", 3},
+    {"stateEvent_FlushLineInv_SMD",     "Event/State: Number of times a FlushLineInv was seen in state SM_D", "count", 3},
+    {"stateEvent_FlushLineInv_MI",      "Event/State: Number of times a FlushLineInv was seen in state MI", "count", 3},
+    {"stateEvent_FlushLineInv_EI",      "Event/State: Number of times a FlushLineInv was seen in state EI", "count", 3},
+    {"stateEvent_FlushLineInv_SI",      "Event/State: Number of times a FlushLineInv was seen in state SI", "count", 3},
+    {"stateEvent_FlushLineInv_IB",      "Event/State: Number of times a FlushLineInv was seen in state I_B", "count", 3},
+    {"stateEvent_FlushLineInv_SB",      "Event/State: Number of times a FlushLineInv was seen in state S_B", "count", 3},
+    {"stateEvent_FlushLineResp_I",      "Event/State: Number of times a FlushLineResp was seen in state I", "count", 3},
+    {"stateEvent_FlushLineResp_IB",     "Event/State: Number of times a FlushLineResp was seen in state I_B", "count", 3},
+    {"stateEvent_FlushLineResp_SB",     "Event/State: Number of times a FlushLineResp was seen in state S_B", "count", 3},
+
+    
     /* Eviction - count attempts to evict in a particular state */
     {"evict_I",                 "Eviction: Attempted to evict a block in state I", "count", 3},
     {"evict_S",                 "Eviction: Attempted to evict a block in state S", "count", 3},
@@ -336,6 +438,8 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"evict_EInvX",             "Eviction: Attempted to evict a block in state E_InvX", "count", 3},
     {"evict_MInvX",             "Eviction: Attempted to evict a block in state M_InvX", "count", 3},
     {"evict_SI",                "Eviction: Attempted to evict a block in state SI", "count", 3},
+    {"evict_IB",                "Eviction: Attempted to evict a block in state S_B", "count", 3},
+    {"evict_SB",                "Eviction: Attempted to evict a block in state I_B", "count", 3},
     /* Latency for different kinds of misses*/
     {"latency_GetS_IS",         "Latency for read misses in I state", "cycles", 1},
     {"latency_GetS_M",          "Latency for read misses that find the block owned by another cache in M state", "cycles", 1},
@@ -349,6 +453,52 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"EventStalledForLockedCacheline",  "Number of times an event (FetchInv, FetchInvX, eviction, Fetch, etc.) was stalled because a cache line was locked", "instances", 1},
     {NULL, NULL, NULL, 0}
 };
+
+/* Coherence Controller Subcomponents */
+static SubComponent* create_MESICoherenceController(Component * comp, Params& params) {
+    return new MESIController(comp, params);
+}
+
+static SubComponent* create_MESICacheDirectoryCoherenceController(Component * comp, Params& params) {
+    return new MESIInternalDirectory(comp, params);
+}
+
+static SubComponent* create_IncoherentController(Component * comp, Params& params) {
+    return new IncoherentController(comp, params);
+}
+
+static SubComponent* create_L1CoherenceController(Component * comp, Params& params) {
+    return new L1CoherenceController(comp, params);
+}
+static SubComponent* create_L1IncoherentController(Component * comp, Params& params) {
+    return new L1IncoherentController(comp, params);
+}
+
+/*****************************************************************************************
+ *  Component: MultiThreadL1
+ *  Purpose: Shim between cores & an L1 to simulate a core with multiple hardware threads
+ *****************************************************************************************/
+static Component* create_multithreadL1(ComponentId_t id, Params& params)
+{
+    return new MultiThreadL1(id, params);
+}
+
+static const ElementInfoParam multithreadL1_params[] = {
+    {"clock",               "Optional, int - Clock frequency or period with units (Hz or s; SI units OK)."},
+    {"requests_per_cycle",  "Optional, int - number of requests to forward to L1 each cycle (for all threads combined). 0 indicates unlimited", "0"},
+    {"responses_per_cycle", "Optional, int - number of responses to forward to threads each cycle (for all threads combined). 0 indicates unlimited", "0"},
+    {"debug",               "Optional, int - Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",         "Optional, int - Debug verbosity level. Between 0 and 10", "0"},
+    {"debug_addr",          "Optional, int - Address (in decimal) to debug. If not specified or set to -1, debug output for all addresses will be printed", "-1"},
+};
+
+static const ElementInfoPort multithreadL1_ports[] = {
+    {"cache", "Link to L1 cache", memEvent_port_events},
+    {"thread%(port)d", "Links to threads/cores", memEvent_port_events},
+    {NULL, NULL, NULL}
+};
+/*****************************************************************************************
+ *****************************************************************************************/
 
 static Component* create_BroadcastShim(ComponentId_t id, Params& params)
 {
@@ -1086,6 +1236,46 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL,
         "SST::Merlin::Bridge::Translator"
     },
+    {   "MESICoherenceController",
+        "Coherence controller for MESI or MSI protocol, non-L1",
+        NULL,
+        create_MESICoherenceController,
+        NULL,
+        coherence_statistics,
+        "SST::MemHierarchy::CoherenceController"
+    },
+    {   "MESICacheDirectoryCoherenceController",
+        "Coherence controller for non-inclusive cache with directory, MESI or MSI protocol, non-L1",
+        NULL,
+        create_MESICacheDirectoryCoherenceController,
+        NULL,
+        coherence_statistics,
+        "SST::MemHierarchy::CoherenceController"
+    },
+    {   "IncoherentController",
+        "Incoherent controller, non-L1",
+        NULL,
+        create_IncoherentController,
+        NULL,
+        coherence_statistics,
+        "SST::MemHierarchy::CoherenceController"
+    },
+    {   "L1CoherenceController",
+        "Coherence controller for MESI & MSI protocols, L1 caches",
+        NULL,
+        create_L1CoherenceController,
+        NULL,
+        coherence_statistics,
+        "SST::MemHierarchy::CoherenceController"
+    },
+    {   "L1IncoherentController",
+        "Incoherent controller for MESI & MSI protocols, L1 caches",
+        NULL,
+        create_L1IncoherentController,
+        NULL,
+        coherence_statistics,
+        "SST::MemHierarchy::CoherenceController"
+    },
     {NULL, NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -1140,6 +1330,15 @@ static const ElementInfoComponent components[] = {
             COMPONENT_CATEGORY_MEMORY,
             cache_statistics
 	},
+        {   "multithreadL1",
+            "Layer to enable connecting multiple CPUs to a single L1 as if multiple hardware threads",
+            NULL,
+            create_multithreadL1,
+            multithreadL1_params,
+            multithreadL1_ports,
+            COMPONENT_CATEGORY_MEMORY,
+            NULL
+        },
         {   "Sieve",
 	    "Simple Cache Filtering Component to model LL private caches",
 	    NULL,
