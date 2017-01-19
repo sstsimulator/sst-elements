@@ -12,7 +12,7 @@
 
 /* Author: Amro Awad
  * E-mail: aawad@sandia.gov
- */
+ *///
 
 #ifndef _H_SST_NVM_DIMM
 #define _H_SST_NVM_DIMM

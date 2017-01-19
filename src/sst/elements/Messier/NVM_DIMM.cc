@@ -34,7 +34,7 @@ using namespace SST;
 using namespace SST::MessierComponent;
 
 
-// Here we hardcode the cache block size
+// // Here we hardcode the cache block size
 int cache_block_size = 64;
 
 // Here we hardcod the page size
