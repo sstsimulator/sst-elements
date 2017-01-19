@@ -12,7 +12,7 @@
 
 /* Author: Amro Awad
  * E-mail: aawad@sandia.gov
- *///
+ */
 
 #ifndef _H_SST_NVM_DIMM
 #define _H_SST_NVM_DIMM
@@ -104,8 +104,31 @@ namespace SST { namespace MessierComponent{
 
 		//bool push_request(NVM_Request * req) { if(transactions.size() >= params->max_requests) return false; else {transactions.push_back(req); return true; }}
 		
-		bool push_request(NVM_Request * req) { transactions.push_back(req); }
-		
+		bool push_request(NVM_Request * req) { transactions.push_back(req); return true;}
+
+		// This is used to submit a pending request to a bank, if not busy
+		bool submit_request();
+
+		// This is the optimized version that basiclly tries to find out if there is any possibility to achieve a row buffer hit from the current transactions
+
+		bool submit_request_opt();
+
+
+		// This is used to handle completed requests
+		void handle_completed();
+
+		// Check if it exists in the write buffer and delete it from their if exists
+		bool find_in_wb(NVM_Request * temp);
+
+		// This schedule a deliver for data ready at the NVM Chips
+		void schedule_delivery();
+
+		// Try to flush the write buffer
+		void try_flush_wb();
+
+		// Try to find a row buffer hit and prioritize it over all other requests;
+		bool pop_optimal();
+	
 		NVM_Request * pop_request();
 		
 		void setMemChannel(SST::Link * x) { m_memChan = x; }
