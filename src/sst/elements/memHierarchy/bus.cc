@@ -14,7 +14,6 @@
 // distribution.
 
 /*
- * File:   coherenceControllers.cc
  * Author: Caesar De la Paz III
  * Email:  caesar.sst@gmail.com
  */
@@ -27,7 +26,6 @@
 #include "bus.h"
 
 #include <csignal>
-#include <boost/variant.hpp>
 
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>

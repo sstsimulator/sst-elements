@@ -21,19 +21,19 @@
 
 
 #include <sst_config.h>
+#include <sst/core/stringize.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include "hash.h"
 #include "cacheController.h"
 #include "util.h"
 #include "cacheListener.h"
 #include <sst/core/params.h>
-#include <boost/lexical_cast.hpp>
 #include "mshr.h"
 #include "L1CoherenceController.h"
 #include "L1IncoherentController.h"
-#include "MESICoherenceController.h"
-#include "MESIInternalDirectory.h"
-#include "IncoherentController.h"
+//#include "MESICoherenceController.h"
+//#include "MESIInternalDirectory.h"
+//#include "IncoherentController.h"
 
 
 namespace SST{ namespace MemHierarchy{
@@ -103,10 +103,10 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     int dirNumEntries           = params.find<int>("noninclusive_directory_entries", 0);
     
     /* Convert all strings to lower case */
-    boost::algorithm::to_lower(coherenceProtocol);
-    boost::algorithm::to_lower(replacement);
-    boost::algorithm::to_lower(dirReplacement);
-    boost::algorithm::to_lower(cacheType);
+    to_lower(coherenceProtocol);
+    to_lower(replacement);
+    to_lower(dirReplacement);
+    to_lower(cacheType);
 
     /* Check user specified all required fields */
     if (frequency.empty())           dbg->fatal(CALL_INFO, -1, "Param not specified: frequency - cache frequency.\n");
@@ -169,25 +169,25 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     ReplacementMgr* replManager = NULL;
     ReplacementMgr* dirReplManager = NULL;
     if (cacheType == "inclusive" || cacheType == "noninclusive") {
-        if (boost::iequals(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (boost::iequals(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
-        else if (boost::iequals(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
-        else if (boost::iequals(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (boost::iequals(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
+        if (SST::strcasecmp(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
+        else if (SST::strcasecmp(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
+        else if (SST::strcasecmp(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
+        else if (SST::strcasecmp(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
+        else if (SST::strcasecmp(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
         else dbg->fatal(CALL_INFO, -1, "Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
         cacheArray = new SetAssociativeArray(dbg, numLines, lineSize, associativity, replManager, ht, !L1);
     } else if (cacheType == "noninclusive_with_directory") {
-        if (boost::iequals(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (boost::iequals(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
-        else if (boost::iequals(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
-        else if (boost::iequals(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (boost::iequals(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
+        if (SST::strcasecmp(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
+        else if (SST::strcasecmp(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
+        else if (SST::strcasecmp(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
+        else if (SST::strcasecmp(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
+        else if (SST::strcasecmp(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
         else dbg->fatal(CALL_INFO, -1, "Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
-        if (boost::iequals(dirReplacement, "lru"))          dirReplManager = new LRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
-        else if (boost::iequals(dirReplacement, "lfu"))     dirReplManager = new LFUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
-        else if (boost::iequals(dirReplacement, "random"))  dirReplManager = new RandomReplacementMgr(dbg, dirAssociativity);
-        else if (boost::iequals(dirReplacement, "mru"))     dirReplManager = new MRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
-        else if (boost::iequals(dirReplacement, "nmru"))    dirReplManager = new NMRUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
+        if (SST::strcasecmp(dirReplacement, "lru"))          dirReplManager = new LRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
+        else if (SST::strcasecmp(dirReplacement, "lfu"))     dirReplManager = new LFUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
+        else if (SST::strcasecmp(dirReplacement, "random"))  dirReplManager = new RandomReplacementMgr(dbg, dirAssociativity);
+        else if (SST::strcasecmp(dirReplacement, "mru"))     dirReplManager = new MRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
+        else if (SST::strcasecmp(dirReplacement, "nmru"))    dirReplManager = new NMRUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
         else dbg->fatal(CALL_INFO, -1, "Invalid param: directory_replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
         cacheArray = new DualSetAssociativeArray(dbg, static_cast<uint>(lineSize), ht, true, dirNumEntries, dirAssociativity, dirReplManager, numLines, associativity, replManager);
     }
@@ -220,8 +220,6 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     string prefetcher           = params.find<std::string>("prefetcher");
     mshrLatency_                = params.find<uint64_t>("mshr_latency_cycles", 0);
     maxRequestsPerCycle_        = params.find<int>("max_requests_per_cycle",-1);
-    string reqWidth             = params.find<std::string>("request_link_width","0B");
-    string respWidth            = params.find<std::string>("response_link_width","0B");
     string packetSize           = params.find<std::string>("min_packet_size", "8B");
     bool snoopL1Invs            = false;
     if (cf_.L1_) snoopL1Invs    = params.find<bool>("snoop_l1_invalidations", false);
@@ -256,17 +254,6 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packetSize.c_str());
     }
 
-    /* Check link widths */
-    UnitAlgebra reqWidth_ua(reqWidth);
-    UnitAlgebra respWidth_ua(respWidth);
-    if (!reqWidth_ua.hasUnits("B")) {
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B). Ex: '32B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), reqWidth.c_str());
-    }
-    if (!respWidth_ua.hasUnits("B")) {
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B). Ex: '32B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), respWidth.c_str());
-    }
-
-    
     /* --------------- Prefetcher ---------------*/
     if (prefetcher.empty()) {
 	Params emptyParams;
@@ -285,9 +272,6 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     mshr_               = new MSHR(d_, cf_.MSHRSize_, this->getName(), DEBUG_ALL, DEBUG_ADDR);
     mshrNoncacheable_   = new MSHR(d_, HUGE_MSHR, this->getName(), DEBUG_ALL, DEBUG_ADDR);
     
-    /* ---------------- Links ---------------- */
-    lowNetPorts_        = new vector<Link*>();
-
     /* ---------------- Clock ---------------- */
     clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
     defaultTimeBase_    = registerClock(cf_.cacheFrequency_, clockHandler_);
@@ -349,35 +333,52 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         statPrefetchDrop            = registerStatistic<uint64_t>("Prefetch_drops");
     }
     /* --------------- Coherence Controllers --------------- */
-    coherenceMgr = NULL;
-    bool inclusive = cf_.type_ == "inclusive";
+    coherenceMgr_ = NULL;
+    std::string inclusive = (cf_.type_ == "inclusive") ? "true" : "false";
+    std::string protocol = (cf_.protocol_ == CoherenceProtocol::MESI) ? "true" : "false";
     isLL = true;
     lowerIsNoninclusive = false;
+
+    Params coherenceParams;
+    coherenceParams.insert("debug_level", params.find<std::string>("debug_level", "1"));
+    coherenceParams.insert("debug", params.find<std::string>("debug", "0"));
+    coherenceParams.insert("access_latency_cycles", std::to_string(accessLatency_));
+    coherenceParams.insert("mshr_latency_cycles", std::to_string(mshrLatency_));
+    coherenceParams.insert("tag_access_latency_cycles", std::to_string(tagLatency_));
+    coherenceParams.insert("cache_line_size", std::to_string(cf_.lineSize_));
+    coherenceParams.insert("protocol", protocol);   // Not used by all managers
+    coherenceParams.insert("inclusive", inclusive); // Not used by all managers
+    coherenceParams.insert("snoop_l1_invalidations", params.find<std::string>("snoop_l1_invalidations", "false")); // Not used by all managers
+    coherenceParams.insert("request_link_width", params.find<std::string>("request_link_width", "0B"));
+    coherenceParams.insert("response_link_width", params.find<std::string>("response_link_width", "0B"));
+    coherenceParams.insert("min_packet_size", params.find<std::string>("min_packet_size", "8B"));
 
     if (!cf_.L1_) {
         if (cf_.protocol_ != CoherenceProtocol::NONE) {
             if (cf_.type_ != "noninclusive_with_directory") {
-                coherenceMgr = new MESIController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, mshr_, cf_.protocol_, 
-                    inclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
+                coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.MESICoherenceController", this, coherenceParams));
             } else {
-                coherenceMgr = new MESIInternalDirectory(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, mshr_, cf_.protocol_,
-                        bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
+                coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.MESICacheDirectoryCoherenceController", this, coherenceParams));
             }
         } else {
-            coherenceMgr = new IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, mshr_,
-                    inclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
+            coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.IncoherentController", this, coherenceParams));
         }
     } else {
         if (cf_.protocol_ != CoherenceProtocol::NONE) {
-            coherenceMgr = new L1CoherenceController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, mshr_, cf_.protocol_, 
-                bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, snoopL1Invs, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
+            coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.L1CoherenceController", this, coherenceParams));
         } else {
-            coherenceMgr = new L1IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, mshr_, 
-                    bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, reqWidth_ua.getRoundedValue(), respWidth_ua.getRoundedValue(), packetSize_ua.getRoundedValue());
+            coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.L1IncoherentController", this, coherenceParams));
         }
     }
-    
-    /*---------------  Misc --------------- */
+    if (coherenceMgr_ == NULL) {
+        d_->fatal(CALL_INFO, -1, "%s, Failed to load CoherenceController.\n", this->Component::getName().c_str());
+    }
+
+    coherenceMgr_->setLinks(lowNetPort_, highNetPort_, bottomNetworkLink_, topNetworkLink_);
+    coherenceMgr_->setMSHR(mshr_);
+    coherenceMgr_->setCacheListener(listener_);
+    coherenceMgr_->setDebug(DEBUG_ALL, DEBUG_ADDR);
+
 }
 
 
@@ -430,17 +431,14 @@ void Cache::configureLinks(Params &params) {
         // Configure low links
         string linkName = "low_network_0";
         uint32_t id = 0;
-        while (isPortConnected(linkName)) {
-            SST::Link * link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-            d_->debug(_INFO_, "Low Network Link ID: %u\n", (uint)link->getId());
-            lowNetPorts_->push_back(link);
-            id++;
-            linkName = "low_network_" + boost::lexical_cast<std::string>(id);
-        }
+        SST::Link * link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        d_->debug(_INFO_, "Low Network Link ID: %u\n", (uint)link->getId());
+        lowNetPort_ = link;
+        linkName = "low_network_" + std::to_string(id);
         bottomNetworkLink_ = NULL;
     
         // Configure high link
-        SST::Link * link = configureLink("high_network_0", "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        link = configureLink("high_network_0", "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         d_->debug(_INFO_, "High Network Link ID: %u\n", (uint)link->getId());
         highNetPort_ = link;
         topNetworkLink_ = NULL;

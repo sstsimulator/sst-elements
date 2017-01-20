@@ -39,9 +39,10 @@
 using namespace SST;
 using namespace SST::n_Bank;
 
-c_BankGroup::c_BankGroup(std::map<std::string, unsigned>* x_bankParams) {
+c_BankGroup::c_BankGroup(std::map<std::string, unsigned>* x_bankParams, unsigned x_Id) {
 	m_rankPtr = nullptr;
 	m_bankParams = x_bankParams;
+	m_bankGroupId = x_Id;
 }
 
 c_BankGroup::~c_BankGroup() {
@@ -62,6 +63,10 @@ void c_BankGroup::acceptRank(c_Rank* x_rankPtr) {
 
 unsigned c_BankGroup::getNumBanks() const {
 	return m_bankPtrs.size();
+}
+
+unsigned c_BankGroup::getBankGroupId() const {
+        return m_bankGroupId;
 }
 
 std::vector<c_BankInfo*> c_BankGroup::getBankPtrs() const {

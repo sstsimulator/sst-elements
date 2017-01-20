@@ -63,19 +63,21 @@ public:
 	// 	  return x_stream;
 	// }
 
-	c_BankGroup(std::map<std::string, unsigned>* x_bankParams);
+        c_BankGroup(std::map<std::string, unsigned>* x_bankParams, unsigned x_Id);
 	virtual ~c_BankGroup();
 
 	void acceptBank(c_BankInfo* x_bankPtr);
 	void acceptRank(c_Rank* x_rankPtr);
 
 	unsigned getNumBanks() const;
+        unsigned getBankGroupId() const;
 	std::vector<c_BankInfo*> getBankPtrs() const;
 
 	void updateOtherBanksNextCommandCycles(c_BankInfo* x_initBankPtr,
 			c_BankCommand* x_cmdPtr);
 
 private:
+        unsigned m_bankGroupId;
 	std::vector<c_BankInfo*> m_bankPtrs;
 	c_Rank* m_rankPtr;
 

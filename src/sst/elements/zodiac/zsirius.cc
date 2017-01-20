@@ -54,7 +54,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
     Params osParams = params.find_prefix_params("os.");
     std::string osName = osParams.find<std::string>("name");
     Params modParams = params.find_prefix_params( osName + "." );
-    msgapi = dynamic_cast<MP::Interface*>(loadModuleWithComponent(
+    msgapi = dynamic_cast<MP::Interface*>(loadSubComponent(
                             "firefly.hadesMP", this, modParams));
     assert(msgapi);
 

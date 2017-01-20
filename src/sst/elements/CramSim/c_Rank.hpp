@@ -50,40 +50,40 @@ namespace n_Bank {
 class c_Channel;
 class c_BankGroup;
 
-class c_Rank {
-public:
+  class c_Rank {
+  public:
 
-	friend std::ostream& operator<<(std::ostream& x_stream,
-			const c_Rank& x_rank) {
-		x_stream<<"Rank:"<<std::endl;
-		  for(unsigned l_i=0; l_i<x_rank.m_bankGroupPtrs.size(); ++l_i) {
-		    x_stream<<(x_rank.m_bankGroupPtrs.at(l_i))<<std::endl;
-		  }
+    friend std::ostream& operator<<(std::ostream& x_stream,
+				    const c_Rank& x_rank) {
+      x_stream<<"Rank:"<<std::endl;
+      for(unsigned l_i=0; l_i<x_rank.m_bankGroupPtrs.size(); ++l_i) {
+	x_stream<<(x_rank.m_bankGroupPtrs.at(l_i))<<std::endl;
+      }
 
-		  return (x_stream);
-	}
+      return (x_stream);
+    }
 
-	c_Rank(std::map<std::string, unsigned>* x_bankParams);
-	virtual ~c_Rank();
+    c_Rank(std::map<std::string, unsigned>* x_bankParams);
+    virtual ~c_Rank();
 
-	void acceptBankGroup(c_BankGroup* x_bankGroupPtr);
-  void acceptChannel(c_Channel* x_channelPtr);
+    void acceptBankGroup(c_BankGroup* x_bankGroupPtr);
+    void acceptChannel(c_Channel* x_channelPtr);
 
-	unsigned getNumBanks() const;
-  unsigned getNumBankGroups() const;
+    unsigned getNumBanks() const;
+    unsigned getNumBankGroups() const;
 
-	std::vector<c_BankInfo*> getBankPtrs() const;
+    std::vector<c_BankInfo*> getBankPtrs() const;
 
-	void updateOtherBanksNextCommandCycles(c_BankGroup* x_initBankGroupPtr,
-			c_BankCommand* x_cmdPtr);
+    void updateOtherBanksNextCommandCycles(c_BankGroup* x_initBankGroupPtr,
+					   c_BankCommand* x_cmdPtr);
 
-private:
-  c_Channel* m_channelPtr;
-	std::vector<c_BankGroup*> m_bankGroupPtrs;
+  private:
+    c_Channel* m_channelPtr;
+    std::vector<c_BankGroup*> m_bankGroupPtrs;
 
-  std::map<std::string, unsigned>* m_bankParams;
+    std::map<std::string, unsigned>* m_bankParams;
 
-};
+  };
 
 } // end n_Bank
 } // end SST

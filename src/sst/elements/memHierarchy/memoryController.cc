@@ -55,6 +55,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     fixupParams( params, "backend.", "backendConvertor.backend." );
     fixupParams( params, "clock", "backendConvertor.backend.clock" );
     fixupParams( params, "request_width", "backendConvertor.request_width" );
+    fixupParams( params, "max_requests_per_cycle", "backendConvertor.backend.max_requests_per_cycle" );
 
     // Output for debug
     dbg.init("@t:--->  ", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
@@ -88,10 +89,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     }
 
     std::string name        = params.find<std::string>("backendConvertor", "memHierarchy.simpleMemBackendConvertor");
+
     string protocolStr      = params.find<std::string>("coherence_protocol", "MESI");
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
     Params tmpParams = params.find_prefix_params("backendConvertor.");
+    
     memBackendConvertor_  = dynamic_cast<MemBackendConvertor*>(loadSubComponent(name, this, tmpParams));
 
     memSize_ = memBackendConvertor_->getMemSize();

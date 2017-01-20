@@ -553,6 +553,7 @@ void ProcessQueuesState<T1>::enterRecv( _CommReq* req, uint64_t exitDelay )
     }
 
     m_pstdRcvQ.push_front( req );
+    obj().statPstdRcv()->addData( m_pstdRcvQ.size() );
 
     size_t length = req->getLength( );
 
@@ -963,6 +964,7 @@ void ProcessQueuesState<T1>::dmaRecvFiniSRB( ShortRecvBuffer* buf, nid_t nid,
 
     assert( tag == (uint32_t) ShortMsgQ );
     m_recvdMsgQ.push_back( buf );
+    obj().statRcvdMsg()->addData( m_recvdMsgQ.size() );
 
     foo();
     m_postedShortBuffers.erase(buf);
@@ -1138,6 +1140,7 @@ void ProcessQueuesState<T1>::loopHandler( int srcCore, std::vector<IoVec>& vec, 
 
     ++m_numRecvLooped;
     m_recvdMsgQ.push_back( new LoopReq( srcCore, vec, key ) );
+    obj().statRcvdMsg()->addData( m_recvdMsgQ.size() );
 
     foo();
 }

@@ -109,6 +109,9 @@ class MemBackendConvertor : public SubComponent {
   private:
     virtual bool issue(MemReq*) = 0;
 
+
+
+
     bool setupMemReq( MemEvent* ev ) {
         if ( FlushLine == ev->getCmd() || FlushLineInv == ev->getCmd() ) {
             // TODO optimize if this becomes a problem, it is slow

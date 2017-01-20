@@ -36,7 +36,7 @@
 #include "cacheArray.h"
 #include "mshr.h"
 #include "replacementManager.h"
-#include "coherenceControllers.h"
+#include "coherenceController.h"
 #include "util.h"
 #include "cacheListener.h"
 #include "memNIC.h"
@@ -186,7 +186,7 @@ private:
          the clock gets deregistered from TimeVortx and reregistered only when an event is received */
     bool clockTick(Cycle_t time) {
         timestamp_++;
-        bool queuesEmpty = coherenceMgr->sendOutgoingCommands(getCurrentSimTimeNano());
+        bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
         
         bool nicIdle = true;
         if (bottomNetworkLink_) nicIdle = bottomNetworkLink_->clock();
@@ -268,7 +268,7 @@ private:
     CacheConfig             cf_;
     uint                    ID_;
     CacheListener*          listener_;
-    vector<Link*>*          lowNetPorts_;
+    Link*                   lowNetPort_;
     Link*                   highNetPort_;
     Link*                   prefetchLink_;
     Link*                   maxWaitSelfLink_;
@@ -280,7 +280,7 @@ private:
     vector<string>          upperLevelCacheNames_;
     MSHR*                   mshr_;
     MSHR*                   mshrNoncacheable_;
-    CoherencyController*    coherenceMgr;
+    CoherenceController*    coherenceMgr_;
     uint64_t                accessLatency_;
     uint64_t                tagLatency_;
     uint64_t                mshrLatency_;

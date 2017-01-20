@@ -31,7 +31,7 @@ typedef Arg_FunctorBase< int, bool > Functor;
 class Interface : public Hermes::Interface {
     public:
 
-    Interface() {}
+    Interface( Component* parent ) : Hermes::Interface(parent) {}
     virtual ~Interface() {}
     virtual void setOS( OS* ) { assert(0); }
 

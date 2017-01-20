@@ -84,7 +84,7 @@ l3_params = {
       	"access_latency_cycles" : "6",
       	"cache_frequency" : "2GHz",
       	"replacement_policy" : "lru",
-      	"coherence_protocol" : "MSI",
+      	"coherence_protocol" : coherence_protocol,
       	"associativity" : "4",
       	"cache_line_size" : "64",
       	"debug_level" : "10",

@@ -21,9 +21,8 @@
 
 #include <sst_config.h>
 #include "cacheController.h"
-#include "coherenceControllers.h"
+#include "coherenceController.h"
 #include "hash.h"
-#include <boost/lexical_cast.hpp>
 #include <csignal>
 
 #include "memEvent.h"
@@ -334,8 +333,8 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
             if (!inserted) {
                 d_->fatal(CALL_INFO, -1, "%s, Error inserting noncacheable request in mshr. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",getName().c_str(), CommandString[cmd], baseAddr, getCurrentSimTimeNano());
             }
-            if (cmd == GetS) coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, NULL);
-            else             coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, &event->getPayload());
+            if (cmd == GetS) coherenceMgr_->forwardMessage(event, baseAddr, event->getSize(), 0, NULL);
+            else             coherenceMgr_->forwardMessage(event, baseAddr, event->getSize(), 0, &event->getPayload());
             break;
         case GetSResp:
         case GetXResp:
@@ -344,7 +343,7 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
                 d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match request at front of mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
                         getName().c_str(),CommandString[cmd],baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
             }
-            coherenceMgr->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
+            coherenceMgr_->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
             delete origRequest;
             delete event;
             break;
@@ -364,7 +363,7 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
                 d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match any request in the mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
                         getName().c_str(),CommandString[cmd],baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
             }
-            coherenceMgr->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
+            coherenceMgr_->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
             mshrNoncacheable_->removeElement(baseAddr, origRequest);
             delete origRequest;
             delete event;
@@ -389,7 +388,7 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
     if (!clockIsOn_) {
         Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
         timestamp_ = time - 1;
-        coherenceMgr->updateTimestamp(timestamp_);
+        coherenceMgr_->updateTimestamp(timestamp_);
         int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
         for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
             statMSHROccupancy->addData(mshr_->getSize());
@@ -447,9 +446,7 @@ void Cache::init(unsigned int phase) {
             }
         }
         if (!bottomNetworkLink_) {
-            for (uint i = 0; i < lowNetPorts_->size(); i++) {
-                lowNetPorts_->at(i)->sendInitData(new MemEvent(this, 10, 10, NULLCMD));
-            }
+            lowNetPort_->sendInitData(new MemEvent(this, 10, 10, NULLCMD));
         }
         
     }
@@ -459,45 +456,39 @@ void Cache::init(unsigned int phase) {
         if (!memEvent) { /* Do nothing */ }
         else if (memEvent->getCmd() == NULLCMD) {
             if (memEvent->getCmd() == NULLCMD) {    // Save upper level cache names
+                coherenceMgr_->addUpperLevelCacheName(memEvent->getSrc());
                 upperLevelCacheNames_.push_back(memEvent->getSrc());
             }
         } else {
             if (bottomNetworkLink_) {
                 bottomNetworkLink_->sendInitData(new MemEvent(*memEvent));
             } else {
-                for (uint idp = 0; idp < lowNetPorts_->size(); idp++) {
-                    lowNetPorts_->at(idp)->sendInitData(new MemEvent(*memEvent));
-                }
+                lowNetPort_->sendInitData(new MemEvent(*memEvent));
             }
         }
         delete memEvent;
      }
     
     if (!bottomNetworkLink_) {  // Save names of caches below us
-        for (uint i = 0; i < lowNetPorts_->size(); i++) {
-            while ((ev = lowNetPorts_->at(i)->recvInitData())) {
-                MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-                if (memEvent && memEvent->getCmd() == NULLCMD) {
-                    if (memEvent->getBaseAddr() == 0) {
-                        isLL = false;
-                        if (memEvent->getAddr() == 1) {
-                            lowerIsNoninclusive = true; // TODO better checking if we have multiple caches below us
-                        }
+        while ((ev = lowNetPort_->recvInitData())) {
+            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+            if (memEvent && memEvent->getCmd() == NULLCMD) {
+                if (memEvent->getBaseAddr() == 0) {
+                    isLL = false;
+                    if (memEvent->getAddr() == 1) {
+                        lowerIsNoninclusive = true; // TODO better checking if we have multiple caches below us
                     }
-                    lowerLevelCacheNames_.push_back(memEvent->getSrc());
                 }
-                delete memEvent;
+                coherenceMgr_->addLowerLevelCacheName(memEvent->getSrc());
+                lowerLevelCacheNames_.push_back(memEvent->getSrc());
             }
+            delete memEvent;
         }
     }
 }
 
 
 void Cache::setup() {
-    if (lowerLevelCacheNames_.size() == 0) lowerLevelCacheNames_.push_back(""); // avoid segfault on accessing this
-    if (upperLevelCacheNames_.size() == 0) upperLevelCacheNames_.push_back(""); // avoid segfault on accessing this
-    coherenceMgr->setLowerLevelCache(&lowerLevelCacheNames_);
-    coherenceMgr->setUpperLevelCache(&upperLevelCacheNames_);
     bool isDirBelow = false; // is a directory below?
     if (bottomNetworkLink_) { 
         isLL = false;   // Either a directory or a cache below us
@@ -517,7 +508,7 @@ void Cache::setup() {
             }
         }
     }
-    coherenceMgr->setupLowerStatus(isLL && !bottomNetworkLink_, lowerIsNoninclusive, isDirBelow);
+    coherenceMgr_->setupLowerStatus(isLL && !bottomNetworkLink_, lowerIsNoninclusive, isDirBelow);
 }
 
 
@@ -535,7 +526,7 @@ void Cache::processIncomingEvent(SST::Event* ev) {
     if (!clockIsOn_) {
         Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
         timestamp_ = time - 1;
-        coherenceMgr->updateTimestamp(timestamp_);
+        coherenceMgr_->updateTimestamp(timestamp_);
         int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
         for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
             statMSHROccupancy->addData(mshr_->getSize());
