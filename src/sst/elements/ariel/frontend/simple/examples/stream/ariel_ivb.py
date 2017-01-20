@@ -84,7 +84,7 @@ l3_params = {
       	"access_latency_cycles" : "6",
       	"cache_frequency" : "2GHz",
       	"replacement_policy" : "lru",
-      	"coherence_protocol" : "MSI",
+      	"coherence_protocol" : coherence_protocol,
       	"associativity" : "4",
       	"cache_line_size" : "64",
       	"debug_level" : "10",
@@ -92,7 +92,7 @@ l3_params = {
       	"cache_size" : "128 KB",
       	"mshr_num_entries" : "4096",
       	"num_cache_slices" : str(groups * l3cache_blocks_per_group),
-      	"slice_allocation_policy" : "rr"
+      	"slice_allocation_policy" : "rr",
 }
 
 mem_params = {

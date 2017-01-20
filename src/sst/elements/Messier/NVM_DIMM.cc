@@ -107,45 +107,34 @@ bool NVM_DIMM::tick()
 	}
 
 
-
-	// Iterating over the requests currently being brough from PCM chips to see if anyone is ready
-	std::map<NVM_Request *, long long int>::iterator st, en;
-	st = ready_trans.begin();
-	en = ready_trans.end();
-
-	while (st != en)
-	{
-
-		bool deleted = false;
-		long long int add = (st->first)->Address;
-		if(st->second <= cycles)
-		{
-
-
-			if(NVM_EVENT_MAP.find(st->first)!= NVM_EVENT_MAP.end())
-			{
-				NVM_Request * temp = st->first;
-				MemRespEvent *respEvent = new MemRespEvent(
-						NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
-
-				m_memChan->send((SST::Event *) respEvent);
-
-				NVM_EVENT_MAP.erase(st->first);
-			}
-
-			(getBank(add))->setLocked(false);
-			ready_trans.erase(st);
-			outstanding.remove(st->first);
-			deleted = false;
-			break;
-		}
-		if(!deleted)
-			st++;
-
-	}
+	// Handle requests that are completed
+	handle_completed();
 
 
 	// We start with checking if any read request is ready at NVM, to schdule reading it form the NVM Chip
+	schedule_delivery();
+	// Here we should check if the write buffer is full or exceeds the threshold and try to flush at least a request
+	try_flush_wb();
+
+
+	// Checking if there is any pending requests	
+	if(!transactions.empty())
+	{
+
+		// Try to submit a request to a free bank and rank
+		//submit_request();
+		submit_request_opt();
+	}
+
+
+	return false;
+
+}
+
+
+void NVM_DIMM::schedule_delivery()
+{
+
 	std::map<NVM_Request *, long long int>::iterator st_1, en_1;
 	st_1 = ready_at_NVM.begin();
 	en_1 = ready_at_NVM.end();
@@ -187,7 +176,14 @@ bool NVM_DIMM::tick()
 			st_1++;
 
 	}
-	// Here we should check if the write buffer is full or exceeds the threshold and try to flush at least a request
+
+
+
+}
+
+void NVM_DIMM::try_flush_wb()
+{
+
 	if(WB->flush() || (transactions.empty() && !WB->empty()))
 	{	
 		NVM_Request * temp = WB->getFront();
@@ -199,7 +195,7 @@ bool NVM_DIMM::tick()
 			if(getBank(add)->getBusyUntil() < cycles)
 			{
 				ready = true;
-			//	WB->pop_entry();
+				//	WB->pop_entry();
 				//	transactions.remove(temp);
 			}
 		}
@@ -209,142 +205,314 @@ bool NVM_DIMM::tick()
 
 
 			WB->pop_entry();
-				//	transactions.remove(temp);
+			//	transactions.remove(temp);
 			// Note that the rank will be busy for the time of sending the data to the bank, in addition to sending the command 
 			getRank(add)->setBusyUntil(cycles + params->tCMD + params->tBURST);
 			(getBank(add))->setBusyUntil(cycles + params->tCMD + params->tCL_W + params->tBURST);
 			curr_writes++;
 			WRITES_COMPLETE[cycles + params->tCMD + params->tCL_W + params->tBURST]++;
 
-			/*
-			   MemRespEvent *respEvent = new MemRespEvent(
-			   NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
-
-			   m_memChan->send(respEvent);
-			 			NVM_EVENT_MAP.erase(temp);
-			 */
 		}
 
 	}
 
+}
 
-	// Checking if there is any pending requests	
-	if(!transactions.empty())
+void NVM_DIMM::handle_completed()
+{
+
+
+	// Iterating over the requests currently being brough from PCM chips to see if anyone is ready
+	std::map<NVM_Request *, long long int>::iterator st, en;
+	st = ready_trans.begin();
+	en = ready_trans.end();
+
+	while (st != en)
 	{
 
-		NVM_Request * temp = transactions.front();  
-		bool removed = false;
-
-		// First check if this is a write request and the write buffer is not full 
-		if(!temp->Read) // if write request
+		bool deleted = false;
+		long long int add = (st->first)->Address;
+		if(st->second <= cycles)
 		{
-			if(!WB->full())
+
+
+			if(NVM_EVENT_MAP.find(st->first)!= NVM_EVENT_MAP.end())
 			{
-				WB->insert_write_request(temp); 
-				transactions.pop_front();
+				NVM_Request * temp = st->first;
 				MemRespEvent *respEvent = new MemRespEvent(
 						NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
 
-				m_memChan->send(respEvent);
-				NVM_EVENT_MAP.erase(temp);
+				m_memChan->send((SST::Event *) respEvent);
 
-
-				removed = true;
+				NVM_EVENT_MAP.erase(st->first);
 			}
 
+			(getBank(add))->setLocked(false);
+			ready_trans.erase(st);
+			outstanding.remove(st->first);
+			deleted = false;
+			break;
 		}
-		else  // if read request
+		if(!deleted)
+			st++;
+
+	}
+}
+
+
+bool NVM_DIMM::find_in_wb(NVM_Request * temp)
+{
+	bool removed = false;
+
+	if(WB->find_entry(temp->Address)!=NULL)
+	{
+		removed = true;
+		MemRespEvent *respEvent = new MemRespEvent(
+				NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
+		m_memChan->send(respEvent); //(SST::Event *)NVM_EVENT_MAP[temp]);
+		NVM_EVENT_MAP.erase(temp);	
+	}
+	return removed;
+}
+
+
+
+
+bool NVM_DIMM::submit_request()
+{
+
+
+	NVM_Request * temp = transactions.front();  
+	bool removed = false;
+
+	// First check if this is a write request and the write buffer is not full 
+	if(!temp->Read) // if write request
+	{
+		if(!WB->full())
 		{
+			WB->insert_write_request(temp); 
+			transactions.pop_front();
+			MemRespEvent *respEvent = new MemRespEvent(
+					NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
+			m_memChan->send(respEvent);
+			NVM_EVENT_MAP.erase(temp);
+			removed = true;
+		}
 
-			// Check if in the write buffer
-			if(WB->find_entry(temp->Address)!=NULL)
+	}
+	else  // if read request
+	{
+		// Check if in the write buffer
+		removed = find_in_wb(temp);
+
+		if(removed)
+		{
+			transactions.pop_front();
+		}
+		else
+		{
+			// First find out the corresponding bank to the read request and check if busy
+			RANK * corresp_rank = getRank(temp->Address);
+			BANK * corresp_bank = getBank(temp->Address);
+
+			// Check if the rank is not busy
+			if ((corresp_rank->getBusyUntil() < cycles) && (corresp_bank->getBusyUntil() < cycles) && !corresp_bank->getLocked() && (outstanding.size() < params->max_outstanding))
 			{
-				removed = true;
-				transactions.pop_front();
-				//	completed_requests.push_back(temp);
-				//	NVM_EVENT_MAP[temp]->makeResponse(this);
-				//MemEvent *event  = dynamic_cast<MemEvent*>(NVM_EVENT_MAP[temp]);
-				//event->makeResponse();
-				MemRespEvent *respEvent = new MemRespEvent(
-						NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
-				m_memChan->send(respEvent); //(SST::Event *)NVM_EVENT_MAP[temp]);
-				NVM_EVENT_MAP.erase(temp);	
-			}
+				long long int time_ready;
+				// Check if row buffer hit
+				bool issued=false;
 
-			// Check for power budget of current simultaneous activations/reads/writes on the NVM chips
-
-			//TODO
-
-			else
-			{
-
-				// First find out the corresponding bank to the read request and check if busy
-				RANK * corresp_rank = getRank(temp->Address);
-				BANK * corresp_bank = getBank(temp->Address);
-
-				// Check if the rank is not busy
-				if ((corresp_rank->getBusyUntil() < cycles) && (corresp_bank->getBusyUntil() < cycles) && !corresp_bank->getLocked() && (outstanding.size() < params->max_outstanding))
+				if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
+				{	
+					//corresp_bank->setBusyUntil(cycles);
+					time_ready = cycles;
+					issued = true;
+				}
+				else if((params->write_weight*curr_writes + params->read_weight*curr_reads) <= (params->max_current_weight - params->read_weight)) 
 				{
-
-					// DEBUG
 					// Allocate the Rank circuitary to submit the command
-					//corresp_rank->setBusyUntil(cycles + params->tCMD);
+					corresp_rank->setBusyUntil(cycles + params->tCMD);
+					// Set the bank busy until we read it
+					corresp_bank->setBusyUntil(cycles + params->tCMD + params->tRCD);
+					time_ready = cycles + params->tRCD + params->tCMD;
+					curr_reads++;
+					READS_COMPLETE[cycles + params->tRCD + params->tCMD]++;
+					corresp_bank->setRB(temp->Address/params->row_buffer_size);
+					issued = true;
+				}
 
-					long long int time_ready;
-					// Check if row buffer hit
-					bool issued=false;
-
-					if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
-					{	
-						//corresp_bank->setBusyUntil(cycles);
-						time_ready = cycles;
-						issued = true;
-					}
-					else if((params->write_weight*curr_writes + params->read_weight*curr_reads) <= (params->max_current_weight - params->read_weight)) 
-					{
-
-
-						// Allocate the Rank circuitary to submit the command
-						corresp_rank->setBusyUntil(cycles + params->tCMD);
-						// Set the bank busy until we read it
-						corresp_bank->setBusyUntil(cycles + params->tCMD + params->tRCD);
-						time_ready = cycles + params->tRCD + params->tCMD;
-						curr_reads++;
-						READS_COMPLETE[cycles + params->tRCD + params->tCMD]++;
-						corresp_bank->setRB(temp->Address/params->row_buffer_size);
-						issued = true;
-
-					}
-
-					if(issued)
-					{
-						outstanding.push_back(temp);
-						transactions.pop_front();
-						removed=true;
-						// Lock the bank so no other request comes in and try to activate another row while waiting for the activation
-
-						corresp_bank->setLocked(true);
-						ready_at_NVM[temp] = time_ready;
-					}
-
+				if(issued)
+				{
+					outstanding.push_back(temp);
+					transactions.pop_front();
+					removed=true;
+					// Lock the bank so no other request comes in and try to activate another row while waiting for the activation
+					corresp_bank->setLocked(true);
+					ready_at_NVM[temp] = time_ready;
 				}
 			}
 		}
-
-
-		if(!removed)
-		{
-			transactions.push_back(transactions.front());
-			transactions.pop_front();
-		}
-
-
 	}
 
+	if(!removed)
+	{
+		transactions.push_back(transactions.front());
+		transactions.pop_front();
+	}
+
+	return removed;
+}
+
+
+bool NVM_DIMM::pop_optimal()
+{
+
+	std::list<NVM_Request *>::iterator st, en;
+	st = transactions.begin();
+	en = transactions.end();
+
+	long long time_ready;
+
+	while(st!=en)
+	{
+		NVM_Request * temp = *st;
+
+		RANK * corresp_rank = getRank(temp->Address);
+		BANK * corresp_bank = getBank(temp->Address);
+		if (temp->Read && (corresp_rank->getBusyUntil() < cycles) && (corresp_bank->getBusyUntil() < cycles) && !corresp_bank->getLocked() && (outstanding.size() < params->max_outstanding))
+		{
+
+			if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
+			{	
+				//corresp_bank->setBusyUntil(cycles);
+				time_ready = cycles;
+				outstanding.push_back(temp);
+				transactions.erase(st);
+				// Lock the bank so no other request comes in and try to activate another row while waiting for the activation
+
+				corresp_bank->setLocked(true);
+				ready_at_NVM[temp] = time_ready;
+				return true;
+			}
+
+		}
+
+		st++;
+	}
 
 	return false;
 
 }
+
+bool NVM_DIMM::submit_request_opt()
+{
+	NVM_Request * temp; // = transactions.front();  
+	bool removed = false;
+	bool found = pop_optimal();
+	if(found)
+	{
+		removed = true;
+
+	}
+	else
+	{
+
+		std::list<NVM_Request *>::iterator st, en;
+		st = transactions.begin();
+		en = transactions.end();
+
+	//	long long time_ready;
+
+
+		while(st!=en)
+		{
+
+			temp = *st;
+
+			// First check if this is a write request and the write buffer is not full 
+			removed = true;
+			if(!temp->Read) // if write request
+			{
+				if(!WB->full())
+				{
+					WB->insert_write_request(temp); 
+					transactions.erase(st);
+					MemRespEvent *respEvent = new MemRespEvent(
+							NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
+					m_memChan->send(respEvent);
+					NVM_EVENT_MAP.erase(temp);
+					removed = true;
+					break;
+				}
+			}
+			else  // if read request
+			{
+				// Check if in the write buffer
+
+
+				removed = find_in_wb(temp);
+				if(removed)
+				{
+					transactions.erase(st);
+					break;
+				}
+				else //if(!removed)
+				{
+					// First find out the corresponding bank to the read request and check if busy
+					RANK * corresp_rank = getRank(temp->Address);
+					BANK * corresp_bank = getBank(temp->Address);
+
+					// Check if the rank is not busy
+					if ((corresp_rank->getBusyUntil() < cycles) && (corresp_bank->getBusyUntil() < cycles) && !corresp_bank->getLocked() && (outstanding.size() < params->max_outstanding))
+					{
+						long long int time_ready;
+						// Check if row buffer hit
+						bool issued=false;
+						if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
+						{	
+							//corresp_bank->setBusyUntil(cycles);
+							time_ready = cycles;
+							issued = true;
+						}
+						else if((params->write_weight*curr_writes + params->read_weight*curr_reads) <= (params->max_current_weight - params->read_weight)) 
+						{
+							// Allocate the Rank circuitary to submit the command
+							corresp_rank->setBusyUntil(cycles + params->tCMD);
+							// Set the bank busy until we read it
+							corresp_bank->setBusyUntil(cycles + params->tCMD + params->tRCD);
+							time_ready = cycles + params->tRCD + params->tCMD;
+							curr_reads++;
+							READS_COMPLETE[cycles + params->tRCD + params->tCMD]++;
+							corresp_bank->setRB(temp->Address/params->row_buffer_size);
+							issued = true;
+						}
+						if(issued)
+						{
+							outstanding.push_back(temp);
+							transactions.erase(st);
+							removed=true;
+							// Lock the bank so no other request comes in and try to activate another row while waiting for the activation
+							corresp_bank->setLocked(true);
+							ready_at_NVM[temp] = time_ready;
+							break;
+						}
+					}
+				}
+			}
+			st++;
+		}
+
+	}
+
+	//	if(!removed)
+	//	{
+	//		transactions.push_back(transactions.front());
+	//		transactions.pop_front();
+	//	}
+
+	return removed;
+}
+
 
 
 NVM_Request * NVM_DIMM::pop_request()
