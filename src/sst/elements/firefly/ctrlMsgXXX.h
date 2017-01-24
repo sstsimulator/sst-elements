@@ -1,4 +1,3 @@
-
 // Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
@@ -6,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -51,7 +54,7 @@ static const int    ShortMsgQ       = 0xf00d;
 
 class ShortRecvBuffer;
 
-class XXX  {
+class XXX : SubComponent  {
 
   public:
 
@@ -167,6 +170,9 @@ class XXX  {
         return m_waitanyStateDelay;
     }
 
+    Statistic<uint64_t>* statRcvdMsg() { return m_statRcvdMsg; }
+    Statistic<uint64_t>* statPstdRcv() { return m_statPstdRcv; }
+
     void memcpy( Callback, MemAddr to, MemAddr from, size_t );
     void memwrite( Callback, MemAddr to, size_t );
     void memread( Callback, MemAddr to, size_t );
@@ -216,6 +222,9 @@ class XXX  {
     Thornhill::MemoryHeapLink* m_memHeapLink;
     Info*           m_info;
     VirtNic*        m_nic;
+
+    Statistic<uint64_t>* m_statRcvdMsg;
+    Statistic<uint64_t>* m_statPstdRcv;
 
     int                         m_dbg_level;
     int                         m_dbg_mask;

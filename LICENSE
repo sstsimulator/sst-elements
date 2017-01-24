@@ -3,8 +3,11 @@ of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 Government retains certain rights in this software.
 
 Copyright (c) 2009-2016, Sandia Corporation
-
 All rights reserved.
+
+Portions are copyright of other developers:
+See the file CONTRIBUTITORS.TXT in the top level directory
+of this repository for more information.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are

@@ -1,0 +1,22 @@
+Allocating arrays of size 2000 elements.
+Done allocating arrays.
+Perfoming the fast_c compute loop...
+Sum of arrays is: 6999500.000000
+Freeing arrays...
+Done.
+ARIEL: Created a malloc of size: 32816 in Ariel
+ARIEL: Created a malloc of size: 8 in Ariel
+ARIEL: Created a malloc of size: 16000 in Ariel
+ARIEL: Created a malloc of size: 16000 in Ariel
+ARIEL: Created a malloc of size: 16000 in Ariel
+ARIEL: Created a malloc of size: 4288 in Ariel
+ARIEL: Created a malloc of size: 192 in Ariel
+ARIEL: Created a malloc of size: 136 in Ariel
+
+Ariel Memory Management Statistics:
+---------------------------------------------------------------------
+Page Table Sizes:
+- Map entries at level 0         285
+Page Table Coverages:
+- Bytes at level 0              1167360
+Simulation is complete, simulated time: 4.80383 ms

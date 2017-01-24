@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -17,19 +21,19 @@
 
 
 #include <sst_config.h>
+#include <sst/core/stringize.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include "hash.h"
 #include "cacheController.h"
 #include "util.h"
 #include "cacheListener.h"
 #include <sst/core/params.h>
-#include <boost/lexical_cast.hpp>
 #include "mshr.h"
 #include "L1CoherenceController.h"
 #include "L1IncoherentController.h"
-#include "MESICoherenceController.h"
-#include "MESIInternalDirectory.h"
-#include "IncoherentController.h"
+//#include "MESICoherenceController.h"
+//#include "MESIInternalDirectory.h"
+//#include "IncoherentController.h"
 
 
 namespace SST{ namespace MemHierarchy{
@@ -40,7 +44,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
  
     /* --------------- Output Class --------------- */
     Output* dbg = new Output();
-    int debugLevel = params.find<int>("debug_level", 0);
+    int debugLevel = params.find<int>("debug_level", 1);
     
     dbg->init("--->  ", debugLevel, 0,(Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)     dbg->fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
@@ -50,6 +54,10 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     // Currently deprecated parameters are: 'LLC', statistcs, network_num_vc, directory_at_next_level, bottom_network, top_network
     Output out("", 1, 0, Output::STDOUT);
     bool found;
+    params.find<int>("LL", 0, found);
+    if (found) {
+        out.output("cacheFactory, ** Found deprecated parameter: LL ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
+    }
     params.find<int>("LLC", 0, found);
     if (found) {
         out.output("cacheFactory, ** Found deprecated parameter: LLC ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
@@ -69,6 +77,10 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     params.find<int>("network_num_vc", 0, found);
     if (found) {
         out.output("cacheFactory, ** Found deprecated parameter: network_num_vc ** MemHierarchy does not use multiple virtual channels. Remove this parameter from your input deck to eliminate this message.\n");
+    }
+    params.find<int>("lower_is_noninclusive", 0, found);
+    if (found) {
+        out.output("cacheFactory, ** Found deprecated parameter: lower_is_noninclusive ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
     }
 
     /* --------------- Get Parameters --------------- */
@@ -91,10 +103,10 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     int dirNumEntries           = params.find<int>("noninclusive_directory_entries", 0);
     
     /* Convert all strings to lower case */
-    boost::algorithm::to_lower(coherenceProtocol);
-    boost::algorithm::to_lower(replacement);
-    boost::algorithm::to_lower(dirReplacement);
-    boost::algorithm::to_lower(cacheType);
+    to_lower(coherenceProtocol);
+    to_lower(replacement);
+    to_lower(dirReplacement);
+    to_lower(cacheType);
 
     /* Check user specified all required fields */
     if (frequency.empty())           dbg->fatal(CALL_INFO, -1, "Param not specified: frequency - cache frequency.\n");
@@ -141,15 +153,15 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     fixByteUnits(sizeStr); // Convert e.g., KB to KiB for unit alg
     UnitAlgebra ua(sizeStr);
     if (!ua.hasUnits("B")) {
-        dbg->fatal(CALL_INFO, -1, "Invalid param: cache_size - must have units of bytes (B). SI units are ok. You specified %s\n", sizeStr.c_str());
+        dbg->fatal(CALL_INFO, -1, "Invalid param: cache_size - must have units of bytes (B). Ex: '32KiB'. SI units are ok. You specified '%s'\n", sizeStr.c_str());
     }
     uint64_t cacheSize = ua.getRoundedValue();
     uint numLines = cacheSize/lineSize;
-    uint protocol = 0;
+    CoherenceProtocol protocol = CoherenceProtocol::MSI;
     
-    if (coherenceProtocol == "mesi")      protocol = 1;
-    else if (coherenceProtocol == "msi")  protocol = 0;
-    else if (coherenceProtocol == "none") protocol = 2;
+    if (coherenceProtocol == "mesi")      protocol = CoherenceProtocol::MESI;
+    else if (coherenceProtocol == "msi")  protocol = CoherenceProtocol::MSI;
+    else if (coherenceProtocol == "none") protocol = CoherenceProtocol::NONE;
     else dbg->fatal(CALL_INFO,-1, "Invalid param: coherence_protocol - must be 'msi', 'mesi', or 'none'\n");
 
     CacheArray * cacheArray = NULL;
@@ -157,25 +169,25 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     ReplacementMgr* replManager = NULL;
     ReplacementMgr* dirReplManager = NULL;
     if (cacheType == "inclusive" || cacheType == "noninclusive") {
-        if (boost::iequals(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (boost::iequals(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
-        else if (boost::iequals(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
-        else if (boost::iequals(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (boost::iequals(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
+        if (SST::strcasecmp(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
+        else if (SST::strcasecmp(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
+        else if (SST::strcasecmp(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
+        else if (SST::strcasecmp(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
+        else if (SST::strcasecmp(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
         else dbg->fatal(CALL_INFO, -1, "Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
         cacheArray = new SetAssociativeArray(dbg, numLines, lineSize, associativity, replManager, ht, !L1);
     } else if (cacheType == "noninclusive_with_directory") {
-        if (boost::iequals(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (boost::iequals(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
-        else if (boost::iequals(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
-        else if (boost::iequals(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (boost::iequals(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
+        if (SST::strcasecmp(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
+        else if (SST::strcasecmp(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
+        else if (SST::strcasecmp(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
+        else if (SST::strcasecmp(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
+        else if (SST::strcasecmp(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
         else dbg->fatal(CALL_INFO, -1, "Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
-        if (boost::iequals(dirReplacement, "lru"))          dirReplManager = new LRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
-        else if (boost::iequals(dirReplacement, "lfu"))     dirReplManager = new LFUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
-        else if (boost::iequals(dirReplacement, "random"))  dirReplManager = new RandomReplacementMgr(dbg, dirAssociativity);
-        else if (boost::iequals(dirReplacement, "mru"))     dirReplManager = new MRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
-        else if (boost::iequals(dirReplacement, "nmru"))    dirReplManager = new NMRUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
+        if (SST::strcasecmp(dirReplacement, "lru"))          dirReplManager = new LRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
+        else if (SST::strcasecmp(dirReplacement, "lfu"))     dirReplManager = new LFUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
+        else if (SST::strcasecmp(dirReplacement, "random"))  dirReplManager = new RandomReplacementMgr(dbg, dirAssociativity);
+        else if (SST::strcasecmp(dirReplacement, "mru"))     dirReplManager = new MRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
+        else if (SST::strcasecmp(dirReplacement, "nmru"))    dirReplManager = new NMRUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
         else dbg->fatal(CALL_INFO, -1, "Invalid param: directory_replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
         cacheArray = new DualSetAssociativeArray(dbg, static_cast<uint>(lineSize), ht, true, dirNumEntries, dirAssociativity, dirReplManager, numLines, associativity, replManager);
     }
@@ -198,8 +210,9 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     errorChecking();
     
     d2_ = new Output();
-    d2_->init("", params.find<int>("debug_level", 0), 0,(Output::output_location_t)params.find<int>("debug", 0));
-    
+    d2_->init("", params.find<int>("debug_level", 1), 0,(Output::output_location_t)params.find<int>("debug", SST::Output::NONE));
+   
+    Output out("", 1, 0, Output::STDOUT);
     
     int stats                   = params.find<int>("statistics", 0);
     accessLatency_              = params.find<uint64_t>("access_latency_cycles", 0);
@@ -207,14 +220,13 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     string prefetcher           = params.find<std::string>("prefetcher");
     mshrLatency_                = params.find<uint64_t>("mshr_latency_cycles", 0);
     maxRequestsPerCycle_        = params.find<int>("max_requests_per_cycle",-1);
+    string packetSize           = params.find<std::string>("min_packet_size", "8B");
     bool snoopL1Invs            = false;
     if (cf_.L1_) snoopL1Invs    = params.find<bool>("snoop_l1_invalidations", false);
-    bool LL                     = params.find<bool>("LL", false);
     int64_t dAddr               = params.find<int64_t>("debug_addr",-1);
     if (dAddr != -1) DEBUG_ALL = false;
     else DEBUG_ALL = true;
     DEBUG_ADDR = (Addr)dAddr;
-    bool lowerIsNoninclusive    = params.find<bool>("lower_is_noninclusive", false);
     bool found;
     
     maxOutstandingPrefetch_     = params.find<int>("max_outstanding_prefetch", cf_.MSHRSize_ / 2, found);
@@ -235,12 +247,13 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
             this->Component::getName().c_str(), accessLatency_);
   
     if (stats != 0) {
-        SST::Output outputStd("",1,0,SST::Output::STDOUT);
-        outputStd.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sstinfo for available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", this->Component::getName().c_str());
+        out.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sst-info for available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", this->Component::getName().c_str());
+    }
+    UnitAlgebra packetSize_ua(packetSize);
+    if (!packetSize_ua.hasUnits("B")) {
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packetSize.c_str());
     }
 
-
-    
     /* --------------- Prefetcher ---------------*/
     if (prefetcher.empty()) {
 	Params emptyParams;
@@ -259,9 +272,6 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     mshr_               = new MSHR(d_, cf_.MSHRSize_, this->getName(), DEBUG_ALL, DEBUG_ADDR);
     mshrNoncacheable_   = new MSHR(d_, HUGE_MSHR, this->getName(), DEBUG_ALL, DEBUG_ADDR);
     
-    /* ---------------- Links ---------------- */
-    lowNetPorts_        = new vector<Link*>();
-
     /* ---------------- Clock ---------------- */
     clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
     defaultTimeBase_    = registerClock(cf_.cacheFrequency_, clockHandler_);
@@ -323,34 +333,52 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         statPrefetchDrop            = registerStatistic<uint64_t>("Prefetch_drops");
     }
     /* --------------- Coherence Controllers --------------- */
-    coherenceMgr = NULL;
-    bool inclusive = cf_.type_ == "inclusive";
-    bool LLC = isPortConnected("directory");
-    
+    coherenceMgr_ = NULL;
+    std::string inclusive = (cf_.type_ == "inclusive") ? "true" : "false";
+    std::string protocol = (cf_.protocol_ == CoherenceProtocol::MESI) ? "true" : "false";
+    isLL = true;
+    lowerIsNoninclusive = false;
+
+    Params coherenceParams;
+    coherenceParams.insert("debug_level", params.find<std::string>("debug_level", "1"));
+    coherenceParams.insert("debug", params.find<std::string>("debug", "0"));
+    coherenceParams.insert("access_latency_cycles", std::to_string(accessLatency_));
+    coherenceParams.insert("mshr_latency_cycles", std::to_string(mshrLatency_));
+    coherenceParams.insert("tag_access_latency_cycles", std::to_string(tagLatency_));
+    coherenceParams.insert("cache_line_size", std::to_string(cf_.lineSize_));
+    coherenceParams.insert("protocol", protocol);   // Not used by all managers
+    coherenceParams.insert("inclusive", inclusive); // Not used by all managers
+    coherenceParams.insert("snoop_l1_invalidations", params.find<std::string>("snoop_l1_invalidations", "false")); // Not used by all managers
+    coherenceParams.insert("request_link_width", params.find<std::string>("request_link_width", "0B"));
+    coherenceParams.insert("response_link_width", params.find<std::string>("response_link_width", "0B"));
+    coherenceParams.insert("min_packet_size", params.find<std::string>("min_packet_size", "8B"));
+
     if (!cf_.L1_) {
-        if (cf_.protocol_ != 2) {
+        if (cf_.protocol_ != CoherenceProtocol::NONE) {
             if (cf_.type_ != "noninclusive_with_directory") {
-                coherenceMgr = new MESIController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, cf_.protocol_, 
-                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
+                coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.MESICoherenceController", this, coherenceParams));
             } else {
-                coherenceMgr = new MESIInternalDirectory(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, cf_.protocol_,
-                        lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
+                coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.MESICacheDirectoryCoherenceController", this, coherenceParams));
             }
         } else {
-            coherenceMgr = new IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_,
-                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
+            coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.IncoherentController", this, coherenceParams));
         }
     } else {
-        if (cf_.protocol_ != 2) {
-            coherenceMgr = new L1CoherenceController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, cf_.protocol_, 
-                lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, snoopL1Invs);
+        if (cf_.protocol_ != CoherenceProtocol::NONE) {
+            coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.L1CoherenceController", this, coherenceParams));
         } else {
-            coherenceMgr = new L1IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPort_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC, LL, mshr_, 
-                    lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
+            coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.L1IncoherentController", this, coherenceParams));
         }
     }
-    
-    /*---------------  Misc --------------- */
+    if (coherenceMgr_ == NULL) {
+        d_->fatal(CALL_INFO, -1, "%s, Failed to load CoherenceController.\n", this->Component::getName().c_str());
+    }
+
+    coherenceMgr_->setLinks(lowNetPort_, highNetPort_, bottomNetworkLink_, topNetworkLink_);
+    coherenceMgr_->setMSHR(mshr_);
+    coherenceMgr_->setCacheListener(listener_);
+    coherenceMgr_->setDebug(DEBUG_ALL, DEBUG_ADDR);
+
 }
 
 
@@ -403,17 +431,14 @@ void Cache::configureLinks(Params &params) {
         // Configure low links
         string linkName = "low_network_0";
         uint32_t id = 0;
-        while (isPortConnected(linkName)) {
-            SST::Link * link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-            d_->debug(_INFO_, "Low Network Link ID: %u\n", (uint)link->getId());
-            lowNetPorts_->push_back(link);
-            id++;
-            linkName = "low_network_" + boost::lexical_cast<std::string>(id);
-        }
+        SST::Link * link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        d_->debug(_INFO_, "Low Network Link ID: %u\n", (uint)link->getId());
+        lowNetPort_ = link;
+        linkName = "low_network_" + std::to_string(id);
         bottomNetworkLink_ = NULL;
     
         // Configure high link
-        SST::Link * link = configureLink("high_network_0", "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        link = configureLink("high_network_0", "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         d_->debug(_INFO_, "High Network Link ID: %u\n", (uint)link->getId());
         highNetPort_ = link;
         topNetworkLink_ = NULL;
@@ -435,10 +460,15 @@ void Cache::configureLinks(Params &params) {
 
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.blocksize = cf_.lineSize_;
+        typeInfo.coherenceProtocol = cf_.protocol_;
+        typeInfo.cacheType = cf_.type_;
 
         bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
-
+        UnitAlgebra packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
+        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
+        bottomNetworkLink_->setMinPacketSize(packet.getRoundedValue());
+        
         // Configure high link
         SST::Link * link = configureLink("high_network_0", "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         d_->debug(_INFO_, "High Network Link ID: %u\n", (uint)link->getId());
@@ -462,9 +492,14 @@ void Cache::configureLinks(Params &params) {
 
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.blocksize = cf_.lineSize_;
+        typeInfo.coherenceProtocol = cf_.protocol_;
+        typeInfo.cacheType = cf_.type_;
 
         bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
+        UnitAlgebra packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
+        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
+        bottomNetworkLink_->setMinPacketSize(packet.getRoundedValue());
 
         // Configure high link
         SST::Link * link = configureLink("high_network_0", "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
@@ -485,7 +520,7 @@ void Cache::configureLinks(Params &params) {
         else if (cacheSliceCount > 1) {
             if (sliceID >= cacheSliceCount) d_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_id - should be between 0 and num_cache_slices-1. You specified %d.\n",
                     getName().c_str(), sliceID);
-            if (sliceAllocPolicy != "rr") d_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified %s.\n",
+            if (sliceAllocPolicy != "rr") d_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified '%s'.\n",
                     getName().c_str(), sliceAllocPolicy.c_str());
         } else {
             d2_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %d.\n", 
@@ -519,9 +554,14 @@ void Cache::configureLinks(Params &params) {
         typeInfo.interleaveSize = interleaveSize;
         typeInfo.interleaveStep = interleaveStep;
         typeInfo.blocksize      = cf_.lineSize_;
+        typeInfo.coherenceProtocol = cf_.protocol_;
+        typeInfo.cacheType = cf_.type_;
         
         bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
+        UnitAlgebra packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
+        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
+        bottomNetworkLink_->setMinPacketSize(packet.getRoundedValue());
 
         // Configure high link
         topNetworkLink_ = bottomNetworkLink_;
@@ -557,10 +597,12 @@ void Cache::intrapolateMSHRLatency() {
     for(uint64 idx = 68; idx < N;  idx++) y[idx] = 32;
     
     if (accessLatency_ > N) {
-        d_->fatal(CALL_INFO, -1, "%s, Error: cannot intrapolate MSHR latency if cache latency > 200. Cache latency: %" PRIu64 "\n", getName().c_str(), accessLatency_);
+        d_->fatal(CALL_INFO, -1, "%s, Error: cannot intrapolate MSHR latency if cache latency > 200. Set 'mshr_latency_cycles' or reduce cache latency. Cache latency: %" PRIu64 "\n", getName().c_str(), accessLatency_);
     }
     mshrLatency_ = y[accessLatency_];
 
+    Output out("", 1, 0, Output::STDOUT);
+    out.verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %" PRIu64 " cycles.\n", getName().c_str(), mshrLatency_);
 }
 
 }}

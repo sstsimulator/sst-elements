@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -31,7 +35,7 @@ ZodiacOTFTraceReader::ZodiacOTFTraceReader(ComponentId_t id, Params& params) :
     if ( msgiface == "" ) {
         msgapi = new MessageInterface();
     } else {
-	msgapi = dynamic_cast<MessageInterface*>(loadModule(msgiface, params));
+	msgapi = dynamic_cast<MessageInterface*>(loadSubComponent(msgiface, this, params));
 
         if(NULL == msgapi) {
 		std::cerr << "Message API: " << msgiface << " could not be loaded." << std::endl;

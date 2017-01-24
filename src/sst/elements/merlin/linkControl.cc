@@ -5,6 +5,10 @@
 // Copyright (c) 2013-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -464,14 +468,14 @@ void LinkControl::handle_input(Event* ev)
             //           << parent->getName() << " on VN " << event->request->vn << " from src " << event->request->src
             //           << "." << std::endl;
         }
-        if ( receiveFunctor != NULL ) {
-            bool keep = (*receiveFunctor)(actual_vn);
-            if ( !keep) receiveFunctor = NULL;
-        }
         SimTime_t lat = parent->getCurrentSimTimeNano() - event->getInjectionTime();
         packet_latency->addData(lat);
         // stats.insertPacketLatency(lat);
         // std::cout << "Exit handle_input" << std::endl;
+        if ( receiveFunctor != NULL ) {
+            bool keep = (*receiveFunctor)(actual_vn);
+            if ( !keep) receiveFunctor = NULL;
+        }
     }
 }
 

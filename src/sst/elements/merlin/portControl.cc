@@ -5,6 +5,10 @@
 // Copyright (c) 2013-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -12,8 +16,6 @@
 
 #include "portControl.h"
 #include "merlin.h"
-
-#include <boost/lexical_cast.hpp>
 
 #define TRACK 0
 #define TRACK_ID 131
@@ -131,7 +133,8 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
                          SimTime_t input_latency_cycles, std::string input_latency_timebase,
                          SimTime_t output_latency_cycles, std::string output_latency_timebase,
                          const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size,
-                         std::vector<std::string>& inspector_names) :
+                         std::vector<std::string>& inspector_names,
+						 const float dlink_thresh) :
     rtr_id(rtr_id),
     num_vcs(-1),
     link_bw(link_bw),
@@ -146,7 +149,12 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     port_ret_credits(NULL),
     port_out_credits(NULL),
     idle_start(0),
+	sai_win_start(0),
+	dlink_thresh(dlink_thresh),
+	sai_port_disabled(false),
+	ongoing_transmit(false),
     is_idle(true),
+	is_active(false),
     waiting(true),
     have_packets(false),
     start_block(0),
@@ -180,6 +188,13 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
         break;
     }
     
+	// This is the self link to enable the logic for adaptive link widths.
+	// The initial call to the handler dynlink_timing->send is made in setup.
+	dynlink_timing = rif->configureSelfLink(link_port_name + "_dynlink_timing", "10us",
+													new Event::Handler<PortControl>(this,&PortControl::handleSAIWindow));
+
+	disable_timing = rif->configureSelfLink(link_port_name + "_disable_timing", "1us",
+													new Event::Handler<PortControl>(this,&PortControl::reenablePort));
     connected = true;
 
     if ( port_link == NULL ) {
@@ -203,12 +218,27 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
 
     // Register statistics
     std::string port_name("port");
-    port_name = port_name + boost::lexical_cast<std::string>(port_number);
+    port_name = port_name + std::to_string(port_number);
 
     send_bit_count = rif->registerStatistic<uint64_t>("send_bit_count", port_name);
     send_packet_count = rif->registerStatistic<uint64_t>("send_packet_count", port_name);
     output_port_stalls = rif->registerStatistic<uint64_t>("output_port_stalls", port_name);
     idle_time = rif->registerStatistic<uint64_t>("idle_time", port_name);
+    width_adj_count = rif->registerStatistic<uint64_t>("width_adj_count", port_name);
+
+	// set the SAI metrics to 0
+	stalled = 0;
+	active = 0;
+	idle = 0;
+
+	// time in seconds
+	sai_win_length = 0.00001;
+	sai_win_length_nano = sai_win_length * 1000 * 1000 * 1000;
+	sai_win_length_pico = sai_win_length_nano * 1000;
+
+	// reasonable values for IB are 4 or 12
+	max_link_width = 4;
+	cur_link_width = max_link_width;
 
     // Create any NetworkInspectors
     for ( unsigned int i = 0; i < inspector_names.size(); i++ ) {
@@ -324,6 +354,8 @@ PortControl::~PortControl() {
 
 void
 PortControl::setup() {
+	
+	if (dlink_thresh >= 0) dynlink_timing->send(1,NULL);
     while ( init_events.size() ) {
         delete init_events.front();
         init_events.pop_front();
@@ -333,6 +365,7 @@ PortControl::setup() {
 void
 PortControl::finish() {
 
+	//std::cerr << "Link was adjusted " << width_adj_count->getCollectionCount() << " times.\n";
     // Any links that ended in an idle state need to add stats
     if (is_idle && connected) {
         idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
@@ -367,6 +400,18 @@ PortControl::init(unsigned int phase) {
     Event *ev;
     RtrInitEvent* init_ev;
 
+	//if (link_bw.hasUnits("GB"))
+	//	printf("Has units GBytes\n");
+	//if (link_bw.hasUnits("B"))
+	//	printf("Has units Bytes\n");
+	//if (link_bw.hasUnits("B/s"))
+	//	printf("Has units Bytes per second\n");
+	//if (link_bw.hasUnits("b"))
+	//	printf("Has units Bits\n");
+	//if (link_bw.hasUnits("b/s"))
+	//	printf("Has units Bits per second\n");
+	//else
+	//	printf("Bandwidth is: %s\n", link_bw.toString().c_str());
     switch ( phase ) {
     case 0:
         // Negotiate link speed.  We will take the min of the two link speeds
@@ -713,8 +758,7 @@ PortControl::handle_input_r2r(Event* ev)
             if ( have_packets) {
                 output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
             }
-            // In either case whether we didn't have credits or
-            // we didn't have packets we need to record it as idle time
+            // I don't think this should be idle, but I need to think it over more carefully - TLG
             if (idle_start) {
                 idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
                 idle_start = 0;
@@ -815,31 +859,33 @@ PortControl::handle_output_r2r(Event* ev) {
     have_packets = false;
     // trace.getOutput().output(CALL_INFO, "Got to here 2\n");
     
-	for ( int i = curr_out_vc; i < num_vcs; i++ ) {
-	    if ( output_buf[i].empty() ) continue;
-        have_packets = true;
-        send_event = output_buf[i].front();
-	    // Check to see if the needed VC has enough space
-        if ( port_out_credits[i] < send_event->getFlitCount() ) continue;
-	    vc_to_send = i;
-	    output_buf[i].pop();
-	    found = true;
-	    break;
-	}
-    // trace.getOutput().output(CALL_INFO, "Got to here 3\n");
-	
-	if (!found)  {
-	    for ( int i = 0; i < curr_out_vc; i++ ) {
-            if ( output_buf[i].empty() ) continue;
-            have_packets = true;
-            send_event = output_buf[i].front();
-            // Check to see if the needed VC has enough space
-            if ( port_out_credits[i] < send_event->getFlitCount() ) continue;
-            vc_to_send = i;
-            output_buf[i].pop();
-            found = true;
-            break;
-	    }
+	if (!sai_port_disabled){
+		for ( int i = curr_out_vc; i < num_vcs; i++ ) {
+			if ( output_buf[i].empty() ) continue;
+			have_packets = true;
+			send_event = output_buf[i].front();
+			// Check to see if the needed VC has enough space
+			if ( port_out_credits[i] < send_event->getFlitCount() ) continue;
+			vc_to_send = i;
+			output_buf[i].pop();
+			found = true;
+			break;
+		}
+		// trace.getOutput().output(CALL_INFO, "Got to here 3\n");
+			
+		if (!found)  {
+			for ( int i = 0; i < curr_out_vc; i++ ) {
+				if ( output_buf[i].empty() ) continue;
+				have_packets = true;
+				send_event = output_buf[i].front();
+				// Check to see if the needed VC has enough space
+				if ( port_out_credits[i] < send_event->getFlitCount() ) continue;
+				vc_to_send = i;
+				output_buf[i].pop();
+				found = true;
+				break;
+			}
+		}
 	}
     // trace.getOutput().output(CALL_INFO, "Got to here 4\n");
 	
@@ -928,10 +974,15 @@ PortControl::handle_output_r2r(Event* ev) {
             is_idle = true;
         }
 		// Should be in a stalled state rather than idle
+		// This should also be triggered when a link is temporarily disabled due to
+		// adjusting the link width
 		if (have_packets && is_idle){
             idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
+		if (sai_port_disabled){
+			output_timing->send(1,NULL); 
+		}
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
@@ -966,31 +1017,33 @@ PortControl::handle_output_n2r(Event* ev) {
 	bool found = false;
 	internal_router_event* send_event = NULL;
     have_packets = false;
-    
-	for ( int i = curr_out_vc; i < num_vcs; i++ ) {
-	    if ( output_buf[i].empty() ) continue;
-        have_packets = true;
-	    send_event = output_buf[i].front();
-	    // Check to see if the needed VC has enough space
-        if ( port_out_credits[send_event->getVN()] < send_event->getFlitCount() ) continue;
-	    vc_to_send = i;
-	    output_buf[i].pop();
-	    found = true;
-	    break;
-	}
-	
-	if (!found)  {
-	    for ( int i = 0; i < curr_out_vc; i++ ) {
-            if ( output_buf[i].empty() ) continue;
-            have_packets = true;
-            send_event = output_buf[i].front();
-            // Check to see if the needed VC has enough space
-            if ( port_out_credits[send_event->getVN()] < send_event->getFlitCount() ) continue;
-            vc_to_send = i;
-            output_buf[i].pop();
-            found = true;
-            break;
-	    }
+   	
+	if (!sai_port_disabled){
+		for ( int i = curr_out_vc; i < num_vcs; i++ ) {
+			if ( output_buf[i].empty() ) continue;
+			have_packets = true;
+			send_event = output_buf[i].front();
+			// Check to see if the needed VC has enough space
+			if ( port_out_credits[send_event->getVN()] < send_event->getFlitCount() ) continue;
+			vc_to_send = i;
+			output_buf[i].pop();
+			found = true;
+			break;
+		}
+			
+		if (!found)  {
+			for ( int i = 0; i < curr_out_vc; i++ ) {
+				if ( output_buf[i].empty() ) continue;
+				have_packets = true;
+				send_event = output_buf[i].front();
+				// Check to see if the needed VC has enough space
+				if ( port_out_credits[send_event->getVN()] < send_event->getFlitCount() ) continue;
+				vc_to_send = i;
+				output_buf[i].pop();
+				found = true;
+				break;
+			}
+		}
 	}
 	
 	// If we found an event to send, go ahead and send it
@@ -1053,6 +1106,7 @@ PortControl::handle_output_n2r(Event* ev) {
             port_link->send(1,send_event); 
 	    }   
 	}
+	// TLG -- need to think about how to count a disabled link, is it stalled?
 	else {
 	    // What do we do if there's nothing to send??  It could be
 	    // because everything is empty or because there's not
@@ -1069,11 +1123,120 @@ PortControl::handle_output_n2r(Event* ev) {
             is_idle = true;
         }
 		// Should be in a stalled state rather than idle
+		// This should also be triggered when a link is temporarily disabled due to
+		// adjusting the link width
 		if (have_packets && is_idle){
             idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
+		if (sai_port_disabled){
+			output_timing->send(1,NULL); 
+		}
 	}
 }
 
+// This is the handler for an event that disables a port
+// from sending or receiving data for sai_adj_delay time 
+void
+PortControl::reenablePort(Event* ev) {
+	sai_port_disabled = false;
+}
 
+// Triggered every window duration of time
+// This resets SAI metrics and calls increase/decreaseLinkWidth
+void 
+PortControl::handleSAIWindow(Event* ev) {
+	
+	SimTime_t cur_time = Simulation::getSimulation()->getCurrentSimCycle();
+	// If we are in the middle of an active state.
+	
+	// If we are in the middle of an idle state.
+	if (is_idle){
+		if (idle_start < sai_win_start){
+			idle = 1;
+		}
+		else {
+			// This is idle time for this interval (picosecs),
+			idle = (cur_time - idle_start)/(double)sai_win_length_pico;
+		}
+	}
+	
+	// There should be a flag based off an input parameter enabling disabling dynamic link width.
+	// Here's the logic for adjusting link width based on idle time.
+	if (idle > dlink_thresh){
+		decreaseLinkWidth();
+	}
+	else if (cur_link_width < max_link_width){
+		increaseLinkWidth();
+	}
+	
+	// DEBUG
+	//if (active > 1 || idle > 1 || stalled > 1){
+   	//	std::cerr << "Error SAI greater than 1: " << stalled << ", " 
+	//			  << active << ", "
+	//			  << idle << "\n";
+	//}
+
+	active = 0; 
+	stalled = 0; 
+	idle = 0;
+
+	dynlink_timing->send(1,NULL);
+	sai_win_start = cur_time;
+}
+
+// If we are idle or stalled beyond some threshold,
+// we want to reduce the bandwidth of the outgoing traffic.
+// Each port monitors the amount of outgoing traffic.
+// Since links are bidirectional we can assume that we can configure output ports independently.
+// This should translate into potential power savings, 
+// which a power constrained system can take advantage of.
+// 
+// TODO add delay on port, before it can transmit data again. 
+bool
+PortControl::decreaseLinkWidth() {
+// We don't want to reduce the link width below 1
+if ( cur_link_width == max_link_width )
+{
+	cur_link_width = cur_link_width/2;
+	link_bw = link_bw/2;
+	UnitAlgebra link_clock = link_bw / flit_size;
+	TimeConverter* tc = parent->getTimeConverter(link_clock);
+	output_timing->setDefaultTimeBase(tc);
+	width_adj_count->addData(1);
+	// I need to add a delay before messages can transmit on the link
+	disable_timing->send(1,NULL);
+	sai_port_disabled = true;
+	return true;
+}
+else return false;
+
+}
+
+// If we are active beyond some threshold,
+// we want to increase the bandwidth of the outgoing traffic.
+// Each port monitors the amount of outgoing traffic.
+// Since links are bidirectional we can assume that we can configure output ports independently.
+// This should translate into potential performance savings.
+//
+// TODO add delay on port, before it can transmit data again. 
+bool
+PortControl::increaseLinkWidth() {
+// We don't want to increase the link width above the max_link_width
+if ( cur_link_width < max_link_width )
+{
+	cur_link_width = max_link_width;
+	link_bw = link_bw*2;
+	UnitAlgebra link_clock = link_bw / flit_size;
+	TimeConverter* tc = parent->getTimeConverter(link_clock);
+	output_timing->setDefaultTimeBase(tc);
+	width_adj_count->addData(1);
+	// I need to add a delay before messages can transmit on the link
+	disable_timing->send(1,NULL);
+	sai_port_disabled = true;
+	return true;
+}
+
+else return false;
+
+}

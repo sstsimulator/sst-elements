@@ -6,6 +6,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -28,15 +32,15 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *_comp, Params &_par
 { }
 
 
-void MemHierarchyInterface::sendInitData(SimpleMem::Request *_req){
-    MemEvent *me = createMemEvent(_req);
+void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
+    MemEvent *me = createMemEvent(req);
     link_->sendInitData(me);
 }
 
 
-void MemHierarchyInterface::sendRequest(SimpleMem::Request *_req){
-    MemEvent *me = createMemEvent(_req);
-    requests_[me->getID()] = _req;
+void MemHierarchyInterface::sendRequest(SimpleMem::Request *req){
+    MemEvent *me = createMemEvent(req);
+    requests_[me->getID()] = req;
     link_->send(me);
 }
 
@@ -53,43 +57,42 @@ SimpleMem::Request* MemHierarchyInterface::recvResponse(void){
 }
 
 
-MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *_req) const{
+MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
     Command cmd = NULLCMD;
     
-    switch ( _req->cmd ) {
-        case SimpleMem::Request::Read:      cmd = GetS;     break;
-        case SimpleMem::Request::Write:     cmd = GetX;     break;
-        case SimpleMem::Request::ReadResp:  cmd = GetXResp; break;
-        case SimpleMem::Request::WriteResp: cmd = GetSResp; break;
+    switch ( req->cmd ) {
+        case SimpleMem::Request::Read:          cmd = GetS;         break;
+        case SimpleMem::Request::Write:         cmd = GetX;         break;
+        case SimpleMem::Request::ReadResp:      cmd = GetXResp;     break;
+        case SimpleMem::Request::WriteResp:     cmd = GetSResp;     break;
+        case SimpleMem::Request::FlushLine:     cmd = FlushLine;    break;
+        case SimpleMem::Request::FlushLineInv:  cmd = FlushLineInv; break;
+        case SimpleMem::Request::FlushLineResp: cmd = FlushLineResp; break;
     }
     
-    MemEvent *me = new MemEvent(owner_, _req->addr, _req->addr, cmd);
+    MemEvent *me = new MemEvent(owner_, req->addr, req->addr, cmd);
     
-    me->setGroupId(_req->groupId);
-    me->setSize(_req->size);
+    me->setSize(req->size);
 
-    if (SimpleMem::Request::Write == _req->cmd)  me->setPayload(_req->data);
+    if (SimpleMem::Request::Write == req->cmd)  me->setPayload(req->data);
 
-    if(_req->flags & SimpleMem::Request::F_NONCACHEABLE)
+    if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
         me->setFlag(MemEvent::F_NONCACHEABLE);
     
-    if(_req->flags & SimpleMem::Request::F_LOCKED) {
+    if(req->flags & SimpleMem::Request::F_LOCKED) {
         me->setFlag(MemEvent::F_LOCKED);
-        if (_req->cmd == SimpleMem::Request::Read)
+        if (req->cmd == SimpleMem::Request::Read)
             me->setCmd(GetSEx);
     }
     
-    if(_req->flags & SimpleMem::Request::F_LLSC){
-        if (_req->cmd == SimpleMem::Request::Read)
-            me->setLoadLink();
-        else if(_req->cmd == SimpleMem::Request::Write)
-            me->setStoreConditional();
+    if(req->flags & SimpleMem::Request::F_LLSC){
+        me->setFlag(MemEvent::F_LLSC);
     }
 
-    me->setVirtualAddress(_req->getVirtualAddress());
-    me->setInstructionPointer(_req->getInstructionPointer());
+    me->setVirtualAddress(req->getVirtualAddress());
+    me->setInstructionPointer(req->getInstructionPointer());
 
-    me->setMemFlags(_req->memFlags);
+    me->setMemFlags(req->memFlags);
 
     //totalRequests_++;
     return me;
@@ -126,22 +129,26 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *_ev){
 }
 
 
-void MemHierarchyInterface::updateRequest(SimpleMem::Request* _req, MemEvent *_me) const{
-    switch (_me->getCmd()) {
+void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me) const{
+    switch (me->getCmd()) {
     case GetSResp:
-        _req->cmd   = SimpleMem::Request::ReadResp;
-        _req->data  = _me->getPayload();
-        _req->size  = _me->getPayload().size();
+        req->cmd   = SimpleMem::Request::ReadResp;
+        req->data  = me->getPayload();
+        req->size  = me->getPayload().size();
         break;
     case GetXResp:
-        _req->cmd   = SimpleMem::Request::WriteResp;
-        if(_me->isAtomic()) _req->flags |= (SimpleMem::Request::F_LLSC_RESP);
+        req->cmd   = SimpleMem::Request::WriteResp;
+        if(me->success()) req->flags |= (SimpleMem::Request::F_LLSC_RESP);
+        break;
+    case FlushLineResp:
+        req->cmd = SimpleMem::Request::FlushLineResp;
+        if (me->success()) req->flags |= (SimpleMem::Request::F_FLUSH_SUCCESS);
         break;
     default:
-        fprintf(stderr, "Don't know how to deal with command %s\n", CommandString[_me->getCmd()]);
+        fprintf(stderr, "Don't know how to deal with command %s\n", CommandString[me->getCmd()]);
     }
    // Always update memFlags to faciliate mem->processor communication
-    _req->memFlags = _me->getMemFlags();
+    req->memFlags = me->getMemFlags();
     
 }
 

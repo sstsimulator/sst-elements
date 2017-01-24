@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -28,33 +32,36 @@ typedef uint64_t Addr;
  *  Not all coherence protocols use all types
  */
 #define X_TYPES \
-    X(NULLCMD)         /* Dummy command */\
+    X(NULLCMD)          /* Dummy command */\
     /* Requests */ \
-    X(GetS)            /* Read:  Request to get cache line in S state */\
-    X(GetX)            /* Write: Request to get cache line in M state */\
-    X(GetSEx)          /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
-                       /*        GetSEx sets the LOCK, GetX removes the LOCK  */\
+    X(GetS)             /* Read:  Request to get cache line in S state */\
+    X(GetX)             /* Write: Request to get cache line in M state */\
+    X(GetSEx)           /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
+                        /*        GetSEx sets the LOCK, GetX removes the LOCK  */\
+    X(FlushLine)        /* Request to flush a cache line */\
+    X(FlushLineInv)     /* Request to flush and invalidate a cache line */\
+    X(FlushAll)         /* Request to flush entire cache - similar to wbinvd */\
     /* Request Responses */\
-    X(GetSResp)        /* Response to a GetS request */\
-    X(GetXResp)        /* Response to a GetX request */\
+    X(GetSResp)         /* Response to a GetS request */\
+    X(GetXResp)         /* Response to a GetX request */\
+    X(FlushLineResp)    /* Response to FlushLine request */\
+    X(FlushAllResp)     /* Response to FlushAll request */\
     /* Writebacks, these commands also serve as invalidation acknowledgments */\
-    X(PutS)            /* Clean replacement from S->I:      Remove sharer */\
-    X(PutM)            /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
-    X(PutE)            /* Clean replacement from E->I:      Remove owner but don't writeback data */\
-    X(PutX)            /* Dirty downgrade from M->O/S:      Remove exclusive ownership, add as sharer (MSI/MESI) or non-exclusive owner (MOESI), writeback data */\
-    X(PutXE)           /* Clean downgrade from E->O/S:      Remove exclusive ownership, add as sharer (MSI/MESI) or non-exclusive owner (MOESI), don't writeback data */\
+    X(PutS)             /* Clean replacement from S->I:      Remove sharer */\
+    X(PutM)             /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
+    X(PutE)             /* Clean replacement from E->I:      Remove owner but don't writeback data */\
     /* Invalidates - sent by caches or directory controller */\
-    X(Inv)             /* Other write request:  Invalidate cache line */\
+    X(Inv)              /* Other write request:  Invalidate cache line */\
     /* Invalidates - sent by directory controller */\
-    X(Fetch)           /* Other read request to sharer:  Get data but don't invalidate cache line */\
-    X(FetchInv)        /* Other write request to owner:  Invalidate cache line */\
-    X(FetchInvX)       /* Other read request to owner:   Downgrade cache line to O/S (Remove exclusivity) */\
-    X(FetchResp)       /* response to a Fetch, FetchInv or FetchInvX request */\
-    X(FetchXResp)      /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
+    X(Fetch)            /* Other read request to sharer:  Get data but don't invalidate cache line */\
+    X(FetchInv)         /* Other write request to owner:  Invalidate cache line */\
+    X(FetchInvX)        /* Other read request to owner:   Downgrade cache line to O/S (Remove exclusivity) */\
+    X(FetchResp)        /* response to a Fetch, FetchInv or FetchInvX request */\
+    X(FetchXResp)       /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
     /* Others */\
-    X(NACK)\
-    X(AckInv)\
-    X(AckPut) \
+    X(NACK)             /* NACK response to a message */\
+    X(AckInv)           /* Acknowledgement response to an invalidation request */\
+    X(AckPut)           /* Acknowledgement response to a replacement (Put*) request */\
     X(LAST_CMD)
 
 /** Valid commands for the MemEvent */
@@ -112,6 +119,9 @@ static const ElementInfoStatistic networkMemoryInspector_statistics[] = {
     X(MI) \
     X(EI) \
     X(SI) \
+    X(S_B)      /* S, blocked while waiting for a response (currently used for flushes) */\
+    X(I_B)      /* I, blocked while waiting for a response (currently used for flushes) */\
+    X(SB_Inv)   /* Was in S_B, got an Inv, resolving Inv first */\
     X(NULLST)
 
 typedef enum {
@@ -145,32 +155,33 @@ public:
     static const uint32_t F_LOCKED        = 0x00000001;  /* Used in a Read-Lock, Write-Unlock atomicity scheme */
     static const uint32_t F_NONCACHEABLE  = 0x00000010;  /* Used to specify that this memory event should not be cached */
     static const uint32_t F_LLSC          = 0x00000100;  /* Load Link / Store Conditional */
+    static const uint32_t F_SUCCESS       = 0x00001000;  /* Indicates a successful response (used for flushes, TODO use for LLSC) */
 
     typedef std::vector<uint8_t> dataVec;       /** Data Payload type */
 
     /** Creates a new MemEvent - Generic */
     MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd) : SST::Event() {
-        initialize(src, addr, baseAddr, cmd);
+        initialize(src->getName(), addr, baseAddr, cmd, src->getCurrentSimTimeNano());
     }
 
     /** MemEvent constructor - Reads */
     MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) : SST::Event() {
-        initialize(src, addr, baseAddr, cmd, size);
+        initialize(src->getName(), addr, baseAddr, cmd, src->getCurrentSimTimeNano(), size);
     }
 
     /** MemEvent constructor - Writes */
     MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) : SST::Event() {
-        initialize(src, addr, baseAddr, cmd, data);
+        initialize(src->getName(), addr, baseAddr, cmd, src->getCurrentSimTimeNano(), data);
     }
 
     /** Create a new MemEvent instance, pre-configured to act as a NACK response */
-    MemEvent* makeNACKResponse(const Component *source, MemEvent* NACKedEvent) {
+    MemEvent* makeNACKResponse(MemEvent* NACKedEvent, SimTime_t timeInNano) {
         MemEvent *me      = new MemEvent(*this);
         me->responseToID_ = eventID_;
         me->dst_          = src_;
         me->NACKedEvent_  = NACKedEvent;
         me->cmd_          = NACK;
-        me->initTime_     = source->getCurrentSimTimeNano();
+        me->initTime_     = timeInNano;
         me->rqstr_        = rqstr_;
         me->instPtr_      = instPtr_;
         me->vAddr_        = vAddr_;
@@ -199,32 +210,32 @@ public:
         return me;
     }
 
-    void initialize(const Component *src, Addr addr, Addr baseAddr, Command cmd) {
+    void initialize(std::string name, Addr addr, Addr baseAddr, Command cmd, SimTime_t timeInNano) {
         initialize();
-        src_  = src->getName();
+        src_  = name;
         addr_ = addr;
         baseAddr_ = baseAddr;
         cmd_  = cmd;
-        initTime_ = src->getCurrentSimTimeNano();
+        initTime_ = timeInNano;
      }
 
-     void initialize(const Component *src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) {
+     void initialize(std::string name, Addr addr, Addr baseAddr, Command cmd, SimTime_t timeInNano, uint32_t size) {
         initialize();
-        src_      = src->getName();
+        src_      = name;
         addr_     = addr;
         baseAddr_ = baseAddr;
         cmd_      = cmd;
         size_     = size;
-        initTime_ = src->getCurrentSimTimeNano();
+        initTime_ = timeInNano;
      }
 
-    void initialize(const Component *src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) {
+    void initialize(std::string name, Addr addr, Addr baseAddr, Command cmd, SimTime_t timeInNano, std::vector<uint8_t>& data) {
         initialize();
-        src_         = src->getName();
-        addr_        = addr;
-        baseAddr_    = baseAddr;
-        cmd_         = cmd;
-        initTime_ = src->getCurrentSimTimeNano();
+        src_        = name;
+        addr_       = addr;
+        baseAddr_   = baseAddr;
+        cmd_        = cmd;
+        initTime_   = timeInNano;
         setPayload(data);
     }
 
@@ -240,11 +251,7 @@ public:
         size_               = 0;
         flags_              = 0;
         memFlags_           = 0;
-        groupID_            = 0;
         prefetch_           = false;
-        atomic_             = false;
-        loadLink_           = false;
-        storeConditional_   = false;
         grantedState_       = NULLST;
         NACKedEvent_        = NULL;
         retries_            = 0;
@@ -302,17 +309,17 @@ public:
     bool inProgress() { return inProgress_; }
     void setInProgress(bool value) { inProgress_ = value; }
 
-    void setLoadLink() { loadLink_ = true; }
-    bool isLoadLink() { return loadLink_; }
+    void setLoadLink() { setFlag(MemEvent::F_LLSC); }
+    bool isLoadLink() { return cmd_ == GetS && queryFlag(MemEvent::F_LLSC); }
     
-    void setStoreConditional() { storeConditional_ = true;}
-    bool isStoreConditional() { return storeConditional_; }
+    void setStoreConditional() { setFlag(MemEvent::F_LLSC); }
+    bool isStoreConditional() { return cmd_ == GetX && queryFlag(MemEvent::F_LLSC); }
     
-    void setAtomic(bool b) { b ? setFlag(MemEvent::F_LLSC) : clearFlag(MemEvent::F_LLSC); }
-    bool isAtomic() { return queryFlag(MemEvent::F_LLSC); }
-    
+    void setSuccess(bool b) { b ? setFlag(MemEvent::F_SUCCESS) : clearFlag(MemEvent::F_SUCCESS); }
+    bool success() { return queryFlag(MemEvent::F_SUCCESS); }
+
     bool isHighNetEvent() {
-        if (cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx || isWriteback()) {
+        if (cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx || isWriteback() || cmd_ == FlushLine || cmd_ == FlushLineInv || cmd_ == FlushAll) {
             return true;
         }
         return false;
@@ -327,7 +334,7 @@ public:
     
     bool isWriteback() {
         if (cmd_ == PutS || cmd_ == PutM ||
-           cmd_ == PutE || cmd_ == PutX || cmd_ == PutXE) {
+           cmd_ == PutE ) {
             return true;
         }
         return false;
@@ -386,18 +393,13 @@ public:
     static bool isCPURequest(Command cmd) { return (cmd == GetS || cmd == GetX || cmd == GetSEx);}
     bool isCPURequest(void) const { return MemEvent::isCPURequest(cmd_); }
     /** Returns true if this is of response type */
-    static bool isResponse(Command cmd) { return (cmd == GetSResp || cmd == GetXResp);}
+    static bool isResponse(Command cmd) { return (cmd == GetSResp || cmd == GetXResp || cmd == FlushLineResp);}
     bool isResponse(void) const { return MemEvent::isResponse(cmd_); }
     /** Returns true if this is a 'writeback' command type */
-    static bool isWriteback(Command cmd) { return (cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE || cmd == PutS); }
+    static bool isWriteback(Command cmd) { return (cmd == PutM || cmd == PutE || cmd == PutS); }
     bool isWriteback(void) const { return MemEvent::isWriteback(cmd_); }
    
 
-    
-    /** Setter for GroupId */
-    void setGroupId(uint32_t groupID) { groupID_ = groupID; }
-    /** Getter for GroupId */
-    uint32_t getGroupId() { return groupID_; }
     
     void setDirty(bool status) { dirty_ = status; }
     bool getDirty() { return dirty_; }
@@ -455,6 +457,9 @@ public:
                 return FetchResp;
             case FetchInvX:
                 return FetchXResp;
+            case FlushLine:
+            case FlushLineInv:
+                return FlushLineResp;
             default:
                 return NULLCMD;
         }
@@ -466,7 +471,6 @@ private:
     uint32_t        flags_;             // Any flags (atomic, noncacheabel, etc.)
     uint32_t        memFlags_;          // Memory flags - ignored by caches except to be copied through. Faciliates processor-memory communication
     uint32_t        size_;              // Size in bytes that are being requested
-    uint32_t        groupID_;           // ???
     Addr            addr_;              // Address
     Addr            baseAddr_;          // Base (line) address
     string          src_;               // Source ID
@@ -478,15 +482,12 @@ private:
     dataVec         payload_;           // Data
     State           grantedState_;      // For data responses, the cohrence state that the request is granted in
     bool            prefetch_;          // Whether this request came from a prefetcher
-    bool            atomic_;            // Whether this request is atomic
-    bool            loadLink_;          // Whether this request in a LL
-    bool            storeConditional_;  // Whether this request is a SC
-    bool            blocked_;           // Whether this request blocked for another pending request (for profiling)
-    SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts
+    bool            blocked_;           // Whether this request blocked for another pending request (for profiling) TODO move to mshrs
+    SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts TODO move to mshrs
     bool            dirty_;             // For a replacement, whether the data is dirty or not
     Addr	    instPtr_;           // Instruction pointer associated with the request
     Addr 	    vAddr_;             // Virtual address associated with the request
-    bool            inProgress_;        // Whether this request is currently being handled, if in MSHR
+    bool            inProgress_;        // Whether this request is currently being handled, if in MSHR TODO move to mshrs
 
     MemEvent() {} // For serialization only
 
@@ -498,7 +499,6 @@ public:
         ser & flags_;
         ser & memFlags_;
         ser & size_;
-        ser & groupID_;
         ser & addr_;
         ser & baseAddr_;
         ser & src_;
@@ -510,9 +510,6 @@ public:
         ser & payload_;
         ser & grantedState_;
         ser & prefetch_;
-        ser & atomic_;
-        ser & loadLink_;
-        ser & storeConditional_;
         ser & blocked_;
         ser & initTime_;
         ser & dirty_;

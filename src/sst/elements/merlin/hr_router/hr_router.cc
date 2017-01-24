@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -241,7 +245,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
                                    1, getLogicalGroupParam(params,topo,i,"output_latency","0ns"),
                                    getLogicalGroupParam(params,topo,i,"input_buf_size"),
                                    getLogicalGroupParam(params,topo,i,"output_buf_size"),
-                                   inspector_names);
+                                   inspector_names,
+								   std::stof(getLogicalGroupParam(params,topo,i,"dlink_thresh", "-1")));
         
     }
     params.enableVerify(true);
@@ -279,7 +284,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     xbar_stalls = new Statistic<uint64_t>*[num_ports];
     for ( int i = 0; i < num_ports; i++ ) {
         std::string port_name("port");
-        port_name = port_name + boost::lexical_cast<std::string>(i);
+        port_name = port_name + std::to_string(i);
         xbar_stalls[i] = registerStatistic<uint64_t>("xbar_stalls",port_name);
     }
 }

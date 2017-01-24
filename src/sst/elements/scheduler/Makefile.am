@@ -55,6 +55,8 @@ libscheduler_la_SOURCES = \
     TaskMapper.h \
     Torus3DMachine.cc \
     Torus3DMachine.h \
+	util.h \
+	util.cc \
     allocators/BestFitAllocator.cc \
     allocators/BestFitAllocator.h \
     allocators/ConstraintAllocator.cc \
@@ -144,8 +146,8 @@ EXTRA_DIST = \
     simulations/test_DetailedNetwork.py \
     simulations/test_DetailedNetwork.sim
 
-libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS)
-libscheduler_la_LIBADD = -lboost_filesystem$(BOOST_LIB_SUFFIX) -lboost_thread$(BOOST_LIB_SUFFIX)
+libscheduler_la_LDFLAGS = -module -avoid-version
+libscheduler_la_LIBADD = 
 
 if HAVE_GLPK
 libscheduler_la_LDFLAGS += $(GLPK_LDFLAGS)

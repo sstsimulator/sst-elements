@@ -18,8 +18,8 @@ ariel.addParams({
         "pipetimeout" : "0",
         "executable" : sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream",
         "arielmode" : "1",
-        "memorylevels" : "1",
-        "defaultlevel" : "0"
+        "memmgr.memorylevels" : "1",
+        "memmgr.defaultlevel" : "0"
         })
 
 corecount = 1;
@@ -41,7 +41,7 @@ memory = sst.Component("memory", "memHierarchy.MemController")
 memory.addParams({
         "coherence_protocol" : "MSI",
         "access_time" : "10ns",
-        "backend.mem_size" : "2048",
+        "backend.mem_size" : "2048MiB",
         "clock" : "1GHz",
         "use_dramsim" : "0",
         "device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",

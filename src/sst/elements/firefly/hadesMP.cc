@@ -5,6 +5,10 @@
 // Copyright (c) 2013-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -19,11 +23,11 @@ using namespace Hermes;
 using namespace Hermes::MP;
 
 HadesMP::HadesMP(Component* owner, Params& params) :
-	m_os(NULL)
+    Interface(owner), m_os(NULL)
 {
     Params tmpParams = params.find_prefix_params("ctrlMsg.");
 	m_proto =
-        dynamic_cast<ProtocolAPI*>(owner->loadModuleWithComponent(
+        dynamic_cast<ProtocolAPI*>(owner->loadSubComponent(
                             "firefly.CtrlMsgProto", owner, tmpParams ) );
 
 	Params funcParams = params.find_prefix_params("functionSM.");

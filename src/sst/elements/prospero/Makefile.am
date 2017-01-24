@@ -38,9 +38,10 @@ EXTRA_DIST = \
         tracetool/api/prospero.h
 
 libprospero_la_LDFLAGS = -module -avoid-version
+libprospero_la_LIBADD = $(SHM_LIB)
 
 if USE_LIBZ
-libprospero_la_LIBADD = -lz
+libprospero_la_LIBADD += -lz
 
 libprospero_la_SOURCES += \
 	prosbingzreader.h \

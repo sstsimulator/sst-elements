@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -15,12 +19,11 @@
 #include <string>
 #include <typeinfo>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/tokenizer.hpp>        // for reading YumYum jobs
-#include <boost/filesystem.hpp>
 
 #include <sst/core/params.h>
+#include <sst/core/stringize.h>
 
+#include "util.h"
 #include "InputParser.h"
 #include "Job.h"
 #include "Machine.h"
@@ -78,9 +81,7 @@ JobParser::JobParser(Machine* machine,
         fileName = jobTrace;
     }
 
-    fileNamePath = boost::filesystem::path(fileName.c_str());
-    folderPath = boost::filesystem::path(fileNamePath);
-    folderPath.remove_leaf();
+    fileNamePath = fileName;
 }
 
 std::vector<Job*> JobParser::parseJobs(SimTime_t currSimTime)
@@ -96,7 +97,7 @@ std::vector<Job*> JobParser::parseJobs(SimTime_t currSimTime)
     
     jobs.clear();
 
-    LastJobFileModTime = boost::filesystem::last_write_time( fileNamePath );
+    LastJobFileModTime = Utils::file_time_last_written( fileNamePath );
 
     //read line by line
     string line;
@@ -233,8 +234,8 @@ std::map<int, std::pair<unsigned long, int> > JobParser::parseJobsEmberRunning()
  */
 bool JobParser::checkJobFile()
 {
-    if( boost::filesystem::exists( fileNamePath ) ){
-        time_t lastWritten = boost::filesystem::last_write_time( fileNamePath );
+    if( Utils::file_exists( fileNamePath ) ){
+        time_t lastWritten = Utils::file_time_last_written( fileNamePath );
         if( lastWritten > LastJobFileModTime ){
             LastJobFileModTime = lastWritten;
             return true;
@@ -253,7 +254,7 @@ bool JobParser::checkJobFile()
    */
 bool JobParser::newYumYumJobLine(std::string line, SimTime_t currSimTime)
 {
-    boost::algorithm::trim(line);
+    trim(line);
 
     if (line.compare("YYKILL") == 0) {
         *YumYumSimulationKillFlag = true;
@@ -268,13 +269,13 @@ bool JobParser::newYumYumJobLine(std::string line, SimTime_t currSimTime)
     uint64_t duration;
     uint64_t procs;
 
-    boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer(line);
+    Tokenizer< escaped_list_separator > Tokenizer(line);
     vector<string> tokens;
     tokens.assign(Tokenizer.begin(), Tokenizer.end());
 
-    boost::algorithm::trim(tokens.at(0));
-    boost::algorithm::trim(tokens.at(1));
-    boost::algorithm::trim(tokens.at(2));
+    trim(tokens.at(0));
+    trim(tokens.at(1));
+    trim(tokens.at(2));
 
     strncpy(ID, tokens.at(0).c_str(), JobIDlength);
     if (JobIDlength > 0) {

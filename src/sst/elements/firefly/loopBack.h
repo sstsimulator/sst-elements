@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -23,15 +27,6 @@ class LoopBackEvent : public Event {
     LoopBackEvent( int _core ) : Event(), core( _core ) {}
     int core;
 
-//  private:
-//        friend class boost::serialization::access;
-//    template<class Archive>
-//    void
-//    serialize(Archive & ar, const unsigned int version )
-//    {
-//        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-//        ar & BOOST_SERIALIZATION_NVP(core);
-//    }
     NotSerializable(LoopBackEvent)
 };
 

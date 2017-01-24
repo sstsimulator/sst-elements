@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -13,7 +17,8 @@
 #include "sst/core/rng/mersenne.h"
 #include "schedComponent.h" 
 
-#include <boost/thread.hpp>
+#include <thread>
+#include <chrono>
 #include <cstring>
 
 #include <iostream> //debug
@@ -314,7 +319,7 @@ void schedComponent::unregisterYourself()
 {
     if (useYumYumSimulationKill) {
         while( YumYumSimulationKillFlag != true && jobs.empty() ){
-            boost::this_thread::sleep( boost::posix_time::milliseconds( YumYumPollWait ) );
+            std::this_thread::sleep_for( std::chrono::milliseconds( YumYumPollWait ) );
             if (jobParser -> checkJobFile()) {
                 jobs = jobParser -> parseJobs(getCurrentSimTime());
                 if (!jobs.empty()) {

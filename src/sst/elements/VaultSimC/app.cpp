@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -22,8 +26,9 @@ static unsigned int missRate[][3] = {{0,51,32},   //app 0
 static unsigned int isLoad[] = {3,32}; // out of 64
 
 using namespace SST::MemHierarchy;
+using namespace SST::VaultSim;
 
-MemEvent *cpu::getInst(int cacheLevel, int app, int core) {
+MemReqEvent *cpu::getInst(int cacheLevel, int app, int core) {
   /*
 app: 		MD(0)	PHD(1)
 l/s ratio	21:1	1:1
@@ -39,7 +44,6 @@ L2 miss/inst	32	15
     unsigned int memRoll = roll & 0x3f;
 
     Addr addr;
-    Command command;
     if ((memRoll & 0x1) == 0) {
       // stride
       addr = coreAddr[core] + (1 << 6);  
@@ -49,12 +53,14 @@ L2 miss/inst	32	15
       addr = (roll >> 6) << 6;    
     }
     coreAddr[core] = addr;
+	bool isWrite; 
+
     if (memRoll <= isLoad[app]) {
-        command = SST::MemHierarchy::GetS;
+        isWrite = false;
     } else {
-        command = SST::MemHierarchy::GetX;
+        isWrite = true;
     }
-    MemEvent *event = new MemEvent(this, addr, addr, command);
+    MemReqEvent *event = new MemReqEvent((ReqId)this, addr, isWrite, 0, 0 );
 
     return event;
   } else {

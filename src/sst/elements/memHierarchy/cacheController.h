@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -32,7 +36,7 @@
 #include "cacheArray.h"
 #include "mshr.h"
 #include "replacementManager.h"
-#include "coherenceControllers.h"
+#include "coherenceController.h"
 #include "util.h"
 #include "cacheListener.h"
 #include "memNIC.h"
@@ -98,7 +102,8 @@ private:
         It appropriately redirects requests to Top and/or Bottom controllers.  */
     void processCacheRequest(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit);
     void processCacheReplacement(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit);
-    
+    void processCacheFlush(MemEvent * event, Addr baseAddr, bool mshrHit);
+
     /** Function processes incomming invalidate messages.  Redirects message 
         to Top and Bottom controllers appropriately  */
     void processCacheInvalidate(MemEvent *event, Addr baseAddr, bool mshrHit);
@@ -134,21 +139,8 @@ private:
         and need to be reactivated */
     inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine);
 
-    /** Check if there a cache miss */
-    inline bool isCacheMiss(int lineIndex);
-
-    /** Find cache line by base addr */
-    inline CacheLine* getLine(Addr baseAddr);
-    inline CacheLine* getCacheLine(Addr baseAddr);
-    inline CacheLine* getDirLine(Addr baseAddr);
-    
-    /** Find cache line by line index */
-    inline CacheLine* getLine(int lineIndex);
-    inline CacheLine* getCacheLine(int lineIndex);
-    inline CacheLine* getDirLine(int lineIndex);
-
     /** Check whether this request will hit or miss in the cache - including correct coherence permission */
-    int isCacheHit(MemEvent* _event, Command _cmd, Addr _baseAddr);
+    int isCacheHit(MemEvent* event, Command cmd, Addr baseAddr);
 
     /** Insert to MSHR wrapper */
     inline bool insertToMSHR(Addr baseAddr, MemEvent* event);
@@ -158,7 +150,7 @@ private:
     bool processInvRequestInMSHR(Addr baseAddr, MemEvent* event, bool inProgress);
     
     /** Determines what CC will send the NACK. */
-    void sendNACK(MemEvent* _event);
+    void sendNACK(MemEvent* event);
 
     /** In charge of processng incoming NACK.  
         Currently, it simply retries event */
@@ -194,7 +186,7 @@ private:
          the clock gets deregistered from TimeVortx and reregistered only when an event is received */
     bool clockTick(Cycle_t time) {
         timestamp_++;
-        bool queuesEmpty = coherenceMgr->sendOutgoingCommands(getCurrentSimTimeNano());
+        bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
         
         bool nicIdle = true;
         if (bottomNetworkLink_) nicIdle = bottomNetworkLink_->clock();
@@ -261,7 +253,7 @@ private:
         string cacheFrequency_;
         CacheArray* cacheArray_;
         CacheArray* directoryArray_;
-        uint protocol_;
+        CoherenceProtocol protocol_;
         Output* dbg_;
         ReplacementMgr* rm_;
         uint numLines_;
@@ -276,7 +268,7 @@ private:
     CacheConfig             cf_;
     uint                    ID_;
     CacheListener*          listener_;
-    vector<Link*>*          lowNetPorts_;
+    Link*                   lowNetPort_;
     Link*                   highNetPort_;
     Link*                   prefetchLink_;
     Link*                   maxWaitSelfLink_;
@@ -288,7 +280,7 @@ private:
     vector<string>          upperLevelCacheNames_;
     MSHR*                   mshr_;
     MSHR*                   mshrNoncacheable_;
-    CoherencyController*    coherenceMgr;
+    CoherenceController*    coherenceMgr_;
     uint64_t                accessLatency_;
     uint64_t                tagLatency_;
     uint64_t                mshrLatency_;
@@ -297,6 +289,8 @@ private:
     int                     maxOutstandingPrefetch_;
     int                     maxRequestsPerCycle_;
     int                     requestsThisCycle_;
+    unsigned int            maxBytesUpPerCycle_;
+    unsigned int            maxBytesDownPerCycle_;
     std::queue<MemEvent*>   requestBuffer_;
     Clock::Handler<Cache>*  clockHandler_;
     TimeConverter*          defaultTimeBase_;
@@ -306,6 +300,10 @@ private:
     std::map<MemEvent*,int> missTypeList;
     bool                    DEBUG_ALL;
     Addr                    DEBUG_ADDR;
+
+    // These parameters are for the coherence controller and are detected during init
+    bool                    isLL;
+    bool                    lowerIsNoninclusive;
 
     /* Performance enhancement: turn clocks off when idle */
     bool                    clockIsOn_;                 // Tell us whether clock is on or off
@@ -444,6 +442,24 @@ private:
         - An L1 cache handles as many requests as are sent by the CPU per cycle.  
          
         - Use a 'no wrapping' editor to view MH files, as many comments are on the 'side' and fall off the window 
+
+
+    Latencies
+        - access_latency_cycles - Time to access the cache data array. Assumed to be longer than or equal to tag_access_latency_cycles so that a 
+                                miss pays the lesser of the two and a hit the greater. This latency is paid by cache hits and coherence requests that need to return data.
+        - tag_access_latency_cycles - Time to access the cache tag array. This latency is paid by caches misses and by coherence requests like invalidations which don't need to touch the data array.
+        - mshr_latency_cycles - Time to access the mshrs - used instead of the tag_access_latency and/or access_latency_cycles for replayed events and MSHR hits.
+        
+        Examples:
+        L1 miss + L2 hit: L1 tag_access_latency_cycles + L2 access_latency_cycles + L1 mshr_latency_cycles + (any transit time over buses/network/etc.)
+        L1 hit: access_latency_cycles
+        Invalidation request: tag_access_latency_cycles
+        Invalidation + data (Fetch) request: access_latency_cycles
+
+
+        Other notes:
+            Accesses to a single address are serialized in time by their access latency. So for a cache with a 4 cycle access, 
+            if requests A and B for the same block are received at cycles 1 and 2 respectively, A will return at 5 and B will return at 9. 
 */
 
 

@@ -84,7 +84,7 @@ l3_params = {
       	"access_latency_cycles" : "6",
       	"cache_frequency" : "2GHz",
       	"replacement_policy" : "lru",
-      	"coherence_protocol" : "MSI",
+      	"coherence_protocol" : coherence_protocol,
       	"associativity" : "4",
       	"cache_line_size" : "64",
       	"debug_level" : "10",
@@ -92,14 +92,15 @@ l3_params = {
       	"cache_size" : "128 KB",
       	"mshr_num_entries" : "4096",
       	"num_cache_slices" : str(groups * l3cache_blocks_per_group),
-      	"slice_allocation_policy" : "rr"
+      	"slice_allocation_policy" : "rr",
 }
 
 mem_params = {
 	"coherence_protocol" : coherence_protocol,
-        "backend.access_time" : "30ns",
+	"backend.access_time" : "30ns",
+	"do_not_back" : 1,
 	"rangeStart" : 0,
-	"backend.mem_size" : memory_capacity / (groups * memory_controllers_per_group),
+	"backend.mem_size" : str(memory_capacity / (groups * memory_controllers_per_group)) + "MiB",
 	"clock" : memory_clock,
 }
 
@@ -124,12 +125,12 @@ ariel.addParams({
         "pipetimeout"         : "0",
         "executable"          : str(os.environ['OMP_EXE']),
         "appargcount"         : "0",
-       	"memorylevels"        : "1",
+       	"memmgr.memorylevels" : "1",
         "arielinterceptcalls" : "1",
        	"arielmode"           : "1",
-	"pagecount0"          : "1048576",
+	"memmgr.pagecount0"   : "1048576",
         "corecount"           : groups * cores_per_group,
-        "defaultlevel"        : 0,
+        "memmgr.defaultlevel" : 0,
         "clock"               : str(clock)
 })
 

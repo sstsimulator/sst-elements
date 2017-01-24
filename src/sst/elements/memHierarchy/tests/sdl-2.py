@@ -1,10 +1,6 @@
 # Automatically generated SST Python input
 import sst
 
-# Define SST core options
-sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "200000ns")
-
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
@@ -23,7 +19,6 @@ comp_l1cache.addParams({
       "cache_line_size" : "32",
       "debug" : "0",
       "L1" : "1",
-      "LL" : "1",
       "cache_size" : "2 KB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
@@ -35,7 +30,7 @@ comp_memory.addParams({
       "backend.access_time" : "100 ns",
       "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
       "backend.system_ini" : "system.ini",
-      "backend.mem_size" : "512",
+      "backend.mem_size" : "512MiB",
       "request_width" : "32",
       "backend" : "memHierarchy.dramsim"
 })

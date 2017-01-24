@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -17,9 +21,8 @@
 
 #include <sst_config.h>
 #include "cacheController.h"
-#include "coherenceControllers.h"
+#include "coherenceController.h"
 #include "hash.h"
-#include <boost/lexical_cast.hpp>
 #include <csignal>
 
 #include "memEvent.h"
@@ -231,10 +234,8 @@ void Cache::processEvent(MemEvent* event, bool replay) {
     // Cannot stall if this is a GetX to L1 and the line is locked because GetX is the unlock!
     bool canStall = !cf_.L1_ || event->getCmd() != GetX;
     if (!canStall) {
-        CacheLine * cacheLine = NULL;
-        int lineIndex = cf_.cacheArray_->find(baseAddr, false);
-        if (lineIndex != -1) cacheLine = cf_.cacheArray_->lines_[lineIndex];
-        canStall = cacheLine == NULL || !(cacheLine->isLocked());
+        CacheLine * cacheLine = cf_.cacheArray_->lookup(baseAddr, false);
+        canStall = cacheLine == nullptr || !(cacheLine->isLocked());
     }
 
     profileEvent(event, cmd, replay, canStall);
@@ -280,6 +281,7 @@ void Cache::processEvent(MemEvent* event, bool replay) {
             break;
         case GetSResp:
         case GetXResp:
+        case FlushLineResp:
             processCacheResponse(event, baseAddr);
             break;
         case PutS:
@@ -304,6 +306,10 @@ void Cache::processEvent(MemEvent* event, bool replay) {
         case FetchXResp:
             processFetchResp(event, baseAddr);
             break;
+        case FlushLine:
+        case FlushLineInv:
+            processCacheFlush(event, baseAddr, replay);
+            break;
         default:
             d_->fatal(CALL_INFO, -1, "Command not supported, cmd = %s", CommandString[cmd]);
     }
@@ -318,6 +324,8 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
         case GetS:
         case GetX:
         case GetSEx:
+        case FlushLine:
+        case FlushLineInv:  // Note that noncacheable flushes currently ignore the cache - they just flush any buffers at memory
 #ifdef __SST_DEBUG_OUTPUT__
 	    if (cmd == GetSEx) d_->debug(_WARNING_, "WARNING: Noncachable atomics have undefined behavior; atomicity not preserved\n"); 
 #endif
@@ -325,19 +333,42 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
             if (!inserted) {
                 d_->fatal(CALL_INFO, -1, "%s, Error inserting noncacheable request in mshr. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",getName().c_str(), CommandString[cmd], baseAddr, getCurrentSimTimeNano());
             }
-            if (cmd == GetS) coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, NULL);
-            else             coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, &event->getPayload());
+            if (cmd == GetS) coherenceMgr_->forwardMessage(event, baseAddr, event->getSize(), 0, NULL);
+            else             coherenceMgr_->forwardMessage(event, baseAddr, event->getSize(), 0, &event->getPayload());
             break;
         case GetSResp:
         case GetXResp:
             origRequest = mshrNoncacheable_->removeFront(baseAddr);
-            if (origRequest->getID().second != event->getResponseToID().second) {
+            if (origRequest->getID().first != event->getResponseToID().first || origRequest->getID().second != event->getResponseToID().second) {
                 d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match request at front of mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
                         getName().c_str(),CommandString[cmd],baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
             }
-            coherenceMgr->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
+            coherenceMgr_->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
             delete origRequest;
+            delete event;
             break;
+        case FlushLineResp: {
+            // Flushes can be returned out of order since they don't neccessarily require a memory access so we need to actually search the MSHRs
+            vector<mshrType> * entries = mshrNoncacheable_->getAll(baseAddr);
+            for (vector<mshrType>::iterator it = entries->begin(); it != entries->end(); it++) {
+                MemEvent * candidate = boost::get<MemEvent*>(it->elem);
+                if (candidate->getCmd() == FlushLine || candidate->getCmd() == FlushLineInv) { // All entries are events so no checking for pointer vs event needed
+                    if (candidate->getID().first == event->getResponseToID().first && candidate->getID().second == event->getResponseToID().second) {
+                        origRequest = candidate;
+                        break;
+                    }
+                }
+            }
+            if (origRequest == nullptr) {
+                d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match any request in the mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
+                        getName().c_str(),CommandString[cmd],baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
+            }
+            coherenceMgr_->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
+            mshrNoncacheable_->removeElement(baseAddr, origRequest);
+            delete origRequest;
+            delete event;
+            break;
+            }
         default:
             d_->fatal(CALL_INFO, -1, "Command does not exist. Command: %s, Src: %s\n", CommandString[cmd], event->getSrc().c_str());
     }
@@ -357,7 +388,7 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
     if (!clockIsOn_) {
         Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
         timestamp_ = time - 1;
-        coherenceMgr->updateTimestamp(timestamp_);
+        coherenceMgr_->updateTimestamp(timestamp_);
         int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
         for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
             statMSHROccupancy->addData(mshr_->getSize());
@@ -387,6 +418,8 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
 
 
 void Cache::init(unsigned int phase) {
+    // See if we can determine whether the lower entity is non-inclusive
+    // For direct-connect cache, 
     if (topNetworkLink_) { // I'm connected to the network ONLY via a single NIC
         bottomNetworkLink_->init(phase);
             
@@ -406,12 +439,14 @@ void Cache::init(unsigned int phase) {
         if (cf_.L1_) {
             highNetPort_->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
         } else {
-            highNetPort_->sendInitData(new MemEvent(this, 0, 0, NULLCMD));
+            if (cf_.type_ == "inclusive") {
+                highNetPort_->sendInitData(new MemEvent(this, 0, 0, NULLCMD));
+            } else {
+                highNetPort_->sendInitData(new MemEvent(this, 1, 0, NULLCMD));
+            }
         }
         if (!bottomNetworkLink_) {
-            for (uint i = 0; i < lowNetPorts_->size(); i++) {
-                lowNetPorts_->at(i)->sendInitData(new MemEvent(this, 10, 10, NULLCMD));
-            }
+            lowNetPort_->sendInitData(new MemEvent(this, 10, 10, NULLCMD));
         }
         
     }
@@ -421,39 +456,59 @@ void Cache::init(unsigned int phase) {
         if (!memEvent) { /* Do nothing */ }
         else if (memEvent->getCmd() == NULLCMD) {
             if (memEvent->getCmd() == NULLCMD) {    // Save upper level cache names
+                coherenceMgr_->addUpperLevelCacheName(memEvent->getSrc());
                 upperLevelCacheNames_.push_back(memEvent->getSrc());
             }
         } else {
             if (bottomNetworkLink_) {
                 bottomNetworkLink_->sendInitData(new MemEvent(*memEvent));
             } else {
-                for (uint idp = 0; idp < lowNetPorts_->size(); idp++) {
-                    lowNetPorts_->at(idp)->sendInitData(new MemEvent(*memEvent));
-                }
+                lowNetPort_->sendInitData(new MemEvent(*memEvent));
             }
         }
         delete memEvent;
      }
     
     if (!bottomNetworkLink_) {  // Save names of caches below us
-        for (uint i = 0; i < lowNetPorts_->size(); i++) {
-            while ((ev = lowNetPorts_->at(i)->recvInitData())) {
-                MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-                if (memEvent && memEvent->getCmd() == NULLCMD) {
-                    lowerLevelCacheNames_.push_back(memEvent->getSrc());
+        while ((ev = lowNetPort_->recvInitData())) {
+            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+            if (memEvent && memEvent->getCmd() == NULLCMD) {
+                if (memEvent->getBaseAddr() == 0) {
+                    isLL = false;
+                    if (memEvent->getAddr() == 1) {
+                        lowerIsNoninclusive = true; // TODO better checking if we have multiple caches below us
+                    }
                 }
-                delete memEvent;
+                coherenceMgr_->addLowerLevelCacheName(memEvent->getSrc());
+                lowerLevelCacheNames_.push_back(memEvent->getSrc());
             }
+            delete memEvent;
         }
     }
 }
 
 
 void Cache::setup() {
-    if (lowerLevelCacheNames_.size() == 0) lowerLevelCacheNames_.push_back(""); // avoid segfault on accessing this
-    if (upperLevelCacheNames_.size() == 0) upperLevelCacheNames_.push_back(""); // avoid segfault on accessing this
-    coherenceMgr->setLowerLevelCache(&lowerLevelCacheNames_);
-    coherenceMgr->setUpperLevelCache(&upperLevelCacheNames_);
+    bool isDirBelow = false; // is a directory below?
+    if (bottomNetworkLink_) { 
+        isLL = false;   // Either a directory or a cache below us
+        lowerIsNoninclusive = false; // Assume the cache below us is inclusive or it's a directory
+        isDirBelow = true; // Assume a directory is below
+        const std::vector<MemNIC::PeerInfo_t> &ci = bottomNetworkLink_->getPeerInfo();
+        const MemNIC::ComponentInfo &myCI = bottomNetworkLink_->getComponentInfo();
+        // Search peer info to determine if we have inclusive or noninclusive caches below us
+        if (MemNIC::TypeCacheToCache == myCI.type) { // I'm a cache with a cache below
+            isDirBelow = false; // Cache not directory below us
+            for (std::vector<MemNIC::PeerInfo_t>::const_iterator i = ci.begin() ; i != ci.end() ; ++i) {
+                if (MemNIC::TypeNetworkCache == i->first.type) { // This would be any cache that is 'below' us
+                    if (i->second.cacheType != "inclusive") {
+                        lowerIsNoninclusive = true;
+                    }
+                }
+            }
+        }
+    }
+    coherenceMgr_->setupLowerStatus(isLL && !bottomNetworkLink_, lowerIsNoninclusive, isDirBelow);
 }
 
 
@@ -471,7 +526,7 @@ void Cache::processIncomingEvent(SST::Event* ev) {
     if (!clockIsOn_) {
         Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
         timestamp_ = time - 1;
-        coherenceMgr->updateTimestamp(timestamp_);
+        coherenceMgr_->updateTimestamp(timestamp_);
         int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
         for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
             statMSHROccupancy->addData(mshr_->getSize());

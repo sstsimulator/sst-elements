@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -25,20 +29,25 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 void Sieve::recordMiss(Addr addr, bool isRead) {
-    allocMap_t::iterator allocI = actAllocMap.lower_bound(addr);
+    allocMap_t::iterator allocI = activeAllocMap.lower_bound(addr);
     
     // lower_bound returns iterator to address just above or equal to addr
     if (allocI->first != addr) {
-        if (allocI == actAllocMap.begin()) {
-            allocI = actAllocMap.end(); // Not found
+        if (allocI == activeAllocMap.begin()) {
+            allocI = activeAllocMap.end(); // Not found
         } else {
             allocI--; // Actually want the address just below the one we got
         }
     }
-    if (allocI != actAllocMap.end()) {
+    if (allocI != activeAllocMap.end()) {
         // is it in range
-        if (addr < (allocI->first +  allocI->second->getAllocateLength())) {
-            allocCountMap_t::iterator evI = allocMap.find(allocI->second);
+        if (addr < (allocI->first +  allocI->second.size)) {
+            uint64_t allocID = allocI->second.id;
+            allocCountMap_t::iterator evI = allocMap.find(allocID);
+            if (evI == allocMap.end()) {
+                allocMap[allocID] = rwCount_t();
+                evI = allocMap.find(allocID);
+            }
             if (isRead) {
                 evI->second.first++;
                 statReadMisses->addData(1);
@@ -62,38 +71,31 @@ void Sieve::recordMiss(Addr addr, bool isRead) {
 void Sieve::processAllocEvent(SST::Event* event) {
     // should only recieve arielAllocTrackEvent events
     ArielComponent::arielAllocTrackEvent* ev = (ArielComponent::arielAllocTrackEvent*)event;
-
+    
     if (ev->getType() == ArielComponent::arielAllocTrackEvent::ALLOC) {
-        // add to the big map and list of all allocations
-        if (allocMap.find(ev) == allocMap.end()) {
-            allocMap[ev] = rwCount_t();
-        } else {
-            output_->fatal(CALL_INFO, -1, "Trying to add allocation event which has already been added. \n");
-        }
-        
         // add to the list of active allocations (i.e. not FREEd)
-        actAllocMap[ev->getVirtualAddress()] = ev;
+        mallocEntry entry = {ev->getInstructionPointer(), ev->getAllocateLength()};
+        activeAllocMap[ev->getVirtualAddress()] = entry;
 
 #ifdef __SST_DEBUG_OUTPUT__
-        if (actAllocMap.find(ev->getVirtualAddress()) != actAllocMap.end()) {
+        if (activeAllocMap.find(ev->getVirtualAddress()) != activeAllocMap.end()) {
             // sometimes ariel replaces both malloc() and _malloc(), so we get two reports. Just ignore the first. 
-            output_->debug(_INFO_, "Trying to add allocation event at an address (%p %" PRIx64") with an active allocation. %" PRIu64 "\n", ev, ev->getVirtualAddress(), (uint64_t)actAllocMap.size());
+            output_->debug(_INFO_, "Trying to add allocation event at an address (%p %" PRIx64") with an active allocation. %" PRIu64 "\n", ev, ev->getVirtualAddress(), (uint64_t)activeAllocMap.size());
         }
 #endif
-
+        delete ev;
     } else if (ev->getType() == ArielComponent::arielAllocTrackEvent::FREE) {
-        allocMap_t::iterator targ = actAllocMap.find(ev->getVirtualAddress());
-        if (targ != actAllocMap.end()) {
-            allocCountMap_t::iterator mapIt = allocMap.find(targ->second);
+        allocMap_t::iterator targ = activeAllocMap.find(ev->getVirtualAddress());
+        if (targ != activeAllocMap.end()) {
+            uint64_t allocID = targ->second.id;
+            allocCountMap_t::iterator mapIt = allocMap.find(allocID);
             
-            // Free malloc partially if it has been accessed, fully otherwise
-            if (mapIt->second.first == 0 && mapIt->second.second == 0) {
-                ArielComponent::arielAllocTrackEvent* allocEv = targ->second;
-                actAllocMap.erase(targ);
+            // In this case ALWAYS delete the entry from active alloc & delete the event
+            activeAllocMap.erase(targ);
+            
+            // If the entry in the count map is 0, remove it as well
+            if (mapIt != allocMap.end() && (mapIt->second.first == 0 && mapIt->second.second == 0)) {
                 allocMap.erase(mapIt);
-                delete allocEv;
-            } else {
-                actAllocMap.erase(targ);
             }
 
 #ifdef __SST_DEBUG_OUTPUT__
@@ -118,15 +120,15 @@ void Sieve::processEvent(SST::Event* ev) {
     event->setBaseAddr(toBaseAddr(event->getAddr()));
     Addr baseAddr   = event->getBaseAddr();
             
-    int lineIndex = cacheArray_->find(baseAddr, true);
-    bool miss = (lineIndex == -1) ? true : false; 
+    CacheLine * cline = cacheArray_->lookup(baseAddr, true);
+    bool miss = (cline == nullptr);
     Addr replacementAddr = 0;
 
     if (miss) {                                     /* Miss.  If needed, evict candidate */
         // output_->debug(_L3_,"-- Cache Miss --\n");
         CacheLine * line = cacheArray_->findReplacementCandidate(baseAddr, false);
         replacementAddr = line->getBaseAddr();
-        cacheArray_->replace(baseAddr, line->getIndex());
+        cacheArray_->replace(baseAddr, line);
         line->setState(M);
 
         recordMiss(event->getVirtualAddress(), (cmd == GetS));
@@ -191,25 +193,27 @@ void Sieve::outputStats(int marker) {
     Output* output_file = new Output("",0,0,SST::Output::FILE, fileName.str());
 
     // print out all the allocations and how often they were touched
-    output_file->output(CALL_INFO, "#Printing out allocation hits (addr, mallocID, len, reads, writes, 'density'):\n");
+    output_file->output(CALL_INFO, "#Printing allocation memory accesses (mallocID, reads, writes):\n");
+    vector<uint64_t> entriesToErase;
     for (allocCountMap_t::iterator i = allocMap.begin(); i != allocMap.end(); i++) {
-        ArielComponent::arielAllocTrackEvent *ev = i->first;
 	rwCount_t &counts = i->second;
 
-        if (counts.first == 0 && counts.second == 0)
+        if (counts.first == 0 && counts.second == 0) {
+            entriesToErase.push_back(i->first);
             continue;
-        double density = double(counts.first + counts.second) / double(ev->getAllocateLength());
-        output_file->output(CALL_INFO, "%#" PRIx64 " %" PRIu64 " %" PRId64 " %" PRId64 " %" PRId64 " %.3f\n", 
-			    ev->getVirtualAddress(), 
-			    ev->getInstructionPointer(), 
-			    ev->getAllocateLength(),
-			    counts.first, counts.second, density);
-
+        }
+        output_file->output(CALL_INFO, "%" PRIu64 " %" PRId64 " %" PRId64 "\n",
+                            i->first, counts.first, counts.second);
+        
         // clear the counts
         if (resetStatsOnOutput) {
             counts.first = 0;
             counts.second = 0;
+            entriesToErase.push_back(i->first);
         }
+    }
+    for (vector<uint64_t>::iterator it = entriesToErase.begin(); it != entriesToErase.end(); it++) {
+        allocMap.erase(*it); // remove entry from allocMap
     }
     // clean up
     delete output_file;
@@ -223,9 +227,4 @@ void Sieve::finish(){
 Sieve::~Sieve(){
     delete cacheArray_;
     delete output_;
-
-    for(allocCountMap_t::iterator i = allocMap.begin();
-        i != allocMap.end(); ++i) {
-        delete i->first;
-    }
 }

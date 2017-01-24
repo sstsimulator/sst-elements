@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 // 
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -14,8 +18,6 @@
 
 #include <string>
 #include <vector>
-
-#include <boost/filesystem.hpp>
 
 #include <sst/core/sst_types.h>
 
@@ -52,8 +54,7 @@ namespace SST {
                 std::vector<Job*> jobs;
 
                 std::string fileName;
-                boost::filesystem::path fileNamePath;
-                boost::filesystem::path folderPath;
+                std::string fileNamePath;
                 std::string jobTrace;
 
                 std::string completedJobTrace; // NetworkSim: File that lists all jobs that has been completed in ember

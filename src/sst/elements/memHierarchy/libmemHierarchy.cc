@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -27,19 +31,35 @@
 #include "dmaEngine.h"
 #include "memHierarchyInterface.h"
 #include "memNIC.h"
+#include "coherenceController.h"
+#include "MESICoherenceController.h"
+#include "MESIInternalDirectory.h"
+#include "IncoherentController.h"
+#include "L1CoherenceController.h"
+#include "L1IncoherentController.h"
 #include "membackend/memBackend.h"
 #include "membackend/simpleMemBackend.h"
 #include "membackend/simpleDRAMBackend.h"
 #include "membackend/vaultSimBackend.h"
+#include "membackend/MessierBackend.h"
 #include "membackend/requestReorderSimple.h"
 #include "membackend/requestReorderByRow.h"
+#include "membackend/delayBuffer.h"
+#include "membackend/simpleMemBackendConvertor.h"
+#include "membackend/timingDRAMBackend.h"
+#include "membackend/timingTransaction.h"
+#include "membackend/timingPagePolicy.h"
+#include "membackend/timingAddrMapper.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
-
-#include "DRAMReq.h"
+#include "multithreadL1Shim.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
+#endif
+
+#ifdef HAVE_LIBRAMULATOR
+#include "membackend/ramulatorBackend.h"
 #endif
 
 #ifdef HAVE_LIBDRAMSIM
@@ -51,7 +71,7 @@
 #include "membackend/hybridSimBackend.h"
 #endif
 
-#ifdef HAVE_FDSIM
+#ifdef HAVE_LIBFDSIM
 #include "membackend/flashSimBackend.h"
 #endif
 
@@ -69,12 +89,11 @@ static Component* create_Cache(ComponentId_t id, Params& params)
 
 static const ElementInfoParam cache_params[] = {
     /* Required */
-    {"cache_frequency",         "Required, string - Clock frequency with units. For L1s, this is usually the same as the CPU's frequency."},
+    {"cache_frequency",         "Required, string - Clock frequency or period with units (Hz or s; SI units OK). For L1s, this is usually the same as the CPU's frequency."},
     {"cache_size",              "Required, string - Cache size with units. Eg. 4KiB or 1MiB"},
     {"associativity",           "Required, int - Associativity of the cache. In set associative mode, this is the number of ways."},
-    {"access_latency_cycles",   "Required, int - Latency (in cycles) to access the cache array."},
+    {"access_latency_cycles",   "Required, int - Latency (in cycles) to access the cache data array. This latency is paid by cache hits and coherence requests that need to return data."},
     {"L1",                      "Required, bool - Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]", "false"},
-    {"LL",                      "Required, bool - Required for LLCs without a directory below - indicates LLC is the lowest-level coherence entity. Options: 0[not LL entity], 1[LL entity]", "false"},
     /* Not required */
     {"cache_line_size",         "Optional, int - Size of a cache line (aka cache block) in bytes.", "64"},
     {"hash_function",           "Optional, int - 0 - none (default), 1 - linear, 2 - XOR", "0"},
@@ -82,14 +101,14 @@ static const ElementInfoParam cache_params[] = {
     {"replacement_policy",      "Optional, string - Replacement policy of the cache array. Options:  LRU[least-recently-used], LFU[least-frequently-used], Random, MRU[most-recently-used], or NMRU[not-most-recently-used]. ", "lru"},
     {"cache_type",              "Optional, string - Cache type. Options: inclusive cache ('inclusive', required for L1s), non-inclusive cache ('noninclusive') or non-inclusive cache with a directory ('noninclusive_with_directory', required for non-inclusive caches with multiple upper level caches directly above them),", "inclusive"},
     {"max_requests_per_cycle",  "Maximum number of requests to accept per cycle. 0 or negative is unlimited.", "-1"},
+    {"request_link_width",      "Optional, string - Limits number of request bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
+    {"response_link_width",     "Optional, string - Limits number of response bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
     {"noninclusive_directory_repl",    "Optional, string - If non-inclusive directory exists, its replacement policy. LRU, LFU, MRU, NMRU, or RANDOM. (not case-sensitive).", "LRU"},
     {"noninclusive_directory_entries", "Optional, int - Number of entries in the directory. Must be at least 1 if the non-inclusive directory exists.", "0"},
     {"noninclusive_directory_associativity", "Optional, int - For a set-associative directory, number of ways.", "1"},
-    {"lower_is_noninclusive",   "Optional, bool - Next lower level cache is non-inclusive, changes some coherence decisions (e.g., write back clean data)", "false"},
     {"mshr_num_entries",        "Optional, int - Number of MSHR entries. Not valid for L1s because L1 MSHRs assumed to be sized for the CPU's load/store queue. Setting this to -1 will create a very large MSHR.", "-1"},
-    {"stat_group_ids",          "Optional, int list - Stat grouping. Instructions with same IDs will be grouped for stats. Separated by commas.", ""},
-    {"tag_access_latency_cycles", "Optional, int - Latency (in cycles) to access tag portion only of cache. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
-    {"mshr_latency_cycles",     "Optional, int - Latency (in cycles) to process responses in the cache (MSHR response hits). If not specified, simple intrapolation is used based on the cache access latency", "-1"},
+    {"tag_access_latency_cycles", "Optional, int - Latency (in cycles) to access tag portion only of cache. Paid by misses and coherence requests that don't need data. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
+    {"mshr_latency_cycles",     "Optional, int - Latency (in cycles) to process responses in the cache and replay requests. Paid on the return/response path for misses instead of access_latency_cycles. If not specified, simple intrapolation is used based on the cache access latency", "-1"},
     {"prefetcher",              "Optional, string - Name of prefetcher module", ""},
     {"max_outstanding_prefetch","Optional, int - Maximum number of prefetch misses that can be outstanding, additional prefetches will be dropped/NACKed. Default is 1/2 of MSHR entries.", "0.5*mshr_num_entries"},
     {"drop_prefetch_mshr_level","Optional, int - Drop/NACK prefetches if the number of in-use mshrs is greater than or equal to this number. Default is mshr_num_entries - 2.", "mshr_num_entries-2"},
@@ -102,16 +121,20 @@ static const ElementInfoParam cache_params[] = {
     {"network_output_buffer_size","Optional, int - When connected to a network, size of the network;s output buffer.", "1KiB"},
     {"maxRequestDelay",         "Optional, int - Set an error timeout if memory requests take longer than this in ns (0: disable)", "0"},
     {"snoop_l1_invalidations",  "Optional, bool - Forward invalidations from L1s to processors. Options: 0[off], 1[on]", "false"},
-    {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
+    {"debug",                   "Optional, int - Where to send output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",             "Optional, int - Output/debug verbosity level. Between 0 (no output) and 10 (everything). 1-3 gives warnings/info; 4-10 gives debug.", "1"},
     {"debug_addr",              "Optional, int - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {"force_noncacheable_reqs", "Optional, bool - Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "false"},
-    {"LLC",                     "DEPRECATED - Now auto-detected by configure. Specifies whether cache is a last-level cache. Options: 0[not LLC], 1[LLC]"},
-    {"statistics",              "DEPRECATED - Use Statistics API to get statistics for caches.", "0"},
+    {"min_packet_size",         "Optional, int - Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
+    {"LL",                      "DEPRECATED - Now auto-detected during init."},
+    {"LLC",                     "DEPRECATED - Now auto-detected by configure."},
+    {"lower_is_noninclusive",   "DEPRECATED - Now auto-detected during init."},
+    {"statistics",              "DEPRECATED - Use Statistics API to get statistics for caches."},
+    {"stat_group_ids",          "DEPRECATED - Use Statistics API to get statistics for caches."},
     {"network_num_vc",          "DEPRECATED - Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
-    {"directory_at_next_level", "DEPRECATED - Now auto-detected by configure. Specifies if there is a directory-controller as the next lower memory level; deprecated - set 'bottom_network' to 'directory' instead", "0"},
-    {"bottom_network",          "DEPRECATED - Now auto-detected by configure. Specifies whether the cache is connected to a network below and the entity type of the connection. Options: cache, directory, ''[no network below]", ""},
-    {"top_network",             "DEPRECATED - Now auto-detected by configure. Specifies whether the cache is connected to a network above and the entity type of the connection. Options: cache, ''[no network above]", ""},
+    {"directory_at_next_level", "DEPRECATED - Now auto-detected by configure."},
+    {"bottom_network",          "DEPRECATED - Now auto-detected by configure."},
+    {"top_network",             "DEPRECATED - Now auto-detected by configure."},
     {NULL, NULL, NULL}
 };
 
@@ -161,6 +184,10 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"FetchInvX_recv",          "Event received: FetchInvX", "count", 2},
     {"Inv_recv",                "Event received: Inv", "count", 2},
     {"NACK_recv",               "Event: NACK received", "count", 2},
+    {NULL, NULL, NULL, 0}
+};
+
+static const ElementInfoStatistic coherence_statistics[] = {
     /* Event sends */
     {"eventSent_GetS",          "Number of GetS requests sent", "events", 2},
     {"eventSent_GetX",          "Number of GetX requests sent", "events", 2},
@@ -180,6 +207,9 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"eventSent_AckPut",        "Number of AckPuts sent", "events", 2},
     {"eventSent_NACK_up",       "Number of NACKs sent up (towards CPU)", "events", 2},
     {"eventSent_NACK_down",     "Number of NACKs sent down (towards main memory)", "events", 2},
+    {"eventSent_FlushLine",     "Number of FlushLine requests sent", "events", 2},
+    {"eventSent_FlushLineInv",  "Number of FlushLineInv requests sent", "events", 2},
+    {"eventSent_FlushLineResp", "Number of FlushLineResp responses sent", "events", 2},
     /* Event/State combinations - Count how many times an event was seen in particular state */
     {"stateEvent_GetS_I",           "Event/State: Number of times a GetS was seen in state I (Miss)", "count", 3},
     {"stateEvent_GetS_S",           "Event/State: Number of times a GetS was seen in state S (Hit)", "count", 3},
@@ -195,8 +225,6 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_GetSEx_M",         "Event/State: Number of times a GetSEx was seen in state M (Hit)", "count", 3},
     {"stateEvent_GetSResp_IS",      "Event/State: Number of times a GetSResp was seen in state IS", "count", 3},
     {"stateEvent_GetSResp_IM",      "Event/State: Number of times a GetSResp was seen in state IM", "count", 3},
-    {"stateEvent_GetSResp_SMInv",   "Event/State: Number of times a GetSResp was seen in state SM_Inv", "count", 3},
-    {"stateEvent_GetSResp_SM",      "Event/State: Number of times a GetSResp was seen in state SM", "count", 3},
     {"stateEvent_GetXResp_IM",      "Event/State: Number of times a GetXResp was seen in state IM", "count", 3},
     {"stateEvent_GetXResp_SM",      "Event/State: Number of times a GetXResp was seen in state SM", "count", 3},
     {"stateEvent_GetXResp_SMInv",   "Event/State: Number of times a GetXResp was seen in state SM_Inv", "count", 3},
@@ -216,33 +244,54 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_PutS_MInv",        "Event/State: Number of times a PutS was seen in state M_Inv", "count", 3},
     {"stateEvent_PutS_SMInv",       "Event/State: Number of times a PutS was seen in state SM_Inv", "count", 3},
     {"stateEvent_PutS_EInvX",       "Event/State: Number of times a PutS was seen in state E_InvX", "count", 3},
+    {"stateEvent_PutS_IB",          "Event/State: Number of times a PutS was seen in state I_B", "count", 3},
+    {"stateEvent_PutS_SB",          "Event/State: Number of times a PutS was seen in state S_B", "count", 3},
+    {"stateEvent_PutS_SBInv",       "Event/State: Number of times a PutS was seen in state SB_Inv", "count", 3},
     {"stateEvent_PutE_I",           "Event/State: Number of times a PutE was seen in state I", "count", 3},
     {"stateEvent_PutE_E",           "Event/State: Number of times a PutE was seen in state E", "count", 3},
     {"stateEvent_PutE_M",           "Event/State: Number of times a PutE was seen in state M", "count", 3},
+    {"stateEvent_PutE_IM",          "Event/State: Number of times a PutE was seen in state IM", "count", 3},
+    {"stateEvent_PutE_IS",          "Event/State: Number of times a PutE was seen in state IS", "count", 3},
     {"stateEvent_PutE_EI",          "Event/State: Number of times a PutE was seen in state EI", "count", 3},
     {"stateEvent_PutE_MI",          "Event/State: Number of times a PutE was seen in state MI", "count", 3},
     {"stateEvent_PutE_EInv",        "Event/State: Number of times a PutE was seen in state E_Inv", "count", 3},
     {"stateEvent_PutE_MInv",        "Event/State: Number of times a PutE was seen in state M_Inv", "count", 3},
     {"stateEvent_PutE_EInvX",       "Event/State: Number of times a PutE was seen in state E_InvX", "count", 3},
     {"stateEvent_PutE_MInvX",       "Event/State: Number of times a PutE was seen in state M_InvX", "count", 3},
+    {"stateEvent_PutE_IB",          "Event/State: Number of times a PutE was seen in state I_B", "count", 3},
+    {"stateEvent_PutE_SB",          "Event/State: Number of times a PutE was seen in state S_B", "count", 3},
     {"stateEvent_PutM_I",           "Event/State: Number of times a PutM was seen in state I", "count", 3},
     {"stateEvent_PutM_E",           "Event/State: Number of times a PutM was seen in state E", "count", 3},
     {"stateEvent_PutM_M",           "Event/State: Number of times a PutM was seen in state M", "count", 3},
+    {"stateEvent_PutM_IS",          "Event/State: Number of times a PutM was seen in state IS", "count", 3},
+    {"stateEvent_PutM_IM",          "Event/State: Number of times a PutM was seen in state IM", "count", 3},
     {"stateEvent_PutM_EI",          "Event/State: Number of times a PutM was seen in state EI", "count", 3},
     {"stateEvent_PutM_MI",          "Event/State: Number of times a PutM was seen in state MI", "count", 3},
     {"stateEvent_PutM_EInv",        "Event/State: Number of times a PutM was seen in state E_Inv", "count", 3},
     {"stateEvent_PutM_MInv",        "Event/State: Number of times a PutM was seen in state M_Inv", "count", 3},
     {"stateEvent_PutM_EInvX",       "Event/State: Number of times a PutM was seen in state E_InvX", "count", 3},
     {"stateEvent_PutM_MInvX",       "Event/State: Number of times a PutM was seen in state M_InvX", "count", 3},
+    {"stateEvent_PutM_IB",          "Event/State: Number of times a PutM was seen in state I_B", "count", 3},
+    {"stateEvent_PutM_SB",          "Event/State: Number of times a PutM was seen in state S_B", "count", 3},
     {"stateEvent_Inv_I",            "Event/State: Number of times an Inv was seen in state I", "count", 3},
     {"stateEvent_Inv_IS",           "Event/State: Number of times an Inv was seen in state IS", "count", 3},
     {"stateEvent_Inv_IM",           "Event/State: Number of times an Inv was seen in state IM", "count", 3},
+    {"stateEvent_Inv_IB",           "Event/State: Number of times an Inv was seen in state I_B", "count", 3},
     {"stateEvent_Inv_S",            "Event/State: Number of times an Inv was seen in state S", "count", 3},
     {"stateEvent_Inv_SM",           "Event/State: Number of times an Inv was seen in state SM", "count", 3},
     {"stateEvent_Inv_SInv",         "Event/State: Number of times an Inv was seen in state S_Inv", "count", 3},
     {"stateEvent_Inv_SI",           "Event/State: Number of times an Inv was seen in state SI", "count", 3},
     {"stateEvent_Inv_SMInv",        "Event/State: Number of times an Inv was seen in state SM_Inv", "count", 3},
     {"stateEvent_Inv_SD",           "Event/State: Number of times an Inv was seen in state S_D", "count", 3},
+    {"stateEvent_Inv_SB",           "Event/State: Number of times an Inv was seen in state S_B", "count", 3},
+    {"stateEvent_Inv_ED",           "Event/State: Number of times an Inv was seen in state E_D", "count", 3},
+    {"stateEvent_Inv_EI",           "Event/State: Number of times an Inv was seen in state EI", "count", 3},
+    {"stateEvent_Inv_EInv",         "Event/State: Number of times an Inv was seen in state E_Inv", "count", 3},
+    {"stateEvent_Inv_EInvX",        "Event/State: Number of times an Inv was seen in state E_InvX", "count", 3},
+    {"stateEvent_Inv_MD",           "Event/State: Number of times an Inv was seen in state M_D", "count", 3},
+    {"stateEvent_Inv_MI",           "Event/State: Number of times an Inv was seen in state MI", "count", 3},
+    {"stateEvent_Inv_MInv",         "Event/State: Number of times an Inv was seen in state M_Inv", "count", 3},
+    {"stateEvent_Inv_MInvX",        "Event/State: Number of times an Inv was seen in state M_InvX", "count", 3},
     {"stateEvent_FetchInv_I",       "Event/State: Number of times a FetchInv was seen in state I", "count", 3},
     {"stateEvent_FetchInv_IS",      "Event/State: Number of times a FetchInv was seen in state IS", "count", 3},
     {"stateEvent_FetchInv_IM",      "Event/State: Number of times a FetchInv was seen in state IM", "count", 3},
@@ -256,13 +305,15 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_FetchInv_EInvX",   "Event/State: Number of times a FetchInv was seen in state E_InvX", "count", 3},
     {"stateEvent_FetchInv_MInv",    "Event/State: Number of times a FetchInv was seen in state M_Inv", "count", 3},
     {"stateEvent_FetchInv_MInvX",   "Event/State: Number of times a FetchInv was seen in state M_InvX", "count", 3},
+    {"stateEvent_FetchInv_SInv",    "Event/State: Number of times a FetchInv was seen in state S_Inv", "count", 3},
     {"stateEvent_FetchInv_SD",      "Event/State: Number of times a FetchInv was seen in state S_D", "count", 3},
     {"stateEvent_FetchInv_ED",      "Event/State: Number of times a FetchInv was seen in state E_D", "count", 3},
     {"stateEvent_FetchInv_MD",      "Event/State: Number of times a FetchInv was seen in state M_D", "count", 3},
+    {"stateEvent_FetchInv_IB",      "Event/State: Number of times a FetchInv was seen in state I_B", "count", 3},
+    {"stateEvent_FetchInv_SB",      "Event/State: Number of times a FetchInv was seen in state S_B", "count", 3},
     {"stateEvent_FetchInvX_I",      "Event/State: Number of times a FetchInvX was seen in state I", "count", 3},
     {"stateEvent_FetchInvX_IS",     "Event/State: Number of times a FetchInvX was seen in state IS", "count", 3},
     {"stateEvent_FetchInvX_IM",     "Event/State: Number of times a FetchInvX was seen in state IM", "count", 3},
-    {"stateEvent_FetchInvX_SM",     "Event/State: Number of times a FetchInvX was seen in state SM", "count", 3},
     {"stateEvent_FetchInvX_E",      "Event/State: Number of times a FetchInvX was seen in state E", "count", 3},
     {"stateEvent_FetchInvX_M",      "Event/State: Number of times a FetchInvX was seen in state M", "count", 3},
     {"stateEvent_FetchInvX_EI",     "Event/State: Number of times a FetchInvX was seen in state EI", "count", 3},
@@ -271,8 +322,8 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_FetchInvX_EInvX",  "Event/State: Number of times a FetchInvX was seen in state E_InvX", "count", 3},
     {"stateEvent_FetchInvX_MInv",   "Event/State: Number of times a FetchInvX was seen in state M_Inv", "count", 3},
     {"stateEvent_FetchInvX_MInvX",  "Event/State: Number of times a FetchInvX was seen in state M_InvX", "count", 3},
-    {"stateEvent_FetchInvX_ED",     "Event/State: Number of times a FetchInvX was seen in state E_D", "count", 3},
-    {"stateEvent_FetchInvX_MD",     "Event/State: Number of times a FetchInvX was seen in state M_D", "count", 3},
+    {"stateEvent_FetchInvX_IB",     "Event/State: Number of times a FetchInvX was seen in state I_B", "count", 3},
+    {"stateEvent_FetchInvX_SB",     "Event/State: Number of times a FetchInvX was seen in state S_B", "count", 3},
     {"stateEvent_Fetch_I",          "Event/State: Number of times a Fetch was seen in state I", "count", 3},
     {"stateEvent_Fetch_IS",         "Event/State: Number of times a Fetch was seen in state IS", "count", 3},
     {"stateEvent_Fetch_IM",         "Event/State: Number of times a Fetch was seen in state IM", "count", 3},
@@ -281,6 +332,8 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_Fetch_SInv",       "Event/State: Number of times a Fetch was seen in state S_Inv", "count", 3},
     {"stateEvent_Fetch_SI",         "Event/State: Number of times a Fetch was seen in state SI", "count", 3},
     {"stateEvent_Fetch_SD",         "Event/State: Number of times a Fetch was seen in state S_D", "count", 3},
+    {"stateEvent_Fetch_IB",         "Event/State: Number of times a Fetch was seen in state I_B", "count", 3},
+    {"stateEvent_Fetch_SB",         "Event/State: Number of times a Fetch was seen in state S_B", "count", 3},
     {"stateEvent_FetchResp_I",      "Event/State: Number of times a FetchResp was seen in state I", "count", 3},
     {"stateEvent_FetchResp_SI",     "Event/State: Number of times a FetchResp was seen in state SI", "count", 3},
     {"stateEvent_FetchResp_EI",     "Event/State: Number of times a FetchResp was seen in state EI", "count", 3},
@@ -288,14 +341,27 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_FetchResp_SInv",   "Event/State: Number of times a FetchResp was seen in state S_Inv", "count", 3},
     {"stateEvent_FetchResp_SMInv",  "Event/State: Number of times a FetchResp was seen in state SM_Inv", "count", 3},
     {"stateEvent_FetchResp_EInv",   "Event/State: Number of times a FetchResp was seen in state E_Inv", "count", 3},
+    {"stateEvent_FetchResp_EInvX",  "Event/State: Number of times a FetchResp was seen in state E_Inv", "count", 3},
     {"stateEvent_FetchResp_MInv",   "Event/State: Number of times a FetchResp was seen in state M_Inv", "count", 3},
+    {"stateEvent_FetchResp_MInvX",  "Event/State: Number of times a FetchResp was seen in state M_InvX", "count", 3},
     {"stateEvent_FetchResp_SD",     "Event/State: Number of times a FetchResp was seen in state S_D", "count", 3},
     {"stateEvent_FetchResp_SMD",    "Event/State: Number of times a FetchResp was seen in state SM_D", "count", 3},
     {"stateEvent_FetchResp_ED",     "Event/State: Number of times a FetchResp was seen in state E_D", "count", 3},
     {"stateEvent_FetchResp_MD",     "Event/State: Number of times a FetchResp was seen in state M_D", "count", 3},
     {"stateEvent_FetchXResp_I",     "Event/State: Number of times a FetchXResp was seen in state I", "count", 3},
+    {"stateEvent_FetchXResp_EInv",  "Event/State: Number of times a FetchXResp was seen in state E_Inv", "count", 3},
     {"stateEvent_FetchXResp_EInvX", "Event/State: Number of times a FetchXResp was seen in state E_InvX", "count", 3},
     {"stateEvent_FetchXResp_MInvX", "Event/State: Number of times a FetchXResp was seen in state M_InvX", "count", 3},
+    {"stateEvent_FetchXResp_MInv",  "Event/State: Number of times a FetchXResp was seen in state M_Inv", "count", 3},
+    {"stateEvent_FetchXResp_MI",    "Event/State: Number of times a FetchXResp was seen in state MI", "count", 3},
+    {"stateEvent_FetchXResp_EI",    "Event/State: Number of times a FetchXResp was seen in state EI", "count", 3},
+    {"stateEvent_FetchXResp_SI",    "Event/State: Number of times a FetchXResp was seen in state SI", "count", 3},
+    {"stateEvent_FetchXResp_SD",    "Event/State: Number of times a FetchXResp was seen in state S_D", "count", 3},
+    {"stateEvent_FetchXResp_ED",    "Event/State: Number of times a FetchXResp was seen in state E_D", "count", 3},
+    {"stateEvent_FetchXResp_MD",    "Event/State: Number of times a FetchXResp was seen in state M_D", "count", 3},
+    {"stateEvent_FetchXResp_SMD",   "Event/State: Number of times a FetchXResp was seen in state SM_D", "count", 3},
+    {"stateEvent_FetchXResp_SInv",  "Event/State: Number of times a FetchXResp was seen in state S_Inv", "count", 3},
+    {"stateEvent_FetchXResp_SMInv", "Event/State: Number of times a FetchXResp was seen in state SM_Inv", "count", 3},
     {"stateEvent_AckInv_I",         "Event/State: Number of times an AckInv was seen in state I", "count", 3},
     {"stateEvent_AckInv_SInv",      "Event/State: Number of times an AckInv was seen in state S_Inv", "count", 3},
     {"stateEvent_AckInv_SMInv",     "Event/State: Number of times an AckInv was seen in state SM_Inv", "count", 3},
@@ -303,8 +369,60 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"stateEvent_AckInv_EI",        "Event/State: Number of times an AckInv was seen in state EI", "count", 3},
     {"stateEvent_AckInv_MI",        "Event/State: Number of times an AckInv was seen in state MI", "count", 3},
     {"stateEvent_AckInv_EInv",      "Event/State: Number of times an AckInv was seen in state E_Inv", "count", 3},
+    {"stateEvent_AckInv_EInvX",     "Event/State: Number of times an AckInv was seen in state E_InvX", "count", 3},
     {"stateEvent_AckInv_MInv",      "Event/State: Number of times an AckInv was seen in state M_Inv", "count", 3},
+    {"stateEvent_AckInv_MInvX",     "Event/State: Number of times an AckInv was seen in state M_InvX", "count", 3},
+    {"stateEvent_AckInv_SBInv",     "Event/State: Number of times an AckInv was seen in state SB_Inv", "count", 3},
     {"stateEvent_AckPut_I",         "Event/State: Number of times an AckPut was seen in state I", "count", 3},
+    {"stateEvent_FlushLine_I",      "Event/State: Number of times a FlushLine was seen in state I", "count", 3},
+    {"stateEvent_FlushLine_S",      "Event/State: Number of times a FlushLine was seen in state S", "count", 3},
+    {"stateEvent_FlushLine_E",      "Event/State: Number of times a FlushLine was seen in state E", "count", 3},
+    {"stateEvent_FlushLine_M",      "Event/State: Number of times a FlushLine was seen in state M", "count", 3},
+    {"stateEvent_FlushLine_IS",     "Event/State: Number of times a FlushLine was seen in state IS", "count", 3},
+    {"stateEvent_FlushLine_IM",     "Event/State: Number of times a FlushLine was seen in state IM", "count", 3},
+    {"stateEvent_FlushLine_SM",     "Event/State: Number of times a FlushLine was seen in state SM", "count", 3},
+    {"stateEvent_FlushLine_MInv",   "Event/State: Number of times a FlushLine was seen in state M_Inv", "count", 3},
+    {"stateEvent_FlushLine_MInvX",  "Event/State: Number of times a FlushLine was seen in state M_InvX", "count", 3},
+    {"stateEvent_FlushLine_EInv",   "Event/State: Number of times a FlushLine was seen in state E_Inv", "count", 3},
+    {"stateEvent_FlushLine_EInvX",  "Event/State: Number of times a FlushLine was seen in state E_InvX", "count", 3},
+    {"stateEvent_FlushLine_SInv",   "Event/State: Number of times a FlushLine was seen in state S_Inv", "count", 3},
+    {"stateEvent_FlushLine_SMInv",  "Event/State: Number of times a FlushLine was seen in state SM_Inv", "count", 3},
+    {"stateEvent_FlushLine_SD",     "Event/State: Number of times a FlushLine was seen in state S_D", "count", 3},
+    {"stateEvent_FlushLine_ED",     "Event/State: Number of times a FlushLine was seen in state E_D", "count", 3},
+    {"stateEvent_FlushLine_MD",     "Event/State: Number of times a FlushLine was seen in state M_D", "count", 3},
+    {"stateEvent_FlushLine_SMD",    "Event/State: Number of times a FlushLine was seen in state SM_D", "count", 3},
+    {"stateEvent_FlushLine_MI",     "Event/State: Number of times a FlushLine was seen in state MI", "count", 3},
+    {"stateEvent_FlushLine_EI",     "Event/State: Number of times a FlushLine was seen in state EI", "count", 3},
+    {"stateEvent_FlushLine_SI",     "Event/State: Number of times a FlushLine was seen in state SI", "count", 3},
+    {"stateEvent_FlushLine_IB",     "Event/State: Number of times a FlushLine was seen in state I_B", "count", 3},
+    {"stateEvent_FlushLine_SB",     "Event/State: Number of times a FlushLine was seen in state S_B", "count", 3},
+    {"stateEvent_FlushLineInv_I",       "Event/State: Number of times a FlushLineInv was seen in state I", "count", 3},
+    {"stateEvent_FlushLineInv_S",       "Event/State: Number of times a FlushLineInv was seen in state S", "count", 3},
+    {"stateEvent_FlushLineInv_E",       "Event/State: Number of times a FlushLineInv was seen in state E", "count", 3},
+    {"stateEvent_FlushLineInv_M",       "Event/State: Number of times a FlushLineInv was seen in state M", "count", 3},
+    {"stateEvent_FlushLineInv_IS",      "Event/State: Number of times a FlushLineInv was seen in state IS", "count", 3},
+    {"stateEvent_FlushLineInv_IM",      "Event/State: Number of times a FlushLineInv was seen in state IM", "count", 3},
+    {"stateEvent_FlushLineInv_SM",      "Event/State: Number of times a FlushLineInv was seen in state SM", "count", 3},
+    {"stateEvent_FlushLineInv_MInv",    "Event/State: Number of times a FlushLineInv was seen in state M_Inv", "count", 3},
+    {"stateEvent_FlushLineInv_MInvX",   "Event/State: Number of times a FlushLineInv was seen in state M_InvX", "count", 3},
+    {"stateEvent_FlushLineInv_EInv",    "Event/State: Number of times a FlushLineInv was seen in state E_Inv", "count", 3},
+    {"stateEvent_FlushLineInv_EInvX",   "Event/State: Number of times a FlushLineInv was seen in state E_InvX", "count", 3},
+    {"stateEvent_FlushLineInv_SInv",    "Event/State: Number of times a FlushLineInv was seen in state S_Inv", "count", 3},
+    {"stateEvent_FlushLineInv_SMInv",   "Event/State: Number of times a FlushLineInv was seen in state SM_Inv", "count", 3},
+    {"stateEvent_FlushLineInv_SD",      "Event/State: Number of times a FlushLineInv was seen in state S_D", "count", 3},
+    {"stateEvent_FlushLineInv_ED",      "Event/State: Number of times a FlushLineInv was seen in state E_D", "count", 3},
+    {"stateEvent_FlushLineInv_MD",      "Event/State: Number of times a FlushLineInv was seen in state M_D", "count", 3},
+    {"stateEvent_FlushLineInv_SMD",     "Event/State: Number of times a FlushLineInv was seen in state SM_D", "count", 3},
+    {"stateEvent_FlushLineInv_MI",      "Event/State: Number of times a FlushLineInv was seen in state MI", "count", 3},
+    {"stateEvent_FlushLineInv_EI",      "Event/State: Number of times a FlushLineInv was seen in state EI", "count", 3},
+    {"stateEvent_FlushLineInv_SI",      "Event/State: Number of times a FlushLineInv was seen in state SI", "count", 3},
+    {"stateEvent_FlushLineInv_IB",      "Event/State: Number of times a FlushLineInv was seen in state I_B", "count", 3},
+    {"stateEvent_FlushLineInv_SB",      "Event/State: Number of times a FlushLineInv was seen in state S_B", "count", 3},
+    {"stateEvent_FlushLineResp_I",      "Event/State: Number of times a FlushLineResp was seen in state I", "count", 3},
+    {"stateEvent_FlushLineResp_IB",     "Event/State: Number of times a FlushLineResp was seen in state I_B", "count", 3},
+    {"stateEvent_FlushLineResp_SB",     "Event/State: Number of times a FlushLineResp was seen in state S_B", "count", 3},
+
+    
     /* Eviction - count attempts to evict in a particular state */
     {"evict_I",                 "Eviction: Attempted to evict a block in state I", "count", 3},
     {"evict_S",                 "Eviction: Attempted to evict a block in state S", "count", 3},
@@ -320,6 +438,8 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"evict_EInvX",             "Eviction: Attempted to evict a block in state E_InvX", "count", 3},
     {"evict_MInvX",             "Eviction: Attempted to evict a block in state M_InvX", "count", 3},
     {"evict_SI",                "Eviction: Attempted to evict a block in state SI", "count", 3},
+    {"evict_IB",                "Eviction: Attempted to evict a block in state S_B", "count", 3},
+    {"evict_SB",                "Eviction: Attempted to evict a block in state I_B", "count", 3},
     /* Latency for different kinds of misses*/
     {"latency_GetS_IS",         "Latency for read misses in I state", "cycles", 1},
     {"latency_GetS_M",          "Latency for read misses that find the block owned by another cache in M state", "cycles", 1},
@@ -333,6 +453,52 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"EventStalledForLockedCacheline",  "Number of times an event (FetchInv, FetchInvX, eviction, Fetch, etc.) was stalled because a cache line was locked", "instances", 1},
     {NULL, NULL, NULL, 0}
 };
+
+/* Coherence Controller Subcomponents */
+static SubComponent* create_MESICoherenceController(Component * comp, Params& params) {
+    return new MESIController(comp, params);
+}
+
+static SubComponent* create_MESICacheDirectoryCoherenceController(Component * comp, Params& params) {
+    return new MESIInternalDirectory(comp, params);
+}
+
+static SubComponent* create_IncoherentController(Component * comp, Params& params) {
+    return new IncoherentController(comp, params);
+}
+
+static SubComponent* create_L1CoherenceController(Component * comp, Params& params) {
+    return new L1CoherenceController(comp, params);
+}
+static SubComponent* create_L1IncoherentController(Component * comp, Params& params) {
+    return new L1IncoherentController(comp, params);
+}
+
+/*****************************************************************************************
+ *  Component: MultiThreadL1
+ *  Purpose: Shim between cores & an L1 to simulate a core with multiple hardware threads
+ *****************************************************************************************/
+static Component* create_multithreadL1(ComponentId_t id, Params& params)
+{
+    return new MultiThreadL1(id, params);
+}
+
+static const ElementInfoParam multithreadL1_params[] = {
+    {"clock",               "Optional, int - Clock frequency or period with units (Hz or s; SI units OK)."},
+    {"requests_per_cycle",  "Optional, int - number of requests to forward to L1 each cycle (for all threads combined). 0 indicates unlimited", "0"},
+    {"responses_per_cycle", "Optional, int - number of responses to forward to threads each cycle (for all threads combined). 0 indicates unlimited", "0"},
+    {"debug",               "Optional, int - Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",         "Optional, int - Debug verbosity level. Between 0 and 10", "0"},
+    {"debug_addr",          "Optional, int - Address (in decimal) to debug. If not specified or set to -1, debug output for all addresses will be printed", "-1"},
+};
+
+static const ElementInfoPort multithreadL1_ports[] = {
+    {"cache", "Link to L1 cache", memEvent_port_events},
+    {"thread%(port)d", "Links to threads/cores", memEvent_port_events},
+    {NULL, NULL, NULL}
+};
+/*****************************************************************************************
+ *****************************************************************************************/
 
 static Component* create_BroadcastShim(ComponentId_t id, Params& params)
 {
@@ -358,7 +524,7 @@ static const ElementInfoParam sieve_params[] = {
     {"cache_line_size",         "Optional, int - Size of a cache line (aka cache block) in bytes."},
     {"profiler",                "Optional, string - Name of profiling module. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
     {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
+    {"debug_level",             "Optional, int - Debugging/verbosity level. Between 0 and 10", "0"},
     {"output_file",             "Optional, string – Name of file to output malloc information to. Will have sequence number (and optional marker number) and .txt appended to it. E.g. sieveMallocRank-3.txt", "sieveMallocRank"},
     {"reset_stats_at_buoy",     "Optional, int - Whether to reset allocation hit/miss stats when a buoy is found (i.e., when a new output file is dumped). Any value other than 0 is true." "0"},
     {NULL, NULL, NULL}
@@ -418,10 +584,15 @@ static const ElementInfoPort cpu_ports[] = {
 
 static const ElementInfoParam cpu_params[] = {
     {"verbose",                 "Determine how verbose the output from the CPU is", "1"},
+    {"clock",                   "Clock frequency", "1GHz"},
     {"rngseed",                 "Set a seed for the random generation of addresses", "7"},
     {"commFreq",                "How often to do a memory operation."},
     {"memSize",                 "Size of physical memory."},
+    {"lineSize",                "Size of a cache line - used for flushes"},
+    {"maxOutstanding",          "Maximum Number of Outstanding memory requests."},
+    {"reqsPerIssue",            "Maximum number of requests to issue at a time"},
     {"do_write",                "Enable writes to memory (versus just reads).", "1"},
+    {"do_flush",                "Enable flushes", "0"},
     {"num_loadstore",           "Stop after this many reads and writes.", "-1"},
     {"noncacheableRangeStart",  "Beginning of range of addresses that are noncacheable.", "0x0"},
     {"noncacheableRangeEnd",    "End of range of addresses that are noncacheable.", "0x0"},
@@ -442,7 +613,7 @@ static Component* create_MemController(ComponentId_t id, Params& params){
 
 static const ElementInfoParam memctrl_params[] = {
     /* Required parameters */
-    {"backend.mem_size",    "Size of physical memory in MiB"},
+    {"backend.mem_size",    "Size of physical memory. NEW REQUIREMENT: must include units in 'B' (SI ok). Simple fix: add 'MiB' to old value."},
     {"clock",               "Clock frequency of controller", NULL},
     /* Optional parameters */
     {"backend",             "Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
@@ -457,7 +628,6 @@ static const ElementInfoParam memctrl_params[] = {
     {"trace_file",          "File name (optional) of a trace-file to generate.", ""},
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
-    {"debug_addr",          "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {"listenercount",       "Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
     {"listener%(listenercount)d", "Loads a listener module into the controller", ""},
     {"network_bw",          "Network link bandwidth.", NULL},
@@ -474,16 +644,9 @@ static const ElementInfoParam memctrl_params[] = {
 
 static const ElementInfoStatistic memctrl_statistics[] = {
     /* Cache hits and misses */
-    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles", 1 },
-    { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
-    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles", 1 },
-    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1},
-    { "requests_received_GetSEx",           "Number of GetSEx (read) requests received",        "requests", 1},
-    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1},
-    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1},
-    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1},
     { NULL, NULL, NULL, 0 }
 };
+
 
 static const ElementInfoPort memctrl_ports[] = {
     {"direct_link",     "Directly connect to another component (like a Directory Controller).", memEvent_port_events},
@@ -492,6 +655,26 @@ static const ElementInfoPort memctrl_ports[] = {
     {NULL, NULL, NULL}
 };
 
+static SubComponent* create_Mem_SimpleBackendConvertor(Component* comp, Params& params){
+    return new SimpleMemBackendConvertor(comp, params);
+}
+
+static const ElementInfoStatistic memBackendConvertor_statistics[] = {
+    /* Cache hits and misses */
+    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles",   1 },
+    { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
+    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles",   1 },
+    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1 },
+    { "requests_received_GetSEx",           "Number of GetSEx (read) requests received",        "requests", 1 },
+    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },
+    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },
+    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },
+    { "latency_GetS",                       "Total latency of handled GetS requests",           "cycles",   1 },
+    { "latency_GetSEx",                     "Total latency of handled GetSEx requests",         "cycles",   1 },
+    { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },
+    { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 },
+    { NULL, NULL, NULL, 0 }
+};
 
 static SubComponent* create_Mem_SimpleSim(Component* comp, Params& params){
     return new SimpleMemory(comp, params);
@@ -502,6 +685,26 @@ static const ElementInfoParam simpleMem_params[] = {
     {"access_time",     "Constant latency of memory operation.", "100 ns"},
     {NULL, NULL}
 };
+
+static SubComponent* create_Mem_TimingDRAM(Component* comp, Params& params) {
+    return new TimingDRAM(comp, params);
+}
+
+static SubComponent* create_Mem_TransactionQ(Component* comp, Params& params) {
+    return new TransactionQ(comp, params);
+}
+
+static SubComponent* create_Mem_ReorderTransactionQ(Component* comp, Params& params) {
+    return new ReorderTransactionQ(comp, params);
+}
+
+static SubComponent* create_Mem_SimplePagePolicy(Component* comp, Params& params) {
+    return new SimplePagePolicy(comp, params);
+}
+
+static SubComponent* create_Mem_TimeoutPagePolicy(Component* comp, Params& params) {
+    return new TimeoutPagePolicy(comp, params);
+}
 
 static SubComponent* create_Mem_SimpleDRAM(Component* comp, Params& params) {
     return new SimpleDRAM(comp, params);
@@ -528,13 +731,24 @@ static const ElementInfoStatistic simpleDRAM_stats[] = {
 };
 
 
+static SubComponent* create_Mem_DelayBuffer(Component * comp, Params& params) {
+    return new DelayBuffer(comp, params);
+}
+
+static const ElementInfoParam delayBuffer_params[] = {
+    {"verbose",     "Sets the verbosity of the backend output", "0" },
+    {"backend",     "Backend memory system", "memHierarchy.simpleMem"},
+    {"request_delay", "Constant delay to be added to requests with units (e.g., 1us)", "0ns"},
+    {NULL, NULL, NULL}
+};
+
 static SubComponent* create_Mem_RequestReorderSimple(Component * comp, Params& params) {
     return new RequestReorderSimple(comp, params);
 }
 
 static const ElementInfoParam requestReorderSimple_params[] = {
     {"verbose",                 "Sets the verbosity of the backend output", "0" },
-    {"max_requests_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+    {"max_issue_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
     {"search_window_size",      "Maximum number of request to search each cycle. 0 or negative is unlimited.", "-1"},
     {"backend",                 "Backend memory system", "memHierarchy.simpleDRAM"},
     { NULL, NULL, NULL }
@@ -547,7 +761,7 @@ static SubComponent* create_Mem_RequestReorderRow(Component * comp, Params& para
 
 static const ElementInfoParam requestReorderRow_params[] = {
     {"verbose",                 "Sets the verbosity of the backend output", "0" },
-    {"max_requests_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+    {"max_issue_per_cycle",  "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
     {"banks",                   "Number of banks", "8"},
     {"bank_interleave_granularity", "Granularity of interleaving in bytes (B), generally a cache line. Must be a power of 2.", "64B"},
     {"row_size",                "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
@@ -556,6 +770,18 @@ static const ElementInfoParam requestReorderRow_params[] = {
     { NULL, NULL, NULL }
 };
 
+#if defined(HAVE_LIBRAMULATOR)
+static SubComponent* create_Mem_Ramulator(Component* comp, Params& params){
+    return new ramulatorMemory(comp, params);
+}
+
+static const ElementInfoParam ramulatorMem_params[] = {
+    {"verbose",          "Sets the verbosity of the backend output", "0" },
+    {"configFile",      "Name of Ramulator Device config file", NULL},
+    {NULL, NULL, NULL}
+};
+
+#endif
 
 #if defined(HAVE_LIBDRAMSIM)
 static SubComponent* create_Mem_DRAMSim(Component* comp, Params& params){
@@ -626,6 +852,10 @@ static SubComponent* create_Mem_VaultSim(Component* comp, Params& params){
     return new VaultSimMemory(comp, params);
 }
 
+static SubComponent* create_Mem_Messier(Component* comp, Params& params){
+    return new Messier(comp, params);
+}
+
 #ifdef HAVE_GOBLIN_HMCSIM
 static SubComponent* create_Mem_GOBLINHMCSim(Component* comp, Params& params){
     return new GOBLINHMCSimBackend(comp, params);
@@ -637,7 +867,7 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 	{ "link_count", 	"Sets the number of links being simulated, min=4, max=8, default=4", "4" },
 	{ "vault_count",	"Sets the number of vaults being simulated, min=16, max=32, default=16", "16" },
 	{ "queue_depth",	"Sets the depth of the HMC request queue, min=2, max=65536, default=2", "2" },
-  	{ "dram_count",         "Sets the number of DRAM blocks per cube\n", "20" },
+  	{ "dram_count",         "Sets the number of DRAM blocks per cube", "20" },
 	{ "xbar_depth",         "Sets the queue depth for the HMC X-bar", "8" },
         { "max_req_size",       "Sets the maximum requests which can be inflight from the controller side at any time", "32" },
 	{ "trace-banks", 	"Decides where tracing for memory banks is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
@@ -651,7 +881,7 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 };
 #endif
 
-#ifdef HAVE_FDSIM
+#ifdef HAVE_LIBFDSIM
 
 static SubComponent* create_Mem_FDSim(Component* comp, Params& params){
     return new FlashDIMMSimMemory(comp, params);
@@ -674,6 +904,13 @@ static const ElementInfoParam vaultsimMem_params[] = {
 };
 
 
+static const ElementInfoParam Messier_params[] = {
+    { "verbose",          "Sets the verbosity of the backend output", "0" },
+    {"access_time",     "When not using DRAMSim, latency of memory operation.", "1 ns"},
+    {NULL, NULL, NULL}
+};
+
+
 
 static Module* create_MemInterface(Component *comp, Params &params) {
     return new MemHierarchyInterface(comp, params);
@@ -684,6 +921,13 @@ static Module* create_MemNIC(Component *comp, Params &params) {
     return new MemNIC(comp, params);
 }
 
+static Module* create_SandyBridgeAddrMapper(Params &params) {
+    return new SandyBridgeAddrMapper(params);
+}
+
+static Module* create_SimpleAddrMapper(Params &params) {
+    return new SimpleAddrMapper(params);
+}
 
 static Component* create_DirectoryController(ComponentId_t id, Params& params){
 	return new DirectoryController( id, params );
@@ -795,6 +1039,15 @@ static const ElementInfoParam bridge_params[] = {
 
 static const ElementInfoSubComponent subcomponents[] = {
     {
+        "simpleMemBackendConvertor",
+        "convert MemEvent to base mem backend",
+        NULL, /* Advanced help */
+        create_Mem_SimpleBackendConvertor, /* Module Alloc w/ params */
+        NULL,
+        memBackendConvertor_statistics, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
         "simpleMem",
         "Simple constant-access time memory",
         NULL, /* Advanced help */
@@ -810,6 +1063,60 @@ static const ElementInfoSubComponent subcomponents[] = {
         create_Mem_SimpleDRAM,
         simpleDRAM_params,
         simpleDRAM_stats,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "timingDRAM",
+        "Moderate timing model for DRAM",
+        NULL,
+        create_Mem_TimingDRAM,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "fifoTransactionQ",
+        "fifo transaction queue",
+        NULL,
+        create_Mem_TransactionQ,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "reorderTransactionQ",
+        "reorder transaction queue",
+        NULL,
+        create_Mem_ReorderTransactionQ,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "simplePagePolicy",
+        "static page open or close policy",
+        NULL,
+        create_Mem_SimplePagePolicy,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "timeoutPagePolicy",
+        "timeout based page open or close policy",
+        NULL,
+        create_Mem_TimeoutPagePolicy,
+        NULL,
+        NULL,
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "DelayBuffer",
+        "Delays requests by specified time",
+        NULL,
+        create_Mem_DelayBuffer,
+        delayBuffer_params,
+        NULL,
         "SST::MemHierarchy::MemBackend"
     },
     {
@@ -830,6 +1137,17 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL,
         "SST::MemHierarchy::MemBackend"
     },
+#if defined(HAVE_LIBRAMULATOR)
+    {
+        "ramulator",
+        "Ramulator-driven memory timings",
+        NULL, /* Advanced help */
+        create_Mem_Ramulator, /* alloc subcomponent */
+        ramulatorMem_params,
+        NULL, /* stats */
+        "SST::MemHierarchy::MemBackend"
+    },
+#endif
 #if defined(HAVE_LIBDRAMSIM)
     {
         "dramsim",
@@ -872,7 +1190,7 @@ static const ElementInfoSubComponent subcomponents[] = {
         "SST::MemHierarchy::MemBackend"
     },
 #endif
-#ifdef HAVE_FDSIM
+#ifdef HAVE_LIBFDSIM
     {
         "flashDIMMSim",
         "FlashDIMM Simulator driven memory timings",
@@ -892,6 +1210,16 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
+    {
+        "Messier",
+        "Messier Memory timings",
+        NULL, /* Advanced help */
+        create_Mem_Messier, /* Module Alloc w/ params */
+        Messier_params,
+        NULL, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+
     { "networkMemoryInspector",
       "Used to classify memory traffic going through a network router",
       NULL,
@@ -907,6 +1235,46 @@ static const ElementInfoSubComponent subcomponents[] = {
         bridge_params,
         NULL,
         "SST::Merlin::Bridge::Translator"
+    },
+    {   "MESICoherenceController",
+        "Coherence controller for MESI or MSI protocol, non-L1",
+        NULL,
+        create_MESICoherenceController,
+        NULL,
+        coherence_statistics,
+        "SST::MemHierarchy::CoherenceController"
+    },
+    {   "MESICacheDirectoryCoherenceController",
+        "Coherence controller for non-inclusive cache with directory, MESI or MSI protocol, non-L1",
+        NULL,
+        create_MESICacheDirectoryCoherenceController,
+        NULL,
+        coherence_statistics,
+        "SST::MemHierarchy::CoherenceController"
+    },
+    {   "IncoherentController",
+        "Incoherent controller, non-L1",
+        NULL,
+        create_IncoherentController,
+        NULL,
+        coherence_statistics,
+        "SST::MemHierarchy::CoherenceController"
+    },
+    {   "L1CoherenceController",
+        "Coherence controller for MESI & MSI protocols, L1 caches",
+        NULL,
+        create_L1CoherenceController,
+        NULL,
+        coherence_statistics,
+        "SST::MemHierarchy::CoherenceController"
+    },
+    {   "L1IncoherentController",
+        "Incoherent controller for MESI & MSI protocols, L1 caches",
+        NULL,
+        create_L1IncoherentController,
+        NULL,
+        coherence_statistics,
+        "SST::MemHierarchy::CoherenceController"
     },
     {NULL, NULL, NULL, NULL, NULL, NULL}
 };
@@ -930,6 +1298,24 @@ static const ElementInfoModule modules[] = {
         NULL, /* Params */
         NULL, /* Interface */
     },
+    {
+        "simpleAddrMapper",
+        "simple address mapper",
+        NULL, /* Advanced help */
+        create_SimpleAddrMapper,
+        NULL,
+        NULL, /* Params */
+        NULL, /* Interface */
+    },
+    {
+        "sandyBridgeAddrMapper",
+        "Sandy Bridge address mapper",
+        NULL, /* Advanced help */
+        create_SandyBridgeAddrMapper,
+        NULL,
+        NULL, /* Params */
+        NULL, /* Interface */
+    },
     {NULL, NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -944,6 +1330,15 @@ static const ElementInfoComponent components[] = {
             COMPONENT_CATEGORY_MEMORY,
             cache_statistics
 	},
+        {   "multithreadL1",
+            "Layer to enable connecting multiple CPUs to a single L1 as if multiple hardware threads",
+            NULL,
+            create_multithreadL1,
+            multithreadL1_params,
+            multithreadL1_ports,
+            COMPONENT_CATEGORY_MEMORY,
+            NULL
+        },
         {   "Sieve",
 	    "Simple Cache Filtering Component to model LL private caches",
 	    NULL,

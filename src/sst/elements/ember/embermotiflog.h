@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -31,11 +35,19 @@ class EmberMotifLogRecord {
 		}
 
 		void increment() {
+#ifndef _SST_EMBER_DISABLE_PARALLEL
+			__sync_fetch_and_add(&motifCount, 1);
+#else
 			motifCount++;
+#endif
 		}
 
 		void decrement() {
+#ifndef _SST_EMBER_DISABLE_PARALLEL
+			__sync_fetch_and_sub(&motifCount, 1);
+#else
 			motifCount--;
+#endif
 		}
 
 		uint32_t getCount() const {

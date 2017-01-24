@@ -6,11 +6,19 @@
 # Copyright (c) 2009-2016, Sandia Corporation
 # All rights reserved.
 #
+# Portions are copyright of other developers:
+# See the file CONTRIBUTORS.TXT in the top level directory
+# the distribution for more information.
+#
 # This file is part of the SST software package. For license
 # information, see the LICENSE file in the top level directory of the
 # distribution.
 
 import sst
+import sys,pprint
+
+pp = pprint.PrettyPrinter(indent=4)
+
 
 from detailedModel import *
 
@@ -77,6 +85,7 @@ class SandyBridgeModel(DetailedModel):
 
         prefix = "sandyBridgeModel_node" + str(nodeID) + "_"
 
+        pp.pprint( self.params )
         cpuL1s, nicL1_read, nicL1_write = snb.configure(prefix,self.params)
 
         self.links.append( self._createThreads( prefix, cpuL1s, self.params['cpu_params']  ) )

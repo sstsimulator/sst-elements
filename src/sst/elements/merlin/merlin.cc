@@ -5,6 +5,10 @@
 // Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -95,7 +99,8 @@ static const ElementInfoStatistic hr_router_statistics[] = {
     { "send_packet_count", "Count number of packets sent on link", "packets", 1},
     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
     { "xbar_stalls", "Count number of cycles the xbar is stalled", "cycles", 1},
-    { "idle_time", "number of (in unites of core timebas) that port was idle", "time spent idle", 1},
+    { "idle_time", "number of (in units of core timebase) that port was idle", "time spent idle", 1},
+    { "width_adj_count", "number of times that link width was increased or decreased", "width adjustment count", 1},
     { NULL, NULL, NULL, 0 }
 };
 
