@@ -1,6 +1,7 @@
 
 import sys,getopt
-sys.path.insert(0, '/mnt/nokrb/fkaplan3/SST/git/sst/sst-elements/src/sst/elements/ember/test')
+sys.path.insert(0, 'PATH')
+#sys.path.insert(0, '/mnt/nokrb/fkaplan3/SST/git/sst/sst-elements/src/sst/elements/ember/test')
 import defaultParams
 import defaultSim
 import chamaOpenIBParams
@@ -185,8 +186,8 @@ elif platform == "exa":
 
 if netBW:
     networkParams['link_bw'] = netBW
-    nicParams['link_bw'] = "1GB/s"
-    #nicParams['link_bw'] = netBW
+    #nicParams['link_bw'] = "1GB/s"
+    nicParams['link_bw'] = netBW
 
 if netFlitSize:
     networkParams['flitSize'] = netFlitSize
@@ -238,7 +239,8 @@ elif "dragonfly2" == netTopo:
 
     topoInfo = DragonFly2Info(netShape)
     topoInfo.params["dragonfly:intergroup_links"] = 1
-    topoInfo.params["xbar_bw"] = "17GB/s"
+    topoInfo.params["xbar_bw"] = netBW
+    #topoInfo.params["xbar_bw"] = "17GB/s"
 
     if "" != routingAlg:
         topoInfo.params["dragonfly:algorithm"] = routingAlg
@@ -255,9 +257,9 @@ elif "dragonfly2" == netTopo:
 	topo = topoDragonFly2()
 
     #Set global link arrangements
+    #print global_link_arrangement
     if  "" == global_link_arrangement:
         global_link_arrangement = "absolute"
-    print global_link_arrangement
     if global_link_arrangement == "relative" or global_link_arrangement == "circulant":
         topo.setRoutingModeRelative()
     if global_link_arrangement == "circulant":
@@ -368,8 +370,8 @@ print "EMBER: network: BW={0} pktSize={1} flitSize={2}".format(
 
 sst.merlin._params["link_lat"] = networkParams['link_lat']
 sst.merlin._params["link_bw"] = networkParams['link_bw']   
-#sst.merlin._params["xbar_bw"] = networkParams['link_bw'] 
-sst.merlin._params["xbar_bw"] = "17GB/s"
+sst.merlin._params["xbar_bw"] = networkParams['link_bw'] 
+#sst.merlin._params["xbar_bw"] = "17GB/s"
 sst.merlin._params["flit_size"] = networkParams['flitSize'] 
 sst.merlin._params["input_latency"] = networkParams['input_latency'] 
 sst.merlin._params["output_latency"] = networkParams['output_latency'] 
@@ -407,8 +409,10 @@ topo.prepParams()
 topo.setEndPointFunc( loadInfo.setNode )
 topo.build()
 
+'''
 sst.setStatisticLoadLevel(8) 
 sst.setStatisticOutput("sst.statOutputCSV")
 sst.setStatisticOutputOptions( {"filepath" : "%s" %(networkStatOut), "separator" : ", " } )
 sst.enableAllStatisticsForComponentType("merlin.hr_router")
+'''
 
