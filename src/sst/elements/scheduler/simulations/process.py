@@ -133,31 +133,36 @@ def main():
 
     InfoPair = []
 
-    for N in [17]: # Each job uses 1/N of the machine
-        for alpha in [4]:
-            if N == 1:
-                applications = ['alltoall', 'bisection', 'mesh']
+    for N in [1]: # Each job uses 1/N of the machine
+        if N == 1:
+            #applications = ['alltoall', 'bisection', 'mesh']
+            applications = ['mesh']
+        else:
+            applications = ['alltoall', 'mesh']
+
+        for application in applications:
+            if application == 'bisection':
+                allocators = ['simple']
+                mappers = ['simple']
             else:
-                applications = ['alltoall', 'mesh']
+                #allocators = ['simple', 'spread', 'random']
+                #mappers = ['libtopomap']
+                allocators = ['simple']
+                mappers = ['libtopomap']
 
-            for application in applications:
-                if application == 'bisection':
-                    allocators = ['simple']
-                    mappers = ['simple']
-                else:
-                    allocators = ['simple', 'spread', 'random']
-                    mappers = ['libtopomap']
+            for allocator in allocators:
+                for mapper in mappers:
+                    #fo = open(fileName, "a")
+                    #fo.writelines("%s, %s, %s\n" %(application, allocator, mapper))
+                    #fo.close()
+                    if allocator == 'random':
+                        num_iters = 100
+                    else:
+                        num_iters = 1
 
-                for allocator in allocators:
                     InfoPair = []
-                    for mapper in mappers:
-                        #fo = open(fileName, "a")
-                        #fo.writelines("%s, %s, %s\n" %(application, allocator, mapper))
-                        #fo.close()
-                        if allocator == 'random':
-                            num_iters = 100
-                        else:
-                            num_iters = 1
+                    for alpha in [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]:
+                    #for alpha in [4]:
                         for iteration in range(num_iters):
                             options.N = N
                             options.alpha = alpha
@@ -168,7 +173,7 @@ def main():
 
                             set_file_name(options)
                             InfoPair.append(get_runtime(options))
-                        record_runtime(options, InfoPair)
+                    record_runtime(options, InfoPair)
 
     '''
         for alpha in [4]: 

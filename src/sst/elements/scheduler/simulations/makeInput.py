@@ -7,10 +7,10 @@ Setting a parameter to "default" or "" will select the default option
 import os
 
 # Input workload trace path:
-traceName = 'jobtrace_files/alltoall_N17.sim'
+traceName = 'jobtrace_files/bisection_N1.sim'
 
 # Output file name:
-outFile = 'simple_libtopomap_alltoall_N17.py'
+outFile = 'simple_libtopomap_bisection_N1.py'
 
 # Machine (cluster) configuration:
 # mesh[xdim, ydim, zdim], torus[xdim, ydim, zdim], simple,

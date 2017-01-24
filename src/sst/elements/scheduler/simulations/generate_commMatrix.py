@@ -20,8 +20,9 @@ def run(cmd):
 def main():
 
     parser = OptionParser(usage="usage: %prog [options]")
-    parser.add_option("-n",  action='store', type=int, dest="numTasks", help="Name of the ember output file.")
-    parser.add_option("-f",  action='store', dest="mtxfile", help="Name of the ember output file.")
+    parser.add_option("-n",  action='store', type=int, dest="numTasks", help="Number of tasks.")
+    parser.add_option("-f",  action='store', dest="mtxfile", help="Name of the matrix file.")
+    parser.add_option("-p",  action='store', dest="pattern", help="Communication pattern.")
     (options, args) = parser.parse_args()
 
 
@@ -31,16 +32,32 @@ def main():
     else:
         tasksPerGroup = numTasks / 2
 
-    fo = open(options.mtxfile, "w")
-    fo.writelines("%%MatrixMarket matrix coordinate pattern symmetric\n")
-    fo.writelines("%d\t%d\t%d\n" % (numTasks, numTasks, (tasksPerGroup * tasksPerGroup)))
+    if options.pattern == "bisection":
+        #Bisection pattern
+        fo = open(options.mtxfile, "w")
+        fo.writelines("%%MatrixMarket matrix coordinate pattern symmetric\n")
+        fo.writelines("%d\t%d\t%d\n" % (numTasks, numTasks, (tasksPerGroup * tasksPerGroup)))
 
-    for i in range(1, tasksPerGroup+1):
-        for j in range(tasksPerGroup+1, numTasks+1):
-            fo.writelines("%d\t%d\n" % (i, j))
+        for i in range(1, tasksPerGroup+1):
+            for j in range(tasksPerGroup+1, numTasks+1):
+                fo.writelines("%d\t%d\n" % (i, j))
 
-    fo.close()
-        
+        fo.close()
+      
+    
+    elif options.pattern == "alltoall":
+        #All to all pattern
+        fo = open(options.mtxfile, "w")
+        fo.writelines("%%MatrixMarket matrix coordinate pattern symmetric\n")
+        fo.writelines("%d\t%d\t%d\n" % (numTasks, numTasks, (numTasks * (numTasks-1))))
+
+        for i in range(1, numTasks+1):
+            for j in range(1, numTasks+1):
+                if i != j: 
+                    fo.writelines("%d\t%d\n" % (i, j))
+
+        fo.close()
+    
     
 
 if __name__ == '__main__':

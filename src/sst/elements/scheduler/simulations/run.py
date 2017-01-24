@@ -11,6 +11,7 @@ from optparse import OptionParser
 import os.path, math
 import numpy as np
 import copy
+import csv
 
 
 # Function to run linux commands
@@ -19,7 +20,7 @@ def run(cmd):
     os.system(cmd)
 
 def submit_job(options):
-    exp_name = "N%s_alpha%s_%s_%s_%s_iter%s" %(options.N, options.alpha, options.application, options.allocator, options.mapper, options.iteration)
+    exp_name = "%s_%s_%s_%sKB_N%s_alpha%s_%s_%s_%s_iter%s" %(options.system_name, options.link_arrangement, options.routing, options.message_size, options.N, options.alpha, options.application, options.allocator, options.mapper, options.iteration)
 
     options.outdir = "%s/%s/%s" %(options.main_sim_path, options.exp_folder, exp_name)
     #os.environ['SIMOUTPUT'] = folder
@@ -27,7 +28,10 @@ def submit_job(options):
     execcommand += "date\n"
     execcommand += "source %s\n" %(options.env_script)
     execcommand += "export SIMOUTPUT=%s/\n" %(options.outdir)
-    execcommand += "python run_DetailedNetworkSim.py --emberOut ember.out --alpha %s --schedPy ./%s_%s_%s_N%s.py\n" %(options.alpha, options.allocator, options.mapper, options.application, options.N)
+    if options.application == "alltoall" or options.application == "alltoallnative" or options.application == "bisection":        
+        execcommand += "python run_DetailedNetworkSim.py --emberOut ember.out --alpha %s --link_arrangement %s --rankmapper linear --routing %s --shuffle --schedPy ./%s_%s_%s_%s_N%s_%sKB.py\n" %(options.alpha, options.link_arrangement, options.routing, options.system_name, options.allocator, options.mapper, options.application, options.N, options.message_size)
+    else:
+        execcommand += "python run_DetailedNetworkSim.py --emberOut ember.out --alpha %s --link_arrangement %s --rankmapper custom --routing %s --schedPy ./%s_%s_%s_%s_N%s_%sKB.py\n" %(options.alpha, options.link_arrangement, options.routing, options.system_name, options.allocator, options.mapper, options.application, options.N, options.message_size)
     execcommand += "date\n"
 
     shfile = "%s/%s.sh" %(options.outdir, exp_name)
@@ -57,8 +61,7 @@ def submit_job(options):
 
         cmd = "chmod +x %s" %(shfile)
         run(cmd)
-        #cmd = ("qsub -q bungee.q,budge.q -cwd -l mem_free=4G,s_vmem=4G -S /bin/bash -o %s -j y %s" % (outfile, shfile))
-        cmd = ("qsub -q me.q -cwd -S /bin/bash -o %s -j y %s" % (outfile, shfile))
+        cmd = ("qsub -q bme.q,budge.q,bungee.q,icsg.q -cwd -l mem_free=16G,s_vmem=16G -S /bin/bash -o %s -j y %s" % (outfile, shfile))
         run(cmd)
         #run("%s" %(shfile))
 
@@ -79,88 +82,136 @@ def main():
     options.main_sim_path = "/mnt/nokrb/fkaplan3/SST/git/sst/sst-elements/src/sst/elements/scheduler/simulations"
     options.env_script = "/mnt/nokrb/fkaplan3/tools/addsimulator.sh"
     
-    '''    
-    for N in [1, 2, 4, 8]: # Each job uses 1/N of the machine
-        for alpha in [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]: 
-            for application in ['alltoall', 'bisection', 'mesh']:
-                for allocator in ['simple', 'spread', 'random']:
-                    for mapper in ['libtopomap']:
+    #system_name = "system_110nodes_220cores"
+    #system_name = "system_72nodes_144cores"
+    system_name = "system_272nodes_544cores"
+
+    '''
+    missing_results_file = "%s/missingResults.txt" %(options.main_sim_path)
+    mf = open(missing_results_file, 'r')
+    for l in mf:
+        line = l.split('cores_')[1]
+        line = line.split('_')
+        alpha = line[4].split('alpha')[1]
+        iteration = line[8].split('iter')[1]
+        iteration = iteration.split('\n')[0]
+        #print line
+
+        options.system_name = system_name
+        options.message_size = line[2]
+        options.routing = line[1]
+        options.link_arrangement = line[0]
+        options.N = line[3]
+        options.alpha = alpha
+        options.application = line[5]
+        options.allocator = line[6]
+        options.mapper = line[7]
+        options.iteration = iteration
+        #print options
+        submit_job(options)
+
+    mf.close()    
+    '''
     '''
     for N in [1]: # Each job uses 1/N of the machine
-        #for alpha in [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]:
-        for alpha in [4]:
-            if N == 1:
-                #applications = ['alltoall', 'bisection', 'mesh']
-                applications = ['alltoall']
-            else:
-                applications = ['alltoall', 'mesh']
+        for message_size in [1000]:
+            applications = ['alltoallnative']
+            allocators = ['simple']
 
             for application in applications:
-                if application == 'bisection':
-                    allocators = ['simple']
-                    mappers = ['simple']
-                else:
-                    #allocators = ['simple', 'spread', 'random']
-                    allocators = ['simple']
-                    mappers = ['libtopomap']
-
                 for allocator in allocators:
+                    mappers = ['simple']
                     for mapper in mappers:
-                        if allocator == 'random':
-                            num_iters = 1
-                        else:
-                            num_iters = 1
-                        for iteration in range(num_iters):
-                            options.N = N
-                            options.alpha = alpha
-                            options.application = application
-                            options.allocator = allocator
-                            options.mapper = mapper
-                            options.iteration = iteration
-                            submit_job(options)
-    '''
-    for N in [1]: # Each job uses 1/N of the machine
-        #for alpha in [0.125, 0.25, 0.5, 0.625, 0.75, 0.875, 1]:
-        for alpha in [4]:
-            for application in ['alltoall']:
-                for allocator in ['simple']:
-                    for mapper in ['libtopomap']:
-                        if allocator == 'random':
-                            num_iters = 1
-                        else:
-                            num_iters = 1
-                        for iteration in range(num_iters):
-                            options.N = N
-                            options.alpha = alpha
-                            options.application = application
-                            options.allocator = allocator
-                            options.mapper = mapper
-                            options.iteration = iteration
-                            submit_job(options)
-    '''
-    '''
-    #Network steady state analysis
-    for N in [1]: # Each job uses 1/N of the machine
-        for alpha in [4]: 
-            for application in ['alltoall']:
-                for allocator in ['simple']:
-                    for mapper in ['libtopomap']:
-                        if allocator == 'random':
-                            num_iters = 100
-                        else:
-                            num_iters = 1
-                        for iteration in range(num_iters):
-                            for motif_iteration in range(10,110,10):
-                                options.N = N
-                                options.alpha = alpha
-                                options.application = application
-                                options.allocator = allocator
-                                options.mapper = mapper
-                                options.iteration = iteration
-                                options.motif_iteration = motif_iteration
-                                submit_job(options)
-    '''
+                        for alpha in [3]:
+                            for routing in ['minimal']:
+                                for link_arrangement in ['relative']:
+                                    iteration = 3
+                                    options.system_name = system_name
+                                    options.message_size = message_size
+                                    options.routing = routing
+                                    options.link_arrangement = link_arrangement
+                                    options.N = N
+                                    options.alpha = alpha
+                                    options.application = application
+                                    options.allocator = allocator
+                                    options.mapper = mapper
+                                    options.iteration = iteration
+                                    submit_job(options)
 
+    '''
+    for N in [1]: # Each job uses 1/N of the machine
+        for message_size in [100]:
+            if N == 1:
+                #applications = ['alltoallnative', 'bisection', 'stencil']
+                applications = ['alltoall']
+                #applications = ['bisection']
+                allocators = ['simple']
+            else:
+                applications = ['alltoallnative', 'stencil']
+                allocators = ['simple', 'simplespread', 'random']
+
+            for application in applications:
+                for allocator in allocators:
+                    if application == "stencil":
+                        mappers = ['topo']
+                    else:
+                        mappers = ['simple']
+                    for mapper in mappers:
+                        for alpha in [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]:
+                            for routing in ['minimal', 'valiant']:
+                                for link_arrangement in ['absolute', 'relative', 'circulant']:
+                                    if allocator == 'random' or application == 'alltoallnative' or application == 'alltoall' or application == 'bisection':
+                                        num_iters = 15
+                                    else:
+                                        num_iters = 1
+                                    for iteration in range(num_iters):
+                                        options.system_name = system_name
+                                        options.message_size = message_size
+                                        options.routing = routing
+                                        options.link_arrangement = link_arrangement
+                                        options.N = N
+                                        options.alpha = alpha
+                                        options.application = application
+                                        options.allocator = allocator
+                                        options.mapper = mapper
+                                        options.iteration = iteration
+                                        submit_job(options)
+
+    
+    '''
+    for N in [1]: # Each job uses 1/N of the machine
+        for message_size in [1000]:
+            if N == 1:
+                applications = ['alltoall', 'bisection', 'stencil']
+                allocators = ['simple']
+
+            for application in applications:
+                for allocator in allocators:
+                    if application == "stencil":
+                        mappers = ['topo']
+                    else:
+                        mappers = ['simple']
+                    for mapper in mappers:
+                        for alpha in [4]:
+                            for routing in ['minimal']:
+                                for link_arrangement in ['absolute']:
+                                    if allocator == 'random':
+                                        num_iters = 20
+                                    else:
+                                        num_iters = 1
+                                    for iteration in range(num_iters):
+                                        options.system_name = system_name
+                                        options.message_size = message_size
+                                        options.routing = routing
+                                        options.link_arrangement = link_arrangement
+                                        options.N = N
+                                        options.alpha = alpha
+                                        options.application = application
+                                        options.allocator = allocator
+                                        options.mapper = mapper
+                                        options.iteration = iteration
+                                        submit_job(options)
+    '''
 
 if __name__ == '__main__':
     main()

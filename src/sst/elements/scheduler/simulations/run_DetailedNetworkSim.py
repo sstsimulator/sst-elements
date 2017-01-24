@@ -40,7 +40,11 @@ def run_sim (options):
 
     # Do the following in a loop until the simulation is completed
     # Parse scheduler snapshot->run ember->Parse ember output->run scheduler->...
-    ember_cmd = "./%s --xml %s --alpha %s > %s" %(options.sched_parser, options.xmlFile, options.alpha, options.emberOutFile)
+    if options.shuffle == True:
+        ember_cmd = "./%s --xml %s --alpha %s --link_arrangement %s --routing %s --rankmapper %s --shuffle > %s" %(options.sched_parser, options.xmlFile, options.alpha, options.link_arrangement, options.routing, options.rankmapper, options.emberOutFile)
+    else:
+        ember_cmd = "./%s --xml %s --alpha %s --link_arrangement %s --routing %s --rankmapper %s > %s" %(options.sched_parser, options.xmlFile, options.alpha, options.link_arrangement, options.routing, options.rankmapper, options.emberOutFile)
+
     #ember_cmd = "./%s --xml %s > %s" %(options.sched_parser, options.xmlFile, options.emberOutFile)
     #ember_cmd = "./%s --xml %s --alpha %s" %(options.sched_parser, options.xmlFile, options.alpha)
     run(ember_cmd)
@@ -100,7 +104,7 @@ def grep_set_fileNames(options):
             temp = temp.split('\"')[1]
             temp = temp.split('/')[-1]
             options.xmlFile = options.output_folder + temp + ".snapshot.xml"
-            #print options.xmlFile
+            print options.xmlFile
         elif "completedJobsTrace" in line:
             temp = line.split(':')[1]
             temp = temp.split('\"')[1]
@@ -123,6 +127,10 @@ def main():
     parser.add_option("--emberOut",  action='store', dest="emberOutFile", help="Name of the ember output file.")
     parser.add_option("--schedPy",  action='store', dest="schedPythonFile", help="Name of the python file that holds the scheduler parameters.")
     parser.add_option("--alpha",  action='store', dest="alpha", help="Alpha = Global_link_BW / Local_link_BW.") 
+    parser.add_option("--link_arrangement",  action='store', dest="link_arrangement", help="Global link arrangement for dragonfly.") 
+    parser.add_option("--routing",  action='store', dest="routing", help="Routing algorithm.") 
+    parser.add_option("--rankmapper",  action='store', dest="rankmapper", help="Custom or linear mapping.") 
+    parser.add_option("--shuffle",  action='store_true', dest="shuffle", help="Random shuffling of the node list order.") 
 
     (options, args) = parser.parse_args()
 

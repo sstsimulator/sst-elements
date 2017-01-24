@@ -46,6 +46,7 @@ routingAlg = ''
 host_bw = ''
 group_bw = ''
 global_bw = ''
+global_link_arrangement = ''
 
 rndmPlacement = False
 #rndmPlacement = True
@@ -62,7 +63,7 @@ motifDefaults = {
 }
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=", "routingAlg=", 
+    opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=", "routingAlg=", "link_arrangement=",
 		"debug=","platform=","numNodes=",
 		"numCores=","loadFile=","cmdLine=","printStats=","networkStatOut=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
@@ -115,6 +116,8 @@ for o, a in opts:
         group_bw = a
     elif o in ("--global_bw"):
         global_bw = a
+    elif o in ("--link_arrangement"):
+        global_link_arrangement = a
     elif o in ("--netFlitSize"):
         netFlitSize = a
     elif o in ("--netPktSize"):
@@ -182,7 +185,8 @@ elif platform == "exa":
 
 if netBW:
     networkParams['link_bw'] = netBW
-    nicParams['link_bw'] = netBW
+    nicParams['link_bw'] = "1GB/s"
+    #nicParams['link_bw'] = netBW
 
 if netFlitSize:
     networkParams['flitSize'] = netFlitSize
@@ -234,9 +238,11 @@ elif "dragonfly2" == netTopo:
 
     topoInfo = DragonFly2Info(netShape)
     topoInfo.params["dragonfly:intergroup_links"] = 1
+    topoInfo.params["xbar_bw"] = "17GB/s"
 
     if "" != routingAlg:
         topoInfo.params["dragonfly:algorithm"] = routingAlg
+        print routingAlg
         if routingAlg == "valiant":
             nicParams['module'] = "merlin.reorderlinkcontrol"
     if "" != host_bw:
@@ -249,10 +255,12 @@ elif "dragonfly2" == netTopo:
 	topo = topoDragonFly2()
 
     #Set global link arrangements
-    global_link_map = "relative"
-    if global_link_map == "relative" or global_link_map == "circulant":
+    if  "" == global_link_arrangement:
+        global_link_arrangement = "absolute"
+    print global_link_arrangement
+    if global_link_arrangement == "relative" or global_link_arrangement == "circulant":
         topo.setRoutingModeRelative()
-    if global_link_map == "circulant":
+    if global_link_arrangement == "circulant":
         ngrp = int(topoInfo.params["dragonfly:num_groups"])
         glm = []
         for i in range(int(ngrp/2)):
@@ -360,7 +368,8 @@ print "EMBER: network: BW={0} pktSize={1} flitSize={2}".format(
 
 sst.merlin._params["link_lat"] = networkParams['link_lat']
 sst.merlin._params["link_bw"] = networkParams['link_bw']   
-sst.merlin._params["xbar_bw"] = networkParams['link_bw'] 
+#sst.merlin._params["xbar_bw"] = networkParams['link_bw'] 
+sst.merlin._params["xbar_bw"] = "17GB/s"
 sst.merlin._params["flit_size"] = networkParams['flitSize'] 
 sst.merlin._params["input_latency"] = networkParams['input_latency'] 
 sst.merlin._params["output_latency"] = networkParams['output_latency'] 
