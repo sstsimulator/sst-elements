@@ -236,10 +236,10 @@ def generate_ember_script (TimeObject, JobObjects, loadfile, mapfile, options):
     emberLoad = "emberLoad.py"
     #currDir   = os.getcwd()
 
-    options.routing = "minimal"
-    options.link_arrangement = "absolute"
-    global_bw = "4"
-    netBW = "4"
+    #options.routing = "minimal"
+    #options.link_arrangement = "absolute"
+    #global_bw = "4"
+    #netBW = "4"
     options.rankmapper = "linear"
 
     # If nextArrivalTime is zero, it means there are no other jobs left to arrive in the future. Do not use stop-at option.
@@ -251,8 +251,9 @@ def generate_ember_script (TimeObject, JobObjects, loadfile, mapfile, options):
         StopAtTime  = str(StopAtTime_) + "us"
         execcommand = "sst --stop-at " + StopAtTime
     # Generate commandline string to execute
-    execcommand += " --model-options=\"--topo=dragonfly2 --shape=2:4:1:9 --routingAlg=%s --link_arrangement=%s --numCores=2 --netFlitSize=8B --netPktSize=1024B --emberVerbose=0 --debug=0" %(options.routing, options.link_arrangement)
-    execcommand += " --host_bw=1GB/s --group_bw=1GB/s --global_bw=%sGB/s --netBW=%sGB/s" %(global_bw, netBW)
+    #execcommand += " --model-options=\"--topo=dragonfly2 --shape=2:4:1:9 --routingAlg=%s --link_arrangement=%s --numCores=2 --netFlitSize=8B --netPktSize=1024B --emberVerbose=0 --debug=0" %(options.routing, options.link_arrangement)
+    #execcommand += " --host_bw=1GB/s --group_bw=1GB/s --global_bw=%sGB/s --netBW=%sGB/s" %(global_bw, netBW)
+    execcommand += " --model-options=\"--topo=dragonfly2 --shape=2:4:1:9 --numCores=2 --netFlitSize=8B --netPktSize=1024B --emberVerbose=0 --debug=0"
     execcommand += " --embermotifLog=" + options.output_folder + "motif"
     if options.rankmapper == "custom":
         execcommand += " --rankmapper=ember.CustomMap"
