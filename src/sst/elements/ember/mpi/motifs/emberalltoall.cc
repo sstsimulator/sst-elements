@@ -36,12 +36,14 @@ bool EmberAlltoallGenerator::generate( std::queue<EmberEvent*>& evQ) {
 			latency /= 1000000000.0;
             output( "%s: ranks %d, loop %d, bytes %d, latency %.3f us\n", 
 					getMotifName().c_str(), size(), m_iterations, m_bytes, latency * 1000000.0  );
+            /*
             //NetworkSim: report total running time
             double latency_us = (double)(m_stopTime-m_startTime)/1000.0;
             double latency_per_iter = latency_us/(double)m_iterations;
             output("Motif Latency: JobNum:%d Total latency:%.3f us\n", jobId, latency_us );
             output("Motif Latency: JobNum:%d Per iteration latency:%.3f us\n", jobId, latency_per_iter );
             output("Job Finished: JobNum:%d Time:%" PRIu64 " us\n", jobId,  getCurrentSimTimeMicro());
+            */
         }
         return true;
     }
