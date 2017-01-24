@@ -30,8 +30,10 @@ public:
 private:
 	std::string graphFile;
 	uint32_t m_loopIndex;
-
 	uint32_t iterations;
+	uint64_t m_startTime;
+    uint64_t m_stopTime;
+
 
 	// Share these over all instances of the motif
 

@@ -142,6 +142,28 @@ bool EmberHalo3DGenerator::generate( std::queue<EmberEvent*>& evQ )
 {
     verbose(CALL_INFO, 1, 0, "loop=%d\n", m_loopIndex );
 
+    	//NetworkSim: record motif start time
+        if ( 0 == m_loopIndex ) {
+        	m_startTime = getCurrentSimTimeMicro();
+        	//output("Start time:%.3f us\n", (double)m_startTime );
+            //enQ_getTime( evQ, &m_startTime );
+        }
+
+        if ( m_loopIndex == iterations ) {
+	    	//NetworkSim: report total running time
+	        //enQ_getTime( evQ, &m_stopTime );
+	        m_stopTime = getCurrentSimTimeMicro();
+	    	if ( 0 == rank() ) {
+	            double latency = (double)(m_stopTime-m_startTime);
+	            double latency_per_iter = latency/(double)iterations;
+	            output("Motif Latency: JobNum:%d Total latency:%.3f us\n", jobId, latency );
+	            output("Motif Latency: JobNum:%d Per iteration latency:%.3f us\n", jobId, latency_per_iter );
+	        	output("Job Finished: JobNum:%d Time:%" PRIu64 " us\n", jobId,  getCurrentSimTimeMicro());
+    		}//end->NetworkSim
+        	return true;
+    	}
+        //end->NetworkSim
+
 		enQ_compute( evQ, nsCompute);
 
 		std::vector<MessageRequest*> requests;
@@ -250,15 +272,25 @@ bool EmberHalo3DGenerator::generate( std::queue<EmberEvent*>& evQ )
 			enQ_allreduce( evQ, NULL, NULL, 1, DOUBLE, SUM, GroupWorld);
 		}
 
+	/*
     if ( ++m_loopIndex == iterations ) {
     	//NetworkSim: report total running time
+        //enQ_getTime( evQ, &m_stopTime );
+        m_stopTime = getCurrentSimTimeMicro();
     	if ( 0 == rank() ) {
-        output("Job Finished: JobNum:%d Time:%" PRIu64 " us\n", jobId,  getCurrentSimTimeMicro());
+            double latency = (double)(m_stopTime-m_startTime);
+            double latency_per_iter = latency/(double)iterations;
+            output("Motif Latency: JobNum:%d Total latency:%.3f us\n", jobId, latency );
+            output("Motif Latency: JobNum:%d Per iteration latency:%.3f us\n", jobId, latency_per_iter );
+        	output("Job Finished: JobNum:%d Time:%" PRIu64 " us\n", jobId,  getCurrentSimTimeMicro());
     	}//end->NetworkSim
 
         return true;
     } else {
         return false;
     }
+    */
+    m_loopIndex++;
+    return false;
 
 }

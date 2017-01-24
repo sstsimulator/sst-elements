@@ -75,13 +75,13 @@ void EmberUnstructuredGenerator::configure()
 	//Create the actual communication map based on the custom task mapping
 	//Ex: TaskMapping on Node0 [3,5,7,120] -> CustomMap[0]=3, CustomMap[1]=5, CustomMap[2]=7, CustomMap[3]=120
 	//	  If rawCommMap says Task0 communicates Task1 -> CommMap says Task3 communicates Task5
-	CommMap = new std::vector<std::map<int,int> >;
-	CommMap->resize(size());
 
 	//Create the actual communication map based on the custom task mapping
 	//Ex: TaskMapping on Node0 [3,5,7,120] -> CustomMap[0]=3, CustomMap[1]=5, CustomMap[2]=7, CustomMap[3]=120
 	//	  If rawCommMap says Task0 communicates Task1 -> CommMap says Task3 communicates Task5
+
 	if (use_CustomRankMap){
+        CommMap = new std::vector<std::map<int,int> >(size());
 		int srcTask, destTask;
 		for(unsigned int i = 0; i < CommMap->size(); i++){
 	        srcTask = cm->CustomMap[i];
@@ -95,6 +95,7 @@ void EmberUnstructuredGenerator::configure()
 	        		//std::cout << srcTask << " communicates with " << destTask << std::endl;
 			}
 		}
+        delete rawCommMap;
 	}
 	//Actual communication map is the same as the raw communication map
 	else{
@@ -113,6 +114,26 @@ void EmberUnstructuredGenerator::configure()
 bool EmberUnstructuredGenerator::generate( std::queue<EmberEvent*>& evQ ) 
 {
     verbose(CALL_INFO, 1, 0, "loop=%d\n", m_loopIndex );
+
+        if ( 0 == m_loopIndex ) {
+            m_startTime = getCurrentSimTimeMicro();
+            //enQ_getTime( evQ, &m_startTime );
+        }
+
+        if ( m_loopIndex == iterations ) {
+            //NetworkSim: report total running time
+            //enQ_getTime( evQ, &m_stopTime );
+            m_stopTime = getCurrentSimTimeMicro();
+            if ( 0 == rank() ) {
+                double latency = (double)(m_stopTime-m_startTime);
+                double latency_per_iter = latency/(double)iterations;
+                output("Motif Latency: JobNum:%d Total latency:%.3f us\n", jobId, latency );
+                output("Motif Latency: JobNum:%d Per iteration latency:%.3f us\n", jobId, latency_per_iter );
+                output("Job Finished: JobNum:%d Time:%" PRIu64 " us\n", jobId,  getCurrentSimTimeMicro());
+            }//end->NetworkSim
+            return true;
+        }
+        //end->NetworkSim
 
     	if(nsCompute > 0) {
     		enQ_compute( evQ, nsCompute);
@@ -141,17 +162,27 @@ bool EmberUnstructuredGenerator::generate( std::queue<EmberEvent*>& evQ )
 		}
 		*/
 
+    /*
     if ( ++m_loopIndex == iterations ) {
+        //enQ_getTime( evQ, &m_stopTime );
+        m_stopTime = getCurrentSimTimeMicro();
     	//NetworkSim: report total running time
     	if ( 0 == rank() ) {
-        output("Job Finished: JobNum:%d Time:%" PRIu64 " us\n", jobId,  getCurrentSimTimeMicro());
+            double latency = (double)(m_stopTime-m_startTime);
+            double latency_per_iter = latency/(double)iterations;
+            output("Motif Latency: JobNum:%d Total latency:%.3f us\n", jobId, latency );
+            output("Motif Latency: JobNum:%d Per iteration latency:%.3f us\n", jobId, latency_per_iter );
+            output("Job Finished: JobNum:%d Time:%" PRIu64 " us\n", jobId,  getCurrentSimTimeMicro());
     	}//end->NetworkSim
 
         return true;
     } else {
         return false;
     }
-
+    */
+    m_loopIndex++;
+    return false;
+    
 }
 
 std::vector<std::map<int,int> >* EmberUnstructuredGenerator::readCommFile(std::string fileName, int procsNeeded)
