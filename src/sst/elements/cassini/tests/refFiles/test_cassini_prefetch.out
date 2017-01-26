@@ -1,0 +1,10 @@
+Next Block Prefetch Engine Statistics (Owner: l1cache):
+--------------------------------------------------------------------
+Cache Miss Events:                      81
+Cache Hit Events :                      100000
+Cache Miss Rate (%):                    0.080934
+Cache Hit Rate (%):                     99.919066
+Prefetches Issued:                      81
+--------------------------------------------------------------------
+ 
+Simulation is complete, simulated time: 9.98358 ms
