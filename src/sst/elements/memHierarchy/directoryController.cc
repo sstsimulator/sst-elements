@@ -440,7 +440,7 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
     }
 
     bool netIdle = network->clock();
-    bool empty = workQueue.empty();
+    bool empty = workQueue.empty() && netMsgQueue.empty() && memMsgQueue.empty();
 
 #ifdef __SST_DEBUG_OUTPUT__
     if (!workQueue.empty()) {
