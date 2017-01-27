@@ -39,8 +39,8 @@ namespace SST {
                 void allocate(TaskMapInfo* taskMapInfo);
                 void deallocate(TaskMapInfo* taskMapInfo);
 
-                int getNumFreeNodes() const { return numAvail; }
-                bool isFree(int nodeNum) const { return freeNodes[nodeNum]; }
+                inline int getNumFreeNodes() const { return numAvail; }
+                inline bool isFree(int nodeNum) const { return freeNodes[nodeNum]; }
                 std::vector<bool>* freeNodeList() const { return new std::vector<bool>(freeNodes); }
                 std::vector<int>* getFreeNodes() const;
                 std::vector<int>* getUsedNodes() const;
@@ -62,7 +62,7 @@ namespace SST {
 
                 //finds the communication route between node0 and node1 for the given weight of commWeight
                 //@return The link indices used in the route
-                virtual std::vector<int>* getRoute(int node0, int node1, double commWeight) const = 0;
+                virtual std::list<int>* getRoute(int node0, int node1, double commWeight) const = 0;
                 
                 double** D_matrix;
                 
