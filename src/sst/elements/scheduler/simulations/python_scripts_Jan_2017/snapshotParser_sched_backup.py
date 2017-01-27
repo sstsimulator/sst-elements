@@ -12,6 +12,7 @@ import xml.dom.minidom
 from optparse import OptionParser
 import math
 import numpy as np
+import random
 
 
 class Time:
@@ -108,12 +109,16 @@ def parse_xml (options):
                 temp[1].append(int(tasks[i]))
             NodeList.append(temp)
         #print NodeList
+        if options.shuffle == True:
+            random.shuffle(NodeList)
 
         # Find number of cores per node
         numCores = len(NodeList[0][1])
 
         # Sort NodeList to match the desired mapping in ember
-        sortedNodeList = sort_NID(NodeList, numCores)
+        #Fulya Jan 2016: Commented out sorting, fix later
+        #sortedNodeList = sort_NID(NodeList, numCores)
+        sortedNodeList = NodeList
 
         tempJobObject = Job()
         tempJobObject.set(jobNum, sortedNodeList, motifFile, startingMotif)
@@ -135,19 +140,24 @@ def sort_NID (nodeList, numCores):
     return (sorted_nodeList)
 
 # Generates necessary files for ember to run
-def generate_ember_files (TimeObject, JobObjects):
+def generate_ember_files (TimeObject, JobObjects, options):
 
-    loadfile    = generate_loadfile (TimeObject, JobObjects)
-    #mapfile     = generate_mapfile (JobObjects)
-    mapfile = "mapFile.txt"
-    execcommand = generate_ember_script (TimeObject, JobObjects, loadfile, mapfile)
+    output_folder = os.getenv('SIMOUTPUT')
+    if output_folder == None:
+        options.output_folder = "./"
+    else:
+        options.output_folder = output_folder
+
+    loadfile    = generate_loadfile (TimeObject, JobObjects, options)
+    mapfile     = generate_mapfile (JobObjects, options)
+    execcommand = generate_ember_script (TimeObject, JobObjects, loadfile, mapfile, options)
 
     return (execcommand)
 
 # Generates a loadfile for ember
-def generate_loadfile (TimeObject, JobObjects):
+def generate_loadfile (TimeObject, JobObjects, options):
 
-    loadfile  = "loadfile"
+    loadfile  = options.output_folder + "loadfile"
     # Open loadfile to write 
     ldfile = open(loadfile, "w")
 
@@ -162,6 +172,10 @@ def generate_loadfile (TimeObject, JobObjects):
 
         # Insert Job Number
         ldfile_str += J_KEY + str(Job.jobNum) + "\n\n"
+
+        #DELETE LATER
+        #Job = get_best_cut_nodeList(Job, options)
+        #print Job.nodeList
 
         # Insert Sorted NodeID List
         ldfile_str += N_KEY
@@ -191,9 +205,73 @@ def generate_loadfile (TimeObject, JobObjects):
 
     return (loadfile)
 
-def generate_mapfile (JobObjects):
+def get_best_cut_nodeList(Job, options):
 
-    mapfile = "mapFile.txt"
+    if options.link_arrangement == 'absolute':
+        if options.alpha == '0.5' or options.alpha == '1':
+            for i in range(72):
+                Job.nodeList[i][0] = i     
+        else:
+            i = 0
+            for j in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26, 27, 32, 33, 34, 35, 40, 41, 48, 49, 56, 57, 64, 65, 20, 21, 22, 23, 28, 29, 30, 31, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47, 50, 51, 52, 53, 54, 55, 58, 59, 60, 61, 62, 63, 66, 67, 68, 69, 70, 71]:
+                Job.nodeList[i][0] = j
+                i += 1
+
+    elif options.link_arrangement == 'relative':
+        if options.alpha == '0.5' or options.alpha == '1':
+            i = 0
+            for j in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 36, 37, 38, 39, 32, 33, 34, 35, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71]:
+                Job.nodeList[i][0] = j
+                i += 1
+        else:
+            i = 0
+            for j in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22, 23, 28, 29, 30, 31, 36, 37, 50, 51, 58, 59, 64, 65, 66, 67, 18, 19, 24, 25, 26, 27, 32, 33, 34, 35, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 52, 53, 54, 55, 56, 57, 60, 61, 62, 63, 68, 69, 70, 71]:
+                Job.nodeList[i][0] = j
+                i += 1
+
+    elif options.link_arrangement == 'circulant':
+        if options.alpha == '0.5' or options.alpha == '1' or options.alpha == '1.5':
+            i = 0
+            for j in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 58, 59, 60, 61, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71]:
+                Job.nodeList[i][0] = j
+                i += 1
+        elif options.alpha == '2' or options.alpha == '2.5':
+            i = 0
+            for j in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 32, 33, 34, 35, 36, 37, 50, 51, 54, 55, 60, 61, 62, 63, 66, 67, 12, 13, 20, 21, 30, 31, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 52, 53, 56, 57, 58, 59, 64, 65, 68, 69, 70, 71]:
+                Job.nodeList[i][0] = j
+                i += 1
+        else:
+            i = 0
+            for j in [0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27, 32, 33, 34, 35, 40, 41, 42, 43, 48, 49, 50, 51, 56, 57, 58, 59, 64, 65, 66, 67, 4, 5, 6, 7, 12, 13, 14, 15, 20, 21, 22, 23, 28, 29, 30, 31, 36, 37, 38, 39, 44, 45, 46, 47, 52, 53, 54, 55, 60, 61, 62, 63, 68, 69, 70, 71]:
+                Job.nodeList[i][0] = j
+                i += 1
+    else:
+        print "Error: Invalid link arrangement!"
+        exit(1)
+
+    if options.shuffle:
+        first_half = []
+        second_half = []
+        for i in range(72):
+            if i <= 35:
+                first_half.append(Job.nodeList[i][0])
+            else:
+                second_half.append(Job.nodeList[i][0])
+
+        random.shuffle(first_half)
+        random.shuffle(second_half)
+
+        for i in range(36):
+            Job.nodeList[i][0] = first_half[i]
+        for i in range(36,72):
+            Job.nodeList[i][0] = second_half[i-36]
+
+    return (Job)
+
+
+def generate_mapfile (JobObjects, options):
+
+    mapfile = options.output_folder + "mapFile.txt"
     # Open mapfile to write 
     mpfile = open(mapfile, "w")
 
@@ -224,10 +302,21 @@ def generate_mapfile (JobObjects):
     return (mapfile)
 
 # Generates a script for ember to run
-def generate_ember_script (TimeObject, JobObjects, loadfile, mapfile):
+def generate_ember_script (TimeObject, JobObjects, loadfile, mapfile, options):
     
     emberLoad = "emberLoad.py"
-    currDir   = os.getcwd()
+    #currDir   = os.getcwd()
+
+    if options.alpha == None:
+        global_bw = "1"
+        netBW = "1"
+    else:
+        global_bw = options.alpha
+        if float(options.alpha) < 1:
+            netBW = "1"
+        else:
+            netBW = options.alpha
+    print netBW
 
     # If nextArrivalTime is zero, it means there are no other jobs left to arrive in the future. Do not use stop-at option.
     if TimeObject.nextArrivalTime == 0:
@@ -238,12 +327,22 @@ def generate_ember_script (TimeObject, JobObjects, loadfile, mapfile):
         StopAtTime  = str(StopAtTime_) + "us"
         execcommand = "sst --stop-at " + StopAtTime
     # Generate commandline string to execute
-    #execcommand += " --model-options=\"--topo=torus --shape=5x4x4 --numCores=4 --netFlitSize=8B --netPktSize=1024B --netBW=4GB/s --emberVerbose=0 --printStats=1"
-    execcommand += " --model-options=\"--topo=dragonfly --shape=7:2:2:4 --numCores=4 --netFlitSize=8B --netPktSize=1024B --netBW=4GB/s --emberVerbose=0 --printStats=1"
-    execcommand += " --embermotifLog=" + currDir + "/motif"
-    #execcommand += " --rankmapper=ember.CustomMap"
+    #execcommand += " --model-options=\"--topo=torus --shape=2x2x2 --numCores=1 --netFlitSize=8B --netPktSize=1024B --emberVerbose=0 --debug=0"
+    #execcommand += " --model-options=\"--topo=dragonfly2 --shape=2:4:1:9 --routingAlg=%s --link_arrangement=%s --numCores=2 --netFlitSize=8B --netPktSize=1024B --emberVerbose=0 --debug=0" %(options.routing, options.link_arrangement)
+    #execcommand += " --model-options=\"--topo=dragonfly2 --shape=2:5:1:11 --routingAlg=%s --link_arrangement=%s --numCores=2 --netFlitSize=8B --netPktSize=1024B --emberVerbose=0 --debug=0" %(options.routing, options.link_arrangement)
+    execcommand += " --model-options=\"--topo=dragonfly2 --shape=2:8:1:17 --routingAlg=%s --link_arrangement=%s --numCores=2 --netFlitSize=8B --netPktSize=1024B --emberVerbose=0 --debug=0" %(options.routing, options.link_arrangement)
+    execcommand += " --host_bw=1GB/s --group_bw=1GB/s --global_bw=%sGB/s --netBW=%sGB/s" %(global_bw, netBW)
+    execcommand += " --embermotifLog=" + options.output_folder + "motif"
+    if options.rankmapper == "custom":
+        execcommand += " --rankmapper=ember.CustomMap"
+    else:
+        execcommand += " --rankmapper=ember.LinearMap"        
+    execcommand += " --mapFile=" + mapfile
+    execcommand += " --networkStatOut=" + options.output_folder + "networkStats.csv"
     execcommand += " --loadFile=" + loadfile + "\""
     execcommand += " " + emberLoad + "\n"
+
+    print execcommand
 
     return (execcommand)
 
@@ -256,10 +355,16 @@ def main():
 
     parser = OptionParser(usage="usage: %prog [options]")
     parser.add_option("--xml",  action='store', dest="xmlFile", help="Name of the xml file that holds the current scheduler snapshot.") 
+    parser.add_option("--alpha",  action='store', dest="alpha", help="Alpha = Global_link_BW / Local_link_BW.") 
+    parser.add_option("--link_arrangement",  action='store', dest="link_arrangement", help="Global link arrangement for dragonfly.") 
+    parser.add_option("--routing",  action='store', dest="routing", help="Routing algorithm.") 
+    parser.add_option("--rankmapper",  action='store', dest="rankmapper", help="Custom or linear mapping.") 
+    parser.add_option("--shuffle",  action='store_true', dest="shuffle", help="Random shuffling of the node list order.") 
+
     (options, args) = parser.parse_args()
     
     TimeObject, JobObjects = parse_xml (options = options)
-    execcommand = generate_ember_files (TimeObject, JobObjects)
+    execcommand = generate_ember_files (TimeObject, JobObjects, options)
     run_ember (execcommand)
 
 if __name__ == '__main__':
