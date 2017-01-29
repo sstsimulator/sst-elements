@@ -57,6 +57,9 @@ private:
 	int32_t  y_up;
 	int32_t  z_down;
 	int32_t  z_up;
+    int jobId; //NetworkSim
+	uint64_t m_startTime;  //NetworkSim
+    uint64_t m_stopTime;  //NetworkSim
 
 };
 

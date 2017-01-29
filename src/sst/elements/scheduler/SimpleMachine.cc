@@ -61,7 +61,9 @@ int SimpleMachine::nodesAtDistance(int dist) const
     return numNodes;
 }
 
-std::vector<int>* SimpleMachine::getRoute(int node1, int node2, double commWeight) const
+std::list<int>* SimpleMachine::getRoute(int node1, int node2, double commWeight) const
 {
-    return new std::vector<int>(1, 0);
+    std::list<int>* retVal = new std::list<int>;
+    retVal->push_back(0);
+    return retVal;
 }
