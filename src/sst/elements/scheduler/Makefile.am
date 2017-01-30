@@ -61,6 +61,7 @@ libscheduler_la_SOURCES = \
     allocators/BestFitAllocator.h \
     allocators/ConstraintAllocator.cc \
     allocators/ConstraintAllocator.h \
+    allocators/DragonflyAllocator.h \
     allocators/EnergyAllocator.cc \
     allocators/EnergyAllocator.h \
     allocators/EnergyAllocClasses.cc \
@@ -87,6 +88,8 @@ libscheduler_la_SOURCES = \
     allocators/RoundUpMBSAllocator.h \
     allocators/SimpleAllocator.cc \
     allocators/SimpleAllocator.h \
+    allocators/SimpleSpreadAllocator.cc \
+    allocators/SimpleSpreadAllocator.h \
     allocators/SortedFreeListAllocator.cc \
     allocators/SortedFreeListAllocator.h \
     allocMappers/FibonacciHeap.cc \

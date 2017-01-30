@@ -346,9 +346,9 @@ int Mesh3DMachine::getLinkIndex(std::vector<int> nodeDims, int dimension) const
     return linkNo;
 }
 
-std::vector<int>* Mesh3DMachine::getRoute(int node0, int node1, double commWeight) const
+std::list<int>* Mesh3DMachine::getRoute(int node0, int node1, double commWeight) const
 {
-    std::vector<int>* links = new std::vector<int>();
+    std::list<int>* links = new std::list<int>();
     int x0 = coordOf(node0,0);
     int x1 = coordOf(node1,0);
     int y0 = coordOf(node0,1);

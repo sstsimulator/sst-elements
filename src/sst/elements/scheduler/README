@@ -124,8 +124,9 @@ A node number 20 in a [3,4,5] machine corresponds to x=2, y=2, z=1.
 torus - a three dimensional torus of nodes. The arguments are the same as mesh.
 
 dragonfly - a dragonfly network with following arguments: [routersPerGroup,
-portsPerRouter, opticalsPerRouter, nodesPerRouter]. Currently, only all-to-all
-local topology and circulant global topology are supported.
+portsPerRouter, opticalsPerRouter, nodesPerRouter, localTopology,
+globalTopology]. Currently, only "all_to_all" local topology is supported.
+Possible global topologies are "absolute", "circulant", and "relative".
 
               Allocators: 
 
