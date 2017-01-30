@@ -135,6 +135,8 @@ private:
     uint32_t router_to_group(uint32_t group);
     uint32_t port_for_router(uint32_t router);
     uint32_t port_for_group(uint32_t group, uint32_t global_slice, int id = -1);
+
+	Statistic<uint64_t>* reroute_count;
 };
 
 

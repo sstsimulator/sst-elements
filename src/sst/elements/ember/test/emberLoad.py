@@ -389,7 +389,7 @@ print("Merlin parameters: (key, value)")
 for k in sst.merlin._params.keys():
 	print "{0}, {1}".format(k, sst.merlin._params[k])
 
-#sst.setStatisticLoadLevel(1)
-#sst.setStatisticOutput("sst.statOutputCSV", {"filepath" : "./stats.csv",
-#                                         "separator" : ", " } )
-#sst.enableAllStatisticsForComponentType("merlin.hr_router", {"type":"sst.AccumulatorStatistic"});
+sst.setStatisticLoadLevel(1)
+sst.setStatisticOutput("sst.statOutputCSV", {"filepath" : "./stats.csv",
+                                         "separator" : ", " } )
+sst.enableAllStatisticsForComponentType("merlin.hr_router", {"type":"sst.AccumulatorStatistic"});
