@@ -50,7 +50,7 @@ namespace SST {
                 std::list<int>* getFreeAtDistance(int center, int distance) const;
 
                 //SimpleMachine assumes a single network link in the machine
-                std::vector<int>* getRoute(int node0, int node1, double commWeight) const;
+                std::list<int>* getRoute(int node0, int node1, double commWeight) const;
 
             private:
                 bool simulationmachine;

@@ -87,9 +87,9 @@ class DragonFlyInfo(TopoInfo):
 		self.params["dragonfly:routers_per_group"] = nRtrs
 		self.params["dragonfly:intergroup_per_router"] = glbl
 		self.params["dragonfly:num_groups"] =  nGrp
-		self.params["dragonfly:algorithm"] =  "minimal" 
+		self.params["dragonfly:algorithm"] =  "minimal"
 
-		self.numNodes = nGrp * hostsPerGroup 
+		self.numNodes = nGrp * hostsPerGroup
                 
 	def getNetworkParams(self):
 		return self.params

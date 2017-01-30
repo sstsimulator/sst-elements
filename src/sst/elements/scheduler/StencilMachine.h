@@ -87,8 +87,8 @@ namespace SST {
                 virtual int getLinkIndex(std::vector<int> dims, int dim) const = 0;
 
                 //default routing is dimension ordered: first x, then y, ...
-                //@return vector of link indices
-                virtual std::vector<int>* getRoute(int node0, int node1, double commWeight) const = 0;
+                //@return list of link indices
+                virtual std::list<int>* getRoute(int node0, int node1, double commWeight) const = 0;
         };
 
         /**
