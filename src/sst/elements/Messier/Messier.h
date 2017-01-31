@@ -52,7 +52,7 @@ namespace SST {
 		class Messier : public SST::Component {
 			public:
 
-				Messier(SST::ComponentId_t id, SST::Params& params); 
+				Messier( SST::ComponentId_t id, SST::Params& params); 
 				void setup()  { };
 				void finish() {DIMM->finish();};
 				void handleEvent(SST::Event* event) {};
