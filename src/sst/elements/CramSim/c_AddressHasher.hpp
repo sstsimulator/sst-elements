@@ -29,6 +29,9 @@
 #ifndef c_ADDRESSHASHER_HPP
 #define c_ADDRESSHASHER_HPP
 
+// sst includes
+#include <sst/core/params.h>
+
 #include <memory>
 #include <map>
 
@@ -41,26 +44,32 @@
 class c_AddressHasher {
 
 public:
-	static c_AddressHasher* getInstance();
+  // Below is for calling in generic locations to obtain a pointer to the singleton instance
+  static c_AddressHasher* getInstance(); 
+  static c_AddressHasher* getInstance(SST::Params& x_params); // This reads the parameters and constructs the hash function
 
-	unsigned getBankFromAddress(const unsigned x_address,
-			const unsigned x_numBanks);
-	unsigned getBankFromAddress1(const unsigned x_address,
-			const unsigned x_numBanks);
-	unsigned getBankFromAddress2(const unsigned x_address,
-			const unsigned x_numBytesPerTransaction,
-			const unsigned x_numChannels, const unsigned x_numBanks);
-	unsigned getRowFromAddress(const unsigned x_address,
-			const unsigned x_numBytesPerTransaction, const unsigned x_numRows,
-			const unsigned x_numCols, const unsigned x_numChannels,
-			const unsigned x_numBanks);
+  unsigned getBankFromAddress(const unsigned x_address,
+			      const unsigned x_numBanks);
+  unsigned getBankFromAddress1(const unsigned x_address,
+			       const unsigned x_numBanks);
+  unsigned getBankFromAddress2(const unsigned x_address,
+			       const unsigned x_numBytesPerTransaction,
+			       const unsigned x_numChannels, const unsigned x_numBanks);
+  unsigned getRowFromAddress(const unsigned x_address,
+			     const unsigned x_numBytesPerTransaction, const unsigned x_numRows,
+			     const unsigned x_numCols, const unsigned x_numChannels,
+			     const unsigned x_numBanks);
 private:
-	static c_AddressHasher* m_instance; //<! shared_ptr to instance of this class
+  static c_AddressHasher* m_instance; //<! shared_ptr to instance of this class
 
-	c_AddressHasher(const c_AddressHasher&)=delete;
-	void operator=(const c_AddressHasher&)=delete;
-	void construct();
+  c_AddressHasher()=delete;
+  c_AddressHasher(const c_AddressHasher&)=delete;
+  void operator=(const c_AddressHasher&)=delete;
 
+  c_AddressHasher(SST::Params& x_params);
+
+  std::string k_addressMapStr = "__r:15__l:6__b:2__R:1__B:1__C:3__h:7__";
+  std::map<std::string, std::vector<uint> > m_bitPositions;
 };
 
 #endif // c_ADDRESSHASHER_HPP

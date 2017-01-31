@@ -395,6 +395,9 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		m_banks.push_back(l_entry);
 	}
 
+	// construct the addressHasher
+	c_AddressHasher::getInstance(x_params);
+
 	// connect the hierarchy
 	unsigned l_rankNum = 0;
 	// for (unsigned l_i = 0; l_i != k_numChannelsPerDimm; ++l_i) {
@@ -487,7 +490,7 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	// set up cmd trace output
 	k_printCmdTrace = (uint32_t)x_params.find<uint32_t>("boolPrintCmdTrace", 0, l_found);
 	
-	k_cmdTraceFileName = (std::string)x_params.find<std::string>("boolCmdTraceFile", "-", l_found);
+	k_cmdTraceFileName = (std::string)x_params.find<std::string>("strCmdTraceFile", "-", l_found);
 	k_cmdTraceFileName.pop_back(); // remove trailing newline (??)
 	if(k_printCmdTrace) {
 	  if(k_cmdTraceFileName.compare("-") == 0) {// set output to std::cout
