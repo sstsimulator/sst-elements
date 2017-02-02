@@ -55,7 +55,7 @@ private:
 	c_TracefileReader(const c_TracefileReader&); //do not implement
 	void operator=(const c_TracefileReader&);
 
-	c_Transaction* getNextTransaction(std::string x_txnType, unsigned x_addr, unsigned x_dataWidth);
+	c_Transaction* getNextTransaction(std::string x_txnType, ulong x_addr, unsigned x_dataWidth);
 	void createTxn();
 
 	//txn to/from events

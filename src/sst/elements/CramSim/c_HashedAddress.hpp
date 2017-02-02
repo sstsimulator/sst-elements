@@ -36,8 +36,9 @@
 class c_HashedAddress {
 
 public:
-  c_HashedAddress(unsigned x_channel, unsigned x_rank, unsigned x_bankgroup,
-		  unsigned x_bank, unsigned x_row, unsigned x_col);
+  //c_HashedAddress(unsigned x_channel, unsigned x_rank, unsigned x_bankgroup,
+  //		  unsigned x_bank, unsigned x_row, unsigned x_col);
+  friend class c_AddressHasher;
   
   unsigned getChannel()   {return m_channel;}
   unsigned getRank()      {return m_row;}
@@ -45,6 +46,7 @@ public:
   unsigned getBank()      {return m_bank;}
   unsigned getRow()       {return m_row;}
   unsigned getCol()       {return m_col;}
+  unsigned getCacheline() {return m_cacheline;}
 
   void print() const;
 
@@ -55,6 +57,7 @@ private:
   unsigned m_bank;
   unsigned m_row;
   unsigned m_col;
+  unsigned m_cacheline;
 };
 
 #endif // c_HASHEDADDRESS_HPP

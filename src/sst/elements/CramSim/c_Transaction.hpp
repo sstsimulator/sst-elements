@@ -39,6 +39,7 @@
 #include <list>
 #include <memory>
 
+#include "c_HashedAddress.hpp"
 
 namespace SST {
 namespace n_Bank {
@@ -52,11 +53,12 @@ class c_Transaction
 {
 
 private:
-  unsigned m_seqNum;
+  ulong m_seqNum;
   e_TransactionType m_txnMnemonic;
-  unsigned m_addr;
+  ulong m_addr;
+  c_HashedAddress m_hashedAddr;
   std::map<e_TransactionType,std::string> m_txnToString;
-
+  
   bool m_isResponseReady;
   unsigned m_numWaitingCommands;
   unsigned m_dataWidth;
@@ -68,12 +70,13 @@ public:
 
 //  friend std::ostream& operator<< (std::ostream& x_stream, const c_Transaction& x_transaction);
 
-  c_Transaction( unsigned x_seqNum, e_TransactionType x_cmdType , unsigned x_addr , unsigned x_dataWidth );
+  c_Transaction( ulong x_seqNum, e_TransactionType x_cmdType , ulong x_addr , unsigned x_dataWidth );
   ~c_Transaction();
 
   e_TransactionType getTransactionMnemonic() const;
 
-  unsigned getAddress() const;         //<! returns the address accessed by this command
+  c_HashedAddress *getHashedAddress(); //<! returns ptr to the hashed address
+  ulong getAddress() const;         //<! returns the address accessed by this command
   std::string getTransactionString() const; //<! returns the mnemonic of command
 
   void setResponseReady(); //<! sets the flag that this transaction has received its response.

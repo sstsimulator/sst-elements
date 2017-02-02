@@ -287,10 +287,10 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 //	x_bankCommandPtr->print();
 //	std::cout << std::endl;
 //
-//	if (m_cmd) {
-//		std::cout << "m_cmd = ";
-//		m_cmd->print();
-//	}
+	if (m_cmd) {
+		std::cout << "m_cmd = ";
+		m_cmd->print();
+	}
 
 	assert(nullptr == m_cmd);
 

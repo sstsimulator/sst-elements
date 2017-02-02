@@ -152,7 +152,7 @@ std::queue<c_BankCommand*> c_TransactionToCommands::getRefreshCommands(unsigned 
 	std::queue<c_BankCommand*> l_commandVec;
 
 	for (unsigned l_i = 0; l_i != x_numBanks; ++l_i) {
-		unsigned l_addr = 32 * l_i;
+		ulong l_addr = 32 * l_i;
 		l_commandVec.push(
 			new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::REF,
 					l_addr)

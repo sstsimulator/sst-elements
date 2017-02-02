@@ -37,6 +37,7 @@
 
 // local includes
 #include "c_BankCommand.hpp"
+#include "c_HashedAddress.hpp"
 
 //<! This class holds information about global simulation state
 //<! any object in the simulator can access this class
@@ -48,14 +49,16 @@ public:
   static c_AddressHasher* getInstance(); 
   static c_AddressHasher* getInstance(SST::Params& x_params); // This reads the parameters and constructs the hash function
 
-  unsigned getBankFromAddress(const unsigned x_address,
+  const void fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address);
+
+  unsigned getBankFromAddress(const ulong x_address,
 			      const unsigned x_numBanks);
-  unsigned getBankFromAddress1(const unsigned x_address,
+  unsigned getBankFromAddress1(const ulong x_address,
 			       const unsigned x_numBanks);
-  unsigned getBankFromAddress2(const unsigned x_address,
+  unsigned getBankFromAddress2(const ulong x_address,
 			       const unsigned x_numBytesPerTransaction,
 			       const unsigned x_numChannels, const unsigned x_numBanks);
-  unsigned getRowFromAddress(const unsigned x_address,
+  unsigned getRowFromAddress(const ulong x_address,
 			     const unsigned x_numBytesPerTransaction, const unsigned x_numRows,
 			     const unsigned x_numCols, const unsigned x_numChannels,
 			     const unsigned x_numBanks);
@@ -68,8 +71,9 @@ private:
 
   c_AddressHasher(SST::Params& x_params);
 
-  std::string k_addressMapStr = "__r:15__l:6__b:2__R:1__B:1__C:3__h:7__";
+  std::string k_addressMapStr = "__r:15__l:7__b:2__R:1__B:2__h:6__";
   std::map<std::string, std::vector<uint> > m_bitPositions;
+  std::map<std::string, uint> m_structureSizes;  // Used for checking that params agree
 };
 
 #endif // c_ADDRESSHASHER_HPP

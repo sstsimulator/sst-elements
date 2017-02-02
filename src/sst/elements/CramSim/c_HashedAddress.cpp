@@ -30,16 +30,17 @@
 
 using namespace std;
 
-c_HashedAddress::c_HashedAddress(unsigned x_channel, unsigned x_rank, unsigned x_bankgroup,
-				 unsigned x_bank, unsigned x_row, unsigned x_col) :
-  m_channel(x_channel), m_rank(x_rank), m_bankgroup(x_bankgroup), m_bank(x_bank),
-  m_row(x_row), m_col(x_col)
-{
-}
+//c_HashedAddress::c_HashedAddress(unsigned x_channel, unsigned x_rank, unsigned x_bankgroup,
+//				 unsigned x_bank, unsigned x_row, unsigned x_col) :
+//  m_channel(x_channel), m_rank(x_rank), m_bankgroup(x_bankgroup), m_bank(x_bank),
+//  m_row(x_row), m_col(x_col)
+//{
+//}
 
 void c_HashedAddress::print() const {
   std::cout << "Channel: " << m_channel << " Rank: " << m_rank
 	    << " BankGroup: " << m_bankgroup << " Bank: " << m_bank
 	    << " Row: " << m_row << " Col: " << m_col
+	    << " Cacheline: " << m_cacheline
 	    << std::endl;
 }

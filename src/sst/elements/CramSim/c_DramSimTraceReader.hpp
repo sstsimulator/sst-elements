@@ -68,7 +68,7 @@ private:
 	c_DramSimTraceReader(const c_DramSimTraceReader&); //do not implement
 	void operator=(const c_DramSimTraceReader&);
 
-	c_Transaction* getNextTransaction(std::string x_txnType, unsigned x_addr,
+	c_Transaction* getNextTransaction(std::string x_txnType, ulong x_addr,
 			unsigned x_dataWidth);
 
 	void createTxn();
