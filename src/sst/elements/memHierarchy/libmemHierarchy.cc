@@ -25,11 +25,13 @@
 #include "Sieve/broadcastShim.h"
 #include "bus.h"
 #include "trivialCPU.h"
+#include "scratchCPU.h"
 #include "streamCPU.h"
 #include "memoryController.h"
 #include "directoryController.h"
 #include "dmaEngine.h"
 #include "memHierarchyInterface.h"
+#include "memHierarchyScratchInterface.h"
 #include "memNIC.h"
 #include "coherenceController.h"
 #include "MESICoherenceController.h"
@@ -50,9 +52,11 @@
 #include "membackend/timingTransaction.h"
 #include "membackend/timingPagePolicy.h"
 #include "membackend/timingAddrMapper.h"
+#include "membackend/simpleMemScratchBackendConvertor.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
 #include "multithreadL1Shim.h"
+#include "scratchpad.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
@@ -79,6 +83,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 static const char * memEvent_port_events[] = {"memHierarchy.MemEvent", NULL};
+static const char * scratchEvent_port_events[] = {"memHierarchy.ScratchEvent", NULL};
 static const char * arielAlloc_port_events[] = {"ariel.arielAllocTrackEvent", NULL};
 static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
 
@@ -490,6 +495,7 @@ static const ElementInfoParam multithreadL1_params[] = {
     {"debug",               "Optional, int - Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",         "Optional, int - Debug verbosity level. Between 0 and 10", "0"},
     {"debug_addr",          "Optional, int - Address (in decimal) to debug. If not specified or set to -1, debug output for all addresses will be printed", "-1"},
+    {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort multithreadL1_ports[] = {
@@ -497,6 +503,48 @@ static const ElementInfoPort multithreadL1_ports[] = {
     {"thread%(port)d", "Links to threads/cores", memEvent_port_events},
     {NULL, NULL, NULL}
 };
+
+
+/*****************************************************************************************
+ *  Component: Scratchpad
+ *  Purpose: Scratchpad (processor-managed cache)
+ *****************************************************************************************/
+static Component* create_scratchpad(ComponentId_t id, Params& params)
+{
+    return new Scratchpad(id, params);
+}
+
+static const ElementInfoParam scratchpad_params[] = {
+    {"clock",               "Required, string - Clock frequency or period with units (Hz or s; SI units OK)."},
+    {"size",                "Required, string - Size of the scratchpad in bytes (B), SI units ok"},
+    {"scratch_line_size",   "Optional, int - Number of bytes in a scratch line. size must be divisible by this number", "64"},
+    {"do_not_back",         "Optional, int - Whether to store actual data values in a backing store or not. Options: 0 (do not store), 1 (store). Do not unset unless simulation does not rely on correct data values!", "1"},
+    {"memory_addr_offset",  "Optional, int - Amount to offset remote addresses by. Default is 'size' so that remote memory addresses start at 0", "size"},
+    {"backendConvertor",    "Optional, string - backend convertor to use for the scratchpad", "memHierarchy.scratchpadBackendConvertor"},
+    {"debug",               "Optional, int - Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",         "Optional, int - Debug verbosity level. Between 0 and 10", "0"},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoPort scratchpad_ports[] = {
+    {"cpu", "Link to cpu/cache on the cpu side", scratchEvent_port_events},
+    {"memory", "Direct link to a memory or bus", memEvent_port_events},
+    {"network", "Network link to memory", net_port_events},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoStatistic scratchpad_statistics[] = {
+    {"request_received_local_read",     "Number of scratchpad reads received from CPU", "count", 1},
+    {"request_received_local_write",    "Number of scratchpad writes received from CPU", "count", 1},
+    {"request_received_remote_read",    "Number of direct memory reads received from CPU", "count", 1},
+    {"request_received_remote_write",   "Number of direct memory writes received from CPU", "count", 1},
+    {"request_received_scratch_get",    "Number of scratchpad Gets received from CPU (copy from memory to scratch)", "count", 1},
+    {"request_received_scratch_put",    "Number of scratchpad Puts received from CPU (copy from scratch to memory)", "count", 1},
+    {"request_issued_local_read",       "Number of scratchpad reads issued to scratchpad", "count", 1},
+    {"request_issued_local_write",      "Number of scratchpad writes issued to scratchpad", "count", 1},
+    { NULL, NULL, NULL, 0 }
+};
+
 /*****************************************************************************************
  *****************************************************************************************/
 
@@ -601,6 +649,24 @@ static const ElementInfoParam cpu_params[] = {
 };
 
 
+static Component* create_scratchCPU(ComponentId_t id, Params& params){
+	return new ScratchCPU( id, params );
+}
+
+static const ElementInfoParam scratch_cpu_params[] = {
+    {"rngseed",                 "Set a seed for the random generator used to create requests", "7"},
+    {"scratchSize",             "Size of the scratchpad in bytes"},
+    {"maxAddr",                 "Maximum address to generate (i.e., scratchSize + size of memory)"},
+    {"scratchLineSize",         "Line size for scratch, max request size for scratch", "64"},
+    {"memLineSize",             "Line size for memory, max request size for memory", "64"},
+    {"clock",                   "Clock frequency in Hz or period in s", "1GHz"},
+    {"maxOutstandingRequests",  "Maximum number of requests outstanding at a time", "8"},
+    {"maxRequestsPerCycle",     "Maximum number of requests to issue per cycle", "2"},
+    {"reqsToIssue",             "Number of requests to issue before ending simulation", "1000"},
+    {NULL, NULL, NULL}
+};
+
+
 static Component* create_streamCPU(ComponentId_t id, Params& params){
 	return new streamCPU( id, params );
 }
@@ -673,6 +739,21 @@ static const ElementInfoStatistic memBackendConvertor_statistics[] = {
     { "latency_GetSEx",                     "Total latency of handled GetSEx requests",         "cycles",   1 },
     { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },
     { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 },
+    { NULL, NULL, NULL, 0 }
+};
+
+static SubComponent* create_Mem_SimpleScratchBackendConvertor(Component* comp, Params& params){
+    return new SimpleMemScratchBackendConvertor(comp, params);
+}
+
+static const ElementInfoStatistic scratchBackendConvertor_statistics[] = {
+    { "cycles_with_issue",                      "Total cycles with successful issue to backend", "cycles", 1},
+    { "cycles_attempted_issue_but_rejected",    "Total cycles where an issue was attempted but backed rejected it", "cycles", 1},
+    { "total_cycles",                           "Total cycles executed at the scratchpad", "cycles", 1},
+    { "reads_received",                         "Number of reads received", "requests", 1},
+    { "writes_received",                        "Number of writes received", "requests", 1},
+    { "read_latency",                           "Latency for read requests", "cycles", 1},
+    { "write_latency",                          "Latency for write requests", "cycles", 1},
     { NULL, NULL, NULL, 0 }
 };
 
@@ -911,9 +992,14 @@ static const ElementInfoParam Messier_params[] = {
 };
 
 
+/* SimpleMem interfaces */
 
-static Module* create_MemInterface(Component *comp, Params &params) {
+static SubComponent* create_MemInterface(Component *comp, Params &params) {
     return new MemHierarchyInterface(comp, params);
+}
+
+static SubComponent* create_ScratchInterface(Component *comp, Params &params) {
+    return new MemHierarchyScratchInterface(comp, params);
 }
 
 
@@ -1039,12 +1125,39 @@ static const ElementInfoParam bridge_params[] = {
 
 static const ElementInfoSubComponent subcomponents[] = {
     {
+        "memInterface",
+        "Simplified interface to Memory Hierarchy",
+        NULL,
+        create_MemInterface,
+        NULL,
+        NULL,
+        "SST::Interfaces::SimpleMem"
+    },
+    {
+        "scratchInterface",
+        "Interface to a scratchpad",
+        NULL,
+        create_ScratchInterface,
+        NULL,
+        NULL,
+        "SST::Interfaces::SimpleMem"
+    },
+    {
         "simpleMemBackendConvertor",
         "convert MemEvent to base mem backend",
         NULL, /* Advanced help */
         create_Mem_SimpleBackendConvertor, /* Module Alloc w/ params */
         NULL,
         memBackendConvertor_statistics, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "simpleMemScratchBackendConvertor",
+        "convert ScratchEvent to base mem backend",
+        NULL, /* Advanced help */
+        create_Mem_SimpleScratchBackendConvertor, /* Module Alloc w/ params */
+        NULL,
+        scratchBackendConvertor_statistics,
         "SST::MemHierarchy::MemBackend"
     },
     {
@@ -1281,15 +1394,6 @@ static const ElementInfoSubComponent subcomponents[] = {
 
 static const ElementInfoModule modules[] = {
     {
-        "memInterface",
-        "Simplified interface to Memory Hierarchy",
-        NULL,
-        NULL,
-        create_MemInterface,
-        NULL,
-        "SST::Interfaces::SimpleMem"
-    },
-    {
         "memNIC",
         "Memory-oriented Network Interface",
         NULL, /* Advanced help */
@@ -1349,7 +1453,7 @@ static const ElementInfoComponent components[] = {
             sieve_statistics	
         },
         {   "BroadcastShim",
-            "blahblah...",
+            "Used to connect a processor to multiple Sieves.",
             NULL,
             create_BroadcastShim,
             NULL,
@@ -1383,6 +1487,15 @@ static const ElementInfoComponent components[] = {
             COMPONENT_CATEGORY_MEMORY,
 	    dirctrl_statistics
         },
+        {   "Scratchpad",
+            "Scratchpad memory",
+            NULL,
+            create_scratchpad,
+            scratchpad_params,
+            scratchpad_ports,
+            COMPONENT_CATEGORY_MEMORY,
+            scratchpad_statistics
+        },
 	{   "DMAEngine",
 	    "DMA Engine Component",
 	    NULL,
@@ -1399,7 +1512,15 @@ static const ElementInfoComponent components[] = {
             cpu_ports,
             COMPONENT_CATEGORY_PROCESSOR
 	},
-	{   "streamCPU",
+	{   "ScratchCPU",
+	    "Simple test CPU for scratchpad interface",
+	    NULL,
+	    create_scratchCPU,
+            scratch_cpu_params,
+            cpu_ports,
+            COMPONENT_CATEGORY_PROCESSOR
+	},
+        {   "streamCPU",
 	    "Simple Demo STREAM CPU for testing",
 	    NULL,
 	    create_streamCPU,

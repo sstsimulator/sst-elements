@@ -234,6 +234,11 @@ void MemController::handleMemResponse( MemEvent* ev ) {
     Debug(_L10_,"Event info: Addr: 0x%" PRIx64 ", dst = %s, src = %s, rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
         ev->getBaseAddr(), ev->getDst().c_str(), ev->getSrc().c_str(), ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
 
+    if (ev->queryFlag(MemEvent::F_NORESPONSE)) {
+        delete ev;
+        return;
+    }
+    
     performResponse( ev );
 
     if ( networkLink_ ) {

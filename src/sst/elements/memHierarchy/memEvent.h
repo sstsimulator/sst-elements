@@ -21,11 +21,11 @@
 #include <sst/core/event.h>
 #include "sst/core/element.h"
 
+#include "util.h"
 
 namespace SST { namespace MemHierarchy {
 
 using namespace std;
-typedef uint64_t Addr;
 
 /*
  *  Command types
@@ -156,6 +156,7 @@ public:
     static const uint32_t F_NONCACHEABLE  = 0x00000010;  /* Used to specify that this memory event should not be cached */
     static const uint32_t F_LLSC          = 0x00000100;  /* Load Link / Store Conditional */
     static const uint32_t F_SUCCESS       = 0x00001000;  /* Indicates a successful response (used for flushes, TODO use for LLSC) */
+    static const uint32_t F_NORESPONSE    = 0x00010000;
 
     typedef std::vector<uint8_t> dataVec;       /** Data Payload type */
 

@@ -14,26 +14,30 @@
 // distribution.
 
 
-#ifndef _H_SST_MEMH_VAULT_SIM_BACKEND
-#define _H_SST_MEMH_VAULT_SIM_BACKEND
+#ifndef __SST_MEMH_SIMPLEMEMSCRATCHBACKENDCONVERTOR__
+#define __SST_MEMH_SIMPLEMEMSCRATCHBACKENDCONVERTOR__
 
-#include "membackend/memBackend.h"
+#include "sst/elements/memHierarchy/membackend/scratchBackendConvertor.h"
 
 namespace SST {
 namespace MemHierarchy {
 
-class VaultSimMemory : public MemFlagMemBackend {
-public:
-    VaultSimMemory(Component *comp, Params &params);
-	virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes );
-private:
-    void handleCubeEvent(SST::Event *event);
+class SimpleMemScratchBackendConvertor : public ScratchBackendConvertor {
+ 
 
-	std::set<ReqId> outToCubes;
-    SST::Link *cube_link;
+  public:
+    SimpleMemScratchBackendConvertor(Component *comp, Params &params);
+
+    virtual bool issue( ScratchReq* req );
+
+    virtual void handleMemResponse( ReqId reqId ) {
+        SST::Event::id_type respId;
+        if ( doResponse( reqId, respId ) ) {
+            notifyResponse( respId );
+        }
+    }
 };
 
 }
 }
-
 #endif

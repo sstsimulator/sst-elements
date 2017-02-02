@@ -70,7 +70,7 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
         case SimpleMem::Request::FlushLineResp: cmd = FlushLineResp; break;
     }
     
-    MemEvent *me = new MemEvent(owner_, req->addr, req->addr, cmd);
+    MemEvent *me = new MemEvent(owner_, req->addrs[0], req->addrs[0], cmd);
     
     me->setSize(req->size);
 

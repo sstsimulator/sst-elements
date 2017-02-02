@@ -23,24 +23,14 @@
 #define	UTIL_H
 
 #include <sst/core/stringize.h>
+#include <sst/core/params.h>
 #include <string>
-#include <assert.h>
 
-#include "memEvent.h"
+using namespace std;
 
 namespace SST {
 namespace MemHierarchy {
 
-#define Z 0
-
-#   define ASSERT_MSG(condition, message) \
-    do { \
-        if (! (condition)) { \
-            std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
-                      << " line " << __LINE__ << ": " << message << std::endl; \
-            std::exit(EXIT_FAILURE); \
-        } \
-    } while (false)
 
 enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
 #define _ERROR_ CALL_INFO,ERROR,0
@@ -62,8 +52,8 @@ const unsigned int tebi = gibi * 1024;
 const unsigned int pebi = tebi * 1024;
 const unsigned int exbi = pebi * 1024;
 
+typedef uint64_t Addr;
 
-using namespace std;
 
 /*
  *  Replace uB or UB (where u/U is a SI unit)
@@ -92,29 +82,7 @@ inline bool isPowerOfTwo(unsigned int x) {
     return !(x & (x-1));   
 }
 
-inline void printData(Output* dbg, string msg, vector<uint8_t>* data){
-    /*dbg->debug(_L10_,"%s: ", msg.c_str());
-    unsigned int  j = 0;
-    for( std::vector<uint8_t>::const_iterator i = data->begin(); i != data->end(); ++i, ++j)
-        dbg->debug(_L10_,"%x", (int)*i);
-    dbg->debug(_L10_, "\n");
-    */
-}
-
-inline void printData(Output* dbg, string msg, vector<uint8_t>* data, Addr offset, unsigned int size){
-    /*dbg->debug(_L10_,"%s: ", msg.c_str()); unsigned int  j = 0;
-    dbg->debug(_L10_,"size: %lu", data->size());
-    for( std::vector<uint8_t>::const_iterator i = data->begin() + offset; i != data->end(); ++i, ++j){
-        if(j < size){
-            dbg->debug(_L10_,"%x", (int)*i);
-        }
-        else break;
-    }
-    dbg->debug(_L10_,"\n");
-    */
-}
-
-inline void fixupParam( Params& params, const std::string oldKey, const std::string newKey ) {
+inline void fixupParam( SST::Params& params, const std::string oldKey, const std::string newKey ) {
     bool found;
 
     std::string value = params.find<std::string>(oldKey,found);

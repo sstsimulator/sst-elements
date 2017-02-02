@@ -16,7 +16,6 @@
 #ifndef _MSHR_H_
 #define _MSHR_H_
 
-#include <boost/assert.hpp>
 #include <map>
 
 #include <sst/core/event.h>
@@ -26,7 +25,6 @@
 
 #include <memEvent.h>
 #include <util.h>
-#include <boost/assert.hpp>
 #include <string>
 #include <sstream>
 #include <boost/variant.hpp>

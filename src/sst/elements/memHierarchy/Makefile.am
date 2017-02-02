@@ -47,15 +47,24 @@ libmemHierarchy_la_SOURCES = \
 	membackend/vaultSimBackend.cc \
 	membackend/MessierBackend.h \
 	membackend/MessierBackend.cc \
+	membackend/scratchBackendConvertor.h \
+	membackend/scratchBackendConvertor.cc \
+	membackend/simpleMemScratchBackendConvertor.h \
+	membackend/simpleMemScratchBackendConvertor.cc \
 	memEvent.h \
+	scratchEvent.h \
 	memNIC.h \
 	memNIC.cc \
 	directoryController.h \
 	directoryController.cc \
+	scratchpad.h \
+	scratchpad.cc \
 	coherenceController.h \
 	coherenceController.cc \
 	memHierarchyInterface.cc \
 	memHierarchyInterface.h \
+	memHierarchyScratchInterface.cc \
+	memHierarchyScratchInterface.h \
 	MESIInternalDirectory.h \
 	MESIInternalDirectory.cc \
 	MESICoherenceController.h \
@@ -76,6 +85,8 @@ libmemHierarchy_la_SOURCES = \
 	trivialCPU.cc \
 	streamCPU.h \
 	streamCPU.cc \
+	scratchCPU.h \
+	scratchCPU.cc \
 	util.h \
 	dmaEngine.h \
 	dmaEngine.cc \
