@@ -42,38 +42,90 @@ c_AddressHasher* c_AddressHasher::m_instance = nullptr;
 c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   // read params here
   bool l_found = false;
-  k_addressMapStr = (string)x_params.find<string>("strAddressMapString", "__r:15__l:7__b:2__R:1__B:2__h:6__", l_found);
+  k_addressMapStr = (string)x_params.find<string>("strAddressMapStr", "_r_l_b_R_B_h_", l_found);
   cout << "Address map string: " << k_addressMapStr << endl;
 
   string l_mapCopy = k_addressMapStr;
 
   //first, remove all _'s
   l_mapCopy.erase(remove(l_mapCopy.begin(), l_mapCopy.end(), '_'), l_mapCopy.end());
-
+  // remove trailing newline
+  l_mapCopy.erase(remove(l_mapCopy.begin(), l_mapCopy.end(), '\n'), l_mapCopy.end());
+  
   regex l_regex("([rlbRBCh])(:([[:digit:]]+))*$");
   smatch l_match;
   uint l_curPos = 0;
+  vector<string> l_simpleOrder;
 
   while(!l_mapCopy.empty()) {
     if(regex_search(l_mapCopy,l_match,l_regex)) {
-      //cout << "1 " << l_match[1] << " 3 " << l_match[3] << endl << endl;
-      m_structureSizes[l_match[1]] = stoi(l_match[3]);
-      for(int ii=0;ii<stoi(l_match[3]);ii++) {
+      string l_bitstr = l_match[3];
+      if(l_match.length() == 1) {
+	l_bitstr = "1";
+      }
+      //cout << "1 " << l_match[1] << " 3 " << l_bitstr << " length " << l_match.length() << endl;
+      m_structureSizes[l_match[1]] += stoi(l_bitstr);
+      for(int ii=0; ii < stoi(l_bitstr); ii++) {
 	m_bitPositions[l_match[1]].push_back(l_curPos);
 	l_curPos++;
       }
+      l_simpleOrder.push_back(l_match[1]);
     } else {
       cerr << "Unable to parse address map string! Incorrectly formatted! Aborting\n";
+      cerr << "Parsed until " << l_mapCopy << endl;
       exit(-1);
     }
     l_mapCopy = regex_replace(l_mapCopy,l_regex,""); // remove the matched portion
   } // while !l_mapCopy.empty()
 
+  // pull config file sizes
+  auto l_pNumChannels = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,l_found);
+  auto l_pNumRanks = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 1,l_found);
+  auto l_pNumBankGroups = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank", 1,l_found);
+  auto l_pNumBanks = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup", 1,l_found);
+  auto l_pNumRows = (uint32_t)x_params.find<uint32_t>("numRowsPerBank", 1,l_found);
+  auto l_pNumCols = (uint32_t)x_params.find<uint32_t>("numColsPerBank", 1,l_found);
+  auto l_pBurstSize = (uint32_t)x_params.find<uint32_t>("numBytesPerTransaction", 1,l_found);
+  
+  // check for simple version address map
+  bool l_allSimple = true;
+  for(auto l_iter : m_bitPositions) {
+    if(l_iter.second.size() > 1) {
+      l_allSimple = false;
+      break;
+    }
+  }
+  
+  if(l_allSimple) { // if simple address detected, reset the bitPositions structureSizes
+    // reset bitPositions
+    for(auto l_iter : l_simpleOrder) {
+      m_bitPositions[l_iter].clear();
+    }
+
+    l_curPos = 0;
+    map<string, uint> l_cfgBits;
+    l_cfgBits["C"] = (uint)log2(l_pNumChannels);
+    l_cfgBits["R"] = (uint)log2(l_pNumRanks);
+    l_cfgBits["B"] = (uint)log2(l_pNumBankGroups);
+    l_cfgBits["b"] = (uint)log2(l_pNumBanks);
+    l_cfgBits["r"] = (uint)log2(l_pNumRows);
+    l_cfgBits["l"] = (uint)log2(l_pNumCols);
+    l_cfgBits["h"] = (uint)log2(l_pBurstSize);
+
+    for(auto l_iter : l_simpleOrder) {
+      m_structureSizes[l_iter] = l_cfgBits[l_iter];
+      for(int ii = 0; ii < l_cfgBits[l_iter]; ii++) {
+	m_bitPositions[l_iter].push_back(l_curPos);
+	l_curPos++;
+      }
+    }
+  } // if(allSimple)
   
   //
   // now verify that the address map and other params make sense
+  //
+  
   // Channels
-  auto l_pNumChannels = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,l_found);
   auto l_it = m_structureSizes.find("C"); // channel
   if(l_it == m_structureSizes.end()) { // if not found
     if(l_pNumChannels > 1) {
@@ -88,13 +140,12 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
       cerr << "Some channels will be unused" << endl << endl;
     }
     if(l_aNumChannels < l_pNumChannels) { // some addresses have nowhere to go
-      cerr << "Error!: Number of addrss map channels is smaller than numChannelsPerDimm. Aborting!" << endl;
+      cerr << "Error!: Number of address map channels is smaller than numChannelsPerDimm. Aborting!" << endl;
       exit(-1);
     }
   } // else found in map
 
   // Ranks
-  auto l_pNumRanks = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 1,l_found);
   l_it = m_structureSizes.find("R");
   if(l_it == m_structureSizes.end()) { // if not found
     if(l_pNumRanks > 1) {
@@ -109,13 +160,12 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
       cerr << "Some Ranks will be unused" << endl << endl;
     }
     if(l_aNumRanks < l_pNumRanks) { // some addresses have nowhere to go
-      cerr << "Error!: Number of addrss map Ranks is smaller than numRanksPerChannel. Aborting!" << endl;
+      cerr << "Error!: Number of address map Ranks is smaller than numRanksPerChannel. Aborting!" << endl;
       exit(-1);
     }
   } // else found in map
 
   // BankGroups
-  auto l_pNumBankGroups = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank", 1,l_found);
   l_it = m_structureSizes.find("B");
   if(l_it == m_structureSizes.end()) { // if not found
     if(l_pNumBankGroups > 1) {
@@ -130,13 +180,12 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
       cerr << "Some BankGroups will be unused" << endl << endl;
     }
     if(l_aNumBankGroups < l_pNumBankGroups) { // some addresses have nowhere to go
-      cerr << "Error!: Number of addrss map bankGroups is smaller than numBankGroupsPerRank. Aborting!" << endl;
+      cerr << "Error!: Number of address map bankGroups is smaller than numBankGroupsPerRank. Aborting!" << endl;
       exit(-1);
     }
   } // else found in map
 
   // Banks
-  auto l_pNumBanks = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup", 1,l_found);
   l_it = m_structureSizes.find("b");
   if(l_it == m_structureSizes.end()) { // if not found
     if(l_pNumBanks > 1) {
@@ -151,13 +200,12 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
       cerr << "Some Banks will be unused" << endl << endl;
     }
     if(l_aNumBanks < l_pNumBanks) { // some addresses have nowhere to go
-      cerr << "Error!: Number of addrss map Banks is smaller than numBanksPerBankGroup. Aborting!" << endl;
+      cerr << "Error!: Number of address map Banks is smaller than numBanksPerBankGroup. Aborting!" << endl;
       exit(-1);
     }
   } // else found in map
 
   // Rows
-  auto l_pNumRows = (uint32_t)x_params.find<uint32_t>("numRowsPerBank", 1,l_found);
   l_it = m_structureSizes.find("r");
   if(l_it == m_structureSizes.end()) { // if not found
     if(l_pNumRows > 1) {
@@ -172,13 +220,12 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
       cerr << "Some Rows will be unused" << endl << endl;
     }
     if(l_aNumRows < l_pNumRows) { // some addresses have nowhere to go
-      cerr << "Error!: Number of addrss map Rows is smaller than numRowsPerBank. Aborting!" << endl;
+      cerr << "Error!: Number of address map Rows is smaller than numRowsPerBank. Aborting!" << endl;
       exit(-1);
     }
   } // else found in map
 
   // Cols
-  auto l_pNumCols = (uint32_t)x_params.find<uint32_t>("numColsPerBank", 1,l_found);
   l_it = m_structureSizes.find("l");
   if(l_it == m_structureSizes.end()) { // if not found
     if(l_pNumCols > 1) {
@@ -193,13 +240,12 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
       cerr << "Some Cols will be unused" << endl << endl;
     }
     if(l_aNumCols < l_pNumCols) { // some addresses have nowhere to go
-      cerr << "Error!: Number of addrss map Cols is smaller than numColsPerBank. Aborting!" << endl;
+      cerr << "Error!: Number of address map Cols is smaller than numColsPerBank. Aborting!" << endl;
       exit(-1);
     }
   } // else found in map
 
   // Cacheline/Burst size
-  auto l_pBurstSize = (uint32_t)x_params.find<uint32_t>("numBytesPerTransaction", 1,l_found);
   l_it = m_structureSizes.find("h");
   if(l_it == m_structureSizes.end()) { // if not found
     if(l_pBurstSize > 1) {

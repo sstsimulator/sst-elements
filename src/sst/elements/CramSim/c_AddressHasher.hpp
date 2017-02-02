@@ -71,7 +71,7 @@ private:
 
   c_AddressHasher(SST::Params& x_params);
 
-  std::string k_addressMapStr = "__r:15__l:7__b:2__R:1__B:2__h:6__";
+  std::string k_addressMapStr = "rlbRBh";
   std::map<std::string, std::vector<uint> > m_bitPositions;
   std::map<std::string, uint> m_structureSizes;  // Used for checking that params agree
 };

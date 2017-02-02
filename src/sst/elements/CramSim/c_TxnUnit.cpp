@@ -456,10 +456,7 @@ void c_TxnUnit::sendRequest() {
 		c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
 		// derive and set command access parameters in the package
 		for (auto& l_cmdPtr : l_cmdPkg) {
-			l_cmdPtr->setRow(
-					l_hasher->getRowFromAddress(l_cmdPtr->getAddress(),
-							k_numBytesPerTransaction, k_numChannelsPerDimm,
-							k_numColsPerBank, k_numRowsPerBank, m_numBanks));
+		  l_cmdPtr->setRow(l_cmdPtr->getTransaction()->getHashedAddress()->getRow());
 		}
 
 		if ((l_cmdPkg.size() < m_cmdUnitReqQTokens)
