@@ -43,7 +43,7 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   // read params here
   bool l_found = false;
   k_addressMapStr = (string)x_params.find<string>("strAddressMapString", "__r:15__l:7__b:2__R:1__B:2__h:6__", l_found);
-  cout << "Read address map string as: " << k_addressMapStr << endl;
+  cout << "Address map string: " << k_addressMapStr << endl;
 
   string l_mapCopy = k_addressMapStr;
 
@@ -343,8 +343,8 @@ const void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const
     x_hashAddr->m_cacheline = l_cur;
   }
 
-  cout << "0x" << std::hex << x_address << std::dec << "\t";
-  x_hashAddr->print();
+  //cout << "0x" << std::hex << x_address << std::dec << "\t";
+  //x_hashAddr->print();
 } // fillHashedAddress(c_HashedAddress, x_address)
 
 

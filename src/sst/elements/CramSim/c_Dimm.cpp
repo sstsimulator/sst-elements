@@ -177,9 +177,7 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 
 void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
 
-	c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
-	unsigned l_bankNum = l_hasher->getBankFromAddress1(
-			x_bankCommandPtr->getAddress(), m_numBanks);
+	unsigned l_bankNum = x_bankCommandPtr->getTransaction()->getHashedAddress()->getBank();
 	m_banks.at(l_bankNum)->handleCommand(x_bankCommandPtr);
 
 }
