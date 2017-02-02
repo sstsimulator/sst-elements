@@ -87,7 +87,7 @@ private:
     void processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr);
     
     /** Process the oldest incoming event */
-    void processEvent(MemEvent* event, bool mshrHit);
+    bool processEvent(MemEvent* event, bool mshrHit);
     
     /** Configure this component's links */
     void configureLinks(Params &params);
@@ -197,14 +197,28 @@ private:
         
         // If we have waiting requests send them now
         requestsThisCycle_ = 0;
+        std::queue<MemEvent*>   tmpBuffer;
         while (!requestBuffer_.empty()) {
             if (requestsThisCycle_ == maxRequestsPerCycle_) {
                 break;
             }
-            processEvent(requestBuffer_.front(), false);
+            
+            bool wasProcessed = processEvent(requestBuffer_.front(), false);
+            if (wasProcessed) {
+                requestsThisCycle_++;
+            } else {
+                tmpBuffer.push(requestBuffer_.front());
+            }
+            
             requestBuffer_.pop();
-            requestsThisCycle_++;
             queuesEmpty = false;
+        }
+        if (!tmpBuffer.empty()) {
+            while (!requestBuffer_.empty()) {
+                tmpBuffer.push(requestBuffer_.front());
+                requestBuffer_.pop();
+            }
+            requestBuffer_.swap(tmpBuffer);
         }
 
         // Disable lower-level cache clocks if they're idle
