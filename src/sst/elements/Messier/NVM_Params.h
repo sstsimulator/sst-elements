@@ -101,11 +101,19 @@ class NVM_PARAMS
 		// This indicates the threshold for starting the write buffer flushing
 		int flush_th; 
 
+		// This indicates the maximum number of conccurent writes to NVM chips (not including those on the write buffer)
+		int max_writes;
+
+		// Determines if cacheline interleaving or bank interleaving
+		bool cacheline_interleaving;
+		
 	public:
 
 		void operator = (const NVM_PARAMS &D ) { 
 			size = D.size;  // in KB, which mean 8GB
 
+			cacheline_interleaving = D.cacheline_interleaving;
+			
 			write_buffer_size = D.write_buffer_size;	
 
 			max_outstanding = D.max_outstanding;
@@ -141,6 +149,7 @@ class NVM_PARAMS
 			row_buffer_size = D.row_buffer_size;
 			flush_th = D.flush_th;
 			max_requests = D.max_requests;
+			max_writes = D.max_writes;
 
 		}
 };

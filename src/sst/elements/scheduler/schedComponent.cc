@@ -136,7 +136,6 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         schedout.output(" %s", name);
         SST::Link *l = configureLink(name, SCHEDULER_TIME_BASE, new Event::Handler<schedComponent,int>(this, &schedComponent::handleCompletionEvent, nodeCount));
         if (l) {
-
             nodes.push_back(l);
             nodeCount++;
         } else {
@@ -686,9 +685,7 @@ void schedComponent::startJob(Job* job)
     // send to each job in the node list
     for (int i = 0; i < ai->getNodesNeeded(); ++i) {
         JobStartEvent *ec = new JobStartEvent(actualRunningTime, job->getJobNum());
-        //NetworkSim: add the emberFinished info to the event
-        ec->emberFinished = emberFinished;
-        //end->NetworkSim
+        ec->emberFinished = emberFinished; //NetworkSim: add the emberFinished info to the event
         nodes[jobNodes[i]] -> send(ec); 
     }
 

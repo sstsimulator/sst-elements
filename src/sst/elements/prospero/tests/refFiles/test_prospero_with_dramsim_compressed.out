@@ -1,0 +1,22 @@
+
+Prospero Component Statistics:
+------------------------------------------------------------------------
+- Completed at:                          685608 ns
+- Cycles with ops issued:                149038 cycles
+- Cycles with no ops issued (LS full):   1222099 cycles
+------------------------------------------------------------------------
+- Reads issued:                          173833
+- Writes issued:                         78410
+- Split reads issued:                    58
+- Split writes issued:                   14
+- Bytes read:                            1269669
+- Bytes written:                         1142526
+------------------------------------------------------------------------
+- Bandwidth (read):                      1.85189 GB/s
+- Bandwidth (written):                   1.66644 GB/s
+- Bandwidth (combined):                  3.51833 GB/s
+- Avr. Read request size:                                7.30 bytes
+- Avr. Write request size:                              14.57 bytes
+- Avr. Request size:                                     9.56 bytes
+
+Simulation is complete, simulated time: 685.608 us

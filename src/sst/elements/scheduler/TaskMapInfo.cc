@@ -145,17 +145,18 @@ void TaskMapInfo::updateNetworkMetrics()
     //iterate through all nodes
     for(unsigned int nodeIter = 0; nodeIter < nodeCommInfo.size(); nodeIter++){
         //iterate through its neighbors in the nodeCommInfo
-        for(std::map<unsigned int, double>::iterator it = nodeCommInfo[nodeIter].begin(); it != nodeCommInfo[nodeIter].end(); it++){
+        for(std::map<unsigned int, double>::iterator it = nodeCommInfo[nodeIter].begin();
+          it != nodeCommInfo[nodeIter].end(); it++){
             //add communication to the traffic
             if(nodeIter < it->first){ //avoid duplicates
                 //get used links
-                std::vector<int>* route = machine.getRoute(nodeIter, it->first, it->second);
+                std::list<int>* route = machine.getRoute(nodeIter, it->first, it->second);
                 //iterate through the links to populate traffic
-                for(unsigned int linkIt = 0; linkIt < route->size(); linkIt++){
-                    if(traffic.count(route->at(linkIt)) == 0){ // no existing communication there
-                        traffic[route->at(linkIt)] = it->second;
+                for (std::list<int>::iterator linkIt = route->begin(); linkIt != route->end(); linkIt++){
+                    if (traffic.count(*linkIt) == 0){ // no existing communication there
+                        traffic[*linkIt] = it->second;
                     } else { //add to existing communication
-                        traffic[route->at(linkIt)] += it->second;
+                        traffic[*linkIt] += it->second;
                     }
                 }
                 delete route;

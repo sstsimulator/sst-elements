@@ -1,0 +1,58 @@
+done configuring SST
+ArielComponent[arielcpu.cc:52:ArielCPU] Creating Ariel component...
+ArielComponent[arielcpu.cc:55:ArielCPU] Configuring for 16 cores...
+ArielComponent[arielcpu.cc:58:ArielCPU] Configuring for check addresses = no
+ArielComponent[arielcpu.cc:140:ArielCPU] Loading memory manger: ariel.MemoryManagerSimple
+ArielComponent[arielcpu.cc:148:ArielCPU] Memory manager construction is completed.
+ArielComponent[arielcpu.cc:179:ArielCPU] Model specifies that there are 0 application arguments
+ArielComponent[arielcpu.cc:189:ArielCPU] Interception and instrumentation of multi-level memory calls is ENABLED.
+ArielComponent[arielcpu.cc:194:ArielCPU] Tracking the stack and dumping on malloc calls is ENABLED.
+ArielComponent[arielcpu.cc:199:ArielCPU] Base pipe name: /sst_shmem_1300-0-1681692777
+ArielComponent[arielcpu.cc:210:ArielCPU] Processing application arguments...
+ArielComponent[arielcpu.cc:313:ArielCPU] Completed processing application arguments.
+ArielComponent[arielcpu.cc:320:ArielCPU] Creating core to cache links...
+ArielComponent[arielcpu.cc:324:ArielCPU] Creating core to allocate tracker links...
+ArielComponent[arielcpu.cc:330:ArielCPU] Creating processor cores and cache links...
+ArielComponent[arielcpu.cc:333:ArielCPU] Configuring cores and cache links...
+ArielComponent[arielcpu.cc:357:ArielCPU] Registering ArielCPU clock at 2660 MHz
+ArielComponent[arielcpu.cc:361:ArielCPU] Clocks registered.
+ArielComponent[arielcpu.cc:369:ArielCPU] Completed initialization of the Ariel CPU.
+SSTARIEL: Loading Ariel Tool to connect to SST on pipe: /sst_shmem_1300-0-1681692777 max instruction count: 1000000000 max core count: 16
+SSTARIEL: Function profiling is disabled.
+The vector is:
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+SSTARIEL: Execution completed, shutting down.
+ArielComponent[arielcpu.cc:377:init] Launching PIN...
+ArielComponent[arielcpu.cc:382:init] Returned from launching PIN.  Waiting for child to attach.
+ArielComponent[arielcpu.cc:385:init] Child has attached!
+CORE ID: 0 PROCESSED AN EXIT EVENT
+ArielComponent[arielcpu.cc:394:finish] Ariel Processor Information:
+ArielComponent[arielcpu.cc:395:finish] Completed at: 997149 nanoseconds.
+ArielComponent[arielcpu.cc:396:finish] Ariel Component Statistics (By Core)
+
+Ariel Memory Management Statistics:
+---------------------------------------------------------------------
+Page Table Sizes:
+- Map entries         828
+Page Table Coverages:
+- Bytes               847872
+Simulation is complete, simulated time: 997.15 us

@@ -30,9 +30,10 @@ typedef uint64_t ReqId;
 
 class MemReqEvent : public SST::Event {
   public:
-    MemReqEvent(ReqId id, Addr addr, bool isWrite, unsigned numBytes, uint32_t flags) : 
-		SST::Event(), reqId(id), addr(addr), isWrite(isWrite), numBytes(numBytes), flags(flags) 
+    MemReqEvent(ReqId id, Addr addr1, bool isWrite, unsigned numBytes, uint32_t flags) : 
+		SST::Event(), reqId(id), addr(addr1), isWrite(isWrite), numBytes(numBytes), flags(flags) 
     { 
+
 		eventID  = generateUniqueId();
 	}
 
