@@ -134,7 +134,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     }
 
     /* NACKing to from L1 to the CPU doesnt really happen in CPUs*/
-    if (L1 && mshrSize != -1)   dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be -1 for L1s, memHierarchy assumes L1 MSHR is sized to match the CPU's load/store queue. You specified %d\n", mshrSize);
+    //if (L1 && mshrSize != -1)   dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be -1 for L1s, memHierarchy assumes L1 MSHR is sized to match the CPU's load/store queue. You specified %d\n", mshrSize);
     
     /* Ensure mshr size is large enough to avoid deadlock*/
     if (-1 == mshrSize) mshrSize = HUGE_MSHR;
