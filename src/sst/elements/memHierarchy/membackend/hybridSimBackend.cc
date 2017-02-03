@@ -71,7 +71,7 @@ void HybridSimMemory::hybridSimDone(unsigned int id, uint64_t addr, uint64_t clo
 #ifdef __SST_DEBUG_OUTPUT__
     output->debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", addr, reqs.size());
 #endif
-    assert(reqs.size());
+    if (reqs.size() == 0) output->fatal(CALL_INFO, -1, "Error: reqs.size() is 0 at DRAMSimMemory done\n");
     ReqId req = reqs.front();
     reqs.pop_front();
     if(reqs.size() == 0)
