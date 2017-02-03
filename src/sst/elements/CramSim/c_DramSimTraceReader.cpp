@@ -82,6 +82,11 @@ c_DramSimTraceReader::c_DramSimTraceReader(ComponentId_t x_id, Params& x_params)
 		exit(-1);
 	}
 	m_traceFileStream.open(m_traceFileName, std::ifstream::in);
+	if(!m_traceFileStream) {
+	  std::cerr << "Unable to open trace file " << m_traceFileName << " Aborting!" << std::endl;
+	  exit(-1);
+	}
+	
 
 	m_statsReqQ = new unsigned[k_txnGenReqQEntries + 1];
 	m_statsResQ = new unsigned[k_txnGenResQEntries + 1];

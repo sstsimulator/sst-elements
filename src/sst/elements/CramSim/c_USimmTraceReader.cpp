@@ -76,13 +76,17 @@ c_USimmTraceReader::c_USimmTraceReader(ComponentId_t x_id, Params& x_params) :
 	}
 	m_txnUnitReqQTokens = k_txnUnitReqQEntries;
 
-  // trace file param
-  m_traceFileName = x_params.find<std::string>("traceFile", "nil", l_found);
-  if (!l_found) {
-    std::cout << "TxnGen:: traceFile name is missing... exiting" << std::endl;
-    exit(-1);
-  }
-  m_traceFileStream.open(m_traceFileName,std::ifstream::in);
+	// trace file param
+	m_traceFileName = x_params.find<std::string>("traceFile", "nil", l_found);
+	if (!l_found) {
+	  std::cout << "TxnGen:: traceFile name is missing... exiting" << std::endl;
+	  exit(-1);
+	}
+	m_traceFileStream.open(m_traceFileName,std::ifstream::in);
+	if(!m_traceFileStream) {
+	  std::cerr << "Unable to open trace file " << m_traceFileName << " Aborting!" << std::endl;
+	  exit(-1);
+	}
 
 
 	m_statsReqQ = new unsigned[k_txnGenReqQEntries+1];

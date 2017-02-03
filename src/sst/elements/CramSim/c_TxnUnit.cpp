@@ -453,7 +453,6 @@ void c_TxnUnit::sendRequest() {
 		std::vector<c_BankCommand*> l_cmdPkg = l_converter->getCommands(
 				l_reqTxn, k_relCommandWidth, k_useReadA, k_useWriteA);
 
-		c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
 		// derive and set command access parameters in the package
 		for (auto& l_cmdPtr : l_cmdPkg) {
 		  l_cmdPtr->setRow(l_cmdPtr->getTransaction()->getHashedAddress()->getRow());

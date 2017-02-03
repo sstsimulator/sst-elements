@@ -42,5 +42,6 @@ void c_HashedAddress::print() const {
 	    << " BankGroup: " << m_bankgroup << " Bank: " << m_bank
 	    << " Row: " << m_row << " Col: " << m_col
 	    << " Cacheline: " << m_cacheline
+	    << "\tBankId: " << m_bankId
 	    << std::endl;
 }

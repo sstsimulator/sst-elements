@@ -33,8 +33,8 @@ using namespace SST::n_Bank;
 
 c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 		e_BankCommandType x_cmdMnemonic, ulong x_addr) :
-		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic), m_isResponseReady(
-				false) {
+		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
+		m_isResponseReady(false), m_transactionPtr(nullptr) {
 
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";
 	m_cmdToString[e_BankCommandType::ACT] = "ACT";

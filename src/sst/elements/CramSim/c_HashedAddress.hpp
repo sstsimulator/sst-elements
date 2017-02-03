@@ -48,6 +48,8 @@ public:
   unsigned getCol()       {return m_col;}
   unsigned getCacheline() {return m_cacheline;}
 
+  unsigned getBankId()    {return m_bankId;} // linear bankId
+
   void print() const;
 
 private:
@@ -58,6 +60,8 @@ private:
   unsigned m_row;
   unsigned m_col;
   unsigned m_cacheline;
+  
+  unsigned m_bankId;
 };
 
 #endif // c_HASHEDADDRESS_HPP

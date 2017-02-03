@@ -418,8 +418,8 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	unsigned l_bankGroupNum = 0;
 	for (unsigned l_i = 0; l_i != k_numRanksPerChannel; ++l_i) {
 		for (unsigned l_j = 0; l_j != k_numBankGroupsPerRank; ++l_j) {
-			// std::cout << "Attaching Rank" << l_i <<
-			// 	" to BankGroup" << l_bankGroupNum << std::endl;
+			std::cout << "Attaching Rank" << l_i <<
+			  " to BankGroup" << l_bankGroupNum << std::endl;
 			m_ranks.at(l_i)->acceptBankGroup(m_bankGroups.at(l_bankGroupNum));
 			m_bankGroups.at(l_bankGroupNum)->acceptRank(m_ranks.at(l_i));
 			++l_bankGroupNum;
@@ -430,8 +430,8 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	unsigned l_bankNum = 0;
 	for (int l_i = 0; l_i != m_numBankGroups; ++l_i) {
 		for (int l_j = 0; l_j != k_numBanksPerBankGroup; ++l_j) {
-			// std::cout << "Attaching BankGroup" << l_i <<
-			// 	" to Bank" << l_bankNum << std::endl;
+			std::cout << "Attaching BankGroup" << l_i <<
+			  " to Bank" << l_bankNum << std::endl;
 			m_bankGroups.at(l_i)->acceptBank(m_banks.at(l_bankNum));
 			m_banks.at(l_bankNum)->acceptBankGroup(m_bankGroups.at(l_i));
 			l_bankNum++;
@@ -535,10 +535,9 @@ void c_CmdUnit::print() const {
 
 void c_CmdUnit::printQueues() {
 	std::cout << "CmdReqQ: " << std::endl;
-	c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
 	for (auto& l_entry : m_cmdReqQ) {
 		l_entry->print();
-		unsigned l_bankNum = l_entry->getTransaction()->getHashedAddress()->getBank();
+		unsigned l_bankNum = l_entry->getTransaction()->getHashedAddress()->getBankId();
 
 		std::cout << " - Going to Bank " << std::dec << l_bankNum << std::endl;
 	}
@@ -643,9 +642,6 @@ void c_CmdUnit::sendReqCloseBankPolicy(
 	for(auto& l_issued : m_cmdACTFAWtracker)
 		l_cmdACTIssuedInFAW += l_issued;
 
-	c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
-
-
 
 	for (auto l_cmdPtrItr = x_startItr; l_cmdPtrItr != m_cmdReqQ.end();
 			++l_cmdPtrItr) {
@@ -674,9 +670,7 @@ void c_CmdUnit::sendReqCloseBankPolicy(
 				|| (((l_cmdPtr))->getCommandMnemonic()
 						== e_BankCommandType::WRITEA));
 
-		unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBank();
-		//unsigned l_bankNum = l_hasher->getBankFromAddress2(l_addr,
-		//		(k_numBytesPerTransaction), (k_numChannelsPerDimm), m_numBanks);
+		unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBankId();
 
 //		std::cout << std::endl << "@" << std::dec
 //				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
@@ -798,11 +792,7 @@ void c_CmdUnit::sendReqOpenRowPolicy() {
 				|| (((l_cmdPtr))->getCommandMnemonic()
 						== e_BankCommandType::WRITE));
 		ulong l_addr = ((l_cmdPtr))->getAddress();
-		c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
-		unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBank();
-//		unsigned l_bankNum = l_hasher->getBankFromAddress1(l_addr, m_numBanks);
-		//unsigned l_bankNum = l_hasher->getBankFromAddress2(l_addr,
-		//		(k_numBytesPerTransaction), (k_numChannelsPerDimm), m_numBanks);
+		unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBankId();
 		c_BankInfo* l_bankPtr = m_banks.at(l_bankNum);
 		unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
@@ -852,16 +842,9 @@ void c_CmdUnit::sendReqOpenRowPolicy() {
 					|| (((l_cmdPtr))->getCommandMnemonic()
 							== e_BankCommandType::PRE));
 
-			unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBank();
+			unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBankId();
 			unsigned l_bankNumOpenBank =
-			  l_openBankCmdPtr->getTransaction()->getHashedAddress()->getBank();
-			//c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
-			//unsigned l_bankNum = l_hasher->getBankFromAddress2(
-			//		l_cmdPtr->getAddress(), (k_numBytesPerTransaction),
-			//		(k_numChannelsPerDimm), m_numBanks);
-			//unsigned l_bankNumOpenBank = l_hasher->getBankFromAddress2(
-			//		l_openBankCmdPtr->getAddress(), (k_numBytesPerTransaction),
-			//		(k_numChannelsPerDimm), m_numBanks);
+			  l_openBankCmdPtr->getTransaction()->getHashedAddress()->getBankId();
 
 			if (l_isActPreCmd && (l_bankNum == l_bankNumOpenBank)) {
 				l_deleteList.push_back(l_cmdPtr);
@@ -928,11 +911,7 @@ void c_CmdUnit::sendReqPseudoOpenRowPolicy() {
 				|| (((l_cmdPtr))->getCommandMnemonic()
 						== e_BankCommandType::WRITE));
 		ulong l_addr = ((l_cmdPtr))->getAddress();
-		unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBank();
-		//c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
-//		unsigned l_bankNum = l_hasher->getBankFromAddress1(l_addr, m_numBanks);
-		//unsigned l_bankNum = l_hasher->getBankFromAddress2(l_addr,
-		//		(k_numBytesPerTransaction), (k_numChannelsPerDimm), m_numBanks);
+		unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBankId();
 		c_BankInfo* l_bankPtr = m_banks.at(l_bankNum);
 		unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
@@ -982,16 +961,9 @@ void c_CmdUnit::sendReqPseudoOpenRowPolicy() {
 					== e_BankCommandType::ACT)
 					|| (((l_cmdPtr))->getCommandMnemonic()
 							== e_BankCommandType::PRE));
-			unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBank();
+			unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBankId();
 			unsigned l_bankNumOpenBank =
-			  l_openBankCmdPtr->getTransaction()->getHashedAddress()->getBank();
-			//c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
-			//unsigned l_bankNum = l_hasher->getBankFromAddress2(
-			//		l_cmdPtr->getAddress(), (k_numBytesPerTransaction),
-			//		(k_numChannelsPerDimm), m_numBanks);
-			//unsigned l_bankNumOpenBank = l_hasher->getBankFromAddress2(
-			//		l_openBankCmdPtr->getAddress(), (k_numBytesPerTransaction),
-			//		(k_numChannelsPerDimm), m_numBanks);
+			  l_openBankCmdPtr->getTransaction()->getHashedAddress()->getBankId();
 
 			if (l_isActPreCmd && (l_bankNum == l_bankNumOpenBank)) {
 				l_deleteList.push_back(l_cmdPtr);
@@ -1059,11 +1031,7 @@ void c_CmdUnit::sendReqOpenBankPolicy() {
 				|| (((l_cmdPtr))->getCommandMnemonic()
 						== e_BankCommandType::WRITE));
 		ulong l_addr = ((l_cmdPtr))->getAddress();
-		unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBank();
-		//c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
-//		unsigned l_bankNum = l_hasher->getBankFromAddress1(l_addr, m_numBanks);
-		//unsigned l_bankNum = l_hasher->getBankFromAddress2(l_addr,
-		//		(k_numBytesPerTransaction), (k_numChannelsPerDimm), m_numBanks);
+		unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBankId();
 		c_BankInfo* l_bankPtr = m_banks.at(l_bankNum);
 		unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
@@ -1110,16 +1078,9 @@ void c_CmdUnit::sendReqOpenBankPolicy() {
 					== e_BankCommandType::ACT)
 					|| (((l_cmdPtr))->getCommandMnemonic()
 							== e_BankCommandType::PRE));
-			unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBank();
+			unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBankId();
 			unsigned l_bankNumOpenBank =
-			  l_openBankCmdPtr->getTransaction()->getHashedAddress()->getBank();
-			//c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
-			//unsigned l_bankNum = l_hasher->getBankFromAddress2(
-			//		l_cmdPtr->getAddress(), (k_numBytesPerTransaction),
-			//		(k_numChannelsPerDimm), m_numBanks);
-			//unsigned l_bankNumOpenBank = l_hasher->getBankFromAddress2(
-			//		l_openBankCmdPtr->getAddress(), (k_numBytesPerTransaction),
-			//		(k_numChannelsPerDimm), m_numBanks);
+			  l_openBankCmdPtr->getTransaction()->getHashedAddress()->getBankId();
 
 			if (l_isActPreCmd && (l_bankNum == l_bankNumOpenBank)) {
 				l_deleteList.push_back(l_cmdPtr);
@@ -1209,18 +1170,12 @@ void c_CmdUnit::sendRequest() {
 }
 
 void c_CmdUnit::sendRefresh() {
-	c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
 	std::vector<c_BankCommand*>::iterator l_cmdIter = m_cmdReqQ.begin();
 	while (m_cmdReqQ.size() > 0
 			&& (*l_cmdIter)->getCommandMnemonic() == e_BankCommandType::REF) {
 		c_BankCommand* l_refCmd = (*l_cmdIter);
 
-		unsigned l_bankNum = l_refCmd->getTransaction()->getHashedAddress()->getBank();
-//		unsigned l_bankNum = l_hasher->getBankFromAddress1(
-//				l_refCmd->getAddress(), m_numBanks);
-		//unsigned l_bankNum = l_hasher->getBankFromAddress2(
-		//		l_refCmd->getAddress(), (k_numBytesPerTransaction),
-		//		(k_numChannelsPerDimm), m_numBanks);
+		unsigned l_bankNum = l_refCmd->getTransaction()->getHashedAddress()->getBankId();
 		c_BankInfo* l_bank = m_banks.at(l_bankNum);
 
 		if (sendCommand(l_refCmd, l_bank)) {
@@ -1304,7 +1259,9 @@ bool c_CmdUnit::sendCommand(c_BankCommand* x_bankCommandPtr,
 				<< " " << (x_bankCommandPtr)->getCommandString()
 				<< " " << std::dec << (x_bankCommandPtr)->getSeqNum()
 				<< " 0x" << std::hex << (x_bankCommandPtr)->getAddress()
-				<< " " << std::dec << x_bank->getBankGroup()->getBankGroupId()
+				<< " " << std::dec << x_bankCommandPtr->getTransaction()->getHashedAddress()->getChannel()
+				<< " " << std::dec << x_bankCommandPtr->getTransaction()->getHashedAddress()->getRank()
+				<< " " << std::dec << x_bankCommandPtr->getTransaction()->getHashedAddress()->getBankGroup()
 				<< " " << std::dec << x_bankCommandPtr->getTransaction()->getHashedAddress()->getBank()
 				<< " " << std::dec << x_bankCommandPtr->getTransaction()->getHashedAddress()->getRow()
 				<< " " << std::dec << x_bankCommandPtr->getTransaction()->getHashedAddress()->getCol()

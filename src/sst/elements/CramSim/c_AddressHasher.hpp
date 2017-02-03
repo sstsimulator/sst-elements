@@ -50,6 +50,7 @@ public:
   static c_AddressHasher* getInstance(SST::Params& x_params); // This reads the parameters and constructs the hash function
 
   const void fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address);
+  const ulong getAddressForBankId(const unsigned x_bankId);
 
   unsigned getBankFromAddress(const ulong x_address,
 			      const unsigned x_numBanks);
@@ -70,6 +71,14 @@ private:
   void operator=(const c_AddressHasher&)=delete;
 
   c_AddressHasher(SST::Params& x_params);
+
+  unsigned k_pNumChannels;
+  unsigned k_pNumRanks;
+  unsigned k_pNumBankGroups;
+  unsigned k_pNumBanks;
+  unsigned k_pNumRows;
+  unsigned k_pNumCols;
+  unsigned k_pBurstSize;
 
   std::string k_addressMapStr = "rlbRBh";
   std::map<std::string, std::vector<uint> > m_bitPositions;

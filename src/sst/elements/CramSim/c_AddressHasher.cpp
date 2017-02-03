@@ -79,13 +79,13 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   } // while !l_mapCopy.empty()
 
   // pull config file sizes
-  auto l_pNumChannels = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,l_found);
-  auto l_pNumRanks = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 1,l_found);
-  auto l_pNumBankGroups = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank", 1,l_found);
-  auto l_pNumBanks = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup", 1,l_found);
-  auto l_pNumRows = (uint32_t)x_params.find<uint32_t>("numRowsPerBank", 1,l_found);
-  auto l_pNumCols = (uint32_t)x_params.find<uint32_t>("numColsPerBank", 1,l_found);
-  auto l_pBurstSize = (uint32_t)x_params.find<uint32_t>("numBytesPerTransaction", 1,l_found);
+  k_pNumChannels = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,l_found);
+  k_pNumRanks = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 1,l_found);
+  k_pNumBankGroups = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank", 1,l_found);
+  k_pNumBanks = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup", 1,l_found);
+  k_pNumRows = (uint32_t)x_params.find<uint32_t>("numRowsPerBank", 1,l_found);
+  k_pNumCols = (uint32_t)x_params.find<uint32_t>("numColsPerBank", 1,l_found);
+  k_pBurstSize = (uint32_t)x_params.find<uint32_t>("numBytesPerTransaction", 1,l_found);
   
   // check for simple version address map
   bool l_allSimple = true;
@@ -104,13 +104,13 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
 
     l_curPos = 0;
     map<string, uint> l_cfgBits;
-    l_cfgBits["C"] = (uint)log2(l_pNumChannels);
-    l_cfgBits["R"] = (uint)log2(l_pNumRanks);
-    l_cfgBits["B"] = (uint)log2(l_pNumBankGroups);
-    l_cfgBits["b"] = (uint)log2(l_pNumBanks);
-    l_cfgBits["r"] = (uint)log2(l_pNumRows);
-    l_cfgBits["l"] = (uint)log2(l_pNumCols);
-    l_cfgBits["h"] = (uint)log2(l_pBurstSize);
+    l_cfgBits["C"] = (uint)log2(k_pNumChannels);
+    l_cfgBits["R"] = (uint)log2(k_pNumRanks);
+    l_cfgBits["B"] = (uint)log2(k_pNumBankGroups);
+    l_cfgBits["b"] = (uint)log2(k_pNumBanks);
+    l_cfgBits["r"] = (uint)log2(k_pNumRows);
+    l_cfgBits["l"] = (uint)log2(k_pNumCols);
+    l_cfgBits["h"] = (uint)log2(k_pBurstSize);
 
     for(auto l_iter : l_simpleOrder) {
       m_structureSizes[l_iter] = l_cfgBits[l_iter];
@@ -128,18 +128,18 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   // Channels
   auto l_it = m_structureSizes.find("C"); // channel
   if(l_it == m_structureSizes.end()) { // if not found
-    if(l_pNumChannels > 1) {
-      cerr << "Number of Channels (" << l_pNumChannels << ") is greater than 1, but no "
+    if(k_pNumChannels > 1) {
+      cerr << "Number of Channels (" << k_pNumChannels << ") is greater than 1, but no "
 	   << "Channels were specified (C) in the address map! Aborting!" << endl;
       exit(-1);
     }
   } else { // found in map
     auto l_aNumChannels = (1 << l_it->second);
-    if(l_aNumChannels > l_pNumChannels) {
+    if(l_aNumChannels > k_pNumChannels) {
       cerr << "Warning!: Number of address map channels is larger than numChannelsPerDimm." << endl;
       cerr << "Some channels will be unused" << endl << endl;
     }
-    if(l_aNumChannels < l_pNumChannels) { // some addresses have nowhere to go
+    if(l_aNumChannels < k_pNumChannels) { // some addresses have nowhere to go
       cerr << "Error!: Number of address map channels is smaller than numChannelsPerDimm. Aborting!" << endl;
       exit(-1);
     }
@@ -148,18 +148,18 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   // Ranks
   l_it = m_structureSizes.find("R");
   if(l_it == m_structureSizes.end()) { // if not found
-    if(l_pNumRanks > 1) {
-      cerr << "Number of Ranks (" << l_pNumRanks << ") is greater than 1, but no "
+    if(k_pNumRanks > 1) {
+      cerr << "Number of Ranks (" << k_pNumRanks << ") is greater than 1, but no "
 	   << "Ranks were specified (R) in the address map! Aborting!" << endl;
       exit(-1);
     }
   } else { // found in map
     auto l_aNumRanks = (1 << l_it->second);
-    if(l_aNumRanks > l_pNumRanks) {
+    if(l_aNumRanks > k_pNumRanks) {
       cerr << "Warning!: Number of address map Ranks is larger than numRanksPerChannel." << endl;
       cerr << "Some Ranks will be unused" << endl << endl;
     }
-    if(l_aNumRanks < l_pNumRanks) { // some addresses have nowhere to go
+    if(l_aNumRanks < k_pNumRanks) { // some addresses have nowhere to go
       cerr << "Error!: Number of address map Ranks is smaller than numRanksPerChannel. Aborting!" << endl;
       exit(-1);
     }
@@ -168,18 +168,18 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   // BankGroups
   l_it = m_structureSizes.find("B");
   if(l_it == m_structureSizes.end()) { // if not found
-    if(l_pNumBankGroups > 1) {
-      cerr << "Number of BankGroups (" << l_pNumBankGroups << ") is greater than 1, but no "
+    if(k_pNumBankGroups > 1) {
+      cerr << "Number of BankGroups (" << k_pNumBankGroups << ") is greater than 1, but no "
 	   << "BankGroups were specified (B) in the address map! Aborting!" << endl;
       exit(-1);
     }
   } else { // found in map
     auto l_aNumBankGroups = (1 << l_it->second);
-    if(l_aNumBankGroups > l_pNumBankGroups) {
+    if(l_aNumBankGroups > k_pNumBankGroups) {
       cerr << "Warning!: Number of address map bankGroups is larger than numBankGroupsPerRank." << endl;
       cerr << "Some BankGroups will be unused" << endl << endl;
     }
-    if(l_aNumBankGroups < l_pNumBankGroups) { // some addresses have nowhere to go
+    if(l_aNumBankGroups < k_pNumBankGroups) { // some addresses have nowhere to go
       cerr << "Error!: Number of address map bankGroups is smaller than numBankGroupsPerRank. Aborting!" << endl;
       exit(-1);
     }
@@ -188,18 +188,18 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   // Banks
   l_it = m_structureSizes.find("b");
   if(l_it == m_structureSizes.end()) { // if not found
-    if(l_pNumBanks > 1) {
-      cerr << "Number of Banks (" << l_pNumBanks << ") is greater than 1, but no "
+    if(k_pNumBanks > 1) {
+      cerr << "Number of Banks (" << k_pNumBanks << ") is greater than 1, but no "
 	   << "Banks were specified (b) in the address map! Aborting!" << endl;
       exit(-1);
     }
   } else { // found in map
     auto l_aNumBanks = (1 << l_it->second);
-    if(l_aNumBanks > l_pNumBanks) {
+    if(l_aNumBanks > k_pNumBanks) {
       cerr << "Warning!: Number of address map Banks is larger than numBanksPerBankGroup." << endl;
       cerr << "Some Banks will be unused" << endl << endl;
     }
-    if(l_aNumBanks < l_pNumBanks) { // some addresses have nowhere to go
+    if(l_aNumBanks < k_pNumBanks) { // some addresses have nowhere to go
       cerr << "Error!: Number of address map Banks is smaller than numBanksPerBankGroup. Aborting!" << endl;
       exit(-1);
     }
@@ -208,18 +208,18 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   // Rows
   l_it = m_structureSizes.find("r");
   if(l_it == m_structureSizes.end()) { // if not found
-    if(l_pNumRows > 1) {
-      cerr << "Number of Rows (" << l_pNumRows << ") is greater than 1, but no "
+    if(k_pNumRows > 1) {
+      cerr << "Number of Rows (" << k_pNumRows << ") is greater than 1, but no "
 	   << "Rows were specified (r) in the address map! Aborting!" << endl;
       exit(-1);
     }
   } else { // found in map
     auto l_aNumRows = (1 << l_it->second);
-    if(l_aNumRows > l_pNumRows) {
+    if(l_aNumRows > k_pNumRows) {
       cerr << "Warning!: Number of address map Rows is larger than numRowsPerBank." << endl;
       cerr << "Some Rows will be unused" << endl << endl;
     }
-    if(l_aNumRows < l_pNumRows) { // some addresses have nowhere to go
+    if(l_aNumRows < k_pNumRows) { // some addresses have nowhere to go
       cerr << "Error!: Number of address map Rows is smaller than numRowsPerBank. Aborting!" << endl;
       exit(-1);
     }
@@ -228,18 +228,18 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   // Cols
   l_it = m_structureSizes.find("l");
   if(l_it == m_structureSizes.end()) { // if not found
-    if(l_pNumCols > 1) {
-      cerr << "Number of Cols (" << l_pNumCols << ") is greater than 1, but no "
+    if(k_pNumCols > 1) {
+      cerr << "Number of Cols (" << k_pNumCols << ") is greater than 1, but no "
 	   << "Cols were specified (l) [el] in the address map! Aborting!" << endl;
       exit(-1);
     }
   } else { // found in map
     auto l_aNumCols = (1 << l_it->second);
-    if(l_aNumCols > l_pNumCols) {
+    if(l_aNumCols > k_pNumCols) {
       cerr << "Warning!: Number of address map Cols is larger than numColsPerBank." << endl;
       cerr << "Some Cols will be unused" << endl << endl;
     }
-    if(l_aNumCols < l_pNumCols) { // some addresses have nowhere to go
+    if(l_aNumCols < k_pNumCols) { // some addresses have nowhere to go
       cerr << "Error!: Number of address map Cols is smaller than numColsPerBank. Aborting!" << endl;
       exit(-1);
     }
@@ -248,14 +248,14 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   // Cacheline/Burst size
   l_it = m_structureSizes.find("h");
   if(l_it == m_structureSizes.end()) { // if not found
-    if(l_pBurstSize > 1) {
-      cerr << "Burst size (" << l_pBurstSize << ") is greater than 1, but no "
+    if(k_pBurstSize > 1) {
+      cerr << "Burst size (" << k_pBurstSize << ") is greater than 1, but no "
 	   << "Cachelines were specified (h) in the address map! Aborting!" << endl;
       exit(-1);
     }
   } else { // found in map
     auto l_aNumCachelines = (1 << l_it->second);
-    if(l_aNumCachelines != l_pBurstSize) {
+    if(l_aNumCachelines != k_pBurstSize) {
       cerr << "Error!: Number of address map Cachelines is not equal to numBytesPerTransaction." << endl;
       cerr << "Make sure that the address map cachelines (h) are equal to numBytesPerTransaction (i.e. 2**h == numByutesPerTransaction!" << endl;
       exit(-1);
@@ -388,11 +388,24 @@ const void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const
     }
     x_hashAddr->m_cacheline = l_cur;
   }
+  
+  x_hashAddr->m_bankId =
+    x_hashAddr->m_bank
+    + x_hashAddr->m_bankgroup * k_pNumBanks
+    + x_hashAddr->m_rank      * k_pNumBanks * k_pNumBankGroups
+    + x_hashAddr->m_channel   * k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
+    
 
-  //cout << "0x" << std::hex << x_address << std::dec << "\t";
-  //x_hashAddr->print();
+  cout << "0x" << std::hex << x_address << std::dec << "\t";
+  x_hashAddr->print();
 } // fillHashedAddress(c_HashedAddress, x_address)
 
+const ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
+  // obtain the bank group rank and channel of this bankId;
+  unsigned l_cur = x_bankId;
+  unsigned l_bank = (m_pNumBanks-1) & l_cur;
+  
+} // getAddressForBankId(const unsigned x_bankId)
 
 unsigned c_AddressHasher::getBankFromAddress(const ulong x_address,
 					     const unsigned x_numBanks) {
