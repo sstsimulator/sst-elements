@@ -63,6 +63,7 @@ class DirectoryController : public Component {
     Addr        addrRangeEnd;
     Addr        interleaveSize;
     Addr        interleaveStep;
+    Addr        memOffset; // Stack addresses if multiple DCs handle the same memory
     
     CoherenceProtocol protocol;
     

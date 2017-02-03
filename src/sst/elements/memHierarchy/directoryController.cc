@@ -85,6 +85,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     addrRangeEnd    = params.find<uint64_t>("addr_range_end", 0);
     string ilSize   = params.find<std::string>("interleave_size", "0B");
     string ilStep   = params.find<std::string>("interleave_step", "0B");
+    memOffset       = params.find<uint64_t>("mem_addr_start", 0);
     string protstr  = params.find<std::string>("coherence_protocol", "MESI");
     dbg.debug(_L5_, "Directory controller using protocol: %s\n", protstr.c_str());
   
@@ -254,7 +255,7 @@ void DirectoryController::handlePacket(SST::Event *event){
         dbg.debug(_L3_, "RECV %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ", Src = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
     }
 #endif
-    if (ev->getCmd() == GetSResp || ev->getCmd() == GetXResp) {
+    if (ev->getCmd() == GetSResp || ev->getCmd() == GetXResp || ev->getCmd() == FlushLineResp) {
         handleMemoryResponse(event);
     } else if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
 #ifdef __SST_DEBUG_OUTPUT__
@@ -624,7 +625,7 @@ void DirectoryController::handleGetX(MemEvent * ev) {
                 sendEventToCaches(respEv, timestamp + accessLatency);
 #ifdef __SST_DEBUG_OUTPUT__
                 if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
-                    dbg.debug(_L4_, "Sending response for 0x%" PRIx64 " to %s, granted state = %s\n", entry->getBaseAddr(), respEv->getDst().c_str(), StateString[respEv->getGrantedState()]);
+                    dbg.debug(_L4_, "Sending response for 0x%" PRIx64 " to %s, granted state = %s, send time: %" PRIu64 "\n", entry->getBaseAddr(), respEv->getDst().c_str(), StateString[respEv->getGrantedState()], timestamp + accessLatency);
                 }
 #endif
                 postRequestProcessing(ev, entry);
@@ -1730,6 +1731,7 @@ Addr DirectoryController::convertAddressToLocalAddress(Addr addr){
         Addr step   = a / interleaveStep;
         Addr offset = a % interleaveStep;
         res         = (step * interleaveSize) + offset;
+        res         += memOffset;
     }
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || addr == DEBUG_ADDR) dbg.debug(_L10_, "Converted physical address 0x%" PRIx64 " to ACTUAL memory address 0x%" PRIx64 "\n", addr, res);
@@ -1799,7 +1801,7 @@ void DirectoryController::setup(void){
 
     const std::vector<MemNIC::PeerInfo_t> &ci = network->getPeerInfo();
     for(std::vector<MemNIC::PeerInfo_t>::const_iterator i = ci.begin() ; i != ci.end() ; ++i){
-        dbg.debug(_L10_, "DC found peer %d(%s) of type %d.\n", i->first.network_addr, i->first.name.c_str(), i->first.type);
+        dbg.debug(_L10_, "DC %s found peer %d(%s) of type %d.\n", getName().c_str(), i->first.network_addr, i->first.name.c_str(), i->first.type);
         if(MemNIC::TypeCache == i->first.type || MemNIC::TypeNetworkCache == i->first.type){
             numTargets++;
             if(blocksize) {
