@@ -60,7 +60,7 @@ SimpleMem::Request* MemHierarchyScratchInterface::recvResponse(void){
 
 
 ScratchEvent* MemHierarchyScratchInterface::createScratchEvent(SimpleMem::Request *req) const{
-    ScratchCommand cmd = SCRATCHNULLCMD;
+    ScratchCommand cmd = ScratchNullCmd;
     
     switch ( req->cmd ) {
         case SimpleMem::Request::Read:          

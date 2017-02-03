@@ -19,45 +19,58 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include "sst/core/element.h"
-
+#include "util.h"
 
 namespace SST { namespace MemHierarchy {
 
 using namespace std;
 typedef uint64_t Addr;
 
-/*
- *  Command types
- */
-#define X_TYPES \
-    X(SCRATCHNULLCMD)   /* Dummy command */\
-    /* Requests */ \
-    X(Read)             /* Read:  Request to read scratch or memory */\
-    X(Write)            /* Write: Request to write scratch or memory */\
-    /* Request Responses */\
-    X(ReadResp)         /* Read response to processor */\
-    X(WriteResp)        /* Write response to processor */\
-    /* Put/Get (Load/Unload) for mem <=> scratch */ \
-    X(ScratchPut)       /* Copy data from scratchpad to memory */\
-    X(ScratchGet)       /* Copy data from memory to scratchpad */\
-    X(SCRATCHLAST_CMD)
+// List of commands
+// Command, ResponseCmd, BasicCommandClass, CommandClass
 
-/** Valid commands for the ScratchEvent */
-typedef enum {
-#define X(x) x,
-    X_TYPES
-#undef X
-} ScratchCommand;
+#define CMD_TYPES \
+    CMD(ScratchNullCmd, ScratchNullCmd, Request,    Request) \
+    CMD(Read,           ReadResp,       Request,    Request) \
+    CMD(Write,          WriteResp,      Request,    Request) \
+    CMD(ReadResp,       ScratchNullCmd, Response,   Data) \
+    CMD(WriteResp,      ScratchNullCmd, Response,   Ack) \
+    CMD(ScratchPut,     WriteResp,      Request,    Request) \
+    CMD(ScratchGet,     ReadResp,       Request,    Request)
 
-/** Array of the stringify'd version of the ScratchEvent Commands.  Useful for printing. */
-static const char* ScratchCommandString[] __attribute__((unused)) = {
-#define X(x) #x ,
-    X_TYPES
-#undef X
+// Create ScratchCommand enum
+enum ScratchCommand {
+#define CMD(a,b,c,d) a,
+    CMD_TYPES
+#undef CMD
+    NUM_STATES
 };
 
-#undef X_TYPES
+static const ScratchCommand ScratchCommandResponse[] = {
+#define CMD(a,b,c,d) b,
+    CMD_TYPES
+#undef CMD
+};
 
+static const char* ScratchCommandString[] = {
+#define CMD(a,b,c,d) #a,
+    CMD_TYPES
+#undef CMD
+};
+
+static const BasicCommandClass ScratchBasicCommandClass[] = {
+#define CMD(a,b,c,d) BasicCommandClass::c,
+    CMD_TYPES
+#undef CMD
+};
+
+static const CommandClass ScratchCommandClass[] = {
+#define CMD(a,b,c,d) CommandClass::d,
+    CMD_TYPES
+#undef CMD
+};
+
+#undef CMD_TYPES
 
 /**
  * Event used in scratchpad-oriented memory systesm
@@ -115,18 +128,7 @@ public:
 
     ScratchEvent * makeResponse() {
         ScratchEvent * ev = new ScratchEvent(*this);
-        switch (cmd_) {
-            case Read:
-            case ScratchGet:
-                ev->setCmd(ReadResp);
-                break;
-            case Write:
-            case ScratchPut:
-                ev->setCmd(WriteResp);
-                break;
-            default:
-                ev->setCmd(SCRATCHNULLCMD);
-        }
+        ev->setCmd(ScratchCommandResponse[cmd_]);
         ev->setDst(src_);
         ev->setSrc(dst_);
         ev->setRqstr(rqstr_);
@@ -137,7 +139,7 @@ public:
     }
 
     void initialize() {
-        cmd_            = SCRATCHNULLCMD;
+        cmd_            = ScratchNullCmd;
         src_            = "";
         dst_            = "";
         addr_           = 0;
@@ -266,4 +268,4 @@ public:
 
 }}
 
-#endif /* INTERFACES_SCRATCHEVENT_H */
+#endif /* MEMHIERARCHY_SCRATCHEVENT_H */

@@ -54,6 +54,9 @@ const unsigned int exbi = pebi * 1024;
 
 typedef uint64_t Addr;
 
+// Event attributes
+enum class CommandClass {Request, Data, Ack, ForwardRequest};
+enum class BasicCommandClass {Request, Response};
 
 /*
  *  Replace uB or UB (where u/U is a SI unit)

@@ -616,7 +616,7 @@ void Scratchpad::init(unsigned int phase) {
     // Handle incoming requests
     while (SST::Event *ev = linkUp_->recvInitData()) {
         ScratchEvent *sEv = dynamic_cast<ScratchEvent*>(ev);
-        if (sEv && sEv->getCmd() != SCRATCHNULLCMD) {
+        if (sEv && sEv->getCmd() != ScratchNullCmd) {
             MemEvent * memRequest = new MemEvent(this, sEv->getAddr(), sEv->getBaseAddr(), sEv->getCmd() == Read ? GetS : GetX, sEv->getSize());
             if (linkNet_) linkNet_->sendInitData(memRequest);
             else linkDown_->sendInitData(memRequest);

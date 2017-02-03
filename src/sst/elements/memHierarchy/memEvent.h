@@ -30,57 +30,92 @@ using namespace std;
 /*
  *  Command types
  *  Not all coherence protocols use all types
+ *
+ *  Command, ResponseCmd, BasicCommandClass, CommandClass, cpuSideRequest, Writeback
  */
 #define X_TYPES \
-    X(NULLCMD)          /* Dummy command */\
+    X(NULLCMD,      NULLCMD,        Request,    Request,        1, 0)   /* Dummy command */\
     /* Requests */ \
-    X(GetS)             /* Read:  Request to get cache line in S state */\
-    X(GetX)             /* Write: Request to get cache line in M state */\
-    X(GetSEx)           /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
-                        /*        GetSEx sets the LOCK, GetX removes the LOCK  */\
-    X(FlushLine)        /* Request to flush a cache line */\
-    X(FlushLineInv)     /* Request to flush and invalidate a cache line */\
-    X(FlushAll)         /* Request to flush entire cache - similar to wbinvd */\
+    X(GetS,         GetSResp,       Request,    Request,        1, 0)   /* Read:  Request to get cache line in S state */\
+    X(GetX,         GetXResp,       Request,    Request,        1, 0)   /* Write: Request to get cache line in M state */\
+    X(GetSEx,       GetSResp,       Request,    Request,        1, 0)   /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
+                                                                        /*        GetSEx sets the LOCK, GetX removes the LOCK  */\
+    X(FlushLine,    FlushLineResp,  Request,    Request,        1, 0)   /* Request to flush a cache line */\
+    X(FlushLineInv, FlushLineResp,  Request,    Request,        1, 0)   /* Request to flush and invalidate a cache line */\
+    X(FlushAll,     FlushAllResp,   Request,    Request,        1, 0)   /* Request to flush entire cache - similar to wbinvd */\
     /* Request Responses */\
-    X(GetSResp)         /* Response to a GetS request */\
-    X(GetXResp)         /* Response to a GetX request */\
-    X(FlushLineResp)    /* Response to FlushLine request */\
-    X(FlushAllResp)     /* Response to FlushAll request */\
+    X(GetSResp,     NULLCMD,        Response,   Data,           0, 0)   /* Response to a GetS request */\
+    X(GetXResp,     NULLCMD,        Response,   Data,           0, 0)   /* Response to a GetX request */\
+    X(FlushLineResp,NULLCMD,        Response,   Ack,            0, 0)   /* Response to FlushLine request */\
+    X(FlushAllResp, NULLCMD,        Response,   Ack,            0, 0)   /* Response to FlushAll request */\
     /* Writebacks, these commands also serve as invalidation acknowledgments */\
-    X(PutS)             /* Clean replacement from S->I:      Remove sharer */\
-    X(PutM)             /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
-    X(PutE)             /* Clean replacement from E->I:      Remove owner but don't writeback data */\
+    X(PutS,         AckPut,         Request,    Request,        1, 1)   /* Clean replacement from S->I:      Remove sharer */\
+    X(PutM,         AckPut,         Request,    Request,        1, 1)   /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
+    X(PutE,         AckPut,         Request,    Request,        1, 1)   /* Clean replacement from E->I:      Remove owner but don't writeback data */\
     /* Invalidates - sent by caches or directory controller */\
-    X(Inv)              /* Other write request:  Invalidate cache line */\
+    X(Inv,          AckInv,         Request,    ForwardRequest, 0, 0)   /* Other write request:  Invalidate cache line */\
     /* Invalidates - sent by directory controller */\
-    X(Fetch)            /* Other read request to sharer:  Get data but don't invalidate cache line */\
-    X(FetchInv)         /* Other write request to owner:  Invalidate cache line */\
-    X(FetchInvX)        /* Other read request to owner:   Downgrade cache line to O/S (Remove exclusivity) */\
-    X(FetchResp)        /* response to a Fetch, FetchInv or FetchInvX request */\
-    X(FetchXResp)       /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
+    X(Fetch,        FetchResp,      Request,    ForwardRequest, 0, 0)   /* Other read request to sharer:  Get data but don't invalidate cache line */\
+    X(FetchInv,     FetchResp,      Request,    ForwardRequest, 0, 0)   /* Other write request to owner:  Invalidate cache line */\
+    X(FetchInvX,    FetchXResp,     Request,    ForwardRequest, 0, 0)   /* Other read request to owner:   Downgrade cache line to O/S (Remove exclusivity) */\
+    X(FetchResp,    NULLCMD,        Response,   Data,           0, 0)   /* response to a Fetch, FetchInv or FetchInvX request */\
+    X(FetchXResp,   NULLCMD,        Response,   Data,           0, 0)   /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
     /* Others */\
-    X(NACK)             /* NACK response to a message */\
-    X(AckInv)           /* Acknowledgement response to an invalidation request */\
-    X(AckPut)           /* Acknowledgement response to a replacement (Put*) request */\
-    X(LAST_CMD)
+    X(NACK,         NULLCMD,        Response,   Ack,            0, 0)   /* NACK response to a message */\
+    X(AckInv,       NULLCMD,        Response,   Ack,            0, 0)   /* Acknowledgement response to an invalidation request */\
+    X(AckPut,       NULLCMD,        Response,   Ack,            0, 0)   /* Acknowledgement response to a replacement (Put*) request */\
+    X(LAST_CMD,     NULLCMD,        Request,    Request,        0, 0)
 
 /** Valid commands for the MemEvent */
-typedef enum {
-#define X(x) x,
+enum Command {
+#define X(a,b,c,d,e,f) a,
     X_TYPES
 #undef X
-} Command;
+};
+
+/** Response commands for MemEvents */
+static const Command MemCommandResponse[] = {
+#define X(a,b,c,d,e,f) b,
+    X_TYPES
+#undef X
+};
+
+/** Get basic command class (request or response) */
+static const BasicCommandClass MemBasicCommandClass[] = {
+#define X(a,b,c,d,e,f) BasicCommandClass::c,
+    X_TYPES
+#undef X
+};
+
+/** Get complete command type (defined in util.h) */
+static const CommandClass MemCommandClass[] = {
+#define X(a,b,c,d,e,f) CommandClass::d,
+    X_TYPES
+#undef X
+};
+
+static const bool MemCommandCPUSide[] = {
+#define X(a,b,c,d,e,f) e,
+    X_TYPES
+#undef X
+};
+
+static const bool MemCommandWriteback[] = {
+#define X(a,b,c,d,e,f) f,
+    X_TYPES
+#undef X
+};
 
 /** Array of the stringify'd version of the MemEvent Commands.  Useful for printing. */
 static const char* CommandString[] __attribute__((unused)) = {
-#define X(x) #x ,
+#define X(a,b,c,d,e,f) #a ,
     X_TYPES
 #undef X
 };
 
 // statistics for the network memory inspector
 static const ElementInfoStatistic networkMemoryInspector_statistics[] = {
-#define X(x) { #x, #x, "memEvents", 1},
+#define X(a,b,c,d,e,f) { #a, #a, "memEvents", 1},
     X_TYPES
 #undef X
     { NULL, NULL, NULL, 0 }
@@ -192,7 +227,7 @@ public:
     /** Generate a new MemEvent, pre-populated as a response */
     MemEvent* makeResponse() {
         MemEvent *me      = new MemEvent(*this);
-        me->cmd_          = commandResponse(cmd_);
+        me->cmd_          = MemCommandResponse[cmd_];
         me->responseToID_ = eventID_;
         me->dst_          = src_;
         me->src_          = dst_;
@@ -319,31 +354,8 @@ public:
     void setSuccess(bool b) { b ? setFlag(MemEvent::F_SUCCESS) : clearFlag(MemEvent::F_SUCCESS); }
     bool success() { return queryFlag(MemEvent::F_SUCCESS); }
 
-    bool isHighNetEvent() {
-        if (cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx || isWriteback() || cmd_ == FlushLine || cmd_ == FlushLineInv || cmd_ == FlushAll) {
-            return true;
-        }
-        return false;
-    }
-    
-   bool isLowNetEvent() {
-        if (cmd_ == Inv || cmd_ == FetchInv || cmd_ == FetchInvX || cmd_ == Fetch) {
-            return true;
-        }
-        return false;
-    }
-    
-    bool isWriteback() {
-        if (cmd_ == PutS || cmd_ == PutM ||
-           cmd_ == PutE ) {
-            return true;
-        }
-        return false;
-    
-    }
-    
-    bool fromHighNetNACK() { return isLowNetEvent();}
-    bool fromLowNetNACK() { return isHighNetEvent();}
+    bool fromHighNetNACK()  { return !MemCommandCPUSide[cmd_];}
+    bool fromLowNetNACK()   { return MemCommandCPUSide[cmd_];}
 
     /** @return  the data payload. */
     dataVec& getPayload(void) {
@@ -387,21 +399,17 @@ public:
     /** Returns true if this is a prefetch command */
     bool isPrefetch() { return prefetch_; }
     
-    /** Returns true if this is a Data Request */
-    static bool isDataRequest(Command cmd) { return (cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == FetchInv || cmd == FetchInvX || cmd == Fetch); }
-    bool isDataRequest(void) const { return MemEvent::isDataRequest(cmd_); }
-    /** Returns true if this is of cpu type */
-    static bool isCPURequest(Command cmd) { return (cmd == GetS || cmd == GetX || cmd == GetSEx);}
-    bool isCPURequest(void) const { return MemEvent::isCPURequest(cmd_); }
+// Information about command types
+    /** Returns true if this is a request that needs to access the data array (Get/Put/Flush) */
+    bool isDataRequest(void) const { return MemCommandClass[cmd_] == CommandClass::Request; }
     /** Returns true if this is of response type */
-    static bool isResponse(Command cmd) { return (cmd == GetSResp || cmd == GetXResp || cmd == FlushLineResp);}
-    bool isResponse(void) const { return MemEvent::isResponse(cmd_); }
-    /** Returns true if this is a 'writeback' command type */
-    static bool isWriteback(Command cmd) { return (cmd == PutM || cmd == PutE || cmd == PutS); }
-    bool isWriteback(void) const { return MemEvent::isWriteback(cmd_); }
-   
+    bool isResponse(void) const { return MemBasicCommandClass[cmd_] == BasicCommandClass::Response; }
+    /** Returns true if this is a writeback */
+    bool isWriteback(void) const { return MemCommandWriteback[cmd_]; }
+    /** Returns true if this is a CPU-side event (i.e., sent from CPU side of hierarchy) */
+    bool isCPUSideEvent(void) const { return MemCommandCPUSide[cmd_]; }
 
-    
+
     void setDirty(bool status) { dirty_ = status; }
     bool getDirty() { return dirty_; }
 
@@ -445,27 +453,6 @@ public:
     /** Return the BaseAddr */
     Addr getBaseAddr() { return baseAddr_; }
     
-    /** Return the command that is the Response to the input command */
-    static Command commandResponse(Command cmd) {
-        switch(cmd) {
-            case GetS:
-            case GetSEx:
-                return GetSResp;
-            case GetX:
-                return GetXResp;
-            case FetchInv:
-            case Fetch:
-                return FetchResp;
-            case FetchInvX:
-                return FetchXResp;
-            case FlushLine:
-            case FlushLineInv:
-                return FlushLineResp;
-            default:
-                return NULLCMD;
-        }
-    }
-
 private:
     id_type         eventID_;           // Unique ID for this event
     id_type         responseToID_;      // For responses, holds the ID to which this event matches
