@@ -87,6 +87,11 @@ static const char * scratchEvent_port_events[] = {"memHierarchy.ScratchEvent", N
 static const char * arielAlloc_port_events[] = {"ariel.arielAllocTrackEvent", NULL};
 static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
 
+
+/*****************************************************************************************
+ *  Component: Cache
+ *  Purpose: Cache controller
+ ****************************************************************************************/
 static Component* create_Cache(ComponentId_t id, Params& params)
 {
 	return Cache::cacheFactory(id, params);
@@ -459,22 +464,49 @@ static const ElementInfoStatistic coherence_statistics[] = {
     {NULL, NULL, NULL, 0}
 };
 
-/* Coherence Controller Subcomponents */
+/*****************************************************************************************
+ *  SubComponent: MESIController
+ *  Purpose: Non-L1 cache coherence controller for MSI or MESI protocol. 
+ *  Loaded by a 'Cache' component
+ *  May be used for inclusive or private non-inclusive caches
+ ****************************************************************************************/
 static SubComponent* create_MESICoherenceController(Component * comp, Params& params) {
     return new MESIController(comp, params);
 }
 
+/*****************************************************************************************
+ *  SubComponent: MESIInternalDirectory
+ *  Purpose: Non-L1 cache coherence controller for non-inclusive shared caches
+ *  MSI or MESI protocol
+ *  Loaded by a 'Cache' component
+ ****************************************************************************************/
 static SubComponent* create_MESICacheDirectoryCoherenceController(Component * comp, Params& params) {
     return new MESIInternalDirectory(comp, params);
 }
 
+/*****************************************************************************************
+ *  SubComponent: IncoherentController
+ *  Purpose: Non-L1 cache coherence controller for non-coherent caches
+ *  Loaded by a 'Cache' component
+ ****************************************************************************************/
 static SubComponent* create_IncoherentController(Component * comp, Params& params) {
     return new IncoherentController(comp, params);
 }
 
+/*****************************************************************************************
+ *  SubComponent: IncoherentController
+ *  Purpose: L1 cache coherence controller for MSI/MESI protocol
+ *  Loaded by a 'Cache' component
+ ****************************************************************************************/
 static SubComponent* create_L1CoherenceController(Component * comp, Params& params) {
     return new L1CoherenceController(comp, params);
 }
+
+/*****************************************************************************************
+ *  SubComponent: IncoherentController
+ *  Purpose: L1 cache coherence controller for non-coherent caches
+ *  Loaded by a 'Cache' component
+ ****************************************************************************************/
 static SubComponent* create_L1IncoherentController(Component * comp, Params& params) {
     return new L1IncoherentController(comp, params);
 }
@@ -545,9 +577,11 @@ static const ElementInfoStatistic scratchpad_statistics[] = {
     { NULL, NULL, NULL, 0 }
 };
 
-/*****************************************************************************************
- *****************************************************************************************/
 
+/*****************************************************************************************
+ *  Component: BroadcastShim
+ *  Purpose: Used with memSieves to broadcast mallocs to private memSieves
+ *****************************************************************************************/
 static Component* create_BroadcastShim(ComponentId_t id, Params& params)
 {
     return new BroadcastShim(id, params);
@@ -559,6 +593,11 @@ static const ElementInfoPort broadcastShim_ports[] = {
     {NULL, NULL, NULL}
 };
 
+/*****************************************************************************************
+ *  Component: sieve
+ *  Purpose: Filters requests for those that miss in the cache hierarchy and maps
+ *  them back to application mallocs - used with Ariel support for the sieve link
+ *****************************************************************************************/
 static Component* create_Sieve(ComponentId_t id, Params& params)
 {
 	return Sieve::sieveFactory(id, params);
@@ -595,7 +634,11 @@ static const ElementInfoStatistic sieve_statistics[] = {
 };
 
 
-
+/*****************************************************************************************
+ *  Component: Bus
+ *  Purpose: Connects one or more upper level components to one or more lower level components
+ *  over a bus-like interface
+ *****************************************************************************************/
 static Component* create_Bus(ComponentId_t id, Params& params)
 {
     return new Bus( id, params );
@@ -621,6 +664,10 @@ static const ElementInfoPort bus_ports[] = {
 };
 
 
+/*****************************************************************************************
+ *  Component: trivialCPU
+ *  Purpose: Generates random memory requests - for testing
+ *****************************************************************************************/
 static Component* create_trivialCPU(ComponentId_t id, Params& params){
 	return new trivialCPU( id, params );
 }
@@ -649,6 +696,10 @@ static const ElementInfoParam cpu_params[] = {
 };
 
 
+/*****************************************************************************************
+ *  Component: ScratchCPU
+ *  Purpose: Generates random memory requests for a scratchpad - for testing
+ *****************************************************************************************/
 static Component* create_scratchCPU(ComponentId_t id, Params& params){
 	return new ScratchCPU( id, params );
 }
@@ -667,12 +718,21 @@ static const ElementInfoParam scratch_cpu_params[] = {
 };
 
 
+/*****************************************************************************************
+ *  Component: streamCPU
+ *  Purpose: Generates sequential memory requests - for testing
+ *****************************************************************************************/
 static Component* create_streamCPU(ComponentId_t id, Params& params){
 	return new streamCPU( id, params );
 }
 
 
 
+/*****************************************************************************************
+ *  Component: MemController
+ *  Purpose: Main memory controller, analagous to a single channel...loads a memory
+ *  backend for timing
+ *****************************************************************************************/
 static Component* create_MemController(ComponentId_t id, Params& params){
 	return new MemController( id, params );
 }
@@ -721,6 +781,12 @@ static const ElementInfoPort memctrl_ports[] = {
     {NULL, NULL, NULL}
 };
 
+
+/*****************************************************************************************
+ *  SubComponent: simpleMemBackendConvertor
+ *  Purpose: Converts memEvents from a memory controller into cmd/addr/size for backends
+ *  which use the 'simpleMem' backend interface
+ *****************************************************************************************/
 static SubComponent* create_Mem_SimpleBackendConvertor(Component* comp, Params& params){
     return new SimpleMemBackendConvertor(comp, params);
 }
@@ -742,6 +808,11 @@ static const ElementInfoStatistic memBackendConvertor_statistics[] = {
     { NULL, NULL, NULL, 0 }
 };
 
+/*****************************************************************************************
+ *  SubComponent: simpleMemScratchBackendConvertor
+ *  Purpose: Converts scratchEvents from a scratchpad into cmd/addr/size for backends
+ *  which use the 'simpleMem' backend interface
+ *****************************************************************************************/
 static SubComponent* create_Mem_SimpleScratchBackendConvertor(Component* comp, Params& params){
     return new SimpleMemScratchBackendConvertor(comp, params);
 }
@@ -757,6 +828,10 @@ static const ElementInfoStatistic scratchBackendConvertor_statistics[] = {
     { NULL, NULL, NULL, 0 }
 };
 
+/*****************************************************************************************
+ *  SubComponent: simpleMem
+ *  Purpose: Memory backend, gives each request a constant access time
+ *****************************************************************************************/
 static SubComponent* create_Mem_SimpleSim(Component* comp, Params& params){
     return new SimpleMemory(comp, params);
 }
@@ -767,26 +842,52 @@ static const ElementInfoParam simpleMem_params[] = {
     {NULL, NULL}
 };
 
+/*****************************************************************************************
+ *  SubComponent: timingDRAM
+ *  Purpose: Memory backend, simulates DRAM timing with bank conflicts, close/open row, 
+ *  and some queuing
+ *****************************************************************************************/
 static SubComponent* create_Mem_TimingDRAM(Component* comp, Params& params) {
     return new TimingDRAM(comp, params);
 }
 
+/*****************************************************************************************
+ *  SubComponent: TransactionQ
+ *  Purpose: Used by timingDRAM memory backend, in-order queue
+ *****************************************************************************************/
 static SubComponent* create_Mem_TransactionQ(Component* comp, Params& params) {
     return new TransactionQ(comp, params);
 }
 
+/*****************************************************************************************
+ *  SubComponent: ReorderTransactionQ
+ *  Purpose: Used by timingDRAM memory backend, re-order queue
+ *****************************************************************************************/
 static SubComponent* create_Mem_ReorderTransactionQ(Component* comp, Params& params) {
     return new ReorderTransactionQ(comp, params);
 }
 
+/*****************************************************************************************
+ *  SubComponent: SimplePagePolicy
+ *  Purpose: Used by timingDRAM memory backend, implements open/close page policies
+ *****************************************************************************************/
 static SubComponent* create_Mem_SimplePagePolicy(Component* comp, Params& params) {
     return new SimplePagePolicy(comp, params);
 }
 
+/*****************************************************************************************
+ *  SubComponent: TimeoutPagePolicy
+ *  Purpose: Used by timingDRAM memory backend, implements open page policy with timeout
+ *****************************************************************************************/
 static SubComponent* create_Mem_TimeoutPagePolicy(Component* comp, Params& params) {
     return new TimeoutPagePolicy(comp, params);
 }
 
+/*****************************************************************************************
+ *  SubComponent: SimpleDRAM
+ *  Purpose: Memory backend, simulates DRAM with banks and open/close pages, use with
+ *  stackable backends to achieve request re-ordering
+ *****************************************************************************************/
 static SubComponent* create_Mem_SimpleDRAM(Component* comp, Params& params) {
     return new SimpleDRAM(comp, params);
 }
@@ -812,6 +913,11 @@ static const ElementInfoStatistic simpleDRAM_stats[] = {
 };
 
 
+/*****************************************************************************************
+ *  SubComponent: DelayBuffer
+ *  Purpose: Memory backend, stacks between memory controller and another backend, 
+ *  adds a constant latency to every request
+ *****************************************************************************************/
 static SubComponent* create_Mem_DelayBuffer(Component * comp, Params& params) {
     return new DelayBuffer(comp, params);
 }
@@ -823,6 +929,11 @@ static const ElementInfoParam delayBuffer_params[] = {
     {NULL, NULL, NULL}
 };
 
+/*****************************************************************************************
+ *  SubComponent: RequestReorderSimple
+ *  Purpose: Memory backend, stacks between memory controller and another backend, 
+ *  reorders requests to backend by doing brute-force attempt to issue N requests 
+ *****************************************************************************************/
 static SubComponent* create_Mem_RequestReorderSimple(Component * comp, Params& params) {
     return new RequestReorderSimple(comp, params);
 }
@@ -836,6 +947,11 @@ static const ElementInfoParam requestReorderSimple_params[] = {
 };
 
 
+/*****************************************************************************************
+ *  SubComponent: RequestReorderRow
+ *  Purpose: Memory backend, stacks between memory controller and another backend, 
+ *  reorders requests to backend by trying to issue requests to open rows first
+ *****************************************************************************************/
 static SubComponent* create_Mem_RequestReorderRow(Component * comp, Params& params) {
     return new RequestReorderRow(comp, params);
 }
@@ -851,6 +967,11 @@ static const ElementInfoParam requestReorderRow_params[] = {
     { NULL, NULL, NULL }
 };
 
+
+/*****************************************************************************************
+ *  SubComponent: ramulatorMemory
+ *  Purpose: Memory backend, interface to Ramulator 
+ *****************************************************************************************/
 #if defined(HAVE_LIBRAMULATOR)
 static SubComponent* create_Mem_Ramulator(Component* comp, Params& params){
     return new ramulatorMemory(comp, params);
@@ -864,6 +985,11 @@ static const ElementInfoParam ramulatorMem_params[] = {
 
 #endif
 
+
+/*****************************************************************************************
+ *  SubComponent: dramsim
+ *  Purpose: Memory backend, interface to DRAMSim
+ *****************************************************************************************/
 #if defined(HAVE_LIBDRAMSIM)
 static SubComponent* create_Mem_DRAMSim(Component* comp, Params& params){
     return new DRAMSimMemory(comp, params);
@@ -877,6 +1003,12 @@ static const ElementInfoParam dramsimMem_params[] = {
     {NULL, NULL, NULL}
 };
 
+
+/*****************************************************************************************
+ *  SubComponent: pagedMultiMemory
+ *  Purpose: Memory backend, implements both HMC (via simpleMem) and DDR (via DRAMSim)
+ *  and simulates caching between them
+ *****************************************************************************************/
 static SubComponent* create_Mem_pagedMulti(Component* comp, Params& params){
     return new pagedMultiMemory(comp, params);
 }
@@ -914,6 +1046,11 @@ static const ElementInfoStatistic pagedMultiMem_statistics[] = {
 
 #endif
 
+
+/*****************************************************************************************
+ *  SubComponent: hybridSimMemory
+ *  Purpose: Memory backend, interface to HybridSim
+ *****************************************************************************************/
 #if defined(HAVE_LIBHYBRIDSIM)
 static SubComponent* create_Mem_HybridSim(Component* comp, Params& params){
     return new HybridSimMemory(comp, params);
@@ -929,14 +1066,39 @@ static const ElementInfoParam hybridsimMem_params[] = {
 
 #endif
 
+
+/*****************************************************************************************
+ *  SubComponent: vaultSimMemory
+ *  Purpose: Memory backend, interface to VaultSim (vaulted memory)
+ *****************************************************************************************/
 static SubComponent* create_Mem_VaultSim(Component* comp, Params& params){
     return new VaultSimMemory(comp, params);
 }
 
+static const ElementInfoParam vaultsimMem_params[] = {
+    { "verbose",          "Sets the verbosity of the backend output", "0" },
+    {"access_time",     "When not using DRAMSim, latency of memory operation.", "100 ns"},
+    {NULL, NULL, NULL}
+};
+
+/*****************************************************************************************
+ *  SubComponent: vaultSimMemory
+ *  Purpose: Memory backend, interface to Messier (NV memory)
+ *****************************************************************************************/
 static SubComponent* create_Mem_Messier(Component* comp, Params& params){
     return new Messier(comp, params);
 }
 
+static const ElementInfoParam Messier_params[] = {
+    { "verbose",          "Sets the verbosity of the backend output", "0" },
+    {"access_time",     "When not using DRAMSim, latency of memory operation.", "1 ns"},
+    {NULL, NULL, NULL}
+};
+
+/*****************************************************************************************
+ *  SubComponent: goblinHMCSim
+ *  Purpose: Memory backend, interface to HMCSim (HMC memory)
+ *****************************************************************************************/
 #ifdef HAVE_GOBLIN_HMCSIM
 static SubComponent* create_Mem_GOBLINHMCSim(Component* comp, Params& params){
     return new GOBLINHMCSimBackend(comp, params);
@@ -964,6 +1126,10 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 
 #ifdef HAVE_LIBFDSIM
 
+/*****************************************************************************************
+ *  SubComponent: FlashDimmSimMemory
+ *  Purpose: Memory backend, interface to FlashDIMMSim (FLASH memory)
+ *****************************************************************************************/
 static SubComponent* create_Mem_FDSim(Component* comp, Params& params){
     return new FlashDIMMSimMemory(comp, params);
 }
@@ -978,43 +1144,54 @@ static const ElementInfoParam fdsimMem_params[] = {
 
 #endif
 
-static const ElementInfoParam vaultsimMem_params[] = {
-    { "verbose",          "Sets the verbosity of the backend output", "0" },
-    {"access_time",     "When not using DRAMSim, latency of memory operation.", "100 ns"},
-    {NULL, NULL, NULL}
-};
-
-
-static const ElementInfoParam Messier_params[] = {
-    { "verbose",          "Sets the verbosity of the backend output", "0" },
-    {"access_time",     "When not using DRAMSim, latency of memory operation.", "1 ns"},
-    {NULL, NULL, NULL}
-};
-
-
 /* SimpleMem interfaces */
 
+/*****************************************************************************************
+ *  SubComponent: memHierarchyInterface
+ *  Purpose: Converts a SST::SimpleMem interface event into a memEvent
+ *****************************************************************************************/
 static SubComponent* create_MemInterface(Component *comp, Params &params) {
     return new MemHierarchyInterface(comp, params);
 }
 
+/*****************************************************************************************
+ *  SubComponent: memHierarchyScratchInterface
+ *  Purpose: Converts a SST::SimpleMem interface event into a scratchEvent
+ *****************************************************************************************/
 static SubComponent* create_ScratchInterface(Component *comp, Params &params) {
     return new MemHierarchyScratchInterface(comp, params);
 }
 
-
+/*****************************************************************************************
+ *  Module: memNIC
+ *  Purpose: Wraps a memEvent in a simpleNetwork interface event
+ *****************************************************************************************/
 static Module* create_MemNIC(Component *comp, Params &params) {
     return new MemNIC(comp, params);
 }
 
+/*****************************************************************************************
+ *  Module: SandyBridgeAddrMapper
+ *  Purpose: Used by timingDRAM memory backend, implements address mapping to DRAM 
+ *  according to Sandybridge
+ *****************************************************************************************/
 static Module* create_SandyBridgeAddrMapper(Params &params) {
     return new SandyBridgeAddrMapper(params);
 }
 
+/*****************************************************************************************
+ *  Module: SimpleAddrMapper
+ *  Purpose: Used by timingDRAM memory backend, basic address mapping into DRAM
+ *****************************************************************************************/
 static Module* create_SimpleAddrMapper(Params &params) {
     return new SimpleAddrMapper(params);
 }
 
+/*****************************************************************************************
+ *  Component: DirectoryController
+ *  Purpose: Distributed directory for coherence (MSI or MESI). 
+ *  Always sits on the NoC and may be co-located with memory
+ *****************************************************************************************/
 static Component* create_DirectoryController(ComponentId_t id, Params& params){
 	return new DirectoryController( id, params );
 }
@@ -1087,6 +1264,11 @@ static const ElementInfoStatistic dirctrl_statistics[] = {
 };
 
 
+/*****************************************************************************************
+ *  Component: DMAEngine
+ *  NOTE: Not up-to-date with the rest of memH. May or may not work.
+ *  Purpose: Manages DMA
+ *****************************************************************************************/
 static Component* create_DMAEngine(ComponentId_t id, Params& params){
 	return new DMAEngine( id, params );
 }
@@ -1107,12 +1289,20 @@ static const ElementInfoPort dmaengine_ports[] = {
     {NULL, NULL, NULL}
 };
 
+/*****************************************************************************************
+ *  SubComponent: networkMemInspector
+ *  Purpose: Sits at a network interface and counts events by command type
+ *****************************************************************************************/
 static SubComponent* load_networkMemoryInspector(Component* parent, 
                                                  Params& params) {
     return new networkMemInspector(parent);
 }
 
 
+/*****************************************************************************************
+ *  SubComponent: memNetBridge
+ *  Purpose: Enables multiple networks in a single configuration
+ *****************************************************************************************/
 static SubComponent* create_MemNetBridge(Component* comp, Params& params){
     return new MemNetBridge(comp, params);
 }
@@ -1122,6 +1312,12 @@ static const ElementInfoParam bridge_params[] = {
     {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
     {NULL, NULL}
 };
+
+
+
+/*****************************************************************************************
+ *****************************************************************************************/
+
 
 static const ElementInfoSubComponent subcomponents[] = {
     {
@@ -1533,7 +1729,8 @@ static const ElementInfoComponent components[] = {
 
 static const ElementInfoEvent memHierarchy_events[] = {
 	{ "MemEvent", "Event to interact with the memHierarchy", NULL, NULL },
-	{ "DMACommand", "Event to interact with DMA engine", NULL, NULL },
+        { "ScratchEvent", "Event to interact with scratchpads", NULL, NULL },
+        { "DMACommand", "Event to interact with DMA engine", NULL, NULL },
 	{ NULL, NULL, NULL, NULL }
 };
 
