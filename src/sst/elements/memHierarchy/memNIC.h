@@ -194,6 +194,7 @@ private:
     std::map<std::string, int> addrMap;
     /* Built during init -> available in Setup and later */
     std::vector<PeerInfo_t> peers;
+    std::unordered_map<std::string, MemNIC::ComponentTypeInfo> peerAddrs;
     /* Built during init -> available for lookups later */
     std::map<MemNIC::ComponentTypeInfo, std::string> destinations;
 
@@ -246,6 +247,8 @@ public:
     std::string findTargetDestination(Addr addr);
     // NOTE: does not clear the listing of destinations which are used for address lookups
     void clearPeerInfo(void) { peers.clear(); }
+    // Assuming addresses at the target 'dst' are linear, convert addr to it's target equivalent
+    Addr convertToDestinationAddress(const std::string &dst, Addr addr);
 
     // Callback function for linkControl
     bool recvNotify(int vn);
