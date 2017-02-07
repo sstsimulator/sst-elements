@@ -552,6 +552,7 @@ static const ElementInfoParam scratchpad_params[] = {
     {"scratch_line_size",   "Optional, int - Number of bytes in a scratch line. size must be divisible by this number", "64"},
     {"do_not_back",         "Optional, int - Whether to store actual data values in a backing store or not. Options: 0 (do not store), 1 (store). Do not unset unless simulation does not rely on correct data values!", "1"},
     {"memory_addr_offset",  "Optional, int - Amount to offset remote addresses by. Default is 'size' so that remote memory addresses start at 0", "size"},
+    {"responses_per_cycle", "Optional, int - Maximum number of responses to return to processor each cycle. 0 is unlimited", "0"},
     {"backendConvertor",    "Optional, string - backend convertor to use for the scratchpad", "memHierarchy.scratchpadBackendConvertor"},
     {"debug",               "Optional, int - Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",         "Optional, int - Debug verbosity level. Between 0 and 10", "0"},

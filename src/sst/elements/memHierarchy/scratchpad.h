@@ -115,7 +115,10 @@ private:
     // Outgoing message queues - map send timestamp to event
     std::multimap<uint64_t, ScratchEvent*> procMsgQueue_;
     std::multimap<uint64_t, MemEvent*> memMsgQueue_;
-        
+    
+    // Throughput limits
+    uint32_t responsesPerCycle_;
+    
     // Statistics
     Statistic<uint64_t>* stat_ScratchReadReceived;
     Statistic<uint64_t>* stat_ScratchWriteReceived;

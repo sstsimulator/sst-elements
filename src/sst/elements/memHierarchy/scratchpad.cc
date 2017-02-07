@@ -80,6 +80,9 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
                 getName().c_str(), size.toString().c_str(), scratchLineSize_);
     }
 
+    // Throughput limits
+    responsesPerCycle_ = params.find<uint32_t>("response_per_cycle",0);
+
     // To back or not to back
     doNotBack_ = params.find<bool>("do_not_back", false);
     
@@ -175,12 +178,6 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
 
     // Initialize local variables
     timestamp_ = 0;
-//    memSendThisCycle_ = 0;
-//    memRecvThisCycle_ = 0;
-//    cpuSendThisCycle_ = 0;
-//    cpuRecvThisCycle_ = 0;
-//    scratchSendThisCycle_ = 0;
-//    scratchRecvThisCycle_ = 0;
 }
 
 
@@ -615,6 +612,7 @@ bool Scratchpad::clock(Cycle_t cycle) {
     bool sent = false; // For debugging pretty printing only
 
     // issue ready events
+    uint32_t responseThisCycle = (responsesPerCycle_ == 0) ? 1 : 0;
     while (!procMsgQueue_.empty() && procMsgQueue_.begin()->first < timestamp_) {
         ScratchEvent * sendEv = procMsgQueue_.begin()->second;
         dbg.debug(_L4_, "%" PRIu64 "  (%s)  Clock. Sending event from procMsgQueue: cmd: %s, addr: %" PRIu64 ", size: %" PRIu32 "\n", 
@@ -622,6 +620,8 @@ bool Scratchpad::clock(Cycle_t cycle) {
         linkUp_->send(sendEv);
         procMsgQueue_.erase(procMsgQueue_.begin());
         sent = true;
+        responseThisCycle++;
+        if (responseThisCycle == responsesPerCycle_) break;
     }
 
     while (!memMsgQueue_.empty() && memMsgQueue_.begin()->first < timestamp_) {
