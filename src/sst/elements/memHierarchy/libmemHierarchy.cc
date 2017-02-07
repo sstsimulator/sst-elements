@@ -566,14 +566,14 @@ static const ElementInfoPort scratchpad_ports[] = {
 };
 
 static const ElementInfoStatistic scratchpad_statistics[] = {
-    {"request_received_local_read",     "Number of scratchpad reads received from CPU", "count", 1},
-    {"request_received_local_write",    "Number of scratchpad writes received from CPU", "count", 1},
-    {"request_received_remote_read",    "Number of direct memory reads received from CPU", "count", 1},
-    {"request_received_remote_write",   "Number of direct memory writes received from CPU", "count", 1},
+    {"request_received_scratch_read",   "Number of scratchpad reads received from CPU", "count", 1},
+    {"request_received_scratch_write",  "Number of scratchpad writes received from CPU", "count", 1},
+    {"request_received_remote_read",    "Number of remote memory reads received from CPU", "count", 1},
+    {"request_received_remote_write",   "Number of remote memory writes received from CPU", "count", 1},
     {"request_received_scratch_get",    "Number of scratchpad Gets received from CPU (copy from memory to scratch)", "count", 1},
     {"request_received_scratch_put",    "Number of scratchpad Puts received from CPU (copy from scratch to memory)", "count", 1},
-    {"request_issued_local_read",       "Number of scratchpad reads issued to scratchpad", "count", 1},
-    {"request_issued_local_write",      "Number of scratchpad writes issued to scratchpad", "count", 1},
+    {"request_issued_scratch_read",     "Number of scratchpad reads issued to scratchpad", "count", 1},
+    {"request_issued_scratch_write",    "Number of scratchpad writes issued to scratchpad", "count", 1},
     { NULL, NULL, NULL, 0 }
 };
 

@@ -77,8 +77,8 @@ private:
     void processIncomingScratchEvent(SST::Event* event);
     void processIncomingMemEvent(SST::Event* event);
 
-    void handleLocalRead(ScratchEvent * event);
-    void handleLocalWrite(ScratchEvent * event);
+    void handleScratchRead(ScratchEvent * event);
+    void handleScratchWrite(ScratchEvent * event);
     void handleRemoteRead(ScratchEvent * event);
     void handleRemoteWrite(ScratchEvent * event);
     void handleScratchGet(ScratchEvent * event);
@@ -110,21 +110,21 @@ private:
     std::map<SST::Event::id_type, std::pair<SST::Event::id_type, Addr> > scratchIDMap_; // Map oustanding scratch requests to initiating scratch event by IDs (1-1 for reads, multi-1 for get/put)
     std::map<SST::Event::id_type, uint64_t> scratchCounters_; // Map of a ScratchPutID to the number of scratch reads we are waiting for
 
-    std::unordered_map<Addr, std::queue<ScratchEvent*> >  localMSHR_; // MSHR for managing conflicts to scratch
+    std::unordered_map<Addr, std::queue<ScratchEvent*> >  scratchMSHR_; // MSHR for managing conflicts to scratch
 
     // Outgoing message queues - map send timestamp to event
     std::multimap<uint64_t, ScratchEvent*> procMsgQueue_;
     std::multimap<uint64_t, MemEvent*> memMsgQueue_;
         
     // Statistics
-    Statistic<uint64_t>* stat_LocalReadReceived;
-    Statistic<uint64_t>* stat_LocalWriteReceived;
+    Statistic<uint64_t>* stat_ScratchReadReceived;
+    Statistic<uint64_t>* stat_ScratchWriteReceived;
     Statistic<uint64_t>* stat_RemoteReadReceived;
     Statistic<uint64_t>* stat_RemoteWriteReceived;
     Statistic<uint64_t>* stat_ScratchGetReceived;
     Statistic<uint64_t>* stat_ScratchPutReceived;
-    Statistic<uint64_t>* stat_LocalReadIssued;
-    Statistic<uint64_t>* stat_LocalWriteIssued;
+    Statistic<uint64_t>* stat_ScratchReadIssued;
+    Statistic<uint64_t>* stat_ScratchWriteIssued;
 };
 
 }}
