@@ -187,6 +187,7 @@ void MemController::handleEvent(SST::Event* event) {
         case PutM:
 
             performRequest( ev );
+            recordResponsePayload( ev );
             notifyListeners( ev );
             memBackendConvertor_->handleMemEvent( ev );
             break;
@@ -247,7 +248,7 @@ void MemController::handleMemResponse( MemEvent* ev ) {
         cacheLink_->send( ev );
     }
 }
-    
+
 void MemController::init(unsigned int phase) {
     if (! networkLink_ ) {
         SST::Event *ev = NULL;
@@ -311,10 +312,11 @@ void MemController::performRequest(MemEvent* event) {
 
 void MemController::performResponse(MemEvent* event) { 
     bool noncacheable  = event->queryFlag(MemEvent::F_NONCACHEABLE);
-    Addr localAddr = noncacheable ? event->getAddr() : event->getBaseAddr();
 
-    for ( size_t i = 0 ; i < event->getSize() ; i++)
-        event->getPayload()[i] = ! backing_ ? 0 : backing_->get( localAddr + i );
+    if (payloads_.find(event->getResponseToID()) != payloads_.end()) {
+        event->setPayload(payloads_.find(event->getResponseToID())->second);
+        payloads_.erase(event->getResponseToID());
+    }
 
     if (noncacheable) event->setFlag(MemEvent::F_NONCACHEABLE);
 
@@ -327,6 +329,23 @@ void MemController::performResponse(MemEvent* event) {
             event->setGrantedState(S);
         }
     }
+}
+
+void MemController::recordResponsePayload( MemEvent * ev) {
+    if (ev->queryFlag(MemEvent::F_NORESPONSE)) return;
+
+    bool noncacheable = ev->queryFlag(MemEvent::F_NONCACHEABLE);
+    Addr localAddr = noncacheable ? ev->getAddr() : ev->getBaseAddr();
+
+    vector<uint8_t> payload;
+    if (ev->getCmd() == GetSResp || (ev->getCmd() == GetXResp && !noncacheable)) {
+        if (!backing_) payload.resize(ev->getSize(), 0);
+        else {
+            for ( size_t i = 0 ; i < ev->getSize() ; i++)
+                payload[i] = backing_->get( localAddr + i );
+        }
+        payloads_.insert(std::make_pair(ev->getID(), payload));
+    } 
 }
 
 void MemController::processInitEvent( MemEvent* me ) {

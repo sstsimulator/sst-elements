@@ -65,6 +65,8 @@ ScratchBackendConvertor::ScratchBackendConvertor(Component *comp, Params& params
 
 void ScratchBackendConvertor::handleScratchEvent(  ScratchEvent * ev ) {
 
+    ev->setDeliveryTime(m_cycleCount);
+
     doReceiveStat( ev->getCmd() );
 
     Debug(_L10_,"Creating ScratchReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
