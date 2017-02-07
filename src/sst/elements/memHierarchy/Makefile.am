@@ -142,6 +142,8 @@ EXTRA_DIST = \
 	tests/testNoninclusive-2.py \
 	tests/testPrefetchParams.py \
 	tests/testThroughputThrottling.py \
+	tests/testScratchDirect.py \
+	tests/testScratchNetwork.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini
 
