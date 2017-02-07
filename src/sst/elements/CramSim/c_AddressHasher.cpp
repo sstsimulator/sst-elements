@@ -119,6 +119,7 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
 	l_curPos++;
       }
     }
+    
   } // if(allSimple)
   
   //
@@ -403,8 +404,89 @@ const void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const
 const ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
   // obtain the bank group rank and channel of this bankId;
   unsigned l_cur = x_bankId;
-  unsigned l_bank = (m_pNumBanks-1) & l_cur;
+  unsigned l_chanSize = k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
+  unsigned l_rankSize = k_pNumBanks * k_pNumBankGroups;
+  unsigned l_bankGroupSize = k_pNumBanks;
+
+  unsigned l_chan=0,l_rank=0,l_bankgroup=0,l_bank=0;
+
+  cout << "Getting an address for bankId " << x_bankId << endl;
+
+  while(l_cur >= l_chanSize) {
+    l_cur -= l_chanSize;
+    l_chan++;
+  }
+
+  while(l_cur >= l_rankSize) {
+    l_cur -= l_rankSize;
+    l_rank++;
+  }
   
+  while(l_cur >= l_bankGroupSize) {
+    l_cur -= l_bankGroupSize;
+    l_bankgroup++;
+  }
+
+  l_bank = l_cur;
+
+  cout << "Final " << l_chan << " " << l_rank << " " << l_bankgroup << " " << l_bank << endl;
+
+  ulong l_address = 0;
+  {
+    ulong l_tmp = l_bank;
+    ulong l_tOut = 0;
+    unsigned l_curPos = 0;
+    while(l_tmp) {
+      l_tOut += (l_tmp & 0x1) << m_bitPositions["b"][l_curPos];
+      l_tmp >>= 1;
+      l_curPos++;
+    }
+
+    l_address += l_tOut;
+  }
+
+  {
+    ulong l_tmp = l_bankgroup;
+    ulong l_tOut = 0;
+    unsigned l_curPos = 0;
+    while(l_tmp) {
+      l_tOut += (l_tmp & 0x1) << m_bitPositions["B"][l_curPos];
+      l_tmp >>= 1;
+      l_curPos++;
+    }
+    
+    l_address += l_tOut;
+  }
+
+  {
+    ulong l_tmp = l_rank;
+    ulong l_tOut = 0;
+    unsigned l_curPos = 0;
+    while(l_tmp) {
+      l_tOut += (l_tmp & 0x1) << m_bitPositions["R"][l_curPos];
+      l_tmp >>= 1;
+      l_curPos++;
+    }
+    
+    l_address += l_tOut;
+  }
+
+  {
+    ulong l_tmp = l_chan;
+    ulong l_tOut = 0;
+    unsigned l_curPos = 0;
+    while(l_tmp) {
+      l_tOut += (l_tmp & 0x1) << m_bitPositions["C"][l_curPos];
+      l_tmp >>= 1;
+      l_curPos++;
+    }
+    
+    l_address += l_tOut;
+  }
+
+  cout << "Returning address 0x" << std::hex << l_address << std::dec << endl;
+  
+  return(l_address);
 } // getAddressForBankId(const unsigned x_bankId)
 
 unsigned c_AddressHasher::getBankFromAddress(const ulong x_address,

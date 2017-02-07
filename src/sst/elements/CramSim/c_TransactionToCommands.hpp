@@ -53,6 +53,7 @@ public:
 	std::vector<c_BankCommand*> getCommands(c_Transaction* x_txn,
 			unsigned x_relCommandWidth, bool x_useReadA, bool x_useWriteA);
 	std::queue<c_BankCommand*> getRefreshCommands(unsigned x_numBanks);
+        std::queue<c_BankCommand*> getRefreshCommands(std::vector<unsigned> &x_refreshGroup);
 
 
 private:

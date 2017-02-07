@@ -1175,7 +1175,7 @@ void c_CmdUnit::sendRefresh() {
 			&& (*l_cmdIter)->getCommandMnemonic() == e_BankCommandType::REF) {
 		c_BankCommand* l_refCmd = (*l_cmdIter);
 
-		unsigned l_bankNum = l_refCmd->getTransaction()->getHashedAddress()->getBankId();
+		unsigned l_bankNum = l_refCmd->getBankId();
 		c_BankInfo* l_bank = m_banks.at(l_bankNum);
 
 		if (sendCommand(l_refCmd, l_bank)) {

@@ -50,6 +50,7 @@ private:
 	unsigned m_seqNum;
 	ulong    m_addr;
 	unsigned m_row;
+        unsigned m_bankId;
 	e_BankCommandType m_cmdMnemonic;
 	std::map<e_BankCommandType, std::string> m_cmdToString;
 	bool m_isResponseReady;
@@ -60,7 +61,9 @@ public:
 	//    friend std::ostream& operator<< (std::ostream& x_stream, const c_BankCommand& x_bankCommand);
 
 	explicit c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
-			ulong x_addr);
+			       ulong x_addr);
+        c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
+		      ulong x_addr, unsigned x_bankId); // only to be used for Refresh commands!
 
 	c_BankCommand(c_BankCommand&) = delete;
 	c_BankCommand(c_BankCommand&&) = delete;
@@ -74,6 +77,10 @@ public:
 
 	inline unsigned getRow() const {
 		return (m_row);
+	}
+
+        inline unsigned getBankId() const {
+	        return (m_bankId);
 	}
 
 	inline bool isResponseReady() const

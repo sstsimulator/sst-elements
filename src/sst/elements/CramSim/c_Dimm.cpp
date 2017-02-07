@@ -43,6 +43,7 @@
 #include "c_Bank.hpp"
 #include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
+#include "c_BankCommand.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
@@ -177,9 +178,14 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 
 void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
 
-	unsigned l_bankNum = x_bankCommandPtr->getTransaction()->getHashedAddress()->getBankId();
-	m_banks.at(l_bankNum)->handleCommand(x_bankCommandPtr);
-
+  unsigned l_bankNum=0;
+  if(x_bankCommandPtr->getCommandMnemonic() == e_BankCommandType::REF) {
+    l_bankNum = x_bankCommandPtr->getBankId();
+  } else {
+    l_bankNum = x_bankCommandPtr->getTransaction()->getHashedAddress()->getBankId();
+  }
+  m_banks.at(l_bankNum)->handleCommand(x_bankCommandPtr);
+  
 }
 
 void c_Dimm::sendResponse() {
