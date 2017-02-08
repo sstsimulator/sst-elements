@@ -418,8 +418,8 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	unsigned l_bankGroupNum = 0;
 	for (unsigned l_i = 0; l_i != k_numRanksPerChannel; ++l_i) {
 		for (unsigned l_j = 0; l_j != k_numBankGroupsPerRank; ++l_j) {
-			std::cout << "Attaching Rank" << l_i <<
-			  " to BankGroup" << l_bankGroupNum << std::endl;
+		  //std::cout << "Attaching Rank" << l_i <<
+		  //	  " to BankGroup" << l_bankGroupNum << std::endl;
 			m_ranks.at(l_i)->acceptBankGroup(m_bankGroups.at(l_bankGroupNum));
 			m_bankGroups.at(l_bankGroupNum)->acceptRank(m_ranks.at(l_i));
 			++l_bankGroupNum;
@@ -430,8 +430,8 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	unsigned l_bankNum = 0;
 	for (int l_i = 0; l_i != m_numBankGroups; ++l_i) {
 		for (int l_j = 0; l_j != k_numBanksPerBankGroup; ++l_j) {
-			std::cout << "Attaching BankGroup" << l_i <<
-			  " to Bank" << l_bankNum << std::endl;
+		  //	std::cout << "Attaching BankGroup" << l_i <<
+		  //	  " to Bank" << l_bankNum << std::endl;
 			m_bankGroups.at(l_i)->acceptBank(m_banks.at(l_bankNum));
 			m_banks.at(l_bankNum)->acceptBankGroup(m_bankGroups.at(l_i));
 			l_bankNum++;

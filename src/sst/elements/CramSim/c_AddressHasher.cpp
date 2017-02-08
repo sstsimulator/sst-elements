@@ -396,9 +396,9 @@ const void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const
     + x_hashAddr->m_rank      * k_pNumBanks * k_pNumBankGroups
     + x_hashAddr->m_channel   * k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
     
-
-  cout << "0x" << std::hex << x_address << std::dec << "\t";
-  x_hashAddr->print();
+  //cout << "0x" << std::hex << x_address << std::dec << "\t";
+  //x_hashAddr->print();
+  
 } // fillHashedAddress(c_HashedAddress, x_address)
 
 const ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
