@@ -22,7 +22,6 @@
 #ifndef _CACHECONTROLLER_H_
 #define _CACHECONTROLLER_H_
 
-#include <boost/assert.hpp>
 #include <queue>
 #include <map>
 
@@ -40,11 +39,8 @@
 #include "util.h"
 #include "cacheListener.h"
 #include "memNIC.h"
-#include <boost/assert.hpp>
 #include <string>
 #include <sstream>
-
-#define assert_msg BOOST_ASSERT_MSG
 
 namespace SST { namespace MemHierarchy {
 
