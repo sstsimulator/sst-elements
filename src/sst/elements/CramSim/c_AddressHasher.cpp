@@ -75,7 +75,7 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
       cerr << "Parsed until " << l_mapCopy << endl;
       exit(-1);
     }
-    l_mapCopy = regex_replace(l_mapCopy,l_regex,""); // remove the matched portion
+    l_mapCopy = regex_replace(l_mapCopy,l_regex,string("")); // remove the matched portion
   } // while !l_mapCopy.empty()
 
   // pull config file sizes
