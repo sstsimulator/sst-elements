@@ -22,7 +22,6 @@
 
 #include <sst_config.h>
 #include <sst/core/stringize.h>
-#include <boost/algorithm/string/predicate.hpp>
 #include "hash.h"
 #include "cacheController.h"
 #include "util.h"
@@ -31,9 +30,6 @@
 #include "mshr.h"
 #include "L1CoherenceController.h"
 #include "L1IncoherentController.h"
-//#include "MESICoherenceController.h"
-//#include "MESIInternalDirectory.h"
-//#include "IncoherentController.h"
 
 
 namespace SST{ namespace MemHierarchy{

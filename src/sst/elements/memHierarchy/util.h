@@ -31,7 +31,6 @@ using namespace std;
 namespace SST {
 namespace MemHierarchy {
 
-
 enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
 #define _ERROR_ CALL_INFO,ERROR,0
 #define _WARNING_ CALL_INFO,WARNING,0

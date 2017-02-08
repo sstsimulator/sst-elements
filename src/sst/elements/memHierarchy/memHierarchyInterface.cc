@@ -29,7 +29,9 @@ using namespace SST::Interfaces;
 
 MemHierarchyInterface::MemHierarchyInterface(SST::Component *_comp, Params &_params) :
     SimpleMem(_comp, _params), owner_(_comp), recvHandler_(NULL), link_(NULL)
-{ }
+{ 
+    output.init("", 1, 0, Output::STDOUT);
+}
 
 
 void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
@@ -119,8 +121,7 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev){
         updateRequest(req, ev);
     }
     else{
-        fprintf(stderr, "Unable to find matching request.  Cmd = %s, Addr = %" PRIx64 ", respID = %" PRIx64 "\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getResponseToID().first); //TODO
-        assert(0);
+        output.fatal(CALL_INFO, -1, "Unable to find matching request.  Cmd = %s, Addr = %" PRIx64 ", respID = %" PRIx64 "\n", CommandString[_ev->getCmd()], _ev->getAddr(), _ev->getResponseToID().first);
     }
     return req;
 }

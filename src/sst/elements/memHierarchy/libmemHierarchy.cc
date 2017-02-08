@@ -1220,6 +1220,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"access_latency_cycles",   "Latency of directory access in cycles", "0"},
     {"mshr_latency_cycles",     "Latency of mshr access in cycles", "0"},
     {"max_requests_per_cycle",  "Maximum number of requests to process per cycle (0 or negative is unlimited)", "0"},
+    {"mem_addr_start",          "Starting memory address for the chunk of memory that this directory controller addresses.", "0"},
     {"direct_mem_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether directory has a direct connection to memory (1) or is connected via a network (0)","1"},
     {"network_num_vc",          "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"statistics",              "DEPRECATED - Use the Statistics API to get statistics", "0"},
