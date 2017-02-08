@@ -81,7 +81,7 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
             req->data.resize(req->size, 0);    
         }
         if (req->data.size() != req->size) 
-            output.fatal(CALL_INFO, -1, "Write request size does not match payload size. Request size: %u. Payload size: %zu.\n", req->size, req->data.size());
+            output.output("Warning: In memHierarchyInterface, write request size does not match payload size. Request size: %u. Payload size: %zu. MemEvent will use payload size\n", req->size, req->data.size());
 
         me->setPayload(req->data);
     }
