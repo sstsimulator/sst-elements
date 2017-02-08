@@ -74,7 +74,6 @@ private:
                                     numLowNetPorts_,
 //                                    numHighNetPortsX_,
 //                                    numLowNetPortsX_,
-                                    maxNumPorts_,
                                     broadcast_,
                                     latency_,
                                     fanout_,

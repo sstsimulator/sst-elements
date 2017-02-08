@@ -45,7 +45,7 @@ class MemBackendConvertor : public SubComponent {
         uint32_t processed()    { return m_offset; }
         uint64_t id()           { return ((uint64_t)m_reqId << 32) | m_offset; }
         MemEvent* getMemEvent() { return m_event; }
-        bool isWrite()          { return (m_event->getCmd() == PutM) ? true : false; }
+        bool isWrite()          { return (m_event->getCmd() == PutM || (m_event->queryFlag(MemEvent::F_NONCACHEABLE) && m_event->getCmd() == GetX)) ? true : false; }
 
         void setResponse( MemEvent* event ) { m_respEvent = event; }
         MemEvent* getResponse() { return m_respEvent; }
