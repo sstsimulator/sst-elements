@@ -41,6 +41,8 @@
 
 #include "c_HashedAddress.hpp"
 
+typedef unsigned long ulong;
+
 namespace SST {
 namespace n_Bank {
 

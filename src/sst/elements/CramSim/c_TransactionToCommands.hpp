@@ -35,6 +35,8 @@
 #include "c_Transaction.hpp"
 #include "c_BankCommand.hpp"
 
+typedef unsigned long ulong;
+
 //<! This class converts a transaction to sequence of bank commands
 //<! This class will accept the width of each
 //<! command access and then divide the transaction size by the width

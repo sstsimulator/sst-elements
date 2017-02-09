@@ -29,6 +29,8 @@
 //local includes
 #include "c_Transaction.hpp"
 
+typedef unsigned long ulong;
+
 using namespace std;
 
 namespace SST {

@@ -36,6 +36,8 @@
 //local includes
 #include "c_Transaction.hpp"
 
+typedef unsigned long ulong;
+
 namespace SST {
 namespace n_Bank {
 

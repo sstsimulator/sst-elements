@@ -42,6 +42,8 @@
 //<! This class holds information about global simulation state
 //<! any object in the simulator can access this class
 
+typedef unsigned long ulong;
+
 class c_AddressHasher {
 
 public:
