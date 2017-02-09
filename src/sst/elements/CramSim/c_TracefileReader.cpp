@@ -76,13 +76,17 @@ c_TracefileReader::c_TracefileReader(ComponentId_t x_id, Params& x_params) :
 	}
 	m_txnUnitReqQTokens = k_txnUnitReqQEntries;
 
-  // trace file param
-  m_traceFileName = x_params.find<std::string>("traceFile", "nil", l_found);
-  if (!l_found) {
-    std::cout << "TxnGen:: traceFile name is missing... exiting" << std::endl;
-    exit(-1);
-  }
-  m_traceFileStream.open(m_traceFileName,std::ifstream::in);
+	// trace file param
+	m_traceFileName = x_params.find<std::string>("traceFile", "nil", l_found);
+	if (!l_found) {
+	  std::cout << "TxnGen:: traceFile name is missing... exiting" << std::endl;
+	  exit(-1);
+	}
+	m_traceFileStream.open(m_traceFileName,std::ifstream::in);
+	if(!m_traceFileStream) {
+	  std::cerr << "Unable to open trace file " << m_traceFileName << " Aborting!" << std::endl;
+	  exit(-1);
+	}
 
 
 
@@ -150,7 +154,7 @@ bool c_TracefileReader::clockTic(Cycle_t) {
 
 }
 
-c_Transaction* c_TracefileReader::getNextTransaction(std::string x_txnType, unsigned x_addr, unsigned x_dataWidth) {
+c_Transaction* c_TracefileReader::getNextTransaction(std::string x_txnType, ulong x_addr, unsigned x_dataWidth) {
       c_Transaction* l_txn = new c_Transaction(m_seqNum, m_stringToTxnTypeMap.at(x_txnType), x_addr, x_dataWidth);
       m_seqNum++;
       return l_txn;
@@ -167,7 +171,7 @@ void c_TracefileReader::createTxn() {
       unsigned l_tokNum = 0;
       unsigned l_txnInterval = 0;
       std::string l_txnType;
-      unsigned l_txnAddress = 0;
+      ulong    l_txnAddress = 0;
       unsigned l_txnDataWidth = 0;
 
       for (Tokenizer<>::iterator l_iter = l_tok.begin();
@@ -180,7 +184,7 @@ void c_TracefileReader::createTxn() {
                 l_txnType = (*l_iter);
                 break;
               case 2:
-                l_txnAddress = (unsigned)strtol((*l_iter).c_str(), NULL, 0);
+                l_txnAddress = (ulong)strtoul((*l_iter).c_str(), NULL, 0);
                 break;
               case 3:
                 l_txnDataWidth = std::atoi((*l_iter).c_str());

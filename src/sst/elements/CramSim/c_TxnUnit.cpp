@@ -136,9 +136,16 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		std::cout << "nREFI value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
-	m_currentREFICount = k_REFI;
 
 	// calculate total number of banks
+
+	int l_numChannelsPerDimm = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,
+			l_found);
+	if (!l_found) {
+		std::cout << "numChannelsPerDimm value is missing... exiting"
+				<< std::endl;
+		exit(-1);
+	}
 
 	int l_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 100,
 			l_found);
@@ -166,6 +173,29 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	m_numBanks = l_numRanksPerChannel * l_numBankGroupsPerRank
 			* l_numBanksPerBankGroup;
+
+	// refresh stuff
+	// populate the m_refreshGroups with bankIds
+
+	//per-rank refresh groups (all-banks refresh)
+	uint l_groupId = 0;
+	uint l_bankId = 0;
+	for(uint l_chan = 0; l_chan < l_numChannelsPerDimm; l_chan++) {
+	  for(uint l_rank = 0; l_rank < l_numRanksPerChannel; l_rank++) {
+	    // every rank in a different refresh group
+	    m_refreshGroups.push_back(std::vector<unsigned>());
+	    for(uint l_bankGroup = 0; l_bankGroup < l_numBankGroupsPerRank; l_bankGroup++) {
+	      for(uint l_bank = 0; l_bank < l_numBanksPerBankGroup; l_bank++) {
+		m_refreshGroups[l_groupId].push_back(l_bankId);
+		l_bankId++;
+	      } // banks
+	    } // bankgroups
+	    l_groupId++;
+	  } // ranks
+	} // channels
+	
+	m_currentRefreshGroup=0;
+	m_currentREFICount = (int)((double)k_REFI/m_refreshGroups.size());
 
 	//load neighboring component's params
 	k_txnGenResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenResQEntries", 100,
@@ -346,7 +376,7 @@ bool c_TxnUnit::clockTic(SST::Cycle_t) {
 				&& (m_cmdUnitReqQTokens == k_cmdUnitReqQEntries)) {
 			// refresh was started and now we have all tokens from CmdUnit CmdReqQ and the refresh list container is empty so refresh must have finished
 			// therefore now we can start another refresh cycle
-			m_currentREFICount = k_REFI;
+		        m_currentREFICount = (int)((double)k_REFI/m_refreshGroups.size());
 			m_processingRefreshCmds = false;
 		}
 	}
@@ -411,7 +441,12 @@ void c_TxnUnit::createRefreshCmds() {
 	c_TransactionToCommands* l_converter =
 			c_TransactionToCommands::getInstance();
 
-	m_refreshList = l_converter->getRefreshCommands(m_numBanks);
+	cout << "Refreshing group " << m_currentRefreshGroup << endl;
+	m_refreshList = l_converter->getRefreshCommands(m_refreshGroups[m_currentRefreshGroup]);
+	m_currentRefreshGroup++;
+	if(m_currentRefreshGroup >= m_refreshGroups.size()) {
+	  m_currentRefreshGroup = 0;
+	}
 }
 
 void c_TxnUnit::sendRequest() {
@@ -453,13 +488,9 @@ void c_TxnUnit::sendRequest() {
 		std::vector<c_BankCommand*> l_cmdPkg = l_converter->getCommands(
 				l_reqTxn, k_relCommandWidth, k_useReadA, k_useWriteA);
 
-		c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
 		// derive and set command access parameters in the package
 		for (auto& l_cmdPtr : l_cmdPkg) {
-			l_cmdPtr->setRow(
-					l_hasher->getRowFromAddress(l_cmdPtr->getAddress(),
-							k_numBytesPerTransaction, k_numChannelsPerDimm,
-							k_numColsPerBank, k_numRowsPerBank, m_numBanks));
+		  l_cmdPtr->setRow(l_cmdPtr->getTransaction()->getHashedAddress()->getRow());
 		}
 
 		if ((l_cmdPkg.size() < m_cmdUnitReqQTokens)
