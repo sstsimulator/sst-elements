@@ -35,6 +35,8 @@
 #include "c_Transaction.hpp"
 #include "c_BankCommand.hpp"
 
+typedef unsigned long ulong;
+
 //<! This class converts a transaction to sequence of bank commands
 //<! This class will accept the width of each
 //<! command access and then divide the transaction size by the width
@@ -53,6 +55,7 @@ public:
 	std::vector<c_BankCommand*> getCommands(c_Transaction* x_txn,
 			unsigned x_relCommandWidth, bool x_useReadA, bool x_useWriteA);
 	std::queue<c_BankCommand*> getRefreshCommands(unsigned x_numBanks);
+        std::queue<c_BankCommand*> getRefreshCommands(std::vector<unsigned> &x_refreshGroup);
 
 
 private:

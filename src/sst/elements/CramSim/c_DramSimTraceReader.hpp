@@ -29,6 +29,8 @@
 //local includes
 #include "c_Transaction.hpp"
 
+typedef unsigned long ulong;
+
 using namespace std;
 
 namespace SST {
@@ -65,10 +67,10 @@ public:
 
 private:
 	c_DramSimTraceReader(); //for serialization only
-	c_DramSimTraceReader(const c_DramSimTraceReader&); //do not implement
+	c_DramSimTraceReader(const c_DramSimTraceReader&)=delete; //do not implement
 	void operator=(const c_DramSimTraceReader&);
 
-	c_Transaction* getNextTransaction(std::string x_txnType, unsigned x_addr,
+	c_Transaction* getNextTransaction(std::string x_txnType, ulong x_addr,
 			unsigned x_dataWidth);
 
 	void createTxn();

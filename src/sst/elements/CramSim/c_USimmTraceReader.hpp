@@ -30,6 +30,8 @@
 //local includes
 #include "c_Transaction.hpp"
 
+typedef unsigned long ulong;
+
 using namespace std;
 
 namespace SST {
@@ -65,7 +67,7 @@ private:
 	c_USimmTraceReader(const c_USimmTraceReader&); //do not implement
 	void operator=(const c_USimmTraceReader&);
 
-	c_Transaction* getNextTransaction(std::string x_txnType, unsigned x_addr, unsigned x_dataWidth);
+	c_Transaction* getNextTransaction(std::string x_txnType, ulong x_addr, unsigned x_dataWidth);
 
 	void createTxn();
 
