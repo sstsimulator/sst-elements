@@ -17,6 +17,7 @@
 #define __SST_MEMH_BACKEND_BACKING
 
 #include <fcntl.h>
+#include "sst/elements/memHierarchy/util.h"
 
 namespace SST {
 namespace MemHierarchy {
