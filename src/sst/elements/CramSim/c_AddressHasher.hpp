@@ -85,6 +85,9 @@ private:
   std::string k_addressMapStr = "rlbRBh";
   std::map<std::string, std::vector<uint> > m_bitPositions;
   std::map<std::string, uint> m_structureSizes;  // Used for checking that params agree
+
+  // regex replacement stuff
+  void parsePattern(std::string *x_inStr, std::pair<std::string,uint> *x_outPair);
 };
 
 #endif // c_ADDRESSHASHER_HPP

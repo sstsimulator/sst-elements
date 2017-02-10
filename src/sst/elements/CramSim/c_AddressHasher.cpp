@@ -51,7 +51,9 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   l_mapCopy.erase(remove(l_mapCopy.begin(), l_mapCopy.end(), '_'), l_mapCopy.end());
   // remove trailing newline
   l_mapCopy.erase(remove(l_mapCopy.begin(), l_mapCopy.end(), '\n'), l_mapCopy.end());
-  
+
+  /* This code uses regex, not supported in gcc 4.8.x
+   * use the crappy crap code I implemented to replace it until compiler versions advance
   regex l_regex("([rlbRBCh])(:([[:digit:]]+))*$");
   smatch l_match;
   uint l_curPos = 0;
@@ -77,6 +79,25 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
     }
     l_mapCopy = regex_replace(l_mapCopy,l_regex,string("")); // remove the matched portion
   } // while !l_mapCopy.empty()
+  */
+
+  // this is replacement code for the above, which is generally safer than my implemention
+  // of parsePattern below
+  uint l_curPos = 0;
+  vector<string> l_simpleOrder;
+  pair<string,uint> l_parsedData;
+
+  while(!l_mapCopy.empty()) {
+    parsePattern(&l_mapCopy, &l_parsedData);
+      m_structureSizes[l_parsedData.first] += l_parsedData.second;
+      for(int ii=0; ii < l_parsedData.second; ii++) {
+	m_bitPositions[l_parsedData.first].push_back(l_curPos);
+	l_curPos++;
+      }
+      l_simpleOrder.push_back(l_parsedData.first);
+    
+  } // while !l_mapCopy.empty()
+
 
   // pull config file sizes
   k_pNumChannels = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,l_found);
@@ -556,3 +577,63 @@ unsigned c_AddressHasher::getRowFromAddress(const ulong x_address,
 
   return (l_result);
 }
+
+// parsePattern
+// takes in complete or partially parsed address map string
+// returns a pair with the matched string and the size of the field
+// also removes the matched portion of the pattern from l_inStr
+//
+// everything is parsed from the end of the string backwards
+void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint> *x_outPair) {
+  assert(x_inStr != nullptr);
+  assert(x_outPair != nullptr);
+
+  if(x_inStr->empty()) {
+    x_outPair->first = "";
+    return;
+  }
+
+  string l_sizeStr("");
+
+  bool l_matched=false;
+  bool l_sizeMatched = false;
+  
+  auto l_sIter = x_inStr->rbegin();
+  while(!l_matched) {
+    if(isdigit(*l_sIter)) {
+      if(l_sizeMatched) {
+	cerr << "Weird parsing detected!" << endl;
+	cerr << "Parsing error at " << *l_sIter << " in address map string " << *x_inStr << endl;
+	exit(-1);
+      }
+      l_sizeStr = *l_sIter + l_sizeStr;
+    } else if(isalpha(*l_sIter)) {
+      cout << "Found alpha!" << endl;
+      if(!(*l_sIter == 'r' || *l_sIter == 'l' || *l_sIter == 'R' || *l_sIter == 'B' ||
+	   *l_sIter == 'b' || *l_sIter == 'C' || *l_sIter == 'h')) {
+	cerr << "Parsing error at " << *l_sIter << " in address map string " << *x_inStr << endl;
+	exit(-1);
+      }
+
+      x_outPair->first = *l_sIter;
+      if(l_sizeMatched) {
+	x_outPair->second = stoi(l_sizeStr);
+      } else {
+	x_outPair->second = 1;
+      }
+      
+      x_inStr->erase(next(l_sIter).base(),x_inStr->end()); // remove the matched portion
+      //cout << "Returning " << x_outPair->first << " " << x_outPair->second << endl;
+      break;
+    } else if(*l_sIter == ':') {
+      l_sizeMatched = true;
+    } else {
+      cerr << "Parsing error at " << *l_sIter << " in address map string " << *x_inStr << endl;
+      exit(-1);
+    }
+    l_sIter++;
+    if(l_sIter == x_inStr->rend()) {
+      break;
+    }
+  } // while(!l_matched)
+} // parsePattern(string, pair<string,uint>)
