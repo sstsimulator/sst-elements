@@ -47,6 +47,7 @@ public:
         TypeMemory,             // memory - connected to directory or cache via network
         TypeDMAEngine,
         TypeSmartMemory,        // Sender and Receiver
+        TypeScratch,
         TypeOther
     };
 

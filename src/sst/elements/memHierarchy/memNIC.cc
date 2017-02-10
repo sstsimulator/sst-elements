@@ -217,7 +217,7 @@ void MemNIC::init(unsigned int phase)
                 destinations[imre->compInfo] = imre->name;
             } else if (ci.type == MemNIC::TypeSmartMemory && (peerCI.type == MemNIC::TypeSmartMemory || peerCI.type == MemNIC::TypeDirectoryCtrl || peerCI.type == MemNIC::TypeNetworkDirectory ) ) {
                 destinations[imre->compInfo] = imre->name;
-            } else if (ci.type == MemNIC::TypeCache && peerCI.type == MemNIC::TypeMemory) {
+            } else if (ci.type == MemNIC::TypeScratch && peerCI.type == MemNIC::TypeMemory) {
                 destinations[imre->compInfo] = imre->name;
             }
         } else {

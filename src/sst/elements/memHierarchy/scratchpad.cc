@@ -166,7 +166,7 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
         if (!packet.hasUnits("B")) out.fatal(CALL_INFO, -1, "Invalid param (%s): min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", getName().c_str(), packet.toString().c_str());
         
-        myInfo.type = MemNIC::TypeCache;
+        myInfo.type = MemNIC::TypeScratch;
         linkNet_ = new MemNIC(this, &dbg, -1, myInfo, new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingMemEvent));
         linkNet_->addTypeInfo(typeInfo);
         linkDown_ = nullptr;
