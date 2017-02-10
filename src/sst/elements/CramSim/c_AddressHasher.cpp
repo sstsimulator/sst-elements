@@ -608,7 +608,6 @@ void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint> *x_ou
       }
       l_sizeStr = *l_sIter + l_sizeStr;
     } else if(isalpha(*l_sIter)) {
-      cout << "Found alpha!" << endl;
       if(!(*l_sIter == 'r' || *l_sIter == 'l' || *l_sIter == 'R' || *l_sIter == 'B' ||
 	   *l_sIter == 'b' || *l_sIter == 'C' || *l_sIter == 'h')) {
 	cerr << "Parsing error at " << *l_sIter << " in address map string " << *x_inStr << endl;
