@@ -76,7 +76,15 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
     
     me->setSize(req->size);
 
-    if (SimpleMem::Request::Write == req->cmd)  me->setPayload(req->data);
+    if (SimpleMem::Request::Write == req->cmd)  {
+        if (req->data.size() == 0) {
+            req->data.resize(req->size, 0);    
+        }
+        if (req->data.size() != req->size) 
+            output.output("Warning: In memHierarchyInterface, write request size does not match payload size. Request size: %u. Payload size: %zu. MemEvent will use payload size\n", req->size, req->data.size());
+
+        me->setPayload(req->data);
+    }
 
     if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
         me->setFlag(MemEvent::F_NONCACHEABLE);
