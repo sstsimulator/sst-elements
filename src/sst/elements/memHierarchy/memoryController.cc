@@ -186,6 +186,9 @@ void MemController::handleEvent(SST::Event* event) {
         case GetSEx:
         case PutM:
 
+            // Handle all backing stuff first since memBackend may not provide a response for writes
+            // TODO fix so that membackend always provides a response and this happens at the return instead
+            // That way, the order of accesses to the backing should match the backend's execution order
             performRequest( ev );
             recordResponsePayload( ev );
             notifyListeners( ev );
@@ -338,9 +341,9 @@ void MemController::recordResponsePayload( MemEvent * ev) {
     Addr localAddr = noncacheable ? ev->getAddr() : ev->getBaseAddr();
 
     vector<uint8_t> payload;
-    if (ev->getCmd() == GetSResp || (ev->getCmd() == GetXResp && !noncacheable)) {
-        if (!backing_) payload.resize(ev->getSize(), 0);
-        else {
+    if (ev->getCmd() == GetS || ev->getCmd() == GetSEx || (ev->getCmd() == GetX && !noncacheable)) {
+        payload.resize(ev->getSize(), 0);
+        if (backing_) {
             for ( size_t i = 0 ; i < ev->getSize() ; i++)
                 payload[i] = backing_->get( localAddr + i );
         }

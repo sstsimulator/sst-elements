@@ -1647,7 +1647,7 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event, Comma
     profileRequestSent(ev);
     
     /* We will get a response if this is a flush request */
-    memReqs[ev->getID()] = data_event->getBaseAddr();
+    if (!ev->isWriteback()) memReqs[ev->getID()] = data_event->getBaseAddr();
 
     uint64_t deliveryTime = timestamp + accessLatency;
     if (memLink) {
