@@ -1155,6 +1155,10 @@ static SubComponent* create_MemInterface(Component *comp, Params &params) {
     return new MemHierarchyInterface(comp, params);
 }
 
+static Module* create_MemInterfaceModule(Component *comp, Params &params) {
+    return new MemHierarchyInterface(comp, params);
+}
+
 /*****************************************************************************************
  *  SubComponent: memHierarchyScratchInterface
  *  Purpose: Converts a SST::SimpleMem interface event into a scratchEvent
@@ -1591,6 +1595,15 @@ static const ElementInfoSubComponent subcomponents[] = {
 };
 
 static const ElementInfoModule modules[] = {
+    {
+        "memInterface",
+        "Simplified interface to Memory Hierarchy",
+        NULL,
+        NULL,
+        create_MemInterfaceModule,
+        NULL,
+        "SST::Interfaces::SimpleMem",
+    },
     {
         "memNIC",
         "Memory-oriented Network Interface",
