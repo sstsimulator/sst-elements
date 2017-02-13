@@ -37,6 +37,9 @@ c_TxnGenRand::c_TxnGenRand(ComponentId_t x_id, Params& x_params) :
 	//used for reading params
 	bool l_found = false;
 
+	// FIXME: Kludge for multi-threaded MPI runs
+	m_params = &x_params;
+	
 	// internal params
 	m_prevAddress = 0;
 	m_seqNum = 0;
@@ -140,10 +143,10 @@ void c_TxnGenRand::createTxn() {
 		if (l_read2write < k_readWriteTxnRatio)
 			mTxn
 					= new c_Transaction(m_seqNum, e_TransactionType::READ,
-							addr, 1);
+							    addr, 1, m_params);
 		else
 			mTxn = new c_Transaction(m_seqNum, e_TransactionType::WRITE, addr,
-					1);
+						 1, m_params);
 
 		m_txnReqQ.push(mTxn);
 
