@@ -72,11 +72,19 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
         case SimpleMem::Request::FlushLineResp: cmd = FlushLineResp; break;
     }
     
-    MemEvent *me = new MemEvent(owner_, req->addr, req->addr, cmd);
+    MemEvent *me = new MemEvent(owner_, req->addrs[0], req->addrs[0], cmd);
     
     me->setSize(req->size);
 
-    if (SimpleMem::Request::Write == req->cmd)  me->setPayload(req->data);
+    if (SimpleMem::Request::Write == req->cmd)  {
+        if (req->data.size() == 0) {
+            req->data.resize(req->size, 0);    
+        }
+        if (req->data.size() != req->size) 
+            output.output("Warning: In memHierarchyInterface, write request size does not match payload size. Request size: %u. Payload size: %zu. MemEvent will use payload size\n", req->size, req->data.size());
+
+        me->setPayload(req->data);
+    }
 
     if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
         me->setFlag(MemEvent::F_NONCACHEABLE);
@@ -101,27 +109,27 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
 }
 
 
-void MemHierarchyInterface::handleIncoming(SST::Event *_ev){
-    MemEvent *me = static_cast<MemEvent*>(_ev);
+void MemHierarchyInterface::handleIncoming(SST::Event *ev){
+    MemEvent *me = static_cast<MemEvent*>(ev);
     SimpleMem::Request *req = processIncoming(me);
     if(req) (*recvHandler_)(req);
     delete me;
 }
 
 
-SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *_ev){
+SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev){
     SimpleMem::Request *req = NULL;
-    Command cmd = _ev->getCmd();
-    MemEvent::id_type origID = _ev->getResponseToID();
+    Command cmd = ev->getCmd();
+    MemEvent::id_type origID = ev->getResponseToID();
     
     std::map<MemEvent::id_type, SimpleMem::Request*>::iterator i = requests_.find(origID);
     if(i != requests_.end()){
         req = i->second;
         requests_.erase(i);
-        updateRequest(req, _ev);
+        updateRequest(req, ev);
     }
     else{
-        output.fatal(CALL_INFO, -1, "Unable to find matching request.  Cmd = %s, Addr = %" PRIx64 ", respID = %" PRIx64 "\n", CommandString[_ev->getCmd()], _ev->getAddr(), _ev->getResponseToID().first);
+        output.fatal(CALL_INFO, -1, "Unable to find matching request.  Cmd = %s, Addr = %" PRIx64 ", respID = %" PRIx64 "\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getResponseToID().first);
     }
     return req;
 }
@@ -150,8 +158,8 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me)
     
 }
 
-bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *_handler){
-    recvHandler_ = _handler;
+bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler){
+    recvHandler_ = handler;
     if ( NULL == recvHandler_) link_ = owner_->configureLink(linkName);
     else                       link_ = owner_->configureLink(linkName, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
 

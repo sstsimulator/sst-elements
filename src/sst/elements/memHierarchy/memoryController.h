@@ -62,6 +62,7 @@ private:
     bool clock( SST::Cycle_t );
     void performRequest( MemEvent* );
     void performResponse( MemEvent* );
+    void recordResponsePayload( MemEvent* );
     void processInitEvent( MemEvent* );
 
     Output dbg;
@@ -73,7 +74,8 @@ private:
     MemNIC*     networkLink_;       // Link to the rest of memHierarchy if we're communicating over a network
 
     std::vector<CacheListener*> listeners_;
-
+    
+    std::map<SST::Event::id_type, vector<uint8_t> > payloads_; // To ensure 'correct' read-write ordering, payloads are constructed on message receive just like backing store writes
 
     bool isRequestAddressValid(Addr addr){
         return (addr < memSize_);

@@ -319,7 +319,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.packet_latency : Accumulator : Sum.u64 = 2285816; SumSQ.u64 = 316737152; Count.u64 = 17786; 
- l3cache.send_bit_count : Accumulator : Sum.u64 = 1639744; SumSQ.u64 = 377952256; Count.u64 = 17786; 
+ l3cache.send_bit_count : Accumulator : Sum.u64 = 1606784; SumSQ.u64 = 372678656; Count.u64 = 17786; 
  l3cache.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.idle_time : Accumulator : Sum.u64 = 14719000; SumSQ.u64 = 1570765500000; Count.u64 = 266; 
  l3cache.TotalEventsReceived : Accumulator : Sum.u64 = 36648; SumSQ.u64 = 36648; Count.u64 = 36648; 
@@ -510,7 +510,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l3cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 8350; SumSQ.u64 = 8350; Count.u64 = 8350; 
  dirctrl.packet_latency : Accumulator : Sum.u64 = 1764045; SumSQ.u64 = 208095583; Count.u64 = 17786; 
- dirctrl.send_bit_count : Accumulator : Sum.u64 = 5939776; SumSQ.u64 = 3144841216; Count.u64 = 17786; 
+ dirctrl.send_bit_count : Accumulator : Sum.u64 = 5937792; SumSQ.u64 = 3144523776; Count.u64 = 17786; 
  dirctrl.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  dirctrl.idle_time : Accumulator : Sum.u64 = 18202000; SumSQ.u64 = 3097532000000; Count.u64 = 212; 
  dirctrl.replacement_request_latency : Accumulator : Sum.u64 = 8350; SumSQ.u64 = 8350; Count.u64 = 8350; 

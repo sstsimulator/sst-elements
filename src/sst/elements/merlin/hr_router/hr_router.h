@@ -17,6 +17,8 @@
 #ifndef COMPONENTS_HR_ROUTER_HR_ROUTER_H
 #define COMPONENTS_HR_ROUTER_HR_ROUTER_H
 
+#include "router.h"
+
 #include <sst/core/clock.h>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
@@ -28,7 +30,6 @@
 
 #include <queue>
 
-#include "sst/elements/merlin/router.h"
 
 using namespace SST;
 
