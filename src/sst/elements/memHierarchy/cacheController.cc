@@ -78,7 +78,7 @@ void Cache::processCacheRequest(MemEvent* event, Command cmd, Addr baseAddr, boo
 #ifdef __SST_DEBUG_OUTPUT__
     printLine(baseAddr);
 #endif
-    bool updateLine = !replay && MemEvent::isDataRequest(cmd);   /* TODO: move replacement manager update to time when cache actually sends a response */
+    bool updateLine = !replay && event->isDataRequest();   /* TODO: move replacement manager update to time when cache actually sends a response */
     CacheLine * line = cf_.cacheArray_->lookup(baseAddr, updateLine);; 
     
     bool miss = (line == nullptr);
@@ -749,13 +749,11 @@ bool Cache::processInvRequestInMSHR(Addr baseAddr, MemEvent* event, bool inProgr
 
 
 void Cache::sendNACK(MemEvent* event) {
-    if (event->isHighNetEvent()) {
+    if (event->isCPUSideEvent()) {
         coherenceMgr_->sendNACK(event, true, getCurrentSimTimeNano());
-    } else if (event->isLowNetEvent()) {
+    } else {
         coherenceMgr_->sendNACK(event, false, getCurrentSimTimeNano());
     }
-    else
-        d_->fatal(CALL_INFO, -1, "Command type not recognized, Cmd = %s\n", CommandString[event->getCmd()]);
 }
 
 

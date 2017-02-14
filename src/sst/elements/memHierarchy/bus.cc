@@ -145,31 +145,28 @@ LinkId_t Bus::lookupNode(const std::string& name) {
 
 void Bus::configureLinks() {
     SST::Link* link;
-    for ( int i = 0 ; i < maxNumPorts_ ; i++ ) {
-        std::ostringstream linkName;
-        linkName << "high_network_" << i;
-        std::string ln = linkName.str();
-        link = configureLink(ln, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
-        if (link) {
-            highNetPorts_.push_back(link);
-            numHighNetPorts_++;
-            linkIdMap_[highNetPorts_[i]->getId()] = highNetPorts_[i];
-            dbg_.output(CALL_INFO, "Port %d = Link %d\n", i, highNetPorts_[i]->getId());
-        }
+    std::string linkprefix = "high_network_";
+    std::string linkname = linkprefix + "0";
+    while (isPortConnected(linkname)) {
+        link = configureLink(linkname, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        highNetPorts_.push_back(link);
+        linkIdMap_[highNetPorts_[numHighNetPorts_]->getId()] = highNetPorts_[numHighNetPorts_];
+        dbg_.output(CALL_INFO, "Port %d = Link %d\n", numHighNetPorts_, highNetPorts_[numHighNetPorts_]->getId());
+        numHighNetPorts_++;
+        linkname = linkprefix + std::to_string(numHighNetPorts_);
+    }
+   
+    linkprefix = "low_network_";
+    linkname = linkprefix + "0";
+    while (isPortConnected(linkname)) {
+        link = configureLink(linkname, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        lowNetPorts_.push_back(link);
+        linkIdMap_[lowNetPorts_[numLowNetPorts_]->getId()] = lowNetPorts_[numLowNetPorts_];
+        dbg_.output(CALL_INFO, "Port %d = Link %d\n", numLowNetPorts_, lowNetPorts_[numLowNetPorts_]->getId());
+        numLowNetPorts_++;
+        linkname = linkprefix + std::to_string(numLowNetPorts_);
     }
     
-    for ( int i = 0 ; i < maxNumPorts_ ; i++ ) {
-        std::ostringstream linkName;
-    	linkName << "low_network_" << i;
-        std::string ln = linkName.str();
-    	link = configureLink(ln, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
-        if (link) {
-            lowNetPorts_.push_back(link);
-            numLowNetPorts_++;
-            linkIdMap_[lowNetPorts_[i]->getId()] = lowNetPorts_[i];
-            dbg_.output(CALL_INFO, "Port %d = Link %d\n", i, lowNetPorts_[i]->getId());
-        }
-    }
     if (numLowNetPorts_ < 1 || numHighNetPorts_ < 1) dbg_.fatal(CALL_INFO, -1,"couldn't find number of Ports (numPorts)\n");
 
 }
@@ -189,7 +186,6 @@ void Bus::configureParameters(SST::Params& params) {
     }
     numHighNetPorts_  = 0;
     numLowNetPorts_   = 0;
-    maxNumPorts_      = 500;
     
     latency_      = params.find<int>("bus_latency_cycles", 1);
     idleMax_      = params.find<int>("idle_max", 6);

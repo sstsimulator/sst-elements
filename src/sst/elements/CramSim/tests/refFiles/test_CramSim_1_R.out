@@ -1,0 +1,16 @@
+Config file: ddr4_verimem.cfg
+Trace file: traces/sst-CramSim-trace_verimem_1_R.trc
+Address map string: _r_l_R_B_b_h_
+Attaching Channel0 to Rank0
+Attaching Channel0 to Rank1
+Deleting DIMM
+Refresh's sent out: 0
+Total Read-Txns Requests send: 1982
+Total Write-Txns Requests send: 0
+Read-Txns-Received: 1930
+Write-Txns-Received: 0
+Total Txns Received: 1930
+Cycles Per Transaction (CPT) = 56.9948
+Component Finished.
+virtual SST::n_Bank::c_CmdUnit::~c_CmdUnit()
+Simulation is complete, simulated time: 110 us

@@ -29,7 +29,9 @@ using namespace SST::Interfaces;
 
 MemHierarchyInterface::MemHierarchyInterface(SST::Component *_comp, Params &_params) :
     SimpleMem(_comp, _params), owner_(_comp), recvHandler_(NULL), link_(NULL)
-{ }
+{ 
+    output.init("", 1, 0, Output::STDOUT);
+}
 
 
 void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
@@ -70,11 +72,19 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
         case SimpleMem::Request::FlushLineResp: cmd = FlushLineResp; break;
     }
     
-    MemEvent *me = new MemEvent(owner_, req->addr, req->addr, cmd);
+    MemEvent *me = new MemEvent(owner_, req->addrs[0], req->addrs[0], cmd);
     
     me->setSize(req->size);
 
-    if (SimpleMem::Request::Write == req->cmd)  me->setPayload(req->data);
+    if (SimpleMem::Request::Write == req->cmd)  {
+        if (req->data.size() == 0) {
+            req->data.resize(req->size, 0);    
+        }
+        if (req->data.size() != req->size) 
+            output.output("Warning: In memHierarchyInterface, write request size does not match payload size. Request size: %u. Payload size: %zu. MemEvent will use payload size\n", req->size, req->data.size());
+
+        me->setPayload(req->data);
+    }
 
     if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
         me->setFlag(MemEvent::F_NONCACHEABLE);
@@ -99,31 +109,27 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
 }
 
 
-void MemHierarchyInterface::handleIncoming(SST::Event *_ev){
-    MemEvent *me = static_cast<MemEvent*>(_ev);
+void MemHierarchyInterface::handleIncoming(SST::Event *ev){
+    MemEvent *me = static_cast<MemEvent*>(ev);
     SimpleMem::Request *req = processIncoming(me);
     if(req) (*recvHandler_)(req);
     delete me;
 }
 
 
-SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *_ev){
+SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev){
     SimpleMem::Request *req = NULL;
-    Command cmd = _ev->getCmd();
-    MemEvent::id_type origID = _ev->getResponseToID();
+    Command cmd = ev->getCmd();
+    MemEvent::id_type origID = ev->getResponseToID();
     
-    BOOST_ASSERT_MSG(MemEvent::isResponse(cmd), "Interal Error: Request Type event (eg GetS, GetX, etc) should not be sent by MemHierarchy to CPU. " \
-    "Make sure you L1's cache 'high network port' is connected to the CPU, and the L1's 'low network port' is connected to the next level cache.");
-
     std::map<MemEvent::id_type, SimpleMem::Request*>::iterator i = requests_.find(origID);
     if(i != requests_.end()){
         req = i->second;
         requests_.erase(i);
-        updateRequest(req, _ev);
+        updateRequest(req, ev);
     }
     else{
-        fprintf(stderr, "Unable to find matching request.  Cmd = %s, Addr = %" PRIx64 ", respID = %" PRIx64 "\n", CommandString[_ev->getCmd()], _ev->getAddr(), _ev->getResponseToID().first); //TODO
-        assert(0);
+        output.fatal(CALL_INFO, -1, "Unable to find matching request.  Cmd = %s, Addr = %" PRIx64 ", respID = %" PRIx64 "\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getResponseToID().first);
     }
     return req;
 }
@@ -152,8 +158,8 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me)
     
 }
 
-bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *_handler){
-    recvHandler_ = _handler;
+bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler){
+    recvHandler_ = handler;
     if ( NULL == recvHandler_) link_ = owner_->configureLink(linkName);
     else                       link_ = owner_->configureLink(linkName, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
 

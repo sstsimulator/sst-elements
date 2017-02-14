@@ -52,6 +52,21 @@ int MemNIC::getSizeInBits(MemEvent *ev)
     return 8 * (packetHeaderBytes + ev->getPayloadSize());
 }
 
+/* Given a destination, convert a global address to a local address (assuming local addresses are contiguous) */
+Addr MemNIC::convertToDestinationAddress(const std::string &dst, Addr addr) {
+    std::unordered_map<std::string, ComponentTypeInfo>::iterator cit = peerAddrs.find(dst);
+    if (cit == peerAddrs.end()) dbg->fatal(CALL_INFO, -1, "Peer %s not found in peerAddrs\n", dst.c_str());
+
+    if (0 == (*cit).second.interleaveSize) return addr - (*cit).second.rangeStart;
+    
+    Addr a = addr - (*cit).second.rangeStart;
+    Addr step = a / (*cit).second.interleaveStep;
+    Addr offset = a % (*cit).second.interleaveStep;
+    Addr retAddr = (step * (*cit).second.interleaveSize) + offset;
+    dbg->debug(_L10_, "%s converted source address %" PRIu64 " to destination address %" PRIu64 " for destination: %s\n", comp->getName().c_str(), addr, retAddr, dst.c_str());
+    return retAddr;
+}
+
 
 void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
 {
@@ -192,6 +207,8 @@ void MemNIC::init(unsigned int phase)
             peerCI.network_addr = imre->address;
             peerCI.type = imre->compType;
             peers.push_back(std::make_pair(peerCI, imre->compInfo));
+            // save peer for lookup later for address conversion
+            peerAddrs[peerCI.name] = imre->compInfo; 
 
             // save a copy for lookups later if we should be sending requests to this entity
             if ((ci.type == MemNIC::TypeCache || ci.type == MemNIC::TypeNetworkCache) && (peerCI.type == MemNIC::TypeDirectoryCtrl || peerCI.type == MemNIC::TypeNetworkDirectory)) { // cache -> dir
@@ -199,6 +216,8 @@ void MemNIC::init(unsigned int phase)
             } else if (ci.type == MemNIC::TypeCacheToCache && peerCI.type == MemNIC::TypeNetworkCache) { // higher cache -> lower cache
                 destinations[imre->compInfo] = imre->name;
             } else if (ci.type == MemNIC::TypeSmartMemory && (peerCI.type == MemNIC::TypeSmartMemory || peerCI.type == MemNIC::TypeDirectoryCtrl || peerCI.type == MemNIC::TypeNetworkDirectory ) ) {
+                destinations[imre->compInfo] = imre->name;
+            } else if (ci.type == MemNIC::TypeScratch && peerCI.type == MemNIC::TypeMemory) {
                 destinations[imre->compInfo] = imre->name;
             }
         } else {

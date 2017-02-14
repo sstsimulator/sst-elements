@@ -1,0 +1,13 @@
+Stride Prefetch Engine Statistics (Owner: l1cache):
+--------------------------------------------------------------------
+Cache Miss Events:                      80
+Cache Hit Events :                      100000
+Cache Miss Rate (%):                    0.079936
+Cache Hit Rate (%):                     99.920064
+Prefetches Opportunities:               25020
+Prefetches Issued:                      12305
+Prefetches canceled by page boundary:   390
+Prefetches canceled by history:         12715
+--------------------------------------------------------------------
+ 
+Simulation is complete, simulated time: 9.98555 ms

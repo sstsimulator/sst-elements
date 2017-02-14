@@ -98,12 +98,24 @@ MODEL OVERVIEW:
 
 
   ADDITIONAL INFO:
-    - Bank addresses are mapped from the singleton class c_AddressHasher. The current hashing algorithm used is borrowed from USimm.
+    - Bank addresses are mapped from the singleton class c_AddressHasher.
+      - The address hash is highly flexible, and can be specified at the bit granularity. The map string is interpreted as little-endian (MSB first).
+      - Checking is done to verify that the structure-level parameters (e.g. numRanksPerChannel) match with the number of bits defined in the address map
+      - A simple map is also available. If only one instance of each type is defined the map will be automatically expanded to cover the structure sizes defined by the normal parameters.
+      - If the complex address map type is defined and fewer map bits are defined than those defined by the structure parameters (e.g. map contains R:2 and numRanksPerChannel is 8) a warning will be printed but simulation will continue with only a subset of the structures being used (some ranks can never be accessed).
+      - If the complex addres map type is defined and more map bits are defined than those defined by the structure parameters (e.g. map contains R:2 and numRanksPerChannel is 1) then the simulation will abort.
+      - The underscore '_' can be used as spacers to increase readability of address maps
+      - Address map key:
+      	C - Channel
+	R - Rank
+	B - BankGroup
+	b - Bank
+	r - Row
+	l - Column
+	h - Cacheline (matches burst size in bytes)
+      - Examples:
+      	_r_l_b_R_B_h_ - simple version, will be expanded as necessary to fill defined structures in the order defined. No 'C' included, so only 1 channel is possible.
+	__r:15_l:7__bb__R__BB__h:6__ - 15 row bits at MSB, folled by 7 column bits, 2 bank bits, 1 Rank bit, 2 BankGroup bits, and 6 cacheline bits
+	
     - It is highly recommended that simulator output is piped to an external file. There is usually a lot of output to decypher
-    - The C++ file test_addresses.cpp uses the c_AddressHasher class to map a trace file's instructions to the banks they would theoretically go to.
-      this program is useful for construction of trace files as it reveals which bank a particular address would map to given the total number of banks.
-      to run:
-        g++ -std=c++11 -o trace_addresses test_addresses.cpp c_AddressHasher.cpp
-        ./trace_addresses TRACE_FILE.trc NUM_BANKS
-
-      where NUM_BANKS is the total number of banks expected in simulation.
+    

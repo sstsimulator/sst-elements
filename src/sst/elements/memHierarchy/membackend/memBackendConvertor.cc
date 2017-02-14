@@ -97,6 +97,8 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
         }
 
         MemReq* req = m_requestQueue.front();
+        Debug(_L10_, "Processing request: addr: %" PRIu64 ", baseAddr: %" PRIu64 ", processed: %" PRIu32 ", id: %" PRIu64 ", isWrite: %d\n",
+                req->addr(), req->baseAddr(), req->processed(), req->id(), req->isWrite());
 
         if ( issue( req ) ) {
             cyclesWithIssue->addData(1);
@@ -108,7 +110,7 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
         reqsThisCycle++;
         req->increment( m_backendRequestWidth );
 
-        if ( req->processed() >= m_backendRequestWidth ) {
+        if ( req->processed() >= req->size() ) {
             Debug(_L10_, "Completed issue of request\n");
             m_requestQueue.pop_front();
         }

@@ -16,8 +16,6 @@
 #include <sst_config.h>
 #include "trivialCPU.h"
 
-#include <assert.h>
-
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
@@ -71,7 +69,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
-    memory = dynamic_cast<Interfaces::SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
+    memory = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.memInterface", this, params));
     if ( !memory ) {
         out.fatal(CALL_INFO, -1, "Unable to load Module as memory\n");
     }

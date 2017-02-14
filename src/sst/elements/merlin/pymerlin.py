@@ -590,6 +590,7 @@ class topoDragonFly(Topo):
 
                 router_num = router_num +1
 
+
 class topoDragonFly2(Topo):
     def __init__(self):
         Topo.__init__(self)
@@ -669,6 +670,9 @@ class topoDragonFly2(Topo):
                 for j in xrange(0,end):
                     self.global_link_map[i*igpr+j] = count;
                     count = count + 1
+
+        #print "Global link map array"
+        #print self.global_link_map
 
         # End set global link map with default
             
