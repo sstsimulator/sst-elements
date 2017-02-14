@@ -23,7 +23,6 @@
 #include <map>
 
 #include <sst/core/sst_types.h>
-#include <sst/core/module.h>
 #include <sst/core/link.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include "memEvent.h"

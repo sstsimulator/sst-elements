@@ -116,9 +116,9 @@ class SimpleMemBackend : public MemBackend {
     std::function<void(ReqId)> m_respFunc;
 };
 
-class HMCMemBackend : public MemBackend {
+class MemFlagMemBackend : public MemBackend {
   public:
-    HMCMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+    MemFlagMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
 
     void handleMemResponse( ReqId id, uint32_t flags ) {
@@ -132,26 +132,6 @@ class HMCMemBackend : public MemBackend {
   private:
     std::function<void(ReqId,uint32_t)> m_respFunc;
 };
-
-class MessierBackend : public MemBackend {
-  public:
-    MessierBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
-    virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
-
-    void handleMemResponse( ReqId id, uint32_t flags ) {
-        m_respFunc( id, flags );
-    }
-
-    virtual void setResponseHandler( std::function<void(ReqId,uint32_t)> func ) {
-        m_respFunc = func;
-    }
-
-  private:
-    std::function<void(ReqId,uint32_t)> m_respFunc;
-};
-
-
-
 
 }}
 

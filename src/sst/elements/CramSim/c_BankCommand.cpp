@@ -26,16 +26,38 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <assert.h>
+
 #include "c_BankCommand.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
 
 c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
-		e_BankCommandType x_cmdMnemonic, unsigned x_addr) :
-		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic), m_isResponseReady(
-				false) {
+		e_BankCommandType x_cmdMnemonic, ulong x_addr) :
+		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
+		m_isResponseReady(false), m_transactionPtr(nullptr) {
 
+	m_cmdToString[e_BankCommandType::ERR] = "ERR";
+	m_cmdToString[e_BankCommandType::ACT] = "ACT";
+	m_cmdToString[e_BankCommandType::READ] = "READ";
+	m_cmdToString[e_BankCommandType::READA] = "READA";
+	m_cmdToString[e_BankCommandType::WRITE] = "WRITE";
+	m_cmdToString[e_BankCommandType::WRITEA] = "WRITEA";
+	m_cmdToString[e_BankCommandType::PRE] = "PRE";
+	m_cmdToString[e_BankCommandType::PREA] = "PREA";
+	m_cmdToString[e_BankCommandType::REF] = "REF";
+
+}
+
+c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
+			     e_BankCommandType x_cmdMnemonic, ulong x_addr,
+			     unsigned x_bankId) :
+		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
+		m_isResponseReady(false), m_transactionPtr(nullptr),
+		m_bankId(x_bankId) {
+
+        assert(x_cmdMnemonic == e_BankCommandType::REF); // This constructor only for REF cmds!
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";
 	m_cmdToString[e_BankCommandType::ACT] = "ACT";
 	m_cmdToString[e_BankCommandType::READ] = "READ";
@@ -73,7 +95,7 @@ c_Transaction* c_BankCommand::getTransaction() const {
 void c_BankCommand::print() const {
 
 	std::cout << "[CMD: " << this->getCommandString() << ", SEQNUM: "
-			<< std::dec << this->getSeqNum() << " , ADDR: " << std::hex
+			<< std::dec << this->getSeqNum() << " , ADDR: 0x" << std::hex
 			<< this->getAddress() << " , isResponseReady: " << std::boolalpha
 			<< this->isResponseReady() << " row: " << getRow() << "]"
 			<< std::endl;
