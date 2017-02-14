@@ -39,9 +39,12 @@ class Topo:
     def __init__(self):
         self.topoKeys = []
         self.topoOptKeys = []
+        self.bundleEndpoints = True
         def epFunc(epID):
             return None
         self._getEndPoint = epFunc
+    def keepEndPointsWithRouter(self):
+        self.bundleEndpoints = False
     def getName(self):
         return "NoName"
     def prepParams(self):
@@ -84,6 +87,8 @@ class topoSimple(Topo):
             ep = self._getEndPoint(l).build(l, {})
             if ep:
                 link = sst.Link("link:%d"%l)
+                if self.bundleEndpoints:
+                    link.setNoCut()
                 link.connect(ep, (rtr, "port%d"%l, _params["link_lat"]) )
             
 
@@ -192,6 +197,8 @@ class topoTorus(Topo):
                 ep = self._getEndPoint(nodeID).build(nodeID, {})
                 if ep:
                     nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    if self.bundleEndpoints:
+                       nicLink.setNoCut()
                     nicLink.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
                 port = port+1
 
@@ -308,6 +315,8 @@ class topoMesh(Topo):
                 ep = self._getEndPoint(nodeID).build(nodeID, {})
                 if ep:
                     nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    if self.bundleEndpoints:
+                       nicLink.setNoCut()
                     nicLink.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
                 port = port+1
 
@@ -393,6 +402,8 @@ class topoFatTree(Topo):
                 ep = self._getEndPoint(node_id).build(node_id, {})
                 if ep:
                     hlink = sst.Link("hostlink_%d"%node_id)
+                    if self.bundleEndpoints:
+                       hlink.setNoCut()
                     ep[0].addLink(hlink, ep[1], ep[2])
                     host_links.append(hlink)
                 #print "Instancing node " + str(node_id)
@@ -553,6 +564,8 @@ class topoDragonFly(Topo):
                     ep = self._getEndPoint(nic_num).build(nic_num, {})
                     if ep:
                         link = sst.Link("link:g%dr%dh%d"%(g, r, p))
+                        if self.bundleEndpoints:
+                            link.setNoCut()
                         link.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
                     nic_num = nic_num + 1
                     port = port + 1
@@ -717,6 +730,8 @@ class topoDragonFly2(Topo):
                     ep = self._getEndPoint(nic_num).build(nic_num, {})
                     if ep:
                         link = sst.Link("link:g%dr%dh%d"%(g, r, p))
+                        if self.bundleEndpoints:
+                            link.setNoCut()
                         link.connect(ep, (rtr, "port%d"%port, _params["link_lat"]) )
                     nic_num = nic_num + 1
                     port = port + 1
