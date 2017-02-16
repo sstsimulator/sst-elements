@@ -6,37 +6,9 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104378 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  81726
-  [2, 4]  17188
-  [4, 6]  2910
-  [6, 8]  1619
-  [8, 10]  785
-  [10, 12]  150
 TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (104265 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  80987
-  [2, 4]  17229
-  [4, 6]  3211
-  [6, 8]  1981
-  [8, 10]  657
-  [10, 12]  200
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (104381 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  80305
-  [2, 4]  18410
-  [4, 6]  3056
-  [6, 8]  1665
-  [8, 10]  793
-  [10, 12]  152
 TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104240 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  82510
-  [2, 4]  15686
-  [4, 6]  3191
-  [6, 8]  2103
-  [8, 10]  546
-  [10, 12]  204
  c0.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1336; SumSQ.u64 = 1336; Count.u64 = 1336; 
  c0.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; 
  c0.l1cache.CacheHits : Accumulator : Sum.u64 = 760; SumSQ.u64 = 760; Count.u64 = 760; 
