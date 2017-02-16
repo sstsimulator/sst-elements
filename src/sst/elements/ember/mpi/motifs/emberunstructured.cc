@@ -14,7 +14,6 @@
 #include "emberunstructured.h"
 #include "../../embercustommap.h"
 
-
 using namespace SST::Ember;
 
 EmberUnstructuredGenerator::EmberUnstructuredGenerator(SST::Component* owner, Params& params) :
@@ -189,7 +188,7 @@ std::vector<std::map<int,int> >* EmberUnstructuredGenerator::readCommFile(std::s
 {
     //read matrix
 	MatrixMarketReader2D<int> reader = MatrixMarketReader2D<int>();
-	vector<int*>* dataVec = reader.readMatrix(fileName.c_str(), true); //current version ignores edge weights
+    std::vector<int*>* dataVec = reader.readMatrix(fileName.c_str(), true); //current version ignores edge weights
 
     //NetworkSim
     if(dataVec == NULL)
@@ -219,13 +218,13 @@ std::vector<std::map<int,int> >* EmberUnstructuredGenerator::readCommFile(std::s
 }
 
 template <class T>
-vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignoreValues)
+std::vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignoreValues)
 {
     //TODO: make this function faster by reading the file all at once
     //TODO: print the errors inside this function instead of returning NULL
 
     //open file
-    ifstream inputFile;
+    std::ifstream inputFile;
     inputFile.open( fileName, std::fstream::in );
     if(!inputFile.is_open()){
         return NULL;
@@ -233,7 +232,7 @@ vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignor
     }
 
     //read header
-    string fType, object, format, field, symmetry;
+    std::string fType, object, format, field, symmetry;
     if( !(inputFile >> fType >> object >> format >> field >> symmetry) ){
         return NULL;
         //fatal(CALL_INFO, -1, "Cannot read matrix market file: %s\n", fileName);
@@ -275,10 +274,10 @@ vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignor
     }
 
     //read data
-    vector<T*>* outVector = new vector<T*>();
+    std::vector<T*>* outVector = new std::vector<T*>();
     T* tempData;
     double ignoredDummy;
-    string line;
+    std::string line;
 
     if(format.compare("coordinate") == 0){
         inputFile >> numLines;
@@ -287,7 +286,7 @@ vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignor
             tempData = new T[3];
             if(ignoreValues){
                 getline(inputFile, line);
-                stringstream is(line);
+                std::stringstream is(line);
                 is >> tempData[0] >> tempData[1] >> ignoredDummy;
                 tempData[2] = 1;
             } else {

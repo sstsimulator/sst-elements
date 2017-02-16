@@ -28,7 +28,7 @@ using namespace SST::Statistics;
 trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     Component(id), rng(id, 13)
 {
-    requestsPendingCycle = new Histogram<uint64_t, uint64_t>("Requests Pending Per Cycle", 2);
+    requestsPendingCycle = registerStatistic<uint64_t>("pendCycle");
 
     // Restart the RNG to ensure completely consistent results 
     uint32_t z_seed = params.find<uint32_t>("rngseed", 7);
@@ -125,7 +125,7 @@ bool trivialCPU::clockTic( Cycle_t )
     ++clock_ticks;
 
     // Histogram bin the requests pending per cycle
-    requestsPendingCycle->add((uint64_t) requests.size());
+    requestsPendingCycle->addData((uint64_t) requests.size());
 
     // communicate?
     if ((0 != numLS) && (0 == (rng.generateNextUInt32() % commFreq))) {
