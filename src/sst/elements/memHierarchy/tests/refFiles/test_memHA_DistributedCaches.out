@@ -19211,69 +19211,13 @@ cpu3: Received Request with command 2 (addr 0x2bf3a574) [Time: 419] [1 outstandi
 cpu3: Received Request with command 2 (addr 0x196e3f6c) [Time: 417] [0 outstanding requests]
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu2 Finished after 1200 issued reads, 1200 returned (89522 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  14
-  [2, 4]  60
-  [4, 6]  278
-  [6, 8]  244
-  [8, 10]  4997
-  [10, 12]  83929
 TrivialCPU cpu1 Finished after 1200 issued reads, 1200 returned (90239 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  75
-  [2, 4]  280
-  [4, 6]  129
-  [6, 8]  135
-  [8, 10]  4947
-  [10, 12]  84673
 TrivialCPU cpu3 Finished after 1200 issued reads, 1200 returned (91482 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  10
-  [2, 4]  164
-  [4, 6]  73
-  [6, 8]  96
-  [8, 10]  4745
-  [10, 12]  86394
 TrivialCPU cpu0 Finished after 1200 issued reads, 1200 returned (91161 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  59
-  [2, 4]  215
-  [4, 6]  25
-  [6, 8]  71
-  [8, 10]  4848
-  [10, 12]  85943
 TrivialCPU cpu4 Finished after 1200 issued reads, 1200 returned (90232 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  616
-  [2, 4]  169
-  [4, 6]  66
-  [6, 8]  139
-  [8, 10]  4757
-  [10, 12]  84485
 TrivialCPU cpu5 Finished after 1200 issued reads, 1200 returned (90118 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  118
-  [2, 4]  179
-  [4, 6]  109
-  [6, 8]  22
-  [8, 10]  4907
-  [10, 12]  84783
 TrivialCPU cpu6 Finished after 1200 issued reads, 1200 returned (91433 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  60
-  [2, 4]  119
-  [4, 6]  32
-  [6, 8]  116
-  [8, 10]  4708
-  [10, 12]  86398
 TrivialCPU cpu7 Finished after 1200 issued reads, 1200 returned (90620 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  67
-  [2, 4]  60
-  [4, 6]  73
-  [6, 8]  193
-  [8, 10]  4816
-  [10, 12]  85411
  network.send_bit_count.port0 : Accumulator : Sum.u64 = 691200; SumSQ.u64 = 398131200; Count.u64 = 1200; 
  network.send_packet_count.port0 : Accumulator : Sum.u64 = 1200; SumSQ.u64 = 1200; Count.u64 = 1200; 
  network.output_port_stalls.port0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -19314,32 +19258,32 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  network.output_port_stalls.port7 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  network.idle_time.port7 : Accumulator : Sum.u64 = 36707994; SumSQ.u64 = 2399674327236; Count.u64 = 1036; 
  network.width_adj_count.port7 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- network.send_bit_count.port8 : Accumulator : Sum.u64 = 1828448; SumSQ.u64 = 901667840; Count.u64 = 7180; 
+ network.send_bit_count.port8 : Accumulator : Sum.u64 = 1820416; SumSQ.u64 = 900382720; Count.u64 = 7180; 
  network.send_packet_count.port8 : Accumulator : Sum.u64 = 7180; SumSQ.u64 = 7180; Count.u64 = 7180; 
  network.output_port_stalls.port8 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  network.idle_time.port8 : Accumulator : Sum.u64 = 32245194; SumSQ.u64 = 553443372036; Count.u64 = 3457; 
  network.width_adj_count.port8 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- network.send_bit_count.port9 : Accumulator : Sum.u64 = 1805440; SumSQ.u64 = 890761216; Count.u64 = 7076; 
+ network.send_bit_count.port9 : Accumulator : Sum.u64 = 1797376; SumSQ.u64 = 889470976; Count.u64 = 7076; 
  network.send_packet_count.port9 : Accumulator : Sum.u64 = 7076; SumSQ.u64 = 7076; Count.u64 = 7076; 
  network.output_port_stalls.port9 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  network.idle_time.port9 : Accumulator : Sum.u64 = 32326794; SumSQ.u64 = 546126451236; Count.u64 = 3440; 
  network.width_adj_count.port9 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- network.send_bit_count.port10 : Accumulator : Sum.u64 = 1800000; SumSQ.u64 = 886818816; Count.u64 = 7096; 
+ network.send_bit_count.port10 : Accumulator : Sum.u64 = 1792512; SumSQ.u64 = 885620736; Count.u64 = 7096; 
  network.send_packet_count.port10 : Accumulator : Sum.u64 = 7096; SumSQ.u64 = 7096; Count.u64 = 7096; 
  network.output_port_stalls.port10 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  network.idle_time.port10 : Accumulator : Sum.u64 = 32321994; SumSQ.u64 = 572346547236; Count.u64 = 3445; 
  network.width_adj_count.port10 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- network.send_bit_count.port11 : Accumulator : Sum.u64 = 1815232; SumSQ.u64 = 893353984; Count.u64 = 7189; 
+ network.send_bit_count.port11 : Accumulator : Sum.u64 = 1808192; SumSQ.u64 = 892227584; Count.u64 = 7189; 
  network.send_packet_count.port11 : Accumulator : Sum.u64 = 7189; SumSQ.u64 = 7189; Count.u64 = 7189; 
  network.output_port_stalls.port11 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  network.idle_time.port11 : Accumulator : Sum.u64 = 32254794; SumSQ.u64 = 545826664836; Count.u64 = 3520; 
  network.width_adj_count.port11 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- network.send_bit_count.port12 : Accumulator : Sum.u64 = 3086880; SumSQ.u64 = 1614332928; Count.u64 = 9598; 
+ network.send_bit_count.port12 : Accumulator : Sum.u64 = 3071360; SumSQ.u64 = 1611849728; Count.u64 = 9598; 
  network.send_packet_count.port12 : Accumulator : Sum.u64 = 9598; SumSQ.u64 = 9598; Count.u64 = 9598; 
  network.output_port_stalls.port12 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  network.idle_time.port12 : Accumulator : Sum.u64 = 29509794; SumSQ.u64 = 316635703236; Count.u64 = 4595; 
  network.width_adj_count.port12 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- network.send_bit_count.port13 : Accumulator : Sum.u64 = 3084544; SumSQ.u64 = 1613258752; Count.u64 = 9592; 
+ network.send_bit_count.port13 : Accumulator : Sum.u64 = 3069440; SumSQ.u64 = 1610842112; Count.u64 = 9592; 
  network.send_packet_count.port13 : Accumulator : Sum.u64 = 9592; SumSQ.u64 = 9592; Count.u64 = 9592; 
  network.output_port_stalls.port13 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  network.idle_time.port13 : Accumulator : Sum.u64 = 29515194; SumSQ.u64 = 309545949636; Count.u64 = 4607; 
@@ -19370,8 +19314,9 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  network.xbar_stalls.port13 : Accumulator : Sum.u64 = 156; SumSQ.u64 = 156; Count.u64 = 156; 
  network.xbar_stalls.port14 : Accumulator : Sum.u64 = 293; SumSQ.u64 = 293; Count.u64 = 293; 
  network.xbar_stalls.port15 : Accumulator : Sum.u64 = 299; SumSQ.u64 = 299; Count.u64 = 299; 
+ cpu0.pendCycle : Accumulator : Sum.u64 = 903958; SumSQ.u64 = 8986268; Count.u64 = 91161; 
  l1cache0.packet_latency : Accumulator : Sum.u64 = 1335; SumSQ.u64 = 1751; Count.u64 = 1200; 
- l1cache0.send_bit_count : Accumulator : Sum.u64 = 213120; SumSQ.u64 = 47321088; Count.u64 = 2368; 
+ l1cache0.send_bit_count : Accumulator : Sum.u64 = 209408; SumSQ.u64 = 46727168; Count.u64 = 2368; 
  l1cache0.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache0.idle_time : Accumulator : Sum.u64 = 30262972; SumSQ.u64 = 1740717942160; Count.u64 = 1053; 
  l1cache0.TotalEventsReceived : Accumulator : Sum.u64 = 2400; SumSQ.u64 = 2400; Count.u64 = 2400; 
@@ -19503,8 +19448,9 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache0.stateEvent_FlushLineInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache0.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache0.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu1.pendCycle : Accumulator : Sum.u64 = 893197; SumSQ.u64 = 8873257; Count.u64 = 90239; 
  l1cache1.packet_latency : Accumulator : Sum.u64 = 1339; SumSQ.u64 = 1745; Count.u64 = 1200; 
- l1cache1.send_bit_count : Accumulator : Sum.u64 = 222336; SumSQ.u64 = 52973568; Count.u64 = 2368; 
+ l1cache1.send_bit_count : Accumulator : Sum.u64 = 218112; SumSQ.u64 = 52297728; Count.u64 = 2368; 
  l1cache1.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache1.idle_time : Accumulator : Sum.u64 = 29601949; SumSQ.u64 = 1700761873511; Count.u64 = 1051; 
  l1cache1.TotalEventsReceived : Accumulator : Sum.u64 = 2400; SumSQ.u64 = 2400; Count.u64 = 2400; 
@@ -19636,8 +19582,9 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache1.stateEvent_FlushLineInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache1.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache1.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu2.pendCycle : Accumulator : Sum.u64 = 886845; SumSQ.u64 = 8807587; Count.u64 = 89522; 
  l1cache2.packet_latency : Accumulator : Sum.u64 = 1338; SumSQ.u64 = 1744; Count.u64 = 1201; 
- l1cache2.send_bit_count : Accumulator : Sum.u64 = 212064; SumSQ.u64 = 46654464; Count.u64 = 2369; 
+ l1cache2.send_bit_count : Accumulator : Sum.u64 = 208448; SumSQ.u64 = 46075904; Count.u64 = 2369; 
  l1cache2.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache2.idle_time : Accumulator : Sum.u64 = 29345417; SumSQ.u64 = 1625758876107; Count.u64 = 1039; 
  l1cache2.TotalEventsReceived : Accumulator : Sum.u64 = 2401; SumSQ.u64 = 2401; Count.u64 = 2401; 
@@ -19769,8 +19716,9 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache2.stateEvent_FlushLineInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache2.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache2.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ cpu3.pendCycle : Accumulator : Sum.u64 = 907718; SumSQ.u64 = 9024834; Count.u64 = 91482; 
  l1cache3.packet_latency : Accumulator : Sum.u64 = 1327; SumSQ.u64 = 1719; Count.u64 = 1200; 
- l1cache3.send_bit_count : Accumulator : Sum.u64 = 207648; SumSQ.u64 = 43987968; Count.u64 = 2368; 
+ l1cache3.send_bit_count : Accumulator : Sum.u64 = 204288; SumSQ.u64 = 43450368; Count.u64 = 2368; 
  l1cache3.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache3.idle_time : Accumulator : Sum.u64 = 30175054; SumSQ.u64 = 1838128577836; Count.u64 = 1041; 
  l1cache3.TotalEventsReceived : Accumulator : Sum.u64 = 2400; SumSQ.u64 = 2400; Count.u64 = 2400; 
@@ -19902,8 +19850,9 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache3.stateEvent_FlushLineInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache3.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache3.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu4.pendCycle : Accumulator : Sum.u64 = 889460; SumSQ.u64 = 8834746; Count.u64 = 90232; 
  l1cache4.packet_latency : Accumulator : Sum.u64 = 1353; SumSQ.u64 = 1763; Count.u64 = 1201; 
- l1cache4.send_bit_count : Accumulator : Sum.u64 = 214240; SumSQ.u64 = 47985664; Count.u64 = 2369; 
+ l1cache4.send_bit_count : Accumulator : Sum.u64 = 210496; SumSQ.u64 = 47386624; Count.u64 = 2369; 
  l1cache4.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.idle_time : Accumulator : Sum.u64 = 29676391; SumSQ.u64 = 1788378852129; Count.u64 = 1065; 
  l1cache4.TotalEventsReceived : Accumulator : Sum.u64 = 2401; SumSQ.u64 = 2401; Count.u64 = 2401; 
@@ -20035,8 +19984,9 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache4.stateEvent_FlushLineInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ cpu5.pendCycle : Accumulator : Sum.u64 = 892928; SumSQ.u64 = 8875072; Count.u64 = 90118; 
  l1cache5.packet_latency : Accumulator : Sum.u64 = 1312; SumSQ.u64 = 1666; Count.u64 = 1200; 
- l1cache5.send_bit_count : Accumulator : Sum.u64 = 218624; SumSQ.u64 = 50659328; Count.u64 = 2368; 
+ l1cache5.send_bit_count : Accumulator : Sum.u64 = 214528; SumSQ.u64 = 50003968; Count.u64 = 2368; 
  l1cache5.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.idle_time : Accumulator : Sum.u64 = 29475683; SumSQ.u64 = 1667797590897; Count.u64 = 1071; 
  l1cache5.TotalEventsReceived : Accumulator : Sum.u64 = 2400; SumSQ.u64 = 2400; Count.u64 = 2400; 
@@ -20168,8 +20118,9 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache5.stateEvent_FlushLineInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu6.pendCycle : Accumulator : Sum.u64 = 907286; SumSQ.u64 = 9021572; Count.u64 = 91433; 
  l1cache6.packet_latency : Accumulator : Sum.u64 = 1328; SumSQ.u64 = 1734; Count.u64 = 1200; 
- l1cache6.send_bit_count : Accumulator : Sum.u64 = 216896; SumSQ.u64 = 49645568; Count.u64 = 2368; 
+ l1cache6.send_bit_count : Accumulator : Sum.u64 = 212992; SumSQ.u64 = 49020928; Count.u64 = 2368; 
  l1cache6.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache6.idle_time : Accumulator : Sum.u64 = 29805278; SumSQ.u64 = 1738471939708; Count.u64 = 1042; 
  l1cache6.TotalEventsReceived : Accumulator : Sum.u64 = 2400; SumSQ.u64 = 2400; Count.u64 = 2400; 
@@ -20301,8 +20252,9 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache6.stateEvent_FlushLineInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache6.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache6.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu7.pendCycle : Accumulator : Sum.u64 = 898970; SumSQ.u64 = 8936462; Count.u64 = 90620; 
  l1cache7.packet_latency : Accumulator : Sum.u64 = 1332; SumSQ.u64 = 1718; Count.u64 = 1200; 
- l1cache7.send_bit_count : Accumulator : Sum.u64 = 217472; SumSQ.u64 = 49983488; Count.u64 = 2368; 
+ l1cache7.send_bit_count : Accumulator : Sum.u64 = 213504; SumSQ.u64 = 49348608; Count.u64 = 2368; 
  l1cache7.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache7.idle_time : Accumulator : Sum.u64 = 29806386; SumSQ.u64 = 1821296489272; Count.u64 = 1069; 
  l1cache7.TotalEventsReceived : Accumulator : Sum.u64 = 2400; SumSQ.u64 = 2400; Count.u64 = 2400; 
@@ -20435,7 +20387,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache7.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache7.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache0.packet_latency : Accumulator : Sum.u64 = 8288; SumSQ.u64 = 12482; Count.u64 = 7180; 
- l2cache0.send_bit_count : Accumulator : Sum.u64 = 1553568; SumSQ.u64 = 812411904; Count.u64 = 4829; 
+ l2cache0.send_bit_count : Accumulator : Sum.u64 = 1545536; SumSQ.u64 = 811126784; Count.u64 = 4829; 
  l2cache0.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache0.idle_time : Accumulator : Sum.u64 = 24347736; SumSQ.u64 = 371598218384; Count.u64 = 3767; 
  l2cache0.TotalEventsReceived : Accumulator : Sum.u64 = 7180; SumSQ.u64 = 7180; Count.u64 = 7180; 
@@ -20673,7 +20625,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache0.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache0.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.packet_latency : Accumulator : Sum.u64 = 8019; SumSQ.u64 = 11619; Count.u64 = 7076; 
- l2cache1.send_bit_count : Accumulator : Sum.u64 = 1531264; SumSQ.u64 = 800665600; Count.u64 = 4760; 
+ l2cache1.send_bit_count : Accumulator : Sum.u64 = 1523200; SumSQ.u64 = 799375360; Count.u64 = 4760; 
  l2cache1.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.idle_time : Accumulator : Sum.u64 = 24230642; SumSQ.u64 = 373300472892; Count.u64 = 3743; 
  l2cache1.TotalEventsReceived : Accumulator : Sum.u64 = 7076; SumSQ.u64 = 7076; Count.u64 = 7076; 
@@ -20911,7 +20863,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache1.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache2.packet_latency : Accumulator : Sum.u64 = 8035; SumSQ.u64 = 11815; Count.u64 = 7096; 
- l2cache2.send_bit_count : Accumulator : Sum.u64 = 1535104; SumSQ.u64 = 802920448; Count.u64 = 4773; 
+ l2cache2.send_bit_count : Accumulator : Sum.u64 = 1527616; SumSQ.u64 = 801722368; Count.u64 = 4773; 
  l2cache2.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache2.idle_time : Accumulator : Sum.u64 = 24296142; SumSQ.u64 = 379730719860; Count.u64 = 3732; 
  l2cache2.TotalEventsReceived : Accumulator : Sum.u64 = 7096; SumSQ.u64 = 7096; Count.u64 = 7096; 
@@ -21149,7 +21101,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache2.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache2.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.packet_latency : Accumulator : Sum.u64 = 8084; SumSQ.u64 = 11702; Count.u64 = 7189; 
- l2cache3.send_bit_count : Accumulator : Sum.u64 = 1554496; SumSQ.u64 = 813260800; Count.u64 = 4835; 
+ l2cache3.send_bit_count : Accumulator : Sum.u64 = 1547456; SumSQ.u64 = 812134400; Count.u64 = 4835; 
  l2cache3.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.idle_time : Accumulator : Sum.u64 = 24228726; SumSQ.u64 = 373017950492; Count.u64 = 3788; 
  l2cache3.TotalEventsReceived : Accumulator : Sum.u64 = 7189; SumSQ.u64 = 7189; Count.u64 = 7189; 
