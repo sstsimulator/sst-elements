@@ -21,8 +21,8 @@ cpu5: 1499 Issued Read for address 0x3e846db4
 cpu0: 1498 Issued Read for address 0x14b97230
 cpu6: 1498 Issued Read for address 0x2b3d7230
 cpu1: 1498 Issued Read for address 0xdcf7230
-cpu7: 1498 Issued Read for address 0x244f722c
 cpu2: 1498 Issued Read for address 0x6e5722c
+cpu7: 1498 Issued Read for address 0x244f722c
 cpu3: 1498 Issued Read for address 0x3ffb7228
 cpu4: 1498 Issued Read for address 0x39117234
 cpu5: 1498 Issued Read for address 0x32277230
@@ -34,12 +34,12 @@ cpu2: 1497 Issued Read for address 0x2380e494
 cpu3: 1497 Issued Read for address 0x3b4fe49c
 cpu4: 1497 Issued Read for address 0x1319e494
 cpu5: 1497 Issued Write for address 0x2ae8e498
-cpu6: 1496 Issued Read for address 0xcdce164
 cpu0: 1496 Issued Read for address 0x36a9e16c
-cpu7: 1496 Issued Read for address 0x3b39e170
 cpu1: 1496 Issued Read for address 0x2507e168
+cpu6: 1496 Issued Read for address 0xcdce164
 cpu2: 1496 Issued Read for address 0x1365e174
 cpu3: 1496 Issued Read for address 0x1c2e174
+cpu7: 1496 Issued Read for address 0x3b39e170
 cpu4: 1496 Issued Read for address 0x3020e170
 cpu5: 1496 Issued Read for address 0x1e7ee16c
 cpu0: 1495 Issued Read for address 0xa463638
@@ -53,16 +53,16 @@ cpu5: 1495 Issued Read for address 0x28853634
 cpu0: 1494 Issued Read for address 0x3f1e0b4
 cpu1: 1494 Issued Read for address 0x1463e0a8
 cpu6: 1494 Issued Read for address 0x268ee0ac
-cpu7: 1494 Issued Read for address 0x3700e0a4
 cpu2: 1494 Issued Read for address 0x24d0e0b4
 cpu3: 1494 Issued Read for address 0x3542e0a8
+cpu7: 1494 Issued Read for address 0x3700e0a4
 cpu4: 1494 Issued Read for address 0x5afe0b0
 cpu5: 1494 Issued Read for address 0x1621e0a8
 cpu0: 1493 Issued Read for address 0xa8ce4b8
-cpu6: 1493 Issued Write for address 0xa49e4ac
 cpu1: 1493 Issued Read for address 0x2a80e4b8
-cpu7: 1493 Issued Read for address 0x2a3de4bc
+cpu6: 1493 Issued Write for address 0xa49e4ac
 cpu2: 1493 Issued Read for address 0xa77e4b4
+cpu7: 1493 Issued Read for address 0x2a3de4bc
 cpu3: 1493 Issued Read for address 0x2a6be4b0
 cpu4: 1493 Issued Read for address 0xa5ee4b0
 cpu5: 1493 Issued Write for address 0x2a52e4ac
@@ -74,10 +74,10 @@ cpu2: 1492 Issued Read for address 0x18410e14
 cpu3: 1492 Issued Read for address 0x18450e18
 cpu4: 1492 Issued Read for address 0x18490e10
 cpu5: 1492 Issued Read for address 0x18490e14
-cpu6: 1491 Issued Read for address 0x16546cd8
 cpu0: 1491 Issued Read for address 0x3c6c6cd4
-cpu7: 1491 Issued Read for address 0x25536cc8
+cpu6: 1491 Issued Read for address 0x16546cd8
 cpu1: 1491 Issued Read for address 0xb6b6cd4
+cpu7: 1491 Issued Read for address 0x25536cc8
 cpu2: 1491 Issued Read for address 0x1a666cc8
 cpu3: 1491 Issued Read for address 0x29606ccc
 cpu4: 1491 Issued Read for address 0x385f6ccc
@@ -96,8 +96,8 @@ cpu4: Received Request with command 3 (addr 0x24f53148) [Time: 181] [9 outstandi
 cpu6: Received Request with command 2 (addr 0x1694313c) [Time: 181] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x1fc16db0) [Time: 179] [9 outstanding requests]
 cpu0: 1489 Issued Read for address 0x1dadb0fc
-cpu6: 1490 Issued Read for address 0x23bcb0f8
 cpu4: 1490 Issued Read for address 0x370cb0fc
+cpu6: 1490 Issued Read for address 0x23bcb0f8
 cpu1: Received Request with command 2 (addr 0xdcf7230) [Time: 179] [9 outstanding requests]
 cpu1: 1488 Issued Read for address 0x18343a20
 cpu5: Received Request with command 2 (addr 0x1dc33140) [Time: 235] [9 outstanding requests]
@@ -118,8 +118,8 @@ cpu0: 1487 Issued Read for address 0x399663cc
 cpu1: Received Request with command 2 (addr 0x1d1f3640) [Time: 314] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x6e5722c) [Time: 334] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x18331070) [Time: 109] [9 outstanding requests]
-cpu6: 1489 Issued Read for address 0x140d63c8
 cpu5: 1489 Issued Read for address 0x4f863c4
+cpu6: 1489 Issued Read for address 0x140d63c8
 cpu3: Received Request with command 3 (addr 0x141146d8) [Time: 111] [9 outstanding requests]
 cpu1: 1487 Issued Read for address 0x3ef50440
 cpu3: 1487 Issued Read for address 0x29fc043c
@@ -134,8 +134,8 @@ cpu0: Received Request with command 2 (addr 0x3c6c6cd4) [Time: 364] [9 outstandi
 cpu0: 1486 Issued Read for address 0x34a4e8e4
 cpu7: Received Request with command 2 (addr 0x244f722c) [Time: 434] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x3e846db4) [Time: 440] [9 outstanding requests]
-cpu7: 1488 Issued Write for address 0x37016610
 cpu5: 1488 Issued Read for address 0x3eaa6608
+cpu7: 1488 Issued Write for address 0x37016610
 cpu1: Received Request with command 2 (addr 0xb6b6cd4) [Time: 417] [9 outstanding requests]
 cpu1: 1486 Issued Write for address 0xd7609dc
 cpu6: Received Request with command 2 (addr 0x2b3d7230) [Time: 485] [9 outstanding requests]
@@ -144,8 +144,8 @@ cpu2: Received Request with command 2 (addr 0x24d0e0b4) [Time: 467] [9 outstandi
 cpu2: 1487 Issued Read for address 0x24208508
 cpu6: Received Request with command 2 (addr 0x16546cd8) [Time: 471] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x4f863c4) [Time: 170] [9 outstanding requests]
-cpu6: 1487 Issued Write for address 0x6ed06e4
 cpu5: 1487 Issued Read for address 0xb4906e4
+cpu6: 1487 Issued Write for address 0x6ed06e4
 cpu7: Received Request with command 2 (addr 0x15280264) [Time: 152] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x16a121f4) [Time: 224] [9 outstanding requests]
 cpu3: 1485 Issued Read for address 0x278bc51c
@@ -416,8 +416,8 @@ cpu1: Received Request with command 3 (addr 0x304cb5c4) [Time: 369] [9 outstandi
 cpu1: 1464 Issued Read for address 0xa5eeddc
 cpu6: Received Request with command 3 (addr 0x11cd1bdc) [Time: 363] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x319f8e50) [Time: 255] [9 outstanding requests]
-cpu6: 1474 Issued Read for address 0x36f35610
 cpu5: 1461 Issued Read for address 0x4471980
+cpu6: 1474 Issued Read for address 0x36f35610
 cpu5: Received Request with command 2 (addr 0x3305ec2c) [Time: 81] [9 outstanding requests]
 cpu5: 1460 Issued Read for address 0x25cd2874
 cpu2: Received Request with command 3 (addr 0x250bb84) [Time: 77] [9 outstanding requests]
@@ -459,8 +459,8 @@ cpu1: 1463 Issued Read for address 0x12dce2a4
 cpu1: Received Request with command 2 (addr 0x1ff0ba78) [Time: 2368] [9 outstanding requests]
 cpu1: 1462 Issued Read for address 0x6d00528
 cpu5: Received Request with command 2 (addr 0x25cd2874) [Time: 265] [9 outstanding requests]
-cpu7: Received Request with command 3 (addr 0x23a05160) [Time: 641] [9 outstanding requests]
 cpu5: 1458 Issued Read for address 0x3310c150
+cpu7: Received Request with command 3 (addr 0x23a05160) [Time: 641] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x1620b5c0) [Time: 218] [9 outstanding requests]
 cpu7: 1475 Issued Read for address 0x2618e298
 cpu4: 1467 Issued Read for address 0x573e524
@@ -696,8 +696,8 @@ cpu2: Received Request with command 2 (addr 0x2a22239c) [Time: 367] [9 outstandi
 cpu2: 1456 Issued Read for address 0x96fd0c0
 cpu5: Received Request with command 3 (addr 0xcd72aac) [Time: 2394] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0xe0088d4) [Time: 1247] [9 outstanding requests]
-cpu6: 1454 Issued Read for address 0x3e248938
 cpu5: 1448 Issued Read for address 0x3ea0c28
+cpu6: 1454 Issued Read for address 0x3e248938
 cpu0: Received Request with command 2 (addr 0x3046f6a4) [Time: 305] [9 outstanding requests]
 cpu0: 1444 Issued Read for address 0x145e3f28
 cpu6: Received Request with command 2 (addr 0x237b6cdc) [Time: 636] [9 outstanding requests]
@@ -1424,8 +1424,8 @@ cpu0: 1393 Issued Read for address 0x11f7cb94
 cpu6: Received Request with command 2 (addr 0x14456854) [Time: 100] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x3090b904) [Time: 319] [9 outstanding requests]
 cpu2: 1413 Issued Read for address 0x2c5036f0
-cpu6: 1406 Issued Read for address 0x2aa05cfc
 cpu3: 1408 Issued Read for address 0x39c90000
+cpu6: 1406 Issued Read for address 0x2aa05cfc
 cpu7: Received Request with command 2 (addr 0x39049d74) [Time: 141] [9 outstanding requests]
 cpu7: 1425 Issued Read for address 0x31b87e18
 cpu7: Received Request with command 3 (addr 0x344ea458) [Time: 150] [9 outstanding requests]
@@ -1838,8 +1838,8 @@ cpu2: Received Request with command 2 (addr 0x3bdfaac8) [Time: 307] [9 outstandi
 cpu2: 1377 Issued Read for address 0x26c19290
 cpu5: Received Request with command 2 (addr 0xe86c7b8) [Time: 107] [9 outstanding requests]
 cpu5: 1375 Issued Read for address 0x146fdf14
-cpu6: Received Request with command 2 (addr 0x26183568) [Time: 220] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x326cb0b0) [Time: 97] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x26183568) [Time: 220] [9 outstanding requests]
 cpu6: 1377 Issued Read for address 0xc5df18
 cpu3: 1385 Issued Read for address 0x3610fdf0
 cpu6: Received Request with command 2 (addr 0x15530568) [Time: 517] [9 outstanding requests]
@@ -1848,8 +1848,8 @@ cpu1: Received Request with command 2 (addr 0x1215fe2c) [Time: 655] [9 outstandi
 cpu4: 1383 Issued Read for address 0x1c6a65d8
 cpu6: 1376 Issued Read for address 0x2989a0dc
 cpu1: 1363 Issued Read for address 0x3ee68ff0
-cpu7: Received Request with command 2 (addr 0x2f38f94) [Time: 155] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x23169148) [Time: 1739] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x2f38f94) [Time: 155] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x16ef6934) [Time: 246] [9 outstanding requests]
 cpu7: 1405 Issued Read for address 0xe944040
 cpu1: 1362 Issued Read for address 0x21d37b40
@@ -1922,8 +1922,8 @@ cpu7: 1401 Issued Write for address 0x2048a470
 cpu7: 1400 Issued Read for address 0x32c7fd88
 cpu7: Received Request with command 2 (addr 0x19796520) [Time: 77] [9 outstanding requests]
 cpu7: 1399 Issued Read for address 0xd237d98
-cpu6: Received Request with command 2 (addr 0x19d2bc38) [Time: 72] [9 outstanding requests]
 cpu3: Received Request with command 3 (addr 0x28f37da4) [Time: 77] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x19d2bc38) [Time: 72] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x1bc47b40) [Time: 270] [8 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x161b2aec) [Time: 275] [7 outstanding requests]
 cpu6: 1368 Issued Read for address 0x278a0524
@@ -1959,8 +1959,8 @@ cpu2: Received Request with command 2 (addr 0x5f04808) [Time: 3245] [9 outstandi
 cpu3: Received Request with command 2 (addr 0x16d35290) [Time: 124] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x306c3c8c) [Time: 124] [8 outstanding requests]
 cpu2: 1369 Issued Read for address 0x3093c99c
-cpu6: 1366 Issued Read for address 0x7184560
 cpu3: 1377 Issued Read for address 0x35f1fee0
+cpu6: 1366 Issued Read for address 0x7184560
 cpu3: 1376 Issued Read for address 0x2dde3b9c
 cpu5: Received Request with command 2 (addr 0x146fdf14) [Time: 580] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x13343380) [Time: 114] [9 outstanding requests]
@@ -2020,8 +2020,8 @@ cpu6: Received Request with command 2 (addr 0x2366a304) [Time: 77] [9 outstandin
 cpu6: 1363 Issued Read for address 0x31edd528
 cpu7: Received Request with command 2 (addr 0x3c4948a8) [Time: 77] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x7b3d560) [Time: 195] [9 outstanding requests]
-cpu7: 1392 Issued Read for address 0xca7789c
 cpu4: 1370 Issued Read for address 0x13d1a5a8
+cpu7: 1392 Issued Read for address 0xca7789c
 cpu5: Received Request with command 2 (addr 0x1ae3193c) [Time: 2174] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x3456de9c) [Time: 80] [9 outstanding requests]
 cpu5: 1367 Issued Read for address 0x261ea92c
@@ -2077,8 +2077,8 @@ cpu2: Received Request with command 2 (addr 0x4924f5c) [Time: 265] [9 outstandin
 cpu0: Received Request with command 2 (addr 0x930f97c) [Time: 207] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x2c829588) [Time: 216] [9 outstanding requests]
 cpu0: 1371 Issued Read for address 0x550da64
-cpu6: 1360 Issued Read for address 0x3cbb8914
 cpu2: 1360 Issued Read for address 0x38848908
+cpu6: 1360 Issued Read for address 0x3cbb8914
 cpu6: Received Request with command 2 (addr 0xf9a2e34) [Time: 212] [9 outstanding requests]
 cpu6: 1359 Issued Read for address 0x3ed740a4
 cpu3: 1367 Issued Read for address 0x2ae06bf4
@@ -2265,8 +2265,8 @@ cpu7: 1376 Issued Read for address 0x5dafe10
 cpu4: Received Request with command 2 (addr 0x68e7e1c) [Time: 318] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x3b9defec) [Time: 128] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x2f50d308) [Time: 219] [9 outstanding requests]
-cpu7: 1375 Issued Write for address 0x1f45e714
 cpu5: 1357 Issued Read for address 0x37a6603c
+cpu7: 1375 Issued Write for address 0x1f45e714
 cpu0: Received Request with command 2 (addr 0x33961c4) [Time: 109] [9 outstanding requests]
 cpu4: 1358 Issued Read for address 0xdcc6030
 cpu6: Received Request with command 2 (addr 0x36957a0) [Time: 252] [9 outstanding requests]
@@ -2280,8 +2280,8 @@ cpu0: Received Request with command 2 (addr 0x291bd5ec) [Time: 151] [9 outstandi
 cpu0: 1355 Issued Read for address 0x7a0fd58
 cpu7: Received Request with command 3 (addr 0x13b2e6f4) [Time: 147] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x27f71140) [Time: 154] [9 outstanding requests]
-cpu7: 1374 Issued Read for address 0x3a6a1078
 cpu4: 1357 Issued Read for address 0x29d4fd50
+cpu7: 1374 Issued Read for address 0x3a6a1078
 cpu1: Received Request with command 3 (addr 0xc891070) [Time: 115] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x15763c30) [Time: 8368] [9 outstanding requests]
 cpu1: 1335 Issued Read for address 0x3249deb4
@@ -2353,8 +2353,8 @@ cpu7: Received Request with command 2 (addr 0x2dc16ad4) [Time: 105] [9 outstandi
 cpu0: 1350 Issued Read for address 0x27b80550
 cpu7: 1370 Issued Read for address 0x18cf0450
 cpu5: Received Request with command 2 (addr 0x35f401ec) [Time: 81] [9 outstanding requests]
-cpu7: Received Request with command 2 (addr 0x7a30728) [Time: 278] [9 outstanding requests]
 cpu5: 1351 Issued Read for address 0x27c70550
+cpu7: Received Request with command 2 (addr 0x7a30728) [Time: 278] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x26dd9ebc) [Time: 272] [9 outstanding requests]
 cpu4: 1353 Issued Read for address 0x636eb28
 cpu1: Received Request with command 2 (addr 0x1441e68) [Time: 2624] [9 outstanding requests]
@@ -2615,8 +2615,8 @@ cpu7: Received Request with command 2 (addr 0x3a16d688) [Time: 266] [8 outstandi
 cpu7: Received Request with command 2 (addr 0x2a2290a8) [Time: 2075] [7 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x149f2540) [Time: 120] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x3070cba4) [Time: 232] [9 outstanding requests]
-cpu7: 1351 Issued Read for address 0x39117b44
 cpu5: 1337 Issued Read for address 0x1a697388
+cpu7: 1351 Issued Read for address 0x39117b44
 cpu2: 1322 Issued Read for address 0x1bedee3c
 cpu7: 1350 Issued Read for address 0x3b2df334
 cpu2: Received Request with command 2 (addr 0x16378460) [Time: 99] [9 outstanding requests]
@@ -2657,8 +2657,8 @@ cpu3: Received Request with command 2 (addr 0x7300388) [Time: 169] [9 outstandin
 cpu7: Received Request with command 2 (addr 0x233c6e58) [Time: 154] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x1bedee3c) [Time: 159] [8 outstanding requests]
 cpu2: 1320 Issued Read for address 0x5c21910
-cpu7: Received Request with command 2 (addr 0x3b2df334) [Time: 161] [8 outstanding requests]
 cpu3: 1326 Issued Read for address 0x100c32b4
+cpu7: Received Request with command 2 (addr 0x3b2df334) [Time: 161] [8 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x27c70550) [Time: 1534] [9 outstanding requests]
 cpu2: 1319 Issued Read for address 0x3808fab8
 cpu0: Received Request with command 2 (addr 0x10063c54) [Time: 114] [9 outstanding requests]
@@ -2922,9 +2922,9 @@ cpu0: 1311 Issued Read for address 0x28a58cbc
 cpu1: 1295 Issued Read for address 0x4e7c8ec
 cpu6: Received Request with command 2 (addr 0xb7bca8c) [Time: 8570] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x269aa388) [Time: 205] [9 outstanding requests]
+cpu3: 1306 Issued Read for address 0x16640dfc
 cpu6: 1336 Issued Read for address 0x3037d18c
 cpu7: Received Request with command 2 (addr 0x11cb2708) [Time: 260] [9 outstanding requests]
-cpu3: 1306 Issued Read for address 0x16640dfc
 cpu7: 1326 Issued Read for address 0x87f8dd4
 cpu0: Received Request with command 2 (addr 0x2ee2c3c8) [Time: 4168] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x17c64fb4) [Time: 254] [9 outstanding requests]
@@ -2980,8 +2980,8 @@ cpu0: 1306 Issued Write for address 0x13eda054
 cpu0: 1305 Issued Read for address 0x2ea3d588
 cpu7: Received Request with command 2 (addr 0x306295cc) [Time: 268] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0xe190bec) [Time: 109] [9 outstanding requests]
-cpu7: 1320 Issued Read for address 0xb84a060
 cpu1: 1289 Issued Read for address 0x28d29ed4
+cpu7: 1320 Issued Read for address 0xb84a060
 cpu0: Received Request with command 2 (addr 0x2f930b60) [Time: 102] [9 outstanding requests]
 cpu0: 1304 Issued Read for address 0x3cdd9930
 cpu5: Received Request with command 2 (addr 0x3e4a08bc) [Time: 485] [9 outstanding requests]
@@ -3145,8 +3145,8 @@ cpu7: 1305 Issued Read for address 0x33ee9b78
 cpu0: Received Request with command 2 (addr 0x34537aac) [Time: 290] [9 outstanding requests]
 cpu0: 1294 Issued Read for address 0x39357ea0
 cpu0: Received Request with command 2 (addr 0x32d55f38) [Time: 1337] [9 outstanding requests]
-cpu7: Received Request with command 2 (addr 0xcad5414) [Time: 248] [9 outstanding requests]
 cpu0: 1293 Issued Read for address 0x2c5dafec
+cpu7: Received Request with command 2 (addr 0xcad5414) [Time: 248] [9 outstanding requests]
 cpu7: 1304 Issued Read for address 0x901b44
 cpu1: Received Request with command 2 (addr 0xb889b7c) [Time: 102] [9 outstanding requests]
 cpu1: 1280 Issued Read for address 0x32baa69c
@@ -3509,8 +3509,8 @@ cpu5: 1280 Issued Read for address 0x36aaef94
 cpu4: Received Request with command 2 (addr 0x91c5988) [Time: 382] [9 outstanding requests]
 cpu4: 1277 Issued Read for address 0x213749cc
 cpu3: Received Request with command 2 (addr 0x3290f8b8) [Time: 2280] [9 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x1b53570c) [Time: 93] [9 outstanding requests]
 cpu3: 1263 Issued Write for address 0x2454c104
+cpu6: Received Request with command 2 (addr 0x1b53570c) [Time: 93] [9 outstanding requests]
 cpu6: 1312 Issued Read for address 0x77a8e38
 cpu2: Received Request with command 2 (addr 0x1f2f7ba4) [Time: 3290] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x38dbbe64) [Time: 234] [9 outstanding requests]
@@ -3551,8 +3551,8 @@ cpu6: Received Request with command 2 (addr 0x77a8e38) [Time: 164] [9 outstandin
 cpu7: Received Request with command 2 (addr 0x3b03bc7c) [Time: 264] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x213749cc) [Time: 176] [9 outstanding requests]
 cpu6: 1311 Issued Read for address 0x7364ca0
-cpu4: 1274 Issued Read for address 0x5d93798
 cpu7: 1274 Issued Read for address 0x13d037a4
+cpu4: 1274 Issued Read for address 0x5d93798
 cpu6: Received Request with command 2 (addr 0x31aa88e0) [Time: 219] [9 outstanding requests]
 cpu3: 1260 Issued Read for address 0x2612447c
 cpu6: 1310 Issued Read for address 0x260ec930
@@ -3618,13 +3618,13 @@ cpu1: Received Request with command 2 (addr 0x3533cea0) [Time: 478] [9 outstandi
 cpu0: Received Request with command 2 (addr 0x323f6fdc) [Time: 156] [8 outstanding requests]
 cpu5: 1273 Issued Read for address 0x3c733990
 cpu6: Received Request with command 2 (addr 0xc4a1e0) [Time: 3264] [9 outstanding requests]
-cpu6: 1308 Issued Read for address 0x19dfca8
 cpu0: 1256 Issued Read for address 0x2e302b5c
+cpu6: 1308 Issued Read for address 0x19dfca8
 cpu1: 1256 Issued Read for address 0x19fa2b60
 cpu0: 1255 Issued Read for address 0x368c91ec
 cpu5: Received Request with command 3 (addr 0xd627c84) [Time: 306] [9 outstanding requests]
-cpu6: Received Request with command 3 (addr 0x1f492f3c) [Time: 157] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x29336fe0) [Time: 160] [9 outstanding requests]
+cpu6: Received Request with command 3 (addr 0x1f492f3c) [Time: 157] [9 outstanding requests]
 cpu2: 1270 Issued Read for address 0x5c52b5c
 cpu6: 1307 Issued Read for address 0x2ec18710
 cpu5: Received Request with command 2 (addr 0x1986ab9c) [Time: 264] [8 outstanding requests]
@@ -4008,8 +4008,8 @@ cpu1: Received Request with command 2 (addr 0x357c87a8) [Time: 161] [9 outstandi
 cpu1: 1229 Issued Read for address 0x1a402de0
 cpu7: Received Request with command 2 (addr 0xc4c9be8) [Time: 191] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x172a148) [Time: 161] [9 outstanding requests]
-cpu7: Received Request with command 2 (addr 0x3ab2f870) [Time: 157] [8 outstanding requests]
 cpu5: 1255 Issued Write for address 0xfe0e73c
+cpu7: Received Request with command 2 (addr 0x3ab2f870) [Time: 157] [8 outstanding requests]
 cpu7: 1241 Issued Read for address 0x21d74878
 cpu7: 1240 Issued Read for address 0xda9a12c
 cpu6: Received Request with command 2 (addr 0x118c31ec) [Time: 114] [9 outstanding requests]
@@ -4149,8 +4149,8 @@ cpu6: 1271 Issued Read for address 0x206b60d4
 cpu1: Received Request with command 2 (addr 0x18e3b39c) [Time: 163] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x9c72304) [Time: 2543] [9 outstanding requests]
 cpu1: 1224 Issued Read for address 0x218b8d2c
-cpu6: Received Request with command 2 (addr 0x370a72b0) [Time: 125] [9 outstanding requests]
 cpu4: 1246 Issued Read for address 0xe6f05dc
+cpu6: Received Request with command 2 (addr 0x370a72b0) [Time: 125] [9 outstanding requests]
 cpu6: 1270 Issued Read for address 0x64a346c
 cpu2: Received Request with command 2 (addr 0x33643864) [Time: 188] [9 outstanding requests]
 cpu2: 1232 Issued Read for address 0x132cd834
@@ -4585,8 +4585,8 @@ cpu5: Received Request with command 2 (addr 0x6eea42c) [Time: 267] [8 outstandin
 cpu1: 1200 Issued Read for address 0x18cb8b0c
 cpu1: Received Request with command 3 (addr 0x26206db0) [Time: 207] [9 outstanding requests]
 cpu1: 1199 Issued Read for address 0x1c106ff0
-cpu7: 1208 Issued Read for address 0x2b08be6c
 cpu5: 1208 Issued Read for address 0x1c2fbe68
+cpu7: 1208 Issued Read for address 0x2b08be6c
 cpu5: 1207 Issued Read for address 0x2346d7f0
 cpu5: Received Request with command 2 (addr 0x17c09158) [Time: 82] [9 outstanding requests]
 cpu5: 1206 Issued Read for address 0x223e6fec
@@ -4667,8 +4667,8 @@ cpu6: 1240 Issued Read for address 0x7978b94
 cpu5: Received Request with command 2 (addr 0x4eb57c4) [Time: 1268] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x23ed9078) [Time: 200] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0xbb976cc) [Time: 1480] [9 outstanding requests]
-cpu4: 1212 Issued Read for address 0x1fc3a2d8
 cpu6: 1239 Issued Read for address 0x179ea7e8
+cpu4: 1212 Issued Read for address 0x1fc3a2d8
 cpu5: 1202 Issued Read for address 0x299d1f90
 cpu3: Received Request with command 2 (addr 0x3ca488c) [Time: 3214] [9 outstanding requests]
 cpu3: 1204 Issued Read for address 0x26101f90
@@ -4798,8 +4798,8 @@ cpu4: 1205 Issued Read for address 0x263f92fc
 cpu6: 1230 Issued Read for address 0x3651dfc0
 cpu7: Received Request with command 2 (addr 0x15117f74) [Time: 150] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x19278644) [Time: 223] [9 outstanding requests]
-cpu7: 1194 Issued Read for address 0x265bb268
 cpu4: 1204 Issued Read for address 0x28f0599c
+cpu7: 1194 Issued Read for address 0x265bb268
 cpu6: Received Request with command 2 (addr 0x288ad010) [Time: 144] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x2b1c7b10) [Time: 105] [9 outstanding requests]
 cpu7: 1193 Issued Write for address 0x12234adc
@@ -4974,8 +4974,8 @@ cpu1: Received Request with command 3 (addr 0x9385998) [Time: 114] [9 outstandin
 cpu6: Received Request with command 2 (addr 0x2a422cfc) [Time: 248] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x33573944) [Time: 427] [8 outstanding requests]
 cpu6: 1217 Issued Read for address 0x22f77fe0
-cpu0: 1168 Issued Read for address 0x3405f938
 cpu7: 1180 Issued Read for address 0x27e3bd60
+cpu0: 1168 Issued Read for address 0x3405f938
 cpu1: 1170 Issued Read for address 0x2cabf934
 cpu1: 1169 Issued Read for address 0x1b6be7e8
 cpu6: Received Request with command 2 (addr 0x3ed7e084) [Time: 784] [9 outstanding requests]
@@ -5290,8 +5290,8 @@ cpu3: Received Request with command 2 (addr 0x2e29356c) [Time: 321] [9 outstandi
 cpu3: 1166 Issued Read for address 0x32c07638
 cpu7: Received Request with command 2 (addr 0x33ed3ce4) [Time: 3418] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x122b4910) [Time: 147] [9 outstanding requests]
-cpu7: 1160 Issued Read for address 0x38f682a0
 cpu4: 1179 Issued Read for address 0xb594034
+cpu7: 1160 Issued Read for address 0x38f682a0
 cpu0: Received Request with command 2 (addr 0x17532b38) [Time: 1182] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x23057a98) [Time: 270] [9 outstanding requests]
 cpu4: 1178 Issued Read for address 0x2790ce4
@@ -5891,10 +5891,10 @@ cpu7: 1124 Issued Read for address 0xa73445c
 cpu5: Received Request with command 2 (addr 0x200303dc) [Time: 210] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x24037a68) [Time: 1831] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x4a2f618) [Time: 160] [9 outstanding requests]
-cpu7: 1123 Issued Read for address 0x2021ccf0
 cpu5: 1153 Issued Read for address 0x29a0b730
-cpu6: Received Request with command 2 (addr 0x1ed86cd4) [Time: 170] [9 outstanding requests]
+cpu7: 1123 Issued Read for address 0x2021ccf0
 cpu2: Received Request with command 2 (addr 0x34361688) [Time: 157] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x1ed86cd4) [Time: 170] [9 outstanding requests]
 cpu6: 1153 Issued Read for address 0x16436b74
 cpu2: 1114 Issued Read for address 0x37840858
 cpu0: 1109 Issued Read for address 0x23a322f8
@@ -6041,8 +6041,8 @@ cpu6: Received Request with command 2 (addr 0x32a1e544) [Time: 210] [8 outstandi
 cpu6: 1143 Issued Read for address 0x14b3e55c
 cpu6: 1142 Issued Read for address 0xa0a9f44
 cpu3: Received Request with command 2 (addr 0x1c731414) [Time: 3847] [9 outstanding requests]
-cpu7: Received Request with command 2 (addr 0x343b999c) [Time: 202] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x28ff518) [Time: 199] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x343b999c) [Time: 202] [9 outstanding requests]
 cpu7: 1113 Issued Read for address 0x2c9df5d8
 cpu2: 1104 Issued Write for address 0x1548bd84
 cpu7: Received Request with command 2 (addr 0x1ce3fa30) [Time: 167] [9 outstanding requests]
@@ -6140,8 +6140,8 @@ cpu7: Received Request with command 2 (addr 0x3205b2f8) [Time: 228] [9 outstandi
 cpu1: 1089 Issued Read for address 0x5d64be8
 cpu0: 1098 Issued Read for address 0x1c379248
 cpu5: Received Request with command 2 (addr 0x2355557c) [Time: 163] [9 outstanding requests]
-cpu5: 1136 Issued Read for address 0x28b5af30
 cpu7: 1105 Issued Read for address 0x155e824
+cpu5: 1136 Issued Read for address 0x28b5af30
 cpu3: Received Request with command 2 (addr 0x3b6ac638) [Time: 199] [9 outstanding requests]
 cpu3: 1108 Issued Read for address 0x33189394
 cpu1: Received Request with command 2 (addr 0x34b1b710) [Time: 540] [9 outstanding requests]
@@ -6188,8 +6188,8 @@ cpu2: 1093 Issued Read for address 0x231e6008
 cpu0: Received Request with command 2 (addr 0x3641d944) [Time: 5327] [9 outstanding requests]
 cpu0: 1096 Issued Write for address 0x3c98d398
 cpu3: Received Request with command 2 (addr 0x39f919ec) [Time: 605] [9 outstanding requests]
-cpu6: 1130 Issued Read for address 0x1ace61e8
 cpu3: 1106 Issued Read for address 0x30c13de4
+cpu6: 1130 Issued Read for address 0x1ace61e8
 cpu7: Received Request with command 2 (addr 0x3f5eca2c) [Time: 263] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x5c3e068) [Time: 158] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x394ea260) [Time: 2226] [9 outstanding requests]
@@ -6318,8 +6318,8 @@ cpu4: 1121 Issued Write for address 0x2163161c
 cpu1: Received Request with command 2 (addr 0x216be5b0) [Time: 272] [9 outstanding requests]
 cpu1: 1078 Issued Read for address 0xe4890d8
 cpu6: Received Request with command 2 (addr 0x168c7ecc) [Time: 133] [9 outstanding requests]
-cpu6: 1118 Issued Read for address 0x39628148
 cpu5: 1126 Issued Read for address 0x19791624
+cpu6: 1118 Issued Read for address 0x39628148
 cpu2: Received Request with command 2 (addr 0x24788348) [Time: 98] [9 outstanding requests]
 cpu2: 1082 Issued Read for address 0x2d7581a4
 cpu0: Received Request with command 2 (addr 0xc8eb8a8) [Time: 345] [9 outstanding requests]
@@ -6469,8 +6469,8 @@ cpu6: 1106 Issued Read for address 0x37904d48
 cpu6: Received Request with command 3 (addr 0x2a381d0) [Time: 104] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x25a6b74) [Time: 1472] [9 outstanding requests]
 cpu3: Received Request with command 3 (addr 0x21c7b450) [Time: 91] [8 outstanding requests]
-cpu6: 1105 Issued Read for address 0x182916dc
 cpu3: 1086 Issued Read for address 0x9ef987c
+cpu6: 1105 Issued Read for address 0x182916dc
 cpu3: 1085 Issued Read for address 0x20a8a52c
 cpu3: Received Request with command 2 (addr 0x1048bdb0) [Time: 427] [9 outstanding requests]
 cpu3: 1084 Issued Read for address 0xde012ac
@@ -6758,8 +6758,8 @@ cpu0: Received Request with command 2 (addr 0x175453c) [Time: 217] [9 outstandin
 cpu0: 1061 Issued Read for address 0x10ca653c
 cpu6: Received Request with command 2 (addr 0xbc9be2c) [Time: 199] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x3c4ad080) [Time: 219] [9 outstanding requests]
-cpu6: 1091 Issued Read for address 0x2b698670
 cpu0: 1060 Issued Read for address 0x725c978
+cpu6: 1091 Issued Read for address 0x2b698670
 cpu2: Received Request with command 2 (addr 0x1fa0c148) [Time: 178] [9 outstanding requests]
 cpu2: 1051 Issued Read for address 0x21c0b440
 cpu5: Received Request with command 2 (addr 0x2d556ee8) [Time: 1151] [9 outstanding requests]
@@ -7262,18 +7262,18 @@ cpu1: Received Request with command 2 (addr 0x1e09c590) [Time: 2102] [9 outstand
 cpu6: Received Request with command 2 (addr 0x3a01f068) [Time: 471] [9 outstanding requests]
 cpu1: 1026 Issued Read for address 0xae31784
 cpu1: Received Request with command 2 (addr 0xd25fac) [Time: 105] [9 outstanding requests]
-cpu2: Received Request with command 2 (addr 0xc71db1c) [Time: 105] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x2bb37efc) [Time: 4457] [8 outstanding requests]
+cpu2: Received Request with command 2 (addr 0xc71db1c) [Time: 105] [9 outstanding requests]
 cpu1: 1025 Issued Read for address 0x10df6024
 cpu4: Received Request with command 2 (addr 0x1c2a8cdc) [Time: 298] [9 outstanding requests]
 cpu6: 1055 Issued Write for address 0x20d7ec44
 cpu6: 1054 Issued Read for address 0x18758ff0
 cpu4: 1058 Issued Read for address 0x2735db18
 cpu2: 1019 Issued Read for address 0x297e7584
-cpu0: Received Request with command 3 (addr 0x1d8396d8) [Time: 304] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x1277e1b0) [Time: 138] [9 outstanding requests]
-cpu7: 1033 Issued Read for address 0x21607588
+cpu0: Received Request with command 3 (addr 0x1d8396d8) [Time: 304] [9 outstanding requests]
 cpu0: 1033 Issued Read for address 0x2cbe7580
+cpu7: 1033 Issued Read for address 0x21607588
 cpu2: Received Request with command 2 (addr 0x385c6ef4) [Time: 342] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x113bf9b0) [Time: 401] [9 outstanding requests]
 cpu2: 1018 Issued Read for address 0x1d5838d0
@@ -7472,8 +7472,8 @@ cpu5: Received Request with command 2 (addr 0x2ad3a2e0) [Time: 2148] [9 outstand
 cpu0: 1022 Issued Read for address 0x2506dd30
 cpu5: 1063 Issued Write for address 0x32e1eb7c
 cpu6: 1042 Issued Read for address 0x36d2b304
-cpu4: Received Request with command 3 (addr 0x2fcc2f64) [Time: 101] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x1ea95110) [Time: 212] [9 outstanding requests]
+cpu4: Received Request with command 3 (addr 0x2fcc2f64) [Time: 101] [9 outstanding requests]
 cpu4: 1043 Issued Read for address 0x2634b2f8
 cpu7: 1019 Issued Read for address 0xcbf5eb0
 cpu7: Received Request with command 2 (addr 0xa285778) [Time: 109] [9 outstanding requests]
@@ -7506,8 +7506,8 @@ cpu7: Received Request with command 2 (addr 0x18c1a5f0) [Time: 80] [9 outstandin
 cpu7: 1017 Issued Write for address 0x1731976c
 cpu5: Received Request with command 2 (addr 0x3d2def90) [Time: 280] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x19903120) [Time: 269] [9 outstanding requests]
-cpu7: 1016 Issued Read for address 0x39e269fc
 cpu5: 1060 Issued Read for address 0x36c74808
+cpu7: 1016 Issued Read for address 0x39e269fc
 cpu4: Received Request with command 2 (addr 0x3ea01b14) [Time: 260] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x22ff758c) [Time: 1120] [9 outstanding requests]
 cpu4: 1040 Issued Read for address 0x151cb95c
@@ -7835,8 +7835,8 @@ cpu4: 1016 Issued Read for address 0x382e3388
 cpu5: Received Request with command 2 (addr 0x2e2bdb54) [Time: 107] [9 outstanding requests]
 cpu2: 987 Issued Write for address 0x31b5e90c
 cpu7: Received Request with command 2 (addr 0x1dc4af4) [Time: 1079] [9 outstanding requests]
-cpu7: 999 Issued Write for address 0x33fda568
 cpu5: 1034 Issued Read for address 0x25709e80
+cpu7: 999 Issued Write for address 0x33fda568
 cpu1: 995 Issued Read for address 0x2a172f90
 cpu6: Received Request with command 2 (addr 0x340bf3a8) [Time: 167] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x19b3203c) [Time: 136] [9 outstanding requests]
@@ -7929,8 +7929,8 @@ cpu2: 980 Issued Read for address 0x35d9cd90
 cpu5: Received Request with command 2 (addr 0x5ef4c18) [Time: 203] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x27b370b4) [Time: 199] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x33424d14) [Time: 203] [8 outstanding requests]
-cpu5: 1026 Issued Read for address 0x3b22b734
 cpu6: 1016 Issued Read for address 0x1f085ef0
+cpu5: 1026 Issued Read for address 0x3b22b734
 cpu1: Received Request with command 2 (addr 0x554f704) [Time: 3272] [9 outstanding requests]
 cpu5: 1025 Issued Read for address 0x298ceb34
 cpu1: 991 Issued Read for address 0x2ae6e330
@@ -7942,8 +7942,8 @@ cpu2: Received Request with command 2 (addr 0x29614d58) [Time: 206] [9 outstandi
 cpu0: Received Request with command 2 (addr 0x25d54ffc) [Time: 2328] [9 outstanding requests]
 cpu2: 979 Issued Read for address 0x34c3d1d4
 cpu0: 997 Issued Read for address 0xa7d418
-cpu2: Received Request with command 2 (addr 0x23dc8198) [Time: 1030] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0xced4d58) [Time: 219] [9 outstanding requests]
+cpu2: Received Request with command 2 (addr 0x23dc8198) [Time: 1030] [9 outstanding requests]
 cpu2: 978 Issued Read for address 0x3de774ac
 cpu7: Received Request with command 3 (addr 0x692b73c) [Time: 159] [8 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x1f8d305c) [Time: 1886] [7 outstanding requests]
@@ -7975,8 +7975,8 @@ cpu5: 1022 Issued Read for address 0xdf0cdac
 cpu6: Received Request with command 2 (addr 0x72ae3f0) [Time: 2261] [9 outstanding requests]
 cpu6: 1012 Issued Read for address 0x30434e00
 cpu1: Received Request with command 2 (addr 0xe0d5f34) [Time: 2370] [9 outstanding requests]
-cpu7: Received Request with command 3 (addr 0x3dcd2254) [Time: 148] [9 outstanding requests]
 cpu1: 989 Issued Read for address 0xba0f0ec
+cpu7: Received Request with command 3 (addr 0x3dcd2254) [Time: 148] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x2677584) [Time: 2454] [9 outstanding requests]
 cpu7: 988 Issued Read for address 0xd6533e0
 cpu1: 988 Issued Read for address 0xa5833e4
@@ -8002,8 +8002,8 @@ cpu7: 987 Issued Read for address 0x150d9444
 cpu7: Received Request with command 2 (addr 0x21076e3c) [Time: 264] [8 outstanding requests]
 cpu7: 986 Issued Read for address 0xdbb6c2c
 cpu5: Received Request with command 3 (addr 0xb8752b0) [Time: 261] [9 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x3611d420) [Time: 270] [9 outstanding requests]
 cpu5: 1020 Issued Read for address 0x2f6d056c
+cpu6: Received Request with command 2 (addr 0x3611d420) [Time: 270] [9 outstanding requests]
 cpu6: 1011 Issued Read for address 0x34b52b50
 cpu7: 985 Issued Read for address 0x1a152a14
 cpu1: Received Request with command 2 (addr 0xa5833e4) [Time: 161] [9 outstanding requests]
@@ -8117,8 +8117,8 @@ cpu3: 985 Issued Write for address 0x14b7d8e4
 cpu6: Received Request with command 2 (addr 0x247d0c1c) [Time: 369] [9 outstanding requests]
 cpu6: 1004 Issued Read for address 0x28a31a4
 cpu5: Received Request with command 2 (addr 0x3ea74508) [Time: 213] [9 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x132b4a20) [Time: 120] [9 outstanding requests]
 cpu5: 1012 Issued Read for address 0x16c69364
+cpu6: Received Request with command 2 (addr 0x132b4a20) [Time: 120] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x126fb198) [Time: 323] [9 outstanding requests]
 cpu6: 1003 Issued Read for address 0x33230f50
 cpu2: 967 Issued Read for address 0xe005bd0
@@ -8569,8 +8569,8 @@ cpu0: 965 Issued Read for address 0x21b34dec
 cpu7: Received Request with command 2 (addr 0x105397b4) [Time: 114] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x2f36be14) [Time: 115] [9 outstanding requests]
 cpu6: 978 Issued Read for address 0x2ca096dc
-cpu3: Received Request with command 3 (addr 0x2af12810) [Time: 116] [9 outstanding requests]
 cpu7: 953 Issued Read for address 0x2dac37c
+cpu3: Received Request with command 3 (addr 0x2af12810) [Time: 116] [9 outstanding requests]
 cpu3: 966 Issued Read for address 0x29d1226c
 cpu4: Received Request with command 2 (addr 0x2f3a7850) [Time: 262] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x35fa9ec8) [Time: 598] [9 outstanding requests]
@@ -8678,8 +8678,8 @@ cpu5: 976 Issued Read for address 0x19287298
 cpu4: 946 Issued Read for address 0x29bb949c
 cpu6: Received Request with command 2 (addr 0x2c8a5768) [Time: 319] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x3ca17dc0) [Time: 307] [9 outstanding requests]
-cpu6: 972 Issued Read for address 0x212b4798
 cpu1: 939 Issued Read for address 0x1a805f78
+cpu6: 972 Issued Read for address 0x212b4798
 cpu0: Received Request with command 2 (addr 0x96f017c) [Time: 206] [9 outstanding requests]
 cpu0: 958 Issued Read for address 0x381e0368
 cpu0: Received Request with command 2 (addr 0x19afa86c) [Time: 324] [9 outstanding requests]
@@ -9368,8 +9368,8 @@ cpu2: 893 Issued Read for address 0x320bd50
 cpu1: Received Request with command 2 (addr 0x14964534) [Time: 6414] [9 outstanding requests]
 cpu0: 910 Issued Read for address 0xdee8954
 cpu4: Received Request with command 2 (addr 0x11d13a4) [Time: 230] [9 outstanding requests]
-cpu7: Received Request with command 3 (addr 0x36be9cb4) [Time: 1779] [9 outstanding requests]
 cpu4: 897 Issued Write for address 0x2b08bd5c
+cpu7: Received Request with command 3 (addr 0x36be9cb4) [Time: 1779] [9 outstanding requests]
 cpu1: 900 Issued Read for address 0x247904f4
 cpu7: 898 Issued Read for address 0x26e6bd54
 cpu5: Received Request with command 2 (addr 0x2512dab0) [Time: 173] [9 outstanding requests]
@@ -9810,8 +9810,8 @@ cpu6: 896 Issued Read for address 0x1056590c
 cpu7: Received Request with command 2 (addr 0x2206cb74) [Time: 328] [9 outstanding requests]
 cpu5: 909 Issued Read for address 0x1e89714
 cpu5: Received Request with command 2 (addr 0x5cdb1cc) [Time: 281] [9 outstanding requests]
-cpu7: 867 Issued Read for address 0x16ba63a8
 cpu5: 908 Issued Read for address 0x15783358
+cpu7: 867 Issued Read for address 0x16ba63a8
 cpu0: Received Request with command 2 (addr 0x194bcc4) [Time: 279] [9 outstanding requests]
 cpu0: 895 Issued Read for address 0x3dd8aa50
 cpu5: Received Request with command 2 (addr 0x6358c98) [Time: 103] [9 outstanding requests]
@@ -11092,8 +11092,8 @@ cpu5: Received Request with command 2 (addr 0x12a3e9e4) [Time: 101] [9 outstandi
 cpu5: 826 Issued Read for address 0x27bb3f00
 cpu6: Received Request with command 2 (addr 0xeccdac0) [Time: 2196] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x29d513f0) [Time: 116] [9 outstanding requests]
-cpu6: 806 Issued Read for address 0x3e98230c
 cpu2: 778 Issued Read for address 0x12ebe084
+cpu6: 806 Issued Read for address 0x3e98230c
 cpu3: Received Request with command 2 (addr 0x2af5f144) [Time: 99] [9 outstanding requests]
 cpu3: 808 Issued Write for address 0x18a07a14
 cpu0: Received Request with command 2 (addr 0x3421fb7c) [Time: 79] [9 outstanding requests]
@@ -11168,8 +11168,8 @@ cpu4: Received Request with command 2 (addr 0x1002cb5c) [Time: 7940] [9 outstand
 cpu5: Received Request with command 2 (addr 0x26427bac) [Time: 344] [9 outstanding requests]
 cpu4: 793 Issued Read for address 0x3eef2080
 cpu5: 820 Issued Read for address 0x2828faf0
-cpu6: Received Request with command 2 (addr 0x3e98230c) [Time: 405] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x9c2efd4) [Time: 73] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x3e98230c) [Time: 405] [9 outstanding requests]
 cpu5: 819 Issued Read for address 0x39899ce0
 cpu6: 800 Issued Write for address 0x83a3434
 cpu3: Received Request with command 3 (addr 0x18a07a14) [Time: 399] [9 outstanding requests]
@@ -11236,8 +11236,8 @@ cpu6: Received Request with command 3 (addr 0x83a3434) [Time: 265] [9 outstandin
 cpu6: 797 Issued Read for address 0x2abff3ac
 cpu2: Received Request with command 2 (addr 0x27f3b28) [Time: 370] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x37e6e08) [Time: 166] [9 outstanding requests]
-cpu7: Received Request with command 2 (addr 0x1b7cf1e4) [Time: 209] [9 outstanding requests]
 cpu0: 818 Issued Read for address 0x21eb2694
+cpu7: Received Request with command 2 (addr 0x1b7cf1e4) [Time: 209] [9 outstanding requests]
 cpu7: 782 Issued Read for address 0x1c6ade4
 cpu1: Received Request with command 2 (addr 0x22767a7c) [Time: 156] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x1c956780) [Time: 164] [9 outstanding requests]
@@ -11465,8 +11465,8 @@ cpu4: 772 Issued Read for address 0x2867243c
 cpu6: Received Request with command 2 (addr 0x19386b0) [Time: 161] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x3b6083d0) [Time: 310] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x3415ed30) [Time: 152] [9 outstanding requests]
-cpu5: 800 Issued Read for address 0x3679e7cc
 cpu6: 783 Issued Read for address 0xa476220
+cpu5: 800 Issued Read for address 0x3679e7cc
 cpu6: Received Request with command 2 (addr 0x2ccfaaf4) [Time: 270] [9 outstanding requests]
 cpu4: 771 Issued Read for address 0xfa24d6c
 cpu5: Received Request with command 2 (addr 0x3c16348) [Time: 214] [9 outstanding requests]
@@ -11511,8 +11511,8 @@ cpu0: 798 Issued Read for address 0x1a922c50
 cpu5: Received Request with command 2 (addr 0x2606681c) [Time: 5256] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x1888cb9c) [Time: 82] [9 outstanding requests]
 cpu4: 768 Issued Read for address 0x2d7edd1c
-cpu7: Received Request with command 2 (addr 0x1f3d4234) [Time: 78] [9 outstanding requests]
 cpu5: 797 Issued Read for address 0x6a3cb9c
+cpu7: Received Request with command 2 (addr 0x1f3d4234) [Time: 78] [9 outstanding requests]
 cpu7: 763 Issued Read for address 0x2c8739d0
 cpu6: Received Request with command 2 (addr 0x21ca3c68) [Time: 722] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0xbe7d8) [Time: 315] [9 outstanding requests]
@@ -11970,8 +11970,8 @@ cpu6: 753 Issued Read for address 0x1dfecacc
 cpu0: 771 Issued Read for address 0x2814d368
 cpu2: Received Request with command 2 (addr 0x18aef34c) [Time: 247] [9 outstanding requests]
 cpu2: 728 Issued Read for address 0x134d550c
-cpu6: Received Request with command 2 (addr 0x3b10085c) [Time: 379] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x11507ed4) [Time: 217] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x3b10085c) [Time: 379] [9 outstanding requests]
 cpu2: 727 Issued Read for address 0x11ef7418
 cpu6: 752 Issued Read for address 0x237942f0
 cpu1: Received Request with command 2 (addr 0x20c8fdac) [Time: 274] [9 outstanding requests]
@@ -12360,8 +12360,8 @@ cpu1: 705 Issued Read for address 0x336a2e10
 cpu6: 740 Issued Read for address 0x2adc009c
 cpu6: Received Request with command 2 (addr 0x2060b130) [Time: 206] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x29029e7c) [Time: 156] [9 outstanding requests]
-cpu6: 739 Issued Read for address 0x27ef3e54
 cpu0: 745 Issued Read for address 0xcd05e4c
+cpu6: 739 Issued Read for address 0x27ef3e54
 cpu4: Received Request with command 2 (addr 0x2ac49230) [Time: 164] [9 outstanding requests]
 cpu4: 712 Issued Read for address 0x2bfa8bec
 cpu5: Received Request with command 2 (addr 0x2e2e0c94) [Time: 125] [9 outstanding requests]
@@ -12396,8 +12396,8 @@ cpu7: 699 Issued Read for address 0x285ca040
 cpu6: Received Request with command 2 (addr 0x3a72dee4) [Time: 2306] [9 outstanding requests]
 cpu6: 738 Issued Write for address 0x618367c
 cpu2: 697 Issued Read for address 0x1def2d98
-cpu1: Received Request with command 2 (addr 0x114f85c4) [Time: 270] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x2adc009c) [Time: 213] [9 outstanding requests]
+cpu1: Received Request with command 2 (addr 0x114f85c4) [Time: 270] [9 outstanding requests]
 cpu1: 702 Issued Read for address 0x12f47168
 cpu0: Received Request with command 2 (addr 0x3d45d604) [Time: 267] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x3e319740) [Time: 264] [9 outstanding requests]
@@ -12515,8 +12515,8 @@ cpu4: 704 Issued Read for address 0x2e7b9a98
 cpu0: Received Request with command 2 (addr 0x2fb0a928) [Time: 381] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x2ccd6444) [Time: 2375] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x2c008788) [Time: 434] [9 outstanding requests]
-cpu7: Received Request with command 2 (addr 0x1fc951dc) [Time: 212] [9 outstanding requests]
 cpu0: 734 Issued Read for address 0xe10a6cc
+cpu7: Received Request with command 2 (addr 0x1fc951dc) [Time: 212] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0xd497b70) [Time: 209] [9 outstanding requests]
 cpu7: 692 Issued Read for address 0x3fae5f68
 cpu0: 733 Issued Read for address 0x15149c50
@@ -12557,8 +12557,8 @@ cpu5: 735 Issued Read for address 0x2825f320
 cpu4: 702 Issued Read for address 0x2875b0a8
 cpu7: Received Request with command 2 (addr 0x3fae5f68) [Time: 163] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x2e7b9a98) [Time: 215] [9 outstanding requests]
-cpu7: 689 Issued Write for address 0x3c75f544
 cpu4: 701 Issued Write for address 0x2cab2e7c
+cpu7: 689 Issued Write for address 0x3c75f544
 cpu0: 731 Issued Write for address 0x8121880
 cpu6: Received Request with command 2 (addr 0x60a1c00) [Time: 316] [9 outstanding requests]
 cpu6: 727 Issued Read for address 0x3188148
@@ -12770,8 +12770,8 @@ cpu4: 682 Issued Write for address 0x20d6b698
 cpu5: 721 Issued Read for address 0x17da7960
 cpu7: Received Request with command 2 (addr 0x29e52388) [Time: 208] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x2c92ad30) [Time: 555] [9 outstanding requests]
-cpu7: 675 Issued Read for address 0x22ab0668
 cpu3: 713 Issued Read for address 0x9965ee4
+cpu7: 675 Issued Read for address 0x22ab0668
 cpu6: Received Request with command 2 (addr 0x131f9388) [Time: 203] [9 outstanding requests]
 cpu6: 714 Issued Read for address 0x200555dc
 cpu5: Received Request with command 2 (addr 0x3a15f784) [Time: 674] [9 outstanding requests]
@@ -12791,8 +12791,8 @@ cpu5: 719 Issued Read for address 0x3d4a4e0c
 cpu1: Received Request with command 3 (addr 0x23f2b134) [Time: 214] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0xcc785a0) [Time: 267] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x2047be2c) [Time: 211] [9 outstanding requests]
-cpu6: 711 Issued Read for address 0x30f82998
 cpu1: 683 Issued Read for address 0x174051c
+cpu6: 711 Issued Read for address 0x30f82998
 cpu0: 719 Issued Read for address 0x2797987c
 cpu4: Received Request with command 2 (addr 0x3c800dc8) [Time: 1177] [9 outstanding requests]
 cpu4: 681 Issued Read for address 0x22639350
@@ -12830,8 +12830,8 @@ cpu5: Received Request with command 2 (addr 0x19c5bcb0) [Time: 218] [9 outstandi
 cpu5: 717 Issued Read for address 0x1598a978
 cpu5: Received Request with command 2 (addr 0x168d6a8c) [Time: 758] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x30f82998) [Time: 169] [9 outstanding requests]
-cpu6: 708 Issued Write for address 0x88995e8
 cpu5: 716 Issued Read for address 0x300ae58
+cpu6: 708 Issued Write for address 0x88995e8
 cpu1: Received Request with command 2 (addr 0x174051c) [Time: 170] [9 outstanding requests]
 cpu1: 682 Issued Read for address 0x26f6aa98
 cpu3: Received Request with command 2 (addr 0x6588f24) [Time: 107] [9 outstanding requests]
@@ -13057,15 +13057,15 @@ cpu3: Received Request with command 2 (addr 0x378894d0) [Time: 177] [9 outstandi
 cpu5: 700 Issued Read for address 0xfcc4d4
 cpu2: Received Request with command 2 (addr 0xcd8d7c) [Time: 171] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x33aad528) [Time: 195] [8 outstanding requests]
-cpu6: 694 Issued Read for address 0x1e0c7ec0
 cpu2: 656 Issued Read for address 0x1c70040c
+cpu6: 694 Issued Read for address 0x1e0c7ec0
 cpu0: Received Request with command 2 (addr 0xb283c70) [Time: 166] [9 outstanding requests]
 cpu3: 691 Issued Read for address 0x1b6b1db0
 cpu3: 690 Issued Write for address 0xb27450c
 cpu0: Received Request with command 2 (addr 0x60b6600) [Time: 176] [8 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x13d7dbe8) [Time: 691] [9 outstanding requests]
-cpu6: 693 Issued Read for address 0x18e21db0
 cpu0: 697 Issued Read for address 0x3ff57ec0
+cpu6: 693 Issued Read for address 0x18e21db0
 cpu5: 699 Issued Read for address 0x23b27ec0
 cpu0: 696 Issued Read for address 0x1df01db0
 cpu2: Received Request with command 3 (addr 0x19812964) [Time: 171] [9 outstanding requests]
@@ -13074,8 +13074,8 @@ cpu7: 671 Issued Read for address 0x3286662c
 cpu2: Received Request with command 2 (addr 0x399cfd10) [Time: 211] [8 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x2051f4e4) [Time: 161] [9 outstanding requests]
 cpu4: 661 Issued Read for address 0x76ff694
-cpu6: Received Request with command 2 (addr 0xd4b689c) [Time: 168] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x82b172c) [Time: 176] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0xd4b689c) [Time: 168] [9 outstanding requests]
 cpu6: 692 Issued Read for address 0x1385cec4
 cpu2: 655 Issued Read for address 0x37193a38
 cpu2: 654 Issued Read for address 0x17b5f40c
@@ -13416,8 +13416,8 @@ cpu3: 672 Issued Read for address 0x19292c78
 cpu5: 680 Issued Read for address 0xa3dc07c
 cpu7: Received Request with command 2 (addr 0x1417067c) [Time: 919] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x3a14b5dc) [Time: 215] [9 outstanding requests]
-cpu7: 650 Issued Read for address 0x2b8a59d4
 cpu3: 671 Issued Read for address 0x1a322164
+cpu7: 650 Issued Read for address 0x2b8a59d4
 cpu4: Received Request with command 2 (addr 0xb22740) [Time: 216] [9 outstanding requests]
 cpu4: 636 Issued Read for address 0x29474e20
 cpu1: Received Request with command 3 (addr 0x1960158c) [Time: 78] [9 outstanding requests]
@@ -13602,8 +13602,8 @@ cpu4: Received Request with command 3 (addr 0x17f9c44c) [Time: 366] [9 outstandi
 cpu4: 624 Issued Read for address 0x1eac4268
 cpu7: Received Request with command 2 (addr 0x2324a224) [Time: 169] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x23b4d89c) [Time: 124] [9 outstanding requests]
-cpu5: 673 Issued Read for address 0x34a6f5b4
 cpu7: 635 Issued Read for address 0xd00f4bc
+cpu5: 673 Issued Read for address 0x34a6f5b4
 cpu1: Received Request with command 2 (addr 0x3939e93c) [Time: 110] [9 outstanding requests]
 cpu1: 627 Issued Read for address 0x16ee5e5c
 cpu1: Received Request with command 2 (addr 0x23c51fa8) [Time: 116] [9 outstanding requests]
@@ -14031,8 +14031,8 @@ cpu1: 596 Issued Write for address 0x161e5c64
 cpu3: 628 Issued Read for address 0x3d3b31e4
 cpu7: 600 Issued Read for address 0x17290d98
 cpu2: Received Request with command 2 (addr 0x11c0bcf4) [Time: 238] [9 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x16210d68) [Time: 327] [9 outstanding requests]
 cpu2: 583 Issued Read for address 0x320090ac
+cpu6: Received Request with command 2 (addr 0x16210d68) [Time: 327] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0xf8b9e54) [Time: 723] [9 outstanding requests]
 cpu6: 644 Issued Read for address 0x3fa4f30
 cpu3: 627 Issued Read for address 0x2bae4438
@@ -14390,8 +14390,8 @@ cpu0: Received Request with command 2 (addr 0x259f9e4c) [Time: 245] [9 outstandi
 cpu3: Received Request with command 2 (addr 0x3f1aed8c) [Time: 1715] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0xd2a110c) [Time: 96] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x3123c7f0) [Time: 162] [9 outstanding requests]
-cpu6: 620 Issued Write for address 0x30389860
 cpu0: 605 Issued Read for address 0x7bce4b4
+cpu6: 620 Issued Write for address 0x30389860
 cpu2: 561 Issued Read for address 0xf1008fc
 cpu3: 605 Issued Read for address 0xfbee4b8
 cpu0: Received Request with command 2 (addr 0x32884720) [Time: 87] [9 outstanding requests]
@@ -14556,8 +14556,8 @@ cpu1: Received Request with command 2 (addr 0x38d8a55c) [Time: 100] [9 outstandi
 cpu1: 556 Issued Read for address 0xc7a81d0
 cpu5: Received Request with command 2 (addr 0x3f1742a4) [Time: 309] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x367c5f20) [Time: 406] [9 outstanding requests]
-cpu7: 571 Issued Read for address 0x25d73d4c
 cpu5: 631 Issued Read for address 0x104ce328
+cpu7: 571 Issued Read for address 0x25d73d4c
 cpu0: Received Request with command 2 (addr 0x1c0e8ef8) [Time: 124] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x174918cc) [Time: 110] [9 outstanding requests]
 cpu4: 579 Issued Read for address 0x16315664
@@ -14658,8 +14658,8 @@ cpu1: 548 Issued Read for address 0x1bd7a10
 cpu7: 564 Issued Write for address 0x6f745a0
 cpu0: Received Request with command 2 (addr 0xa1b4ee4) [Time: 159] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x366ad06c) [Time: 2479] [9 outstanding requests]
-cpu7: 563 Issued Read for address 0x2ec7d908
 cpu0: 589 Issued Read for address 0x37610c84
+cpu7: 563 Issued Read for address 0x2ec7d908
 cpu2: Received Request with command 2 (addr 0x353c2bd0) [Time: 405] [9 outstanding requests]
 cpu2: 541 Issued Read for address 0x1348744
 cpu3: Received Request with command 2 (addr 0x11acde2c) [Time: 191] [9 outstanding requests]
@@ -14668,8 +14668,8 @@ cpu4: Received Request with command 2 (addr 0xba21088) [Time: 771] [9 outstandin
 cpu4: 572 Issued Read for address 0x20a22c
 cpu6: Received Request with command 3 (addr 0x3cc05190) [Time: 697] [9 outstanding requests]
 cpu6: 609 Issued Read for address 0x3c8f9200
-cpu6: Received Request with command 2 (addr 0x294f5310) [Time: 162] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x20ae7b4) [Time: 4074] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x294f5310) [Time: 162] [9 outstanding requests]
 cpu2: 540 Issued Write for address 0xa56ebc0
 cpu3: 587 Issued Read for address 0xfc7b2c0
 cpu1: Received Request with command 2 (addr 0x123b62ec) [Time: 444] [9 outstanding requests]
@@ -14756,8 +14756,8 @@ cpu3: Received Request with command 2 (addr 0x4eb45a0) [Time: 348] [9 outstandin
 cpu3: 582 Issued Read for address 0x240d08b8
 cpu4: Received Request with command 2 (addr 0x2c932c60) [Time: 199] [9 outstanding requests]
 cpu4: 565 Issued Write for address 0x1b50ae50
-cpu6: Received Request with command 2 (addr 0x39df81cc) [Time: 726] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x2d720a60) [Time: 88] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x39df81cc) [Time: 726] [9 outstanding requests]
 cpu6: 602 Issued Read for address 0x16fbe010
 cpu2: 533 Issued Read for address 0x273d8cd8
 cpu1: Received Request with command 2 (addr 0x144eef4) [Time: 78] [9 outstanding requests]
@@ -14795,8 +14795,8 @@ cpu5: 620 Issued Read for address 0x3708203c
 cpu1: Received Request with command 2 (addr 0x2f3b8cd8) [Time: 134] [9 outstanding requests]
 cpu1: 536 Issued Read for address 0x1407b10c
 cpu6: Received Request with command 2 (addr 0x16fbe010) [Time: 186] [9 outstanding requests]
-cpu6: 598 Issued Read for address 0x23d81dc8
 cpu5: Received Request with command 2 (addr 0x7860b08) [Time: 2255] [9 outstanding requests]
+cpu6: 598 Issued Read for address 0x23d81dc8
 cpu5: 619 Issued Read for address 0x2521df58
 cpu2: Received Request with command 2 (addr 0x15e4ca98) [Time: 1211] [9 outstanding requests]
 cpu2: 529 Issued Write for address 0x1ba236bc
@@ -15404,8 +15404,8 @@ cpu1: Received Request with command 2 (addr 0x34a88ef8) [Time: 205] [9 outstandi
 cpu1: 495 Issued Read for address 0x32fca270
 cpu2: Received Request with command 2 (addr 0x3b46efa8) [Time: 283] [9 outstanding requests]
 cpu2: 488 Issued Read for address 0x225cb3fc
-cpu7: Received Request with command 3 (addr 0x1c5cc580) [Time: 2270] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x18381100) [Time: 161] [9 outstanding requests]
+cpu7: Received Request with command 3 (addr 0x1c5cc580) [Time: 2270] [9 outstanding requests]
 cpu4: 525 Issued Read for address 0x226e6d68
 cpu4: Received Request with command 2 (addr 0x1e0f8f00) [Time: 157] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x3559c880) [Time: 1220] [9 outstanding requests]
@@ -15598,8 +15598,8 @@ cpu6: Received Request with command 2 (addr 0x30ec4434) [Time: 264] [9 outstandi
 cpu0: Received Request with command 2 (addr 0x349b5550) [Time: 1650] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x3d2815b0) [Time: 314] [9 outstanding requests]
 cpu0: 532 Issued Read for address 0x1e834a3c
-cpu6: 554 Issued Read for address 0x1531983c
 cpu2: 474 Issued Read for address 0x3df90bd0
+cpu6: 554 Issued Read for address 0x1531983c
 cpu4: Received Request with command 3 (addr 0xb77fcdc) [Time: 74] [9 outstanding requests]
 cpu4: 510 Issued Read for address 0x28c9c0ac
 cpu1: Received Request with command 2 (addr 0x3c6c3514) [Time: 290] [9 outstanding requests]
@@ -15755,8 +15755,8 @@ cpu2: 466 Issued Read for address 0x3e40baa8
 cpu4: Received Request with command 2 (addr 0x3a4c63f0) [Time: 201] [9 outstanding requests]
 cpu4: 499 Issued Read for address 0x1b187d58
 cpu5: Received Request with command 2 (addr 0xa922434) [Time: 1760] [9 outstanding requests]
-cpu5: 558 Issued Read for address 0x2d22f1fc
 cpu6: Received Request with command 2 (addr 0x3d42f388) [Time: 216] [9 outstanding requests]
+cpu5: 558 Issued Read for address 0x2d22f1fc
 cpu4: Received Request with command 2 (addr 0xbfa6700) [Time: 382] [9 outstanding requests]
 cpu6: 548 Issued Read for address 0x3e631400
 cpu1: Received Request with command 2 (addr 0x1a4cab0) [Time: 621] [9 outstanding requests]
@@ -15829,8 +15829,8 @@ cpu7: Received Request with command 2 (addr 0x39bf69ac) [Time: 263] [9 outstandi
 cpu3: Received Request with command 3 (addr 0x23c58af4) [Time: 159] [9 outstanding requests]
 cpu3: 524 Issued Read for address 0x389aa5cc
 cpu6: Received Request with command 2 (addr 0x1605b7ac) [Time: 262] [9 outstanding requests]
-cpu6: 546 Issued Read for address 0xfb5f8
 cpu2: 460 Issued Read for address 0x2a405848
+cpu6: 546 Issued Read for address 0xfb5f8
 cpu0: Received Request with command 2 (addr 0xc70f0b0) [Time: 165] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x3e631400) [Time: 372] [9 outstanding requests]
 cpu7: 490 Issued Read for address 0x24d6f54
@@ -15942,8 +15942,8 @@ cpu3: Received Request with command 2 (addr 0x28213110) [Time: 5291] [9 outstand
 cpu7: Received Request with command 2 (addr 0x1c37968c) [Time: 85] [9 outstanding requests]
 cpu7: 483 Issued Read for address 0x151df844
 cpu3: 519 Issued Read for address 0x36863288
-cpu1: Received Request with command 2 (addr 0x1692e5d0) [Time: 387] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x30eb0c3c) [Time: 74] [9 outstanding requests]
+cpu1: Received Request with command 2 (addr 0x1692e5d0) [Time: 387] [9 outstanding requests]
 cpu1: 464 Issued Write for address 0x3e2871fc
 cpu7: 482 Issued Read for address 0x19bc2c48
 cpu0: Received Request with command 2 (addr 0xfdb6f50) [Time: 485] [9 outstanding requests]
@@ -15954,8 +15954,8 @@ cpu6: Received Request with command 2 (addr 0x19df6e08) [Time: 78] [9 outstandin
 cpu2: Received Request with command 2 (addr 0xc3b6f38) [Time: 81] [9 outstanding requests]
 cpu2: 452 Issued Read for address 0x3b7462a0
 cpu6: 537 Issued Read for address 0x2d443280
-cpu6: Received Request with command 2 (addr 0x5388df4) [Time: 479] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x2746803c) [Time: 151] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x5388df4) [Time: 479] [9 outstanding requests]
 cpu6: 536 Issued Read for address 0x2660250c
 cpu3: Received Request with command 2 (addr 0x2165c138) [Time: 4506] [9 outstanding requests]
 cpu2: 451 Issued Read for address 0x2458d5b4
@@ -16000,8 +16000,8 @@ cpu0: Received Request with command 3 (addr 0x1b5ff62c) [Time: 108] [9 outstandi
 cpu0: 501 Issued Read for address 0x1b0c4240
 cpu7: Received Request with command 2 (addr 0x151df844) [Time: 247] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x17461f18) [Time: 108] [9 outstanding requests]
-cpu4: 480 Issued Read for address 0x27dcb3e0
 cpu7: 480 Issued Read for address 0x9fab3e0
+cpu4: 480 Issued Read for address 0x27dcb3e0
 cpu0: Received Request with command 2 (addr 0x624c98) [Time: 113] [9 outstanding requests]
 cpu6: 534 Issued Read for address 0x1a2d78cc
 cpu0: 500 Issued Read for address 0x2630e1a8
@@ -16027,8 +16027,8 @@ cpu2: Received Request with command 2 (addr 0x2458d5b4) [Time: 289] [9 outstandi
 cpu7: Received Request with command 2 (addr 0x364861f4) [Time: 187] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x3920629c) [Time: 125] [9 outstanding requests]
 cpu2: 446 Issued Write for address 0x1ed48bc8
-cpu7: Received Request with command 2 (addr 0x19bc2c48) [Time: 348] [8 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x5c2b3e0) [Time: 175] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x19bc2c48) [Time: 348] [8 outstanding requests]
 cpu1: 460 Issued Read for address 0xd402668
 cpu3: 511 Issued Read for address 0x1c1ce624
 cpu7: 479 Issued Read for address 0x32e1ba40
@@ -16570,8 +16570,8 @@ cpu0: 475 Issued Read for address 0x177ccc
 cpu6: Received Request with command 2 (addr 0x3a69f4d0) [Time: 147] [9 outstanding requests]
 cpu4: 444 Issued Read for address 0x1bb5a604
 cpu3: Received Request with command 2 (addr 0xae46648) [Time: 142] [9 outstanding requests]
-cpu6: 492 Issued Read for address 0x267c0164
 cpu3: 475 Issued Read for address 0xec8ec80
+cpu6: 492 Issued Read for address 0x267c0164
 cpu5: Received Request with command 2 (addr 0xce53420) [Time: 198] [9 outstanding requests]
 cpu5: 518 Issued Read for address 0x2b1b7588
 cpu7: Received Request with command 2 (addr 0x3fa8ec48) [Time: 320] [9 outstanding requests]
@@ -16753,8 +16753,8 @@ cpu4: 431 Issued Read for address 0x3df92028
 cpu1: 413 Issued Read for address 0x1f918b38
 cpu0: Received Request with command 2 (addr 0x29e7d58c) [Time: 4302] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x4e2f614) [Time: 137] [8 outstanding requests]
-cpu6: 479 Issued Read for address 0x249fb2f8
 cpu5: 508 Issued Read for address 0x1cf63a54
+cpu6: 479 Issued Read for address 0x249fb2f8
 cpu7: 432 Issued Read for address 0x163f2024
 cpu5: Received Request with command 2 (addr 0x1dd43304) [Time: 2055] [9 outstanding requests]
 cpu5: 507 Issued Read for address 0x11a32b08
@@ -17381,8 +17381,8 @@ cpu1: 374 Issued Read for address 0x149a741c
 cpu3: Received Request with command 2 (addr 0x3bc601f8) [Time: 268] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x2e36fce4) [Time: 170] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x3ba542dc) [Time: 172] [9 outstanding requests]
-cpu7: 390 Issued Read for address 0x3a4a4eb0
 cpu2: 363 Issued Read for address 0x31cb91f8
+cpu7: 390 Issued Read for address 0x3a4a4eb0
 cpu3: 420 Issued Read for address 0x6a76194
 cpu0: Received Request with command 2 (addr 0x5cd4e98) [Time: 141] [9 outstanding requests]
 cpu0: 423 Issued Read for address 0x2b146194
@@ -17547,8 +17547,8 @@ cpu2: 356 Issued Read for address 0x232f0354
 cpu4: Received Request with command 3 (addr 0xd664b98) [Time: 1247] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x1bfe1724) [Time: 330] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0xee6e270) [Time: 13524] [9 outstanding requests]
-cpu4: 383 Issued Read for address 0x3af8a28c
 cpu6: 434 Issued Read for address 0x3a1d84e0
+cpu4: 383 Issued Read for address 0x3af8a28c
 cpu0: 406 Issued Write for address 0x2a07db44
 cpu7: Received Request with command 2 (addr 0x1a6ad4e4) [Time: 127] [9 outstanding requests]
 cpu0: Received Request with command 3 (addr 0x16fba770) [Time: 170] [9 outstanding requests]
@@ -17576,8 +17576,8 @@ cpu7: Received Request with command 2 (addr 0x3d8d8c20) [Time: 152] [9 outstandi
 cpu6: Received Request with command 2 (addr 0x487e48) [Time: 7137] [8 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x3af8a28c) [Time: 112] [9 outstanding requests]
 cpu4: 381 Issued Read for address 0x1e53ff98
-cpu7: 376 Issued Read for address 0x34abc490
 cpu2: 355 Issued Read for address 0x3aeb34e0
+cpu7: 376 Issued Read for address 0x34abc490
 cpu6: 432 Issued Read for address 0x1aa58c14
 cpu5: 455 Issued Read for address 0x194d9584
 cpu6: 431 Issued Read for address 0x17439d44
@@ -17632,9 +17632,9 @@ cpu2: Received Request with command 2 (addr 0x3aeb34e0) [Time: 271] [9 outstandi
 cpu2: 353 Issued Read for address 0x13469e78
 cpu2: Received Request with command 2 (addr 0x937d95c) [Time: 4889] [9 outstanding requests]
 cpu2: 352 Issued Read for address 0x8c35854
-cpu2: Received Request with command 2 (addr 0x2214994c) [Time: 4329] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x19e57fb0) [Time: 975] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x34a546ec) [Time: 278] [9 outstanding requests]
+cpu2: Received Request with command 2 (addr 0x2214994c) [Time: 4329] [9 outstanding requests]
 cpu6: 426 Issued Read for address 0x3fc42d48
 cpu5: Received Request with command 2 (addr 0x157d00d0) [Time: 266] [9 outstanding requests]
 cpu5: 449 Issued Write for address 0x346df51c
@@ -17720,8 +17720,8 @@ cpu6: 421 Issued Read for address 0xff4310
 cpu4: Received Request with command 2 (addr 0xbdfb448) [Time: 4368] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x9a8a600) [Time: 5295] [9 outstanding requests]
 cpu5: 445 Issued Read for address 0x1508cd98
-cpu4: 373 Issued Write for address 0xaeea6d4
 cpu7: 368 Issued Read for address 0x1029117c
+cpu4: 373 Issued Write for address 0xaeea6d4
 cpu0: Received Request with command 2 (addr 0x286c27c) [Time: 330] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x828aaf8) [Time: 2180] [8 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x10d78574) [Time: 3349] [9 outstanding requests]
@@ -18151,8 +18151,8 @@ cpu2: Received Request with command 2 (addr 0x31840e80) [Time: 228] [8 outstandi
 cpu0: Received Request with command 2 (addr 0x228b6f10) [Time: 2293] [9 outstanding requests]
 cpu2: 314 Issued Read for address 0x2ec4f3ec
 cpu2: 313 Issued Write for address 0x1ec60e04
-cpu0: Received Request with command 2 (addr 0x39676484) [Time: 5316] [8 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x2187903c) [Time: 163] [9 outstanding requests]
+cpu0: Received Request with command 2 (addr 0x39676484) [Time: 5316] [8 outstanding requests]
 cpu0: 370 Issued Read for address 0x28ae1d84
 cpu6: 405 Issued Write for address 0x6e5501c
 cpu0: 369 Issued Read for address 0xd917ee4
@@ -18481,8 +18481,8 @@ cpu7: 318 Issued Read for address 0x2798fac
 cpu5: Received Request with command 2 (addr 0x34fcc54) [Time: 3148] [9 outstanding requests]
 cpu5: 397 Issued Read for address 0x1da4ffbc
 cpu2: Received Request with command 2 (addr 0x1cf58fac) [Time: 110] [9 outstanding requests]
-cpu5: Received Request with command 2 (addr 0x8e00c60) [Time: 3714] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0xea27480) [Time: 104] [9 outstanding requests]
+cpu5: Received Request with command 2 (addr 0x8e00c60) [Time: 3714] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x186cb640) [Time: 715] [9 outstanding requests]
 cpu7: 317 Issued Read for address 0x2156a938
 cpu2: 292 Issued Read for address 0x5318ff0
@@ -18620,9 +18620,9 @@ cpu7: 309 Issued Read for address 0x2d477110
 cpu2: 283 Issued Read for address 0xb6f5d80
 cpu3: Received Request with command 2 (addr 0x332363ec) [Time: 167] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x188ada8c) [Time: 273] [9 outstanding requests]
+cpu3: Received Request with command 2 (addr 0xcd4c544) [Time: 164] [8 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x15057da8) [Time: 224] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x356b3c38) [Time: 214] [9 outstanding requests]
-cpu3: Received Request with command 2 (addr 0xcd4c544) [Time: 164] [8 outstanding requests]
 cpu3: 340 Issued Read for address 0x11965634
 cpu3: 339 Issued Write for address 0x525e670
 cpu4: 316 Issued Read for address 0x573bc38
@@ -18936,8 +18936,8 @@ cpu3: Received Request with command 2 (addr 0x146eb54) [Time: 1052] [9 outstandi
 cpu3: 319 Issued Read for address 0x398edfa0
 cpu1: Received Request with command 2 (addr 0x343a2510) [Time: 89] [9 outstanding requests]
 cpu1: 283 Issued Write for address 0x26cd9ab0
-cpu4: Received Request with command 2 (addr 0x3b84f154) [Time: 208] [9 outstanding requests]
 cpu7: Received Request with command 3 (addr 0x357e9030) [Time: 130] [9 outstanding requests]
+cpu4: Received Request with command 2 (addr 0x3b84f154) [Time: 208] [9 outstanding requests]
 cpu7: 292 Issued Read for address 0x76d0674
 cpu4: 296 Issued Read for address 0x3c660658
 cpu0: Received Request with command 2 (addr 0x14888268) [Time: 754] [9 outstanding requests]
@@ -19087,8 +19087,8 @@ cpu7: 278 Issued Write for address 0x272acdd4
 cpu1: Received Request with command 2 (addr 0x2175cbc0) [Time: 170] [9 outstanding requests]
 cpu1: 271 Issued Read for address 0x3583c1e0
 cpu5: Received Request with command 2 (addr 0x3c62aabc) [Time: 76] [9 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x1117f42c) [Time: 79] [9 outstanding requests]
 cpu5: 358 Issued Read for address 0x1039c054
+cpu6: Received Request with command 2 (addr 0x1117f42c) [Time: 79] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x666fc90) [Time: 76] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x34b83524) [Time: 78] [9 outstanding requests]
 cpu0: 321 Issued Read for address 0xf5e3afc
@@ -19594,8 +19594,8 @@ cpu5: Received Request with command 3 (addr 0x6437468) [Time: 83] [8 outstanding
 cpu5: 329 Issued Read for address 0x19ebf44
 cpu3: 274 Issued Read for address 0x14939b04
 cpu5: 328 Issued Read for address 0x264d20c0
-cpu6: Received Request with command 2 (addr 0x1123b170) [Time: 111] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0xea1e1b0) [Time: 257] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x1123b170) [Time: 111] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x49c46a0) [Time: 252] [9 outstanding requests]
 cpu1: 238 Issued Read for address 0x21476450
 cpu7: 246 Issued Read for address 0x1b10df88
@@ -19792,8 +19792,8 @@ cpu2: 207 Issued Read for address 0x2157dcf0
 cpu3: 263 Issued Read for address 0x1c1eb1f0
 cpu6: Received Request with command 2 (addr 0x1ba27d80) [Time: 136] [9 outstanding requests]
 cpu7: Received Request with command 3 (addr 0x705b218) [Time: 137] [9 outstanding requests]
-cpu6: 299 Issued Read for address 0x30352170
 cpu5: Received Request with command 2 (addr 0x2408ec34) [Time: 545] [9 outstanding requests]
+cpu6: 299 Issued Read for address 0x30352170
 cpu7: 228 Issued Read for address 0x258f82e4
 cpu5: 317 Issued Read for address 0x31795818
 cpu0: Received Request with command 2 (addr 0x10f2a49c) [Time: 131] [9 outstanding requests]
@@ -19992,8 +19992,8 @@ cpu4: Received Request with command 2 (addr 0x7733220) [Time: 209] [9 outstandin
 cpu1: Received Request with command 2 (addr 0xfc8f7bc) [Time: 205] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x22eb031c) [Time: 210] [9 outstanding requests]
 cpu1: 219 Issued Read for address 0x59d89c8
-cpu4: 243 Issued Read for address 0x3962b000
 cpu7: 216 Issued Read for address 0x6353b78
+cpu4: 243 Issued Read for address 0x3962b000
 cpu2: Received Request with command 3 (addr 0x29d748bc) [Time: 1238] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0xfc1a010) [Time: 3341] [9 outstanding requests]
 cpu2: 195 Issued Read for address 0x1fc7b2b0
@@ -20292,10 +20292,10 @@ cpu3: 232 Issued Read for address 0x3f00f7b4
 cpu1: Received Request with command 2 (addr 0x6a00928) [Time: 315] [9 outstanding requests]
 cpu1: 199 Issued Read for address 0x85f87fc
 cpu5: 281 Issued Write for address 0x39cb9354
-cpu0: Received Request with command 2 (addr 0x153f5144) [Time: 1855] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x1b7ab900) [Time: 258] [9 outstanding requests]
-cpu0: 238 Issued Read for address 0x1fa7cd4
+cpu0: Received Request with command 2 (addr 0x153f5144) [Time: 1855] [9 outstanding requests]
 cpu6: 271 Issued Read for address 0x2b60c0b4
+cpu0: 238 Issued Read for address 0x1fa7cd4
 cpu0: Received Request with command 2 (addr 0x313fb88c) [Time: 198] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x1e72d2a0) [Time: 4330] [9 outstanding requests]
 cpu0: 237 Issued Read for address 0x3babb748
@@ -20709,10 +20709,10 @@ cpu0: 208 Issued Read for address 0x18281278
 cpu6: Received Request with command 2 (addr 0x2dcbd600) [Time: 2362] [9 outstanding requests]
 cpu4: Received Request with command 3 (addr 0x16aaebc) [Time: 273] [9 outstanding requests]
 cpu6: 259 Issued Read for address 0x345daac4
-cpu1: Received Request with command 3 (addr 0x26800780) [Time: 220] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x866af14) [Time: 1309] [9 outstanding requests]
-cpu7: 186 Issued Read for address 0xc1b5d84
+cpu1: Received Request with command 3 (addr 0x26800780) [Time: 220] [9 outstanding requests]
 cpu1: 167 Issued Read for address 0xeafd36c
+cpu7: 186 Issued Read for address 0xc1b5d84
 cpu4: 191 Issued Read for address 0x2fe2cffc
 cpu2: Received Request with command 2 (addr 0x27971374) [Time: 132] [9 outstanding requests]
 cpu3: Received Request with command 3 (addr 0x87a3bcc) [Time: 2211] [9 outstanding requests]
@@ -21128,8 +21128,8 @@ cpu5: Received Request with command 2 (addr 0x171f8674) [Time: 1282] [9 outstand
 cpu5: 225 Issued Read for address 0x20195464
 cpu1: Received Request with command 3 (addr 0x1a01e9b4) [Time: 272] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x30e4c728) [Time: 264] [9 outstanding requests]
-cpu7: 162 Issued Read for address 0x33d756e4
 cpu1: 140 Issued Read for address 0x30c6b70
+cpu7: 162 Issued Read for address 0x33d756e4
 cpu0: Received Request with command 2 (addr 0x1d3d435c) [Time: 211] [9 outstanding requests]
 cpu0: 179 Issued Read for address 0xb2c8150
 cpu4: Received Request with command 2 (addr 0xc153058) [Time: 9976] [9 outstanding requests]
@@ -21287,8 +21287,8 @@ cpu6: Received Request with command 2 (addr 0x3a4be268) [Time: 1344] [9 outstand
 cpu3: Received Request with command 3 (addr 0x30c865e8) [Time: 272] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x2cfbf998) [Time: 163] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x128f8bf0) [Time: 272] [9 outstanding requests]
-cpu7: 155 Issued Read for address 0x30173aa4
 cpu4: 155 Issued Read for address 0x3f0c3aa0
+cpu7: 155 Issued Read for address 0x30173aa4
 cpu3: 168 Issued Write for address 0x128a23e4
 cpu7: Received Request with command 2 (addr 0x10346f64) [Time: 1036] [9 outstanding requests]
 cpu5: 213 Issued Read for address 0x72ba38
@@ -21608,8 +21608,8 @@ cpu4: Received Request with command 2 (addr 0x32d7e3d8) [Time: 555] [9 outstandi
 cpu7: Received Request with command 2 (addr 0x16e5e778) [Time: 231] [9 outstanding requests]
 cpu4: 132 Issued Read for address 0x15516fac
 cpu2: Received Request with command 2 (addr 0x40f2470) [Time: 252] [9 outstanding requests]
-cpu2: 90 Issued Read for address 0x3848887c
 cpu7: 131 Issued Read for address 0x38302770
+cpu2: 90 Issued Read for address 0x3848887c
 cpu6: Received Request with command 2 (addr 0x3ee3766c) [Time: 225] [9 outstanding requests]
 cpu6: 206 Issued Read for address 0x5ae45b4
 cpu4: Received Request with command 3 (addr 0x3e7279b4) [Time: 706] [9 outstanding requests]
@@ -21798,8 +21798,8 @@ cpu1: Received Request with command 2 (addr 0x37563b54) [Time: 151] [9 outstandi
 cpu1: 92 Issued Read for address 0x1023dd7c
 cpu7: Received Request with command 2 (addr 0x24655c58) [Time: 105] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x397d68e4) [Time: 1172] [9 outstanding requests]
-cpu3: 138 Issued Read for address 0x3e369998
 cpu7: 120 Issued Read for address 0x3f898344
+cpu3: 138 Issued Read for address 0x3e369998
 cpu7: Received Request with command 2 (addr 0x393370b0) [Time: 160] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x9645960) [Time: 107] [9 outstanding requests]
 cpu2: 77 Issued Write for address 0x31721b94
@@ -21855,8 +21855,8 @@ cpu2: Received Request with command 2 (addr 0x36aa1524) [Time: 154] [9 outstandi
 cpu2: 74 Issued Read for address 0x27027dd4
 cpu1: Received Request with command 2 (addr 0x11c3c7ac) [Time: 109] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x5b5f5dc) [Time: 1334] [9 outstanding requests]
-cpu1: 87 Issued Read for address 0x31bea1a0
 cpu7: 115 Issued Read for address 0x6b745c
+cpu1: 87 Issued Read for address 0x31bea1a0
 cpu4: 115 Issued Read for address 0x39527454
 cpu3: Received Request with command 2 (addr 0x361538f4) [Time: 314] [9 outstanding requests]
 cpu3: 135 Issued Write for address 0x2701a7cc
@@ -22260,8 +22260,8 @@ cpu5: Received Request with command 2 (addr 0x63f3c54) [Time: 113] [9 outstandin
 cpu5: 152 Issued Read for address 0x2815550c
 cpu7: Received Request with command 2 (addr 0x13bf54cc) [Time: 1272] [9 outstanding requests]
 cpu7: 88 Issued Read for address 0x350004e4
-cpu0: Received Request with command 3 (addr 0x23a51ac4) [Time: 77] [9 outstanding requests]
 cpu7: Received Request with command 3 (addr 0x13d61ebc) [Time: 265] [9 outstanding requests]
+cpu0: Received Request with command 3 (addr 0x23a51ac4) [Time: 77] [9 outstanding requests]
 cpu1: Received Request with command 3 (addr 0x3d89a0b0) [Time: 164] [9 outstanding requests]
 cpu1: 58 Issued Read for address 0x2c4a1ec0
 cpu0: 113 Issued Read for address 0x36e70a84
@@ -22596,15 +22596,15 @@ cpu5: Received Request with command 2 (addr 0x32b9b1f8) [Time: 76] [9 outstandin
 cpu5: 125 Issued Read for address 0x22575db8
 cpu1: Received Request with command 2 (addr 0x3cc6fbec) [Time: 76] [9 outstanding requests]
 cpu1: 35 Issued Read for address 0x1e0ba0fc
-cpu2: Received Request with command 2 (addr 0x1942a7ac) [Time: 2876] [9 outstanding requests]
 cpu7: Received Request with command 3 (addr 0xabe642c) [Time: 1193] [9 outstanding requests]
+cpu2: Received Request with command 2 (addr 0x1942a7ac) [Time: 2876] [9 outstanding requests]
 cpu2: 44 Issued Read for address 0x2573864c
 cpu7: 64 Issued Read for address 0x2a23d0e8
 cpu6: Received Request with command 2 (addr 0x2c19a894) [Time: 217] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x2cf98964) [Time: 190] [9 outstanding requests]
 cpu6: 143 Issued Read for address 0x3c188400
-cpu7: Received Request with command 2 (addr 0x300a5ee4) [Time: 96] [9 outstanding requests]
 cpu3: 94 Issued Read for address 0x3ede8ac4
+cpu7: Received Request with command 2 (addr 0x300a5ee4) [Time: 96] [9 outstanding requests]
 cpu7: Received Request with command 3 (addr 0x11885db4) [Time: 216] [8 outstanding requests]
 cpu7: 63 Issued Read for address 0x25aac544
 cpu7: 62 Issued Read for address 0xbe9f464
@@ -23035,8 +23035,8 @@ cpu4: 35 Issued Read for address 0x1b0f21ac
 cpu4: Received Request with command 2 (addr 0x34c2b528) [Time: 227] [9 outstanding requests]
 cpu4: 34 Issued Read for address 0x4777dec
 cpu0: Received Request with command 2 (addr 0x226f470c) [Time: 212] [9 outstanding requests]
-cpu6: Received Request with command 3 (addr 0x3b89f9e8) [Time: 72] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x1bc710ac) [Time: 192] [9 outstanding requests]
+cpu6: Received Request with command 3 (addr 0x3b89f9e8) [Time: 72] [9 outstanding requests]
 cpu4: 33 Issued Read for address 0xd130eb8
 cpu6: 118 Issued Read for address 0x38d2d568
 cpu0: 64 Issued Write for address 0x9693b88
@@ -23823,8 +23823,8 @@ cpu5: 36 Issued Write for address 0x10eaed64
 cpu3: Received Request with command 2 (addr 0x3ab4f5ac) [Time: 5569] [6 outstanding requests]
 cpu7: Received Request with command 2 (addr 0xc2700a4) [Time: 2414] [4 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x1df6c474) [Time: 2035] [9 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x1fa8f9fc) [Time: 80] [9 outstanding requests]
 cpu5: 35 Issued Read for address 0xe3ad264
+cpu6: Received Request with command 2 (addr 0x1fa8f9fc) [Time: 80] [9 outstanding requests]
 cpu6: 42 Issued Read for address 0xce76118
 cpu6: Received Request with command 2 (addr 0x4388a78) [Time: 81] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x36d88f8) [Time: 5995] [8 outstanding requests]
@@ -23847,8 +23847,8 @@ cpu6: Received Request with command 2 (addr 0xcbd9534) [Time: 426] [9 outstandin
 cpu3: Received Request with command 2 (addr 0xf6dd9b0) [Time: 2061] [2 outstanding requests]
 cpu6: 38 Issued Write for address 0xfe88e9c
 cpu6: Received Request with command 2 (addr 0x2867d4dc) [Time: 1415] [9 outstanding requests]
-cpu5: Received Request with command 2 (addr 0xe3ad264) [Time: 160] [9 outstanding requests]
 cpu6: 37 Issued Write for address 0x25cb8714
+cpu5: Received Request with command 2 (addr 0xe3ad264) [Time: 160] [9 outstanding requests]
 cpu5: Received Request with command 3 (addr 0x7436bc0) [Time: 109] [8 outstanding requests]
 cpu5: 31 Issued Read for address 0x1975e464
 cpu5: 30 Issued Read for address 0x20b329b4
@@ -23884,8 +23884,8 @@ cpu5: Received Request with command 2 (addr 0x1e6a2d64) [Time: 123] [9 outstandi
 cpu5: Received Request with command 2 (addr 0x125e5738) [Time: 90] [8 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x599b4fc) [Time: 72] [9 outstanding requests]
 cpu5: 24 Issued Read for address 0x3a07e8f0
-cpu5: 23 Issued Write for address 0x1b2a50d8
 cpu6: 30 Issued Write for address 0x6b43660
+cpu5: 23 Issued Write for address 0x1b2a50d8
 cpu5: Received Request with command 2 (addr 0x1e1dc1bc) [Time: 85] [9 outstanding requests]
 cpu5: 22 Issued Read for address 0xe63c044
 cpu6: Received Request with command 2 (addr 0x2852433c) [Time: 77] [9 outstanding requests]
@@ -24011,53 +24011,11 @@ cpu6: Received Request with command 2 (addr 0x48e3e60) [Time: 1888] [1 outstandi
 cpu6: Received Request with command 2 (addr 0x173fc67c) [Time: 1580] [0 outstanding requests]
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu0 Finished after 1500 issued reads, 1500 returned (114947 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  60
-  [2, 4]  224
-  [4, 6]  169
-  [6, 8]  119
-  [8, 10]  5947
-  [10, 12]  108428
 TrivialCPU cpu5 Finished after 1500 issued reads, 1500 returned (116585 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  10
-  [2, 4]  118
-  [4, 6]  118
-  [6, 8]  57
-  [8, 10]  6035
-  [10, 12]  110247
 TrivialCPU cpu4 Finished after 1500 issued reads, 1500 returned (113678 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  20
-  [2, 4]  356
-  [4, 6]  70
-  [6, 8]  144
-  [8, 10]  6096
-  [10, 12]  106992
 TrivialCPU cpu3 Finished after 1500 issued reads, 1500 returned (115331 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  61
-  [2, 4]  119
-  [4, 6]  68
-  [6, 8]  176
-  [8, 10]  6229
-  [10, 12]  108678
 TrivialCPU cpu1 Finished after 1500 issued reads, 1500 returned (112155 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  517
-  [2, 4]  83
-  [4, 6]  113
-  [6, 8]  97
-  [8, 10]  5954
-  [10, 12]  105391
 TrivialCPU cpu2 Finished after 1500 issued reads, 1500 returned (112567 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  165
-  [2, 4]  596
-  [4, 6]  241
-  [6, 8]  191
-  [8, 10]  6200
-  [10, 12]  105174
  network.send_bit_count.port0 : Accumulator : Sum.u64 = 1247616; SumSQ.u64 = 672620544; Count.u64 = 3414; 
  network.send_packet_count.port0 : Accumulator : Sum.u64 = 3414; SumSQ.u64 = 3414; Count.u64 = 3414; 
  network.output_port_stalls.port0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -24142,6 +24100,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  network.xbar_stalls.port11 : Accumulator : Sum.u64 = 308; SumSQ.u64 = 308; Count.u64 = 308; 
  network.xbar_stalls.port12 : Accumulator : Sum.u64 = 1321; SumSQ.u64 = 1321; Count.u64 = 1321; 
  network.xbar_stalls.port13 : Accumulator : Sum.u64 = 1411; SumSQ.u64 = 1411; Count.u64 = 1411; 
+ cpu0.pendCycle : Accumulator : Sum.u64 = 1139644; SumSQ.u64 = 11329018; Count.u64 = 114947; 
  l1cache0.TotalEventsReceived : Accumulator : Sum.u64 = 7687; SumSQ.u64 = 7687; Count.u64 = 7687; 
  l1cache0.TotalEventsReplayed : Accumulator : Sum.u64 = 402; SumSQ.u64 = 402; Count.u64 = 402; 
  l1cache0.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -24363,16 +24322,8 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache0.stateEvent_Inv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache0.stateEvent_Inv_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache0.stateEvent_Inv_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
-TrivialCPU cpu6 Finished after 1500 issued reads, 1500 returned (117464 clocks)
  l2cache0.stateEvent_Inv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  58
-  [2, 4]  67
-  [4, 6]  63
-  [6, 8]  138
  l2cache0.stateEvent_Inv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
-  [8, 10]  6395
-  [10, 12]  110743
  l2cache0.stateEvent_FetchInvX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache0.stateEvent_FetchInvX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache0.stateEvent_FetchInvX_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -24518,6 +24469,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache0.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache0.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache0.eventSent_PutE : Accumulator : Sum.u64 = 1258; SumSQ.u64 = 1258; Count.u64 = 1258; 
+ cpu1.pendCycle : Accumulator : Sum.u64 = 1109098; SumSQ.u64 = 11024284; Count.u64 = 112155; 
  l1cache1.TotalEventsReceived : Accumulator : Sum.u64 = 7862; SumSQ.u64 = 7862; Count.u64 = 7862; 
  l1cache1.TotalEventsReplayed : Accumulator : Sum.u64 = 416; SumSQ.u64 = 416; Count.u64 = 416; 
  l1cache1.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -24591,6 +24543,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache1.stateEvent_FetchInvX_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache1.stateEvent_FetchInvX_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache1.stateEvent_Fetch_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+TrivialCPU cpu6 Finished after 1500 issued reads, 1500 returned (117464 clocks)
  l1cache1.stateEvent_Fetch_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache1.stateEvent_Fetch_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache1.stateEvent_Fetch_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -24886,6 +24839,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache1.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.eventSent_PutE : Accumulator : Sum.u64 = 1249; SumSQ.u64 = 1249; Count.u64 = 1249; 
+ cpu2.pendCycle : Accumulator : Sum.u64 = 1111385; SumSQ.u64 = 11031219; Count.u64 = 112567; 
  l1cache2.TotalEventsReceived : Accumulator : Sum.u64 = 7425; SumSQ.u64 = 7425; Count.u64 = 7425; 
  l1cache2.TotalEventsReplayed : Accumulator : Sum.u64 = 364; SumSQ.u64 = 364; Count.u64 = 364; 
  l1cache2.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25254,6 +25208,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache2.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache2.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache2.eventSent_PutE : Accumulator : Sum.u64 = 1233; SumSQ.u64 = 1233; Count.u64 = 1233; 
+ cpu3.pendCycle : Accumulator : Sum.u64 = 1144212; SumSQ.u64 = 11374326; Count.u64 = 115331; 
  l1cache3.TotalEventsReceived : Accumulator : Sum.u64 = 7469; SumSQ.u64 = 7469; Count.u64 = 7469; 
  l1cache3.TotalEventsReplayed : Accumulator : Sum.u64 = 440; SumSQ.u64 = 440; Count.u64 = 440; 
  l1cache3.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25458,16 +25413,8 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache3.stateEvent_PutS_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_PutS_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_PutS_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
-TrivialCPU cpu7 Finished after 1500 issued reads, 1500 returned (115327 clocks)
  l2cache3.stateEvent_PutS_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  62
-  [2, 4]  167
-  [4, 6]  175
-  [6, 8]  956
-  [8, 10]  6007
  l2cache3.stateEvent_PutS_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
-  [10, 12]  107960
  l2cache3.stateEvent_PutS_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_PutS_SBInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_PutM_I : Accumulator : Sum.u64 = 170; SumSQ.u64 = 170; Count.u64 = 170; 
@@ -25490,20 +25437,6 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache3.stateEvent_FetchInvX_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FetchInvX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FetchInvX_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.TotalEventsReceived : Accumulator : Sum.u64 = 7507; SumSQ.u64 = 7507; Count.u64 = 7507; 
- l1cache5.TotalEventsReplayed : Accumulator : Sum.u64 = 440; SumSQ.u64 = 440; Count.u64 = 440; 
- l1cache5.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.GetSHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.GetXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.GetSExHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.GetSHit_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.GetXHit_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.GetSExHit_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.CacheMisses : Accumulator : Sum.u64 = 1500; SumSQ.u64 = 1500; Count.u64 = 1500; 
- l1cache5.GetSMiss_Arrival : Accumulator : Sum.u64 = 1374; SumSQ.u64 = 1374; Count.u64 = 1374; 
- l1cache5.GetXMiss_Arrival : Accumulator : Sum.u64 = 126; SumSQ.u64 = 126; Count.u64 = 126; 
- l1cache5.GetSExMiss_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FetchInvX_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FetchInvX_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FetchInvX_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25541,36 +25474,6 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache3.stateEvent_AckInv_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_AckInv_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_AckInv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.GetSExMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.GetS_recv : Accumulator : Sum.u64 = 1374; SumSQ.u64 = 1374; Count.u64 = 1374; 
- l1cache5.GetX_recv : Accumulator : Sum.u64 = 126; SumSQ.u64 = 126; Count.u64 = 126; 
- l1cache5.GetSEx_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.GetSResp_recv : Accumulator : Sum.u64 = 1374; SumSQ.u64 = 1374; Count.u64 = 1374; 
- l1cache5.GetXResp_recv : Accumulator : Sum.u64 = 126; SumSQ.u64 = 126; Count.u64 = 126; 
- l1cache5.PutS_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.PutM_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.PutE_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.FetchInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.NACK_recv : Accumulator : Sum.u64 = 3039; SumSQ.u64 = 3039; Count.u64 = 3039; 
- l1cache5.MSHR_occupancy : Accumulator : Sum.u64 = 1151598; SumSQ.u64 = 11399962; Count.u64 = 116583; 
- l1cache5.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.evict_E : Accumulator : Sum.u64 = 1344; SumSQ.u64 = 1344; Count.u64 = 1344; 
- l1cache5.evict_M : Accumulator : Sum.u64 = 123; SumSQ.u64 = 123; Count.u64 = 123; 
- l1cache5.evict_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.evict_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.latency_GetS_IS : Accumulator : Sum.u64 = 1051999; SumSQ.u64 = 3640932327; Count.u64 = 1374; 
- l1cache5.latency_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.latency_GetX_IM : Accumulator : Sum.u64 = 99599; SumSQ.u64 = 333886513; Count.u64 = 126; 
- l1cache5.latency_GetX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.latency_GetX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.latency_GetSEx_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.latency_GetSEx_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.latency_GetSEx_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_AckInv_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_AckInv_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_AckInv_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25654,9 +25557,6 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache3.stateEvent_FetchInvX_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FetchInv_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.evict_S : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
- l1cache5.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FetchInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FetchInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FetchResp_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25670,30 +25570,17 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache3.stateEvent_AckInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FlushLine_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FlushLine_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_GetS_I : Accumulator : Sum.u64 = 1374; SumSQ.u64 = 1374; Count.u64 = 1374; 
- l1cache5.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_GetX_I : Accumulator : Sum.u64 = 126; SumSQ.u64 = 126; Count.u64 = 126; 
- l1cache5.stateEvent_GetX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_GetX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_GetSEx_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_GetSEx_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FlushLine_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FlushLine_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FlushLineInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FlushLineInv_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_GetSEx_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 1374; SumSQ.u64 = 1374; Count.u64 = 1374; 
- l1cache5.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 126; SumSQ.u64 = 126; Count.u64 = 126; 
- l1cache5.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.eventSent_PutE : Accumulator : Sum.u64 = 1241; SumSQ.u64 = 1241; Count.u64 = 1241; 
+ cpu4.pendCycle : Accumulator : Sum.u64 = 1126713; SumSQ.u64 = 11199045; Count.u64 = 113678; 
  l1cache4.TotalEventsReceived : Accumulator : Sum.u64 = 7429; SumSQ.u64 = 7429; Count.u64 = 7429; 
  l1cache4.TotalEventsReplayed : Accumulator : Sum.u64 = 447; SumSQ.u64 = 447; Count.u64 = 447; 
  l1cache4.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Inv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Inv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.GetSHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.GetXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.GetSExHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25706,13 +25593,6 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache4.GetSExMiss_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Inv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Inv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Inv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Inv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Inv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInvX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInvX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.GetSExMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.GetS_recv : Accumulator : Sum.u64 = 1366; SumSQ.u64 = 1366; Count.u64 = 1366; 
  l1cache4.GetX_recv : Accumulator : Sum.u64 = 134; SumSQ.u64 = 134; Count.u64 = 134; 
@@ -25751,12 +25631,6 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache4.stateEvent_GetX_I : Accumulator : Sum.u64 = 134; SumSQ.u64 = 134; Count.u64 = 134; 
  l1cache4.stateEvent_GetX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_GetX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInvX_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInvX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInvX_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInvX_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Fetch_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Fetch_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_GetSEx_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_GetSEx_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_GetSEx_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25779,23 +25653,6 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache4.stateEvent_Fetch_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_Fetch_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_Fetch_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Fetch_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Fetch_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Fetch_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Fetch_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_Fetch_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInv_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FetchInv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLine_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLine_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLine_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLine_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_Fetch_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_Fetch_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_Fetch_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25815,11 +25672,6 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache4.stateEvent_FlushLine_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_FlushLine_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_FlushLine_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLine_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLine_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLine_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLine_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLineInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_FlushLine_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_FlushLineInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.stateEvent_FlushLineInv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25840,15 +25692,6 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache4.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.eventSent_FetchResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLineInv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLineInv_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLineInv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLineInv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLineInv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLineInv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLineInv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLineResp_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLineResp_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.eventSent_FetchXResp : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  l1cache4.eventSent_AckInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.eventSent_GetSResp : Accumulator : Sum.u64 = 1366; SumSQ.u64 = 1366; Count.u64 = 1366; 
@@ -25903,10 +25746,6 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache4.evict_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache4.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache4.evict_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.stateEvent_FlushLineResp_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache5.eventSent_GetS : Accumulator : Sum.u64 = 4141; SumSQ.u64 = 4141; Count.u64 = 4141; 
- l1cache5.eventSent_GetX : Accumulator : Sum.u64 = 398; SumSQ.u64 = 398; Count.u64 = 398; 
- l1cache5.eventSent_GetSEx : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache4.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache4.latency_GetS_IS : Accumulator : Sum.u64 = 265522; SumSQ.u64 = 87071278; Count.u64 = 1366; 
  l2cache4.latency_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25919,6 +25758,305 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache4.evict_S : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  l2cache4.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache4.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.evict_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.evict_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.evict_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.evict_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetS_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetSEx_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetSEx_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetSEx_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetXResp_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_I : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ l2cache4.stateEvent_PutS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_SBInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutM_I : Accumulator : Sum.u64 = 131; SumSQ.u64 = 131; Count.u64 = 131; 
+ l2cache4.stateEvent_PutM_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutM_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutM_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutM_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Inv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Inv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Inv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Inv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Inv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Inv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Inv_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Inv_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Inv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Inv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInvX_I : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ l2cache4.stateEvent_FetchInvX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInvX_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInvX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInvX_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInvX_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInvX_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInvX_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInvX_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Fetch_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Fetch_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Fetch_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Fetch_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Fetch_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Fetch_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Fetch_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Fetch_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_Fetch_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchResp_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchResp_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchResp_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchResp_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchXResp_I : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ l2cache4.stateEvent_FetchXResp_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchXResp_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchXResp_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_AckInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_AckInv_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_AckInv_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_AckInv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_AckInv_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_AckInv_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_AckInv_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_AckInv_SBInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineResp_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineResp_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineResp_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.eventSent_GetS : Accumulator : Sum.u64 = 1841; SumSQ.u64 = 1841; Count.u64 = 1841; 
+ l2cache4.eventSent_GetX : Accumulator : Sum.u64 = 188; SumSQ.u64 = 188; Count.u64 = 188; 
+ l2cache4.eventSent_GetSEx : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.eventSent_PutS : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ l2cache4.eventSent_PutM : Accumulator : Sum.u64 = 124; SumSQ.u64 = 124; Count.u64 = 124; 
+ l2cache4.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.eventSent_FetchResp : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ l2cache4.eventSent_FetchXResp : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ l2cache4.eventSent_AckInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.eventSent_GetSResp : Accumulator : Sum.u64 = 1366; SumSQ.u64 = 1366; Count.u64 = 1366; 
+ l2cache4.eventSent_GetXResp : Accumulator : Sum.u64 = 134; SumSQ.u64 = 134; Count.u64 = 134; 
+ l2cache4.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.eventSent_Fetch : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.eventSent_FetchInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.eventSent_FetchInvX : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ l2cache4.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.eventSent_NACK_up : Accumulator : Sum.u64 = 2960; SumSQ.u64 = 2960; Count.u64 = 2960; 
+ l2cache4.eventSent_AckPut : Accumulator : Sum.u64 = 1468; SumSQ.u64 = 1468; Count.u64 = 1468; 
+ l2cache4.stateEvent_AckPut_I : Accumulator : Sum.u64 = 1403; SumSQ.u64 = 1403; Count.u64 = 1403; 
+ l2cache4.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetS_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_GetSEx_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutS_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutE_I : Accumulator : Sum.u64 = 1336; SumSQ.u64 = 1336; Count.u64 = 1336; 
+ l2cache4.stateEvent_PutE_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutE_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutE_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutE_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutE_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutE_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutE_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutE_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutM_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutM_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutM_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_PutM_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInvX_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInvX_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInvX_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ l2cache4.stateEvent_FetchInv_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchResp_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchResp_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchResp_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchXResp_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchXResp_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FetchXResp_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_AckInv_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_AckInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_AckInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLine_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l2cache4.eventSent_PutE : Accumulator : Sum.u64 = 1278; SumSQ.u64 = 1278; Count.u64 = 1278; 
+ cpu5.pendCycle : Accumulator : Sum.u64 = 1157598; SumSQ.u64 = 11512598; Count.u64 = 116585; 
+TrivialCPU cpu7 Finished after 1500 issued reads, 1500 returned (115327 clocks)
+ l1cache5.TotalEventsReceived : Accumulator : Sum.u64 = 7507; SumSQ.u64 = 7507; Count.u64 = 7507; 
+ l1cache5.TotalEventsReplayed : Accumulator : Sum.u64 = 440; SumSQ.u64 = 440; Count.u64 = 440; 
+ l1cache5.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.GetSHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.GetXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.GetSExHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.GetSHit_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.GetXHit_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.GetSExHit_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.CacheMisses : Accumulator : Sum.u64 = 1500; SumSQ.u64 = 1500; Count.u64 = 1500; 
+ l1cache5.GetSMiss_Arrival : Accumulator : Sum.u64 = 1374; SumSQ.u64 = 1374; Count.u64 = 1374; 
+ l1cache5.GetXMiss_Arrival : Accumulator : Sum.u64 = 126; SumSQ.u64 = 126; Count.u64 = 126; 
+ l1cache5.GetSExMiss_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.GetSExMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.GetS_recv : Accumulator : Sum.u64 = 1374; SumSQ.u64 = 1374; Count.u64 = 1374; 
+ l1cache5.GetX_recv : Accumulator : Sum.u64 = 126; SumSQ.u64 = 126; Count.u64 = 126; 
+ l1cache5.GetSEx_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.GetSResp_recv : Accumulator : Sum.u64 = 1374; SumSQ.u64 = 1374; Count.u64 = 1374; 
+ l1cache5.GetXResp_recv : Accumulator : Sum.u64 = 126; SumSQ.u64 = 126; Count.u64 = 126; 
+ l1cache5.PutS_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.PutM_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.PutE_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.FetchInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.NACK_recv : Accumulator : Sum.u64 = 3039; SumSQ.u64 = 3039; Count.u64 = 3039; 
+ l1cache5.MSHR_occupancy : Accumulator : Sum.u64 = 1151598; SumSQ.u64 = 11399962; Count.u64 = 116583; 
+ l1cache5.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.evict_E : Accumulator : Sum.u64 = 1344; SumSQ.u64 = 1344; Count.u64 = 1344; 
+ l1cache5.evict_M : Accumulator : Sum.u64 = 123; SumSQ.u64 = 123; Count.u64 = 123; 
+ l1cache5.evict_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.evict_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.latency_GetS_IS : Accumulator : Sum.u64 = 1051999; SumSQ.u64 = 3640932327; Count.u64 = 1374; 
+ l1cache5.latency_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.latency_GetX_IM : Accumulator : Sum.u64 = 99599; SumSQ.u64 = 333886513; Count.u64 = 126; 
+ l1cache5.latency_GetX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.latency_GetX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.latency_GetSEx_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.latency_GetSEx_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.latency_GetSEx_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.evict_S : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ l1cache5.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_GetS_I : Accumulator : Sum.u64 = 1374; SumSQ.u64 = 1374; Count.u64 = 1374; 
+ l1cache5.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_GetX_I : Accumulator : Sum.u64 = 126; SumSQ.u64 = 126; Count.u64 = 126; 
+ l1cache5.stateEvent_GetX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_GetX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_GetSEx_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_GetSEx_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_GetSEx_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 1374; SumSQ.u64 = 1374; Count.u64 = 1374; 
+ l1cache5.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 126; SumSQ.u64 = 126; Count.u64 = 126; 
+ l1cache5.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Inv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Inv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Inv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Inv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Inv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Inv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Inv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInvX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInvX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInvX_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInvX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInvX_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInvX_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Fetch_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Fetch_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Fetch_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Fetch_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Fetch_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Fetch_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_Fetch_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInv_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FetchInv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLine_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLine_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLine_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLine_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLine_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLine_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLine_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLine_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLineInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLineInv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLineInv_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLineInv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLineInv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLineInv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLineInv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLineInv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLineResp_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLineResp_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.stateEvent_FlushLineResp_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache5.eventSent_GetS : Accumulator : Sum.u64 = 4141; SumSQ.u64 = 4141; Count.u64 = 4141; 
+ l1cache5.eventSent_GetX : Accumulator : Sum.u64 = 398; SumSQ.u64 = 398; Count.u64 = 398; 
+ l1cache5.eventSent_GetSEx : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.eventSent_PutM : Accumulator : Sum.u64 = 123; SumSQ.u64 = 123; Count.u64 = 123; 
  l1cache5.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25930,20 +26068,12 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l1cache5.eventSent_GetXResp : Accumulator : Sum.u64 = 126; SumSQ.u64 = 126; Count.u64 = 126; 
  l1cache5.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.stateEvent_AckPut_I : Accumulator : Sum.u64 = 1468; SumSQ.u64 = 1468; Count.u64 = 1468; 
- l2cache4.evict_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.evict_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.evict_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.evict_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.eventSent_PutS : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  l1cache5.eventSent_PutE : Accumulator : Sum.u64 = 1344; SumSQ.u64 = 1344; Count.u64 = 1344; 
  l1cache5.stateEvent_GetS_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.stateEvent_GetSEx_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.stateEvent_FlushLine_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetS_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.stateEvent_FlushLineInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache5.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25998,8 +26128,6 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache5.evict_S : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  l2cache5.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.evict_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.evict_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.evict_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -26011,16 +26139,6 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache5.stateEvent_GetX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_GetX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_GetSEx_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetSEx_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetSEx_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetSEx_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetXResp_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_I : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
- l2cache4.stateEvent_PutS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_GetSEx_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_GetSEx_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -26030,63 +26148,13 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache5.stateEvent_PutS_I : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  l2cache5.stateEvent_PutS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_PutS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_SBInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutM_I : Accumulator : Sum.u64 = 131; SumSQ.u64 = 131; Count.u64 = 131; 
- l2cache4.stateEvent_PutM_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutM_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutM_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutM_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Inv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Inv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Inv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Inv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Inv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Inv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Inv_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Inv_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_PutS_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_PutS_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Inv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Inv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInvX_I : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
- l2cache4.stateEvent_FetchInvX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInvX_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInvX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInvX_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInvX_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInvX_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInvX_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInvX_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Fetch_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Fetch_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Fetch_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_PutS_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_PutS_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_PutS_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_PutS_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_PutS_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Fetch_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Fetch_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Fetch_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Fetch_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Fetch_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_Fetch_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_PutS_SBInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_PutM_I : Accumulator : Sum.u64 = 123; SumSQ.u64 = 123; Count.u64 = 123; 
  l2cache5.stateEvent_PutM_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -26098,112 +26166,15 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache5.stateEvent_Inv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Inv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Inv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Inv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Inv_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchResp_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchResp_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchResp_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchResp_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchXResp_I : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
- l2cache4.stateEvent_FetchXResp_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchXResp_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchXResp_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_AckInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_AckInv_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_AckInv_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_AckInv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_AckInv_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_AckInv_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_AckInv_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_AckInv_SBInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineResp_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineResp_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineResp_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.eventSent_GetS : Accumulator : Sum.u64 = 1841; SumSQ.u64 = 1841; Count.u64 = 1841; 
- l2cache4.eventSent_GetX : Accumulator : Sum.u64 = 188; SumSQ.u64 = 188; Count.u64 = 188; 
- l2cache4.eventSent_GetSEx : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Inv_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Inv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Inv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_FetchInvX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_FetchInvX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.eventSent_PutS : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
- l2cache4.eventSent_PutM : Accumulator : Sum.u64 = 124; SumSQ.u64 = 124; Count.u64 = 124; 
- l2cache4.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.eventSent_FetchResp : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
- l2cache4.eventSent_FetchXResp : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
- l2cache4.eventSent_AckInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.eventSent_GetSResp : Accumulator : Sum.u64 = 1366; SumSQ.u64 = 1366; Count.u64 = 1366; 
- l2cache4.eventSent_GetXResp : Accumulator : Sum.u64 = 134; SumSQ.u64 = 134; Count.u64 = 134; 
- l2cache4.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.eventSent_Fetch : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.eventSent_FetchInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.eventSent_FetchInvX : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
- l2cache4.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.eventSent_NACK_up : Accumulator : Sum.u64 = 2960; SumSQ.u64 = 2960; Count.u64 = 2960; 
- l2cache4.eventSent_AckPut : Accumulator : Sum.u64 = 1468; SumSQ.u64 = 1468; Count.u64 = 1468; 
- l2cache4.stateEvent_AckPut_I : Accumulator : Sum.u64 = 1403; SumSQ.u64 = 1403; Count.u64 = 1403; 
- l2cache4.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetS_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_GetSEx_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutS_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutE_I : Accumulator : Sum.u64 = 1336; SumSQ.u64 = 1336; Count.u64 = 1336; 
- l2cache4.stateEvent_PutE_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutE_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutE_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutE_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutE_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutE_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutE_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutE_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutM_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutM_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutM_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_FetchInvX_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_FetchInvX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_PutM_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInvX_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInvX_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInvX_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  l2cache5.stateEvent_FetchInvX_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_FetchInvX_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_FetchInvX_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -26212,29 +26183,8 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache5.stateEvent_Fetch_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Fetch_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Fetch_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchResp_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchResp_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchResp_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Fetch_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Fetch_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchXResp_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchXResp_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FetchXResp_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_AckInv_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_AckInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_AckInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLine_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache4.eventSent_PutE : Accumulator : Sum.u64 = 1278; SumSQ.u64 = 1278; Count.u64 = 1278; 
  l2cache5.stateEvent_Fetch_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Fetch_SI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_Fetch_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -26366,6 +26316,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache5.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.eventSent_PutE : Accumulator : Sum.u64 = 1288; SumSQ.u64 = 1288; Count.u64 = 1288; 
+ cpu6.pendCycle : Accumulator : Sum.u64 = 1165809; SumSQ.u64 = 11589921; Count.u64 = 117464; 
  l1cache6.TotalEventsReceived : Accumulator : Sum.u64 = 7512; SumSQ.u64 = 7512; Count.u64 = 7512; 
  l1cache6.TotalEventsReplayed : Accumulator : Sum.u64 = 382; SumSQ.u64 = 382; Count.u64 = 382; 
  l1cache6.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -26734,6 +26685,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache6.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache6.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache6.eventSent_PutE : Accumulator : Sum.u64 = 1238; SumSQ.u64 = 1238; Count.u64 = 1238; 
+ cpu7.pendCycle : Accumulator : Sum.u64 = 1140570; SumSQ.u64 = 11318900; Count.u64 = 115327; 
  l1cache7.TotalEventsReceived : Accumulator : Sum.u64 = 7710; SumSQ.u64 = 7710; Count.u64 = 7710; 
  l1cache7.TotalEventsReplayed : Accumulator : Sum.u64 = 409; SumSQ.u64 = 409; Count.u64 = 409; 
  l1cache7.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 

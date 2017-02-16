@@ -8007,37 +8007,9 @@ cpu0: Received Request with command 3 (addr 0x41dec) [Time: 2812] [1 outstanding
 cpu0: Received Request with command 2 (addr 0x553f4) [Time: 1862] [0 outstanding requests]
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (466263 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  362
-  [2, 4]  1481
-  [4, 6]  997
-  [6, 8]  2791
-  [8, 10]  101111
-  [10, 12]  359521
 TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (467559 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  242
-  [2, 4]  1517
-  [4, 6]  1545
-  [6, 8]  2149
-  [8, 10]  96827
-  [10, 12]  365279
 TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (468423 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  713
-  [2, 4]  1538
-  [4, 6]  1139
-  [6, 8]  2360
-  [8, 10]  96216
-  [10, 12]  366457
 TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (468927 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  228
-  [2, 4]  371
-  [4, 6]  639
-  [6, 8]  1365
-  [8, 10]  102825
-  [10, 12]  363499
  c0.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1997; SumSQ.u64 = 1997; Count.u64 = 1997; 
  c0.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  c0.l1cache.CacheHits : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; 
@@ -8901,7 +8873,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  n1.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.packet_latency : Accumulator : Sum.u64 = 949584; SumSQ.u64 = 138639264; Count.u64 = 6504; 
- l3cache.send_bit_count : Accumulator : Sum.u64 = 573216; SumSQ.u64 = 121058304; Count.u64 = 6504; 
+ l3cache.send_bit_count : Accumulator : Sum.u64 = 560640; SumSQ.u64 = 119046144; Count.u64 = 6504; 
  l3cache.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.idle_time : Accumulator : Sum.u64 = 290000; SumSQ.u64 = 60674500000; Count.u64 = 2; 
  l3cache.TotalEventsReceived : Accumulator : Sum.u64 = 13284; SumSQ.u64 = 13284; Count.u64 = 13284; 
@@ -9092,7 +9064,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l3cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 2730; SumSQ.u64 = 2730; Count.u64 = 2730; 
  dirctrl.packet_latency : Accumulator : Sum.u64 = 786984; SumSQ.u64 = 95225064; Count.u64 = 6504; 
- dirctrl.send_bit_count : Accumulator : Sum.u64 = 2338944; SumSQ.u64 = 1256853504; Count.u64 = 6504; 
+ dirctrl.send_bit_count : Accumulator : Sum.u64 = 2338304; SumSQ.u64 = 1256751104; Count.u64 = 6504; 
  dirctrl.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  dirctrl.idle_time : Accumulator : Sum.u64 = 497000; SumSQ.u64 = 149269000000; Count.u64 = 2; 
  dirctrl.replacement_request_latency : Accumulator : Sum.u64 = 2730; SumSQ.u64 = 2730; Count.u64 = 2730; 
