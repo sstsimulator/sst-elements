@@ -2,19 +2,19 @@ l3cache0: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated t
 l3cache1: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 l3cache2: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 l3cache3: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-cpu6: 1500 Issued Read for address 0x1694313c
 cpu0: 1500 Issued Read for address 0x1bb313c
-cpu7: 1500 Issued Write for address 0xf623148
+cpu6: 1500 Issued Read for address 0x1694313c
 cpu1: 1500 Issued Write for address 0x3a893148
+cpu7: 1500 Issued Write for address 0xf623148
 cpu2: 1500 Issued Read for address 0x33563140
 cpu3: 1500 Issued Read for address 0x2c28313c
 cpu4: 1500 Issued Write for address 0x24f53148
 cpu5: 1500 Issued Read for address 0x1dc33140
-cpu6: 1499 Issued Read for address 0x2b116db0
-cpu7: 1499 Issued Write for address 0x179b6dac
 cpu0: 1499 Issued Read for address 0x1fc16db0
+cpu6: 1499 Issued Read for address 0x2b116db0
 cpu1: 1499 Issued Read for address 0xc4e6dac
 cpu2: 1499 Issued Read for address 0x38dc6dac
+cpu7: 1499 Issued Write for address 0x179b6dac
 cpu3: 1499 Issued Read for address 0x25696dac
 cpu4: 1499 Issued Read for address 0x11f66db8
 cpu5: 1499 Issued Read for address 0x3e846db4
@@ -35,8 +35,8 @@ cpu3: 1497 Issued Read for address 0x3b4fe49c
 cpu4: 1497 Issued Read for address 0x1319e494
 cpu5: 1497 Issued Write for address 0x2ae8e498
 cpu6: 1496 Issued Read for address 0xcdce164
-cpu7: 1496 Issued Read for address 0x3b39e170
 cpu0: 1496 Issued Read for address 0x36a9e16c
+cpu7: 1496 Issued Read for address 0x3b39e170
 cpu1: 1496 Issued Read for address 0x2507e168
 cpu2: 1496 Issued Read for address 0x1365e174
 cpu3: 1496 Issued Read for address 0x1c2e174
@@ -45,27 +45,27 @@ cpu5: 1496 Issued Read for address 0x1e7ee16c
 cpu0: 1495 Issued Read for address 0xa463638
 cpu6: 1495 Issued Read for address 0x3b5e363c
 cpu1: 1495 Issued Read for address 0x1d1f3640
-cpu7: 1495 Issued Read for address 0xe373634
 cpu2: 1495 Issued Read for address 0x2ff7363c
+cpu7: 1495 Issued Read for address 0xe373634
 cpu3: 1495 Issued Read for address 0x2d03640
 cpu4: 1495 Issued Read for address 0x15ad3638
 cpu5: 1495 Issued Read for address 0x28853634
 cpu0: 1494 Issued Read for address 0x3f1e0b4
 cpu1: 1494 Issued Read for address 0x1463e0a8
 cpu6: 1494 Issued Read for address 0x268ee0ac
-cpu7: 1494 Issued Read for address 0x3700e0a4
 cpu2: 1494 Issued Read for address 0x24d0e0b4
+cpu7: 1494 Issued Read for address 0x3700e0a4
 cpu3: 1494 Issued Read for address 0x3542e0a8
 cpu4: 1494 Issued Read for address 0x5afe0b0
 cpu5: 1494 Issued Read for address 0x1621e0a8
 cpu0: 1493 Issued Read for address 0xa8ce4b8
 cpu1: 1493 Issued Read for address 0x2a80e4b8
+cpu6: 1493 Issued Write for address 0xa49e4ac
 cpu2: 1493 Issued Read for address 0xa77e4b4
+cpu7: 1493 Issued Read for address 0x2a3de4bc
 cpu3: 1493 Issued Read for address 0x2a6be4b0
 cpu4: 1493 Issued Read for address 0xa5ee4b0
-cpu6: 1493 Issued Write for address 0xa49e4ac
 cpu5: 1493 Issued Write for address 0x2a52e4ac
-cpu7: 1493 Issued Read for address 0x2a3de4bc
 cpu0: 1492 Issued Read for address 0x18380e14
 cpu6: 1492 Issued Read for address 0x184d0e10
 cpu1: 1492 Issued Read for address 0x183d0e1c
@@ -96,8 +96,8 @@ cpu4: Received Request with command 3 (addr 0x24f53148) [Time: 181] [9 outstandi
 cpu6: Received Request with command 2 (addr 0x1694313c) [Time: 181] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x1fc16db0) [Time: 179] [9 outstanding requests]
 cpu0: 1489 Issued Read for address 0x1dadb0fc
-cpu6: 1490 Issued Read for address 0x23bcb0f8
 cpu4: 1490 Issued Read for address 0x370cb0fc
+cpu6: 1490 Issued Read for address 0x23bcb0f8
 cpu1: Received Request with command 2 (addr 0xdcf7230) [Time: 179] [9 outstanding requests]
 cpu1: 1488 Issued Read for address 0x18343a20
 cpu5: Received Request with command 2 (addr 0x1dc33140) [Time: 235] [9 outstanding requests]
@@ -118,8 +118,8 @@ cpu0: 1487 Issued Read for address 0x399663cc
 cpu1: Received Request with command 2 (addr 0x1d1f3640) [Time: 314] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x6e5722c) [Time: 334] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x18331070) [Time: 109] [9 outstanding requests]
-cpu6: 1489 Issued Read for address 0x140d63c8
 cpu5: 1489 Issued Read for address 0x4f863c4
+cpu6: 1489 Issued Read for address 0x140d63c8
 cpu3: Received Request with command 3 (addr 0x141146d8) [Time: 111] [9 outstanding requests]
 cpu1: 1487 Issued Read for address 0x3ef50440
 cpu3: 1487 Issued Read for address 0x29fc043c
@@ -146,8 +146,8 @@ cpu6: Received Request with command 2 (addr 0x16546cd8) [Time: 471] [9 outstandi
 cpu5: Received Request with command 2 (addr 0x4f863c4) [Time: 170] [9 outstanding requests]
 cpu5: 1487 Issued Read for address 0xb4906e4
 cpu6: 1487 Issued Write for address 0x6ed06e4
-cpu3: Received Request with command 2 (addr 0x16a121f4) [Time: 224] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x15280264) [Time: 152] [9 outstanding requests]
+cpu3: Received Request with command 2 (addr 0x16a121f4) [Time: 224] [9 outstanding requests]
 cpu3: 1485 Issued Read for address 0x278bc51c
 cpu7: 1487 Issued Read for address 0x1c49c2dc
 cpu4: Received Request with command 2 (addr 0x167fc37c) [Time: 126] [9 outstanding requests]
@@ -416,8 +416,8 @@ cpu1: Received Request with command 3 (addr 0x304cb5c4) [Time: 369] [9 outstandi
 cpu1: 1464 Issued Read for address 0xa5eeddc
 cpu6: Received Request with command 3 (addr 0x11cd1bdc) [Time: 363] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x319f8e50) [Time: 255] [9 outstanding requests]
-cpu6: 1474 Issued Read for address 0x36f35610
 cpu5: 1461 Issued Read for address 0x4471980
+cpu6: 1474 Issued Read for address 0x36f35610
 cpu5: Received Request with command 2 (addr 0x3305ec2c) [Time: 81] [9 outstanding requests]
 cpu5: 1460 Issued Read for address 0x25cd2874
 cpu2: Received Request with command 3 (addr 0x250bb84) [Time: 77] [9 outstanding requests]
@@ -547,8 +547,8 @@ cpu6: 1465 Issued Read for address 0x3ff5c300
 cpu4: Received Request with command 2 (addr 0x25a5f07c) [Time: 266] [9 outstanding requests]
 cpu4: 1461 Issued Read for address 0x2701a494
 cpu2: Received Request with command 2 (addr 0x3db8faac) [Time: 317] [9 outstanding requests]
-cpu7: Received Request with command 2 (addr 0x36cf82f0) [Time: 156] [9 outstanding requests]
 cpu0: Received Request with command 3 (addr 0x2157bfbc) [Time: 251] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x36cf82f0) [Time: 156] [9 outstanding requests]
 cpu7: 1471 Issued Read for address 0x17046d4
 cpu2: 1464 Issued Read for address 0x10bcab14
 cpu6: Received Request with command 3 (addr 0xa146074) [Time: 146] [9 outstanding requests]
@@ -909,8 +909,8 @@ cpu2: Received Request with command 2 (addr 0x2a782558) [Time: 400] [9 outstandi
 cpu6: Received Request with command 2 (addr 0x3f378f70) [Time: 695] [8 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x164473b4) [Time: 112] [9 outstanding requests]
 cpu3: 1442 Issued Read for address 0x394e595c
-cpu6: 1437 Issued Read for address 0x219ce944
 cpu1: 1426 Issued Read for address 0x312b5790
+cpu6: 1437 Issued Read for address 0x219ce944
 cpu4: 1451 Issued Read for address 0xccad18c
 cpu2: 1440 Issued Read for address 0x2ca7f4ac
 cpu6: 1436 Issued Read for address 0x103a1f48
@@ -1182,8 +1182,8 @@ cpu6: Received Request with command 2 (addr 0x781bd14) [Time: 807] [9 outstandin
 cpu6: 1422 Issued Read for address 0x2e71ad14
 cpu6: Received Request with command 2 (addr 0xfb39b88) [Time: 257] [9 outstanding requests]
 cpu6: 1421 Issued Read for address 0x250020b4
-cpu7: Received Request with command 2 (addr 0x2f1b880c) [Time: 262] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x31b0e190) [Time: 216] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x2f1b880c) [Time: 262] [9 outstanding requests]
 cpu7: 1440 Issued Read for address 0xaf5f1c
 cpu5: 1412 Issued Read for address 0x17ea04b4
 cpu2: Received Request with command 2 (addr 0x10fb974c) [Time: 156] [9 outstanding requests]
@@ -1216,8 +1216,8 @@ cpu5: Received Request with command 3 (addr 0x23d39630) [Time: 202] [9 outstandi
 cpu5: 1410 Issued Read for address 0x1d541994
 cpu7: Received Request with command 2 (addr 0x2a8e86e8) [Time: 100] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0xa5eeddc) [Time: 4244] [9 outstanding requests]
-cpu7: 1437 Issued Read for address 0x30a8b35c
 cpu1: 1404 Issued Read for address 0xdb9ce94
+cpu7: 1437 Issued Read for address 0x30a8b35c
 cpu0: Received Request with command 2 (addr 0x165d2010) [Time: 185] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x13dae5a0) [Time: 751] [9 outstanding requests]
 cpu0: 1407 Issued Write for address 0x3337506c
@@ -1982,8 +1982,8 @@ cpu1: Received Request with command 2 (addr 0x11bf3ba0) [Time: 210] [9 outstandi
 cpu1: 1345 Issued Read for address 0x5f6ae14
 cpu5: Received Request with command 2 (addr 0x286a529c) [Time: 260] [8 outstanding requests]
 cpu5: 1375 Issued Read for address 0x6d3bcac
-cpu6: 1367 Issued Read for address 0x311842a4
 cpu5: 1374 Issued Read for address 0x2e33edd0
+cpu6: 1367 Issued Read for address 0x311842a4
 cpu7: Received Request with command 2 (addr 0x17f85c94) [Time: 4132] [9 outstanding requests]
 cpu7: 1385 Issued Read for address 0x21dc24fc
 cpu4: Received Request with command 2 (addr 0x1bf1c8d0) [Time: 1053] [9 outstanding requests]
@@ -2098,8 +2098,8 @@ cpu3: 1383 Issued Read for address 0x34dd08d0
 cpu3: Received Request with command 2 (addr 0x1e790524) [Time: 371] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x12efed84) [Time: 215] [9 outstanding requests]
 cpu3: 1382 Issued Read for address 0xceb4cb0
-cpu3: Received Request with command 2 (addr 0x21349288) [Time: 1234] [9 outstanding requests]
 cpu7: 1377 Issued Read for address 0x3c27c26c
+cpu3: Received Request with command 2 (addr 0x21349288) [Time: 1234] [9 outstanding requests]
 cpu6: 1361 Issued Read for address 0x2a2d57f8
 cpu4: Received Request with command 3 (addr 0x34eede30) [Time: 328] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x30d2f8a8) [Time: 2938] [9 outstanding requests]
@@ -2234,8 +2234,8 @@ cpu6: 1353 Issued Read for address 0xa4ad820
 cpu1: 1324 Issued Read for address 0x1fe2a834
 cpu7: Received Request with command 2 (addr 0xafa2188) [Time: 324] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x21b09864) [Time: 212] [9 outstanding requests]
-cpu7: 1368 Issued Read for address 0x356c86cc
 cpu2: 1357 Issued Read for address 0x1e37d824
+cpu7: 1368 Issued Read for address 0x356c86cc
 cpu6: Received Request with command 2 (addr 0x395d8678) [Time: 501] [9 outstanding requests]
 cpu6: 1352 Issued Read for address 0x1d6f1070
 cpu0: Received Request with command 2 (addr 0x39070bcc) [Time: 444] [9 outstanding requests]
@@ -2348,8 +2348,8 @@ cpu6: Received Request with command 2 (addr 0x63faedc) [Time: 74] [9 outstanding
 cpu1: Received Request with command 3 (addr 0x17cfcc0c) [Time: 235] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x9c3eeb4) [Time: 221] [8 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x128ed308) [Time: 803] [9 outstanding requests]
-cpu6: 1343 Issued Read for address 0x162a7e64
 cpu1: 1317 Issued Read for address 0x2680d590
+cpu6: 1343 Issued Read for address 0x162a7e64
 cpu1: 1316 Issued Read for address 0x2b29c43c
 cpu3: 1367 Issued Read for address 0x35db668c
 cpu2: Received Request with command 2 (addr 0x3836aedc) [Time: 102] [9 outstanding requests]
@@ -2398,8 +2398,8 @@ cpu6: Received Request with command 2 (addr 0x3709d598) [Time: 357] [9 outstandi
 cpu5: Received Request with command 2 (addr 0x1f9de32c) [Time: 320] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x2a66e7ac) [Time: 7519] [9 outstanding requests]
 cpu6: 1339 Issued Read for address 0x69c3a4
-cpu7: Received Request with command 2 (addr 0x19f1d11c) [Time: 266] [9 outstanding requests]
 cpu0: 1332 Issued Read for address 0x2f058c6c
+cpu7: Received Request with command 2 (addr 0x19f1d11c) [Time: 266] [9 outstanding requests]
 cpu5: 1346 Issued Read for address 0x21330a44
 cpu4: Received Request with command 2 (addr 0x7e3f6a0) [Time: 277] [9 outstanding requests]
 cpu4: 1364 Issued Read for address 0x23a2a388
@@ -2682,8 +2682,8 @@ cpu0: 1311 Issued Read for address 0xc63fd64
 cpu1: 1291 Issued Read for address 0x25eb5c1c
 cpu3: Received Request with command 2 (addr 0x69991d0) [Time: 1069] [9 outstanding requests]
 cpu3: 1358 Issued Read for address 0x143647d8
-cpu6: Received Request with command 2 (addr 0x15a96a1c) [Time: 212] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x3937ba84) [Time: 4356] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x15a96a1c) [Time: 212] [9 outstanding requests]
 cpu3: 1357 Issued Read for address 0x18dcc154
 cpu6: 1324 Issued Read for address 0x1a96fd64
 cpu2: Received Request with command 2 (addr 0x1f8047d4) [Time: 97] [9 outstanding requests]
@@ -2926,8 +2926,8 @@ cpu3: Received Request with command 2 (addr 0x18dcc154) [Time: 1130] [9 outstand
 cpu2: Received Request with command 2 (addr 0x1bc32c40) [Time: 110] [9 outstanding requests]
 cpu2: 1318 Issued Read for address 0x29d0e2b4
 cpu3: 1342 Issued Read for address 0x1a351884
-cpu7: Received Request with command 2 (addr 0x36317388) [Time: 1586] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0xe07b258) [Time: 101] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x36317388) [Time: 1586] [9 outstanding requests]
 cpu7: 1319 Issued Read for address 0x34f5e2b4
 cpu1: 1275 Issued Read for address 0x31a2dae4
 cpu6: Received Request with command 2 (addr 0x1d5d4be8) [Time: 74] [9 outstanding requests]
@@ -3464,8 +3464,8 @@ cpu7: Received Request with command 2 (addr 0x32fb9e5c) [Time: 284] [9 outstandi
 cpu6: 1270 Issued Write for address 0x1ee9326c
 cpu7: Received Request with command 2 (addr 0x1b04f388) [Time: 1381] [8 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x232d5700) [Time: 120] [9 outstanding requests]
-cpu6: 1269 Issued Read for address 0x3fb8f228
 cpu0: 1260 Issued Read for address 0x3c5bcdd0
+cpu6: 1269 Issued Read for address 0x3fb8f228
 cpu7: 1287 Issued Write for address 0x4d988e4
 cpu7: 1286 Issued Read for address 0x7ee96fc
 cpu4: Received Request with command 2 (addr 0x1929f274) [Time: 5064] [9 outstanding requests]
@@ -3478,8 +3478,8 @@ cpu3: 1305 Issued Read for address 0x382388dc
 cpu7: Received Request with command 2 (addr 0x1af4918) [Time: 212] [9 outstanding requests]
 cpu3: 1304 Issued Read for address 0x8459704
 cpu5: Received Request with command 2 (addr 0x1b83e08c) [Time: 78] [9 outstanding requests]
-cpu7: 1285 Issued Read for address 0x1c4f53d4
 cpu5: 1271 Issued Read for address 0x36aaef94
+cpu7: 1285 Issued Read for address 0x1c4f53d4
 cpu0: Received Request with command 2 (addr 0x141abe68) [Time: 251] [9 outstanding requests]
 cpu0: 1259 Issued Read for address 0x1fb09460
 cpu7: Received Request with command 2 (addr 0x38cbfa0) [Time: 764] [9 outstanding requests]
@@ -3540,8 +3540,8 @@ cpu6: 1264 Issued Read for address 0x272df74c
 cpu2: Received Request with command 2 (addr 0xc906e7c) [Time: 248] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x2b2e2b84) [Time: 121] [9 outstanding requests]
 cpu5: 1267 Issued Read for address 0x2596f744
-cpu7: 1280 Issued Read for address 0x38e3b6e8
 cpu2: 1280 Issued Read for address 0x1b4cb6f0
+cpu7: 1280 Issued Read for address 0x38e3b6e8
 cpu5: Received Request with command 3 (addr 0x1480406c) [Time: 217] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x3133cbf4) [Time: 169] [9 outstanding requests]
 cpu6: 1263 Issued Read for address 0x1e88605c
@@ -3856,16 +3856,16 @@ cpu1: Received Request with command 3 (addr 0x2a3858d8) [Time: 226] [9 outstandi
 cpu1: 1222 Issued Read for address 0x2751a534
 cpu5: Received Request with command 2 (addr 0x375f5a2c) [Time: 78] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x57a6c10) [Time: 90] [9 outstanding requests]
-cpu6: 1239 Issued Read for address 0x365ea78
 cpu5: 1249 Issued Read for address 0x3cf934a8
+cpu6: 1239 Issued Read for address 0x365ea78
 cpu2: Received Request with command 2 (addr 0x3b85f6e8) [Time: 260] [9 outstanding requests]
 cpu2: 1255 Issued Read for address 0x31ca34a0
 cpu0: Received Request with command 2 (addr 0x12e73a74) [Time: 219] [9 outstanding requests]
 cpu0: 1237 Issued Read for address 0x107954ec
 cpu5: Received Request with command 2 (addr 0x28b50344) [Time: 182] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x1eac040) [Time: 2250] [9 outstanding requests]
-cpu7: 1262 Issued Read for address 0xc897d48
 cpu5: 1248 Issued Read for address 0x2ed58d54
+cpu7: 1262 Issued Read for address 0xc897d48
 cpu6: Received Request with command 2 (addr 0x231de208) [Time: 122] [9 outstanding requests]
 cpu6: 1238 Issued Read for address 0x26556518
 cpu0: Received Request with command 2 (addr 0x4dea394) [Time: 4085] [9 outstanding requests]
@@ -4008,8 +4008,8 @@ cpu7: Received Request with command 2 (addr 0x3fa75edc) [Time: 1153] [9 outstand
 cpu4: Received Request with command 2 (addr 0x2c14bb9c) [Time: 506] [9 outstanding requests]
 cpu3: 1283 Issued Write for address 0x3b088b34
 cpu1: Received Request with command 2 (addr 0x12b5d9c8) [Time: 2184] [9 outstanding requests]
-cpu6: 1229 Issued Read for address 0x31246a7c
 cpu1: 1215 Issued Read for address 0x2f0d20e4
+cpu6: 1229 Issued Read for address 0x31246a7c
 cpu4: Received Request with command 3 (addr 0x15d25940) [Time: 10426] [8 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x2820fa18) [Time: 225] [9 outstanding requests]
 cpu7: 1250 Issued Read for address 0x2fd78718
@@ -4172,11 +4172,11 @@ cpu0: 1220 Issued Write for address 0x2d56384
 cpu3: 1271 Issued Read for address 0x24f0ac84
 cpu2: Received Request with command 2 (addr 0x27bada3c) [Time: 2012] [9 outstanding requests]
 cpu2: 1241 Issued Read for address 0x31351ecc
-cpu6: Received Request with command 2 (addr 0x26135704) [Time: 105] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x1bfdfb50) [Time: 504] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x26135704) [Time: 105] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x1d5b2ce0) [Time: 1253] [9 outstanding requests]
-cpu7: 1239 Issued Read for address 0x227fc828
 cpu4: 1260 Issued Read for address 0x30fc2788
+cpu7: 1239 Issued Read for address 0x227fc828
 cpu6: 1216 Issued Read for address 0x90f2bc8
 cpu1: Received Request with command 2 (addr 0x5212e34) [Time: 711] [9 outstanding requests]
 cpu1: 1205 Issued Read for address 0x1748bd7c
@@ -4296,8 +4296,8 @@ cpu1: 1200 Issued Read for address 0x3f2bc344
 cpu3: Received Request with command 2 (addr 0x9ccf538) [Time: 173] [9 outstanding requests]
 cpu3: 1262 Issued Read for address 0x1458d3ac
 cpu3: Received Request with command 2 (addr 0x1be5ab8c) [Time: 122] [9 outstanding requests]
-cpu6: 1211 Issued Read for address 0x1580f440
 cpu0: 1211 Issued Read for address 0x209bf430
+cpu6: 1211 Issued Read for address 0x1580f440
 cpu3: 1261 Issued Read for address 0x2550d764
 cpu6: 1210 Issued Read for address 0x1bd5b84
 cpu6: Received Request with command 2 (addr 0xe2a69b0) [Time: 148] [9 outstanding requests]
@@ -4468,8 +4468,8 @@ cpu0: Received Request with command 2 (addr 0xfb9d758) [Time: 214] [9 outstandin
 cpu2: Received Request with command 2 (addr 0x2eab0aa0) [Time: 207] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0xddd77d0) [Time: 160] [9 outstanding requests]
 cpu5: Received Request with command 3 (addr 0x37438400) [Time: 3296] [9 outstanding requests]
-cpu2: 1222 Issued Read for address 0x8414a90
 cpu7: 1219 Issued Read for address 0x1eb2a9b8
+cpu2: 1222 Issued Read for address 0x8414a90
 cpu5: 1208 Issued Read for address 0x1f6cd62c
 cpu0: Received Request with command 2 (addr 0x16f3a620) [Time: 329] [8 outstanding requests]
 cpu0: 1199 Issued Read for address 0x14f8266c
@@ -4834,15 +4834,15 @@ cpu3: Received Request with command 2 (addr 0x1ed62938) [Time: 103] [9 outstandi
 cpu4: Received Request with command 2 (addr 0x23152db8) [Time: 95] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x177d9944) [Time: 2313] [9 outstanding requests]
 cpu4: 1209 Issued Read for address 0x3d6c9670
-cpu6: 1178 Issued Read for address 0x114cd024
 cpu3: 1230 Issued Read for address 0x1ff183a0
+cpu6: 1178 Issued Read for address 0x114cd024
 cpu2: Received Request with command 2 (addr 0xa5c0648) [Time: 182] [9 outstanding requests]
 cpu2: 1195 Issued Read for address 0x38761f68
 cpu6: Received Request with command 2 (addr 0x1139a5b0) [Time: 98] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x2f1d3840) [Time: 197] [9 outstanding requests]
 cpu4: 1208 Issued Read for address 0x3eb7d8b8
-cpu7: Received Request with command 3 (addr 0x1a0dfb30) [Time: 3970] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x9dfe894) [Time: 624] [9 outstanding requests]
+cpu7: Received Request with command 3 (addr 0x1a0dfb30) [Time: 3970] [9 outstanding requests]
 cpu6: 1177 Issued Read for address 0x3b1a73dc
 cpu0: Received Request with command 2 (addr 0x1a004b50) [Time: 1705] [9 outstanding requests]
 cpu0: 1189 Issued Read for address 0x11ce47cc
@@ -4969,8 +4969,8 @@ cpu2: 1185 Issued Read for address 0x146ce164
 cpu6: Received Request with command 2 (addr 0x342a0194) [Time: 624] [9 outstanding requests]
 cpu6: 1167 Issued Write for address 0x72a9c30
 cpu5: Received Request with command 2 (addr 0x9c4e7f0) [Time: 253] [9 outstanding requests]
-cpu7: Received Request with command 2 (addr 0x3087c4f4) [Time: 487] [9 outstanding requests]
 cpu5: 1175 Issued Read for address 0x5a150c8
+cpu7: Received Request with command 2 (addr 0x3087c4f4) [Time: 487] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x30bb3244) [Time: 199] [9 outstanding requests]
 cpu7: 1178 Issued Read for address 0x24835d80
 cpu1: 1164 Issued Read for address 0x23b29a0
@@ -5105,8 +5105,8 @@ cpu3: 1220 Issued Read for address 0x3c58fab0
 cpu6: 1158 Issued Read for address 0x36625bb4
 cpu6: Received Request with command 2 (addr 0x11a2699c) [Time: 332] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x1fef5cec) [Time: 171] [8 outstanding requests]
-cpu6: 1157 Issued Read for address 0xebfc20c
 cpu1: 1157 Issued Read for address 0x2a4ac208
+cpu6: 1157 Issued Read for address 0xebfc20c
 cpu6: 1156 Issued Read for address 0x3b000c50
 cpu7: Received Request with command 2 (addr 0x530c7cc) [Time: 161] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x16a599d4) [Time: 277] [9 outstanding requests]
@@ -5387,8 +5387,8 @@ cpu2: 1164 Issued Read for address 0xfd8aaec
 cpu6: Received Request with command 2 (addr 0x3970ca7c) [Time: 351] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x245ebfc8) [Time: 244] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x13117f40) [Time: 242] [9 outstanding requests]
-cpu6: 1133 Issued Read for address 0x31a6058
 cpu3: 1201 Issued Read for address 0x31d9148
+cpu6: 1133 Issued Read for address 0x31a6058
 cpu7: 1146 Issued Read for address 0x1abb1ad4
 cpu0: Received Request with command 2 (addr 0x10ee0a90) [Time: 154] [9 outstanding requests]
 cpu0: 1165 Issued Read for address 0x97045f4
@@ -5631,12 +5631,12 @@ cpu7: Received Request with command 2 (addr 0x1cca024c) [Time: 270] [9 outstandi
 cpu7: 1129 Issued Read for address 0x242e89cc
 cpu5: Received Request with command 2 (addr 0x3fc86aec) [Time: 862] [9 outstanding requests]
 cpu3: 1184 Issued Read for address 0x2f0a69cc
-cpu6: Received Request with command 2 (addr 0x18e469ec) [Time: 279] [9 outstanding requests]
 cpu5: 1136 Issued Read for address 0x2b99d7ac
+cpu6: Received Request with command 2 (addr 0x18e469ec) [Time: 279] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x31a6058) [Time: 1264] [8 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x126c0b00) [Time: 72] [9 outstanding requests]
-cpu6: 1127 Issued Read for address 0x693a1ac
 cpu1: 1120 Issued Read for address 0x390575c4
+cpu6: 1127 Issued Read for address 0x693a1ac
 cpu6: 1126 Issued Read for address 0x3c48699c
 cpu4: Received Request with command 2 (addr 0x297952e4) [Time: 222] [9 outstanding requests]
 cpu4: 1155 Issued Read for address 0x1c5ed874
@@ -5738,8 +5738,8 @@ cpu3: 1177 Issued Read for address 0x36ae6f74
 cpu2: Received Request with command 2 (addr 0x37bb2300) [Time: 1142] [9 outstanding requests]
 cpu2: 1147 Issued Read for address 0xf5245f0
 cpu6: 1118 Issued Read for address 0x15f4e994
-cpu7: Received Request with command 2 (addr 0x2b072ed8) [Time: 324] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x17b01464) [Time: 211] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x2b072ed8) [Time: 324] [9 outstanding requests]
 cpu5: 1126 Issued Read for address 0x3bbe8dd8
 cpu7: 1124 Issued Read for address 0x2410e994
 cpu3: Received Request with command 2 (addr 0xe455a18) [Time: 106] [9 outstanding requests]
@@ -5764,8 +5764,8 @@ cpu5: 1124 Issued Read for address 0x79eee8c
 cpu1: Received Request with command 2 (addr 0x170651d0) [Time: 274] [9 outstanding requests]
 cpu6: 1116 Issued Read for address 0x1a793e0c
 cpu1: 1110 Issued Write for address 0x45a9ccc
-cpu7: Received Request with command 2 (addr 0x2410e994) [Time: 149] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x1a963274) [Time: 262] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x2410e994) [Time: 149] [9 outstanding requests]
 cpu4: 1147 Issued Read for address 0x1ff2b7d8
 cpu7: 1123 Issued Read for address 0x22ffe9fc
 cpu2: Received Request with command 2 (addr 0x3952fb58) [Time: 1471] [9 outstanding requests]
@@ -5966,8 +5966,8 @@ cpu3: Received Request with command 2 (addr 0x332cd5c) [Time: 235] [9 outstandin
 cpu3: 1162 Issued Read for address 0x1a2256e4
 cpu3: Received Request with command 2 (addr 0x91b679c) [Time: 7495] [9 outstanding requests]
 cpu3: 1161 Issued Read for address 0x223bd3a0
-cpu6: Received Request with command 2 (addr 0x4aca108) [Time: 225] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x31ee2ca4) [Time: 8428] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x4aca108) [Time: 225] [9 outstanding requests]
 cpu6: 1107 Issued Read for address 0x8ca8318
 cpu5: 1116 Issued Write for address 0x27b71690
 cpu2: Received Request with command 2 (addr 0x261d7408) [Time: 164] [9 outstanding requests]
@@ -6054,8 +6054,8 @@ cpu2: 1128 Issued Read for address 0x256c68b8
 cpu5: 1110 Issued Read for address 0x38cb494c
 cpu2: Received Request with command 2 (addr 0xade4904) [Time: 244] [9 outstanding requests]
 cpu2: 1127 Issued Write for address 0x10728cfc
-cpu7: Received Request with command 2 (addr 0x3b73ca34) [Time: 6488] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x1114c690) [Time: 2252] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x3b73ca34) [Time: 6488] [9 outstanding requests]
 cpu7: 1106 Issued Read for address 0x9ba008c
 cpu1: 1088 Issued Read for address 0x2c30af30
 cpu4: Received Request with command 2 (addr 0x17a4c6d8) [Time: 364] [9 outstanding requests]
@@ -6116,8 +6116,8 @@ cpu4: 1124 Issued Read for address 0xba4daa4
 cpu5: 1105 Issued Read for address 0x2f0c7948
 cpu6: Received Request with command 2 (addr 0x3cbd92d4) [Time: 158] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x11c375c8) [Time: 2253] [9 outstanding requests]
-cpu6: 1096 Issued Read for address 0x1ec94738
 cpu5: 1104 Issued Read for address 0x228e5380
+cpu6: 1096 Issued Read for address 0x1ec94738
 cpu4: Received Request with command 2 (addr 0xf6cc75c) [Time: 123] [9 outstanding requests]
 cpu4: 1123 Issued Read for address 0x3b11bb14
 cpu4: Received Request with command 2 (addr 0x45fb058) [Time: 276] [9 outstanding requests]
@@ -6206,8 +6206,8 @@ cpu3: Received Request with command 2 (addr 0xa1d5fd0) [Time: 291] [9 outstandin
 cpu3: 1145 Issued Read for address 0x29b86774
 cpu7: Received Request with command 2 (addr 0x51f11ac) [Time: 115] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x29dbab54) [Time: 240] [9 outstanding requests]
-cpu7: 1096 Issued Read for address 0xd4dbfc8
 cpu5: 1098 Issued Read for address 0x130d9680
+cpu7: 1096 Issued Read for address 0xd4dbfc8
 cpu0: Received Request with command 2 (addr 0x1732bd90) [Time: 162] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0xce5eb44) [Time: 290] [9 outstanding requests]
 cpu0: 1119 Issued Read for address 0xc8eb8a8
@@ -6583,8 +6583,8 @@ cpu7: 1075 Issued Read for address 0x116a6a50
 cpu5: Received Request with command 2 (addr 0x6107274) [Time: 203] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x17b9b200) [Time: 332] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x197cbe80) [Time: 165] [9 outstanding requests]
-cpu7: 1074 Issued Read for address 0x1708f43c
 cpu5: 1074 Issued Read for address 0x784f448
+cpu7: 1074 Issued Read for address 0x1708f43c
 cpu5: Received Request with command 2 (addr 0x1b2f3728) [Time: 157] [9 outstanding requests]
 cpu5: 1073 Issued Read for address 0xbbe7b9c
 cpu2: Received Request with command 2 (addr 0x32baab8c) [Time: 278] [9 outstanding requests]
@@ -6597,8 +6597,8 @@ cpu2: Received Request with command 2 (addr 0x16f5dd8) [Time: 197] [9 outstandin
 cpu4: Received Request with command 2 (addr 0x876d3c0) [Time: 371] [9 outstanding requests]
 cpu0: 1096 Issued Read for address 0x375f6a48
 cpu2: 1096 Issued Read for address 0x11186a50
-cpu7: Received Request with command 2 (addr 0x2d043728) [Time: 208] [9 outstanding requests]
 cpu4: 1092 Issued Write for address 0x1fc1f444
+cpu7: Received Request with command 2 (addr 0x2d043728) [Time: 208] [9 outstanding requests]
 cpu1: Received Request with command 3 (addr 0x287af438) [Time: 116] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x2ca0350c) [Time: 270] [9 outstanding requests]
 cpu3: 1125 Issued Read for address 0x375d5510
@@ -6836,8 +6836,8 @@ cpu1: Received Request with command 2 (addr 0x2ee73acc) [Time: 136] [9 outstandi
 cpu1: 1035 Issued Read for address 0x3ebf9cd8
 cpu0: Received Request with command 2 (addr 0x38162ba8) [Time: 75] [9 outstanding requests]
 cpu0: 1089 Issued Read for address 0x267d3ac4
-cpu6: Received Request with command 2 (addr 0x584da6c) [Time: 6050] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x2ca64db8) [Time: 76] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x584da6c) [Time: 6050] [9 outstanding requests]
 cpu6: 1041 Issued Read for address 0x3b00d4d0
 cpu4: 1079 Issued Write for address 0x325e1214
 cpu5: Received Request with command 2 (addr 0x2f83aee0) [Time: 417] [9 outstanding requests]
@@ -7168,8 +7168,8 @@ cpu7: Received Request with command 2 (addr 0x1d3937f0) [Time: 752] [9 outstandi
 cpu1: Received Request with command 2 (addr 0x1fd5d754) [Time: 182] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x6a17274) [Time: 223] [8 outstanding requests]
 cpu2: Received Request with command 2 (addr 0xcd50600) [Time: 815] [9 outstanding requests]
-cpu7: Received Request with command 2 (addr 0x2b6625c0) [Time: 172] [8 outstanding requests]
 cpu1: 1007 Issued Read for address 0xe0dc04c
+cpu7: Received Request with command 2 (addr 0x2b6625c0) [Time: 172] [8 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x1c197410) [Time: 1972] [9 outstanding requests]
 cpu3: 1100 Issued Read for address 0x35abc240
 cpu2: 1054 Issued Read for address 0x2313f9b0
@@ -7354,8 +7354,8 @@ cpu6: Received Request with command 2 (addr 0x1f3ea610) [Time: 1738] [9 outstand
 cpu1: Received Request with command 2 (addr 0x3e9e06f4) [Time: 319] [9 outstanding requests]
 cpu1: 994 Issued Read for address 0x2b9304d0
 cpu6: 1000 Issued Read for address 0x3667c224
-cpu6: Received Request with command 2 (addr 0x3494a14) [Time: 1429] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x377506fc) [Time: 316] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x3494a14) [Time: 1429] [9 outstanding requests]
 cpu6: 999 Issued Read for address 0x3742884
 cpu2: Received Request with command 2 (addr 0x200a0158) [Time: 588] [9 outstanding requests]
 cpu5: 1013 Issued Write for address 0x3b61eac0
@@ -7429,8 +7429,8 @@ cpu6: Received Request with command 2 (addr 0x186e3130) [Time: 110] [8 outstandi
 cpu4: Received Request with command 2 (addr 0x9b6ef90) [Time: 110] [9 outstanding requests]
 cpu4: 1046 Issued Read for address 0x3e70e128
 cpu3: Received Request with command 2 (addr 0x224a31c) [Time: 107] [9 outstanding requests]
-cpu6: 994 Issued Read for address 0x1ff95eb4
 cpu3: 1084 Issued Read for address 0x3d3bd700
+cpu6: 994 Issued Read for address 0x1ff95eb4
 cpu6: 993 Issued Read for address 0x3836fbf4
 cpu5: Received Request with command 2 (addr 0x369d5f48) [Time: 154] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x32b1c170) [Time: 153] [9 outstanding requests]
@@ -7560,8 +7560,8 @@ cpu3: 1075 Issued Read for address 0x2f11907c
 cpu4: 1040 Issued Read for address 0x2da96760
 cpu7: Received Request with command 2 (addr 0x2060450c) [Time: 271] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x1cc9088) [Time: 265] [9 outstanding requests]
-cpu7: 1014 Issued Read for address 0x282aa5b0
 cpu5: 997 Issued Read for address 0xb9e9698
+cpu7: 1014 Issued Read for address 0x282aa5b0
 cpu0: Received Request with command 2 (addr 0x10d85040) [Time: 171] [9 outstanding requests]
 cpu0: 1067 Issued Read for address 0x15bbec68
 cpu7: Received Request with command 2 (addr 0x3e8667d8) [Time: 168] [9 outstanding requests]
@@ -7662,8 +7662,8 @@ cpu4: Received Request with command 2 (addr 0x201fb038) [Time: 242] [9 outstandi
 cpu4: 1036 Issued Read for address 0x24aea968
 cpu3: Received Request with command 2 (addr 0x3dcf7d3c) [Time: 251] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x17e86180) [Time: 1287] [9 outstanding requests]
-cpu6: 982 Issued Read for address 0x1f587874
 cpu3: 1066 Issued Read for address 0x109397e4
+cpu6: 982 Issued Read for address 0x1f587874
 cpu1: Received Request with command 3 (addr 0x1cb91a30) [Time: 11555] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x11e267b0) [Time: 4969] [9 outstanding requests]
 cpu7: 1006 Issued Write for address 0x1ecc00e8
@@ -7701,8 +7701,8 @@ cpu7: Received Request with command 2 (addr 0x340c779c) [Time: 4088] [9 outstand
 cpu0: Received Request with command 2 (addr 0x1509a45c) [Time: 153] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x976b9e0) [Time: 163] [8 outstanding requests]
 cpu2: Received Request with command 3 (addr 0x2bf32500) [Time: 100] [9 outstanding requests]
-cpu7: 1003 Issued Write for address 0x2ba7e990
 cpu0: 1058 Issued Write for address 0x398c4d80
+cpu7: 1003 Issued Write for address 0x2ba7e990
 cpu1: 970 Issued Read for address 0x132e560c
 cpu1: 969 Issued Read for address 0x2fca03bc
 cpu2: 1018 Issued Read for address 0xc66786c
@@ -7756,8 +7756,8 @@ cpu1: 966 Issued Read for address 0x1d784d68
 cpu1: 965 Issued Read for address 0x4a6338c
 cpu4: Received Request with command 2 (addr 0x32103c40) [Time: 157] [9 outstanding requests]
 cpu4: 1033 Issued Read for address 0xdbb9684
-cpu7: Received Request with command 2 (addr 0x1dc417b0) [Time: 3107] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x27305678) [Time: 155] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x1dc417b0) [Time: 3107] [9 outstanding requests]
 cpu7: 999 Issued Read for address 0x5bd1128
 cpu6: Received Request with command 2 (addr 0x3fff5684) [Time: 175] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x669c750) [Time: 670] [9 outstanding requests]
@@ -7976,8 +7976,8 @@ cpu3: Received Request with command 2 (addr 0x3b6cd428) [Time: 273] [9 outstandi
 cpu7: Received Request with command 3 (addr 0x2ba7e990) [Time: 1250] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x326ee338) [Time: 221] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x2c6080a4) [Time: 166] [9 outstanding requests]
-cpu7: 984 Issued Read for address 0x1180a9fc
 cpu1: 950 Issued Read for address 0x1ca22c24
+cpu7: 984 Issued Read for address 0x1180a9fc
 cpu3: 1053 Issued Read for address 0x952a9d0
 cpu5: Received Request with command 2 (addr 0x207e9384) [Time: 161] [9 outstanding requests]
 cpu0: 1041 Issued Read for address 0x1bf3be90
@@ -8376,16 +8376,16 @@ cpu6: Received Request with command 2 (addr 0x1e32f73c) [Time: 221] [9 outstandi
 cpu0: 1017 Issued Read for address 0x2396c408
 cpu2: 976 Issued Read for address 0x12ad45bc
 cpu2: Received Request with command 2 (addr 0x5035d5c) [Time: 1895] [9 outstanding requests]
+cpu2: 975 Issued Read for address 0xe6434cc
 cpu6: 935 Issued Read for address 0x228d05d4
 cpu6: Received Request with command 2 (addr 0x110a24fc) [Time: 168] [9 outstanding requests]
-cpu2: 975 Issued Read for address 0xe6434cc
 cpu6: 934 Issued Read for address 0x1c941db0
 cpu4: Received Request with command 2 (addr 0x39784d90) [Time: 201] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x3ad9ceec) [Time: 268] [9 outstanding requests]
 cpu4: 995 Issued Write for address 0x121891e0
 cpu5: Received Request with command 2 (addr 0x35a31054) [Time: 98] [9 outstanding requests]
-cpu6: 933 Issued Read for address 0x38e92c3c
 cpu5: 938 Issued Read for address 0x2ee7144
+cpu6: 933 Issued Read for address 0x38e92c3c
 cpu1: Received Request with command 3 (addr 0x6955eac) [Time: 174] [9 outstanding requests]
 cpu1: 924 Issued Read for address 0x2f4f78a0
 cpu1: Received Request with command 2 (addr 0x11491cac) [Time: 176] [9 outstanding requests]
@@ -8908,8 +8908,8 @@ cpu2: Received Request with command 2 (addr 0x3a9815f4) [Time: 1223] [9 outstand
 cpu2: 952 Issued Read for address 0x1a4495b8
 cpu4: Received Request with command 2 (addr 0x1c9a6758) [Time: 134] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x1656dbd4) [Time: 129] [9 outstanding requests]
-cpu1: 892 Issued Read for address 0xd4df1d0
 cpu6: 898 Issued Read for address 0x29ff5c8
+cpu1: 892 Issued Read for address 0xd4df1d0
 cpu7: 934 Issued Read for address 0x1c67d200
 cpu4: 959 Issued Read for address 0x7c8671c
 cpu5: Received Request with command 2 (addr 0x17ed1e34) [Time: 268] [9 outstanding requests]
@@ -9102,8 +9102,8 @@ cpu6: Received Request with command 2 (addr 0x2212bc44) [Time: 253] [9 outstandi
 cpu1: Received Request with command 2 (addr 0xb234c0) [Time: 257] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x12af4480) [Time: 79] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x155e3df4) [Time: 212] [9 outstanding requests]
-cpu6: 888 Issued Read for address 0x890d120
 cpu1: 877 Issued Read for address 0x3666a0f4
+cpu6: 888 Issued Read for address 0x890d120
 cpu5: 886 Issued Write for address 0x3fbd67c8
 cpu2: Received Request with command 2 (addr 0xdc41154) [Time: 6120] [9 outstanding requests]
 cpu0: 968 Issued Read for address 0xc7f3cd0
@@ -9295,8 +9295,8 @@ cpu7: 912 Issued Read for address 0x35b652dc
 cpu2: Received Request with command 2 (addr 0x2d919ac) [Time: 108] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x3f0323ac) [Time: 103] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x34ada004) [Time: 3482] [9 outstanding requests]
-cpu7: 911 Issued Write for address 0x3512b1a8
 cpu5: 872 Issued Write for address 0x2ad97efc
+cpu7: 911 Issued Write for address 0x3512b1a8
 cpu2: 925 Issued Read for address 0x22260e1c
 cpu6: Received Request with command 2 (addr 0x12219a08) [Time: 627] [9 outstanding requests]
 cpu6: 880 Issued Read for address 0x36c2a11c
@@ -9416,8 +9416,8 @@ cpu1: 858 Issued Read for address 0x22aa5364
 cpu5: 867 Issued Read for address 0x35daa6a0
 cpu6: Received Request with command 3 (addr 0x2562cd18) [Time: 121] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0xc33b580) [Time: 1617] [9 outstanding requests]
-cpu6: 874 Issued Read for address 0x218be30c
 cpu3: 965 Issued Read for address 0x19098e7c
+cpu6: 874 Issued Read for address 0x218be30c
 cpu5: Received Request with command 2 (addr 0xda3f08) [Time: 155] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x252563b0) [Time: 150] [9 outstanding requests]
 cpu2: 916 Issued Read for address 0xec60338
@@ -9488,8 +9488,8 @@ cpu7: Received Request with command 2 (addr 0x31888954) [Time: 120] [9 outstandi
 cpu7: 899 Issued Read for address 0x12e857c0
 cpu1: Received Request with command 2 (addr 0x17c9fb18) [Time: 281] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x22b2a6a0) [Time: 261] [9 outstanding requests]
-cpu7: 898 Issued Read for address 0x2ce29030
 cpu1: 852 Issued Read for address 0x2fd2614
+cpu7: 898 Issued Read for address 0x2ce29030
 cpu2: Received Request with command 2 (addr 0x34157ba8) [Time: 474] [9 outstanding requests]
 cpu2: 910 Issued Write for address 0xec174c
 cpu6: Received Request with command 2 (addr 0x16718e50) [Time: 158] [9 outstanding requests]
@@ -9941,8 +9941,8 @@ cpu0: 912 Issued Read for address 0xcb3b198
 cpu4: Received Request with command 2 (addr 0xadeb18c) [Time: 75] [9 outstanding requests]
 cpu4: 887 Issued Read for address 0x1c65ebc
 cpu6: Received Request with command 2 (addr 0x472a244) [Time: 310] [9 outstanding requests]
-cpu6: 851 Issued Write for address 0x35e20988
 cpu1: Received Request with command 2 (addr 0x2e4fe540) [Time: 1514] [9 outstanding requests]
+cpu6: 851 Issued Write for address 0x35e20988
 cpu1: 821 Issued Read for address 0x1e0d2d40
 cpu5: Received Request with command 2 (addr 0x3c29bb84) [Time: 114] [9 outstanding requests]
 cpu5: 839 Issued Read for address 0x39cc9468
@@ -10106,8 +10106,8 @@ cpu3: Received Request with command 2 (addr 0xcd02668) [Time: 1540] [9 outstandi
 cpu3: 916 Issued Read for address 0x5f3df0c
 cpu3: Received Request with command 2 (addr 0xb5691d0) [Time: 226] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x34cff84c) [Time: 217] [9 outstanding requests]
-cpu7: 867 Issued Read for address 0x2823c0c0
 cpu3: 915 Issued Read for address 0x19d55914
+cpu7: 867 Issued Read for address 0x2823c0c0
 cpu1: Received Request with command 3 (addr 0x112ae3c4) [Time: 182] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0xd0a3d58) [Time: 170] [9 outstanding requests]
 cpu1: 811 Issued Read for address 0x11f9dca0
@@ -10202,8 +10202,8 @@ cpu6: Received Request with command 2 (addr 0x1dcde3a0) [Time: 123] [9 outstandi
 cpu6: 834 Issued Read for address 0x9fa0024
 cpu0: Received Request with command 2 (addr 0x19250990) [Time: 891] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x390a0088) [Time: 364] [9 outstanding requests]
-cpu6: 833 Issued Read for address 0xaa82ad0
 cpu0: 893 Issued Read for address 0xbc1b76c
+cpu6: 833 Issued Read for address 0xaa82ad0
 cpu4: Received Request with command 2 (addr 0x25bb00f4) [Time: 274] [9 outstanding requests]
 cpu4: 875 Issued Read for address 0x2ffb1b14
 cpu4: Received Request with command 2 (addr 0x140b03f4) [Time: 272] [9 outstanding requests]
@@ -10307,8 +10307,8 @@ cpu3: 901 Issued Read for address 0x4d680f4
 cpu2: Received Request with command 3 (addr 0x354caa90) [Time: 808] [9 outstanding requests]
 cpu4: Received Request with command 3 (addr 0x4ef5c04) [Time: 189] [9 outstanding requests]
 cpu2: 856 Issued Write for address 0x13a59054
-cpu7: Received Request with command 3 (addr 0x111cd58c) [Time: 1243] [9 outstanding requests]
 cpu4: 868 Issued Read for address 0x37664ce8
+cpu7: Received Request with command 3 (addr 0x111cd58c) [Time: 1243] [9 outstanding requests]
 cpu7: 854 Issued Read for address 0x200a7074
 cpu2: Received Request with command 2 (addr 0xc62c4b0) [Time: 183] [9 outstanding requests]
 cpu2: 855 Issued Write for address 0x3dfe7074
@@ -10401,8 +10401,8 @@ cpu7: 846 Issued Read for address 0x1044610c
 cpu2: 851 Issued Read for address 0x3485b308
 cpu4: 864 Issued Read for address 0x2c694e98
 cpu2: Received Request with command 2 (addr 0x3928c068) [Time: 122] [9 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x2338d0dc) [Time: 205] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x1e0d2d40) [Time: 1943] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x2338d0dc) [Time: 205] [9 outstanding requests]
 cpu1: 795 Issued Read for address 0x220aa550
 cpu2: 850 Issued Read for address 0x1e1ecd44
 cpu6: Received Request with command 2 (addr 0x2a970e80) [Time: 1288] [8 outstanding requests]
@@ -10439,8 +10439,8 @@ cpu2: 849 Issued Read for address 0x2ed50864
 cpu5: Received Request with command 2 (addr 0x1ec242a4) [Time: 205] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x38a22ca4) [Time: 1236] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x1c7fb308) [Time: 171] [9 outstanding requests]
-cpu7: 844 Issued Write for address 0x1aaafe0c
 cpu2: 848 Issued Read for address 0x3520b5d4
+cpu7: 844 Issued Write for address 0x1aaafe0c
 cpu5: 812 Issued Read for address 0xf739c64
 cpu7: Received Request with command 2 (addr 0x1044610c) [Time: 166] [9 outstanding requests]
 cpu7: 843 Issued Read for address 0x1322c6c
@@ -11588,8 +11588,8 @@ cpu6: 746 Issued Read for address 0x3bf6aee0
 cpu7: Received Request with command 2 (addr 0x8b69038) [Time: 209] [9 outstanding requests]
 cpu7: 784 Issued Read for address 0x309a96e4
 cpu7: Received Request with command 2 (addr 0x1516b248) [Time: 107] [9 outstanding requests]
-cpu1: 730 Issued Read for address 0x194b410
 cpu7: 783 Issued Read for address 0x34e0924c
+cpu1: 730 Issued Read for address 0x194b410
 cpu4: Received Request with command 2 (addr 0xac0c5bc) [Time: 266] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x1bdc8ea4) [Time: 183] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x95e2470) [Time: 110] [8 outstanding requests]
@@ -11832,8 +11832,8 @@ cpu7: Received Request with command 2 (addr 0x213c0944) [Time: 124] [9 outstandi
 cpu7: 765 Issued Read for address 0x25a4aad4
 cpu2: Received Request with command 3 (addr 0x2017ddd4) [Time: 160] [9 outstanding requests]
 cpu6: Received Request with command 3 (addr 0xc9c5ae0) [Time: 554] [9 outstanding requests]
-cpu2: 755 Issued Read for address 0x3b3738b4
 cpu6: 734 Issued Read for address 0x28f3c6b8
+cpu2: 755 Issued Read for address 0x3b3738b4
 cpu1: Received Request with command 2 (addr 0x2e10306c) [Time: 4022] [9 outstanding requests]
 cpu1: 714 Issued Read for address 0x302014d0
 cpu3: Received Request with command 2 (addr 0x17092e7c) [Time: 107] [9 outstanding requests]
@@ -12084,8 +12084,8 @@ cpu2: Received Request with command 2 (addr 0x3bf0485c) [Time: 216] [9 outstandi
 cpu4: 744 Issued Read for address 0x26697428
 cpu4: Received Request with command 2 (addr 0x2763d594) [Time: 100] [9 outstanding requests]
 cpu2: 736 Issued Read for address 0x6fd37fc
-cpu7: 749 Issued Read for address 0x2e5291dc
 cpu4: 743 Issued Read for address 0x1c158d30
+cpu7: 749 Issued Read for address 0x2e5291dc
 cpu0: Received Request with command 2 (addr 0x13e2135c) [Time: 2806] [9 outstanding requests]
 cpu0: 792 Issued Read for address 0x2005d5c
 cpu3: Received Request with command 2 (addr 0x22f79648) [Time: 176] [9 outstanding requests]
@@ -12182,8 +12182,8 @@ cpu1: Received Request with command 2 (addr 0x3b1b9740) [Time: 174] [9 outstandi
 cpu2: Received Request with command 2 (addr 0x64823c4) [Time: 164] [9 outstanding requests]
 cpu2: 729 Issued Read for address 0xeedc4dc
 cpu1: 689 Issued Read for address 0x2589a350
-cpu1: Received Request with command 2 (addr 0x6450b70) [Time: 260] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0xba0db38) [Time: 203] [9 outstanding requests]
+cpu1: Received Request with command 2 (addr 0x6450b70) [Time: 260] [9 outstanding requests]
 cpu1: 688 Issued Read for address 0x3e36fc10
 cpu0: Received Request with command 2 (addr 0xbfdf5f8) [Time: 4630] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x109223a8) [Time: 163] [9 outstanding requests]
@@ -12381,8 +12381,8 @@ cpu0: Received Request with command 2 (addr 0x17f41048) [Time: 253] [9 outstandi
 cpu3: 764 Issued Read for address 0x372ac4
 cpu5: Received Request with command 2 (addr 0x2b65b26c) [Time: 274] [9 outstanding requests]
 cpu0: 771 Issued Read for address 0x29e5df6c
-cpu6: Received Request with command 2 (addr 0x29f8a378) [Time: 179] [9 outstanding requests]
 cpu5: 684 Issued Read for address 0x26ae2800
+cpu6: Received Request with command 2 (addr 0x29f8a378) [Time: 179] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x3acd48e8) [Time: 711] [9 outstanding requests]
 cpu6: 700 Issued Read for address 0x1363431c
 cpu4: 730 Issued Read for address 0x2d0564a4
@@ -12442,8 +12442,8 @@ cpu5: 679 Issued Read for address 0x4f985c0
 cpu0: 768 Issued Read for address 0x3c02d03c
 cpu2: Received Request with command 2 (addr 0x14e7b898) [Time: 77] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x365e922c) [Time: 79] [9 outstanding requests]
-cpu2: 714 Issued Read for address 0x3d8b0004
 cpu6: 695 Issued Read for address 0x151b58c8
+cpu2: 714 Issued Read for address 0x3d8b0004
 cpu5: Received Request with command 2 (addr 0x374447c0) [Time: 209] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x6398e4c) [Time: 265] [9 outstanding requests]
 cpu0: 767 Issued Read for address 0x29029e7c
@@ -12637,8 +12637,8 @@ cpu1: 663 Issued Read for address 0xa17c8bc
 cpu1: Received Request with command 2 (addr 0x3feaa614) [Time: 176] [9 outstanding requests]
 cpu1: 662 Issued Read for address 0x2dde8098
 cpu6: Received Request with command 2 (addr 0x2149c734) [Time: 3251] [9 outstanding requests]
-cpu6: 683 Issued Read for address 0x12d16a78
 cpu2: 701 Issued Read for address 0x3130ad98
+cpu6: 683 Issued Read for address 0x12d16a78
 cpu2: 700 Issued Read for address 0x2f52c1f0
 cpu2: Received Request with command 2 (addr 0x3515e354) [Time: 3193] [9 outstanding requests]
 cpu2: 699 Issued Write for address 0x344c6258
@@ -13110,8 +13110,8 @@ cpu1: 630 Issued Read for address 0x3ecafd0c
 cpu7: Received Request with command 2 (addr 0x10612eb0) [Time: 107] [8 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x3d97f04c) [Time: 266] [9 outstanding requests]
 cpu7: 696 Issued Read for address 0x2ea7c6c0
-cpu6: Received Request with command 2 (addr 0xe0e114c) [Time: 385] [9 outstanding requests]
 cpu3: 715 Issued Read for address 0xf9b62c8
+cpu6: Received Request with command 2 (addr 0xe0e114c) [Time: 385] [9 outstanding requests]
 cpu6: 653 Issued Read for address 0x38bde400
 cpu7: 695 Issued Read for address 0x147ddf58
 cpu6: Received Request with command 2 (addr 0x37e74f9c) [Time: 152] [9 outstanding requests]
@@ -13132,8 +13132,8 @@ cpu2: 664 Issued Read for address 0x38587f0c
 cpu3: 713 Issued Read for address 0x3950df54
 cpu1: Received Request with command 2 (addr 0x1e3f75b0) [Time: 151] [9 outstanding requests]
 cpu7: Received Request with command 3 (addr 0x7935b94) [Time: 7729] [9 outstanding requests]
-cpu7: 694 Issued Read for address 0x1353230
 cpu1: 629 Issued Read for address 0x3614d018
+cpu7: 694 Issued Read for address 0x1353230
 cpu5: Received Request with command 2 (addr 0x6e9df5c) [Time: 275] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x19516dc0) [Time: 5024] [9 outstanding requests]
 cpu5: 635 Issued Read for address 0x170092ec
@@ -13223,8 +13223,8 @@ cpu7: 687 Issued Write for address 0x2286da48
 cpu7: Received Request with command 2 (addr 0x1dca31e0) [Time: 1990] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x17b5f40c) [Time: 128] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x17f87ec8) [Time: 219] [9 outstanding requests]
-cpu6: 643 Issued Write for address 0x20d67368
 cpu2: 658 Issued Read for address 0x15c5d1d4
+cpu6: 643 Issued Write for address 0x20d67368
 cpu7: 686 Issued Read for address 0x3b0742c8
 cpu6: Received Request with command 2 (addr 0x2df3a3c) [Time: 177] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x213c9560) [Time: 225] [9 outstanding requests]
@@ -13298,8 +13298,8 @@ cpu5: 625 Issued Read for address 0x44fac04
 cpu0: Received Request with command 2 (addr 0x1173b908) [Time: 108] [8 outstanding requests]
 cpu0: 719 Issued Read for address 0x22aa93f4
 cpu0: 718 Issued Read for address 0x2be1f710
-cpu7: Received Request with command 2 (addr 0x18677ec0) [Time: 539] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x12a9b480) [Time: 3376] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x18677ec0) [Time: 539] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x20792598) [Time: 106] [9 outstanding requests]
 cpu7: 683 Issued Read for address 0x266078f0
 cpu6: Received Request with command 2 (addr 0x1887b29c) [Time: 103] [9 outstanding requests]
@@ -13386,8 +13386,8 @@ cpu6: 632 Issued Read for address 0x5d08c38
 cpu5: 621 Issued Read for address 0x19343164
 cpu5: Received Request with command 2 (addr 0x35f77478) [Time: 257] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x83281f4) [Time: 255] [9 outstanding requests]
-cpu7: 678 Issued Read for address 0x1d9f3580
 cpu5: 620 Issued Read for address 0x2d97cea0
+cpu7: 678 Issued Read for address 0x1d9f3580
 cpu7: Received Request with command 2 (addr 0x32e83128) [Time: 195] [9 outstanding requests]
 cpu7: 677 Issued Read for address 0x279436c0
 cpu0: Received Request with command 2 (addr 0x2974105c) [Time: 298] [9 outstanding requests]
@@ -13400,8 +13400,8 @@ cpu7: 676 Issued Read for address 0x23303fd8
 cpu6: Received Request with command 2 (addr 0x228c7d20) [Time: 7453] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0xaf2dbac) [Time: 213] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x2b015f48) [Time: 198] [9 outstanding requests]
-cpu6: 631 Issued Read for address 0x1daa3e2c
 cpu0: 711 Issued Read for address 0x1e5b9d44
+cpu6: 631 Issued Read for address 0x1daa3e2c
 cpu1: 618 Issued Write for address 0x29f7189c
 cpu4: Received Request with command 2 (addr 0x814cc80) [Time: 169] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x96b1e1c) [Time: 168] [8 outstanding requests]
@@ -13629,8 +13629,8 @@ cpu7: 660 Issued Read for address 0x3346e708
 cpu6: Received Request with command 2 (addr 0x28449ed8) [Time: 244] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x3f0189e8) [Time: 235] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x10ab870) [Time: 223] [9 outstanding requests]
-cpu6: 614 Issued Read for address 0x28702b9c
 cpu1: 604 Issued Read for address 0xdc48ba8
+cpu6: 614 Issued Read for address 0x28702b9c
 cpu7: Received Request with command 2 (addr 0xf068d50) [Time: 218] [8 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x1cc65b4c) [Time: 522] [9 outstanding requests]
 cpu7: 659 Issued Read for address 0x2693e274
@@ -13986,8 +13986,8 @@ cpu6: Received Request with command 3 (addr 0x1a825ae0) [Time: 330] [9 outstandi
 cpu6: 592 Issued Read for address 0x2cc06cb4
 cpu7: Received Request with command 2 (addr 0x1f8fa574) [Time: 167] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0xc8730e8) [Time: 223] [9 outstanding requests]
-cpu7: 635 Issued Read for address 0x39f04a90
 cpu3: 662 Issued Read for address 0x5875e90
+cpu7: 635 Issued Read for address 0x39f04a90
 cpu4: Received Request with command 2 (addr 0x1779b3c) [Time: 80] [9 outstanding requests]
 cpu4: 633 Issued Read for address 0x11e7f560
 cpu2: Received Request with command 2 (addr 0x18a7bad0) [Time: 212] [9 outstanding requests]
@@ -14000,8 +14000,8 @@ cpu5: 578 Issued Read for address 0x4940ba0
 cpu2: 618 Issued Read for address 0x1df13364
 cpu6: Received Request with command 2 (addr 0x1e699b30) [Time: 242] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x15599d3c) [Time: 1143] [9 outstanding requests]
-cpu0: 673 Issued Read for address 0x385f07a0
 cpu6: 591 Issued Read for address 0x36eed428
+cpu0: 673 Issued Read for address 0x385f07a0
 cpu3: Received Request with command 2 (addr 0x3cff1aa0) [Time: 81] [9 outstanding requests]
 cpu3: 661 Issued Read for address 0x1f9f4a98
 cpu2: Received Request with command 3 (addr 0x428f274) [Time: 3169] [9 outstanding requests]
@@ -14021,8 +14021,8 @@ cpu6: 590 Issued Read for address 0x39a8b8d8
 cpu0: 672 Issued Read for address 0xc76a884
 cpu5: 576 Issued Read for address 0x3bd3ac84
 cpu3: Received Request with command 2 (addr 0x5875e90) [Time: 179] [9 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x36eed428) [Time: 112] [9 outstanding requests]
 cpu3: 659 Issued Read for address 0x12355e0
+cpu6: Received Request with command 2 (addr 0x36eed428) [Time: 112] [9 outstanding requests]
 cpu6: 589 Issued Write for address 0x3dd3974
 cpu7: Received Request with command 2 (addr 0x2ae1bc64) [Time: 276] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x292c3368) [Time: 275] [9 outstanding requests]
@@ -14088,8 +14088,8 @@ cpu5: 572 Issued Read for address 0x25a05a34
 cpu7: Received Request with command 2 (addr 0x1c6a52bc) [Time: 140] [9 outstanding requests]
 cpu0: 667 Issued Read for address 0x2773cf90
 cpu4: Received Request with command 2 (addr 0xd961238) [Time: 2714] [9 outstanding requests]
-cpu7: 629 Issued Read for address 0xec86d2c
 cpu4: 629 Issued Read for address 0x31c06d28
+cpu7: 629 Issued Read for address 0xec86d2c
 cpu2: Received Request with command 2 (addr 0x11554b8) [Time: 640] [9 outstanding requests]
 cpu2: 614 Issued Read for address 0x167c0344
 cpu4: Received Request with command 2 (addr 0x2262b754) [Time: 172] [9 outstanding requests]
@@ -14226,8 +14226,8 @@ cpu6: Received Request with command 2 (addr 0xcbd7af8) [Time: 193] [9 outstandin
 cpu2: Received Request with command 2 (addr 0x2abb7f48) [Time: 149] [9 outstanding requests]
 cpu6: 575 Issued Read for address 0xf1c1530
 cpu0: Received Request with command 2 (addr 0xdc51dfc) [Time: 152] [9 outstanding requests]
-cpu7: Received Request with command 2 (addr 0x788d4f0) [Time: 150] [9 outstanding requests]
 cpu0: 657 Issued Write for address 0x21db7f4c
+cpu7: Received Request with command 2 (addr 0x788d4f0) [Time: 150] [9 outstanding requests]
 cpu7: 623 Issued Read for address 0xa821724
 cpu2: 604 Issued Read for address 0xc197de8
 cpu7: Received Request with command 3 (addr 0x34b00620) [Time: 1214] [9 outstanding requests]
@@ -14550,8 +14550,8 @@ cpu7: Received Request with command 2 (addr 0x122a90e4) [Time: 101] [8 outstandi
 cpu1: Received Request with command 2 (addr 0xe4b8ea4) [Time: 215] [9 outstanding requests]
 cpu7: 603 Issued Read for address 0xc8b1600
 cpu3: Received Request with command 2 (addr 0x939450c) [Time: 213] [9 outstanding requests]
-cpu7: 602 Issued Write for address 0x3f7009b8
 cpu3: 621 Issued Read for address 0x74c3f54
+cpu7: 602 Issued Write for address 0x3f7009b8
 cpu5: 541 Issued Read for address 0x211cc3f4
 cpu1: 542 Issued Read for address 0x3b7dc3f8
 cpu6: Received Request with command 2 (addr 0x3c43666c) [Time: 75] [9 outstanding requests]
@@ -14643,8 +14643,8 @@ cpu5: 536 Issued Read for address 0x29bfa2cc
 cpu6: 548 Issued Read for address 0x3c6b300
 cpu1: Received Request with command 3 (addr 0x2ee6ab80) [Time: 225] [9 outstanding requests]
 cpu2: 582 Issued Read for address 0x501464c
-cpu7: Received Request with command 3 (addr 0x3166c194) [Time: 166] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x10d534f0) [Time: 73] [9 outstanding requests]
+cpu7: Received Request with command 3 (addr 0x3166c194) [Time: 166] [9 outstanding requests]
 cpu1: 535 Issued Read for address 0x36b0c2d4
 cpu7: 597 Issued Write for address 0x287f7ff4
 cpu6: Received Request with command 3 (addr 0x3dbcae24) [Time: 175] [9 outstanding requests]
@@ -14810,8 +14810,8 @@ cpu6: Received Request with command 2 (addr 0x10498d68) [Time: 3306] [9 outstand
 cpu6: 539 Issued Read for address 0x3fdbdccc
 cpu0: Received Request with command 2 (addr 0x1c851a74) [Time: 156] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0xb972df8) [Time: 155] [9 outstanding requests]
-cpu7: 581 Issued Read for address 0x11e382a4
 cpu0: 615 Issued Write for address 0x28842ce0
+cpu7: 581 Issued Read for address 0x11e382a4
 cpu1: Received Request with command 2 (addr 0x18a81200) [Time: 624] [9 outstanding requests]
 cpu1: 530 Issued Read for address 0x2c424930
 cpu3: Received Request with command 2 (addr 0x1f5c3d28) [Time: 165] [9 outstanding requests]
@@ -14849,8 +14849,8 @@ cpu7: 577 Issued Read for address 0x3bb3b2cc
 cpu2: Received Request with command 2 (addr 0xb2787d8) [Time: 260] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x2255f464) [Time: 2275] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x1a90f978) [Time: 2763] [9 outstanding requests]
-cpu6: 537 Issued Read for address 0x3f5c504
 cpu1: 528 Issued Read for address 0x127921e0
+cpu6: 537 Issued Read for address 0x3f5c504
 cpu2: 571 Issued Read for address 0x2e818c8
 cpu5: Received Request with command 2 (addr 0x3caa9a98) [Time: 122] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x26a9d630) [Time: 11780] [9 outstanding requests]
@@ -14883,8 +14883,8 @@ cpu7: Received Request with command 2 (addr 0x3bb3b2cc) [Time: 169] [9 outstandi
 cpu7: 575 Issued Write for address 0x2f1e03cc
 cpu6: Received Request with command 2 (addr 0x13638540) [Time: 589] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x201af28c) [Time: 211] [9 outstanding requests]
-cpu1: 527 Issued Read for address 0x3cc6921c
 cpu7: 574 Issued Read for address 0x28a4ef68
+cpu1: 527 Issued Read for address 0x3cc6921c
 cpu2: Received Request with command 2 (addr 0x2e818c8) [Time: 163] [9 outstanding requests]
 cpu6: 535 Issued Read for address 0x17c4fb08
 cpu2: 569 Issued Read for address 0x33f8bb8c
@@ -15005,8 +15005,8 @@ cpu2: 561 Issued Read for address 0x1d9d6b6c
 cpu5: Received Request with command 2 (addr 0x1eaf033c) [Time: 4336] [9 outstanding requests]
 cpu3: Received Request with command 3 (addr 0x2a3e5bd4) [Time: 120] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x3b74f974) [Time: 525] [9 outstanding requests]
-cpu6: 528 Issued Read for address 0x2bb13cc0
 cpu3: 595 Issued Read for address 0x90789bc
+cpu6: 528 Issued Read for address 0x2bb13cc0
 cpu7: Received Request with command 3 (addr 0xae70c84) [Time: 159] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x3a4d8740) [Time: 119] [9 outstanding requests]
 cpu5: 512 Issued Read for address 0x1c70e23c
@@ -15132,8 +15132,8 @@ cpu3: 588 Issued Read for address 0x2e449118
 cpu5: 504 Issued Read for address 0x1713835c
 cpu7: Received Request with command 2 (addr 0xb6a2e10) [Time: 196] [9 outstanding requests]
 cpu4: Received Request with command 3 (addr 0x23aa4884) [Time: 631] [9 outstanding requests]
-cpu7: 557 Issued Read for address 0x205ad6ac
 cpu4: 569 Issued Read for address 0x25ac4fa0
+cpu7: 557 Issued Read for address 0x205ad6ac
 cpu4: Received Request with command 2 (addr 0x20fafde0) [Time: 183] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x1e988a70) [Time: 424] [9 outstanding requests]
 cpu0: 598 Issued Read for address 0x21232050
@@ -15934,8 +15934,8 @@ cpu7: Received Request with command 3 (addr 0x2aed84b4) [Time: 158] [9 outstandi
 cpu7: 507 Issued Read for address 0x3a753510
 cpu7: Received Request with command 3 (addr 0x6c79f68) [Time: 187] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x2d016d44) [Time: 1925] [9 outstanding requests]
-cpu2: 499 Issued Read for address 0x55b1654
 cpu7: 506 Issued Read for address 0x155838b4
+cpu2: 499 Issued Read for address 0x55b1654
 cpu4: Received Request with command 2 (addr 0x210400b0) [Time: 3719] [9 outstanding requests]
 cpu4: 517 Issued Read for address 0x1c2209a8
 cpu4: Received Request with command 2 (addr 0x14668940) [Time: 3328] [9 outstanding requests]
@@ -15985,8 +15985,8 @@ cpu7: 505 Issued Read for address 0x3fd66b0c
 cpu2: Received Request with command 3 (addr 0xc9d64ac) [Time: 337] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x222970c) [Time: 311] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x5a21b5c) [Time: 73] [9 outstanding requests]
-cpu7: 504 Issued Write for address 0x207ada8
 cpu2: 496 Issued Read for address 0x22d6d9b4
+cpu7: 504 Issued Write for address 0x207ada8
 cpu4: 511 Issued Read for address 0x3b5df5d8
 cpu7: Received Request with command 2 (addr 0x155838b4) [Time: 283] [9 outstanding requests]
 cpu7: 503 Issued Read for address 0x2bf7dd1c
@@ -16283,8 +16283,8 @@ cpu3: 512 Issued Read for address 0x392921c
 cpu4: Received Request with command 2 (addr 0x3ac8d6ec) [Time: 400] [9 outstanding requests]
 cpu4: 485 Issued Read for address 0x31baf1c
 cpu0: Received Request with command 2 (addr 0xc0f5340) [Time: 128] [9 outstanding requests]
-cpu6: Received Request with command 3 (addr 0xa01f3f8) [Time: 3208] [9 outstanding requests]
 cpu0: 532 Issued Read for address 0x35c92ae4
+cpu6: Received Request with command 3 (addr 0xa01f3f8) [Time: 3208] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x3bcc5858) [Time: 311] [9 outstanding requests]
 cpu1: 428 Issued Read for address 0x1f039e2c
 cpu6: 441 Issued Read for address 0x12741fe0
@@ -16320,8 +16320,8 @@ cpu6: 439 Issued Read for address 0x427bafc
 cpu3: 510 Issued Read for address 0x2298513c
 cpu7: Received Request with command 2 (addr 0x3808edc) [Time: 694] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x29c0f760) [Time: 238] [9 outstanding requests]
-cpu7: 485 Issued Read for address 0xa5c8b98
 cpu1: 426 Issued Read for address 0x2356388c
+cpu7: 485 Issued Read for address 0xa5c8b98
 cpu4: Received Request with command 2 (addr 0x226bc4f8) [Time: 269] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x12741fe0) [Time: 159] [9 outstanding requests]
 cpu4: 482 Issued Read for address 0x7be9e2c
@@ -16350,8 +16350,8 @@ cpu6: Received Request with command 2 (addr 0x23228458) [Time: 78] [9 outstandin
 cpu6: 435 Issued Read for address 0x1a2d78cc
 cpu2: Received Request with command 2 (addr 0x210c8338) [Time: 205] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x4a4512c) [Time: 268] [9 outstanding requests]
-cpu2: 476 Issued Read for address 0x18b48460
 cpu7: 484 Issued Read for address 0x3d1f9984
+cpu2: 476 Issued Read for address 0x18b48460
 cpu6: Received Request with command 2 (addr 0xd7c384) [Time: 216] [9 outstanding requests]
 cpu6: 434 Issued Read for address 0x2871f14
 cpu1: Received Request with command 2 (addr 0x3cba2054) [Time: 132] [9 outstanding requests]
@@ -16445,8 +16445,8 @@ cpu7: 478 Issued Read for address 0x19eb7154
 cpu0: 520 Issued Read for address 0x11b0ba38
 cpu1: Received Request with command 2 (addr 0x3e5f0354) [Time: 116] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x2fccb9c8) [Time: 107] [9 outstanding requests]
-cpu7: 477 Issued Read for address 0x2af072c8
 cpu4: 471 Issued Read for address 0x1a221a20
+cpu7: 477 Issued Read for address 0x2af072c8
 cpu1: 413 Issued Write for address 0x91799a4
 cpu2: Received Request with command 2 (addr 0x1d6bb138) [Time: 294] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x14282398) [Time: 4389] [9 outstanding requests]
@@ -16814,8 +16814,8 @@ cpu0: 494 Issued Write for address 0x31098048
 cpu3: 493 Issued Read for address 0x168fda88
 cpu2: Received Request with command 2 (addr 0x239cea5c) [Time: 143] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x22cadd98) [Time: 436] [9 outstanding requests]
-cpu7: 449 Issued Read for address 0x2d47842c
 cpu2: 445 Issued Read for address 0x2c356b24
+cpu7: 449 Issued Read for address 0x2d47842c
 cpu4: Received Request with command 2 (addr 0x2786169c) [Time: 380] [9 outstanding requests]
 cpu4: 452 Issued Write for address 0x27c0de00
 cpu2: Received Request with command 2 (addr 0x37e3c630) [Time: 279] [9 outstanding requests]
@@ -17137,8 +17137,8 @@ cpu3: 471 Issued Read for address 0x27697094
 cpu3: Received Request with command 3 (addr 0x28fb7b90) [Time: 3566] [9 outstanding requests]
 cpu3: 470 Issued Read for address 0x34766f48
 cpu3: Received Request with command 2 (addr 0x1dbeffc8) [Time: 304] [9 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x2b12dcc8) [Time: 217] [9 outstanding requests]
 cpu3: 469 Issued Write for address 0x12cb8674
+cpu6: Received Request with command 2 (addr 0x2b12dcc8) [Time: 217] [9 outstanding requests]
 cpu6: 378 Issued Read for address 0x109c345c
 cpu0: Received Request with command 3 (addr 0x6afa7a0) [Time: 164] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x281ecb8) [Time: 164] [9 outstanding requests]
@@ -18216,8 +18216,8 @@ cpu2: Received Request with command 2 (addr 0x3516d828) [Time: 151] [9 outstandi
 cpu2: 360 Issued Read for address 0x26d6d0c4
 cpu7: Received Request with command 2 (addr 0x87715dc) [Time: 219] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x1cfb295c) [Time: 212] [9 outstanding requests]
-cpu7: 377 Issued Read for address 0x3d7354e0
 cpu3: 397 Issued Read for address 0x2048bdc8
+cpu7: 377 Issued Read for address 0x3d7354e0
 cpu6: Received Request with command 2 (addr 0x2228d828) [Time: 341] [9 outstanding requests]
 cpu6: 311 Issued Read for address 0x3f3f7264
 cpu6: Received Request with command 2 (addr 0x2d4edbb0) [Time: 726] [9 outstanding requests]
@@ -18892,8 +18892,8 @@ cpu5: 305 Issued Read for address 0x27ae0540
 cpu3: 352 Issued Read for address 0x3e108fa4
 cpu7: 345 Issued Write for address 0x1387ea8c
 cpu3: 351 Issued Read for address 0x279b6c58
-cpu4: Received Request with command 2 (addr 0x272b0088) [Time: 210] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x226479c0) [Time: 253] [9 outstanding requests]
+cpu4: Received Request with command 2 (addr 0x272b0088) [Time: 210] [9 outstanding requests]
 cpu0: Received Request with command 2 (addr 0x34ed5b64) [Time: 3341] [9 outstanding requests]
 cpu6: 265 Issued Read for address 0x1246e96c
 cpu4: 331 Issued Read for address 0x3e9f32cc
@@ -19055,8 +19055,8 @@ cpu0: Received Request with command 2 (addr 0x117f01f4) [Time: 279] [9 outstandi
 cpu0: 352 Issued Read for address 0xcd48c24
 cpu5: Received Request with command 2 (addr 0x1092dba4) [Time: 223] [9 outstanding requests]
 cpu1: Received Request with command 3 (addr 0x23f1a51c) [Time: 2386] [9 outstanding requests]
-cpu1: 239 Issued Write for address 0x2bed11c0
 cpu6: 257 Issued Read for address 0x3a19c714
+cpu1: 239 Issued Write for address 0x2bed11c0
 cpu5: 294 Issued Read for address 0x11d429dc
 cpu2: Received Request with command 2 (addr 0x18b0d80c) [Time: 178] [9 outstanding requests]
 cpu2: 300 Issued Read for address 0x3354ed9c
@@ -19260,8 +19260,8 @@ cpu7: 319 Issued Read for address 0x31e4eb98
 cpu5: 281 Issued Read for address 0x297aa36c
 cpu6: Received Request with command 2 (addr 0x26455050) [Time: 221] [9 outstanding requests]
 cpu1: Received Request with command 2 (addr 0x3e0a195c) [Time: 171] [9 outstanding requests]
-cpu1: 225 Issued Read for address 0x1af8b478
 cpu6: 243 Issued Read for address 0xe643678
+cpu1: 225 Issued Read for address 0x1af8b478
 cpu3: Received Request with command 2 (addr 0x2a2b8268) [Time: 176] [9 outstanding requests]
 cpu3: 327 Issued Read for address 0x3517983c
 cpu0: Received Request with command 2 (addr 0x2b03224) [Time: 266] [9 outstanding requests]
@@ -19319,8 +19319,8 @@ cpu0: 340 Issued Read for address 0x282f0dbc
 cpu4: Received Request with command 2 (addr 0x15d04790) [Time: 115] [9 outstanding requests]
 cpu4: 306 Issued Read for address 0x28b71fb0
 cpu2: Received Request with command 2 (addr 0xe4c3050) [Time: 160] [9 outstanding requests]
-cpu7: Received Request with command 3 (addr 0x19d9a378) [Time: 129] [9 outstanding requests]
 cpu2: 284 Issued Read for address 0x24f28a6c
+cpu7: Received Request with command 3 (addr 0x19d9a378) [Time: 129] [9 outstanding requests]
 cpu7: 315 Issued Read for address 0x30ef2f28
 cpu4: Received Request with command 2 (addr 0x394a9ccc) [Time: 130] [9 outstanding requests]
 cpu6: Received Request with command 2 (addr 0x303b77c4) [Time: 165] [9 outstanding requests]
@@ -19355,8 +19355,8 @@ cpu0: 337 Issued Read for address 0x887d188
 cpu3: Received Request with command 2 (addr 0x290973c0) [Time: 136] [9 outstanding requests]
 cpu2: Received Request with command 2 (addr 0x24f28a6c) [Time: 124] [9 outstanding requests]
 cpu2: 282 Issued Read for address 0xbe2682c
-cpu7: Received Request with command 2 (addr 0x30ef2f28) [Time: 137] [9 outstanding requests]
 cpu3: 321 Issued Read for address 0x3a71072c
+cpu7: Received Request with command 2 (addr 0x30ef2f28) [Time: 137] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x39083ca4) [Time: 130] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x916bc3c) [Time: 1188] [9 outstanding requests]
 cpu3: 320 Issued Read for address 0xbb620e8
@@ -19477,8 +19477,8 @@ cpu4: Received Request with command 2 (addr 0x3acaeae0) [Time: 5441] [8 outstand
 cpu7: Received Request with command 2 (addr 0x387495fc) [Time: 149] [9 outstanding requests]
 cpu4: 296 Issued Read for address 0x38cabfe0
 cpu4: Received Request with command 2 (addr 0x37f76344) [Time: 151] [8 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x1f23dbcc) [Time: 122] [9 outstanding requests]
 cpu4: 295 Issued Read for address 0x22306c00
+cpu6: Received Request with command 2 (addr 0x1f23dbcc) [Time: 122] [9 outstanding requests]
 cpu7: 302 Issued Read for address 0x4d863f0
 cpu2: Received Request with command 2 (addr 0x2c02c27c) [Time: 119] [9 outstanding requests]
 cpu2: 276 Issued Read for address 0x2a823058
@@ -19656,8 +19656,8 @@ cpu5: Received Request with command 2 (addr 0x66dc57c) [Time: 145] [9 outstandin
 cpu5: 259 Issued Read for address 0x2debbad8
 cpu2: Received Request with command 2 (addr 0x3c1fd4) [Time: 149] [9 outstanding requests]
 cpu2: 264 Issued Read for address 0x10b6323c
-cpu7: Received Request with command 2 (addr 0x311dc1dc) [Time: 146] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x28d29f8c) [Time: 255] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x311dc1dc) [Time: 146] [9 outstanding requests]
 cpu4: 286 Issued Read for address 0x3c141680
 cpu7: 291 Issued Read for address 0x1881c95c
 cpu6: Received Request with command 2 (addr 0x38279e54) [Time: 113] [9 outstanding requests]
@@ -19925,8 +19925,8 @@ cpu3: 289 Issued Read for address 0x2b6e7834
 cpu1: Received Request with command 2 (addr 0x2ad8f8e8) [Time: 253] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x109a4d5c) [Time: 802] [9 outstanding requests]
 cpu1: Received Request with command 3 (addr 0x302d21e0) [Time: 3036] [8 outstanding requests]
-cpu7: 269 Issued Read for address 0x24bf33e8
 cpu1: 184 Issued Read for address 0xcbac978
+cpu7: 269 Issued Read for address 0x24bf33e8
 cpu5: Received Request with command 2 (addr 0x62359c) [Time: 164] [9 outstanding requests]
 cpu1: 183 Issued Read for address 0x3180b324
 cpu5: 239 Issued Read for address 0x3d536d94
@@ -20035,8 +20035,8 @@ cpu1: 176 Issued Read for address 0x2ad395d8
 cpu4: 256 Issued Read for address 0x9118a0
 cpu5: 230 Issued Read for address 0x2ca5145c
 cpu2: Received Request with command 2 (addr 0x34318a04) [Time: 575] [9 outstanding requests]
-cpu3: Received Request with command 3 (addr 0x377f21cc) [Time: 217] [9 outstanding requests]
 cpu7: Received Request with command 3 (addr 0x23ad4e84) [Time: 371] [9 outstanding requests]
+cpu3: Received Request with command 3 (addr 0x377f21cc) [Time: 217] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x3b21e460) [Time: 2226] [9 outstanding requests]
 cpu3: 280 Issued Read for address 0x1544e5f0
 cpu5: 229 Issued Write for address 0x66ec750
@@ -20106,8 +20106,8 @@ cpu0: 296 Issued Read for address 0xc131820
 cpu4: 252 Issued Write for address 0x6afce00
 cpu7: Received Request with command 2 (addr 0x26b9f18) [Time: 263] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x2ca5145c) [Time: 368] [9 outstanding requests]
-cpu5: 223 Issued Read for address 0x1c0ea220
 cpu7: 257 Issued Read for address 0xf09b658
+cpu5: 223 Issued Read for address 0x1c0ea220
 cpu6: Received Request with command 2 (addr 0x35256c28) [Time: 4408] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x27cc76fc) [Time: 157] [9 outstanding requests]
 cpu6: 199 Issued Read for address 0x3401376c
@@ -20306,8 +20306,8 @@ cpu7: Received Request with command 2 (addr 0x31772ddc) [Time: 152] [9 outstandi
 cpu4: Received Request with command 2 (addr 0xd021e20) [Time: 260] [9 outstanding requests]
 cpu7: 244 Issued Write for address 0x3fce6b94
 cpu3: Received Request with command 2 (addr 0x7ee33b4) [Time: 163] [9 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x2a5b8934) [Time: 162] [9 outstanding requests]
 cpu4: 237 Issued Read for address 0x255fdcf0
+cpu6: Received Request with command 2 (addr 0x2a5b8934) [Time: 162] [9 outstanding requests]
 cpu0: Received Request with command 3 (addr 0x1e7cc5b4) [Time: 162] [9 outstanding requests]
 cpu6: 185 Issued Read for address 0x1c08f124
 cpu3: 263 Issued Read for address 0x29b124c0
@@ -21132,8 +21132,8 @@ cpu5: Received Request with command 2 (addr 0x9fb76dc) [Time: 229] [9 outstandin
 cpu5: 171 Issued Read for address 0x33b7928c
 cpu7: Received Request with command 2 (addr 0xee739c) [Time: 166] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x86f1888) [Time: 185] [9 outstanding requests]
-cpu7: 194 Issued Read for address 0x24f4eb78
 cpu5: 170 Issued Read for address 0x22e28f00
+cpu7: 194 Issued Read for address 0x24f4eb78
 cpu5: Received Request with command 2 (addr 0x275b7504) [Time: 407] [9 outstanding requests]
 cpu3: Received Request with command 3 (addr 0xdbd933c) [Time: 119] [9 outstanding requests]
 cpu3: 209 Issued Read for address 0x11a0d0b8
@@ -21170,8 +21170,8 @@ cpu0: Received Request with command 2 (addr 0x297d1154) [Time: 270] [9 outstandi
 cpu0: 232 Issued Read for address 0x2593524c
 cpu6: Received Request with command 2 (addr 0x261e9288) [Time: 265] [9 outstanding requests]
 cpu6: 135 Issued Read for address 0x32f4c658
-cpu6: Received Request with command 2 (addr 0x3e62524c) [Time: 284] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x14c8733c) [Time: 155] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x3e62524c) [Time: 284] [9 outstanding requests]
 cpu5: 165 Issued Read for address 0x1c1deeac
 cpu6: 134 Issued Write for address 0xf2a8a78
 cpu1: Received Request with command 2 (addr 0xab45748) [Time: 2228] [9 outstanding requests]
@@ -21229,8 +21229,8 @@ cpu5: Received Request with command 2 (addr 0x118624a0) [Time: 76] [9 outstandin
 cpu2: Received Request with command 3 (addr 0x33d607f8) [Time: 218] [9 outstanding requests]
 cpu1: 103 Issued Read for address 0x29991370
 cpu6: Received Request with command 2 (addr 0x140fcde8) [Time: 380] [9 outstanding requests]
-cpu6: 132 Issued Read for address 0x3f3e4120
 cpu5: 160 Issued Read for address 0x2840784
+cpu6: 132 Issued Read for address 0x3f3e4120
 cpu5: Received Request with command 2 (addr 0x37568a7c) [Time: 211] [9 outstanding requests]
 cpu2: 168 Issued Read for address 0x7a59ac4
 cpu5: 159 Issued Read for address 0x3e2d862c
@@ -21531,8 +21531,8 @@ cpu7: Received Request with command 2 (addr 0x2072472c) [Time: 123] [9 outstandi
 cpu0: 209 Issued Read for address 0x2e42ba00
 cpu7: 182 Issued Read for address 0x30b64fb4
 cpu2: Received Request with command 2 (addr 0x3295a064) [Time: 277] [9 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x2ffe4d14) [Time: 119] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x10cda984) [Time: 672] [9 outstanding requests]
+cpu6: Received Request with command 2 (addr 0x2ffe4d14) [Time: 119] [9 outstanding requests]
 cpu6: 108 Issued Read for address 0x9e9b244
 cpu2: 150 Issued Write for address 0x15104d20
 cpu3: 180 Issued Read for address 0x19604528
@@ -22080,8 +22080,8 @@ cpu7: Received Request with command 2 (addr 0x1617bc70) [Time: 1173] [9 outstand
 cpu2: Received Request with command 2 (addr 0x1873c208) [Time: 312] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x18531b40) [Time: 104] [8 outstanding requests]
 cpu7: 152 Issued Read for address 0x25115288
-cpu2: 108 Issued Read for address 0x136dc3bc
 cpu6: 78 Issued Read for address 0x209f68ec
+cpu2: 108 Issued Read for address 0x136dc3bc
 cpu7: Received Request with command 2 (addr 0x788bb98) [Time: 1830] [9 outstanding requests]
 cpu7: 151 Issued Read for address 0x2066c1ac
 cpu5: 118 Issued Read for address 0x82a4ebc
@@ -22172,8 +22172,8 @@ cpu4: Received Request with command 2 (addr 0x2ace4e84) [Time: 328] [9 outstandi
 cpu4: 103 Issued Read for address 0x2588bf90
 cpu5: Received Request with command 2 (addr 0xd7f77a4) [Time: 195] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0xc764828) [Time: 139] [9 outstanding requests]
-cpu6: Received Request with command 2 (addr 0x25920a24) [Time: 120] [9 outstanding requests]
 cpu5: 113 Issued Read for address 0x34a60a28
+cpu6: Received Request with command 2 (addr 0x25920a24) [Time: 120] [9 outstanding requests]
 cpu7: 148 Issued Read for address 0xb35e6cc
 cpu4: Received Request with command 2 (addr 0x34109894) [Time: 222] [9 outstanding requests]
 cpu6: 71 Issued Read for address 0x20041988
@@ -22512,8 +22512,8 @@ cpu6: Received Request with command 2 (addr 0x183a5ed8) [Time: 173] [9 outstandi
 cpu6: 47 Issued Read for address 0x2839a360
 cpu3: Received Request with command 2 (addr 0x18e554cc) [Time: 164] [9 outstanding requests]
 cpu3: 110 Issued Read for address 0x2144ab34
-cpu7: Received Request with command 2 (addr 0xdac9690) [Time: 220] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x3a3f1324) [Time: 211] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0xdac9690) [Time: 220] [9 outstanding requests]
 cpu5: 91 Issued Read for address 0x3b1db5dc
 cpu7: 125 Issued Read for address 0x92d48d4
 cpu6: Received Request with command 2 (addr 0x3ec243ac) [Time: 287] [9 outstanding requests]
@@ -22596,10 +22596,10 @@ cpu6: Received Request with command 2 (addr 0xd70b70) [Time: 164] [9 outstanding
 cpu3: Received Request with command 2 (addr 0xc659930) [Time: 220] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x10c6580) [Time: 179] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x23ddbecc) [Time: 999] [9 outstanding requests]
-cpu6: 39 Issued Read for address 0x3776573c
 cpu4: 74 Issued Read for address 0x1d4ed0d8
-cpu7: Received Request with command 2 (addr 0x3d28b5d8) [Time: 249] [9 outstanding requests]
+cpu6: 39 Issued Read for address 0x3776573c
 cpu4: Received Request with command 2 (addr 0x2226180c) [Time: 2263] [9 outstanding requests]
+cpu7: Received Request with command 2 (addr 0x3d28b5d8) [Time: 249] [9 outstanding requests]
 cpu5: 84 Issued Read for address 0x3e6a9634
 cpu3: 105 Issued Read for address 0x1cd3b3fc
 cpu4: 73 Issued Read for address 0x18e7ec0c
@@ -22804,8 +22804,8 @@ cpu5: Received Request with command 2 (addr 0xd6f73a0) [Time: 791] [9 outstandin
 cpu6: Received Request with command 3 (addr 0x366c7e0c) [Time: 222] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x3c573f8) [Time: 170] [8 outstanding requests]
 cpu6: 25 Issued Read for address 0x239e1064
-cpu6: Received Request with command 3 (addr 0xfaec48c) [Time: 334] [9 outstanding requests]
 cpu5: 70 Issued Read for address 0x2a06c568
+cpu6: Received Request with command 3 (addr 0xfaec48c) [Time: 334] [9 outstanding requests]
 cpu4: Received Request with command 2 (addr 0x333db534) [Time: 218] [9 outstanding requests]
 cpu4: 63 Issued Read for address 0x2d9a8b44
 cpu5: 69 Issued Read for address 0x24cd48c4
@@ -23305,8 +23305,8 @@ cpu4: 31 Issued Read for address 0x5e9ffc
 cpu0: Received Request with command 2 (addr 0x3a9b9168) [Time: 464] [9 outstanding requests]
 cpu0: 106 Issued Read for address 0x267ca29c
 cpu4: Received Request with command 3 (addr 0x16c4b908) [Time: 142] [9 outstanding requests]
-cpu7: Received Request with command 2 (addr 0x10cae8b4) [Time: 401] [9 outstanding requests]
 cpu4: 30 Issued Read for address 0x101e61f8
+cpu7: Received Request with command 2 (addr 0x10cae8b4) [Time: 401] [9 outstanding requests]
 cpu7: 77 Issued Read for address 0x12463520
 cpu0: Received Request with command 2 (addr 0x28c282f8) [Time: 321] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x3e38dd0) [Time: 167] [9 outstanding requests]
@@ -23663,8 +23663,8 @@ cpu5: 12 Issued Read for address 0x1939c2e8
 cpu0: Received Request with command 2 (addr 0x3f09917c) [Time: 411] [9 outstanding requests]
 cpu5: Received Request with command 2 (addr 0x143701bc) [Time: 220] [9 outstanding requests]
 cpu0: 68 Issued Read for address 0x384b6d04
-cpu7: Received Request with command 2 (addr 0x28e9a84c) [Time: 1176] [9 outstanding requests]
 cpu5: 11 Issued Read for address 0x2a0889a4
+cpu7: Received Request with command 2 (addr 0x28e9a84c) [Time: 1176] [9 outstanding requests]
 cpu3: Received Request with command 2 (addr 0x163686b0) [Time: 326] [9 outstanding requests]
 cpu7: 44 Issued Read for address 0x3ec987a0
 cpu3: 20 Issued Write for address 0xa75b3b8
@@ -23862,8 +23862,8 @@ cpu7: Received Request with command 2 (addr 0x145e7434) [Time: 79] [9 outstandin
 cpu7: 20 Issued Read for address 0x2ffbf3b8
 cpu0: Received Request with command 2 (addr 0xac44b9c) [Time: 95] [9 outstanding requests]
 cpu0: 42 Issued Read for address 0x3d2f3620
-cpu0: Received Request with command 2 (addr 0x39284804) [Time: 99] [9 outstanding requests]
 cpu7: Received Request with command 2 (addr 0x25a26d6c) [Time: 2167] [9 outstanding requests]
+cpu0: Received Request with command 2 (addr 0x39284804) [Time: 99] [9 outstanding requests]
 cpu7: 19 Issued Read for address 0xf4a7990
 cpu7: Received Request with command 2 (addr 0x2ebb1a34) [Time: 74] [9 outstanding requests]
 cpu7: 18 Issued Read for address 0x226f43d8
@@ -24011,53 +24011,11 @@ cpu0: Received Request with command 2 (addr 0x1e9dec04) [Time: 1245] [1 outstand
 cpu0: Received Request with command 2 (addr 0x3f04f818) [Time: 1032] [0 outstanding requests]
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu0 Finished after 1500 issued reads, 1500 returned (114494 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  59
-  [2, 4]  133
-  [4, 6]  379
-  [6, 8]  135
-  [8, 10]  6227
-  [10, 12]  107561
 TrivialCPU cpu5 Finished after 1500 issued reads, 1500 returned (111953 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  118
-  [2, 4]  117
-  [4, 6]  159
-  [6, 8]  20
-  [8, 10]  5922
-  [10, 12]  105617
 TrivialCPU cpu4 Finished after 1500 issued reads, 1500 returned (111770 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  56
-  [2, 4]  392
-  [4, 6]  54
-  [6, 8]  266
-  [8, 10]  6365
-  [10, 12]  104637
 TrivialCPU cpu3 Finished after 1500 issued reads, 1500 returned (113137 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  112
-  [2, 4]  166
-  [4, 6]  802
-  [6, 8]  104
-  [8, 10]  5943
-  [10, 12]  106010
 TrivialCPU cpu1 Finished after 1500 issued reads, 1500 returned (108700 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  81
-  [2, 4]  64
-  [4, 6]  795
-  [6, 8]  83
-  [8, 10]  6230
-  [10, 12]  101447
 TrivialCPU cpu2 Finished after 1500 issued reads, 1500 returned (111842 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  59
-  [2, 4]  85
-  [4, 6]  448
-  [6, 8]  114
-  [8, 10]  5923
-  [10, 12]  105213
  network.send_bit_count.port0 : Accumulator : Sum.u64 = 1152576; SumSQ.u64 = 663883776; Count.u64 = 2001; 
  network.send_packet_count.port0 : Accumulator : Sum.u64 = 2001; SumSQ.u64 = 2001; Count.u64 = 2001; 
  network.output_port_stalls.port0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -24142,6 +24100,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  network.xbar_stalls.port11 : Accumulator : Sum.u64 = 228; SumSQ.u64 = 228; Count.u64 = 228; 
  network.xbar_stalls.port12 : Accumulator : Sum.u64 = 1003; SumSQ.u64 = 1003; Count.u64 = 1003; 
  network.xbar_stalls.port13 : Accumulator : Sum.u64 = 958; SumSQ.u64 = 958; Count.u64 = 958; 
+ cpu0.pendCycle : Accumulator : Sum.u64 = 1133998; SumSQ.u64 = 11265136; Count.u64 = 114494; 
  l1cache0.TotalEventsReceived : Accumulator : Sum.u64 = 7730; SumSQ.u64 = 7730; Count.u64 = 7730; 
  l1cache0.TotalEventsReplayed : Accumulator : Sum.u64 = 382; SumSQ.u64 = 382; Count.u64 = 382; 
  l1cache0.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -24510,6 +24469,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache0.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache0.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache0.eventSent_PutE : Accumulator : Sum.u64 = 1273; SumSQ.u64 = 1273; Count.u64 = 1273; 
+ cpu1.pendCycle : Accumulator : Sum.u64 = 1074320; SumSQ.u64 = 10660700; Count.u64 = 108700; 
  l1cache1.TotalEventsReceived : Accumulator : Sum.u64 = 7435; SumSQ.u64 = 7435; Count.u64 = 7435; 
  l1cache1.TotalEventsReplayed : Accumulator : Sum.u64 = 352; SumSQ.u64 = 352; Count.u64 = 352; 
  l1cache1.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -24706,6 +24666,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache1.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+TrivialCPU cpu6 Finished after 1500 issued reads, 1500 returned (109015 clocks)
  l2cache1.stateEvent_GetXResp_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.stateEvent_PutS_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.stateEvent_PutS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -24737,16 +24698,8 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache1.stateEvent_FetchInvX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.stateEvent_FetchInvX_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.stateEvent_FetchInvX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
-TrivialCPU cpu6 Finished after 1500 issued reads, 1500 returned (109015 clocks)
  l2cache1.stateEvent_FetchInvX_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  118
-  [2, 4]  163
-  [4, 6]  125
  l2cache1.stateEvent_FetchInvX_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
-  [6, 8]  67
-  [8, 10]  6315
-  [10, 12]  102227
  l2cache1.stateEvent_FetchInvX_MI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.stateEvent_FetchInvX_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.stateEvent_FetchInvX_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -24886,6 +24839,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache1.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache1.eventSent_PutE : Accumulator : Sum.u64 = 1255; SumSQ.u64 = 1255; Count.u64 = 1255; 
+ cpu2.pendCycle : Accumulator : Sum.u64 = 1108060; SumSQ.u64 = 11009740; Count.u64 = 111842; 
  l1cache2.TotalEventsReceived : Accumulator : Sum.u64 = 7646; SumSQ.u64 = 7646; Count.u64 = 7646; 
  l1cache2.TotalEventsReplayed : Accumulator : Sum.u64 = 441; SumSQ.u64 = 441; Count.u64 = 441; 
  l1cache2.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25254,6 +25208,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache2.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache2.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache2.eventSent_PutE : Accumulator : Sum.u64 = 1261; SumSQ.u64 = 1261; Count.u64 = 1261; 
+ cpu3.pendCycle : Accumulator : Sum.u64 = 1117956; SumSQ.u64 = 11097880; Count.u64 = 113137; 
  l1cache3.TotalEventsReceived : Accumulator : Sum.u64 = 7721; SumSQ.u64 = 7721; Count.u64 = 7721; 
  l1cache3.TotalEventsReplayed : Accumulator : Sum.u64 = 397; SumSQ.u64 = 397; Count.u64 = 397; 
  l1cache3.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25622,6 +25577,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache3.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache3.eventSent_PutE : Accumulator : Sum.u64 = 1257; SumSQ.u64 = 1257; Count.u64 = 1257; 
+ cpu4.pendCycle : Accumulator : Sum.u64 = 1106178; SumSQ.u64 = 10985112; Count.u64 = 111770; 
  l1cache4.TotalEventsReceived : Accumulator : Sum.u64 = 7764; SumSQ.u64 = 7764; Count.u64 = 7764; 
  l1cache4.TotalEventsReplayed : Accumulator : Sum.u64 = 368; SumSQ.u64 = 368; Count.u64 = 368; 
  l1cache4.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -25990,14 +25946,8 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache4.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache4.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache4.eventSent_PutE : Accumulator : Sum.u64 = 1272; SumSQ.u64 = 1272; Count.u64 = 1272; 
+ cpu5.pendCycle : Accumulator : Sum.u64 = 1110468; SumSQ.u64 = 11041772; Count.u64 = 111953; 
 TrivialCPU cpu7 Finished after 1500 issued reads, 1500 returned (114058 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  60
-  [2, 4]  165
-  [4, 6]  778
-  [6, 8]  273
-  [8, 10]  5837
-  [10, 12]  106945
  l1cache5.TotalEventsReceived : Accumulator : Sum.u64 = 7403; SumSQ.u64 = 7403; Count.u64 = 7403; 
  l1cache5.TotalEventsReplayed : Accumulator : Sum.u64 = 387; SumSQ.u64 = 387; Count.u64 = 387; 
  l1cache5.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -26366,6 +26316,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache5.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache5.eventSent_PutE : Accumulator : Sum.u64 = 1266; SumSQ.u64 = 1266; Count.u64 = 1266; 
+ cpu6.pendCycle : Accumulator : Sum.u64 = 1080192; SumSQ.u64 = 10733794; Count.u64 = 109015; 
  l1cache6.TotalEventsReceived : Accumulator : Sum.u64 = 7372; SumSQ.u64 = 7372; Count.u64 = 7372; 
  l1cache6.TotalEventsReplayed : Accumulator : Sum.u64 = 404; SumSQ.u64 = 404; Count.u64 = 404; 
  l1cache6.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -26734,6 +26685,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l2cache6.stateEvent_FlushLineInv_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache6.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache6.eventSent_PutE : Accumulator : Sum.u64 = 1251; SumSQ.u64 = 1251; Count.u64 = 1251; 
+ cpu7.pendCycle : Accumulator : Sum.u64 = 1127132; SumSQ.u64 = 11187822; Count.u64 = 114058; 
  l1cache7.TotalEventsReceived : Accumulator : Sum.u64 = 7244; SumSQ.u64 = 7244; Count.u64 = 7244; 
  l1cache7.TotalEventsReplayed : Accumulator : Sum.u64 = 420; SumSQ.u64 = 420; Count.u64 = 420; 
  l1cache7.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 

@@ -696,6 +696,11 @@ static const ElementInfoParam cpu_params[] = {
     {NULL, NULL, NULL}
 };
 
+static const ElementInfoStatistic cpu_statistics[] = {
+    {"pendCycle",               "Number of Pending Requests per Cycle", "count", 1},
+    {NULL, NULL, NULL, 0}
+};
+
 
 /*****************************************************************************************
  *  Component: ScratchCPU
@@ -1721,7 +1726,8 @@ static const ElementInfoComponent components[] = {
 	    create_trivialCPU,
             cpu_params,
             cpu_ports,
-            COMPONENT_CATEGORY_PROCESSOR
+            COMPONENT_CATEGORY_PROCESSOR,
+            cpu_statistics
 	},
 	{   "ScratchCPU",
 	    "Simple test CPU for scratchpad interface",
