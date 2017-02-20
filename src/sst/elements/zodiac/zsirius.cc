@@ -37,7 +37,8 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
   recvFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedRecvFunction)),
   retFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedFunction)),
   sendFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedSendFunction)),
-  waitFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedWaitFunction))
+  waitFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedWaitFunction)),
+  trace(NULL)
 {
     scaleCompute = params.find("scalecompute", 1.0);
 
@@ -178,11 +179,13 @@ void ZodiacSiriusTraceReader::finish() {
 }
 
 ZodiacSiriusTraceReader::~ZodiacSiriusTraceReader() {
-	if(! trace->hasReachedFinalize()) {
-		zOut.output("WARNING: Component did not reach a finalize event, yet the component destructor has been called.\n");
-	}
+    if ( trace ) {
+        if(! trace->hasReachedFinalize()) {
+            zOut.output("WARNING: Component did not reach a finalize event, yet the component destructor has been called.\n");
+        }
 
-	trace->close();
+        trace->close();
+    }
 }
 
 ZodiacSiriusTraceReader::ZodiacSiriusTraceReader() :
