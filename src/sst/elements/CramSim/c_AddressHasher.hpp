@@ -30,6 +30,8 @@
 #define c_ADDRESSHASHER_HPP
 
 // sst includes
+#include <sst/core/component.h>
+#include <sst/core/link.h>
 #include <sst/core/params.h>
 
 #include <memory>
@@ -44,15 +46,16 @@
 
 typedef unsigned long ulong;
 
-class c_AddressHasher {
+class c_AddressHasher: public SST::Component {
 
 public:
   // Below is for calling in generic locations to obtain a pointer to the singleton instance
+  c_AddressHasher(SST::ComponentId_t x_id, SST::Params& x_params);
   static c_AddressHasher* getInstance(); 
   static c_AddressHasher* getInstance(SST::Params& x_params); // This reads the parameters and constructs the hash function
 
-  const void fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address);
-  const ulong getAddressForBankId(const unsigned x_bankId);
+  void fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address);
+  ulong getAddressForBankId(const unsigned x_bankId);
 
   unsigned getBankFromAddress(const ulong x_address,
 			      const unsigned x_numBanks);

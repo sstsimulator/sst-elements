@@ -40,9 +40,6 @@ c_USimmTraceReader::c_USimmTraceReader(ComponentId_t x_id, Params& x_params) :
 	//used for reading params
 	bool l_found = false;
 
-	// FIXME: Kludge for multi-threaded MPI runs
-	m_params = &x_params;
-	
 	// internal params
 	m_seqNum = 0;
 	m_reqReadCount = 0;
@@ -174,7 +171,7 @@ bool c_USimmTraceReader::clockTic(Cycle_t) {
 }
 
 c_Transaction* c_USimmTraceReader::getNextTransaction(std::string x_txnType, ulong x_addr, unsigned x_dataWidth) {
-      c_Transaction* l_txn = new c_Transaction(m_seqNum, m_stringToTxnTypeMap.at(x_txnType), x_addr, x_dataWidth, m_params);
+      c_Transaction* l_txn = new c_Transaction(m_seqNum, m_stringToTxnTypeMap.at(x_txnType), x_addr, x_dataWidth);
       m_seqNum++;
       return l_txn;
 }

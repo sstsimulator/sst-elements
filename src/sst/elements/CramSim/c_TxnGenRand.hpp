@@ -102,8 +102,6 @@ private:
 	std::queue<c_Transaction*> m_txnReqQ; //outgoing
 	std::queue<c_Transaction*> m_txnResQ; //incoming
 
-       // FIXME: Kludge for multi-threaded MPI runs
-       SST::Params *m_params;
 };
 
 } // namespace n_Bank

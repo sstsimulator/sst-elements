@@ -490,7 +490,7 @@ void c_TxnUnit::sendRequest() {
 
 		// derive and set command access parameters in the package
 		for (auto& l_cmdPtr : l_cmdPkg) {
-		  l_cmdPtr->setRow(l_cmdPtr->getTransaction()->getHashedAddress()->getRow());
+		  l_cmdPtr->setRow(l_reqTxn->getHashedAddress()->getRow());
 		}
 
 		if ((l_cmdPkg.size() < m_cmdUnitReqQTokens)
@@ -504,10 +504,17 @@ void c_TxnUnit::sendRequest() {
 			m_txnResQ.push_back(l_reqTxn);
 			m_txnReqQ.erase(m_txnReqQ.begin());
 
-			// std::cout << "@" << std::dec
-			// 		<< Simulation::getSimulation()->getCurrentSimCycle()
-			// 		<< ": " << __PRETTY_FUNCTION__ << ": Request sent"
-			// 		<< std::endl;
+			//std::cout << "Txn unit side pkg size " << l_cmdPkg.size() << std::endl;
+			//for (auto &l_entry : l_cmdPkg) {
+			//  std::cout<<"Txn (*l_entry) = " << std::hex << l_entry << std::endl;
+			//  l_entry->print();
+			//  std::cout << std::endl;
+			//}
+			
+			//std::cout << "@" << std::dec
+			//	  << Simulation::getSimulation()->getCurrentSimCycle()
+			//	  << ": " << __PRETTY_FUNCTION__ << ": Request sent"
+			//	  << std::endl;
 		} else {
 			for (int l_i = 0; l_i != l_cmdPkg.size(); ++l_i)
 				delete l_cmdPkg[l_i];

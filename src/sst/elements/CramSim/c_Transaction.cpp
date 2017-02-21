@@ -34,7 +34,7 @@ using namespace SST;
 using namespace SST::n_Bank;
 
 c_Transaction::c_Transaction(ulong x_seqNum, e_TransactionType x_txnMnemonic,
-			     ulong x_addr, unsigned x_dataWidth, SST::Params *x_params) :
+			     ulong x_addr, unsigned x_dataWidth) :
 		m_seqNum(x_seqNum), m_txnMnemonic(x_txnMnemonic), m_addr(x_addr), m_isResponseReady(
 				false), m_numWaitingCommands(0), m_dataWidth(x_dataWidth), m_processed(
 				false) {
@@ -42,7 +42,9 @@ c_Transaction::c_Transaction(ulong x_seqNum, e_TransactionType x_txnMnemonic,
 	m_txnToString[e_TransactionType::READ] = "READ";
 	m_txnToString[e_TransactionType::WRITE] = "WRITE";
 
-	c_AddressHasher::getInstance(*x_params)->fillHashedAddress(&m_hashedAddr,x_addr);
+	c_AddressHasher::getInstance()->fillHashedAddress(&m_hashedAddr,x_addr);
+
+	//std::cout << "0x" << std::hex << x_addr << std::dec << "\t";    m_hashedAddr.print();
 }
 
 void c_Transaction::setWaitingCommands(const unsigned x_numWaitingCommands) {

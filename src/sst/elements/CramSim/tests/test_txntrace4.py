@@ -122,6 +122,10 @@ sst.setProgramOption("stopAtCycle", g_params["stopAtCycle"])
 
 # Define the simulation components
 
+# address hasher
+comp_addressHasher = sst.Component("AddrHash0", "CramSim.c_AddressHasher")
+comp_addressHasher.addParams(g_params)
+
 # txn gen
 comp_txnGen0 = setup_txn_generator(g_params)
 

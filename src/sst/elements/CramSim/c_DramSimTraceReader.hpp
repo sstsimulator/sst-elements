@@ -133,8 +133,6 @@ private:
 	unsigned* m_statsReqQ;
 	unsigned* m_statsResQ;
 
-       // FIXME: Kludge for multi-threaded MPI runs
-       SST::Params *m_params;
 };
 
 } // namespace n_Bank

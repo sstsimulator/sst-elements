@@ -39,6 +39,13 @@ using namespace std;
 
 c_AddressHasher* c_AddressHasher::m_instance = nullptr;
 
+c_AddressHasher::c_AddressHasher(SST::ComponentId_t x_id, SST::Params& x_params) :
+  Component(x_id) {
+
+  getInstance(x_params);
+  
+}
+
 c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   // read params here
   bool l_found = false;
@@ -302,7 +309,7 @@ c_AddressHasher* c_AddressHasher::getInstance() {
   return m_instance;
 }
 
-const void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address) {
+void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address) {
   ulong l_cur=0;
   ulong l_cnt=0;
   
@@ -417,12 +424,11 @@ const void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const
     + x_hashAddr->m_rank      * k_pNumBanks * k_pNumBankGroups
     + x_hashAddr->m_channel   * k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
     
-  //cout << "0x" << std::hex << x_address << std::dec << "\t";
-  //x_hashAddr->print();
+  //cout << "0x" << std::hex << x_address << std::dec << "\t";  x_hashAddr->print();
   
 } // fillHashedAddress(c_HashedAddress, x_address)
 
-const ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
+ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
   // obtain the bank group rank and channel of this bankId;
   unsigned l_cur = x_bankId;
   unsigned l_chanSize = k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
