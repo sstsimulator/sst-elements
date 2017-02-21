@@ -2,17 +2,7 @@ l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (104065 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  77731
-  [2, 4]  24411
-  [4, 6]  1917
-  [6, 8]  6
 TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104063 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  79598
-  [2, 4]  22778
-  [4, 6]  1683
-  [6, 8]  4
  c0.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1879; SumSQ.u64 = 1879; Count.u64 = 1879; 
  c0.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 20; SumSQ.u64 = 20; Count.u64 = 20; 
  c0.l1cache.CacheHits : Accumulator : Sum.u64 = 216; SumSQ.u64 = 216; Count.u64 = 216; 

@@ -2001,10 +2001,6 @@ cpu: 1 Issued Read for address 0x31c
 cpu: Received Request with command 2 (addr 0x31c) [Time: 4] [0 outstanding requests]
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu Finished after 1000 issued reads, 1000 returned (104054 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  101338
-  [2, 4]  2634
-  [4, 6]  82
  l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1506; SumSQ.u64 = 1506; Count.u64 = 1506; 
  l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; 
  l1cache.CacheHits : Accumulator : Sum.u64 = 494; SumSQ.u64 = 494; Count.u64 = 494; 

@@ -26007,37 +26007,9 @@ cpu0: Received Request with command 2 (addr 0x966f4) [Time: 1809] [0 outstanding
 TrivialCPU: Test Completed Successfuly
 fast_t_pages: 1024
 TrivialCPU cpu0 Finished after 10000 issued reads, 10000 returned (1689922 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  693
-  [2, 4]  9237
-  [4, 6]  49349
-  [6, 8]  186825
-  [8, 10]  747369
-  [10, 12]  696449
 TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (475498 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  530
-  [2, 4]  3389
-  [4, 6]  4063
-  [6, 8]  6410
-  [8, 10]  90464
-  [10, 12]  370642
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (476650 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  218
-  [2, 4]  2417
-  [4, 6]  1280
-  [6, 8]  7697
-  [8, 10]  96107
-  [10, 12]  368931
 TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (476218 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  1433
-  [2, 4]  674
-  [4, 6]  1674
-  [6, 8]  9721
-  [8, 10]  92274
-  [10, 12]  370442
  c0.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 20500; SumSQ.u64 = 20500; Count.u64 = 20500; 
  c0.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 4819; SumSQ.u64 = 4819; Count.u64 = 4819; 
  c0.l1cache.CacheHits : Accumulator : Sum.u64 = 44; SumSQ.u64 = 44; Count.u64 = 44; 
@@ -27023,7 +26995,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  n1.l2cache.stateEvent_FlushLineInv_EI : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.eventSent_PutE : Accumulator : Sum.u64 = 363; SumSQ.u64 = 363; Count.u64 = 363; 
  l3cache.packet_latency : Accumulator : Sum.u64 = 1924343; SumSQ.u64 = 225621231; Count.u64 = 23362; 
- l3cache.send_bit_count : Accumulator : Sum.u64 = 2127744; SumSQ.u64 = 481984512; Count.u64 = 23362; 
+ l3cache.send_bit_count : Accumulator : Sum.u64 = 2089088; SumSQ.u64 = 475799552; Count.u64 = 23362; 
  l3cache.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.idle_time : Accumulator : Sum.u64 = 2157000; SumSQ.u64 = 120585000000; Count.u64 = 52; 
  l3cache.TotalEventsReceived : Accumulator : Sum.u64 = 48250; SumSQ.u64 = 48250; Count.u64 = 48250; 

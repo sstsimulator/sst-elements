@@ -4,13 +4,6 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu Finished after 10000 issued reads, 10000 returned (1004898 clocks)
 	5 Noncacheable Reads
 	1 Noncacheable Writes
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  322249
-  [2, 4]  472501
-  [4, 6]  179872
-  [6, 8]  27940
-  [8, 10]  2262
-  [10, 12]  74
  l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 19965; SumSQ.u64 = 19965; Count.u64 = 19965; 
  l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  l1cache.CacheHits : Accumulator : Sum.u64 = 35; SumSQ.u64 = 35; Count.u64 = 35; 
