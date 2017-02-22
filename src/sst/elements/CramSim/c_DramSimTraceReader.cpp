@@ -164,7 +164,7 @@ bool c_DramSimTraceReader::clockTic(Cycle_t) {
 c_Transaction* c_DramSimTraceReader::getNextTransaction(std::string x_txnType,
 		ulong x_addr, unsigned x_dataWidth) {
 	c_Transaction* l_txn = new c_Transaction(m_seqNum,
-			m_stringToTxnTypeMap.at(x_txnType), x_addr, x_dataWidth);
+	       m_stringToTxnTypeMap.at(x_txnType), x_addr, x_dataWidth);
 	m_seqNum++;
 	return l_txn;
 }

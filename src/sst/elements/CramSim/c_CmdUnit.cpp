@@ -397,7 +397,7 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	}
 
 	// construct the addressHasher
-	c_AddressHasher::getInstance(x_params);
+	//c_AddressHasher::getInstance(x_params);
 
 	// connect the hierarchy
 	unsigned l_rankNum = 0;
@@ -1362,14 +1362,14 @@ void c_CmdUnit::handleInTxnUnitReqPtrEvent(SST::Event *ev) {
 		// accommodate the incoming cmds
 		assert(l_cmdBuffer.size() <= (k_cmdReqQEntries - m_cmdReqQ.size()));
 
-		// std::cout << std::endl << "@" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		// 		<< __PRETTY_FUNCTION__ << std::endl;
+		//std::cout << std::endl << "@" << std::dec
+		//	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+		//	  << __PRETTY_FUNCTION__ << std::endl;
 
 		for (auto &l_entry : l_cmdBuffer) {
-			// std::cout<<"(*l_entry) = " << std::hex << l_entry << std::endl;
-			// l_entry->print();
-			// std::cout << std::endl;
+		  //  std::cout<<"(*l_entry) = " << std::hex << l_entry << std::endl;
+		  //  l_entry->print();
+		  //  std::cout << std::endl;
 
 			m_cmdReqQ.push_back(l_entry);
 		}

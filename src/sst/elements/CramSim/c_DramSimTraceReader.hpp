@@ -132,6 +132,7 @@ private:
 	// FIXME: Delete. Used for debugging queue size issues
 	unsigned* m_statsReqQ;
 	unsigned* m_statsResQ;
+
 };
 
 } // namespace n_Bank

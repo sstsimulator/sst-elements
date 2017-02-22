@@ -18,6 +18,7 @@
 #include "sst/core/element.h"
 
 // local includes
+#include "c_AddressHasher.hpp"
 #include "c_TxnGenSeq.hpp"
 #include "c_TxnGenRand.hpp"
 #include "c_TracefileReader.hpp"
@@ -38,6 +39,11 @@ using namespace SST::n_TxnDriver;
 using namespace SST::n_BankReceiver;
 
 /*----ALLOCATORS FOR COMPONENTS----*/
+
+static Component*
+create_c_AddressHasher(SST::ComponentId_t id, SST::Params& params) {
+	return new c_AddressHasher(id, params);
+}
 
 // c_TxnGenSeq
 static Component*
@@ -104,6 +110,21 @@ static Component*
 create_c_Dimm(SST::ComponentId_t id, SST::Params& params) {
 	return new c_Dimm(id, params);
 }
+
+/*----SETUP c_AddressHasher  STRUCTURES----*/
+static const ElementInfoParam c_AddressHasher_params[] = {
+		{"numChannelsPerDimm", "Total number of channels per DIMM", NULL},
+		{"numRanksPerChannel", "Total number of ranks per channel", NULL},
+		{"numBankGroupsPerRank", "Total number of bank groups per rank", NULL},
+		{"numBanksPerBankGroup", "Total number of banks per group", NULL},
+		{"numRowsPerBank" "Number of rows in every bank", NULL},
+		{"numColsPerBank", "Number of cols in every bank", NULL},
+		{"numBytesPerTransaction", "Number of bytes retrieved for every transaction", NULL},
+		{"strAddressMapStr","String defining the address mapping scheme",NULL},
+		{ NULL, NULL, NULL } };
+
+static const ElementInfoPort c_AddressHasher_ports[] = {
+		{ NULL, NULL, NULL } };
 
 /*----SETUP c_TxnGenSeq STRUCTURES----*/
 static const ElementInfoParam c_TxnGenSeq_params[] = {
@@ -390,6 +411,15 @@ static const ElementInfoPort c_Dimm_ports[] = {
 
 
 static const ElementInfoComponent CramSimComponents[] = {
+		{ "c_AddressHasher", 							// Name
+		"Hashes addresses based on config parameters",			// Description
+		NULL, 										// PrintHelp
+		create_c_AddressHasher, 						// Allocator
+		c_AddressHasher_params, 						// Parameters
+		c_AddressHasher_ports, 							// Ports
+		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
+		NULL 										// Statistics
+		},
 		{ "c_TxnGenSeq", 							// Name
 		"Test Txn Sequential Generator",			// Description
 		NULL, 										// PrintHelp

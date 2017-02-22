@@ -72,7 +72,7 @@ public:
 
 //  friend std::ostream& operator<< (std::ostream& x_stream, const c_Transaction& x_transaction);
 
-  c_Transaction( ulong x_seqNum, e_TransactionType x_cmdType , ulong x_addr , unsigned x_dataWidth );
+  c_Transaction( ulong x_seqNum, e_TransactionType x_cmdType , ulong x_addr , unsigned x_dataWidth);
   ~c_Transaction();
 
   e_TransactionType getTransactionMnemonic() const;

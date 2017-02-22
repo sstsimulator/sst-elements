@@ -129,7 +129,6 @@ private:
 	unsigned* m_statsReqQ;
 	unsigned* m_statsResQ;
 
-
 };
 
 } // namespace n_Bank
