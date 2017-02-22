@@ -61,7 +61,7 @@ class RecvMachine {
         void state_0( FireflyNetworkEvent* );
         void state_1( FireflyNetworkEvent* );
         void state_2( FireflyNetworkEvent* );
-        void state_3( SendEntry* );
+        void state_3( FireflyNetworkEvent*, SendEntry*  );
         void state_move_0( FireflyNetworkEvent* );
         void state_move_1( FireflyNetworkEvent*, bool );
         void checkNetwork();
