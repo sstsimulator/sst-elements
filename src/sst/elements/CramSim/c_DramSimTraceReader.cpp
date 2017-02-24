@@ -82,6 +82,11 @@ c_DramSimTraceReader::c_DramSimTraceReader(ComponentId_t x_id, Params& x_params)
 		exit(-1);
 	}
 	m_traceFileStream.open(m_traceFileName, std::ifstream::in);
+	if(!m_traceFileStream) {
+	  std::cerr << "Unable to open trace file " << m_traceFileName << " Aborting!" << std::endl;
+	  exit(-1);
+	}
+	
 
 	m_statsReqQ = new unsigned[k_txnGenReqQEntries + 1];
 	m_statsResQ = new unsigned[k_txnGenResQEntries + 1];
@@ -157,9 +162,9 @@ bool c_DramSimTraceReader::clockTic(Cycle_t) {
 }
 
 c_Transaction* c_DramSimTraceReader::getNextTransaction(std::string x_txnType,
-		unsigned x_addr, unsigned x_dataWidth) {
+		ulong x_addr, unsigned x_dataWidth) {
 	c_Transaction* l_txn = new c_Transaction(m_seqNum,
-			m_stringToTxnTypeMap.at(x_txnType), x_addr, x_dataWidth);
+	       m_stringToTxnTypeMap.at(x_txnType), x_addr, x_dataWidth);
 	m_seqNum++;
 	return l_txn;
 }
@@ -175,14 +180,14 @@ void c_DramSimTraceReader::createTxn() {
 			unsigned l_tokNum = 0;
 			unsigned l_txnInterval = 0;
 			std::string l_txnType;
-			unsigned l_txnAddress = 0;
+			ulong    l_txnAddress = 0;
 			unsigned l_txnDataWidth = 0;
 
 			for (Tokenizer<>::iterator l_iter =
 					l_tok.begin(); l_iter != l_tok.end(); ++l_iter) {
 				switch (l_tokNum) {
 				case 0:
-					l_txnAddress = (unsigned) strtol((*l_iter).c_str(), NULL,
+					l_txnAddress = (ulong) strtoul((*l_iter).c_str(), NULL,
 							0);
 					break;
 				case 1:

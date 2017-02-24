@@ -27,7 +27,6 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
-#include <sst/core/stats/histo/histo.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/rng/marsaglia.h>
 
@@ -49,11 +48,11 @@ public:
     	if ( noncacheableReads || noncacheableWrites )
 	    out.output("\t%zu Noncacheable Reads\n\t%zu Noncacheable Writes\n", noncacheableReads, noncacheableWrites);
 
-    	out.output("Number of Pending Requests per Cycle (Binned by 2 Requests)\n");
-    	for(uint64_t i = requestsPendingCycle->getBinStart(); i < requestsPendingCycle->getBinEnd(); i += requestsPendingCycle->getBinWidth()) {
-            out.output("  [%" PRIu64 ", %" PRIu64 "]  %" PRIu64 "\n",
-	    	i, i + requestsPendingCycle->getBinWidth(), requestsPendingCycle->getBinCountByBinStart(i));
-	}
+    	//out.output("Number of Pending Requests per Cycle (Binned by 2 Requests)\n");
+    	//for(uint64_t i = requestsPendingCycle->getBinStart(); i < requestsPendingCycle->getBinEnd(); i += requestsPendingCycle->getBinWidth()) {
+        //    out.output("  [%" PRIu64 ", %" PRIu64 "]  %" PRIu64 "\n",
+	    //	i, i + requestsPendingCycle->getBinWidth(), requestsPendingCycle->getBinCountByBinStart(i));
+	    //}
     }
 
 private:
@@ -78,7 +77,7 @@ private:
     uint64_t noncacheableRangeStart, noncacheableRangeEnd;
     uint64_t clock_ticks;
     size_t noncacheableReads, noncacheableWrites;
-    Histogram<uint64_t, uint64_t>* requestsPendingCycle;
+    Statistic<uint64_t>* requestsPendingCycle;
 
     std::map<uint64_t, SimTime_t> requests;
 

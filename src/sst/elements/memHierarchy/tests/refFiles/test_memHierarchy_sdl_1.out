@@ -1,12 +1,5 @@
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu Finished after 1000 issued reads, 1000 returned (109990 clocks)
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  2752
-  [2, 4]  22068
-  [4, 6]  33629
-  [6, 8]  30537
-  [8, 10]  16431
-  [10, 12]  4573
  l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1544; SumSQ.u64 = 1544; Count.u64 = 1544; 
  l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 86; SumSQ.u64 = 86; Count.u64 = 86; 
  l1cache.CacheHits : Accumulator : Sum.u64 = 456; SumSQ.u64 = 456; Count.u64 = 456; 

@@ -140,10 +140,10 @@ void c_TxnGenRand::createTxn() {
 		if (l_read2write < k_readWriteTxnRatio)
 			mTxn
 					= new c_Transaction(m_seqNum, e_TransactionType::READ,
-							addr, 1);
+							    addr, 1);
 		else
 			mTxn = new c_Transaction(m_seqNum, e_TransactionType::WRITE, addr,
-					1);
+						 1);
 
 		m_txnReqQ.push(mTxn);
 

@@ -21,14 +21,11 @@
 #include <string>
 #include <utility>
 #include <map>
-#include "assert.h"
 
 #include <sst/core/sst_types.h>
-#include <sst/core/module.h>
 #include <sst/core/link.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include "memEvent.h"
-#include <boost/assert.hpp>
 #include "sst/core/output.h"
 
 namespace SST {
@@ -73,6 +70,7 @@ private:
     HandlerBase*    recvHandler_;
     SST::Link*      link_;
     std::map<MemEvent::id_type, Interfaces::SimpleMem::Request*> requests_;
+    Output output;
 };
 
 }

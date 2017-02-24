@@ -81,7 +81,7 @@ void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcy
 #ifdef __SST_DEBUG_OUTPUT__
     output->debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
 #endif
-    assert(reqs.size());
+    if (reqs.size() == 0) output->fatal(CALL_INFO, -1, "Error: reqs.size() is 0 at DRAMSimMemory done\n");
     ReqId reqId = reqs.front();
     reqs.pop_front();
     if(0 == reqs.size())

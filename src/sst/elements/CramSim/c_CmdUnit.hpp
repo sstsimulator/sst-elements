@@ -46,6 +46,8 @@
 #include "c_Channel.hpp"
 #include "c_Rank.hpp"
 
+typedef unsigned long ulong;
+
 namespace SST {
 namespace n_Bank {
 class c_CmdUnit: public SST::Component {

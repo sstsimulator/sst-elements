@@ -12,83 +12,27 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu6 Finished after 1000 issued reads, 1000 returned (104270 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  55653
-  [2, 4]  37991
-  [4, 6]  7278
-  [6, 8]  2080
-  [8, 10]  1058
-  [10, 12]  210
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (104381 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  62697
-  [2, 4]  32542
-  [4, 6]  6494
-  [6, 8]  1616
-  [8, 10]  880
-  [10, 12]  152
 TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (104383 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  53635
-  [2, 4]  38657
-  [4, 6]  8463
-  [6, 8]  2162
-  [8, 10]  1288
-  [10, 12]  178
 TrivialCPU cpu4 Finished after 1000 issued reads, 1000 returned (104265 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  64425
-  [2, 4]  31268
-  [4, 6]  5594
-  [6, 8]  1902
-  [8, 10]  876
-  [10, 12]  200
 TrivialCPU cpu5 Finished after 1000 issued reads, 1000 returned (104267 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  58503
-  [2, 4]  35920
-  [4, 6]  6687
-  [6, 8]  2039
-  [8, 10]  914
-  [10, 12]  204
 TrivialCPU cpu7 Finished after 1000 issued reads, 1000 returned (104240 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  47226
-  [2, 4]  43681
-  [4, 6]  9083
-  [6, 8]  2697
-  [8, 10]  1338
-  [10, 12]  215
 TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104386 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  48222
-  [2, 4]  42298
-  [4, 6]  9914
-  [6, 8]  2374
-  [8, 10]  1395
-  [10, 12]  183
 TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104378 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
-Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  67512
-  [2, 4]  29082
-  [4, 6]  5195
-  [6, 8]  1615
-  [8, 10]  824
-  [10, 12]  150
  c0.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1379; SumSQ.u64 = 1379; Count.u64 = 1379; 
  c0.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; 
  c0.l1cache.CacheHits : Accumulator : Sum.u64 = 715; SumSQ.u64 = 715; Count.u64 = 715; 
@@ -1440,7 +1384,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  n1.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.packet_latency : Accumulator : Sum.u64 = 48460; SumSQ.u64 = 4664608; Count.u64 = 541; 
- l3cache.send_bit_count : Accumulator : Sum.u64 = 37312; SumSQ.u64 = 2646016; Count.u64 = 541; 
+ l3cache.send_bit_count : Accumulator : Sum.u64 = 35904; SumSQ.u64 = 2420736; Count.u64 = 541; 
  l3cache.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.idle_time : Accumulator : Sum.u64 = 10970500; SumSQ.u64 = 2380609750000; Count.u64 = 89; 
  l3cache.TotalEventsReceived : Accumulator : Sum.u64 = 1946; SumSQ.u64 = 1946; Count.u64 = 1946; 
@@ -1631,7 +1575,7 @@ Number of Pending Requests per Cycle (Binned by 2 Requests)
  l3cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  dirctrl.packet_latency : Accumulator : Sum.u64 = 59865; SumSQ.u64 = 7156909; Count.u64 = 541; 
- dirctrl.send_bit_count : Accumulator : Sum.u64 = 80736; SumSQ.u64 = 24339456; Count.u64 = 541; 
+ dirctrl.send_bit_count : Accumulator : Sum.u64 = 79424; SumSQ.u64 = 24129536; Count.u64 = 541; 
  dirctrl.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  dirctrl.idle_time : Accumulator : Sum.u64 = 54326000; SumSQ.u64 = 89178900000000; Count.u64 = 81; 
  dirctrl.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 

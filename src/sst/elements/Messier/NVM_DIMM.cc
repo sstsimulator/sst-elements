@@ -41,18 +41,25 @@ int cache_block_size = 64;
 int page_size = 4096;
 
 // This is the constructor of the NVM-based DIMM
-NVM_DIMM::NVM_DIMM(NVM_PARAMS par)
+NVM_DIMM::NVM_DIMM(SST::Component * owner, NVM_PARAMS par)
 {
 
 	// Here we should do the assignment of parameters to the NVM_DIMM object
+
+	Owner = owner;
 
 	params = new NVM_PARAMS();
 
 	(*params) = par; 
 
+	histogram_idle = Owner->registerStatistic<uint64_t>( "histogram_idle");
+
 	WB = new NVM_WRITE_BUFFER(params->write_buffer_size, 0, 64 /*write buffer granularity, now assume 64B */, params->flush_th);
 
 	ranks = new RANK*[params->num_ranks];	
+
+
+	cacheline_interleave = params->cacheline_interleaving;
 
 	// Initializing each rank
 	for ( int i = 0; i < params->num_ranks; i++)
@@ -80,16 +87,42 @@ int NVM_DIMM::WhichRank(long long int add)
 int NVM_DIMM::WhichBank(long long int add)
 {
 
-	return (add/params->row_buffer_size)%(params->num_banks);
+	//	std::cout<<Owner->getName()<<" "<<params->row_buffer_size<<" "<<dec<<add<<" "<<dec<<(add/params->row_buffer_size)%(params->num_banks)<<std::endl;
+	//return (add/params->row_buffer_size)%(params->num_banks);
+
+	if(cacheline_interleave)
+		return (add/64)%(params->num_banks);
+	else
+		return (add/params->row_buffer_size)%(params->num_banks);
 
 }
 
+
+
 // This implements the clock ticking function
+
+unsigned long int last_empty = 0;
+
 bool NVM_DIMM::tick()
 {
 
+	/*
+	   if(transactions.empty())
+	   last_empty++;
+	   else
+	   {
+	   if(last_empty!=0)
+	   histogram_idle->addData(last_empty);
+
+	   last_empty = 0;
+
+	   }
+	   */
+	//histogram_idle->addData(time_diff);
 
 	// Incrementing the cycles count
+
+	histogram_idle->addData(WB->getSize());
 	cycles++;
 
 
@@ -114,7 +147,8 @@ bool NVM_DIMM::tick()
 	// We start with checking if any read request is ready at NVM, to schdule reading it form the NVM Chip
 	schedule_delivery();
 	// Here we should check if the write buffer is full or exceeds the threshold and try to flush at least a request
-	try_flush_wb();
+	if(WB->getSize() > 0)
+		try_flush_wb();
 
 
 	// Checking if there is any pending requests	
@@ -186,13 +220,21 @@ void NVM_DIMM::try_flush_wb()
 
 	if(WB->flush() || (transactions.empty() && !WB->empty()))
 	{	
+
+
 		NVM_Request * temp = WB->getFront();
 		long long int add = temp->Address;
 		bool ready = false;
+		bool removed = false;
 
+		BANK * temp_bank = getBank(temp->Address);
+		
+		if(temp_bank == NULL)
+		  return;
+		
 		if (getRank(add)->getBusyUntil() < cycles)
 		{
-			if(getBank(add)->getBusyUntil() < cycles)
+			if(temp_bank->getBusyUntil() < cycles)
 			{
 				ready = true;
 				//	WB->pop_entry();
@@ -200,18 +242,25 @@ void NVM_DIMM::try_flush_wb()
 			}
 		}
 		// Occupy the rank for the write time
-		if(ready && ((params->write_weight*curr_writes + params->read_weight*curr_reads) <= (params->max_current_weight - params->write_weight)))
+		if(ready && (params->max_writes > curr_writes) && ((params->write_weight*curr_writes + params->read_weight*curr_reads) <= (params->max_current_weight - params->write_weight)))
 		{
 
 
+			removed = true;
 			WB->pop_entry();
 			//	transactions.remove(temp);
 			// Note that the rank will be busy for the time of sending the data to the bank, in addition to sending the command 
 			getRank(add)->setBusyUntil(cycles + params->tCMD + params->tBURST);
-			(getBank(add))->setBusyUntil(cycles + params->tCMD + params->tCL_W + params->tBURST);
+			(temp_bank)->setBusyUntil(cycles + params->tCMD + params->tCL_W + params->tBURST);
 			curr_writes++;
 			WRITES_COMPLETE[cycles + params->tCMD + params->tCL_W + params->tBURST]++;
 
+		}
+
+		if(!removed)
+		{
+			WB->pop_entry();
+			WB->insert_write_request(temp);	
 		}
 
 	}
@@ -241,6 +290,9 @@ void NVM_DIMM::handle_completed()
 				NVM_Request * temp = st->first;
 				MemRespEvent *respEvent = new MemRespEvent(
 						NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
+
+				//	histogram_idle->addData(cycles - TIME_STAMP[temp]);
+				TIME_STAMP.erase(temp);
 
 				m_memChan->send((SST::Event *) respEvent);
 
@@ -276,6 +328,27 @@ bool NVM_DIMM::find_in_wb(NVM_Request * temp)
 }
 
 
+bool NVM_DIMM::row_buffer_hit(long long int add, long long int bank_add)
+{
+
+
+	if(cacheline_interleave)
+	{
+		if((add/(params->num_banks*params->row_buffer_size)) == bank_add/params->num_banks)	
+			return true;
+		else
+			return false;
+
+	}
+	else // if bank interleaving (meaning each page goes to a specific bank), consecutive pages go to different banks
+	{
+		if((add/params->row_buffer_size) == bank_add)
+			return true;
+		else
+			return false;
+	}
+
+}
 
 
 bool NVM_DIMM::submit_request()
@@ -322,7 +395,15 @@ bool NVM_DIMM::submit_request()
 				// Check if row buffer hit
 				bool issued=false;
 
-				if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
+
+				//std::cout<<Owner->getName()<<" "<<params->row_buffer_size<<" "<<dec<<temp->Address<<" "<<dec<<(temp->Address/params->row_buffer_size)%(params->num_banks)<<std::endl;
+
+
+				//histogram_idle->addData(WhichBank(temp->Address));
+
+				//if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
+
+				if ( row_buffer_hit(temp->Address, corresp_bank->getRB()))
 				{	
 					//corresp_bank->setBusyUntil(cycles);
 					time_ready = cycles;
@@ -382,7 +463,8 @@ bool NVM_DIMM::pop_optimal()
 		if (temp->Read && (corresp_rank->getBusyUntil() < cycles) && (corresp_bank->getBusyUntil() < cycles) && !corresp_bank->getLocked() && (outstanding.size() < params->max_outstanding))
 		{
 
-			if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
+			//if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
+			if ( row_buffer_hit(temp->Address, corresp_bank->getRB()))
 			{	
 				//corresp_bank->setBusyUntil(cycles);
 				time_ready = cycles;
@@ -421,7 +503,7 @@ bool NVM_DIMM::submit_request_opt()
 		st = transactions.begin();
 		en = transactions.end();
 
-	//	long long time_ready;
+		//	long long time_ready;
 
 
 		while(st!=en)
@@ -468,7 +550,8 @@ bool NVM_DIMM::submit_request_opt()
 						long long int time_ready;
 						// Check if row buffer hit
 						bool issued=false;
-						if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
+						//if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
+						if ( row_buffer_hit(temp->Address, corresp_bank->getRB()))
 						{	
 							//corresp_bank->setBusyUntil(cycles);
 							time_ready = cycles;
@@ -476,6 +559,11 @@ bool NVM_DIMM::submit_request_opt()
 						}
 						else if((params->write_weight*curr_writes + params->read_weight*curr_reads) <= (params->max_current_weight - params->read_weight)) 
 						{
+							//std::cout<<Owner->getName()<<" "<<params->row_buffer_size<<" "<<dec<<temp->Address<<" "<<dec<<(temp->Address/params->row_buffer_size)%(params->num_banks)<<std::endl;
+
+
+							//	histogram_idle->addData(WhichBank(temp->Address));
+
 							// Allocate the Rank circuitary to submit the command
 							corresp_rank->setBusyUntil(cycles + params->tCMD);
 							// Set the bank busy until we read it
@@ -536,7 +624,7 @@ void NVM_DIMM::handleRequest(SST::Event* e)
 {
 
 
-	MemReqEvent *event  = dynamic_cast<MemReqEvent*>(e);
+	MessierComponent::MemReqEvent *event  = dynamic_cast<MessierComponent::MemReqEvent*>(e);
 
 	NVM_Request * tmp = new NVM_Request();
 

@@ -16,8 +16,6 @@
 #ifndef _H_EMBER_MPI_GENERATOR
 #define _H_EMBER_MPI_GENERATOR
 
-#include <sst/core/stats/histo/histo.h>
-
 #include <queue>
 
 #include "embergen.h"

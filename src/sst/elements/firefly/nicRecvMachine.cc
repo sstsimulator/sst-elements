@@ -96,8 +96,7 @@ void Nic::RecvMachine::state_1(  FireflyNetworkEvent* ev )
                 m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"Recv: ""Get Op\n");
                 SendEntry* entry = findGet( ev->src, hdr, rdmaHdr );
                 delay = m_hostReadDelay; // host read  delay
-                callback = std::bind( &Nic::RecvMachine::state_3, this, entry );
-                delete ev;
+                callback = std::bind( &Nic::RecvMachine::state_3, this, ev, entry );
             }
             break;
 
@@ -122,9 +121,10 @@ void Nic::RecvMachine::state_2( FireflyNetworkEvent* ev )
 }
 
 // Need Get 
-void Nic::RecvMachine::state_3( SendEntry* entry )
+void Nic::RecvMachine::state_3( FireflyNetworkEvent* ev, SendEntry* entry )
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Recv: ""\n");
+    delete ev;
     m_nic.m_sendMachine[0].run( entry );
 
     checkNetwork();

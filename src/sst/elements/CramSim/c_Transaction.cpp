@@ -28,18 +28,23 @@
 // limitations under the License.
 
 #include "c_Transaction.hpp"
+#include "c_AddressHasher.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
 
-c_Transaction::c_Transaction(unsigned x_seqNum, e_TransactionType x_txnMnemonic,
-		unsigned x_addr, unsigned x_dataWidth) :
+c_Transaction::c_Transaction(ulong x_seqNum, e_TransactionType x_txnMnemonic,
+			     ulong x_addr, unsigned x_dataWidth) :
 		m_seqNum(x_seqNum), m_txnMnemonic(x_txnMnemonic), m_addr(x_addr), m_isResponseReady(
 				false), m_numWaitingCommands(0), m_dataWidth(x_dataWidth), m_processed(
 				false) {
-
+       
 	m_txnToString[e_TransactionType::READ] = "READ";
 	m_txnToString[e_TransactionType::WRITE] = "WRITE";
+
+	c_AddressHasher::getInstance()->fillHashedAddress(&m_hashedAddr,x_addr);
+
+	//std::cout << "0x" << std::hex << x_addr << std::dec << "\t";    m_hashedAddr.print();
 }
 
 void c_Transaction::setWaitingCommands(const unsigned x_numWaitingCommands) {
@@ -55,7 +60,11 @@ c_Transaction::~c_Transaction() {
 	// delete the list of commands that this transaction translates into
 }
 
-unsigned c_Transaction::getAddress() const {
+c_HashedAddress *c_Transaction::getHashedAddress() {
+  return &m_hashedAddr;
+}
+
+ulong c_Transaction::getAddress() const {
 	return (m_addr);
 }
 
@@ -101,7 +110,7 @@ void c_Transaction::isProcessed(bool x_processed) {
 // FIXME: print function should be actually be overloaded in operator<< but for some reason operator overloading does not working when creating the library, so for now we will have the print function.
 void c_Transaction::print() const {
 	std::cout << getTransactionString() << ", seqNum: " << std::dec << m_seqNum
-			<< ", address: " << std::hex << getAddress() << std::dec
+			<< ", address: 0x" << std::hex << getAddress() << std::dec
 			<< ", dataWidth = " << m_dataWidth << ", m_numWaitingCommands = "
 			<< std::dec << m_numWaitingCommands << ", isProcessed = "
 			<< std::boolalpha << m_processed << ", isResponseReady = "

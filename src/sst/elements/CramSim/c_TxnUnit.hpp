@@ -119,6 +119,8 @@ private:
 	int m_numBanks;
 	int k_REFI;
 	int m_currentREFICount;
+        std::vector<std::vector<unsigned> > m_refreshGroups;
+        uint m_currentRefreshGroup;
 	std::queue<c_BankCommand*> m_refreshList;
 
 
