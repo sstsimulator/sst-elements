@@ -33,19 +33,24 @@
 #include <map>
 #include <string>
 
+//sst includes
+#include <sst/core/serialization/serializable.h>
+
 //local includes
-#include "c_Transaction.hpp"
+//#include "c_Transaction.hpp"
 
 typedef unsigned long ulong;
 
 namespace SST {
 namespace n_Bank {
 
+class c_Transaction;
+
 enum class e_BankCommandType {
 	ERR, ACT, READ, READA, WRITE, WRITEA, PRE, PREA, REF, PDX, PDE
 };
 
-class c_BankCommand {
+class c_BankCommand : public SST::Core::Serialization::serializable {
 
 private:
 
@@ -66,6 +71,7 @@ public:
 			       ulong x_addr);
         c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
 		      ulong x_addr, unsigned x_bankId); // only to be used for Refresh commands!
+        c_BankCommand() : m_transactionPtr(nullptr) {} // required for ImplementSerializable
 
 	c_BankCommand(c_BankCommand&) = delete;
 	c_BankCommand(c_BankCommand&&) = delete;
@@ -119,6 +125,13 @@ public:
 	//        return x_stream;
 	//    }
 
-};}
-}
+        void serialize_order(SST::Core::Serialization::serializer &ser);
+  
+        ImplementSerializable(c_BankCommand);
+
+}; // class c_BankCommand
+
+} // namespace n_Bank
+
+} // namespace SST
 #endif // C_BANKCOMMAND_HPP

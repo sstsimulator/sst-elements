@@ -32,9 +32,12 @@
 #include <memory>
 #include <assert.h>
 
+#include <sst/core/simulation.h>
+
 #include "c_BankState.hpp"
 #include "c_BankInfo.hpp"
 #include "c_BankCommand.hpp"
+#include "c_Transaction.hpp"
 #include "c_BankStateReadA.hpp"
 
 using namespace SST;

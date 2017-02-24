@@ -39,6 +39,10 @@
 #include <list>
 #include <memory>
 
+//sst includes
+#include <sst/core/serialization/serializable.h>
+
+//local includes
 #include "c_HashedAddress.hpp"
 
 typedef unsigned long ulong;
@@ -46,12 +50,11 @@ typedef unsigned long ulong;
 namespace SST {
 namespace n_Bank {
 
-
 class c_BankCommand;
 
 enum class e_TransactionType { READ, WRITE };
 
-class c_Transaction
+class c_Transaction : public SST::Core::Serialization::serializable
 {
 
 private:
@@ -72,6 +75,7 @@ public:
 
 //  friend std::ostream& operator<< (std::ostream& x_stream, const c_Transaction& x_transaction);
 
+  c_Transaction() {} // required for ImplementSerializable
   c_Transaction( ulong x_seqNum, e_TransactionType x_cmdType , ulong x_addr , unsigned x_dataWidth);
   ~c_Transaction();
 
@@ -93,6 +97,11 @@ public:
   bool isProcessed() const;
   void isProcessed(bool x_processed);
   void print() const;
+
+  void serialize_order(SST::Core::Serialization::serializer &ser);
+  
+  ImplementSerializable(c_Transaction);
+  
 };
 
 } // namespace n_Bank

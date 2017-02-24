@@ -29,6 +29,7 @@
 #include <assert.h>
 
 #include "c_BankCommand.hpp"
+#include "c_Transaction.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
@@ -58,6 +59,7 @@ c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 		m_bankId(x_bankId) {
 
         assert(x_cmdMnemonic == e_BankCommandType::REF); // This constructor only for REF cmds!
+
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";
 	m_cmdToString[e_BankCommandType::ACT] = "ACT";
 	m_cmdToString[e_BankCommandType::READ] = "READ";
@@ -75,7 +77,7 @@ unsigned c_BankCommand::getAddress() const {
 }
 
 std::string c_BankCommand::getCommandString() const {
-	return (m_cmdToString.find(m_cmdMnemonic)->second);
+  return (m_cmdToString.find(m_cmdMnemonic)->second);
 }
 
 e_BankCommandType c_BankCommand::getCommandMnemonic() const {
@@ -85,20 +87,21 @@ e_BankCommandType c_BankCommand::getCommandMnemonic() const {
 // acceptTransaction is called from the process that converts a c_Transaction into one or more c_BankCommand objects
 // this function links the c_Transaction object with it constituent c_BankCommand objects
 void c_BankCommand::acceptTransaction(c_Transaction* x_transaction) {
-	m_transactionPtr = x_transaction;
+  m_transactionPtr = x_transaction;
 }
 
 c_Transaction* c_BankCommand::getTransaction() const {
-	return (m_transactionPtr);
+  return (m_transactionPtr);
 }
 
 void c_BankCommand::print() const {
 
 	std::cout << "[CMD: " << this->getCommandString() << ", SEQNUM: "
-			<< std::dec << this->getSeqNum() << " , ADDR: 0x" << std::hex
-			<< this->getAddress() << " , isResponseReady: " << std::boolalpha
-			<< this->isResponseReady() << " row: " << getRow() << "]"
-			<< std::endl;
+		  << std::dec << this->getSeqNum() << " , ADDR: 0x" << std::hex
+		  << this->getAddress() << " , isResponseReady: " << std::boolalpha
+		  << this->isResponseReady() << " row: " << getRow() << "] Tx:"
+		  << this->getTransaction()
+		  << std::endl;
 
 }
 
@@ -112,3 +115,24 @@ void c_BankCommand::print() const {
 //    x_stream<<"[CMD: "<<x_bankCommand.getCommandString()<<", SEQNUM: "<<std::dec<<x_bankCommand.getSeqNum()<<" , ADDR: "<<std::hex<<x_bankCommand.getAddress()<<" , isResponseReady: "<<std::boolalpha<<x_bankCommand.isResponseReady()<<"]";
 //    return x_stream;
 //}
+
+void c_BankCommand::serialize_order(SST::Core::Serialization::serializer &ser)
+{
+  ser & m_seqNum;
+  ser & m_addr;
+  ser & m_row;
+  ser & m_bankId;
+  ser & m_cmdMnemonic;
+  ser & m_cmdToString;
+  ser & m_isResponseReady;
+  ser & m_isResponseReady;
+
+  //std::cout << "Serializing tx ptr " << std::hex << m_transactionPtr
+  //	    << " mnemonic " << m_cmdToString[m_cmdMnemonic] 
+  //	    << std::endl;
+
+  std::cout << "Serializing BankCommand " << this << " ";
+  this->print();
+  
+  ser & m_transactionPtr;
+}

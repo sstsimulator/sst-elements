@@ -34,8 +34,10 @@
 
 // CramSim includes
 #include "c_Bank.hpp"
+#include "c_Transaction.hpp"
 //#include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
+#include "c_BankCommand.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;

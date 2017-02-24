@@ -40,11 +40,12 @@
 #include <sst/core/link.h>
 
 // CramSim includes
-#include "c_BankCommand.hpp"
+//#include "c_BankCommand.hpp"
 
 namespace SST {
 namespace n_Bank {
 
+  class c_BankCommand;
 
 class c_Bank {
 public:

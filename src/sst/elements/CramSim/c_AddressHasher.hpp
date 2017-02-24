@@ -38,7 +38,7 @@
 #include <map>
 
 // local includes
-#include "c_BankCommand.hpp"
+//#include "c_BankCommand.hpp"
 #include "c_HashedAddress.hpp"
 
 //<! This class holds information about global simulation state

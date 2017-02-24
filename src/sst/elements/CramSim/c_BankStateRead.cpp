@@ -35,6 +35,7 @@
 
 #include "c_BankState.hpp"
 #include "c_BankCommand.hpp"
+#include "c_Transaction.hpp"
 #include "c_BankStateActive.hpp"
 #include "c_BankStatePrecharge.hpp"
 #include "c_BankStateRead.hpp"

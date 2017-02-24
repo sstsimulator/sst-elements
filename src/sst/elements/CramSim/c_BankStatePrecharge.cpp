@@ -38,6 +38,7 @@
 // CramSim includes
 #include "c_BankState.hpp"
 #include "c_BankCommand.hpp"
+#include "c_Transaction.hpp"
 #include "c_BankStateIdle.hpp"
 #include "c_BankStatePrecharge.hpp"
 

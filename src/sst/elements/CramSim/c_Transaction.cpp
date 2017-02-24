@@ -28,6 +28,7 @@
 // limitations under the License.
 
 #include "c_Transaction.hpp"
+#include "c_BankCommand.hpp"
 #include "c_AddressHasher.hpp"
 
 using namespace SST;
@@ -117,3 +118,18 @@ void c_Transaction::print() const {
 			<< std::boolalpha << m_isResponseReady;
 }
 
+void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
+{
+  ser & m_seqNum;
+  ser & m_txnMnemonic;
+  ser & m_addr;
+  ser & m_hashedAddr;
+  ser & m_txnToString;
+    
+  ser & m_isResponseReady;
+  ser & m_numWaitingCommands;
+  ser & m_dataWidth;
+  ser & m_processed;
+    
+  ser & m_cmdPtrList;
+}

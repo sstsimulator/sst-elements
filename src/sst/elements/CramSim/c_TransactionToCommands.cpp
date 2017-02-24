@@ -68,8 +68,9 @@ std::vector<c_BankCommand*> c_TransactionToCommands::getCommands(
 
 	x_txn->isProcessed(true);
 
-	for (auto& l_cmd : l_commandVec)
-	l_cmd->acceptTransaction(x_txn);
+	for (auto& l_cmd : l_commandVec) {
+	  l_cmd->acceptTransaction(x_txn);
+	}
 
 	return (l_commandVec);
 }

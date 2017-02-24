@@ -21,6 +21,7 @@
 
 
 //local includes
+#include "c_Transaction.hpp"
 #include "c_TxnGenSeq.hpp"
 #include "c_TxnReqEvent.hpp"
 #include "c_TxnResEvent.hpp"

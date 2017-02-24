@@ -40,6 +40,7 @@
 // CramSim includes
 #include "c_Dimm.hpp"
 #include "c_AddressHasher.hpp"
+#include "c_Transaction.hpp"
 #include "c_Bank.hpp"
 #include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"

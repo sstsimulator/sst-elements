@@ -42,6 +42,7 @@
 
 // CramSim includes
 #include "c_CmdUnit.hpp"
+#include "c_Transaction.hpp"
 #include "c_AddressHasher.hpp"
 #include "c_HashedAddress.hpp"
 #include "c_TokenChgEvent.hpp"
@@ -50,6 +51,7 @@
 #include "c_CmdResEvent.hpp"
 #include "c_BankState.hpp"
 #include "c_BankStateIdle.hpp"
+#include "c_BankCommand.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
@@ -649,14 +651,6 @@ void c_CmdUnit::sendReqCloseBankPolicy(
 		if ((l_cmdPtr)->getCommandMnemonic() == e_BankCommandType::REF)
 			break;
 
-		// for
-//		std::cout << std::endl << "@" << std::dec
-//				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//				<< __PRETTY_FUNCTION__ << ": " << std::hex << " pointer: "
-//				<< ((l_cmdPtr)) << std::endl;
-//
-//		(l_cmdPtr)->print();
-//		std::cout << std::endl;
 		if ((e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic()) && (l_cmdACTIssuedInFAW >= 4))
 			continue;
 
@@ -670,6 +664,14 @@ void c_CmdUnit::sendReqCloseBankPolicy(
 				|| (((l_cmdPtr))->getCommandMnemonic()
 						== e_BankCommandType::WRITEA));
 
+		//std::cout << std::endl << "@" << std::dec
+		//	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+		//	  << __PRETTY_FUNCTION__ << ": " << std::hex << " pointer: "
+		//	  << ((l_cmdPtr)) << std::endl;
+		
+		//(l_cmdPtr)->print();
+		//std::cout << std::endl;
+		
 		unsigned l_bankNum = l_cmdPtr->getTransaction()->getHashedAddress()->getBankId();
 
 //		std::cout << std::endl << "@" << std::dec
@@ -1362,16 +1364,16 @@ void c_CmdUnit::handleInTxnUnitReqPtrEvent(SST::Event *ev) {
 		// accommodate the incoming cmds
 		assert(l_cmdBuffer.size() <= (k_cmdReqQEntries - m_cmdReqQ.size()));
 
-		//std::cout << std::endl << "@" << std::dec
-		//	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		//	  << __PRETTY_FUNCTION__ << std::endl;
-
+		std::cout << std::endl << "@" << std::dec
+			  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+			  << __PRETTY_FUNCTION__ << std::endl;
+		
 		for (auto &l_entry : l_cmdBuffer) {
-		  //  std::cout<<"(*l_entry) = " << std::hex << l_entry << std::endl;
-		  //  l_entry->print();
-		  //  std::cout << std::endl;
-
-			m_cmdReqQ.push_back(l_entry);
+		  std::cout<<"(*l_entry) = " << std::hex << l_entry << std::endl;
+		  l_entry->print();
+		  std::cout << std::endl;
+		  
+		  m_cmdReqQ.push_back(l_entry);
 		}
 
 		delete l_cmdReqEventPtr;

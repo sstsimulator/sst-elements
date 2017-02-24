@@ -40,7 +40,6 @@
 #include <sst/core/link.h>
 
 // local includes
-#include "c_BankCommand.hpp"
 #include "c_BankInfo.hpp"
 #include "c_BankGroup.hpp"
 #include "c_Channel.hpp"
@@ -50,6 +49,9 @@ typedef unsigned long ulong;
 
 namespace SST {
 namespace n_Bank {
+
+  class c_BankCommand;
+  
 class c_CmdUnit: public SST::Component {
 public:
 

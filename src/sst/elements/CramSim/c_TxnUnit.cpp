@@ -476,12 +476,12 @@ void c_TxnUnit::sendRequest() {
 	}
 
 	if ((m_txnReqQ.size() > 0) && !m_processingRefreshCmds) {
-		// std::cout << "@" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		// 		<< __PRETTY_FUNCTION__ << std::endl;
+	        //std::cout << "@" << std::dec
+		//	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+		//	  << __PRETTY_FUNCTION__ << std::endl;
 		c_Transaction* l_reqTxn = m_txnReqQ.front();
-		// l_reqTxn->print();
-		// std::cout << std::endl;
+		//l_reqTxn->print();
+		//std::cout << std::endl;
 
 		c_TransactionToCommands* l_converter =
 				c_TransactionToCommands::getInstance();
@@ -504,17 +504,17 @@ void c_TxnUnit::sendRequest() {
 			m_txnResQ.push_back(l_reqTxn);
 			m_txnReqQ.erase(m_txnReqQ.begin());
 
-			//std::cout << "Txn unit side pkg size " << l_cmdPkg.size() << std::endl;
-			//for (auto &l_entry : l_cmdPkg) {
-			//  std::cout<<"Txn (*l_entry) = " << std::hex << l_entry << std::endl;
-			//  l_entry->print();
-			//  std::cout << std::endl;
-			//}
+			std::cout << "Txn unit side pkg size " << l_cmdPkg.size() << std::endl;
+			for (auto &l_entry : l_cmdPkg) {
+			  std::cout<<"Txn (*l_entry) = " << std::hex << l_entry << std::endl;
+			  l_entry->print();
+			  std::cout << std::endl;
+			}
 			
-			//std::cout << "@" << std::dec
-			//	  << Simulation::getSimulation()->getCurrentSimCycle()
-			//	  << ": " << __PRETTY_FUNCTION__ << ": Request sent"
-			//	  << std::endl;
+			std::cout << "@" << std::dec
+				  << Simulation::getSimulation()->getCurrentSimCycle()
+				  << ": " << __PRETTY_FUNCTION__ << ": Request sent"
+				  << std::endl;
 		} else {
 			for (int l_i = 0; l_i != l_cmdPkg.size(); ++l_i)
 				delete l_cmdPkg[l_i];
