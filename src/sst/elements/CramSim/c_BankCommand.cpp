@@ -127,12 +127,7 @@ void c_BankCommand::serialize_order(SST::Core::Serialization::serializer &ser)
   ser & m_isResponseReady;
   ser & m_isResponseReady;
 
-  //std::cout << "Serializing tx ptr " << std::hex << m_transactionPtr
-  //	    << " mnemonic " << m_cmdToString[m_cmdMnemonic] 
-  //	    << std::endl;
-
-  std::cout << "Serializing BankCommand " << this << " ";
-  this->print();
+  //std::cout << "Serializing BankCommand " << this << " "; this->print();
   
   ser & m_transactionPtr;
 }

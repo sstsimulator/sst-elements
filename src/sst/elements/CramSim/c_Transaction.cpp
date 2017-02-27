@@ -130,6 +130,8 @@ void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
   ser & m_numWaitingCommands;
   ser & m_dataWidth;
   ser & m_processed;
+
+  //std::cout << "Serializing Transaction " << this << " "; this->print();
     
   ser & m_cmdPtrList;
 }

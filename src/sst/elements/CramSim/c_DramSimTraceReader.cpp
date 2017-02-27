@@ -334,9 +334,9 @@ void c_DramSimTraceReader::sendRequest() {
 				return;
 			}
 
-			// std::cout << "TxnGen::sendRequest(): sending Txn=";
-			// m_txnReqQ.front().first->print();
-			// std::cout << std::endl;
+			//std::cout << "TxnGen::sendRequest(): sending Txn=" << m_txnReqQ.front().first << " ";
+			//m_txnReqQ.front().first->print();
+			//std::cout << std::endl;
 
 			if (m_txnReqQ.front().first->getTransactionMnemonic()
 					== e_TransactionType::READ)

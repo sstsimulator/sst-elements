@@ -86,7 +86,7 @@ public:
   std::string getTransactionString() const; //<! returns the mnemonic of command
 
   void setResponseReady(); //<! sets the flag that this transaction has received its response.
-  bool isResponseReady();  //<! sets the flag that this transaction has received its response.
+  bool isResponseReady();  //<! returns the flag that this transaction has received its response.
 
   void setWaitingCommands(const unsigned x_numWaitingCommands);
   unsigned getWaitingCommands() const;

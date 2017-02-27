@@ -401,8 +401,9 @@ void c_TxnUnit::sendResponse() {
 	// - m_txnResQ.size() > 0
 	// - m_txnResQ has an element which is response-ready
 
-//	std::cout << "m_txnGenResQTokens" << m_txnGenResQTokens << std::endl;
-//	std::cout << "m_txnResQ" << m_txnResQ.size() << std::endl;
+  //std::cout << "m_txnGenResQTokens " << std::dec << m_txnGenResQTokens << std::endl;
+  //std::cout << "m_txnResQ " << std::dec << m_txnResQ.size() << std::endl;
+  //printQueues();
 
 	if ((m_txnGenResQTokens > 0) && (m_txnResQ.size() > 0)) {
 
@@ -418,11 +419,11 @@ void c_TxnUnit::sendResponse() {
 
 		if (l_txnRes != nullptr) {
 
-//			 std::cout << "@" << std::dec
-//			 		<< Simulation::getSimulation()->getCurrentSimCycle()
-//			 		<< ": " << __PRETTY_FUNCTION__ << std::endl;
-//			 l_txnRes->print();
-//			 std::cout << std::endl;
+		         //std::cout << "@" << std::dec
+			 //		<< Simulation::getSimulation()->getCurrentSimCycle()
+			 //		<< ": " << __PRETTY_FUNCTION__ << std::endl;
+			 //l_txnRes->print();
+			 //std::cout << std::endl;
 
 			c_TxnResEvent* l_txnResEvPtr = new c_TxnResEvent();
 			l_txnResEvPtr->m_payload = l_txnRes;
@@ -504,17 +505,17 @@ void c_TxnUnit::sendRequest() {
 			m_txnResQ.push_back(l_reqTxn);
 			m_txnReqQ.erase(m_txnReqQ.begin());
 
-			std::cout << "Txn unit side pkg size " << l_cmdPkg.size() << std::endl;
-			for (auto &l_entry : l_cmdPkg) {
-			  std::cout<<"Txn (*l_entry) = " << std::hex << l_entry << std::endl;
-			  l_entry->print();
-			  std::cout << std::endl;
-			}
+			//std::cout << "Txn unit side pkg size " << l_cmdPkg.size() << std::endl;
+			//for (auto &l_entry : l_cmdPkg) {
+			//  std::cout<<"Txn (*l_entry) = " << std::hex << l_entry << std::endl;
+			//  l_entry->print();
+			//  std::cout << std::endl;
+			//}
 			
-			std::cout << "@" << std::dec
-				  << Simulation::getSimulation()->getCurrentSimCycle()
-				  << ": " << __PRETTY_FUNCTION__ << ": Request sent"
-				  << std::endl;
+			//std::cout << "@" << std::dec
+			//	  << Simulation::getSimulation()->getCurrentSimCycle()
+			//	  << ": " << __PRETTY_FUNCTION__ << ": Request sent"
+			//	  << std::endl;
 		} else {
 			for (int l_i = 0; l_i != l_cmdPkg.size(); ++l_i)
 				delete l_cmdPkg[l_i];
@@ -554,12 +555,11 @@ void c_TxnUnit::handleInTxnGenReqPtrEvent(SST::Event *ev) {
 
 	c_TxnReqEvent* l_txnReqEventPtr = dynamic_cast<c_TxnReqEvent*>(ev);
 	if (l_txnReqEventPtr) {
-		// std::cout << std::endl << "@" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		// 		<< __PRETTY_FUNCTION__ << std::endl;
-		//
-		// l_txnReqEventPtr->m_payload->print();
-		// std::cout << std::endl;
+	        //std::cout << "@" << std::dec
+		//	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+		//	  << __PRETTY_FUNCTION__ << l_txnReqEventPtr->m_payload << " ";
+		//l_txnReqEventPtr->m_payload->print();
+		//std::cout << std::endl;
 
 		m_txnReqQ.push_back(l_txnReqEventPtr->m_payload);
 		delete l_txnReqEventPtr;
