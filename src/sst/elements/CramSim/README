@@ -10,7 +10,7 @@ PREREQUISITES TO INSTALLATION:
 INSTALLATION:
   - Once the repo is cloned, cd to main folder (sstcramsim/)
   - Run "./autogen.sh"
-  - Run "cd sst/elements/MemBankTxn"
+  - Run "cd sst/elements/CramSim"
   - Run "make"
 
   When editing the simulator:
@@ -18,7 +18,7 @@ INSTALLATION:
     - Add class files to Makefile.am
     - cd to parent directory "sstcramsim"
     - Run "./autogen.sh"
-    - Run "cd sst/elements/MemBankTxn"
+    - Run "cd sst/elements/CramSim"
     - Run "make"
   - If modifying existing files:
     - Run "make"
@@ -41,17 +41,16 @@ VERIMEM:
   granularity of this simulator are 1, 4, 5, and 6. Suites 2, 3, and 7 require a model that includes bank rows and columns to provide any insights that
   1, 4, 5, and 6 don't already.
 
-  NOTE: VeriMem tests will not run. SST directory structure mandated that the VeriMem traces cannot be checked in into the sst-elements directory. Traces will be checked into a separate directory and the links to the verimem traces will be updated. After the update the directions below will apply for VeriMem.
+  NOTE: VeriMem tests will not run without downloading the traces. SST directory structure mandated that the VeriMem traces cannot be checked in into the sst-elements directory. 
   The VeriMem traces are currently (01 2017) available here: https://github.com/sstsimulator/sst-downloads/releases
   The filenames begin with sst-CramSim-trace_verimem in the SST Test Support Files section.
  
-  To run Verimem (from within /sstcramsim/sst/elements/MemBankTxn/):
+  To run Verimem (from within /sstcramsim/sst/elements/CramSim/):
       python ./tests/VeriMem/test_verimem1.py BOOL_DEBUG_OUTPUT
     BOOL_DEBUG_OUTPUT should be either 0 or 1, depending on if debugging output is wanted or not.
   This script runs simulations using a config file (to edit, change the variable "config_file") and a series of different trace files specifically structured to
-  test the validity of the simulator's results. CURRENT ISSUE: Due to bugs inherent to SST, "VeriMem Suite 5 - Writes only" causes the simulation to crash. We
-  are still not 100% sure what causes this crash but SST's team is aware of it.
-
+  test the validity of the simulator's results.
+  
 SST BASICS:
   SST allows the usage of isolated components. Each component has its own internal clockCycle. Every cycle, each component runs its clockTic() method.
     The simulator is cycle-based in that in a given cycle, all the clockTics are to be seen as running concurrently.
@@ -59,7 +58,7 @@ SST BASICS:
     SST-provided Event objects can be sent on the link. The Event class can be subclassed to include specific event types that carry specific payloads (e.g. c_TxnReqEvent).
     The simulator is event-based in that components respond discretely to events as they arrive.
 
-MemBankTxn.cpp:
+CramSim.cpp:
   This is the factory-pattern class that is used to instantiate SST components. Link names and parameters are explicitly defined here so that the python file
   can properly map them together.
 
@@ -74,7 +73,7 @@ MODEL OVERVIEW:
     - c_TracefileReader
       - Reads Txns from a trace file
     - c_DramSimTraceReader
-      - Reads Txns from a DRAMSim22 trace file
+      - Reads Txns from a DRAMSim2 trace file
     - c_USimmTraceReader
       - Reads Txns from a USimm trace file
 
@@ -117,5 +116,5 @@ MODEL OVERVIEW:
       	_r_l_b_R_B_h_ - simple version, will be expanded as necessary to fill defined structures in the order defined. No 'C' included, so only 1 channel is possible.
 	__r:15_l:7__bb__R__BB__h:6__ - 15 row bits at MSB, folled by 7 column bits, 2 bank bits, 1 Rank bit, 2 BankGroup bits, and 6 cacheline bits
 	
-    - It is highly recommended that simulator output is piped to an external file. There is usually a lot of output to decypher
+    - It is highly recommended that simulator output is piped to an external file. There is usually a lot of output to decipher
     
