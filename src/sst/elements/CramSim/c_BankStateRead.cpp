@@ -185,9 +185,9 @@ void c_BankStateRead::clockTic(c_BankInfo* x_bank) {
 void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 		c_BankCommand* x_cmdPtr) {
 
-//	std::cout << std::endl << "@" << std::dec
-//			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//			<< __PRETTY_FUNCTION__ << std::endl;
+  //std::cout << std::endl << "@" << std::dec
+  //			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
+  //			<< __PRETTY_FUNCTION__ << std::endl;
 
 	m_timerExit = 0;
 	m_nextStatePtr = nullptr;
@@ -195,11 +195,11 @@ void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_prevCommandPtr = x_cmdPtr;
 	if (nullptr != m_prevCommandPtr) {
 		m_prevCommandPtr->setResponseReady();
-		const unsigned l_cmdsLeft =
-				m_prevCommandPtr->getTransaction()->getWaitingCommands() - 1;
-		m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
-		if (l_cmdsLeft == 0)
-			m_prevCommandPtr->getTransaction()->setResponseReady();
+		//const unsigned l_cmdsLeft =
+		//		m_prevCommandPtr->getTransaction()->getWaitingCommands() - 1;
+		//m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
+		//if (l_cmdsLeft == 0)
+		//	m_prevCommandPtr->getTransaction()->setResponseReady();
 
 //		std::cout << std::endl << "@" << std::dec
 //				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "

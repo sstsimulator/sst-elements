@@ -183,7 +183,7 @@ void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
   if(x_bankCommandPtr->getCommandMnemonic() == e_BankCommandType::REF) {
     l_bankNum = x_bankCommandPtr->getBankId();
   } else {
-    l_bankNum = x_bankCommandPtr->getTransaction()->getHashedAddress()->getBankId();
+    l_bankNum = x_bankCommandPtr->getHashedAddress()->getBankId();
   }
   m_banks.at(l_bankNum)->handleCommand(x_bankCommandPtr);
   
@@ -194,18 +194,18 @@ void c_Dimm::sendResponse() {
 	// check if ResQ has cmds
 	if (m_cmdResQ.size() > 0) {
 
-//		std::cout << std::endl << "@" << std::dec
-//				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//				<< __PRETTY_FUNCTION__ << std::endl;
-//		m_cmdResQ.front()->print();
-//		std::cout << std::endl;
+	  //std::cout << std::endl << "@" << std::dec
+	  //	    << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+	  //	    << __PRETTY_FUNCTION__ << std::endl;
+	  //m_cmdResQ.front()->print();
+	  //std::cout << std::endl;
 
-		c_CmdResEvent* l_cmdResEventPtr = new c_CmdResEvent();
-		l_cmdResEventPtr->m_payload = m_cmdResQ.front();
-		m_cmdResQ.erase(
-				std::remove(m_cmdResQ.begin(), m_cmdResQ.end(),
-						m_cmdResQ.front()), m_cmdResQ.end());
-		m_outCmdUnitResPtrLink->send(l_cmdResEventPtr);
+	  c_CmdResEvent* l_cmdResEventPtr = new c_CmdResEvent();
+	  l_cmdResEventPtr->m_payload = m_cmdResQ.front();
+	  m_cmdResQ.erase(
+			  std::remove(m_cmdResQ.begin(), m_cmdResQ.end(),
+				      m_cmdResQ.front()), m_cmdResQ.end());
+	  m_outCmdUnitResPtrLink->send(l_cmdResEventPtr);
 	}
 }
 

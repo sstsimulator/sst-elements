@@ -419,11 +419,11 @@ void c_TxnUnit::sendResponse() {
 
 		if (l_txnRes != nullptr) {
 
-		         //std::cout << "@" << std::dec
-			 //		<< Simulation::getSimulation()->getCurrentSimCycle()
-			 //		<< ": " << __PRETTY_FUNCTION__ << std::endl;
-			 //l_txnRes->print();
-			 //std::cout << std::endl;
+		        //std::cout << "@" << std::dec
+			//		<< Simulation::getSimulation()->getCurrentSimCycle()
+			//		<< ": " << __PRETTY_FUNCTION__ << std::endl;
+			//l_txnRes->print();
+			//std::cout << std::endl;
 
 			c_TxnResEvent* l_txnResEvPtr = new c_TxnResEvent();
 			l_txnResEvPtr->m_payload = l_txnRes;
@@ -433,7 +433,8 @@ void c_TxnUnit::sendResponse() {
 		}
 
 	}
-}
+} // sendResponse
+
 void c_TxnUnit::createRefreshCmds() {
 //	std::cout << "@" << std::dec
 //			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
@@ -488,11 +489,6 @@ void c_TxnUnit::sendRequest() {
 				c_TransactionToCommands::getInstance();
 		std::vector<c_BankCommand*> l_cmdPkg = l_converter->getCommands(
 				l_reqTxn, k_relCommandWidth, k_useReadA, k_useWriteA);
-
-		// derive and set command access parameters in the package
-		for (auto& l_cmdPtr : l_cmdPkg) {
-		  l_cmdPtr->setRow(l_reqTxn->getHashedAddress()->getRow());
-		}
 
 		if ((l_cmdPkg.size() < m_cmdUnitReqQTokens)
 				&& ((k_txnResQEntries - m_txnResQ.size()) > 0)) {
@@ -633,26 +629,38 @@ void c_TxnUnit::handleInCmdUnitReqQTokenChgEvent(SST::Event *ev) {
 
 void c_TxnUnit::handleInCmdUnitResPtrEvent(SST::Event *ev) {
 
-	c_CmdResEvent* l_cmdResEventPtr = dynamic_cast<c_CmdResEvent*>(ev);
-	if (l_cmdResEventPtr) {
-		c_Transaction* l_txnRes = l_cmdResEventPtr->m_payload->getTransaction();
+  c_CmdResEvent* l_cmdResEventPtr = dynamic_cast<c_CmdResEvent*>(ev);
+  if (l_cmdResEventPtr) {
+    ulong l_resSeqNum = l_cmdResEventPtr->m_payload->getSeqNum();
+    // need to find which txn matches the command seq number in the txnResQ
+    c_Transaction* l_txnRes = nullptr;
+    for(auto l_txIter : m_txnResQ) {
+      if(l_txIter->matchesCmdSeqNum(l_resSeqNum)) {
+	l_txnRes = l_txIter;
+      }
+    }
 
-		const unsigned l_cmdsLeft = l_txnRes->getWaitingCommands() - 1;
-		l_txnRes->setWaitingCommands(l_cmdsLeft);
-		if (l_cmdsLeft == 0)
-			l_txnRes->setResponseReady();
+    if(l_txnRes == nullptr) {
+      std::cout << "Error! Couldn't find transaction to match cmdSeqnum " << l_resSeqNum << std::endl;
+      exit(-1);
+    }
 
-		// std::cout << std::endl << "@" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		// 		<< __PRETTY_FUNCTION__ << std::endl;
-		// l_txnRes->print();
-		// std::cout << std::endl;
+    const unsigned l_cmdsLeft = l_txnRes->getWaitingCommands() - 1;
+    l_txnRes->setWaitingCommands(l_cmdsLeft);
+    if (l_cmdsLeft == 0)
+      l_txnRes->setResponseReady();
 
-		delete l_cmdResEventPtr->m_payload;
-		//delete l_cmdResEventPtr;
+    //std::cout << std::endl << "@" << std::dec
+    //      << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+    //	      << __PRETTY_FUNCTION__ << std::endl;
+    //l_txnRes->print();
+    //std::cout << std::endl;
 
-	} else {
-		std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
-				<< std::endl;
-	}
+    delete l_cmdResEventPtr->m_payload;
+    //delete l_cmdResEventPtr;
+
+  } else {
+    std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
+	      << std::endl;
+  }
 }

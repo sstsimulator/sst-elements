@@ -43,7 +43,6 @@
 #include <sst/core/serialization/serializable.h>
 
 //local includes
-#include "c_HashedAddress.hpp"
 
 typedef unsigned long ulong;
 
@@ -61,7 +60,6 @@ private:
   ulong m_seqNum;
   e_TransactionType m_txnMnemonic;
   ulong m_addr;
-  c_HashedAddress m_hashedAddr;
   std::map<e_TransactionType,std::string> m_txnToString;
   
   bool m_isResponseReady;
@@ -69,7 +67,8 @@ private:
   unsigned m_dataWidth;
   bool m_processed; //<! flag that is set when this transaction is split into commands
 
-  std::list<c_BankCommand*> m_cmdPtrList; //<! list of c_BankCommand shared_ptrs that compose this c_Transaction
+  //std::list<c_BankCommand*> m_cmdPtrList; //<! list of c_BankCommand shared_ptrs that compose this c_Transaction
+  std::list<ulong> m_cmdSeqNumList; //<! list of c_BankCommand Sequence numbers that compose this c_Transaction
 
 public:
 
@@ -81,7 +80,6 @@ public:
 
   e_TransactionType getTransactionMnemonic() const;
 
-  c_HashedAddress *getHashedAddress(); //<! returns ptr to the hashed address
   ulong getAddress() const;         //<! returns the address accessed by this command
   std::string getTransactionString() const; //<! returns the mnemonic of command
 
@@ -90,6 +88,8 @@ public:
 
   void setWaitingCommands(const unsigned x_numWaitingCommands);
   unsigned getWaitingCommands() const;
+
+  bool matchesCmdSeqNum(ulong x_seqNum); //<! returns true if this transaction matches a command with x_seqNum
 
   void addCommandPtr(c_BankCommand* x_cmdPtr);
   unsigned getDataWidth() const;

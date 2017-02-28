@@ -27,6 +27,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+
 #include "c_Transaction.hpp"
 #include "c_BankCommand.hpp"
 #include "c_AddressHasher.hpp"
@@ -43,8 +45,6 @@ c_Transaction::c_Transaction(ulong x_seqNum, e_TransactionType x_txnMnemonic,
 	m_txnToString[e_TransactionType::READ] = "READ";
 	m_txnToString[e_TransactionType::WRITE] = "WRITE";
 
-	c_AddressHasher::getInstance()->fillHashedAddress(&m_hashedAddr,x_addr);
-
 	//std::cout << "0x" << std::hex << x_addr << std::dec << "\t";    m_hashedAddr.print();
 }
 
@@ -59,10 +59,6 @@ unsigned c_Transaction::getWaitingCommands() const {
 //
 c_Transaction::~c_Transaction() {
 	// delete the list of commands that this transaction translates into
-}
-
-c_HashedAddress *c_Transaction::getHashedAddress() {
-  return &m_hashedAddr;
 }
 
 ulong c_Transaction::getAddress() const {
@@ -91,8 +87,14 @@ bool c_Transaction::isResponseReady() {
 //  return (x_stream);
 //}
 
+bool c_Transaction::matchesCmdSeqNum(ulong x_seqNum) {
+  return(std::find(m_cmdSeqNumList.begin(), m_cmdSeqNumList.end(), x_seqNum)
+	 != m_cmdSeqNumList.end());
+}
+
 void c_Transaction::addCommandPtr(c_BankCommand* x_cmdPtr) {
-	m_cmdPtrList.push_back(x_cmdPtr);
+  //m_cmdPtrList.push_back(x_cmdPtr);
+  m_cmdSeqNumList.push_back(x_cmdPtr->getSeqNum());
 }
 
 unsigned c_Transaction::getDataWidth() const {
@@ -110,12 +112,12 @@ void c_Transaction::isProcessed(bool x_processed) {
 //
 // FIXME: print function should be actually be overloaded in operator<< but for some reason operator overloading does not working when creating the library, so for now we will have the print function.
 void c_Transaction::print() const {
-	std::cout << getTransactionString() << ", seqNum: " << std::dec << m_seqNum
-			<< ", address: 0x" << std::hex << getAddress() << std::dec
-			<< ", dataWidth = " << m_dataWidth << ", m_numWaitingCommands = "
-			<< std::dec << m_numWaitingCommands << ", isProcessed = "
-			<< std::boolalpha << m_processed << ", isResponseReady = "
-			<< std::boolalpha << m_isResponseReady;
+  std::cout << this << " " << getTransactionString() << ", seqNum: " << std::dec << m_seqNum
+	    << ", address: 0x" << std::hex << getAddress() << std::dec
+	    << ", dataWidth = " << m_dataWidth << ", m_numWaitingCommands = "
+	    << std::dec << m_numWaitingCommands << ", isProcessed = "
+	    << std::boolalpha << m_processed << ", isResponseReady = "
+	    << std::boolalpha << m_isResponseReady;
 }
 
 void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
@@ -123,7 +125,6 @@ void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
   ser & m_seqNum;
   ser & m_txnMnemonic;
   ser & m_addr;
-  ser & m_hashedAddr;
   ser & m_txnToString;
     
   ser & m_isResponseReady;
@@ -133,5 +134,6 @@ void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
 
   //std::cout << "Serializing Transaction " << this << " "; this->print();
     
-  ser & m_cmdPtrList;
+  //ser & m_cmdPtrList;
+  ser & m_cmdSeqNumList;
 }

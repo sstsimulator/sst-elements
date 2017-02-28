@@ -43,15 +43,15 @@ public:
   //		  unsigned x_bank, unsigned x_row, unsigned x_col);
   friend class c_AddressHasher;
   
-  unsigned getChannel()   {return m_channel;}
-  unsigned getRank()      {return m_row;}
-  unsigned getBankGroup() {return m_bankgroup;}
-  unsigned getBank()      {return m_bank;}
-  unsigned getRow()       {return m_row;}
-  unsigned getCol()       {return m_col;}
-  unsigned getCacheline() {return m_cacheline;}
+  unsigned getChannel()   const {return m_channel;}
+  unsigned getRank()      const {return m_row;}
+  unsigned getBankGroup() const {return m_bankgroup;}
+  unsigned getBank()      const {return m_bank;}
+  unsigned getRow()       const {return m_row;}
+  unsigned getCol()       const {return m_col;}
+  unsigned getCacheline() const {return m_cacheline;}
 
-  unsigned getBankId()    {return m_bankId;} // linear bankId
+  unsigned getBankId()    const {return m_bankId;} // linear bankId
 
   void print() const;
   
