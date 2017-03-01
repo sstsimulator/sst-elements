@@ -82,8 +82,8 @@ c_TracefileReader::c_TracefileReader(ComponentId_t x_id, Params& x_params) :
 	  std::cout << "TxnGen:: traceFile name is missing... exiting" << std::endl;
 	  exit(-1);
 	}
-	m_traceFileStream.open(m_traceFileName,std::ifstream::in);
-	if(!m_traceFileStream) {
+	m_traceFileStream = new zstr::ifstream(m_traceFileName, std::ifstream::in);
+	if(!(*m_traceFileStream)) {
 	  std::cerr << "Unable to open trace file " << m_traceFileName << " Aborting!" << std::endl;
 	  exit(-1);
 	}
@@ -126,7 +126,7 @@ c_TracefileReader::c_TracefileReader(ComponentId_t x_id, Params& x_params) :
 }
 
 c_TracefileReader::~c_TracefileReader() {
-  m_traceFileStream.close();
+  delete m_traceFileStream;
 }
 
 c_TracefileReader::c_TracefileReader() :
@@ -164,7 +164,7 @@ void c_TracefileReader::createTxn() {
   // check if txn can fit inside Req q
 	if (m_txnReqQ.size() < k_txnGenReqQEntries) {
     std::string l_line;
-    if (std::getline(m_traceFileStream, l_line)) {
+    if (std::getline(*m_traceFileStream, l_line)) {
       Tokenizer<> l_tok(l_line);
       unsigned l_numTokens = std::distance(l_tok.begin(), l_tok.end());
       assert((3==l_numTokens) || (4==l_numTokens));

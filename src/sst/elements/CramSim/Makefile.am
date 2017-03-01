@@ -14,6 +14,10 @@ libCramSim_la_SOURCES = \
 	c_TxnGenSeq.cpp \
 	c_TxnGenRand.hpp \
 	c_TxnGenRand.cpp \
+	c_zstr.hpp \
+	c_zstr.cpp \
+	c_strict_fstream.hpp \
+	c_strict_fstream.cpp \
 	c_TracefileReader.hpp \
 	c_TracefileReader.cpp \
 	c_DramSimTraceReader.hpp \
