@@ -38,7 +38,7 @@
 #include <map>
 
 // local includes
-#include "c_BankCommand.hpp"
+//#include "c_BankCommand.hpp"
 #include "c_HashedAddress.hpp"
 
 //<! This class holds information about global simulation state
@@ -57,17 +57,6 @@ public:
   void fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address);
   ulong getAddressForBankId(const unsigned x_bankId);
 
-  unsigned getBankFromAddress(const ulong x_address,
-			      const unsigned x_numBanks);
-  unsigned getBankFromAddress1(const ulong x_address,
-			       const unsigned x_numBanks);
-  unsigned getBankFromAddress2(const ulong x_address,
-			       const unsigned x_numBytesPerTransaction,
-			       const unsigned x_numChannels, const unsigned x_numBanks);
-  unsigned getRowFromAddress(const ulong x_address,
-			     const unsigned x_numBytesPerTransaction, const unsigned x_numRows,
-			     const unsigned x_numCols, const unsigned x_numChannels,
-			     const unsigned x_numBanks);
 private:
   static c_AddressHasher* m_instance; //<! shared_ptr to instance of this class
 

@@ -38,6 +38,7 @@
 // CramSim includes
 #include "c_BankState.hpp"
 #include "c_BankCommand.hpp"
+#include "c_Transaction.hpp"
 #include "c_BankStateIdle.hpp"
 #include "c_BankStatePrecharge.hpp"
 
@@ -84,12 +85,12 @@ void c_BankStatePrecharge::clockTic(c_BankInfo* x_bank) {
 
 		if (m_prevCommandPtr) {
 			m_prevCommandPtr->setResponseReady();
-			const unsigned l_cmdsLeft =
-					m_prevCommandPtr->getTransaction()->getWaitingCommands()
-							- 1;
-			m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
-			if (l_cmdsLeft == 0)
-				m_prevCommandPtr->getTransaction()->setResponseReady();
+			//const unsigned l_cmdsLeft =
+			//		m_prevCommandPtr->getTransaction()->getWaitingCommands()
+			//				- 1;
+			//m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
+			//if (l_cmdsLeft == 0)
+			//	m_prevCommandPtr->getTransaction()->setResponseReady();
 		}
 		auto l_p = new c_BankStateIdle(m_bankParams);
 		l_p->enter(x_bank, this, nullptr);

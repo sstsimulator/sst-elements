@@ -34,10 +34,13 @@
 #ifndef C_TXNREQEVENT_HPP_
 #define C_TXNREQEVENT_HPP_
 
-#include "c_Transaction.hpp"
+//#include "c_Transaction.hpp"
 
 namespace SST {
 namespace n_Bank {
+  
+class c_Transaction;
+  
 class c_TxnReqEvent: public SST::Event {
 public:
 	c_Transaction *m_payload; // FIXME: change this pointer to a unique_ptr
@@ -48,7 +51,7 @@ public:
 
 	void serialize_order(SST::Core::Serialization::serializer &ser) {
 		Event::serialize_order(ser);
-//        ser & m_payload;
+		ser & m_payload;
 	}
 
 	ImplementSerializable (SST::n_Bank::c_TxnReqEvent);

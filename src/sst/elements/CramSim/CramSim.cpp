@@ -205,24 +205,24 @@ static const ElementInfoPort c_DramSimTraceReader_ports[] = {
 		{ NULL, NULL, NULL } };
 
 
-	/*----SETUP c_USimmTraceReader STRUCTURES----*/
-	static const ElementInfoParam c_USimmTraceReader_params[] = {
-			{"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
-			{"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
-			{"numTxnUnitReqQEntries", "Total entries in the neighbor TxnUnit's Req queue", NULL},
-			{"traceFile", "Location of trace file to read", NULL},
-			{ NULL, NULL, NULL } };
+/*----SETUP c_USimmTraceReader STRUCTURES----*/
+static const ElementInfoParam c_USimmTraceReader_params[] = {
+  {"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
+  {"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
+  {"numTxnUnitReqQEntries", "Total entries in the neighbor TxnUnit's Req queue", NULL},
+  {"traceFile", "Location of trace file to read", NULL},
+  { NULL, NULL, NULL } };
 
-	static const char* c_USimmTraceReader_req_port_events[] = { "c_TxnReqEvent", NULL };
-	static const char* c_USimmTraceReader_res_port_events[] = { "c_TxnResEvent", NULL };
-	static const char* c_USimmTraceReader_token_port_events[] = {"c_TokenChgEvent", NULL};
+static const char* c_USimmTraceReader_req_port_events[] = { "c_TxnReqEvent", NULL };
+static const char* c_USimmTraceReader_res_port_events[] = { "c_TxnResEvent", NULL };
+static const char* c_USimmTraceReader_token_port_events[] = {"c_TokenChgEvent", NULL};
 
-	static const ElementInfoPort c_USimmTraceReader_ports[] = {
-			{ "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenRand_req_port_events },
-			{ "inTxnUnitReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
-			{ "inTxnUnitResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
-			{ "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenRand_token_port_events },
-			{ NULL, NULL, NULL } };
+static const ElementInfoPort c_USimmTraceReader_ports[] = {
+  { "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenRand_req_port_events },
+  { "inTxnUnitReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
+  { "inTxnUnitResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
+  { "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenRand_token_port_events },
+  { NULL, NULL, NULL } };
 
 
 

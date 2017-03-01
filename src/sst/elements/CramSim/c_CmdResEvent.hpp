@@ -27,7 +27,7 @@ namespace n_Bank {
 
     void serialize_order(SST::Core::Serialization::serializer &ser) {
         Event::serialize_order(ser);
-//        ser & m_payload;
+        ser & m_payload;
     }
     
     ImplementSerializable(SST::n_Bank::c_CmdResEvent);     

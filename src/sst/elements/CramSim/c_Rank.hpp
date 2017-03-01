@@ -41,7 +41,7 @@
 
 // local includes
 #include "c_BankInfo.hpp"
-#include "c_BankCommand.hpp"
+//#include "c_BankCommand.hpp"
 #include "c_Channel.hpp"
 
 namespace SST {
@@ -49,6 +49,7 @@ namespace n_Bank {
 
 class c_Channel;
 class c_BankGroup;
+class c_BankCommand;
 
   class c_Rank {
   public:

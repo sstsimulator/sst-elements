@@ -35,6 +35,9 @@
 
 // local includes
 #include "c_BankGroup.hpp"
+#include "c_BankCommand.hpp"
+#include "c_BankInfo.hpp"
+#include "c_Rank.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;

@@ -24,10 +24,13 @@
 #include <sst/core/link.h>
 
 //local includes
-#include "c_Transaction.hpp"
+//#include "c_Transaction.hpp"
 
 namespace SST {
 namespace n_Bank {
+
+class c_Transaction;
+  
 class c_TxnGenSeq: public SST::Component {
 
 public:

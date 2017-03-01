@@ -35,15 +35,16 @@
 #include <map>
 
 // CramSim includes
-#include "c_BankCommand.hpp"
 #include "c_BankState.hpp"
-#include "c_BankGroup.hpp"
+//#include "c_BankGroup.hpp"
 
 namespace SST {
 namespace n_Bank {
 
 class c_BankGroup;
-
+class c_BankCommand;
+enum class e_BankCommandType;
+  
 class c_BankInfo {
 public:
 
