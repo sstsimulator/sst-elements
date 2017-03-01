@@ -34,6 +34,7 @@
 #include <assert.h>
 
 #include "c_TransactionToCommands.hpp"
+#include "c_AddressHasher.hpp"
 
 using namespace SST;
 using namespace n_Bank;
@@ -64,12 +65,14 @@ std::vector<c_BankCommand*> c_TransactionToCommands::getCommands(
 
 
 	// set the number of waiting commands for the transaction
-	x_txn->setWaitingCommands(l_commandVec.size());
+	x_txn->setWaitingCommands(l_commandVec.size()/3);
 
 	x_txn->isProcessed(true);
 
-	for (auto& l_cmd : l_commandVec)
-	l_cmd->acceptTransaction(x_txn);
+	for (auto& l_cmd : l_commandVec) {
+	  //l_cmd->acceptTransaction(x_txn);
+	  x_txn->addCommandPtr(l_cmd); // only copies seq num
+	}
 
 	return (l_commandVec);
 }
@@ -86,28 +89,29 @@ std::vector<c_BankCommand*> c_TransactionToCommands::getReadCommands(
 	unsigned l_numCmdsPerTrans = x_txn->getDataWidth() / x_relCommandWidth;
 
 	for (unsigned l_i = 0; l_i < l_numCmdsPerTrans; ++l_i) {
+ 	        ulong l_nAddr = x_txn->getAddress() + (x_relCommandWidth * l_i);
+		c_HashedAddress l_hashedAddr;
+		c_AddressHasher::getInstance()->fillHashedAddress(&l_hashedAddr,l_nAddr);
+	  
 		l_commandVec.push_back(
 			new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::ACT,
-					x_txn->getAddress() + (x_relCommandWidth * l_i))
-		);
+					  l_nAddr, l_hashedAddr));
 
 //		std::cout << __PRETTY_FUNCTION__ << " m_cmdSeqNum = "<<m_cmdSeqNum<<std::endl;
 
 
 		l_commandVec.push_back(
-				new c_BankCommand(m_cmdSeqNum++, l_readCmdType,
-						x_txn->getAddress() + (x_relCommandWidth * l_i))
-					);
+			new c_BankCommand(m_cmdSeqNum++, l_readCmdType,
+					   l_nAddr, l_hashedAddr));
 
 //		std::cout << __PRETTY_FUNCTION__ << " m_cmdSeqNum = "<<m_cmdSeqNum<<std::endl;
 
 
 		// Last command will be precharge IFF ReadA is not used
 		if (!x_useReadA)
-		l_commandVec.push_back(
-			new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::PRE,
-				x_txn->getAddress() + (x_relCommandWidth * l_i)));
-
+		  l_commandVec.push_back(
+		          new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::PRE,
+					    l_nAddr, l_hashedAddr));
 	}
 
 //	std::cout << __PRETTY_FUNCTION__ << " m_cmdSeqNum = "<<m_cmdSeqNum<<std::endl;
@@ -128,19 +132,23 @@ std::vector<c_BankCommand*> c_TransactionToCommands::getWriteCommands(
 	unsigned l_numCmdsPerTrans = x_txn->getDataWidth() / x_relCommandWidth;
 
 	for (unsigned l_i = 0; l_i < l_numCmdsPerTrans; ++l_i) {
+ 	        ulong l_nAddr = x_txn->getAddress() + (x_relCommandWidth * l_i);
+		c_HashedAddress l_hashedAddr;
+		c_AddressHasher::getInstance()->fillHashedAddress(&l_hashedAddr,l_nAddr);
+		
 		l_commandVec.push_back(
 				new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::ACT,
-						x_txn->getAddress() + (x_relCommandWidth * l_i)));
+						  l_nAddr, l_hashedAddr));
 
 		l_commandVec.push_back(
 				new c_BankCommand(m_cmdSeqNum++, l_writeCmdType,
-						x_txn->getAddress() + (x_relCommandWidth * l_i)));
+						  l_nAddr, l_hashedAddr));
 
 		// Last command will be precharge IFF WriteA is not used
 		if (!x_useWriteA)
 				l_commandVec.push_back(
 					new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::PRE,
-						x_txn->getAddress() + (x_relCommandWidth * l_i)));
+							  l_nAddr, l_hashedAddr));
 	}
 
 

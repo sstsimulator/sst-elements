@@ -31,26 +31,43 @@
 
 #include <iostream>
 
-// local includes
+//sst includes
+#include <sst/core/serialization/serializable.h>
 
-class c_HashedAddress {
+//local includes
+
+class c_HashedAddress : public SST::Core::Serialization::serializable {
 
 public:
   //c_HashedAddress(unsigned x_channel, unsigned x_rank, unsigned x_bankgroup,
   //		  unsigned x_bank, unsigned x_row, unsigned x_col);
   friend class c_AddressHasher;
   
-  unsigned getChannel()   {return m_channel;}
-  unsigned getRank()      {return m_row;}
-  unsigned getBankGroup() {return m_bankgroup;}
-  unsigned getBank()      {return m_bank;}
-  unsigned getRow()       {return m_row;}
-  unsigned getCol()       {return m_col;}
-  unsigned getCacheline() {return m_cacheline;}
+  unsigned getChannel()   const {return m_channel;}
+  unsigned getRank()      const {return m_row;}
+  unsigned getBankGroup() const {return m_bankgroup;}
+  unsigned getBank()      const {return m_bank;}
+  unsigned getRow()       const {return m_row;}
+  unsigned getCol()       const {return m_col;}
+  unsigned getCacheline() const {return m_cacheline;}
 
-  unsigned getBankId()    {return m_bankId;} // linear bankId
+  unsigned getBankId()    const {return m_bankId;} // linear bankId
 
   void print() const;
+  
+  void serialize_order(SST::Core::Serialization::serializer &ser)
+  {
+    ser & m_channel;
+    ser & m_rank;
+    ser & m_bankgroup;
+    ser & m_bank;
+    ser & m_row;
+    ser & m_col;
+    ser & m_cacheline;
+    ser & m_bankId;
+  }
+  
+  ImplementSerializable(c_HashedAddress);
 
 private:
   unsigned m_channel;

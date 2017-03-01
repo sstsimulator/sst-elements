@@ -33,19 +33,25 @@
 #include <map>
 #include <string>
 
+//sst includes
+#include <sst/core/serialization/serializable.h>
+
 //local includes
-#include "c_Transaction.hpp"
+//#include "c_Transaction.hpp"
+#include "c_HashedAddress.hpp"
 
 typedef unsigned long ulong;
 
 namespace SST {
 namespace n_Bank {
 
+class c_Transaction;
+
 enum class e_BankCommandType {
 	ERR, ACT, READ, READA, WRITE, WRITEA, PRE, PREA, REF, PDX, PDE
 };
 
-class c_BankCommand {
+class c_BankCommand : public SST::Core::Serialization::serializable {
 
 private:
 
@@ -56,7 +62,8 @@ private:
 	e_BankCommandType m_cmdMnemonic;
 	std::map<e_BankCommandType, std::string> m_cmdToString;
 	bool m_isResponseReady;
-	c_Transaction* m_transactionPtr; //<! ptr to the c_Transaction that this c_BankCommand is part of
+        c_HashedAddress m_hashedAddr;
+        //c_Transaction* m_transactionPtr; //<! ptr to the c_Transaction that this c_BankCommand is part of
 
 public:
 
@@ -66,6 +73,9 @@ public:
 			       ulong x_addr);
         c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
 		      ulong x_addr, unsigned x_bankId); // only to be used for Refresh commands!
+        c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
+		      ulong x_addr, c_HashedAddress &x_hashedAddr); 
+        c_BankCommand() {} // required for ImplementSerializable
 
 	c_BankCommand(c_BankCommand&) = delete;
 	c_BankCommand(c_BankCommand&&) = delete;
@@ -73,16 +83,12 @@ public:
 
 	void print() const;
 
-	inline void setRow(unsigned x_row) {
-		m_row = x_row;
+        const c_HashedAddress *getHashedAddress() const {
+	  return (&m_hashedAddr);
 	}
 
-	inline unsigned getRow() const {
-		return (m_row);
-	}
-
-        inline unsigned getBankId() const {
-	        return (m_bankId);
+        inline unsigned getBankId() {
+	  return (m_bankId);
 	}
 
 	inline bool isResponseReady() const
@@ -105,9 +111,9 @@ public:
 	unsigned getAddress() const; //<! returns the address accessed by this command
 	std::string getCommandString() const;//<! returns the mnemonic of command
 
-	void acceptTransaction(c_Transaction* x_transaction);
+        //void acceptTransaction(c_Transaction* x_transaction);
 
-	c_Transaction* getTransaction() const;
+	//c_Transaction* getTransaction() const;
 
 	// FIXME: implement operator<<
 	//    friend inline std::ostream& operator<< (
@@ -119,6 +125,13 @@ public:
 	//        return x_stream;
 	//    }
 
-};}
-}
+        void serialize_order(SST::Core::Serialization::serializer &ser);
+  
+        ImplementSerializable(c_BankCommand);
+
+}; // class c_BankCommand
+
+} // namespace n_Bank
+
+} // namespace SST
 #endif // C_BANKCOMMAND_HPP

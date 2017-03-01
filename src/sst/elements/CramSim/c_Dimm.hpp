@@ -37,11 +37,14 @@
 #include <sst/core/link.h>
 
 // local includes
-#include "c_BankCommand.hpp"
+//#include "c_BankCommand.hpp"
 #include "c_Bank.hpp"
 
 namespace SST {
 namespace n_Bank {
+
+  class c_BankCommand;
+  
 class c_Dimm: public SST::Component {
 public:
 

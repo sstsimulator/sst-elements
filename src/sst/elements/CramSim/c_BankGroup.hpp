@@ -40,15 +40,16 @@
 #include <sst/core/link.h>
 
 // local includes
-#include "c_Rank.hpp"
-#include "c_BankInfo.hpp"
-#include "c_BankCommand.hpp"
+//#include "c_Rank.hpp"
+//#include "c_BankInfo.hpp"
+//#include "c_BankCommand.hpp"
 
 namespace SST {
 namespace n_Bank {
 
 class c_BankInfo;
 class c_Rank;
+class c_BankCommand;
 
 class c_BankGroup {
 public:

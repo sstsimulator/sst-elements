@@ -34,8 +34,10 @@
 
 // CramSim includes
 #include "c_Bank.hpp"
+#include "c_Transaction.hpp"
 //#include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
+#include "c_BankCommand.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
@@ -381,10 +383,10 @@ c_BankCommand* c_Bank::clockTic() {
 			// waiting commands and delete the command
 			if (l_doSendRes) {
 
-//				std::cout << __PRETTY_FUNCTION__ << ": Sending cmd:"
-//						<< std::endl;
-//				m_cmd->print();
-//				std::cout << std::endl;
+			        //std::cout << __PRETTY_FUNCTION__ << ": Sending cmd:"
+				//		<< std::endl;
+				//m_cmd->print();
+				//std::cout << std::endl;
 
 				l_resPtr = m_cmd;
 				m_cmd = nullptr;
@@ -395,11 +397,11 @@ c_BankCommand* c_Bank::clockTic() {
 //				m_cmd->print();
 //				std::cout << std::endl;
 
-				c_Transaction* l_txnPtr = m_cmd->getTransaction();
-				const unsigned l_cmdsLeft = l_txnPtr->getWaitingCommands() - 1;
-				l_txnPtr->setWaitingCommands(l_cmdsLeft);
-				if (l_cmdsLeft == 0)
-					l_txnPtr->setResponseReady();
+			        //c_Transaction* l_txnPtr = m_cmd->getTransaction();
+				//const unsigned l_cmdsLeft = l_txnPtr->getWaitingCommands() - 1;
+				//l_txnPtr->setWaitingCommands(l_cmdsLeft);
+				//if (l_cmdsLeft == 0)
+				//	l_txnPtr->setResponseReady();
 
 				delete m_cmd;
 				m_cmd = nullptr;
