@@ -51,6 +51,7 @@ namespace SST {
 namespace n_Bank {
 
   class c_BankCommand;
+  enum class e_BankCommandType;
   
 class c_CmdUnit: public SST::Component {
 public:
@@ -170,6 +171,7 @@ private:
 	unsigned m_refsSent;
 
 	unsigned m_lastDataCmdIssueCycle;
+        e_BankCommandType m_lastDataCmdType;
 	std::list<unsigned> m_cmdACTFAWtracker; // FIXME: change this to a circular buffer for speed. Could also implement as shift register.
 	bool m_issuedACT;
 };

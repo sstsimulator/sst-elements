@@ -179,7 +179,7 @@ std::queue<c_BankCommand*> c_TransactionToCommands::getRefreshCommands(std::vect
 					      l_bankId)
 			    );
 	}
-	std::cout << __PRETTY_FUNCTION__ << " m_cmdSeqNum = "<<m_cmdSeqNum<<std::endl;
+	//std::cout << __PRETTY_FUNCTION__ << " m_cmdSeqNum = "<<m_cmdSeqNum<<std::endl;
 
 	return l_commandVec;
 }

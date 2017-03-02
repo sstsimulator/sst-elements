@@ -18,7 +18,7 @@
 
 #include <assert.h>
 #include <iostream>
-
+#include <string>
 
 //local includes
 #include "c_TxnGenRand.hpp"
@@ -80,6 +80,14 @@ c_TxnGenRand::c_TxnGenRand(ComponentId_t x_id, Params& x_params) :
 				<< std::endl;
 		exit(-1);
 	}
+
+	std::string l_randSeedStr = x_params.find<std::string>("randomSeed","0", l_found);
+	if(l_randSeedStr.compare("-") == 0) { // use a random seed
+	  
+	} else {
+	  k_randSeed = (unsigned int)std::strtoul(l_randSeedStr.c_str(),NULL,0);
+	}
+	std::srand(k_randSeed);
 
 	// tell the simulator not to end without us
 	registerAsPrimaryComponent();

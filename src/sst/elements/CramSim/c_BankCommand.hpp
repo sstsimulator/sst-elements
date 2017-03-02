@@ -87,7 +87,7 @@ public:
 	  return (&m_hashedAddr);
 	}
 
-        inline unsigned getBankId() {
+        inline unsigned getBankId() const {
 	  return (m_bankId);
 	}
 

@@ -482,6 +482,7 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	// reset last data cmd issue cycle
 	m_lastDataCmdIssueCycle = 0;
+	m_lastDataCmdType = e_BankCommandType::READ;
 
 	m_cmdACTFAWtracker.clear();
 	m_cmdACTFAWtracker.resize(m_bankParams.at("nFAW"),0);
@@ -738,10 +739,11 @@ void c_CmdUnit::sendReqCloseBankPolicy(
 					m_issuedDataCmd = l_isDataCmd || m_issuedDataCmd;
 
 					if (l_isDataCmd) {
-						assert(
-								(Simulation::getSimulation()->getCurrentSimCycle()-m_lastDataCmdIssueCycle) >= (std::min(m_bankParams.at("nBL"),std::max(m_bankParams.at("nCCD_L"),m_bankParams.at("nCCD_S")))));
-						m_lastDataCmdIssueCycle =
-								Simulation::getSimulation()->getCurrentSimCycle();
+					  assert( (m_lastDataCmdType != ((l_cmdPtr))->getCommandMnemonic()) || (
+						      (Simulation::getSimulation()->getCurrentSimCycle()-m_lastDataCmdIssueCycle) >= (std::min(m_bankParams.at("nBL"),std::max(m_bankParams.at("nCCD_L"),m_bankParams.at("nCCD_S"))))));
+					  m_lastDataCmdIssueCycle =
+					    Simulation::getSimulation()->getCurrentSimCycle();
+					  m_lastDataCmdType = ((l_cmdPtr))->getCommandMnemonic();
 					}
 
 					m_issuedACT = (e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic());
@@ -1152,9 +1154,38 @@ void c_CmdUnit::sendRequest() {
 }
 
 void c_CmdUnit::sendRefresh() {
+  printQueues();
+  // first fill the refCmdVec
+  std::vector<c_BankCommand*> l_refCmdVec;
+  for(auto l_cmd : m_cmdReqQ) {
+    if(l_cmd->getCommandMnemonic() == e_BankCommandType::REF) {
+      l_refCmdVec.push_back(l_cmd);
+    } else {
+      break;
+    }
+  }
+
+  for(auto l_refCmd : l_refCmdVec) {
+    unsigned l_bankNum = l_refCmd->getBankId();
+    c_BankInfo* l_bank = m_banks.at(l_bankNum);
+    std::cout << "Attempting to send Refresh to bankId " << l_bankNum;
+    if(sendCommand(l_refCmd, l_bank)) {
+      std::cout << " Succeeded!" << std::endl;
+      m_refsSent++;
+    } else {
+      std::cout << " FAILED!" << std::endl;
+    }
+  }
+  /*
 	std::vector<c_BankCommand*>::iterator l_cmdIter = m_cmdReqQ.begin();
-	while (m_cmdReqQ.size() > 0
+	int l_tmp = 0;
+	std::cout << "Starting to iterate " << m_cmdReqQ.size() << std::endl << std::endl;
+	std::cout << l_tmp << " " << (*l_cmdIter)->getCommandString() << std::endl;
+	while (m_cmdReqQ.size() > 0 
 			&& (*l_cmdIter)->getCommandMnemonic() == e_BankCommandType::REF) {
+	  std::cout << l_tmp << " " << m_refsSent << " " << (*l_cmdIter)->getCommandString()
+		    << " " << (*l_cmdIter) << " " << *(m_cmdReqQ.rbegin()) << " " << m_cmdReqQ.size()
+		    << std::endl;
 		c_BankCommand* l_refCmd = (*l_cmdIter);
 
 		unsigned l_bankNum = l_refCmd->getBankId();
@@ -1171,11 +1202,12 @@ void c_CmdUnit::sendRefresh() {
 //			 std::cout << std::endl;
 
 			m_refsSent++;
-		}
+		} 
 
 		++l_cmdIter;
+		l_tmp++;
 	}
-
+  */
 }
 
 // TODO: Determine whether or not k_cmdQueueFindAnyIssuable is necesarry for future use
@@ -1248,6 +1280,7 @@ bool c_CmdUnit::sendCommand(c_BankCommand* x_bankCommandPtr,
 				<< " " << std::dec << x_bankCommandPtr->getHashedAddress()->getRow()
 				<< " " << std::dec << x_bankCommandPtr->getHashedAddress()->getCol()
 				<< " " << std::dec << x_bankCommandPtr->getHashedAddress()->getCacheline()
+				<< "\t" << std::dec << x_bankCommandPtr->getHashedAddress()->getBankId()
 				<< std::endl;
 	  }
 
@@ -1344,13 +1377,15 @@ void c_CmdUnit::handleInTxnUnitReqPtrEvent(SST::Event *ev) {
 		// accommodate the incoming cmds
 		assert(l_cmdBuffer.size() <= (k_cmdReqQEntries - m_cmdReqQ.size()));
 
-		//std::cout << "@" << std::dec
-		//	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		//  	  << __PRETTY_FUNCTION__ << std::endl;
 		
 		for (auto &l_entry : l_cmdBuffer) {
-		  //std::cout<<"(*l_entry) = " << l_entry << std::endl;
-		  //l_entry->print();
+		  if(l_entry->getCommandMnemonic() == e_BankCommandType::REF) {
+		    std::cout << "@" << std::dec
+			      << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+			      << __PRETTY_FUNCTION__ << std::endl;
+		    std::cout<<"(*l_entry) = " << l_entry << std::endl;
+		    l_entry->print();
+		  }
 		  
 		  m_cmdReqQ.push_back(l_entry);
 		}

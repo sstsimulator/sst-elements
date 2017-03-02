@@ -97,7 +97,8 @@ void c_BankCommand::print() const {
   std::cout << "[" << this << " CMD: " << this->getCommandString() << ", SEQNUM: "
 	    << std::dec << this->getSeqNum() << " , ADDR: 0x" << std::hex
 	    << this->getAddress() << " , isResponseReady: " << std::boolalpha
-	    << this->isResponseReady() << " row: " << this->getHashedAddress()->getRow() << "]"
+	    << this->isResponseReady() << " row: " << this->getHashedAddress()->getRow()
+	    << " BankId: " << std::dec << this->getBankId() << "]"
 	    << std::endl;
 
 }
