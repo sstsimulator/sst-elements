@@ -465,10 +465,10 @@ void c_TxnUnit::sendRequest() {
 
 	// first check if any refreshes are pending being sent
 	if (m_refreshList.size() > 0) {
-		std::cout << "@" << std::dec
-			  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-			  << __PRETTY_FUNCTION__ << std::endl;
-		printf("%u REF commands left to send\n", m_refreshList.size());
+	  //		std::cout << "@" << std::dec
+	  //		  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+	  //		  << __PRETTY_FUNCTION__ << std::endl;
+	  //	printf("%u REF commands left to send\n", m_refreshList.size());
 		std::vector<c_BankCommand*> l_cmdPkg;
 		while (m_cmdUnitReqQTokens > 0 && m_refreshList.size() > 0) {
 			l_cmdPkg.push_back(m_refreshList.front());
@@ -478,7 +478,7 @@ void c_TxnUnit::sendRequest() {
 		}
 
 		if (l_cmdPkg.size() > 0) {
-		  printf("Sending %lu REF commands\n", l_cmdPkg.size());
+		  //printf("Sending %lu REF commands\n", l_cmdPkg.size());
 			c_CmdPtrPkgEvent* l_cmdPtrPkgEventPtr = new c_CmdPtrPkgEvent();
 			l_cmdPtrPkgEventPtr->m_payload = l_cmdPkg;
 			m_outCmdUnitReqPtrLink->send(l_cmdPtrPkgEventPtr);

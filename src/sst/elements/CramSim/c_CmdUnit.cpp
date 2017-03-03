@@ -1154,12 +1154,16 @@ void c_CmdUnit::sendRequest() {
 }
 
 void c_CmdUnit::sendRefresh() {
-  printQueues();
   // first fill the refCmdVec
   std::vector<c_BankCommand*> l_refCmdVec;
   for(auto l_cmd : m_cmdReqQ) {
     if(l_cmd->getCommandMnemonic() == e_BankCommandType::REF) {
       l_refCmdVec.push_back(l_cmd);
+      c_BankInfo *l_bank = m_banks.at(l_cmd->getBankId());
+      unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+      if (!l_bank->isCommandAllowed(l_cmd, l_time)) { // can't send all refs now, cancel!
+	return;
+      }
     } else {
       break;
     }
@@ -1167,16 +1171,17 @@ void c_CmdUnit::sendRefresh() {
 
   for(auto l_refCmd : l_refCmdVec) {
     unsigned l_bankNum = l_refCmd->getBankId();
-    c_BankInfo* l_bank = m_banks.at(l_bankNum);
-    std::cout << "Attempting to send Refresh to bankId " << l_bankNum;
+    c_BankInfo *l_bank = m_banks.at(l_bankNum);
+    //std::cout << "Attempting to send Refresh to bankId " << l_bankNum;
     if(sendCommand(l_refCmd, l_bank)) {
-      std::cout << " Succeeded!" << std::endl;
+      //std::cout << " Succeeded!" << std::endl;
       m_refsSent++;
     } else {
-      std::cout << " FAILED!" << std::endl;
+      assert(0);
+      //std::cout << " FAILED!" << std::endl;
     }
   }
-  /*
+  /*  Old version that sends refs to individual banks before checking that all banks are able to enter refresh
 	std::vector<c_BankCommand*>::iterator l_cmdIter = m_cmdReqQ.begin();
 	int l_tmp = 0;
 	std::cout << "Starting to iterate " << m_cmdReqQ.size() << std::endl << std::endl;
@@ -1268,20 +1273,29 @@ bool c_CmdUnit::sendCommand(c_BankCommand* x_bankCommandPtr,
 
 	if (x_bank->isCommandAllowed(x_bankCommandPtr, l_time)) {
 	  if(k_printCmdTrace) {
-	    (*m_cmdTraceStream) << "@" << std::dec
-				<< Simulation::getSimulation()->getCurrentSimCycle()
-				<< " " << (x_bankCommandPtr)->getCommandString()
-				<< " " << std::dec << (x_bankCommandPtr)->getSeqNum()
-				<< " 0x" << std::hex << (x_bankCommandPtr)->getAddress()
-				<< " " << std::dec << x_bankCommandPtr->getHashedAddress()->getChannel()
-				<< " " << std::dec << x_bankCommandPtr->getHashedAddress()->getRank()
-				<< " " << std::dec << x_bankCommandPtr->getHashedAddress()->getBankGroup()
-				<< " " << std::dec << x_bankCommandPtr->getHashedAddress()->getBank()
-				<< " " << std::dec << x_bankCommandPtr->getHashedAddress()->getRow()
-				<< " " << std::dec << x_bankCommandPtr->getHashedAddress()->getCol()
-				<< " " << std::dec << x_bankCommandPtr->getHashedAddress()->getCacheline()
-				<< "\t" << std::dec << x_bankCommandPtr->getHashedAddress()->getBankId()
-				<< std::endl;
+	    if(x_bankCommandPtr->getCommandMnemonic() == e_BankCommandType::REF) {
+	      (*m_cmdTraceStream) << "@" << std::dec
+				  << Simulation::getSimulation()->getCurrentSimCycle()
+				  << " " << (x_bankCommandPtr)->getCommandString()
+				  << " " << std::dec << (x_bankCommandPtr)->getSeqNum()
+				  << " " << std::dec << x_bankCommandPtr->getBankId()
+				  << std::endl;
+	    } else {
+	      (*m_cmdTraceStream) << "@" << std::dec
+				  << Simulation::getSimulation()->getCurrentSimCycle()
+				  << " " << (x_bankCommandPtr)->getCommandString()
+				  << " " << std::dec << (x_bankCommandPtr)->getSeqNum()
+				  << " 0x" << std::hex << (x_bankCommandPtr)->getAddress()
+				  << " " << std::dec << x_bankCommandPtr->getHashedAddress()->getChannel()
+				  << " " << std::dec << x_bankCommandPtr->getHashedAddress()->getRank()
+				  << " " << std::dec << x_bankCommandPtr->getHashedAddress()->getBankGroup()
+				  << " " << std::dec << x_bankCommandPtr->getHashedAddress()->getBank()
+				  << " " << std::dec << x_bankCommandPtr->getHashedAddress()->getRow()
+				  << " " << std::dec << x_bankCommandPtr->getHashedAddress()->getCol()
+				  << " " << std::dec << x_bankCommandPtr->getHashedAddress()->getCacheline()
+				  << "\t" << std::dec << x_bankCommandPtr->getHashedAddress()->getBankId()
+				  << std::endl;
+	    }
 	  }
 
 	  //		std::cout << std::endl << "@" << std::dec
@@ -1379,13 +1393,13 @@ void c_CmdUnit::handleInTxnUnitReqPtrEvent(SST::Event *ev) {
 
 		
 		for (auto &l_entry : l_cmdBuffer) {
-		  if(l_entry->getCommandMnemonic() == e_BankCommandType::REF) {
-		    std::cout << "@" << std::dec
-			      << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-			      << __PRETTY_FUNCTION__ << std::endl;
-		    std::cout<<"(*l_entry) = " << l_entry << std::endl;
-		    l_entry->print();
-		  }
+		  //if(l_entry->getCommandMnemonic() == e_BankCommandType::REF) {
+		    //std::cout << "@" << std::dec
+		    //	      << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+		    //	      << __PRETTY_FUNCTION__ << std::endl;
+		    //std::cout<<"(*l_entry) = " << l_entry << std::endl;
+		    //l_entry->print();
+		  //}
 		  
 		  m_cmdReqQ.push_back(l_entry);
 		}
