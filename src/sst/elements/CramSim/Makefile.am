@@ -76,7 +76,10 @@ libCramSim_la_SOURCES = \
 	c_CmdPtrPkgEvent.hpp \
 	c_TokenChgEvent.hpp \
 	c_CmdReqEvent.hpp \
-	c_CmdResEvent.hpp
+	c_CmdResEvent.hpp \
+	c_MemhBridge.hpp \
+	c_MemhBridge.cpp \
+	memReqEvent.hpp 
 
 EXTRA_DIST = \
 	README \

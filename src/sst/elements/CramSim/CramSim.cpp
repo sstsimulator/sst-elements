@@ -18,6 +18,7 @@
 #include "sst/core/element.h"
 
 // local includes
+#include "c_MemhBridge.hpp"
 #include "c_AddressHasher.hpp"
 #include "c_TxnGenSeq.hpp"
 #include "c_TxnGenRand.hpp"
@@ -31,6 +32,7 @@
 #include "c_BankReceiver.hpp"
 #include "c_Dimm.hpp"
 
+
 // namespaces
 using namespace SST;
 using namespace SST::n_Bank;
@@ -43,6 +45,12 @@ using namespace SST::n_BankReceiver;
 static Component*
 create_c_AddressHasher(SST::ComponentId_t id, SST::Params& params) {
 	return new c_AddressHasher(id, params);
+}
+
+// c_MemhBridge
+static Component*
+create_c_MemhBridge(SST::ComponentId_t id, SST::Params& params) {
+	return new c_MemhBridge(id, params);
 }
 
 // c_TxnGenSeq
@@ -124,6 +132,26 @@ static const ElementInfoParam c_AddressHasher_params[] = {
 		{ NULL, NULL, NULL } };
 
 static const ElementInfoPort c_AddressHasher_ports[] = {
+		{ NULL, NULL, NULL } };
+
+/*----SETUP c_MemhBridge STRUCTURES----*/
+static const ElementInfoParam c_MemhBridge_params[] = {
+		{"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
+		{"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
+		{"numTxnUnitReqQEntries", "Total entries in the neighbor TxnUnit's Req queue", NULL},
+		{ NULL, NULL, NULL } };
+
+static const char* c_MemhBridge_req_port_events[] = { "c_TxnReqEvent", NULL };
+static const char* c_MemhBridge_res_port_events[] = { "c_TxnResEvent", NULL };
+static const char* c_MemhBridge_token_port_events[] = {"c_TokenChgEvent", NULL};
+static const char* c_MemhBridge_CPU_events[] = {"c_CPUevent", NULL};
+
+static const ElementInfoPort c_MemhBridge_ports[] = {
+		{ "linkCPU", "link to/from CPU",c_MemhBridge_CPU_events},
+		{ "outTxnGenReqPtr", "link to c_MemhBridge for outgoing req txn", c_MemhBridge_req_port_events },
+		{ "inTxnUnitReqQTokenChg", "link to c_MemhBridge for incoming req token", c_MemhBridge_token_port_events },
+		{ "inTxnUnitResPtr", "link to c_MemhBrdige for incoming res txn", c_MemhBridge_res_port_events },
+		{ "outTxnGenResQTokenChg", "link to c_MemhBridge for outgoing res token",c_MemhBridge_token_port_events },
 		{ NULL, NULL, NULL } };
 
 /*----SETUP c_TxnGenSeq STRUCTURES----*/
@@ -516,6 +544,15 @@ static const ElementInfoComponent CramSimComponents[] = {
 		create_c_Dimm, 						// Allocator
 		c_Dimm_params, 						// Parameters
 		c_Dimm_ports, 						// Ports
+		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
+		NULL 										// Statistics
+		},
+		{ "c_MemhBridge",			 						// Name
+		"Bridge to communicate with MemoryHierarchy",				 				// Description
+		NULL, 										// PrintHelp
+		create_c_MemhBridge, 						// Allocator
+		c_MemhBridge_params, 						// Parameters
+		c_MemhBridge_ports, 						// Ports
 		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
 		NULL 										// Statistics
 		},

@@ -53,6 +53,7 @@
 #include "membackend/timingPagePolicy.h"
 #include "membackend/timingAddrMapper.h"
 #include "membackend/simpleMemScratchBackendConvertor.h"
+#include "membackend/cramSimBackend.h"
 #include "networkMemInspector.h"
 #include "memNetBridge.h"
 #include "multithreadL1Shim.h"
@@ -1087,6 +1088,21 @@ static const ElementInfoParam vaultsimMem_params[] = {
     {NULL, NULL, NULL}
 };
 
+
+/*****************************************************************************************
+ *  SubComponent: cramSimMemory
+ *  Purpose: Memory backend, interface to VaultSim (vaulted memory)
+ *****************************************************************************************/
+static SubComponent* create_Mem_CramSim(Component* comp, Params& params){
+    return new CramSimMemory(comp, params);
+}
+
+static const ElementInfoParam cramsimMem_params[] = {
+        { "verbose",          "Sets the verbosity of the backend output", "0" },
+        {"access_time",     "When not using DRAMSim, latency of memory operation.", "100 ns"},
+        {NULL, NULL, NULL}
+};
+
 /*****************************************************************************************
  *  SubComponent: vaultSimMemory
  *  Purpose: Memory backend, interface to Messier (NV memory)
@@ -1527,6 +1543,15 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL, /* Advanced help */
         create_Mem_VaultSim, /* Module Alloc w/ params */
         vaultsimMem_params,
+        NULL, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+     {
+        "cramsim",
+        "CramSim Memory timings",
+        NULL, /* Advanced help */
+        create_Mem_CramSim, /* Module Alloc w/ params */
+        cramsimMem_params,
         NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },

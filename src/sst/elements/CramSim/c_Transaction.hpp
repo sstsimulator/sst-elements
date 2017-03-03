@@ -92,6 +92,9 @@ public:
   bool matchesCmdSeqNum(ulong x_seqNum); //<! returns true if this transaction matches a command with x_seqNum
 
   void addCommandPtr(c_BankCommand* x_cmdPtr);
+
+  ulong getSeqNum() const;
+
   unsigned getDataWidth() const;
   unsigned getThreadId() const; // FIXME
   bool isProcessed() const;
