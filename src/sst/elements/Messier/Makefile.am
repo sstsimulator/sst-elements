@@ -10,6 +10,7 @@ libMessier_la_SOURCES = \
 	libMessier.cpp \
 	memReqEvent.h \
 	Messier.cc \
+	Messier_Event.h \
 	Messier.h \
 	Bank.h \
 	Rank.h \
