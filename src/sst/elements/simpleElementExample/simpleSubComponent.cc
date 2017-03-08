@@ -38,6 +38,7 @@ SubComponentLoader::SubComponentLoader(ComponentId_t id, Params &params) :
         new Clock::Handler<SubComponentLoader>(this, &SubComponentLoader::tick ));
 
     registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
 }
 
 
