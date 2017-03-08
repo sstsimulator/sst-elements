@@ -310,6 +310,7 @@ static const ElementInfoComponent simpleElementComponents[] = {
         .printHelp = NULL,
         .alloc = create_SubComponentLoader,
         .params = simpleSubComp_SubCompLoader_params,
+        .ports = NULL,
         .category = COMPONENT_CATEGORY_UNCATEGORIZED,
         .stats = NULL,
         .subComponents = simpleSubComp_SubCompLoader_subComps
