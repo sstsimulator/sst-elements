@@ -43,6 +43,9 @@ class NVM_WRITE_BUFFER
 	// flush threshold percentage; this determines at what percentage of max number of entries triggers flushing the write buffer: e.g., 50% means when we have 50% of the size entries, we should attempt flushing
 	int flush_th;
 
+	// This indicates the low threshold, where the controller will bring down the number of entries to, whenever it reaches the high threshold
+	int flush_th_low;
+
 	// the current number of entries
 	int curr_entries;
 
@@ -55,10 +58,12 @@ class NVM_WRITE_BUFFER
 
 	int entry_size; // this determines the granularity of the write requests, ideally this should be similar to cache line size
 
+	bool still_flushing; // This indicates that the controller is still trying to bring down the entries to low threshold
+
 	public:
 
 	// Constructor
-	NVM_WRITE_BUFFER(int Size, int Sched_mode, int Entry_size, int Flush_th){ max_size = Size; sched_mode = Sched_mode; flush_th = Flush_th; entry_size = Entry_size; curr_entries = 0;}
+	NVM_WRITE_BUFFER(int Size, int Sched_mode, int Entry_size, int Flush_th, int low_th){ flush_th_low = low_th; max_size = Size; sched_mode = Sched_mode; flush_th = Flush_th; entry_size = Entry_size; still_flushing=false; curr_entries = 0;}
 
 	// This checks if the writebuffer is in the flush mode (entries exceed threshold)
 	bool flush();
@@ -81,6 +86,11 @@ class NVM_WRITE_BUFFER
 	NVM_Request * pop_entry();
 
 	NVM_Request * getFront() { return mem_reqs.front();}
+
+	void erase_entry(NVM_Request *);	
+
+	std::list<NVM_Request *> getList() { return mem_reqs;}
+
 
 };
 }}

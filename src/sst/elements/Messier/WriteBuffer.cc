@@ -37,10 +37,7 @@ using namespace SST::MessierComponent;
 bool NVM_WRITE_BUFFER::flush()
 {
 
-	if( curr_entries >= (int) (flush_th*1.0*max_size/100.0) )
-		return true;
-	else
-		return false;
+	return still_flushing;
 
 }
 
@@ -49,12 +46,18 @@ bool NVM_WRITE_BUFFER::insert_write_request(NVM_Request * req)
 {
 
 
+
 	if(curr_entries < max_size)
 	{
 
 		ADD_REQ[req->Address/entry_size]=req;
 		mem_reqs.push_back(req);
 		curr_entries++;
+
+		if( curr_entries >= (int) (flush_th*1.0*max_size/100.0) )
+			still_flushing=true;
+
+
 		return true;
 	}
 	else
@@ -86,5 +89,25 @@ NVM_Request * NVM_WRITE_BUFFER::pop_entry()
 	ADD_REQ.erase(TEMP->Address/entry_size);
 	mem_reqs.pop_front();
 	curr_entries--;
+	
+	if(curr_entries <= (int) (flush_th*1.0*max_size/100.0) )
+		still_flushing=false;
+
 	return TEMP;
 }
+
+
+// Towards out-of-order execution of writes. With this we enable the memory controller to execute and erase any write request
+void NVM_WRITE_BUFFER::erase_entry(NVM_Request * TEMP)
+{
+
+	ADD_REQ.erase(TEMP->Address/entry_size);
+	mem_reqs.remove(TEMP);
+	curr_entries--;
+
+	 if(curr_entries <= (int) (flush_th*1.0*max_size/100.0) )
+                still_flushing=false;
+
+}
+
+
