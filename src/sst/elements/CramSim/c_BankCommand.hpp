@@ -59,11 +59,11 @@ private:
 	ulong    m_addr;
 	unsigned m_row;
         unsigned m_bankId;
+        std::vector<unsigned> m_bankIdVec;
 	e_BankCommandType m_cmdMnemonic;
 	std::map<e_BankCommandType, std::string> m_cmdToString;
 	bool m_isResponseReady;
         c_HashedAddress m_hashedAddr;
-        //c_Transaction* m_transactionPtr; //<! ptr to the c_Transaction that this c_BankCommand is part of
 
 public:
 
@@ -73,6 +73,8 @@ public:
 			       ulong x_addr);
         c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
 		      ulong x_addr, unsigned x_bankId); // only to be used for Refresh commands!
+        c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
+		      ulong x_addr, std::vector<unsigned> &x_bankIdVec); // only to be used for Refresh commands!
         c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
 		      ulong x_addr, c_HashedAddress &x_hashedAddr); 
         c_BankCommand() {} // required for ImplementSerializable
@@ -91,6 +93,10 @@ public:
 	  return (m_bankId);
 	}
 
+        inline std::vector<unsigned> *getBankIdVec() {
+	  return(&m_bankIdVec);
+	}
+  
 	inline bool isResponseReady() const
 	{
 		return (m_isResponseReady);
@@ -110,10 +116,6 @@ public:
 
 	unsigned getAddress() const; //<! returns the address accessed by this command
 	std::string getCommandString() const;//<! returns the mnemonic of command
-
-        //void acceptTransaction(c_Transaction* x_transaction);
-
-	//c_Transaction* getTransaction() const;
 
 	// FIXME: implement operator<<
 	//    friend inline std::ostream& operator<< (

@@ -117,7 +117,8 @@ void c_BankStateRefresh::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	x_bank->setNextCommandCycle(e_BankCommandType::REF,
 			std::max(
 					x_bank->getNextCommandCycle(e_BankCommandType::REF)
-							+ m_bankParams->at("nREFI"), l_time));
+							+ m_bankParams->at("nREFI"),
+					l_time + m_bankParams->at("nREFI")));
 
 	x_bank->changeState(this);
 	if (nullptr != x_prevState)

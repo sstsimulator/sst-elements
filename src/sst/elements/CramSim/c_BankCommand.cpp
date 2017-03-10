@@ -70,6 +70,27 @@ c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 	m_cmdToString[e_BankCommandType::REF] = "REF";
 }
 
+c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
+			     e_BankCommandType x_cmdMnemonic, ulong x_addr,
+			     std::vector<unsigned> &x_bankIdVec) :
+		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
+		m_isResponseReady(false), m_bankIdVec(x_bankIdVec) {
+
+        assert(x_cmdMnemonic == e_BankCommandType::REF); // This constructor only for REF cmds!
+
+	m_bankId = x_bankIdVec.front();
+	
+	m_cmdToString[e_BankCommandType::ERR] = "ERR";
+	m_cmdToString[e_BankCommandType::ACT] = "ACT";
+	m_cmdToString[e_BankCommandType::READ] = "READ";
+	m_cmdToString[e_BankCommandType::READA] = "READA";
+	m_cmdToString[e_BankCommandType::WRITE] = "WRITE";
+	m_cmdToString[e_BankCommandType::WRITEA] = "WRITEA";
+	m_cmdToString[e_BankCommandType::PRE] = "PRE";
+	m_cmdToString[e_BankCommandType::PREA] = "PREA";
+	m_cmdToString[e_BankCommandType::REF] = "REF";
+}
+
 unsigned c_BankCommand::getAddress() const {
 	return (m_addr);
 }
@@ -120,6 +141,7 @@ void c_BankCommand::serialize_order(SST::Core::Serialization::serializer &ser)
   ser & m_addr;
   ser & m_row;
   ser & m_bankId;
+  ser & m_bankIdVec;
   ser & m_cmdMnemonic;
   ser & m_cmdToString;
   ser & m_isResponseReady;

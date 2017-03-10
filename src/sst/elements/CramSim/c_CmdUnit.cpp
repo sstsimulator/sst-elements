@@ -731,10 +731,6 @@ void c_CmdUnit::sendReqCloseBankPolicy(
 
 				c_BankInfo* l_bank = m_banks.at(l_bankNum);
 
-//				std::cout << "l_bankNum " << l_bankNum << " state: ";
-//				l_bank->print();
-//				std::cout << std::endl;
-
 				if (sendCommand((l_cmdPtr), l_bank)) {
 					m_issuedDataCmd = l_isDataCmd || m_issuedDataCmd;
 
@@ -1154,65 +1150,41 @@ void c_CmdUnit::sendRequest() {
 }
 
 void c_CmdUnit::sendRefresh() {
-  // first fill the refCmdVec
-  std::vector<c_BankCommand*> l_refCmdVec;
-  for(auto l_cmd : m_cmdReqQ) {
-    if(l_cmd->getCommandMnemonic() == e_BankCommandType::REF) {
-      l_refCmdVec.push_back(l_cmd);
-      c_BankInfo *l_bank = m_banks.at(l_cmd->getBankId());
-      unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
-      if (!l_bank->isCommandAllowed(l_cmd, l_time)) { // can't send all refs now, cancel!
-	return;
-      }
-    } else {
-      break;
+  //std::cout << std::endl << "@" << std::dec
+  //	    << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+  //	    << __PRETTY_FUNCTION__ << std::endl;
+  
+  c_BankCommand *l_refCmd = m_cmdReqQ.front();
+  assert(l_refCmd->getCommandMnemonic() == e_BankCommandType::REF);
+
+  // determine if all banks are ready to refresh
+  for(auto l_bankId : *(l_refCmd->getBankIdVec())) {
+    c_BankInfo *l_bank = m_banks.at(l_bankId);
+    unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+    if (!l_bank->isCommandAllowed(l_refCmd, l_time)) { // can't send all refs now, cancel!
+      return;
     }
   }
 
-  for(auto l_refCmd : l_refCmdVec) {
-    unsigned l_bankNum = l_refCmd->getBankId();
-    c_BankInfo *l_bank = m_banks.at(l_bankNum);
-    //std::cout << "Attempting to send Refresh to bankId " << l_bankNum;
-    if(sendCommand(l_refCmd, l_bank)) {
-      //std::cout << " Succeeded!" << std::endl;
+  bool l_first = true;
+  c_BankCommand *l_cmdToSend = l_refCmd;
+  for(auto l_bankId : *(l_refCmd->getBankIdVec())) {
+    c_BankInfo *l_bank = m_banks.at(l_bankId);
+    if(l_first) {
+      l_first = false;
+    } else {
+      // make a new bank command for each bank after the first
+      // each bank deletes their own command
+      l_cmdToSend = new c_BankCommand(l_refCmd->getSeqNum(), l_refCmd->getCommandMnemonic(),
+				      0, l_bankId);
+    }
+    if(sendCommand(l_cmdToSend, l_bank)) {
       m_refsSent++;
     } else {
       assert(0);
-      //std::cout << " FAILED!" << std::endl;
     }
   }
-  /*  Old version that sends refs to individual banks before checking that all banks are able to enter refresh
-	std::vector<c_BankCommand*>::iterator l_cmdIter = m_cmdReqQ.begin();
-	int l_tmp = 0;
-	std::cout << "Starting to iterate " << m_cmdReqQ.size() << std::endl << std::endl;
-	std::cout << l_tmp << " " << (*l_cmdIter)->getCommandString() << std::endl;
-	while (m_cmdReqQ.size() > 0 
-			&& (*l_cmdIter)->getCommandMnemonic() == e_BankCommandType::REF) {
-	  std::cout << l_tmp << " " << m_refsSent << " " << (*l_cmdIter)->getCommandString()
-		    << " " << (*l_cmdIter) << " " << *(m_cmdReqQ.rbegin()) << " " << m_cmdReqQ.size()
-		    << std::endl;
-		c_BankCommand* l_refCmd = (*l_cmdIter);
 
-		unsigned l_bankNum = l_refCmd->getBankId();
-		c_BankInfo* l_bank = m_banks.at(l_bankNum);
-
-		if (sendCommand(l_refCmd, l_bank)) {
-
-//			 printQueues();
-//			 std::cout << "@" << std::dec
-//			 		<< Simulation::getSimulation()->getCurrentSimCycle()
-//			 		<< ": " << __PRETTY_FUNCTION__ << ": Gave BankState " << l_bankNum << " a REF Cmd" << std::endl;
-//			 l_refCmd->print();
-//			 std::cout << "l_bank = " << std::dec << l_bankNum << std::endl;
-//			 std::cout << std::endl;
-
-			m_refsSent++;
-		} 
-
-		++l_cmdIter;
-		l_tmp++;
-	}
-  */
 }
 
 // TODO: Determine whether or not k_cmdQueueFindAnyIssuable is necesarry for future use
@@ -1277,9 +1249,12 @@ bool c_CmdUnit::sendCommand(c_BankCommand* x_bankCommandPtr,
 	      (*m_cmdTraceStream) << "@" << std::dec
 				  << Simulation::getSimulation()->getCurrentSimCycle()
 				  << " " << (x_bankCommandPtr)->getCommandString()
-				  << " " << std::dec << (x_bankCommandPtr)->getSeqNum()
-				  << " " << std::dec << x_bankCommandPtr->getBankId()
-				  << std::endl;
+				  << " " << std::dec << (x_bankCommandPtr)->getSeqNum();
+		//<< " " << std::dec << x_bankCommandPtr->getBankId()
+	      for(auto l_bankId : *(x_bankCommandPtr->getBankIdVec())) {
+		std::cout << " " << l_bankId;
+	      }
+	      std::cout << std::endl;
 	    } else {
 	      (*m_cmdTraceStream) << "@" << std::dec
 				  << Simulation::getSimulation()->getCurrentSimCycle()
@@ -1298,15 +1273,10 @@ bool c_CmdUnit::sendCommand(c_BankCommand* x_bankCommandPtr,
 	    }
 	  }
 
-	  //		std::cout << std::endl << "@" << std::dec
-	  //				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-	  //				<< __PRETTY_FUNCTION__ << ": Sent command " << std::endl;
-	  //		(x_bankCommandPtr)->print();
-	  //		c_AddressHasher* l_hasher = c_AddressHasher::getInstance();
-	  //		unsigned l_bankNum = l_hasher->getBankFromAddress1(
-	  //				x_bankCommandPtr->getAddress(), m_numBanks);
-	  //		std::cout << " going to bank " << std::dec << l_bankNum << std::endl;
-	  //		std::cout << std::endl;	  
+	        //std::cout << std::endl << "@" << std::dec
+		//	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+		//	  << __PRETTY_FUNCTION__ << ": Sent command " << std::endl;
+		//(x_bankCommandPtr)->print();
 
 		// send command to BankState
 		x_bank->handleCommand(x_bankCommandPtr, l_time);
@@ -1355,7 +1325,7 @@ bool c_CmdUnit::sendCommand(c_BankCommand* x_bankCommandPtr,
 //		m_cmdReqQ.remove(x_bankCommandPtr);
 		m_cmdReqQ.erase(
 				std::remove(m_cmdReqQ.begin(), m_cmdReqQ.end(),
-						x_bankCommandPtr), m_cmdReqQ.end());
+					    x_bankCommandPtr), m_cmdReqQ.end());
 
 		return true;
 	} else
