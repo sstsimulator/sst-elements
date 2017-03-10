@@ -81,7 +81,7 @@ c_DramSimTraceReader::c_DramSimTraceReader(ComponentId_t x_id, Params& x_params)
 				<< std::endl;
 		exit(-1);
 	}
-	m_traceFileStream = new zstr::ifstream(m_traceFileName, std::ifstream::in);
+	m_traceFileStream = new std::ifstream(m_traceFileName, std::ifstream::in);
 	if(!(*m_traceFileStream)) {
 	  std::cerr << "Unable to open trace file " << m_traceFileName << " Aborting!" << std::endl;
 	  exit(-1);

@@ -29,7 +29,6 @@
 
 //local includes
 #include "c_Transaction.hpp"
-#include "c_zstr.hpp"
 
 typedef unsigned long ulong;
 
@@ -99,7 +98,7 @@ private:
 
 	//params for internal microarcitecture
 	std::string m_traceFileName;
-        zstr::ifstream *m_traceFileStream; // handles gzip compressed streams as well
+        std::ifstream *m_traceFileStream; 
 	std::map<std::string,e_TransactionType> m_stringToTxnTypeMap = { {"READ",e_TransactionType::READ},
 									 {"WRITE",e_TransactionType::WRITE} };
 
