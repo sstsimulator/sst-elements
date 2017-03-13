@@ -450,9 +450,9 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	for (unsigned l_i = 0; l_i != k_cmdResQEntries + 1; ++l_i)
 		m_statsResQ[l_i] = 0;
 
-	// tell the simulator not to end without us
-	registerAsPrimaryComponent();
-	primaryComponentDoNotEndSim();
+	// tell the simulator not to end without us <--why?
+	//registerAsPrimaryComponent();
+	//primaryComponentDoNotEndSim();
 
 	// configure links
 

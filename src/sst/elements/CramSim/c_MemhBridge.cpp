@@ -77,8 +77,8 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 
 
 	// tell the simulator not to end without us
-	registerAsPrimaryComponent();
-	primaryComponentDoNotEndSim();
+	//registerAsPrimaryComponent();
+	//primaryComponentDoNotEndSim();
 
 	/*---- CONFIGURE LINKS ----*/
 

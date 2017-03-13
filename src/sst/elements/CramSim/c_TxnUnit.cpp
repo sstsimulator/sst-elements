@@ -258,9 +258,9 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	for (unsigned l_i = 0; l_i != k_txnResQEntries + 1; ++l_i)
 		m_statsResQ[l_i] = 0;
 
-	// tell the simulator not to end without us
-	registerAsPrimaryComponent();
-	primaryComponentDoNotEndSim();
+	// tell the simulator not to end without us <-- why??[seokin]
+	//registerAsPrimaryComponent();
+	//primaryComponentDoNotEndSim();
 
 	// configure links
 
