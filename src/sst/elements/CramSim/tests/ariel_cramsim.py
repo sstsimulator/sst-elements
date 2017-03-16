@@ -114,7 +114,7 @@ g_params = setup_config_params()
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "21000us")
+#sst.setProgramOption("stopAtCycle", "21000us")
 
 
 
@@ -134,6 +134,7 @@ corecount = 8
 ## Application Info
 os.environ['SIM_DESC'] = 'EIGHT_CORES'
 os.environ['OMP_NUM_THREADS'] = str(corecount)
+
 
 sst_root = os.getenv( "SST_ROOT" )
 
@@ -158,7 +159,7 @@ ariel.addParams({
    "maxcorequeue"        : "256",
    "maxissuepercycle"    : "2",
    "pipetimeout"         : "0",
-   "executable"         : str(os.environ['OMP_EXE']),
+   "executable"         : "./stream",
    "memorylevels"        : "1",
    "arielinterceptcalls" : "1",
    "arielmode"           : "1",
@@ -184,7 +185,6 @@ def genMemHierarchy(cores):
        "clock"                 : "1Ghz",
       "backend" : "memHierarchy.cramsim",
       "backend.access_time" : "2 ns",   # Phy latency
-      "backend.mem_size" : "512MiB",
       "backend.mem_size" : "512MiB",
        "request_width"         : cacheLineSize
    })
