@@ -24,6 +24,7 @@
 #include "simpleStatisticsComponent.h"
 #include "simpleMessageGeneratorComponent.h"
 #include "simpleLookupTableComponent.h"
+#include "simpleSubComponent.h"
 
 
 using namespace SST;
@@ -34,6 +35,7 @@ using namespace SST::SimpleRNGComponent;
 using namespace SST::SimpleStatisticsComponent;
 using namespace SST::SimpleMessageGeneratorComponent;
 using namespace SST::SimpleElementExample;
+using namespace SST::SimpleSubComponent;
 
 static Component* create_simpleComponent(SST::ComponentId_t id, SST::Params& params) 
 {
@@ -70,6 +72,18 @@ static Component* create_simpleLookupTableComponent(SST::ComponentId_t id, SST::
     return new SimpleLookupTableComponent(id, params);
 }
 
+static Component* create_SubComponentLoader(SST::ComponentId_t id, SST::Params& params)
+{
+    return new SubComponentLoader(id, params);
+}
+static SubComponent* create_SubCompSender(SST::Component *owner, SST::Params& params)
+{
+    return new SubCompSender(owner, params);
+}
+static SubComponent* create_SubCompReceiver(SST::Component *owner, SST::Params& params)
+{
+    return new SubCompReceiver(owner, params);
+}
 
 static const ElementInfoParam simpleComponent_params[] = {
     { "workPerCycle", "Count of busy work to do during a clock tick.", NULL},
@@ -159,6 +173,73 @@ static const ElementInfoParam simpleLookupTableComponent_params[] = {
 };
 
 
+
+static const ElementInfoParam simpleSubComp_SubCompLoader_params[] = {
+    {"clock", "Clock Rate", "1GHz"},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoSubComponentHook simpleSubComp_SubCompLoader_subComps[] = {
+    {"mySubComp", "Subcomponent to do my real work", "SST::SimpleSubComponent::SubCompInterface"},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoParam simpleSubComp_SubCompSender_params[] = {
+    {"sendCount", "Number of Messages to Send", "10"},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoStatistic simpleSubComp_SubCompSender_stats[] = {
+    {"numSent", "# of msgs sent", "", 1},
+    {NULL, NULL, NULL, 0}
+};
+
+static const ElementInfoPort simpleSubComp_SubCompSender_ports[] = {
+    {"sendPort", "Sending Port", simpleMessageGeneratorComponent_port_events},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoParam simpleSubComp_SubCompReceiver_params[] = {
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoStatistic simpleSubComp_SubCompReceiver_stats[] = {
+    {"numRecv", "# of msgs sent", "", 1},
+    {NULL, NULL, NULL, 0}
+};
+
+static const ElementInfoPort simpleSubComp_SubCompReceiver_ports[] = {
+    {"recvPort", "Receiving Port", simpleMessageGeneratorComponent_port_events},
+    {NULL, NULL, NULL}
+};
+
+
+static const ElementInfoSubComponent simpleElementSubComponents[] = {
+    {
+        .name = "SubCompSender",
+        .description = "Sending Subcomponent",
+        .printHelp = NULL,
+        .alloc = create_SubCompSender,
+        .params = simpleSubComp_SubCompSender_params,
+        .stats = simpleSubComp_SubCompSender_stats,
+        .provides = "SST::simpleSubComponent::SubCompInterface",
+        .ports = simpleSubComp_SubCompSender_ports,
+        .subComponents = NULL
+    },
+    {
+        .name = "SubCompReceiver",
+        .description = "Receiving Subcomponent",
+        .printHelp = NULL,
+        .alloc = create_SubCompReceiver,
+        .params = simpleSubComp_SubCompReceiver_params,
+        .stats = simpleSubComp_SubCompReceiver_stats,
+        .provides = "SST::simpleSubComponent::SubCompInterface",
+        .ports = simpleSubComp_SubCompReceiver_ports,
+        .subComponents = NULL
+    },
+    {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+};
+
 static const ElementInfoComponent simpleElementComponents[] = {
     { "simpleComponent",                                 // Name
       "Simple Demo Component",                           // Description
@@ -223,6 +304,17 @@ static const ElementInfoComponent simpleElementComponents[] = {
       COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
       NULL                                               // Statistics
     },
+    {
+        .name = "SubComponentLoader",
+        .description = "Demonstrates subcomponents",
+        .printHelp = NULL,
+        .alloc = create_SubComponentLoader,
+        .params = simpleSubComp_SubCompLoader_params,
+        .ports = NULL,
+        .category = COMPONENT_CATEGORY_UNCATEGORIZED,
+        .stats = NULL,
+        .subComponents = simpleSubComp_SubCompLoader_subComps
+    },
     { NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL}
 };
 
@@ -234,7 +326,7 @@ extern "C" {
         NULL,                                            // Events 
         NULL,                                            // Introspectors 
         NULL,                                            // Modules 
-        NULL,                                            // Subcomponents 
+        simpleElementSubComponents,                      // Subcomponents
         NULL,                                            // Partitioners
         NULL,                                            // Python Module Generator
         NULL                                             // Generators

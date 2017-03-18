@@ -313,6 +313,11 @@ static const ElementInfoPort basecpu_ports[] = {
     	{ NULL, NULL, NULL }
 };
 
+static const ElementInfoSubComponentHook basecpu_subComps[] = {
+    { "generator", "SST::Miranda::RequestGenerator" },
+    { NULL, NULL }
+};
+
 static const ElementInfoComponent components[] = {
 	{
 		"BaseCPU",
@@ -322,7 +327,8 @@ static const ElementInfoComponent components[] = {
 		basecpu_params,
 		basecpu_ports,
 		COMPONENT_CATEGORY_PROCESSOR,
-		basecpu_stats
+		basecpu_stats,
+        basecpu_subComps,
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0 }
 };
