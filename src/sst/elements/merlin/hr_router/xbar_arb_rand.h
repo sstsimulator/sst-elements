@@ -18,6 +18,7 @@
 #define COMPONENTS_HR_ROUTER_XBAR_ARB_RAND_H
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -104,7 +105,7 @@ private:
     // PortControl** ports;
     
 public:
-    xbar_arb_rand(Component* parent) :
+    xbar_arb_rand(Component* parent, Params& params) :
         XbarArbitration(parent)
     {
         rng = new RNG::XORShiftRNG(69);
@@ -227,6 +228,17 @@ public:
         /* } */
     }
     
+    SST_ELI_REGISTER_SUBCOMPONENT(xbar_arb_rand,"merlin","xbar_arb_rand","Random arbitration unit for hr_router","SST::Merlin::XbarArbitration")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
 };
  
 }

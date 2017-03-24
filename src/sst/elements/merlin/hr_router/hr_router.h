@@ -17,10 +17,9 @@
 #ifndef COMPONENTS_HR_ROUTER_HR_ROUTER_H
 #define COMPONENTS_HR_ROUTER_HR_ROUTER_H
 
-#include "router.h"
-
 #include <sst/core/clock.h>
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
@@ -30,6 +29,7 @@
 
 #include <queue>
 
+#include "sst/elements/merlin/router.h"
 
 using namespace SST;
 
@@ -104,6 +104,42 @@ public:
     
     void dumpState(std::ostream& stream);
     void printStatus(Output& out);
+
+
+    SST_ELI_REGISTER_COMPONENT(hr_router,"merlin","hr_router","High radix router",COMPONENT_CATEGORY_NETWORK)
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"id", "ID of the router."},
+        {"num_ports", "Number of ports that the router has"},
+        {"num_vcs", "DEPRECATED", ""},
+        {"topology", "Name of the topology subcomponent that should be loaded to control routing."},
+        {"xbar_arb", "Arbitration unit to be used for crossbar.","merlin.xbar_arb_lru"},
+        {"link_bw", "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
+        {"flit_size", "Flit size specified in either b or B (can include SI prefix)."},
+        {"xbar_bw", "Bandwidth of the crossbar specified in either b/s or B/s (can include SI prefix)."},
+        {"input_latency", "Latency of packets entering switch into input buffers.  Specified in s (can include SI prefix)."},
+        {"output_latency", "Latency of packets exiting switch from output buffers.  Specified in s (can include SI prefix)."},
+        {"input_buf_size", "Size of input buffers specified in b or B (can include SI prefix)."},
+        {"output_buf_size", "Size of output buffers specified in b or B (can include SI prefix)."},
+        {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
+        {"debug", "Turn on debugging for router. Set to 1 for on, 0 for off.", "0"}
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "send_bit_count", "Count number of bits sent on link", "bits", 1},
+        { "send_packet_count", "Count number of packets sent on link", "packets", 1},
+        { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
+        { "xbar_stalls", "Count number of cycles the xbar is stalled", "cycles", 1},
+        { "idle_time", "amount of time spent idle for a given port", "units of core timebase", 1},
+        { "width_adj_count", "number of times that link width was increased or decreased", "width adjustment count", 1}
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"port%(num_ports)d",  "Ports which connect to endpoints or other routers.", { "merlin.RtrEvent", "merlin.internal_router_event", "merlin.topologyevent", "merlin.credit_event" } }
+    )
+
+
+
 };
 
 }
