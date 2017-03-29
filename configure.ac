@@ -47,6 +47,14 @@ SST_CHECK_OSX()
 
 SST_ELEMENT_CONFIG_OUTPUT()
 
+# Compile flags come from SST-Core, add or remove extra warnings 
+# depending on the use-picky flag 
+SST_CHECK_PICKY
+#AS_IF([test "x$use_picky" = "xyes"],
+AS_IF([test "x$use_picky" = "xyes"],
+      [CFLAGS="$CFLAGS -Wall -Wextra"; CXXFLAGS="$CXXFLAGS -Wall -Wextra"],
+      [CFLAGS=`echo $CFLAGS | sed -e 's/-Wall//g' -e 's/-Wextra//g'`; CXXFLAGS=`echo $CXXFLAGS | sed -e 's/-Wall//g' -e 's/-Wextra//g'`])
+
 AC_MSG_CHECKING([for SST-Elements Git Branch, Head SHA and Commit Count])
 if test -d ".git" ; then
     SSTELEMENTS_GIT_BRANCH=`git rev-parse --abbrev-ref HEAD`
