@@ -82,6 +82,7 @@ messier_inst.addParams({
       "write_buffer_size" : "32",
       "flush_th" : "90",
       "num_banks" : "32",
+      "num_ranks" : 2,
       "max_outstanding" : "32",
       "max_current_weight" : "160",
       "read_weight" : "5",
