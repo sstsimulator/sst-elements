@@ -2,7 +2,7 @@
 
 # Structural Simulation Toolkit (SST)
 
-#### Copyright (c) 2009-2016, Sandia Corporation
+#### Copyright (c) 2009-2017, Sandia Corporation
 Portions are copyright of other developers:
 See the file CONTRIBUTITORS.TXT in the top level directory
 of this repository for more information.
