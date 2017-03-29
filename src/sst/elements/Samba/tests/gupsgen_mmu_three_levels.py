@@ -50,7 +50,7 @@ comp_memory.addParams({
 
 mmu = sst.Component("mmu0", "Samba")
 mmu.addParams({
-        "os_page_size": 2048,
+        "os_page_size": 4,
         "corecount": 1,
         "sizes_L1": 3,
         "page_size1_L1": 4,
@@ -72,8 +72,17 @@ mmu.addParams({
         "size2_L2": 1536,
         "assoc3_L2": 4,
         "size3_L2": 16,
+	"page_size1_L3": 4,
+        "page_size2_L3": 2048,
+        "page_size3_L3": 1024*1024,
+        "assoc1_L2": 12,
+        "size1_L3": 8192,
+        "assoc2_L2": 12,
+        "size2_L2": 4096,
+        "assoc3_L2": 8,
+        "size3_L2": 2048,
         "clock": "2 Ghz",
-        "levels": 2,
+        "levels": 3,
         "max_width_L1": 3,
         "max_outstanding_L1": 2,
         "latency_L1": 4,
