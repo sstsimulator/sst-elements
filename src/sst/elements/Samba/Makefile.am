@@ -31,6 +31,13 @@ libSamba_la_LDFLAGS = \
 libSamba_la_LIBADD = \
 	$(SST_SYSTEMC_LIB)
 
+EXTRA_DIST = \
+	tests/gupsgen_mmu_4KB.py \
+	tests/gupsgen_mmu.py \
+	tests/gupsgen_mmu_three_levels.py \
+	tests/stencil3dbench_mmu.py \
+	tests/streambench_mmu.py 
+
 #noinst_PROGRAMS = infogather
 #infogather_SOURCES = infogather.cc
 #infogather_CPPFLAGS = -I/usr/local/systemc-2.3/include \
