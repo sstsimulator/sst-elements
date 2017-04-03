@@ -6,7 +6,7 @@
 AC_INIT([SST Elements Library], [-dev], [sst@sandia.gov])
 
 AC_PREREQ([2.59])
-AC_COPYRIGHT([Copyright Sandia National Laboratories, 2004-2016])
+AC_COPYRIGHT([Copyright Sandia National Laboratories, 2004-2017])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config])
@@ -47,6 +47,15 @@ SST_CHECK_OSX()
 
 SST_ELEMENT_CONFIG_OUTPUT()
 
+# Compile flags come from SST-Core, add or remove extra warnings 
+# depending on the use-picky flag 
+SST_CHECK_PICKY
+AS_IF([test "x$use_picky" = "xyes"],
+      [WARNFLAGS="-Wall -Wextra"],
+      [WARNFLAGS=""])
+CFLAGS="$CFLAGS $WARNFLAGS"
+CXXFLAGS="$CXXFLAGS $WARNFLAGS"
+      
 AC_MSG_CHECKING([for SST-Elements Git Branch, Head SHA and Commit Count])
 if test -d ".git" ; then
     SSTELEMENTS_GIT_BRANCH=`git rev-parse --abbrev-ref HEAD`

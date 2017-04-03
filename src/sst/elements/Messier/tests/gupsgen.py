@@ -75,17 +75,18 @@ messier_params = {
 messier_inst.addParams(messier_params)
 
 messier_inst.addParams({
-      "tCL" : "70",
-      "tRCD" : "200",
+      "tCL" : "30",
+      "tRCD" : "300",
       "clock" : "1GHz",
-      "tCL_W" : "50",
+      "tCL_W" : "1000",
       "write_buffer_size" : "32",
       "flush_th" : "90",
-      "num_banks" : "16",
+      "num_banks" : "32",
       "max_outstanding" : "32",
       "max_current_weight" : "160",
       "read_weight" : "5",
-      "write_weight" : "50"
+      "write_weight" : "50",
+      "max_writes" : 4
 })
 
 
