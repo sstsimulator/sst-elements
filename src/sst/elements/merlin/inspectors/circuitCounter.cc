@@ -17,6 +17,11 @@
 
 #include "circuitCounter.h"
 
+using namespace std;
+
+namespace SST {
+namespace Merlin {
+
 SST::Core::ThreadSafe::Spinlock CircNetworkInspector::mapLock;
 CircNetworkInspector::setMap_t CircNetworkInspector::setMap;
 
@@ -86,3 +91,6 @@ void CircNetworkInspector::finish() {
         mapLock.unlock();
     }
 }
+
+} // namespace Merlin
+} // namespace SST

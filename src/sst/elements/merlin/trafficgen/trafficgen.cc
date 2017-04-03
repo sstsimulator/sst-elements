@@ -18,7 +18,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>

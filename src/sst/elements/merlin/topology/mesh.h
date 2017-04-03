@@ -19,6 +19,7 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_MESH_H
 #define COMPONENTS_MERLIN_TOPOLOGY_MESH_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
@@ -131,6 +132,23 @@ private:
     void parseDimString(const std::string &shape, int *output) const;
     int get_dest_router(int dest_id) const;
     int get_dest_local_port(int dest_id) const;
+
+
+    SST_ELI_REGISTER_SUBCOMPONENT(topo_mesh,"merlin","mesh","Multi-dimensional mesh topology object","SST::Merlin::Topology")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"mesh:shape","Shape of the mesh specified as the number of routers in each dimension, where each dimension is separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
+        {"mesh:width","Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
+        {"mesh:local_ports","Number of endpoints attached to each router."}
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+
 };
 
 }

@@ -19,6 +19,7 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY2_H
 #define COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY2_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
@@ -135,6 +136,28 @@ private:
     uint32_t router_to_group(uint32_t group);
     uint32_t port_for_router(uint32_t router);
     uint32_t port_for_group(uint32_t group, uint32_t global_slice, int id = -1);
+
+    SST_ELI_REGISTER_SUBCOMPONENT(topo_dragonfly2,"merlin","dragonfly2","Dragonfly2 topology object.  Implements a dragonfly with a single all to all pattern within the group.","SST::Merlin::Topology")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"dragonfly:hosts_per_router","Number of hosts connected to each router."},
+        {"dragonfly:routers_per_group","Number of links used to connect to routers in same group."},
+        {"dragonfly:intergroup_per_router","Number of links per router connected to other groups."},
+        {"dragonfly:intergroup_links","Number of links between each pair of groups."},
+        {"dragonfly:num_groups","Number of groups in network."},
+        {"dragonfly:algorithm","Routing algorithm to use [minmal (default) | valiant].", "minimal"},
+        {"dragonfly:adaptive_threshold","Threshold to use when make adaptive routing decisions.", "2.0"},
+        {"dragonfly:global_link_map","Array specifying connectivity of global links in each dragonfly group."},
+        {"dragonfly:global_route_mode","Mode for intepreting global link map [absolute (default) | relative].","absolute"},
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+
 };
 
 

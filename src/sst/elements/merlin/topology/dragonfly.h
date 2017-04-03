@@ -19,6 +19,7 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY_H
 #define COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
@@ -84,6 +85,24 @@ private:
     uint32_t router_to_group(uint32_t group) const;
     uint32_t port_for_router(uint32_t router) const;
     uint32_t port_for_group(uint32_t group) const;
+
+    SST_ELI_REGISTER_SUBCOMPONENT(topo_dragonfly,"merlin","dragonfly","Dragonfly topology object","SST::Merlin::Topology")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"dragonfly:hosts_per_router","Number of hosts connected to each router."},
+        {"dragonfly:routers_per_group","Number of links used to connect to routers in same group."},
+        {"dragonfly:intergroup_per_router","Number of links per router connected to other groups."},
+        {"dragonfly:num_groups","Number of groups in network."},
+        {"dragonfly:algorithm","Routing algorithm to use [minmal (default) | valiant].", "minimal"}
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+
 };
 
 

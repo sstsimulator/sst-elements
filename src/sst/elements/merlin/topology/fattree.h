@@ -19,6 +19,7 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_FATTREE_H
 #define COMPONENTS_MERLIN_TOPOLOGY_FATTREE_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
@@ -74,6 +75,20 @@ public:
 
     virtual int computeNumVCs(int vns) {return vns;}
     
+    SST_ELI_REGISTER_SUBCOMPONENT(topo_fattree,"merlin","fattree","Fattree topology object","SST::Merlin::Topology")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"fattree:shape","Shape of the fattree"},
+        {"fattree:routing_alg","Routing algorithm to use. [deterministic | adaptive]","deterministic"},
+        {"fattree:adaptive_threshold","Threshold used to determine if a packet will adaptively route."}
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
 };
 
 }

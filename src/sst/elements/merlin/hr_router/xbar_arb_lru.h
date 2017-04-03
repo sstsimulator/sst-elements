@@ -18,6 +18,7 @@
 #define COMPONENTS_HR_ROUTER_XBAR_ARB_LRU_H
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -52,7 +53,7 @@ private:
     // PortControl** ports;
     
 public:
-    xbar_arb_lru(Component* parent) :
+    xbar_arb_lru(Component* parent, Params& param) :
         XbarArbitration(parent)
     {
     }
@@ -193,6 +194,17 @@ public:
         /* } */
     }
     
+    SST_ELI_REGISTER_SUBCOMPONENT(xbar_arb_lru,"merlin","xbar_arb_lru","Least recently used arbitration unit for hr_router","SST::Merlin::XbarArbitration")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
 };
  
 }
