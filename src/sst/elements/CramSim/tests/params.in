@@ -105,15 +105,15 @@ noc_dimension 0
 link_width 32
 
 # DEBUG
-debug_core_id 0
+debug_core_id 1
 debug_cycle_start 1
-debug_cycle_stop 0
-debug_front_stage 0
-debug_alloc_stage 0
-debug_schedule_stage 0
-debug_exec_stage 0
-debug_dcu_stage 0
-debug_retire_stage 0
+debug_cycle_stop 1
+debug_front_stage 1
+debug_alloc_stage 1
+debug_schedule_stage 1
+debug_exec_stage 1
+debug_dcu_stage 1
+debug_retire_stage 1
 debug_map_stage 0
 debug_mem  0
 debug_trace_read 0

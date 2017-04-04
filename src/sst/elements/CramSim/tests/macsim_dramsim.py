@@ -2,20 +2,6 @@
 import sst
 import os
 
-def setup_cramsim_params(cramsim_config_file):
-	l_params = {}
-	l_configFile = open(cramsim_config_file, 'r')
-	for l_line in l_configFile:
-		l_tokens = l_line.split(' ')
-		#print l_tokens[0], ": ", l_tokens[1]
-		l_params[l_tokens[0]] = l_tokens[1]
-
-	return l_params
-
-
-# Setup parameters
-cramsim_params = setup_cramsim_params("../ddr3.cfg")
-macsim_params_file = "params.in"
 
 # Define SST Program Options:
 sst.setProgramOption("timebase", "1ps")
@@ -33,7 +19,7 @@ comp_gpu0.addParams({
      "frequency" : "4 Ghz",
      "output_dir" : "results",
      "debug" : "0",
-     "param_file" : macsim_params_file
+     "param_file" : "params.in"
 })
 comp_core0l1icache = sst.Component("core0l1icache", "memHierarchy.Cache")
 comp_core0l1icache.addParams({
@@ -537,13 +523,15 @@ comp_gpu0l2cache.addParams({
 })
 comp_memory0 = sst.Component("memory0", "memHierarchy.MemController")
 comp_memory0.addParams({
-     "debug" : "0",
+     "debug" : "1",
      "coherence_protocol" : "MESI",
-	 "backend" : "memHierarchy.cramsim",
+	 "system_ini" : "system.ini",
+	 "backend" : "memHierarchy.dramsim",
 	 "backend.access_time" : "100 ns",
      "backend.mem_size" : "4096MiB",
-     "clock" : "1GHz",
-     "rangeStart" : "0",
+	 "backend.system_ini" : "system.ini",
+	 "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+     "clock" : "1 GHz",
 	 "request_width"	: "128"
 })
 
@@ -698,75 +686,6 @@ link_bus_gpu0l2cache = sst.Link("link_bus_gpu0l2cachebus_gpu0l2cache")
 link_bus_gpu0l2cache.connect( (comp_gpu0l1l2bus, "low_network_0", "10000ps"), (comp_gpu0l2cache, "high_network_0", "10000ps") )
 link_gpu0l2_mem0 = sst.Link("link_gpu0l2_mem0gpu0l2_mem0")
 link_gpu0l2_mem0.connect( (comp_gpu0l2cache, "low_network_0", "10000ps"), (comp_memory0, "direct_link", "10000ps") )
-
-# address hasher
-comp_addressHasher = sst.Component("AddrHash0", "CramSim.c_AddressHasher")
-comp_addressHasher.addParams(cramsim_params)
-
-
-
-# txn gen --> memHierarchy Bridge
-comp_memhBridge = sst.Component("memh_bridge", "CramSim.c_MemhBridge")
-comp_memhBridge.addParams(cramsim_params);
-
-# txn unit
-comp_txnUnit0 = sst.Component("TxnUnit0", "CramSim.c_TxnUnit")
-comp_txnUnit0.addParams(cramsim_params)
-
-# cmd unit
-comp_cmdUnit0 = sst.Component("CmdUnit0", "CramSim.c_CmdUnit")
-comp_cmdUnit0.addParams(cramsim_params)
-
-# bank receiver
-comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
-comp_dimm0.addParams(cramsim_params)
-
-link_dir_cramsim_link = sst.Link("link_dir_cramsim_link")
-link_dir_cramsim_link.connect( (comp_memory0, "cube_link", "2ns"), (comp_memhBridge, "linkCPU", "2ns") )
-
-txnReqLink_0 = sst.Link("txnReqLink_0")
-txnReqLink_0.connect( (comp_memhBridge, "outTxnGenReqPtr", cramsim_params["clockCycle"]), (comp_txnUnit0, "inTxnGenReqPtr", cramsim_params["clockCycle"]) )
-
-# memhBridge(=TxnGen) <- TxnUnit (Req)(Token)
-txnTokenLink_0 = sst.Link("txnTokenLink_0")
-txnTokenLink_0.connect( (comp_memhBridge, "inTxnUnitReqQTokenChg", cramsim_params["clockCycle"]), (comp_txnUnit0, "outTxnGenReqQTokenChg", cramsim_params["clockCycle"]) )
-
- # memhBridge(=TxnGen) <- TxnUnit (Res)(Txn)
-txnResLink_0 = sst.Link("txnResLink_0")
-txnResLink_0.connect( (comp_memhBridge, "inTxnUnitResPtr", cramsim_params["clockCycle"]), (comp_txnUnit0, "outTxnGenResPtr", cramsim_params["clockCycle"]) )
-
-# memhBridge(=TxnGen) -> TxnUnit (Res)(Token)
-txnTokenLink_1 = sst.Link("txnTokenLink_1")
-txnTokenLink_1.connect( (comp_memhBridge, "outTxnGenResQTokenChg", cramsim_params["clockCycle"]), (comp_txnUnit0, "inTxnGenResQTokenChg", cramsim_params["clockCycle"]) )
-
-
-
-# TXNUNIT / CMDUNIT LINKS
-# TxnUnit -> CmdUnit (Req) (Cmd)
-cmdReqLink_0 = sst.Link("cmdReqLink_0")
-cmdReqLink_0.connect( (comp_txnUnit0, "outCmdUnitReqPtrPkg", cramsim_params["clockCycle"]), (comp_cmdUnit0, "inTxnUnitReqPtr", cramsim_params["clockCycle"]) )
-
-# TxnUnit <- CmdUnit (Req) (Token)
-cmdTokenLink_0 = sst.Link("cmdTokenLink_0")
-cmdTokenLink_0.connect( (comp_txnUnit0, "inCmdUnitReqQTokenChg", cramsim_params["clockCycle"]), (comp_cmdUnit0, "outTxnUnitReqQTokenChg", cramsim_params["clockCycle"]) )
-
-# TxnUnit <- CmdUnit (Res) (Cmd)
-cmdResLink_0 = sst.Link("cmdResLink_0")
-cmdResLink_0.connect( (comp_txnUnit0, "inCmdUnitResPtr", cramsim_params["clockCycle"]), (comp_cmdUnit0, "outTxnUnitResPtr", cramsim_params["clockCycle"]) )
-
-
-
-
-# CMDUNIT / DIMM LINKS
-# CmdUnit -> Dimm (Req) (Cmd)
-cmdReqLink_1 = sst.Link("cmdReqLink_1")
-cmdReqLink_1.connect( (comp_cmdUnit0, "outBankReqPtr", cramsim_params["clockCycle"]), (comp_dimm0, "inCmdUnitReqPtr", cramsim_params["clockCycle"]) )
-
-# CmdUnit <- Dimm (Res) (Cmd)
-cmdResLink_1 = sst.Link("cmdResLink_1")
-cmdResLink_1.connect( (comp_cmdUnit0, "inBankResPtr", cramsim_params["clockCycle"]), (comp_dimm0, "outCmdUnitResPtr", cramsim_params["clockCycle"]) )
-
-
 
 
 # End of generated output.
