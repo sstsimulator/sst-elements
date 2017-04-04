@@ -197,6 +197,16 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	m_currentRefreshGroup=0;
 	m_currentREFICount = (int)((double)k_REFI/m_refreshGroups.size());
 
+	int l_tmp = 0;
+	for(auto l_vec : m_refreshGroups) {
+	  std::cout << "Refresh Group " << l_tmp << " : ";
+	  for(auto l_bankId : l_vec) {
+	    std::cout << l_bankId << " ";
+	  } std::cout << std::endl;
+	  l_tmp++;
+	}
+	  
+
 	//load neighboring component's params
 	k_txnGenResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenResQEntries", 100,
 			l_found);
@@ -443,7 +453,7 @@ void c_TxnUnit::createRefreshCmds() {
 	c_TransactionToCommands* l_converter =
 			c_TransactionToCommands::getInstance();
 
-	cout << "Refreshing group " << m_currentRefreshGroup << endl;
+	//cout << "Refreshing group " << m_currentRefreshGroup << endl;
 	m_refreshList = l_converter->getRefreshCommands(m_refreshGroups[m_currentRefreshGroup]);
 	m_currentRefreshGroup++;
 	if(m_currentRefreshGroup >= m_refreshGroups.size()) {
@@ -455,10 +465,10 @@ void c_TxnUnit::sendRequest() {
 
 	// first check if any refreshes are pending being sent
 	if (m_refreshList.size() > 0) {
-		// std::cout << "@" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		// 		<< __PRETTY_FUNCTION__ << std::endl;
-		// printf("%u REF commands left to send\n", m_refreshList.size());
+	  //		std::cout << "@" << std::dec
+	  //		  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+	  //		  << __PRETTY_FUNCTION__ << std::endl;
+	  //	printf("%u REF commands left to send\n", m_refreshList.size());
 		std::vector<c_BankCommand*> l_cmdPkg;
 		while (m_cmdUnitReqQTokens > 0 && m_refreshList.size() > 0) {
 			l_cmdPkg.push_back(m_refreshList.front());
@@ -468,7 +478,7 @@ void c_TxnUnit::sendRequest() {
 		}
 
 		if (l_cmdPkg.size() > 0) {
-			// printf("Sending %lu REF commands\n", l_cmdPkg.size());
+		  //printf("Sending %lu REF commands\n", l_cmdPkg.size());
 			c_CmdPtrPkgEvent* l_cmdPtrPkgEventPtr = new c_CmdPtrPkgEvent();
 			l_cmdPtrPkgEventPtr->m_payload = l_cmdPkg;
 			m_outCmdUnitReqPtrLink->send(l_cmdPtrPkgEventPtr);

@@ -83,6 +83,7 @@ private:
 	int k_txnGenReqQEntries;
 	int k_txnGenResQEntries;
 	double k_readWriteTxnRatio;
+        unsigned int k_randSeed;
 
 	//param for receiver
 	int k_txnUnitReqQEntries;
