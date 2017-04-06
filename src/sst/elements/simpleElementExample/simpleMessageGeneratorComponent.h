@@ -17,6 +17,7 @@
 #define _SIMPLEMESSAGEGENERATORCOMPONENT_H
 
 #include "sst/core/component.h"
+#include <sst/core/elementinfo.h>
 #include "sst/core/link.h"
 
 namespace SST {
@@ -49,6 +50,54 @@ private:
     
     SST::Link* remote_component;
     
+//static const ElementInfoParam simpleMessageGeneratorComponent_params[] = {
+//    { "printStats", "Prints the statistics from the component", "0"},
+//    { "clock", "Sets the clock for the message generator", "1GHz" },
+//    { "sendcount", "Sets the number of sends in the simulation.", "1000" },
+//    { "outputinfo", "Sets the level of output information", "1" },
+//    { NULL, NULL, NULL }
+//};
+
+//static const char * simpleMessageGeneratorComponent_port_events[] = {"simpleMessageGeneratorComponent.simpleMessage", NULL};
+
+//static const ElementInfoPort simpleMessageGeneratorComponent_ports[] = {
+//    { "remoteComponent", "Sets the link for the message component, message components talk to each other exchanging simple messages", simpleMessageGeneratorComponent_port_events },
+//    { NULL, NULL, NULL }
+//};
+
+//static const ElementInfoComponent simpleElementComponents[] = {
+//    { "simpleMessageGeneratorComponent",                 // Name
+//      "Messaging rate benchmark component",              // Description
+//      NULL,                                              // PrintHelp
+//      create_simpleMessageGeneratorComponent,            // Allocator
+//      simpleMessageGeneratorComponent_params,            // Parameters
+//      simpleMessageGeneratorComponent_ports,             // Ports
+//      COMPONENT_CATEGORY_NETWORK,                        // Category
+//      NULL                                               // Statistics
+//    },
+
+    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_COMPONENT(
+        simpleMessageGeneratorComponent,
+        "simpleElementExample",
+        "simpleMessageGeneratorComponent",
+        "Messaging rate benchmark component",
+        COMPONENT_CATEGORY_NETWORK
+    )
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        { "printStats", "Prints the statistics from the component", "0"},
+        { "clock", "Sets the clock for the message generator", "1GHz" },
+        { "sendcount", "Sets the number of sends in the simulation.", "1000" },
+        { "outputinfo", "Sets the level of output information", "1" },
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        { "remoteComponent", "Sets the link for the message component, message components talk to each other exchanging simple messages", { "simpleMessageGeneratorComponent.simpleMessage", NULL } },
+    )
 };
 
 } // namespace SimpleMessageGeneratorComponent

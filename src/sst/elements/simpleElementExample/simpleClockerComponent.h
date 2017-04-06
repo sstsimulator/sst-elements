@@ -17,6 +17,7 @@
 #define _SIMPLECLOCKERCOMPONENT_H
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 
 namespace SST {
 namespace SimpleClockerComponent {
@@ -50,6 +51,44 @@ private:
     
     std::string clock_frequency_str;
     int clock_count;
+    
+//static const ElementInfoParam simpleClockerComponent_params[] = {
+//    { "clock", "Clock frequency", "1GHz" },
+//    { "clockcount", "Number of clock ticks to execute", "100000"},
+//    { NULL, NULL, NULL }
+//};
+
+//static const ElementInfoComponent simpleElementComponents[] = {
+//    { "simpleClockerComponent",                          // Name
+//      "Clock Benchmark Component",                       // Description
+//      NULL,                                              // PrintHelp
+//      create_simpleClockerComponent,                     // Allocator
+//      simpleClockerComponent_params,                     // Parameters
+//      NULL,                                              // Ports
+//      COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
+//      NULL                                               // Statistics
+//    },
+
+
+    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_COMPONENT(
+        simpleClockerComponent,
+        "simpleElementExample",
+        "simpleClockerComponent",
+        "Clock Benchmark Component",
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        { "clock", "Clock frequency", "1GHz" },
+        { "clockcount", "Number of clock ticks to execute", "100000"},
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
     
 };
 

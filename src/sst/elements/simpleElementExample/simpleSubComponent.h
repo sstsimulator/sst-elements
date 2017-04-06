@@ -17,6 +17,7 @@
 #define _SIMPLESUBCOMPONENT_H
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/link.h>
 
@@ -44,6 +45,23 @@ private:
     bool tick(SST::Cycle_t);
     SubCompInterface* subComp;
 
+    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_COMPONENT(SubComponentLoader,
+                               "simpleElementExample",
+                               "SubComponentLoader",
+                               "Demonstrates subcomponentst",
+                               COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"clock", "Clock Rate", "1GHz"},
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
 };
 
 
@@ -58,6 +76,27 @@ public:
     ~SubCompSender() {}
     void clock(Cycle_t);
 
+    // REGISTER THIS SUB-COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        SubCompSender,
+        "simpleElementExample",
+        "SubCompSender",
+        "Sending Subcomponent",
+        "SST::simpleSubComponent::SubCompInterface"
+    )
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"sendCount", "Number of Messages to Send", "10"},
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        {"numSent", "# of msgs sent", "", 1},
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"sendPort", "Sending Port", { "simpleMessageGeneratorComponent.simpleMessage", NULL } },
+    )
+    
 };
 
 
@@ -73,10 +112,110 @@ public:
     ~SubCompReceiver() {}
     void clock(Cycle_t);
 
+    // REGISTER THIS SUB-COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        SubCompReceiver,
+        "simpleElementExample",
+        "SubCompReceiver",
+        "Receiving Subcomponent",
+        "SST::simpleSubComponent::SubCompInterface"
+    )
+    
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        {"numRecv", "# of msgs sent", "", 1},
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"recvPort", "Receiving Port", { "simpleMessageGeneratorComponent.simpleMessage", NULL } },
+    )
 };
+
+//static const ElementInfoParam simpleSubComp_SubCompLoader_params[] = {
+//    {"clock", "Clock Rate", "1GHz"},
+//    {NULL, NULL, NULL}
+//};
+
+//static const ElementInfoSubComponentHook simpleSubComp_SubCompLoader_subComps[] = {
+//    {"mySubComp", "Subcomponent to do my real work", "SST::SimpleSubComponent::SubCompInterface"},
+//    {NULL, NULL, NULL}
+//};
+
+//static const ElementInfoParam simpleSubComp_SubCompSender_params[] = {
+//    {"sendCount", "Number of Messages to Send", "10"},
+//    {NULL, NULL, NULL}
+//};
+//
+//static const ElementInfoStatistic simpleSubComp_SubCompSender_stats[] = {
+//    {"numSent", "# of msgs sent", "", 1},
+//    {NULL, NULL, NULL, 0}
+//};
+//
+//static const ElementInfoPort simpleSubComp_SubCompSender_ports[] = {
+//    {"sendPort", "Sending Port", simpleMessageGeneratorComponent_port_events},
+//    {NULL, NULL, NULL}
+//};
+
+//static const ElementInfoParam simpleSubComp_SubCompReceiver_params[] = {
+//    {NULL, NULL, NULL}
+//};
+//
+//static const ElementInfoStatistic simpleSubComp_SubCompReceiver_stats[] = {
+//    {"numRecv", "# of msgs sent", "", 1},
+//    {NULL, NULL, NULL, 0}
+//};
+//
+//static const ElementInfoPort simpleSubComp_SubCompReceiver_ports[] = {
+//    {"recvPort", "Receiving Port", simpleMessageGeneratorComponent_port_events},
+//    {NULL, NULL, NULL}
+//};
+
+
+//static const ElementInfoSubComponent simpleElementSubComponents[] = {
+//    {
+//        .name = "SubCompSender",
+//        .description = "Sending Subcomponent",
+//        .printHelp = NULL,
+//        .alloc = create_SubCompSender,
+//        .params = simpleSubComp_SubCompSender_params,
+//        .stats = simpleSubComp_SubCompSender_stats,
+//        .provides = "SST::simpleSubComponent::SubCompInterface",
+//        .ports = simpleSubComp_SubCompSender_ports,
+//        .subComponents = NULL
+//    },
+//    {
+//        .name = "SubCompReceiver",
+//        .description = "Receiving Subcomponent",
+//        .printHelp = NULL,
+//        .alloc = create_SubCompReceiver,
+//        .params = simpleSubComp_SubCompReceiver_params,
+//        .stats = simpleSubComp_SubCompReceiver_stats,
+//        .provides = "SST::simpleSubComponent::SubCompInterface",
+//        .ports = simpleSubComp_SubCompReceiver_ports,
+//        .subComponents = NULL
+//    },
+//    {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+//};
+//
+//static const ElementInfoComponent simpleElementComponents[] = {
+//    {
+//        .name = "SubComponentLoader",
+//        .description = "Demonstrates subcomponents",
+//        .printHelp = NULL,
+//        .alloc = create_SubComponentLoader,
+//        .params = simpleSubComp_SubCompLoader_params,
+//        .ports = NULL,
+//        .category = COMPONENT_CATEGORY_UNCATEGORIZED,
+//        .stats = NULL,
+//        .subComponents = simpleSubComp_SubCompLoader_subComps
+//    },
+   
 
 } // namespace SimpleSubComponent
 } // namespace SST
+
 
 
 
