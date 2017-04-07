@@ -15,4 +15,3 @@ config.status
 configure
 libtool
 tags
-*gem5*

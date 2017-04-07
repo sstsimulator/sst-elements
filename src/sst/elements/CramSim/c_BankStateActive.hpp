@@ -68,7 +68,7 @@ private:
 	c_BankCommand* m_receivedCommandPtr; //<! pointer to command received after entering this state
 	c_BankCommand* m_prevCommandPtr;
 	c_BankState* m_nextStatePtr;
-	unsigned m_timer;
+	SimTime_t m_timer;
 
 };
 } // namespace n_Bank

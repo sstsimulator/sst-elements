@@ -91,7 +91,7 @@ c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 	m_cmdToString[e_BankCommandType::REF] = "REF";
 }
 
-unsigned c_BankCommand::getAddress() const {
+ulong c_BankCommand::getAddress() const {
 	return (m_addr);
 }
 

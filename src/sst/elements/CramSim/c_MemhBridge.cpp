@@ -133,7 +133,7 @@ void c_MemhBridge::createTxn() {
 
 			//TODO: Default value for dataWidth?
 			c_Transaction *mTxn;
-			uint64_t addr = event->getAddr();
+			ulong addr = event->getAddr();
 
 			if (event->getIsWrite())
 				mTxn = new c_Transaction(event->getReqId(), e_TransactionType::WRITE, addr, 1);

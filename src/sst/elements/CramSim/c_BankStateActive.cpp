@@ -67,7 +67,7 @@ c_BankStateActive::~c_BankStateActive() {
 void c_BankStateActive::handleCommand(c_BankInfo* x_bank,
 		c_BankCommand* x_bankCommandPtr) {
 
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 //	std::cout << "@ " << l_time << " " << __PRETTY_FUNCTION__ << std::endl;
 
@@ -75,7 +75,7 @@ void c_BankStateActive::handleCommand(c_BankInfo* x_bank,
 	if (nullptr == m_receivedCommandPtr) {
 		m_receivedCommandPtr = x_bankCommandPtr;
 
-		unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+		SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 		m_nextStatePtr = nullptr;
 		switch (m_receivedCommandPtr->getCommandMnemonic()) {
@@ -138,7 +138,7 @@ void c_BankStateActive::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 		c_BankCommand* x_cmdPtr) {
 //	std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
 
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 //std::cout << std::endl << "@" << std::dec
 //		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "

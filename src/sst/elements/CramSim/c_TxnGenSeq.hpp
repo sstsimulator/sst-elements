@@ -50,7 +50,7 @@ private:
 	c_TxnGenSeq(const c_TxnGenSeq&); //do not implement
 	void operator=(const c_TxnGenSeq&);
 
-	uint64_t getNextAddress();
+	ulong getNextAddress();
 	void createTxn();
 
 	//txn to/from events
@@ -68,8 +68,8 @@ private:
 	virtual bool clockTic(SST::Cycle_t); //called every cycle
 
 	//Transaction info
-	uint64_t m_prevAddress;
-	uint64_t m_seqNum;
+	ulong m_prevAddress;
+	ulong m_seqNum;
 
 	//request-related links
 	SST::Link* m_outTxnGenReqPtrLink; //outgoing txn gen req ptr

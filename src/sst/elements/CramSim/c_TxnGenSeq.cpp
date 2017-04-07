@@ -86,9 +86,9 @@ c_TxnGenSeq::c_TxnGenSeq(ComponentId_t x_id, Params& x_params) :
 	std::string l_randSeedStr = x_params.find<std::string>("randomSeed","0", l_found);
 	l_randSeedStr.pop_back(); // remove trailing newline (??)
 	if(l_randSeedStr.compare("-") == 0) { // use a random seed
-	  k_randSeed = (unsigned int)time(nullptr);
+	  k_randSeed = (SimTime_t)time(nullptr);
 	} else {
-	  k_randSeed = (unsigned int)std::strtoul(l_randSeedStr.c_str(),NULL,0);
+	  k_randSeed = (SimTime_t)std::strtoul(l_randSeedStr.c_str(),NULL,0);
 	}
 	std::srand(k_randSeed);
 
@@ -141,7 +141,7 @@ uint64_t c_TxnGenSeq::getNextAddress() {
 
 void c_TxnGenSeq::createTxn() {
 	if (m_txnReqQ.size() < k_txnGenReqQEntries) {
-		uint64_t addr = getNextAddress();
+		ulong addr = getNextAddress();
 		m_seqNum++;
 
 		double l_read2write = ((double) rand() / (RAND_MAX));

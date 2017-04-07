@@ -78,7 +78,7 @@ private:
 	void printQueues();
 
 	// internal microarcitecture params
-	unsigned m_thisCycleReceivedCmds;
+	SimTime_t m_thisCycleReceivedCmds;
 
 	// params for bank structure
 	int k_numRanksPerChannel;

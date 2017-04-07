@@ -117,4 +117,60 @@ MODEL OVERVIEW:
 	__r:15_l:7__bb__R__BB__h:6__ - 15 row bits at MSB, folled by 7 column bits, 2 bank bits, 1 Rank bit, 2 BankGroup bits, and 6 cacheline bits
 	
     - It is highly recommended that simulator output is piped to an external file. There is usually a lot of output to decipher
-    
+
+
+
+RUNNING A SIMULATION WITH CPU MODELS:
+  CramSim can run as a backend of the memoryHierarchy element to communicate with other SST elements. 
+  A CramSim backend is available in the memoryHierarchy directory (elements/memHierarchy/membackend/cramSimBackend.cc).
+
+0. Prerequisites: set environment variables
+    $ export SST_ELEMENT_HOME="SST-Element installation directory"
+    $ export SST_CORE_HOME="SST-Core installation directory"
+    $ export SST_ELEMENT_ROOT="SST-ELEMENT source code directory"
+
+1. Run with Ariel
+   - install 
+    $ cd $SST_ELEMENT_ROOT
+    $ ./autogen.sh
+    $ ./configure --prefix=$SST_ELEMENT_HOME --with-sst-core=$SST_CORE_HOME
+	$ make install
+
+   - run
+    $ cd $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests
+	$ make
+    $ sst ariel_cramsim.py
+
+2. Run with MacSim
+   - install 
+    $ cd $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests
+    $ ./get_macsim.sh
+    $ cd $SST_ELEMENT_ROOT
+    $ ./autogen.sh
+    $ export PIN_HOME = "PIN tool installation directory"
+    $ ./configure --prefix=$SST_ELEMENT_HOME --with-sst-core=$SST_CORE_HOME --with-pin=$PIN_HOME
+    $ make install
+
+   - run
+    $ cd $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests
+    $ sst macsim_cramsim.py
+
+
+3. Run with Gem5
+   - Install
+    $ cd $SST_ELEMENT_ROOT
+    $ ./autogen.sh
+    $ ./configure --prefix=$SST_ELEMENT_HOME --with-sst-core=$SST_CORE_HOME
+	$ make install
+	$ cd $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests
+    $ ./get_gem5.sh
+
+   - run 
+    $ cd $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests
+    $ sst gem5_cramsim.py
+
+   - Connect to the simulated console interface
+    $ cd $SST_ELEMENT_ROOT/src/sst/elements/gem5/util/term
+	$ sudo make install
+	$ ./m5term localhost 3456
+

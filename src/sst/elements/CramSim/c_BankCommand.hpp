@@ -114,7 +114,7 @@ public:
 
 	e_BankCommandType getCommandMnemonic() const;
 
-	unsigned getAddress() const; //<! returns the address accessed by this command
+	ulong getAddress() const; //<! returns the address accessed by this command
 	std::string getCommandString() const;//<! returns the mnemonic of command
 
 	// FIXME: implement operator<<

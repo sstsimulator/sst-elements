@@ -14,7 +14,7 @@ def setup_cramsim_params(cramsim_config_file):
 
 
 # Setup parameters
-cramsim_params = setup_cramsim_params("../ddr3.cfg")
+cramsim_params = setup_cramsim_params("../ddr4_verimem.cfg")
 macsim_params_file = "params.in"
 
 # Define SST Program Options:

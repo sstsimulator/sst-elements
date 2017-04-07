@@ -73,8 +73,8 @@ private:
 	Output dbg;
 
 	//Transaction info
-	uint64_t m_prevAddress;
-	uint64_t m_seqNum;
+	ulong m_prevAddress;
+	ulong m_seqNum;
 
 	std::map<uint64_t,Event::id_type> dramReqs; //key: transaction sequence number, value: event id
 
