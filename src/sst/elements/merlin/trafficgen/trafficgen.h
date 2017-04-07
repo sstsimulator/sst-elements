@@ -19,8 +19,7 @@
 #ifndef COMPONENTS_MERLIN_GENERATORS_TRAFFICEGEN_H
 #define COMPONENTS_MERLIN_GENERATORS_TRAFFICEGEN_H
 
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/binomial_distribution.hpp>
+#include <cstdlib>
 
 #include <sst/core/rng/mersenne.h>
 #include <sst/core/rng/gaussian.h>
@@ -35,6 +34,7 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 
+#include "sst/elements/merlin/merlin.h"
 #include "sst/elements/merlin/linkControl.h"
 
 #define ENABLE_FINISH_HACK 0
@@ -61,7 +61,7 @@ private:
         virtual int getNextValue(void) = 0;
         virtual void seed(uint32_t val) = 0;
     };
-
+    
     class NearestNeighbor : public Generator {
         Generator *dist;
         int *neighbors;
@@ -89,8 +89,8 @@ private:
                     "Unsure how to deal with %d neighbors\n", numNeighbors);
             }
         }
-
-	int getNextValue(void)
+        
+        int getNextValue(void)
         {
             int neighbor = dist->getNextValue();
             return neighbors[neighbor];
@@ -197,7 +197,7 @@ private:
 
         void seed(uint32_t val)
         {
-	    gen = new MersenneRNG((unsigned int) val);
+            gen = new MersenneRNG((unsigned int) val);
         }
     };
 
@@ -210,8 +210,8 @@ private:
     public:
         NormalDist(int min, int max, double mean, double stddev) : minValue(min), maxValue(max)
         {
-	    gen = new MersenneRNG();
-	    dist = new SSTGaussianDistribution(mean, stddev);
+            gen = new MersenneRNG();
+            dist = new SSTGaussianDistribution(mean, stddev);
         }
 
 	~NormalDist() {
@@ -229,26 +229,25 @@ private:
 
         void seed(uint32_t val)
         {
-	    gen = new MersenneRNG((unsigned int) val);
+            gen = new MersenneRNG((unsigned int) val);
         }
     };
 
     class BinomialDist : public Generator {
-        boost::random::mt19937 gen;
-        boost::random::binomial_distribution<> dist;
         int minValue;
     public:
         BinomialDist(int min, int max, int trials, float probability) : minValue(min)
         {
-            dist = boost::random::binomial_distribution<>(trials, probability);
+            merlin_abort.fatal(CALL_INFO, -1, "BinomialDist is not currently supported\n");
         }
         virtual int getNextValue(void)
         {
-            return dist(gen) + minValue;
+            // return dist(gen) + minValue;
+            return 0;
         }
         virtual void seed(uint32_t val)
         {
-            gen.seed(val);
+            // gen.seed(val);
         }
     };
 
