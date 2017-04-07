@@ -89,7 +89,7 @@ private:
         { "lambda", "Lambda value to use for the exponential distribution", "1.0"},
         { "binresults", "Print the results, only if value is \"1\"", "1"},
         { "probcount", "Number of probabilities in discrete distribution"},
-        { "prob%(probcount)d", "Probability values for discrete distribution"},
+        { "prob%(probcount)d", "Probability values for discrete distribution"}
     )
 
     SST_ELI_DOCUMENT_STATISTICS(

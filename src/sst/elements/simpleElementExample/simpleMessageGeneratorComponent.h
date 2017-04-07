@@ -89,14 +89,14 @@ private:
         { "printStats", "Prints the statistics from the component", "0"},
         { "clock", "Sets the clock for the message generator", "1GHz" },
         { "sendcount", "Sets the number of sends in the simulation.", "1000" },
-        { "outputinfo", "Sets the level of output information", "1" },
+        { "outputinfo", "Sets the level of output information", "1" }
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
     )
 
     SST_ELI_DOCUMENT_PORTS(
-        { "remoteComponent", "Sets the link for the message component, message components talk to each other exchanging simple messages", { "simpleMessageGeneratorComponent.simpleMessage", NULL } },
+        { "remoteComponent", "Sets the link for the message component, message components talk to each other exchanging simple messages", { "simpleMessageGeneratorComponent.simpleMessage", "" } }
     )
 };
 

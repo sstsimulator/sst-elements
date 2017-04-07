@@ -71,7 +71,7 @@ private:
     SST_ELI_DOCUMENT_PARAMS(
         { "filename", "Filename to load as the table", ""},
         {"num_entities", "Number of entities in the sim", "1"},
-        {"myid", "ID Number (0 <= myid < num_entities)", "0"},
+        {"myid", "ID Number (0 <= myid < num_entities)", "0"}
     )
 
     SST_ELI_DOCUMENT_STATISTICS(

@@ -95,17 +95,17 @@ private:
     SST_ELI_DOCUMENT_PARAMS(
         { "workPerCycle", "Count of busy work to do during a clock tick.", NULL},
         { "commFreq", "Approximate frequency of sending an event during a clock tick.", NULL},
-        { "commSize", "Size of communication to send.", "16"},
+        { "commSize", "Size of communication to send.", "16"}
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
     )
 
     SST_ELI_DOCUMENT_PORTS(
-        {"Nlink", "Link to the simpleComponent to the North", { "simpleComponent.simpleComponentEvent", NULL } },
-        {"Slink", "Link to the simpleComponent to the South", { "simpleComponent.simpleComponentEvent", NULL } },
-        {"Elink", "Link to the simpleComponent to the East",  { "simpleComponent.simpleComponentEvent", NULL } },
-        {"Wlink", "Link to the simpleComponent to the West",  { "simpleComponent.simpleComponentEvent", NULL } },
+        {"Nlink", "Link to the simpleComponent to the North", { "simpleComponent.simpleComponentEvent", "" } },
+        {"Slink", "Link to the simpleComponent to the South", { "simpleComponent.simpleComponentEvent", "" } },
+        {"Elink", "Link to the simpleComponent to the East",  { "simpleComponent.simpleComponentEvent", "" } },
+        {"Wlink", "Link to the simpleComponent to the West",  { "simpleComponent.simpleComponentEvent", "" } }
     )
     
 };

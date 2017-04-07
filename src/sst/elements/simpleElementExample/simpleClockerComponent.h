@@ -81,7 +81,7 @@ private:
     
     SST_ELI_DOCUMENT_PARAMS(
         { "clock", "Clock frequency", "1GHz" },
-        { "clockcount", "Number of clock ticks to execute", "100000"},
+        { "clockcount", "Number of clock ticks to execute", "100000"}
     )
 
     SST_ELI_DOCUMENT_STATISTICS(

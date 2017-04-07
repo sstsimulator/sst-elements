@@ -86,15 +86,15 @@ public:
     )
     
     SST_ELI_DOCUMENT_PARAMS(
-        {"sendCount", "Number of Messages to Send", "10"},
+        {"sendCount", "Number of Messages to Send", "10"}
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
-        {"numSent", "# of msgs sent", "", 1},
+        {"numSent", "# of msgs sent", "", 1}
     )
 
     SST_ELI_DOCUMENT_PORTS(
-        {"sendPort", "Sending Port", { "simpleMessageGeneratorComponent.simpleMessage", NULL } },
+        {"sendPort", "Sending Port", { "simpleMessageGeneratorComponent.simpleMessage", "" } }
     )
     
 };
@@ -129,7 +129,7 @@ public:
     )
 
     SST_ELI_DOCUMENT_PORTS(
-        {"recvPort", "Receiving Port", { "simpleMessageGeneratorComponent.simpleMessage", NULL } },
+        {"recvPort", "Receiving Port", { "simpleMessageGeneratorComponent.simpleMessage", "" } }
     )
 };
 

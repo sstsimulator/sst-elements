@@ -102,7 +102,7 @@ private:
         { "seed_z", "The seed to use for the random number generator", "5" },
         { "seed", "The seed to use for the random number generator.", "11" },
         { "rng", "The random number generator to use (Marsaglia or Mersenne), default is Mersenne", "Mersenne"},
-        { "count", "The number of random numbers to generate, default is 1000", "1000" },
+        { "count", "The number of random numbers to generate, default is 1000", "1000" }
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -111,7 +111,7 @@ private:
         { "stat3_I32", "Test Statistic 3 - Collecting I32 Data", "units", 3},
         { "stat4_I64", "Test Statistic 4 - Collecting I64 Data", "units", 4},
         { "stat5_U32", "Test Statistic 5 - Collecting U32 Data", "units", 5},
-        { "stat6_U64", "Test Statistic 6 - Collecting U64 Data", "units", 6},
+        { "stat6_U64", "Test Statistic 6 - Collecting U64 Data", "units", 6}
     )
 
     SST_ELI_DOCUMENT_PORTS(
