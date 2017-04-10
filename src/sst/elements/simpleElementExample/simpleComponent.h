@@ -54,35 +54,6 @@ private:
     SST::Link* E;
     SST::Link* W;
 
-//static const ElementInfoParam simpleComponent_params[] = {
-//    { "workPerCycle", "Count of busy work to do during a clock tick.", NULL},
-//    { "commFreq", "Approximate frequency of sending an event during a clock tick.", NULL},
-//    { "commSize", "Size of communication to send.", "16"},
-//    { NULL, NULL, NULL}
-//};
-
-//static const char* simpleComponent_port_events[] = { "simpleComponent.simpleComponentEvent", NULL };
-
-//static const ElementInfoPort simpleComponent_ports[] = {
-//    {"Nlink", "Link to the simpleComponent to the North", simpleComponent_port_events},
-//    {"Slink", "Link to the simpleComponent to the South", simpleComponent_port_events},
-//    {"Elink", "Link to the simpleComponent to the East",  simpleComponent_port_events},
-//    {"Wlink", "Link to the simpleComponent to the West",  simpleComponent_port_events},
-//    {NULL, NULL, NULL}
-//};
-
-//static const ElementInfoComponent simpleElementComponents[] = {
-//    { "simpleComponent",                                 // Name
-//      "Simple Demo Component",                           // Description
-//      NULL,                                              // PrintHelp
-//      create_simpleComponent,                            // Allocator
-//      simpleComponent_params,                            // Parameters
-//      simpleComponent_ports,                             // Ports
-//      COMPONENT_CATEGORY_PROCESSOR,                      // Category
-//      NULL                                               // Statistics
-//    },
-
-
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         simpleComponent,

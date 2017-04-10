@@ -49,30 +49,6 @@ private:
     
     std::map<int64_t, uint64_t>* bins;
     
-//static const ElementInfoParam simpleDistribComponent_params[] = {
-//	{ "count", "Number of random values to generate from the distribution", "1000"},
-//	{ "distrib", "Random distribution to use - \"gaussian\" (or \"normal\"), or \"exponential\"", "gaussian"},
-//	{ "mean", "Mean value to use if we are sampling from the Gaussian/Normal distribution", "1.0"},
-//	{ "stddev", "Standard deviation to use for the distribution", "0.2"},
-//	{ "lambda", "Lambda value to use for the exponential distribution", "1.0"},
-//	{ "binresults", "Print the results, only if value is \"1\"", "1"},
-//	{ "probcount", "Number of probabilities in discrete distribution"},
-//	{ "prob%(probcount)d", "Probability values for discrete distribution"},
-//  	{ NULL, NULL, NULL }
-//};
-
-//static const ElementInfoComponent simpleElementComponents[] = {
-//    { "simpleDistribComponent",                          // Name
-//      "Random Number Distribution Component",            // Description
-//      NULL,                                              // PrintHelp
-//      create_simpleDistribComponent,                     // Allocator
-//      simpleDistribComponent_params,                     // Parameters
-//      NULL,                                              // Ports
-//      COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
-//      NULL                                               // Statistics
-//    },
-
-
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         simpleDistribComponent,

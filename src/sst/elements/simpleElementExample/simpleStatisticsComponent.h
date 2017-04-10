@@ -58,36 +58,6 @@ private:
     Statistic<uint64_t>*  stat6_U64; 
     Statistic<uint32_t>*  stat7_U32_NOTUSED; 
     
-//static const ElementInfoParam simpleStatisticsComponent_params[] = {
-//    { "seed_w", "The seed to use for the random number generator", "7" },
-//    { "seed_z", "The seed to use for the random number generator", "5" },
-//    { "seed", "The seed to use for the random number generator.", "11" },
-//    { "rng", "The random number generator to use (Marsaglia or Mersenne), default is Mersenne", "Mersenne"},
-//    { "count", "The number of random numbers to generate, default is 1000", "1000" },
-//    { NULL, NULL, NULL }
-//};
-
-//static const ElementInfoStatistic simpleStatisticsComponent_statistics[] = {
-//    { "stat1_U32", "Test Statistic 1 - Collecting U32 Data", "units", 1},   // Name, Desc, Enable Level 
-//    { "stat2_U64", "Test Statistic 2 - Collecting U64 Data", "units", 2},
-//    { "stat3_I32", "Test Statistic 3 - Collecting I32 Data", "units", 3},
-//    { "stat4_I64", "Test Statistic 4 - Collecting I64 Data", "units", 4},
-//    { "stat5_U32", "Test Statistic 5 - Collecting U32 Data", "units", 5},
-//    { "stat6_U64", "Test Statistic 6 - Collecting U64 Data", "units", 6},
-//    { NULL, NULL, NULL, 0 }
-//};
-
-//static const ElementInfoComponent simpleElementComponents[] = {
-//    { "simpleStatisticsComponent",                       // Name
-//      "Statistics Demo Component",                       // Description
-//      NULL,                                              // PrintHelp
-//      create_simpleStatisticsComponent,                  // Allocator
-//      simpleStatisticsComponent_params,                  // Parameters
-//      NULL,                                              // Ports
-//      COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
-//      simpleStatisticsComponent_statistics               // Statistics
-//    },
-
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         simpleStatisticsComponent,

@@ -47,28 +47,6 @@ private:
     int rng_max_count;
     int rng_count;
     
-
-//static const ElementInfoParam simpleRNGComponent_params[] = {
-//    { "seed_w", "The seed to use for the random number generator", "7" },
-//    { "seed_z", "The seed to use for the random number generator", "5" },
-//    { "seed", "The seed to use for the random number generator.", "11" },
-//    { "rng", "The random number generator to use (Marsaglia or Mersenne), default is Mersenne", "Mersenne"},
-//    { "count", "The number of random numbers to generate, default is 1000", "1000" },
-//    { "verbose", "Sets the output verbosity of the component", "0" },
-//    { NULL, NULL, NULL }
-//};
-
-//static const ElementInfoComponent simpleElementComponents[] = {
-//    { "simpleRNGComponent",                              // Name
-//      "Random number generation component",              // Description
-//      NULL,                                              // PrintHelp
-//      create_simpleRNGComponent,                         // Allocator
-//      simpleRNGComponent_params,                         // Parameters
-//      NULL,                                              // Ports
-//      COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
-//      NULL                                               // Statistics
-//    },
-
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         simpleRNGComponent,

@@ -41,24 +41,6 @@ private:
     size_t tableSize;
     SharedRegion *sregion;
 
-//static const ElementInfoParam simpleLookupTableComponent_params[] = {
-//    { "filename", "Filename to load as the table", ""},
-//    {"num_entities", "Number of entities in the sim", "1"},
-//    {"myid", "ID Number (0 <= myid < num_entities)", "0"},
-//    { NULL, NULL, NULL }
-//};
-
-//static const ElementInfoComponent simpleElementComponents[] = {
-//    { "simpleLookupTableComponent",                      // Name
-//      "Demonstrates using a Shared Lookup Table",        // Description
-//      NULL,                                              // PrintHelp
-//      create_simpleLookupTableComponent,                 // Allocator
-//      simpleLookupTableComponent_params,                 // Parameters
-//      NULL,                                              // Ports
-//      COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
-//      NULL                                               // Statistics
-//    },
-
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         simpleLookupTableComponent,
