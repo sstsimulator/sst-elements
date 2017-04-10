@@ -48,7 +48,7 @@ class NVM_PARAMS
 		int max_requests;
 
 		// The number of possible outstanding requests inside the internal controller (not that once writes are written to the write buffer, they are deleted)
-		int max_outstanding;
+		long long int max_outstanding;
 
 		// For power budget (at any time, the controller enforces write_weight*num_current_writes + read_weight*num_current_reads less than or equal max_current_weight
 		float max_current_weight;

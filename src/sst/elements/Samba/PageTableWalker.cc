@@ -159,7 +159,6 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 
 	SST::Event * ev = event;
-	uint64_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
 
 	long long int pw_id;
@@ -226,7 +225,6 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 
 		// Those track if any hit in one of the supported pages' structures
-		bool hit=false;
 		int hit_id=0;
 
 		// We check the structures in parallel to find if it hits
@@ -234,7 +232,6 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 		for(k=0; k < sizes; k++)
 			if(check_hit(addr, k))
 			{
-				hit=true;
 				hit_id=k;
 				break;
 			}
@@ -269,7 +266,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				k = max(k-2, 1); 
 
 
-			if(pending_misses.size() < max_outstanding)
+			if((int) pending_misses.size() < (int) max_outstanding)
 			{	
 				statPageTableWalkerMisses->addData(1);
 				misses++;
