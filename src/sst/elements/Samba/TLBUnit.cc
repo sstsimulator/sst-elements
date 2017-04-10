@@ -296,7 +296,7 @@ bool TLB::tick(SST::Cycle_t x)
 		{
 
 			// Making sure we have a room for an additional miss, i.e., less than the maximum outstanding misses
-			if(pending_misses.size() < max_outstanding)
+			if((int) pending_misses.size() < (int) max_outstanding)
 			{	
 
 				// Check if the miss is not currently being handled

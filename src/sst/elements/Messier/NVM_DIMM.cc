@@ -45,6 +45,8 @@ int page_size = 4096;
 NVM_DIMM::NVM_DIMM(SST::Component * owner, NVM_PARAMS par)
 {
 
+	cycles = 0;
+
 	// Here we should do the assignment of parameters to the NVM_DIMM object
 
 	Owner = owner;
@@ -216,7 +218,6 @@ void NVM_DIMM::try_flush_wb()
 
 	bool flush_write = false;
 
-	bool pull_idle = false;
 	int MAX_WRITES = params->max_writes;
 
 	if(WB->flush() || (transactions.empty() && !WB->empty()))
@@ -241,7 +242,6 @@ void NVM_DIMM::try_flush_wb()
 
 			long long int add = temp->Address;
 			bool ready = false;
-			bool removed = false;
 
 			BANK * temp_bank;
 			temp_bank = getBank(temp->Address);
@@ -261,7 +261,6 @@ void NVM_DIMM::try_flush_wb()
 			{
 
 
-				removed = true;
 				WB->erase_entry(temp);
 				// Note that the rank will be busy for the time of sending the data to the bank, in addition to sending the command 
 				getRank(add)->setBusyUntil(cycles + params->tCMD + params->tBURST);
@@ -335,7 +334,14 @@ bool NVM_DIMM::submit_request()
 	{
 		if(!WB->full())
 		{
-			WB->insert_write_request(temp); 
+			NVM_Request * write_req = new NVM_Request();
+			write_req->req_ID = 0;
+			write_req->Read = false;
+			write_req->Address = temp->Address;
+
+
+			WB->insert_write_request(write_req);
+
 			transactions.pop_front();
 			MemRespEvent *respEvent = new MemRespEvent(
 					NVM_EVENT_MAP[temp]->getReqId(), NVM_EVENT_MAP[temp]->getAddr(), NVM_EVENT_MAP[temp]->getFlags() );
@@ -365,7 +371,7 @@ bool NVM_DIMM::submit_request()
 			BANK * corresp_bank = getBank(temp->Address);
 
 			// Check if the rank is not busy
-			if ((corresp_rank->getBusyUntil() < cycles) && (corresp_bank->getBusyUntil() < cycles) && !corresp_bank->getLocked() && (outstanding.size() < params->max_outstanding))
+			if ((corresp_rank->getBusyUntil() < cycles) && (corresp_bank->getBusyUntil() < cycles) && !corresp_bank->getLocked() && ((long long int) outstanding.size() < params->max_outstanding))
 			{
 				long long int time_ready;
 				// Check if row buffer hit
@@ -434,7 +440,7 @@ bool NVM_DIMM::pop_optimal()
 
 		RANK * corresp_rank = getRank(temp->Address);
 		BANK * corresp_bank = getBank(temp->Address);
-		if (temp->Read && (corresp_rank->getBusyUntil() < cycles) && (corresp_bank->getBusyUntil() < cycles) && !corresp_bank->getLocked() && (outstanding.size() < params->max_outstanding))
+		if (temp->Read && (corresp_rank->getBusyUntil() < cycles) && (corresp_bank->getBusyUntil() < cycles) && !corresp_bank->getLocked() && ((long long int) outstanding.size() < params->max_outstanding))
 		{
 
 			//if((temp->Address/params->row_buffer_size) == (corresp_bank->getRB()))
@@ -497,8 +503,14 @@ bool NVM_DIMM::submit_request_opt()
 					//  histogram_idle->addData((cycles-last_write)/10);
 
 					last_write = cycles;
+					NVM_Request * write_req = new NVM_Request();
+					write_req->req_ID = 0;
+					write_req->Read = false;
+					write_req->Address = temp->Address;
 
-					WB->insert_write_request(temp); 
+
+					WB->insert_write_request(write_req);
+
 					transactions.erase(st);
 
 					MemRespEvent *respEvent = new MemRespEvent(
@@ -532,7 +544,7 @@ bool NVM_DIMM::submit_request_opt()
 					BANK * corresp_bank = getBank(temp->Address);
 
 					// Check if the rank is not busy
-					if ((corresp_rank->getBusyUntil() < cycles) && (corresp_bank->getBusyUntil() < cycles) && !corresp_bank->getLocked() && (outstanding.size() < params->max_outstanding))
+					if ((corresp_rank->getBusyUntil() < cycles) && (corresp_bank->getBusyUntil() < cycles) && !corresp_bank->getLocked() && ((long long int) outstanding.size() < params->max_outstanding))
 					{
 						long long int time_ready;
 						// Check if row buffer hit
