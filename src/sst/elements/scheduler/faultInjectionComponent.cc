@@ -21,6 +21,7 @@
 #include "misc.h"
 #include "util.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <stdlib.h>

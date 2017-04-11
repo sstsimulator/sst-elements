@@ -16,6 +16,7 @@
 #include "sst_config.h"
 #include "Factory.h"
 
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
