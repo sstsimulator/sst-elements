@@ -34,6 +34,7 @@
 #include "sst_config.h"
 
 // C++ includes
+#include <algorithm>
 #include <string>
 #include <assert.h>
 
