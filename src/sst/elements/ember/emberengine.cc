@@ -90,11 +90,11 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
         //NetworkSim: Add the rankmapper parameter as motif parameters and pass it.
         //Params::value_type addedparam = std::make_pair("motif" + tmp.str() + ".rankmapper", params.find_string("rankmapper", "ember.LinearMap"));
-        params.insert("motif" + tmp.str() + ".rankmapper", params.find_string("rankmapper", "ember.LinearMap"), true);
+        params.insert("motif" + tmp.str() + ".rankmapper", params.find<string>("rankmapper", "ember.LinearMap"), true);
 
         //NetworkSim: Add the mapFile parameter as motif parameters and pass it.
         //Params::value_type addedparam2 = std::make_pair("motif" + tmp.str() + ".rankmap.mapFile", params.find_string("mapFile", "mapFile.txt"));
-        params.insert("motif" + tmp.str() + ".rankmap.mapFile", params.find_string("mapFile", "mapFile.txt"), true);
+        params.insert("motif" + tmp.str() + ".rankmap.mapFile", params.find<string>("mapFile", "mapFile.txt"), true);
         //NetworkSim->end
 
 		motifParams[i] = params.find_prefix_params( "motif" + tmp.str() + "." );

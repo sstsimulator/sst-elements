@@ -55,7 +55,7 @@ EmberHalo3DGenerator::EmberHalo3DGenerator(SST::Component* owner, Params& params
 	z_down = -1;
 	z_up   = -1;
 
-    jobId        = (int) params.find_integer("_jobId"); //NetworkSim
+    jobId        = (int) params.find<int>("_jobId"); //NetworkSim
 
 	configure();
 }
