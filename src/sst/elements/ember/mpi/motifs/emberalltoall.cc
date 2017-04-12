@@ -27,7 +27,7 @@ EmberAlltoallGenerator::EmberAlltoallGenerator(SST::Component* owner,
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);
 	m_compute    = (uint32_t) params.find("arg.compute", 0);
 	m_bytes      = (uint32_t) params.find("arg.bytes", 1);
-    jobId        = (int) params.find_integer("_jobId"); //NetworkSim
+    jobId        = (int) params.find<int>("_jobId"); //NetworkSim
     m_sendBuf = NULL;
     m_recvBuf = NULL;
 }
