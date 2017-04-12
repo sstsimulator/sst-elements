@@ -73,6 +73,7 @@ ScratchEvent* MemHierarchyScratchInterface::createScratchEvent(SimpleMem::Reques
             break;
         case SimpleMem::Request::ReadResp:      cmd = ReadResp;     break;
         case SimpleMem::Request::WriteResp:     cmd = WriteResp;    break;
+        default: output.fatal(CALL_INFO, -1, "Unknown req->cmd in createScratchEvent()\n");
     }
    
     ScratchEvent *me = new ScratchEvent(parent->getName(), req->addrs[0], req->addrs[0], cmd);

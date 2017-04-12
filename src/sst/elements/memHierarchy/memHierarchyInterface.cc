@@ -70,6 +70,7 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
         case SimpleMem::Request::FlushLine:     cmd = FlushLine;    break;
         case SimpleMem::Request::FlushLineInv:  cmd = FlushLineInv; break;
         case SimpleMem::Request::FlushLineResp: cmd = FlushLineResp; break;
+        default: output.fatal(CALL_INFO, -1, "Unknown req->cmd in createMemEvent()\n");
     }
     
     MemEvent *me = new MemEvent(owner_, req->addrs[0], req->addrs[0], cmd);
@@ -81,7 +82,7 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
             req->data.resize(req->size, 0);    
         }
         if (req->data.size() != req->size) 
-            output.output("Warning: In memHierarchyInterface, write request size does not match payload size. Request size: %u. Payload size: %zu. MemEvent will use payload size\n", req->size, req->data.size());
+            output.output("Warning: In memHierarchyInterface, write request size does not match payload size. Request size: %zu. Payload size: %zu. MemEvent will use payload size\n", req->size, req->data.size());
 
         me->setPayload(req->data);
     }
