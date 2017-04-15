@@ -16,6 +16,7 @@
 #include <sst_config.h>
 #include "trafficgen/trafficgen.h"
 #include <unistd.h>
+#include <climits>
 #include <signal.h>
 
 #include <sst/core/params.h>
