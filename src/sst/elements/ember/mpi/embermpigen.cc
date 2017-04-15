@@ -14,6 +14,7 @@
 // distribution.
 
 #include <sst_config.h>
+#include <climits>
 #include <sst/core/component.h>
 
 #include "embermpigen.h"

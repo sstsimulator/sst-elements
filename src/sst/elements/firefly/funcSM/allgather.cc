@@ -16,6 +16,7 @@
 
 #include <sst_config.h>
 
+#include <cmath>
 #include <string.h>
 
 
