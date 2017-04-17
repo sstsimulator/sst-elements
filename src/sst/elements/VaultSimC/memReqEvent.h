@@ -51,7 +51,7 @@ class MemReqEvent : public SST::Event {
 	id_type eventID;
 
   public:
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & reqId;  
         ser & addr;
@@ -86,7 +86,7 @@ class MemRespEvent : public SST::Event {
 	id_type eventID;
 
   public:
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & reqId;  
         ser & flags;

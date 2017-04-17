@@ -42,7 +42,7 @@ private:
 	PyEvent() {} // For serialization only
 
 public:
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         // TODO:  Serialize pyE
     }

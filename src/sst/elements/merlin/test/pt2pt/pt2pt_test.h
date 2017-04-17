@@ -93,7 +93,7 @@ class pt2pt_test_event : public Event {
 
     pt2pt_test_event() {}
     
-    virtual Event* clone(void)
+    virtual Event* clone(void) override
     {
         return new pt2pt_test_event(*this);
     }

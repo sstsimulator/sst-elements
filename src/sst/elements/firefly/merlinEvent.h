@@ -82,7 +82,7 @@ class FireflyNetworkEvent : public Event {
         offset = me.offset;
     }
 
-    virtual Event* clone(void)
+    virtual Event* clone(void) override
     {
         return new FireflyNetworkEvent(*this);
     }
@@ -105,7 +105,7 @@ class FireflyNetworkEvent : public Event {
     size_t          bufLen;
 
   public:	
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & seq;
         ser & offset;

@@ -3,12 +3,10 @@
 #
 
 AM_CPPFLAGS = \
-	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
 libzodiac_la_CPPFLAGS = \
-	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) \
 	$(DUMPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
