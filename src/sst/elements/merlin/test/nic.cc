@@ -146,17 +146,17 @@ public:
     MyRtrEvent(int seq) : seq(seq)
     {}
 
-    Event* clone(void)
+    Event* clone(void) override
     {
         return new MyRtrEvent(*this);
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & seq;
     }
 
-    virtual void print(const std::string& header, Output &out) const {
+    virtual void print(const std::string& header, Output &out) const  override {
         out.output("%s MyRtrEvent to be delivered at %" PRIu64 " with priority %d.  seq = %d\n",
                    header.c_str(), getDeliveryTime(), getPriority(), seq);
     }

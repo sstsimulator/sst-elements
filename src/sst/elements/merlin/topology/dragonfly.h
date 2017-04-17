@@ -118,12 +118,12 @@ public:
     topo_dragonfly_event(const topo_dragonfly::dgnflyAddr &dest) : dest(dest) {}
     ~topo_dragonfly_event() { }
 
-    virtual internal_router_event *clone(void)
+    virtual internal_router_event *clone(void) override
     {
         return new topo_dragonfly_event(*this);
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
         ser & src_group;
         ser & dest.group;

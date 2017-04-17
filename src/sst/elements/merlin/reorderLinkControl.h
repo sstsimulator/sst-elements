@@ -77,7 +77,7 @@ public:
 
     typedef std::priority_queue<ReorderRequest*, std::vector<ReorderRequest*>, Priority> PriorityQueue;
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         SST::Interfaces::SimpleNetwork::Request::serialize_order(ser);
         ser & seq;
     }
