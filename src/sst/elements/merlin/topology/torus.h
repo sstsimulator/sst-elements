@@ -40,7 +40,7 @@ public:
     topo_torus_event() {}
     topo_torus_event(int dim) {	dimensions = dim; routing_dim = 0; dest_loc = new int[dim]; }
     ~topo_torus_event() { delete[] dest_loc; }
-    virtual internal_router_event* clone(void)
+    virtual internal_router_event* clone(void) override
     {
         topo_torus_event* tte = new topo_torus_event(*this);
         tte->dest_loc = new int[dimensions];
@@ -48,7 +48,7 @@ public:
         return tte;
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
         ser & dimensions;
         ser & routing_dim;

@@ -55,7 +55,7 @@ public:
 
   void print() const;
   
-  void serialize_order(SST::Core::Serialization::serializer &ser)
+  void serialize_order(SST::Core::Serialization::serializer &ser) override
   {
     ser & m_channel;
     ser & m_rank;

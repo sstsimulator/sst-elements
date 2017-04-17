@@ -93,12 +93,12 @@ class bisection_test_event : public Event {
 
     bisection_test_event() {}
     
-    virtual Event* clone(void)
+    virtual Event* clone(void) override
     {
         return new bisection_test_event(*this);
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & start_time;
     }

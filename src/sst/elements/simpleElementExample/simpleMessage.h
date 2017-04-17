@@ -25,7 +25,7 @@ public:
     simpleMessage() : SST::Event() { }
 
 public:	
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
     }
     

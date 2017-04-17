@@ -98,7 +98,7 @@ public:
   void isProcessed(bool x_processed);
   void print() const;
 
-  void serialize_order(SST::Core::Serialization::serializer &ser);
+  void serialize_order(SST::Core::Serialization::serializer &ser) override ;
   
   ImplementSerializable(c_Transaction);
   
