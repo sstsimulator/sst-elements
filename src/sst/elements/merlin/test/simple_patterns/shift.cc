@@ -135,12 +135,12 @@ public:
     ShiftEvent(int seq) : seq(seq)
     {}
 
-    Event* clone(void)
+    Event* clone(void) override
     {
         return new ShiftEvent(*this);
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & seq;
     }

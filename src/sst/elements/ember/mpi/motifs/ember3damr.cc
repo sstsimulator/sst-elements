@@ -15,6 +15,8 @@
 
 #include <sst_config.h>
 
+#include <climits>
+
 #include "ember3damr.h"
 #include "ember3damrfile.h"
 #include "ember3damrtextfile.h"

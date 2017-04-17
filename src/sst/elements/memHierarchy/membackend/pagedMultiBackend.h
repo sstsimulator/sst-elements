@@ -164,7 +164,7 @@ private:
         Addr addr;
         bool isWrite;
         unsigned numBytes;
-		void serialize_order(SST::Core::Serialization::serializer &ser) {
+		void serialize_order(SST::Core::Serialization::serializer &ser)  override {
 			ser & id;
 			ser & addr;
 			ser & isWrite;
@@ -242,7 +242,7 @@ public:
         MemCtrlEvent() {} // For Serialization only
         
     public:
-        void serialize_order(SST::Core::Serialization::serializer &ser) {
+        void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
             ser & req;  // Cannot serialize pointers unless they are a serializable object
         }

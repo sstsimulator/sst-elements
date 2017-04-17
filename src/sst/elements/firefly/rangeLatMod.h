@@ -18,6 +18,7 @@
 #define COMPONENTS_FIREFLY_RANGELATMOD_H
 
 #include "latencyMod.h"
+#include <cmath>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/unitAlgebra.h>
