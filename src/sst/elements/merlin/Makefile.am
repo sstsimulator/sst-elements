@@ -3,7 +3,7 @@
 #
 
 AM_CPPFLAGS = 	-I$(top_srcdir)/src \
-	$(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
+	$(MPI_CPPFLAGS) \
 	$(PYTHON_CPPFLAGS) $(CPPFLAGS)
 
 compdir = $(pkglibdir)

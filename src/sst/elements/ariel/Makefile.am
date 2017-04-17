@@ -1,6 +1,5 @@
 
 AM_CPPFLAGS = \
-        $(BOOST_CPPFLAGS) \
         $(MPI_CPPFLAGS) \
         $(PINTOOL_CPPFLAGS)
 
@@ -71,7 +70,6 @@ all-local: frontend/simple/fesimple.cc
 	$(CXX) -O3 -shared \
 	$(CXXFLAGS) \
 	$(CPPFLAGS) \
-	$(BOOST_CPPFLAGS) \
 	$(LIBZ_CPPFLAGS) \
 	-DBIGARRAY_MULTIPLIER=1 \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
@@ -105,7 +103,6 @@ all-local:
 	-fomit-frame-pointer \
 	$(CXXFLAGS) \
 	$(CPPFLAGS) \
-	$(BOOST_CPPFLAGS) \
 	$(LIBZ_CPPFLAGS) \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
 	-I./ \
