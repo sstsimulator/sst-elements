@@ -44,7 +44,6 @@ AC_CACHE_SAVE
 SST_CORE_CHECK_INSTALL()
 
 SST_CHECK_OSX()
-SST_CHECK_BOOST([], [AC_MSG_ERROR([Could not find Boost, this is required for SST to build])])
 
 SST_ELEMENT_CONFIG_OUTPUT()
 
