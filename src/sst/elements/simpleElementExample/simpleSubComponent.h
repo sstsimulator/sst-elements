@@ -16,6 +16,8 @@
 #ifndef _SIMPLESUBCOMPONENT_H
 #define _SIMPLESUBCOMPONENT_H
 
+#include<vector>
+
 #include <sst/core/component.h>
 #include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
@@ -43,13 +45,13 @@ public:
 private:
 
     bool tick(SST::Cycle_t);
-    SubCompInterface* subComp;
+    std::vector<SubCompInterface*> subComps;
 
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(SubComponentLoader,
                                "simpleElementExample",
                                "SubComponentLoader",
-                               "Demonstrates subcomponentst",
+                               "Demonstrates subcomponents",
                                COMPONENT_CATEGORY_UNCATEGORIZED
     )
     
@@ -61,6 +63,9 @@ private:
     )
 
     SST_ELI_DOCUMENT_PORTS(
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
     )
 };
 
@@ -86,17 +91,19 @@ public:
     )
     
     SST_ELI_DOCUMENT_PARAMS(
-        {"sendCount", "Number of Messages to Send", "10"}
+        {"sendCount", "Number of Messages to Send", "10"},
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
-        {"numSent", "# of msgs sent", "", 1}
+        {"numSent", "# of msgs sent", "", 1},
     )
 
     SST_ELI_DOCUMENT_PORTS(
         {"sendPort", "Sending Port", { "simpleMessageGeneratorComponent.simpleMessage", "" } }
     )
     
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
 };
 
 
@@ -130,6 +137,9 @@ public:
 
     SST_ELI_DOCUMENT_PORTS(
         {"recvPort", "Receiving Port", { "simpleMessageGeneratorComponent.simpleMessage", "" } }
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
     )
 };
 
