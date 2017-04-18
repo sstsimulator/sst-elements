@@ -192,6 +192,9 @@ private:
     SST_ELI_DOCUMENT_PORTS(
     )
     
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
+    
     
 };
 

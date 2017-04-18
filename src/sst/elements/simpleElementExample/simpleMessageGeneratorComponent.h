@@ -72,6 +72,10 @@ private:
     SST_ELI_DOCUMENT_PORTS(
         { "remoteComponent", "Sets the link for the message component, message components talk to each other exchanging simple messages", { "simpleMessageGeneratorComponent.simpleMessage", "" } }
     )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
+
 };
 
 } // namespace SimpleMessageGeneratorComponent

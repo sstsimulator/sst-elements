@@ -79,6 +79,8 @@ private:
         {"Wlink", "Link to the simpleComponent to the West",  { "simpleComponent.simpleComponentEvent", "" } }
     )
     
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
 };
 
 } // namespace SimpleComponent

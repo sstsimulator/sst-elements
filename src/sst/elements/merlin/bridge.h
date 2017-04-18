@@ -118,6 +118,8 @@ private:
         {"network1",     "Network Link",  {} },
     )
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
 
 };
 
