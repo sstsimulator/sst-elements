@@ -21,6 +21,7 @@
 
 #include <sst/core/component.h>
 #include <sst/core/event.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/interfaces/simpleNetwork.h>
@@ -71,6 +72,30 @@ public:
 
 private:
     bool clock_handler(Cycle_t cycle);
+
+
+    SST_ELI_REGISTER_COMPONENT(nic,"merlin","test_nic","Simple NIC to test base functionality.",COMPONENT_CATEGORY_NETWORK)
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"id","Network ID of endpoint."},
+        {"num_peers","Total number of endpoints in network."},
+        {"num_messages","Total number of messages to send to each endpoint."},
+        {"num_vns","Number of requested virtual networks."},
+        {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
+        {"topology", "Name of the topology subcomponent that should be loaded to control routing."},
+        {"remap", "Creates a logical to physical mapping shifted by remap amount.", "0"}
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
+
 };
 
 }

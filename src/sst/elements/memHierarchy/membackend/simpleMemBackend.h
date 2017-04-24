@@ -41,7 +41,7 @@ public:
         MemCtrlEvent() {} // For Serialization only
         
     public:
-        void serialize_order(SST::Core::Serialization::serializer &ser) {
+        void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
             ser & reqId;  // Cannot serialize pointers unless they are a serializable object
        }

@@ -16,21 +16,23 @@
 #ifndef COMPONENTS_MERLIN_CIRCUITCOUNTER_H
 #define COMPONENTS_MERLIN_CIRCUITCOUNTER_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 #include <sst/core/threadsafe.h>
 
-using namespace std;
+namespace SST {
 using namespace SST::Interfaces;
+namespace Merlin {
 
 class CircNetworkInspector : public SimpleNetwork::NetworkInspector {
 private:
-    typedef pair<SimpleNetwork::nid_t, SimpleNetwork::nid_t> SDPair;
-    typedef set<SDPair> pairSet_t;
+    typedef std::pair<SimpleNetwork::nid_t, SimpleNetwork::nid_t> SDPair;
+    typedef std::set<SDPair> pairSet_t;
     pairSet_t *uniquePaths;
-    string outFileName;
+    std::string outFileName;
 
-    typedef map<string, pairSet_t*> setMap_t;
+    typedef std::map<std::string, pairSet_t*> setMap_t;
     // Map which makes sure that all the inspectors on one router use
     // the same pairSet. This structure can be accessed by multiple
     // threads during intiailize, so it needs to be protected.
@@ -39,10 +41,28 @@ private:
 public:
     CircNetworkInspector(SST::Component* parent, SST::Params &params);
 
-    void initialize(string id);
+    void initialize(std::string id);
     void finish();
 
     void inspectNetworkData(SimpleNetwork::Request* req);
+
+
+    SST_ELI_REGISTER_SUBCOMPONENT(CircNetworkInspector,"merlin","circuit_network_inspector","Used to count the number of network circuits (as in 'circuit switched' circuits)","SST::Interfaces::SimpleNetwork:NetworkInspector")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
 };
 
+
+} // namespace Merlin
+} // namespace SST
 #endif

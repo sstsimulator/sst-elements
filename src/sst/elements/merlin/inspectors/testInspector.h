@@ -16,23 +16,42 @@
 #ifndef COMPONENTS_MERLIN_TESTINSPECTOR_H
 #define COMPONENTS_MERLIN_TESTINSPECTOR_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 #include <sst/core/threadsafe.h>
 
 using namespace std;
-using namespace SST;
+namespace SST {
 using namespace SST::Interfaces;
+
+namespace Merlin {
 
 class TestNetworkInspector : public SimpleNetwork::NetworkInspector {
 private:
     Statistic<uint64_t>* test_count;
 public:
-    TestNetworkInspector(Component* parent);
+    TestNetworkInspector(Component* parent, Params& params);
 
     void initialize(string id);
 
     void inspectNetworkData(SimpleNetwork::Request* req);
-};
 
+    SST_ELI_REGISTER_SUBCOMPONENT(TestNetworkInspector,"merlin","test_network_inspector","Used to test NetworkInspector functionality.  Duplicates send_packet_count in hr_router.","SST::Interfaces::SimpleNetwork::NetworkInspector")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "test_count", "Count number of packets sent on link", "packets", 1}
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
+};
+} // namespace Merlin
+} // namespace SST
 #endif

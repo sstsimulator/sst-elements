@@ -90,7 +90,7 @@ NVM_Request * NVM_WRITE_BUFFER::pop_entry()
 	mem_reqs.pop_front();
 	curr_entries--;
 	
-	if(curr_entries <= (int) (flush_th*1.0*max_size/100.0) )
+	if(curr_entries <= (int) (flush_th_low*1.0*max_size/100.0) )
 		still_flushing=false;
 
 	return TEMP;
@@ -105,7 +105,7 @@ void NVM_WRITE_BUFFER::erase_entry(NVM_Request * TEMP)
 	mem_reqs.remove(TEMP);
 	curr_entries--;
 
-	 if(curr_entries <= (int) (flush_th*1.0*max_size/100.0) )
+	 if(curr_entries <= (int) (flush_th_low*1.0*max_size/100.0) )
                 still_flushing=false;
 
 }

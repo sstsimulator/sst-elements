@@ -16,9 +16,9 @@
 #include <sst_config.h>
 #include "trafficgen/trafficgen.h"
 #include <unistd.h>
+#include <climits>
 #include <signal.h>
 
-#include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>

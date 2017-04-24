@@ -206,7 +206,7 @@ class TimingDRAM : public SimpleMemBackend {
         void pushTrans( Transaction* trans ) {
             unsigned bank = m_mapper->getBank( trans->addr);
             
-            m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#lx\n",
+            m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#llx\n",
                 bank,trans->addr);
 
             m_banks[bank].pushTrans( trans );
@@ -240,7 +240,7 @@ class TimingDRAM : public SimpleMemBackend {
 
             unsigned rank = m_mapper->getRank( addr);
 
-            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%lu rank=%d addr=%#lx\n", id, rank, addr );
+            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%llu rank=%d addr=%#llx\n", id, rank, addr );
 
             Transaction* trans = new Transaction( createTime, id, addr, isWrite, numBytes, m_mapper->getBank(addr),
                                                 m_mapper->getRow(addr) );
@@ -277,7 +277,7 @@ public:
     TimingDRAM(Component*, Params& );
     virtual bool issueRequest( ReqId, Addr, bool, unsigned );
     void handleResponse(ReqId  id ) {
-        output->verbose(CALL_INFO, 2, DBG_MASK, "req=%p\n", id ); 
+        output->verbose(CALL_INFO, 2, DBG_MASK, "req=%llu\n", id ); 
         handleMemResponse( id );
     }
     virtual void clock();

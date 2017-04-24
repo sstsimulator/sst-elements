@@ -127,7 +127,7 @@ namespace SST { namespace SambaComponent{
 		bool setCPULink(SST::Link * TO_CPU) { to_cpu = TO_CPU; return true;}
 
 		// Setting the memory link of the page table walker
-		bool setPTWLink(SST::Link * l) { PTW->set_ToMem(l);};
+		bool setPTWLink(SST::Link * l) { PTW->set_ToMem(l); return true;}
 
 
 	};

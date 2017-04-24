@@ -17,11 +17,10 @@
 
 #include "testInspector.h"
 
-using namespace std;
-using namespace SST;
-using namespace SST::Interfaces;
+namespace SST {
+namespace Merlin {
 
-TestNetworkInspector::TestNetworkInspector(Component* parent) :
+TestNetworkInspector::TestNetworkInspector(Component* parent, Params& params) :
     SimpleNetwork::NetworkInspector(parent)
 {}
 
@@ -33,3 +32,5 @@ void TestNetworkInspector::inspectNetworkData(SimpleNetwork::Request* req) {
     test_count->addData(1);
 }
 
+} // namespace Merlin
+} // namespace SST

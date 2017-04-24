@@ -18,14 +18,12 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
 
-//#include "sst/elements/merlin/linkControl.h"
 #include <sst/core/interfaces/simpleNetwork.h>
 
 namespace SST {
@@ -148,17 +146,17 @@ public:
     MyRtrEvent(int seq) : seq(seq)
     {}
 
-    Event* clone(void)
+    Event* clone(void) override
     {
         return new MyRtrEvent(*this);
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & seq;
     }
 
-    virtual void print(const std::string& header, Output &out) const {
+    virtual void print(const std::string& header, Output &out) const  override {
         out.output("%s MyRtrEvent to be delivered at %" PRIu64 " with priority %d.  seq = %d\n",
                    header.c_str(), getDeliveryTime(), getPriority(), seq);
     }

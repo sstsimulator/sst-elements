@@ -36,7 +36,7 @@ public:
 	uint64_t 	key;
 private:
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & key;
 		ser & generators;
@@ -49,7 +49,7 @@ class MirandaRspEvent : public SST::Event {
 public:
 	uint64_t 	key;
 private:
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
 		ser & key;
 	}

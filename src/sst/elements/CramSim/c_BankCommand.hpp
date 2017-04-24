@@ -125,7 +125,7 @@ public:
 	//        return x_stream;
 	//    }
 
-        void serialize_order(SST::Core::Serialization::serializer &ser);
+        void serialize_order(SST::Core::Serialization::serializer &ser) override ;
   
         ImplementSerializable(c_BankCommand);
 

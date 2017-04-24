@@ -18,6 +18,7 @@
 #define _H_SST_ARIEL_TEXT_TRACE_GEN
 
 #include <sst/core/params.h>
+#include <climits>
 #include "arieltracegen.h"
 
 namespace SST {

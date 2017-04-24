@@ -19,6 +19,7 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_SINGLEROUTER_H
 #define COMPONENTS_MERLIN_TOPOLOGY_SINGLEROUTER_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
@@ -46,6 +47,21 @@ public:
     virtual PortState getPortState(int port) const;
 
     virtual int getEndpointID(int port) { return port; }
+
+    SST_ELI_REGISTER_SUBCOMPONENT(topo_singlerouter,"merlin","singlerouter","Simple, single-router topology object","SST::Merlin::Topology")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
+
 };
 
 }

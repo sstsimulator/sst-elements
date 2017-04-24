@@ -17,17 +17,18 @@
 #define _SIMPLELOOKUPTABLECOMPONENT_H
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/output.h>
 #include <sst/core/sharedRegion.h>
 
 namespace SST {
 namespace SimpleElementExample {
 
-class SimpleLookupTableComponent : public SST::Component
+class simpleLookupTableComponent : public SST::Component
 {
 public:
-    SimpleLookupTableComponent(SST::ComponentId_t id, SST::Params& params);
-    ~SimpleLookupTableComponent();
+    simpleLookupTableComponent(SST::ComponentId_t id, SST::Params& params);
+    ~simpleLookupTableComponent();
 
     virtual void init(unsigned int phase);
     virtual void setup();
@@ -39,6 +40,30 @@ private:
     const uint8_t * table;
     size_t tableSize;
     SharedRegion *sregion;
+
+    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_COMPONENT(
+        simpleLookupTableComponent,
+        "simpleElementExample",
+        "simpleLookupTableComponent",
+        "Demonstrates using a Shared Lookup Table",
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        { "filename", "Filename to load as the table", ""},
+        {"num_entities", "Number of entities in the sim", "1"},
+        {"myid", "ID Number (0 <= myid < num_entities)", "0"}
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
 };
 
 }

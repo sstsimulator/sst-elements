@@ -51,7 +51,7 @@ namespace SST{ namespace MessierComponent{
 
 			// Pointer to the NVM_Request initiated this event
 			NVM_Request * req;		
-			void serialize_order(SST::Core::Serialization::serializer &ser) {
+			void serialize_order(SST::Core::Serialization::serializer &ser)  override {
 				Event::serialize_order(ser);
 			}
 

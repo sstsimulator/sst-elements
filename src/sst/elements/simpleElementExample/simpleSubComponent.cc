@@ -28,11 +28,14 @@ using namespace SST::SimpleSubComponent;
 SubComponentLoader::SubComponentLoader(ComponentId_t id, Params &params) :
     Component(id)
 {
-    subComp = dynamic_cast<SubCompInterface*> (loadNamedSubComponent("mySubComp"));
-    if ( !subComp ) {
-        Output::getDefaultObject().fatal(CALL_INFO, -1, "Must specify a SubComponent.\n");
+    SubComponentSlotInfo* info = getSubComponentSlotInfo("mySubComp");
+    if ( !info ) {
+        Output::getDefaultObject().fatal(CALL_INFO, -1, "Must specify at least one SubComponent for slot mySubComp.\n");
     }
 
+    info->createAll(subComps);
+    // subComps.push_back(static_cast<SubCompInterface*>(loadNamedSubComponent("mySubComp")));
+    
     std::string freq = params.find<std::string>("clock", "1GHz");
     registerClock( freq,
         new Clock::Handler<SubComponentLoader>(this, &SubComponentLoader::tick ));
@@ -44,7 +47,9 @@ SubComponentLoader::SubComponentLoader(ComponentId_t id, Params &params) :
 
 bool SubComponentLoader::tick(Cycle_t cyc)
 {
-    subComp->clock(cyc);
+    for ( auto sub : subComps ) {
+        sub->clock(cyc);
+    }
     return false;
 }
 

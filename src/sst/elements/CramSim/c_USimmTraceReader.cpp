@@ -17,6 +17,7 @@
 //SST includes
 #include "sst_config.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <iostream>
 #include <stdlib.h>
