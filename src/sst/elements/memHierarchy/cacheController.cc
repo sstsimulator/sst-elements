@@ -506,14 +506,14 @@ void Cache::activatePrevEvents(Addr baseAddr) {
     bool writebackInProgress = false;   // Use this to allow replay of pointers but NOT events for this addr because an eviction is in progress
     
     // Self-pointer check -> remove it and record that we have it if needed
-    if ((*entries.begin()).elem.type() == typeid(Addr) && boost::get<Addr>((*entries.begin()).elem) == baseAddr) {
+    if ((*entries.begin()).elem.isAddr() && ((*entries.begin()).elem).getAddr() == baseAddr) {
         entries.erase(entries.begin());
         writebackInProgress = true;
     }
 
     for (vector<mshrType>::iterator it = entries.begin(); it != entries.end(); i++) {
-        if ((*it).elem.type() == typeid(Addr)) {                          /* Pointer Type */
-            Addr pointerAddr = boost::get<Addr>((*it).elem);
+        if ((*it).elem.isAddr()) {                          /* Pointer Type */
+            Addr pointerAddr = ((*it).elem).getAddr();
 #ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L6_,"Pointer Addr: %" PRIx64 "\n", pointerAddr);
 #endif
@@ -526,8 +526,8 @@ void Cache::activatePrevEvents(Addr baseAddr) {
             // This entry list shouldn't include pointers unless a writeback occured (and even then...)
             vector<mshrType> pointerEntries = mshr_->removeAll(pointerAddr);    
             for (vector<mshrType>::iterator it2 = pointerEntries.begin(); it2 != pointerEntries.end(); i++) {
-                if ((*it2).elem.type() != typeid(MemEvent*)) {
-                    Addr elemAddr = boost::get<Addr>((*it2).elem);
+                if ((*it2).elem.isAddr()) {
+                    Addr elemAddr = ((*it2).elem).getAddr();
                     if (elemAddr == pointerAddr) {
 #ifdef __SST_DEBUG_OUTPUT__
                         d_->debug(_L5_, "Cache eviction raced with stalled request, wait for AckPut\n");
@@ -539,7 +539,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
                                 this->getName().c_str(), pointerAddr, getCurrentSimTimeNano());
                     }
                 }
-                cont = activatePrevEvent(boost::get<MemEvent*>((*it2).elem), pointerEntries, pointerAddr, it2, i);
+                cont = activatePrevEvent(((*it2).elem).getEvent(), pointerEntries, pointerAddr, it2, i);
                 if (!cont) break;
             }
             entries.erase(it);  // Erase processed pointer
@@ -547,8 +547,8 @@ void Cache::activatePrevEvents(Addr baseAddr) {
             // Check if we need to stop because a new event is in our mshr thanks to the processing of the pointer events?
             if (mshr_->isHit(baseAddr)) {
                 bool stop = false;
-                if (entries.begin()->elem.type() == typeid(MemEvent*)) {
-                    MemEvent * front = boost::get<MemEvent*>((entries.begin())->elem);
+                if (entries.begin()->elem.isEvent()) {
+                    MemEvent * front = ((entries.begin())->elem).getEvent();
                     if (front->getCmd() != Inv && front->getCmd() != FetchInv && front->getCmd() != FetchInvX) {
                         stop = true;
                     }
@@ -561,7 +561,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
                 }
             }
         } else {    /* MemEvent Type */
-            Command cmd = boost::get<MemEvent*>((entries.begin())->elem)->getCmd();
+            Command cmd = ((entries.begin())->elem).getEvent()->getCmd();
             if (writebackInProgress) {
                 if (cmd != Inv && cmd != FetchInv && cmd != FetchInvX) {
                     mshr_->insertAll(baseAddr, entries);
@@ -570,7 +570,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
                     writebackInProgress = false;
                 }
             } 
-            cont = activatePrevEvent(boost::get<MemEvent*>((*it).elem), entries, baseAddr, it, i);
+            cont = activatePrevEvent(((*it).elem).getEvent(), entries, baseAddr, it, i);
             if (!cont) break;
         }
     }
@@ -601,8 +601,8 @@ bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& _entries, Addr 
     /* However we do need to replay requests from lower levels! (Like Inv) Otherwise deadlock! */
     if (mshr_->isHit(_addr)) {
         bool stop = false;
-        if (_entries.begin()->elem.type() == typeid(MemEvent*)) {
-            MemEvent * front = boost::get<MemEvent*>((_entries.begin())->elem);
+        if (_entries.begin()->elem.isEvent()) {
+            MemEvent * front = ((_entries.begin())->elem).getEvent();
             if (front->getCmd() != Inv && front->getCmd() != FetchInv && front->getCmd() != FetchInvX) stop = true;
         } else {
             stop = true;
@@ -697,12 +697,12 @@ void Cache::reActivateEventWaitingForUserLock(CacheLine* cacheLine) {
    Extras
    --------------------------------------- */
 MemEvent* Cache::getOrigReq(const vector<mshrType> entries) {
-    if (entries.front().elem.type() != typeid(MemEvent*)) {
+    if (entries.front().elem.isAddr()) {
         d_->fatal(CALL_INFO, -1, "%s, Error: Request at front of the mshr is not of type MemEvent. Time = %" PRIu64 "\n",
                 this->getName().c_str(), getCurrentSimTimeNano());
     }
 
-    return boost::get<MemEvent*>(entries.front().elem);
+    return (entries.front().elem).getEvent();
 }
 
 
@@ -809,7 +809,7 @@ void Cache::printLine(Addr addr) {
 
 
 bool operator== ( const mshrType& n1, const mshrType& n2) {
-    if (n1.elem.type() == typeid(Addr)) return false;
-    return(boost::get<MemEvent*>(n1.elem) == boost::get<MemEvent*>(n2.elem));
+    if (n1.elem.isAddr()) return false;
+    return((n1.elem).getEvent() == (n2.elem).getEvent());
 }
 

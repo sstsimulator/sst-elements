@@ -1681,7 +1681,7 @@ void DirectoryController::replayWaitingEvents(Addr addr) {
     if (mshr->isHit(addr)) {
         vector<mshrType> replayEntries = mshr->removeAll(addr);
         for (vector<mshrType>::reverse_iterator it = replayEntries.rbegin(); it != replayEntries.rend(); it++) {
-            MemEvent *ev = boost::get<MemEvent*>((*it).elem);
+            MemEvent *ev = ((*it).elem).getEvent();
 #ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || DEBUG_ADDR == addr) {
                 dbg.debug(_L5_, "Reactivating event. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 "\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr());
