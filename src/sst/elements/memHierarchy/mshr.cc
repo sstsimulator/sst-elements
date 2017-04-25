@@ -16,6 +16,8 @@
 #include <sst_config.h>
 #include "mshr.h"
 
+#include <algorithm>
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 
