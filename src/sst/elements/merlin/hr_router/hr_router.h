@@ -107,6 +107,8 @@ public:
 
 
     SST_ELI_REGISTER_COMPONENT(hr_router,"merlin","hr_router","High radix router",COMPONENT_CATEGORY_NETWORK)
+
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
     
     SST_ELI_DOCUMENT_PARAMS(
         {"id", "ID of the router."},

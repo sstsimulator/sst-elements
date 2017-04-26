@@ -57,6 +57,8 @@ private:
         COMPONENT_CATEGORY_UNCATEGORIZED
     )
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         { "count", "Number of random values to generate from the distribution", "1000"},
         { "distrib", "Random distribution to use - \"gaussian\" (or \"normal\"), or \"exponential\"", "gaussian"},

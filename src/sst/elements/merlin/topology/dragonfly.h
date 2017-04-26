@@ -88,6 +88,8 @@ private:
 
     SST_ELI_REGISTER_SUBCOMPONENT(topo_dragonfly,"merlin","dragonfly","Dragonfly topology object","SST::Merlin::Topology")
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"dragonfly:hosts_per_router","Number of hosts connected to each router."},
         {"dragonfly:routers_per_group","Number of links used to connect to routers in same group."},

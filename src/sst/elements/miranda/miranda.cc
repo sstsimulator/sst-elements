@@ -313,7 +313,7 @@ static const ElementInfoPort basecpu_ports[] = {
     	{ NULL, NULL, NULL }
 };
 
-static const ElementInfoSubComponentHook basecpu_subComps[] = {
+static const ElementInfoSubComponentSlot basecpu_subComps[] = {
     { "generator", "SST::Miranda::RequestGenerator" },
     { NULL, NULL }
 };

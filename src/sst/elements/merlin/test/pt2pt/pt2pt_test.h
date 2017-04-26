@@ -67,6 +67,8 @@ private:
 
     SST_ELI_REGISTER_COMPONENT(pt2pt_test,"merlin","pt2pt_test","Simple NIC to test basic pt2pt performance.",COMPONENT_CATEGORY_NETWORK)
     
+    SST_ELI_DOCUMENT_VERSION(0,9,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"id","Network ID of endpoint."},
         {"num_vns","Number of requested virtual networks."},

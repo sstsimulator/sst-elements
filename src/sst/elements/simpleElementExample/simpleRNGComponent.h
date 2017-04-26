@@ -56,6 +56,8 @@ private:
         COMPONENT_CATEGORY_UNCATEGORIZED
     )
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         { "seed_w", "The seed to use for the random number generator", "7" },
         { "seed_z", "The seed to use for the random number generator", "5" },

@@ -196,6 +196,8 @@ public:
     
     SST_ELI_REGISTER_SUBCOMPONENT(xbar_arb_lru,"merlin","xbar_arb_lru","Least recently used arbitration unit for hr_router","SST::Merlin::XbarArbitration")
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
     )
 

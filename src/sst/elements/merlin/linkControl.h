@@ -177,6 +177,8 @@ private:
 
     SST_ELI_REGISTER_SUBCOMPONENT(LinkControl,"merlin","linkcontrol","Link Control module for building Merlin-enabled NICs","SST::Interfaces::SimpleNetwork")
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"checkerboard","Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
         {"checkerboard_alg","Algorithm to use to spead traffic across checkerboarded VNs [deterministic | roundrobin]", "deterministic" }

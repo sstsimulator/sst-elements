@@ -77,6 +77,8 @@ public:
     
     SST_ELI_REGISTER_SUBCOMPONENT(topo_fattree,"merlin","fattree","Fattree topology object","SST::Merlin::Topology")
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"fattree:shape","Shape of the fattree"},
         {"fattree:routing_alg","Routing algorithm to use. [deterministic | adaptive]","deterministic"},

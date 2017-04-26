@@ -184,6 +184,8 @@ public:
     
     SST_ELI_REGISTER_SUBCOMPONENT(xbar_arb_lru_infx,"merlin","xbar_arb_lru_infx","Least recently used arbitration unit with \"infiinite crossbar\" for hr_router","SST::Merlin::XbarArbitration")
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
     )
 

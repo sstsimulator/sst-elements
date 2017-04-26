@@ -54,7 +54,9 @@ private:
                                "Demonstrates subcomponents",
                                COMPONENT_CATEGORY_UNCATEGORIZED
     )
-    
+
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"clock", "Clock Rate", "1GHz"},
     )
@@ -91,6 +93,8 @@ public:
         "SST::simpleSubComponent::SubCompInterface"
     )
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"sendCount", "Number of Messages to Send", "10"},
     )
@@ -129,6 +133,8 @@ public:
         "SST::simpleSubComponent::SubCompInterface"
     )
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
     )
 
