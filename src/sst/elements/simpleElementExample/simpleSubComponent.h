@@ -66,6 +66,7 @@ private:
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+        {"mySubComp", "Test slot", "SST::SimpleSubComponent::SubCompInterface" }
     )
 };
 

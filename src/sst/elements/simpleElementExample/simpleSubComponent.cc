@@ -34,7 +34,6 @@ SubComponentLoader::SubComponentLoader(ComponentId_t id, Params &params) :
     }
 
     info->createAll(subComps);
-    // subComps.push_back(static_cast<SubCompInterface*>(loadNamedSubComponent("mySubComp")));
     
     std::string freq = params.find<std::string>("clock", "1GHz");
     registerClock( freq,
