@@ -129,7 +129,7 @@ void ArielMemoryManagerMalloc::allocate(const uint64_t size, const uint32_t leve
 			output->verbose(CALL_INFO, 4, 0, "Requesting a memory allocation at level: %" PRIu32 " which will fail due to not having enough free pages\n",
 				level);
                         for (uint32_t i = 0; i < memoryLevels; ++i) {
-                            output->verbose(CALL_INFO, -1, 0, "Free pages at level %" PRIu32 " : %" PRIu64 "\n", i, freePages[i]->size());
+                            output->verbose(CALL_INFO, -1, 0, "Free pages at level %" PRIu32 " : %" PRIu64 "\n", i, static_cast<uint64_t>(freePages[i]->size()));
                         }
                         output->fatal(CALL_INFO, -1, "Requested a memory allocation at level: %" PRIu32 " of size %" PRIu64 " which failed due to not having enough free pages\n",
                                 level, size);
@@ -177,7 +177,7 @@ bool ArielMemoryManagerMalloc::allocateMalloc(const uint64_t size, const uint32_
 
     // Check whether enough pages are available
     if (freePages[level]->size() < pageCount) {
-        output->verbose(CALL_INFO, 4, 0, "Requested memory cannot be allocated, not enough pages. Have: %" PRIu64 ", Need: %" PRIu64 "\n", freePages[level]->size(), pageCount);
+        output->verbose(CALL_INFO, 4, 0, "Requested memory cannot be allocated, not enough pages. Have: %" PRIu64 ", Need: %" PRIu64 "\n", static_cast<uint64_t>(freePages[level]->size()), pageCount);
         return false;
     }
 
@@ -195,10 +195,13 @@ bool ArielMemoryManagerMalloc::allocateMalloc(const uint64_t size, const uint32_
         nextVirtPage += pageSizes[level];
         lastPhysAddr = nextPhysPage;
     }
-    output->verbose(CALL_INFO, 4, 0, "Malloc mapped %" PRIu64 " to [%" PRIu64 ", %" PRIu64 "] (%u pages).\n", virtualAddress, firstPhysAddr, lastPhysAddr, pageCount);
+
+    output->verbose(CALL_INFO, 4, 0, "Malloc mapped %" PRIu64 " to [%" PRIu64 ", %" PRIu64 "] (%" PRIu64 " pages).\n", virtualAddress, firstPhysAddr, lastPhysAddr, pageCount);
 
     // Record malloc
     mallocInformation.insert(std::make_pair(virtualAddress, mallocInfo(size, level, virtualPages)));
+
+    return true;
 }
 
 
@@ -310,7 +313,7 @@ uint64_t ArielMemoryManagerMalloc::translateAddress(uint64_t virtAddr) {
                             break;
                         }
                     }
-                    if (!allocated) output->fatal(CALL_INFO, -1, "Attempted to allocate page for address %" PRIu64 " but no free pages are available\n");
+                    if (!allocated) output->fatal(CALL_INFO, -1, "Attempted to allocate page for address %" PRIu64 " but no free pages are available\n", virtAddr);
                 }
 
 		// Now attempt to refind it
