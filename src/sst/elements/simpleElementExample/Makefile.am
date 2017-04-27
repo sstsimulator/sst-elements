@@ -8,7 +8,6 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsimpleElementExample.la
 libsimpleElementExample_la_SOURCES = \
-	simpleElementExample.cc \
 	simpleComponent.h \
 	simpleComponent.cc \
 	simpleComponentEvent.h \

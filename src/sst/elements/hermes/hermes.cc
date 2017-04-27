@@ -15,6 +15,8 @@
 
 #include <sst_config.h>
 
+#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
+
 #include <sst/core/element.h>
 #include <sst/core/configGraph.h>
 
