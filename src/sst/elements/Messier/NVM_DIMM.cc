@@ -640,7 +640,6 @@ void NVM_DIMM::handleEvent(SST::Event* e)
 			bank_hist[WhichBank(temp->Address)]--;
 			delete NVM_EVENT_MAP[temp];
 			NVM_EVENT_MAP.erase(req);
-			delete temp;
 			delete e;
 
 		}
@@ -648,6 +647,8 @@ void NVM_DIMM::handleEvent(SST::Event* e)
 		(getBank(req->Address))->setLocked(false, cycles);
 		ready_trans.erase(req);
 		outstanding.remove(req);
+
+		delete req;
 
 	} 
 	else if (tmp.ev == EventType::DEVICE_READY)
