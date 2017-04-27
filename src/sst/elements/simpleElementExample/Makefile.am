@@ -40,7 +40,9 @@ EXTRA_DIST = \
     tests/test_simpleRNGComponent_marsaglia.py \
     tests/test_simpleRNGComponent_xorshift.py \
     tests/test_simpleStatisticsComponent.py \
-    tests/test_simpleMessageGeneratorComponent.py
+    tests/test_simpleMessageGeneratorComponent.py \
+    tests/test_simpleSubComponent.py \
+    tests/test_simpleSubComponent_2.py
 
 libsimpleElementExample_la_LDFLAGS = -module -avoid-version
 
