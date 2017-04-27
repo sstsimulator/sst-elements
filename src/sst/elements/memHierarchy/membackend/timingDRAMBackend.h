@@ -62,7 +62,7 @@ class TimingDRAM : public SimpleMemBackend {
             va_start( arg, format );
             vsnprintf( buf, 500, format, arg );
             va_end(arg);
-            m_output->verbosePrefix( prefix(), line,"",func, 2, DBG_MASK, buf );
+            m_output->verbosePrefix( prefix(), line,"",func, 2, DBG_MASK, "%s", buf );
         }
 
         unsigned getRank() { return m_rank; }
