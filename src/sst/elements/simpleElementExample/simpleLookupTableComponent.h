@@ -50,6 +50,8 @@ private:
         COMPONENT_CATEGORY_UNCATEGORIZED
     )
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         { "filename", "Filename to load as the table", ""},
         {"num_entities", "Number of entities in the sim", "1"},

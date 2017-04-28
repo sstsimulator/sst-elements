@@ -187,6 +187,8 @@ private:
     SST_ELI_REGISTER_SUBCOMPONENT(ReorderLinkControl,"merlin","reorderlinkcontrol","Link Control module that can handle out of order packet arrival.  "
       "Events are sequenced and order is reconstructed on receive.","SST::Interfaces::SimpleNetwork")
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"rlc:networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"}
     )

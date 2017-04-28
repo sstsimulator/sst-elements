@@ -18,6 +18,8 @@
 
 #include <assert.h>
 
+#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
+
 #include "sst/core/element.h"
 #include "sst/core/component.h"
 #include "sst/core/subcomponent.h"

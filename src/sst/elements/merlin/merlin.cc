@@ -48,6 +48,7 @@ public:
 
     SST_ELI_REGISTER_PYTHON_MODULE(MerlinPyModule,"merlin")
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
 };
 
 /*
@@ -55,18 +56,18 @@ public:
   SST library without it.
  */
 
-extern "C" {
-    ElementLibraryInfo merlin_eli = {
-        "merlin",
-        "Flexible network components",
-        NULL,
-        NULL,   // Events
-        NULL,   // Introspectors
-        NULL,
-        NULL,
-        NULL, // partitioners,
-        NULL,  // Python Module Generator
-        NULL // generators,
-    };
-}
+// extern "C" {
+//     ElementLibraryInfo merlin_eli = {
+//         "merlin",
+//         "Flexible network components",
+//         NULL,
+//         NULL,   // Events
+//         NULL,   // Introspectors
+//         NULL,
+//         NULL,
+//         NULL, // partitioners,
+//         NULL,  // Python Module Generator
+//         NULL // generators,
+//     };
+// }
 

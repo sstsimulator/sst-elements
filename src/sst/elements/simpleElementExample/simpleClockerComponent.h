@@ -61,6 +61,8 @@ private:
         COMPONENT_CATEGORY_UNCATEGORIZED
     )
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         { "clock", "Clock frequency", "1GHz" },
         { "clockcount", "Number of clock ticks to execute", "100000"}

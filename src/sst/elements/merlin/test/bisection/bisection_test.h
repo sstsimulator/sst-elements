@@ -69,6 +69,8 @@ private:
     
     SST_ELI_REGISTER_COMPONENT(bisection_test,"merlin","bisection_test","Simple NIC to test bisection bandwidth of a network.",COMPONENT_CATEGORY_NETWORK)
     
+    SST_ELI_DOCUMENT_VERSION(0,9,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"num_peers","Number of peers on the network (must be even number)"},
         {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix).","2GB/s"},

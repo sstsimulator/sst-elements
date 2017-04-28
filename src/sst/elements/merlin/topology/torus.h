@@ -108,6 +108,8 @@ private:
 
     SST_ELI_REGISTER_SUBCOMPONENT(topo_torus,"merlin","torus","Multi-dimensional torus topology object","SST::Merlin::Topology")
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"torus:shape","Shape of the torus specified as the number of routers in each dimension, where each dimension is separated by an x.  For example, 4x4x2x2.  Any number of dimensions is supported."},
         {"torus:width","Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
