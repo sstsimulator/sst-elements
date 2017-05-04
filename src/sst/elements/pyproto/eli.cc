@@ -17,6 +17,8 @@
 
 #include "pyproto.h"
 
+#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
+
 #include "sst/core/element.h"
 
 extern "C" void* genPyProtoPyModule(void);

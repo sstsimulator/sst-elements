@@ -16,6 +16,9 @@
 
 #include <sst_config.h>
 #include <sst/core/component.h>
+
+#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
+
 #include <sst/core/element.h>
 
 #include <nic.h>

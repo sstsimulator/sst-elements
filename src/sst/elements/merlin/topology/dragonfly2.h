@@ -139,6 +139,8 @@ private:
 
     SST_ELI_REGISTER_SUBCOMPONENT(topo_dragonfly2,"merlin","dragonfly2","Dragonfly2 topology object.  Implements a dragonfly with a single all to all pattern within the group.","SST::Merlin::Topology")
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"dragonfly:hosts_per_router","Number of hosts connected to each router."},
         {"dragonfly:routers_per_group","Number of links used to connect to routers in same group."},

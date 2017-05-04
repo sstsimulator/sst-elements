@@ -76,6 +76,8 @@ private:
 
     SST_ELI_REGISTER_COMPONENT(nic,"merlin","test_nic","Simple NIC to test base functionality.",COMPONENT_CATEGORY_NETWORK)
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"id","Network ID of endpoint."},
         {"num_peers","Total number of endpoints in network."},

@@ -357,7 +357,7 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
             // Flushes can be returned out of order since they don't neccessarily require a memory access so we need to actually search the MSHRs
             vector<mshrType> * entries = mshrNoncacheable_->getAll(baseAddr);
             for (vector<mshrType>::iterator it = entries->begin(); it != entries->end(); it++) {
-                MemEvent * candidate = boost::get<MemEvent*>(it->elem);
+                MemEvent * candidate = (it->elem).getEvent();
                 if (candidate->getCmd() == FlushLine || candidate->getCmd() == FlushLineInv) { // All entries are events so no checking for pointer vs event needed
                     if (candidate->getID().first == event->getResponseToID().first && candidate->getID().second == event->getResponseToID().second) {
                         origRequest = candidate;

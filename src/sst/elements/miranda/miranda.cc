@@ -15,6 +15,9 @@
 
 
 #include <sst_config.h>
+
+#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
+
 #include <sst/core/element.h>
 #include <sst/core/subcomponent.h>
 
@@ -313,9 +316,9 @@ static const ElementInfoPort basecpu_ports[] = {
     	{ NULL, NULL, NULL }
 };
 
-static const ElementInfoSubComponentHook basecpu_subComps[] = {
-    { "generator", "SST::Miranda::RequestGenerator" },
-    { NULL, NULL }
+static const ElementInfoSubComponentSlot basecpu_subComps[] = {
+    { "generator", "Generator to be used by basecpu", "SST::Miranda::RequestGenerator" },
+    { NULL, NULL, NULL }
 };
 
 static const ElementInfoComponent components[] = {

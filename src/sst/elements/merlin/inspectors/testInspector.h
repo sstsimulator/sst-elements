@@ -39,6 +39,8 @@ public:
 
     SST_ELI_REGISTER_SUBCOMPONENT(TestNetworkInspector,"merlin","test_network_inspector","Used to test NetworkInspector functionality.  Duplicates send_packet_count in hr_router.","SST::Interfaces::SimpleNetwork::NetworkInspector")
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
     )
 

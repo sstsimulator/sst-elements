@@ -63,6 +63,8 @@ private:
         COMPONENT_CATEGORY_PROCESSOR
     )
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         { "workPerCycle", "Count of busy work to do during a clock tick.", NULL},
         { "commFreq", "Approximate frequency of sending an event during a clock tick.", NULL},

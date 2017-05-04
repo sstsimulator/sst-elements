@@ -97,6 +97,8 @@ private:
 
     SST_ELI_REGISTER_COMPONENT(Bridge,"merlin","Bridge","Bridge between two memory networks.",COMPONENT_CATEGORY_NETWORK)
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"translator",                "Translator backend.  Inherit from SST::Merlin::Bridge::Translator.", NULL},
         {"debug",                     "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},

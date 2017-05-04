@@ -50,6 +50,8 @@ public:
 
     SST_ELI_REGISTER_SUBCOMPONENT(topo_singlerouter,"merlin","singlerouter","Simple, single-router topology object","SST::Merlin::Topology")
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
     )
 

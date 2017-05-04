@@ -19,7 +19,6 @@
 #include <stdint.h>
 #include <queue>
 #include<iostream>
-#include<boost/tokenizer.hpp>
 #include<string>
 #include<fstream>
 

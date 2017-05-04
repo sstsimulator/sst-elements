@@ -59,6 +59,8 @@ private:
         COMPONENT_CATEGORY_NETWORK
     )
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         { "printStats", "Prints the statistics from the component", "0"},
         { "clock", "Sets the clock for the message generator", "1GHz" },

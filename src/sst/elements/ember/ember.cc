@@ -20,6 +20,8 @@
 
 #include "emberengine.h"
 
+#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
+
 #include "sst/core/element.h"
 #include "sst/core/params.h"
 #include "sst/core/subcomponent.h"

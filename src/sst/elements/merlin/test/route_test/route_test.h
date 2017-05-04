@@ -65,6 +65,8 @@ private:
 
     SST_ELI_REGISTER_COMPONENT(route_test,"merlin","route_test","Simple NIC to test routing.",COMPONENT_CATEGORY_NETWORK)
     
+    SST_ELI_DOCUMENT_VERSION(0,5,0)
+
     SST_ELI_DOCUMENT_PARAMS(
         {"id","Network ID of endpoint."},
         {"num_peers","Total number of endpoints in network."},

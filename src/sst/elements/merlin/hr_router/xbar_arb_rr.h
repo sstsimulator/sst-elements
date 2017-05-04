@@ -165,6 +165,8 @@ public:
 
     SST_ELI_REGISTER_SUBCOMPONENT(xbar_arb_rr,"merlin","xbar_arb_rr","Round robin arbitration unit for hr_router","SST::Merlin::XbarArbitration")
     
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
     SST_ELI_DOCUMENT_PARAMS(
     )
 

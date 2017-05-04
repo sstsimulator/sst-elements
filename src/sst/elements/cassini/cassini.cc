@@ -17,6 +17,8 @@
 #include "sst_config.h"
 #include <assert.h>
 
+#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
+
 #include "sst/core/element.h"
 #include "nbprefetch.h"
 #include "strideprefetch.h"
