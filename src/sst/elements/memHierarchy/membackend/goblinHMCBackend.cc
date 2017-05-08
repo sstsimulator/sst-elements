@@ -478,7 +478,7 @@ void GOBLINHMCSimBackend::registerStatistics() {
 }
 
 void GOBLINHMCSimBackend::recordIOStats( uint64_t header ){
-        uint32_t cmd = (uint32_t)(head & 0x7F);
+        uint32_t cmd = (uint32_t)(header & 0x7F);
 
         switch( cmd ){
         case 8:
