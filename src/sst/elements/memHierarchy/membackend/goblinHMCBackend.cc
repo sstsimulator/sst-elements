@@ -454,8 +454,8 @@ void GOBLINHMCSimBackend::registerStatistics() {
         PWrite80Ops = registerStatistic<uint64_t>("P_WR80");
         PWrite96Ops = registerStatistic<uint64_t>("P_WR96");
         PWrite112Ops = registerStatistic<uint64_t>("P_WR112");
-        PWrite128Ops = registerStatistic<uint64_t>("P_128");
-        PWrite256Ops = registerStatistic<uint64_t>("P_256");
+        PWrite128Ops = registerStatistic<uint64_t>("P_WR128");
+        PWrite256Ops = registerStatistic<uint64_t>("P_WR256");
         TwoAddS8ROps = registerStatistic<uint64_t>("2ADDS8R");
         AddS16ROps = registerStatistic<uint64_t>("ADDS16");
         Inc8Ops = registerStatistic<uint64_t>("INC8");

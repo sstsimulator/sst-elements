@@ -20,6 +20,7 @@
 #include <queue>
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/params.h>
 #include <sst/core/output.h>
 #include <membackend/memBackend.h>

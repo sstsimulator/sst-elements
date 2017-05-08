@@ -466,6 +466,64 @@ static const ElementInfoStatistic coherence_statistics[] = {
     {NULL, NULL, NULL, 0}
 };
 
+#ifdef HAVE_GOBLIN_HMCSIM
+static const ElementInfoStatistic goblinhmcsim_statistics[] = {
+    {"WR16",      "Operation count for HMC WR16",       "count", 1},
+    {"WR32",      "Operation count for HMC WR32",       "count", 1},
+    {"WR48",      "Operation count for HMC WR48",       "count", 1},
+    {"WR64",      "Operation count for HMC WR64",       "count", 1},
+    {"WR80",      "Operation count for HMC WR80",       "count", 1},
+    {"WR96",      "Operation count for HMC WR96",       "count", 1},
+    {"WR112",     "Operation count for HMC WR112",      "count", 1},
+    {"WR128",     "Operation count for HMC WR128",      "count", 1},
+    {"WR256",     "Operation count for HMC WR256",      "count", 1},
+    {"RD16",      "Operation count for HMC RD16",       "count", 1},
+    {"RD32",      "Operation count for HMC RD32",       "count", 1},
+    {"RD48",      "Operation count for HMC RD48",       "count", 1},
+    {"RD64",      "Operation count for HMC RD64",       "count", 1},
+    {"RD80",      "Operation count for HMC RD80",       "count", 1},
+    {"RD96",      "Operation count for HMC RD96",       "count", 1},
+    {"RD112",     "Operation count for HMC RD112",      "count", 1},
+    {"RD128",     "Operation count for HMC RD128",      "count", 1},
+    {"RD256",     "Operation count for HMC RD256",      "count", 1},
+    {"MD_WR",     "Operation count for HMC MD_WR",      "count", 1},
+    {"MD_RD",     "Operation count for HMC MD_RD",      "count", 1},
+    {"BWR",       "Operation count for HMC BWR",        "count", 1},
+    {"2ADD8",     "Operation count for HMC 2ADD8",      "count", 1},
+    {"ADD16",     "Operation count for HMC ADD16",      "count", 1},
+    {"P_WR16",    "Operation count for HMC P_WR16",     "count", 1},
+    {"P_WR32",    "Operation count for HMC P_WR32",     "count", 1},
+    {"P_WR48",    "Operation count for HMC P_WR48",     "count", 1},
+    {"P_WR64",    "Operation count for HMC P_WR64",     "count", 1},
+    {"P_WR80",    "Operation count for HMC P_WR80",     "count", 1},
+    {"P_WR96",    "Operation count for HMC P_WR96",     "count", 1},
+    {"P_WR112",   "Operation count for HMC P_WR112",    "count", 1},
+    {"P_WR128",   "Operation count for HMC P_WR128",    "count", 1},
+    {"P_WR256",   "Operation count for HMC P_WR256",    "count", 1},
+    {"2ADDS8R",   "Operation count for HMC 2ADDS8R",    "count", 1},
+    {"ADDS16",    "Operation count for HMC ADDS16",     "count", 1},
+    {"INC8",      "Operation count for HMC INC8",       "count", 1},
+    {"P_INC8",    "Operation count for HMC P_INC8",     "count", 1},
+    {"XOR16",     "Operation count for HMC XOR16",      "count", 1},
+    {"OR16",      "Operation count for HMC OR16",       "count", 1},
+    {"NOR16",     "Operation count for HMC NOR16",      "count", 1},
+    {"AND16",     "Operation count for HMC AND16",      "count", 1},
+    {"NAND16",    "Operation count for HMC NAND16",     "count", 1},
+    {"CASGT8",    "Operation count for HMC CASGT8",     "count", 1},
+    {"CASGT16",   "Operation count for HMC CASGT16",    "count", 1},
+    {"CASLT8",    "Operation count for HMC CASLT8",     "count", 1},
+    {"CASLT16",   "Operation count for HMC CASLT16",    "count", 1},
+    {"CASEQ8",    "Operation count for HMC CASEQ8",     "count", 1},
+    {"CASZERO16", "Operation count for HMC CASZER016",  "count", 1},
+    {"EQ8",       "Operation count for HMC EQ8",        "count", 1},
+    {"EQ16",      "Operation count for HMC EQ16",       "count", 1},
+    {"BWR8R",     "Operation count for HMC BWR8R",      "count", 1},
+    {"SWAP16",    "Operation count for HMC SWAP16",     "count", 1},
+    {NULL, NULL, NULL, 0}
+};
+#endif // HAVE_GOBLIN_HMCSIM
+
+
 /*****************************************************************************************
  *  SubComponent: MESIController
  *  Purpose: Non-L1 cache coherence controller for MSI or MESI protocol. 
@@ -1508,7 +1566,7 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL, /* Advanced help */
         create_Mem_GOBLINHMCSim, /* Module Alloc w/ params */
         goblin_hmcsim_Mem_params,
-        NULL, /* statistics */
+        goblinhmcsim_statistics, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
 #endif
