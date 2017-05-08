@@ -84,6 +84,11 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : Simp
 
         params.find_array<std::string>("cmc-lib", cmclibs);
 
+        // register the SST statistics
+        if( (hmc_trace_level & HMC_TRACE_CMD) > 0 ){
+          registerStatistics();
+        }
+
 	output->verbose(CALL_INFO, 1, 0, "Initializing HMC...\n");
 	int rc = hmcsim_init(&the_hmc,
 		hmc_dev_count,
@@ -287,6 +292,11 @@ bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite, uns
 
 		// Add the tag and request into our table of pending
 		tag_req_map.insert( std::pair<uint16_t, HMCSimBackEndReq*>(req_tag, reqEntry) );
+
+                // Record the I/O statistics
+                if( (hmc_trace_level & HMC_TRACE_CMD) > 0 ){
+                  recordIOStats( hmc_packet[0] );
+                }
 	} else {
 		output->fatal(CALL_INFO, -1, "Error issue request for address %" PRIu64 " into HMC on link %" PRIu8 "\n", addr, req_link);
 	}
@@ -411,6 +421,285 @@ GOBLINHMCSimBackend::~GOBLINHMCSimBackend() {
 
 	output->verbose(CALL_INFO, 1, 0, "Completed.\n");
 	delete output;
+}
+
+void GOBLINHMCSimBackend::registerStatistics() {
+        Write16Ops = registerStatistic<uint64_t>("WR16");
+        Write32Ops = registerStatistic<uint64_t>("WR32");
+        Write48Ops = registerStatistic<uint64_t>("WR48");
+        Write64Ops = registerStatistic<uint64_t>("WR64");
+        Write80Ops = registerStatistic<uint64_t>("WR80");
+        Write96Ops = registerStatistic<uint64_t>("WR96");
+        Write112Ops = registerStatistic<uint64_t>("WR112");
+        Write128Ops = registerStatistic<uint64_t>("WR128");
+        Write256Ops = registerStatistic<uint64_t>("WR256");
+        Read16Ops = registerStatistic<uint64_t>("RD16");
+        Read32Ops = registerStatistic<uint64_t>("RD32");
+        Read48Ops = registerStatistic<uint64_t>("RD48");
+        Read64Ops = registerStatistic<uint64_t>("RD64");
+        Read80Ops = registerStatistic<uint64_t>("RD80");
+        Read96Ops = registerStatistic<uint64_t>("RD96");
+        Read112Ops = registerStatistic<uint64_t>("RD112");
+        Read128Ops = registerStatistic<uint64_t>("RD128");
+        Read256Ops = registerStatistic<uint64_t>("RD256");
+        ModeWriteOps = registerStatistic<uint64_t>("MD_WR");
+        ModeReadOps = registerStatistic<uint64_t>("MD_RD");
+        BWROps = registerStatistic<uint64_t>("BWR");
+        TwoAdd8Ops = registerStatistic<uint64_t>("2ADD8");
+        Add16Ops = registerStatistic<uint64_t>("ADD16");
+        PWrite16Ops = registerStatistic<uint64_t>("P_WR16");
+        PWrite32Ops = registerStatistic<uint64_t>("P_WR32");
+        PWrite48Ops = registerStatistic<uint64_t>("P_WR48");
+        PWrite64Ops = registerStatistic<uint64_t>("P_WR64");
+        PWrite80Ops = registerStatistic<uint64_t>("P_WR80");
+        PWrite96Ops = registerStatistic<uint64_t>("P_WR96");
+        PWrite112Ops = registerStatistic<uint64_t>("P_WR112");
+        PWrite128Ops = registerStatistic<uint64_t>("P_128");
+        PWrite256Ops = registerStatistic<uint64_t>("P_256");
+        TwoAddS8ROps = registerStatistic<uint64_t>("2ADDS8R");
+        AddS16ROps = registerStatistic<uint64_t>("ADDS16");
+        Inc8Ops = registerStatistic<uint64_t>("INC8");
+        PInc8Ops = registerStatistic<uint64_t>("P_INC8");
+        Xor16Ops = registerStatistic<uint64_t>("XOR16");
+        Or16Ops = registerStatistic<uint64_t>("OR16");
+        Nor16Ops = registerStatistic<uint64_t>("NOR16");
+        And16Ops = registerStatistic<uint64_t>("AND16");
+        Nand16Ops = registerStatistic<uint64_t>("NAND16");
+        CasGT8Ops = registerStatistic<uint64_t>("CASGT8");
+        CasGT16Ops = registerStatistic<uint64_t>("CASGT16");
+        CasLT8Ops = registerStatistic<uint64_t>("CASLT8");
+        CasLT16Ops = registerStatistic<uint64_t>("CASLT16");
+        CasEQ8Ops = registerStatistic<uint64_t>("CASEQ8");
+        CasZero16Ops = registerStatistic<uint64_t>("CASZERO16");
+        Eq8Ops = registerStatistic<uint64_t>("EQ8");
+        Eq16Ops = registerStatistic<uint64_t>("EQ16");
+        BWR8ROps = registerStatistic<uint64_t>("BWR8R");
+        Swap16Ops = registerStatistic<uint64_t>("SWAP16");
+}
+
+void GOBLINHMCSimBackend::recordIOStats( uint64_t header ){
+        uint32_t cmd = (uint32_t)(head & 0x7F);
+
+        switch( cmd ){
+        case 8:
+          // WR16
+          Write16Ops->addData(1);
+          break;
+        case 9:
+          // WR32
+          Write32Ops->addData(1);
+          break;
+        case 10:
+          // WR48
+          Write48Ops->addData(1);
+          break;
+        case 11:
+          // WR64
+          Write64Ops->addData(1);
+          break;
+        case 12:
+          // WR80
+          Write80Ops->addData(1);
+          break;
+        case 13:
+          // WR96
+          Write96Ops->addData(1);
+          break;
+        case 14:
+          // WR112
+          Write112Ops->addData(1);
+          break;
+        case 15:
+          // WR128
+          Write128Ops->addData(1);
+          break;
+        case 79:
+          // WR256
+          Write256Ops->addData(1);
+          break;
+        case 16:
+          // MD_WR
+          ModeWriteOps->addData(1);
+          break;
+        case 17:
+          // BWR
+          BWROps->addData(1);
+          break;
+        case 18:
+          // TWOADD8
+          TwoAdd8Ops->addData(1);
+          break;
+        case 19:
+          // ADD16
+          Add16Ops->addData(1);
+          break;
+        case 24:
+          // P_WR16
+          PWrite16Ops->addData(1);
+          break;
+        case 25:
+          // P_WR32
+          PWrite32Ops->addData(1);
+          break;
+        case 26:
+          // P_WR48
+          PWrite48Ops->addData(1);
+          break;
+        case 27:
+          // P_WR64
+          PWrite64Ops->addData(1);
+          break;
+        case 28:
+          // P_WR80
+          PWrite80Ops->addData(1);
+          break;
+        case 29:
+          // P_WR96
+          PWrite96Ops->addData(1);
+          break;
+        case 30:
+          // P_WR112
+          PWrite112Ops->addData(1);
+          break;
+        case 31:
+          // P_WR128
+          PWrite128Ops->addData(1);
+          break;
+        case 95:
+          // P_WR256
+          PWrite256Ops->addData(1);
+          break;
+        case 33:
+          // P_BWR
+          PBWROps->addData(1);
+          break;
+        case 34:
+          // P2ADD8
+          P2ADD8Ops->addData(1);
+          break;
+        case 35:
+          // P2ADD16
+          P2ADD16Ops->addData(1);
+          break;
+        case 48:
+          // RD16
+          Read16Ops->addData(1);
+          break;
+        case 49:
+          // RD32
+          Read32Ops->addData(1);
+          break;
+        case 50:
+          // RD48
+          Read48Ops->addData(1);
+          break;
+        case 51:
+          // RD64
+          Read64Ops->addData(1);
+          break;
+        case 52:
+          // RD80
+          Read80Ops->addData(1);
+          break;
+        case 53:
+          // RD96
+          Read96Ops->addData(1);
+          break;
+        case 54:
+          // RD112
+          Read112Ops->addData(1);
+          break;
+        case 55:
+          // RD128
+          Read128Ops->addData(1);
+          break;
+        case 119:
+          // RD256
+          Read256Ops->addData(1);
+          break;
+        case 40:
+          // MD_RD
+          ModeReadOps->addData(1);
+          break;
+        case 82:
+          // 2ADDS8R
+          TwoAddS8ROps->addData(1);
+          break;
+        case 83:
+          // ADDS16R
+          AddS16ROps->addData(1);
+          break;
+        case 80:
+          // INC8
+          Inc8Ops->addData(1);
+          break;
+        case 84:
+          // P_INC8
+          PInc8Ops->addData(1);
+          break;
+        case 64:
+          // XOR16
+          Xor16Ops->addData(1);
+          break;
+        case 65:
+          // OR16
+          Or16Ops->addData(1);
+          break;
+        case 66:
+          // NOR16
+          Nor16Ops->addData(1);
+          break;
+        case 67:
+          // AND16
+          And16Ops->addData(1);
+          break;
+        case 68:
+          // NAND16
+          Nand16Ops->addData(1);
+          break;
+        case 96:
+          // CASGT8
+          CasGT8Ops->addData(1);
+          break;
+        case 98:
+          // CASGT16
+          CasGT16Ops->addData(1);
+          break;
+        case 97:
+          // CASLT8
+          CasLT8Ops->addData(1);
+          break;
+        case 99:
+          // CASLT16
+          CasLT16Ops->addData(1);
+          break;
+        case 100:
+          // CASEQ8
+          CasEQ8Ops->addData(1);
+          break;
+        case 101:
+          // CASZERO16
+          CasZero16Ops->addData(1);
+          break;
+        case 105:
+          // EQ8
+          Eq8Ops->addData(1);
+          break;
+        case 104:
+          // EQ16
+          Eq16Ops->addData(1);
+          break;
+        case 81:
+          // BWR8R
+          BWR8ROps->addData(1);
+          break;
+        case 106:
+          // SWAP16
+          Swap16Ops->addData(1);
+          break;
+        default:
+          break;
+        }
 }
 
 void GOBLINHMCSimBackend::zeroPacket(uint64_t* packet) const {
