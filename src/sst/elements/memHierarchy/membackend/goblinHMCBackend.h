@@ -94,6 +94,28 @@ private:
         float vault_ctrl;
         float row_access;
 
+        // Internal Counters
+        float s_link_phy_power;
+        float s_link_local_route_power;
+        float s_link_remote_route_power;
+        float s_xbar_rqst_slot_power;
+        float s_xbar_rsp_slot_power;
+        float s_xbar_route_extern_power;
+        float s_vault_rqst_slot_power;
+        float s_vault_rsp_slot_power;
+        float s_vault_ctrl_power;
+        float s_row_access_power;
+        float s_link_phy_therm;
+        float s_link_local_route_therm;
+        float s_link_remote_route_therm;
+        float s_xbar_rqst_slot_therm;
+        float s_xbar_rsp_slot_therm;
+        float s_xbar_route_extern_therm;
+        float s_vault_rqst_slot_therm;
+        float s_vault_rsp_slot_therm;
+        float s_vault_ctrl_therm;
+        float s_row_access_therm;
+
         // Statistics
         Statistic<uint64_t>* Write16Ops;
         Statistic<uint64_t>* Write32Ops;
@@ -150,6 +172,39 @@ private:
         Statistic<uint64_t>* BWR8ROps;
         Statistic<uint64_t>* Swap16Ops;
 
+        // stall stats
+        Statistic<uint64_t>* xbar_rqst_stall_stat;
+        Statistic<uint64_t>* xbar_rsp_stall_stat;
+        Statistic<uint64_t>* vault_rqst_stall_stat;
+        Statistic<uint64_t>* vault_rsp_stall_stat;
+        Statistic<uint64_t>* route_rqst_stall_stat;
+        Statistic<uint64_t>* route_rsp_stall_stat;
+        Statistic<uint64_t>* undef_stall_stat;
+        Statistic<uint64_t>* bank_conflict_stat;
+        Statistic<uint64_t>* xbar_latency_stat;
+
+        // power & thermal stats
+        Statistic<float>* link_phy_power_stat;
+        Statistic<float>* link_local_route_power_stat;
+        Statistic<float>* link_remote_route_power_stat;
+        Statistic<float>* xbar_rqst_slot_power_stat;
+        Statistic<float>* xbar_rsp_slot_power_stat;
+        Statistic<float>* xbar_route_extern_power_stat;
+        Statistic<float>* vault_rqst_slot_power_stat;
+        Statistic<float>* vault_rsp_slot_power_stat;
+        Statistic<float>* vault_ctrl_power_stat;
+        Statistic<float>* row_access_power_stat;
+        Statistic<float>* link_phy_therm_stat;
+        Statistic<float>* link_local_route_therm_stat;
+        Statistic<float>* link_remote_route_therm_stat;
+        Statistic<float>* xbar_rqst_slot_therm_stat;
+        Statistic<float>* xbar_rsp_slot_therm_stat;
+        Statistic<float>* xbar_route_extern_therm_stat;
+        Statistic<float>* vault_rqst_slot_therm_stat;
+        Statistic<float>* vault_rsp_slot_therm_stat;
+        Statistic<float>* vault_ctrl_therm_stat;
+        Statistic<float>* row_access_therm_stat;
+
 	uint32_t nextLink;
 
         std::vector<std::string> cmclibs;
@@ -165,6 +220,7 @@ private:
 	std::queue<uint16_t> tag_queue;
 	std::map<uint16_t, HMCSimBackEndReq*> tag_req_map;
 
+        void collectStats();
         void registerStatistics();
         void recordIOStats(uint64_t header);
 	void zeroPacket(uint64_t* packet) const;

@@ -24,6 +24,28 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : Simp
 
 	int verbose = params.find<int>("verbose", 0);
 
+        // init the internal counters
+        s_link_phy_power=0.;
+        s_link_local_route_power=0.;
+        s_link_remote_route_power=0.;
+        s_xbar_rqst_slot_power=0.;
+        s_xbar_rsp_slot_power=0.;
+        s_xbar_route_extern_power=0.;
+        s_vault_rqst_slot_power=0.;
+        s_vault_rsp_slot_power=0.;
+        s_vault_ctrl_power=0.;
+        s_row_access_power=0.;
+        s_link_phy_therm=0.;
+        s_link_local_route_therm=0.;
+        s_link_remote_route_therm=0.;
+        s_xbar_rqst_slot_therm=0.;
+        s_xbar_rsp_slot_therm=0.;
+        s_xbar_route_extern_therm=0.;
+        s_vault_rqst_slot_therm=0.;
+        s_vault_rsp_slot_therm=0.;
+        s_vault_ctrl_therm=0.;
+        s_row_access_therm=0.;
+
 	output = new Output("HMCBackend[@p:@l]: ", verbose, 0, Output::STDOUT);
 
 	hmc_dev_count    = params.find<uint32_t>("device_count", 1);
@@ -312,6 +334,67 @@ void GOBLINHMCSimBackend::finish() {
 
 }
 
+void GOBLINHMCSimBackend::collectStats(){
+#if defined( HMC_STAT )
+  // stall stats
+  xbar_rqst_stall_stat->addData(hmcsim_int_stat(&the_hmc, XBAR_RQST_STALL_STAT));
+  xbar_rsp_stall_stat->addData(hmcsim_int_stat(&the_hmc, XBAR_RSP_STALL_STAT));
+  vault_rqst_stall_stat->addData(hmcsim_int_stat(&the_hmc, VAULT_RQST_STALL_STAT));
+  vault_rsp_stall_stat->addData(hmcsim_int_stat(&the_hmc, VAULT_RSP_STALL_STAT));
+  route_rqst_stall_stat->addData(hmcsim_int_stat(&the_hmc, ROUTE_RQST_STALL_STAT));
+  route_rsp_stall_stat->addData(hmcsim_int_stat(&the_hmc, ROUTE_RSP_STALL_STAT));
+  undef_stall_stat->addData(hmcsim_int_stat(&the_hmc, UNDEF_STALL_STAT));
+  bank_conflict_stat->addData(hmcsim_int_stat(&the_hmc, BANK_CONFLICT_STAT));
+  xbar_latency_stat->addData(hmcsim_int_stat(&the_hmc, XBAR_LATENCY_STAT));
+
+  // power & thermal stats
+  link_phy_power_stat->addData(hmcsim_float_stat(&the_hmc, LINK_PHY_POWER_STAT)-s_link_phy_power);
+  link_local_route_power_stat->addData(hmcsim_float_stat(&the_hmc, LINK_LOCAL_ROUTE_POWER_STAT)-s_link_local_route_power);
+  link_remote_route_power_stat->addData(hmcsim_float_stat(&the_hmc, LINK_REMOTE_ROUTE_POWER_STAT)-s_link_remote_route_power);
+  xbar_rqst_slot_power_stat->addData(hmcsim_float_stat(&the_hmc, XBAR_RQST_SLOT_POWER_STAT)-s_xbar_rqst_slot_power);
+  xbar_rsp_slot_power_stat->addData(hmcsim_float_stat(&the_hmc, XBAR_RSP_SLOT_POWER_STAT)-s_xbar_rsp_slot_power);
+  xbar_route_extern_power_stat->addData(hmcsim_float_stat(&the_hmc, XBAR_ROUTE_EXTERN_POWER_STAT)-s_xbar_route_extern_power);
+  vault_rqst_slot_power_stat->addData(hmcsim_float_stat(&the_hmc, VAULT_RQST_SLOT_POWER_STAT)-s_vault_rqst_slot_power);
+  vault_rsp_slot_power_stat->addData(hmcsim_float_stat(&the_hmc, VAULT_RSP_SLOT_POWER_STAT)-s_vault_rsp_slot_power);
+  vault_ctrl_power_stat->addData(hmcsim_float_stat(&the_hmc, VAULT_CTRL_POWER_STAT)-s_vault_ctrl_power);
+  row_access_power_stat->addData(hmcsim_float_stat(&the_hmc, ROW_ACCESS_POWER_STAT)-s_row_access_power);
+
+  link_phy_therm_stat->addData(hmcsim_float_stat(&the_hmc, LINK_PHY_THERM_STAT)-s_link_phy_therm);
+  link_local_route_therm_stat->addData(hmcsim_float_stat(&the_hmc, LINK_LOCAL_ROUTE_THERM_STAT)-s_link_local_route_therm);
+  link_remote_route_therm_stat->addData(hmcsim_float_stat(&the_hmc, LINK_REMOTE_ROUTE_THERM_STAT)-s_link_remote_route_therm);
+  xbar_rqst_slot_therm_stat->addData(hmcsim_float_stat(&the_hmc, XBAR_RQST_SLOT_THERM_STAT)-s_xbar_rqst_slot_therm);
+  xbar_rsp_slot_therm_stat->addData(hmcsim_float_stat(&the_hmc, XBAR_RSP_SLOT_THERM_STAT)-s_xbar_rsp_slot_therm);
+  xbar_route_extern_therm_stat->addData(hmcsim_float_stat(&the_hmc, XBAR_ROUTE_EXTERN_THERM_STAT)-s_xbar_route_extern_therm);
+  vault_rqst_slot_therm_stat->addData(hmcsim_float_stat(&the_hmc, VAULT_RQST_SLOT_THERM_STAT)-s_vault_rqst_slot_therm);
+  vault_rsp_slot_therm_stat->addData(hmcsim_float_stat(&the_hmc, VAULT_RSP_SLOT_THERM_STAT)-s_vault_rsp_slot_therm);
+  vault_ctrl_therm_stat->addData(hmcsim_float_stat(&the_hmc, VAULT_CTRL_THERM_STAT)-s_vault_ctrl_therm);
+  row_access_therm_stat->addData(hmcsim_float_stat(&the_hmc, ROW_ACCESS_THERM_STAT)-s_row_access_therm);
+
+  s_link_phy_power = hmcsim_float_stat(&the_hmc, LINK_PHY_POWER_STAT);
+  s_link_local_route_power = hmcsim_float_stat(&the_hmc, LINK_LOCAL_ROUTE_POWER_STAT);
+  s_link_remote_route_power = hmcsim_float_stat(&the_hmc, LINK_REMOTE_ROUTE_POWER_STAT);
+  s_xbar_rqst_slot_power = hmcsim_float_stat(&the_hmc, XBAR_RQST_SLOT_POWER_STAT);
+  s_xbar_rsp_slot_power = hmcsim_float_stat(&the_hmc, XBAR_RSP_SLOT_POWER_STAT);
+  s_xbar_route_extern_power = hmcsim_float_stat(&the_hmc, XBAR_ROUTE_EXTERN_POWER_STAT);
+  s_vault_rqst_slot_power = hmcsim_float_stat(&the_hmc, VAULT_RQST_SLOT_POWER_STAT);
+  s_vault_rsp_slot_power = hmcsim_float_stat(&the_hmc, VAULT_RSP_SLOT_POWER_STAT);
+  s_vault_ctrl_power = hmcsim_float_stat(&the_hmc, VAULT_CTRL_POWER_STAT);
+  s_row_access_power = hmcsim_float_stat(&the_hmc, ROW_ACCESS_POWER_STAT);
+
+  s_link_phy_therm = hmcsim_float_stat(&the_hmc, LINK_PHY_THERM_STAT);
+  s_link_local_route_therm = hmcsim_float_stat(&the_hmc, LINK_LOCAL_ROUTE_THERM_STAT);
+  s_link_remote_route_therm = hmcsim_float_stat(&the_hmc, LINK_REMOTE_ROUTE_THERM_STAT);
+  s_xbar_rqst_slot_therm = hmcsim_float_stat(&the_hmc, XBAR_RQST_SLOT_THERM_STAT);
+  s_xbar_rsp_slot_therm = hmcsim_float_stat(&the_hmc, XBAR_RSP_SLOT_THERM_STAT);
+  s_xbar_route_extern_therm = hmcsim_float_stat(&the_hmc, XBAR_ROUTE_EXTERN_THERM_STAT);
+  s_vault_rqst_slot_therm = hmcsim_float_stat(&the_hmc, VAULT_RQST_SLOT_THERM_STAT);
+  s_vault_rsp_slot_therm = hmcsim_float_stat(&the_hmc, VAULT_RSP_SLOT_THERM_STAT);
+  s_vault_ctrl_therm = hmcsim_float_stat(&the_hmc, VAULT_CTRL_THERM_STAT);
+  s_row_access_therm = hmcsim_float_stat(&the_hmc, ROW_ACCESS_THERM_STAT);
+
+#endif
+}
+
 void GOBLINHMCSimBackend::clock() {
 	output->verbose(CALL_INFO, 8, 0, "Clocking HMC...\n");
 	int rc = hmcsim_clock(&the_hmc);
@@ -319,6 +402,10 @@ void GOBLINHMCSimBackend::clock() {
 	if(rc > 0) {
 		output->fatal(CALL_INFO, -1, "Error: clock call to the HMC failed.\n");
 	}
+
+#if defined( HMC_STAT )
+        collectStats();
+#endif
 
 	// Call to process any responses from the HMC
 	processResponses();
@@ -424,6 +511,7 @@ GOBLINHMCSimBackend::~GOBLINHMCSimBackend() {
 }
 
 void GOBLINHMCSimBackend::registerStatistics() {
+        // I/O Ops
         Write16Ops = registerStatistic<uint64_t>("WR16");
         Write32Ops = registerStatistic<uint64_t>("WR32");
         Write48Ops = registerStatistic<uint64_t>("WR48");
@@ -475,6 +563,39 @@ void GOBLINHMCSimBackend::registerStatistics() {
         Eq16Ops = registerStatistic<uint64_t>("EQ16");
         BWR8ROps = registerStatistic<uint64_t>("BWR8R");
         Swap16Ops = registerStatistic<uint64_t>("SWAP16");
+
+        // Stall Stats
+        xbar_rqst_stall_stat = registerStatistic<uint64_t>("XbarRqstStall");
+        xbar_rsp_stall_stat = registerStatistic<uint64_t>("XbarRspStall");
+        vault_rqst_stall_stat = registerStatistic<uint64_t>("VaultRqstStall");
+        vault_rsp_stall_stat = registerStatistic<uint64_t>("VaultRspStall");
+        route_rqst_stall_stat = registerStatistic<uint64_t>("RouteRqstStall");
+        route_rsp_stall_stat = registerStatistic<uint64_t>("RouteRspStall");
+        undef_stall_stat = registerStatistic<uint64_t>("UndefStall");
+        bank_conflict_stat = registerStatistic<uint64_t>("BankConflict");
+        xbar_latency_stat = registerStatistic<uint64_t>("XbarLatency");
+
+        // Power & Thermal Stats
+        link_phy_power_stat = registerStatistic<float>("LinkPhyPower");
+        link_local_route_power_stat = registerStatistic<float>("LinkLocalRoutePower");
+        link_remote_route_power_stat = registerStatistic<float>("LinkRemoteRoutePower");
+        xbar_rqst_slot_power_stat = registerStatistic<float>("XbarRqstSlotPower");
+        xbar_rsp_slot_power_stat = registerStatistic<float>("XbarRspSlotPower");
+        xbar_route_extern_power_stat = registerStatistic<float>("XbarRouteExternPower");
+        vault_rqst_slot_power_stat = registerStatistic<float>("VaultRqstSlotPower");
+        vault_rsp_slot_power_stat = registerStatistic<float>("VaultRspSlotPower");
+        vault_ctrl_power_stat = registerStatistic<float>("VaultCtrlPower");
+        row_access_power_stat = registerStatistic<float>("RowAccessPower");
+        link_phy_therm_stat = registerStatistic<float>("LinkPhyTherm");
+        link_local_route_therm_stat = registerStatistic<float>("LinkLocalRouteTherm");
+        link_remote_route_therm_stat = registerStatistic<float>("LinkRemoteRouteTherm");
+        xbar_rqst_slot_therm_stat = registerStatistic<float>("XbarRqstSlotTherm");
+        xbar_rsp_slot_therm_stat = registerStatistic<float>("XbarRspSlotTherm");
+        xbar_route_extern_therm_stat = registerStatistic<float>("XbarRouteExternTherm");
+        vault_rqst_slot_therm_stat = registerStatistic<float>("VaultRqstSlotTherm");
+        vault_rsp_slot_therm_stat = registerStatistic<float>("VaultRspSlotTherm");
+        vault_ctrl_therm_stat = registerStatistic<float>("VaultCtrlTherm");
+        row_access_therm_stat = registerStatistic<float>("RowAccessTherm");
 }
 
 void GOBLINHMCSimBackend::recordIOStats( uint64_t header ){
