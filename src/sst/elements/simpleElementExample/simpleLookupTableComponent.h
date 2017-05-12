@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,17 +17,18 @@
 #define _SIMPLELOOKUPTABLECOMPONENT_H
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/output.h>
 #include <sst/core/sharedRegion.h>
 
 namespace SST {
 namespace SimpleElementExample {
 
-class SimpleLookupTableComponent : public SST::Component
+class simpleLookupTableComponent : public SST::Component
 {
 public:
-    SimpleLookupTableComponent(SST::ComponentId_t id, SST::Params& params);
-    ~SimpleLookupTableComponent();
+    simpleLookupTableComponent(SST::ComponentId_t id, SST::Params& params);
+    ~simpleLookupTableComponent();
 
     virtual void init(unsigned int phase);
     virtual void setup();
@@ -39,6 +40,32 @@ private:
     const uint8_t * table;
     size_t tableSize;
     SharedRegion *sregion;
+
+    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_COMPONENT(
+        simpleLookupTableComponent,
+        "simpleElementExample",
+        "simpleLookupTableComponent",
+        "Demonstrates using a Shared Lookup Table",
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+    
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
+    SST_ELI_DOCUMENT_PARAMS(
+        { "filename", "Filename to load as the table", ""},
+        {"num_entities", "Number of entities in the sim", "1"},
+        {"myid", "ID Number (0 <= myid < num_entities)", "0"}
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
 };
 
 }

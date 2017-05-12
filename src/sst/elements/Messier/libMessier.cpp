@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -14,6 +14,9 @@
 // distribution.
 
 #include <sst_config.h>
+
+#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
+
 #include "sst/core/element.h"
 #include <Messier.h>
 
@@ -53,6 +56,10 @@ static const ElementInfoParam Messier_params[] = {
     {"num_banks", "The number of banks on each rank", "16"},
     {"row_buffer_size", "The row buffer size in bytes", "8192"},
     {"flush_th", "This determines the percentage of max number of entries in write buffer that triggers flushing it", "50"},
+    {"flush_th_low", "This determines the percentage of the low threshold number of entries", "30"},
+    {"max_writes", "This determines the maximum number of concurrent writes at NVM chips (not including those on buffer", "1"}, 
+    {"cacheline_interleaving", "This determines if cacheline interleaving is used (1) or bank interleaving (0) ", "1"}, 
+    {"adaptive_writes", "This indicates that the writes rate is adjusted dynamically", "0"},
     { NULL, NULL }
 };
 
@@ -60,6 +67,7 @@ static const ElementInfoStatistic Messier_statistics[] = {
     { "reads", "Determine the number of reads", "reads", 1},
     { "writes", "Determine the number of writes", "writes", 1},
     { "avg_time", "The average time spent on each read request", "cycles", 3},
+    { "histogram_idle", "The histogram of cycles length while controller is idle", "cycles",1},
     { NULL, NULL, NULL, 0 }
 };
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -62,7 +62,7 @@ class TimingDRAM : public SimpleMemBackend {
             va_start( arg, format );
             vsnprintf( buf, 500, format, arg );
             va_end(arg);
-            m_output->verbosePrefix( prefix(), line,"",func, 2, DBG_MASK, buf );
+            m_output->verbosePrefix( prefix(), line,"",func, 2, DBG_MASK, "%s", buf );
         }
 
         unsigned getRank() { return m_rank; }
@@ -206,7 +206,7 @@ class TimingDRAM : public SimpleMemBackend {
         void pushTrans( Transaction* trans ) {
             unsigned bank = m_mapper->getBank( trans->addr);
             
-            m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#lx\n",
+            m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#llx\n",
                 bank,trans->addr);
 
             m_banks[bank].pushTrans( trans );
@@ -240,7 +240,7 @@ class TimingDRAM : public SimpleMemBackend {
 
             unsigned rank = m_mapper->getRank( addr);
 
-            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%lu rank=%d addr=%#lx\n", id, rank, addr );
+            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%llu rank=%d addr=%#llx\n", id, rank, addr );
 
             Transaction* trans = new Transaction( createTime, id, addr, isWrite, numBytes, m_mapper->getBank(addr),
                                                 m_mapper->getRow(addr) );
@@ -277,7 +277,7 @@ public:
     TimingDRAM(Component*, Params& );
     virtual bool issueRequest( ReqId, Addr, bool, unsigned );
     void handleResponse(ReqId  id ) {
-        output->verbose(CALL_INFO, 2, DBG_MASK, "req=%p\n", id ); 
+        output->verbose(CALL_INFO, 2, DBG_MASK, "req=%llu\n", id ); 
         handleMemResponse( id );
     }
     virtual void clock();

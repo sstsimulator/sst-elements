@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -18,6 +18,7 @@
 #define COMPONENTS_HR_ROUTER_XBAR_ARB_RR_H
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -50,7 +51,7 @@ private:
     // PortControl** ports;
     
 public:
-    xbar_arb_rr(Component* parent) :
+    xbar_arb_rr(Component* parent, Params& params) :
         XbarArbitration(parent),
         rr_vcs(NULL)
     {
@@ -161,6 +162,22 @@ public:
             stream << i << ": " << rr_vcs[i] << std::endl;
         }
     }
+
+    SST_ELI_REGISTER_SUBCOMPONENT(xbar_arb_rr,"merlin","xbar_arb_rr","Round robin arbitration unit for hr_router","SST::Merlin::XbarArbitration")
+    
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
     
 };
  

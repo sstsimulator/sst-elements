@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -19,6 +19,7 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_SINGLEROUTER_H
 #define COMPONENTS_MERLIN_TOPOLOGY_SINGLEROUTER_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
@@ -46,6 +47,23 @@ public:
     virtual PortState getPortState(int port) const;
 
     virtual int getEndpointID(int port) { return port; }
+
+    SST_ELI_REGISTER_SUBCOMPONENT(topo_singlerouter,"merlin","singlerouter","Simple, single-router topology object","SST::Merlin::Topology")
+    
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
+
 };
 
 }

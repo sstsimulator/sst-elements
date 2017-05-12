@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
+// Copyright 2013-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2016, Sandia Corporation
+// Copyright (c) 2013-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -101,7 +101,7 @@ public:
             Event(), event(ev)
         { }
 
-        virtual Event* clone(void) {
+        virtual Event* clone(void)  override {
             MemRtrEvent *mre = new MemRtrEvent(*this);
             mre->event = new MemEvent(*event);
             return mre;
@@ -110,7 +110,7 @@ public:
         virtual bool hasClientData() const { return true; }
 
     public:
-        void serialize_order(SST::Core::Serialization::serializer &ser) {
+        void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
             ser & event;
         }
@@ -139,14 +139,14 @@ public:
             src = addr;
         }
 
-        virtual Event* clone(void) {
+        virtual Event* clone(void)  override {
             return new InitMemRtrEvent(*this);
         }
 
-        virtual bool hasClientData() const { return false; }
+        virtual bool hasClientData() const override { return false; }
 
     public:
-        void serialize_order(SST::Core::Serialization::serializer &ser) {
+        void serialize_order(SST::Core::Serialization::serializer &ser)  override {
                 MemRtrEvent::serialize_order(ser);
                 ser & compType;
                 ser & address;

@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -104,7 +104,12 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	
 	memMgr = new MirandaMemoryManager(out, pageSize, pageCount, policy);
 
-	if ( ! reqGenModName.empty() ) {
+    if ( NULL != (reqGen = dynamic_cast<RequestGenerator*>(loadNamedSubComponent("generator"))) ) {
+        out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
+	    registerAsPrimaryComponent();
+	    primaryComponentDoNotEndSim();
+
+    } else if ( ! reqGenModName.empty() ) {
 
 		out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", reqGenModName.c_str());
 		Params genParams = params.find_prefix_params("generatorParams.");

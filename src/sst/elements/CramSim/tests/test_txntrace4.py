@@ -83,7 +83,7 @@ def setup_config_params():
     else:
         l_configFile = open(g_config_file, 'r')
         for l_line in l_configFile:
-            l_tokens = l_line.split(' ')
+            l_tokens = l_line.split()
             #print l_tokens[0], ": ", l_tokens[1]
             l_params[l_tokens[0]] = l_tokens[1]
 

@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -19,6 +19,7 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY2_H
 #define COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY2_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
@@ -135,6 +136,32 @@ private:
     uint32_t router_to_group(uint32_t group);
     uint32_t port_for_router(uint32_t router);
     uint32_t port_for_group(uint32_t group, uint32_t global_slice, int id = -1);
+
+    SST_ELI_REGISTER_SUBCOMPONENT(topo_dragonfly2,"merlin","dragonfly2","Dragonfly2 topology object.  Implements a dragonfly with a single all to all pattern within the group.","SST::Merlin::Topology")
+    
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {"dragonfly:hosts_per_router","Number of hosts connected to each router."},
+        {"dragonfly:routers_per_group","Number of links used to connect to routers in same group."},
+        {"dragonfly:intergroup_per_router","Number of links per router connected to other groups."},
+        {"dragonfly:intergroup_links","Number of links between each pair of groups."},
+        {"dragonfly:num_groups","Number of groups in network."},
+        {"dragonfly:algorithm","Routing algorithm to use [minmal (default) | valiant].", "minimal"},
+        {"dragonfly:adaptive_threshold","Threshold to use when make adaptive routing decisions.", "2.0"},
+        {"dragonfly:global_link_map","Array specifying connectivity of global links in each dragonfly group."},
+        {"dragonfly:global_route_mode","Mode for intepreting global link map [absolute (default) | relative].","absolute"},
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
+
 };
 
 
@@ -152,12 +179,12 @@ public:
     topo_dragonfly2_event(const topo_dragonfly2::dgnfly2Addr &dest) : dest(dest) {}
     ~topo_dragonfly2_event() { }
 
-    virtual internal_router_event *clone(void)
+    virtual internal_router_event *clone(void) override
     {
         return new topo_dragonfly2_event(*this);
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
         ser & src_group;
         ser & dest.group;

@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -68,8 +68,9 @@ namespace SST {
 
 				int create_pinchild(char* prog_binary, char** arg_list){return 0;}
 
-
 				SST::Link * m_memChan; 
+
+				SST::Link * event_link; // Note that this is a self-link for events
 
 				NVM_PARAMS * nvm_params;
 				NVM_DIMM * DIMM;

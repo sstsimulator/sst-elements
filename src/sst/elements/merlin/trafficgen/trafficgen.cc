@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,9 +16,9 @@
 #include <sst_config.h>
 #include "trafficgen/trafficgen.h"
 #include <unistd.h>
+#include <climits>
 #include <signal.h>
 
-#include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>

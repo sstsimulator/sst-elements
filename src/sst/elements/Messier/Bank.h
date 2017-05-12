@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -43,9 +43,11 @@ class BANK
 	// This means the bank is locked until serving a specific request, this is important to avoid races in the time between activation ready and the controller read the data, the block must remain blocked until the data is read, and void being stolen by another request
 	bool locked;	
 
+	long long int locked_ts;
+
 	public: 
 
-	BANK() { locked= false; row_buff = -1; row_buffer_dirty = false; BusyUntil = 0;}
+	BANK() { locked= false; row_buff = -1; row_buffer_dirty = false; BusyUntil = 0; locked_ts = 0;}
 
 	void setBusyUntil(long long int x) {BusyUntil = x;}
 	long long int getBusyUntil() { return BusyUntil;}
@@ -54,7 +56,12 @@ class BANK
 	long long int getRB() { return row_buff; }
 
 	bool getLocked() { return locked;}
-	void setLocked(bool x) { locked = x; }
+	void setLocked(bool x, long long int ts) { locked = x; locked_ts = ts;}
+
+	long long int locked_since()
+	{
+	 return locked_ts;
+	}
 
 };
 

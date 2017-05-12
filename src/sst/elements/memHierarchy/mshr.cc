@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -16,22 +16,24 @@
 #include <sst_config.h>
 #include "mshr.h"
 
+#include <algorithm>
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 
 struct MSHREntryCompare {
     enum Type {Event, Pointer};
     MSHREntryCompare( mshrType* _m ) : m_(_m) {
-        if (m_->elem.type() == typeid(MemEvent*)) type_ = Event;
+        if (m_->elem.isEvent()) type_ = Event;
         else type_ = Pointer;
     }
     bool operator() (mshrType& _n) {
         if (type_ == Event) {
-            if (_n.elem.type() == typeid(MemEvent*)) return boost::get<MemEvent*>(m_->elem) == boost::get<MemEvent*>(_n.elem);
+            if (_n.elem.isEvent()) return (m_->elem).getEvent() == (_n.elem).getEvent();
             return false;
         }
         else{
-            if (_n.elem.type() == typeid(Addr)) return boost::get<Addr>(m_->elem) == boost::get<Addr>(_n.elem);
+            if (_n.elem.isAddr()) return (m_->elem).getAddr() == (_n.elem).getAddr();
             return false;
         }
     }
@@ -142,7 +144,7 @@ bool MSHR::exists(Addr baseAddr) {
     vector<mshrType> * queue = &((it->second).mshrQueue);
     vector<mshrType>::iterator frontEntry = queue->begin();
     if (frontEntry == queue->end()) return false;
-    return (frontEntry->elem.type() == typeid(MemEvent*));
+    return (frontEntry->elem.isEvent());
 }
 
 bool MSHR::isHit(Addr baseAddr) { return (map_.find(baseAddr) != map_.end()) && (map_.find(baseAddr)->second.mshrQueue.size() > 0); }
@@ -173,10 +175,10 @@ MemEvent* MSHR::lookupFront(Addr baseAddr) {
         d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
     vector<mshrType> queue = (it->second).mshrQueue;
-    if (queue.front().elem.type() != typeid(MemEvent*)) {
+    if (queue.front().elem.isAddr()) {
         d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: front entry in mshr is not of type MemEvent. Addr = 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
-    return boost::get<MemEvent*>(queue.front().elem);
+    return (queue.front().elem).getEvent();
 }
 
 /* Public insertion methods
@@ -267,9 +269,9 @@ bool MSHR::insertAll(Addr baseAddr, vector<mshrType>& events) {
     int trueSize = 0;
     int prefetches = 0;
     for (vector<mshrType>::iterator it = events.begin(); it != events.end(); it++) {
-        if ((*it).elem.type() == typeid(MemEvent*)) {
+        if ((*it).elem.isEvent()) {
             trueSize++;
-            if ((boost::get<MemEvent*>(it->elem))->isPrefetch()) 
+            if (((it->elem)).getEvent()->isPrefetch()) 
                 prefetches++;
         }
     }
@@ -303,8 +305,8 @@ bool MSHR::insertInv(Addr baseAddr, mshrType entry, bool inProgress) {
     /*int i = 0;
     for (it = map_[baseAddr].mshrQueue.begin(); it != map_[baseAddr].mshrQueue.end(); it++) {
         if (inProgress && it == map_[baseAddr].mshrQueue.begin()) continue;
-        if (it->elem.type() == typeid(MemEvent*)) {
-            MemEvent * ev = boost::get<MemEvent*>(it->elem);
+        if (it->elem.isEvent()) {
+            MemEvent * ev = getEvent(it->elem);
             if (ev->getCmd() == GetS || ev->getCmd() == GetSEx || ev->getCmd() == GetX) {
                 break;
             }
@@ -313,7 +315,7 @@ bool MSHR::insertInv(Addr baseAddr, mshrType entry, bool inProgress) {
     }*/
     if (inProgress && map_[baseAddr].mshrQueue.size() > 0) it++;
     map_[baseAddr].mshrQueue.insert(it, entry);
-    if (entry.elem.type() == typeid(MemEvent*)) size_++;
+    if (entry.elem.isEvent()) size_++;
     //printTable();
     return true;
 }
@@ -328,8 +330,8 @@ MemEvent* MSHR::getOldestRequest() const {
     MemEvent *ev = NULL;
     for ( mshrTable::const_iterator it = map_.begin() ; it != map_.end() ; ++it ) {
         for ( vector<mshrType>::const_iterator jt = (it->second).mshrQueue.begin() ; jt != (it->second).mshrQueue.end() ; jt++ ) {
-            if ( jt->elem.type() == typeid(MemEvent*) ) {
-                MemEvent *me = boost::get<MemEvent*>(jt->elem);
+            if ( jt->elem.isEvent() ) {
+                MemEvent *me = (jt->elem).getEvent();
                 if ( !ev || ( me->getInitializationTime() < ev->getInitializationTime() ) ) {
                     ev = me;
                 }
@@ -366,9 +368,9 @@ vector<mshrType> MSHR::removeAll(Addr baseAddr) {
     int trueSize = 0;
     int prefetches = 0;
     for (vector<mshrType>::iterator it = res.begin(); it != res.end(); it++) {
-        if ((*it).elem.type() == typeid(MemEvent*)) {
+        if ((*it).elem.isEvent()) {
             trueSize++;
-            MemEvent * ev = boost::get<MemEvent*>(it->elem);
+            MemEvent * ev = (it->elem).getEvent();
             if (ev->isPrefetch()) prefetches++;
         }
     }
@@ -390,11 +392,11 @@ MemEvent* MSHR::removeFront(Addr baseAddr) {
     //  d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: no front entry to remove in mshr for addr = 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     //}
     //
-    // if (it->second.front().elem.type() != typeid(MemEvent*)) {
+    // if (it->second.front().elem.isAddr()) {
     //     d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: front entry in mshr is not of type MemEvent. Addr = 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     // }
     
-    MemEvent* ret = boost::get<MemEvent*>((it->second).mshrQueue.front().elem);
+    MemEvent* ret = ((it->second).mshrQueue.front().elem).getEvent();
     
     if (ret->isPrefetch()) prefetchCount_--;
     
@@ -487,12 +489,12 @@ void MSHR::printTable() {
         vector<mshrType> entries = (it->second).mshrQueue;
         d_->debug(_L9_, "MSHR: Addr = 0x%" PRIx64 "\n", (it->first));
         for (vector<mshrType>::iterator it2 = entries.begin(); it2 != entries.end(); it2++) {
-            if (it2->elem.type() != typeid(MemEvent*)) {
-                Addr ptr = boost::get<Addr>(it2->elem);
+            if (it2->elem.isAddr()) {
+                Addr ptr = (it2->elem).getAddr();
                 d_->debug(_L9_, "\t0x%" PRIx64 "\n", ptr);
 
             } else {
-                MemEvent * ev = boost::get<MemEvent*>(it2->elem);
+                MemEvent * ev = (it2->elem).getEvent();
                 d_->debug(_L9_, "\t%s, %s\n", ev->getSrc().c_str(), CommandString[ev->getCmd()]);
             }
         }
