@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -48,7 +48,7 @@ class NVM_PARAMS
 		int max_requests;
 
 		// The number of possible outstanding requests inside the internal controller (not that once writes are written to the write buffer, they are deleted)
-		int max_outstanding;
+		long long int max_outstanding;
 
 		// For power budget (at any time, the controller enforces write_weight*num_current_writes + read_weight*num_current_reads less than or equal max_current_weight
 		float max_current_weight;
@@ -101,11 +101,17 @@ class NVM_PARAMS
 		// This indicates the threshold for starting the write buffer flushing
 		int flush_th; 
 
+		// This indicates the low flush threshold
+		int flush_th_low;
+
 		// This indicates the maximum number of conccurent writes to NVM chips (not including those on the write buffer)
 		int max_writes;
 
 		// Determines if cacheline interleaving or bank interleaving
 		bool cacheline_interleaving;
+
+		// This implements the adaptive writes policy for NVM devices
+		bool adaptive_writes;
 		
 	public:
 
@@ -114,6 +120,8 @@ class NVM_PARAMS
 
 			cacheline_interleaving = D.cacheline_interleaving;
 			
+			adaptive_writes = D.adaptive_writes;
+
 			write_buffer_size = D.write_buffer_size;	
 
 			max_outstanding = D.max_outstanding;
@@ -150,6 +158,8 @@ class NVM_PARAMS
 			flush_th = D.flush_th;
 			max_requests = D.max_requests;
 			max_writes = D.max_writes;
+			
+			flush_th_low = D.flush_th_low;
 
 		}
 };

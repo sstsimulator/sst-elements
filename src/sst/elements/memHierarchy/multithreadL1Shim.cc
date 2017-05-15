@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
+// Copyright 2013-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright(c) 2013-2016, Sandia Corporation
+// Copyright(c) 2013-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -153,7 +153,7 @@ void MultiThreadL1::init(unsigned int phase) {
 
     // Pass CPU events to memory hierarchy, generally these are memory initialization
     for (int i = 0; i < threadLinks.size(); i++) {
-        while (ev = threadLinks[i]->recvInitData()) {
+        while ((ev = threadLinks[i]->recvInitData()) != NULL) {
             MemEvent * memEvent = dynamic_cast<MemEvent*>(ev);
             if (memEvent) {
                 cacheLink->sendInitData(new MemEvent(*memEvent));
@@ -163,7 +163,7 @@ void MultiThreadL1::init(unsigned int phase) {
     }
     
     // Nothing important flows this way
-    while (ev = cacheLink->recvInitData()) {
+    while ((ev = cacheLink->recvInitData()) != NULL) {
         delete ev;
     }
 }

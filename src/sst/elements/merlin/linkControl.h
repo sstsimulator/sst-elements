@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -19,6 +19,7 @@
 #ifndef COMPONENTS_MERLIN_LINKCONTROL_H
 #define COMPONENTS_MERLIN_LINKCONTROL_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/unitAlgebra.h>
 
@@ -173,6 +174,28 @@ private:
     void handle_input(Event* ev);
     void handle_output(Event* ev);
 
+
+    SST_ELI_REGISTER_SUBCOMPONENT(LinkControl,"merlin","linkcontrol","Link Control module for building Merlin-enabled NICs","SST::Interfaces::SimpleNetwork")
+    
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {"checkerboard","Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
+        {"checkerboard_alg","Algorithm to use to spead traffic across checkerboarded VNs [deterministic | roundrobin]", "deterministic" }
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "packet_latency", "Histogram of latencies for received packets", "latency", 1},
+        { "send_bit_count", "Count number of bits sent on link", "bits", 1},
+        { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
+        { "idle_time", "number of (in unites of core timebas) that port was idle", "time spent idle", 1},
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+    
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
     
     
 };

@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -117,7 +117,7 @@ bool ScratchCPU::tick(Cycle_t time) {
                     Interfaces::SimpleMem::Addr addr = (Interfaces::SimpleMem::Addr) (((rng.generateNextUInt64() % scratchSize) >> log2Size) << log2Size);
                     
                     req = new Interfaces::SimpleMem::Request(Interfaces::SimpleMem::Request::Read, addr, size);
-                    out.debug(_L3_, "ScratchCPU (%s) sending Read. Addr: %" PRIu64 ", Size: %lu\n\n", getName().c_str(), addr, size);
+                    out.debug(_L3_, "ScratchCPU (%s) sending Read. Addr: %" PRIu64 ", Size: %u\n\n", getName().c_str(), addr, size);
                 } else if (instType == 1) { // Scratch write
                     // Generate request size
                     uint32_t log2Size = rng.generateNextUInt32() % (log2ScratchLineSize + 1);
@@ -126,7 +126,7 @@ bool ScratchCPU::tick(Cycle_t time) {
                     std::vector<uint8_t> data;
                     data.resize(size, 0);
                     req = new Interfaces::SimpleMem::Request(Interfaces::SimpleMem::Request::Write, addr, size, data);
-                    out.debug(_L3_, "ScratchCPU (%s) sending Write. Addr: %" PRIu64 ", Size: %lu\n\n", getName().c_str(), addr, size);
+                    out.debug(_L3_, "ScratchCPU (%s) sending Write. Addr: %" PRIu64 ", Size: %u\n\n", getName().c_str(), addr, size);
                 } else if (instType == 2) { // Scratch Get (copy from memory to scratch)
                     uint32_t log2Size = rng.generateNextUInt32() % (log2MemLineSize + 1);
                     uint32_t size = 1 << log2Size;
@@ -137,7 +137,7 @@ bool ScratchCPU::tick(Cycle_t time) {
 
                     req = new Interfaces::SimpleMem::Request(Interfaces::SimpleMem::Request::Read, dstAddr, size);
                     req->addAddress(srcAddr);
-                    out.debug(_L3_, "ScratchCPU (%s) sending ScratchGet. Dst Addr: %" PRIu64 ", Src Addr: %" PRIu64 ", Size: %lu\n\n", getName().c_str(), dstAddr, srcAddr, size);
+                    out.debug(_L3_, "ScratchCPU (%s) sending ScratchGet. Dst Addr: %" PRIu64 ", Src Addr: %" PRIu64 ", Size: %u\n\n", getName().c_str(), dstAddr, srcAddr, size);
                 } else if (instType == 3) { // Scratch Put (copy from scratch to memory)
                     uint32_t log2Size = rng.generateNextUInt32() % (log2MemLineSize + 1);
                     uint32_t size = 1 << log2Size;
@@ -148,7 +148,7 @@ bool ScratchCPU::tick(Cycle_t time) {
 
                     req = new Interfaces::SimpleMem::Request(Interfaces::SimpleMem::Request::Write, dstAddr, size);
                     req->addAddress(srcAddr);
-                    out.debug(_L3_, "ScratchCPU (%s) sending ScratchPut. Dst Addr: %" PRIu64 ", Src Addr: %" PRIu64 ", Size: %lu\n\n", getName().c_str(), dstAddr, srcAddr, size);
+                    out.debug(_L3_, "ScratchCPU (%s) sending ScratchPut. Dst Addr: %" PRIu64 ", Src Addr: %" PRIu64 ", Size: %u\n\n", getName().c_str(), dstAddr, srcAddr, size);
                 } else if (instType == 4) { // Memory read
                     uint32_t log2Size = rng.generateNextUInt32() % (log2MemLineSize + 1);
                     uint32_t size = 1 << log2Size;
@@ -156,7 +156,7 @@ bool ScratchCPU::tick(Cycle_t time) {
                     Interfaces::SimpleMem::Addr addr = (Interfaces::SimpleMem::Addr) (((rng.generateNextUInt64() % (maxAddr - scratchSize)) >> log2Size ) << log2Size);
                     addr += scratchSize;
                     req = new Interfaces::SimpleMem::Request(Interfaces::SimpleMem::Request::Read, addr, size);
-                    out.debug(_L3_, "ScratchCPU (%s) sending mem Read. Addr: %" PRIu64 ", Size: %lu\n\n", getName().c_str(), addr, size);
+                    out.debug(_L3_, "ScratchCPU (%s) sending mem Read. Addr: %" PRIu64 ", Size: %u\n\n", getName().c_str(), addr, size);
                 } else { // Memory write
                     uint32_t log2Size = rng.generateNextUInt32() % (log2MemLineSize + 1);
                     uint32_t size = 1 << log2Size;
@@ -168,7 +168,7 @@ bool ScratchCPU::tick(Cycle_t time) {
                     data.resize(size, 0);
                     
                     req = new Interfaces::SimpleMem::Request(Interfaces::SimpleMem::Request::Write, addr, size, data);
-                    out.debug(_L3_, "ScratchCPU (%s) sending mem Write. Addr: %" PRIu64 ", Size: %lu\n\n", getName().c_str(), addr, size);
+                    out.debug(_L3_, "ScratchCPU (%s) sending mem Write. Addr: %" PRIu64 ", Size: %u\n\n", getName().c_str(), addr, size);
                 }
 
 		// Send request

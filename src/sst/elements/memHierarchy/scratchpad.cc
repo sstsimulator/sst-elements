@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -76,7 +76,7 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     remoteLineSize_ = params.find<uint64_t>("memory_line_size", 64);
 
     if (scratchSize_ % scratchLineSize_ != 0) {
-        out.fatal(CALL_INFO, -1, "Invalid param combination (%s): size, scratch_line_size - size must be divisible by scratch_line_size. You speciified size: %s, scratch_line_size: %lu\n", 
+        out.fatal(CALL_INFO, -1, "Invalid param combination (%s): size, scratch_line_size - size must be divisible by scratch_line_size. You speciified size: %s, scratch_line_size: %" PRIu64 "\n", 
                 getName().c_str(), size.toString().c_str(), scratchLineSize_);
     }
 
@@ -214,14 +214,14 @@ void Scratchpad::processIncomingMemEvent(SST::Event * event) {
     std::map<SST::Event::id_type, SST::Event::id_type>::iterator idItr = remoteIDMap_.find(ev->getResponseToID());
 
     if (idItr == remoteIDMap_.end()) {
-        dbg.fatal(CALL_INFO, -1, "(%s) Received data response from remote but no matching request in remoteIDMap_, id is (%" PRIu64 ", %" PRIu64 "), timestamp is %" PRIu64 "\n",
+        dbg.fatal(CALL_INFO, -1, "(%s) Received data response from remote but no matching request in remoteIDMap_, id is (%" PRIu64 ", %" PRIu32 "), timestamp is %" PRIu64 "\n",
                 getName().c_str(), ev->getResponseToID().first, ev->getResponseToID().second, timestamp_);
     }
 
     std::map<SST::Event::id_type, ScratchPair >::iterator reqItr = pendingPool_.find(idItr->second);
 
     if (reqItr == pendingPool_.end()) {
-        dbg.fatal(CALL_INFO, -1, "(%s) Received data response from remote but no matching request in pendingPool, id is (%" PRIu64 ", %" PRIu64 "), timestamp is %" PRIu64 "\n",
+        dbg.fatal(CALL_INFO, -1, "(%s) Received data response from remote but no matching request in pendingPool, id is (%" PRIu64 ", %" PRIu32 "), timestamp is %" PRIu64 "\n",
                 getName().c_str(), idItr->second.first, idItr->second.second, timestamp_);
     }
     
@@ -258,7 +258,7 @@ void Scratchpad::processIncomingMemEvent(SST::Event * event) {
             write->setInstructionPointer(reqEv->getInstructionPointer());
             bytesLeft -= size;
         
-            dbg.debug(_L4_, "\tCreated scratch request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %lu\n", 
+            dbg.debug(_L4_, "\tCreated scratch request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 "\n", 
                     ScratchCommandString[write->getCmd()], write->getAddr(), write->getBaseAddr(), write->getSize());
         
             // Check basic ordering -> don't issue repeat requests for the same line - if we change this, we can't send ack to proc immediately since
@@ -413,7 +413,7 @@ void Scratchpad::handleScratchGet(ScratchEvent * event) {
     // Assume the network orders requests from the same src so I don't have to worry about a prior write coming after this read
     // TODO make sure this is a valid assumption!
     uint64_t deliveryTime = timestamp_;
-    dbg.debug(_L4_, "\tSending memory request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %lu, send at cycle %" PRIu64 "\n", 
+    dbg.debug(_L4_, "\tSending memory request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 ", send at cycle %" PRIu64 "\n", 
             CommandString[memRequest->getCmd()], memRequest->getAddr(), memRequest->getBaseAddr(), memRequest->getSize(), deliveryTime);
     memMsgQueue_.insert(std::make_pair(deliveryTime, memRequest));
     dbg.debug(_L3_, "\n");
@@ -461,7 +461,7 @@ void Scratchpad::handleScratchPut(ScratchEvent * event) {
         read->setInstructionPointer(event->getInstructionPointer());
         bytesLeft -= size;
         
-        dbg.debug(_L4_, "\tCreated scratch request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %lu\n", 
+        dbg.debug(_L4_, "\tCreated scratch request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 "\n", 
                 ScratchCommandString[read->getCmd()], read->getAddr(), read->getBaseAddr(), read->getSize());
         // check basic ordering -> don't issue repeat requests for the same line
         if (scratchMSHR_.find(baseAddr) == scratchMSHR_.end()) {
@@ -504,7 +504,7 @@ void Scratchpad::handleRemoteRead(ScratchEvent * event) {
     pendingPool_.insert(std::make_pair(event->getID(), ScratchPair(event, (MemEvent*)nullptr)));
     
     uint64_t deliveryTime = timestamp_;
-    dbg.debug(_L4_, "\tSending memory request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %lu, send at cycle %" PRIu64 "\n", 
+    dbg.debug(_L4_, "\tSending memory request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 ", send at cycle %" PRIu64 "\n", 
             CommandString[memRequest->getCmd()], memRequest->getAddr(), memRequest->getBaseAddr(), memRequest->getSize(), deliveryTime);
     memMsgQueue_.insert(std::make_pair(deliveryTime, memRequest));
     
@@ -527,7 +527,7 @@ void Scratchpad::handleRemoteWrite(ScratchEvent * event) {
     memRequest->setInstructionPointer(event->getInstructionPointer());
 
     uint64_t deliveryTime = timestamp_;
-    dbg.debug(_L4_, "\tSending memory request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %lu, send at cycle %" PRIu64 "\n", 
+    dbg.debug(_L4_, "\tSending memory request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 ", send at cycle %" PRIu64 "\n", 
             CommandString[memRequest->getCmd()], memRequest->getAddr(), memRequest->getBaseAddr(), memRequest->getSize(), deliveryTime);
     memMsgQueue_.insert(std::make_pair(deliveryTime, memRequest));
 
@@ -570,7 +570,7 @@ void Scratchpad::handleScratchResponse(SST::Event::id_type id) {
 
 
             // send write to memory
-            dbg.debug(_L4_, "\tSending memory write. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %lu, send at cycle %" PRIu64 "\n", 
+            dbg.debug(_L4_, "\tSending memory write. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 ", send at cycle %" PRIu64 "\n", 
                 CommandString[memRequest->getCmd()], memRequest->getAddr(), memRequest->getBaseAddr(), memRequest->getSize(), timestamp_);
             memMsgQueue_.insert(std::make_pair(timestamp_, memRequest));
 
@@ -664,7 +664,7 @@ void Scratchpad::removeFromMSHR(Addr addr) {
     // Issue waiting request(s)
     while (!mshrItr->second.empty()) {
         ScratchEvent * reqEvent = mshrItr->second.front();
-        dbg.debug(_L4_, "\tSending stalled event to scratch backend. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %lu\n",
+        dbg.debug(_L4_, "\tSending stalled event to scratch backend. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 "\n",
                 ScratchCommandString[reqEvent->getCmd()], reqEvent->getAddr(), reqEvent->getBaseAddr(), reqEvent->getSize());
         reqEvent->getCmd() == Read ? stat_ScratchReadIssued->addData(1) : stat_ScratchWriteIssued->addData(1);
         scratch_->handleScratchEvent(reqEvent);

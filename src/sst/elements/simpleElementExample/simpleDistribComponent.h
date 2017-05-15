@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,24 +16,9 @@
 #ifndef _SIMPLEDISTRIBCOMPONENT_H
 #define _SIMPLEDISTRIBCOMPONENT_H
 
-//#include <sst/core/event.h>
-//#include <sst/core/sst_types.h>
 #include <sst/core/component.h>
-//#include <sst/core/link.h>
-//#include <sst/core/timeConverter.h>
-
+#include <sst/core/elementinfo.h>
 #include <sst/core/rng/distrib.h>
-//#include <sst/core/rng/expon.h>
-//#include <sst/core/rng/gaussian.h>
-//#include <sst/core/rng/poisson.h>
-
-//#include <sst/core/rng/sstrand.h>
-//#include <sst/core/rng/mersenne.h>
-//#include <sst/core/rng/marsaglia.h>
-
-////#include <cstring>
-//#include <string>
-//#include <map>
 
 using namespace SST;
 using namespace SST::RNG;
@@ -64,6 +49,35 @@ private:
     
     std::map<int64_t, uint64_t>* bins;
     
+    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_COMPONENT(
+        simpleDistribComponent,
+        "simpleElementExample","simpleDistribComponent",
+        "Random Number Distribution Component",
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+    
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
+    SST_ELI_DOCUMENT_PARAMS(
+        { "count", "Number of random values to generate from the distribution", "1000"},
+        { "distrib", "Random distribution to use - \"gaussian\" (or \"normal\"), or \"exponential\"", "gaussian"},
+        { "mean", "Mean value to use if we are sampling from the Gaussian/Normal distribution", "1.0"},
+        { "stddev", "Standard deviation to use for the distribution", "0.2"},
+        { "lambda", "Lambda value to use for the exponential distribution", "1.0"},
+        { "binresults", "Print the results, only if value is \"1\"", "1"},
+        { "probcount", "Number of probabilities in discrete distribution"},
+        { "prob%(probcount)d", "Probability values for discrete distribution"}
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
 };
 
 } // namespace SimpleDistribComponent

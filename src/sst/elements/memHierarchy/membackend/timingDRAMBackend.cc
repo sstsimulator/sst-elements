@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -68,16 +68,16 @@ bool TimingDRAM::issueRequest( ReqId id, Addr addr, bool isWrite, unsigned numBy
     bool ret = m_channels[chan].issue(m_cycle, id, addr, isWrite, numBytes );
 
     if ( ret ) { 
-        output->verbose(CALL_INFO, 2, DBG_MASK, "chan=%d reqId=%d addr=%#lx\n",chan,id,addr);
+        output->verbose(CALL_INFO, 2, DBG_MASK, "chan=%d reqId=%llu addr=%#llx\n",chan,id,addr);
     } else {
-        output->verbose(CALL_INFO, 5, DBG_MASK, "chan=%d reqId=%d addr=%#lx failed\n",chan,id,addr);
+        output->verbose(CALL_INFO, 5, DBG_MASK, "chan=%d reqId=%llu addr=%#llx failed\n",chan,id,addr);
     }
     return ret;
 }
 
 void TimingDRAM::clock()
 {
-    output->verbose(CALL_INFO, 5, DBG_MASK, "cycle %lu\n",m_cycle);
+    output->verbose(CALL_INFO, 5, DBG_MASK, "cycle %llu\n",m_cycle);
     for ( unsigned i = 0; i < m_channels.size(); i++ ) {
         m_channels[i].clock(m_cycle);
     }
@@ -114,7 +114,7 @@ TimingDRAM::Channel::Channel( Component* comp, TimingDRAM* mem, Params& params, 
 
 void TimingDRAM::Channel::clock( SimTime_t cycle )
 {
-    m_output->verbosePrefix(prefix(),CALL_INFO, 5, DBG_MASK, "cycle %lu\n",cycle);
+    m_output->verbosePrefix(prefix(),CALL_INFO, 5, DBG_MASK, "cycle %llu\n",cycle);
 
     std::list<Cmd*>::iterator iter = m_issuedCmds.begin();
 
@@ -122,7 +122,7 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
         if ( (*iter)->isDone(cycle) ) {
             Cmd* cmd = (*iter);
 
-            m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "cycle=%lu retire %s for rank=%d bank=%d row=%d\n",
+            m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "cycle=%llu retire %s for rank=%d bank=%d row=%d\n",
                     cycle, cmd->getName().c_str(), cmd->getRank(), cmd->getBank(), cmd->getRow());
 
             delete (*iter);
@@ -143,7 +143,7 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
 
     Cmd* cmd = popCmd( cycle, m_dataBusAvailCycle );
     if ( cmd ) {
-        m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "cycle=%lu issue %s for rank=%d bank=%d row=%d\n",
+        m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "cycle=%llu issue %s for rank=%d bank=%d row=%d\n",
                     cycle, cmd->getName().c_str(), cmd->getRank(), cmd->getBank(), cmd->getRow());
 
         m_dataBusAvailCycle = cmd->issue();  
@@ -293,7 +293,7 @@ void TimingDRAM::Bank::update( SimTime_t current )
         return;
     }
 
-    m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "addr=%#lx current row=%d trans row=%d\n",
+    m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "addr=%#llx current row=%d trans row=%d\n",
             trans->addr, m_row, trans->row );
 
     Cmd* cmd;

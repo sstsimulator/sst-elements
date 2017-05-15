@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -90,11 +90,11 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
         //NetworkSim: Add the rankmapper parameter as motif parameters and pass it.
         //Params::value_type addedparam = std::make_pair("motif" + tmp.str() + ".rankmapper", params.find_string("rankmapper", "ember.LinearMap"));
-        params.insert("motif" + tmp.str() + ".rankmapper", params.find_string("rankmapper", "ember.LinearMap"), true);
+        params.insert("motif" + tmp.str() + ".rankmapper", params.find<string>("rankmapper", "ember.LinearMap"), true);
 
         //NetworkSim: Add the mapFile parameter as motif parameters and pass it.
         //Params::value_type addedparam2 = std::make_pair("motif" + tmp.str() + ".rankmap.mapFile", params.find_string("mapFile", "mapFile.txt"));
-        params.insert("motif" + tmp.str() + ".rankmap.mapFile", params.find_string("mapFile", "mapFile.txt"), true);
+        params.insert("motif" + tmp.str() + ".rankmap.mapFile", params.find<string>("mapFile", "mapFile.txt"), true);
         //NetworkSim->end
 
 		motifParams[i] = params.find_prefix_params( "motif" + tmp.str() + "." );

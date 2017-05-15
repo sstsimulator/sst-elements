@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,6 +17,7 @@
 #define _SIMPLECOMPONENT_H
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/link.h>
 #include <sst/core/rng/marsaglia.h>
 
@@ -52,6 +53,36 @@ private:
     SST::Link* S;
     SST::Link* E;
     SST::Link* W;
+
+    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_COMPONENT(
+        simpleComponent,
+        "simpleElementExample",
+        "simpleComponent",
+        "Simple Demo Component",
+        COMPONENT_CATEGORY_PROCESSOR
+    )
+    
+    SST_ELI_DOCUMENT_VERSION(1,0,0)
+
+    SST_ELI_DOCUMENT_PARAMS(
+        { "workPerCycle", "Count of busy work to do during a clock tick.", NULL},
+        { "commFreq", "Approximate frequency of sending an event during a clock tick.", NULL},
+        { "commSize", "Size of communication to send.", "16"}
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"Nlink", "Link to the simpleComponent to the North", { "simpleComponent.simpleComponentEvent", "" } },
+        {"Slink", "Link to the simpleComponent to the South", { "simpleComponent.simpleComponentEvent", "" } },
+        {"Elink", "Link to the simpleComponent to the East",  { "simpleComponent.simpleComponentEvent", "" } },
+        {"Wlink", "Link to the simpleComponent to the West",  { "simpleComponent.simpleComponentEvent", "" } }
+    )
+    
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
 };
 
 } // namespace SimpleComponent

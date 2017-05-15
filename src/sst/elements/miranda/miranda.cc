@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -15,6 +15,9 @@
 
 
 #include <sst_config.h>
+
+#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
+
 #include <sst/core/element.h>
 #include <sst/core/subcomponent.h>
 
@@ -313,6 +316,11 @@ static const ElementInfoPort basecpu_ports[] = {
     	{ NULL, NULL, NULL }
 };
 
+static const ElementInfoSubComponentSlot basecpu_subComps[] = {
+    { "generator", "Generator to be used by basecpu", "SST::Miranda::RequestGenerator" },
+    { NULL, NULL, NULL }
+};
+
 static const ElementInfoComponent components[] = {
 	{
 		"BaseCPU",
@@ -322,7 +330,8 @@ static const ElementInfoComponent components[] = {
 		basecpu_params,
 		basecpu_ports,
 		COMPONENT_CATEGORY_PROCESSOR,
-		basecpu_stats
+		basecpu_stats,
+        basecpu_subComps,
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0 }
 };

@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,15 +27,36 @@
 #include <util.h>
 #include <string>
 #include <sstream>
-#include <boost/variant.hpp>
 
 namespace SST { namespace MemHierarchy {
 
 using namespace std;
 
+// Specific version of variant class to replace boost::variant
+
+class AddrEventVariant {
+    union {
+        Addr addr;
+        MemEvent* event;
+    } data;
+    bool _isAddr;
+    
+public:
+    AddrEventVariant(Addr a) {data.addr = a; _isAddr = true; }
+    AddrEventVariant(MemEvent* ev) {data.event = ev; _isAddr = false; }
+
+    Addr getAddr() const { return data.addr; }
+    MemEvent* getEvent() const { return data.event; }
+
+    bool isAddr() const { return _isAddr; }
+    bool isEvent() const { return !_isAddr; }
+    
+};
+
 /* MSHRs hold both events and pointers to events (e.g., the address of an event to replay when the current event resolves) */
 struct mshrType {
-    boost::variant<Addr, MemEvent*> elem;
+    AddrEventVariant elem;
+    // boost::variant<Addr, MemEvent*> elem;
     MemEvent * event;
     mshrType(MemEvent* ev) : elem(ev), event(ev) {}
     mshrType(Addr addr) : elem(addr) {}

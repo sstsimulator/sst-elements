@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,7 +30,7 @@ using namespace SST::MemHierarchy;
 #endif
 
 MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : 
-    SubComponent(comp), m_reqId(0)
+    SubComponent(comp), m_cycleCount(0), m_reqId(0)
 {
     m_dbg.init("--->  ", 
             params.find<uint32_t>("debug_level", 0),

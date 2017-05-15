@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -20,17 +20,17 @@ EmberUnstructuredGenerator::EmberUnstructuredGenerator(SST::Component* owner, Pa
 	EmberMessagePassingGenerator(owner, params, "Unstructured"), 
 	m_loopIndex(0)
 {
-	graphFile  = params.find_string("arg.graphfile", "-1");
+	graphFile  = params.find<std::string>("arg.graphfile", "-1");
 	if(graphFile.compare("-1") == 0)
 		fatal(CALL_INFO, -1, "Communication graph file must be specified for unstructured motifs!\n");
 
-	p_size  = (uint32_t) params.find_integer("arg.p_size", 10000);
-	items_per_cell = (uint32_t) params.find_integer("arg.fields_per_cell", 1);
-	sizeof_cell = (uint32_t) params.find_integer("arg.datatype_width", 8);
-	iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-	nsCompute  = (uint64_t) params.find_integer("arg.computetime", 0);
+	p_size  = (uint32_t) params.find<uint32_t>("arg.p_size", 10000);
+	items_per_cell = (uint32_t) params.find<uint32_t>("arg.fields_per_cell", 1);
+	sizeof_cell = (uint32_t) params.find<uint32_t>("arg.datatype_width", 8);
+	iterations = (uint32_t) params.find<uint32_t>("arg.iterations", 1);
+	nsCompute  = (uint64_t) params.find<uint64_t>("arg.computetime", 0);
 
-    jobId        = (int) params.find_integer("_jobId"); //NetworkSim
+    jobId        = (int) params.find<int>("_jobId"); //NetworkSim
 	configure();
 }
 
