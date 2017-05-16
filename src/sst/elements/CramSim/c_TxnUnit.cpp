@@ -314,6 +314,9 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	m_processingRefreshCmds = false;
 
+	// Statistics setup
+	readTxnsRecvd = registerStatistic<uint64_t>("readTxnsRecvd");
+	writeTxnsRecvd = registerStatistic<uint64_t>("writeTxnsRecvd");
 }
 
 c_TxnUnit::~c_TxnUnit() {
@@ -569,6 +572,13 @@ void c_TxnUnit::handleInTxnGenReqPtrEvent(SST::Event *ev) {
 
 		m_txnReqQ.push_back(l_txnReqEventPtr->m_payload);
 		delete l_txnReqEventPtr;
+
+		if(l_txnReqEventPtr->m_payload->getTransactionMnemonic() == e_TransactionType::READ) {
+		  readTxnsRecvd->addData(1);
+		}
+		if(l_txnReqEventPtr->m_payload->getTransactionMnemonic() == e_TransactionType::WRITE) {
+		  writeTxnsRecvd->addData(1);
+		}
 	} else {
 		std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
 				<< std::endl;

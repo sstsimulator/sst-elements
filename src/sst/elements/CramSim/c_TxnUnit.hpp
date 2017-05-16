@@ -154,6 +154,9 @@ private:
 
 	bool m_processingRefreshCmds; // Cmd unit is processing refresh commands
 
+  // Statistics
+  Statistic<uint64_t>* readTxnsRecvd;
+  Statistic<uint64_t>* writeTxnsRecvd;
 };
 }
 }

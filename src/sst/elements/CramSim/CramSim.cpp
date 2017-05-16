@@ -40,6 +40,7 @@ using namespace SST::n_Bank;
 using namespace SST::n_CmdDriver;
 using namespace SST::n_TxnDriver;
 using namespace SST::n_BankReceiver;
+using namespace SST::Statistics;
 
 /*----ALLOCATORS FOR COMPONENTS----*/
 
@@ -288,7 +289,11 @@ static const ElementInfoPort c_TxnUnit_ports[] = {
 		{NULL, NULL, NULL}
 };
 
-
+static const ElementInfoStatistic c_TxnUnit_stats[] = {
+  {"readTxnsRecvd", "Number of read transactions received", "reads", 1}, // Name, Desc, Units, Enable Level
+  {"writeTxnsRecvd", "Number of write transactions received", "writes", 1},
+  {NULL, NULL, NULL, 0}
+};
 
 
 /*----SETUP c_CmdDriver STRUCTURES----*/
@@ -484,7 +489,7 @@ static const ElementInfoComponent CramSimComponents[] = {
 		c_TxnUnit_params, 							// Parameters
 		c_TxnUnit_ports, 							// Ports
 		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		NULL 										// Statistics
+		c_TxnUnit_stats									// Statistics
 		},
 		{ "c_CmdDriver",	 						// Name
 		"Test Cmd Driver",				 			// Description
