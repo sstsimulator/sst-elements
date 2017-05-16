@@ -144,6 +144,8 @@ comp_dimm0.addParams(g_params)
 
 # enable all statistics
 comp_txnUnit0.enableAllStatistics()
+#comp_txnUnit0.enableAllStatistics({ "type":"sst.AccumulatorStatistic",
+#                                    "rate":"1 us"})
 
 
 # Define simulation links
