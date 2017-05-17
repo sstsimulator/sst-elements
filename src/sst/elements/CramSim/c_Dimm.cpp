@@ -108,6 +108,15 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	//set our clock
 	registerClock("1GHz", new Clock::Handler<c_Dimm>(this, &c_Dimm::clockTic));
+
+	// Statistics setup
+	s_actCmdsRecvd = registerStatistic<uint64_t>("actCmdsRecvd");
+	s_readCmdsRecvd = registerStatistic<uint64_t>("readCmdsRecvd");
+	s_readACmdsRecvd = registerStatistic<uint64_t>("readACmdsRecvd");
+	s_writeCmdsRecvd = registerStatistic<uint64_t>("writeCmdsRecvd");
+	s_writeACmdsRecvd = registerStatistic<uint64_t>("writeACmdsRecvd");
+	s_preCmdsRecvd = registerStatistic<uint64_t>("preCmdsRecvd");
+	s_refCmdsRecvd = registerStatistic<uint64_t>("refCmdsRecvd");
 }
 
 c_Dimm::~c_Dimm() {
@@ -168,6 +177,30 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 //				<< __PRETTY_FUNCTION__ << " received command " << std::endl;
 //		l_cmdReq->print();
 //		std::cout << std::endl;
+
+		switch(l_cmdReq->getCommandMnemonic()) {
+		case e_BankCommandType::ACT:
+		  s_actCmdsRecvd->addData(1);
+		  break;
+		case e_BankCommandType::READ:
+		  s_readCmdsRecvd->addData(1);
+		  break;
+		case e_BankCommandType::READA:
+		  s_readACmdsRecvd->addData(1);
+		  break;
+		case e_BankCommandType::WRITE:
+		  s_writeCmdsRecvd->addData(1);
+		  break;
+		case e_BankCommandType::WRITEA:
+		  s_writeACmdsRecvd->addData(1);
+		  break;
+		case e_BankCommandType::PRE:
+		  s_preCmdsRecvd->addData(1);
+		  break;
+		case e_BankCommandType::REF:
+		  s_refCmdsRecvd->addData(1);
+		  break;
+		}
 
 		sendToBank(l_cmdReq);
 

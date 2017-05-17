@@ -120,6 +120,7 @@ sst.setProgramOption("timebase", g_params["clockCycle"])
 sst.setProgramOption("stopAtCycle", g_params["stopAtCycle"])
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
+#sst.setStatisticOutputOption("help", "help")
 
 # Define the simulation components
 
@@ -143,10 +144,23 @@ comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
 comp_dimm0.addParams(g_params)
 
 # enable all statistics
+comp_txnGen0.enableAllStatistics()
 comp_txnUnit0.enableAllStatistics()
+comp_txnUnit0.enableStatistics(["reqQueueSize"],  # overriding the type of one statistic
+                                  {"type":"sst.HistogramStatistic",
+                                   "minvalue" : "0",
+                                   "binwidth" : "2",
+                                   "numbins" : "18",
+                                   "IncludeOutOfBounds" : "1"})
+comp_txnUnit0.enableStatistics(["resQueueSize"],  # overriding the type of one statistic
+                                  {"type":"sst.HistogramStatistic",
+                                   "minvalue" : "0",
+                                   "binwidth" : "2",
+                                   "numbins" : "18",
+                                   "IncludeOutOfBounds" : "1"})
 #comp_txnUnit0.enableAllStatistics({ "type":"sst.AccumulatorStatistic",
 #                                    "rate":"1 us"})
-
+comp_dimm0.enableAllStatistics()
 
 # Define simulation links
 

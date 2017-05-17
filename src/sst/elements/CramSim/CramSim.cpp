@@ -169,6 +169,12 @@ static const ElementInfoPort c_TxnGenRand_ports[] = {
 		{ "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenRand_token_port_events },
 		{ NULL, NULL, NULL } };
 
+static const ElementInfoStatistic c_TxnGenRand_stats[] = {
+  {"readTxnsCompleted", "Number of read transactions completed", "reads", 1}, // Name, Desc, Units, Enable Level
+  {"writeTxnsCompleted", "Number of write transactions completed", "writes", 1},
+  {NULL, NULL, NULL, 0}
+};
+
 /*----SETUP c_TracefileReader STRUCTURES----*/
 static const ElementInfoParam c_TracefileReader_params[] = {
 		{"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
@@ -208,6 +214,11 @@ static const ElementInfoPort c_DramSimTraceReader_ports[] = {
 		{ "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenRand_token_port_events },
 		{ NULL, NULL, NULL } };
 
+static const ElementInfoStatistic c_DramSimTraceReader_stats[] = {
+  {"readTxnsCompleted", "Number of read transactions completed", "reads", 1}, // Name, Desc, Units, Enable Level
+  {"writeTxnsCompleted", "Number of write transactions completed", "writes", 1},
+  {NULL, NULL, NULL, 0}
+};
 
 /*----SETUP c_USimmTraceReader STRUCTURES----*/
 static const ElementInfoParam c_USimmTraceReader_params[] = {
@@ -292,6 +303,9 @@ static const ElementInfoPort c_TxnUnit_ports[] = {
 static const ElementInfoStatistic c_TxnUnit_stats[] = {
   {"readTxnsRecvd", "Number of read transactions received", "reads", 1}, // Name, Desc, Units, Enable Level
   {"writeTxnsRecvd", "Number of write transactions received", "writes", 1},
+  {"totalTxnsRecvd", "Number of write transactions received", "transactions", 1},
+  {"reqQueueSize", "Total size of the request queue over time", "transactions", 1},
+  {"resQueueSize", "Total size of the response queue over time", "transactions", 1},
   {NULL, NULL, NULL, 0}
 };
 
@@ -417,6 +431,17 @@ static const ElementInfoPort c_Dimm_ports[] = {
 		{NULL, NULL, NULL}
 };
 
+static const ElementInfoStatistic c_Dimm_stats[] = {
+  {"actCmdsRecvd", "Number of activate commands received", "activates", 1}, // Name, Desc, Units, Enable Level
+  {"readCmdsRecvd", "Number of read commands received", "reads", 1}, 
+  {"readACmdsRecvd", "Number of read with autoprecharge commands received", "readAs", 1},
+  {"writeCmdsRecvd", "Number of write commands received", "writes", 1}, 
+  {"writeACmdsRecvd", "Number of write with autoprecharge commands received", "writeAs", 1},
+  {"preCmdsRecvd", "Number of precharge commands received", "precharges", 1},
+  {"refCmdsRecvd", "Number of refresh commands received", "refreshes", 1},
+  {NULL, NULL, NULL, 0}
+};
+
 
 static const ElementInfoComponent CramSimComponents[] = {
 		{ "c_AddressHasher", 							// Name
@@ -444,7 +469,7 @@ static const ElementInfoComponent CramSimComponents[] = {
 		c_TxnGenRand_params, 						// Parameters
 		c_TxnGenRand_ports, 						// Ports
 		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		NULL 										// Statistics
+		c_TxnGenRand_stats								// Statistics
 		},
 		{ "c_TracefileReader", 							// Name
 		"Test Trace file Generator",			 	// Description
@@ -462,7 +487,7 @@ static const ElementInfoComponent CramSimComponents[] = {
 		c_DramSimTraceReader_params, 						// Parameters
 		c_DramSimTraceReader_ports, 						// Ports
 		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		NULL 										// Statistics
+		c_DramSimTraceReader_stats							// Statistics
 		},
 		{ "c_USimmTraceReader", 							// Name
 		"Test USimm Trace file Generator",			 	// Description
@@ -525,7 +550,7 @@ static const ElementInfoComponent CramSimComponents[] = {
 		c_Dimm_params, 						// Parameters
 		c_Dimm_ports, 						// Ports
 		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		NULL 										// Statistics
+		c_Dimm_stats									// Statistics
 		},
 		{ NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL } };
 

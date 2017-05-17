@@ -315,8 +315,11 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	m_processingRefreshCmds = false;
 
 	// Statistics setup
-	readTxnsRecvd = registerStatistic<uint64_t>("readTxnsRecvd");
-	writeTxnsRecvd = registerStatistic<uint64_t>("writeTxnsRecvd");
+	s_readTxnsRecvd = registerStatistic<uint64_t>("readTxnsRecvd");
+	s_writeTxnsRecvd = registerStatistic<uint64_t>("writeTxnsRecvd");
+	s_totalTxnsRecvd = registerStatistic<uint64_t>("totalTxnsRecvd");
+	s_reqQueueSize = registerStatistic<uint64_t>("reqQueueSize");
+	s_resQueueSize = registerStatistic<uint64_t>("resQueueSize");
 }
 
 c_TxnUnit::~c_TxnUnit() {
@@ -403,6 +406,9 @@ bool c_TxnUnit::clockTic(SST::Cycle_t) {
 	//FIXME: Delete. For debugging queue size issues
 	m_statsReqQ[m_txnReqQ.size()]++;
 	m_statsResQ[m_txnResQ.size()]++;
+
+	s_reqQueueSize->addData(m_txnReqQ.size());
+	s_resQueueSize->addData(m_txnResQ.size());
 
 	return false;
 }
@@ -570,15 +576,16 @@ void c_TxnUnit::handleInTxnGenReqPtrEvent(SST::Event *ev) {
 		//l_txnReqEventPtr->m_payload->print();
 		//std::cout << std::endl;
 
-		m_txnReqQ.push_back(l_txnReqEventPtr->m_payload);
-		delete l_txnReqEventPtr;
-
 		if(l_txnReqEventPtr->m_payload->getTransactionMnemonic() == e_TransactionType::READ) {
-		  readTxnsRecvd->addData(1);
+		  s_readTxnsRecvd->addData(1);
 		}
 		if(l_txnReqEventPtr->m_payload->getTransactionMnemonic() == e_TransactionType::WRITE) {
-		  writeTxnsRecvd->addData(1);
+		  s_writeTxnsRecvd->addData(1);
 		}
+		s_totalTxnsRecvd->addData(1);
+		
+		m_txnReqQ.push_back(l_txnReqEventPtr->m_payload);
+		delete l_txnReqEventPtr;
 	} else {
 		std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
 				<< std::endl;
