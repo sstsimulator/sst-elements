@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
+// Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -62,17 +62,24 @@ class NVM_WRITE_BUFFER
 
 	public:
 
+	
+
 	// Constructor
 	NVM_WRITE_BUFFER(int Size, int Sched_mode, int Entry_size, int Flush_th, int low_th){ flush_th_low = low_th; max_size = Size; sched_mode = Sched_mode; flush_th = Flush_th; entry_size = Entry_size; still_flushing=false; curr_entries = 0;}
 
 	// This checks if the writebuffer is in the flush mode (entries exceed threshold)
 	bool flush();
 
+	// Get the list size
+	int ListSize() { return mem_reqs.size();}
+
 	// Check if empty
 	bool empty() { if (curr_entries == 0) return true; else return false;}
 	// Get the current size
 	int getSize(){ return curr_entries;}
 
+	// Tells you if larger than the low threshold;
+	
 	// Check if full or not
 	bool full() { if(curr_entries == max_size) return true; else return false;}
 

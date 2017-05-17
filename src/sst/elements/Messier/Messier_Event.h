@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
+// Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -32,7 +32,7 @@ using namespace SST;
 
 namespace SST{ namespace MessierComponent{
 
-	enum EventType { READ_COMPLETION, WRITE_COMPLETION, DEVICE_READY};
+	enum EventType { READ_COMPLETION, WRITE_COMPLETION, DEVICE_READY, HIT_MISS, INVALIDATE_WRITE};
 
 	// Thie defines a class for events of Messier
 	class MessierEvent : public SST::Event
@@ -41,21 +41,29 @@ namespace SST{ namespace MessierComponent{
 		private:
 		MessierEvent() { } // For serialization
 
+			int ev;
+			NVM_Request * req;		
 		public:
 
 			MessierEvent(NVM_Request * x, EventType y) : SST::Event()
 		{ ev = y; req = x;}
 
-			// This indicates the event type
-			EventType ev;
+			void setType(int ev1) { ev = static_cast<EventType>(ev1);}
+			int getType() { return ev; }
+			
+			void setReq(NVM_Request * tmp) { req = tmp;}
+			NVM_Request * getReq() { return req; }
 
 			// Pointer to the NVM_Request initiated this event
-			NVM_Request * req;		
-			void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+
+			void serialize_order(SST::Core::Serialization::serializer &ser) {
 				Event::serialize_order(ser);
 			}
 
-			//ImplementSerializable(MemRespEvent);
+				// This indicates the event type
+
+
+		//ImplementSerializable(MemRespEvent);
 
 		ImplementSerializable(MessierEvent);
 
