@@ -23,5 +23,8 @@ AC_DEFUN([SST_memHierarchy_CONFIG], [
   # Use FlashDIMMSim
   SST_CHECK_FDSIM([],[],[AC_MSG_ERROR([FlashDIMMSim requested but could not be found])])
 
+  # Use LIBZ
+  SST_CHECK_LIBZ()
+
   AS_IF([test "$mh_happy" = "yes"], [$1], [$2])
 ])
