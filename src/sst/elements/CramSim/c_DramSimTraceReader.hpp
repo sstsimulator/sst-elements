@@ -133,6 +133,10 @@ private:
 	unsigned* m_statsReqQ;
 	unsigned* m_statsResQ;
 
+  // Statistics
+  Statistic<uint64_t>* s_readTxnsCompleted;
+  Statistic<uint64_t>* s_writeTxnsCompleted;
+
 };
 
 } // namespace n_Bank

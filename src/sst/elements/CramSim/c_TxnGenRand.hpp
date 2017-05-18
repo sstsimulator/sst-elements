@@ -103,6 +103,10 @@ private:
 	std::queue<c_Transaction*> m_txnReqQ; //outgoing
 	std::queue<c_Transaction*> m_txnResQ; //incoming
 
+  // Statistics
+  Statistic<uint64_t>* s_readTxnsCompleted;
+  Statistic<uint64_t>* s_writeTxnsCompleted;
+
 };
 
 } // namespace n_Bank

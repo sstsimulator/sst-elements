@@ -125,6 +125,10 @@ c_TxnGenRand::c_TxnGenRand(ComponentId_t x_id, Params& x_params) :
 	//set our clock
 	registerClock("1GHz",
 			new Clock::Handler<c_TxnGenRand>(this, &c_TxnGenRand::clockTic));
+	
+	// Statistics
+	s_readTxnsCompleted = registerStatistic<uint64_t>("readTxnsCompleted");
+	s_writeTxnsCompleted = registerStatistic<uint64_t>("writeTxnsCompleted");
 }
 
 c_TxnGenRand::~c_TxnGenRand() {
@@ -230,10 +234,13 @@ void c_TxnGenRand::handleInTxnUnitResPtrEvent(SST::Event* ev) {
 		// std::cout << std::endl;
 
 		if (l_txnResEventPtr->m_payload->getTransactionMnemonic()
-				== e_TransactionType::READ)
-			m_resReadCount++;
-		else
-			m_resWriteCount++;
+		    == e_TransactionType::READ) {
+		  s_readTxnsCompleted->addData(1);
+		  m_resReadCount++;
+		} else {
+		  s_writeTxnsCompleted->addData(1);
+		  m_resWriteCount++;
+		}
 
 
 		m_txnResQ.push(l_txnResEventPtr->m_payload);

@@ -90,6 +90,16 @@ private:
 	std::vector<c_Bank*> m_banks;
 
 	std::vector<c_BankCommand*> m_cmdResQ;
+  
+  // Statistics
+  Statistic<uint64_t>* s_actCmdsRecvd;
+  Statistic<uint64_t>* s_readCmdsRecvd;
+  Statistic<uint64_t>* s_readACmdsRecvd;
+  Statistic<uint64_t>* s_writeCmdsRecvd;
+  Statistic<uint64_t>* s_writeACmdsRecvd;
+  Statistic<uint64_t>* s_preCmdsRecvd;
+  Statistic<uint64_t>* s_refCmdsRecvd;
+  
 };
 }
 }
