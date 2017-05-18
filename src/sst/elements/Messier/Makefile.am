@@ -6,13 +6,14 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libMessier.la 
 
 libMessier_la_SOURCES = \
+	Cache.h \
 	libMessier.cpp \
 	memReqEvent.h \
 	Messier.cc \
-	Messier_Event.h \
 	Messier.h \
 	Bank.h \
 	Rank.h \
+        Messier_Event.h \
 	WriteBuffer.h \
 	WriteBuffer.cc \
 	NVM_Request.h \
@@ -45,6 +46,7 @@ EXTRA_DIST = \
 #infogather_SOURCES = infogather.cc
 #infogather_CPPFLAGS = -I/usr/local/systemc-2.3/include \
 #											-std=c++11 -fPIC -Wall \
+#											$(BOOST_CPPFLAGS) \
 #											$(MPI_CPPFLAGS) 
 #infogather_LDFLAGS =  -L/usr/local/systemc-2.3/lib-linux64/ -lsystemc \
 #											-lhmcsim \
