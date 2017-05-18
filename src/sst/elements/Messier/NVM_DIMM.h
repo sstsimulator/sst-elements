@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
+// Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -30,6 +30,7 @@
 #include "NVM_Params.h"
 #include "NVM_Request.h"
 #include "memReqEvent.h"
+#include "Cache.h"
 
 using namespace SST;
 using namespace SST::MessierComponent;
@@ -39,6 +40,8 @@ namespace SST { namespace MessierComponent{
 	// This class structure represents NVM-Based DIMM, including the NVM-DIMM controller
 	class NVM_DIMM
 	{ 
+
+		bool enabled;
 
 		// This determines the number of clock cycles so far
 		long long int cycles;
@@ -79,6 +82,9 @@ namespace SST { namespace MessierComponent{
 		// The number of currently executed writes
 		int curr_writes;
 
+		//TODO: remove this variable
+		int read_count;
+
 		// This determines if cache line interleaving was used
 		bool cacheline_interleave; 
 		
@@ -86,15 +92,25 @@ namespace SST { namespace MessierComponent{
 
 		SST::Link * m_EventChan;
 
-		std::map<NVM_Request *, MemReqEvent *> NVM_EVENT_MAP;
+		std::map<long long int, MemReqEvent *> NVM_EVENT_MAP;
 
 		std::map<NVM_Request *, long long int> TIME_STAMP;
 
+		// This keeps track of the squashed requests, as they hit in the cache
+		std::map<long long int, int> SQUASHED;
+
+		// This structure prevents returning data before checking the cache, to avoid any inconsistency issues
+		std::map<long long int, int> HOLD;
+
+		// This keeps track of the owner object
 		SST::Component * Owner;
 
-
+		// This defines the internal cache of the NVM-based DIMM
+		NVM_CACHE * cache;
 
 		std::map<int, int> bank_hist;
+
+		int group_locked;
 
 		public: 
 
@@ -120,15 +136,10 @@ namespace SST { namespace MessierComponent{
 
 		//bool push_request(NVM_Request * req) { if(transactions.size() >= params->max_requests) return false; else {transactions.push_back(req); return true; }}
 		
-		bool push_request(NVM_Request * req) { transactions.push_back(req);  TIME_STAMP[req]= cycles; return true;}
-
-		// This is used to submit a pending request to a bank, if not busy
-		bool submit_request();
+		bool push_request(NVM_Request * req) { transactions.push_back(req);  if(req->Read) TIME_STAMP[req]= cycles; return true;}
 
 		// This is the optimized version that basiclly tries to find out if there is any possibility to achieve a row buffer hit from the current transactions
-
 		bool submit_request_opt();
-
 
 		// Check if it exists in the write buffer and delete it from their if exists
 		bool find_in_wb(NVM_Request * temp);
@@ -137,7 +148,7 @@ namespace SST { namespace MessierComponent{
 		void schedule_delivery();
 
 		// Try to flush the write buffer
-		void try_flush_wb();
+		bool try_flush_wb();
 
 		// Try to find a row buffer hit and prioritize it over all other requests;
 		bool pop_optimal();
@@ -154,6 +165,8 @@ namespace SST { namespace MessierComponent{
 		bool row_buffer_hit(long long int add, long long int bank_add);
 		Statistic<uint64_t>* histogram_idle;
 
+		Statistic<uint64_t>* reads;
+		Statistic<uint64_t>* writes;
 
 	};
 }}
