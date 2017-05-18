@@ -396,6 +396,11 @@ static const ElementInfoPort c_CmdUnit_ports[] = {
 		{NULL, NULL, NULL}
 };
 
+static const ElementInfoStatistic c_CmdUnit_stats[] = {
+  //{"rowHits", "Number of DRAM page buffer hits", "hits", 1}, // Name, Desc, Units, Enable Level
+  {NULL,NULL,NULL,0}
+};
+
 /*----SETUP c_BankReceiver STRUCTURES----*/
 static const ElementInfoParam c_BankReceiver_params[] = {
 		{NULL, NULL, NULL } };
@@ -532,7 +537,7 @@ static const ElementInfoComponent CramSimComponents[] = {
 		c_CmdUnit_params, 							// Parameters
 		c_CmdUnit_ports, 							// Ports
 		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		NULL 										// Statistics
+		c_CmdUnit_stats									// Statistics
 		},
 		{ "c_BankReceiver",	 						// Name
 		"Test Bank Receiver",				 		// Description

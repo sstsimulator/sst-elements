@@ -512,6 +512,9 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	  }
 	  m_cmdTraceStream = new std::ostream(m_cmdTraceStreamBuf);
 	}
+
+	// Statistics
+	//s_rowHits = registerStatistic<uint64_t>("rowHits");
 }
 
 c_CmdUnit::~c_CmdUnit() {
@@ -800,7 +803,8 @@ void c_CmdUnit::sendReqOpenRowPolicy() {
 
 		if (l_isDataCmd && (l_bankPtr->isCommandAllowed(l_cmdPtr, l_time))
 				&& (l_bankPtr->isRowOpen())
-		    && (l_bankPtr->getOpenRowNum() == l_cmdPtr->getHashedAddress()->getRow())) {
+		    && (l_bankPtr->getOpenRowNum() == l_cmdPtr->getHashedAddress()->getRow()))
+		{
 			l_openBankCmdPtr = l_cmdPtr;
 
 //			std::cout << std::endl << "@" << std::dec
