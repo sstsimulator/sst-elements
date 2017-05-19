@@ -1,5 +1,5 @@
 // Copyright 2009-2017 Sandia Corporation. Under the terms
-// // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// // of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // // Government retains certain rights in this software.
 // //
 // // Copyright (c) 2009-2017, Sandia Corporation
@@ -10,6 +10,8 @@
 // // distribution.
 // //
 //
+
+
 // /* Author: Amro Awad
 //  * E-mail: aawad@sandia.gov
 //   */
@@ -35,10 +37,11 @@ class NVM_Request
 	public:
 		NVM_Request() {}
 		NVM_Request(long long id, bool R, int size, long long int Add) { req_ID = id; Read = R; Size = size; Address = Add;}
-		long long req_ID;
+		long long int req_ID;
 		bool Read;
 		int Size;
 		long long int Address;
+		int meta_data;
 
 };
 
