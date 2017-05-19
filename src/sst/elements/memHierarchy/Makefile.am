@@ -51,6 +51,8 @@ libmemHierarchy_la_SOURCES = \
 	membackend/scratchBackendConvertor.cc \
 	membackend/simpleMemScratchBackendConvertor.h \
 	membackend/simpleMemScratchBackendConvertor.cc \
+	membackend/cramSimBackend.h \
+	membackend/cramSimBackend.cc \
 	memEvent.h \
 	scratchEvent.h \
 	memNIC.h \

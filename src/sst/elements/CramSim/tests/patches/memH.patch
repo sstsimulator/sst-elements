@@ -1,0 +1,33 @@
+diff --git src/sst/elements/memHierarchy/memEvent.h src/sst/elements/memHierarchy/memEvent.h
+index c1f8c47..a4d6653 100644
+--- memEvent.h
++++ memEvent.h
+@@ -339,6 +339,7 @@ public:
+     void incrementRetries() { retries_++; }
+     int getRetries() { return retries_; }
+ 
++
+     bool blocked() { return blocked_; }
+     void setBlocked(bool value) { blocked_ = value; }
+     
+@@ -410,6 +411,12 @@ public:
+     bool isCPUSideEvent(void) const { return MemCommandCPUSide[cmd_]; }
+ 
+ 
++    /** Setter for GroupId */
++    void setGroupId(uint32_t _groupID){ groupID_ = _groupID; }
++    /** Getter for GroupId */
++    uint32_t getGroupId() { return groupID_; }
++
++
+     void setDirty(bool status) { dirty_ = status; }
+     bool getDirty() { return dirty_; }
+ 
+@@ -476,6 +483,7 @@ private:
+     Addr	    instPtr_;           // Instruction pointer associated with the request
+     Addr 	    vAddr_;             // Virtual address associated with the request
+     bool            inProgress_;        // Whether this request is currently being handled, if in MSHR TODO move to mshrs
++    uint32_t        groupID_;
+ 
+     MemEvent() {} // For serialization only
+ 

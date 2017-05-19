@@ -18,7 +18,8 @@
 
 #include <assert.h>
 #include <iostream>
-
+#include <string>
+#include <ctime>
 
 //local includes
 #include "c_TxnGenRand.hpp"
@@ -81,6 +82,16 @@ c_TxnGenRand::c_TxnGenRand(ComponentId_t x_id, Params& x_params) :
 		exit(-1);
 	}
 
+	// initialize the random seed
+	std::string l_randSeedStr = x_params.find<std::string>("randomSeed","0", l_found);
+	l_randSeedStr.pop_back(); // remove trailing newline (??)
+	if(l_randSeedStr.compare("-") == 0) { // use a random seed
+	  k_randSeed = (SimTime_t)time(nullptr);
+	} else {
+	  k_randSeed = (SimTime_t)std::strtoul(l_randSeedStr.c_str(),NULL,0);
+	}
+	std::srand(k_randSeed);
+
 	// tell the simulator not to end without us
 	registerAsPrimaryComponent();
 	primaryComponentDoNotEndSim();
@@ -114,6 +125,10 @@ c_TxnGenRand::c_TxnGenRand(ComponentId_t x_id, Params& x_params) :
 	//set our clock
 	registerClock("1GHz",
 			new Clock::Handler<c_TxnGenRand>(this, &c_TxnGenRand::clockTic));
+	
+	// Statistics
+	s_readTxnsCompleted = registerStatistic<uint64_t>("readTxnsCompleted");
+	s_writeTxnsCompleted = registerStatistic<uint64_t>("writeTxnsCompleted");
 }
 
 c_TxnGenRand::~c_TxnGenRand() {
@@ -219,10 +234,13 @@ void c_TxnGenRand::handleInTxnUnitResPtrEvent(SST::Event* ev) {
 		// std::cout << std::endl;
 
 		if (l_txnResEventPtr->m_payload->getTransactionMnemonic()
-				== e_TransactionType::READ)
-			m_resReadCount++;
-		else
-			m_resWriteCount++;
+		    == e_TransactionType::READ) {
+		  s_readTxnsCompleted->addData(1);
+		  m_resReadCount++;
+		} else {
+		  s_writeTxnsCompleted->addData(1);
+		  m_resWriteCount++;
+		}
 
 
 		m_txnResQ.push(l_txnResEventPtr->m_payload);

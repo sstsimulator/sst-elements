@@ -1,0 +1,10 @@
+# This is little-endian (MSB first)
+# key
+# C - channel/MC
+# R - rank
+# B - bankGroup
+# b - bank
+# r - row
+# l - column
+# h - cacheline
+r:15  l:2  R:1 l:4 b:2  B:2  C:3  h:7

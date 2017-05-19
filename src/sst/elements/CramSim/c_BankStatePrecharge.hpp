@@ -63,7 +63,7 @@ public:
 			c_BankInfo* x_bankPtr);
 
 private:
-	unsigned m_timer; //<! counts down to 0. when 0, changes state to IDLE automatically. is reset to ?? at state entry.
+	SimTime_t m_timer; //<! counts down to 0. when 0, changes state to IDLE automatically. is reset to ?? at state entry.
 	c_BankCommand* m_receivedCommandPtr; //<! pointer to a received command
 	c_BankCommand* m_prevCommandPtr;
 	std::list<e_BankCommandType> m_allowedCommands;

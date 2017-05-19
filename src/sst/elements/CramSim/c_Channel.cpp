@@ -82,7 +82,7 @@ std::vector<c_BankInfo*> c_Channel::getBankPtrs() const {
 void c_Channel::updateOtherBanksNextCommandCycles(c_Rank* x_initRankPtr,
 		c_BankCommand* x_cmdPtr) {
 
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 //	std::cout << "@ " << std::dec << l_time << " Entered "
 //			<< __PRETTY_FUNCTION__ << std::endl;
@@ -104,7 +104,7 @@ void c_Channel::updateOtherBanksNextCommandCycles(c_Rank* x_initRankPtr,
 			case e_BankCommandType::READ:
 			case e_BankCommandType::READA: {
 				// timing for the next READ or READA command
-				unsigned l_nextCycle = std::max(
+                SimTime_t l_nextCycle = std::max(
 						std::max(
 								l_bankPtr->getNextCommandCycle(
 										e_BankCommandType::READ),
@@ -148,7 +148,7 @@ void c_Channel::updateOtherBanksNextCommandCycles(c_Rank* x_initRankPtr,
 			case e_BankCommandType::WRITE:
 			case e_BankCommandType::WRITEA: {
 				// timing for the next READ or READA command
-				unsigned l_nextCycle = std::max(
+                SimTime_t l_nextCycle = std::max(
 						std::max(
 								l_bankPtr->getNextCommandCycle(
 										e_BankCommandType::READ),
