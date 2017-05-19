@@ -63,8 +63,8 @@ public:
 			c_BankInfo* x_bankPtr);
 
 private:
-	unsigned m_timer; // counts down to 0
-	unsigned m_timerExit; // counts down to 0 during state exit
+	SimTime_t m_timer; // counts down to 0
+	SimTime_t m_timerExit; // counts down to 0 during state exit
 
 	std::list<e_BankCommandType> m_allowedCommands;
 	c_BankCommand* m_receivedCommandPtr;

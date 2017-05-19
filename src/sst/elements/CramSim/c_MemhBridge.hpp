@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
+// Copyright 2009-2016 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2016, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _TXNGENSEQ_H
-#define _TXNGENSEQ_H
+#ifndef _MEMHBRIDGE_H
+#define _MEMHBRIDGE_H
 
 #include <stdint.h>
 #include <queue>
@@ -22,20 +22,19 @@
 //SST includes
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <sst/core/output.h>
 
 //local includes
-//#include "c_Transaction.hpp"
+#include "c_Transaction.hpp"
 
 namespace SST {
 namespace n_Bank {
+class c_MemhBridge: public SST::Component {
 
-class c_Transaction;
-  
-class c_TxnGenSeq: public SST::Component {
 
 public:
-	c_TxnGenSeq(SST::ComponentId_t x_id, SST::Params& x_params);
-	~c_TxnGenSeq();
+	c_MemhBridge(SST::ComponentId_t x_id, SST::Params& x_params);
+	~c_MemhBridge();
 
 	void setup() {
 	}
@@ -46,12 +45,15 @@ public:
 	}
 
 private:
-	c_TxnGenSeq(); //for serialization only
-	c_TxnGenSeq(const c_TxnGenSeq&); //do not implement
-	void operator=(const c_TxnGenSeq&);
+	c_MemhBridge(); //for serialization only
+	c_MemhBridge(const c_MemhBridge&); //do not implement
 
-	ulong getNextAddress();
+
+	void operator=(const c_MemhBridge&);
+
 	void createTxn();
+
+	//FIXME: Remove the word unit from members once class is complete to keep in line with code convention
 
 	//txn to/from events
 	void handleOutTxnGenReqPtrEvent(SST::Event *ev); // we do not need this function for functionality
@@ -67,9 +69,19 @@ private:
 
 	virtual bool clockTic(SST::Cycle_t); //called every cycle
 
+	//Debug
+	Output dbg;
+
 	//Transaction info
 	ulong m_prevAddress;
 	ulong m_seqNum;
+
+	std::map<uint64_t,Event::id_type> dramReqs; //key: transaction sequence number, value: event id
+
+
+
+	//link to/from CPU
+	SST::Link *m_linkCPU;
 
 	//request-related links
 	SST::Link* m_outTxnGenReqPtrLink; //outgoing txn gen req ptr
@@ -83,7 +95,6 @@ private:
 	int k_txnGenReqQEntries;
 	int k_txnGenResQEntries;
 	double k_readWriteTxnRatio;
-        unsigned int k_randSeed;
 
 	//param for receiver
 	int k_txnUnitReqQEntries;
@@ -110,4 +121,4 @@ private:
 } // namespace n_Bank
 } // namespace SST
 
-#endif  /* _TXNGENSEQ_H */
+#endif  /* _TXNGENRAND_H */

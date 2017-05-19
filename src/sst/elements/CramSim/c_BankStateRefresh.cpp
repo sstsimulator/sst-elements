@@ -113,7 +113,7 @@ void c_BankStateRefresh::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_allowedCommands.clear();
 	// this state should not have any allowed bank commands
 	// this is a transitory state
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 	x_bank->setNextCommandCycle(e_BankCommandType::REF,
 			std::max(
 					x_bank->getNextCommandCycle(e_BankCommandType::REF)

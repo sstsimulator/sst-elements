@@ -86,6 +86,9 @@ bool c_Transaction::isResponseReady() {
 //  x_stream<<x_transaction.getTransactionString()<<", seqNum: "<<std::dec<<x_transaction.m_seqNum<<", address: "<<std::hex<<x_transaction.getAddress()<<std::dec<<", dataWidth = "<<x_transaction.m_dataWidth<<", m_numWaitingCommands = "<<std::dec<<x_transaction.m_numWaitingCommands<<", isProcessed = "<<std::boolalpha<<x_transaction.m_processed<<", isResponseReady = "<<std::boolalpha<<x_transaction.m_isResponseReady;
 //  return (x_stream);
 //}
+ulong c_Transaction::getSeqNum() const {
+	return (m_seqNum);
+}
 
 bool c_Transaction::matchesCmdSeqNum(ulong x_seqNum) {
   return(std::find(m_cmdSeqNumList.begin(), m_cmdSeqNumList.end(), x_seqNum)

@@ -46,6 +46,9 @@
 #include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
 #include "c_BankCommand.hpp"
+#include "../../../../../sst-core/src/sst/core/event.h"
+#include "../../../../../sst-core/src/sst/core/component.h"
+#include "../../../../../sst-core/src/sst/core/sst_types.h"
 
 using namespace SST;
 using namespace SST::n_Bank;
@@ -53,9 +56,9 @@ using namespace SST::n_Bank;
 c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		Component(x_id) {
 
-	// tell the simulator not to end without us
-	registerAsPrimaryComponent();
-	primaryComponentDoNotEndSim();
+	// tell the simulator not to end without us <-- why?
+	//registerAsPrimaryComponent();
+	//primaryComponentDoNotEndSim();
 
 	// configure links
 

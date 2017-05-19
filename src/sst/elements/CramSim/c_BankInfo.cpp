@@ -133,7 +133,7 @@ void c_BankInfo::reset() {
 }
 
 void c_BankInfo::handleCommand(c_BankCommand* x_bankCommandPtr,
-		unsigned x_simCycle) {
+                               SimTime_t x_simCycle) {
 	assert(
 			m_nextCommandCycleMap.end() != m_nextCommandCycleMap.find(x_bankCommandPtr->getCommandMnemonic()));
 	assert(
@@ -161,7 +161,7 @@ std::list<e_BankCommandType> c_BankInfo::getAllowedCommands() {
 }
 
 bool c_BankInfo::isCommandAllowed(c_BankCommand* x_cmdPtr,
-		unsigned x_simCycle) {
+                                  SimTime_t x_simCycle) {
 	bool l_canAccept = false;
 	assert(nullptr != m_bankState);
 
@@ -182,23 +182,23 @@ void c_BankInfo::changeState(c_BankState* x_newState) {
 }
 
 void c_BankInfo::setNextCommandCycle(const e_BankCommandType x_cmd,
-		const unsigned x_cycle) {
+		const SimTime_t x_cycle) {
 	assert(m_nextCommandCycleMap.end() != m_nextCommandCycleMap.find(x_cmd));
 	m_nextCommandCycleMap[x_cmd] = x_cycle;
 }
 
-unsigned c_BankInfo::getNextCommandCycle(e_BankCommandType x_cmd) {
+SimTime_t c_BankInfo::getNextCommandCycle(e_BankCommandType x_cmd) {
 	assert(m_nextCommandCycleMap.end() != m_nextCommandCycleMap.find(x_cmd));
 	return (m_nextCommandCycleMap[x_cmd]);
 }
 
 void c_BankInfo::setLastCommandCycle(e_BankCommandType x_cmd,
-		unsigned x_lastCycle) {
+                                     SimTime_t x_lastCycle) {
 	assert(m_lastCommandCycleMap.end() != m_lastCommandCycleMap.find(x_cmd));
 	m_lastCommandCycleMap[x_cmd] = x_lastCycle;
 }
 
-unsigned c_BankInfo::getLastCommandCycle(e_BankCommandType x_cmd) {
+SimTime_t c_BankInfo::getLastCommandCycle(e_BankCommandType x_cmd) {
 	assert(m_lastCommandCycleMap.end() != m_lastCommandCycleMap.find(x_cmd));
 	return m_lastCommandCycleMap[x_cmd];
 }

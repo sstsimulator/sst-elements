@@ -148,7 +148,7 @@ void c_BankStateIdle::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 
 	m_receivedCommandPtr = nullptr;
 
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 	m_allowedCommands.clear();
 	m_allowedCommands.push_back(e_BankCommandType::ACT);

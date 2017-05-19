@@ -66,7 +66,7 @@ private:
 	std::list<e_BankCommandType> m_allowedCommands;
 	c_BankCommand* m_prevCommandPtr;
 	c_BankCommand* m_receivedCommandPtr;
-	unsigned m_timer;
+	SimTime_t m_timer;
 
 
 };

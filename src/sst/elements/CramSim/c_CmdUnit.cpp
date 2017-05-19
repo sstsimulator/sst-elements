@@ -450,9 +450,9 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	for (unsigned l_i = 0; l_i != k_cmdResQEntries + 1; ++l_i)
 		m_statsResQ[l_i] = 0;
 
-	// tell the simulator not to end without us
-	registerAsPrimaryComponent();
-	primaryComponentDoNotEndSim();
+	// tell the simulator not to end without us <--why?
+	//registerAsPrimaryComponent();
+	//primaryComponentDoNotEndSim();
 
 	// configure links
 
@@ -631,11 +631,11 @@ void c_CmdUnit::sendReqCloseBankPolicy(
 //	std::cout << std::endl << "@" << std::dec
 //			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
 //			<< __PRETTY_FUNCTION__ << std::endl;
-//
+
 //	for (auto& l_infWrite : m_inflightWrites)
 //		std::cout << std::hex << l_infWrite << std::endl;
 //	std::cout << std::endl;
-//
+
 //	std::cout << std::endl << "@" << std::dec
 //			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
 //			<< __PRETTY_FUNCTION__ << ": starting at command " << std::endl;
@@ -792,7 +792,7 @@ void c_CmdUnit::sendReqOpenRowPolicy() {
 		ulong l_addr = ((l_cmdPtr))->getAddress();
 		unsigned l_bankNum = l_cmdPtr->getHashedAddress()->getBankId();
 		c_BankInfo* l_bankPtr = m_banks.at(l_bankNum);
-		unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+        SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 //		std::cout << std::endl << "@" << std::dec
 //				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
@@ -907,7 +907,7 @@ void c_CmdUnit::sendReqPseudoOpenRowPolicy() {
 		ulong l_addr = ((l_cmdPtr))->getAddress();
 		unsigned l_bankNum = l_cmdPtr->getHashedAddress()->getBankId();
 		c_BankInfo* l_bankPtr = m_banks.at(l_bankNum);
-		unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+        SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 //		std::cout << std::endl << "@" << std::dec
 //				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
@@ -1022,7 +1022,7 @@ void c_CmdUnit::sendReqOpenBankPolicy() {
 		ulong l_addr = ((l_cmdPtr))->getAddress();
 		unsigned l_bankNum = l_cmdPtr->getHashedAddress()->getBankId();
 		c_BankInfo* l_bankPtr = m_banks.at(l_bankNum);
-		unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+        SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 //		std::cout << std::endl << "@" << std::dec
 //				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
@@ -1154,9 +1154,9 @@ void c_CmdUnit::sendRequest() {
 }
 
 void c_CmdUnit::sendRefresh() {
-  //std::cout << std::endl << "@" << std::dec
-  //	    << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-  //	    << __PRETTY_FUNCTION__ << std::endl;
+//  std::cout << std::endl << "@" << std::dec
+ // 		    << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+ // 		    << __PRETTY_FUNCTION__ << std::endl;
   
   c_BankCommand *l_refCmd = m_cmdReqQ.front();
   assert(l_refCmd->getCommandMnemonic() == e_BankCommandType::REF);
@@ -1164,7 +1164,7 @@ void c_CmdUnit::sendRefresh() {
   // determine if all banks are ready to refresh
   for(auto l_bankId : *(l_refCmd->getBankIdVec())) {
     c_BankInfo *l_bank = m_banks.at(l_bankId);
-    unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+      SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
     if (!l_bank->isCommandAllowed(l_refCmd, l_time)) { // can't send all refs now, cancel!
       return;
     }
@@ -1245,7 +1245,7 @@ void c_CmdUnit::sendRefresh() {
 
 bool c_CmdUnit::sendCommand(c_BankCommand* x_bankCommandPtr,
 		c_BankInfo* x_bank) {
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+    SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 	if (x_bank->isCommandAllowed(x_bankCommandPtr, l_time)) {
 	  if(k_printCmdTrace) {
