@@ -44,6 +44,18 @@ namespace SST {
 namespace n_Bank {
 
   class c_BankCommand;
+
+  // holds all the statistics pointers for the banks
+  class c_BankStatistics {
+  public:
+    Statistic<uint64_t>* s_bankACTsRecvd;
+    Statistic<uint64_t>* s_bankREADsRecvd;
+    Statistic<uint64_t>* s_bankWRITEsRecvd;
+    Statistic<uint64_t>* s_bankPREsRecvd;
+    
+    Statistic<uint64_t>* s_bankRowHits;
+    Statistic<uint64_t>* s_totalRowHits;
+  };
   
 class c_Dimm: public SST::Component {
 public:
@@ -99,7 +111,8 @@ private:
   Statistic<uint64_t>* s_writeACmdsRecvd;
   Statistic<uint64_t>* s_preCmdsRecvd;
   Statistic<uint64_t>* s_refCmdsRecvd;
-  
+
+  std::vector<c_BankStatistics*> m_bankStatsVec;
 };
 }
 }
