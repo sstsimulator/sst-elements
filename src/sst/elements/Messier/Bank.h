@@ -10,6 +10,8 @@
 // distribution.
 //
 
+
+//
 /* Author: Amro Awad
  * E-mail: aawad@sandia.gov
  */
@@ -45,11 +47,21 @@ class BANK
 
 	long long int locked_ts;
 
+	// determine if the current request being serviced is read or write
+	bool last_read;
+
+	// determines the last write request address
+	long long int last_address;
+	
 	public: 
 
 	BANK() { locked= false; row_buff = -1; row_buffer_dirty = false; BusyUntil = 0; locked_ts = 0;}
 
 	void setBusyUntil(long long int x) {BusyUntil = x;}
+	void set_last(bool read) { last_read = read;}
+	
+	bool read() { return last_read; }
+	
 	long long int getBusyUntil() { return BusyUntil;}
 
 	void setRB(long long int address) { row_buff = address;}
@@ -57,6 +69,9 @@ class BANK
 
 	bool getLocked() { return locked;}
 	void setLocked(bool x, long long int ts) { locked = x; locked_ts = ts;}
+
+	void set_last_address(long long int add) { last_address = add;}
+	long long int get_last_address() { return last_address;}
 
 	long long int locked_since()
 	{
