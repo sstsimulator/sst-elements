@@ -1,5 +1,5 @@
 // Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
 // Copyright (c) 2009-2017, Sandia Corporation
@@ -102,9 +102,31 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	m_numBanks = k_numRanksPerChannel * k_numBankGroupsPerRank
 			* k_numBanksPerBankGroup;
 
+	Statistic<uint64_t> *l_totalRowHits = registerStatistic<uint64_t>("totalRowHits");
 	for (int l_i = 0; l_i != m_numBanks; ++l_i) {
 		c_Bank* l_entry = new c_Bank(x_params);
 		m_banks.push_back(l_entry);
+
+		std::string l_statName;
+		unsigned l_bankNum = l_entry->getBankNum();
+		c_BankStatistics *l_bankStats = new c_BankStatistics();
+		
+		l_statName = "bankACTsRecvd_" + std::to_string(l_bankNum);
+		l_bankStats->s_bankACTsRecvd = registerStatistic<uint64_t>(l_statName);
+		l_statName = "bankREADsRecvd_" + std::to_string(l_bankNum);
+		l_bankStats->s_bankREADsRecvd = registerStatistic<uint64_t>(l_statName);
+		l_statName = "bankWRITEsRecvd_" + std::to_string(l_bankNum);
+		l_bankStats->s_bankWRITEsRecvd = registerStatistic<uint64_t>(l_statName);
+		l_statName = "bankPREsRecvd_" + std::to_string(l_bankNum);
+		l_bankStats->s_bankPREsRecvd = registerStatistic<uint64_t>(l_statName);
+
+		l_statName = "bankRowHits_" + std::to_string(l_bankNum);
+		l_bankStats->s_bankRowHits = registerStatistic<uint64_t>(l_statName);
+		
+		l_bankStats->s_totalRowHits = l_totalRowHits;
+		
+		l_entry->acceptStatistics(l_bankStats);
+		m_bankStatsVec.push_back(l_bankStats);
 	}
 
 	m_thisCycleReceivedCmds = 0;
@@ -113,13 +135,13 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	registerClock("1GHz", new Clock::Handler<c_Dimm>(this, &c_Dimm::clockTic));
 
 	// Statistics setup
-	s_actCmdsRecvd = registerStatistic<uint64_t>("actCmdsRecvd");
-	s_readCmdsRecvd = registerStatistic<uint64_t>("readCmdsRecvd");
-	s_readACmdsRecvd = registerStatistic<uint64_t>("readACmdsRecvd");
-	s_writeCmdsRecvd = registerStatistic<uint64_t>("writeCmdsRecvd");
-	s_writeACmdsRecvd = registerStatistic<uint64_t>("writeACmdsRecvd");
-	s_preCmdsRecvd = registerStatistic<uint64_t>("preCmdsRecvd");
-	s_refCmdsRecvd = registerStatistic<uint64_t>("refCmdsRecvd");
+	s_actCmdsRecvd     = registerStatistic<uint64_t>("actCmdsRecvd");
+	s_readCmdsRecvd    = registerStatistic<uint64_t>("readCmdsRecvd");
+	s_readACmdsRecvd   = registerStatistic<uint64_t>("readACmdsRecvd");
+	s_writeCmdsRecvd   = registerStatistic<uint64_t>("writeCmdsRecvd");
+	s_writeACmdsRecvd  = registerStatistic<uint64_t>("writeACmdsRecvd");
+	s_preCmdsRecvd     = registerStatistic<uint64_t>("preCmdsRecvd");
+	s_refCmdsRecvd     = registerStatistic<uint64_t>("refCmdsRecvd");
 }
 
 c_Dimm::~c_Dimm() {

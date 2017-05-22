@@ -1,5 +1,5 @@
 // Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
 // Copyright (c) 2009-2017, Sandia Corporation
@@ -353,9 +353,11 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 			(*service_back_size)[st->first]=ready_by_size[st->first];
 
-			ready_by.erase(st);
 
 			ready_by_size.erase(st->first);
+
+
+
 
 			deleted = true;
 
@@ -376,6 +378,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				st2++;
 			}
 
+			ready_by.erase(st);
 
 		}
 		if(deleted)

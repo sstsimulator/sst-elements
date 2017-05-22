@@ -1,5 +1,5 @@
 // Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
 // Copyright (c) 2009-2017, Sandia Corporation
@@ -174,6 +174,11 @@ private:
         e_BankCommandType m_lastDataCmdType;
 	std::list<unsigned> m_cmdACTFAWtracker; // FIXME: change this to a circular buffer for speed. Could also implement as shift register.
 	bool m_issuedACT;
+
+  
+  // Statistics
+  //  Statistic<uint64_t>* s_rowHits;
+
 };
 }
 }

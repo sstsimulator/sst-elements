@@ -160,6 +160,7 @@ comp_txnUnit0.enableStatistics(["resQueueSize"],  # overriding the type of one s
                                    "IncludeOutOfBounds" : "1"})
 #comp_txnUnit0.enableAllStatistics({ "type":"sst.AccumulatorStatistic",
 #                                    "rate":"1 us"})
+comp_cmdUnit0.enableAllStatistics()
 comp_dimm0.enableAllStatistics()
 
 # Define simulation links

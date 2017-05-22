@@ -1,5 +1,5 @@
 // Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
 // Copyright (c) 2009-2017, Sandia Corporation
@@ -33,6 +33,7 @@
 #include <assert.h>
 
 // CramSim includes
+#include "c_Dimm.hpp"
 #include "c_Bank.hpp"
 #include "c_Transaction.hpp"
 //#include "c_CmdReqEvent.hpp"
@@ -275,6 +276,8 @@ c_Bank::c_Bank(SST::Params& x_params) {
 	m_READCmdsSent = 0;
 	m_WRITECmdsSent = 0;
 	m_PRECmdsSent = 0;
+
+	m_bankStats = NULL;
 }
 
 c_Bank::~c_Bank() {
@@ -306,17 +309,21 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 		switch (x_bankCommandPtr->getCommandMnemonic()){
 			case e_BankCommandType::ACT:
 				m_ACTCmdsReceived++;
+				m_bankStats->s_bankACTsRecvd->addData(1);
 				break;
 			case e_BankCommandType::READ:
 			case e_BankCommandType::READA:
 				m_READCmdsReceived++;
+				m_bankStats->s_bankREADsRecvd->addData(1);
 				break;
 			case e_BankCommandType::WRITE:
 			case e_BankCommandType::WRITEA:
 				m_WRITECmdsReceived++;
+				m_bankStats->s_bankWRITEsRecvd->addData(1);
 				break;
 			case e_BankCommandType::PRE:
 				m_PRECmdsReceived++;
+				m_bankStats->s_bankPREsRecvd->addData(1);
 				break;
 			case e_BankCommandType::REF:
 				break;
@@ -415,6 +422,11 @@ c_BankCommand* c_Bank::clockTic() {
 //	}
 
 	return l_resPtr;
+} // c_BankCommand* c_Bank::clockTic()
+
+void c_Bank::acceptStatistics(c_BankStatistics *x_bankStats) {
+  assert(m_bankStats == NULL);
+  m_bankStats = x_bankStats;
 }
 
 void c_Bank::print() {

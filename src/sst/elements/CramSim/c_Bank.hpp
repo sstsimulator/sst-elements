@@ -1,5 +1,5 @@
 // Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
 // Copyright (c) 2009-2017, Sandia Corporation
@@ -46,6 +46,7 @@ namespace SST {
 namespace n_Bank {
 
   class c_BankCommand;
+  class c_BankStatistics;
 
 class c_Bank {
 public:
@@ -160,6 +161,9 @@ public:
 		return (k_nBL);
 	}
 
+  unsigned getBankNum() const {return m_bankNum;}
+  void acceptStatistics(c_BankStatistics *x_bankStats);
+  
 private:
 	c_Bank(); // for serialization only
 	c_Bank(const c_Bank&); // do not implement
@@ -222,6 +226,9 @@ private:
 	unsigned m_READCmdsSent;
 	unsigned m_WRITECmdsSent;
 	unsigned m_PRECmdsSent;
+
+  // Statistics
+  c_BankStatistics *m_bankStats;
 };
 } // n_Bank
 } // namespace SST
