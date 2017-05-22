@@ -44,6 +44,7 @@
 #include "c_BankGroup.hpp"
 #include "c_Channel.hpp"
 #include "c_Rank.hpp"
+#include "c_BankCommand.hpp"
 
 typedef unsigned long ulong;
 
@@ -105,7 +106,9 @@ private:
 	void sendRefresh();
 
 	std::set<unsigned> m_inflightWrites; // track inflight write commands
-	std::vector<bool> m_blockBank;bool m_issuedDataCmd;
+	//std::vector<bool> m_blockBank;bool m_issuedDataCmd;
+	std::vector<unsigned> m_blockRowCmd; //command bus occupancy info
+	std::vector<unsigned> m_blockColCmd; //command bus occupancy info
 
 	void sendReqCloseBankPolicy(
 			std::vector<c_BankCommand*>::iterator x_startItr); // send request function that models close bank policy
@@ -114,6 +117,13 @@ private:
 	void sendReqPseudoOpenRowPolicy(); // send request function that models pseudo open row policy
 
 	bool sendCommand(c_BankCommand* x_bankCommandPtr, c_BankInfo* x_bank); // helper method to sendRequest
+
+	/// helper methods to check if channel (command bus) is available
+	bool isCommandBusAvailable(c_BankCommand* x_BankCommandPtr);
+	///Set the occupancy of command bus
+	bool occupyCommandBus(c_BankCommand *l_cmdPtr);
+	///Release the occupancy of command bus
+	void releaseCommandBus();
 
 	// FIXME: Remove. For testing purposes
 	void printQueues();
@@ -125,34 +135,40 @@ private:
 	// params for bank structure
 	int k_numBytesPerTransaction;
 	int k_numChannelsPerDimm;
+	int k_numPseudoChannels;
 	int k_numRanksPerChannel;
 	int k_numBankGroupsPerRank;
 	int k_numBanksPerBankGroup;
 	int k_numColsPerBank;
 	int k_numRowsPerBank;
 
+	int m_numRanks;
 	int m_numBankGroups;
 	int m_numBanks;
 
 	bool k_allocateCmdResQACT;bool k_allocateCmdResQREAD;bool k_allocateCmdResQREADA;bool k_allocateCmdResQWRITE;bool k_allocateCmdResQWRITEA;bool k_allocateCmdResQPRE;
 
-	bool k_useRefresh;bool k_cmdQueueFindAnyIssuable;
+	bool k_useRefresh;
+	bool k_cmdQueueFindAnyIssuable;
 	int k_bankPolicy;
+	bool k_IsHBM;
 
 	int k_relCommandWidth;
 	int m_cmdResQTokens;
 
+	int k_useDualCommandBus;
+	int k_multiCycleACT;
 	std::vector<c_BankInfo*> m_banks;
 	std::vector<c_BankGroup*> m_bankGroups;
 	std::vector<c_Rank*> m_ranks;
 	std::vector<c_Channel*> m_channel;
 
-        bool k_printCmdTrace;
-        std::string k_cmdTraceFileName;
-        std::filebuf m_cmdTraceFileBuf;
-        std::streambuf *m_cmdTraceStreamBuf;
-        std::ofstream m_cmdTraceOFStream;
-        std::ostream *m_cmdTraceStream;
+    bool k_printCmdTrace;
+    std::string k_cmdTraceFileName;
+    std::filebuf m_cmdTraceFileBuf;
+    std::streambuf *m_cmdTraceStreamBuf;
+    std::ofstream m_cmdTraceOFStream;
+    std::ostream *m_cmdTraceStream;
 
 	// token change in this unit this cycle
 	// beginning of every cycle these variables are reset
@@ -171,7 +187,8 @@ private:
 	unsigned m_refsSent;
 
 	SimTime_t m_lastDataCmdIssueCycle;
-        e_BankCommandType m_lastDataCmdType;
+	e_BankCommandType m_lastDataCmdType;
+	unsigned m_lastPseudoChannel;
 	std::list<unsigned> m_cmdACTFAWtracker; // FIXME: change this to a circular buffer for speed. Could also implement as shift register.
 	bool m_issuedACT;
 

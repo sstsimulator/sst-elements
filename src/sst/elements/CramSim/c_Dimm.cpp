@@ -75,6 +75,22 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	// read params here
 	bool l_found = false;
 
+	k_numChannelsPerDimm = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,
+															 l_found);
+	if (!l_found) {
+		std::cout << "numChannelsPerDimm value is missing... exiting"
+				  << std::endl;
+		exit(-1);
+	}
+
+	k_numPseudoChannels = (uint32_t)x_params.find<uint32_t>("numPseudoChannels", 1,
+															l_found);
+	if (!l_found) {
+		std::cout << "numPseudoChannel value is missing... "
+				  << std::endl;
+		//exit(-1);
+	}
+
 	k_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 100,
 			l_found);
 	if (!l_found) {
@@ -99,7 +115,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	m_numBanks = k_numRanksPerChannel * k_numBankGroupsPerRank
+	m_numBanks = k_numChannelsPerDimm * k_numPseudoChannels * k_numRanksPerChannel * k_numBankGroupsPerRank
 			* k_numBanksPerBankGroup;
 
 	Statistic<uint64_t> *l_totalRowHits = registerStatistic<uint64_t>("totalRowHits");

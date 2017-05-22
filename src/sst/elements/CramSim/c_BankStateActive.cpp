@@ -170,7 +170,8 @@ void c_BankStateActive::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 
 	m_receivedCommandPtr = nullptr;
 
-	assert(m_bankParams->at("nCCD_L") > 2);
+	//Todo: Why decrease the m_timer value by two?
+	//assert(m_bankParams->at("nCCD_L") > 2);
 
 	m_timer = m_bankParams->at("nCCD_L") - 2;
 

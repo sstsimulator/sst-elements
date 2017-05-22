@@ -97,6 +97,14 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
+	k_numPseudoChannels = (uint32_t)x_params.find<uint32_t>("numPseudoChannels", 1,
+															 l_found);
+	if (!l_found) {
+		std::cout << "numPseudoChannel value is missing... "
+				  << std::endl;
+		//exit(-1);
+	}
+
 	k_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 2,
 			l_found);
 	if (!l_found) {
@@ -144,6 +152,12 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		std::cout << "boolUseRefresh param value is missing... exiting"
 				<< std::endl;
 		exit(-1);
+	}
+
+	k_IsHBM = (uint32_t)x_params.find<uint32_t>("boolIsHBM", 0, l_found);
+	if (!l_found) {
+		std::cout << "boolIsHBM value is missing... disabled"
+				  << std::endl;
 	}
 
 	/* BUFFER ALLOCATION PARAMETERS */
@@ -207,6 +221,16 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	if (!l_found) {
 		std::cout << "bankPolicy value is missing... exiting" << std::endl;
 		exit(-1);
+	}
+
+	k_useDualCommandBus = (uint32_t)x_params.find<uint32_t>("boolDualCommandBus", 0, l_found);
+	if (!l_found) {
+		std::cout << "boolDualCommandBus value is missing... disabled" << std::endl;
+	}
+
+	k_multiCycleACT = (uint32_t)x_params.find<uint32_t>("boolMultiCycleACT", 0, l_found);
+	if (!l_found) {
+		std::cout << "boolDualCommandBus value is missing... exiting" << std::endl;
 	}
 
 	/* BANK TRANSITION PARAMETERS */
@@ -380,10 +404,12 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	}
 
 	// configure the memory hierarchy
-	m_numBankGroups = k_numRanksPerChannel * k_numBankGroupsPerRank;
+	uint32_t l_numChannels = k_numPseudoChannels * k_numChannelsPerDimm;
+    m_numRanks = l_numChannels * k_numRanksPerChannel;
+	m_numBankGroups = m_numRanks * k_numBankGroupsPerRank;
 	m_numBanks = m_numBankGroups * k_numBanksPerBankGroup;
 
-	for (int l_i = 0; l_i != k_numRanksPerChannel; ++l_i) {
+	for (int l_i = 0; l_i != m_numRanks; ++l_i) {
 		c_Rank* l_entry = new c_Rank(&m_bankParams);
 		m_ranks.push_back(l_entry);
 	}
@@ -403,22 +429,22 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	// connect the hierarchy
 	unsigned l_rankNum = 0;
-	// for (unsigned l_i = 0; l_i != k_numChannelsPerDimm; ++l_i) {
-	c_Channel* l_channel = new c_Channel(&m_bankParams);
-	m_channel.push_back(l_channel);
-	int l_i = 0;
-	for (unsigned l_j = 0; l_j != k_numRanksPerChannel; ++l_j) {
-		std::cout << "Attaching Channel" << l_i << " to Rank" << l_rankNum
-				<< std::endl;
-		m_channel.at(l_i)->acceptRank(m_ranks.at(l_rankNum));
-		m_ranks.at(l_rankNum)->acceptChannel(m_channel.at(l_i));
-		++l_rankNum;
+	for (unsigned l_i = 0; l_i != l_numChannels; ++l_i) {
+        c_Channel* l_channel = new c_Channel(&m_bankParams);
+        m_channel.push_back(l_channel);
+     //   int l_i = 0;
+        for (unsigned l_j = 0; l_j != k_numRanksPerChannel; ++l_j) {
+            std::cout << "Attaching Channel" << l_i << " to Rank" << l_rankNum
+                    << std::endl;
+            m_channel.at(l_i)->acceptRank(m_ranks.at(l_rankNum));
+            m_ranks.at(l_rankNum)->acceptChannel(m_channel.at(l_i));
+            ++l_rankNum;
+		}
 	}
-	// }
-	// assert(l_rankNum == k_numRanks);
+	assert(l_rankNum == m_numRanks);
 
 	unsigned l_bankGroupNum = 0;
-	for (unsigned l_i = 0; l_i != k_numRanksPerChannel; ++l_i) {
+	for (unsigned l_i = 0; l_i != m_numRanks; ++l_i) {
 		for (unsigned l_j = 0; l_j != k_numBankGroupsPerRank; ++l_j) {
 		  //std::cout << "Attaching Rank" << l_i <<
 		  //	  " to BankGroup" << l_bankGroupNum << std::endl;
@@ -483,6 +509,11 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	// reset last data cmd issue cycle
 	m_lastDataCmdIssueCycle = 0;
 	m_lastDataCmdType = e_BankCommandType::READ;
+	m_lastPseudoChannel = 0;
+
+	// reset command bus
+	m_blockColCmd.resize(k_numChannelsPerDimm);
+	m_blockRowCmd.resize(k_numChannelsPerDimm);
 
 	m_cmdACTFAWtracker.clear();
 	m_cmdACTFAWtracker.resize(m_bankParams.at("nFAW"),0);
@@ -628,20 +659,6 @@ void c_CmdUnit::sendResponse() {
 void c_CmdUnit::sendReqCloseBankPolicy(
 		std::vector<c_BankCommand*>::iterator x_startItr) {
 
-//	std::cout << std::endl << "@" << std::dec
-//			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//			<< __PRETTY_FUNCTION__ << std::endl;
-
-//	for (auto& l_infWrite : m_inflightWrites)
-//		std::cout << std::hex << l_infWrite << std::endl;
-//	std::cout << std::endl;
-
-//	std::cout << std::endl << "@" << std::dec
-//			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//			<< __PRETTY_FUNCTION__ << ": starting at command " << std::endl;
-//	(*x_startItr)->print();
-//	std::cout << std::endl;
-
 	// get count of ACT cmds issued in the FAW
 	unsigned l_cmdACTIssuedInFAW = 0;
 	assert(m_cmdACTFAWtracker.size() == m_bankParams.at("nFAW"));
@@ -658,33 +675,6 @@ void c_CmdUnit::sendReqCloseBankPolicy(
 		if ((e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic()) && (l_cmdACTIssuedInFAW >= 4))
 			continue;
 
-		ulong l_addr = ((l_cmdPtr))->getAddress();
-		bool l_isDataCmd = ((((l_cmdPtr))->getCommandMnemonic()
-				== e_BankCommandType::READ)
-				|| (((l_cmdPtr))->getCommandMnemonic()
-						== e_BankCommandType::READA)
-				|| (((l_cmdPtr))->getCommandMnemonic()
-						== e_BankCommandType::WRITE)
-				|| (((l_cmdPtr))->getCommandMnemonic()
-						== e_BankCommandType::WRITEA));
-
-		//std::cout << std::endl << "@" << std::dec
-		//	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		//	  << __PRETTY_FUNCTION__ << ": " << std::hex << " pointer: "
-		//	  << ((l_cmdPtr)) << std::endl;
-		
-		//(l_cmdPtr)->print();
-		//std::cout << std::endl;
-		
-		unsigned l_bankNum = l_cmdPtr->getHashedAddress()->getBankId();
-
-//		std::cout << std::endl << "@" << std::dec
-//				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//				<< __PRETTY_FUNCTION__ << ": command " << std::endl;
-//		(l_cmdPtr)->print();
-//		std::cout << "l_bankNum = " << l_bankNum << std::endl;
-//		m_banks.at(l_bankNum)->print();
-//		std::cout << std::endl;
 
 		// block: READ after WRITE to the same address
 		// block: WRITE after WRITE to the same address. Processor should make sure that the older WRITE is annulled but we will block the younger here.
@@ -692,14 +682,6 @@ void c_CmdUnit::sendReqCloseBankPolicy(
 		if (m_inflightWrites.find((l_cmdPtr)->getAddress())
 		    != m_inflightWrites.end()) {
 		  l_proceed = false;
-
-//				std::cout << std::endl << "@" << std::dec
-//						<< Simulation::getSimulation()->getCurrentSimCycle()
-//						<< ": " << __PRETTY_FUNCTION__ << ": Blocking command "
-//						<< std::endl;
-//				(l_cmdPtr)->print();
-//				std::cout << std::endl;
-
 		}
 
 		// if this is a WRITE or WRITEA command insert it in the inflight set
@@ -707,62 +689,37 @@ void c_CmdUnit::sendReqCloseBankPolicy(
 				|| (e_BankCommandType::WRITEA
 						== (l_cmdPtr)->getCommandMnemonic())) {
 
-//			std::cout << "@@ "<< std::dec
-//					<< Simulation::getSimulation()->getCurrentSimCycle()
-//					<< " Inserting " << std::hex << (*l_cmdPtrItr)->getAddress()
-//					<< std::endl;
-
 			m_inflightWrites.insert((l_cmdPtr)->getAddress());
 		}
 
 		if (l_proceed) {
 
-//			std::cout << std::endl << "@" << std::dec
-//					<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//					<< __PRETTY_FUNCTION__ << ": Trying to send command "
-//					<< std::hex << " addr: " << l_addr << " bankNum = "
-//					<< l_bankNum << std::endl;
-//			(l_cmdPtr)->print();
-//			std::cout << std::endl;
-//			std::cout << m_blockBank.at(l_bankNum) << std::endl;
+			if (isCommandBusAvailable(l_cmdPtr)){   //check if the command bus is available
 
-			// FIXME: as many ACT and PRE commands as there are banks can issue in a cycle
-			// is this incorrect? should there be a limit on the number of ACT and PRE
-			// commands?
-			if (!m_blockBank.at(l_bankNum)
-					&& !(l_isDataCmd && m_issuedDataCmd)) {
-
+				unsigned l_bankNum = l_cmdPtr->getHashedAddress()->getBankId();
 				c_BankInfo* l_bank = m_banks.at(l_bankNum);
 
 				if (sendCommand((l_cmdPtr), l_bank)) {
-					m_issuedDataCmd = l_isDataCmd || m_issuedDataCmd;
 
-					if (l_isDataCmd) {
-					  assert( (m_lastDataCmdType != ((l_cmdPtr))->getCommandMnemonic()) || (
-						      (Simulation::getSimulation()->getCurrentSimCycle()-m_lastDataCmdIssueCycle) >= (std::min(m_bankParams.at("nBL"),std::max(m_bankParams.at("nCCD_L"),m_bankParams.at("nCCD_S"))))));
-					  m_lastDataCmdIssueCycle =
-					    Simulation::getSimulation()->getCurrentSimCycle();
-					  m_lastDataCmdType = ((l_cmdPtr))->getCommandMnemonic();
+
+					if (l_cmdPtr->isColCommand()) {
+						assert( (m_lastDataCmdType != ((l_cmdPtr))->getCommandMnemonic()) ||
+								(m_lastPseudoChannel != (l_cmdPtr->getHashedAddress()->getPChannel())) ||
+						      (Simulation::getSimulation()->getCurrentSimCycle()-m_lastDataCmdIssueCycle) >= (std::min(m_bankParams.at("nBL"),std::max(m_bankParams.at("nCCD_L"),m_bankParams.at("nCCD_S")))));
+
+						m_lastDataCmdIssueCycle = Simulation::getSimulation()->getCurrentSimCycle();
+						m_lastDataCmdType = ((l_cmdPtr))->getCommandMnemonic();
+						m_lastPseudoChannel = ((l_cmdPtr))->getHashedAddress()->getPChannel();
 					}
 
 					m_issuedACT = (e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic());
 
-//					std::cout << std::endl << "@" << std::dec
-//							<< Simulation::getSimulation()->getCurrentSimCycle()
-//							<< ": " << __PRETTY_FUNCTION__ << ": Sent command "
-//							<< std::hex << " addr: " << l_addr << " bankNum = "
-//							<< std::dec << l_bankNum << std::endl;
-//					(l_cmdPtr)->print();
-//					std::cout << std::endl;
-//					std::cout << m_blockBank.at(l_bankNum) << std::endl;
-
-					break;// we issued a command, so stop
+					if(occupyCommandBus(l_cmdPtr))
+						break;// all command buses are occupied, so stop
 				}
 			}
-			m_blockBank.at(l_bankNum) = true;
 		}
 	} // for
-
 }
 
 //
@@ -1129,9 +1086,7 @@ void c_CmdUnit::sendRequest() {
 
 		// do the member var setup up before calling any req sending policy function
 		m_inflightWrites.clear();
-		m_blockBank.clear();
-		m_blockBank.resize(m_numBanks, false);
-		m_issuedDataCmd = false;
+		releaseCommandBus();  //update the command bus status
 
 		switch (k_bankPolicy) {
 		case 0:
@@ -1242,6 +1197,85 @@ void c_CmdUnit::sendRefresh() {
 // 	}
 //
 // }
+
+/**
+ *
+ * @param l_cmdPtr
+ * @return "true" if the command bus required for the input command is available.
+ */
+bool c_CmdUnit::isCommandBusAvailable(c_BankCommand *l_cmdPtr) {
+	uint32_t l_ChannelNum = l_cmdPtr->getHashedAddress()->getChannel();
+	bool l_isColCmd = l_cmdPtr->isColCommand();
+
+
+	if(l_isColCmd)
+		return (m_blockColCmd.at(l_ChannelNum)==0);
+	else
+		return (m_blockRowCmd.at(l_ChannelNum)==0);
+}
+
+
+/**
+ *
+ * @param l_cmdPtr
+ * @return "true" if all buses are occupied.
+ */
+bool c_CmdUnit::occupyCommandBus(c_BankCommand *l_cmdPtr) {
+	uint32_t l_ChannelNum=0;
+	uint32_t l_NumAvailableBus=0;
+
+	l_ChannelNum = l_cmdPtr->getHashedAddress()->getChannel();
+	uint32_t l_cmdCycle;
+
+	if(l_cmdPtr->getCommandMnemonic()== e_BankCommandType::ACT && k_multiCycleACT)
+			l_cmdCycle=2;			//HBM requires two cycles for the active command
+	else
+			l_cmdCycle=1;
+
+	//Occupy the command bus
+	if (k_useDualCommandBus) {
+		if (l_cmdPtr->isColCommand())
+			m_blockColCmd.at(l_ChannelNum) = l_cmdCycle;
+		else
+			m_blockRowCmd.at(l_ChannelNum) = l_cmdCycle;
+	}
+	else {
+		m_blockColCmd.at(l_ChannelNum) = 1;
+		m_blockRowCmd.at(l_ChannelNum) = 1;
+	}
+
+	//Check whether all command buses are occupied
+	for(auto & value: m_blockColCmd)
+		if(value == 0)
+			l_NumAvailableBus++;
+
+	for(auto & value: m_blockRowCmd)
+		if(value == 0)
+			l_NumAvailableBus++;
+
+	if(l_NumAvailableBus>0) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+/**
+ *
+ */
+void c_CmdUnit::releaseCommandBus() {
+	for(auto & value: m_blockColCmd)
+	{
+		if(value>0) value--;
+	}
+
+	for(auto & value: m_blockRowCmd)
+	{
+		if(value>0) value--;
+	}
+}
+
 
 bool c_CmdUnit::sendCommand(c_BankCommand* x_bankCommandPtr,
 		c_BankInfo* x_bank) {
