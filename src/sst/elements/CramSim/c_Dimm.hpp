@@ -81,6 +81,8 @@ private:
 	SimTime_t m_thisCycleReceivedCmds;
 
 	// params for bank structure
+	int k_numChannelsPerDimm;
+	int k_numPseudoChannels;
 	int k_numRanksPerChannel;
 	int k_numBankGroupsPerRank;
 	int k_numBanksPerBankGroup;

@@ -73,6 +73,7 @@ private:
   unsigned k_pNumRows;
   unsigned k_pNumCols;
   unsigned k_pBurstSize;
+    unsigned k_pNumPseudoChannels;
 
   std::string k_addressMapStr = "rlbRBh";
   std::map<std::string, std::vector<uint> > m_bitPositions;

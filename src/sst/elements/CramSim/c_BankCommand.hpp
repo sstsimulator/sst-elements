@@ -114,6 +114,14 @@ public:
 
 	e_BankCommandType getCommandMnemonic() const;
 
+	bool isColCommand()
+	{
+		return ((m_cmdMnemonic == e_BankCommandType::READ)
+				|| (m_cmdMnemonic == e_BankCommandType::READA)
+				|| (m_cmdMnemonic == e_BankCommandType::WRITE)
+				|| (m_cmdMnemonic == e_BankCommandType::WRITEA));
+	}
+
 	ulong getAddress() const; //<! returns the address accessed by this command
 	std::string getCommandString() const;//<! returns the mnemonic of command
 

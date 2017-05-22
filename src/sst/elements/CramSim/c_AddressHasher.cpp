@@ -114,7 +114,8 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   k_pNumRows = (uint32_t)x_params.find<uint32_t>("numRowsPerBank", 1,l_found);
   k_pNumCols = (uint32_t)x_params.find<uint32_t>("numColsPerBank", 1,l_found);
   k_pBurstSize = (uint32_t)x_params.find<uint32_t>("numBytesPerTransaction", 1,l_found);
-  
+  k_pNumPseudoChannels = (uint32_t)x_params.find<uint32_t>("numPseudoChannels", 1,l_found); //used to indicate the pseudo channel mode
+
   // check for simple version address map
   bool l_allSimple = true;
   for(auto l_iter : m_bitPositions) {
@@ -133,6 +134,7 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
     l_curPos = 0;
     map<string, uint> l_cfgBits;
     l_cfgBits["C"] = (uint)log2(k_pNumChannels);
+    l_cfgBits["c"] = (uint)log2(k_pNumPseudoChannels);   // set the number of address bits assigned to pseudo channel.
     l_cfgBits["R"] = (uint)log2(k_pNumRanks);
     l_cfgBits["B"] = (uint)log2(k_pNumBankGroups);
     l_cfgBits["b"] = (uint)log2(k_pNumBanks);
@@ -170,6 +172,26 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
     }
     if(l_aNumChannels < k_pNumChannels) { // some addresses have nowhere to go
       cerr << "Error!: Number of address map channels is smaller than numChannelsPerDimm. Aborting!" << endl;
+      exit(-1);
+    }
+  } // else found in map
+
+   //Pseudo channel
+   l_it = m_structureSizes.find("c"); // Pseudo channel
+  if(l_it == m_structureSizes.end()) { // if not found
+  if(k_pNumPseudoChannels > 1) {
+      cerr << "Number of Pseudo Channels (" << k_pNumPseudoChannels << ") is greater than 1, but no "
+	   << "Channels were specified (c) in the address map! Aborting!" << endl;
+      exit(-1);
+    }
+  } else { // found in map
+    auto l_aNumPChannels = (1 << l_it->second);
+    if(l_aNumPChannels > k_pNumPseudoChannels) {
+      cerr << "Warning!: Number of address map channels is larger than numPseudoChannels." << endl;
+      cerr << "Some channels will be unused" << endl << endl;
+    }
+    if(l_aNumPChannels < k_pNumPseudoChannels) { // some addresses have nowhere to go
+      cerr << "Error!: Number of address map channels is smaller than numPseudoChannels. Aborting!" << endl;
       exit(-1);
     }
   } // else found in map
@@ -321,13 +343,28 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
     x_hashAddr->m_channel = l_cur;
   }
-  
+
+  //pseudo channel
+   l_bitPos = m_bitPositions.find("c");
+  if(l_bitPos == m_bitPositions.end()) { // not found
+    x_hashAddr->m_pchannel = 0;
+  } else {
+    l_cur=0;
+    for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
+      ulong l_val = l_bitPos->second[l_cnt];
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
+
+      l_cur |= l_tmp;
+    }
+    x_hashAddr->m_pchannel = l_cur;
+  }
+
   //rank
   l_bitPos = m_bitPositions.find("R");
   if(l_bitPos == m_bitPositions.end()) { // not found
@@ -336,7 +373,7 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
@@ -351,7 +388,7 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
@@ -366,7 +403,7 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
@@ -381,7 +418,7 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
@@ -396,7 +433,7 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
@@ -411,7 +448,7 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
@@ -422,26 +459,33 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
     x_hashAddr->m_bank
     + x_hashAddr->m_bankgroup * k_pNumBanks
     + x_hashAddr->m_rank      * k_pNumBanks * k_pNumBankGroups
-    + x_hashAddr->m_channel   * k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
+    + x_hashAddr->m_pchannel  *  k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
+    + x_hashAddr->m_channel   * k_pNumPseudoChannels * k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
     
-  //cout << "0x" << std::hex << x_address << std::dec << "\t";  x_hashAddr->print();
+  cout << "0x" << std::hex << x_address << std::dec << "\t";  x_hashAddr->print();
   
 } // fillHashedAddress(c_HashedAddress, x_address)
 
 ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
   // obtain the bank group rank and channel of this bankId;
   unsigned l_cur = x_bankId;
-  unsigned l_chanSize = k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
+  unsigned l_chanSize = k_pNumBanks * k_pNumBankGroups * k_pNumRanks * k_pNumPseudoChannels;
+  unsigned l_pchanSize = k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
   unsigned l_rankSize = k_pNumBanks * k_pNumBankGroups;
   unsigned l_bankGroupSize = k_pNumBanks;
 
-  unsigned l_chan=0,l_rank=0,l_bankgroup=0,l_bank=0;
+  unsigned l_chan=0,l_pchan=0,l_rank=0,l_bankgroup=0,l_bank=0;
 
   cout << "Getting an address for bankId " << x_bankId << endl;
 
   while(l_cur >= l_chanSize) {
     l_cur -= l_chanSize;
     l_chan++;
+  }
+
+  while(l_cur >= l_pchanSize) {
+    l_cur -= l_pchanSize;
+    l_pchan++;
   }
 
   while(l_cur >= l_rankSize) {
@@ -456,7 +500,7 @@ ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
 
   l_bank = l_cur;
 
-  cout << "Final " << l_chan << " " << l_rank << " " << l_bankgroup << " " << l_bank << endl;
+  cout << "Final " << l_chan << " " << l_pchan << " "<< l_rank << " " << l_bankgroup << " " << l_bank << endl;
 
   ulong l_address = 0;
   {
@@ -495,6 +539,19 @@ ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
       l_curPos++;
     }
     
+    l_address += l_tOut;
+  }
+
+  {
+    ulong l_tmp = l_pchan;
+    ulong l_tOut = 0;
+    unsigned l_curPos = 0;
+    while(l_tmp) {
+      l_tOut += (l_tmp & 0x1) << m_bitPositions["c"][l_curPos];
+      l_tmp >>= 1;
+      l_curPos++;
+    }
+
     l_address += l_tOut;
   }
 
@@ -547,7 +604,7 @@ void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint> *x_ou
       l_sizeStr = *l_sIter + l_sizeStr;
     } else if(isalpha(*l_sIter)) {
       if(!(*l_sIter == 'r' || *l_sIter == 'l' || *l_sIter == 'R' || *l_sIter == 'B' ||
-	   *l_sIter == 'b' || *l_sIter == 'C' || *l_sIter == 'h')) {
+	   *l_sIter == 'b' || *l_sIter == 'C' || *l_sIter == 'h' ||*l_sIter == 'c')) {
 	cerr << "Parsing error at " << *l_sIter << " in address map string " << *x_inStr << endl;
 	exit(-1);
       }

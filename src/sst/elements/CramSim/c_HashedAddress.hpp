@@ -44,6 +44,7 @@ public:
   friend class c_AddressHasher;
   
   unsigned getChannel()   const {return m_channel;}
+    unsigned getPChannel() const {return m_pchannel;}
   unsigned getRank()      const {return m_rank;}
   unsigned getBankGroup() const {return m_bankgroup;}
   unsigned getBank()      const {return m_bank;}
@@ -71,13 +72,14 @@ public:
 
 private:
   unsigned m_channel;
+    unsigned m_pchannel;
   unsigned m_rank;
   unsigned m_bankgroup;
   unsigned m_bank;
   unsigned m_row;
   unsigned m_col;
   unsigned m_cacheline;
-  
+
   unsigned m_bankId;
 };
 
