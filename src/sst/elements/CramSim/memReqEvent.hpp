@@ -2,7 +2,7 @@
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -13,11 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.    
 
-#ifndef _H_SST_VAULTSIM_MEM_EVENT
-#define _H_SST_VAULTSIM_MEM_EVENT
+#ifndef _H_SST_CRAMSIM_MEM_EVENT
+#define _H_SST_CRAMSIM_MEM_EVENT
 
 #include <sst/core/event.h>
-#include <sst/elements/VaultSimC/VaultSimC.h>
 
 namespace SST {
 namespace CramSim {

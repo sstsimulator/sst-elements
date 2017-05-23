@@ -1,18 +1,3 @@
-diff --git src/sim/simulate.cc src/sim/simulate.cc
-index c6eb2dd..0c62df5 100644
---- src/sim/simulate.cc
-+++ src/sim/simulate.cc
-@@ -104,7 +104,7 @@ simulate(Tick num_cycles)
-                                        "simulate() limit reached", 0);
-     }
- 
--    inform("Entering event queue @ %d.  Starting simulation...\n", curTick());
-+   // inform("Entering event queue @ %d.  Starting simulation...\n", curTick());
- 
-     if (num_cycles < MaxTick - curTick())
-         num_cycles = curTick() + num_cycles;
-
-
 diff --git ext/sst/ExtMaster.cc ext/sst/ExtMaster.cc
 index 2468248..438dc58 100644
 --- ext/sst/ExtMaster.cc
@@ -237,16 +222,10 @@ index 6251ba8..db9353e 100644
 +
 +*/
 diff --git ext/sst/ExtSlave.hh ext/sst/ExtSlave.hh
-index cef7c1e..717aaa6 100644
+index cef7c1e..57be6e6 100644
 --- ext/sst/ExtSlave.hh
 +++ ext/sst/ExtSlave.hh
-@@ -51,11 +51,13 @@
- #include <mem/packet.hh>
- #include <mem/request.hh>
- #include <mem/external_slave.hh>
-+#include <elements/memHierarchy/membackend/backing.h>
- 
- namespace SST {
+@@ -56,6 +56,7 @@ namespace SST {
  class Link;
  class Event;
  class MemEvent;
@@ -254,7 +233,7 @@ index cef7c1e..717aaa6 100644
  namespace gem5 {
  
  class gem5Component;
-@@ -64,6 +66,9 @@ class ExtSlave : public ExternalSlave::Port {
+@@ -64,6 +65,9 @@ class ExtSlave : public ExternalSlave::Port {
    public:
      const std::string name;
  
@@ -264,7 +243,7 @@ index cef7c1e..717aaa6 100644
      bool
      recvTimingSnoopResp(PacketPtr packet)
      {
-@@ -101,6 +106,7 @@ public:
+@@ -101,6 +105,7 @@ public:
      ExtSlave(gem5Component*, Output&, ExternalSlave&, std::string&);
      void init(unsigned phase);
  
@@ -272,7 +251,7 @@ index cef7c1e..717aaa6 100644
      void
      setup()
      {
-@@ -108,6 +114,11 @@ public:
+@@ -108,6 +113,11 @@ public:
      }
  
      void handleEvent(Event*);
@@ -285,7 +264,7 @@ index cef7c1e..717aaa6 100644
  
  }
 diff --git ext/sst/Makefile ext/sst/Makefile
-index 3eb0a8e..0829b96 100644
+index 3eb0a8e..3248a55 100644
 --- ext/sst/Makefile
 +++ ext/sst/Makefile
 @@ -1,10 +1,11 @@
@@ -297,7 +276,7 @@ index 3eb0a8e..0829b96 100644
  LDFLAGS=-shared -fno-common ${shell pkg-config ${SST_VERSION} --libs} -L../../build/ARM
 -CXXFLAGS=-std=c++0x -g -O2 -fPIC ${shell pkg-config ${SST_VERSION} --cflags} ${shell python-config --includes} -I../../build/ARM
 -CPPFLAGS+=-MMD -MP
-+CXXFLAGS=-std=c++0x -g -O2 -fPIC ${shell pkg-config ${SST_VERSION} --cflags} ${shell python-config --includes} -I../../build/ARM -I${SST_CORE_HOME}/include/sst -I${SST_CORE_HOME}include -I${SST_ELEMENT_HOME}/include/sst -I${SST_ELEMENT_HOME}/include
++CXXFLAGS=-std=c++0x -g -O2 -fPIC ${shell pkg-config ${SST_VERSION} --cflags} ${shell python-config --includes} -I../../build/ARM -I${SST_CORE_HOME}/include/sst -I${SST_CORE_HOME}/include/sst/core -I${SST_CORE_HOME}include -I${SST_ELEMENT_HOME}/include/sst -I${SST_ELEMENT_HOME}/include
 +
 +CPPFLAGS+=-MMD -MP -g -O2
  SRC=$(wildcard *.cc)
@@ -405,10 +384,19 @@ index 7749d37..25dec57 100644
 +    return (addrRangeStart>addr) ? addr : addr-addrRangeStart;
 +}
 diff --git ext/sst/gem5.hh ext/sst/gem5.hh
-index 0f1bed8..ea1497a 100644
+index 0f1bed8..257b599 100644
 --- ext/sst/gem5.hh
 +++ ext/sst/gem5.hh
-@@ -62,6 +62,47 @@ namespace gem5 {
+@@ -47,6 +47,8 @@
+ 
+ #include <string>
+ #include <vector>
++#include <fcntl.h>
++#include <unistd.h>
+ 
+ #include <core/sst_config.h>
+ #include <core/component.h>
+@@ -62,6 +64,47 @@ namespace gem5 {
  class gem5Component : public SST::Component,
                        public ExternalSlave::Handler,
                        public ExternalMaster::Handler {
@@ -456,7 +444,7 @@ index 0f1bed8..ea1497a 100644
  private:
  
      Output dbg;
-@@ -69,9 +110,15 @@ private:
+@@ -69,9 +112,15 @@ private:
      uint64_t sim_cycles;
      uint64_t clocks_processed;
  
@@ -472,7 +460,7 @@ index 0f1bed8..ea1497a 100644
      void splitCommandArgs(std::string &cmd, std::vector<char*> &args);
      void initPython(int argc, char *argv[]);
  
-@@ -82,6 +129,13 @@ public:
+@@ -82,6 +131,13 @@ public:
      virtual void setup();
      virtual void finish();
      bool clockTick(Cycle_t);
@@ -486,7 +474,7 @@ index 0f1bed8..ea1497a 100644
  
      virtual ExternalMaster::Port *getExternalPort(
          const std::string &name, ExternalMaster &owner,
-@@ -90,6 +144,8 @@ public:
+@@ -90,6 +146,8 @@ public:
      virtual ExternalSlave::Port *getExternalPort(
          const std::string &name, ExternalSlave &owner,
          const std::string &port_data);
@@ -508,6 +496,19 @@ index 93fa05b..86c40fe 100644
      {NULL, NULL}
  };
  
+diff --git src/sim/simulate.cc src/sim/simulate.cc
+index c6eb2dd..0c62df5 100644
+--- src/sim/simulate.cc
++++ src/sim/simulate.cc
+@@ -104,7 +104,7 @@ simulate(Tick num_cycles)
+                                        "simulate() limit reached", 0);
+     }
+ 
+-    inform("Entering event queue @ %d.  Starting simulation...\n", curTick());
++   // inform("Entering event queue @ %d.  Starting simulation...\n", curTick());
+ 
+     if (num_cycles < MaxTick - curTick())
+         num_cycles = curTick() + num_cycles;
 diff --git src/sim/simulate.hh src/sim/simulate.hh
 index e39a259..c7446fd 100644
 --- src/sim/simulate.hh
