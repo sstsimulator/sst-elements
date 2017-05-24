@@ -54,13 +54,13 @@ public:
 
 	virtual ~c_BankInfo();
 
-	void handleCommand(c_BankCommand* x_bankCommandPtr, unsigned x_simCycle);
+	void handleCommand(c_BankCommand* x_bankCommandPtr, SimTime_t x_simCycle);
 
 	void clockTic();
 
 	std::list<e_BankCommandType> getAllowedCommands();
 
-	bool isCommandAllowed(c_BankCommand* x_cmdPtr, unsigned x_simCycle);
+	bool isCommandAllowed(c_BankCommand* x_cmdPtr, SimTime_t x_simCycle);
 
 	e_BankState getCurrentState() {
 		return (m_bankState->getCurrentState());
@@ -69,11 +69,11 @@ public:
 	void changeState(c_BankState* x_newState);
 
 	void setNextCommandCycle(const e_BankCommandType x_cmd,
-			const unsigned x_cycle);
-	unsigned getNextCommandCycle(e_BankCommandType x_cmd);
+			const SimTime_t x_cycle);
+	SimTime_t getNextCommandCycle(e_BankCommandType x_cmd);
 
-	void setLastCommandCycle(e_BankCommandType x_cmd, unsigned x_lastCycle);
-	unsigned getLastCommandCycle(e_BankCommandType x_cmd);
+	void setLastCommandCycle(e_BankCommandType x_cmd, SimTime_t x_lastCycle);
+	SimTime_t getLastCommandCycle(e_BankCommandType x_cmd);
 
 	void acceptBankGroup(c_BankGroup* x_bankGroupPtr);
 
@@ -92,10 +92,10 @@ public:
 	unsigned getOpenRowNum() const {
 		return (m_openRowNum);
 	}
-	void setAutoPreTimer(unsigned x_timerVal) {
+	void setAutoPreTimer(SimTime_t x_timerVal) {
 		m_autoPrechargeTimer = x_timerVal;
 	}
-	unsigned getAutoPreTimer() {
+	SimTime_t getAutoPreTimer() {
 		return (m_autoPrechargeTimer);
 	}
 
@@ -119,13 +119,13 @@ private:
 	c_BankGroup* m_bankGroupPtr;
 
 	std::map<std::string, unsigned>* m_bankParams;
-	std::map<e_BankCommandType, unsigned> m_lastCommandCycleMap;
-	std::map<e_BankCommandType, unsigned> m_nextCommandCycleMap;
+	std::map<e_BankCommandType, SimTime_t> m_lastCommandCycleMap;
+	std::map<e_BankCommandType, SimTime_t> m_nextCommandCycleMap;
 
 	//TESTING -- DELETE
 	std::map<e_BankCommandType, std::string> m_cmdToString;
 
-	unsigned m_autoPrechargeTimer; // used to model a pseudo-open page policy
+	SimTime_t m_autoPrechargeTimer; // used to model a pseudo-open page policy
 
 };
 }

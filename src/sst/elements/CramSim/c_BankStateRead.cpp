@@ -63,7 +63,7 @@ c_BankStateRead::~c_BankStateRead() {
 void c_BankStateRead::handleCommand(c_BankInfo* x_bank,
 		c_BankCommand* x_bankCommandPtr) {
 
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 //	std::cout << "@ " << l_time << __PRETTY_FUNCTION__ << std::endl;
 
@@ -115,7 +115,7 @@ void c_BankStateRead::clockTic(c_BankInfo* x_bank) {
 //	std::cout << "m_timer = " << m_timer << ", m_timerExit = " << m_timerExit
 //			<< std::endl;
 
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 	if (0 < m_timer) {
 		--m_timer;
@@ -230,7 +230,7 @@ void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 
 	m_receivedCommandPtr = nullptr;
 
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 // FIXME: add condition for modeling closed row or open row
 //

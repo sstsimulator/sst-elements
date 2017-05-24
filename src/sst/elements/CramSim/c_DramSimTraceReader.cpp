@@ -82,8 +82,8 @@ c_DramSimTraceReader::c_DramSimTraceReader(ComponentId_t x_id, Params& x_params)
 				<< std::endl;
 		exit(-1);
 	}
-	m_traceFileStream.open(m_traceFileName, std::ifstream::in);
-	if(!m_traceFileStream) {
+	m_traceFileStream = new std::ifstream(m_traceFileName, std::ifstream::in);
+	if(!(*m_traceFileStream)) {
 	  std::cerr << "Unable to open trace file " << m_traceFileName << " Aborting!" << std::endl;
 	  exit(-1);
 	}
@@ -128,10 +128,14 @@ c_DramSimTraceReader::c_DramSimTraceReader(ComponentId_t x_id, Params& x_params)
 	registerClock("1GHz",
 			new Clock::Handler<c_DramSimTraceReader>(this,
 					&c_DramSimTraceReader::clockTic));
+
+	// Statistics
+	s_readTxnsCompleted = registerStatistic<uint64_t>("readTxnsCompleted");
+	s_writeTxnsCompleted = registerStatistic<uint64_t>("writeTxnsCompleted");
 }
 
 c_DramSimTraceReader::~c_DramSimTraceReader() {
-	m_traceFileStream.close();
+  delete m_traceFileStream;
 }
 
 c_DramSimTraceReader::c_DramSimTraceReader() :
@@ -174,7 +178,7 @@ void c_DramSimTraceReader::createTxn() {
 	// check if txn can fit inside Req q
 	if (m_txnReqQ.size() < k_txnGenReqQEntries) {
 		std::string l_line;
-		if (std::getline(m_traceFileStream, l_line)) {
+		if (std::getline(*m_traceFileStream, l_line)) {
 			char_delimiter sep(" ");
 			Tokenizer<> l_tok(l_line, sep);
 			unsigned l_numTokens = std::distance(l_tok.begin(), l_tok.end());
@@ -276,10 +280,13 @@ void c_DramSimTraceReader::handleInTxnUnitResPtrEvent(SST::Event* ev) {
 //		 std::cout << std::endl;
 
 		if (l_txnResEventPtr->m_payload->getTransactionMnemonic()
-				== e_TransactionType::READ)
-			m_resReadCount++;
-		else
-			m_resWriteCount++;
+		    == e_TransactionType::READ) {
+		  s_readTxnsCompleted->addData(1);
+		  m_resReadCount++;
+		} else {
+		  s_writeTxnsCompleted->addData(1);
+		  m_resWriteCount++;
+		}
 
 		m_txnResQ.push(l_txnResEventPtr->m_payload);
 
