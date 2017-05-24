@@ -127,7 +127,8 @@ RUNNING A SIMULATION WITH CPU MODELS:
 0. Prerequisites: set environment variables
     $ export SST_ELEMENT_HOME="SST-Element installation directory"
     $ export SST_CORE_HOME="SST-Core installation directory"
-    $ export SST_ELEMENT_ROOT="SST-ELEMENT source code directory"
+    $ export SST_ELEMENT_ROOT="SST-Element source code directory"
+    $ export SST_CORE_ROOT="SST-Core source code directory"
 
 1. Run with Ariel
    - install 
@@ -157,7 +158,17 @@ RUNNING A SIMULATION WITH CPU MODELS:
 
 
 3. Run with Gem5
+   - Apply patch files for SST
+    $ cd $SST_CORE_ROOT
+	$ patch -p0 < $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests/patches/core.patch
+    $ cd $SST_ELEMENT_ROOT/src/sst/elements/memHierarchy
+	$ patch -p0 < ../CramSim/tests/patches/memH.patch
+
    - Install
+    $ cd $SST_CORE_ROOT
+    $ ./autogen.sh
+	$ ./configure --prefix=$SST_CORE_HOME
+    $ make install
     $ cd $SST_ELEMENT_ROOT
     $ ./autogen.sh
     $ ./configure --prefix=$SST_ELEMENT_HOME --with-sst-core=$SST_CORE_HOME

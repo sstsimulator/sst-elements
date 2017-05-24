@@ -1,19 +1,3 @@
-"""
-Sample script
-Simulating System
-Every core with Private L1 and L2 caches. 
-All L2 cache are connected to shared L3 cache via bus. 
-L3 connects to MainMemory through memory Controller.
-
-core_0   core_1   core_2   core_3   core_4   core_5   core_6   core_7
-L1_0     L1_1     L1_2     L1_3     L1_4     L1_5     L1_6     L1_7
-L2_0     L2_1     L2_2     L2_3     L2_4     L2_5     L2_6     L2_7
-                                BUS
-                             Shared L3
-                           MemoryController
-                         Main Memory (DRAMSIM)
-"""
-
 import sst 
 import os
 
