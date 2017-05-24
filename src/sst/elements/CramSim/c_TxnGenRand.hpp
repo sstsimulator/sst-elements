@@ -47,7 +47,7 @@ private:
 	c_TxnGenRand(const c_TxnGenRand&); //do not implement
 	void operator=(const c_TxnGenRand&);
 
-	ulong getNextAddress();
+	uint64_t getNextAddress();
 	void createTxn();
 
 	//FIXME: Remove the word unit from members once class is complete to keep in line with code convention
@@ -66,7 +66,7 @@ private:
 	virtual bool clockTic(SST::Cycle_t); //called every cycle
 
 	//Transaction info
-	ulong m_prevAddress;
+	uint64_t m_prevAddress;
 	ulong m_seqNum;
 
 	//request-related links
