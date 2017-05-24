@@ -154,11 +154,6 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_IsHBM = (uint32_t)x_params.find<uint32_t>("boolIsHBM", 0, l_found);
-	if (!l_found) {
-		std::cout << "boolIsHBM value is missing... disabled"
-				  << std::endl;
-	}
 
 	/* BUFFER ALLOCATION PARAMETERS */
 	k_allocateCmdResQACT = (uint32_t)x_params.find<uint32_t>("boolAllocateCmdResACT", 1,
@@ -230,7 +225,7 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	k_multiCycleACT = (uint32_t)x_params.find<uint32_t>("boolMultiCycleACT", 0, l_found);
 	if (!l_found) {
-		std::cout << "boolDualCommandBus value is missing... exiting" << std::endl;
+		std::cout << "boolMultiCycleACT value is missing... disabled" << std::endl;
 	}
 
 	/* BANK TRANSITION PARAMETERS */
