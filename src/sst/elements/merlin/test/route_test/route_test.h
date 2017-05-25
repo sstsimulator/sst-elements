@@ -62,7 +62,7 @@ private:
     bool clock_handler(Cycle_t cycle);
 
     bool handle_event(int vn);
-
+public:
     SST_ELI_REGISTER_COMPONENT(route_test,"merlin","route_test","Simple NIC to test routing.",COMPONENT_CATEGORY_NETWORK)
     
     SST_ELI_DOCUMENT_VERSION(0,5,0)

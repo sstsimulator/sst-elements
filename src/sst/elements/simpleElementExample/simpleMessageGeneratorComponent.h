@@ -49,7 +49,7 @@ private:
     int output_message_info;
     
     SST::Link* remote_component;
-    
+public:    
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         simpleMessageGeneratorComponent,

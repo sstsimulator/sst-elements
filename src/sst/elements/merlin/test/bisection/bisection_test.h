@@ -66,7 +66,7 @@ private:
     void handle_complete(Event* ev);
     bool receive_handler(int vn);
     bool send_handler(int vn);
-    
+public:    
     SST_ELI_REGISTER_COMPONENT(bisection_test,"merlin","bisection_test","Simple NIC to test bisection bandwidth of a network.",COMPONENT_CATEGORY_NETWORK)
     
     SST_ELI_DOCUMENT_VERSION(0,9,0)

@@ -174,7 +174,7 @@ private:
     void handle_input(Event* ev);
     void handle_output(Event* ev);
 
-
+public:
     SST_ELI_REGISTER_SUBCOMPONENT(LinkControl,"merlin","linkcontrol","Link Control module for building Merlin-enabled NICs","SST::Interfaces::SimpleNetwork")
     
     SST_ELI_DOCUMENT_VERSION(1,0,0)

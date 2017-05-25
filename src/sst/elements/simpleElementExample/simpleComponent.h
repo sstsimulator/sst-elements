@@ -53,7 +53,7 @@ private:
     SST::Link* S;
     SST::Link* E;
     SST::Link* W;
-
+public:
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         simpleComponent,
