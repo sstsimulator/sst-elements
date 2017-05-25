@@ -136,7 +136,7 @@ private:
     uint32_t router_to_group(uint32_t group);
     uint32_t port_for_router(uint32_t router);
     uint32_t port_for_group(uint32_t group, uint32_t global_slice, int id = -1);
-
+public:
     SST_ELI_REGISTER_SUBCOMPONENT(topo_dragonfly2,"merlin","dragonfly2","Dragonfly2 topology object.  Implements a dragonfly with a single all to all pattern within the group.","SST::Merlin::Topology")
     
     SST_ELI_DOCUMENT_VERSION(1,0,0)

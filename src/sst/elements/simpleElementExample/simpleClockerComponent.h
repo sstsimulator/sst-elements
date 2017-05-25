@@ -51,7 +51,7 @@ private:
     
     std::string clock_frequency_str;
     int clock_count;
-    
+public:    
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         simpleClockerComponent,

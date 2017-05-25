@@ -94,7 +94,7 @@ private:
     void configureNIC(uint8_t nic, SST::Params &params);
     bool handleIncoming(int vn, uint8_t nic);
     bool spaceAvailable(int vn, uint8_t nic);
-
+public:
     SST_ELI_REGISTER_COMPONENT(Bridge,"merlin","Bridge","Bridge between two memory networks.",COMPONENT_CATEGORY_NETWORK)
     
     SST_ELI_DOCUMENT_VERSION(1,0,0)

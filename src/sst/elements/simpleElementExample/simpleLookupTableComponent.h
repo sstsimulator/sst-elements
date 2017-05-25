@@ -40,7 +40,7 @@ private:
     const uint8_t * table;
     size_t tableSize;
     SharedRegion *sregion;
-
+public:
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         simpleLookupTableComponent,

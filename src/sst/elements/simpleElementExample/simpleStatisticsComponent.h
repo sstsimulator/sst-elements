@@ -57,7 +57,7 @@ private:
     Statistic<uint32_t>*  stat5_U32; 
     Statistic<uint64_t>*  stat6_U64; 
     Statistic<uint32_t>*  stat7_U32_NOTUSED; 
-    
+public:    
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         simpleStatisticsComponent,

@@ -74,7 +74,7 @@ private:
     bool clock_handler(Cycle_t cycle);
     bool handle_event(int vn);
 
-
+public:
     SST_ELI_REGISTER_COMPONENT(shift_nic,"merlin","shift_nic","Simple pattern NIC doing a shift pattern.",COMPONENT_CATEGORY_NETWORK)
     
     SST_ELI_DOCUMENT_VERSION(0,9,0)
