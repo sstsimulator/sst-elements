@@ -60,8 +60,8 @@ public:
 			c_BankInfo* x_bankPtr);
 
 private:
-	unsigned m_timer; // counts down to 0. when 0, changes state to ACTIVE automatically. is reset to ?? at state entry.
-	unsigned m_timerExit; // counts down to 0 during state exit
+	SimTime_t m_timer; // counts down to 0. when 0, changes state to ACTIVE automatically. is reset to ?? at state entry.
+	SimTime_t m_timerExit; // counts down to 0 during state exit
 
 private:
 	std::list<e_BankCommandType> m_allowedCommands;

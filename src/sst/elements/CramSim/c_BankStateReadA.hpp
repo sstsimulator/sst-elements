@@ -63,8 +63,8 @@ public:
 
 
 private:
-	unsigned m_timerEnter; //<! counts down to 0. when 0, changes state to ACTIVE automatically. is reset to ?? at state entry.
-	unsigned m_timerExit; //<! counts down to 0 and models the exit to PRE time
+	SimTime_t m_timerEnter; //<! counts down to 0. when 0, changes state to ACTIVE automatically. is reset to ?? at state entry.
+	SimTime_t m_timerExit; //<! counts down to 0 and models the exit to PRE time
 	std::list<e_BankCommandType> m_allowedCommands;
 	c_BankCommand* m_prevCommandPtr;
 	c_BankState* m_nextStatePtr;

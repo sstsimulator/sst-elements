@@ -67,7 +67,7 @@ private:
 
 	//Transaction info
 	uint64_t m_prevAddress;
-	uint64_t m_seqNum;
+	ulong m_seqNum;
 
 	//request-related links
 	SST::Link* m_outTxnGenReqPtrLink; //outgoing txn gen req ptr
@@ -81,6 +81,7 @@ private:
 	int k_txnGenReqQEntries;
 	int k_txnGenResQEntries;
 	double k_readWriteTxnRatio;
+        unsigned int k_randSeed;
 
 	//param for receiver
 	int k_txnUnitReqQEntries;
@@ -101,6 +102,10 @@ private:
 
 	std::queue<c_Transaction*> m_txnReqQ; //outgoing
 	std::queue<c_Transaction*> m_txnResQ; //incoming
+
+  // Statistics
+  Statistic<uint64_t>* s_readTxnsCompleted;
+  Statistic<uint64_t>* s_writeTxnsCompleted;
 
 };
 

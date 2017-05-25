@@ -174,12 +174,14 @@ std::queue<c_BankCommand*> c_TransactionToCommands::getRefreshCommands(unsigned 
 std::queue<c_BankCommand*> c_TransactionToCommands::getRefreshCommands(std::vector<unsigned> &x_refreshGroup) {
 	std::queue<c_BankCommand*> l_commandVec;
 
-	for(ulong l_bankId : x_refreshGroup) {
-	  l_commandVec.push(new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::REF, 0,
-					      l_bankId)
-			    );
-	}
-	std::cout << __PRETTY_FUNCTION__ << " m_cmdSeqNum = "<<m_cmdSeqNum<<std::endl;
+	//	for(ulong l_bankId : x_refreshGroup) {
+	//  l_commandVec.push(new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::REF, 0,
+	//				      l_bankId)
+	//		    );
+	//}
+	l_commandVec.push(new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::REF, 0,
+					    x_refreshGroup));
+	//std::cout << __PRETTY_FUNCTION__ << " m_cmdSeqNum = "<<m_cmdSeqNum<<std::endl;
 
 	return l_commandVec;
 }
