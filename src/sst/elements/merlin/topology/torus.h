@@ -105,7 +105,7 @@ private:
     void parseDimString(const std::string &shape, int *output) const;
     int get_dest_router(int dest_id) const;
     int get_dest_local_port(int dest_id) const;
-
+public:
     SST_ELI_REGISTER_SUBCOMPONENT(topo_torus,"merlin","torus","Multi-dimensional torus topology object","SST::Merlin::Topology")
     
     SST_ELI_DOCUMENT_VERSION(1,0,0)

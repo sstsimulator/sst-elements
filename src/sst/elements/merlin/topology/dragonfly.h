@@ -85,7 +85,7 @@ private:
     uint32_t router_to_group(uint32_t group) const;
     uint32_t port_for_router(uint32_t router) const;
     uint32_t port_for_group(uint32_t group) const;
-
+public:
     SST_ELI_REGISTER_SUBCOMPONENT(topo_dragonfly,"merlin","dragonfly","Dragonfly topology object","SST::Merlin::Topology")
     
     SST_ELI_DOCUMENT_VERSION(1,0,0)

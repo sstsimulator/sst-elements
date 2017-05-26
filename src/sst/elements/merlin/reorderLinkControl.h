@@ -183,7 +183,7 @@ public:
 private:
 
     bool handle_event(int vn);
-    
+public:    
     SST_ELI_REGISTER_SUBCOMPONENT(ReorderLinkControl,"merlin","reorderlinkcontrol","Link Control module that can handle out of order packet arrival.  "
       "Events are sequenced and order is reconstructed on receive.","SST::Interfaces::SimpleNetwork")
     

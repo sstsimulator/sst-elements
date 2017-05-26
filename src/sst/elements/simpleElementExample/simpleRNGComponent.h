@@ -46,7 +46,7 @@ private:
     std::string rng_type;
     int rng_max_count;
     int rng_count;
-    
+public:    
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         simpleRNGComponent,

@@ -94,7 +94,7 @@ private:
 //      COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
 //      NULL                                               // Statistics
 //    },
-
+public:
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(simpleRNGComponent,"simpleElementExample","simpleRNGComponent","Random number generation component",COMPONENT_CATEGORY_UNCATEGORIZED)
     

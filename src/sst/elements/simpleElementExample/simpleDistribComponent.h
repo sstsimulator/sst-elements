@@ -48,7 +48,7 @@ private:
     std::string dist_type;
     
     std::map<int64_t, uint64_t>* bins;
-    
+public:    
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         simpleDistribComponent,
