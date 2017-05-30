@@ -145,8 +145,7 @@ void c_BankGroup::updateOtherBanksNextCommandCycles(c_BankInfo* x_initBankPtr,
 									e_BankCommandType::READA)),
 					l_time
 							+ m_bankParams->at("nCWL") + m_bankParams->at("nBL")
-							+ m_bankParams->at("nWTR_L")
-							- m_bankParams->at("nCL"));
+							+ m_bankParams->at("nWTR_L"));
 			l_bankPtr->setNextCommandCycle(e_BankCommandType::READ,
 					l_nextCycle);
 			l_bankPtr->setNextCommandCycle(e_BankCommandType::READA,

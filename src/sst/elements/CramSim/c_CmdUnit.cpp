@@ -495,7 +495,7 @@ c_CmdUnit::c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	k_printCmdTrace = (uint32_t)x_params.find<uint32_t>("boolPrintCmdTrace", 0, l_found);
 	
 	k_cmdTraceFileName = (std::string)x_params.find<std::string>("strCmdTraceFile", "-", l_found);
-	k_cmdTraceFileName.pop_back(); // remove trailing newline (??)
+	//k_cmdTraceFileName.pop_back(); // remove trailing newline (??)
 	if(k_printCmdTrace) {
 	  if(k_cmdTraceFileName.compare("-") == 0) {// set output to std::cout
 	    std::cout << "Setting cmd trace output to std::cout" << std::endl;
@@ -1256,9 +1256,9 @@ bool c_CmdUnit::sendCommand(c_BankCommand* x_bankCommandPtr,
 				  << " " << std::dec << (x_bankCommandPtr)->getSeqNum();
 		//<< " " << std::dec << x_bankCommandPtr->getBankId()
 	      for(auto l_bankId : *(x_bankCommandPtr->getBankIdVec())) {
-		std::cout << " " << l_bankId;
+	        (*m_cmdTraceStream) << " " << l_bankId;
 	      }
-	      std::cout << std::endl;
+	      (*m_cmdTraceStream) << std::endl;
 	    } else {
 	      (*m_cmdTraceStream) << "@" << std::dec
 				  << Simulation::getSimulation()->getCurrentSimCycle()
