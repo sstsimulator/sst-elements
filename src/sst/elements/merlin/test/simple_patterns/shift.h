@@ -33,6 +33,32 @@ namespace Merlin {
 
 class shift_nic : public Component {
 
+public:
+
+    SST_ELI_REGISTER_COMPONENT(
+        shift_nic,
+        "merlin",
+        "shift_nic",
+        SST_ELI_ELEMENT_VERSION(0,9,0),
+        "Simple pattern NIC doing a shift pattern.",
+        COMPONENT_CATEGORY_NETWORK)
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"id",              "Network ID of endpoint."},
+        {"num_peers",       "Total number of endpoints in network."},
+        {"shift",           "Number of logical network endpoints to shift to use as destination for packets."},
+        {"packets_to_send", "Number of packets to send in the test.","10"},
+        {"packet_size",     "Packet size specified in either b or B (can include SI prefix).","64B"},
+        {"link_bw",         "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
+        {"remap",           "Creates a logical to physical mapping shifted by remap amount.", "0"}
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
+    )
+
+    
+
 private:
 
     int id;
@@ -73,31 +99,6 @@ public:
 private:
     bool clock_handler(Cycle_t cycle);
     bool handle_event(int vn);
-
-public:
-    SST_ELI_REGISTER_COMPONENT(shift_nic,"merlin","shift_nic","Simple pattern NIC doing a shift pattern.",COMPONENT_CATEGORY_NETWORK)
-    
-    SST_ELI_DOCUMENT_VERSION(0,9,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-        {"id","Network ID of endpoint."},
-        {"num_peers","Total number of endpoints in network."},
-        {"shift","Number of logical network endpoints to shift to use as destination for packets."},
-        {"packets_to_send","Number of packets to send in the test.","10"},
-        {"packet_size","Packet size specified in either b or B (can include SI prefix).","64B"},
-        {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
-        {"remap", "Creates a logical to physical mapping shifted by remap amount.", "0"}
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
 
 };
 

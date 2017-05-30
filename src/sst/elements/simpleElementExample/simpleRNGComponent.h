@@ -29,6 +29,38 @@ namespace SimpleRNGComponent {
 class simpleRNGComponent : public SST::Component 
 {
 public:
+
+    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_COMPONENT(
+        simpleRNGComponent,
+        "simpleElementExample",
+        "simpleRNGComponent",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Random number generation component",
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        { "seed_w",  "The seed to use for the random number generator", "7" },
+        { "seed_z",  "The seed to use for the random number generator", "5" },
+        { "seed",    "The seed to use for the random number generator.", "11" },
+        { "rng",     "The random number generator to use (Marsaglia or Mersenne), default is Mersenne", "Mersenne"},
+        { "count",   "The number of random numbers to generate, default is 1000", "1000" },
+        { "verbose", "Sets the output verbosity of the component", "0" }
+    )
+
+    // Optional since there is nothing to document
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    // Optional since there is nothing to document
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+    // Optional since there is nothing to document
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
+
     simpleRNGComponent(SST::ComponentId_t id, SST::Params& params);
     ~simpleRNGComponent();
     void setup()  { }
@@ -46,36 +78,7 @@ private:
     std::string rng_type;
     int rng_max_count;
     int rng_count;
-public:    
-    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
-    SST_ELI_REGISTER_COMPONENT(
-        simpleRNGComponent,
-        "simpleElementExample",
-        "simpleRNGComponent",
-        "Random number generation component",
-        COMPONENT_CATEGORY_UNCATEGORIZED
-    )
     
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-        { "seed_w", "The seed to use for the random number generator", "7" },
-        { "seed_z", "The seed to use for the random number generator", "5" },
-        { "seed", "The seed to use for the random number generator.", "11" },
-        { "rng", "The random number generator to use (Marsaglia or Mersenne), default is Mersenne", "Mersenne"},
-        { "count", "The number of random numbers to generate, default is 1000", "1000" },
-        { "verbose", "Sets the output verbosity of the component", "0" }
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
-
 };
 
 } // namespace SimpleRNGComponent
