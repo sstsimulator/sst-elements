@@ -46,7 +46,7 @@ private:
 
     bool tick(SST::Cycle_t);
     std::vector<SubCompInterface*> subComps;
-
+public:
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(SubComponentLoader,
                                "simpleElementExample",
