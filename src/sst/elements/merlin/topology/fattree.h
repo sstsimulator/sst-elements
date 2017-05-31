@@ -31,6 +31,23 @@ namespace Merlin {
 
 class topo_fattree: public Topology {
 
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        topo_fattree,
+        "merlin",
+        "fattree",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Fattree topology object",
+        "SST::Merlin::Topology")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"fattree:shape",               "Shape of the fattree"},
+        {"fattree:routing_alg",         "Routing algorithm to use. [deterministic | adaptive]","deterministic"},
+        {"fattree:adaptive_threshold",  "Threshold used to determine if a packet will adaptively route."}
+    )
+
+    
 private:
     int rtr_level;
     int level_id;
@@ -75,24 +92,6 @@ public:
 
     virtual int computeNumVCs(int vns) {return vns;}
     
-    SST_ELI_REGISTER_SUBCOMPONENT(topo_fattree,"merlin","fattree","Fattree topology object","SST::Merlin::Topology")
-    
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-        {"fattree:shape","Shape of the fattree"},
-        {"fattree:routing_alg","Routing algorithm to use. [deterministic | adaptive]","deterministic"},
-        {"fattree:adaptive_threshold","Threshold used to determine if a packet will adaptively route."}
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
 };
 
 }

@@ -46,6 +46,65 @@ class LinkControl;
 
 class TrafficGen : public Component {
 
+public:
+
+    SST_ELI_REGISTER_COMPONENT(
+        TrafficGen,
+        "merlin",
+        "trafficgen",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Pattern-based traffic generator.",
+        COMPONENT_CATEGORY_NETWORK)
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"id",                                    "Network ID of endpoint."},
+        {"num_peers",                             "Total number of endpoints in network."},
+        {"num_vns",                               "Number of requested virtual networks."},
+        {"link_bw",                               "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
+        {"topology",                              "Name of the topology subcomponent that should be loaded to control routing."},
+        {"buffer_length",                         "Length of input and output buffers.","1kB"},
+        {"packets_to_send",                       "Number of packets to send in the test.","1000"},
+        {"packet_size",                           "Packet size specified in either b or B (can include SI prefix).","5"},
+        {"delay_between_packets",                 "","0"},
+        {"message_rate",                          "","1GHz"},
+        {"PacketDest:pattern",                    "Address pattern to be used (NearestNeighbor, Uniform, HotSpot, Normal, Binomial)",NULL},
+        {"PacketDest:Seed",                       "Sets the seed of the RNG", "11" },
+        {"PacketDest:RangeMax",                   "Minumum address to send packets.","0"},
+        {"PacketDest:RangeMin",                   "Maximum address to send packets.","INT_MAX"},
+        {"PacketDest:NearestNeighbor:3DSize",     "For Nearest Neighbors, the 3D size \"x y z\" of the mesh", ""},
+        {"PacketDest:HotSpot:target",             "For HotSpot, which node is the target", ""},
+        {"PacketDest:HotSpot:targetProbability",  "For HotSpot, with what probability is the target targeted", ""},
+        {"PacketDest:Normal:Mean",                "In a normal distribution, the mean", ""},
+        {"PacketDest:Normal:Sigma",               "In a normal distribution, the mean variance", ""},
+        {"PacketDest:Binomial:Mean",              "In a binomial distribution, the mean", ""},
+        {"PacketDest:Binomial:Sigma",             "In a binomial distribution, the variance", ""},
+        {"PacketSize:pattern",                    "Address pattern to be used (Uniform, HotSpot, Normal, Binomial)",NULL},
+        {"PacketSize:Seed",                       "Sets the seed of the RNG", "11" },
+        {"PacketSize:RangeMax",                   "Minumum size of packets.","0"},
+        {"PacketSize:RangeMin",                   "Maximum size of packets.","INT_MAX"},
+        {"PacketSize:HotSpot:target",             "For HotSpot, the target packet size", ""},
+        {"PacketSize:HotSpot:targetProbability",  "For HotSpot, with what probability is the target targeted", ""},
+        {"PacketSize:Normal:Mean",                "In a normal distribution, the mean", ""},
+        {"PacketSize:Normal:Sigma",               "In a normal distribution, the mean variance", "1.0"},
+        {"PacketSize:Binomial:Mean",              "In a binomial distribution, the mean", ""},
+        {"PacketSize:Binomial:Sigma",             "In a binomial distribution, the variance", "0.5"},
+        {"PacketDelay:pattern",                   "Address pattern to be used (Uniform, HotSpot, Normal, Binomial)",NULL},
+        {"PacketDelay:Seed",                      "Sets the seed of the RNG", "11" },
+        {"PacketDelay:RangeMax",                  "Minumum delay between packets.","0"},
+        {"PacketDelay:RangeMin",                  "Maximum delay between packets.","INT_MAX"},
+        {"PacketDelay:HotSpot:target",            "For HotSpot, the target packet delay", ""},
+        {"PacketDelay:HotSpot:targetProbability", "For HotSpot, with what probability is the target targeted", ""},
+        {"PacketDelay:Normal:Mean",               "In a normal distribution, the mean", ""},
+        {"PacketDelay:Normal:Sigma",              "In a normal distribution, the mean variance", "1.0"},
+        {"PacketDelay:Binomial:Mean",             "In a binomial distribution, the mean", ""},
+        {"PacketDelay:Binomial:Sigma",            "In a binomial distribution, the variance", "0.5"}
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
+    )
+
+
 private:
 
 #if ENABLE_FINISH_HACK
@@ -307,64 +366,6 @@ protected:
     int getPacketSize(void);
     int getDelayNextPacket(void);
 
-public:
-    SST_ELI_REGISTER_COMPONENT(TrafficGen,"merlin","trafficgen","Pattern-based traffic generator.",COMPONENT_CATEGORY_NETWORK)
-    
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-        {"id","Network ID of endpoint."},
-        {"num_peers","Total number of endpoints in network."},
-        {"num_vns","Number of requested virtual networks."},
-        {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
-        {"topology", "Name of the topology subcomponent that should be loaded to control routing."},
-        {"buffer_length", "Length of input and output buffers.","1kB"},
-        {"packets_to_send","Number of packets to send in the test.","1000"},
-        {"packet_size","Packet size specified in either b or B (can include SI prefix).","5"},
-        {"delay_between_packets","","0"},
-        {"message_rate","","1GHz"},
-        {"PacketDest:pattern","Address pattern to be used (NearestNeighbor, Uniform, HotSpot, Normal, Binomial)",NULL},
-        {"PacketDest:Seed", "Sets the seed of the RNG", "11" },
-        {"PacketDest:RangeMax","Minumum address to send packets.","0"},
-        {"PacketDest:RangeMin","Maximum address to send packets.","INT_MAX"},
-        {"PacketDest:NearestNeighbor:3DSize", "For Nearest Neighbors, the 3D size \"x y z\" of the mesh", ""},
-        {"PacketDest:HotSpot:target", "For HotSpot, which node is the target", ""},
-        {"PacketDest:HotSpot:targetProbability", "For HotSpot, with what probability is the target targeted", ""},
-        {"PacketDest:Normal:Mean", "In a normal distribution, the mean", ""},
-        {"PacketDest:Normal:Sigma", "In a normal distribution, the mean variance", ""},
-        {"PacketDest:Binomial:Mean", "In a binomial distribution, the mean", ""},
-        {"PacketDest:Binomial:Sigma", "In a binomial distribution, the variance", ""},
-        {"PacketSize:pattern","Address pattern to be used (Uniform, HotSpot, Normal, Binomial)",NULL},
-        {"PacketSize:Seed", "Sets the seed of the RNG", "11" },
-        {"PacketSize:RangeMax","Minumum size of packets.","0"},
-        {"PacketSize:RangeMin","Maximum size of packets.","INT_MAX"},
-        {"PacketSize:HotSpot:target", "For HotSpot, the target packet size", ""},
-        {"PacketSize:HotSpot:targetProbability", "For HotSpot, with what probability is the target targeted", ""},
-        {"PacketSize:Normal:Mean", "In a normal distribution, the mean", ""},
-        {"PacketSize:Normal:Sigma", "In a normal distribution, the mean variance", "1.0"},
-        {"PacketSize:Binomial:Mean", "In a binomial distribution, the mean", ""},
-        {"PacketSize:Binomial:Sigma", "In a binomial distribution, the variance", "0.5"},
-        {"PacketDelay:pattern","Address pattern to be used (Uniform, HotSpot, Normal, Binomial)",NULL},
-        {"PacketDelay:Seed", "Sets the seed of the RNG", "11" },
-        {"PacketDelay:RangeMax","Minumum delay between packets.","0"},
-        {"PacketDelay:RangeMin","Maximum delay between packets.","INT_MAX"},
-        {"PacketDelay:HotSpot:target", "For HotSpot, the target packet delay", ""},
-        {"PacketDelay:HotSpot:targetProbability", "For HotSpot, with what probability is the target targeted", ""},
-        {"PacketDelay:Normal:Mean", "In a normal distribution, the mean", ""},
-        {"PacketDelay:Normal:Sigma", "In a normal distribution, the mean variance", "1.0"},
-        {"PacketDelay:Binomial:Mean", "In a binomial distribution, the mean", ""},
-        {"PacketDelay:Binomial:Sigma", "In a binomial distribution, the variance", "0.5"}
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
 };
 
 } //namespace Merlin
