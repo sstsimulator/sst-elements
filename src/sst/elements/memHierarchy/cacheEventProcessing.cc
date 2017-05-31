@@ -23,9 +23,9 @@
 #include "cacheController.h"
 #include "coherenceController.h"
 #include "hash.h"
-#include <csignal>
 
 #include "memEvent.h"
+#include "memEventBase.h"
 #include <sst/core/interfaces/stringEvent.h>
 
 
@@ -36,61 +36,61 @@ using namespace SST::MemHierarchy;
 void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStall) {
     if (!replay) {
         switch (cmd) {
-            case GetS:
+            case Command::GetS:
                 statGetS_recv->addData(1);
                 break;
-            case GetX:
+            case Command::GetX:
                 statGetX_recv->addData(1);
                 break;
-            case GetSEx:
-                statGetSEx_recv->addData(1);
+            case Command::GetSX:
+                statGetSX_recv->addData(1);
                 break;
-            case GetSResp:
+            case Command::GetSResp:
                 statGetSResp_recv->addData(1);
                 break;
-            case GetXResp:
+            case Command::GetXResp:
                 statGetXResp_recv->addData(1);
                 break;
-            case PutS:
+            case Command::PutS:
                 statPutS_recv->addData(1);
                 return;
-            case PutE:
+            case Command::PutE:
                 statPutE_recv->addData(1);
                 return;
-            case PutM:
+            case Command::PutM:
                 statPutM_recv->addData(1);
                 return;
-            case FetchInv:
+            case Command::FetchInv:
                 statFetchInv_recv->addData(1);
                 return;
-            case FetchInvX:
+            case Command::FetchInvX:
                 statFetchInvX_recv->addData(1);
                 return;
-            case Inv:
+            case Command::Inv:
                 statInv_recv->addData(1);
                 return;
-            case NACK:
+            case Command::NACK:
                 statNACK_recv->addData(1);
                 return;
             default:
                 return;
         }
     }
-    if (cmd != GetS && cmd != GetX && cmd != GetSEx) return;
+    if (cmd != Command::GetS && cmd != Command::GetX && cmd != Command::GetSX) return;
 
     // Data request profiling only
     if (mshr_->isHit(event->getBaseAddr()) && canStall) return;   // will block this event, profile it later
     int cacheHit = isCacheHit(event, cmd, event->getBaseAddr());
     bool wasBlocked = event->blocked();                             // Event was blocked, now we're starting to handle it
     if (wasBlocked) event->setBlocked(false);
-    if (cmd == GetS || cmd == GetX || cmd == GetSEx) {
+    if (cmd == Command::GetS || cmd == Command::GetX || cmd == Command::GetSX) {
         if (mshr_->isFull() || (!cf_.L1_ && !replay && mshr_->isAlmostFull()  && !(cacheHit == 0))) { 
                 return; // profile later, this event is getting NACKed 
         }
     }
 
     switch(cmd) {
-        case GetS:
+        case Command::GetS:
             if (!replay) {                // New event
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
@@ -119,7 +119,7 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                 }
             }
             break;
-        case GetX:
+        case Command::GetX:
             if (!replay) {                // New event
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
@@ -152,14 +152,14 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                 }
             }
             break;
-        case GetSEx:
+        case Command::GetSX:
             if (!replay) {                // New event
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
-                    statGetSExHitOnArrival->addData(1);
+                    statGetSXHitOnArrival->addData(1);
                 } else {
                     statCacheMisses->addData(1);
-                    statGetSExMissOnArrival->addData(1);
+                    statGetSXMissOnArrival->addData(1);
                     if (cacheHit == 1) {
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 5));
                     } else if (cacheHit == 2) { 
@@ -171,10 +171,10 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
             } else if (wasBlocked) {        // Blocked event, now unblocked
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
-                    statGetSExMissAfterBlocked->addData(1);
+                    statGetSXMissAfterBlocked->addData(1);
                 } else {
                     statCacheMisses->addData(1);
-                    statGetSExMissAfterBlocked->addData(1);
+                    statGetSXMissAfterBlocked->addData(1);
                     if (cacheHit == 1) {
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 5));
                     } else if (cacheHit == 2) {
@@ -215,11 +215,11 @@ bool Cache::processEvent(MemEvent* event, bool replay) {
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) {
         if (replay) {
             d_->debug(_L3_,"Replay. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", VAddr: %" PRIx64 ", iPtr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Bytes requested = %u, cycles: %" PRIu64 ", %s\n",
-                       this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getRqstr().c_str(), 
+                       this->getName().c_str(), CommandString[(int)event->getCmd()], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getRqstr().c_str(), 
                        event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable");
         } else {
             d_->debug(_L3_,"New Event. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", VAddr: %" PRIx64 ", iPtr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Bytes requested = %u, cycles: %" PRIu64 ", %s\n",
-                       this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getRqstr().c_str(), 
+                       this->getName().c_str(), CommandString[(int)event->getCmd()], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getRqstr().c_str(), 
                        event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable");
         }
     }
@@ -232,7 +232,7 @@ bool Cache::processEvent(MemEvent* event, bool replay) {
     }
 
     // Cannot stall if this is a GetX to L1 and the line is locked because GetX is the unlock!
-    bool canStall = !cf_.L1_ || event->getCmd() != GetX;
+    bool canStall = !cf_.L1_ || event->getCmd() != Command::GetX;
     if (!canStall) {
         CacheLine * cacheLine = cf_.cacheArray_->lookup(baseAddr, false);
         canStall = cacheLine == nullptr || !(cacheLine->isLocked());
@@ -241,9 +241,9 @@ bool Cache::processEvent(MemEvent* event, bool replay) {
     profileEvent(event, cmd, replay, canStall);
 
     switch(cmd) {
-        case GetS:
-        case GetX:
-        case GetSEx:
+        case Command::GetS:
+        case Command::GetX:
+        case Command::GetSX:
             // Determine if request should be NACKed: Request cannot be handled immediately and there are no free MSHRs to buffer the request
             if (!replay && mshr_->isAlmostFull()) { 
                 // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
@@ -284,39 +284,39 @@ bool Cache::processEvent(MemEvent* event, bool replay) {
             
             processCacheRequest(event, cmd, baseAddr, replay);
             break;
-        case GetSResp:
-        case GetXResp:
-        case FlushLineResp:
+        case Command::GetSResp:
+        case Command::GetXResp:
+        case Command::FlushLineResp:
             processCacheResponse(event, baseAddr);
             break;
-        case PutS:
-        case PutM:
-        case PutE:
+        case Command::PutS:
+        case Command::PutM:
+        case Command::PutE:
             processCacheReplacement(event, cmd, baseAddr, replay);
             break;
-        case NACK:
+        case Command::NACK:
             origEvent = event->getNACKedEvent();
             processIncomingNACK(origEvent);
             delete event;
             break;
-        case FetchInv:
-        case Fetch:
-        case FetchInvX:
-        case Inv:
+        case Command::FetchInv:
+        case Command::Fetch:
+        case Command::FetchInvX:
+        case Command::Inv:
             processCacheInvalidate(event, baseAddr, replay);
             break;
-        case AckPut:
-        case AckInv:
-        case FetchResp:
-        case FetchXResp:
+        case Command::AckPut:
+        case Command::AckInv:
+        case Command::FetchResp:
+        case Command::FetchXResp:
             processFetchResp(event, baseAddr);
             break;
-        case FlushLine:
-        case FlushLineInv:
+        case Command::FlushLine:
+        case Command::FlushLineInv:
             processCacheFlush(event, baseAddr, replay);
             break;
         default:
-            d_->fatal(CALL_INFO, -1, "Command not supported, cmd = %s", CommandString[cmd]);
+            d_->fatal(CALL_INFO, -1, "Command not supported, cmd = %s", CommandString[(int)cmd]);
     }
     return true;
 }
@@ -327,38 +327,38 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
     event->setFlag(MemEvent::F_NONCACHEABLE);
     
     switch(cmd) {
-        case GetS:
-        case GetX:
-        case GetSEx:
-        case FlushLine:
-        case FlushLineInv:  // Note that noncacheable flushes currently ignore the cache - they just flush any buffers at memory
+        case Command::GetS:
+        case Command::GetX:
+        case Command::GetSX:
+        case Command::FlushLine:
+        case Command::FlushLineInv:  // Note that noncacheable flushes currently ignore the cache - they just flush any buffers at memory
 #ifdef __SST_DEBUG_OUTPUT__
-	    if (cmd == GetSEx) d_->debug(_WARNING_, "WARNING: Noncachable atomics have undefined behavior; atomicity not preserved\n"); 
+	    if (cmd == Command::GetSX) d_->debug(_WARNING_, "WARNING: Noncachable atomics have undefined behavior; atomicity not preserved\n"); 
 #endif
             inserted = mshrNoncacheable_->insert(baseAddr, event);
             if (!inserted) {
-                d_->fatal(CALL_INFO, -1, "%s, Error inserting noncacheable request in mshr. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",getName().c_str(), CommandString[cmd], baseAddr, getCurrentSimTimeNano());
+                d_->fatal(CALL_INFO, -1, "%s, Error inserting noncacheable request in mshr. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",getName().c_str(), CommandString[(int)cmd], baseAddr, getCurrentSimTimeNano());
             }
-            if (cmd == GetS) coherenceMgr_->forwardMessage(event, baseAddr, event->getSize(), 0, NULL);
+            if (cmd == Command::GetS) coherenceMgr_->forwardMessage(event, baseAddr, event->getSize(), 0, NULL);
             else             coherenceMgr_->forwardMessage(event, baseAddr, event->getSize(), 0, &event->getPayload());
             break;
-        case GetSResp:
-        case GetXResp:
+        case Command::GetSResp:
+        case Command::GetXResp:
             origRequest = mshrNoncacheable_->removeFront(baseAddr);
             if (origRequest->getID().first != event->getResponseToID().first || origRequest->getID().second != event->getResponseToID().second) {
                 d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match request at front of mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
-                        getName().c_str(),CommandString[cmd],baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
+                        getName().c_str(),CommandString[(int)cmd],baseAddr, CommandString[(int)origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
             }
             coherenceMgr_->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
             delete origRequest;
             delete event;
             break;
-        case FlushLineResp: {
+        case Command::FlushLineResp: {
             // Flushes can be returned out of order since they don't neccessarily require a memory access so we need to actually search the MSHRs
             vector<mshrType> * entries = mshrNoncacheable_->getAll(baseAddr);
             for (vector<mshrType>::iterator it = entries->begin(); it != entries->end(); it++) {
                 MemEvent * candidate = (it->elem).getEvent();
-                if (candidate->getCmd() == FlushLine || candidate->getCmd() == FlushLineInv) { // All entries are events so no checking for pointer vs event needed
+                if (candidate->getCmd() == Command::FlushLine || candidate->getCmd() == Command::FlushLineInv) { // All entries are events so no checking for pointer vs event needed
                     if (candidate->getID().first == event->getResponseToID().first && candidate->getID().second == event->getResponseToID().second) {
                         origRequest = candidate;
                         break;
@@ -367,7 +367,7 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
             }
             if (origRequest == nullptr) {
                 d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match any request in the mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
-                        getName().c_str(),CommandString[cmd],baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
+                        getName().c_str(),CommandString[(int)cmd],baseAddr, CommandString[(int)origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
             }
             coherenceMgr_->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
             mshrNoncacheable_->removeElement(baseAddr, origRequest);
@@ -376,7 +376,7 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
             break;
             }
         default:
-            d_->fatal(CALL_INFO, -1, "Command does not exist. Command: %s, Src: %s\n", CommandString[cmd], event->getSrc().c_str());
+            d_->fatal(CALL_INFO, -1, "Command does not exist. Command: %s, Src: %s\n", CommandString[(int)cmd], event->getSrc().c_str());
     }
 }
 
@@ -408,7 +408,7 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
 
     // Drop prefetch if we can't handle it immediately or handling it would violate maxOustandingPrefetch or dropPrefetchLevel
     if (requestsThisCycle_ != maxRequestsPerCycle_) {
-        if (event->getCmd() != NULLCMD && mshr_->getSize() < dropPrefetchLevel_ && mshr_->getPrefetchCount() < maxOutstandingPrefetch_) { 
+        if (event->getCmd() != Command::NULLCMD && mshr_->getSize() < dropPrefetchLevel_ && mshr_->getPrefetchCount() < maxOutstandingPrefetch_) { 
             requestsThisCycle_++;
             processEvent(event, false);
         } else {
@@ -424,13 +424,19 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
 
 
 void Cache::init(unsigned int phase) {
-    // See if we can determine whether the lower entity is non-inclusive
-    // For direct-connect cache, 
     if (topNetworkLink_) { // I'm connected to the network ONLY via a single NIC
+        
         bottomNetworkLink_->init(phase);
-            
+        
+        if (!phase)
+            bottomNetworkLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive"));
+
         /*  */
-        while(MemEvent *event = bottomNetworkLink_->recvInitData()) {
+        while(MemEventInit *event = bottomNetworkLink_->recvInitData()) {
+            if (event->getCmd() == Command::NULLCMD) {
+                d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d\n", 
+                        this->getName().c_str(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), (int)event->getType(), event->getInclusive());
+            }
             delete event;
         }
         return;
@@ -445,31 +451,31 @@ void Cache::init(unsigned int phase) {
         if (cf_.L1_) {
             highNetPort_->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
         } else {
-            if (cf_.type_ == "inclusive") {
-                highNetPort_->sendInitData(new MemEvent(this, 0, 0, NULLCMD));
-            } else {
-                highNetPort_->sendInitData(new MemEvent(this, 1, 0, NULLCMD));
-            }
+            highNetPort_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive"));
         }
-        if (!bottomNetworkLink_) {
-            lowNetPort_->sendInitData(new MemEvent(this, 10, 10, NULLCMD));
+        if (!bottomNetworkLink_) { // If we do have a bottom network link, the nic takes care of this
+            lowNetPort_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive"));
+        } else {
+            bottomNetworkLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive"));
         }
-        
     }
 
     while ((ev = highNetPort_->recvInitData())) {
-        MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+        MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);
         if (!memEvent) { /* Do nothing */ }
-        else if (memEvent->getCmd() == NULLCMD) {
-            if (memEvent->getCmd() == NULLCMD) {    // Save upper level cache names
-                coherenceMgr_->addUpperLevelCacheName(memEvent->getSrc());
-                upperLevelCacheNames_.push_back(memEvent->getSrc());
-            }
+        else if (memEvent->getCmd() == Command::NULLCMD) {
+            d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d\n", 
+                    this->getName().c_str(), CommandString[(int)memEvent->getCmd()], memEvent->getSrc().c_str(), (int)memEvent->getType(), memEvent->getInclusive());
+            coherenceMgr_->addUpperLevelCacheName(memEvent->getSrc());
+            upperLevelCacheNames_.push_back(memEvent->getSrc());
         } else {
+            d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, addr: %" PRIu64 ", payload size: %zu\n", 
+                    this->getName().c_str(), CommandString[(int)memEvent->getCmd()], memEvent->getSrc().c_str(), memEvent->getAddr(), memEvent->getPayload().size());
+        
             if (bottomNetworkLink_) {
-                bottomNetworkLink_->sendInitData(new MemEvent(*memEvent));
+                bottomNetworkLink_->sendInitData(new MemEventInit(*memEvent));
             } else {
-                lowNetPort_->sendInitData(new MemEvent(*memEvent));
+                lowNetPort_->sendInitData(new MemEventInit(*memEvent));
             }
         }
         delete memEvent;
@@ -477,16 +483,31 @@ void Cache::init(unsigned int phase) {
     
     if (!bottomNetworkLink_) {  // Save names of caches below us
         while ((ev = lowNetPort_->recvInitData())) {
-            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-            if (memEvent && memEvent->getCmd() == NULLCMD) {
-                if (memEvent->getBaseAddr() == 0) {
+            MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);
+            if (memEvent && memEvent->getCmd() == Command::NULLCMD) {
+                d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d\n", 
+                        this->getName().c_str(), CommandString[(int)memEvent->getCmd()], memEvent->getSrc().c_str(), (int)memEvent->getType(), memEvent->getInclusive());
+                if (memEvent->getType() == Endpoint::Cache) {
                     isLL = false;
-                    if (memEvent->getAddr() == 1) {
+                    if (!memEvent->getInclusive()) {
                         lowerIsNoninclusive = true; // TODO better checking if we have multiple caches below us
                     }
                 }
                 coherenceMgr_->addLowerLevelCacheName(memEvent->getSrc());
                 lowerLevelCacheNames_.push_back(memEvent->getSrc());
+            }
+            delete memEvent;
+        }
+    } else {
+        /*
+         *  Network attached caches
+         *  Note that this finds ALL endpoints on the network, not just those the cache might directly communicate with
+         *  Current MemNIC does all the tracking of which endpoints we actually need to know about so this is just for debug
+         */
+        while (MemEventInit *memEvent = bottomNetworkLink_->recvInitData()) {
+            if (memEvent->getCmd() == Command::NULLCMD) {
+                d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d\n", 
+                        this->getName().c_str(), CommandString[(int)memEvent->getCmd()], memEvent->getSrc().c_str(), (int)memEvent->getType(), memEvent->getInclusive());
             }
             delete memEvent;
         }
@@ -543,7 +564,7 @@ void Cache::processIncomingEvent(SST::Event* ev) {
     if (requestsThisCycle_ == maxRequestsPerCycle_) {
         requestBuffer_.push(event);
     } else {
-        if ((event->getCmd() == GetS || event->getCmd() == GetX) && !requestBuffer_.empty()) {
+        if ((event->getCmd() == Command::GetS || event->getCmd() == Command::GetX) && !requestBuffer_.empty()) {
             requestBuffer_.push(event); // Force ordering on requests -> really only need @ L1s
         } else {
             requestsThisCycle_++;

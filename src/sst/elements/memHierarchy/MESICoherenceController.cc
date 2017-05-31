@@ -72,7 +72,7 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
 #endif
                 return STALL;
             }
-            if (!silentEvictClean_) sendWriteback(PutS, wbCacheLine, false, rqstr);
+            if (!silentEvictClean_) sendWriteback(Command::PutS, wbCacheLine, false, rqstr);
             if (expectWritebackAck_) mshr_->insertWriteback(wbBaseAddr);
             wbCacheLine->setState(I);    // wait for ack
 	    return DONE;
@@ -98,7 +98,7 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
 #endif
                 return STALL;
             }
-            if (!silentEvictClean_) sendWriteback(PutE, wbCacheLine, false, rqstr);
+            if (!silentEvictClean_) sendWriteback(Command::PutE, wbCacheLine, false, rqstr);
             if (expectWritebackAck_) mshr_->insertWriteback(wbBaseAddr);
 	    wbCacheLine->setState(I);    // wait for ack
 	    return DONE;
@@ -125,7 +125,7 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
 #endif
                 return STALL;
             }
-	    sendWriteback(PutM, wbCacheLine, true, rqstr);
+	    sendWriteback(Command::PutM, wbCacheLine, true, rqstr);
             wbCacheLine->setState(I);    // wait for ack
             if (expectWritebackAck_) mshr_->insertWriteback(wbBaseAddr);
 	    return DONE;
@@ -150,14 +150,14 @@ CacheAction MESIController::handleRequest(MemEvent* event, CacheLine* cacheLine,
     Command cmd = event->getCmd();
 
     switch(cmd) {
-        case GetS:
+        case Command::GetS:
             return handleGetSRequest(event, cacheLine, replay);
-        case GetX:
-        case GetSEx:
+        case Command::GetX:
+        case Command::GetSX:
             return handleGetXRequest(event, cacheLine, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return STALL;    // Eliminate compiler warning
 }
@@ -170,18 +170,18 @@ CacheAction MESIController::handleReplacement(MemEvent* event, CacheLine* cacheL
     Command cmd = event->getCmd();
 
     switch(cmd) {
-        case PutS:
+        case Command::PutS:
             return handlePutSRequest(event, cacheLine, reqEvent);
-        case PutM:
-        case PutE:
+        case Command::PutM:
+        case Command::PutE:
             return handlePutMRequest(event, cacheLine, reqEvent);
-        case FlushLineInv:
+        case Command::FlushLineInv:
             return handleFlushLineInvRequest(event, cacheLine, reqEvent, replay);
-        case FlushLine:
+        case Command::FlushLine:
             return handleFlushLineRequest(event, cacheLine, reqEvent, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -208,7 +208,7 @@ CacheAction MESIController::handleInvalidationRequest(MemEvent * event, CacheLin
         if (inclusive_) return IGNORE; // Raced with Put in system without AckPuts; Put will serve as Inv response
         else { // not inclusive
             if (collisionEvent && collisionEvent->isWriteback()) return BLOCK; // We are waiting for an open cache line for a Put
-            else if (collisionEvent && (collisionEvent->getCmd() == FlushLineInv || (collisionEvent->getCmd() == FlushLine && event->getCmd() == FetchInvX))) return IGNORE; // Our FlushLine will serve as the Inv response
+            else if (collisionEvent && (collisionEvent->getCmd() == Command::FlushLineInv || (collisionEvent->getCmd() == Command::FlushLine && event->getCmd() == Command::FetchInvX))) return IGNORE; // Our FlushLine will serve as the Inv response
             else { // Line is just cached elsewhere
                 forwardMessageUp(event);
                 mshr_->setAcksNeeded(event->getBaseAddr(), 1);
@@ -220,17 +220,17 @@ CacheAction MESIController::handleInvalidationRequest(MemEvent * event, CacheLin
 
     Command cmd = event->getCmd();
     switch (cmd) {
-        case Inv: 
+        case Command::Inv: 
             return handleInv(event, cacheLine, replay);
-        case Fetch:
+        case Command::Fetch:
             return handleFetch(event, cacheLine, replay);
-        case FetchInv:
+        case Command::FetchInv:
             return handleFetchInv(event, cacheLine, collisionEvent, replay);
-        case FetchInvX:
+        case Command::FetchInvX:
             return handleFetchInvX(event, cacheLine, collisionEvent, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized invalidation: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return STALL; // eliminate compiler warning
 }
@@ -242,19 +242,19 @@ CacheAction MESIController::handleInvalidationRequest(MemEvent * event, CacheLin
 CacheAction MESIController::handleResponse(MemEvent * respEvent, CacheLine * cacheLine, MemEvent * reqEvent) {
     Command cmd = respEvent->getCmd();
     switch (cmd) {
-        case GetSResp:
-        case GetXResp:
+        case Command::GetSResp:
+        case Command::GetXResp:
             return handleDataResponse(respEvent, cacheLine, reqEvent);
-        case FetchResp:
-        case FetchXResp:
+        case Command::FetchResp:
+        case Command::FetchXResp:
             return handleFetchResp(respEvent, cacheLine, reqEvent);
-        case AckInv:
+        case Command::AckInv:
             return handleAckInv(respEvent, cacheLine, reqEvent);
-        case AckPut:
+        case Command::AckPut:
             recordStateEventCount(respEvent->getCmd(), I);
             mshr_->removeWriteback(respEvent->getBaseAddr());
             return DONE;    // Retry any events that were stalled for ack
-        case FlushLineResp:
+        case Command::FlushLineResp:
             recordStateEventCount(respEvent->getCmd(), cacheLine ? cacheLine->getState() : I);
             if (cacheLine && cacheLine->getState() == S_B) cacheLine->setState(S);
             else if (cacheLine && cacheLine->getState() == I_B) cacheLine->setState(I);
@@ -262,7 +262,7 @@ CacheAction MESIController::handleResponse(MemEvent * respEvent, CacheLine * cac
             return DONE;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), getCurrentSimTimeNano());
+                    parent->getName().c_str(), CommandString[(int)cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -273,25 +273,25 @@ bool MESIController::isRetryNeeded(MemEvent* event, CacheLine* cacheLine) {
     State state = cacheLine ? cacheLine->getState() : I;
     
     switch (cmd) {
-        case GetS:
-        case GetX:
-        case GetSEx:
-        case FlushLine:
-        case FlushLineInv:
+        case Command::GetS:
+        case Command::GetX:
+        case Command::GetSX:
+        case Command::FlushLine:
+        case Command::FlushLineInv:
             return true;
-        case PutS:
-        case PutE:
-        case PutM:
+        case Command::PutS:
+        case Command::PutE:
+        case Command::PutM:
             if (expectWritebackAck_ && !mshr_->pendingWriteback(cacheLine->getBaseAddr())) 
                 return false;
             return true;
-        case FetchInv:
-        case FetchInvX:
+        case Command::FetchInv:
+        case Command::FetchInvX:
             if (state == I) return false;   // Already resolved the request, don't resend
             if (cacheLine->getOwner() != event->getDst()) {
-                if (cacheLine->isSharer(event->getDst()) && cmd == FetchInv) { // Got a downgrade from the owner but still need to invalidate
+                if (cacheLine->isSharer(event->getDst()) && cmd == Command::FetchInv) { // Got a downgrade from the owner but still need to invalidate
                     uint64_t deliveryTime = 0;
-                    MemEvent * inv = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Inv);
+                    MemEvent * inv = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
                     inv->setDst(event->getDst());
                     inv->setRqstr(event->getRqstr());
                     inv->setSize(cacheLine->getSize());
@@ -307,13 +307,13 @@ bool MESIController::isRetryNeeded(MemEvent* event, CacheLine* cacheLine) {
                 return false;    // Must have gotten a replacement/downgrade from this owner
             }
             return true;
-        case Inv:
+        case Command::Inv:
             if (state == I) return false;   // Already resolved the request, don't resend
             if (!cacheLine->isSharer(event->getDst())) return false;    // Must have gotten a replacement from this sharer
             return true;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: NACKed event is unrecognized: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return true;
 }
@@ -328,20 +328,20 @@ bool MESIController::isRetryNeeded(MemEvent* event, CacheLine* cacheLine) {
 int MESIController::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine) {
     Command cmd = event->getCmd();
     State state = cacheLine->getState();
-    if (cmd == GetSEx) cmd = GetX;  // for our purposes these are equal
+    if (cmd == Command::GetSX) cmd = Command::GetX;  // for our purposes these are equal
 
     if (state == I) return 1;
     if (event->isPrefetch() && event->getRqstr() == parent->getName()) return 0;
     
     switch (state) {
         case S:
-            if (cmd == GetS) return 0;
+            if (cmd == Command::GetS) return 0;
             return 2;
         case E:
         case M:
             if (cacheLine->ownerExists()) return 3;
-            if (cmd == GetS) return 0;  // hit
-            if (cmd == GetX) {
+            if (cmd == Command::GetS) return 0;  // hit
+            if (cmd == Command::GetX) {
                 if (cacheLine->isShareless() || (cacheLine->isSharer(event->getSrc()) && cacheLine->numSharers() == 1)) return 0; // Hit
             }
             return 3;
@@ -431,7 +431,7 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
             return DONE;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Handling a GetS request but coherence state is not valid and stable. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), event->getBaseAddr(), CommandString[event->getCmd()], event->getSrc().c_str(), 
+                    parent->getName().c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), 
                     StateString[state], getCurrentSimTimeNano());
 
     }
@@ -439,7 +439,7 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
 }
 
 
-/** Handle GetX or GetSEx (Read-lock) */
+/** Handle GetX or GetSX (Read-lock) */
 CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
     State state = cacheLine->getState();
     Command cmd = event->getCmd();
@@ -493,7 +493,7 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
             return STALL;   // retried this request too soon because we were checking for waiting invalidations
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received %s in unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[cmd], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    parent->getName().c_str(), CommandString[(int)cmd], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     /* Event/State combinations - Count how many times an event was seen in particular state */
     }
     return STALL; // Eliminate compiler warning
@@ -577,19 +577,19 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
                 }
             }
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (reqEvent->getCmd() == FetchInvX) {
+                if (reqEvent->getCmd() == Command::FetchInvX) {
                     sendResponseDown(reqEvent, cacheLine, (state == E_InvX || event->getDirty()), true); // calc latency based on where data comes from
                     cacheLine->setState(S);
-                } else if (reqEvent->getCmd() == FlushLine) {
+                } else if (reqEvent->getCmd() == Command::FlushLine) {
                     cacheLine->getState() == E_InvX ? cacheLine->setState(E) : cacheLine->setState(M);
                     return handleFlushLineRequest(reqEvent, cacheLine, NULL, true);
-                } else if (reqEvent->getCmd() == FetchInv) { // Occurs if FetchInv raced with our FetchInvX for a flushline
+                } else if (reqEvent->getCmd() == Command::FetchInv) { // Occurs if FetchInv raced with our FetchInvX for a flushline
                     if (cacheLine->getState() == M_InvX) cacheLine->setState(M);
                     else cacheLine->setState(E);
                     return handleFetchInv(reqEvent, cacheLine, NULL, true);
                 } else if (!inclusive_) { // Need to forward dirty/M so we don't lose that info
                     debug->fatal(CALL_INFO, -1, "%s, Error: Handling not implemented because state not expected: noninclusive cache, state = %s due to GetS, request = %s. Time = %" PRIu64 " ns\n",
-                            parent->getName().c_str(), StateString[state], CommandString[event->getCmd()], getCurrentSimTimeNano());
+                            parent->getName().c_str(), StateString[state], CommandString[(int)event->getCmd()], getCurrentSimTimeNano());
                 } else {
                     cacheLine->addSharer(reqEvent->getSrc());
                     sendTime = sendResponseUp(reqEvent, S, cacheLine->getData(), (event->getDirty()), cacheLine->getTimestamp());
@@ -600,10 +600,10 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
             } else return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received %s in unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[event->getCmd()], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    parent->getName().c_str(), CommandString[(int)event->getCmd()], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
 
-    forwardFlushLine(event->getBaseAddr(), event->getRqstr(), cacheLine, FlushLine);
+    forwardFlushLine(event->getBaseAddr(), event->getRqstr(), cacheLine, Command::FlushLine);
     if (cacheLine && state != I) cacheLine->setState(S_B);
     else if (cacheLine) cacheLine->setState(I_B);
     event->setInProgress(true);
@@ -690,10 +690,10 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
             // reqEvent is Inv, FlushLineInv, FetchInv
             reqEventAction = (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) ? DONE : STALL;
             if (reqEventAction == DONE) {
-                if (reqEvent->getCmd() == Inv) sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
-                else if (reqEvent->getCmd() == FetchInv) sendResponseDown(reqEvent, cacheLine, false, true);
-                else if (reqEvent->getCmd() == FlushLineInv) {
-                    forwardFlushLine(reqEvent->getBaseAddr(), reqEvent->getRqstr(), cacheLine, FlushLineInv);
+                if (reqEvent->getCmd() == Command::Inv) sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
+                else if (reqEvent->getCmd() == Command::FetchInv) sendResponseDown(reqEvent, cacheLine, false, true);
+                else if (reqEvent->getCmd() == Command::FlushLineInv) {
+                    forwardFlushLine(reqEvent->getBaseAddr(), reqEvent->getRqstr(), cacheLine, Command::FlushLineInv);
                     cacheLine->setState(I_B);
                     return STALL;
                 }
@@ -702,7 +702,7 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
             return reqEventAction;
         case SM_Inv:
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (reqEvent->getCmd() == Inv) {
+                if (reqEvent->getCmd() == Command::Inv) {
                     if (cacheLine->numSharers() > 0) {  // May not have invalidated GetX requestor -> cannot also be the FlushLine requestor since that one is in I and blocked on flush
                         invalidateAllSharers(cacheLine, reqEvent->getRqstr(), true);
                         return STALL;
@@ -711,27 +711,27 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
                         cacheLine->setState(IM);
                         return DONE;
                     }
-                } else if (reqEvent->getCmd() == GetX) {
+                } else if (reqEvent->getCmd() == Command::GetX) {
                     cacheLine->setState(SM);
                     return STALL; // Waiting for GetXResp
                 }
                 debug->fatal(CALL_INFO, -1, "%s, Error: Received %s in state SM_Inv but case does not match an implemented handler. Addr = 0x%" PRIx64 ", Src = %s, OrigEvent = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), CommandString[event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), CommandString[reqEvent->getCmd()], getCurrentSimTimeNano());
+                        parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), CommandString[(int)reqEvent->getCmd()], getCurrentSimTimeNano());
             }
             return STALL;
         case EI:
         case MI:
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (state == MI || event->getDirty()) sendWriteback(PutM, cacheLine, true, parent->getName());
+                if (state == MI || event->getDirty()) sendWriteback(Command::PutM, cacheLine, true, parent->getName());
     /* Event/State combinations - Count how many times an event was seen in particular state */
-                else sendWriteback(PutE, cacheLine, false, parent->getName());
+                else sendWriteback(Command::PutE, cacheLine, false, parent->getName());
                 if (expectWritebackAck_) mshr_->insertWriteback(cacheLine->getBaseAddr());
                 cacheLine->setState(I);
                 return DONE;
             } else return STALL;
         case SI:
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                sendWriteback(PutS, cacheLine, false, parent->getName());
+                sendWriteback(Command::PutS, cacheLine, false, parent->getName());
                 if (expectWritebackAck_) mshr_->insertWriteback(cacheLine->getBaseAddr());
                 cacheLine->setState(I);
                 return DONE;
@@ -739,31 +739,31 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
         case M_Inv:
             // reqEvent is GetX, FlushLineInv, or FetchInv
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (reqEvent->getCmd() == FetchInv) {
+                if (reqEvent->getCmd() == Command::FetchInv) {
                     sendResponseDown(reqEvent, cacheLine, true, true);
                     cacheLine->setState(I);
                     return DONE;
-                } else if (reqEvent->getCmd() == GetX || reqEvent->getCmd() == GetSEx) {
+                } else if (reqEvent->getCmd() == Command::GetX || reqEvent->getCmd() == Command::GetSX) {
                     cacheLine->setOwner(reqEvent->getSrc());
                     if (cacheLine->isSharer(reqEvent->getSrc())) cacheLine->removeSharer(reqEvent->getSrc());
                     sendTime = sendResponseUp(reqEvent, M, cacheLine->getData(), true, cacheLine->getTimestamp());
                     cacheLine->setTimestamp(sendTime);
                     cacheLine->setState(M);
                     return DONE;
-                } else if (reqEvent->getCmd() == FlushLineInv) {
-                    forwardFlushLine(event->getBaseAddr(), event->getRqstr(), cacheLine, FlushLineInv);
+                } else if (reqEvent->getCmd() == Command::FlushLineInv) {
+                    forwardFlushLine(event->getBaseAddr(), event->getRqstr(), cacheLine, Command::FlushLineInv);
                     cacheLine->setState(I_B);
                     return STALL;
                 }
             } else return STALL;
         case E_Inv:
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (reqEvent->getCmd() == FetchInv) {
+                if (reqEvent->getCmd() == Command::FetchInv) {
                     sendResponseDown(reqEvent, cacheLine, event->getDirty(), true);
                     cacheLine->setState(I);
                     return DONE;
-                } else if (reqEvent->getCmd() == FlushLineInv) {
-                    forwardFlushLine(reqEvent->getBaseAddr(), reqEvent->getRqstr(), cacheLine, FlushLineInv);
+                } else if (reqEvent->getCmd() == Command::FlushLineInv) {
+                    forwardFlushLine(reqEvent->getBaseAddr(), reqEvent->getRqstr(), cacheLine, Command::FlushLineInv);
                     cacheLine->setState(I_B);
                     return STALL;
                 }
@@ -772,10 +772,10 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
         case E_InvX:
             /* reqEvent is FetchInvX, FlushLine, or GetS */
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (reqEvent->getCmd() == FetchInvX) {
+                if (reqEvent->getCmd() == Command::FetchInvX) {
                     sendResponseDown(reqEvent, cacheLine, (state == E_InvX || event->getDirty()), true); // calc latency based on where data comes from
                     cacheLine->setState(S);
-                } else if (reqEvent->getCmd() == FlushLine) {
+                } else if (reqEvent->getCmd() == Command::FlushLine) {
                     if (event->getDirty() || state == M_InvX) cacheLine->setState(M);
                     else cacheLine->setState(E);
                     return handleFlushLineRequest(reqEvent, cacheLine, NULL, true);
@@ -799,10 +799,10 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
             } else return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received %s in unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[event->getCmd()], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    parent->getName().c_str(), CommandString[(int)event->getCmd()], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
 
-    forwardFlushLine(event->getBaseAddr(), event->getRqstr(), cacheLine, FlushLineInv);
+    forwardFlushLine(event->getBaseAddr(), event->getRqstr(), cacheLine, Command::FlushLineInv);
     if (cacheLine) cacheLine->setState(I_B);
     return STALL;   // wait for response
 }
@@ -820,22 +820,22 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
     if (!inclusive_) {
         if (line == NULL) { // Means we couldn't allocate a cache line immediately but we have a reqEvent that we need to resolve
             if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(event->getBaseAddr());
-            if (reqEvent->getCmd() == Fetch) {
+            if (reqEvent->getCmd() == Command::Fetch) {
                 sendResponseDownFromMSHR(event, reqEvent, false);
                 return STALL; // Replay PutS since we haven't officially dropped it
-            } else if (reqEvent->getCmd() == Inv) {
+            } else if (reqEvent->getCmd() == Command::Inv) {
                 if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
                     sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr()); 
                     return DONE;    // Drop both requests
                 } else return IGNORE; // Drop PutS only
-            } else if (reqEvent->getCmd() == FetchInv) {
+            } else if (reqEvent->getCmd() == Command::FetchInv) {
                 if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
                     sendResponseDownFromMSHR(event, reqEvent, false);
                     return DONE; // Drop both requests
                 }
             } else {
                 debug->fatal(CALL_INFO, -1, "%s, Error: Received PutS for an unallocated line but reqEvent cmd is unhandled. Addr = 0x%" PRIx64 ", Cmd = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), event->getBaseAddr(), CommandString[event->getCmd()], getCurrentSimTimeNano());
+                        parent->getName().c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], getCurrentSimTimeNano());
             }
         }
         line->setData(event->getPayload(), event);
@@ -846,7 +846,7 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
                 line->setState(S); // newly allocated line
             } else {
-                if (reqEvent->getCmd() == Fetch) {
+                if (reqEvent->getCmd() == Command::Fetch) {
                     line->setState(S_D);
                 } else line->setState(S_Inv);   // cmd is FetchInv or Inv
             }
@@ -874,17 +874,17 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
             return DONE;
         /* Races with evictions */
         case SI:
-            sendWriteback(PutS, line, false, parent->getName());
+            sendWriteback(Command::PutS, line, false, parent->getName());
             if (expectWritebackAck_) mshr_->insertWriteback(line->getBaseAddr());
             line->setState(I);
             return DONE;
         case EI:
-            sendWriteback(PutE, line, false, parent->getName());
+            sendWriteback(Command::PutE, line, false, parent->getName());
             if (expectWritebackAck_) mshr_->insertWriteback(line->getBaseAddr());
             line->setState(I);
             return DONE;
         case MI:
-            sendWriteback(PutM, line, true, parent->getName());
+            sendWriteback(Command::PutM, line, true, parent->getName());
             if (expectWritebackAck_) mshr_->insertWriteback(line->getBaseAddr());
             line->setState(I);
             return DONE;
@@ -895,14 +895,14 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
             return DONE;
         /* Races with Invs and FetchInvs from outside our sub-hierarchy; races with GetX from within our sub-hierarchy*/
         case S_Inv:
-            if (reqEvent->getCmd() == Inv) {
+            if (reqEvent->getCmd() == Command::Inv) {
                 sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
                 line->setState(I);
-            } else if (reqEvent->getCmd() == FlushLineInv) {
+            } else if (reqEvent->getCmd() == Command::FlushLineInv) {
                 line->setState(S);
                 if (handleFlushLineInvRequest(reqEvent, line, NULL, true) == DONE) return DONE;
                 else return IGNORE;
-            } else if (reqEvent->getCmd() == FlushLine) {
+            } else if (reqEvent->getCmd() == Command::FlushLine) {
                 line->setState(S);
                 if (handleFlushLineRequest(reqEvent, line, NULL, true) == DONE) return DONE;
                 else return IGNORE;
@@ -916,7 +916,7 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
             line->setState(I_B);
             return DONE;
         case E_Inv:
-            if (reqEvent->getCmd() == FlushLineInv) {
+            if (reqEvent->getCmd() == Command::FlushLineInv) {
                 line->setState(E);
                 if (handleFlushLineInvRequest(reqEvent, line, NULL, true) == DONE) return DONE;
                 else return IGNORE;
@@ -926,10 +926,10 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
                 return DONE;
             }
         case M_Inv:
-            if (reqEvent->getCmd() == FetchInv) {
+            if (reqEvent->getCmd() == Command::FetchInv) {
                 sendResponseDown(reqEvent, line, true, true);
                 line->setState(I);
-            } else if (reqEvent->getCmd() == GetX || reqEvent->getCmd() == GetSEx) {
+            } else if (reqEvent->getCmd() == Command::GetX || reqEvent->getCmd() == Command::GetSX) {
                 line->setOwner(reqEvent->getSrc());
                 if (line->isSharer(reqEvent->getSrc())) line->removeSharer(reqEvent->getSrc());
                 sendTime = sendResponseUp(reqEvent, M, line->getData(), true, line->getTimestamp());
@@ -938,7 +938,7 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
 #ifdef __SST_DEBUG_OUTPUT__
                 if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(line->getData(), false);
 #endif
-            } else if (reqEvent->getCmd() == FlushLineInv) {
+            } else if (reqEvent->getCmd() == Command::FlushLineInv) {
                 line->setState(M);
                 // Returns: Flush   PutS    Val
                 //          DONE    IGNORE  DONE
@@ -948,7 +948,7 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
             }
             return DONE;
         case SM_Inv:
-            if (reqEvent->getCmd() == Inv) {
+            if (reqEvent->getCmd() == Command::Inv) {
                 if (line->numSharers() > 0) { // Possible that GetX requestor was never invalidated
                     invalidateAllSharers(line, reqEvent->getRqstr(), true);
                     return IGNORE;
@@ -963,7 +963,7 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
             }
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Received PutS in unhandled state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), event->getBaseAddr(), CommandString[event->getCmd()], event->getSrc().c_str(), 
+                    parent->getName().c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), 
                     StateString[state], getCurrentSimTimeNano());
 
     }
@@ -982,26 +982,26 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
     if (!inclusive_) {
         if (cacheLine == NULL) {    // Didn't wait for allocation because a reqEvent is dependent on this replacement
             if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(event->getBaseAddr());
-            if (reqEvent->getCmd() == FetchInvX) {
+            if (reqEvent->getCmd() == Command::FetchInvX) {
                 // Handle FetchInvX and keep stalling Put*
                 sendResponseDownFromMSHR(event, reqEvent, event->getDirty());
                 return STALL;
-            } else if (reqEvent->getCmd() == FetchInv) {  
+            } else if (reqEvent->getCmd() == Command::FetchInv) {  
                 // HandleFetchInv and retire Put*
                 sendResponseDownFromMSHR(event, reqEvent, event->getDirty());
                 return IGNORE;
             } else {
                 debug->fatal(CALL_INFO, -1, "%s, Error: Received %s for an unallocated line but conflicting event's command is unhandled. Addr = 0x%" PRIx64 ", Cmd = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), CommandString[event->getCmd()], event->getBaseAddr(), CommandString[reqEvent->getCmd()], getCurrentSimTimeNano());
+                        parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), CommandString[(int)reqEvent->getCmd()], getCurrentSimTimeNano());
             }
         } else if (cacheLine->getState() == I) {
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                (event->getCmd() == PutM) ? cacheLine->setState(M) : cacheLine->setState(E);
+                (event->getCmd() == Command::PutM) ? cacheLine->setState(M) : cacheLine->setState(E);
             } else {
-                if (reqEvent->getCmd() == FetchInvX) {
-                    (event->getCmd() == PutM) ? cacheLine->setState(M_InvX) : cacheLine->setState(E_InvX);
+                if (reqEvent->getCmd() == Command::FetchInvX) {
+                    (event->getCmd() == Command::PutM) ? cacheLine->setState(M_InvX) : cacheLine->setState(E_InvX);
                 } else {
-                    (event->getCmd() == PutM) ? cacheLine->setState(M_Inv) : cacheLine->setState(E_Inv);
+                    (event->getCmd() == Command::PutM) ? cacheLine->setState(M_Inv) : cacheLine->setState(E_Inv);
                 }
             }
             state = cacheLine->getState();
@@ -1024,22 +1024,22 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
             break;
         /* Races with evictions */
         case EI:
-            if (event->getCmd() == PutM) {
-                sendWriteback(PutM, cacheLine, true, parent->getName());
+            if (event->getCmd() == Command::PutM) {
+                sendWriteback(Command::PutM, cacheLine, true, parent->getName());
             } else {
-                sendWriteback(PutE, cacheLine, false, parent->getName());
+                sendWriteback(Command::PutE, cacheLine, false, parent->getName());
             }
 	    cacheLine->setState(I);    // wait for ack
             if (expectWritebackAck_) mshr_->insertWriteback(cacheLine->getBaseAddr());
             break;
         case MI:
-            sendWriteback(PutM, cacheLine, true, parent->getName());
+            sendWriteback(Command::PutM, cacheLine, true, parent->getName());
 	    cacheLine->setState(I);    // wait for ack
             if (expectWritebackAck_) mshr_->insertWriteback(cacheLine->getBaseAddr());
             break;
         /* Races with FetchInv from outside our sub-hierarchy; races with GetX from within our sub-hierarchy */
         case E_Inv:
-            if (reqEvent->getCmd() == FlushLineInv) {
+            if (reqEvent->getCmd() == Command::FlushLineInv) {
                 event->getDirty() ? cacheLine->setState(M) : cacheLine->setState(E);
                 if (handleFlushLineInvRequest(reqEvent, cacheLine, NULL, true) == DONE) return DONE;
                 else return IGNORE;
@@ -1049,10 +1049,10 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
             }
             break;
         case M_Inv:
-            if (reqEvent->getCmd() == FetchInv) {
+            if (reqEvent->getCmd() == Command::FetchInv) {
                 sendResponseDown(reqEvent, cacheLine, true, true);
                 cacheLine->setState(I);
-            } else if (reqEvent->getCmd() == FlushLineInv) {
+            } else if (reqEvent->getCmd() == Command::FlushLineInv) {
                 cacheLine->setState(M);
                 if (handleFlushLineInvRequest(reqEvent, cacheLine, NULL, true) == DONE) return DONE;
                 else return IGNORE;
@@ -1075,7 +1075,7 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
             } else {
                 cacheLine->setState(M);
             }
-            if (reqEvent->getCmd() == FetchInvX) {
+            if (reqEvent->getCmd() == Command::FetchInvX) {
                 sendResponseDown(reqEvent, cacheLine, (state == M_InvX || event->getDirty()), true);
                 cacheLine->setState(S);
             } else if (!inclusive_) {
@@ -1097,7 +1097,7 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
             break;
         default:
 	    debug->fatal(CALL_INFO, -1, "%s, Error: Updating data but cache is not in E or M state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), event->getBaseAddr(), CommandString[event->getCmd()], event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+                    parent->getName().c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -1150,7 +1150,7 @@ CacheAction MESIController::handleInv(MemEvent* event, CacheLine* cacheLine, boo
             return STALL;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an invalidation in an unhandled state: %s. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), CommandString[event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+                    parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return STALL;
 }
@@ -1234,7 +1234,7 @@ CacheAction MESIController::handleFetchInv(MemEvent * event, CacheLine * cacheLi
         case E_InvX:
         case M_Inv:
         case M_InvX:
-            if (collisionEvent->getCmd() == FlushLine || collisionEvent->getCmd() == FlushLineInv) return STALL;    // Handle the incoming Inv first
+            if (collisionEvent->getCmd() == Command::FlushLine || collisionEvent->getCmd() == Command::FlushLineInv) return STALL;    // Handle the incoming Inv first
             return BLOCK;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Received FetchInv but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
@@ -1283,7 +1283,7 @@ CacheAction MESIController::handleFetchInvX(MemEvent * event, CacheLine * cacheL
         case E_InvX:
         case M_Inv:
         case M_InvX:
-            if (collisionEvent && (collisionEvent->getCmd() == FlushLine || collisionEvent->getCmd() == FlushLineInv)) return STALL;    // Handle the incoming Inv first
+            if (collisionEvent && (collisionEvent->getCmd() == Command::FlushLine || collisionEvent->getCmd() == Command::FlushLineInv)) return STALL;    // Handle the incoming Inv first
             return BLOCK;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Received FetchInvX but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
@@ -1393,7 +1393,7 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
             return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Response received but state is not handled. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[responseEvent->getCmd()], 
+                    parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], 
                     responseEvent->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return DONE; // Eliminate compiler warning
@@ -1425,30 +1425,30 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
             // Sanity check that this is a non-inclusive cache!
             if (inclusive_) {
                 debug->fatal(CALL_INFO, -1, "%s, Error: Inclusive cache received a FetchResp for a non-cached address. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str(), getCurrentSimTimeNano());
+                    parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], responseEvent->getSrc().c_str(), getCurrentSimTimeNano());
             } else if (action != DONE) {
                 debug->fatal(CALL_INFO, -1, "%s, Error: Non-inclusive cache received a FetchResp for a non-cached address and is waiting for more acks. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str(), getCurrentSimTimeNano());
+                    parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], responseEvent->getSrc().c_str(), getCurrentSimTimeNano());
             }
             sendResponseDownFromMSHR(responseEvent, reqEvent, responseEvent->getDirty());
             break;
         case EI:
-            sendWriteback(responseEvent->getDirty() ? PutM : PutE, cacheLine, responseEvent->getDirty(), parent->getName());
+            sendWriteback(responseEvent->getDirty() ? Command::PutM : Command::PutE, cacheLine, responseEvent->getDirty(), parent->getName());
 	    cacheLine->setState(I);    // wait for ack
             if (expectWritebackAck_) mshr_->insertWriteback(cacheLine->getBaseAddr());
             break;
         case MI:
-            sendWriteback(PutM, cacheLine, true, parent->getName());
+            sendWriteback(Command::PutM, cacheLine, true, parent->getName());
 	    cacheLine->setState(I);    // wait for ack
             if (expectWritebackAck_) mshr_->insertWriteback(cacheLine->getBaseAddr());
             break;
         case E_InvX:
             cacheLine->clearOwner();
             cacheLine->addSharer(responseEvent->getSrc());
-            if (reqEvent->getCmd() == FetchInvX) {
+            if (reqEvent->getCmd() == Command::FetchInvX) {
                 sendResponseDownFromMSHR(responseEvent, reqEvent, responseEvent->getDirty());
                 cacheLine->setState(S);
-            } else if (reqEvent->getCmd() == FlushLine) {
+            } else if (reqEvent->getCmd() == Command::FlushLine) {
                 if (responseEvent->getDirty()) {
                     cacheLine->setState(M);
                     cacheLine->setData(responseEvent->getPayload(), responseEvent);
@@ -1457,7 +1457,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 }
                 action = handleFlushLineRequest(reqEvent, cacheLine, NULL, true);
                 break;
-            } else if (reqEvent->getCmd() == FetchInv) {    // Raced with FlushLine
+            } else if (reqEvent->getCmd() == Command::FetchInv) {    // Raced with FlushLine
                 if (responseEvent->getDirty()) {
                     cacheLine->setData(responseEvent->getPayload(), responseEvent);
                 }
@@ -1481,7 +1481,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
             }
             break;
         case E_Inv:
-            if (reqEvent->getCmd() == FlushLineInv) {
+            if (reqEvent->getCmd() == Command::FlushLineInv) {
                 
                 if (cacheLine->isSharer(responseEvent->getSrc())) cacheLine->removeSharer(responseEvent->getSrc());
                 if (cacheLine->getOwner() == responseEvent->getSrc()) cacheLine->clearOwner();
@@ -1491,7 +1491,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 } else cacheLine->setState(E);
                 if (action != DONE) { // Sanity check...
                     debug->fatal(CALL_INFO, -1, "%s, Error: Received a FetchResp to a FlushLineInv but still waiting on more acks. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str(), getCurrentSimTimeNano()); 
+                        parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], responseEvent->getSrc().c_str(), getCurrentSimTimeNano()); 
                 }
                 action = handleFlushLineInvRequest(reqEvent, cacheLine, NULL, true);
                 break;
@@ -1504,10 +1504,10 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
         case M_InvX:
             cacheLine->clearOwner();
             cacheLine->addSharer(responseEvent->getSrc());
-            if (reqEvent->getCmd() == FetchInvX) {
+            if (reqEvent->getCmd() == Command::FetchInvX) {
                 sendResponseDown(reqEvent, cacheLine, true, true);
                 cacheLine->setState(S);
-            } else if (reqEvent->getCmd() == FlushLine) {
+            } else if (reqEvent->getCmd() == Command::FlushLine) {
                 if (responseEvent->getDirty()) {
                     cacheLine->setState(M);
                     cacheLine->setData(responseEvent->getPayload(), responseEvent);
@@ -1516,7 +1516,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 }
                 action = handleFlushLineRequest(reqEvent, cacheLine, NULL, true);
                 break;
-            } else if (reqEvent->getCmd() == FetchInv) {
+            } else if (reqEvent->getCmd() == Command::FetchInv) {
                 if (responseEvent->getDirty()) {
                     cacheLine->setData(responseEvent->getPayload(), responseEvent);
                 }
@@ -1538,17 +1538,17 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
             break;
         case M_Inv:
             cacheLine->clearOwner();
-            if (reqEvent->getCmd() == FlushLineInv) {
+            if (reqEvent->getCmd() == Command::FlushLineInv) {
                 if (cacheLine->getOwner() == responseEvent->getSrc()) cacheLine->clearOwner();
                 if (responseEvent->getDirty()) cacheLine->setData(responseEvent->getPayload(), responseEvent);
                 cacheLine->setState(M);
                 if (action != DONE) { // Sanity check...
                     debug->fatal(CALL_INFO, -1, "%s, Error: Received a FetchResp to a FlushLineInv but still waiting on more acks. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str(), getCurrentSimTimeNano()); 
+                        parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], responseEvent->getSrc().c_str(), getCurrentSimTimeNano()); 
                 }
                 action = handleFlushLineInvRequest(reqEvent, cacheLine, NULL, true);
                 break;
-            } else if (reqEvent->getCmd() == FetchInv) {
+            } else if (reqEvent->getCmd() == Command::FetchInv) {
                 sendResponseDown(reqEvent, cacheLine, true, true);
                 cacheLine->setState(I);
             } else {    // reqEvent->getCmd() == GetX
@@ -1565,7 +1565,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
             break;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received a FetchResp and state is unhandled. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[responseEvent->getCmd()], 
+                    parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], 
                     responseEvent->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return action;
@@ -1599,16 +1599,16 @@ CacheAction MESIController::handleAckInv(MemEvent * ack, CacheLine * line, MemEv
             return action;
         case S_Inv:
             if (action == DONE) {
-                if (reqEvent->getCmd() == FetchInv) {
+                if (reqEvent->getCmd() == Command::FetchInv) {
                     sendResponseDown(reqEvent, line, false, true);
                     line->setState(I);
-                } else if (reqEvent->getCmd() == Inv) {
+                } else if (reqEvent->getCmd() == Command::Inv) {
                     sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
                     line->setState(I);
-                } else if (reqEvent->getCmd() == FlushLineInv) {
+                } else if (reqEvent->getCmd() == Command::FlushLineInv) {
                     line->setState(S);
                     action = handleFlushLineInvRequest(reqEvent, line, NULL, true);
-                } else if (reqEvent->getCmd() == FlushLine) {
+                } else if (reqEvent->getCmd() == Command::FlushLine) {
                     line->setState(S);
                     action = handleFlushLineRequest(reqEvent, line, NULL, true);
                 }
@@ -1616,7 +1616,7 @@ CacheAction MESIController::handleAckInv(MemEvent * ack, CacheLine * line, MemEv
             return action;
         case SM_Inv:
             if (action == DONE) {
-                if (reqEvent->getCmd() == Inv) {
+                if (reqEvent->getCmd() == Command::Inv) {
                     if (line->numSharers() > 0) { // May not have invalidated GetX requestor
                         invalidateAllSharers(line, reqEvent->getRqstr(), true);
                         return IGNORE;
@@ -1624,7 +1624,7 @@ CacheAction MESIController::handleAckInv(MemEvent * ack, CacheLine * line, MemEv
                         sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
                         line->setState(IM);
                     }
-                } else if (reqEvent->getCmd() == FetchInv) {
+                } else if (reqEvent->getCmd() == Command::FetchInv) {
                     sendResponseDown(reqEvent, line, false, true);
                     line->setState(IM);
                 } else {
@@ -1645,28 +1645,28 @@ CacheAction MESIController::handleAckInv(MemEvent * ack, CacheLine * line, MemEv
             return action;
         case SI:
             if (action == DONE) {
-                sendWriteback(PutS, line, false, parent->getName());
+                sendWriteback(Command::PutS, line, false, parent->getName());
                 if (expectWritebackAck_) mshr_->insertWriteback(line->getBaseAddr());
                 line->setState(I);
             }
             return action;
         case EI:
             if (action == DONE) {
-                sendWriteback(PutE, line, false, parent->getName());
+                sendWriteback(Command::PutE, line, false, parent->getName());
                 if (expectWritebackAck_) mshr_->insertWriteback(line->getBaseAddr());
                 line->setState(I);
             }
             return action;
         case MI:
             if (action == DONE) {
-                sendWriteback(PutM, line, true, parent->getName());
+                sendWriteback(Command::PutM, line, true, parent->getName());
                 if (expectWritebackAck_) mshr_->insertWriteback(line->getBaseAddr());
                 line->setState(I);
             }
             return action;
         case E_Inv:
             if (action == DONE) {
-                if (reqEvent->getCmd() == FlushLineInv) {
+                if (reqEvent->getCmd() == Command::FlushLineInv) {
                     line->setState(E);
                     action = handleFlushLineInvRequest(reqEvent, line, NULL, true);
                 } else {
@@ -1677,13 +1677,13 @@ CacheAction MESIController::handleAckInv(MemEvent * ack, CacheLine * line, MemEv
             return action;
         case M_Inv:
             if (action == DONE) {
-                if (reqEvent->getCmd() == FlushLineInv) {
+                if (reqEvent->getCmd() == Command::FlushLineInv) {
                     line->setState(M);
                     action = handleFlushLineInvRequest(reqEvent, line, NULL, true);
-                } else if (reqEvent->getCmd() == FetchInv) {
+                } else if (reqEvent->getCmd() == Command::FetchInv) {
                     sendResponseDown(reqEvent, line, true, true);
                     line->setState(I);
-                } else { // reqEvent->getCmd() == GetX/GetSEx
+                } else { // reqEvent->getCmd() == GetX/GetSX
                     notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
                     line->setOwner(reqEvent->getSrc());
                     if (line->isSharer(reqEvent->getSrc())) line->removeSharer(reqEvent->getSrc());
@@ -1699,18 +1699,18 @@ CacheAction MESIController::handleAckInv(MemEvent * ack, CacheLine * line, MemEv
         case E_InvX:
         case M_InvX:
             if (action == DONE) {
-                if (reqEvent->getCmd() == FlushLine) {
+                if (reqEvent->getCmd() == Command::FlushLine) {
                     state == E_InvX ? line->setState(E) : line->setState(M);
                     action = handleFlushLineRequest(reqEvent, line, NULL, true);
                 } else {
                    debug->fatal(CALL_INFO, -1, "%s, Error: Received AckInv in M_InvX, but reqEvent is unhandled. Addr = 0x%" PRIx64 ", reqEvent cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                           parent->getName().c_str(), ack->getBaseAddr(), CommandString[reqEvent->getCmd()], ack->getSrc().c_str(), getCurrentSimTimeNano());
+                           parent->getName().c_str(), ack->getBaseAddr(), CommandString[(int)reqEvent->getCmd()], ack->getSrc().c_str(), getCurrentSimTimeNano());
                 }
             }
             return action;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Received AckInv in unhandled state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), ack->getBaseAddr(), CommandString[ack->getCmd()], ack->getSrc().c_str(), 
+                    parent->getName().c_str(), ack->getBaseAddr(), CommandString[(int)ack->getCmd()], ack->getSrc().c_str(), 
                     StateString[state], getCurrentSimTimeNano());
 
     }
@@ -1729,7 +1729,7 @@ void MESIController::invalidateAllSharers(CacheLine * cacheLine, string rqstr, b
     set<std::string> * sharers = cacheLine->getSharers();
     uint64_t deliveryTime = 0;
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
-        MemEvent * inv = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Inv);
+        MemEvent * inv = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
         inv->setDst(*it);
         inv->setRqstr(rqstr);
         inv->setSize(cacheLine->getSize());
@@ -1752,7 +1752,7 @@ void MESIController::invalidateAllSharers(CacheLine * cacheLine, string rqstr, b
 
 /**
  *  Send an Inv to all sharers unless the cache requesting exclusive permission is a sharer; then send Inv to all sharers except requestor. 
- *  Used for GetX/GetSEx requests.
+ *  Used for GetX/GetSX requests.
  */
 bool MESIController::invalidateSharersExceptRequestor(CacheLine * cacheLine, string rqstr, string origRqstr, bool replay) {
     bool sentInv = false;
@@ -1761,7 +1761,7 @@ bool MESIController::invalidateSharersExceptRequestor(CacheLine * cacheLine, str
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
         if (*it == rqstr) continue;
 
-        MemEvent * inv = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Inv);
+        MemEvent * inv = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
         inv->setDst(*it);
         inv->setRqstr(origRqstr);
         inv->setSize(cacheLine->getSize());
@@ -1788,7 +1788,7 @@ bool MESIController::invalidateSharersExceptRequestor(CacheLine * cacheLine, str
  *  Send FetchInv to owner of a block
  */
 void MESIController::sendFetchInv(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), FetchInv);
+    MemEvent * fetch = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv);
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
     fetch->setSize(cacheLine->getSize());
@@ -1810,7 +1810,7 @@ void MESIController::sendFetchInv(CacheLine * cacheLine, string rqstr, bool repl
  *  Send FetchInv to owner of a block
  */
 void MESIController::sendFetchInvX(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), FetchInvX);
+    MemEvent * fetch = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInvX);
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
     fetch->setSize(cacheLine->getSize());
@@ -1841,7 +1841,7 @@ void MESIController::forwardMessageUp(MemEvent* event) {
     Response fwdReq = {forwardEvent, deliveryTime, packetHeaderBytes + forwardEvent->getPayloadSize()};
     addToOutgoingQueueUp(fwdReq);
 #ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_, "Forwarding %s to %s at cycle = %" PRIu64 "\n", CommandString[forwardEvent->getCmd()], forwardEvent->getDst().c_str(), deliveryTime);
+    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_, "Forwarding %s to %s at cycle = %" PRIu64 "\n", CommandString[(int)forwardEvent->getCmd()], forwardEvent->getDst().c_str(), deliveryTime);
 #endif
 }
 
@@ -1867,7 +1867,7 @@ void MESIController::sendResponseDown(MemEvent* event, CacheLine* cacheLine, boo
     
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) { 
-        debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str());
+        debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[(int)responseEvent->getCmd()], responseEvent->getSrc().c_str());
     }
 #endif
 }
@@ -1887,7 +1887,7 @@ void MESIController::sendResponseDownFromMSHR(MemEvent * respEvent, MemEvent * r
 
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == respEvent->getBaseAddr()) {
-        debug->debug(_L3_,"Sending Response from MSHR at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[newResponseEvent->getCmd()], newResponseEvent->getSrc().c_str());
+        debug->debug(_L3_,"Sending Response from MSHR at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[(int)newResponseEvent->getCmd()], newResponseEvent->getSrc().c_str());
     }
 #endif
 }
@@ -1919,7 +1919,7 @@ void MESIController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime);
 #ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) debug->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s. Cache index = %d\n", deliveryTime, CommandString[cmd], cacheLine->getIndex());
+    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) debug->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s. Cache index = %d\n", deliveryTime, CommandString[(int)cmd], cacheLine->getIndex());
 #endif
 }
 
@@ -1927,7 +1927,7 @@ void MESIController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty
  *  Send a writeback ack. Mostly used by non-inclusive caches.
  */
 void MESIController::sendWritebackAck(MemEvent * event) {
-    MemEvent * ack = new MemEvent(parent, event->getBaseAddr(), event->getBaseAddr(), AckPut);
+    MemEvent * ack = new MemEvent(parent, event->getBaseAddr(), event->getBaseAddr(), Command::AckPut);
     ack->setDst(event->getSrc());
     ack->setRqstr(event->getSrc());
     ack->setSize(event->getSize());
@@ -1946,7 +1946,7 @@ void MESIController::sendWritebackAck(MemEvent * event) {
  *  Send an AckInv as a response to an Inv
  */
 void MESIController::sendAckInv(Addr baseAddr, string origRqstr) {
-    MemEvent * ack = new MemEvent(parent, baseAddr, baseAddr, AckInv);
+    MemEvent * ack = new MemEvent(parent, baseAddr, baseAddr, Command::AckInv);
     ack->setDst(getDestination(baseAddr));
     ack->setRqstr(origRqstr);
     ack->setSize(lineSize_); // Number of bytes invalidated
@@ -1983,7 +1983,7 @@ void MESIController::forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine
     if (cacheLine) cacheLine->setTimestamp(deliveryTime-1);
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) {
-        debug->debug(_L3_,"Forwarding %s at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", CommandString[cmd], deliveryTime, CommandString[flush->getCmd()], flush->getSrc().c_str());
+        debug->debug(_L3_,"Forwarding %s at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", CommandString[(int)cmd], deliveryTime, CommandString[(int)flush->getCmd()], flush->getSrc().c_str());
     }
 #endif
 }
@@ -2002,7 +2002,7 @@ void MESIController::sendFlushResponse(MemEvent * requestEvent, bool success) {
     addToOutgoingQueueUp(resp);
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == requestEvent->getBaseAddr()) { 
-        debug->debug(_L3_,"Sending Flush Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[flushResponse->getCmd()], flushResponse->getSrc().c_str());
+        debug->debug(_L3_,"Sending Flush Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[(int)flushResponse->getCmd()], flushResponse->getSrc().c_str());
     }
 #endif
 }
@@ -2102,35 +2102,35 @@ void MESIController::recordEvictionState(State state) {
 void MESIController::recordStateEventCount(Command cmd, State state) {
     
     switch (cmd) {
-        case GetS:
+        case Command::GetS:
             if (state == I) stat_stateEvent_GetS_I->addData(1);
             else if (state == S) stat_stateEvent_GetS_S->addData(1);
             else if (state == E) stat_stateEvent_GetS_E->addData(1);
             else if (state == M) stat_stateEvent_GetS_M->addData(1);
             break;
-        case GetX:
+        case Command::GetX:
             if (state == I) stat_stateEvent_GetX_I->addData(1);
             else if (state == S) stat_stateEvent_GetX_S->addData(1);
             else if (state == E) stat_stateEvent_GetX_E->addData(1);
             else if (state == M) stat_stateEvent_GetX_M->addData(1);
             //else if (state == SM) Only because we retried too early
             break;
-        case GetSEx:
-            if (state == I) stat_stateEvent_GetSEx_I->addData(1);
-            else if (state == S) stat_stateEvent_GetSEx_S->addData(1);
-            else if (state == E) stat_stateEvent_GetSEx_E->addData(1);
-            else if (state == M) stat_stateEvent_GetSEx_M->addData(1);
+        case Command::GetSX:
+            if (state == I) stat_stateEvent_GetSX_I->addData(1);
+            else if (state == S) stat_stateEvent_GetSX_S->addData(1);
+            else if (state == E) stat_stateEvent_GetSX_E->addData(1);
+            else if (state == M) stat_stateEvent_GetSX_M->addData(1);
             //else if (state == SM) Only because we retried too early
             break;
-        case GetSResp:
+        case Command::GetSResp:
             if (state == IS) stat_stateEvent_GetSResp_IS->addData(1);
             break;
-        case GetXResp:
+        case Command::GetXResp:
             if (state == IM) stat_stateEvent_GetXResp_IM->addData(1);
             else if (state == SM) stat_stateEvent_GetXResp_SM->addData(1);
             else if (state == SM_Inv) stat_stateEvent_GetXResp_SMInv->addData(1);
             break;
-        case PutS:
+        case Command::PutS:
             if (state == I) stat_stateEvent_PutS_I->addData(1);
             else if (state == S) stat_stateEvent_PutS_S->addData(1);
             else if (state == E) stat_stateEvent_PutS_E->addData(1);
@@ -2146,7 +2146,7 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             else if (state == S_B) stat_stateEvent_PutS_SB->addData(1);
             else if (state == SB_Inv) stat_stateEvent_PutS_SBInv->addData(1);
             break;
-        case PutE:
+        case Command::PutE:
             if (state == I) stat_stateEvent_PutE_I->addData(1);
             else if (state == E) stat_stateEvent_PutE_E->addData(1);
             else if (state == M) stat_stateEvent_PutE_M->addData(1);
@@ -2157,7 +2157,7 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             else if (state == MI) stat_stateEvent_PutE_MI->addData(1);
             else if (state == EI) stat_stateEvent_PutE_EI->addData(1);
             break;
-        case PutM:
+        case Command::PutM:
             if (state == I) stat_stateEvent_PutM_I->addData(1);
             else if (state == E) stat_stateEvent_PutM_E->addData(1);
             else if (state == M) stat_stateEvent_PutM_M->addData(1);
@@ -2168,7 +2168,7 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             else if (state == MI) stat_stateEvent_PutM_MI->addData(1);
             else if (state == EI) stat_stateEvent_PutM_EI->addData(1);
             break;
-        case Inv:
+        case Command::Inv:
             if (state == I) stat_stateEvent_Inv_I->addData(1);
             else if (state == S) stat_stateEvent_Inv_S->addData(1);
             else if (state == IS) stat_stateEvent_Inv_IS->addData(1);
@@ -2180,7 +2180,7 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             else if (state == S_B) stat_stateEvent_Inv_SB->addData(1);
             else if (state == I_B) stat_stateEvent_Inv_IB->addData(1);
             break;
-        case FetchInvX:
+        case Command::FetchInvX:
             if (state == I) stat_stateEvent_FetchInvX_I->addData(1);
             else if (state == E) stat_stateEvent_FetchInvX_E->addData(1);
             else if (state == M) stat_stateEvent_FetchInvX_M->addData(1);
@@ -2195,7 +2195,7 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             else if (state == I_B) stat_stateEvent_FetchInvX_IB->addData(1);
             else if (state == S_B) stat_stateEvent_FetchInvX_SB->addData(1);
             break;
-        case Fetch:
+        case Command::Fetch:
             if (state == I) stat_stateEvent_Fetch_I->addData(1);
             else if (state == S) stat_stateEvent_Fetch_S->addData(1);
             else if (state == IS) stat_stateEvent_Fetch_IS->addData(1);
@@ -2206,7 +2206,7 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             else if (state == I_B) stat_stateEvent_Fetch_IB->addData(1);
             else if (state == S_B) stat_stateEvent_Fetch_SB->addData(1);
             break;
-        case FetchInv:
+        case Command::FetchInv:
             if (state == I) stat_stateEvent_FetchInv_I->addData(1);
             else if (state == S) stat_stateEvent_FetchInv_S->addData(1);
             else if (state == E) stat_stateEvent_FetchInv_E->addData(1);
@@ -2224,7 +2224,7 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             else if (state == I_B) stat_stateEvent_FetchInv_IB->addData(1);
             else if (state == S_B) stat_stateEvent_FetchInv_SB->addData(1);
             break;
-        case FetchResp:
+        case Command::FetchResp:
             if (state == I) stat_stateEvent_FetchResp_I->addData(1);
             else if (state == M_Inv) stat_stateEvent_FetchResp_MInv->addData(1);
             else if (state == M_InvX) stat_stateEvent_FetchResp_MInvX->addData(1);
@@ -2233,7 +2233,7 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             else if (state == MI) stat_stateEvent_FetchResp_MI->addData(1);
             else if (state == EI) stat_stateEvent_FetchResp_EI->addData(1);
             break;
-        case FetchXResp:
+        case Command::FetchXResp:
             if (state == I) stat_stateEvent_FetchXResp_I->addData(1);
             else if (state == M_Inv) stat_stateEvent_FetchXResp_MInv->addData(1);
             else if (state == M_InvX) stat_stateEvent_FetchXResp_MInvX->addData(1);
@@ -2242,7 +2242,7 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             else if (state == MI) stat_stateEvent_FetchXResp_MI->addData(1);
             else if (state == EI) stat_stateEvent_FetchXResp_EI->addData(1);
             break;
-        case AckInv:
+        case Command::AckInv:
             if (state == I) stat_stateEvent_AckInv_I->addData(1);
             else if (state == M_Inv) stat_stateEvent_AckInv_MInv->addData(1);
             else if (state == M_InvX) stat_stateEvent_AckInv_MInvX->addData(1);
@@ -2255,10 +2255,10 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             else if (state == SI) stat_stateEvent_AckInv_SI->addData(1);
             else if (state == SB_Inv) stat_stateEvent_AckInv_SBInv->addData(1);
             break;
-        case AckPut:
+        case Command::AckPut:
             if (state == I) stat_stateEvent_AckPut_I->addData(1);
             break;
-        case FlushLine:
+        case Command::FlushLine:
             if (state == I) stat_stateEvent_FlushLine_I->addData(1);
             else if (state == S) stat_stateEvent_FlushLine_S->addData(1);
             else if (state == E) stat_stateEvent_FlushLine_E->addData(1);
@@ -2278,7 +2278,7 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             else if (state == I_B) stat_stateEvent_FlushLine_IB->addData(1);
             else if (state == S_B) stat_stateEvent_FlushLine_SB->addData(1);
             break;
-        case FlushLineInv:
+        case Command::FlushLineInv:
             if (state == I) stat_stateEvent_FlushLineInv_I->addData(1);
             else if (state == S) stat_stateEvent_FlushLineInv_S->addData(1);
             else if (state == E) stat_stateEvent_FlushLineInv_E->addData(1);
@@ -2298,7 +2298,7 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             else if (state == I_B) stat_stateEvent_FlushLineInv_IB->addData(1);
             else if (state == S_B) stat_stateEvent_FlushLineInv_SB->addData(1);
             break;
-        case FlushLineResp:
+        case Command::FlushLineResp:
             if (state == I) stat_stateEvent_FlushLineResp_I->addData(1);
             else if (state == I_B) stat_stateEvent_FlushLineResp_IB->addData(1);
             else if (state == S_B) stat_stateEvent_FlushLineResp_SB->addData(1);
@@ -2310,40 +2310,40 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
 
 void MESIController::recordEventSentDown(Command cmd) {
     switch(cmd) {
-        case GetS:
+        case Command::GetS:
             stat_eventSent_GetS->addData(1);
             break;
-        case GetX:
+        case Command::GetX:
             stat_eventSent_GetX->addData(1);
             break;
-        case GetSEx:
-            stat_eventSent_GetSEx->addData(1);
+        case Command::GetSX:
+            stat_eventSent_GetSX->addData(1);
             break;
-        case PutS:
+        case Command::PutS:
             stat_eventSent_PutS->addData(1);
             break;
-        case PutE:
+        case Command::PutE:
             stat_eventSent_PutE->addData(1);
             break;
-        case PutM:
+        case Command::PutM:
             stat_eventSent_PutM->addData(1);
             break;
-        case FlushLine:
+        case Command::FlushLine:
             stat_eventSent_FlushLine->addData(1);
             break;
-        case FlushLineInv:
+        case Command::FlushLineInv:
             stat_eventSent_FlushLineInv->addData(1);
             break;
-        case FetchResp:
+        case Command::FetchResp:
             stat_eventSent_FetchResp->addData(1);
             break;
-        case FetchXResp:
+        case Command::FetchXResp:
             stat_eventSent_FetchXResp->addData(1);
             break;
-        case AckInv:
+        case Command::AckInv:
             stat_eventSent_AckInv->addData(1);
             break;
-        case NACK:
+        case Command::NACK:
             stat_eventSent_NACK_down->addData(1);
             break;
         default:
@@ -2354,31 +2354,31 @@ void MESIController::recordEventSentDown(Command cmd) {
 
 void MESIController::recordEventSentUp(Command cmd) {
     switch (cmd) {
-        case GetSResp:
+        case Command::GetSResp:
             stat_eventSent_GetSResp->addData(1);
             break;
-        case GetXResp:
+        case Command::GetXResp:
             stat_eventSent_GetXResp->addData(1);
             break;
-        case FlushLineResp:
+        case Command::FlushLineResp:
             stat_eventSent_FlushLineResp->addData(1);
             break;
-        case AckPut:
+        case Command::AckPut:
             stat_eventSent_AckPut->addData(1);
             break;
-        case Fetch:
+        case Command::Fetch:
             stat_eventSent_Fetch->addData(1);
             break;
-        case FetchInv:
+        case Command::FetchInv:
             stat_eventSent_FetchInv->addData(1);
             break;
-        case FetchInvX:
+        case Command::FetchInvX:
             stat_eventSent_FetchInvX->addData(1);
             break;
-        case Inv:
+        case Command::Inv:
             stat_eventSent_Inv->addData(1);
             break;
-        case NACK:
+        case Command::NACK:
             stat_eventSent_NACK_up->addData(1);
             break;
         default:

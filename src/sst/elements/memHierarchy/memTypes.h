@@ -1,0 +1,197 @@
+// Copyright 2009-2017 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2017, Sandia Corporation
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
+#ifndef MEMHIERARCHY_MEMTYPES_H
+#define MEMHIERARCHY_MEMTYPES_H
+
+#include <sst/core/sst_types.h>
+
+#include "util.h"
+
+namespace SST { namespace MemHierarchy {
+
+using namespace std;
+
+
+// Command attributes
+enum class CommandClass { Request, Data, Ack, ForwardRequest };     // Also corresponds to the typical virtual channels
+enum class BasicCommandClass {Request, Response};                   // Whether a command is a request or response
+enum class MemEventType { Cache, Move };                            // For parsing which kind of event a MemEventBase is
+
+
+
+/******************************************************************************************
+ *  Commands used throughout MemH
+ *  Not all components handle all types
+ *
+ *  Command, ResponseCmd, BasicCommandClass, CommandClass, cpuSideRequest, Writeback, EventType
+ *****************************************************************************************/
+#define X_CMDS \
+    X(NULLCMD,          NULLCMD,        Request,    Request,        1, 0,   Cache)   /* Dummy command */\
+    /* Requests */ \
+    X(GetS,             GetSResp,       Request,    Request,        1, 0,   Cache)   /* Read:  Request to get cache line in S state */\
+    X(GetX,             GetXResp,       Request,    Request,        1, 0,   Cache)   /* Write: Request to get cache line in M state */\
+    X(GetSX,            GetSResp,       Request,    Request,        1, 0,   Cache)   /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
+                                                                        /*        GetSX sets the LOCK, GetX removes the LOCK  */\
+    X(FlushLine,        FlushLineResp,  Request,    Request,        1, 0,   Cache)   /* Request to flush a cache line */\
+    X(FlushLineInv,     FlushLineResp,  Request,    Request,        1, 0,   Cache)   /* Request to flush and invalidate a cache line */\
+    X(FlushAll,         FlushAllResp,   Request,    Request,        1, 0,   Cache)   /* Request to flush entire cache - similar to wbinvd */\
+    /* Request Responses */\
+    X(GetSResp,         NULLCMD,        Response,   Data,           0, 0,   Cache)   /* Response to a GetS request */\
+    X(GetXResp,         NULLCMD,        Response,   Data,           0, 0,   Cache)   /* Response to a GetX request */\
+    X(FlushLineResp,    NULLCMD,        Response,   Ack,            0, 0,   Cache)   /* Response to FlushLine request */\
+    X(FlushAllResp,     NULLCMD,        Response,   Ack,            0, 0,   Cache)   /* Response to FlushAll request */\
+    /* Writebacks, these commands also serve as invalidation acknowledgments */\
+    X(PutS,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Clean replacement from S->I:      Remove sharer */\
+    X(PutM,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
+    X(PutE,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Clean replacement from E->I:      Remove owner but don't writeback data */\
+    /* Invalidates - sent by caches or directory controller */\
+    X(Inv,              AckInv,         Request,    ForwardRequest, 0, 0,   Cache)   /* Other write request:  Invalidate cache line */\
+    /* Invalidates - sent by directory controller */\
+    X(Fetch,            FetchResp,      Request,    ForwardRequest, 0, 0,   Cache)   /* Other read request to sharer:  Get data but don't invalidate cache line */\
+    X(FetchInv,         FetchResp,      Request,    ForwardRequest, 0, 0,   Cache)   /* Other write request to owner:  Invalidate cache line */\
+    X(FetchInvX,        FetchXResp,     Request,    ForwardRequest, 0, 0,   Cache)   /* Other read request to owner:   Downgrade cache line to O/S (Remove exclusivity) */\
+    X(FetchResp,        NULLCMD,        Response,   Data,           1, 0,   Cache)   /* response to a Fetch, FetchInv or FetchInvX request */\
+    X(FetchXResp,       NULLCMD,        Response,   Data,           1, 0,   Cache)   /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
+    /* Others */\
+    X(NACK,             NULLCMD,        Response,   Ack,            1, 0,   Cache)   /* NACK response to a message */\
+    X(AckInv,           NULLCMD,        Response,   Ack,            1, 0,   Cache)   /* Acknowledgement response to an invalidation request */\
+    X(AckPut,           NULLCMD,        Response,   Ack,            0, 0,   Cache)   /* Acknowledgement response to a replacement (Put*) request */\
+    X(Put,              AckMove,        Request,    Request,        1, 0,   Move) \
+    X(Get,              AckMove,        Request,    Request,        1, 0,   Move) \
+    X(AckMove,          NULLCMD,        Response,   Ack,            0, 0,   Move) \
+    X(Read,             GetSResp,       Request,    Request,        1, 0,   Cache) \
+    X(Write,            NULLCMD,        Request,    Request,        1, 0,   Cache) \
+
+/** Valid commands for the MemEvent */
+enum class Command {
+#define X(a,b,c,d,e,f,g) a,
+    X_CMDS
+#undef X
+    LAST_CMD
+};
+
+/** Response commands for MemEvents */
+static const Command CommandResponse[] = {
+#define X(a,b,c,d,e,f,g) Command::b,
+    X_CMDS
+#undef X
+};
+
+/** Get basic command class (request or response) */
+static const BasicCommandClass BasicCommandClassArr[] = {
+#define X(a,b,c,d,e,f,g) BasicCommandClass::c,
+    X_CMDS
+#undef X
+};
+
+/** Get complete command type (defined in util.h) */
+static const CommandClass CommandClassArr[] = {
+#define X(a,b,c,d,e,f,g) CommandClass::d,
+    X_CMDS
+#undef X
+};
+
+static const bool CommandCPUSide[] = {
+#define X(a,b,c,d,e,f,g) e,
+    X_CMDS
+#undef X
+};
+
+static const bool CommandWriteback[] = {
+#define X(a,b,c,d,e,f,g) f,
+    X_CMDS
+#undef X
+};
+
+/** Array of the stringify'd version of the MemEvent Commands.  Useful for printing. */
+static const char* CommandString[] __attribute__((unused)) = {
+#define X(a,b,c,d,e,f,g) #a ,
+    X_CMDS
+#undef X
+};
+
+static const MemEventType MemEventTypeArr[] = {
+#define X(a,b,c,d,e,f,g) MemEventType::g,
+    X_CMDS
+#undef X
+};
+
+// statistics for the network memory inspector
+static const ElementInfoStatistic networkMemoryInspector_statistics[] = {
+#define X(a,b,c,d,e,f,g) { #a, #a, "memEvents", 1},
+    X_CMDS
+#undef X
+    { NULL, NULL, NULL, 0 }
+};
+
+
+#undef X_CMDS
+
+
+/******************************************************************************************
+ * Coherence states. Not all protocols use all states 
+ *****************************************************************************************/
+#define STATE_TYPES \
+    X(NP)    /* Invalid/Not present */\
+    X(I)    /* Invalid */\
+    X(S)    /* Shared */\
+    X(E)    /* Exclusive, clean */\
+    X(O)    /* Owned, dirty */\
+    X(M)    /* Exclusive, dirty */\
+    X(IS)   /* Invalid, have issued read request */\
+    X(IM)   /* Invalid, have issued write request */\
+    X(SM)   /* Shared, have issued upgrade request */\
+    X(OM)   /* Owned, have issued upgrade request */\
+    X(I_d)  /* I, waiting for dir entry from memory */\
+    X(S_d)  /* S, waiting for dir entry from memory */\
+    X(M_d)  /* M, waiting for dir entry from memory */\
+    X(M_Inv)    /* M, waiting for FetchResp from owner */\
+    X(M_InvX)   /* M, waiting for FetchXResp from owner */\
+    X(E_Inv)    /* E, waiting for FetchResp from owner */\
+    X(E_InvX)   /* E, waiting for FetchXResp from owner */\
+    X(S_D)      /* S, waiting for data from memory for another GetS request */\
+    X(E_D)      /* E with sharers, waiting for data from memory for another GetS request */\
+    X(M_D)      /* M with sharers, waiting for data from memory for another GetS request */\
+    X(SM_D)     /* SM, waiting for data from memory for another GetS request */\
+    X(S_Inv)    /* S, waiting for Invalidation acks from sharers */\
+    X(SM_Inv)   /* SM, waiting for Invalidation acks from sharers */\
+    X(MI) \
+    X(EI) \
+    X(SI) \
+    X(S_B)      /* S, blocked while waiting for a response (currently used for flushes) */\
+    X(I_B)      /* I, blocked while waiting for a response (currently used for flushes) */\
+    X(SB_Inv)   /* Was in S_B, got an Inv, resolving Inv first */\
+    X(NULLST)
+
+typedef enum {
+#define X(x) x,
+    STATE_TYPES
+#undef X
+} State;
+
+/** Array of the stringify'd version of the MemEvent Commands.  Useful for printing. */
+static const char* StateString[] __attribute__((unused)) = {
+#define X(x) #x ,
+    STATE_TYPES
+#undef X
+};
+
+#undef STATE_TYPES
+
+static const std::string NONE = "None";
+
+}}
+#endif

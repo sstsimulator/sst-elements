@@ -33,7 +33,7 @@ int MemNIC::addrForDest(const std::string &target) const
 {
   std::map<std::string, int>::const_iterator addrIter = addrMap.find(target);
   if ( addrIter == addrMap.end() )
-      dbg->fatal(CALL_INFO, -1, "Address for target %s not found in addrMap.\n", target.c_str());
+      dbg->fatal(CALL_INFO, -1, "%s, Address for target %s not found in addrMap.\n", comp->getName().c_str(), target.c_str());
   return addrIter->second;
 }
 
@@ -235,7 +235,7 @@ void MemNIC::finish(void)
 }
 
 
-void MemNIC::sendInitData(MemEvent *ev)
+void MemNIC::sendInitData(MemEventInit *ev)
 {
     MemRtrEvent *mre = new MemRtrEvent(ev);
     SimpleNetwork::Request* req = new SimpleNetwork::Request();
@@ -245,12 +245,12 @@ void MemNIC::sendInitData(MemEvent *ev)
     link_control->sendInitData(req);
 }
 
-MemEvent* MemNIC::recvInitData(void)
+MemEventInit* MemNIC::recvInitData(void)
 {
     if ( initQueue.size() ) {
         MemRtrEvent *mre = initQueue.front();
         initQueue.pop_front();
-        MemEvent *ev = mre->event;
+        MemEventInit *ev = static_cast<MemEventInit*>(mre->event);
         delete mre;
         return ev;
     }
@@ -286,7 +286,7 @@ bool MemNIC::clock(void)
                     MemEvent* event = static_cast<MemEvent*>((static_cast<MemRtrEvent*>(head->inspectPayload()))->event);
                     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) {
                         dbg->debug(_L8_, "Sent message ((%" PRIx64 ", %d) %s %" PRIx64 ") to (%" PRIu64 ") [%s]\n", 
-                                event->getID().first, event->getID().second, CommandString[event->getCmd()], event->getAddr(), head->dest, event->getDst().c_str());
+                                event->getID().first, event->getID().second, CommandString[(int)event->getCmd()], event->getAddr(), head->dest, event->getDst().c_str());
                     }
                 }
 #endif
@@ -332,7 +332,7 @@ bool MemNIC::recvNotify(int) {
 #ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == me->getBaseAddr())
             dbg->debug(_L9_, "%s, memNIC recv: src: %s. (Cmd: %s, Rqst size: %u, Payload size: %u)\n", 
-                    comp->getName().c_str(), me->getSrc().c_str(), CommandString[me->getCmd()], me->getSize(), me->getPayloadSize());
+                    comp->getName().c_str(), me->getSrc().c_str(), CommandString[(int)me->getCmd()], me->getSize(), me->getPayloadSize());
 #endif
         
         (*recvHandler)(me);
@@ -352,7 +352,7 @@ MemEvent* MemNIC::recv(void)
             MemRtrEvent *mre = static_cast<MemRtrEvent*>(req->takePayload());
             delete req;
             if ( mre->hasClientData() ) {
-                MemEvent *deliverEvent = mre->event;
+                MemEvent *deliverEvent = static_cast<MemEvent*>(mre->event);
                 deliverEvent->setDeliveryLink(mre->getLinkId(), NULL);
                 delete mre;
                 return deliverEvent;
@@ -394,7 +394,7 @@ void MemNIC::send(MemEvent *ev)
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr())
         dbg->debug(_L9_, "%s, memNIC send: dst: %s; bits: %zu. (Cmd: %s, Rqst size: %u, Payload size: %u)\n", 
-                comp->getName().c_str(), ev->getDst().c_str(), req->size_in_bits, CommandString[ev->getCmd()], ev->getSize(), ev->getPayloadSize());
+                comp->getName().c_str(), ev->getDst().c_str(), req->size_in_bits, CommandString[(int)ev->getCmd()], ev->getSize(), ev->getPayloadSize());
 #endif
     req->givePayload(mre);
     

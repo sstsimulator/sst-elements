@@ -102,7 +102,7 @@ void streamCPU::handleEvent(Event *ev)
 	MemEvent *event = dynamic_cast<MemEvent*>(ev);
 	if (event) {
 		// May receive invalidates.  Just ignore 'em.
-		if ( event->getCmd() == Inv) return;
+		if ( event->getCmd() == Command::Inv) return;
 
 		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
 		if ( i == requests.end() ) {
@@ -138,7 +138,7 @@ bool streamCPU::clockTic( Cycle_t )
 
     	    bool doWrite = do_write && (((rng.generateNextUInt32() % 10) == 0));
 
-	    MemEvent *e = new MemEvent(this, nextAddr, nextAddr, doWrite ? GetX : GetS);
+	    MemEvent *e = new MemEvent(this, nextAddr, nextAddr, doWrite ? Command::GetX : Command::GetS);
             e->setSize(4); // Load 4 bytes
 	    if ( doWrite ) {
 	        e->setPayload(4, (uint8_t*)&nextAddr);

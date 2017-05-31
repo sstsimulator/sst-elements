@@ -53,8 +53,9 @@ libmemHierarchy_la_SOURCES = \
 	membackend/simpleMemScratchBackendConvertor.cc \
 	membackend/cramSimBackend.h \
 	membackend/cramSimBackend.cc \
+	memEventBase.h \
 	memEvent.h \
-	scratchEvent.h \
+	moveEvent.h \
 	memNIC.h \
 	memNIC.cc \
 	directoryController.h \
@@ -90,6 +91,7 @@ libmemHierarchy_la_SOURCES = \
 	scratchCPU.h \
 	scratchCPU.cc \
 	util.h \
+	memTypes.h \
 	dmaEngine.h \
 	dmaEngine.cc \
 	networkMemInspector.h \
@@ -151,6 +153,7 @@ EXTRA_DIST = \
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \
+	memEventBase.h \
 	memEvent.h \
 	memNIC.h \
 	membackend/memBackend.h \
@@ -164,7 +167,8 @@ nobase_sst_HEADERS = \
 	memoryController.h \
 	cacheListener.h \
 	bus.h \
-	util.h
+	util.h \
+	memTypes.h
 
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
 libmemHierarchy_la_LIBADD = 

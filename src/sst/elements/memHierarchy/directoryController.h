@@ -93,7 +93,7 @@ class DirectoryController : public Component {
     Statistic<uint64_t> * stat_mshrHits;                    // mshrHits;
     // Received events - from caches
     Statistic<uint64_t> * stat_GetXReqReceived;
-    Statistic<uint64_t> * stat_GetSExReqReceived;
+    Statistic<uint64_t> * stat_GetSXReqReceived;
     Statistic<uint64_t> * stat_GetSReqReceived;
     Statistic<uint64_t> * stat_PutMReqReceived;
     Statistic<uint64_t> * stat_PutEReqReceived;
@@ -147,7 +147,7 @@ class DirectoryController : public Component {
     /** Handle incoming GetS request */
     void handleGetS(MemEvent * ev);
     
-    /** Handle incoming GetX/GetSEx request */
+    /** Handle incoming GetX/GetSX request */
     void handleGetX(MemEvent * ev);
 
     /** Handle incoming PutS */
@@ -236,7 +236,7 @@ class DirectoryController : public Component {
     MemEvent::id_type writebackData(MemEvent *data_event, Command wbCmd);
 
     /** Determines if request is valid in terms of address ranges */
-    bool isRequestAddressValid(MemEvent *ev);
+    bool isRequestAddressValid(Addr addr);
     
     /** Convert global address to local address of the main memory section this directory controller owns */
     Addr convertAddressToLocalAddress(Addr addr);

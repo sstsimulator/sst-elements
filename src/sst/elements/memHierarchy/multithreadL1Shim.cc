@@ -154,9 +154,9 @@ void MultiThreadL1::init(unsigned int phase) {
     // Pass CPU events to memory hierarchy, generally these are memory initialization
     for (int i = 0; i < threadLinks.size(); i++) {
         while ((ev = threadLinks[i]->recvInitData()) != NULL) {
-            MemEvent * memEvent = dynamic_cast<MemEvent*>(ev);
+            MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
             if (memEvent) {
-                cacheLink->sendInitData(new MemEvent(*memEvent));
+                cacheLink->sendInitData(new MemEventInit(*memEvent));
             }
             delete memEvent;
         }

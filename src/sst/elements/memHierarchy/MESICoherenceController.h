@@ -45,9 +45,9 @@ public:
         stat_stateEvent_GetX_I =    registerStatistic<uint64_t>("stateEvent_GetX_I");
         stat_stateEvent_GetX_S =    registerStatistic<uint64_t>("stateEvent_GetX_S");
         stat_stateEvent_GetX_M =    registerStatistic<uint64_t>("stateEvent_GetX_M");
-        stat_stateEvent_GetSEx_I =  registerStatistic<uint64_t>("stateEvent_GetSEx_I");
-        stat_stateEvent_GetSEx_S =  registerStatistic<uint64_t>("stateEvent_GetSEx_S");
-        stat_stateEvent_GetSEx_M =  registerStatistic<uint64_t>("stateEvent_GetSEx_M");
+        stat_stateEvent_GetSX_I =  registerStatistic<uint64_t>("stateEvent_GetSX_I");
+        stat_stateEvent_GetSX_S =  registerStatistic<uint64_t>("stateEvent_GetSX_S");
+        stat_stateEvent_GetSX_M =  registerStatistic<uint64_t>("stateEvent_GetSX_M");
         stat_stateEvent_GetSResp_IS =       registerStatistic<uint64_t>("stateEvent_GetSResp_IS");
         stat_stateEvent_GetXResp_IM =       registerStatistic<uint64_t>("stateEvent_GetXResp_IM");
         stat_stateEvent_GetXResp_SM =       registerStatistic<uint64_t>("stateEvent_GetXResp_SM");
@@ -157,7 +157,7 @@ public:
         stat_stateEvent_FlushLineResp_SB =      registerStatistic<uint64_t>("stateEvent_FlushLineResp_SB");
         stat_eventSent_GetS             = registerStatistic<uint64_t>("eventSent_GetS");
         stat_eventSent_GetX             = registerStatistic<uint64_t>("eventSent_GetX");
-        stat_eventSent_GetSEx           = registerStatistic<uint64_t>("eventSent_GetSEx");
+        stat_eventSent_GetSX           = registerStatistic<uint64_t>("eventSent_GetSX");
         stat_eventSent_PutS             = registerStatistic<uint64_t>("eventSent_PutS");
         stat_eventSent_PutM             = registerStatistic<uint64_t>("eventSent_PutM");
         stat_eventSent_FlushLine        = registerStatistic<uint64_t>("eventSent_FlushLine");
@@ -189,7 +189,7 @@ public:
             stat_evict_EInvX =  registerStatistic<uint64_t>("evict_EInvX");
             stat_stateEvent_GetS_E =    registerStatistic<uint64_t>("stateEvent_GetS_E");
             stat_stateEvent_GetX_E =    registerStatistic<uint64_t>("stateEvent_GetX_E");
-            stat_stateEvent_GetSEx_E =  registerStatistic<uint64_t>("stateEvent_GetSEx_E");
+            stat_stateEvent_GetSX_E =  registerStatistic<uint64_t>("stateEvent_GetSX_E");
             stat_stateEvent_PutS_E =        registerStatistic<uint64_t>("stateEvent_PutS_E");
             stat_stateEvent_PutS_EInv =     registerStatistic<uint64_t>("stateEvent_PutS_EInv");
             stat_stateEvent_PutS_EI =       registerStatistic<uint64_t>("stateEvent_PutS_EI");
@@ -244,7 +244,7 @@ public:
     /** Send cacheline data to the lower level caches */
     CacheAction handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam=false);
 
-    /** Process cache request:  GetX, GetS, GetSEx */
+    /** Process cache request:  GetX, GetS, GetSX */
     CacheAction handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
     
     /** Process replacement request - PutS, PutE, PutM */
@@ -294,10 +294,10 @@ private:
     Statistic<uint64_t>* stat_stateEvent_GetX_S;
     Statistic<uint64_t>* stat_stateEvent_GetX_E;
     Statistic<uint64_t>* stat_stateEvent_GetX_M;
-    Statistic<uint64_t>* stat_stateEvent_GetSEx_I;
-    Statistic<uint64_t>* stat_stateEvent_GetSEx_S;
-    Statistic<uint64_t>* stat_stateEvent_GetSEx_E;
-    Statistic<uint64_t>* stat_stateEvent_GetSEx_M;
+    Statistic<uint64_t>* stat_stateEvent_GetSX_I;
+    Statistic<uint64_t>* stat_stateEvent_GetSX_S;
+    Statistic<uint64_t>* stat_stateEvent_GetSX_E;
+    Statistic<uint64_t>* stat_stateEvent_GetSX_M;
     Statistic<uint64_t>* stat_stateEvent_GetSResp_IS;
     Statistic<uint64_t>* stat_stateEvent_GetXResp_IM;
     Statistic<uint64_t>* stat_stateEvent_GetXResp_SM;
@@ -449,7 +449,7 @@ private:
     Statistic<uint64_t>* stat_stateEvent_FlushLineResp_SB;
     Statistic<uint64_t>* stat_eventSent_GetS;
     Statistic<uint64_t>* stat_eventSent_GetX;
-    Statistic<uint64_t>* stat_eventSent_GetSEx;
+    Statistic<uint64_t>* stat_eventSent_GetSX;
     Statistic<uint64_t>* stat_eventSent_PutS;
     Statistic<uint64_t>* stat_eventSent_PutE;
     Statistic<uint64_t>* stat_eventSent_PutM;

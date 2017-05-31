@@ -28,6 +28,7 @@
 #include "util.h"
 
 #include "membackend/memBackendConvertor.h"
+#include "memEventBase.h"
 #include "memEvent.h"
 #include "bus.h"
 #include "cacheListener.h"
@@ -173,7 +174,7 @@ void MemController::handleEvent(SST::Event* event) {
     }
 
     Debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
-    Debug(_L10_,"Memory Controller: %s - Event Received. Cmd = %s\n", getName().c_str(), CommandString[ev->getCmd()]);
+    Debug(_L10_,"Memory Controller: %s - Event Received. Cmd = %s\n", getName().c_str(), CommandString[(int)ev->getCmd()]);
     Debug(_L10_,"Event info: Addr: 0x%" PRIx64 ", dst = %s, src = %s, rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
         ev->getBaseAddr(), ev->getDst().c_str(), ev->getSrc().c_str(), ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
 
@@ -181,10 +182,10 @@ void MemController::handleEvent(SST::Event* event) {
 
     // Notify our listeners that we have received an event
     switch (cmd) {
-        case GetS:
-        case GetX:
-        case GetSEx:
-        case PutM:
+        case Command::GetS:
+        case Command::GetX:
+        case Command::GetSX:
+        case Command::PutM:
 
             // Handle all backing stuff first since memBackend may not provide a response for writes
             // TODO fix so that membackend always provides a response and this happens at the return instead
@@ -195,16 +196,16 @@ void MemController::handleEvent(SST::Event* event) {
             memBackendConvertor_->handleMemEvent( ev );
             break;
 
-        case FlushLine:
-        case FlushLineInv:
+        case Command::FlushLine:
+        case Command::FlushLineInv:
             {
                 MemEvent* put = NULL;
                 if ( ev->getPayloadSize() != 0 ) {
                     put = new MemEvent( *ev );
-                    put->setCmd(PutM);
+                    put->setCmd(Command::PutM);
                 }
 
-                ev->setCmd(FlushLine);
+                ev->setCmd(Command::FlushLine);
                 memBackendConvertor_->handleMemEvent( ev );
 
                 if ( put ) {
@@ -214,11 +215,11 @@ void MemController::handleEvent(SST::Event* event) {
             }
             break;
 
-        case PutS:
-        case PutE:
+        case Command::PutS:
+        case Command::PutE:
             break;
         default:
-            dbg.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[cmd]);
+            dbg.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[(int)cmd]);
     }
 }
 
@@ -234,7 +235,7 @@ bool MemController::clock(Cycle_t cycle) {
 void MemController::handleMemResponse( MemEvent* ev ) {
 
     Debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
-    Debug(_L10_,"Memory Controller: %s - Response Received. Cmd = %s\n", getName().c_str(), CommandString[ev->getCmd()]);
+    Debug(_L10_,"Memory Controller: %s - Response Received. Cmd = %s\n", getName().c_str(), CommandString[(int)ev->getCmd()]);
     Debug(_L10_,"Event info: Addr: 0x%" PRIx64 ", dst = %s, src = %s, rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
         ev->getBaseAddr(), ev->getDst().c_str(), ev->getSrc().c_str(), ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
 
@@ -254,9 +255,13 @@ void MemController::handleMemResponse( MemEvent* ev ) {
 
 void MemController::init(unsigned int phase) {
     if (! networkLink_ ) {
+        if (!phase) {
+            cacheLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Memory, true));
+        }
+
         SST::Event *ev = NULL;
         while (NULL != (ev = cacheLink_->recvInitData())) {
-            MemEvent *me = dynamic_cast<MemEvent*>(ev);
+            MemEventInit *me = dynamic_cast<MemEventInit*>(ev);
             if (!me) {
                 delete ev;
                 return;
@@ -266,8 +271,12 @@ void MemController::init(unsigned int phase) {
         }
     } else {
         networkLink_->init(phase);
+        
+        if (!phase) {
+            networkLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Memory, true));
+        }
 
-        while (MemEvent *ev = networkLink_->recvInitData()) {
+        while (MemEventInit *ev = networkLink_->recvInitData()) {
             if (ev->getDst() == getName()) {
                 /* Push data to memory */
                 processInitEvent( ev );
@@ -295,7 +304,7 @@ void MemController::performRequest(MemEvent* event) {
 
     Addr addr = event->queryFlag(MemEvent::F_NONCACHEABLE) ?  event->getAddr() : event->getBaseAddr();
 
-    if (event->getCmd() == PutM) {  /* Write request to memory */
+    if (event->getCmd() == Command::PutM) {  /* Write request to memory */
         Debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i\n", addr, event->getSize());
 
         for ( size_t i = 0 ; i < event->getSize() ; i++)
@@ -304,7 +313,7 @@ void MemController::performRequest(MemEvent* event) {
     } else {
         bool noncacheable  = event->queryFlag(MemEvent::F_NONCACHEABLE);
 
-        if (noncacheable && event->getCmd()== GetX) {
+        if (noncacheable && event->getCmd()== Command::GetX) {
             Debug(_L10_,"WRITE. Noncacheable request, Addr = %" PRIx64 ", Request size = %i\n", addr, event->getSize());
 
             for ( size_t i = 0 ; i < event->getSize() ; i++)
@@ -323,7 +332,7 @@ void MemController::performResponse(MemEvent* event) {
 
     if (noncacheable) event->setFlag(MemEvent::F_NONCACHEABLE);
 
-    if (event->getCmd() == GetXResp) {
+    if (event->getCmd() == Command::GetXResp) {
         event->setGrantedState(M);
     } else {
         if (protocol_) {
@@ -341,7 +350,7 @@ void MemController::recordResponsePayload( MemEvent * ev) {
     Addr localAddr = noncacheable ? ev->getAddr() : ev->getBaseAddr();
 
     vector<uint8_t> payload;
-    if (ev->getCmd() == GetS || ev->getCmd() == GetSEx || (ev->getCmd() == GetX && !noncacheable)) {
+    if (ev->getCmd() == Command::GetS || ev->getCmd() == Command::GetSX || (ev->getCmd() == Command::GetX && !noncacheable)) {
         payload.resize(ev->getSize(), 0);
         if (backing_) {
             for ( size_t i = 0 ; i < ev->getSize() ; i++)
@@ -351,17 +360,19 @@ void MemController::recordResponsePayload( MemEvent * ev) {
     } 
 }
 
-void MemController::processInitEvent( MemEvent* me ) {
+void MemController::processInitEvent( MemEventInit* me ) {
 
     /* Push data to memory */
-    if (GetX == me->getCmd()) {
+    if (Command::GetX == me->getCmd()) {
         Addr addr = me->getAddr();
-        Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 " size %" PRIu32 "\n", getName().c_str(), me->getAddr(),me->getSize());
+        Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 " size %" PRIu32 "\n", getName().c_str(), me->getAddr(),me->getPayload().size());
         if ( isRequestAddressValid(addr) && backing_ ) {
-            for ( size_t i = 0 ; i < me->getSize() ; i++) {
+            for ( size_t i = 0 ; i < me->getPayload().size() ; i++) {
                 backing_->set( addr + i,  me->getPayload()[i] );
             }
         }
+    } else if (Command::NULLCMD == me->getCmd()) {
+        Debug(_L10_, "Memory received endpoint announcement from: %s, of type %d\n", me->getSrc().c_str(), (int)me->getType()); 
     } else {
         Output out("", 0, 0, Output::STDERR);
         out.debug(_L10_,"Memory received unexpected Init Command: %d\n", me->getCmd());

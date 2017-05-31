@@ -31,6 +31,7 @@
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include "memEvent.h"
+#include "memEventBase.h"
 
 using namespace std;
 using namespace SST;
@@ -105,7 +106,7 @@ void Bus::sendSingleEvent(SST::Event* ev) {
         dbg_.debug(_L3_,"\n\n");
         dbg_.debug(_L3_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
         dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %" PRIx64 ", BsAddr: %" PRIx64 ", Src: %s, Dst: %s, LinkID: %ld \n",
-                   this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), event->getDeliveryLink()->getId());
+                   this->getName().c_str(), CommandString[(int)event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), event->getDeliveryLink()->getId());
     }
 #endif
     LinkId_t dstLinkId = lookupNode(event->getDst());
@@ -113,7 +114,7 @@ void Bus::sendSingleEvent(SST::Event* ev) {
     MemEvent* forwardEvent = new MemEvent(*event);
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == forwardEvent->getBaseAddr()) {
-        dbg_.debug(_L3_,"BCmd = %s \n", CommandString[forwardEvent->getCmd()]);
+        dbg_.debug(_L3_,"BCmd = %s \n", CommandString[(int)forwardEvent->getCmd()]);
         dbg_.debug(_L3_,"BDst = %s \n", forwardEvent->getDst().c_str());
         dbg_.debug(_L3_,"BSrc = %s \n", forwardEvent->getSrc().c_str());
     }
@@ -213,15 +214,15 @@ void Bus::init(unsigned int phase) {
 
     for (int i = 0; i < numHighNetPorts_; i++) {
         while ((ev = highNetPorts_[i]->recvInitData())) {
-            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+            MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);
 
-            if (memEvent && memEvent->getCmd() == NULLCMD) {
+            if (memEvent && memEvent->getCmd() == Command::NULLCMD) {
                 mapNodeEntry(memEvent->getSrc(), highNetPorts_[i]->getId());
                 for (int k = 0; k < numLowNetPorts_; k++)
-                    lowNetPorts_[k]->sendInitData(new MemEvent(*memEvent));
+                    lowNetPorts_[k]->sendInitData(new MemEventInit(*memEvent));
             } else if (memEvent) {
                 for (int k = 0; k < numLowNetPorts_; k++)
-                    lowNetPorts_[k]->sendInitData(new MemEvent(*memEvent));
+                    lowNetPorts_[k]->sendInitData(new MemEventInit(*memEvent));
             }
             delete memEvent;
         }
@@ -229,12 +230,12 @@ void Bus::init(unsigned int phase) {
     
     for (int i = 0; i < numLowNetPorts_; i++) {
         while ((ev = lowNetPorts_[i]->recvInitData())) {
-            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+            MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);
             if (!memEvent) delete memEvent;
-            else if (memEvent->getCmd() == NULLCMD) {
+            else if (memEvent->getCmd() == Command::NULLCMD) {
                 mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]->getId());
                 for (int i = 0; i < numHighNetPorts_; i++) {
-                    highNetPorts_[i]->sendInitData(new MemEvent(*memEvent));
+                    highNetPorts_[i]->sendInitData(new MemEventInit(*memEvent));
                 }
                 delete memEvent;
             }

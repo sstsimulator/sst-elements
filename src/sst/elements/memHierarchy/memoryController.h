@@ -63,7 +63,7 @@ private:
     void performRequest( MemEvent* );
     void performResponse( MemEvent* );
     void recordResponsePayload( MemEvent* );
-    void processInitEvent( MemEvent* );
+    void processInitEvent( MemEventInit* );
 
     Output dbg;
 

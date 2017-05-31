@@ -131,21 +131,21 @@ void Sieve::processEvent(SST::Event* ev) {
         cacheArray_->replace(baseAddr, line);
         line->setState(M);
 
-        recordMiss(event->getVirtualAddress(), (cmd == GetS));
+        recordMiss(event->getVirtualAddress(), (cmd == Command::GetS));
     } else {
-        if (cmd == GetS) statReadHits->addData(1);
+        if (cmd == Command::GetS) statReadHits->addData(1);
         else statWriteHits->addData(1);
     }
 
     // Debug output. Ifdef this for even better performance
 #ifdef __SST_DEBUG_OUTPUT__
     output_->debug(_L4_, "%s, Src = %s, Cmd = %s, BaseAddr = %" PRIx64 ", Addr = %" PRIx64 ", VA = %" PRIx64 ", PC = %" PRIx64 ", Size = %d: %s\n",
-            getName().c_str(), event->getSrc().c_str(), CommandString[cmd], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getSize(), miss ? "MISS" : "HIT");
+            getName().c_str(), event->getSrc().c_str(), CommandString[(int)cmd], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getSize(), miss ? "MISS" : "HIT");
     if (miss) output_->debug(_L5_, "%s, Replaced address %" PRIx64 "\n", getName().c_str(), replacementAddr);
 #endif
 
     MemEvent * responseEvent;
-    if (cmd == GetS) {
+    if (cmd == Command::GetS) {
         responseEvent = event->makeResponse(S);
     } else {
         responseEvent = event->makeResponse(M);

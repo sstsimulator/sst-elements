@@ -45,7 +45,7 @@ class MemBackendConvertor : public SubComponent {
         uint32_t processed()    { return m_offset; }
         uint64_t id()           { return ((uint64_t)m_reqId << 32) | m_offset; }
         MemEvent* getMemEvent() { return m_event; }
-        bool isWrite()          { return (m_event->getCmd() == PutM || (m_event->queryFlag(MemEvent::F_NONCACHEABLE) && m_event->getCmd() == GetX)) ? true : false; }
+        bool isWrite()          { return (m_event->getCmd() == Command::PutM || (m_event->queryFlag(MemEvent::F_NONCACHEABLE) && m_event->getCmd() == Command::GetX)) ? true : false; }
         uint32_t size()         { return m_event->getSize(); }
 
         void setResponse( MemEvent* event ) { m_respEvent = event; }
@@ -114,7 +114,7 @@ class MemBackendConvertor : public SubComponent {
 
 
     bool setupMemReq( MemEvent* ev ) {
-        if ( FlushLine == ev->getCmd() || FlushLineInv == ev->getCmd() ) {
+        if ( Command::FlushLine == ev->getCmd() || Command::FlushLineInv == ev->getCmd() ) {
             // TODO optimize if this becomes a problem, it is slow
             std::unordered_set<MemEvent*> dependsOn;
             for (std::deque<MemReq*>::iterator it = m_requestQueue.begin(); it != m_requestQueue.end(); it++) {
@@ -149,16 +149,16 @@ class MemBackendConvertor : public SubComponent {
 
     void doReceiveStat( Command cmd) {
         switch (cmd ) { 
-            case GetS: 
+            case Command::GetS: 
                 stat_GetSReqReceived->addData(1);
                 break;
-            case GetX:
+            case Command::GetX:
                 stat_GetXReqReceived->addData(1);
                 break;
-            case GetSEx:
-                stat_GetSExReqReceived->addData(1);
+            case Command::GetSX:
+                stat_GetSXReqReceived->addData(1);
                 break;
-            case PutM:
+            case Command::PutM:
                 stat_PutMReqReceived->addData(1);
                 break;
             default:
@@ -168,16 +168,16 @@ class MemBackendConvertor : public SubComponent {
 
     void doResponseStat( Command cmd, Cycle_t latency ) {
         switch (cmd) {
-            case GetS:
+            case Command::GetS:
                 stat_GetSLatency->addData(latency);
                 break;
-            case GetSEx:
-                stat_GetSExLatency->addData(latency);
+            case Command::GetSX:
+                stat_GetSXLatency->addData(latency);
                 break;
-            case GetX:
+            case Command::GetX:
                 stat_GetXLatency->addData(latency);
                 break;
-            case PutM:
+            case Command::PutM:
                 stat_PutMLatency->addData(latency);
                 break;
             default:
@@ -203,14 +203,14 @@ class MemBackendConvertor : public SubComponent {
     std::map<MemEvent*, std::unordered_set<MemEvent*> > m_dependentRequests; // Reverse map, set of flushes for each request ID, for faster lookup
 
     Statistic<uint64_t>* stat_GetSLatency;
-    Statistic<uint64_t>* stat_GetSExLatency;
+    Statistic<uint64_t>* stat_GetSXLatency;
     Statistic<uint64_t>* stat_GetXLatency;
     Statistic<uint64_t>* stat_PutMLatency;
 
     Statistic<uint64_t>* stat_GetSReqReceived;
     Statistic<uint64_t>* stat_GetXReqReceived;
     Statistic<uint64_t>* stat_PutMReqReceived;
-    Statistic<uint64_t>* stat_GetSExReqReceived;
+    Statistic<uint64_t>* stat_GetSXReqReceived;
 
     Statistic<uint64_t>* cyclesWithIssue;
     Statistic<uint64_t>* cyclesAttemptIssueButRejected;

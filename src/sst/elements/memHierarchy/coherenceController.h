@@ -195,9 +195,9 @@ protected:
     Statistic<uint64_t>* stat_latency_GetX_IM;
     Statistic<uint64_t>* stat_latency_GetX_SM;
     Statistic<uint64_t>* stat_latency_GetX_M;
-    Statistic<uint64_t>* stat_latency_GetSEx_IM;
-    Statistic<uint64_t>* stat_latency_GetSEx_SM;
-    Statistic<uint64_t>* stat_latency_GetSEx_M;     
+    Statistic<uint64_t>* stat_latency_GetSX_IM;
+    Statistic<uint64_t>* stat_latency_GetSX_SM;
+    Statistic<uint64_t>* stat_latency_GetSX_M;     
 
 private:
     Link * lowNetPort_;

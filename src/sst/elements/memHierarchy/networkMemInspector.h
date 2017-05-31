@@ -39,7 +39,7 @@ namespace SST { namespace MemHierarchy {
             
             Output dbg;
             // statistics
-            Statistic<uint64_t>*  memCmdStat[LAST_CMD];
+            Statistic<uint64_t>*  memCmdStat[(int)Command::LAST_CMD];
         };
 
     }}

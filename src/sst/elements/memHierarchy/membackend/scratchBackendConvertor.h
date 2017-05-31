@@ -18,10 +18,10 @@
 #define __SST_MEMH_SCRATCHBACKENDCONVERTOR__
 
 #include <sst/core/subcomponent.h>
-#include "sst/elements/memHierarchy/scratchEvent.h"
+#include "sst/elements/memHierarchy/memEvent.h"
 
 /*
- *  Converts ScratchEvent to membackend interface
+ *  Converts MemEvent to membackend interface
  *
  */
 
@@ -36,7 +36,7 @@ class ScratchBackendConvertor : public SubComponent {
 
     class ScratchReq {
       public:
-        ScratchReq( ScratchEvent* event, uint32_t reqId, uint64_t time  ) : m_event(event),
+        ScratchReq( MemEvent* event, uint32_t reqId, uint64_t time  ) : m_event(event),
             m_reqId(reqId), m_offset(0), m_numReq(0), m_deliveryTime(time)
         { }
         ~ScratchReq() {
@@ -49,8 +49,8 @@ class ScratchBackendConvertor : public SubComponent {
 
         uint32_t processed()    { return m_offset; }
         uint64_t id()           { return ((uint64_t)m_reqId << 32) | m_offset; }
-        ScratchEvent* getScratchEvent() { return m_event; }
-        bool isWrite()          { return (m_event->getCmd() == Write) ? true : false; }
+        MemEvent* getMemEvent() { return m_event; }
+        bool isWrite()          { return (m_event->getCmd() == Command::GetX) ? true : false; }
 
         uint64_t getDeliveryTime() { return m_deliveryTime; }
 
@@ -64,7 +64,7 @@ class ScratchBackendConvertor : public SubComponent {
         }
 
       private:
-        ScratchEvent*   m_event;
+        MemEvent*   m_event;
         uint32_t        m_reqId;
         uint32_t        m_offset;
         uint32_t        m_numReq;
@@ -79,7 +79,7 @@ class ScratchBackendConvertor : public SubComponent {
     virtual const std::string& getClockFreq();
     virtual size_t getMemSize();
     virtual bool clock( Cycle_t cycle );
-    virtual void handleScratchEvent(  ScratchEvent* );
+    virtual void handleMemEvent(  MemEvent* );
 
     virtual const std::string& getRequestor( ReqId reqId ) { 
         uint32_t id = ScratchReq::getBaseId(reqId);
@@ -87,7 +87,7 @@ class ScratchBackendConvertor : public SubComponent {
             m_dbg.fatal(CALL_INFO, -1, "memory request not found\n");
         }
 
-        return m_pendingRequests[id]->getScratchEvent()->getRqstr();
+        return m_pendingRequests[id]->getMemEvent()->getRqstr();
     }
 
   protected:
@@ -112,7 +112,7 @@ class ScratchBackendConvertor : public SubComponent {
   private:
     virtual bool issue(ScratchReq*) = 0;
 
-    void setupScratchReq( ScratchEvent* ev ) {
+    void setupScratchReq( MemEvent* ev ) {
         uint32_t id = genReqId();
         ScratchReq* req = new ScratchReq( ev, id, m_cycleCount );
         m_requestQueue.push_back( req );
@@ -123,12 +123,12 @@ class ScratchBackendConvertor : public SubComponent {
         stat_totalCycles->addData(1);        
     }
 
-    void doReceiveStat( ScratchCommand cmd) {
+    void doReceiveStat( Command cmd) {
         switch (cmd ) { 
-            case Read: 
+            case Command::GetS: 
                 stat_ReadReceived->addData(1);
                 break;
-            case Write:
+            case Command::GetX:
                 stat_WriteReceived->addData(1);
                 break;
             default:
@@ -136,12 +136,12 @@ class ScratchBackendConvertor : public SubComponent {
         }
     }
 
-    void doResponseStat( ScratchCommand cmd, Cycle_t latency ) {
+    void doResponseStat( Command cmd, Cycle_t latency ) {
         switch (cmd) {
-            case Read:
+            case Command::GetS:
                 stat_ReadLatency->addData(latency);
                 break;
-            case Write:
+            case Command::GetX:
                 stat_WriteLatency->addData(latency);
                 break;
             default:

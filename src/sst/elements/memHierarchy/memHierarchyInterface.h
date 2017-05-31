@@ -51,6 +51,9 @@ public:
     virtual void sendRequest(Request *req);
     virtual Request* recvResponse(void);
 
+    void init(unsigned int phase);
+
+
 
 private:
 

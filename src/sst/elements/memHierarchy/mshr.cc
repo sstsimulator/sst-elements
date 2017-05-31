@@ -203,7 +203,7 @@ bool MSHR::insert(Addr baseAddr, MemEvent* event) {
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
         d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", 
-                baseAddr, event->getAddr(), CommandString[event->getCmd()], size_, map_[baseAddr].mshrQueue.size());
+                baseAddr, event->getAddr(), CommandString[(int)event->getCmd()], size_, map_[baseAddr].mshrQueue.size());
 #endif
     return true;
 }
@@ -246,7 +246,7 @@ bool MSHR::insertInv(Addr baseAddr, MemEvent* event, bool inProgress) {
 #ifdef __SST_DEBUG_OUTPUT__
     if (LIKELY(ret)) {
         if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
-            d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", baseAddr, event->getAddr(), CommandString[event->getCmd()], size_, map_[baseAddr].mshrQueue.size());
+            d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", baseAddr, event->getAddr(), CommandString[(int)event->getCmd()], size_, map_[baseAddr].mshrQueue.size());
      }
     else if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_, "MSHR Full.  Event could not be inserted.\n");
 #endif
@@ -307,7 +307,7 @@ bool MSHR::insertInv(Addr baseAddr, mshrType entry, bool inProgress) {
         if (inProgress && it == map_[baseAddr].mshrQueue.begin()) continue;
         if (it->elem.isEvent()) {
             MemEvent * ev = getEvent(it->elem);
-            if (ev->getCmd() == GetS || ev->getCmd() == GetSEx || ev->getCmd() == GetX) {
+            if (ev->getCmd() == GetS || ev->getCmd() == GetSX || ev->getCmd() == GetX) {
                 break;
             }
         }
@@ -495,7 +495,7 @@ void MSHR::printTable() {
 
             } else {
                 MemEvent * ev = (it2->elem).getEvent();
-                d_->debug(_L9_, "\t%s, %s\n", ev->getSrc().c_str(), CommandString[ev->getCmd()]);
+                d_->debug(_L9_, "\t%s, %s\n", ev->getSrc().c_str(), CommandString[(int)ev->getCmd()]);
             }
         }
     }
@@ -508,7 +508,7 @@ void MSHR::printTable() {
     int i = 0;
     for (vector<MemEvent*>::iterator it = map_[baseAddr].begin(); it != map_[baseAddr].end(); ++it, ++i) {
         MemEvent* event = (MemEvent*)(*it);
-        d_->debug(C,L5,0, "Entry %i:  Key Addr: %#016lllx, Event Addr: %#016lllx, Event Cmd = %s\n", i, baseAddr, event->getAddr(), CommandString[event->getCmd()]);
+        d_->debug(C,L5,0, "Entry %i:  Key Addr: %#016lllx, Event Addr: %#016lllx, Event Cmd = %s\n", i, baseAddr, event->getAddr(), CommandString[(int)event->getCmd()]);
     }
 }*/
 

@@ -55,12 +55,12 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
     }
 
     stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
-    stat_GetSExReqReceived  = registerStatistic<uint64_t>("requests_received_GetSEx");
+    stat_GetSXReqReceived  = registerStatistic<uint64_t>("requests_received_GetSX");
     stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
     stat_PutMReqReceived    = registerStatistic<uint64_t>("requests_received_PutM");
     stat_outstandingReqs    = registerStatistic<uint64_t>("outstanding_requests");
     stat_GetSLatency        = registerStatistic<uint64_t>("latency_GetS");
-    stat_GetSExLatency      = registerStatistic<uint64_t>("latency_GetSEx");
+    stat_GetSXLatency      = registerStatistic<uint64_t>("latency_GetSX");
     stat_GetXLatency        = registerStatistic<uint64_t>("latency_GetX");
     stat_PutMLatency        = registerStatistic<uint64_t>("latency_PutM");
 
@@ -76,7 +76,7 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
     doReceiveStat( ev->getCmd() );
 
     Debug(_L10_,"Creating MemReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
-                        ev->getBaseAddr(), ev->getSize(), CommandString[ev->getCmd()]);
+                        ev->getBaseAddr(), ev->getSize(), CommandString[(int)ev->getCmd()]);
 
 
     if (!setupMemReq(ev)) {
@@ -140,7 +140,7 @@ MemEvent* MemBackendConvertor::doResponse( ReqId reqId ) {
         m_pendingRequests.erase(id);
         MemEvent* event = req->getMemEvent();
 
-        if ( PutM != event->getCmd()  ) {
+        if ( Command::PutM != event->getCmd()  ) {
             resp = event->makeResponse();
         }
 

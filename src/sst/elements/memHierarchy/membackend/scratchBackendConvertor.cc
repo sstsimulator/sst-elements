@@ -63,14 +63,14 @@ ScratchBackendConvertor::ScratchBackendConvertor(Component *comp, Params& params
     stat_WriteLatency = registerStatistic<uint64_t>("write_latency");
 }
 
-void ScratchBackendConvertor::handleScratchEvent(  ScratchEvent * ev ) {
+void ScratchBackendConvertor::handleMemEvent(  MemEvent * ev ) {
 
     ev->setDeliveryTime(m_cycleCount);
 
     doReceiveStat( ev->getCmd() );
 
     Debug(_L10_,"Creating ScratchReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
-                        ev->getBaseAddr(), ev->getSize(), ScratchCommandString[ev->getCmd()]);
+                        ev->getBaseAddr(), ev->getSize(), CommandString[(int)ev->getCmd()]);
 
     setupScratchReq(ev);
 }
@@ -124,9 +124,9 @@ bool ScratchBackendConvertor::doResponse( ReqId reqId, SST::Event::id_type & res
 
     if ( req->isDone() ) {
         m_pendingRequests.erase(id);
-        ScratchEvent* event = req->getScratchEvent();
+        MemEvent* event = req->getMemEvent();
 
-        if ( Write != event->getCmd()  ) {
+        if ( Command::GetX != event->getCmd()  ) {
             respId = event->getID();
             sendResponse = true;
         }
@@ -135,7 +135,7 @@ bool ScratchBackendConvertor::doResponse( ReqId reqId, SST::Event::id_type & res
 
         doResponseStat( event->getCmd(), latency );
 
-        // ScratchReq deletes its ScratchEvent
+        // ScratchReq deletes its Event
         delete req;
 
     }

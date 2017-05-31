@@ -54,9 +54,6 @@ const unsigned int exbi = pebi * 1024;
 typedef uint64_t Addr;
 
 // Event attributes
-enum class CommandClass {Request, Data, Ack, ForwardRequest};
-enum class BasicCommandClass {Request, Response};
-
 /*
  *  Replace uB or UB (where u/U is a SI unit)
  *  with uiB or UiB for unit algebra
@@ -114,6 +111,8 @@ inline void fixupParams( Params& params, const std::string oldKey, const std::st
 typedef enum {IGNORE, DONE, STALL, BLOCK } CacheAction;
 
 enum class CoherenceProtocol {MSI, MESI, NONE};
+
+enum class Endpoint { CPU, Cache, Memory, Directory, Scratchpad };
 
 }}
 #endif	/* UTIL_H */

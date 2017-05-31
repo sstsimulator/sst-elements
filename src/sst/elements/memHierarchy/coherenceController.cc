@@ -79,9 +79,9 @@ CoherenceController::CoherenceController(Component * comp, Params &params) : Sub
     stat_latency_GetX_IM =      registerStatistic<uint64_t>("latency_GetX_IM");
     stat_latency_GetX_SM =      registerStatistic<uint64_t>("latency_GetX_SM");
     stat_latency_GetX_M =       registerStatistic<uint64_t>("latency_GetX_M");
-    stat_latency_GetSEx_IM =    registerStatistic<uint64_t>("latency_GetSEx_IM");
-    stat_latency_GetSEx_SM =    registerStatistic<uint64_t>("latency_GetSEx_SM");
-    stat_latency_GetSEx_M =     registerStatistic<uint64_t>("latency_GetSEx_M");
+    stat_latency_GetSX_IM =    registerStatistic<uint64_t>("latency_GetSX_IM");
+    stat_latency_GetSX_SM =    registerStatistic<uint64_t>("latency_GetSX_SM");
+    stat_latency_GetSX_M =     registerStatistic<uint64_t>("latency_GetSX_M");
 }
 
 
@@ -144,7 +144,7 @@ void CoherenceController::resendEvent(MemEvent * event, bool up) {
 
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_,"Sending request: Addr = %" PRIx64 ", BaseAddr = %" PRIx64 ", Cmd = %s\n", 
-            event->getAddr(), event->getBaseAddr(), CommandString[event->getCmd()]);
+            event->getAddr(), event->getBaseAddr(), CommandString[(int)event->getCmd()]);
 #endif
 }
   
@@ -205,21 +205,23 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
                 break;
             }
         }
+
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
+            debug->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Rqst size = %u, Payload size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
+                    CommandString[(int)outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
+                    outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), outgoingEvent->getPayloadSize(), timestamp_, curTime);
+        }
+#endif
         if (bottomNetworkLink_) {
             outgoingEvent->setDst(bottomNetworkLink_->findTargetDestination(outgoingEvent->getBaseAddr()));
+            debug->debug(_L4_, "Set destination to %s\n", outgoingEvent->getDst().c_str());
             bottomNetworkLink_->send(outgoingEvent);
         } else {
             lowNetPort_->send(outgoingEvent);
         }
         outgoingEventQueue_.pop_front();
 
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
-            debug->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Rqst size = %u, Payload size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
-                    CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
-                    outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), outgoingEvent->getPayloadSize(), timestamp_, curTime);
-        }
-#endif
     }
 
     // Check for ready events in outgoing 'up' queue
@@ -236,6 +238,13 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
             }
         }
 
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
+            debug->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Rqst size = %u, Payload size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
+                    CommandString[(int)outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
+                    outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), outgoingEvent->getPayloadSize(), timestamp_, curTime);
+        }
+#endif
         if (topNetworkLink_) {
             topNetworkLink_->send(outgoingEvent);
         } else {
@@ -243,13 +252,6 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
         }
         outgoingEventQueueUp_.pop_front();
 
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
-            debug->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Rqst size = %u, Payload size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
-                    CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
-                    outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), outgoingEvent->getPayloadSize(), timestamp_, curTime);
-        }
-#endif
     }
 
     // Return whether it's ok for the cache to turn off the clock - we need it on to be able to send waiting events
@@ -324,17 +326,17 @@ void CoherenceController::recordLatency(Command cmd, State state, uint64_t laten
             stat_latency_GetS_IS->addData(latency);
             break;
         case IM:
-            if (cmd == GetX) stat_latency_GetX_IM->addData(latency);
-            else stat_latency_GetSEx_IM->addData(latency);
+            if (cmd == Command::GetX) stat_latency_GetX_IM->addData(latency);
+            else stat_latency_GetSX_IM->addData(latency);
             break;
         case SM:
-            if (cmd == GetX) stat_latency_GetX_SM->addData(latency);
-            else stat_latency_GetSEx_SM->addData(latency);
+            if (cmd == Command::GetX) stat_latency_GetX_SM->addData(latency);
+            else stat_latency_GetSX_SM->addData(latency);
             break;
         case M:
-            if (cmd == GetS) stat_latency_GetS_M->addData(latency);
-            if (cmd == GetX) stat_latency_GetX_M->addData(latency);
-            else stat_latency_GetSEx_M->addData(latency);
+            if (cmd == Command::GetS) stat_latency_GetS_M->addData(latency);
+            if (cmd == Command::GetX) stat_latency_GetX_M->addData(latency);
+            else stat_latency_GetSX_M->addData(latency);
             break;
         default:
             break;

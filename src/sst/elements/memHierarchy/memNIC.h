@@ -26,6 +26,7 @@
 #include <sst/core/module.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
+#include "sst/elements/memHierarchy/memEventBase.h"
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/util.h"
 
@@ -90,20 +91,20 @@ public:
 
 
 public:
-    class MemRtrEvent : public Event {
+    class MemRtrEvent : public SST::Event {
     public:
-        MemEvent *event;
+        MemEventBase *event;
 
         MemRtrEvent() :
             Event(), event(NULL)
         {}
-        MemRtrEvent(MemEvent *ev) :
+        MemRtrEvent(MemEventBase *ev) :
             Event(), event(ev)
         { }
 
         virtual Event* clone(void)  override {
             MemRtrEvent *mre = new MemRtrEvent(*this);
-            mre->event = new MemEvent(*event);
+            mre->event = this->event->clone();
             return mre;
         }
 
@@ -239,8 +240,8 @@ public:
 
     void send(MemEvent *ev);
     MemEvent* recv(void);
-    void sendInitData(MemEvent *ev);
-    MemEvent* recvInitData(void);
+    void sendInitData(MemEventInit *ev);
+    MemEventInit* recvInitData(void);
     bool initDataReady();
     const std::vector<PeerInfo_t>& getPeerInfo(void) const { return peers; }
     const ComponentInfo& getComponentInfo(void) const { return ci; }

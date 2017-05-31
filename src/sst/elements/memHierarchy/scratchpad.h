@@ -27,7 +27,7 @@
 #include <queue>
 
 #include "sst/elements/memHierarchy/membackend/backing.h"
-#include "scratchEvent.h"
+#include "moveEvent.h"
 #include "memEvent.h"
 #include "memNIC.h"
 
@@ -74,15 +74,18 @@ private:
     // Event handling
     bool clock(SST::Cycle_t cycle);
 
-    void processIncomingScratchEvent(SST::Event* event);
-    void processIncomingMemEvent(SST::Event* event);
+    void processIncomingCPUEvent(SST::Event* event);
+    void processIncomingRemoteEvent(SST::Event* event);
 
-    void handleScratchRead(ScratchEvent * event);
-    void handleScratchWrite(ScratchEvent * event);
-    void handleRemoteRead(ScratchEvent * event);
-    void handleRemoteWrite(ScratchEvent * event);
-    void handleScratchGet(ScratchEvent * event);
-    void handleScratchPut(ScratchEvent * event);
+    void handleRead(MemEventBase * event);
+    void handleWrite(MemEventBase * event);
+
+    void handleScratchRead(MemEvent * event);
+    void handleScratchWrite(MemEvent * event);
+    void handleRemoteRead(MemEvent * event);
+    void handleRemoteWrite(MemEvent * event);
+    void handleScratchGet(MemEventBase * event);
+    void handleScratchPut(MemEventBase * event);
 
     // Helper methods
     void removeFromMSHR(Addr addr);
@@ -94,14 +97,10 @@ private:
 
     // ScratchPair
     struct ScratchPair {
-        ScratchEvent * request;
-        union {
-            ScratchEvent * response;
-            MemEvent * memRequest;
-        };
+        MemEventBase * request;
+        MemEvent *  memEvent;
 
-        ScratchPair(ScratchEvent * req, ScratchEvent * resp) : request(req), response(resp) {}
-        ScratchPair(ScratchEvent * req, MemEvent * memreq) : request(req), memRequest(memreq) {}
+        ScratchPair(MemEventBase * req, MemEvent * memev) : request(req), memEvent(memev) {}
     };
 
     // Request tracking
@@ -110,15 +109,19 @@ private:
     std::map<SST::Event::id_type, std::pair<SST::Event::id_type, Addr> > scratchIDMap_; // Map oustanding scratch requests to initiating scratch event by IDs (1-1 for reads, multi-1 for get/put)
     std::map<SST::Event::id_type, uint64_t> scratchCounters_; // Map of a ScratchPutID to the number of scratch reads we are waiting for
 
-    std::unordered_map<Addr, std::queue<ScratchEvent*> >  scratchMSHR_; // MSHR for managing conflicts to scratch
+    std::unordered_map<Addr, std::queue<MemEvent*> >  scratchMSHR_; // MSHR for managing conflicts to scratch
 
     // Outgoing message queues - map send timestamp to event
-    std::multimap<uint64_t, ScratchEvent*> procMsgQueue_;
+    std::multimap<uint64_t, MemEventBase*> procMsgQueue_;
     std::multimap<uint64_t, MemEvent*> memMsgQueue_;
     
     // Throughput limits
     uint32_t responsesPerCycle_;
     
+    // Caching information
+    bool caching_;  // Whether or not caching is possible
+    std::vector<bool> cacheStatus_; // One entry per scratchpad line, whether line may be cached
+
     // Statistics
     Statistic<uint64_t>* stat_ScratchReadReceived;
     Statistic<uint64_t>* stat_ScratchWriteReceived;

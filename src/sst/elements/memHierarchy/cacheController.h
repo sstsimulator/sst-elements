@@ -254,7 +254,7 @@ private:
             if ( waitTime > cf_.maxWaitTime_ ) {
                 d_->fatal(CALL_INFO, 1, "%s, Error: Maximum Cache Request time reached!\n"
                         "Event: %s 0x%" PRIx64 " from %s. Time = %" PRIu64 " ns\n",
-                        getName().c_str(), CommandString[oldReq->getCmd()], oldReq->getAddr(), oldReq->getSrc().c_str(), curTime);
+                        getName().c_str(), CommandString[(int)oldReq->getCmd()], oldReq->getAddr(), oldReq->getSrc().c_str(), curTime);
             }
         }
     }
@@ -330,22 +330,22 @@ private:
     Statistic<uint64_t>* statCacheHits;
     Statistic<uint64_t>* statGetSHitOnArrival;
     Statistic<uint64_t>* statGetXHitOnArrival;
-    Statistic<uint64_t>* statGetSExHitOnArrival;
+    Statistic<uint64_t>* statGetSXHitOnArrival;
     Statistic<uint64_t>* statGetSHitAfterBlocked;
     Statistic<uint64_t>* statGetXHitAfterBlocked;
-    Statistic<uint64_t>* statGetSExHitAfterBlocked;
+    Statistic<uint64_t>* statGetSXHitAfterBlocked;
     // Cache misses
     Statistic<uint64_t>* statCacheMisses;
     Statistic<uint64_t>* statGetSMissOnArrival;
     Statistic<uint64_t>* statGetXMissOnArrival;
-    Statistic<uint64_t>* statGetSExMissOnArrival;
+    Statistic<uint64_t>* statGetSXMissOnArrival;
     Statistic<uint64_t>* statGetSMissAfterBlocked;
     Statistic<uint64_t>* statGetXMissAfterBlocked;
-    Statistic<uint64_t>* statGetSExMissAfterBlocked;
+    Statistic<uint64_t>* statGetSXMissAfterBlocked;
     // Events received
     Statistic<uint64_t>* statGetS_recv;
     Statistic<uint64_t>* statGetX_recv;
-    Statistic<uint64_t>* statGetSEx_recv;
+    Statistic<uint64_t>* statGetSX_recv;
     Statistic<uint64_t>* statGetSResp_recv;
     Statistic<uint64_t>* statGetXResp_recv;
     Statistic<uint64_t>* statPutS_recv;
@@ -429,7 +429,7 @@ private:
     for blocks mapped to that cache.
  
     Key notes:
-        - The cache supports hardware "locking" (GetSEx command), and atomics-based requests (LLSC, GetS with 
+        - The cache supports hardware "locking" (GetSX command), and atomics-based requests (LLSC, GetS with 
         LLSC flag on).  For LLSC atomics, the flag "LLSC_Resp" is set when a store (GetX) was successful.
         
         - In case an L1's cache line is "LOCKED" (L2+ are never locked), the L1 is in charge of "replying" any
