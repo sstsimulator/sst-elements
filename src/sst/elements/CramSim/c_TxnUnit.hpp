@@ -36,80 +36,36 @@
 #include <queue>
 
 // SST includes
-#include <sst/core/component.h>
+#include <sst/core/subcomponent.h>
 #include <sst/core/link.h>
 
 // local includes
 #include "c_Transaction.hpp"
+#include "c_BankCommand.hpp"
+#include "c_TransactionToCommands.hpp"
+
 
 namespace SST {
 namespace n_Bank {
-class c_TxnUnit: public SST::Component {
+class c_TxnUnit: public SubComponent {
 public:
-// TODO: overload << operator
-// friend std::ostream& operator<< (std::ostream& x_stream, const c_Bank& x_bank);
 
-	c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params);
+	c_TxnUnit(SST::Component * comp, SST::Params& x_params);
 	~c_TxnUnit();
 
-	void finish(){
-		// TODO: Delete. For testing purposes
-		// printf("TxnUnit Queues:\n");
-		// printf("\t TxnUnit Req Q:\n");
-		// for (unsigned l_i = 0; l_i != k_txnReqQEntries+1; ++l_i)
-		// 	printf("%u\n", m_statsReqQ[l_i]);
-		//
-		// printf("\n\t TxnUnit Res Q:\n");
-		// for (unsigned l_i = 0; l_i != k_txnResQEntries+1; ++l_i)
-		// 	printf("%u\n", m_statsResQ[l_i]);
-	}
+	void pushTransaction(SST::Event *ev); // receive txns from txnGen into req q
+	std::vector<c_BankCommand*> convertTransaction();
 
 	void print() const; // print internals
 
 private:
-	// TODO: change this to C++11 style =delete
-	c_TxnUnit(); // for serialization only
-	c_TxnUnit(const c_TxnUnit&); // do not implement
-	void operator=(const c_TxnUnit&); // do not implement
 
-	virtual bool clockTic(SST::Cycle_t); // called every cycle
-
-	// TxnUnit <-> TxnGen Handlers
-	void handleInTxnGenReqPtrEvent(SST::Event *ev); // receive txns from txnGen into req q
-	void handleOutTxnGenReqQTokenChgEvent(SST::Event *ev); // we do not need this function for functionality
-	void handleOutTxnGenResPtrEvent(SST::Event *ev); // we do not need this function for functionality
-	void handleInTxnGenResQTokenChgEvent(SST::Event *ev); //receive tokens from txnGen for res q
-
-
-	// TxnUnit <-> CmdUnit Handlers
-	void handleOutCmdUnitReqPtrEvent(SST::Event *ev); // we do not need this function for functionality
-	void handleInCmdUnitReqQTokenChgEvent(SST::Event *ev); // receive tokens from cmdUnit for req q
-	void handleInCmdUnitResPtrEvent(SST::Event *ev); // receive txn from cmdUnit for res q
-
-	// TxnUnit <-> TxnGen Links
-	SST::Link* m_inTxnGenReqPtrLink; // incoming txngen req ptr
-	SST::Link* m_outTxnGenReqQTokenChgLink; // outgoing txngen req q token
-	SST::Link* m_outTxnGenResPtrLink; // outgoing txngen res ptr
-	SST::Link* m_inTxnGenResQTokenChgLink; // incoming txngen res q token
-
-
-	// TxnUnit <-> CmdUnit Links
-	SST::Link* m_outCmdUnitReqPtrLink; // outgoing cmdunit req ptr
-	SST::Link* m_inCmdUnitReqQTokenChgLink; // incoming cmdunit req q token
-	SST::Link* m_inCmdUnitResPtrLink; // incoming cmdunit res ptr
-	//outCmdUnitResQToken no longer part of model
-
-	void sendTokenChg(); // should happen at the end of every cycle
-	void sendResponse();
-	void sendRequest();
 	void createRefreshCmds();
 
 	// FIXME: Remove. For testing purposes
 	void printQueues();
 
 	// params for internal architecture
-	int k_txnReqQEntries;
-	int k_txnResQEntries;
 	int k_relCommandWidth; // txn relative command width
 	bool k_useReadA;
 	bool k_useWriteA;
@@ -119,38 +75,19 @@ private:
 	int m_numBanks;
 	int k_REFI;
 	int m_currentREFICount;
-        std::vector<std::vector<unsigned> > m_refreshGroups;
-        uint m_currentRefreshGroup;
+	c_TransactionToCommands *m_converter;
+
+	std::vector<std::vector<unsigned> > m_refreshGroups;
+	uint m_currentRefreshGroup;
 	std::queue<c_BankCommand*> m_refreshList;
 
-
-	// params for neighboring components
-	int k_txnGenResQEntries;
-	int m_txnGenResQTokens;
-	int k_cmdUnitReqQEntries;
-	int m_cmdUnitReqQTokens;
-
-	int k_numBytesPerTransaction;
-	int k_numChannelsPerDimm;
-	int k_numRanksPerChannel;
-	int k_numBankGroupsPerRank;
-	int k_numBanksPerBankGroup;
-	int k_numColsPerBank;
-	int k_numRowsPerBank;
-
-
-	// token change in this unit this cycle
-	// beginning of every cycle these variables are reset
-	// sendTokenChg() function sends the contents of these variables
-	int m_thisCycleReqQTknChg;
-
 	// internal architecture
-	std::vector<c_Transaction*> m_txnReqQ;
-	std::vector<c_Transaction*> m_txnResQ;
+	std::queue<c_Transaction*> m_txnReqQ;
+	std::queue<c_Transaction*> m_txnResQ;
 
 	// FIXME: Delete. Used for debugging queue size issues
-	unsigned* m_statsReqQ;
-	unsigned* m_statsResQ;
+//	unsigned* m_statsReqQ;
+//	unsigned* m_statsResQ;
 
 	bool m_processingRefreshCmds; // Cmd unit is processing refresh commands
 

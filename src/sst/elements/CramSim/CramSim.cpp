@@ -34,6 +34,7 @@
 #include "c_CmdUnit.hpp"
 #include "c_BankReceiver.hpp"
 #include "c_Dimm.hpp"
+#include "c_Controller.hpp"
 
 
 // namespaces
@@ -46,11 +47,11 @@ using namespace SST::Statistics;
 
 /*----ALLOCATORS FOR COMPONENTS----*/
 
-static Component*
+/*static Component*
 create_c_AddressHasher(SST::ComponentId_t id, SST::Params& params) {
 	return new c_AddressHasher(id, params);
 }
-
+*/
 // c_MemhBridge
 static Component*
 create_c_MemhBridge(SST::ComponentId_t id, SST::Params& params) {
@@ -94,10 +95,11 @@ create_c_TxnDriver(SST::ComponentId_t id, SST::Params& params){
 }
 
 // c_TxnUnit
-static Component*
-create_c_TxnUnit(SST::ComponentId_t id, SST::Params& params) {
-	return new c_TxnUnit(id, params);
-}
+//static Component*
+//create_c_TxnUnit(SST::ComponentId_t id, SST::Params& params) {
+//	return new c_TxnUnit(id, params);
+//}
+
 
 // c_CmdDriver
 static Component*
@@ -106,10 +108,10 @@ create_c_CmdDriver(SST::ComponentId_t id, SST::Params& params){
 }
 
 // c_CmdUnit
-static Component*
-create_c_CmdUnit(SST::ComponentId_t id, SST::Params& params){
-	return new c_CmdUnit(id, params);
-}
+//static Component*
+//create_c_CmdUnit(SST::ComponentId_t id, SST::Params& params){
+//	return new c_CmdUnit(id, params);
+//}
 
 // c_BankReceiver
 static Component*
@@ -121,6 +123,29 @@ create_c_BankReceiver(SST::ComponentId_t id, SST::Params& params){
 static Component*
 create_c_Dimm(SST::ComponentId_t id, SST::Params& params) {
 	return new c_Dimm(id, params);
+}
+
+// c_Controller
+static Component*
+create_c_Controller(SST::ComponentId_t id, SST::Params& params) {
+	return new c_Controller(id, params);
+}
+// c_AddressHasher
+static SubComponent*
+create_c_AddressHasher(Component * owner, Params& params) {
+	return new c_AddressHasher(owner, params);
+}
+
+// c_TxnUnit
+static SubComponent*
+create_c_TxnUnit(Component * owner, Params& params) {
+	return new c_TxnUnit(owner, params);
+}
+
+// c_DeviceController
+static SubComponent*
+create_c_CmdUnit(Component * owner, Params& params) {
+	return new c_CmdUnit(owner, params);
 }
 
 /*----SETUP c_AddressHasher  STRUCTURES----*/
@@ -135,8 +160,8 @@ static const ElementInfoParam c_AddressHasher_params[] = {
 		{"strAddressMapStr","String defining the address mapping scheme",NULL},
 		{ NULL, NULL, NULL } };
 
-static const ElementInfoPort c_AddressHasher_ports[] = {
-		{ NULL, NULL, NULL } };
+//static const ElementInfoPort c_AddressHasher_ports[] = {
+//		{ NULL, NULL, NULL } };
 
 /*----SETUP c_MemhBridge STRUCTURES----*/
 static const ElementInfoParam c_MemhBridge_params[] = {
@@ -310,7 +335,7 @@ static const ElementInfoParam c_TxnUnit_params[] = {
 		{"boolUseWriteA", "Whether to use WRITE or WRITEA Cmds", NULL},
 		{NULL, NULL, NULL } };
 
-static const char* c_TxnUnit_txnReq_port_events[] = { "c_TxnReqEvent", NULL };
+/*static const char* c_TxnUnit_txnReq_port_events[] = { "c_TxnReqEvent", NULL };
 static const char* c_TxnUnit_txnRes_port_events[] = { "c_TxnResEvent", NULL };
 static const char* c_TxnUnit_cmdReq_port_events[] = { "c_CmdPtrPkgEvent", NULL };
 static const char* c_TxnUnit_token_port_events[] = {"c_TokenChgEvent", NULL};
@@ -327,7 +352,7 @@ static const ElementInfoPort c_TxnUnit_ports[] = {
 		{"inTxnGenResQTokenChg", "link to c_TxnUnit for incoming res txn tokens", c_TxnUnit_token_port_events},
 		{NULL, NULL, NULL}
 };
-
+*/
 static const ElementInfoStatistic c_TxnUnit_stats[] = {
   {"readTxnsRecvd", "Number of read transactions received", "reads", 1}, // Name, Desc, Units, Enable Level
   {"writeTxnsRecvd", "Number of write transactions received", "writes", 1},
@@ -410,23 +435,36 @@ static const ElementInfoParam c_CmdUnit_params[] = {
 		{"nBL", "Bank Param", NULL},
 		{NULL, NULL, NULL } };
 
-static const char* c_CmdUnit_cmdReq_port_events[] = { "c_CmdReqEvent", NULL };
-static const char* c_CmdUnit_cmdRes_port_events[] = { "c_CmdResEvent", NULL };
-static const char* c_CmdUnit_cmdReqPkg_port_events[] = { "c_CmdPtrPkgEvent", NULL };
-static const char* c_CmdUnit_token_port_events[] = {"c_TokenChgEvent", NULL};
-
-static const ElementInfoPort c_CmdUnit_ports[] = {
-		{"inTxnUnitReqPtr", "link to c_CmdDriver for incoming req cmds", c_CmdUnit_cmdReqPkg_port_events},
-		{"outTxnUnitReqQTokenChg", "link to c_CmdUnit for outgoing req cmd token", c_CmdUnit_token_port_events},
-		{"outTxnUnitResPtr", "link to c_CmdUnit for outgoing res cmd", c_CmdUnit_cmdRes_port_events},
-		{"outBankReqPtr", "link to c_CmdUnit for outgoing req cmd", c_CmdUnit_cmdReq_port_events},
-		{"inBankResPtr", "link to c_CmdUnit for incoming res cmd", c_CmdUnit_cmdRes_port_events},
-		{NULL, NULL, NULL}
-};
-
 static const ElementInfoStatistic c_CmdUnit_stats[] = {
   //{"rowHits", "Number of DRAM page buffer hits", "hits", 1}, // Name, Desc, Units, Enable Level
   {NULL,NULL,NULL,0}
+};
+
+
+/*----SETUP c_Controller STRUCTURES----*/
+static const ElementInfoParam c_Controller_params[] = {
+		{"AddrHasher", "address hasher", "CramSim.c_AddressHasher"},
+		{"scheduler", "Command Scheduler", "CramSim.c_simpleScheduler"},
+		{"deviceController", "device controller", "CramSim.c_CmdUnit"},
+		{NULL, NULL, NULL } };
+
+static const char* c_Controller_TxnGenReq_port_events[] = { "c_txnGenReqEvent", NULL };
+static const char* c_Controller_TxnGenRes_port_events[] = { "c_txnGenResEvent", NULL };
+static const char* c_Controller_DeviceReq_port_events[] = { "c_DeviceReqEvent", NULL };
+static const char* c_Controller_DeviceRes_port_events[] = { "c_DeviceResEvent", NULL };
+static const char* c_Controller_TxnGenResToken_port_events[] = { "c_txnGenResTokenEvent", NULL };
+static const char* c_Controller_TxnGenReqToken_port_events[] = { "c_txnGenReqTokenEvent", NULL };
+static const char* c_Controller_DeviceReqToken_port_events[] = { "c_DeviceReqTokenEvent", NULL };
+
+static const ElementInfoPort c_Controller_ports[] = {
+		{"inTxnGenReqPtr", "link to controller for incoming req cmds from txn gen", c_Controller_TxnGenReq_port_events},
+		{"outTxnGenResPtr", "link to controller for outgoing res cmds to txn gen", c_Controller_TxnGenRes_port_events},
+		{"inDeviceResPtr", "link to controller for incoming res cmds from device", c_Controller_DeviceRes_port_events},
+		{"outDeviceReqPtr", "link to controller for outgoing req cmds to device", c_Controller_DeviceReq_port_events},
+		{"inTxnGenResQTokenChg", "link to controller for incoming res txn tokens",c_Controller_TxnGenResToken_port_events},
+		{"outTxnGenReqQTokenChg", "link to controller for outgoing req txn tokens",c_Controller_TxnGenReqToken_port_events},
+		{"inDeviceReqQTokenChg", "link to controller for incoming req cmd tokens",c_Controller_DeviceReqToken_port_events},
+		{NULL, NULL, NULL}
 };
 
 /*----SETUP c_BankReceiver STRUCTURES----*/
@@ -799,15 +837,6 @@ static const ElementInfoStatistic c_Dimm_stats[] = {
 
 
 static const ElementInfoComponent CramSimComponents[] = {
-		{ "c_AddressHasher", 							// Name
-		"Hashes addresses based on config parameters",			// Description
-		NULL, 										// PrintHelp
-		create_c_AddressHasher, 						// Allocator
-		c_AddressHasher_params, 						// Parameters
-		c_AddressHasher_ports, 							// Ports
-		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		NULL 										// Statistics
-		},
 		{ "c_TxnGenSeq", 							// Name
 		"Test Txn Sequential Generator",			// Description
 		NULL, 										// PrintHelp
@@ -862,15 +891,6 @@ static const ElementInfoComponent CramSimComponents[] = {
 		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
 		NULL 										// Statistics
 		},
-		{ "c_TxnUnit",	 							// Name
-		"Test Txn Unit",				 			// Description
-		NULL, 										// PrintHelp
-		create_c_TxnUnit, 							// Allocator
-		c_TxnUnit_params, 							// Parameters
-		c_TxnUnit_ports, 							// Ports
-		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		c_TxnUnit_stats									// Statistics
-		},
 		{ "c_CmdDriver",	 						// Name
 		"Test Cmd Driver",				 			// Description
 		NULL, 										// PrintHelp
@@ -879,15 +899,6 @@ static const ElementInfoComponent CramSimComponents[] = {
 		c_CmdDriver_ports, 							// Ports
 		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
 		NULL 										// Statistics
-		},
-		{ "c_CmdUnit",	 							// Name
-		"Test Cmd Unit",				 			// Description
-		NULL, 										// PrintHelp
-		create_c_CmdUnit, 							// Allocator
-		c_CmdUnit_params, 							// Parameters
-		c_CmdUnit_ports, 							// Ports
-		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		c_CmdUnit_stats									// Statistics
 		},
 		{ "c_BankReceiver",	 						// Name
 		"Test Bank Receiver",				 		// Description
@@ -916,7 +927,46 @@ static const ElementInfoComponent CramSimComponents[] = {
 		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
 		NULL 										// Statistics
 		},
+		{ "c_Controller",			 						// Name
+			"Memory Controller",				 				// Description
+			NULL, 										// PrintHelp
+					create_c_Controller, 						// Allocator
+					c_Controller_params, 						// Parameters
+					c_Controller_ports, 						// Ports
+					COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
+					NULL 										// Statistics
+		},
 		{ NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL } };
+
+
+static const ElementInfoSubComponent CramSimSubComponents[] = {
+		{ "c_AddressHasher", 							// Name
+		  "Hashes addresses based on config parameters",			// Description
+		  NULL, 										// PrintHelp
+		  create_c_AddressHasher, 						// Allocator
+		  c_AddressHasher_params, 						// Parameters
+		  NULL,
+		  COMPONENT_CATEGORY_UNCATEGORIZED 			// Category
+		},
+		{ "c_TxnUnit",	 							// Name
+		"Transaction Converter",				 			// Description
+		NULL, 										// PrintHelp
+		create_c_TxnUnit, 							// Allocator
+		c_TxnUnit_params, 							// Parameters
+		c_TxnUnit_stats,
+		COMPONENT_CATEGORY_UNCATEGORIZED 			// Category
+		},
+		{"c_CmdUnit",                                // Name
+			"Dram Control Unit",                            // Description
+			NULL,                                        // PrintHelp
+			create_c_CmdUnit,                            // Allocator
+			c_CmdUnit_params,                            // Parameters
+			c_CmdUnit_stats,
+			COMPONENT_CATEGORY_UNCATEGORIZED            // Category
+		},
+		{ NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL }
+};
+
 
 extern "C" {
 ElementLibraryInfo CramSim_eli = { "CramSim", // Name
@@ -925,7 +975,7 @@ ElementLibraryInfo CramSim_eli = { "CramSim", // Name
 		NULL, // Events
 		NULL, // Introspectors
 		NULL, // Modules
-		NULL, // Subcomponents
+		CramSimSubComponents, // Subcomponents
 		NULL, // Partitioners
 		NULL, // Python Module Generator
 		NULL // Generators

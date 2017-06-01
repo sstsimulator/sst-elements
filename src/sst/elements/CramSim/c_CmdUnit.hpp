@@ -26,8 +26,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef C_CMDUNIT_HPP
-#define C_CMDUNIT_HPP
+#ifndef C_CmdUnit_HPP
+#define C_CmdUnit_HPP
 
 #include <vector>
 #include <list>
@@ -45,19 +45,20 @@
 #include "c_Channel.hpp"
 #include "c_Rank.hpp"
 #include "c_BankCommand.hpp"
+#include "c_DeviceController.hpp"
 
 typedef unsigned long ulong;
 
 namespace SST {
-namespace n_Bank {
+namespace n_Bank{
 
-  class c_BankCommand;
-  enum class e_BankCommandType;
+	class c_BankCommand;
+	enum class e_BankCommandType;
   
-class c_CmdUnit: public SST::Component {
+class c_CmdUnit: public SubComponent {
 public:
 
-	c_CmdUnit(SST::ComponentId_t x_id, SST::Params& x_params);
+	c_CmdUnit(Component *comp, Params& x_params);
 	~c_CmdUnit();
 
 	void finish() {
@@ -74,16 +75,15 @@ public:
 	}
 
 	void print() const; // print internals
+	std::vector<c_BankCommand*> issueCommand();
+	void pushCommand(std::vector<c_BankCommand*> newCmds);
 
 private:
 	c_CmdUnit(); // for serialization only
-	c_CmdUnit(const c_CmdUnit&); // do not implement
-	void operator=(const c_CmdUnit&); // do not implement
-
-	virtual bool clockTic(SST::Cycle_t); // called every cycle
 
 	// CmdUnit <-> TxnUnit Handlers
-	void handleInTxnUnitReqPtrEvent(SST::Event *ev); // receive a cmd req pkg from TxnUnit
+
+	/*void handleInTxnUnitReqPtrEvent(SST::Event *ev); // receive a cmd req pkg from TxnUnit
 	void handleOutTxnUnitReqQTokenChgEvent(SST::Event *ev); // we do not this function for functionality
 	void handleOutTxnUnitResPtrEvent(SST::Event *ev); // we do not need this function for functionality
 
@@ -98,10 +98,10 @@ private:
 
 	// CmdUnit <-> Bank Links
 	SST::Link* m_outBankReqPtrLink; // outgoing bank req ptr
-	SST::Link* m_inBankResPtrLink; // incoming bank res ptr
+	SST::Link* m_inBankResPtrLink; // incoming bank res ptr*/
 
-	void sendTokenChg(); // should happen at the end of every cycle
-	void sendResponse();
+//	void sendTokenChg(); // should happen at the end of every cycle
+//	void sendResponse();
 	void sendRequest();
 	void sendRefresh();
 
@@ -163,12 +163,12 @@ private:
 	std::vector<c_Rank*> m_ranks;
 	std::vector<c_Channel*> m_channel;
 
-    bool k_printCmdTrace;
-    std::string k_cmdTraceFileName;
-    std::filebuf m_cmdTraceFileBuf;
-    std::streambuf *m_cmdTraceStreamBuf;
-    std::ofstream m_cmdTraceOFStream;
-    std::ostream *m_cmdTraceStream;
+	bool k_printCmdTrace;
+	std::string k_cmdTraceFileName;
+	std::filebuf m_cmdTraceFileBuf;
+	std::streambuf *m_cmdTraceStreamBuf;
+	std::ofstream m_cmdTraceOFStream;
+	std::ostream *m_cmdTraceStream;
 
 	// token change in this unit this cycle
 	// beginning of every cycle these variables are reset
@@ -176,6 +176,7 @@ private:
 	int m_thisCycleReqQTknChg;
 	int m_thisCycleResReceived;
 
+	std::vector<c_BankCommand*> m_cmdIssueQ;
 	std::vector<c_BankCommand*> m_cmdReqQ;
 	std::vector<c_BankCommand*> m_cmdResQ;
 
@@ -192,9 +193,6 @@ private:
 	std::list<unsigned> m_cmdACTFAWtracker; // FIXME: change this to a circular buffer for speed. Could also implement as shift register.
 	bool m_issuedACT;
 
-  
-  // Statistics
-  //  Statistic<uint64_t>* s_rowHits;
 
 };
 }

@@ -42,6 +42,11 @@ using namespace n_Bank;
 c_TransactionToCommands* c_TransactionToCommands::m_instance = nullptr;
 unsigned c_TransactionToCommands::m_cmdSeqNum = 0;
 
+c_TransactionToCommands::c_TransactionToCommands(c_AddressHasher *x_addrHasher)
+{
+	m_addrHasher=x_addrHasher;
+}
+
 c_TransactionToCommands* c_TransactionToCommands::getInstance() {
 	if (nullptr == m_instance) {
 		m_instance->construct();
@@ -91,7 +96,8 @@ std::vector<c_BankCommand*> c_TransactionToCommands::getReadCommands(
 	for (unsigned l_i = 0; l_i < l_numCmdsPerTrans; ++l_i) {
  	        ulong l_nAddr = x_txn->getAddress() + (x_relCommandWidth * l_i);
 		c_HashedAddress l_hashedAddr;
-		c_AddressHasher::getInstance()->fillHashedAddress(&l_hashedAddr,l_nAddr);
+		//c_AddressHasher::getInstance()->fillHashedAddress(&l_hashedAddr,l_nAddr);
+		m_addrHasher->fillHashedAddress(&l_hashedAddr,l_nAddr);
 	  
 		l_commandVec.push_back(
 			new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::ACT,
@@ -134,8 +140,9 @@ std::vector<c_BankCommand*> c_TransactionToCommands::getWriteCommands(
 	for (unsigned l_i = 0; l_i < l_numCmdsPerTrans; ++l_i) {
  	        ulong l_nAddr = x_txn->getAddress() + (x_relCommandWidth * l_i);
 		c_HashedAddress l_hashedAddr;
-		c_AddressHasher::getInstance()->fillHashedAddress(&l_hashedAddr,l_nAddr);
-		
+		//c_AddressHasher::getInstance()->fillHashedAddress(&l_hashedAddr,l_nAddr);
+		m_addrHasher->fillHashedAddress(&l_hashedAddr,l_nAddr);
+
 		l_commandVec.push_back(
 				new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::ACT,
 						  l_nAddr, l_hashedAddr));

@@ -45,18 +45,21 @@
 #include "c_CmdResEvent.hpp"
 #include "c_TransactionToCommands.hpp"
 #include "c_AddressHasher.hpp"
+#include "c_Controller.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
 using namespace std;
 
-c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
-		Component(x_id) {
+c_TxnUnit::c_TxnUnit(SST::Component *comp, SST::Params& x_params) : SubComponent(comp){
+
+	m_converter=new c_TransactionToCommands(((c_Controller*)parent)->getAddrHasher());
+
 	// read params here
 	bool l_found = false;
 
 	// load internal params
-	k_txnReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitReqQEntries", 100,
+/*	k_txnReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitReqQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numTxnUnitReqQEntries param value is missing... exiting"
@@ -71,59 +74,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 				<< std::endl;
 		exit(-1);
 	}
-
-	k_numBytesPerTransaction = (uint32_t)x_params.find<uint32_t>("numBytesPerTransaction",
-			32, l_found);
-	if (!l_found) {
-		std::cout << "numBytesPerTransaction value is missing... exiting"
-				<< std::endl;
-		exit(-1);
-	}
-
-	k_numChannelsPerDimm = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,
-			l_found);
-	if (!l_found) {
-		std::cout << "numChannelsPerDimm value is missing... exiting"
-				<< std::endl;
-		exit(-1);
-	}
-
-	k_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 2,
-			l_found);
-	if (!l_found) {
-		std::cout << "numRanksPerChannel value is missing... exiting"
-				<< std::endl;
-		exit(-1);
-	}
-
-	k_numBankGroupsPerRank = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank", 100,
-			l_found);
-	if (!l_found) {
-		std::cout << "numBankGroupsPerRank value is missing... exiting"
-				<< std::endl;
-		exit(-1);
-	}
-
-	k_numBanksPerBankGroup = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup", 100,
-			l_found);
-	if (!l_found) {
-		std::cout << "numBanksPerBankGroup value is missing... exiting"
-				<< std::endl;
-		exit(-1);
-	}
-
-	k_numColsPerBank = (uint32_t)x_params.find<uint32_t>("numColsPerBank", 100, l_found);
-	if (!l_found) {
-		std::cout << "numColsPerBank value is missing... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_numRowsPerBank = (uint32_t)x_params.find<uint32_t>("numRowsPerBank", 100, l_found);
-	if (!l_found) {
-		std::cout << "numRowsPerBank value is missing... exiting" << std::endl;
-		exit(-1);
-	}
-
+*/
 	k_relCommandWidth = (uint32_t)x_params.find<uint32_t>("relCommandWidth", 1, l_found);
 	if (!l_found) {
 		std::cout << "relCommandWidth value is missing ... exiting"
@@ -208,7 +159,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	  
 
 	//load neighboring component's params
-	k_txnGenResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenResQEntries", 100,
+/*	k_txnGenResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenResQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numTxnGenResQEntries param value is missing... exiting"
@@ -225,7 +176,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 	m_cmdUnitReqQTokens = k_cmdUnitReqQEntries;
-
+*/
 	k_useReadA = (uint32_t)x_params.find<uint32_t>("boolUseReadA", 1, l_found);
 	if (!l_found) {
 		std::cout << "boolUseWriteA param value is missing... exiting"
@@ -259,7 +210,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	m_statsReqQ = new unsigned[k_txnReqQEntries + 1];
+/*	m_statsReqQ = new unsigned[k_txnReqQEntries + 1];
 	m_statsResQ = new unsigned[k_txnResQEntries + 1];
 
 	for (unsigned l_i = 0; l_i != k_txnReqQEntries + 1; ++l_i)
@@ -267,43 +218,43 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	for (unsigned l_i = 0; l_i != k_txnResQEntries + 1; ++l_i)
 		m_statsResQ[l_i] = 0;
-
+*/
 	// tell the simulator not to end without us <-- why??[seokin]
 	//registerAsPrimaryComponent();
 	//primaryComponentDoNotEndSim();
 
 	// configure links
 
-	// TxnUnit <-> TxnGen Links
+	// c_TxnUnit <-> TxnGen Links
 
-	// TxnUnit <- TxnGen (Req) (Txn)
-	m_inTxnGenReqPtrLink = configureLink("inTxnGenReqPtr",
+	// c_TxnUnit <- TxnGen (Req) (Txn)
+/*	m_inTxnGenReqPtrLink = configureLink("inTxnGenReqPtr",
 			new Event::Handler<c_TxnUnit>(this,
 					&c_TxnUnit::handleInTxnGenReqPtrEvent));
-	// TxnUnit -> TxnGen (Req) (Token)
+	// c_TxnUnit -> TxnGen (Req) (Token)
 	m_outTxnGenReqQTokenChgLink = configureLink("outTxnGenReqQTokenChg",
 			new Event::Handler<c_TxnUnit>(this,
 					&c_TxnUnit::handleOutTxnGenReqQTokenChgEvent));
-	// TxnUnit -> TxnGen (Res) (Txn)
+	// c_TxnUnit -> TxnGen (Res) (Txn)
 	m_outTxnGenResPtrLink = configureLink("outTxnGenResPtr",
 			new Event::Handler<c_TxnUnit>(this,
 					&c_TxnUnit::handleOutTxnGenResPtrEvent));
-	// TxnUnit <- TxnGen (Res) (Token)
+	// c_TxnUnit <- TxnGen (Res) (Token)
 	m_inTxnGenResQTokenChgLink = configureLink("inTxnGenResQTokenChg",
 			new Event::Handler<c_TxnUnit>(this,
 					&c_TxnUnit::handleInTxnGenResQTokenChgEvent));
 
-	// TxnUnit <-> CmdUnit Links
+	// c_TxnUnit <-> CmdUnit Links
 
-	// TxnUnit -> CmdUnit (Req) (Cmd)
+	// c_TxnUnit -> CmdUnit (Req) (Cmd)
 	m_outCmdUnitReqPtrLink = configureLink("outCmdUnitReqPtrPkg",
 			new Event::Handler<c_TxnUnit>(this,
 					&c_TxnUnit::handleOutCmdUnitReqPtrEvent));
-	// TxnUnit <- CmdUnit (Req) (Token)
+	// c_TxnUnit <- CmdUnit (Req) (Token)
 	m_inCmdUnitReqQTokenChgLink = configureLink("inCmdUnitReqQTokenChg",
 			new Event::Handler<c_TxnUnit>(this,
 					&c_TxnUnit::handleInCmdUnitReqQTokenChgEvent));
-	// TxnUnit <- CmdUnit (Res) (Txn)
+	// c_TxnUnit <- CmdUnit (Res) (Txn)
 	m_inCmdUnitResPtrLink = configureLink("inCmdUnitResPtr",
 			new Event::Handler<c_TxnUnit>(this,
 					&c_TxnUnit::handleInCmdUnitResPtrEvent));
@@ -311,7 +262,7 @@ c_TxnUnit::c_TxnUnit(SST::ComponentId_t x_id, SST::Params& x_params) :
 	//set our clock
 	registerClock("1GHz",
 			new Clock::Handler<c_TxnUnit>(this, &c_TxnUnit::clockTic));
-
+*/
 	m_processingRefreshCmds = false;
 
 	// Statistics setup
@@ -326,13 +277,14 @@ c_TxnUnit::~c_TxnUnit() {
 
 }
 
-c_TxnUnit::c_TxnUnit() :
-		Component(-1) {
+/*c_TxnUnit::c_TxnUnit() {
+	//	Component(-1) {
 	// for serialization only
 }
+*/
 
 void c_TxnUnit::print() const {
-	std::cout << "***TxnUnit " << Component::getName() << std::endl;
+/*a	std::cout << "***c_TxnUnit " << Component::getName() << std::endl;
 	std::cout << "ReqQEntries=" << k_txnReqQEntries << ", " << "ResQEntries="
 			<< k_txnResQEntries << std::endl;
 	std::cout << "k_txnGenResQEntries=" << k_txnGenResQEntries
@@ -340,56 +292,53 @@ void c_TxnUnit::print() const {
 	std::cout << "TxnReqQ size=" << m_txnReqQ.size() << ", " << "TxnResQ size="
 			<< m_txnResQ.size() << std::endl;
 	std::cout << "m_cmdReqQTokens = " << m_cmdUnitReqQTokens << ", "
-			<< "m_txnGenResQTokens = " << m_txnGenResQTokens << std::endl;
+			<< "m_txnGenResQTokens = " << m_txnGenResQTokens << std::endl;*/
 }
 
 void c_TxnUnit::printQueues() {
 	std::cout << "TxnReqQ: " << std::endl;
-	for (auto& l_entry : m_txnReqQ) {
-		l_entry->print();
+	for (auto it = m_txnReqQ.front();it!=m_txnReqQ.back();++it) {
+		it->print();
 		std::cout << std::endl;
 	}
 
 	std::cout << std::endl << "TxnResQ:" << std::endl;
-	for (auto& l_entry : m_txnResQ) {
-		l_entry->print();
+	for (auto it = m_txnResQ.front();it!=m_txnResQ.back();++it) {
+		it->print();
 		std::cout << std::endl;
 	}
 }
 
-bool c_TxnUnit::clockTic(SST::Cycle_t) {
 
-//	std::cout << std::endl << std::endl << "TxnUnit:: clock tic" << std::endl;
+std::vector<c_BankCommand*> c_TxnUnit::convertTransaction() {
+
+//	std::cout << std::endl << std::endl << "c_TxnUnit:: clock tic" << std::endl;
 //	std::cout << "m_ResQTokens: " << m_txnGenResQTokens << std::endl;
 //	printQueues();
 
-	m_thisCycleReqQTknChg = 0;
+	//m_thisCycleReqQTknChg = 0;
 
 	// store the current number of entries in the queue to later compute change
-	m_thisCycleReqQTknChg = m_txnReqQ.size();
 
-	sendResponse();
+	//m_thisCycleReqQTknChg = m_txnReqQ.size();
+
+	//sendResponse();
 
 	if (k_useRefresh) {
 		// if the refresh counter is still counting, send regular Request
 		// else send REF to all banks
 		if (m_currentREFICount > 0) {
-//			std::cout << __PRETTY_FUNCTION__ << ": m_currentREFICount = "
-//					<< m_currentREFICount << std::endl;
-
 			--m_currentREFICount;
 		} else {
 			if (!m_processingRefreshCmds) {
-//				std::cout << __PRETTY_FUNCTION__ << ": Creating REFs"
-//						<< std::endl;
-
 				createRefreshCmds();
 				m_processingRefreshCmds = true;
 			}
 		}
 
+		//Todo: check the condition-state. (m_cmdUnitReqQTokens == k_cmdUnitReqQEntries)?
 		if (m_processingRefreshCmds && (m_refreshList.size() == 0)
-				&& (m_cmdUnitReqQTokens == k_cmdUnitReqQEntries)) {
+			/*&& (m_cmdUnitReqQTokens == k_cmdUnitReqQEntries)*/) {
 			// refresh was started and now we have all tokens from CmdUnit CmdReqQ and the refresh list container is empty so refresh must have finished
 			// therefore now we can start another refresh cycle
 		        m_currentREFICount = (int)((double)k_REFI/m_refreshGroups.size());
@@ -397,22 +346,44 @@ bool c_TxnUnit::clockTic(SST::Cycle_t) {
 		}
 	}
 
-	sendRequest();
+	//sendRequest();
 
-	m_thisCycleReqQTknChg -= m_txnReqQ.size();
+	// convert transactions to commands and push them into the command queue
+	std::vector<c_BankCommand*> l_cmdQ;
+	if (m_refreshList.size() > 0) {
+		while(m_refreshList.size()>0){
+			l_cmdQ.push_back(m_refreshList.front());
+			m_refreshList.pop();
+		}
+	}
+	else if ((m_txnReqQ.size() > 0) && !m_processingRefreshCmds) {
+		c_Transaction* l_reqTxn = m_txnReqQ.front();
 
-	sendTokenChg();
+		//c_TransactionToCommands* l_converter =
+		//		c_TransactionToCommands::getInstance();
+		//std::vector<c_BankCommand*> l_cmdPkg = l_converter->getCommands(
+		//		l_reqTxn, k_relCommandWidth, k_useReadA, k_useWriteA);
+		std::vector<c_BankCommand*> l_cmdPkg = m_converter->getCommands(
+				l_reqTxn, k_relCommandWidth, k_useReadA, k_useWriteA);
+		m_txnReqQ.pop();
+
+		for(std::vector<c_BankCommand*>::iterator it=l_cmdPkg.begin();it!=l_cmdPkg.end();++it)
+		{
+			l_cmdQ.push_back(*it);
+		}
+	}
 
 	//FIXME: Delete. For debugging queue size issues
-	m_statsReqQ[m_txnReqQ.size()]++;
-	m_statsResQ[m_txnResQ.size()]++;
+//	m_statsReqQ[m_txnReqQ.size()]++;
+//	m_statsResQ[m_txnResQ.size()]++;
 
 	s_reqQueueSize->addData(m_txnReqQ.size());
 	s_resQueueSize->addData(m_txnResQ.size());
 
-	return false;
+	return l_cmdQ;
 }
 
+/*
 void c_TxnUnit::sendResponse() {
 
 	// sendResponse conditions:
@@ -424,8 +395,8 @@ void c_TxnUnit::sendResponse() {
   //std::cout << "m_txnResQ " << std::dec << m_txnResQ.size() << std::endl;
   //printQueues();
 
-	if ((m_txnGenResQTokens > 0) && (m_txnResQ.size() > 0)) {
-
+	//if ((m_txnGenResQTokens > 0) && (m_txnResQ.size() > 0)) {
+	if(m_txnResQ.size()>0){
 		c_Transaction* l_txnRes = nullptr;
 		for (std::vector<c_Transaction*>::iterator l_it = m_txnResQ.begin();
 				l_it != m_txnResQ.end(); ++l_it) {
@@ -453,31 +424,35 @@ void c_TxnUnit::sendResponse() {
 
 	}
 } // sendResponse
+*/
+
 
 void c_TxnUnit::createRefreshCmds() {
 //	std::cout << "@" << std::dec
 //			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
 //			<< __PRETTY_FUNCTION__ << std::endl;
 
-	c_TransactionToCommands* l_converter =
-			c_TransactionToCommands::getInstance();
+	//c_TransactionToCommands* l_converter =
+	//		c_TransactionToCommands::getInstance();
 
 	//cout << "Refreshing group " << m_currentRefreshGroup << endl;
-	m_refreshList = l_converter->getRefreshCommands(m_refreshGroups[m_currentRefreshGroup]);
+	//m_refreshList = l_converter->getRefreshCommands(m_refreshGroups[m_currentRefreshGroup]);
+	m_refreshList = m_converter->getRefreshCommands(m_refreshGroups[m_currentRefreshGroup]);
 	m_currentRefreshGroup++;
 	if(m_currentRefreshGroup >= m_refreshGroups.size()) {
 	  m_currentRefreshGroup = 0;
 	}
 }
 
+/*
 void c_TxnUnit::sendRequest() {
 
 	// first check if any refreshes are pending being sent
 	if (m_refreshList.size() > 0) {
-	  //		std::cout << "@" << std::dec
-	  //		  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-	  //		  << __PRETTY_FUNCTION__ << std::endl;
-	  //	printf("%u REF commands left to send\n", m_refreshList.size());
+		//		std::cout << "@" << std::dec
+		//		  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
+		//		  << __PRETTY_FUNCTION__ << std::endl;
+		//	printf("%u REF commands left to send\n", m_refreshList.size());
 		std::vector<c_BankCommand*> l_cmdPkg;
 		while (m_cmdUnitReqQTokens > 0 && m_refreshList.size() > 0) {
 			l_cmdPkg.push_back(m_refreshList.front());
@@ -487,7 +462,7 @@ void c_TxnUnit::sendRequest() {
 		}
 
 		if (l_cmdPkg.size() > 0) {
-		  //printf("Sending %lu REF commands\n", l_cmdPkg.size());
+			//printf("Sending %lu REF commands\n", l_cmdPkg.size());
 			c_CmdPtrPkgEvent* l_cmdPtrPkgEventPtr = new c_CmdPtrPkgEvent();
 			l_cmdPtrPkgEventPtr->m_payload = l_cmdPkg;
 			m_outCmdUnitReqPtrLink->send(l_cmdPtrPkgEventPtr);
@@ -497,7 +472,7 @@ void c_TxnUnit::sendRequest() {
 	}
 
 	if ((m_txnReqQ.size() > 0) && !m_processingRefreshCmds) {
-	        //std::cout << "@" << std::dec
+		//std::cout << "@" << std::dec
 		//	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
 		//	  << __PRETTY_FUNCTION__ << std::endl;
 		c_Transaction* l_reqTxn = m_txnReqQ.front();
@@ -510,7 +485,7 @@ void c_TxnUnit::sendRequest() {
 				l_reqTxn, k_relCommandWidth, k_useReadA, k_useWriteA);
 
 		if ((l_cmdPkg.size() < m_cmdUnitReqQTokens)
-				&& ((k_txnResQEntries - m_txnResQ.size()) > 0)) {
+			&& ((k_txnResQEntries - m_txnResQ.size()) > 0)) {
 			c_CmdPtrPkgEvent* l_cmdPtrPkgEventPtr = new c_CmdPtrPkgEvent();
 			l_cmdPtrPkgEventPtr->m_payload = l_cmdPkg;
 			m_outCmdUnitReqPtrLink->send(l_cmdPtrPkgEventPtr);
@@ -526,7 +501,7 @@ void c_TxnUnit::sendRequest() {
 			//  l_entry->print();
 			//  std::cout << std::endl;
 			//}
-			
+
 			//std::cout << "@" << std::dec
 			//	  << Simulation::getSimulation()->getCurrentSimCycle()
 			//	  << ": " << __PRETTY_FUNCTION__ << ": Request sent"
@@ -544,29 +519,12 @@ void c_TxnUnit::sendRequest() {
 	}
 
 }
+*/
 
-void c_TxnUnit::sendTokenChg() {
-	// only send tokens when space has opened up in queues
-	// there are no negative tokens. token subtraction must be performed
-	// in the source component immediately after sending an event
-	if (m_thisCycleReqQTknChg > 0) {
-		// send req q token chg
-		// std::cout << "@" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		// 		<< __PRETTY_FUNCTION__ << std::endl;
-		// std::cout << "TxnUnit:: Sending req q tokens" << std::endl;
-		c_TokenChgEvent* l_txnReqQTokenChgEvent = new c_TokenChgEvent();
-		l_txnReqQTokenChgEvent->m_payload = m_thisCycleReqQTknChg;
-		m_outTxnGenReqQTokenChgLink->send(l_txnReqQTokenChgEvent);
-	}
-}
-
-// ----EVENT HANDLERS----
-//// TxnUnit <-> TxnGen Handlers
-void c_TxnUnit::handleInTxnGenReqPtrEvent(SST::Event *ev) {
+void c_TxnUnit::pushTransaction(SST::Event *ev) {
 	// make sure the internal req q has at least one empty entry
 	// to accept a new txn ptr
-	assert(1 <= (k_txnReqQEntries - m_txnReqQ.size()));
+	//assert(1 <= (k_txnReqQEntries - m_txnReqQ.size()));
 
 	c_TxnReqEvent* l_txnReqEventPtr = dynamic_cast<c_TxnReqEvent*>(ev);
 	if (l_txnReqEventPtr) {
@@ -584,7 +542,7 @@ void c_TxnUnit::handleInTxnGenReqPtrEvent(SST::Event *ev) {
 		}
 		s_totalTxnsRecvd->addData(1);
 		
-		m_txnReqQ.push_back(l_txnReqEventPtr->m_payload);
+		m_txnReqQ.push(l_txnReqEventPtr->m_payload);
 		delete l_txnReqEventPtr;
 	} else {
 		std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
@@ -593,67 +551,7 @@ void c_TxnUnit::handleInTxnGenReqPtrEvent(SST::Event *ev) {
 
 }
 
-void c_TxnUnit::handleOutTxnGenReqQTokenChgEvent(SST::Event *ev) {
-	// nothing to do here
-	std::cout << __PRETTY_FUNCTION__ << " ERROR: Should not be here"
-			<< std::endl;
-}
-
-void c_TxnUnit::handleOutTxnGenResPtrEvent(SST::Event *ev) {
-	// nothing to do here
-	std::cout << __PRETTY_FUNCTION__ << " ERROR: Should not be here"
-			<< std::endl;
-}
-
-void c_TxnUnit::handleInTxnGenResQTokenChgEvent(SST::Event *ev) {
-	c_TokenChgEvent* l_txnGenResQTokenChgEventPtr =
-			dynamic_cast<c_TokenChgEvent*>(ev);
-	if (l_txnGenResQTokenChgEventPtr) {
-		// std::cout << std::endl << "@" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		// 		<< __PRETTY_FUNCTION__ << std::endl;
-
-		m_txnGenResQTokens += l_txnGenResQTokenChgEventPtr->m_payload;
-
-		assert(m_txnGenResQTokens >= 0);
-		assert(m_txnGenResQTokens <= k_txnGenResQEntries);
-
-		// std::cout << "m_ResQTokens: " << m_txnGenResQTokens << std::endl;
-		delete l_txnGenResQTokenChgEventPtr;
-	} else {
-		std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
-				<< std::endl;
-	}
-}
-
-//// TxnUnit <-> CmdUnit Handlers
-void c_TxnUnit::handleOutCmdUnitReqPtrEvent(SST::Event *ev) {
-	// nothing to do here
-	std::cout << __PRETTY_FUNCTION__ << " ERROR: Should not be here"
-			<< std::endl;
-}
-
-void c_TxnUnit::handleInCmdUnitReqQTokenChgEvent(SST::Event *ev) {
-	c_TokenChgEvent* l_cmdUnitReqQTokenChgEventPtr =
-			dynamic_cast<c_TokenChgEvent*>(ev);
-	if (l_cmdUnitReqQTokenChgEventPtr) {
-		// std::cout << std::endl << "@" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		// 		<< __PRETTY_FUNCTION__ << std::endl;
-
-		m_cmdUnitReqQTokens += l_cmdUnitReqQTokenChgEventPtr->m_payload;
-
-		assert(m_cmdUnitReqQTokens >= 0);
-		assert(m_cmdUnitReqQTokens <= k_cmdUnitReqQEntries);
-
-		//FIXME: Critical: This pointer is left dangling
-		delete l_cmdUnitReqQTokenChgEventPtr;
-	} else {
-		std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
-				<< std::endl;
-	}
-}
-
+/*
 void c_TxnUnit::handleInCmdUnitResPtrEvent(SST::Event *ev) {
 
   c_CmdResEvent* l_cmdResEventPtr = dynamic_cast<c_CmdResEvent*>(ev);
@@ -691,3 +589,4 @@ void c_TxnUnit::handleInCmdUnitResPtrEvent(SST::Event *ev) {
 	      << std::endl;
   }
 }
+*/

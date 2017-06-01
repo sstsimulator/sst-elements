@@ -36,20 +36,14 @@
 #include "c_AddressHasher.hpp"
 
 using namespace std;
+using namespace SST;
 
 c_AddressHasher* c_AddressHasher::m_instance = nullptr;
 
-c_AddressHasher::c_AddressHasher(SST::ComponentId_t x_id, SST::Params& x_params) :
-  Component(x_id) {
-
-  getInstance(x_params);
-  
-}
-
-c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
+c_AddressHasher::c_AddressHasher(Component * comp, Params &params) : SubComponent(comp) {
   // read params here
   bool l_found = false;
-  k_addressMapStr = (string)x_params.find<string>("strAddressMapStr", "_r_l_b_R_B_h_", l_found);
+  k_addressMapStr = (string)params.find<string>("strAddressMapStr", "_r_l_b_R_B_h_", l_found);
   cout << "Address map string: " << k_addressMapStr << endl;
 
   string l_mapCopy = k_addressMapStr;
@@ -107,14 +101,14 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
 
 
   // pull config file sizes
-  k_pNumChannels = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,l_found);
-  k_pNumRanks = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 1,l_found);
-  k_pNumBankGroups = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank", 1,l_found);
-  k_pNumBanks = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup", 1,l_found);
-  k_pNumRows = (uint32_t)x_params.find<uint32_t>("numRowsPerBank", 1,l_found);
-  k_pNumCols = (uint32_t)x_params.find<uint32_t>("numColsPerBank", 1,l_found);
-  k_pBurstSize = (uint32_t)x_params.find<uint32_t>("numBytesPerTransaction", 1,l_found);
-  k_pNumPseudoChannels = (uint32_t)x_params.find<uint32_t>("numPseudoChannels", 1,l_found); //used to indicate the pseudo channel mode
+  k_pNumChannels = (uint32_t)params.find<uint32_t>("numChannelsPerDimm", 1,l_found);
+  k_pNumRanks = (uint32_t)params.find<uint32_t>("numRanksPerChannel", 1,l_found);
+  k_pNumBankGroups = (uint32_t)params.find<uint32_t>("numBankGroupsPerRank", 1,l_found);
+  k_pNumBanks = (uint32_t)params.find<uint32_t>("numBanksPerBankGroup", 1,l_found);
+  k_pNumRows = (uint32_t)params.find<uint32_t>("numRowsPerBank", 1,l_found);
+  k_pNumCols = (uint32_t)params.find<uint32_t>("numColsPerBank", 1,l_found);
+  k_pBurstSize = (uint32_t)params.find<uint32_t>("numBytesPerTransaction", 1,l_found);
+  k_pNumPseudoChannels = (uint32_t)params.find<uint32_t>("numPseudoChannels", 1,l_found); //used to indicate the pseudo channel mode
 
   // check for simple version address map
   bool l_allSimple = true;
@@ -315,6 +309,7 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
 
 } // c_AddressHasher(SST::Params)
 
+/*
 c_AddressHasher* c_AddressHasher::getInstance(SST::Params& x_params) {
   if (nullptr == m_instance) {
     m_instance = new c_AddressHasher(x_params);
@@ -330,6 +325,7 @@ c_AddressHasher* c_AddressHasher::getInstance() {
   }
   return m_instance;
 }
+ */
 
 void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address) {
   ulong l_cur=0;

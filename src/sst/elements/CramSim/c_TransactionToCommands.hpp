@@ -34,6 +34,7 @@
 
 #include "c_Transaction.hpp"
 #include "c_BankCommand.hpp"
+#include "c_AddressHasher.hpp"
 
 typedef unsigned long ulong;
 
@@ -48,19 +49,20 @@ namespace n_Bank {
 class c_TransactionToCommands {
 
 public:
+	c_TransactionToCommands(c_AddressHasher *x_addrHasher);
 	static c_TransactionToCommands* getInstance();
 	// x_relCommandWidth is the width of commands in terms of transaction
 	// for example, if transaction and command are for the same width, x_relCommandWidth
 	// must be set to 1, to create one basic command for every transaction.
-	std::vector<c_BankCommand*> getCommands(c_Transaction* x_txn,
-			unsigned x_relCommandWidth, bool x_useReadA, bool x_useWriteA);
-	std::queue<c_BankCommand*> getRefreshCommands(unsigned x_numBanks);
-        std::queue<c_BankCommand*> getRefreshCommands(std::vector<unsigned> &x_refreshGroup);
+	std::vector<c_BankCommand*> getCommands(c_Transaction* x_txn, unsigned x_relCommandWidth, bool x_useReadA, bool x_useWriteA);
+	std::queue<c_BankCommand*>  getRefreshCommands(unsigned x_numBanks);
+	std::queue<c_BankCommand*>  getRefreshCommands(std::vector<unsigned> &x_refreshGroup);
 
 
 private:
 	static c_TransactionToCommands* m_instance; //<! shared_ptr to instance of this class
 	static unsigned m_cmdSeqNum;
+	c_AddressHasher* m_addrHasher;
 
 	c_TransactionToCommands(const c_TransactionToCommands&) =delete;
 	void operator=(const c_TransactionToCommands&) =delete;

@@ -33,6 +33,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
+#include <sst/core/subcomponent.h>
 
 #include <memory>
 #include <map>
@@ -41,18 +42,19 @@
 //#include "c_BankCommand.hpp"
 #include "c_HashedAddress.hpp"
 
+using namespace SST;
 //<! This class holds information about global simulation state
 //<! any object in the simulator can access this class
 
 typedef unsigned long ulong;
 
-class c_AddressHasher: public SST::Component {
+class c_AddressHasher: public SubComponent {
 
 public:
   // Below is for calling in generic locations to obtain a pointer to the singleton instance
-  c_AddressHasher(SST::ComponentId_t x_id, SST::Params& x_params);
+  c_AddressHasher(Component * comp, Params &params);
   static c_AddressHasher* getInstance(); 
-  static c_AddressHasher* getInstance(SST::Params& x_params); // This reads the parameters and constructs the hash function
+  static c_AddressHasher* getInstance(Params& x_params); // This reads the parameters and constructs the hash function
 
   void fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address);
   ulong getAddressForBankId(const unsigned x_bankId);
@@ -64,7 +66,7 @@ private:
   c_AddressHasher(const c_AddressHasher&)=delete;
   void operator=(const c_AddressHasher&)=delete;
 
-  c_AddressHasher(SST::Params& x_params);
+  c_AddressHasher(Params& x_params);
 
   unsigned k_pNumChannels;
   unsigned k_pNumRanks;

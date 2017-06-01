@@ -253,7 +253,7 @@ void c_DramSimTraceReader::handleInTxnUnitReqQTokenChgEvent(SST::Event *ev) {
 		m_txnUnitReqQTokens += l_txnUnitReqQTknChgEventPtr->m_payload;
 
 		//FIXME: Critical: This pointer is left dangling
-		delete l_txnUnitReqQTknChgEventPtr;
+		//delete l_txnUnitReqQTknChgEventPtr;
 
 		assert(m_txnUnitReqQTokens >= 0);
 		assert(m_txnUnitReqQTokens <= k_txnUnitReqQEntries);
@@ -291,7 +291,7 @@ void c_DramSimTraceReader::handleInTxnUnitResPtrEvent(SST::Event* ev) {
 		m_txnResQ.push(l_txnResEventPtr->m_payload);
 
 		//FIXME: Critical: This pointer is left dangling
-		delete l_txnResEventPtr;
+		//delete l_txnResEventPtr;
 	} else {
 		std::cout << std::endl << std::endl << "TxnGen:: "
 				<< __PRETTY_FUNCTION__ << " ERROR:: Bad Event Type!"
