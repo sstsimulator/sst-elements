@@ -191,39 +191,43 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
 }
 
 
-bool Cache::processEvent(MemEvent* event, bool replay) {
+bool Cache::processEvent(MemEventBase* ev, bool replay) {
+    
+    
+    // Debug
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR)) {
+        if (replay) {
+            d_->debug(_L3_, "Replay. Name: %s. Cycles: %" PRIu64 ". Event: (%s)\n", this->getName().c_str(), timestamp_, ev->getVerboseString().c_str());
+        } else {
+            d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"); 
+            d_->debug(_L3_,"New Event. Name: %s. Cycles: %" PRIu64 ", Event: (%s)\n", this->getName().c_str(), timestamp_, ev->getVerboseString().c_str());
+        }
+        cout << flush;
+    }
+#endif
+    if (MemEventTypeArr[(int)ev->getCmd()] != MemEventType::Cache) {
+        coherenceMgr_->forwardMessage(ev);
+    }
+
+    MemEvent * event = static_cast<MemEvent*>(ev);
     Command cmd     = event->getCmd();
-    if (cf_.L1_) event->setBaseAddr(toBaseAddr(event->getAddr()));
+    bool noncacheable   = ev->queryFlag(MemEvent::F_NONCACHEABLE) || cf_.allNoncacheableRequests_;
+    //if (cf_.L1_) event->setBaseAddr(toBaseAddr(event->getAddr()));
     Addr baseAddr   = event->getBaseAddr();
-    bool noncacheable   = event->queryFlag(MemEvent::F_NONCACHEABLE) || cf_.allNoncacheableRequests_;
+    if (baseAddr % cf_.cacheArray_->getLineSize() != 0) {
+        d_->fatal(CALL_INFO, -1, "Base address is not a multiple of line size!\n");
+    }
     MemEvent* origEvent;
     
     /* Set requestor field if this is the first cache that's seen this event */
-    if (event->getRqstr() == "None") { event->setRqstr(this->getName()); }
 
     
     if (!replay) { 
         statTotalEventsReceived->addData(1);
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"); 
-        cout << flush;
-#endif
-    }
-    else statTotalEventsReplayed->addData(1);
+    } else statTotalEventsReplayed->addData(1);
 
 #ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) {
-        if (replay) {
-            d_->debug(_L3_,"Replay. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", VAddr: %" PRIx64 ", iPtr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Bytes requested = %u, cycles: %" PRIu64 ", %s\n",
-                       this->getName().c_str(), CommandString[(int)event->getCmd()], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getRqstr().c_str(), 
-                       event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable");
-        } else {
-            d_->debug(_L3_,"New Event. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", VAddr: %" PRIx64 ", iPtr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Bytes requested = %u, cycles: %" PRIu64 ", %s\n",
-                       this->getName().c_str(), CommandString[(int)event->getCmd()], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getRqstr().c_str(), 
-                       event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable");
-        }
-    }
-    cout << flush; 
 #endif
 
     if (noncacheable || cf_.allNoncacheableRequests_) {
@@ -389,7 +393,7 @@ void Cache::handlePrefetchEvent(SST::Event* ev) {
 void Cache::processPrefetchEvent(SST::Event* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);
     event->setBaseAddr(toBaseAddr(event->getAddr()));
-    
+    event->setRqstr(this->getName());
 
     if (!clockIsOn_) {
         Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
@@ -429,13 +433,13 @@ void Cache::init(unsigned int phase) {
         bottomNetworkLink_->init(phase);
         
         if (!phase)
-            bottomNetworkLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive"));
+            bottomNetworkLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive", cf_.cacheArray_->getLineSize()));
 
         /*  */
         while(MemEventInit *event = bottomNetworkLink_->recvInitData()) {
             if (event->getCmd() == Command::NULLCMD) {
-                d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d\n", 
-                        this->getName().c_str(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), (int)event->getType(), event->getInclusive());
+                d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d, line size: %" PRIu64 "\n", 
+                        this->getName().c_str(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), (int)event->getType(), event->getInclusive(), event->getLineSize());
             }
             delete event;
         }
@@ -448,15 +452,12 @@ void Cache::init(unsigned int phase) {
     }
     
     if (!phase) {
-        if (cf_.L1_) {
-            highNetPort_->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
-        } else {
-            highNetPort_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive"));
-        }
+        highNetPort_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive", cf_.cacheArray_->getLineSize()));
+        
         if (!bottomNetworkLink_) { // If we do have a bottom network link, the nic takes care of this
-            lowNetPort_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive"));
+            lowNetPort_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive", cf_.cacheArray_->getLineSize()));
         } else {
-            bottomNetworkLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive"));
+            bottomNetworkLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive", cf_.cacheArray_->getLineSize()));
         }
     }
 
@@ -549,7 +550,7 @@ void Cache::finish() {
 
 /* Main handler for links to upper and lower caches/cores/buses/etc */
 void Cache::processIncomingEvent(SST::Event* ev) {
-    MemEvent* event = static_cast<MemEvent*>(ev);
+    MemEventBase* event = static_cast<MemEventBase*>(ev);
     if (!clockIsOn_) {
         Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
         timestamp_ = time - 1;

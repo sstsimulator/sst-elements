@@ -205,7 +205,7 @@ private:
     int addrForDest(const std::string &target) const;
 
     /* Get size in bits for a MemEvent */
-    int getSizeInBits(MemEvent *ev);
+    int getSizeInBits(MemEventBase *ev);
 
     /* Used during run to send updated address ranges */
     void sendNewTypeInfo(const ComponentTypeInfo &cti);
@@ -238,8 +238,8 @@ public:
     bool clock(void);
     bool isValidDestination(std::string target);
 
-    void send(MemEvent *ev);
-    MemEvent* recv(void);
+    void send(MemEventBase *ev);
+    MemEventBase* recv(void);
     void sendInitData(MemEventInit *ev);
     MemEventInit* recvInitData(void);
     bool initDataReady();
@@ -263,8 +263,7 @@ public:
     }
 
 
-    bool isRequestAddressValid(MemEvent *ev){
-        Addr addr = ev->getAddr();
+    bool isRequestAddressValid(Addr addr){
         Addr step;
 
         if(0 == numPages_)     return (addr >= rangeStart_ && addr < (rangeStart_ + memSize_));

@@ -35,7 +35,24 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *_comp, Params &_par
 
 
 void MemHierarchyInterface::init(unsigned int phase) {
-    
+    if (!phase) {
+        link_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::CPU, false, 0));
+    }
+
+    while (SST::Event * ev = link_->recvInitData()) {
+        MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
+        if (memEvent) {
+            // Pick up info for initializing MemEvents
+            if (memEvent->getCmd() == Command::NULLCMD) {
+//                output.output("%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d, line size: %" PRIu64 "\n",
+//                        this->getName().c_str(), CommandString[(int)memEvent->getCmd()], memEvent->getSrc().c_str(), (int)memEvent->getType(), memEvent->getInclusive(), memEvent->getLineSize());
+
+                baseAddrMask_ = ~(memEvent->getLineSize() - 1);
+                rqstr_ = memEvent->getSrc();
+            }
+        }
+        delete ev;
+    }
 }
 
 
@@ -77,9 +94,13 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
         case SimpleMem::Request::FlushLineResp: cmd = Command::FlushLineResp; break;
         default: output.fatal(CALL_INFO, -1, "Unknown req->cmd in createMemEvent()\n");
     }
+
+    Addr baseAddr = (req->addrs[0]) & baseAddrMask_;
     
-    MemEvent *me = new MemEvent(owner_, req->addrs[0], req->addrs[0], cmd);
+    MemEvent *me = new MemEvent(owner_, req->addrs[0], baseAddr, cmd);
     
+    me->setRqstr(rqstr_);
+    me->setDst(rqstr_);
     me->setSize(req->size);
 
     if (SimpleMem::Request::Write == req->cmd)  {
@@ -109,6 +130,8 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
     me->setInstructionPointer(req->getInstructionPointer());
 
     me->setMemFlags(req->memFlags);
+
+    //output.output("MemHInterface. Created event. %s\n", me->getVerboseString().c_str());
 
     //totalRequests_++;
     return me;

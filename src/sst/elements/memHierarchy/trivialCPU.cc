@@ -95,9 +95,7 @@ trivialCPU::trivialCPU() :
 
 void trivialCPU::init(unsigned int phase)
 {
-	if ( !phase ) {
-		memory->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
-	}
+    memory->init(phase);
 }
 
 // incoming events are scanned and deleted

@@ -329,7 +329,7 @@ void Scratchpad::handleScratchGet(MemEventBase * event) {
             if (cacheStatus_[lineIndex + i]) { // Line might be cached, invalidate it AND THROW IT OUT IF MODIFIED!
                 MemEvent * inv = new MemEvent(this, (lineIndex+i)*scratchLineSize_, (lineIndex+i)*scratchLineSize_, Command::ForceInv, scratchLineSize_);
                 uint64_t deliveryTime = timestamp_; // TODO timing
-                procMsgQueue_.insert(std::make_pair(deliveryTime, memRequest));
+                procMsgQueue_.insert(std::make_pair(deliveryTime, inv));
             }
         }
     }
@@ -759,7 +759,7 @@ void Scratchpad::init(unsigned int phase) {
                 caching_ = true;
                 cacheStatus_.resize(scratchSize_/scratchLineSize_, false);
             } else if (sEv->getType() == Endpoint::Directory) {
-                debug.fatal("Error, scratchpad does not currently support link to a directory...working on this\n");
+                dbg.fatal(CALL_INFO, -1, "Error, scratchpad does not currently support link to a directory...working on this\n");
             }   
         }
         delete ev;

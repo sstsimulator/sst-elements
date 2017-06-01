@@ -1770,10 +1770,10 @@ void DirectoryController::init(unsigned int phase){
     if (!phase) {
         // Tell memory we're here
         if (memLink)
-            memLink->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Directory, true));
+            memLink->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Directory, true, cacheLineSize));
 
         // Announce to network we're here
-        network->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Directory, true));
+        network->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Directory, true, cacheLineSize));
     }
 
     if (!memLink && network->initDataReady() && !network->isValidDestination(memoryName)) {

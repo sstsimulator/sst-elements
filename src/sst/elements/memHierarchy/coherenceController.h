@@ -81,6 +81,8 @@ public:
     /* Forward a message to a lower memory level (towards memory) */
     uint64_t forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data);
 
+    /* Forward a generic message towards memory */
+    uint64_t forwardMessage(MemEventBase * event);
 
     /***** Manage outgoing event queuest *****/
     
@@ -120,7 +122,7 @@ public:
     
 protected:
     struct Response {
-        MemEvent* event;
+        MemEventBase* event;
         uint64_t deliveryTime;
         uint64_t size;
     };

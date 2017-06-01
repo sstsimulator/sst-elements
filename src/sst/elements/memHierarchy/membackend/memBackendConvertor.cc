@@ -199,3 +199,7 @@ const std::string& MemBackendConvertor::getClockFreq() {
 size_t MemBackendConvertor::getMemSize() {
     return m_backend->getMemSize();
 }
+
+uint32_t MemBackendConvertor::getRequestWidth() {
+    return m_backend->getRequestWidth();
+}

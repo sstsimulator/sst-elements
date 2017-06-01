@@ -46,7 +46,7 @@ void MemNIC::setMinPacketSize(unsigned int bytes) {
 }
 
 /* Get size in bytes for a MemEvent */
-int MemNIC::getSizeInBits(MemEvent *ev)
+int MemNIC::getSizeInBits(MemEventBase *ev)
 {
     /* addr (8B) + cmd (1B) + size */
     return 8 * (packetHeaderBytes + ev->getPayloadSize());
@@ -283,10 +283,10 @@ bool MemNIC::clock(void)
             if ( sent ) {
 #ifdef __SST_DEBUG_OUTPUT__
                 if ( static_cast<MemRtrEvent*>(head->inspectPayload())->hasClientData() ) {
-                    MemEvent* event = static_cast<MemEvent*>((static_cast<MemRtrEvent*>(head->inspectPayload()))->event);
-                    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) {
-                        dbg->debug(_L8_, "Sent message ((%" PRIx64 ", %d) %s %" PRIx64 ") to (%" PRIu64 ") [%s]\n", 
-                                event->getID().first, event->getID().second, CommandString[(int)event->getCmd()], event->getAddr(), head->dest, event->getDst().c_str());
+                    MemEventBase* event = static_cast<MemEventBase*>((static_cast<MemRtrEvent*>(head->inspectPayload()))->event);
+                    if (DEBUG_ALL || event->doDebug(DEBUG_ADDR)) {
+                        dbg->debug(_L8_, "Sent message ((%" PRIx64 ", %d) %s ) to (%" PRIu64 ") [%s]\n", 
+                                event->getID().first, event->getID().second, CommandString[(int)event->getCmd()], head->dest, event->getDst().c_str());
                     }
                 }
 #endif
@@ -306,33 +306,13 @@ bool MemNIC::clock(void)
  *  Notify MemNIC on receiving an event
  */
 bool MemNIC::recvNotify(int) {
-    MemEvent * me = recv();
+    MemEventBase * me = recv();
     if (me) {
-#if 0
-        if ( !isRequestAddressValid(me) ) {
-            dbg->fatal(CALL_INFO, 1, "MemoryController \"%s\" received request from \"%s\" with invalid address.\n"
-                "\t\tRequested Address:   0x%" PRIx64 "\n"
-                "\t\tMC Range Start:      0x%" PRIx64 "\n"
-                "\t\tMC Range End:        0x%" PRIx64 "\n"
-                "\t\tMC Interleave Step:  0x%" PRIx64 "\n"
-                "\t\tMC Interleave Size:  0x%" PRIx64 "\n",
-                comp->getName().c_str(),
-                me->getSrc().c_str(), me->getAddr(),
-                rangeStart_, (rangeStart_ + memSize_),
-                interleaveStep_, interleaveSize_);
-        }
-#endif
-
-        // A memory controller should only know about a contiguous memory space
-        // the MemNIC should convert to a contiguous address before the MemEvent
-        // hits the memory controller and probably needs to fixup the response
-        // Addr convertAddressToLocalAddress(Addr addr)
-        
        
 #ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || DEBUG_ADDR == me->getBaseAddr())
-            dbg->debug(_L9_, "%s, memNIC recv: src: %s. (Cmd: %s, Rqst size: %u, Payload size: %u)\n", 
-                    comp->getName().c_str(), me->getSrc().c_str(), CommandString[(int)me->getCmd()], me->getSize(), me->getPayloadSize());
+        if (DEBUG_ALL || me->doDebug(DEBUG_ADDR))
+            dbg->debug(_L9_, "%s, memNIC recv: src: %s. cmd: %s\n", 
+                    comp->getName().c_str(), me->getSrc().c_str(), CommandString[(int)me->getCmd()]);
 #endif
         
         (*recvHandler)(me);
@@ -340,7 +320,7 @@ bool MemNIC::recvNotify(int) {
     return true;
 }
 
-MemEvent* MemNIC::recv(void)
+MemEventBase* MemNIC::recv(void)
 {
     /* Check for received stuff */
     for ( int vc = 0; vc < num_vcs ; vc++ ) {
@@ -352,7 +332,7 @@ MemEvent* MemNIC::recv(void)
             MemRtrEvent *mre = static_cast<MemRtrEvent*>(req->takePayload());
             delete req;
             if ( mre->hasClientData() ) {
-                MemEvent *deliverEvent = static_cast<MemEvent*>(mre->event);
+                MemEventBase *deliverEvent = static_cast<MemEventBase*>(mre->event);
                 deliverEvent->setDeliveryLink(mre->getLinkId(), NULL);
                 delete mre;
                 return deliverEvent;
@@ -383,7 +363,7 @@ MemEvent* MemNIC::recv(void)
 }
 
 
-void MemNIC::send(MemEvent *ev)
+void MemNIC::send(MemEventBase *ev)
 {
     SimpleNetwork::Request* req = new SimpleNetwork::Request();
     MemRtrEvent *mre = new MemRtrEvent(ev);
@@ -392,9 +372,9 @@ void MemNIC::send(MemEvent *ev)
     req->size_in_bits = getSizeInBits(ev);
     req->vn = 0;
 #ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr())
-        dbg->debug(_L9_, "%s, memNIC send: dst: %s; bits: %zu. (Cmd: %s, Rqst size: %u, Payload size: %u)\n", 
-                comp->getName().c_str(), ev->getDst().c_str(), req->size_in_bits, CommandString[(int)ev->getCmd()], ev->getSize(), ev->getPayloadSize());
+    if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR))
+        dbg->debug(_L9_, "%s, memNIC send: dst: %s; bits: %zu. cmd: %s\n", 
+                comp->getName().c_str(), ev->getDst().c_str(), req->size_in_bits, CommandString[(int)ev->getCmd()]);
 #endif
     req->givePayload(mre);
     

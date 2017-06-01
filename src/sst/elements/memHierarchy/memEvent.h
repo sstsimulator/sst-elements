@@ -194,7 +194,7 @@ public:
         }
     }
 
-    uint32_t getPayloadSize() {
+    size_t getPayloadSize() {
         return payload_.size();
     }
 
@@ -224,6 +224,29 @@ public:
 
     virtual MemEvent* clone(void) override {
         return new MemEvent(*this);
+    }
+
+    virtual std::string getVerboseString() {
+        std::ostringstream str;
+        str << " Addr: " << addr_ << " BaseAddr: " << baseAddr_;
+        str << " VA: " << vAddr_ << " IP: " << instPtr_;
+        str << " Size: " << size_;
+        str << " Prefetch: " << (prefetch_ ? "true" : "false");
+        return MemEventBase::getVerboseString() + str.str();
+    }
+
+    virtual std::string getBriefString() {
+        std::ostringstream str;
+        str << "Addr: " << addr_ << " BaseAddr: " << baseAddr_;
+        return MemEventBase::getBriefString() + str.str();
+    }
+    
+    virtual bool doDebug(Addr addr) {
+        return (baseAddr_ == addr);
+    }
+
+    virtual Addr getRoutingAddress() {
+        return baseAddr_;
     }
 
 private:

@@ -57,8 +57,9 @@ enum class MemEventType { Cache, Move };                            // For parsi
     X(PutS,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Clean replacement from S->I:      Remove sharer */\
     X(PutM,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
     X(PutE,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Clean replacement from E->I:      Remove owner but don't writeback data */\
-    /* Invalidates - sent by caches or directory controller */\
+    /* Invalidations*/\
     X(Inv,              AckInv,         Request,    ForwardRequest, 0, 0,   Cache)   /* Other write request:  Invalidate cache line */\
+    X(ForceInv,         AckInv,         Request,    ForwardRequest, 0, 0,   Cache)   /* Force invalidation even if line is modified */ \
     /* Invalidates - sent by directory controller */\
     X(Fetch,            FetchResp,      Request,    ForwardRequest, 0, 0,   Cache)   /* Other read request to sharer:  Get data but don't invalidate cache line */\
     X(FetchInv,         FetchResp,      Request,    ForwardRequest, 0, 0,   Cache)   /* Other write request to owner:  Invalidate cache line */\
@@ -72,8 +73,6 @@ enum class MemEventType { Cache, Move };                            // For parsi
     X(Put,              AckMove,        Request,    Request,        1, 0,   Move) \
     X(Get,              AckMove,        Request,    Request,        1, 0,   Move) \
     X(AckMove,          NULLCMD,        Response,   Ack,            0, 0,   Move) \
-    X(Read,             GetSResp,       Request,    Request,        1, 0,   Cache) \
-    X(Write,            NULLCMD,        Request,    Request,        1, 0,   Cache) \
 
 /** Valid commands for the MemEvent */
 enum class Command {

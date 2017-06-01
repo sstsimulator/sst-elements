@@ -77,6 +77,7 @@ class MemBackendConvertor : public SubComponent {
     virtual size_t getMemSize();
     virtual bool clock( Cycle_t cycle );
     virtual void handleMemEvent(  MemEvent* );
+    virtual uint32_t getRequestWidth();
 
     virtual const std::string& getRequestor( ReqId reqId ) { 
         uint32_t id = MemReq::getBaseId(reqId);

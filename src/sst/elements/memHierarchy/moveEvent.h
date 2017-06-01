@@ -102,6 +102,40 @@ public:
     virtual MoveEvent* clone(void) override {
         return new MoveEvent(*this);
     }
+    
+    virtual std::string getVerboseString() {
+        std::ostringstream str;
+        str << " SrcAddr: " << srcAddr_ << " SrcBaseAddr: " << srcBaseAddr_;
+        str << " DstAddr: " << dstAddr_ << " DstBaseAddr: " << dstBaseAddr_;
+        str << " SrcVA: " << srcVAddr_ << " DstVA: " << dstVAddr_ << " IP: " << iPtr_;
+        str << " Size: " << size_;
+        return MemEventBase::getVerboseString() + str.str();
+    }
+
+    virtual std::string getBriefString() {
+        std::ostringstream str;
+        str << " SrcAddr: " << srcAddr_ << " SrcBaseAddr: " << srcBaseAddr_;
+        str << " DstAddr: " << dstAddr_ << " DstBaseAddr: " << dstBaseAddr_;
+        str << " Size: " << size_;
+        return MemEventBase::getBriefString() + str.str();
+    }
+    
+    virtual bool doDebug(Addr addr) {
+        if (addr >= dstBaseAddr_ && addr < dstAddr_ + size_) return true;
+        if (addr >= srcBaseAddr_ && addr < srcAddr_ + size_) return true;
+        return false;
+    }
+
+    virtual Addr getRoutingAddress() {
+        // Return "local" address - destination if Get, source if Put
+        if (cmd_ == Command::Get) return dstBaseAddr_;
+        else return srcBaseAddr_;
+    }
+
+    virtual size_t getPayloadSize() {
+        return 0;
+    }
+
 private:
     Addr            dstAddr_;          // Address (target address if this is a get/put)
     Addr            dstBaseAddr_;      // Base address (line-aligned address, target if a get/put)

@@ -256,7 +256,7 @@ void MemController::handleMemResponse( MemEvent* ev ) {
 void MemController::init(unsigned int phase) {
     if (! networkLink_ ) {
         if (!phase) {
-            cacheLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Memory, true));
+            cacheLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Memory, true, memBackendConvertor_->getRequestWidth()));
         }
 
         SST::Event *ev = NULL;
@@ -273,7 +273,7 @@ void MemController::init(unsigned int phase) {
         networkLink_->init(phase);
         
         if (!phase) {
-            networkLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Memory, true));
+            networkLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Memory, true, memBackendConvertor_->getRequestWidth()));
         }
 
         while (MemEventInit *ev = networkLink_->recvInitData()) {

@@ -121,6 +121,38 @@ public:
     void setMemFlags(uint32_t flags) { memFlags_ = flags; }
     uint32_t getMemFlags() const { return memFlags_; }
 
+    std::string getFlagString() {
+        std::string str;
+        str += "[";
+        bool addComma = false;
+        if (flags_ & F_LOCKED) { 
+            str += "F_LOCKED"; 
+            addComma = true;
+        }
+        if (flags_ & F_NONCACHEABLE) { 
+            if (addComma) str += ", ";
+            str += "F_NONCACHEABLE, "; 
+            addComma = true;
+        }
+        if (flags_ & F_LLSC) { 
+            if (addComma) str += ", ";
+            str += "F_LLSC, "; 
+            addComma = true;
+        }
+        if (flags_ & F_SUCCESS) { 
+            if (addComma) str += ", ";
+            str += "F_SUCCESS, "; 
+            addComma = true;
+        }
+        if (flags_ & F_NORESPONSE) { 
+            if (addComma) str += ", ";
+            str += "F_NORESPONSE, "; 
+            addComma = true;
+        }
+        str += "]";
+        return str;
+    }
+
 
     /** Return size of the event - for calculating bandwidth used */
     virtual uint32_t getEventSize() { return 0; }
@@ -128,13 +160,27 @@ public:
     /** Get verbose print of the event */
     virtual std::string getVerboseString() {
         std::string cmdStr(CommandString[(int)cmd_]);
-        return "Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rqstr: " + rqstr_;
+        std::ostringstream str;
+        str << " Flags: " << getFlagString() << " MemFlags: " << memFlags_;
+        return "Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rqstr: " + rqstr_ + str.str();
     }
 
     /** Get brief print of the event */
     virtual std::string getBriefString() {
         std::string cmdStr(CommandString[(int)cmd_]);
         return "Cmd: " + cmdStr + " Src: " + src_;
+    }
+
+    virtual bool doDebug(Addr addr) {
+        return true;    // Always debug unless we come up with a different way of determining it
+    }
+
+    virtual Addr getRoutingAddress() {
+        return 0;   // Route this as if its address was 0
+    }
+    
+    virtual size_t getPayloadSize() { 
+        return 0; // No payload
     }
 
     virtual MemEventBase* clone(void) override {
@@ -176,24 +222,45 @@ public:
 
 class MemEventInit : public MemEventBase  {
 public:
-    MemEventInit(std::string src, Command cmd, Endpoint type, bool inclusive) : MemEventBase(src, cmd), type_(type), inclusive_(inclusive) { }
+    MemEventInit(std::string src, Command cmd, Endpoint type, bool inclusive, Addr lineSize) : MemEventBase(src, cmd), type_(type), inclusive_(inclusive), lineSize_(lineSize), addr_(0) { }
     MemEventInit(std::string src, Command cmd, Addr addr, std::vector<uint8_t> &data) : MemEventBase(src, cmd), addr_(addr), payload_(data) { }
 
     Endpoint getType() { return type_; }
     bool getInclusive() { return inclusive_; }
+    Addr getLineSize() { return lineSize_; }
     std::vector<uint8_t>& getPayload() { return payload_; }
     Addr getAddr() { return addr_; }
     void setAddr(Addr addr) { addr_ = addr; }
+    
 
     virtual MemEventInit* clone(void) override {
         return new MemEventInit(*this);
     }
+    
+    virtual std::string getVerboseString() {
+        std::ostringstream str;
+        if (cmd_ == Command::NULLCMD) {
+            str << " Type: " << (int) type_ << " Inclusive: " << (inclusive_ ? "true" : "false");
+            str << " LineSize: " << lineSize_;
+        } else {
+            str << " Addr: " << addr_ << " Payload size: " << payload_.size();
+        }
+        return MemEventBase::getVerboseString() + str.str();
+    }
+
+    virtual std::string getBriefString() {
+        return MemEventBase::getBriefString();
+    }
+
+    virtual Addr getRoutingAddress() { return addr_; }
+
 
 private:
     // For determining endpoint information 
-    Endpoint type_;  // Type of this endpoint
-    bool inclusive_; // Whether this endpoint is inclusive
-    
+    Endpoint type_;     // Type of this endpoint
+    bool inclusive_;    // Whether this endpoint is inclusive
+    Addr lineSize_;  // Endpoint's linesize
+
     // For pre-loading data into memory
     Addr addr_;
     std::vector<uint8_t> payload_;
@@ -204,6 +271,7 @@ public:
         MemEventBase::serialize_order(ser);
         ser & type_;
         ser & inclusive_;
+        ser & lineSize_;
         ser & addr_;
         ser & payload_;
     }

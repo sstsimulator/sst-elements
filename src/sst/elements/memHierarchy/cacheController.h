@@ -83,7 +83,7 @@ private:
     void processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr);
     
     /** Process the oldest incoming event */
-    bool processEvent(MemEvent* event, bool mshrHit);
+    bool processEvent(MemEventBase* event, bool mshrHit);
     
     /** Configure this component's links */
     void configureLinks(Params &params);
@@ -193,7 +193,7 @@ private:
         
         // If we have waiting requests send them now
         requestsThisCycle_ = 0;
-        std::queue<MemEvent*>   tmpBuffer;
+        std::queue<MemEventBase*>   tmpBuffer;
         while (!requestBuffer_.empty()) {
             if (requestsThisCycle_ == maxRequestsPerCycle_) {
                 break;
@@ -301,12 +301,12 @@ private:
     int                     requestsThisCycle_;
     unsigned int            maxBytesUpPerCycle_;
     unsigned int            maxBytesDownPerCycle_;
-    std::queue<MemEvent*>   requestBuffer_;
+    std::queue<MemEventBase*>       requestBuffer_;
     Clock::Handler<Cache>*  clockHandler_;
     TimeConverter*          defaultTimeBase_;
-    std::map<string, LinkId_t>     nameMap_;
-    std::map<LinkId_t, SST::Link*> linkIdMap_;
-    std::map<MemEvent*,uint64> startTimeList;
+    std::map<string, LinkId_t>      nameMap_;
+    std::map<LinkId_t, SST::Link*>  linkIdMap_;
+    std::map<MemEvent*,uint64>      startTimeList;
     std::map<MemEvent*,int> missTypeList;
     bool                    DEBUG_ALL;
     Addr                    DEBUG_ADDR;

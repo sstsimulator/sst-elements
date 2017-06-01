@@ -102,7 +102,7 @@ bool DMAEngine::clock(Cycle_t cycle)
 
     networkLink->clock();
 
-    MemEvent *me = NULL;
+    MemEventBase *me = NULL;
     SST::Event *se = NULL;
 
     while ( NULL != (me = networkLink->recv()) ) {
@@ -172,7 +172,7 @@ void DMAEngine::startRequest(Request *req)
 }
 
 
-void DMAEngine::processPacket(Request *req, MemEvent *ev)
+void DMAEngine::processPacket(Request *req, MemEventBase *ev)
 {
     assert(0);
     /*  Needs to be updated with current MemHierarchy Commands/States, MemHierarchyInterface
@@ -225,7 +225,7 @@ bool DMAEngine::findOverlap(Addr a1, size_t s1, Addr a2, size_t s2) const
 }
 
 
-DMAEngine::Request* DMAEngine::findRequest(MemEvent::id_type id)
+DMAEngine::Request* DMAEngine::findRequest(SST::Event::id_type id)
 {
     for ( std::set<Request*>::iterator i = activeRequests.begin() ; i != activeRequests.end() ; ++i ) {
         Request *req = (*i);

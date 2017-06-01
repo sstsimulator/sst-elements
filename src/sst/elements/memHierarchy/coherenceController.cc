@@ -179,7 +179,15 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, Addr baseAddr, un
 #endif
     return deliveryTime;
 }
-    
+
+uint64_t CoherenceController::forwardMessage(MemEventBase * event) {
+    event->setSrc(parent->getName());
+    event->setDst(getDestination(event->getRoutingAddress()));
+
+    Response fwdReq = {event, timestamp_ + 1, packetHeaderBytes };
+    addToOutgoingQueue(fwdReq);
+    return timestamp_ + 1;
+}
 
 
 /**************************************/
@@ -195,7 +203,7 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
     // Check for ready events in outgoing 'down' queue
     uint64_t bytesLeft = maxBytesDown;
     while (!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
-        MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
+        MemEventBase *outgoingEvent = outgoingEventQueue_.front().event;
         if (maxBytesDown != 0) {
             if (bytesLeft == 0) break;
             if (bytesLeft >= outgoingEventQueue_.front().size) {
@@ -207,14 +215,13 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
         }
 
 #ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
-            debug->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Rqst size = %u, Payload size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
-                    CommandString[(int)outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
-                    outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), outgoingEvent->getPayloadSize(), timestamp_, curTime);
+        if (DEBUG_ALL || outgoingEvent->doDebug(DEBUG_ADDR)) {
+            debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
+                    parent->getName().c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
         }
 #endif
         if (bottomNetworkLink_) {
-            outgoingEvent->setDst(bottomNetworkLink_->findTargetDestination(outgoingEvent->getBaseAddr()));
+            outgoingEvent->setDst(bottomNetworkLink_->findTargetDestination(outgoingEvent->getRoutingAddress()));
             debug->debug(_L4_, "Set destination to %s\n", outgoingEvent->getDst().c_str());
             bottomNetworkLink_->send(outgoingEvent);
         } else {
@@ -227,7 +234,7 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
     // Check for ready events in outgoing 'up' queue
     bytesLeft = maxBytesUp;
     while (!outgoingEventQueueUp_.empty() && outgoingEventQueueUp_.front().deliveryTime <= timestamp_) {
-        MemEvent * outgoingEvent = outgoingEventQueueUp_.front().event;
+        MemEventBase * outgoingEvent = outgoingEventQueueUp_.front().event;
         if (maxBytesUp != 0) {
             if (bytesLeft == 0) break;
             if (bytesLeft >= outgoingEventQueueUp_.front().size) {
@@ -239,10 +246,9 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
         }
 
 #ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
-            debug->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Rqst size = %u, Payload size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
-                    CommandString[(int)outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
-                    outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), outgoingEvent->getPayloadSize(), timestamp_, curTime);
+        if (DEBUG_ALL || outgoingEvent->doDebug(DEBUG_ADDR)) {
+            debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
+                    parent->getName().c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
         }
 #endif
         if (topNetworkLink_) {
@@ -268,7 +274,7 @@ void CoherenceController::addToOutgoingQueue(Response& resp) {
     list<Response>::reverse_iterator rit;
     for (rit = outgoingEventQueue_.rbegin(); rit!= outgoingEventQueue_.rend(); rit++) {
         if (resp.deliveryTime >= (*rit).deliveryTime) break;
-        if (resp.event->getBaseAddr() == (*rit).event->getBaseAddr()) break;
+        if (resp.event->getRoutingAddress() == (*rit).event->getRoutingAddress()) break;
     }
     outgoingEventQueue_.insert(rit.base(), resp);
 }
@@ -280,7 +286,7 @@ void CoherenceController::addToOutgoingQueueUp(Response& resp) {
     list<Response>::reverse_iterator rit;
     for (rit = outgoingEventQueueUp_.rbegin(); rit != outgoingEventQueueUp_.rend(); rit++) {
         if (resp.deliveryTime >= (*rit).deliveryTime) break;
-        if (resp.event->getBaseAddr() == (*rit).event->getBaseAddr()) break;
+        if (resp.event->getRoutingAddress() == (*rit).event->getRoutingAddress()) break;
     }
     outgoingEventQueueUp_.insert(rit.base(), resp);
 }
