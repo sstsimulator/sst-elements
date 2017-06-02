@@ -47,7 +47,7 @@ for line in inFile:
             bankStates[int(ii)] = cmdDict[cmd]
     else:
         if cmd != 'REF':
-            addr = grep[2]
+            addr = grep[3]
             bankId = int(grep[11])
             if bankId >= numBanks:
                 print "Increase numBqanks!",bankId,"detected, max is",numBanks-1
