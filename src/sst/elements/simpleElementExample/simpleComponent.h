@@ -27,6 +27,38 @@ namespace SimpleComponent {
 class simpleComponent : public SST::Component 
 {
 public:
+
+    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_COMPONENT(
+        simpleComponent,
+        "simpleElementExample",
+        "simpleComponent",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Simple Demo Component",
+        COMPONENT_CATEGORY_PROCESSOR
+    )
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        { "workPerCycle", "Count of busy work to do during a clock tick.", NULL},
+        { "commFreq",     "Approximate frequency of sending an event during a clock tick.", NULL},
+        { "commSize",     "Size of communication to send.", "16"}
+    )
+
+    // Optional since there is nothing to document
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"Nlink", "Link to the simpleComponent to the North", { "simpleComponent.simpleComponentEvent", "" } },
+        {"Slink", "Link to the simpleComponent to the South", { "simpleComponent.simpleComponentEvent", "" } },
+        {"Elink", "Link to the simpleComponent to the East",  { "simpleComponent.simpleComponentEvent", "" } },
+        {"Wlink", "Link to the simpleComponent to the West",  { "simpleComponent.simpleComponentEvent", "" } }
+    )
+    
+    // Optional since there is nothing to document
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
+
     simpleComponent(SST::ComponentId_t id, SST::Params& params);
     ~simpleComponent();
 
@@ -53,36 +85,6 @@ private:
     SST::Link* S;
     SST::Link* E;
     SST::Link* W;
-public:
-    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
-    SST_ELI_REGISTER_COMPONENT(
-        simpleComponent,
-        "simpleElementExample",
-        "simpleComponent",
-        "Simple Demo Component",
-        COMPONENT_CATEGORY_PROCESSOR
-    )
-    
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-        { "workPerCycle", "Count of busy work to do during a clock tick.", NULL},
-        { "commFreq", "Approximate frequency of sending an event during a clock tick.", NULL},
-        { "commSize", "Size of communication to send.", "16"}
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-        {"Nlink", "Link to the simpleComponent to the North", { "simpleComponent.simpleComponentEvent", "" } },
-        {"Slink", "Link to the simpleComponent to the South", { "simpleComponent.simpleComponentEvent", "" } },
-        {"Elink", "Link to the simpleComponent to the East",  { "simpleComponent.simpleComponentEvent", "" } },
-        {"Wlink", "Link to the simpleComponent to the West",  { "simpleComponent.simpleComponentEvent", "" } }
-    )
-    
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
 };
 
 } // namespace SimpleComponent

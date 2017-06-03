@@ -32,6 +32,26 @@ namespace Merlin {
 class topo_dragonfly_event;
 
 class topo_dragonfly: public Topology {
+
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        topo_dragonfly,
+        "merlin",
+        "dragonfly",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Dragonfly topology object",
+        "SST::Merlin::Topology")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"dragonfly:hosts_per_router",      "Number of hosts connected to each router."},
+        {"dragonfly:routers_per_group",     "Number of links used to connect to routers in same group."},
+        {"dragonfly:intergroup_per_router", "Number of links per router connected to other groups."},
+        {"dragonfly:num_groups",            "Number of groups in network."},
+        {"dragonfly:algorithm",             "Routing algorithm to use [minmal (default) | valiant].", "minimal"}
+    )
+
+    
     /* Assumed connectivity of each router:
      * ports [0, p-1]:      Hosts
      * ports [p, p+a-2]:    Intra-group
@@ -85,27 +105,6 @@ private:
     uint32_t router_to_group(uint32_t group) const;
     uint32_t port_for_router(uint32_t router) const;
     uint32_t port_for_group(uint32_t group) const;
-public:
-    SST_ELI_REGISTER_SUBCOMPONENT(topo_dragonfly,"merlin","dragonfly","Dragonfly topology object","SST::Merlin::Topology")
-    
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-        {"dragonfly:hosts_per_router","Number of hosts connected to each router."},
-        {"dragonfly:routers_per_group","Number of links used to connect to routers in same group."},
-        {"dragonfly:intergroup_per_router","Number of links per router connected to other groups."},
-        {"dragonfly:num_groups","Number of groups in network."},
-        {"dragonfly:algorithm","Routing algorithm to use [minmal (default) | valiant].", "minimal"}
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
 
 };
 
