@@ -43,23 +43,25 @@
 #include "c_TokenChgEvent.hpp"
 #include "c_CmdPtrPkgEvent.hpp"
 #include "c_CmdResEvent.hpp"
-#include "c_TransactionToCommands.hpp"
-#include "c_AddressHasher.hpp"
-#include "c_Controller.hpp"
+//#include "c_TransactionToCommands.hpp"
+//#include "c_AddressHasher.hpp"
+//#include "c_Controller.hpp"
+//#include "c_Transaction.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
 using namespace std;
 
-c_TxnUnit::c_TxnUnit(SST::Component *comp, SST::Params& x_params) : SubComponent(comp){
+c_TxnUnit::c_TxnUnit(SST::Component *owner, SST::Params& x_params) :  c_CtrlSubComponent <c_Transaction*,c_BankCommand*> (owner, x_params){
 
+    m_nextSubComponent=dynamic_cast<c_Controller*>(owner)->getCmdScheduler();
 	m_converter=new c_TransactionToCommands(((c_Controller*)parent)->getAddrHasher());
 
 	// read params here
 	bool l_found = false;
 
 	// load internal params
-/*	k_txnReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitReqQEntries", 100,
+	k_txnReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitReqQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numTxnUnitReqQEntries param value is missing... exiting"
@@ -67,7 +69,7 @@ c_TxnUnit::c_TxnUnit(SST::Component *comp, SST::Params& x_params) : SubComponent
 		exit(-1);
 	}
 
-	k_txnResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitResQEntries", 100,
+/*	k_txnResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitResQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout << "numTxnUnitResQEntries param value is missing... exiting"
@@ -284,15 +286,7 @@ c_TxnUnit::~c_TxnUnit() {
 */
 
 void c_TxnUnit::print() const {
-/*a	std::cout << "***c_TxnUnit " << Component::getName() << std::endl;
-	std::cout << "ReqQEntries=" << k_txnReqQEntries << ", " << "ResQEntries="
-			<< k_txnResQEntries << std::endl;
-	std::cout << "k_txnGenResQEntries=" << k_txnGenResQEntries
-			<< ", k_cmdReqQEntries=" << k_cmdUnitReqQEntries << std::endl;
-	std::cout << "TxnReqQ size=" << m_txnReqQ.size() << ", " << "TxnResQ size="
-			<< m_txnResQ.size() << std::endl;
-	std::cout << "m_cmdReqQTokens = " << m_cmdUnitReqQTokens << ", "
-			<< "m_txnGenResQTokens = " << m_txnGenResQTokens << std::endl;*/
+	std::cout << "ReqQEntries=" << k_txnReqQEntries << std::endl;
 }
 
 void c_TxnUnit::printQueues() {
@@ -310,19 +304,7 @@ void c_TxnUnit::printQueues() {
 }
 
 
-std::vector<c_BankCommand*> c_TxnUnit::convertTransaction() {
-
-//	std::cout << std::endl << std::endl << "c_TxnUnit:: clock tic" << std::endl;
-//	std::cout << "m_ResQTokens: " << m_txnGenResQTokens << std::endl;
-//	printQueues();
-
-	//m_thisCycleReqQTknChg = 0;
-
-	// store the current number of entries in the queue to later compute change
-
-	//m_thisCycleReqQTknChg = m_txnReqQ.size();
-
-	//sendResponse();
+bool c_TxnUnit::clockTic(SST::Cycle_t){
 
 	if (k_useRefresh) {
 		// if the refresh counter is still counting, send regular Request
@@ -346,33 +328,8 @@ std::vector<c_BankCommand*> c_TxnUnit::convertTransaction() {
 		}
 	}
 
-	//sendRequest();
-
-	// convert transactions to commands and push them into the command queue
-	std::vector<c_BankCommand*> l_cmdQ;
-	if (m_refreshList.size() > 0) {
-		while(m_refreshList.size()>0){
-			l_cmdQ.push_back(m_refreshList.front());
-			m_refreshList.pop();
-		}
-	}
-	else if ((m_txnReqQ.size() > 0) && !m_processingRefreshCmds) {
-		c_Transaction* l_reqTxn = m_txnReqQ.front();
-
-		//c_TransactionToCommands* l_converter =
-		//		c_TransactionToCommands::getInstance();
-		//std::vector<c_BankCommand*> l_cmdPkg = l_converter->getCommands(
-		//		l_reqTxn, k_relCommandWidth, k_useReadA, k_useWriteA);
-		std::vector<c_BankCommand*> l_cmdPkg = m_converter->getCommands(
-				l_reqTxn, k_relCommandWidth, k_useReadA, k_useWriteA);
-		m_txnReqQ.pop();
-
-		for(std::vector<c_BankCommand*>::iterator it=l_cmdPkg.begin();it!=l_cmdPkg.end();++it)
-		{
-			l_cmdQ.push_back(*it);
-		}
-	}
-
+	run();
+	sendRequest();
 	//FIXME: Delete. For debugging queue size issues
 //	m_statsReqQ[m_txnReqQ.size()]++;
 //	m_statsResQ[m_txnResQ.size()]++;
@@ -380,7 +337,7 @@ std::vector<c_BankCommand*> c_TxnUnit::convertTransaction() {
 	s_reqQueueSize->addData(m_txnReqQ.size());
 	s_resQueueSize->addData(m_txnResQ.size());
 
-	return l_cmdQ;
+	return false;
 }
 
 /*
@@ -444,111 +401,68 @@ void c_TxnUnit::createRefreshCmds() {
 	}
 }
 
-/*
-void c_TxnUnit::sendRequest() {
+void c_TxnUnit::run(){
+	//std::cout<<"m_txnReqQ pre size():"<<m_txnReqQ.size()<<std::endl;
+	// convert transactions to commands and push them into the command queue
+	if(m_cmdQ.size()==0) {
+		if (m_refreshList.size() > 0) {
+			while (!m_refreshList.empty()) {
+				m_cmdQ.push(m_refreshList.front());
+				m_refreshList.pop();
+			}
+		} else if ((m_txnReqQ.size() > 0) && !m_processingRefreshCmds) {
+			c_Transaction *l_reqTxn = m_txnReqQ.front();
 
-	// first check if any refreshes are pending being sent
-	if (m_refreshList.size() > 0) {
-		//		std::cout << "@" << std::dec
-		//		  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		//		  << __PRETTY_FUNCTION__ << std::endl;
-		//	printf("%u REF commands left to send\n", m_refreshList.size());
-		std::vector<c_BankCommand*> l_cmdPkg;
-		while (m_cmdUnitReqQTokens > 0 && m_refreshList.size() > 0) {
-			l_cmdPkg.push_back(m_refreshList.front());
-			m_refreshList.pop();
+			//c_TransactionToCommands* l_converter =
+			//		c_TransactionToCommands::getInstance();
+			//std::vector<c_BankCommand*> l_cmdPkg = l_converter->getCommands(
+			//		l_reqTxn, k_relCommandWidth, k_useReadA, k_useWriteA);
+			std::vector<c_BankCommand *> l_cmdPkg = m_converter->getCommands(l_reqTxn, k_relCommandWidth, k_useReadA,
+																			 k_useWriteA);
+			m_txnReqQ.pop();
 
-			m_cmdUnitReqQTokens--;
+			for (std::vector<c_BankCommand *>::iterator it = l_cmdPkg.begin(); it != l_cmdPkg.end(); ++it) {
+				m_cmdQ.push(*it);
+			}
 		}
-
-		if (l_cmdPkg.size() > 0) {
-			//printf("Sending %lu REF commands\n", l_cmdPkg.size());
-			c_CmdPtrPkgEvent* l_cmdPtrPkgEventPtr = new c_CmdPtrPkgEvent();
-			l_cmdPtrPkgEventPtr->m_payload = l_cmdPkg;
-			m_outCmdUnitReqPtrLink->send(l_cmdPtrPkgEventPtr);
-		}
-
-		return;
 	}
 
-	if ((m_txnReqQ.size() > 0) && !m_processingRefreshCmds) {
-		//std::cout << "@" << std::dec
-		//	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		//	  << __PRETTY_FUNCTION__ << std::endl;
-		c_Transaction* l_reqTxn = m_txnReqQ.front();
-		//l_reqTxn->print();
-		//std::cout << std::endl;
-
-		c_TransactionToCommands* l_converter =
-				c_TransactionToCommands::getInstance();
-		std::vector<c_BankCommand*> l_cmdPkg = l_converter->getCommands(
-				l_reqTxn, k_relCommandWidth, k_useReadA, k_useWriteA);
-
-		if ((l_cmdPkg.size() < m_cmdUnitReqQTokens)
-			&& ((k_txnResQEntries - m_txnResQ.size()) > 0)) {
-			c_CmdPtrPkgEvent* l_cmdPtrPkgEventPtr = new c_CmdPtrPkgEvent();
-			l_cmdPtrPkgEventPtr->m_payload = l_cmdPkg;
-			m_outCmdUnitReqPtrLink->send(l_cmdPtrPkgEventPtr);
-			m_cmdUnitReqQTokens -= l_cmdPkg.size();
-
-			//Add the related txn to m_ResQ and pop it out of m_ReqQ
-			m_txnResQ.push_back(l_reqTxn);
-			m_txnReqQ.erase(m_txnReqQ.begin());
-
-			//std::cout << "Txn unit side pkg size " << l_cmdPkg.size() << std::endl;
-			//for (auto &l_entry : l_cmdPkg) {
-			//  std::cout<<"Txn (*l_entry) = " << std::hex << l_entry << std::endl;
-			//  l_entry->print();
-			//  std::cout << std::endl;
-			//}
-
-			//std::cout << "@" << std::dec
-			//	  << Simulation::getSimulation()->getCurrentSimCycle()
-			//	  << ": " << __PRETTY_FUNCTION__ << ": Request sent"
-			//	  << std::endl;
-		} else {
-			for (int l_i = 0; l_i != l_cmdPkg.size(); ++l_i)
-				delete l_cmdPkg[l_i];
-
-		}
-	} else {
-		// std::cout << "@" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		// 		<< __PRETTY_FUNCTION__ << ": No Requests to send out"
-		// 		<< std::endl;
-	}
-
+	//std::cout<<"m_txnReqQ post size():"<<m_txnReqQ.size()<<std::endl;
 }
-*/
 
-void c_TxnUnit::pushTransaction(SST::Event *ev) {
+
+void c_TxnUnit::sendRequest() {
+	int token=m_nextSubComponent->getToken();
+
+	while(token>0 && !m_cmdQ.empty()) {
+		m_nextSubComponent->push(m_cmdQ.front());
+		m_cmdQ.pop();
+		token--;
+	}
+}
+
+
+void c_TxnUnit::pushTransaction(c_Transaction* newTxn) {
+
 	// make sure the internal req q has at least one empty entry
 	// to accept a new txn ptr
-	//assert(1 <= (k_txnReqQEntries - m_txnReqQ.size()));
-
-	c_TxnReqEvent* l_txnReqEventPtr = dynamic_cast<c_TxnReqEvent*>(ev);
-	if (l_txnReqEventPtr) {
-	        //std::cout << "@" << std::dec
-		//	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		//	  << __PRETTY_FUNCTION__ << l_txnReqEventPtr->m_payload << " ";
-		//l_txnReqEventPtr->m_payload->print();
-		//std::cout << std::endl;
-
-		if(l_txnReqEventPtr->m_payload->getTransactionMnemonic() == e_TransactionType::READ) {
+		if(newTxn->getTransactionMnemonic() == e_TransactionType::READ) {
 		  s_readTxnsRecvd->addData(1);
 		}
-		if(l_txnReqEventPtr->m_payload->getTransactionMnemonic() == e_TransactionType::WRITE) {
+		if(newTxn->getTransactionMnemonic() == e_TransactionType::WRITE) {
 		  s_writeTxnsRecvd->addData(1);
 		}
 		s_totalTxnsRecvd->addData(1);
 		
-		m_txnReqQ.push(l_txnReqEventPtr->m_payload);
-		delete l_txnReqEventPtr;
-	} else {
-		std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
-				<< std::endl;
-	}
+		m_txnReqQ.push(newTxn);
+}
 
+int c_TxnUnit::getToken()
+{
+	int l_QueueSize=m_txnReqQ.size();
+	assert(k_txnReqQEntries>=l_QueueSize);
+
+	return k_txnReqQEntries-l_QueueSize;
 }
 
 /*

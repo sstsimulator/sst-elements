@@ -54,10 +54,13 @@
 #include "c_BankStateIdle.hpp"
 #include "c_BankCommand.hpp"
 
+
 using namespace SST;
 using namespace SST::n_Bank;
 
-c_CmdUnit::c_CmdUnit(Component *comp, Params& x_params) : SubComponent(comp) {
+c_CmdUnit::c_CmdUnit(Component *owner, Params& x_params) : c_CtrlSubComponent<c_BankCommand*,c_BankCommand*>(owner, x_params){
+
+	m_Owner=dynamic_cast<c_Controller*>(owner);
 
 	m_thisCycleResReceived = 0;
 	m_refsSent = 0;
@@ -563,13 +566,13 @@ void c_CmdUnit::print() const {
 	std::cout << "***CmdUnit " << SubComponent::getName() << std::endl;
 	std::cout << "ReqQEntries=" << k_cmdReqQEntries << ", " << "ResQEntries="
 			<< k_cmdResQEntries << std::endl;
-	std::cout << "CmdReqQ size=" << m_cmdReqQ.size() << ", " << "CmdResQ size="
+	std::cout << "CmdReqQ size=" << m_inputQ.size() << ", " << "CmdResQ size="
 			<< m_cmdResQ.size() << std::endl;
 }
 
 void c_CmdUnit::printQueues() {
 	std::cout << "CmdReqQ: " << std::endl;
-	for (auto& l_entry : m_cmdReqQ) {
+	for (auto& l_entry : m_inputQ) {
 		l_entry->print();
 		unsigned l_bankNum = l_entry->getHashedAddress()->getBankId();
 
@@ -583,37 +586,23 @@ void c_CmdUnit::printQueues() {
 	}
 }
 
-//bool c_CmdUnit::clockTic(SST::Cycle_t) {
-std::vector<c_BankCommand*> c_CmdUnit::issueCommand() {
+bool c_CmdUnit::clockTic(SST::Cycle_t) {
 
 	m_issuedACT = false;
-	//m_thisCycleReqQTknChg = 0;
-	//m_thisCycleResReceived = 0;
-
-	// store the current number of entries in the queue to later compute change
-	//m_thisCycleReqQTknChg = m_cmdReqQ.size();
 
 	for (int l_i = 0; l_i != m_banks.size(); ++l_i) {
 		m_banks.at(l_i)->clockTic();
 		// m_banks.at(l_i)->printState();
 	}
-
-	//sendResponse();
+	run();
 	sendRequest();
-
-	//m_thisCycleReqQTknChg -= m_cmdReqQ.size();
-
-	//sendTokenChg();
-
-	//FIXME: Delete. For debugging queue size issues
-	//m_statsReqQ[m_cmdReqQ.size()]++;
-	//m_statsResQ[m_cmdResQ.size()]++;
 
 	m_cmdACTFAWtracker.push_back(m_issuedACT?static_cast<unsigned>(1):static_cast<unsigned>(0));
 	m_cmdACTFAWtracker.pop_front();
-
-	return m_cmdIssueQ;
 }
+
+
+
 /*
 void c_CmdUnit::sendResponse() {
 
@@ -645,7 +634,7 @@ void c_CmdUnit::sendResponse() {
 // Iterate through the cmdReqQ and mark the bank to which a cmd cannot go
 // do not send any further cmds to that bank
 void c_CmdUnit::sendReqCloseBankPolicy(
-		std::vector<c_BankCommand*>::iterator x_startItr) {
+		std::deque<c_BankCommand*>::iterator x_startItr) {
 
 	// get count of ACT cmds issued in the FAW
 	unsigned l_cmdACTIssuedInFAW = 0;
@@ -654,7 +643,7 @@ void c_CmdUnit::sendReqCloseBankPolicy(
 		l_cmdACTIssuedInFAW += l_issued;
 
 
-	for (auto l_cmdPtrItr = x_startItr; l_cmdPtrItr != m_cmdReqQ.end();
+	for (auto l_cmdPtrItr = x_startItr; l_cmdPtrItr != m_inputQ.end();
 			++l_cmdPtrItr) {
 		c_BankCommand* l_cmdPtr = (*l_cmdPtrItr);
 		if ((l_cmdPtr)->getCommandMnemonic() == e_BankCommandType::REF)
@@ -721,8 +710,8 @@ void c_CmdUnit::sendReqCloseBankPolicy(
 void c_CmdUnit::sendReqOpenRowPolicy() {
 
 	c_BankCommand* l_openBankCmdPtr = nullptr;
-	auto l_openBankCmdPtrItr = m_cmdReqQ.begin();
-	for (auto l_cmdPtr : m_cmdReqQ) {
+	auto l_openBankCmdPtrItr = m_inputQ.begin();
+	for (auto l_cmdPtr : m_inputQ) {
 		if (l_cmdPtr->getCommandMnemonic() == e_BankCommandType::REF)
 			break;
 
@@ -746,12 +735,12 @@ void c_CmdUnit::sendReqOpenRowPolicy() {
 	} // for
 	if (nullptr == l_openBankCmdPtr) {
 
-		sendReqCloseBankPolicy(m_cmdReqQ.begin());
+		sendReqCloseBankPolicy(m_inputQ.begin());
 	} else {
 		// found a command, so now remove older ACT and PRE commands
 		std::list<c_BankCommand*> l_deleteList;
 		l_deleteList.clear();
-		for (auto l_cmdPtr : m_cmdReqQ) {
+		for (auto l_cmdPtr : m_inputQ) {
 			if (l_cmdPtr == l_openBankCmdPtr) {
 				break;
 			}
@@ -784,12 +773,12 @@ void c_CmdUnit::sendReqOpenRowPolicy() {
 			}
 
 			// erase entries in the command req q
-			m_cmdReqQ.erase(
-					std::remove(m_cmdReqQ.begin(), m_cmdReqQ.end(), l_delPtr),
-					m_cmdReqQ.end());
+			m_inputQ.erase(
+					std::remove(m_inputQ.begin(), m_inputQ.end(), l_delPtr),
+					m_inputQ.end());
 		}
 		sendReqCloseBankPolicy(
-				std::find(m_cmdReqQ.begin(), m_cmdReqQ.end(),
+				std::find(m_inputQ.begin(), m_inputQ.end(),
 						l_openBankCmdPtr));
 	}
 
@@ -807,8 +796,8 @@ void c_CmdUnit::sendReqOpenRowPolicy() {
 void c_CmdUnit::sendReqPseudoOpenRowPolicy() {
 
 	c_BankCommand* l_openBankCmdPtr = nullptr;
-	auto l_openBankCmdPtrItr = m_cmdReqQ.begin();
-	for (auto l_cmdPtr : m_cmdReqQ) {
+	auto l_openBankCmdPtrItr = m_inputQ.begin();
+	for (auto l_cmdPtr : m_inputQ) {
 		if (l_cmdPtr->getCommandMnemonic() == e_BankCommandType::REF)
 			break;
 
@@ -832,12 +821,12 @@ void c_CmdUnit::sendReqPseudoOpenRowPolicy() {
 	} // for
 	if (nullptr == l_openBankCmdPtr) {
 
-		sendReqCloseBankPolicy(m_cmdReqQ.begin());
+		sendReqCloseBankPolicy(m_inputQ.begin());
 	} else {
 		// found a command, so now remove older ACT and PRE commands
 		std::list<c_BankCommand*> l_deleteList;
 		l_deleteList.clear();
-		for (auto l_cmdPtr : m_cmdReqQ) {
+		for (auto l_cmdPtr : m_inputQ) {
 			if (l_cmdPtr == l_openBankCmdPtr) {
 				break;
 			}
@@ -869,12 +858,12 @@ void c_CmdUnit::sendReqPseudoOpenRowPolicy() {
 			}
 
 			// erase entries in the command req q
-			m_cmdReqQ.erase(
-					std::remove(m_cmdReqQ.begin(), m_cmdReqQ.end(), l_delPtr),
-					m_cmdReqQ.end());
+			m_inputQ.erase(
+					std::remove(m_inputQ.begin(), m_inputQ.end(), l_delPtr),
+					m_inputQ.end());
 		}
 		sendReqCloseBankPolicy(
-				std::find(m_cmdReqQ.begin(), m_cmdReqQ.end(),
+				std::find(m_inputQ.begin(), m_inputQ.end(),
 						l_openBankCmdPtr));
 	}
 
@@ -893,8 +882,8 @@ void c_CmdUnit::sendReqPseudoOpenRowPolicy() {
 void c_CmdUnit::sendReqOpenBankPolicy() {
 
 	c_BankCommand* l_openBankCmdPtr = nullptr;
-	auto l_openBankCmdPtrItr = m_cmdReqQ.begin();
-	for (auto l_cmdPtr : m_cmdReqQ) {
+	auto l_openBankCmdPtrItr = m_inputQ.begin();
+	for (auto l_cmdPtr : m_inputQ) {
 		if (l_cmdPtr->getCommandMnemonic() == e_BankCommandType::REF)
 			break;
 
@@ -916,12 +905,12 @@ void c_CmdUnit::sendReqOpenBankPolicy() {
 	} // for
 	if (nullptr == l_openBankCmdPtr) {
 
-		sendReqCloseBankPolicy(m_cmdReqQ.begin());
+		sendReqCloseBankPolicy(m_inputQ.begin());
 	} else {
 		// found a command, so now remove older ACT and PRE commands
 		std::list<c_BankCommand*> l_deleteList;
 		l_deleteList.clear();
-		for (auto l_cmdPtr : m_cmdReqQ) {
+		for (auto l_cmdPtr : m_inputQ) {
 			if (l_cmdPtr == l_openBankCmdPtr) {
 				break;
 			}
@@ -953,23 +942,21 @@ void c_CmdUnit::sendReqOpenBankPolicy() {
 			}
 
 			// erase entries in the command req q
-			m_cmdReqQ.erase(
-					std::remove(m_cmdReqQ.begin(), m_cmdReqQ.end(), l_delPtr),
-					m_cmdReqQ.end());
+			m_inputQ.erase(
+					std::remove(m_inputQ.begin(), m_inputQ.end(), l_delPtr),
+					m_inputQ.end());
 		}
 		sendReqCloseBankPolicy(
-				std::find(m_cmdReqQ.begin(), m_cmdReqQ.end(),
+				std::find(m_inputQ.begin(), m_inputQ.end(),
 						l_openBankCmdPtr));
 	}
 }
 
-void c_CmdUnit::sendRequest() {
+void c_CmdUnit::run() {
 
-	if(m_cmdIssueQ.size()>0)
-		m_cmdIssueQ.clear();
 	// if REFs are enabled, check the Req Q's head for REF
-	if (k_useRefresh && m_cmdReqQ.size() > 0) {
-		if (m_cmdReqQ.front()->getCommandMnemonic() == e_BankCommandType::REF) {
+	if (k_useRefresh && m_inputQ.size() > 0) {
+		if (m_inputQ.front()->getCommandMnemonic() == e_BankCommandType::REF) {
 			sendRefresh();
 			return;
 		}
@@ -980,11 +967,11 @@ void c_CmdUnit::sendRequest() {
 //	std::cout << std::endl << "@" << std::dec
 //			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
 //			<< __PRETTY_FUNCTION__;
-//	std::cout << ": m_cmdReqQ.size() = " << m_cmdReqQ.size()
+//	std::cout << ": m_inputQ.size() = " << m_inputQ.size()
 //			<< " m_cmdResQTokens = " << m_cmdResQTokens << std::endl;
 
-	//if (m_cmdReqQ.size() > 0 && m_cmdResQTokens > 0) {
-	if (m_cmdReqQ.size() > 0 ) {
+	//if (m_inputQ.size() > 0 && m_cmdResQTokens > 0) {
+	if (m_inputQ.size() > 0 ) {
 //		 std::cout << std::endl << "@" << std::dec
 //		 		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
 //		 		<< __PRETTY_FUNCTION__ << std::endl;
@@ -996,7 +983,7 @@ void c_CmdUnit::sendRequest() {
 
 		switch (k_bankPolicy) {
 		case 0:
-			sendReqCloseBankPolicy(m_cmdReqQ.begin());
+			sendReqCloseBankPolicy(m_inputQ.begin());
 			break;
 		case 1:
 			sendReqOpenRowPolicy();
@@ -1018,8 +1005,8 @@ void c_CmdUnit::sendRefresh() {
 //  std::cout << std::endl << "@" << std::dec
  // 		    << Simulation::getSimulation()->getCurrentSimCycle() << ": "
  // 		    << __PRETTY_FUNCTION__ << std::endl;
-  
-  c_BankCommand *l_refCmd = m_cmdReqQ.front();
+
+  c_BankCommand *l_refCmd = m_inputQ.front();
   assert(l_refCmd->getCommandMnemonic() == e_BankCommandType::REF);
 
   // determine if all banks are ready to refresh
@@ -1185,7 +1172,7 @@ bool c_CmdUnit::sendCommand(c_BankCommand* x_bankCommandPtr,
 		/*c_CmdReqEvent* l_cmdReqEventPtr = new c_CmdReqEvent();
 		l_cmdReqEventPtr->m_payload = x_bankCommandPtr;
 		m_outBankReqPtrLink->send(l_cmdReqEventPtr);*/
-		m_cmdIssueQ.push_back(x_bankCommandPtr);
+		m_outputQ.push_back(x_bankCommandPtr);
 
 		// Decrease token if we are allocating CmdResQ space.
 		// CmdUnit keeps track of its own res Q tokens
@@ -1216,20 +1203,21 @@ bool c_CmdUnit::sendCommand(c_BankCommand* x_bankCommandPtr,
 //			m_cmdResQTokens--;
 
 		// remove cmd from ReqQ
-//		m_cmdReqQ.remove(x_bankCommandPtr);
-		m_cmdReqQ.erase(
-				std::remove(m_cmdReqQ.begin(), m_cmdReqQ.end(),
-					    x_bankCommandPtr), m_cmdReqQ.end());
+//		m_inputQ.remove(x_bankCommandPtr);
+		m_inputQ.erase(
+				std::remove(m_inputQ.begin(), m_inputQ.end(),
+					    x_bankCommandPtr), m_inputQ.end());
 
 		return true;
 	} else
 		return false;
 }
 
-void c_CmdUnit::pushCommand(std::vector<c_BankCommand*> newCmds)
-{
-	for(auto it = newCmds.begin();it!=newCmds.end();++it)
-	{
-		m_cmdReqQ.push_back(*it);
+
+void c_CmdUnit::sendRequest() {
+	//int token=m_Owner->getToken();
+	while(!m_outputQ.empty()) {
+		m_Owner->sendCommand(m_outputQ.front());
+		m_outputQ.pop_front();
 	}
 };

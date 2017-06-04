@@ -40,32 +40,43 @@
 #include <sst/core/link.h>
 
 // local includes
-#include "c_Transaction.hpp"
 #include "c_BankCommand.hpp"
 #include "c_TransactionToCommands.hpp"
-
+#include "c_CmdUnit.hpp"
+#include "c_CtrlSubComponent.hpp"
+#include "c_CmdScheduler.hpp"
+#include "c_Transaction.hpp"
 
 namespace SST {
 namespace n_Bank {
-class c_TxnUnit: public SubComponent {
+	class c_CmdScheduler;
+class c_TxnUnit: public c_CtrlSubComponent <c_Transaction*,c_BankCommand*> {
+
 public:
 
 	c_TxnUnit(SST::Component * comp, SST::Params& x_params);
 	~c_TxnUnit();
 
-	void pushTransaction(SST::Event *ev); // receive txns from txnGen into req q
-	std::vector<c_BankCommand*> convertTransaction();
-
+//	uint32_t getToken();
+	void pushTransaction(c_Transaction* newTxn); // receive txns from txnGen into req q
+	bool clockTic(SST::Cycle_t);
+	int getToken();
 	void print() const; // print internals
 
 private:
 
+	c_CmdScheduler *m_nextSubComponent;
+	std::queue<c_BankCommand*> m_cmdQ;
+
+	void run();
+	void sendRequest();
 	void createRefreshCmds();
 
 	// FIXME: Remove. For testing purposes
 	void printQueues();
 
 	// params for internal architecture
+	int k_txnReqQEntries;
 	int k_relCommandWidth; // txn relative command width
 	bool k_useReadA;
 	bool k_useWriteA;
@@ -82,7 +93,7 @@ private:
 	std::queue<c_BankCommand*> m_refreshList;
 
 	// internal architecture
-	std::queue<c_Transaction*> m_txnReqQ;
+	std::queue<c_Transaction*> m_txnReqQ;				//input queue
 	std::queue<c_Transaction*> m_txnResQ;
 
 	// FIXME: Delete. Used for debugging queue size issues

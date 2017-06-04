@@ -30,25 +30,41 @@
 #ifndef C_CONTROLLER_HPP
 #define C_CONTROLLER_HPP
 
+//SST includes
+#include <sst/core/component.h>
+#include <sst/core/link.h>
 
 // SST includes
 #include <sst/core/component.h>
 #include "c_AddressHasher.hpp"
 #include "c_CmdUnit.hpp"
 #include "c_TxnUnit.hpp"
+#include "c_CmdScheduler.hpp"
+
 
 // local includes
 namespace SST {
     namespace n_Bank {
+        class c_CmdUnit;
+        class c_TxnUnit;
+        class c_CmdScheduler;
+
         class c_Controller : public SST::Component {
 
         public:
-            c_Controller(ComponentId_t id, Params &params);
+            c_Controller(SST::ComponentId_t id, SST::Params &params);
             ~c_Controller();
 
-            void finish();
-            c_AddressHasher* getAddrHasher(){return m_addrHasher;}
+            void setup() {
+            }
+            void finish(){};
+            void print() const;
+            c_AddressHasher* getAddrHasher() {return m_addrHasher;}
+            c_CmdUnit* getDeviceController() {return m_deviceController;}
+            c_CmdScheduler* getCmdScheduler() {return m_cmdScheduler;}
+            c_TxnUnit* getTxnConverter() {return m_transConverter;}
 
+            void sendCommand(c_BankCommand* cmd);
 
         private:
             SST::Output *output;
@@ -56,9 +72,10 @@ namespace SST {
             std::vector<c_Transaction*> m_txnReqQ;
             std::vector<c_Transaction*> m_txnResQ;
 
+
             // Subcomponents
             c_TxnUnit *m_transConverter;
-           // c_CommandScheduler *m_cmdScheduler;
+            c_CmdScheduler *m_cmdScheduler;
             c_AddressHasher *m_addrHasher;
             c_CmdUnit *m_deviceController;
             //c_DeviceController *m_deviceController;
@@ -66,7 +83,7 @@ namespace SST {
             //token changes from Txn gen
             int m_txnGenResQTokens;
             int m_deviceReqQTokens;
-            int m_thisCycleReqQTknChg;
+            int m_thisCycleTxnQTknChg;
 
             // params for internal architecture
             int k_txnReqQEntries;
@@ -85,6 +102,8 @@ namespace SST {
             SST::Link *m_inTxnGenResQTokenChgLink;
             SST::Link *m_outTxnGenReqQTokenChgLink;
 
+            c_Controller(); // for serialization only
+            c_Controller(SST::ComponentId_t id);
             void configure_link();
             virtual bool clockTic(SST::Cycle_t); // called every cycle
 
@@ -99,7 +118,7 @@ namespace SST {
             void handleOutTxnGenReqQTokenChgEvent(SST::Event *ev);
 
             // Controller <--> memory devices
-            void handleOutgoingCommand(std::vector<c_BankCommand*> issuedCmd);
+
             void handleOutDeviceReqPtrEvent(SST::Event *ev);
             void handleInDeviceResPtrEvent(SST::Event *ev);
             void handleInDeviceReqQTokenChgEvent(SST::Event *ev);

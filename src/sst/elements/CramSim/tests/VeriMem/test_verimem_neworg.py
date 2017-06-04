@@ -1,6 +1,7 @@
 from __future__ import division
 import subprocess
 import sys
+import time
 
 # GLOBAL PARAMS
 config_file = "ddr4_verimem.cfg"
@@ -381,6 +382,7 @@ for line in configFileInstance:
 g_params = santize_params(g_params)
 g_params["config_file"] = config_file
 
+start= time.time()
 print "-----RUNNING VERIMEM-----"
 print(run_suite1(g_params))
 print(run_suite2(g_params))
@@ -388,3 +390,5 @@ print(run_suite4(g_params))
 print(run_suite5(g_params))
 print(run_suite6(g_params))
 print("done.\n")
+end = time.time()
+print (end-start)

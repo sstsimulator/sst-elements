@@ -30,25 +30,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 //SST includes
 #include "sst_config.h"
 
 // C++ includes
 #include <algorithm>
-#include <string>
 #include <assert.h>
+#include <iostream>
+#include <stdlib.h>
+
+#include <sst/core/stringize.h>
 
 // CramSim includes
 #include "c_Dimm.hpp"
-#include "c_AddressHasher.hpp"
-#include "c_Transaction.hpp"
-#include "c_Bank.hpp"
 #include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
-#include "c_BankCommand.hpp"
-#include "../../../../../sst-core/src/sst/core/event.h"
-#include "../../../../../sst-core/src/sst/core/component.h"
-#include "../../../../../sst-core/src/sst/core/sst_types.h"
 
 using namespace SST;
 using namespace SST::n_Bank;

@@ -130,22 +130,28 @@ static Component*
 create_c_Controller(SST::ComponentId_t id, SST::Params& params) {
 	return new c_Controller(id, params);
 }
-// c_AddressHasher
+// Address Mapper
 static SubComponent*
 create_c_AddressHasher(Component * owner, Params& params) {
 	return new c_AddressHasher(owner, params);
 }
 
-// c_TxnUnit
+// Transaction Converter
 static SubComponent*
 create_c_TxnUnit(Component * owner, Params& params) {
 	return new c_TxnUnit(owner, params);
 }
 
-// c_DeviceController
+// Command Scheduler
 static SubComponent*
 create_c_CmdUnit(Component * owner, Params& params) {
 	return new c_CmdUnit(owner, params);
+}
+
+// Device Controller
+static SubComponent*
+create_c_CmdScheduler(Component * owner, Params& params) {
+	return new c_CmdScheduler(owner, params);
 }
 
 /*----SETUP c_AddressHasher  STRUCTURES----*/
@@ -335,24 +341,6 @@ static const ElementInfoParam c_TxnUnit_params[] = {
 		{"boolUseWriteA", "Whether to use WRITE or WRITEA Cmds", NULL},
 		{NULL, NULL, NULL } };
 
-/*static const char* c_TxnUnit_txnReq_port_events[] = { "c_TxnReqEvent", NULL };
-static const char* c_TxnUnit_txnRes_port_events[] = { "c_TxnResEvent", NULL };
-static const char* c_TxnUnit_cmdReq_port_events[] = { "c_CmdPtrPkgEvent", NULL };
-static const char* c_TxnUnit_token_port_events[] = {"c_TokenChgEvent", NULL};
-static const char* c_TxnUnit_cmdRes_port_events[] = {"c_CmdResEvent", NULL};
-
-
-static const ElementInfoPort c_TxnUnit_ports[] = {
-		{"inTxnGenReqPtr", "link to c_TxnUnit for incoming req txn", c_TxnUnit_txnReq_port_events},
-		{"outCmdUnitReqPtrPkg", "link to c_TxnUnit for outgoing req cmds", c_TxnUnit_cmdReq_port_events},
-		{"outTxnGenReqQTokenChg", "link to c_TxnUnit for outgoing req txn tokens", c_TxnUnit_token_port_events},
-		{"inCmdUnitReqQTokenChg", "link to c_TxnUnit for incoming req cmd tokens", c_TxnUnit_token_port_events},
-		{"inCmdUnitResPtr", "link to c_TxnUnit for incoming res txns from CmdUnit", c_TxnUnit_cmdRes_port_events},
-		{"outTxnGenResPtr", "link to c_TxnUnit for outgoing res txns", c_TxnUnit_txnRes_port_events},
-		{"inTxnGenResQTokenChg", "link to c_TxnUnit for incoming res txn tokens", c_TxnUnit_token_port_events},
-		{NULL, NULL, NULL}
-};
-*/
 static const ElementInfoStatistic c_TxnUnit_stats[] = {
   {"readTxnsRecvd", "Number of read transactions received", "reads", 1}, // Name, Desc, Units, Enable Level
   {"writeTxnsRecvd", "Number of write transactions received", "writes", 1},
@@ -360,6 +348,15 @@ static const ElementInfoStatistic c_TxnUnit_stats[] = {
   {"reqQueueSize", "Total size of the request queue over time", "transactions", 1},
   {"resQueueSize", "Total size of the response queue over time", "transactions", 1},
   {NULL, NULL, NULL, 0}
+};
+
+
+/*----SETUP c_CmdScheduler STRUCTURES----*/
+static const ElementInfoParam c_CmdScheduler_params[] = {
+		{NULL, NULL, NULL } };
+
+static const ElementInfoStatistic c_CmdScheduler_stats[] = {
+		{NULL, NULL, NULL, 0}
 };
 
 
@@ -963,6 +960,14 @@ static const ElementInfoSubComponent CramSimSubComponents[] = {
 			c_CmdUnit_params,                            // Parameters
 			c_CmdUnit_stats,
 			COMPONENT_CATEGORY_UNCATEGORIZED            // Category
+		},
+		{"c_CmdScheduler",                                // Name
+				"Command Scheduler",                            // Description
+				NULL,                                        // PrintHelp
+				create_c_CmdScheduler,                            // Allocator
+				c_CmdScheduler_params,                            // Parameters
+				c_CmdScheduler_stats,
+				COMPONENT_CATEGORY_UNCATEGORIZED            // Category
 		},
 		{ NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL }
 };

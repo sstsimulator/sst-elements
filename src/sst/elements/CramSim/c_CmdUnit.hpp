@@ -30,6 +30,7 @@
 #define C_CmdUnit_HPP
 
 #include <vector>
+#include <queue>
 #include <list>
 #include <set>
 #include <iostream>
@@ -46,6 +47,9 @@
 #include "c_Rank.hpp"
 #include "c_BankCommand.hpp"
 #include "c_DeviceController.hpp"
+#include "c_Controller.hpp"
+#include "c_CtrlSubComponent.hpp"
+
 
 typedef unsigned long ulong;
 
@@ -53,65 +57,47 @@ namespace SST {
 namespace n_Bank{
 
 	class c_BankCommand;
+	class c_Controller;
 	enum class e_BankCommandType;
   
-class c_CmdUnit: public SubComponent {
+class c_CmdUnit: public c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> {
 public:
-
 	c_CmdUnit(Component *comp, Params& x_params);
 	~c_CmdUnit();
 
 	void finish() {
-		// printf("CmdUnit Queues:\n");
-		// printf("\t CmdUnit Req Q:\n");
-		// for (unsigned l_i = 0; l_i != k_cmdReqQEntries+1; ++l_i)
-		// 	printf("%u\n", m_statsReqQ[l_i]);
-		//
-		// printf("\n\t CmdUnit Res Q:\n");
-		// for (unsigned l_i = 0; l_i != k_cmdResQEntries+1; ++l_i)
-		// 	printf("%u\n", m_statsResQ[l_i]);
 		printf("Refresh's sent out: %" PRIu32 "\n", m_refsSent);
-
 	}
 
 	void print() const; // print internals
-	std::vector<c_BankCommand*> issueCommand();
-	void pushCommand(std::vector<c_BankCommand*> newCmds);
+	bool clockTic(SST::Cycle_t);
 
 private:
+
+    void run();
+
+	std::vector<c_BankCommand*> m_cmdReqQ;			//input queue
+	std::vector<c_BankCommand*> m_cmdResQ;
+
+	c_Controller *m_Owner;
+
+	// params for internal architecture
+	int k_cmdReqQEntries;
+	int k_cmdResQEntries;
+
 	c_CmdUnit(); // for serialization only
 
-	// CmdUnit <-> TxnUnit Handlers
-
-	/*void handleInTxnUnitReqPtrEvent(SST::Event *ev); // receive a cmd req pkg from TxnUnit
-	void handleOutTxnUnitReqQTokenChgEvent(SST::Event *ev); // we do not this function for functionality
-	void handleOutTxnUnitResPtrEvent(SST::Event *ev); // we do not need this function for functionality
-
-	// CmdUnit <-> Bank handlers
-	void handleOutBankReqPtrEvent(SST::Event *ev); // we do not need this function for functionality
-	void handleInBankResPtrEvent(SST::Event *ev); // receive a cmd res from Bank
-
-	// CmdUnit <-> TxnUnit Links
-	SST::Link* m_inTxnUnitReqPtrLink; // incoming txnunit req ptr
-	SST::Link* m_outTxnUnitReqQTokenChgLink; // outgoing txnunit req q token
-	SST::Link* m_outTxnUnitResPtrLink; // outgoing txnunit res ptr
-
-	// CmdUnit <-> Bank Links
-	SST::Link* m_outBankReqPtrLink; // outgoing bank req ptr
-	SST::Link* m_inBankResPtrLink; // incoming bank res ptr*/
-
-//	void sendTokenChg(); // should happen at the end of every cycle
-//	void sendResponse();
 	void sendRequest();
 	void sendRefresh();
+	void issueCommand(c_BankCommand* cmd);
 
 	std::set<unsigned> m_inflightWrites; // track inflight write commands
 	//std::vector<bool> m_blockBank;bool m_issuedDataCmd;
-	std::vector<unsigned> m_blockRowCmd; //command bus occupancy info
-	std::vector<unsigned> m_blockColCmd; //command bus occupancy info
+	std::deque<unsigned> m_blockRowCmd; //command bus occupancy info
+	std::deque<unsigned> m_blockColCmd; //command bus occupancy info
 
 	void sendReqCloseBankPolicy(
-			std::vector<c_BankCommand*>::iterator x_startItr); // send request function that models close bank policy
+			std::deque<c_BankCommand*>::iterator x_startItr); // send request function that models close bank policy
 	void sendReqOpenRowPolicy(); // send request function that models open row policy
 	void sendReqOpenBankPolicy(); // send request function that models open bank policy
 	void sendReqPseudoOpenRowPolicy(); // send request function that models pseudo open row policy
@@ -128,9 +114,7 @@ private:
 	// FIXME: Remove. For testing purposes
 	void printQueues();
 
-	// params for internal arcitecture
-	int k_cmdReqQEntries;
-	int k_cmdResQEntries;
+
 
 	// params for bank structure
 	int k_numBytesPerTransaction;
@@ -176,9 +160,7 @@ private:
 	int m_thisCycleReqQTknChg;
 	int m_thisCycleResReceived;
 
-	std::vector<c_BankCommand*> m_cmdIssueQ;
-	std::vector<c_BankCommand*> m_cmdReqQ;
-	std::vector<c_BankCommand*> m_cmdResQ;
+
 
 	std::map<std::string, unsigned> m_bankParams;
 
