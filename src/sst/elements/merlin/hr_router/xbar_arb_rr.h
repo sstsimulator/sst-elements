@@ -35,6 +35,17 @@ namespace Merlin {
 
 class xbar_arb_rr : public XbarArbitration {
 
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        xbar_arb_rr,
+        "merlin",
+        "xbar_arb_rr",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Round robin arbitration unit for hr_router",
+        "SST::Merlin::XbarArbitration")
+    
+    
 private:
     int num_ports;
     int num_vcs;
@@ -163,22 +174,6 @@ public:
         }
     }
 
-    SST_ELI_REGISTER_SUBCOMPONENT(xbar_arb_rr,"merlin","xbar_arb_rr","Round robin arbitration unit for hr_router","SST::Merlin::XbarArbitration")
-    
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
-    
 };
  
 }

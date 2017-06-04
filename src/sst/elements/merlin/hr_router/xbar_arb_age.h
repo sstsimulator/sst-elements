@@ -35,6 +35,16 @@ namespace Merlin {
     
 class xbar_arb_age : public XbarArbitration {
 
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        xbar_arb_age,
+        "merlin",
+        "xbar_arb_age",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Age based arbitration unit for hr_router",
+        "SST::Merlin::XbarArbitration")
+    
 private:
     /**
        Structure for sorting priority based on age
@@ -236,21 +246,6 @@ public:
         /* } */
     }
     
-    SST_ELI_REGISTER_SUBCOMPONENT(xbar_arb_age,"merlin","xbar_arb_age","Age based arbitration unit for hr_router","SST::Merlin::XbarArbitration")
-    
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
 };
  
 }

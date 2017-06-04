@@ -38,6 +38,7 @@ namespace Merlin {
 
 // Need our own version of Request to add a sequence number
 class ReorderRequest : public SST::Interfaces::SimpleNetwork::Request {
+
 public:
     uint32_t seq;
 
@@ -113,6 +114,20 @@ struct ReorderInfo {
 // functionality working.
 class ReorderLinkControl : public SST::Interfaces::SimpleNetwork {
 public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        ReorderLinkControl,
+        "merlin",
+        "reorderlinkcontrol",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Link Control module that can handle out of order packet arrival. Events are sequenced and order is reconstructed on receive.",
+        "SST::Interfaces::SimpleNetwork")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"rlc:networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"}
+    )
+
+    
     typedef std::queue<SST::Interfaces::SimpleNetwork::Request*> request_queue_t;
     
 private:
@@ -183,25 +198,6 @@ public:
 private:
 
     bool handle_event(int vn);
-    
-    SST_ELI_REGISTER_SUBCOMPONENT(ReorderLinkControl,"merlin","reorderlinkcontrol","Link Control module that can handle out of order packet arrival.  "
-      "Events are sequenced and order is reconstructed on receive.","SST::Interfaces::SimpleNetwork")
-    
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-        {"rlc:networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"}
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
-    
 };
 
 }

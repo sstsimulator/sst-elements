@@ -179,36 +179,36 @@ void c_BankStateActive::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_allowedCommands.push_back(e_BankCommandType::READ);
 	x_bank->setNextCommandCycle(e_BankCommandType::READ,
 			std::max(x_bank->getNextCommandCycle(e_BankCommandType::READ),
-					l_time + m_bankParams->at("nRCD")) - 2);
+				 l_time + m_bankParams->at("nRCD") - 2));
 
 	m_allowedCommands.push_back(e_BankCommandType::READA);
 	x_bank->setNextCommandCycle(e_BankCommandType::READA,
 			std::max(x_bank->getNextCommandCycle(e_BankCommandType::READA),
-					l_time + m_bankParams->at("nRCD")) - 2);
+				 l_time + m_bankParams->at("nRCD") - 2));
 
 	m_allowedCommands.push_back(e_BankCommandType::WRITE);
 	x_bank->setNextCommandCycle(e_BankCommandType::WRITE,
 			std::max(x_bank->getNextCommandCycle(e_BankCommandType::WRITE),
-					l_time + m_bankParams->at("nRCD")) - 2);
+				 l_time + m_bankParams->at("nRCD") - 2));
 
 	m_allowedCommands.push_back(e_BankCommandType::WRITEA);
 	x_bank->setNextCommandCycle(e_BankCommandType::WRITEA,
 			std::max(x_bank->getNextCommandCycle(e_BankCommandType::WRITEA),
-					l_time + m_bankParams->at("nRCD")) - 2);
+				 l_time + m_bankParams->at("nRCD") - 2));
 
 	m_allowedCommands.push_back(e_BankCommandType::PRE);
 	x_bank->setNextCommandCycle(e_BankCommandType::PRE,
-			(std::max(x_bank->getNextCommandCycle(e_BankCommandType::PRE),
-					std::max(
-							x_bank->getLastCommandCycle(e_BankCommandType::ACT)
-									+ m_bankParams->at("nRAS"),
-							std::max(
-									x_bank->getLastCommandCycle(
-											e_BankCommandType::WRITE)
-											+ m_bankParams->at("nWR"),
-									x_bank->getLastCommandCycle(
-											e_BankCommandType::READ)
-											+ m_bankParams->at("nRTP"))))) - 2);
+				    (std::max(x_bank->getNextCommandCycle(e_BankCommandType::PRE),
+					      std::max(
+						       x_bank->getLastCommandCycle(e_BankCommandType::ACT)
+						       + m_bankParams->at("nRAS"),
+						       std::max(
+								x_bank->getLastCommandCycle(
+											    e_BankCommandType::WRITE)
+								+ m_bankParams->at("nWR"),
+								x_bank->getLastCommandCycle(
+											    e_BankCommandType::READ)
+								+ m_bankParams->at("nRTP"))))));
 
 	x_bank->changeState(this);
 	if (nullptr != x_prevState)

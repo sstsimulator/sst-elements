@@ -46,6 +46,29 @@ typedef std::queue<RtrEvent*> network_queue_t;
 // more than one link_control (and thus link to router).
 class LinkControl : public SST::Interfaces::SimpleNetwork {
 
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        LinkControl,
+        "merlin",
+        "linkcontrol",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Link Control module for building Merlin-enabled NICs",
+        "SST::Interfaces::SimpleNetwork")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"checkerboard",     "Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
+        {"checkerboard_alg", "Algorithm to use to spead traffic across checkerboarded VNs [deterministic | roundrobin]", "deterministic" }
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "packet_latency",     "Histogram of latencies for received packets", "latency", 1},
+        { "send_bit_count",     "Count number of bits sent on link", "bits", 1},
+        { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
+        { "idle_time",          "Number of (in unites of core timebas) that port was idle", "time spent idle", 1},
+    )
+
+    
 private:
     // Link to router
     Link* rtr_link;
@@ -174,29 +197,6 @@ private:
     void handle_input(Event* ev);
     void handle_output(Event* ev);
 
-
-    SST_ELI_REGISTER_SUBCOMPONENT(LinkControl,"merlin","linkcontrol","Link Control module for building Merlin-enabled NICs","SST::Interfaces::SimpleNetwork")
-    
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-        {"checkerboard","Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
-        {"checkerboard_alg","Algorithm to use to spead traffic across checkerboarded VNs [deterministic | roundrobin]", "deterministic" }
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-        { "packet_latency", "Histogram of latencies for received packets", "latency", 1},
-        { "send_bit_count", "Count number of bits sent on link", "bits", 1},
-        { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
-        { "idle_time", "number of (in unites of core timebas) that port was idle", "time spent idle", 1},
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-    )
-    
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
-    
     
 };
 

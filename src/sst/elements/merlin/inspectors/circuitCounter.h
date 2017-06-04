@@ -26,6 +26,18 @@ using namespace SST::Interfaces;
 namespace Merlin {
 
 class CircNetworkInspector : public SimpleNetwork::NetworkInspector {
+
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        CircNetworkInspector,
+        "merlin",
+        "circuit_network_inspector",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Used to count the number of network circuits (as in 'circuit switched' circuits)",
+        "SST::Interfaces::SimpleNetwork:NetworkInspector")
+    
+
 private:
     typedef std::pair<SimpleNetwork::nid_t, SimpleNetwork::nid_t> SDPair;
     typedef std::set<SDPair> pairSet_t;
@@ -47,21 +59,6 @@ public:
     void inspectNetworkData(SimpleNetwork::Request* req);
 
 
-    SST_ELI_REGISTER_SUBCOMPONENT(CircNetworkInspector,"merlin","circuit_network_inspector","Used to count the number of network circuits (as in 'circuit switched' circuits)","SST::Interfaces::SimpleNetwork:NetworkInspector")
-    
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
 };
 
 

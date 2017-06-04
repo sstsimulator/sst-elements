@@ -34,6 +34,30 @@ namespace Merlin {
 
 class bisection_test : public Component {
 
+public:
+
+    SST_ELI_REGISTER_COMPONENT(
+        bisection_test,
+        "merlin",
+        "bisection_test",
+        SST_ELI_ELEMENT_VERSION(0,9,0),
+        "Simple NIC to test bisection bandwidth of a network.",
+        COMPONENT_CATEGORY_NETWORK)
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"num_peers",       "Number of peers on the network (must be even number)"},
+        {"link_bw",         "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix).","2GB/s"},
+        {"packet_size",     "Packet size specified in either b or B (can include SI prefix).","64B"},
+        {"packets_to_send", "Number of packets to send in the test.", "32"},
+        {"buffer_size",     "Size of input and output buffers specified in b or B (can include SI prefix).", "128B"},
+        {"networkIF",       "Network interface to use.  Must inherit from SimpleNetwork", "merlin.linkcontrol"}
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
+    )
+
+    
 private:
     int id;
     int partner_id;
@@ -66,29 +90,6 @@ private:
     void handle_complete(Event* ev);
     bool receive_handler(int vn);
     bool send_handler(int vn);
-    
-    SST_ELI_REGISTER_COMPONENT(bisection_test,"merlin","bisection_test","Simple NIC to test bisection bandwidth of a network.",COMPONENT_CATEGORY_NETWORK)
-    
-    SST_ELI_DOCUMENT_VERSION(0,9,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-        {"num_peers","Number of peers on the network (must be even number)"},
-        {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix).","2GB/s"},
-        {"packet_size","Packet size specified in either b or B (can include SI prefix).","64B"},
-        {"packets_to_send","Number of packets to send in the test.", "32"},
-        {"buffer_size","Size of input and output buffers specified in b or B (can include SI prefix).", "128B"},
-        {"networkIF","Network interface to use.  Must inherit from SimpleNetwork", "merlin.linkcontrol"}
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
 };
 
 class bisection_test_event : public Event {

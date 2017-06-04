@@ -32,6 +32,18 @@ namespace Merlin {
 
 class topo_singlerouter: public Topology {
 
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        topo_singlerouter,
+        "merlin",
+        "singlerouter",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Simple, single-router topology object",
+        "SST::Merlin::Topology")
+    
+    
+private:
     int num_ports;
 
 public:
@@ -47,22 +59,6 @@ public:
     virtual PortState getPortState(int port) const;
 
     virtual int getEndpointID(int port) { return port; }
-
-    SST_ELI_REGISTER_SUBCOMPONENT(topo_singlerouter,"merlin","singlerouter","Simple, single-router topology object","SST::Merlin::Topology")
-    
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
 
 };
 

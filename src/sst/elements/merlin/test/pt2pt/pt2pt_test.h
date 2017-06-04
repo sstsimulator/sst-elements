@@ -33,6 +33,30 @@ class LinkControl;
 
 class pt2pt_test : public Component {
 
+public:
+
+    SST_ELI_REGISTER_COMPONENT(
+        pt2pt_test,
+        "merlin",
+        "pt2pt_test",
+        SST_ELI_ELEMENT_VERSION(0,9,0),
+        "Simple NIC to test basic pt2pt performance.",
+        COMPONENT_CATEGORY_NETWORK)
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"id",               "Network ID of endpoint."},
+        {"num_vns",          "Number of requested virtual networks."},
+        {"link_bw",          "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
+        {"packet_size",      "Packet size specified in either b or B (can include SI prefix)."},
+        {"packets_to_send",  "Number of packets to send in the test."},
+        {"buffer_size",      "Size of input and output buffers specified in b or B (can include SI prefix)."}
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
+    )
+
+
 private:
     int id;
     int num_vns;
@@ -63,31 +87,6 @@ private:
     bool clock_handler(Cycle_t cycle);
     void handle_complete(Event* ev);
     
-
-
-    SST_ELI_REGISTER_COMPONENT(pt2pt_test,"merlin","pt2pt_test","Simple NIC to test basic pt2pt performance.",COMPONENT_CATEGORY_NETWORK)
-    
-    SST_ELI_DOCUMENT_VERSION(0,9,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-        {"id","Network ID of endpoint."},
-        {"num_vns","Number of requested virtual networks."},
-        {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
-        {"packet_size","Packet size specified in either b or B (can include SI prefix)."},
-        {"packets_to_send","Number of packets to send in the test."},
-        {"buffer_size","Size of input and output buffers specified in b or B (can include SI prefix)."}
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
-
 };
 
 class pt2pt_test_event : public Event {
