@@ -68,14 +68,14 @@ c_TracefileReader::c_TracefileReader(ComponentId_t x_id, Params& x_params) :
 	}
 
 	//transaction unit queue entries
-	k_txnUnitReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitReqQEntries", 100,
+	k_CtrlReqQEntries = (uint32_t)x_params.find<uint32_t>("numCtrlReqQEntries", 100,
 			l_found);
 	if (!l_found) {
-		std::cout << "TxnGen:: numTxnUnitReqQEntries value is missing... exiting"
+		std::cout << "TxnGen:: numCtrlReqQEntries value is missing... exiting"
 				<< std::endl;
 		exit(-1);
 	}
-	m_txnUnitReqQTokens = k_txnUnitReqQEntries;
+	m_CtrlReqQTokens = k_CtrlReqQEntries;
 
 	// trace file param
 	m_traceFileName = x_params.find<std::string>("traceFile", "nil", l_found);
@@ -104,17 +104,17 @@ c_TracefileReader::c_TracefileReader(ComponentId_t x_id, Params& x_params) :
 			new Event::Handler<c_TracefileReader>(this,
 					&c_TracefileReader::handleOutTxnGenReqPtrEvent));
 	//// accept token chg from txn unit
-	m_inTxnUnitReqQTokenChgLink = configureLink(
-			"inTxnUnitReqQTokenChg",
+	m_inCtrlReqQTokenChgLink = configureLink(
+			"inCtrlReqQTokenChg",
 			new Event::Handler<c_TracefileReader>(this,
-					&c_TracefileReader::handleInTxnUnitReqQTokenChgEvent));
+					&c_TracefileReader::handleInCtrlReqQTokenChgEvent));
 
 	// response-related links
 	//// accept from txn unit
-	m_inTxnUnitResPtrLink = configureLink(
-			"inTxnUnitResPtr",
+	m_inCtrlResPtrLink = configureLink(
+			"inCtrlResPtr",
 			new Event::Handler<c_TracefileReader>(this,
-					&c_TracefileReader::handleInTxnUnitResPtrEvent));
+					&c_TracefileReader::handleInCtrlResPtrEvent));
 	//// send token chg to txn unit
 	m_outTxnGenResQTokenChgLink = configureLink(
 			"outTxnGenResQTokenChg",
@@ -219,23 +219,23 @@ void c_TracefileReader::createTxn() {
 }
 
 
-void c_TracefileReader::handleInTxnUnitReqQTokenChgEvent(SST::Event *ev) {
-	c_TokenChgEvent* l_txnUnitReqQTknChgEventPtr =
+void c_TracefileReader::handleInCtrlReqQTokenChgEvent(SST::Event *ev) {
+	c_TokenChgEvent* l_CtrlReqQTknChgEventPtr =
 			dynamic_cast<c_TokenChgEvent*> (ev);
 
-	if (l_txnUnitReqQTknChgEventPtr) {
-		std::cout << "TxnGen::handleInTxnUnitReqQTokenChgEvent(): @"
+	if (l_CtrlReqQTknChgEventPtr) {
+		std::cout << "TxnGen::handleInCtrlReqQTokenChgEvent(): @"
 				<< std::dec
 				<< Simulation::getSimulation()->getCurrentSimCycle() << " "
 				<< __PRETTY_FUNCTION__ << std::endl;
 
-		m_txnUnitReqQTokens += l_txnUnitReqQTknChgEventPtr->m_payload;
+		m_CtrlReqQTokens += l_CtrlReqQTknChgEventPtr->m_payload;
 
 		//FIXME: Critical: This pointer is left dangling
-		delete l_txnUnitReqQTknChgEventPtr;
+		delete l_CtrlReqQTknChgEventPtr;
 
-		assert(m_txnUnitReqQTokens >= 0);
-		assert(m_txnUnitReqQTokens <= k_txnUnitReqQEntries);
+		assert(m_CtrlReqQTokens >= 0);
+		assert(m_CtrlReqQTokens <= k_CtrlReqQEntries);
 
 
 	} else {
@@ -245,14 +245,14 @@ void c_TracefileReader::handleInTxnUnitReqQTokenChgEvent(SST::Event *ev) {
 	}
 }
 
-void c_TracefileReader::handleInTxnUnitResPtrEvent(SST::Event* ev) {
+void c_TracefileReader::handleInCtrlResPtrEvent(SST::Event* ev) {
 	// make sure the txn res q has at least one empty entry
 	// to accept a new txn ptr
 	assert(1 <= (k_txnGenResQEntries - m_txnResQ.size()));
 
 	c_TxnResEvent* l_txnResEventPtr = dynamic_cast<c_TxnResEvent*> (ev);
 	if (l_txnResEventPtr) {
-		std::cout << "TxnGen::handleInTxnUnitResPtrEvent(): @" << std::dec
+		std::cout << "TxnGen::handleInCtrlResPtrEvent(): @" << std::dec
 				<< Simulation::getSimulation()->getCurrentSimCycle() << " "
 				<< __PRETTY_FUNCTION__ << " Txn received: "<< std::endl;
 		l_txnResEventPtr->m_payload->print();
@@ -306,7 +306,7 @@ void c_TracefileReader::sendTokenChg() {
 
 void c_TracefileReader::sendRequest() {
 
-	if (m_txnUnitReqQTokens > 0) {
+	if (m_CtrlReqQTokens > 0) {
 		if (m_txnReqQ.size() > 0) {
 
 			// confirm that interval timer has run out before contiuing
@@ -332,7 +332,7 @@ void c_TracefileReader::sendRequest() {
 			l_txnReqEvPtr->m_payload = m_txnReqQ.front().first;
 			m_txnReqQ.pop();
 			m_outTxnGenReqPtrLink->send(l_txnReqEvPtr);
-			--m_txnUnitReqQTokens;
+			--m_CtrlReqQTokens;
 		}
 	}
 }

@@ -14,7 +14,7 @@
 // distribution.
 
 /*
- * c_TxnUnit.hpp
+ * c_TxnConverter.hpp
  *
  *  Created on: May 18, 2016
  *      Author: tkarkha
@@ -29,8 +29,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef C_TXNUNIT_HPP_
-#define C_TXNUNIT_HPP_
+#ifndef C_TxnConverter_HPP_
+#define C_TxnConverter_HPP_
 
 #include <vector>
 #include <queue>
@@ -50,26 +50,23 @@
 namespace SST {
 namespace n_Bank {
 	class c_CmdScheduler;
-class c_TxnUnit: public c_CtrlSubComponent <c_Transaction*,c_BankCommand*> {
+class c_TxnConverter: public c_CtrlSubComponent <c_Transaction*,c_BankCommand*> {
 
 public:
 
-	c_TxnUnit(SST::Component * comp, SST::Params& x_params);
-	~c_TxnUnit();
+	c_TxnConverter(SST::Component * comp, SST::Params& x_params);
+	~c_TxnConverter();
 
-//	uint32_t getToken();
-	void pushTransaction(c_Transaction* newTxn); // receive txns from txnGen into req q
+	void push(c_Transaction* newTxn); // receive txns from txnGen into req q
 	bool clockTic(SST::Cycle_t);
-	int getToken();
 	void print() const; // print internals
 
 private:
 
 	c_CmdScheduler *m_nextSubComponent;
-	std::queue<c_BankCommand*> m_cmdQ;
 
 	void run();
-	void sendRequest();
+	void send();
 	void createRefreshCmds();
 
 	// FIXME: Remove. For testing purposes
@@ -83,23 +80,13 @@ private:
 	bool k_useRefresh;
 	int k_bankPolicy;
 
-	int m_numBanks;
-	int k_REFI;
-	int m_currentREFICount;
 	c_TransactionToCommands *m_converter;
 
+	int k_REFI;
+	int m_currentREFICount;
 	std::vector<std::vector<unsigned> > m_refreshGroups;
 	uint m_currentRefreshGroup;
 	std::queue<c_BankCommand*> m_refreshList;
-
-	// internal architecture
-	std::queue<c_Transaction*> m_txnReqQ;				//input queue
-	std::queue<c_Transaction*> m_txnResQ;
-
-	// FIXME: Delete. Used for debugging queue size issues
-//	unsigned* m_statsReqQ;
-//	unsigned* m_statsResQ;
-
 	bool m_processingRefreshCmds; // Cmd unit is processing refresh commands
 
   // Statistics
@@ -112,4 +99,4 @@ private:
 }
 }
 
-#endif /* C_TXNUNIT_HPP_ */
+#endif /* C_TxnConverter_HPP_ */

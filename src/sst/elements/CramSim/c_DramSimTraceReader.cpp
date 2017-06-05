@@ -65,15 +65,15 @@ c_DramSimTraceReader::c_DramSimTraceReader(ComponentId_t x_id, Params& x_params)
 	}
 
 	//transaction unit queue entries
-	k_txnUnitReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitReqQEntries", 100,
+	k_CtrlReqQEntries = (uint32_t)x_params.find<uint32_t>("numCtrlReqQEntries", 100,
 			l_found);
 	if (!l_found) {
 		std::cout
-				<< "TxnGen:: numTxnUnitReqQEntries value is missing... exiting"
+				<< "TxnGen:: numCtrlReqQEntries value is missing... exiting"
 				<< std::endl;
 		exit(-1);
 	}
-	m_txnUnitReqQTokens = k_txnUnitReqQEntries;
+	m_CtrlReqQTokens = k_CtrlReqQEntries;
 
 	// trace file param
 	m_traceFileName = x_params.find<std::string>("traceFile", "nil", l_found);
@@ -87,7 +87,7 @@ c_DramSimTraceReader::c_DramSimTraceReader(ComponentId_t x_id, Params& x_params)
 	  std::cerr << "Unable to open trace file " << m_traceFileName << " Aborting!" << std::endl;
 	  exit(-1);
 	}
-	
+
 
 	m_statsReqQ = new unsigned[k_txnGenReqQEntries + 1];
 	m_statsResQ = new unsigned[k_txnGenResQEntries + 1];
@@ -110,15 +110,15 @@ c_DramSimTraceReader::c_DramSimTraceReader(ComponentId_t x_id, Params& x_params)
 			new Event::Handler<c_DramSimTraceReader>(this,
 					&c_DramSimTraceReader::handleOutTxnGenReqPtrEvent));
 	//// accept token chg from txn unit
-	m_inTxnUnitReqQTokenChgLink = configureLink("inTxnUnitReqQTokenChg",
+	m_inCtrlReqQTokenChgLink = configureLink("inCtrlReqQTokenChg",
 			new Event::Handler<c_DramSimTraceReader>(this,
-					&c_DramSimTraceReader::handleInTxnUnitReqQTokenChgEvent));
+					&c_DramSimTraceReader::handleInCtrlReqQTokenChgEvent));
 
 	// response-related links
 	//// accept from txn unit
-	m_inTxnUnitResPtrLink = configureLink("inTxnUnitResPtr",
+	m_inCtrlResPtrLink = configureLink("inCtrlResPtr",
 			new Event::Handler<c_DramSimTraceReader>(this,
-					&c_DramSimTraceReader::handleInTxnUnitResPtrEvent));
+					&c_DramSimTraceReader::handleInCtrlResPtrEvent));
 	//// send token chg to txn unit
 	m_outTxnGenResQTokenChgLink = configureLink("outTxnGenResQTokenChg",
 			new Event::Handler<c_DramSimTraceReader>(this,
@@ -235,28 +235,28 @@ void c_DramSimTraceReader::createTxn() {
 	}
 }
 
-void c_DramSimTraceReader::handleInTxnUnitReqQTokenChgEvent(SST::Event *ev) {
-	c_TokenChgEvent* l_txnUnitReqQTknChgEventPtr =
+void c_DramSimTraceReader::handleInCtrlReqQTokenChgEvent(SST::Event *ev) {
+	c_TokenChgEvent* l_CtrlReqQTknChgEventPtr =
 			dynamic_cast<c_TokenChgEvent*>(ev);
 
-	if (l_txnUnitReqQTknChgEventPtr) {
-//		 std::cout << "TxnGen::handleInTxnUnitReqQTokenChgEvent(): @"
+	if (l_CtrlReqQTknChgEventPtr) {
+//		 std::cout << "TxnGen::handleInCtrlReqQTokenChgEvent(): @"
 //		 		<< std::dec
 //		 		<< Simulation::getSimulation()->getCurrentSimCycle() << " "
 //		 		<< __PRETTY_FUNCTION__
 //		 		<< " "
-//		 		<< l_txnUnitReqQTknChgEventPtr
+//		 		<< l_CtrlReqQTknChgEventPtr
 //		 		<< " "
-//		 		<< l_txnUnitReqQTknChgEventPtr->m_payload
+//		 		<< l_CtrlReqQTknChgEventPtr->m_payload
 //		 		<< std::endl;
 
-		m_txnUnitReqQTokens += l_txnUnitReqQTknChgEventPtr->m_payload;
+		m_CtrlReqQTokens += l_CtrlReqQTknChgEventPtr->m_payload;
 
 		//FIXME: Critical: This pointer is left dangling
-		//delete l_txnUnitReqQTknChgEventPtr;
+		//delete l_CtrlReqQTknChgEventPtr;
 
-		assert(m_txnUnitReqQTokens >= 0);
-		assert(m_txnUnitReqQTokens <= k_txnUnitReqQEntries);
+		assert(m_CtrlReqQTokens >= 0);
+		assert(m_CtrlReqQTokens <= k_CtrlReqQEntries);
 
 	} else {
 		std::cout << std::endl << std::endl << "TxnGen:: "
@@ -265,7 +265,7 @@ void c_DramSimTraceReader::handleInTxnUnitReqQTokenChgEvent(SST::Event *ev) {
 	}
 }
 
-void c_DramSimTraceReader::handleInTxnUnitResPtrEvent(SST::Event* ev) {
+void c_DramSimTraceReader::handleInCtrlResPtrEvent(SST::Event* ev) {
 	// make sure the txn res q has at least one empty entry
 	// to accept a new txn ptr
 	assert(1 <= (k_txnGenResQEntries - m_txnResQ.size()));
@@ -273,7 +273,7 @@ void c_DramSimTraceReader::handleInTxnUnitResPtrEvent(SST::Event* ev) {
 	c_TxnResEvent* l_txnResEventPtr = dynamic_cast<c_TxnResEvent*>(ev);
 	if (l_txnResEventPtr) {
 
-//		 std::cout << "TxnGen::handleInTxnUnitResPtrEvent(): @" << std::dec
+//		 std::cout << "TxnGen::handleInCtrlResPtrEvent(): @" << std::dec
 //		 		<< Simulation::getSimulation()->getCurrentSimCycle() << " "
 //		 		<< __PRETTY_FUNCTION__ << " Txn received: "<< std::endl;
 //		 l_txnResEventPtr->m_payload->print();
@@ -329,7 +329,7 @@ void c_DramSimTraceReader::sendTokenChg() {
 
 void c_DramSimTraceReader::sendRequest() {
 
-	if (m_txnUnitReqQTokens > 0) {
+	if (m_CtrlReqQTokens > 0) {
 		if (m_txnReqQ.size() > 0) {
 
 			// confirm that interval timer has run out before contiuing
@@ -356,7 +356,7 @@ void c_DramSimTraceReader::sendRequest() {
 			l_txnReqEvPtr->m_payload = m_txnReqQ.front().first;
 			m_txnReqQ.pop();
 			m_outTxnGenReqPtrLink->send(l_txnReqEvPtr);
-			--m_txnUnitReqQTokens;
+			--m_CtrlReqQTokens;
 		}
 	}
 }

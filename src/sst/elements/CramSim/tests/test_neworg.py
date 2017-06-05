@@ -127,8 +127,14 @@ comp_txnGen0 = setup_txn_generator(g_params)
 
 # controller
 comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
-
 comp_controller0.addParams(g_params)
+comp_controller0.addParams({
+		"TxnConverter" : "CramSim.c_TxnConverter",
+		"AddrHasher" : "CramSim.c_AddressHasher",
+		"CmdScheduler" : "CramSim.c_CmdScheduler" ,
+		"DeviceController" : "CramSim.c_DeviceController"
+		})
+
 
 
 # bank receiver
@@ -146,12 +152,12 @@ txnReqLink_0.connect( (comp_txnGen0, "outTxnGenReqPtr", g_params["clockCycle"]),
 
 # TxnGen <- Controller (Res)(Txn)
 txnResLink_0 = sst.Link("txnResLink_0")
-txnResLink_0.connect( (comp_txnGen0, "inTxnUnitResPtr", g_params["clockCycle"]), (comp_controller0, "outTxnGenResPtr", g_params["clockCycle"]) )
+txnResLink_0.connect( (comp_txnGen0, "inCtrlResPtr", g_params["clockCycle"]), (comp_controller0, "outTxnGenResPtr", g_params["clockCycle"]) )
 
 
 # TxnGen <- Controller (Req)(Token)
 txnTokenLink_0 = sst.Link("txnTokenLink_0")
-txnTokenLink_0.connect( (comp_txnGen0, "inTxnUnitReqQTokenChg", g_params["clockCycle"]), (comp_controller0, "outTxnGenReqQTokenChg", g_params["clockCycle"]) )
+txnTokenLink_0.connect( (comp_txnGen0, "inCtrlReqQTokenChg", g_params["clockCycle"]), (comp_controller0, "outTxnGenReqQTokenChg", g_params["clockCycle"]) )
 
 # TxnGen -> Controller (Res)(Token)
 txnTokenLink_1 = sst.Link("txnTokenLink_1")
@@ -160,11 +166,11 @@ txnTokenLink_1.connect( (comp_txnGen0, "outTxnGenResQTokenChg", g_params["clockC
 
 # Controller -> Dimm (Req)
 cmdReqLink_1 = sst.Link("cmdReqLink_1")
-cmdReqLink_1.connect( (comp_controller0, "outDeviceReqPtr", g_params["clockCycle"]), (comp_dimm0, "inCmdUnitReqPtr", g_params["clockCycle"]) )
+cmdReqLink_1.connect( (comp_controller0, "outDeviceReqPtr", g_params["clockCycle"]), (comp_dimm0, "inCtrlReqPtr", g_params["clockCycle"]) )
 
 # Controller <- Dimm (Res) (Cmd)
 cmdResLink_1 = sst.Link("cmdResLink_1")
-cmdResLink_1.connect( (comp_controller0, "inDeviceResPtr", g_params["clockCycle"]), (comp_dimm0, "outCmdUnitResPtr", g_params["clockCycle"]) )
+cmdResLink_1.connect( (comp_controller0, "inDeviceResPtr", g_params["clockCycle"]), (comp_dimm0, "outCtrlResPtr", g_params["clockCycle"]) )
 
 
 

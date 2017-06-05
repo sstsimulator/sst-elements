@@ -40,7 +40,7 @@ c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : c_CtrlSubCom
 
 bool c_CmdScheduler::clockTic(SST::Cycle_t){
     run();
-    sendRequest();
+    send();
 }
 
 
@@ -54,7 +54,7 @@ void c_CmdScheduler::run(){
     }
 }
 
-void c_CmdScheduler::sendRequest() {
+void c_CmdScheduler::send() {
     int token=m_nextSubComponent->getToken();
 
     while(token>0 && !m_outputQ.empty()) {

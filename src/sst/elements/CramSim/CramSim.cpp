@@ -94,10 +94,10 @@ create_c_TxnDriver(SST::ComponentId_t id, SST::Params& params){
 	return new c_TxnDriver(id, params);
 }
 
-// c_TxnUnit
+// c_TxnConverter
 //static Component*
-//create_c_TxnUnit(SST::ComponentId_t id, SST::Params& params) {
-//	return new c_TxnUnit(id, params);
+//create_c_TxnConverter(SST::ComponentId_t id, SST::Params& params) {
+//	return new c_TxnConverter(id, params);
 //}
 
 
@@ -107,10 +107,10 @@ create_c_CmdDriver(SST::ComponentId_t id, SST::Params& params){
 	return new c_CmdDriver(id, params);
 }
 
-// c_CmdUnit
+// c_DeviceController
 //static Component*
-//create_c_CmdUnit(SST::ComponentId_t id, SST::Params& params){
-//	return new c_CmdUnit(id, params);
+//create_c_DeviceController(SST::ComponentId_t id, SST::Params& params){
+//	return new c_DeviceController(id, params);
 //}
 
 // c_BankReceiver
@@ -138,14 +138,14 @@ create_c_AddressHasher(Component * owner, Params& params) {
 
 // Transaction Converter
 static SubComponent*
-create_c_TxnUnit(Component * owner, Params& params) {
-	return new c_TxnUnit(owner, params);
+create_c_TxnConverter(Component * owner, Params& params) {
+	return new c_TxnConverter(owner, params);
 }
 
 // Command Scheduler
 static SubComponent*
-create_c_CmdUnit(Component * owner, Params& params) {
-	return new c_CmdUnit(owner, params);
+create_c_DeviceController(Component * owner, Params& params) {
+	return new c_DeviceController(owner, params);
 }
 
 // Device Controller
@@ -173,7 +173,7 @@ static const ElementInfoParam c_AddressHasher_params[] = {
 static const ElementInfoParam c_MemhBridge_params[] = {
 		{"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
 		{"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
-		{"numTxnUnitReqQEntries", "Total entries in the neighbor TxnUnit's Req queue", NULL},
+		{"numCtrlReqQEntries", "Total entries in the neighbor TxnConverter's Req queue", NULL},
 		{ NULL, NULL, NULL } };
 
 static const char* c_MemhBridge_req_port_events[] = { "c_TxnReqEvent", NULL };
@@ -184,8 +184,8 @@ static const char* c_MemhBridge_CPU_events[] = {"c_CPUevent", NULL};
 static const ElementInfoPort c_MemhBridge_ports[] = {
 		{ "linkCPU", "link to/from CPU",c_MemhBridge_CPU_events},
 		{ "outTxnGenReqPtr", "link to c_MemhBridge for outgoing req txn", c_MemhBridge_req_port_events },
-		{ "inTxnUnitReqQTokenChg", "link to c_MemhBridge for incoming req token", c_MemhBridge_token_port_events },
-		{ "inTxnUnitResPtr", "link to c_MemhBrdige for incoming res txn", c_MemhBridge_res_port_events },
+		{ "inCtrlReqQTokenChg", "link to c_MemhBridge for incoming req token", c_MemhBridge_token_port_events },
+		{ "inCtrlResPtr", "link to c_MemhBrdige for incoming res txn", c_MemhBridge_res_port_events },
 		{ "outTxnGenResQTokenChg", "link to c_MemhBridge for outgoing res token",c_MemhBridge_token_port_events },
 		{ NULL, NULL, NULL } };
 
@@ -193,7 +193,7 @@ static const ElementInfoPort c_MemhBridge_ports[] = {
 static const ElementInfoParam c_TxnGenSeq_params[] = {
 		{"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
 		{"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
-		{"numTxnUnitReqQEntries", "Total entries in the neighbor TxnUnit's Req queue", NULL},
+		{"numCtrlReqQEntries", "Total entries in the neighbor TxnConverter's Req queue", NULL},
 		{"readWriteRatio", "Ratio of read txn's to generate : write txn's to generate", NULL},
 		{ NULL, NULL, NULL } };
 
@@ -203,8 +203,8 @@ static const char* c_TxnGenSeq_token_port_events[] = {"c_TokenChgEvent", NULL};
 
 static const ElementInfoPort c_TxnGenSeq_ports[] = {
 		{ "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenSeq_req_port_events },
-		{ "inTxnUnitReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenSeq_token_port_events },
-		{ "inTxnUnitResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenSeq_res_port_events },
+		{ "inTxnCvtReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenSeq_token_port_events },
+		{ "inTxnCvtResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenSeq_res_port_events },
 		{ "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenSeq_token_port_events },
 		{ NULL, NULL, NULL } };
 
@@ -213,7 +213,7 @@ static const ElementInfoPort c_TxnGenSeq_ports[] = {
 static const ElementInfoParam c_TxnGenRand_params[] = {
 		{"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
 		{"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
-		{"numTxnUnitReqQEntries", "Total entries in the neighbor TxnUnit's Req queue", NULL},
+		{"numCtrlReqQEntries", "Total entries in the neighbor TxnConverter's Req queue", NULL},
 		{"readWriteRatio", "Ratio of read txn's to generate : write txn's to generate", NULL},
 		{ NULL, NULL, NULL } };
 
@@ -223,8 +223,8 @@ static const char* c_TxnGenRand_token_port_events[] = {"c_TokenChgEvent", NULL};
 
 static const ElementInfoPort c_TxnGenRand_ports[] = {
 		{ "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenRand_req_port_events },
-		{ "inTxnUnitReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
-		{ "inTxnUnitResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
+		{ "inCtrlReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
+		{ "inCtrlResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
 		{ "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenRand_token_port_events },
 		{ NULL, NULL, NULL } };
 
@@ -238,7 +238,7 @@ static const ElementInfoStatistic c_TxnGenRand_stats[] = {
 static const ElementInfoParam c_TracefileReader_params[] = {
 		{"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
 		{"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
-		{"numTxnUnitReqQEntries", "Total entries in the neighbor TxnUnit's Req queue", NULL},
+		{"numCtrlReqQEntries", "Total entries in the neighbor TxnConverter's Req queue", NULL},
 		{"traceFile", "Location of trace file to read", NULL},
 		{ NULL, NULL, NULL } };
 
@@ -248,8 +248,8 @@ static const char* c_TracefileReader_token_port_events[] = {"c_TokenChgEvent", N
 
 static const ElementInfoPort c_TracefileReader_ports[] = {
 		{ "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenRand_req_port_events },
-		{ "inTxnUnitReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
-		{ "inTxnUnitResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
+		{ "inCtrlReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
+		{ "inCtrlResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
 		{ "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenRand_token_port_events },
 		{ NULL, NULL, NULL } };
 
@@ -258,7 +258,7 @@ static const ElementInfoPort c_TracefileReader_ports[] = {
 static const ElementInfoParam c_DramSimTraceReader_params[] = {
 		{"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
 		{"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
-		{"numTxnUnitReqQEntries", "Total entries in the neighbor TxnUnit's Req queue", NULL},
+		{"numCtrlReqQEntries", "Total entries in the neighbor Ctrl's Req queue", NULL},
 		{"traceFile", "Location of trace file to read", NULL},
 		{ NULL, NULL, NULL } };
 
@@ -268,8 +268,8 @@ static const char* c_DramSimTraceReader_token_port_events[] = {"c_TokenChgEvent"
 
 static const ElementInfoPort c_DramSimTraceReader_ports[] = {
 		{ "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenRand_req_port_events },
-		{ "inTxnUnitReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
-		{ "inTxnUnitResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
+		{ "inCtrlReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
+		{ "inCtrlResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
 		{ "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenRand_token_port_events },
 		{ NULL, NULL, NULL } };
 
@@ -283,7 +283,7 @@ static const ElementInfoStatistic c_DramSimTraceReader_stats[] = {
 static const ElementInfoParam c_USimmTraceReader_params[] = {
   {"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
   {"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
-  {"numTxnUnitReqQEntries", "Total entries in the neighbor TxnUnit's Req queue", NULL},
+  {"numCtrlReqQEntries", "Total entries in the neighbor Ctrl's Req queue", NULL},
   {"traceFile", "Location of trace file to read", NULL},
   { NULL, NULL, NULL } };
 
@@ -293,8 +293,8 @@ static const char* c_USimmTraceReader_token_port_events[] = {"c_TokenChgEvent", 
 
 static const ElementInfoPort c_USimmTraceReader_ports[] = {
   { "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenRand_req_port_events },
-  { "inTxnUnitReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
-  { "inTxnUnitResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
+  { "inCtrlReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
+  { "inCtrlResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
   { "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenRand_token_port_events },
   { NULL, NULL, NULL } };
 
@@ -320,12 +320,12 @@ static const ElementInfoPort c_TxnDriver_ports[] = {
 		{ NULL, NULL, NULL } };
 
 
-/*----SETUP c_TxnUnit STRUCTURES----*/
-static const ElementInfoParam c_TxnUnit_params[] = {
-		{"numTxnUnitReqQEntries", "Total number of entries in TxnUnit's Req queue", NULL},
-		{"numTxnUnitResQEntries", "Total number of entries in TxnUnit's Res queue", NULL},
+/*----SETUP c_TxnConverter STRUCTURES----*/
+static const ElementInfoParam c_TxnConverter_params[] = {
+		{"numTxnCvtReqQEntries", "Total number of entries in TxnConverter's Req queue", NULL},
+		{"numTxnCvtResQEntries", "Total number of entries in TxnConverter's Res queue", NULL},
 		{"numTxnGenResQEntries", "Total number of entries in neighbor TxnGen's Res queue", NULL},
-		{"numCmdReqQEntries", "Total number of entries in neighbor CmdUnit's Req queue", NULL},
+		{"numCmdReqQEntries", "Total number of entries in neighbor DeviceController's Req queue", NULL},
 		{"numChannelsPerDimm", "Total number of channels per DIMM", NULL},
 		{"numRanksPerChannel", "Total number of ranks per channel", NULL},
 		{"numBankGroupsPerRank", "Total number of bank groups per rank", NULL},
@@ -341,7 +341,7 @@ static const ElementInfoParam c_TxnUnit_params[] = {
 		{"boolUseWriteA", "Whether to use WRITE or WRITEA Cmds", NULL},
 		{NULL, NULL, NULL } };
 
-static const ElementInfoStatistic c_TxnUnit_stats[] = {
+static const ElementInfoStatistic c_TxnConverter_stats[] = {
   {"readTxnsRecvd", "Number of read transactions received", "reads", 1}, // Name, Desc, Units, Enable Level
   {"writeTxnsRecvd", "Number of write transactions received", "writes", 1},
   {"totalTxnsRecvd", "Number of write transactions received", "transactions", 1},
@@ -363,7 +363,7 @@ static const ElementInfoStatistic c_CmdScheduler_stats[] = {
 /*----SETUP c_CmdDriver STRUCTURES----*/
 static const ElementInfoParam c_CmdDriver_params[] = {
 		{"numCmdReqQEntries", "Total number of entries in Driver's buffer", NULL},
-		{"numTxnResQEntries", "Total number of entries in neighbor TxnUnit's Res queue", NULL},
+		{"numTxnResQEntries", "Total number of entries in neighbor TxnConverter's Res queue", NULL},
 		{NULL, NULL, NULL } };
 
 static const char* c_CmdDriver_cmdRes_port_events[] = { "c_CmdResEvent", NULL };
@@ -372,16 +372,16 @@ static const char* c_CmdDriver_token_port_events[] = {"c_TokenChgEvent", NULL};
 
 static const ElementInfoPort c_CmdDriver_ports[] = {
 		{"outCmdDrvReqQTokenChg", "link to c_CmdDriver for outgoing req txn token", c_CmdDriver_token_port_events},
-		{"inTxnUnitReqPtr", "link to c_CmdDriver for incoming req cmds", c_CmdDriver_cmdReq_port_events},
+		{"inTxnCvtReqPtr", "link to c_CmdDriver for incoming req cmds", c_CmdDriver_cmdReq_port_events},
 		{"outCmdDrvResPtr", "link to c_CmdDriver for outgoing res txn", c_CmdDriver_cmdRes_port_events},
 		{NULL, NULL, NULL}
 };
 
 
-/*----SETUP c_CmdUnit STRUCTURES----*/
-static const ElementInfoParam c_CmdUnit_params[] = {
-		{"numCmdReqQEntries", "Total number of entries in CmdUnit's Req queue", NULL},
-		{"numCmdResQEntries", "Total number of entries in CmdUnit's Res queue", NULL},
+/*----SETUP c_DeviceController STRUCTURES----*/
+static const ElementInfoParam c_DeviceController_params[] = {
+		{"numCmdReqQEntries", "Total number of entries in DeviceController's Req queue", NULL},
+		{"numCmdResQEntries", "Total number of entries in DeviceController's Res queue", NULL},
 		{"numChannelsPerDimm", "Total number of channels per DIMM", NULL},
 		{"numRanksPerChannel", "Total number of ranks per channel", NULL},
 		{"numBankGroupsPerRank", "Total number of bank groups per rank", NULL},
@@ -393,12 +393,12 @@ static const ElementInfoParam c_CmdUnit_params[] = {
 		{"strCmdTraceFile", "Filename to print the command trace, or - for stdout", NULL},
 		{"strAddressMapStr", "String describing the address map", NULL},
 		{"relCommandWidth", "Relative width of each command", NULL},
-		{"boolAllocateCmdResACT", "Allocate space in CmdUnit Res Q for ACT Cmds", NULL},
-		{"boolAllocateCmdResREAD", "Allocate space in CmdUnit Res Q for READ Cmds", NULL},
-		{"boolAllocateCmdResREADA", "Allocate space in CmdUnit Res Q for READA Cmds", NULL},
-		{"boolAllocateCmdResWRITE", "Allocate space in CmdUnit Res Q for WRITE Cmds", NULL},
-		{"boolAllocateCmdResWRITEA", "Allocate space in CmdUnit Res Q for WRITEA Cmds", NULL},
-		{"boolAllocateCmdResPRE", "Allocate space in CmdUnit Res Q for PRE Cmds", NULL},
+		{"boolAllocateCmdResACT", "Allocate space in DeviceController Res Q for ACT Cmds", NULL},
+		{"boolAllocateCmdResREAD", "Allocate space in DeviceController Res Q for READ Cmds", NULL},
+		{"boolAllocateCmdResREADA", "Allocate space in DeviceController Res Q for READA Cmds", NULL},
+		{"boolAllocateCmdResWRITE", "Allocate space in DeviceController Res Q for WRITE Cmds", NULL},
+		{"boolAllocateCmdResWRITEA", "Allocate space in DeviceController Res Q for WRITEA Cmds", NULL},
+		{"boolAllocateCmdResPRE", "Allocate space in DeviceController Res Q for PRE Cmds", NULL},
 		{"boolCmdQueueFindAnyIssuable", "Search through Req Q for any cmd to send", NULL},
 		{"bankPolicy", "Select which bank policy to model", NULL},
 		{"boolUseRefresh", "Whether to use REF or not", NULL},
@@ -432,7 +432,7 @@ static const ElementInfoParam c_CmdUnit_params[] = {
 		{"nBL", "Bank Param", NULL},
 		{NULL, NULL, NULL } };
 
-static const ElementInfoStatistic c_CmdUnit_stats[] = {
+static const ElementInfoStatistic c_DeviceController_stats[] = {
   //{"rowHits", "Number of DRAM page buffer hits", "hits", 1}, // Name, Desc, Units, Enable Level
   {NULL,NULL,NULL,0}
 };
@@ -442,7 +442,7 @@ static const ElementInfoStatistic c_CmdUnit_stats[] = {
 static const ElementInfoParam c_Controller_params[] = {
 		{"AddrHasher", "address hasher", "CramSim.c_AddressHasher"},
 		{"scheduler", "Command Scheduler", "CramSim.c_simpleScheduler"},
-		{"deviceController", "device controller", "CramSim.c_CmdUnit"},
+		{"deviceController", "device controller", "CramSim.c_DeviceController"},
 		{NULL, NULL, NULL } };
 
 static const char* c_Controller_TxnGenReq_port_events[] = { "c_txnGenReqEvent", NULL };
@@ -472,8 +472,8 @@ static const char* c_BankReceiver_cmdReq_port_events[] = { "c_CmdReqEvent", NULL
 static const char* c_BankReceiver_cmdRes_port_events[] = { "c_CmdResEvent", NULL };
 
 static const ElementInfoPort c_BankReceiver_ports[] = {
-		{"inCmdUnitReqPtr", "link to c_BankReceiver for incoming req cmds", c_BankReceiver_cmdReq_port_events},
-		{"outCmdUnitResPtr", "link to c_BankReceiver for outgoing res cmds", c_BankReceiver_cmdRes_port_events},
+		{"inDeviceControllerReqPtr", "link to c_BankReceiver for incoming req cmds", c_BankReceiver_cmdReq_port_events},
+		{"outDeviceControllerResPtr", "link to c_BankReceiver for outgoing res cmds", c_BankReceiver_cmdRes_port_events},
 		{NULL, NULL, NULL}
 };
 
@@ -482,20 +482,20 @@ static const ElementInfoParam c_Dimm_params[] = {
 		{"numRanksPerChannel", "Total number of ranks per channel", NULL},
 		{"numBankGroupsPerRank", "Total number of bank groups per rank", NULL},
 		{"numBanksPerBankGroup", "Total number of banks per group", NULL},
-		{"boolAllocateCmdResACT", "Allocate space in CmdUnit Res Q for ACT Cmds", NULL},
-		{"boolAllocateCmdResREAD", "Allocate space in CmdUnit Res Q for READ Cmds", NULL},
-		{"boolAllocateCmdResREADA", "Allocate space in CmdUnit Res Q for READA Cmds", NULL},
-		{"boolAllocateCmdResWRITE", "Allocate space in CmdUnit Res Q for WRITE Cmds", NULL},
-		{"boolAllocateCmdResWRITEA", "Allocate space in CmdUnit Res Q for WRITEA Cmds", NULL},
-		{"boolAllocateCmdResPRE", "Allocate space in CmdUnit Res Q for PRE Cmds", NULL},
+		{"boolAllocateCmdResACT", "Allocate space in Controller Res Q for ACT Cmds", NULL},
+		{"boolAllocateCmdResREAD", "Allocate space in Controller Res Q for READ Cmds", NULL},
+		{"boolAllocateCmdResREADA", "Allocate space in Controller Res Q for READA Cmds", NULL},
+		{"boolAllocateCmdResWRITE", "Allocate space in Controller Res Q for WRITE Cmds", NULL},
+		{"boolAllocateCmdResWRITEA", "Allocate space in Controller Res Q for WRITEA Cmds", NULL},
+		{"boolAllocateCmdResPRE", "Allocate space in Controller Res Q for PRE Cmds", NULL},
 		{NULL, NULL, NULL } };
 
 static const char* c_Dimm_cmdReq_port_events[] = { "c_CmdReqEvent", NULL };
 static const char* c_Dimm_cmdRes_port_events[] = { "c_CmdResEvent", NULL };
 
 static const ElementInfoPort c_Dimm_ports[] = {
-		{"inCmdUnitReqPtr", "link to c_Dimm for incoming req cmds", c_Dimm_cmdReq_port_events},
-		{"outCmdUnitResPtr", "link to c_Dimm for outgoing res cmds", c_Dimm_cmdRes_port_events},
+		{"inCtrlReqPtr", "link to c_Dimm for incoming req cmds", c_Dimm_cmdReq_port_events},
+		{"outCtrlResPtr", "link to c_Dimm for outgoing res cmds", c_Dimm_cmdRes_port_events},
 		{NULL, NULL, NULL}
 };
 
@@ -945,20 +945,20 @@ static const ElementInfoSubComponent CramSimSubComponents[] = {
 		  NULL,
 		  COMPONENT_CATEGORY_UNCATEGORIZED 			// Category
 		},
-		{ "c_TxnUnit",	 							// Name
+		{ "c_TxnConverter",	 							// Name
 		"Transaction Converter",				 			// Description
 		NULL, 										// PrintHelp
-		create_c_TxnUnit, 							// Allocator
-		c_TxnUnit_params, 							// Parameters
-		c_TxnUnit_stats,
+		create_c_TxnConverter, 							// Allocator
+		c_TxnConverter_params, 							// Parameters
+		c_TxnConverter_stats,
 		COMPONENT_CATEGORY_UNCATEGORIZED 			// Category
 		},
-		{"c_CmdUnit",                                // Name
+		{"c_DeviceController",                                // Name
 			"Dram Control Unit",                            // Description
 			NULL,                                        // PrintHelp
-			create_c_CmdUnit,                            // Allocator
-			c_CmdUnit_params,                            // Parameters
-			c_CmdUnit_stats,
+			create_c_DeviceController,                            // Allocator
+			c_DeviceController_params,                            // Parameters
+			c_DeviceController_stats,
 			COMPONENT_CATEGORY_UNCATEGORIZED            // Category
 		},
 		{"c_CmdScheduler",                                // Name

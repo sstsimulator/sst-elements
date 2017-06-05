@@ -36,7 +36,7 @@
 
 namespace SST{
     namespace n_Bank {
-        class c_CmdUnit;
+        class c_DeviceController;
        // template<class I, class O> class c_CtrlSubComponent;
 
         class c_CmdScheduler : public c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> {
@@ -47,9 +47,9 @@ namespace SST{
 
         private:
             void run();
-            void sendRequest();
+            void send();
 
-            c_CmdUnit* m_nextSubComponent;
+            c_DeviceController* m_nextSubComponent;
         };
     }
 }

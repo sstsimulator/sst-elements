@@ -26,8 +26,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef C_CmdUnit_HPP
-#define C_CmdUnit_HPP
+#ifndef C_DeviceController_HPP
+#define C_DeviceController_HPP
 
 #include <vector>
 #include <queue>
@@ -46,7 +46,7 @@
 #include "c_Channel.hpp"
 #include "c_Rank.hpp"
 #include "c_BankCommand.hpp"
-#include "c_DeviceController.hpp"
+#include "c_CmdUnit.hpp"
 #include "c_Controller.hpp"
 #include "c_CtrlSubComponent.hpp"
 
@@ -60,10 +60,10 @@ namespace n_Bank{
 	class c_Controller;
 	enum class e_BankCommandType;
   
-class c_CmdUnit: public c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> {
+class c_DeviceController: public c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> {
 public:
-	c_CmdUnit(Component *comp, Params& x_params);
-	~c_CmdUnit();
+	c_DeviceController(Component *comp, Params& x_params);
+	~c_DeviceController();
 
 	void finish() {
 		printf("Refresh's sent out: %" PRIu32 "\n", m_refsSent);
@@ -76,20 +76,13 @@ private:
 
     void run();
 
-	std::vector<c_BankCommand*> m_cmdReqQ;			//input queue
-	std::vector<c_BankCommand*> m_cmdResQ;
-
 	c_Controller *m_Owner;
 
-	// params for internal architecture
-	int k_cmdReqQEntries;
-	int k_cmdResQEntries;
 
-	c_CmdUnit(); // for serialization only
+	c_DeviceController(); // for serialization only
 
-	void sendRequest();
+	void send();
 	void sendRefresh();
-	void issueCommand(c_BankCommand* cmd);
 
 	std::set<unsigned> m_inflightWrites; // track inflight write commands
 	//std::vector<bool> m_blockBank;bool m_issuedDataCmd;
@@ -114,32 +107,13 @@ private:
 	// FIXME: Remove. For testing purposes
 	void printQueues();
 
+	// FIXME: Delete. Used for debugging queue size issues
+    //unsigned* m_statsReqQ;
+    //unsigned* m_statsResQ;
+    unsigned m_refsSent;
 
 
 	// params for bank structure
-	int k_numBytesPerTransaction;
-	int k_numChannelsPerDimm;
-	int k_numPseudoChannels;
-	int k_numRanksPerChannel;
-	int k_numBankGroupsPerRank;
-	int k_numBanksPerBankGroup;
-	int k_numColsPerBank;
-	int k_numRowsPerBank;
-
-	int m_numRanks;
-	int m_numBankGroups;
-	int m_numBanks;
-
-	bool k_allocateCmdResQACT;bool k_allocateCmdResQREAD;bool k_allocateCmdResQREADA;bool k_allocateCmdResQWRITE;bool k_allocateCmdResQWRITEA;bool k_allocateCmdResQPRE;
-
-	bool k_useRefresh;
-	bool k_cmdQueueFindAnyIssuable;
-	int k_bankPolicy;
-	bool k_IsHBM;
-
-	int k_relCommandWidth;
-	int m_cmdResQTokens;
-
 	int k_useDualCommandBus;
 	int k_multiCycleACT;
 	std::vector<c_BankInfo*> m_banks;
@@ -154,30 +128,14 @@ private:
 	std::ofstream m_cmdTraceOFStream;
 	std::ostream *m_cmdTraceStream;
 
-	// token change in this unit this cycle
-	// beginning of every cycle these variables are reset
-	// sendTokenChg() function sends the contents of these variables
-	int m_thisCycleReqQTknChg;
-	int m_thisCycleResReceived;
-
-
-
-	std::map<std::string, unsigned> m_bankParams;
-
-	// FIXME: Delete. Used for debugging queue size issues
-	unsigned* m_statsReqQ;
-	unsigned* m_statsResQ;
-	unsigned m_refsSent;
-
 	SimTime_t m_lastDataCmdIssueCycle;
 	e_BankCommandType m_lastDataCmdType;
 	unsigned m_lastPseudoChannel;
 	std::list<unsigned> m_cmdACTFAWtracker; // FIXME: change this to a circular buffer for speed. Could also implement as shift register.
 	bool m_issuedACT;
 
-
 };
 }
 }
 
-#endif // C_CMDUNIT_HPP
+#endif // C_DeviceController_HPP

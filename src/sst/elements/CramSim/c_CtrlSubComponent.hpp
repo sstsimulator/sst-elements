@@ -68,7 +68,7 @@ namespace SST {
         protected:
             //internal functions
             virtual void run() =0 ;
-            virtual void sendRequest() = 0;
+            virtual void send() = 0;
 
             // internal buffer
             std::vector<I> m_input2Q;                    //input queue
@@ -79,8 +79,7 @@ namespace SST {
             std::deque<O> *m_nextSubCompInputQ;    //neighbor subcomponent
 
             // params for internal architecture
-            int k_numInQueueEntries;
-            int k_numOutQueueEntries;
+            int k_numCtrlIntQEntries;
 
             // params for bank structure
             int k_numBytesPerTransaction;
@@ -111,6 +110,14 @@ namespace SST {
             std::ofstream m_cmdTraceOFStream;
             std::ostream *m_cmdTraceStream;
             std::map<std::string, unsigned> m_bankParams;
+            int m_numChannelsPerDimm;
+            int m_numRanksPerChannel;
+            int m_numBankGroupsPerRank;
+            int m_numBanksPerBankGroup;
+            int m_numBanks;
+            int m_numRanks;
+            int m_numBankGroups;
+
 
 
         };
@@ -120,18 +127,6 @@ namespace SST {
             m_inputQ.clear();
             m_outputQ.clear();
             bool l_found = false;
-            k_numInQueueEntries = (uint32_t) x_params.find<uint32_t>("numCmdReqQEntries", 100, l_found);
-            if (!l_found) {
-                std::cout << "numCmdUnitReqQEntries value is missing... exiting" << std::endl;
-                exit(-1);
-            }
-
-            k_numOutQueueEntries = (uint32_t) x_params.find<uint32_t>("numCmdResQEntries", 100, l_found);
-            if (!l_found) {
-                std::cout << "numCmdUnitResQEntries value is missing... exiting" << std::endl;
-                exit(-1);
-            }
-
 
             k_numBytesPerTransaction = (uint32_t) x_params.find<uint32_t>("numBytesPerTransaction", 32, l_found);
             if (!l_found) {
@@ -252,6 +247,50 @@ namespace SST {
             if (!l_found) {
                 std::cout << "boolMultiCycleACT value is missing... disabled" << std::endl;
             }
+
+
+
+            // calculate total number of banks
+            int m_numChannelsPerDimm = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,
+                                                                         l_found);
+            if (!l_found) {
+                std::cout << "numChannelsPerDimm value is missing... exiting"
+                          << std::endl;
+                exit(-1);
+            }
+
+            int m_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 100,
+                                                                         l_found);
+            if (!l_found) {
+                std::cout << "numRanksPerChannel value is missing... exiting"
+                          << std::endl;
+                exit(-1);
+            }
+
+            int m_numBankGroupsPerRank = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank",
+                                                                           100, l_found);
+            if (!l_found) {
+                std::cout << "numBankGroupsPerRank value is missing... exiting"
+                          << std::endl;
+                exit(-1);
+            }
+
+            int m_numBanksPerBankGroup = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup",
+                                                                           100, l_found);
+            if (!l_found) {
+                std::cout << "numBanksPerBankGroup value is missing... exiting"
+                          << std::endl;
+                exit(-1);
+            }
+
+            // configure the memory hierarchy
+            uint32_t l_numChannels = k_numPseudoChannels * k_numChannelsPerDimm;
+            m_numRanks = l_numChannels * k_numRanksPerChannel;
+            m_numBankGroups = m_numRanks * k_numBankGroupsPerRank;
+            m_numBanks = m_numBankGroups * k_numBanksPerBankGroup;
+
+           // m_numBanks = m_numRanksPerChannel * m_numBankGroupsPerRank
+             //            * m_numBanksPerBankGroup;
 
             /* BANK TRANSITION PARAMETERS */
             //FIXME: Move this param reading to inside of c_BankInfo
@@ -423,9 +462,9 @@ namespace SST {
                 exit(-1);
             }
 
-            k_numInQueueEntries = (uint32_t) x_params.find<uint32_t>("numCmdReqQEntries", 100, l_found);
+            k_numCtrlIntQEntries = (uint32_t) x_params.find<uint32_t>("numCtrlIntQEntries", 100, l_found);
             if (!l_found) {
-                std::cout << "numCmdUnitReqQEntries value is missing... exiting" << std::endl;
+                std::cout << "k_numCtrlIntQEntries value is missing... exiting" << std::endl;
                 exit(-1);
             }
         }
@@ -440,9 +479,9 @@ namespace SST {
         template<class I, class O>
         int c_CtrlSubComponent<I, O>::getToken() {
             int l_QueueSize = m_inputQ.size();
-            assert(k_numInQueueEntries >= l_QueueSize);
+            assert(k_numCtrlIntQEntries >= l_QueueSize);
 
-            return k_numInQueueEntries - l_QueueSize;
+            return k_numCtrlIntQEntries - l_QueueSize;
         }
     }
 }

@@ -61,11 +61,11 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	// DIMM <-> CmdUnit Links
 	//// DIMM <-> CmdUnit (Req) (Cmd)
-	m_inCmdUnitReqPtrLink = configureLink("inCmdUnitReqPtr",
+	m_inCmdUnitReqPtrLink = configureLink("inCtrlReqPtr",
 			new Event::Handler<c_Dimm>(this,
 					&c_Dimm::handleInCmdUnitReqPtrEvent));
 	//// DIMM <-> CmdUnit (Res) (Cmd)
-	m_outCmdUnitResPtrLink = configureLink("outCmdUnitResPtr",
+	m_outCmdUnitResPtrLink = configureLink("outCtrlResPtr",
 			new Event::Handler<c_Dimm>(this,
 					&c_Dimm::handleOutCmdUnitResPtrEvent));
 

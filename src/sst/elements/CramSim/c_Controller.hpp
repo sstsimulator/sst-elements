@@ -45,8 +45,8 @@
 // local includes
 namespace SST {
     namespace n_Bank {
-        class c_CmdUnit;
-        class c_TxnUnit;
+        class c_DeviceController;
+        class c_TxnConverter;
         class c_CmdScheduler;
 
         class c_Controller : public SST::Component {
@@ -60,9 +60,9 @@ namespace SST {
             void finish(){};
             void print() const;
             c_AddressHasher* getAddrHasher() {return m_addrHasher;}
-            c_CmdUnit* getDeviceController() {return m_deviceController;}
+            c_DeviceController* getDeviceController() {return m_deviceController;}
             c_CmdScheduler* getCmdScheduler() {return m_cmdScheduler;}
-            c_TxnUnit* getTxnConverter() {return m_transConverter;}
+            c_TxnConverter* getTxnConverter() {return m_transConverter;}
 
             void sendCommand(c_BankCommand* cmd);
 
@@ -74,10 +74,10 @@ namespace SST {
 
 
             // Subcomponents
-            c_TxnUnit *m_transConverter;
+            c_TxnConverter *m_transConverter;
             c_CmdScheduler *m_cmdScheduler;
             c_AddressHasher *m_addrHasher;
-            c_CmdUnit *m_deviceController;
+            c_DeviceController *m_deviceController;
             //c_DeviceController *m_deviceController;
 
             //token changes from Txn gen
@@ -92,7 +92,7 @@ namespace SST {
 
 
 
-            // Transaction Generator <-> CmdUnit Links
+            // Transaction Generator <-> DeviceController Links
             SST::Link *m_inTxnGenReqPtrLink;
             SST::Link *m_outTxnGenResPtrLink;
             SST::Link *m_outDeviceReqPtrLink;

@@ -55,14 +55,14 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     m_addrHasher= dynamic_cast<c_AddressHasher*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
     // set device controller
-    l_subCompName = params.find<std::string>("DeviceController", "CramSim.c_CmdUnit",l_found);
+    l_subCompName = params.find<std::string>("DeviceController", "CramSim.c_DeviceController",l_found);
     if(!l_found){
-        output->output("Device Controller is not specified... c_CmdUnit (default) will be used\n");
+        output->output("Device Controller is not specified... c_DeviceController (default) will be used\n");
     }
-    m_deviceController= dynamic_cast<c_CmdUnit*>(loadSubComponent(l_subCompName.c_str(),this,params));
+    m_deviceController= dynamic_cast<c_DeviceController*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
     // set cmd schduler
-    l_subCompName = params.find<std::string>("CommandScheduler", "CramSim.c_CmdScheduler",l_found);
+    l_subCompName = params.find<std::string>("CmdScheduler", "CramSim.c_CmdScheduler",l_found);
     if(!l_found){
         output->output("Command Scheduler is not specified... c_CmdScheduler (default) will be used\n");
     }
@@ -70,11 +70,11 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     m_cmdScheduler= dynamic_cast<c_CmdScheduler*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
     // set device controller
-    l_subCompName = params.find<std::string>("TransConverter", "CramSim.c_TxnUnit",l_found);
+    l_subCompName = params.find<std::string>("TxnConverter", "CramSim.c_TxnConverter",l_found);
     if(!l_found){
-        output->output("Transaction Converter is not specified... c_TxnUnit (default) will be used\n");
+        output->output("Transaction Converter is not specified... c_TxnConverter (default) will be used\n");
     }
-    m_transConverter= dynamic_cast<c_TxnUnit*>(loadSubComponent(l_subCompName.c_str(),this,params));
+    m_transConverter= dynamic_cast<c_TxnConverter*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
 
 
@@ -120,33 +120,33 @@ c_Controller::c_Controller() :
 // configure links
 void c_Controller::configure_link() {
 
-    // CmdUnit <-> TxnUnit Links
-    // TxnUnit <- TxnGen (Res) (Token)
+    // TxnUnit <--> Controller Links
+    // TxnGen -> Controller (Res) (Token)
     m_inTxnGenResQTokenChgLink = configureLink("inTxnGenResQTokenChg",
                                                new Event::Handler<c_Controller>(this,
                                                                                 &c_Controller::handleInTxnGenResQTokenChgEvent));
-    // TxnUnit -> TxnGen (Req) (Token)
+    // TxnGen <- Controller (Req) (Token)
     m_outTxnGenReqQTokenChgLink = configureLink("outTxnGenReqQTokenChg",
                                                 new Event::Handler<c_Controller>(this,
                                                                                  &c_Controller::handleOutTxnGenReqQTokenChgEvent));
-    // TxnGen --> TxnUnit (Req) (Cmd)
+    // TxnGen -> Controller (Req) (Txn)
     m_inTxnGenReqPtrLink = configureLink("inTxnGenReqPtr",
                                          new Event::Handler<c_Controller>(this,
                                                                           &c_Controller::handleIncomingTransaction));
-    //// CmdUnit -> TxnUnit (Res) (Cmd)
+    // TxnUnit <- Controller (Res) (Txn)
     m_outTxnGenResPtrLink = configureLink("outTxnGenResPtr",
                                           new Event::Handler<c_Controller>(this,
                                                                            &c_Controller::handleOutTxnGenResPtrEvent));
-    // CmdUnit <-> Bank Links
-    // TxnUnit <- Bank (Req) (Token)
+    // DeviceController <-> Bank Links
+    // Controller <- Device (Req) (Token)
     m_inDeviceReqQTokenChgLink = configureLink("inDeviceReqQTokenChg",
                                                new Event::Handler<c_Controller>(this,
                                                                                 &c_Controller::handleInDeviceReqQTokenChgEvent));
-    //// CmdUnit -> Bank (Req) (Cmd)
+    // Controller -> Device (Req) (Cmd)
     m_outDeviceReqPtrLink = configureLink("outDeviceReqPtr",
                                         new Event::Handler<c_Controller>(this,
                                                                          &c_Controller::handleOutDeviceReqPtrEvent));
-    //// CmdUnit <- Bank (Res) (Cmd)
+    // Controller <- Device (Res) (Cmd)
     m_inDeviceResPtrLink = configureLink("inDeviceResPtr",
                                        new Event::Handler<c_Controller>(this,
                                                                         &c_Controller::handleInDeviceResPtrEvent));
@@ -160,12 +160,18 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
 
     m_thisCycleTxnQTknChg = m_transConverter->getToken();
 
+
+    // run transaction converter
     m_transConverter->clockTic(clock);
 
+    // run command scheduler
     m_cmdScheduler->clockTic(clock);
 
+    // run device controller
     m_deviceController->clockTic(clock);
 
+
+    //send token to the transaction generator
     m_thisCycleTxnQTknChg = m_transConverter->getToken()-m_thisCycleTxnQTknChg;
     if (m_thisCycleTxnQTknChg > 0) {
         sendTokenChg();
@@ -175,19 +181,66 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
 }
 
 
+void c_Controller::sendCommand(c_BankCommand* cmd)
+{
+     c_CmdReqEvent *l_cmdReqEventPtr = new c_CmdReqEvent();
+     l_cmdReqEventPtr->m_payload = cmd;
+     m_outDeviceReqPtrLink->send(l_cmdReqEventPtr);
+}
+
+
+void c_Controller::sendTokenChg() {
+    // only send tokens when space has opened up in queues
+    // there are no negative tokens. token subtraction must be performed
+    // in the source component immediately after sending an event
+
+    // send req q token chg
+    c_TokenChgEvent* l_txnReqQTokenChgEvent = new c_TokenChgEvent();
+    l_txnReqQTokenChgEvent->m_payload = m_thisCycleTxnQTknChg;
+    m_outTxnGenReqQTokenChgLink->send(l_txnReqQTokenChgEvent);
+}
+
+void c_Controller::sendResponse() {
+
+    // sendResponse conditions:
+    // - m_txnGenResQTokens > 0
+    // - m_txnResQ.size() > 0
+    // - m_txnResQ has an element which is response-ready
+
+    if ((m_txnGenResQTokens > 0) && (m_txnResQ.size() > 0)) {
+        c_Transaction* l_txnRes = nullptr;
+        for (std::vector<c_Transaction*>::iterator l_it = m_txnResQ.begin();
+             l_it != m_txnResQ.end(); ++l_it) {
+            if ((*l_it)->isResponseReady()) {
+                l_txnRes = *l_it;
+                m_txnResQ.erase(l_it);
+                break;
+            }
+        }
+
+        if (l_txnRes != nullptr) {
+
+            c_TxnResEvent* l_txnResEvPtr = new c_TxnResEvent();
+            l_txnResEvPtr->m_payload = l_txnRes;
+            m_outTxnGenResPtrLink->send(l_txnResEvPtr);
+
+            --m_txnGenResQTokens;
+        }
+
+    }
+} // sendResponse
+
+
+
+///** Link Event handlers **///
 void c_Controller::handleIncomingTransaction(SST::Event *ev){
 
     c_TxnReqEvent* l_txnReqEventPtr = dynamic_cast<c_TxnReqEvent*>(ev);
 
     if (l_txnReqEventPtr) {
-        //std::cout << "@" << std::dec
-        //	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-        //	  << __PRETTY_FUNCTION__ << l_txnReqEventPtr->m_payload << " ";
-        //l_txnReqEventPtr->m_payload->print();
-        //std::cout << std::endl;
 
         m_txnResQ.push_back(l_txnReqEventPtr->m_payload);
-        m_transConverter->pushTransaction(l_txnReqEventPtr->m_payload);
+        m_transConverter->push(l_txnReqEventPtr->m_payload);
         delete l_txnReqEventPtr;
     } else {
         std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
@@ -195,20 +248,9 @@ void c_Controller::handleIncomingTransaction(SST::Event *ev){
     }
 }
 
-void c_Controller::sendCommand(c_BankCommand* cmd)
-{
- //   std::cout << "@" << std::dec
-  //  	  << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-   // 	  << __PRETTY_FUNCTION__ << cmd << " ";
-  //  cmd->print();
-
-    //std::cout << std::endl;
-        c_CmdReqEvent *l_cmdReqEventPtr = new c_CmdReqEvent();
-        l_cmdReqEventPtr->m_payload = cmd;
-        m_outDeviceReqPtrLink->send(l_cmdReqEventPtr);
-}
 
 void c_Controller::handleOutTxnGenResPtrEvent(SST::Event *ev){}
+
 
 void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
     c_CmdResEvent* l_cmdResEventPtr = dynamic_cast<c_CmdResEvent*>(ev);
@@ -232,12 +274,6 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
         if (l_cmdsLeft == 0)
             l_txnRes->setResponseReady();
 
-      //  std::cout << std::endl << "@" << std::dec
-       //       << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-       // 	      << __PRETTY_FUNCTION__ << std::endl;
-       // l_txnRes->print();
-        //std::cout << std::endl;
-
 
         delete l_cmdResEventPtr->m_payload;         //now, free the memory space allocated to the commands for a transaction
         //delete l_cmdResEventPtr;
@@ -254,16 +290,13 @@ void c_Controller::handleInTxnGenResQTokenChgEvent(SST::Event *ev) {
     c_TokenChgEvent* l_txnGenResQTokenChgEventPtr =
             dynamic_cast<c_TokenChgEvent*>(ev);
     if (l_txnGenResQTokenChgEventPtr) {
-       //  std::cout << std::endl << "@" << std::dec
-         //		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-        	//	<< __PRETTY_FUNCTION__ << std::endl;
+
 
         m_txnGenResQTokens += l_txnGenResQTokenChgEventPtr->m_payload;
 
         assert(m_txnGenResQTokens >= 0);
         assert(m_txnGenResQTokens <= k_txnReqQEntries);
 
-        // std::cout << "m_ResQTokens: " << m_txnGenResQTokens << std::endl;
         delete l_txnGenResQTokenChgEventPtr;
     } else {
         std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
@@ -275,9 +308,6 @@ void c_Controller::handleInDeviceReqQTokenChgEvent(SST::Event *ev) {
     c_TokenChgEvent* l_cmdUnitReqQTokenChgEventPtr =
             dynamic_cast<c_TokenChgEvent*>(ev);
     if (l_cmdUnitReqQTokenChgEventPtr) {
-        // std::cout << std::endl << "@" << std::dec
-        // 		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-        // 		<< __PRETTY_FUNCTION__ << std::endl;
 
         m_deviceReqQTokens += l_cmdUnitReqQTokenChgEventPtr->m_payload;
 
@@ -297,58 +327,4 @@ void c_Controller::handleOutTxnGenReqQTokenChgEvent(SST::Event *ev) {
     std::cout << __PRETTY_FUNCTION__ << " ERROR: Should not be here"
               << std::endl;
 }
-
-void c_Controller::sendTokenChg() {
-    // only send tokens when space has opened up in queues
-    // there are no negative tokens. token subtraction must be performed
-    // in the source component immediately after sending an event
-
-    // send req q token chg
-        // std::cout << "@" << std::dec
-        // 		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-        // 		<< __PRETTY_FUNCTION__ << std::endl;
-        // std::cout << "TxnUnit:: Sending req q tokens" << std::endl;
-        c_TokenChgEvent* l_txnReqQTokenChgEvent = new c_TokenChgEvent();
-        l_txnReqQTokenChgEvent->m_payload = m_thisCycleTxnQTknChg;
-        m_outTxnGenReqQTokenChgLink->send(l_txnReqQTokenChgEvent);
-}
-
-void c_Controller::sendResponse() {
-
-    // sendResponse conditions:
-    // - m_txnGenResQTokens > 0
-    // - m_txnResQ.size() > 0
-    // - m_txnResQ has an element which is response-ready
-
-    //std::cout << "m_txnGenResQTokens " << std::dec << m_txnGenResQTokens << std::endl;
-    //std::cout << "m_txnResQ " << std::dec << m_txnResQ.size() << std::endl;
-    //printQueues();
-
-    if ((m_txnGenResQTokens > 0) && (m_txnResQ.size() > 0)) {
-        c_Transaction* l_txnRes = nullptr;
-        for (std::vector<c_Transaction*>::iterator l_it = m_txnResQ.begin();
-             l_it != m_txnResQ.end(); ++l_it) {
-            if ((*l_it)->isResponseReady()) {
-                l_txnRes = *l_it;
-                m_txnResQ.erase(l_it);
-                break;
-            }
-        }
-
-        if (l_txnRes != nullptr) {
-
-            //std::cout << "@" << std::dec
-            //		<< Simulation::getSimulation()->getCurrentSimCycle()
-            //		<< ": " << __PRETTY_FUNCTION__ << std::endl;
-            //l_txnRes->print();
-            //std::cout << std::endl;
-            c_TxnResEvent* l_txnResEvPtr = new c_TxnResEvent();
-            l_txnResEvPtr->m_payload = l_txnRes;
-            m_outTxnGenResPtrLink->send(l_txnResEvPtr);
-
-            --m_txnGenResQTokens;
-        }
-
-    }
-} // sendResponse
 
