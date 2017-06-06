@@ -2,6 +2,7 @@
 import sst
 import sys
 import time
+sys.path.append('./tests/')
 from util import *
 
 

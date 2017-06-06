@@ -251,7 +251,7 @@ namespace SST {
 
 
             // calculate total number of banks
-            int m_numChannelsPerDimm = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,
+            m_numChannelsPerDimm = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,
                                                                          l_found);
             if (!l_found) {
                 std::cout << "numChannelsPerDimm value is missing... exiting"
@@ -259,7 +259,7 @@ namespace SST {
                 exit(-1);
             }
 
-            int m_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 100,
+            m_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 100,
                                                                          l_found);
             if (!l_found) {
                 std::cout << "numRanksPerChannel value is missing... exiting"
@@ -267,7 +267,7 @@ namespace SST {
                 exit(-1);
             }
 
-            int m_numBankGroupsPerRank = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank",
+            m_numBankGroupsPerRank = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank",
                                                                            100, l_found);
             if (!l_found) {
                 std::cout << "numBankGroupsPerRank value is missing... exiting"
@@ -275,7 +275,7 @@ namespace SST {
                 exit(-1);
             }
 
-            int m_numBanksPerBankGroup = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup",
+            m_numBanksPerBankGroup = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup",
                                                                            100, l_found);
             if (!l_found) {
                 std::cout << "numBanksPerBankGroup value is missing... exiting"

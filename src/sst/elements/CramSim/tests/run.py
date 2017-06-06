@@ -10,7 +10,7 @@ import time
 #sst --lib-path=../.libs/ test_statTest1.py --model-options="--configfile=../ddr4_verimem.cfg --tracefile=../traces/sst-CramSim-trace_verimem_6_W.trc"
 #sst --lib-path=../.libs/ test_statTest1.py --model-options="--configfile=../ddr4_verimem.cfg --tracefile=../traces/sst-CramSim-trace_verimem_6_W.trc"
 
-sstCmd = "sst --lib-path=../.libs/ test_txngen.py --model-options=\""
+sstCmd = "sst --lib-path=.libs/ ./tests/test_txngen.py --model-options=\""
 
 #seq txn gen
 #sstParams = "--configfile=../ddr4_verimem.cfg --txngen=seq\""
@@ -33,18 +33,17 @@ def run(sstParams):
 	print "sim_elapsed_time(sec): ", sim_elapsed_time
 	print "\n\n"
 
-stopAtCycle = "1ms"
+stopAtCycle = "100us"
 sstParams = [
-	"--configfile=../ddr4_verimem.cfg --txngen=rand --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=../ddr4_verimem.cfg --txngen=seq  --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=../ddr4_verimem.cfg --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_1_R.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=../ddr4_verimem.cfg --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_2_R.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=../ddr4_verimem.cfg --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_4_R.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=../ddr4_verimem.cfg --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_1_W.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=../ddr4_verimem.cfg --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_2_W.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=../ddr4_verimem.cfg --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_4_W.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=../ddr4_verimem.cfg --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_1_RW.trc --stopAtCycle=%s\"" % stopAtCycle]
-
+	"--configfile=./ddr4_verimem.cfg --txngen=rand --stopAtCycle=%s\"" % stopAtCycle,
+	"--configfile=./ddr4_verimem.cfg --txngen=seq  --stopAtCycle=%s\"" % stopAtCycle,
+	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_1_R.trc --stopAtCycle=%s\"" % stopAtCycle,
+	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_2_R.trc --stopAtCycle=%s\"" % stopAtCycle,
+	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_4_R.trc --stopAtCycle=%s\"" % stopAtCycle,
+	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_1_W.trc --stopAtCycle=%s\"" % stopAtCycle,
+	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_2_W.trc --stopAtCycle=%s\"" % stopAtCycle,
+	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_4_W.trc --stopAtCycle=%s\"" % stopAtCycle,
+	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_1_RW.trc --stopAtCycle=%s\"" % stopAtCycle]
 
 for params in sstParams:
 	run(params)

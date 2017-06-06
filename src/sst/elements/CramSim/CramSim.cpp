@@ -30,6 +30,8 @@
 #include "c_USimmTraceReader.hpp"
 #include "c_TxnDriver.hpp"
 #include "c_TxnUnit.hpp"
+#include "c_CmdReqEvent.hpp"
+#include "c_CmdResEvent.hpp"
 #include "c_CmdDriver.hpp"
 #include "c_CmdUnit.hpp"
 #include "c_BankReceiver.hpp"
