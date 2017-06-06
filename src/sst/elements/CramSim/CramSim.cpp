@@ -203,8 +203,8 @@ static const char* c_TxnGenSeq_token_port_events[] = {"c_TokenChgEvent", NULL};
 
 static const ElementInfoPort c_TxnGenSeq_ports[] = {
 		{ "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenSeq_req_port_events },
-		{ "inTxnCvtReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenSeq_token_port_events },
-		{ "inTxnCvtResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenSeq_res_port_events },
+		{ "inCtrlReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenSeq_token_port_events },
+		{ "inCtrlResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenSeq_res_port_events },
 		{ "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenSeq_token_port_events },
 		{ NULL, NULL, NULL } };
 

@@ -53,10 +53,10 @@ private:
 	//FIXME: Remove the word unit from members once class is complete to keep in line with code convention
 	//txn to/from events
 	void handleOutTxnGenReqPtrEvent(SST::Event *ev); // we do not need this function for functionality
-	void handleInTxnUnitResPtrEvent(SST::Event *ev); //receive txn res ptr from Transaction unit
+	void handleInCtrlResPtrEvent(SST::Event *ev); //receive txn res ptr from Transaction unit
 
 	//token chg to/from events
-	void handleInTxnUnitReqQTokenChgEvent(SST::Event *ev); //receive change in tokens in txn unit req queue
+	void handleInCtrlReqQTokenChgEvent(SST::Event *ev); //receive change in tokens in txn unit req queue
 	void handleOutTxnGenResQTokenChgEvent(SST::Event *ev); // we do not need this function for functionality
 
 	void sendTokenChg(); //should happen at the end of every cycle
@@ -71,10 +71,10 @@ private:
 
 	//request-related links
 	SST::Link* m_outTxnGenReqPtrLink; //outgoing txn gen req ptr
-	SST::Link* m_inTxnUnitReqQTokenChgLink; //incoming change in txn unit req q tokens
+	SST::Link* m_inCtrlReqQTokenChgLink; //incoming change in txn unit req q tokens
 
 	//response links
-	SST::Link* m_inTxnUnitResPtrLink; //incoming txn unit res ptr
+	SST::Link* m_inCtrlResPtrLink; //incoming txn unit res ptr
 	SST::Link* m_outTxnGenResQTokenChgLink; //outgoing change in txn gen res q tokens
 
 	//params for internal microarcitecture
@@ -84,7 +84,7 @@ private:
         unsigned int k_randSeed;
 
 	//param for receiver
-	int k_txnUnitReqQEntries;
+	int k_CtrlReqQEntries;
 
 	//TODO: implement txn width if necessary
 
@@ -94,7 +94,7 @@ private:
 	int m_thisCycleResQTknChg;
 
 	//token changes from Txn unit
-	int m_txnUnitReqQTokens;
+	int m_CtrlReqQTokens;
 
 	// used to keep track of the response types being received
 	unsigned long m_resReadCount;

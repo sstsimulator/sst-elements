@@ -64,14 +64,14 @@ c_TxnGenRand::c_TxnGenRand(ComponentId_t x_id, Params& x_params) :
 	}
 
 	//transaction unit queue entries
-	k_txnUnitReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitReqQEntries", 100,
+	k_CtrlReqQEntries = (uint32_t)x_params.find<uint32_t>("numCtrlReqQEntries", 100,
 			l_found);
 	if (!l_found) {
-		std::cout << "TxnGen:: numTxnUnitReqQEntries value is missing... exiting"
+		std::cout << "Controller:: numCtrlReqQEntries value is missing... exiting"
 				<< std::endl;
 		exit(-1);
 	}
-	m_txnUnitReqQTokens = k_txnUnitReqQEntries;
+	m_CtrlReqQTokens = k_CtrlReqQEntries;
 
 	//ratio of read txn's : write txn's to generate
 	k_readWriteTxnRatio
@@ -105,17 +105,17 @@ c_TxnGenRand::c_TxnGenRand(ComponentId_t x_id, Params& x_params) :
 			new Event::Handler<c_TxnGenRand>(this,
 					&c_TxnGenRand::handleOutTxnGenReqPtrEvent));
 	//// accept token chg from txn unit
-	m_inTxnUnitReqQTokenChgLink = configureLink(
-			"inTxnUnitReqQTokenChg",
+	m_inCtrlReqQTokenChgLink = configureLink(
+			"inCtrlReqQTokenChg",
 			new Event::Handler<c_TxnGenRand>(this,
-					&c_TxnGenRand::handleInTxnUnitReqQTokenChgEvent));
+					&c_TxnGenRand::handleInCtrlReqQTokenChgEvent));
 
 	// response-related links
 	//// accept from txn unit
-	m_inTxnUnitResPtrLink = configureLink(
-			"inTxnUnitResPtr",
+	m_inCtrlResPtrLink = configureLink(
+			"inCtrlResPtr",
 			new Event::Handler<c_TxnGenRand>(this,
-					&c_TxnGenRand::handleInTxnUnitResPtrEvent));
+					&c_TxnGenRand::handleInCtrlResPtrEvent));
 	//// send token chg to txn unit
 	m_outTxnGenResQTokenChgLink = configureLink(
 			"outTxnGenResQTokenChg",
@@ -194,23 +194,19 @@ bool c_TxnGenRand::clockTic(Cycle_t) {
 
 }
 
-void c_TxnGenRand::handleInTxnUnitReqQTokenChgEvent(SST::Event *ev) {
-	c_TokenChgEvent* l_txnUnitReqQTknChgEventPtr =
+void c_TxnGenRand::handleInCtrlReqQTokenChgEvent(SST::Event *ev) {
+	c_TokenChgEvent* l_CtrlReqQTknChgEventPtr =
 			dynamic_cast<c_TokenChgEvent*> (ev);
 
-	if (l_txnUnitReqQTknChgEventPtr) {
-		// std::cout << "TxnGen::handleInTxnUnitReqQTokenChgEvent(): @"
-		// 		<< std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle() << " "
-		// 		<< __PRETTY_FUNCTION__ << std::endl;
+	if (l_CtrlReqQTknChgEventPtr) {
 
-		m_txnUnitReqQTokens += l_txnUnitReqQTknChgEventPtr->m_payload;
+		m_CtrlReqQTokens += l_CtrlReqQTknChgEventPtr->m_payload;
 
 		//FIXME: Critical: This pointer is left dangling
-		//delete l_txnUnitReqQTknChgEventPtr;
+		//delete l_CtrlReqQTknChgEventPtr;
 
-		assert(m_txnUnitReqQTokens >= 0);
-		assert(m_txnUnitReqQTokens <= k_txnUnitReqQEntries);
+		assert(m_CtrlReqQTokens >= 0);
+		assert(m_CtrlReqQTokens <= k_CtrlReqQEntries);
 
 
 	} else {
@@ -220,18 +216,18 @@ void c_TxnGenRand::handleInTxnUnitReqQTokenChgEvent(SST::Event *ev) {
 	}
 }
 
-void c_TxnGenRand::handleInTxnUnitResPtrEvent(SST::Event* ev) {
+void c_TxnGenRand::handleInCtrlResPtrEvent(SST::Event* ev) {
 	// make sure the txn res q has at least one empty entry
 	// to accept a new txn ptr
 	assert(1 <= (k_txnGenResQEntries - m_txnResQ.size()));
 
 	c_TxnResEvent* l_txnResEventPtr = dynamic_cast<c_TxnResEvent*> (ev);
 	if (l_txnResEventPtr) {
-		// std::cout << "TxnGen::handleInTxnUnitResPtrEvent(): @" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle() << " "
-		// 		<< __PRETTY_FUNCTION__ << " Txn received: "<< std::endl;
+		 //std::cout << "TxnGen::handleInCtrlResPtrEvent(): @" << std::dec
+		 //		<< Simulation::getSimulation()->getCurrentSimCycle() << " "
+		 //		<< __PRETTY_FUNCTION__ << " Txn received: "<< std::endl;
 		// l_txnResEventPtr->m_payload->print();
-		// std::cout << std::endl;
+		 //std::cout << std::endl;
 
 		if (l_txnResEventPtr->m_payload->getTransactionMnemonic()
 		    == e_TransactionType::READ) {
@@ -284,7 +280,7 @@ void c_TxnGenRand::sendTokenChg() {
 
 void c_TxnGenRand::sendRequest() {
 
-	if (m_txnUnitReqQTokens > 0) {
+	if (m_CtrlReqQTokens > 0) {
 		if (m_txnReqQ.size() > 0) {
 
 			// std::cout << "TxnGen::sendRequest(): sending Txn=";
@@ -294,7 +290,7 @@ void c_TxnGenRand::sendRequest() {
 			l_txnReqEvPtr->m_payload = m_txnReqQ.front();
 			m_txnReqQ.pop();
 			m_outTxnGenReqPtrLink->send(l_txnReqEvPtr);
-			--m_txnUnitReqQTokens;
+			--m_CtrlReqQTokens;
 
 		}
 	}
@@ -305,10 +301,10 @@ void c_TxnGenRand::readResponse() {
 		c_Transaction* l_txn = m_txnResQ.front();
 		m_txnResQ.pop();
 		// std::cout << "TxnGen::readResponse() Transaction printed: Addr-"
-		// 		<< std::hex << l_txn->getAddress() << std::endl;
+		 //		<< std::hex << l_txn->getAddress() << std::endl;
 	} else {
-		// std::cout << "TxnGen::readResponse(): No transactions in res q to read"
-		// 		<< std::endl;
+		 //std::cout << "TxnGen::readResponse(): No transactions in res q to read"
+		 	//	<< std::endl;
 	}
 }
 
