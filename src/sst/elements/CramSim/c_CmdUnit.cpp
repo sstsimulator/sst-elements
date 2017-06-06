@@ -77,6 +77,11 @@ c_DeviceController::c_DeviceController(Component *owner, Params& x_params) : c_C
 		std::cout << "boolMultiCycleACT value is missing... disabled" << std::endl;
 	}
 
+	// configure the memory hierarchy
+	uint32_t l_numChannels = k_numPseudoChannels * k_numChannelsPerDimm;
+	m_numRanks = l_numChannels * k_numRanksPerChannel;
+	m_numBankGroups = m_numRanks * k_numBankGroupsPerRank;
+	m_numBanks = m_numBankGroups * k_numBanksPerBankGroup;
 
 	for (int l_i = 0; l_i != m_numRanks; ++l_i) {
 		c_Rank *l_entry = new c_Rank(&m_bankParams);
@@ -94,11 +99,10 @@ c_DeviceController::c_DeviceController(Component *owner, Params& x_params) : c_C
 	}
 
 	// construct the addressHasher
-	//c_AddressHasher::getInstance(x_params);
 
 	// connect the hierarchy
 	unsigned l_rankNum = 0;
-	for (unsigned l_i = 0; l_i != k_numChannelsPerDimm; ++l_i) {
+	for (unsigned l_i = 0; l_i != l_numChannels; ++l_i) {
 		c_Channel *l_channel = new c_Channel(&m_bankParams);
 		m_channel.push_back(l_channel);
 		//   int l_i = 0;
@@ -241,9 +245,9 @@ void c_DeviceController::sendReqCloseBankPolicy(
 		l_cmdACTIssuedInFAW += l_issued;
 
 
-	for (auto l_cmdPtrItr = x_startItr; l_cmdPtrItr != m_inputQ.end();
-			++l_cmdPtrItr) {
+	for (auto l_cmdPtrItr = x_startItr; l_cmdPtrItr != m_inputQ.end(); ++l_cmdPtrItr) {
 		c_BankCommand* l_cmdPtr = (*l_cmdPtrItr);
+
 		if ((l_cmdPtr)->getCommandMnemonic() == e_BankCommandType::REF)
 			break;
 
@@ -291,6 +295,9 @@ void c_DeviceController::sendReqCloseBankPolicy(
 
 					if(occupyCommandBus(l_cmdPtr))
 						break;// all command buses are occupied, so stop
+
+					if(l_cmdPtrItr==m_inputQ.end())
+						break; //last element is removed from inputQ, so stop
 				}
 			}
 		}

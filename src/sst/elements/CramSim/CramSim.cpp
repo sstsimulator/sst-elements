@@ -322,10 +322,6 @@ static const ElementInfoPort c_TxnDriver_ports[] = {
 
 /*----SETUP c_TxnConverter STRUCTURES----*/
 static const ElementInfoParam c_TxnConverter_params[] = {
-		{"numTxnCvtReqQEntries", "Total number of entries in TxnConverter's Req queue", NULL},
-		{"numTxnCvtResQEntries", "Total number of entries in TxnConverter's Res queue", NULL},
-		{"numTxnGenResQEntries", "Total number of entries in neighbor TxnGen's Res queue", NULL},
-		{"numCmdReqQEntries", "Total number of entries in neighbor DeviceController's Req queue", NULL},
 		{"numChannelsPerDimm", "Total number of channels per DIMM", NULL},
 		{"numRanksPerChannel", "Total number of ranks per channel", NULL},
 		{"numBankGroupsPerRank", "Total number of bank groups per rank", NULL},
@@ -380,8 +376,6 @@ static const ElementInfoPort c_CmdDriver_ports[] = {
 
 /*----SETUP c_DeviceController STRUCTURES----*/
 static const ElementInfoParam c_DeviceController_params[] = {
-		{"numCmdReqQEntries", "Total number of entries in DeviceController's Req queue", NULL},
-		{"numCmdResQEntries", "Total number of entries in DeviceController's Res queue", NULL},
 		{"numChannelsPerDimm", "Total number of channels per DIMM", NULL},
 		{"numRanksPerChannel", "Total number of ranks per channel", NULL},
 		{"numBankGroupsPerRank", "Total number of bank groups per rank", NULL},
@@ -942,8 +936,8 @@ static const ElementInfoSubComponent CramSimSubComponents[] = {
 		  NULL, 										// PrintHelp
 		  create_c_AddressHasher, 						// Allocator
 		  c_AddressHasher_params, 						// Parameters
-		  NULL,
-		  COMPONENT_CATEGORY_UNCATEGORIZED 			// Category
+		  NULL,										//Interface
+		  "SST::CramSim::Controller::AddressHasher" 			// Category
 		},
 		{ "c_TxnConverter",	 							// Name
 		"Transaction Converter",				 			// Description
@@ -951,7 +945,7 @@ static const ElementInfoSubComponent CramSimSubComponents[] = {
 		create_c_TxnConverter, 							// Allocator
 		c_TxnConverter_params, 							// Parameters
 		c_TxnConverter_stats,
-		COMPONENT_CATEGORY_UNCATEGORIZED 			// Category
+				"SST::CramSim::Controller::TxnConverter" 			// Category
 		},
 		{"c_DeviceController",                                // Name
 			"Dram Control Unit",                            // Description
@@ -959,7 +953,7 @@ static const ElementInfoSubComponent CramSimSubComponents[] = {
 			create_c_DeviceController,                            // Allocator
 			c_DeviceController_params,                            // Parameters
 			c_DeviceController_stats,
-			COMPONENT_CATEGORY_UNCATEGORIZED            // Category
+				"SST::CramSim::Controller::DeviceController"            // Category
 		},
 		{"c_CmdScheduler",                                // Name
 				"Command Scheduler",                            // Description
@@ -967,9 +961,9 @@ static const ElementInfoSubComponent CramSimSubComponents[] = {
 				create_c_CmdScheduler,                            // Allocator
 				c_CmdScheduler_params,                            // Parameters
 				c_CmdScheduler_stats,
-				COMPONENT_CATEGORY_UNCATEGORIZED            // Category
+				"SST::CramSim::Controller::CmdScheduler"            // Category
 		},
-		{ NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL }
+		{ NULL, NULL, NULL, NULL, NULL, NULL}
 };
 
 

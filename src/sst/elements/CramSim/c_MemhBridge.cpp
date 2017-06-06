@@ -57,7 +57,8 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 	}
 
 	k_txnGenResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenResQEntries", 100,
-			l_found);
+															l_found);
+
 	if (!l_found) {
 		std::cout
 				<< "TxnGen:: numTxnGenResQEntries value is missing... exiting"
@@ -66,14 +67,14 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 	}
 
 	//transaction unit queue entries
-	k_txnUnitReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnUnitReqQEntries", 100,
+	k_CtrlReqQEntries = (uint32_t)x_params.find<uint32_t>("numCtrlReqQEntries", 100,
 			l_found);
 	if (!l_found) {
-		std::cout << "TxnGen:: numTxnUnitReqQEntries value is missing... exiting"
+		std::cout << "TxnGen:: numCtrlReqQEntries value is missing... exiting"
 				<< std::endl;
 		exit(-1);
 	}
-	m_txnUnitReqQTokens = k_txnUnitReqQEntries;
+	m_txnUnitReqQTokens = k_CtrlReqQEntries;
 
 
 	// tell the simulator not to end without us
@@ -90,14 +91,14 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 					&c_MemhBridge::handleOutTxnGenReqPtrEvent));
 	//// accept token chg from txn unit
 	m_inTxnUnitReqQTokenChgLink = configureLink(
-			"inTxnUnitReqQTokenChg",
+			"inCtrlReqQTokenChg",
 			new Event::Handler<c_MemhBridge>(this,
 					&c_MemhBridge::handleInTxnUnitReqQTokenChgEvent));
 
 	// response-related links
 	//// accept from txn unit
 	m_inTxnUnitResPtrLink = configureLink(
-			"inTxnUnitResPtr",
+			"inCtrlResPtr",
 			new Event::Handler<c_MemhBridge>(this,
 					&c_MemhBridge::handleInTxnUnitResPtrEvent));
 	//// send token chg to txn unit
@@ -194,7 +195,7 @@ void c_MemhBridge::handleInTxnUnitReqQTokenChgEvent(SST::Event *ev) {
 		//delete l_txnUnitReqQTknChgEventPtr;
 
 		assert(m_txnUnitReqQTokens >= 0);
-		assert(m_txnUnitReqQTokens <= k_txnUnitReqQEntries);
+		assert(m_txnUnitReqQTokens <= k_CtrlReqQEntries);
 
 
 	} else {

@@ -283,12 +283,6 @@ namespace SST {
                 exit(-1);
             }
 
-            // configure the memory hierarchy
-            uint32_t l_numChannels = k_numPseudoChannels * k_numChannelsPerDimm;
-            m_numRanks = l_numChannels * k_numRanksPerChannel;
-            m_numBankGroups = m_numRanks * k_numBankGroupsPerRank;
-            m_numBanks = m_numBankGroups * k_numBanksPerBankGroup;
-
            // m_numBanks = m_numRanksPerChannel * m_numBankGroupsPerRank
              //            * m_numBanksPerBankGroup;
 

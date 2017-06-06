@@ -97,7 +97,7 @@ private:
 	double k_readWriteTxnRatio;
 
 	//param for receiver
-	int k_txnUnitReqQEntries;
+	int k_CtrlReqQEntries;
 
 	//TODO: implement txn width if necessary
 

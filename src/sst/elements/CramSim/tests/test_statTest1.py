@@ -123,36 +123,37 @@ sst.setStatisticOutput("sst.statOutputConsole")
 #sst.setStatisticOutputOption("help", "help")
 
 # Define the simulation components
-
-# address hasher
-comp_addressHasher = sst.Component("AddrHash0", "CramSim.c_AddressHasher")
-comp_addressHasher.addParams(g_params)
-
 # txn gen
 comp_txnGen0 = setup_txn_generator(g_params)
 
-# txn unit
-comp_txnUnit0 = sst.Component("TxnUnit0", "CramSim.c_TxnUnit")
-comp_txnUnit0.addParams(g_params)
 
-# cmd unit
-comp_cmdUnit0 = sst.Component("CmdUnit0", "CramSim.c_CmdUnit")
-comp_cmdUnit0.addParams(g_params)
+# controller
+comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
+comp_controller0.addParams(g_params)
+comp_controller0.addParams({
+		"TxnConverter" : "CramSim.c_TxnConverter",
+		"AddrHasher" : "CramSim.c_AddressHasher",
+		"CmdScheduler" : "CramSim.c_CmdScheduler" ,
+		"DeviceController" : "CramSim.c_DeviceController"
+		})
+
+
 
 # bank receiver
 comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
 comp_dimm0.addParams(g_params)
 
+
 # enable all statistics
 comp_txnGen0.enableAllStatistics()
-comp_txnUnit0.enableAllStatistics()
-comp_txnUnit0.enableStatistics(["reqQueueSize"],  # overriding the type of one statistic
+comp_controller0.enableAllStatistics()
+comp_controller0.enableStatistics(["reqQueueSize"],  # overriding the type of one statistic
                                   {"type":"sst.HistogramStatistic",
                                    "minvalue" : "0",
                                    "binwidth" : "2",
                                    "numbins" : "18",
                                    "IncludeOutOfBounds" : "1"})
-comp_txnUnit0.enableStatistics(["resQueueSize"],  # overriding the type of one statistic
+comp_controller0.enableStatistics(["resQueueSize"],  # overriding the type of one statistic
                                   {"type":"sst.HistogramStatistic",
                                    "minvalue" : "0",
                                    "binwidth" : "2",
@@ -160,56 +161,36 @@ comp_txnUnit0.enableStatistics(["resQueueSize"],  # overriding the type of one s
                                    "IncludeOutOfBounds" : "1"})
 #comp_txnUnit0.enableAllStatistics({ "type":"sst.AccumulatorStatistic",
 #                                    "rate":"1 us"})
-comp_cmdUnit0.enableAllStatistics()
 comp_dimm0.enableAllStatistics()
 
 # Define simulation links
 
-
-# TXNGEN / TXNUNIT LINKS
-# TxnGen -> TxnUnit (Req)(Txn)
+# TXNGEN / Controller LINKS
+# TxnGen -> Controller (Req)(Txn)
 txnReqLink_0 = sst.Link("txnReqLink_0")
-txnReqLink_0.connect( (comp_txnGen0, "outTxnGenReqPtr", g_params["clockCycle"]), (comp_txnUnit0, "inTxnGenReqPtr", g_params["clockCycle"]) )
+txnReqLink_0.connect( (comp_txnGen0, "outTxnGenReqPtr", g_params["clockCycle"]), (comp_controller0, "inTxnGenReqPtr", g_params["clockCycle"]) )
 
-# TxnGen <- TxnUnit (Req)(Token)
-txnTokenLink_0 = sst.Link("txnTokenLink_0")
-txnTokenLink_0.connect( (comp_txnGen0, "inTxnUnitReqQTokenChg", g_params["clockCycle"]), (comp_txnUnit0, "outTxnGenReqQTokenChg", g_params["clockCycle"]) )
-
-# TxnGen <- TxnUnit (Res)(Txn)
+# TxnGen <- Controller (Res)(Txn)
 txnResLink_0 = sst.Link("txnResLink_0")
-txnResLink_0.connect( (comp_txnGen0, "inTxnUnitResPtr", g_params["clockCycle"]), (comp_txnUnit0, "outTxnGenResPtr", g_params["clockCycle"]) )
+txnResLink_0.connect( (comp_txnGen0, "inCtrlResPtr", g_params["clockCycle"]), (comp_controller0, "outTxnGenResPtr", g_params["clockCycle"]) )
 
-# TxnGen -> TxnUnit (Res)(Token)
+
+# TxnGen <- Controller (Req)(Token)
+txnTokenLink_0 = sst.Link("txnTokenLink_0")
+txnTokenLink_0.connect( (comp_txnGen0, "inCtrlReqQTokenChg", g_params["clockCycle"]), (comp_controller0, "outTxnGenReqQTokenChg", g_params["clockCycle"]) )
+
+# TxnGen -> Controller (Res)(Token)
 txnTokenLink_1 = sst.Link("txnTokenLink_1")
-txnTokenLink_1.connect( (comp_txnGen0, "outTxnGenResQTokenChg", g_params["clockCycle"]), (comp_txnUnit0, "inTxnGenResQTokenChg", g_params["clockCycle"]) )
+txnTokenLink_1.connect( (comp_txnGen0, "outTxnGenResQTokenChg", g_params["clockCycle"]), (comp_controller0, "inTxnGenResQTokenChg", g_params["clockCycle"]) )
 
 
-
-
-# TXNUNIT / CMDUNIT LINKS
-# TxnUnit -> CmdUnit (Req) (Cmd)
-cmdReqLink_0 = sst.Link("cmdReqLink_0")
-cmdReqLink_0.connect( (comp_txnUnit0, "outCmdUnitReqPtrPkg", g_params["clockCycle"]), (comp_cmdUnit0, "inTxnUnitReqPtr", g_params["clockCycle"]) )
-
-# TxnUnit <- CmdUnit (Req) (Token)
-cmdTokenLink_0 = sst.Link("cmdTokenLink_0")
-cmdTokenLink_0.connect( (comp_txnUnit0, "inCmdUnitReqQTokenChg", g_params["clockCycle"]), (comp_cmdUnit0, "outTxnUnitReqQTokenChg", g_params["clockCycle"]) )
-
-# TxnUnit <- CmdUnit (Res) (Cmd)
-cmdResLink_0 = sst.Link("cmdResLink_0")
-cmdResLink_0.connect( (comp_txnUnit0, "inCmdUnitResPtr", g_params["clockCycle"]), (comp_cmdUnit0, "outTxnUnitResPtr", g_params["clockCycle"]) )
-
-
-
-
-# CMDUNIT / DIMM LINKS
-# CmdUnit -> Dimm (Req) (Cmd)
+# Controller -> Dimm (Req)
 cmdReqLink_1 = sst.Link("cmdReqLink_1")
-cmdReqLink_1.connect( (comp_cmdUnit0, "outBankReqPtr", g_params["clockCycle"]), (comp_dimm0, "inCmdUnitReqPtr", g_params["clockCycle"]) )
+cmdReqLink_1.connect( (comp_controller0, "outDeviceReqPtr", g_params["clockCycle"]), (comp_dimm0, "inCtrlReqPtr", g_params["clockCycle"]) )
 
-# CmdUnit <- Dimm (Res) (Cmd)
+# Controller <- Dimm (Res) (Cmd)
 cmdResLink_1 = sst.Link("cmdResLink_1")
-cmdResLink_1.connect( (comp_cmdUnit0, "inBankResPtr", g_params["clockCycle"]), (comp_dimm0, "outCmdUnitResPtr", g_params["clockCycle"]) )
+cmdResLink_1.connect( (comp_controller0, "inDeviceResPtr", g_params["clockCycle"]), (comp_dimm0, "outCtrlResPtr", g_params["clockCycle"]) )
 
 
 

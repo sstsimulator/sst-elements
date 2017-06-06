@@ -10,7 +10,7 @@ DEBUG = True if sys.argv[1] == "1" else False
 
 def run_verimem(config_file, trace_file):
     # set the command
-    sstCmd = "sst --lib-path=.libs/ tests/test_neworg.py --model-options=\""
+    sstCmd = "sst --lib-path=.libs/ tests/test_newarch.py --model-options=\""
     sstParams = "--configfile=" + config_file + " --tracefile=" + trace_file + "\""
 
     osCmd = sstCmd + sstParams
@@ -44,7 +44,7 @@ def run_verimem(config_file, trace_file):
 
 def run_verimem_openbank(config_file, trace_file):
     # set the command
-    sstCmd = "sst --lib-path=.libs/ tests/test_neworg.py --model-options=\""
+    sstCmd = "sst --lib-path=.libs/ tests/test_newarch.py --model-options=\""
     sstParams_openbank = "--configfile=" + config_file_openbank + " --tracefile=" + trace_file + "\""
     osCmd_openbank = sstCmd + sstParams_openbank
     
@@ -139,7 +139,7 @@ def run_suite1(params):
 
 
 #Trace Suites 2 and 3 do not offer different insights for this sim from Suite 1
-# sst --lib-path=.libs/ tests/test_neworg.py --model-options="--configfile=ddr4_verimem_openbank.cfg --tracefile=traces/sst-CramSim-trace_verimem_2_W.trc"
+# sst --lib-path=.libs/ tests/test_newarch.py --model-options="--configfile=ddr4_verimem_openbank.cfg --tracefile=traces/sst-CramSim-trace_verimem_2_W.trc"
 
 #Trace Suite 2
 def run_suite2(params):
