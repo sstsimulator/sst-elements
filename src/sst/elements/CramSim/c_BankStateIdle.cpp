@@ -106,13 +106,13 @@ void c_BankStateIdle::clockTic(c_BankInfo* x_bank) {
 			}
 		} else {
 			if (m_receivedCommandPtr) {
-				// std::cout << "@@" << std::dec
-				// 		<< l_time
-				// 		<< ": now can process command response in IDLE state"
-				// 		<< std::endl;
-
 				SimTime_t l_time =
 						Simulation::getSimulation()->getCurrentSimCycle();
+			        //std::cout << "@@" << std::dec
+				//	  << l_time
+				//	  << ": now can process command response in IDLE state"
+				//	  << std::endl;
+
 				c_BankState* l_p = nullptr;
 				switch (m_receivedCommandPtr->getCommandMnemonic()) {
 				case e_BankCommandType::ACT:
@@ -139,10 +139,10 @@ void c_BankStateIdle::clockTic(c_BankInfo* x_bank) {
 void c_BankStateIdle::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 		c_BankCommand* x_cmdPtr) {
 
-//	std::cout << "@@" << std::dec
-//			<< Simulation::getSimulation()->getCurrentSimCycle()
-//			<< ": m_timer = " << m_timer << std::endl;
-//	std::cout << "Entering " << __PRETTY_FUNCTION__ << std::endl;
+        //std::cout << "@@" << std::dec
+	//	  << Simulation::getSimulation()->getCurrentSimCycle()
+	//	  << ": m_timer = " << m_timer << std::endl;
+	//std::cout << "Entering " << __PRETTY_FUNCTION__ << std::endl;
 
 	m_prevCommandPtr = x_cmdPtr;
 

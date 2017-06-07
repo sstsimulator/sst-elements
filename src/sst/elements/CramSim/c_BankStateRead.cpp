@@ -98,11 +98,11 @@ void c_BankStateRead::handleCommand(c_BankInfo* x_bank,
 			break;
 		}
 
-//		std::cout << std::endl << "@" << std::dec
-//				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//				<< __PRETTY_FUNCTION__ << std::endl;
-//		m_receivedCommandPtr->print();
-//		std::cout << std::endl;
+		//std::cout << std::endl << "@" << std::dec
+		//		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
+		//		<< __PRETTY_FUNCTION__ << std::endl;
+		//m_receivedCommandPtr->print();
+		//std::cout << std::endl;
 
 	}
 }
