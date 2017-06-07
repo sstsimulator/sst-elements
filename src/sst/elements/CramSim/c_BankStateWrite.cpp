@@ -254,16 +254,14 @@ void c_BankStateWrite::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 			(std::max(x_bank->getNextCommandCycle(e_BankCommandType::READ),
 					x_bank->getLastCommandCycle(e_BankCommandType::WRITE)
 							+ m_bankParams->at("nCWL") + m_bankParams->at("nBL")
-							+ m_bankParams->at("nWR")
-							+ m_bankParams->at("nWTR"))));
+							+ m_bankParams->at("nWTR_L"))));
 
 	m_allowedCommands.push_back(e_BankCommandType::READA);
 	x_bank->setNextCommandCycle(e_BankCommandType::READA,
 			(std::max(x_bank->getNextCommandCycle(e_BankCommandType::READA),
 					x_bank->getLastCommandCycle(e_BankCommandType::WRITE)
 							+ m_bankParams->at("nCWL") + m_bankParams->at("nBL")
-							+ m_bankParams->at("nWR")
-							+ m_bankParams->at("nWTR"))));
+							+ m_bankParams->at("nWTR_L"))));
 
 //  FIXME: below for write going to the same row as the previous WRITE command
 	m_allowedCommands.push_back(e_BankCommandType::WRITE);

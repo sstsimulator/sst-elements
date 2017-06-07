@@ -27,13 +27,6 @@ for line in inFile:
     cycle = grep[0][1:]
     cmd = grep[1]
 
-    #reset active banks to | and precharge banks to .
-    for ii in range(numBanks):
-        if bankStates[ii] == "A" or bankStates[ii] == "W" or bankStates[ii] == "R":
-            bankStates[ii] = "|"
-        if bankStates[ii] == "P" or bankStates[ii] == "F":
-            bankStates[ii] = "."
-
     doPrint = True
     ref = False
     if cmd == 'REF' and len(grep)>3:
@@ -50,7 +43,7 @@ for line in inFile:
             addr = grep[3]
             bankId = int(grep[11])
             if bankId >= numBanks:
-                print "Increase numBqanks!",bankId,"detected, max is",numBanks-1
+                print "Increase numBanks!",bankId,"detected, max is",numBanks-1
             bankStates[bankId] = cmdDict[cmd]
         else:
             doPrint = False
@@ -61,6 +54,17 @@ for line in inFile:
         for ii in range(numBanks):
             sys.stdout.write('%3s' % bankStates[ii])
         print " ",addr
+
+        #reset active banks to | and precharge banks to .
+        if ref:
+            for ii in bankList:
+                bankStates[int(ii)] = "."
+        else:
+            if bankStates[bankId] == "A" or bankStates[bankId] == "W" or bankStates[bankId] == "R":
+                bankStates[bankId] = "|"
+            if bankStates[bankId] == "P" or bankStates[bankId] == "F":
+                bankStates[bankId] = "."
+
         
 
     
