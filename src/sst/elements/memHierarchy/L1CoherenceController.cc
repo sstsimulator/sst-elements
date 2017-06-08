@@ -154,6 +154,8 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
             return handleFetchInv(event, cacheLine, replay);
         case Command::FetchInvX:
             return handleFetchInvX(event, cacheLine, replay);
+        case Command::ForceInv:
+            return handleForceInv(event, cacheLine, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized invalidation: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
                     parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
@@ -471,6 +473,38 @@ CacheAction L1CoherenceController::handleInv(MemEvent* event, CacheLine* cacheLi
     }
     return STALL;
 }
+
+
+CacheAction L1CoherenceController::handleForceInv(MemEvent * event, CacheLine * cacheLine, bool replay) {
+    State state = cacheLine->getState();
+    recordStateEventCount(event->getCmd(), state);
+
+    switch(state) {
+        case I:
+        case IS:
+        case IM:
+        case I_B:
+            return IGNORE; // Assume Put/flush raced with invalidation
+        case S:
+        case E:
+        case M:
+            sendAckInv(event->getBaseAddr(), event->getRqstr(), cacheLine);
+            cacheLine->setState(I);
+            return DONE;
+        case SM:
+            sendAckInv(event->getBaseAddr(), event->getRqstr(), cacheLine);
+            cacheLine->setState(IM);
+            return DONE;
+        case S_B:
+            sendAckInv(event->getBaseAddr(), event->getRqstr(), cacheLine);
+            cacheLine->setState(I_B);
+            return IGNORE; // don't retry waiting flush
+        default:
+            debug->fatal(CALL_INFO, -1, "%s, Error: Received a ForceInv in an unhandled state: %s. Addr = 0x%" PRIu64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n",
+                    parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+    }
+}
+
 
 
 

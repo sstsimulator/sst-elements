@@ -48,6 +48,8 @@ public:
     /** Link getter */
     virtual SST::Link* getLink(void) const { return link_; }
 
+    virtual void init(unsigned int phase);
+
     virtual void sendInitData(Request *req);
     virtual void sendRequest(Request *req);
     virtual Request* recvResponse(void);
@@ -73,6 +75,9 @@ private:
     HandlerBase*    recvHandler_;
     SST::Link*      link_;
     std::map<SST::Event::id_type, Interfaces::SimpleMem::Request*> requests_;
+    Addr baseAddrMask_;
+    std::string rqstr_;
+    Addr remoteMemStart_;
 };
 
 }

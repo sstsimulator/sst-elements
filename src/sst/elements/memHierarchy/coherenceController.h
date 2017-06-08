@@ -82,7 +82,10 @@ public:
     uint64_t forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data);
 
     /* Forward a generic message towards memory */
-    uint64_t forwardMessage(MemEventBase * event);
+    uint64_t forwardTowardsMem(MemEventBase * event);
+
+    /* Forward a generic message towards CPU */
+    uint64_t forwardTowardsCPU(MemEventBase * event, std::string dst);
 
     /***** Manage outgoing event queuest *****/
     

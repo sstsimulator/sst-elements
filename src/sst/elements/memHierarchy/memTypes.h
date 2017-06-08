@@ -64,6 +64,7 @@ enum class MemEventType { Cache, Move };                            // For parsi
     X(Fetch,            FetchResp,      Request,    ForwardRequest, 0, 0,   Cache)   /* Other read request to sharer:  Get data but don't invalidate cache line */\
     X(FetchInv,         FetchResp,      Request,    ForwardRequest, 0, 0,   Cache)   /* Other write request to owner:  Invalidate cache line */\
     X(FetchInvX,        FetchXResp,     Request,    ForwardRequest, 0, 0,   Cache)   /* Other read request to owner:   Downgrade cache line to O/S (Remove exclusivity) */\
+    X(ForceFetchInv,    FetchResp,      Request,    ForwardRequest, 0, 0,   Cache)   /* Invalidate and send FetchResp or AckInv */ \
     X(FetchResp,        NULLCMD,        Response,   Data,           1, 0,   Cache)   /* response to a Fetch, FetchInv or FetchInvX request */\
     X(FetchXResp,       NULLCMD,        Response,   Data,           1, 0,   Cache)   /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
     /* Others */\

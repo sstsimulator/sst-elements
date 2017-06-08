@@ -63,6 +63,12 @@ public:
         memFlags_       = 0;
     }
 
+    virtual MemEventBase* makeResponse() {
+        MemEventBase * me = new MemEventBase(*this);
+        me->setResponse(this);
+        return me;
+    }
+
     void setResponse(MemEventBase * event) {
         responseToID_ = event->eventID_;
         cmd_ = CommandResponse[(int)cmd_];
@@ -152,7 +158,6 @@ public:
         str += "]";
         return str;
     }
-
 
     /** Return size of the event - for calculating bandwidth used */
     virtual uint32_t getEventSize() { return 0; }

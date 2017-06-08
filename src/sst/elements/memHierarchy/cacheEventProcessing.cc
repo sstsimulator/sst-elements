@@ -206,35 +206,36 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         cout << flush;
     }
 #endif
-    if (MemEventTypeArr[(int)ev->getCmd()] != MemEventType::Cache) {
-        coherenceMgr_->forwardMessage(ev);
+
+    // Set noncacheable requests if needed
+    if (cf_.allNoncacheableRequests_) {
+        ev->setFlag(MemEvent::F_NONCACHEABLE);
     }
+    bool noncacheable = ev->queryFlag(MemEvent::F_NONCACHEABLE);
 
-    MemEvent * event = static_cast<MemEvent*>(ev);
-    Command cmd     = event->getCmd();
-    bool noncacheable   = ev->queryFlag(MemEvent::F_NONCACHEABLE) || cf_.allNoncacheableRequests_;
-    //if (cf_.L1_) event->setBaseAddr(toBaseAddr(event->getAddr()));
-    Addr baseAddr   = event->getBaseAddr();
-    if (baseAddr % cf_.cacheArray_->getLineSize() != 0) {
-        d_->fatal(CALL_INFO, -1, "Base address is not a multiple of line size!\n");
-    }
-    MemEvent* origEvent;
-    
-    /* Set requestor field if this is the first cache that's seen this event */
 
-    
-    if (!replay) { 
-        statTotalEventsReceived->addData(1);
-    } else statTotalEventsReplayed->addData(1);
-
-#ifdef __SST_DEBUG_OUTPUT__
-#endif
-
-    if (noncacheable || cf_.allNoncacheableRequests_) {
-        processNoncacheable(event, cmd, baseAddr);
+    if (MemEventTypeArr[(int)ev->getCmd()] != MemEventType::Cache || noncacheable) {
+        statNoncacheableEventsReceived->addData(1);
+        processNoncacheable(ev);
         return true;
     }
 
+    /* Start handling cache events */
+    MemEvent * event = static_cast<MemEvent*>(ev);
+    Command cmd     = event->getCmd();
+    Addr baseAddr   = event->getBaseAddr();
+    
+    // TODO this is a temporary check while we ensure that the source sets baseAddr correctly
+    if (baseAddr % cf_.cacheArray_->getLineSize() != 0) {
+        d_->fatal(CALL_INFO, -1, "Base address is not a multiple of line size!\n");
+    }
+    
+    MemEvent* origEvent;
+    
+    // Update statistics
+    if (!replay) statTotalEventsReceived->addData(1);
+    else statTotalEventsReplayed->addData(1);
+    
     // Cannot stall if this is a GetX to L1 and the line is locked because GetX is the unlock!
     bool canStall = !cf_.L1_ || event->getCmd() != Command::GetX;
     if (!canStall) {
@@ -325,62 +326,19 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     return true;
 }
 
-void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
-    MemEvent* origRequest;
-    bool inserted;
-    event->setFlag(MemEvent::F_NONCACHEABLE);
-    
-    switch(cmd) {
-        case Command::GetS:
-        case Command::GetX:
-        case Command::GetSX:
-        case Command::FlushLine:
-        case Command::FlushLineInv:  // Note that noncacheable flushes currently ignore the cache - they just flush any buffers at memory
-#ifdef __SST_DEBUG_OUTPUT__
-	    if (cmd == Command::GetSX) d_->debug(_WARNING_, "WARNING: Noncachable atomics have undefined behavior; atomicity not preserved\n"); 
-#endif
-            inserted = mshrNoncacheable_->insert(baseAddr, event);
-            if (!inserted) {
-                d_->fatal(CALL_INFO, -1, "%s, Error inserting noncacheable request in mshr. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",getName().c_str(), CommandString[(int)cmd], baseAddr, getCurrentSimTimeNano());
-            }
-            if (cmd == Command::GetS) coherenceMgr_->forwardMessage(event, baseAddr, event->getSize(), 0, NULL);
-            else             coherenceMgr_->forwardMessage(event, baseAddr, event->getSize(), 0, &event->getPayload());
-            break;
-        case Command::GetSResp:
-        case Command::GetXResp:
-            origRequest = mshrNoncacheable_->removeFront(baseAddr);
-            if (origRequest->getID().first != event->getResponseToID().first || origRequest->getID().second != event->getResponseToID().second) {
-                d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match request at front of mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
-                        getName().c_str(),CommandString[(int)cmd],baseAddr, CommandString[(int)origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
-            }
-            coherenceMgr_->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
-            delete origRequest;
-            delete event;
-            break;
-        case Command::FlushLineResp: {
-            // Flushes can be returned out of order since they don't neccessarily require a memory access so we need to actually search the MSHRs
-            vector<mshrType> * entries = mshrNoncacheable_->getAll(baseAddr);
-            for (vector<mshrType>::iterator it = entries->begin(); it != entries->end(); it++) {
-                MemEvent * candidate = (it->elem).getEvent();
-                if (candidate->getCmd() == Command::FlushLine || candidate->getCmd() == Command::FlushLineInv) { // All entries are events so no checking for pointer vs event needed
-                    if (candidate->getID().first == event->getResponseToID().first && candidate->getID().second == event->getResponseToID().second) {
-                        origRequest = candidate;
-                        break;
-                    }
-                }
-            }
-            if (origRequest == nullptr) {
-                d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match any request in the mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
-                        getName().c_str(),CommandString[(int)cmd],baseAddr, CommandString[(int)origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
-            }
-            coherenceMgr_->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
-            mshrNoncacheable_->removeElement(baseAddr, origRequest);
-            delete origRequest;
-            delete event;
-            break;
-            }
-        default:
-            d_->fatal(CALL_INFO, -1, "Command does not exist. Command: %s, Src: %s\n", CommandString[(int)cmd], event->getSrc().c_str());
+/* For handling non-cache commands (including NONCACHEABLE data requests) */
+void Cache::processNoncacheable(MemEventBase* event) {
+    if (CommandCPUSide[(int)event->getCmd()]) {
+        responseDst_.insert(std::make_pair(event->getID(), event->getSrc()));
+        coherenceMgr_->forwardTowardsMem(event);
+    } else {
+        std::map<SST::Event::id_type,std::string>::iterator it = responseDst_.find(event->getResponseToID());
+        if (it == responseDst_.end()) {
+            d_->fatal(CALL_INFO, 01, "%s, Error: noncacheable response received does not match a request. Event: (). Time: %" PRIu64 "\n",
+                    getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+        }
+        coherenceMgr_->forwardTowardsCPU(event, it->second);
+        responseDst_.erase(it);
     }
 }
 

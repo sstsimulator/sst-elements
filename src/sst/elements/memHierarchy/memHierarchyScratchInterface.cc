@@ -31,10 +31,34 @@ MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::Component *comp,
     SimpleMem(comp, params), owner_(comp), recvHandler_(NULL), link_(NULL)
 { 
     output.init("", 1, 0, Output::STDOUT); 
+
+    bool found;
+    UnitAlgebra size = UnitAlgebra(params.find<std::string>("scratchpad_size", "0B", found));
+    if (!found) 
+        output.fatal(CALL_INFO, -1, "Param not specified (%s): scratchpad_size - size of scratchpad\n", getName().c_str());
+    if (!size.hasUnits("B"))
+        output.fatal(CALL_INFO, -1, "Invalid param (%s): scratchpad_size - must have units of 'B'. SI units ok. You specified '%s'\n", getName().c_str(), size.toString().c_str());
+    remoteMemStart_ = size.getRoundedValue();
 }
 
 
-void MemHierarchyScratchInterface::sendInitData(SimpleMem::Request *req){
+void MemHierarchyScratchInterface::init(unsigned int phase) {
+    if (!phase) {
+        link_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::CPU, false, 0));
+    }
+
+    while (SST::Event * ev = link_->recvInitData()) {
+        MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
+        if (memEvent) {
+            if (memEvent->getCmd() == Command::NULLCMD) {
+                baseAddrMask_ = ~(memEvent->getLineSize() - 1);
+                rqstr_ = memEvent->getSrc();
+            }
+        }   
+    }
+}
+
+void MemHierarchyScratchInterface::sendInitData(SimpleMem::Request *req) {
     MemEventInit * event = new MemEventInit(getName(), Command::GetX, req->addrs[0], req->data);
     link_->sendInitData(event);
 }
@@ -75,14 +99,27 @@ MemEvent * MemHierarchyScratchInterface::createMemEvent(SimpleMem::Request * req
         default: output.fatal(CALL_INFO, -1, "MemHierarchyScratchInterface received unknown command in createMemEvent\n");
     }
 
-    MemEvent * me = new MemEvent(owner_, req->addrs[0], req->addrs[0], cmd);
+    Addr baseAddr = req->addrs[0] & baseAddrMask_;
+
+    MemEvent * me = new MemEvent(owner_, req->addrs[0], baseAddr, cmd);
+   
+    /* Set remote memory accesses to noncacheable so that any cache avoids trying to cache the response */
+    if (me->getAddr() >= remoteMemStart_) {
+        me->setFlag(MemEvent::F_NONCACHEABLE);
+    }
+
     me->setSize(req->size);
+    me->setRqstr(rqstr_);
+    me->setSrc(rqstr_);
+    me->setDst(rqstr_);
+
     if (SimpleMem::Request::Write == req->cmd) {
         if (req->data.size() == 0) req->data.resize(req->size, 0);
         if (req->data.size() != req->size)
             output.output("Warning: In memHierarchyScratchInterface, write request size does not match payload size. Request size: %zu, Payload size: %zu. Using payload size.\n", req->size, req->data.size());
         me->setPayload(req->data);
     }
+    return me;
 }
 
 
@@ -97,6 +134,9 @@ MoveEvent* MemHierarchyScratchInterface::createMoveEvent(SimpleMem::Request *req
    
     MoveEvent *me = new MoveEvent(parent->getName(), req->addrs[1], req->addrs[1], req->addrs[0], req->addrs[0], cmd);
 
+    me->setRqstr(rqstr_);
+    me->setSrc(rqstr_);
+    me->setDst(rqstr_);
     me->setSize(req->size);
 
     me->setDstVirtualAddress(req->getVirtualAddress());

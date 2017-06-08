@@ -177,6 +177,7 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"GetSXMiss_Blocked",  "GetSX was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
     {"TotalEventsReceived", "Total number of events received by this cache", "events", 1},
     {"TotalEventsReplayed", "Total number of events that were initially blocked and then were replayed", "events", 1},
+    {"TotalNoncacheableEventsReceived", "Total number of non-cache or noncacheable cache events that were received by this cache and forward", "events", 1},
     {"MSHR_occupancy",      "Number of events in MSHR each cycle", "events", 1},
     {"Prefetch_requests",   "Number of prefetches received from prefetcher at this cache", "events", 1},
     {"Prefetch_hits",       "Number of prefetches that were cancelled due to cache or MSHR hit", "events", 1},

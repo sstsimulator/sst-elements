@@ -194,6 +194,12 @@ public:
         }
     }
 
+    void setZeroPayload(uint32_t size) {
+        setSize(size);
+        payload_.clear();
+        payload_.resize(size, 0);
+    }
+
     size_t getPayloadSize() {
         return payload_.size();
     }

@@ -278,6 +278,9 @@ private:
     /** Handle Inv request */
     CacheAction handleInv(MemEvent * event, CacheLine * cacheLine, bool replay);
     
+    /** Handle ForceInv request */
+    CacheAction handleForceInv(MemEvent * event, CacheLine * cacheLine, bool replay);
+    
     /** Handle Fetch */
     CacheAction handleFetch(MemEvent * event, CacheLine * cacheLine, bool replay);
     

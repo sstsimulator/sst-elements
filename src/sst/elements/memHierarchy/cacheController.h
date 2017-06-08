@@ -79,8 +79,8 @@ private:
     /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
     void processIncomingEvent(SST::Event *event);
     
-    /** Process the oldest incoming 'noncacheable' event */
-    void processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr);
+    /** Process an incoming event that is not meant for the cache */
+    void processNoncacheable(MemEventBase* event);
     
     /** Process the oldest incoming event */
     bool processEvent(MemEventBase* event, bool mshrHit);
@@ -239,15 +239,15 @@ private:
         SimTime_t curTime = getCurrentSimTimeNano();
         MemEvent *oldReq = NULL;
         MemEvent *oldCacheReq = mshr_->getOldestRequest();
-        MemEvent *oldUnCacheReq = mshrNoncacheable_->getOldestRequest();
 
-        if ( oldCacheReq && oldUnCacheReq ) {
+        /*if ( oldCacheReq && oldUnCacheReq ) {
             oldReq = (oldCacheReq->getInitializationTime() < oldUnCacheReq->getInitializationTime()) ? oldCacheReq : oldUnCacheReq;
         } else if ( oldCacheReq ) {
             oldReq = oldCacheReq;
         } else {
             oldReq = oldUnCacheReq;
-        }
+        }*/
+        oldReq = oldCacheReq;
 
         if ( oldReq ) {
             SimTime_t waitTime = curTime - oldReq->getInitializationTime();
@@ -289,7 +289,7 @@ private:
     vector<string>          lowerLevelCacheNames_;
     vector<string>          upperLevelCacheNames_;
     MSHR*                   mshr_;
-    MSHR*                   mshrNoncacheable_;
+    std::map<SST::Event::id_type, std::string> responseDst_; 
     CoherenceController*    coherenceMgr_;
     uint64_t                accessLatency_;
     uint64_t                tagLatency_;
@@ -357,6 +357,7 @@ private:
     Statistic<uint64_t>* statNACK_recv;
     Statistic<uint64_t>* statTotalEventsReceived;
     Statistic<uint64_t>* statTotalEventsReplayed;   // Used to be "MSHR Hits" but this makes more sense because incoming events may be an MSHR hit but will be counted as "event received"
+    Statistic<uint64_t>* statNoncacheableEventsReceived; // Counts any non-cache events that are received and forwarded
     Statistic<uint64_t>* statInvStalledByLockedLine;
 
     Statistic<uint64_t>* statMSHROccupancy;

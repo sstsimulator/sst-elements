@@ -180,15 +180,23 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, Addr baseAddr, un
     return deliveryTime;
 }
 
-uint64_t CoherenceController::forwardMessage(MemEventBase * event) {
+uint64_t CoherenceController::forwardTowardsMem(MemEventBase * event) {
     event->setSrc(parent->getName());
     event->setDst(getDestination(event->getRoutingAddress()));
 
-    Response fwdReq = {event, timestamp_ + 1, packetHeaderBytes };
+    Response fwdReq = {event, timestamp_ + 1, packetHeaderBytes + event->getPayloadSize()};
     addToOutgoingQueue(fwdReq);
     return timestamp_ + 1;
 }
 
+uint64_t CoherenceController::forwardTowardsCPU(MemEventBase * event, std::string dst) {
+    event->setSrc(parent->getName());
+    event->setDst(dst);
+
+    Response fwdReq = {event, timestamp_ + 1, packetHeaderBytes + event->getPayloadSize()};
+    addToOutgoingQueueUp(fwdReq);
+    return timestamp_ + 1;
+}
 
 /**************************************/
 /******* Manage outgoing events *******/

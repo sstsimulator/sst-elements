@@ -266,7 +266,6 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     
     /* ----------------- MSHR ----------------- */
     mshr_               = new MSHR(d_, cf_.MSHRSize_, this->getName(), DEBUG_ALL, DEBUG_ADDR);
-    mshrNoncacheable_   = new MSHR(d_, HUGE_MSHR, this->getName(), DEBUG_ALL, DEBUG_ADDR);
     
     /* ---------------- Clock ---------------- */
     clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
@@ -294,8 +293,9 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     }
     
     /* Register statistics */
-    statTotalEventsReceived     = registerStatistic<uint64_t>("TotalEventsReceived");
-    statTotalEventsReplayed     = registerStatistic<uint64_t>("TotalEventsReplayed");
+    statTotalEventsReceived         = registerStatistic<uint64_t>("TotalEventsReceived");
+    statTotalEventsReplayed         = registerStatistic<uint64_t>("TotalEventsReplayed");
+    statNoncacheableEventsReceived  = registerStatistic<uint64_t>("TotalNoncacheableEventsReceived");
     statCacheHits               = registerStatistic<uint64_t>("CacheHits");
     statGetSHitOnArrival        = registerStatistic<uint64_t>("GetSHit_Arrival");   
     statGetXHitOnArrival        = registerStatistic<uint64_t>("GetXHit_Arrival");
