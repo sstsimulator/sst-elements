@@ -53,8 +53,10 @@ void MemHierarchyScratchInterface::init(unsigned int phase) {
             if (memEvent->getCmd() == Command::NULLCMD) {
                 baseAddrMask_ = ~(memEvent->getLineSize() - 1);
                 rqstr_ = memEvent->getSrc();
+                allNoncache_ = (Endpoint::Scratchpad == memEvent->getType());
             }
-        }   
+        }
+        delete ev;
     }
 }
 
@@ -104,7 +106,7 @@ MemEvent * MemHierarchyScratchInterface::createMemEvent(SimpleMem::Request * req
     MemEvent * me = new MemEvent(owner_, req->addrs[0], baseAddr, cmd);
    
     /* Set remote memory accesses to noncacheable so that any cache avoids trying to cache the response */
-    if (me->getAddr() >= remoteMemStart_) {
+    if (me->getAddr() >= remoteMemStart_ || allNoncache_) {
         me->setFlag(MemEvent::F_NONCACHEABLE);
     }
 

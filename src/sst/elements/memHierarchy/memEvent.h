@@ -243,7 +243,7 @@ public:
 
     virtual std::string getBriefString() {
         std::ostringstream str;
-        str << "Addr: " << addr_ << " BaseAddr: " << baseAddr_;
+        str << " Addr: " << addr_ << " BaseAddr: " << baseAddr_ << " Size: " << size_;
         return MemEventBase::getBriefString() + str.str();
     }
     

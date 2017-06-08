@@ -78,6 +78,7 @@ private:
     Addr baseAddrMask_;
     std::string rqstr_;
     Addr remoteMemStart_;
+    bool allNoncache_;
 };
 
 }

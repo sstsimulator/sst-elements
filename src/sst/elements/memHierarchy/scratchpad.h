@@ -92,7 +92,7 @@ private:
     // Helper methods
     void updateMSHR(Addr baseAddr);
 
-    void doScratchRead(MemEvent * read, std::vector<uint8_t>* returnData);
+    std::vector<uint8_t> doScratchRead(MemEvent * read);
     void doScratchWrite(MemEvent * write);
     void sendResponse(MemEventBase * event);
 
@@ -141,7 +141,18 @@ private:
             MSHREntry(SST::Event::id_type id, Command cmd, MemEvent * scratch) : id (id), scratch(scratch), cmd(cmd), started(false), needDataAndAck(false) { }
 
             // For events that may need data and ack and are started
-            MSHREntry(SST::Event::id_type id, Command cmd, bool started, bool needDataAndAck) : id(id), scratch(nullptr), started(started), needDataAndAck(needDataAndAck) { }
+            MSHREntry(SST::Event::id_type id, Command cmd, bool started, bool needDataAndAck) : id(id), scratch(nullptr), cmd(cmd), started(started), needDataAndAck(needDataAndAck) { }
+
+            // For debug
+            std::string getString() {
+                std::string cmdStr(CommandString[(int)cmd]);
+                ostringstream str;
+                str <<"ID: <" << id.first << "," << id.second << ">";
+                str << " Cmd: " << cmdStr;
+                str << " Start: " << (started ? "T" : "F");
+                str << " Ack&Data: " << (needDataAndAck ? "T" : "F");
+                return str.str();
+            }
     };
     
 

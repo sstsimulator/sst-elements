@@ -164,16 +164,20 @@ public:
     
     /** Get verbose print of the event */
     virtual std::string getVerboseString() {
+        std::ostringstream idstring;
+        idstring << "ID: <" << eventID_.first << "," << eventID_.second << ">";
         std::string cmdStr(CommandString[(int)cmd_]);
         std::ostringstream str;
         str << " Flags: " << getFlagString() << " MemFlags: " << memFlags_;
-        return "Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rqstr: " + rqstr_ + str.str();
+        return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rqstr: " + rqstr_ + str.str();
     }
 
     /** Get brief print of the event */
     virtual std::string getBriefString() {
         std::string cmdStr(CommandString[(int)cmd_]);
-        return "Cmd: " + cmdStr + " Src: " + src_;
+        std::ostringstream idstring;
+        idstring << "ID: <" << eventID_.first << "," << eventID_.second << ">";
+        return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_;
     }
 
     virtual bool doDebug(Addr addr) {
