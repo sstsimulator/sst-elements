@@ -273,32 +273,37 @@ void c_DeviceController::sendReqCloseBankPolicy(
 
 		if (l_proceed) {
 
-			if (isCommandBusAvailable(l_cmdPtr)){   //check if the command bus is available
-
+			if ( isCommandBusAvailable(l_cmdPtr)){   //check if the command bus is available
 				unsigned l_bankNum = l_cmdPtr->getHashedAddress()->getBankId();
-				c_BankInfo* l_bank = m_banks.at(l_bankNum);
 
-				if (sendCommand((l_cmdPtr), l_bank)) {
+				if(!m_blockBank.at(l_bankNum) ) {
+					c_BankInfo *l_bank = m_banks.at(l_bankNum);
+
+					if (sendCommand((l_cmdPtr), l_bank)) {
 
 
-					if (l_cmdPtr->isColCommand()) {
-						assert( (m_lastDataCmdType != ((l_cmdPtr))->getCommandMnemonic()) ||
-								(m_lastPseudoChannel != (l_cmdPtr->getHashedAddress()->getPChannel())) ||
-						      (Simulation::getSimulation()->getCurrentSimCycle()-m_lastDataCmdIssueCycle) >= (std::min(m_bankParams.at("nBL"),std::max(m_bankParams.at("nCCD_L"),m_bankParams.at("nCCD_S")))));
+						if (l_cmdPtr->isColCommand()) {
+							assert((m_lastDataCmdType != ((l_cmdPtr))->getCommandMnemonic()) ||
+								   (m_lastPseudoChannel != (l_cmdPtr->getHashedAddress()->getPChannel())) ||
+								   (Simulation::getSimulation()->getCurrentSimCycle() - m_lastDataCmdIssueCycle) >=
+								   (std::min(m_bankParams.at("nBL"),
+											 std::max(m_bankParams.at("nCCD_L"), m_bankParams.at("nCCD_S")))));
 
-						m_lastDataCmdIssueCycle = Simulation::getSimulation()->getCurrentSimCycle();
-						m_lastDataCmdType = ((l_cmdPtr))->getCommandMnemonic();
-						m_lastPseudoChannel = ((l_cmdPtr))->getHashedAddress()->getPChannel();
+							m_lastDataCmdIssueCycle = Simulation::getSimulation()->getCurrentSimCycle();
+							m_lastDataCmdType = ((l_cmdPtr))->getCommandMnemonic();
+							m_lastPseudoChannel = ((l_cmdPtr))->getHashedAddress()->getPChannel();
+						}
+
+						m_issuedACT = (e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic());
+
+						if (occupyCommandBus(l_cmdPtr))
+							break;// all command buses are occupied, so stop
+
+						if (l_cmdPtrItr == m_inputQ.end())
+							break; //last element is removed from inputQ, so stop
 					}
-
-					m_issuedACT = (e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic());
-
-					if(occupyCommandBus(l_cmdPtr))
-						break;// all command buses are occupied, so stop
-
-					if(l_cmdPtrItr==m_inputQ.end())
-						break; //last element is removed from inputQ, so stop
 				}
+				m_blockBank.at(l_bankNum) = true;
 			}
 		}
 	} // for
@@ -572,6 +577,9 @@ void c_DeviceController::run() {
 		// do the member var setup up before calling any req sending policy function
 		if(m_inflightWrites.size()>0)
 			m_inflightWrites.clear();
+
+		m_blockBank.clear();
+		m_blockBank.resize(m_numBanks, false);
 		releaseCommandBus();  //update the command bus status
 
 		switch (k_bankPolicy) {
