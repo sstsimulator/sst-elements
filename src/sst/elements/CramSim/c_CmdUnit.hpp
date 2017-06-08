@@ -111,7 +111,7 @@ private:
     //unsigned* m_statsReqQ;
     //unsigned* m_statsResQ;
     unsigned m_refsSent;
-
+	std::vector<bool> m_blockBank;
 
 	// params for bank structure
 	int k_useDualCommandBus;
