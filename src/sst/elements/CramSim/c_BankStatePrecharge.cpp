@@ -70,8 +70,11 @@ void c_BankStatePrecharge::clockTic(c_BankInfo* x_bank) {
 	if (0 < m_timer) {
 		--m_timer;
 
-//		std::cout << __PRETTY_FUNCTION__ << "@@" << std::dec << "m_timer = "
-//				<< m_timer << " ";
+		//std::cout << __PRETTY_FUNCTION__ << "@@" << std::dec << "m_timer = "
+		//	  << m_timer << " " 
+		//	  << Simulation::getSimulation()->getCurrentSimCycle()
+		//	  << std::endl;
+
 //		if (m_prevCommandPtr)
 //			m_prevCommandPtr->print();
 
@@ -104,9 +107,14 @@ void c_BankStatePrecharge::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	x_bank->resetRowOpen();
 	m_prevCommandPtr = x_cmdPtr;
 	m_receivedCommandPtr = nullptr;
-	m_timer = m_bankParams->at("nRP");
+	m_timer = m_bankParams->at("nRP") - 2; // MBH it takes 2 cycles from the time PRE is issued for m_timer to start counting down
 	m_allowedCommands.clear();
 
+	//std::cout << "@@" << std::dec
+	//	  << Simulation::getSimulation()->getCurrentSimCycle()
+	//	  << ": m_timer = " << m_timer << std::endl;
+	//std::cout << "Entering " << __PRETTY_FUNCTION__ << std::endl;
+	
 //	if (m_prevCommandPtr) {
 //		std::cout << "Previous command = ";
 //		m_prevCommandPtr->print();
