@@ -184,6 +184,11 @@ c_DeviceController::c_DeviceController(Component *owner, Params& x_params) : c_C
 		}
 		m_cmdTraceStream = new std::ostream(m_cmdTraceStreamBuf);
 	}
+
+	//set debug mask and debug prefix
+	m_debugMask = DVCCTRL;
+	m_debugPrefix="[Device Controller]";
+
 }
 c_DeviceController::~c_DeviceController() {
 	std::cout << __PRETTY_FUNCTION__ << std::endl;
@@ -195,9 +200,10 @@ c_DeviceController::~c_DeviceController() {
 }
 
 
-void c_DeviceController::print() const {
-	std::cout << "***DeviceController " << SubComponent::getName() << std::endl;
-	std::cout << "Internal Queue Entries=" << k_numCtrlIntQEntries <<std::endl;
+void c_DeviceController::print(){
+	//std::cout << "***DeviceController " << SubComponent::getName() << std::endl;
+	//std::cout << "Internal Queue Entries=" << k_numCtrlIntQEntries <<std::endl;
+	debug(m_debugMask, 3, "Internal Queue Entries=%d", k_numCtrlIntQEntries);
 }
 
 void c_DeviceController::printQueues() {
@@ -285,10 +291,12 @@ void c_DeviceController::sendReqCloseBankPolicy(
 						if (l_cmdPtr->isColCommand()) {
 							assert((m_lastDataCmdType != ((l_cmdPtr))->getCommandMnemonic()) ||
 								   (m_lastPseudoChannel != (l_cmdPtr->getHashedAddress()->getPChannel())) ||
+								   (m_lastChannel !=(l_cmdPtr->getHashedAddress()->getChannel())) ||
 								   (Simulation::getSimulation()->getCurrentSimCycle() - m_lastDataCmdIssueCycle) >=
 								   (std::min(m_bankParams.at("nBL"),
 											 std::max(m_bankParams.at("nCCD_L"), m_bankParams.at("nCCD_S")))));
 
+							m_lastChannel = ((l_cmdPtr))->getHashedAddress()->getChannel();
 							m_lastDataCmdIssueCycle = Simulation::getSimulation()->getCurrentSimCycle();
 							m_lastDataCmdType = ((l_cmdPtr))->getCommandMnemonic();
 							m_lastPseudoChannel = ((l_cmdPtr))->getHashedAddress()->getPChannel();
@@ -606,6 +614,16 @@ void c_DeviceController::run() {
 void c_DeviceController::send() {
 	//int token=m_Owner->getToken();
 	while(!m_outputQ.empty()) {
+
+		//print debug message
+		debug(m_debugPrefix.c_str(),m_debugMask,1," send command to device: Ch:%d, pCh:%d, rank:%d, bg:%d, b:%d, cl: %d\n",
+			  m_outputQ.front()->getHashedAddress()->getChannel(),
+			  m_outputQ.front()->getHashedAddress()->getPChannel(),
+			  m_outputQ.front()->getHashedAddress()->getRank(),
+			  m_outputQ.front()->getHashedAddress()->getBankGroup(),
+			  m_outputQ.front()->getHashedAddress()->getBank(),
+			  m_outputQ.front()->getHashedAddress()->getCacheline());
+
 		m_Owner->sendCommand(m_outputQ.front());
 		m_outputQ.pop_front();
 	}
@@ -749,6 +767,7 @@ bool c_DeviceController::sendCommand(c_BankCommand* x_bankCommandPtr,
 				  << " " << std::dec << (x_bankCommandPtr)->getSeqNum()
 				  << " 0x" << std::hex << (x_bankCommandPtr)->getAddress()
 				  << " " << std::dec << x_bankCommandPtr->getHashedAddress()->getChannel()
+				  << " " << std::dec << x_bankCommandPtr->getHashedAddress()->getPChannel()
 				  << " " << std::dec << x_bankCommandPtr->getHashedAddress()->getRank()
 				  << " " << std::dec << x_bankCommandPtr->getHashedAddress()->getBankGroup()
 				  << " " << std::dec << x_bankCommandPtr->getHashedAddress()->getBank()

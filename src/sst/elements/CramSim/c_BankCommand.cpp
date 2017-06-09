@@ -27,7 +27,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include <assert.h>
-
+#include "sst/core/simulation.h"
 #include "c_BankCommand.hpp"
 //#include "c_Transaction.hpp"
 
@@ -114,14 +114,40 @@ e_BankCommandType c_BankCommand::getCommandMnemonic() const {
 //}
 
 void c_BankCommand::print() const {
+  std::cout << "[" << this << " Cycle:" <<  Simulation::getSimulation()->getCurrentSimCycle()
+			<< " CMD: " << this->getCommandString()
+			<< ", SEQNUM: " << std::dec << this->getSeqNum()
+			<< ", ADDR: 0x" << std::hex << this->getAddress()
+			<< ", isResponseReady: " << std::boolalpha << this->isResponseReady()
+		    << ", BankId: " << std::dec << this->getHashedAddress()->getBankId()
+			<< ", Ch: " << std::dec << this->getHashedAddress()->getChannel()
+			<< ", Pch: " << std::dec << this->getHashedAddress()->getPChannel()
+		    << ", Rank: " << std::dec << this->getHashedAddress()->getRank()
+			<< ", BG: " << std::dec << this->getHashedAddress()->getBankGroup()
+			<< ", Bank: " << std::dec << this->getHashedAddress()->getBank()
+			<< ", Row: " << std::dec << this->getHashedAddress()->getRow()
+			<< ", Col: " << std::dec << this->getHashedAddress()->getCol()
+		  	<< ", Cacheline: " << std::dec << this->getHashedAddress()->getCacheline() << "]"
+			<< std::endl;
 
-  std::cout << "[" << this << " CMD: " << this->getCommandString() << ", SEQNUM: "
-	    << std::dec << this->getSeqNum() << " , ADDR: 0x" << std::hex
-	    << this->getAddress() << " , isResponseReady: " << std::boolalpha
-	    << this->isResponseReady() << " row: " << this->getHashedAddress()->getRow()
-	    << " BankId: " << std::dec << this->getBankId() << "]"
-	    << std::endl;
+}
 
+void c_BankCommand::print(SST::Output *x_debugOutput) const {
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "[BankCommand] Cycle:%ld," , Simulation::getSimulation()->getCurrentSimCycle());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "CMD:%s,",this->getCommandString().c_str());
+	x_debugOutput->verbose(CALL_INFO, 1, 0,	"SEQNUM:%d,",this->getSeqNum());
+	x_debugOutput->verbose(CALL_INFO, 1, 0,	"ADDR:%lx,",this->getAddress());
+	x_debugOutput->verbose(CALL_INFO, 1, 0,	"isResponseReady:%d,",this->isResponseReady());
+	x_debugOutput->verbose(CALL_INFO, 1, 0,	"BankId:%d, ", this->getHashedAddress()->getBankId());
+	x_debugOutput->verbose(CALL_INFO, 1, 0,	"Ch:%d,",this->getHashedAddress()->getChannel());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "Pch:%d, ",this->getHashedAddress()->getPChannel());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "Rank:%d,",this->getHashedAddress()->getRank());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "BG:%d,", this->getHashedAddress()->getBankGroup());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "Bank:%d,",this->getHashedAddress()->getBank());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "Row:%d,",this->getHashedAddress()->getRow());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "Col:%d,",this->getHashedAddress()->getCol());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "Cacheline:%d\n",this->getHashedAddress()->getCacheline());
+	x_debugOutput->flush();
 }
 
 // TODO: Implement ostream operator overloading for c_BankCommand class. For some reason overloading the ostream operator does not get found during runtime

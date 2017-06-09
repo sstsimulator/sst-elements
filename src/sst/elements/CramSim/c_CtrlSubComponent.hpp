@@ -41,13 +41,19 @@
 // local includes
 #include "c_BankCommand.hpp"
 
+using namespace std;
 namespace SST {
     namespace n_Bank {
         class c_CmdUnit;
 
         template<class I, class O>
         class c_CtrlSubComponent : public SST::SubComponent {
+
+
         public:
+
+
+
             c_CtrlSubComponent(Component *comp, Params &x_params);
 
             ~c_CtrlSubComponent() {};
@@ -64,8 +70,18 @@ namespace SST {
             virtual bool clockTic(SST::Cycle_t) =0;
 
 
-
         protected:
+            enum DEBUG_MASK{
+                TXNCVT = 1,
+                CMDSCH = 1<<1,
+                ADDRHASH= 1<<2,
+                DVCCTRL=1<<3
+            };
+            void debug(unsigned mask_bit, unsigned debug_level, char* format, ...);
+            void debug(const char* prefix, unsigned mask_bit, unsigned debug_level, char* format, ...);
+            unsigned parseDebugFlags(std::string debugFlags);
+            bool isDebugEnabled(DEBUG_MASK x_debug_mask);
+
             //internal functions
             virtual void run() =0 ;
             virtual void send() = 0;
@@ -75,11 +91,15 @@ namespace SST {
             std::deque<I> m_inputQ;                    //input queue
             std::deque<O> m_outputQ;
 
-            // pointers of neighbor components
-            std::deque<O> *m_nextSubCompInputQ;    //neighbor subcomponent
-
             // params for internal architecture
             int k_numCtrlIntQEntries;
+
+            // debug output
+            Output*         m_debugOutput;
+            unsigned        m_debug_bits;
+            bool m_debug_en;
+            std::vector<std::string>m_debugFlags;
+
 
             // params for bank structure
             int k_numBytesPerTransaction;
@@ -124,6 +144,22 @@ namespace SST {
 
         template<class I, class O>
         c_CtrlSubComponent<I, O>::c_CtrlSubComponent(Component *owner, Params &x_params) : SubComponent(owner) {
+
+            //set debug output
+            unsigned l_debug_level=x_params.find<uint32_t>("debug_level", 0);
+            std::string l_debug_flag = x_params.find<std::string>("debug_flag","");
+            m_debug_bits=parseDebugFlags(l_debug_flag);
+            m_debugOutput = new SST::Output("",
+                                            l_debug_level,
+                                            m_debug_bits,
+                                            (Output::output_location_t)x_params.find<int>("debug_location", 1),
+                                            x_params.find<std::string>("debug_file","debugLog"));
+
+            if(l_debug_level>0 && m_debug_bits!=0)
+                m_debug_en=true;
+            else
+                m_debug_en=false;
+
             m_inputQ.clear();
             m_outputQ.clear();
             bool l_found = false;
@@ -477,6 +513,87 @@ namespace SST {
 
             return k_numCtrlIntQEntries - l_QueueSize;
         }
+
+        template<class I, class O>
+        void c_CtrlSubComponent<I, O>::debug(unsigned mask_bit, unsigned debug_level, char* format, ...)
+        {
+           // m_debugOutput->verbosePrefix(prefix.c_str(),CALL_INFO,3,mask_bit,msg.c_str());
+            if(m_debug_en==true) {
+                va_list args;
+                va_start(args,format);
+                size_t size = std::snprintf(nullptr, 0, format, args)+ 1;
+                std::unique_ptr<char[]> buf(new char[size]);
+                std::vsnprintf(buf.get(),size, format, args);
+                std::string msg = std::string(buf.get(),buf.get()+size -1);
+
+                m_debugOutput->verbose(CALL_INFO, debug_level, mask_bit, msg.c_str());
+                m_debugOutput->flush();
+                va_end(args);
+            }
+        }
+
+        template<class I, class O>
+        void c_CtrlSubComponent<I, O>::debug(const char* prefix, unsigned mask_bit, unsigned debug_level, char* format, ...) {
+            // m_debugOutput->verbosePrefix(prefix.c_str(),CALL_INFO,3,mask_bit,msg.c_str());
+            if (m_debug_en == true) {
+                va_list args;
+                va_start(args, format);
+                size_t size = std::snprintf(nullptr, 0, format, args) + 1;
+                std::unique_ptr<char[]> buf(new char[size]);
+                std::vsnprintf(buf.get(), size, format, args);
+                std::string msg = std::string(buf.get(), buf.get() + size - 1);
+
+                m_debugOutput->verbosePrefix(prefix, CALL_INFO, debug_level, mask_bit, msg.c_str());
+                m_debugOutput->flush();
+                va_end(args);
+            }
+        }
+
+
+
+            template<class I, class O>
+        unsigned c_CtrlSubComponent<I, O>::parseDebugFlags(std::string x_debugFlags)
+        {
+
+            unsigned debug_bits=0;
+            std::string delimiter = ",";
+            size_t pos=0;
+            std::string token;
+
+            while((pos=x_debugFlags.find(delimiter)) != std::string::npos){
+                token = x_debugFlags.substr(0,pos);
+                std::cout<<token<<std::endl;
+                m_debugFlags.push_back(token);
+                x_debugFlags.erase(0,pos+delimiter.length());
+            }
+            m_debugFlags.push_back(x_debugFlags);
+
+            for(auto &it : m_debugFlags)
+            {
+                if(it=="dvcctrl")
+                        debug_bits|=DVCCTRL;
+                else if(it=="txncvt")
+                        debug_bits|=TXNCVT;
+                else if(it=="cmdsch")
+                        debug_bits|=CMDSCH;
+                else if(it=="addrhash")
+                    debug_bits|=ADDRHASH;
+                else {
+                    printf("debug flag error! (devicectrl/txncvt/cmdsche/addrhas)");
+                    exit(1);
+                }
+            }
+            return debug_bits;
+        }
+
+        template<class I, class O>
+        bool c_CtrlSubComponent<I, O>::isDebugEnabled(DEBUG_MASK x_debug_mask)
+        {
+            if(m_debug_bits & x_debug_mask)
+                return true;
+            else
+                return false;
+        };
     }
 }
 #endif //SRC_C_CMDSCHEDULER_H

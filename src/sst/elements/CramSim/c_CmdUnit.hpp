@@ -56,7 +56,7 @@ typedef unsigned long ulong;
 namespace SST {
 namespace n_Bank{
 
-	class c_BankCommand;
+//	class c_BankCommand;
 	class c_Controller;
 	enum class e_BankCommandType;
   
@@ -69,7 +69,7 @@ public:
 		printf("Refresh's sent out: %" PRIu32 "\n", m_refsSent);
 	}
 
-	void print() const; // print internals
+	void print(); // print internals
 	bool clockTic(SST::Cycle_t);
 
 private:
@@ -85,12 +85,15 @@ private:
 	void sendRefresh();
 
 	std::set<unsigned> m_inflightWrites; // track inflight write commands
-	//std::vector<bool> m_blockBank;bool m_issuedDataCmd;
 	std::deque<unsigned> m_blockRowCmd; //command bus occupancy info
 	std::deque<unsigned> m_blockColCmd; //command bus occupancy info
 
-	void sendReqCloseBankPolicy(
-			std::deque<c_BankCommand*>::iterator x_startItr); // send request function that models close bank policy
+
+	//debug
+	DEBUG_MASK m_debugMask;
+	std::string m_debugPrefix;
+
+	void sendReqCloseBankPolicy(std::deque<c_BankCommand*>::iterator x_startItr); // send request function that models close bank policy
 	void sendReqOpenRowPolicy(); // send request function that models open row policy
 	void sendReqOpenBankPolicy(); // send request function that models open bank policy
 	void sendReqPseudoOpenRowPolicy(); // send request function that models pseudo open row policy
@@ -130,6 +133,7 @@ private:
 
 	SimTime_t m_lastDataCmdIssueCycle;
 	e_BankCommandType m_lastDataCmdType;
+	unsigned m_lastChannel;
 	unsigned m_lastPseudoChannel;
 	std::list<unsigned> m_cmdACTFAWtracker; // FIXME: change this to a circular buffer for speed. Could also implement as shift register.
 	bool m_issuedACT;

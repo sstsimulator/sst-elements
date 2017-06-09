@@ -20,24 +20,30 @@ def run(sstParams):
 
 
 
-stopAtCycle = "1ms"
+stopAtCycle = "100us"
+config = sys.argv[2];
 sstParams = [
-#	"--configfile=./ddr4_verimem.cfg --txngen=rand --stopAtCycle=%s\"" % stopAtCycle,
-#	"--configfile=./ddr4_verimem.cfg --txngen=seq  --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_1_R.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_2_R.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_4_R.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_5_R.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_6_R.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_1_W.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_2_W.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_4_W.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_5_W.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_6_W.trc --stopAtCycle=%s\"" % stopAtCycle,
-	"--configfile=./ddr4_verimem.cfg --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_1_RW.trc --stopAtCycle=%s\"" % stopAtCycle]
+	"--configfile=./%s --txngen=rand --stopAtCycle=%s\"" % (config,stopAtCycle),
+	"--configfile=./%s --txngen=seq  --stopAtCycle=%s\"" % (config,stopAtCycle),
+	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_1_R.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
+	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_2_R.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
+	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_4_R.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
+	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_5_R.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
+	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_6_R.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
+	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_1_W.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
+	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_2_W.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
+	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_4_W.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
+	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_5_W.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
+	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_6_W.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
+	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_1_RW.trc --stopAtCycle=%s\"" % (config,stopAtCycle)
+	]
 
-#opt=int(sys.argv[1])
-#run(sstParams[opt])
-for params in sstParams:
-	run(params)
-	time.sleep(1)
+if(sys.argv[1] == "batch"):
+	for params in sstParams:
+		run(params)
+		time.sleep(1)
+elif(sys.argv[1].isdigit()):
+	opt=int(sys.argv[1])
+	run(sstParams[opt])
+else:
+	print "Param#1 should be \"batch\" or [0-%d]" % (len(sstParams)-1)

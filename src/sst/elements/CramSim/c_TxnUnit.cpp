@@ -48,24 +48,23 @@ using namespace SST;
 using namespace SST::n_Bank;
 using namespace std;
 
-c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  c_CtrlSubComponent <c_Transaction*,c_BankCommand*> (owner, x_params){
+c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  c_CtrlSubComponent <c_Transaction*,c_BankCommand*> (owner, x_params) {
 
-    m_nextSubComponent=dynamic_cast<c_Controller*>(owner)->getCmdScheduler();
-	m_converter=new c_TransactionToCommands(((c_Controller*)parent)->getAddrHasher());
+	m_nextSubComponent = dynamic_cast<c_Controller *>(owner)->getCmdScheduler();
+	m_converter = new c_TransactionToCommands(((c_Controller *) parent)->getAddrHasher());
 
 	// read params here
 	bool l_found = false;
 
 	// load internal params
 
-	k_relCommandWidth = (uint32_t)x_params.find<uint32_t>("relCommandWidth", 1, l_found);
+	k_relCommandWidth = (uint32_t) x_params.find<uint32_t>("relCommandWidth", 1, l_found);
 	if (!l_found) {
-		std::cout << "relCommandWidth value is missing ... exiting"
-				<< std::endl;
+		std::cout << "relCommandWidth value is missing ... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_REFI = (uint32_t)x_params.find<uint32_t>("nREFI", 1, l_found);
+	k_REFI = (uint32_t) x_params.find<uint32_t>("nREFI", 1, l_found);
 	if (!l_found) {
 		std::cout << "nREFI value is missing ... exiting" << std::endl;
 		exit(-1);
@@ -77,63 +76,60 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  
 	//per-rank refresh groups (all-banks refresh)
 	uint l_groupId = 0;
 	uint l_bankId = 0;
-	for(uint l_chan = 0; l_chan < m_numChannelsPerDimm; l_chan++) {
-	  for(uint l_rank = 0; l_rank < m_numRanksPerChannel; l_rank++) {
-	    // every rank in a different refresh group
-	    m_refreshGroups.push_back(std::vector<unsigned>());
-	    for(uint l_bankGroup = 0; l_bankGroup < m_numBankGroupsPerRank; l_bankGroup++) {
-	      for(uint l_bank = 0; l_bank < m_numBanksPerBankGroup; l_bank++) {
-		m_refreshGroups[l_groupId].push_back(l_bankId);
-		l_bankId++;
-	      } // banks
-	    } // bankgroups
-	    l_groupId++;
-	  } // ranks
+	for (uint l_chan = 0; l_chan < m_numChannelsPerDimm; l_chan++) {
+		for (uint l_rank = 0; l_rank < m_numRanksPerChannel; l_rank++) {
+			// every rank in a different refresh group
+			m_refreshGroups.push_back(std::vector<unsigned>());
+			for (uint l_bankGroup = 0; l_bankGroup < m_numBankGroupsPerRank; l_bankGroup++) {
+				for (uint l_bank = 0; l_bank < m_numBanksPerBankGroup; l_bank++) {
+					m_refreshGroups[l_groupId].push_back(l_bankId);
+					l_bankId++;
+				} // banks
+			} // bankgroups
+			l_groupId++;
+		} // ranks
 	} // channels
-	
-	m_currentRefreshGroup=0;
-	m_currentREFICount = (int)((double)k_REFI/m_refreshGroups.size());
+
+	m_currentRefreshGroup = 0;
+	m_currentREFICount = (int) ((double) k_REFI / m_refreshGroups.size());
 
 	int l_tmp = 0;
-	for(auto l_vec : m_refreshGroups) {
-	  std::cout << "Refresh Group " << l_tmp << " : ";
-	  for(auto l_bankId : l_vec) {
-	    std::cout << l_bankId << " ";
-	  } std::cout << std::endl;
-	  l_tmp++;
+	for (auto l_vec : m_refreshGroups) {
+		std::cout << "Refresh Group " << l_tmp << " : ";
+		for (auto l_bankId : l_vec) {
+			std::cout << l_bankId << " ";
+		}
+		std::cout << std::endl;
+		l_tmp++;
 	}
 
 
-	k_useReadA = (uint32_t)x_params.find<uint32_t>("boolUseReadA", 1, l_found);
+	k_useReadA = (uint32_t) x_params.find<uint32_t>("boolUseReadA", 1, l_found);
 	if (!l_found) {
-		std::cout << "boolUseWriteA param value is missing... exiting"
-				<< std::endl;
+		std::cout << "boolUseWriteA param value is missing... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_useWriteA = (uint32_t)x_params.find<uint32_t>("boolUseWriteA", 1, l_found);
+	k_useWriteA = (uint32_t) x_params.find<uint32_t>("boolUseWriteA", 1, l_found);
 	if (!l_found) {
-		std::cout << "boolUseWriteA param value is missing... exiting"
-				<< std::endl;
+		std::cout << "boolUseWriteA param value is missing... exiting" << std::endl;
 		exit(-1);
 	}
 
-	k_bankPolicy = (uint32_t)x_params.find<uint32_t>("bankPolicy", 0, l_found);
+	k_bankPolicy = (uint32_t) x_params.find<uint32_t>("bankPolicy", 0, l_found);
 	if (!l_found) {
 		std::cout << "bankPolicy value is missing... exiting" << std::endl;
 		exit(-1);
 	}
 
 	if ((k_bankPolicy == 1) && (k_useReadA || k_useWriteA)) {
-		std::cout << "Open bank/row and READA or WRITEA makes no sense"
-				<< std::endl;
+		std::cout << "Open bank/row and READA or WRITEA makes no sense" << std::endl;
 		exit(-1);
 	}
 
-	k_useRefresh = (uint32_t)x_params.find<uint32_t>("boolUseRefresh", 1, l_found);
+	k_useRefresh = (uint32_t) x_params.find<uint32_t>("boolUseRefresh", 1, l_found);
 	if (!l_found) {
-		std::cout << "boolUseRefresh param value is missing... exiting"
-				<< std::endl;
+		std::cout << "boolUseRefresh param value is missing... exiting" << std::endl;
 		exit(-1);
 	}
 
@@ -145,6 +141,11 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  
 	s_totalTxnsRecvd = registerStatistic<uint64_t>("totalTxnsRecvd");
 	s_reqQueueSize = registerStatistic<uint64_t>("reqQueueSize");
 	s_resQueueSize = registerStatistic<uint64_t>("resQueueSize");
+
+	//debug mask
+	m_debugMask = TXNCVT;
+	m_debugPrefix = "[TxnConverter]";
+
 }
 
 c_TxnConverter::~c_TxnConverter() {
@@ -226,6 +227,11 @@ void c_TxnConverter::run(){
 			m_inputQ.pop_front();
 
 			for (std::vector<c_BankCommand *>::iterator it = l_cmdPkg.begin(); it != l_cmdPkg.end(); ++it) {
+				//print debug messages
+#if 0
+				if(isDebugEnabled(TXNCVT))
+					(*it)->print(m_debugOutput);
+#endif
 				m_outputQ.push_back(*it);
 			}
 		}
@@ -237,6 +243,15 @@ void c_TxnConverter::send() {
 	int token=m_nextSubComponent->getToken();
 
 	while(token>0 && !m_outputQ.empty()) {
+		//print debug message
+		debug(m_debugPrefix.c_str(), m_debugMask, 1," send command to scheduler: Ch:%d, pCh:%d, rank:%d, bg:%d, b:%d, cl: %d\n",
+			  m_outputQ.front()->getHashedAddress()->getChannel(),
+			  m_outputQ.front()->getHashedAddress()->getPChannel(),
+			  m_outputQ.front()->getHashedAddress()->getRank(),
+			  m_outputQ.front()->getHashedAddress()->getBankGroup(),
+			  m_outputQ.front()->getHashedAddress()->getBank(),
+			  m_outputQ.front()->getHashedAddress()->getCacheline());
+
 		m_nextSubComponent->push(m_outputQ.front());
 		m_outputQ.pop_front();
 		token--;

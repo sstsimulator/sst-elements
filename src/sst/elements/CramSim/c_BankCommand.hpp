@@ -35,6 +35,7 @@
 
 //sst includes
 #include <sst/core/serialization/serializable.h>
+#include "output.h"
 
 //local includes
 //#include "c_Transaction.hpp"
@@ -83,6 +84,7 @@ public:
 	c_BankCommand(c_BankCommand&&) = delete;
 	c_BankCommand& operator=(c_BankCommand) = delete;
 
+	void print(SST::Output *) const;
 	void print() const;
 
         const c_HashedAddress *getHashedAddress() const {

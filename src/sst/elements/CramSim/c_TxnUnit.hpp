@@ -95,6 +95,10 @@ private:
   Statistic<uint64_t>* s_totalTxnsRecvd;
   Statistic<uint64_t>* s_reqQueueSize;
   Statistic<uint64_t>* s_resQueueSize;
+
+    //debug
+    int m_debugMask;
+	std::string m_debugPrefix;
 };
 }
 }

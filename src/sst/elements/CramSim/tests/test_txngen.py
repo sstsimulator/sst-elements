@@ -21,10 +21,13 @@ if g_stopAtCycle != "" :
 	g_params["stopAtCycle"]=g_stopAtCycle
 
 
+
+
 # Define SST core options
 sst.setProgramOption("timebase", g_params["clockCycle"])
 sst.setProgramOption("stopAtCycle", g_params["stopAtCycle"])
-
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
 
 
 # txn gen
@@ -80,7 +83,24 @@ cmdResLink_1 = sst.Link("cmdResLink_1")
 cmdResLink_1.connect( (comp_controller0, "inDeviceResPtr", g_params["clockCycle"]), (comp_dimm0, "outCtrlResPtr", g_params["clockCycle"]) )
 
 
+# enable all statistics
+comp_txnGen0.enableAllStatistics()
+comp_controller0.enableAllStatistics()
+comp_controller0.enableStatistics(["reqQueueSize"],  # overriding the type of one statistic
+                                  {"type":"sst.HistogramStatistic",
+                                   "minvalue" : "0",
+                                   "binwidth" : "2",
+                                   "numbins" : "18",
+                                   "IncludeOutOfBounds" : "1"})
+comp_controller0.enableStatistics(["resQueueSize"],  # overriding the type of one statistic
+                                  {"type":"sst.HistogramStatistic",
+                                   "minvalue" : "0",
+                                   "binwidth" : "2",
+                                   "numbins" : "18",
+                                   "IncludeOutOfBounds" : "1"})
+#comp_txnUnit0.enableAllStatistics({ "type":"sst.AccumulatorStatistic",
+#                                    "rate":"1 us"})
+comp_dimm0.enableAllStatistics()
 
 
 
-# End of generated output.
