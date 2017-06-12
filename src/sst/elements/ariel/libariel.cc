@@ -55,11 +55,13 @@ static SubComponent* load_ArielMemoryManagerMalloc(Component * owner, Params& pa
 };
 
 static const ElementInfoStatistic ariel_statistics[] = {
-    { "read_requests",        "Stat read_requests", "requests", 1},   // Name, Desc, Enable Level 
-    { "write_requests",       "Stat write_requests", "requests", 1},
-    { "split_read_requests",  "Stat split_read_requests", "requests", 1},
-    { "split_write_requests", "Stat split_write_requests", "requests", 1},
-    { "no_ops",               "Stat no_ops", "instructions", 1},
+    { "read_requests",        "Statistic counts number of read requests", "requests", 1},   // Name, Desc, Enable Level 
+    { "write_requests",       "Statistic counts number of write requests", "requests", 1},
+    { "read_request_sizes",   "Statistic for size of read requests", "bytes", 1},   // Name, Desc, Enable Level 
+    { "write_request_sizes",  "Statistic for size of write requests", "bytes", 1},
+    { "split_read_requests",  "Statistic counts number of split read requests (requests which come from multiple lines)", "requests", 1},
+    { "split_write_requests", "Statistic counts number of split write requests (requests which are split over multiple lines)", "requests", 1},
+    { "no_ops",               "Statistic counts instructions which do not execute a memory operation", "instructions", 1},
     { "instruction_count",    "Statistic for counting instructions", "instructions", 1 },
     { "fp_dp_ins",            "Statistic for counting DP-floating point instructions", "instructions", 1 },
     { "fp_dp_simd_ins",       "Statistic for counting DP-FP SIMD instructons", "instructions", 1 },
@@ -69,7 +71,6 @@ static const ElementInfoStatistic ariel_statistics[] = {
     { "fp_sp_simd_ins",       "Statistic for counting SP-FP SIMD instructons", "instructions", 1 },
     { "fp_sp_scalar_ins",     "Statistic for counting SP-FP Non-SIMD instructons", "instructions", 1 },
     { "fp_sp_ops",            "Statistic for counting SP-FP operations (inst * SIMD width)", "instructions", 1 },
-    { "no_ops",               "Stat no_ops", "instructions", 1},
     { NULL, NULL, NULL, 0 }
 };
 

@@ -48,6 +48,8 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 
 	statReadRequests  = own->registerStatistic<uint64_t>( "read_requests", subID );
 	statWriteRequests = own->registerStatistic<uint64_t>( "write_requests", subID );
+	statReadRequestSizes = own->registerStatistic<uint64_t>( "read_request_sizes", subID );
+	statWriteRequestSizes = own->registerStatistic<uint64_t>( "write_request_sizes", subID );
 	statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests", subID );
 	statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests", subID );
 	statNoopCount     = own->registerStatistic<uint64_t>( "no_ops", subID );
@@ -450,6 +452,7 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 	}
 
 	statReadRequests->addData(1);
+	statReadRequestSizes->addData(readLength);
 }
 
 void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
@@ -517,6 +520,7 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 	}
 
 	statWriteRequests->addData(1);
+	statWriteRequestSizes->addData(writeLength);
 }
 
 void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {

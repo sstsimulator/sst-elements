@@ -120,6 +120,8 @@ class ArielCore {
 
 		Statistic<uint64_t>* statReadRequests;
 		Statistic<uint64_t>* statWriteRequests;
+		Statistic<uint64_t>* statReadRequestSizes;
+		Statistic<uint64_t>* statWriteRequestSizes;
 		Statistic<uint64_t>* statSplitReadRequests;
 		Statistic<uint64_t>* statSplitWriteRequests;
 		Statistic<uint64_t>* statNoopCount;
