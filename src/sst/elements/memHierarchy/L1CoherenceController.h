@@ -281,6 +281,9 @@ private:
     /** Handle ForceInv request */
     CacheAction handleForceInv(MemEvent * event, CacheLine * cacheLine, bool replay);
     
+    /** Handle ForceFetchInv request */
+    CacheAction handleForceFetchInv(MemEvent * event, CacheLine * cacheLine, bool replay);
+    
     /** Handle Fetch */
     CacheAction handleFetch(MemEvent * event, CacheLine * cacheLine, bool replay);
     
@@ -302,7 +305,7 @@ private:
     void sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string origRqstr);
 
     /** Send AckInv response to lower level caches */
-    void sendAckInv(Addr baseAddr, string origRqstr, CacheLine * cacheLine);
+    void sendAckInv(MemEvent * request, CacheLine * cacheLine);
 
     /** Forward a flush line request, with or without data */
     void forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine);

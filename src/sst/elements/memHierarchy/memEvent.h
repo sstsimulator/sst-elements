@@ -234,16 +234,16 @@ public:
 
     virtual std::string getVerboseString() {
         std::ostringstream str;
-        str << " Addr: " << addr_ << " BaseAddr: " << baseAddr_;
-        str << " VA: " << vAddr_ << " IP: " << instPtr_;
-        str << " Size: " << size_;
+        str << std::hex << " Addr: 0x" << addr_ << " BaseAddr: 0x" << baseAddr_;
+        str << " VA: 0x" << vAddr_ << " IP: 0x" << instPtr_;
+        str << std::dec << " Size: " << size_;
         str << " Prefetch: " << (prefetch_ ? "true" : "false");
         return MemEventBase::getVerboseString() + str.str();
     }
 
     virtual std::string getBriefString() {
         std::ostringstream str;
-        str << " Addr: " << addr_ << " BaseAddr: " << baseAddr_ << " Size: " << size_;
+        str << " Addr: 0x" << std::hex << addr_ << " BaseAddr: 0x" << baseAddr_ << std::dec << " Size: " << size_;
         return MemEventBase::getBriefString() + str.str();
     }
     

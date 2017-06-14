@@ -166,9 +166,12 @@ public:
     virtual std::string getVerboseString() {
         std::ostringstream idstring;
         idstring << "ID: <" << eventID_.first << "," << eventID_.second << ">";
+        if (BasicCommandClassArr[(int)cmd_] == BasicCommandClass::Response) {
+            idstring << " RespID: <" << responseToID_.first << "," << responseToID_.second << ">";
+        }
         std::string cmdStr(CommandString[(int)cmd_]);
         std::ostringstream str;
-        str << " Flags: " << getFlagString() << " MemFlags: " << memFlags_;
+        str << " Flags: " << getFlagString() << " MemFlags: 0x" << std::hex << memFlags_;
         return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rqstr: " + rqstr_ + str.str();
     }
 
@@ -177,6 +180,9 @@ public:
         std::string cmdStr(CommandString[(int)cmd_]);
         std::ostringstream idstring;
         idstring << "ID: <" << eventID_.first << "," << eventID_.second << ">";
+        if (BasicCommandClassArr[(int)cmd_] == BasicCommandClass::Response) {
+            idstring << " RespID: <" << responseToID_.first << "," << responseToID_.second << ">";
+        }
         return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_;
     }
 

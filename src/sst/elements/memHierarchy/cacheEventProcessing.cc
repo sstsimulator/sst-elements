@@ -227,7 +227,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     
     // TODO this is a temporary check while we ensure that the source sets baseAddr correctly
     if (baseAddr % cf_.cacheArray_->getLineSize() != 0) {
-        d_->fatal(CALL_INFO, -1, "Base address is not a multiple of line size!\n");
+        d_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %u. Event: %s\n", getName().c_str(), cf_.cacheArray_->getLineSize(), ev->getBriefString().c_str());
     }
     
     MemEvent* origEvent;
@@ -308,6 +308,8 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         case Command::Fetch:
         case Command::FetchInvX:
         case Command::Inv:
+        case Command::ForceInv:
+        case Command::ForceFetchInv:
             processCacheInvalidate(event, baseAddr, replay);
             break;
         case Command::AckPut:
@@ -321,7 +323,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             processCacheFlush(event, baseAddr, replay);
             break;
         default:
-            d_->fatal(CALL_INFO, -1, "Command not supported, cmd = %s", CommandString[(int)cmd]);
+            d_->fatal(CALL_INFO, -1, "%s, Command not supported, cmd = %s", getName().c_str(), CommandString[(int)cmd]);
     }
     return true;
 }
@@ -446,7 +448,7 @@ void Cache::init(unsigned int phase) {
             if (memEvent && memEvent->getCmd() == Command::NULLCMD) {
                 d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d\n", 
                         this->getName().c_str(), CommandString[(int)memEvent->getCmd()], memEvent->getSrc().c_str(), (int)memEvent->getType(), memEvent->getInclusive());
-                if (memEvent->getType() == Endpoint::Cache) {
+                if (memEvent->getType() == Endpoint::Cache || memEvent->getType() == Endpoint::Scratchpad || memEvent->getType() == Endpoint::Directory) {
                     isLL = false;
                     if (!memEvent->getInclusive()) {
                         lowerIsNoninclusive = true; // TODO better checking if we have multiple caches below us

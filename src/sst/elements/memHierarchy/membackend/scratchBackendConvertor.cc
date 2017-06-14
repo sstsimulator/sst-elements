@@ -126,7 +126,7 @@ bool ScratchBackendConvertor::doResponse( ReqId reqId, SST::Event::id_type & res
         m_pendingRequests.erase(id);
         MemEvent* event = req->getMemEvent();
 
-        if ( Command::GetX != event->getCmd()  ) {
+        if ( !req->isWrite()  ) {
             respId = event->getID();
             sendResponse = true;
         }

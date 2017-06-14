@@ -119,7 +119,8 @@ CacheAction L1CoherenceController::handleReplacement(MemEvent* event, CacheLine*
  *  Return: whether Inv was successful (true) or we are waiting on further actions (false). L1 returns true (no sharers/owners).
  */
 CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * collisionEvent, bool replay) {
-    
+   
+    // Handle case where an inv raced with a replacement -> assumes non-silent replacements
     if (cacheLine == NULL) {
         recordStateEventCount(event->getCmd(), I);
         if (mshr_->pendingWriteback(event->getBaseAddr())) {
@@ -141,6 +142,13 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
         Response resp = {snoop, deliveryTime, packetHeaderBytes};
         addToOutgoingQueueUp(resp);
     }
+    
+    /* Handle locked cache lines */
+    if (cacheLine->isLocked()) {
+        stat_eventStalledForLock->addData(1);
+        cacheLine->setEventsWaitingForLock(true); 
+        return STALL;
+    }
 
     cacheLine->atomicEnd();
 
@@ -156,6 +164,8 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
             return handleFetchInvX(event, cacheLine, replay);
         case Command::ForceInv:
             return handleForceInv(event, cacheLine, replay);
+        case Command::ForceFetchInv:
+            return handleForceFetchInv(event, cacheLine, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized invalidation: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
                     parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
@@ -456,15 +466,15 @@ CacheAction L1CoherenceController::handleInv(MemEvent* event, CacheLine* cacheLi
         case I_B:
             return IGNORE;  // Our Put/flush raced with the invalidation and will serve as the AckInv when it arrives
         case S:
-            sendAckInv(event->getBaseAddr(), event->getRqstr(), cacheLine);
+            sendAckInv(event, cacheLine);
             cacheLine->setState(I);
             return DONE;
         case SM:
-            sendAckInv(event->getBaseAddr(), event->getRqstr(), cacheLine);
+            sendAckInv(event, cacheLine);
             cacheLine->setState(IM);
             return DONE;
         case S_B:
-            sendAckInv(event->getBaseAddr(), event->getRqstr(), cacheLine);
+            sendAckInv(event, cacheLine);
             cacheLine->setState(I_B);
             return IGNORE;  // don't retry waiting flush
         default:
@@ -488,15 +498,15 @@ CacheAction L1CoherenceController::handleForceInv(MemEvent * event, CacheLine * 
         case S:
         case E:
         case M:
-            sendAckInv(event->getBaseAddr(), event->getRqstr(), cacheLine);
+            sendAckInv(event, cacheLine);
             cacheLine->setState(I);
             return DONE;
         case SM:
-            sendAckInv(event->getBaseAddr(), event->getRqstr(), cacheLine);
+            sendAckInv(event, cacheLine);
             cacheLine->setState(IM);
             return DONE;
         case S_B:
-            sendAckInv(event->getBaseAddr(), event->getRqstr(), cacheLine);
+            sendAckInv(event, cacheLine);
             cacheLine->setState(I_B);
             return IGNORE; // don't retry waiting flush
         default:
@@ -506,17 +516,43 @@ CacheAction L1CoherenceController::handleForceInv(MemEvent * event, CacheLine * 
 }
 
 
+CacheAction L1CoherenceController::handleForceFetchInv(MemEvent * event, CacheLine * cacheLine, bool replay) {
+    State state = cacheLine->getState();
+    recordStateEventCount(event->getCmd(), state);
+    
+    switch (state) {
+        case I:
+        case IS:
+        case IM:
+        case I_B:
+            return IGNORE; // Assume Put/flush raced with invalidation
+        case S:
+            sendAckInv(event, cacheLine);
+            cacheLine->setState(I);
+            return DONE;
+        case E:
+        case M:
+            sendResponseDown(event, cacheLine, replay);
+            cacheLine->setState(I);
+            return DONE;
+        case SM:
+            sendAckInv(event, cacheLine);
+            cacheLine->setState(IM);
+            return DONE;
+        case S_B:
+            sendAckInv(event, cacheLine);
+            cacheLine->setState(I_B);
+            return IGNORE; // Don't retry waiting flush
+        default:
+            debug->fatal(CALL_INFO, -1, "%s, Error: Received a ForceFetchInv in an unhandled state: %s. Addr = 0x%" PRIu64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n",
+                    parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+    }
+}
+
 
 
 CacheAction L1CoherenceController::handleFetchInv(MemEvent * event, CacheLine * cacheLine, bool replay) {
     State state = cacheLine->getState();
-
-    if (cacheLine->isLocked()) {
-        stat_eventStalledForLock->addData(1);
-        cacheLine->setEventsWaitingForLock(true); 
-        return STALL;
-    }
-    
     recordStateEventCount(event->getCmd(), state);
     
     switch (state) {
@@ -536,7 +572,7 @@ CacheAction L1CoherenceController::handleFetchInv(MemEvent * event, CacheLine * 
             cacheLine->setState(I);
             return DONE;
         case S_B:
-            sendAckInv(event->getBaseAddr(), event->getRqstr(), cacheLine);
+            sendAckInv(event, cacheLine);
             cacheLine->setState(I_B);
             return IGNORE; // don't retry waiting flush
         default:
@@ -549,12 +585,6 @@ CacheAction L1CoherenceController::handleFetchInv(MemEvent * event, CacheLine * 
 
 CacheAction L1CoherenceController::handleFetchInvX(MemEvent * event, CacheLine * cacheLine, bool replay) {
     State state = cacheLine->getState();
-    
-    if (cacheLine->isLocked()) {
-        stat_eventStalledForLock->addData(1);
-        cacheLine->setEventsWaitingForLock(true); 
-        return STALL;
-    }
     recordStateEventCount(event->getCmd(), state);
     
     switch (state) {
@@ -580,13 +610,6 @@ CacheAction L1CoherenceController::handleFetchInvX(MemEvent * event, CacheLine *
 
 CacheAction L1CoherenceController::handleFetch(MemEvent * event, CacheLine * cacheLine, bool replay) {
     State state = cacheLine->getState();
-    
-    if (cacheLine->isLocked()) {
-        stat_eventStalledForLock->addData(1);
-        cacheLine->setEventsWaitingForLock(true); 
-        return STALL;
-    }
-    
     recordStateEventCount(event->getCmd(), state);
     
     switch (state) {
@@ -764,10 +787,10 @@ void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, boo
  *  Handles: sending AckInv responses
  *  Latency: cache access + tag to update coherence state
  */
-void L1CoherenceController::sendAckInv(Addr baseAddr, string origRqstr, CacheLine * cacheLine) {
-    MemEvent* ack = new MemEvent(parent, baseAddr, baseAddr, Command::AckInv);
-    ack->setDst(getDestination(baseAddr));
-    ack->setRqstr(origRqstr);
+void L1CoherenceController::sendAckInv(MemEvent * request, CacheLine * cacheLine) {
+    MemEvent* ack = request->makeResponse();
+    ack->setCmd(Command::AckInv);
+    ack->setDst(getDestination(ack->getBaseAddr()));
     ack->setSize(lineSize_);
     
     uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
@@ -777,7 +800,7 @@ void L1CoherenceController::sendAckInv(Addr baseAddr, string origRqstr, CacheLin
     cacheLine->setTimestamp(deliveryTime-1);
     
 #ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) debug->debug(_L3_,"Sending AckInv at cycle = %" PRIu64 "\n", deliveryTime);
+    if (DEBUG_ALL || DEBUG_ADDR == request->getBaseAddr()) debug->debug(_L3_,"Sending AckInv at cycle = %" PRIu64 "\n", deliveryTime);
 #endif
 }
 

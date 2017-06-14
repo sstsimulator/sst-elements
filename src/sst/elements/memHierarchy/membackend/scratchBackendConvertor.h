@@ -20,11 +20,6 @@
 #include <sst/core/subcomponent.h>
 #include "sst/elements/memHierarchy/memEvent.h"
 
-/*
- *  Converts MemEvent to membackend interface
- *
- */
-
 namespace SST {
 namespace MemHierarchy {
 
@@ -50,7 +45,8 @@ class ScratchBackendConvertor : public SubComponent {
         uint32_t processed()    { return m_offset; }
         uint64_t id()           { return ((uint64_t)m_reqId << 32) | m_offset; }
         MemEvent* getMemEvent() { return m_event; }
-        bool isWrite()          { return (m_event->getCmd() == Command::GetX) ? true : false; }
+        bool isWrite()          { return (m_event->getCmd() == Command::PutM || (m_event->queryFlag(MemEvent::F_NONCACHEABLE) && m_event->getCmd() == Command::GetX)) ? true : false; }
+        uint32_t size()         { return m_event->getSize(); }
 
         uint64_t getDeliveryTime() { return m_deliveryTime; }
 
@@ -65,10 +61,10 @@ class ScratchBackendConvertor : public SubComponent {
 
       private:
         MemEvent*   m_event;
-        uint32_t        m_reqId;
-        uint32_t        m_offset;
-        uint32_t        m_numReq;
-        uint64_t        m_deliveryTime;
+        uint32_t    m_reqId;
+        uint32_t    m_offset;
+        uint32_t    m_numReq;
+        uint64_t    m_deliveryTime;
     };
 
   public:
@@ -131,6 +127,12 @@ class ScratchBackendConvertor : public SubComponent {
             case Command::GetX:
                 stat_WriteReceived->addData(1);
                 break;
+            case Command::GetSX:
+                stat_ReadReceived->addData(1);
+                break;
+            case Command::PutM:
+                stat_WriteReceived->addData(1);
+                break;
             default:
                 break;
         }
@@ -141,7 +143,13 @@ class ScratchBackendConvertor : public SubComponent {
             case Command::GetS:
                 stat_ReadLatency->addData(latency);
                 break;
+            case Command::GetSX:
+                stat_ReadLatency->addData(latency);
+                break;
             case Command::GetX:
+                stat_WriteLatency->addData(latency);
+                break;
+            case Command::PutM:
                 stat_WriteLatency->addData(latency);
                 break;
             default:

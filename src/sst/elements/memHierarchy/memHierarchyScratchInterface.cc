@@ -133,8 +133,14 @@ MoveEvent* MemHierarchyScratchInterface::createMoveEvent(SimpleMem::Request *req
         case SimpleMem::Request::Write: cmd = Command::Put; break;
         default: output.fatal(CALL_INFO, -1, "Unknown req->cmd in createMoveEvent()\n");
     }
-   
+
     MoveEvent *me = new MoveEvent(parent->getName(), req->addrs[1], req->addrs[1], req->addrs[0], req->addrs[0], cmd);
+
+    if (cmd == Command::Get) {
+        me->setDstBaseAddr(req->addrs[0] & baseAddrMask_);
+    } else {
+        me->setSrcBaseAddr(req->addrs[1] & baseAddrMask_);
+    }
 
     me->setRqstr(rqstr_);
     me->setSrc(rqstr_);

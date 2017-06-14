@@ -105,17 +105,21 @@ public:
     
     virtual std::string getVerboseString() {
         std::ostringstream str;
-        str << " SrcAddr: " << srcAddr_ << " SrcBaseAddr: " << srcBaseAddr_;
-        str << " DstAddr: " << dstAddr_ << " DstBaseAddr: " << dstBaseAddr_;
-        str << " SrcVA: " << srcVAddr_ << " DstVA: " << dstVAddr_ << " IP: " << iPtr_;
+        str << std::hex;
+        str << " SrcAddr: 0x" << srcAddr_ << " SrcBaseAddr: 0x" << srcBaseAddr_;
+        str << " DstAddr: 0x" << dstAddr_ << " DstBaseAddr: 0x" << dstBaseAddr_;
+        str << " SrcVA: 0x" << srcVAddr_ << " DstVA: 0x" << dstVAddr_ << " IP: 0x" << iPtr_;
+        str << std::dec;
         str << " Size: " << size_;
         return MemEventBase::getVerboseString() + str.str();
     }
 
     virtual std::string getBriefString() {
         std::ostringstream str;
-        str << " SrcAddr: " << srcAddr_ << " SrcBaseAddr: " << srcBaseAddr_;
-        str << " DstAddr: " << dstAddr_ << " DstBaseAddr: " << dstBaseAddr_;
+        str << std::hex;
+        str << " SrcAddr: 0x" << srcAddr_ << " SrcBaseAddr: 0x" << srcBaseAddr_;
+        str << " DstAddr: 0x" << dstAddr_ << " DstBaseAddr: 0x" << dstBaseAddr_;
+        str << std::dec;
         str << " Size: " << size_;
         return MemEventBase::getBriefString() + str.str();
     }

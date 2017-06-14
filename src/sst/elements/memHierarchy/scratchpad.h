@@ -121,8 +121,9 @@ private:
             OutstandingEvent(MemEventBase * request, MemEventBase * response) : request(request), response(response), remoteWrite(nullptr), count(0) { }
             OutstandingEvent(MemEventBase * request, MemEventBase * response, MemEvent * write) : request(request), response(response), remoteWrite(write), count(0) { } 
 
-            uint32_t decrementCount() { return count--; }
+            uint32_t decrementCount() { count--; return count; }
             void incrementCount() { count++; }
+            uint32_t getCount() { return count; }
     };
     // MSHR entry
     // MSHR consists of a base address and queue of these
