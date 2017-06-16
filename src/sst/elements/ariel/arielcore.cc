@@ -54,6 +54,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests", subID );
 	statNoopCount     = own->registerStatistic<uint64_t>( "no_ops", subID );
 	statInstructionCount = own->registerStatistic<uint64_t>( "instruction_count", subID );
+	statCycles = own->registerStatistic<uint64_t>( "cycles", subID );
 
 	statFPSPIns = own->registerStatistic<uint64_t>("fp_sp_ins", subID);
 	statFPDPIns = own->registerStatistic<uint64_t>("fp_dp_ins", subID);
@@ -670,6 +671,7 @@ void ArielCore::tick() {
 		}
 
 		currentCycles++;
+		statCycles->addData(1);
 	}
 }
 

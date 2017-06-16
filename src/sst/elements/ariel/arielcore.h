@@ -126,6 +126,7 @@ class ArielCore {
 		Statistic<uint64_t>* statSplitWriteRequests;
 		Statistic<uint64_t>* statNoopCount;
 		Statistic<uint64_t>* statInstructionCount;
+		Statistic<uint64_t>* statCycles;
 
 		Statistic<uint64_t>* statFPDPIns;
 		Statistic<uint64_t>* statFPDPSIMDIns;

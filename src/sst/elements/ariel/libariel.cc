@@ -71,6 +71,7 @@ static const ElementInfoStatistic ariel_statistics[] = {
     { "fp_sp_simd_ins",       "Statistic for counting SP-FP SIMD instructons", "instructions", 1 },
     { "fp_sp_scalar_ins",     "Statistic for counting SP-FP Non-SIMD instructons", "instructions", 1 },
     { "fp_sp_ops",            "Statistic for counting SP-FP operations (inst * SIMD width)", "instructions", 1 },
+    { "cycles",               "Statistic for counting cycles of the Ariel core.", "cycles", 1 },
     { NULL, NULL, NULL, 0 }
 };
 
