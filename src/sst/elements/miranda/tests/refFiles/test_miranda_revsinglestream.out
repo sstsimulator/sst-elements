@@ -1,7 +1,3 @@
-ReverseSingleStreamGenerator[ReverseSingleStreamGenerator:40]: Start Address:         65536
-ReverseSingleStreamGenerator[ReverseSingleStreamGenerator:41]: Stop Address:          0
-ReverseSingleStreamGenerator[ReverseSingleStreamGenerator:42]: Data width:            8
-ReverseSingleStreamGenerator[ReverseSingleStreamGenerator:43]: Stride:                8
  cpu.read_reqs : Accumulator : Sum.u64 = 8192; SumSQ.u64 = 8192; Count.u64 = 8192; 
  cpu.write_reqs : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  cpu.split_read_reqs : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
