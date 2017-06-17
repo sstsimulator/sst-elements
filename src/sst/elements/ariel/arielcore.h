@@ -91,6 +91,9 @@ class ArielCore {
 		void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 		void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 
+		// Setting the max number of instructions to be simulated
+		void setMaxInsts(long long int i){max_insts=i;}
+
 		void printCoreStatistics();
 		void printTraceEntry(const bool isRead, const uint64_t address, const uint32_t length);
 
@@ -115,6 +118,12 @@ class ArielCore {
 		const uint32_t perform_checks;
 		bool enableTracing;
 		uint64_t currentCycles;
+
+		// This indicates the current number of executed instructions by this core
+		long long int inst_count;
+
+		// This indicates the max number of instructions before halting the simulation
+		long long int max_insts;
 
 		ArielTraceGenerator* traceGen;
 

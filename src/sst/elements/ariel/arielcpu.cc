@@ -52,6 +52,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Creating Ariel component...\n");
 
 	core_count = (uint32_t) params.find<uint32_t>("corecount", 1);
+
+	long long int max_insts = (uint64_t) params.find<uint64_t>("max_insts", 0);
+
 	output->verbose(CALL_INFO, 1, 0, "Configuring for %" PRIu32 " cores...\n", core_count);
 
 	uint32_t perform_checks = (uint32_t) params.find<uint32_t>("checkaddresses", 0);
@@ -341,6 +344,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         cpu_to_cache_links[i] = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
         cpu_to_cache_links[i]->initialize(link_buffer, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent));
 
+		// Set max number of instructions
+		cpu_cores[i]->setMaxInsts(max_insts);
 
                 // optionally wire up links to allocate trackers (e.g. memSieve)
                 if (useAllocTracker) {

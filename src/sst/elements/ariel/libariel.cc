@@ -63,6 +63,7 @@ static const ElementInfoStatistic ariel_statistics[] = {
     { "split_write_requests", "Statistic counts number of split write requests (requests which are split over multiple lines)", "requests", 1},
     { "no_ops",               "Statistic counts instructions which do not execute a memory operation", "instructions", 1},
     { "instruction_count",    "Statistic for counting instructions", "instructions", 1 },
+    { "max_insts", "Maximum number of instructions reached by a thread",	"instructions", 0},
     { "fp_dp_ins",            "Statistic for counting DP-floating point instructions", "instructions", 1 },
     { "fp_dp_simd_ins",       "Statistic for counting DP-FP SIMD instructons", "instructions", 1 },
     { "fp_dp_scalar_ins",     "Statistic for counting DP-FP Non-SIMD instructons", "instructions", 1 },
