@@ -71,6 +71,7 @@ public:
 
 	void print(); // print internals
 	bool clockTic(SST::Cycle_t);
+	bool isCmdAllowed(c_BankCommand* x_bankCommandPtr);
 
 private:
 
@@ -83,6 +84,7 @@ private:
 
 	void send();
 	void sendRefresh();
+	std::vector<c_BankCommand*> getPreReqCmds(c_BankCommand *x_cmdPtr);
 
 	std::set<unsigned> m_inflightWrites; // track inflight write commands
 	std::deque<unsigned> m_blockRowCmd; //command bus occupancy info
@@ -93,6 +95,7 @@ private:
 	DEBUG_MASK m_debugMask;
 	std::string m_debugPrefix;
 
+	void sendRequest(std::deque<c_BankCommand*>::iterator x_startItr); // send request function that models close bank policy
 	void sendReqCloseBankPolicy(std::deque<c_BankCommand*>::iterator x_startItr); // send request function that models close bank policy
 	void sendReqOpenRowPolicy(); // send request function that models open row policy
 	void sendReqOpenBankPolicy(); // send request function that models open bank policy
@@ -106,6 +109,7 @@ private:
 	bool occupyCommandBus(c_BankCommand *l_cmdPtr);
 	///Release the occupancy of command bus
 	void releaseCommandBus();
+
 
 	// FIXME: Remove. For testing purposes
 	void printQueues();

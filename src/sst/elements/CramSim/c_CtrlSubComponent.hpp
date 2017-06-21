@@ -130,15 +130,12 @@ namespace SST {
             std::ofstream m_cmdTraceOFStream;
             std::ostream *m_cmdTraceStream;
             std::map<std::string, unsigned> m_bankParams;
-            int m_numChannelsPerDimm;
-            int m_numRanksPerChannel;
-            int m_numBankGroupsPerRank;
-            int m_numBanksPerBankGroup;
-            int m_numBanks;
+
+            int m_numChannels;
+            int m_numPseudoChannels;
             int m_numRanks;
             int m_numBankGroups;
-
-
+            int m_numBanks;
 
         };
 
@@ -284,16 +281,16 @@ namespace SST {
                 std::cout << "boolMultiCycleACT value is missing... disabled" << std::endl;
             }
 
-
-
             // calculate total number of banks
-            m_numChannelsPerDimm = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,
+         /*   m_numChannelsPerDimm = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,
                                                                          l_found);
             if (!l_found) {
                 std::cout << "numChannelsPerDimm value is missing... exiting"
                           << std::endl;
                 exit(-1);
             }
+
+
 
             m_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 100,
                                                                          l_found);
@@ -317,10 +314,14 @@ namespace SST {
                 std::cout << "numBanksPerBankGroup value is missing... exiting"
                           << std::endl;
                 exit(-1);
-            }
+            }*/
 
-           // m_numBanks = m_numRanksPerChannel * m_numBankGroupsPerRank
-             //            * m_numBanksPerBankGroup;
+            // configure the memory hierarchy
+            m_numChannels =  k_numChannelsPerDimm;
+            m_numPseudoChannels = m_numChannels * k_numPseudoChannels;
+            m_numRanks = m_numPseudoChannels * k_numRanksPerChannel;
+            m_numBankGroups = m_numRanks * k_numBankGroupsPerRank;
+            m_numBanks = m_numBankGroups * k_numBanksPerBankGroup;
 
             /* BANK TRANSITION PARAMETERS */
             //FIXME: Move this param reading to inside of c_BankInfo

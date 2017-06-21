@@ -139,6 +139,7 @@ void c_BankInfo::handleCommand(c_BankCommand* x_bankCommandPtr,
 	assert(
 			x_simCycle >= m_nextCommandCycleMap[x_bankCommandPtr->getCommandMnemonic()]);
 
+
 	m_bankState->handleCommand(this, x_bankCommandPtr);
 	m_bankGroupPtr->updateOtherBanksNextCommandCycles(this, x_bankCommandPtr);
 }

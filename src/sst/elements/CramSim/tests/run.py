@@ -7,6 +7,7 @@ import sys
 def run(sstParams):
 
 	sstCmd = "sst --lib-path=.libs/ ./tests/test_txngen.py --model-options=\""
+#	sstCmd = "sst --lib-path=/home/seokin/workspace/sst/src/sst-elements-0619/src/sst/elements/CramSim/.libs/ ./tests/test_txngen.py --model-options=\""
 	# run sst
 	osCmd = sstCmd + sstParams
 	print osCmd
@@ -20,7 +21,7 @@ def run(sstParams):
 
 
 
-stopAtCycle = "100us"
+stopAtCycle = "10us"
 config = sys.argv[2];
 sstParams = [
 	"--configfile=./%s --txngen=rand --stopAtCycle=%s\"" % (config,stopAtCycle),

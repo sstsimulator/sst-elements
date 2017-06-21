@@ -170,7 +170,6 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
     // run device controller
     m_deviceController->clockTic(clock);
 
-
     //send token to the transaction generator
     m_thisCycleTxnQTknChg = m_transConverter->getToken()-m_thisCycleTxnQTknChg;
     if (m_thisCycleTxnQTknChg > 0) {

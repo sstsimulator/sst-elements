@@ -26,6 +26,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <string>
+#include <vector>
+#include <list>
+#include <algorithm>
+#include <map>
+#include <assert.h>
 
 #include "c_CmdScheduler.hpp"
 #include "c_CmdUnit.hpp"
@@ -35,35 +41,77 @@ using namespace SST::n_Bank;
 
 c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> (comp, x_params){
     m_nextSubComponent=dynamic_cast<c_Controller*>(comp)->getDeviceController();
+
+    //create command queue
+    m_cmdQueues.clear();
+    for(unsigned l_bankIdx=0;l_bankIdx<m_numBanks;l_bankIdx++)
+    {
+
+        c_CmdQueue *l_cmdQueue=new c_CmdQueue();
+        l_cmdQueue->clear();
+        m_cmdQueues.push_back(l_cmdQueue);
+    }
 }
 
+c_CmdScheduler::~c_CmdScheduler(){
+    for(auto &it: m_cmdQueues)
+    {
+        delete it;
+    }
+}
 
-bool c_CmdScheduler::clockTic(SST::Cycle_t){
+bool c_CmdScheduler::clockTic(SST::Cycle_t) {
+
     run();
     send();
+
 }
 
 
 void c_CmdScheduler::run(){
-    //bypassing
-    if(m_outputQ.empty()) {
-        while (!m_inputQ.empty()) {
-            m_outputQ.push_back(m_inputQ.front());
-            m_inputQ.pop_front();
-        }
+
+    for( auto it=m_inputQ.begin();it!=m_inputQ.end();) {
+        c_BankCommand* l_cmd=*it;
+        uint l_bankID=l_cmd->getHashedAddress()->getBankId();
+        assert(l_bankID<m_numBanks);
+
+        //todo: modify to configure the size of command queues
+        if (m_cmdQueues.at(l_bankID)->size() < 16) {
+            m_cmdQueues.at(l_bankID)->push_back(l_cmd);
+         //   printf("[push]sim_cycle:%lld cmdseq:%d bankid:%d size:%d\n",Simulation::getSimulation()->getCurrentSimCycle(), m_cmdQueues.at(l_bankID)->front()->getSeqNum(),  m_cmdQueues.at(l_bankID)->front()->getHashedAddress()->getBankId(), m_cmdQueues.at(l_bankID)->size());
+
+            it=m_inputQ.erase(it);
+        } else
+            ++it;//printf("cmd queue is full\n");
     }
+
+
+    for(auto &x_cmdQueue: m_cmdQueues)
+        if(x_cmdQueue->size()>0) {
+
+            c_BankCommand *l_cmdPtr = x_cmdQueue->front();
+            //  l_cmdPtr->print(m_debugOutput);
+
+            if (m_nextSubComponent->isCmdAllowed(l_cmdPtr)) {
+                m_outputQ.push_back(l_cmdPtr);
+                x_cmdQueue->pop_front();
+                //   printf("[pop]sim_cycle:%lld cmdseq:%d bankid:%d size:%d\n",Simulation::getSimulation()->getCurrentSimCycle(),x_cmdQueue->front()->getSeqNum(), x_cmdQueue->front()->getHashedAddress()->getBankId(),x_cmdQueue->size());
+            }
+        }
+
 }
+
 
 void c_CmdScheduler::send() {
-    int token=m_nextSubComponent->getToken();
+ //   int token=m_nextSubComponent->getToken();
 
-    while(token>0 && !m_outputQ.empty()) {
+    while(!m_outputQ.empty())
+    {
+//    while(token>0 && !m_outputQ.empty()) {
         m_nextSubComponent->push(m_outputQ.front());
+//        m_outputQ.front()->print(m_debugOutput);
         m_outputQ.pop_front();
-        token--;
+  //      token--;
     }
 }
-
-
-
 

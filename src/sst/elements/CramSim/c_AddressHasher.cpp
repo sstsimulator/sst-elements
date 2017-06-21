@@ -458,7 +458,7 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
     + x_hashAddr->m_pchannel  *  k_pNumBanks * k_pNumBankGroups * k_pNumRanks
     + x_hashAddr->m_channel   * k_pNumPseudoChannels * k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
     
-  //cout << "0x" << std::hex << x_address << std::dec << "\t";  x_hashAddr->print();
+   // cout << "0x" << std::hex << x_address << std::dec << "\t";  x_hashAddr->print();
   
 } // fillHashedAddress(c_HashedAddress, x_address)
 
@@ -564,7 +564,7 @@ ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
     l_address += l_tOut;
   }
 
-  cout << "Returning address 0x" << std::hex << l_address << std::dec << endl;
+ // cout << "Returning address 0x" << std::hex << l_address << std::dec << endl;
   
   return(l_address);
 } // getAddressForBankId(const unsigned x_bankId)

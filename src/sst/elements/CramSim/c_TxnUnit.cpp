@@ -76,12 +76,12 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  
 	//per-rank refresh groups (all-banks refresh)
 	uint l_groupId = 0;
 	uint l_bankId = 0;
-	for (uint l_chan = 0; l_chan < m_numChannelsPerDimm; l_chan++) {
-		for (uint l_rank = 0; l_rank < m_numRanksPerChannel; l_rank++) {
+	for (uint l_chan = 0; l_chan < k_numChannelsPerDimm; l_chan++) {
+		for (uint l_rank = 0; l_rank < k_numRanksPerChannel; l_rank++) {
 			// every rank in a different refresh group
 			m_refreshGroups.push_back(std::vector<unsigned>());
-			for (uint l_bankGroup = 0; l_bankGroup < m_numBankGroupsPerRank; l_bankGroup++) {
-				for (uint l_bank = 0; l_bank < m_numBanksPerBankGroup; l_bank++) {
+			for (uint l_bankGroup = 0; l_bankGroup < k_numBankGroupsPerRank; l_bankGroup++) {
+				for (uint l_bank = 0; l_bank < k_numBanksPerBankGroup; l_bank++) {
 					m_refreshGroups[l_groupId].push_back(l_bankId);
 					l_bankId++;
 				} // banks

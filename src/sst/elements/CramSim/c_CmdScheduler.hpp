@@ -37,19 +37,22 @@
 namespace SST{
     namespace n_Bank {
         class c_DeviceController;
-       // template<class I, class O> class c_CtrlSubComponent;
 
         class c_CmdScheduler : public c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> {
         public:
             c_CmdScheduler(Component *comp, Params &x_params);
-            ~c_CmdScheduler(){};
+            ~c_CmdScheduler();
             bool clockTic(SST::Cycle_t);
 
+
         private:
+            typedef std::deque<c_BankCommand*> c_CmdQueue;
+
             void run();
             void send();
 
             c_DeviceController* m_nextSubComponent;
+            std::vector<c_CmdQueue *> m_cmdQueues;  //per-bank command queue
         };
     }
 }
