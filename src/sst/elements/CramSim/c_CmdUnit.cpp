@@ -98,7 +98,6 @@ c_DeviceController::c_DeviceController(Component *owner, Params& x_params) : c_C
 		m_banks.push_back(l_entry);
 	}
 
-	// construct the addressHasher
 
 	// connect the hierarchy
 	unsigned l_rankNum = 0;
@@ -159,9 +158,8 @@ c_DeviceController::c_DeviceController(Component *owner, Params& x_params) : c_C
 	m_blockColCmd.resize(k_numChannelsPerDimm);
 	m_blockRowCmd.resize(k_numChannelsPerDimm);
 
-	m_cmdACTFAWtracker.clear();
-	m_cmdACTFAWtracker.resize(m_bankParams.at("nFAW"), 0);
-
+	//init per-rank FAW tracker
+	initACTFAWTracker();
 
 	// set up cmd trace output
 	k_printCmdTrace = (uint32_t) x_params.find<uint32_t>("boolPrintCmdTrace", 0, l_found);
@@ -219,7 +217,7 @@ void c_DeviceController::printQueues() {
 
 bool c_DeviceController::clockTic(SST::Cycle_t) {
 
-	m_issuedACT = false;
+
 
 	for (int l_i = 0; l_i != m_banks.size(); ++l_i) {
 		m_banks.at(l_i)->clockTic();
@@ -228,8 +226,7 @@ bool c_DeviceController::clockTic(SST::Cycle_t) {
 	run();
 	send();
 
-	m_cmdACTFAWtracker.push_back(m_issuedACT?static_cast<unsigned>(1):static_cast<unsigned>(0));
-	m_cmdACTFAWtracker.pop_front();
+
 }
 
 
@@ -244,26 +241,53 @@ bool c_DeviceController::clockTic(SST::Cycle_t) {
 void c_DeviceController::sendReqCloseBankPolicy(
 		std::deque<c_BankCommand*>::iterator x_startItr) {
 
+	// do the member var setup up before calling any req sending policy function
+	if(m_inflightWrites.size()>0)
+		m_inflightWrites.clear();
+
+	m_blockBank.clear();
+	m_blockBank.resize(m_numBanks, false);
+	releaseCommandBus();  //update the command bus status
+
 	// get count of ACT cmds issued in the FAW
-	unsigned l_cmdACTIssuedInFAW = 0;
-	assert(m_cmdACTFAWtracker.size() == m_bankParams.at("nFAW"));
-	for(auto& l_issued : m_cmdACTFAWtracker)
-		l_cmdACTIssuedInFAW += l_issued;
+    std::vector<unsigned> l_numACTIssuedInFAW;
+	l_numACTIssuedInFAW.clear();
+    for(int l_rankId=0;l_rankId<m_numRanks;l_rankId++)
+    {
+		l_numACTIssuedInFAW.push_back(getNumIssuedACTinFAW(l_rankId));
+    }
+	std::vector<unsigned> l_isACTIssued;
+	l_isACTIssued.clear();
+	l_isACTIssued.resize(m_numRanks,0);
 
 
-	for (auto l_cmdPtrItr = x_startItr; l_cmdPtrItr != m_inputQ.end(); ++l_cmdPtrItr) {
+	for (auto l_cmdPtrItr = x_startItr; l_cmdPtrItr != m_inputQ.end();)  {
 		c_BankCommand* l_cmdPtr = (*l_cmdPtrItr);
+		bool l_proceed = true;
+		unsigned l_bankNum = l_cmdPtr->getHashedAddress()->getBankId();
+		unsigned l_rankNum = l_cmdPtr->getHashedAddress()->getRankId();
+
+		//requests to same bank should be executed sequentially.
+		if(!m_blockBank.at(l_bankNum)) {
+			l_proceed = true;
+			m_blockBank.at(l_bankNum) = true;
+		}
+		else {
+			l_proceed = false;
+		}
 
 		if ((l_cmdPtr)->getCommandMnemonic() == e_BankCommandType::REF)
 			break;
 
-		if ((e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic()) && (l_cmdACTIssuedInFAW >= 4))
-			continue;
+		if ((e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic()) && (l_numACTIssuedInFAW[l_rankNum] >= 4))
+		{
+			l_proceed = false;
+		}
 
 
 		// block: READ after WRITE to the same address
 		// block: WRITE after WRITE to the same address. Processor should make sure that the older WRITE is annulled but we will block the younger here.
-		bool l_proceed = true;
+
 		if (m_inflightWrites.find((l_cmdPtr)->getAddress())
 		    != m_inflightWrites.end()) {
 		  l_proceed = false;
@@ -277,16 +301,19 @@ void c_DeviceController::sendReqCloseBankPolicy(
 			m_inflightWrites.insert((l_cmdPtr)->getAddress());
 		}
 
+
+
 		if (l_proceed) {
-
 			if ( isCommandBusAvailable(l_cmdPtr)){   //check if the command bus is available
-				unsigned l_bankNum = l_cmdPtr->getHashedAddress()->getBankId();
 
-				if(!m_blockBank.at(l_bankNum) ) {
+				//if(!m_blockBank.at(l_bankNum) ) {
 					c_BankInfo *l_bank = m_banks.at(l_bankNum);
+
 
 					if (sendCommand((l_cmdPtr), l_bank)) {
 
+						// remove cmd from ReqQ
+						l_cmdPtrItr=m_inputQ.erase(l_cmdPtrItr);
 
 						if (l_cmdPtr->isColCommand()) {
 							assert((m_lastDataCmdType != ((l_cmdPtr))->getCommandMnemonic()) ||
@@ -302,19 +329,32 @@ void c_DeviceController::sendReqCloseBankPolicy(
 							m_lastPseudoChannel = ((l_cmdPtr))->getHashedAddress()->getPChannel();
 						}
 
-						m_issuedACT = (e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic());
+						bool l_isACT= (e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic());
+						if(l_isACT)
+						{
+							assert(l_isACTIssued[l_rankNum]==0);
+							l_isACTIssued[l_rankNum] = true;
+						}
+
 
 						if (occupyCommandBus(l_cmdPtr))
 							break;// all command buses are occupied, so stop
 
-						if (l_cmdPtrItr == m_inputQ.end())
-							break; //last element is removed from inputQ, so stop
+						continue;
 					}
 				}
-				m_blockBank.at(l_bankNum) = true;
-			}
+		//	}
+
 		}
-	} // for
+		++l_cmdPtrItr;
+	}// for
+
+	//update ACTFAWTracker info
+	for(int l_rankNum=0;l_rankNum<m_numRanks;l_rankNum++) {
+		m_cmdACTFAWtrackers[l_rankNum].push_back(l_isACTIssued[l_rankNum] ? static_cast<unsigned>(1) : static_cast<unsigned>(0));
+		m_cmdACTFAWtrackers[l_rankNum].pop_front();
+	}
+
 }
 
 //
@@ -582,13 +622,7 @@ void c_DeviceController::run() {
 
 	if (m_inputQ.size() > 0 ) {
 
-		// do the member var setup up before calling any req sending policy function
-		if(m_inflightWrites.size()>0)
-			m_inflightWrites.clear();
 
-		m_blockBank.clear();
-		m_blockBank.resize(m_numBanks, false);
-		releaseCommandBus();  //update the command bus status
 
 		switch (k_bankPolicy) {
 		case 0:
@@ -656,7 +690,11 @@ void c_DeviceController::sendRefresh() {
 				      0, l_bankId);
     }
     if(sendCommand(l_cmdToSend, l_bank)) {
-      m_refsSent++;
+		// remove cmd from ReqQ
+		m_inputQ.erase(
+				std::remove(m_inputQ.begin(), m_inputQ.end(),
+							l_cmdToSend), m_inputQ.end());
+		m_refsSent++;
     } else {
       assert(0);
     }
@@ -724,7 +762,7 @@ bool c_DeviceController::occupyCommandBus(c_BankCommand *l_cmdPtr) {
 		return false;
 	}
 	else {
-		return true;
+		return true;  //all command buses are occupied
 	}
 }
 
@@ -812,15 +850,34 @@ bool c_DeviceController::sendCommand(c_BankCommand* x_bankCommandPtr,
 		    break;
 		}
 
-		// remove cmd from ReqQ
-		m_inputQ.erase(
-				std::remove(m_inputQ.begin(), m_inputQ.end(),
-					    x_bankCommandPtr), m_inputQ.end());
 
 		return true;
 	} else
 		return false;
+
+
 }
 
+void c_DeviceController::initACTFAWTracker()
+{
+	m_cmdACTFAWtrackers.clear();
+	for(int i=0; i<m_numRanks;i++)
+	{
+		std::list<unsigned> l_cmdACTFAWTracker;
+		l_cmdACTFAWTracker.clear();
+		l_cmdACTFAWTracker.resize(m_bankParams.at("nFAW"), 0);
+		m_cmdACTFAWtrackers.push_back(l_cmdACTFAWTracker);
+	}
+}
 
+unsigned c_DeviceController::getNumIssuedACTinFAW(unsigned x_rankid) {
 
+	assert(x_rankid<m_numRanks);
+
+	// get count of ACT cmds issued in the FAW
+	unsigned l_cmdACTIssuedInFAW = 0;
+	assert(m_cmdACTFAWtrackers[x_rankid].size() == m_bankParams.at("nFAW"));
+	for(auto& l_issued : m_cmdACTFAWtrackers[x_rankid])
+		l_cmdACTIssuedInFAW += l_issued;
+	return l_cmdACTIssuedInFAW;
+}

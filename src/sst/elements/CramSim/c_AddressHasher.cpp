@@ -457,6 +457,11 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
     + x_hashAddr->m_rank      * k_pNumBanks * k_pNumBankGroups
     + x_hashAddr->m_pchannel  *  k_pNumBanks * k_pNumBankGroups * k_pNumRanks
     + x_hashAddr->m_channel   * k_pNumPseudoChannels * k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
+
+  x_hashAddr->m_rankId =
+            x_hashAddr->m_rank
+          + x_hashAddr->m_pchannel  * k_pNumRanks
+          + x_hashAddr->m_channel   * k_pNumPseudoChannels * k_pNumRanks;
     
   //cout << "0x" << std::hex << x_address << std::dec << "\t";  x_hashAddr->print();
   

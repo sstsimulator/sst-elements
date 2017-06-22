@@ -59,12 +59,12 @@ private:
 	unsigned m_seqNum;
 	ulong    m_addr;
 	unsigned m_row;
-        unsigned m_bankId;
-        std::vector<unsigned> m_bankIdVec;
+	unsigned m_bankId;
+	std::vector<unsigned> m_bankIdVec;
 	e_BankCommandType m_cmdMnemonic;
 	std::map<e_BankCommandType, std::string> m_cmdToString;
 	bool m_isResponseReady;
-        c_HashedAddress m_hashedAddr;
+	c_HashedAddress m_hashedAddr;
 
 public:
 

@@ -559,31 +559,34 @@ namespace SST {
             std::string delimiter = ",";
             size_t pos=0;
             std::string token;
+			if(x_debugFlags!="")
+			{
+				while((pos=x_debugFlags.find(delimiter)) != std::string::npos){
+					token = x_debugFlags.substr(0,pos);
+					m_debugFlags.push_back(token);
+					x_debugFlags.erase(0,pos+delimiter.length());
+				}
+				m_debugFlags.push_back(x_debugFlags);
 
-            while((pos=x_debugFlags.find(delimiter)) != std::string::npos){
-                token = x_debugFlags.substr(0,pos);
-                std::cout<<token<<std::endl;
-                m_debugFlags.push_back(token);
-                x_debugFlags.erase(0,pos+delimiter.length());
-            }
-            m_debugFlags.push_back(x_debugFlags);
-
-            for(auto &it : m_debugFlags)
-            {
-                if(it=="dvcctrl")
-                        debug_bits|=DVCCTRL;
-                else if(it=="txncvt")
-                        debug_bits|=TXNCVT;
-                else if(it=="cmdsch")
-                        debug_bits|=CMDSCH;
-                else if(it=="addrhash")
-                    debug_bits|=ADDRHASH;
-                else {
-                    printf("debug flag error! (devicectrl/txncvt/cmdsche/addrhas)");
-                    exit(1);
-                }
-            }
-            return debug_bits;
+				for(auto &it : m_debugFlags)
+				{
+					std::cout <<it<<std::endl;
+					if(it=="dvcctrl")
+							debug_bits|=DVCCTRL;
+					else if(it=="txncvt")
+							debug_bits|=TXNCVT;
+					else if(it=="cmdsch")
+							debug_bits|=CMDSCH;
+					else if(it=="addrhash")
+						debug_bits|=ADDRHASH;
+					else {
+						printf("debug flag error! (dvcctrl/txncvt/cmdsch/addrhash)\n");
+						exit(1);
+					}
+				}
+				return debug_bits;
+			}
+			return 0;
         }
 
         template<class I, class O>

@@ -98,7 +98,7 @@ while(my $line = <SEQ>) {
 	    shift(@grep);
 	}
 
-	my @fileStructOrder = ('chan', 'pChan', 'rank', 'bankGroup', 'bank', 'row', 'col', 'cacheLine');
+	my @fileStructOrder = ('pChan', 'chan', 'rank', 'bankGroup', 'bank', 'row', 'col', 'cacheLine');
 
 	foreach my $curStruct (@fileStructOrder) {
 	    $pat = shift(@grep);

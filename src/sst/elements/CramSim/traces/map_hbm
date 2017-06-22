@@ -11,4 +11,4 @@
 #
 # This map matches the default present in hbm_verimem.cfg for CramSiM
 #
-c:1 C:3 r:14  l:6  R:1 B:2  b:2  h:5
+c:0 C:3 R:0 r:14 l:6 B:1  b:2  h:5

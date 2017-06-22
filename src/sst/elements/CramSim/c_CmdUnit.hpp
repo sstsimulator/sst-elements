@@ -103,9 +103,12 @@ private:
 	/// helper methods to check if channel (command bus) is available
 	bool isCommandBusAvailable(c_BankCommand* x_BankCommandPtr);
 	///Set the occupancy of command bus
-	bool occupyCommandBus(c_BankCommand *l_cmdPtr);
+	bool occupyCommandBus(c_BankCommand *x_cmdPtr);
 	///Release the occupancy of command bus
 	void releaseCommandBus();
+
+	void initACTFAWTracker();
+	unsigned getNumIssuedACTinFAW(unsigned x_rankid);
 
 	// FIXME: Remove. For testing purposes
 	void printQueues();
@@ -135,7 +138,7 @@ private:
 	e_BankCommandType m_lastDataCmdType;
 	unsigned m_lastChannel;
 	unsigned m_lastPseudoChannel;
-	std::list<unsigned> m_cmdACTFAWtracker; // FIXME: change this to a circular buffer for speed. Could also implement as shift register.
+	std::vector<std::list<unsigned>> m_cmdACTFAWtrackers; // FIXME: change this to a circular buffer for speed. Could also implement as shift register.
 	bool m_issuedACT;
 
 };
