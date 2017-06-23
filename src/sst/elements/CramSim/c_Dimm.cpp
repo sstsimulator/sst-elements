@@ -264,7 +264,7 @@ void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
 void c_Dimm::sendResponse() {
 
 	// check if ResQ has cmds
-	if (m_cmdResQ.size() > 0) {
+	while (!m_cmdResQ.empty()) {
 
 	  //std::cout << std::endl << "@" << std::dec
 	  //	    << Simulation::getSimulation()->getCurrentSimCycle() << ": "

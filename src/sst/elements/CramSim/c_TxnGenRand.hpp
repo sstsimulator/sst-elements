@@ -69,6 +69,8 @@ private:
 	uint64_t m_prevAddress;
 	ulong m_seqNum;
 
+	uint32_t m_numTxnPerCycle;
+
 	//request-related links
 	SST::Link* m_outTxnGenReqPtrLink; //outgoing txn gen req ptr
 	SST::Link* m_inCtrlReqQTokenChgLink; //incoming change in txn unit req q tokens

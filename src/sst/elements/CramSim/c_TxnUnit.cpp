@@ -219,20 +219,23 @@ void c_TxnConverter::run(){
 				m_refreshList.pop();
 			}
 		} else if ((m_inputQ.size() > 0) && !m_processingRefreshCmds) {
-			c_Transaction *l_reqTxn = m_inputQ.front();
+			while(!m_inputQ.empty())
+			{
+                c_Transaction *l_reqTxn = m_inputQ.front();
 
-			//Convert a transaction to commands
-			std::vector<c_BankCommand *> l_cmdPkg = m_converter->getCommands(l_reqTxn, k_relCommandWidth, k_useReadA,
-																			 k_useWriteA);
-			m_inputQ.pop_front();
+                //Convert a transaction to commands
+                std::vector<c_BankCommand *> l_cmdPkg = m_converter->getCommands(l_reqTxn, k_relCommandWidth, k_useReadA,
+                                                                                 k_useWriteA);
+                m_inputQ.pop_front();
 
-			for (std::vector<c_BankCommand *>::iterator it = l_cmdPkg.begin(); it != l_cmdPkg.end(); ++it) {
-				//print debug messages
+                for (std::vector<c_BankCommand *>::iterator it = l_cmdPkg.begin(); it != l_cmdPkg.end(); ++it) {
+					//print debug messages
 #if 0
-				if(isDebugEnabled(TXNCVT))
-					(*it)->print(m_debugOutput);
+                    if(isDebugEnabled(TXNCVT))
+                        (*it)->print(m_debugOutput);
 #endif
-				m_outputQ.push_back(*it);
+					m_outputQ.push_back(*it);
+				}
 			}
 		}
 	}

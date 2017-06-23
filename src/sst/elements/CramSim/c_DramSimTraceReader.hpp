@@ -102,7 +102,9 @@ private:
 
 	//params for internal microarcitecture
 	std::string m_traceFileName;
-        std::ifstream *m_traceFileStream; 
+        std::ifstream *m_traceFileStream;
+
+	uint32_t m_numTxnPerCycle;
 	std::map<std::string, e_TransactionType> m_stringToTxnTypeMap = { { "READ",
 			e_TransactionType::READ }, { "WRITE", e_TransactionType::WRITE } };
 

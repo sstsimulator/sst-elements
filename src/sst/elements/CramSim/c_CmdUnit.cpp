@@ -365,6 +365,7 @@ void c_DeviceController::sendReqCloseBankPolicy(
 //
 // Iterate through the cmdReqQ and mark the bank to which a cmd cannot go
 // do not send any further cmds to that bank
+/*
 void c_DeviceController::sendReqOpenRowPolicy() {
 
 	c_BankCommand* l_openBankCmdPtr = nullptr;
@@ -441,9 +442,60 @@ void c_DeviceController::sendReqOpenRowPolicy() {
 	}
 
 }
-
+*/
 ////////////////
+void c_DeviceController::sendReqOpenRowPolicy() {
 
+	c_BankCommand* l_openBankCmdPtr = nullptr;
+	auto l_openBankCmdPtrItr = m_inputQ.begin();
+	std::deque<c_BankCommand*> tempQ=m_inputQ;
+	for (auto l_cmdPtr : m_inputQ) {
+		if (l_cmdPtr->getCommandMnemonic() == e_BankCommandType::REF)
+			break;
+
+		bool l_isDataCmd = ((((l_cmdPtr))->getCommandMnemonic()
+							 == e_BankCommandType::READ)
+							|| (((l_cmdPtr))->getCommandMnemonic()
+								== e_BankCommandType::WRITE));
+		ulong l_addr = ((l_cmdPtr))->getAddress();
+		unsigned l_bankNum = l_cmdPtr->getHashedAddress()->getBankId();
+		c_BankInfo* l_bankPtr = m_banks.at(l_bankNum);
+		SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
+
+		if (l_isDataCmd && (l_bankPtr->isCommandAllowed(l_cmdPtr, l_time))
+			&& (l_bankPtr->isRowOpen())
+			&& (l_bankPtr->getOpenRowNum() == l_cmdPtr->getHashedAddress()->getRow()))
+		{
+			l_openBankCmdPtr = l_cmdPtr;
+
+			// found a command, so now remove older ACT and PRE commands
+			for (auto l_cmdPtr : m_inputQ) {
+				if (l_cmdPtr == l_openBankCmdPtr) {
+					break;
+				}
+
+				bool l_isActPreCmd = ((((l_cmdPtr))->getCommandMnemonic()
+									   == e_BankCommandType::ACT)
+									  || (((l_cmdPtr))->getCommandMnemonic()
+										  == e_BankCommandType::PRE));
+
+				unsigned l_bankNum = l_cmdPtr->getHashedAddress()->getBankId();
+				unsigned l_bankNumOpenBank =
+						l_openBankCmdPtr->getHashedAddress()->getBankId();
+
+				if (l_isActPreCmd && (l_bankNum == l_bankNumOpenBank)) {
+					l_cmdPtr->setResponseReady();
+					tempQ.erase((std::remove(tempQ.begin(), tempQ.end(), l_cmdPtr),
+							tempQ.end()));
+				}
+			}
+		} // if
+	} // for
+	m_inputQ.clear();
+	m_inputQ=tempQ;
+
+		sendReqCloseBankPolicy(m_inputQ.begin());
+}
 //
 // Model a open row policy where a timer closes a row, so no infinite open row
 //

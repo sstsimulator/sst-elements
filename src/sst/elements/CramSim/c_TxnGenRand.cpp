@@ -82,6 +82,12 @@ c_TxnGenRand::c_TxnGenRand(ComponentId_t x_id, Params& x_params) :
 		exit(-1);
 	}
 
+	m_numTxnPerCycle =  x_params.find<std::uint32_t>("numTxnPerCycle", 1, l_found);
+	if (!l_found) {
+		std::cout << "TxnGen:: numTxnPerCycle is missing... use default value (1)"
+				  << std::endl;
+	}
+
 	// initialize the random seed
 	std::string l_randSeedStr = x_params.find<std::string>("randomSeed","0", l_found);
 	l_randSeedStr.pop_back(); // remove trailing newline (??)
@@ -178,18 +184,19 @@ void c_TxnGenRand::createTxn() {
 bool c_TxnGenRand::clockTic(Cycle_t) {
 	// std::cout << std::endl << std::endl << "TxnGen::clock tic" << std::endl;
 
-	m_thisCycleResQTknChg = 0;
+	for(int i=0;i<m_numTxnPerCycle;i++) {
+		m_thisCycleResQTknChg = 0;
 
-	// store the current number of entries in the queue, later compute the change
-	m_thisCycleResQTknChg = m_txnResQ.size();
+		// store the current number of entries in the queue, later compute the change
+		m_thisCycleResQTknChg = m_txnResQ.size();
 
-	createTxn();
-	sendRequest();
-	readResponse();
+		createTxn();
+		sendRequest();
+		readResponse();
 
-	m_thisCycleResQTknChg -= m_txnResQ.size();
-	sendTokenChg();
-
+		m_thisCycleResQTknChg -= m_txnResQ.size();
+		sendTokenChg();
+	}
 	return false;
 
 }
