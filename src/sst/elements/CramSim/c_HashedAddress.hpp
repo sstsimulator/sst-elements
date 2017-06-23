@@ -53,6 +53,7 @@ public:
   unsigned getCacheline() const {return m_cacheline;}
 
   unsigned getBankId()    const {return m_bankId;} // linear bankId
+    unsigned getRankId()  const {return m_rankId;}
 
   void print() const;
   
@@ -81,6 +82,7 @@ private:
   unsigned m_cacheline;
 
   unsigned m_bankId;
+    unsigned m_rankId;
 };
 
 #endif // c_HASHEDADDRESS_HPP

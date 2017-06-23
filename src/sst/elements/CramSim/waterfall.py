@@ -2,7 +2,7 @@
 
 import sys
 
-numBanks = 32
+numBanks = 256
 
 cmdDict = {"ACT":"A","READ":"R","WRITE":"W","PRE":"P","REF":"F"}
 

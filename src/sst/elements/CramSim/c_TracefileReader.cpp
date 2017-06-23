@@ -139,17 +139,17 @@ bool c_TracefileReader::clockTic(Cycle_t) {
 	std::cout << std::endl << std::endl << "TxnGen::clock tic" << std::endl;
 
 
-	m_thisCycleResQTknChg = 0;
+		m_thisCycleResQTknChg = 0;
 
-	// store the current number of entries in the queue, later compute the change
-	m_thisCycleResQTknChg = m_txnResQ.size();
+		// store the current number of entries in the queue, later compute the change
+		m_thisCycleResQTknChg = m_txnResQ.size();
 
-	createTxn();
-	sendRequest();
-	readResponse();
+		createTxn();
+		sendRequest();
+		readResponse();
 
-	m_thisCycleResQTknChg -= m_txnResQ.size();
-	sendTokenChg();
+		m_thisCycleResQTknChg -= m_txnResQ.size();
+		sendTokenChg();
 
 	return false;
 

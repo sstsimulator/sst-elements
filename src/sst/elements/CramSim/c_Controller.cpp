@@ -219,23 +219,22 @@ void c_Controller::sendResponse() {
     if ((m_txnGenResQTokens > 0) && (m_txnResQ.size() > 0)) {
         c_Transaction* l_txnRes = nullptr;
         for (std::vector<c_Transaction*>::iterator l_it = m_txnResQ.begin();
-             l_it != m_txnResQ.end(); ++l_it) {
+             l_it != m_txnResQ.end();)  {
             if ((*l_it)->isResponseReady()) {
                 l_txnRes = *l_it;
-                m_txnResQ.erase(l_it);
-                break;
+                l_it=m_txnResQ.erase(l_it);
+                //break;
+                c_TxnResEvent* l_txnResEvPtr = new c_TxnResEvent();
+                l_txnResEvPtr->m_payload = l_txnRes;
+                m_outTxnGenResPtrLink->send(l_txnResEvPtr);
+
+                --m_txnGenResQTokens;
+            }
+            else
+            {
+                l_it++;
             }
         }
-
-        if (l_txnRes != nullptr) {
-
-            c_TxnResEvent* l_txnResEvPtr = new c_TxnResEvent();
-            l_txnResEvPtr->m_payload = l_txnRes;
-            m_outTxnGenResPtrLink->send(l_txnResEvPtr);
-
-            --m_txnGenResQTokens;
-        }
-
     }
 } // sendResponse
 
