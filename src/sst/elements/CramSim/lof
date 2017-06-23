@@ -1,0 +1,34 @@
+-----RUNNING VERIMEM-----
+sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem.cfg --tracefile=traces/sst-CramSim-trace_verimem_1_R.trc"
+My output:  Config file: ddr4_verimem.cfg
+Trace file: traces/sst-CramSim-trace_verimem_1_R.trc
+FATAL:  SST Core: can't find requested component or subcomponent CramSim.c_DramSimTraceReader.
+ SST Fatal Backtrace Information:
+    0 : sst(_ZNK3SST6Output5fatalEjPKcS2_jS2_z+0x344) [0x643e54]
+    1 : sst(_ZN3SST7Factory15isPortNameValidERKSsSs+0x22f) [0x610b31]
+    2 : sst(_ZN3SST11ConfigGraph24checkForStructuralErrorsEv+0x3a3) [0x5e8c0d]
+    3 : sst(main+0x6fa) [0x5af100]
+    4 : /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf5) [0x7fa2f8e07f45]
+    5 : sst() [0x5ad609]
+
+My error:  Opening element library CramSim failed: file not found
+Opening and resolving references for element library CramSim failed:
+	.libs//libCramSim.so: undefined symbol: _ZN3SST6n_Bank18c_CtrlSubComponentIPNS0_13c_TransactionEPNS0_13c_BankCommandEE4sendEv
+Could not find ELI block CramSim_eli in CramSim
+FATAL:  SST Core: can't find requested component or subcomponent CramSim.c_DramSimTraceReader.
+ --------------------------------------------------------------------------
+MPI_ABORT was invoked on rank 0 in communicator MPI_COMM_WORLD 
+with errorcode -1.
+
+NOTE: invoking MPI_ABORT causes Open MPI to kill all MPI processes.
+You may or may not see output from other processes, depending on
+exactly when Open MPI kills them.
+--------------------------------------------------------------------------
+
+FATAL: SSTPythonModel Execution of model construction function failed.
+SST Fatal Backtrace Information:
+    0 : sst(_ZNK3SST6Output5fatalEjPKcS2_jS2_z+0x344) [0x643e54]
+    1 : sst(_ZN3SST4Core24SSTPythonModelDefinition17createConfigGraphEv+0x153) [0x6a2c6b]
+    2 : sst(main+0x65f) [0x5af065]
+    3 : /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf5) [0x7f0a876eaf45]
+    4 : sst() [0x5ad609]

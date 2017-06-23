@@ -69,12 +69,20 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
 
     m_cmdScheduler= dynamic_cast<c_CmdScheduler*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
-    // set device controller
+    // set transaction converter
     l_subCompName = params.find<std::string>("TxnConverter", "CramSim.c_TxnConverter",l_found);
     if(!l_found){
         output->output("Transaction Converter is not specified... c_TxnConverter (default) will be used\n");
     }
-    m_transConverter= dynamic_cast<c_TxnConverter*>(loadSubComponent(l_subCompName.c_str(),this,params));
+    m_txnConverter= dynamic_cast<c_TxnConverter*>(loadSubComponent(l_subCompName.c_str(),this,params));
+
+
+    // set transaction scheduler
+    l_subCompName = params.find<std::string>("TxnScheduler", "CramSim.c_TxnScheduler",l_found);
+    if(!l_found){
+        output->output("Transaction Scheduler is not specified... c_TxnScheduler (default) will be used\n");
+    }
+    m_txnScheduler= dynamic_cast<c_TxnScheduler*>(loadSubComponent(l_subCompName.c_str(), this, params));
 
 
 
@@ -158,11 +166,13 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
 
     sendResponse();
 
-    m_thisCycleTxnQTknChg = m_transConverter->getToken();
+    m_thisCycleTxnQTknChg = m_txnScheduler->getToken();
 
+    // run transaction Scheduler
+    m_txnScheduler->clockTic(clock);
 
     // run transaction converter
-    m_transConverter->clockTic(clock);
+    m_txnConverter->clockTic(clock);
 
     // run command scheduler
     m_cmdScheduler->clockTic(clock);
@@ -171,7 +181,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
     m_deviceController->clockTic(clock);
 
     //send token to the transaction generator
-    m_thisCycleTxnQTknChg = m_transConverter->getToken()-m_thisCycleTxnQTknChg;
+    m_thisCycleTxnQTknChg = m_txnScheduler->getToken()-m_thisCycleTxnQTknChg;
     if (m_thisCycleTxnQTknChg > 0) {
         sendTokenChg();
     }
@@ -239,7 +249,7 @@ void c_Controller::handleIncomingTransaction(SST::Event *ev){
     if (l_txnReqEventPtr) {
 
         m_txnResQ.push_back(l_txnReqEventPtr->m_payload);
-        m_transConverter->push(l_txnReqEventPtr->m_payload);
+        m_txnScheduler->push(l_txnReqEventPtr->m_payload);
         delete l_txnReqEventPtr;
     } else {
         std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"

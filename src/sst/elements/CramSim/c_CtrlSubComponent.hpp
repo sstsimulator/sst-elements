@@ -51,24 +51,17 @@ namespace SST {
 
 
         public:
-
-
-
             c_CtrlSubComponent(Component *comp, Params &x_params);
-
             ~c_CtrlSubComponent() {};
 
             void finish() {};
-
             void print() {}; // print internals
 
             //interfaces
             void push(I input);
-
             int getToken();
 
             virtual bool clockTic(SST::Cycle_t) =0;
-
 
         protected:
             enum DEBUG_MASK{
@@ -84,7 +77,7 @@ namespace SST {
 
             //internal functions
             virtual void run() =0 ;
-            virtual void send() = 0;
+            virtual void send()=0;
 
             // internal buffer
             std::vector<I> m_input2Q;                    //input queue

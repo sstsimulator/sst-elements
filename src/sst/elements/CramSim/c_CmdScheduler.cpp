@@ -103,15 +103,13 @@ void c_CmdScheduler::run(){
 
 
 void c_CmdScheduler::send() {
- //   int token=m_nextSubComponent->getToken();
+    int token=m_nextSubComponent->getToken();
 
-    while(!m_outputQ.empty())
-    {
-//    while(token>0 && !m_outputQ.empty()) {
+    while(token>0 && !m_outputQ.empty()) {
         m_nextSubComponent->push(m_outputQ.front());
 //        m_outputQ.front()->print(m_debugOutput);
         m_outputQ.pop_front();
-  //      token--;
+        token--;
     }
 }
 

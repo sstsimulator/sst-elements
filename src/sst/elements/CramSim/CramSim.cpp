@@ -30,6 +30,7 @@
 #include "c_USimmTraceReader.hpp"
 #include "c_TxnDriver.hpp"
 #include "c_TxnUnit.hpp"
+#include "c_TxnScheduler.hpp"
 #include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
 #include "c_CmdDriver.hpp"
@@ -49,11 +50,6 @@ using namespace SST::Statistics;
 
 /*----ALLOCATORS FOR COMPONENTS----*/
 
-/*static Component*
-create_c_AddressHasher(SST::ComponentId_t id, SST::Params& params) {
-	return new c_AddressHasher(id, params);
-}
-*/
 // c_MemhBridge
 static Component*
 create_c_MemhBridge(SST::ComponentId_t id, SST::Params& params) {
@@ -96,12 +92,6 @@ create_c_TxnDriver(SST::ComponentId_t id, SST::Params& params){
 	return new c_TxnDriver(id, params);
 }
 
-// c_TxnConverter
-//static Component*
-//create_c_TxnConverter(SST::ComponentId_t id, SST::Params& params) {
-//	return new c_TxnConverter(id, params);
-//}
-
 
 // c_CmdDriver
 static Component*
@@ -109,11 +99,6 @@ create_c_CmdDriver(SST::ComponentId_t id, SST::Params& params){
 	return new c_CmdDriver(id, params);
 }
 
-// c_DeviceController
-//static Component*
-//create_c_DeviceController(SST::ComponentId_t id, SST::Params& params){
-//	return new c_DeviceController(id, params);
-//}
 
 // c_BankReceiver
 static Component*
@@ -136,6 +121,12 @@ create_c_Controller(SST::ComponentId_t id, SST::Params& params) {
 static SubComponent*
 create_c_AddressHasher(Component * owner, Params& params) {
 	return new c_AddressHasher(owner, params);
+}
+
+// Transaction Converter
+static SubComponent*
+create_c_TxnScheduler(Component * owner, Params& params) {
+	return new c_TxnScheduler(owner, params);
 }
 
 // Transaction Converter
@@ -321,6 +312,14 @@ static const ElementInfoPort c_TxnDriver_ports[] = {
 		{ "outTxnDrvResPtr", "link to c_TxnGen for outgoing res txn",c_TxnGenRand_res_port_events },
 		{ NULL, NULL, NULL } };
 
+
+/*----SETUP c_TxnScheduler STRUCTURES----*/
+static const ElementInfoParam c_TxnScheduler_params[] = {
+		{NULL, NULL, NULL } };
+
+static const ElementInfoStatistic c_TxnScheduler_stats[] = {
+		{NULL, NULL, NULL, 0}
+};
 
 /*----SETUP c_TxnConverter STRUCTURES----*/
 static const ElementInfoParam c_TxnConverter_params[] = {
@@ -940,6 +939,14 @@ static const ElementInfoSubComponent CramSimSubComponents[] = {
 		  c_AddressHasher_params, 						// Parameters
 		  NULL,										//Interface
 		  "SST::CramSim::Controller::AddressHasher" 			// Category
+		},
+		{ "c_TxnScheduler",	 							// Name
+		"Transaction Scheduler",				 			// Description
+		NULL, 										// PrintHelp
+		create_c_TxnScheduler, 							// Allocator
+		c_TxnScheduler_params, 							// Parameters
+		c_TxnScheduler_stats,
+				"SST::CramSim::Controller::TxnScheduler" 			// Category
 		},
 		{ "c_TxnConverter",	 							// Name
 		"Transaction Converter",				 			// Description

@@ -40,11 +40,13 @@
 #include "c_CmdUnit.hpp"
 #include "c_TxnUnit.hpp"
 #include "c_CmdScheduler.hpp"
+#include "c_TxnScheduler.hpp"
 
 
 // local includes
 namespace SST {
     namespace n_Bank {
+        class c_TxnScheduler;
         class c_DeviceController;
         class c_TxnConverter;
         class c_CmdScheduler;
@@ -59,10 +61,11 @@ namespace SST {
             }
             void finish(){};
             void print() const;
+            c_TxnScheduler* getTxnScheduler() {return m_txnScheduler;}
             c_AddressHasher* getAddrHasher() {return m_addrHasher;}
             c_DeviceController* getDeviceController() {return m_deviceController;}
             c_CmdScheduler* getCmdScheduler() {return m_cmdScheduler;}
-            c_TxnConverter* getTxnConverter() {return m_transConverter;}
+            c_TxnConverter* getTxnConverter() {return m_txnConverter;}
 
             void sendCommand(c_BankCommand* cmd);
 
@@ -74,7 +77,8 @@ namespace SST {
 
 
             // Subcomponents
-            c_TxnConverter *m_transConverter;
+            c_TxnScheduler *m_txnScheduler;
+            c_TxnConverter *m_txnConverter;
             c_CmdScheduler *m_cmdScheduler;
             c_AddressHasher *m_addrHasher;
             c_DeviceController *m_deviceController;

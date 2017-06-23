@@ -1,0 +1,1065 @@
+-----RUNNING VERIMEM-----
+sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem.cfg --tracefile=traces/sst-CramSim-trace_verimem_1_R.trc"
+My output:  Config file: ddr4_verimem.cfg
+Trace file: traces/sst-CramSim-trace_verimem_1_R.trc
+Address map string: _r_l_R_B_b_h_
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Attaching Channel0 to Rank0
+Attaching Channel0 to Rank1
+Setting cmd trace output to ddr4_trace
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Refresh Group 0 : 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+Refresh Group 1 : 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 
+Transaction Scheduler is not specified... c_TxnScheduler (default) will be used
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+Deleting DIMM
+Total Read-Txns Requests send: 10999
+Total Write-Txns Requests send: 0
+Read-Txns-Received: 200
+Write-Txns-Received: 0
+Total Txns Received: 200
+Cycles Per Transaction (CPT) = 55
+Component Finished.
+Simulation is complete, simulated time: 11 us
+
+Expected Timing:  55
+Actual Timing:  55.0 
+
+
+
+sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem.cfg --tracefile=traces/sst-CramSim-trace_verimem_1_W.trc"
+My output:  Config file: ddr4_verimem.cfg
+Trace file: traces/sst-CramSim-trace_verimem_1_W.trc
+Address map string: _r_l_R_B_b_h_
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Attaching Channel0 to Rank0
+Attaching Channel0 to Rank1
+Setting cmd trace output to ddr4_trace
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Refresh Group 0 : 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+Refresh Group 1 : 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 
+Transaction Scheduler is not specified... c_TxnScheduler (default) will be used
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+Deleting DIMM
+Total Read-Txns Requests send: 0
+Total Write-Txns Requests send: 10999
+Read-Txns-Received: 0
+Write-Txns-Received: 167
+Total Txns Received: 167
+Cycles Per Transaction (CPT) = 65.8683
+Component Finished.
+Simulation is complete, simulated time: 11 us
+
+Expected Timing:  66
+Actual Timing:  65.8682634731 
+
+
+
+sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem.cfg --tracefile=traces/sst-CramSim-trace_verimem_1_RW.trc"
+My output:  Config file: ddr4_verimem.cfg
+Trace file: traces/sst-CramSim-trace_verimem_1_RW.trc
+Address map string: _r_l_R_B_b_h_
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Attaching Channel0 to Rank0
+Attaching Channel0 to Rank1
+Setting cmd trace output to ddr4_trace
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Refresh Group 0 : 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+Refresh Group 1 : 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 
+Transaction Scheduler is not specified... c_TxnScheduler (default) will be used
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+Deleting DIMM
+Total Read-Txns Requests send: 5500
+Total Write-Txns Requests send: 5499
+Read-Txns-Received: 91
+Write-Txns-Received: 91
+Total Txns Received: 182
+Cycles Per Transaction (CPT) = 60.4396
+Component Finished.
+Simulation is complete, simulated time: 11 us
+
+Expected Timing:  59.5
+Actual Timing:  60.4395604396 
+
+
+
+[v] Suite 1 - Reads only
+[v] Suite 1 - Writes only
+[v] Suite 1 - Reads & Writes
+
+sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem_openbank.cfg --tracefile=traces/sst-CramSim-trace_verimem_2_R.trc"
+My output:  Config file: ddr4_verimem_openbank.cfg
+Trace file: traces/sst-CramSim-trace_verimem_2_R.trc
+Address map string: _r_l_R_B_b_h_
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Attaching Channel0 to Rank0
+Attaching Channel0 to Rank1
+Setting cmd trace output to ddr4_trace_openbank
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Refresh Group 0 : 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+Refresh Group 1 : 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 
+Transaction Scheduler is not specified... c_TxnScheduler (default) will be used
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+[Device Controller] send command to device: Ch:0, pCh:0, rank:0, bg:0, b:0, cl: 0
+Deleting DIMM
+Total Read-Txns Requests send: 10999
+Total Write-Txns Requests send: 0
+Read-Txns-Received: 200
+Write-Txns-Received: 0
+Total Txns Received: 200
+Cycles Per Transaction (CPT) = 55
+Component Finished.
+Simulation is complete, simulated time: 11 us
+
+Expected Timing:  55
+Actual Timing:  55.0 
+
+
+
+sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem.cfg --tracefile=traces/sst-CramSim-trace_verimem_2_W.trc"
+My output:  Config file: ddr4_verimem.cfg
+Trace file: traces/sst-CramSim-trace_verimem_2_W.trc
+Address map string: _r_l_R_B_b_h_
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Attaching Channel0 to Rank0
+Attaching Channel0 to Rank1
+Setting cmd trace output to ddr4_trace
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Refresh Group 0 : 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+Refresh Group 1 : 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 
+Transaction Scheduler is not specified... c_TxnScheduler (default) will be used
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+Deleting DIMM
+Total Read-Txns Requests send: 0
+Total Write-Txns Requests send: 10999
+Read-Txns-Received: 0
+Write-Txns-Received: 167
+Total Txns Received: 167
+Cycles Per Transaction (CPT) = 65.8683
+Component Finished.
+Simulation is complete, simulated time: 11 us
+
+Expected Timing:  66
+Actual Timing:  65.8682634731 
+
+
+
+[v] Suite 2 - Reads only
+[v] Suite 2 - Writes only
+
+sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem.cfg --tracefile=traces/sst-CramSim-trace_verimem_4_R.trc"
+My output:  Config file: ddr4_verimem.cfg
+Trace file: traces/sst-CramSim-trace_verimem_4_R.trc
+Address map string: _r_l_R_B_b_h_
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Attaching Channel0 to Rank0
+Attaching Channel0 to Rank1
+Setting cmd trace output to ddr4_trace
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Refresh Group 0 : 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+Refresh Group 1 : 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 
+Transaction Scheduler is not specified... c_TxnScheduler (default) will be used
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+Deleting DIMM
+Total Read-Txns Requests send: 10999
+Total Write-Txns Requests send: 0
+Read-Txns-Received: 800
+Write-Txns-Received: 0
+Total Txns Received: 800
+Cycles Per Transaction (CPT) = 13.75
+Component Finished.
+Simulation is complete, simulated time: 11 us
+
+Expected Timing:  13.75
+Actual Timing:  13.75 
+
+
+
+sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem.cfg --tracefile=traces/sst-CramSim-trace_verimem_4_W.trc"
+My output:  Config file: ddr4_verimem.cfg
+Trace file: traces/sst-CramSim-trace_verimem_4_W.trc
+Address map string: _r_l_R_B_b_h_
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Attaching Channel0 to Rank0
+Attaching Channel0 to Rank1
+Setting cmd trace output to ddr4_trace
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Refresh Group 0 : 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+Refresh Group 1 : 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 
+Transaction Scheduler is not specified... c_TxnScheduler (default) will be used
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+Deleting DIMM
+Total Read-Txns Requests send: 0
+Total Write-Txns Requests send: 10999
+Read-Txns-Received: 0
+Write-Txns-Received: 668
+Total Txns Received: 668
+Cycles Per Transaction (CPT) = 16.4671
+Component Finished.
+Simulation is complete, simulated time: 11 us
+
+Expected Timing:  16.0
+Actual Timing:  16.4670658683 
+
+
+
+[v] Suite 4 - Reads only
+[v] Suite 4 - Writes only
+[v] Suite 4 - Reads & Writes (Analysis yet to be done)
+
+sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem.cfg --tracefile=traces/sst-CramSim-trace_verimem_5_R.trc"
+My output:  Config file: ddr4_verimem.cfg
+Trace file: traces/sst-CramSim-trace_verimem_5_R.trc
+Address map string: _r_l_R_B_b_h_
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Attaching Channel0 to Rank0
+Attaching Channel0 to Rank1
+Setting cmd trace output to ddr4_trace
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Refresh Group 0 : 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+Refresh Group 1 : 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 
+Transaction Scheduler is not specified... c_TxnScheduler (default) will be used
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+Deleting DIMM
+Total Read-Txns Requests send: 10999
+Total Write-Txns Requests send: 0
+Read-Txns-Received: 2498
+Write-Txns-Received: 0
+Total Txns Received: 2498
+Cycles Per Transaction (CPT) = 4.40352
+Component Finished.
+Simulation is complete, simulated time: 11 us
+
+Expected Timing:  4.0
+Actual Timing:  4.40352281825 
+
+
+
+sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem.cfg --tracefile=traces/sst-CramSim-trace_verimem_5_W.trc"
+My output:  Config file: ddr4_verimem.cfg
+Trace file: traces/sst-CramSim-trace_verimem_5_W.trc
+Address map string: _r_l_R_B_b_h_
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Attaching Channel0 to Rank0
+Attaching Channel0 to Rank1
+Setting cmd trace output to ddr4_trace
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Refresh Group 0 : 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+Refresh Group 1 : 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 
+Transaction Scheduler is not specified... c_TxnScheduler (default) will be used
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+Deleting DIMM
+Total Read-Txns Requests send: 0
+Total Write-Txns Requests send: 10999
+Read-Txns-Received: 0
+Write-Txns-Received: 2433
+Total Txns Received: 2433
+Cycles Per Transaction (CPT) = 4.52117
+Component Finished.
+Simulation is complete, simulated time: 11 us
+
+Expected Timing:  4.0
+Actual Timing:  4.52116728319 
+
+
+
+[v] Suite 5 - Reads only
+[v] Suite 5 - Writes only
+[v] Suite 5 - Reads & Writes (Analysis yet to be done)
+
+sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem.cfg --tracefile=traces/sst-CramSim-trace_verimem_6_R.trc"
+My output:  Config file: ddr4_verimem.cfg
+Trace file: traces/sst-CramSim-trace_verimem_6_R.trc
+Address map string: _r_l_R_B_b_h_
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Attaching Channel0 to Rank0
+Attaching Channel0 to Rank1
+Setting cmd trace output to ddr4_trace
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Refresh Group 0 : 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+Refresh Group 1 : 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 
+Transaction Scheduler is not specified... c_TxnScheduler (default) will be used
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+Deleting DIMM
+Total Read-Txns Requests send: 10999
+Total Write-Txns Requests send: 0
+Read-Txns-Received: 2499
+Write-Txns-Received: 0
+Total Txns Received: 2499
+Cycles Per Transaction (CPT) = 4.40176
+Component Finished.
+Simulation is complete, simulated time: 11 us
+
+Expected Timing:  4.0
+Actual Timing:  4.40176070428 
+
+
+
+sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem.cfg --tracefile=traces/sst-CramSim-trace_verimem_6_W.trc"
+My output:  Config file: ddr4_verimem.cfg
+Trace file: traces/sst-CramSim-trace_verimem_6_W.trc
+Address map string: _r_l_R_B_b_h_
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Attaching Channel0 to Rank0
+Attaching Channel0 to Rank1
+Setting cmd trace output to ddr4_trace
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Refresh Group 0 : 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+Refresh Group 1 : 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 
+Transaction Scheduler is not specified... c_TxnScheduler (default) will be used
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+Deleting DIMM
+Total Read-Txns Requests send: 0
+Total Write-Txns Requests send: 10999
+Read-Txns-Received: 0
+Write-Txns-Received: 2433
+Total Txns Received: 2433
+Cycles Per Transaction (CPT) = 4.52117
+Component Finished.
+Simulation is complete, simulated time: 11 us
+
+Expected Timing:  4.0
+Actual Timing:  4.52116728319 
+
+
+
+[v] Suite 6 - Reads only
+[v] Suite 6 - Writes only
+[v] Suite 6 - Reads & Writes (Analysis yet to be done)
+
+done.
+
+20.7158880234
+WARNING: No components are assigned to rank: 0.0
+Simulation is complete, simulated time: 0 s
