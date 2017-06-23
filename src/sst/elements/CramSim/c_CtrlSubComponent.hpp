@@ -77,8 +77,8 @@ namespace SST {
                 ADDRHASH= 1<<2,
                 DVCCTRL=1<<3
             };
-            void debug(unsigned mask_bit, unsigned debug_level, char* format, ...);
-            void debug(const char* prefix, unsigned mask_bit, unsigned debug_level, char* format, ...);
+            void debug(unsigned mask_bit, unsigned debug_level, const char* format, ...);
+            void debug(const char* prefix, unsigned mask_bit, unsigned debug_level, const char* format, ...);
             unsigned parseDebugFlags(std::string debugFlags);
             bool isDebugEnabled(DEBUG_MASK x_debug_mask);
 
@@ -515,7 +515,7 @@ namespace SST {
         }
 
         template<class I, class O>
-        void c_CtrlSubComponent<I, O>::debug(unsigned mask_bit, unsigned debug_level, char* format, ...)
+        void c_CtrlSubComponent<I, O>::debug(unsigned mask_bit, unsigned debug_level, const char* format, ...)
         {
            // m_debugOutput->verbosePrefix(prefix.c_str(),CALL_INFO,3,mask_bit,msg.c_str());
             if(m_debug_en==true) {
@@ -533,7 +533,7 @@ namespace SST {
         }
 
         template<class I, class O>
-        void c_CtrlSubComponent<I, O>::debug(const char* prefix, unsigned mask_bit, unsigned debug_level, char* format, ...) {
+        void c_CtrlSubComponent<I, O>::debug(const char* prefix, unsigned mask_bit, unsigned debug_level, const char* format, ...) {
             // m_debugOutput->verbosePrefix(prefix.c_str(),CALL_INFO,3,mask_bit,msg.c_str());
             if (m_debug_en == true) {
                 va_list args;
