@@ -20,6 +20,7 @@
 
 namespace SST {
 namespace Firefly {
+namespace CtrlMsg {
 
 class Memory : public MemoryBase {
 
@@ -131,6 +132,7 @@ inline Memory::~Memory( ) {
     delete m_rxMemcpyMod;
 }
 
+}
 }
 }
 

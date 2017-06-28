@@ -17,9 +17,11 @@
 #define COMPONENTS_FIREFLY_CTRL_MSG_TIMING_H
 
 #include "ctrlMsgTimingBase.h"
+#include "latencyMod.h"
 
 namespace SST {
 namespace Firefly {
+namespace CtrlMsg { 
 
 class MsgTiming {
   public:
@@ -114,6 +116,7 @@ inline MsgTiming::~MsgTiming()
     }
 }
 
+}
 }
 }
 

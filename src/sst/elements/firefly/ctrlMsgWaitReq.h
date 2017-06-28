@@ -16,6 +16,8 @@
 #ifndef COMPONENTS_FIREFLY_CTRL_MSG_WAIT_REQ_H
 #define COMPONENTS_FIREFLY_CTRL_MSG_WAIT_REQ_H
 
+#include "ctrlMsgCommReq.h"
+
 namespace SST {
 namespace Firefly {
 namespace CtrlMsg {

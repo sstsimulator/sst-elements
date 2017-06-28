@@ -46,7 +46,7 @@ LoopBack::LoopBack(ComponentId_t id, Params& params ) :
 }
 
 void LoopBack::handleCoreEvent( Event* ev, int src ) {
-    LoopBackEvent* event = static_cast<LoopBackEvent*>(ev);
+    LoopBackEventBase* event = static_cast<LoopBackEventBase*>(ev);
     int dest = event->core;
     event->core = src; 
     m_links[dest]->send(0,ev );

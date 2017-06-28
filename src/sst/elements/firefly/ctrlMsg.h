@@ -59,7 +59,6 @@ class API : public ProtocolAPI {
 
     virtual void init( Info* info, VirtNic*, Thornhill::MemoryHeapLink* );
     virtual void setup();
-    virtual Info* info();
     virtual void finish();
 
     virtual std::string name() { return "CtrlMsgProtocol"; }

@@ -19,9 +19,11 @@
 #include <sst/core/params.h>
 #include <sstream>
 
-#include "virtNic.h"
-#include "ctrlMsgXXX.h"
 #include "ctrlMsgProcessQueuesState.h"
+#include "ctrlMsgXXX.h"
+#include "ctrlMsgMemory.h"
+
+#include "virtNic.h"
 #include "info.h"
 #include "loopBack.h"
 
@@ -34,7 +36,6 @@ XXX::XXX( Component* parent, Params& params ) :
     m_retLink( NULL ),
     m_memHeapLink( NULL ),
     m_info( NULL ),
-    m_rxPostMod( NULL ),
     m_processQueuesState( NULL )
 {
     m_dbg_level = params.find<uint32_t>("verboseLevel",0);
@@ -55,58 +56,9 @@ XXX::XXX( Component* parent, Params& params ) :
         "CtrlMsgSelfLink." + ss.str(), "1 ns",
         new Event::Handler<XXX>(this,&XXX::delayHandler));
 
-    m_matchDelay_ns = params.find<int>( "matchDelay_ns", 1 );
-
-    std::string tmpName = params.find<std::string>("txMemcpyMod");
-    Params tmpParams = params.find_prefix_params("txMemcpyModParams.");
-    m_txMemcpyMod = dynamic_cast<LatencyMod*>( 
-            loadModule( tmpName, tmpParams ) );  
-    assert( m_txMemcpyMod );
-    
-    tmpName = params.find<std::string>("rxMemcpyMod");
-    tmpParams = params.find_prefix_params("rxMemcpyModParams.");
-    m_rxMemcpyMod = dynamic_cast<LatencyMod*>( 
-            loadModule( tmpName, tmpParams ) );  
-    assert( m_rxMemcpyMod );
-
-    tmpName = params.find<std::string>("txSetupMod");
-    tmpParams = params.find_prefix_params("txSetupModParams.");
-    m_txSetupMod = dynamic_cast<LatencyMod*>( 
-            loadModule( tmpName, tmpParams ) );  
-    assert( m_txSetupMod );
-    
-    tmpName = params.find<std::string>("rxSetupMod");
-    tmpParams = params.find_prefix_params("rxSetupModParams.");
-    m_rxSetupMod = dynamic_cast<LatencyMod*>( 
-            loadModule( tmpName, tmpParams ) );  
-    assert( m_rxSetupMod );
-
-    tmpName = params.find<std::string>("rxPostMod");
-    if ( ! tmpName.empty() ) {
-        tmpParams = params.find_prefix_params("rxPostModParams.");
-        m_rxPostMod = dynamic_cast<LatencyMod*>( 
-            loadModule( tmpName, tmpParams ) );  
-    }
-
-    m_regRegionBaseDelay_ns = params.find<int>( "regRegionBaseDelay_ns", 0 );
-    m_regRegionPerPageDelay_ns = params.find<int>( "regRegionPerPageDelay_ns", 0 );
-    m_regRegionXoverLength = params.find<int>( "regRegionXoverLength", 4096 );
-    
-    m_shortMsgLength = params.find<size_t>( "shortMsgLength", 4096 );
-
-    tmpName = params.find<std::string>("txFiniMod","firefly.LatencyMod");
-    tmpParams = params.find_prefix_params("txFiniModParams.");
-    m_txFiniMod = dynamic_cast<LatencyMod*>( 
-            loadModule( tmpName, tmpParams ) );  
-    assert( m_txFiniMod );
-    
-    tmpName = params.find<std::string>("rxFiniMod","firefly.LatencyMod");
-    tmpParams = params.find_prefix_params("rxFiniModParams.");
-    m_rxFiniMod = dynamic_cast<LatencyMod*>( 
-            loadModule( tmpName, tmpParams ) );  
-    assert( m_rxFiniMod );
-    
-    m_sendAckDelay = params.find<int>( "sendAckDelay_ns", 0 );
+    Memory::SchedCallback cb = std::bind( &XXX::schedCallback, this, std::placeholders::_1, std::placeholders::_2 );
+    m_mem = new Memory( parent, params, m_dbg, cb );
+    m_msgTiming = new MsgTiming( parent, params, m_dbg );
 
     m_sendStateDelay = params.find<uint64_t>( "sendStateDelay_ps", 0 );
     m_recvStateDelay = params.find<uint64_t>( "recvStateDelay_ps", 0 );
@@ -126,17 +78,6 @@ void XXX::finish() {
 XXX::~XXX()
 {
 	if ( m_processQueuesState) delete m_processQueuesState;
-
-    delete m_txMemcpyMod;
-    delete m_rxMemcpyMod;
-    delete m_txSetupMod;
-    delete m_rxSetupMod;
-    delete m_rxFiniMod;
-    delete m_txFiniMod;
-
-    if ( m_rxPostMod ) {
-        delete m_rxPostMod;
-    }
 }
 
 void XXX::init( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem  )
@@ -158,9 +99,7 @@ void XXX::init( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem  )
         new VirtNic::Handler3Args<XXX,int,int,size_t>(
                                 this, &XXX::notifyNeedRecv )
     );
-
 }
-
 
 void XXX::setup() 
 {
@@ -169,33 +108,22 @@ void XXX::setup()
                                                 m_info->worldRank());
     m_dbg.setPrefix(buffer);
 
-    m_processQueuesState = new ProcessQueuesState<XXX>(
-                        m_dbg_level, m_dbg_mask, *this );
-
-    m_dbg.verbose(CALL_INFO,1,1,"matchDelay %d ns.\n",  m_matchDelay_ns );
+    m_processQueuesState = new ProcessQueuesState(
+            m_dbg_level, m_dbg_mask, m_nic, m_info, m_mem, m_msgTiming,
+            std::bind( &XXX::schedCallback, this, std::placeholders::_1, std::placeholders::_2 ),
+            std::bind( &XXX::passCtrlToFunction, this, std::placeholders::_1 ),
+            std::bind( &XXX::loopSendReq, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3 ),
+            std::bind( &XXX::loopSendResp, this, std::placeholders::_1, std::placeholders::_2 ),
+            std::bind( &XXX::memHeapAlloc, this, std::placeholders::_1, std::placeholders::_2 ),
+            std::bind( &XXX::statPstdRcv_addData, this, std::placeholders::_1 ),
+            std::bind( &XXX::statRcvdMsg_addData, this, std::placeholders::_1 )
+       );
 }
 
 void XXX::setRetLink( Link* link ) 
 {
     m_retLink = link;
 }
-
-class Foo : public LoopBackEvent {
-  public:
-    Foo( std::vector<IoVec>& _vec, int core, void* _key ) : 
-        LoopBackEvent( core ), vec( _vec ), key( _key ), response( false ) 
-    {}
-
-    Foo( int core, void* _key ) : 
-        LoopBackEvent( core ), key( _key ), response( true ) 
-    {}
-
-    std::vector<IoVec>  vec;
-    void*               key;
-    bool                response;
-    
-    NotSerializable(Foo)
-};
 
 static size_t calcLength( std::vector<IoVec>& ioVec )
 {
@@ -206,22 +134,22 @@ static size_t calcLength( std::vector<IoVec>& ioVec )
     return len;
 }
 
-void XXX::loopSend( std::vector<IoVec>& vec, int core, void* key ) 
+void XXX::loopSendReq( std::vector<IoVec>& vec, int core, void* key ) 
 {
     m_dbg.verbose(CALL_INFO,1,1,"dest core=%d key=%p\n",core,key);    
     
-    m_loopLink->send(0, new Foo( vec, core, key ) );
+    m_loopLink->send(0, new LoopBackEvent( vec, core, key ) );
 }    
 
-void XXX::loopSend( int core, void* key ) 
+void XXX::loopSendResp( int core, void* key ) 
 {
     m_dbg.verbose(CALL_INFO,1,1,"dest core=%d key=%p\n",core,key);    
-    m_loopLink->send(0, new Foo( core, key ) );
+    m_loopLink->send(0, new LoopBackEvent( core, key ) );
 }
 
 void XXX::loopHandler( Event* ev )
 {
-    Foo* event = static_cast< Foo* >(ev);
+    LoopBackEvent* event = static_cast< LoopBackEvent* >(ev);
     m_dbg.verbose(CALL_INFO,1,1,"%s key=%p\n",
         event->vec.empty() ? "Response" : "Request", event->key);    
 
@@ -233,16 +161,7 @@ void XXX::loopHandler( Event* ev )
     delete ev;
 }
 
-void XXX::memEventHandler( Event* ev )
-{
-    MemRespEvent* event = static_cast<MemRespEvent*>(ev);
-    m_dbg.verbose(CALL_INFO,1,1,"\n");
-    event->callback();
-    delete event;
-}
-
 // **********************************************************************
-
 
 void XXX::init() {
    	m_processQueuesState->enterInit( (m_memHeapLink) );
@@ -261,11 +180,11 @@ void XXX::sendv( std::vector<IoVec>& ioVec,
     _CommReq* req;
     if ( commReq ) {
         req = new _CommReq( _CommReq::Isend, ioVec,
-            info()->sizeofDataType(dtype) , dest, tag, group );
+            m_info->sizeofDataType(dtype) , dest, tag, group );
         commReq->req = req;
     } else {
         req = new _CommReq( _CommReq::Send, ioVec,
-            info()->sizeofDataType( dtype), dest, tag, group );
+            m_info->sizeofDataType( dtype), dest, tag, group );
     }
 
     m_processQueuesState->enterSend( req, sendStateDelay() );
@@ -281,11 +200,11 @@ void XXX::recvv( std::vector<IoVec>& ioVec,
     _CommReq* req;
     if ( commReq ) {
         req = new _CommReq( _CommReq::Irecv, ioVec,
-            info()->sizeofDataType(dtype), src, tag, group );
+            m_info->sizeofDataType(dtype), src, tag, group );
         commReq->req = req;
     } else {
         req = new _CommReq( _CommReq::Recv, ioVec,
-            info()->sizeofDataType(dtype), src, tag, group );
+            m_info->sizeofDataType(dtype), src, tag, group );
     }
 
     m_processQueuesState->enterRecv( req, recvStateDelay() );
@@ -308,7 +227,7 @@ void XXX::send(const Hermes::MemAddr& buf, uint32_t count,
     m_dbg.verbose(CALL_INFO,1,1,"count=%d dest=%d tag=%#x\n",count,dest,tag);
 
     m_processQueuesState->enterSend( new _CommReq( _CommReq::Send, buf, count,
-            info()->sizeofDataType( dtype), dest, tag, group ) );
+            m_info->sizeofDataType( dtype), dest, tag, group ) );
 }
 
 void XXX::isend(const Hermes::MemAddr& buf, uint32_t count,
@@ -316,7 +235,7 @@ void XXX::isend(const Hermes::MemAddr& buf, uint32_t count,
         MP::Communicator group, MP::MessageRequest* req )
 {
     *req = new _CommReq( _CommReq::Isend, buf, count,
-            info()->sizeofDataType(dtype) , dest, tag, group );
+            m_info->sizeofDataType(dtype) , dest, tag, group );
     m_dbg.verbose(CALL_INFO,1,1,"%p\n",*req);
     m_processQueuesState->enterSend( static_cast<_CommReq*>(*req) );
 }
@@ -327,7 +246,7 @@ void XXX::recv(const Hermes::MemAddr& buf, uint32_t count,
 {
     m_dbg.verbose(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
     m_processQueuesState->enterRecv( new _CommReq( _CommReq::Recv, buf, count,
-            info()->sizeofDataType(dtype), src, tag, group, resp ) );
+            m_info->sizeofDataType(dtype), src, tag, group, resp ) );
 }
 
 void XXX::irecv(const Hermes::MemAddr& buf, uint32_t count,
@@ -336,7 +255,7 @@ void XXX::irecv(const Hermes::MemAddr& buf, uint32_t count,
 {
     m_dbg.verbose(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
     *req = new _CommReq( _CommReq::Irecv, buf, count,
-            info()->sizeofDataType(dtype), src, tag, group );
+            m_info->sizeofDataType(dtype), src, tag, group );
     m_processQueuesState->enterRecv( static_cast<_CommReq*>(*req) );
 }
 
@@ -379,62 +298,6 @@ void XXX::delayHandler( SST::Event* e )
 
     event->callback();
     delete e;
-}
-
-void XXX::memcpy( Callback callback, MemAddr to, MemAddr from, size_t length )
-{
-    m_dbg.verbose(CALL_INFO,1,1,"\n");
-    if ( 0 ) {
-        //m_memLink->send( 0, new MemCpyReqEvent( callback, 0, to, from, length ) );
-    } else {
-        uint64_t delay; 
-        if ( from ) {
-            delay = txMemcpyDelay( length );
-        } else if ( to ) {
-            delay = rxMemcpyDelay( length );
-        } else {
-            assert(0);
-        }
-        m_delayLink->send( delay, new DelayEvent(callback) );
-    }
-}
-
-void XXX::memread( Callback callback, MemAddr addr, size_t length )
-{
-    m_dbg.verbose(CALL_INFO,1,1,"\n");
-    if ( 0 ) {
-        //m_memLink->send( 0, new MemReadReqEvent( callback, 0, addr, length ) );
-    } else {
-        m_delayLink->send( txMemcpyDelay( length ), new DelayEvent(callback) );
-    }
-}
-
-void XXX::memwrite( Callback callback, MemAddr addr, size_t length )
-{
-    m_dbg.verbose(CALL_INFO,1,1,"\n");
-    if ( 0 ) {
-        //m_memLink->send( 0, new MemWriteReqEvent( callback, 0, addr, length ) );
-    } else {
-        m_delayLink->send( txMemcpyDelay( length ), new DelayEvent(callback) );
-    }
-}
-
-void XXX::mempin( Callback callback, MemAddr addr, size_t length )
-{
-    m_dbg.verbose(CALL_INFO,1,1,"\n");
-    m_delayLink->send( regRegionDelay( length ), new DelayEvent(callback) );
-}
-
-void XXX::memunpin( Callback callback, MemAddr addr, size_t length )
-{
-    m_dbg.verbose(CALL_INFO,1,1,"\n");
-    m_delayLink->send( regRegionDelay( length ), new DelayEvent(callback) );
-}
-
-void XXX::memwalk( Callback callback, int count )
-{
-    m_dbg.verbose(CALL_INFO,1,1,"\n");
-    m_delayLink->send( matchDelay( count ), new DelayEvent(callback) );
 }
 
 bool XXX::notifyGetDone( void* key )
