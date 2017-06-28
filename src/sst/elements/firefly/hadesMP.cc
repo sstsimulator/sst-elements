@@ -43,8 +43,7 @@ HadesMP::~HadesMP() {
 void HadesMP::setup( )
 {
 	assert(m_os);
-	m_proto->init( m_os->getInfo(), m_os->getNic(), m_os->getMemHeapLink() );
-	m_proto->setup( );
+	m_proto->setVars( m_os->getInfo(), m_os->getNic(), m_os->getMemHeapLink(), m_functionSM->getRetLink() );
     m_functionSM->setup(m_os->getInfo() );
 }
 

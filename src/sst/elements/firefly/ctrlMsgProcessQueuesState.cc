@@ -23,35 +23,40 @@ using namespace SST::Firefly;
 using namespace SST;
 
 
-ProcessQueuesState::ProcessQueuesState( int verbose, int mask, VirtNic* nic, Info* info,
-            MemoryBase* mem, MsgTiming* msgTiming, SchedCallback schedCB, ReturnToCaller returnToCaller,
-            SendLoopReqFunc sendLoopReq, SendLoopRespFunc sendLoopResp, HeapAllocFunc heapAlloc,
-            IncStatFunc pstd, IncStatFunc rcvd ) :
+ProcessQueuesState::ProcessQueuesState( Component* owner, Params& params ) : 
+        SubComponent( owner ),
+
         m_getKey( 0 ),
         m_rspKey( 0 ),
         m_needRecv( 0 ),
         m_numNicRequestedShortBuff(0),
         m_numRecvLooped(0),
         m_missedInt( false ),
-        m_intCtx(NULL),
-        m_nic(nic),
-        m_info(info),
-        m_mem(mem),
-        m_msgTiming(msgTiming),
-        m_schedCB( schedCB ),
-        m_returnToCaller( returnToCaller ),
-        m_sendLoopReqFunc(sendLoopReq),
-        m_sendLoopRespFunc(sendLoopResp),
-        m_memHeapAlloc(heapAlloc),
-        m_statPstdRcv_addData(pstd),
-        m_statRcvdMsg_addData(rcvd)
+        m_intCtx(NULL)
 {
-    m_dbg.init("", verbose, mask, Output::STDOUT );
-    char buffer[100];
-    snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
-                            m_nic->getNodeId(), m_info->worldRank());
-    dbg().setPrefix(buffer);
+    int level = params.find<uint32_t>("verboseLevel",0);
+    int mask = params.find<int32_t>("verboseMask",-1);
+
+    m_dbg.init("", level, mask, Output::STDOUT );
+
+    m_statPstdRcv = registerStatistic<uint64_t>("posted_receive_list");
+    m_statRcvdMsg = registerStatistic<uint64_t>("received_msg_list");
+
+    m_msgTiming = new MsgTiming( parent, params, m_dbg );
+
+    std::stringstream ss;
+    ss << this;
+
+    m_delayLink = configureSelfLink(
+                        "ProcessQueuesStateSelfLink." + ss.str(), "1 ns",
+                                new Event::Handler<ProcessQueuesState>(this,&ProcessQueuesState::delayHandler));
+
+    m_loopLink = configureLink(
+            params.find<std::string>("loopBackPortName", "loop"), "1 ns",
+            new Event::Handler<ProcessQueuesState>(this,&ProcessQueuesState::loopHandler) );
+    assert(m_loopLink);
 }
+
 
 ProcessQueuesState::~ProcessQueuesState()
 {
@@ -60,6 +65,21 @@ ProcessQueuesState::~ProcessQueuesState()
         delete m_postedShortBuffers.begin()->second;
         m_postedShortBuffers.erase( m_postedShortBuffers.begin() );
     }
+}
+
+void ProcessQueuesState::setVars( VirtNic* nic, Info* info, MemoryBase* mem, 
+            Thornhill::MemoryHeapLink* memHeapLink, Link* returnToCaller )
+{
+    m_nic = nic;
+    m_info = info;
+    m_mem = mem;
+    m_returnToCaller = returnToCaller;
+    m_memHeapLink = memHeapLink;
+
+    char buffer[100];
+    snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
+                            m_nic->getNodeId(), m_info->worldRank());
+    dbg().setPrefix(buffer);
 }
 
 void ProcessQueuesState:: finish() {
@@ -81,7 +101,7 @@ void ProcessQueuesState::enterInit( bool haveGlobalMemHeap )
     };
 
     if ( haveGlobalMemHeap ) {
-        m_memHeapAlloc( length, callback );
+        memHeapAlloc( length, callback );
     } else {
         enterInit_1( 0x1000, length );
     }
@@ -223,8 +243,7 @@ void ProcessQueuesState::processSendLoop( _CommReq* req )
     vec.insert( vec.begin() + 1, req->ioVec().begin(), 
                                         req->ioVec().end() );
 
-    m_sendLoopReqFunc( vec, m_nic->calcCoreId( 
-                        calcNid( req, req->getDestRank() ) ), req );
+    loopSendReq( vec, m_nic->calcCoreId( calcNid( req, req->getDestRank() ) ), req );
 
     if ( ! req->isBlocking() ) {
         exit();
@@ -252,7 +271,7 @@ void ProcessQueuesState::enterRecv( _CommReq* req, uint64_t exitDelay )
     dbg().verbose(CALL_INFO,1,1,"\n");
     m_pstdRcvQ.push_front( req );
 
-    m_statPstdRcv_addData( m_pstdRcvQ.size() );
+    m_statPstdRcv->addData( m_pstdRcvQ.size() );
 
     size_t length = req->getLength( );
 
@@ -557,7 +576,7 @@ void ProcessQueuesState::processShortList_4( Stack* stack )
         dbg().verbose(CALL_INFO,1,2,"loop message key=%p srcCore=%d "
             "srcRank=%d\n", loopReq->key, loopReq->srcCore, ctx->hdr().rank);
         req->setDone();
-        m_sendLoopRespFunc( loopReq->srcCore , loopReq->key );
+        loopSendResp( loopReq->srcCore , loopReq->key );
 
     } else if ( length <= shortMsgLength() ) { 
         dbg().verbose(CALL_INFO,1,1,"short\n");
@@ -645,7 +664,7 @@ void ProcessQueuesState::dmaRecvFiniSRB( ShortRecvBuffer* buf, nid_t nid,
 
     assert( tag == (uint32_t) ShortMsgQ );
     m_recvdMsgQ.push_back( buf );
-    m_statRcvdMsg_addData( m_recvdMsgQ.size() );
+    m_statRcvdMsg->addData( m_recvdMsgQ.size() );
 
     runInterruptCtx();
     m_postedShortBuffers.erase(buf);
@@ -810,7 +829,7 @@ void ProcessQueuesState::loopHandler( int srcCore, std::vector<IoVec>& vec, void
 
     ++m_numRecvLooped;
     m_recvdMsgQ.push_back( new LoopReq( srcCore, vec, key ) );
-    m_statRcvdMsg_addData( m_recvdMsgQ.size() );
+    m_statRcvdMsg->addData( m_recvdMsgQ.size() );
 
     runInterruptCtx();
 }
@@ -922,4 +941,41 @@ void ProcessQueuesState::postShortRecvBuffer( )
     dbg().verbose(CALL_INFO,1,1,"num postedShortRecvBuffers %lu\n",
                                         m_postedShortBuffers.size());
     m_nic->dmaRecv( -1, ShortMsgQ, buf->ioVec, callback ); 
+}
+
+void ProcessQueuesState::loopSendReq( std::vector<IoVec>& vec, int core, void* key )
+{
+    m_dbg.verbose(CALL_INFO,1,1,"dest core=%d key=%p\n",core,key);
+
+    m_loopLink->send(0, new LoopBackEvent( vec, core, key ) );
+}
+
+void ProcessQueuesState::loopSendResp( int core, void* key )
+{
+    m_dbg.verbose(CALL_INFO,1,1,"dest core=%d key=%p\n",core,key);
+    m_loopLink->send(0, new LoopBackEvent( core, key ) );
+}
+
+void ProcessQueuesState::loopHandler( Event* ev )
+{
+    LoopBackEvent* event = static_cast< LoopBackEvent* >(ev);
+    m_dbg.verbose(CALL_INFO,1,1,"%s key=%p\n",
+        event->vec.empty() ? "Response" : "Request", event->key);
+
+    if ( event->vec.empty() ) {
+        loopHandler(event->core, event->key );
+    } else {
+        loopHandler(event->core, event->vec, event->key);
+    }
+    delete ev;
+}
+
+void ProcessQueuesState::delayHandler( SST::Event* e )
+{
+    DelayEvent* event = static_cast<DelayEvent*>(e);
+
+    m_dbg.verbose(CALL_INFO,2,1,"execute callback\n");
+
+    event->callback();
+    delete e;
 }
