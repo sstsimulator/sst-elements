@@ -18,7 +18,7 @@
 
 #include "ctrlMsg.h"
 #include <stdlib.h>
-#include "loopback.h"
+#include "loopBack.h"
 
 namespace SST {
 namespace Firefly {
