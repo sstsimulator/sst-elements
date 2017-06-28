@@ -18,6 +18,7 @@
 
 namespace SST {
 namespace Firefly {
+namespace CtrlMsg {
 
 class MsgTimingBase {
   public:
@@ -33,6 +34,7 @@ class MsgTimingBase {
     virtual uint64_t shortMsgLength() = 0;
 };
 
+}
 }
 }
 

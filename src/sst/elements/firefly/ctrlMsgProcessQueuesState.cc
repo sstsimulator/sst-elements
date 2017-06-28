@@ -16,6 +16,7 @@
 #include <sst_config.h>
 
 #include "ctrlMsgProcessQueuesState.h"
+#include "ctrlMsgMemory.h"
 
 using namespace SST::Firefly::CtrlMsg;
 using namespace SST::Firefly;

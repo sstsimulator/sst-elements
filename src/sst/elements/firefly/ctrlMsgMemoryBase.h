@@ -18,6 +18,7 @@
 
 namespace SST {
 namespace Firefly {
+namespace CtrlMsg {
 
 class MemoryBase {
   public:
@@ -33,6 +34,7 @@ class MemoryBase {
     virtual void walk( Callback, int count ) = 0;
 };
 
+}
 }
 }
 

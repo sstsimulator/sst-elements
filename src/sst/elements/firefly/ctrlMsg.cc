@@ -49,11 +49,6 @@ void API::setup()
     m_xxx->setup();
 }
 
-Info* API::info() 
-{
-    return m_xxx->info();
-}
-
 void API::setRetLink( Link* link ) 
 {
     m_xxx->setRetLink( link );
