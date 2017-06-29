@@ -57,15 +57,13 @@ class API : public ProtocolAPI {
     API( Component* owner, Params& );
     ~API();
 
-    virtual void init( Info* info, VirtNic*, Thornhill::MemoryHeapLink* );
     virtual void setup();
-    virtual Info* info();
     virtual void finish();
-
     virtual std::string name() { return "CtrlMsgProtocol"; }
-    virtual void setRetLink( Link* link );
 
-    void init();
+    virtual void setVars( Info* info, VirtNic*, Thornhill::MemoryHeapLink*, Link* );
+
+    void initMsgPassing();
     void makeProgress();
     void send( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag ); 
     void send( const Hermes::MemAddr&, size_t len, MP::RankID dest, uint64_t tag, 
