@@ -41,6 +41,8 @@ static const key_t LongRspKey  = 2 << (sizeof(key_t) * 8 - 2);
 static const key_t ReadReqKey  = 3 << (sizeof(key_t) * 8 - 2);
 static const key_t ReadRspKey  = 0 << (sizeof(key_t) * 8 - 2);
 
+typedef int region_t;
+
 class MemoryBase;
 
 class ProcessQueuesState : SubComponent
