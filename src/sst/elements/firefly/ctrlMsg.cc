@@ -26,7 +26,8 @@ using namespace SST::Firefly;
 using namespace SST;
 using namespace SST::Firefly::CtrlMsg;
 
-API::API( Component* owner, Params& params ) : ProtocolAPI( owner ) 
+API::API( Component* owner, Params& params ) : 
+    ProtocolAPI( owner ), m_memHeapLink(NULL)
 {
 
     m_dbg_level = params.find<uint32_t>("verboseLevel",0);
