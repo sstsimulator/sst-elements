@@ -37,21 +37,20 @@ static const uint64_t GathervTag    = 0x40000000;
 static const uint64_t LongProtoTag  = 0x50000000;
 static const uint64_t TagMask       = 0xf0000000;
 
-class XXX;
-
+class MemoryBase;
+class ProcessQueuesState;
 class _CommReq;
 
 struct CommReq {
     _CommReq* req;
 };
 
-static const nid_t  AnyNid = -1;
 static const uint64_t  AnyTag = -1; 
-typedef int region_t;
-
-typedef int RegionEvent;
 
 class API : public ProtocolAPI {
+
+    typedef std::function<void()> Callback;
+    typedef std::function<void(nid_t, uint32_t, size_t)> Callback2;
 
   public:
     API( Component* owner, Params& );
@@ -101,7 +100,38 @@ class API : public ProtocolAPI {
                 MP::MessageResponse* resp[] );
 
   private:
-    XXX*    m_xxx;
+    void sendv_common( std::vector<IoVec>& ioVec,
+            MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+            MP::Communicator group, CommReq* commReq );
+    void recvv_common( std::vector<IoVec>& ioVec,
+    MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+    MP::Communicator group, CommReq* commReq );
+
+    bool notifyGetDone( void* );
+    bool notifySendPioDone( void* );
+    bool notifyRecvDmaDone( int, int, size_t, void* );
+    bool notifyNeedRecv( int, int, size_t );
+
+    uint64_t sendStateDelay() { return m_sendStateDelay; }
+    uint64_t recvStateDelay() { return m_recvStateDelay; }
+    uint64_t waitallStateDelay() { return m_waitallStateDelay; }
+    uint64_t waitanyStateDelay() { return m_waitanyStateDelay; }
+
+    Output          m_dbg;
+    int             m_dbg_level;
+    int             m_dbg_mask;
+
+    ProcessQueuesState*     m_processQueuesState;
+
+    Thornhill::MemoryHeapLink* m_memHeapLink;
+
+    Info*       m_info;
+    MemoryBase* m_mem;
+
+    uint64_t m_sendStateDelay;
+    uint64_t m_recvStateDelay;
+    uint64_t m_waitallStateDelay;
+    uint64_t m_waitanyStateDelay;
 };
 
 }
