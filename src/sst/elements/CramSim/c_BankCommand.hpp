@@ -77,7 +77,7 @@ public:
         c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
 		      ulong x_addr, std::vector<unsigned> &x_bankIdVec); // only to be used for Refresh commands!
         c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
-		      ulong x_addr, c_HashedAddress &x_hashedAddr); 
+		      ulong x_addr, const c_HashedAddress &x_hashedAddr);
         c_BankCommand() {} // required for ImplementSerializable
 
 	c_BankCommand(c_BankCommand&) = delete;

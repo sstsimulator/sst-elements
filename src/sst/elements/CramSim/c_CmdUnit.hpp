@@ -72,6 +72,7 @@ public:
 	void print(); // print internals
 	bool clockTic(SST::Cycle_t);
 	bool isCmdAllowed(c_BankCommand* x_bankCommandPtr);
+	bool isBusAllowed(c_BankCommand* x_bankCommandPtr);
 
 private:
 
@@ -92,10 +93,11 @@ private:
 
 
 	//debug
+    Output *output;
 	DEBUG_MASK m_debugMask;
 	std::string m_debugPrefix;
 
-	void sendRequest(std::deque<c_BankCommand*>::iterator x_startItr); // send request function that models close bank policy
+	void sendRequest(); // send request function that models close bank policy
 	void sendReqCloseBankPolicy(std::deque<c_BankCommand*>::iterator x_startItr); // send request function that models close bank policy
 	void sendReqOpenRowPolicy(); // send request function that models open row policy
 	void sendReqOpenBankPolicy(); // send request function that models open bank policy
@@ -142,6 +144,7 @@ private:
 	unsigned m_lastChannel;
 	unsigned m_lastPseudoChannel;
 	std::vector<std::list<unsigned>> m_cmdACTFAWtrackers; // FIXME: change this to a circular buffer for speed. Could also implement as shift register.
+	std::vector<bool> m_isACTIssued;
 	bool m_issuedACT;
 
 };

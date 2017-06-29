@@ -33,8 +33,6 @@ libCramSim_la_SOURCES = \
 	c_TxnUnit.cpp \
 	c_Transaction.hpp \
 	c_Transaction.cpp \
-	c_TransactionToCommands.hpp \
-	c_TransactionToCommands.cpp \
 	c_AddressHasher.hpp \
 	c_AddressHasher.cpp \
 	c_HashedAddress.hpp \

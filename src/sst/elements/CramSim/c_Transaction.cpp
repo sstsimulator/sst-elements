@@ -44,6 +44,7 @@ c_Transaction::c_Transaction(ulong x_seqNum, e_TransactionType x_txnMnemonic,
        
 	m_txnToString[e_TransactionType::READ] = "READ";
 	m_txnToString[e_TransactionType::WRITE] = "WRITE";
+	m_hasHashedAddr= false;
 
 	//std::cout << "0x" << std::hex << x_addr << std::dec << "\t";    m_hashedAddr.print();
 }

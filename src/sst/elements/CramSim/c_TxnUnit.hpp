@@ -41,15 +41,18 @@
 
 // local includes
 #include "c_BankCommand.hpp"
-#include "c_TransactionToCommands.hpp"
+//#include "c_TransactionToCommands.hpp"
 #include "c_CmdUnit.hpp"
 #include "c_CtrlSubComponent.hpp"
 #include "c_CmdScheduler.hpp"
 #include "c_Transaction.hpp"
+#include "c_BankInfo.hpp"
 
 namespace SST {
 namespace n_Bank {
 	class c_CmdScheduler;
+
+
 class c_TxnConverter: public c_CtrlSubComponent <c_Transaction*,c_BankCommand*> {
 
 public:
@@ -57,20 +60,25 @@ public:
 	c_TxnConverter(SST::Component * comp, SST::Params& x_params);
 	~c_TxnConverter();
 
-	void push(c_Transaction* newTxn); // receive txns from txnGen into req q
+    bool push(c_Transaction* newTxn); // receive txns from txnGen into req q
 	bool clockTic(SST::Cycle_t);
 	void print() const; // print internals
 
 private:
 
-	c_CmdScheduler *m_nextSubComponent;
-
 	void run();
 	void send();
-	void createRefreshCmds();
+	std::vector<c_BankCommand*> getCommands(c_Transaction* x_txn);
+	void getPreCommands(std::vector<c_BankCommand*> &x_commandVec, c_Transaction* x_txn, ulong x_addr);
+	void getPostCommands(std::vector<c_BankCommand*> &x_commandVec, c_Transaction* x_txn, ulong x_addr);
+	void updateBankInfo(c_Transaction* x_txn);
 
-	// FIXME: Remove. For testing purposes
+	/// / FIXME: Remove. For testing purposes
 	void printQueues();
+
+	c_CmdScheduler *m_cmdScheduler;
+	std::vector<c_BankInfo*> m_bankInfo;
+	unsigned m_cmdSeqNum;
 
 	// params for internal architecture
 	int k_txnReqQEntries;
@@ -79,8 +87,6 @@ private:
 	bool k_useWriteA;
 	bool k_useRefresh;
 	int k_bankPolicy;
-
-	c_TransactionToCommands *m_converter;
 
 	int k_REFI;
 	int m_currentREFICount;
@@ -104,3 +110,4 @@ private:
 }
 
 #endif /* C_TxnConverter_HPP_ */
+

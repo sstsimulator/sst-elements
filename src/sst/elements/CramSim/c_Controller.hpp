@@ -66,14 +66,15 @@ namespace SST {
             c_DeviceController* getDeviceController() {return m_deviceController;}
             c_CmdScheduler* getCmdScheduler() {return m_cmdScheduler;}
             c_TxnConverter* getTxnConverter() {return m_txnConverter;}
+            Output * getOutput() {return output;}
 
             void sendCommand(c_BankCommand* cmd);
 
         private:
             SST::Output *output;
 
-            std::vector<c_Transaction*> m_txnReqQ;
-            std::vector<c_Transaction*> m_txnResQ;
+            std::deque<c_Transaction*> m_ReqQ;
+            std::deque<c_Transaction*> m_ResQ;
 
 
             // Subcomponents
@@ -85,6 +86,7 @@ namespace SST {
             //c_DeviceController *m_deviceController;
 
             //token changes from Txn gen
+            int m_ReqQTokens;
             int m_txnGenResQTokens;
             int m_deviceReqQTokens;
             int m_thisCycleTxnQTknChg;
@@ -115,6 +117,8 @@ namespace SST {
             void sendResponse();
             void sendRequest();
 
+            void setHashedAddress(c_Transaction* newTxn);
+
             // Transaction Generator <-> Controller Handlers
             void handleIncomingTransaction(SST::Event *ev);
             void handleOutTxnGenResPtrEvent(SST::Event *ev);
@@ -126,6 +130,7 @@ namespace SST {
             void handleOutDeviceReqPtrEvent(SST::Event *ev);
             void handleInDeviceResPtrEvent(SST::Event *ev);
             void handleInDeviceReqQTokenChgEvent(SST::Event *ev);
+
 
         };
     }

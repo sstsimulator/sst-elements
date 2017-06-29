@@ -42,7 +42,13 @@ using namespace SST::n_Bank;
 using namespace std;
 
 c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) :  c_CtrlSubComponent <c_Transaction*,c_Transaction*> (owner, x_params) {
-    m_nextSubComponent = dynamic_cast<c_Controller *>(owner)->getTxnConverter();
+    m_txnConverter = dynamic_cast<c_Controller *>(owner)->getTxnConverter();
+    m_addrHasher = dynamic_cast<c_Controller *>(owner)->getAddrHasher();
+    m_nextChannel=0;
+    output = dynamic_cast<c_Controller *>(owner)->getOutput();
+
+    //initialize per-channel transaction queues
+    m_txnQ.resize(m_numChannels);
 }
 
 c_TxnScheduler::~c_TxnScheduler() {
@@ -51,31 +57,79 @@ c_TxnScheduler::~c_TxnScheduler() {
 
 
 bool c_TxnScheduler::clockTic(SST::Cycle_t){
-
     run();
-    send();
     return false;
 }
 
+
 void c_TxnScheduler::run(){
 
-    //FCFS
-    if(m_outputQ.empty())
-        if(!m_inputQ.empty()) {
-            m_outputQ.push_back(m_inputQ.front());
-            m_inputQ.pop_front();
+    int l_numSchedTxn=0;
+    int l_channelID=m_nextChannel;
+
+    while(l_numSchedTxn<m_numChannels) {
+
+        //1. select a transaction from the transaction queue
+        c_Transaction* nextTxn=getNextTxn(l_channelID);
+
+        //2. send the selected transaction to transaction converter
+        if(nextTxn!=nullptr) {
+            if(m_txnConverter->push(nextTxn)) {
+                popTxn(l_channelID, nextTxn);
+
+#ifdef __SST_DEBUG_OUTPUT__
+                output->debug(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
+                              Simulation::getSimulation()->getCurrentSimCycle(),
+                              nextTxn->getTransactionString().c_str(),
+                              nextTxn->getHashedAddress().getChannel(),
+                              nextTxn->getHashedAddress().getPChannel(),
+                              nextTxn->getHashedAddress().getRank(),
+                              nextTxn->getHashedAddress().getBankGroup(),
+                              nextTxn->getHashedAddress().getBank(),
+                              nextTxn->getHashedAddress().getRow(),
+                              nextTxn->getHashedAddress().getCol(),
+                              nextTxn->getHashedAddress().getBankId(),
+                              nextTxn->getSeqNum());
+#endif
+            } else {
+                //todo: debug message
+                //inputQ of txnconverter is full
+            }
         }
+
+        l_numSchedTxn++;
+        l_channelID = (l_channelID + 1) % m_numChannels;
+    }
+
+    m_nextChannel=l_channelID;
 }
 
-void c_TxnScheduler::send()
-{
-    int token=m_nextSubComponent->getToken();
 
-    while(token>0 && !m_outputQ.empty()) {
-        m_nextSubComponent->push(m_outputQ.front());
-//        m_outputQ.front()->print(m_debugOutput);
-        m_outputQ.pop_front();
-        token--;
+c_Transaction* c_TxnScheduler::getNextTxn(int x_ch)
+{
+    //FCFS
+    if(!m_txnQ.at(x_ch).empty()) {
+        //get the next transaction
+        return m_txnQ.at(x_ch).front();
+    } else
+        return nullptr;
+
+}
+
+void c_TxnScheduler::popTxn(int x_ch, c_Transaction* x_Txn)
+{
+    m_txnQ.at(x_ch).remove(x_Txn);
+}
+
+bool c_TxnScheduler::push(c_Transaction* newTxn)
+{
+    int l_channelId=newTxn->getHashedAddress().getChannel();
+
+    if(m_txnQ.at(l_channelId).size()<k_numCtrlIntQEntries) {
+        m_txnQ.at(l_channelId).push_back(newTxn);
+        return true;
     }
+    else
+        return false;
 }
 

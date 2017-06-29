@@ -75,9 +75,10 @@ namespace SST {
             unsigned parseDebugFlags(std::string debugFlags);
             bool isDebugEnabled(DEBUG_MASK x_debug_mask);
 
+
             //internal functions
             virtual void run() =0 ;
-            virtual void send()=0;
+            virtual void send(){};
 
             // internal buffer
             std::vector<I> m_input2Q;                    //input queue
@@ -136,9 +137,9 @@ namespace SST {
         c_CtrlSubComponent<I, O>::c_CtrlSubComponent(Component *owner, Params &x_params) : SubComponent(owner) {
 
             //set debug output
-            unsigned l_debug_level=x_params.find<uint32_t>("debug_level", 0);
+            unsigned l_debug_level = x_params.find<uint32_t>("debug_level", 0);
             std::string l_debug_flag = x_params.find<std::string>("debug_flag","");
-            m_debug_bits=parseDebugFlags(l_debug_flag);
+            m_debug_bits = parseDebugFlags(l_debug_flag);
             m_debugOutput = new SST::Output("",
                                             l_debug_level,
                                             m_debug_bits,

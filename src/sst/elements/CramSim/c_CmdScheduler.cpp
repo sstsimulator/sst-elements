@@ -26,6 +26,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include "sst_config.h"
+
 #include <string>
 #include <vector>
 #include <list>
@@ -41,7 +43,7 @@ using namespace SST::n_Bank;
 
 c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> (comp, x_params){
     m_nextSubComponent=dynamic_cast<c_Controller*>(comp)->getDeviceController();
-
+    output=dynamic_cast<c_Controller*>(comp)->getOutput();
     //create command queue
     m_cmdQueues.clear();
     for(unsigned l_bankIdx=0;l_bankIdx<m_numBanks;l_bankIdx++)
@@ -53,6 +55,7 @@ c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : c_CtrlSubCom
     }
 }
 
+
 c_CmdScheduler::~c_CmdScheduler(){
     for(auto &it: m_cmdQueues)
     {
@@ -60,34 +63,17 @@ c_CmdScheduler::~c_CmdScheduler(){
     }
 }
 
-bool c_CmdScheduler::clockTic(SST::Cycle_t) {
 
+bool c_CmdScheduler::clockTic(SST::Cycle_t) {
     run();
     send();
-
 }
 
 
 void c_CmdScheduler::run(){
 
-    for( auto it=m_inputQ.begin();it!=m_inputQ.end();) {
-        c_BankCommand* l_cmd=*it;
-        uint l_bankID=l_cmd->getHashedAddress()->getBankId();
-        assert(l_bankID<m_numBanks);
-
-        //todo: modify to configure the size of command queues
-        if (m_cmdQueues.at(l_bankID)->size() < 16) {
-            m_cmdQueues.at(l_bankID)->push_back(l_cmd);
-         //   printf("[push]sim_cycle:%lld cmdseq:%d bankid:%d size:%d\n",Simulation::getSimulation()->getCurrentSimCycle(), m_cmdQueues.at(l_bankID)->front()->getSeqNum(),  m_cmdQueues.at(l_bankID)->front()->getHashedAddress()->getBankId(), m_cmdQueues.at(l_bankID)->size());
-
-            it=m_inputQ.erase(it);
-        } else
-            ++it;//printf("cmd queue is full\n");
-    }
-
-
     for(auto &x_cmdQueue: m_cmdQueues)
-        if(x_cmdQueue->size()>0) {
+        if(!x_cmdQueue->empty()) {
 
             c_BankCommand *l_cmdPtr = x_cmdQueue->front();
             //  l_cmdPtr->print(m_debugOutput);
@@ -95,10 +81,32 @@ void c_CmdScheduler::run(){
             if (m_nextSubComponent->isCmdAllowed(l_cmdPtr)) {
                 m_outputQ.push_back(l_cmdPtr);
                 x_cmdQueue->pop_front();
-                //   printf("[pop]sim_cycle:%lld cmdseq:%d bankid:%d size:%d\n",Simulation::getSimulation()->getCurrentSimCycle(),x_cmdQueue->front()->getSeqNum(), x_cmdQueue->front()->getHashedAddress()->getBankId(),x_cmdQueue->size());
+
+#ifdef __SST_DEBUG_OUTPUT__
+                output->debug(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
+                          Simulation::getSimulation()->getCurrentSimCycle(),
+                          l_cmdPtr->getCommandString().c_str(),
+                          l_cmdPtr->getHashedAddress()->getChannel(),
+                          l_cmdPtr->getHashedAddress()->getPChannel(),
+                          l_cmdPtr->getHashedAddress()->getRank(),
+                          l_cmdPtr->getHashedAddress()->getBankGroup(),
+                          l_cmdPtr->getHashedAddress()->getBank(),
+                          l_cmdPtr->getHashedAddress()->getRow(),
+                          l_cmdPtr->getHashedAddress()->getCol(),
+                              l_cmdPtr->getHashedAddress()->getBankId(),
+                         l_cmdPtr->getSeqNum());
+#endif
+
             }
         }
 
+  /*  if(m_outputQ.empty())
+    {
+        while(!m_inputQ.empty()) {
+            m_outputQ.push_back(m_inputQ.front());
+            m_inputQ.pop_front();
+        }
+    }*/
 }
 
 
@@ -113,3 +121,29 @@ void c_CmdScheduler::send() {
     }
 }
 
+
+bool c_CmdScheduler::push(c_BankCommand* x_cmd) {
+    uint l_bankID=x_cmd->getHashedAddress()->getBankId();
+    assert(l_bankID<m_numBanks);
+
+    //todo: modify to configure the size of command queues
+    if (m_cmdQueues.at(l_bankID)->size() < k_numCtrlIntQEntries) {
+        m_cmdQueues.at(l_bankID)->push_back(x_cmd);
+        return true;
+        //   printf("[push]sim_cycle:%lld cmdseq:%d bankid:%d size:%d\n",Simulation::getSimulation()->getCurrentSimCycle(), m_cmdQueues.at(l_bankID)->front()->getSeqNum(),  m_cmdQueues.at(l_bankID)->front()->getHashedAddress()->getBankId(), m_cmdQueues.at(l_bankID)->size());
+    } else
+        return false;
+
+    //m_cmdQueue.push_back(x_cmd);
+}
+
+
+unsigned c_CmdScheduler::getToken(const c_HashedAddress &x_addr)
+{
+   // return k_numCtrlIntQEntries-m_cmdQueue.size();
+   unsigned l_bankID=x_addr.getBankId();
+    assert(l_bankID<m_numBanks);
+
+    return k_numCtrlIntQEntries-m_cmdQueues.at(l_bankID)->size();
+
+}

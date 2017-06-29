@@ -35,6 +35,7 @@
 #include "c_TokenChgEvent.hpp"
 #include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
+#include "c_HashedAddress.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
@@ -45,6 +46,8 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     int verbosity = params.find<int>("verbose", 0);
     output = new SST::Output("CramSim.Controller[@f:@l:@p] ",
                              verbosity, 0, SST::Output::STDOUT);
+
+
     /** Get subcomponent parameters*/
     bool l_found;
     // set address hasher
@@ -110,6 +113,7 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
         exit(-1);
     }
     m_txnGenResQTokens = k_txnGenResQEntries;
+    m_ReqQTokens= k_txnReqQEntries;
     //configure SST link
     configure_link();
 
@@ -166,22 +170,55 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
 
     sendResponse();
 
-    m_thisCycleTxnQTknChg = m_txnScheduler->getToken();
+    m_thisCycleTxnQTknChg = m_ReqQ.size();
 
-    // run transaction Scheduler
+    // 1. Convert physical address to device address
+    // 2. Push transactions to the transaction queue
+    for(std::deque<c_Transaction*>::iterator l_it=m_ReqQ.begin() ; l_it!=m_ReqQ.end();)
+    {
+        c_Transaction* newTxn= *l_it;
+
+        if(newTxn->hasHashedAddress()== false)
+        {
+            c_HashedAddress l_hashedAddress;
+            m_addrHasher->fillHashedAddress(&l_hashedAddress, newTxn->getAddress());
+            newTxn->setHashedAddress(l_hashedAddress);
+        }
+
+        if(m_txnScheduler->push(newTxn)) {
+            l_it = m_ReqQ.erase(l_it);
+
+#ifdef __SST_DEBUG_OUTPUT__
+            output->debug(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d\n",
+                          Simulation::getSimulation()->getCurrentSimCycle(),
+                          newTxn->getTransactionString().c_str(),
+                          newTxn->getHashedAddress().getChannel(),
+                          newTxn->getHashedAddress().getPChannel(),
+                          newTxn->getHashedAddress().getRank(),
+                          newTxn->getHashedAddress().getBankGroup(),
+                          newTxn->getHashedAddress().getBank(),
+                          newTxn->getHashedAddress().getRow(),
+                          newTxn->getHashedAddress().getCol());
+#endif
+        }
+        else
+            l_it++;
+    }
+
+    // 3. run transaction Scheduler
     m_txnScheduler->clockTic(clock);
 
-    // run transaction converter
+    // 4. run transaction converter
     m_txnConverter->clockTic(clock);
 
-    // run command scheduler
+    // 5, run command scheduler
     m_cmdScheduler->clockTic(clock);
 
-    // run device controller
+    // 6. run device controller
     m_deviceController->clockTic(clock);
 
-    //send token to the transaction generator
-    m_thisCycleTxnQTknChg = m_txnScheduler->getToken()-m_thisCycleTxnQTknChg;
+    // 7. send token to the transaction generator
+    m_thisCycleTxnQTknChg = m_thisCycleTxnQTknChg-m_ReqQ.size();
     if (m_thisCycleTxnQTknChg > 0) {
         sendTokenChg();
     }
@@ -213,16 +250,16 @@ void c_Controller::sendResponse() {
 
     // sendResponse conditions:
     // - m_txnGenResQTokens > 0
-    // - m_txnResQ.size() > 0
-    // - m_txnResQ has an element which is response-ready
+    // - m_ResQ.size() > 0
+    // - m_ResQ has an element which is response-ready
 
-    if ((m_txnGenResQTokens > 0) && (m_txnResQ.size() > 0)) {
+    if ((m_txnGenResQTokens > 0) && (m_ResQ.size() > 0)) {
         c_Transaction* l_txnRes = nullptr;
-        for (std::vector<c_Transaction*>::iterator l_it = m_txnResQ.begin();
-             l_it != m_txnResQ.end();)  {
+        for (std::deque<c_Transaction*>::iterator l_it = m_ResQ.begin();
+             l_it != m_ResQ.end();)  {
             if ((*l_it)->isResponseReady()) {
                 l_txnRes = *l_it;
-                l_it=m_txnResQ.erase(l_it);
+                l_it=m_ResQ.erase(l_it);
                 //break;
                 c_TxnResEvent* l_txnResEvPtr = new c_TxnResEvent();
                 l_txnResEvPtr->m_payload = l_txnRes;
@@ -246,9 +283,13 @@ void c_Controller::handleIncomingTransaction(SST::Event *ev){
     c_TxnReqEvent* l_txnReqEventPtr = dynamic_cast<c_TxnReqEvent*>(ev);
 
     if (l_txnReqEventPtr) {
+        c_Transaction* newTxn=l_txnReqEventPtr->m_payload;
 
-        m_txnResQ.push_back(l_txnReqEventPtr->m_payload);
-        m_txnScheduler->push(l_txnReqEventPtr->m_payload);
+
+        m_ReqQ.push_back(newTxn);
+        m_ResQ.push_back(newTxn);
+
+
         delete l_txnReqEventPtr;
     } else {
         std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
@@ -266,7 +307,7 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
         ulong l_resSeqNum = l_cmdResEventPtr->m_payload->getSeqNum();
         // need to find which txn matches the command seq number in the txnResQ
         c_Transaction* l_txnRes = nullptr;
-        for(auto l_txIter : m_txnResQ) {
+        for(auto l_txIter : m_ResQ) {
             if(l_txIter->matchesCmdSeqNum(l_resSeqNum)) {
                 l_txnRes = l_txIter;
             }
@@ -334,5 +375,12 @@ void c_Controller::handleOutTxnGenReqQTokenChgEvent(SST::Event *ev) {
     // nothing to do here
     std::cout << __PRETTY_FUNCTION__ << " ERROR: Should not be here"
               << std::endl;
+}
+
+void c_Controller::setHashedAddress(c_Transaction* newTxn)
+{
+    c_HashedAddress l_hashedAddress;
+    m_addrHasher->fillHashedAddress(&l_hashedAddress, newTxn->getAddress());
+    newTxn->setHashedAddress(l_hashedAddress);
 }
 

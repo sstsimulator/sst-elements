@@ -43,6 +43,7 @@
 #include "c_TokenChgEvent.hpp"
 #include "c_CmdPtrPkgEvent.hpp"
 #include "c_CmdResEvent.hpp"
+#include "c_HashedAddress.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
@@ -50,8 +51,14 @@ using namespace std;
 
 c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  c_CtrlSubComponent <c_Transaction*,c_BankCommand*> (owner, x_params) {
 
-	m_nextSubComponent = dynamic_cast<c_Controller *>(owner)->getCmdScheduler();
-	m_converter = new c_TransactionToCommands(((c_Controller *) parent)->getAddrHasher());
+	m_cmdScheduler= dynamic_cast<c_Controller *>(owner)->getCmdScheduler();
+
+	for(unsigned i=0; i<m_numBanks;i++)
+	{
+        c_BankInfo* l_bankinfo= new c_BankInfo();
+        l_bankinfo->resetRowOpen();
+		m_bankInfo.push_back(l_bankinfo);
+	}
 
 	// read params here
 	bool l_found = false;
@@ -149,7 +156,10 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  
 }
 
 c_TxnConverter::~c_TxnConverter() {
-
+	for(auto &it : m_bankInfo)
+	{
+		delete it;
+	}
 }
 
 
@@ -166,103 +176,47 @@ void c_TxnConverter::printQueues() {
 }
 
 
-bool c_TxnConverter::clockTic(SST::Cycle_t){
-
-	if (k_useRefresh) {
-		// if the refresh counter is still counting, send regular Request
-		// else send REF to all banks
-		if (m_currentREFICount > 0) {
-			--m_currentREFICount;
-		} else {
-			if (!m_processingRefreshCmds) {
-				createRefreshCmds();
-				m_processingRefreshCmds = true;
-			}
-		}
-
-		//Todo: check the condition-state. (m_cmdUnitReqQTokens == k_cmdUnitReqQEntries)?
-		if (m_processingRefreshCmds && (m_refreshList.size() == 0)
-			/*&& (m_cmdUnitReqQTokens == k_cmdUnitReqQEntries)*/) {
-			// refresh was started and now we have all tokens from CmdUnit CmdReqQ and the refresh list container is empty so refresh must have finished
-			// therefore now we can start another refresh cycle
-		        m_currentREFICount = (int)((double)k_REFI/m_refreshGroups.size());
-			m_processingRefreshCmds = false;
-		}
-	}
+bool c_TxnConverter::clockTic(SST::Cycle_t) {
 
 	run();
-	send();
 
 	s_reqQueueSize->addData(m_inputQ.size());
-//	s_resQueueSize->addData(m_txnResQ.size());
-
 	return false;
 }
 
 
-void c_TxnConverter::createRefreshCmds() {
-
-	m_refreshList = m_converter->getRefreshCommands(m_refreshGroups[m_currentRefreshGroup]);
-	m_currentRefreshGroup++;
-	if(m_currentRefreshGroup >= m_refreshGroups.size()) {
-	  m_currentRefreshGroup = 0;
-	}
-}
-
 void c_TxnConverter::run(){
-	//std::cout<<"m_inputQ pre size():"<<m_inputQ.size()<<std::endl;
-	// convert transactions to commands and push them into the command queue
-	if(m_outputQ.size()==0) {
-		if (m_refreshList.size() > 0) {
-			while (!m_refreshList.empty()) {
-				m_outputQ.push_back(m_refreshList.front());
-				m_refreshList.pop();
-			}
-		} else if ((m_inputQ.size() > 0) && !m_processingRefreshCmds) {
-			while(!m_inputQ.empty())
-			{
-                c_Transaction *l_reqTxn = m_inputQ.front();
 
-                //Convert a transaction to commands
-                std::vector<c_BankCommand *> l_cmdPkg = m_converter->getCommands(l_reqTxn, k_relCommandWidth, k_useReadA,
-                                                                                 k_useWriteA);
-                m_inputQ.pop_front();
+	for (std::deque<c_Transaction*>::iterator l_it=m_inputQ.begin(); l_it!=m_inputQ.end();) {
+		c_Transaction* l_reqTxn=*l_it;
 
-                for (std::vector<c_BankCommand *>::iterator it = l_cmdPkg.begin(); it != l_cmdPkg.end(); ++it) {
-					//print debug messages
-#if 0
-                    if(isDebugEnabled(TXNCVT))
-                        (*it)->print(m_debugOutput);
-#endif
-					m_outputQ.push_back(*it);
+		//1. Convert a transaction to commands
+		unsigned l_numToken=m_cmdScheduler->getToken(l_reqTxn->getHashedAddress());
+		if(l_numToken>=3) {
+			std::vector<c_BankCommand *> l_cmdPkg = getCommands(l_reqTxn);
+
+			//2. Send commands to the command scheduler
+			if (!l_cmdPkg.empty()) {
+				for (auto &it : l_cmdPkg) {
+					bool isSuccess = m_cmdScheduler->push(it);
+					assert(isSuccess);
 				}
-			}
-		}
+				updateBankInfo(l_reqTxn);
+				l_it = m_inputQ.erase(l_it);
+
+			} else
+				l_it++;
+		} else
+			l_it++;
 	}
 }
 
 
 void c_TxnConverter::send() {
-	int token=m_nextSubComponent->getToken();
-
-	while(token>0 && !m_outputQ.empty()) {
-		//print debug message
-		debug(m_debugPrefix.c_str(), m_debugMask, 1," send command to scheduler: Ch:%d, pCh:%d, rank:%d, bg:%d, b:%d, cl: %d\n",
-			  m_outputQ.front()->getHashedAddress()->getChannel(),
-			  m_outputQ.front()->getHashedAddress()->getPChannel(),
-			  m_outputQ.front()->getHashedAddress()->getRank(),
-			  m_outputQ.front()->getHashedAddress()->getBankGroup(),
-			  m_outputQ.front()->getHashedAddress()->getBank(),
-			  m_outputQ.front()->getHashedAddress()->getCacheline());
-
-		m_nextSubComponent->push(m_outputQ.front());
-		m_outputQ.pop_front();
-		token--;
-	}
+	;
 }
 
-
-void c_TxnConverter::push(c_Transaction* newTxn) {
+bool c_TxnConverter::push(c_Transaction* newTxn) {
 
 	// make sure the internal req q has at least one empty entry
 	// to accept a new txn ptr
@@ -274,5 +228,143 @@ void c_TxnConverter::push(c_Transaction* newTxn) {
 		}
 		s_totalTxnsRecvd->addData(1);
 
-		c_CtrlSubComponent<c_Transaction*,c_BankCommand*>::push(newTxn);
+		if(m_inputQ.size()<k_numCtrlIntQEntries) {
+			m_inputQ.push_back(newTxn);
+			return true;
+		} else
+			return false;
+}
+
+
+std::vector<c_BankCommand*> c_TxnConverter::getCommands(c_Transaction* x_txn) {
+
+	std::vector<c_BankCommand*> l_commandVec;
+
+	//2. Generate a command sequence for a transaction
+	unsigned l_numCmdsPerTrans = x_txn->getDataWidth() / k_relCommandWidth;
+	for (unsigned l_i = 0; l_i < l_numCmdsPerTrans; ++l_i) {
+		ulong l_nAddr = x_txn->getAddress() + (k_relCommandWidth * l_i);
+		const c_HashedAddress &l_hashedAddr=x_txn->getHashedAddress();
+
+		getPreCommands(l_commandVec,x_txn,l_nAddr);
+		getPostCommands(l_commandVec,x_txn,l_nAddr);
+	}
+
+	//3. Set the information of the generated commands for the transaction
+	x_txn->setWaitingCommands(1);
+	x_txn->isProcessed(true);
+	for (auto& l_cmd : l_commandVec) {
+		x_txn->addCommandPtr(l_cmd); // only copies seq num
+	}
+
+	return (l_commandVec);
+}
+
+
+void c_TxnConverter::getPreCommands(
+		std::vector<c_BankCommand*> &x_commandVec, c_Transaction* x_txn, ulong x_nAddr) {
+	unsigned l_bankId=x_txn->getHashedAddress().getBankId();
+	c_BankInfo* l_bankinfo=m_bankInfo.at(l_bankId);
+	const c_HashedAddress &l_hashedAddr=x_txn->getHashedAddress();
+
+	//close policy
+	if(k_bankPolicy==0)
+	{
+		x_commandVec.push_back(
+			new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::ACT, x_nAddr, l_hashedAddr));
+	}//open policy
+	else if(k_bankPolicy==1)
+	{
+		if(l_bankinfo->isRowOpen())
+		{
+			unsigned l_row = x_txn->getHashedAddress().getRow();
+
+			if(l_bankinfo->getOpenRowNum()!=l_row) {
+				//other row is open, so need to close
+				x_commandVec.push_back(new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::PRE, x_nAddr, l_hashedAddr));
+				//open row
+				x_commandVec.push_back(new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::ACT, x_nAddr, l_hashedAddr));
+			}
+		} else
+		{
+			//open row
+			x_commandVec.push_back(
+					new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::ACT, x_nAddr, l_hashedAddr));
+		}
+	}
+}
+
+
+void c_TxnConverter::getPostCommands(
+		std::vector<c_BankCommand*> &x_commandVec,  c_Transaction* x_txn, ulong x_nAddr) {
+
+	const c_HashedAddress &l_hashedAddr = x_txn->getHashedAddress();
+	e_BankCommandType l_CmdType;
+	bool l_useAutoPRE=false;
+
+	if(k_bankPolicy==0) //close policy
+	{
+		//1. Decode column command
+		if (e_TransactionType::READ == x_txn->getTransactionMnemonic())
+		{
+			if(k_useReadA) {
+				l_CmdType=e_BankCommandType::READA;
+				l_useAutoPRE=true;
+			} else {
+				l_CmdType=e_BankCommandType::READ;
+				l_useAutoPRE=false;
+			}
+		} else {
+			if(k_useReadA) {
+				l_CmdType=e_BankCommandType::WRITEA;
+				l_useAutoPRE=true;
+			}
+			else {
+				l_CmdType=e_BankCommandType::WRITE;
+				l_useAutoPRE=false;
+			}
+		}
+
+		x_commandVec.push_back(
+				new c_BankCommand(m_cmdSeqNum++, l_CmdType, x_nAddr, l_hashedAddr));
+
+		// Last command will be precharge IFF ReadA is not used
+		if (!l_useAutoPRE)
+			x_commandVec.push_back(
+					new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::PRE,
+									  x_nAddr, l_hashedAddr));
+
+	} else if(k_bankPolicy==1){		//open row policy
+
+		if (e_TransactionType::READ == x_txn->getTransactionMnemonic())
+				l_CmdType=e_BankCommandType::READ;
+		else
+				l_CmdType=e_BankCommandType::WRITE;
+
+		x_commandVec.push_back(
+				new c_BankCommand(m_cmdSeqNum++, l_CmdType, x_nAddr, l_hashedAddr));
+
+	} else{
+		printf("bank policy error!!");
+		exit(1);
+	}
+}
+
+
+void c_TxnConverter::updateBankInfo(c_Transaction* x_txn)
+{
+	unsigned l_bankid=x_txn->getHashedAddress().getBankId();
+	unsigned l_row=x_txn->getHashedAddress().getRow();
+
+	if(k_bankPolicy==0)//close policy
+	{
+		m_bankInfo.at(l_bankid)->resetRowOpen();
+	} else if(k_bankPolicy==1) //open row policy
+	{
+		m_bankInfo.at(l_bankid)->setRowOpen();
+		m_bankInfo.at(l_bankid)->setOpenRowNum(l_row);
+	} else{
+		printf("bank policy error!!");
+		exit(1);
+	}
 }

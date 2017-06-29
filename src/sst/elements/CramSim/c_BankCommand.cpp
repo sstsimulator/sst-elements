@@ -36,7 +36,7 @@ using namespace SST::n_Bank;
 
 c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 			     e_BankCommandType x_cmdMnemonic, ulong x_addr,
-			     c_HashedAddress &x_hashedAddr) :
+			     const c_HashedAddress &x_hashedAddr) :
 		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
 		m_isResponseReady(false), m_hashedAddr(x_hashedAddr) {
 

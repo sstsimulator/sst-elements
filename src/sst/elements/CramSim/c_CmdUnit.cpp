@@ -60,6 +60,7 @@ using namespace SST::n_Bank;
 c_DeviceController::c_DeviceController(Component *owner, Params& x_params) : c_CtrlSubComponent<c_BankCommand*,c_BankCommand*>(owner, x_params) {
 
 	m_Owner = dynamic_cast<c_Controller *>(owner);
+    output = m_Owner->getOutput();
 
 	m_refsSent = 0;
 	m_inflightWrites.clear();
@@ -213,8 +214,6 @@ void c_DeviceController::printQueues() {
 
 bool c_DeviceController::clockTic(SST::Cycle_t) {
 
-
-
 	for (int l_i = 0; l_i != m_banks.size(); ++l_i) {
 
 		m_banks.at(l_i)->clockTic();
@@ -222,7 +221,6 @@ bool c_DeviceController::clockTic(SST::Cycle_t) {
 	}
 	run();
 	send();
-
 
 }
 
@@ -235,6 +233,7 @@ bool c_DeviceController::isCmdAllowed(c_BankCommand* x_bankCommandPtr)
 	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 	// get count of ACT cmds issued in the FAW
 	unsigned l_bankId=x_bankCommandPtr->getHashedAddress()->getBankId();
+
 
 
 	if ((x_bankCommandPtr)->getCommandMnemonic() == e_BankCommandType::REF)
@@ -255,9 +254,9 @@ bool c_DeviceController::isCmdAllowed(c_BankCommand* x_bankCommandPtr)
 	}
 
     //todo: remove?
-	if(!m_blockBank.empty())
-		if(m_blockBank.at(l_bankId))
-			return false;
+	//if(!m_blockBank.empty())
+	//	if(m_blockBank.at(l_bankId))
+	//		return false;
 
     //check timing constraints
 	if (!m_banks.at(l_bankId)->isCommandAllowed(x_bankCommandPtr, l_time))
@@ -276,15 +275,14 @@ bool c_DeviceController::isCmdAllowed(c_BankCommand* x_bankCommandPtr)
 //
 // Iterate through the cmdReqQ and mark the bank to which a cmd cannot go
 // do not send any further cmds to that bank
-void c_DeviceController::sendRequest(
-		std::deque<c_BankCommand*>::iterator x_startItr) {
+void c_DeviceController::sendRequest() {
 
-// do the member var setup up before calling any req sending policy function
+	m_blockBank.resize(m_numBanks,false);
+
+	// do the member var setup up before calling any req sending policy function
 	if(m_inflightWrites.size()>0)
 		m_inflightWrites.clear();
 
-	m_blockBank.clear();
-	m_blockBank.resize(m_numBanks, false);
 	releaseCommandBus();  //update the command bus status
 
 	// get count of ACT cmds issued in the FAW
@@ -294,12 +292,12 @@ void c_DeviceController::sendRequest(
 	{
 		l_numACTIssuedInFAW.push_back(getNumIssuedACTinFAW(l_rankId));
 	}
-	std::vector<unsigned> l_isACTIssued;
-	l_isACTIssued.clear();
-	l_isACTIssued.resize(m_numRanks,0);
+
+	m_isACTIssued.clear();
+	m_isACTIssued.resize(m_numRanks,false);
 
 
-	for (auto l_cmdPtrItr = x_startItr; l_cmdPtrItr != m_inputQ.end();)  {
+	for (auto l_cmdPtrItr = m_inputQ.begin(); l_cmdPtrItr != m_inputQ.end();)  {
 		c_BankCommand* l_cmdPtr = (*l_cmdPtrItr);
 		bool l_proceed = true;
 		unsigned l_bankNum = l_cmdPtr->getHashedAddress()->getBankId();
@@ -365,8 +363,8 @@ void c_DeviceController::sendRequest(
 					bool l_isACT= (e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic());
 					if(l_isACT)
 					{
-						assert(l_isACTIssued[l_rankNum]==0);
-						l_isACTIssued[l_rankNum] = true;
+						assert(m_isACTIssued[l_rankNum]==false);
+						m_isACTIssued[l_rankNum] = true;
 					}
 
 					if (occupyCommandBus(l_cmdPtr))
@@ -378,13 +376,6 @@ void c_DeviceController::sendRequest(
 		}
 		++l_cmdPtrItr;
 	}// for
-
-	//update ACTFAWTracker info
-	for(int l_rankNum=0;l_rankNum<m_numRanks;l_rankNum++) {
-		m_cmdACTFAWtrackers[l_rankNum].push_back(
-				l_isACTIssued[l_rankNum] ? static_cast<unsigned>(1) : static_cast<unsigned>(0));
-		m_cmdACTFAWtrackers[l_rankNum].pop_front();
-	}
 }
 
 //
@@ -833,10 +824,20 @@ void c_DeviceController::run() {
     m_blockBank.clear();
     m_blockBank.resize(m_numBanks, false);
     releaseCommandBus();  //update the command bus status
+	m_isACTIssued.clear();
+	m_isACTIssued.resize(m_numRanks,false);
 
 	if (m_inputQ.size() > 0 ) {
-		sendRequest(m_inputQ.begin());
+		sendRequest();
 	}
+
+	//update ACTFAWTracker info
+	for(int l_rankNum=0;l_rankNum<m_numRanks;l_rankNum++) {
+		m_cmdACTFAWtrackers[l_rankNum].push_back(
+				m_isACTIssued[l_rankNum] ? static_cast<unsigned>(1) : static_cast<unsigned>(0));
+		m_cmdACTFAWtrackers[l_rankNum].pop_front();
+	}
+
 }
 /*
 void c_DeviceController::run() {
@@ -1047,6 +1048,20 @@ bool c_DeviceController::sendCommand(c_BankCommand* x_bankCommandPtr,
 	    }
 	  }
 
+#ifdef __SST_DEBUG_OUTPUT__
+        output->debug(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\\n",
+                      Simulation::getSimulation()->getCurrentSimCycle(),
+                      x_bankCommandPtr->getCommandString().c_str(),
+                      x_bankCommandPtr->getHashedAddress()->getChannel(),
+                      x_bankCommandPtr->getHashedAddress()->getPChannel(),
+                      x_bankCommandPtr->getHashedAddress()->getRank(),
+                      x_bankCommandPtr->getHashedAddress()->getBankGroup(),
+                      x_bankCommandPtr->getHashedAddress()->getBank(),
+                      x_bankCommandPtr->getHashedAddress()->getRow(),
+                      x_bankCommandPtr->getHashedAddress()->getCol(),
+						x_bankCommandPtr->getHashedAddress()->getBankId(),
+						x_bankCommandPtr->getSeqNum());
+#endif
 		// send command to BankState
 		x_bank->handleCommand(x_bankCommandPtr, l_time);
 

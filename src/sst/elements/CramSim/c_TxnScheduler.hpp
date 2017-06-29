@@ -45,19 +45,31 @@ namespace SST {
             ~c_TxnScheduler();
 
             bool clockTic(SST::Cycle_t);
+            bool push(c_Transaction* newTxn);
 
             void print() const; // print internals
 
         private:
-
-            c_TxnConverter *m_nextSubComponent;
-
             virtual void run();
-            virtual void send();
+            virtual void send(){};
+            c_Transaction* getNextTxn(int x_ch);
+            void popTxn(int x_ch, c_Transaction* x_txn);
+
+
+            //**transaction converter
+            c_TxnConverter *m_txnConverter;
+            //**Address mapper
+            c_AddressHasher *m_addrHasher;
+            //**per-channel transaction Queue
+            std::vector<std::list<c_Transaction*>> m_txnQ;
+            //**ID of the channel which will be scheduled first at the next cycle
+            int m_nextChannel;
+
+            Output *output;
+
 
         };
     }
 }
-
 
 #endif //C_TRANSACTIONSCHEDULER_HPP
