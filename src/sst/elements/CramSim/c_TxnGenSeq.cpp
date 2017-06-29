@@ -122,8 +122,11 @@ c_TxnGenSeq::c_TxnGenSeq(ComponentId_t x_id, Params& x_params) :
 			new Event::Handler<c_TxnGenSeq>(this,
 					&c_TxnGenSeq::handleOutTxnGenResQTokenChgEvent));
 
+	// get configured clock frequency
+	std::string l_controllerClockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
+	
 	//set our clock
-	registerClock("1GHz",
+	registerClock(l_controllerClockFreqStr,
 			new Clock::Handler<c_TxnGenSeq>(this, &c_TxnGenSeq::clockTic));
 }
 

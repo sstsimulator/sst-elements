@@ -102,11 +102,15 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
         exit(-1);
     }
     m_txnGenResQTokens = k_txnGenResQEntries;
+
+    // get configured clock frequency
+    k_controllerClockFreqStr = (string)params.find<string>("strControllerClockFrequency", "1GHz", l_found);
+    
     //configure SST link
     configure_link();
 
     //set our clock
-    registerClock("1GHz",
+    registerClock(k_controllerClockFreqStr,
                   new Clock::Handler<c_Controller>(this, &c_Controller::clockTic));
 
 }
