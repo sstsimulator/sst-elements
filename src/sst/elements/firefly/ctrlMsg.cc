@@ -35,27 +35,20 @@ API::~API()
     delete m_xxx;
 }
 
+void API::setup() { 
+    m_xxx->setup();
+}
 void API::finish() { 
     m_xxx->finish();
 }
 
-void API::init( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem )
+void API::setVars( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem, Link* retLink )
 {
-    m_xxx->init( info, nic, mem );
+    m_xxx->setVars( info, nic, mem, retLink );
 }
 
-void API::setup() 
-{
-    m_xxx->setup();
-}
-
-void API::setRetLink( Link* link ) 
-{
-    m_xxx->setRetLink( link );
-}
-
-void API::init() {
-	m_xxx->init();
+void API::initMsgPassing() {
+	m_xxx->initMsgPassing();
 }
 
 void API::makeProgress() {

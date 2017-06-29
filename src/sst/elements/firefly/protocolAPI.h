@@ -31,12 +31,13 @@ class ProtocolAPI : public SST::SubComponent
 
     ProtocolAPI( Component* parent ) : SubComponent( parent ) {}
     virtual ~ProtocolAPI() {}
+#if 0
     virtual void printStatus( Output& ) {}
     virtual void setup() {};
     virtual void finish() {};
-    virtual void init( Info*, VirtNic*, Thornhill::MemoryHeapLink* ) = 0;  
+#endif
+    virtual void setVars( Info*, VirtNic*, Thornhill::MemoryHeapLink*, Link* ) = 0;  
     virtual std::string name() = 0;
-    virtual void setRetLink(SST::Link* link) { assert(0); } 
 };
 
 }

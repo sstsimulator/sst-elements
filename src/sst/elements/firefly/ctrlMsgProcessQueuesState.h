@@ -24,6 +24,7 @@
 #include "info.h"
 #include "heapAddrs.h"
 #include "ctrlMsgTiming.h"
+#include "loopBack.h"
 
 #include "ctrlMsgCommReq.h"
 #include "ctrlMsgWaitReq.h"
@@ -42,28 +43,52 @@ static const key_t ReadRspKey  = 0 << (sizeof(key_t) * 8 - 2);
 
 class MemoryBase;
 
-class ProcessQueuesState
+class ProcessQueuesState : SubComponent
 {
+    typedef std::function<void(nid_t, uint32_t, size_t)> Callback2;
+    typedef std::function<void()> VoidFunction;
+
+    class DelayEvent : public SST::Event {
+      public:
+
+        DelayEvent( VoidFunction _callback ) :
+            Event(),
+            callback( _callback )
+        {}
+
+        VoidFunction                callback;
+
+        NotSerializable(DelayEvent)
+    };
+
+    class LoopBackEvent : public LoopBackEventBase {
+      public:
+        LoopBackEvent( std::vector<IoVec>& _vec, int core, void* _key ) :
+            LoopBackEventBase( core ), vec( _vec ), key( _key ), response( false )
+        {}
+
+        LoopBackEvent( int core, void* _key ) : LoopBackEventBase( core ), key( _key ), response( true )
+        {}
+
+        std::vector<IoVec>  vec;
+        void*               key;
+        bool                response;
+
+        NotSerializable(LoopBackEvent)
+    };
+
     static const unsigned long MaxPostedShortBuffers = 512;
     static const unsigned long MinPostedShortBuffers = 5;
 
-    typedef std::function<void(nid_t, uint32_t, size_t)> Callback2;
-    typedef std::function<void()> VoidFunction;
-    typedef std::function<void(VoidFunction,uint64_t)> SchedCallback;
-    typedef std::function<void(uint64_t)> ReturnToCaller;
-    typedef std::function<void(std::vector<IoVec>&, int, void*)> SendLoopReqFunc;
-    typedef std::function<void(int, void*)> SendLoopRespFunc;
-    typedef std::function<void(uint64_t,std::function<void(uint64_t)> )> HeapAllocFunc;
-    typedef std::function<void(uint32_t)> IncStatFunc;
 
   public:
-    ProcessQueuesState( int verbose, int mask, VirtNic* nic, Info* info, 
-            MemoryBase*, MsgTiming*, SchedCallback, ReturnToCaller, 
-            SendLoopReqFunc, SendLoopRespFunc, HeapAllocFunc, IncStatFunc, IncStatFunc );
-
+    ProcessQueuesState( Component* owner, Params& params );
     ~ProcessQueuesState();
-
+    void setup() {}
     void finish();
+
+    void setVars( VirtNic* nic, Info* info, MemoryBase* mem, 
+        Thornhill::MemoryHeapLink* m_memHeapLink, Link* returnToCaller );
 
     void enterInit( bool );
     void enterSend( _CommReq*, uint64_t exitDelay = 0 );
@@ -73,10 +98,10 @@ class ProcessQueuesState
 
     void needRecv( int, int, size_t );
 
-    void loopHandler( int, std::vector<IoVec>&, void* );
-    void loopHandler( int, void* );
-
   private:
+
+    void loopHandler( Event* );
+    void delayHandler( Event* );
 
     struct CtrlHdr {
         key_t     key;
@@ -300,7 +325,7 @@ class ProcessQueuesState
 
     void exit( int delay = 0 ) {
         dbg().verbose(CALL_INFO,2,1,"exit ProcessQueuesState\n"); 
-        m_returnToCaller( m_exitDelay + delay );
+        passCtrlToFunction( m_exitDelay + delay );
         m_exitDelay = 0;
     }
 
@@ -359,24 +384,28 @@ class ProcessQueuesState
     }
 
     void schedCallback( VoidFunction callback, uint64_t delay = 0) {
-        m_schedCB( callback, delay );
+        m_delayLink->send( delay, new DelayEvent(callback) );
     }  
     void passCtrlToFunction( uint64_t delay = 0 ) {
-        m_returnToCaller( delay );
+        m_returnToCaller->send( delay, NULL );
     }
 
+    void memHeapAlloc( size_t bytes, std::function<void(uint64_t)> callback ) {
+        m_memHeapLink->alloc( bytes, callback );
+    }
+
+    void loopHandler( int, std::vector<IoVec>&, void* );
+    void loopHandler( int, void* );
+    void loopSendReq( std::vector<IoVec>&, int, void* );
+    void loopSendResp( int, void* );
+
+    Output      m_dbg;
     VirtNic*    m_nic;
     Info*       m_info;
     MemoryBase* m_mem;
+    Thornhill::MemoryHeapLink* m_memHeapLink;
     MsgTiming*  m_msgTiming;
-    Output      m_dbg;
-    SchedCallback m_schedCB;
-    ReturnToCaller m_returnToCaller;
-    SendLoopReqFunc    m_sendLoopReqFunc;
-    SendLoopRespFunc   m_sendLoopRespFunc;
-    HeapAllocFunc     m_memHeapAlloc;
-    IncStatFunc   m_statPstdRcv_addData;
-    IncStatFunc   m_statRcvdMsg_addData;
+
 
     key_t   m_getKey;
     key_t   m_rspKey;
@@ -401,6 +430,13 @@ class ProcessQueuesState
     uint64_t        m_exitDelay;
 
     HeapAddrs*      m_simVAddrs;
+
+    Link*   m_loopLink;
+    Link*   m_delayLink;
+    Link*   m_returnToCaller;
+
+    Statistic<uint64_t>* m_statRcvdMsg;
+    Statistic<uint64_t>* m_statPstdRcv;
 };
 
 }

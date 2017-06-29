@@ -37,7 +37,7 @@ class InitFuncSM :  public FunctionSMInterface
 
 		m_event = static_cast<InitStartEvent*>(e);
 
-        proto()->init( );
+        proto()->initMsgPassing( );
     }
 
     void handleEnterEvent( Retval& retval ) {

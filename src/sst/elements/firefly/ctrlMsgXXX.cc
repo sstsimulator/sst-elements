@@ -33,7 +33,6 @@ using namespace SST;
 
 XXX::XXX( Component* parent, Params& params ) :
     SubComponent( parent ),
-    m_retLink( NULL ),
     m_memHeapLink( NULL ),
     m_info( NULL ),
     m_processQueuesState( NULL )
@@ -41,36 +40,25 @@ XXX::XXX( Component* parent, Params& params ) :
     m_dbg_level = params.find<uint32_t>("verboseLevel",0);
     m_dbg_mask = params.find<int32_t>("verboseMask",-1);
 
-    m_statPstdRcv = registerStatistic<uint64_t>("posted_receive_list");
-    m_statRcvdMsg = registerStatistic<uint64_t>("received_msg_list");
-
     m_dbg.init("@t:CtrlMsg::@p():@l ", 
         m_dbg_level, 
         m_dbg_mask,
         Output::STDOUT );
 
-    std::stringstream ss;
-    ss << this;
+    m_processQueuesState = new ProcessQueuesState( parent, params ); 
 
-    m_delayLink = configureSelfLink( 
-        "CtrlMsgSelfLink." + ss.str(), "1 ns",
-        new Event::Handler<XXX>(this,&XXX::delayHandler));
-
-    Memory::SchedCallback cb = std::bind( &XXX::schedCallback, this, std::placeholders::_1, std::placeholders::_2 );
-    m_mem = new Memory( parent, params, m_dbg, cb );
-    m_msgTiming = new MsgTiming( parent, params, m_dbg );
+    m_mem = new Memory( parent, params );
+    static_cast<Memory*>(m_mem)->setOutput( &m_dbg );
 
     m_sendStateDelay = params.find<uint64_t>( "sendStateDelay_ps", 0 );
     m_recvStateDelay = params.find<uint64_t>( "recvStateDelay_ps", 0 );
     m_waitallStateDelay = params.find<uint64_t>( "waitallStateDelay_ps", 0 );
     m_waitanyStateDelay = params.find<uint64_t>( "waitanyStateDelay_ps", 0 );
-
-    m_loopLink = configureLink(
-			params.find<std::string>("loopBackPortName", "loop"), "1 ns",
-            new Event::Handler<XXX>(this,&XXX::loopHandler) );
-    assert(m_loopLink);
 }
 
+void XXX::setup() { 
+    m_processQueuesState->setup(); 
+}
 void XXX::finish() { 
     m_processQueuesState->finish(); 
 }
@@ -80,11 +68,10 @@ XXX::~XXX()
 	if ( m_processQueuesState) delete m_processQueuesState;
 }
 
-void XXX::init( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem  )
+void XXX::setVars( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem, Link* retLink  )
 {
     m_info = info;
-    m_nic = nic;
-    m_memHeapLink = mem;
+
     nic->setNotifyOnGetDone(
         new VirtNic::Handler<XXX,void*>(this, &XXX::notifyGetDone )
     );
@@ -99,30 +86,12 @@ void XXX::init( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem  )
         new VirtNic::Handler3Args<XXX,int,int,size_t>(
                                 this, &XXX::notifyNeedRecv )
     );
-}
 
-void XXX::setup() 
-{
     char buffer[100];
-    snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::XXX::@p():@l ",m_nic->getNodeId(), 
-                                                m_info->worldRank());
+    snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::XXX::@p():@l ", nic->getNodeId(), m_info->worldRank());
     m_dbg.setPrefix(buffer);
 
-    m_processQueuesState = new ProcessQueuesState(
-            m_dbg_level, m_dbg_mask, m_nic, m_info, m_mem, m_msgTiming,
-            std::bind( &XXX::schedCallback, this, std::placeholders::_1, std::placeholders::_2 ),
-            std::bind( &XXX::passCtrlToFunction, this, std::placeholders::_1 ),
-            std::bind( &XXX::loopSendReq, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3 ),
-            std::bind( &XXX::loopSendResp, this, std::placeholders::_1, std::placeholders::_2 ),
-            std::bind( &XXX::memHeapAlloc, this, std::placeholders::_1, std::placeholders::_2 ),
-            std::bind( &XXX::statPstdRcv_addData, this, std::placeholders::_1 ),
-            std::bind( &XXX::statRcvdMsg_addData, this, std::placeholders::_1 )
-       );
-}
-
-void XXX::setRetLink( Link* link ) 
-{
-    m_retLink = link;
+    m_processQueuesState->setVars( nic, m_info, m_mem, m_memHeapLink, retLink );
 }
 
 static size_t calcLength( std::vector<IoVec>& ioVec )
@@ -134,36 +103,9 @@ static size_t calcLength( std::vector<IoVec>& ioVec )
     return len;
 }
 
-void XXX::loopSendReq( std::vector<IoVec>& vec, int core, void* key ) 
-{
-    m_dbg.verbose(CALL_INFO,1,1,"dest core=%d key=%p\n",core,key);    
-    
-    m_loopLink->send(0, new LoopBackEvent( vec, core, key ) );
-}    
-
-void XXX::loopSendResp( int core, void* key ) 
-{
-    m_dbg.verbose(CALL_INFO,1,1,"dest core=%d key=%p\n",core,key);    
-    m_loopLink->send(0, new LoopBackEvent( core, key ) );
-}
-
-void XXX::loopHandler( Event* ev )
-{
-    LoopBackEvent* event = static_cast< LoopBackEvent* >(ev);
-    m_dbg.verbose(CALL_INFO,1,1,"%s key=%p\n",
-        event->vec.empty() ? "Response" : "Request", event->key);    
-
-    if ( event->vec.empty() ) {
-        m_processQueuesState->loopHandler(event->core, event->key );
-    } else { 
-        m_processQueuesState->loopHandler(event->core, event->vec, event->key);
-    }
-    delete ev;
-}
-
 // **********************************************************************
 
-void XXX::init() {
+void XXX::initMsgPassing() {
    	m_processQueuesState->enterInit( (m_memHeapLink) );
 }
 void XXX::makeProgress() {
@@ -284,22 +226,6 @@ void XXX::waitAll( int count, MP::MessageRequest req[],
 
 // **********************************************************************
 
-void XXX::schedCallback( Callback callback, uint64_t delay )
-{
-    m_dbg.verbose(CALL_INFO,1,1,"delay=%" PRIu64 "\n",delay);
-    m_delayLink->send( delay, new DelayEvent(callback) );
-}
-
-void XXX::delayHandler( SST::Event* e )
-{
-    DelayEvent* event = static_cast<DelayEvent*>(e);
-    
-    m_dbg.verbose(CALL_INFO,2,1,"execute callback\n");
-
-    event->callback();
-    delete e;
-}
-
 bool XXX::notifyGetDone( void* key )
 {
     m_dbg.verbose(CALL_INFO,1,1,"key=%p\n",key);
@@ -346,12 +272,4 @@ bool XXX::notifyNeedRecv(int nid, int tag, size_t len )
     m_processQueuesState->needRecv( nid, tag, len );
     
     return true;
-}
-
-void XXX::passCtrlToFunction( uint64_t delay )
-{
-    m_dbg.verbose(CALL_INFO,1,1,"back to Function delay=%" PRIu64 "\n",
-                                delay );
-
-    m_retLink->send( delay, NULL ); 
 }

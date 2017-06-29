@@ -18,13 +18,11 @@
 
 #include "ctrlMsg.h"
 #include <stdlib.h>
-#include "loopBack.h"
 
 namespace SST {
 namespace Firefly {
 namespace CtrlMsg {
 
-class MsgTiming;
 class MemoryBase;
 class ProcessQueuesState;
 
@@ -33,48 +31,17 @@ class XXX : SubComponent  {
     typedef std::function<void()> Callback;
     typedef std::function<void(nid_t, uint32_t, size_t)> Callback2;
 
-    class LoopBackEvent : public LoopBackEventBase {
-      public:
-        LoopBackEvent( std::vector<IoVec>& _vec, int core, void* _key ) :
-            LoopBackEventBase( core ), vec( _vec ), key( _key ), response( false )
-        {}
-
-        LoopBackEvent( int core, void* _key ) : LoopBackEventBase( core ), key( _key ), response( true )
-        {}
-
-        std::vector<IoVec>  vec;
-        void*               key;
-        bool                response;
-
-        NotSerializable(LoopBackEvent)
-    };
-
-    class DelayEvent : public SST::Event {
-      public:
-
-        DelayEvent( Callback _callback ) :
-            Event(), 
-            callback( _callback )
-        {}
-
-        Callback                callback;
-        
-        NotSerializable(DelayEvent)
-    };
-
-
   public:
 
     XXX( Component* owner, Params& params );
     ~XXX();
 
-    void init( Info* info, VirtNic*, Thornhill::MemoryHeapLink* );
-    void setRetLink( Link* link );
     void setup();
     void finish();
-    void init();
     
-  public:
+    void setVars( Info* info, VirtNic*, Thornhill::MemoryHeapLink*, Link* retLink );
+
+    void initMsgPassing();
     void makeProgress();
     void sendv( std::vector<IoVec>&,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
@@ -111,16 +78,11 @@ class XXX : SubComponent  {
         MP::MessageResponse* resp[] );
 
   private:
-    void schedCallback( Callback, uint64_t delay = 0 );
-    void passCtrlToFunction( uint64_t delay = 0 );
-    void delayHandler( Event* );
-    void loopHandler( Event* );
+
     bool notifyGetDone( void* );
     bool notifySendPioDone( void* );
     bool notifyRecvDmaDone( int, int, size_t, void* );
     bool notifyNeedRecv( int, int, size_t );
-    void loopSendReq( std::vector<IoVec>&, int, void* );
-    void loopSendResp( int, void* );
 
     uint64_t sendStateDelay() { return m_sendStateDelay; }
     uint64_t recvStateDelay() { return m_recvStateDelay; }
@@ -130,37 +92,22 @@ class XXX : SubComponent  {
     void memHeapAlloc( size_t bytes, std::function<void(uint64_t)> callback ) {
         m_memHeapLink->alloc( bytes, callback );
     }
-    void statPstdRcv_addData( uint32_t num ) {
-        m_statPstdRcv->addData(num);
-    }
-    void statRcvdMsg_addData( uint32_t num ) {
-        m_statRcvdMsg->addData(num);
-    }
 
     Output          m_dbg;
     int             m_dbg_level;
     int             m_dbg_mask;
 
-    Link*           m_retLink;
-    Link*           m_delayLink;
-    Link*           m_loopLink;
-    Thornhill::MemoryHeapLink* m_memHeapLink;
-
     ProcessQueuesState*     m_processQueuesState;
 
-    Info*           m_info;
-    VirtNic*        m_nic;
-    MemoryBase*     m_mem;
-    MsgTiming*      m_msgTiming;
+    Thornhill::MemoryHeapLink* m_memHeapLink;
 
-    Statistic<uint64_t>* m_statRcvdMsg;
-    Statistic<uint64_t>* m_statPstdRcv;
+    Info*       m_info;
+    MemoryBase* m_mem;
 
     uint64_t m_sendStateDelay;
     uint64_t m_recvStateDelay;
     uint64_t m_waitallStateDelay;
     uint64_t m_waitanyStateDelay;
-
 };
 
 }
