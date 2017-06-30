@@ -15,8 +15,6 @@ libfirefly_la_SOURCES = \
 	group.h \
 	ctrlMsg.cc \
 	ctrlMsg.h \
-	ctrlMsgXXX.cc \
-	ctrlMsgXXX.h \
 	ctrlMsgFunctors.h \
 	ctrlMsgProcessQueuesState.h \
 	ctrlMsgProcessQueuesState.cc \
