@@ -18,15 +18,17 @@ def read_arguments():
             boolUseRandomTrace = False
             print "Trace file:", trace_file
 
-        if arg.find("--configfile=") != -1:
+        elif arg.find("--configfile=") != -1:
             substrIndex = arg.find("=")+1
             config_file_list.append(arg[substrIndex:])
             boolUseDefaultConfig = False
             print "Config file list:", config_file_list
 
-        if arg.find("--overridecfg=") != -1:
-            substrIndex = arg.find("=")+1
-            override_list.append(arg[substrIndex:])
+        elif arg != sys.argv[0]:
+            if arg.find("=") == -1:
+                print "Malformed config override found!: ", arg
+                exit(-1)
+            override_list.append(arg)
             print "Override: ", override_list[-1]
             
     return [boolUseRandomTrace, trace_file, boolUseDefaultConfig, config_file_list, override_list]
