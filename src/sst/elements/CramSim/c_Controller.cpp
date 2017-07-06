@@ -58,11 +58,11 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     m_addrHasher= dynamic_cast<c_AddressHasher*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
     // set device controller
-    l_subCompName = params.find<std::string>("DeviceController", "CramSim.c_DeviceController",l_found);
+    l_subCompName = params.find<std::string>("DeviceDriver", "CramSim.c_DeviceDriver",l_found);
     if(!l_found){
-        output->output("Device Controller is not specified... c_DeviceController (default) will be used\n");
+        output->output("Device Controller is not specified... c_DeviceDriver (default) will be used\n");
     }
-    m_deviceController= dynamic_cast<c_DeviceController*>(loadSubComponent(l_subCompName.c_str(),this,params));
+    m_deviceDriver= dynamic_cast<c_DeviceDriver*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
     // set cmd schduler
     l_subCompName = params.find<std::string>("CmdScheduler", "CramSim.c_CmdScheduler",l_found);
@@ -149,7 +149,7 @@ void c_Controller::configure_link() {
     m_outTxnGenResPtrLink = configureLink("outTxnGenResPtr",
                                           new Event::Handler<c_Controller>(this,
                                                                            &c_Controller::handleOutTxnGenResPtrEvent));
-    // DeviceController <-> Bank Links
+    // DeviceDriver <-> Bank Links
     // Controller <- Device (Req) (Token)
     m_inDeviceReqQTokenChgLink = configureLink("inDeviceReqQTokenChg",
                                                new Event::Handler<c_Controller>(this,
@@ -172,6 +172,9 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
 
     m_thisCycleTxnQTknChg = m_ReqQ.size();
 
+    // 0. update device driver
+    m_deviceDriver->update();
+
     // 1. Convert physical address to device address
     // 2. Push transactions to the transaction queue
     for(std::deque<c_Transaction*>::iterator l_it=m_ReqQ.begin() ; l_it!=m_ReqQ.end();)
@@ -188,7 +191,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
         if(m_txnScheduler->push(newTxn)) {
             l_it = m_ReqQ.erase(l_it);
 
-#ifdef __SST_DEBUG_OUTPUT__
+            #ifdef __SST_DEBUG_OUTPUT__
             output->debug(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d\n",
                           Simulation::getSimulation()->getCurrentSimCycle(),
                           newTxn->getTransactionString().c_str(),
@@ -199,23 +202,23 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
                           newTxn->getHashedAddress().getBank(),
                           newTxn->getHashedAddress().getRow(),
                           newTxn->getHashedAddress().getCol());
-#endif
+            #endif
         }
         else
             l_it++;
     }
 
     // 3. run transaction Scheduler
-    m_txnScheduler->clockTic(clock);
+    m_txnScheduler->run();
 
     // 4. run transaction converter
-    m_txnConverter->clockTic(clock);
+    m_txnConverter->run();
 
     // 5, run command scheduler
-    m_cmdScheduler->clockTic(clock);
+    m_cmdScheduler->run();
 
-    // 6. run device controller
-    m_deviceController->clockTic(clock);
+    // 6. run device driver
+    m_deviceDriver->run();
 
     // 7. send token to the transaction generator
     m_thisCycleTxnQTknChg = m_thisCycleTxnQTknChg-m_ReqQ.size();

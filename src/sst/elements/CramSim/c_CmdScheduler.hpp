@@ -32,18 +32,19 @@
 
 #include "c_CtrlSubComponent.hpp"
 #include "c_BankCommand.hpp"
-#include "c_CmdUnit.hpp"
+#include "c_DeviceDriver.hpp"
 #include "c_HashedAddress.hpp"
 
 namespace SST{
     namespace n_Bank {
-        class c_DeviceController;
+        class c_DeviceDriver;
 
         class c_CmdScheduler : public c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> {
         public:
             c_CmdScheduler(Component *comp, Params &x_params);
             ~c_CmdScheduler();
-            bool clockTic(SST::Cycle_t);
+
+            void run();
             bool push(c_BankCommand* x_cmd);
             unsigned getToken(const c_HashedAddress &x_addr);
 
@@ -51,10 +52,8 @@ namespace SST{
         private:
             typedef std::deque<c_BankCommand*> c_CmdQueue;
 
-            void run();
-            void send();
 
-            c_DeviceController* m_nextSubComponent;
+            c_DeviceDriver* m_deviceController;
             std::vector<c_CmdQueue *> m_cmdQueues;  //per-bank command queue
             std::deque<c_BankCommand *> m_cmdQueue;  //per-bank command queue
 

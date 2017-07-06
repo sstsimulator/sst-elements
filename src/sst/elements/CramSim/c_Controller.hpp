@@ -37,8 +37,8 @@
 // SST includes
 #include <sst/core/component.h>
 #include "c_AddressHasher.hpp"
-#include "c_CmdUnit.hpp"
-#include "c_TxnUnit.hpp"
+#include "c_DeviceDriver.hpp"
+#include "c_TxnConverter.hpp"
 #include "c_CmdScheduler.hpp"
 #include "c_TxnScheduler.hpp"
 
@@ -47,7 +47,7 @@
 namespace SST {
     namespace n_Bank {
         class c_TxnScheduler;
-        class c_DeviceController;
+        class c_DeviceDriver;
         class c_TxnConverter;
         class c_CmdScheduler;
 
@@ -57,13 +57,9 @@ namespace SST {
             c_Controller(SST::ComponentId_t id, SST::Params &params);
             ~c_Controller();
 
-            void setup() {
-            }
-            void finish(){};
-            void print() const;
             c_TxnScheduler* getTxnScheduler() {return m_txnScheduler;}
             c_AddressHasher* getAddrHasher() {return m_addrHasher;}
-            c_DeviceController* getDeviceController() {return m_deviceController;}
+            c_DeviceDriver* getDeviceDriver() {return m_deviceDriver;}
             c_CmdScheduler* getCmdScheduler() {return m_cmdScheduler;}
             c_TxnConverter* getTxnConverter() {return m_txnConverter;}
             Output * getOutput() {return output;}
@@ -71,19 +67,40 @@ namespace SST {
             void sendCommand(c_BankCommand* cmd);
 
         private:
+            c_Controller(); // for serialization only
+            c_Controller(SST::ComponentId_t id);
+
+            virtual bool clockTic(SST::Cycle_t); // called every cycle
+
+            void setHashedAddress(c_Transaction* newTxn);
+
+            void sendTokenChg(); // should happen at the end of every cycle
+            void sendResponse();
+            void sendRequest();
+            void configure_link();
+            // Transaction Generator <-> Controller Handlers
+            void handleIncomingTransaction(SST::Event *ev);
+            void handleOutTxnGenResPtrEvent(SST::Event *ev);
+            void handleInTxnGenResQTokenChgEvent(SST::Event *ev);
+            void handleOutTxnGenReqQTokenChgEvent(SST::Event *ev);
+
+            // Controller <--> memory devices
+            void handleOutDeviceReqPtrEvent(SST::Event *ev);
+            void handleInDeviceResPtrEvent(SST::Event *ev);
+            void handleInDeviceReqQTokenChgEvent(SST::Event *ev);
+
+
             SST::Output *output;
 
             std::deque<c_Transaction*> m_ReqQ;
             std::deque<c_Transaction*> m_ResQ;
-
 
             // Subcomponents
             c_TxnScheduler *m_txnScheduler;
             c_TxnConverter *m_txnConverter;
             c_CmdScheduler *m_cmdScheduler;
             c_AddressHasher *m_addrHasher;
-            c_DeviceController *m_deviceController;
-            //c_DeviceController *m_deviceController;
+            c_DeviceDriver *m_deviceDriver;
 
             //token changes from Txn gen
             int m_ReqQTokens;
@@ -96,9 +113,7 @@ namespace SST {
             int k_txnResQEntries;
             int k_txnGenResQEntries;
 
-
-
-            // Transaction Generator <-> DeviceController Links
+            // Transaction Generator <-> DeviceDriver Links
             SST::Link *m_inTxnGenReqPtrLink;
             SST::Link *m_outTxnGenResPtrLink;
             SST::Link *m_outDeviceReqPtrLink;
@@ -107,31 +122,6 @@ namespace SST {
             SST::Link *m_inDeviceReqQTokenChgLink;
             SST::Link *m_inTxnGenResQTokenChgLink;
             SST::Link *m_outTxnGenReqQTokenChgLink;
-
-            c_Controller(); // for serialization only
-            c_Controller(SST::ComponentId_t id);
-            void configure_link();
-            virtual bool clockTic(SST::Cycle_t); // called every cycle
-
-            void sendTokenChg(); // should happen at the end of every cycle
-            void sendResponse();
-            void sendRequest();
-
-            void setHashedAddress(c_Transaction* newTxn);
-
-            // Transaction Generator <-> Controller Handlers
-            void handleIncomingTransaction(SST::Event *ev);
-            void handleOutTxnGenResPtrEvent(SST::Event *ev);
-            void handleInTxnGenResQTokenChgEvent(SST::Event *ev);
-            void handleOutTxnGenReqQTokenChgEvent(SST::Event *ev);
-
-            // Controller <--> memory devices
-
-            void handleOutDeviceReqPtrEvent(SST::Event *ev);
-            void handleInDeviceResPtrEvent(SST::Event *ev);
-            void handleInDeviceReqQTokenChgEvent(SST::Event *ev);
-
-
         };
     }
 }

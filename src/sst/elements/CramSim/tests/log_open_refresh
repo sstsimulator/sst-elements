@@ -1,0 +1,10 @@
+Config file: ./hbm_ch_test_open_refresh.cfg
+Trace file: ./seq_hbm.seq00
+stopAtCycle 2us
+FATAL: SSTPythonModel Execution of model construction function failed.
+SST Fatal Backtrace Information:
+    0 : sst(_ZNK3SST6Output5fatalEjPKcS2_jS2_z+0x344) [0x643e54]
+    1 : sst(_ZN3SST4Core24SSTPythonModelDefinition17createConfigGraphEv+0x153) [0x6a2c6b]
+    2 : sst(main+0x65f) [0x5af065]
+    3 : /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf5) [0x7f4065506f45]
+    4 : sst() [0x5ad609]

@@ -72,6 +72,7 @@ class c_BankCommand;
 
     unsigned getNumBanks() const;
     unsigned getNumBankGroups() const;
+      c_Channel* getChannelPtr() const;
 
     std::vector<c_BankInfo*> getBankPtrs() const;
 

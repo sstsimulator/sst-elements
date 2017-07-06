@@ -39,8 +39,10 @@
 class c_HashedAddress : public SST::Core::Serialization::serializable {
 
 public:
-  //c_HashedAddress(unsigned x_channel, unsigned x_rank, unsigned x_bankgroup,
-  //		  unsigned x_bank, unsigned x_row, unsigned x_col);
+    c_HashedAddress(){};
+  c_HashedAddress(unsigned x_channel, unsigned x_pchannel, unsigned x_rank, unsigned x_bankgroup,
+  		  unsigned x_bank, unsigned x_row, unsigned x_col, unsigned x_bankid) : m_channel(x_channel), m_pchannel(x_pchannel), m_rank(x_rank), m_bankgroup(x_bankgroup),
+                                                               m_bank(x_bank),m_row(x_row),m_col(x_col),m_bankId(x_bankid){};
   friend class c_AddressHasher;
   
   unsigned getChannel()   const {return m_channel;}

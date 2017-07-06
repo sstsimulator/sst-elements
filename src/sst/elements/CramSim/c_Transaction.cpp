@@ -124,6 +124,22 @@ void c_Transaction::print() const {
 	    << std::boolalpha << m_isResponseReady;
 }
 
+void c_Transaction::print(SST::Output *x_output, std::string x_prefix) const {
+	x_output->debug(CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %d CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
+				  Simulation::getSimulation()->getCurrentSimCycle(),
+				  getTransactionString().c_str(),
+					m_seqNum,
+				  getHashedAddress().getChannel(),
+				  getHashedAddress().getPChannel(),
+				  getHashedAddress().getRank(),
+				  getHashedAddress().getBankGroup(),
+				  getHashedAddress().getBank(),
+				  getHashedAddress().getRow(),
+				  getHashedAddress().getCol(),
+				  getHashedAddress().getBankId()
+	);
+}
+
 void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
 {
   ser & m_seqNum;

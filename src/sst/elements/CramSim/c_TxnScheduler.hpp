@@ -32,7 +32,7 @@
 #define C_TXNSCHEDULER_HPP
 
 #include "c_Transaction.hpp"
-#include "c_TxnUnit.hpp"
+#include "c_TxnConverter.hpp"
 
 namespace SST {
     namespace n_Bank {
@@ -44,17 +44,12 @@ namespace SST {
             c_TxnScheduler(SST::Component *comp, SST::Params &x_params);
             ~c_TxnScheduler();
 
-            bool clockTic(SST::Cycle_t);
-            bool push(c_Transaction* newTxn);
-
-            void print() const; // print internals
+            virtual void run();
+            virtual bool push(c_Transaction* newTxn);
 
         private:
-            virtual void run();
-            virtual void send(){};
             c_Transaction* getNextTxn(int x_ch);
             void popTxn(int x_ch, c_Transaction* x_txn);
-
 
             //**transaction converter
             c_TxnConverter *m_txnConverter;

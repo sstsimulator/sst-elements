@@ -74,6 +74,10 @@ unsigned c_Rank::getNumBankGroups() const {
 	return m_bankGroupPtrs.size();
 }
 
+c_Channel* c_Rank::getChannelPtr() const {
+	return m_channelPtr;
+}
+
 std::vector<c_BankInfo*> c_Rank::getBankPtrs() const {
 	std::vector<c_BankInfo*> l_allBankPtrs;
 	for (auto& l_bankGroupPtr : m_bankGroupPtrs) {

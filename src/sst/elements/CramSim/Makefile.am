@@ -29,16 +29,16 @@ libCramSim_la_SOURCES = \
 	c_Dimm.cpp \
 	c_Bank.hpp \
 	c_Bank.cpp \
-	c_TxnUnit.hpp \
-	c_TxnUnit.cpp \
+	c_TxnConverter.hpp \
+	c_TxnConverter.cpp \
 	c_Transaction.hpp \
 	c_Transaction.cpp \
 	c_AddressHasher.hpp \
 	c_AddressHasher.cpp \
 	c_HashedAddress.hpp \
 	c_HashedAddress.cpp \
-	c_CmdUnit.hpp \
-	c_CmdUnit.cpp \
+	c_DeviceDriver.hpp \
+	c_DeviceDriver.cpp \
 	c_Controller.cpp \
 	c_Controller.hpp \
 	c_BankCommand.hpp \

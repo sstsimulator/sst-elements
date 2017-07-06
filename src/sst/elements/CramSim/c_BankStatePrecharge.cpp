@@ -108,7 +108,6 @@ void c_BankStatePrecharge::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_prevCommandPtr = x_cmdPtr;
 	m_receivedCommandPtr = nullptr;
 	m_timer = m_bankParams->at("nRP") - 2; // MBH it takes 2 cycles from the time PRE is issued for m_timer to start counting down
-	m_timer -=1; //when timer is expired, it goes to idle state. so, one cycle is need for the transition from idle to target state.
 	m_allowedCommands.clear();
 
 	//std::cout << "@@" << std::dec

@@ -252,11 +252,11 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
 
   unsigned l_bankNum=0;
-  if(x_bankCommandPtr->getCommandMnemonic() == e_BankCommandType::REF) {
+  //if(x_bankCommandPtr->getBankIdVec().size()) {
     l_bankNum = x_bankCommandPtr->getBankId();
-  } else {
-    l_bankNum = x_bankCommandPtr->getHashedAddress()->getBankId();
-  }
+  //} else {
+  //  l_bankNum = x_bankCommandPtr->getHashedAddress()->getBankId();
+ // }
   m_banks.at(l_bankNum)->handleCommand(x_bankCommandPtr);
   
 }

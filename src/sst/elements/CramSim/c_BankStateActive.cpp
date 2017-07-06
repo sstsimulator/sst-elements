@@ -124,7 +124,7 @@ void c_BankStateActive::clockTic(c_BankInfo* x_bank) {
 	if (0 < m_timer) {
 		--m_timer;
 	} else {
-		x_bank->setRowOpen();
+	//	x_bank->setRowOpen();
 		if (m_receivedCommandPtr) {
 
 			if ((nullptr != m_nextStatePtr)
@@ -147,6 +147,7 @@ void c_BankStateActive::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 //std::cout << std::endl;
 
 	x_bank->setOpenRowNum(x_cmdPtr->getHashedAddress()->getRow());
+	x_bank->setRowOpen();
 	m_prevCommandPtr = x_cmdPtr;
 	m_nextStatePtr = nullptr;
 

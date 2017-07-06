@@ -56,12 +56,6 @@ c_TxnScheduler::~c_TxnScheduler() {
 }
 
 
-bool c_TxnScheduler::clockTic(SST::Cycle_t){
-    run();
-    return false;
-}
-
-
 void c_TxnScheduler::run(){
 
     int l_numSchedTxn=0;
@@ -74,26 +68,20 @@ void c_TxnScheduler::run(){
 
         //2. send the selected transaction to transaction converter
         if(nextTxn!=nullptr) {
-            if(m_txnConverter->push(nextTxn)) {
+
+            // send the selected transaction
+            bool isSuccess=m_txnConverter->push(nextTxn);
+
+            // pop it from inputQ
+            if(isSuccess) {
                 popTxn(l_channelID, nextTxn);
 
-#ifdef __SST_DEBUG_OUTPUT__
-                output->debug(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
-                              Simulation::getSimulation()->getCurrentSimCycle(),
-                              nextTxn->getTransactionString().c_str(),
-                              nextTxn->getHashedAddress().getChannel(),
-                              nextTxn->getHashedAddress().getPChannel(),
-                              nextTxn->getHashedAddress().getRank(),
-                              nextTxn->getHashedAddress().getBankGroup(),
-                              nextTxn->getHashedAddress().getBank(),
-                              nextTxn->getHashedAddress().getRow(),
-                              nextTxn->getHashedAddress().getCol(),
-                              nextTxn->getHashedAddress().getBankId(),
-                              nextTxn->getSeqNum());
-#endif
+     //           #ifdef __SST_DEBUG_OUTPUT__
+   //             nextTxn->print(output, "[TxnScheduler]");
+       //         #endif
+
             } else {
-                //todo: debug message
-                //inputQ of txnconverter is full
+                output->debug(CALL_INFO,2,0,"Fail to send a transaction to the transaction converter!!");
             }
         }
 

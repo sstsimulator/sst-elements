@@ -75,7 +75,7 @@ public:
         c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
 		      ulong x_addr, unsigned x_bankId); // only to be used for Refresh commands!
         c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
-		      ulong x_addr, std::vector<unsigned> &x_bankIdVec); // only to be used for Refresh commands!
+		      ulong x_addr, const c_HashedAddress &x_hashedAddr, std::vector<unsigned> &x_bankIdVec); // only to be used for Refresh commands!
         c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
 		      ulong x_addr, const c_HashedAddress &x_hashedAddr);
         c_BankCommand() {} // required for ImplementSerializable
@@ -95,8 +95,8 @@ public:
 	  return (m_bankId);
 	}
 
-        inline std::vector<unsigned> *getBankIdVec() {
-	  return(&m_bankIdVec);
+        inline std::vector<unsigned>& getBankIdVec() {
+	  return(m_bankIdVec);
 	}
   
 	inline bool isResponseReady() const

@@ -41,7 +41,7 @@
 
 //sst includes
 #include <sst/core/serialization/serializable.h>
-
+#include <output.h>
 //local includes
 #include "c_HashedAddress.hpp"
 
@@ -103,6 +103,7 @@ public:
   bool isProcessed() const;
   void isProcessed(bool x_processed);
   void print() const;
+  void print(SST::Output *x_output, std::string x_prefix) const;
 
   const c_HashedAddress& getHashedAddress() const {
          return (m_hashedAddr);

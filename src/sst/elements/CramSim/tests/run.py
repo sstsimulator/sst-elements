@@ -21,7 +21,7 @@ def run(sstParams):
 
 
 
-stopAtCycle = "10us"
+stopAtCycle = "100us"
 config = sys.argv[2];
 sstParams = [
 	"--configfile=./%s --txngen=rand --stopAtCycle=%s\"" % (config,stopAtCycle),

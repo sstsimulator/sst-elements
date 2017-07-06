@@ -167,11 +167,11 @@ bool c_BankInfo::isCommandAllowed(c_BankCommand* x_cmdPtr,
 	assert(nullptr != m_bankState);
 
 	if (m_bankState->isCommandAllowed(x_cmdPtr, this)) {
-		assert(
-				m_nextCommandCycleMap.find(x_cmdPtr->getCommandMnemonic()) != m_nextCommandCycleMap.end());
-		if (m_nextCommandCycleMap.find(x_cmdPtr->getCommandMnemonic())->second
-				<= x_simCycle)
+		assert(m_nextCommandCycleMap.find(x_cmdPtr->getCommandMnemonic()) != m_nextCommandCycleMap.end());
+		if (m_nextCommandCycleMap.find(x_cmdPtr->getCommandMnemonic())->second <= x_simCycle)
 			l_canAccept = true;
+
+
 	}
 
 	return l_canAccept;

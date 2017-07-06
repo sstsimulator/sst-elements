@@ -40,6 +40,7 @@
 #include "c_BankInfo.hpp"
 #include "c_BankStateActivating.hpp"
 #include "c_BankStateRefresh.hpp"
+#include "c_BankStatePrecharge.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
@@ -70,6 +71,9 @@ void c_BankStateIdle::handleCommand(c_BankInfo* x_bank,
 	case e_BankCommandType::REF:
 		x_bank->setLastCommandCycle(e_BankCommandType::REF, l_time);
 		break;
+		case e_BankCommandType::PRE:
+			x_bank->setLastCommandCycle(e_BankCommandType::PRE, l_time);
+			break;
 	default:
 	    break;
 	}
@@ -123,6 +127,10 @@ void c_BankStateIdle::clockTic(c_BankInfo* x_bank) {
 					l_p = new c_BankStateRefresh(m_bankParams);
 //					x_bank->setLastCommandCycle(e_BankCommandType::REF, l_time);
 					break;
+					case e_BankCommandType::PRE:
+						l_p = new c_BankStatePrecharge(m_bankParams);
+//					x_bank->setLastCommandCycle(e_BankCommandType::REF, l_time);
+						break;
 				default:
 				break;
 				}
@@ -144,6 +152,7 @@ void c_BankStateIdle::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	//	  << ": m_timer = " << m_timer << std::endl;
 	//std::cout << "Entering " << __PRETTY_FUNCTION__ << std::endl;
 
+	x_bank->resetRowOpen();
 	m_prevCommandPtr = x_cmdPtr;
 
 	m_receivedCommandPtr = nullptr;
@@ -153,6 +162,7 @@ void c_BankStateIdle::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_allowedCommands.clear();
 	m_allowedCommands.push_back(e_BankCommandType::ACT);
 	m_allowedCommands.push_back(e_BankCommandType::REF);
+	m_allowedCommands.push_back(e_BankCommandType::PRE);
 
 	x_bank->setNextCommandCycle(e_BankCommandType::ACT,
 			std::max(x_bank->getNextCommandCycle(e_BankCommandType::ACT),
@@ -161,6 +171,10 @@ void c_BankStateIdle::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	x_bank->setNextCommandCycle(e_BankCommandType::REF,
 			std::max(x_bank->getNextCommandCycle(e_BankCommandType::REF),
 					l_time));
+
+	x_bank->setNextCommandCycle(e_BankCommandType::PRE,
+								std::max(x_bank->getNextCommandCycle(e_BankCommandType::PRE),
+										 l_time));
 
 	x_bank->changeState(this);
 
@@ -171,6 +185,7 @@ void c_BankStateIdle::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 bool c_BankStateIdle::isCommandAllowed(c_BankCommand* x_cmdPtr,
 		c_BankInfo* x_bankPtr) {
 
+//	assert(x_cmdPtr->getCommandMnemonic()!=e_BankCommandType::PRE);
 // Cmd must be of an allowed type and BankState cannot already be processing another cmd
 	for (std::list<e_BankCommandType>::iterator l_iter =
 			m_allowedCommands.begin(); l_iter != m_allowedCommands.end();

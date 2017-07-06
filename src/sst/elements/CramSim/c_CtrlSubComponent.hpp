@@ -61,8 +61,6 @@ namespace SST {
             void push(I input);
             int getToken();
 
-            virtual bool clockTic(SST::Cycle_t) =0;
-
         protected:
             enum DEBUG_MASK{
                 TXNCVT = 1,
@@ -81,7 +79,6 @@ namespace SST {
             virtual void send(){};
 
             // internal buffer
-            std::vector<I> m_input2Q;                    //input queue
             std::deque<I> m_inputQ;                    //input queue
             std::deque<O> m_outputQ;
 
@@ -111,6 +108,7 @@ namespace SST {
             bool k_allocateCmdResQWRITEA;
             bool k_allocateCmdResQPRE;
             bool k_useRefresh;
+            int k_REFI;
             bool k_cmdQueueFindAnyIssuable;
             int k_bankPolicy;
             int k_relCommandWidth;
@@ -212,6 +210,12 @@ namespace SST {
             k_useRefresh = (uint32_t) x_params.find<uint32_t>("boolUseRefresh", 1, l_found);
             if (!l_found) {
                 std::cout << "boolUseRefresh param value is missing... exiting" << std::endl;
+                exit(-1);
+            }
+
+            k_REFI = (uint32_t) x_params.find<uint32_t>("nREFI", 1, l_found);
+            if (!l_found) {
+                std::cout << "nREFI value is missing ... exiting" << std::endl;
                 exit(-1);
             }
 

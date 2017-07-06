@@ -108,17 +108,17 @@ void c_BankStateRefresh::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	// Therefore it is forwarded to BankStateIdle
 	m_prevCommandPtr = x_cmdPtr;
 	m_receivedCommandPtr = nullptr;
-	m_timer = m_bankParams->at("nRFC");
+	m_timer = m_bankParams->at("nRFC")-1;
 
 	m_allowedCommands.clear();
 	// this state should not have any allowed bank commands
 	// this is a transitory state
-	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	/*SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 	x_bank->setNextCommandCycle(e_BankCommandType::REF,
 			std::max(
 					x_bank->getNextCommandCycle(e_BankCommandType::REF)
 							+ m_bankParams->at("nREFI"),
-					l_time + m_bankParams->at("nREFI")));
+					l_time + m_bankParams->at("nREFI")));*/
 
 	x_bank->changeState(this);
 	if (nullptr != x_prevState)

@@ -38,7 +38,7 @@ c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 			     e_BankCommandType x_cmdMnemonic, ulong x_addr,
 			     const c_HashedAddress &x_hashedAddr) :
 		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
-		m_isResponseReady(false), m_hashedAddr(x_hashedAddr) {
+		m_isResponseReady(false), m_hashedAddr(x_hashedAddr), m_bankId(x_hashedAddr.getBankId()) {
 
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";
 	m_cmdToString[e_BankCommandType::ACT] = "ACT";
@@ -57,7 +57,7 @@ c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
 		m_isResponseReady(false), m_bankId(x_bankId) {
 
-        assert(x_cmdMnemonic == e_BankCommandType::REF); // This constructor only for REF cmds!
+	assert(x_cmdMnemonic == e_BankCommandType::REF ||x_cmdMnemonic == e_BankCommandType::PRE); // This constructor only for REF cmds!
 
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";
 	m_cmdToString[e_BankCommandType::ACT] = "ACT";
@@ -71,13 +71,14 @@ c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 }
 
 c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
-			     e_BankCommandType x_cmdMnemonic, ulong x_addr,
+			     e_BankCommandType x_cmdMnemonic, ulong x_addr, const c_HashedAddress &x_hashedAddr,
 			     std::vector<unsigned> &x_bankIdVec) :
 		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
 		m_isResponseReady(false), m_bankIdVec(x_bankIdVec) {
 
-        assert(x_cmdMnemonic == e_BankCommandType::REF); // This constructor only for REF cmds!
+        assert((x_cmdMnemonic == e_BankCommandType::REF||x_cmdMnemonic == e_BankCommandType::PRE)); // This constructor only for REF cmds!
 
+	m_hashedAddr = x_hashedAddr;
 	m_bankId = x_bankIdVec.front();
 	
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";

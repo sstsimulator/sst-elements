@@ -29,12 +29,12 @@
 #include "c_DramSimTraceReader.hpp"
 #include "c_USimmTraceReader.hpp"
 #include "c_TxnDriver.hpp"
-#include "c_TxnUnit.hpp"
+#include "c_TxnConverter.hpp"
 #include "c_TxnScheduler.hpp"
 #include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
 #include "c_CmdDriver.hpp"
-#include "c_CmdUnit.hpp"
+#include "c_DeviceDriver.hpp"
 #include "c_BankReceiver.hpp"
 #include "c_Dimm.hpp"
 #include "c_Controller.hpp"
@@ -137,8 +137,8 @@ create_c_TxnConverter(Component * owner, Params& params) {
 
 // Command Scheduler
 static SubComponent*
-create_c_DeviceController(Component * owner, Params& params) {
-	return new c_DeviceController(owner, params);
+create_c_DeviceDriver(Component * owner, Params& params) {
+	return new c_DeviceDriver(owner, params);
 }
 
 // Device Controller
@@ -375,8 +375,8 @@ static const ElementInfoPort c_CmdDriver_ports[] = {
 };
 
 
-/*----SETUP c_DeviceController STRUCTURES----*/
-static const ElementInfoParam c_DeviceController_params[] = {
+/*----SETUP c_DeviceDriver STRUCTURES----*/
+static const ElementInfoParam c_DeviceDriver_params[] = {
 		{"numChannelsPerDimm", "Total number of channels per DIMM", NULL},
 		{"numRanksPerChannel", "Total number of ranks per channel", NULL},
 		{"numBankGroupsPerRank", "Total number of bank groups per rank", NULL},
@@ -388,12 +388,12 @@ static const ElementInfoParam c_DeviceController_params[] = {
 		{"strCmdTraceFile", "Filename to print the command trace, or - for stdout", NULL},
 		{"strAddressMapStr", "String describing the address map", NULL},
 		{"relCommandWidth", "Relative width of each command", NULL},
-		{"boolAllocateCmdResACT", "Allocate space in DeviceController Res Q for ACT Cmds", NULL},
-		{"boolAllocateCmdResREAD", "Allocate space in DeviceController Res Q for READ Cmds", NULL},
-		{"boolAllocateCmdResREADA", "Allocate space in DeviceController Res Q for READA Cmds", NULL},
-		{"boolAllocateCmdResWRITE", "Allocate space in DeviceController Res Q for WRITE Cmds", NULL},
-		{"boolAllocateCmdResWRITEA", "Allocate space in DeviceController Res Q for WRITEA Cmds", NULL},
-		{"boolAllocateCmdResPRE", "Allocate space in DeviceController Res Q for PRE Cmds", NULL},
+		{"boolAllocateCmdResACT", "Allocate space in DeviceDriver Res Q for ACT Cmds", NULL},
+		{"boolAllocateCmdResREAD", "Allocate space in DeviceDriver Res Q for READ Cmds", NULL},
+		{"boolAllocateCmdResREADA", "Allocate space in DeviceDriver Res Q for READA Cmds", NULL},
+		{"boolAllocateCmdResWRITE", "Allocate space in DeviceDriver Res Q for WRITE Cmds", NULL},
+		{"boolAllocateCmdResWRITEA", "Allocate space in DeviceDriver Res Q for WRITEA Cmds", NULL},
+		{"boolAllocateCmdResPRE", "Allocate space in DeviceDriver Res Q for PRE Cmds", NULL},
 		{"boolCmdQueueFindAnyIssuable", "Search through Req Q for any cmd to send", NULL},
 		{"bankPolicy", "Select which bank policy to model", NULL},
 		{"boolUseRefresh", "Whether to use REF or not", NULL},
@@ -427,7 +427,7 @@ static const ElementInfoParam c_DeviceController_params[] = {
 		{"nBL", "Bank Param", NULL},
 		{NULL, NULL, NULL } };
 
-static const ElementInfoStatistic c_DeviceController_stats[] = {
+static const ElementInfoStatistic c_DeviceDriver_stats[] = {
   //{"rowHits", "Number of DRAM page buffer hits", "hits", 1}, // Name, Desc, Units, Enable Level
   {NULL,NULL,NULL,0}
 };
@@ -437,7 +437,7 @@ static const ElementInfoStatistic c_DeviceController_stats[] = {
 static const ElementInfoParam c_Controller_params[] = {
 		{"AddrHasher", "address hasher", "CramSim.c_AddressHasher"},
 		{"scheduler", "Command Scheduler", "CramSim.c_simpleScheduler"},
-		{"deviceController", "device controller", "CramSim.c_DeviceController"},
+		{"deviceController", "device controller", "CramSim.c_DeviceDriver"},
 		{NULL, NULL, NULL } };
 
 static const char* c_Controller_TxnGenReq_port_events[] = { "c_txnGenReqEvent", NULL };
@@ -467,8 +467,8 @@ static const char* c_BankReceiver_cmdReq_port_events[] = { "c_CmdReqEvent", NULL
 static const char* c_BankReceiver_cmdRes_port_events[] = { "c_CmdResEvent", NULL };
 
 static const ElementInfoPort c_BankReceiver_ports[] = {
-		{"inDeviceControllerReqPtr", "link to c_BankReceiver for incoming req cmds", c_BankReceiver_cmdReq_port_events},
-		{"outDeviceControllerResPtr", "link to c_BankReceiver for outgoing res cmds", c_BankReceiver_cmdRes_port_events},
+		{"inDeviceDriverReqPtr", "link to c_BankReceiver for incoming req cmds", c_BankReceiver_cmdReq_port_events},
+		{"outDeviceDriverResPtr", "link to c_BankReceiver for outgoing res cmds", c_BankReceiver_cmdRes_port_events},
 		{NULL, NULL, NULL}
 };
 
@@ -1916,13 +1916,13 @@ static const ElementInfoSubComponent CramSimSubComponents[] = {
 		c_TxnConverter_stats,
 				"SST::CramSim::Controller::TxnConverter" 			// Category
 		},
-		{"c_DeviceController",                                // Name
+		{"c_DeviceDriver",                                // Name
 			"Dram Control Unit",                            // Description
 			NULL,                                        // PrintHelp
-			create_c_DeviceController,                            // Allocator
-			c_DeviceController_params,                            // Parameters
-			c_DeviceController_stats,
-				"SST::CramSim::Controller::DeviceController"            // Category
+			create_c_DeviceDriver,                            // Allocator
+			c_DeviceDriver_params,                            // Parameters
+			c_DeviceDriver_stats,
+				"SST::CramSim::Controller::DeviceDriver"            // Category
 		},
 		{"c_CmdScheduler",                                // Name
 				"Command Scheduler",                            // Description
