@@ -66,8 +66,6 @@ FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj,
     m_toMeLink = obj->configureSelfLink("ToMe", "1 ns",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleEnterEvent));
     assert( m_toMeLink );
-
-    m_proto->setRetLink( m_toMeLink );
 }
 
 FunctionSM::~FunctionSM()

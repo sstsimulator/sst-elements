@@ -67,9 +67,13 @@ c_BankReceiver::c_BankReceiver(SST::ComponentId_t x_id, SST::Params& x_params) :
 			"outCmdUnitResPtr",
 			new Event::Handler<c_BankReceiver>(this,
 					&c_BankReceiver::handleOutCmdUnitResPtrEvent));
-
+	
+	// get configured clock frequency
+	bool l_found;
+	std::string l_controllerClockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
+    
 	//set our clock
-	registerClock("1GHz",
+	registerClock(l_controllerClockFreqStr,
 			new Clock::Handler<c_BankReceiver>(this, &c_BankReceiver::clockTic));
 }
 

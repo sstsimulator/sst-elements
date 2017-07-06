@@ -15,10 +15,15 @@ libfirefly_la_SOURCES = \
 	group.h \
 	ctrlMsg.cc \
 	ctrlMsg.h \
-	ctrlMsgXXX.cc \
-	ctrlMsgXXX.h \
 	ctrlMsgFunctors.h \
 	ctrlMsgProcessQueuesState.h \
+	ctrlMsgProcessQueuesState.cc \
+	ctrlMsgCommReq.h \
+	ctrlMsgWaitReq.h \
+	ctrlMsgMemory.h \
+	ctrlMsgMemoryBase.h \
+	ctrlMsgTiming.h \
+	ctrlMsgTimingBase.h \
 	heapAddrs.h \
 	ioapi.h \
 	nicTester.h \

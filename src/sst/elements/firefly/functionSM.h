@@ -79,6 +79,7 @@ class FunctionSM  {
     ~FunctionSM();
     void printStatus( Output& );
 
+    Link* getRetLink() { return m_toMeLink; } 
     void setup( Info* );
     void start(int type, MP::Functor* retFunc,  SST::Event* );
     void enter( );

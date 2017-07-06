@@ -21,13 +21,13 @@
 namespace SST {
 namespace Firefly {
 
-class LoopBackEvent : public Event {
+class LoopBackEventBase : public Event {
 
   public:
-    LoopBackEvent( int _core ) : Event(), core( _core ) {}
+    LoopBackEventBase( int _core ) : Event(), core( _core ) {}
     int core;
 
-    NotSerializable(LoopBackEvent)
+    NotSerializable(LoopBackEventBase)
 };
 
 class LoopBack : public SST::Component  {

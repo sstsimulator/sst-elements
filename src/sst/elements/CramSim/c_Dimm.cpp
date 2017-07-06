@@ -144,8 +144,11 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	m_thisCycleReceivedCmds = 0;
 
+	// get configured clock frequency
+	std::string l_controllerClockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
+    
 	//set our clock
-	registerClock("1GHz", new Clock::Handler<c_Dimm>(this, &c_Dimm::clockTic));
+	registerClock(l_controllerClockFreqStr, new Clock::Handler<c_Dimm>(this, &c_Dimm::clockTic));
 
 	// Statistics setup
 	s_actCmdsRecvd     = registerStatistic<uint64_t>("actCmdsRecvd");

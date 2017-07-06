@@ -8,7 +8,8 @@ def read_arguments():
     boolUseRandomTrace = True
     boolUseDefaultConfig = True
     trace_file = ""
-    config_file = ""
+    config_file_list = list()
+    override_list = list()
 
     for arg in sys.argv:
         if arg.find("--tracefile=") != -1:
@@ -17,12 +18,20 @@ def read_arguments():
             boolUseRandomTrace = False
             print "Trace file:", trace_file
 
-        if arg.find("--configfile=") != -1:
+        elif arg.find("--configfile=") != -1:
             substrIndex = arg.find("=")+1
-            config_file = arg[substrIndex:]
+            config_file_list.append(arg[substrIndex:])
             boolUseDefaultConfig = False
-            print "Config file:", config_file
-    return [boolUseRandomTrace, trace_file, boolUseDefaultConfig, config_file]
+            print "Config file list:", config_file_list
+
+        elif arg != sys.argv[0]:
+            if arg.find("=") == -1:
+                print "Malformed config override found!: ", arg
+                exit(-1)
+            override_list.append(arg)
+            print "Override: ", override_list[-1]
+            
+    return [boolUseRandomTrace, trace_file, boolUseDefaultConfig, config_file_list, override_list]
 
 def setup_config_params():
     l_params = {}
@@ -81,12 +90,18 @@ def setup_config_params():
             "nBL":"""4"""
         }
     else:
-        l_configFile = open(g_config_file, 'r')
-        for l_line in l_configFile:
-            l_tokens = l_line.split()
-            #print l_tokens[0], ": ", l_tokens[1]
-            l_params[l_tokens[0]] = l_tokens[1]
+        for g_config_file in g_config_file_list:
+            l_configFile = open(g_config_file, 'r')
+            for l_line in l_configFile:
+                l_tokens = l_line.split()
+                #print l_tokens[0], ": ", l_tokens[1]
+                l_params[l_tokens[0]] = l_tokens[1]
 
+    for override in g_override_list:
+        l_tokens = override.split("=")
+        print "Override cfg", l_tokens[0], l_tokens[1]
+        l_params[l_tokens[0]] = l_tokens[1]
+        
     if not g_boolUseRandomTrace:
         l_params["traceFile"] = g_trace_file
     else:
@@ -108,10 +123,11 @@ def setup_txn_generator(params):
 g_boolUseRandomTrace = True
 g_boolUseDefaultConfig = True
 g_trace_file = ""
-g_config_file = ""
+g_config_file_list = list()
+g_override_list = list()
 
 # Setup global parameters
-[g_boolUseRandomTrace, g_trace_file, g_boolUseDefaultConfig, g_config_file] = read_arguments()
+[g_boolUseRandomTrace, g_trace_file, g_boolUseDefaultConfig, g_config_file_list, g_override_list] = read_arguments()
 g_params = setup_config_params()
 
 

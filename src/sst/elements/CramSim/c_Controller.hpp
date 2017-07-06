@@ -113,7 +113,11 @@ namespace SST {
             int k_txnResQEntries;
             int k_txnGenResQEntries;
 
-            // Transaction Generator <-> DeviceDriver Links
+		    // clock frequency
+			std::string k_controllerClockFreqStr;
+
+            // Transaction Generator <-> DeviceController Links
+
             SST::Link *m_inTxnGenReqPtrLink;
             SST::Link *m_outTxnGenResPtrLink;
             SST::Link *m_outDeviceReqPtrLink;
