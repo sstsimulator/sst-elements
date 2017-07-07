@@ -280,6 +280,14 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
     uint64_t sendTime = 0;
 
     recordStateEventCount(event->getCmd(), state);
+    
+    /* Special case - if this is the last coherence level (e.g., just mem below), 
+     * can upgrade without forwarding request */
+    if (state == S && lastLevel_) {
+        state = M;
+        cacheLine->setState(M);
+    }
+
     switch (state) {
         case I:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
@@ -613,7 +621,7 @@ int L1CoherenceController::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine
     
     switch (state) {
         case S:
-            if (cmd == Command::GetS) return 0;
+            if (cmd == Command::GetS || lastLevel_) return 0;
             return 2;
         case E:
         case M:
@@ -901,7 +909,8 @@ void L1CoherenceController::recordStateEventCount(Command cmd, State state) {
             if (state == IS) stat_stateEvent_GetSResp_IS->addData(1);
             break;
         case Command::GetXResp:
-            if (state == IM) stat_stateEvent_GetXResp_IM->addData(1);
+            if (state == IS) stat_stateEvent_GetXResp_IS->addData(1);
+            else if (state == IM) stat_stateEvent_GetXResp_IM->addData(1);
             else if (state == SM) stat_stateEvent_GetXResp_SM->addData(1);
             break;
         case Command::Inv:

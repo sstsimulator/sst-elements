@@ -40,7 +40,8 @@ public:
         stat_stateEvent_GetSX_E = registerStatistic<uint64_t>("stateEvent_GetSX_E");
         stat_stateEvent_GetSX_M = registerStatistic<uint64_t>("stateEvent_GetSX_M");
         stat_stateEvent_GetSResp_IS = registerStatistic<uint64_t>("stateEvent_GetSResp_IS");
-        stat_stateEvent_GetSResp_IM = registerStatistic<uint64_t>("stateEvent_GetSResp_IM");
+        stat_stateEvent_GetXResp_IS = registerStatistic<uint64_t>("stateEvent_GetXResp_IS");
+        stat_stateEvent_GetXResp_IM = registerStatistic<uint64_t>("stateEvent_GetXResp_IM");
         stat_stateEvent_PutE_I = registerStatistic<uint64_t>("stateEvent_PutE_I");
         stat_stateEvent_PutE_E = registerStatistic<uint64_t>("stateEvent_PutE_E");
         stat_stateEvent_PutE_M = registerStatistic<uint64_t>("stateEvent_PutE_M");
@@ -137,7 +138,8 @@ private:
     Statistic<uint64_t>* stat_stateEvent_GetSX_E;
     Statistic<uint64_t>* stat_stateEvent_GetSX_M;
     Statistic<uint64_t>* stat_stateEvent_GetSResp_IS;
-    Statistic<uint64_t>* stat_stateEvent_GetSResp_IM;
+    Statistic<uint64_t>* stat_stateEvent_GetXResp_IS;
+    Statistic<uint64_t>* stat_stateEvent_GetXResp_IM;
     Statistic<uint64_t>* stat_stateEvent_PutE_I;
     Statistic<uint64_t>* stat_stateEvent_PutE_E;
     Statistic<uint64_t>* stat_stateEvent_PutE_M;

@@ -164,6 +164,7 @@ protected:
     bool            writebackCleanBlocks_;  // Writeback clean data as opposed to just a coherence msg
     bool            silentEvictClean_;      // Silently evict clean blocks (currently ok when just mem below us)
     bool            expectWritebackAck_;    // Whether we should expect a writeback ack
+    bool            lastLevel_;             // Whether we are the lowest coherence level and should not send coherence messages down
 
     /* General parameters and structures */
     unsigned int lineSize_;

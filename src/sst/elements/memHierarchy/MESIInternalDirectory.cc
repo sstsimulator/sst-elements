@@ -300,7 +300,7 @@ int MESIInternalDirectory::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine
 
     if (state == I) return 1;
     if (event->isPrefetch() && event->getRqstr() == parent->getName()) return 0;
-    
+    if (state == S && lastLevel_) state = M;
     switch (state) {
         case S:
             if (cmd == Command::GetS) return 0;
@@ -414,6 +414,15 @@ CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine*
     
     bool isCached = dirLine->getDataLine() != NULL;
     uint64_t sendTime = 0;
+    
+    /* Special case - if this is the last coherence level (e.g., just mem below), 
+     * can upgrade without forwarding request */
+    if (state == S && lastLevel_) {
+        state = M;
+        dirLine->setState(M);
+    }
+    
+
     switch (state) {
         case I:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
@@ -2351,7 +2360,8 @@ void MESIInternalDirectory::recordStateEventCount(Command cmd, State state) {
             if (state == IS) stat_stateEvent_GetSResp_IS->addData(1);
             break;
         case Command::GetXResp:
-            if (state == IM) stat_stateEvent_GetXResp_IM->addData(1);
+            if (state == IS) stat_stateEvent_GetXResp_IS->addData(1);
+            else if (state == IM) stat_stateEvent_GetXResp_IM->addData(1);
             else if (state == SM) stat_stateEvent_GetXResp_SM->addData(1);
             else if (state == SM_Inv) stat_stateEvent_GetXResp_SMInv->addData(1);
             break;

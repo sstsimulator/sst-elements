@@ -393,6 +393,7 @@ void CoherenceController::recordEvictionState(State state) {
 /* Setup variables controlling interactions with other memory levels */
 void CoherenceController::setupLowerStatus(bool isLastCoherenceLevel, bool expectWritebackAck, bool lowerIsNoninclusive) {
     silentEvictClean_ = isLastCoherenceLevel; // Level below us doesn't do coherence so just drop clean blocks
+    lastLevel_ = isLastCoherenceLevel;
     expectWritebackAck_ = expectWritebackAck; // Level below us will send writeback acks so wait for it
     writebackCleanBlocks_ = lowerIsNoninclusive; // Attach a payload to clean writebacks if the lower level might not have data
 

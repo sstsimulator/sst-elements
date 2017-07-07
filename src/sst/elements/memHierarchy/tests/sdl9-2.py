@@ -230,7 +230,7 @@ comp_l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "debug" : DEBUG_L3,
-      "debug_level" : "1",
+      "debug_level" : "3",
       "memNIC.network_address" : "1",
       "memNIC.network_bw" : "25GB/s"
 })
@@ -249,6 +249,7 @@ comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
       "coherence_protocol" : "MSI",
       "debug" : DEBUG_DIR,
+      "debug_level" : 10,
       "entry_cache_size" : "8192",
       "memNIC.network_address" : "0",
       "memNIC.network_bw" : "25GB/s",

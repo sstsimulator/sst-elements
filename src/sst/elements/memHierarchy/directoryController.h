@@ -105,6 +105,7 @@ class DirectoryController : public Component {
     Statistic<uint64_t> * stat_PutMRespReceived;
     Statistic<uint64_t> * stat_PutERespReceived;
     Statistic<uint64_t> * stat_PutSRespReceived;
+    Statistic<uint64_t> * stat_NoncacheReceived;
     // Sent events - to mem
     Statistic<uint64_t> * stat_dataReads;
     Statistic<uint64_t> * stat_dataWrites;
@@ -143,10 +144,10 @@ class DirectoryController : public Component {
     DirEntry* getDirEntry(Addr target);
 	
     /** Handle incoming GetS request */
-    void handleGetS(MemEvent * ev);
+    void handleGetS(MemEvent * ev, bool replay);
     
     /** Handle incoming GetX/GetSX request */
-    void handleGetX(MemEvent * ev);
+    void handleGetX(MemEvent * ev, bool replay);
 
     /** Handle incoming PutS */
     void handlePutS(MemEvent * ev);
@@ -398,7 +399,7 @@ public:
 	
     /** Handler that gets called by clock tick.  
         Function redirects request according to their type. */
-    void processPacket(MemEvent *ev);
+    void processPacket(MemEvent *ev, bool replay);
 	
     /** Clock handler */
     bool clock(SST::Cycle_t cycle);

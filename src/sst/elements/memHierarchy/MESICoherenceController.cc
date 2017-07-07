@@ -334,7 +334,7 @@ int MESIController::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine) {
 
     if (state == I) return 1;
     if (event->isPrefetch() && event->getRqstr() == parent->getName()) return 0;
-    
+    if (state == S && lastLevel_) state = M;
     switch (state) {
         case S:
             if (cmd == Command::GetS) return 0;
@@ -448,6 +448,13 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
    
     uint64_t sendTime = 0;
     
+    /* Special case - if this is the last coherence level (e.g., just mem below), 
+     * can upgrade without forwarding request */
+    if (state == S && lastLevel_) {
+        state = M;
+        cacheLine->setState(M);
+    }
+
     switch (state) {
         case I:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
@@ -1440,7 +1447,6 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
 #endif
             if (responseEvent->getCmd() == Command::GetXResp && responseEvent->getDirty()) cacheLine->setState(M);
             else if (protocol_ && responseEvent->getCmd() == Command::GetXResp) cacheLine->setState(E);
-            else if (responseEvent->getCmd() == Command::GetXResp) cacheLine->setState(M);    // Assume we are the lowest level coherence if we're not MESI and getting a GetXResp -> a future GetX won't need to access memory
             else cacheLine->setState(S);
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) return DONE;
@@ -2242,7 +2248,8 @@ void MESIController::recordStateEventCount(Command cmd, State state) {
             if (state == IS) stat_stateEvent_GetSResp_IS->addData(1);
             break;
         case Command::GetXResp:
-            if (state == IM) stat_stateEvent_GetXResp_IM->addData(1);
+            if (state == IS) stat_stateEvent_GetXResp_IS->addData(1);
+            else if (state == IM) stat_stateEvent_GetXResp_IM->addData(1);
             else if (state == SM) stat_stateEvent_GetXResp_SM->addData(1);
             else if (state == SM_Inv) stat_stateEvent_GetXResp_SMInv->addData(1);
             break;

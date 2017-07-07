@@ -224,6 +224,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_GetSRespSent               = registerStatistic<uint64_t>("responses_sent_GetSResp");
     stat_GetXRespSent               = registerStatistic<uint64_t>("responses_sent_GetXResp");
     stat_MSHROccupancy              = registerStatistic<uint64_t>("MSHR_occupancy");
+    stat_NoncacheReceived           = registerStatistic<uint64_t>("requests_received_noncacheable");
 
 }
 
@@ -460,7 +461,7 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
         requestsThisCycle++;
         MemEvent *event = workQueue.front();
         workQueue.erase(workQueue.begin());
-	processPacket(event);
+	processPacket(event, false);
         if (requestsThisCycle == maxRequestsPerCycle) {
             break;
         }
@@ -474,7 +475,7 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
     return false;
 }
 
-void DirectoryController::processPacket(MemEvent * ev) {
+void DirectoryController::processPacket(MemEvent * ev, bool replay) {
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
         dbg.debug(_L3_, "\n%" PRIu64 " (%s) Processing: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
@@ -489,11 +490,11 @@ void DirectoryController::processPacket(MemEvent * ev) {
     Command cmd = ev->getCmd();
     switch (cmd) {
         case Command::GetS:
-            handleGetS(ev);
+            handleGetS(ev, replay);
             break;
         case Command::GetSX:    // handled like GetX, this is a GetS-lock request
         case Command::GetX:
-            handleGetX(ev);
+            handleGetX(ev, replay);
             break;
         case Command::NACK:
             handleNACK(ev);
@@ -535,7 +536,8 @@ void DirectoryController::processPacket(MemEvent * ev) {
 
 void DirectoryController::handleNoncacheableRequest(MemEventBase * ev) {
     noncacheMemReqs[ev->getID()] = ev->getSrc();
-    
+    stat_NoncacheReceived->addData(1);
+
     ev->setSrc(getName());
     ev->setDst(memoryName);
         
@@ -558,10 +560,9 @@ void DirectoryController::handleNoncacheableResponse(MemEventBase * ev) {
 /* Event handlers */
 
 /** GetS */
-void DirectoryController::handleGetS(MemEvent * ev) {
+void DirectoryController::handleGetS(MemEvent * ev, bool replay) {
     /* Locate directory entry and allocate if needed */
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
-
     /* Put request in MSHR (all GetS requests need to be buffered while they wait for data) and stall if there are waiting requests ahead of us */
     if (!(mshr->elementIsHit(ev->getBaseAddr(), ev))) {
         bool conflict = mshr->isHit(ev->getBaseAddr());
@@ -574,6 +575,8 @@ void DirectoryController::handleGetS(MemEvent * ev) {
         } else {
             profileRequestRecv(ev, entry);
         }
+    } else if (!replay) {
+        profileRequestRecv(ev, entry);
     }
 
     if (!entry->isCached()) {
@@ -605,7 +608,7 @@ void DirectoryController::handleGetS(MemEvent * ev) {
 
 
 /** GetX */
-void DirectoryController::handleGetX(MemEvent * ev) {
+void DirectoryController::handleGetX(MemEvent * ev, bool replay) {
     /* Locate directory entry and allocate if needed */
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
 
@@ -621,7 +624,8 @@ void DirectoryController::handleGetX(MemEvent * ev) {
         } else {
             profileRequestRecv(ev, entry);
         }
-    }
+    } else if (!replay)
+        profileRequestRecv(ev, entry);
 
     if (!entry->isCached()) {
 #ifdef __SST_DEBUG_OUTPUT__
@@ -1481,7 +1485,7 @@ void DirectoryController::handleDirEntryMemoryResponse(MemEvent * ev) {
             dbg.fatal(CALL_INFO, -1, "Directory Controller %s: DirEntry response received for addr 0x%" PRIx64 " but state is %s\n", getName().c_str(), entry->getBaseAddr(), StateString[st]);
     }
     MemEvent * reqEv = mshr->lookupFront(dirAddr);
-    processPacket(reqEv);
+    processPacket(reqEv, true);
 }
 
 

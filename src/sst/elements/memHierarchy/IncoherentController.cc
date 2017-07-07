@@ -508,7 +508,8 @@ void IncoherentController::recordStateEventCount(Command cmd, State state) {
             if (state == IS) stat_stateEvent_GetSResp_IS->addData(1);
             break;
         case Command::GetXResp:
-            if (state == IM) stat_stateEvent_GetSResp_IM->addData(1);
+            if (state == IM) stat_stateEvent_GetXResp_IM->addData(1);
+            else if (state == IS) stat_stateEvent_GetXResp_IS->addData(1);
             break;
         case Command::PutE:
             if (state == I) stat_stateEvent_PutE_I->addData(1);
