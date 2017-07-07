@@ -62,6 +62,7 @@ public:
 
     void run();
     bool push(c_Transaction* newTxn); // receive txns from txnGen into req q
+	c_BankInfo* getBankInfo(unsigned x_bankId);
 
 private:
 

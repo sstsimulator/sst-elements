@@ -58,6 +58,7 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  
 	{
         c_BankInfo* l_bankinfo= new c_BankInfo();
         l_bankinfo->resetRowOpen();
+		l_bankinfo->setBankId(i);
 		m_bankInfo.push_back(l_bankinfo);
 	}
 
@@ -70,45 +71,6 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  
 	if (!l_found) {
 		std::cout << "relCommandWidth value is missing ... exiting" << std::endl;
 		exit(-1);
-	}
-
-	k_REFI = (uint32_t) x_params.find<uint32_t>("nREFI", 1, l_found);
-	if (!l_found) {
-		std::cout << "nREFI value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	// refresh stuff
-	// populate the m_refreshGroups with bankIds
-
-	//per-rank refresh groups (all-banks refresh)
-	uint l_groupId = 0;
-	uint l_bankId = 0;
-	for (uint l_chan = 0; l_chan < k_numChannelsPerDimm; l_chan++) {
-		for (uint l_rank = 0; l_rank < k_numRanksPerChannel; l_rank++) {
-			// every rank in a different refresh group
-			m_refreshGroups.push_back(std::vector<unsigned>());
-			for (uint l_bankGroup = 0; l_bankGroup < k_numBankGroupsPerRank; l_bankGroup++) {
-				for (uint l_bank = 0; l_bank < k_numBanksPerBankGroup; l_bank++) {
-					m_refreshGroups[l_groupId].push_back(l_bankId);
-					l_bankId++;
-				} // banks
-			} // bankgroups
-			l_groupId++;
-		} // ranks
-	} // channels
-
-	m_currentRefreshGroup = 0;
-	m_currentREFICount = (int) ((double) k_REFI / m_refreshGroups.size());
-
-	int l_tmp = 0;
-	for (auto l_vec : m_refreshGroups) {
-		std::cout << "Refresh Group " << l_tmp << " : ";
-		for (auto l_bankId : l_vec) {
-			std::cout << l_bankId << " ";
-		}
-		std::cout << std::endl;
-		l_tmp++;
 	}
 
 
@@ -190,6 +152,8 @@ void c_TxnConverter::run(){
 		} else
 			l_it++;
 	}
+
+	assert(m_inputQ.empty());
 }
 
 
@@ -345,4 +309,10 @@ void c_TxnConverter::updateBankInfo(c_Transaction* x_txn)
 		printf("bank policy error!!");
 		exit(1);
 	}
+}
+
+
+c_BankInfo* c_TxnConverter::getBankInfo(unsigned x_bankId)
+{
+	return m_bankInfo[x_bankId];
 }

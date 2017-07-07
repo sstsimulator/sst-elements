@@ -57,6 +57,13 @@
 using namespace SST;
 using namespace SST::n_Bank;
 
+
+
+/*!
+ *
+ * @param owner
+ * @param x_params
+ */
 c_DeviceDriver::c_DeviceDriver(Component *owner, Params& x_params) : c_CtrlSubComponent<c_BankCommand*,c_BankCommand*>(owner, x_params) {
 
 	m_Owner = dynamic_cast<c_Controller *>(owner);
@@ -190,6 +197,10 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& x_params) : c_CtrlSubCo
 	m_debugPrefix="[Device Controller]";
 
 }
+
+/*!
+ *
+ */
 c_DeviceDriver::~c_DeviceDriver() {
 	std::cout << __PRETTY_FUNCTION__ << std::endl;
 	// for (unsigned l_i = 0; l_i != m_numBanks; ++l_i)
@@ -200,9 +211,11 @@ c_DeviceDriver::~c_DeviceDriver() {
 }
 
 
+/*!
+ *
+ */
 void c_DeviceDriver::run() {
 
-	//update();
 	unsigned l_rankID=0;
 	if (k_useRefresh) {
 		for (unsigned l_ch = 0 ; l_ch < k_numChannelsPerDimm ; l_ch++)
@@ -225,11 +238,12 @@ void c_DeviceDriver::run() {
 
 	if (!m_inputQ.empty())
 		sendRequest();
-
-	//update();
-
 }
 
+
+/*!
+ *
+ */
 void c_DeviceDriver::update() {
 	for (int l_i = 0; l_i != m_banks.size(); ++l_i) {
 
@@ -253,9 +267,15 @@ void c_DeviceDriver::update() {
 	m_isACTIssued.clear();
 	m_isACTIssued.resize(m_numRanks, false);
 }
-//check
-// 1. bank status
-// 2. bus status
+
+
+
+
+/*!
+ * check bank and bus status
+ * @param x_bankCommandPtr
+ * @return
+ */
 bool c_DeviceDriver::isCmdAllowed(c_BankCommand* x_bankCommandPtr)
 {
 	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
@@ -289,14 +309,21 @@ bool c_DeviceDriver::isCmdAllowed(c_BankCommand* x_bankCommandPtr)
 }
 
 
-//
-// Model a close bank policy as an approximation to a close row policy
-// FIXME: update this to close row policy
-//
-// TODO: call this function only when a config knob k_closeBankPolicy is true
-//
-// Iterate through the cmdReqQ and mark the bank to which a cmd cannot go
-// do not send any further cmds to that bank
+/*!
+ *
+ * @param x_bankId
+ * @return
+ */
+c_BankInfo* c_DeviceDriver::getBankInfo(unsigned x_bankId)
+{
+	return m_banks.at(x_bankId);
+}
+
+
+
+/*!
+ *
+ */
 void c_DeviceDriver::sendRequest() {
 
 	// get count of ACT cmds issued in the FAW
@@ -401,7 +428,11 @@ void c_DeviceDriver::sendRequest() {
 }
 
 
-
+/*!
+ *
+ * @param rank
+ * @return
+ */
 bool c_DeviceDriver::sendRefresh(unsigned rank) {
 
 
@@ -547,6 +578,12 @@ void c_DeviceDriver::releaseCommandBus() {
 }
 
 
+/*!
+ *
+ * @param x_bankCommandPtr
+ * @param x_bank
+ * @return
+ */
 bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 		c_BankInfo* x_bank) {
     SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
@@ -606,6 +643,9 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 
 }
 
+/*!
+ *
+ */
 void c_DeviceDriver::initACTFAWTracker()
 {
 	m_cmdACTFAWtrackers.clear();
@@ -618,6 +658,11 @@ void c_DeviceDriver::initACTFAWTracker()
 	}
 }
 
+/*!
+ *
+ * @param x_rankid
+ * @return
+ */
 unsigned c_DeviceDriver::getNumIssuedACTinFAW(unsigned x_rankid) {
 
 	assert(x_rankid<m_numRanks);
@@ -630,7 +675,11 @@ unsigned c_DeviceDriver::getNumIssuedACTinFAW(unsigned x_rankid) {
 	return l_cmdACTIssuedInFAW;
 }
 
-
+/*!
+ *
+ * @param x_cmd
+ * @return
+ */
 bool c_DeviceDriver::push(c_BankCommand* x_cmd) {
 	unsigned l_ch = x_cmd->getHashedAddress()->getChannel();
 	//todo: variable queue size
@@ -643,6 +692,11 @@ bool c_DeviceDriver::push(c_BankCommand* x_cmd) {
 }
 
 
+/*!
+ *
+ * @param x_ch
+ * @param x_rankID
+ */
 void c_DeviceDriver::createRefreshCmds(unsigned x_ch, unsigned x_rankID) {
 	std::vector<c_BankInfo*> l_bankInfo=m_ranks[x_rankID]->getBankPtrs();
 
@@ -701,6 +755,11 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_ch, unsigned x_rankID) {
 	}
 }
 
+/*!
+ *
+ * @param x_addr
+ * @return
+ */
 bool c_DeviceDriver::isRefreshing(const c_HashedAddress *x_addr)
 {
 	unsigned l_rank=x_addr->getRankId();
@@ -709,3 +768,4 @@ bool c_DeviceDriver::isRefreshing(const c_HashedAddress *x_addr)
 	else
 		return false;
 }
+

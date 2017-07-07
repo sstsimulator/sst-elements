@@ -115,6 +115,7 @@ namespace SST {
             int m_cmdResQTokens;
             int k_useDualCommandBus;
             int k_multiCycleACT;
+            int k_txnSchedulePolicy;
             bool k_printCmdTrace;
             std::string k_cmdTraceFileName;
             std::filebuf m_cmdTraceFileBuf;
@@ -277,6 +278,22 @@ namespace SST {
             k_multiCycleACT = (uint32_t) x_params.find<uint32_t>("boolMultiCycleACT", 0, l_found);
             if (!l_found) {
                 std::cout << "boolMultiCycleACT value is missing... disabled" << std::endl;
+            }
+
+            string l_txnSchedulePolicy= (string) x_params.find<std::string>("txnSchedulePolicy","FCFS", l_found);
+            if(!l_found) {
+                std::cout << "txnSchedulePolicy value is missing... FCFS policy will be used" << std::endl;
+            }
+            if(l_txnSchedulePolicy=="FCFS")
+            {
+                k_txnSchedulePolicy=0;
+            }
+            else if(l_txnSchedulePolicy=="FRFCFS")
+            {
+                k_txnSchedulePolicy=1;
+            } else
+            {
+                std::cout << "unsupported txnSchedulePolicy ("<<l_txnSchedulePolicy<<")"<< std::endl;
             }
 
             // calculate total number of banks

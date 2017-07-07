@@ -68,6 +68,7 @@ public:
 	virtual void run();
 	virtual bool push(c_BankCommand* x_cmd);
 	virtual bool isCmdAllowed(c_BankCommand* x_bankCommandPtr);
+	virtual c_BankInfo* getBankInfo(unsigned x_bankId);
 	void update();
 
 private:

@@ -1,0 +1,36 @@
+Config file: ./ddr4_test_FRFCFS.cfg
+Trace file: ./testSeq.seq00
+stopAtCycle 10us
+TxnGen:: numTxnPerCycle is missing... use default value (1)
+Address map string: _r_l_R_B_b_h_
+Device Controller is not specified... c_DeviceDriver (default) will be used
+dvcctrl
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+Attaching Channel0 to Rank0
+Setting cmd trace output to ddr4_trace
+dvcctrl
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+dvcctrl
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+dvcctrl
+numPseudoChannel value is missing... 
+boolDualCommandBus value is missing... disabled
+boolMultiCycleACT value is missing... disabled
+numPseudoChannel value is missing... 
+Deleting DIMM
+Total Read-Txns Requests send: 1488
+Total Write-Txns Requests send: 0
+Read-Txns-Received: 1355
+Write-Txns-Received: 0
+Total Txns Received: 1355
+Cycles Per Transaction (CPT) = 7.38007
+Component Finished.
+Simulation is complete, simulated time: 10 us

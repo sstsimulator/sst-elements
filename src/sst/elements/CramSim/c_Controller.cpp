@@ -196,7 +196,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
             l_it = m_ReqQ.erase(l_it);
 
             #ifdef __SST_DEBUG_OUTPUT__
-            output->debug(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d\n",
+            output->verbose(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d\n",
                           Simulation::getSimulation()->getCurrentSimCycle(),
                           newTxn->getTransactionString().c_str(),
                           newTxn->getHashedAddress().getChannel(),

@@ -44,6 +44,7 @@ using namespace std;
 c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) :  c_CtrlSubComponent <c_Transaction*,c_Transaction*> (owner, x_params) {
     m_txnConverter = dynamic_cast<c_Controller *>(owner)->getTxnConverter();
     m_addrHasher = dynamic_cast<c_Controller *>(owner)->getAddrHasher();
+    m_cmdScheduler = dynamic_cast<c_Controller *>(owner)->getCmdScheduler();
     m_nextChannel=0;
     output = dynamic_cast<c_Controller *>(owner)->getOutput();
 
@@ -63,25 +64,31 @@ void c_TxnScheduler::run(){
 
     while(l_numSchedTxn<m_numChannels) {
 
+
         //1. select a transaction from the transaction queue
-        c_Transaction* nextTxn=getNextTxn(l_channelID);
+        c_Transaction* l_nextTxn=getNextTxn(l_channelID);
+
+
 
         //2. send the selected transaction to transaction converter
-        if(nextTxn!=nullptr) {
+        if(l_nextTxn!=nullptr) {
+            if(m_cmdScheduler->getToken(l_nextTxn->getHashedAddress())>=3) {
 
-            // send the selected transaction
-            bool isSuccess=m_txnConverter->push(nextTxn);
+                // send the selected transaction
+                bool isSuccess = m_txnConverter->push(l_nextTxn);
 
-            // pop it from inputQ
-            if(isSuccess) {
-                popTxn(l_channelID, nextTxn);
+                #ifdef __SST_DEBUG_OUTPUT__
+                l_nextTxn->print(output, "[c_TxnScheduler]");
+                #endif
 
-     //           #ifdef __SST_DEBUG_OUTPUT__
-   //             nextTxn->print(output, "[TxnScheduler]");
-       //         #endif
+                // pop it from inputQ
+                if (isSuccess) {
+                    popTxn(l_channelID, l_nextTxn);
 
-            } else {
-                output->debug(CALL_INFO,2,0,"Fail to send a transaction to the transaction converter!!");
+
+                } else {
+                    output->verbose(CALL_INFO, 2, 0, "Fail to send a transaction to the transaction converter!!\n");
+                }
             }
         }
 
@@ -98,7 +105,31 @@ c_Transaction* c_TxnScheduler::getNextTxn(int x_ch)
     //FCFS
     if(!m_txnQ.at(x_ch).empty()) {
         //get the next transaction
-        return m_txnQ.at(x_ch).front();
+        //FCFS
+        c_Transaction* l_nxtTxn = nullptr;
+        if(k_txnSchedulePolicy==0) {
+            l_nxtTxn = m_txnQ.at(x_ch).front();
+        }else if(k_txnSchedulePolicy==1){
+
+            //pick a transaction going to an open bank
+            for(auto& l_txn: m_txnQ.at(x_ch))
+            {
+
+                c_BankInfo* l_bankInfo = m_txnConverter->getBankInfo(l_txn->getHashedAddress().getBankId());
+
+                if(l_bankInfo->isRowOpen()
+                   && l_bankInfo->getOpenRowNum()==l_txn->getHashedAddress().getRow()){
+                    l_nxtTxn = l_txn;
+                    break;
+                }
+            }
+
+            // pick a transaction at the head of queue if there is no pended transaction going to an open bank
+            if(l_nxtTxn==nullptr)
+                l_nxtTxn = m_txnQ.at(x_ch).front();
+        }
+
+        return l_nxtTxn;
     } else
         return nullptr;
 

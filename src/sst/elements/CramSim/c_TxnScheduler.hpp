@@ -34,6 +34,7 @@
 #include "c_Transaction.hpp"
 #include "c_TxnConverter.hpp"
 
+
 namespace SST {
     namespace n_Bank {
         class c_TxnConverter;
@@ -47,14 +48,18 @@ namespace SST {
             virtual void run();
             virtual bool push(c_Transaction* newTxn);
 
+
         private:
             c_Transaction* getNextTxn(int x_ch);
             void popTxn(int x_ch, c_Transaction* x_txn);
 
             //**transaction converter
-            c_TxnConverter *m_txnConverter;
+            c_TxnConverter* m_txnConverter;
             //**Address mapper
-            c_AddressHasher *m_addrHasher;
+            c_AddressHasher* m_addrHasher;
+            //**command Scheduler
+            c_CmdScheduler* m_cmdScheduler;
+
             //**per-channel transaction Queue
             std::vector<std::list<c_Transaction*>> m_txnQ;
             //**ID of the channel which will be scheduled first at the next cycle

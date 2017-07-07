@@ -98,6 +98,9 @@ public:
 	SimTime_t getAutoPreTimer() {
 		return (m_autoPrechargeTimer);
 	}
+	void setBankId(const unsigned x_bankId) {
+		m_bankId=x_bankId;
+	}
 
 	void print();
         unsigned getBankId() {

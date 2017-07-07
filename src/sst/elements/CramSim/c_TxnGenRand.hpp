@@ -39,6 +39,10 @@ public:
 	void finish() {
 		printf("Total Read-Txns Responses received: %lu\n", m_resReadCount);
 		printf("Total Write-Txns Responses received: %lu\n", m_resWriteCount);
+		printf("Total Txns Received: %lu\n", m_resReadCount + m_resWriteCount);
+		std::cout << "Cycles Per Transaction (CPT) = "
+				  << std::dec << static_cast<double>(Simulation::getSimulation()->getCurrentSimCycle())
+								 / static_cast<double>(m_resReadCount + m_resWriteCount) << std::endl;
 		printf("Component Finished.\n");
 	}
 
