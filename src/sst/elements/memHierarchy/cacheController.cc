@@ -549,7 +549,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
                 bool stop = false;
                 if (entries.begin()->elem.isEvent()) {
                     MemEvent * front = ((entries.begin())->elem).getEvent();
-                    if (front->getCmd() != Command::Inv && front->getCmd() != Command::FetchInv && front->getCmd() != Command::FetchInvX) {
+                    if (front->getCmd() != Command::Inv && front->getCmd() != Command::FetchInv && front->getCmd() != Command::FetchInvX && front->getCmd() != Command::ForceInv) {
                         stop = true;
                     }
                 } else {
@@ -563,7 +563,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
         } else {    /* MemEvent Type */
             Command cmd = ((entries.begin())->elem).getEvent()->getCmd();
             if (writebackInProgress) {
-                if (cmd != Command::Inv && cmd != Command::FetchInv && cmd != Command::FetchInvX) {
+                if (cmd != Command::Inv && cmd != Command::FetchInv && cmd != Command::FetchInvX && cmd != Command::ForceInv) {
                     mshr_->insertAll(baseAddr, entries);
                     break;
                 } else {
@@ -603,7 +603,8 @@ bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& _entries, Addr 
         bool stop = false;
         if (_entries.begin()->elem.isEvent()) {
             MemEvent * front = ((_entries.begin())->elem).getEvent();
-            if (front->getCmd() != Command::Inv && front->getCmd() != Command::FetchInv && front->getCmd() != Command::FetchInvX) stop = true;
+            if (front->getCmd() != Command::Inv && front->getCmd() != Command::FetchInv && front->getCmd() != Command::FetchInvX && front->getCmd() != Command::ForceInv) 
+                stop = true;
         } else {
             stop = true;
         }

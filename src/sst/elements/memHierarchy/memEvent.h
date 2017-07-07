@@ -92,16 +92,24 @@ public:
     /** Generate a new MemEvent, pre-populated as a response */
     MemEvent* makeResponse(State state) {
         MemEvent *me = makeResponse();
-        me->setGrantedState(state);
+        return me;
+    }
+
+    /** Generate a new MemEvent, pre-populated as a response
+     * with a non-default response cmd
+     */
+    MemEvent* makeResponse(Command cmd) {
+        MemEvent *me = makeResponse();
+        me->setCmd(cmd);
         return me;
     }
 
     void initialize() {
         addr_               = 0;
         baseAddr_           = 0;
+        addrGlobal_         = true;
         size_               = 0;
         prefetch_           = false;
-        grantedState_       = NULLST;
         NACKedEvent_        = nullptr;
         retries_            = 0;
         blocked_            = false;
@@ -125,6 +133,11 @@ public:
     void setBaseAddr(Addr baseAddr) { baseAddr_ = baseAddr; }
     /** Return the BaseAddr */
     Addr getBaseAddr() { return baseAddr_; }
+
+    /** Sets whether the address is global (T) or local (F) */
+    void setAddrGlobal(bool global) { addrGlobal_ = global; }
+    /** Return whether address is global (T) or local (F) */
+    bool isAddrGlobal() { return addrGlobal_; }
 
     /** Sets the virtual address of this MemEvent */
     void setVirtualAddress(Addr newVA) { vAddr_ = newVA; }
@@ -204,11 +217,6 @@ public:
         return payload_.size();
     }
 
-    /** Sets the Granted State */
-    void setGrantedState(State state) { grantedState_ = state;}
-    /** Return the Granted State */
-    State getGrantedState() { return grantedState_; }
-
     /** Sets that this is a prefetch command */
     void setPrefetchFlag(bool prefetch) { prefetch_ = prefetch;}
     /** Returns true if this is a prefetch command */
@@ -235,6 +243,7 @@ public:
     virtual std::string getVerboseString() {
         std::ostringstream str;
         str << std::hex << " Addr: 0x" << addr_ << " BaseAddr: 0x" << baseAddr_;
+        str << (addrGlobal_ ? " (Global)" : " (Local)");
         str << " VA: 0x" << vAddr_ << " IP: 0x" << instPtr_;
         str << std::dec << " Size: " << size_;
         str << " Prefetch: " << (prefetch_ ? "true" : "false");
@@ -259,10 +268,10 @@ private:
     uint32_t        size_;              // Size in bytes that are being requested
     Addr            addr_;              // Address
     Addr            baseAddr_;          // Base (line) address
+    bool            addrGlobal_;        // Whether address is a local or global address 
     MemEvent*       NACKedEvent_;       // For a NACK, pointer to the NACKed event
     int             retries_;           // For NACKed events, how many times a retry has been sent
     dataVec         payload_;           // Data
-    State           grantedState_;      // For data responses, the cohrence state that the request is granted in
     bool            prefetch_;          // Whether this request came from a prefetcher
     bool            blocked_;           // Whether this request blocked for another pending request (for profiling) TODO move to mshrs
     SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts TODO move to mshrs
@@ -279,10 +288,10 @@ public:
         ser & size_;
         ser & addr_;
         ser & baseAddr_;
+        ser & addrGlobal_;
         ser & NACKedEvent_;
         ser & retries_;
         ser & payload_;
-        ser & grantedState_;
         ser & prefetch_;
         ser & blocked_;
         ser & initTime_;

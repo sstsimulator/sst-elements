@@ -137,22 +137,22 @@ public:
         }
         if (flags_ & F_NONCACHEABLE) { 
             if (addComma) str += ", ";
-            str += "F_NONCACHEABLE, "; 
+            str += "F_NONCACHEABLE"; 
             addComma = true;
         }
         if (flags_ & F_LLSC) { 
             if (addComma) str += ", ";
-            str += "F_LLSC, "; 
+            str += "F_LLSC"; 
             addComma = true;
         }
         if (flags_ & F_SUCCESS) { 
             if (addComma) str += ", ";
-            str += "F_SUCCESS, "; 
+            str += "F_SUCCESS"; 
             addComma = true;
         }
         if (flags_ & F_NORESPONSE) { 
             if (addComma) str += ", ";
-            str += "F_NORESPONSE, "; 
+            str += "F_NORESPONSE"; 
             addComma = true;
         }
         str += "]";
@@ -183,7 +183,7 @@ public:
         if (BasicCommandClassArr[(int)cmd_] == BasicCommandClass::Response) {
             idstring << " RespID: <" << responseToID_.first << "," << responseToID_.second << ">";
         }
-        return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_;
+        return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_;
     }
 
     virtual bool doDebug(Addr addr) {
@@ -237,44 +237,51 @@ public:
 
 class MemEventInit : public MemEventBase  {
 public:
-    MemEventInit(std::string src, Command cmd, Endpoint type, bool inclusive, Addr lineSize) : MemEventBase(src, cmd), type_(type), inclusive_(inclusive), lineSize_(lineSize), addr_(0) { }
-    MemEventInit(std::string src, Command cmd, Addr addr, std::vector<uint8_t> &data) : MemEventBase(src, cmd), addr_(addr), payload_(data) { }
+    
+    enum class InitCommand { Region, Data, Coherence };
 
-    Endpoint getType() { return type_; }
-    bool getInclusive() { return inclusive_; }
-    Addr getLineSize() { return lineSize_; }
+    /* Init event */
+    MemEventInit(std::string src, InitCommand cmd) : MemEventBase(src, Command::NULLCMD), initCmd_(cmd) { }
+
+    /* Init events for initializing memory contents */
+    MemEventInit(std::string src, Command cmd, Addr addr, std::vector<uint8_t> &data) : 
+        MemEventBase(src, cmd), addr_(addr), payload_(data), initCmd_(InitCommand::Data) { }
+
+    InitCommand getInitCmd() { return initCmd_; }
+
     std::vector<uint8_t>& getPayload() { return payload_; }
     Addr getAddr() { return addr_; }
     void setAddr(Addr addr) { addr_ = addr; }
-    
 
     virtual MemEventInit* clone(void) override {
         return new MemEventInit(*this);
     }
     
     virtual std::string getVerboseString() {
-        std::ostringstream str;
-        if (cmd_ == Command::NULLCMD) {
-            str << " Type: " << (int) type_ << " Inclusive: " << (inclusive_ ? "true" : "false");
-            str << " LineSize: " << lineSize_;
-        } else {
-            str << " Addr: " << addr_ << " Payload size: " << payload_.size();
-        }
-        return MemEventBase::getVerboseString() + str.str();
+        std::string str;
+        if (initCmd_ == InitCommand::Region) str = " InitCmd: Region";
+        else if (initCmd_ == InitCommand::Data) str = " InitCmd: Data";
+        else if (initCmd_ == InitCommand::Coherence) str = " InitCmd: Coherence";
+        else str = " InitCmd: Unknown command";
+
+        return MemEventBase::getVerboseString() + str;
     }
 
     virtual std::string getBriefString() {
-        return MemEventBase::getBriefString();
+        std::string str;
+        if (initCmd_ == InitCommand::Region) str = " InitCmd: Region";
+        else if (initCmd_ == InitCommand::Data) str = " InitCmd: Data";
+        else if (initCmd_ == InitCommand::Coherence) str = " InitCmd: Coherence";
+        else str = " InitCmd: Unknown command";
+        
+        return MemEventBase::getBriefString() + str;
     }
 
     virtual Addr getRoutingAddress() { return addr_; }
 
 
-private:
-    // For determining endpoint information 
-    Endpoint type_;     // Type of this endpoint
-    bool inclusive_;    // Whether this endpoint is inclusive
-    Addr lineSize_;  // Endpoint's linesize
+protected:
+    InitCommand initCmd_;
 
     // For pre-loading data into memory
     Addr addr_;
@@ -284,15 +291,93 @@ private:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         MemEventBase::serialize_order(ser);
-        ser & type_;
-        ser & inclusive_;
-        ser & lineSize_;
+        ser & initCmd_;
         ser & addr_;
         ser & payload_;
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventInit);
 };
+
+class MemEventInitCoherence : public MemEventInit  {
+public:
+    
+    /* Init events for coordintating coherence policies */
+    MemEventInitCoherence(std::string src, Endpoint type, bool inclusive, bool WBAck, Addr lineSize) : 
+        MemEventInit(src, InitCommand::Coherence), type_(type), inclusive_(inclusive), needWBAck_(WBAck), lineSize_(lineSize) { }
+
+    Endpoint getType() { return type_; }
+    bool getInclusive() { return inclusive_; }
+    bool getWBAck() { return needWBAck_; }
+    Addr getLineSize() { return lineSize_; }
+
+    virtual MemEventInitCoherence* clone(void) override {
+        return new MemEventInitCoherence(*this);
+    }   
+
+    virtual std::string getVerboseString() {
+        std::ostringstream str;
+        str << " Type: " << (int) type_ << " Inclusive: " << (inclusive_ ? "true" : "false");
+        str << " LineSize: " << lineSize_;
+        return MemEventInit::getVerboseString() + str.str();
+    }
+
+private:
+    Endpoint type_;     // Type of endpoint
+    bool inclusive_;    // Whether endpoint is inclusive
+    bool needWBAck_;    // Whether endpoint expects writeback acks
+    Addr lineSize_;     // Endpoint's linesize
+
+    MemEventInitCoherence() {} // For serialization only
+
+public:
+    void serialize_order(SST::Core::Serialization::serializer &ser) override {
+        MemEventInit::serialize_order(ser);
+        ser & type_;
+        ser & inclusive_;
+        ser & needWBAck_;
+        ser & lineSize_;
+    }
+    
+    ImplementSerializable(SST::MemHierarchy::MemEventInitCoherence);
+};
+
+class MemEventInitRegion : public MemEventInit {
+public:
+    MemEventInitRegion(std::string src, MemRegion region, bool setRegion) :
+        MemEventInit(src, InitCommand::Region), region_(region), setRegion_(setRegion) { }
+
+    MemRegion getRegion() { return region_; }
+
+    bool getSetRegion() { return setRegion_; }
+
+    virtual MemEventInitRegion* clone(void) override {
+        return new MemEventInitRegion(*this);
+    }
+
+    virtual std::string getVerboseString() {
+        return MemEventInit::getVerboseString() + region_.toString() + " SetRegion: " + (setRegion_ ? "T" : "F");
+    }
+
+private:
+    MemRegion region_;  // MemRegion for source
+    bool setRegion_;    // Whether this is a push to set the destination's region or not
+
+    MemEventInitRegion() {} // For serialization only
+
+public:
+    void serialize_order(SST::Core::Serialization::serializer &ser) override {
+        MemEventInit::serialize_order(ser);
+        ser & region_.start;
+        ser & region_.end;
+        ser & region_.interleaveStep;
+        ser & region_.interleaveSize;
+        ser & setRegion_;
+    }
+    
+    ImplementSerializable(SST::MemHierarchy::MemEventInitRegion);
+};
+
 
 }}
 

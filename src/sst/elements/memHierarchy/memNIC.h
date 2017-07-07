@@ -30,12 +30,18 @@
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/util.h"
 
-//#include <sst/elements/merlin/linkControl.h>
-
-
 namespace SST {
 namespace MemHierarchy {
 
+/*
+ *  MemNIC provides a simpleNetwork (from SST core) network interface for memory components
+ *  and overlays memory functions on top
+ *
+ *  The memNIC assumes each network endpoint is associated with a set of memory addresses and that
+ *  each endpoint communicates with a subset of endpoints on the network as defined by "sources"
+ *  and "destinations".
+ *
+ */
 class MemNIC : public Module {
 
 public:
@@ -52,6 +58,13 @@ public:
         TypeOther
     };
 
+    /* Info for memory functions 
+     * MemNIC endpoint handles a set of addresses defined by
+     * rangeStart, rangeEnd, interleaveSize, and interleaveStep
+     *
+     * All other fields are for error checking and coordinating
+     * coherence protocols
+     */
     struct ComponentTypeInfo {
         uint64_t rangeStart;
         uint64_t rangeEnd;
@@ -73,6 +86,7 @@ public:
         }
     };
 
+    /* Info for network functions */
     struct ComponentInfo {
         std::string link_port;
 	int num_vcs;
@@ -193,9 +207,17 @@ private:
     // std::deque<MemRtrEvent *> sendQueue;
     std::deque<SST::Interfaces::SimpleNetwork::Request *> sendQueue;
     int last_recv_vc;
-    std::map<std::string, int> addrMap;
+    
+
+    // Map every network endpoint's name to its network address
+    std::map<std::string, int> networkAddress;
+    
     /* Built during init -> available in Setup and later */
+
+    // Record network and memory info about each network endpoint, indexed by network address??
     std::vector<PeerInfo_t> peers;
+    
+
     std::unordered_map<std::string, MemNIC::ComponentTypeInfo> peerAddrs;
     /* Built during init -> available for lookups later */
     std::map<MemNIC::ComponentTypeInfo, std::string> destinations;
@@ -249,9 +271,6 @@ public:
     std::string findTargetDestination(Addr addr);
     // NOTE: does not clear the listing of destinations which are used for address lookups
     void clearPeerInfo(void) { peers.clear(); }
-    // Assuming addresses at the target 'dst' are linear, convert addr to it's target equivalent
-    Addr convertToDestinationAddress(const std::string &dst, Addr addr);
-
     // Callback function for linkControl
     bool recvNotify(int vn);
 

@@ -164,8 +164,6 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
             return handleFetchInvX(event, cacheLine, replay);
         case Command::ForceInv:
             return handleForceInv(event, cacheLine, replay);
-        case Command::ForceFetchInv:
-            return handleForceFetchInv(event, cacheLine, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized invalidation: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
                     parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
@@ -261,14 +259,12 @@ CacheAction L1CoherenceController::handleGetSRequest(MemEvent* event, CacheLine*
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) return DONE;
             if (event->isLoadLink()) cacheLine->atomicStart();
-            sendTime = sendResponseUp(event, S, data, replay, cacheLine->getTimestamp());
+            sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime-1);
             return DONE;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Handling a GetS request but coherence state is not valid and stable. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), 
-                    StateString[state], getCurrentSimTimeNano());
-
+            debug->fatal(CALL_INFO,-1,"%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns.\n",
+                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return STALL;    // eliminate compiler warning
 }
@@ -321,8 +317,8 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
                 cacheLine->incLock(); 
             }
             
-            if (event->isStoreConditional()) sendTime = sendResponseUp(event, M, data, replay, cacheLine->getTimestamp(), cacheLine->isAtomic());
-            else sendTime = sendResponseUp(event, M, data, replay, cacheLine->getTimestamp());
+            if (event->isStoreConditional()) sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp(), cacheLine->isAtomic());
+            else sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime-1);
 
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
@@ -404,13 +400,13 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
             if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) {
                 printData(cacheLine->getData(), true);
             }
-            if (responseEvent->getGrantedState() == E) cacheLine->setState(E);
-            else if (responseEvent->getGrantedState() == M) cacheLine->setState(M);
+            if (responseEvent->getCmd() == Command::GetXResp && responseEvent->getDirty()) cacheLine->setState(M);
+            else if (protocol_ && responseEvent->getCmd() == Command::GetXResp) cacheLine->setState(E);
             else cacheLine->setState(S);
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) break;
             if (origRequest->isLoadLink()) cacheLine->atomicStart();
-            sendTime = sendResponseUp(origRequest, S, cacheLine->getData(), true, cacheLine->getTimestamp());
+            sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime-1);
             break;
         case IM:
@@ -442,8 +438,8 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
                 cacheLine->incLock(); 
             }
             
-            if (origRequest->isStoreConditional()) sendTime = sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->getTimestamp(), cacheLine->isAtomic());
-            else sendTime = sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->getTimestamp());
+            if (origRequest->isStoreConditional()) sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp(), cacheLine->isAtomic());
+            else sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime-1);
             
             notifyListenerOfAccess(origRequest, NotifyAccessType::WRITE, NotifyResultType::HIT);
@@ -514,41 +510,6 @@ CacheAction L1CoherenceController::handleForceInv(MemEvent * event, CacheLine * 
                     parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
 }
-
-
-CacheAction L1CoherenceController::handleForceFetchInv(MemEvent * event, CacheLine * cacheLine, bool replay) {
-    State state = cacheLine->getState();
-    recordStateEventCount(event->getCmd(), state);
-    
-    switch (state) {
-        case I:
-        case IS:
-        case IM:
-        case I_B:
-            return IGNORE; // Assume Put/flush raced with invalidation
-        case S:
-            sendAckInv(event, cacheLine);
-            cacheLine->setState(I);
-            return DONE;
-        case E:
-        case M:
-            sendResponseDown(event, cacheLine, replay);
-            cacheLine->setState(I);
-            return DONE;
-        case SM:
-            sendAckInv(event, cacheLine);
-            cacheLine->setState(IM);
-            return DONE;
-        case S_B:
-            sendAckInv(event, cacheLine);
-            cacheLine->setState(I_B);
-            return IGNORE; // Don't retry waiting flush
-        default:
-            debug->fatal(CALL_INFO, -1, "%s, Error: Received a ForceFetchInv in an unhandled state: %s. Addr = 0x%" PRIu64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
-    }
-}
-
 
 
 CacheAction L1CoherenceController::handleFetchInv(MemEvent * event, CacheLine * cacheLine, bool replay) {
@@ -704,9 +665,9 @@ void L1CoherenceController::sendResponseDown(MemEvent* event, CacheLine* cacheLi
 }
 
 
-uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, State grantedState, std::vector<uint8_t>* data, bool replay, uint64_t baseTime, bool finishedAtomically) {
+uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, std::vector<uint8_t>* data, bool replay, uint64_t baseTime, bool finishedAtomically) {
     Command cmd = event->getCmd();
-    MemEvent * responseEvent = event->makeResponse(grantedState);
+    MemEvent * responseEvent = event->makeResponse();
     responseEvent->setDst(event->getSrc());
     bool noncacheable = event->queryFlag(MemEvent::F_NONCACHEABLE);
      
@@ -738,8 +699,8 @@ uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, State grantedSt
     
     // Debugging
 #ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", 
-            deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), StateString[responseEvent->getGrantedState()]);
+    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i\n", 
+            deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize());
 #endif
     return deliveryTime;
 }

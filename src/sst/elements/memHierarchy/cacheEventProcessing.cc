@@ -227,7 +227,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     
     // TODO this is a temporary check while we ensure that the source sets baseAddr correctly
     if (baseAddr % cf_.cacheArray_->getLineSize() != 0) {
-        d_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %u. Event: %s\n", getName().c_str(), cf_.cacheArray_->getLineSize(), ev->getBriefString().c_str());
+        d_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %u. Event: %s\n", getName().c_str(), cf_.cacheArray_->getLineSize(), ev->getVerboseString().c_str());
     }
     
     MemEvent* origEvent;
@@ -309,7 +309,6 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         case Command::FetchInvX:
         case Command::Inv:
         case Command::ForceInv:
-        case Command::ForceFetchInv:
             processCacheInvalidate(event, baseAddr, replay);
             break;
         case Command::AckPut:
@@ -323,7 +322,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             processCacheFlush(event, baseAddr, replay);
             break;
         default:
-            d_->fatal(CALL_INFO, -1, "%s, Command not supported, cmd = %s", getName().c_str(), CommandString[(int)cmd]);
+            d_->fatal(CALL_INFO, -1, "%s, Command not supported. Time = %" PRIu64 "ns, Event = %s", getName().c_str(), getCurrentSimTimeNano(), event->getVerboseString().c_str());
     }
     return true;
 }
@@ -336,7 +335,7 @@ void Cache::processNoncacheable(MemEventBase* event) {
     } else {
         std::map<SST::Event::id_type,std::string>::iterator it = responseDst_.find(event->getResponseToID());
         if (it == responseDst_.end()) {
-            d_->fatal(CALL_INFO, 01, "%s, Error: noncacheable response received does not match a request. Event: (). Time: %" PRIu64 "\n",
+            d_->fatal(CALL_INFO, 01, "%s, Error: noncacheable response received does not match a request. Event: (%s). Time: %" PRIu64 "\n",
                     getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
         }
         coherenceMgr_->forwardTowardsCPU(event, it->second);
@@ -388,115 +387,134 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
 
 
 void Cache::init(unsigned int phase) {
-    if (topNetworkLink_) { // I'm connected to the network ONLY via a single NIC
-        
-        bottomNetworkLink_->init(phase);
-        
+    if (linkUp_ == linkDown_) {
+        linkDown_->init(phase);
+
         if (!phase)
-            bottomNetworkLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive", cf_.cacheArray_->getLineSize()));
+            linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, cf_.type_ == "inclusive", cf_.type_ != "inclusive", cf_.cacheArray_->getLineSize()));
 
         /*  */
-        while(MemEventInit *event = bottomNetworkLink_->recvInitData()) {
+        while(MemEventInit *event = linkDown_->recvInitData()) {
             if (event->getCmd() == Command::NULLCMD) {
-                d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d, line size: %" PRIu64 "\n", 
-                        this->getName().c_str(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), (int)event->getType(), event->getInclusive(), event->getLineSize());
+                d_->debug(_L10_, "%s received init event: %s\n", 
+                        this->getName().c_str(), event->getVerboseString().c_str());
+            }
+            /* If event is from one of our destinations, update parameters */
+            if (linkDown_->isDest(event->getSrc()) && event->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(event);
+                if (eventC->getType() != Endpoint::Memory) { // All other types do coherence
+                    isLL = false;
+                }
+                if (!eventC->getInclusive()) {
+                    lowerIsNoninclusive = true; // TODO better checking if multiple caches below us
+                }
+                if (eventC->getWBAck()) {
+                    expectWritebackAcks = true;
+                }
             }
             delete event;
         }
         return;
     }
     
-    SST::Event *ev;
-    if (bottomNetworkLink_) {
-        bottomNetworkLink_->init(phase);
-    }
+    linkUp_->init(phase);
+    linkDown_->init(phase);
     
     if (!phase) {
-        highNetPort_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive", cf_.cacheArray_->getLineSize()));
-        
-        if (!bottomNetworkLink_) { // If we do have a bottom network link, the nic takes care of this
-            lowNetPort_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive", cf_.cacheArray_->getLineSize()));
-        } else {
-            bottomNetworkLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Cache, cf_.type_ == "inclusive", cf_.cacheArray_->getLineSize()));
-        }
+        // MemEventInit: Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
+        linkUp_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, cf_.type_ == "inclusive", cf_.type_ != "inclusive", cf_.cacheArray_->getLineSize()));
+        linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, cf_.type_ == "inclusive", cf_.type_ != "inclusive", cf_.cacheArray_->getLineSize()));
     }
 
-    while ((ev = highNetPort_->recvInitData())) {
-        MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);
-        if (!memEvent) { /* Do nothing */ }
-        else if (memEvent->getCmd() == Command::NULLCMD) {
-            d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d\n", 
-                    this->getName().c_str(), CommandString[(int)memEvent->getCmd()], memEvent->getSrc().c_str(), (int)memEvent->getType(), memEvent->getInclusive());
-            coherenceMgr_->addUpperLevelCacheName(memEvent->getSrc());
+    while (MemEventInit * memEvent = linkUp_->recvInitData()) {
+        if (memEvent->getCmd() == Command::NULLCMD) {
+            d_->debug(_L10_, "%s received init event %s\n", getName().c_str(), memEvent->getVerboseString().c_str());
             upperLevelCacheNames_.push_back(memEvent->getSrc());
         } else {
-            d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, addr: %" PRIu64 ", payload size: %zu\n", 
-                    this->getName().c_str(), CommandString[(int)memEvent->getCmd()], memEvent->getSrc().c_str(), memEvent->getAddr(), memEvent->getPayload().size());
+            d_->debug(_L10_, "%s received init event %s\n", getName().c_str(), memEvent->getVerboseString().c_str());
         
-            if (bottomNetworkLink_) {
-                bottomNetworkLink_->sendInitData(new MemEventInit(*memEvent));
-            } else {
-                lowNetPort_->sendInitData(new MemEventInit(*memEvent));
+            linkDown_->sendInitData(new MemEventInit(*memEvent));
+        }
+        delete memEvent;
+    }
+    
+    while (MemEventInit * memEvent = linkDown_->recvInitData()) {
+        if (memEvent->getCmd() == Command::NULLCMD) {
+            d_->debug(_L10_, "%s received init event %s\n", getName().c_str(), memEvent->getVerboseString().c_str());
+            
+            if (linkDown_->isDest(memEvent->getSrc()) && memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);
+                if (eventC->getType() != Endpoint::Memory) { // All other types to coherence
+                    isLL = false;
+                }
+                if (!eventC->getInclusive()) {
+                    lowerIsNoninclusive = true; // TODO better checking if multiple caches below us
+                }
+                if (eventC->getWBAck()) {
+                    expectWritebackAcks = true;
+                }
+
+                lowerLevelCacheNames_.push_back(eventC->getSrc());
             }
         }
         delete memEvent;
-     }
-    
-    if (!bottomNetworkLink_) {  // Save names of caches below us
-        while ((ev = lowNetPort_->recvInitData())) {
-            MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);
-            if (memEvent && memEvent->getCmd() == Command::NULLCMD) {
-                d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d\n", 
-                        this->getName().c_str(), CommandString[(int)memEvent->getCmd()], memEvent->getSrc().c_str(), (int)memEvent->getType(), memEvent->getInclusive());
-                if (memEvent->getType() == Endpoint::Cache || memEvent->getType() == Endpoint::Scratchpad || memEvent->getType() == Endpoint::Directory) {
-                    isLL = false;
-                    if (!memEvent->getInclusive()) {
-                        lowerIsNoninclusive = true; // TODO better checking if we have multiple caches below us
-                    }
-                }
-                coherenceMgr_->addLowerLevelCacheName(memEvent->getSrc());
-                lowerLevelCacheNames_.push_back(memEvent->getSrc());
-            }
-            delete memEvent;
-        }
-    } else {
-        /*
-         *  Network attached caches
-         *  Note that this finds ALL endpoints on the network, not just those the cache might directly communicate with
-         *  Current MemNIC does all the tracking of which endpoints we actually need to know about so this is just for debug
-         */
-        while (MemEventInit *memEvent = bottomNetworkLink_->recvInitData()) {
-            if (memEvent->getCmd() == Command::NULLCMD) {
-                d_->debug(_L10_, "%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d\n", 
-                        this->getName().c_str(), CommandString[(int)memEvent->getCmd()], memEvent->getSrc().c_str(), (int)memEvent->getType(), memEvent->getInclusive());
-            }
-            delete memEvent;
-        }
     }
 }
 
 
 void Cache::setup() {
-    bool isDirBelow = false; // is a directory below?
-    if (bottomNetworkLink_) { 
-        isLL = false;   // Either a directory or a cache below us
-        lowerIsNoninclusive = false; // Assume the cache below us is inclusive or it's a directory
-        isDirBelow = true; // Assume a directory is below
-        const std::vector<MemNIC::PeerInfo_t> &ci = bottomNetworkLink_->getPeerInfo();
-        const MemNIC::ComponentInfo &myCI = bottomNetworkLink_->getComponentInfo();
-        // Search peer info to determine if we have inclusive or noninclusive caches below us
-        if (MemNIC::TypeCacheToCache == myCI.type) { // I'm a cache with a cache below
-            isDirBelow = false; // Cache not directory below us
-            for (std::vector<MemNIC::PeerInfo_t>::const_iterator i = ci.begin() ; i != ci.end() ; ++i) {
-                if (MemNIC::TypeNetworkCache == i->first.type) { // This would be any cache that is 'below' us
-                    if (i->second.cacheType != "inclusive") {
-                        lowerIsNoninclusive = true;
-                    }
-                }
-            }
+    // Check that our sources and destinations exist or configure if needed
+    
+    std::unordered_map<std::string,MemLinkBase::EndpointInfo> * names = linkUp_->getSources();
+
+    if (names->empty()) {
+        std::unordered_map<std::string,MemLinkBase::EndpointInfo> srcNames;
+        if (upperLevelCacheNames_.empty()) upperLevelCacheNames_.push_back(""); // TODO is this a carry over from the old init or is it needed to avoid segfaults still?
+        for (int i = 0; i < upperLevelCacheNames_.size(); i++) {
+            MemLinkBase::EndpointInfo info;
+            info.name = upperLevelCacheNames_[i];
+            info.addr = 0;
+            info.id = 0;
+            info.region.setDefault();
+            srcNames.insert(std::make_pair(upperLevelCacheNames_[i], info));
         }
+        linkUp_->setSources(srcNames);
     }
-    coherenceMgr_->setupLowerStatus(isLL && !bottomNetworkLink_, lowerIsNoninclusive, isDirBelow);
+    names = linkUp_->getSources();
+    if (names->empty()) 
+        d_->fatal(CALL_INFO, -1,"%s did not find any sources\n", getName().c_str());
+
+    names = linkDown_->getDests();
+    if (names->empty()) {
+        std::unordered_map<std::string,MemLinkBase::EndpointInfo> dstNames;
+        if (lowerLevelCacheNames_.empty()) lowerLevelCacheNames_.push_back(""); // TODO is this a carry over from the old init or is it needed to avoid segfaults still?
+        uint64_t ilStep = 0;
+        uint64_t ilSize = 0;
+        if (lowerLevelCacheNames_.size() > 1) { // RR slice addressing
+            ilStep = cf_.cacheArray_->getLineSize() * lowerLevelCacheNames_.size();
+            ilSize = cf_.cacheArray_->getLineSize();
+        }
+        for (int i = 0; i < lowerLevelCacheNames_.size(); i++) {
+            MemLinkBase::EndpointInfo info;
+            info.name = lowerLevelCacheNames_[i];
+            info.addr = 0;
+            info.id = 0;
+            info.region.setDefault();
+            info.region.interleaveStep = ilStep;
+            info.region.interleaveSize = ilSize;
+            dstNames.insert(std::make_pair(lowerLevelCacheNames_[i], info));
+        }
+        linkDown_->setDests(dstNames);
+    }
+
+    names = linkDown_->getDests();
+    if (names->empty())
+        d_->fatal(CALL_INFO, -1, "%s did not find any destinations\n", getName().c_str());
+
+    linkUp_->setup();
+    if (linkUp_ != linkDown_) linkDown_->setup();
+
+    coherenceMgr_->setupLowerStatus(isLL, expectWritebackAcks, lowerIsNoninclusive);
 }
 
 

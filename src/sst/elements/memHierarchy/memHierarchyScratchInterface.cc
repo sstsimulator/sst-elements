@@ -44,16 +44,18 @@ MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::Component *comp,
 
 void MemHierarchyScratchInterface::init(unsigned int phase) {
     if (!phase) {
-        link_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::CPU, false, 0));
+        // Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
+        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0));
     }
 
     while (SST::Event * ev = link_->recvInitData()) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {
-            if (memEvent->getCmd() == Command::NULLCMD) {
-                baseAddrMask_ = ~(memEvent->getLineSize() - 1);
-                rqstr_ = memEvent->getSrc();
-                allNoncache_ = (Endpoint::Scratchpad == memEvent->getType());
+            if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
+                baseAddrMask_ = ~(memEventC->getLineSize() - 1);
+                rqstr_ = memEventC->getSrc();
+                allNoncache_ = (Endpoint::Scratchpad == memEventC->getType());
             }
         }
         delete ev;

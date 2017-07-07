@@ -36,19 +36,19 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *_comp, Params &_par
 
 void MemHierarchyInterface::init(unsigned int phase) {
     if (!phase) {
-        link_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::CPU, false, 0));
+        // Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
+        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0));
     }
 
     while (SST::Event * ev = link_->recvInitData()) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {
             // Pick up info for initializing MemEvents
-            if (memEvent->getCmd() == Command::NULLCMD) {
-//                output.output("%s received init event with cmd: %s, src: %s, type: %d, inclusive: %d, line size: %" PRIu64 "\n",
-//                        this->getName().c_str(), CommandString[(int)memEvent->getCmd()], memEvent->getSrc().c_str(), (int)memEvent->getType(), memEvent->getInclusive(), memEvent->getLineSize());
+            if (memEvent->getCmd() == Command::NULLCMD && memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
 
-                baseAddrMask_ = ~(memEvent->getLineSize() - 1);
-                rqstr_ = memEvent->getSrc();
+                baseAddrMask_ = ~(memEventC->getLineSize() - 1);
+                rqstr_ = memEventC->getSrc();
             }
         }
         delete ev;

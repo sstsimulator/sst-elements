@@ -185,7 +185,7 @@ CacheAction L1IncoherentController::handleGetSRequest(MemEvent* event, CacheLine
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) return DONE;
             if (event->isLoadLink()) cacheLine->atomicStart();
-            sendTime = sendResponseUp(event, S, data, replay, cacheLine->getTimestamp());
+            sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             return DONE;
         default:
@@ -236,8 +236,8 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
                 cacheLine->incLock(); 
             }
             
-            if (event->isStoreConditional()) sendTime = sendResponseUp(event, M, data, replay, cacheLine->getTimestamp(), cacheLine->isAtomic());
-            else sendTime = sendResponseUp(event, M, data, replay, cacheLine->getTimestamp());
+            if (event->isStoreConditional()) sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp(), cacheLine->isAtomic());
+            else sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
 
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
@@ -316,7 +316,7 @@ void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLi
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) break;
             if (origRequest->isLoadLink()) cacheLine->atomicStart();
-            sendTime = sendResponseUp(origRequest, S, cacheLine->getData(), true, cacheLine->getTimestamp());
+            sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             break;
         case IM:
@@ -339,8 +339,8 @@ void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLi
                 cacheLine->incLock(); 
             }
             
-            if (origRequest->isStoreConditional()) sendTime = sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->getTimestamp(), cacheLine->isAtomic());
-            else sendTime = sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->getTimestamp());
+            if (origRequest->isStoreConditional()) sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp(), cacheLine->isAtomic());
+            else sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             notifyListenerOfAccess(origRequest, NotifyAccessType::WRITE, NotifyResultType::HIT);
             break;
@@ -371,9 +371,9 @@ int L1IncoherentController::isCoherenceMiss(MemEvent* event, CacheLine* cacheLin
  *  Methods for sending & receiving messages
  *********************************************/
 
-uint64_t L1IncoherentController::sendResponseUp(MemEvent * event, State grantedState, std::vector<uint8_t>* data, bool replay, uint64_t baseTime, bool finishedAtomically) {
+uint64_t L1IncoherentController::sendResponseUp(MemEvent * event, std::vector<uint8_t>* data, bool replay, uint64_t baseTime, bool finishedAtomically) {
     Command cmd = event->getCmd();
-    MemEvent * responseEvent = event->makeResponse(grantedState);
+    MemEvent * responseEvent = event->makeResponse();
     responseEvent->setDst(event->getSrc());
     bool noncacheable = event->queryFlag(MemEvent::F_NONCACHEABLE);
     
@@ -399,8 +399,8 @@ uint64_t L1IncoherentController::sendResponseUp(MemEvent * event, State grantedS
     addToOutgoingQueueUp(resp);
 
 #ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", 
-            deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), StateString[responseEvent->getGrantedState()]);
+    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i\n", 
+            deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize());
 #endif
     return deliveryTime;
 }

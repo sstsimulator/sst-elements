@@ -524,6 +524,9 @@ private:
     /** Handle Inv */
     CacheAction handleInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent);
     
+    /** Handle ForceInv */
+    CacheAction handleForceInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent);
+    
     /** Handle Fetch */
     CacheAction handleFetch(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent);
     
@@ -561,7 +564,7 @@ private:
     void sendWritebackAck(MemEvent * event);
 
     /** Send AckInv to lower level cache */
-    void sendAckInv(Addr baseAddr, string origRqstr);
+    void sendAckInv(MemEvent * event);
 
     /** Fetch data from owner and invalidate their copy of the line */
     void sendFetchInv(CacheLine * dirLine, string rqstr, bool replay);
@@ -571,6 +574,9 @@ private:
 
     /** Fetch data from sharer */
     void sendFetch(CacheLine * dirLine, string rqstr, bool replay);
+
+    /** Send ForceInv to owner */
+    void sendForceInv(CacheLine * dirLine, string rqstr, bool replay);
 
     /** Send a flush response */
     void sendFlushResponse(MemEvent * reqEvent, bool success);

@@ -22,6 +22,8 @@
 
 #include "memEvent.h"
 #include "memNIC.h"
+#include "memLink.h"
+#include "memNICSub.h"
 #include "cacheController.h"
 #include "Sieve/sieveController.h"
 #include "Sieve/broadcastShim.h"
@@ -34,7 +36,6 @@
 #include "dmaEngine.h"
 #include "memHierarchyInterface.h"
 #include "memHierarchyScratchInterface.h"
-#include "memNIC.h"
 #include "coherenceController.h"
 #include "MESICoherenceController.h"
 #include "MESIInternalDirectory.h"
@@ -843,7 +844,6 @@ static const ElementInfoParam memctrl_params[] = {
     {"clock",               "Clock frequency of controller", NULL},
     /* Optional parameters */
     {"backend",             "Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
-    {"coherence_protocol",  "Coherence protocol.  Supported: MESI (default), MSI. Only used when a directory controller is not present.", "MESI"},
     {"request_width",       "Size of a DRAM request in bytes. Default 64", "64"},
     {"max_requests_per_cycle",  "Maximum number of requests to accept per cycle. 0 or negative is unlimited. Default is 1 for simpleMem backend, unlimited otherwise.", "1"},
     {"range_start",         "Address where physical memory begins", "0"},
@@ -865,6 +865,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"statistics",          "DEPRECATED - use Statistics API to get statistics for memory controller","0"},
     {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"direct_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether memory is directly connected to a directory/cache (1) or is connected via the network (0)","1"},
+    {"coherence_protocol",  "DEPRECATED. No longer needed. Coherence protocol.  Supported: MESI (default), MSI. Only used when a directory controller is not present.", "MESI"},
     {NULL, NULL, NULL}
 };
 
@@ -1279,6 +1280,23 @@ static Module* create_MemInterfaceModule(Component *comp, Params &params) {
  *****************************************************************************************/
 static SubComponent* create_ScratchInterface(Component *comp, Params &params) {
     return new MemHierarchyScratchInterface(comp, params);
+}
+
+/*****************************************************************************************
+ *  SubComponent: memNIC
+ *  Purpose: Wraps a memEventBase in a simpleNetwork interface event
+ *****************************************************************************************/
+static SubComponent* create_MemNICSub(Component *comp, Params &params) {
+    return new MemNICSub(comp, params);
+}
+
+/*****************************************************************************************
+ *  SubComponent: memLink
+ *  Purpose: Base class for memory component links. 
+ *           Wraps links in an address-aware subcomponent
+ *****************************************************************************************/
+static SubComponent* create_MemLink(Component * comp, Params &params) {
+    return new MemLink(comp, params);
 }
 
 /*****************************************************************************************
@@ -1714,6 +1732,23 @@ static const ElementInfoSubComponent subcomponents[] = {
         coherence_statistics,
         "SST::MemHierarchy::CoherenceController"
     },
+    {   "MemLink",
+        "Memory-oriented link interface",
+        NULL,
+        create_MemLink,
+        NULL,
+        NULL,
+        "SST::MemLink",
+    },
+    {   "MemNICSub",
+        "Memory-oriented Network Interface",
+        NULL,
+        create_MemNICSub,
+        NULL,
+        NULL,
+        "SST::MemLink",
+    },
+            
     {NULL, NULL, NULL, NULL, NULL, NULL}
 };
 

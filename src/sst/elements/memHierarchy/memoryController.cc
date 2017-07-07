@@ -13,12 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/* 
- * File:   memController.cc
- * Author: Caesar De la Paz III
- * Email:  caesar.sst@gmail.com
- */
-
 #include <sst_config.h>
 #include <sst/core/element.h>
 #include <sst/core/params.h>
@@ -32,7 +26,8 @@
 #include "memEvent.h"
 #include "bus.h"
 #include "cacheListener.h"
-#include "memNIC.h"
+#include "memNICSub.h"
+#include "memLink.h"
 
 #define NO_STRING_DEFINED "N/A"
 
@@ -48,7 +43,7 @@ using namespace SST::MemHierarchy;
 #endif
 
 /*************************** Memory Controller ********************/
-MemController::MemController(ComponentId_t id, Params &params) : Component(id), networkLink_(NULL), cacheLink_(NULL), backing_(NULL) {
+MemController::MemController(ComponentId_t id, Params &params) : Component(id), backing_(NULL) {
             
     int debugLevel = params.find<int>("debug_level", 0);
 
@@ -59,7 +54,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     fixupParams( params, "max_requests_per_cycle", "backendConvertor.backend.max_requests_per_cycle" );
 
     // Output for debug
-    dbg.init("@t:--->  ", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
+    dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
     dbg.debug(_L10_,"---");
@@ -91,7 +86,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     std::string name        = params.find<std::string>("backendConvertor", "memHierarchy.simpleMemBackendConvertor");
 
-    string protocolStr      = params.find<std::string>("coherence_protocol", "MESI");
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
     Params tmpParams = params.find_prefix_params("backendConvertor.");
@@ -120,28 +114,31 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     free(nextListenerName);
     free(nextListenerParams);
 
-    // Check protocol string - note this is only used if directory controller is not present in system to ensure LLC gets the right permissions
-    if (protocolStr != "MESI" && protocolStr != "mesi" && protocolStr != "msi" && protocolStr != "MSI" && protocolStr != "none" && protocolStr != "NONE") {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): protocol - must be one of 'MESI', 'MSI', or 'NONE'. You specified '%s'\n", getName().c_str(), protocolStr.c_str());
-    }
-
-    protocol_ = (protocolStr == "mesi" || protocolStr == "MESI") ? 1 : 0;
 
     if (isPortConnected("direct_link")) {
-        cacheLink_   = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
+        Params linkParams = params.find_prefix_params("ulink.");
+        linkParams.insert("name", "direct_link");
+        linkParams.insert("latency", link_lat, false);
+        linkParams.insert("accept_region", "1", false);
+        link_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, linkParams));
+        link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
     } else {
 
         if (!isPortConnected("network")) {
             dbg.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
         }
 
-        Params tmpParams = params.find_prefix_params( "memNIC.");
-        tmpParams.insert("mem_size", params.find<std::string>("backendConvertor.backend.mem_size"));
+        Params nicParams = params.find_prefix_params("memNIC.");
+        nicParams.insert("port", "network");
+        nicParams.insert("class", "4", false);
+        nicParams.insert("accept_region", "1", false);
 
-        networkLink_ = new MemNIC( this, tmpParams );
-        networkLink_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
-        networkLink_->setOutput( &dbg );
+        link_ = dynamic_cast<MemNICSub*>(loadSubComponent("memHierarchy.MemNICSub", this, nicParams)); 
+        link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
     }
+    
+    region_ = link_->getRegion();
+    privateMemOffset_ = 0;
 
     // Set up backing store if needed
     if ( ! params.find<bool>("do_not_back",false)  ) {
@@ -165,18 +162,13 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
 void MemController::handleEvent(SST::Event* event) {
     MemEvent *ev = static_cast<MemEvent*>(event);
+    
+    Debug(_L3_,"\n%" PRIu64 " (%s) Recieved: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
 
-    if ( !isRequestAddressValid(ev->getAddr()) ) {
-        dbg.fatal(CALL_INFO, 1, "MemoryController \"%s\" received request from \"%s\" with invalid address.\n"
-                "\t\tRequested Address:   0x%" PRIx64 "\n"
-                "\t\tMC Memory End:       0x%" PRIx64 "\n",
-                getName().c_str(), ev->getSrc().c_str(), ev->getAddr(), (Addr) memSize_);
+    if (ev->isAddrGlobal()) {
+        ev->setBaseAddr(translateToLocal(ev->getBaseAddr()));
+        ev->setAddr(translateToLocal(ev->getAddr()));
     }
-
-    Debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
-    Debug(_L10_,"Memory Controller: %s - Event Received. Cmd = %s\n", getName().c_str(), CommandString[(int)ev->getCmd()]);
-    Debug(_L10_,"Event info: Addr: 0x%" PRIx64 ", dst = %s, src = %s, rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
-        ev->getBaseAddr(), ev->getDst().c_str(), ev->getSrc().c_str(), ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
 
     Command cmd = ev->getCmd();
 
@@ -225,7 +217,7 @@ void MemController::handleEvent(SST::Event* event) {
 
 bool MemController::clock(Cycle_t cycle) {
 
-    if (networkLink_) networkLink_->clock();
+    link_->clock();
 
     memBackendConvertor_->clock( cycle );
 
@@ -234,66 +226,50 @@ bool MemController::clock(Cycle_t cycle) {
 
 void MemController::handleMemResponse( MemEvent* ev ) {
 
-    Debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
-    Debug(_L10_,"Memory Controller: %s - Response Received. Cmd = %s\n", getName().c_str(), CommandString[(int)ev->getCmd()]);
-    Debug(_L10_,"Event info: Addr: 0x%" PRIx64 ", dst = %s, src = %s, rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
-        ev->getBaseAddr(), ev->getDst().c_str(), ev->getSrc().c_str(), ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
+    Debug(_L3_,"Memory Controller: %s - Response Received. %s\n", getName().c_str(), ev->getVerboseString().c_str());
 
     if (ev->queryFlag(MemEvent::F_NORESPONSE)) {
         delete ev;
         return;
     }
-    
-    performResponse( ev );
 
-    if ( networkLink_ ) {
-        networkLink_->send( ev );
-    } else {
-        cacheLink_->send( ev );
+    performResponse( ev );
+    
+    if (ev->isAddrGlobal()) {
+        ev->setBaseAddr(translateToGlobal(ev->getBaseAddr()));
+        ev->setAddr(translateToGlobal(ev->getAddr()));
     }
+    
+    link_->send( ev );
 }
 
 void MemController::init(unsigned int phase) {
-    if (! networkLink_ ) {
-        if (!phase) {
-            cacheLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Memory, true, memBackendConvertor_->getRequestWidth()));
-        }
+    link_->init(phase);
+    
+    /* Inherit region from our source(s) */
+    region_ = link_->getRegion(); // This can change during init, but should stabilize before we start receiving init data
+    if (!phase) {
+        /* Announce our presence on link */
+        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth()));
+    }
 
-        SST::Event *ev = NULL;
-        while (NULL != (ev = cacheLink_->recvInitData())) {
-            MemEventInit *me = dynamic_cast<MemEventInit*>(ev);
-            if (!me) {
-                delete ev;
-                return;
-            }
-            /* Push data to memory */
-            processInitEvent( me );
-        }
-    } else {
-        networkLink_->init(phase);
-        
-        if (!phase) {
-            networkLink_->sendInitData(new MemEventInit(getName(), Command::NULLCMD, Endpoint::Memory, true, memBackendConvertor_->getRequestWidth()));
-        }
-
-        while (MemEventInit *ev = networkLink_->recvInitData()) {
-            if (ev->getDst() == getName()) {
-                /* Push data to memory */
-                processInitEvent( ev );
-            }
-        }
+    while (MemEventInit *ev = link_->recvInitData()) {
+        if (ev->getDst() == getName()) {
+            processInitEvent(ev);
+        } else delete ev;
     }
 }
 
 void MemController::setup(void) {
     memBackendConvertor_->setup();
-    if (networkLink_) networkLink_->setup();
+    link_->setup();
+
 }
 
 
 void MemController::finish(void) {
     memBackendConvertor_->finish();
-    if (networkLink_) networkLink_->finish();
+    link_->finish();
 }
 
 void MemController::performRequest(MemEvent* event) {
@@ -305,7 +281,7 @@ void MemController::performRequest(MemEvent* event) {
     Addr addr = event->queryFlag(MemEvent::F_NONCACHEABLE) ?  event->getAddr() : event->getBaseAddr();
 
     if (event->getCmd() == Command::PutM) {  /* Write request to memory */
-        Debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i\n", addr, event->getSize());
+        Debug(_L4_,"\tWRITE. Addr = %" PRIx64 ", Request size = %i\n", addr, event->getSize());
 
         for ( size_t i = 0 ; i < event->getSize() ; i++)
              backing_->set( addr + i, event->getPayload()[i] );
@@ -314,7 +290,7 @@ void MemController::performRequest(MemEvent* event) {
         bool noncacheable  = event->queryFlag(MemEvent::F_NONCACHEABLE);
 
         if (noncacheable && event->getCmd()== Command::GetX) {
-            Debug(_L10_,"WRITE. Noncacheable request, Addr = %" PRIx64 ", Request size = %i\n", addr, event->getSize());
+            Debug(_L4_,"\tWRITE. Noncacheable request, Addr = %" PRIx64 ", Request size = %i\n", addr, event->getSize());
 
             for ( size_t i = 0 ; i < event->getSize() ; i++)
                     backing_->set( addr + i, event->getPayload()[i] );
@@ -332,16 +308,41 @@ void MemController::performResponse(MemEvent* event) {
 
     if (noncacheable) event->setFlag(MemEvent::F_NONCACHEABLE);
 
-    if (event->getCmd() == Command::GetXResp) {
-        event->setGrantedState(M);
-    } else {
-        if (protocol_) {
-            event->setGrantedState(E); // Directory controller supersedes this; only used if DirCtrl does not exist
-        } else {
-            event->setGrantedState(S);
-        }
-    }
+    if (!noncacheable && event->getCmd() == Command::GetSResp) 
+        event->setCmd(Command::GetXResp); // Memory always sends exclusive responses, dir/caches decide what to do with it
 }
+
+
+/* Translations assume interleaveStep is divisible by interleaveSize */
+Addr MemController::translateToLocal(Addr addr) {
+    Addr rAddr = addr;
+    if (region_.interleaveSize == 0) {
+        rAddr = rAddr - region_.start + privateMemOffset_;
+    } else {
+        Addr shift = rAddr - region_.start;
+        Addr step = shift / region_.interleaveStep;
+        Addr offset = shift % region_.interleaveStep;
+        rAddr = (step * region_.interleaveSize) + offset + privateMemOffset_;
+    }
+    Debug(_L10_,"\tConverting global address 0x%" PRIx64 " to local address 0x%" PRIx64 "\n", addr, rAddr);
+    return rAddr;
+}
+
+
+Addr MemController::translateToGlobal(Addr addr) {
+    Addr rAddr = addr - privateMemOffset_;
+    if (region_.interleaveSize == 0) {
+        rAddr += region_.start;
+    } else {
+        Addr offset = rAddr % region_.interleaveSize;
+        rAddr -= offset;
+        rAddr = rAddr / region_.interleaveSize;
+        rAddr = rAddr * region_.interleaveStep + offset + region_.start;
+    }
+    Debug(_L10_,"\tConverting local address 0x%" PRIx64 " to global address 0x%" PRIx64 "\n", addr, rAddr);
+    return rAddr;
+}
+
 
 void MemController::recordResponsePayload( MemEvent * ev) {
     if (ev->queryFlag(MemEvent::F_NORESPONSE)) return;
@@ -361,9 +362,9 @@ void MemController::recordResponsePayload( MemEvent * ev) {
 }
 
 void MemController::processInitEvent( MemEventInit* me ) {
-
     /* Push data to memory */
     if (Command::GetX == me->getCmd()) {
+        me->setAddr(translateToLocal(me->getAddr()));
         Addr addr = me->getAddr();
         Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 " size %" PRIu32 "\n", getName().c_str(), me->getAddr(),me->getPayload().size());
         if ( isRequestAddressValid(addr) && backing_ ) {
@@ -372,7 +373,7 @@ void MemController::processInitEvent( MemEventInit* me ) {
             }
         }
     } else if (Command::NULLCMD == me->getCmd()) {
-        Debug(_L10_, "Memory received endpoint announcement from: %s, of type %d\n", me->getSrc().c_str(), (int)me->getType()); 
+        Debug(_L10_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str());
     } else {
         Output out("", 0, 0, Output::STDERR);
         out.debug(_L10_,"Memory received unexpected Init Command: %d\n", me->getCmd());

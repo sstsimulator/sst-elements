@@ -31,14 +31,14 @@ using namespace SST::Interfaces;
 /* Translates a MemEvent string destination to a network address (integer) */
 int MemNIC::addrForDest(const std::string &target) const
 {
-  std::map<std::string, int>::const_iterator addrIter = addrMap.find(target);
-  if ( addrIter == addrMap.end() )
-      dbg->fatal(CALL_INFO, -1, "%s, Address for target %s not found in addrMap.\n", comp->getName().c_str(), target.c_str());
+  std::map<std::string, int>::const_iterator addrIter = networkAddress.find(target);
+  if ( addrIter == networkAddress.end() )
+      dbg->fatal(CALL_INFO, -1, "%s, Address for target %s not found in networkAddress map.\n", comp->getName().c_str(), target.c_str());
   return addrIter->second;
 }
 
 bool MemNIC::isValidDestination(std::string target) {
-    return (addrMap.find(target) != addrMap.end());
+    return (networkAddress.find(target) != networkAddress.end());
 }
 
 void MemNIC::setMinPacketSize(unsigned int bytes) {
@@ -51,22 +51,6 @@ int MemNIC::getSizeInBits(MemEventBase *ev)
     /* addr (8B) + cmd (1B) + size */
     return 8 * (packetHeaderBytes + ev->getPayloadSize());
 }
-
-/* Given a destination, convert a global address to a local address (assuming local addresses are contiguous) */
-Addr MemNIC::convertToDestinationAddress(const std::string &dst, Addr addr) {
-    std::unordered_map<std::string, ComponentTypeInfo>::iterator cit = peerAddrs.find(dst);
-    if (cit == peerAddrs.end()) dbg->fatal(CALL_INFO, -1, "Peer %s not found in peerAddrs\n", dst.c_str());
-
-    if (0 == (*cit).second.interleaveSize) return addr - (*cit).second.rangeStart;
-    
-    Addr a = addr - (*cit).second.rangeStart;
-    Addr step = a / (*cit).second.interleaveStep;
-    Addr offset = a % (*cit).second.interleaveStep;
-    Addr retAddr = (step * (*cit).second.interleaveSize) + offset;
-    dbg->debug(_L10_, "%s converted source address %" PRIu64 " to destination address %" PRIu64 " for destination: %s\n", comp->getName().c_str(), addr, retAddr, dst.c_str());
-    return retAddr;
-}
-
 
 void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
 {
@@ -194,14 +178,14 @@ void MemNIC::init(unsigned int phase)
         typeInfoSent = true;
         dbg->debug(_L10_, "Sent init data!\n");
     }
-    // while ( SST::Event *ev = link_control->recvInitData() ) {
     while ( SimpleNetwork::Request *req = link_control->recvInitData() ) {
-        // InitMemRtrEvent *imre = dynamic_cast<InitMemRtrEvent*>(ev);
         Event* payload = req->takePayload();
         InitMemRtrEvent *imre = dynamic_cast<InitMemRtrEvent*>(payload);
         if ( imre ) {
-            addrMap[imre->name] = imre->address;
-            
+            /* Record information for all network endpoints */
+            networkAddress[imre->name] = imre->address;
+
+            /* Record information for only src and/or dst endpoints */
             ComponentInfo peerCI;
             peerCI.name = imre->name;
             peerCI.network_addr = imre->address;
@@ -384,7 +368,7 @@ void MemNIC::send(MemEventBase *ev)
 
 void MemNIC::sendNewTypeInfo(const ComponentTypeInfo &cti)
 {
-    for ( std::map<std::string, int>::const_iterator i = addrMap.begin() ; i != addrMap.end() ; ++i ) {
+    for ( std::map<std::string, int>::const_iterator i = networkAddress.begin() ; i != networkAddress.end() ; ++i ) {
         InitMemRtrEvent *imre = new InitMemRtrEvent(comp->getName(), ci.network_addr, ci.type, cti);
         SimpleNetwork::Request* req = new SimpleNetwork::Request();
 

@@ -28,7 +28,7 @@
 #include "sst/elements/memHierarchy/membackend/backing.h"
 #include "moveEvent.h"
 #include "memEvent.h"
-#include "memNIC.h"
+#include "memLinkBase.h"
 
 namespace SST {
 namespace MemHierarchy {
@@ -39,9 +39,13 @@ class Scratchpad : public SST::Component {
 public:
     Scratchpad(ComponentId_t id, Params &params);
     void init(unsigned int);
+    void setup();
 
     // Output for debug info
     Output dbg;
+
+    // Output for warnings, etc.
+    Output out;
 
     // Handler for backend responses
     void handleScratchResponse(SST::Event::id_type id);
@@ -73,6 +77,7 @@ private:
 
     void processIncomingCPUEvent(SST::Event* event);
     void processIncomingRemoteEvent(SST::Event* event);
+    void processIncomingNetworkEvent(SST::Event* event);
 
     void handleRead(MemEventBase * event);
     void handleWrite(MemEventBase * event);
@@ -85,6 +90,7 @@ private:
     void handleScratchPut(MemEventBase * event);
     void handleAckInv(MemEventBase * event);
     void handleFetchResp(MemEventBase * event);
+    void handleNack(MemEventBase * event);
 
     void handleRemoteGetResponse(MemEvent * response, SST::Event::id_type id);
     void handleRemoteReadResponse(MemEvent * response, SST::Event::id_type id);
@@ -106,9 +112,8 @@ private:
     uint32_t deriveSize(Addr addr, Addr baseAddr, Addr requestAddr, uint32_t requestSize);
 
     // Links
-    SST::Link* linkUp_;     // To cache/cpu
-    SST::Link* linkDown_;   // To memory
-    MemNIC* linkNet_;       // To memory over network
+    MemLinkBase* linkUp_;     // To cache/cpu
+    MemLinkBase* linkDown_;   // To memory
     
     class OutstandingEvent {
         public:
@@ -132,17 +137,17 @@ private:
             SST::Event::id_type id; // Event id that we are mapped to
             MemEvent * scratch;     // If we are waiting to send an event to scratch, the event to send
             Command cmd;            // Event command
-            bool started;           // Whether we've started processing this event
-            bool needDataAndAck;    // Waiting for both data and ack or just one of them?
+            bool needData;          // Waiting on data? (from scratch or remote)
+            bool needAck;           // Waiting on ack? (from cache)
 
-            // For GetS/GetX
-            MSHREntry(SST::Event::id_type id, Command cmd, bool started) : id(id), scratch(nullptr), cmd(cmd), started(started), needDataAndAck(false) { }
-            
-            // For events not yet started that need to send to scratch
-            MSHREntry(SST::Event::id_type id, Command cmd, MemEvent * scratch) : id (id), scratch(scratch), cmd(cmd), started(false), needDataAndAck(false) { }
+            // For events not yet started
+            MSHREntry(SST::Event::id_type id, Command cmd, MemEvent * scratch = nullptr) : id(id), scratch(scratch), cmd(cmd), needData(false), needAck(false) { }
 
-            // For events that may need data and ack and are started
-            MSHREntry(SST::Event::id_type id, Command cmd, bool started, bool needDataAndAck) : id(id), scratch(nullptr), cmd(cmd), started(started), needDataAndAck(needDataAndAck) { }
+            // For Get events which have not yet started but remote read has been sent
+            MSHREntry(SST::Event::id_type id, Command cmd, bool needData) : id(id), scratch(nullptr), cmd(cmd), needData(needData), needAck(false) { }
+
+            // For events that have started
+            MSHREntry(SST::Event::id_type id, Command cmd, bool needData, bool needAck) : id(id), scratch(nullptr), cmd(cmd), needData(needData), needAck(needAck) { }
 
             // For debug
             std::string getString() {
@@ -150,8 +155,8 @@ private:
                 ostringstream str;
                 str <<"ID: <" << id.first << "," << id.second << ">";
                 str << " Cmd: " << cmdStr;
-                str << " Start: " << (started ? "T" : "F");
-                str << " Ack&Data: " << (needDataAndAck ? "T" : "F");
+                str << " Data: " << (needData ? "T" : "F");
+                str << " Ack: " << (needAck ? "T" : "F");
                 return str.str();
             }
     };
@@ -172,6 +177,7 @@ private:
     
     // Caching information
     bool caching_;  // Whether or not caching is possible
+    bool directory_; // Whether or not a directory is managing the caches - if so we cannot assume on a writeback that the data is not cached
     std::vector<bool> cacheStatus_; // One entry per scratchpad line, whether line may be cached
     std::map<SST::Event::id_type, uint64_t> cacheCounters_; // Map of a Get or Put ID to the number of cache acks/data responses we are waiting for
 

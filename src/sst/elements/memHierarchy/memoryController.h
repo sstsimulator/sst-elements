@@ -19,11 +19,10 @@
 #include <sst/core/sst_types.h>
 
 #include <sst/core/component.h>
-#include <sst/core/link.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/cacheListener.h"
-#include "sst/elements/memHierarchy/memNIC.h"
+#include "sst/elements/memHierarchy/memLinkBase.h"
 #include "sst/elements/memHierarchy/membackend/backing.h"
 
 namespace SST {
@@ -70,19 +69,22 @@ private:
     MemBackendConvertor*    memBackendConvertor_;
     Backend::Backing*       backing_; 
 
-    SST::Link*  cacheLink_;         // Link to the rest of memHierarchy 
-    MemNIC*     networkLink_;       // Link to the rest of memHierarchy if we're communicating over a network
+    MemLinkBase* link_;         // Link to the rest of memHierarchy 
 
     std::vector<CacheListener*> listeners_;
     
     std::map<SST::Event::id_type, vector<uint8_t> > payloads_; // To ensure 'correct' read-write ordering, payloads are constructed on message receive just like backing store writes
 
     bool isRequestAddressValid(Addr addr){
-        return (addr < memSize_);
+        return region_.contains(addr);
     }
 
-    int         protocol_;
     size_t      memSize_;
+
+    MemRegion region_; // Which address region we are, for translating to local addresses
+    Addr privateMemOffset_; // If we reserve any memory locations for ourselves/directories/etc. and they are NOT part of the physical address space, shift regular addresses by this much
+    Addr translateToLocal(Addr addr);
+    Addr translateToGlobal(Addr addr);
 };
 
 }}

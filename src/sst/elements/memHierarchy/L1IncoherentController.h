@@ -99,7 +99,7 @@ public:
 
     /* Methods for sending events, called by cache controller */
     /** Send response up (to processor) */
-    uint64_t sendResponseUp(MemEvent * event, State grantedState, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
     
     /** Call through to coherenceController with statistic recording */
     void addToOutgoingQueue(Response& resp);

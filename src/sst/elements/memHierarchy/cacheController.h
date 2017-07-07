@@ -38,7 +38,7 @@
 #include "coherenceController.h"
 #include "util.h"
 #include "cacheListener.h"
-#include "memNIC.h"
+#include "memLinkBase.h"
 #include <string>
 #include <sstream>
 
@@ -185,7 +185,7 @@ private:
         bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
         
         bool nicIdle = true;
-        if (bottomNetworkLink_) nicIdle = bottomNetworkLink_->clock();
+        nicIdle = linkDown_->clock();
         if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
         
         // MSHR occupancy
@@ -278,12 +278,10 @@ private:
     CacheConfig             cf_;
     uint                    ID_;
     CacheListener*          listener_;
-    Link*                   lowNetPort_;
-    Link*                   highNetPort_;
+    MemLinkBase*            linkUp_;
+    MemLinkBase*            linkDown_;
     Link*                   prefetchLink_;
     Link*                   maxWaitSelfLink_;
-    MemNIC*                 bottomNetworkLink_;
-    MemNIC*                 topNetworkLink_;
     Output*                 d_;
     Output*                 d2_;
     vector<string>          lowerLevelCacheNames_;
@@ -314,6 +312,7 @@ private:
     // These parameters are for the coherence controller and are detected during init
     bool                    isLL;
     bool                    lowerIsNoninclusive;
+    bool                    expectWritebackAcks;
 
     /* Performance enhancement: turn clocks off when idle */
     bool                    clockIsOn_;                 // Tell us whether clock is on or off

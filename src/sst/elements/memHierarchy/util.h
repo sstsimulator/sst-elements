@@ -81,14 +81,21 @@ inline bool isPowerOfTwo(unsigned int x) {
     return !(x & (x-1));   
 }
 
-inline void fixupParam( SST::Params& params, const std::string oldKey, const std::string newKey ) {
+/* 
+ * copy oldKey to newKey but don't overwrite if newKey already exists 
+ * return whether parameter was fixed
+ */
+inline bool fixupParam( SST::Params& params, const std::string oldKey, const std::string newKey ) {
     bool found;
+    if (params.contains(newKey)) return false;
 
-    std::string value = params.find<std::string>(oldKey,found);
-    if ( found ) {
-        params.insert( newKey , value );
+    std::string value = params.find<std::string>(oldKey, found);
+    if (found) {
+        params.insert(newKey, value);
+        return true;
     //    params.erase( oldKey );
     }
+    return false;
 }
 
 inline void fixupParams( Params& params, const std::string oldKey, const std::string newKey ) {

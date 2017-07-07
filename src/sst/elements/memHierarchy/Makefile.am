@@ -56,8 +56,13 @@ libmemHierarchy_la_SOURCES = \
 	memEventBase.h \
 	memEvent.h \
 	moveEvent.h \
+	memLinkBase.h \
+	memLink.h \
+	memLink.cc \
 	memNIC.h \
 	memNIC.cc \
+	memNICSub.h \
+	memNICSub.cc \
 	directoryController.h \
 	directoryController.cc \
 	scratchpad.h \
@@ -156,6 +161,7 @@ nobase_sst_HEADERS = \
 	memEventBase.h \
 	memEvent.h \
 	memNIC.h \
+	memNICSub.h \
 	membackend/memBackend.h \
 	membackend/vaultSimBackend.h \
 	membackend/MessierBackend.h \

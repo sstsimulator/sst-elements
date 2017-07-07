@@ -491,6 +491,9 @@ private:
     /** Handle Inv */
     CacheAction handleInv(MemEvent * event, CacheLine * cacheLine, bool replay);
     
+    /** Handle ForceInv */
+    CacheAction handleForceInv(MemEvent * event, CacheLine * cacheLine, bool replay);
+    
     /** Handle Fetch */
     CacheAction handleFetch(MemEvent * event, CacheLine * cacheLine, bool replay);
     
@@ -523,7 +526,7 @@ private:
     void sendWritebackAck(MemEvent * event);
 
     /** Send AckInv to lower level cache */
-    void sendAckInv(Addr baseAddr, string origRqstr);
+    void sendAckInv(MemEvent * event);
 
     /** Fetch data from owner and invalidate their copy of the line */
     void sendFetchInv(CacheLine * cacheLine, string rqstr, bool replay);
@@ -531,6 +534,8 @@ private:
     /** Fetch data from owner and downgrade owner to sharer */
     void sendFetchInvX(CacheLine * cacheLine, string rqstr, bool replay);
 
+    /** Force invalidation of line from owner, do not request data */
+    void sendForceInv(CacheLine * cacheLine, string rqstr, bool replay);
     /** Invalidate all sharers of a block. Used for invalidations and evictions */
     void invalidateAllSharers(CacheLine * cacheLine, string rqstr, bool replay);
     

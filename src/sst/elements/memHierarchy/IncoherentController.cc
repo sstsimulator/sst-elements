@@ -216,7 +216,7 @@ CacheAction IncoherentController::handleGetSRequest(MemEvent* event, CacheLine* 
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) return DONE;
-            sendTime = sendResponseUp(event, E, data, replay, cacheLine->getTimestamp());
+            sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             return DONE;
         default:
@@ -251,7 +251,7 @@ CacheAction IncoherentController::handleGetXRequest(MemEvent* event, CacheLine* 
         case E:
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
-            sendTime = sendResponseUp(event, M, cacheLine->getData(), replay, cacheLine->getTimestamp());
+            sendTime = sendResponseUp(event, cacheLine->getData(), replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(cacheLine->getData(), false);
             return DONE;
@@ -334,7 +334,7 @@ CacheAction IncoherentController::handleFlushLineInvRequest(MemEvent * event, Ca
 CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest){
     
     if (!inclusive_ && (cacheLine == NULL || cacheLine->getState() == I)) {
-        sendResponseUp(origRequest, responseEvent->getGrantedState(), &responseEvent->getPayload(), true, 0);
+        sendResponseUp(origRequest, &responseEvent->getPayload(), true, 0);
         return DONE;
     }
 
@@ -351,13 +351,13 @@ CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, Ca
             cacheLine->setState(E);
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) return DONE;
-            sendTime = sendResponseUp(origRequest, cacheLine->getState(), cacheLine->getData(), true, cacheLine->getTimestamp());
+            sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), false);
             return DONE;
         case IM:
             cacheLine->setState(M); 
-            sendTime = sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->getTimestamp());
+            sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), false);
             return DONE;

@@ -64,7 +64,6 @@ enum class MemEventType { Cache, Move };                            // For parsi
     X(Fetch,            FetchResp,      Request,    ForwardRequest, 0, 0,   Cache)   /* Other read request to sharer:  Get data but don't invalidate cache line */\
     X(FetchInv,         FetchResp,      Request,    ForwardRequest, 0, 0,   Cache)   /* Other write request to owner:  Invalidate cache line */\
     X(FetchInvX,        FetchXResp,     Request,    ForwardRequest, 0, 0,   Cache)   /* Other read request to owner:   Downgrade cache line to O/S (Remove exclusivity) */\
-    X(ForceFetchInv,    FetchResp,      Request,    ForwardRequest, 0, 0,   Cache)   /* Invalidate and send FetchResp or AckInv */ \
     X(FetchResp,        NULLCMD,        Response,   Data,           1, 0,   Cache)   /* response to a Fetch, FetchInv or FetchInvX request */\
     X(FetchXResp,       NULLCMD,        Response,   Data,           1, 0,   Cache)   /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
     /* Others */\
@@ -144,47 +143,55 @@ static const ElementInfoStatistic networkMemoryInspector_statistics[] = {
 /******************************************************************************************
  * Coherence states. Not all protocols use all states 
  *****************************************************************************************/
+/* State NextState */
 #define STATE_TYPES \
-    X(NP)    /* Invalid/Not present */\
-    X(I)    /* Invalid */\
-    X(S)    /* Shared */\
-    X(E)    /* Exclusive, clean */\
-    X(O)    /* Owned, dirty */\
-    X(M)    /* Exclusive, dirty */\
-    X(IS)   /* Invalid, have issued read request */\
-    X(IM)   /* Invalid, have issued write request */\
-    X(SM)   /* Shared, have issued upgrade request */\
-    X(OM)   /* Owned, have issued upgrade request */\
-    X(I_d)  /* I, waiting for dir entry from memory */\
-    X(S_d)  /* S, waiting for dir entry from memory */\
-    X(M_d)  /* M, waiting for dir entry from memory */\
-    X(M_Inv)    /* M, waiting for FetchResp from owner */\
-    X(M_InvX)   /* M, waiting for FetchXResp from owner */\
-    X(E_Inv)    /* E, waiting for FetchResp from owner */\
-    X(E_InvX)   /* E, waiting for FetchXResp from owner */\
-    X(S_D)      /* S, waiting for data from memory for another GetS request */\
-    X(E_D)      /* E with sharers, waiting for data from memory for another GetS request */\
-    X(M_D)      /* M with sharers, waiting for data from memory for another GetS request */\
-    X(SM_D)     /* SM, waiting for data from memory for another GetS request */\
-    X(S_Inv)    /* S, waiting for Invalidation acks from sharers */\
-    X(SM_Inv)   /* SM, waiting for Invalidation acks from sharers */\
-    X(MI) \
-    X(EI) \
-    X(SI) \
-    X(S_B)      /* S, blocked while waiting for a response (currently used for flushes) */\
-    X(I_B)      /* I, blocked while waiting for a response (currently used for flushes) */\
-    X(SB_Inv)   /* Was in S_B, got an Inv, resolving Inv first */\
-    X(NULLST)
+    X(NP,       NP) /* Invalid/Not present */\
+    X(I,        I)  /* Invalid */\
+    X(S,        S)  /* Shared */\
+    X(E,        E)  /* Exclusive, clean */\
+    X(O,        O)  /* Owned, dirty */\
+    X(M,        M)  /* Exclusive, dirty */\
+    X(IS,       S)  /* Invalid, have issued read request */\
+    X(IM,       M)  /* Invalid, have issued write request */\
+    X(SM,       M)  /* Shared, have issued upgrade request */\
+    X(OM,       M)  /* Owned, have issued upgrade request */\
+    X(I_d,      I)  /* I, waiting for dir entry from memory */\
+    X(S_d,      S)  /* S, waiting for dir entry from memory */\
+    X(M_d,      M)  /* M, waiting for dir entry from memory */\
+    X(M_Inv,    M)  /* M, waiting for FetchResp from owner */\
+    X(M_InvX,   M)  /* M, waiting for FetchXResp from owner */\
+    X(E_Inv,    E)  /* E, waiting for FetchResp from owner */\
+    X(E_InvX,   E)  /* E, waiting for FetchXResp from owner */\
+    X(S_D,      S)  /* S, waiting for data from memory for another GetS request */\
+    X(E_D,      E)  /* E with sharers, waiting for data from memory for another GetS request */\
+    X(M_D,      M)  /* M with sharers, waiting for data from memory for another GetS request */\
+    X(SM_D,     SM) /* SM, waiting for data from memory for another GetS request */\
+    X(S_Inv,    S)  /* S, waiting for Invalidation acks from sharers */\
+    X(SM_Inv,   SM) /* SM, waiting for Invalidation acks from sharers */\
+    X(SD_Inv,   IS) /* S_D, got Invalidation, waiting for acks */\
+    X(MI,       I) \
+    X(EI,       I) \
+    X(SI,       I) \
+    X(S_B,      S)  /* S, blocked while waiting for a response (currently used for flushes) */\
+    X(I_B,      I)  /* I, blocked while waiting for a response (currently used for flushes) */\
+    X(SB_Inv,   S_B)/* Was in S_B, got an Inv, resolving Inv first */\
+    X(NULLST,   NULLST)
 
 typedef enum {
-#define X(x) x,
+#define X(a,b) a,
     STATE_TYPES
 #undef X
 } State;
 
 /** Array of the stringify'd version of the MemEvent Commands.  Useful for printing. */
 static const char* StateString[] __attribute__((unused)) = {
-#define X(x) #x ,
+#define X(a,b) #a ,
+    STATE_TYPES
+#undef X
+};
+
+static State NextState[] = {
+#define X(a,b) b,
     STATE_TYPES
 #undef X
 };
@@ -194,4 +201,37 @@ static const char* StateString[] __attribute__((unused)) = {
 static const std::string NONE = "None";
 
 }}
+
+
+/* Define an address region by start/end & interleaving */
+struct MemRegion {
+    uint64_t start;
+    uint64_t end;
+    uint64_t interleaveSize;
+    uint64_t interleaveStep;
+
+    void setDefault() {
+        start = interleaveSize = interleaveStep = 0;
+        end = (uint64_t) - 1;
+    }
+
+    bool contains(uint64_t addr) {
+        if (addr >= start && addr < end) {
+            if (interleaveSize == 0) return true;
+            uint64_t offset = (addr - start) % interleaveStep;
+            return (offset < interleaveSize);
+        }
+        return false;
+    }
+
+    std::string toString() {
+        std::ostringstream str;
+        str << "Start: " << start << " End: " << end;
+        str << " InterleaveSize: " << interleaveSize;
+        str << " InterleaveStep: " << interleaveStep;
+        return str.str();
+    }
+};
+
+
 #endif
