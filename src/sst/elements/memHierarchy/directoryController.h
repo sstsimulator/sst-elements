@@ -41,7 +41,7 @@ using namespace std;
 
 namespace SST { namespace MemHierarchy {
 
-class MemNICSub;
+class MemNIC;
 
 class DirectoryController : public Component {
 
@@ -134,7 +134,7 @@ class DirectoryController : public Component {
 
     /* Network connections */
     MemLink*    memLink;
-    MemNICSub*  network;
+    MemNIC*     network;
     string      memoryName; // if connected to mem via network, this should be the name of the memory we own - param is memory_name
     
     std::multimap<uint64_t,MemEventBase*>   netMsgQueue;

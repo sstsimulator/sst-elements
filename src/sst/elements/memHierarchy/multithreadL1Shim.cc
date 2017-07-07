@@ -79,14 +79,14 @@ MultiThreadL1::~MultiThreadL1() {
 }
 
 void MultiThreadL1::handleRequest(SST::Event * ev, unsigned int threadid) {
-    MemEvent *event = static_cast<MemEvent*>(ev);
+    MemEventBase *event = static_cast<MemEventBase*>(ev);
     if (!clockOn) enableClock();
     threadRequestMap.insert(std::make_pair(event->getID(), threadid));
     requestQueue.push(event);
 }
 
 void MultiThreadL1::handleResponse(SST::Event * ev) {
-    MemEvent *event = static_cast<MemEvent*>(ev);
+    MemEventBase *event = static_cast<MemEventBase*>(ev);
     if (!clockOn) enableClock();
     responseQueue.push(event);
 }
@@ -107,7 +107,7 @@ bool MultiThreadL1::tick(SST::Cycle_t cycle) {
     
     /* Drain response queue */
     while (!responseQueue.empty() && sendcount > 0) {
-        MemEvent * event = responseQueue.front();
+        MemEventBase * event = responseQueue.front();
         responseQueue.pop();
         
         unsigned int linkid = threadRequestMap.find(event->getResponseToID())->second;
@@ -158,12 +158,18 @@ void MultiThreadL1::init(unsigned int phase) {
             if (memEvent) {
                 cacheLink->sendInitData(new MemEventInit(*memEvent));
             }
-            delete memEvent;
+            delete ev;
         }
     }
     
     // Nothing important flows this way
     while ((ev = cacheLink->recvInitData()) != NULL) {
+        MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
+        if (memEvent) {
+            for (int i = 0; i < threadLinks.size(); i++) {
+                threadLinks[i]->sendInitData(new MemEventInit(*memEvent));
+            }
+        }
         delete ev;
     }
 }

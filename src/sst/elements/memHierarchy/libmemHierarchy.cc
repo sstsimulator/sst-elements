@@ -23,7 +23,6 @@
 #include "memEvent.h"
 #include "memNIC.h"
 #include "memLink.h"
-#include "memNICSub.h"
 #include "cacheController.h"
 #include "Sieve/sieveController.h"
 #include "Sieve/broadcastShim.h"
@@ -1287,8 +1286,8 @@ static SubComponent* create_ScratchInterface(Component *comp, Params &params) {
  *  SubComponent: memNIC
  *  Purpose: Wraps a memEventBase in a simpleNetwork interface event
  *****************************************************************************************/
-static SubComponent* create_MemNICSub(Component *comp, Params &params) {
-    return new MemNICSub(comp, params);
+static SubComponent* create_MemNIC(Component *comp, Params &params) {
+    return new MemNIC(comp, params);
 }
 
 /*****************************************************************************************
@@ -1298,14 +1297,6 @@ static SubComponent* create_MemNICSub(Component *comp, Params &params) {
  *****************************************************************************************/
 static SubComponent* create_MemLink(Component * comp, Params &params) {
     return new MemLink(comp, params);
-}
-
-/*****************************************************************************************
- *  Module: memNIC
- *  Purpose: Wraps a memEvent in a simpleNetwork interface event
- *****************************************************************************************/
-static Module* create_MemNIC(Component *comp, Params &params) {
-    return new MemNIC(comp, params);
 }
 
 /*****************************************************************************************
@@ -1742,10 +1733,10 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL,
         "SST::MemLink",
     },
-    {   "MemNICSub",
+    {   "MemNIC",
         "Memory-oriented Network Interface",
         NULL,
-        create_MemNICSub,
+        create_MemNIC,
         NULL,
         NULL,
         "SST::MemLink",
@@ -1763,15 +1754,6 @@ static const ElementInfoModule modules[] = {
         create_MemInterfaceModule,
         NULL,
         "SST::Interfaces::SimpleMem",
-    },
-    {
-        "memNIC",
-        "Memory-oriented Network Interface",
-        NULL, /* Advanced help */
-        NULL, /* ModuleAlloc */
-        create_MemNIC, /* Module Alloc w/ params */
-        NULL, /* Params */
-        NULL, /* Interface */
     },
     {
         "simpleAddrMapper",

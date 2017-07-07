@@ -37,7 +37,7 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) :
     if ( NULL == commandLink ) dbg.fatal(CALL_INFO, 1, "Missing cmdLink\n");
 
     if ( !isPortConnected("netLink") ) dbg.fatal(CALL_INFO, 1, "Missing netLink\n");
-
+/*
     MemNIC::ComponentInfo myInfo;
     myInfo.link_port = "netLink";
     myInfo.link_bandwidth = "1GiB/s";
@@ -46,7 +46,7 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) :
     myInfo.network_addr = params.find<int>("netAddr");
     myInfo.type = MemNIC::TypeDMAEngine;
     networkLink = new MemNIC(this, &dbg, -1, myInfo);
-
+*/
     blocksize = 0;
 }
 
@@ -62,7 +62,7 @@ void DMAEngine::setup(void)
     networkLink->setup();
     bool blocksizeSet = false;
 
-    const std::vector<MemNIC::PeerInfo_t> &peers = networkLink->getPeerInfo();
+/*    const std::vector<MemNIC::PeerInfo_t> &peers = networkLink->getPeerInfo();
     for ( std::vector<MemNIC::PeerInfo_t>::const_iterator i = peers.begin() ; i != peers.end() ; ++i ) {
         switch (i->first.type) {
         case MemNIC::TypeDirectoryCtrl:
@@ -77,7 +77,7 @@ void DMAEngine::setup(void)
         }
     }
 
-    networkLink->clearPeerInfo();
+    networkLink->clearPeerInfo();*/
 }
 
 
@@ -100,14 +100,14 @@ bool DMAEngine::clock(Cycle_t cycle)
      * If new command, check overlap, and delay if needed, otherwise process
      */
 
-    networkLink->clock();
+    //networkLink->clock();
 
     MemEventBase *me = NULL;
     SST::Event *se = NULL;
 
-    while ( NULL != (me = networkLink->recv()) ) {
+//    while ( NULL != (me = networkLink->recv()) ) {
         /* Process network packet */
-        Request* req = findRequest(me->getResponseToID());
+/*        Request* req = findRequest(me->getResponseToID());
 #ifdef __SST_DEBUG_OUTPUT__
         if ( NULL == req ) {
             dbg.debug(_L10_, "Received Packet for which we have no response ID waiting.  ID received: (%" PRIx64 ", %d)\n", me->getResponseToID().first, me->getResponseToID().second);
@@ -115,7 +115,7 @@ bool DMAEngine::clock(Cycle_t cycle)
 #endif
         processPacket(req, me);
     }
-
+*/
 
     while ( NULL != (se = commandLink->recv()) ) {
         /* Process new commands */

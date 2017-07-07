@@ -26,7 +26,7 @@
 #include "memEvent.h"
 #include "bus.h"
 #include "cacheListener.h"
-#include "memNICSub.h"
+#include "memNIC.h"
 #include "memLink.h"
 
 #define NO_STRING_DEFINED "N/A"
@@ -133,7 +133,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         nicParams.insert("class", "4", false);
         nicParams.insert("accept_region", "1", false);
 
-        link_ = dynamic_cast<MemNICSub*>(loadSubComponent("memHierarchy.MemNICSub", this, nicParams)); 
+        link_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams)); 
         link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
     }
     

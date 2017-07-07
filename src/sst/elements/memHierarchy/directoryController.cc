@@ -20,7 +20,7 @@
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 
-#include "memNICSub.h"
+#include "memNIC.h"
 
 
 using namespace SST;
@@ -157,7 +157,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         nicParams.insert("sources", std::to_string(cl - 1), false);
         nicParams.insert("destinations", std::to_string(cl + 1), false);
         
-        network = dynamic_cast<MemNICSub*>(loadSubComponent("memHierarchy.MemNICSub", this, nicParams));
+        network = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
         network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
     
         if (isPortConnected("memory")) {

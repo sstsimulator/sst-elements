@@ -24,7 +24,7 @@
 #include "util.h"
 #include <sst/core/interfaces/stringEvent.h>
 #include "memLink.h"
-#include "memNICSub.h"
+#include "memNIC.h"
 
 using namespace std;
 using namespace SST;
@@ -193,14 +193,14 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         nicParams.insert("class", "3", false); // 3 is the default for anything that talks to memory but this can be set by user too so don't overwrite
        
         if (!memoryDirect) { /* Connect mem side to network */
-            linkDown_ = static_cast<MemNICSub*>(loadSubComponent("memHierarchy.MemNICSub", this, nicParams));
+            linkDown_ = static_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
             linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
             if (!cpuDirect) {
                 linkUp_ = linkDown_; /* Connect cpu side to same network */
                 linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingNetworkEvent));
             }
         } else {
-            linkUp_ = static_cast<MemNICSub*>(loadSubComponent("memHierarchy.MemNICSub", this, nicParams));
+            linkUp_ = static_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
             linkUp_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingCPUEvent));
         }
     }

@@ -30,7 +30,7 @@
 #include "mshr.h"
 #include "L1CoherenceController.h"
 #include "L1IncoherentController.h"
-#include "memNICSub.h"
+#include "memNIC.h"
 #include "memLink.h"
 
 namespace SST{ namespace MemHierarchy{
@@ -459,7 +459,7 @@ void Cache::configureLinks(Params &params) {
         nicParams.find<std::string>("class", "", found);
         if (!found) nicParams.insert("class", "1");
 
-        linkDown_ = dynamic_cast<MemNICSub*>(loadSubComponent("memHierarchy.MemNICSub", this, nicParams));
+        linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         
         // Configure high link
@@ -475,7 +475,7 @@ void Cache::configureLinks(Params &params) {
         if (!found) nicParams.insert("class", "2");
         
         // Configure low link
-        linkDown_ = dynamic_cast<MemNICSub*>(loadSubComponent("memHierarchy.MemNICSub", this, nicParams));
+        linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
         // Configure high link
@@ -529,7 +529,7 @@ void Cache::configureLinks(Params &params) {
             nicParams.insert("interleave_size", std::to_string(interleaveSize) + "B");
             nicParams.insert("interleave_step", std::to_string(interleaveStep) + "B");
         }
-        linkDown_ = dynamic_cast<MemNICSub*>(loadSubComponent("memHierarchy.MemNICSub", this, nicParams));
+        linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
         // Configure high link
