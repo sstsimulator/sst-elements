@@ -40,61 +40,56 @@ public:
 class SubComponentLoader : public Component
 {
 public:
-    SubComponentLoader(ComponentId_t id, SST::Params& params);
-
-private:
-
-    bool tick(SST::Cycle_t);
-    std::vector<SubCompInterface*> subComps;
-public:
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(SubComponentLoader,
                                "simpleElementExample",
                                "SubComponentLoader",
+                               SST_ELI_ELEMENT_VERSION(1,0,0),
                                "Demonstrates subcomponents",
                                COMPONENT_CATEGORY_UNCATEGORIZED
     )
-
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
 
     SST_ELI_DOCUMENT_PARAMS(
         {"clock", "Clock Rate", "1GHz"},
     )
 
+    // Optional since there is nothing to document
     SST_ELI_DOCUMENT_STATISTICS(
     )
 
+    // Optional since there is nothing to document
     SST_ELI_DOCUMENT_PORTS(
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"mySubComp", "Test slot", "SST::SimpleSubComponent::SubCompInterface" }
     )
+
+    SubComponentLoader(ComponentId_t id, SST::Params& params);
+
+private:
+
+    bool tick(SST::Cycle_t);
+    std::vector<SubCompInterface*> subComps;
+
 };
 
 
 /* Our example subcomponents */
 class SubCompSender : public SubCompInterface
 {
-    Statistic<uint32_t> *nMsgSent;
-    uint32_t nToSend;
-    SST::Link *link;
 public:
-    SubCompSender(Component *owningComponent, Params &params);
-    ~SubCompSender() {}
-    void clock(Cycle_t);
 
     // REGISTER THIS SUB-COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_SUBCOMPONENT(
         SubCompSender,
         "simpleElementExample",
         "SubCompSender",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
         "Sending Subcomponent",
         "SST::simpleSubComponent::SubCompInterface"
     )
     
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
     SST_ELI_DOCUMENT_PARAMS(
         {"sendCount", "Number of Messages to Send", "10"},
     )
@@ -107,34 +102,38 @@ public:
         {"sendPort", "Sending Port", { "simpleMessageGeneratorComponent.simpleMessage", "" } }
     )
     
+    // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
     )
+
+private:    
+    Statistic<uint32_t> *nMsgSent;
+    uint32_t nToSend;
+    SST::Link *link;
+public:
+    SubCompSender(Component *owningComponent, Params &params);
+    ~SubCompSender() {}
+    void clock(Cycle_t);
+
 };
 
 
 class SubCompReceiver : public SubCompInterface
 {
-    Statistic<uint32_t> *nMsgReceived;
-    SST::Link *link;
-
-    void handleEvent(SST::Event *ev);
 
 public:
-    SubCompReceiver(Component *owningComponent, Params &params);
-    ~SubCompReceiver() {}
-    void clock(Cycle_t);
 
     // REGISTER THIS SUB-COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_SUBCOMPONENT(
         SubCompReceiver,
         "simpleElementExample",
         "SubCompReceiver",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
         "Receiving Subcomponent",
         "SST::simpleSubComponent::SubCompInterface"
     )
     
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
+    // Optional since there is nothing to document
     SST_ELI_DOCUMENT_PARAMS(
     )
 
@@ -146,8 +145,22 @@ public:
         {"recvPort", "Receiving Port", { "simpleMessageGeneratorComponent.simpleMessage", "" } }
     )
 
+    // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
     )
+    
+private:
+
+    Statistic<uint32_t> *nMsgReceived;
+    SST::Link *link;
+
+    void handleEvent(SST::Event *ev);
+
+public:
+    SubCompReceiver(Component *owningComponent, Params &params);
+    ~SubCompReceiver() {}
+    void clock(Cycle_t);
+
 };
 
 } // namespace SimpleSubComponent

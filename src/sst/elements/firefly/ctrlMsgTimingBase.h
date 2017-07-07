@@ -13,33 +13,29 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef COMPONENTS_FIREFLY_PROTOCOLAPI_H
-#define COMPONENTS_FIREFLY_PROTOCOLAPI_H
-
-#include <sst/core/subcomponent.h>
-#include "sst/elements/thornhill/memoryHeapLink.h"
+#ifndef COMPONENTS_FIREFLY_CTRL_MSG_TIMING_BASE_H
+#define COMPONENTS_FIREFLY_CTRL_MSG_TIMING_BASE_H
 
 namespace SST {
 namespace Firefly {
+namespace CtrlMsg {
 
-class Info;
-class VirtNic;
-
-class ProtocolAPI : public SST::SubComponent 
-{
+class MsgTimingBase {
   public:
 
-    ProtocolAPI( Component* parent ) : SubComponent( parent ) {}
-    virtual ~ProtocolAPI() {}
-#if 0
-    virtual void printStatus( Output& ) {}
-    virtual void setup() {};
-    virtual void finish() {};
-#endif
-    virtual void setVars( Info*, VirtNic*, Thornhill::MemoryHeapLink*, Link* ) = 0;  
-    virtual std::string name() = 0;
+    virtual ~MsgTimingBase() {}
+    virtual uint64_t txDelay( size_t ) = 0;
+    virtual uint64_t rxDelay( size_t ) = 0;
+
+    virtual uint64_t sendReqFiniDelay( size_t ) = 0;
+    virtual uint64_t recvReqFiniDelay( size_t ) = 0;
+    virtual uint64_t rxPostDelay_ns( size_t ) = 0;
+    virtual uint64_t sendAckDelay() = 0;
+    virtual uint64_t shortMsgLength() = 0;
 };
 
 }
 }
+}
+
 #endif

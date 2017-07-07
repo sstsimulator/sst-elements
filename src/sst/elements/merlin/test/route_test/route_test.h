@@ -37,6 +37,27 @@ namespace Merlin {
 
 class route_test : public Component {
 
+public:
+
+    SST_ELI_REGISTER_COMPONENT(
+        route_test,
+        "merlin",
+        "route_test",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Simple NIC to test routing.",
+        COMPONENT_CATEGORY_NETWORK)
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"id",        "Network ID of endpoint."},
+        {"num_peers", "Total number of endpoints in network."},
+        {"link_bw",   "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."}
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
+    )
+
+    
 private:
 
     int id;
@@ -62,26 +83,6 @@ private:
     bool clock_handler(Cycle_t cycle);
 
     bool handle_event(int vn);
-public:
-    SST_ELI_REGISTER_COMPONENT(route_test,"merlin","route_test","Simple NIC to test routing.",COMPONENT_CATEGORY_NETWORK)
-    
-    SST_ELI_DOCUMENT_VERSION(0,5,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-        {"id","Network ID of endpoint."},
-        {"num_peers","Total number of endpoints in network."},
-        {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."}
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
 };
 
 }

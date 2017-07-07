@@ -46,9 +46,9 @@
 #include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
 #include "c_BankCommand.hpp"
-#include "../../../../../sst-core/src/sst/core/event.h"
-#include "../../../../../sst-core/src/sst/core/component.h"
-#include "../../../../../sst-core/src/sst/core/sst_types.h"
+#include <sst/core/event.h>
+#include <sst/core/component.h>
+#include <sst/core/sst_types.h>
 
 using namespace SST;
 using namespace SST::n_Bank;

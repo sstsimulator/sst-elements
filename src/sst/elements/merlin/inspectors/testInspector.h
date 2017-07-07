@@ -28,6 +28,22 @@ using namespace SST::Interfaces;
 namespace Merlin {
 
 class TestNetworkInspector : public SimpleNetwork::NetworkInspector {
+
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        TestNetworkInspector,
+        "merlin",
+        "test_network_inspector",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Used to test NetworkInspector functionality.  Duplicates send_packet_count in hr_router.",
+        "SST::Interfaces::SimpleNetwork::NetworkInspector")
+    
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "test_count", "Count number of packets sent on link", "packets", 1}
+    )
+    
+
 private:
     Statistic<uint64_t>* test_count;
 public:
@@ -37,22 +53,6 @@ public:
 
     void inspectNetworkData(SimpleNetwork::Request* req);
 
-    SST_ELI_REGISTER_SUBCOMPONENT(TestNetworkInspector,"merlin","test_network_inspector","Used to test NetworkInspector functionality.  Duplicates send_packet_count in hr_router.","SST::Interfaces::SimpleNetwork::NetworkInspector")
-    
-    SST_ELI_DOCUMENT_VERSION(1,0,0)
-
-    SST_ELI_DOCUMENT_PARAMS(
-    )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-        { "test_count", "Count number of packets sent on link", "packets", 1}
-    )
-
-    SST_ELI_DOCUMENT_PORTS(
-    )
-
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    )
 };
 } // namespace Merlin
 } // namespace SST
