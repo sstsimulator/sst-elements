@@ -2,7 +2,7 @@
 
 import sys
 
-numBanks = 64
+numBanks = 32
 
 cmdDict = {"ACT":"A","READ":"R","WRITE":"W","PRE":"P","REF":"F"}
 
@@ -19,6 +19,9 @@ for ii in range(numBanks):
     sys.stdout.write('%3d' % ii)
 print
 
+bankList = list()
+first = True
+
 for line in inFile:
     if line[0] != '@': # very simple format checking
         continue
@@ -27,44 +30,41 @@ for line in inFile:
     cycle = grep[0][1:]
     cmd = grep[1]
 
-    doPrint = True
-    ref = False
-    if cmd == 'REF' and len(grep)>3:
-        addr = ""
-        ref = True
-        bankList = grep[3:]
+    if first:
+        first = False
+        lastCycle = cycle
 
-        for ii in bankList:
-            if int(ii) >= numBanks:
-                print "Increase numBanks!",ii,"detected, max is",numBanks-1
-            bankStates[int(ii)] = cmdDict[cmd]
-    else:
-        if cmd != 'REF':
-            addr = grep[3]
-            bankId = int(grep[12])
-            if bankId >= numBanks:
-                print "Increase numBanks!",bankId,"detected, max is",numBanks-1
-            bankStates[bankId] = cmdDict[cmd]
-        else:
-            doPrint = False
-
-    if doPrint:
-        sys.stdout.write('%9s' % cycle)
+    if cycle != lastCycle:
+        sys.stdout.write('%9s' % lastCycle)
         sys.stdout.write(" ")
         for ii in range(numBanks):
             sys.stdout.write('%3s' % bankStates[ii])
         print " ",addr
 
         #reset active banks to | and precharge banks to .
-        if ref:
-            for ii in bankList:
-                bankStates[int(ii)] = "."
+        if len(bankList) > 1:
+            for curBankId in bankList:
+                if bankStates[curBankId] == "A" or bankStates[curBankId] == "W" or bankStates[curBankId] == "R":
+                    bankStates[curBankId] = "|"
+                if bankStates[curBankId] == "P" or bankStates[curBankId] == "F":
+                    bankStates[curBankId] = "."
         else:
             if bankStates[bankId] == "A" or bankStates[bankId] == "W" or bankStates[bankId] == "R":
                 bankStates[bankId] = "|"
             if bankStates[bankId] == "P" or bankStates[bankId] == "F":
                 bankStates[bankId] = "."
-
+            
+        bankList = list() ## clear the bank list
         
+    addr = grep[3]
+    bankId = int(grep[-1])
+    if bankId >= numBanks:
+        print "Increase numBanks!",bankId,"detected, max is",numBanks-1
+        exit(-1)
+    bankStates[bankId] = cmdDict[cmd]
+    bankList.append(bankId)
+        
+    lastCycle = cycle
+
 
     
