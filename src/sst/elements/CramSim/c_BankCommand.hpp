@@ -64,6 +64,7 @@ private:
 	e_BankCommandType m_cmdMnemonic;
 	std::map<e_BankCommandType, std::string> m_cmdToString;
 	bool m_isResponseReady;
+        bool m_isRefreshType; // REF and PRE commands treated specially for printing cmd trace
 	c_HashedAddress m_hashedAddr;
 
 public:
@@ -103,6 +104,11 @@ public:
 	{
 		return (m_isResponseReady);
 	}
+
+        inline bool isRefreshType() const
+        {
+	  return (m_isRefreshType);
+        }
 
 	inline void setResponseReady()
 	{

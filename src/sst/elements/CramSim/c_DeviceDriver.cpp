@@ -475,7 +475,7 @@ bool c_DeviceDriver::sendRefresh(unsigned rank) {
 			for (auto &l_bankid:l_bankIdVec) {
 				c_BankInfo *l_bank = m_banks.at(l_bankid);
 				c_BankCommand *l_cmd = new c_BankCommand(l_cmdPtr->getSeqNum(), l_cmdPtr->getCommandMnemonic(),
-														 l_cmdPtr->getAddress(), l_bankid);
+									 l_cmdPtr->getAddress(), l_bankid);
 				sendCommand((l_cmd), l_bank);
 			}
 		} else {
@@ -590,7 +590,8 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 
 	if (x_bank->isCommandAllowed(x_bankCommandPtr, l_time)) {
 	  if(k_printCmdTrace) {
-	    if(x_bankCommandPtr->getCommandMnemonic() == e_BankCommandType::REF) {
+	    //if(x_bankCommandPtr->getCommandMnemonic() == e_BankCommandType::REF) {
+	    if(x_bankCommandPtr->isRefreshType()) {
 	      (*m_cmdTraceStream) << "@" << std::dec
 				  << Simulation::getSimulation()->getCurrentSimCycle()
 				  << " " << (x_bankCommandPtr)->getCommandString()
@@ -714,7 +715,7 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_ch, unsigned x_rankID) {
 	if(!l_bankVec.empty()) {
 
 		m_refreshCmdQ[x_rankID].push_back(
-				new c_BankCommand(0, e_BankCommandType::PRE, 0, c_HashedAddress(x_ch, 0, 0, 0, 0, 0, 0, 0), l_bankVec));
+				new c_BankCommand(0, e_BankCommandType::PRE, 0, c_HashedAddress(x_ch, 0, x_rankID, 0, 0, 0, 0, 0), l_bankVec));
 
 		#ifdef __SST_DEBUG_OUTPUT__
 		output->verbose(CALL_INFO,2,0,"Cycle: %llu, ch: %d, rankid: %d, Insert precharge commands to close rows before issueing refresh commands\n",
@@ -768,4 +769,3 @@ bool c_DeviceDriver::isRefreshing(const c_HashedAddress *x_addr)
 	else
 		return false;
 }
-
