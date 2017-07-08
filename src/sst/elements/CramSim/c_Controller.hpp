@@ -46,6 +46,7 @@
 // local includes
 namespace SST {
     namespace n_Bank {
+        class c_AddressHasher;
         class c_TxnScheduler;
         class c_DeviceDriver;
         class c_TxnConverter;
@@ -107,6 +108,15 @@ namespace SST {
             int m_txnGenResQTokens;
             int m_deviceReqQTokens;
             int m_thisCycleTxnQTknChg;
+
+            // params for system configuration
+            int k_numChannelsPerDimm;
+            int k_numPseudoChannels;
+            int k_numRanksPerChannel;
+            int k_numBankGroupsPerRank;
+            int k_numBanksPerBankGroup;
+            int k_numColsPerBank;
+            int k_numRowsPerBank;
 
             // params for internal architecture
             int k_txnReqQEntries;

@@ -30,7 +30,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //SST includes
-#include "sst_config.h"
 
 // std includes
 #include <iostream>
@@ -43,7 +42,6 @@
 #include "c_TokenChgEvent.hpp"
 #include "c_CmdPtrPkgEvent.hpp"
 #include "c_CmdResEvent.hpp"
-#include "c_HashedAddress.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
@@ -51,10 +49,13 @@ using namespace std;
 
 c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  c_CtrlSubComponent <c_Transaction*,c_BankCommand*> (owner, x_params) {
 
-	m_cmdScheduler= dynamic_cast<c_Controller *>(owner)->getCmdScheduler();
+	m_owner = dynamic_cast<c_Controller *>(owner);
+	m_cmdScheduler= m_owner->getCmdScheduler();
 	m_cmdSeqNum=0;
 
-	for(unsigned i=0; i<m_numBanks;i++)
+	unsigned l_bankNum=m_owner->getDeviceDriver()->getTotalNumBank();
+	assert(l_bankNum>0);
+	for(unsigned i=0; i<l_bankNum;i++)
 	{
         c_BankInfo* l_bankinfo= new c_BankInfo();
         l_bankinfo->resetRowOpen();
@@ -65,7 +66,6 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  
 	// read params here
 	bool l_found = false;
 
-	// load internal params
 
 	k_relCommandWidth = (uint32_t) x_params.find<uint32_t>("relCommandWidth", 1, l_found);
 	if (!l_found) {
@@ -97,13 +97,6 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  
 		exit(-1);
 	}
 
-	k_useRefresh = (uint32_t) x_params.find<uint32_t>("boolUseRefresh", 1, l_found);
-	if (!l_found) {
-		std::cout << "boolUseRefresh param value is missing... exiting" << std::endl;
-		exit(-1);
-	}
-
-	m_processingRefreshCmds = false;
 
 	// Statistics setup
 	s_readTxnsRecvd = registerStatistic<uint64_t>("readTxnsRecvd");
@@ -158,7 +151,7 @@ void c_TxnConverter::run(){
 
 
 
-bool c_TxnConverter::push(c_Transaction* newTxn) {
+void c_TxnConverter::push(c_Transaction* newTxn) {
 
 	// make sure the internal req q has at least one empty entry
 	// to accept a new txn ptr
@@ -170,11 +163,7 @@ bool c_TxnConverter::push(c_Transaction* newTxn) {
 		}
 		s_totalTxnsRecvd->addData(1);
 
-		if(m_inputQ.size()<k_numCtrlIntQEntries) {
-			m_inputQ.push_back(newTxn);
-			return true;
-		} else
-			return false;
+		m_inputQ.push_back(newTxn);
 }
 
 

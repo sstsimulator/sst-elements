@@ -50,15 +50,9 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
 
     /** Get subcomponent parameters*/
     bool l_found;
-    // set address hasher
-    std::string l_subCompName = params.find<std::string>("AddrHasher", "CramSim.c_AddressHasher",l_found);
-    if(!l_found){
-        output->output("AddrHasher is not specified... AddressHasher (default) will be used\n");
-    }
-    m_addrHasher= dynamic_cast<c_AddressHasher*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
     // set device controller
-    l_subCompName = params.find<std::string>("DeviceDriver", "CramSim.c_DeviceDriver",l_found);
+    std::string l_subCompName  = params.find<std::string>("DeviceDriver", "CramSim.c_DeviceDriver",l_found);
     if(!l_found){
         output->output("Device Controller is not specified... c_DeviceDriver (default) will be used\n");
     }
@@ -87,6 +81,12 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     }
     m_txnScheduler= dynamic_cast<c_TxnScheduler*>(loadSubComponent(l_subCompName.c_str(), this, params));
 
+    // set address hasher
+    l_subCompName = params.find<std::string>("AddrHasher", "CramSim.c_AddressHasher",l_found);
+    if(!l_found){
+        output->output("AddrHasher is not specified... AddressHasher (default) will be used\n");
+    }
+    m_addrHasher= dynamic_cast<c_AddressHasher*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
 
     /** Get SST link parameters*/
@@ -124,6 +124,8 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     //set our clock
     registerClock(k_controllerClockFreqStr,
                   new Clock::Handler<c_Controller>(this, &c_Controller::clockTic));
+
+
 
 }
 

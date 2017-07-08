@@ -145,10 +145,11 @@ comp_txnGen0 = setup_txn_generator(g_params)
 comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
 comp_controller0.addParams(g_params)
 comp_controller0.addParams({
+		"TxnScheduler" : "CramSim.c_TxnScheduler",
 		"TxnConverter" : "CramSim.c_TxnConverter",
 		"AddrHasher" : "CramSim.c_AddressHasher",
 		"CmdScheduler" : "CramSim.c_CmdScheduler" ,
-		"DeviceController" : "CramSim.c_DeviceController"
+		"DeviceDriver" : "CramSim.c_DeviceDriver"
 		})
 
 

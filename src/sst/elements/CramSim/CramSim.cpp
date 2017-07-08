@@ -315,6 +315,8 @@ static const ElementInfoPort c_TxnDriver_ports[] = {
 
 /*----SETUP c_TxnScheduler STRUCTURES----*/
 static const ElementInfoParam c_TxnScheduler_params[] = {
+		{"txnSchedulePolicy", "Transaction scheduling policy", NULL},
+		{"numTxnQEntries", "The number of transaction queue entries", NULL},
 		{NULL, NULL, NULL } };
 
 static const ElementInfoStatistic c_TxnScheduler_stats[] = {
@@ -323,17 +325,8 @@ static const ElementInfoStatistic c_TxnScheduler_stats[] = {
 
 /*----SETUP c_TxnConverter STRUCTURES----*/
 static const ElementInfoParam c_TxnConverter_params[] = {
-		{"numChannelsPerDimm", "Total number of channels per DIMM", NULL},
-		{"numRanksPerChannel", "Total number of ranks per channel", NULL},
-		{"numBankGroupsPerRank", "Total number of bank groups per rank", NULL},
-		{"numBanksPerBankGroup", "Total number of banks per group", NULL},
-		{"numRowsPerBank" "Number of rows in every bank", NULL},
-		{"numColsPerBank", "Number of cols in every bank", NULL},
-		{"numBytesPerTransaction", "Number of bytes retrieved for every transaction", NULL},
 		{"relCommandWidth", "Relative width of each command", NULL},
 		{"bankPolicy", "Select which bank policy to model", NULL},
-		{"nREFI", "Bank param for how often refreshes happen", NULL},
-		{"boolUseRefresh", "Whether to use REF or not", NULL},
 		{"boolUseReadA", "Whether to use READ or READA Cmds", NULL},
 		{"boolUseWriteA", "Whether to use WRITE or WRITEA Cmds", NULL},
 		{NULL, NULL, NULL } };
@@ -350,6 +343,7 @@ static const ElementInfoStatistic c_TxnConverter_stats[] = {
 
 /*----SETUP c_CmdScheduler STRUCTURES----*/
 static const ElementInfoParam c_CmdScheduler_params[] = {
+		{"numCmdQEntries", "The number of entries in command scheduler's command queue"},
 		{NULL, NULL, NULL } };
 
 static const ElementInfoStatistic c_CmdScheduler_stats[] = {
@@ -377,26 +371,24 @@ static const ElementInfoPort c_CmdDriver_ports[] = {
 
 /*----SETUP c_DeviceDriver STRUCTURES----*/
 static const ElementInfoParam c_DeviceDriver_params[] = {
-		{"numChannelsPerDimm", "Total number of channels per DIMM", NULL},
-		{"numRanksPerChannel", "Total number of ranks per channel", NULL},
+		{"numChannels", "Total number of channels per DIMM", NULL},
+		{"numPChannelsPerChannel", "Total number of channels per pseudo channel (added to support HBM)", NULL},
+		{"numRanksPerChannel", "Total number of ranks per (p)channel", NULL},
 		{"numBankGroupsPerRank", "Total number of bank groups per rank", NULL},
 		{"numBanksPerBankGroup", "Total number of banks per group", NULL},
 		{"numRowsPerBank" "Number of rows in every bank", NULL},
 		{"numColsPerBank", "Number of cols in every bank", NULL},
-		{"numBytesPerTransaction", "Number of bytes retrieved for every transaction", NULL},
 		{"boolPrintCmdTrace", "Print a command trace", NULL},
 		{"strCmdTraceFile", "Filename to print the command trace, or - for stdout", NULL},
-		{"strAddressMapStr", "String describing the address map", NULL},
-		{"relCommandWidth", "Relative width of each command", NULL},
 		{"boolAllocateCmdResACT", "Allocate space in DeviceDriver Res Q for ACT Cmds", NULL},
 		{"boolAllocateCmdResREAD", "Allocate space in DeviceDriver Res Q for READ Cmds", NULL},
 		{"boolAllocateCmdResREADA", "Allocate space in DeviceDriver Res Q for READA Cmds", NULL},
 		{"boolAllocateCmdResWRITE", "Allocate space in DeviceDriver Res Q for WRITE Cmds", NULL},
 		{"boolAllocateCmdResWRITEA", "Allocate space in DeviceDriver Res Q for WRITEA Cmds", NULL},
 		{"boolAllocateCmdResPRE", "Allocate space in DeviceDriver Res Q for PRE Cmds", NULL},
-		{"boolCmdQueueFindAnyIssuable", "Search through Req Q for any cmd to send", NULL},
-		{"bankPolicy", "Select which bank policy to model", NULL},
 		{"boolUseRefresh", "Whether to use REF or not", NULL},
+		{"boolDualCommandBus", "Whether to use dual command bus (added to support HBM)", NULL},
+		{"boolMultiCycleACT", "Whether to use multi-cycle (two cycles) active command (added to support HBM)", NULL},
 		{"nRC", "Bank Param", NULL},
 		{"nRRD", "Bank Param", NULL},
 		{"nRRD_L", "Bank Param", NULL},
@@ -436,8 +428,10 @@ static const ElementInfoStatistic c_DeviceDriver_stats[] = {
 /*----SETUP c_Controller STRUCTURES----*/
 static const ElementInfoParam c_Controller_params[] = {
 		{"AddrHasher", "address hasher", "CramSim.c_AddressHasher"},
-		{"scheduler", "Command Scheduler", "CramSim.c_simpleScheduler"},
-		{"deviceController", "device controller", "CramSim.c_DeviceDriver"},
+		{"TxnScheduler", "Transaction Scheduler", "CramSim.c_TxnScheduler"},
+		{"TxnConverter", "Transaction Converter", "CramSim.c_TxnConverter"},
+		{"CmdScheduler", "Command Scheduler", "CramSim.c_CmdScheduler"},
+		{"DeviceDriver", "device driver", "CramSim.c_DeviceDriver"},
 		{NULL, NULL, NULL } };
 
 static const char* c_Controller_TxnGenReq_port_events[] = { "c_txnGenReqEvent", NULL };

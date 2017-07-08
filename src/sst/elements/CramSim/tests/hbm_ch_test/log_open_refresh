@@ -1,9 +1,8 @@
 Config file: ./hbm_ch_test_open_refresh.cfg
 Trace file: ./seq_hbm.seq00
 stopAtCycle 2us
-Address map string: c_C_r_l_R_B_b_h_
 Device Controller is not specified... c_DeviceDriver (default) will be used
-txnSchedulePolicy value is missing... FCFS policy will be used
+k_numCtrlIntQEntries value is missing...
 Attaching Channel0 to Rank0
 Attaching Channel0 to Rank1
 Attaching Channel1 to Rank2
@@ -21,15 +20,17 @@ Attaching Channel6 to Rank13
 Attaching Channel7 to Rank14
 Attaching Channel7 to Rank15
 Setting cmd trace output to hbm_trace
+k_numCtrlIntQEntries value is missing...
+k_numCtrlIntQEntries value is missing...
+k_numCtrlIntQEntries value is missing...
 txnSchedulePolicy value is missing... FCFS policy will be used
-txnSchedulePolicy value is missing... FCFS policy will be used
-txnSchedulePolicy value is missing... FCFS policy will be used
+Address map string: c_C_r_l_R_B_b_h_
 Deleting DIMM
-Total Read-Txns Requests send: 11209
+Total Read-Txns Requests send: 7945
 Total Write-Txns Requests send: 0
-Read-Txns-Received: 10965
+Read-Txns-Received: 7828
 Write-Txns-Received: 0
-Total Txns Received: 10965
-Cycles Per Transaction (CPT) = 0.182399
+Total Txns Received: 7828
+Cycles Per Transaction (CPT) = 0.255493
 Component Finished.
 Simulation is complete, simulated time: 2 us

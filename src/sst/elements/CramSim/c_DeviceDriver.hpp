@@ -71,6 +71,15 @@ public:
 	virtual c_BankInfo* getBankInfo(unsigned x_bankId);
 	void update();
 
+	unsigned getNumChannel(){return k_numChannels;}
+	unsigned getNumPChPerChannel(){return k_numPChannelsPerChannel;}
+	unsigned getNumRanksPerChannel(){return k_numRanksPerChannel;}
+	unsigned getNumBankGroupsPerRank(){return k_numBankGroupsPerRank;}
+	unsigned getNumBanksPerBankGroup(){return k_numBanksPerBankGroup;}
+	unsigned getNumRowsPerBank(){return k_numRowsPerBank;}
+	unsigned getNumColPerBank(){return k_numColsPerBank;}
+	unsigned getTotalNumBank() {return m_numBanks;}
+
 private:
 
 	c_DeviceDriver(); // for serialization only
@@ -113,13 +122,32 @@ private:
 	std::vector<bool> m_isACTIssued;
 	bool m_issuedACT;
 
-	// params for bank structure
-	int k_useDualCommandBus;
-	int k_multiCycleACT;
+
+	// params
+	int k_numChannels;
+	int k_numPChannelsPerChannel;
+	int k_numRanksPerChannel;
+	int k_numBankGroupsPerRank;
+	int k_numBanksPerBankGroup;
+	int k_numColsPerBank;
+	int k_numRowsPerBank;
+
+	bool k_useDualCommandBus;
+	bool k_multiCycleACT;
+	bool k_useRefresh;
+
+
 	std::vector<c_BankInfo*> m_banks;
 	std::vector<c_BankGroup*> m_bankGroups;
 	std::vector<c_Rank*> m_ranks;
 	std::vector<c_Channel*> m_channel;
+    std::map<std::string, unsigned> m_bankParams;
+
+	int m_numChannels;
+	int m_numPseudoChannels;
+	int m_numRanks;
+	int m_numBankGroups;
+	int m_numBanks;
 
 	bool k_printCmdTrace;
 	std::string k_cmdTraceFileName;

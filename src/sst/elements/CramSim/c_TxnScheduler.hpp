@@ -33,11 +33,14 @@
 
 #include "c_Transaction.hpp"
 #include "c_TxnConverter.hpp"
+#include "c_Controller.hpp"
 
 
 namespace SST {
     namespace n_Bank {
+        class c_AddressHasher;
         class c_TxnConverter;
+        class c_Controller;
 
         class c_TxnScheduler: public c_CtrlSubComponent <c_Transaction*,c_Transaction*>  {
         public:
@@ -53,6 +56,8 @@ namespace SST {
             c_Transaction* getNextTxn(int x_ch);
             void popTxn(int x_ch, c_Transaction* x_txn);
 
+            //**Controller
+            c_Controller * m_controller;
             //**transaction converter
             c_TxnConverter* m_txnConverter;
             //**Address mapper
@@ -66,7 +71,11 @@ namespace SST {
             int m_nextChannel;
 
             Output *output;
+            unsigned m_numChannels;
 
+            //parameters
+            int k_txnSchedulePolicy;
+            unsigned k_numTxnQEntries;
 
         };
     }

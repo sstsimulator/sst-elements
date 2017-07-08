@@ -334,11 +334,11 @@ def santize_params(params):
 
     return_params["stopAtCycle"] = int(params["stopAtCycle"].replace("ns\n", ""))
 
-    channelsPerDimm = int(params["numChannelsPerDimm"].replace("\n", ""))
+    channels = int(params["numChannels"].replace("\n", ""))
     ranksPerChannel = int(params["numRanksPerChannel"].replace("\n", ""))
     bankGroupsPerRank = int(params["numBankGroupsPerRank"].replace("\n", ""))
     banksPerBankGroup = int(params["numBanksPerBankGroup"].replace("\n", ""))
-    return_params["num_banks"] = channelsPerDimm * ranksPerChannel * bankGroupsPerRank * banksPerBankGroup
+    return_params["num_banks"] = channels * ranksPerChannel * bankGroupsPerRank * banksPerBankGroup
 
     return_params["nRC"] = int(params["nRC"].replace("\n", ""))
     return_params["nRRD"] = int(params["nRRD"].replace("\n", ""))

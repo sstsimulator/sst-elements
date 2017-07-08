@@ -47,10 +47,12 @@
 #include "c_CmdScheduler.hpp"
 #include "c_Transaction.hpp"
 #include "c_BankInfo.hpp"
+#include "c_Controller.hpp"
 
 namespace SST {
 namespace n_Bank {
 	class c_CmdScheduler;
+	class c_Controller;
 
 
 class c_TxnConverter: public c_CtrlSubComponent <c_Transaction*,c_BankCommand*> {
@@ -61,7 +63,7 @@ public:
 	~c_TxnConverter();
 
     void run();
-    bool push(c_Transaction* newTxn); // receive txns from txnGen into req q
+    void push(c_Transaction* newTxn); // receive txns from txnGen into req q
 	c_BankInfo* getBankInfo(unsigned x_bankId);
 
 private:
@@ -75,23 +77,18 @@ private:
 	void printQueues();
 
 	c_CmdScheduler *m_cmdScheduler;
+	c_Controller *m_owner;
+
 	std::vector<c_BankInfo*> m_bankInfo;
+	unsigned m_bankNums;
 	unsigned m_cmdSeqNum;
 
-	// params for internal architecture
-	int k_txnReqQEntries;
+	// params
 	int k_relCommandWidth; // txn relative command width
 	bool k_useReadA;
 	bool k_useWriteA;
-	bool k_useRefresh;
 	int k_bankPolicy;
 
-	int k_REFI;
-	int m_currentREFICount;
-	std::vector<std::vector<unsigned> > m_refreshGroups;
-	uint m_currentRefreshGroup;
-	std::queue<c_BankCommand*> m_refreshList;
-	bool m_processingRefreshCmds; // Cmd unit is processing refresh commands
 
   // Statistics
   Statistic<uint64_t>* s_readTxnsRecvd;

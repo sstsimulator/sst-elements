@@ -56,6 +56,17 @@ public:
 
   unsigned getBankId()    const {return m_bankId;} // linear bankId
     unsigned getRankId()  const {return m_rankId;}
+    void setChannel(unsigned x_ch) {m_channel=x_ch;}
+    void setPChannel(unsigned x_pch) {m_pchannel=x_pch;}
+    void setRank(unsigned x_rank) {m_rank=x_rank;}
+    void setBankGroup(unsigned x_bg) {m_bankgroup=x_bg;}
+    void setBank(unsigned x_bank) {m_bank=x_bank;}
+    void setRow(unsigned x_row) {m_row=x_row;}
+    void setCol(unsigned x_col) {m_col=x_col;}
+    void setCacheline(unsigned x_cacheline) {m_cacheline=x_cacheline;}
+    void setBankId(unsigned x_bankid) {m_bankId=x_bankid;}
+    void setRankId(unsigned x_rankid) {m_rankId=x_rankid;}
+
 
   void print() const;
   

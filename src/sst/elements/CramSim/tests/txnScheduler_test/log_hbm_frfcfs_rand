@@ -1,7 +1,8 @@
 Config file: ./hbm_test_FRFCFS.cfg
 stopAtCycle 10us
-Address map string: c_C_r_l_R_B_b_h_
 Device Controller is not specified... c_DeviceDriver (default) will be used
+k_numCtrlIntQEntries value is missing...
+numPChannelsPerChannel value is missing... 
 Attaching Channel0 to Rank0
 Attaching Channel1 to Rank1
 Attaching Channel2 to Rank2
@@ -11,10 +12,15 @@ Attaching Channel5 to Rank5
 Attaching Channel6 to Rank6
 Attaching Channel7 to Rank7
 Setting cmd trace output to hbm_trace
+k_numCtrlIntQEntries value is missing...
+k_numCtrlIntQEntries value is missing...
+k_numCtrlIntQEntries value is missing...
+Address map string: c_C_r_l_R_B_b_h_
+numPChannelsPerChannel value is missing... 
 Deleting DIMM
-Total Read-Txns Responses received: 4937
-Total Write-Txns Responses received: 2411
-Total Txns Received: 7348
-Cycles Per Transaction (CPT) = 1.36091
+Total Read-Txns Responses received: 4724
+Total Write-Txns Responses received: 2318
+Total Txns Received: 7042
+Cycles Per Transaction (CPT) = 1.42005
 Component Finished.
 Simulation is complete, simulated time: 10 us

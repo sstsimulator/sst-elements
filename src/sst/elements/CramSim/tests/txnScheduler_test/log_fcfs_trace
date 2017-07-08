@@ -2,31 +2,24 @@ Config file: ./ddr4_test_FCFS.cfg
 Trace file: ./testSeq.seq00
 stopAtCycle 10us
 TxnGen:: numTxnPerCycle is missing... use default value (1)
-Address map string: _r_l_R_B_b_h_
 Device Controller is not specified... c_DeviceDriver (default) will be used
 dvcctrl
-numPseudoChannel value is missing... 
+k_numCtrlIntQEntries value is missing...
 boolDualCommandBus value is missing... disabled
 boolMultiCycleACT value is missing... disabled
-boolDualCommandBus value is missing... disabled
-boolMultiCycleACT value is missing... disabled
+numPChannelsPerChannel value is missing... 
 Attaching Channel0 to Rank0
 Setting cmd trace output to ddr4_trace
 dvcctrl
-numPseudoChannel value is missing... 
-boolDualCommandBus value is missing... disabled
-boolMultiCycleACT value is missing... disabled
+k_numCtrlIntQEntries value is missing...
 dvcctrl
-numPseudoChannel value is missing... 
-boolDualCommandBus value is missing... disabled
-boolMultiCycleACT value is missing... disabled
+k_numCtrlIntQEntries value is missing...
 dvcctrl
-numPseudoChannel value is missing... 
-boolDualCommandBus value is missing... disabled
-boolMultiCycleACT value is missing... disabled
-numPseudoChannel value is missing... 
+k_numCtrlIntQEntries value is missing...
+Address map string: _r_l_R_B_b_h_
+numPChannelsPerChannel value is missing... 
 Deleting DIMM
-Total Read-Txns Requests send: 268
+Total Read-Txns Requests send: 220
 Total Write-Txns Requests send: 0
 Read-Txns-Received: 173
 Write-Txns-Received: 0

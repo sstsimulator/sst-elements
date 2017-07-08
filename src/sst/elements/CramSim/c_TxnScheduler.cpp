@@ -42,14 +42,46 @@ using namespace SST::n_Bank;
 using namespace std;
 
 c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) :  c_CtrlSubComponent <c_Transaction*,c_Transaction*> (owner, x_params) {
-    m_txnConverter = dynamic_cast<c_Controller *>(owner)->getTxnConverter();
-    m_addrHasher = dynamic_cast<c_Controller *>(owner)->getAddrHasher();
-    m_cmdScheduler = dynamic_cast<c_Controller *>(owner)->getCmdScheduler();
+    m_controller = dynamic_cast<c_Controller *>(owner);
+    m_txnConverter = m_controller->getTxnConverter();
+    m_addrHasher = m_controller->getAddrHasher();
+    m_cmdScheduler = m_controller->getCmdScheduler();
+
+    output = m_controller->getOutput();
+
+    //initialize member variables
     m_nextChannel=0;
-    output = dynamic_cast<c_Controller *>(owner)->getOutput();
+    m_numChannels = m_controller->getDeviceDriver()->getNumChannel();
+    assert(m_numChannels>0);
 
     //initialize per-channel transaction queues
     m_txnQ.resize(m_numChannels);
+
+    bool l_found=false;
+
+    string l_txnSchedulePolicy= (string) x_params.find<std::string>("txnSchedulePolicy","FCFS", l_found);
+    if(!l_found) {
+        std::cout << "txnSchedulePolicy value is missing... FCFS policy will be used" << std::endl;
+    }
+    if(l_txnSchedulePolicy=="FCFS")
+    {
+        k_txnSchedulePolicy=0;
+    }
+    else if(l_txnSchedulePolicy=="FRFCFS")
+    {
+        k_txnSchedulePolicy=1;
+    } else
+    {
+        std::cout << "unsupported txnSchedulePolicy ("<<l_txnSchedulePolicy<<")"<< std::endl;
+    }
+
+
+    k_numTxnQEntries = (uint32_t) x_params.find<uint32_t>("numTxnQEntries", 32, l_found);
+    if (!l_found) {
+        std::cout << "numTxnQEntries:w value is missing... it will be 32 (default)" << std::endl;
+    }
+
+
 }
 
 c_TxnScheduler::~c_TxnScheduler() {
@@ -75,20 +107,15 @@ void c_TxnScheduler::run(){
             if(m_cmdScheduler->getToken(l_nextTxn->getHashedAddress())>=3) {
 
                 // send the selected transaction
-                bool isSuccess = m_txnConverter->push(l_nextTxn);
+                m_txnConverter->push(l_nextTxn);
 
                 #ifdef __SST_DEBUG_OUTPUT__
                 l_nextTxn->print(output, "[c_TxnScheduler]");
                 #endif
 
                 // pop it from inputQ
-                if (isSuccess) {
-                    popTxn(l_channelID, l_nextTxn);
+                popTxn(l_channelID, l_nextTxn);
 
-
-                } else {
-                    output->verbose(CALL_INFO, 2, 0, "Fail to send a transaction to the transaction converter!!\n");
-                }
             }
         }
 
@@ -144,7 +171,7 @@ bool c_TxnScheduler::push(c_Transaction* newTxn)
 {
     int l_channelId=newTxn->getHashedAddress().getChannel();
 
-    if(m_txnQ.at(l_channelId).size()<k_numCtrlIntQEntries) {
+    if(m_txnQ.at(l_channelId).size()<k_numTxnQEntries) {
         m_txnQ.at(l_channelId).push_back(newTxn);
         return true;
     }

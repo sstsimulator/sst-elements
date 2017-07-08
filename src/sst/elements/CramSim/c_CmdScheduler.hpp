@@ -34,10 +34,12 @@
 #include "c_BankCommand.hpp"
 #include "c_DeviceDriver.hpp"
 #include "c_HashedAddress.hpp"
+#include "c_Controller.hpp"
 
 namespace SST{
     namespace n_Bank {
         class c_DeviceDriver;
+        class c_Controller;
 
         class c_CmdScheduler : public c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> {
         public:
@@ -52,12 +54,15 @@ namespace SST{
         private:
             typedef std::deque<c_BankCommand*> c_CmdQueue;
 
-
+            c_Controller* m_owner;
             c_DeviceDriver* m_deviceController;
+
             std::vector<c_CmdQueue *> m_cmdQueues;  //per-bank command queue
             std::deque<c_BankCommand *> m_cmdQueue;  //per-bank command queue
 
             Output* output;
+            unsigned m_numBanks;
+            unsigned k_numCmdQEntries;
         };
     }
 }

@@ -42,9 +42,12 @@ using namespace SST;
 using namespace SST::n_Bank;
 
 c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> (comp, x_params){
-    m_deviceController=dynamic_cast<c_Controller*>(comp)->getDeviceDriver();
+    m_owner = dynamic_cast<c_Controller*>(comp);
+    m_deviceController=m_owner->getDeviceDriver();
     output=dynamic_cast<c_Controller*>(comp)->getOutput();
     //create command queue
+    m_numBanks=m_owner->getDeviceDriver()->getTotalNumBank();
+    assert(m_numBanks>0);
     m_cmdQueues.clear();
     for(unsigned l_bankIdx=0;l_bankIdx<m_numBanks;l_bankIdx++)
     {
@@ -52,6 +55,12 @@ c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : c_CtrlSubCom
         c_CmdQueue *l_cmdQueue=new c_CmdQueue();
         l_cmdQueue->clear();
         m_cmdQueues.push_back(l_cmdQueue);
+    }
+
+    bool l_found = false;
+    k_numCmdQEntries = (uint32_t) x_params.find<uint32_t>("numCmdQEntries", 32, l_found);
+    if (!l_found) {
+        std::cout << "numCmdQEntries value is missing... it will be 32 (default)" << std::endl;
     }
 }
 
@@ -115,6 +124,6 @@ unsigned c_CmdScheduler::getToken(const c_HashedAddress &x_addr)
    unsigned l_bankID=x_addr.getBankId();
     assert(l_bankID<m_numBanks);
 
-    return k_numCtrlIntQEntries-m_cmdQueues.at(l_bankID)->size();
+    return k_numCmdQEntries-m_cmdQueues.at(l_bankID)->size();
 
 }
