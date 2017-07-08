@@ -1,0 +1,20 @@
+Config file: ./hbm_test_FCFS.cfg
+stopAtCycle 10us
+Address map string: c_C_r_l_R_B_b_h_
+Device Controller is not specified... c_DeviceDriver (default) will be used
+Attaching Channel0 to Rank0
+Attaching Channel1 to Rank1
+Attaching Channel2 to Rank2
+Attaching Channel3 to Rank3
+Attaching Channel4 to Rank4
+Attaching Channel5 to Rank5
+Attaching Channel6 to Rank6
+Attaching Channel7 to Rank7
+Setting cmd trace output to hbm_trace
+Deleting DIMM
+Total Read-Txns Responses received: 1840
+Total Write-Txns Responses received: 939
+Total Txns Received: 2779
+Cycles Per Transaction (CPT) = 3.59842
+Component Finished.
+Simulation is complete, simulated time: 10 us

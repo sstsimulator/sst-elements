@@ -1,5 +1,4 @@
 Config file: ./ddr4_test_FRFCFS.cfg
-Trace file: ./testSeq.seq00
 stopAtCycle 10us
 TxnGen:: numTxnPerCycle is missing... use default value (1)
 Address map string: _r_l_R_B_b_h_
