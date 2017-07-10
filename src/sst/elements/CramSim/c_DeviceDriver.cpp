@@ -72,6 +72,7 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : c_CtrlSubComp
 	// read params here
 	bool l_found = false;
 
+
 	k_useDualCommandBus = (uint32_t) params.find<uint32_t>("boolDualCommandBus", 0, l_found);
 	if (!l_found) {
 		std::cout << "boolDualCommandBus value is missing... disabled" << std::endl;
@@ -509,15 +510,33 @@ bool c_DeviceDriver::isCmdAllowed(c_BankCommand* x_bankCommandPtr)
 	// get count of ACT cmds issued in the FAW
 	unsigned l_bankId=x_bankCommandPtr->getHashedAddress()->getBankId();
 
+	if(k_useRefresh)
+		if(isRefreshing(x_bankCommandPtr->getHashedAddress()))
+			return false;
 
+	//insert active command if the target row is closed (this case can happen due to refresh)
+	if(x_bankCommandPtr->isColCommand() &&
+			(m_banks.at(l_bankId)->getCurrentState()==e_BankState::PRE || m_banks.at(l_bankId)->getCurrentState()==e_BankState::IDLE))
+	{
+		//check if ACT command is already inserted to inputQ
+		for(auto &l_cmd: m_inputQ) {
+			if((l_cmd->getBankId()==x_bankCommandPtr->getBankId())&&(l_cmd->getCommandMnemonic()==e_BankCommandType ::ACT))
+				return false;
+		}
 
-	if ((x_bankCommandPtr)->getCommandMnemonic() == e_BankCommandType::REF)
+		//if there is no ACT command for the closed bank, insert an ACT command.
+        ulong l_addr = x_bankCommandPtr->getAddress();
+        const c_HashedAddress *l_hashedAddr = x_bankCommandPtr->getHashedAddress();
+        c_BankCommand *l_newCmd = new c_BankCommand(0, e_BankCommandType::ACT, l_addr, *l_hashedAddr);
+        m_inputQ.push_back(l_newCmd);
+
 		return false;
+	}
 
-    //check tFAW
+	//check tFAW
     //todo: check tFAW per each rank
-//	if ((e_BankCommandType::ACT == ((x_bankCommandPtr))->getCommandMnemonic()) && (l_cmdACTIssuedInFAW >= 4))
-//		return false;
+	//	if ((e_BankCommandType::ACT == ((x_bankCommandPtr))->getCommandMnemonic()) && (l_cmdACTIssuedInFAW >= 4))
+	//		return false;
 
     //check inflight Write commands to the same address
     // block: READ after WRITE to the same address
@@ -564,17 +583,18 @@ void c_DeviceDriver::sendRequest() {
 
 	for (auto l_cmdPtrItr = m_inputQ.begin(); l_cmdPtrItr != m_inputQ.end();)  {
 
-		c_BankCommand* l_cmdPtr = (*l_cmdPtrItr);
-
-		if(isRefreshing(l_cmdPtr->getHashedAddress())==true)
-		{
-			l_cmdPtrItr++;
-			continue;
-		}
-
 		bool l_proceed = true;
+		c_BankCommand* l_cmdPtr = (*l_cmdPtrItr);
 		unsigned l_bankNum = l_cmdPtr->getHashedAddress()->getBankId();
 		unsigned l_rankNum = l_cmdPtr->getHashedAddress()->getRankId();
+
+
+		if(k_useRefresh)
+			if(isRefreshing(l_cmdPtr->getHashedAddress())==true)
+            {
+                l_cmdPtrItr++;
+                continue;
+            }
 
 		//requests to same bank should be executed sequentially.
 		if(!m_blockBank.at(l_bankNum)) {
@@ -608,15 +628,21 @@ void c_DeviceDriver::sendRequest() {
 			m_inflightWrites.insert((l_cmdPtr)->getAddress());
 		}
 
+
+
 		if (l_proceed) {
-			//skip a precharge command if the bank is already precharged
 			c_BankInfo *l_bank = m_banks.at(l_bankNum);
 
 			if ( isCommandBusAvailable(l_cmdPtr)){   //check if the command bus is available
+				//skip a precharge command if the bank is already precharged
+				if(l_cmdPtr->getCommandMnemonic() == e_BankCommandType::PRE)
+                    if(l_bank->getCurrentState()==e_BankState::PRE || l_bank->getCurrentState()==e_BankState::IDLE)
+                    {
+						l_cmdPtrItr=m_inputQ.erase(l_cmdPtrItr);
+						continue;
+                    }
 
-				//if(!m_blockBank.at(l_bankNum) ) {
-				c_BankInfo *l_bank = m_banks.at(l_bankNum);
-
+				//send command
 				if (sendCommand((l_cmdPtr), l_bank)) {
 
 					// remove cmd from ReqQ
@@ -944,10 +970,6 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_ch, unsigned x_rankID) {
 		m_refreshCmdQ[x_rankID].push_back(
 				new c_BankCommand(0, e_BankCommandType::PRE, 0, c_HashedAddress(x_ch, 0, x_rankID, 0, 0, 0, 0, 0), l_bankVec));
 
-		#ifdef __SST_DEBUG_OUTPUT__
-		output->verbose(CALL_INFO,2,0,"Cycle: %llu, ch: %d, rankid: %d, Insert precharge commands to close rows before issueing refresh commands\n",
-						Simulation::getSimulation()->getCurrentSimCycle(),x_ch, x_rankID);
-		#endif
 	}
 
 
@@ -961,25 +983,27 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_ch, unsigned x_rankID) {
 		m_refreshCmdQ[x_rankID].push_back(
 				new c_BankCommand(0, e_BankCommandType::REF, 0, c_HashedAddress(x_ch, 0, 0, 0, 0, 0, 0, 0), l_bankVec));
 
-		#ifdef __SST_DEBUG_OUTPUT__
-		output->verbose(CALL_INFO,2,0,"Cycle: %llu, ch:%d, rankid: %d, Insert refresh commands\n",
-						 Simulation::getSimulation()->getCurrentSimCycle(),x_ch, x_rankID);
-		#endif
 	}
 
-	//add active commands if the bank is open
+	//add active commands
 	for (auto &l_bank : l_bankInfo) {
-		if (l_bank->isRowOpen()) {
-				c_HashedAddress *l_addr = new c_HashedAddress(x_ch, 0, 0, 0, 0, l_bank->getOpenRowNum(), 0,
-															  l_bank->getBankId());
-				m_refreshCmdQ[x_rankID].push_back(new c_BankCommand(0, e_BankCommandType::ACT, 0, *l_addr));
+        for (auto &l_cmd : m_inputQ)
+        {
+            if(l_bank->getBankId() == l_cmd->getBankId())
+            {
+				//add active commands if there is a column command going to the bank closed by the refresh operation.
+                if(l_cmd->isColCommand())
+                {
+                    ulong l_addr = l_cmd->getAddress();
+                    const c_HashedAddress *l_hashedAddr = l_cmd->getHashedAddress();
+                    c_BankCommand *l_newCmd = new c_BankCommand(0, e_BankCommandType::ACT, l_addr, *l_hashedAddr);
+                    m_inputQ.push_front(l_newCmd);
 
-				#ifdef __SST_DEBUG_OUTPUT__
-				output->verbose(CALL_INFO,2,0,"Cycle: %llu, ch: %d, rankid: %d, Insert active commands if the current bank is activated\n",
-								Simulation::getSimulation()->getCurrentSimCycle(),x_ch, x_rankID);
-				#endif
-
-			}
+                    break;
+                } else // stop if there is a row command (precharge or active) followed by a column command
+                    break;
+            }
+        }
 	}
 }
 
