@@ -76,6 +76,10 @@ std::vector<c_BankInfo*> c_BankGroup::getBankPtrs() const {
 	return (m_bankPtrs);
 }
 
+c_Rank* c_BankGroup::getRankPtr() const{
+	return m_rankPtr;
+}
+
 void c_BankGroup::updateOtherBanksNextCommandCycles(c_BankInfo* x_initBankPtr,
 		c_BankCommand* x_cmdPtr) {
 

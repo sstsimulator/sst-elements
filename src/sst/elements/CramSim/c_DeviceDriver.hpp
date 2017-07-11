@@ -97,13 +97,12 @@ private:
 	void releaseCommandBus();
 
 	void initACTFAWTracker();
+	void initRefresh();
 	unsigned getNumIssuedACTinFAW(unsigned x_rankid);
-	void createRefreshCmds(unsigned x_ch, unsigned x_rank);
+	void createRefreshCmds(unsigned x_rank);
     bool isRefreshing(const c_HashedAddress *x_addr);
 
 	c_Controller *m_Owner;
-
-    std::vector<std::deque<c_BankCommand*>> m_cmdQ;  // per-channel command queue
 
 	std::vector<bool> m_blockBank;
 	std::set<unsigned> m_inflightWrites; // track inflight write commands
@@ -112,7 +111,7 @@ private:
 
 	std::vector<unsigned> m_currentREFICount; //per rank REFICounter
 	std::vector<std::vector<c_BankCommand*>> m_refreshCmdQ; //per rank refresh commandQ
-	std::vector<bool> m_isRefreshing;  //per rank refresh status
+	std::vector<unsigned> m_nextBankToRefresh; //for per-bank refresh
 
 	SimTime_t m_lastDataCmdIssueCycle;
 	e_BankCommandType m_lastDataCmdType;
@@ -135,7 +134,7 @@ private:
 	bool k_useDualCommandBus;
 	bool k_multiCycleACT;
 	bool k_useRefresh;
-
+	bool k_useSBRefresh;
 
 	std::vector<c_BankInfo*> m_banks;
 	std::vector<c_BankGroup*> m_bankGroups;

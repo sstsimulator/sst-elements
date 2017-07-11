@@ -132,6 +132,10 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : c_CtrlSubComp
 		exit(-1);
 	}
 
+	k_useSBRefresh = (uint32_t) params.find<uint32_t>("boolUseSBRefresh", 0, l_found);
+	if (!l_found) {
+		std::cout << "boolUseSBRefresh (single bank refresh) param value is missing... disabled (default)" << std::endl;
+	}
 
 	/* Device timing parameters*/
     //FIXME: Move this param reading to inside of c_BankInfo
@@ -331,7 +335,7 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : c_CtrlSubComp
 	// connect the hierarchy
 	unsigned l_rankNum = 0;
 	for (unsigned l_i = 0; l_i != m_numPseudoChannels; ++l_i) {
-		c_Channel *l_channel = new c_Channel(&m_bankParams);
+		c_Channel *l_channel = new c_Channel(&m_bankParams, l_i);
 		m_channel.push_back(l_channel);
 		//   int l_i = 0;
 		for (unsigned l_j = 0; l_j != k_numRanksPerChannel; ++l_j) {
@@ -379,16 +383,9 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : c_CtrlSubComp
 	//init per-rank FAW tracker
 	initACTFAWTracker();
 
-	//init per-rank Refresh
-	m_isRefreshing.resize(m_numRanks,false);
-	m_currentREFICount.resize(m_numRanks,0);
-	m_refreshCmdQ.resize(m_numRanks);
+	//init structures for refresh
+	initRefresh();
 
-	for(int i=0;i<m_numRanks;i++)
-	{
-		//refresh commands are timely interleaved to ranks.
-		m_currentREFICount[i]=m_bankParams.at("nREFI")/(i+1);
-	}
 
 
 	// set up cmd trace output
@@ -444,30 +441,25 @@ c_DeviceDriver::~c_DeviceDriver() {
  */
 void c_DeviceDriver::run() {
 
-	unsigned l_rankID=0;
-	if (k_useRefresh) {
-		for (unsigned l_ch = 0 ; l_ch < k_numChannels ; l_ch++)
-            for (int l_rank = 0; l_rank < k_numRanksPerChannel; l_rank++) {
-                if (m_currentREFICount[l_rankID] > 0) {
-                    --m_currentREFICount[l_rankID];
-                } else {
-                    createRefreshCmds(l_ch, l_rankID);
-                    m_currentREFICount[l_rankID] = m_bankParams.at("nREFI");
-                }
+	if(k_useRefresh) {
+		//refresh counter is managed per rank..
+		//Todo: For HBM, refresh counter needs to be managed per channel
+		for (unsigned l_id = 0; l_id < m_numRanks; l_id++) {
+			if (m_currentREFICount[l_id] > 0) {
+				--m_currentREFICount[l_id];
+			} else {
+				createRefreshCmds(l_id);
+				m_currentREFICount[l_id] = m_bankParams.at("nREFI");
+			}
 
-                if (!m_refreshCmdQ[l_rankID].empty())
-                    sendRefresh(l_rankID);
-                else
-                    m_isRefreshing[l_rankID] = false;
-
-			l_rankID++;
+			if (!m_refreshCmdQ[l_id].empty())
+				sendRefresh(l_id);
 		}
 	}
 
 	if (!m_inputQ.empty())
 		sendRequest();
 }
-
 
 /*!
  *
@@ -686,16 +678,16 @@ void c_DeviceDriver::sendRequest() {
  * @param rank
  * @return
  */
-bool c_DeviceDriver::sendRefresh(unsigned rank) {
+bool c_DeviceDriver::sendRefresh(unsigned x_requester) {
 
 
-	std::vector<c_BankCommand*> &cmdQ=m_refreshCmdQ[rank];
+	std::vector<c_BankCommand*> &cmdQ=m_refreshCmdQ[x_requester];
 
 	c_BankCommand* l_cmdPtr = cmdQ.front();
     SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 	std::vector<unsigned>& l_bankIdVec = l_cmdPtr->getBankIdVec();
 
-	//check if all bank are ready for the current command
+	//check if the target bank are ready for the current command
 	if(l_bankIdVec.size()>0) {
 		for (auto &l_bankid:l_bankIdVec) {
 			c_BankInfo *l_bank = m_banks.at(l_bankid);
@@ -710,19 +702,6 @@ bool c_DeviceDriver::sendRefresh(unsigned rank) {
 
 	//send the command if the command bus is available
     if ( isCommandBusAvailable(l_cmdPtr)) {   //check if the command bus is available
-		// get count of ACT cmds issued in the FAW
-		std::vector<unsigned> l_numACTIssuedInFAW;
-		l_numACTIssuedInFAW.clear();
-		for(int l_rankId=0;l_rankId<m_numRanks;l_rankId++)
-		{
-			l_numACTIssuedInFAW.push_back(getNumIssuedACTinFAW(l_rankId));
-		}
-
-
-		if ((e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic()) && (l_numACTIssuedInFAW[rank] >= 4))
-		{
-			return false;
-		}
 
 		if (l_bankIdVec.size() > 0){
 			for (auto &l_bankid:l_bankIdVec) {
@@ -739,12 +718,7 @@ bool c_DeviceDriver::sendRefresh(unsigned rank) {
 		cmdQ.erase(cmdQ.begin());
 		occupyCommandBus(l_cmdPtr);
 
-		bool l_isACT= (e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic());
-		if(l_isACT)
-		{
-			assert(m_isACTIssued[rank]==false);
-			m_isACTIssued[rank] = true;
-		}
+
 		return true;
 	}
 	else
@@ -914,6 +888,24 @@ void c_DeviceDriver::initACTFAWTracker()
 
 /*!
  *
+ */
+void c_DeviceDriver::initRefresh() {
+
+	//init per-rank Refresh
+	m_currentREFICount.resize(m_numRanks, 0);
+	m_refreshCmdQ.resize(m_numRanks);
+	m_nextBankToRefresh.resize(m_numRanks);
+
+	for(int i=0;i<m_numRanks;i++)
+	{
+		//refresh commands are timely interleaved to ranks.
+		m_currentREFICount[i]=m_bankParams.at("nREFI")/(i+1);
+		m_nextBankToRefresh[i]=0;
+	}
+}
+
+/*!
+ *
  * @param x_rankid
  * @return
  */
@@ -947,19 +939,37 @@ bool c_DeviceDriver::push(c_BankCommand* x_cmd) {
 
 
 /*!
- *
+ )*
  * @param x_ch
  * @param x_rankID
  */
-void c_DeviceDriver::createRefreshCmds(unsigned x_ch, unsigned x_rankID) {
-	std::vector<c_BankInfo*> l_bankInfo=m_ranks[x_rankID]->getBankPtrs();
+void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
+	std::vector<c_BankInfo*> l_refreshRequester;
 
-	//allbank refresh
+	//create a vector of bank to be refreshed
+	if(k_useSBRefresh) // per-bank refresh (single bank refresh)
+	{
+        //get bank list belongs to the current rank
+		std::vector<c_BankInfo*>& l_banks = m_ranks[x_rankID]->getBankPtrs();
+        //select a bank to be refreshed
+		unsigned & l_nextBankToRefresh = m_nextBankToRefresh[x_rankID];
+        //put the selected bank to the refresh requester list
+		l_refreshRequester.push_back(l_banks[l_nextBankToRefresh]);
+
+		//select next bank to be refreshed
+		l_nextBankToRefresh = (l_nextBankToRefresh+1)% l_banks.size();
+
+	} else // per-rank refresh (all bank refresh)
+		l_refreshRequester = m_ranks[x_rankID]->getBankPtrs(); //all bank will be refreshed
+
+	//get channel id --> used for the command bus arbitration
+	unsigned l_ch=l_refreshRequester.front()->getBankGroupPtr()->getRankPtr()->getChannelPtr()->getChannelId();
+
 	m_refreshCmdQ[x_rankID].clear();
 
 	//add precharge commands if the bank is open
 	std::vector<unsigned> l_bankVec;
-	for(auto &l_bank : l_bankInfo) {
+	for(auto &l_bank : l_refreshRequester) {
 		if(!(l_bank->getCurrentState() == e_BankState::IDLE
 			 || l_bank->getCurrentState() == e_BankState::PRE))
 			l_bankVec.push_back(l_bank->getBankId());
@@ -968,25 +978,25 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_ch, unsigned x_rankID) {
 	if(!l_bankVec.empty()) {
 
 		m_refreshCmdQ[x_rankID].push_back(
-				new c_BankCommand(0, e_BankCommandType::PRE, 0, c_HashedAddress(x_ch, 0, x_rankID, 0, 0, 0, 0, 0), l_bankVec));
+				new c_BankCommand(0, e_BankCommandType::PRE, 0, c_HashedAddress(l_ch, 0, 0, 0, 0, 0, 0, 0), l_bankVec));
 
 	}
 
 
 	//add refresh commands
 	l_bankVec.clear();
-	for(auto &l_bank : l_bankInfo) {
+	for(auto &l_bank : l_refreshRequester) {
 			l_bankVec.push_back(l_bank->getBankId());
 	}
 	if(!l_bankVec.empty()) {
 
 		m_refreshCmdQ[x_rankID].push_back(
-				new c_BankCommand(0, e_BankCommandType::REF, 0, c_HashedAddress(x_ch, 0, 0, 0, 0, 0, 0, 0), l_bankVec));
+				new c_BankCommand(0, e_BankCommandType::REF, 0, c_HashedAddress(l_ch, 0, 0, 0, 0, 0, 0, 0), l_bankVec));
 
 	}
 
 	//add active commands
-	for (auto &l_bank : l_bankInfo) {
+	for (auto &l_bank : l_refreshRequester) {
         for (auto &l_cmd : m_inputQ)
         {
             if(l_bank->getBankId() == l_cmd->getBankId())

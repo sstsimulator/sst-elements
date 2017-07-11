@@ -107,7 +107,7 @@ public:
 	  return m_bankId;
 	}
   
-        c_BankGroup *getBankGroup() {
+	c_BankGroup *getBankGroupPtr() {
 	  return m_bankGroupPtr;
 	}
 private:
