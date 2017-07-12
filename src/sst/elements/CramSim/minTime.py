@@ -52,6 +52,8 @@ for ii in range(numBankIds):
     bankId2Rank.append(-1)
     bankId2BankGroup.append(-1)
     bankId2Bank.append(-1)
+
+seenBankIds = dict();
         
 inFileName = sys.argv[1]
 
@@ -65,106 +67,69 @@ for line in inFile:
     cycle = int(grep[0][1:])
     cmd = grep[1]
 
-    ref = False
-    doCount = True
-    if cmd == 'REF' and len(grep)>3:
-        ref = True
-        bankList = grep[3:]
+    bankId = int(grep[-1])
 
-        for ii in bankList:
-            bankId = int(ii)
-            if bankId >= numBankIds:
-                print "Increase numBankIds!",bankId,"detected, max is",numBankIds-1
+    if bankId not in seenBankIds:
+        if len(grep) < 5:
+            print "grep isn't long enough to get bankId stuff!!\n", bankId, bankId2Chan[bankId], line
+            exit(-1)
 
-            chan = bankId2Chan[bankId]
-            rank = bankId2Rank[bankId]
-            bankGroup = bankId2BankGroup[bankId]
-            bank = bankId2Bank[bankId]
-
-            for calCmd in cmdList:
-                for calChan in range(numChans):
-                    for calRank in range(numRanks):
-                        for calGroup in range(numBankGroups):
-                            for calBank in range(numBanks):
-                                
-                                if calChan == chan:
-                                    if calRank == rank:
-                                        if calGroup == bankGroup:
-                                            if calBank == bank:
-                                                struct = "SAME_BANK"
-                                            else: # bank !=
-                                                struct = "SAME_BGROUP"
-                                        else: # bankGroup !=
-                                            struct = "SAME_RANK"
-                                    else: # rank !=
-                                        struct = "SAME_CHAN"
-
-                                    if lastCmd[calCmd][calChan][calRank][calGroup][calBank] != -1:
-                                        delta = cycle - lastCmd[calCmd][calChan][calRank][calGroup][calBank]
-                                        if minDict[struct][calCmd][cmd] != -1:
-                                            if delta < minDict[struct][calCmd][cmd]:
-                                                minDict[struct][calCmd][cmd] = delta
-                                                minLineDict[struct][calCmd][cmd][0] = lastCmdLine[calCmd][calChan][calRank][calGroup][calBank]
-                                                minLineDict[struct][calCmd][cmd][1] = line
-                                        else:
-                                            minDict[struct][calCmd][cmd] = delta
-                                            minLineDict[struct][calCmd][cmd][0] = lastCmdLine[calCmd][calChan][calRank][calGroup][calBank]
-                                            minLineDict[struct][calCmd][cmd][1] = line
-                                                        
-            lastCmd[cmd][chan][rank][bankGroup][bank] = cycle
-            lastCmdLine[cmd][chan][rank][bankGroup][bank] = line
-            
+        seenBankIds[bankId] = 1
+        
+        chan = int(grep[4])
+        pchan = int(grep[5])
+        rank = int(grep[6])
+        bankGroup = int(grep[7])
+        bank = int(grep[8])
+        
+        bankId2Chan[bankId] = chan
+        bankId2Rank[bankId] = rank
+        bankId2BankGroup[bankId] = bankGroup
+        bankId2Bank[bankId] = bank
     else:
-        if cmd != 'REF':
-            chan = int(grep[4])
-            rank = int(grep[5])
-            bankGroup = int(grep[6])
-            bank = int(grep[7])
+        chan = bankId2Chan[bankId]
+        pchan = 0 ## not supported for now
+        rank = bankId2Rank[bankId]
+        bankGroup = bankId2BankGroup[bankId]
+        bank = bankId2Bank[bankId]
             
-            bankId = int(grep[11])
-
-            bankId2Chan[bankId] = chan
-            bankId2Rank[bankId] = rank
-            bankId2BankGroup[bankId] = bankGroup
-            bankId2Bank[bankId] = bank
             
-            if bankId >= numBankIds:
-                print "Increase numBankIds!",bankId,"detected, max is",numBankIds-1
+    if bankId >= numBankIds:
+        print "Increase numBankIds!",bankId,"detected, max is",numBankIds-1
+        exit(-1)
 
-            for calCmd in cmdList:
-                for calChan in range(numChans):
-                    for calRank in range(numRanks):
-                        for calGroup in range(numBankGroups):
-                            for calBank in range(numBanks):
+    for calCmd in cmdList:
+        for calChan in range(numChans):
+            for calRank in range(numRanks):
+                for calGroup in range(numBankGroups):
+                    for calBank in range(numBanks):
                                 
-                                if calChan == chan:
-                                    if calRank == rank:
-                                        if calGroup == bankGroup:
-                                            if calBank == bank:
-                                                struct = "SAME_BANK"
-                                            else: # bank !=
-                                                struct = "SAME_BGROUP"
-                                        else: # bankGroup !=
-                                            struct = "SAME_RANK"
-                                    else: # rank !=
-                                        struct = "SAME_CHAN"
+                        if calChan == chan:
+                            if calRank == rank:
+                                if calGroup == bankGroup:
+                                    if calBank == bank:
+                                        struct = "SAME_BANK"
+                                    else: # bank !=
+                                        struct = "SAME_BGROUP"
+                                else: # bankGroup !=
+                                    struct = "SAME_RANK"
+                            else: # rank !=
+                                struct = "SAME_CHAN"
 
-                                    if lastCmd[calCmd][calChan][calRank][calGroup][calBank] != -1:
-                                        delta = cycle - lastCmd[calCmd][calChan][calRank][calGroup][calBank]
-                                        if minDict[struct][calCmd][cmd] != -1:
-                                            if delta < minDict[struct][calCmd][cmd]:
-                                                minDict[struct][calCmd][cmd] = delta
-                                                minLineDict[struct][calCmd][cmd][0] = lastCmdLine[calCmd][calChan][calRank][calGroup][calBank]
-                                                minLineDict[struct][calCmd][cmd][1] = line
-                                        else:
-                                            minDict[struct][calCmd][cmd] = delta
-                                            minLineDict[struct][calCmd][cmd][0] = lastCmdLine[calCmd][calChan][calRank][calGroup][calBank]
-                                            minLineDict[struct][calCmd][cmd][1] = line
+                            if lastCmd[calCmd][calChan][calRank][calGroup][calBank] != -1:
+                                delta = cycle - lastCmd[calCmd][calChan][calRank][calGroup][calBank]
+                                if minDict[struct][calCmd][cmd] != -1:
+                                    if delta < minDict[struct][calCmd][cmd]:
+                                        minDict[struct][calCmd][cmd] = delta
+                                        minLineDict[struct][calCmd][cmd][0] = lastCmdLine[calCmd][calChan][calRank][calGroup][calBank]
+                                        minLineDict[struct][calCmd][cmd][1] = line
+                                else:
+                                    minDict[struct][calCmd][cmd] = delta
+                                    minLineDict[struct][calCmd][cmd][0] = lastCmdLine[calCmd][calChan][calRank][calGroup][calBank]
+                                    minLineDict[struct][calCmd][cmd][1] = line
                                                         
-            lastCmd[cmd][chan][rank][bankGroup][bank] = cycle
-            lastCmdLine[cmd][chan][rank][bankGroup][bank] = line
-        else:
-            doCount = False
+    lastCmd[cmd][chan][rank][bankGroup][bank] = cycle
+    lastCmdLine[cmd][chan][rank][bankGroup][bank] = line
 
 
 for struct in structList:

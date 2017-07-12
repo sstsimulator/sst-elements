@@ -112,7 +112,7 @@ def setup_config_params():
 def setup_txn_generator(params):
     l_txnGenStr = ""
     if g_boolUseRandomTrace:
-        l_txnGen = "CramSim.c_TxnGenSeq"
+        l_txnGen = "CramSim.c_TxnGenRand"
     else:
         l_txnGen = "CramSim.c_DramSimTraceReader"
     l_txnGen = sst.Component("TxnGen0", l_txnGen)
