@@ -391,17 +391,16 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 			} else {
 				if ( srcReqEvent->generators.empty() ) {
 					MirandaRspEvent* event = new MirandaRspEvent;
-					event->key = static_cast<MirandaReqEvent*>(srcReqEvent)->key;	
+					event->key = static_cast<MirandaReqEvent*>(srcReqEvent)->key;
 					delete srcReqEvent;
 					srcLink->send(0,event);
 
 					return true;
-				} else {  
-					
+				} else {
 					loadGenerator( srcReqEvent );
 					return false;
 				}
-	 
+
 			}
 			// Deregister here
 			return true;
@@ -419,11 +418,15 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 	uint32_t reqsIssuedThisCycle = 0;
 	std::vector<uint32_t> delReqs;
 
-	if(pendingRequests.size() < reqMaxPerCycle) {
-		if(! reqGen->isFinished()) {
+	// We need to generate at least as many requests as can be looked up in the OoO window
+	// otherwise the issue will have starvation.
+	for(int i = pendingRequests.size(); i < maxOpLookup; ++i) {
+		if( reqGen->isFinished()) {
+			break;
+		} else {
 			reqGen->generate(&pendingRequests);
 		}
-	} 
+	}
 
 	for(uint32_t i = 0; i < pendingRequests.size(); ++i) {
 		if(reqsIssuedThisCycle == reqMaxPerCycle) {

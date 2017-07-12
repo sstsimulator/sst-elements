@@ -4,7 +4,7 @@
 
 #### Copyright (c) 2009-2017, Sandia Corporation
 Portions are copyright of other developers:
-See the file CONTRIBUTITORS.TXT in the top level directory
+See the file CONTRIBUTORS.TXT in the top level directory
 of this repository for more information.
 
 ---
