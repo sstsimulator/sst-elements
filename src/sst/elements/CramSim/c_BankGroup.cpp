@@ -99,7 +99,7 @@ void c_BankGroup::updateOtherBanksNextCommandCycles(c_BankInfo* x_initBankPtr,
 		case e_BankCommandType::ACT: {
 			SimTime_t l_nextCycle = std::max(
 					l_bankPtr->getNextCommandCycle(e_BankCommandType::ACT),
-					l_time + m_bankParams->at("nRRD_S"));
+					l_time + m_bankParams->at("nRRD_L"));
 			l_bankPtr->setNextCommandCycle(e_BankCommandType::ACT, l_nextCycle);
 			break;
 		}
@@ -113,7 +113,7 @@ void c_BankGroup::updateOtherBanksNextCommandCycles(c_BankInfo* x_initBankPtr,
 							l_bankPtr->getNextCommandCycle(
 									e_BankCommandType::READA)),
 					l_time
-							+ std::max(m_bankParams->at("nCCD_S"),
+							+ std::max(m_bankParams->at("nCCD_L"),
 									m_bankParams->at("nBL")));
 			l_bankPtr->setNextCommandCycle(e_BankCommandType::READ,
 					l_nextCycle);
@@ -163,7 +163,7 @@ void c_BankGroup::updateOtherBanksNextCommandCycles(c_BankInfo* x_initBankPtr,
 							l_bankPtr->getNextCommandCycle(
 									e_BankCommandType::WRITEA)),
 					l_time
-							+ std::max(m_bankParams->at("nCCD_S"),
+							+ std::max(m_bankParams->at("nCCD_L"),
 									m_bankParams->at("nBL")));
 			l_bankPtr->setNextCommandCycle(e_BankCommandType::WRITE,
 					l_nextCycle);
