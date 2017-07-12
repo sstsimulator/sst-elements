@@ -42,6 +42,8 @@ namespace SST {
         class c_TxnConverter;
         class c_Controller;
 
+        enum class e_txnSchedulingPolicy {FCFS, FRFCFS};
+
         class c_TxnScheduler: public c_CtrlSubComponent <c_Transaction*,c_Transaction*>  {
         public:
 
@@ -74,7 +76,7 @@ namespace SST {
             unsigned m_numChannels;
 
             //parameters
-            int k_txnSchedulePolicy;
+            e_txnSchedulingPolicy k_txnSchedulingPolicy;
             unsigned k_numTxnQEntries;
 
         };

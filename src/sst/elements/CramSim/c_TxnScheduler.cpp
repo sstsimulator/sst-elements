@@ -59,20 +59,22 @@ c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) :  
 
     bool l_found=false;
 
-    string l_txnSchedulePolicy= (string) x_params.find<std::string>("txnSchedulePolicy","FCFS", l_found);
+    string l_txnSchedulingPolicy= (string) x_params.find<std::string>("txnSchedulePolicy","FCFS", l_found);
     if(!l_found) {
         std::cout << "txnSchedulePolicy value is missing... FCFS policy will be used" << std::endl;
     }
-    if(l_txnSchedulePolicy=="FCFS")
+
+    if(l_txnSchedulingPolicy=="FCFS")
     {
-        k_txnSchedulePolicy=0;
+        k_txnSchedulingPolicy=e_txnSchedulingPolicy::FCFS;
     }
-    else if(l_txnSchedulePolicy=="FRFCFS")
+    else if(l_txnSchedulingPolicy=="FRFCFS")
     {
-        k_txnSchedulePolicy=1;
+        k_txnSchedulingPolicy=e_txnSchedulingPolicy::FRFCFS;
     } else
     {
-        std::cout << "unsupported txnSchedulePolicy ("<<l_txnSchedulePolicy<<")"<< std::endl;
+        std::cout << "unsupported txnSchedulePolicy ("<<l_txnSchedulingPolicy<<"),, exit"<< std::endl;
+        exit(1);
     }
 
 
@@ -134,9 +136,9 @@ c_Transaction* c_TxnScheduler::getNextTxn(int x_ch)
         //get the next transaction
         //FCFS
         c_Transaction* l_nxtTxn = nullptr;
-        if(k_txnSchedulePolicy==0) {
+        if(k_txnSchedulingPolicy == e_txnSchedulingPolicy::FCFS) {
             l_nxtTxn = m_txnQ.at(x_ch).front();
-        }else if(k_txnSchedulePolicy==1){
+        }else if(k_txnSchedulingPolicy == e_txnSchedulingPolicy::FRFCFS){
 
             //pick a transaction going to an open bank
             for(auto& l_txn: m_txnQ.at(x_ch))
