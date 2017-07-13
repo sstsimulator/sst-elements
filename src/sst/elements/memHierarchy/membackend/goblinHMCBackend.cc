@@ -261,11 +261,77 @@ bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite, uns
 	hmc_rqst_t       	req_type;
 
 	// Check if the request is for a read or write then transform this into something
-	// for HMC simulator to use, right now lets just try 64-byte lengths
+	// for HMC simulator to use
 	if(isWrite) {
-		req_type = WR64;
+                switch( numBytes ){
+                case 8:
+                case 16:
+                  req_type = WR16;
+                  break;
+                case 32:
+                  req_type = WR32;
+                  break;
+                case 48:
+                  req_type = WR48;
+                  break;
+                case 64:
+                  req_type = WR64;
+                  break;
+                case 80:
+                  req_type = WR80;
+                  break;
+                case 96:
+                  req_type = WR96;
+                  break;
+                case 112:
+                  req_type = WR112;
+                  break;
+                case 128:
+                  req_type = WR128;
+                  break;
+                case 256:
+                  req_type = WR256;
+                  break;
+                default:
+                  // flag an error
+		  output->fatal(CALL_INFO, -1, "Unknown write request size: %d\n", numBytes );
+                  break;
+                }
 	} else {
-		req_type = RD64;
+                switch( numBytes ){
+                case 8:
+                case 16:
+                  req_type = RD16;
+                  break;
+                case 32:
+                  req_type = RD32;
+                  break;
+                case 48:
+                  req_type = RD48;
+                  break;
+                case 64:
+                  req_type = RD64;
+                  break;
+                case 80:
+                  req_type = RD80;
+                  break;
+                case 96:
+                  req_type = RD96;
+                  break;
+                case 112:
+                  req_type = RD112;
+                  break;
+                case 128:
+                  req_type = RD128;
+                  break;
+                case 256:
+                  req_type = RD256;
+                  break;
+                default:
+                  // flag an error
+		  output->fatal(CALL_INFO, -1, "Unknown read request size: %d\n", numBytes );
+                  break;
+                }
 	}
 
 	const uint8_t           req_link   = (uint8_t) (nextLink);
