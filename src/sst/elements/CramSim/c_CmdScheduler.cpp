@@ -81,13 +81,12 @@ void c_CmdScheduler::run(){
 
     bool isSuccess = false;
     c_BankCommand *l_cmdPtr= nullptr;
-
+    SimTime_t  l_time=Simulation::getSimulation()->getCurrentSimCycle();
     for(unsigned l_ch=0;l_ch<m_numChannels;l_ch++) {
 
-        unsigned &nextBankIdx = m_nextCmdQIdx.at(l_ch);
+        unsigned nextBankIdx = m_nextCmdQIdx.at(l_ch);
         for (unsigned i = 0; i < m_numBanksPerChannel; i++) {
             c_CmdQueue &l_cmdQueue = m_cmdQueues[l_ch].at(nextBankIdx);
-            isSuccess=false;
 
             if (!l_cmdQueue.empty()) {
                 l_cmdPtr = l_cmdQueue.front();
@@ -104,15 +103,15 @@ void c_CmdScheduler::run(){
                 }
             }
             nextBankIdx = (nextBankIdx + 1) % m_numBanksPerChannel;
-
         }
+        m_nextCmdQIdx.at(l_ch)=(m_nextCmdQIdx.at(l_ch)+1)%m_numBanksPerChannel;
     }
 }
 
 
 bool c_CmdScheduler::push(c_BankCommand* x_cmd) {
     unsigned l_ch=x_cmd->getHashedAddress()->getChannel();
-    unsigned l_bank=x_cmd->getHashedAddress()->getBankId() / m_numChannels;
+    unsigned l_bank=x_cmd->getHashedAddress()->getBankId() % m_numBanksPerChannel;
 
     if (m_cmdQueues[l_ch].at(l_bank).size() < k_numCmdQEntries) {
         m_cmdQueues[l_ch].at(l_bank).push_back(x_cmd);
@@ -126,7 +125,7 @@ bool c_CmdScheduler::push(c_BankCommand* x_cmd) {
 unsigned c_CmdScheduler::getToken(const c_HashedAddress &x_addr)
 {
     unsigned l_ch=x_addr.getChannel();
-    unsigned l_bank=x_addr.getBankId() / m_numChannels;
+    unsigned l_bank=x_addr.getBankId() % m_numBanksPerChannel;
 
     return k_numCmdQEntries-m_cmdQueues[l_ch].at(l_bank).size();
 
