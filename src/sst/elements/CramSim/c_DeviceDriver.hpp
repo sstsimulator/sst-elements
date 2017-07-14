@@ -159,7 +159,7 @@ private:
 	Output *output;
 	DEBUG_MASK m_debugMask;
 	std::string m_debugPrefix;
-	unsigned m_issued_cmd;
+	uint64_t m_issued_cmd;
 };
 }
 }

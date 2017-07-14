@@ -205,7 +205,7 @@ void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 			break;
 		case e_BankCommandType::READ:
 			m_timer = std::max(m_bankParams->at("nCCD_L"),
-					m_bankParams->at("nBL"));
+					m_bankParams->at("nBL"))-1;
 			break;
 		case e_BankCommandType::ACT:
 			m_timer = 0;

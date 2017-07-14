@@ -81,6 +81,7 @@ void c_CmdScheduler::run(){
 
     bool isSuccess = false;
     c_BankCommand *l_cmdPtr= nullptr;
+
     for(unsigned l_ch=0;l_ch<m_numChannels;l_ch++) {
 
         unsigned &nextBankIdx = m_nextCmdQIdx.at(l_ch);
@@ -104,10 +105,6 @@ void c_CmdScheduler::run(){
             }
             nextBankIdx = (nextBankIdx + 1) % m_numBanksPerChannel;
 
-            if(isSuccess)
-                break;
-            else
-                continue;
         }
     }
 }

@@ -440,6 +440,8 @@ c_DeviceDriver::~c_DeviceDriver() {
  *
  */
 void c_DeviceDriver::run() {
+	uint64_t l_issued_cmd=m_issued_cmd;
+	releaseCommandBus();
 
 	if(k_useRefresh) {
 		//refresh counter is managed per rank..
@@ -459,6 +461,11 @@ void c_DeviceDriver::run() {
 
 	if (!m_inputQ.empty())
 		sendRequest();
+
+//	if(m_issued_cmd<m_numChannels)
+//	{
+//		output->verbose(CALL_INFO,2,0,"[cycle:%lld] low command issue rate",Simulation::getSimulation()->getCurrentSimCycle());
+//	}
 }
 
 /*!
@@ -534,10 +541,12 @@ bool c_DeviceDriver::isCmdAllowed(c_BankCommand* x_bankCommandPtr)
     // block: READ after WRITE to the same address
     // block: WRITE after WRITE to the same address. Processor should make sure that the older WRITE is annulled but we will block the younger here.
     //todo: remove?
-	if (m_inflightWrites.find((x_bankCommandPtr)->getAddress())
-		!= m_inflightWrites.end()) {
+	//if (m_inflightWrites.find((x_bankCommandPtr)->getAddress())
+	//	!= m_inflightWrites.end()) {
+	//	return false;
+	//}
+	if(!isCommandBusAvailable(x_bankCommandPtr))
 		return false;
-	}
 
     //check timing constraints
 	if (!m_banks.at(l_bankId)->isCommandAllowed(x_bankCommandPtr, l_time))
@@ -636,6 +645,7 @@ void c_DeviceDriver::sendRequest() {
 
 				//send command
 				if (sendCommand((l_cmdPtr), l_bank)) {
+					m_issued_cmd++;
 
 					// remove cmd from ReqQ
 					l_cmdPtrItr=m_inputQ.erase(l_cmdPtrItr);
@@ -932,6 +942,7 @@ bool c_DeviceDriver::push(c_BankCommand* x_cmd) {
 	if(m_inputQ.size()<32)
 	{
 		m_inputQ.push_back(x_cmd);
+		occupyCommandBus(x_cmd);
 		return true;
 	} else
 		return false;
