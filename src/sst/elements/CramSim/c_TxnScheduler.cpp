@@ -57,6 +57,7 @@ c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) :  
     //initialize per-channel transaction queues
     m_txnQ.resize(m_numChannels);
 
+
     bool l_found=false;
 
     string l_txnSchedulingPolicy= (string) x_params.find<std::string>("txnSchedulePolicy","FCFS", l_found);
@@ -131,37 +132,40 @@ void c_TxnScheduler::run(){
 
 c_Transaction* c_TxnScheduler::getNextTxn(int x_ch)
 {
-    //FCFS
     if(!m_txnQ.at(x_ch).empty()) {
         //get the next transaction
-        //FCFS
         c_Transaction* l_nxtTxn = nullptr;
+
+
+        //FCFS
         if(k_txnSchedulingPolicy == e_txnSchedulingPolicy::FCFS) {
-            l_nxtTxn = m_txnQ.at(x_ch).front();
-        }else if(k_txnSchedulingPolicy == e_txnSchedulingPolicy::FRFCFS){
-
-            //pick a transaction going to an open bank
-            for(auto& l_txn: m_txnQ.at(x_ch))
-            {
-
-                c_BankInfo* l_bankInfo = m_txnConverter->getBankInfo(l_txn->getHashedAddress().getBankId());
-
-                if(l_bankInfo->isRowOpen()
-                   && l_bankInfo->getOpenRowNum()==l_txn->getHashedAddress().getRow()){
+            if(m_cmdScheduler->getToken(m_txnQ.at(x_ch).front()->getHashedAddress())>=3)
+                l_nxtTxn= m_txnQ.at(x_ch).front();
+        }//FRFCFS
+        else if(k_txnSchedulingPolicy == e_txnSchedulingPolicy::FRFCFS) {
+            for (auto &l_txn: m_txnQ.at(x_ch)) {
+                if (m_cmdScheduler->getToken(l_txn->getHashedAddress()) >= 3) {
                     l_nxtTxn = l_txn;
-                    break;
+
+                    //pick a transaction going to an open bank
+                    c_BankInfo *l_bankInfo = m_txnConverter->getBankInfo(l_txn->getHashedAddress().getBankId());
+
+                    if (l_bankInfo->isRowOpen()
+                        && l_bankInfo->getOpenRowNum() == l_txn->getHashedAddress().getRow()) {
+                        break;
+                    }
                 }
             }
-
-            // pick a transaction at the head of queue if there is no pended transaction going to an open bank
-            if(l_nxtTxn==nullptr)
-                l_nxtTxn = m_txnQ.at(x_ch).front();
+        }
+        else
+        {
+            printf("unsupported transaction scheduling policy.. exit(1)");
+            exit(1);
         }
 
         return l_nxtTxn;
     } else
         return nullptr;
-
 }
 
 void c_TxnScheduler::popTxn(int x_ch, c_Transaction* x_Txn)

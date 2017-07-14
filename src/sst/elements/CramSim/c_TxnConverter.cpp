@@ -52,6 +52,7 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  
 	m_owner = dynamic_cast<c_Controller *>(owner);
 	m_cmdScheduler= m_owner->getCmdScheduler();
 	m_cmdSeqNum=0;
+	output = m_owner->getOutput();
 
 	unsigned l_bankNum=m_owner->getDeviceDriver()->getTotalNumBank();
 	assert(l_bankNum>0);
@@ -134,7 +135,9 @@ void c_TxnConverter::run(){
 			//2. Send commands to the command scheduler
 			if (!l_cmdPkg.empty()) {
 				for (auto &it : l_cmdPkg) {
-					bool isSuccess = m_cmdScheduler->push(it);
+					c_BankCommand* l_cmd = it;
+					bool isSuccess = m_cmdScheduler->push(l_cmd);
+					l_cmd->print(output, "[c_TxnConverter]");
 					assert(isSuccess);
 				}
 				updateBankInfo(l_reqTxn);

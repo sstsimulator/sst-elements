@@ -100,6 +100,8 @@ private:
     //debug
     int m_debugMask;
 	std::string m_debugPrefix;
+	Output *output;
+
 };
 }
 }

@@ -57,11 +57,13 @@ namespace SST{
             c_Controller* m_owner;
             c_DeviceDriver* m_deviceController;
 
-            std::vector<c_CmdQueue *> m_cmdQueues;  //per-bank command queue
-            std::deque<c_BankCommand *> m_cmdQueue;  //per-bank command queue
+            std::vector<std::vector<c_CmdQueue>> m_cmdQueues;  //per-bank command queue for each channel
+            std::vector<unsigned> m_nextCmdQIdx;                //index for command queue scheduling (Round Robin)
 
             Output* output;
             unsigned m_numBanks;
+            unsigned m_numChannels;
+            unsigned m_numBanksPerChannel;
             unsigned k_numCmdQEntries;
         };
     }

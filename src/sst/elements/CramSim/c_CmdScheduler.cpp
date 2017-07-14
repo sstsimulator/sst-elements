@@ -47,15 +47,22 @@ c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : c_CtrlSubCom
     output=dynamic_cast<c_Controller*>(comp)->getOutput();
     //create command queue
     m_numBanks=m_owner->getDeviceDriver()->getTotalNumBank();
+    m_numChannels=m_owner->getDeviceDriver()->getNumChannel();
+    m_numBanksPerChannel=m_numBanks/m_numChannels;
+
     assert(m_numBanks>0);
     m_cmdQueues.clear();
-    for(unsigned l_bankIdx=0;l_bankIdx<m_numBanks;l_bankIdx++)
-    {
 
-        c_CmdQueue *l_cmdQueue=new c_CmdQueue();
-        l_cmdQueue->clear();
-        m_cmdQueues.push_back(l_cmdQueue);
+    m_cmdQueues.resize(m_numChannels);
+    m_nextCmdQIdx.resize(m_numChannels);
+    for(unsigned l_ch=0;l_ch<m_numChannels;l_ch++) {
+        m_nextCmdQIdx.at(l_ch)=0;
+        for (unsigned l_bankIdx = 0; l_bankIdx < m_numBanks; l_bankIdx++) {
+            m_cmdQueues.at(l_ch).resize(m_numBanksPerChannel);
+        }
     }
+
+
 
     bool l_found = false;
     k_numCmdQEntries = (uint32_t) x_params.find<uint32_t>("numCmdQEntries", 32, l_found);
@@ -66,52 +73,52 @@ c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : c_CtrlSubCom
 
 
 c_CmdScheduler::~c_CmdScheduler(){
-    for(auto &it: m_cmdQueues)
-    {
-        delete it;
-    }
 }
 
 
 
 void c_CmdScheduler::run(){
 
-       for(auto &l_cmdQueue: m_cmdQueues)
-           if(!l_cmdQueue->empty()) {
-                c_BankCommand *l_cmdPtr = l_cmdQueue->front();
+    bool isSuccess = false;
+    c_BankCommand *l_cmdPtr= nullptr;
+    for(unsigned l_ch=0;l_ch<m_numChannels;l_ch++) {
+
+        unsigned &nextBankIdx = m_nextCmdQIdx.at(l_ch);
+        for (unsigned i = 0; i < m_numBanksPerChannel; i++) {
+            c_CmdQueue &l_cmdQueue = m_cmdQueues[l_ch].at(nextBankIdx);
+            isSuccess=false;
+
+            if (!l_cmdQueue.empty()) {
+                l_cmdPtr = l_cmdQueue.front();
 
                 if (m_deviceController->isCmdAllowed(l_cmdPtr)) {
-                   bool isSuccess=m_deviceController->push(l_cmdPtr);
-                    if(isSuccess)
-                       l_cmdQueue->pop_front();
+                    isSuccess = m_deviceController->push(l_cmdPtr);
+                    if (isSuccess) {
+                        l_cmdQueue.pop_front();
 
-                    #ifdef __SST_DEBUG_OUTPUT__
-                    output->verbose(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
-                              Simulation::getSimulation()->getCurrentSimCycle(),
-                              l_cmdPtr->getCommandString().c_str(),
-                              l_cmdPtr->getHashedAddress()->getChannel(),
-                              l_cmdPtr->getHashedAddress()->getPChannel(),
-                              l_cmdPtr->getHashedAddress()->getRank(),
-                              l_cmdPtr->getHashedAddress()->getBankGroup(),
-                              l_cmdPtr->getHashedAddress()->getBank(),
-                              l_cmdPtr->getHashedAddress()->getRow(),
-                              l_cmdPtr->getHashedAddress()->getCol(),
-                                  l_cmdPtr->getHashedAddress()->getBankId(),
-                             l_cmdPtr->getSeqNum());
-                     #endif
-
+                        #ifdef __SST_DEBUG_OUTPUT__
+                        l_cmdPtr->print(output, "[c_CmdScheduler]");
+                        #endif
+                    }
                 }
             }
+            nextBankIdx = (nextBankIdx + 1) % m_numBanksPerChannel;
+
+            if(isSuccess)
+                break;
+            else
+                continue;
+        }
+    }
 }
 
 
 bool c_CmdScheduler::push(c_BankCommand* x_cmd) {
-    uint l_bankID=x_cmd->getHashedAddress()->getBankId();
-    assert(l_bankID<m_numBanks);
+    unsigned l_ch=x_cmd->getHashedAddress()->getChannel();
+    unsigned l_bank=x_cmd->getHashedAddress()->getBankId() / m_numChannels;
 
-    //todo: modify to configure the size of command queues
-    if (m_cmdQueues.at(l_bankID)->size() < k_numCtrlIntQEntries) {
-        m_cmdQueues.at(l_bankID)->push_back(x_cmd);
+    if (m_cmdQueues[l_ch].at(l_bank).size() < k_numCmdQEntries) {
+        m_cmdQueues[l_ch].at(l_bank).push_back(x_cmd);
         return true;
     } else
         return false;
@@ -121,9 +128,9 @@ bool c_CmdScheduler::push(c_BankCommand* x_cmd) {
 
 unsigned c_CmdScheduler::getToken(const c_HashedAddress &x_addr)
 {
-   unsigned l_bankID=x_addr.getBankId();
-    assert(l_bankID<m_numBanks);
+    unsigned l_ch=x_addr.getChannel();
+    unsigned l_bank=x_addr.getBankId() / m_numChannels;
 
-    return k_numCmdQEntries-m_cmdQueues.at(l_bankID)->size();
+    return k_numCmdQEntries-m_cmdQueues[l_ch].at(l_bank).size();
 
 }

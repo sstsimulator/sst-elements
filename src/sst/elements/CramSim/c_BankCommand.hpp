@@ -86,6 +86,7 @@ public:
 	c_BankCommand& operator=(c_BankCommand) = delete;
 
 	void print(SST::Output *) const;
+	void print(SST::Output *x_debugOutput,const std::string x_prefix) const;
 	void print() const;
 
         const c_HashedAddress *getHashedAddress() const {
