@@ -78,9 +78,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     addrRangeStart  = params.find<uint64_t>("addr_range_start", 0, found);
     if (!found) addrRangeStart = params.find<uint64_t>("memNIC.addr_range_start", 0, found);
     if (!found) addrRangeStart = params.find<uint64_t>("memLink.addr_range_start", 0, found);
-    addrRangeEnd    = params.find<uint64_t>("addr_range_end", 0, found);
-    if (!found) addrRangeEnd = params.find<uint64_t>("memNIC.addr_range_end", 0, found);
-    if (!found) addrRangeEnd = params.find<uint64_t>("memLink.addr_range_end", 0, found);
+    addrRangeEnd    = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
+    if (!found) addrRangeEnd = params.find<uint64_t>("memNIC.addr_range_end", (uint64_t) - 1, found);
+    if (!found) addrRangeEnd = params.find<uint64_t>("memLink.addr_range_end", (uint64_t) - 1, found);
     string ilSize   = params.find<std::string>("interleave_size", "0B", found);
     if (!found) ilSize = params.find<std::string>("memNIC.interleave_size", "0B", found);
     if (!found) ilSize = params.find<std::string>("memLink.interleave_size", "0B", found);

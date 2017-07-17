@@ -124,7 +124,7 @@ public:
 
     /* Functions for managing communication according to address */
     virtual std::string findTargetDestination(Addr addr) {
-        for (std::set<EndpointInfo>::iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+        for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
             if (it->region.contains(addr)) return it->name;
         }
 
@@ -132,7 +132,7 @@ public:
         stringstream error;
         error << getName() + " (MemLinkBase) cannot find a destination for address " << addr << endl;
         error << "Known destination regions: " << endl;
-        for (std::set<EndpointInfo>::iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+        for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
             error << it->name << " " << it->region.toString() << endl;
         }
         dbg.fatal(CALL_INFO, -1, "%s", error.str().c_str());
