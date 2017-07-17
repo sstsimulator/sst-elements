@@ -215,7 +215,7 @@ struct MemRegion {
         end = (uint64_t) - 1;
     }
 
-    bool contains(uint64_t addr) {
+    bool contains(uint64_t addr) const {
         if (addr >= start && addr < end) {
             if (interleaveSize == 0) return true;
             uint64_t offset = (addr - start) % interleaveStep;
@@ -224,7 +224,11 @@ struct MemRegion {
         return false;
     }
 
-    std::string toString() {
+    bool operator<(const MemRegion &o) const {
+        return (start < o.start);
+    }
+
+    std::string toString() const {
         std::ostringstream str;
         str << "Start: " << start << " End: " << end;
         str << " InterleaveSize: " << interleaveSize;

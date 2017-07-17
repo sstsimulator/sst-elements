@@ -212,7 +212,7 @@ uint64_t CoherenceController::forwardTowardsCPU(MemEventBase * event, std::strin
 }
     
 std::string CoherenceController::getSrc() {
-    return linkUp_->getSources()->begin()->first;
+    return linkUp_->getSources()->begin()->name;
 }
 
 /**************************************/

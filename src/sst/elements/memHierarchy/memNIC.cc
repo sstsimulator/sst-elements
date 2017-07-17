@@ -127,10 +127,10 @@ void MemNIC::init(unsigned int phase) {
 
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                 dbg.debug(_L10_, "\tAdding to sourceEndpointInfo\n");
-                sourceEndpointInfo.insert(std::make_pair(imre->info.name, imre->info));
+                sourceEndpointInfo.insert(imre->info);
             } else if (destIDs.find(imre->info.id) != destIDs.end()) {
                 dbg.debug(_L10_, "\tAdding to destEndpointInfo\n");
-                destEndpointInfo.insert(std::make_pair(imre->info.name, imre->info));
+                destEndpointInfo.insert(imre->info);
             }
             delete imre;
         } else {
@@ -146,8 +146,7 @@ void MemNIC::init(unsigned int phase) {
                 }
                 delete ev;
                 delete mre;
-            } else if (sourceEndpointInfo.find(mre->event->getSrc()) != sourceEndpointInfo.end() 
-                        || destEndpointInfo.find(mre->event->getSrc()) != destEndpointInfo.end()) {
+            } else if (isSource(mre->event->getSrc()) || isDest(mre->event->getSrc())) {
                 dbg.debug(_L10_, "\tInserting in initQueue\n");
                 initQueue.push(mre);
             }
@@ -184,6 +183,7 @@ bool MemNIC::clock() {
     while (!sendQueue.empty()) {
         SimpleNetwork::Request *head = sendQueue.front();
 /* Debug info - record before we attempt send so that if send destroys anything we have it */
+#ifdef __SST_DEBUG_OUTPUT__
         MemEventBase * ev = (static_cast<MemRtrEvent*>(head->inspectPayload()))->event;
         std::string debugEvStr;
         uint64_t dst = head->dest;
@@ -192,6 +192,7 @@ bool MemNIC::clock() {
             debugEvStr = ev->getBriefString();
             if (!DEBUG_ALL) doDebug = ev->doDebug(DEBUG_ADDR);
         }
+#endif
         if (link_control->spaceToSend(0, head->size_in_bits) && link_control->send(head, 0)) {
 #ifdef __SST_DEBUG_OUTPUT__
             if (!debugEvStr.empty() && (DEBUG_ALL || doDebug)) {
@@ -284,9 +285,9 @@ MemEventBase* MemNIC::recv() {
                         getName().c_str(), imre->info.name.c_str());
             }
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
-                sourceEndpointInfo.insert(std::make_pair(imre->info.name, imre->info));
+                sourceEndpointInfo.insert(imre->info);
             } else if (destIDs.find(imre->info.id) != destIDs.end()) {
-                destEndpointInfo.insert(std::make_pair(imre->info.name, imre->info));
+                destEndpointInfo.insert(imre->info);
             }
             delete imre;
         }

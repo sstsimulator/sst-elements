@@ -54,7 +54,6 @@ class DirectoryController : public Component {
     /* ie, sum of all caches we talk to */
     uint32_t    entrySize;
     uint32_t    numTargets;
-    uint32_t    blocksize;
     uint32_t    targetCount;
     uint32_t    cacheLineSize;
 
@@ -249,9 +248,6 @@ class DirectoryController : public Component {
     /** Determines if request is valid in terms of address ranges */
     bool isRequestAddressValid(Addr addr);
     
-    /** Convert global address to local address of the main memory section this directory controller owns */
-    Addr convertAddressToLocalAddress(Addr addr);
-
     /** Print directory controller status */
     const char* printDirectoryEntryStatus(Addr addr);
 

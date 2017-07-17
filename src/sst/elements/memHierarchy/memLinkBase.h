@@ -48,6 +48,10 @@ public:
         uint64_t addr;
         uint32_t id;
         MemRegion region;
+
+        bool operator<(const EndpointInfo &o) const {
+            return (region < o.region);
+        }
     };
     
     /* Constructor */
@@ -120,16 +124,16 @@ public:
 
     /* Functions for managing communication according to address */
     virtual std::string findTargetDestination(Addr addr) {
-        for (std::unordered_map<std::string, EndpointInfo>::iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
-            if (it->second.region.contains(addr)) return it->second.name;
+        for (std::set<EndpointInfo>::iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+            if (it->region.contains(addr)) return it->name;
         }
 
         /* Build error string */
         stringstream error;
         error << getName() + " (MemLinkBase) cannot find a destination for address " << addr << endl;
         error << "Known destination regions: " << endl;
-        for (std::unordered_map<std::string,EndpointInfo>::iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
-            error << it->first << " " << it->second.region.toString() << endl;
+        for (std::set<EndpointInfo>::iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+            error << it->name << " " << it->region.toString() << endl;
         }
         dbg.fatal(CALL_INFO, -1, "%s", error.str().c_str());
         return "";
@@ -138,16 +142,17 @@ public:
     virtual bool isRequestAddressValid(Addr addr) { return info.region.contains(addr); }
 
     /* Functions for managing source/destination information */
-    std::unordered_map<std::string,EndpointInfo> * getSources() { return &sourceEndpointInfo; }
-    std::unordered_map<std::string,EndpointInfo> * getDests() { return &destEndpointInfo; }
+    std::set<EndpointInfo> * getSources() { return &sourceEndpointInfo; }
+    std::set<EndpointInfo> * getDests() { return &destEndpointInfo; }
     
-    void setSources(std::unordered_map<std::string,EndpointInfo>& srcs) { sourceEndpointInfo = srcs; }
-    void setDests(std::unordered_map<std::string,EndpointInfo>& dsts) { destEndpointInfo = dsts; }
+    void setSources(std::set<EndpointInfo>& srcs) { sourceEndpointInfo = srcs; }
+    void setDests(std::set<EndpointInfo>& dsts) { destEndpointInfo = dsts; }
     
-    void addSource(std::string name, EndpointInfo info) { sourceEndpointInfo.insert(std::make_pair(name, info)); }
-    void addDest(std::string name, EndpointInfo info) { destEndpointInfo.insert(std::make_pair(name, info)); }
+    void addSource(EndpointInfo info) { sourceEndpointInfo.insert(info); }
+    void addDest(EndpointInfo info) { destEndpointInfo.insert(info); }
     
     virtual bool isDest(std::string str) { return true; } // Anything we get on this link is valid for a dest 
+    virtual bool isSource(std::string str) { return true; } // Anything we get on this link is valid for a source
 
     MemRegion getRegion() { return info.region; }
     MemRegion setRegion(MemRegion region) { info.region = region; }
@@ -170,8 +175,8 @@ protected:
     SST::Event::HandlerBase * recvHandler; // Event handler to call when an event is received
 
     // Data structures
-    std::unordered_map<std::string,EndpointInfo> sourceEndpointInfo;    // Map of name -> endpoint info for each network endpoint
-    std::unordered_map<std::string,EndpointInfo> destEndpointInfo;      // Map of name -> endpoint info for each network endpoint
+    std::set<EndpointInfo> sourceEndpointInfo;    // endpoint info for each source network endpoint
+    std::set<EndpointInfo> destEndpointInfo;      // endpoint info for each destination network endpoint
 };
 
 } //namespace memHierarchy

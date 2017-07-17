@@ -117,7 +117,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     if (isPortConnected("direct_link")) {
         Params linkParams = params.find_prefix_params("ulink.");
-        linkParams.insert("name", "direct_link");
+        linkParams.insert("port", "direct_link");
         linkParams.insert("latency", link_lat, false);
         linkParams.insert("accept_region", "1", false);
         link_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, linkParams));

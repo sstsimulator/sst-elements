@@ -465,10 +465,10 @@ void Cache::init(unsigned int phase) {
 void Cache::setup() {
     // Check that our sources and destinations exist or configure if needed
     
-    std::unordered_map<std::string,MemLinkBase::EndpointInfo> * names = linkUp_->getSources();
+    std::set<MemLinkBase::EndpointInfo> * names = linkUp_->getSources();
 
     if (names->empty()) {
-        std::unordered_map<std::string,MemLinkBase::EndpointInfo> srcNames;
+        std::set<MemLinkBase::EndpointInfo> srcNames;
         if (upperLevelCacheNames_.empty()) upperLevelCacheNames_.push_back(""); // TODO is this a carry over from the old init or is it needed to avoid segfaults still?
         for (int i = 0; i < upperLevelCacheNames_.size(); i++) {
             MemLinkBase::EndpointInfo info;
@@ -476,7 +476,7 @@ void Cache::setup() {
             info.addr = 0;
             info.id = 0;
             info.region.setDefault();
-            srcNames.insert(std::make_pair(upperLevelCacheNames_[i], info));
+            srcNames.insert(info);
         }
         linkUp_->setSources(srcNames);
     }
@@ -486,7 +486,7 @@ void Cache::setup() {
 
     names = linkDown_->getDests();
     if (names->empty()) {
-        std::unordered_map<std::string,MemLinkBase::EndpointInfo> dstNames;
+        std::set<MemLinkBase::EndpointInfo> dstNames;
         if (lowerLevelCacheNames_.empty()) lowerLevelCacheNames_.push_back(""); // TODO is this a carry over from the old init or is it needed to avoid segfaults still?
         uint64_t ilStep = 0;
         uint64_t ilSize = 0;
@@ -502,7 +502,7 @@ void Cache::setup() {
             info.region.setDefault();
             info.region.interleaveStep = ilStep;
             info.region.interleaveSize = ilSize;
-            dstNames.insert(std::make_pair(lowerLevelCacheNames_[i], info));
+            dstNames.insert(info);
         }
         linkDown_->setDests(dstNames);
     }

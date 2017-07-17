@@ -159,13 +159,13 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     
     if (cpuDirect) {
         Params ulink = params.find_prefix_params("ulink.");
-        ulink.insert("name", "cpu");
+        ulink.insert("port", "cpu");
         linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, ulink));
         linkUp_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingCPUEvent));
     }
     if (memoryDirect) {
         Params dlink = params.find_prefix_params("dlink.");
-        dlink.insert("name", "memory");
+        dlink.insert("port", "memory");
         linkDown_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, dlink));
         linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
     }
@@ -243,7 +243,7 @@ void Scratchpad::init(unsigned int phase) {
                     info.addr = 0;
                     info.id = 0;
                     info.region.setDefault();
-                    linkUp_->addSource(info.name, info);
+                    linkUp_->addSource(info);
                 }
             }
         } else { // Not a NULLCMD
@@ -264,7 +264,7 @@ void Scratchpad::init(unsigned int phase) {
                 info.addr = 0;
                 info.id = 0;
                 info.region.setDefault();
-                linkDown_->addDest(info.name, info);
+                linkDown_->addDest(info);
             }
         }
         delete initEv;
@@ -272,19 +272,7 @@ void Scratchpad::init(unsigned int phase) {
 }
 
 
-void Scratchpad::setup() {
-    std::unordered_map<std::string,MemLink::EndpointInfo> * names = linkUp_->getSources();
-    dbg.debug(_L10_, "%s sources are:\n", getName().c_str());
-    for (std::unordered_map<std::string,MemLink::EndpointInfo>::iterator it = names->begin(); it != names->end(); it++) {
-        dbg.debug(_L10_, "\t%s\n", it->first.c_str());
-    }
-    
-    names = linkDown_->getDests();
-    dbg.debug(_L10_, "%s destinations are:\n", getName().c_str());
-    for (std::unordered_map<std::string,MemLink::EndpointInfo>::iterator it = names->begin(); it != names->end(); it++) {
-        dbg.debug(_L10_, "\t%s\n", it->first.c_str());
-    }
-}
+void Scratchpad::setup() { }
 
 
 /* Events received from a network connected to both processor-side and remote-side */
@@ -958,7 +946,7 @@ bool Scratchpad::startGet(Addr baseAddr, MoveEvent * get) {
     if (caching_ && cacheStatus_.at(baseAddr/scratchLineSize_) == true) {
         MemEvent * inv = new MemEvent(this, baseAddr, baseAddr, Command::ForceInv, scratchLineSize_);
         inv->setRqstr(get->getRqstr());
-        inv->setDst(linkUp_->getSources()->begin()->first);
+        inv->setDst(linkUp_->getSources()->begin()->name);
         inv->setVirtualAddress(get->getDstVirtualAddress());
         inv->setInstructionPointer(get->getInstructionPointer());
         dbg.debug(_L5_, "\tInserting event in processor queue. %s\n", inv->getBriefString().c_str());
@@ -977,7 +965,7 @@ bool Scratchpad::startPut(Addr baseAddr, MoveEvent * put) {
     if (caching_ && cacheStatus_.at(baseAddr/scratchLineSize_) == true) {
         MemEvent * inv = new MemEvent(this, baseAddr, baseAddr, Command::FetchInv, scratchLineSize_);
         inv->setRqstr(put->getRqstr());
-        inv->setDst(linkUp_->getSources()->begin()->first);
+        inv->setDst(linkUp_->getSources()->begin()->name);
         inv->setVirtualAddress(put->getSrcVirtualAddress());
         inv->setInstructionPointer(put->getInstructionPointer());
         dbg.debug(_L5_, "\tInserting event in processor queue. %s\n", inv->getBriefString().c_str());

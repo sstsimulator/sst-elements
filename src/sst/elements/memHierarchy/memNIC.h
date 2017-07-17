@@ -112,6 +112,7 @@ public:
             MemRtrEvent::serialize_order(ser);
             ser & info.name;
             ser & info.addr;
+            ser & info.id;
             ser & info.region.start;
             ser & info.region.end;
             ser & info.region.interleaveSize;
@@ -121,7 +122,18 @@ public:
         ImplementSerializable(SST::MemHierarchy::MemNIC::InitMemRtrEvent);
     };
     
-    bool isDest(std::string str) { return destEndpointInfo.find(str) != destEndpointInfo.end(); }
+    bool isSource(std::string str) { /* Note this is only used during init so doesn't need to be fast */
+        for (std::set<EndpointInfo>::iterator it = sourceEndpointInfo.begin(); it != sourceEndpointInfo.end(); it++) {
+            if (it->name == str) return true;   
+        }
+        return false;
+    }
+    bool isDest(std::string str) { /* Note this is only used during init so doesn't need to be fast */
+        for (std::set<EndpointInfo>::iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+            if (it->name == str) return true;   
+        }
+        return false;
+    }
 
 private:
 

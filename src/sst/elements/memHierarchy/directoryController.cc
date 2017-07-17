@@ -31,7 +31,7 @@ using namespace std;
 const MemEvent::id_type DirectoryController::DirEntry::NO_LAST_REQUEST = std::make_pair((uint64_t)-1, -1);
 
 DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
-    Component(id), blocksize(0){
+    Component(id) {
     int debugLevel = params.find<int>("debug_level", 0);
     cacheLineSize = params.find<uint32_t>("cache_line_size", 64);
     
@@ -162,7 +162,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     
         if (isPortConnected("memory")) {
             Params memParams = params.find_prefix_params("memLink.");
-            memParams.insert("name", "memory");
+            memParams.insert("port", "memory");
             memParams.insert("latency", "1ns");
             memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);
             memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);
@@ -274,23 +274,6 @@ void DirectoryController::handlePacket(SST::Event *event){
     if (ev->getCmd() == Command::GetSResp || ev->getCmd() == Command::GetXResp || ev->getCmd() == Command::FlushLineResp || ev->getCmd() == Command::ForceInv || ev->getCmd() == Command::FetchInv 
             || ev->getCmd() == Command::AckPut) {
         handleMemoryResponse(event);
-    } else if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR)) {
-            dbg.debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n",
-                    getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
-        }
-        if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR)) {
-            dbg.debug(_L5_,"\tForwarding noncacheable event to memory.\n");
-        }
-#endif
-        profileRequestRecv(ev, NULL);
-        /* Save source for return routing */
-        noncacheMemReqs[ev->getID()] = ev->getSrc();
-        ev->setSrc(getName());
-        ev->setDst(memoryName);
-        profileRequestSent(ev);
-        sendEventToMem(ev);
     } else {
         workQueue.push_back(ev);
     }
@@ -1912,7 +1895,7 @@ void DirectoryController::init(unsigned int phase) {
         } else {
     
             /* Check that memory name is valid - really only need to do this once, but since it's init, whatever */
-            if (!memLink && (network->getDests()->find(memoryName) == network->getDests()->end())) {
+            if (!memLink && !network->isDest(memoryName)) {
                 dbg.fatal(CALL_INFO,-1,"%s, Invalid param: net_memory_name - must name a valid memory component in the system. You specified: %s\n",getName().c_str(), memoryName.c_str());
             }
             
@@ -1958,23 +1941,9 @@ void DirectoryController::setup(void){
     network->setup();
 
     numTargets = network->getSources()->size();
-    /*    const std::vector<MemNIC::PeerInfo_t> &ci = network->getPeerInfo();
-    for(std::vector<MemNIC::PeerInfo_t>::const_iterator i = ci.begin() ; i != ci.end() ; ++i){
-        dbg.debug(_L10_, "DC %s found peer %d(%s) of type %d.\n", getName().c_str(), i->first.network_addr, i->first.name.c_str(), i->first.type);
-        if(MemNIC::TypeCache == i->first.type || MemNIC::TypeNetworkCache == i->first.type){
-            numTargets++;
-            if(blocksize) {
-		if(blocksize != i->second.blocksize) {
-			dbg.fatal(CALL_INFO, -1, "%s, Error: block size does not match blocksize=%" PRIu32 " != %" PRIu32 "\n",
-				getName().c_str(), (uint32_t) blocksize, (uint32_t) i->second.blocksize);
-		}
-	    }
-            else            blocksize = i->second.blocksize;
-        }
-    }*/
+    
     if(0 == numTargets) dbg.fatal(CALL_INFO,-1,"%s, Error: Did not find any caches during init\n",getName().c_str());
 
-    //network->clearPeerInfo();
     entrySize = (numTargets+1)/8 +1;
 }
 

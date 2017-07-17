@@ -26,9 +26,9 @@ MemLink::MemLink(Component * parent, Params &params) : MemLinkBase(parent, param
     
     // Configure link
     std::string latency = params.find<std::string>("latency", "50ps");
-    std::string name = params.find<std::string>("name", "");
+    std::string port = params.find<std::string>("port", "");
 
-    link = configureLink(name, latency, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
+    link = configureLink(port, latency, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
    
     dbg.debug(_L10_, "%s memLink info is: Name: %s, addr: %" PRIu64 ", id: %" PRIu32 "\n",
             getName().c_str(), info.name.c_str(), info.addr, info.id);
@@ -69,8 +69,8 @@ MemEventInit * MemLink::recvInitData() {
                 epInfo.addr = 0;
                 epInfo.id = 0;
                 epInfo.region = mEvRegion->getRegion();
-                sourceEndpointInfo.insert(std::make_pair(mEvRegion->getSrc(), epInfo));
-                destEndpointInfo.insert(std::make_pair(mEvRegion->getSrc(), epInfo));
+                sourceEndpointInfo.insert(epInfo);
+                destEndpointInfo.insert(epInfo);
 
                 if (/*mEvRegion->getDst() == getName() &&*/ mEvRegion->getSetRegion() && acceptRegion) {
                     dbg.debug(_L10_, "\tUpdating local region\n");

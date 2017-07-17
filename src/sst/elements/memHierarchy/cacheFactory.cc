@@ -435,10 +435,10 @@ void Cache::configureLinks(Params &params) {
     Params nicParams = params.find_prefix_params("memNIC." );
 
     Params dlink = params.find_prefix_params("dlink.");
-    dlink.insert("name", "low_network_0");
+    dlink.insert("port", "low_network_0");
     
     Params ulink = params.find_prefix_params("ulink.");
-    ulink.insert("name", "high_network_0");
+    ulink.insert("port", "high_network_0");
 
     /* Finally configure the links */
     if (highNetExists && lowNetExists) {
