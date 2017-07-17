@@ -336,7 +336,7 @@ bool ArielCore::refillQueue() {
 				}
 
 				// Add one to our instruction counts
-				statInstructionCount->addData(1);
+				//statInstructionCount->addData(1);
 
 				break;
 
@@ -569,7 +569,8 @@ bool ArielCore::processNextEvent() {
 	switch(nextEvent->getEventType()) {
 		case NOOP:
 			ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is NOOP\n", coreID));
-
+			 statInstructionCount->addData(1);
+			inst_count++;
 			statNoopCount->addData(1);
 			removeEvent = true;
 			break;
@@ -580,6 +581,8 @@ bool ArielCore::processNextEvent() {
 			//		if(pendingTransactions->size() < maxPendingTransactions) {
 			if(pending_transaction_count < maxPendingTransactions) {
 				ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Found a read event, fewer pending transactions than permitted so will process...\n"));
+				 statInstructionCount->addData(1);
+				inst_count++;
 				removeEvent = true;
 				handleReadRequest(dynamic_cast<ArielReadEvent*>(nextEvent));
 			} else {
@@ -594,7 +597,9 @@ bool ArielCore::processNextEvent() {
 			//		if(pendingTransactions->size() < maxPendingTransactions) {
 			if(pending_transaction_count < maxPendingTransactions) {
 				ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Found a write event, fewer pending transactions than permitted so will process...\n"));
-				removeEvent = true;
+				 statInstructionCount->addData(1);
+				inst_count++;
+					removeEvent = true;
 				handleWriteRequest(dynamic_cast<ArielWriteEvent*>(nextEvent));
 			} else {
 				ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Pending transaction queue is currently full for core %" PRIu32 ", core will stall for new events\n", coreID));
