@@ -45,6 +45,11 @@ c_Channel::c_Channel(std::map<std::string, unsigned>* x_bankParams) {
 	m_rankPtrs.clear();
 }
 
+c_Channel::c_Channel(std::map<std::string, unsigned>* x_bankParams, unsigned x_chId) : c_Channel(x_bankParams) {
+		m_chId = x_chId;
+}
+
+
 c_Channel::~c_Channel() {
 	for (unsigned l_i = 0; l_i != m_rankPtrs.size(); ++l_i)
 		if (m_rankPtrs.at(l_i) != nullptr)
@@ -68,10 +73,14 @@ unsigned c_Channel::getNumRanks() const {
 	return m_rankPtrs.size();
 }
 
+unsigned c_Channel::getChannelId() const {
+	return m_chId;
+}
+
 std::vector<c_BankInfo*> c_Channel::getBankPtrs() const {
 	std::vector<c_BankInfo*> l_allBankPtrs;
 	for (auto& l_rankPtr : m_rankPtrs) {
-		std::vector<c_BankInfo*> l_entryPtrs = l_rankPtr->getBankPtrs();
+		std::vector<c_BankInfo*>& l_entryPtrs = l_rankPtr->getBankPtrs();
 		l_allBankPtrs.insert(l_allBankPtrs.end(), l_entryPtrs.begin(),
 				l_entryPtrs.end());
 	}

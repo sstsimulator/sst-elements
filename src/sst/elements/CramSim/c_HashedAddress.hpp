@@ -39,8 +39,10 @@
 class c_HashedAddress : public SST::Core::Serialization::serializable {
 
 public:
-  //c_HashedAddress(unsigned x_channel, unsigned x_rank, unsigned x_bankgroup,
-  //		  unsigned x_bank, unsigned x_row, unsigned x_col);
+    c_HashedAddress(){};
+  c_HashedAddress(unsigned x_channel, unsigned x_pchannel, unsigned x_rank, unsigned x_bankgroup,
+  		  unsigned x_bank, unsigned x_row, unsigned x_col, unsigned x_bankid) : m_channel(x_channel), m_pchannel(x_pchannel), m_rank(x_rank), m_bankgroup(x_bankgroup),
+                                                               m_bank(x_bank),m_row(x_row),m_col(x_col),m_bankId(x_bankid){};
   friend class c_AddressHasher;
   
   unsigned getChannel()   const {return m_channel;}
@@ -53,6 +55,18 @@ public:
   unsigned getCacheline() const {return m_cacheline;}
 
   unsigned getBankId()    const {return m_bankId;} // linear bankId
+    unsigned getRankId()  const {return m_rankId;}
+    void setChannel(unsigned x_ch) {m_channel=x_ch;}
+    void setPChannel(unsigned x_pch) {m_pchannel=x_pch;}
+    void setRank(unsigned x_rank) {m_rank=x_rank;}
+    void setBankGroup(unsigned x_bg) {m_bankgroup=x_bg;}
+    void setBank(unsigned x_bank) {m_bank=x_bank;}
+    void setRow(unsigned x_row) {m_row=x_row;}
+    void setCol(unsigned x_col) {m_col=x_col;}
+    void setCacheline(unsigned x_cacheline) {m_cacheline=x_cacheline;}
+    void setBankId(unsigned x_bankid) {m_bankId=x_bankid;}
+    void setRankId(unsigned x_rankid) {m_rankId=x_rankid;}
+
 
   void print() const;
   
@@ -81,6 +95,7 @@ private:
   unsigned m_cacheline;
 
   unsigned m_bankId;
+    unsigned m_rankId;
 };
 
 #endif // c_HASHEDADDRESS_HPP

@@ -35,6 +35,7 @@
 #include "c_TokenChgEvent.hpp"
 #include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
+#include "c_HashedAddress.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
@@ -45,21 +46,17 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     int verbosity = params.find<int>("verbose", 0);
     output = new SST::Output("CramSim.Controller[@f:@l:@p] ",
                              verbosity, 0, SST::Output::STDOUT);
+
+
     /** Get subcomponent parameters*/
     bool l_found;
-    // set address hasher
-    std::string l_subCompName = params.find<std::string>("AddrHasher", "CramSim.c_AddressHasher",l_found);
-    if(!l_found){
-        output->output("AddrHasher is not specified... AddressHasher (default) will be used\n");
-    }
-    m_addrHasher= dynamic_cast<c_AddressHasher*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
     // set device controller
-    l_subCompName = params.find<std::string>("DeviceController", "CramSim.c_DeviceController",l_found);
+    std::string l_subCompName  = params.find<std::string>("DeviceDriver", "CramSim.c_DeviceDriver",l_found);
     if(!l_found){
-        output->output("Device Controller is not specified... c_DeviceController (default) will be used\n");
+        output->output("Device Controller is not specified... c_DeviceDriver (default) will be used\n");
     }
-    m_deviceController= dynamic_cast<c_DeviceController*>(loadSubComponent(l_subCompName.c_str(),this,params));
+    m_deviceDriver= dynamic_cast<c_DeviceDriver*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
     // set cmd schduler
     l_subCompName = params.find<std::string>("CmdScheduler", "CramSim.c_CmdScheduler",l_found);
@@ -69,13 +66,27 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
 
     m_cmdScheduler= dynamic_cast<c_CmdScheduler*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
-    // set device controller
+    // set transaction converter
     l_subCompName = params.find<std::string>("TxnConverter", "CramSim.c_TxnConverter",l_found);
     if(!l_found){
         output->output("Transaction Converter is not specified... c_TxnConverter (default) will be used\n");
     }
-    m_transConverter= dynamic_cast<c_TxnConverter*>(loadSubComponent(l_subCompName.c_str(),this,params));
+    m_txnConverter= dynamic_cast<c_TxnConverter*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
+
+    // set transaction scheduler
+    l_subCompName = params.find<std::string>("TxnScheduler", "CramSim.c_TxnScheduler",l_found);
+    if(!l_found){
+        output->output("Transaction Scheduler is not specified... c_TxnScheduler (default) will be used\n");
+    }
+    m_txnScheduler= dynamic_cast<c_TxnScheduler*>(loadSubComponent(l_subCompName.c_str(), this, params));
+
+    // set address hasher
+    l_subCompName = params.find<std::string>("AddrHasher", "CramSim.c_AddressHasher",l_found);
+    if(!l_found){
+        output->output("AddrHasher is not specified... AddressHasher (default) will be used\n");
+    }
+    m_addrHasher= dynamic_cast<c_AddressHasher*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
 
     /** Get SST link parameters*/
@@ -102,6 +113,7 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
         exit(-1);
     }
     m_txnGenResQTokens = k_txnGenResQEntries;
+    m_ReqQTokens= k_txnReqQEntries;
 
     // get configured clock frequency
     k_controllerClockFreqStr = (string)params.find<string>("strControllerClockFrequency", "1GHz", l_found);
@@ -112,6 +124,8 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     //set our clock
     registerClock(k_controllerClockFreqStr,
                   new Clock::Handler<c_Controller>(this, &c_Controller::clockTic));
+
+
 
 }
 
@@ -141,7 +155,7 @@ void c_Controller::configure_link() {
     m_outTxnGenResPtrLink = configureLink("outTxnGenResPtr",
                                           new Event::Handler<c_Controller>(this,
                                                                            &c_Controller::handleOutTxnGenResPtrEvent));
-    // DeviceController <-> Bank Links
+    // DeviceDriver <-> Bank Links
     // Controller <- Device (Req) (Token)
     m_inDeviceReqQTokenChgLink = configureLink("inDeviceReqQTokenChg",
                                                new Event::Handler<c_Controller>(this,
@@ -162,21 +176,58 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
 
     sendResponse();
 
-    m_thisCycleTxnQTknChg = m_transConverter->getToken();
+    m_thisCycleTxnQTknChg = m_ReqQ.size();
 
+    // 0. update device driver
+    m_deviceDriver->update();
 
-    // run transaction converter
-    m_transConverter->clockTic(clock);
+    // 1. Convert physical address to device address
+    // 2. Push transactions to the transaction queue
+    for(std::deque<c_Transaction*>::iterator l_it=m_ReqQ.begin() ; l_it!=m_ReqQ.end();)
+    {
+        c_Transaction* newTxn= *l_it;
 
-    // run command scheduler
-    m_cmdScheduler->clockTic(clock);
+        if(newTxn->hasHashedAddress()== false)
+        {
+            c_HashedAddress l_hashedAddress;
+            m_addrHasher->fillHashedAddress(&l_hashedAddress, newTxn->getAddress());
+            newTxn->setHashedAddress(l_hashedAddress);
+        }
 
-    // run device controller
-    m_deviceController->clockTic(clock);
+        if(m_txnScheduler->push(newTxn)) {
+            l_it = m_ReqQ.erase(l_it);
 
+            #ifdef __SST_DEBUG_OUTPUT__
+            output->verbose(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d\n",
+                          Simulation::getSimulation()->getCurrentSimCycle(),
+                          newTxn->getTransactionString().c_str(),
+                          newTxn->getHashedAddress().getChannel(),
+                          newTxn->getHashedAddress().getPChannel(),
+                          newTxn->getHashedAddress().getRank(),
+                          newTxn->getHashedAddress().getBankGroup(),
+                          newTxn->getHashedAddress().getBank(),
+                          newTxn->getHashedAddress().getRow(),
+                          newTxn->getHashedAddress().getCol());
+            #endif
+        }
+        else
+            l_it++;
+    }
 
-    //send token to the transaction generator
-    m_thisCycleTxnQTknChg = m_transConverter->getToken()-m_thisCycleTxnQTknChg;
+    // 3. run transaction Scheduler
+    m_txnScheduler->run();
+
+    // 4. run transaction converter
+    m_txnConverter->run();
+
+    // 5, run command scheduler
+    m_cmdScheduler->run();
+
+    // 6. run device driver
+    m_deviceDriver->run();
+
+    // 7. send token to the transaction generator
+    m_thisCycleTxnQTknChg = m_thisCycleTxnQTknChg-m_ReqQ.size();
     if (m_thisCycleTxnQTknChg > 0) {
         sendTokenChg();
     }
@@ -208,29 +259,28 @@ void c_Controller::sendResponse() {
 
     // sendResponse conditions:
     // - m_txnGenResQTokens > 0
-    // - m_txnResQ.size() > 0
-    // - m_txnResQ has an element which is response-ready
+    // - m_ResQ.size() > 0
+    // - m_ResQ has an element which is response-ready
 
-    if ((m_txnGenResQTokens > 0) && (m_txnResQ.size() > 0)) {
+    if ((m_txnGenResQTokens > 0) && (m_ResQ.size() > 0)) {
         c_Transaction* l_txnRes = nullptr;
-        for (std::vector<c_Transaction*>::iterator l_it = m_txnResQ.begin();
-             l_it != m_txnResQ.end(); ++l_it) {
+        for (std::deque<c_Transaction*>::iterator l_it = m_ResQ.begin();
+             l_it != m_ResQ.end();)  {
             if ((*l_it)->isResponseReady()) {
                 l_txnRes = *l_it;
-                m_txnResQ.erase(l_it);
-                break;
+                l_it=m_ResQ.erase(l_it);
+                //break;
+                c_TxnResEvent* l_txnResEvPtr = new c_TxnResEvent();
+                l_txnResEvPtr->m_payload = l_txnRes;
+                m_outTxnGenResPtrLink->send(l_txnResEvPtr);
+
+                --m_txnGenResQTokens;
+            }
+            else
+            {
+                l_it++;
             }
         }
-
-        if (l_txnRes != nullptr) {
-
-            c_TxnResEvent* l_txnResEvPtr = new c_TxnResEvent();
-            l_txnResEvPtr->m_payload = l_txnRes;
-            m_outTxnGenResPtrLink->send(l_txnResEvPtr);
-
-            --m_txnGenResQTokens;
-        }
-
     }
 } // sendResponse
 
@@ -242,9 +292,13 @@ void c_Controller::handleIncomingTransaction(SST::Event *ev){
     c_TxnReqEvent* l_txnReqEventPtr = dynamic_cast<c_TxnReqEvent*>(ev);
 
     if (l_txnReqEventPtr) {
+        c_Transaction* newTxn=l_txnReqEventPtr->m_payload;
 
-        m_txnResQ.push_back(l_txnReqEventPtr->m_payload);
-        m_transConverter->push(l_txnReqEventPtr->m_payload);
+
+        m_ReqQ.push_back(newTxn);
+        m_ResQ.push_back(newTxn);
+
+
         delete l_txnReqEventPtr;
     } else {
         std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
@@ -262,7 +316,7 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
         ulong l_resSeqNum = l_cmdResEventPtr->m_payload->getSeqNum();
         // need to find which txn matches the command seq number in the txnResQ
         c_Transaction* l_txnRes = nullptr;
-        for(auto l_txIter : m_txnResQ) {
+        for(auto l_txIter : m_ResQ) {
             if(l_txIter->matchesCmdSeqNum(l_resSeqNum)) {
                 l_txnRes = l_txIter;
             }
@@ -330,5 +384,12 @@ void c_Controller::handleOutTxnGenReqQTokenChgEvent(SST::Event *ev) {
     // nothing to do here
     std::cout << __PRETTY_FUNCTION__ << " ERROR: Should not be here"
               << std::endl;
+}
+
+void c_Controller::setHashedAddress(c_Transaction* newTxn)
+{
+    c_HashedAddress l_hashedAddress;
+    m_addrHasher->fillHashedAddress(&l_hashedAddress, newTxn->getAddress());
+    newTxn->setHashedAddress(l_hashedAddress);
 }
 

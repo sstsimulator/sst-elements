@@ -72,7 +72,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	// read params here
 	bool l_found = false;
 
-	k_numChannelsPerDimm = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,
+	k_numChannels = (uint32_t)x_params.find<uint32_t>("numChannels", 1,
 															 l_found);
 	if (!l_found) {
 		std::cout << "numChannelsPerDimm value is missing... exiting"
@@ -80,10 +80,10 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	k_numPseudoChannels = (uint32_t)x_params.find<uint32_t>("numPseudoChannels", 1,
+	k_numPChannelsPerChannel = (uint32_t)x_params.find<uint32_t>("numPChannelsPerChannel", 1,
 															l_found);
 	if (!l_found) {
-		std::cout << "numPseudoChannel value is missing... "
+		std::cout << "numPChannelsPerChannel value is missing... "
 				  << std::endl;
 		//exit(-1);
 	}
@@ -112,7 +112,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	m_numBanks = k_numChannelsPerDimm * k_numPseudoChannels * k_numRanksPerChannel * k_numBankGroupsPerRank
+	m_numBanks = k_numChannels * k_numPChannelsPerChannel * k_numRanksPerChannel * k_numBankGroupsPerRank
 			* k_numBanksPerBankGroup;
 
 	Statistic<uint64_t> *l_totalRowHits = registerStatistic<uint64_t>("totalRowHits");
@@ -255,11 +255,11 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
 
   unsigned l_bankNum=0;
-  if(x_bankCommandPtr->getCommandMnemonic() == e_BankCommandType::REF) {
+  //if(x_bankCommandPtr->getBankIdVec().size()) {
     l_bankNum = x_bankCommandPtr->getBankId();
-  } else {
-    l_bankNum = x_bankCommandPtr->getHashedAddress()->getBankId();
-  }
+  //} else {
+  //  l_bankNum = x_bankCommandPtr->getHashedAddress()->getBankId();
+ // }
   m_banks.at(l_bankNum)->handleCommand(x_bankCommandPtr);
   
 }
@@ -267,7 +267,7 @@ void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
 void c_Dimm::sendResponse() {
 
 	// check if ResQ has cmds
-	if (m_cmdResQ.size() > 0) {
+	while (!m_cmdResQ.empty()) {
 
 	  //std::cout << std::endl << "@" << std::dec
 	  //	    << Simulation::getSimulation()->getCurrentSimCycle() << ": "

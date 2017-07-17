@@ -32,24 +32,39 @@
 
 #include "c_CtrlSubComponent.hpp"
 #include "c_BankCommand.hpp"
-#include "c_CmdUnit.hpp"
+#include "c_DeviceDriver.hpp"
+#include "c_HashedAddress.hpp"
+#include "c_Controller.hpp"
 
 namespace SST{
     namespace n_Bank {
-        class c_DeviceController;
-       // template<class I, class O> class c_CtrlSubComponent;
+        class c_DeviceDriver;
+        class c_Controller;
 
         class c_CmdScheduler : public c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> {
         public:
             c_CmdScheduler(Component *comp, Params &x_params);
-            ~c_CmdScheduler(){};
-            bool clockTic(SST::Cycle_t);
+            ~c_CmdScheduler();
+
+            void run();
+            bool push(c_BankCommand* x_cmd);
+            unsigned getToken(const c_HashedAddress &x_addr);
+
 
         private:
-            void run();
-            void send();
+            typedef std::deque<c_BankCommand*> c_CmdQueue;
 
-            c_DeviceController* m_nextSubComponent;
+            c_Controller* m_owner;
+            c_DeviceDriver* m_deviceController;
+
+            std::vector<std::vector<c_CmdQueue>> m_cmdQueues;  //per-bank command queue for each channel
+            std::vector<unsigned> m_nextCmdQIdx;                //index for command queue scheduling (Round Robin)
+
+            Output* output;
+            unsigned m_numBanks;
+            unsigned m_numChannels;
+            unsigned m_numBanksPerChannel;
+            unsigned k_numCmdQEntries;
         };
     }
 }

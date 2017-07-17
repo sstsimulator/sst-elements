@@ -98,12 +98,6 @@ void c_BankStateRead::handleCommand(c_BankInfo* x_bank,
 			break;
 		}
 
-		//std::cout << std::endl << "@" << std::dec
-		//		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-		//		<< __PRETTY_FUNCTION__ << std::endl;
-		//m_receivedCommandPtr->print();
-		//std::cout << std::endl;
-
 	}
 }
 
@@ -185,9 +179,6 @@ void c_BankStateRead::clockTic(c_BankInfo* x_bank) {
 void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 		c_BankCommand* x_cmdPtr) {
 
-  //std::cout << std::endl << "@" << std::dec
-  //			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-  //			<< __PRETTY_FUNCTION__ << std::endl;
 
 	m_timerExit = 0;
 	m_nextStatePtr = nullptr;
@@ -214,7 +205,7 @@ void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 			break;
 		case e_BankCommandType::READ:
 			m_timer = std::max(m_bankParams->at("nCCD_L"),
-					m_bankParams->at("nBL"));
+					m_bankParams->at("nBL"))-1;
 			break;
 		case e_BankCommandType::ACT:
 			m_timer = 0;

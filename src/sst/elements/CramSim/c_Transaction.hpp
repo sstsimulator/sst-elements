@@ -41,8 +41,9 @@
 
 //sst includes
 #include <sst/core/serialization/serializable.h>
-
+#include <output.h>
 //local includes
+#include "c_HashedAddress.hpp"
 
 typedef unsigned long ulong;
 
@@ -69,6 +70,8 @@ private:
 
   //std::list<c_BankCommand*> m_cmdPtrList; //<! list of c_BankCommand shared_ptrs that compose this c_Transaction
   std::list<ulong> m_cmdSeqNumList; //<! list of c_BankCommand Sequence numbers that compose this c_Transaction
+    c_HashedAddress m_hashedAddr;
+    bool m_hasHashedAddr;
 
 public:
 
@@ -100,6 +103,19 @@ public:
   bool isProcessed() const;
   void isProcessed(bool x_processed);
   void print() const;
+  void print(SST::Output *x_output, std::string x_prefix) const;
+
+  const c_HashedAddress& getHashedAddress() const {
+         return (m_hashedAddr);
+  }
+  void setHashedAddress(c_HashedAddress &x_hashedAddr)
+  {
+      m_hashedAddr = x_hashedAddr;
+      m_hasHashedAddr=true;
+  }
+        bool hasHashedAddress(){
+            return m_hasHashedAddr;
+        }
 
   void serialize_order(SST::Core::Serialization::serializer &ser) override ;
   

@@ -26,44 +26,107 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include "sst_config.h"
+
+#include <string>
+#include <vector>
+#include <list>
+#include <algorithm>
+#include <map>
+#include <assert.h>
 
 #include "c_CmdScheduler.hpp"
-#include "c_CmdUnit.hpp"
+#include "c_DeviceDriver.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
 
 c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> (comp, x_params){
-    m_nextSubComponent=dynamic_cast<c_Controller*>(comp)->getDeviceController();
+    m_owner = dynamic_cast<c_Controller*>(comp);
+    m_deviceController=m_owner->getDeviceDriver();
+    output=dynamic_cast<c_Controller*>(comp)->getOutput();
+    //create command queue
+    m_numBanks=m_owner->getDeviceDriver()->getTotalNumBank();
+    m_numChannels=m_owner->getDeviceDriver()->getNumChannel();
+    m_numBanksPerChannel=m_numBanks/m_numChannels;
+
+    assert(m_numBanks>0);
+    m_cmdQueues.clear();
+
+    m_cmdQueues.resize(m_numChannels);
+    m_nextCmdQIdx.resize(m_numChannels);
+    for(unsigned l_ch=0;l_ch<m_numChannels;l_ch++) {
+        m_nextCmdQIdx.at(l_ch)=0;
+        for (unsigned l_bankIdx = 0; l_bankIdx < m_numBanks; l_bankIdx++) {
+            m_cmdQueues.at(l_ch).resize(m_numBanksPerChannel);
+        }
+    }
+
+
+
+    bool l_found = false;
+    k_numCmdQEntries = (uint32_t) x_params.find<uint32_t>("numCmdQEntries", 32, l_found);
+    if (!l_found) {
+        std::cout << "numCmdQEntries value is missing... it will be 32 (default)" << std::endl;
+    }
 }
 
 
-bool c_CmdScheduler::clockTic(SST::Cycle_t){
-    run();
-    send();
+c_CmdScheduler::~c_CmdScheduler(){
 }
+
 
 
 void c_CmdScheduler::run(){
-    //bypassing
-    if(m_outputQ.empty()) {
-        while (!m_inputQ.empty()) {
-            m_outputQ.push_back(m_inputQ.front());
-            m_inputQ.pop_front();
+
+    bool isSuccess = false;
+    c_BankCommand *l_cmdPtr= nullptr;
+    SimTime_t  l_time=Simulation::getSimulation()->getCurrentSimCycle();
+    for(unsigned l_ch=0;l_ch<m_numChannels;l_ch++) {
+
+        unsigned nextBankIdx = m_nextCmdQIdx.at(l_ch);
+        for (unsigned i = 0; i < m_numBanksPerChannel; i++) {
+            c_CmdQueue &l_cmdQueue = m_cmdQueues[l_ch].at(nextBankIdx);
+
+            if (!l_cmdQueue.empty()) {
+                l_cmdPtr = l_cmdQueue.front();
+
+                if (m_deviceController->isCmdAllowed(l_cmdPtr)) {
+                    isSuccess = m_deviceController->push(l_cmdPtr);
+                    if (isSuccess) {
+                        l_cmdQueue.pop_front();
+
+                        #ifdef __SST_DEBUG_OUTPUT__
+                        l_cmdPtr->print(output, "[c_CmdScheduler]");
+                        #endif
+                    }
+                }
+            }
+            nextBankIdx = (nextBankIdx + 1) % m_numBanksPerChannel;
         }
-    }
-}
-
-void c_CmdScheduler::send() {
-    int token=m_nextSubComponent->getToken();
-
-    while(token>0 && !m_outputQ.empty()) {
-        m_nextSubComponent->push(m_outputQ.front());
-        m_outputQ.pop_front();
-        token--;
+        m_nextCmdQIdx.at(l_ch)=(m_nextCmdQIdx.at(l_ch)+1)%m_numBanksPerChannel;
     }
 }
 
 
+bool c_CmdScheduler::push(c_BankCommand* x_cmd) {
+    unsigned l_ch=x_cmd->getHashedAddress()->getChannel();
+    unsigned l_bank=x_cmd->getHashedAddress()->getBankId() % m_numBanksPerChannel;
+
+    if (m_cmdQueues[l_ch].at(l_bank).size() < k_numCmdQEntries) {
+        m_cmdQueues[l_ch].at(l_bank).push_back(x_cmd);
+        return true;
+    } else
+        return false;
+
+}
 
 
+unsigned c_CmdScheduler::getToken(const c_HashedAddress &x_addr)
+{
+    unsigned l_ch=x_addr.getChannel();
+    unsigned l_bank=x_addr.getBankId() % m_numBanksPerChannel;
+
+    return k_numCmdQEntries-m_cmdQueues[l_ch].at(l_bank).size();
+
+}

@@ -72,7 +72,7 @@ std::list<e_BankCommandType> c_BankStateRefresh::getAllowedCommands() {
 
 // call this function every clock cycle
 void c_BankStateRefresh::clockTic(c_BankInfo* x_bank) {
-	if (1 < m_timer) {
+	if (0 < m_timer) {
 		--m_timer;
 
 		// std::cout << "@@" << std::dec
@@ -108,7 +108,7 @@ void c_BankStateRefresh::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	// Therefore it is forwarded to BankStateIdle
 	m_prevCommandPtr = x_cmdPtr;
 	m_receivedCommandPtr = nullptr;
-	m_timer = m_bankParams->at("nRFC");
+	m_timer = m_bankParams->at("nRFC")-2;
 
 	m_allowedCommands.clear();
 	// this state should not have any allowed bank commands
@@ -117,8 +117,8 @@ void c_BankStateRefresh::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	x_bank->setNextCommandCycle(e_BankCommandType::REF,
 			std::max(
 					x_bank->getNextCommandCycle(e_BankCommandType::REF)
-							+ m_bankParams->at("nREFI"),
-					l_time + m_bankParams->at("nREFI")));
+							+ m_bankParams->at("nREFI")-1,
+					l_time + m_bankParams->at("nREFI"))-1);
 
 	x_bank->changeState(this);
 	if (nullptr != x_prevState)

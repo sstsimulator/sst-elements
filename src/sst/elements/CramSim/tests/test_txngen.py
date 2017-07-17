@@ -39,10 +39,11 @@ comp_txnGen0.addParams(g_params)
 comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
 comp_controller0.addParams(g_params)
 comp_controller0.addParams({
+		"TxnScheduler" : "CramSim.c_TxnScheduler",
 		"TxnConverter" : "CramSim.c_TxnConverter",
 		"AddrHasher" : "CramSim.c_AddressHasher",
 		"CmdScheduler" : "CramSim.c_CmdScheduler" ,
-		"DeviceController" : "CramSim.c_DeviceController"
+		"DeviceDriver" : "CramSim.c_DeviceDriver"
 		})
 
 
@@ -82,7 +83,7 @@ cmdReqLink_1.connect( (comp_controller0, "outDeviceReqPtr", g_params["clockCycle
 cmdResLink_1 = sst.Link("cmdResLink_1")
 cmdResLink_1.connect( (comp_controller0, "inDeviceResPtr", g_params["clockCycle"]), (comp_dimm0, "outCtrlResPtr", g_params["clockCycle"]) )
 
-
+'''
 # enable all statistics
 comp_txnGen0.enableAllStatistics()
 comp_controller0.enableAllStatistics()
@@ -101,6 +102,6 @@ comp_controller0.enableStatistics(["resQueueSize"],  # overriding the type of on
 #comp_txnUnit0.enableAllStatistics({ "type":"sst.AccumulatorStatistic",
 #                                    "rate":"1 us"})
 comp_dimm0.enableAllStatistics()
-
+'''
 
 

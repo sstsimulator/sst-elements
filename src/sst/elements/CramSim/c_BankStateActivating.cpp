@@ -87,6 +87,8 @@ void c_BankStateActivating::enter(c_BankInfo* x_bank,
 
 	// set timer for auto precharge countdown used in the pseudo-open page policy
 	x_bank->setAutoPreTimer(m_bankParams->at("nRAS"));
+	x_bank->setRowOpen();
+	x_bank->setOpenRowNum(x_cmdPtr->getHashedAddress()->getRow());
 
 	// Being in the activating state does not make an ACT cmd response ready.
 	// Therefore it is forwarded to BankStateActive

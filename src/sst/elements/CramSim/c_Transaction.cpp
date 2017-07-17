@@ -44,6 +44,7 @@ c_Transaction::c_Transaction(ulong x_seqNum, e_TransactionType x_txnMnemonic,
        
 	m_txnToString[e_TransactionType::READ] = "READ";
 	m_txnToString[e_TransactionType::WRITE] = "WRITE";
+	m_hasHashedAddr= false;
 
 	//std::cout << "0x" << std::hex << x_addr << std::dec << "\t";    m_hashedAddr.print();
 }
@@ -121,6 +122,22 @@ void c_Transaction::print() const {
 	    << std::dec << m_numWaitingCommands << ", isProcessed = "
 	    << std::boolalpha << m_processed << ", isResponseReady = "
 	    << std::boolalpha << m_isResponseReady;
+}
+
+void c_Transaction::print(SST::Output *x_output, const std::string x_prefix) const {
+	x_output->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %d CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
+				  Simulation::getSimulation()->getCurrentSimCycle(),
+				  getTransactionString().c_str(),
+					m_seqNum,
+				  getHashedAddress().getChannel(),
+				  getHashedAddress().getPChannel(),
+				  getHashedAddress().getRank(),
+				  getHashedAddress().getBankGroup(),
+				  getHashedAddress().getBank(),
+				  getHashedAddress().getRow(),
+				  getHashedAddress().getCol(),
+				  getHashedAddress().getBankId()
+	);
 }
 
 void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)

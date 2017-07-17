@@ -73,6 +73,7 @@ public:
 	unsigned getNumBanks() const;
         unsigned getBankGroupId() const;
 	std::vector<c_BankInfo*> getBankPtrs() const;
+	c_Rank* getRankPtr() const;
 
 	void updateOtherBanksNextCommandCycles(c_BankInfo* x_initBankPtr,
 			c_BankCommand* x_cmdPtr);

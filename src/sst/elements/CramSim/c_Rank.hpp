@@ -72,8 +72,10 @@ class c_BankCommand;
 
     unsigned getNumBanks() const;
     unsigned getNumBankGroups() const;
+      c_Channel* getChannelPtr() const;
 
-    std::vector<c_BankInfo*> getBankPtrs() const;
+
+    std::vector<c_BankInfo*>& getBankPtrs();
 
     void updateOtherBanksNextCommandCycles(c_BankGroup* x_initBankGroupPtr,
 					   c_BankCommand* x_cmdPtr);
@@ -81,7 +83,7 @@ class c_BankCommand;
   private:
     c_Channel* m_channelPtr;
     std::vector<c_BankGroup*> m_bankGroupPtrs;
-
+      std::vector<c_BankInfo*> m_allBankPtrs;
     std::map<std::string, unsigned>* m_bankParams;
 
   };

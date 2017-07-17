@@ -36,9 +36,9 @@ using namespace SST::n_Bank;
 
 c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 			     e_BankCommandType x_cmdMnemonic, ulong x_addr,
-			     c_HashedAddress &x_hashedAddr) :
+			     const c_HashedAddress &x_hashedAddr) :
 		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
-		m_isResponseReady(false), m_hashedAddr(x_hashedAddr) {
+		m_isResponseReady(false), m_hashedAddr(x_hashedAddr), m_bankId(x_hashedAddr.getBankId()), m_isRefreshType(false) {
 
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";
 	m_cmdToString[e_BankCommandType::ACT] = "ACT";
@@ -55,9 +55,9 @@ c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 			     e_BankCommandType x_cmdMnemonic, ulong x_addr,
 			     unsigned x_bankId) :
 		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
-		m_isResponseReady(false), m_bankId(x_bankId) {
+		m_isResponseReady(false), m_bankId(x_bankId), m_isRefreshType(true) {
 
-        assert(x_cmdMnemonic == e_BankCommandType::REF); // This constructor only for REF cmds!
+	assert(x_cmdMnemonic == e_BankCommandType::REF ||x_cmdMnemonic == e_BankCommandType::PRE); // This constructor only for REF cmds!
 
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";
 	m_cmdToString[e_BankCommandType::ACT] = "ACT";
@@ -71,13 +71,14 @@ c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 }
 
 c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
-			     e_BankCommandType x_cmdMnemonic, ulong x_addr,
+			     e_BankCommandType x_cmdMnemonic, ulong x_addr, const c_HashedAddress &x_hashedAddr,
 			     std::vector<unsigned> &x_bankIdVec) :
 		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
-		m_isResponseReady(false), m_bankIdVec(x_bankIdVec) {
+		m_isResponseReady(false), m_bankIdVec(x_bankIdVec), m_isRefreshType(true) {
 
-        assert(x_cmdMnemonic == e_BankCommandType::REF); // This constructor only for REF cmds!
+        assert((x_cmdMnemonic == e_BankCommandType::REF||x_cmdMnemonic == e_BankCommandType::PRE)); // This constructor only for REF cmds!
 
+	m_hashedAddr = x_hashedAddr;
 	m_bankId = x_bankIdVec.front();
 	
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";
@@ -148,6 +149,22 @@ void c_BankCommand::print(SST::Output *x_debugOutput) const {
 	x_debugOutput->verbose(CALL_INFO, 1, 0, "Col:%d,",this->getHashedAddress()->getCol());
 	x_debugOutput->verbose(CALL_INFO, 1, 0, "Cacheline:%d\n",this->getHashedAddress()->getCacheline());
 	x_debugOutput->flush();
+}
+
+void c_BankCommand::print(SST::Output *x_debugOutput,const std::string x_prefix) const {
+	x_debugOutput->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %d CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
+							Simulation::getSimulation()->getCurrentSimCycle(),
+							getCommandString().c_str(),
+							m_seqNum,
+							getHashedAddress()->getChannel(),
+							getHashedAddress()->getPChannel(),
+							getHashedAddress()->getRank(),
+							getHashedAddress()->getBankGroup(),
+							getHashedAddress()->getBank(),
+							getHashedAddress()->getRow(),
+							getHashedAddress()->getCol(),
+							getHashedAddress()->getBankId());
+
 }
 
 // TODO: Implement ostream operator overloading for c_BankCommand class. For some reason overloading the ostream operator does not get found during runtime

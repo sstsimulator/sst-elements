@@ -88,6 +88,11 @@ c_DramSimTraceReader::c_DramSimTraceReader(ComponentId_t x_id, Params& x_params)
 	  exit(-1);
 	}
 
+	m_numTxnPerCycle =  x_params.find<std::uint32_t>("numTxnPerCycle", 1, l_found);
+	if (!l_found) {
+		std::cout << "TxnGen:: numTxnPerCycle is missing... use default value (1)"
+				  << std::endl;
+	}
 
 	m_statsReqQ = new unsigned[k_txnGenReqQEntries + 1];
 	m_statsResQ = new unsigned[k_txnGenResQEntries + 1];
@@ -148,23 +153,23 @@ c_DramSimTraceReader::c_DramSimTraceReader() :
 
 bool c_DramSimTraceReader::clockTic(Cycle_t) {
 	//std::cout << std::endl << std::endl << "TxnGen::clock tic" << std::endl;
+	for(int i=0;i<m_numTxnPerCycle;i++) {
+		m_thisCycleResQTknChg = 0;
 
-	m_thisCycleResQTknChg = 0;
+		// store the current number of entries in the queue, later compute the change
+		m_thisCycleResQTknChg = m_txnResQ.size();
 
-	// store the current number of entries in the queue, later compute the change
-	m_thisCycleResQTknChg = m_txnResQ.size();
+		//FIXME: Delete. For debugging queue size issues
+		m_statsReqQ[m_txnReqQ.size()]++;
+		m_statsResQ[m_txnResQ.size()]++;
 
-	//FIXME: Delete. For debugging queue size issues
-	m_statsReqQ[m_txnReqQ.size()]++;
-	m_statsResQ[m_txnResQ.size()]++;
+		createTxn();
+		sendRequest();
+		readResponse();
 
-	createTxn();
-	sendRequest();
-	readResponse();
-
-	m_thisCycleResQTknChg -= m_txnResQ.size();
-	sendTokenChg();
-
+		m_thisCycleResQTknChg -= m_txnResQ.size();
+		sendTokenChg();
+	}
 	return false;
 
 }

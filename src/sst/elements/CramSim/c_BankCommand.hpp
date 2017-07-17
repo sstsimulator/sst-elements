@@ -59,12 +59,13 @@ private:
 	unsigned m_seqNum;
 	ulong    m_addr;
 	unsigned m_row;
-        unsigned m_bankId;
-        std::vector<unsigned> m_bankIdVec;
+	unsigned m_bankId;
+	std::vector<unsigned> m_bankIdVec;
 	e_BankCommandType m_cmdMnemonic;
 	std::map<e_BankCommandType, std::string> m_cmdToString;
 	bool m_isResponseReady;
-        c_HashedAddress m_hashedAddr;
+        bool m_isRefreshType; // REF and PRE commands treated specially for printing cmd trace
+	c_HashedAddress m_hashedAddr;
 
 public:
 
@@ -75,9 +76,9 @@ public:
         c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
 		      ulong x_addr, unsigned x_bankId); // only to be used for Refresh commands!
         c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
-		      ulong x_addr, std::vector<unsigned> &x_bankIdVec); // only to be used for Refresh commands!
+		      ulong x_addr, const c_HashedAddress &x_hashedAddr, std::vector<unsigned> &x_bankIdVec); // only to be used for Refresh commands!
         c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
-		      ulong x_addr, c_HashedAddress &x_hashedAddr); 
+		      ulong x_addr, const c_HashedAddress &x_hashedAddr);
         c_BankCommand() {} // required for ImplementSerializable
 
 	c_BankCommand(c_BankCommand&) = delete;
@@ -85,6 +86,7 @@ public:
 	c_BankCommand& operator=(c_BankCommand) = delete;
 
 	void print(SST::Output *) const;
+	void print(SST::Output *x_debugOutput,const std::string x_prefix) const;
 	void print() const;
 
         const c_HashedAddress *getHashedAddress() const {
@@ -95,14 +97,19 @@ public:
 	  return (m_bankId);
 	}
 
-        inline std::vector<unsigned> *getBankIdVec() {
-	  return(&m_bankIdVec);
+        inline std::vector<unsigned>& getBankIdVec() {
+	  return(m_bankIdVec);
 	}
   
 	inline bool isResponseReady() const
 	{
 		return (m_isResponseReady);
 	}
+
+        inline bool isRefreshType() const
+        {
+	  return (m_isRefreshType);
+        }
 
 	inline void setResponseReady()
 	{

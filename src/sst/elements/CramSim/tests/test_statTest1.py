@@ -118,8 +118,9 @@ g_params = setup_config_params()
 # Define SST core options
 sst.setProgramOption("timebase", g_params["clockCycle"])
 sst.setProgramOption("stopAtCycle", g_params["stopAtCycle"])
-sst.setStatisticLoadLevel(7)
-sst.setStatisticOutput("sst.statOutputConsole")
+
+#sst.setStatisticLoadLevel(7)
+#sst.setStatisticOutput("sst.statOutputConsole")
 #sst.setStatisticOutputOption("help", "help")
 
 # Define the simulation components
@@ -131,10 +132,11 @@ comp_txnGen0 = setup_txn_generator(g_params)
 comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
 comp_controller0.addParams(g_params)
 comp_controller0.addParams({
+		"TxnScheduler" : "CramSim.c_TxnScheduler",
 		"TxnConverter" : "CramSim.c_TxnConverter",
 		"AddrHasher" : "CramSim.c_AddressHasher",
 		"CmdScheduler" : "CramSim.c_CmdScheduler" ,
-		"DeviceController" : "CramSim.c_DeviceController"
+		"DeviceDriver" : "CramSim.c_DeviceDriver"
 		})
 
 
@@ -143,7 +145,7 @@ comp_controller0.addParams({
 comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
 comp_dimm0.addParams(g_params)
 
-
+'''
 # enable all statistics
 comp_txnGen0.enableAllStatistics()
 comp_controller0.enableAllStatistics()
@@ -162,6 +164,8 @@ comp_controller0.enableStatistics(["resQueueSize"],  # overriding the type of on
 #comp_txnUnit0.enableAllStatistics({ "type":"sst.AccumulatorStatistic",
 #                                    "rate":"1 us"})
 comp_dimm0.enableAllStatistics()
+'''
+
 
 # Define simulation links
 

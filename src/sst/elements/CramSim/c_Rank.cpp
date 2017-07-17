@@ -44,6 +44,7 @@ using namespace SST::n_Bank;
 c_Rank::c_Rank(std::map<std::string, unsigned>* x_bankParams) {
 	m_channelPtr = nullptr;
 	m_bankParams = x_bankParams;
+	m_allBankPtrs.clear();
 }
 
 c_Rank::~c_Rank() {
@@ -74,15 +75,20 @@ unsigned c_Rank::getNumBankGroups() const {
 	return m_bankGroupPtrs.size();
 }
 
-std::vector<c_BankInfo*> c_Rank::getBankPtrs() const {
-	std::vector<c_BankInfo*> l_allBankPtrs;
-	for (auto& l_bankGroupPtr : m_bankGroupPtrs) {
-		std::vector<c_BankInfo*> l_entryPtrs = l_bankGroupPtr->getBankPtrs();
-		l_allBankPtrs.insert(l_allBankPtrs.end(), l_entryPtrs.begin(),
-				l_entryPtrs.end());
+c_Channel* c_Rank::getChannelPtr() const {
+	return m_channelPtr;
+}
+
+std::vector<c_BankInfo*>& c_Rank::getBankPtrs() {
+
+	if(m_allBankPtrs.empty()) {
+		for (auto &l_bankGroupPtr : m_bankGroupPtrs) {
+			std::vector<c_BankInfo *> l_entryPtrs = l_bankGroupPtr->getBankPtrs();
+			m_allBankPtrs.insert(m_allBankPtrs.end(), l_entryPtrs.begin(), l_entryPtrs.end());
+		}
 	}
 
-	return l_allBankPtrs;
+	return m_allBankPtrs;
 }
 
 void c_Rank::updateOtherBanksNextCommandCycles(c_BankGroup* x_initBankGroupPtr,
