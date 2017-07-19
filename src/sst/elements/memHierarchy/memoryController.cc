@@ -143,18 +143,25 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     }
 
     // Set up backing store if needed
+    std::string memoryFile = params.find<std::string>("memory_file", NO_STRING_DEFINED );
     if ( ! params.find<bool>("do_not_back",false)  ) {
-        string memoryFile = params.find<std::string>("memory_file", NO_STRING_DEFINED );
         if ( 0 == memoryFile.compare( NO_STRING_DEFINED ) ) {
             memoryFile.clear();
         }
         try { 
             backing_ = new Backend::Backing( memoryFile, memBackendConvertor_->getMemSize() );
         }
-        catch ( int ) {
-            dbg.fatal(CALL_INFO, -1, "%s, Error - conflicting parameters. 'do_not_back' cannot be true if 'memory_file' is specified.  memory_file = %s\n",
-                "MemBackendConvertor", memoryFile.c_str());
+        catch ( int e) {
+            if (e == 1) 
+                dbg.fatal(CALL_INFO, -1, "%s, Error - unable to open memory_file. You specified '%s'.\n", getName().c_str(), memoryFile.c_str());
+            else if (e == 2)
+                dbg.fatal(CALL_INFO, -1, "%s, Error - mmap of backing store failed.\n", getName().c_str());
+            else 
+                dbg.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
         }
+    } else if (memoryFile != NO_STRING_DEFINED) {
+            dbg.fatal(CALL_INFO, -1, "%s, Error - conflicting parameters. 'do_not_back' cannot be true if 'memory_file' is specified.  memory_file = %s\n",
+                getName().c_str(), memoryFile.c_str());
     }
 
     /* Clock Handler */
