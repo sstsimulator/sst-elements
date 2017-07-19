@@ -29,8 +29,10 @@ SingleStreamGenerator::SingleStreamGenerator( Component* owner, Params& params )
 
 	issueCount = params.find<uint64_t>("count", 1000);
 	reqLength  = params.find<uint64_t>("length", 8);
-	nextAddr   = params.find<uint64_t>("startat", 0);
+	startAddr  = params.find<uint64_t>("startat", 0);
 	maxAddr    = params.find<uint64_t>("max_address", 524288);
+
+	nextAddr   = startAddr;
 
 	std::string op = params.find<std::string>( "memOp", "Read" );	
 	if ( ! op.compare( "Read" ) ) {
@@ -59,6 +61,8 @@ void SingleStreamGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) 
 
 	// What is the next address?
 	nextAddr = (nextAddr + reqLength) % maxAddr;
+	if( nextAddr == 0 )
+		nextAddr = startAddr;
 
 	issueCount--;
 }
