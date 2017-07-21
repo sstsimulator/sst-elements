@@ -77,16 +77,16 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     // These are technically nic params and we're borrowing them
     addrRangeStart  = params.find<uint64_t>("addr_range_start", 0, found);
     if (!found) addrRangeStart = params.find<uint64_t>("memNIC.addr_range_start", 0, found);
-    if (!found) addrRangeStart = params.find<uint64_t>("memLink.addr_range_start", 0, found);
+    if (!found) addrRangeStart = params.find<uint64_t>("dlink.addr_range_start", 0, found);
     addrRangeEnd    = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
     if (!found) addrRangeEnd = params.find<uint64_t>("memNIC.addr_range_end", (uint64_t) - 1, found);
-    if (!found) addrRangeEnd = params.find<uint64_t>("memLink.addr_range_end", (uint64_t) - 1, found);
+    if (!found) addrRangeEnd = params.find<uint64_t>("dlink.addr_range_end", (uint64_t) - 1, found);
     string ilSize   = params.find<std::string>("interleave_size", "0B", found);
     if (!found) ilSize = params.find<std::string>("memNIC.interleave_size", "0B", found);
-    if (!found) ilSize = params.find<std::string>("memLink.interleave_size", "0B", found);
+    if (!found) ilSize = params.find<std::string>("dlink.interleave_size", "0B", found);
     string ilStep   = params.find<std::string>("interleave_step", "0B", found);
     if (!found) ilStep = params.find<std::string>("memNIC.interleave_step", "0B", found);
-    if (!found) ilStep = params.find<std::string>("memLink.interleave_step", "0B", found);
+    if (!found) ilStep = params.find<std::string>("dlink.interleave_step", "0B", found);
 
     memOffset       = params.find<uint64_t>("mem_addr_start", 0);
     string protstr  = params.find<std::string>("coherence_protocol", "MESI");
@@ -152,8 +152,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         Params nicParams = params.find_prefix_params("memNIC.");
         nicParams.insert("port", "network");
 
-        nicParams.insert("class", "3", false);
-        int cl = nicParams.find<int>("class");
+        nicParams.insert("group", "3", false);
+        int cl = nicParams.find<int>("group");
         nicParams.insert("sources", std::to_string(cl - 1), false);
         nicParams.insert("destinations", std::to_string(cl + 1), false);
         
@@ -161,7 +161,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
     
         if (isPortConnected("memory")) {
-            Params memParams = params.find_prefix_params("memLink.");
+            Params memParams = params.find_prefix_params("dlink.");
             memParams.insert("port", "memory");
             memParams.insert("latency", "1ns");
             memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);

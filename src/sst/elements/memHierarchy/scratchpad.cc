@@ -140,8 +140,6 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     stat_ScratchReadIssued        = registerStatistic<uint64_t>("request_issued_scratch_read");
     stat_ScratchWriteIssued       = registerStatistic<uint64_t>("request_issued_scratch_write");
 
-    std::string memLinkLatency = params.find<std::string>("mem_link_latency", "1ns");
-
     // Figure out port connections and set up links
     // Options: cpu and network; or cpu and memory;
     // cpu is a MoveEvent interface, memory & network are MemEvent interfaces (memory is a direct connect while network uses SimpleNetwork)
@@ -190,7 +188,7 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         nicParams.insert("interleave_size", "0B", false);
         nicParams.insert("interleave_step", "0B", false);
         nicParams.insert("port", "network");
-        nicParams.insert("class", "3", false); // 3 is the default for anything that talks to memory but this can be set by user too so don't overwrite
+        nicParams.insert("group", "3", false); // 3 is the default for anything that talks to memory but this can be set by user too so don't overwrite
        
         if (!memoryDirect) { /* Connect mem side to network */
             linkDown_ = static_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));

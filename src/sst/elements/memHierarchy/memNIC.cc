@@ -46,11 +46,11 @@ MemNIC::MemNIC(Component * parent, Params &params) : MemLinkBase(parent, params)
     link_control->initialize(linkName, UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
 
     // Get source/destination parameters
-    // Each NIC has a class ID and talks to those with IDs in sources and destinations
-    // If no source/destination provided, source = class ID - 1, destination = class ID + 1
-    info.id = params.find<uint32_t>("class", 0, found);
+    // Each NIC has a group ID and talks to those with IDs in sources and destinations
+    // If no source/destination provided, source = group ID - 1, destination = group ID + 1
+    info.id = params.find<uint32_t>("group", 0, found);
     if (!found) {
-        dbg.fatal(CALL_INFO, -1, "Param not specified(%s): class - class ID (or hierarchy level) for this NIC's component.\n", getName().c_str());
+        dbg.fatal(CALL_INFO, -1, "Param not specified(%s): group - group ID (or hierarchy level) for this NIC's component.\n", getName().c_str());
     }
     std::stringstream sources, destinations;
     sources.str(params.find<std::string>("sources", ""));

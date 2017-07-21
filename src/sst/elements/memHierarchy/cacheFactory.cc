@@ -456,8 +456,8 @@ void Cache::configureLinks(Params &params) {
         d_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a cache below\n");
         nicParams.find<std::string>("port", "", found);
         if (!found) nicParams.insert("port", "cache");
-        nicParams.find<std::string>("class", "", found);
-        if (!found) nicParams.insert("class", "1");
+        nicParams.find<std::string>("group", "", found);
+        if (!found) nicParams.insert("group", "1");
 
         linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
@@ -471,8 +471,8 @@ void Cache::configureLinks(Params &params) {
         d_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a directory below\n");
         nicParams.find<std::string>("port", "", found);
         if (!found) nicParams.insert("port", "directory");
-        nicParams.find<std::string>("class", "", found);
-        if (!found) nicParams.insert("class", "2");
+        nicParams.find<std::string>("group", "", found);
+        if (!found) nicParams.insert("group", "2");
         
         // Configure low link
         linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
@@ -487,8 +487,8 @@ void Cache::configureLinks(Params &params) {
         d_->debug(_INFO_, "Configuring cache with a single network link to talk to a cache above and a directory below\n");
         nicParams.find<std::string>("port", "", found);
         if (!found) nicParams.insert("port", "directory");
-        nicParams.find<std::string>("class", "", found);
-        if (!found) nicParams.insert("class", "2");
+        nicParams.find<std::string>("group", "", found);
+        if (!found) nicParams.insert("group", "2");
 
         // Configure low link
         // This NIC may need to account for cache slices. Check params.
@@ -517,18 +517,12 @@ void Cache::configureLinks(Params &params) {
             }
             cf_.cacheArray_->setSliceAware(cacheSliceCount);
         }
-        bool found1 = false;
-        // Decide whether to set params - if any are found in nicParams, trust that the user has done it right.
-        nicParams.find<std::string>("addr_range_start", "", found);     if (found) found1 = true;
-        nicParams.find<std::string>("addr_range_end", "", found);       if (found) found1 = true;
-        nicParams.find<std::string>("interleave_size", "", found);      if (found) found1 = true;
-        nicParams.find<std::string>("interleave_step", "", found);      if (found) found1 = true;
-        if (!found1) {
-            nicParams.insert("addr_range_start", std::to_string(addrRangeStart));
-            nicParams.insert("addr_range_end", std::to_string(addrRangeEnd));
-            nicParams.insert("interleave_size", std::to_string(interleaveSize) + "B");
-            nicParams.insert("interleave_step", std::to_string(interleaveStep) + "B");
-        }
+        // Set region parameters
+        nicParams.insert("addr_range_start", std::to_string(addrRangeStart));
+        nicParams.insert("addr_range_end", std::to_string(addrRangeEnd));
+        nicParams.insert("interleave_size", std::to_string(interleaveSize) + "B");
+        nicParams.insert("interleave_step", std::to_string(interleaveStep) + "B");
+        
         linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
