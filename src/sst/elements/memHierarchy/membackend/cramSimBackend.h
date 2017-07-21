@@ -29,8 +29,10 @@ public:
 private:
     void handleCramsimEvent(SST::Event *event);
 
-	std::set<ReqId> dramReqs;
+	std::set<ReqId> memReqs;
     SST::Link *cramsim_link;
+
+	int m_maxNumOutstandingReqs;
 };
 
 }

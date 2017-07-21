@@ -89,7 +89,7 @@ def setup_config_params():
 
 # Command line arguments
 g_boolUseDefaultConfig = False
-g_config_file = "../ddr4_verimem.cfg"
+g_config_file = "../ddr4.cfg"
 
 # Setup global parameters
 #[g_boolUseDefaultConfig, g_config_file] = read_arguments()
@@ -104,8 +104,8 @@ sst.setProgramOption("timebase", "1ps")
 
 
 ## Flags
-memDebug = 0
-memDebugLevel = 10
+memDebug = 1
+memDebugLevel = 1
 coherenceProtocol = "MESI"
 rplPolicy = "lru"
 busLat = "50 ps"
@@ -139,7 +139,7 @@ sst_root = os.getenv( "SST_ROOT" )
 ariel = sst.Component("A0", "ariel.ariel")
 ## ariel.addParams(AppArgs)
 ariel.addParams({
-   "verbose"             : "0",
+   "verbose"             : "1",
    "maxcorequeue"        : "256",
    "maxissuepercycle"    : "2",
    "pipetimeout"         : "0",
@@ -170,6 +170,8 @@ def genMemHierarchy(cores):
       "backend" : "memHierarchy.cramsim",
       "backend.access_time" : "2 ns",   # Phy latency
       "backend.mem_size" : "512MiB",
+      "backend.max_outstanding_requests" : 256,
+	"backend.verbose" : 1,
        "request_width"         : cacheLineSize
    })
 

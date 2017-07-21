@@ -40,7 +40,6 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 	bool l_found = false;
 
 	// internal params
-	m_prevAddress = 0;
 	m_seqNum = 0;
 	m_resReadCount = 0;
 	m_resWriteCount = 0;
@@ -48,7 +47,6 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 	//internal queues' sizes
 	k_txnGenReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenReqQEntries", 100,
 			l_found);
-
 	if (!l_found) {
 		std::cout
 				<< "TxnGen:: numTxnGenReqQEntries value is missing... exiting"
@@ -58,7 +56,6 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 
 	k_txnGenResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenResQEntries", 100,
 															l_found);
-
 	if (!l_found) {
 		std::cout
 				<< "TxnGen:: numTxnGenResQEntries value is missing... exiting"
@@ -77,14 +74,10 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 	m_txnUnitReqQTokens = k_CtrlReqQEntries;
 
 
-	// tell the simulator not to end without us
-	//registerAsPrimaryComponent();
-	//primaryComponentDoNotEndSim();
-
 	/*---- CONFIGURE LINKS ----*/
 
 	// request-related links
-	//// send to txn unit
+	//// send to controller
 	m_outTxnGenReqPtrLink = configureLink(
 			"outTxnGenReqPtr",
 			new Event::Handler<c_MemhBridge>(this,
@@ -96,12 +89,12 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 					&c_MemhBridge::handleInTxnUnitReqQTokenChgEvent));
 
 	// response-related links
-	//// accept from txn unit
+	//// accept from controller
 	m_inTxnUnitResPtrLink = configureLink(
 			"inCtrlResPtr",
 			new Event::Handler<c_MemhBridge>(this,
 					&c_MemhBridge::handleInTxnUnitResPtrEvent));
-	//// send token chg to txn unit
+	//// send token chg to controller
 	m_outTxnGenResQTokenChgLink = configureLink(
 			"outTxnGenResQTokenChg",
 			new Event::Handler<c_MemhBridge>(this,
@@ -129,13 +122,10 @@ c_MemhBridge::c_MemhBridge() :
 
 void c_MemhBridge::createTxn() {
 	if (m_txnReqQ.size() < k_txnGenReqQEntries) {
-
 		SST::Event* e = 0;
-		if((e = m_linkCPU->recv())) {
+		while((e = m_linkCPU->recv())) {
 			MemReqEvent *event = dynamic_cast<MemReqEvent *>(e);
-			dbg.output(CALL_INFO, "req for %llx)\n", event->getAddr());
 
-			//TODO: Default value for dataWidth?
 			c_Transaction *mTxn;
 			ulong addr = event->getAddr();
 
@@ -145,20 +135,7 @@ void c_MemhBridge::createTxn() {
 				mTxn = new c_Transaction(event->getReqId(), e_TransactionType::READ, addr, 1);
 
 			m_txnReqQ.push(mTxn);
-
-			m_prevAddress = addr;
-
-	//		std::cout << std::endl << std::endl
-	 //		<< "TxnGen::createTxn() created txn seqNum = " << event->getReqId()
-	 	//	<< " addr=" << std::hex << addr << std::endl;
-
 		}
-
-
-	} else {
-	//	 std::cout << std::endl << std::endl
-	//	 		<< "TxnGen::createTxn() Did not create txn seqNum = "
-	//	 		<< event->getReqId() << " txnReqQ is full" << std::endl;
 	}
 }
 
@@ -195,7 +172,7 @@ void c_MemhBridge::handleInTxnUnitReqQTokenChgEvent(SST::Event *ev) {
 		m_txnUnitReqQTokens += l_txnUnitReqQTknChgEventPtr->m_payload;
 
 		//FIXME: Critical: This pointer is left dangling
-		//delete l_txnUnitReqQTknChgEventPtr;
+		delete l_txnUnitReqQTknChgEventPtr;
 
 		assert(m_txnUnitReqQTokens >= 0);
 		assert(m_txnUnitReqQTokens <= k_CtrlReqQEntries);
@@ -231,7 +208,7 @@ void c_MemhBridge::handleInTxnUnitResPtrEvent(SST::Event* ev) {
 		m_txnResQ.push(l_txnResEventPtr->m_payload);
 
 		//FIXME: Critical: This pointer is left dangling
-		//delete l_txnResEventPtr;
+		delete l_txnResEventPtr;
 	} else {
 		std::cout << std::endl << std::endl << "TxnGen:: "
 				<< __PRETTY_FUNCTION__ << " ERROR:: Bad Event Type!"
@@ -280,7 +257,6 @@ void c_MemhBridge::sendRequest() {
 			m_txnReqQ.pop();
 			m_outTxnGenReqPtrLink->send(l_txnReqEvPtr);
 			--m_txnUnitReqQTokens;
-
 		}
 	}
 }
@@ -296,10 +272,6 @@ void c_MemhBridge::readResponse() {
 
 		m_linkCPU->send( event );
 		m_txnResQ.pop();
-
-	} else {
-		// std::cout << "TxnGen::readResponse(): No transactions in res q to read"
-		// 		<< std::endl;
 	}
 }
 
