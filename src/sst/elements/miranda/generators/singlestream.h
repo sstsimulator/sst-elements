@@ -39,6 +39,7 @@ private:
 	uint64_t maxAddr;
 	uint64_t issueCount;
 	uint64_t nextAddr;
+	uint64_t startAddr;
 	Output*  out;
 	ReqOperation memOp;
 
