@@ -108,14 +108,18 @@ public:
   const c_HashedAddress& getHashedAddress() const {
          return (m_hashedAddr);
   }
-  void setHashedAddress(c_HashedAddress &x_hashedAddr)
-  {
+  void setHashedAddress(c_HashedAddress &x_hashedAddr) {
       m_hashedAddr = x_hashedAddr;
       m_hasHashedAddr=true;
   }
         bool hasHashedAddress(){
             return m_hasHashedAddr;
         }
+
+        bool isRead(){
+            return m_txnMnemonic==e_TransactionType ::READ;
+        }
+
 
   void serialize_order(SST::Core::Serialization::serializer &ser) override ;
   

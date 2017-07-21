@@ -55,22 +55,23 @@ namespace SST {
 
 
         private:
-            c_Transaction* getNextTxn(int x_ch);
-            void popTxn(int x_ch, c_Transaction* x_txn);
+            typedef std::list<c_Transaction*> TxnQueue;
+            c_Transaction* getNextTxn(TxnQueue& x_queue);
+            void popTxn(TxnQueue& x_queue, c_Transaction* x_txn);
 
             //**Controller
             c_Controller * m_controller;
             //**transaction converter
             c_TxnConverter* m_txnConverter;
-            //**Address mapper
-            c_AddressHasher* m_addrHasher;
             //**command Scheduler
             c_CmdScheduler* m_cmdScheduler;
 
-            //**per-channel transaction Queue
-            std::vector<std::list<c_Transaction*>> m_txnQ;
-            //**ID of the channel which will be scheduled first at the next cycle
-            int m_nextChannel;
+            //**per-channel transaction queue
+            std::vector<TxnQueue> m_txnQ;      // unified queue
+            //**per-channel tranaction queues for read-first scheduling
+            std::vector<TxnQueue> m_txnReadQ;  // read queue for read-first scheduling
+            std::vector<TxnQueue> m_txnWriteQ; // write queue for read-first scheduling
+            unsigned m_maxNumPendingWrite;
 
             Output *output;
             unsigned m_numChannels;
@@ -78,6 +79,8 @@ namespace SST {
             //parameters
             e_txnSchedulingPolicy k_txnSchedulingPolicy;
             unsigned k_numTxnQEntries;
+            float k_pendingWriteThreshold;
+            bool k_isReadFirstScheduling;
 
         };
     }

@@ -315,7 +315,7 @@ static const ElementInfoPort c_TxnDriver_ports[] = {
 
 /*----SETUP c_TxnScheduler STRUCTURES----*/
 static const ElementInfoParam c_TxnScheduler_params[] = {
-		{"txnSchedulePolicy", "Transaction scheduling policy", NULL},
+		{"txnSchedulingPolicy", "Transaction scheduling policy", NULL},
 		{"numTxnQEntries", "The number of transaction queue entries", NULL},
 		{NULL, NULL, NULL } };
 

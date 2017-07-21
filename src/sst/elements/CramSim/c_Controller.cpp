@@ -115,6 +115,12 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     m_txnGenResQTokens = k_txnGenResQEntries;
     m_ReqQTokens= k_txnReqQEntries;
 
+    k_isFastWriteResponse = (uint32_t)params.find<uint32_t>("boolFastWriteResponse", 0,l_found);
+    if (!l_found) {
+        std::cout << "boolFastWriteResponse param value is missing... disabled"
+                  << std::endl;
+    }
+
     // get configured clock frequency
     k_controllerClockFreqStr = (string)params.find<string>("strControllerClockFrequency", "1GHz", l_found);
     
@@ -195,6 +201,15 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
         }
 
         if(m_txnScheduler->push(newTxn)) {
+            //With fast write response mode, controller sends a response for a write request as soon as it push the request to a transaction queue.
+            if(k_isFastWriteResponse && !newTxn->isRead())
+            {
+                //crease a response and push it to the response queue.
+               c_Transaction* l_txnRes = new c_Transaction(newTxn->getSeqNum(),newTxn->getTransactionMnemonic(),newTxn->getAddress(),newTxn->getDataWidth());
+               l_txnRes->setResponseReady();
+                m_ResQ.push_back(l_txnRes);
+            }
+
             l_it = m_ReqQ.erase(l_it);
 
             #ifdef __SST_DEBUG_OUTPUT__
@@ -316,9 +331,11 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
         ulong l_resSeqNum = l_cmdResEventPtr->m_payload->getSeqNum();
         // need to find which txn matches the command seq number in the txnResQ
         c_Transaction* l_txnRes = nullptr;
-        for(auto l_txIter : m_ResQ) {
-            if(l_txIter->matchesCmdSeqNum(l_resSeqNum)) {
-                l_txnRes = l_txIter;
+        std::deque<c_Transaction*>::iterator l_txIter;
+        for(l_txIter=m_ResQ.begin() ; l_txIter!=m_ResQ.end();l_txIter++) {
+            if((*l_txIter)->matchesCmdSeqNum(l_resSeqNum)) {
+                l_txnRes = *l_txIter;
+                break;
             }
         }
 
@@ -329,9 +346,15 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
 
         const unsigned l_cmdsLeft = l_txnRes->getWaitingCommands() - 1;
         l_txnRes->setWaitingCommands(l_cmdsLeft);
-        if (l_cmdsLeft == 0)
+        if (l_cmdsLeft == 0) {
             l_txnRes->setResponseReady();
-
+            // With fast write response mode, controller sends a response to a requester for a write request as soon as the request is pushed to a transaction queue
+            // So, we don't need to send another response at this time. Just erase the request in the response queue.
+            if ( k_isFastWriteResponse && !l_txnRes->isRead()) {
+                delete l_txnRes;
+                m_ResQ.erase(l_txIter);
+            }
+        }
 
         delete l_cmdResEventPtr->m_payload;         //now, free the memory space allocated to the commands for a transaction
         //delete l_cmdResEventPtr;
