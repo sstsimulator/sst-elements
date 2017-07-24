@@ -115,9 +115,9 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     m_txnGenResQTokens = k_txnGenResQEntries;
     m_ReqQTokens= k_txnReqQEntries;
 
-    k_isFastWriteResponse = (uint32_t)params.find<uint32_t>("boolFastWriteResponse", 0,l_found);
+    k_enableQuickResponse = (uint32_t)params.find<uint32_t>("boolEnableQuickRes", 0,l_found);
     if (!l_found) {
-        std::cout << "boolFastWriteResponse param value is missing... disabled"
+        std::cout << "boolEnableQuickRes param value is missing... disabled"
                   << std::endl;
     }
 
@@ -192,7 +192,6 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
     for(std::deque<c_Transaction*>::iterator l_it=m_ReqQ.begin() ; l_it!=m_ReqQ.end();)
     {
         c_Transaction* newTxn= *l_it;
-
         if(newTxn->hasHashedAddress()== false)
         {
             c_HashedAddress l_hashedAddress;
@@ -200,11 +199,23 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
             newTxn->setHashedAddress(l_hashedAddress);
         }
 
+        //If new transaction hits in the transaction queue, send a response immediately and do not access memory
+        if(k_enableQuickResponse && m_txnScheduler->isHit(newTxn))
+        {
+            newTxn->setResponseReady();
+            m_ReqQ.erase(l_it);
+            #ifdef __SST_DEBUG_OUTPUT__
+                newTxn->print(output,"[TxnQueue hit]");
+            #endif
+            continue;
+        }
+
+        //insert new transaction into a transaction queue
         if(m_txnScheduler->push(newTxn)) {
             //With fast write response mode, controller sends a response for a write request as soon as it push the request to a transaction queue.
-            if(k_isFastWriteResponse && !newTxn->isRead())
+            if(k_enableQuickResponse && newTxn->isWrite())
             {
-                //crease a response and push it to the response queue.
+                //create a response and push it to the response queue.
                c_Transaction* l_txnRes = new c_Transaction(newTxn->getSeqNum(),newTxn->getTransactionMnemonic(),newTxn->getAddress(),newTxn->getDataWidth());
                l_txnRes->setResponseReady();
                 m_ResQ.push_back(l_txnRes);
@@ -213,16 +224,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
             l_it = m_ReqQ.erase(l_it);
 
             #ifdef __SST_DEBUG_OUTPUT__
-            output->verbose(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d\n",
-                          Simulation::getSimulation()->getCurrentSimCycle(),
-                          newTxn->getTransactionString().c_str(),
-                          newTxn->getHashedAddress().getChannel(),
-                          newTxn->getHashedAddress().getPChannel(),
-                          newTxn->getHashedAddress().getRank(),
-                          newTxn->getHashedAddress().getBankGroup(),
-                          newTxn->getHashedAddress().getBank(),
-                          newTxn->getHashedAddress().getRow(),
-                          newTxn->getHashedAddress().getCol());
+                newTxn->print(output,"[Controller queues new txn]");
             #endif
         }
         else
@@ -348,9 +350,9 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
         l_txnRes->setWaitingCommands(l_cmdsLeft);
         if (l_cmdsLeft == 0) {
             l_txnRes->setResponseReady();
-            // With fast write response mode, controller sends a response to a requester for a write request as soon as the request is pushed to a transaction queue
+            // With quick response mode, controller sends a response to a requester for a write request as soon as the request is pushed to a transaction queue
             // So, we don't need to send another response at this time. Just erase the request in the response queue.
-            if ( k_isFastWriteResponse && !l_txnRes->isRead()) {
+            if ( k_enableQuickResponse && !l_txnRes->isRead()) {
                 delete l_txnRes;
                 m_ResQ.erase(l_txIter);
             }
@@ -395,7 +397,6 @@ void c_Controller::handleInDeviceReqQTokenChgEvent(SST::Event *ev) {
         assert(m_deviceReqQTokens >= 0);
         assert(m_deviceReqQTokens <= k_txnResQEntries);
 
-        //FIXME: Critical: This pointer is left dangling
         delete l_cmdUnitReqQTokenChgEventPtr;
     } else {
         std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"

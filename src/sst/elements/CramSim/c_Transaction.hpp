@@ -120,6 +120,10 @@ public:
             return m_txnMnemonic==e_TransactionType ::READ;
         }
 
+        bool isWrite(){
+            return m_txnMnemonic==e_TransactionType ::WRITE;
+        }
+
 
   void serialize_order(SST::Core::Serialization::serializer &ser) override ;
   

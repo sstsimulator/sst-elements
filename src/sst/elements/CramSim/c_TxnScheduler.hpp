@@ -43,6 +43,7 @@ namespace SST {
         class c_Controller;
 
         enum class e_txnSchedulingPolicy {FCFS, FRFCFS};
+        typedef std::list<c_Transaction*> TxnQueue;
 
         class c_TxnScheduler: public c_CtrlSubComponent <c_Transaction*,c_Transaction*>  {
         public:
@@ -52,10 +53,10 @@ namespace SST {
 
             virtual void run();
             virtual bool push(c_Transaction* newTxn);
+            virtual bool isHit(c_Transaction* newTxn);
 
 
         private:
-            typedef std::list<c_Transaction*> TxnQueue;
             c_Transaction* getNextTxn(TxnQueue& x_queue);
             void popTxn(TxnQueue& x_queue, c_Transaction* x_txn);
 
@@ -72,14 +73,17 @@ namespace SST {
             std::vector<TxnQueue> m_txnReadQ;  // read queue for read-first scheduling
             std::vector<TxnQueue> m_txnWriteQ; // write queue for read-first scheduling
             unsigned m_maxNumPendingWrite;
+            unsigned m_minNumPendingWrite;
 
             Output *output;
             unsigned m_numChannels;
+            bool m_flushWriteQueue;
 
             //parameters
             e_txnSchedulingPolicy k_txnSchedulingPolicy;
             unsigned k_numTxnQEntries;
-            float k_pendingWriteThreshold;
+            float k_maxPendingWriteThreshold;
+            float k_minPendingWriteThreshold;
             bool k_isReadFirstScheduling;
 
         };

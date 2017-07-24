@@ -117,7 +117,7 @@ namespace SST {
             int k_numBanksPerBankGroup;
             int k_numColsPerBank;
             int k_numRowsPerBank;
-            int k_isFastWriteResponse;
+            int k_enableQuickResponse;
 
             // params for internal architecture
             int k_txnReqQEntries;

@@ -88,19 +88,34 @@ c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) :  
     if(!k_isReadFirstScheduling)
         m_txnQ.resize(m_numChannels);
     else {
-        k_pendingWriteThreshold = (float) x_params.find<float>("pendingWriteThreshold", 1, l_found);
+        m_txnReadQ.resize(m_numChannels);
+        m_txnWriteQ.resize(m_numChannels);
+
+        k_maxPendingWriteThreshold = (float) x_params.find<float>("maxPendingWriteThreshold", 1, l_found);
         if (!l_found) {
-            std::cout << "pendedWriteThreshold value is missing... it will be 1.0 (default)" << std::endl;
+            std::cout << "maxPendingWriteThreshold value is missing... it will be 1.0 (default)" << std::endl;
         } else {
-            if (k_pendingWriteThreshold > 1) {
-                std::cout << "pendedWriteThreshold value should be greater than 0 and less than (or equal to) one"
+            if (k_maxPendingWriteThreshold > 1) {
+                std::cout << "maxPendingWriteThreshold value should be greater than 0 and less than (or equal to) one"
                           << std::endl;
                 exit(1);
             }
         }
-        m_maxNumPendingWrite = (unsigned) ((float) k_numTxnQEntries * k_pendingWriteThreshold);
-        m_txnReadQ.resize(m_numChannels);
-        m_txnWriteQ.resize(m_numChannels);
+
+        k_minPendingWriteThreshold = (float) x_params.find<float>("minPendingWriteThreshold", 0.2, l_found);
+        if (!l_found) {
+            std::cout << "minPendingWriteThreshold value is missing... it will be 1.0 (default)" << std::endl;
+        } else {
+            if (k_minPendingWriteThreshold > k_maxPendingWriteThreshold) {
+                std::cout << "minPendingWriteThreshold value should be smaller than maxPendingWriteThreshold"
+                          << std::endl;
+                exit(1);
+            }
+        }
+
+        m_maxNumPendingWrite = (unsigned) ((float) k_numTxnQEntries * k_maxPendingWriteThreshold);
+        m_minNumPendingWrite = (unsigned) ((float) k_numTxnQEntries * k_minPendingWriteThreshold);
+        m_flushWriteQueue = false;
     }
 }
 
@@ -114,24 +129,35 @@ void c_TxnScheduler::run(){
 
     for(int l_channelID=0; l_channelID<m_numChannels; l_channelID++) {
 
-
-        //1. select a transaction from the transaction queue
-        c_Transaction* l_nextTxn=nullptr;
-        //select queue
+        //0. select queue
         TxnQueue* l_queue= nullptr;
-
-        if(!k_isReadFirstScheduling)
-        {
+        if(!k_isReadFirstScheduling) {
             l_queue = &(m_txnQ[l_channelID]);
-        } else
-        {
-            if(m_txnWriteQ[l_channelID].size() >=m_maxNumPendingWrite || m_txnReadQ.empty())
-                l_queue = &(m_txnWriteQ[l_channelID]);
+        } else {
+            if (m_txnWriteQ[l_channelID].size() >= m_maxNumPendingWrite)
+                m_flushWriteQueue = true;
+            else if (m_txnWriteQ[l_channelID].size() < m_minNumPendingWrite)
+                m_flushWriteQueue = false;
+
+
+            if(m_flushWriteQueue) {
+                //flush write transactions that are older than the pending read transactions (simple read-after-write ordering)
+                if(!m_txnReadQ[l_channelID].empty() &&
+                        (m_txnReadQ[l_channelID].front()->getSeqNum() < m_txnWriteQ[l_channelID].front()->getSeqNum()))
+                    l_queue=&(m_txnReadQ[l_channelID]);
+                else {
+                    l_queue = &(m_txnWriteQ[l_channelID]);
+                }
+                l_queue= &(m_txnWriteQ[l_channelID]);
+            }
             else
                 l_queue = &(m_txnReadQ[l_channelID]);
         }
 
         assert(l_queue!=nullptr);
+
+        //1. select a transaction from the transaction queue
+        c_Transaction* l_nextTxn=nullptr;
         if(l_queue->size())
             l_nextTxn=getNextTxn(*l_queue);
 
@@ -157,11 +183,11 @@ void c_TxnScheduler::run(){
 
 c_Transaction* c_TxnScheduler::getNextTxn(TxnQueue& x_queue)
 {
+
     assert(x_queue.size()!=0);
 
         //get the next transaction
         c_Transaction* l_nxtTxn = nullptr;
-
 
         //FCFS
         if(k_txnSchedulingPolicy == e_txnSchedulingPolicy::FCFS) {
@@ -173,7 +199,6 @@ c_Transaction* c_TxnScheduler::getNextTxn(TxnQueue& x_queue)
                 if (m_cmdScheduler->getToken(l_txn->getHashedAddress()) >= 3) {
                     l_nxtTxn = l_txn;
 
-                    //pick a transaction going to an open bank
                     c_BankInfo *l_bankInfo = m_txnConverter->getBankInfo(l_txn->getHashedAddress().getBankId());
 
                     if (l_bankInfo->isRowOpen()
@@ -191,6 +216,7 @@ c_Transaction* c_TxnScheduler::getNextTxn(TxnQueue& x_queue)
 
         return l_nxtTxn;
 }
+
 
 void c_TxnScheduler::popTxn(TxnQueue &x_txnQ, c_Transaction* x_Txn)
 {
@@ -224,5 +250,37 @@ bool c_TxnScheduler::push(c_Transaction* newTxn)
                 return false;
         }
     }
+}
+
+
+//Check if read transactions get data from the transaction queue
+bool c_TxnScheduler::isHit(c_Transaction* x_txn)
+{
+    int l_channelId=x_txn->getHashedAddress().getChannel();
+    TxnQueue* l_queue=nullptr;
+    bool l_isRead = x_txn->isRead();
+    bool l_isHit = false;
+
+    if(l_isRead)
+    {
+        if(!k_isReadFirstScheduling) {
+            l_queue = &m_txnQ.at(l_channelId);
+
+        } else{
+            l_queue = &m_txnWriteQ.at(l_channelId);
+        }
+
+        //traverse the transaction queue in reverse order
+        for (TxnQueue::reverse_iterator l_txnItr = l_queue->rbegin(); l_txnItr != l_queue->rend(); ++l_txnItr) {
+            c_Transaction *l_txn = *l_txnItr;
+
+            if (l_txn->isWrite() && (l_txn->getAddress() == x_txn->getAddress())) {
+                l_isHit = true;
+                break;
+            }
+        }
+    }
+
+    return l_isHit;
 }
 
