@@ -192,6 +192,15 @@ nobase_sst_HEADERS += membackend/pagedMultiBackend.h
 
 endif
 
+if HAVE_HBMSIM
+libmemHierarchy_la_LDFLAGS += $(HBMSIM_LDFLAGS)
+libmemHierarchy_la_LIBADD += $(HBMSIM_LIB)
+libmemHierarchy_la_SOURCES += membackend/hbmSimBackend.cc \
+	membackend/hbmSimBackend.h
+nobase_sst_HEADERS += membackend/hbmSimBackend.h
+AM_CPPFLAGS += $(HBMSIM_CPPFLAGS) -DHAVE_LIBHBMSIM
+endif
+
 if HAVE_HYBRIDSIM
 libmemHierarchy_la_LDFLAGS += $(HYBRIDSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(HYBRIDSIM_LIB)
@@ -232,6 +241,7 @@ AM_CPPFLAGS += $(HMC_FLAG)
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) DRAMSIM LIBDIR=$(DRAMSIM_LIBDIR)
+	$(SST_REGISTER_TOOL) HBMSIM LIBDIR=$(HBMSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) HYBRIDSIM LIBDIR=$(HYBRIDSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) NVDIMMSIM LIBDIR=$(NVDIMMSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) FDSIM LIBDIR=$(FDSIM_LIBDIR)
