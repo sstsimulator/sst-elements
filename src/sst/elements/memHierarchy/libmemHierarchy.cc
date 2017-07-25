@@ -74,6 +74,10 @@
 #include "membackend/pagedMultiBackend.h"
 #endif
 
+#ifdef HAVE_LIBHBMSIM
+#include "membackend/hbmSimBackend.h"
+#endif
+
 #ifdef HAVE_LIBHYBRIDSIM
 #include "membackend/hybridSimBackend.h"
 #endif
@@ -1145,6 +1149,24 @@ static const ElementInfoStatistic pagedMultiMem_statistics[] = {
 
 #endif
 
+/*****************************************************************************************
+ *  SubComponent: hbmSimMemory
+ *  Purpose: Memory backend, interface to HBMSim
+ *****************************************************************************************/
+#if defined(HAVE_LIBHBMSIM)
+static SubComponent* create_Mem_HBMSim(Component* comp, Params& params){
+    return new HBMSimMemory(comp, params);
+}
+
+
+static const ElementInfoParam hbmsimMem_params[] = {
+    {"verbose",          "Sets the verbosity of the backend output", "0" },
+    {"device_ini",      "Name of HBMSim Device config file", NULL},
+    {"system_ini",      "Name of HBMSim Device system file", NULL},
+    {NULL, NULL, NULL}
+};
+#endif
+
 
 /*****************************************************************************************
  *  SubComponent: hybridSimMemory
@@ -1593,6 +1615,17 @@ static const ElementInfoSubComponent subcomponents[] = {
         create_Mem_pagedMulti, /* Module Alloc w/ params */
         pagedMultiMem_params,
         pagedMultiMem_statistics, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+#endif
+#if defined(HAVE_LIBHBMSIM)
+    {
+        "hbmsim",
+        "HBMSim-driven memory timings",
+        NULL, /* Advanced help */
+        create_Mem_HBMSim, /* Module Alloc w/ params */
+        hbmsimMem_params,
+        NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
 #endif
