@@ -82,6 +82,11 @@
 #include "membackend/flashSimBackend.h"
 #endif
 
+#ifdef HAVE_HBMLIBDRAMSIM
+#include "membackend/HBMdramSimBackend.h"
+#include "membackend/HBMpagedMultiBackend.h"
+#endif
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 
@@ -556,6 +561,19 @@ static const ElementInfoStatistic goblinhmcsim_statistics[] = {
 };
 #endif // HAVE_GOBLIN_HMCSIM
 
+#ifdef HAVE_HBMLIBDRAMSIM
+static const ElementInfoStatistic hbmDramSim_statistics[] = {
+    {"TotalBandwidth",      "Total Bandwidth",              "GB/s",   1},
+    {"BytesTransferred",    "Total Bytes Transferred",      "bytes",  1},
+    {"TotalReads",          "Total Queued Reads",           "count",  1},
+    {"TotalWrites",         "Total Queued Writes",          "count",  1},
+    {"TotalTransactions",   "Total Number of Transactions", "count",  1},
+    {"PendingReads",        "Pending Transactions",         "count",  1},
+    {"PendingReturns",      "Pending Returns",              "count",  1},
+
+    {NULL, NULL, NULL, 0}
+};
+#endif // HAVE_HBMLIBDRAMSIM
 
 /*****************************************************************************************
  *  SubComponent: MESIController
@@ -1145,6 +1163,65 @@ static const ElementInfoStatistic pagedMultiMem_statistics[] = {
 
 #endif
 
+/*****************************************************************************************
+ *  SubComponent: hbmdramsim
+ *  Purpose: Memory backend, interface to DRAMSim using GaTech HBM mods
+ *****************************************************************************************/
+#if defined(HAVE_HBMLIBDRAMSIM)
+static SubComponent* create_Mem_HBMDRAMSim(Component* comp, Params& params){
+    return new HBMDRAMSimMemory(comp, params);
+}
+
+
+static const ElementInfoParam HBMdramsimMem_params[] = {
+    {"verbose",          "Sets the verbosity of the backend output", "0" },
+    {"device_ini",      "Name of DRAMSim Device config file", NULL},
+    {"system_ini",      "Name of DRAMSim Device system file", NULL},
+    {NULL, NULL, NULL}
+};
+
+
+/*****************************************************************************************
+ *  SubComponent: HBMpagedMultiMemory
+ *  Purpose: Memory backend, implements both HMC (via simpleMem) and DDR (via HBM DRAMSim)
+ *  and simulates caching between them
+ *****************************************************************************************/
+static SubComponent* HBMcreate_Mem_pagedMulti(Component* comp, Params& params){
+    return new HBMpagedMultiMemory(comp, params);
+}
+
+
+static const ElementInfoParam HBMpagedMultiMem_params[] = {
+    { "verbose",          "Sets the verbosity of the backend output", "0" },
+    {"device_ini",      "Name of DRAMSim Device config file", NULL},
+    {"system_ini",      "Name of DRAMSim Device system file", NULL},
+    {"collect_stats",      "Name of DRAMSim Device system file", "0"},
+    {"transfer_delay",      "Time (in ns) to transfer page to fast mem", "250"},
+    {"dramBackpressure",    "Don't issue page swaps if DRAM is too busy", "1"},
+    {"threshold",      "Threshold (touches/quantum)", "4"},
+    {"scan_threshold",      "scan Threshold (for SC strategies)", "4"},
+    {"seed",      "RNG Seed", "1447"},
+    {"page_add_strategy",      "Page Addition Strategy", "T"},
+    {"page_replace_strategy",      "Page Replacement Strategy", "FIFO"},
+    {"access_time", "Constant time memory access for \"fast\" memory", "35ns"},
+    {"max_fast_pages", "Number of \"fast\" (constant time) pages", "256"},
+    {"page_shift", "Size of page (2^x bytes)", "12"},
+    {"quantum", "time period for when page access counts is shifted", "5ms"},
+    {"accStatsPrefix","File name for acces pattern statistics",""},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoStatistic HBMpagedMultiMem_statistics[] = {
+    {"fast_hits", "Number of accesses that 'hit' a fast page", "count", 1},
+    {"fast_swaps", "Number of pages swapped between 'fast' and 'slow' memory", "count", 1},
+    {"fast_acc", "Number of total accesses to the memory backend", "count", 1},
+    {"t_pages", "Number of total pages", "count", 1},
+    {"cant_swap", "Number of times a page could not be swapped in because no victim page could be found because all candidates were swapping", "count", 1},
+    {"swap_delays", "Number of an access is delayed because the page is swapping", "count", 1},
+    { NULL, NULL, NULL, 0 }
+};
+#endif //HAVE_HBMLIBDRAMSIM
+
 
 /*****************************************************************************************
  *  SubComponent: hybridSimMemory
@@ -1593,6 +1670,26 @@ static const ElementInfoSubComponent subcomponents[] = {
         create_Mem_pagedMulti, /* Module Alloc w/ params */
         pagedMultiMem_params,
         pagedMultiMem_statistics, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+#endif
+#if defined(HAVE_HBMLIBDRAMSIM)
+    {
+        "hbmdramsim",
+        "HBM DRAMSim-driven memory timings",
+        NULL, /* Advanced help */
+        create_Mem_HBMDRAMSim, /* Module Alloc w/ params */
+        HBMdramsimMem_params,
+        hbmDramSim_statistics, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "HBMpagedMulti",
+        "HBM DRAMSim-driven memory timings with a fixed timing multi-level memory using paging",
+        NULL, /* Advanced help */
+        HBMcreate_Mem_pagedMulti, /* Module Alloc w/ params */
+        HBMpagedMultiMem_params,
+        HBMpagedMultiMem_statistics, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
 #endif
