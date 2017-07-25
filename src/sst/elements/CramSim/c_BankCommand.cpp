@@ -152,7 +152,7 @@ void c_BankCommand::print(SST::Output *x_debugOutput) const {
 }
 
 void c_BankCommand::print(SST::Output *x_debugOutput,const std::string x_prefix) const {
-	x_debugOutput->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %d CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
+	x_debugOutput->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %d CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
 							Simulation::getSimulation()->getCurrentSimCycle(),
 							getCommandString().c_str(),
 							m_seqNum,

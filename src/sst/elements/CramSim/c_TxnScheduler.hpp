@@ -57,8 +57,9 @@ namespace SST {
 
 
         private:
-            c_Transaction* getNextTxn(TxnQueue& x_queue);
-            void popTxn(TxnQueue& x_queue, c_Transaction* x_txn);
+            virtual c_Transaction* getNextTxn(TxnQueue& x_queue, int x_ch);
+            virtual bool hasDependancy(c_Transaction* x_txn, int x_ch);
+            virtual void popTxn(TxnQueue& x_queue, c_Transaction* x_txn);
 
             //**Controller
             c_Controller * m_controller;

@@ -124,11 +124,13 @@ void c_Transaction::print() const {
 	    << std::boolalpha << m_isResponseReady;
 }
 
+
 void c_Transaction::print(SST::Output *x_output, const std::string x_prefix) const {
-	x_output->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %d CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
+	x_output->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %d addr:0x%x CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
 				  Simulation::getSimulation()->getCurrentSimCycle(),
 				  getTransactionString().c_str(),
 					m_seqNum,
+							m_addr,
 				  getHashedAddress().getChannel(),
 				  getHashedAddress().getPChannel(),
 				  getHashedAddress().getRank(),
