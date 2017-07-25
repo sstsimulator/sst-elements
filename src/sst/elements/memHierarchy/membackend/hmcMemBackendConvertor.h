@@ -29,11 +29,7 @@ class HMCMemBackendConvertor : public MemBackendConvertor {
 
     virtual bool issue( MemReq* req );
     virtual void handleMemResponse( ReqId reqId, uint32_t flags  ) {
-        MemEvent* resp;
-        if ( ( resp = doResponse( reqId ) ) ) {
-            resp->setFlags(flags);
-            sendResponse( resp );
-        }
+        doResponse( reqId, flags );
     }
 };
 

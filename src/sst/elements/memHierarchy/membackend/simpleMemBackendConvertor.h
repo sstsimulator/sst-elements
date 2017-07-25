@@ -31,10 +31,7 @@ class SimpleMemBackendConvertor : public MemBackendConvertor {
     virtual bool issue( MemReq* req );
 
     virtual void handleMemResponse( ReqId reqId ) {
-        MemEvent* resp;
-        if ( ( resp = doResponse( reqId ) ) ) {
-            sendResponse( resp );
-        }
+        doResponse(reqId);
     }
 };
 

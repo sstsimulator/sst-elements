@@ -1,4 +1,4 @@
-memright 2009-2017 Sandia Corporation. Under the terms
+// Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
@@ -645,7 +645,7 @@ static const ElementInfoParam scratchpad_params[] = {
     {"clock",               "(string) Clock frequency or period with units (Hz or s; SI units OK)."},
     {"size",                "(string) Size of the scratchpad in bytes (B), SI units ok"},
     {"scratch_line_size",   "(string) Number of bytes in a scratch line with units. 'size' must be divisible by this number.", "64B"},
-    {"memory_line_size",    "(string) Number of bytes in a remote memory line with units. Used to set base addresses for routing.", "64B"}
+    {"memory_line_size",    "(string) Number of bytes in a remote memory line with units. Used to set base addresses for routing.", "64B"},
     {"do_not_back",         "(bool) Whether to store actual data values in a backing store or not. Options: 0 (do not store), 1 (store). Do not unset unless simulation does not rely on correct data values!", "1"},
     {"memory_addr_offset",  "(uint) Amount to offset remote addresses by. Default is 'size' so that remote memory addresses start at 0", "size"},
     {"response_per_cycle",  "(uint) Maximum number of responses to return to processor each cycle. 0 is unlimited", "0"},
@@ -1315,7 +1315,7 @@ static const ElementInfoParam memNIC_params[] = {
     { "memNIC.interleave_size",             "Set by parent component. Size of interleaved chunks.", "0B"},
     { "memNIC.interleave_step",             "Set by parent component. Distance between interleaved chunks.", "0B"},
     { NULL, NULL, NULL }
-}
+};
 
 /*****************************************************************************************
  *  SubComponent: memLink
@@ -1338,7 +1338,7 @@ static const ElementInfoParam memLink_params[] = {
     { "{u|d}link.interleave_size",  "Set by parent component. Size of interleaved chunks.", "0B"},
     { "{u|d}link.interleave_step",  "Set by parent component. Distance between interleaved chunks.", "0B"},
     { NULL, NULL, NULL }
-}
+};
 
 /*****************************************************************************************
  *  Module: SandyBridgeAddrMapper

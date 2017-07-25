@@ -18,6 +18,8 @@
 #define __SST_MEMH_MEMBACKENDCONVERTOR__
 
 #include <sst/core/subcomponent.h>
+#include <sst/core/event.h>
+
 #include "sst/elements/memHierarchy/memEvent.h"
 
 namespace SST {
@@ -31,12 +33,10 @@ class MemBackendConvertor : public SubComponent {
 
     class MemReq {
       public:
-        MemReq( MemEvent* event, uint32_t reqId  ) : m_event(event), m_respEvent( NULL),
+        MemReq( MemEvent* event, uint32_t reqId ) : m_event(event),
             m_reqId(reqId), m_offset(0), m_numReq(0)
         { }
-        ~MemReq() {
-            delete m_event;
-        }
+        ~MemReq() { }
 
         static uint32_t getBaseId( ReqId id) { return id >> 32; }
         Addr baseAddr() { return m_event->getBaseAddr(); }
@@ -47,9 +47,6 @@ class MemBackendConvertor : public SubComponent {
         MemEvent* getMemEvent() { return m_event; }
         bool isWrite()          { return (m_event->getCmd() == Command::PutM || (m_event->queryFlag(MemEvent::F_NONCACHEABLE) && m_event->getCmd() == Command::GetX)) ? true : false; }
         uint32_t size()         { return m_event->getSize(); }
-
-        void setResponse( MemEvent* event ) { m_respEvent = event; }
-        MemEvent* getResponse() { return m_respEvent; }
 
         void increment( uint32_t bytes ) {
             m_offset += bytes;
@@ -62,7 +59,6 @@ class MemBackendConvertor : public SubComponent {
 
       private:
         MemEvent*   m_event;
-        MemEvent*   m_respEvent;
         uint32_t    m_reqId;
         uint32_t    m_offset;
         uint32_t    m_numReq;
@@ -101,9 +97,8 @@ class MemBackendConvertor : public SubComponent {
         }
     }
 
-    MemEvent* doResponse( ReqId reqId );
-    void sendResponse( MemEvent* event );
-    void sendFlushResponse( MemEvent* event );
+    void doResponse( ReqId reqId, uint32_t flags = 0 );
+    inline void sendResponse( SST::Event::id_type id, uint32_t flags );
 
     MemBackend* m_backend;
     uint32_t    m_backendRequestWidth;
@@ -144,8 +139,8 @@ class MemBackendConvertor : public SubComponent {
         return true;
     }
 
-    void doClockStat( ) {
-        totalCycles->addData(1);        
+    inline void doClockStat( ) {
+        stat_totalCycles->addData(1);        
     }
 
     void doReceiveStat( Command cmd) {
@@ -213,9 +208,9 @@ class MemBackendConvertor : public SubComponent {
     Statistic<uint64_t>* stat_PutMReqReceived;
     Statistic<uint64_t>* stat_GetSXReqReceived;
 
-    Statistic<uint64_t>* cyclesWithIssue;
-    Statistic<uint64_t>* cyclesAttemptIssueButRejected;
-    Statistic<uint64_t>* totalCycles;
+    Statistic<uint64_t>* stat_cyclesWithIssue;
+    Statistic<uint64_t>* stat_cyclesAttemptIssueButRejected;
+    Statistic<uint64_t>* stat_totalCycles;
     Statistic<uint64_t>* stat_outstandingReqs;
 
 };

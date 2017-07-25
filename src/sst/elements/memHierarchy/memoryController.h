@@ -19,6 +19,7 @@
 #include <sst/core/sst_types.h>
 
 #include <sst/core/component.h>
+#include <sst/core/event.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/cacheListener.h"
@@ -32,14 +33,14 @@ class MemBackendConvertor;
 
 class MemController : public SST::Component {
 public:
-	typedef uint64_t ReqId;
+    typedef uint64_t ReqId;
 
     MemController(ComponentId_t id, Params &params);
     void init(unsigned int);
     void setup();
     void finish();
 
-    virtual void handleMemResponse( MemEvent* );
+    virtual void handleMemResponse( SST::Event::id_type id, uint32_t flags );
 
 private:
 
@@ -59,9 +60,8 @@ private:
 
     void handleEvent( SST::Event* );
     bool clock( SST::Cycle_t );
-    void performRequest( MemEvent* );
-    void performResponse( MemEvent* );
-    void recordResponsePayload( MemEvent* );
+    void writeData( MemEvent* );
+    void readData( MemEvent* );
     void processInitEvent( MemEventInit* );
 
     Output dbg;
@@ -73,7 +73,7 @@ private:
 
     std::vector<CacheListener*> listeners_;
     
-    std::map<SST::Event::id_type, vector<uint8_t> > payloads_; // To ensure 'correct' read-write ordering, payloads are constructed on message receive just like backing store writes
+    std::map<SST::Event::id_type, MemEvent*> outstandingEvents_; // For sending responses. Expect backend to respond to ALL requests so that we know the execution order
 
     bool isRequestAddressValid(Addr addr){
         return region_.contains(addr);

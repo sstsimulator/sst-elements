@@ -57,7 +57,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
-    dbg.debug(_L10_,"---");
 
     // Output for warnings
     Output out("", 1, 0, Output::STDOUT);
@@ -130,7 +129,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
         Params nicParams = params.find_prefix_params("memNIC.");
         nicParams.insert("port", "network");
-        nicParams.insert("class", "4", false);
+        nicParams.insert("group", "4", false);
         nicParams.insert("accept_region", "1", false);
 
         link_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams)); 
@@ -174,16 +173,12 @@ void MemController::handleEvent(SST::Event* event) {
 
     // Notify our listeners that we have received an event
     switch (cmd) {
+        case Command::PutM:
+            ev->setFlag(MemEvent::F_NORESPONSE);
         case Command::GetS:
         case Command::GetX:
         case Command::GetSX:
-        case Command::PutM:
-
-            // Handle all backing stuff first since memBackend may not provide a response for writes
-            // TODO fix so that membackend always provides a response and this happens at the return instead
-            // That way, the order of accesses to the backing should match the backend's execution order
-            performRequest( ev );
-            recordResponsePayload( ev );
+            outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
             notifyListeners( ev );
             memBackendConvertor_->handleMemEvent( ev );
             break;
@@ -193,22 +188,23 @@ void MemController::handleEvent(SST::Event* event) {
             {
                 MemEvent* put = NULL;
                 if ( ev->getPayloadSize() != 0 ) {
-                    put = new MemEvent( *ev );
-                    put->setCmd(Command::PutM);
-                }
-
-                ev->setCmd(Command::FlushLine);
-                memBackendConvertor_->handleMemEvent( ev );
-
-                if ( put ) {
+                    put = new MemEvent(this, ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload() );
+                    put->setFlag(MemEvent::F_NORESPONSE);
+                    outstandingEvents_.insert(std::make_pair(put->getID(), put));
                     notifyListeners(ev);
                     memBackendConvertor_->handleMemEvent( put );
                 }
+                
+                outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
+                ev->setCmd(Command::FlushLine);
+                memBackendConvertor_->handleMemEvent( ev );
+
             }
             break;
 
         case Command::PutS:
         case Command::PutE:
+            delete ev;
             break;
         default:
             dbg.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[(int)cmd]);
@@ -224,23 +220,41 @@ bool MemController::clock(Cycle_t cycle) {
     return false;
 }
 
-void MemController::handleMemResponse( MemEvent* ev ) {
+void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
 
-    Debug(_L3_,"Memory Controller: %s - Response Received. %s\n", getName().c_str(), ev->getVerboseString().c_str());
+    MemEvent * ev = outstandingEvents_.find(id)->second;
+    outstandingEvents_.erase(id);
+
+    Debug(_L3_,"Memory Controller: %s - Response received to (%s)\n", getName().c_str(), ev->getVerboseString().c_str());
+
+    bool noncacheable  = ev->queryFlag(MemEvent::F_NONCACHEABLE);
+    
+    /* Write data. Here instead of receive to try to match backing access order to backend execute order */
+    if (backing_ && (ev->getCmd() == Command::PutM || (ev->getCmd() == Command::GetX && noncacheable)))
+        writeData(ev);
 
     if (ev->queryFlag(MemEvent::F_NORESPONSE)) {
         delete ev;
         return;
     }
 
-    performResponse( ev );
-    
+    MemEvent * resp = ev->makeResponse();
+
+    /* Read order matches execute order so that mis-ordering at backend can result in bad data */
+    if (resp->getCmd() == Command::GetSResp || (resp->getCmd() == Command::GetXResp && !noncacheable)) {
+        readData(resp);
+        if (!noncacheable) resp->setCmd(Command::GetXResp);
+    }
+
+    resp->setFlags(flags);
+
     if (ev->isAddrGlobal()) {
-        ev->setBaseAddr(translateToGlobal(ev->getBaseAddr()));
-        ev->setAddr(translateToGlobal(ev->getAddr()));
+        resp->setBaseAddr(translateToGlobal(ev->getBaseAddr()));
+        resp->setAddr(translateToGlobal(ev->getAddr()));
     }
     
-    link_->send( ev );
+    link_->send( resp );
+    delete ev;
 }
 
 void MemController::init(unsigned int phase) {
@@ -272,44 +286,41 @@ void MemController::finish(void) {
     link_->finish();
 }
 
-void MemController::performRequest(MemEvent* event) {
+void MemController::writeData(MemEvent* event) {
+    /* Noncacheable events occur on byte addresses, others on line addresses */
+    bool noncacheable = event->queryFlag(MemEvent::F_NONCACHEABLE);
+    Addr addr = noncacheable ? event->getAddr() : event->getBaseAddr();
 
-    if ( ! backing_ ) {
+    if (event->getCmd() == Command::PutM) { /* Write request to memory */
+        Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize());
+        for (size_t i = 0; i < event->getSize(); i++)
+            backing_->set( addr + i, event->getPayload()[i] );
+        return;
+    }
+    
+    if (noncacheable && event->getCmd() == Command::GetX) {
+        Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize());
+        for (size_t i = 0; i < event->getSize(); i++)
+            backing_->set( addr + i, event->getPayload()[i] );
         return;
     }
 
-    Addr addr = event->queryFlag(MemEvent::F_NONCACHEABLE) ?  event->getAddr() : event->getBaseAddr();
-
-    if (event->getCmd() == Command::PutM) {  /* Write request to memory */
-        Debug(_L4_,"\tWRITE. Addr = %" PRIx64 ", Request size = %i\n", addr, event->getSize());
-
-        for ( size_t i = 0 ; i < event->getSize() ; i++)
-             backing_->set( addr + i, event->getPayload()[i] );
-
-    } else {
-        bool noncacheable  = event->queryFlag(MemEvent::F_NONCACHEABLE);
-
-        if (noncacheable && event->getCmd()== Command::GetX) {
-            Debug(_L4_,"\tWRITE. Noncacheable request, Addr = %" PRIx64 ", Request size = %i\n", addr, event->getSize());
-
-            for ( size_t i = 0 ; i < event->getSize() ; i++)
-                    backing_->set( addr + i, event->getPayload()[i] );
-        }
-    }
 }
 
-void MemController::performResponse(MemEvent* event) { 
-    bool noncacheable  = event->queryFlag(MemEvent::F_NONCACHEABLE);
 
-    if (payloads_.find(event->getResponseToID()) != payloads_.end()) {
-        event->setPayload(payloads_.find(event->getResponseToID())->second);
-        payloads_.erase(event->getResponseToID());
-    }
+void MemController::readData(MemEvent* event) { 
+    bool noncacheable = event->queryFlag(MemEvent::F_NONCACHEABLE);
+    Addr localAddr = noncacheable ? event->getAddr() : event->getBaseAddr();
 
-    if (noncacheable) event->setFlag(MemEvent::F_NONCACHEABLE);
+    vector<uint8_t> payload;
+    payload.resize(event->getSize(), 0);
 
-    if (!noncacheable && event->getCmd() == Command::GetSResp) 
-        event->setCmd(Command::GetXResp); // Memory always sends exclusive responses, dir/caches decide what to do with it
+    if (!backing_) return;
+
+    for ( size_t i = 0 ; i < event->getSize() ; i++)
+        payload[i] = backing_->get( localAddr + i );
+    
+    event->setPayload(payload);
 }
 
 
@@ -343,23 +354,6 @@ Addr MemController::translateToGlobal(Addr addr) {
     return rAddr;
 }
 
-
-void MemController::recordResponsePayload( MemEvent * ev) {
-    if (ev->queryFlag(MemEvent::F_NORESPONSE)) return;
-
-    bool noncacheable = ev->queryFlag(MemEvent::F_NONCACHEABLE);
-    Addr localAddr = noncacheable ? ev->getAddr() : ev->getBaseAddr();
-
-    vector<uint8_t> payload;
-    if (ev->getCmd() == Command::GetS || ev->getCmd() == Command::GetSX || (ev->getCmd() == Command::GetX && !noncacheable)) {
-        payload.resize(ev->getSize(), 0);
-        if (backing_) {
-            for ( size_t i = 0 ; i < ev->getSize() ; i++)
-                payload[i] = backing_->get( localAddr + i );
-        }
-        payloads_.insert(std::make_pair(ev->getID(), payload));
-    } 
-}
 
 void MemController::processInitEvent( MemEventInit* me ) {
     /* Push data to memory */
