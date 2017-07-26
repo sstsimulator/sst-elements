@@ -283,6 +283,9 @@ void c_Controller::sendResponse() {
         c_Transaction* l_txnRes = nullptr;
         for (std::deque<c_Transaction*>::iterator l_it = m_ResQ.begin();
              l_it != m_ResQ.end();)  {
+	    if(m_txnGenResQTokens <= 0) {
+	      break;
+	    }
             if ((*l_it)->isResponseReady()) {
                 l_txnRes = *l_it;
                 l_it=m_ResQ.erase(l_it);
