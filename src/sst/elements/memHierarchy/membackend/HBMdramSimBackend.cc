@@ -15,8 +15,8 @@
 
 // Originally derived from the DRAMSim membackend
 // Modified to provide HBM-specific functionality
-// using the GATech DRAMSim port from:
-// https://github.com/gthparch/HBM
+// using the DRAMSim port from:
+// https://github.com/tactcomplabs/HBM
 
 #include <sst_config.h>
 #include "sst/elements/memHierarchy/util.h"
