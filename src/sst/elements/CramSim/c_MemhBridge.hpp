@@ -70,7 +70,7 @@ private:
 	virtual bool clockTic(SST::Cycle_t); //called every cycle
 
 	//Debug
-	Output dbg;
+	Output *output;
 
 	//Transaction info
 	ulong m_prevAddress;

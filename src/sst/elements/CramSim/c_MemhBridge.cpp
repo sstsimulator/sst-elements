@@ -43,6 +43,9 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 	m_seqNum = 0;
 	m_resReadCount = 0;
 	m_resWriteCount = 0;
+	int verbosity = x_params.find<int>("verbose", 0);
+	output = new SST::Output("CramSim.memhbridge[@f:@l:@p] ",
+							 verbosity, 0, SST::Output::STDOUT);
 
 	//internal queues' sizes
 	k_txnGenReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenReqQEntries", 100,
@@ -249,9 +252,9 @@ void c_MemhBridge::sendRequest() {
 	if (m_txnUnitReqQTokens > 0) {
 		if (m_txnReqQ.size() > 0) {
 
-			// std::cout << "TxnGen::sendRequest(): sending Txn=";
-			// m_txnReqQ.front()->print();
-			// std::cout << std::endl;
+
+			m_txnReqQ.front()->print(output,"[memhbridge.sendRequest]");
+
 			c_TxnReqEvent* l_txnReqEvPtr = new c_TxnReqEvent();
 			l_txnReqEvPtr->m_payload = m_txnReqQ.front();
 			m_txnReqQ.pop();
@@ -267,8 +270,7 @@ void c_MemhBridge::readResponse() {
 
 		MemRespEvent *event = new MemRespEvent(l_txn->getSeqNum(), l_txn->getAddress(), 0);
 
-		//std::cout << "TxnGen::readResponse() Transaction printed: Addr : "
-		//		  << std::hex << l_txn->getAddress() << std::endl;
+		l_txn->print(output,"[memhbridge.readResponse]");
 
 		m_linkCPU->send( event );
 		m_txnResQ.pop();

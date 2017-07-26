@@ -220,6 +220,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
                l_txnRes->setResponseReady();
                 m_ResQ.push_back(l_txnRes);
             }
+          
 
             l_it = m_ReqQ.erase(l_it);
 
@@ -228,7 +229,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
             #endif
         }
         else
-            l_it++;
+            break;
     }
 
     // 3. run transaction Scheduler

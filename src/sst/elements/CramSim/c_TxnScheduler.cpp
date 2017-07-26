@@ -134,9 +134,9 @@ void c_TxnScheduler::run(){
         if(!k_isReadFirstScheduling) {
             l_queue = &(m_txnQ[l_channelID]);
         } else {
-            if (m_txnWriteQ[l_channelID].size() >= m_maxNumPendingWrite)
+            if (m_txnWriteQ[l_channelID].size() >= m_maxNumPendingWrite || m_txnReadQ[l_channelID].size()==0)
                 m_flushWriteQueue = true;
-            else if (m_txnWriteQ[l_channelID].size() < m_minNumPendingWrite)
+            else if (m_txnWriteQ[l_channelID].size() < m_minNumPendingWrite && m_txnReadQ[l_channelID].size()!=0)
                 m_flushWriteQueue = false;
 
 
@@ -153,6 +153,16 @@ void c_TxnScheduler::run(){
         c_Transaction* l_nextTxn=nullptr;
         if(l_queue->size())
             l_nextTxn=getNextTxn(*l_queue, l_channelID);
+          //1.1. With read-first scheduling, we change the queue if there are no issuable transactions in the selected queue
+        if(k_isReadFirstScheduling && l_nextTxn== nullptr)
+        {
+            if(m_flushWriteQueue ==true)
+                l_queue = &m_txnReadQ[l_channelID];
+            else
+                l_queue = &m_txnWriteQ[l_channelID];
+            if(l_queue->size())
+                l_nextTxn=getNextTxn(*l_queue, l_channelID);
+        }
 
         //2. send the selected transaction to transaction converter
         if(l_nextTxn!=nullptr) {
@@ -225,7 +235,6 @@ bool c_TxnScheduler::push(c_Transaction* newTxn)
 {
     int l_channelId=newTxn->getHashedAddress().getChannel();
     bool l_success=false;
-
     if(!k_isReadFirstScheduling)
     {
         if (m_txnQ.at(l_channelId).size() < k_numTxnQEntries) {
@@ -291,6 +300,7 @@ bool c_TxnScheduler::hasDependancy(c_Transaction *x_txn, int x_ch)
 {
     TxnQueue* l_queue= nullptr;
     bool l_hasDependancy = false;
+
     if(!k_isReadFirstScheduling)
         l_queue=&m_txnQ[x_ch];
     else
