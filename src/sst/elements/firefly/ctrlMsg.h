@@ -110,7 +110,7 @@ class API : public ProtocolAPI {
     bool notifyGetDone( void* );
     bool notifySendPioDone( void* );
     bool notifyRecvDmaDone( int, int, size_t, void* );
-    bool notifyNeedRecv( int, int, size_t );
+    bool notifyNeedRecv( int, size_t );
 
     uint64_t sendStateDelay() { return m_sendStateDelay; }
     uint64_t recvStateDelay() { return m_recvStateDelay; }
