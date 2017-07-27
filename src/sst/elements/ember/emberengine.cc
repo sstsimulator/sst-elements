@@ -151,9 +151,8 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
 
         std::string moduleName = apiParams.find<std::string>( "module" );
         assert( ! moduleName.empty() );
-        Params osParams = params.find_prefix_params("os.");
-        std::string osName = osParams.find<std::string>("name");
-        Params modParams = params.find_prefix_params( osName + "." );
+
+        Params modParams = params.find_prefix_params( moduleName + "." );
 
         Hermes::Interface* api = dynamic_cast<Interface*>(
                         owner->loadSubComponent( 
