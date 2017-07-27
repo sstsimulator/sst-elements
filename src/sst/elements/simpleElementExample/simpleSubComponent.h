@@ -87,7 +87,7 @@ public:
         "SubCompSender",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Sending Subcomponent",
-        "SST::simpleSubComponent::SubCompInterface"
+        "SST::SimpleSubComponent::SubCompInterface"
     )
     
     SST_ELI_DOCUMENT_PARAMS(
@@ -130,15 +130,15 @@ public:
         "SubCompReceiver",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Receiving Subcomponent",
-        "SST::simpleSubComponent::SubCompInterface"
+        "SST::SimpleSubComponent::SubCompInterface"
     )
-    
+
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_PARAMS(
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
-        {"numRecv", "# of msgs sent", "", 1},
+        {"numRecv", "# of msgs recv", "", 1},
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -148,7 +148,7 @@ public:
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
     )
-    
+
 private:
 
     Statistic<uint32_t> *nMsgReceived;
