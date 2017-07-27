@@ -14,34 +14,29 @@
 // distribution.
 
 
-#ifndef _H_EMBER_SHMEM_EVENT
-#define _H_EMBER_SHMEM_EVENT
+#ifndef _H_EMBER_SHMEM_FENCE_EVENT
+#define _H_EMBER_SHMEM_FENCE_EVENT
 
-#include "emberevent.h" 
-
-using namespace Hermes;
+#include "emberShmemEvent.h"
 
 namespace SST {
 namespace Ember {
 
-typedef Statistic<uint32_t> EmberEventTimeStatistic;
+class EmberFenceShmemEvent : public EmberShmemEvent {
 
-class EmberShmemEvent : public EmberEvent {
+public:
+	EmberFenceShmemEvent( Shmem::Interface& api, Output* output,
+                    EmberEventTimeStatistic* stat = NULL ) :
+            EmberShmemEvent( api, output, stat ){}
+	~EmberFenceShmemEvent() {}
 
-  public:
+    std::string getName() { return "Barrier"; }
 
-    EmberShmemEvent( Shmem::Interface& api, Output* output, 
-            EmberEventTimeStatistic* stat = NULL ):
-        EmberEvent( output, stat ), m_api( api )
-    {
-        m_state = IssueFunctor;
+    void issue( uint64_t time, MP::Functor* functor ) {
+
+        EmberEvent::issue( time );
+        m_api.fence( functor );
     }
-
-  protected:
-
-    Shmem::Interface&   m_api;
-
-  private:
 };
 
 }
