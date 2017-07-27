@@ -25,34 +25,9 @@ using namespace Hermes::MP;
 HadesMP::HadesMP(Component* owner, Params& params) :
     Interface(owner), m_os(NULL)
 {
-    Params tmpParams = params.find_prefix_params("ctrlMsg.");
-	m_proto =
-        dynamic_cast<ProtocolAPI*>(owner->loadSubComponent(
-                            "firefly.CtrlMsgProto", owner, tmpParams ) );
-
-	Params funcParams = params.find_prefix_params("functionSM.");
-
-	m_functionSM = new FunctionSM( funcParams, owner, m_proto );
 }
 
-HadesMP::~HadesMP() {
-	delete m_proto;
-    delete m_functionSM;
-}
-
-void HadesMP::setup( )
-{
-	assert(m_os);
-	m_proto->setVars( m_os->getInfo(), m_os->getNic(), m_os->getMemHeapLink(), m_functionSM->getRetLink() );
-    m_functionSM->setup(m_os->getInfo() );
-}
-
-void HadesMP::finish(  )
-{
-    m_proto->finish();
-}
-
-#if 0
+#if PRINT_STATUS 
 void HadesMP::printStatus( Output& out )
 {
     std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();
@@ -94,7 +69,7 @@ void HadesMP::send(const Hermes::MemAddr& buf, uint32_t count,
         PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group,
         Functor* retFunc )
 {
-   dbg().verbose(CALL_INFO,1,1,"buf=%p count=%d dtype=%d dest=%d tag=%d "
+    dbg().verbose(CALL_INFO,1,1,"buf=%p count=%d dtype=%d dest=%d tag=%d "
                         "group=%d\n", &buf,count,dtype,dest,tag,group);
     functionSM().start( FunctionSM::Send, retFunc,
             new SendStartEvent( buf, count, dtype, dest, tag, group, NULL) ); 
@@ -162,9 +137,7 @@ void HadesMP::bcast(const Hermes::MemAddr& mydata, uint32_t count,
     dbg().verbose(CALL_INFO,1,1,"in=%p ount=%d dtype=%d \n",
                 &mydata,count,dtype);
 
-	Hermes::MemAddr addr;
-	addr.simVAddr = 1;
-	addr.backing = NULL;
+	Hermes::MemAddr addr(1,NULL);
 
     functionSM().start( FunctionSM::Reduce, retFunc,
         new CollectiveStartEvent(mydata, addr, count, 
