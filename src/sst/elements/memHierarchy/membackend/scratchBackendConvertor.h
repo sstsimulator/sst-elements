@@ -29,12 +29,12 @@ class ScratchBackendConvertor : public SubComponent {
   public:
     typedef uint64_t ReqId; 
 
-    class ScratchReq {
+    class MemReq {
       public:
-        ScratchReq( MemEvent* event, uint32_t reqId, uint64_t time  ) : m_event(event),
-            m_reqId(reqId), m_offset(0), m_numReq(0), m_deliveryTime(time)
+        MemReq( MemEvent* event, uint32_t reqId ) : m_event(event),
+            m_reqId(reqId), m_offset(0), m_numReq(0)
         { }
-        ~ScratchReq() {
+        ~MemReq() {
             delete m_event;
         }
 
@@ -47,8 +47,6 @@ class ScratchBackendConvertor : public SubComponent {
         MemEvent* getMemEvent() { return m_event; }
         bool isWrite()          { return (m_event->getCmd() == Command::PutM || (m_event->queryFlag(MemEvent::F_NONCACHEABLE) && m_event->getCmd() == Command::GetX)) ? true : false; }
         uint32_t size()         { return m_event->getSize(); }
-
-        uint64_t getDeliveryTime() { return m_deliveryTime; }
 
         void increment( uint32_t bytes ) {
             m_offset += bytes;
@@ -64,7 +62,6 @@ class ScratchBackendConvertor : public SubComponent {
         uint32_t    m_reqId;
         uint32_t    m_offset;
         uint32_t    m_numReq;
-        uint64_t    m_deliveryTime;
     };
 
   public:
@@ -78,7 +75,7 @@ class ScratchBackendConvertor : public SubComponent {
     virtual void handleMemEvent(  MemEvent* );
 
     virtual const std::string& getRequestor( ReqId reqId ) { 
-        uint32_t id = ScratchReq::getBaseId(reqId);
+        uint32_t id = MemReq::getBaseId(reqId);
         if ( m_pendingRequests.find( id ) == m_pendingRequests.end() ) {
             m_dbg.fatal(CALL_INFO, -1, "memory request not found\n");
         }
@@ -106,11 +103,11 @@ class ScratchBackendConvertor : public SubComponent {
     uint32_t    m_backendRequestWidth;
 
   private:
-    virtual bool issue(ScratchReq*) = 0;
+    virtual bool issue(MemReq*) = 0;
 
-    void setupScratchReq( MemEvent* ev ) {
+    void setupMemReq( MemEvent* ev ) {
         uint32_t id = genReqId();
-        ScratchReq* req = new ScratchReq( ev, id, m_cycleCount );
+        MemReq* req = new MemReq( ev, id );
         m_requestQueue.push_back( req );
         m_pendingRequests[id] = req;
     }
@@ -122,16 +119,16 @@ class ScratchBackendConvertor : public SubComponent {
     void doReceiveStat( Command cmd) {
         switch (cmd ) { 
             case Command::GetS: 
-                stat_ReadReceived->addData(1);
+                stat_GetSReqReceived->addData(1);
                 break;
             case Command::GetX:
-                stat_WriteReceived->addData(1);
+                stat_GetXReqReceived->addData(1);
                 break;
             case Command::GetSX:
-                stat_ReadReceived->addData(1);
+                stat_GetSXReqReceived->addData(1);
                 break;
             case Command::PutM:
-                stat_WriteReceived->addData(1);
+                stat_PutMReqReceived->addData(1);
                 break;
             default:
                 break;
@@ -141,16 +138,16 @@ class ScratchBackendConvertor : public SubComponent {
     void doResponseStat( Command cmd, Cycle_t latency ) {
         switch (cmd) {
             case Command::GetS:
-                stat_ReadLatency->addData(latency);
+                stat_GetSLatency->addData(latency);
                 break;
             case Command::GetSX:
-                stat_ReadLatency->addData(latency);
+                stat_GetSXLatency->addData(latency);
                 break;
             case Command::GetX:
-                stat_WriteLatency->addData(latency);
+                stat_GetXLatency->addData(latency);
                 break;
             case Command::PutM:
-                stat_WriteLatency->addData(latency);
+                stat_PutMLatency->addData(latency);
                 break;
             default:
                 break;
@@ -165,17 +162,21 @@ class ScratchBackendConvertor : public SubComponent {
 
     uint32_t    m_reqId;
 
-    typedef std::map<uint32_t,ScratchReq*>    PendingRequests;
+    typedef std::map<uint32_t,MemReq*>    PendingRequests;
 
-    std::deque<ScratchReq*>     m_requestQueue;
+    std::deque<MemReq*>     m_requestQueue;
     PendingRequests         m_pendingRequests;
     uint32_t                m_frontendRequestWidth;
 
-    Statistic<uint64_t>* stat_ReadLatency;
-    Statistic<uint64_t>* stat_WriteLatency;
+    Statistic<uint64_t>* stat_GetSLatency;
+    Statistic<uint64_t>* stat_GetXLatency;
+    Statistic<uint64_t>* stat_GetSXLatency;
+    Statistic<uint64_t>* stat_PutMLatency;
 
-    Statistic<uint64_t>* stat_ReadReceived;
-    Statistic<uint64_t>* stat_WriteReceived;
+    Statistic<uint64_t>* stat_GetSReqReceived;
+    Statistic<uint64_t>* stat_GetXReqReceived;
+    Statistic<uint64_t>* stat_GetSXReqReceived;
+    Statistic<uint64_t>* stat_PutMReqReceived;
 
     Statistic<uint64_t>* stat_cyclesWithIssue;
     Statistic<uint64_t>* stat_cyclesAttemptIssueButRejected;

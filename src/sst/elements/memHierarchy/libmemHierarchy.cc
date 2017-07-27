@@ -926,13 +926,17 @@ static SubComponent* create_Mem_SimpleScratchBackendConvertor(Component* comp, P
 }
 
 static const ElementInfoStatistic scratchBackendConvertor_statistics[] = {
-    { "cycles_with_issue",                      "Total cycles with successful issue to backend", "cycles", 1},
+    { "cycles_with_issue",                      "Total cycles with successful issue to backend",    "cycles", 1},
     { "cycles_attempted_issue_but_rejected",    "Total cycles where an issue was attempted but backed rejected it", "cycles", 1},
-    { "total_cycles",                           "Total cycles executed at the scratchpad", "cycles", 1},
-    { "reads_received",                         "Number of reads received", "requests", 1},
-    { "writes_received",                        "Number of writes received", "requests", 1},
-    { "read_latency",                           "Latency for read requests", "cycles", 1},
-    { "write_latency",                          "Latency for write requests", "cycles", 1},
+    { "total_cycles",                           "Total cycles executed at the scratchpad",          "cycles", 1},
+    { "requests_received_GetS",                 "Number of GetS (read) requests received",          "requests", 1 },
+    { "requests_received_GetSX",                "Number of GetSX (read) requests received",         "requests", 1 },
+    { "requests_received_GetX",                 "Number of GetX (read) requests received",          "requests", 1 },
+    { "requests_received_PutM",                 "Number of PutM (write) requests received",         "requests", 1 },
+    { "latency_GetS",                           "Total latency of handled GetS requests",           "cycles",   1 },
+    { "latency_GetSX",                          "Total latency of handled GetSX requests",          "cycles",   1 },
+    { "latency_GetX",                           "Total latency of handled GetX requests",           "cycles",   1 },
+    { "latency_PutM",                           "Total latency of handled PutM requests",           "cycles",   1 },
     { NULL, NULL, NULL, 0 }
 };
 

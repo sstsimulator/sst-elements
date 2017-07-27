@@ -119,7 +119,7 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         try {
             backing_ = new Backend::Backing(memFile, scratch_->getMemSize() );
         } catch (int) {
-            dbg.fatal(CALL_INFO, -1, "%s, Error - unable to MMAP backing store for scratchpad\n", getName().c_str());
+            dbg.fatal(CALL_INFO, -1, "%s, Error - unable to mmap backing store for scratchpad\n", getName().c_str());
         }
     }
 
