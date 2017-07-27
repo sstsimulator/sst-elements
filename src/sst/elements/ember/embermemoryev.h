@@ -42,7 +42,7 @@ public:
         EmberEvent::issue( time );
     
         std::function<void(uint64_t)> callback = [=](uint64_t value){
-			m_addr->simVAddr = value;
+			m_addr->setSimVAddr( value );
             (*functor)(0);
             return 0;
         };
@@ -51,7 +51,8 @@ public:
     }
 
 protected:
-    Thornhill::MemoryHeapLink&  m_api; Hermes::MemAddr* 	m_addr;
+    Thornhill::MemoryHeapLink&  m_api; 
+    Hermes::MemAddr* 	m_addr;
 	size_t  			m_length;
 
 };
