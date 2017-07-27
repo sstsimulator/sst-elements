@@ -92,8 +92,8 @@ bool GathervFuncSM::waitUp(Retval& retval)
         m_dbg.verbose(CALL_INFO,1,0,"post recv for child %d[%d]\n", 
                  m_waitUpState.count, m_qqq->calcChild(m_waitUpState.count) );
 
-		addr.simVAddr = 1;
-		addr.backing = &m_waitUpSize[m_waitUpState.count];
+		addr.setSimVAddr( 1 );
+		addr.setBacking( &m_waitUpSize[m_waitUpState.count] );
         proto()->irecv( addr, 
                     sizeof(m_waitUpSize[m_waitUpState.count]),
                     m_qqq->calcChild(m_waitUpState.count),
@@ -143,8 +143,8 @@ bool GathervFuncSM::waitUp(Retval& retval)
 
         m_dbg.verbose(CALL_INFO,1,0,"post recv for child %d[%d]\n",
                    m_waitUpState.count, m_qqq->calcChild(m_waitUpState.count) );
-		addr.simVAddr = 1;
-		addr.backing = &m_recvBuf[m_waitUpState.len];
+		addr.setSimVAddr( 1 );
+		addr.setBacking( &m_recvBuf[m_waitUpState.len] );
         proto()->irecv( addr, 
                     m_waitUpSize[m_waitUpState.count],
                     m_qqq->calcChild(m_waitUpState.count),
@@ -164,8 +164,8 @@ bool GathervFuncSM::waitUp(Retval& retval)
         m_dbg.verbose(CALL_INFO,1,0,"send I'm ready message to"
                 " child %d[%d]\n", m_waitUpState.count, 
                 m_qqq->calcChild( m_waitUpState.count ) );
-		addr.simVAddr = 1;
-		addr.backing = NULL;
+		addr.setSimVAddr( 1 );
+		addr.setBacking( NULL );
         proto()->send( addr, 0, m_qqq->calcChild( m_waitUpState.count ),
                             genTag(3) );
 
@@ -206,7 +206,7 @@ void GathervFuncSM::doRoot()
     int len = m_info->sizeofDataType( m_event->sendtype ) * m_event->sendcnt;
     m_dbg.verbose(CALL_INFO,1,0,"I'm root buf.size()=%lu\n", m_recvBuf.size());
 
-    memcpy( &m_recvBuf[0], m_event->sendbuf.backing, len ); 
+    memcpy( &m_recvBuf[0], m_event->sendbuf.getBacking(), len ); 
 
 #if 0 // print debug
     for ( unsigned int i = 0; i < m_recvBuf.size()/4; i++ ) {
@@ -230,12 +230,12 @@ void GathervFuncSM::doRoot()
 
             m_dbg.verbose(CALL_INFO,1,0,"rank %d, recvcnt %d, displs %d, "
                                 "len=%u\n", rank, recvcnt, displs, len);
-            memcpy( (unsigned char*) m_event->recvbuf.backing + displs, 
+            memcpy( (unsigned char*) m_event->recvbuf.getBacking() + displs, 
                             &m_recvBuf[offset], len);
         } else {
             len = m_info->sizeofDataType( m_event->recvtype ) * 
                                     m_event->recvcnt;
-            memcpy( (unsigned char*) m_event->recvbuf.backing + len * rank, 
+            memcpy( (unsigned char*) m_event->recvbuf.getBacking() + len * rank, 
                             &m_recvBuf[offset], len);
         }
 
@@ -262,12 +262,12 @@ bool GathervFuncSM::sendUp(Retval& retval)
         if ( 0 == m_qqq->numChildren() ) {
             m_recvBuf.resize( len );
         }
-        memcpy( &m_recvBuf[0], m_event->sendbuf.backing, len ); 
+        memcpy( &m_recvBuf[0], m_event->sendbuf.getBacking(), len ); 
         m_intBuf = m_recvBuf.size();
         m_dbg.verbose(CALL_INFO,1,0,"send Sening %d bytes message to %d\n", 
                                                 m_intBuf, m_qqq->parent());
-		addr.simVAddr = 1;
-		addr.backing = &m_intBuf;
+		addr.setSimVAddr( 1 );
+		addr.setBacking( &m_intBuf );
         proto()->send( addr, sizeof(m_intBuf), m_qqq->parent(),
                             genTag(1) );
 
@@ -277,8 +277,8 @@ bool GathervFuncSM::sendUp(Retval& retval)
     case SendUpState::RecvGo:
         m_dbg.verbose(CALL_INFO,1,0,"post receive for Go msg, parrent=%d\n",
                                         m_qqq->parent());
-		addr.simVAddr = 1;
-		addr.backing = NULL;
+		addr.setSimVAddr( 1 );
+		addr.setBacking( NULL );
         proto()->recv( addr, 0, m_qqq->parent(), genTag(3) );
 
         m_sendUpState.state = SendUpState::SendBody;
@@ -288,8 +288,8 @@ bool GathervFuncSM::sendUp(Retval& retval)
 
         m_dbg.verbose(CALL_INFO,1,0,"sending body to parent %d\n", 
                                             m_qqq->parent());
-		addr.simVAddr = 1;
-		addr.backing = &m_recvBuf[0];
+		addr.setSimVAddr( 1 );
+		addr.setBacking( &m_recvBuf[0] );
         proto()->send( addr, m_recvBuf.size(), m_qqq->parent(),
                             genTag(2) );
 #if 0 // print debug 
