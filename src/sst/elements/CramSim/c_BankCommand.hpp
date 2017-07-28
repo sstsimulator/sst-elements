@@ -56,7 +56,7 @@ class c_BankCommand : public SST::Core::Serialization::serializable {
 
 private:
 
-	unsigned m_seqNum;
+	ulong m_seqNum;
 	ulong    m_addr;
 	unsigned m_row;
 	unsigned m_bankId;

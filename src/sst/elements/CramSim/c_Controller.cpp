@@ -192,6 +192,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
     for(std::deque<c_Transaction*>::iterator l_it=m_ReqQ.begin() ; l_it!=m_ReqQ.end();)
     {
         c_Transaction* newTxn= *l_it;
+
         if(newTxn->hasHashedAddress()== false)
         {
             c_HashedAddress l_hashedAddress;
@@ -203,13 +204,14 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
         if(k_enableQuickResponse && m_txnScheduler->isHit(newTxn))
         {
             newTxn->setResponseReady();
-            m_ReqQ.erase(l_it);
+            //delete the new transaction from request queue
+            l_it=m_ReqQ.erase(l_it);
+
             #ifdef __SST_DEBUG_OUTPUT__
                 newTxn->print(output,"[TxnQueue hit]");
             #endif
             continue;
         }
-
         //insert new transaction into a transaction queue
         if(m_txnScheduler->push(newTxn)) {
             //With fast write response mode, controller sends a response for a write request as soon as it push the request to a transaction queue.
