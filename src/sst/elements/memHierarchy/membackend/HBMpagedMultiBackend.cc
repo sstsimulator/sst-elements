@@ -137,7 +137,7 @@ HBMpagedMultiMemory::HBMpagedMultiMemory(Component *comp, Params &params)
 }
 
 // should we add it?
-bool HBMpagedMultiMemory::checkAdd(pageInfo &page) {
+bool HBMpagedMultiMemory::checkAdd(HBMpageInfo &page) {
     // only add if the dram isn't too busy
     if (dramBackpressure && dramQ.size() >= 4) return false;
 
@@ -224,7 +224,7 @@ bool HBMpagedMultiMemory::checkAdd(pageInfo &page) {
     }
 }
 
-void HBMpagedMultiMemory::do_FIFO_LRU( pageInfo &page, bool &inFast, bool &swapping) {  
+void HBMpagedMultiMemory::do_FIFO_LRU( HBMpageInfo &page, bool &inFast, bool &swapping) {  
     swapping = 0;
     if (0 == page.inFast) {
         // not in fast
@@ -239,13 +239,13 @@ void HBMpagedMultiMemory::do_FIFO_LRU( pageInfo &page, bool &inFast, bool &swapp
                 if (modelSwaps) {moveToFast(page);}
             } else {
                 // kick someone out
-                pageInfo *victimPage = pageList.back();
-                pageInfo::pageListIter e = pageList.end();
+                HBMpageInfo *victimPage = pageList.back();
+                HBMpageInfo::pageListIter e = pageList.end();
                 bool found = 0;
                 while (e != pageList.begin()) {
                     e--;
                     victimPage = *e;
-                    if (victimPage->swapDir == pageInfo::NONE) {
+                    if (victimPage->swapDir == HBMpageInfo::NONE) {
                         found = 1;
                         break;
                     }
@@ -273,12 +273,12 @@ void HBMpagedMultiMemory::do_FIFO_LRU( pageInfo &page, bool &inFast, bool &swapp
                 if (modelSwaps) {moveToFast(page);}
                 if ((replaceStrat == BiLRU) && ((rng->generateNextUInt32() & 0x7f) == 0)) { // roughly 1:128 chance
                     pageList.push_back(&page); // put in back of list
-                    pageInfo::pageListIter le = pageList.end(); le--;
+                    HBMpageInfo::pageListIter le = pageList.end(); le--;
                     page.listEntry = le;
                 } else if ((replaceStrat == SCLRU) && (page.scanLeng > scanThreshold)) {
                     // put "scan-y" pages at the back
                     pageList.push_back(&page); // put in back of list
-                    pageInfo::pageListIter le = pageList.end(); le--;
+                    HBMpageInfo::pageListIter le = pageList.end(); le--;
                     page.listEntry = le;
                 } else {
                     pageList.push_front(&page); // put in front of FIFO/list
@@ -310,7 +310,7 @@ void HBMpagedMultiMemory::do_FIFO_LRU( pageInfo &page, bool &inFast, bool &swapp
     page.lastTouch = getCurrentSimTimeNano(); // for mrpu       
 }
 
-void HBMpagedMultiMemory::do_LFU( Addr addr, pageInfo &page, bool &inFast, bool &swapping) {
+void HBMpagedMultiMemory::do_LFU( Addr addr, HBMpageInfo &page, bool &inFast, bool &swapping) {
     const uint64_t pageAddr = addr >> pageShift;
     inFast = 0;
     swapping = 0;
@@ -334,7 +334,7 @@ void HBMpagedMultiMemory::do_LFU( Addr addr, pageInfo &page, bool &inFast, bool 
 		  if ((p->second.inFast == 1) && (p->first != pageAddr)) {
 		    lastMin = min(lastMin, p->second.touched);
 		    if((p->second.touched < page.touched) &&
-                       (p->second.swapDir == pageInfo::NONE)) { // make sure we don't bump someone in motion
+                       (p->second.swapDir == HBMpageInfo::NONE)) { // make sure we don't bump someone in motion
                         found = 1;
                         p->second.inFast = 0; // rm old
                         if (modelSwaps) {moveToSlow(&(p->second));}
@@ -501,7 +501,7 @@ void HBMpagedMultiMemory::handleSelfEvent(SST::Event *event){
         delete ev;
     } else if (modelSwaps && si_w != swapToFast_Writes.end()) {
         // this is from fast mem, indicating a transfer from slow.
-        pageInfo *page = si_w->second;
+        HBMpageInfo *page = si_w->second;
         page->swapsOut -= 1;
 	//printf(" got moveToFast write addr:%p ev:%p p:%p sO:%d\n", (void*)(req->baseAddr_ + req->amtInProcess_) ,ev, page, page->swapsOut);
         if (page->swapsOut == 0) {
@@ -530,14 +530,14 @@ bool HBMpagedMultiMemory::quantaClock(SST::Cycle_t _cycle) {
     return false;
 }
 
-void HBMpagedMultiMemory::moveToFast(pageInfo &page) {
-    assert(page.swapDir == pageInfo::NONE);
+void HBMpagedMultiMemory::moveToFast(HBMpageInfo &page) {
+    assert(page.swapDir == HBMpageInfo::NONE);
 
     uint64_t addr = page.pageAddr << pageShift;
     const uint numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
 
     // mark page as swapping
-    page.swapDir = pageInfo::StoF;
+    page.swapDir = HBMpageInfo::StoF;
     page.swapsOut = numTransfers;   
 
     dbg.debug(_L10_, "moveToFast(%p addr:%p) sO:%d\n", &page, (void*)(addr), 
@@ -554,8 +554,8 @@ void HBMpagedMultiMemory::moveToFast(pageInfo &page) {
     }
 }
 
-void HBMpagedMultiMemory::moveToSlow(pageInfo *page) {
-    assert(page->swapDir == pageInfo::NONE);
+void HBMpagedMultiMemory::moveToSlow(HBMpageInfo *page) {
+    assert(page->swapDir == HBMpageInfo::NONE);
 
     uint64_t addr = page->pageAddr << pageShift;
     const uint numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
@@ -563,7 +563,7 @@ void HBMpagedMultiMemory::moveToSlow(pageInfo *page) {
     dbg.debug(_L10_, "moveToSlow(%p addr:%p)\n", page, (void*)(addr));
 
     // mark page as swapping
-    page->swapDir = pageInfo::FtoS;
+    page->swapDir = HBMpageInfo::FtoS;
     page->swapsOut = numTransfers;
 
     // issue reads to fast mem
@@ -593,7 +593,7 @@ void HBMpagedMultiMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t c
     if (modelSwaps && si != swapToSlow_Writes.end()) {
         // this is a returning write from the DRAM
         // mark the page as having less outstanding
-        pageInfo *page = si->second;
+        HBMpageInfo *page = si->second;
         page->swapsOut -= 1;
         if (page->swapsOut == 0) {
             swapDone(page, addr);
@@ -618,12 +618,12 @@ void HBMpagedMultiMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t c
     }
 }
 
-void HBMpagedMultiMemory::swapDone(pageInfo *page, const uint64_t addr) {
+void HBMpagedMultiMemory::swapDone(HBMpageInfo *page, const uint64_t addr) {
     const uint64_t pageAddr = addr >> pageShift;
     dbg.debug(_L10_, "swapDone(%p addr:%p) %d\n", page, (void*)pageAddr, page->swapDir);
 
     assert(page->swapsOut == 0);
-    assert(page->swapDir != pageInfo::NONE);
+    assert(page->swapDir != HBMpageInfo::NONE);
     assert(&pageMap[pageAddr] == page);
 
 
@@ -632,7 +632,7 @@ void HBMpagedMultiMemory::swapDone(pageInfo *page, const uint64_t addr) {
     //printf(" - swapDone releasing %d\n", (int)waitList.size());
     for (auto it = waitList.begin(); it != waitList.end(); ++it) {
         Req *req = *it;
-        if (page->swapDir == pageInfo::FtoS) {
+        if (page->swapDir == HBMpageInfo::FtoS) {
             // just finished moving page from fast to slow mem, so issue to DRAM
             //assert(DRAMSimMemory::issueRequest(req));
             queueRequest(req);
@@ -645,11 +645,11 @@ void HBMpagedMultiMemory::swapDone(pageInfo *page, const uint64_t addr) {
     waitingReqs.erase(pageAddr);
 
     // mark page as ready
-    page->swapDir = pageInfo::NONE;
+    page->swapDir = HBMpageInfo::NONE;
 }
 
 
-bool HBMpagedMultiMemory::pageIsSwapping(const pageInfo &page) {
-    return (page.swapDir != pageInfo::NONE);
+bool HBMpagedMultiMemory::pageIsSwapping(const HBMpageInfo &page) {
+    return (page.swapDir != HBMpageInfo::NONE);
 }
 

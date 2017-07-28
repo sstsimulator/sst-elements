@@ -201,7 +201,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     std::string shmem_region_name = tunnel->getRegionName();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name.c_str());
 
-    appLauncher = params.find<std::string>("launcher", ARIEL_STRINGIZE(PINTOOL_EXECUTABLE));
+    appLauncher = params.find<std::string>("launcher", PINTOOL_EXECUTABLE);
 
     const uint32_t launch_param_count = (uint32_t) params.find<uint32_t>("launchparamcount", 0);
     const uint32_t pin_arg_count = 25 + launch_param_count;

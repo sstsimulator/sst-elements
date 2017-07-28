@@ -28,7 +28,7 @@
 #undef DEBUG
 #endif
 
-#include <DRAMSim.h>
+#include <HBMDRAMSim.h>
 
 #ifdef OLD_DEBUG
 #define DEBUG OLD_DEBUG
@@ -38,8 +38,8 @@
 namespace SST {
 namespace MemHierarchy {
 
-struct pageInfo {
-    typedef list<pageInfo*> pageList_t;
+struct HBMpageInfo {
+    typedef list<HBMpageInfo*> pageList_t;
     typedef pageList_t::iterator pageListIter;
 
     uint64_t pageAddr;
@@ -139,7 +139,7 @@ struct pageInfo {
 	rqstrs.clear();
     }
 
-    pageInfo() : pageAddr(0), touched(0), inFast(0), lastTouch(0), lastRef(0), scanLeng(0),
+    HBMpageInfo() : pageAddr(0), touched(0), inFast(0), lastTouch(0), lastRef(0), scanLeng(0),
                  pageDelay(0), swapDir(NONE), swapsOut(0) {
         for (int i = 0; i < LAST_CASE; ++i) {
             accPat[i] = 0;
@@ -176,7 +176,7 @@ private:
         Req() {}
 		ImplementSerializable(SST::MemHierarchy::HBMpagedMultiMemory::Req)
     };
-    pageInfo::pageList_t pageList; // used in FIFO
+    HBMpageInfo::pageList_t pageList; // used in FIFO
 
     // addition strategy
     typedef enum {addMFU, // Most Frequent
@@ -200,9 +200,9 @@ private:
 
     bool dramBackpressure;
 
-    bool checkAdd(pageInfo &page);
-    void do_FIFO_LRU( pageInfo &page, bool &inFast, bool &swapping);
-    void do_LFU( Addr, pageInfo &page, bool &inFast, bool &swapping);
+    bool checkAdd(HBMpageInfo &page);
+    void do_FIFO_LRU( HBMpageInfo &page, bool &inFast, bool &swapping);
+    void do_LFU( Addr, HBMpageInfo &page, bool &inFast, bool &swapping);
     
     void printAccStats();
     queue<Req *> dramQ;
@@ -219,18 +219,18 @@ private:
 public:
     class MemCtrlEvent;
 private:
-    typedef map<MemCtrlEvent *, pageInfo*> evToPage_t;
-    typedef map<Req *, pageInfo*> reqToPage_t;
+    typedef map<MemCtrlEvent *, HBMpageInfo*> evToPage_t;
+    typedef map<Req *, HBMpageInfo*> reqToPage_t;
     evToPage_t swapToSlow_Reads;
     evToPage_t swapToFast_Writes;
     reqToPage_t swapToSlow_Writes;
     reqToPage_t swapToFast_Reads;
 
     void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
-    void swapDone(pageInfo *, uint64_t);
-    void moveToFast(pageInfo &);
-    void moveToSlow(pageInfo *);
-    bool pageIsSwapping(const pageInfo &page);
+    void swapDone(HBMpageInfo *, uint64_t);
+    void moveToFast(HBMpageInfo &);
+    void moveToSlow(HBMpageInfo *);
+    bool pageIsSwapping(const HBMpageInfo &page);
 
 public:
     class MemCtrlEvent : public SST::Event {
@@ -252,7 +252,7 @@ public:
         ImplementSerializable(SST::MemHierarchy::HBMpagedMultiMemory::MemCtrlEvent);     
     };
 
-    typedef map<uint64_t, pageInfo> pageMap_t;
+    typedef map<uint64_t, HBMpageInfo> pageMap_t;
     pageMap_t pageMap;
     uint maxFastPages;
     uint pageShift;
