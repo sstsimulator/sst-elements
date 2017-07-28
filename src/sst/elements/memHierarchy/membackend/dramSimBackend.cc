@@ -64,8 +64,9 @@ bool DRAMSimMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned ){
 
 
 
-void DRAMSimMemory::clock(){
+bool DRAMSimMemory::clock(Cycle_t cycle){
     memSystem->update();
+    return false;
 }
 
 

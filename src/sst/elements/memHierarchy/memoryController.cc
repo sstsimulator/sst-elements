@@ -220,17 +220,21 @@ void MemController::handleEvent(SST::Event* event) {
 
 bool MemController::clock(Cycle_t cycle) {
 
-    link_->clock();
+    bool unclockLink = link_->clock();
 
-    memBackendConvertor_->clock( cycle );
+    bool unclockBack = memBackendConvertor_->clock( cycle );
 
     return false;
 }
 
 void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
 
-    MemEvent * ev = outstandingEvents_.find(id)->second;
-    outstandingEvents_.erase(id);
+    std::map<SST::Event::id_type,MemEvent*>::iterator it = outstandingEvents_.find(id);
+    if (it == outstandingEvents_.end())
+        dbg.fatal(CALL_INFO, -1, "Memory controller (%s) received unrecognized response ID: %" PRIu64 ", %" PRIu32 "", getName().c_str(), id.first, id.second);
+
+    MemEvent * ev = it->second;
+    outstandingEvents_.erase(it);
 
     Debug(_L3_,"Memory Controller: %s - Response received to (%s)\n", getName().c_str(), ev->getVerboseString().c_str());
 

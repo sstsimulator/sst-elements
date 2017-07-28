@@ -66,8 +66,9 @@ bool FlashDIMMSimMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigne
     return true;
 }
 
-void FlashDIMMSimMemory::clock() {
+bool FlashDIMMSimMemory::clock(Cycle_t cycle) {
     memSystem->update();
+    return false;
 }
 
 void FlashDIMMSimMemory::finish() {

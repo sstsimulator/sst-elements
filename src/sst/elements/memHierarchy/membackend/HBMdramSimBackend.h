@@ -56,7 +56,7 @@ private:
 public:
     HBMDRAMSimMemory(Component *comp, Params &params);
 	virtual bool issueRequest(ReqId, Addr, bool, unsigned );
-    virtual void clock();
+    virtual bool clock(Cycle_t cycle);
     virtual void finish();
 
 protected:

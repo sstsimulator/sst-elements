@@ -118,7 +118,7 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
 
     stat_outstandingReqs->addData( m_pendingRequests.size() );
 
-    m_backend->clock();
+    bool unclock = m_backend->clock(cycle);
 
     return false;
 }

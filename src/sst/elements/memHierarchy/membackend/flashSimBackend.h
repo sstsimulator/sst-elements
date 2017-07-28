@@ -38,7 +38,7 @@ class FlashDIMMSimMemory : public SimpleMemBackend {
 public:
     FlashDIMMSimMemory(Component *comp, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
-    void clock();
+    virtual bool clock(Cycle_t cycle);
     void finish();
 
 private:

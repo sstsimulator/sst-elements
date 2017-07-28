@@ -108,7 +108,7 @@ bool ScratchBackendConvertor::clock(Cycle_t cycle) {
         }
     }
 
-    m_backend->clock();
+    bool unclock = m_backend->clock(cycle);
 
     return false;
 }
