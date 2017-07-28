@@ -66,6 +66,7 @@
 #include "mpi/motifs/emberunstructured.h" //NetworkSim: added unstructured communication motif
 #include "mpi/motifs/embersiriustrace.h"
 #include "mpi/motifs/emberrandomgen.h"
+#include "shmem/motifs/emberShmemTest.h"
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
 
@@ -275,6 +276,12 @@ static SubComponent*
 load_TrafficGen( Component* comp, Params& params ) {
 	return new EmberTrafficGenGenerator(comp, params);
 }
+
+static SubComponent*
+load_ShmemTest( Component* comp, Params& params ) {
+	return new EmberShmemTestGenerator(comp, params);
+}
+
 
 //NetworkSim: loader for the stop motif
 static SubComponent*
@@ -709,6 +716,10 @@ static const ElementInfoParam commdbl_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
+static const ElementInfoParam shmemTest_params[] = {
+	{	NULL,	NULL,	NULL	}
+};
+
 static const ElementInfoParam comm_params[] = {
 	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
 	{	"arg.messagesize",		"Sets the size of the message in bytes",	 	"0"},
@@ -1064,6 +1075,14 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Comm,
 	comm_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemTestMotif",
+	"SHMEM test",
+	NULL,
+	load_ShmemTest,
+    shmemTest_params,
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },

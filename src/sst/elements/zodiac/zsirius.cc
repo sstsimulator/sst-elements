@@ -295,12 +295,8 @@ void ZodiacSiriusTraceReader::handleAllreduceEvent(ZodiacEvent* zEv) {
 	zOut.verbose(__LINE__, __FILE__, "handleAllreduceEvent",
 		2, 1, "Processing an Allreduce event.\n");
 
-	Hermes::MemAddr addr0;
-	addr0.simVAddr = 0;
-	addr0.backing = emptyBuffer;
-	Hermes::MemAddr addr1;
-	addr1.simVAddr = 0;
-	addr1.backing = &emptyBuffer[zAEv->getLength()];
+	Hermes::MemAddr addr0( 0, emptyBuffer );
+	Hermes::MemAddr addr1( 0, &emptyBuffer[zAEv->getLength()] );
 
 	msgapi->allreduce( addr0,
 		addr1,
@@ -342,9 +338,7 @@ void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
 		2, 1, "Processing a Send event (length=%" PRIu32 ", tag=%d, dest=%" PRIu32 ")\n",
 		zSEv->getLength(), zSEv->getMessageTag(), zSEv->getDestination());
 
-	Hermes::MemAddr addr;
-	addr.simVAddr = 0;
-	addr.backing = emptyBuffer;
+	Hermes::MemAddr addr(0,emptyBuffer);
 
 	msgapi->send( addr, zSEv->getLength(),
 		zSEv->getDataType(), (RankID) zSEv->getDestination(),
@@ -367,9 +361,7 @@ void ZodiacSiriusTraceReader::handleRecvEvent(ZodiacEvent* zEv) {
 		2, 1, "Processing a Recv event (length=%" PRIu32 ", tag=%d, source=%" PRIu32 ")\n",
 		zREv->getLength(), zREv->getMessageTag(), zREv->getSource());
 
-	Hermes::MemAddr addr;
-	addr.simVAddr = 0;
-	addr.backing = emptyBuffer;
+	Hermes::MemAddr addr(0,emptyBuffer);
 
 	msgapi->recv( addr, zREv->getLength(),
 		zREv->getDataType(), (RankID) zREv->getSource(),
@@ -413,9 +405,7 @@ void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
 		2, 1, "Processing a Irecv event (length=%" PRIu32 ", tag=%d, source=%" PRIu32 ")\n",
 		zREv->getLength(), zREv->getMessageTag(), zREv->getSource());
 
-	Hermes::MemAddr addr;
-	addr.simVAddr = 0;
-	addr.backing = emptyBuffer;
+	Hermes::MemAddr addr(0,emptyBuffer);
 	msgapi->irecv( addr, zREv->getLength(),
 		zREv->getDataType(), (RankID) zREv->getSource(),
 		zREv->getMessageTag(), zREv->getCommunicatorGroup(),

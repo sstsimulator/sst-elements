@@ -69,6 +69,8 @@ class FunctionSM  {
     static const char *m_functionName[];
 
   public:
+    typedef std::function<void()> Callback;
+
     enum FunctionEnum{
         FOREACH_FUNCTION(GENERATE_ENUM)
     };
@@ -82,6 +84,7 @@ class FunctionSM  {
     Link* getRetLink() { return m_toMeLink; } 
     void setup( Info* );
     void start(int type, MP::Functor* retFunc,  SST::Event* );
+    void start(int type, Callback,  SST::Event* );
     void enter( );
 
   private:
@@ -96,6 +99,7 @@ class FunctionSM  {
     std::vector<FunctionSMInterface*>  m_smV; 
     FunctionSMInterface*    m_sm; 
     MP::Functor*    m_retFunc;
+    Callback        m_callback;
 
     SST::Link*          m_fromDriverLink;    
     SST::Link*          m_toDriverLink;    

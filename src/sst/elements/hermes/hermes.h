@@ -31,7 +31,41 @@ namespace SST {
 
 namespace Hermes {
 
-struct MemAddr {
+class MemAddr {
+
+  public:
+    enum Type { Normal, Shmem }; 
+    MemAddr( uint64_t sim, void* back, Type type = Normal) : 
+        type(type), simVAddr(sim), backing(back) {} 
+    MemAddr( Type type = Normal) : type(type), simVAddr(0), backing(NULL) {} 
+    MemAddr( void* backing ) : type(Normal), simVAddr(0), backing(backing) {} 
+
+    char& operator[](size_t index) {
+        return ((char*)backing)[index];
+    }
+    MemAddr offset( size_t val ) {
+        MemAddr addr = *this;
+        addr.simVAddr += val; 
+        if ( addr.backing ) {
+            addr.backing = (char*) addr.backing + val;
+        }
+        return addr;
+    }
+    uint64_t getSimVAddr( ) {
+        return simVAddr;
+    }
+    void setSimVAddr( uint64_t addr ) {
+        simVAddr = addr;
+    }
+    void* getBacking( ) {
+        return backing;
+    }
+    void setBacking( void* ptr ) {
+        backing = ptr;
+    }
+            
+  private:
+    Type type;
     uint64_t simVAddr;
     void*	 backing;
 };

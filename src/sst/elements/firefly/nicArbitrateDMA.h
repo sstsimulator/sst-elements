@@ -22,6 +22,9 @@ class ArbitrateDMA {
     };
 
   public:
+
+    typedef std::function<void()> Callback;
+
     enum Type { Write, Read };
     ArbitrateDMA( Nic& nic, Output& dbg, float GBs, float contentionMult, 
                                     int bufferSize ) : 

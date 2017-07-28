@@ -34,6 +34,7 @@ EmberBcastGenerator::EmberBcastGenerator(SST::Component* owner,
 bool EmberBcastGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
     if ( m_loopIndex == m_iterations ) {
+printf("%s\n",__func__);
         int typeSize = sizeofDataType(DOUBLE);
         if ( size() - 1 == rank() ) {
             double latency = (double)(m_stopTime-m_startTime)/(double)m_iterations;

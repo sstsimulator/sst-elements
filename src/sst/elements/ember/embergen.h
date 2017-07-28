@@ -154,7 +154,7 @@ void EmberGenerator::enQ_detailedCompute( Queue& q, std::string name,
 void EmberGenerator::enQ_memAlloc( Queue& q, Hermes::MemAddr* addr, size_t length )
 {
     assert( m_memHeapLink );
-    addr->backing = memAlloc(length);
+    addr->setBacking( memAlloc(length) );
     q.push( new EmberMemAllocEvent( *m_memHeapLink, &getOutput(), addr, length  ) );
 }
 

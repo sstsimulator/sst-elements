@@ -85,7 +85,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
     }
 
     unsigned char* chunkPtr( int rank ) {
-        unsigned char* ptr = (unsigned char*) m_event->recvbuf.backing;
+        unsigned char* ptr = (unsigned char*) m_event->recvbuf.getBacking();
         if ( m_event->recvcntPtr ) {
             ptr += ((int*)m_event->displsPtr)[rank]; 
         } else {

@@ -32,12 +32,12 @@ class HadesMP : public MP::Interface
 {
   public:
     HadesMP(Component*, Params&);
-    ~HadesMP();
+    ~HadesMP() {}
 
     virtual std::string getName() { return "HadesMP"; } 
 
-	virtual void setup();
-	virtual void finish();
+	virtual void setup() {} 
+	virtual void finish() {} 
 	virtual void setOS( OS* os ) { 
 		m_os = static_cast<Hades*>(os); 
 		dbg().verbose(CALL_INFO,2,0,"\n");
@@ -161,11 +161,10 @@ class HadesMP : public MP::Interface
     virtual void comm_destroy( MP::Communicator, MP::Functor* );
 
   private:
-	Output& dbg() { return m_os->m_dbg; }
-	FunctionSM& functionSM() { return *m_functionSM; }	
+    Output  m_dbg;
+	Output& dbg() { return m_dbg; }
+	FunctionSM& functionSM() { return m_os->getFunctionSM(); }
 	Hades*	    m_os;
-	ProtocolAPI* m_proto;
-	FunctionSM*  m_functionSM;
 };
 
 } // namesapce Firefly 
