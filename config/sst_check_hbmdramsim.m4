@@ -23,7 +23,7 @@ AC_DEFUN([SST_CHECK_HBMDRAMSIM], [
 
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([HBMDRAMSim.h], [], [sst_check_hbmdramsim_happy="no"])
-  AC_CHECK_LIB([hbmdramsim], [libdramsim_is_present],
+  AC_CHECK_LIB([dramsim], [libhbmdramsim_is_present],
     [HBMDRAMSIM_LIB="-ldramsim"], [sst_check_hbmdramsim_happy="no"])
   AC_LANG_POP(C++)
 
