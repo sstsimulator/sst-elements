@@ -22,7 +22,7 @@
 #include "sst/core/element.h"
 #include "nbprefetch.h"
 #include "strideprefetch.h"
-#include "strideprefetch_pala.h"
+#include "palaprefetch.h"
 #include "addrHistogrammer.h"
 
 using namespace SST;
@@ -60,11 +60,11 @@ static const ElementInfoParam stridePrefetcher_params[] = {
     	{ NULL, NULL, NULL }
 };
 
-static SubComponent* load_StridePrefetcherPala(Component* owner, Params& params){
-    return new StridePrefetcherPala(owner, params);
+static SubComponent* load_PalaPrefetcher(Component* owner, Params& params){
+    return new PalaPrefetcher(owner, params);
 }
 
-static const ElementInfoParam stridePrefetcherPala_params[] = {
+static const ElementInfoParam palaPrefetcher_params[] = {
         { "verbose",                     "Controls the verbosity of the cassini components", ""},
         { "cache_line_size",             "Controls the cache line size of the cache the prefetcher is attached too", "64"},
         { "history",                     "Start of Address Range, for this controller.", "16"},
@@ -117,10 +117,10 @@ static const ElementInfoSubComponent subcomponents[] = {
       stride_statistics,
       "SST::MemHierarchy::CacheListener"
     },
-    { "StridePrefetcherPala",
+    { "PalaPrefetcher",
       "Creates a prefetch engine which automatically recognizes strides and pre-loads blocks of data based on the work of Palacharla",
       NULL,
-      load_StridePrefetcherPala,
+      load_PalaPrefetcher,
       stridePrefetcher_params,
       stride_statistics,
       "SST::MemHierarchy::CacheListener"
