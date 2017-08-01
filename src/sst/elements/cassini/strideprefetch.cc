@@ -33,8 +33,6 @@ void StridePrefetcher::notifyAccess(const CacheListenerNotification& notify) {
         const NotifyResultType notifyResType = notify.getResultType();
         const Addr addr = notify.getPhysicalAddress();
 
-        std::cout << "@recentAddress " << std::hex << addr << "\n" << std::dec;
-
 	// Put address into our recent address list
         uint64_t tag = addr >> (64 - tagSize);
         StrideFilter filterEntry;
@@ -54,37 +52,14 @@ void StridePrefetcher::notifyAccess(const CacheListenerNotification& notify) {
                 if( (*recentAddrList)[tag].lastStride == tempStride )
                 {
                     (*recentAddrList)[tag].state = P_PENDING;
-                    std::cout << "+PSize " << recentAddrList->size() << "  --  ";
                 }
-
-            std::cout << "+ISize " << recentAddrList->size() << "  --  ";
-            std::cout << "element " << std::hex << tag << "   already existed";
-            std::cout << " with a value of " << (*recentAddrList)[tag].lastAddress << std::dec;
-            std::cout << "   ---   Old Stride: " << (*recentAddrList)[tag].stride << std::hex;
-            std::cout << "   New Stride: " << addr << " - " << (*recentAddrList)[tag].lastAddress << " = " << std::dec << tempStride << "\n";
-
             }
             else if( (*recentAddrList)[tag].state == P_PENDING )
             {
                 if( (*recentAddrList)[tag].lastStride == tempStride )
                 {
                     (*recentAddrList)[tag].state = P_VALID;
-                    std::cout << "+VSize " << recentAddrList->size() << "  --  ";
-            std::cout << "element " << std::hex << tag << "   already existed";
-            std::cout << " with a value of " << (*recentAddrList)[tag].lastAddress << std::dec;
-            std::cout << "   ---   Old Stride: " << (*recentAddrList)[tag].stride << std::hex;
-            std::cout << "   New Stride: " << addr << " - " << (*recentAddrList)[tag].lastAddress << " = " << std::dec << (*recentAddrList)[tag].lastStride << "\n";
-
                     (*recentAddrList)[tag].stride = tempStride;
-                }
-                else
-                {
-
-            std::cout << "+PPSize " << recentAddrList->size() << "  --  ";
-            std::cout << "element " << std::hex << tag << "   already existed";
-            std::cout << " with a value of " << (*recentAddrList)[tag].lastAddress << std::dec;
-            std::cout << "   ---   Old Stride: " << (*recentAddrList)[tag].stride << std::hex;
-            std::cout << "   New Stride: " << addr << " - " << (*recentAddrList)[tag].lastAddress << " = " << std::dec << (*recentAddrList)[tag].lastStride << "\n";
                 }
 
             }
@@ -93,43 +68,19 @@ void StridePrefetcher::notifyAccess(const CacheListenerNotification& notify) {
                 if( (*recentAddrList)[tag].lastStride != tempStride )
                 {
                     (*recentAddrList)[tag].state = P_PENDING;
-                    std::cout << "+VPSize " << recentAddrList->size() << "  --  ";
                 }
-
-            std::cout << "+VVSize " << recentAddrList->size() << "  --  ";
-            std::cout << "element " << std::hex << tag << "   already existed";
-            std::cout << " with a value of " << (*recentAddrList)[tag].lastAddress << std::dec;
-            std::cout << "   ---   Old Stride: " << (*recentAddrList)[tag].stride << std::hex;
-            std::cout << "   New Stride: " << addr << " - " << (*recentAddrList)[tag].lastAddress << " = " << std::dec << (*recentAddrList)[tag].lastStride << "\n";
-
-
-
             }
 
             (*recentAddrList)[tag].lastStride = tempStride;
-
-//             (*recentAddrList)[tag].stride = int64_t( addr - (*recentAddrList)[tag].lastAddress );
-
-
             (*recentAddrList)[tag].lastAddress = addr;
         }
         else
         {
-            std::cout << "+Size " << recentAddrList->size() << "  --  ";
-            std::cout << " inserted element " << std::hex << tag;
-            std::cout << " with a value of " << (*recentAddrList)[tag].lastAddress << std::dec;
-            std::cout << "\n";
-
             recentAddrListQueue->push_back(retVal.first);
-        }
-
-        for (auto& x: (*recentAddrList)) {
-                std::cout << std::hex << x.first <<  '\n';
         }
 
         if( recentAddrList->size() >= recentAddrListCount )
         {
-            std::cout << "---- PURGING " << std::hex << recentAddrListQueue->back()->first << std::dec << "\n";
             recentAddrList->erase(recentAddrListQueue->back());
             recentAddrListQueue->pop_back();
         }
@@ -150,15 +101,7 @@ void StridePrefetcher::DispatchRequest(Addr targetAddress) {
         uint64_t tag = targetAddress >> (64 - tagSize);
 
         Addr targetPrefetchAddress = targetAddress + (strideReach * stride);
-
-        std::cout << "*** STRIDE:  " << stride;
-        std::cout << std::hex;
-        std::cout << "  targetAddress: " << targetAddress;
-        std::cout << "  targetPrefetchAddr: " << targetPrefetchAddress;
         targetPrefetchAddress = targetPrefetchAddress - (targetPrefetchAddress % blockSize);
-        std::cout << "  targetPrefetchAddr-L: " << targetPrefetchAddress;
-        std::cout << std:: dec;
-        std::cout << "\n";
 
         if(overrunPageBoundary) {
             output->verbose(CALL_INFO, 2, 0,
@@ -299,3 +242,15 @@ void StridePrefetcher::registerResponseCallback(Event::HandlerBase* handler) {
 
 void StridePrefetcher::printStats(Output &out) {
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// This is loosely base on the work done by Palacharla and Kessler. The prefetcher maintains a table
+/// indexed by a tag. The table contains the current stride value as well as the previous address and
+/// previous stride value. The stride value is updated when the previous stride matches for two
+/// fetches in a row. The default stride is the size of a cache line (initial value). The table can
+/// hold a number of entries equal to address_count.
+///
+/// S. Palacharla and R. E. Kessler. 1994. Evaluating stream buffers as a secondary cache replacement.
+/// In Proceedings of the 21st annual international symposium on Computer architecture (ISCA '94).
+/// IEEE Computer Society Press, Los Alamitos, CA, USA, 24-33. DOI=http://dx.doi.org/10.1145/191995.192014
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
