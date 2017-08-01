@@ -22,6 +22,7 @@
 #include "sst/core/element.h"
 #include "nbprefetch.h"
 #include "strideprefetch.h"
+#include "strideprefetch_pala.h"
 #include "addrHistogrammer.h"
 
 using namespace SST;
@@ -56,8 +57,24 @@ static const ElementInfoParam stridePrefetcher_params[] = {
     	{ "address_count",               "Number of addresses to keep in the prefetch table", "64"},
     	{ "page_size",                   "Start of Address Range, for this controller.", "4096"},
     	{ "overrun_page_boundaries",     "Allow prefetcher to run over page alignment boundaries, default is 0 (false)", "0"},
-    	{ "tag_size",                    "Number of bits used for address matching in table", "48"},
     	{ NULL, NULL, NULL }
+};
+
+static SubComponent* load_StridePrefetcherPala(Component* owner, Params& params){
+    return new StridePrefetcherPala(owner, params);
+}
+
+static const ElementInfoParam stridePrefetcherPala_params[] = {
+        { "verbose",                     "Controls the verbosity of the cassini components", ""},
+        { "cache_line_size",             "Controls the cache line size of the cache the prefetcher is attached too", "64"},
+        { "history",                     "Start of Address Range, for this controller.", "16"},
+        { "reach",                       "Reach of the prefetcher (ie how far forward to make requests)", "2"},
+        { "detect_range",                "Range to detact addresses over in request-counts, default is 4.", "4"},
+        { "address_count",               "Number of addresses to keep in the prefetch table", "64"},
+        { "page_size",                   "Start of Address Range, for this controller.", "4096"},
+        { "overrun_page_boundaries",     "Allow prefetcher to run over page alignment boundaries, default is 0 (false)", "0"},
+        { "tag_size",                    "Number of bits used for address matching in table", "48"},
+        { NULL, NULL, NULL }
 };
 
 static const ElementInfoStatistic stride_statistics[] = {
@@ -96,6 +113,14 @@ static const ElementInfoSubComponent subcomponents[] = {
       "Creates a prefetch engine which automatically recognizes strides and pre-loads blocks of data",
       NULL,
       load_StridePrefetcher,
+      stridePrefetcher_params,
+      stride_statistics,
+      "SST::MemHierarchy::CacheListener"
+    },
+    { "StridePrefetcherPala",
+      "Creates a prefetch engine which automatically recognizes strides and pre-loads blocks of data based on the work of Palacharla",
+      NULL,
+      load_StridePrefetcherPala,
       stridePrefetcher_params,
       stride_statistics,
       "SST::MemHierarchy::CacheListener"
