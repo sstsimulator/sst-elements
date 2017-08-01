@@ -18,6 +18,7 @@
 #define _H_SST_STRIDE_PREFETCH
 
 #include <vector>
+#include <map>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
@@ -36,6 +37,16 @@ using namespace std;
 namespace SST {
 namespace Cassini {
 
+enum PrefetcherState { P_INVALID, P_PENDING, P_VALID };
+
+struct StrideFilter {
+    uint64_t lastAddress;
+    int32_t lastStride;
+    int32_t stride;
+    PrefetcherState state;
+};
+
+
 class StridePrefetcher : public SST::MemHierarchy::CacheListener {
     public:
 	StridePrefetcher(Component* owner, Params& params);
@@ -46,20 +57,23 @@ class StridePrefetcher : public SST::MemHierarchy::CacheListener {
 	void printStats(Output &out);
 
     private:
+        void     DispatchRequest(Addr targetAddress);
+
 	Output* output;
         std::vector<Event::HandlerBase*> registeredCallbacks;
 	std::deque<uint64_t>* prefetchHistory;
 	uint32_t prefetchHistoryCount;
         uint64_t blockSize;
+        uint64_t tagSize;
 	bool overrunPageBoundary;
 	uint64_t pageSize;
-	Addr* recentAddrList;
-	uint32_t recentAddrListCount;
+	std::map< uint64_t, StrideFilter >* recentAddrList;
+        std::deque< std::map< uint64_t, StrideFilter >::iterator >* recentAddrListQueue;
+
+        uint32_t recentAddrListCount;
 	uint32_t nextRecentAddressIndex;
-	void DetectStride();
 	uint32_t strideDetectionRange;
 	uint32_t strideReach;
-	Addr getAddressByIndex(uint32_t index);
 	uint32_t recheckCountdown;
         uint64_t missEventsProcessed;
         uint64_t hitEventsProcessed;
