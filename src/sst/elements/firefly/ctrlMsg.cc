@@ -76,7 +76,7 @@ void API::setVars( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem, Lin
                                 this, &API::notifyRecvDmaDone )
     );
     nic->setNotifyNeedRecv(
-        new VirtNic::Handler3Args<API,int,int,size_t>(
+        new VirtNic::Handler2Args<API,int,size_t>(
                                 this, &API::notifyNeedRecv )
     );
 
@@ -331,11 +331,11 @@ bool API::notifyRecvDmaDone( int nid, int tag, size_t len, void* key )
     return true;
 }
 
-bool API::notifyNeedRecv(int nid, int tag, size_t len )
+bool API::notifyNeedRecv(int nid, size_t len )
 {
 
-    m_dbg.verbose(CALL_INFO,1,1,"src=%#x tag=%#x len=%lu\n",nid,tag,len);
-    m_processQueuesState->needRecv( nid, tag, len );
+    m_dbg.verbose(CALL_INFO,1,1,"src=%#x len=%lu\n",nid,len);
+    m_processQueuesState->needRecv( nid, len );
 
     return true;
 }

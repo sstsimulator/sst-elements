@@ -19,29 +19,33 @@
 class SendMachine {
 
       public:
-        SendMachine( Nic& nic, Output& output ) :
-            m_nic(nic), m_dbg(output), m_txDelay(50),
-			m_packetId( 0 ), m_notifyCallback(NULL)
+        typedef std::function<void()> Callback;
+        SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask,
+              int txDelay, int packetSizeInBytes, int vc  ) :
+            m_nic(nic), 
+            m_txDelay( txDelay ),
+            m_packetSizeInBytes( packetSizeInBytes ),
+            m_vc( vc ),
+			m_packetId( 0 ),
+            m_notifyCallback(NULL)
 #ifdef NIC_SEND_DEBUG
             , m_msgCount(0)
 #endif
-        { }
+        {
+            char buffer[100];
+            snprintf(buffer,100,"@t:%d:Nic::SendMachine::@p():@l vc=%d ",nodeId,m_vc);
+
+            m_dbg.init(buffer, verboseLevel, verboseMask, Output::STDOUT);
+        }
 
         ~SendMachine();
 
-        void init( int txDelay, int packetSizeInBytes, int vc ) {
-            m_txDelay = txDelay;
-            m_packetSizeInBytes = packetSizeInBytes;
-			m_vc = vc;
-        }
-
-        void run( SendEntry* entry  ) {
+        void run( SendEntryBase* entry  ) {
             m_sendQ.push_back( entry );
             if ( 1 == m_sendQ.size() ) {
                 state_0( m_sendQ.front() );
             } else {
-                m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"Send: "
-							"%d: Q send entry\n",m_vc);
+                m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "Q send entry\n");
             }
         }
 
@@ -65,13 +69,12 @@ class SendMachine {
             m_nic.setNotifyOnSend( m_vc );
         }
 
-        void state_0( SendEntry* );
-        void state_1( SendEntry*, FireflyNetworkEvent* );
-        void state_2( SendEntry*, FireflyNetworkEvent* );
+        void state_0( SendEntryBase* );
+        void state_1( SendEntryBase*, FireflyNetworkEvent* );
+        void state_2( SendEntryBase*, FireflyNetworkEvent* );
         void state_3( ) {
             if ( ! canSend( m_packetSizeInBytes ) ) {
-                m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"Send: "
-							"%d: send busy\n",m_vc);
+                m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "send busy\n");
                     setCanSendCallback(
                     std::bind( &Nic::SendMachine::state_3, this )
                 );
@@ -84,12 +87,12 @@ class SendMachine {
         } 
 
         void copyOut( Output& dbg, FireflyNetworkEvent& event,
-                                Nic::Entry& entry, std::vector<DmaVec>& );
+                                Nic::EntryBase& entry, std::vector<DmaVec>& );
 
         Nic&        m_nic;
-        Output&     m_dbg;
+        Output      m_dbg;
 
-        std::deque<SendEntry*>  m_sendQ;
+        std::deque<SendEntryBase*>  m_sendQ;
         int                     m_txDelay;
         unsigned int            m_packetSizeInBytes;
         int                     m_packetId;

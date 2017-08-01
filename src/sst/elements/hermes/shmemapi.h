@@ -33,27 +33,27 @@ class Interface : public Hermes::Interface {
 
     Interface( Component* parent ) : Hermes::Interface(parent) {}
     virtual ~Interface() {}
-    virtual void setOS( OS* ) { assert(0); }
 
-    virtual void start_pes(int,Functor*) {}
-    virtual void num_pes(Functor*) {}
-    virtual void my_pe(Functor*) {}
-    virtual void malloc(size_t, Functor*) {}
-    virtual void free(void*, Functor*) {}
-    virtual void realloc(void*, size_t, Functor*) {}
-    virtual void memalign(size_t, size_t, Functor*) {}
-#if 0
-    virtual void p<Type>( Type* target, Type value, int pe, Functor*) {}
-    virtual void put<Type>( Type* target, const Type* src, 
-                        size_t nelems, int pe, Functor* ) {}
-    virtual void putSS( void* target, const Type* src, 
-                        size_t nelems, int pe, Functor* ) {}
-    virtual void g<Type>( Type* target, int pe, Functor* ) {}
-    virtual void get<Type>( Type* target, const Type* src, 
-                        size_t nelems, int pe, Functor* ) {}
-    virtual void getSS( void* target, const Type* src, 
-                        size_t nelems, int pe, Functor* ) {}
-#endif
+    virtual void init(Functor*) { assert(0); }
+    virtual void finalize(Functor*) { assert(0); }
+
+    virtual void barrier_all(Functor*) { assert(0); }
+    virtual void fence(Functor*) { assert(0); }
+
+    virtual void n_pes(int*, Functor*) { assert(0); }
+    virtual void my_pe(int*, Functor*) { assert(0); }
+
+    virtual void malloc(MemAddr*, size_t, Functor*) { assert(0); }
+    virtual void free(MemAddr, Functor*) { assert(0); }
+
+    virtual void get( MemAddr dst, MemAddr src, size_t nelems, int pe, Functor*) { assert(0); }
+    virtual void put( MemAddr dst, MemAddr src, size_t nelems, int pe, Functor*) { assert(0); }
+    virtual void getv( void*, MemAddr, int size, int pe, Functor*) { assert(0); }
+    virtual void putv( MemAddr, uint64_t value, int size, int pe, Functor*) { assert(0); }
+
+    virtual void uint64_gut( MemAddr, MemAddr, int pe, Functor*) { assert(0); }
+
+    virtual void uint64_add(uint64_t* addr, int pe, Functor*) { assert(0); }
 };
 
 }

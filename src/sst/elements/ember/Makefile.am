@@ -136,6 +136,20 @@ libember_la_SOURCES = \
 	sirius/include/sirius/siriusglobals.h \
 	shmem/emberShmemGen.cc \
 	shmem/emberShmemGen.h \
+	shmem/emberShmemBarrierEv.h \
+	shmem/emberShmemEvent.h \
+	shmem/emberShmemFenceEv.h \
+	shmem/emberShmemFiniEv.h \
+	shmem/emberShmemFreeEv.h \
+	shmem/emberShmemGetEv.h \
+	shmem/emberShmemGetVEv.h \
+	shmem/emberShmemInitEv.h \
+	shmem/emberShmemMallocEv.h \
+	shmem/emberShmemMyPeEv.h \
+	shmem/emberShmemNPesEv.h \
+	shmem/emberShmemPutEv.h \
+	shmem/emberShmemPutVEv.h \
+	shmem/motifs/embertest.h \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc
 
