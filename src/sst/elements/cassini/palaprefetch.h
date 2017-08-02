@@ -17,8 +17,9 @@
 #ifndef _H_SST_STRIDE_PREFETCH_PALA
 #define _H_SST_STRIDE_PREFETCH_PALA
 
-#include <map>
+#include <unordered_map>
 #include <vector>
+#include <deque>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
@@ -67,9 +68,11 @@ class PalaPrefetcher : public SST::MemHierarchy::CacheListener {
         uint64_t tagSize;
         bool overrunPageBoundary;
         uint64_t pageSize;
-        std::map< uint64_t, StrideFilter >* recentAddrList;
-        std::deque< std::map< uint64_t, StrideFilter >::iterator >* recentAddrListQueue;
+        std::unordered_map< uint64_t, StrideFilter >* recentAddrList;
+        std::deque< std::unordered_map< uint64_t, StrideFilter >::iterator >* recentAddrListQueue;
+        std::deque< std::unordered_map< uint64_t, StrideFilter >::iterator >::iterator it;
 
+        uint32_t addressSize;
         uint32_t recentAddrListCount;
         uint32_t nextRecentAddressIndex;
         uint32_t strideDetectionRange;
