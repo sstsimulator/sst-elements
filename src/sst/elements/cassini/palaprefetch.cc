@@ -99,11 +99,6 @@ void PalaPrefetcher::notifyAccess(const CacheListenerNotification& notify)
         }
         else
         {
-            std::cout << "~~~~~ INSERTING Size " << recentAddrList->size() << "  --  ";
-            std::cout << " inserted element " << std::hex << tag;
-            std::cout << " with a value of " << (*recentAddrList)[tag].lastAddress << std::dec;
-            std::cout << "\n";
-
             // Insert a reference to the new element at the front of the queue
             recentAddrListQueue->push_front(retVal.first);
         }
@@ -114,7 +109,6 @@ void PalaPrefetcher::notifyAccess(const CacheListenerNotification& notify)
 
         if( recentAddrList->size() >= recentAddrListCount )
         {
-            std::cout << "~~~~~ PURGING " << std::hex << recentAddrListQueue->back()->first << std::dec << "\n";
             recentAddrList->erase(recentAddrListQueue->back());
             recentAddrListQueue->pop_back();
         }
