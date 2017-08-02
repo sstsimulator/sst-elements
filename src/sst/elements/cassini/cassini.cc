@@ -74,6 +74,7 @@ static const ElementInfoParam palaPrefetcher_params[] = {
         { "page_size",                   "Start of Address Range, for this controller.", "4096"},
         { "overrun_page_boundaries",     "Allow prefetcher to run over page alignment boundaries, default is 0 (false)", "0"},
         { "tag_size",                    "Number of bits used for address matching in table", "48"},
+        { "addr_size",                   "Number of bits used for addresses", "64"},
         { NULL, NULL, NULL }
 };
 
