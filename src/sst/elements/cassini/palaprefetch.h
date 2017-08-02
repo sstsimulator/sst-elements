@@ -40,7 +40,8 @@ namespace Cassini {
 
 enum PrefetcherState { P_INVALID, P_PENDING, P_VALID };
 
-struct StrideFilter {
+struct StrideFilter
+{
     uint64_t lastAddress;
     int32_t lastStride;
     int32_t stride;
@@ -48,7 +49,8 @@ struct StrideFilter {
 };
 
 
-class PalaPrefetcher : public SST::MemHierarchy::CacheListener {
+class PalaPrefetcher : public SST::MemHierarchy::CacheListener
+{
     public:
         PalaPrefetcher(Component* owner, Params& params);
         ~PalaPrefetcher();
