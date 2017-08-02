@@ -25,9 +25,6 @@
 #include "sst/core/element.h"
 #include "sst/core/params.h"
 
-
-#define CASSINI_MIN(a,b) (((a)<(b)) ? a : b)
-
 using namespace SST;
 using namespace SST::Cassini;
 

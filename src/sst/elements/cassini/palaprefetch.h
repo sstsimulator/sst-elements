@@ -63,16 +63,17 @@ class PalaPrefetcher : public SST::MemHierarchy::CacheListener {
         Output* output;
         std::vector<Event::HandlerBase*> registeredCallbacks;
         std::deque<uint64_t>* prefetchHistory;
-        uint32_t prefetchHistoryCount;
-        uint64_t blockSize;
-        uint64_t tagSize;
-        bool overrunPageBoundary;
-        uint64_t pageSize;
         std::unordered_map< uint64_t, StrideFilter >* recentAddrList;
         std::deque< std::unordered_map< uint64_t, StrideFilter >::iterator >* recentAddrListQueue;
         std::deque< std::unordered_map< uint64_t, StrideFilter >::iterator >::iterator it;
 
+        uint64_t pageSize;
+        uint64_t blockSize;
+        uint64_t tagSize;
         uint32_t addressSize;
+
+        bool     overrunPageBoundary;
+        uint32_t prefetchHistoryCount;
         uint32_t recentAddrListCount;
         uint32_t nextRecentAddressIndex;
         uint32_t strideDetectionRange;
