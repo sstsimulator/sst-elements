@@ -100,10 +100,6 @@ void PalaPrefetcher::notifyAccess(const CacheListenerNotification& notify)
             recentAddrListQueue->push_front(retVal.first);
         }
 
-        for (auto& x: (*recentAddrListQueue)) {
-                std::cout << std::hex << x->first <<  '\n';
-        }
-
         if( recentAddrList->size() >= recentAddrListCount )
         {
             recentAddrList->erase(recentAddrListQueue->back());
