@@ -46,7 +46,6 @@ c_Transaction::c_Transaction(ulong x_seqNum, e_TransactionType x_txnMnemonic,
 	m_txnToString[e_TransactionType::WRITE] = "WRITE";
 	m_hasHashedAddr= false;
 
-	//std::cout << "0x" << std::hex << x_addr << std::dec << "\t";    m_hashedAddr.print();
 }
 
 void c_Transaction::setWaitingCommands(const unsigned x_numWaitingCommands) {
@@ -121,7 +120,7 @@ void c_Transaction::print() const {
 	    << ", dataWidth = " << m_dataWidth << ", m_numWaitingCommands = "
 	    << std::dec << m_numWaitingCommands << ", isProcessed = "
 	    << std::boolalpha << m_processed << ", isResponseReady = "
-	    << std::boolalpha << m_isResponseReady;
+	    << std::boolalpha << m_isResponseReady <<std::endl;
 }
 
 
@@ -153,6 +152,8 @@ void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
   ser & m_numWaitingCommands;
   ser & m_dataWidth;
   ser & m_processed;
+	ser & m_hasHashedAddr;
+	ser & m_hashedAddr;
 
   //std::cout << "Serializing Transaction " << this << " "; this->print();
     

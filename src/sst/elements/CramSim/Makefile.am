@@ -83,6 +83,10 @@ libCramSim_la_SOURCES = \
 	c_TxnScheduler.hpp \
 	c_CmdScheduler.cpp \
 	c_CmdScheduler.hpp \
+	c_TxnDispatcher.hpp \
+	c_TxnDispatcher.cpp \
+	c_TxnGen.hpp \
+	c_TxnGen.cpp \
 	memReqEvent.hpp 
 
 EXTRA_DIST = \

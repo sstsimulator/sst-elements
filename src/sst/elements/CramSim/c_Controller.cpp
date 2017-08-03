@@ -192,6 +192,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
     for(std::deque<c_Transaction*>::iterator l_it=m_ReqQ.begin() ; l_it!=m_ReqQ.end();)
     {
         c_Transaction* newTxn= *l_it;
+
         if(newTxn->hasHashedAddress()== false)
         {
             c_HashedAddress l_hashedAddress;
@@ -203,13 +204,14 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
         if(k_enableQuickResponse && m_txnScheduler->isHit(newTxn))
         {
             newTxn->setResponseReady();
-            m_ReqQ.erase(l_it);
+            //delete the new transaction from request queue
+            l_it=m_ReqQ.erase(l_it);
+
             #ifdef __SST_DEBUG_OUTPUT__
                 newTxn->print(output,"[TxnQueue hit]");
             #endif
             continue;
         }
-
         //insert new transaction into a transaction queue
         if(m_txnScheduler->push(newTxn)) {
             //With fast write response mode, controller sends a response for a write request as soon as it push the request to a transaction queue.
@@ -246,7 +248,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
 
     // 7. send token to the transaction generator
     m_thisCycleTxnQTknChg = m_thisCycleTxnQTknChg-m_ReqQ.size();
-    if (m_thisCycleTxnQTknChg > 0) {
+    if (m_outTxnGenReqQTokenChgLink && m_thisCycleTxnQTknChg > 0) {
         sendTokenChg();
     }
 
@@ -293,9 +295,14 @@ void c_Controller::sendResponse() {
                 //break;
                 c_TxnResEvent* l_txnResEvPtr = new c_TxnResEvent();
                 l_txnResEvPtr->m_payload = l_txnRes;
-                m_outTxnGenResPtrLink->send(l_txnResEvPtr);
 
-                --m_txnGenResQTokens;
+                if(m_outTxnGenResPtrLink)
+                    m_outTxnGenResPtrLink->send(l_txnResEvPtr);
+                else
+                    m_inTxnGenReqPtrLink->send(l_txnResEvPtr);
+
+                if(m_outTxnGenReqQTokenChgLink)
+                  --m_txnGenResQTokens;
             }
             else
             {
@@ -315,6 +322,9 @@ void c_Controller::handleIncomingTransaction(SST::Event *ev){
     if (l_txnReqEventPtr) {
         c_Transaction* newTxn=l_txnReqEventPtr->m_payload;
 
+        #ifdef __SST_DEBUG_OUTPUT__
+        newTxn->print(output,"[c_Controller.handleIncommingTransaction]");
+        #endif
 
         m_ReqQ.push_back(newTxn);
         m_ResQ.push_back(newTxn);
