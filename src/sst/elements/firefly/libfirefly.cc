@@ -24,6 +24,7 @@
 #include <nic.h>
 #include <hades.h>
 #include <hadesMP.h>
+#include <hadesSHMEM.h>
 #include <virtNic.h>
 #include <funcSM/init.h>
 #include <funcSM/fini.h>
@@ -127,6 +128,16 @@ load_hadesMP(Component* comp, Params& params)
 {
     return new HadesMP(comp, params);
 }
+
+static SubComponent*
+load_hadesSHMEM(Component* comp, Params& params)
+{
+    return new HadesSHMEM(comp, params);
+}
+
+static const ElementInfoParam hadesSHMEMModule_params[] = {
+	{NULL, NULL}
+};
 
 static const ElementInfoParam hadesMPModule_params[] = {
 	{"verboseLevel", "Sets the output verbosity of the component", "1"},
@@ -635,6 +646,14 @@ static const ElementInfoSubComponent subcomponents[] = {
       NULL,
       load_hadesMP,
       hadesMPModule_params,
+      NULL,
+      "SST::Hermes::MP::Interface"
+    },
+    { "hadesSHMEM",
+      "Firefly Hermes SHMEM module",
+      NULL,
+      load_hadesSHMEM,
+      hadesSHMEMModule_params,
       NULL,
       "SST::Hermes::MP::Interface"
     },

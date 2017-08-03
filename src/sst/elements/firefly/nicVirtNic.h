@@ -47,10 +47,10 @@ class VirtNic {
                 new NicRespEvent( NicRespEvent::DmaRecv, src_vNic,
                         src, tag, len, key ) );
         }
-        void notifyNeedRecv( int src_vNic, int src, int tag, size_t len ) {
+        void notifyNeedRecv( int src_vNic, int src, size_t len ) {
             m_toCoreLink->send(0,
                 new NicRespEvent( NicRespEvent::NeedRecv, src_vNic,
-                        src, tag, len ) );
+                        src, 0, len ) );
         }
         void notifySendDmaDone( void* key ) {
             m_toCoreLink->send(0,new NicRespEvent( NicRespEvent::DmaSend, key));
@@ -63,5 +63,9 @@ class VirtNic {
         }
         void notifyGetDone( void* key ) {
             m_toCoreLink->send(0, new NicRespEvent( NicRespEvent::Get, key ));
+        }
+
+        void notifyShmem( NicShmemRespEvent::Type type, NicShmemRespEvent::Callback callback, uint64_t value = 0 ) {
+            m_toCoreLink->send(0, new NicShmemRespEvent( type, callback, value ));
         }
     };

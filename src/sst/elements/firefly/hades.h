@@ -42,6 +42,7 @@ class Hades : public OS
     ~Hades();
     virtual void _componentInit(unsigned int phase );
     virtual void _componentSetup();
+    virtual void finish();
 
     int getNid();
     int getNumNids();
@@ -63,17 +64,19 @@ class Hades : public OS
     }
 
     VirtNic*            getNic() { return m_virtNic; }
-    Info*                getInfo() { return &m_info; }
+    Info*               getInfo() { return &m_info; }
+    FunctionSM&         getFunctionSM() { return *m_functionSM; }
+    ProtocolAPI&        getMsgStack() { return *m_proto; }
 
   private:
 
     VirtNic*            m_virtNic;
     Info                m_info;
-
-  public:
     Output              m_dbg;
 
   private:
+    FunctionSM*                          m_functionSM;
+    ProtocolAPI*                         m_proto;
     Thornhill::DetailedCompute*          m_detailedCompute;
     Thornhill::MemoryHeapLink*           m_memHeapLink;
     NodePerf*                            m_nodePerf;

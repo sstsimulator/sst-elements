@@ -74,17 +74,35 @@ libfirefly_la_SOURCES = \
 	hades.cc \
 	hadesMP.cc \
 	hadesMP.h \
+	hadesSHMEM.cc \
+	hadesSHMEM.h \
 	merlinEvent.h \
 	virtNic.h \
 	virtNic.cc \
 	nic.h \
 	nic.cc \
+	nicEvents.h \
 	nicVirtNic.h \
+	nicShmem.h \
+	nicShmem.cc \
 	nicArbitrateDMA.h \
 	nicSendMachine.cc \
 	nicSendMachine.h \
 	nicRecvMachine.cc \
 	nicRecvMachine.h \
+	nicEntryBase.h \
+	nicEntryBase.cc \
+	nicRecvEntry.h \
+	nicShmemRecvMachine.h \
+	nicSendEntry.h \
+	nicShmemSendEntry.h \
+	nicShmemSendEntry.cc \
+	nicMsgStream.cc \
+	nicMsgStream.h \
+	nicRdmaStream.cc \
+	nicRdmaStream.h \
+	nicShmemStream.cc \
+	nicShmemStream.h \
 	nodePerf.h
 
 libfirefly_la_LDFLAGS = -module -avoid-version
