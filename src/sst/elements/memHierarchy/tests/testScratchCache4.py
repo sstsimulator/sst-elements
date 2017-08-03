@@ -71,6 +71,7 @@ comp_l2_0 = sst.Component("l2_0", "memHierarchy.Cache")
 comp_l2_0.addParams({
     "debug" : debugL2 | debugCore0,
     "debug_level" : 10,
+    "debug_addr" : "0x1340",
     "cache_frequency" : core_clock,
     "cache_size" : "16KiB",
     "access_latency_cycles" : 5,
@@ -80,7 +81,7 @@ comp_l2_0.addParams({
     "replacement_policy" : "mru",
     "memNIC.network_address" : 0,
     "memNIC.network_bw" : "80GiB/s",
-    "memNIC.class" : 1,
+    "memNIC.group" : 1,
 })
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.ScratchCPU")
 comp_cpu2.addParams({
@@ -138,6 +139,7 @@ comp_l2_1 = sst.Component("l2_1", "memHierarchy.Cache")
 comp_l2_1.addParams({
     "debug" : debugL2 | debugCore1,
     "debug_level" : 10,
+    "debug_addr" : "0x1340",
     "cache_frequency" : core_clock,
     "cache_size" : "16KiB",
     "access_latency_cycles" : 5,
@@ -147,24 +149,26 @@ comp_l2_1.addParams({
     "replacement_policy" : "nmru",
     "memNIC.network_address" : 1,
     "memNIC.network_bw" : "80GiB/s",
-    "memNIC.class" : 1,
+    "memNIC.group" : 1,
 })
 comp_dir = sst.Component("dir", "memHierarchy.DirectoryController")
 comp_dir.addParams({
     "debug" : debugDir | debugCore0 | debugCore1,
     "debug_level" : 10,
+    "debug_addr" : "0x1340",
     "entry_cache_size" : 1024,
     "coherence_protocol" : "MESI",
     "memNIC.network_address" : 2,
     "memNIC.network_bw" : "80GiB/s",
     "memNIC.addr_range_start" : 0,
-    "memNIC.class" : 2,
+    "memNIC.group" : 2,
     "net_memory_name" : "scratch"
 })
 comp_scratch = sst.Component("scratch", "memHierarchy.Scratchpad")
 comp_scratch.addParams({
     "debug" : debugScratch | debugCore0 | debugCore1,
     "debug_level" : 10,
+    "debug_addr" : "0x1340",
     "clock" : core_clock,
     "size" : "64KiB",
     "scratch_line_size" : 64,
@@ -175,7 +179,7 @@ comp_scratch.addParams({
     "backendConvertor.backend.access_time" : "10ns",
     "memNIC.network_bw" : "50GB/s",
     "memNIC.network_address" : 3,
-    "memNIC.class" : 3,
+    "memNIC.group" : 3,
 })
 comp_net = sst.Component("network", "merlin.hr_router")
 comp_net.addParams({
@@ -204,7 +208,7 @@ comp_memory0.addParams({
       "memNIC.addr_range_start" : 0,
       "memNIC.interleave_size" : "128B",
       "memNIC.interleave_step" : "256B",
-      "memNIC.class" : 4,
+      "memNIC.group" : 4,
 })
 comp_memory1 = sst.Component("memory1", "memHierarchy.MemController")
 comp_memory1.addParams({
@@ -219,7 +223,7 @@ comp_memory1.addParams({
       "memNIC.addr_range_start" : 128,
       "memNIC.interleave_size" : "128B",
       "memNIC.interleave_step" : "256B",
-      "memNIC.class" : 4,
+      "memNIC.group" : 4,
 })
 
 comp_bus_0 = sst.Component("bus_0", "memHierarchy.Bus")

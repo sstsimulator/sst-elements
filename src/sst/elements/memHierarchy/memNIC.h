@@ -70,7 +70,7 @@ public:
     void sendInitData(MemEventInit * ev);
     MemEventInit* recvInitData();
     void finish() { link_control->finish(); }
-    void setup() { link_control->setup(); }
+    void setup() { link_control->setup(); MemLinkBase::setup(); }
 
     // Router events
     class MemRtrEvent : public SST::Event {

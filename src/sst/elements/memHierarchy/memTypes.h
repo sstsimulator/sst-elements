@@ -228,6 +228,14 @@ struct MemRegion {
         return (start < o.start);
     }
 
+    bool operator==(const MemRegion &o) const {
+        return (start == o.start && end == o.end);
+    }
+
+    bool operator!=(const MemRegion &o) const {
+        return !(*this == o);
+    }
+
     std::string toString() const {
         std::ostringstream str;
         str << "Start: " << start << " End: " << end;

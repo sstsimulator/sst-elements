@@ -50,7 +50,10 @@ public:
         MemRegion region;
 
         bool operator<(const EndpointInfo &o) const {
-            return (region < o.region);
+            if (region != o.region)
+                return region < o.region;
+            else 
+                return name < o.name;
         }
     };
     
@@ -105,7 +108,16 @@ public:
     virtual void setRecvHandler(Event::HandlerBase * handler) { recvHandler = handler; }
     virtual void init(unsigned int phase) { }
     virtual void finish() { }
-    virtual void setup() { }
+    virtual void setup() { 
+#ifdef __SST_DEBUG_OUTPUT__
+        stringstream srcs;
+        srcs << getName() + " (MemLinkBase) sources are: ";
+        for (std::set<EndpointInfo>::iterator it = sourceEndpointInfo.begin(); it != sourceEndpointInfo.end(); it++) {
+            srcs << it->name << " ";
+        }
+        dbg.debug(_L10_, "%s\n", srcs.str().c_str());
+#endif
+    }
 
     /* Send and receive functions for MemLink */
     virtual void sendInitData(MemEventInit * ev) =0;

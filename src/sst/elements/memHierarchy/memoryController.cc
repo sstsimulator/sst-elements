@@ -115,7 +115,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
 
     if (isPortConnected("direct_link")) {
-        Params linkParams = params.find_prefix_params("ulink.");
+        Params linkParams = params.find_prefix_params("cpulink.");
         linkParams.insert("port", "direct_link");
         linkParams.insert("latency", link_lat, false);
         linkParams.insert("accept_region", "1", false);

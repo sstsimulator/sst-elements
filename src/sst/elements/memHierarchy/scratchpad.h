@@ -43,6 +43,8 @@ public:
 
     // Output for debug info
     Output dbg;
+    Addr DEBUG_ADDR;
+    bool DEBUG_ALL;
 
     // Output for warnings, etc.
     Output out;

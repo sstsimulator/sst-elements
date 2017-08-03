@@ -77,16 +77,16 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     // These are technically nic params and we're borrowing them
     addrRangeStart  = params.find<uint64_t>("addr_range_start", 0, found);
     if (!found) addrRangeStart = params.find<uint64_t>("memNIC.addr_range_start", 0, found);
-    if (!found) addrRangeStart = params.find<uint64_t>("dlink.addr_range_start", 0, found);
+    if (!found) addrRangeStart = params.find<uint64_t>("memlink.addr_range_start", 0, found);
     addrRangeEnd    = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
     if (!found) addrRangeEnd = params.find<uint64_t>("memNIC.addr_range_end", (uint64_t) - 1, found);
-    if (!found) addrRangeEnd = params.find<uint64_t>("dlink.addr_range_end", (uint64_t) - 1, found);
+    if (!found) addrRangeEnd = params.find<uint64_t>("memlink.addr_range_end", (uint64_t) - 1, found);
     string ilSize   = params.find<std::string>("interleave_size", "0B", found);
     if (!found) ilSize = params.find<std::string>("memNIC.interleave_size", "0B", found);
-    if (!found) ilSize = params.find<std::string>("dlink.interleave_size", "0B", found);
+    if (!found) ilSize = params.find<std::string>("memlink.interleave_size", "0B", found);
     string ilStep   = params.find<std::string>("interleave_step", "0B", found);
     if (!found) ilStep = params.find<std::string>("memNIC.interleave_step", "0B", found);
-    if (!found) ilStep = params.find<std::string>("dlink.interleave_step", "0B", found);
+    if (!found) ilStep = params.find<std::string>("memlink.interleave_step", "0B", found);
 
     memOffset       = params.find<uint64_t>("mem_addr_start", 0);
     string protstr  = params.find<std::string>("coherence_protocol", "MESI");
@@ -161,7 +161,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
     
         if (isPortConnected("memory")) {
-            Params memParams = params.find_prefix_params("dlink.");
+            Params memParams = params.find_prefix_params("memlink.");
             memParams.insert("port", "memory");
             memParams.insert("latency", "1ns");
             memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);
@@ -247,7 +247,6 @@ DirectoryController::~DirectoryController(){
 
 void DirectoryController::handlePacket(SST::Event *event){
     MemEventBase *evb = static_cast<MemEventBase*>(event);
-    MemEvent *ev = dynamic_cast<MemEvent*>(event);
     evb->setDeliveryTime(getCurrentSimTimeNano());
      
     if (!clockOn) {
@@ -271,8 +270,10 @@ void DirectoryController::handlePacket(SST::Event *event){
 
     }
     
-    if (ev->getCmd() == Command::GetSResp || ev->getCmd() == Command::GetXResp || ev->getCmd() == Command::FlushLineResp || ev->getCmd() == Command::ForceInv || ev->getCmd() == Command::FetchInv 
-            || ev->getCmd() == Command::AckPut) {
+    MemEvent *ev = static_cast<MemEvent*>(event);
+    dbg.debug(_L10_, "%s (Dir) HandlePacket for %s\n", getName().c_str(), ev->getBriefString().c_str());
+    if (ev->getCmd() == Command::GetSResp || ev->getCmd() == Command::GetXResp || ev->getCmd() == Command::FlushLineResp 
+            || ev->getCmd() == Command::ForceInv || ev->getCmd() == Command::FetchInv || ev->getCmd() == Command::AckPut) {
         handleMemoryResponse(event);
     } else {
         workQueue.push_back(ev);
@@ -286,14 +287,14 @@ inline void DirectoryController::profileRequestRecv(MemEvent * event, DirEntry *
     Command cmd = event->getCmd();
     switch (cmd) {
         case Command::GetX:
-        stat_GetXReqReceived->addData(1);
-        break;
+            stat_GetXReqReceived->addData(1);
+            break;
         case Command::GetSX:
-        stat_GetSXReqReceived->addData(1);
-        break;
+            stat_GetSXReqReceived->addData(1);
+            break;
         case Command::GetS:
-        stat_GetSReqReceived->addData(1);
-        break;
+            stat_GetSReqReceived->addData(1);
+            break;
     case Command::PutM:
         stat_PutMReqReceived->addData(1);
         break;
@@ -1227,7 +1228,7 @@ void DirectoryController::handleBackInv(MemEvent* ev) {
         }
 
         if (!inserted) {
-            mshrNACKRequest(ev);
+            mshrNACKRequest(ev, true);
             return;
         }
         if (conflict) return; // stall until conflicting request finishes
@@ -1574,10 +1575,13 @@ void DirectoryController::getDirEntryFromMemory(DirEntry * entry) {
 
 
 
-void DirectoryController::mshrNACKRequest(MemEvent* ev) {
+void DirectoryController::mshrNACKRequest(MemEvent* ev, bool mem) {
     MemEvent * nackEv = ev->makeNACKResponse(ev, getCurrentSimTimeNano());
     profileResponseSent(nackEv);
-    sendEventToCaches(nackEv, timestamp + 1);
+    if (mem) 
+        memMsgQueue.insert(std::make_pair(timestamp + 1, nackEv));
+    else
+        sendEventToCaches(nackEv, timestamp + 1);
 }
 
 void DirectoryController::printStatus(Output &out){
@@ -1806,6 +1810,7 @@ void DirectoryController::sendEventToMem(MemEventBase *ev) {
 
 bool DirectoryController::isRequestAddressValid(Addr addr){
     if (!memLink) return network->isRequestAddressValid(addr);
+    else return memLink->isRequestAddressValid(addr);
 
     if(0 == interleaveSize) {
         return (addr >= addrRangeStart && addr < addrRangeEnd);
@@ -1939,7 +1944,7 @@ void DirectoryController::finish(void){
 
 void DirectoryController::setup(void){
     network->setup();
-
+    
     numTargets = network->getSources()->size();
     
     if(0 == numTargets) dbg.fatal(CALL_INFO,-1,"%s, Error: Did not find any caches during init\n",getName().c_str());

@@ -73,8 +73,8 @@ comp_memory.addParams({
       "printStats" : "1",
       "clock" : "1GHz",
       "backend.access_time" : "100 ns",
-      "ulink.debug" : 1,
-      "ulink.debug_level" : 10,
+      "cpulink.debug" : 1,
+      "cpulink.debug_level" : 10,
 })
 
 # Enable statistics

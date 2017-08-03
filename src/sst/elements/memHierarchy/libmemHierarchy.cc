@@ -1389,12 +1389,12 @@ static const ElementInfoParam memNIC_params[] = {
     { "memNIC.network_input_buffer_size",   "(string) Size of input buffer", "1KiB"},
     { "memNIC.network_output_buffer_size",  "(string) Size of output buffer", "1KiB"},
     { "memNIC.min_packet_size",             "(string) Size of a packet without a payload (e.g., control message size)", "8B"},
-    { "memNIC.accept_region",               "Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},
-    { "memNIC.port",                        "Set by parent component. Name of port this NIC sits on.", ""},
-    { "memNIC.addr_range_start",            "Set by parent component. Lowest address handled by the parent.", "0"},
-    { "memNIC.addr_range_end",              "Set by parent component. Highest address handled by the parent.", "uint64_t-1"},
-    { "memNIC.interleave_size",             "Set by parent component. Size of interleaved chunks.", "0B"},
-    { "memNIC.interleave_step",             "Set by parent component. Distance between interleaved chunks.", "0B"},
+    { "memNIC.accept_region",               "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},
+    { "memNIC.port",                        "(string) Set by parent component. Name of port this NIC sits on.", ""},
+    { "memNIC.addr_range_start",            "(uint) Set by parent component. Lowest address handled by the parent.", "0"},
+    { "memNIC.addr_range_end",              "(uint) Set by parent component. Highest address handled by the parent.", "uint64_t-1"},
+    { "memNIC.interleave_size",             "(uint) Set by parent component. Size of interleaved chunks.", "0B"},
+    { "memNIC.interleave_step",             "(uint) Set by parent component. Distance between interleaved chunks.", "0B"},
     { NULL, NULL, NULL }
 };
 
@@ -1408,16 +1408,16 @@ static SubComponent* create_MemLink(Component * comp, Params &params) {
 }
 
 static const ElementInfoParam memLink_params[] = {
-    { "{u|d}link.latency",          "Optional, string - Link latency. Prefix 'ulink' for up-link towards CPU or 'dlink' for down-link towards memory", "50ps"},
-    { "{u|d}link.debug",            "Optional, int - Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    { "{u|d}link.debug_level",      "Optional, int - Debug verbosity level. Between 0 and 10", "0"},
-    { "{u|d}link.debug_addr",       "Optional, int - Address to debug. If not specified or set to -1, debug output for all addresses will be printed", "-1"},
-    { "{u|d}link.accept_region",    "Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},
-    { "{u|d}link.port",             "Set by parent component. Name of port this memLink sits on.", ""},
-    { "{u|d}link.addr_range_start", "Set by parent component. Lowest address handled by the parent.", "0"},
-    { "{u|d}link.addr_range_end",   "Set by parent component. Highest address handled by the parent.", "uint64_t-1"},
-    { "{u|d}link.interleave_size",  "Set by parent component. Size of interleaved chunks.", "0B"},
-    { "{u|d}link.interleave_step",  "Set by parent component. Distance between interleaved chunks.", "0B"},
+    { "{cpu|mem}link.latency",          "(string) Link latency. Prefix 'cpulink' for up-link towards CPU or 'memlink' for down-link towards memory", "50ps"},
+    { "{cpu|mem}link.debug",            "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    { "{cpu|mem}link.debug_level",      "(int) Debug verbosity level. Between 0 and 10", "0"},
+    { "{cpu|mem}link.debug_addr",       "(int) Address to debug. If not specified or set to -1, debug output for all addresses will be printed", "-1"},
+    { "{cpu|mem}link.accept_region",    "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},
+    { "{cpu|mem}link.port",             "(string) Set by parent component. Name of port this memLink sits on.", ""},
+    { "{cpu|mem}link.addr_range_start", "(uint) Set by parent component. Lowest address handled by the parent.", "0"},
+    { "{cpu|mem}link.addr_range_end",   "(uint) Set by parent component. Highest address handled by the parent.", "uint64_t-1"},
+    { "{cpu|mem}link.interleave_size",  "(string) Set by parent component. Size of interleaved chunks.", "0B"},
+    { "{cpu|mem}link.interleave_step",  "(string) Set by parent component. Distance between interleaved chunks.", "0B"},
     { NULL, NULL, NULL }
 };
 
@@ -1562,8 +1562,8 @@ static SubComponent* create_MemNetBridge(Component* comp, Params& params){
 }
 
 static const ElementInfoParam bridge_params[] = {
-    {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
+    {"debug",                   "(int) Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",             "(int) Debugging level. Between 0 and 10", "0"},
     {NULL, NULL}
 };
 

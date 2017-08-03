@@ -214,7 +214,7 @@ class DirectoryController : public Component {
     void getDirEntryFromMemory(DirEntry * entry);
 
     /** NACK incoming request because there are no available MSHRs */
-    void mshrNACKRequest(MemEvent * event);
+    void mshrNACKRequest(MemEvent * event, bool toMem = false);
 
     /** Find link id by name.  Create map entry if not found */
     uint32_t node_id(const std::string &name);

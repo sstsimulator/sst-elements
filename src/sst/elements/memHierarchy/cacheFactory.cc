@@ -434,23 +434,24 @@ void Cache::configureLinks(Params &params) {
 
     Params nicParams = params.find_prefix_params("memNIC." );
 
-    Params dlink = params.find_prefix_params("dlink.");
-    dlink.insert("port", "low_network_0");
+    Params memlink = params.find_prefix_params("memlink.");
+    memlink.insert("port", "low_network_0");
     
-    Params ulink = params.find_prefix_params("ulink.");
-    ulink.insert("port", "high_network_0");
+    Params cpulink = params.find_prefix_params("cpulink.");
+    cpulink.insert("port", "high_network_0");
 
     /* Finally configure the links */
     if (highNetExists && lowNetExists) {
         
         d_->debug(_INFO_,"Configuring cache with a direct link above and below\n");
         
-        linkDown_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, dlink));
+        linkDown_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, memlink));
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
-        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, ulink));
+        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-    
+        clockLink_ = false; /* Currently only linkDown_ may need to be clocked */
+
     } else if (highNetExists && lowCacheExists) {
             
         d_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a cache below\n");
@@ -463,8 +464,9 @@ void Cache::configureLinks(Params &params) {
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         
         // Configure high link
-        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, ulink));
+        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
     
     } else if (highNetExists && lowDirExists) {
             
@@ -479,8 +481,9 @@ void Cache::configureLinks(Params &params) {
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
         // Configure high link
-        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, ulink));
+        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
 
     } else {    // lowDirExists
         
@@ -528,6 +531,7 @@ void Cache::configureLinks(Params &params) {
 
         // Configure high link
         linkUp_ = linkDown_;
+        clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
     }
 
     // Configure self link for prefetch/listener events
