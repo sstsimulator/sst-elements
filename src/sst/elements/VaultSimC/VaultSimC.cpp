@@ -93,18 +93,18 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
 
     // setup backing store
     size_t memSize = MEMSIZE;
-    memBuffer = (uint8_t*)mmap(NULL, memSize, PROT_READ|PROT_WRITE, 
+    /*memBuffer = (uint8_t*)mmap(NULL, memSize, PROT_READ|PROT_WRITE, 
                                MAP_PRIVATE|MAP_ANON, -1, 0);
     if ( !memBuffer ) {
         dbg.fatal(CALL_INFO, -1, "Unable to MMAP backing store for Memory\n");
     }
-
+*/
     memOutStat = registerStatistic<uint64_t>("Mem_Outstanding","1");
 }
 
     int VaultSimC::Finish() 
 {
-    munmap(memBuffer, MEMSIZE);
+    //munmap(memBuffer, MEMSIZE);
 
     return 0;
 }
@@ -122,10 +122,10 @@ void VaultSimC::init(unsigned int phase)
                 uint32_t chunkSize = (1 << VAULT_SHIFT);
                 if (me->getSize() > chunkSize)
                     dbg.fatal(CALL_INFO, -1, "vault got too large init\n");
-                for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
+                /*for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
                     memBuffer[getInternalAddress(me->getAddr() + i)] =
                         me->getPayload()[i];
-                }
+                }*/
             } else {
                 dbg.fatal(CALL_INFO, -1, "vault got bad init command\n");
             }

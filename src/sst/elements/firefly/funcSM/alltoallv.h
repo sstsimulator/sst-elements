@@ -67,7 +67,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
     }
 
     unsigned char* sendChunkPtr( MP::RankID rank ) {
-        unsigned char* ptr = (unsigned char*) m_event->sendbuf.backing;
+        unsigned char* ptr = (unsigned char*) m_event->sendbuf.getBacking();
         if ( ! ptr ) return NULL;
         if ( m_event->sendcnts ) {
             ptr += ((int*)m_event->senddispls)[rank];
@@ -94,7 +94,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
     }
 
     unsigned char* recvChunkPtr( MP::RankID rank ) {
-        unsigned char* ptr = (unsigned char*) m_event->recvbuf.backing;
+        unsigned char* ptr = (unsigned char*) m_event->recvbuf.getBacking();
         if ( ! ptr ) return NULL;
         if ( m_event->recvcnts ) {
             ptr += ((int*)m_event->recvdispls)[rank];

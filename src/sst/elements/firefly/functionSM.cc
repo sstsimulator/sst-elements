@@ -157,6 +157,17 @@ void FunctionSM::enter( )
     m_toMeLink->send( NULL );
 }
 
+void FunctionSM::start(int type, Callback callback,  SST::Event* e)
+{
+    assert( e );
+    m_retFunc = NULL;
+    m_callback = callback;
+    assert( ! m_sm );
+    m_sm = m_smV[ type ];
+    m_dbg.verbose(CALL_INFO,3,0,"%s enter\n",m_sm->name().c_str());
+    m_fromDriverLink->send( m_sm->enterLatency(), e );
+}
+
 void FunctionSM::start( int type, MP::Functor* retFunc, SST::Event* e )
 {
     assert( e );
@@ -191,8 +202,12 @@ void FunctionSM::processRetval(  Retval& retval )
 {
     if ( retval.isExit() ) {
         m_dbg.verbose(CALL_INFO,3,0,"Exit %" PRIu64 "\n", retval.value() );
-        DriverEvent* x = new DriverEvent( m_retFunc, retval.value() );
-        m_toDriverLink->send( m_sm->returnLatency(), x ); 
+        if ( m_retFunc ) {
+            DriverEvent* x = new DriverEvent( m_retFunc, retval.value() );
+            m_toDriverLink->send( m_sm->returnLatency(), x ); 
+        } else {
+            m_callback();
+        }
     } else if ( retval.isDelay() ) {
         m_dbg.verbose(CALL_INFO,3,0,"Delay %" PRIu64 "\n", retval.value() );
         m_toMeLink->send( retval.value(), NULL ); 

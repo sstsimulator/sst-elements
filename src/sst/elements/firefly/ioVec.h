@@ -28,7 +28,6 @@ struct IoVec {
     IoVec( const Hermes::MemAddr& _addr, size_t _size ) : 
         addr( _addr ), len( _size ) {}
 	Hermes::MemAddr addr;
-    //void*  ptr;
     size_t len;
 };
 }

@@ -73,8 +73,8 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
         m_dbg.verbose(CALL_INFO,1,0,"count=%d irecv src=%d\n", 
                                                         m_count, rank );
 
-		addr.simVAddr = 1; 
-		addr.backing = recvChunkPtr(rank); 
+		addr.setSimVAddr( 1 ); 
+		addr.setBacking( recvChunkPtr(rank) );
         proto()->irecv( addr, recvChunkSize(rank), 
                         rank, genTag(), m_event->group, &m_recvReq ); 
         m_state = Send;
@@ -87,8 +87,8 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
                                                         m_count, rank );
 
 		
-		addr.simVAddr = 1; 
-		addr.backing = sendChunkPtr(rank); 
+		addr.setSimVAddr( 1 ); 
+		addr.setBacking( sendChunkPtr(rank) ); 
         proto()->send( addr, sendChunkSize(rank), 
                                             rank, genTag(), m_event->group ); 
         m_state = WaitRecv;

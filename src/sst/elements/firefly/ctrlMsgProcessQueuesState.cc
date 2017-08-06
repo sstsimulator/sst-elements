@@ -169,14 +169,14 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
     IoVec hdrVec;   
     hdrVec.len = sizeof( req->hdr() ); 
 
-    hdrVec.addr.simVAddr = m_simVAddrs->alloc( hdrVec.len );
+    hdrVec.addr.setSimVAddr( m_simVAddrs->alloc( hdrVec.len ) );
 
     if ( length <= shortMsgLength() ) {
-		hdrVec.addr.backing = malloc( hdrVec.len );
-        hdrPtr = hdrVec.addr.backing;
-        memcpy( hdrVec.addr.backing, &req->hdr(), hdrVec.len );
+		hdrVec.addr.setBacking( malloc( hdrVec.len ) );
+        hdrPtr = hdrVec.addr.getBacking();
+        memcpy( hdrVec.addr.getBacking(), &req->hdr(), hdrVec.len );
     } else {
-        hdrVec.addr.backing = &req->hdr(); 
+        hdrVec.addr.setBacking( &req->hdr() ); 
     }
 
     std::vector<IoVec> vec;
@@ -202,12 +202,12 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
         std::vector<IoVec> hdrVec;
         hdrVec.resize(1);
         hdrVec[0].len = sizeof( info->hdr ); 
-        hdrVec[0].addr.simVAddr = m_simVAddrs->alloc( hdrVec[0].len ); 
-        hdrVec[0].addr.backing = &info->hdr; 
+        hdrVec[0].addr.setSimVAddr( m_simVAddrs->alloc( hdrVec[0].len ) ); 
+        hdrVec[0].addr.setBacking( &info->hdr ); 
         
         Callback2* callback = new Callback2;
         *callback = std::bind( 
-            &ProcessQueuesState::dmaRecvFiniGI, this, info, hdrVec[0].addr.simVAddr, 
+            &ProcessQueuesState::dmaRecvFiniGI, this, info, hdrVec[0].addr.getSimVAddr(), 
             std::placeholders::_1,
             std::placeholders::_2,
             std::placeholders::_3
@@ -218,7 +218,7 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
     }
 
     VoidFunction* callback = new VoidFunction;
-    *callback = std::bind( &ProcessQueuesState::pioSendFiniVoid, this, hdrPtr, hdrVec.addr.simVAddr );
+    *callback = std::bind( &ProcessQueuesState::pioSendFiniVoid, this, hdrPtr, hdrVec.addr.getSimVAddr() );
 
     m_nic->pioSend( nid, ShortMsgQ, vec, callback);
 
@@ -235,8 +235,8 @@ void ProcessQueuesState::processSendLoop( _CommReq* req )
 
     IoVec hdrVec;
     hdrVec.len = sizeof( req->hdr() );
-    hdrVec.addr.simVAddr = 1; //m_simVAddrs->alloc( hdrVec.len );
-    hdrVec.addr.backing = &req->hdr();
+    hdrVec.addr.setSimVAddr( 1 ); //m_simVAddrs->alloc( hdrVec.len );
+    hdrVec.addr.setBacking( &req->hdr() );
 
     std::vector<IoVec> vec;
     vec.insert( vec.begin(), hdrVec );
@@ -772,12 +772,12 @@ void ProcessQueuesState::processLongGetFini0( Stack* stack )
     IoVec hdrVec;   
     CtrlHdr* hdr = new CtrlHdr;
     hdrVec.len = sizeof( *hdr ); 
-    hdrVec.addr.simVAddr = m_simVAddrs->alloc(hdrVec.len);
-    hdrVec.addr.backing = hdr; 
+    hdrVec.addr.setSimVAddr( m_simVAddrs->alloc(hdrVec.len) );
+    hdrVec.addr.setBacking( hdr ); 
 
     VoidFunction* callback = new VoidFunction;
     *callback = std::bind( 
-                &ProcessQueuesState::pioSendFiniCtrlHdr, this, hdr, hdrVec.addr.simVAddr ); 
+                &ProcessQueuesState::pioSendFiniCtrlHdr, this, hdr, hdrVec.addr.getSimVAddr() ); 
 
     std::vector<IoVec> vec;
     vec.insert( vec.begin(), hdrVec );
@@ -799,12 +799,9 @@ void ProcessQueuesState::processLongAck( GetInfo* info )
     return;
 }
 
-void ProcessQueuesState::needRecv( int nid, int tag, size_t length  )
+void ProcessQueuesState::needRecv( int nid, size_t length )
 {
-    dbg().verbose(CALL_INFO,1,1,"nid=%d tag=%#x length=%lu\n",nid,tag,length);
-    if ( tag != (uint32_t) ShortMsgQ ) {
-        dbg().fatal(CALL_INFO,0,"nid=%d tag=%#x length=%lu\n",nid,tag,length);
-    }
+    dbg().verbose(CALL_INFO,1,1,"nid=%d length=%lu\n",nid,length);
 
     ++m_needRecv;
     runInterruptCtx();
@@ -822,7 +819,7 @@ void ProcessQueuesState::loopHandler( int srcCore, void* key )
 void ProcessQueuesState::loopHandler( int srcCore, std::vector<IoVec>& vec, void* key )
 {
         
-    MatchHdr* hdr = (MatchHdr*) vec[0].addr.backing;
+    MatchHdr* hdr = (MatchHdr*) vec[0].addr.getBacking();
 
     dbg().verbose(CALL_INFO,1,2,"req: srcCore=%d key=%p vec.size()=%lu srcRank=%d\n",
                                                     srcCore, key, vec.size(), hdr->rank);
@@ -908,8 +905,9 @@ void ProcessQueuesState::copyIoVec(
             dbg().verbose(CALL_INFO,3,1,"copied=%lu rV=%lu rP=%lu\n",
                                                         copied,rV,rP);
 
-            if ( dst[rV].addr.backing && src[i].addr.backing ) {
-                ((char*)dst[rV].addr.backing)[rP] = ((char*)src[i].addr.backing)[j];
+            if ( dst[rV].addr.getBacking() && src[i].addr.getBacking() ) {
+                ((char*)dst[rV].addr.getBacking())[rP] = 
+                            ((char*)src[i].addr.getBacking())[j];
             }
             ++copied;
             ++rP;
