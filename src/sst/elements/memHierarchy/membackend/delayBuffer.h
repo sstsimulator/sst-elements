@@ -33,6 +33,7 @@ public:
     void finish();
     virtual bool clock(Cycle_t cycle);
     virtual const std::string& getClockFreq() { return backend->getClockFreq(); }
+    virtual bool isClocked() { return backend->isClocked(); }
 
 private:
     void handleMemReponse( ReqId id ) {

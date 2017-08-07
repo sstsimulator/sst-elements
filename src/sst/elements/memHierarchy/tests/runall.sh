@@ -62,6 +62,10 @@ do
     esac
 done
 
+if [ -z "$arr" ]; then
+    arr+=( "${sdl_arr[@]}" "${bk_arr[@]}" "${ca_arr[@]}" "${scr_arr[@]}" )
+fi
+
 for i in "${arr[@]}"
 do
     echo "Running $i"

@@ -53,6 +53,10 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
     if ( m_backendRequestWidth > m_frontendRequestWidth ) {
         m_backendRequestWidth = m_frontendRequestWidth;
     }
+    
+    m_clockBackend = m_backend->isClocked();
+    
+    Debug(_L3_, "%s clock backend: %d\n", getName().c_str(), m_clockBackend);
 
     stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
     stat_GetSXReqReceived  = registerStatistic<uint64_t>("requests_received_GetSX");
@@ -66,7 +70,7 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
 
     stat_cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
     stat_cyclesAttemptIssueButRejected = registerStatistic<uint64_t>( "cycles_attempted_issue_but_rejected" );
-    stat_totalCycles     = registerStatistic<uint64_t>( "total_cycles" );
+    stat_totalCycles = registerStatistic<uint64_t>( "total_cycles" );;        
 }
 
 void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
@@ -85,10 +89,7 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
 }
 
 bool MemBackendConvertor::clock(Cycle_t cycle) {
-
-
     m_cycleCount++;
-    doClockStat(); // TODO do we really need this? It's counted in other calls like 'stat_outstandingReqs' but not as obviously
 
     int reqsThisCycle = 0;
     while ( !m_requestQueue.empty()) {
@@ -118,7 +119,8 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
 
     stat_outstandingReqs->addData( m_pendingRequests.size() );
 
-    bool unclock = m_backend->clock(cycle);
+    if (m_clockBackend)
+        bool unclock = m_backend->clock(cycle);
 
     return false;
 }
@@ -173,6 +175,7 @@ void MemBackendConvertor::sendResponse( SST::Event::id_type id, uint32_t flags )
 }
 
 void MemBackendConvertor::finish(void) {
+    stat_totalCycles->addData(m_cycleCount);        
     m_backend->finish();
 }
 

@@ -27,7 +27,8 @@ public:
     SimpleDRAM();
     SimpleDRAM(Component *comp, Params &params);
     bool issueRequest( ReqId, Addr, bool, unsigned );
-    
+    bool isClocked() { return false; }
+
     typedef enum {OPEN, CLOSED, DYNAMIC, TIMEOUT } RowPolicy;
 
 private:

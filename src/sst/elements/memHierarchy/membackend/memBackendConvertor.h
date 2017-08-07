@@ -74,6 +74,7 @@ class MemBackendConvertor : public SubComponent {
     virtual bool clock( Cycle_t cycle );
     virtual void handleMemEvent(  MemEvent* );
     virtual uint32_t getRequestWidth();
+    virtual bool isBackendClocked() { return m_clockBackend; }
 
     virtual const std::string& getRequestor( ReqId reqId ) { 
         uint32_t id = MemReq::getBaseId(reqId);
@@ -102,6 +103,8 @@ class MemBackendConvertor : public SubComponent {
 
     MemBackend* m_backend;
     uint32_t    m_backendRequestWidth;
+
+    bool m_clockBackend;
 
   private:
     virtual bool issue(MemReq*) = 0;
