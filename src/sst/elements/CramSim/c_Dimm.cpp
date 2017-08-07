@@ -117,7 +117,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	Statistic<uint64_t> *l_totalRowHits = registerStatistic<uint64_t>("totalRowHits");
 	for (int l_i = 0; l_i != m_numBanks; ++l_i) {
-		c_Bank* l_entry = new c_Bank(x_params);
+		c_Bank* l_entry = new c_Bank(x_params,l_i);
 		m_banks.push_back(l_entry);
 
 		std::string l_statName;
@@ -162,6 +162,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 c_Dimm::~c_Dimm() {
 
+
 }
 
 c_Dimm::c_Dimm() :
@@ -191,8 +192,6 @@ bool c_Dimm::clockTic(SST::Cycle_t) {
 			m_cmdResQ.push_back(l_resPtr);
 		}
 	}
-
-//	printQueues();
 
 	sendResponse();
 

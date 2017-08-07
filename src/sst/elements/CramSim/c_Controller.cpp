@@ -373,7 +373,7 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
         }
 
         delete l_cmdResEventPtr->m_payload;         //now, free the memory space allocated to the commands for a transaction
-        //delete l_cmdResEventPtr;
+        delete l_cmdResEventPtr;
 
     } else {
         std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"

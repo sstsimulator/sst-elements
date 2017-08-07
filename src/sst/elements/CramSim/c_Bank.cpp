@@ -46,7 +46,7 @@ using namespace SST::n_Bank;
 
 unsigned c_Bank::k_banks = 0;
 
-c_Bank::c_Bank(SST::Params& x_params) {
+c_Bank::c_Bank(SST::Params& x_params,unsigned x_bankId) {
 	// read params here
 
 /*	k_nRC = (uint32_t)x_params.find<uint32_t>("nRC", 55, l_found);
@@ -263,8 +263,11 @@ c_Bank::c_Bank(SST::Params& x_params) {
 
 	m_cmd = nullptr;
 
-	m_bankNum = k_banks;
-	k_banks++;
+	/*--static variable makes an error in multi-lane configuration.
+	    so, fixed to set the bank id with an input argument --*/
+	//m_bankNum = k_banks;
+	//k_banks++;
+	m_bankNum = x_bankId;
 
 
 	m_ACTCmdsReceived = 0;

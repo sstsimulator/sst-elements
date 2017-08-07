@@ -4,12 +4,8 @@ import time
 import sys
 
 
-def run(sstParams):
+def run(osCmd):
 
-	sstCmd = "sst --lib-path=.libs/ ./tests/test_txngen.py --model-options=\""
-#	sstCmd = "sst --lib-path=/home/seokin/workspace/sst/src/sst-elements-0619/src/sst/elements/CramSim/.libs/ ./tests/test_txngen.py --model-options=\""
-	# run sst
-	osCmd = sstCmd + sstParams
 	print osCmd
 
 	start=time.time()
@@ -20,31 +16,37 @@ def run(sstParams):
 	print "\n\n"
 
 
+stopAtCycle = "100000us"
+sysconfig = sys.argv[2]
+sel = sys.argv[1]
 
-stopAtCycle = "100us"
-config = sys.argv[2];
-sstParams = [
-	"--configfile=./%s --txngen=rand --stopAtCycle=%s\"" % (config,stopAtCycle),
-	"--configfile=./%s --txngen=seq  --stopAtCycle=%s\"" % (config,stopAtCycle),
-	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_1_R.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
-	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_2_R.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
-	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_4_R.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
-	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_5_R.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
-	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_6_R.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
-	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_1_W.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
-	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_2_W.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
-	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_4_W.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
-	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_5_W.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
-	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_6_W.trc --stopAtCycle=%s\"" % (config,stopAtCycle),
-	"--configfile=./%s --txngen=trace --tracefile=./traces/sst-CramSim-trace_verimem_1_RW.trc --stopAtCycle=%s\"" % (config,stopAtCycle)
-	]
+sstCmds = {
+	1:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=rand --stopAtCycle=%s\"" % (sysconfig,stopAtCycle), 									# basic test with random trace
+	2:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=seq  --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),										# basic test with seq trace
+	3:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_1_R.trc --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),			# basic test with verimem_1_R trace
+	4:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_2_R.trc --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),			# basic test with verimem_2_R trace
+	5:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_4_R.trc --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),			# basic test with verimem_4_R trace
+	6:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_5_R.trc --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),			# basic test with verimem_5_R trace
+	7:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_6_R.trc --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),			# basic test with verimem_6_R trace
+	8:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_1_W.trc --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),			# basic test with verimem_1_W trace
+	9:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_2_W.trc --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),			# basic test with verimem_2_W trace
+	10:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_4_W.trc --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),		# basic test with verimem_4_W trace
+	11:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_5_W.trc --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),		# basic test with verimem_5_W trace
+	12:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_6_W.trc --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),		# basic test with verimem_6_W trace
+	13:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s --txngen=trace --tracefile=../traces/sst-CramSim-trace_verimem_1_RW.trc --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),		# basic test with verimem_1_RW trace
+	14:"mpirun -np 2 sst --lib-path=../.libs ./test_multilanes_1lane.py --model-options=\"--configfile=%s --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),		# basic test with verimem_1_RW trace
+	15:"mpirun -np 3 sst --lib-path=../.libs ./test_multilanes_2lane.py --model-options=\"--configfile=%s --stopAtCycle=%s\"" % (sysconfig,stopAtCycle),		# basic test with verimem_1_RW trace
+	16:"mpirun -np 5 sst --lib-path=../.libs ./test_multilanes_4lane.py --model-options=\"--configfile=%s --stopAtCycle=%s\"" % (sysconfig,stopAtCycle)		# basic test with verimem_1_RW trace
+	}
 
-if(sys.argv[1] == "batch"):
-	for params in sstParams:
-		run(params)
+	
+
+if(sel == "batch"):
+	for sel in sstCmds:
+		run(sstCmds[sel])
 		time.sleep(1)
-elif(sys.argv[1].isdigit()):
-	opt=int(sys.argv[1])
-	run(sstParams[opt])
+elif(sel.isdigit()):
+	params=sstCmds[int(sel)]
+	run(params)
 else:
-	print "Param#1 should be \"batch\" or [0-%d]" % (len(sstParams)-1)
+	print "Param#1 should be \"batch\" or [0-%d]" % (len(sstCmds)-1)

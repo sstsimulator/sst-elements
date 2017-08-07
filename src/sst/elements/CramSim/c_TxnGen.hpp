@@ -47,23 +47,26 @@ namespace SST {
                 printf("Component Finished.\n");
             }
 
-        private:
+        protected:
             c_TxnGen(); //for serialization only
 
             uint64_t getNextAddress();
-            c_Transaction* createTxn();
+            void createTxn();
 
             //token chg to/from events
             void handleResEvent(SST::Event *ev); //handleEvent
 
-            void sendRequest(c_Transaction* x_txn); //send out txn req ptr to Transaction unit
+            bool sendRequest(); //send out txn req ptr to Transaction unit
             void readResponse(); //read from res q to output
 
             virtual bool clockTic(SST::Cycle_t); //called every cycle
 
+            std::deque<std::pair<c_Transaction*, uint64_t>> m_txnReqQ;
+            uint32_t m_numOutstandingReqs;
+            uint64_t m_numTxns;
             //Transaction info
             uint64_t m_prevAddress;
-            ulong m_seqNum;
+            uint32_t m_seqNum;
 
 
             //links
@@ -72,20 +75,24 @@ namespace SST {
             //params for internal microarcitecture
             uint32_t k_numTxnPerCycle;
             uint32_t k_maxOutstandingReqs;
+            uint64_t k_maxTxns;
             double k_readWriteTxnRatio;
             unsigned int k_randSeed;
 
             // used to keep track of the response types being received
-            unsigned long m_resReadCount;
-            unsigned long m_resWriteCount;
+            uint64_t m_resReadCount;
+            uint64_t m_resWriteCount;
 
-            std::map<uint64_t ,c_Transaction*> m_txnReqQ; //outgoing
+            uint64_t m_reqReadCount;
+            uint64_t m_reqWriteCount;
+
 
             // Statistics
             Statistic<uint64_t>* s_readTxnsCompleted;
             Statistic<uint64_t>* s_writeTxnsCompleted;
 
         };
+
 
     } // namespace n_Bank
 } // namespace SST

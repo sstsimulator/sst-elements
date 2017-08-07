@@ -26,6 +26,8 @@
 #include "c_TxnReqEvent.hpp"
 #include "c_TxnResEvent.hpp"
 
+
+
 using namespace SST;
 using namespace SST::n_Bank;
 
@@ -42,6 +44,8 @@ c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
     m_seqNum = 0;
     m_resReadCount = 0;
     m_resWriteCount = 0;
+    m_numOutstandingReqs = 0;
+    m_numTxns = 0;
 
     //ratio of read txn's : write txn's to generate
     k_readWriteTxnRatio
@@ -65,6 +69,14 @@ c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
                   << std::endl;
         exit(-1);
     }
+
+    k_maxTxns =  x_params.find<std::uint32_t>("maxTxns", 0, l_found);
+    if (!l_found) {
+        std::cout << "TxnGen:: maxTxns is missing... exiting"
+                  << std::endl;
+        exit(-1);
+    }
+
 
     // initialize the random seed
     std::string l_randSeedStr = x_params.find<std::string>("randomSeed","0", l_found);
@@ -109,47 +121,68 @@ c_TxnGen::c_TxnGen() :
     // for serialization only
 }
 
+
 uint64_t c_TxnGen::getNextAddress() {
     return (rand());
 }
 
-c_Transaction* c_TxnGen::createTxn() {
-    uint64_t addr = getNextAddress();
-    m_seqNum++;
 
-    double l_read2write = ((double) rand() / (RAND_MAX));
+void c_TxnGen::createTxn() {
 
-    //TODO: Default value for dataWidth?
-    c_Transaction* mTxn;
-    if (l_read2write < k_readWriteTxnRatio)
-        mTxn = new c_Transaction(m_seqNum, e_TransactionType::READ, addr, 1);
-    else
-        mTxn = new c_Transaction(m_seqNum, e_TransactionType::WRITE, addr, 1);
+    uint64_t l_cycle = Simulation::getSimulation()->getCurrentSimCycle();
 
-    m_prevAddress = addr;
-    return mTxn;
+    while(m_txnReqQ.size()<k_numTxnPerCycle)
+    {
+        uint64_t addr = getNextAddress();
+        m_seqNum++;
 
+        double l_read2write = ((double) rand() / (RAND_MAX));
+
+        //TODO: Default value for dataWidth?
+        c_Transaction* mTxn;
+        if (l_read2write < k_readWriteTxnRatio)
+            mTxn = new c_Transaction(m_seqNum, e_TransactionType::READ, addr, 1);
+        else
+            mTxn = new c_Transaction(m_seqNum, e_TransactionType::WRITE, addr, 1);
+
+        m_prevAddress = addr;
+
+        std::pair<c_Transaction*, uint64_t > l_entry = std::make_pair(mTxn,l_cycle);
+        m_txnReqQ.push_back(l_entry);
+    }
 }
 
+
 bool c_TxnGen::clockTic(Cycle_t) {
+    createTxn();
 
     for(int i=0;i<k_numTxnPerCycle;i++) {
-        if(m_txnReqQ.size()<k_maxOutstandingReqs) {
-            c_Transaction* l_newTxn = createTxn();
-            assert(l_newTxn!= nullptr);
+        if(m_numOutstandingReqs<k_maxOutstandingReqs) {
 
-            sendRequest(l_newTxn);
+            if(sendRequest()==false)
+                break;
+
+            m_numOutstandingReqs++;
+            m_numTxns++;
         } else
             break;
+
+        if(k_maxTxns>0 && m_numTxns>=k_maxTxns) {
+            primaryComponentOKToEndSim();
+            return true;
+        }
     }
     return false;
 }
 
 
+
 void c_TxnGen::handleResEvent(SST::Event* ev) {
 
     c_TxnResEvent* l_txnResEventPtr = dynamic_cast<c_TxnResEvent*> (ev);
-    if (l_txnResEventPtr) {
+
+    if (l_txnResEventPtr)
+    {
         c_Transaction *l_txn=l_txnResEventPtr->m_payload;
         if (l_txn->getTransactionMnemonic()
             == e_TransactionType::READ) {
@@ -160,7 +193,8 @@ void c_TxnGen::handleResEvent(SST::Event* ev) {
             m_resWriteCount++;
         }
 
-        m_txnReqQ.erase(l_txn->getSeqNum());
+        m_numOutstandingReqs--;
+        assert(m_numOutstandingReqs>=0);
 
         delete l_txn;
         delete l_txnResEventPtr;
@@ -172,15 +206,37 @@ void c_TxnGen::handleResEvent(SST::Event* ev) {
     }
 }
 
-void c_TxnGen::sendRequest(c_Transaction* x_txn) {
-    assert(m_txnReqQ.size()<k_maxOutstandingReqs);
 
-    m_txnReqQ[x_txn->getSeqNum()]=x_txn;
+
+bool c_TxnGen::sendRequest()
+{
+    assert(m_numOutstandingReqs<=k_maxOutstandingReqs);
+    uint64_t l_cycle=Simulation::getSimulation()->getCurrentSimCycle();
+
+    // confirm that interval timer has run out before contiuing
+    if (m_txnReqQ.front().second > l_cycle) {
+        // std::cout << __PRETTY_FUNCTION__ << ": Interval timer for front txn is not done"
+        // << std::endl;
+        // m_txnReqQ.front().first->print();
+        // std::cout << " - Interval:" << m_txnReqQ.front().second << std::endl;
+        return false;
+    }
+
+    if (m_txnReqQ.front().first->getTransactionMnemonic()
+        == e_TransactionType::READ)
+        m_reqReadCount++;
+    else
+        m_reqWriteCount++;
+
     c_TxnReqEvent* l_txnReqEvPtr = new c_TxnReqEvent();
-    l_txnReqEvPtr->m_payload = x_txn;
+    l_txnReqEvPtr->m_payload = m_txnReqQ.front().first;
+    m_txnReqQ.pop_front();
 
     assert(m_lowLink!=NULL);
     m_lowLink->send(l_txnReqEvPtr);
+    return true;
 }
+
+
 
 // Element Libarary / Serialization stuff

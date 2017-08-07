@@ -144,6 +144,8 @@ bool c_TxnDispatcher::clockTic(Cycle_t clock)
         sendResponse(m_resQ.front());
         m_resQ.pop_front();
     }
+
+    return false;
 }
 
 

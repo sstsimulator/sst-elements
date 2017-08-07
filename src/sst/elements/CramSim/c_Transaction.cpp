@@ -153,7 +153,7 @@ void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
   ser & m_dataWidth;
   ser & m_processed;
 	ser & m_hasHashedAddr;
-	ser & m_hashedAddr;
+	//ser & m_hashedAddr;
 
   //std::cout << "Serializing Transaction " << this << " "; this->print();
     
