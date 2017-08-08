@@ -37,7 +37,7 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *_comp, Params &_par
 void MemHierarchyInterface::init(unsigned int phase) {
     if (!phase) {
         // Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0));
+        link_->sendInitData(new MemEventInitCoherence(parent->getName(), Endpoint::CPU, false, false, 0));
     }
 
     while (SST::Event * ev = link_->recvInitData()) {
@@ -180,7 +180,7 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me)
         if (me->success()) req->flags |= (SimpleMem::Request::F_FLUSH_SUCCESS);
         break;
     default:
-        fprintf(stderr, "Don't know how to deal with command %s\n", CommandString[(int)me->getCmd()]);
+        output.fatal(CALL_INFO, -1, "Don't know how to deal with command %s\n", CommandString[(int)me->getCmd()]);
     }
    // Always update memFlags to faciliate mem->processor communication
     req->memFlags = me->getMemFlags();
