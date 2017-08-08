@@ -120,6 +120,30 @@ Samba::Samba() : Component(-1)
 }
 
 
+void Samba::init(unsigned int phase) {
+    
+    /* 
+     * CPU may send init events to memory, pass them through, 
+     * also pass memory events to CPU
+     */
+    for (uint32_t i = 0; i < core_count; i++) {
+        SST::Event * ev;
+        while ((ev = cpu_to_mmu[i]->recvInitData())) {
+            mmu_to_cache[i]->sendInitData(ev);
+        }
+        
+        while ((ev = mmu_to_cache[i]->recvInitData())) {
+            SST::MemHierarchy::MemEventInit * mEv = dynamic_cast<SST::MemHierarchy::MemEventInit*>(ev);
+            if (mEv && mEv->getInitCmd() == SST::MemHierarchy::MemEventInit::InitCommand::Coherence) {
+                SST::MemHierarchy::MemEventInitCoherence * mEvC = static_cast<SST::MemHierarchy::MemEventInitCoherence*>(mEv);
+                TLB[i]->setLineSize(mEvC->getLineSize()); 
+            }
+            cpu_to_mmu[i]->sendInitData(ev);
+        }
+    }
+
+}
+
 
 bool Samba::tick(SST::Cycle_t x)
 {
