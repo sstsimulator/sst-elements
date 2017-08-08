@@ -444,7 +444,7 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 	the_child = fork();
     if ( the_child < 0 ) {
         perror("fork");
-        output->fatal(CALL_INFO, 1, "Fork failed to launch the traced process. errno = %d\n", errno);
+        output->fatal(CALL_INFO, 1, "Fork failed to launch the traced process. errno = %d, errstr = %s\n", errno, strerror(errno));
     }
 
 	if(the_child != 0) {
