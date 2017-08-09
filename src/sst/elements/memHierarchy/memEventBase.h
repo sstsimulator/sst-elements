@@ -245,7 +245,7 @@ public:
 
     /* Init events for initializing memory contents */
     MemEventInit(std::string src, Command cmd, Addr addr, std::vector<uint8_t> &data) : 
-        MemEventBase(src, cmd), addr_(addr), payload_(data), initCmd_(InitCommand::Data) { }
+        MemEventBase(src, cmd), initCmd_(InitCommand::Data), addr_(addr), payload_(data) { }
 
     InitCommand getInitCmd() { return initCmd_; }
 

@@ -41,6 +41,8 @@ public:
     void finish();
 
     virtual void handleMemResponse( SST::Event::id_type id, uint32_t flags );
+    
+    SST::Cycle_t turnClockOn();
 
 private:
 
@@ -80,6 +82,10 @@ private:
     }
 
     size_t      memSize_;
+
+    bool clockOn_;
+    Clock::Handler<MemController>* clockHandler_;
+    TimeConverter* clockTimeBase_;
 
     MemRegion region_; // Which address region we are, for translating to local addresses
     Addr privateMemOffset_; // If we reserve any memory locations for ourselves/directories/etc. and they are NOT part of the physical address space, shift regular addresses by this much

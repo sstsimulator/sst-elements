@@ -162,11 +162,19 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     }
 
     /* Clock Handler */
-    registerClock(memBackendConvertor_->getClockFreq(), new Clock::Handler<MemController>(this, &MemController::clock));
+    clockHandler_ = new Clock::Handler<MemController>(this, &MemController::clock);
+    clockTimeBase_ = registerClock(memBackendConvertor_->getClockFreq(), clockHandler_);
+    clockOn_ = true;
+
     registerTimeBase("1 ns", true);
 }
 
 void MemController::handleEvent(SST::Event* event) {
+    if (!clockOn_) {
+        Cycle_t cycle = turnClockOn();
+        memBackendConvertor_->turnClockOn(cycle);
+    }
+    
     MemEvent *ev = static_cast<MemEvent*>(event);
     
     Debug(_L3_,"\n%" PRIu64 " (%s) Recieved: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
@@ -223,8 +231,21 @@ bool MemController::clock(Cycle_t cycle) {
     bool unclockLink = link_->clock();
 
     bool unclockBack = memBackendConvertor_->clock( cycle );
+    
+    if (unclockLink && unclockBack) {
+        memBackendConvertor_->turnClockOff();
+        clockOn_ = false;
+        return true;
+    }
 
     return false;
+}
+
+Cycle_t MemController::turnClockOn() {
+    Cycle_t cycle = reregisterClock(clockTimeBase_, clockHandler_);
+    cycle--;
+    clockOn_ = true;
+    return cycle;
 }
 
 void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
@@ -293,6 +314,10 @@ void MemController::setup(void) {
 
 
 void MemController::finish(void) {
+    if (!clockOn_) {
+        Cycle_t cycle = turnClockOn();
+        memBackendConvertor_->turnClockOn(cycle);
+    }
     memBackendConvertor_->finish();
     link_->finish();
 }

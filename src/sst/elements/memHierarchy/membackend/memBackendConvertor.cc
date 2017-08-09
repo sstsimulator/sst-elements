@@ -56,8 +56,6 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
     
     m_clockBackend = m_backend->isClocked();
     
-    Debug(_L3_, "%s clock backend: %d\n", getName().c_str(), m_clockBackend);
-
     stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
     stat_GetSXReqReceived  = registerStatistic<uint64_t>("requests_received_GetSX");
     stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
@@ -70,7 +68,9 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
 
     stat_cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
     stat_cyclesAttemptIssueButRejected = registerStatistic<uint64_t>( "cycles_attempted_issue_but_rejected" );
-    stat_totalCycles = registerStatistic<uint64_t>( "total_cycles" );;        
+    stat_totalCycles = registerStatistic<uint64_t>( "total_cycles" );;
+
+    m_clockOn = true; /* Maybe parent should set this */
 }
 
 void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
@@ -92,6 +92,7 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
     m_cycleCount++;
 
     int reqsThisCycle = 0;
+    bool cycleWithIssue = false;
     while ( !m_requestQueue.empty()) {
         if ( reqsThisCycle == m_backend->getMaxReqPerCycle() ) {
             break;
@@ -102,8 +103,9 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
                 req->addr(), req->baseAddr(), req->processed(), req->id(), req->isWrite());
 
         if ( issue( req ) ) {
-            stat_cyclesWithIssue->addData(1);
+            cycleWithIssue = true;
         } else {
+            cycleWithIssue = false;
             stat_cyclesAttemptIssueButRejected->addData(1);
             break;
         }
@@ -117,15 +119,50 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
         }
     }
 
+    if (cycleWithIssue)
+        stat_cyclesWithIssue->addData(1);
+
     stat_outstandingReqs->addData( m_pendingRequests.size() );
 
+    bool unclock = !m_clockBackend;
     if (m_clockBackend)
-        bool unclock = m_backend->clock(cycle);
+        unclock = m_backend->clock(cycle);
 
+    // Can turn off the clock if:
+    // 1) backend says it's ok
+    // 2) requestQueue is empty
+    if (unclock && m_requestQueue.empty()) 
+        return true;
+    
     return false;
 }
 
+/* 
+ * Called by MemController to turn the clock back on 
+ * cycle = current cycle
+ */
+void MemBackendConvertor::turnClockOn(Cycle_t cycle) {
+    Cycle_t cyclesOff = cycle - m_cycleCount;
+    for (Cycle_t i = 0; i < cyclesOff; i++)
+        stat_outstandingReqs->addData( m_pendingRequests.size() );
+    m_cycleCount = cycle;
+    m_clockOn = true;
+}
+
+/*
+ * Called by MemController to turn the clock off 
+ */
+void MemBackendConvertor::turnClockOff() {
+    m_clockOn = false;
+}
+
 void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
+
+    /* If clock is not on, turn it back on */
+    if (!m_clockOn) {
+        Cycle_t cycle = static_cast<MemController*>(parent)->turnClockOn();
+        turnClockOn(cycle);
+    }
 
     uint32_t id = MemReq::getBaseId(reqId);
     MemEvent* resp = NULL;

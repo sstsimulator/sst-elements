@@ -27,8 +27,8 @@ using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
 
-MemHierarchyInterface::MemHierarchyInterface(SST::Component *_comp, Params &_params) :
-    SimpleMem(_comp, _params), owner_(_comp), recvHandler_(NULL), link_(NULL)
+MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &params) :
+    SimpleMem(comp, params), owner_(comp), recvHandler_(NULL), link_(NULL)
 { 
     output.init("", 1, 0, Output::STDOUT);
 }
