@@ -1,8 +1,4 @@
 l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 5 cycles.
-memory memLink info is: Name: memory, addr: 0, id: 0
-memory sending region init message: ID: <0,0> Cmd: NULLCMD Src: memory Dst: None Rqstr: None Flags: [] MemFlags: 0x0 InitCmd: RegionStart: 0 End: 18446744073709551615 InterleaveSize: 0 InterleaveStep: 0 SetRegion: F
-memory sending init message: ID: <1,0> Cmd: NULLCMD Src: memory Dst: None Rqstr: None Flags: [] MemFlags: 0x0 InitCmd: Coherence Type: 2 Inclusive: true LineSize: 64
-memory received init message: ID: <3,0> Cmd: NULLCMD Src: l2cache Dst: None Rqstr: None Flags: [] MemFlags: 0x0 InitCmd: RegionStart: 0 End: 18446744073709551615 InterleaveSize: 0 InterleaveStep: 0 SetRegion: F
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (104065 clocks)
@@ -455,5 +451,5 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104063 clocks)
  memory.latency_PutM : Accumulator : Sum.u64 = 8383; SumSQ.u64 = 846683; Count.u64 = 83; 
  memory.cycles_with_issue : Accumulator : Sum.u64 = 570; SumSQ.u64 = 570; Count.u64 = 570; 
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- memory.total_cycles : Accumulator : Sum.u64 = 104065; SumSQ.u64 = 104065; Count.u64 = 104065; 
+ memory.total_cycles : Accumulator : Sum.u64 = 104065; SumSQ.u64 = 10829524225; Count.u64 = 1; 
 Simulation is complete, simulated time: 104.065 us

@@ -449,9 +449,9 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104053 clocks)
  memory.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory.latency_GetX : Accumulator : Sum.u64 = 1936; SumSQ.u64 = 85542; Count.u64 = 50; 
  memory.latency_PutM : Accumulator : Sum.u64 = 2593; SumSQ.u64 = 90981; Count.u64 = 83; 
- memory.cycles_with_issue : Accumulator : Sum.u64 = 571; SumSQ.u64 = 571; Count.u64 = 571; 
+ memory.cycles_with_issue : Accumulator : Sum.u64 = 487; SumSQ.u64 = 487; Count.u64 = 487; 
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- memory.total_cycles : Accumulator : Sum.u64 = 104053; SumSQ.u64 = 104053; Count.u64 = 104053; 
+ memory.total_cycles : Accumulator : Sum.u64 = 104053; SumSQ.u64 = 10827026809; Count.u64 = 1; 
 Simulation is complete, simulated time: 104.053 us
 == Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' == 
 == Loading system model file 'system.ini' == 

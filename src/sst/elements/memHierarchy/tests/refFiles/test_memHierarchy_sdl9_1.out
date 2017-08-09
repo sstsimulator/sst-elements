@@ -517,5 +517,5 @@ TrivialCPU cpu Finished after 10000 issued reads, 10000 returned (1004898 clocks
  memory.latency_PutM : Accumulator : Sum.u64 = 91305; SumSQ.u64 = 9221907; Count.u64 = 904; 
  memory.cycles_with_issue : Accumulator : Sum.u64 = 10320; SumSQ.u64 = 10320; Count.u64 = 10320; 
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- memory.total_cycles : Accumulator : Sum.u64 = 1004898; SumSQ.u64 = 1004898; Count.u64 = 1004898; 
+ memory.total_cycles : Accumulator : Sum.u64 = 1004898; SumSQ.u64 = 1009819990404; Count.u64 = 1; 
 Simulation is complete, simulated time: 1.0049 ms
