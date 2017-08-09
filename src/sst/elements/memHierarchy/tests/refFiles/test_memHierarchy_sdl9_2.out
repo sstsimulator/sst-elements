@@ -573,7 +573,7 @@ TrivialCPU cpu7 Finished after 1000 issued reads, 1000 returned (104240 clocks)
  n0.l2cache.latency_GetX_M : Accumulator : Sum.u64 = 227594; SumSQ.u64 = 334975940; Count.u64 = 187; 
  n0.l2cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- n0.l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 2114; SumSQ.u64 = 869134; Count.u64 = 9; 
+ n0.l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.evict_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -1258,7 +1258,7 @@ TrivialCPU cpu7 Finished after 1000 issued reads, 1000 returned (104240 clocks)
  n1.l2cache.latency_GetX_M : Accumulator : Sum.u64 = 219371; SumSQ.u64 = 306847385; Count.u64 = 187; 
  n1.l2cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- n1.l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 8847; SumSQ.u64 = 1789097; Count.u64 = 72; 
+ n1.l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.evict_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -1451,7 +1451,7 @@ TrivialCPU cpu7 Finished after 1000 issued reads, 1000 returned (104240 clocks)
  l3cache.latency_GetX_M : Accumulator : Sum.u64 = 159308; SumSQ.u64 = 125727644; Count.u64 = 304; 
  l3cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l3cache.latency_GetSX_M : Accumulator : Sum.u64 = 15978; SumSQ.u64 = 3244396; Count.u64 = 79; 
+ l3cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.evict_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 

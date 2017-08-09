@@ -295,7 +295,7 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104054 clocks)
  l2cache.latency_GetX_M : Accumulator : Sum.u64 = 18061; SumSQ.u64 = 1943271; Count.u64 = 184; 
  l2cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 5729; SumSQ.u64 = 395441; Count.u64 = 83; 
+ l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.evict_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
