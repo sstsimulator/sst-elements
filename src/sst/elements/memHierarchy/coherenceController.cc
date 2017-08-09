@@ -343,7 +343,7 @@ void CoherenceController::recordLatency(Command cmd, State state, uint64_t laten
             break;
         case M:
             if (cmd == Command::GetS) stat_latency_GetS_M->addData(latency);
-            if (cmd == Command::GetX) stat_latency_GetX_M->addData(latency);
+            else if (cmd == Command::GetX) stat_latency_GetX_M->addData(latency);
             else stat_latency_GetSX_M->addData(latency);
             break;
         default:

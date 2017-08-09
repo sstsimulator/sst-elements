@@ -65,6 +65,7 @@ private:
     virtual bool clockTic( SST::Cycle_t );
 
     Output out;
+    bool verbose;
     int numLS;
     int commFreq;
     bool do_write;
