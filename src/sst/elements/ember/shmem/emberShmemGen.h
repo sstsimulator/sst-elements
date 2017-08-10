@@ -29,7 +29,7 @@
 #include "emberShmemMallocEv.h"
 #include "emberShmemFreeEv.h"
 #include "emberShmemPutEv.h"
-#include "emberShmemPutvEv.h"
+#include "emberShmemPutVEv.h"
 #include "emberShmemGetEv.h"
 #include "emberShmemGetVEv.h"
 #include "emberShmemWaitEv.h"
