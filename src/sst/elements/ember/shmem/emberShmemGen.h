@@ -1,5 +1,5 @@
 // Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+
 // Government retains certain rights in this software.
 //
 // Copyright (c) 2009-2017, Sandia Corporation
@@ -29,9 +29,13 @@
 #include "emberShmemMallocEv.h"
 #include "emberShmemFreeEv.h"
 #include "emberShmemPutEv.h"
-#include "emberShmemPutVEv.h"
+#include "emberShmemPutvEv.h"
 #include "emberShmemGetEv.h"
 #include "emberShmemGetVEv.h"
+#include "emberShmemWaitEv.h"
+#include "emberShmemCswapEv.h"
+#include "emberShmemSwapEv.h"
+#include "emberShmemFaddEv.h"
 
 using namespace Hermes;
 
@@ -64,8 +68,21 @@ protected:
     template <class TYPE>
     inline void enQ_getv( Queue&, TYPE*, Hermes::MemAddr, int pe );
 
+    template <class TYPE>
+    inline void enQ_wait( Queue&, Hermes::MemAddr, TYPE );
+    template <class TYPE>
+    inline void enQ_wait_until( Queue&, Hermes::MemAddr, Hermes::Shmem::WaitOp, TYPE );
+
     inline void enQ_get( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
     inline void enQ_put( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
+
+    template <class TYPE>
+    inline void enQ_fadd( Queue&, TYPE*, Hermes::MemAddr, TYPE*, int pe );
+
+    template <class TYPE>
+    inline void enQ_swap( Queue&, TYPE*, Hermes::MemAddr, TYPE* value, int pe );
+    template <class TYPE>
+    inline void enQ_cswap( Queue&, TYPE*, Hermes::MemAddr, TYPE* cond, TYPE* value, int pe );
 
 private:
 };
@@ -128,15 +145,7 @@ void EmberShmemGenerator::enQ_get( Queue& q, Hermes::MemAddr dest,
 {
     verbose(CALL_INFO,2,0,"\n");
     q.push( new EmberGetShmemEvent( *shmem_cast(m_api), &getOutput(),  
-                dest, src, length, pe ) );
-}
-
-void EmberShmemGenerator::enQ_put( Queue& q, Hermes::MemAddr dest, 
-        Hermes::MemAddr src, size_t length, int pe )
-{
-    verbose(CALL_INFO,2,0,"\n");
-    q.push( new EmberPutShmemEvent( *shmem_cast(m_api), &getOutput(),  
-                dest, src, length, pe ) );
+                dest.getSimVAddr(), src.getSimVAddr(), length, pe ) );
 }
 
 template <class TYPE>
@@ -144,17 +153,70 @@ void EmberShmemGenerator::enQ_getv( Queue& q, TYPE* laddr, Hermes::MemAddr addr,
        int pe )
 {
     verbose(CALL_INFO,2,0,"\n");
-    q.push( new EmberGetVShmemEvent<TYPE>( *shmem_cast(m_api), &getOutput(),  
-                laddr, addr, pe ) );
+    q.push( new EmberGetVShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                Hermes::Value(laddr), addr.getSimVAddr(), pe ) );
 }
+
+void EmberShmemGenerator::enQ_put( Queue& q, Hermes::MemAddr dest, 
+        Hermes::MemAddr src, size_t length, int pe )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberPutShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                dest.getSimVAddr(), src.getSimVAddr(), length, pe ) );
+}
+
 template <class TYPE>
 void EmberShmemGenerator::enQ_putv( Queue& q, Hermes::MemAddr addr, 
         TYPE value, int pe )
 {
     verbose(CALL_INFO,2,0,"\n");
-    q.push( new EmberPutVShmemEvent<TYPE>( *shmem_cast(m_api), &getOutput(),  
-                addr, value, pe ) );
+    q.push( new EmberPutvShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                addr.getSimVAddr(), Hermes::Value( (TYPE) value ), pe ) );
 }
+
+template <class TYPE>
+void EmberShmemGenerator::enQ_wait( Queue& q, Hermes::MemAddr addr, TYPE value )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberWaitShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                addr.getSimVAddr(), Hermes::Shmem::NE, Hermes::Value( (TYPE) value ) ) );
+}
+
+template <class TYPE>
+void EmberShmemGenerator::enQ_wait_until( Queue& q, Hermes::MemAddr addr, Hermes::Shmem::WaitOp op, TYPE value )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberWaitShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                addr.getSimVAddr(), op, Hermes::Value( (TYPE) value ) ) );
+}
+
+template <class TYPE>
+void EmberShmemGenerator::enQ_fadd( Queue& q, TYPE* result, Hermes::MemAddr addr, TYPE* value,  
+       int pe )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberFaddShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                Hermes::Value(result), addr.getSimVAddr(), Hermes::Value(value), pe ) );
+}
+
+template <class TYPE>
+void EmberShmemGenerator::enQ_swap( Queue& q, TYPE* result, Hermes::MemAddr addr, TYPE* value,  
+       int pe )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberSwapShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                Hermes::Value(result), addr.getSimVAddr(), Hermes::Value(value), pe ) );
+}
+
+template <class TYPE>
+void EmberShmemGenerator::enQ_cswap( Queue& q, TYPE* result, Hermes::MemAddr addr, TYPE* cond, TYPE* value,  
+       int pe )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberCswapShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                Hermes::Value(result), addr.getSimVAddr(), Hermes::Value(cond), Hermes::Value(value), pe ) );
+}
+
 
 }
 }
