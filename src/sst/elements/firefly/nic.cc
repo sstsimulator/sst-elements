@@ -103,7 +103,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_shmem = new Shmem( *this, m_dbg );
 
-
     m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
@@ -251,21 +250,36 @@ void Nic::handleMsgEvent( NicCmdEvent* event, int id )
 
 void Nic::handleShmemEvent( NicShmemCmdEvent* event, int id )
 {
-
     switch (event->type) {
-    case NicShmemCmdEvent::PutP:
-    case NicShmemCmdEvent::PutV:
-        m_shmem->put( event, id );
+    case NicShmemCmdEvent::Put:
+        m_shmem->put( static_cast<NicShmemPutCmdEvent*>(event), id );
         break;
-    case NicShmemCmdEvent::GetP:
-    case NicShmemCmdEvent::GetV:
-        m_shmem->get( event, id );
+    case NicShmemCmdEvent::Putv:
+        m_shmem->putv( static_cast<NicShmemPutvCmdEvent*>(event), id );
+        break;
+    case NicShmemCmdEvent::Get:
+        m_shmem->get( static_cast<NicShmemGetCmdEvent*>(event), id );
+        break;
+    case NicShmemCmdEvent::Getv:
+        m_shmem->getv( static_cast<NicShmemGetvCmdEvent*>(event), id );
         break;
     case NicShmemCmdEvent::Fence:
         m_shmem->fence( event, id );
         break;
     case NicShmemCmdEvent::RegMem:
-        m_shmem->regMem( event, id );
+        m_shmem->regMem( static_cast< NicShmemRegMemCmdEvent*>(event), id );
+        break;
+    case NicShmemCmdEvent::Wait:
+        m_shmem->wait( static_cast< NicShmemOpCmdEvent*>(event), id );
+        break;
+    case NicShmemCmdEvent::Fadd:
+        m_shmem->fadd( static_cast< NicShmemFaddCmdEvent*>(event), id );
+        break;
+    case NicShmemCmdEvent::Cswap:
+        m_shmem->cswap( static_cast< NicShmemCswapCmdEvent*>(event), id );
+        break;
+    case NicShmemCmdEvent::Swap:
+        m_shmem->swap( static_cast< NicShmemSwapCmdEvent*>(event), id );
         break;
 
     default:
@@ -570,7 +584,16 @@ Nic::EntryBase* Nic::findRecv( int srcNode, MsgHdr& hdr, int tag  )
     return entry;
 }
 
-std::pair<Hermes::MemAddr, size_t> Nic::findShmem( uint64_t simVAddr )
+Hermes::MemAddr Nic::findShmem(  Hermes::Vaddr addr, size_t length )
 {
-    return m_shmem->findRegion( simVAddr);
+    std::pair<Hermes::MemAddr, size_t> region = m_shmem->findRegion( addr);
+
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"found region Vaddr=%#" PRIx64 " length=%lu\n",
+        region.first.getSimVAddr(), region.second );
+
+    uint64_t offset =  addr - region.first.getSimVAddr();
+
+    assert(  addr + length <= region.first.getSimVAddr() + region.second );
+    return region.first.offset(offset);
 }
+
