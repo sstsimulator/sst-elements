@@ -32,7 +32,7 @@
 using namespace SST;
 using namespace n_Bank;
 
-c_TraceReader::c_TraceReader(SST::ComponentId_t x_id, SST::Params& x_params):c_TxnGen(x_id,x_params)
+c_TraceReader::c_TraceReader(SST::ComponentId_t x_id, SST::Params& x_params):c_TxnGenBase(x_id,x_params)
 {
     // trace file param
     bool l_found=false;

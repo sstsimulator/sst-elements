@@ -34,7 +34,7 @@
 
 namespace SST {
     namespace n_Bank {
-        class c_TraceReader: public c_TxnGen {
+        class c_TraceReader: public c_TxnGenBase {
         public:
             c_TraceReader(SST::ComponentId_t x_id, SST::Params& x_params);
             ~c_TraceReader(){}

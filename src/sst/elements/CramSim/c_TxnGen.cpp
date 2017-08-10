@@ -31,7 +31,7 @@
 using namespace SST;
 using namespace SST::n_Bank;
 
-c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
+c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
         Component(x_id) {
 
     /*---- LOAD PARAMS ----*/
@@ -40,21 +40,12 @@ c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
     bool l_found = false;
 
     // internal params
-    m_prevAddress = 0;
     m_seqNum = 0;
     m_resReadCount = 0;
     m_resWriteCount = 0;
     m_numOutstandingReqs = 0;
     m_numTxns = 0;
 
-    //ratio of read txn's : write txn's to generate
-    k_readWriteTxnRatio
-            = x_params.find<float>("readWriteRatio", 0.5, l_found);
-    if (!l_found) {
-        std::cout << "TxnGen:: readWriteRatio value is missing... it will be 0.5 (default)"
-                  << std::endl;
-        //exit(-1);
-    }
 
     k_numTxnPerCycle =  x_params.find<std::uint32_t>("numTxnPerCycle", 1, l_found);
     if (!l_found) {
@@ -77,16 +68,12 @@ c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
         exit(-1);
     }
 
-
-    // initialize the random seed
-    std::string l_randSeedStr = x_params.find<std::string>("randomSeed","0", l_found);
-    l_randSeedStr.pop_back(); // remove trailing newline (??)
-    if(l_randSeedStr.compare("-") == 0) { // use a random seed
-        k_randSeed = (SimTime_t)time(nullptr);
-    } else {
-        k_randSeed = (SimTime_t)std::strtoul(l_randSeedStr.c_str(),NULL,0);
+    k_maxTxns =  x_params.find<std::uint32_t>("maxTxns", 0, l_found);
+    if (!l_found) {
+        std::cout << "TxnGen:: maxTxns is missing... exiting"
+                  << std::endl;
+        exit(-1);
     }
-    std::srand(k_randSeed);
 
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
@@ -99,61 +86,30 @@ c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
     //// send token chg to txn unit
     m_lowLink = configureLink(
             "lowLink",
-            new Event::Handler<c_TxnGen>(this, &c_TxnGen::handleResEvent));
+            new Event::Handler<c_TxnGenBase>(this, &c_TxnGenBase::handleResEvent));
 
     // get configured clock frequency
     std::string l_controllerClockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
 
     //set our clock
     registerClock(l_controllerClockFreqStr,
-                  new Clock::Handler<c_TxnGen>(this, &c_TxnGen::clockTic));
+                  new Clock::Handler<c_TxnGenBase>(this, &c_TxnGenBase::clockTic));
 
     // Statistics
     s_readTxnsCompleted = registerStatistic<uint64_t>("readTxnsCompleted");
     s_writeTxnsCompleted = registerStatistic<uint64_t>("writeTxnsCompleted");
 }
 
-c_TxnGen::~c_TxnGen() {
+c_TxnGenBase::~c_TxnGenBase() {
 }
 
-c_TxnGen::c_TxnGen() :
+c_TxnGenBase::c_TxnGenBase() :
         Component(-1) {
     // for serialization only
 }
 
 
-uint64_t c_TxnGen::getNextAddress() {
-    return (rand());
-}
-
-
-void c_TxnGen::createTxn() {
-
-    uint64_t l_cycle = Simulation::getSimulation()->getCurrentSimCycle();
-
-    while(m_txnReqQ.size()<k_numTxnPerCycle)
-    {
-        uint64_t addr = getNextAddress();
-        m_seqNum++;
-
-        double l_read2write = ((double) rand() / (RAND_MAX));
-
-        //TODO: Default value for dataWidth?
-        c_Transaction* mTxn;
-        if (l_read2write < k_readWriteTxnRatio)
-            mTxn = new c_Transaction(m_seqNum, e_TransactionType::READ, addr, 1);
-        else
-            mTxn = new c_Transaction(m_seqNum, e_TransactionType::WRITE, addr, 1);
-
-        m_prevAddress = addr;
-
-        std::pair<c_Transaction*, uint64_t > l_entry = std::make_pair(mTxn,l_cycle);
-        m_txnReqQ.push_back(l_entry);
-    }
-}
-
-
-bool c_TxnGen::clockTic(Cycle_t) {
+bool c_TxnGenBase::clockTic(Cycle_t) {
     createTxn();
 
     for(int i=0;i<k_numTxnPerCycle;i++) {
@@ -177,7 +133,7 @@ bool c_TxnGen::clockTic(Cycle_t) {
 
 
 
-void c_TxnGen::handleResEvent(SST::Event* ev) {
+void c_TxnGenBase::handleResEvent(SST::Event* ev) {
 
     c_TxnResEvent* l_txnResEventPtr = dynamic_cast<c_TxnResEvent*> (ev);
 
@@ -208,7 +164,7 @@ void c_TxnGen::handleResEvent(SST::Event* ev) {
 
 
 
-bool c_TxnGen::sendRequest()
+bool c_TxnGenBase::sendRequest()
 {
     assert(m_numOutstandingReqs<=k_maxOutstandingReqs);
     uint64_t l_cycle=Simulation::getSimulation()->getCurrentSimCycle();
@@ -237,6 +193,95 @@ bool c_TxnGen::sendRequest()
     return true;
 }
 
+
+
+
+c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
+        c_TxnGenBase(x_id,x_params) {
+
+    /*---- LOAD PARAMS ----*/
+
+    //used for reading params
+    bool l_found = false;
+
+    // internal params
+    m_prevAddress = 0;
+
+    //ratio of read txn's : write txn's to generate
+    k_readWriteTxnRatio
+            = x_params.find<float>("readWriteRatio", 0.5, l_found);
+    if (!l_found) {
+        std::cout << "TxnGen:: readWriteRatio value is missing... it will be 0.5 (default)"
+                  << std::endl;
+        //exit(-1);
+    }
+
+    //set mode (random or sequential)
+    std::string l_mode = x_params.find<std::string>("mode", "rand", l_found);
+    if (!l_found) {
+        std::cout << "TxnGen:: mode is missing... exiting"
+                  << std::endl;
+        exit(-1);
+    } else {
+        if (l_mode == "rand")
+            m_mode = e_TxnMode::RAND;
+        else if (l_mode == "seq")
+            m_mode = e_TxnMode::SEQ;
+        else {
+            std::cout << "TxnGen:: mode (" << l_mode
+                      << ").. It should be \"rand\" or \"seq\" .. exiting"
+                      << std::endl;
+            exit(-1);
+        }
+    }
+
+    // initialize the random seed
+    std::string l_randSeedStr = x_params.find<std::string>("randomSeed","0", l_found);
+    l_randSeedStr.pop_back(); // remove trailing newline (??)
+    if(l_randSeedStr.compare("-") == 0) { // use a random seed
+        k_randSeed = (SimTime_t)time(nullptr);
+    } else {
+        k_randSeed = (SimTime_t)std::strtoul(l_randSeedStr.c_str(),NULL,0);
+    }
+    std::srand(k_randSeed);
+
+}
+
+
+
+
+uint64_t c_TxnGen::getNextAddress() {
+    if(m_mode==e_TxnMode::RAND)
+        return (rand());
+    else
+        return (m_prevAddress+1);
+}
+
+
+void c_TxnGen::createTxn() {
+
+    uint64_t l_cycle = Simulation::getSimulation()->getCurrentSimCycle();
+
+    while(m_txnReqQ.size()<k_numTxnPerCycle)
+    {
+        uint64_t addr = getNextAddress();
+        m_seqNum++;
+
+        double l_read2write = ((double) rand() / (RAND_MAX));
+
+        //TODO: Default value for dataWidth?
+        c_Transaction* mTxn;
+        if (l_read2write < k_readWriteTxnRatio)
+            mTxn = new c_Transaction(m_seqNum, e_TransactionType::READ, addr, 1);
+        else
+            mTxn = new c_Transaction(m_seqNum, e_TransactionType::WRITE, addr, 1);
+
+        m_prevAddress = addr;
+
+        std::pair<c_Transaction*, uint64_t > l_entry = std::make_pair(mTxn,l_cycle);
+        m_txnReqQ.push_back(l_entry);
+    }
+}
 
 
 // Element Libarary / Serialization stuff

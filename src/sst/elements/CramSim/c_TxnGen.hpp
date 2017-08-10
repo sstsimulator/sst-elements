@@ -29,11 +29,11 @@
 
 namespace SST {
     namespace n_Bank {
-        class c_TxnGen: public SST::Component {
+        class c_TxnGenBase: public SST::Component {
 
         public:
-            c_TxnGen(SST::ComponentId_t x_id, SST::Params& x_params);
-            ~c_TxnGen();
+            c_TxnGenBase (SST::ComponentId_t x_id, SST::Params& x_params);
+            ~c_TxnGenBase();
 
             void setup() {
             }
@@ -48,10 +48,8 @@ namespace SST {
             }
 
         protected:
-            c_TxnGen(); //for serialization only
-
-            uint64_t getNextAddress();
-            virtual void createTxn();
+            c_TxnGenBase(); //for serialization only
+            virtual void createTxn()=0;
 
             //token chg to/from events
             void handleResEvent(SST::Event *ev); //handleEvent
@@ -65,8 +63,9 @@ namespace SST {
             uint32_t m_numOutstandingReqs;
             uint64_t m_numTxns;
             //Transaction info
-            uint64_t m_prevAddress;
             uint32_t m_seqNum;
+
+            uint32_t m_mode;
 
 
             //links
@@ -76,8 +75,6 @@ namespace SST {
             uint32_t k_numTxnPerCycle;
             uint32_t k_maxOutstandingReqs;
             uint64_t k_maxTxns;
-            double k_readWriteTxnRatio;
-            unsigned int k_randSeed;
 
             // used to keep track of the response types being received
             uint64_t m_resReadCount;
@@ -93,6 +90,24 @@ namespace SST {
 
         };
 
+        class c_TxnGen: public c_TxnGenBase{
+        public:
+            c_TxnGen (SST::ComponentId_t x_id, SST::Params& x_params);
+        private:
+            enum e_TxnMode{
+                RAND,
+                SEQ
+            };
+
+            virtual void createTxn();
+            uint64_t getNextAddress();
+
+            uint64_t m_prevAddress;
+            e_TxnMode m_mode;
+
+            double k_readWriteTxnRatio;
+            unsigned int k_randSeed;
+        };
 
     } // namespace n_Bank
 } // namespace SST

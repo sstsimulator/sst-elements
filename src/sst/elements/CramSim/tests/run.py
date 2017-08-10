@@ -26,8 +26,8 @@ if len(sys.argv) > 1:
    sel = sys.argv[1]
 
 sstCmds = {
-	1:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s stopAtCycle=%s\"" % (sysconfig,stopAtCycle), 									# basic test with random trace
-	2:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s stopAtCycle=%s\"" % (sysconfig,stopAtCycle),										# basic test with seq trace
+	1:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s mode=rand stopAtCycle=%s\"" % (sysconfig,stopAtCycle), 									# basic test with random trace
+	2:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s mode=seq stopAtCycle=%s\"" % (sysconfig,stopAtCycle),										# basic test with seq trace
 	3:"sst --lib-path=../.libs ./test_txntrace.py --model-options=\"--configfile=%s traceFile=../traces/sst-CramSim-trace_verimem_1_R.trc stopAtCycle=%s\"" % (sysconfig,stopAtCycle),			# basic test with verimem_1_R trace
 	4:"sst --lib-path=../.libs ./test_txntrace.py --model-options=\"--configfile=%s traceFile=../traces/sst-CramSim-trace_verimem_2_R.trc stopAtCycle=%s\"" % (sysconfig,stopAtCycle),			# basic test with verimem_2_R trace
 	5:"sst --lib-path=../.libs ./test_txntrace.py --model-options=\"--configfile=%s traceFile=../traces/sst-CramSim-trace_verimem_4_R.trc stopAtCycle=%s\"" % (sysconfig,stopAtCycle),			# basic test with verimem_4_R trace
