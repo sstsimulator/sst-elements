@@ -139,6 +139,7 @@ libember_la_SOURCES = \
 	shmem/emberShmemEvent.h \
 	shmem/emberShmemFaddEv.h \
 	shmem/emberShmemFenceEv.h \
+	shmem/emberShmemFreeEv.h \
 	shmem/emberShmemFiniEv.h \
 	shmem/emberShmemGen.cc \
 	shmem/emberShmemGen.h \
