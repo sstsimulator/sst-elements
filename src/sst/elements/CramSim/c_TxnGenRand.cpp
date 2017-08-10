@@ -309,6 +309,8 @@ void c_TxnGenRand::sendRequest() {
 void c_TxnGenRand::readResponse() {
 	if (m_txnResQ.size() > 0) {
 		c_Transaction* l_txn = m_txnResQ.front();
+		delete l_txn;	//added to resolve the memory leakage problem
+
 		m_txnResQ.pop();
 		// std::cout << "TxnGen::readResponse() Transaction printed: Addr-"
 		 //		<< std::hex << l_txn->getAddress() << std::endl;

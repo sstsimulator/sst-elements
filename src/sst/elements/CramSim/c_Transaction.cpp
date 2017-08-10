@@ -42,8 +42,8 @@ c_Transaction::c_Transaction(ulong x_seqNum, e_TransactionType x_txnMnemonic,
 				false), m_numWaitingCommands(0), m_dataWidth(x_dataWidth), m_processed(
 				false) {
        
-	m_txnToString[e_TransactionType::READ] = "READ";
-	m_txnToString[e_TransactionType::WRITE] = "WRITE";
+//	m_txnToString[e_TransactionType::READ] = "READ";
+//	m_txnToString[e_TransactionType::WRITE] = "WRITE";
 	m_hasHashedAddr= false;
 
 }
@@ -66,7 +66,11 @@ ulong c_Transaction::getAddress() const {
 }
 
 std::string c_Transaction::getTransactionString() const {
-	return (m_txnToString.find(m_txnMnemonic)->second);
+	if(m_txnMnemonic==e_TransactionType::READ)
+		return "READ";
+	else
+		return "WRITE";
+	//return (m_txnToString.find(m_txnMnemonic)->second);
 }
 
 e_TransactionType c_Transaction::getTransactionMnemonic() const {
@@ -146,7 +150,7 @@ void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
   ser & m_seqNum;
   ser & m_txnMnemonic;
   ser & m_addr;
-  ser & m_txnToString;
+  //ser & m_txnToString;
     
   ser & m_isResponseReady;
   ser & m_numWaitingCommands;
@@ -158,5 +162,5 @@ void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
   //std::cout << "Serializing Transaction " << this << " "; this->print();
     
   //ser & m_cmdPtrList;
-  ser & m_cmdSeqNumList;
+  //ser & m_cmdSeqNumList;
 }

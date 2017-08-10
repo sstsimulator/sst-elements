@@ -49,11 +49,11 @@ c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
 
     //ratio of read txn's : write txn's to generate
     k_readWriteTxnRatio
-            = x_params.find<float>("readWriteRatio", 1.0, l_found);
+            = x_params.find<float>("readWriteRatio", 0.5, l_found);
     if (!l_found) {
-        std::cout << "TxnGen:: readWriteRatio value is missing... exiting"
+        std::cout << "TxnGen:: readWriteRatio value is missing... it will be 0.5 (default)"
                   << std::endl;
-        exit(-1);
+        //exit(-1);
     }
 
     k_numTxnPerCycle =  x_params.find<std::uint32_t>("numTxnPerCycle", 1, l_found);

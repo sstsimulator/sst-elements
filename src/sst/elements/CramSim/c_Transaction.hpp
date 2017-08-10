@@ -61,7 +61,7 @@ private:
   ulong m_seqNum;
   e_TransactionType m_txnMnemonic;
   ulong m_addr;
-  std::map<e_TransactionType,std::string> m_txnToString;
+  //std::map<e_TransactionType,std::string> m_txnToString;
   
   bool m_isResponseReady;
   unsigned m_numWaitingCommands;

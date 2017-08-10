@@ -39,7 +39,7 @@ namespace SST {
             c_TraceReader(SST::ComponentId_t x_id, SST::Params& x_params);
             ~c_TraceReader(){}
         private:
-            void createTxn();
+            virtual void createTxn();
 
             //params for internal microarcitecture
             std::string m_traceFileName;

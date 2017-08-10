@@ -372,6 +372,8 @@ void c_DramSimTraceReader::sendRequest() {
 void c_DramSimTraceReader::readResponse() {
 	if (m_txnResQ.size() > 0) {
 		c_Transaction* l_txn = m_txnResQ.front();
+		delete l_txn;
+
 		m_txnResQ.pop();
 		// std::cout << "TxnGen::readResponse() Transaction printed: Addr-"
 		// 		<< l_txn->getAddress() << std::endl;

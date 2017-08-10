@@ -14,7 +14,7 @@ g_override_list = ""
 g_params = setup_config_params(g_config_file, g_overrided_list)
 
 numChannels = int(g_params["numChannels"])
-maxOutstandingReqs = numChannels*64
+maxOutstandingReqs = numChannels*128
 numTxnPerCycle = numChannels
 maxTxns = 100000 * numChannels
 
@@ -29,13 +29,12 @@ sst.setStatisticOutput("sst.statOutputConsole")
 #########################################################################################################
 
 ## Configure transaction generator
-comp_txnGen = sst.Component("TxnGen", "CramSim.c_TxnGen")
+comp_txnGen = sst.Component("TxnGen", "CramSim.c_TraceReader")
 comp_txnGen.addParams(g_params)
 comp_txnGen.addParams({
 	"maxTxns" : maxTxns,
 	"numTxnPerCycle" : numTxnPerCycle,
-	"maxOutstandingReqs" : maxOutstandingReqs,
-	"readWriteRatio" : 0.5
+	"maxOutstandingReqs" : maxOutstandingReqs
 	})
 comp_txnGen.enableAllStatistics()
 

@@ -53,47 +53,38 @@ c_TxnDispatcher::c_TxnDispatcher(ComponentId_t x_id, Params &params):Component(x
     assert(k_numLanes>0);
 
     string l_laneIdxString = (string) params.find<string>("laneIdxPos", "13:12", l_found);
-    if (!l_found) {
-        cout << "the bit position of lane index is not specified... it should be \"end:start\""
-                  << endl;
-        exit(-1);
-    }
-    else
-    {
-        //l_laneIdxString.erase(remove(l_laneIdxString.begin(), l_laneIdxString.end(), '['), l_laneIdxString.end());
-        //l_laneIdxString.erase(remove(l_laneIdxString.begin(), l_laneIdxString.end(), ']'), l_laneIdxString.end());
-        //l_laneIdxString.erase(remove(l_laneIdxString.begin(), l_laneIdxString.end(), '\n'), l_laneIdxString.end());
- //       l_laneIdxString.erase(remove(l_laneIdxString.begin(), l_laneIdxString.end(), ' '), l_laneIdxString.end());
-
-        stringstream string_stream;
-        string_stream.str(l_laneIdxString);
-        string item;
-        vector<string> strings;
-        while(getline(string_stream,item,':'))
-        {
-            cout << item <<endl;
-            strings.push_back(item);
-        }
-        if(strings.size()!=2)
-        {
-            cout<<"laneIdxPosition error! =>"<<l_laneIdxString<<endl;
+    if(k_numLanes>1) {
+        if (!l_found) {
+            cout << "the bit position of lane index is not specified... it should be \"end:start\""
+                 << endl;
             exit(-1);
-        }
-        else {
-            m_laneIdxEnd = atoi(strings[0].c_str());
-            m_laneIdxStart = atoi(strings[1].c_str());
-            m_laneIdxMask= ~((int64_t)-1 << (m_laneIdxEnd+1));
-            if(m_laneIdxEnd<m_laneIdxStart)
-            {
-                cout<<"landIdxPosition error!!"
-                <<"End position: "<<m_laneIdxEnd
-                <<"Start position: "<<m_laneIdxStart
-                <<endl;
+        } else {
+
+            stringstream string_stream;
+            string_stream.str(l_laneIdxString);
+            string item;
+            vector<string> strings;
+            while (getline(string_stream, item, ':')) {
+                strings.push_back(item);
+            }
+
+            if (strings.size() != 2) {
+                cout << "laneIdxPosition error! =>" << l_laneIdxString << endl;
                 exit(-1);
+            } else {
+                m_laneIdxEnd = atoi(strings[0].c_str());
+                m_laneIdxStart = atoi(strings[1].c_str());
+                m_laneIdxMask = ~((int64_t) -1 << (m_laneIdxEnd + 1));
+                if (m_laneIdxEnd < m_laneIdxStart) {
+                    cout << "landIdxPos error!!"
+                         << "End position: " << m_laneIdxEnd
+                         << "Start position: " << m_laneIdxStart
+                         << endl;
+                    exit(-1);
+                }
             }
         }
     }
-
     std::string l_clockFreqStr = (std::string)params.find<std::string>("ClockFreq", "1GHz", l_found);
 
 
@@ -111,7 +102,7 @@ c_TxnDispatcher::c_TxnDispatcher(ComponentId_t x_id, Params &params):Component(x
 
     for (int i = 0; i < k_numLanes; i++) {
         string l_linkName = "lane_" + to_string(i);
-        Link *l_link = configureLink(l_linkName,"0ns",new Event::Handler<c_TxnDispatcher>(this, &c_TxnDispatcher::handleCtrlEvent));
+        Link *l_link = configureLink(l_linkName,new Event::Handler<c_TxnDispatcher>(this, &c_TxnDispatcher::handleCtrlEvent));
 
         if (l_link) {
             m_laneLinks.push_back(l_link);

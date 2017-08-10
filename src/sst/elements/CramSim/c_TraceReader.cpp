@@ -82,7 +82,7 @@ void c_TraceReader::createTxn()
                         if ((*l_iter).find("WR") != std::string::npos)
                             l_txnType = e_TransactionType::WRITE;
                         else
-                            l_txnType = e_TransactionType::WRITE;
+                            l_txnType = e_TransactionType::READ;
                         break;
                     case 2:
                         l_txnInterval = std::atoi((*l_iter).c_str());
@@ -103,10 +103,6 @@ void c_TraceReader::createTxn()
             std::pair<c_Transaction *, unsigned> l_entry = std::make_pair(l_txn, l_txnInterval);
             m_txnReqQ.push_back(l_entry);
 
-            //todo: record transaction
-             std::cout << std::endl << std::endl
-             		<< "TxnGen::createTxn() created txn seqNum = " << m_seqNum
-             		<< " addr=" << l_txnAddress << std::endl;
         } else {
             break;
             //  std::cout << "TxnGen:: Ran out of txn's to read" << std::endl;

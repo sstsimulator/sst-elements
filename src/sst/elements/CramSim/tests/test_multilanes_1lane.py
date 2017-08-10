@@ -1,43 +1,28 @@
-# Automatically generated SST Python input
 import sst
 import sys
 import time
-sys.path.append('./tests/')
 from util import *
 
+#######################################################################################################
 
 # Command line arguments
-g_trace_file = ""
 g_config_file = ""
-g_trace_gen = ""
-g_stopAtCycle = ""
-g_params = ""
-
-
-addressMapStr = "_rrrrrrrrrrrrrrr_BB_bb_lllllll_C_hhhhhh_"
-numlanes=1
-laneIdxPos = "7:6"
-readWriteRatio = 0.5
-channelPerLane = 2
-totalChannel = channelPerLane*numlanes
-maxOutstandingReqs = totalChannel*64
-numTxnPerCycle = totalChannel
-maxTxns = 10000*totalChannel
+g_override_list = ""
 
 # Setup global parameters
-[g_trace_file, g_config_file, g_trace_gen, g_stopAtCycle] = read_arguments()
-g_params = setup_config_params(g_config_file)
-g_params["traceFile"] = g_trace_file
+[g_config_file, g_overrided_list] = read_arguments()
+g_params = setup_config_params(g_config_file, g_overrided_list)
 
-
-if g_stopAtCycle != "" :
-	g_params["stopAtCycle"]=g_stopAtCycle
-
-if channelPerLane != "" :
-	g_params["numChannels"]=channelPerLane
-
-if addressMapStr != "":
-	g_params["strAddressMapStr"] = addressMapStr
+numLanes = 1
+g_params["strAddressMapStr"] = "_rrrrrrrrrrrrrrr_BB_bb_lllllll_CCC_hhhhhh_"
+laneIdxPos = ""
+readWriteRatio = 0.5
+channelsPerLane = 8
+g_params["numChannels"] = channelsPerLane
+totalChannel = channelsPerLane*numLanes
+maxOutstandingReqs = totalChannel*64
+numTxnPerCycle = totalChannel
+maxTxns = 100000 * totalChannel
 
 
 # Define SST core options
@@ -47,18 +32,22 @@ sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
 
 
+#########################################################################################################
 
+## Configure transaction generator and transaction dispatcher
 comp_txnGen = sst.Component("TxnGen", "CramSim.c_TxnGen")
+comp_txnGen.addParams(g_params)
 comp_txnGen.addParams({
 	"maxTxns" : maxTxns,
 	"numTxnPerCycle" : totalChannel,
 	"maxOutstandingReqs" : maxOutstandingReqs,
 	"readWriteRatio" : readWriteRatio
 	})
+comp_txnGen.enableAllStatistics()
 
 comp_txnDispatcher = sst.Component("txnDispatcher", "CramSim.c_TxnDispatcher");
 comp_txnDispatcher.addParams({
-	"numLanes" : numlanes,
+	"numLanes" : numLanes,
 	"laneIdxPos" : laneIdxPos,
 	"debug" : 0,
 	"debug_level" : 0
@@ -67,11 +56,9 @@ comp_txnDispatcher.addParams({
 txnGenLink = sst.Link("txnGenLink")
 txnGenLink.connect((comp_txnGen, "lowLink", g_params["clockCycle"]),(comp_txnDispatcher,"txnGen",g_params["clockCycle"]))
 
-# enable all statistics
-comp_txnGen.enableAllStatistics()
 
-# controller+device gen
-for chid in range(numlanes):
+# Configure controller and device
+for chid in range(numLanes):
 
 	# controller
 	comp_controller = sst.Component("MemController"+str(chid), "CramSim.c_Controller")

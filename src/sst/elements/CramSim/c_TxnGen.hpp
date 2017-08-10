@@ -51,7 +51,7 @@ namespace SST {
             c_TxnGen(); //for serialization only
 
             uint64_t getNextAddress();
-            void createTxn();
+            virtual void createTxn();
 
             //token chg to/from events
             void handleResEvent(SST::Event *ev); //handleEvent
