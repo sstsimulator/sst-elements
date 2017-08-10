@@ -1430,10 +1430,10 @@ void DirectoryController::handleFlushLineResponse(MemEvent * ev) {
 #endif
     reqEv->setMemFlags(ev->getMemFlags()); // Copy anything back up that needs to be
     
-    MemEvent * me = new MemEvent(this, reqEv->getBaseAddr(), reqEv->getBaseAddr(), Command::FlushLineResp);
+    MemEvent * me = reqEv->makeResponse();
     me->setDst(reqEv->getSrc());
     me->setRqstr(reqEv->getRqstr());
-    me->setSuccess(true);
+    me->setSuccess(ev->queryFlag(MemEvent::F_SUCCESS));
     me->setMemFlags(reqEv->getMemFlags());
 
     profileResponseSent(me);
@@ -1506,11 +1506,8 @@ void DirectoryController::issueFetch(MemEvent * ev, DirEntry * entry, Command cm
 
 /* Send Get* request to memory */
 void DirectoryController::issueMemoryRequest(MemEvent * ev, DirEntry * entry) {
-    MemEvent *reqEv         = new MemEvent(this, ev->getAddr(), ev->getBaseAddr(), ev->getCmd(), cacheLineSize);
-    reqEv->setRqstr(ev->getRqstr());
-    reqEv->setVirtualAddress(ev->getVirtualAddress());
-    reqEv->setInstructionPointer(ev->getInstructionPointer());
-    reqEv->setMemFlags(ev->getMemFlags());
+    MemEvent *reqEv         = new MemEvent(*ev);
+    reqEv->setSrc(getName());
     reqEv->setDst(memoryName);
     memReqs[reqEv->getID()] = ev->getBaseAddr();
     profileRequestSent(reqEv);
@@ -1624,7 +1621,7 @@ void DirectoryController::sendInvalidate(int target, MemEvent * reqEv, DirEntry*
 }
 
 void DirectoryController::sendAckPut(MemEvent * event) {
-    MemEvent * me = new MemEvent(this, event->getBaseAddr(), event->getBaseAddr(), Command::AckPut);
+    MemEvent * me = event->makeResponse(Command::AckPut);
     me->setDst(event->getSrc());
     me->setRqstr(event->getRqstr());
 
