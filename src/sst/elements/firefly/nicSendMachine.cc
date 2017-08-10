@@ -106,7 +106,9 @@ void Nic::SendMachine::state_2( SendEntryBase* entry, FireflyNetworkEvent *ev )
 
     if ( entry->isDone() ) {
         m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "send entry done\n");
-        delete entry;
+        if ( entry->shouldDelete() ) {
+            delete entry;
+        } 
 
         if ( ! canSend( m_packetSizeInBytes ) ) {
             m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "send busy\n");
