@@ -20,6 +20,7 @@
 #include <sst/core/module.h>
 #include <sst/core/output.h>
 #include <sst/core/component.h>
+#include "sst/elements/hermes/shmemapi.h"
 
 #include "ioVec.h"
 
@@ -27,7 +28,7 @@ namespace SST {
 namespace Firefly {
 
 class NicRespEvent;
-class NicShmemRespEvent;
+class NicShmemRespBaseEvent;
 
 class VirtNic : public SST::Module {
 
@@ -55,7 +56,8 @@ class VirtNic : public SST::Module {
 
   public:
 
-    typedef std::function<void(uint64_t)> Callback;
+    typedef std::function<void(Hermes::Value&)> CallbackV;
+    typedef std::function<void()> Callback;
 
     template <typename classT, typename argT >
     class Handler : public HandlerBase<argT> {
@@ -153,10 +155,18 @@ class VirtNic : public SST::Module {
     void shmemBlocked( Callback );
     void shmemRegMem( Hermes::MemAddr&, size_t len, Callback );
     void shmemFence( Callback );
-    void shmemPut( int node, Hermes::MemAddr& dest, uint64_t, size_t len, Callback );
-    void shmemPut( int node, Hermes::MemAddr& dest, Hermes::MemAddr& src, size_t len, Callback );
-    void shmemGet( int node, Hermes::MemAddr& src, size_t len, Callback );
-    void shmemGet( int node, Hermes::MemAddr& dest, Hermes::MemAddr& src, size_t len, Callback );
+
+    void shmemWait( Hermes::Vaddr dest, Hermes::Shmem::WaitOp, Hermes::Value&, Callback );
+
+    void shmemPutv( int node, Hermes::Vaddr dest, Hermes::Value&, Callback );
+    void shmemGetv( int node, Hermes::Vaddr src, Hermes::Value::Type, CallbackV );
+
+    void shmemPut( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback );
+    void shmemGet( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback );
+
+    void shmemSwap( int node, Hermes::Vaddr dest, Hermes::Value& value, CallbackV );
+    void shmemCswap( int node, Hermes::Vaddr dest, Hermes::Value& cond, Hermes::Value& value, CallbackV );
+    void shmemFadd( int node, Hermes::Vaddr dest, Hermes::Value&, CallbackV );
 
     void setNotifyOnRecvDmaDone(
         VirtNic::HandlerBase4Args<int,int,size_t,void*>* functor);
@@ -171,6 +181,11 @@ class VirtNic : public SST::Module {
 
   private:
 
+    void sendCmd( SimTime_t delay ,Event* ev) {
+        ++m_numPendingShmem;
+        m_toNicLink->send( delay, ev );  
+    }
+         
 	int calcRealNicId( int nodeId ) {
 		if ( -1 == nodeId ) {
 			return -1;
@@ -184,7 +199,7 @@ class VirtNic : public SST::Module {
 
     void handleEvent( Event * );
     void handleMsgEvent( NicRespEvent * );
-    void handleShmemEvent( NicShmemRespEvent * );
+    void handleShmemEvent( NicShmemRespBaseEvent * );
 
     int         m_realNicId;
     int         m_coreId;

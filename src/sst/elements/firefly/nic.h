@@ -23,6 +23,7 @@
 #include <sst/core/output.h>
 #include <sst/core/link.h>
 
+#include "sst/elements/hermes/shmemapi.h"
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
@@ -57,12 +58,12 @@ class Nic : public SST::Component  {
         unsigned short    dst_vNicId;
         unsigned short    src_vNicId;
     };
-    struct ShmemMsgHdr {
-        enum { Put, Get, GetResp } op;
-        uint64_t simVAddrSrc;
-        uint64_t simVAddrDest;
+    struct __attribute__ ((packed)) ShmemMsgHdr {
+        enum Op { Put, Get, GetResp, Fadd, Swap, Cswap } op;
+        uint64_t vaddr;
         size_t   length;
-        uint64_t key;
+        Hermes::Value::Type dataType;
+        uint64_t respKey;
     };
     struct RdmaMsgHdr {
         enum { Put, Get, GetResp } op;
@@ -105,6 +106,7 @@ class Nic : public SST::Component  {
 
     #include "nicVirtNic.h" 
     #include "nicShmem.h"
+    #include "nicShmemMove.h" 
     #include "nicEntryBase.h"
     #include "nicSendEntry.h"
     #include "nicShmemSendEntry.h" 
@@ -162,7 +164,8 @@ public:
     DmaRecvEntry* findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr );
     SendEntryBase* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
     EntryBase* findRecv( int srcNode, MsgHdr&, int tag );
-    std::pair<Hermes::MemAddr, size_t> findShmem( uint64_t simVAddr );
+
+    Hermes::MemAddr findShmem( Hermes::Vaddr  addr, size_t length );
 
     void schedEvent( SelfEvent* event, int delay = 0 ) {
         m_selfLink->send( delay, event );

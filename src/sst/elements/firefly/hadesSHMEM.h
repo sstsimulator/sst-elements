@@ -71,7 +71,7 @@ class HadesSHMEM : public Shmem::Interface
 
   public:
     HadesSHMEM(Component*, Params&);
-    ~HadesSHMEM() {}
+    ~HadesSHMEM() { delete m_heap; }
 
     virtual void setup();
     virtual void finish() {}
@@ -94,11 +94,17 @@ class HadesSHMEM : public Shmem::Interface
     virtual void malloc(Hermes::MemAddr*,size_t,MP::Functor*);
     virtual void free(Hermes::MemAddr*,MP::Functor*);
 
-    virtual void get(Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, int pe, MP::Functor*);
-    virtual void put(Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, int pe, MP::Functor*);
+    virtual void get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, MP::Functor*);
+    virtual void put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, MP::Functor*);
 
-    virtual void getv(void* dest, Hermes::MemAddr, int size, int pe, MP::Functor*);
-    virtual void putv(Hermes::MemAddr dest, uint64_t value, int size, int pe, MP::Functor*);
+    virtual void getv(Hermes::Value&, Hermes::Vaddr src, int pe, MP::Functor*);
+    virtual void putv(Hermes::Vaddr dest, Hermes::Value&, int pe, MP::Functor*);
+
+    virtual void wait_until(Hermes::Vaddr src, Hermes::Shmem::WaitOp, Hermes::Value&, MP::Functor*);
+
+    virtual void cswap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& cond, Hermes::Value& value, int pe, MP::Functor*);
+    virtual void swap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& value, int pe, MP::Functor*);
+    virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, MP::Functor*);
 
   private:
     Output m_dbg;

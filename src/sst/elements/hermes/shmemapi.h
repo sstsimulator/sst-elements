@@ -20,14 +20,12 @@
 
 #include "hermes.h"
 
-using namespace SST;
-
 namespace SST {
 namespace Hermes {
 namespace Shmem {
 
 typedef Arg_FunctorBase< int, bool > Functor;
-
+typedef enum { NONE, LTE, LT, E, NE, GT, GTE } WaitOp;
 class Interface : public Hermes::Interface {
     public:
 
@@ -44,16 +42,18 @@ class Interface : public Hermes::Interface {
     virtual void my_pe(int*, Functor*) { assert(0); }
 
     virtual void malloc(MemAddr*, size_t, Functor*) { assert(0); }
-    virtual void free(MemAddr, Functor*) { assert(0); }
+    virtual void free(MemAddr&, Functor*) { assert(0); }
 
-    virtual void get( MemAddr dst, MemAddr src, size_t nelems, int pe, Functor*) { assert(0); }
-    virtual void put( MemAddr dst, MemAddr src, size_t nelems, int pe, Functor*) { assert(0); }
-    virtual void getv( void*, MemAddr, int size, int pe, Functor*) { assert(0); }
-    virtual void putv( MemAddr, uint64_t value, int size, int pe, Functor*) { assert(0); }
+    virtual void get( Vaddr dst, Vaddr src, size_t nelems, int pe, Functor*) { assert(0); }
+    virtual void put( Vaddr dst, Vaddr src, size_t nelems, int pe, Functor*) { assert(0); }
 
-    virtual void uint64_gut( MemAddr, MemAddr, int pe, Functor*) { assert(0); }
+    virtual void getv( Value& result, Vaddr src, int pe, Functor*) { assert(0); }
+    virtual void putv( Vaddr dest, Value& value, int pe, Functor*) { assert(0); }
 
-    virtual void uint64_add(uint64_t* addr, int pe, Functor*) { assert(0); }
+    virtual void wait_until( Vaddr, WaitOp, Value&, Functor*) { assert(0); }
+    virtual void cswap( Value& result, Vaddr, Value& cond, Value& value, int pe, Functor*) { assert(0); }
+    virtual void swap( Value& result, Vaddr, Value&, int pe, Functor*) { assert(0); }
+    virtual void fadd( Value& result, Vaddr, Value&, int pe, Functor*) { assert(0); }
 };
 
 }

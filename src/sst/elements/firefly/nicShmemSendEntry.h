@@ -16,7 +16,9 @@
 
 class ShmemSendEntryBase: public SendEntryBase {
   public:
-    ShmemSendEntryBase( int local_vNic ) : SendEntryBase( local_vNic ) {}
+    ShmemSendEntryBase( int local_vNic ) : SendEntryBase( local_vNic ) { }
+    ~ShmemSendEntryBase() { }
+    
     MsgHdr::Op getOp() { return MsgHdr::Shmem; }
     void* hdr() { return &m_hdr; }
     size_t hdrSize() { return sizeof(m_hdr); }
@@ -26,59 +28,143 @@ class ShmemSendEntryBase: public SendEntryBase {
 
 class ShmemCmdSendEntry: public ShmemSendEntryBase {
   public:
-    ShmemCmdSendEntry( int local_vNic, NicShmemCmdEvent* event) : 
-        ShmemSendEntryBase( local_vNic ), m_event( event ) {}
-    int dst_vNic() { return m_event->vnic; }
-    int dest() { return m_event->node; }
+    ShmemCmdSendEntry( int local_vNic, NicShmemSendCmdEvent* event) : 
+        ShmemSendEntryBase( local_vNic ), m_event( event ) { }
+    int dst_vNic() { return m_event->getVnic(); }
+    int dest() { return m_event->getNode(); }
   protected:
-    NicShmemCmdEvent* m_event;
+    NicShmemSendCmdEvent* m_event;
 };
 
-class ShmemGetSendEntry: public ShmemCmdSendEntry {
+class ShmemRespSendEntry: public ShmemCmdSendEntry {
   public:
-    ShmemGetSendEntry( int local_vNic, NicShmemCmdEvent* event ) : 
+    ShmemRespSendEntry( int local_vNic, NicShmemSendCmdEvent* event ) : 
         ShmemCmdSendEntry( local_vNic, event )
     {
-        assert( sizeof( m_hdr.key) == sizeof(m_event )); 
-        m_hdr.op = ShmemMsgHdr::Get; 
-        m_hdr.simVAddrSrc = m_event->src.getSimVAddr();
-        m_hdr.simVAddrDest = m_event->dest.getSimVAddr();
-        m_hdr.key = (size_t)m_event;
-        m_hdr.length = m_event->len; 
+        assert( sizeof( m_hdr.respKey) == sizeof(m_event )); 
+        m_hdr.vaddr = m_event->getFarAddr();
+        m_hdr.length = m_event->getLength(); 
+        m_hdr.respKey = (size_t) this;
     }
+    bool shouldDelete() { return false; }
 
     size_t totalBytes() { return 0; } 
     bool isDone() { return true; }
-    void copyOut( Output&, int vc, int numBytes, 
+    virtual void copyOut( Output&, int vc, int numBytes, 
             FireflyNetworkEvent&, std::vector<DmaVec>& ) {};
+    NicShmemSendCmdEvent* getCmd() { return m_event; }
 };
 
-class ShmemMove {
+class ShmemGetvSendEntry: public ShmemRespSendEntry {
   public:
-    ShmemMove( void* ptr, size_t length ) : 
-        m_ptr((uint8_t*)ptr), m_length( length ), m_offset(0) {}
-    void copyOut( Output& dbg, int vc, int numBytes, 
-            FireflyNetworkEvent& ev, std::vector<DmaVec>& vec );
-    bool isDone() { return m_offset == m_length; }
+    typedef std::function<void(Hermes::Value&)> Callback;
+
+    ShmemGetvSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback  ) :
+        ShmemRespSendEntry( local_vNic, event ), m_callback(callback)
+    { 
+        m_hdr.op = ShmemMsgHdr::Get; 
+    }
+    void callback( Hermes::Value& value ) { m_callback(value); }
   private:
-    uint8_t*  m_ptr;
-    size_t m_length;
-    size_t m_offset;
+    Callback  m_callback;
+};
+
+class ShmemFaddSendEntry: public ShmemRespSendEntry {
+  public:
+    typedef std::function<void(Hermes::Value&)> Callback;
+
+    ShmemFaddSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback  ) :
+        ShmemRespSendEntry( local_vNic, event ), m_callback(callback)
+    { 
+        m_shmemMove = new ShmemSendMoveMem( event->getBacking(), event->getLength() );
+        m_hdr.op = ShmemMsgHdr::Fadd; 
+        m_hdr.dataType = m_event->getDataType();
+    }
+    ~ShmemFaddSendEntry() { delete m_shmemMove; }
+
+    void callback( Hermes::Value& value ) { m_callback(value); }
+
+    void copyOut( Output& dbg, int vc, int numBytes, 
+            FireflyNetworkEvent& ev, std::vector<DmaVec>&  vec) { 
+        m_shmemMove->copyOut( dbg, vc, numBytes, ev, vec ); 
+    }
+  private:
+    Callback  m_callback;
+    ShmemSendMove* m_shmemMove;
+};
+
+class ShmemSwapSendEntry: public ShmemRespSendEntry {
+  public:
+    typedef std::function<void(Hermes::Value&)> Callback;
+    ShmemSwapSendEntry( int local_vNic, NicShmemSwapCmdEvent* event, Callback callback  ) :
+        ShmemRespSendEntry( local_vNic, event ), m_callback(callback)
+    {
+        m_shmemMove = new ShmemSendMoveValue( event->data );
+        m_hdr.op = ShmemMsgHdr::Swap; 
+        m_hdr.dataType = m_event->getDataType();
+    }
+    ~ShmemSwapSendEntry() { delete m_shmemMove; }
+
+    void callback( Hermes::Value& value ) { m_callback(value); }
+
+    void copyOut( Output& dbg, int vc, int numBytes, 
+            FireflyNetworkEvent& ev, std::vector<DmaVec>&  vec) { 
+        m_shmemMove->copyOut( dbg, vc, numBytes, ev, vec ); 
+    }
+  private:
+    Callback        m_callback;
+    ShmemSendMove*  m_shmemMove;
+};
+
+class ShmemCswapSendEntry: public ShmemRespSendEntry {
+  public:
+    typedef std::function<void(Hermes::Value&)> Callback;
+    ShmemCswapSendEntry( int local_vNic, NicShmemCswapCmdEvent* event, Callback callback  ) :
+        ShmemRespSendEntry( local_vNic, event ), m_callback(callback)
+    {
+        m_shmemMove = new ShmemSendMove2Value( event->data, event->cond );
+        m_hdr.op = ShmemMsgHdr::Cswap; 
+        m_hdr.dataType = m_event->getDataType();
+    }
+    ~ShmemCswapSendEntry() { delete m_shmemMove; }
+
+    void callback( Hermes::Value& value ) { m_callback(value); }
+
+    void copyOut( Output& dbg, int vc, int numBytes, 
+            FireflyNetworkEvent& ev, std::vector<DmaVec>&  vec) { 
+        m_shmemMove->copyOut( dbg, vc, numBytes, ev, vec ); 
+    }
+  private:
+    Callback        m_callback;
+    ShmemSendMove*  m_shmemMove;
+};
+
+class ShmemGetbSendEntry: public ShmemRespSendEntry {
+  public:
+    typedef std::function<void()> Callback;
+
+    ShmemGetbSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback  ) : 
+        ShmemRespSendEntry( local_vNic, event ), m_callback(callback) 
+    { 
+        m_hdr.op = ShmemMsgHdr::Get; 
+    }
+    void callback() { m_callback(); }
+  private:
+    Callback  m_callback;
 };
 
 class ShmemPutSendEntry: public ShmemCmdSendEntry  {
   public:
     typedef std::function<void()> Callback;
-    ShmemPutSendEntry( int local_vNic, NicShmemCmdEvent* event,
+    ShmemPutSendEntry( int local_vNic, NicShmemSendCmdEvent* event,
                                                 Callback callback ) : 
         ShmemCmdSendEntry( local_vNic, event ),
         m_callback(callback)
     {
         m_hdr.op = ShmemMsgHdr::Put; 
-        m_hdr.simVAddrSrc = 0;
-        m_hdr.simVAddrDest = m_event->dest.getSimVAddr();
-        m_hdr.key = 0;
-        m_hdr.length = m_event->len; 
+        m_hdr.vaddr = m_event->getFarAddr();
+        m_hdr.length = m_event->getLength(); 
+        m_hdr.respKey = 0;
     }
 
     ~ShmemPutSendEntry() {
@@ -96,47 +182,63 @@ class ShmemPutSendEntry: public ShmemCmdSendEntry  {
 
   protected:
     Callback m_callback;
-    ShmemMove* m_shmemMove;
+    ShmemSendMove* m_shmemMove;
 };
 
-class ShmemPutPSendEntry: public ShmemPutSendEntry  {
+class ShmemPutbSendEntry: public ShmemPutSendEntry  {
   public:
-    ShmemPutPSendEntry( int local_vNic, NicShmemCmdEvent* event,
+    ShmemPutbSendEntry( int local_vNic, NicShmemSendCmdEvent* event, void* backing,
                                                 Callback callback ) : 
         ShmemPutSendEntry( local_vNic, event, callback )
     {
-        m_shmemMove = new ShmemMove( event->src.getBacking(), event->len );
+        m_shmemMove = new ShmemSendMoveMem( backing, event->getLength() );
+    }
+    ~ShmemPutbSendEntry() {
     }
 };
 
-class ShmemPutVSendEntry: public ShmemPutSendEntry  {
+class ShmemPutvSendEntry: public ShmemPutSendEntry  {
   public:
-    ShmemPutVSendEntry( int local_vNic, NicShmemCmdEvent* event,
+    ShmemPutvSendEntry( int local_vNic, NicShmemSendCmdEvent* event,
                                                 Callback callback ) : 
         ShmemPutSendEntry( local_vNic, event, callback )
     {
-        m_shmemMove = new ShmemMove( &event->value, event->len );
+        m_shmemMove = new ShmemSendMoveMem( event->getBacking(), event->getLength() );
     }
 };
-
 
 class ShmemPut2SendEntry: public ShmemSendEntryBase  {
   public:
     ShmemPut2SendEntry( int local_vNic, int destNode, int dest_vNic,
-            uint64_t simVAddrDest, void* ptr, size_t length, uint64_t key ) :
+            void* ptr, size_t length, uint64_t key ) :
         ShmemSendEntryBase( local_vNic ),
         m_node( destNode ),
-        m_vnic(dest_vNic)
+        m_vnic(dest_vNic),
+        m_value(NULL)
     {
-        m_hdr.op = ShmemMsgHdr::Put; 
-        m_hdr.simVAddrSrc = 0;
-        m_hdr.simVAddrDest = simVAddrDest;
-        m_hdr.key = key;
-        m_hdr.length = length; 
-        m_shmemMove = new ShmemMove( ptr, length );
+        init( length, key );
+        m_shmemMove = new ShmemSendMoveMem( ptr, length );
     }
+    ShmemPut2SendEntry( int local_vNic, int destNode, int dest_vNic,
+            Hermes::Value* value, uint64_t key ) :
+        ShmemSendEntryBase( local_vNic ),
+        m_node( destNode ),
+        m_vnic(dest_vNic),
+        m_value(value) 
+    {
+        init( value->getLength(), key );
+        m_shmemMove = new ShmemSendMoveValue( *value );
+    }
+
+    void init( uint64_t length, uint64_t key ) {
+        m_hdr.op = ShmemMsgHdr::Put; 
+        m_hdr.respKey = key;
+        m_hdr.length = length; 
+    }
+
     ~ShmemPut2SendEntry() {
         delete m_shmemMove;
+        if ( m_value) { delete m_value; }
     }
     int dst_vNic() { return m_vnic; }
     int dest() { return m_node; }
@@ -149,7 +251,8 @@ class ShmemPut2SendEntry: public ShmemSendEntryBase  {
     };
 
   private:
-    ShmemMove* m_shmemMove;
+    ShmemSendMove* m_shmemMove;
     int m_vnic;
     int m_node;
+    Hermes::Value* m_value;
 };
