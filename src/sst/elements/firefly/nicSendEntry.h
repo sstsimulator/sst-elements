@@ -49,7 +49,7 @@ class CmdSendEntry: public SendEntryBase, public EntryBase {
 
     ~CmdSendEntry() {
         m_callback (m_cmd->key );
-      //  delete m_cmd;
+        delete m_cmd;
     }
 
     std::vector<IoVec>& ioVec() { return m_cmd->iovec; }
