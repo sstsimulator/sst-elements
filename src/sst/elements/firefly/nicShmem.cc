@@ -30,6 +30,7 @@ void Nic::Shmem::regMem( NicShmemRegMemCmdEvent* event, int id )
     m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::RegMem, event->callback );
 
     m_regMem.push_back( std::make_pair(event->addr, event->len) );
+    delete event;
 }
 
 void Nic::Shmem::wait( NicShmemOpCmdEvent* event, int id )

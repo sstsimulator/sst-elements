@@ -71,7 +71,7 @@ class HadesSHMEM : public Shmem::Interface
 
   public:
     HadesSHMEM(Component*, Params&);
-    ~HadesSHMEM() {}
+    ~HadesSHMEM() { delete m_heap; }
 
     virtual void setup();
     virtual void finish() {}

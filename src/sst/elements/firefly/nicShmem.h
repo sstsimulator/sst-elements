@@ -22,7 +22,10 @@ class Shmem {
         typedef std::function<void()> Callback;
         enum Type { Wait } m_type;  
         Op( Type type, NicShmemOpCmdEvent* cmd, Callback callback ) : m_type(type), m_cmd(cmd), m_callback(callback) {}
-        virtual ~Op() { m_callback(); }
+        virtual ~Op() { 
+            m_callback();
+            delete m_cmd;
+        }
         virtual bool checkOp( ) = 0;
         bool inRange( Hermes::Vaddr addr, size_t length ) {
             return ( m_cmd->addr >= addr && m_cmd->addr + m_cmd->value.getLength() <= addr + length );
@@ -73,6 +76,10 @@ class Shmem {
   public:
     Shmem( Nic& nic, Output& output ) : m_nic( nic ), m_dbg(output) 
     {}
+    ~Shmem() {
+        m_regMem.clear();
+    }
+
     void regMem( NicShmemRegMemCmdEvent*, int id );
     void wait( NicShmemOpCmdEvent*, int id );
     void put( NicShmemPutCmdEvent*, int id );
