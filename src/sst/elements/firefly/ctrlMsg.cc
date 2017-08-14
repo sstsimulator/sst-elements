@@ -52,6 +52,7 @@ API::API( Component* owner, Params& params ) :
 API::~API()
 {
     if ( m_processQueuesState) delete m_processQueuesState;
+    delete m_mem;
 }
 
 void API::setup() { 
@@ -129,7 +130,6 @@ void API::send( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t ta
     std::vector<IoVec> ioVec(1);
     ioVec[0].addr = addr;
     ioVec[0].len = len;
-
 
     sendv_common( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, NULL );
 }

@@ -14,34 +14,36 @@
 // distribution.
 
 
-#ifndef _H_EMBER_SHMEM_GETV_EVENT
-#define _H_EMBER_SHMEM_GETV_EVENT
+#ifndef _H_EMBER_SHMEM_SWAP_EVENT
+#define _H_EMBER_SHMEM_SWAP_EVENT
 
 #include "emberShmemEvent.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberGetVShmemEvent : public EmberShmemEvent {
+class EmberSwapShmemEvent : public EmberShmemEvent {
 
 public:
-	EmberGetVShmemEvent( Shmem::Interface& api, Output* output,
-            Hermes::Value value, Hermes::Vaddr src, int pe, 
+	EmberSwapShmemEvent( Shmem::Interface& api, Output* output,
+            Hermes::Value result, Hermes::Vaddr dest, Hermes::Value value, int pe, 
             EmberEventTimeStatistic* stat = NULL ) :
             EmberShmemEvent( api, output, stat ), 
-            m_value(value), m_src(src),  m_pe(pe) {}
-	~EmberGetVShmemEvent() {}
+            m_result(result), m_dest(dest), m_value(value), m_pe(pe) {}
+	~EmberSwapShmemEvent() {}
 
-    std::string getName() { return "Malloc"; }
+    std::string getName() { return "Swap"; }
 
     void issue( uint64_t time, MP::Functor* functor ) {
 
         EmberEvent::issue( time );
-        m_api.getv( m_value, m_src, m_pe, functor );
+        m_api.swap( m_result, m_dest, m_value, m_pe, functor );
     }
+
 private:
-    Value  m_value;
-    Hermes::Vaddr m_src;
+    Hermes::Value m_result;
+    Hermes::Value m_value;
+    Hermes::Vaddr m_dest;
     int m_pe;
 };
 
