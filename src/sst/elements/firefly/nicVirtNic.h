@@ -65,7 +65,11 @@ class VirtNic {
             m_toCoreLink->send(0, new NicRespEvent( NicRespEvent::Get, key ));
         }
 
-        void notifyShmem( NicShmemRespEvent::Type type, NicShmemRespEvent::Callback callback, uint64_t value = 0 ) {
-            m_toCoreLink->send(0, new NicShmemRespEvent( type, callback, value ));
+
+        void notifyShmem( NicShmemRespBaseEvent::Type type, NicShmemRespEvent::Callback callback ) {
+            m_toCoreLink->send(0, new NicShmemRespEvent( type, callback ));
+        }
+        void notifyShmem( NicShmemRespBaseEvent::Type type, NicShmemValueRespEvent::Callback callback, Hermes::Value& value ) {
+            m_toCoreLink->send(0, new NicShmemValueRespEvent( type, callback, value ));
         }
     };

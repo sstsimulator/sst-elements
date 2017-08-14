@@ -113,19 +113,20 @@ void VirtNic::handleMsgEvent( NicRespEvent* event )
         assert(0);
     }
 }
-void VirtNic::handleShmemEvent( NicShmemRespEvent* event )
+void VirtNic::handleShmemEvent( NicShmemRespBaseEvent* event )
 {
-    if ( event->callback ) {
-        m_dbg.verbose(CALL_INFO,2,0,"\n");
-        event->callback(event->value);
-    } else {
+    if ( event->type == NicShmemRespBaseEvent::FreeCmd ) {
         m_dbg.verbose(CALL_INFO,2,0,"pending=%d\n",m_numPendingShmem);
         assert( m_numPendingShmem );
         --m_numPendingShmem;
         if ( m_shmemBlockedCallback ) {
-            m_shmemBlockedCallback(0);
+            m_shmemBlockedCallback();
             m_shmemBlockedCallback = NULL;
         }
+    } else {
+        m_dbg.verbose(CALL_INFO,2,0,"\n");
+        NicShmemRespBaseEvent* ev = static_cast<NicShmemRespBaseEvent*>(event);
+        ev->callback();
     }
 }
 
@@ -175,55 +176,71 @@ void VirtNic::shmemBlocked( Callback callback ) {
     if ( m_numPendingShmem == m_maxPendingShmem ) {
         m_shmemBlockedCallback = callback;
     } else {
-        callback(0);
+        callback();
     } 
 }
 
 void VirtNic::shmemRegMem( Hermes::MemAddr& addr, size_t len, Callback callback )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
-    ++m_numPendingShmem;
-    m_toNicLink->send(0, new NicShmemCmdEvent( NicShmemCmdEvent::RegMem, 
-			addr, len, callback ) );
+    sendCmd(0, new NicShmemRegMemCmdEvent( addr, len, callback ) );
 }
 
 void VirtNic::shmemFence( Callback callback )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
-    ++m_numPendingShmem;
-    m_toNicLink->send(0, new NicShmemCmdEvent( NicShmemCmdEvent::Fence, callback ) );
+    assert(0);
+#if 0
+    sendCmd(0, new NicShmemCmdEvent( NicShmemCmdEvent::Fence, callback ) );
+#endif
 }
 
-void VirtNic::shmemGet( int node, Hermes::MemAddr& dest, Hermes::MemAddr& src, size_t len, Callback callback )
+void VirtNic::shmemGet( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback callback )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
-    ++m_numPendingShmem;
-    m_toNicLink->send(0, new NicShmemCmdEvent( NicShmemCmdEvent::GetP, 
-			calcCoreId(node), calcRealNicId(node), dest, src, len, callback ) );
+    sendCmd(0, new NicShmemGetCmdEvent( calcCoreId(node), calcRealNicId(node), dest, src, len, callback ) );
 }
 
-void VirtNic::shmemGet( int node, Hermes::MemAddr& src, size_t len, Callback callback )
+void VirtNic::shmemGetv( int node, Hermes::Vaddr src, Hermes::Value::Type type, CallbackV callback )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
-    ++m_numPendingShmem;
-    m_toNicLink->send(0, new NicShmemCmdEvent( NicShmemCmdEvent::GetV, 
-			calcCoreId(node), calcRealNicId(node), src, len, callback ) );
+    sendCmd(0, new NicShmemGetvCmdEvent( calcCoreId(node), calcRealNicId(node), src, type, callback ) );
 }
 
-void VirtNic::shmemPut( int node, Hermes::MemAddr& dest, Hermes::MemAddr& src, size_t len, Callback callback )
+void VirtNic::shmemWait( Hermes::Vaddr addr, Hermes::Shmem::WaitOp op, Hermes::Value& value, Callback callback )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
-    ++m_numPendingShmem;
-    m_toNicLink->send(0, new NicShmemCmdEvent( NicShmemCmdEvent::PutP, 
-			calcCoreId(node), calcRealNicId(node), dest, src, len, callback ) );
+    sendCmd(0, new NicShmemOpCmdEvent( addr, op, value, callback ) );
 }
 
-void VirtNic::shmemPut( int node, Hermes::MemAddr& dest, uint64_t src, size_t len, Callback callback )
+void VirtNic::shmemPut( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback callback )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
-    ++m_numPendingShmem;
-    m_toNicLink->send(0, new NicShmemCmdEvent( NicShmemCmdEvent::PutV, 
-			calcCoreId(node), calcRealNicId(node), dest, src, len, callback ) );
+    sendCmd(0, new NicShmemPutCmdEvent( calcCoreId(node), calcRealNicId(node), dest, src, len, callback ) );
+}
+
+void VirtNic::shmemPutv( int node, Hermes::Vaddr dest, Hermes::Value& value, Callback callback )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    sendCmd(0, new NicShmemPutvCmdEvent( calcCoreId(node), calcRealNicId(node), dest, value, callback ) );
+}
+
+void VirtNic::shmemSwap( int node, Hermes::Vaddr dest, Hermes::Value& value , CallbackV callback )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    sendCmd(0, new NicShmemSwapCmdEvent( calcCoreId(node), calcRealNicId(node), dest, value, callback ) );
+}
+
+void VirtNic::shmemCswap( int node, Hermes::Vaddr dest, Hermes::Value& cond, Hermes::Value& value , CallbackV callback )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    sendCmd(0, new NicShmemCswapCmdEvent( calcCoreId(node), calcRealNicId(node), dest, cond, value, callback ) );
+}
+
+void VirtNic::shmemFadd( int node, Hermes::Vaddr dest, Hermes::Value& value, CallbackV callback )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    sendCmd(0, new NicShmemFaddCmdEvent( calcCoreId(node), calcRealNicId(node), dest, value, callback ) );
 }
 
 void VirtNic::setNotifyOnRecvDmaDone(

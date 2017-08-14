@@ -26,7 +26,7 @@ class EmberGetShmemEvent : public EmberShmemEvent {
 
 public:
 	EmberGetShmemEvent( Shmem::Interface& api, Output* output,
-            Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe, 
+            Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, 
             EmberEventTimeStatistic* stat = NULL ) :
             EmberShmemEvent( api, output, stat ), 
             m_dest(dest), m_src(src), m_length(length), m_pe(pe) {}
@@ -40,8 +40,8 @@ public:
         m_api.get( m_dest, m_src, m_length, m_pe, functor );
     }
 private:
-    Hermes::MemAddr m_dest;
-    Hermes::MemAddr m_src;
+    Hermes::Vaddr m_dest;
+    Hermes::Vaddr m_src;
     size_t m_length;
     int m_pe;
 };

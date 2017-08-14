@@ -49,6 +49,19 @@ class HeapAddrs {
 
   public:
 
+	~HeapAddrs() {
+		EntrySet::iterator iter = m_free.begin();
+		for ( ; iter != m_free.end(); ++iter ) {
+			delete *iter;
+		}	
+		EntryMap::iterator iter2 = m_used.begin();
+		for ( ; iter2 != m_used.end(); ++iter2 ) {
+			delete iter2->second;
+		}	
+		delete m_head;
+		delete m_tail;
+	}
+
 	HeapAddrs( uint64_t start, size_t length ) {
 
 #if _H_HEAP_ADDRS_DBG
