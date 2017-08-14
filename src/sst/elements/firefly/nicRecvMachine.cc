@@ -24,10 +24,15 @@ static void print( Output& dbg, char* buf, int len );
 
 Nic::RecvMachine::~RecvMachine()
 {
+// for some reason the causes a fault when 
+// testSuite_scheduler_DetailedNetwork.sh
+// terminates a simulation
+#if 0
     while ( ! m_streamMap.empty() ) {
         delete m_streamMap.begin()->second;
         m_streamMap.erase( m_streamMap.begin() );
     }
+#endif
 }
 
 void Nic::RecvMachine::state_0( FireflyNetworkEvent* ev )
