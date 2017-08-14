@@ -23,10 +23,12 @@ using namespace SST::Interfaces;
 
 Nic::SendMachine::~SendMachine() 
 {
+#if 0
     while ( ! m_sendQ.empty() ) {
         delete m_sendQ.front();
         m_sendQ.pop_front();
     }
+#endif
 }
 
 void Nic::SendMachine::state_0( SendEntryBase* entry )

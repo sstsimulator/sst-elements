@@ -72,6 +72,8 @@ class NicShmemRegMemCmdEvent : public NicShmemCmdEvent {
     Hermes::MemAddr addr;
     size_t          len;
     Callback        callback;
+
+    NotSerializable(NicShmemRegMemCmdEvent)
 };
 
     
@@ -91,6 +93,7 @@ class NicShmemSendCmdEvent : public NicShmemCmdEvent {
   private:
     int vnic;
     int node;
+	NotSerializable(NicShmemSendCmdEvent)
 };
 
 class NicShmemPutvCmdEvent : public NicShmemSendCmdEvent {
@@ -109,6 +112,8 @@ class NicShmemPutvCmdEvent : public NicShmemSendCmdEvent {
     Hermes::Vaddr   destAddr;
     Hermes::Value   value;
     Callback        callback;
+
+	NotSerializable(NicShmemPutvCmdEvent)
 };
 
 class NicShmemPutCmdEvent : public NicShmemSendCmdEvent {
@@ -130,6 +135,8 @@ class NicShmemPutCmdEvent : public NicShmemSendCmdEvent {
     Hermes::Vaddr   srcAddr;
     size_t          length;
     Callback        callback;
+
+	NotSerializable(NicShmemPutCmdEvent)	
 };
 
 
@@ -156,6 +163,8 @@ class NicShmemGetCmdEvent : public NicShmemSendCmdEvent {
     Hermes::Vaddr dest;
     Callback callback;
     size_t length;
+
+	NotSerializable(NicShmemGetCmdEvent)
 };
 
 class NicShmemGetvCmdEvent : public NicShmemSendCmdEvent {
@@ -175,6 +184,8 @@ class NicShmemGetvCmdEvent : public NicShmemSendCmdEvent {
 
     Hermes::Vaddr   srcAddr;
     Hermes::Value::Type   dataType;
+
+	NotSerializable(NicShmemGetvCmdEvent)
 };
 
 class NicShmemFaddCmdEvent : public NicShmemSendCmdEvent {
@@ -194,6 +205,8 @@ class NicShmemFaddCmdEvent : public NicShmemSendCmdEvent {
 
     Hermes::Vaddr   srcAddr;
     Hermes::Value  data;
+
+	NotSerializable(NicShmemFaddCmdEvent)
 };
 
 class NicShmemSwapCmdEvent : public NicShmemSendCmdEvent {
@@ -211,6 +224,8 @@ class NicShmemSwapCmdEvent : public NicShmemSendCmdEvent {
     Callback        callback;
     Hermes::Vaddr   srcAddr;
     Hermes::Value  data;
+
+	NotSerializable(NicShmemSwapCmdEvent)
 };
 
 class NicShmemCswapCmdEvent : public NicShmemSendCmdEvent {
@@ -230,6 +245,8 @@ class NicShmemCswapCmdEvent : public NicShmemSendCmdEvent {
     Hermes::Vaddr   srcAddr;
     Hermes::Value  data;
     Hermes::Value  cond;
+
+	NotSerializable(NicShmemCswapCmdEvent)
 };
 
 class NicShmemOpCmdEvent : public NicShmemCmdEvent {
@@ -244,6 +261,8 @@ class NicShmemOpCmdEvent : public NicShmemCmdEvent {
     Hermes::Vaddr   addr;
     Hermes::Value   value;
     Callback        callback;
+
+	NotSerializable(NicShmemOpCmdEvent)
 };
 
 

@@ -65,6 +65,8 @@ ProcessQueuesState::~ProcessQueuesState()
         delete m_postedShortBuffers.begin()->second;
         m_postedShortBuffers.erase( m_postedShortBuffers.begin() );
     }
+    delete m_simVAddrs;
+    delete m_msgTiming;
 }
 
 void ProcessQueuesState::setVars( VirtNic* nic, Info* info, MemoryBase* mem, 

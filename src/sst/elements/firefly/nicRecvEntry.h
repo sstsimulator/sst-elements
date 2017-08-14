@@ -33,7 +33,9 @@ class DmaRecvEntry : public RecvEntryBase {
     DmaRecvEntry( NicCmdEvent* cmd, Callback callback) :
         RecvEntryBase(), m_cmd( cmd ), m_callback( callback )
     { }
-    ~DmaRecvEntry() { }
+    ~DmaRecvEntry() { 
+        delete m_cmd;
+    }
 
     void notify( int src_vNic, int src_node, int tag, size_t length ) {
         m_callback( src_vNic, src_node, tag, length, m_cmd->key );
@@ -91,6 +93,7 @@ class ShmemGetRespRecvEntry : public RecvEntryBase {
     { } 
     ~ShmemGetRespRecvEntry() { 
         delete m_shmemMove;
+        delete m_entry->getCmd();
         delete m_entry;
     }
 

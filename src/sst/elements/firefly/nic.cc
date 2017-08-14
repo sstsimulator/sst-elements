@@ -173,10 +173,21 @@ Nic::~Nic()
             }
         }
     }
+	delete m_shmem;
 	delete m_linkControl;
+
+	for ( size_t i = 0; i < m_recvMachine.size(); i++ ) {
+		delete m_recvMachine[i];
+	}
+	for ( size_t i = 0; i < m_sendMachine.size(); i++ ) {
+		delete m_sendMachine[i];
+	}
 
 	if ( m_recvNotifyFunctor ) delete m_recvNotifyFunctor;
 	if ( m_sendNotifyFunctor ) delete m_sendNotifyFunctor;
+
+	if ( m_detailedCompute[0] ) delete m_detailedCompute[0];
+	if ( m_detailedCompute[1] ) delete m_detailedCompute[1];
 
     for ( int i = 0; i < m_num_vNics; i++ ) {
         delete m_vNicV[i];
