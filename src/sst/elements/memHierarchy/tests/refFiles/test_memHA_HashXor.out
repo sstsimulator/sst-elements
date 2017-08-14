@@ -6,11 +6,12 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu0 Finished after 10000 issued reads, 10000 returned (5684481 clocks)
-TrivialCPU cpu2 Finished after 10000 issued reads, 10000 returned (5685777 clocks)
 TrivialCPU cpu1 Finished after 10000 issued reads, 10000 returned (5685921 clocks)
+TrivialCPU cpu2 Finished after 10000 issued reads, 10000 returned (5685777 clocks)
 TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clocks)
  c0.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 20000; SumSQ.u64 = 20000; Count.u64 = 20000; 
  c0.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 18; SumSQ.u64 = 18; Count.u64 = 18; 
+ c0.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.GetSHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.GetXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -28,8 +29,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  c0.l1cache.GetS_recv : Accumulator : Sum.u64 = 9048; SumSQ.u64 = 9048; Count.u64 = 9048; 
  c0.l1cache.GetX_recv : Accumulator : Sum.u64 = 952; SumSQ.u64 = 952; Count.u64 = 952; 
  c0.l1cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- c0.l1cache.GetSResp_recv : Accumulator : Sum.u64 = 9048; SumSQ.u64 = 9048; Count.u64 = 9048; 
- c0.l1cache.GetXResp_recv : Accumulator : Sum.u64 = 952; SumSQ.u64 = 952; Count.u64 = 952; 
+ c0.l1cache.GetSResp_recv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ c0.l1cache.GetXResp_recv : Accumulator : Sum.u64 = 9999; SumSQ.u64 = 9999; Count.u64 = 9999; 
  c0.l1cache.PutS_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.PutM_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.PutE_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -65,7 +66,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  c0.l1cache.stateEvent_GetSX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.stateEvent_GetSX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.stateEvent_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- c0.l1cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 9048; SumSQ.u64 = 9048; Count.u64 = 9048; 
+ c0.l1cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ c0.l1cache.stateEvent_GetXResp_IS : Accumulator : Sum.u64 = 9047; SumSQ.u64 = 9047; Count.u64 = 9047; 
  c0.l1cache.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 952; SumSQ.u64 = 952; Count.u64 = 952; 
  c0.l1cache.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.stateEvent_Inv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -140,6 +142,7 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  c0.l1cache.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 20000; SumSQ.u64 = 20000; Count.u64 = 20000; 
  c1.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 14; SumSQ.u64 = 14; Count.u64 = 14; 
+ c1.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.GetSHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.GetXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -157,8 +160,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  c1.l1cache.GetS_recv : Accumulator : Sum.u64 = 8981; SumSQ.u64 = 8981; Count.u64 = 8981; 
  c1.l1cache.GetX_recv : Accumulator : Sum.u64 = 1019; SumSQ.u64 = 1019; Count.u64 = 1019; 
  c1.l1cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- c1.l1cache.GetSResp_recv : Accumulator : Sum.u64 = 8981; SumSQ.u64 = 8981; Count.u64 = 8981; 
- c1.l1cache.GetXResp_recv : Accumulator : Sum.u64 = 1019; SumSQ.u64 = 1019; Count.u64 = 1019; 
+ c1.l1cache.GetSResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ c1.l1cache.GetXResp_recv : Accumulator : Sum.u64 = 10000; SumSQ.u64 = 10000; Count.u64 = 10000; 
  c1.l1cache.PutS_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.PutM_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.PutE_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -194,7 +197,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  c1.l1cache.stateEvent_GetSX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.stateEvent_GetSX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.stateEvent_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- c1.l1cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 8981; SumSQ.u64 = 8981; Count.u64 = 8981; 
+ c1.l1cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ c1.l1cache.stateEvent_GetXResp_IS : Accumulator : Sum.u64 = 8981; SumSQ.u64 = 8981; Count.u64 = 8981; 
  c1.l1cache.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 1019; SumSQ.u64 = 1019; Count.u64 = 1019; 
  c1.l1cache.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.stateEvent_Inv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -269,6 +273,7 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  c1.l1cache.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.TotalEventsReceived : Accumulator : Sum.u64 = 59874; SumSQ.u64 = 59874; Count.u64 = 59874; 
  n0.l2cache.TotalEventsReplayed : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ n0.l2cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.GetSHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.GetXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -286,8 +291,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  n0.l2cache.GetS_recv : Accumulator : Sum.u64 = 18029; SumSQ.u64 = 18029; Count.u64 = 18029; 
  n0.l2cache.GetX_recv : Accumulator : Sum.u64 = 1971; SumSQ.u64 = 1971; Count.u64 = 1971; 
  n0.l2cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- n0.l2cache.GetSResp_recv : Accumulator : Sum.u64 = 18029; SumSQ.u64 = 18029; Count.u64 = 18029; 
- n0.l2cache.GetXResp_recv : Accumulator : Sum.u64 = 1971; SumSQ.u64 = 1971; Count.u64 = 1971; 
+ n0.l2cache.GetSResp_recv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ n0.l2cache.GetXResp_recv : Accumulator : Sum.u64 = 19999; SumSQ.u64 = 19999; Count.u64 = 19999; 
  n0.l2cache.PutS_recv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  n0.l2cache.PutM_recv : Accumulator : Sum.u64 = 1950; SumSQ.u64 = 1950; Count.u64 = 1950; 
  n0.l2cache.PutE_recv : Accumulator : Sum.u64 = 17921; SumSQ.u64 = 17921; Count.u64 = 17921; 
@@ -327,7 +332,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  n0.l2cache.stateEvent_GetSX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.stateEvent_GetSX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.stateEvent_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- n0.l2cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 18029; SumSQ.u64 = 18029; Count.u64 = 18029; 
+ n0.l2cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ n0.l2cache.stateEvent_GetXResp_IS : Accumulator : Sum.u64 = 18028; SumSQ.u64 = 18028; Count.u64 = 18028; 
  n0.l2cache.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 1971; SumSQ.u64 = 1971; Count.u64 = 1971; 
  n0.l2cache.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.stateEvent_GetXResp_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -445,8 +451,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  n0.l2cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; 
  n0.l2cache.eventSent_AckInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- n0.l2cache.eventSent_GetSResp : Accumulator : Sum.u64 = 18029; SumSQ.u64 = 18029; Count.u64 = 18029; 
- n0.l2cache.eventSent_GetXResp : Accumulator : Sum.u64 = 1971; SumSQ.u64 = 1971; Count.u64 = 1971; 
+ n0.l2cache.eventSent_GetSResp : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ n0.l2cache.eventSent_GetXResp : Accumulator : Sum.u64 = 19999; SumSQ.u64 = 19999; Count.u64 = 19999; 
  n0.l2cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.eventSent_Fetch : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.eventSent_FetchInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -503,6 +509,7 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  n0.l2cache.eventSent_PutE : Accumulator : Sum.u64 = 17586; SumSQ.u64 = 17586; Count.u64 = 17586; 
  c2.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 20001; SumSQ.u64 = 20001; Count.u64 = 20001; 
  c2.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 34; SumSQ.u64 = 34; Count.u64 = 34; 
+ c2.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c2.l1cache.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c2.l1cache.GetSHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c2.l1cache.GetXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -520,8 +527,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  c2.l1cache.GetS_recv : Accumulator : Sum.u64 = 9002; SumSQ.u64 = 9002; Count.u64 = 9002; 
  c2.l1cache.GetX_recv : Accumulator : Sum.u64 = 998; SumSQ.u64 = 998; Count.u64 = 998; 
  c2.l1cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- c2.l1cache.GetSResp_recv : Accumulator : Sum.u64 = 9002; SumSQ.u64 = 9002; Count.u64 = 9002; 
- c2.l1cache.GetXResp_recv : Accumulator : Sum.u64 = 998; SumSQ.u64 = 998; Count.u64 = 998; 
+ c2.l1cache.GetSResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ c2.l1cache.GetXResp_recv : Accumulator : Sum.u64 = 10000; SumSQ.u64 = 10000; Count.u64 = 10000; 
  c2.l1cache.PutS_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c2.l1cache.PutM_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c2.l1cache.PutE_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -557,7 +564,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  c2.l1cache.stateEvent_GetSX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c2.l1cache.stateEvent_GetSX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c2.l1cache.stateEvent_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- c2.l1cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 9002; SumSQ.u64 = 9002; Count.u64 = 9002; 
+ c2.l1cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ c2.l1cache.stateEvent_GetXResp_IS : Accumulator : Sum.u64 = 9002; SumSQ.u64 = 9002; Count.u64 = 9002; 
  c2.l1cache.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 998; SumSQ.u64 = 998; Count.u64 = 998; 
  c2.l1cache.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c2.l1cache.stateEvent_Inv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -632,6 +640,7 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  c2.l1cache.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  c3.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 20000; SumSQ.u64 = 20000; Count.u64 = 20000; 
  c3.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 19; SumSQ.u64 = 19; Count.u64 = 19; 
+ c3.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c3.l1cache.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c3.l1cache.GetSHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c3.l1cache.GetXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -649,8 +658,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  c3.l1cache.GetS_recv : Accumulator : Sum.u64 = 8981; SumSQ.u64 = 8981; Count.u64 = 8981; 
  c3.l1cache.GetX_recv : Accumulator : Sum.u64 = 1019; SumSQ.u64 = 1019; Count.u64 = 1019; 
  c3.l1cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- c3.l1cache.GetSResp_recv : Accumulator : Sum.u64 = 8981; SumSQ.u64 = 8981; Count.u64 = 8981; 
- c3.l1cache.GetXResp_recv : Accumulator : Sum.u64 = 1019; SumSQ.u64 = 1019; Count.u64 = 1019; 
+ c3.l1cache.GetSResp_recv : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; 
+ c3.l1cache.GetXResp_recv : Accumulator : Sum.u64 = 9998; SumSQ.u64 = 9998; Count.u64 = 9998; 
  c3.l1cache.PutS_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c3.l1cache.PutM_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c3.l1cache.PutE_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -686,7 +695,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  c3.l1cache.stateEvent_GetSX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c3.l1cache.stateEvent_GetSX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c3.l1cache.stateEvent_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- c3.l1cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 8981; SumSQ.u64 = 8981; Count.u64 = 8981; 
+ c3.l1cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; 
+ c3.l1cache.stateEvent_GetXResp_IS : Accumulator : Sum.u64 = 8979; SumSQ.u64 = 8979; Count.u64 = 8979; 
  c3.l1cache.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 1019; SumSQ.u64 = 1019; Count.u64 = 1019; 
  c3.l1cache.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c3.l1cache.stateEvent_Inv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -761,6 +771,7 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  c3.l1cache.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.TotalEventsReceived : Accumulator : Sum.u64 = 59873; SumSQ.u64 = 59873; Count.u64 = 59873; 
  n1.l2cache.TotalEventsReplayed : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ n1.l2cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.CacheHits : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  n1.l2cache.GetSHit_Arrival : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  n1.l2cache.GetXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -778,8 +789,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  n1.l2cache.GetS_recv : Accumulator : Sum.u64 = 17983; SumSQ.u64 = 17983; Count.u64 = 17983; 
  n1.l2cache.GetX_recv : Accumulator : Sum.u64 = 2017; SumSQ.u64 = 2017; Count.u64 = 2017; 
  n1.l2cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- n1.l2cache.GetSResp_recv : Accumulator : Sum.u64 = 17982; SumSQ.u64 = 17982; Count.u64 = 17982; 
- n1.l2cache.GetXResp_recv : Accumulator : Sum.u64 = 2017; SumSQ.u64 = 2017; Count.u64 = 2017; 
+ n1.l2cache.GetSResp_recv : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; 
+ n1.l2cache.GetXResp_recv : Accumulator : Sum.u64 = 19997; SumSQ.u64 = 19997; Count.u64 = 19997; 
  n1.l2cache.PutS_recv : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; 
  n1.l2cache.PutM_recv : Accumulator : Sum.u64 = 2008; SumSQ.u64 = 2008; Count.u64 = 2008; 
  n1.l2cache.PutE_recv : Accumulator : Sum.u64 = 17861; SumSQ.u64 = 17861; Count.u64 = 17861; 
@@ -819,7 +830,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  n1.l2cache.stateEvent_GetSX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.stateEvent_GetSX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.stateEvent_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- n1.l2cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 17982; SumSQ.u64 = 17982; Count.u64 = 17982; 
+ n1.l2cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; 
+ n1.l2cache.stateEvent_GetXResp_IS : Accumulator : Sum.u64 = 17980; SumSQ.u64 = 17980; Count.u64 = 17980; 
  n1.l2cache.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 2017; SumSQ.u64 = 2017; Count.u64 = 2017; 
  n1.l2cache.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.stateEvent_GetXResp_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -937,8 +949,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  n1.l2cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  n1.l2cache.eventSent_AckInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- n1.l2cache.eventSent_GetSResp : Accumulator : Sum.u64 = 17983; SumSQ.u64 = 17983; Count.u64 = 17983; 
- n1.l2cache.eventSent_GetXResp : Accumulator : Sum.u64 = 2017; SumSQ.u64 = 2017; Count.u64 = 2017; 
+ n1.l2cache.eventSent_GetSResp : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; 
+ n1.l2cache.eventSent_GetXResp : Accumulator : Sum.u64 = 19998; SumSQ.u64 = 19998; Count.u64 = 19998; 
  n1.l2cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.eventSent_Fetch : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.eventSent_FetchInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -999,6 +1011,7 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  l3cache.idle_time : Accumulator : Sum.u64 = 144100; SumSQ.u64 = 10923610000; Count.u64 = 2; 
  l3cache.TotalEventsReceived : Accumulator : Sum.u64 = 157945; SumSQ.u64 = 157945; Count.u64 = 157945; 
  l3cache.TotalEventsReplayed : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l3cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.CacheHits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.GetSHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.GetXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -1016,8 +1029,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  l3cache.GetS_recv : Accumulator : Sum.u64 = 36011; SumSQ.u64 = 36011; Count.u64 = 36011; 
  l3cache.GetX_recv : Accumulator : Sum.u64 = 3988; SumSQ.u64 = 3988; Count.u64 = 3988; 
  l3cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l3cache.GetSResp_recv : Accumulator : Sum.u64 = 36008; SumSQ.u64 = 36008; Count.u64 = 36008; 
- l3cache.GetXResp_recv : Accumulator : Sum.u64 = 3988; SumSQ.u64 = 3988; Count.u64 = 3988; 
+ l3cache.GetSResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l3cache.GetXResp_recv : Accumulator : Sum.u64 = 39996; SumSQ.u64 = 39996; Count.u64 = 39996; 
  l3cache.PutS_recv : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; 
  l3cache.PutM_recv : Accumulator : Sum.u64 = 3866; SumSQ.u64 = 3866; Count.u64 = 3866; 
  l3cache.PutE_recv : Accumulator : Sum.u64 = 35103; SumSQ.u64 = 35103; Count.u64 = 35103; 
@@ -1040,7 +1053,7 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  l3cache.latency_GetX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l3cache.latency_GetSX_M : Accumulator : Sum.u64 = 95; SumSQ.u64 = 3089; Count.u64 = 3; 
+ l3cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.evict_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -1057,7 +1070,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  l3cache.stateEvent_GetSX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.stateEvent_GetSX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.stateEvent_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l3cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 36008; SumSQ.u64 = 36008; Count.u64 = 36008; 
+ l3cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l3cache.stateEvent_GetXResp_IS : Accumulator : Sum.u64 = 36008; SumSQ.u64 = 36008; Count.u64 = 36008; 
  l3cache.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 3988; SumSQ.u64 = 3988; Count.u64 = 3988; 
  l3cache.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.stateEvent_GetXResp_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -1175,8 +1189,8 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  l3cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.eventSent_AckInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l3cache.eventSent_GetSResp : Accumulator : Sum.u64 = 36011; SumSQ.u64 = 36011; Count.u64 = 36011; 
- l3cache.eventSent_GetXResp : Accumulator : Sum.u64 = 3988; SumSQ.u64 = 3988; Count.u64 = 3988; 
+ l3cache.eventSent_GetSResp : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; 
+ l3cache.eventSent_GetXResp : Accumulator : Sum.u64 = 39996; SumSQ.u64 = 39996; Count.u64 = 39996; 
  l3cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.eventSent_Fetch : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.eventSent_FetchInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -1259,9 +1273,10 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  dirctrl.requests_sent_FetchInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  dirctrl.requests_sent_FetchInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  dirctrl.responses_sent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- dirctrl.responses_sent_GetSResp : Accumulator : Sum.u64 = 36008; SumSQ.u64 = 36008; Count.u64 = 36008; 
- dirctrl.responses_sent_GetXResp : Accumulator : Sum.u64 = 3988; SumSQ.u64 = 3988; Count.u64 = 3988; 
+ dirctrl.responses_sent_GetSResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ dirctrl.responses_sent_GetXResp : Accumulator : Sum.u64 = 39996; SumSQ.u64 = 39996; Count.u64 = 39996; 
  dirctrl.MSHR_occupancy : Accumulator : Sum.u64 = 1359864; SumSQ.u64 = 1359864; Count.u64 = 5685877; 
+ dirctrl.requests_received_noncacheable : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory.requests_received_GetS : Accumulator : Sum.u64 = 36008; SumSQ.u64 = 36008; Count.u64 = 36008; 
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory.requests_received_GetX : Accumulator : Sum.u64 = 3988; SumSQ.u64 = 3988; Count.u64 = 3988; 
@@ -1273,5 +1288,5 @@ TrivialCPU cpu3 Finished after 10000 issued reads, 10000 returned (5686065 clock
  memory.latency_PutM : Accumulator : Sum.u64 = 119877; SumSQ.u64 = 3716187; Count.u64 = 3867; 
  memory.cycles_with_issue : Accumulator : Sum.u64 = 43863; SumSQ.u64 = 43863; Count.u64 = 43863; 
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- memory.total_cycles : Accumulator : Sum.u64 = 5686065; SumSQ.u64 = 5686065; Count.u64 = 5686065; 
+ memory.total_cycles : Accumulator : Sum.u64 = 5686065; SumSQ.u64 = 32331335184225; Count.u64 = 1; 
 Simulation is complete, simulated time: 5.68606 ms

@@ -137,7 +137,7 @@ comp_l3cache.addParams({
       "debug" : "0",
       "memNIC.network_address" : "1",
       "memNIC.network_bw" : "25GB/s",
-      "memNIC.debug" : 1,
+#      "memNIC.debug" : 1,
       "memNIC.debug_level" : 10,
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
@@ -163,7 +163,7 @@ comp_dirctrl.addParams({
       "memNIC.addr_range_end" : "0x1F000000",
       "memNIC.addr_range_start" : "0x0",
       "net_memory_name" : "memory",
-      "memNIC.debug" : 1,
+#      "memNIC.debug" : 1,
       "memNIC.debug_level" : 10,
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
@@ -179,7 +179,7 @@ comp_memory.addParams({
     "backend.cycle_time" : "5ns",
     "backend.row_size" : "8KiB",
     "backend.row_policy" : "closed",
-    "memNIC.debug" : 1,
+#    "memNIC.debug" : 1,
     "memNIC.debug_level" : 10,
     "memNIC.network_address" : "2",
     "memNIC.network_bw" : "25GB/s",

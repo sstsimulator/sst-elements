@@ -133,7 +133,7 @@ for x in range(memories):
         "memNIC.network_bw" : network_bw,
         "memNIC.network_input_buffer_size" : "2KiB",
         "memNIC.network_output_buffer_size" : "2KiB",
-        "memNIC.debug" : 1,
+#        "memNIC.debug" : 1,
         "memNIC.debug_level" : 10,
         # Debug parameters
         "debug" : DEBUG_MEM,

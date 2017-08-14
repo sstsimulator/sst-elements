@@ -1624,6 +1624,8 @@ void DirectoryController::sendAckPut(MemEvent * event) {
     MemEvent * me = event->makeResponse(Command::AckPut);
     me->setDst(event->getSrc());
     me->setRqstr(event->getRqstr());
+    me->setPayload(0, nullptr);
+    me->setSize(cacheLineSize);
 
     profileResponseSent(me);
     
