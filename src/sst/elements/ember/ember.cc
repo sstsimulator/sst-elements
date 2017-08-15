@@ -77,6 +77,8 @@
 #include "shmem/motifs/emberShmemFadd.h"
 #include "shmem/motifs/emberShmemCswap.h"
 #include "shmem/motifs/emberShmemSwap.h"
+#include "shmem/motifs/emberShmemBarrier.h"
+#include "shmem/motifs/emberShmemBarrierAll.h"
 
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
@@ -336,6 +338,16 @@ load_ShmemWait( Component* comp, Params& params ) {
 static SubComponent*
 load_ShmemWaitUntil( Component* comp, Params& params ) {
 	return new EmberShmemWaitUntilGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemBarrier( Component* comp, Params& params ) {
+	return new EmberShmemBarrierGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemBarrierAll( Component* comp, Params& params ) {
+	return new EmberShmemBarrierAllGenerator(comp, params);
 }
 
 //NetworkSim: loader for the stop motif
@@ -1209,6 +1221,22 @@ static const ElementInfoSubComponent subcomponents[] = {
 	"SHMEM swap",
 	NULL,
 	load_ShmemSwap,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemBarrierMotif",
+	"SHMEM barrier",
+	NULL,
+	load_ShmemBarrier,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemBarrierAllMotif",
+	"SHMEM barrier_all",
+	NULL,
+	load_ShmemBarrierAll,
     shmemTest_params,
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
