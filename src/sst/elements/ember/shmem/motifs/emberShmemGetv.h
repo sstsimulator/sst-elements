@@ -57,12 +57,12 @@ public:
 
             *(int*) m_ptr = 0xdead0000 + m_my_pe;
 
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             enQ_getv( evQ, 
                     &m_local,
                     m_addr,
                     (m_my_pe + 1) % m_n_pes );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             break;
 
         case 4:

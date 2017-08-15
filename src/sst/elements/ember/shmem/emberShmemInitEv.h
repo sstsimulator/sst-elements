@@ -32,10 +32,10 @@ public:
 
     std::string getName() { return "Init"; }
 
-    void issue( uint64_t time, MP::Functor* functor ) {
+    void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.init( functor );
+        m_api.init( callback );
     }
 };
 

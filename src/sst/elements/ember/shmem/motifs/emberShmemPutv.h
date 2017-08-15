@@ -56,17 +56,16 @@ public:
 
             printf("%d:%s: simVAddr %#" PRIx64 " backing %p\n",m_my_pe, 
                     getMotifName().c_str(), m_addr.getSimVAddr(), m_ptr );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             enQ_putv( evQ, 
                     m_addr,
                     (int) (0xdead0000 + m_my_pe), 
                     (m_my_pe + 1) % m_n_pes );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             break;
 
         case 4:
             printf("%d:%s: PUT value=%#" PRIx32 "\n",m_my_pe, getMotifName().c_str(), m_ptr[0]);
-            assert ( m_ptr[0] == (0xdead0000 + ((m_my_pe + 1 ) % m_n_pes) ) ); 
 		    ret = true;
 
         }

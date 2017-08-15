@@ -24,36 +24,39 @@ namespace SST {
 namespace Hermes {
 namespace Shmem {
 
-typedef Arg_FunctorBase< int, bool > Functor;
-typedef enum { NONE, LTE, LT, E, NE, GT, GTE } WaitOp;
+typedef std::function<void(int)> Callback;
+
+typedef enum { NONE, LTE, LT, EQ, NE, GT, GTE } WaitOp;
 class Interface : public Hermes::Interface {
     public:
 
     Interface( Component* parent ) : Hermes::Interface(parent) {}
     virtual ~Interface() {}
 
-    virtual void init(Functor*) { assert(0); }
-    virtual void finalize(Functor*) { assert(0); }
+    virtual void init(Callback) { assert(0); }
+    virtual void finalize(Callback) { assert(0); }
 
-    virtual void barrier_all(Functor*) { assert(0); }
-    virtual void fence(Functor*) { assert(0); }
+    virtual void n_pes(int*, Callback) { assert(0); }
+    virtual void my_pe(int*, Callback) { assert(0); }
 
-    virtual void n_pes(int*, Functor*) { assert(0); }
-    virtual void my_pe(int*, Functor*) { assert(0); }
+    virtual void barrier_all(Callback) { assert(0); }
+    virtual void barrier( int start, int stride, int size, Vaddr, Callback) { assert(0); }
+    virtual void fence(Callback) { assert(0); }
+    virtual void quiet(Callback) { assert(0); }
 
-    virtual void malloc(MemAddr*, size_t, Functor*) { assert(0); }
-    virtual void free(MemAddr&, Functor*) { assert(0); }
+    virtual void malloc(MemAddr*, size_t, Callback) { assert(0); }
+    virtual void free(MemAddr&, Callback) { assert(0); }
 
-    virtual void get( Vaddr dst, Vaddr src, size_t nelems, int pe, Functor*) { assert(0); }
-    virtual void put( Vaddr dst, Vaddr src, size_t nelems, int pe, Functor*) { assert(0); }
+    virtual void get( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
+    virtual void put( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
 
-    virtual void getv( Value& result, Vaddr src, int pe, Functor*) { assert(0); }
-    virtual void putv( Vaddr dest, Value& value, int pe, Functor*) { assert(0); }
+    virtual void getv( Value& result, Vaddr src, int pe, Callback) { assert(0); }
+    virtual void putv( Vaddr dest, Value& value, int pe, Callback) { assert(0); }
 
-    virtual void wait_until( Vaddr, WaitOp, Value&, Functor*) { assert(0); }
-    virtual void cswap( Value& result, Vaddr, Value& cond, Value& value, int pe, Functor*) { assert(0); }
-    virtual void swap( Value& result, Vaddr, Value&, int pe, Functor*) { assert(0); }
-    virtual void fadd( Value& result, Vaddr, Value&, int pe, Functor*) { assert(0); }
+    virtual void wait_until( Vaddr, WaitOp, Value&, Callback) { assert(0); }
+    virtual void cswap( Value& result, Vaddr, Value& cond, Value& value, int pe, Callback) { assert(0); }
+    virtual void swap( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
+    virtual void fadd( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
 };
 
 }

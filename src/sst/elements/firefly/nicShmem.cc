@@ -54,7 +54,6 @@ void Nic::Shmem::wait( NicShmemOpCmdEvent* event, int id )
     } else {
         delete op;
     }
-    assert( m_pendingOps.size() );
 }
 
 void Nic::Shmem::checkWaitOps( Hermes::Vaddr addr, size_t length )
@@ -65,6 +64,8 @@ void Nic::Shmem::checkWaitOps( Hermes::Vaddr addr, size_t length )
 
     while ( iter != m_pendingOps.end() ) {
 
+
+        m_dbg.verbose(CALL_INFO,1,1,"Shmem: check op\n" );
         Op* op = *iter;
         if ( op->inRange( addr, length  ) && op->checkOp() ) {
             delete op; 
@@ -78,6 +79,8 @@ void Nic::Shmem::checkWaitOps( Hermes::Vaddr addr, size_t length )
 void Nic::Shmem::put( NicShmemPutCmdEvent* event, int id )
 {
     m_dbg.verbose(CALL_INFO,1,1,"Shmem: far=%" PRIx64" len=%lu\n", event->getFarAddr(), event->getLength() );
+
+    assert( event->getNode() != m_nic.getNodeId() );
 
     m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::FreeCmd, NULL );
 
@@ -97,19 +100,35 @@ void Nic::Shmem::putv( NicShmemPutvCmdEvent* event, int id )
 
     m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::FreeCmd, NULL );
 
-    ShmemPutSendEntry* entry = new ShmemPutvSendEntry( id, event,
+    if( event->getNode() == m_nic.getNodeId() ) {
+
+        Hermes::Value local( event->getDataType(), 
+                getBacking( event->getFarAddr(), event->getLength() ) );
+
+
+        m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::Putv, event->getCallback() );
+        local = event->getValue();
+        std::stringstream tmp;
+        tmp << local << " " << event->getValue();
+
+    } else {
+
+        ShmemPutSendEntry* entry = new ShmemPutvSendEntry( id, event,
             [=]() {
                 m_dbg.verbose(CALL_INFO,1,1,"Nic::Shmem::put complete\n");
                 m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::Putv, event->getCallback() );
             } 
-    ); 
+        ); 
 
-    m_nic.m_sendMachine[0]->run( entry );
+        m_nic.m_sendMachine[0]->run( entry );
+    }
 }
 
 void Nic::Shmem::getv( NicShmemGetvCmdEvent* event, int id )
 {
     m_dbg.verbose(CALL_INFO,1,1,"Shmem: far=%" PRIx64" len=%lu\n", event->getFarAddr(), event->getLength() );
+
+    assert( event->getNode() != m_nic.getNodeId() );
 
     m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::FreeCmd, NULL );
 
@@ -127,6 +146,8 @@ void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
 {
     m_dbg.verbose(CALL_INFO,1,1,"Shmem: far=%" PRIx64" len=%lu\n", event->getFarAddr(), event->getLength() );
 
+    assert( event->getNode() != m_nic.getNodeId() );
+
     m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::FreeCmd, NULL );
 
     ShmemGetbSendEntry* entry = new ShmemGetbSendEntry( id, event, 
@@ -142,6 +163,8 @@ void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
 void Nic::Shmem::fadd( NicShmemFaddCmdEvent* event, int id )
 {
     m_dbg.verbose(CALL_INFO,1,1,"Shmem: far=%" PRIx64" len=%lu\n", event->getFarAddr(), event->getLength() );
+
+    assert( event->getNode() != m_nic.getNodeId() );
 
     m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::FreeCmd, NULL );
 
@@ -159,6 +182,8 @@ void Nic::Shmem::cswap( NicShmemCswapCmdEvent* event, int id )
 {
     m_dbg.verbose(CALL_INFO,1,1,"Shmem: far=%" PRIx64" len=%lu\n", event->getFarAddr(), event->getLength() );
 
+    assert( event->getNode() != m_nic.getNodeId() );
+
     m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::FreeCmd, NULL );
 
     ShmemCswapSendEntry* entry = new ShmemCswapSendEntry( id, event, 
@@ -174,6 +199,8 @@ void Nic::Shmem::cswap( NicShmemCswapCmdEvent* event, int id )
 void Nic::Shmem::swap( NicShmemSwapCmdEvent* event, int id )
 {
     m_dbg.verbose(CALL_INFO,1,1,"Shmem: far=%" PRIx64" len=%lu\n", event->getFarAddr(), event->getLength() );
+
+    assert( event->getNode() != m_nic.getNodeId() );
 
     m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::FreeCmd, NULL );
 

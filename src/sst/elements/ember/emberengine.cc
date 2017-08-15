@@ -322,6 +322,11 @@ void EmberEngine::handleEvent(Event* ev) {
                             this, &EmberEngine::completeFunctor, eEv ) );
         break;
 
+      case EmberEvent::IssueCallback:
+        eEv->issue( getCurrentSimTimeNano(), 
+                    std::bind( &EmberEngine::completeCallback, this, eEv, std::placeholders::_1 ) );
+        break;
+
       case EmberEvent::Complete:
         if ( eEv->complete( getCurrentSimTimeNano() ) ) {
             delete ev;

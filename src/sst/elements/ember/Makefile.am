@@ -135,6 +135,7 @@ libember_la_SOURCES = \
 	mpi/motifs/emberrandomgen.cc \
 	sirius/include/sirius/siriusglobals.h \
 	shmem/emberShmemBarrierEv.h \
+	shmem/emberShmemBarrierAllEv.h \
 	shmem/emberShmemCswapEv.h \
 	shmem/emberShmemEvent.h \
 	shmem/emberShmemFaddEv.h \
@@ -153,6 +154,8 @@ libember_la_SOURCES = \
 	shmem/emberShmemPutVEv.h \
 	shmem/emberShmemSwapEv.h \
 	shmem/emberShmemWaitEv.h \
+	shmem/motifs/emberShmemBarrier.h \
+	shmem/motifs/emberShmemBarrierAll.h \
 	shmem/motifs/emberShmemCswap.h \
 	shmem/motifs/emberShmemFadd.h \
 	shmem/motifs/emberShmemGet.h \

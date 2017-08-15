@@ -46,13 +46,13 @@ public:
 
             printf("%d:%s: %d\n",m_my_pe, getMotifName().c_str(),m_n_pes);
             enQ_malloc( evQ, &m_addr, 1000*2 );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             break;
 
         case 3:
 
             memset( &m_addr[0], 0, 8 );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             
             if ( m_my_pe == 0 ) {
                 enQ_wait( evQ, m_addr, (int) 0 );
