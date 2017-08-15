@@ -64,7 +64,7 @@ using namespace SST::n_Bank;
  * @param owner
  * @param params
  */
-c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : c_CtrlSubComponent<c_BankCommand*,c_BankCommand*>(owner, params) {
+c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(owner) {
 
 	m_Owner = dynamic_cast<c_Controller *>(owner);
     output = m_Owner->getOutput();
@@ -416,11 +416,6 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : c_CtrlSubComp
 	releaseCommandBus();  //update the command bus status
 	m_isACTIssued.clear();
 	m_isACTIssued.resize(m_numRanks, false);
-
-	//set debug mask and debug prefix
-	m_debugMask = DVCCTRL;
-	m_debugPrefix="[Device Controller]";
-
 }
 
 /*!

@@ -122,7 +122,7 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     }
 
     // get configured clock frequency
-    k_controllerClockFreqStr = (string)params.find<string>("strControllerClockFrequency", "1GHz", l_found);
+    k_controllerClockFreqStr = (std::string)params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
     
     //configure SST link
     configure_link();

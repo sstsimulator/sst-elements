@@ -30,7 +30,6 @@
 #ifndef C_CMDSCHEDULER_HPP
 #define C_CMDSCHEDULER_HPP
 
-#include "c_CtrlSubComponent.hpp"
 #include "c_BankCommand.hpp"
 #include "c_DeviceDriver.hpp"
 #include "c_HashedAddress.hpp"
@@ -41,7 +40,7 @@ namespace SST{
         class c_DeviceDriver;
         class c_Controller;
 
-        class c_CmdScheduler : public c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> {
+        class c_CmdScheduler : public SubComponent{
         public:
             c_CmdScheduler(Component *comp, Params &x_params);
             ~c_CmdScheduler();

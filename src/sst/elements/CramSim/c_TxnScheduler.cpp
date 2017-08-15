@@ -41,7 +41,7 @@ using namespace SST;
 using namespace SST::n_Bank;
 using namespace std;
 
-c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) :  c_CtrlSubComponent <c_Transaction*,c_Transaction*> (owner, x_params) {
+c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) : SubComponent(owner) {
     m_controller = dynamic_cast<c_Controller *>(owner);
     m_txnConverter = m_controller->getTxnConverter();
     m_cmdScheduler = m_controller->getCmdScheduler();

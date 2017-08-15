@@ -47,7 +47,7 @@ using namespace SST;
 using namespace SST::n_Bank;
 using namespace std;
 
-c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  c_CtrlSubComponent <c_Transaction*,c_BankCommand*> (owner, x_params) {
+c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) : SubComponent(owner) {
 
 	m_owner = dynamic_cast<c_Controller *>(owner);
 	m_cmdScheduler= m_owner->getCmdScheduler();
@@ -106,9 +106,6 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) :  
 	s_reqQueueSize = registerStatistic<uint64_t>("reqQueueSize");
 	s_resQueueSize = registerStatistic<uint64_t>("resQueueSize");
 
-	//debug mask
-	m_debugMask = TXNCVT;
-	m_debugPrefix = "[TxnConverter]";
 
 }
 

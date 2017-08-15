@@ -78,7 +78,6 @@ libCramSim_la_SOURCES = \
 	c_CmdResEvent.hpp \
 	c_MemhBridge.hpp \
 	c_MemhBridge.cpp \
-	c_CtrlSubComponent.hpp \
 	c_TxnScheduler.cpp \
 	c_TxnScheduler.hpp \
 	c_CmdScheduler.cpp \

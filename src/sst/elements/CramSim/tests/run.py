@@ -39,10 +39,10 @@ sstCmds = {
 	11:"sst --lib-path=../.libs ./test_txntrace.py --model-options=\"--configfile=%s traceFile=../traces/sst-CramSim-trace_verimem_5_W.trc stopAtCycle=%s\"" % (sysconfig,stopAtCycle),		# basic test with verimem_5_W trace
 	12:"sst --lib-path=../.libs ./test_txntrace.py --model-options=\"--configfile=%s traceFile=../traces/sst-CramSim-trace_verimem_6_W.trc stopAtCycle=%s\"" % (sysconfig,stopAtCycle),		# basic test with verimem_6_W trace
 	13:"sst --lib-path=../.libs ./test_txntrace.py --model-options=\"--configfile=%s traceFile=../traces/sst-CramSim-trace_verimem_1_RW.trc stopAtCycle=%s\"" % (sysconfig,stopAtCycle),		# basic test with verimem_1_RW trace
-	14:"sst --lib-path=../.libs ./test_multilanes_1lane.py --model-options=\"--configfile=../ddr4_2400_ramulator.cfg stopAtCycle=%s\"" % (stopAtCycle),		# basic test with verimem_1_RW trace
-	15:"mpirun -np 2 sst --lib-path=../.libs ./test_multilanes_1lane.py --model-options=\"--configfile=../ddr4_2400_ramulator.cfg stopAtCycle=%s \"" % (stopAtCycle),		# basic test with verimem_1_RW trace
-	16:"mpirun -np 3 sst --lib-path=../.libs ./test_multilanes_2lane.py --model-options=\"--configfile=../ddr4_2400_ramulator.cfg stopAtCycle=%s\"" % (stopAtCycle),		# basic test with verimem_1_RW trace
-	17:"mpirun -np 5 sst --lib-path=../.libs ./test_multilanes_4lane.py --model-options=\"--configfile=../ddr4_2400_ramulator.cfg stopAtCycle=%s\"" % (stopAtCycle),		# 
+	14:"sst --lib-path=../.libs ./test_multilanes_1lane.py --model-options=\"--configfile=../ddr4_2400_ramulator.cfg stopAtCycle=%s\"" % (stopAtCycle),						# basic test for txn dispatcher with 1lane
+	15:"mpirun -np 2 sst --lib-path=../.libs ./test_multilanes_1lane.py --model-options=\"--configfile=../ddr4_2400_ramulator.cfg stopAtCycle=%s \"" % (stopAtCycle),				# basic test for txn dispatcher with 1lane(mpi) 
+	16:"mpirun -np 3 sst --lib-path=../.libs ./test_multilanes_2lane.py --model-options=\"--configfile=../ddr4_2400_ramulator.cfg stopAtCycle=%s\"" % (stopAtCycle),				# basic test for txn dispatcher with 2lane(mpi)
+	17:"mpirun -np 5 sst --lib-path=../.libs ./test_multilanes_4lane.py --model-options=\"--configfile=../ddr4_2400_ramulator.cfg stopAtCycle=%s\"" % (stopAtCycle),				# basic test for txn dispatcher with 4lane(mpi)
 	}
 
 	

@@ -41,7 +41,7 @@
 using namespace SST;
 using namespace SST::n_Bank;
 
-c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> (comp, x_params){
+c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : SubComponent(comp){
     m_owner = dynamic_cast<c_Controller*>(comp);
     m_deviceController=m_owner->getDeviceDriver();
     output=dynamic_cast<c_Controller*>(comp)->getOutput();

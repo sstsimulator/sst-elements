@@ -38,6 +38,7 @@ sst.setStatisticOutput("sst.statOutputConsole")
 comp_txnGen = sst.Component("TxnGen", "CramSim.c_TxnGen")
 comp_txnGen.addParams(g_params)
 comp_txnGen.addParams({
+	"mode" : "rand",
 	"maxTxns" : maxTxns,
 	"numTxnPerCycle" : totalChannel,
 	"maxOutstandingReqs" : maxOutstandingReqs,
