@@ -34,10 +34,10 @@ public:
 
     std::string getName() { return "Malloc"; }
 
-    void issue( uint64_t time, MP::Functor* functor ) {
+    void issue( uint64_t time, Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.getv( m_value, m_src, m_pe, functor );
+        m_api.getv( m_value, m_src, m_pe, callback );
     }
 private:
     Value  m_value;

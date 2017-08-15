@@ -34,10 +34,10 @@ public:
 
     std::string getName() { return "Malloc"; }
 
-    void issue( uint64_t time, MP::Functor* functor ) {
+    void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.get( m_dest, m_src, m_length, m_pe, functor );
+        m_api.get( m_dest, m_src, m_length, m_pe, callback );
     }
 private:
     Hermes::Vaddr m_dest;

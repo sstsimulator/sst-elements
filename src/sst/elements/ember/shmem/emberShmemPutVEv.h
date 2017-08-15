@@ -34,10 +34,10 @@ public:
 
     std::string getName() { return "PutV"; }
 
-    void issue( uint64_t time, MP::Functor* functor ) {
+    void issue( uint64_t time, Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.putv( m_dest, m_value, m_pe, functor );
+        m_api.putv( m_dest, m_value, m_pe, callback );
     }
 private:
     Hermes::Vaddr m_dest;

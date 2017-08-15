@@ -32,10 +32,10 @@ public:
 
     std::string getName() { return "NPes"; }
 
-    void issue( uint64_t time, MP::Functor* functor ) {
+    void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.n_pes( m_val, functor );
+        m_api.n_pes( m_val, callback );
     }
 private:
     int* m_val;

@@ -32,10 +32,10 @@ public:
 
     std::string getName() { return "Barrier"; }
 
-    void issue( uint64_t time, MP::Functor* functor ) {
+    void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.fence( functor );
+        m_api.fence( callback );
     }
 };
 

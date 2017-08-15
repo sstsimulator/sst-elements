@@ -34,10 +34,10 @@ public:
 
     std::string getName() { return "Fadd"; }
 
-    void issue( uint64_t time, MP::Functor* functor ) {
+    void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.fadd( m_result, m_dest, m_value, m_pe, functor );
+        m_api.fadd( m_result, m_dest, m_value, m_pe, callback );
     }
 
 private:
