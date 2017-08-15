@@ -28,6 +28,7 @@ class Shmem {
         }
         virtual bool checkOp( ) = 0;
         bool inRange( Hermes::Vaddr addr, size_t length ) {
+            //printf("%s() addr=%lu length=%lu\n",__func__,addr, length);
             return ( m_cmd->addr >= addr && m_cmd->addr + m_cmd->value.getLength() <= addr + length );
         }
 
@@ -45,6 +46,11 @@ class Shmem {
         {} 
 
         bool checkOp() {
+#if 0
+            std::stringstream tmp;
+            tmp << m_value << " " << m_cmd->op << " " << m_cmd->value;
+            printf("%s %s\n",__func__,tmp.str().c_str());
+#endif
             switch ( m_cmd->op ) {
               case Hermes::Shmem::NE:
                 return m_value != m_cmd->value; 
@@ -55,7 +61,7 @@ class Shmem {
               case Hermes::Shmem::GT:
                 return m_value > m_cmd->value; 
                 break;
-              case Hermes::Shmem::E:
+              case Hermes::Shmem::EQ:
                 return m_value == m_cmd->value; 
                 break;
               case Hermes::Shmem::LT:
