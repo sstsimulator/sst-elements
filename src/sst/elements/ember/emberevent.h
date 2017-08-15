@@ -20,16 +20,19 @@
 #include <sst/core/event.h>
 #include <sst/core/statapi/statbase.h>
 #include <sst/elements/hermes/msgapi.h>
+#include <sst/elements/hermes/shmemapi.h>
 
 namespace SST {
 namespace Ember {
 
 typedef Hermes::MP::Functor FOO;
+typedef Hermes::Shmem::Callback Callback;
 
 #undef FOREACH_ENUM
 #define FOREACH_ENUM(NAME) \
     NAME( Issue ) \
     NAME( IssueFunctor ) \
+    NAME( IssueCallback ) \
     NAME( Complete ) \
 
 #define GENERATE_ENUM(ENUM) ENUM,
@@ -58,6 +61,14 @@ public:
     std::string stateName( State i ) { return m_enumName[i]; }
 
     virtual void issue( uint64_t time, FOO* = NULL ) {
+        if ( m_output ) {
+            m_output->verbose(CALL_INFO, 3, 0, "%s\n",getName().c_str());
+        }
+        m_issueTime = time;
+        m_state = Complete;
+    }
+
+    virtual void issue( uint64_t time, Callback ) {
         if ( m_output ) {
             m_output->verbose(CALL_INFO, 3, 0, "%s\n",getName().c_str());
         }
