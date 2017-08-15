@@ -265,9 +265,10 @@ void DirectoryController::handlePacket(SST::Event *event){
         profileRequestRecv(ev,NULL);
         Addr localAddr       = convertAddressToLocalAddress(ev->getAddr());
         Addr localBaseAddr   = convertAddressToLocalAddress(ev->getBaseAddr());
-        noncacheMemReqs[ev->getID()] = make_pair<Addr,Addr>(ev->getBaseAddr(),ev->getAddr());
+        noncacheMemReqs[ev->getID()] = { ev->getBaseAddr(), ev->getAddr(), ev->getSrc() };
         ev->setBaseAddr(localBaseAddr);
         ev->setAddr(localAddr);
+        ev->setSrc(getName());
         profileRequestSent(ev);
         if (memLink) {
             memLink->send(ev);
@@ -1340,8 +1341,9 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
 
     if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
         if (noncacheMemReqs.find(ev->getResponseToID()) != noncacheMemReqs.end()) {
-            Addr globalBaseAddr = noncacheMemReqs[ev->getID()].first;
-            Addr globalAddr = noncacheMemReqs[ev->getID()].second;
+            Addr globalBaseAddr = noncacheMemReqs[ev->getID()].bAddr;
+            Addr globalAddr = noncacheMemReqs[ev->getID()].addr;
+            std::string src = noncacheMemReqs[ev->getID()].src;
 #ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) { 
                 dbg.debug(_L3_, "EVENT: %s, Received: MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u, Time = %" PRIu64 "\n", 
@@ -1350,6 +1352,8 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
 #endif
             ev->setBaseAddr(globalBaseAddr);
             ev->setAddr(globalAddr);
+            ev->setDst(src);
+            ev->setSrc(getName());
             noncacheMemReqs.erase(ev->getResponseToID());
             profileResponseSent(ev);
             

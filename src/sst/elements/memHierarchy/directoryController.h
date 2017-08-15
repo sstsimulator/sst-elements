@@ -128,7 +128,12 @@ class DirectoryController : public Component {
     std::list<MemEvent*>                    workQueue;
     std::map<MemEvent::id_type, Addr>       memReqs;
     std::map<MemEvent::id_type, Addr>       dirEntryMiss;
-    std::map<MemEvent::id_type, pair<Addr,Addr> > noncacheMemReqs;
+    struct NonCacheRecord {
+        Addr bAddr;
+        Addr addr;
+        std::string src;
+    };
+    std::map<MemEvent::id_type, NonCacheRecord> noncacheMemReqs;
 
     /* Network connections */
     SST::Link*  memLink;
