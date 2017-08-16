@@ -180,8 +180,6 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         // Fix up parameters for nic params & warn that we're doing it
         if (fixupParam(params, "network_bw", "memNIC.network_bw"))
             out.output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
-        if (fixupParam(params, "network_address", "memNIC.network_address")) 
-            out.output(CALL_INFO, "Note (%s): Changed 'network_address' to 'memNIC.network_address' in params. Change your input file to remove this notice.\n", getName().c_str());
         if (fixupParam(params, "network_input_buffer_size", "memNIC.network_input_buffer_size"))
             out.output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
         if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))

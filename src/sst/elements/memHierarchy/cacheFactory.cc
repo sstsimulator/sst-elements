@@ -427,8 +427,6 @@ void Cache::configureLinks(Params &params) {
         d_->output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
     if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))
         d_->output(CALL_INFO, "Note (%s): Changed 'network_output_buffer_size' to 'memNIC.network_output_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "network_address", "memNIC.network_address"))
-        d_->output(CALL_INFO, "Note (%s): Changed 'network_address' to 'memNIC.network_address' in params. Change your input file to remove this notice.\n", getName().c_str());
     if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
         d_->output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size'. Change your input file to remove this notice.\n", getName().c_str());
 

@@ -139,6 +139,7 @@ private:
 
     // Other parameters
     size_t packetHeaderBytes;
+    bool initMsgSent;
 
     // Handlers and network
     SST::Interfaces::SimpleNetwork *link_control;

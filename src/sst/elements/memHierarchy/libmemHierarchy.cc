@@ -149,8 +149,8 @@ static const ElementInfoParam cache_params[] = {
     {"directory_at_next_level",     "DEPRECATED - Now auto-detected by configure."},
     {"bottom_network",              "DEPRECATED - Now auto-detected by configure."},
     {"top_network",                 "DEPRECATED - Now auto-detected by configure."},
+    {"network_address",             "DEPRECATED - Now auto-detected by link control."},
     {"network_bw",                  "MOVED - Now a member of the MemNIC subcomponent.", "80GiB/s"},
-    {"network_address",             "MOVED - Now a member of the MemNIC subcomponent.", "0"},
     {"network_input_buffer_size",   "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"},
     {"network_output_buffer_size",  "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"},
     {NULL, NULL, NULL}
@@ -886,8 +886,8 @@ static const ElementInfoParam memctrl_params[] = {
     {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"direct_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether memory is directly connected to a directory/cache (1) or is connected via the network (0)","1"},
     {"coherence_protocol",  "DEPRECATED. No longer needed. Coherence protocol.  Supported: MESI (default), MSI. Only used when a directory controller is not present.", "MESI"},
+    {"network_address",     "DEPRECATED - Now auto-detected by link control."},
     {"network_bw",          "MOVED. Now a member of the MemNIC subcomponent.", NULL},
-    {"network_address",     "MOVED. Now a member of the MemNIC subcomponent.", ""},
     {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"},
     {"network_output_buffer_size",  "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"},
     {"direct_link_latency", "MOVED. Now a member of the MemLink subcomponent.", "10 ns"},
@@ -1379,8 +1379,6 @@ static SubComponent* create_MemNIC(Component *comp, Params &params) {
 }
 
 static const ElementInfoParam memNIC_params[] = {
-    /* Required */
-    { "memNIC.network_address",             "(int) Network address for this component", ""},
     /* Optional */
     { "memNIC.group",                       "(int) Group ID. See params 'sources' and 'destinations'. If not specified, the parent component will guess.", "1"},
     { "memNIC.sources",                     "(comma-separated list of ints) List of group IDs that serve as sources for this component. If not specified, defaults to 'group - 1'.", "group-1"},
@@ -1448,8 +1446,6 @@ static Component* create_DirectoryController(ComponentId_t id, Params& params){
 }
 
 static const ElementInfoParam dirctrl_params[] = {
-    /* Required parameters */
-    {"network_address",         "Network address of component.", ""},
     /* Optional parameters */
     {"clock",                   "Clock rate of controller.", "1GHz"},
     {"entry_cache_size",        "Size (in # of entries) the controller will cache.", "0"},
@@ -1472,6 +1468,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"direct_mem_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether directory has a direct connection to memory (1) or is connected via a network (0)","1"},
     {"network_num_vc",          "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"statistics",              "DEPRECATED - Use the Statistics API to get statistics", "0"},
+    {"network_address",         "DEPRECATD - Now auto-detected by link control", ""},
     {"network_bw",                  "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "80GiB/s"},
     {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "1KiB"},
     {"network_output_buffer_size",  "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "1KiB"},

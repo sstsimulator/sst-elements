@@ -43,7 +43,6 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) :
     myInfo.link_bandwidth = "1GiB/s";
 	myInfo.num_vcs = params.find<int>("network_num_vc", 1);
     myInfo.name = getName();
-    myInfo.network_addr = params.find<int>("netAddr");
     myInfo.type = MemNIC::TypeDMAEngine;
     networkLink = new MemNIC(this, &dbg, -1, myInfo);
 */

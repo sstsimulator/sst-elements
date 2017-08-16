@@ -37,10 +37,6 @@ MemNIC::MemNIC(Component * parent, Params &params) : MemLinkBase(parent, params)
     int num_vcs = 1; // MemNIC does not use VCs
     std::string linkInbufSize = params.find<std::string>("network_input_buffer_size", "1KiB");
     std::string linkOutbufSize = params.find<std::string>("network_output_buffer_size", "1KiB");
-    info.addr = params.find<uint64_t>("network_address", 0, found);
-    if (!found) {
-        dbg.fatal(CALL_INFO, -1, "Param not specified(%s): network_address - network address for this component.\n", getName().c_str());
-    }
 
     link_control = (SimpleNetwork*)parent->loadSubComponent("merlin.linkcontrol", parent, params); // But link control doesn't use params so manually initialize
     link_control->initialize(linkName, UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
@@ -84,30 +80,35 @@ MemNIC::MemNIC(Component * parent, Params &params) : MemLinkBase(parent, params)
     // Set link control to call recvNotify on event receive
     link_control->setNotifyOnReceive(new SimpleNetwork::Handler<MemNIC>(this, &MemNIC::recvNotify));
 
-    dbg.debug(_L10_, "%s memNIC info is: Name: %s, addr: %" PRIu64 ", id: %" PRIu32 "\n",
-            getName().c_str(), info.name.c_str(), info.addr, info.id);
+    initMsgSent = false;
+
+    dbg.debug(_L10_, "%s memNIC info is: Name: %s, group: %" PRIu32 "\n",
+            getName().c_str(), info.name.c_str(), info.id);
 
 }
 
 void MemNIC::init(unsigned int phase) {
     link_control->init(phase);  // This MUST be called before anything else
 
+    bool networkReady = link_control->isNetworkInitialized();
+
+    if (networkReady && initMsgSent) {
+        while (!initSendQueue.empty()) {
+            link_control->sendInitData(initSendQueue.front());
+            initSendQueue.pop();
+        }
+    }
+
     // On first init round, send our region out to all others
-    if (phase == 1) {
+    if (networkReady && !initMsgSent) {
+        info.addr = link_control->getEndpointID();
         InitMemRtrEvent *ev = new InitMemRtrEvent(info);
         SimpleNetwork::Request * req = new SimpleNetwork::Request();
         req->dest = SimpleNetwork::INIT_BROADCAST_ADDR;
         req->src = info.addr;
         req->givePayload(ev);
         link_control->sendInitData(req);
-    }
-
-    if (phase > 1) {
-        while (!initSendQueue.empty()) {
-            link_control->sendInitData(initSendQueue.front());
-            initSendQueue.pop();
-        
-        }
+        initMsgSent = true;
     }
 
     // Expect different kinds of init events
