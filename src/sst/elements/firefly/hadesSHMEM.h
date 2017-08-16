@@ -23,7 +23,7 @@
 #include <string.h>
 #include "sst/elements/hermes/shmemapi.h"
 #include "hades.h"
-
+#include "shmem/barrier.h"
 
 using namespace Hermes;
 
@@ -32,16 +32,20 @@ namespace Firefly {
 
 class HadesSHMEM : public Shmem::Interface
 {
+  public:
+    typedef std::function<void()> Callback;
+
+  private:
     class DelayEvent : public SST::Event {
       public:
 
-        DelayEvent( MP::Functor* functor, int retval ) :
+        DelayEvent( Shmem::Callback callback, int retval ) :
             Event(),
-            m_functor( functor ),
+            m_callback( callback ),
             m_retval( retval )
         {}
 
-        MP::Functor* m_functor;
+        Shmem::Callback m_callback;
         int m_retval;
 
         NotSerializable(DelayEvent)
@@ -54,6 +58,7 @@ class HadesSHMEM : public Shmem::Interface
             Hermes::MemAddr addr( Hermes::MemAddr::Shmem );
             addr.setSimVAddr( m_curAddr );
 
+            m_curAddr += n;
             if ( m_back ) {
                 addr.setBacking( ::malloc(n) );
             }
@@ -82,29 +87,32 @@ class HadesSHMEM : public Shmem::Interface
         dbg().verbose(CALL_INFO,2,0,"\n");
     }
 
-    virtual void init(MP::Functor*);
-    virtual void finalize(MP::Functor*);
+    virtual void init(Shmem::Callback);
+    virtual void finalize(Shmem::Callback);
 
-    virtual void n_pes(int*, MP::Functor*);
-    virtual void my_pe(int*,MP::Functor*);
+    virtual void n_pes(int*, Shmem::Callback);
+    virtual void my_pe(int*, Shmem::Callback);
 
-    virtual void barrier_all(MP::Functor*);
-    virtual void fence(MP::Functor*);
+    virtual void barrier( int start, int stride, int size, Vaddr, Shmem::Callback);
+    virtual void barrier_all(Shmem::Callback);
+    virtual void fence(Shmem::Callback);
+    virtual void quiet(Shmem::Callback);
 
-    virtual void malloc(Hermes::MemAddr*,size_t,MP::Functor*);
-    virtual void free(Hermes::MemAddr*,MP::Functor*);
+    virtual void malloc(Hermes::MemAddr*,size_t,Shmem::Callback);
+    virtual void malloc(Hermes::MemAddr*,size_t,Callback);
+    virtual void free(Hermes::MemAddr*,Shmem::Callback);
 
-    virtual void get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, MP::Functor*);
-    virtual void put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, MP::Functor*);
+    virtual void get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
+    virtual void put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
 
-    virtual void getv(Hermes::Value&, Hermes::Vaddr src, int pe, MP::Functor*);
-    virtual void putv(Hermes::Vaddr dest, Hermes::Value&, int pe, MP::Functor*);
+    virtual void getv(Hermes::Value&, Hermes::Vaddr src, int pe, Shmem::Callback);
+    virtual void putv(Hermes::Vaddr dest, Hermes::Value&, int pe, Shmem::Callback);
 
-    virtual void wait_until(Hermes::Vaddr src, Hermes::Shmem::WaitOp, Hermes::Value&, MP::Functor*);
+    virtual void wait_until(Hermes::Vaddr src, Hermes::Shmem::WaitOp, Hermes::Value&, Shmem::Callback);
 
-    virtual void cswap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& cond, Hermes::Value& value, int pe, MP::Functor*);
-    virtual void swap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& value, int pe, MP::Functor*);
-    virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, MP::Functor*);
+    virtual void cswap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& cond, Hermes::Value& value, int pe, Shmem::Callback);
+    virtual void swap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& value, int pe, Shmem::Callback);
+    virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
 
   private:
     Output m_dbg;
@@ -113,10 +121,10 @@ class HadesSHMEM : public Shmem::Interface
 
     void handleToDriver(SST::Event* e) {
         DelayEvent* event = static_cast<DelayEvent*>(e);
-        (*event->m_functor)( event->m_retval );
+        event->m_callback( event->m_retval );
         delete e;
     }
-    void delay( MP::Functor* functor, uint64_t delay, int retval ) {
+    void delay( Shmem::Callback functor, uint64_t delay, int retval ) {
         //printf("%s() delay=%lu retval=%d\n",__func__,delay,retval);
         m_selfLink->send( delay, new DelayEvent( functor, retval ) );
     } 
@@ -126,6 +134,12 @@ class HadesSHMEM : public Shmem::Interface
 
     Heap* m_heap;
     std::map<key_t,Hermes::MemAddr> m_map;
+    ShmemBarrier* m_barrier;
+    int m_num_pes;
+    int m_my_pe;
+    size_t m_localDataSize;
+    Hermes::MemAddr  m_localData;
+    Hermes::MemAddr  m_psync;
 };
 
 }

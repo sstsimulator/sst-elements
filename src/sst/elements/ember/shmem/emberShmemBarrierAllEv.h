@@ -14,37 +14,29 @@
 // distribution.
 
 
-#ifndef _H_EMBER_SHMEM_FADD_EVENT
-#define _H_EMBER_SHMEM_FADD_EVENT
+#ifndef _H_EMBER_SHMEM_BARRIER_ALL_EVENT
+#define _H_EMBER_SHMEM_BARRIER_ALL_EVENT
 
 #include "emberShmemEvent.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberFaddShmemEvent : public EmberShmemEvent {
+class EmberBarrierAllShmemEvent : public EmberShmemEvent {
 
 public:
-	EmberFaddShmemEvent( Shmem::Interface& api, Output* output,
-            Hermes::Value result, Hermes::Vaddr dest, Hermes::Value value, int pe, 
-            EmberEventTimeStatistic* stat = NULL ) :
-            EmberShmemEvent( api, output, stat ), 
-            m_result(result), m_dest(dest), m_value(value), m_pe(pe) {}
-	~EmberFaddShmemEvent() {}
+	EmberBarrierAllShmemEvent( Shmem::Interface& api, Output* output,
+                    EmberEventTimeStatistic* stat = NULL ) :
+            EmberShmemEvent( api, output, stat ){}
+	~EmberBarrierAllShmemEvent() {}
 
-    std::string getName() { return "Fadd"; }
+    std::string getName() { return "BarrierAll"; }
 
     void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.fadd( m_result, m_dest, m_value, m_pe, callback );
+        m_api.barrier_all( callback );
     }
-
-private:
-    Hermes::Value m_result;
-    Hermes::Vaddr m_dest;
-    Hermes::Value m_value;
-    int m_pe;
 };
 
 }

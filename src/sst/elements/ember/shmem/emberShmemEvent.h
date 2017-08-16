@@ -34,7 +34,7 @@ class EmberShmemEvent : public EmberEvent {
             EmberEventTimeStatistic* stat = NULL ):
         EmberEvent( output, stat ), m_api( api )
     {
-        m_state = IssueFunctor;
+        m_state = IssueCallback;
     }
 
   protected:

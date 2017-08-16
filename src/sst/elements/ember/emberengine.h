@@ -73,6 +73,10 @@ private:
 
 	void handleEvent(SST::Event* ev);
 	void issueNextEvent(uint64_t nanoSecDelay);
+
+    void completeCallback( EmberEvent* ev, int retval ) {
+        completeFunctor(retval, ev);
+    }
     bool completeFunctor( int retval, EmberEvent* ev ); 
 
 	Hermes::OS*	m_os;

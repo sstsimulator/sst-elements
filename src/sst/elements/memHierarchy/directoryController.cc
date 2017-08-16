@@ -1444,7 +1444,6 @@ void DirectoryController::handleFlushLineResponse(MemEvent * ev) {
 }
 
 
-
 /* Handle response for directory entry */
 void DirectoryController::handleDirEntryMemoryResponse(MemEvent * ev) {
     Addr dirAddr = ev->getBaseAddr();

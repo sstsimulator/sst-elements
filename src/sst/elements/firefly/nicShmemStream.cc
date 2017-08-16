@@ -123,6 +123,8 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processFa
 
     local += got;
 
+    m_rm.m_nic.m_shmem->checkWaitOps( addr.getSimVAddr(), local.getLength() );
+
     m_rm.nic().m_sendMachine[0]->run( new ShmemPut2SendEntry( local_vNic, ev->src, dest_vNic, save, hdr.respKey ) );
 
     return std::bind( &Nic::RecvMachine::state_move_2, &m_rm, ev );

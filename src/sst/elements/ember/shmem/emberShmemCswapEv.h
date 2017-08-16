@@ -34,10 +34,10 @@ public:
 
     std::string getName() { return "Cswap"; }
 
-    void issue( uint64_t time, MP::Functor* functor ) {
+    void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.cswap( m_result, m_dest, m_cond, m_value, m_pe, functor );
+        m_api.cswap( m_result, m_dest, m_cond, m_value, m_pe, callback );
     }
 
 private:

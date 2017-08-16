@@ -76,6 +76,8 @@ libfirefly_la_SOURCES = \
 	hadesMP.h \
 	hadesSHMEM.cc \
 	hadesSHMEM.h \
+	shmem/barrier.cc \
+	shmem/barrier.h \
 	merlinEvent.h \
 	virtNic.h \
 	virtNic.cc \

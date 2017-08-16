@@ -41,8 +41,8 @@ public:
          } else if ( 0 == m_opName.compare("LT") ) {
             m_op = Hermes::Shmem::LT;
             m_putValue = -1;
-         } else if ( 0 == m_opName.compare("E") ) {
-            m_op = Hermes::Shmem::E;
+         } else if ( 0 == m_opName.compare("EQ") ) {
+            m_op = Hermes::Shmem::EQ;
             m_waitValue = 1;
             m_putValue = 1;
          } else if ( 0 == m_opName.compare("NE") ) {
@@ -76,12 +76,12 @@ public:
 
             printf("%d:%s: %d\n",m_my_pe, getMotifName().c_str(),m_n_pes);
             enQ_malloc( evQ, &m_addr, 1000*2 );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             break;
 
         case 3:
             m_addr.at<int>(0) = m_initValue;
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             
             if ( m_my_pe == 0 ) {
                 enQ_wait_until( evQ, m_addr, m_op, m_waitValue );

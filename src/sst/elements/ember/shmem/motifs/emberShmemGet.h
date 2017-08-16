@@ -62,7 +62,7 @@ public:
                 m_src[i] = m_my_pe + i;
             }
 
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             break;
 
         case 4:
@@ -71,7 +71,7 @@ public:
                     m_addr.offset(0), 
                     m_numInts*sizeof(int),
                     m_other_pe );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             break;
 
         case 5: 

@@ -34,10 +34,10 @@ public:
 
     std::string getName() { return "Wait"; }
 
-    void issue( uint64_t time, MP::Functor* functor ) {
+    void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.wait_until( m_dest, m_op, m_value, functor );
+        m_api.wait_until( m_dest, m_op, m_value, callback );
     }
 private:
     Hermes::Vaddr m_dest;

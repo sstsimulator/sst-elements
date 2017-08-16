@@ -25,6 +25,7 @@
 #include "emberShmemMyPeEv.h"
 #include "emberShmemNPesEv.h"
 #include "emberShmemBarrierEv.h"
+#include "emberShmemBarrierAllEv.h"
 #include "emberShmemFenceEv.h"
 #include "emberShmemMallocEv.h"
 #include "emberShmemFreeEv.h"
@@ -58,7 +59,8 @@ protected:
 
     inline void enQ_my_pe( Queue&, int* );
     inline void enQ_n_pes( Queue&, int *);
-    inline void enQ_barrier( Queue& );
+    inline void enQ_barrier_all( Queue& );
+    inline void enQ_barrier( Queue&, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
     inline void enQ_fence( Queue& );
     inline void enQ_malloc( Queue&, Hermes::MemAddr*, size_t );
     inline void enQ_free( Queue&, Hermes::MemAddr );
@@ -115,10 +117,17 @@ void EmberShmemGenerator::enQ_n_pes( Queue& q, int* val )
     q.push( new EmberNPesShmemEvent( *shmem_cast(m_api), &getOutput(), val ) );
 }
 
-void EmberShmemGenerator::enQ_barrier( Queue& q )
+void EmberShmemGenerator::enQ_barrier_all( Queue& q )
 {
     verbose(CALL_INFO,2,0,"\n");
-    q.push( new EmberBarrierShmemEvent( *shmem_cast(m_api), &getOutput() ) );
+    q.push( new EmberBarrierAllShmemEvent( *shmem_cast(m_api), &getOutput() ) );
+}
+
+void EmberShmemGenerator::enQ_barrier( Queue& q, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberBarrierShmemEvent( *shmem_cast(m_api), &getOutput(), PE_start,
+                        logPE_stride, PE_size, pSync.getSimVAddr() ) );
 }
 
 void EmberShmemGenerator::enQ_fence( Queue& q )

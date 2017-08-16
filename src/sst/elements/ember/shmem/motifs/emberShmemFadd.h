@@ -57,7 +57,7 @@ public:
                 m_addr.at<int>(0) = 10;
             }
 
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
 
             if ( m_my_pe == 1 ) {
                 m_value = 19;
@@ -67,7 +67,7 @@ public:
                     &m_value,
                     0 );
             }
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             break;
 
         case 4:
