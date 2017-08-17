@@ -41,7 +41,6 @@ void Nic::Shmem::wait( NicShmemOpCmdEvent* event, int id )
     tmp << event->value;
     m_dbg.verbose(CALL_INFO,1,1,"Shmem: addr=%" PRIx64 " value=%s\n", event->addr, tmp.str().c_str() );
 
-            
     Op* op = new WaitOp(  event, getBacking( event->addr, event->value.getLength() ),
             [=]() {
                 m_dbg.verbose(CALL_INFO,1,1,"Nic::Shmem::wait complete\n");
@@ -80,18 +79,28 @@ void Nic::Shmem::put( NicShmemPutCmdEvent* event, int id )
 {
     m_dbg.verbose(CALL_INFO,1,1,"Shmem: far=%" PRIx64" len=%lu\n", event->getFarAddr(), event->getLength() );
 
-    assert( event->getNode() != m_nic.getNodeId() );
-
     m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::FreeCmd, NULL );
 
-    ShmemPutSendEntry* entry = new ShmemPutbSendEntry( id, event, getBacking( event->getMyAddr(), event->getLength() ), 
+    if( event->getNode() == m_nic.getNodeId() ) {
+
+        assert( event->getOp() == Hermes::Shmem::ReduOp::MOVE );
+
+        void* dest = getBacking( event->getFarAddr(), event->getLength() );
+        void* src = getBacking( event->getMyAddr(), event->getLength() );
+        memcpy( dest, src, event->getLength() );
+
+        m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::Put, event->getCallback() );
+    } else {
+
+        ShmemPutSendEntry* entry = new ShmemPutbSendEntry( id, event, getBacking( event->getMyAddr(), event->getLength() ), 
             [=]() {
                 m_dbg.verbose(CALL_INFO,1,1,"Nic::Shmem::put complete\n");
                 m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::Put, event->getCallback() );
             } 
-    ); 
+        ); 
 
-    m_nic.m_sendMachine[0]->run( entry );
+        m_nic.m_sendMachine[0]->run( entry );
+    }
 }
 
 void Nic::Shmem::putv( NicShmemPutvCmdEvent* event, int id )
@@ -104,7 +113,6 @@ void Nic::Shmem::putv( NicShmemPutvCmdEvent* event, int id )
 
         Hermes::Value local( event->getDataType(), 
                 getBacking( event->getFarAddr(), event->getLength() ) );
-
 
         m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::Putv, event->getCallback() );
         local = event->getValue();
