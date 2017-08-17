@@ -213,7 +213,12 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     timestamp_ = 0;
 }
 
-/* Init - forward memory initialization events to memory; detect presence of caches */
+/* Init
+ * 1. Initialize network if present
+ * 2. Inform our neighbors who we are (line size, endpoint type, whether to expect writeback acks, etc.)
+ * 3. Discover who our neighbors are, especially if any are caches and we need to be sending shoot downs
+ * 4. Forward any memory initialization events to memory
+ */
 void Scratchpad::init(unsigned int phase) {
     
     //Init MemNIC if we have one - must be done before attempting to send anything on this link
@@ -278,10 +283,15 @@ void Scratchpad::init(unsigned int phase) {
 }
 
 
+/* setup. Empty for now */
 void Scratchpad::setup() { }
 
 
-/* Events received from a network connected to both processor-side and remote-side */
+/* 
+ * Events received from a network connection. 
+ * May be processor-side and/or remote memory
+ * Sort into process function according to source
+ */
 void Scratchpad::processIncomingNetworkEvent(SST::Event* event) {
     MemEventBase * ev = static_cast<MemEventBase*>(event);
     if (ev->getCmd() == Command::GetSResp || ev->getCmd() == Command::GetXResp)
@@ -290,7 +300,15 @@ void Scratchpad::processIncomingNetworkEvent(SST::Event* event) {
         processIncomingCPUEvent(event);
 }
 
-/* Events received from processor */
+
+/* 
+ * Handle events received from a processor
+ * - Read/write requests - remote and scratch
+ * - Put/get requests
+ * - (TODO) Flush requests
+ * - Shootdown acknowledgements
+ * - Acks
+ */
 void Scratchpad::processIncomingCPUEvent(SST::Event* event) {
     MemEventBase * ev = static_cast<MemEventBase*>(event);
     
@@ -332,7 +350,12 @@ void Scratchpad::processIncomingCPUEvent(SST::Event* event) {
     }
 }
 
-/* Events received from memory - must be read response but could be response to a memory read or a ScratchGet */
+
+/* 
+ * Handle events received from remote memory
+ * Writes are not ack'd so must be read responses, could be response
+ * to a memory read or a ScratchGet
+ */
 void Scratchpad::processIncomingRemoteEvent(SST::Event * event) {
     MemEvent * ev = static_cast<MemEvent*>(event);
 
@@ -359,7 +382,10 @@ void Scratchpad::processIncomingRemoteEvent(SST::Event * event) {
 }
 
 
-/* Clock handler */
+/* 
+ * Clock handler 
+ * TODO turn off clock when idle
+ */
 bool Scratchpad::clock(Cycle_t cycle) {
     timestamp_++;
     
@@ -404,7 +430,11 @@ bool Scratchpad::clock(Cycle_t cycle) {
     return false;
 }
 
+
 /***************** request and response handlers ***********************/
+/*
+ *  Sort read requests into local (scratch) and remote
+ */
 void Scratchpad::handleRead(MemEventBase * event) {
     MemEvent * ev = static_cast<MemEvent*>(event);
 
@@ -415,6 +445,10 @@ void Scratchpad::handleRead(MemEventBase * event) {
     }
 }
 
+/*
+ *  Sort write requests into local and remote
+ *  Also send coherence reads that correspond to processor writes to the read function
+ */
 void Scratchpad::handleWrite(MemEventBase * event) {
     MemEvent * ev = static_cast<MemEvent*>(event);
     if (ev->getAddr() < scratchSize_) {
@@ -428,6 +462,15 @@ void Scratchpad::handleWrite(MemEventBase * event) {
     }
 }
 
+
+/*
+ *  Handle a scratch read
+ *  Commands:
+ *      - GetS
+ *      - GetSX
+ *      - GetX, cacheable
+ *  Put request in mshr, if no conflict, send to scratchpad and wait for response
+ */
 void Scratchpad::handleScratchRead(MemEvent * ev) {
 
     stat_ScratchReadReceived->addData(1);
@@ -461,6 +504,20 @@ void Scratchpad::handleScratchRead(MemEvent * ev) {
 #endif
 }
 
+
+/*
+ * Handle a scratch write
+ * Commands:
+ *      - GetX, noncacheable
+ *      - PutM/E/S
+ * Check for races with invalidations and handle as needed
+ * Send AckPut for clean writebacks (PutE/PutS) and drop them
+ * Send write to scratchpad after checking for conflicts in MSHR
+ *
+ * If this is a replacement from cache, mark as uncached
+ * If from directory, replacements don't neccessarily mean that block is no longer cached,
+ * so don't clear cached state.
+ */
 void Scratchpad::handleScratchWrite(MemEvent * ev) {
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR))
@@ -517,7 +574,7 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
             if (it->cmd == Command::Put) {
                 if (it == entry->begin()) {
                     doScratchWrite(write);
-                    sendResponse(response);
+                    sendResponse(response); /* Send response when request is sent to scratch, since scratch doesn't respond */
                     delete ev;
                 } else {
                     outstandingEventList_.insert(std::make_pair(ev->getID(),OutstandingEvent(ev,response)));
@@ -534,7 +591,7 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
 
     if (mshr_.find(ev->getBaseAddr()) == mshr_.end()) {
         doScratchWrite(write);
-        sendResponse(response);
+        sendResponse(response); /* Send response when request is sent to scratch since scratch doesn't respond */
         delete ev;
         /* Update cache state */
         if (caching_ && !ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
@@ -550,6 +607,21 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
     }
 }
 
+
+/* 
+ * Handle scratch Get by copying 'size' bytes from remote address 
+ * srcAddr to scratch address dstAddr. 'Size' may exceed the scratch
+ * line size.
+ * 
+ * 1. Issue read to remote for 'size' bytes from srcAddr
+ * 2. If caching, send shootdowns for any cached blocks between
+ *    dstAddr & dstAddr+size. All dirty data is discarded.
+ * 3. Once the remote read returns, issue writes to the local scratch
+ *    starting at address dstAddr (may mean writing multiple blocks).
+ * 4. Once all writes are sent and all shootdown responses received,
+ *    send AckMove to processor. At this point, any scratch reads sent 
+ *    by the processor are guaranteed to return new data.
+ */
 void Scratchpad::handleScratchGet(MemEventBase * event) {
     MoveEvent * ev = static_cast<MoveEvent*>(event);
 
@@ -593,6 +665,20 @@ void Scratchpad::handleScratchGet(MemEventBase * event) {
     }
 }
 
+
+/* 
+ * Handle scratch Put by copying 'size' bytes from scratch address 
+ * srcAddr to remote address dstAddr. 'Size' may exceed the scratch line size.
+ * 
+ * 1. If caching, send shootdowns for any cached blocks between
+ *    srcAddr & srcAddr+size. 
+ * 2. Send scratch read requests for any uncached blocks between
+ *    srcAddr & srcAddr+size.
+ * 3. Collect data scratch & shootdown responses in the payload of a write event.
+ *    If a shootdown response arrives without data (i.e., was clean or uncached), 
+ *    send a scratch read.
+ * 4. Once all data is received, send write to remote and AckMove to processor
+ */
 void Scratchpad::handleScratchPut(MemEventBase * event) {
     MoveEvent *ev = static_cast<MoveEvent*>(event);
 
@@ -634,6 +720,14 @@ void Scratchpad::handleScratchPut(MemEventBase * event) {
     }
 }
 
+
+/*
+ * Handle a scratchpad response. Called by scratch backend.
+ * Responses:
+ *  Response to a ScratchPut's read request: call updatePut() to record response
+ *      in remote write's payload
+ *  All others (regular read responses): call finishRequest()
+ */
 void Scratchpad::handleScratchResponse(SST::Event::id_type responseID) {
     SST::Event::id_type requestID = responseIDMap_.find(responseID)->second;
     responseIDMap_.erase(responseID);
@@ -654,6 +748,16 @@ void Scratchpad::handleScratchResponse(SST::Event::id_type responseID) {
     updateMSHR(baseAddr);
 }
 
+
+/*
+ * Handle an AckInv response to a shootdown (Inv)
+ * 
+ * 1. Set cached status to false
+ * 2. Set state for the Get or Put to indicate a shootdown response was received
+ * 3. If we needed data (for a Put), send a read request to scratch
+ * 4. If this was the last shootdown response and we're not waiting for a scratch response,
+ *    finish the request
+ */
 void Scratchpad::handleAckInv(MemEventBase * event) {
     MemEvent *response = static_cast<MemEvent*>(event);
     Addr baseAddr = response->getBaseAddr();
@@ -721,6 +825,16 @@ void Scratchpad::handleAckInv(MemEventBase * event) {
     delete event;
 }
 
+
+/*
+ * Handle a FetchResp response to a shootdown.
+ * Can only be in response to a Put since we don't request data for Get shootdowns.
+ *
+ * 1. Set cached state to false
+ * 2. If data is dirty, send scratch write
+ * 3. Update payload for remote write
+ * 4. If there are no more scratch or shootdown responses to wait for, finish the put (updatePut())
+ */
 void Scratchpad::handleFetchResp(MemEventBase * event) {
     MemEvent * response = static_cast<MemEvent*>(event);
     Addr baseAddr = response->getBaseAddr();
@@ -763,11 +877,12 @@ void Scratchpad::handleFetchResp(MemEventBase * event) {
     delete response;        // Delete response
 }
 
+
 /**
  * Handle NACKs
- * These can only be invalidations since they are the only
- * type of requests a scratchpad sends to caches
- * (responses are never NACKed)
+ * Only invalidations will be NACKed since they are the
+ * only type of requests a scratchpad sends to caches
+ * (responses are never NACKed).
  */
 void Scratchpad::handleNack(MemEventBase * event) {
     MemEvent * nack = static_cast<MemEvent*>(event);
@@ -808,6 +923,10 @@ void Scratchpad::handleNack(MemEventBase * event) {
 }
 
 
+/*
+ * Handle a read request to a remote address.
+ * This bypasses the scratchpad completely.
+ */
 void Scratchpad::handleRemoteRead(MemEvent * event) {
     stat_RemoteReadReceived->addData(1);
 
@@ -829,6 +948,12 @@ void Scratchpad::handleRemoteRead(MemEvent * event) {
 }
 
 
+/*
+ * Handle a write request to a remote address.
+ * This bypasses the scratchpad completely.
+ * The remote will not Ack a write so we send a
+ * response to the processor immediately
+ */
 void Scratchpad::handleRemoteWrite(MemEvent * event) {
     stat_RemoteWriteReceived->addData(1);
 
@@ -860,6 +985,11 @@ void Scratchpad::handleRemoteWrite(MemEvent * event) {
 }
 
 
+/*
+ * Handle a read response from remote memory in response to a ScratchGet 
+ * If from a ScratchGet, write data to scratchpad and send a response
+ * to the processor once all data is written.
+ */
 void Scratchpad::handleRemoteGetResponse(MemEvent * response, SST::Event::id_type requestID) {
     
     MoveEvent * request = static_cast<MoveEvent*>(outstandingEventList_.find(requestID)->second.request);

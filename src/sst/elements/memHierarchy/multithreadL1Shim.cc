@@ -162,7 +162,6 @@ void MultiThreadL1::init(unsigned int phase) {
         }
     }
     
-    // Nothing important flows this way
     while ((ev = cacheLink->recvInitData()) != NULL) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {

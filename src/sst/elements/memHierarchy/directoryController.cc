@@ -1099,7 +1099,7 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
     respEv->setPayload(ev->getPayload());
     profileResponseSent(respEv);
     if (reqEv->getCmd() == Command::FetchInv || reqEv->getCmd() == Command::ForceInv)
-        sendEventToMem(respEv);
+        memMsgQueue.insert(std::make_pair(timestamp + mshrLatency, respEv));
     else 
         sendEventToCaches(respEv, timestamp + mshrLatency);
     
