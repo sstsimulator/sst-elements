@@ -27,7 +27,7 @@ class EmberShmemBarrierAllGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemBarrierAllGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemBarrierAdd" ), m_phase(-1) 
+		EmberShmemGenerator(owner, params, "ShmemBarrierAll" ), m_phase(-1) 
 	{ 
         m_count = (uint32_t) params.find("arg.iterations", 1);
     }
