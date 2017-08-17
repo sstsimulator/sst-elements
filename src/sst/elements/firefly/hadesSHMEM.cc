@@ -50,7 +50,10 @@ void HadesSHMEM::init(Shmem::Callback callback)
     dbg().verbose(CALL_INFO,1,1,"\n");
     m_num_pes = m_os->getInfo()->getGroup(MP::GroupWorld)->getSize();
     m_my_pe = m_os->getInfo()->getGroup(MP::GroupWorld)->getMyRank();
-    m_barrier = new ShmemBarrier( *this, m_my_pe, m_num_pes );
+    m_common = new ShmemCommon( m_my_pe, m_num_pes, 10, 2 );
+    m_barrier = new ShmemBarrier( *this, *m_common );
+    m_broadcast = new ShmemBroadcast( *this, *m_common );
+    m_reduction = new ShmemReduction( *this, *m_common );
 
     m_localDataSize = m_num_pes * sizeof(long);
 
@@ -83,17 +86,33 @@ void HadesSHMEM::my_pe(int* val, Shmem::Callback callback )
     m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
 }
 
+void HadesSHMEM::barrier_all(Shmem::Callback callback)
+{
+    dbg().verbose(CALL_INFO,1,1,"\n");
+
+    m_barrier->start( 0, 0, m_num_pes, m_psync.getSimVAddr(), callback );
+}
+
 void HadesSHMEM::barrier( int start, int stride, int size, Vaddr psync, Shmem::Callback callback )
 {
     dbg().verbose(CALL_INFO,1,1,"\n");
 
     m_barrier->start( start, stride, size, psync, callback );
 } 
-void HadesSHMEM::barrier_all(Shmem::Callback callback)
+
+void HadesSHMEM::broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int start,
+                                int stride, int size, Vaddr psync, Shmem::Callback callback)
 {
     dbg().verbose(CALL_INFO,1,1,"\n");
-
-    m_barrier->start( 0, 0, m_num_pes, m_psync.getSimVAddr(), callback );
+    m_broadcast->start( dest, source, nelems, root, start, stride, size, psync, callback, true );
+}
+void HadesSHMEM::reduction( Vaddr dest, Vaddr source, int nelems, int PE_start,
+                int logPE_stride, int PE_size, Vaddr pWrk, Vaddr pSync,
+                Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Shmem::Callback callback) 
+{
+    dbg().verbose(CALL_INFO,1,1,"\n");
+    m_reduction->start( dest, source, nelems, PE_start, logPE_stride, PE_size, pWrk, pSync,
+            op, dataType, callback );
 }
 
 void HadesSHMEM::quiet(Shmem::Callback callback)
@@ -104,7 +123,8 @@ void HadesSHMEM::quiet(Shmem::Callback callback)
 
 void HadesSHMEM::fence(Shmem::Callback callback)
 {
-    assert(0);
+    dbg().verbose(CALL_INFO,1,1,"\n");
+    m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
 #if 0
     FunctionSM::Callback callback = [this, callback ] { 
 
@@ -211,6 +231,23 @@ void HadesSHMEM::put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int p
         [=]() { 
             this->dbg().verbose(CALL_INFO,1,1,"\n");
             this->m_os->getNic()->shmemPut( pe, dest, src, length, 
+
+                [=]() {
+                    this->dbg().verbose(CALL_INFO,1,1,"\n");
+                    this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+                }
+            );
+        } 
+    );
+}
+
+void HadesSHMEM::putOp(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe,
+                Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Shmem::Callback callback)
+{
+    m_os->getNic()->shmemBlocked(
+        [=]() { 
+            this->dbg().verbose(CALL_INFO,1,1,"\n");
+            this->m_os->getNic()->shmemPutOp( pe, dest, src, length, op, dataType, 
 
                 [=]() {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
