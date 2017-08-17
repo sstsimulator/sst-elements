@@ -219,6 +219,13 @@ void VirtNic::shmemPut( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t 
     sendCmd(0, new NicShmemPutCmdEvent( calcCoreId(node), calcRealNicId(node), dest, src, len, callback ) );
 }
 
+void VirtNic::shmemPutOp( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len,
+            Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Callback callback )
+{
+    m_dbg.verbose(CALL_INFO,2,0," %d\n",op);
+    sendCmd(0, new NicShmemPutCmdEvent( calcCoreId(node), calcRealNicId(node), dest, src, len, op, dataType, callback ) );
+}
+
 void VirtNic::shmemPutv( int node, Hermes::Vaddr dest, Hermes::Value& value, Callback callback )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");

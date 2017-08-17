@@ -164,6 +164,8 @@ class VirtNic : public SST::Module {
     void shmemPut( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback );
     void shmemGet( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback );
 
+    void shmemPutOp( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Hermes::Shmem::ReduOp, Hermes::Value::Type, Callback );
+
     void shmemSwap( int node, Hermes::Vaddr dest, Hermes::Value& value, CallbackV );
     void shmemCswap( int node, Hermes::Vaddr dest, Hermes::Value& cond, Hermes::Value& value, CallbackV );
     void shmemFadd( int node, Hermes::Vaddr dest, Hermes::Value&, CallbackV );
