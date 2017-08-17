@@ -59,10 +59,13 @@ class Nic : public SST::Component  {
         unsigned short    src_vNicId;
     };
     struct __attribute__ ((packed)) ShmemMsgHdr {
-        enum Op { Put, Get, GetResp, Fadd, Swap, Cswap } op;
+        ShmemMsgHdr() : op2(0) {}
+        enum Op : unsigned char { Put, Get, GetResp, Fadd, Swap, Cswap } op;
+        unsigned char op2; 
+        unsigned char dataType;
+        unsigned char pad;
+        uint32_t length;
         uint64_t vaddr;
-        size_t   length;
-        Hermes::Value::Type dataType;
         uint64_t respKey;
     };
     struct RdmaMsgHdr {
