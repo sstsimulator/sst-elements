@@ -89,6 +89,7 @@ class NicShmemSendCmdEvent : public NicShmemCmdEvent {
     virtual void* getBacking() = 0;
     virtual size_t getLength() = 0;
     virtual Hermes::Value::Type   getDataType() { assert(0); }
+    virtual Hermes::Shmem::ReduOp getOp() { return Hermes::Shmem::MOVE; } 
 
   private:
     int vnic;
@@ -121,14 +122,25 @@ class NicShmemPutvCmdEvent : public NicShmemSendCmdEvent {
 class NicShmemPutCmdEvent : public NicShmemSendCmdEvent {
   public:
     typedef std::function<void()> Callback;
-    NicShmemPutCmdEvent( int vnic, int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Callback callback ) :
-        NicShmemSendCmdEvent( Put, vnic, node ), destAddr(dest), srcAddr(src), length(length), callback(callback) {}
+    NicShmemPutCmdEvent( int vnic, int node, Hermes::Vaddr dest, Hermes::Vaddr src, 
+            size_t length, Callback callback, Hermes::Shmem::ReduOp op = Hermes::Shmem::MOVE ) :
+        NicShmemSendCmdEvent( Put, vnic, node ), destAddr(dest), srcAddr(src), 
+        length(length), callback(callback), op(op)
+    { }
+    NicShmemPutCmdEvent( int vnic, int node, Hermes::Vaddr dest, Hermes::Vaddr src, 
+        size_t length, Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType,  Callback callback  ) :
+        NicShmemSendCmdEvent( Put, vnic, node ), destAddr(dest), srcAddr(src), 
+        length(length), callback(callback), op(op), dataType(dataType)
+    { }
 
     Hermes::Vaddr getFarAddr()  override { return destAddr; } 
     size_t getLength()          override { return length; } 
     void* getBacking()          override { assert(0); } 
-    Callback getCallback()      { return callback; } 
 
+    Hermes::Value::Type getDataType()   override { return dataType; }
+    Hermes::Shmem::ReduOp getOp()       override { return op; }
+
+    Callback getCallback()      { return callback; } 
     Hermes::Vaddr getMyAddr()   { return srcAddr; } 
 
   private:
@@ -138,9 +150,11 @@ class NicShmemPutCmdEvent : public NicShmemSendCmdEvent {
     size_t          length;
     Callback        callback;
 
+    Hermes::Value::Type dataType;
+    Hermes::Shmem::ReduOp op;
+
 	NotSerializable(NicShmemPutCmdEvent)	
 };
-
 
 class NicShmemGetCmdEvent : public NicShmemSendCmdEvent {
   public:
