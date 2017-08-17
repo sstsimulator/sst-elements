@@ -70,6 +70,12 @@ class ShmemRecvEntry : public RecvEntryBase {
         m_shmemMove = new ShmemRecvMoveMem( addr.getBacking(), length, shmem, addr.getSimVAddr() );
     }
 
+    ShmemRecvEntry( Shmem* shmem, Hermes::MemAddr addr, size_t length, 
+                        Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType ) :
+        RecvEntryBase()
+    { 
+        m_shmemMove = new ShmemRecvMoveMemOp( addr.getBacking(), length, shmem, addr.getSimVAddr(), op, dataType );
+    }
     ~ShmemRecvEntry() { 
         delete m_shmemMove;
     }
