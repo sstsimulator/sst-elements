@@ -26,7 +26,9 @@ namespace Shmem {
 
 typedef std::function<void(int)> Callback;
 
-typedef enum { NONE, LTE, LT, EQ, NE, GT, GTE } WaitOp;
+typedef enum { LTE, LT, EQ, NE, GT, GTE } WaitOp;
+typedef enum { MOVE, AND, MAX, MIN, SUM, PROD, OR, XOR } ReduOp;
+
 class Interface : public Hermes::Interface {
     public:
 
@@ -39,10 +41,16 @@ class Interface : public Hermes::Interface {
     virtual void n_pes(int*, Callback) { assert(0); }
     virtual void my_pe(int*, Callback) { assert(0); }
 
-    virtual void barrier_all(Callback) { assert(0); }
-    virtual void barrier( int start, int stride, int size, Vaddr, Callback) { assert(0); }
     virtual void fence(Callback) { assert(0); }
     virtual void quiet(Callback) { assert(0); }
+
+    virtual void barrier_all(Callback) { assert(0); }
+    virtual void barrier( int start, int stride, int size, Vaddr, Callback) { assert(0); }
+    virtual void broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start, 
+            int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
+    virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start, 
+            int logPE_stride, int PE_size, Vaddr pWrk, Vaddr pSync, 
+            ReduOp, Hermes::Value::Type, Callback) { assert(0); }
 
     virtual void malloc(MemAddr*, size_t, Callback) { assert(0); }
     virtual void free(MemAddr&, Callback) { assert(0); }
