@@ -103,7 +103,7 @@ public:
         return new MoveEvent(*this);
     }
     
-    virtual std::string getVerboseString() {
+    virtual std::string getVerboseString() override {
         std::ostringstream str;
         str << std::hex;
         str << " SrcAddr: 0x" << srcAddr_ << " SrcBaseAddr: 0x" << srcBaseAddr_;
@@ -114,7 +114,7 @@ public:
         return MemEventBase::getVerboseString() + str.str();
     }
 
-    virtual std::string getBriefString() {
+    virtual std::string getBriefString() override {
         std::ostringstream str;
         str << std::hex;
         str << " SrcAddr: 0x" << srcAddr_ << " SrcBaseAddr: 0x" << srcBaseAddr_;
@@ -124,19 +124,19 @@ public:
         return MemEventBase::getBriefString() + str.str();
     }
     
-    virtual bool doDebug(Addr addr) {
+    virtual bool doDebug(Addr addr) override {
         if (addr >= dstBaseAddr_ && addr < dstAddr_ + size_) return true;
         if (addr >= srcBaseAddr_ && addr < srcAddr_ + size_) return true;
         return false;
     }
 
-    virtual Addr getRoutingAddress() {
+    virtual Addr getRoutingAddress() override {
         // Return "local" address - destination if Get, source if Put
         if (cmd_ == Command::Get) return dstBaseAddr_;
         else return srcBaseAddr_;
     }
 
-    virtual size_t getPayloadSize() {
+    virtual size_t getPayloadSize() override {
         return 0;
     }
 

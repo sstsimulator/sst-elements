@@ -80,7 +80,7 @@ public:
     }
 
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse() {
+    MemEvent* makeResponse() override {
         MemEvent *me      = new MemEvent(*this);
         me->setResponse(this);
         me->prefetch_     = prefetch_;
@@ -213,7 +213,7 @@ public:
         payload_.resize(size, 0);
     }
 
-    size_t getPayloadSize() {
+    size_t getPayloadSize() override {
         return payload_.size();
     }
 
@@ -240,7 +240,7 @@ public:
         return new MemEvent(*this);
     }
 
-    virtual std::string getVerboseString() {
+    virtual std::string getVerboseString() override {
         std::ostringstream str;
         str << std::hex << " Addr: 0x" << addr_ << " BaseAddr: 0x" << baseAddr_;
         str << (addrGlobal_ ? " (Global)" : " (Local)");
@@ -250,17 +250,17 @@ public:
         return MemEventBase::getVerboseString() + str.str();
     }
 
-    virtual std::string getBriefString() {
+    virtual std::string getBriefString() override {
         std::ostringstream str;
         str << " Addr: 0x" << std::hex << addr_ << " BaseAddr: 0x" << baseAddr_ << std::dec << " Size: " << size_;
         return MemEventBase::getBriefString() + str.str();
     }
     
-    virtual bool doDebug(Addr addr) {
+    virtual bool doDebug(Addr addr) override {
         return (baseAddr_ == addr);
     }
 
-    virtual Addr getRoutingAddress() {
+    virtual Addr getRoutingAddress() override {
         return baseAddr_;
     }
 

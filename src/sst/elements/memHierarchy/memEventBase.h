@@ -257,7 +257,7 @@ public:
         return new MemEventInit(*this);
     }
     
-    virtual std::string getVerboseString() {
+    virtual std::string getVerboseString() override {
         std::string str;
         if (initCmd_ == InitCommand::Region) str = " InitCmd: Region";
         else if (initCmd_ == InitCommand::Data) str = " InitCmd: Data";
@@ -267,7 +267,7 @@ public:
         return MemEventBase::getVerboseString() + str;
     }
 
-    virtual std::string getBriefString() {
+    virtual std::string getBriefString() override {
         std::string str;
         if (initCmd_ == InitCommand::Region) str = " InitCmd: Region";
         else if (initCmd_ == InitCommand::Data) str = " InitCmd: Data";
@@ -277,7 +277,7 @@ public:
         return MemEventBase::getBriefString() + str;
     }
 
-    virtual Addr getRoutingAddress() { return addr_; }
+    virtual Addr getRoutingAddress() override { return addr_; }
 
 
 protected:
@@ -315,7 +315,7 @@ public:
         return new MemEventInitCoherence(*this);
     }   
 
-    virtual std::string getVerboseString() {
+    virtual std::string getVerboseString() override {
         std::ostringstream str;
         str << " Type: " << (int) type_ << " Inclusive: " << (inclusive_ ? "true" : "false");
         str << " LineSize: " << lineSize_;
@@ -355,7 +355,7 @@ public:
         return new MemEventInitRegion(*this);
     }
 
-    virtual std::string getVerboseString() {
+    virtual std::string getVerboseString() override {
         return MemEventInit::getVerboseString() + region_.toString() + " SetRegion: " + (setRegion_ ? "T" : "F");
     }
 
