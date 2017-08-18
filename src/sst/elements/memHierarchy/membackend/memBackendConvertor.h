@@ -117,13 +117,13 @@ class MemBackendConvertor : public SubComponent {
     bool setupMemReq( MemEvent* ev ) {
         if ( Command::FlushLine == ev->getCmd() || Command::FlushLineInv == ev->getCmd() ) {
             // TODO optimize if this becomes a problem, it is slow
-            std::unordered_set<MemEvent*> dependsOn;
+            std::set<MemEvent*> dependsOn;
             for (std::deque<MemReq*>::iterator it = m_requestQueue.begin(); it != m_requestQueue.end(); it++) {
                 if ((*it)->baseAddr() == ev->getBaseAddr()) {
                     MemEvent * req = (*it)->getMemEvent();
                     dependsOn.insert(req);
                     if (m_dependentRequests.find(req) == m_dependentRequests.end()) {
-                        std::unordered_set<MemEvent*> flushSet;
+                        std::set<MemEvent*> flushSet;
                         flushSet.insert(ev);
                         m_dependentRequests.insert(std::make_pair(req, flushSet));
                     } else {
@@ -202,8 +202,8 @@ class MemBackendConvertor : public SubComponent {
     PendingRequests         m_pendingRequests;
     uint32_t                m_frontendRequestWidth;
 
-    std::map<MemEvent*, std::unordered_set<MemEvent*> > m_waitingFlushes; // Set of request events for each flush
-    std::map<MemEvent*, std::unordered_set<MemEvent*> > m_dependentRequests; // Reverse map, set of flushes for each request ID, for faster lookup
+    std::map<MemEvent*, std::set<MemEvent*> > m_waitingFlushes; // Set of request events for each flush
+    std::map<MemEvent*, std::set<MemEvent*> > m_dependentRequests; // Reverse map, set of flushes for each request ID, for faster lookup
 
     Statistic<uint64_t>* stat_GetSLatency;
     Statistic<uint64_t>* stat_GetSXLatency;

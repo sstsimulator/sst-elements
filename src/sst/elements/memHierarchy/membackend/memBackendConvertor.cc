@@ -189,9 +189,9 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
         // TODO clock responses
         // Check for flushes that are waiting on this event to finish
         if (m_dependentRequests.find(event) != m_dependentRequests.end()) {
-            std::unordered_set<MemEvent*> flushes = m_dependentRequests.find(event)->second;
+            std::set<MemEvent*> flushes = m_dependentRequests.find(event)->second;
             
-            for (std::unordered_set<MemEvent*>::iterator it = flushes.begin(); it != flushes.end(); it++) {
+            for (std::set<MemEvent*>::iterator it = flushes.begin(); it != flushes.end(); it++) {
                 (m_waitingFlushes.find(*it)->second).erase(event);
                 if ((m_waitingFlushes.find(*it)->second).empty()) {
                     MemEvent * flush = *it;

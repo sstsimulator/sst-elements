@@ -132,8 +132,8 @@ for x in range(memories):
         "entry_cache_size" : 32768,
         "mshr_num_entries" : 16,
         # MemNIC parameters
-        "interleave_size" : "64B",    # Interleave at line granularity between memories
-        "interleave_step" : str(memories * 64) + "B",
+        "memNIC.interleave_size" : "64B",    # Interleave at line granularity between memories
+        "memNIC.interleave_step" : str(memories * 64) + "B",
         "memNIC.network_bw" : network_bw,
         "memNIC.addr_range_start" : x*64,
         "memNIC.addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
