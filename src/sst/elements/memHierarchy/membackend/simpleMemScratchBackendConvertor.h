@@ -28,7 +28,7 @@ class SimpleMemScratchBackendConvertor : public ScratchBackendConvertor {
   public:
     SimpleMemScratchBackendConvertor(Component *comp, Params &params);
 
-    virtual bool issue( ScratchReq* req );
+    virtual bool issue( MemReq* req );
 
     virtual void handleMemResponse( ReqId reqId ) {
         SST::Event::id_type respId;

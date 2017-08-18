@@ -293,7 +293,6 @@ protected:
     unsigned int    numLines_;
     unsigned int    associativity_;
     unsigned int    lineSize_;
-    unsigned int    setMask_;
     unsigned int    lineOffset_;
     ReplacementMgr* replacementMgr_;
     HashFunction*   hash_;
@@ -306,7 +305,6 @@ protected:
                replacementMgr_(replacementMgr), hash_(hash) {
         dbg_->debug(_INFO_,"--------------------------- Initializing [Set Associative Cache Array]... \n");
         numSets_    = numLines_ / associativity_;
-        setMask_    = numSets_ - 1;
         lineOffset_ = log2Of(lineSize_);
         lines_.resize(numLines_);
         slices_ = 1;
@@ -377,7 +375,6 @@ private:
     unsigned int    cacheNumSets_;
     unsigned int    cacheNumLines_;
     unsigned int    cacheAssociativity_;
-    unsigned int    cacheSetMask_;
 
 };
 

@@ -27,15 +27,37 @@ using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
 
-MemHierarchyInterface::MemHierarchyInterface(SST::Component *_comp, Params &_params) :
-    SimpleMem(_comp, _params), owner_(_comp), recvHandler_(NULL), link_(NULL)
+MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &params) :
+    SimpleMem(comp, params), owner_(comp), recvHandler_(NULL), link_(NULL)
 { 
     output.init("", 1, 0, Output::STDOUT);
 }
 
 
+void MemHierarchyInterface::init(unsigned int phase) {
+    if (!phase) {
+        // Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
+        link_->sendInitData(new MemEventInitCoherence(parent->getName(), Endpoint::CPU, false, false, 0));
+    }
+
+    while (SST::Event * ev = link_->recvInitData()) {
+        MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
+        if (memEvent) {
+            // Pick up info for initializing MemEvents
+            if (memEvent->getCmd() == Command::NULLCMD && memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
+
+                baseAddrMask_ = ~(memEventC->getLineSize() - 1);
+                rqstr_ = memEventC->getSrc();
+            }
+        }
+        delete ev;
+    }
+}
+
+
 void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
-    MemEvent *me = createMemEvent(req);
+    MemEventInit *me = new MemEventInit(getName(), Command::GetX, req->addrs[0], req->data);
     link_->sendInitData(me);
 }
 
@@ -60,21 +82,25 @@ SimpleMem::Request* MemHierarchyInterface::recvResponse(void){
 
 
 MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
-    Command cmd = NULLCMD;
+    Command cmd = Command::NULLCMD;
     
     switch ( req->cmd ) {
-        case SimpleMem::Request::Read:          cmd = GetS;         break;
-        case SimpleMem::Request::Write:         cmd = GetX;         break;
-        case SimpleMem::Request::ReadResp:      cmd = GetXResp;     break;
-        case SimpleMem::Request::WriteResp:     cmd = GetSResp;     break;
-        case SimpleMem::Request::FlushLine:     cmd = FlushLine;    break;
-        case SimpleMem::Request::FlushLineInv:  cmd = FlushLineInv; break;
-        case SimpleMem::Request::FlushLineResp: cmd = FlushLineResp; break;
+        case SimpleMem::Request::Read:          cmd = Command::GetS;         break;
+        case SimpleMem::Request::Write:         cmd = Command::GetX;         break;
+        case SimpleMem::Request::ReadResp:      cmd = Command::GetXResp;     break;
+        case SimpleMem::Request::WriteResp:     cmd = Command::GetSResp;     break;
+        case SimpleMem::Request::FlushLine:     cmd = Command::FlushLine;    break;
+        case SimpleMem::Request::FlushLineInv:  cmd = Command::FlushLineInv; break;
+        case SimpleMem::Request::FlushLineResp: cmd = Command::FlushLineResp; break;
         default: output.fatal(CALL_INFO, -1, "Unknown req->cmd in createMemEvent()\n");
     }
+
+    Addr baseAddr = (req->addrs[0]) & baseAddrMask_;
     
-    MemEvent *me = new MemEvent(owner_, req->addrs[0], req->addrs[0], cmd);
+    MemEvent *me = new MemEvent(owner_, req->addrs[0], baseAddr, cmd);
     
+    me->setRqstr(rqstr_);
+    me->setDst(rqstr_);
     me->setSize(req->size);
 
     if (SimpleMem::Request::Write == req->cmd)  {
@@ -93,7 +119,7 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
     if(req->flags & SimpleMem::Request::F_LOCKED) {
         me->setFlag(MemEvent::F_LOCKED);
         if (req->cmd == SimpleMem::Request::Read)
-            me->setCmd(GetSEx);
+            me->setCmd(Command::GetSX);
     }
     
     if(req->flags & SimpleMem::Request::F_LLSC){
@@ -104,6 +130,8 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
     me->setInstructionPointer(req->getInstructionPointer());
 
     me->setMemFlags(req->memFlags);
+
+    //output.output("MemHInterface. Created event. %s\n", me->getVerboseString().c_str());
 
     //totalRequests_++;
     return me;
@@ -130,7 +158,7 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev){
         updateRequest(req, ev);
     }
     else{
-        output.fatal(CALL_INFO, -1, "Unable to find matching request.  Cmd = %s, Addr = %" PRIx64 ", respID = %" PRIx64 "\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getResponseToID().first);
+        output.fatal(CALL_INFO, -1, "Unable to find matching request.  Cmd = %s, Addr = %" PRIx64 ", respID = %" PRIx64 "\n", CommandString[(int)ev->getCmd()], ev->getAddr(), ev->getResponseToID().first);
     }
     return req;
 }
@@ -138,21 +166,21 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev){
 
 void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me) const{
     switch (me->getCmd()) {
-    case GetSResp:
+        case Command::GetSResp:
         req->cmd   = SimpleMem::Request::ReadResp;
         req->data  = me->getPayload();
         req->size  = me->getPayload().size();
         break;
-    case GetXResp:
+        case Command::GetXResp:
         req->cmd   = SimpleMem::Request::WriteResp;
         if(me->success()) req->flags |= (SimpleMem::Request::F_LLSC_RESP);
         break;
-    case FlushLineResp:
+        case Command::FlushLineResp:
         req->cmd = SimpleMem::Request::FlushLineResp;
         if (me->success()) req->flags |= (SimpleMem::Request::F_FLUSH_SUCCESS);
         break;
     default:
-        fprintf(stderr, "Don't know how to deal with command %s\n", CommandString[me->getCmd()]);
+        output.fatal(CALL_INFO, -1, "Don't know how to deal with command %s\n", CommandString[(int)me->getCmd()]);
     }
    // Always update memFlags to faciliate mem->processor communication
     req->memFlags = me->getMemFlags();

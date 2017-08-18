@@ -104,6 +104,16 @@ cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
 // destructor
 cacheTracer::~cacheTracer() {}
 
+void cacheTracer::init(unsigned int phase) {
+    // Since cacheTracer can sit between memH components, it needs to forward init events
+    while (SST::Event * ev = northBus->recvInitData()) {
+        southBus->sendInitData(ev);
+    }
+    while (SST::Event * ev = southBus->recvInitData()) {
+        northBus->sendInitData(ev);
+    }
+}
+
 bool cacheTracer::clock(Cycle_t current){
     timestamp++;
 

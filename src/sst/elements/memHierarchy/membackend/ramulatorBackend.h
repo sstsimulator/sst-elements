@@ -34,7 +34,7 @@ public:
     ramulatorMemory(Component *comp, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
     //virtual bool issueRequest(DRAMReq *req);
-    virtual void clock();
+    virtual bool clock(Cycle_t cycle);
     virtual void finish();
 
 protected:

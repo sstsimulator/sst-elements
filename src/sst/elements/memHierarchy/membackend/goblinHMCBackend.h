@@ -63,7 +63,7 @@ public:
 	bool issueRequest(ReqId, Addr, bool, unsigned);
 	void setup();
 	void finish();
-	void clock();
+	virtual bool clock(Cycle_t cycle);
 
 private:
 	Component* owner;

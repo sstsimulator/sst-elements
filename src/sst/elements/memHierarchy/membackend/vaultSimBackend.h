@@ -25,11 +25,13 @@ namespace MemHierarchy {
 class VaultSimMemory : public MemFlagMemBackend {
 public:
     VaultSimMemory(Component *comp, Params &params);
-	virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes );
+    virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes );
+    virtual bool isClocked() { return false; }
+
 private:
     void handleCubeEvent(SST::Event *event);
 
-	std::set<ReqId> outToCubes;
+    std::set<ReqId> outToCubes;
     SST::Link *cube_link;
 };
 

@@ -1,6 +1,10 @@
 # Automatically generated SST Python input
 import sst
 
+DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_MEM = 0
+
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
@@ -19,8 +23,8 @@ comp_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "2 KB",
       "L1" : "1",
-      #"debug" : "1",
-      #"debug_level" : "10"
+      "debug" : DEBUG_L1,
+      "debug_level" : "10"
 })
 comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 comp_l2cache.addParams({
@@ -31,15 +35,17 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "16 KB",
-      #"debug" : "1",
-      #"debug_level" : "10"
+      "debug" : DEBUG_L2,
+      "debug_level" : "10"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
       "backend.access_time" : "100 ns",
       "clock" : "1GHz",
-      "backend.mem_size" : "512MiB"
+      "backend.mem_size" : "512MiB",
+      "debug" : DEBUG_MEM,
+      "debug_level" : "10"
 })
 
 # Enable statistics

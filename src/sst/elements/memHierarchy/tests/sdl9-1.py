@@ -1,6 +1,11 @@
 # Automatically generated SST Python input
 import sst
 
+DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_L3 = 0
+DEBUG_MEM = 0
+
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
@@ -21,7 +26,7 @@ comp_l1cache.addParams({
       "cache_line_size" : "64",
       "debug_level" : "8",
       "L1" : "1",
-      "debug" : "0",
+      "debug" : DEBUG_L1,
       "cache_size" : "4 KB"
 })
 comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
@@ -33,7 +38,7 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "debug_level" : "8",
-      "debug" : "0",
+      "debug" : DEBUG_L2,
       "cache_size" : "32 KB"
 })
 comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
@@ -45,13 +50,12 @@ comp_l3cache.addParams({
       "associativity" : "16",
       "cache_line_size" : "64",
       "debug_level" : "8",
-      "debug" : "0",
+      "debug" : DEBUG_L3,
       "cache_size" : "64 KB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "coherence_protocol" : "MSI",
-      "debug" : "0",
+      "debug" : DEBUG_MEM,
       "backend.access_time" : "100 ns",
       "clock" : "1GHz",
       "backend.mem_size" : "512MiB"

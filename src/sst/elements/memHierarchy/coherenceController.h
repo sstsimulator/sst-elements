@@ -28,7 +28,7 @@
 #include "cacheListener.h"
 #include "cacheArray.h"
 #include "mshr.h"
-#include "memNIC.h"
+#include "memLinkBase.h"
 
 namespace SST { namespace MemHierarchy {
 using namespace std;
@@ -76,11 +76,30 @@ public:
     void resendEvent(MemEvent * event, bool towardsCPU);
 
     /* Send a response event up (towards CPU). L1s need to implement their own to split out requested bytes. */
-    uint64_t sendResponseUp(MemEvent * event, State grantedState, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic=false);
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic=false);
+
+    /* Send a response event up (towards CPU). L1s need to implement their own to split out requested bytes. */
+    uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic=false);
+    
+    /* Send a response event up (towards CPU). L1s need to implement their own to split out requested bytes. */
+    uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool atomic=false);
+
 
     /* Forward a message to a lower memory level (towards memory) */
     uint64_t forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data);
 
+    /* Forward a generic message towards memory */
+    uint64_t forwardTowardsMem(MemEventBase * event);
+
+    /* Forward a generic message towards CPU */
+    uint64_t forwardTowardsCPU(MemEventBase * event, std::string dst);
+
+    /* Return the name of the source for this cache */
+    std::string getSrc();
+    
+    /* Return the destination for a given address - for sliced/distributed caches */
+    std::string getDestination(Addr addr) { return linkDown_->findTargetDestination(addr); }
+    
 
     /***** Manage outgoing event queuest *****/
     
@@ -90,21 +109,15 @@ public:
 
     /***** Setup and initialization functions *****/
 
-    /* Add cache names to destination lookup tables */
-    void addLowerLevelCacheName(std::string name) { lowerLevelCacheNames_.push_back(name); }
-    void addUpperLevelCacheName(std::string name) { upperLevelCacheNames_.push_back(name); }
-
     /* Initialize variables that tell this coherence controller how to interact with the cache below it */
     void setupLowerStatus(bool isLastLevel, bool isNoninclusive, bool isDir);
 
     /* Setup pointers to other subcomponents/cache structures */
     void setCacheListener(CacheListener* ptr) { listener_ = ptr; }
     void setMSHR(MSHR* ptr) { mshr_ = ptr; }
-    void setLinks(Link * lowNetPort, Link * highNetPort, MemNIC * lowNIC, MemNIC * highNIC) {
-        lowNetPort_ = lowNetPort;
-        highNetPort_ = highNetPort;
-        bottomNetworkLink_ = lowNIC;
-        topNetworkLink_ = highNIC;
+    void setLinks(MemLinkBase * linkUp, MemLinkBase * linkDown) {
+        linkUp_ = linkUp;
+        linkDown_ = linkDown;
     }
 
     /* Setup debug info (this is cache-wide) */
@@ -120,7 +133,7 @@ public:
     
 protected:
     struct Response {
-        MemEvent* event;
+        MemEventBase* event;
         uint64_t deliveryTime;
         uint64_t size;
     };
@@ -151,11 +164,10 @@ protected:
     bool            writebackCleanBlocks_;  // Writeback clean data as opposed to just a coherence msg
     bool            silentEvictClean_;      // Silently evict clean blocks (currently ok when just mem below us)
     bool            expectWritebackAck_;    // Whether we should expect a writeback ack
+    bool            lastLevel_;             // Whether we are the lowest coherence level and should not send coherence messages down
 
     /* General parameters and structures */
     unsigned int lineSize_;
-    vector<string>  lowerLevelCacheNames_;
-    vector<string>  upperLevelCacheNames_;
 
     /* Throughput control TODO move these to a port manager */
     uint64_t maxBytesUp;
@@ -170,9 +182,6 @@ protected:
     /* Add a new event to the outgoing command queue towards the CPU */
     virtual void addToOutgoingQueueUp(Response& resp);
 
-    /* Return the destination for a given address - for sliced/distributed caches */
-    std::string getDestination(Addr baseAddr);
-    
     /* Statistics */
     virtual void recordStateEventCount(Command cmd, State state);
     virtual void recordEvictionState(State state);
@@ -195,15 +204,13 @@ protected:
     Statistic<uint64_t>* stat_latency_GetX_IM;
     Statistic<uint64_t>* stat_latency_GetX_SM;
     Statistic<uint64_t>* stat_latency_GetX_M;
-    Statistic<uint64_t>* stat_latency_GetSEx_IM;
-    Statistic<uint64_t>* stat_latency_GetSEx_SM;
-    Statistic<uint64_t>* stat_latency_GetSEx_M;     
+    Statistic<uint64_t>* stat_latency_GetSX_IM;
+    Statistic<uint64_t>* stat_latency_GetSX_SM;
+    Statistic<uint64_t>* stat_latency_GetSX_M;     
 
 private:
-    Link * lowNetPort_;
-    Link * highNetPort_;
-    MemNIC * bottomNetworkLink_;
-    MemNIC * topNetworkLink_;
+    MemLinkBase * linkUp_;
+    MemLinkBase * linkDown_;
 };
 
 }}

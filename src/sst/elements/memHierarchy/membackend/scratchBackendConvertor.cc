@@ -32,7 +32,7 @@ using namespace SST::MemHierarchy;
 ScratchBackendConvertor::ScratchBackendConvertor(Component *comp, Params& params ) : 
     SubComponent(comp), m_reqId(0)
 {
-    m_dbg.init("--->  ", 
+    m_dbg.init("", 
             params.find<uint32_t>("debug_level", 0),
             params.find<uint32_t>("debug_mask", 0),
             (Output::output_location_t)params.find<int>("debug_location", 0 ));
@@ -57,22 +57,27 @@ ScratchBackendConvertor::ScratchBackendConvertor(Component *comp, Params& params
     stat_cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
     stat_cyclesAttemptIssueButRejected = registerStatistic<uint64_t>( "cycles_attempted_issue_but_rejected" );
     stat_totalCycles     = registerStatistic<uint64_t>( "total_cycles" );
-    stat_ReadReceived = registerStatistic<uint64_t>( "reads_received" );
-    stat_WriteReceived = registerStatistic<uint64_t>( "writes_received" );
-    stat_ReadLatency = registerStatistic<uint64_t>("read_latency");
-    stat_WriteLatency = registerStatistic<uint64_t>("write_latency");
+    stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
+    stat_GetSXReqReceived  = registerStatistic<uint64_t>("requests_received_GetSX");
+    stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
+    stat_PutMReqReceived    = registerStatistic<uint64_t>("requests_received_PutM");
+    stat_GetSLatency        = registerStatistic<uint64_t>("latency_GetS");
+    stat_GetSXLatency      = registerStatistic<uint64_t>("latency_GetSX");
+    stat_GetXLatency        = registerStatistic<uint64_t>("latency_GetX");
+    stat_PutMLatency        = registerStatistic<uint64_t>("latency_PutM");
+
 }
 
-void ScratchBackendConvertor::handleScratchEvent(  ScratchEvent * ev ) {
+void ScratchBackendConvertor::handleMemEvent(  MemEvent * ev ) {
 
     ev->setDeliveryTime(m_cycleCount);
 
     doReceiveStat( ev->getCmd() );
 
-    Debug(_L10_,"Creating ScratchReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
-                        ev->getBaseAddr(), ev->getSize(), ScratchCommandString[ev->getCmd()]);
+    Debug(_L10_,"Creating MemReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
+                        ev->getBaseAddr(), ev->getSize(), CommandString[(int)ev->getCmd()]);
 
-    setupScratchReq(ev);
+    setupMemReq(ev);
 }
 
 bool ScratchBackendConvertor::clock(Cycle_t cycle) {
@@ -85,7 +90,7 @@ bool ScratchBackendConvertor::clock(Cycle_t cycle) {
             break;
         }
 
-        ScratchReq* req = m_requestQueue.front();
+        MemReq* req = m_requestQueue.front();
 
         if ( issue( req ) ) {
             stat_cyclesWithIssue->addData(1);
@@ -103,7 +108,7 @@ bool ScratchBackendConvertor::clock(Cycle_t cycle) {
         }
     }
 
-    m_backend->clock();
+    bool unclock = m_backend->clock(cycle);
 
     return false;
 }
@@ -111,22 +116,22 @@ bool ScratchBackendConvertor::clock(Cycle_t cycle) {
 
 bool ScratchBackendConvertor::doResponse( ReqId reqId, SST::Event::id_type & respId ) {
 
-    uint32_t id = ScratchReq::getBaseId(reqId);
+    uint32_t id = MemReq::getBaseId(reqId);
     bool sendResponse = false;
 
     if ( m_pendingRequests.find( id ) == m_pendingRequests.end() ) {
         m_dbg.fatal(CALL_INFO, -1, "%s, memory request not found\n", parent->getName().c_str());
     }
 
-    ScratchReq* req = m_pendingRequests[id];
+    MemReq* req = m_pendingRequests[id];
 
     req->decrement( );
 
     if ( req->isDone() ) {
         m_pendingRequests.erase(id);
-        ScratchEvent* event = req->getScratchEvent();
+        MemEvent* event = req->getMemEvent();
 
-        if ( Write != event->getCmd()  ) {
+        if ( !event->queryFlag(MemEvent::F_NORESPONSE ) ) {
             respId = event->getID();
             sendResponse = true;
         }
@@ -135,7 +140,7 @@ bool ScratchBackendConvertor::doResponse( ReqId reqId, SST::Event::id_type & res
 
         doResponseStat( event->getCmd(), latency );
 
-        // ScratchReq deletes its ScratchEvent
+        // MemReq deletes its Event
         delete req;
 
     }
@@ -144,7 +149,6 @@ bool ScratchBackendConvertor::doResponse( ReqId reqId, SST::Event::id_type & res
 
 void ScratchBackendConvertor::notifyResponse( SST::Event::id_type id) {
 
-    Debug(_L10_, "send response\n");
     static_cast<Scratchpad*>(parent)->handleScratchResponse( id );
 
 }

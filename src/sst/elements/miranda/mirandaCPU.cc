@@ -46,7 +46,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	out->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
 
 	Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
-	cache_link = dynamic_cast<SimpleMem*>( loadModuleWithComponent(interfaceName,
+	cache_link = dynamic_cast<Interfaces::SimpleMem*>( loadSubComponent(interfaceName,
 		this, interfaceParams) );
 
 	maxOpLookup = params.find<uint64_t>("max_reorder_lookups", 16);
@@ -188,7 +188,7 @@ void RequestGenCPU::finish() {
 }
 
 void RequestGenCPU::init(unsigned int phase) {
-
+    cache_link->init(phase);
 }
 
 void RequestGenCPU::handleSrcEvent( Event* ev ) {

@@ -23,13 +23,12 @@
 #include <sst/core/link.h>
 #include <sst/core/output.h>
 #include <map>
-#include <unordered_map>
-#include <queue>
+#include <list>
 
 #include "sst/elements/memHierarchy/membackend/backing.h"
-#include "scratchEvent.h"
+#include "moveEvent.h"
 #include "memEvent.h"
-#include "memNIC.h"
+#include "memLinkBase.h"
 
 namespace SST {
 namespace MemHierarchy {
@@ -41,10 +40,14 @@ public:
     Scratchpad(ComponentId_t id, Params &params);
     void init(unsigned int);
     void setup();
-    void finish();
 
     // Output for debug info
     Output dbg;
+    Addr DEBUG_ADDR;
+    bool DEBUG_ALL;
+
+    // Output for warnings, etc.
+    Output out;
 
     // Handler for backend responses
     void handleScratchResponse(SST::Event::id_type id);
@@ -74,51 +77,112 @@ private:
     // Event handling
     bool clock(SST::Cycle_t cycle);
 
-    void processIncomingScratchEvent(SST::Event* event);
-    void processIncomingMemEvent(SST::Event* event);
+    void processIncomingCPUEvent(SST::Event* event);
+    void processIncomingRemoteEvent(SST::Event* event);
+    void processIncomingNetworkEvent(SST::Event* event);
 
-    void handleScratchRead(ScratchEvent * event);
-    void handleScratchWrite(ScratchEvent * event);
-    void handleRemoteRead(ScratchEvent * event);
-    void handleRemoteWrite(ScratchEvent * event);
-    void handleScratchGet(ScratchEvent * event);
-    void handleScratchPut(ScratchEvent * event);
+    void handleRead(MemEventBase * event);
+    void handleWrite(MemEventBase * event);
+
+    void handleScratchRead(MemEvent * event);
+    void handleScratchWrite(MemEvent * event);
+    void handleRemoteRead(MemEvent * event);
+    void handleRemoteWrite(MemEvent * event);
+    void handleScratchGet(MemEventBase * event);
+    void handleScratchPut(MemEventBase * event);
+    void handleAckInv(MemEventBase * event);
+    void handleFetchResp(MemEventBase * event);
+    void handleNack(MemEventBase * event);
+
+    void handleRemoteGetResponse(MemEvent * response, SST::Event::id_type id);
+    void handleRemoteReadResponse(MemEvent * response, SST::Event::id_type id);
 
     // Helper methods
-    void removeFromMSHR(Addr addr);
+    void updateMSHR(Addr baseAddr);
+
+    std::vector<uint8_t> doScratchRead(MemEvent * read);
+    void doScratchWrite(MemEvent * write);
+    void sendResponse(MemEventBase * event);
+
+    bool startGet(Addr baseAddr, MoveEvent * get);
+    bool startPut(Addr baseAddr, MoveEvent * put);
+
+    void updateGet(SST::Event::id_type id);
+    void updatePut(SST::Event::id_type id);
+    void finishRequest(SST::Event::id_type id);
+
+    uint32_t deriveSize(Addr addr, Addr baseAddr, Addr requestAddr, uint32_t requestSize);
 
     // Links
-    SST::Link* linkUp_;     // To cache/cpu
-    SST::Link* linkDown_;   // To memory
-    MemNIC* linkNet_;       // To memory over network
+    MemLinkBase* linkUp_;     // To cache/cpu
+    MemLinkBase* linkDown_;   // To memory
+    
+    class OutstandingEvent {
+        public:
+            MemEventBase * request;     // Request (outstanding event)
+            MemEventBase * response;    // Sent to processor when complete
+            MemEvent * remoteWrite;     // For Put requests, collect scratch read responses here
+            uint32_t count;             // Number of lines we are waiting on - when 0, the request is complete
+                                        // i.e., for a read or write, just 1, for a get or put, the size/lineSize
+            
+            OutstandingEvent(MemEventBase * request, MemEventBase * response) : request(request), response(response), remoteWrite(nullptr), count(0) { }
+            OutstandingEvent(MemEventBase * request, MemEventBase * response, MemEvent * write) : request(request), response(response), remoteWrite(write), count(0) { } 
 
-    // ScratchPair
-    struct ScratchPair {
-        ScratchEvent * request;
-        union {
-            ScratchEvent * response;
-            MemEvent * memRequest;
-        };
-
-        ScratchPair(ScratchEvent * req, ScratchEvent * resp) : request(req), response(resp) {}
-        ScratchPair(ScratchEvent * req, MemEvent * memreq) : request(req), memRequest(memreq) {}
+            uint32_t decrementCount() { count--; return count; }
+            void incrementCount() { count++; }
+            uint32_t getCount() { return count; }
     };
+    // MSHR entry
+    // MSHR consists of a base address and queue of these
+    class MSHREntry {
+        public:
+            SST::Event::id_type id; // Event id that we are mapped to
+            MemEvent * scratch;     // If we are waiting to send an event to scratch, the event to send
+            Command cmd;            // Event command
+            bool needData;          // Waiting on data? (from scratch or remote)
+            bool needAck;           // Waiting on ack? (from cache)
 
-    // Request tracking
-    std::map<SST::Event::id_type, ScratchPair> pendingPool_; // Global map of all outstanding requests by ID mapped to request and response
-    std::map<SST::Event::id_type,SST::Event::id_type> remoteIDMap_; // Map outstanding remote requests to initiating scratch event by IDs (1-1 but conversion from scratchEvent to memEvent)
-    std::map<SST::Event::id_type, std::pair<SST::Event::id_type, Addr> > scratchIDMap_; // Map oustanding scratch requests to initiating scratch event by IDs (1-1 for reads, multi-1 for get/put)
-    std::map<SST::Event::id_type, uint64_t> scratchCounters_; // Map of a ScratchPutID to the number of scratch reads we are waiting for
+            // For events not yet started
+            MSHREntry(SST::Event::id_type id, Command cmd, MemEvent * scratch = nullptr) : id(id), scratch(scratch), cmd(cmd), needData(false), needAck(false) { }
 
-    std::unordered_map<Addr, std::queue<ScratchEvent*> >  scratchMSHR_; // MSHR for managing conflicts to scratch
+            // For Get events which have not yet started but remote read has been sent
+            MSHREntry(SST::Event::id_type id, Command cmd, bool needData) : id(id), scratch(nullptr), cmd(cmd), needData(needData), needAck(false) { }
+
+            // For events that have started
+            MSHREntry(SST::Event::id_type id, Command cmd, bool needData, bool needAck) : id(id), scratch(nullptr), cmd(cmd), needData(needData), needAck(needAck) { }
+
+            // For debug
+            std::string getString() {
+                std::string cmdStr(CommandString[(int)cmd]);
+                ostringstream str;
+                str <<"ID: <" << id.first << "," << id.second << ">";
+                str << " Cmd: " << cmdStr;
+                str << " Data: " << (needData ? "T" : "F");
+                str << " Ack: " << (needAck ? "T" : "F");
+                return str.str();
+            }
+    };
+    
+
+    std::map<SST::Event::id_type,SST::Event::id_type> responseIDMap_;   // Map a forwarded request ID to a original request ID
+    std::map<SST::Event::id_type,Addr> responseIDAddrMap_;              // Map an outstanding scratch request ID to the request's baseAddr
+    std::map<SST::Event::id_type,OutstandingEvent> outstandingEventList_; // List of all outstanding events
+    std::map<Addr,std::list<MSHREntry> > mshr_; // MSHR for scratch accesses
+
 
     // Outgoing message queues - map send timestamp to event
-    std::multimap<uint64_t, ScratchEvent*> procMsgQueue_;
+    std::multimap<uint64_t, MemEventBase*> procMsgQueue_;
     std::multimap<uint64_t, MemEvent*> memMsgQueue_;
     
     // Throughput limits
     uint32_t responsesPerCycle_;
     
+    // Caching information
+    bool caching_;  // Whether or not caching is possible
+    bool directory_; // Whether or not a directory is managing the caches - if so we cannot assume on a writeback that the data is not cached
+    std::vector<bool> cacheStatus_; // One entry per scratchpad line, whether line may be cached
+    std::map<SST::Event::id_type, uint64_t> cacheCounters_; // Map of a Get or Put ID to the number of cache acks/data responses we are waiting for
+
     // Statistics
     Statistic<uint64_t>* stat_ScratchReadReceived;
     Statistic<uint64_t>* stat_ScratchWriteReceived;

@@ -51,6 +51,9 @@ public:
     virtual void sendRequest(Request *req);
     virtual Request* recvResponse(void);
 
+    void init(unsigned int phase);
+
+
 
 private:
 
@@ -71,6 +74,8 @@ private:
     SST::Link*      link_;
     std::map<MemEvent::id_type, Interfaces::SimpleMem::Request*> requests_;
     Output output;
+    Addr baseAddrMask_;
+    std::string rqstr_;
 };
 
 }

@@ -311,7 +311,7 @@ void Cache::processCacheResponse(MemEvent* responseEvent, Addr baseAddr) {
     CacheAction action = coherenceMgr_->handleResponse(responseEvent, line, origRequest);
 
     if (action == DONE) {
-        if (responseEvent->getCmd() != AckPut) {
+        if (responseEvent->getCmd() != Command::AckPut) {
             mshr_->removeFront(baseAddr);
         }
 #ifdef __SST_DEBUG_OUTPUT__
@@ -549,7 +549,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
                 bool stop = false;
                 if (entries.begin()->elem.isEvent()) {
                     MemEvent * front = ((entries.begin())->elem).getEvent();
-                    if (front->getCmd() != Inv && front->getCmd() != FetchInv && front->getCmd() != FetchInvX) {
+                    if (front->getCmd() != Command::Inv && front->getCmd() != Command::FetchInv && front->getCmd() != Command::FetchInvX && front->getCmd() != Command::ForceInv) {
                         stop = true;
                     }
                 } else {
@@ -563,7 +563,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
         } else {    /* MemEvent Type */
             Command cmd = ((entries.begin())->elem).getEvent()->getCmd();
             if (writebackInProgress) {
-                if (cmd != Inv && cmd != FetchInv && cmd != FetchInvX) {
+                if (cmd != Command::Inv && cmd != Command::FetchInv && cmd != Command::FetchInvX && cmd != Command::ForceInv) {
                     mshr_->insertAll(baseAddr, entries);
                     break;
                 } else {
@@ -585,7 +585,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
 bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& _entries, Addr _addr, vector<mshrType>::iterator it, int index) {
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == _addr) d_->debug(_L3_,"Replaying event #%i, cmd = %s, bsAddr: %" PRIx64 ", addr: %" PRIx64 ", dst: %s\n",
-                  index, CommandString[event->getCmd()], toBaseAddr(event->getAddr()), event->getAddr(), event->getDst().c_str());
+                  index, CommandString[(int)event->getCmd()], toBaseAddr(event->getAddr()), event->getAddr(), event->getDst().c_str());
     if (DEBUG_ALL || DEBUG_ADDR == _addr) d_->debug(_L3_,"--------------------------------------\n");
 #endif
     
@@ -603,7 +603,8 @@ bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& _entries, Addr 
         bool stop = false;
         if (_entries.begin()->elem.isEvent()) {
             MemEvent * front = ((_entries.begin())->elem).getEvent();
-            if (front->getCmd() != Inv && front->getCmd() != FetchInv && front->getCmd() != FetchInvX) stop = true;
+            if (front->getCmd() != Command::Inv && front->getCmd() != Command::FetchInv && front->getCmd() != Command::FetchInvX && front->getCmd() != Command::ForceInv) 
+                stop = true;
         } else {
             stop = true;
         }
@@ -621,28 +622,28 @@ void Cache::recordLatency(MemEvent* event) {
         int missType = missTypeList.find(event)->second;
         switch (missType) {
             case 0:
-                coherenceMgr_->recordLatency(GetS, IS, timestamp_ - issueTime);
+                coherenceMgr_->recordLatency(Command::GetS, IS, timestamp_ - issueTime);
                 break;
             case 1:
-                coherenceMgr_->recordLatency(GetS, M, timestamp_ - issueTime);
+                coherenceMgr_->recordLatency(Command::GetS, M, timestamp_ - issueTime);
                 break;
             case 2:
-                coherenceMgr_->recordLatency(GetX, IM, timestamp_ - issueTime);
+                coherenceMgr_->recordLatency(Command::GetX, IM, timestamp_ - issueTime);
                 break;
             case 3:
-                coherenceMgr_->recordLatency(GetX, SM, timestamp_ - issueTime);
+                coherenceMgr_->recordLatency(Command::GetX, SM, timestamp_ - issueTime);
                 break;
             case 4:
-                coherenceMgr_->recordLatency(GetX, M, timestamp_ - issueTime);
+                coherenceMgr_->recordLatency(Command::GetX, M, timestamp_ - issueTime);
                 break;
             case 5:
-                coherenceMgr_->recordLatency(GetSEx, IM, timestamp_ - issueTime);
+                coherenceMgr_->recordLatency(Command::GetSX, IM, timestamp_ - issueTime);
                 break;
             case 6:
-                coherenceMgr_->recordLatency(GetSEx, SM, timestamp_ - issueTime);
+                coherenceMgr_->recordLatency(Command::GetSX, SM, timestamp_ - issueTime);
                 break;
             case 7:
-                coherenceMgr_->recordLatency(GetSEx, M, timestamp_ - issueTime);
+                coherenceMgr_->recordLatency(Command::GetSX, M, timestamp_ - issueTime);
                 break;
             default:
                 break;
@@ -677,7 +678,7 @@ void Cache::postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool re
     
     /* For atomic requests handled by the cache itself, GetX unlocks the cache line.  Therefore,
        we possibly need to 'replay' events that blocked due to an locked cacheline */
-    if (cmd == GetX && cf_.L1_ && cacheLine->getEventsWaitingForLock() && !cacheLine->isLocked()) reActivateEventWaitingForUserLock(cacheLine);
+    if (cmd == Command::GetX && cf_.L1_ && cacheLine->getEventsWaitingForLock() && !cacheLine->isLocked()) reActivateEventWaitingForUserLock(cacheLine);
 
     if (mshr_->isHit(addr)) activatePrevEvents(addr);   // Replay any waiting events that blocked for this one
 
@@ -781,7 +782,7 @@ void Cache::processIncomingNACK(MemEvent* origReqEvent) {
     } else if (origReqEvent->fromLowNetNACK()) {
         coherenceMgr_->resendEvent(origReqEvent, false);
     } else
-        d_->fatal(CALL_INFO, -1, "Command type not recognized, Cmd = %s\n", CommandString[origReqEvent->getCmd()]);
+        d_->fatal(CALL_INFO, -1, "Command type not recognized, Cmd = %s\n", CommandString[(int)origReqEvent->getCmd()]);
 }
 
 void Cache::printLine(Addr addr) {

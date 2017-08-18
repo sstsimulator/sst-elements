@@ -1,6 +1,11 @@
 # Automatically generated SST Python input
 import sst
 
+DEBUG_SCRATCH = 0
+DEBUG_MEM = 0
+DEBUG_CORE0 = 0
+DEBUG_CORE1 = 0
+
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.ScratchCPU")
 comp_cpu0.addParams({
@@ -17,8 +22,8 @@ comp_cpu0.addParams({
 })
 comp_scratch0 = sst.Component("scratch0", "memHierarchy.Scratchpad")
 comp_scratch0.addParams({
-    #"debug" : 1,
-    #"debug_level" : 5,
+    "debug" : DEBUG_SCRATCH | DEBUG_CORE0,
+    "debug_level" : 5,
     "clock" : "2GHz",
     "size" : "1KiB",
     "scratch_line_size" : 64,
@@ -27,8 +32,8 @@ comp_scratch0.addParams({
     "backendConvertor" : "memHierarchy.simpleMemScratchBackendConvertor",
     "backendConvertor.backend" : "memHierarchy.simpleMem",
     "backendConvertor.backend.access_time" : "10ns",
-    "network_bw" : "50GB/s",
-    "network_address" : 0
+    "memNIC.network_bw" : "50GB/s",
+    "memNIC.network_address" : 0
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.ScratchCPU")
 comp_cpu1.addParams({
@@ -45,8 +50,8 @@ comp_cpu1.addParams({
 })
 comp_scratch1 = sst.Component("scratch1", "memHierarchy.Scratchpad")
 comp_scratch1.addParams({
-    #"debug" : 1,
-    #"debug_level" : 5,
+    "debug" : DEBUG_SCRATCH | DEBUG_CORE1,
+    "debug_level" : 5,
     "clock" : "2GHz",
     "size" : "1KiB",
     "scratch_line_size" : 64,
@@ -55,8 +60,8 @@ comp_scratch1.addParams({
     "backendConvertor" : "memHierarchy.simpleMemScratchBackendConvertor",
     "backendConvertor.backend" : "memHierarchy.simpleMem",
     "backendConvertor.backend.access_time" : "10ns",
-    "network_bw" : "50GB/s",
-    "network_address" : 1
+    "memNIC.network_bw" : "50GB/s",
+    "memNIC.network_address" : 1
 })
 comp_net = sst.Component("network", "merlin.hr_router")
 comp_net.addParams({
@@ -72,8 +77,8 @@ comp_net.addParams({
 
 comp_memory0 = sst.Component("memory0", "memHierarchy.MemController")
 comp_memory0.addParams({
-      #"debug" : "1",
-      #"debug_level" : 10,
+      "debug" : DEBUG_MEM,
+      "debug_level" : 10,
       "do_not_back" : 1,
       "clock" : "1GHz",
       #"backendConvertor.debug_location" : 1,
@@ -82,21 +87,21 @@ comp_memory0.addParams({
       "backend.mem_size" : "512MiB",
       "memNIC.network_bw" : "50GB/s",
       "memNIC.network_address" : 2,
-      "memNIC.range_start" : 0,
+      "memNIC.addr_range_start" : 0,
       "memNIC.interleave_size" : "128B",
       "memNIC.interleave_step" : "256B",
 })
 comp_memory1 = sst.Component("memory1", "memHierarchy.MemController")
 comp_memory1.addParams({
-      #"debug" : "1",
-      #"debug_level" : 10,
+      "debug" : DEBUG_MEM,
+      "debug_level" : 10,
       "do_not_back" : 1,
       "backend.access_time" : "75ns",
       "clock" : "1GHz",
       "backend.mem_size" : "512MiB",
       "memNIC.network_bw" : "50GB/s",
       "memNIC.network_address" : 3,
-      "memNIC.range_start" : 128,
+      "memNIC.addr_range_start" : 128,
       "memNIC.interleave_size" : "128B",
       "memNIC.interleave_step" : "256B"
 })

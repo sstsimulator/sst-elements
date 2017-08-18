@@ -62,6 +62,10 @@ ScratchCPU::ScratchCPU(ComponentId_t id, Params& params) : Component(id), rng(id
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
+    std::string size = params.find<std::string>("scratchSize", "0");
+    size += "B";
+    params.insert("scratchpad_size", size);
+
     memory = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.scratchInterface", this, params));
     if ( !memory ) {
         out.fatal(CALL_INFO, -1, "Unable to load scratchInterface subcomponent\n");
@@ -77,9 +81,7 @@ ScratchCPU::ScratchCPU(ComponentId_t id, Params& params) : Component(id), rng(id
 
 // SST Component functions
 void ScratchCPU::init(unsigned int phase) {
-    if ( !phase ) {
-        memory->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
-    }
+    memory->init(phase);
 }
 
 void ScratchCPU::finish() {

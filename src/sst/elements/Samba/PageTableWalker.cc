@@ -187,7 +187,8 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 
 		long long int dummy_add = rand()%10000000;
-		MemEvent *e = new MemEvent(Owner, dummy_add, dummy_add, GetS);
+                uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
+		MemEvent *e = new MemEvent(Owner, dummy_add, dummy_base_add, Command::GetS);
 		SST::Event * ev = e;
 
 		WSR_COUNT[pw_id]--;
@@ -277,7 +278,8 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 					WID_EV[++mmu_id] = (*st_1);
 
 					long long int dummy_add = rand()%10000000;
-					MemEvent *e = new MemEvent(Owner, dummy_add, dummy_add, GetS);
+                                        uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
+					MemEvent *e = new MemEvent(Owner, dummy_add, dummy_base_add, Command::GetS);
 					SST::Event * ev = e;
 
 

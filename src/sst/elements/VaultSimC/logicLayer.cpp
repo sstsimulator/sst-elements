@@ -119,7 +119,7 @@ void logicLayer::init(unsigned int phase) {
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if ( me ) {
             /* Push data to memory */
-	  if ( me->isWriteback() || me->getCmd() == GetX) {
+	  if ( me->isWriteback() || me->getCmd() == Command::GetX) {
 	         //printf("Memory received Init Command: of size 0x%x at addr 0x%lx\n", me->getSize(), me->getAddr() );
                 uint32_t chunkSize = (1 << VAULT_SHIFT);
                 if (me->getSize() > chunkSize) {
@@ -169,7 +169,7 @@ void logicLayer::init(unsigned int phase) {
                     }
                 }
             } else {
-	        printf("Memory received unexpected Init Command: %s\n", CommandString[me->getCmd()] );
+	        printf("Memory received unexpected Init Command: %s\n", CommandString[(int)me->getCmd()] );
             }
         }
     }

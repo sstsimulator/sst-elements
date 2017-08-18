@@ -82,11 +82,12 @@ public:
 
     virtual void setup() {}
     virtual void finish() {}
-    virtual void clock() {} 
+    virtual bool clock(Cycle_t cycle) { return true; } 
     virtual size_t getMemSize() { return m_memSize; }
     virtual uint32_t getRequestWidth() { return m_reqWidth; }
     virtual int32_t getMaxReqPerCycle() { return m_maxReqPerCycle; } 
-    virtual const std::string& getClockFreq() { return m_clockFreq; } 
+    virtual const std::string& getClockFreq() { return m_clockFreq; }
+    virtual bool isClocked() { return true; }
 protected:
     Output*         output;
     std::string     m_clockFreq;

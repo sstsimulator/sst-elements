@@ -41,10 +41,11 @@ public:
         stat_stateEvent_GetX_I =        registerStatistic<uint64_t>("stateEvent_GetX_I");
         stat_stateEvent_GetX_S =        registerStatistic<uint64_t>("stateEvent_GetX_S");
         stat_stateEvent_GetX_M =        registerStatistic<uint64_t>("stateEvent_GetX_M");
-        stat_stateEvent_GetSEx_I =      registerStatistic<uint64_t>("stateEvent_GetSEx_I");
-        stat_stateEvent_GetSEx_S =      registerStatistic<uint64_t>("stateEvent_GetSEx_S");
-        stat_stateEvent_GetSEx_M =      registerStatistic<uint64_t>("stateEvent_GetSEx_M");
+        stat_stateEvent_GetSX_I =      registerStatistic<uint64_t>("stateEvent_GetSX_I");
+        stat_stateEvent_GetSX_S =      registerStatistic<uint64_t>("stateEvent_GetSX_S");
+        stat_stateEvent_GetSX_M =      registerStatistic<uint64_t>("stateEvent_GetSX_M");
         stat_stateEvent_GetSResp_IS =   registerStatistic<uint64_t>("stateEvent_GetSResp_IS");
+        stat_stateEvent_GetXResp_IS =   registerStatistic<uint64_t>("stateEvent_GetXResp_IS");
         stat_stateEvent_GetXResp_IM =   registerStatistic<uint64_t>("stateEvent_GetXResp_IM");
         stat_stateEvent_GetXResp_SM =   registerStatistic<uint64_t>("stateEvent_GetXResp_SM");
         stat_stateEvent_Inv_I =         registerStatistic<uint64_t>("stateEvent_Inv_I");
@@ -96,7 +97,7 @@ public:
         stat_stateEvent_FlushLineResp_SB =  registerStatistic<uint64_t>("stateEvent_FlushLineResp_SB");
         stat_eventSent_GetS =           registerStatistic<uint64_t>("eventSent_GetS");
         stat_eventSent_GetX =           registerStatistic<uint64_t>("eventSent_GetX");
-        stat_eventSent_GetSEx =         registerStatistic<uint64_t>("eventSent_GetSEx");
+        stat_eventSent_GetSX =         registerStatistic<uint64_t>("eventSent_GetSX");
         stat_eventSent_PutM =           registerStatistic<uint64_t>("eventSent_PutM");
         stat_eventSent_NACK_down =      registerStatistic<uint64_t>("eventSent_NACK_down");
         stat_eventSent_FlushLine =      registerStatistic<uint64_t>("eventSent_FlushLine");
@@ -124,7 +125,7 @@ public:
         if (protocol_) {
             stat_stateEvent_GetS_E =        registerStatistic<uint64_t>("stateEvent_GetS_E");
             stat_stateEvent_GetX_E =        registerStatistic<uint64_t>("stateEvent_GetX_E");
-            stat_stateEvent_GetSEx_E =      registerStatistic<uint64_t>("stateEvent_GetSEx_E");
+            stat_stateEvent_GetSX_E =      registerStatistic<uint64_t>("stateEvent_GetSX_E");
             stat_stateEvent_FlushLine_E =   registerStatistic<uint64_t>("stateEvent_FlushLine_E");
             stat_stateEvent_FlushLineInv_E =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_E");
             stat_stateEvent_FetchInv_E =    registerStatistic<uint64_t>("stateEvent_FetchInv_E");
@@ -143,7 +144,7 @@ public:
     /** Send cache line data to the lower level caches */
     CacheAction handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam=false);
 
-    /** Process new cache request:  GetX, GetS, GetSEx */
+    /** Process new cache request:  GetX, GetS, GetSX */
     CacheAction handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
    
     /** Process replacement - implemented for compatibility with CoherenceController but L1s do not receive replacements */
@@ -158,7 +159,7 @@ public:
 
     /* Methods for sending events, called by cache controller */
     /** Send response up (to processor) */
-    uint64_t sendResponseUp(MemEvent * event, State grantedState, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
     
     /** Call through to coherenceController with statistic recording */
     void addToOutgoingQueue(Response& resp);
@@ -186,11 +187,12 @@ private:
     Statistic<uint64_t>* stat_stateEvent_GetX_S;
     Statistic<uint64_t>* stat_stateEvent_GetX_E;
     Statistic<uint64_t>* stat_stateEvent_GetX_M;
-    Statistic<uint64_t>* stat_stateEvent_GetSEx_I;
-    Statistic<uint64_t>* stat_stateEvent_GetSEx_S;
-    Statistic<uint64_t>* stat_stateEvent_GetSEx_E;
-    Statistic<uint64_t>* stat_stateEvent_GetSEx_M;
+    Statistic<uint64_t>* stat_stateEvent_GetSX_I;
+    Statistic<uint64_t>* stat_stateEvent_GetSX_S;
+    Statistic<uint64_t>* stat_stateEvent_GetSX_E;
+    Statistic<uint64_t>* stat_stateEvent_GetSX_M;
     Statistic<uint64_t>* stat_stateEvent_GetSResp_IS;
+    Statistic<uint64_t>* stat_stateEvent_GetXResp_IS;
     Statistic<uint64_t>* stat_stateEvent_GetXResp_IM;
     Statistic<uint64_t>* stat_stateEvent_GetXResp_SM;
     Statistic<uint64_t>* stat_stateEvent_Inv_I;
@@ -247,7 +249,7 @@ private:
     Statistic<uint64_t>* stat_stateEvent_FlushLineResp_SB;
     Statistic<uint64_t>* stat_eventSent_GetS;
     Statistic<uint64_t>* stat_eventSent_GetX;
-    Statistic<uint64_t>* stat_eventSent_GetSEx;
+    Statistic<uint64_t>* stat_eventSent_GetSX;
     Statistic<uint64_t>* stat_eventSent_PutS;
     Statistic<uint64_t>* stat_eventSent_PutE;
     Statistic<uint64_t>* stat_eventSent_PutM;
@@ -278,6 +280,9 @@ private:
     /** Handle Inv request */
     CacheAction handleInv(MemEvent * event, CacheLine * cacheLine, bool replay);
     
+    /** Handle ForceInv request */
+    CacheAction handleForceInv(MemEvent * event, CacheLine * cacheLine, bool replay);
+    
     /** Handle Fetch */
     CacheAction handleFetch(MemEvent * event, CacheLine * cacheLine, bool replay);
     
@@ -299,7 +304,7 @@ private:
     void sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string origRqstr);
 
     /** Send AckInv response to lower level caches */
-    void sendAckInv(Addr baseAddr, string origRqstr, CacheLine * cacheLine);
+    void sendAckInv(MemEvent * request, CacheLine * cacheLine);
 
     /** Forward a flush line request, with or without data */
     void forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine);

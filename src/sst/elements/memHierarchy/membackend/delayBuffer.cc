@@ -72,8 +72,8 @@ bool DelayBuffer::issueRequest( ReqId req, Addr addr, bool isWrite, unsigned num
  * Call throughs to our backend
  */
 
-void DelayBuffer::clock() {
-    backend->clock();
+bool DelayBuffer::clock(Cycle_t cycle) {
+    return backend->clock(cycle);
 }
 
 void DelayBuffer::setup() {

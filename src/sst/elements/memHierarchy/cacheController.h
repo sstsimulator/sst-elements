@@ -38,7 +38,7 @@
 #include "coherenceController.h"
 #include "util.h"
 #include "cacheListener.h"
-#include "memNIC.h"
+#include "memLinkBase.h"
 #include <string>
 #include <sstream>
 
@@ -79,11 +79,11 @@ private:
     /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
     void processIncomingEvent(SST::Event *event);
     
-    /** Process the oldest incoming 'noncacheable' event */
-    void processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr);
+    /** Process an incoming event that is not meant for the cache */
+    void processNoncacheable(MemEventBase* event);
     
     /** Process the oldest incoming event */
-    bool processEvent(MemEvent* event, bool mshrHit);
+    bool processEvent(MemEventBase* event, bool mshrHit);
     
     /** Configure this component's links */
     void configureLinks(Params &params);
@@ -185,7 +185,8 @@ private:
         bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
         
         bool nicIdle = true;
-        if (bottomNetworkLink_) nicIdle = bottomNetworkLink_->clock();
+        if (clockLink_) nicIdle = linkDown_->clock();
+
         if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
         
         // MSHR occupancy
@@ -193,7 +194,7 @@ private:
         
         // If we have waiting requests send them now
         requestsThisCycle_ = 0;
-        std::queue<MemEvent*>   tmpBuffer;
+        std::queue<MemEventBase*>   tmpBuffer;
         while (!requestBuffer_.empty()) {
             if (requestsThisCycle_ == maxRequestsPerCycle_) {
                 break;
@@ -239,22 +240,22 @@ private:
         SimTime_t curTime = getCurrentSimTimeNano();
         MemEvent *oldReq = NULL;
         MemEvent *oldCacheReq = mshr_->getOldestRequest();
-        MemEvent *oldUnCacheReq = mshrNoncacheable_->getOldestRequest();
 
-        if ( oldCacheReq && oldUnCacheReq ) {
+        /*if ( oldCacheReq && oldUnCacheReq ) {
             oldReq = (oldCacheReq->getInitializationTime() < oldUnCacheReq->getInitializationTime()) ? oldCacheReq : oldUnCacheReq;
         } else if ( oldCacheReq ) {
             oldReq = oldCacheReq;
         } else {
             oldReq = oldUnCacheReq;
-        }
+        }*/
+        oldReq = oldCacheReq;
 
         if ( oldReq ) {
             SimTime_t waitTime = curTime - oldReq->getInitializationTime();
             if ( waitTime > cf_.maxWaitTime_ ) {
                 d_->fatal(CALL_INFO, 1, "%s, Error: Maximum Cache Request time reached!\n"
                         "Event: %s 0x%" PRIx64 " from %s. Time = %" PRIu64 " ns\n",
-                        getName().c_str(), CommandString[oldReq->getCmd()], oldReq->getAddr(), oldReq->getSrc().c_str(), curTime);
+                        getName().c_str(), CommandString[(int)oldReq->getCmd()], oldReq->getAddr(), oldReq->getSrc().c_str(), curTime);
             }
         }
     }
@@ -278,18 +279,16 @@ private:
     CacheConfig             cf_;
     uint                    ID_;
     CacheListener*          listener_;
-    Link*                   lowNetPort_;
-    Link*                   highNetPort_;
+    MemLinkBase*            linkUp_;
+    MemLinkBase*            linkDown_;
     Link*                   prefetchLink_;
     Link*                   maxWaitSelfLink_;
-    MemNIC*                 bottomNetworkLink_;
-    MemNIC*                 topNetworkLink_;
     Output*                 d_;
     Output*                 d2_;
     vector<string>          lowerLevelCacheNames_;
     vector<string>          upperLevelCacheNames_;
     MSHR*                   mshr_;
-    MSHR*                   mshrNoncacheable_;
+    std::map<SST::Event::id_type, std::string> responseDst_; 
     CoherenceController*    coherenceMgr_;
     uint64_t                accessLatency_;
     uint64_t                tagLatency_;
@@ -301,12 +300,12 @@ private:
     int                     requestsThisCycle_;
     unsigned int            maxBytesUpPerCycle_;
     unsigned int            maxBytesDownPerCycle_;
-    std::queue<MemEvent*>   requestBuffer_;
+    std::queue<MemEventBase*>       requestBuffer_;
     Clock::Handler<Cache>*  clockHandler_;
     TimeConverter*          defaultTimeBase_;
-    std::map<string, LinkId_t>     nameMap_;
-    std::map<LinkId_t, SST::Link*> linkIdMap_;
-    std::map<MemEvent*,uint64> startTimeList;
+    std::map<string, LinkId_t>      nameMap_;
+    std::map<LinkId_t, SST::Link*>  linkIdMap_;
+    std::map<MemEvent*,uint64>      startTimeList;
     std::map<MemEvent*,int> missTypeList;
     bool                    DEBUG_ALL;
     Addr                    DEBUG_ADDR;
@@ -314,6 +313,7 @@ private:
     // These parameters are for the coherence controller and are detected during init
     bool                    isLL;
     bool                    lowerIsNoninclusive;
+    bool                    expectWritebackAcks;
 
     /* Performance enhancement: turn clocks off when idle */
     bool                    clockIsOn_;                 // Tell us whether clock is on or off
@@ -321,7 +321,7 @@ private:
     SimTime_t               checkMaxWaitInterval_;      // Check for timeouts on this interval - when clock is on
     UnitAlgebra             maxWaitWakeupDelay_;        // Set wakeup event to check timeout on this interval - when clock is off
     bool                    maxWaitWakeupExists_;       // Whether a timeout wakeup exists
-
+    bool                    clockLink_; // Whether link actually needs clock() called or not
 
     /* 
      * Statistics API stats 
@@ -330,22 +330,22 @@ private:
     Statistic<uint64_t>* statCacheHits;
     Statistic<uint64_t>* statGetSHitOnArrival;
     Statistic<uint64_t>* statGetXHitOnArrival;
-    Statistic<uint64_t>* statGetSExHitOnArrival;
+    Statistic<uint64_t>* statGetSXHitOnArrival;
     Statistic<uint64_t>* statGetSHitAfterBlocked;
     Statistic<uint64_t>* statGetXHitAfterBlocked;
-    Statistic<uint64_t>* statGetSExHitAfterBlocked;
+    Statistic<uint64_t>* statGetSXHitAfterBlocked;
     // Cache misses
     Statistic<uint64_t>* statCacheMisses;
     Statistic<uint64_t>* statGetSMissOnArrival;
     Statistic<uint64_t>* statGetXMissOnArrival;
-    Statistic<uint64_t>* statGetSExMissOnArrival;
+    Statistic<uint64_t>* statGetSXMissOnArrival;
     Statistic<uint64_t>* statGetSMissAfterBlocked;
     Statistic<uint64_t>* statGetXMissAfterBlocked;
-    Statistic<uint64_t>* statGetSExMissAfterBlocked;
+    Statistic<uint64_t>* statGetSXMissAfterBlocked;
     // Events received
     Statistic<uint64_t>* statGetS_recv;
     Statistic<uint64_t>* statGetX_recv;
-    Statistic<uint64_t>* statGetSEx_recv;
+    Statistic<uint64_t>* statGetSX_recv;
     Statistic<uint64_t>* statGetSResp_recv;
     Statistic<uint64_t>* statGetXResp_recv;
     Statistic<uint64_t>* statPutS_recv;
@@ -357,6 +357,7 @@ private:
     Statistic<uint64_t>* statNACK_recv;
     Statistic<uint64_t>* statTotalEventsReceived;
     Statistic<uint64_t>* statTotalEventsReplayed;   // Used to be "MSHR Hits" but this makes more sense because incoming events may be an MSHR hit but will be counted as "event received"
+    Statistic<uint64_t>* statNoncacheableEventsReceived; // Counts any non-cache events that are received and forwarded
     Statistic<uint64_t>* statInvStalledByLockedLine;
 
     Statistic<uint64_t>* statMSHROccupancy;
@@ -429,7 +430,7 @@ private:
     for blocks mapped to that cache.
  
     Key notes:
-        - The cache supports hardware "locking" (GetSEx command), and atomics-based requests (LLSC, GetS with 
+        - The cache supports hardware "locking" (GetSX command), and atomics-based requests (LLSC, GetS with 
         LLSC flag on).  For LLSC atomics, the flag "LLSC_Resp" is set when a store (GetX) was successful.
         
         - In case an L1's cache line is "LOCKED" (L2+ are never locked), the L1 is in charge of "replying" any

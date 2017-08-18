@@ -30,6 +30,6 @@ SimpleMemScratchBackendConvertor::SimpleMemScratchBackendConvertor(Component *co
     static_cast<SimpleMemBackend*>(m_backend)->setResponseHandler( std::bind( &SimpleMemScratchBackendConvertor::handleMemResponse, this, _1 ) );
 }
 
-bool SimpleMemScratchBackendConvertor::issue( ScratchReq* req ) {
+bool SimpleMemScratchBackendConvertor::issue( MemReq* req ) {
     return static_cast<SimpleMemBackend*>(m_backend)->issueRequest( req->id(), req->addr(), req->isWrite(), m_backendRequestWidth );
 }

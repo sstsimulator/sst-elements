@@ -32,7 +32,7 @@ using namespace SST::MemHierarchy;
 MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : 
     SubComponent(comp), m_cycleCount(0), m_reqId(0)
 {
-    m_dbg.init("--->  ", 
+    m_dbg.init("", 
             params.find<uint32_t>("debug_level", 0),
             params.find<uint32_t>("debug_mask", 0),
             (Output::output_location_t)params.find<int>("debug_location", 0 ));
@@ -53,20 +53,24 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
     if ( m_backendRequestWidth > m_frontendRequestWidth ) {
         m_backendRequestWidth = m_frontendRequestWidth;
     }
-
+    
+    m_clockBackend = m_backend->isClocked();
+    
     stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
-    stat_GetSExReqReceived  = registerStatistic<uint64_t>("requests_received_GetSEx");
+    stat_GetSXReqReceived  = registerStatistic<uint64_t>("requests_received_GetSX");
     stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
     stat_PutMReqReceived    = registerStatistic<uint64_t>("requests_received_PutM");
     stat_outstandingReqs    = registerStatistic<uint64_t>("outstanding_requests");
     stat_GetSLatency        = registerStatistic<uint64_t>("latency_GetS");
-    stat_GetSExLatency      = registerStatistic<uint64_t>("latency_GetSEx");
+    stat_GetSXLatency      = registerStatistic<uint64_t>("latency_GetSX");
     stat_GetXLatency        = registerStatistic<uint64_t>("latency_GetX");
     stat_PutMLatency        = registerStatistic<uint64_t>("latency_PutM");
 
-    cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
-    cyclesAttemptIssueButRejected = registerStatistic<uint64_t>( "cycles_attempted_issue_but_rejected" );
-    totalCycles     = registerStatistic<uint64_t>( "total_cycles" );
+    stat_cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
+    stat_cyclesAttemptIssueButRejected = registerStatistic<uint64_t>( "cycles_attempted_issue_but_rejected" );
+    stat_totalCycles = registerStatistic<uint64_t>( "total_cycles" );;
+
+    m_clockOn = true; /* Maybe parent should set this */
 }
 
 void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
@@ -76,21 +80,19 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
     doReceiveStat( ev->getCmd() );
 
     Debug(_L10_,"Creating MemReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
-                        ev->getBaseAddr(), ev->getSize(), CommandString[ev->getCmd()]);
+                        ev->getBaseAddr(), ev->getSize(), CommandString[(int)ev->getCmd()]);
 
 
     if (!setupMemReq(ev)) {
-        sendFlushResponse(ev);
+        sendResponse(ev->getID(), ev->getFlags());
     }
 }
 
 bool MemBackendConvertor::clock(Cycle_t cycle) {
-
-
     m_cycleCount++;
-    doClockStat();
 
     int reqsThisCycle = 0;
+    bool cycleWithIssue = false;
     while ( !m_requestQueue.empty()) {
         if ( reqsThisCycle == m_backend->getMaxReqPerCycle() ) {
             break;
@@ -101,9 +103,10 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
                 req->addr(), req->baseAddr(), req->processed(), req->id(), req->isWrite());
 
         if ( issue( req ) ) {
-            cyclesWithIssue->addData(1);
+            cycleWithIssue = true;
         } else {
-            cyclesAttemptIssueButRejected->addData(1);
+            cycleWithIssue = false;
+            stat_cyclesAttemptIssueButRejected->addData(1);
             break;
         }
 
@@ -116,14 +119,50 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
         }
     }
 
+    if (cycleWithIssue)
+        stat_cyclesWithIssue->addData(1);
+
     stat_outstandingReqs->addData( m_pendingRequests.size() );
 
-    m_backend->clock();
+    bool unclock = !m_clockBackend;
+    if (m_clockBackend)
+        unclock = m_backend->clock(cycle);
 
+    // Can turn off the clock if:
+    // 1) backend says it's ok
+    // 2) requestQueue is empty
+    if (unclock && m_requestQueue.empty()) 
+        return true;
+    
     return false;
 }
 
-MemEvent* MemBackendConvertor::doResponse( ReqId reqId ) {
+/* 
+ * Called by MemController to turn the clock back on 
+ * cycle = current cycle
+ */
+void MemBackendConvertor::turnClockOn(Cycle_t cycle) {
+    Cycle_t cyclesOff = cycle - m_cycleCount;
+    for (Cycle_t i = 0; i < cyclesOff; i++)
+        stat_outstandingReqs->addData( m_pendingRequests.size() );
+    m_cycleCount = cycle;
+    m_clockOn = true;
+}
+
+/*
+ * Called by MemController to turn the clock off 
+ */
+void MemBackendConvertor::turnClockOff() {
+    m_clockOn = false;
+}
+
+void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
+
+    /* If clock is not on, turn it back on */
+    if (!m_clockOn) {
+        Cycle_t cycle = static_cast<MemController*>(parent)->turnClockOn();
+        turnClockOn(cycle);
+    }
 
     uint32_t id = MemReq::getBaseId(reqId);
     MemEvent* resp = NULL;
@@ -139,56 +178,41 @@ MemEvent* MemBackendConvertor::doResponse( ReqId reqId ) {
     if ( req->isDone() ) {
         m_pendingRequests.erase(id);
         MemEvent* event = req->getMemEvent();
-
-        if ( PutM != event->getCmd()  ) {
-            resp = event->makeResponse();
-        }
-
+        
         Cycle_t latency = m_cycleCount - event->getDeliveryTime();
 
         doResponseStat( event->getCmd(), latency );
+        
+        if (!flags) flags = event->getFlags();
+        sendResponse(event->getID(), flags); // Needs to occur before a flush is completed since flush is dependent
 
-        // Check for matching flushes -> requires that doResponse always be called just before sendResponse!
         // TODO clock responses
+        // Check for flushes that are waiting on this event to finish
         if (m_dependentRequests.find(event) != m_dependentRequests.end()) {
-            std::unordered_set<MemEvent*> flushes = m_dependentRequests.find(event)->second;
-            for (std::unordered_set<MemEvent*>::iterator it = flushes.begin(); it != flushes.end(); it++) {
-               (m_waitingFlushes.find(*it)->second).erase(event);
-               if ((m_waitingFlushes.find(*it)->second).empty()) {
-                    sendFlushResponse(*it);
-               }
+            std::set<MemEvent*> flushes = m_dependentRequests.find(event)->second;
+            
+            for (std::set<MemEvent*>::iterator it = flushes.begin(); it != flushes.end(); it++) {
+                (m_waitingFlushes.find(*it)->second).erase(event);
+                if ((m_waitingFlushes.find(*it)->second).empty()) {
+                    MemEvent * flush = *it;
+                    sendResponse(flush->getID(), (flush->getFlags() | MemEvent::F_SUCCESS));
+                    m_waitingFlushes.erase(flush);
+                }
             }
             m_dependentRequests.erase(event);
         }
-
-        // MemReq deletes its MemEvent
         delete req;
-
     }
-    return resp;
 }
 
-void MemBackendConvertor::sendFlushResponse(MemEvent * flush) {
-    
-    Debug(_L10_, "send response\n");
-    MemEvent * resp = flush->makeResponse();
-    resp->setSuccess(true);
-    static_cast<MemController*>(parent)->handleMemResponse(resp);
+void MemBackendConvertor::sendResponse( SST::Event::id_type id, uint32_t flags ) {
 
-    // Clean up
-    m_waitingFlushes.erase(flush);
-
-    delete flush;
-}
-
-void MemBackendConvertor::sendResponse( MemEvent* resp ) {
-
-    Debug(_L10_, "send response\n");
-    static_cast<MemController*>(parent)->handleMemResponse( resp );
+    static_cast<MemController*>(parent)->handleMemResponse( id, flags );
 
 }
 
 void MemBackendConvertor::finish(void) {
+    stat_totalCycles->addData(m_cycleCount);        
     m_backend->finish();
 }
 
@@ -198,4 +222,8 @@ const std::string& MemBackendConvertor::getClockFreq() {
 
 size_t MemBackendConvertor::getMemSize() {
     return m_backend->getMemSize();
+}
+
+uint32_t MemBackendConvertor::getRequestWidth() {
+    return m_backend->getRequestWidth();
 }
