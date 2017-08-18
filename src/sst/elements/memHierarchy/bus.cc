@@ -105,7 +105,7 @@ void Bus::sendSingleEvent(SST::Event* ev) {
     if (DEBUG_ALL || event->doDebug(DEBUG_ADDR)) {
         dbg_.debug(_L3_,"\n\n");
         dbg_.debug(_L3_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
-        dbg_.debug(_L3_,"Incoming Event. Name: %s, LinkID: %ld, Event: %s\n",
+        dbg_.debug(_L3_,"Incoming Event. Name: %s, LinkID: %d, Event: %s\n",
                    this->getName().c_str(), event->getDeliveryLink()->getId(), event->getBriefString().c_str());
     }
 #endif

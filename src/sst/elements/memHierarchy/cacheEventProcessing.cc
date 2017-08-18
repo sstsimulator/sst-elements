@@ -227,7 +227,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     
     // TODO this is a temporary check while we ensure that the source sets baseAddr correctly
     if (baseAddr % cf_.cacheArray_->getLineSize() != 0) {
-        d_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %u. Event: %s\n", getName().c_str(), cf_.cacheArray_->getLineSize(), ev->getVerboseString().c_str());
+        d_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %" PRIu64 ". Event: %s\n", getName().c_str(), cf_.cacheArray_->getLineSize(), ev->getVerboseString().c_str());
     }
     
     MemEvent* origEvent;

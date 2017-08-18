@@ -396,7 +396,7 @@ void MemController::processInitEvent( MemEventInit* me ) {
     if (Command::GetX == me->getCmd()) {
         me->setAddr(translateToLocal(me->getAddr()));
         Addr addr = me->getAddr();
-        Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 " size %" PRIu32 "\n", getName().c_str(), me->getAddr(),me->getPayload().size());
+        Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size());
         if ( isRequestAddressValid(addr) && backing_ ) {
             for ( size_t i = 0 ; i < me->getPayload().size() ; i++) {
                 backing_->set( addr + i,  me->getPayload()[i] );

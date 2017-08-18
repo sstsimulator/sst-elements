@@ -517,6 +517,7 @@ CacheAction L1CoherenceController::handleForceInv(MemEvent * event, CacheLine * 
             debug->fatal(CALL_INFO, -1, "%s, Error: Received a ForceInv in an unhandled state: %s. Addr = 0x%" PRIu64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n",
                     parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
+    return STALL;
 }
 
 

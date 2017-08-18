@@ -46,7 +46,7 @@ public:
         dstBaseAddr_ = dstBaseAddr;
     }
 
-    MoveEvent * makeResponse() {
+    MoveEvent * makeResponse() override {
         MoveEvent * ev = new MoveEvent(*this);
         ev->setResponse(this);
         ev->setDstVirtualAddress(dstVAddr_);

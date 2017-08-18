@@ -1918,7 +1918,7 @@ void DirectoryController::init(unsigned int phase) {
 
     SST::Event * ev;
     if (memLink) {
-        while (ev = memLink->recvInitData()) {
+        while ((ev = memLink->recvInitData())) {
             MemEventInit * initEv = dynamic_cast<MemEventInit*>(ev);
             if (initEv && initEv->getCmd() == Command::NULLCMD) {
                 dbg.debug(_L10_, "%s received init event: %s\n",

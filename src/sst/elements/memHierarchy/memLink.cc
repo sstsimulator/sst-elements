@@ -57,7 +57,7 @@ void MemLink::sendInitData(MemEventInit * event) {
  */
 MemEventInit * MemLink::recvInitData() {
     SST::Event * ev;
-    while (ev = link->recvInitData()) {
+    while ((ev = link->recvInitData())) {
         MemEventInit * mEv = dynamic_cast<MemEventInit*>(ev);
         if (mEv) {
             if (mEv->getInitCmd() == MemEventInit::InitCommand::Region) {

@@ -1237,6 +1237,7 @@ CacheAction MESIController::handleForceInv(MemEvent * event, CacheLine * cacheLi
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
                     parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
+    return STALL;
 }
 
 

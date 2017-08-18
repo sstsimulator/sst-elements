@@ -54,14 +54,14 @@ public:
                 return new MemEventLinkInit(*this);
             }
 
-            virtual std::string getVerboseString() {
+            virtual std::string getVerboseString() override {
                 std::ostringstream str;
                 str << "Start: " << region.start << " End: " << region.end;
                 str << " Step: " << region.interleaveStep << " Size: " << region.interleaveSize;
                 return MemEventBase::getVerboseString() + str.str();
             }
 
-            virtual std::string getBriefString() {
+            virtual std::string getBriefString() override {
                 std::ostringstream str;
                 str << "Start: " << region.start << " End: " << region.end;
                 str << " Step: " << region.interleaveStep << " Size: " << region.interleaveSize;

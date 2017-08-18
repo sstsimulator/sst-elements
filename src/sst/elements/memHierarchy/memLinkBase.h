@@ -167,7 +167,7 @@ public:
     virtual bool isSource(std::string str) { return true; } // Anything we get on this link is valid for a source
 
     MemRegion getRegion() { return info.region; }
-    MemRegion setRegion(MemRegion region) { info.region = region; }
+    void setRegion(MemRegion region) { info.region = region; }
 
 protected:
     
