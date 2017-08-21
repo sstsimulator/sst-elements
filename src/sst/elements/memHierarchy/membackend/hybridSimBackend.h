@@ -38,7 +38,7 @@ class HybridSimMemory : public SimpleMemBackend {
 public:
     HybridSimMemory(Component *comp, Params &params);
     bool issueRequest( ReqId, Addr, bool, unsigned );
-    void clock();
+    bool clock(Cycle_t cycle);
     void finish();
 private:
     void hybridSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
