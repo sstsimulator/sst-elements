@@ -239,7 +239,10 @@ def genMemHierarchy(cores):
     # txn gen --> memHierarchy Bridge
    comp_memhBridge = sst.Component("memh_bridge", "CramSim.c_MemhBridge")
    comp_memhBridge.addParams(g_params);
-
+   comp_memhBridge.addParams({
+                        "strTxnTraceFile" : "arielTrace",
+                        "boolPrintTxnTrace" : "1"
+                        })
    # controller
    comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
    comp_controller0.addParams(g_params)

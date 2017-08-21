@@ -76,6 +76,29 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 	}
 	m_txnUnitReqQTokens = k_CtrlReqQEntries;
 
+	// set up txn trace output
+	k_printTxnTrace = (uint32_t) x_params.find<uint32_t>("boolPrintTxnTrace", 0, l_found);
+
+	k_txnTraceFileName = (std::string) x_params.find<std::string>("strTxnTraceFile", "-", l_found);
+	//k_txnTraceFileName.pop_back(); // remove trailing newline (??)
+	if (k_printTxnTrace) {
+		if (k_txnTraceFileName.compare("-") == 0) {// set output to std::cout
+			std::cout << "Setting txn trace output to std::cout" << std::endl;
+			m_txnTraceStreamBuf = std::cout.rdbuf();
+		} else { // open the file and direct the txnTraceStream to it
+			std::cout << "Setting txn trace output to " << k_txnTraceFileName << std::endl;
+			m_txnTraceOFStream.open(k_txnTraceFileName);
+			if (m_txnTraceOFStream) {
+				m_txnTraceStreamBuf = m_txnTraceOFStream.rdbuf();
+			} else {
+				std::cerr << "Failed to open txn trace output file " << k_txnTraceFileName << ", redirecting to stdout";
+				m_txnTraceStreamBuf = std::cout.rdbuf();
+			}
+		}
+		m_txnTraceStream = new std::ostream(m_txnTraceStreamBuf);
+	}
+
+
 
 	/*---- CONFIGURE LINKS ----*/
 
@@ -138,6 +161,9 @@ void c_MemhBridge::createTxn() {
 				mTxn = new c_Transaction(event->getReqId(), e_TransactionType::READ, addr, 1);
 
 			m_txnReqQ.push(mTxn);
+                        mTxn->print();
+                        if(k_printTxnTrace)
+                            printTxn(event->getIsWrite(),addr);
 		}
 	}
 }
@@ -275,6 +301,21 @@ void c_MemhBridge::readResponse() {
 		m_linkCPU->send( event );
 		m_txnResQ.pop();
 	}
+}
+
+void c_MemhBridge::printTxn(bool x_isWrite, uint64_t x_addr){
+    std::string l_txnType;
+    
+    if(x_isWrite)
+        l_txnType="P_MEM_WR";
+    else
+        l_txnType="P_MEM_RD";
+
+    (*m_txnTraceStream) << "0x" << std::hex <<x_addr
+                        << " " <<l_txnType
+                        << " " << "0"
+                        <<std::endl;
+		
 }
 
 // Element Libarary / Serialization stuff

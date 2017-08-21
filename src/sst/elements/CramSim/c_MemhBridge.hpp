@@ -18,6 +18,8 @@
 
 #include <stdint.h>
 #include <queue>
+#include <iostream>
+#include <fstream>
 
 //SST includes
 #include <sst/core/component.h>
@@ -69,6 +71,7 @@ private:
 
 	virtual bool clockTic(SST::Cycle_t); //called every cycle
 
+        void printTxn(bool isWrite, uint64_t addr);
 	//Debug
 	Output *output;
 
@@ -115,6 +118,14 @@ private:
 
 	std::queue<c_Transaction*> m_txnReqQ; //outgoing
 	std::queue<c_Transaction*> m_txnResQ; //incoming
+
+	bool k_printTxnTrace;
+	std::string k_txnTraceFileName;
+	std::filebuf m_txnTraceFileBuf;
+	std::streambuf *m_txnTraceStreamBuf;
+	std::ofstream m_txnTraceOFStream;
+	std::ostream *m_txnTraceStream;
+
 
 };
 
