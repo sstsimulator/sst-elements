@@ -72,6 +72,7 @@ private:
     Backend::Backing*       backing_; 
 
     MemLinkBase* link_;         // Link to the rest of memHierarchy 
+    bool clockLink_;            // Flag - should we call clock() on this link or not
 
     std::vector<CacheListener*> listeners_;
     
