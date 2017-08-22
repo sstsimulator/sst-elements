@@ -293,13 +293,15 @@ void c_MemhBridge::sendRequest() {
 void c_MemhBridge::readResponse() {
 	if (m_txnResQ.size() > 0) {
 		c_Transaction* l_txn = m_txnResQ.front();
-
+                
 		MemRespEvent *event = new MemRespEvent(l_txn->getSeqNum(), l_txn->getAddress(), 0);
 
 		l_txn->print(output,"[memhbridge.readResponse]");
 
 		m_linkCPU->send( event );
-		m_txnResQ.pop();
+		delete l_txn;
+
+                m_txnResQ.pop();
 	}
 }
 
