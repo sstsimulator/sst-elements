@@ -23,7 +23,10 @@
 #include <string.h>
 #include "sst/elements/hermes/shmemapi.h"
 #include "hades.h"
+#include "shmem/common.h"
 #include "shmem/barrier.h"
+#include "shmem/broadcast.h"
+#include "shmem/reduction.h"
 
 using namespace Hermes;
 
@@ -93,10 +96,16 @@ class HadesSHMEM : public Shmem::Interface
     virtual void n_pes(int*, Shmem::Callback);
     virtual void my_pe(int*, Shmem::Callback);
 
-    virtual void barrier( int start, int stride, int size, Vaddr, Shmem::Callback);
-    virtual void barrier_all(Shmem::Callback);
     virtual void fence(Shmem::Callback);
     virtual void quiet(Shmem::Callback);
+
+    virtual void barrier_all(Shmem::Callback);
+    virtual void barrier( int start, int stride, int size, Vaddr, Shmem::Callback);
+    virtual void broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start,
+                        int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
+    virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start,
+                        int logPE_stride, int PE_size, Vaddr pWrk, Vaddr pSync,
+                        Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
 
     virtual void malloc(Hermes::MemAddr*,size_t,Shmem::Callback);
     virtual void malloc(Hermes::MemAddr*,size_t,Callback);
@@ -104,6 +113,8 @@ class HadesSHMEM : public Shmem::Interface
 
     virtual void get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
     virtual void put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
+    virtual void putOp(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, 
+            Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
 
     virtual void getv(Hermes::Value&, Hermes::Vaddr src, int pe, Shmem::Callback);
     virtual void putv(Hermes::Vaddr dest, Hermes::Value&, int pe, Shmem::Callback);
@@ -134,7 +145,12 @@ class HadesSHMEM : public Shmem::Interface
 
     Heap* m_heap;
     std::map<key_t,Hermes::MemAddr> m_map;
-    ShmemBarrier* m_barrier;
+
+    ShmemCommon*    m_common;
+    ShmemBarrier*   m_barrier;
+    ShmemBroadcast* m_broadcast;
+    ShmemReduction* m_reduction;
+
     int m_num_pes;
     int m_my_pe;
     size_t m_localDataSize;

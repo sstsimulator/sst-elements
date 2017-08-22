@@ -77,8 +77,10 @@
 #include "shmem/motifs/emberShmemFadd.h"
 #include "shmem/motifs/emberShmemCswap.h"
 #include "shmem/motifs/emberShmemSwap.h"
-#include "shmem/motifs/emberShmemBarrier.h"
 #include "shmem/motifs/emberShmemBarrierAll.h"
+#include "shmem/motifs/emberShmemBarrier.h"
+#include "shmem/motifs/emberShmemBroadcast.h"
+#include "shmem/motifs/emberShmemReduction.h"
 
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
@@ -341,13 +343,23 @@ load_ShmemWaitUntil( Component* comp, Params& params ) {
 }
 
 static SubComponent*
+load_ShmemBarrierAll( Component* comp, Params& params ) {
+	return new EmberShmemBarrierAllGenerator(comp, params);
+}
+
+static SubComponent*
 load_ShmemBarrier( Component* comp, Params& params ) {
 	return new EmberShmemBarrierGenerator(comp, params);
 }
 
 static SubComponent*
-load_ShmemBarrierAll( Component* comp, Params& params ) {
-	return new EmberShmemBarrierAllGenerator(comp, params);
+load_ShmemBroadcast( Component* comp, Params& params ) {
+	return new EmberShmemBroadcastGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemReduction( Component* comp, Params& params ) {
+	return new EmberShmemReductionGenerator(comp, params);
 }
 
 //NetworkSim: loader for the stop motif
@@ -1225,6 +1237,14 @@ static const ElementInfoSubComponent subcomponents[] = {
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
+    { 	"ShmemBarrierAllMotif",
+	"SHMEM barrier_all",
+	NULL,
+	load_ShmemBarrierAll,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
     { 	"ShmemBarrierMotif",
 	"SHMEM barrier",
 	NULL,
@@ -1233,10 +1253,18 @@ static const ElementInfoSubComponent subcomponents[] = {
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
-    { 	"ShmemBarrierAllMotif",
-	"SHMEM barrier_all",
+    { 	"ShmemBroadcastMotif",
+	"SHMEM broadcast",
 	NULL,
-	load_ShmemBarrierAll,
+	load_ShmemBroadcast,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemReductionMotif",
+	"SHMEM reduction",
+	NULL,
+	load_ShmemReduction,
     shmemTest_params,
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"

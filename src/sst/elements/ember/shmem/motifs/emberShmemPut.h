@@ -27,8 +27,10 @@ class EmberShmemPutGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemPutGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemPut" ), m_phase(0), m_numInts(100) 
-	{ }
+		EmberShmemGenerator(owner, params, "ShmemPut" ), m_phase(0)
+	{ 
+        m_numInts = params.find<int>("arg.length", 1000);
+    }
 
     bool generate( std::queue<EmberEvent*>& evQ) 
 	{
@@ -53,7 +55,6 @@ public:
             
             m_from = &m_addr.at<int>(0);
             m_to =   &m_addr.at<int>(m_numInts);
-            printf("%d:%s: %p %p\n",m_my_pe, getMotifName().c_str(),m_from,m_to);
             printf("%d:%s: %#" PRIx64 " %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(),
                     m_addr.getSimVAddr(),m_addr.getSimVAddr<int>(m_numInts));
             bzero( m_to, m_numInts * sizeof(int) );

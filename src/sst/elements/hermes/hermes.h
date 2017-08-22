@@ -98,34 +98,70 @@ class Value {
 
     Value( Type type, void* ptr ) : m_type(type), m_length(getLength(type)), m_ptr(ptr) {}
 
+#define MATH_OP(op)\
+        assert( getType() == rh.getType() );\
+        switch( getType() ) {\
+          case Short:\
+            set( get<short>() op rh.get<short>() );\
+            break;\
+          case Int:\
+            set( get<int>() op rh.get<int>() );\
+            break;\
+          case Long:\
+            set( get<long>() op rh.get<long>() );\
+            break;\
+          case LongLong:\
+            set( get<long long>() op rh.get<long long>() );\
+            break;\
+          case Float:\
+            set( get<float>() op rh.get<float>() );\
+            break;\
+          case Double:\
+            set( get<double>() op rh.get<double>() );\
+            break;\
+          case LongDouble:\
+            set( get<long double>() op rh.get<long double>() );\
+            break;\
+          default:\
+            assert(0);\
+        }\
+        return *this;\
+
     Value& operator+=( const Value& rh ) {
-        assert( getType() == rh.getType() );
-        switch( getType() ) {
-          case Short:
-            set( get<short>() + rh.get<short>() );
-            break;
-          case Int:
-            set( get<int>() + rh.get<int>() );
-            break;
-          case Long:
-            set( get<long>() + rh.get<long>() );
-            break;
-          case LongLong:
-            set( get<long long>() + rh.get<long long>() );
-            break;
-          case Float:
-            set( get<float>() + rh.get<float>() );
-            break;
-          case Double:
-            set( get<double>() + rh.get<double>() );
-            break;
-          case LongDouble:
-            set( get<long double>() + rh.get<long double>() );
-            break;
-          default:
-            assert(0);
-        } 
-        return *this;
+        MATH_OP(+) 
+    }
+    Value& operator*=( const Value& rh ) {
+        MATH_OP(*) 
+    }
+
+#define BIT_OP(op)\
+        assert( getType() == rh.getType() );\
+        switch( getType() ) {\
+          case Short:\
+            set( get<short>() op rh.get<short>() );\
+            break;\
+          case Int:\
+            set( get<int>() op rh.get<int>() );\
+            break;\
+          case Long:\
+            set( get<long>() op rh.get<long>() );\
+            break;\
+          case LongLong:\
+            set( get<long long>() op rh.get<long long>() );\
+            break;\
+          default:\
+            assert(0);\
+        }\
+        return *this;\
+
+    Value& operator&=( const Value& rh ) {
+        BIT_OP(&) 
+    }
+    Value& operator|=( const Value& rh ) {
+        BIT_OP(|) 
+    }
+    Value& operator^=( const Value& rh ) {
+        BIT_OP(^) 
     }
 
     template< class TYPE >
@@ -274,7 +310,7 @@ class MemAddr {
     }
 
     template < class TYPE = char >
-        TYPE& at(size_t index) {
+    TYPE& at(size_t index) {
         return ((TYPE*)backing)[index];
     }
 

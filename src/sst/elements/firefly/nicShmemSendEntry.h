@@ -162,6 +162,8 @@ class ShmemPutSendEntry: public ShmemCmdSendEntry  {
         m_callback(callback)
     {
         m_hdr.op = ShmemMsgHdr::Put; 
+        m_hdr.op2 = (unsigned char) m_event->getOp();
+        m_hdr.dataType = (unsigned char) m_event->getDataType();
         m_hdr.vaddr = m_event->getFarAddr();
         m_hdr.length = m_event->getLength(); 
         m_hdr.respKey = 0;

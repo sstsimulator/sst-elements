@@ -64,16 +64,26 @@ Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, FireflyNetworkEvent*
 
 Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processPut( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev )
 {
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%lu respKey=%#" PRIx64 "\n",
-            m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
 
     // this is not a get response
     if ( ! hdr.respKey ) { 
+        m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u\n",
+            m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length);
+        
         Hermes::MemAddr addr = m_rm.nic().findShmem( hdr.vaddr, hdr.length ); 
 
-        m_recvEntry = new ShmemRecvEntry( m_rm.m_nic.m_shmem, addr, hdr.length );
+        if ( hdr.op2 == Hermes::Shmem::MOVE ) {
+            m_recvEntry = new ShmemRecvEntry( m_rm.m_nic.m_shmem, addr, hdr.length );
+        }else{
+            m_recvEntry = new ShmemRecvEntry( m_rm.m_nic.m_shmem, addr, hdr.length,
+                                (Hermes::Shmem::ReduOp) hdr.op2, 
+                                (Hermes::Value::Type) hdr.dataType );
+        } 
 
     } else {
+        m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d respKey=%#" PRIx64 "\n",
+            m_shmemHdr.op, m_shmemHdr.respKey);
+
         ShmemRespSendEntry* entry = (ShmemRespSendEntry*)hdr.respKey;
 
         if ( entry->getCmd()->type == NicShmemCmdEvent::Getv || 
@@ -96,7 +106,7 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processPu
 
 Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processGet( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_vNic, int dest_vNic )
 {
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%lu respKey=%#" PRIx64 "\n",
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%#" PRIx64 "\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
 
     Hermes::MemAddr addr = m_rm.nic().findShmem( hdr.vaddr, hdr.length ); 
@@ -109,15 +119,15 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processGe
 
 Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processFadd( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_vNic, int dest_vNic )
 {
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%lu respKey=%#" PRIx64 "\n",
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%#" PRIx64 "\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
     Hermes::MemAddr addr = m_rm.nic().findShmem( hdr.vaddr, hdr.length ); 
 
-    assert( ev->bufSize() == Hermes::Value::getLength(hdr.dataType) );
+    assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) );
 
-    Hermes::Value* save = new Hermes::Value( hdr.dataType );
-    Hermes::Value local( hdr.dataType, addr.getBacking());
-    Hermes::Value got( hdr.dataType, ev->bufPtr() );
+    Hermes::Value* save = new Hermes::Value( (Hermes::Value::Type)hdr.dataType );
+    Hermes::Value local( (Hermes::Value::Type) hdr.dataType, addr.getBacking());
+    Hermes::Value got( (Hermes::Value::Type) hdr.dataType, ev->bufPtr() );
 
     *save = local;
 
@@ -132,16 +142,16 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processFa
 
 Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processSwap( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_vNic, int dest_vNic )
 {
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%lu respKey=%#" PRIx64 "\n",
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%#" PRIx64 "\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
     Hermes::MemAddr addr = m_rm.nic().findShmem( hdr.vaddr, hdr.length ); 
 
-    assert( ev->bufSize() == Hermes::Value::getLength(hdr.dataType) );
+    assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) );
 
-    Hermes::Value local( hdr.dataType, addr.getBacking());
-    Hermes::Value* save = new Hermes::Value( hdr.dataType );
+    Hermes::Value local( (Hermes::Value::Type)hdr.dataType, addr.getBacking());
+    Hermes::Value* save = new Hermes::Value( (Hermes::Value::Type)hdr.dataType );
     *save = local;
-    Hermes::Value swap( hdr.dataType, ev->bufPtr() );
+    Hermes::Value swap( (Hermes::Value::Type)hdr.dataType, ev->bufPtr() );
 
     local = swap;
 
@@ -151,18 +161,18 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processSw
 }
 Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processCswap( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_vNic, int dest_vNic )
 {
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%lu respKey=%#" PRIx64 "\n",
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%#" PRIx64 "\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
     Hermes::MemAddr addr = m_rm.nic().findShmem( hdr.vaddr, hdr.length ); 
 
-    assert( ev->bufSize() == Hermes::Value::getLength(hdr.dataType) * 2 );
+    assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) * 2 );
 
-    Hermes::Value local( hdr.dataType, addr.getBacking());
-    Hermes::Value* save = new Hermes::Value( hdr.dataType );
+    Hermes::Value local( (Hermes::Value::Type) hdr.dataType, addr.getBacking());
+    Hermes::Value* save = new Hermes::Value( (Hermes::Value::Type) hdr.dataType );
     *save = local;
-    Hermes::Value swap( hdr.dataType, ev->bufPtr() );
+    Hermes::Value swap( (Hermes::Value::Type) hdr.dataType, ev->bufPtr() );
     ev->bufPop(swap.getLength());
-    Hermes::Value cond( hdr.dataType, ev->bufPtr() );
+    Hermes::Value cond( (Hermes::Value::Type) hdr.dataType, ev->bufPtr() );
 
 #if 0
     std::stringstream tmp1;
