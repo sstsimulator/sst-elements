@@ -38,6 +38,10 @@ namespace SST {
             void setup() {
             }
             void finish() {
+                printf("Total Read-Txns Requests sent: %lu\n", m_resReadCount);
+                printf("Total Write-Txns Requests sent: %lu\n", m_resWriteCount);
+                printf("Total Txns Sents: %lu\n", m_resReadCount + m_resWriteCount);
+
                 printf("Total Read-Txns Responses received: %lu\n", m_resReadCount);
                 printf("Total Write-Txns Responses received: %lu\n", m_resWriteCount);
                 printf("Total Txns Received: %lu\n", m_resReadCount + m_resWriteCount);
@@ -51,15 +55,15 @@ namespace SST {
             c_TxnGenBase(); //for serialization only
             virtual void createTxn()=0;
 
-            //token chg to/from events
-            void handleResEvent(SST::Event *ev); //handleEvent
+            virtual void handleResEvent(SST::Event *ev); //handleEvent
 
-            bool sendRequest(); //send out txn req ptr to Transaction unit
-            void readResponse(); //read from res q to output
+            virtual bool sendRequest(); //send out txn req ptr to Transaction unit
+            virtual void readResponse(); //read from res q to output
 
             virtual bool clockTic(SST::Cycle_t); //called every cycle
 
             std::deque<std::pair<c_Transaction*, uint64_t>> m_txnReqQ;
+            std::deque<c_Transaction*> m_txnResQ;
             uint32_t m_numOutstandingReqs;
             uint64_t m_numTxns;
             //Transaction info

@@ -52,6 +52,11 @@ c_TraceReader::c_TraceReader(SST::ComponentId_t x_id, SST::Params& x_params):c_T
         std::endl;
         exit(-1);
     }
+
+    // tell the simulator not to end without us
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
+
 }
 
 

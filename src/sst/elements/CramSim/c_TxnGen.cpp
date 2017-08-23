@@ -54,30 +54,18 @@ c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
         exit(-1);
     }
 
-    k_maxOutstandingReqs =  x_params.find<std::uint32_t>("maxOutstandingReqs", 64, l_found);
+    k_maxOutstandingReqs =  x_params.find<std::uint32_t>("maxOutstandingReqs", 0, l_found);
     if (!l_found) {
-        std::cout << "TxnGen:: maxOutstandingReqs is missing... exiting"
+        std::cout << "TxnGen:: maxOutstandingReqs is missing... No limit to the maximum number of outstanding transactions"
                   << std::endl;
-        exit(-1);
     }
 
     k_maxTxns =  x_params.find<std::uint32_t>("maxTxns", 0, l_found);
     if (!l_found) {
-        std::cout << "TxnGen:: maxTxns is missing... exiting"
+        std::cout << "TxnGen:: maxTxns is missing... No limit to the maximum number of transactions"
                   << std::endl;
-        exit(-1);
+        //exit(-1);
     }
-
-    k_maxTxns =  x_params.find<std::uint32_t>("maxTxns", 0, l_found);
-    if (!l_found) {
-        std::cout << "TxnGen:: maxTxns is missing... exiting"
-                  << std::endl;
-        exit(-1);
-    }
-
-    // tell the simulator not to end without us
-    registerAsPrimaryComponent();
-    primaryComponentDoNotEndSim();
 
     /*---- CONFIGURE LINKS ----*/
 
@@ -98,6 +86,7 @@ c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
     // Statistics
     s_readTxnsCompleted = registerStatistic<uint64_t>("readTxnsCompleted");
     s_writeTxnsCompleted = registerStatistic<uint64_t>("writeTxnsCompleted");
+
 }
 
 c_TxnGenBase::~c_TxnGenBase() {
@@ -113,11 +102,13 @@ bool c_TxnGenBase::clockTic(Cycle_t) {
     createTxn();
 
     for(int i=0;i<k_numTxnPerCycle;i++) {
-        if(m_numOutstandingReqs<k_maxOutstandingReqs) {
+        if(k_maxOutstandingReqs==0 || m_numOutstandingReqs<k_maxOutstandingReqs) {
 
+            readResponse();
+            
             if(sendRequest()==false)
                 break;
-
+            
             m_numOutstandingReqs++;
             m_numTxns++;
         } else
@@ -151,8 +142,10 @@ void c_TxnGenBase::handleResEvent(SST::Event* ev) {
 
         m_numOutstandingReqs--;
         assert(m_numOutstandingReqs>=0);
+    
 
-        delete l_txn;
+	m_txnResQ.push_back(l_txnResEventPtr->m_payload);
+        
         delete l_txnResEventPtr;
 
     } else {
@@ -166,31 +159,51 @@ void c_TxnGenBase::handleResEvent(SST::Event* ev) {
 
 bool c_TxnGenBase::sendRequest()
 {
-    assert(m_numOutstandingReqs<=k_maxOutstandingReqs);
-    uint64_t l_cycle=Simulation::getSimulation()->getCurrentSimCycle();
+    assert(k_maxOutstandingReqs==0 || m_numOutstandingReqs<=k_maxOutstandingReqs);
+    if(!m_txnReqQ.empty())
+    {
+        uint64_t l_cycle=Simulation::getSimulation()->getCurrentSimCycle();
 
-    // confirm that interval timer has run out before contiuing
-    if (m_txnReqQ.front().second > l_cycle) {
-        // std::cout << __PRETTY_FUNCTION__ << ": Interval timer for front txn is not done"
-        // << std::endl;
-        // m_txnReqQ.front().first->print();
-        // std::cout << " - Interval:" << m_txnReqQ.front().second << std::endl;
-        return false;
+        // confirm that interval timer has run out before contiuing
+        if (m_txnReqQ.front().second > l_cycle) {
+            // std::cout << __PRETTY_FUNCTION__ << ": Interval timer for front txn is not done"
+            // << std::endl;
+            // m_txnReqQ.front().first->print();
+            // std::cout << " - Interval:" << m_txnReqQ.front().second << std::endl;
+            return false;
+        }
+
+        if (m_txnReqQ.front().first->getTransactionMnemonic()
+            == e_TransactionType::READ)
+            m_reqReadCount++;
+        else
+            m_reqWriteCount++;
+
+        c_TxnReqEvent* l_txnReqEvPtr = new c_TxnReqEvent();
+        l_txnReqEvPtr->m_payload = m_txnReqQ.front().first;
+        m_txnReqQ.pop_front();
+
+        assert(m_lowLink!=NULL);
+        m_lowLink->send(l_txnReqEvPtr);
+        return true;
     }
-
-    if (m_txnReqQ.front().first->getTransactionMnemonic()
-        == e_TransactionType::READ)
-        m_reqReadCount++;
     else
-        m_reqWriteCount++;
+        return false;
+}
 
-    c_TxnReqEvent* l_txnReqEvPtr = new c_TxnReqEvent();
-    l_txnReqEvPtr->m_payload = m_txnReqQ.front().first;
-    m_txnReqQ.pop_front();
 
-    assert(m_lowLink!=NULL);
-    m_lowLink->send(l_txnReqEvPtr);
-    return true;
+void c_TxnGenBase::readResponse() {
+	if (m_txnResQ.size() > 0) {
+		c_Transaction* l_txn = m_txnResQ.front();
+		delete l_txn;
+
+		m_txnResQ.pop_front();
+		// std::cout << "TxnGen::readResponse() Transaction printed: Addr-"
+		// 		<< l_txn->getAddress() << std::endl;
+	} else {
+		// std::cout << "TxnGen::readResponse(): No transactions in res q to read"
+		// 		<< std::endl;
+	}
 }
 
 
