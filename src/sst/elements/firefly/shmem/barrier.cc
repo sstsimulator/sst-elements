@@ -23,8 +23,13 @@ using namespace Firefly;
 void ShmemBarrier::start( int PE_start, int logPE_stride, int PE_size, 
         Hermes::Vaddr pSync, Hermes::Shmem::Callback returnCallback )
 {
-    
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
+
+    if ( 1 == PE_size ) {
+        m_api.delay(returnCallback,0,0);
+        return;
+    }
+
     m_returnCallback = returnCallback;
     m_pSync = pSync;
 
