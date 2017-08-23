@@ -80,6 +80,7 @@
 #include "shmem/motifs/emberShmemBarrierAll.h"
 #include "shmem/motifs/emberShmemBarrier.h"
 #include "shmem/motifs/emberShmemBroadcast.h"
+#include "shmem/motifs/emberShmemAlltoall.h"
 #include "shmem/motifs/emberShmemReduction.h"
 
 #include "emberconstdistrib.h"
@@ -355,6 +356,11 @@ load_ShmemBarrier( Component* comp, Params& params ) {
 static SubComponent*
 load_ShmemBroadcast( Component* comp, Params& params ) {
 	return new EmberShmemBroadcastGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemAlltoall( Component* comp, Params& params ) {
+	return new EmberShmemAlltoallGenerator(comp, params);
 }
 
 static SubComponent*
@@ -1257,6 +1263,14 @@ static const ElementInfoSubComponent subcomponents[] = {
 	"SHMEM broadcast",
 	NULL,
 	load_ShmemBroadcast,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAlltoallMotif",
+	"SHMEM alltoall",
+	NULL,
+	load_ShmemAlltoall,
     shmemTest_params,
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
