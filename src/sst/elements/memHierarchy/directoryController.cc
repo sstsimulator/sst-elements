@@ -269,7 +269,6 @@ void DirectoryController::handlePacket(SST::Event *event){
     }
     
     MemEvent *ev = static_cast<MemEvent*>(event);
-    dbg.debug(_L10_, "%s (Dir) HandlePacket for %s\n", getName().c_str(), ev->getBriefString().c_str());
     if (ev->getCmd() == Command::GetSResp || ev->getCmd() == Command::GetXResp || ev->getCmd() == Command::FlushLineResp 
             || ev->getCmd() == Command::ForceInv || ev->getCmd() == Command::FetchInv || ev->getCmd() == Command::AckPut) {
         handleMemoryResponse(event);
@@ -643,6 +642,7 @@ void DirectoryController::handleGetX(MemEvent * ev, bool replay) {
                 }
 #endif
                 postRequestProcessing(ev, entry);
+                replayWaitingEvents(entry->getBaseAddr());
                 updateCache(entry);                
             } else {
                 entry->setState(S_Inv);

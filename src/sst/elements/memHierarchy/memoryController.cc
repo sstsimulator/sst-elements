@@ -121,6 +121,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         linkParams.insert("accept_region", "1", false);
         link_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, linkParams));
         link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
+        clockLink_ = false;
     } else {
 
         if (!isPortConnected("network")) {
@@ -134,6 +135,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
         link_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams)); 
         link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
+        clockLink_ = true;
     }
     
     region_ = link_->getRegion();
@@ -228,7 +230,10 @@ void MemController::handleEvent(SST::Event* event) {
 
 bool MemController::clock(Cycle_t cycle) {
 
-    bool unclockLink = link_->clock();
+    bool unclockLink = true;
+    if (clockLink_) {
+        unclockLink = link_->clock();
+    }
 
     bool unclockBack = memBackendConvertor_->clock( cycle );
     
