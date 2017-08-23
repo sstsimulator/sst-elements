@@ -136,6 +136,7 @@ libember_la_SOURCES = \
 	sirius/include/sirius/siriusglobals.h \
 	shmem/emberShmemBarrierEv.h \
 	shmem/emberShmemBarrierAllEv.h \
+	shmem/emberShmemBroadcastEv.h \
 	shmem/emberShmemCswapEv.h \
 	shmem/emberShmemEvent.h \
 	shmem/emberShmemFaddEv.h \
