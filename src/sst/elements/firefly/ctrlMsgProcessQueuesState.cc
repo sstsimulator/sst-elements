@@ -79,7 +79,7 @@ void ProcessQueuesState::setVars( VirtNic* nic, Info* info, MemoryBase* mem,
     m_memHeapLink = memHeapLink;
 
     char buffer[100];
-    snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
+    snprintf(buffer,100,"@t:%d:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
                             m_nic->getNodeId(), m_info->worldRank());
     dbg().setPrefix(buffer);
 }
@@ -259,7 +259,6 @@ void ProcessQueuesState::enterRecv( _CommReq* req, uint64_t exitDelay )
     dbg().verbose(CALL_INFO,1,1,"req=%p$ delay=%" PRIu64 "\n", req, exitDelay );
     m_exitDelay = exitDelay;
 
-    dbg().verbose(CALL_INFO,1,1,"\n");
     if ( m_postedShortBuffers.size() < MaxPostedShortBuffers ) {
         if ( m_numNicRequestedShortBuff ) {
             --m_numNicRequestedShortBuff; 
@@ -270,14 +269,12 @@ void ProcessQueuesState::enterRecv( _CommReq* req, uint64_t exitDelay )
         }
     }
 
-    dbg().verbose(CALL_INFO,1,1,"\n");
     m_pstdRcvQ.push_front( req );
 
     m_statPstdRcv->addData( m_pstdRcvQ.size() );
 
     size_t length = req->getLength( );
 
-    dbg().verbose(CALL_INFO,1,1,"\n");
     VoidFunction callback;
 
     if ( length > shortMsgLength() ) {
@@ -288,9 +285,7 @@ void ProcessQueuesState::enterRecv( _CommReq* req, uint64_t exitDelay )
                 &ProcessQueuesState::processRecv_1, this, req );
     }
 
-    dbg().verbose(CALL_INFO,1,1,"\n");
     schedCallback( callback, rxPostDelay_ns( length ) );
-    dbg().verbose(CALL_INFO,1,1,"\n");
 }
 
 void ProcessQueuesState::processRecv_0( _CommReq* req )
