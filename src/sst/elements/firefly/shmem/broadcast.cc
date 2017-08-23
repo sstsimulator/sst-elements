@@ -24,6 +24,7 @@ void ShmemBroadcast::start( Vaddr dest, Vaddr source, size_t nelems, int root, i
 {
     printf(":%d:%s():%d nelems=%lu PE_root=%d PE_start=%d stride=%d\n",
             my_pe(),__func__,__LINE__,nelems,root,PE_start,logPE_stride);
+
     m_returnCallback = callback;
     m_pSync = pSync;
     m_complete = complete;
