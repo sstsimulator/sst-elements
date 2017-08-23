@@ -41,6 +41,7 @@ class ShmemCommon {
     int full_tree_num_children() { return m_full_tree_num_children; }
     int tree_radix() { return m_tree_radix; }
     std::vector<int>& full_tree_children() { return m_full_tree_children; }
+    int circular_iter_next(int curr, int PE_start, int logPE_stride, int PE_size);
 
   private:
     bool m_debug;

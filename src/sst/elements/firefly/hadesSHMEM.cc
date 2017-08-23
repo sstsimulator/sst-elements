@@ -53,6 +53,7 @@ void HadesSHMEM::init(Shmem::Callback callback)
     m_common = new ShmemCommon( m_my_pe, m_num_pes, 10, 2 );
     m_barrier = new ShmemBarrier( *this, *m_common );
     m_broadcast = new ShmemBroadcast( *this, *m_common );
+    m_alltoall = new ShmemAlltoall( *this, *m_common );
     m_reduction = new ShmemReduction( *this, *m_common );
 
     m_localDataSize = m_num_pes * sizeof(long);
@@ -106,6 +107,14 @@ void HadesSHMEM::broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, i
     dbg().verbose(CALL_INFO,1,1,"\n");
     m_broadcast->start( dest, source, nelems, root, start, stride, size, psync, callback, true );
 }
+
+void HadesSHMEM::alltoall( Vaddr dest, Vaddr source, size_t nelems, int start,
+                                int stride, int size, Vaddr psync, Shmem::Callback callback)
+{
+    dbg().verbose(CALL_INFO,1,1,"\n");
+    m_alltoall->start( dest, source, nelems, start, stride, size, psync, callback );
+}
+
 void HadesSHMEM::reduction( Vaddr dest, Vaddr source, int nelems, int PE_start,
                 int logPE_stride, int PE_size, Vaddr pWrk, Vaddr pSync,
                 Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Shmem::Callback callback) 

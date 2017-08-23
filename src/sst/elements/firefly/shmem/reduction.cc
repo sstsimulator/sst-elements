@@ -25,6 +25,7 @@ void ShmemReduction::start( Hermes::Vaddr dest, Hermes::Vaddr source, size_t nel
 {
     printf(":%d:%s():%d nelems=%lu PE_start=%d stride=%d op=%d dataType=%d\n",
             my_pe(),__func__,__LINE__,nelems,PE_start,logPE_stride, op, dataType);
+
     assert( PE_size > 1 );
 
     m_returnCallback = callback;

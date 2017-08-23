@@ -117,3 +117,17 @@ void ShmemCommon::build_kary_tree(int radix, int PE_start, int stride,
         DEBUG_STR(debug_str);
     }
 }
+
+int ShmemCommon::circular_iter_next(int curr, int PE_start, int logPE_stride, int PE_size)
+{
+    const int stride = 1 << logPE_stride;
+    const int last = PE_start + (stride * (PE_size - 1));
+    int next;
+
+    next = curr + stride;
+    if (next > last)
+        next = PE_start;
+
+    return next;
+}
+
