@@ -26,6 +26,7 @@
 #include "shmem/common.h"
 #include "shmem/barrier.h"
 #include "shmem/broadcast.h"
+#include "shmem/alltoall.h"
 #include "shmem/reduction.h"
 
 using namespace Hermes;
@@ -103,6 +104,8 @@ class HadesSHMEM : public Shmem::Interface
     virtual void barrier( int start, int stride, int size, Vaddr, Shmem::Callback);
     virtual void broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start,
                         int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
+    virtual void alltoall( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
+                        int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start,
                         int logPE_stride, int PE_size, Vaddr pWrk, Vaddr pSync,
                         Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
@@ -125,6 +128,11 @@ class HadesSHMEM : public Shmem::Interface
     virtual void swap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& value, int pe, Shmem::Callback);
     virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
 
+    void delay( Shmem::Callback functor, uint64_t delay, int retval ) {
+        //printf("%s() delay=%lu retval=%d\n",__func__,delay,retval);
+        m_selfLink->send( delay, new DelayEvent( functor, retval ) );
+    } 
+
   private:
     Output m_dbg;
     Output& dbg() { return m_dbg; }
@@ -135,10 +143,6 @@ class HadesSHMEM : public Shmem::Interface
         event->m_callback( event->m_retval );
         delete e;
     }
-    void delay( Shmem::Callback functor, uint64_t delay, int retval ) {
-        //printf("%s() delay=%lu retval=%d\n",__func__,delay,retval);
-        m_selfLink->send( delay, new DelayEvent( functor, retval ) );
-    } 
 
     FunctionSM& functionSM() { return m_os->getFunctionSM(); }
     SST::Link*      m_selfLink;
@@ -149,6 +153,7 @@ class HadesSHMEM : public Shmem::Interface
     ShmemCommon*    m_common;
     ShmemBarrier*   m_barrier;
     ShmemBroadcast* m_broadcast;
+    ShmemAlltoall*  m_alltoall;
     ShmemReduction* m_reduction;
 
     int m_num_pes;
