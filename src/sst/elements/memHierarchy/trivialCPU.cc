@@ -141,7 +141,6 @@ bool trivialCPU::clockTic( Cycle_t )
             for (int i = 0; i < reqsToSend; i++) {
 
                 Interfaces::SimpleMem::Addr addr = rng.generateNextUInt64();
-                ((((Interfaces::SimpleMem::Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
                 
                 Interfaces::SimpleMem::Request::Command cmd = Interfaces::SimpleMem::Request::Read;
 
