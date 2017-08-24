@@ -140,7 +140,8 @@ bool trivialCPU::clockTic( Cycle_t )
 
             for (int i = 0; i < reqsToSend; i++) {
 
-                Interfaces::SimpleMem::Addr addr = ((((Interfaces::SimpleMem::Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
+                Interfaces::SimpleMem::Addr addr = rng.generateNextUInt64();
+                ((((Interfaces::SimpleMem::Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
                 
                 Interfaces::SimpleMem::Request::Command cmd = Interfaces::SimpleMem::Request::Read;
 
@@ -150,16 +151,21 @@ bool trivialCPU::clockTic( Cycle_t )
                 if ((do_write && 0 == instNum) || 1 == instNum) {
                     cmd = Interfaces::SimpleMem::Request::Write;
                     cmdString = "Write";
+                    addr = ((addr % maxAddr)>>2) << 2;
                 } else if (do_flush && 2 == instNum) {
                     cmd = Interfaces::SimpleMem::Request::FlushLine;
                     size = lineSize;
+                    addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeStart;
                     addr = addr - (addr % lineSize);
                     cmdString = "FlushLine";
                 } else if (do_flush && 3 == instNum) {
                     cmd = Interfaces::SimpleMem::Request::FlushLineInv;
                     size = lineSize;
+                    addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeStart;
                     addr = addr - (addr % lineSize);
                     cmdString = "FlushLineInv";
+                } else {
+                    addr = ((addr % maxAddr)>>2) << 2;
                 }
 
                 Interfaces::SimpleMem::Request *req = new Interfaces::SimpleMem::Request(cmd, addr, 4 /*4 bytes*/);
