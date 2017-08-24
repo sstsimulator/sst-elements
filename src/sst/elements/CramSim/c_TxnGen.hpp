@@ -49,6 +49,10 @@ namespace SST {
                           << std::dec << static_cast<double>(Simulation::getSimulation()->getCurrentSimCycle())
                                          / static_cast<double>(m_resReadCount + m_resWriteCount) << std::endl;
                 printf("Component Finished.\n");
+
+                double l_txnsPerCycle=  static_cast<double>(m_resReadCount + m_resWriteCount) /static_cast<double>(Simulation::getSimulation()->getCurrentSimCycle());
+
+                s_txnsPerCycle->addData(l_txnsPerCycle);
             }
 
         protected:
@@ -64,6 +68,7 @@ namespace SST {
 
             std::deque<std::pair<c_Transaction*, uint64_t>> m_txnReqQ;
             std::deque<c_Transaction*> m_txnResQ;
+            std::map<uint64_t, uint64_t> m_outstandingReqs; //(txn_id, birth time)
             uint32_t m_numOutstandingReqs;
             uint64_t m_numTxns;
             //Transaction info
@@ -89,8 +94,18 @@ namespace SST {
 
 
             // Statistics
+            Statistic<uint64_t>* s_readTxnSent;
+            Statistic<uint64_t>* s_writeTxnSent;
             Statistic<uint64_t>* s_readTxnsCompleted;
             Statistic<uint64_t>* s_writeTxnsCompleted;
+
+            Statistic<double>* s_txnsPerCycle;
+            Statistic<uint64_t>* s_readTxnsLatency;
+            Statistic<uint64_t>* s_writeTxnsLatency;
+            Statistic<uint64_t>* s_txnsLatency;
+
+            // Debug Output
+            Output* output;
 
         };
 

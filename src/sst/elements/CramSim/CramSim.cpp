@@ -209,8 +209,14 @@ static const ElementInfoPort c_MemhBridge_ports[] = {
 		{ NULL, NULL, NULL } };
 
 static const ElementInfoStatistic c_MemhBridge_stats[] = {
+  {"readTxnsSent", "Number of read transactions sent", "reads", 1}, // Name, Desc, Units, Enable Level
+  {"writeTxnsSent", "Number of write transactions sent", "writes", 1}, // Name, Desc, Units, Enable Level
   {"readTxnsCompleted", "Number of read transactions completed", "reads", 1}, // Name, Desc, Units, Enable Level
   {"writeTxnsCompleted", "Number of write transactions completed", "writes", 1},
+  {"txnsPerCycle", "Transactions Per Cycle", "Txns/Cycle", 1},
+  {"readTxnsLatency", "Average latency of read transactions", "cycles", 1},
+  {"writeTxnsLatency", "Average latency of write transactions", "cycles", 1},
+  {"txnsLatency", "Average latency of (read/write) transactions", "cycles", 1},
   {NULL, NULL, NULL, 0}
 };
 
@@ -247,8 +253,14 @@ static const ElementInfoPort c_TxnGen_ports[] = {
 		{ NULL, NULL, NULL } };
 
 static const ElementInfoStatistic c_TxnGen_stats[] = {
+  {"readTxnsSent", "Number of read transactions sent", "reads", 1}, // Name, Desc, Units, Enable Level
+  {"writeTxnsSent", "Number of write transactions sent", "writes", 1}, // Name, Desc, Units, Enable Level
   {"readTxnsCompleted", "Number of read transactions completed", "reads", 1}, // Name, Desc, Units, Enable Level
   {"writeTxnsCompleted", "Number of write transactions completed", "writes", 1},
+  {"txnsPerCycle", "Transactions Per Cycle", "Txns/Cycle", 1},
+  {"readTxnsLatency", "Average latency of read transactions", "cycles", 1},
+  {"writeTxnsLatency", "Average latency of write transactions", "cycles", 1},
+  {"txnsLatency", "Average latency of (read/write) transactions", "cycles", 1},
   {NULL, NULL, NULL, 0}
 };
 
@@ -313,9 +325,15 @@ static const ElementInfoPort c_TraceReader_ports[] = {
 		{ NULL, NULL, NULL } };
 
 static const ElementInfoStatistic c_TraceReader_stats[] = {
-		{"readTxnsCompleted", "Number of read transactions completed", "reads", 1}, // Name, Desc, Units, Enable Level
-		{"writeTxnsCompleted", "Number of write transactions completed", "writes", 1},
-		{NULL, NULL, NULL, 0}
+  {"readTxnsSent", "Number of read transactions sent", "reads", 1}, // Name, Desc, Units, Enable Level
+  {"writeTxnsSent", "Number of write transactions sent", "writes", 1}, // Name, Desc, Units, Enable Level
+  {"readTxnsCompleted", "Number of read transactions completed", "reads", 1}, // Name, Desc, Units, Enable Level
+  {"writeTxnsCompleted", "Number of write transactions completed", "writes", 1},
+  {"txnsPerCycle", "Transactions Per Cycle", "Txns/Cycle", 1},
+  {"readTxnsLatency", "Average latency of read transactions", "cycles", 1},
+  {"writeTxnsLatency", "Average latency of write transactions", "cycles", 1},
+  {"txnsLatency", "Average latency of (read/write) transactions", "cycles", 1},
+  {NULL, NULL, NULL, 0}
 };
 
 /*----SETUP c_DramSimTraceReader STRUCTURES----*/

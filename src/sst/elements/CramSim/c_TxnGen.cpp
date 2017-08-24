@@ -34,6 +34,12 @@ using namespace SST::n_Bank;
 c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
         Component(x_id) {
 
+
+    int verbosity = x_params.find<int>("verbose", 0);
+    output = new SST::Output("CramSim.TxnGen[@f:@l:@p] ",
+                             verbosity, 0, SST::Output::STDOUT);
+
+
     /*---- LOAD PARAMS ----*/
 
     //used for reading params
@@ -86,6 +92,13 @@ c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
     // Statistics
     s_readTxnsCompleted = registerStatistic<uint64_t>("readTxnsCompleted");
     s_writeTxnsCompleted = registerStatistic<uint64_t>("writeTxnsCompleted");
+    s_readTxnSent= registerStatistic<uint64_t>("readTxnsSent");
+    s_writeTxnSent= registerStatistic<uint64_t>("readTxnsSent");
+
+    s_txnsPerCycle= registerStatistic<double>("txnsPerCycle");
+    s_readTxnsLatency= registerStatistic<uint64_t>("readTxnsLatency");
+    s_writeTxnsLatency= registerStatistic<uint64_t>("writeTxnsLatency");
+    s_txnsLatency= registerStatistic<uint64_t>("txnsLatency");
 
 }
 
@@ -144,9 +157,29 @@ void c_TxnGenBase::handleResEvent(SST::Event* ev) {
         assert(m_numOutstandingReqs>=0);
     
 
-	m_txnResQ.push_back(l_txnResEventPtr->m_payload);
+	m_txnResQ.push_back(l_txn);
         
         delete l_txnResEventPtr;
+        uint64_t l_currentCycle = Simulation::getSimulation()->getCurrentSimCycle();
+        uint64_t l_seqnum=l_txn->getSeqNum();
+        
+        
+        assert(m_outstandingReqs.find(l_seqnum)!=m_outstandingReqs.end());
+        SimTime_t l_latency=l_currentCycle-m_outstandingReqs[l_seqnum];
+        
+        if(l_txn->isRead())
+            s_readTxnsLatency->addData(l_latency);
+        else
+            s_writeTxnsLatency->addData(l_latency);
+        
+        s_txnsLatency->addData(l_latency);
+
+#ifdef __SST_DEBUG_OUTPUT__
+        output->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%x isRead:%d seqNum:%lld birthTime:%lld latency:%lld \n",l_currentCycle,l_txn->getAddress(),l_txn->isRead(), l_seqnum,m_outstandingReqs[l_seqnum],l_latency);
+#endif
+
+
+        m_outstandingReqs.erase(l_seqnum);
 
     } else {
         std::cout << std::endl << std::endl << "TxnGen:: "
@@ -175,16 +208,29 @@ bool c_TxnGenBase::sendRequest()
 
         if (m_txnReqQ.front().first->getTransactionMnemonic()
             == e_TransactionType::READ)
+        {
+            s_readTxnSent->addData(1);
             m_reqReadCount++;
+        }
         else
+        {
+            s_writeTxnSent->addData(1);
             m_reqWriteCount++;
+        }
 
         c_TxnReqEvent* l_txnReqEvPtr = new c_TxnReqEvent();
         l_txnReqEvPtr->m_payload = m_txnReqQ.front().first;
-        m_txnReqQ.pop_front();
+        m_txnReqQ.pop_front(); 
 
         assert(m_lowLink!=NULL);
         m_lowLink->send(l_txnReqEvPtr);
+        
+    #ifdef __SST_DEBUG_OUTPUT__
+        c_Transaction *l_txn=l_txnReqEvPtr->m_payload;
+        output->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%x isRead:%d seqNum:%lld\n",l_cycle,l_txn->getAddress(),l_txn->isRead(),l_txn->getSeqNum());
+    #endif    
+        
+        m_outstandingReqs.insert(std::pair<uint64_t, uint64_t>(l_txn->getSeqNum(),l_cycle));
         return true;
     }
     else

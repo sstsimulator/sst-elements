@@ -240,6 +240,7 @@ def genMemHierarchy(cores):
    comp_memhBridge = sst.Component("memh_bridge", "CramSim.c_MemhBridge")
    comp_memhBridge.addParams(g_params);
    comp_memhBridge.addParams({
+                        "verbose" : "0",
                         "numTxnPerCycle" : g_params["numChannels"],
                         "strTxnTraceFile" : "arielTrace",
                         "boolPrintTxnTrace" : "1"
@@ -248,6 +249,7 @@ def genMemHierarchy(cores):
    comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
    comp_controller0.addParams(g_params)
    comp_controller0.addParams({
+                        "verbose" : "0",
 			"TxnConverter" : "CramSim.c_TxnConverter",
 			"AddrHasher" : "CramSim.c_AddressHasher",
 			"CmdScheduler" : "CramSim.c_CmdScheduler" ,
@@ -275,8 +277,13 @@ def genMemHierarchy(cores):
    # Controller <- Dimm (Res) (Cmd)
    cmdResLink_1 = sst.Link("cmdResLink_1")
    cmdResLink_1.connect( (comp_controller0, "inDeviceResPtr", g_params["clockCycle"]), (comp_dimm0, "outCtrlResPtr", g_params["clockCycle"]) )
+   
+   comp_controller0.enableAllStatistics()
+   comp_memhBridge.enableAllStatistics()
 
 
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
 
 genMemHierarchy(corecount)        
 
