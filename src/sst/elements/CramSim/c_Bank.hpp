@@ -228,6 +228,8 @@ private:
 	unsigned m_WRITECmdsSent;
 	unsigned m_PRECmdsSent;
 
+        uint32_t m_prevOpenRow;
+
   // Statistics
   c_BankStatistics *m_bankStats;
 };

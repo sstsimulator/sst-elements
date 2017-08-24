@@ -113,7 +113,7 @@ cacheFrequency = "2 Ghz"
 defaultLevel = 0
 cacheLineSize = 64
 
-corecount = 8
+corecount = 1
 
 ## Application Info
 os.environ['SIM_DESC'] = 'EIGHT_CORES'
@@ -280,6 +280,7 @@ def genMemHierarchy(cores):
    
    comp_controller0.enableAllStatistics()
    comp_memhBridge.enableAllStatistics()
+   comp_dimm0.enableAllStatistics()
 
 
 sst.setStatisticLoadLevel(7)

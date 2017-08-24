@@ -269,6 +269,7 @@ c_Bank::c_Bank(SST::Params& x_params,unsigned x_bankId) {
 	//k_banks++;
 	m_bankNum = x_bankId;
 
+        m_prevOpenRow = 0;
 
 	m_ACTCmdsReceived = 0;
 	m_READCmdsReceived = 0;
@@ -309,7 +310,9 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 
 		m_cmd = x_bankCommandPtr;
 
-		switch (x_bankCommandPtr->getCommandMnemonic()){
+                unsigned l_row = m_cmd->getHashedAddress()->getRow();
+		
+                switch (x_bankCommandPtr->getCommandMnemonic()){
 			case e_BankCommandType::ACT:
 				m_ACTCmdsReceived++;
 				m_bankStats->s_bankACTsRecvd->addData(1);
@@ -318,11 +321,27 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 			case e_BankCommandType::READA:
 				m_READCmdsReceived++;
 				m_bankStats->s_bankREADsRecvd->addData(1);
+                                
+                                if(m_prevOpenRow == l_row)
+                                {
+                                    m_bankStats->s_bankRowHits->addData(1);
+                                    m_bankStats->s_totalRowHits->addData(1);
+                                }
+                                else
+                                    m_prevOpenRow = m_cmd->getHashedAddress()->getRow();
 				break;
 			case e_BankCommandType::WRITE:
 			case e_BankCommandType::WRITEA:
 				m_WRITECmdsReceived++;
 				m_bankStats->s_bankWRITEsRecvd->addData(1);
+                                
+                                if(m_prevOpenRow == l_row)
+                                {
+                                    m_bankStats->s_bankRowHits->addData(1);
+                                    m_bankStats->s_totalRowHits->addData(1);
+                                }else
+                                    m_prevOpenRow = m_cmd->getHashedAddress()->getRow();
+	
 				break;
 			case e_BankCommandType::PRE:
 				m_PRECmdsReceived++;

@@ -225,8 +225,9 @@ bool c_TxnGenBase::sendRequest()
         assert(m_lowLink!=NULL);
         m_lowLink->send(l_txnReqEvPtr);
         
-    #ifdef __SST_DEBUG_OUTPUT__
+
         c_Transaction *l_txn=l_txnReqEvPtr->m_payload;
+    #ifdef __SST_DEBUG_OUTPUT__
         output->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%x isRead:%d seqNum:%lld\n",l_cycle,l_txn->getAddress(),l_txn->isRead(),l_txn->getSeqNum());
     #endif    
         
