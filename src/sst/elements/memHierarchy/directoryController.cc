@@ -641,7 +641,7 @@ void DirectoryController::handleGetX(MemEvent * ev, bool replay) {
                     dbg.debug(_L4_, "Sending response for 0x%" PRIx64 " to %s, send time: %" PRIu64 "\n", entry->getBaseAddr(), respEv->getDst().c_str(), timestamp + accessLatency);
                 }
 #endif
-                postRequestProcessing(ev, entry);
+                postRequestProcessing(ev, entry, true);
                 replayWaitingEvents(entry->getBaseAddr());
                 updateCache(entry);                
             } else {
@@ -677,15 +677,14 @@ void DirectoryController::handlePutS(MemEvent * ev) {
                 entry->setState(I);
             }
             sendAckPut(ev);
-            postRequestProcessing(ev, entry);   // profile & delete ev
+            postRequestProcessing(ev, entry, true);   // profile & delete ev
             replayWaitingEvents(addr);
             updateCache(entry);             // update dir cache
             break;
         case S_D:
             profileRequestRecv(ev, entry);
             sendAckPut(ev);
-            postRequestProcessing(ev, entry);
-            replayWaitingEvents(addr);
+            postRequestProcessing(ev, entry, false);
             break;
         case S_Inv:
         case SD_Inv:
@@ -748,19 +747,19 @@ void DirectoryController::handlePutE(MemEvent * ev) {
         case M:
             entry->setState(I);
             sendAckPut(ev);
-            postRequestProcessing(ev, entry);  // profile & delete ev
+            postRequestProcessing(ev, entry, true);  // profile & delete ev
             replayWaitingEvents(entry->getBaseAddr());
             updateCache(entry);         // update cache;
             break;
         case M_Inv:     /* If PutE comes with data then we can handle this immediately but otherwise */
             entry->setState(IM);
             issueMemoryRequest(mshr->lookupFront(ev->getBaseAddr()), entry);
-            postRequestProcessing(ev, entry);  // profile & delete ev
+            postRequestProcessing(ev, entry, false);  // profile & delete ev
             break;
         case M_InvX:
             entry->setState(IS);
             issueMemoryRequest(mshr->lookupFront(ev->getBaseAddr()), entry);
-            postRequestProcessing(ev, entry);  // profile & delete ev
+            postRequestProcessing(ev, entry, false);  // profile & delete ev
             break;
         default:
             dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutE but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
@@ -811,7 +810,7 @@ void DirectoryController::handlePutM(MemEvent * ev) {
             entry->clearOwner();
             entry->setState(I);
             sendAckPut(ev);
-            postRequestProcessing(ev, entry);  // profile & delete event
+            postRequestProcessing(ev, entry, true);  // profile & delete event
             replayWaitingEvents(ev->getBaseAddr());
             updateCache(entry);
             break;
@@ -1105,7 +1104,7 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
     
     if (!keepEvent) delete ev;
     
-    postRequestProcessing(reqEv, entry);
+    postRequestProcessing(reqEv, entry, true);
     replayWaitingEvents(entry->getBaseAddr());
     updateCache(entry);
 }
@@ -1144,7 +1143,7 @@ void DirectoryController::handleFetchXResp(MemEvent * ev, bool keepEvent) {
     
     if (!keepEvent) delete ev;
 
-    postRequestProcessing(reqEv, entry);
+    postRequestProcessing(reqEv, entry, true);
     replayWaitingEvents(entry->getBaseAddr());
     updateCache(entry);
 
@@ -1413,7 +1412,7 @@ void DirectoryController::handleDataResponse(MemEvent * ev) {
     }
 #endif
 
-    postRequestProcessing(reqEv, entry);
+    postRequestProcessing(reqEv, entry, true);
     replayWaitingEvents(entry->getBaseAddr());
     updateCache(entry);
 }
@@ -1768,7 +1767,7 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event, Comma
     return ev->getID();
 }
 
-void DirectoryController::postRequestProcessing(MemEvent * ev, DirEntry * entry) {
+void DirectoryController::postRequestProcessing(MemEvent * ev, DirEntry * entry, bool stable) {
     Command cmd = ev->getCmd();
     if (cmd == Command::GetS || cmd == Command::GetX || cmd == Command::GetSX) {
         stat_getRequestLatency->addData(getCurrentSimTimeNano() - ev->getDeliveryTime());
@@ -1777,7 +1776,8 @@ void DirectoryController::postRequestProcessing(MemEvent * ev, DirEntry * entry)
     }
 
     delete ev;
-    entry->setToSteadyState();
+    if (stable)
+        entry->setToSteadyState();
 }
 
 void DirectoryController::replayWaitingEvents(Addr addr) {
