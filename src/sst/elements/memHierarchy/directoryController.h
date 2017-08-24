@@ -228,7 +228,7 @@ class DirectoryController : public Component {
     void updateCache(DirEntry *entry);
 
     /** Profile request and delete it */
-    void postRequestProcessing(MemEvent * ev, DirEntry * entry);
+    void postRequestProcessing(MemEvent * ev, DirEntry * entry, bool stable);
 
     /** Replay any waiting events */
     void replayWaitingEvents(Addr addr);
