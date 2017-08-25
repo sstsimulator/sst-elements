@@ -84,7 +84,7 @@ public:
     
     /** @return  Unique ID of the MemEvent that this is a response to */
     id_type getResponseToID(void) const { return responseToID_; }
-    
+
     /** @return  Command of this MemEvent */
     Command getCmd(void) const { return cmd_; }
     /** Sets the Command of this MemEvent */
@@ -230,6 +230,11 @@ public:
     ImplementSerializable(SST::MemHierarchy::MemEventBase);     
 };
 
+struct memEventCmp {
+    bool operator() (const MemEventBase * lhs, const MemEventBase * rhs) const {
+        return lhs->getID() < rhs->getID();
+    }
+};
 
 /* 
  * Init event type

@@ -178,6 +178,8 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
     if ( req->isDone() ) {
         m_pendingRequests.erase(id);
         MemEvent* event = req->getMemEvent();
+    
+        Debug(_L10_,"doResponse req is done. %s\n", event->getBriefString().c_str()); 
         
         Cycle_t latency = m_cycleCount - event->getDeliveryTime();
 
@@ -189,9 +191,9 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
         // TODO clock responses
         // Check for flushes that are waiting on this event to finish
         if (m_dependentRequests.find(event) != m_dependentRequests.end()) {
-            std::set<MemEvent*> flushes = m_dependentRequests.find(event)->second;
+            std::set<MemEvent*, memEventCmp> flushes = m_dependentRequests.find(event)->second;
             
-            for (std::set<MemEvent*>::iterator it = flushes.begin(); it != flushes.end(); it++) {
+            for (std::set<MemEvent*, memEventCmp>::iterator it = flushes.begin(); it != flushes.end(); it++) {
                 (m_waitingFlushes.find(*it)->second).erase(event);
                 if ((m_waitingFlushes.find(*it)->second).empty()) {
                     MemEvent * flush = *it;
