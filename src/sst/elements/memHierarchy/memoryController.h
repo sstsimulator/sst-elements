@@ -67,6 +67,8 @@ private:
     void processInitEvent( MemEventInit* );
 
     Output dbg;
+    bool DEBUG_ALL;
+    Addr DEBUG_ADDR;
 
     MemBackendConvertor*    memBackendConvertor_;
     Backend::Backing*       backing_; 

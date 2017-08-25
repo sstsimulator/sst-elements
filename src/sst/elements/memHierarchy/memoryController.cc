@@ -37,9 +37,9 @@ using namespace SST::MemHierarchy;
 
 
 #ifdef __SST_DEBUG_OUTPUT__
-#define Debug(level, fmt, ... ) dbg.debug( level, fmt, ##__VA_ARGS__  )
+#define Debug(addrfilter, level, fmt, ... ) if (DEBUG_ALL || (addrfilter)) dbg.debug( level, fmt, ##__VA_ARGS__  )
 #else
-#define Debug(level, fmt, ... )
+#define Debug(addrfilter, level, fmt, ... )
 #endif
 
 /*************************** Memory Controller ********************/
@@ -57,6 +57,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
+
+    // Debug address
+    int dAddr = params.find<int>("debug_addr", -1);
+    if (dAddr == -1) {
+        DEBUG_ADDR = (Addr) dAddr;
+        DEBUG_ALL = true;
+    } else {
+        DEBUG_ADDR = (Addr) dAddr;
+        DEBUG_ALL = false;
+    }
 
     // Output for warnings
     Output out("", 1, 0, Output::STDOUT);
@@ -179,7 +189,7 @@ void MemController::handleEvent(SST::Event* event) {
     
     MemEvent *ev = static_cast<MemEvent*>(event);
     
-    Debug(_L3_,"\n%" PRIu64 " (%s) Recieved: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
+    Debug(ev->doDebug(DEBUG_ADDR), _L3_, "\n%" PRIu64 " (%s) Recieved: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
 
     if (ev->isAddrGlobal()) {
         ev->setBaseAddr(translateToLocal(ev->getBaseAddr()));
@@ -262,7 +272,7 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     MemEvent * ev = it->second;
     outstandingEvents_.erase(it);
 
-    Debug(_L3_,"Memory Controller: %s - Response received to (%s)\n", getName().c_str(), ev->getVerboseString().c_str());
+    Debug(ev->doDebug(DEBUG_ALL), _L3_, "Memory Controller: %s - Response received to (%s)\n", getName().c_str(), ev->getVerboseString().c_str());
 
     bool noncacheable  = ev->queryFlag(MemEvent::F_NONCACHEABLE);
     
@@ -333,14 +343,16 @@ void MemController::writeData(MemEvent* event) {
     Addr addr = noncacheable ? event->getAddr() : event->getBaseAddr();
 
     if (event->getCmd() == Command::PutM) { /* Write request to memory */
-        Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize());
+        Debug(event->doDebug(DEBUG_ADDR), _L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize());
+        
         for (size_t i = 0; i < event->getSize(); i++)
             backing_->set( addr + i, event->getPayload()[i] );
         return;
     }
     
     if (noncacheable && event->getCmd() == Command::GetX) {
-        Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize());
+        Debug(event->doDebug(DEBUG_ADDR), _L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize());
+        
         for (size_t i = 0; i < event->getSize(); i++)
             backing_->set( addr + i, event->getPayload()[i] );
         return;
@@ -376,7 +388,7 @@ Addr MemController::translateToLocal(Addr addr) {
         Addr offset = shift % region_.interleaveStep;
         rAddr = (step * region_.interleaveSize) + offset + privateMemOffset_;
     }
-    Debug(_L10_,"\tConverting global address 0x%" PRIx64 " to local address 0x%" PRIx64 "\n", addr, rAddr);
+    Debug(addr == DEBUG_ADDR, _L10_,"\tConverting global address 0x%" PRIx64 " to local address 0x%" PRIx64 "\n", addr, rAddr);
     return rAddr;
 }
 
@@ -391,7 +403,7 @@ Addr MemController::translateToGlobal(Addr addr) {
         rAddr = rAddr / region_.interleaveSize;
         rAddr = rAddr * region_.interleaveStep + offset + region_.start;
     }
-    Debug(_L10_,"\tConverting local address 0x%" PRIx64 " to global address 0x%" PRIx64 "\n", addr, rAddr);
+    Debug(rAddr == DEBUG_ADDR, _L10_,"\tConverting local address 0x%" PRIx64 " to global address 0x%" PRIx64 "\n", addr, rAddr); 
     return rAddr;
 }
 
@@ -401,14 +413,14 @@ void MemController::processInitEvent( MemEventInit* me ) {
     if (Command::GetX == me->getCmd()) {
         me->setAddr(translateToLocal(me->getAddr()));
         Addr addr = me->getAddr();
-        Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size());
+        Debug(me->doDebug(DEBUG_ADDR), _L10_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size());
         if ( isRequestAddressValid(addr) && backing_ ) {
             for ( size_t i = 0 ; i < me->getPayload().size() ; i++) {
                 backing_->set( addr + i,  me->getPayload()[i] );
             }
         }
     } else if (Command::NULLCMD == me->getCmd()) {
-        Debug(_L10_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str());
+        Debug(me->doDebug(DEBUG_ADDR), _L10_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str());
     } else {
         Output out("", 0, 0, Output::STDERR);
         out.debug(_L10_,"Memory received unexpected Init Command: %d\n", me->getCmd());
