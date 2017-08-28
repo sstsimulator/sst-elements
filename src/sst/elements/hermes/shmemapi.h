@@ -48,6 +48,8 @@ class Interface : public Hermes::Interface {
     virtual void barrier( int start, int stride, int size, Vaddr, Callback) { assert(0); }
     virtual void broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start, 
             int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
+    virtual void alltoall( Vaddr dest, Vaddr source, size_t nelems, int PE_start, 
+            int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
     virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start, 
             int logPE_stride, int PE_size, Vaddr pWrk, Vaddr pSync, 
             ReduOp, Hermes::Value::Type, Callback) { assert(0); }

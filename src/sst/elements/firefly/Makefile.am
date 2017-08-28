@@ -76,6 +76,8 @@ libfirefly_la_SOURCES = \
 	hadesMP.h \
 	hadesSHMEM.cc \
 	hadesSHMEM.h \
+	shmem/alltoall.cc \
+	shmem/alltoall.h \
 	shmem/common.cc \
 	shmem/common.h \
 	shmem/barrier.cc \
