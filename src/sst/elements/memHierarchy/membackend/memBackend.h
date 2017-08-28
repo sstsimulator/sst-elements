@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <map>
+#include <vector>
 
 #include "sst/elements/memHierarchy/membackend/memBackendConvertor.h"
 #include "sst/elements/memHierarchy/membackend/simpleMemBackendConvertor.h"
@@ -121,6 +122,25 @@ class MemFlagMemBackend : public MemBackend {
   public:
     MemFlagMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
+
+    void handleMemResponse( ReqId id, uint32_t flags ) {
+        m_respFunc( id, flags );
+    }
+
+    virtual void setResponseHandler( std::function<void(ReqId,uint32_t)> func ) {
+        m_respFunc = func;
+    }
+
+  private:
+    std::function<void(ReqId,uint32_t)> m_respFunc;
+};
+
+class ExtMemBackend : public MemBackend {
+  public:
+    ExtMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+    virtual bool issueRequest( ReqId, Addr, bool isWrite,
+                               std::vector<uint64_t> ins,
+                               uint32_t flags, unsigned numBytes ) = 0;
 
     void handleMemResponse( ReqId id, uint32_t flags ) {
         m_respFunc( id, flags );
