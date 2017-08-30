@@ -20,7 +20,7 @@
 #include <vector>
 #include "sst/elements/hermes/shmemapi.h"
 
-#if 0 
+#if 1 
 #undef printf
 #define printf(x,...)
 #endif
