@@ -170,11 +170,11 @@ class HadesSHMEM : public Shmem::Interface
     virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
 
     void memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback ) {
-        dbg().verbose(CALL_INFO,1,1,"\n");
+        dbg().verbose(CALL_INFO,1,1,"dest=%#" PRIx64 " src=%#" PRIx64 " length=%d\n",dest,src,length);
         if ( dest != src ) {
             ::memcpy( m_heap->findBacking(dest), m_heap->findBacking(src), length );
         }
-        m_selfLink->send( 1, new DelayEvent( callback, 0 ) );
+        m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
     }
 
     void* getBacking( Hermes::Vaddr addr ) {
