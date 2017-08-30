@@ -26,7 +26,10 @@
 #include "shmem/common.h"
 #include "shmem/barrier.h"
 #include "shmem/broadcast.h"
+#include "shmem/collect.h"
+#include "shmem/fcollect.h"
 #include "shmem/alltoall.h"
+#include "shmem/alltoalls.h"
 #include "shmem/reduction.h"
 
 using namespace Hermes;
@@ -47,7 +50,13 @@ class HadesSHMEM : public Shmem::Interface
             Event(),
             m_callback( callback ),
             m_retval( retval )
-        {}
+        {
+            //printf("%s() %p\n",__func__,this);
+        }
+        ~DelayEvent()
+        {
+            //printf("%s() %p\n",__func__,this);
+        }
 
         Shmem::Callback m_callback;
         int m_retval;
@@ -56,6 +65,13 @@ class HadesSHMEM : public Shmem::Interface
     };
 
     class Heap {
+        struct Entry {
+            Entry() {}
+            Entry( Hermes::MemAddr addr, size_t length ) : addr(addr), length(length) {}
+
+            Hermes::MemAddr addr;
+            size_t length;
+        };
       public:
         Heap( bool back = false ) : m_curAddr(0x1000), m_back(back) {}
         Hermes::MemAddr malloc( size_t n ) {
@@ -66,16 +82,35 @@ class HadesSHMEM : public Shmem::Interface
             if ( m_back ) {
                 addr.setBacking( ::malloc(n) );
             }
+            m_map[ addr.getSimVAddr() ] = Entry( addr, n );
+
             return addr; 
         }  
         void free( Hermes::MemAddr& addr ) {
             if ( addr.getBacking() ) {
                 ::free( addr.getBacking() );
             }
+            m_map.erase( addr.getSimVAddr() );
+        }
+        void* findBacking( Hermes::Vaddr addr ) {
+            std::map<Hermes::Vaddr,Entry>::iterator iter = m_map.begin();
+            for ( ; iter != m_map.end(); ++iter ) {
+                Entry& entry = iter->second;
+                if ( addr >= entry.addr.getSimVAddr() && addr < entry.addr.getSimVAddr() + entry.length ) {
+                    unsigned char * ptr = NULL;
+                    if ( entry.addr.getBacking() ) {
+                        ptr = (unsigned char*) entry.addr.getBacking(); 
+                        ptr += addr - entry.addr.getSimVAddr(); 
+                    }
+                    return ptr;
+                }
+            } 
+            assert(0);
         }
       private:
         size_t m_curAddr;
         bool   m_back;
+        std::map<Hermes::Vaddr, Entry > m_map;
     };
 
   public:
@@ -104,8 +139,14 @@ class HadesSHMEM : public Shmem::Interface
     virtual void barrier( int start, int stride, int size, Vaddr, Shmem::Callback);
     virtual void broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start,
                         int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
+    virtual void fcollect( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
+                        int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
+    virtual void collect( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
+                        int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void alltoall( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
                         int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
+    virtual void alltoalls( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize, 
+                        int PE_start, int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start,
                         int logPE_stride, int PE_size, Vaddr pWrk, Vaddr pSync,
                         Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
@@ -128,9 +169,21 @@ class HadesSHMEM : public Shmem::Interface
     virtual void swap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& value, int pe, Shmem::Callback);
     virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
 
-    void delay( Shmem::Callback functor, uint64_t delay, int retval ) {
+    void memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback ) {
+        dbg().verbose(CALL_INFO,1,1,"\n");
+        if ( dest != src ) {
+            ::memcpy( m_heap->findBacking(dest), m_heap->findBacking(src), length );
+        }
+        m_selfLink->send( 1, new DelayEvent( callback, 0 ) );
+    }
+
+    void* getBacking( Hermes::Vaddr addr ) {
+        return m_heap->findBacking(addr);
+    }
+
+    void delay( Shmem::Callback callback, uint64_t delay, int retval ) {
         //printf("%s() delay=%lu retval=%d\n",__func__,delay,retval);
-        m_selfLink->send( delay, new DelayEvent( functor, retval ) );
+        m_selfLink->send( delay, new DelayEvent( callback, retval ) );
     } 
 
   private:
@@ -139,28 +192,35 @@ class HadesSHMEM : public Shmem::Interface
     Hades*      m_os;
 
     void handleToDriver(SST::Event* e) {
+        dbg().verbose(CALL_INFO,1,1,"%p event=%p\n",this,e);
         DelayEvent* event = static_cast<DelayEvent*>(e);
+        //dbg().verbose(CALL_INFO,1,1,"\n");
         event->m_callback( event->m_retval );
+        //dbg().verbose(CALL_INFO,1,1,"\n");
         delete e;
+        //dbg().verbose(CALL_INFO,1,1,"event=%p\n",e);
     }
 
     FunctionSM& functionSM() { return m_os->getFunctionSM(); }
     SST::Link*      m_selfLink;
 
     Heap* m_heap;
-    std::map<key_t,Hermes::MemAddr> m_map;
 
     ShmemCommon*    m_common;
     ShmemBarrier*   m_barrier;
     ShmemBroadcast* m_broadcast;
+    ShmemCollect*   m_collect;
+    ShmemFcollect*  m_fcollect;
     ShmemAlltoall*  m_alltoall;
+    ShmemAlltoalls* m_alltoalls;
     ShmemReduction* m_reduction;
 
     int m_num_pes;
     int m_my_pe;
     size_t m_localDataSize;
     Hermes::MemAddr  m_localData;
-    Hermes::MemAddr  m_psync;
+    Hermes::MemAddr  m_pSync;
+    Hermes::MemAddr  m_localScratch;
 };
 
 }
