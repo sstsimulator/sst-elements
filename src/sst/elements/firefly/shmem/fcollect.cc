@@ -40,23 +40,19 @@ void ShmemFcollect::start( Vaddr dest, Vaddr source, size_t nelems, int PE_start
     } else {
         callback = std::bind( &ShmemFcollect::state_0, this, std::placeholders::_1 );
     }
-    //printf(":%d:%s():%d %d\n",my_pe(),__func__,__LINE__,my_id());
-    //m_api.memcpy( dest + (my_id()*nelems), source, nelems, callback );
-    m_api.memcpy( 0, 0, nelems, callback );
-    //printf(":%d:%s():%d %d\n",my_pe(),__func__,__LINE__,my_id());
+
+    printf(":%d:%s():%d my_id=%d\n",my_pe(),__func__,__LINE__,my_id());
+    m_api.memcpy( dest + (my_id()*nelems), source, nelems, callback );
     m_iteration = 1;
 }
 
 void ShmemFcollect::state_0( int )
 {
-    //printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
-    //size_t iter_offset = ((my_id() + 1 - m_iteration + m_PE_size) % m_PE_size) * m_nelems;
-    //printf(":%d:%s():%d %#lx %d\n",my_pe(),__func__,__LINE__,iter_offset,next_proc());
+    size_t iter_offset = ((my_id() + 1 - m_iteration + m_PE_size) % m_PE_size) * m_nelems;
+    printf(":%d:%s():%d iter_offset=%#lu dest=%#lx\n",my_pe(),__func__,__LINE__,iter_offset,m_dest + iter_offset);
 
-#if 0
     m_api.put( m_dest + iter_offset, m_dest + iter_offset, m_nelems, next_proc(), 
         std::bind( &ShmemFcollect::state_1, this, std::placeholders::_1 ) );
-#endif
 }
 
 void ShmemFcollect::state_1( int )
@@ -80,16 +76,16 @@ void ShmemFcollect::state_2( int )
 
 void ShmemFcollect::state_3( int )
 {
-    printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
-    ++m_iteration;
+    printf(":%d:%s():%d iteration=%d\n",my_pe(),__func__,__LINE__,m_iteration);
     m_value.set( (long) m_iteration );
 
     Shmem::Callback callback;
-    if ( m_iteration == m_PE_size ) {
-        callback = std::bind( &ShmemFcollect::state_4, this, std::placeholders::_1 );
-    } else {
+    if ( m_iteration < m_PE_size ) {
         callback = std::bind( &ShmemFcollect::state_0, this, std::placeholders::_1 );
+    } else {
+        callback = std::bind( &ShmemFcollect::state_4, this, std::placeholders::_1 );
     }
+	++m_iteration;
     /* wait for completion for this round */
     m_api.wait_until( m_pSync, Shmem::GTE, m_value, callback );
     //SHMEM_WAIT_UNTIL(pSync, SHMEM_CMP_GE, i);
