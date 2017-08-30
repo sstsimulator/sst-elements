@@ -78,12 +78,18 @@ libfirefly_la_SOURCES = \
 	hadesSHMEM.h \
 	shmem/alltoall.cc \
 	shmem/alltoall.h \
-	shmem/common.cc \
-	shmem/common.h \
+	shmem/alltoalls.cc \
+	shmem/alltoalls.h \
 	shmem/barrier.cc \
 	shmem/barrier.h \
 	shmem/broadcast.cc \
 	shmem/broadcast.h \
+	shmem/collect.cc \
+	shmem/collect.h \
+	shmem/common.cc \
+	shmem/common.h \
+	shmem/fcollect.cc \
+	shmem/fcollect.h \
 	shmem/reduction.cc \
 	shmem/reduction.h \
 	merlinEvent.h \
