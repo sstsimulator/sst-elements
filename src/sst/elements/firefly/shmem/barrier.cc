@@ -98,7 +98,8 @@ void ShmemBarrier::root_2( int )
     if ( m_iteration < m_num_children - 1 ) {
         callback =  std::bind( &ShmemBarrier::root_2, this, std::placeholders::_1 );
     } else {
-        callback =  std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 );
+        //callback =  std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 );
+        callback =  m_returnCallback;
     }
 
     m_api.fadd( m_retval, m_pSync, m_one, m_children[m_iteration], callback );
@@ -159,7 +160,8 @@ void ShmemBarrier::node_4( int )
     if ( m_iteration < m_num_children - 1 ) {
         callback =  std::bind( &ShmemBarrier::node_4, this, std::placeholders::_1 );
     } else {
-        callback =  std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 );
+        //callback =  std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 );
+        callback = m_returnCallback;
     }
 
     m_api.fadd( m_retval, m_pSync, m_one, m_children[m_iteration], callback ); 
@@ -212,8 +214,8 @@ void ShmemBarrier::leaf_2( int )
 void ShmemBarrier::leaf_3( int )
 {
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
-    m_api.wait_until( m_pSync, Shmem::EQ, m_zero, 
-           std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 ) );
+    m_api.wait_until( m_pSync, Shmem::EQ, m_zero, m_returnCallback ); 
+//           std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 ) );
 #if 0
     SHMEM_WAIT_UNTIL(pSync, SHMEM_CMP_EQ, 0);
 #endif

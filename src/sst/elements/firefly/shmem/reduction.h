@@ -33,7 +33,7 @@ class ShmemReduction : public ShmemCollective {
         Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Hermes::Shmem::Callback );
   private:
 
-    void fini( int x ) { ShmemCollective::fini( x ); }
+//    void fini( int x ) { ShmemCollective::fini( x ); }
     void have_children_0(int);
     void have_children_1(int);
     void have_children_2(int);

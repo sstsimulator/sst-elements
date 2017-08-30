@@ -32,7 +32,7 @@ class ShmemBroadcast : public ShmemCollective {
         int logPE_stride, int PE_size, Hermes::Vaddr pSync, Hermes::Shmem::Callback, bool complete );
   private:
 
-    void fini( int x ) { ShmemCollective::fini( x ); }
+//    void fini( int x ) { ShmemCollective::fini( x ); }
     void node_0(int);
     void node_1(int);
     void node_2(int);
