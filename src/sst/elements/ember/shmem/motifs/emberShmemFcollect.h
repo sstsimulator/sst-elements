@@ -30,6 +30,7 @@ public:
 		EmberShmemGenerator(owner, params, "ShmemFcollect" ), m_phase(0) 
 	{ 
         m_nelems = params.find<int>("arg.nelems", 1 );
+        m_printResults = params.find<bool>("arg.printResults", false );
     }
 
     bool generate( std::queue<EmberEvent*>& evQ) 
@@ -63,14 +64,16 @@ public:
             m_src = m_pSync.offset<long>(3);
 
             for ( int i = 0; i < m_nelems; i++ ) { 
-             //   m_src.at<uint64_t>( i ) = ((uint64_t) (m_my_pe + 1) << 32) | i + 1;
+                m_src.at<uint64_t>( i ) = ((uint64_t) (m_my_pe + 1) << 32) | i + 1;
             }
 
             m_dest = m_src.offset<uint64_t>( m_nelems );
-            printf("%d:%s: buffer=%#" PRIx64 " src=%#" PRIx64 " dest=%#" PRIx64 "\n",m_my_pe, 
+			if ( 0 == m_my_pe ) {
+            	printf("%d:%s: buffer=%#" PRIx64 " src=%#" PRIx64 " dest=%#" PRIx64 "\n",m_my_pe, 
                         getMotifName().c_str(), m_memory.getSimVAddr(), 
                         m_src.getSimVAddr(), m_dest.getSimVAddr());
-            //bzero( &m_dest.at<uint64_t>(0), sizeof(uint64_t) * m_num_pes * m_nelems);
+			}
+            bzero( &m_dest.at<uint64_t>(0), sizeof(uint64_t) * m_num_pes * m_nelems);
 
             enQ_barrier_all( evQ );
             break;
@@ -82,12 +85,16 @@ public:
           case 4:
             for ( int pe = 0; pe < m_num_pes; pe++ ) {
                 for ( int i = 0; i < m_nelems; i++ ) {
-                    printf("%d:%s: pe=%d i=%d %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), 
+					if ( m_printResults ) {
+                    	printf("%d:%s: pe=%d i=%d %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), 
                             pe, i, m_dest.at<uint64_t>( pe * m_nelems + i));
+					}
                     assert( m_dest.at<uint64_t>( pe * m_nelems + i) == ( ((uint64_t) (pe + 1) << 32) | i + 1  )  );
                 }
             }
-            printf("%d:%s exit\n",m_my_pe, getMotifName().c_str());
+			if ( 0 == m_my_pe ) {
+            	printf("%d:%s: exit\n",m_my_pe, getMotifName().c_str());
+			}
             ret = true;
 
         }
@@ -97,6 +104,7 @@ public:
 	}
 
   private:
+	bool m_printResults;
     Hermes::MemAddr m_memory;
     Hermes::MemAddr m_pSync;
     Hermes::MemAddr m_src;
