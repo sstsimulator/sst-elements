@@ -80,7 +80,10 @@
 #include "shmem/motifs/emberShmemBarrierAll.h"
 #include "shmem/motifs/emberShmemBarrier.h"
 #include "shmem/motifs/emberShmemBroadcast.h"
+#include "shmem/motifs/emberShmemCollect.h"
+#include "shmem/motifs/emberShmemFcollect.h"
 #include "shmem/motifs/emberShmemAlltoall.h"
+#include "shmem/motifs/emberShmemAlltoalls.h"
 #include "shmem/motifs/emberShmemReduction.h"
 
 #include "emberconstdistrib.h"
@@ -359,8 +362,23 @@ load_ShmemBroadcast( Component* comp, Params& params ) {
 }
 
 static SubComponent*
+load_ShmemFcollect( Component* comp, Params& params ) {
+	return new EmberShmemFcollectGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemCollect( Component* comp, Params& params ) {
+	return new EmberShmemCollectGenerator(comp, params);
+}
+
+static SubComponent*
 load_ShmemAlltoall( Component* comp, Params& params ) {
 	return new EmberShmemAlltoallGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemAlltoalls( Component* comp, Params& params ) {
+	return new EmberShmemAlltoallsGenerator(comp, params);
 }
 
 static SubComponent*
@@ -1267,10 +1285,34 @@ static const ElementInfoSubComponent subcomponents[] = {
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
+    { 	"ShmemFcollectMotif",
+	"SHMEM fcollect",
+	NULL,
+	load_ShmemFcollect,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemCollectMotif",
+	"SHMEM collect",
+	NULL,
+	load_ShmemCollect,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
     { 	"ShmemAlltoallMotif",
 	"SHMEM alltoall",
 	NULL,
 	load_ShmemAlltoall,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAlltoallsMotif",
+	"SHMEM alltoalls",
+	NULL,
+	load_ShmemAlltoalls,
     shmemTest_params,
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"

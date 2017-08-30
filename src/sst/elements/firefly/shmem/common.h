@@ -67,13 +67,16 @@ class ShmemCollective {
     int full_tree_num_children() { return m_common.full_tree_num_children(); }
     std::vector<int>& full_tree_children() { return m_common.full_tree_children(); }
 
-  protected:
     typedef long pSync_t;
 
+  protected:
+
+#if 0
     void fini(int) {
         printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
         m_returnCallback( 0 );
     }    
+#endif
 
     HadesSHMEM&     m_api;
     ShmemCommon&    m_common;

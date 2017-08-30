@@ -100,6 +100,7 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processPu
                     memAddr.getBacking() );
         }
     }
+	m_matched_len = hdr.length;
 
     return std::bind( &Nic::RecvMachine::state_move_0, &m_rm, ev, this );
 }

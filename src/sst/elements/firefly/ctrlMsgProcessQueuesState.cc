@@ -32,7 +32,8 @@ ProcessQueuesState::ProcessQueuesState( Component* owner, Params& params ) :
         m_numNicRequestedShortBuff(0),
         m_numRecvLooped(0),
         m_missedInt( false ),
-        m_intCtx(NULL)
+        m_intCtx(NULL),
+		m_simVAddrs(NULL)
 {
     int level = params.find<uint32_t>("verboseLevel",0);
     int mask = params.find<int32_t>("verboseMask",-1);
@@ -65,7 +66,9 @@ ProcessQueuesState::~ProcessQueuesState()
         delete m_postedShortBuffers.begin()->second;
         m_postedShortBuffers.erase( m_postedShortBuffers.begin() );
     }
-    delete m_simVAddrs;
+	if ( m_simVAddrs ) {
+    	delete m_simVAddrs;
+	}
     delete m_msgTiming;
 }
 
