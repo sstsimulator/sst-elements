@@ -182,7 +182,7 @@ void ShmemReduction::not_root_4(int)
 void ShmemReduction::not_root_5(int) 
 {
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
-    m_api.fadd( m_retval, m_pSync, m_one, m_parent,
+    m_api.add( m_pSync, m_one, m_parent,
                 std::bind( &ShmemReduction::bcast, this, std::placeholders::_1 ) );
     //shmem_internal_atomic_small(pSync, &one, sizeof(one), parent, SHM_INTERNAL_SUM, SHM_INTERNAL_LONG);
 }

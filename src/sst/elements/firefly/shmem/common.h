@@ -57,7 +57,7 @@ class ShmemCommon {
 class ShmemCollective {
   public:
     ShmemCollective( HadesSHMEM& api, ShmemCommon& common ) : m_api(api), m_common( common ),
-        m_value( Hermes::Value::Long), m_retval( Hermes::Value::Long ), m_one((long)1), m_zero((long)0)
+        m_value( Hermes::Value::Long), m_one((long)1), m_zero((long)0)
     {}
 
     int num_pes() { return m_common.num_pes(); }
@@ -89,7 +89,6 @@ class ShmemCollective {
 
     Hermes::Vaddr   m_pSync;
     Hermes::Value   m_value;
-    Hermes::Value   m_retval;
     Hermes::Value   m_one;
     Hermes::Value   m_zero;
 
