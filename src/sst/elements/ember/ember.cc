@@ -75,6 +75,7 @@
 #include "shmem/motifs/emberShmemPutv.h"
 #include "shmem/motifs/emberShmemGetv.h"
 #include "shmem/motifs/emberShmemFadd.h"
+#include "shmem/motifs/emberShmemAdd.h"
 #include "shmem/motifs/emberShmemCswap.h"
 #include "shmem/motifs/emberShmemSwap.h"
 #include "shmem/motifs/emberShmemBarrierAll.h"
@@ -379,6 +380,26 @@ load_ShmemGetvFloat( Component* comp, Params& params ) {
 static SubComponent*
 load_ShmemGetvDouble( Component* comp, Params& params ) {
 	return new EmberShmemGetvGenerator<double>(comp, params);
+}
+
+static SubComponent*
+load_ShmemAddInt( Component* comp, Params& params ) {
+	return new EmberShmemAddGenerator<int>(comp, params);
+}
+
+static SubComponent*
+load_ShmemAddLong( Component* comp, Params& params ) {
+	return new EmberShmemAddGenerator<long>(comp, params);
+}
+
+static SubComponent*
+load_ShmemAddFloat( Component* comp, Params& params ) {
+	return new EmberShmemAddGenerator<float>(comp, params);
+}
+
+static SubComponent*
+load_ShmemAddDouble( Component* comp, Params& params ) {
+	return new EmberShmemAddGenerator<double>(comp, params);
 }
 
 static SubComponent*
@@ -1500,8 +1521,40 @@ static const ElementInfoSubComponent subcomponents[] = {
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
+    { 	"ShmemAddIntMotif",
+	"SHMEM add int",
+	NULL,
+	load_ShmemAddInt,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAddLongMotif",
+	"SHMEM add long",
+	NULL,
+	load_ShmemAddLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAddFloatMotif",
+	"SHMEM add float",
+	NULL,
+	load_ShmemAddFloat,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAddDoubleMotif",
+	"SHMEM add double",
+	NULL,
+	load_ShmemAddDouble,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
     { 	"ShmemFaddIntMotif",
-	"SHMEM fadd int",
+	"SHMEM add int",
 	NULL,
 	load_ShmemFaddInt,
     shmemTest_params,
