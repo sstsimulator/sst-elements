@@ -51,16 +51,17 @@ platParams = ""
 motifDefaults = { 
 	'cmd' : "",
 	'printStats' : 0, 
-	'api': "HadesMP",
 	'spyplotmode': 0 
 }
+
+motifAPI='HadesMP'
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
 		"simConfig=","platParams=",",debug=","platform=","numNodes=",
 		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
-		"rtrArb=","embermotifLog=",	"rankmapper=",
+		"rtrArb=","embermotifLog=",	"rankmapper=","motifAPI=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
         "detailedNameModel=","detailedModelParams=","detailedModelNodes="])
 
@@ -81,9 +82,12 @@ for o, a in opts:
         debug = a
     elif o in ("--loadFile"):
         loadFile = a
+    elif o in ("--motifAPI"):
+		motifAPI= a
     elif o in ("--cmdLine"):
     	motif = dict.copy(motifDefaults)
     	motif['cmd'] = a 
+    	motif['api'] = motifAPI 
     	workFlow.append( motif )
     elif o in ("--topo"):
         netTopo = a
@@ -310,6 +314,8 @@ hermesParams['hermesParams.nicParams.verboseLevel'] = debug
 hermesParams['hermesParams.functionSM.verboseLevel'] = debug
 hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 emberParams['verbose'] = emberVerbose
+emberParams['firefly.hadesSHMEM.verboseLevel'] = 0 
+emberParams['firefly.hadesSHMEM.verboseMask'] = -1
 if embermotifLog:
     emberParams['motifLog'] = embermotifLog
 if emberrankmapper:
