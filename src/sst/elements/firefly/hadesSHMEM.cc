@@ -141,11 +141,11 @@ void HadesSHMEM::alltoalls( Vaddr dest, Vaddr source, int dst, int sst, size_t n
 }
 
 void HadesSHMEM::reduction( Vaddr dest, Vaddr source, int nelems, int PE_start,
-                int logPE_stride, int PE_size, Vaddr pWrk, Vaddr pSync,
+                int logPE_stride, int PE_size, Vaddr pSync,
                 Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Shmem::Callback callback) 
 {
     dbg().verbose(CALL_INFO,1,1,"\n");
-    m_reduction->start( dest, source, nelems, PE_start, logPE_stride, PE_size, pWrk, pSync,
+    m_reduction->start( dest, source, nelems, PE_start, logPE_stride, PE_size, pSync,
             op, dataType, callback );
 }
 

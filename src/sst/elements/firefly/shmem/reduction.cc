@@ -20,7 +20,7 @@ using namespace SST;
 using namespace Firefly;
 
 void ShmemReduction::start( Hermes::Vaddr dest, Hermes::Vaddr source, size_t nelems, int PE_start,
-    int logPE_stride, int PE_size, Hermes::Vaddr pWrk, Hermes::Vaddr pSync, 
+    int logPE_stride, int PE_size, Hermes::Vaddr pSync, 
     Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Hermes::Shmem::Callback callback )
 {
     printf(":%d:%s():%d nelems=%lu PE_start=%d stride=%d op=%d dataType=%d\n",

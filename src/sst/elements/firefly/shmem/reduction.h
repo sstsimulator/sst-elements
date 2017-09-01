@@ -29,7 +29,7 @@ class ShmemReduction : public ShmemCollective {
     ShmemReduction( HadesSHMEM& api, ShmemCommon& common ) : ShmemCollective(api, common )
     { }
     void start( Hermes::Vaddr dest, Hermes::Vaddr source, size_t nelems, int PE_start, 
-        int logPE_stride, int PE_size, Hermes::Vaddr pWork, Hermes::Vaddr pSync, 
+        int logPE_stride, int PE_size, Hermes::Vaddr pSync, 
         Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Hermes::Shmem::Callback );
   private:
 
