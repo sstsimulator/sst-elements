@@ -19,16 +19,24 @@
 
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
+#include <cxxabi.h>
 
 namespace SST {
 namespace Ember {
 
+template< class TYPE >
 class EmberShmemGetGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemGetGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemGet" ), m_phase(0), m_numInts(100) 
-	{ }
+		EmberShmemGenerator(owner, params, "ShmemGet" ), m_phase(0)
+	{ 
+        m_nelems = params.find<int>("arg.nelems", 1);
+        m_printResults = params.find<bool>("arg.printResults", false );
+        int status;
+        std::string tname = typeid(TYPE).name();
+        m_type_name = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+	}
 
     bool generate( std::queue<EmberEvent*>& evQ) 
 	{
@@ -36,63 +44,71 @@ public:
         switch ( m_phase ) {
         case 0:
             enQ_init( evQ );
-            break;
-        case 1:
-            enQ_n_pes( evQ, &m_n_pes );
+            enQ_n_pes( evQ, &m_num_pes );
             enQ_my_pe( evQ, &m_my_pe );
+            break;
+
+        case 1:
+
+            if ( 0 == m_my_pe ) {
+                printf("%d:%s: num_pes=%d nelems=%d type=\"%s\"\n",m_my_pe,
+                        getMotifName().c_str(), m_num_pes, m_nelems, m_type_name);
+            }
+			assert( 2 == m_num_pes );
+            m_other_pe = (m_my_pe + 1) % m_num_pes;
+            enQ_malloc( evQ, &m_src, m_nelems * sizeof(TYPE) * 2);
             break;
 
         case 2:
 
-            printf("%d:%s: num_pes=%d\n",m_my_pe, getMotifName().c_str(),m_n_pes);
-            m_other_pe = (m_my_pe + 1) % m_n_pes;
-            enQ_malloc( evQ, &m_addr, m_numInts * sizeof(int) * 2);
-            break;
+            m_dest = m_src.offset<TYPE>(m_nelems );
 
-        case 3:
-            
-            m_src  = &m_addr.at<int>(0);
-            m_dest = &m_addr.at<int>(m_numInts);
-            printf("%d:%s: %p %p\n",m_my_pe, getMotifName().c_str(),m_src,m_dest);
-            printf("%d:%s: %#" PRIx64 " %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(),
-                    m_addr.getSimVAddr(),m_addr.getSimVAddr<int>(m_numInts));
-            bzero( m_dest, m_numInts * sizeof(int) );
-
-            for ( int i = 0; i < m_numInts; i++ ) {
-                m_src[i] = m_my_pe + i;
+            for ( int i = 0; i < m_nelems; i++ ) {
+                m_src.at<TYPE>(i) = m_my_pe + i;
             }
+
+            bzero( &m_dest.at<TYPE>(0), sizeof(TYPE) * m_nelems);
 
             enQ_barrier_all( evQ );
             break;
 
-        case 4:
+        case 3:
             enQ_get( evQ, 
-                    m_addr.offset<int>(m_numInts),
-                    m_addr.offset(0), 
-                    m_numInts*sizeof(int),
+                    m_dest,
+                    m_src, 
+                    m_nelems*sizeof(TYPE),
                     m_other_pe );
             enQ_barrier_all( evQ );
             break;
 
-        case 5: 
-            for ( int i = 0; i < m_numInts; i++ ) {
-                //printf("%d:%s: %d %d\n",m_my_pe, getMotifName().c_str(),i + m_other_pe, m_dest[i]);
-                assert( i + m_other_pe == m_dest[i] );
+        case 4: 
+            for ( int i = 0; i < m_nelems; i++ ) {
+                TYPE want = ((m_my_pe + 1) % 2 )  + i;
+                if ( m_printResults ) {
+                    std::stringstream tmp;
+                    tmp << " got="<< m_dest.at<TYPE>(i) << " want=" <<  want;
+                    printf("%d:%s: PUT %s\n",m_my_pe, getMotifName().c_str(), tmp.str().c_str());
+                }
+                assert( m_dest.at<TYPE>(i) == want );
             }
 		    ret = true;
+            if ( 0 == m_my_pe ) {
+                printf("%d:%s: exit\n",m_my_pe, getMotifName().c_str());
+            }
         }
         ++m_phase;
         return ret;
 	}
   private:
-    Hermes::MemAddr m_addr;
-    int m_numInts;
-    int* m_src;
-    int* m_dest;
+    bool m_printResults;
+    char* m_type_name;
+    Hermes::MemAddr m_src;
+    Hermes::MemAddr m_dest;
+    int m_nelems;
     int m_phase;
     int m_my_pe;
     int m_other_pe;
-    int m_n_pes;
+    int m_num_pes;
 };
 
 }
