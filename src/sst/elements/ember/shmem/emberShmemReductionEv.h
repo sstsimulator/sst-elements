@@ -27,12 +27,12 @@ class EmberReductionShmemEvent : public EmberShmemEvent {
 public:
 	EmberReductionShmemEvent( Shmem::Interface& api, Output* output,
                Hermes::Vaddr dest, Hermes::Vaddr src, int nelems,
-               int PE_start, int logPE_stride, int PE_size, Hermes::Vaddr pWrk, Hermes::Vaddr pSync, 
+               int PE_start, int logPE_stride, int PE_size, Hermes::Vaddr pSync, 
                Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, EmberEventTimeStatistic* stat = NULL ) :
 
             EmberShmemEvent( api, output, stat ),
             m_dest(dest), m_src(src), m_nelems(nelems), m_pe_start(PE_start), m_PE_stride( logPE_stride), 
-            m_PE_size(PE_size), m_pWrk(pWrk), m_pSync(pSync), m_op(op), m_dataType(dataType)  {}
+            m_PE_size(PE_size), m_pSync(pSync), m_op(op), m_dataType(dataType)  {}
 
 	~EmberReductionShmemEvent() {}
 
@@ -40,10 +40,9 @@ public:
 
     void issue( uint64_t time, Shmem::Callback callback ) {
 
-        printf("%s() %d\n",__func__,m_op);
         EmberEvent::issue( time );
         m_api.reduction( m_dest, m_src, m_nelems, m_pe_start, m_PE_stride, m_PE_size, 
-                            m_pWrk, m_pSync, m_op, m_dataType, callback );
+                            m_pSync, m_op, m_dataType, callback );
     }
 private:
     Hermes::Vaddr m_dest;
@@ -54,7 +53,6 @@ private:
     int m_PE_size;
     Hermes::Shmem::ReduOp m_op;
     Hermes::Value::Type   m_dataType;
-    Hermes::Vaddr m_pWrk;
     Hermes::Vaddr m_pSync;
 };
 

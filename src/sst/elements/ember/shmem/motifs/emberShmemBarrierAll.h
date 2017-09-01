@@ -38,12 +38,15 @@ public:
             enQ_init( evQ );
             enQ_my_pe( evQ, &m_my_pe );
         } else {
-            if ( m_my_pe == 0 ) {
-                printf("%d:%s: m_phase=%d\n",m_my_pe,getMotifName().c_str(),m_phase);
+            if ( m_phase==0 && m_my_pe == 0 ) {
+                printf("%d:%s: m_count=%d\n",m_my_pe,getMotifName().c_str(),m_count);
             }
             enQ_barrier_all( evQ );
         }
         ++m_phase;
+        if ( m_phase == m_count && 0 == m_my_pe ) {
+            printf("%d:%s: exit\n",m_my_pe, getMotifName().c_str());
+        }
 
         return m_phase == m_count;
 	}

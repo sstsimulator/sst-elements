@@ -60,7 +60,7 @@ class Nic : public SST::Component  {
     };
     struct __attribute__ ((packed)) ShmemMsgHdr {
         ShmemMsgHdr() : op2(0) {}
-        enum Op : unsigned char { Put, Get, GetResp, Fadd, Swap, Cswap } op;
+        enum Op : unsigned char { Put, Get, GetResp, Add, Fadd, Swap, Cswap } op;
         unsigned char op2; 
         unsigned char dataType;
         unsigned char pad;

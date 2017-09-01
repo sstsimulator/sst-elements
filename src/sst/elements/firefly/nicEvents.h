@@ -55,7 +55,7 @@ class NicCmdBaseEvent : public Event {
 class NicShmemCmdEvent : public NicCmdBaseEvent {
   public:
 
-    enum Type { RegMem, Fence, Put, Putv, Get, Getv, Wait, Fadd, Swap, Cswap } type;
+    enum Type { RegMem, Fence, Put, Putv, Get, Getv, Wait, Add, Fadd, Swap, Cswap } type;
 
     NicShmemCmdEvent( Type type ) :
         NicCmdBaseEvent( Shmem ), type(type) {}
@@ -204,6 +204,27 @@ class NicShmemGetvCmdEvent : public NicShmemSendCmdEvent {
 	NotSerializable(NicShmemGetvCmdEvent)
 };
 
+class NicShmemAddCmdEvent : public NicShmemSendCmdEvent {
+  public:
+    typedef std::function<void( )> Callback;
+    NicShmemAddCmdEvent( int vnic, int node, Hermes::Vaddr addr, Hermes::Value& value, Callback callback ) :
+        NicShmemSendCmdEvent( Add, vnic, node ), srcAddr(addr), data(value), callback(callback) {}
+
+    Hermes::Vaddr getFarAddr()  override { return srcAddr; } 
+    size_t getLength()          override { return data.getLength(); } 
+    void* getBacking()          override { return data.getPtr(); } 
+    Callback getCallback()      { return callback; } 
+    Hermes::Value::Type getDataType() override { return data.getType(); }
+
+    Callback        callback;
+  private:
+
+    Hermes::Vaddr  srcAddr;
+    Hermes::Value  data;
+
+	NotSerializable(NicShmemAddCmdEvent)
+};
+
 class NicShmemFaddCmdEvent : public NicShmemSendCmdEvent {
   public:
     typedef std::function<void( Hermes::Value& )> Callback;
@@ -316,7 +337,7 @@ class NicRespBaseEvent : public Event {
 class NicShmemRespBaseEvent : public NicCmdBaseEvent {
   public:
 
-    enum Type { RegMem, Fence, Put, Putv, Get, Getv, Wait, Fadd, Swap, Cswap, FreeCmd } type;
+    enum Type { RegMem, Fence, Put, Putv, Get, Getv, Wait, Add, Fadd, Swap, Cswap, FreeCmd } type;
 
     NicShmemRespBaseEvent( Type type ) : 
         NicCmdBaseEvent( Shmem ), type(type) {}

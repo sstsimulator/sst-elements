@@ -37,26 +37,31 @@ public:
         if ( m_phase == -2 ) {
             enQ_init( evQ );
             enQ_my_pe( evQ, &m_my_pe );
-            enQ_malloc( evQ, &m_addr, 8 );
+			enQ_n_pes( evQ, &m_num_pes );
+            enQ_malloc( evQ, &m_addr, sizeof(long) );
         } else if ( m_phase == -1 ) {
+            if ( 1 == m_my_pe ) {
+                printf("%d:%s: m_count=%d\n",m_my_pe,getMotifName().c_str(),m_count);
+            }
             m_addr.at<long>(0) = 0;
             enQ_barrier_all( evQ );
         } else {
-            if ( m_my_pe == 0 ) {
-                printf("%d:%s: m_phase=%d\n",m_my_pe,getMotifName().c_str(),m_phase);
-            }
 
             if ( m_my_pe % 2 == 1 ) {
-                enQ_barrier( evQ, 1, 1, 4, m_addr );
+                enQ_barrier( evQ, 1, 1, m_num_pes/2, m_addr );
             }
         }
         ++m_phase;
+        if ( m_phase == m_count && 1 == m_my_pe ) {
+            printf("%d:%s: exit\n",m_my_pe, getMotifName().c_str());
+        }
 
         return m_phase == m_count;
 	}
 
   private:
     Hermes::MemAddr m_addr;
+	int m_num_pes;
     int m_my_pe;
     int m_phase;
     int m_count;

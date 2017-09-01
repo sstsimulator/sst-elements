@@ -69,7 +69,7 @@ void ShmemFcollect::state_2( int )
        only ever sent to next_proc and there's a shmem_fence
        between successive calls to the put above.  So a rolling
        counter is safe here. */
-    m_api.fadd( m_retval, m_pSync, m_one, next_proc(), 
+    m_api.add( m_pSync, m_one, next_proc(), 
                   std::bind( &ShmemFcollect::state_3, this, std::placeholders::_1 ));  
     //shmem_internal_atomic_small(pSync, &one, sizeof(long), next_proc, SHM_INTERNAL_SUM, SHM_INTERNAL_LONG);
 }

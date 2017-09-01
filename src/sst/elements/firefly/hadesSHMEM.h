@@ -148,7 +148,7 @@ class HadesSHMEM : public Shmem::Interface
     virtual void alltoalls( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize, 
                         int PE_start, int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start,
-                        int logPE_stride, int PE_size, Vaddr pWrk, Vaddr pSync,
+                        int logPE_stride, int PE_size, Vaddr pSync,
                         Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
 
     virtual void malloc(Hermes::MemAddr*,size_t,Shmem::Callback);
@@ -167,6 +167,7 @@ class HadesSHMEM : public Shmem::Interface
 
     virtual void cswap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& cond, Hermes::Value& value, int pe, Shmem::Callback);
     virtual void swap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& value, int pe, Shmem::Callback);
+    virtual void add(  Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
     virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
 
     void memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback ) {

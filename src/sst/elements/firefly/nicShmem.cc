@@ -168,6 +168,37 @@ void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
     m_nic.m_sendMachine[0]->run( entry );
 }
 
+void Nic::Shmem::add( NicShmemAddCmdEvent* event, int id )
+{
+    m_dbg.verbose(CALL_INFO,1,1,"Shmem: far=%" PRIx64" len=%lu\n", event->getFarAddr(), event->getLength() );
+
+    m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::FreeCmd, NULL );
+
+    if( event->getNode() == m_nic.getNodeId() ) {
+
+		assert(0);
+#if 0
+        Hermes::Value local( event->getDataType(), 
+                getBacking( event->getFarAddr(), event->getLength() ) );
+
+        m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::Putv, event->getCallback() );
+        local = event->getValue();
+        std::stringstream tmp;
+        tmp << local << " " << event->getValue();
+#endif
+
+	} else {
+    	ShmemAddSendEntry* entry = new ShmemAddSendEntry( id, event, 
+            [=]() {
+                m_dbg.verbose(CALL_INFO,1,1,"Nic::Shmem::add complete\n");
+                m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::Add, event->getCallback() );
+            } 
+    	); 
+
+    	m_nic.m_sendMachine[0]->run( entry );
+	}
+}
+
 void Nic::Shmem::fadd( NicShmemFaddCmdEvent* event, int id )
 {
     m_dbg.verbose(CALL_INFO,1,1,"Shmem: far=%" PRIx64" len=%lu\n", event->getFarAddr(), event->getLength() );

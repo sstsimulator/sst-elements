@@ -244,6 +244,12 @@ void VirtNic::shmemCswap( int node, Hermes::Vaddr dest, Hermes::Value& cond, Her
     sendCmd(0, new NicShmemCswapCmdEvent( calcCoreId(node), calcRealNicId(node), dest, cond, value, callback ) );
 }
 
+void VirtNic::shmemAdd( int node, Hermes::Vaddr dest, Hermes::Value& value, Callback callback )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    sendCmd(0, new NicShmemAddCmdEvent( calcCoreId(node), calcRealNicId(node), dest, value, callback ) );
+}
+
 void VirtNic::shmemFadd( int node, Hermes::Vaddr dest, Hermes::Value& value, CallbackV callback )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");

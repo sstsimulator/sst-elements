@@ -14,8 +14,8 @@
 // distribution.
 
 
-#ifndef _H_EMBER_SHMEM_CSWAP
-#define _H_EMBER_SHMEM_CSWAP
+#ifndef _H_EMBER_SHMEM_ADD
+#define _H_EMBER_SHMEM_ADD
 
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
@@ -25,11 +25,11 @@ namespace SST {
 namespace Ember {
 
 template< class TYPE >
-class EmberShmemCswapGenerator : public EmberShmemGenerator {
+class EmberShmemAddGenerator : public EmberShmemGenerator {
 
 public:
-    EmberShmemCswapGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemCswap" ), m_phase(0) 
+	EmberShmemAddGenerator(SST::Component* owner, Params& params) :
+		EmberShmemGenerator(owner, params, "ShmemAdd" ), m_phase(0) 
 	{ 
         int status;
         std::string tname = typeid(TYPE).name();
@@ -58,45 +58,33 @@ public:
 
         case 2:
             
-            if ( m_my_pe == 0 ) {
-                m_addr.at<TYPE>(0) = 10;
-            }
+            m_addr.at<TYPE>(0) = 10;
 
             enQ_barrier_all( evQ );
 
-            if ( m_my_pe == 1 ) {
-                m_value = 19; 
-				m_cond = 10; 
-				enQ_cswap( evQ, &m_result, m_addr, &m_cond, &m_value, 0 );
-            }
+			m_value = m_my_pe + 11; 
+            enQ_add( evQ, m_addr, &m_value, (m_my_pe + 1 ) % 2 );
+
             enQ_barrier_all( evQ );
             break;
 
         case 3:
-            if ( 0 == m_my_pe ) {
+			{
                 std::stringstream tmp;
-                tmp << " got="<< m_addr.at<TYPE>(0) << " want=" << 19;
-                printf("%d:%s: Fadd %s\n",m_my_pe, getMotifName().c_str(), tmp.str().c_str());
+                tmp << " got="<< m_addr.at<TYPE>(0) << " want=" <<  11 + 10 + (m_my_pe + 1 ) % 2;
+                printf("%d:%s: Add %s\n",m_my_pe, getMotifName().c_str(), tmp.str().c_str());
 
-                assert( m_addr.at<TYPE>(0) == 19 );
-            } else {
-                std::stringstream tmp;
-                tmp << " got="<< m_result << " want=" << 10;
-                printf("%d:%s: Fadd %s\n",m_my_pe, getMotifName().c_str(), tmp.str().c_str());
-
-                assert ( m_result == 10 ); 
-            }
+                assert( m_addr.at<TYPE>(0) == 11 + 10 + (m_my_pe + 1 ) % 2 );
+			}
 		    ret = true;
         }
         ++m_phase;
         return ret;
 	}
   private:
-	char* m_type_name;
+    char* m_type_name;
     Hermes::MemAddr m_addr;
     TYPE m_value;
-    TYPE m_result;
-    TYPE m_cond;
     int m_phase;
     int m_my_pe;
     int m_num_pes;

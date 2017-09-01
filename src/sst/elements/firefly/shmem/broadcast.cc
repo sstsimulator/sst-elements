@@ -80,7 +80,7 @@ void ShmemBroadcast::node_1(int)
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
     /* if complete, send ack */
     if ( m_complete) {
-        m_api.fadd( m_retval, m_pSync, m_one, m_parent,
+        m_api.add( m_pSync, m_one, m_parent,
                 std::bind( &ShmemBroadcast::node_2, this, std::placeholders::_1 ) );
         //shmem_internal_atomic_small(pSync, &one, sizeof(one), parent,
         //                                    SHM_INTERNAL_SUM, SHM_INTERNAL_LONG);
@@ -186,7 +186,7 @@ void ShmemBroadcast::leaf_1(int v)
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
     /* if complete, send ack */
     if (m_complete) {
-        m_api.fadd( m_retval, m_pSync, m_one, m_parent,
+        m_api.add( m_pSync, m_one, m_parent,
                 std::bind( &ShmemBroadcast::leaf_2, this, std::placeholders::_1 ) );
         //shmem_internal_atomic_small(pSync, &one, sizeof(one), parent, SHM_INTERNAL_SUM, SHM_INTERNAL_LONG);
     } else {

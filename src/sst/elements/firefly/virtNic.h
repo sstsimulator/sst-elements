@@ -168,6 +168,7 @@ class VirtNic : public SST::Module {
 
     void shmemSwap( int node, Hermes::Vaddr dest, Hermes::Value& value, CallbackV );
     void shmemCswap( int node, Hermes::Vaddr dest, Hermes::Value& cond, Hermes::Value& value, CallbackV );
+    void shmemAdd( int node, Hermes::Vaddr dest, Hermes::Value&, Callback );
     void shmemFadd( int node, Hermes::Vaddr dest, Hermes::Value&, CallbackV );
 
     void setNotifyOnRecvDmaDone(

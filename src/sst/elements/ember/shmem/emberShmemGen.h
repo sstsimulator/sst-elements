@@ -43,6 +43,7 @@
 #include "emberShmemCswapEv.h"
 #include "emberShmemSwapEv.h"
 #include "emberShmemFaddEv.h"
+#include "emberShmemAddEv.h"
 
 using namespace Hermes;
 
@@ -94,7 +95,7 @@ protected:
 
 #define declareOp( type, op) \
     inline void enQ_##type##_##op##_to_all( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, int nelmes, \
-            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pWrk, Hermes::MemAddr pSync );\
+            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync );\
 
 #define declareMathOps( op )\
     declareOp( short, op )\
@@ -138,7 +139,10 @@ protected:
     inline void enQ_put( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
 
     template <class TYPE>
+    inline void enQ_add( Queue&, Hermes::MemAddr, TYPE*, int pe );
+    template <class TYPE>
     inline void enQ_fadd( Queue&, TYPE*, Hermes::MemAddr, TYPE*, int pe );
+
 
     template <class TYPE>
     inline void enQ_swap( Queue&, TYPE*, Hermes::MemAddr, TYPE* value, int pe );
@@ -282,12 +286,12 @@ void EmberShmemGenerator::enQ_alltoalls64( Queue& q, Hermes::MemAddr dest, Herme
 
 #define defineReduce( type1, type2, op1, op2 ) \
 void EmberShmemGenerator::enQ_##type1##_##op1##_to_all( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, int nelems, \
-            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pWrk, Hermes::MemAddr pSync )\
+            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )\
 {\
     verbose(CALL_INFO,2,0,"\n");\
     q.push( new EmberReductionShmemEvent( *shmem_cast(m_api), &getOutput(), \
                     dest.getSimVAddr(), src.getSimVAddr(), nelems, PE_start, logPE_stride, \
-                    PE_size, pWrk.getSimVAddr(), pSync.getSimVAddr(), Hermes::Shmem::op2, Hermes::Value::type2 ) ); \
+                    PE_size, pSync.getSimVAddr(), Hermes::Shmem::op2, Hermes::Value::type2 ) ); \
 }\
 
 #define defineBitOp( op1, op2 ) \
@@ -381,6 +385,15 @@ void EmberShmemGenerator::enQ_wait_until( Queue& q, Hermes::MemAddr addr, Hermes
     verbose(CALL_INFO,2,0,"\n");
     q.push( new EmberWaitShmemEvent( *shmem_cast(m_api), &getOutput(),  
                 addr.getSimVAddr(), op, Hermes::Value( (TYPE) value ) ) );
+}
+
+template <class TYPE>
+void EmberShmemGenerator::enQ_add( Queue& q, Hermes::MemAddr addr, TYPE* value,  
+       int pe )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberAddShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                addr.getSimVAddr(), Hermes::Value(value), pe ) );
 }
 
 template <class TYPE>

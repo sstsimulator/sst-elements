@@ -69,6 +69,7 @@ class ShmemGetvSendEntry: public ShmemRespSendEntry {
     Callback  m_callback;
 };
 
+
 class ShmemFaddSendEntry: public ShmemRespSendEntry {
   public:
     typedef std::function<void(Hermes::Value&)> Callback;
@@ -206,6 +207,17 @@ class ShmemPutvSendEntry: public ShmemPutSendEntry  {
         ShmemPutSendEntry( local_vNic, event, callback )
     {
         m_shmemMove = new ShmemSendMoveMem( event->getBacking(), event->getLength() );
+    }
+};
+
+class ShmemAddSendEntry: public ShmemPutvSendEntry {
+  public:
+    ShmemAddSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback  ) :
+
+        ShmemPutvSendEntry( local_vNic, event, callback )
+    { 
+        m_hdr.op = ShmemMsgHdr::Add; 
+        m_hdr.dataType = event->getDataType();
     }
 };
 
