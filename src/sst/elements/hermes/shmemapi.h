@@ -73,6 +73,7 @@ class Interface : public Hermes::Interface {
     virtual void cswap( Value& result, Vaddr, Value& cond, Value& value, int pe, Callback) { assert(0); }
     virtual void swap( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
     virtual void fadd( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
+    virtual void add( Vaddr, Value&, int pe, Callback) { assert(0); }
 };
 
 }
