@@ -48,13 +48,15 @@ detailedModelParams = ""
 simConfig = ""
 platParams = ""
 
+motifAPI='HadesMP'
+
 motifDefaults = { 
 	'cmd' : "",
 	'printStats' : 0, 
-	'spyplotmode': 0 
+	'spyplotmode': 0,
+	'api': motifAPI, 
 }
 
-motifAPI='HadesMP'
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
