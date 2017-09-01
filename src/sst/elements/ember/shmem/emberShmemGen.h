@@ -43,6 +43,7 @@
 #include "emberShmemCswapEv.h"
 #include "emberShmemSwapEv.h"
 #include "emberShmemFaddEv.h"
+#include "emberShmemAddEv.h"
 
 using namespace Hermes;
 
@@ -138,7 +139,10 @@ protected:
     inline void enQ_put( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
 
     template <class TYPE>
+    inline void enQ_add( Queue&, Hermes::MemAddr, TYPE*, int pe );
+    template <class TYPE>
     inline void enQ_fadd( Queue&, TYPE*, Hermes::MemAddr, TYPE*, int pe );
+
 
     template <class TYPE>
     inline void enQ_swap( Queue&, TYPE*, Hermes::MemAddr, TYPE* value, int pe );
@@ -381,6 +385,15 @@ void EmberShmemGenerator::enQ_wait_until( Queue& q, Hermes::MemAddr addr, Hermes
     verbose(CALL_INFO,2,0,"\n");
     q.push( new EmberWaitShmemEvent( *shmem_cast(m_api), &getOutput(),  
                 addr.getSimVAddr(), op, Hermes::Value( (TYPE) value ) ) );
+}
+
+template <class TYPE>
+void EmberShmemGenerator::enQ_add( Queue& q, Hermes::MemAddr addr, TYPE* value,  
+       int pe )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberAddShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                addr.getSimVAddr(), Hermes::Value(value), pe ) );
 }
 
 template <class TYPE>
