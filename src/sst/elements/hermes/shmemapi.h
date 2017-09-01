@@ -57,7 +57,7 @@ class Interface : public Hermes::Interface {
     virtual void alltoalls( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize,
             int PE_start, int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
     virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start, 
-            int logPE_stride, int PE_size, Vaddr pWrk, Vaddr pSync, 
+            int logPE_stride, int PE_size, Vaddr pSync, 
             ReduOp, Hermes::Value::Type, Callback) { assert(0); }
 
     virtual void malloc(MemAddr*, size_t, Callback) { assert(0); }
