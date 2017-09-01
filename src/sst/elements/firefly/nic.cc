@@ -283,6 +283,9 @@ void Nic::handleShmemEvent( NicShmemCmdEvent* event, int id )
     case NicShmemCmdEvent::Wait:
         m_shmem->wait( static_cast< NicShmemOpCmdEvent*>(event), id );
         break;
+    case NicShmemCmdEvent::Add:
+        m_shmem->add( static_cast< NicShmemAddCmdEvent*>(event), id );
+        break;
     case NicShmemCmdEvent::Fadd:
         m_shmem->fadd( static_cast< NicShmemFaddCmdEvent*>(event), id );
         break;

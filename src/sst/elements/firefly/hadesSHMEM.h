@@ -167,6 +167,7 @@ class HadesSHMEM : public Shmem::Interface
 
     virtual void cswap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& cond, Hermes::Value& value, int pe, Shmem::Callback);
     virtual void swap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& value, int pe, Shmem::Callback);
+    virtual void add(  Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
     virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
 
     void memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback ) {

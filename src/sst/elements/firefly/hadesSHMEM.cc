@@ -388,6 +388,27 @@ void HadesSHMEM::cswap(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value&
     );
 }
 
+void HadesSHMEM::add( Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::Callback callback)
+{
+    std::stringstream tmp;
+    tmp << value;
+    dbg().verbose(CALL_INFO,1,1,"addr=%#" PRIx64 " val=%s\n",addr, tmp.str().c_str());
+
+    m_os->getNic()->shmemBlocked(
+        [=]() { 
+            this->dbg().verbose(CALL_INFO,1,1,"\n");
+            Hermes::Value _value = value;
+            this->m_os->getNic()->shmemAdd( pe, addr, _value, 
+
+                [=]( ) {
+                    this->dbg().verbose(CALL_INFO,1,1,"\n");
+
+                    this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+                }
+            );
+        }
+    );
+}
 void HadesSHMEM::fadd(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::Callback callback)
 {
     std::stringstream tmp;

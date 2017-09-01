@@ -92,6 +92,7 @@ class Shmem {
     void putv( NicShmemPutvCmdEvent*, int id );
     void get( NicShmemGetCmdEvent*, int id );
     void getv( NicShmemGetvCmdEvent*, int id );
+    void add( NicShmemAddCmdEvent*, int id );
     void fadd( NicShmemFaddCmdEvent*, int id );
     void cswap( NicShmemCswapCmdEvent*, int id );
     void swap( NicShmemSwapCmdEvent*, int id );
