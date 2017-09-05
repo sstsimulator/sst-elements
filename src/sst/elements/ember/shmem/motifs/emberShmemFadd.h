@@ -33,7 +33,9 @@ public:
 	{ 
         int status;
         std::string tname = typeid(TYPE).name();
-        m_type_name = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+        m_type_name = tmp;
+		free(tmp);
 	}
 
     bool generate( std::queue<EmberEvent*>& evQ) 
@@ -50,7 +52,7 @@ public:
 
             if ( 0 == m_my_pe ) {
                 printf("%d:%s: num_pes=%d type=\"%s\"\n",m_my_pe,
-                        getMotifName().c_str(), m_num_pes, m_type_name);
+                        getMotifName().c_str(), m_num_pes, m_type_name.c_str());
             }
 			assert( 2 == m_num_pes );
             enQ_malloc( evQ, &m_addr, sizeof(TYPE) );
@@ -92,7 +94,7 @@ public:
         return ret;
 	}
   private:
-    char* m_type_name;
+    std::string  m_type_name;
     Hermes::MemAddr m_addr;
     TYPE m_value;
     TYPE m_result;
