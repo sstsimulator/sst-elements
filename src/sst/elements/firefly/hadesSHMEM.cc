@@ -36,6 +36,17 @@ HadesSHMEM::HadesSHMEM(Component* owner, Params& params) :
     m_heap = new Heap(true);
 }
 
+HadesSHMEM::~HadesSHMEM() { 
+	delete m_heap; 
+	delete m_common;
+	delete m_barrier;
+	delete m_broadcast;
+	delete m_collect;
+	delete m_fcollect;
+	delete m_alltoall;
+	delete m_alltoalls;
+	delete m_reduction;
+}
 
 void HadesSHMEM::setup()
 {

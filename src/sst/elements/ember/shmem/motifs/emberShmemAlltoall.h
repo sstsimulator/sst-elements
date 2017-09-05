@@ -35,7 +35,9 @@ public:
         m_printResults = params.find<bool>("arg.printResults", false );
         int status;
         std::string tname = typeid(TYPE).name();
-        m_type_name = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+		char * tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+        m_type_name = tmp;
+		free(tmp); 
 		m_PE_start = params.find<int>("arg.PE_start", 0 );
 		m_logPE_stride = params.find<int>("arg.logPE_stride", 0 );
 
@@ -68,7 +70,7 @@ public:
           case 1:
 			m_PE_size = calcPE_size();
 			if ( 0 == m_my_pe ) {
-            	printf("%d:%s: num_pes=%d nelems=%d type=\"%s\"\n",m_my_pe, getMotifName().c_str(), m_num_pes, m_nelems, m_type_name);
+            	printf("%d:%s: num_pes=%d nelems=%d type=\"%s\"\n",m_my_pe, getMotifName().c_str(), m_num_pes, m_nelems, m_type_name.c_str());
 				printf("%d:%s: PE_start=%d logPE_stride=%d PE_size=%d\n", m_my_pe, getMotifName().c_str(), m_PE_start, m_logPE_stride, m_PE_size );
 			}
             { 
@@ -146,7 +148,7 @@ public:
 	int m_logPE_stride;
 	int m_PE_size;;
 	bool m_printResults;
-	char* m_type_name;
+	std::string m_type_name;
     Hermes::MemAddr m_pSync;
     Hermes::MemAddr m_src;
     Hermes::MemAddr m_dest;

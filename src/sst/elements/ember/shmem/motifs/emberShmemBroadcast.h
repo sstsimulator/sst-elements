@@ -36,7 +36,9 @@ public:
 		m_root = params.find<int>("arg.root", 0 );
     	int status;
     	std::string tname = typeid(TYPE).name();
-    	m_type_name = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+    	m_type_name = tmp;
+		free(tmp);
 
 		assert( 4 == sizeof(TYPE) || 8 == sizeof(TYPE) ); 	
     }
@@ -55,7 +57,7 @@ public:
 
             if ( 0 == m_my_pe ) {
                 printf("%d:%s: num_pes=%d nelems=%d type=\"%s\" root=%d\n",m_my_pe, 
-						getMotifName().c_str(), m_num_pes, m_nelems, m_type_name,m_root);
+						getMotifName().c_str(), m_num_pes, m_nelems, m_type_name.c_str(),m_root);
 				assert( m_root < m_num_pes ); 
             }
             {
@@ -117,7 +119,7 @@ public:
 
   private:
 	bool m_printResults;
-	char* m_type_name;
+	std::string m_type_name;
     Hermes::MemAddr m_pSync;
     Hermes::MemAddr m_src;
     Hermes::MemAddr m_dest;
