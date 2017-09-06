@@ -168,7 +168,7 @@ public:
     SendEntryBase* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
     EntryBase* findRecv( int srcNode, MsgHdr&, int tag );
 
-    Hermes::MemAddr findShmem( Hermes::Vaddr  addr, size_t length );
+    Hermes::MemAddr findShmem( int core, Hermes::Vaddr  addr, size_t length );
 
     void schedEvent( SelfEvent* event, int delay = 0 ) {
         m_selfLink->send( delay, event );
