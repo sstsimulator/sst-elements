@@ -91,7 +91,7 @@ bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std
     }
 
     if ( m_addr + m_offset ) { 
-        m_shmem->checkWaitOps( m_addr, length );
+        m_shmem->checkWaitOps( m_core, m_addr, length );
     }
 
     event.bufPop(length);
@@ -153,7 +153,7 @@ bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, s
                 m_op,tmp1.str().c_str(), tmp2.str().c_str(), tmp3.str().c_str());
 #endif
 
-        m_shmem->checkWaitOps( m_addr + m_offset, dataLength );
+        m_shmem->checkWaitOps( m_core, m_addr + m_offset, dataLength );
         event.bufPop(dataLength);
         m_offset += dataLength;
     }

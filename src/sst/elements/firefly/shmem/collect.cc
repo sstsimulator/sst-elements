@@ -22,7 +22,7 @@ using namespace Firefly;
 void ShmemCollect::start( Vaddr dest, Vaddr source, size_t nelems, int PE_start, int logPE_stride,
         int PE_size, Hermes::Vaddr pSync, Hermes::MemAddr* scratch, Hermes::Shmem::Callback callback )
 {
-    printf(":%d:%s():%d nelems=%lu PE_start=%d stride=%d\n",
+    printf(":%d:%s():%d collect nelems=%lu PE_start=%d stride=%d\n",
             my_pe(),__func__,__LINE__,nelems,PE_start,logPE_stride);
 
     m_dest = dest;

@@ -22,7 +22,7 @@ using namespace Firefly;
 void ShmemBarrier::start( int PE_start, int logPE_stride, int PE_size, 
         Hermes::Vaddr pSync, Hermes::Shmem::Callback returnCallback )
 {
-    printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
+    printf(":%d:%s():%d barrier\n",my_pe(),__func__,__LINE__);
 
     if ( 1 == PE_size ) {
         m_api.delay(returnCallback,0,0);
@@ -98,6 +98,7 @@ void ShmemBarrier::root_2( int )
         callback =  std::bind( &ShmemBarrier::root_2, this, std::placeholders::_1 );
     } else {
         //callback =  std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 );
+    	printf(":%d:%s():%d barrier done\n",my_pe(),__func__,__LINE__);
         callback =  m_returnCallback;
     }
 
@@ -160,6 +161,7 @@ void ShmemBarrier::node_4( int )
         callback =  std::bind( &ShmemBarrier::node_4, this, std::placeholders::_1 );
     } else {
         //callback =  std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 );
+    	printf(":%d:%s():%d barrier done\n",my_pe(),__func__,__LINE__);
         callback = m_returnCallback;
     }
 
@@ -212,7 +214,7 @@ void ShmemBarrier::leaf_2( int )
 
 void ShmemBarrier::leaf_3( int )
 {
-    printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
+    printf(":%d:%s():%d barrier done\n",my_pe(),__func__,__LINE__);
     m_api.wait_until( m_pSync, Shmem::EQ, m_zero, m_returnCallback ); 
 //           std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 ) );
 #if 0

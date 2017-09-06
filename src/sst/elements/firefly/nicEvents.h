@@ -215,6 +215,7 @@ class NicShmemAddCmdEvent : public NicShmemSendCmdEvent {
     void* getBacking()          override { return data.getPtr(); } 
     Callback getCallback()      { return callback; } 
     Hermes::Value::Type getDataType() override { return data.getType(); }
+    Hermes::Value& getValue() { return data; }
 
     Callback        callback;
   private:
@@ -236,8 +237,10 @@ class NicShmemFaddCmdEvent : public NicShmemSendCmdEvent {
     void* getBacking()          override { return data.getPtr(); } 
     Callback getCallback()      { return callback; } 
     Hermes::Value::Type getDataType() override { return data.getType(); }
+    Hermes::Value& getValue() { return data; }
 
     Callback        callback;
+
   private:
 
     Hermes::Vaddr   srcAddr;
@@ -257,8 +260,11 @@ class NicShmemSwapCmdEvent : public NicShmemSendCmdEvent {
     void* getBacking() override { return data.getPtr(); } 
     Callback getCallback()      { return callback; } 
     Hermes::Value::Type   getDataType() override { return data.getType(); }
+    Hermes::Value& getValue() { return data; }
 
     Callback        callback;
+
+  private:
     Hermes::Vaddr   srcAddr;
     Hermes::Value  data;
 
@@ -276,9 +282,13 @@ class NicShmemCswapCmdEvent : public NicShmemSendCmdEvent {
     void* getBacking()          override { return data.getPtr(); } 
     Callback getCallback()      { return callback; } 
     Hermes::Value::Type   getDataType() override { return data.getType(); }
+    Hermes::Value& getValue() { return data; }
+    Hermes::Value& getCond() { return cond; }
 
 
     Callback        callback;
+
+ private:
     Hermes::Vaddr   srcAddr;
     Hermes::Value  data;
     Hermes::Value  cond;

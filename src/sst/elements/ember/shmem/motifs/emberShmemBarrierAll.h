@@ -48,7 +48,7 @@ public:
             printf("%d:%s: exit\n",m_my_pe, getMotifName().c_str());
         }
 
-        return m_phase == m_count;
+        return m_phase == m_count + 1;
 	}
 
   private:

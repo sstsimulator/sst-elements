@@ -36,7 +36,7 @@ Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, FireflyNetworkEvent*
     switch ( m_shmemHdr.op ) { 
         
       case ShmemMsgHdr::Put: 
-        callback = processPut( m_shmemHdr, ev );
+        callback = processPut( m_shmemHdr, ev, m_hdr.dst_vNicId, m_hdr.src_vNicId );
         break;
 
       case ShmemMsgHdr::Get: 
@@ -66,7 +66,7 @@ Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, FireflyNetworkEvent*
     m_rm.nic().schedCallback( callback, 0 );
 }
 
-Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processPut( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev )
+Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processPut( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_vNic, int dest_vNic )
 {
 
     // this is not a get response
@@ -74,12 +74,12 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processPu
         m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length);
         
-        Hermes::MemAddr addr = m_rm.nic().findShmem( hdr.vaddr, hdr.length ); 
+        Hermes::MemAddr addr = m_rm.nic().findShmem( local_vNic, hdr.vaddr, hdr.length ); 
 
         if ( hdr.op2 == Hermes::Shmem::MOVE ) {
-            m_recvEntry = new ShmemRecvEntry( m_rm.m_nic.m_shmem, addr, hdr.length );
+            m_recvEntry = new ShmemRecvEntry( m_rm.m_nic.m_shmem, local_vNic, addr, hdr.length );
         }else{
-            m_recvEntry = new ShmemRecvEntry( m_rm.m_nic.m_shmem, addr, hdr.length,
+            m_recvEntry = new ShmemRecvEntry( m_rm.m_nic.m_shmem, local_vNic, addr, hdr.length,
                                 (Hermes::Shmem::ReduOp) hdr.op2, 
                                 (Hermes::Value::Type) hdr.dataType );
         } 
@@ -98,9 +98,9 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processPu
         } else {
             Hermes::Vaddr addr = static_cast<NicShmemGetCmdEvent*>(entry->getCmd())->getMyAddr();
 
-            Hermes::MemAddr memAddr = m_rm.nic().findShmem( addr, hdr.length ); 
+            Hermes::MemAddr memAddr = m_rm.nic().findShmem( local_vNic, addr, hdr.length ); 
 
-            m_recvEntry = new ShmemGetbRespRecvEntry( m_rm.m_nic.m_shmem, hdr.length, static_cast<ShmemGetbSendEntry*>(entry), 
+            m_recvEntry = new ShmemGetbRespRecvEntry( m_rm.m_nic.m_shmem, local_vNic, hdr.length, static_cast<ShmemGetbSendEntry*>(entry), 
                     memAddr.getBacking() );
         }
     }
@@ -114,7 +114,7 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processGe
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%#" PRIx64 "\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
 
-    Hermes::MemAddr addr = m_rm.nic().findShmem( hdr.vaddr, hdr.length ); 
+    Hermes::MemAddr addr = m_rm.nic().findShmem( local_vNic, hdr.vaddr, hdr.length ); 
 
     m_rm.nic().m_sendMachine[0]->run( new ShmemPut2SendEntry( local_vNic, ev->src, dest_vNic, addr.getBacking(), 
                 hdr.length, hdr.respKey ) );
@@ -126,7 +126,7 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processAd
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%#" PRIx64 "\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
-    Hermes::MemAddr addr = m_rm.nic().findShmem( hdr.vaddr, hdr.length ); 
+    Hermes::MemAddr addr = m_rm.nic().findShmem( local_vNic, hdr.vaddr, hdr.length ); 
 
     assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) );
 
@@ -135,7 +135,7 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processAd
 
     local += got;
 
-    m_rm.m_nic.m_shmem->checkWaitOps( addr.getSimVAddr(), local.getLength() );
+    m_rm.m_nic.m_shmem->checkWaitOps( local_vNic, addr.getSimVAddr(), local.getLength() );
 
 	m_matched_len = hdr.length;
 
@@ -146,7 +146,7 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processFa
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%#" PRIx64 "\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
-    Hermes::MemAddr addr = m_rm.nic().findShmem( hdr.vaddr, hdr.length ); 
+    Hermes::MemAddr addr = m_rm.nic().findShmem( local_vNic, hdr.vaddr, hdr.length ); 
 
     assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) );
 
@@ -158,7 +158,7 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processFa
 
     local += got;
 
-    m_rm.m_nic.m_shmem->checkWaitOps( addr.getSimVAddr(), local.getLength() );
+    m_rm.m_nic.m_shmem->checkWaitOps( local_vNic, addr.getSimVAddr(), local.getLength() );
 
     m_rm.nic().m_sendMachine[0]->run( new ShmemPut2SendEntry( local_vNic, ev->src, dest_vNic, save, hdr.respKey ) );
 
@@ -169,7 +169,7 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processSw
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%#" PRIx64 "\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
-    Hermes::MemAddr addr = m_rm.nic().findShmem( hdr.vaddr, hdr.length ); 
+    Hermes::MemAddr addr = m_rm.nic().findShmem( local_vNic, hdr.vaddr, hdr.length ); 
 
     assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) );
 
@@ -188,7 +188,7 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processCs
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%#" PRIx64 "\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
-    Hermes::MemAddr addr = m_rm.nic().findShmem( hdr.vaddr, hdr.length ); 
+    Hermes::MemAddr addr = m_rm.nic().findShmem( local_vNic, hdr.vaddr, hdr.length ); 
 
     assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) * 2 );
 
