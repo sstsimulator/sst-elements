@@ -101,18 +101,18 @@ Nic::Nic(ComponentId_t id, Params &params) :
     }
     m_recvM.resize( m_num_vNics );
 
-    m_shmem = new Shmem( *this, m_dbg );
+    m_shmem = new Shmem( *this, m_num_vNics, m_dbg );
 
     m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
                 rxMatchDelay, hostReadDelay, 
-                std::bind( &Shmem::findRegion, m_shmem, _1 ) ) );
+                std::bind( &Shmem::findRegion, m_shmem, _1, _2 ) ) );
     m_recvMachine.push_back( new CtlMsgRecvMachine( *this, 1, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
                 rxMatchDelay, hostReadDelay, 
-                std::bind( &Shmem::findRegion, m_shmem, _1 ) ) );
+                std::bind( &Shmem::findRegion, m_shmem, _1, _2 ) ) );
 
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
@@ -219,7 +219,7 @@ void Nic::handleVnicEvent( Event* ev, int id )
 {
     NicCmdBaseEvent* event = static_cast<NicCmdBaseEvent*>(ev);
 
-    m_dbg.verbose(CALL_INFO,3,1,"type=%d\n",event->base_type);
+    m_dbg.verbose(CALL_INFO,3,1,"core=%d type=%d\n",id,event->base_type);
     
     switch ( event->base_type ) {
     case NicCmdBaseEvent::Msg:
@@ -598,12 +598,12 @@ Nic::EntryBase* Nic::findRecv( int srcNode, MsgHdr& hdr, int tag  )
     return entry;
 }
 
-Hermes::MemAddr Nic::findShmem(  Hermes::Vaddr addr, size_t length )
+Hermes::MemAddr Nic::findShmem(  int core, Hermes::Vaddr addr, size_t length )
 {
-    std::pair<Hermes::MemAddr, size_t> region = m_shmem->findRegion( addr);
+    std::pair<Hermes::MemAddr, size_t> region = m_shmem->findRegion( core, addr);
 
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"found region Vaddr=%#" PRIx64 " length=%lu\n",
-        region.first.getSimVAddr(), region.second );
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"found region core=%d Vaddr=%#" PRIx64 " length=%lu\n",
+        core, region.first.getSimVAddr(), region.second );
 
     uint64_t offset =  addr - region.first.getSimVAddr();
 
