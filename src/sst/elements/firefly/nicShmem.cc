@@ -90,6 +90,8 @@ void Nic::Shmem::put( NicShmemPutCmdEvent* event, int id )
         memcpy( dest, src, event->getLength() );
 
         m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::Put, event->getCallback() );
+
+        delete event;
     } else {
 
         ShmemPutSendEntry* entry = new ShmemPutbSendEntry( id, event, getBacking( event->getMyAddr(), event->getLength() ), 
@@ -118,6 +120,7 @@ void Nic::Shmem::putv( NicShmemPutvCmdEvent* event, int id )
         local = event->getValue();
         std::stringstream tmp;
         tmp << local << " " << event->getValue();
+        delete event;
 
     } else {
 
@@ -185,6 +188,7 @@ void Nic::Shmem::add( NicShmemAddCmdEvent* event, int id )
         local = event->getValue();
         std::stringstream tmp;
         tmp << local << " " << event->getValue();
+        delete event
 #endif
 
 	} else {

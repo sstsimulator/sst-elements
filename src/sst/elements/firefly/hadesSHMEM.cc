@@ -24,7 +24,7 @@ using namespace SST::Firefly;
 using namespace Hermes;
 
 HadesSHMEM::HadesSHMEM(Component* owner, Params& params) :
-    Interface(owner)
+    Interface(owner), m_common( NULL )
 {
     m_dbg.init("@t:HadesSHMEM::@p():@l ",
         params.find<uint32_t>("verboseLevel",0),
@@ -36,6 +36,19 @@ HadesSHMEM::HadesSHMEM(Component* owner, Params& params) :
     m_heap = new Heap(true);
 }
 
+HadesSHMEM::~HadesSHMEM() { 
+	delete m_heap; 
+	if ( m_common ) {
+		delete m_common;
+		delete m_barrier;
+		delete m_broadcast;
+		delete m_collect;
+		delete m_fcollect;
+		delete m_alltoall;
+		delete m_alltoalls;
+		delete m_reduction;
+	}
+}
 
 void HadesSHMEM::setup()
 {

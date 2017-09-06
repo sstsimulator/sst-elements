@@ -46,7 +46,9 @@ public:
         m_printResults = params.find<bool>("arg.printResults", false );
         int status;
         std::string tname = typeid(TYPE).name();
-        m_type_name = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+        m_type_name = tmp;
+		free(tmp);
 	}
 
     bool generate( std::queue<EmberEvent*>& evQ) 
@@ -62,7 +64,7 @@ public:
         case 1:
             if ( 0 == m_my_pe ) {
                 printf("%d:%s: num_pes=%d type=\"%s\"\n",m_my_pe,
-                        getMotifName().c_str(), m_num_pes, m_type_name);
+                        getMotifName().c_str(), m_num_pes, m_type_name.c_str());
                 assert( m_num_pes == 2 );
             }
             enQ_malloc( evQ, &m_src, sizeof(TYPE) );
@@ -95,7 +97,7 @@ public:
 	}
   private:
     bool m_printResults;
-    char* m_type_name;
+    std::string  m_type_name;
     Hermes::MemAddr m_src;
 	TYPE m_result;
     int m_phase;

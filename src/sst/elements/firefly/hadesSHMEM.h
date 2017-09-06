@@ -74,6 +74,15 @@ class HadesSHMEM : public Shmem::Interface
         };
       public:
         Heap( bool back = false ) : m_curAddr(0x1000), m_back(back) {}
+		~Heap() { 
+            std::map<Hermes::Vaddr,Entry>::iterator iter = m_map.begin();
+            for ( ; iter != m_map.end(); ++iter ) {
+                Entry& entry = iter->second;
+				if ( entry.addr.getBacking()  ) {
+                	::free( entry.addr.getBacking() );
+				}
+			}
+		}
         Hermes::MemAddr malloc( size_t n ) {
             Hermes::MemAddr addr( Hermes::MemAddr::Shmem );
             addr.setSimVAddr( m_curAddr );
@@ -115,7 +124,7 @@ class HadesSHMEM : public Shmem::Interface
 
   public:
     HadesSHMEM(Component*, Params&);
-    ~HadesSHMEM() { delete m_heap; }
+    ~HadesSHMEM();
 
     virtual void setup();
     virtual void finish() {}

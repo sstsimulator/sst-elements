@@ -130,11 +130,8 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processAd
 
     assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) );
 
-    Hermes::Value* save = new Hermes::Value( (Hermes::Value::Type)hdr.dataType );
     Hermes::Value local( (Hermes::Value::Type) hdr.dataType, addr.getBacking());
     Hermes::Value got( (Hermes::Value::Type) hdr.dataType, ev->bufPtr() );
-
-    *save = local;
 
     local += got;
 

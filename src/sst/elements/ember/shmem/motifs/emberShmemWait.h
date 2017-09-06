@@ -33,7 +33,9 @@ public:
 	{ 
         int status;
         std::string tname = typeid(TYPE).name();
-        m_type_name = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+        m_type_name = tmp;
+		free(tmp); 
 
         assert( 4 == sizeof(TYPE) || 8 == sizeof(TYPE) );
 	}
@@ -51,7 +53,7 @@ public:
         case 1:
 
             if ( 0 == m_my_pe ) {
-                printf("%d:%s: type=\"%s\"\n",m_my_pe, getMotifName().c_str(), m_type_name);
+                printf("%d:%s: type=\"%s\"\n",m_my_pe, getMotifName().c_str(), m_type_name.c_str());
             }
 			assert( 2 == m_n_pes );
             enQ_malloc( evQ, &m_addr, sizeof(TYPE) );
@@ -83,7 +85,7 @@ public:
         return ret;
 	}
   private:
-	char* m_type_name;
+	std::string m_type_name;
     Hermes::MemAddr m_addr;
     int m_phase;
     int m_my_pe;
