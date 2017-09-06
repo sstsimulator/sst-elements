@@ -100,7 +100,7 @@ class ShmemSwapSendEntry: public ShmemRespSendEntry {
     ShmemSwapSendEntry( int local_vNic, NicShmemSwapCmdEvent* event, Callback callback  ) :
         ShmemRespSendEntry( local_vNic, event ), m_callback(callback)
     {
-        m_shmemMove = new ShmemSendMoveValue( event->data );
+        m_shmemMove = new ShmemSendMoveValue( event->getValue() );
         m_hdr.op = ShmemMsgHdr::Swap; 
         m_hdr.dataType = m_event->getDataType();
     }
@@ -123,7 +123,7 @@ class ShmemCswapSendEntry: public ShmemRespSendEntry {
     ShmemCswapSendEntry( int local_vNic, NicShmemCswapCmdEvent* event, Callback callback  ) :
         ShmemRespSendEntry( local_vNic, event ), m_callback(callback)
     {
-        m_shmemMove = new ShmemSendMove2Value( event->data, event->cond );
+        m_shmemMove = new ShmemSendMove2Value( event->getValue(), event->getCond() );
         m_hdr.op = ShmemMsgHdr::Cswap; 
         m_hdr.dataType = m_event->getDataType();
     }

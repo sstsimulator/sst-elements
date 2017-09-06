@@ -31,7 +31,6 @@ class ShmemBarrier : ShmemCollective {
     void start( int PE_start, int logPE_stride, int PE_size, Hermes::Vaddr pSync, Hermes::Shmem::Callback );
   private:
 
-    //void fini( int x ) { ShmemCollective::fini( x ); }
     void not_leaf_0(int);
     void root_0(int);
     void root_1(int);

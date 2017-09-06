@@ -64,17 +64,17 @@ class PutRecvEntry : public RecvEntryBase {
 class ShmemRecvEntry : public RecvEntryBase {
   public:
 
-    ShmemRecvEntry( Shmem* shmem, Hermes::MemAddr addr, size_t length ) :
+    ShmemRecvEntry( Shmem* shmem, int core, Hermes::MemAddr addr, size_t length ) :
         RecvEntryBase()
     { 
-        m_shmemMove = new ShmemRecvMoveMem( addr.getBacking(), length, shmem, addr.getSimVAddr() );
+        m_shmemMove = new ShmemRecvMoveMem(  addr.getBacking(), length, shmem, core, addr.getSimVAddr() );
     }
 
-    ShmemRecvEntry( Shmem* shmem, Hermes::MemAddr addr, size_t length, 
+    ShmemRecvEntry( Shmem* shmem, int core, Hermes::MemAddr addr, size_t length, 
                         Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType ) :
         RecvEntryBase()
     { 
-        m_shmemMove = new ShmemRecvMoveMemOp( addr.getBacking(), length, shmem, addr.getSimVAddr(), op, dataType );
+        m_shmemMove = new ShmemRecvMoveMemOp( addr.getBacking(), length, shmem, core, addr.getSimVAddr(), op, dataType );
     }
     ~ShmemRecvEntry() { 
         delete m_shmemMove;
@@ -136,14 +136,14 @@ class ShmemGetvRespRecvEntry : public ShmemGetRespRecvEntry {
 class ShmemGetbRespRecvEntry : public ShmemGetRespRecvEntry {
   public:
 
-    ShmemGetbRespRecvEntry( Shmem* shmem, size_t length, ShmemGetbSendEntry* entry, void* backing ) :
+    ShmemGetbRespRecvEntry( Shmem* shmem, int core, size_t length, ShmemGetbSendEntry* entry, void* backing ) :
         ShmemGetRespRecvEntry( entry )
     { 
 
         NicShmemGetCmdEvent* cmd =    static_cast<NicShmemGetCmdEvent*>(entry->getCmd());
 
         assert( length ==  cmd->getLength() );
-        m_shmemMove = new ShmemRecvMoveMem( backing, length, shmem, cmd->getMyAddr() );
+        m_shmemMove = new ShmemRecvMoveMem( backing, length, shmem, core, cmd->getMyAddr() );
     }
 
     virtual void notify( int src_vNic, int src_node, int tag, size_t length ) {

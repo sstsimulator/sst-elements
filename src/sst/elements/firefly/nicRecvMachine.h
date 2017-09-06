@@ -56,7 +56,7 @@ class RecvMachine {
         RecvMachine( Nic& nic, int vc, int numVnics, 
                 int nodeId, int verboseLevel, int verboseMask,
                 int rxMatchDelay, int hostReadDelay, 
-                std::function<std::pair<Hermes::MemAddr,size_t>(uint64_t)> func ) :
+                std::function<std::pair<Hermes::MemAddr,size_t>(int,uint64_t)> func ) :
             m_nic(nic), 
             m_vc(vc), 
             m_rxMatchDelay( rxMatchDelay ),
@@ -155,7 +155,7 @@ class CtlMsgRecvMachine : public RecvMachine {
     CtlMsgRecvMachine( Nic& nic, int vc, int numVnics, 
                 int nodeId, int verboseLevel, int verboseMask,
                 int rxMatchDelay, int hostReadDelay, 
-                std::function<std::pair<Hermes::MemAddr,size_t>(uint64_t)> func ) :
+                std::function<std::pair<Hermes::MemAddr,size_t>(int,uint64_t)> func ) :
         RecvMachine( nic, vc, numVnics, nodeId, verboseLevel, verboseMask, rxMatchDelay, hostReadDelay, func )
     {}
 

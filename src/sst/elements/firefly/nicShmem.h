@@ -80,8 +80,11 @@ class Shmem {
     }; 
 
   public:
-    Shmem( Nic& nic, Output& output ) : m_nic( nic ), m_dbg(output) 
-    {}
+    Shmem( Nic& nic, int numVnics, Output& output ) : m_nic( nic ), m_dbg(output) 
+    {
+		m_regMem.resize( numVnics ); 
+		m_pendingOps.resize( numVnics );
+	}
     ~Shmem() {
         m_regMem.clear();
     }
@@ -98,16 +101,18 @@ class Shmem {
     void swap( NicShmemSwapCmdEvent*, int id );
     void fence( NicShmemCmdEvent*, int id );
 
-    void* getBacking( Hermes::Vaddr addr, size_t length ) {
-        return  m_nic.findShmem( addr, length ).getBacking();
+    void* getBacking( int core, Hermes::Vaddr addr, size_t length ) {
+        return  m_nic.findShmem( core, addr, length ).getBacking();
     }
-    void checkWaitOps( Hermes::Vaddr addr, size_t length );
+    void checkWaitOps( int core, Hermes::Vaddr addr, size_t length );
+	void doReduction( Hermes::Shmem::ReduOp op, unsigned char* dest, unsigned char* src, size_t length, Hermes::Value::Type );
 
-    std::pair<Hermes::MemAddr, size_t>& findRegion( uint64_t addr ) { 
-        for ( int i = 0; i < m_regMem.size(); i++ ) {
-            if ( addr >= m_regMem[i].first.getSimVAddr() &&
-                addr < m_regMem[i].first.getSimVAddr() + m_regMem[i].second ) {
-                return m_regMem[i]; 
+    std::pair<Hermes::MemAddr, size_t>& findRegion( int core, uint64_t addr ) { 
+//		printf("%s() core=%d %#" PRIx64 "\n",__func__,core,addr);
+        for ( int i = 0; i < m_regMem[core].size(); i++ ) {
+            if ( addr >= m_regMem[core][i].first.getSimVAddr() &&
+                addr < m_regMem[core][i].first.getSimVAddr() + m_regMem[core][i].second ) {
+                return m_regMem[core][i]; 
             } 
         } 
         assert(0);
@@ -116,6 +121,6 @@ class Shmem {
   private:
     Nic& m_nic;
     Output& m_dbg;
-    std::list<Op*> m_pendingOps;
-    std::vector< std::pair<Hermes::MemAddr, size_t> > m_regMem;
+    std::vector< std::list<Op*> > m_pendingOps;
+    std::vector<std::vector< std::pair<Hermes::MemAddr, size_t> > > m_regMem;
 };

@@ -19,7 +19,7 @@ class ShmemStream : public StreamBase {
     ShmemStream( Output&, FireflyNetworkEvent*, RecvMachine& );
 
   private:
-    Callback processPut( ShmemMsgHdr&, FireflyNetworkEvent* );
+    Callback processPut( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     Callback processGet( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     Callback processFadd( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     Callback processAdd( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );

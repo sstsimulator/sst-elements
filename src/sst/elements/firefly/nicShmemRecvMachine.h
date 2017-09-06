@@ -16,10 +16,10 @@
 class Shmem {
   public:
     Shmem( Output& output ) : m_dbg( output) {}
-    void init( std::function<std::pair<Hermes::MemAddr,size_t>(uint64_t)> func ) {
+    void init( std::function<std::pair<Hermes::MemAddr,size_t>(int,uint64_t)> func ) {
         m_findRegMem = func;
     }
   private:
     Output& m_dbg;
-    std::function<std::pair<Hermes::MemAddr,size_t>(uint64_t)> m_findRegMem;
+    std::function<std::pair<Hermes::MemAddr,size_t>(int,uint64_t)> m_findRegMem;
 };
