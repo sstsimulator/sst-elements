@@ -33,6 +33,7 @@
 #include "emberShmemAlltoallsEv.h"
 #include "emberShmemReductionEv.h"
 #include "emberShmemFenceEv.h"
+#include "emberShmemQuietEv.h"
 #include "emberShmemMallocEv.h"
 #include "emberShmemFreeEv.h"
 #include "emberShmemPutEv.h"
@@ -122,6 +123,7 @@ protected:
     declareMathOps( prod )
 
     inline void enQ_fence( Queue& );
+    inline void enQ_quiet( Queue& );
     inline void enQ_malloc( Queue&, Hermes::MemAddr*, size_t );
     inline void enQ_free( Queue&, Hermes::MemAddr );
 
@@ -322,6 +324,12 @@ void EmberShmemGenerator::enQ_fence( Queue& q )
 {
     verbose(CALL_INFO,2,0,"\n");
     q.push( new EmberFenceShmemEvent( *shmem_cast(m_api), &getOutput() ) );
+}
+
+void EmberShmemGenerator::enQ_quiet( Queue& q )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberQuietShmemEvent( *shmem_cast(m_api), &getOutput() ) );
 }
 
 
