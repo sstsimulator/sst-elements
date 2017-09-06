@@ -60,9 +60,9 @@ void HadesSHMEM::setup()
 
 void HadesSHMEM::init(Shmem::Callback callback)
 {
-    dbg().verbose(CALL_INFO,1,1,"\n");
     m_num_pes = m_os->getInfo()->getGroup(MP::GroupWorld)->getSize();
     m_my_pe = m_os->getInfo()->getGroup(MP::GroupWorld)->getMyRank();
+    dbg().verbose(CALL_INFO,1,1,"my_pe=%d num_pes=%d\n",m_my_pe,m_num_pes);
 
     m_common = new ShmemCommon( m_my_pe, m_num_pes, 10, 2 );
     m_barrier = new ShmemBarrier( *this, *m_common );
