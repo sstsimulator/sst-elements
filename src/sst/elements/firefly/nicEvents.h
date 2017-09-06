@@ -55,12 +55,24 @@ class NicCmdBaseEvent : public Event {
 class NicShmemCmdEvent : public NicCmdBaseEvent {
   public:
 
-    enum Type { RegMem, Fence, Put, Putv, Get, Getv, Wait, Add, Fadd, Swap, Cswap } type;
+    enum Type { Init, RegMem, Fence, Put, Putv, Get, Getv, Wait, Add, Fadd, Swap, Cswap } type;
 
     NicShmemCmdEvent( Type type ) :
         NicCmdBaseEvent( Shmem ), type(type) {}
 
     NotSerializable(NicShmemCmdEvent)
+};
+
+class NicShmemInitCmdEvent : public NicShmemCmdEvent {
+  public:
+    typedef std::function<void()> Callback;
+    NicShmemInitCmdEvent( Hermes::Vaddr addr, Callback callback ) :
+        NicShmemCmdEvent( Init ), addr(addr), callback(callback) {}
+
+    Hermes::Vaddr addr;
+    Callback      callback;
+
+    NotSerializable(NicShmemInitCmdEvent)
 };
 
 class NicShmemRegMemCmdEvent : public NicShmemCmdEvent {
@@ -347,7 +359,7 @@ class NicRespBaseEvent : public Event {
 class NicShmemRespBaseEvent : public NicCmdBaseEvent {
   public:
 
-    enum Type { RegMem, Fence, Put, Putv, Get, Getv, Wait, Add, Fadd, Swap, Cswap, FreeCmd } type;
+    enum Type { Init, RegMem, Fence, Put, Putv, Get, Getv, Wait, Add, Fadd, Swap, Cswap, FreeCmd } type;
 
     NicShmemRespBaseEvent( Type type ) : 
         NicCmdBaseEvent( Shmem ), type(type) {}

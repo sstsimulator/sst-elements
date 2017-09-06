@@ -28,9 +28,7 @@ Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, FireflyNetworkEvent*
     m_hdr = *(MsgHdr*) ev->bufPtr();
     m_shmemHdr = *(ShmemMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
 
-
     ev->bufPop(sizeof(MsgHdr) + sizeof(m_shmemHdr) );
-
 
     Callback callback;
     switch ( m_shmemHdr.op ) { 
@@ -59,11 +57,22 @@ Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, FireflyNetworkEvent*
         callback = processSwap( m_shmemHdr, ev, m_hdr.dst_vNicId, m_hdr.src_vNicId );
         break;
 
+      case ShmemMsgHdr::Ack: 
+        callback = processAck( m_shmemHdr, ev, m_hdr.dst_vNicId, m_hdr.src_vNicId );
+        break;
+
       default:
         assert(0);
         break;
     }
     m_rm.nic().schedCallback( callback, 0 );
+}
+
+Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processAck( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_vNic, int dest_vNic )
+{
+	m_rm.m_nic.shmemDecPending( local_vNic );
+
+    return std::bind( &Nic::RecvMachine::state_move_2, &m_rm, ev );
 }
 
 Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processPut( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_vNic, int dest_vNic )
@@ -106,6 +115,8 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processPu
     }
 	m_matched_len = hdr.length;
 
+	m_sendEntry = new ShmemAckSendEntry( local_vNic, ev->src, dest_vNic );
+
     return std::bind( &Nic::RecvMachine::state_move_0, &m_rm, ev, this );
 }
 
@@ -138,6 +149,8 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processAd
     m_rm.m_nic.m_shmem->checkWaitOps( local_vNic, addr.getSimVAddr(), local.getLength() );
 
 	m_matched_len = hdr.length;
+
+	m_sendEntry = new ShmemAckSendEntry( local_vNic, ev->src, dest_vNic );
 
     return std::bind( &Nic::RecvMachine::state_move_2, &m_rm, ev );
 }

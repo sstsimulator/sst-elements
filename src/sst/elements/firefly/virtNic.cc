@@ -180,6 +180,12 @@ void VirtNic::shmemBlocked( Callback callback ) {
     } 
 }
 
+void VirtNic::shmemInit( Hermes::Vaddr addr, Callback callback )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    sendCmd(0, new NicShmemInitCmdEvent( addr, callback ) );
+}
+
 void VirtNic::shmemRegMem( Hermes::MemAddr& addr, size_t len, Callback callback )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");

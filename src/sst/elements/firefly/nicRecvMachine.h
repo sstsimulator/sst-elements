@@ -21,7 +21,7 @@ class RecvMachine {
         class StreamBase {
           public:
             StreamBase(Output& output, RecvMachine& rm) : 
-                m_dbg(output), m_rm(rm),m_recvEntry(NULL)
+                m_dbg(output), m_rm(rm),m_recvEntry(NULL),m_sendEntry(NULL)
             {}
             virtual ~StreamBase() {
                 m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"notify \n");
@@ -29,6 +29,9 @@ class RecvMachine {
                     m_recvEntry->notify( m_hdr.src_vNicId, m_src, m_tag, m_matched_len );
                     delete m_recvEntry;
                 }
+				if ( m_sendEntry ) {
+					m_rm.m_nic.m_sendMachine[0]->run( m_sendEntry );	
+				}
             }
             virtual void processPkt( FireflyNetworkEvent* ev ) {
                 m_rm.state_move_0( ev, this );
@@ -38,6 +41,7 @@ class RecvMachine {
           protected:
             Output&         m_dbg;
             RecvMachine&    m_rm;
+			SendEntryBase*  m_sendEntry;
             RecvEntryBase*  m_recvEntry;
             MsgHdr          m_hdr;
             int             m_src;

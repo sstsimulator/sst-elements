@@ -24,7 +24,7 @@ using namespace SST::Firefly;
 using namespace Hermes;
 
 HadesSHMEM::HadesSHMEM(Component* owner, Params& params) :
-    Interface(owner), m_common( NULL )
+	Interface(owner), m_common( NULL ), m_zero((long)0)
 {
     m_dbg.init("@t:HadesSHMEM::@p():@l ",
         params.find<uint32_t>("verboseLevel",0),
@@ -72,14 +72,23 @@ void HadesSHMEM::init(Shmem::Callback callback)
     m_alltoall = new ShmemAlltoall( *this, *m_common );
     m_alltoalls = new ShmemAlltoalls( *this, *m_common );
     m_reduction = new ShmemReduction( *this, *m_common );
-    m_localDataSize = sizeof(ShmemCollective::pSync_t) + sizeof(long) * 2;
+
+	// need space for global pSync, scratch for collect and pending remote operations count
+    m_localDataSize = sizeof(ShmemCollective::pSync_t) + sizeof(long) * 3;
 
     malloc( &m_localData, m_localDataSize, 
             [=]() { 
                 m_pSync = m_localData;
                 m_pSync.at<ShmemCollective::pSync_t>(0) = 0;
-                m_localScratch = m_pSync.offset<ShmemCollective::pSync_t>(1);
-                m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+                m_pendingRemoteOps = m_pSync.offset<ShmemCollective::pSync_t>(1);
+				m_pendingRemoteOps.at<long>(0) = 0;
+                m_localScratch = m_pendingRemoteOps.offset<long>(1);
+
+            	this->m_os->getNic()->shmemInit( m_pendingRemoteOps.getSimVAddr(), 
+                	[=]()  {
+    					m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+					} 
+				);
             }
     );
 }
@@ -165,35 +174,14 @@ void HadesSHMEM::reduction( Vaddr dest, Vaddr source, int nelems, int PE_start,
 void HadesSHMEM::quiet(Shmem::Callback callback)
 {
     dbg().verbose(CALL_INFO,1,1,"\n");
-    m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+
+	wait_until( m_pendingRemoteOps.getSimVAddr(), Shmem::EQ, m_zero, callback );
 }
 
 void HadesSHMEM::fence(Shmem::Callback callback)
 {
     dbg().verbose(CALL_INFO,1,1,"\n");
     m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
-#if 0
-    FunctionSM::Callback callback = [this, callback ] { 
-
-        this->dbg().verbose(CALL_INFO,1,1,"\n");
-
-        this->m_os->getNic()->shmemBlocked( 
-
-            [=]() { 
-                this->dbg().verbose(CALL_INFO,1,1,"\n");
-                this->m_os->getNic()->shmemFence( 
-                    [=]() {
-                        this->dbg().verbose(CALL_INFO,1,1,"\n");
-                        this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
-                    }
-                );
-            }
-        );
-    };
-
-    functionSM().start( FunctionSM::Barrier, callback,
-            new BarrierStartEvent( Hermes::MP::GroupWorld) );
-#endif
 }
 
 void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, Shmem::Callback callback )

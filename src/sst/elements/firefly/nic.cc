@@ -262,6 +262,9 @@ void Nic::handleMsgEvent( NicCmdEvent* event, int id )
 void Nic::handleShmemEvent( NicShmemCmdEvent* event, int id )
 {
     switch (event->type) {
+    case NicShmemCmdEvent::Init:
+        m_shmem->init( static_cast< NicShmemInitCmdEvent*>(event), id );
+        break;
     case NicShmemCmdEvent::Put:
         m_shmem->put( static_cast<NicShmemPutCmdEvent*>(event), id );
         break;

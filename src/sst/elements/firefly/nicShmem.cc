@@ -20,6 +20,20 @@
 using namespace SST;
 using namespace SST::Firefly;
 
+void Nic::Shmem::init( NicShmemInitCmdEvent* event, int id )
+{
+    m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::FreeCmd, NULL );
+
+    m_dbg.verbose(CALL_INFO,1,1,"Shmem: core=%d simVAddr=%" PRIx64 "\n", 
+            id, event->addr );
+
+	Hermes::Value local( Hermes::Value::Long, getBacking( id, event->addr, Hermes::Value::getLength( Hermes::Value::Long ) ) );
+	m_pendingRemoteOps[id] = std::make_pair( event->addr, local );
+
+    m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::Init, event->callback );
+
+    delete event;
+}
 void Nic::Shmem::regMem( NicShmemRegMemCmdEvent* event, int id )
 {
     m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::FreeCmd, NULL );
@@ -99,6 +113,12 @@ void Nic::Shmem::put( NicShmemPutCmdEvent* event, int id )
         delete event;
     } else {
 
+		m_pendingRemoteOps[id].second += m_one;
+
+        std::stringstream tmp;
+        tmp << m_pendingRemoteOps[id].second;
+    	m_dbg.verbose(CALL_INFO,1,1,"Nic::Shmem:: pendingRemoteOps=%s\n",tmp.str().c_str());
+
         ShmemPutSendEntry* entry = new ShmemPutbSendEntry( id, event, getBacking( id, event->getMyAddr(), event->getLength() ), 
             [=]() {
                 m_dbg.verbose(CALL_INFO,1,1,"Nic::Shmem::put complete\n");
@@ -130,6 +150,11 @@ void Nic::Shmem::putv( NicShmemPutvCmdEvent* event, int id )
         delete event;
 
     } else {
+
+		m_pendingRemoteOps[id].second += m_one;
+        std::stringstream tmp;
+        tmp << m_pendingRemoteOps[id].second;
+    	m_dbg.verbose(CALL_INFO,1,1,"Nic::Shmem:: pendingRemoteOps=%s\n",tmp.str().c_str());
 
         ShmemPutSendEntry* entry = new ShmemPutvSendEntry( id, event,
             [=]() {
@@ -218,6 +243,13 @@ void Nic::Shmem::add( NicShmemAddCmdEvent* event, int id )
         delete event;
 
 	} else {
+
+		m_pendingRemoteOps[id].second += m_one;
+
+        std::stringstream tmp;
+        tmp << m_pendingRemoteOps[id].second;
+    	m_dbg.verbose(CALL_INFO,1,1,"Nic::Shmem:: pendingRemoteOps=%s\n",tmp.str().c_str());
+
     	ShmemAddSendEntry* entry = new ShmemAddSendEntry( id, event, 
             [=]() {
                 m_dbg.verbose(CALL_INFO,1,1,"Nic::Shmem::add complete\n");
@@ -343,10 +375,6 @@ void Nic::Shmem::fence( NicShmemCmdEvent* event, int id )
 {
     m_dbg.verbose(CALL_INFO,1,1,"Shmem: \n");
     assert(0);
-#if 0
-    m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::Fence, NULL );
-    m_nic.getVirtNic(id)->notifyShmem( NicShmemRespEvent::Fence, event->callback );
-#endif
 }
 
 void Nic::Shmem::doReduction( Hermes::Shmem::ReduOp op, unsigned char* destPtr, unsigned char* srcPtr, size_t length, Hermes::Value::Type type )

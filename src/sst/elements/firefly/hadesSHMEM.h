@@ -204,11 +204,8 @@ class HadesSHMEM : public Shmem::Interface
     void handleToDriver(SST::Event* e) {
         dbg().verbose(CALL_INFO,1,1,"%p event=%p\n",this,e);
         DelayEvent* event = static_cast<DelayEvent*>(e);
-        //dbg().verbose(CALL_INFO,1,1,"\n");
         event->m_callback( event->m_retval );
-        //dbg().verbose(CALL_INFO,1,1,"\n");
         delete e;
-        //dbg().verbose(CALL_INFO,1,1,"event=%p\n",e);
     }
 
     FunctionSM& functionSM() { return m_os->getFunctionSM(); }
@@ -231,6 +228,8 @@ class HadesSHMEM : public Shmem::Interface
     Hermes::MemAddr  m_localData;
     Hermes::MemAddr  m_pSync;
     Hermes::MemAddr  m_localScratch;
+    Hermes::MemAddr  m_pendingRemoteOps;
+    Hermes::Value    m_zero;
 };
 
 }
