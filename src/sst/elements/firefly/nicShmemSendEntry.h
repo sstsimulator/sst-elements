@@ -36,6 +36,25 @@ class ShmemCmdSendEntry: public ShmemSendEntryBase {
     NicShmemSendCmdEvent* m_event;
 };
 
+class ShmemAckSendEntry: public ShmemSendEntryBase {
+  public:
+    ShmemAckSendEntry( int local_vNic, int dest_node, int dest_vNic  ) :
+        ShmemSendEntryBase( local_vNic ), m_dest_node(dest_node), m_dest_vNic(dest_vNic)
+    { 
+        m_hdr.op = ShmemMsgHdr::Ack; 
+    }
+    int dst_vNic() { return m_dest_vNic; }
+    int dest() { return m_dest_node; }
+    size_t totalBytes() { return 0; } 
+    bool isDone() { return true; }
+    virtual void copyOut( Output&, int vc, int numBytes, 
+            FireflyNetworkEvent&, std::vector<DmaVec>& ) {};
+  private:
+	int m_dest_vNic;
+	int m_dest_node;
+};
+
+
 class ShmemRespSendEntry: public ShmemCmdSendEntry {
   public:
     ShmemRespSendEntry( int local_vNic, NicShmemSendCmdEvent* event ) : 
@@ -209,6 +228,7 @@ class ShmemPutvSendEntry: public ShmemPutSendEntry  {
         m_shmemMove = new ShmemSendMoveMem( event->getBacking(), event->getLength() );
     }
 };
+
 
 class ShmemAddSendEntry: public ShmemPutvSendEntry {
   public:

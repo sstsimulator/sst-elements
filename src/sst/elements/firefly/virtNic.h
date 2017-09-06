@@ -153,6 +153,7 @@ class VirtNic : public SST::Module {
     void regMem( int node, int tag, std::vector<IoVec>& vec, void *key );
 
     void shmemBlocked( Callback );
+    void shmemInit( Hermes::Vaddr, Callback );
     void shmemRegMem( Hermes::MemAddr&, size_t len, Callback );
     void shmemFence( Callback );
 

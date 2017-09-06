@@ -80,15 +80,17 @@ class Shmem {
     }; 
 
   public:
-    Shmem( Nic& nic, int numVnics, Output& output ) : m_nic( nic ), m_dbg(output) 
+    Shmem( Nic& nic, int numVnics, Output& output ) : m_nic( nic ), m_dbg(output), m_one( (long) 1 )
     {
 		m_regMem.resize( numVnics ); 
 		m_pendingOps.resize( numVnics );
+		m_pendingRemoteOps.resize( numVnics );
 	}
     ~Shmem() {
         m_regMem.clear();
     }
 
+    void init( NicShmemInitCmdEvent*, int id );
     void regMem( NicShmemRegMemCmdEvent*, int id );
     void wait( NicShmemOpCmdEvent*, int id );
     void put( NicShmemPutCmdEvent*, int id );
@@ -100,6 +102,11 @@ class Shmem {
     void cswap( NicShmemCswapCmdEvent*, int id );
     void swap( NicShmemSwapCmdEvent*, int id );
     void fence( NicShmemCmdEvent*, int id );
+
+	void decPending( int core ) {
+		m_pendingRemoteOps[core].second -= m_one;
+		checkWaitOps( core, m_pendingRemoteOps[core].first, m_pendingRemoteOps[core].second.getLength() );
+	}	
 
     void* getBacking( int core, Hermes::Vaddr addr, size_t length ) {
         return  m_nic.findShmem( core, addr, length ).getBacking();
@@ -119,6 +126,8 @@ class Shmem {
     }
 
   private:
+	Hermes::Value m_one;
+	std::vector< std::pair< Hermes::Vaddr, Hermes::Value > > m_pendingRemoteOps;
     Nic& m_nic;
     Output& m_dbg;
     std::vector< std::list<Op*> > m_pendingOps;
