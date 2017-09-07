@@ -73,7 +73,8 @@ public:
             m_src = m_pSync.offset<long>(3);
 
             for ( int i = 0; i < m_nelems; i++ ) { 
-                m_src.at<TYPE>( i ) = ((TYPE) (m_my_pe + 1) << 32) | i + 1;
+                int shift = (sizeof(TYPE) * 8 )/ 2;
+                m_src.at<TYPE>( i ) = ((TYPE) (m_my_pe + 1) << shift) | i + 1;
             }
 
             m_dest = m_src.offset<TYPE>( m_nelems );
@@ -97,12 +98,13 @@ public:
 
           case 4:
             for ( int pe = 0; pe < m_num_pes; pe++ ) {
+                int shift = (sizeof(TYPE) * 8 )/ 2;
                 for ( int i = 0; i < m_nelems; i++ ) {
 					if ( m_printResults ) {
                     	printf("%d:%s: pe=%d i=%d %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), 
-                            pe, i, m_dest.at<TYPE>( pe * m_nelems + i));
+                            pe, i, (uint64_t) m_dest.at<TYPE>( pe * m_nelems + i));
 					}
-                    assert( m_dest.at<TYPE>( pe * m_nelems + i) == ( ((TYPE) (pe + 1) << 32) | i + 1  )  );
+                    assert( m_dest.at<TYPE>( pe * m_nelems + i) == ( ((TYPE) (pe + 1) << shift) | i + 1  )  );
                 }
             }
             ret = true;

@@ -100,7 +100,7 @@ public:
 				int shift = (sizeof(TYPE) * 8 )/ 2;
 				if ( m_my_pe != m_root ) {
 					if ( m_printResults ) {
-            			printf("%d:%s: %#lx\n",m_my_pe, getMotifName().c_str(), m_dest.at<TYPE>(i));
+            			printf("%d:%s: %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), (uint64_t) m_dest.at<TYPE>(i));
 					}
 
 					assert( (((TYPE)(m_root + 1) << shift) | i + 1 ) == m_dest.at<TYPE>(i) );

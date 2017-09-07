@@ -74,7 +74,7 @@ public:
 
         case 3:
             if ( m_my_pe == 0 ) {
-                printf("%d:%s: got %#x\n",m_my_pe, getMotifName().c_str(), m_addr.at<TYPE>(0));
+                printf("%d:%s: got %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), (uint64_t) m_addr.at<TYPE>(0));
 				assert( m_addr.at<TYPE>(0) == 0xdead0000 + ((  m_my_pe + 1 ) % m_n_pes ) );
             }
 
