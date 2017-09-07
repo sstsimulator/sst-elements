@@ -78,10 +78,10 @@ public:
 
         case 3:
             if ( 0 == m_my_pe ) {
-                printf("%d:%s: Swap result=%#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), m_addr.at<TYPE>(0));
+                printf("%d:%s: Swap result=%#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), (uint64_t) m_addr.at<TYPE>(0));
                 assert( m_addr.at<TYPE>(0) == 19 );
             } else {
-                printf("%d:%s: Swap result=%#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), m_result);
+                printf("%d:%s: Swap result=%#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), (uint64_t) m_result);
                 assert ( m_result == 10 ); 
             }
 		    ret = true;

@@ -102,7 +102,7 @@ public:
                 for ( int i = 0; i < m_nelems; i++ ) {
 					if ( m_printResults ) {
                     	printf("%d:%s: pe=%d i=%d %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), 
-                            pe, i, m_dest.at<TYPE>( pe * m_nelems + i));
+                            pe, i, (uint64_t) m_dest.at<TYPE>( pe * m_nelems + i));
 					}
                     assert( m_dest.at<TYPE>( pe * m_nelems + i) == ( ((TYPE) (pe + 1) << shift) | i + 1  )  );
                 }
