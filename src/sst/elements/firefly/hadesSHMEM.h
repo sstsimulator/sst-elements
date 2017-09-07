@@ -179,22 +179,12 @@ class HadesSHMEM : public Shmem::Interface
     virtual void add(  Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
     virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
 
-    void memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback ) {
-        dbg().verbose(CALL_INFO,1,1,"dest=%#" PRIx64 " src=%#" PRIx64 " length=%zu\n",dest,src,length);
-        if ( dest != src ) {
-            ::memcpy( m_heap->findBacking(dest), m_heap->findBacking(src), length );
-        }
-        m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
-    }
+    void memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback );
+    void delay( Shmem::Callback callback, uint64_t delay, int retval );
 
     void* getBacking( Hermes::Vaddr addr ) {
         return m_heap->findBacking(addr);
     }
-
-    void delay( Shmem::Callback callback, uint64_t delay, int retval ) {
-        //printf("%s() delay=%lu retval=%d\n",__func__,delay,retval);
-        m_selfLink->send( delay, new DelayEvent( callback, retval ) );
-    } 
 
   private:
     Output m_dbg;
