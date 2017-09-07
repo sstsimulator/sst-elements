@@ -73,6 +73,19 @@ enum class MemEventType { Cache, Move };                            // For parsi
     X(Put,              AckMove,        Request,    Request,        1, 0,   Move) \
     X(Get,              AckMove,        Request,    Request,        1, 0,   Move) \
     X(AckMove,          NULLCMD,        Response,   Ack,            0, 0,   Move) \
+    /* Atomic Requests*/\
+    X(AMOFetchAdd,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Add */\
+    X(AMOFetchSub,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Sub */\
+    X(AMOFetchOr,       AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Or */\
+    X(AMOFetchAnd,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and And */\
+    X(AMOFetchXor,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Xor */\
+    X(AMOFetchNand,     AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Nand */\
+    X(AMOCAS,           AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Compare and Swap */\
+    /* Extended Requests */\
+    X(ExtReq,           AckMove,        Request,    Request,        1, 0,   Move)   /* Extended Request: Custom request with response */\
+    X(ExtPostedReq,     NULLCMD,        Request,    Ack,            1, 0,   Move)   /* Extended Request: Custom request with no response (posted) */\
+    X(ExtResp,          NULLCMD,        Response,   Data,           1, 0,   Move)   /* Extended Response: Used for custom memory operation responses */\
+    X(ExtAck,           NULLCMD,        Response,   Ack,            1, 0,   Move)   /* Extended Response: Used for custom memory operation acks */\
 
 /** Valid commands for the MemEvent */
 enum class Command {
