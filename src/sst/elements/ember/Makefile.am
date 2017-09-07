@@ -158,6 +158,7 @@ libember_la_SOURCES = \
 	shmem/emberShmemNPesEv.h \
 	shmem/emberShmemPutEv.h \
 	shmem/emberShmemPutVEv.h \
+	shmem/emberShmemQuietEv.h \
 	shmem/emberShmemReductionEv.h \
 	shmem/emberShmemSwapEv.h \
 	shmem/emberShmemWaitEv.h \
