@@ -26,9 +26,9 @@ using namespace std;
 
 
 // Command attributes
-enum class CommandClass { Request, Data, Ack, ForwardRequest };     // Also corresponds to the typical virtual channels
+enum class CommandClass { Request, Data, Ack, ForwardRequest };     // TODO - route messages on VCs based on command class
 enum class BasicCommandClass {Request, Response};                   // Whether a command is a request or response
-enum class MemEventType { Cache, Move };                            // For parsing which kind of event a MemEventBase is
+enum class MemEventType { Cache, Move, Custom };                    // For parsing which kind of event a MemEventBase is
 
 
 
@@ -73,6 +73,11 @@ enum class MemEventType { Cache, Move };                            // For parsi
     X(Put,              AckMove,        Request,    Request,        1, 0,   Move) \
     X(Get,              AckMove,        Request,    Request,        1, 0,   Move) \
     X(AckMove,          NULLCMD,        Response,   Ack,            0, 0,   Move) \
+    /* Custom Request types - for external (non-memH) components */\
+    X(CustomReq,        CustomDataResp, Request,    Request,        1, 0,   Custom) \
+    X(CustomDataResp,   NULLCMD,        Response,   Data,           0, 0,   Custom) \
+    X(CustomDataAck,    NULLCMD,        Response,   Ack,            0, 0,   Custom) \
+    X(CustomFwdReq,     CustomDataResp, Request,    ForwardRequest, 0, 0,   Custom) \
     /* Atomic Requests*/\
     X(AMOFetchAdd,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Add */\
     X(AMOFetchSub,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Sub */\

@@ -22,6 +22,15 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
+/* Debug macros */
+#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
+#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#else
+#define is_debug_addr(addr) false
+#define is_debug_event(ev) false
+#endif
+
 /* Constructor */
 MemNIC::MemNIC(Component * parent, Params &params) : MemLinkBase(parent, params) {
     
@@ -191,12 +200,12 @@ bool MemNIC::clock() {
         bool doDebug = false;
         if (ev) { 
             debugEvStr = ev->getBriefString();
-            if (!DEBUG_ALL) doDebug = ev->doDebug(DEBUG_ADDR);
+            doDebug = is_debug_event(ev);
         }
 #endif
         if (link_control->spaceToSend(0, head->size_in_bits) && link_control->send(head, 0)) {
 #ifdef __SST_DEBUG_OUTPUT__
-            if (!debugEvStr.empty() && (DEBUG_ALL || doDebug)) {
+            if (!debugEvStr.empty() && doDebug) {
                 dbg.debug(_L9_, "%s (memNIC), Sending message %s to dst addr %" PRIu64 "\n",
                         getName().c_str(), debugEvStr.c_str(), dst);
             }
@@ -216,11 +225,11 @@ bool MemNIC::clock() {
 bool MemNIC::recvNotify(int) {
     MemEventBase * me = recv();
     if (me) {
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || me->doDebug(DEBUG_ADDR)) 
+        if (is_debug_event(me)) {
             dbg.debug(_L9_, "%s, memNIC recv: src: %s. cmd: %s\n", 
                     getName().c_str(), me->getSrc().c_str(), CommandString[(int)me->getCmd()]);
-#endif
+        }
+
         // Call parent's handler
         (*recvHandler)(me);
     }
@@ -236,11 +245,12 @@ void MemNIC::send(MemEventBase *ev) {
     req->dest = lookupNetworkAddress(ev->getDst());
     req->size_in_bits = getSizeInBits(ev);
     req->vn = 0;
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR))
+    
+    if (is_debug_event(ev)) {
         dbg.debug(_L9_, "%s, memNIC adding to send queue: dst: %s, bits: %zu, cmd: %s\n",
                 getName().c_str(), ev->getDst().c_str(), req->size_in_bits, CommandString[(int)ev->getCmd()]);
-#endif
+    }
+
     req->givePayload(mre);
     sendQueue.push(req);
 }

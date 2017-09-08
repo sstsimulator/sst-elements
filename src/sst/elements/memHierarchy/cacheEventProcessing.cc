@@ -32,6 +32,15 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+/* Debug macros */
+#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
+#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#else
+#define is_debug_addr(addr) false
+#define is_debug_event(ev) false
+#endif
+
 
 void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStall) {
     if (!replay) {
@@ -195,8 +204,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     
     
     // Debug
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR)) {
+    if (is_debug_event(ev)) {
         if (replay) {
             d_->debug(_L3_, "Replay. Name: %s. Cycles: %" PRIu64 ". Event: (%s)\n", this->getName().c_str(), timestamp_, ev->getVerboseString().c_str());
         } else {
@@ -205,7 +213,6 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         }
         cout << flush;
     }
-#endif
 
     // Set noncacheable requests if needed
     if (cf_.allNoncacheableRequests_) {
@@ -269,9 +276,9 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
                     break;
                 }
                 if (processRequestInMSHR(baseAddr, event)) {
-#ifdef __SST_DEBUG_OUTPUT__
-                    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
-#endif
+                    if (is_debug_addr(baseAddr)) 
+                        d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
+                    
                     event->setBlocked(true);
                 }
                 // track times in our separate queue

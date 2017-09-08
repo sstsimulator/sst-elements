@@ -35,10 +35,14 @@ using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-
+// Debug macros
 #ifdef __SST_DEBUG_OUTPUT__
-#define Debug(addrfilter, level, fmt, ... ) if (DEBUG_ALL || (addrfilter)) dbg.debug( level, fmt, ##__VA_ARGS__  )
+#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#define Debug(level, fmt, ... ) dbg.debug( level, fmt, ##__VA_ARGS__  )
 #else
+#define is_debug_addr(addr) false
+#define is_debug_event(ev) false
 #define Debug(addrfilter, level, fmt, ... )
 #endif
 
@@ -59,13 +63,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
 
     // Debug address
-    int dAddr = params.find<int>("debug_addr", -1);
-    if (dAddr == -1) {
-        DEBUG_ADDR = (Addr) dAddr;
-        DEBUG_ALL = true;
-    } else {
-        DEBUG_ADDR = (Addr) dAddr;
-        DEBUG_ALL = false;
+    std::vector<Addr> addrArr;
+    params.find_array<Addr>("debug_addr", addrArr);
+    for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++) {
+        DEBUG_ADDR.insert(*it);
     }
 
     // Output for warnings
@@ -189,7 +190,9 @@ void MemController::handleEvent(SST::Event* event) {
     
     MemEvent *ev = static_cast<MemEvent*>(event);
     
-    Debug(ev->doDebug(DEBUG_ADDR), _L3_, "\n%" PRIu64 " (%s) Recieved: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
+    if (is_debug_event(ev)) {
+        Debug(_L3_, "\n%" PRIu64 " (%s) Recieved: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
+    }
 
     if (ev->isAddrGlobal()) {
         ev->setBaseAddr(translateToLocal(ev->getBaseAddr()));
@@ -272,8 +275,9 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     MemEvent * ev = it->second;
     outstandingEvents_.erase(it);
 
-    Debug(ev->doDebug(DEBUG_ALL), _L3_, "Memory Controller: %s - Response received to (%s)\n", getName().c_str(), ev->getVerboseString().c_str());
-
+    if (is_debug_event(ev)) {
+        Debug(_L3_, "Memory Controller: %s - Response received to (%s)\n", getName().c_str(), ev->getVerboseString().c_str());
+    }
     bool noncacheable  = ev->queryFlag(MemEvent::F_NONCACHEABLE);
     
     /* Write data. Here instead of receive to try to match backing access order to backend execute order */
@@ -343,7 +347,7 @@ void MemController::writeData(MemEvent* event) {
     Addr addr = noncacheable ? event->getAddr() : event->getBaseAddr();
 
     if (event->getCmd() == Command::PutM) { /* Write request to memory */
-        Debug(event->doDebug(DEBUG_ADDR), _L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize());
+        if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
         
         for (size_t i = 0; i < event->getSize(); i++)
             backing_->set( addr + i, event->getPayload()[i] );
@@ -351,7 +355,7 @@ void MemController::writeData(MemEvent* event) {
     }
     
     if (noncacheable && event->getCmd() == Command::GetX) {
-        Debug(event->doDebug(DEBUG_ADDR), _L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize());
+        if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
         
         for (size_t i = 0; i < event->getSize(); i++)
             backing_->set( addr + i, event->getPayload()[i] );
@@ -388,7 +392,7 @@ Addr MemController::translateToLocal(Addr addr) {
         Addr offset = shift % region_.interleaveStep;
         rAddr = (step * region_.interleaveSize) + offset + privateMemOffset_;
     }
-    Debug(addr == DEBUG_ADDR, _L10_,"\tConverting global address 0x%" PRIx64 " to local address 0x%" PRIx64 "\n", addr, rAddr);
+    if (is_debug_addr(addr)) { Debug(_L10_,"\tConverting global address 0x%" PRIx64 " to local address 0x%" PRIx64 "\n", addr, rAddr); }
     return rAddr;
 }
 
@@ -403,7 +407,7 @@ Addr MemController::translateToGlobal(Addr addr) {
         rAddr = rAddr / region_.interleaveSize;
         rAddr = rAddr * region_.interleaveStep + offset + region_.start;
     }
-    Debug(rAddr == DEBUG_ADDR, _L10_,"\tConverting local address 0x%" PRIx64 " to global address 0x%" PRIx64 "\n", addr, rAddr); 
+    if (is_debug_addr(rAddr)) { Debug(_L10_,"\tConverting local address 0x%" PRIx64 " to global address 0x%" PRIx64 "\n", addr, rAddr); }
     return rAddr;
 }
 
@@ -413,14 +417,14 @@ void MemController::processInitEvent( MemEventInit* me ) {
     if (Command::GetX == me->getCmd()) {
         me->setAddr(translateToLocal(me->getAddr()));
         Addr addr = me->getAddr();
-        Debug(me->doDebug(DEBUG_ADDR), _L10_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size());
+        if (is_debug_event(me)) { Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         if ( isRequestAddressValid(addr) && backing_ ) {
             for ( size_t i = 0 ; i < me->getPayload().size() ; i++) {
                 backing_->set( addr + i,  me->getPayload()[i] );
             }
         }
     } else if (Command::NULLCMD == me->getCmd()) {
-        Debug(me->doDebug(DEBUG_ADDR), _L10_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str());
+        if (is_debug_event(me)) { Debug(_L10_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }
     } else {
         Output out("", 0, 0, Output::STDERR);
         out.debug(_L10_,"Memory received unexpected Init Command: %d\n", me->getCmd());
