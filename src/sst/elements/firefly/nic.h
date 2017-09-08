@@ -186,7 +186,7 @@ public:
 		}
 		assert(0);
 	}
-	SimTime_t getDelay_ns( NicCmdBaseEvent* event ) {
+	SimTime_t getDelay_ns( ) {
 		return m_nic2host_lat_ns - m_nic2host_base_lat_ns;
 	}
 

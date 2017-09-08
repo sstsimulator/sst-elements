@@ -108,7 +108,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     }
     m_recvM.resize( m_num_vNics );
 
-    m_shmem = new Shmem( *this, m_num_vNics, m_dbg );
+    m_shmem = new Shmem( *this, m_num_vNics, m_dbg, getDelay_ns(), getDelay_ns() );
 
     m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
@@ -229,10 +229,7 @@ void Nic::handleVnicEvent( Event* ev, int id )
     switch ( event->base_type ) {
 
       case NicCmdBaseEvent::Msg:
-		m_selfLink->send( 
-			getDelay_ns( static_cast<NicCmdBaseEvent*>(ev) ),
-			new SelfEvent( ev, id ) 
-		);
+		m_selfLink->send( getDelay_ns( ), new SelfEvent( ev, id ) );
         break;
 
       case NicCmdBaseEvent::Shmem:

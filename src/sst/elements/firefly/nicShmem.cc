@@ -30,34 +30,33 @@ void Nic::Shmem::handleEvent( NicShmemCmdEvent* event, int id )
 	}
 
     switch (event->type) {
-
-    case NicShmemCmdEvent::Add:
+      case NicShmemCmdEvent::Add:
 		--m_freeCmdSlots;	
         m_nic.getVirtNic(id)->notifyShmem( 0, static_cast< NicShmemAddCmdEvent*>(event)->getCallback() );
 		break;
-    case NicShmemCmdEvent::Put:
+      case NicShmemCmdEvent::Put:
 		--m_freeCmdSlots;	
         m_nic.getVirtNic(id)->notifyShmem( 0, static_cast< NicShmemPutCmdEvent*>(event)->getCallback() );
 		break;
-    case NicShmemCmdEvent::Putv:
+      case NicShmemCmdEvent::Putv:
 		--m_freeCmdSlots;	
         m_nic.getVirtNic(id)->notifyShmem( 0, static_cast< NicShmemPutvCmdEvent*>(event)->getCallback() );
 		break;
 
-    case NicShmemCmdEvent::Init:
-    case NicShmemCmdEvent::Get:
-    case NicShmemCmdEvent::Getv:
-    case NicShmemCmdEvent::RegMem:
-    case NicShmemCmdEvent::Wait:
-    case NicShmemCmdEvent::Fadd:
-    case NicShmemCmdEvent::Cswap:
-    case NicShmemCmdEvent::Swap:
+      case NicShmemCmdEvent::Init:
+      case NicShmemCmdEvent::Get:
+      case NicShmemCmdEvent::Getv:
+      case NicShmemCmdEvent::RegMem:
+      case NicShmemCmdEvent::Wait:
+      case NicShmemCmdEvent::Fadd:
+      case NicShmemCmdEvent::Cswap:
+      case NicShmemCmdEvent::Swap:
 		break;
 
-    default:
+      default:
         assert(0);
     }
-	m_nic.schedEvent(  new SelfEvent( event, id ), 149 );
+	m_nic.schedEvent(  new SelfEvent( event, id ), getHost2NicDelay_ns() );
 }
 
 

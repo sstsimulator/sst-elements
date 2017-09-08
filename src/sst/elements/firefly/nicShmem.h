@@ -80,7 +80,9 @@ class Shmem {
     }; 
 
   public:
-    Shmem( Nic& nic, int numVnics, Output& output ) : m_nic( nic ), m_dbg(output), m_one( (long) 1 ), m_freeCmdSlots( 32 )
+    Shmem( Nic& nic, int numVnics, Output& output, SimTime_t nic2HostDelay_ns, SimTime_t host2NicDelay_ns ) : 
+		m_nic( nic ), m_dbg(output), m_one( (long) 1 ), m_freeCmdSlots( 32 ),
+    	m_nic2HostDelay_ns(nic2HostDelay_ns), m_host2NicDelay_ns(host2NicDelay_ns)
     {
 		m_regMem.resize( numVnics ); 
 		m_pendingOps.resize( numVnics );
@@ -109,7 +111,8 @@ class Shmem {
     void checkWaitOps( int core, Hermes::Vaddr addr, size_t length );
 
 private:
-	SimTime_t getNic2HostDelay_ns() { return 149; }
+	SimTime_t getNic2HostDelay_ns() { return m_nic2HostDelay_ns; }
+	SimTime_t getHost2NicDelay_ns() { return m_host2NicDelay_ns; }
     void init( NicShmemInitCmdEvent*, int id );
     void regMem( NicShmemRegMemCmdEvent*, int id );
     void wait( NicShmemOpCmdEvent*, int id );
@@ -144,4 +147,6 @@ private:
     Output& m_dbg;
     std::vector< std::list<Op*> > m_pendingOps;
     std::vector<std::vector< std::pair<Hermes::MemAddr, size_t> > > m_regMem;
+	SimTime_t m_nic2HostDelay_ns;
+	SimTime_t m_host2NicDelay_ns;
 };
