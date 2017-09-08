@@ -359,10 +359,8 @@ class NicRespBaseEvent : public Event {
 class NicShmemRespBaseEvent : public NicCmdBaseEvent {
   public:
 
-    enum Type { Init, RegMem, Fence, Put, Putv, Get, Getv, Wait, Add, Fadd, Swap, Cswap, FreeCmd } type;
-
-    NicShmemRespBaseEvent( Type type ) : 
-        NicCmdBaseEvent( Shmem ), type(type) {}
+    NicShmemRespBaseEvent( ) : 
+        NicCmdBaseEvent( Shmem ) {}
 
     virtual ~NicShmemRespBaseEvent() {}
 
@@ -376,8 +374,8 @@ class NicShmemRespEvent : public NicShmemRespBaseEvent {
   public:
     typedef std::function<void()> Callback;
 
-    NicShmemRespEvent( Type type, Callback callback) : 
-        NicShmemRespBaseEvent( type ), m_callback(callback) {}
+    NicShmemRespEvent( Callback callback) : 
+        NicShmemRespBaseEvent( ), m_callback(callback) {}
 
     void callback() override { m_callback(); }
   private:
@@ -391,8 +389,8 @@ class NicShmemValueRespEvent : public NicShmemRespBaseEvent {
   public:
     typedef std::function<void(Hermes::Value&)> Callback;
 
-    NicShmemValueRespEvent( Type type, Callback callback, Hermes::Value& value ) : 
-        NicShmemRespBaseEvent( type ), m_callback(callback), m_value(value) {}
+    NicShmemValueRespEvent(  Callback callback, Hermes::Value& value ) : 
+        NicShmemRespBaseEvent( ), m_callback(callback), m_value(value) {}
 
     void callback() override { m_callback(m_value); }
 
