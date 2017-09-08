@@ -149,6 +149,8 @@ public:
 				result ^= tmp; 
 			}
 			break;
+        default: 
+            assert(0);
 		}
 		return result;
 	}
@@ -235,8 +237,8 @@ public:
 				case Long:
                 	enQ_long_and_to_all( evQ, m_dest, m_src, m_nelems, 0, 0, m_num_pes, m_pSync );
 					break;
-				default:
-					assert(0);
+                default: 
+                    assert(0);
 				}
                 break;
             case OR:
@@ -247,8 +249,8 @@ public:
 				case Long:
                 	enQ_long_or_to_all( evQ, m_dest, m_src, m_nelems, 0, 0, m_num_pes, m_pSync );
 					break;
-				default:
-					assert(0);
+                default: 
+                    assert(0);
 				}
                 break;
             case XOR:
@@ -259,8 +261,8 @@ public:
 				case Long:
                 	enQ_long_xor_to_all( evQ, m_dest, m_src, m_nelems, 0, 0, m_num_pes, m_pSync );
 					break;
-				default:
-					assert(0);
+                default:
+                    assert(0);
 				}
                 break;
             case SUM:
@@ -277,8 +279,8 @@ public:
 				case Double:
                 	enQ_double_sum_to_all( evQ, m_dest, m_src, m_nelems, 0, 0, m_num_pes, m_pSync );
 					break;
-				default:
-					assert(0);
+                default:
+                    assert(0);
 				}
                 break;
             case PROD:
@@ -298,6 +300,8 @@ public:
 				case Double:
                 	enQ_double_prod_to_all( evQ, m_dest, m_src, m_nelems, 0, 0, m_num_pes, m_pSync );
                 	break;
+                default:
+                    assert(0);
 				}
 				break;
 
@@ -315,8 +319,8 @@ public:
 				case Double:
                 	enQ_double_min_to_all( evQ, m_dest, m_src, m_nelems, 0, 0, m_num_pes, m_pSync );
 					break;
-				default:
-					assert(0);
+                default:
+                    assert(0);
 				}
                 break;
             case MAX:
@@ -333,8 +337,8 @@ public:
 				case Double:
                 	enQ_double_max_to_all( evQ, m_dest, m_src, m_nelems, 0, 0, m_num_pes, m_pSync );
 					break;
-				default:
-					assert(0);
+                default:
+                    assert(0);
 				}
                 break;
             }

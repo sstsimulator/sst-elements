@@ -111,8 +111,8 @@ public:
 
 					if ( m_printResults ) {
                     	printf("%d:%s: addr=%#" PRIx64 " pe=%d i=%d %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), 
-                            m_dest.getSimVAddr<TYPE>( pe * m_nelems * m_dst + i * m_dst  ), 
-                            pe, i, m_dest.at<TYPE>( pe * m_nelems * m_dst + i * m_dst));
+                            (uint64_t) m_dest.getSimVAddr<TYPE>( pe * m_nelems * m_dst + i * m_dst  ), 
+                            pe, i, (uint64_t) m_dest.at<TYPE>( pe * m_nelems * m_dst + i * m_dst));
 					}
 
                     assert( m_dest.at<TYPE>( pe * m_nelems * m_dst + i * m_dst) == ( ((TYPE) (pe + 1) << shift) | i + 1  )  );
