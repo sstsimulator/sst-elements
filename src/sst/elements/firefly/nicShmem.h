@@ -80,7 +80,7 @@ class Shmem {
     }; 
 
   public:
-    Shmem( Nic& nic, int numVnics, Output& output ) : m_nic( nic ), m_dbg(output), m_one( (long) 1 )
+    Shmem( Nic& nic, int numVnics, Output& output ) : m_nic( nic ), m_dbg(output), m_one( (long) 1 ), m_freeCmdSlots( 32 )
     {
 		m_regMem.resize( numVnics ); 
 		m_pendingOps.resize( numVnics );
@@ -89,30 +89,12 @@ class Shmem {
     ~Shmem() {
         m_regMem.clear();
     }
-
-    void init( NicShmemInitCmdEvent*, int id );
-    void regMem( NicShmemRegMemCmdEvent*, int id );
-    void wait( NicShmemOpCmdEvent*, int id );
-    void put( NicShmemPutCmdEvent*, int id );
-    void putv( NicShmemPutvCmdEvent*, int id );
-    void get( NicShmemGetCmdEvent*, int id );
-    void getv( NicShmemGetvCmdEvent*, int id );
-    void add( NicShmemAddCmdEvent*, int id );
-    void fadd( NicShmemFaddCmdEvent*, int id );
-    void cswap( NicShmemCswapCmdEvent*, int id );
-    void swap( NicShmemSwapCmdEvent*, int id );
-    void fence( NicShmemCmdEvent*, int id );
-
+	void handleEvent( NicShmemCmdEvent* event, int id );
+	void handleEvent2( NicShmemCmdEvent* event, int id );
 	void decPending( int core ) {
 		m_pendingRemoteOps[core].second -= m_one;
 		checkWaitOps( core, m_pendingRemoteOps[core].first, m_pendingRemoteOps[core].second.getLength() );
 	}	
-
-    void* getBacking( int core, Hermes::Vaddr addr, size_t length ) {
-        return  m_nic.findShmem( core, addr, length ).getBacking();
-    }
-    void checkWaitOps( int core, Hermes::Vaddr addr, size_t length );
-	void doReduction( Hermes::Shmem::ReduOp op, unsigned char* dest, unsigned char* src, size_t length, Hermes::Value::Type );
 
     std::pair<Hermes::MemAddr, size_t>& findRegion( int core, uint64_t addr ) { 
 //		printf("%s() core=%d %#" PRIx64 "\n",__func__,core,addr);
@@ -124,8 +106,38 @@ class Shmem {
         } 
         assert(0);
     }
+    void checkWaitOps( int core, Hermes::Vaddr addr, size_t length );
 
-  private:
+private:
+	SimTime_t getNic2HostDelay_ns() { return 149; }
+    void init( NicShmemInitCmdEvent*, int id );
+    void regMem( NicShmemRegMemCmdEvent*, int id );
+    void wait( NicShmemOpCmdEvent*, int id );
+    void put( NicShmemPutCmdEvent*, int id );
+    void putv( NicShmemPutvCmdEvent*, int id );
+    void get( NicShmemGetCmdEvent*, int id );
+    void getv( NicShmemGetvCmdEvent*, int id );
+    void add( NicShmemAddCmdEvent*, int id );
+    void fadd( NicShmemFaddCmdEvent*, int id );
+    void cswap( NicShmemCswapCmdEvent*, int id );
+    void swap( NicShmemSwapCmdEvent*, int id );
+
+    void* getBacking( int core, Hermes::Vaddr addr, size_t length ) {
+        return  m_nic.findShmem( core, addr, length ).getBacking();
+    }
+	void doReduction( Hermes::Shmem::ReduOp op, unsigned char* dest, unsigned char* src, size_t length, Hermes::Value::Type );
+
+	void incFreeCmdSlots( ) {
+		++m_freeCmdSlots;
+		if ( ! m_pendingCmds.empty() ) {
+			handleEvent( m_pendingCmds.front().first, m_pendingCmds.front().second );
+			m_pendingCmds.pop_front();
+		}
+	}
+
+	std::deque<std::pair<NicShmemCmdEvent*, int> > m_pendingCmds;
+	int m_freeCmdSlots;
+
 	Hermes::Value m_one;
 	std::vector< std::pair< Hermes::Vaddr, Hermes::Value > > m_pendingRemoteOps;
     Nic& m_nic;
