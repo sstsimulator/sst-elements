@@ -80,7 +80,7 @@ void ShmemBroadcast::node_1(int)
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
     /* if complete, send ack */
     if ( m_complete) {
-        m_api.fadd( m_retval, m_pSync, m_one, m_parent,
+        m_api.add( m_pSync, m_one, m_parent,
                 std::bind( &ShmemBroadcast::node_2, this, std::placeholders::_1 ) );
         //shmem_internal_atomic_small(pSync, &one, sizeof(one), parent,
         //                                    SHM_INTERNAL_SUM, SHM_INTERNAL_LONG);
@@ -166,7 +166,8 @@ void ShmemBroadcast::node_7(int)
 {
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
     m_api.wait_until( m_pSync, Shmem::EQ, m_zero,
-                std::bind( &ShmemBroadcast::fini, this, std::placeholders::_1 ) );
+                m_returnCallback );
+                //std::bind( &ShmemBroadcast::fini, this, std::placeholders::_1 ) );
     //SHMEM_WAIT_UNTIL(pSync, SHMEM_CMP_EQ, 0);
 } 
 
@@ -185,7 +186,7 @@ void ShmemBroadcast::leaf_1(int v)
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
     /* if complete, send ack */
     if (m_complete) {
-        m_api.fadd( m_retval, m_pSync, m_one, m_parent,
+        m_api.add( m_pSync, m_one, m_parent,
                 std::bind( &ShmemBroadcast::leaf_2, this, std::placeholders::_1 ) );
         //shmem_internal_atomic_small(pSync, &one, sizeof(one), parent, SHM_INTERNAL_SUM, SHM_INTERNAL_LONG);
     } else {
@@ -205,7 +206,7 @@ void ShmemBroadcast::leaf_2(int)
 void ShmemBroadcast::leaf_3(int)
 {
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
-    m_api.wait_until( m_pSync, Shmem::EQ, m_zero,
-                std::bind( &ShmemBroadcast::fini, this, std::placeholders::_1 ) );
+    m_api.wait_until( m_pSync, Shmem::EQ, m_zero, m_returnCallback );
+//                std::bind( &ShmemBroadcast::fini, this, std::placeholders::_1 ) );
     //SHMEM_WAIT_UNTIL(pSync, SHMEM_CMP_EQ, 0);
 }

@@ -127,6 +127,9 @@ class Value {
         }\
         return *this;\
 
+    Value& operator-=( const Value& rh ) {
+        MATH_OP(-) 
+    }
     Value& operator+=( const Value& rh ) {
         MATH_OP(+) 
     }

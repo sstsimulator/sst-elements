@@ -36,6 +36,25 @@ class ShmemCmdSendEntry: public ShmemSendEntryBase {
     NicShmemSendCmdEvent* m_event;
 };
 
+class ShmemAckSendEntry: public ShmemSendEntryBase {
+  public:
+    ShmemAckSendEntry( int local_vNic, int dest_node, int dest_vNic  ) :
+        ShmemSendEntryBase( local_vNic ), m_dest_node(dest_node), m_dest_vNic(dest_vNic)
+    { 
+        m_hdr.op = ShmemMsgHdr::Ack; 
+    }
+    int dst_vNic() { return m_dest_vNic; }
+    int dest() { return m_dest_node; }
+    size_t totalBytes() { return 0; } 
+    bool isDone() { return true; }
+    virtual void copyOut( Output&, int vc, int numBytes, 
+            FireflyNetworkEvent&, std::vector<DmaVec>& ) {};
+  private:
+	int m_dest_vNic;
+	int m_dest_node;
+};
+
+
 class ShmemRespSendEntry: public ShmemCmdSendEntry {
   public:
     ShmemRespSendEntry( int local_vNic, NicShmemSendCmdEvent* event ) : 
@@ -69,6 +88,7 @@ class ShmemGetvSendEntry: public ShmemRespSendEntry {
     Callback  m_callback;
 };
 
+
 class ShmemFaddSendEntry: public ShmemRespSendEntry {
   public:
     typedef std::function<void(Hermes::Value&)> Callback;
@@ -99,7 +119,7 @@ class ShmemSwapSendEntry: public ShmemRespSendEntry {
     ShmemSwapSendEntry( int local_vNic, NicShmemSwapCmdEvent* event, Callback callback  ) :
         ShmemRespSendEntry( local_vNic, event ), m_callback(callback)
     {
-        m_shmemMove = new ShmemSendMoveValue( event->data );
+        m_shmemMove = new ShmemSendMoveValue( event->getValue() );
         m_hdr.op = ShmemMsgHdr::Swap; 
         m_hdr.dataType = m_event->getDataType();
     }
@@ -122,7 +142,7 @@ class ShmemCswapSendEntry: public ShmemRespSendEntry {
     ShmemCswapSendEntry( int local_vNic, NicShmemCswapCmdEvent* event, Callback callback  ) :
         ShmemRespSendEntry( local_vNic, event ), m_callback(callback)
     {
-        m_shmemMove = new ShmemSendMove2Value( event->data, event->cond );
+        m_shmemMove = new ShmemSendMove2Value( event->getValue(), event->getCond() );
         m_hdr.op = ShmemMsgHdr::Cswap; 
         m_hdr.dataType = m_event->getDataType();
     }
@@ -206,6 +226,18 @@ class ShmemPutvSendEntry: public ShmemPutSendEntry  {
         ShmemPutSendEntry( local_vNic, event, callback )
     {
         m_shmemMove = new ShmemSendMoveMem( event->getBacking(), event->getLength() );
+    }
+};
+
+
+class ShmemAddSendEntry: public ShmemPutvSendEntry {
+  public:
+    ShmemAddSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback  ) :
+
+        ShmemPutvSendEntry( local_vNic, event, callback )
+    { 
+        m_hdr.op = ShmemMsgHdr::Add; 
+        m_hdr.dataType = event->getDataType();
     }
 };
 

@@ -80,41 +80,56 @@ class Shmem {
     }; 
 
   public:
-    Shmem( Nic& nic, Output& output ) : m_nic( nic ), m_dbg(output) 
-    {}
+    Shmem( Nic& nic, int numVnics, Output& output ) : m_nic( nic ), m_dbg(output), m_one( (long) 1 )
+    {
+		m_regMem.resize( numVnics ); 
+		m_pendingOps.resize( numVnics );
+		m_pendingRemoteOps.resize( numVnics );
+	}
     ~Shmem() {
         m_regMem.clear();
     }
 
+    void init( NicShmemInitCmdEvent*, int id );
     void regMem( NicShmemRegMemCmdEvent*, int id );
     void wait( NicShmemOpCmdEvent*, int id );
     void put( NicShmemPutCmdEvent*, int id );
     void putv( NicShmemPutvCmdEvent*, int id );
     void get( NicShmemGetCmdEvent*, int id );
     void getv( NicShmemGetvCmdEvent*, int id );
+    void add( NicShmemAddCmdEvent*, int id );
     void fadd( NicShmemFaddCmdEvent*, int id );
     void cswap( NicShmemCswapCmdEvent*, int id );
     void swap( NicShmemSwapCmdEvent*, int id );
     void fence( NicShmemCmdEvent*, int id );
 
-    void* getBacking( Hermes::Vaddr addr, size_t length ) {
-        return  m_nic.findShmem( addr, length ).getBacking();
-    }
-    void checkWaitOps( Hermes::Vaddr addr, size_t length );
+	void decPending( int core ) {
+		m_pendingRemoteOps[core].second -= m_one;
+		checkWaitOps( core, m_pendingRemoteOps[core].first, m_pendingRemoteOps[core].second.getLength() );
+	}	
 
-    std::pair<Hermes::MemAddr, size_t>& findRegion( uint64_t addr ) { 
-        for ( int i = 0; i < m_regMem.size(); i++ ) {
-            if ( addr >= m_regMem[i].first.getSimVAddr() &&
-                addr < m_regMem[i].first.getSimVAddr() + m_regMem[i].second ) {
-                return m_regMem[i]; 
+    void* getBacking( int core, Hermes::Vaddr addr, size_t length ) {
+        return  m_nic.findShmem( core, addr, length ).getBacking();
+    }
+    void checkWaitOps( int core, Hermes::Vaddr addr, size_t length );
+	void doReduction( Hermes::Shmem::ReduOp op, unsigned char* dest, unsigned char* src, size_t length, Hermes::Value::Type );
+
+    std::pair<Hermes::MemAddr, size_t>& findRegion( int core, uint64_t addr ) { 
+//		printf("%s() core=%d %#" PRIx64 "\n",__func__,core,addr);
+        for ( int i = 0; i < m_regMem[core].size(); i++ ) {
+            if ( addr >= m_regMem[core][i].first.getSimVAddr() &&
+                addr < m_regMem[core][i].first.getSimVAddr() + m_regMem[core][i].second ) {
+                return m_regMem[core][i]; 
             } 
         } 
         assert(0);
     }
 
   private:
+	Hermes::Value m_one;
+	std::vector< std::pair< Hermes::Vaddr, Hermes::Value > > m_pendingRemoteOps;
     Nic& m_nic;
     Output& m_dbg;
-    std::list<Op*> m_pendingOps;
-    std::vector< std::pair<Hermes::MemAddr, size_t> > m_regMem;
+    std::vector< std::list<Op*> > m_pendingOps;
+    std::vector<std::vector< std::pair<Hermes::MemAddr, size_t> > > m_regMem;
 };

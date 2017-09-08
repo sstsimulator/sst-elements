@@ -27,9 +27,13 @@
 #include "emberShmemBarrierEv.h"
 #include "emberShmemBarrierAllEv.h"
 #include "emberShmemBroadcastEv.h"
+#include "emberShmemCollectEv.h"
+#include "emberShmemFcollectEv.h"
 #include "emberShmemAlltoallEv.h"
+#include "emberShmemAlltoallsEv.h"
 #include "emberShmemReductionEv.h"
 #include "emberShmemFenceEv.h"
+#include "emberShmemQuietEv.h"
 #include "emberShmemMallocEv.h"
 #include "emberShmemFreeEv.h"
 #include "emberShmemPutEv.h"
@@ -40,6 +44,7 @@
 #include "emberShmemCswapEv.h"
 #include "emberShmemSwapEv.h"
 #include "emberShmemFaddEv.h"
+#include "emberShmemAddEv.h"
 
 using namespace Hermes;
 
@@ -69,14 +74,29 @@ protected:
     inline void enQ_broadcast64( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelmes, 
             int PE_root, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
 
+    inline void enQ_fcollect32( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelmes, 
+            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
+    inline void enQ_fcollect64( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelmes, 
+            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
+
+    inline void enQ_collect32( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelmes, 
+            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
+    inline void enQ_collect64( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelmes, 
+            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
+
     inline void enQ_alltoall32( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelmes, 
             int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
     inline void enQ_alltoall64( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelmes, 
             int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
 
+    inline void enQ_alltoalls32( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, int dst,
+            int sst, size_t nelmes, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
+    inline void enQ_alltoalls64( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, int dst,
+            int sst, size_t nelmes, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
+
 #define declareOp( type, op) \
     inline void enQ_##type##_##op##_to_all( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, int nelmes, \
-            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pWrk, Hermes::MemAddr pSync );\
+            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync );\
 
 #define declareMathOps( op )\
     declareOp( short, op )\
@@ -103,6 +123,7 @@ protected:
     declareMathOps( prod )
 
     inline void enQ_fence( Queue& );
+    inline void enQ_quiet( Queue& );
     inline void enQ_malloc( Queue&, Hermes::MemAddr*, size_t );
     inline void enQ_free( Queue&, Hermes::MemAddr );
 
@@ -120,7 +141,10 @@ protected:
     inline void enQ_put( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
 
     template <class TYPE>
+    inline void enQ_add( Queue&, Hermes::MemAddr, TYPE*, int pe );
+    template <class TYPE>
     inline void enQ_fadd( Queue&, TYPE*, Hermes::MemAddr, TYPE*, int pe );
+
 
     template <class TYPE>
     inline void enQ_swap( Queue&, TYPE*, Hermes::MemAddr, TYPE* value, int pe );
@@ -190,6 +214,42 @@ void EmberShmemGenerator::enQ_broadcast64( Queue& q, Hermes::MemAddr dest, Herme
                         logPE_stride, PE_size, pSync.getSimVAddr() ) );
 }
 
+void EmberShmemGenerator::enQ_fcollect32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
+            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberFcollectShmemEvent( *shmem_cast(m_api), &getOutput(), 
+                    dest.getSimVAddr(), src.getSimVAddr(), nelems * 4, PE_start,
+                        logPE_stride, PE_size, pSync.getSimVAddr() ) );
+}
+
+void EmberShmemGenerator::enQ_fcollect64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
+            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberFcollectShmemEvent( *shmem_cast(m_api), &getOutput(), 
+                    dest.getSimVAddr(), src.getSimVAddr(), nelems * 8, PE_start,
+                        logPE_stride, PE_size, pSync.getSimVAddr() ) );
+}
+
+void EmberShmemGenerator::enQ_collect32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
+            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberCollectShmemEvent( *shmem_cast(m_api), &getOutput(), 
+                    dest.getSimVAddr(), src.getSimVAddr(), nelems * 4, PE_start,
+                        logPE_stride, PE_size, pSync.getSimVAddr() ) );
+}
+
+void EmberShmemGenerator::enQ_collect64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
+            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberCollectShmemEvent( *shmem_cast(m_api), &getOutput(), 
+                    dest.getSimVAddr(), src.getSimVAddr(), nelems * 8, PE_start,
+                        logPE_stride, PE_size, pSync.getSimVAddr() ) );
+}
+
 void EmberShmemGenerator::enQ_alltoall32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
             int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
 {
@@ -208,14 +268,32 @@ void EmberShmemGenerator::enQ_alltoall64( Queue& q, Hermes::MemAddr dest, Hermes
                         logPE_stride, PE_size, pSync.getSimVAddr() ) );
 }
 
+void EmberShmemGenerator::enQ_alltoalls32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, 
+        int dst, int sst, size_t nelems, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberAlltoallsShmemEvent( *shmem_cast(m_api), &getOutput(), 
+                    dest.getSimVAddr(), src.getSimVAddr(), dst, sst, nelems, 4, PE_start,
+                        logPE_stride, PE_size, pSync.getSimVAddr() ) );
+}
+
+void EmberShmemGenerator::enQ_alltoalls64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, 
+        int dst, int sst, size_t nelems, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberAlltoallsShmemEvent( *shmem_cast(m_api), &getOutput(), 
+                    dest.getSimVAddr(), src.getSimVAddr(), dst, sst, nelems, 8, PE_start,
+                        logPE_stride, PE_size, pSync.getSimVAddr() ) );
+}
+
 #define defineReduce( type1, type2, op1, op2 ) \
 void EmberShmemGenerator::enQ_##type1##_##op1##_to_all( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, int nelems, \
-            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pWrk, Hermes::MemAddr pSync )\
+            int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )\
 {\
     verbose(CALL_INFO,2,0,"\n");\
     q.push( new EmberReductionShmemEvent( *shmem_cast(m_api), &getOutput(), \
                     dest.getSimVAddr(), src.getSimVAddr(), nelems, PE_start, logPE_stride, \
-                    PE_size, pWrk.getSimVAddr(), pSync.getSimVAddr(), Hermes::Shmem::op2, Hermes::Value::type2 ) ); \
+                    PE_size, pSync.getSimVAddr(), Hermes::Shmem::op2, Hermes::Value::type2 ) ); \
 }\
 
 #define defineBitOp( op1, op2 ) \
@@ -246,6 +324,12 @@ void EmberShmemGenerator::enQ_fence( Queue& q )
 {
     verbose(CALL_INFO,2,0,"\n");
     q.push( new EmberFenceShmemEvent( *shmem_cast(m_api), &getOutput() ) );
+}
+
+void EmberShmemGenerator::enQ_quiet( Queue& q )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberQuietShmemEvent( *shmem_cast(m_api), &getOutput() ) );
 }
 
 
@@ -309,6 +393,15 @@ void EmberShmemGenerator::enQ_wait_until( Queue& q, Hermes::MemAddr addr, Hermes
     verbose(CALL_INFO,2,0,"\n");
     q.push( new EmberWaitShmemEvent( *shmem_cast(m_api), &getOutput(),  
                 addr.getSimVAddr(), op, Hermes::Value( (TYPE) value ) ) );
+}
+
+template <class TYPE>
+void EmberShmemGenerator::enQ_add( Queue& q, Hermes::MemAddr addr, TYPE* value,  
+       int pe )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberAddShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                addr.getSimVAddr(), Hermes::Value(value), pe ) );
 }
 
 template <class TYPE>

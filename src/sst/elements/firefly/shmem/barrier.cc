@@ -19,11 +19,10 @@
 using namespace SST;
 using namespace Firefly;
 
-
 void ShmemBarrier::start( int PE_start, int logPE_stride, int PE_size, 
         Hermes::Vaddr pSync, Hermes::Shmem::Callback returnCallback )
 {
-    printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
+    printf(":%d:%s():%d barrier\n",my_pe(),__func__,__LINE__);
 
     if ( 1 == PE_size ) {
         m_api.delay(returnCallback,0,0);
@@ -98,10 +97,12 @@ void ShmemBarrier::root_2( int )
     if ( m_iteration < m_num_children - 1 ) {
         callback =  std::bind( &ShmemBarrier::root_2, this, std::placeholders::_1 );
     } else {
-        callback =  std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 );
+        //callback =  std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 );
+    	printf(":%d:%s():%d barrier done\n",my_pe(),__func__,__LINE__);
+        callback =  m_returnCallback;
     }
 
-    m_api.fadd( m_retval, m_pSync, m_one, m_children[m_iteration], callback );
+    m_api.add( m_pSync, m_one, m_children[m_iteration], callback );
     ++m_iteration;
 #if 0
     /* Send acks down to children */
@@ -118,7 +119,7 @@ void ShmemBarrier::node_0( int )
 {
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
     /* send ack to parent */
-    m_api.fadd( m_retval, m_pSync, m_one, m_parent, 
+    m_api.add( m_pSync, m_one, m_parent, 
            std::bind( &ShmemBarrier::node_1, this, std::placeholders::_1 ) );
     //shmem_internal_atomic_small(pSync, &one, sizeof(one),
                 // parent, SHM_INTERNAL_SUM, SHM_INTERNAL_LONG);
@@ -159,10 +160,12 @@ void ShmemBarrier::node_4( int )
     if ( m_iteration < m_num_children - 1 ) {
         callback =  std::bind( &ShmemBarrier::node_4, this, std::placeholders::_1 );
     } else {
-        callback =  std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 );
+        //callback =  std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 );
+    	printf(":%d:%s():%d barrier done\n",my_pe(),__func__,__LINE__);
+        callback = m_returnCallback;
     }
 
-    m_api.fadd( m_retval, m_pSync, m_one, m_children[m_iteration], callback ); 
+    m_api.add(  m_pSync, m_one, m_children[m_iteration], callback ); 
     ++m_iteration;
 
 #if 0
@@ -178,7 +181,7 @@ void ShmemBarrier::leaf_0( int )
 {
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
    /* send message up psync tree */
-    m_api.fadd( m_retval, m_pSync, m_one, m_parent, 
+    m_api.add( m_pSync, m_one, m_parent, 
            std::bind( &ShmemBarrier::leaf_1, this, std::placeholders::_1 ) );
 
 #if 0
@@ -211,9 +214,9 @@ void ShmemBarrier::leaf_2( int )
 
 void ShmemBarrier::leaf_3( int )
 {
-    printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
-    m_api.wait_until( m_pSync, Shmem::EQ, m_zero, 
-           std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 ) );
+    printf(":%d:%s():%d barrier done\n",my_pe(),__func__,__LINE__);
+    m_api.wait_until( m_pSync, Shmem::EQ, m_zero, m_returnCallback ); 
+//           std::bind( &ShmemBarrier::fini, this, std::placeholders::_1 ) );
 #if 0
     SHMEM_WAIT_UNTIL(pSync, SHMEM_CMP_EQ, 0);
 #endif

@@ -48,10 +48,16 @@ class Interface : public Hermes::Interface {
     virtual void barrier( int start, int stride, int size, Vaddr, Callback) { assert(0); }
     virtual void broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start, 
             int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
+    virtual void fcollect( Vaddr dest, Vaddr source, size_t nelems, int PE_start, 
+            int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
+    virtual void collect( Vaddr dest, Vaddr source, size_t nelems, int PE_start, 
+            int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
     virtual void alltoall( Vaddr dest, Vaddr source, size_t nelems, int PE_start, 
             int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
+    virtual void alltoalls( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize,
+            int PE_start, int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
     virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start, 
-            int logPE_stride, int PE_size, Vaddr pWrk, Vaddr pSync, 
+            int logPE_stride, int PE_size, Vaddr pSync, 
             ReduOp, Hermes::Value::Type, Callback) { assert(0); }
 
     virtual void malloc(MemAddr*, size_t, Callback) { assert(0); }
@@ -67,6 +73,7 @@ class Interface : public Hermes::Interface {
     virtual void cswap( Value& result, Vaddr, Value& cond, Value& value, int pe, Callback) { assert(0); }
     virtual void swap( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
     virtual void fadd( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
+    virtual void add( Vaddr, Value&, int pe, Callback) { assert(0); }
 };
 
 }

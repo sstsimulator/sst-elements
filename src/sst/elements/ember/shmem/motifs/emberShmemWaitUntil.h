@@ -19,45 +19,54 @@
 
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
+#include <cxxabi.h>
 
 namespace SST {
 namespace Ember {
 
+template <class TYPE>
 class EmberShmemWaitUntilGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemWaitUntilGenerator(SST::Component* owner, Params& params) :
 		EmberShmemGenerator(owner, params, "ShmemWaitUntil" ), m_phase(0) 
 	{ 
-         m_opName = params.find<std::string>("arg.op", "NE");
-         printf("%s\n",m_opName.c_str()); 
+        m_opName = params.find<std::string>("arg.op", "NE");
 
-         m_initValue = 0; 
-         m_waitValue = m_initValue;
-         if ( 0 == m_opName.compare("LTE") ) {
+        m_initValue = 0; 
+        m_waitValue = m_initValue;
+        if ( 0 == m_opName.compare("LTE") ) {
             m_waitValue = -1;
             m_op = Hermes::Shmem::LTE;
             m_putValue = -1;
-         } else if ( 0 == m_opName.compare("LT") ) {
+        } else if ( 0 == m_opName.compare("LT") ) {
             m_op = Hermes::Shmem::LT;
             m_putValue = -1;
-         } else if ( 0 == m_opName.compare("EQ") ) {
+        } else if ( 0 == m_opName.compare("EQ") ) {
             m_op = Hermes::Shmem::EQ;
             m_waitValue = 1;
             m_putValue = 1;
-         } else if ( 0 == m_opName.compare("NE") ) {
+        } else if ( 0 == m_opName.compare("NE") ) {
             m_op = Hermes::Shmem::NE;
             m_putValue = 1;
-         } else if ( 0 == m_opName.compare("GT") ) {
+        } else if ( 0 == m_opName.compare("GT") ) {
             m_op = Hermes::Shmem::GT;
             m_putValue = 1;
-         } else if ( 0 == m_opName.compare("GTE") ) {
+        } else if ( 0 == m_opName.compare("GTE") ) {
             m_op = Hermes::Shmem::GTE;
             m_waitValue = 1;
             m_putValue = 1;
-         } else {
-             assert(0);
-         }
+        } else {
+            assert(0);
+        }
+		int status;
+
+        std::string tname = typeid(TYPE).name();
+		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
+        m_type_name = tmp;
+		free(tmp); 
+
+        assert( 4 == sizeof(TYPE) || 8 == sizeof(TYPE) );	
     }
 
     bool generate( std::queue<EmberEvent*>& evQ) 
@@ -66,21 +75,22 @@ public:
         switch ( m_phase ) {
         case 0:
             enQ_init( evQ );
-            break;
-        case 1:
             enQ_n_pes( evQ, &m_n_pes );
             enQ_my_pe( evQ, &m_my_pe );
             break;
 
-        case 2:
+        case 1:
 
-            printf("%d:%s: %d\n",m_my_pe, getMotifName().c_str(),m_n_pes);
-            enQ_malloc( evQ, &m_addr, 1000*2 );
+			if ( 0 == m_my_pe ) {
+            	printf("%d:%s: type=\"%s\"\n",m_my_pe, getMotifName().c_str(), m_type_name.c_str());
+			}
+			assert( 2 == m_n_pes );
+            enQ_malloc( evQ, &m_addr, sizeof(TYPE) );
             enQ_barrier_all( evQ );
             break;
 
-        case 3:
-            m_addr.at<int>(0) = m_initValue;
+        case 2:
+            m_addr.at<TYPE>(0) = m_initValue;
             enQ_barrier_all( evQ );
             
             if ( m_my_pe == 0 ) {
@@ -91,10 +101,13 @@ public:
 
             break;
 
-        case 4:
+        case 3:
             if ( m_my_pe == 0 ) {
-                printf("%d:%s: %s init=%#x wait=%#x put=%#x got=%#x\n",m_my_pe, getMotifName().c_str(),
-                        m_opName.c_str(), m_initValue, m_waitValue, m_putValue, m_addr.at<int>(0));
+                std::stringstream tmp;
+				tmp << "init=" << m_initValue << " wait=" << m_waitValue << " put=" << m_putValue << " got=" << m_addr.at<TYPE>(0);
+
+                printf("%d:%s: op=%s %s\n",m_my_pe, getMotifName().c_str(),
+                        m_opName.c_str(), tmp.str().c_str());
             }
 		    ret = true;
             break;
@@ -103,12 +116,13 @@ public:
         return ret;
 	}
   private:
+	std::string m_type_name;
     Hermes::Shmem::WaitOp m_op;
     Hermes::MemAddr       m_addr;
     std::string m_opName;
-    int m_initValue;
-    int m_putValue;
-    int m_waitValue;
+    TYPE m_initValue;
+    TYPE m_putValue;
+    TYPE m_waitValue;
     int m_phase;
     int m_my_pe;
     int m_n_pes;

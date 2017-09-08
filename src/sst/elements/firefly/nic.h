@@ -60,7 +60,7 @@ class Nic : public SST::Component  {
     };
     struct __attribute__ ((packed)) ShmemMsgHdr {
         ShmemMsgHdr() : op2(0) {}
-        enum Op : unsigned char { Put, Get, GetResp, Fadd, Swap, Cswap } op;
+        enum Op : unsigned char { Ack, Put, Get, GetResp, Add, Fadd, Swap, Cswap } op;
         unsigned char op2; 
         unsigned char dataType;
         unsigned char pad;
@@ -151,6 +151,9 @@ public:
     VirtNic* getVirtNic( int id ) {
         return m_vNicV[id];
     }
+	void shmemDecPending( int core ) {
+		m_shmem->decPending( core );
+	}
 
   private:
     void handleSelfEvent( Event* );
@@ -168,7 +171,7 @@ public:
     SendEntryBase* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
     EntryBase* findRecv( int srcNode, MsgHdr&, int tag );
 
-    Hermes::MemAddr findShmem( Hermes::Vaddr  addr, size_t length );
+    Hermes::MemAddr findShmem( int core, Hermes::Vaddr  addr, size_t length );
 
     void schedEvent( SelfEvent* event, int delay = 0 ) {
         m_selfLink->send( delay, event );

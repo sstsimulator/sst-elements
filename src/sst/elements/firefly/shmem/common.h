@@ -20,7 +20,7 @@
 #include <vector>
 #include "sst/elements/hermes/shmemapi.h"
 
-#if 1 
+#if 1
 #undef printf
 #define printf(x,...)
 #endif
@@ -57,7 +57,7 @@ class ShmemCommon {
 class ShmemCollective {
   public:
     ShmemCollective( HadesSHMEM& api, ShmemCommon& common ) : m_api(api), m_common( common ),
-        m_value( Hermes::Value::Long), m_retval( Hermes::Value::Long ), m_one((long)1), m_zero((long)0)
+        m_value( Hermes::Value::Long), m_one((long)1), m_zero((long)0)
     {}
 
     int num_pes() { return m_common.num_pes(); }
@@ -67,13 +67,16 @@ class ShmemCollective {
     int full_tree_num_children() { return m_common.full_tree_num_children(); }
     std::vector<int>& full_tree_children() { return m_common.full_tree_children(); }
 
-  protected:
     typedef long pSync_t;
 
+  protected:
+
+#if 0
     void fini(int) {
         printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
         m_returnCallback( 0 );
     }    
+#endif
 
     HadesSHMEM&     m_api;
     ShmemCommon&    m_common;
@@ -86,7 +89,6 @@ class ShmemCollective {
 
     Hermes::Vaddr   m_pSync;
     Hermes::Value   m_value;
-    Hermes::Value   m_retval;
     Hermes::Value   m_one;
     Hermes::Value   m_zero;
 

@@ -134,16 +134,20 @@ libember_la_SOURCES = \
 	mpi/motifs/emberrandomgen.h \
 	mpi/motifs/emberrandomgen.cc \
 	sirius/include/sirius/siriusglobals.h \
+	shmem/emberShmemAddEv.h \
 	shmem/emberShmemAlltoallEv.h \
+	shmem/emberShmemAlltoallsEv.h \
 	shmem/emberShmemBarrierAllEv.h \
 	shmem/emberShmemBarrierEv.h \
 	shmem/emberShmemBroadcastEv.h \
+	shmem/emberShmemCollectEv.h \
 	shmem/emberShmemCswapEv.h \
 	shmem/emberShmemEvent.h \
 	shmem/emberShmemFaddEv.h \
+	shmem/emberShmemFcollectEv.h \
 	shmem/emberShmemFenceEv.h \
-	shmem/emberShmemFreeEv.h \
 	shmem/emberShmemFiniEv.h \
+	shmem/emberShmemFreeEv.h \
 	shmem/emberShmemGen.cc \
 	shmem/emberShmemGen.h \
 	shmem/emberShmemGetEv.h \
@@ -154,15 +158,20 @@ libember_la_SOURCES = \
 	shmem/emberShmemNPesEv.h \
 	shmem/emberShmemPutEv.h \
 	shmem/emberShmemPutVEv.h \
+	shmem/emberShmemQuietEv.h \
 	shmem/emberShmemReductionEv.h \
 	shmem/emberShmemSwapEv.h \
 	shmem/emberShmemWaitEv.h \
+	shmem/motifs/emberShmemAdd.h \
 	shmem/motifs/emberShmemAlltoall.h \
+	shmem/motifs/emberShmemAlltoalls.h \
 	shmem/motifs/emberShmemBarrier.h \
 	shmem/motifs/emberShmemBarrierAll.h \
 	shmem/motifs/emberShmemBroadcast.h \
+	shmem/motifs/emberShmemCollect.h \
 	shmem/motifs/emberShmemCswap.h \
 	shmem/motifs/emberShmemFadd.h \
+	shmem/motifs/emberShmemFcollect.h \
 	shmem/motifs/emberShmemGet.h \
 	shmem/motifs/emberShmemGetv.h \
 	shmem/motifs/emberShmemPut.h \
