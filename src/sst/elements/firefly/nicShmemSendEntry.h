@@ -163,7 +163,7 @@ class ShmemGetbSendEntry: public ShmemRespSendEntry {
   public:
     typedef std::function<void()> Callback;
 
-    ShmemGetbSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback  ) : 
+    ShmemGetbSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback ) : 
         ShmemRespSendEntry( local_vNic, event ), m_callback(callback) 
     { 
         m_hdr.op = ShmemMsgHdr::Get; 
@@ -232,7 +232,7 @@ class ShmemPutvSendEntry: public ShmemPutSendEntry  {
 
 class ShmemAddSendEntry: public ShmemPutvSendEntry {
   public:
-    ShmemAddSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback  ) :
+    ShmemAddSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback ) :
 
         ShmemPutvSendEntry( local_vNic, event, callback )
     { 
