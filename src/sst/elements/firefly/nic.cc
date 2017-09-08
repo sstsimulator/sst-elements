@@ -48,6 +48,13 @@ Nic::Nic(ComponentId_t id, Params &params) :
         params.find<uint32_t>("verboseMask",-1), 
         Output::STDOUT);
 
+	// The link between the NIC and HOST historically provided the latency of crossing a bus such as PCI
+	// hence it was configured at wire up with a value like 150ns. The NIC has since taken on some HOST functionality
+	// so the latency has been dropped to 1ns. The bus latency must still be added for some messages so the 
+	// NIC now sends these message to itself with a time of nic2host_lat_ns - "the latency of the link". 
+	m_nic2host_lat_ns = calcDelay_ns( params.find<SST::UnitAlgebra>("nic2host_lat", SST::UnitAlgebra("150ns")));
+	m_nic2host_base_lat_ns = 1;
+
     int rxMatchDelay = params.find<int>( "rxMatchDelay_ns", 100 );
     int txDelay =      params.find<int>( "txDelay_ns", 50 );
     int hostReadDelay = params.find<int>( "hostReadDelay_ns", 200 );
@@ -219,20 +226,24 @@ void Nic::handleVnicEvent( Event* ev, int id )
 {
     NicCmdBaseEvent* event = static_cast<NicCmdBaseEvent*>(ev);
 
-    m_dbg.verbose(CALL_INFO,3,1,"core=%d type=%d\n",id,event->base_type);
-    
     switch ( event->base_type ) {
-    case NicCmdBaseEvent::Msg:
-        handleMsgEvent( static_cast<NicCmdEvent*>(event), id );
-        break;
-    case NicCmdBaseEvent::Shmem:
-        handleShmemEvent( static_cast<NicShmemCmdEvent*>(event), id );
-        break;
-    default:
-        assert(0);
-    }
-}
 
+      case NicCmdBaseEvent::Msg:
+		m_selfLink->send( 
+			getDelay_ns( static_cast<NicCmdBaseEvent*>(ev) ),
+			new SelfEvent( ev, id ) 
+		);
+        break;
+
+      case NicCmdBaseEvent::Shmem:
+        m_shmem->handleEvent( static_cast<NicShmemCmdEvent*>(event), id );
+		break;
+
+	  default:
+		assert(0);
+	}
+}
+    
 void Nic::handleMsgEvent( NicCmdEvent* event, int id )
 {
     switch ( event->type ) {
@@ -259,62 +270,40 @@ void Nic::handleMsgEvent( NicCmdEvent* event, int id )
     }
 }
 
-void Nic::handleShmemEvent( NicShmemCmdEvent* event, int id )
-{
-    switch (event->type) {
-    case NicShmemCmdEvent::Init:
-        m_shmem->init( static_cast< NicShmemInitCmdEvent*>(event), id );
-        break;
-    case NicShmemCmdEvent::Put:
-        m_shmem->put( static_cast<NicShmemPutCmdEvent*>(event), id );
-        break;
-    case NicShmemCmdEvent::Putv:
-        m_shmem->putv( static_cast<NicShmemPutvCmdEvent*>(event), id );
-        break;
-    case NicShmemCmdEvent::Get:
-        m_shmem->get( static_cast<NicShmemGetCmdEvent*>(event), id );
-        break;
-    case NicShmemCmdEvent::Getv:
-        m_shmem->getv( static_cast<NicShmemGetvCmdEvent*>(event), id );
-        break;
-    case NicShmemCmdEvent::Fence:
-        m_shmem->fence( event, id );
-        break;
-    case NicShmemCmdEvent::RegMem:
-        m_shmem->regMem( static_cast< NicShmemRegMemCmdEvent*>(event), id );
-        break;
-    case NicShmemCmdEvent::Wait:
-        m_shmem->wait( static_cast< NicShmemOpCmdEvent*>(event), id );
-        break;
-    case NicShmemCmdEvent::Add:
-        m_shmem->add( static_cast< NicShmemAddCmdEvent*>(event), id );
-        break;
-    case NicShmemCmdEvent::Fadd:
-        m_shmem->fadd( static_cast< NicShmemFaddCmdEvent*>(event), id );
-        break;
-    case NicShmemCmdEvent::Cswap:
-        m_shmem->cswap( static_cast< NicShmemCswapCmdEvent*>(event), id );
-        break;
-    case NicShmemCmdEvent::Swap:
-        m_shmem->swap( static_cast< NicShmemSwapCmdEvent*>(event), id );
-        break;
-
-    default:
-        assert(0);
-    }
-}
-
 void Nic::handleSelfEvent( Event *e )
 {
     SelfEvent* event = static_cast<SelfEvent*>(e);
     
-    if ( event->callback ) {
+	switch ( event->type ) {
+	case SelfEvent::Callback:
         event->callback();
-    } else if ( event->entry ) {
+		break;
+	case SelfEvent::Entry:
         m_sendMachine[0]->run( static_cast<SendEntryBase*>(event->entry) );
-    }
-
+		break;
+	case SelfEvent::Event:
+		handleVnicEvent2( event->event, event->linkNum );
+		break;
+	}
     delete e;
+}
+
+void Nic::handleVnicEvent2( Event* ev, int id )
+{
+    NicCmdBaseEvent* event = static_cast<NicCmdBaseEvent*>(ev);
+
+    m_dbg.verbose(CALL_INFO,3,1,"core=%d type=%d\n",id,event->base_type);
+
+    switch ( event->base_type ) {
+    case NicCmdBaseEvent::Msg:
+        handleMsgEvent( static_cast<NicCmdEvent*>(event), id );
+        break;
+    case NicCmdBaseEvent::Shmem:
+        m_shmem->handleEvent2( static_cast<NicShmemCmdEvent*>(event), id );
+        break;
+    default:
+        assert(0);
+    }
 }
 
 void Nic::dmaSend( NicCmdEvent *e, int vNicNum )

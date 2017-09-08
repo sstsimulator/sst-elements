@@ -79,14 +79,20 @@ class Nic : public SST::Component  {
     class SelfEvent : public SST::Event {
       public:
 
-        typedef std::function<void()> Callback;
+		enum { Callback, Entry, Event } type;
+        typedef std::function<void()> Callback_t;
+
         SelfEvent( void* entry) : 
-            entry(entry), callback(NULL) {}
-        SelfEvent( Callback _callback ) :
-            entry(NULL), callback( _callback) {}
+            type(Entry), entry(entry) {}
+        SelfEvent( Callback_t callback ) :
+            type(Callback), callback( callback) {}
+        SelfEvent( SST::Event* ev,  int linkNum  ) :
+            type(Event), event( ev), linkNum(linkNum) {}
         
         void*              entry;
-        Callback           callback;
+        Callback_t         callback;
+		SST::Event*        event;
+		int				   linkNum;
         
         NotSerializable(SelfEvent)
     };
@@ -158,6 +164,7 @@ public:
   private:
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
+    void handleVnicEvent2( Event*, int );
     void handleMsgEvent( NicCmdEvent* event, int id );
     void handleShmemEvent( NicShmemCmdEvent* event, int id );
     void dmaSend( NicCmdEvent*, int );
@@ -173,7 +180,17 @@ public:
 
     Hermes::MemAddr findShmem( int core, Hermes::Vaddr  addr, size_t length );
 
-    void schedEvent( SelfEvent* event, int delay = 0 ) {
+	SimTime_t calcDelay_ns( SST::UnitAlgebra val ) {
+		if ( val.hasUnits("ns") ) {
+			return val.getValue().toDouble()* 1000000000;
+		}
+		assert(0);
+	}
+	SimTime_t getDelay_ns( NicCmdBaseEvent* event ) {
+		return m_nic2host_lat_ns - m_nic2host_base_lat_ns;
+	}
+
+    void schedEvent( SelfEvent* event, SimTime_t delay = 0 ) {
         m_selfLink->send( delay, event );
     }
 
@@ -241,6 +258,8 @@ public:
     std::vector<Thornhill::DetailedCompute*> m_detailedCompute;
 	bool m_useDetailedCompute;
     Shmem* m_shmem;
+	SimTime_t m_nic2host_lat_ns;
+	SimTime_t m_nic2host_base_lat_ns;
 
     uint16_t m_getKey;
   public:
