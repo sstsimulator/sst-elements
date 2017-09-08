@@ -200,13 +200,9 @@ void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, Callback callback )
 
     *ptr =  m_heap->malloc( size );
 
-    m_os->getNic()->shmemBlocked( 
-        [=]() { 
-            this->dbg().verbose(CALL_INFO,1,1,"\n");
+    dbg().verbose(CALL_INFO,1,1,"\n");
 
-            this->m_os->getNic()->shmemRegMem( *ptr, size, callback) ; 
-        }
-    );  
+	m_os->getNic()->shmemRegMem( *ptr, size, callback) ; 
 }
 
 void HadesSHMEM::free( Hermes::MemAddr* ptr, Shmem::Callback callback)
@@ -220,19 +216,12 @@ void HadesSHMEM::get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int p
     dbg().verbose(CALL_INFO,1,1,"destSimVAddr=%#" PRIx64 " srcSimVaddr=%#" PRIx64 " length=%lu\n",
                     dest, src, length);
 
-    m_os->getNic()->shmemBlocked(
-        [=]() { 
-            this->dbg().verbose(CALL_INFO,1,1,"\n");
-            this->m_os->getNic()->shmemGet( pe, dest, src, length, 
-
+    m_os->getNic()->shmemGet( pe, dest, src, length, 
                 [=]() {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
                     this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
                 }
             );
-        }
-    ); 
-
 }
 
 void HadesSHMEM::getv( Hermes::Value& value, Hermes::Vaddr src, int pe, Shmem::Callback callback)
@@ -241,11 +230,7 @@ void HadesSHMEM::getv( Hermes::Value& value, Hermes::Vaddr src, int pe, Shmem::C
 
     Hermes::Value::Type type = value.getType(); 
 
-    m_os->getNic()->shmemBlocked(
-        [=]() { 
-            this->dbg().verbose(CALL_INFO,1,1,"\n");
-
-            this->m_os->getNic()->shmemGetv( pe, src, type, 
+    m_os->getNic()->shmemGetv( pe, src, type, 
 
                 [=]( Hermes::Value& newValue ) {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
@@ -256,41 +241,29 @@ void HadesSHMEM::getv( Hermes::Value& value, Hermes::Vaddr src, int pe, Shmem::C
                     this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
                 }
             );
-        }
-    );
 }
 
 void HadesSHMEM::put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, Shmem::Callback callback)
 {
-    m_os->getNic()->shmemBlocked(
-        [=]() { 
-            this->dbg().verbose(CALL_INFO,1,1,"\n");
-            this->m_os->getNic()->shmemPut( pe, dest, src, length, 
-
+    dbg().verbose(CALL_INFO,1,1,"\n");
+    m_os->getNic()->shmemPut( pe, dest, src, length, 
                 [=]() {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
                     this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
                 }
             );
-        } 
-    );
 }
 
 void HadesSHMEM::putOp(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe,
                 Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Shmem::Callback callback)
 {
-    m_os->getNic()->shmemBlocked(
-        [=]() { 
-            this->dbg().verbose(CALL_INFO,1,1,"\n");
-            this->m_os->getNic()->shmemPutOp( pe, dest, src, length, op, dataType, 
-
+    dbg().verbose(CALL_INFO,1,1,"\n");
+    m_os->getNic()->shmemPutOp( pe, dest, src, length, op, dataType, 
                 [=]() {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
                     this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
                 }
             );
-        } 
-    );
 }
 
 void HadesSHMEM::putv(Hermes::Vaddr dest, Hermes::Value& value, int pe, Shmem::Callback callback)
@@ -299,20 +272,12 @@ void HadesSHMEM::putv(Hermes::Vaddr dest, Hermes::Value& value, int pe, Shmem::C
     tmp << value;
     dbg().verbose(CALL_INFO,1,1,"destSimVaddr=%#" PRIx64 " value=%s\n", dest, tmp.str().c_str() );
 
-    m_os->getNic()->shmemBlocked(
-        [=]() { 
-            this->dbg().verbose(CALL_INFO,1,1,"\n");
-            Hermes::Value _value = value;
-
-            this->m_os->getNic()->shmemPutv( pe, dest, _value,
+    m_os->getNic()->shmemPutv( pe, dest, value,
                 [=]() {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
                     this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
                 }
             );
-
-        }
-    );
 }
 
 void HadesSHMEM::wait_until(Hermes::Vaddr addr, Hermes::Shmem::WaitOp op, Hermes::Value& value, Shmem::Callback callback)
@@ -321,18 +286,12 @@ void HadesSHMEM::wait_until(Hermes::Vaddr addr, Hermes::Shmem::WaitOp op, Hermes
     tmp << value;
     dbg().verbose(CALL_INFO,1,1,"addr=%#" PRIx64 " val=%s\n",addr, tmp.str().c_str());
 
-    m_os->getNic()->shmemBlocked(
-        [=]() { 
-            this->dbg().verbose(CALL_INFO,1,1,"\n");
-            Hermes::Value _value = value;
-            this->m_os->getNic()->shmemWait( addr, op, _value,
+    m_os->getNic()->shmemWait( addr, op, value,
                 [=]() {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
                     this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
                 }
             );
-        }
-    );
 }
 
 
@@ -342,23 +301,17 @@ void HadesSHMEM::swap(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value& 
     tmp1 << value;
     dbg().verbose(CALL_INFO,1,1,"addr=%#" PRIx64 " val=%s\n",addr, tmp1.str().c_str());
 
-    m_os->getNic()->shmemBlocked(
-        [=]() { 
-            this->dbg().verbose(CALL_INFO,1,1,"\n");
-            Hermes::Value _value = value;
-            this->m_os->getNic()->shmemSwap( pe, addr,  _value, 
+    m_os->getNic()->shmemSwap( pe, addr,  value, 
 
                 [=]( Hermes::Value& newValue ) {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
 
                     Hermes::Value _result = result;
-                    ::memcpy( _result.getPtr(), newValue.getPtr(), _value.getLength() );
+                    ::memcpy( _result.getPtr(), newValue.getPtr(), value.getLength() );
 
                     this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
                 }
             );
-        }
-    );
 }
 
 void HadesSHMEM::cswap(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value& cond, Hermes::Value& value, int pe, Shmem::Callback callback)
@@ -369,24 +322,17 @@ void HadesSHMEM::cswap(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value&
     tmp2 << cond;
     dbg().verbose(CALL_INFO,1,1,"addr=%#" PRIx64 " val=%s cond=%s\n",addr, tmp1.str().c_str(),tmp2.str().c_str());
 
-    m_os->getNic()->shmemBlocked(
-        [=]() { 
-            this->dbg().verbose(CALL_INFO,1,1,"\n");
-            Hermes::Value _value = value;
-            Hermes::Value _cond = cond;
-            this->m_os->getNic()->shmemCswap( pe, addr, _cond, _value, 
+    m_os->getNic()->shmemCswap( pe, addr, cond, value, 
 
                 [=]( Hermes::Value& newValue ) {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
 
                     Hermes::Value _result = result;
-                    ::memcpy( _result.getPtr(), newValue.getPtr(), _value.getLength() );
+                    ::memcpy( _result.getPtr(), newValue.getPtr(), value.getLength() );
 
                     this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
                 }
             );
-        }
-    );
 }
 
 void HadesSHMEM::add( Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::Callback callback)
@@ -395,20 +341,13 @@ void HadesSHMEM::add( Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::C
     tmp << value;
     dbg().verbose(CALL_INFO,1,1,"addr=%#" PRIx64 " val=%s\n",addr, tmp.str().c_str());
 
-    m_os->getNic()->shmemBlocked(
-        [=]() { 
-            this->dbg().verbose(CALL_INFO,1,1,"\n");
-            Hermes::Value _value = value;
-            this->m_os->getNic()->shmemAdd( pe, addr, _value, 
-
+    m_os->getNic()->shmemAdd( pe, addr, value, 
                 [=]( ) {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
 
                     this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
                 }
             );
-        }
-    );
 }
 void HadesSHMEM::fadd(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::Callback callback)
 {
@@ -416,12 +355,7 @@ void HadesSHMEM::fadd(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value& 
     tmp << value;
     dbg().verbose(CALL_INFO,1,1,"addr=%#" PRIx64 " val=%s\n",addr, tmp.str().c_str());
 
-    m_os->getNic()->shmemBlocked(
-        [=]() { 
-            this->dbg().verbose(CALL_INFO,1,1,"\n");
-            Hermes::Value _value = value;
-            this->m_os->getNic()->shmemFadd( pe, addr, _value, 
-
+    m_os->getNic()->shmemFadd( pe, addr, value, 
                 [=]( Hermes::Value& newValue ) {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
 
@@ -431,6 +365,4 @@ void HadesSHMEM::fadd(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value& 
                     this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
                 }
             );
-        }
-    );
 }
