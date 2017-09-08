@@ -49,7 +49,7 @@ void ShmemFcollect::start( Vaddr dest, Vaddr source, size_t nelems, int PE_start
 void ShmemFcollect::state_0( int )
 {
     size_t iter_offset = ((my_id() + 1 - m_iteration + m_PE_size) % m_PE_size) * m_nelems;
-    printf(":%d:%s():%d iter_offset=%#lu dest=%#lx\n",my_pe(),__func__,__LINE__,iter_offset,m_dest + iter_offset);
+    printf(":%d:%s():%d iter_offset=%lu dest=%#" PRIx64 "\n",my_pe(),__func__,__LINE__,iter_offset,(uint64_t)m_dest + iter_offset);
 
     m_api.put( m_dest + iter_offset, m_dest + iter_offset, m_nelems, next_proc(), 
         std::bind( &ShmemFcollect::state_1, this, std::placeholders::_1 ) );

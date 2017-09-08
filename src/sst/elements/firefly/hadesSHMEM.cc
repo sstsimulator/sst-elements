@@ -58,6 +58,18 @@ void HadesSHMEM::setup()
     m_dbg.setPrefix(buffer);
 }
 
+void HadesSHMEM::delay( Shmem::Callback callback, uint64_t delay, int retval ) {
+    m_selfLink->send( delay, new DelayEvent( callback, retval ) );
+}
+void HadesSHMEM::memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback )
+{
+    dbg().verbose(CALL_INFO,1,1,"dest=%#" PRIx64 " src=%#" PRIx64 " length=%zu\n",dest,src,length);
+    if ( dest != src ) {
+        ::memcpy( m_heap->findBacking(dest), m_heap->findBacking(src), length );
+     }
+    m_selfLink->send( 0, new HadesSHMEM::DelayEvent( callback, 0 ) );
+}
+
 void HadesSHMEM::init(Shmem::Callback callback)
 {
     m_num_pes = m_os->getInfo()->getGroup(MP::GroupWorld)->getSize();
@@ -232,7 +244,6 @@ void HadesSHMEM::get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int p
             );
         }
     ); 
-
 }
 
 void HadesSHMEM::getv( Hermes::Value& value, Hermes::Vaddr src, int pe, Shmem::Callback callback)
