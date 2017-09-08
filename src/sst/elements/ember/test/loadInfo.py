@@ -170,8 +170,10 @@ class EmberEP( EndPoint ):
                                             "_Link"  )
             loopLink.setNoCut() 
 
-            ep.addLink(nicLink, "nic", self.nicParams["nic2host_lat"] )
-            nic.addLink(nicLink, "core" + str(x), self.nicParams["nic2host_lat"] )
+            #ep.addLink(nicLink, "nic", self.nicParams["nic2host_lat"] )
+            #nic.addLink(nicLink, "core" + str(x), self.nicParams["nic2host_lat"] )
+            ep.addLink(nicLink, "nic", "1ns" )
+            nic.addLink(nicLink, "core" + str(x), "1ns" )
 
             ep.addLink(loopLink, "loop", "1ns")
             loopBack.addLink(loopLink, "core" + str(x), "1ns")
