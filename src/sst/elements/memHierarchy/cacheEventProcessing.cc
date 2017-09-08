@@ -250,7 +250,6 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         canStall = cacheLine == nullptr || !(cacheLine->isLocked());
     }
 
-    profileEvent(event, cmd, replay, canStall);
 
     switch(cmd) {
         case Command::GetS:
@@ -260,6 +259,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             if (!replay && mshr_->isAlmostFull()) { 
                 // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
                 if (!cf_.L1_) {
+                    profileEvent(event, cmd, replay, canStall);
                     sendNACK(event);
                     break;
                 } else if (canStall) {
@@ -267,6 +267,8 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
                     return false;
                 }
             }
+            
+            profileEvent(event, cmd, replay, canStall);
             
             if (mshr_->isHit(baseAddr) && canStall) {
                 // Drop local prefetches if there are outstanding requests for the same address NOTE this includes replacements/inv/etc.
@@ -299,14 +301,17 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         case Command::GetSResp:
         case Command::GetXResp:
         case Command::FlushLineResp:
+            profileEvent(event, cmd, replay, canStall);
             processCacheResponse(event, baseAddr);
             break;
         case Command::PutS:
         case Command::PutM:
         case Command::PutE:
+            profileEvent(event, cmd, replay, canStall);
             processCacheReplacement(event, cmd, baseAddr, replay);
             break;
         case Command::NACK:
+            profileEvent(event, cmd, replay, canStall);
             origEvent = event->getNACKedEvent();
             processIncomingNACK(origEvent);
             delete event;
@@ -316,16 +321,19 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         case Command::FetchInvX:
         case Command::Inv:
         case Command::ForceInv:
+            profileEvent(event, cmd, replay, canStall);
             processCacheInvalidate(event, baseAddr, replay);
             break;
         case Command::AckPut:
         case Command::AckInv:
         case Command::FetchResp:
         case Command::FetchXResp:
+            profileEvent(event, cmd, replay, canStall);
             processFetchResp(event, baseAddr);
             break;
         case Command::FlushLine:
         case Command::FlushLineInv:
+            profileEvent(event, cmd, replay, canStall);
             processCacheFlush(event, baseAddr, replay);
             break;
         default:
