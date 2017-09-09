@@ -109,8 +109,11 @@ void c_TraceReader::createTxn()
             m_txnReqQ.push_back(l_entry);
 
         } else {
+            
+            primaryComponentOKToEndSim();
+            std::cout << "TxnGen:: Ran out of txn's to read" << std::endl;
+
             break;
-            //  std::cout << "TxnGen:: Ran out of txn's to read" << std::endl;
         }
     }
 }

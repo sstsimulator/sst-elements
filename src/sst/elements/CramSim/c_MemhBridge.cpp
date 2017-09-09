@@ -82,7 +82,7 @@ c_MemhBridge::~c_MemhBridge() {
 
 
 void c_MemhBridge::createTxn() {
-	    
+   
     uint64_t l_cycle = Simulation::getSimulation()->getCurrentSimCycle();
     
     SST::Event* e = 0;
@@ -125,7 +125,8 @@ void c_MemhBridge::readResponse() {
 
 void c_MemhBridge::printTxn(bool x_isWrite, uint64_t x_addr){
     std::string l_txnType;
-    
+
+    uint64_t l_currentCycle = Simulation::getSimulation()->getCurrentSimCycle();
     if(x_isWrite)
         l_txnType="P_MEM_WR";
     else
@@ -133,7 +134,7 @@ void c_MemhBridge::printTxn(bool x_isWrite, uint64_t x_addr){
 
     (*m_txnTraceStream) << "0x" << std::hex <<x_addr
                         << " " <<l_txnType
-                        << " " << "0"
+                        << " " << std::dec<<l_currentCycle
                         <<std::endl;
 		
 }

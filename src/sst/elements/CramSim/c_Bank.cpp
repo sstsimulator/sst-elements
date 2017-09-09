@@ -346,6 +346,7 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 			case e_BankCommandType::PRE:
 				m_PRECmdsReceived++;
 				m_bankStats->s_bankPREsRecvd->addData(1);
+                                m_prevOpenRow=-1;
 				break;
 			case e_BankCommandType::REF:
 				break;
