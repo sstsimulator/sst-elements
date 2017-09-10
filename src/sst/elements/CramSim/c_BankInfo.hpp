@@ -56,7 +56,7 @@ public:
 
 	void handleCommand(c_BankCommand* x_bankCommandPtr, SimTime_t x_simCycle);
 
-	void clockTic();
+	void clockTic(SimTime_t x_cycle);
 
 	std::list<e_BankCommandType> getAllowedCommands();
 

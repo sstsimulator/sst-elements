@@ -59,19 +59,19 @@ c_BankStateWriteA::~c_BankStateWriteA() {
 // handle automatic state changes in function update( ... )
 
 void c_BankStateWriteA::handleCommand(c_BankInfo* x_bank,
-		c_BankCommand* x_bankCommandPtr) {
+		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
 	// std::cout << __PRETTY_FUNCTION__
 	// 		<< "ERROR: Bank commands are irrelevant in the current state ... exiting simulation"
 	// 		<< std::endl;
 }
 
-void c_BankStateWriteA::clockTic(c_BankInfo* x_bank) {
+void c_BankStateWriteA::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 
 	if (0 < m_timerEnter) {
 		--m_timerEnter;
 	} else {
 		if (0 == m_timerExit) {
-			SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
+			SimTime_t l_time = x_cycle;
 			x_bank->setLastCommandCycle(e_BankCommandType::WRITEA, l_time);
 			SimTime_t l_nextCycle = std::max(
 					x_bank->getNextCommandCycle(e_BankCommandType::ACT)
@@ -89,13 +89,13 @@ void c_BankStateWriteA::clockTic(c_BankInfo* x_bank) {
 			--m_timerExit;
 		} else {
 			if (nullptr != m_nextStatePtr)
-				m_nextStatePtr->enter(x_bank, this, nullptr);
+				m_nextStatePtr->enter(x_bank, this, nullptr,x_cycle);
 		}
 	}
 }
 
 void c_BankStateWriteA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-		c_BankCommand* x_cmdPtr) {
+		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 //	 std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
 
 	// Being in the WriteA state does not make a READA cmd response ready.
@@ -123,7 +123,7 @@ void c_BankStateWriteA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 		m_prevCommandPtr = nullptr;
 	}
 
-	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = x_cycle;
 
 //	m_timerExit = std::max(
 //			std::max(x_bank->getNextCommandCycle(e_BankCommandType::WRITEA),

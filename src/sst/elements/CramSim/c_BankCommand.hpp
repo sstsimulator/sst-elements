@@ -34,6 +34,8 @@
 #include <string>
 
 //sst includes
+
+#include <sst/core/component.h>
 #include <sst/core/serialization/serializable.h>
 #include "output.h"
 
@@ -85,9 +87,9 @@ public:
 	c_BankCommand(c_BankCommand&&) = delete;
 	c_BankCommand& operator=(c_BankCommand) = delete;
 
-	void print(SST::Output *) const;
-	void print(SST::Output *x_debugOutput,const std::string x_prefix) const;
-	void print() const;
+	void print(SST::Output *, SimTime_t x_cycle) const;
+	void print(SST::Output *x_debugOutput,const std::string x_prefix, SimTime_t x_cycle) const;
+	void print(SimTime_t x_cycle) const;
 
         const c_HashedAddress *getHashedAddress() const {
 	  return (&m_hashedAddr);

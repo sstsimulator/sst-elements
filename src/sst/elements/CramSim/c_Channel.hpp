@@ -76,7 +76,7 @@ public:
 	std::vector<c_BankInfo*> getBankPtrs() const;
 
 	void updateOtherBanksNextCommandCycles(c_Rank* x_initRankPtr,
-			c_BankCommand* x_cmdPtr);
+			c_BankCommand* x_cmdPtr, SimTime_t x_cycle);
 
 private:
 	std::vector<c_Rank*> m_rankPtrs;

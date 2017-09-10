@@ -49,12 +49,12 @@ public:
 	c_BankStateReadA(std::map<std::string, unsigned>* x_bankParams);
 	~c_BankStateReadA();
 
-	virtual void handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr);
+	virtual void handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle);
 
-	virtual void clockTic(c_BankInfo* x_bank);
+	virtual void clockTic(c_BankInfo* x_bank, SimTime_t x_cycle);
 
 	virtual void enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-			c_BankCommand* x_cmdPtr);
+			c_BankCommand* x_cmdPtr, SimTime_t x_cycle);
 
 	virtual std::list<e_BankCommandType> getAllowedCommands();
 

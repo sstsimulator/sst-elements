@@ -134,7 +134,7 @@ void c_TxnConverter::run(){
 				for (auto &it : l_cmdPkg) {
 					c_BankCommand* l_cmd = it;
 					bool isSuccess = m_cmdScheduler->push(l_cmd);
-					l_cmd->print(output, "[c_TxnConverter]");
+					l_cmd->print(output, "[c_TxnConverter]", m_owner->getSimCycle());
 					assert(isSuccess);
 				}
 				updateBankInfo(l_reqTxn);

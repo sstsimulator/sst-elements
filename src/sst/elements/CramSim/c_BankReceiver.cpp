@@ -105,7 +105,7 @@ void c_BankReceiver::sendResponse() {
 			std::cout << std::endl << "@" << std::dec
 					<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
 					<< __PRETTY_FUNCTION__ << std::endl;
-			(*l_iter)->print();
+		//	(*l_iter)->print();
 			std::cout << std::endl;
 
 			SST::n_Bank::c_CmdResEvent* l_cmdResEventPtr = new c_CmdResEvent();
@@ -129,7 +129,7 @@ void c_BankReceiver::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 		std::cout << std::endl << "@" << std::dec
 				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
 				<< __PRETTY_FUNCTION__ << std::endl;
-		l_cmdReq->print();
+	//	l_cmdReq->print();
 		std::cout << std::endl;
 
 		m_cmdQ.push_back(l_cmdReq);

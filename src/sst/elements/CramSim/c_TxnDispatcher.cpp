@@ -177,7 +177,7 @@ void c_TxnDispatcher::sendRequest(c_TxnReqEvent* x_newReq)
 
     #ifdef __SST_DEBUG_OUTPUT__
     dbg.verbose(CALL_INFO,1,0," Cycle:%lld, LaneIdxPosition:[%d:%d] Addr: 0x%lx LaneIdx: %d\n",
-             Simulation::getSimulation()->getCurrentSimCycle(),m_laneIdxEnd,m_laneIdxStart,l_addr,l_laneIdx);
+             m_simCycle,m_laneIdxEnd,m_laneIdxStart,l_addr,l_laneIdx);
     #endif
 
     //send the event to a target lane

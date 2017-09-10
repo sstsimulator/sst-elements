@@ -30,11 +30,9 @@
 #ifndef C_CONTROLLER_HPP
 #define C_CONTROLLER_HPP
 
-//SST includes
-#include <sst/core/component.h>
-#include <sst/core/link.h>
 
 // SST includes
+#include <sst/core/link.h>
 #include <sst/core/component.h>
 #include "c_AddressHasher.hpp"
 #include "c_DeviceDriver.hpp"
@@ -67,6 +65,8 @@ namespace SST {
 
             void sendCommand(c_BankCommand* cmd);
 
+            SimTime_t getSimCycle(){return m_simCycle;}
+
         private:
             c_Controller(); // for serialization only
             c_Controller(SST::ComponentId_t id);
@@ -89,7 +89,8 @@ namespace SST {
             void handleOutDeviceReqPtrEvent(SST::Event *ev);
             void handleInDeviceResPtrEvent(SST::Event *ev);
             void handleInDeviceReqQTokenChgEvent(SST::Event *ev);
-
+    
+            SimTime_t m_simCycle;
 
             SST::Output *output;
 

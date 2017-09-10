@@ -114,8 +114,8 @@ e_BankCommandType c_BankCommand::getCommandMnemonic() const {
 //  return (m_transactionPtr);
 //}
 
-void c_BankCommand::print() const {
-  std::cout << "[" << this << " Cycle:" <<  Simulation::getSimulation()->getCurrentSimCycle()
+void c_BankCommand::print(SimTime_t x_cycle) const {
+  std::cout << "[" << this << " Cycle:" <<  x_cycle
 			<< " CMD: " << this->getCommandString()
 			<< ", SEQNUM: " << std::dec << this->getSeqNum()
 			<< ", ADDR: 0x" << std::hex << this->getAddress()
@@ -133,8 +133,8 @@ void c_BankCommand::print() const {
 
 }
 
-void c_BankCommand::print(SST::Output *x_debugOutput) const {
-	x_debugOutput->verbose(CALL_INFO, 1, 0, "[BankCommand] Cycle:%ld," , Simulation::getSimulation()->getCurrentSimCycle());
+void c_BankCommand::print(SST::Output *x_debugOutput, SimTime_t x_cycle) const {
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "[BankCommand] Cycle:%ld," , x_cycle);
 	x_debugOutput->verbose(CALL_INFO, 1, 0, "CMD:%s,",this->getCommandString().c_str());
 	x_debugOutput->verbose(CALL_INFO, 1, 0,	"SEQNUM:%d,",this->getSeqNum());
 	x_debugOutput->verbose(CALL_INFO, 1, 0,	"ADDR:%lx,",this->getAddress());
@@ -151,9 +151,9 @@ void c_BankCommand::print(SST::Output *x_debugOutput) const {
 	x_debugOutput->flush();
 }
 
-void c_BankCommand::print(SST::Output *x_debugOutput,const std::string x_prefix) const {
+void c_BankCommand::print(SST::Output *x_debugOutput,const std::string x_prefix, SimTime_t x_cycle) const {
 	x_debugOutput->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %d CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
-							Simulation::getSimulation()->getCurrentSimCycle(),
+							x_cycle,
 							getCommandString().c_str(),
 							m_seqNum,
 							getHashedAddress()->getChannel(),

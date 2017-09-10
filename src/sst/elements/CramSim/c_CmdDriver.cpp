@@ -163,7 +163,7 @@ void c_CmdDriver::sendResponse() {
 	if (m_cmdQ.size() > 0) {
 
 		std::cout << "CmdDriver::sendResponse(): sending cmd:";
-		m_cmdQ.front()->print();
+	//	m_cmdQ.front()->print();
 		std::cout << std::endl;
 		c_CmdResEvent* l_txnResEventPtr = new c_CmdResEvent();
 		l_txnResEventPtr->m_payload = m_cmdQ.front();

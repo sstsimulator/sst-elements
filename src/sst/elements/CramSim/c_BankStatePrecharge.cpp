@@ -60,20 +60,16 @@ c_BankStatePrecharge::~c_BankStatePrecharge() {
 }
 
 void c_BankStatePrecharge::handleCommand(c_BankInfo* x_bank,
-		c_BankCommand* x_bankCommandPtr) {
+		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
 	// std::cout << __PRETTY_FUNCTION__
 	// 		<< " ERROR: should not receive a command in this state. This is a transitory state."
 	// 		<< std::endl;
 }
 
-void c_BankStatePrecharge::clockTic(c_BankInfo* x_bank) {
+void c_BankStatePrecharge::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 	if (0 < m_timer) {
 		--m_timer;
 
-		//std::cout << __PRETTY_FUNCTION__ << "@@" << std::dec << "m_timer = "
-		//	  << m_timer << " " 
-		//	  << Simulation::getSimulation()->getCurrentSimCycle()
-		//	  << std::endl;
 
 //		if (m_prevCommandPtr)
 //			m_prevCommandPtr->print();
@@ -96,12 +92,12 @@ void c_BankStatePrecharge::clockTic(c_BankInfo* x_bank) {
 			//	m_prevCommandPtr->getTransaction()->setResponseReady();
 		}
 		auto l_p = new c_BankStateIdle(m_bankParams);
-		l_p->enter(x_bank, this, nullptr);
+		l_p->enter(x_bank, this, nullptr, x_cycle);
 	}
 }
 
 void c_BankStatePrecharge::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-		c_BankCommand* x_cmdPtr) {
+		c_BankCommand* x_cmdPtr,SimTime_t x_cycle) {
 
 //	std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
 	x_bank->resetRowOpen();
@@ -110,10 +106,6 @@ void c_BankStatePrecharge::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_timer = m_bankParams->at("nRP") - 2; // MBH it takes 2 cycles from the time PRE is issued for m_timer to start counting down
 	m_allowedCommands.clear();
 
-	//std::cout << "@@" << std::dec
-	//	  << Simulation::getSimulation()->getCurrentSimCycle()
-	//	  << ": m_timer = " << m_timer << std::endl;
-	//std::cout << "Entering " << __PRETTY_FUNCTION__ << std::endl;
 	
 //	if (m_prevCommandPtr) {
 //		std::cout << "Previous command = ";

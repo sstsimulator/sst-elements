@@ -83,7 +83,7 @@ c_MemhBridge::~c_MemhBridge() {
 
 void c_MemhBridge::createTxn() {
    
-    uint64_t l_cycle = Simulation::getSimulation()->getCurrentSimCycle();
+    uint64_t l_cycle = m_simCycle;
     
     SST::Event* e = 0;
     while((e = m_linkCPU->recv())) {
@@ -113,7 +113,7 @@ void c_MemhBridge::readResponse() {
                 
 		MemRespEvent *event = new MemRespEvent(l_txn->getSeqNum(), l_txn->getAddress(), 0);
 
-		l_txn->print(output,"[memhbridge.readResponse]");
+		l_txn->print(output,"[memhbridge.readResponse]", m_simCycle);
 
 		m_linkCPU->send( event );
 		delete l_txn;
@@ -126,7 +126,7 @@ void c_MemhBridge::readResponse() {
 void c_MemhBridge::printTxn(bool x_isWrite, uint64_t x_addr){
     std::string l_txnType;
 
-    uint64_t l_currentCycle = Simulation::getSimulation()->getCurrentSimCycle();
+    uint64_t l_currentCycle = m_simCycle;
     if(x_isWrite)
         l_txnType="P_MEM_WR";
     else

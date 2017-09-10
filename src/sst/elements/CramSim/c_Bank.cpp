@@ -290,15 +290,11 @@ c_Bank::~c_Bank() {
 
 void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 
-  //std::cout << std::endl << "@" << std::dec
-  //<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-  //<< __PRETTY_FUNCTION__ << " " << this << std::endl;
-  //std::cout << std::endl;
 
   //std::cout << "bankNum " << m_bankNum << std::endl;
   if(m_cmd) {
-    std::cout << "m_cmd = ";       m_cmd->print();
-    std::cout << "x_cmd = ";       x_bankCommandPtr->print();
+   // std::cout << "m_cmd = ";       m_cmd->print();
+   // std::cout << "x_cmd = ";       x_bankCommandPtr->print();
   }
 
 	assert(nullptr == m_cmd);
@@ -359,10 +355,6 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 
 c_BankCommand* c_Bank::clockTic() {
 
-//	std::cout << std::endl << "@" << std::dec
-//			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//			<< __PRETTY_FUNCTION__ << std::endl;
-//	std::cout << "m_cmd = " << m_cmd << std::endl;
 //	if (nullptr != m_cmd)
 //		m_cmd->print();
 

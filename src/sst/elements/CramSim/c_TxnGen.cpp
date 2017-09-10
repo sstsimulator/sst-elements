@@ -34,12 +34,12 @@ using namespace SST::n_Bank;
 c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
         Component(x_id) {
 
-
+    
     int verbosity = x_params.find<int>("verbose", 0);
     output = new SST::Output("CramSim.TxnGen[@f:@l:@p] ",
                              verbosity, 0, SST::Output::STDOUT);
 
-
+    m_simCycle=0;
     /*---- LOAD PARAMS ----*/
 
     //used for reading params
@@ -112,6 +112,9 @@ c_TxnGenBase::c_TxnGenBase() :
 
 
 bool c_TxnGenBase::clockTic(Cycle_t) {
+    
+    m_simCycle++;
+
     createTxn();
 
     for(int i=0;i<k_numTxnPerCycle;i++) {
@@ -160,7 +163,7 @@ void c_TxnGenBase::handleResEvent(SST::Event* ev) {
 	m_txnResQ.push_back(l_txn);
         
         delete l_txnResEventPtr;
-        uint64_t l_currentCycle = Simulation::getSimulation()->getCurrentSimCycle();
+        uint64_t l_currentCycle = m_simCycle;
         uint64_t l_seqnum=l_txn->getSeqNum();
         
         
@@ -195,7 +198,7 @@ bool c_TxnGenBase::sendRequest()
     assert(k_maxOutstandingReqs==0 || m_numOutstandingReqs<=k_maxOutstandingReqs);
     if(!m_txnReqQ.empty())
     {
-        uint64_t l_cycle=Simulation::getSimulation()->getCurrentSimCycle();
+        uint64_t l_cycle=m_simCycle;
 
         // confirm that interval timer has run out before contiuing
         if (m_txnReqQ.front().second > l_cycle) {
@@ -320,7 +323,7 @@ uint64_t c_TxnGen::getNextAddress() {
 
 void c_TxnGen::createTxn() {
 
-    uint64_t l_cycle = Simulation::getSimulation()->getCurrentSimCycle();
+    uint64_t l_cycle = m_simCycle;
 
     while(m_txnReqQ.size()<k_numTxnPerCycle)
     {

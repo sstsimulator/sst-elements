@@ -46,11 +46,11 @@ namespace SST {
                 printf("Total Write-Txns Responses received: %lu\n", m_resWriteCount);
                 printf("Total Txns Received: %lu\n", m_resReadCount + m_resWriteCount);
                 std::cout << "Cycles Per Transaction (CPT) = "
-                          << std::dec << static_cast<double>(Simulation::getSimulation()->getCurrentSimCycle())
+                          << std::dec << static_cast<double>(m_simCycle)
                                          / static_cast<double>(m_resReadCount + m_resWriteCount) << std::endl;
                 printf("Component Finished.\n");
 
-                double l_txnsPerCycle=  static_cast<double>(m_resReadCount + m_resWriteCount) /static_cast<double>(Simulation::getSimulation()->getCurrentSimCycle());
+                double l_txnsPerCycle=  static_cast<double>(m_resReadCount + m_resWriteCount) /static_cast<double>(m_simCycle);
 
                 s_txnsPerCycle->addData(l_txnsPerCycle);
             }
@@ -65,6 +65,8 @@ namespace SST {
             virtual void readResponse(); //read from res q to output
 
             virtual bool clockTic(SST::Cycle_t); //called every cycle
+
+            SimTime_t m_simCycle;
 
             std::deque<std::pair<c_Transaction*, uint64_t>> m_txnReqQ;
             std::deque<c_Transaction*> m_txnResQ;

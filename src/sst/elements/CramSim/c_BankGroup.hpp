@@ -76,7 +76,7 @@ public:
 	c_Rank* getRankPtr() const;
 
 	void updateOtherBanksNextCommandCycles(c_BankInfo* x_initBankPtr,
-			c_BankCommand* x_cmdPtr);
+			c_BankCommand* x_cmdPtr, SimTime_t x_cycle);
 
 private:
         unsigned m_bankGroupId;

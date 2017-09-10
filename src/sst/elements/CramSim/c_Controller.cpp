@@ -47,6 +47,7 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     output = new SST::Output("CramSim.Controller[@f:@l:@p] ",
                              verbosity, 0, SST::Output::STDOUT);
 
+    m_simCycle=0;
 
     /** Get subcomponent parameters*/
     bool l_found;
@@ -179,6 +180,8 @@ void c_Controller::configure_link() {
 
 // clock event handler
 bool c_Controller::clockTic(SST::Cycle_t clock) {
+    
+    m_simCycle++;
 
     sendResponse();
 
