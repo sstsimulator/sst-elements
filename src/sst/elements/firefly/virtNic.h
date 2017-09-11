@@ -152,21 +152,14 @@ class VirtNic : public SST::Module {
     void get( int node, int tag, std::vector<IoVec>& vec, void* key );
     void regMem( int node, int tag, std::vector<IoVec>& vec, void *key );
 
-    void shmemBlocked( Callback );
     void shmemInit( Hermes::Vaddr, Callback );
     void shmemRegMem( Hermes::MemAddr&, size_t len, Callback );
-    void shmemFence( Callback );
-
     void shmemWait( Hermes::Vaddr dest, Hermes::Shmem::WaitOp, Hermes::Value&, Callback );
-
     void shmemPutv( int node, Hermes::Vaddr dest, Hermes::Value&, Callback );
     void shmemGetv( int node, Hermes::Vaddr src, Hermes::Value::Type, CallbackV );
-
     void shmemPut( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback );
     void shmemGet( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback );
-
     void shmemPutOp( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Hermes::Shmem::ReduOp, Hermes::Value::Type, Callback );
-
     void shmemSwap( int node, Hermes::Vaddr dest, Hermes::Value& value, CallbackV );
     void shmemCswap( int node, Hermes::Vaddr dest, Hermes::Value& cond, Hermes::Value& value, CallbackV );
     void shmemAdd( int node, Hermes::Vaddr dest, Hermes::Value&, Callback );
@@ -186,7 +179,6 @@ class VirtNic : public SST::Module {
   private:
 
     void sendCmd( SimTime_t delay ,Event* ev) {
-        ++m_numPendingShmem;
         m_toNicLink->send( delay, ev );  
     }
          
@@ -210,10 +202,6 @@ class VirtNic : public SST::Module {
     int         m_numCores;
     Output      m_dbg;
     Link*       m_toNicLink;
-
-    int         m_numPendingShmem;
-    int         m_maxPendingShmem;
-    Callback    m_shmemBlockedCallback;
 
     VirtNic::HandlerBase<void*>* m_notifyGetDone; 
     VirtNic::HandlerBase<void*>* m_notifyPutDone; 

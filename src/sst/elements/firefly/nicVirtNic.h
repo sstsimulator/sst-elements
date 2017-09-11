@@ -39,37 +39,45 @@ class VirtNic {
             }
         }
 
+		void send( SST::Event * event ) {
+			m_toCoreLink->send( 149, event );
+		}
+
+		void sendShmem( SimTime_t delay, SST::Event * event ) {
+			m_toCoreLink->send( delay , event );
+		}
+
+
         Link* m_toCoreLink;
         int id;
         void notifyRecvDmaDone( int src_vNic, int src, int tag, size_t len,
                                                             void* key ) {
-            m_toCoreLink->send(0,
-                new NicRespEvent( NicRespEvent::DmaRecv, src_vNic,
+            send( new NicRespEvent( NicRespEvent::DmaRecv, src_vNic,
                         src, tag, len, key ) );
         }
         void notifyNeedRecv( int src_vNic, int src, size_t len ) {
-            m_toCoreLink->send(0,
-                new NicRespEvent( NicRespEvent::NeedRecv, src_vNic,
+            send( new NicRespEvent( NicRespEvent::NeedRecv, src_vNic,
                         src, 0, len ) );
         }
         void notifySendDmaDone( void* key ) {
-            m_toCoreLink->send(0,new NicRespEvent( NicRespEvent::DmaSend, key));
+            send( new NicRespEvent( NicRespEvent::DmaSend, key));
         }
         void notifySendPioDone( void* key ) {
-            m_toCoreLink->send(0,new NicRespEvent( NicRespEvent::PioSend, key));
+            send( new NicRespEvent( NicRespEvent::PioSend, key));
         }
         void notifyPutDone( void* key ) {
-            m_toCoreLink->send(0, new NicRespEvent( NicRespEvent::Put, key ));
+            send( new NicRespEvent( NicRespEvent::Put, key ));
         }
         void notifyGetDone( void* key ) {
-            m_toCoreLink->send(0, new NicRespEvent( NicRespEvent::Get, key ));
+            send( new NicRespEvent( NicRespEvent::Get, key ));
         }
 
 
-        void notifyShmem( NicShmemRespBaseEvent::Type type, NicShmemRespEvent::Callback callback ) {
-            m_toCoreLink->send(0, new NicShmemRespEvent( type, callback ));
+        void notifyShmem( SimTime_t delay, NicShmemRespEvent::Callback callback ) {
+            sendShmem( delay, new NicShmemRespEvent( callback ));
         }
-        void notifyShmem( NicShmemRespBaseEvent::Type type, NicShmemValueRespEvent::Callback callback, Hermes::Value& value ) {
-            m_toCoreLink->send(0, new NicShmemValueRespEvent( type, callback, value ));
+
+        void notifyShmem( SimTime_t delay, NicShmemValueRespEvent::Callback callback, Hermes::Value& value ) {
+            sendShmem( delay, new NicShmemValueRespEvent( callback, value ));
         }
     };
