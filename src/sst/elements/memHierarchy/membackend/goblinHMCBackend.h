@@ -18,6 +18,7 @@
 #define _H_SST_MEMH_GOBLIN_HMC_BACKEND
 
 #include <queue>
+#include <vector>
 
 #include <sst/core/component.h>
 #include <sst/core/elementinfo.h>
@@ -54,13 +55,14 @@ class HMCSimBackEndReq {
 		uint64_t startTime;
 };
 
-class GOBLINHMCSimBackend : public SimpleMemBackend {
+class GOBLINHMCSimBackend : public ExtMemBackend {
 
 public:
-	GOBLINHMCSimBackend() : SimpleMemBackend() {};
 	GOBLINHMCSimBackend(Component* comp, Params& params);
 	~GOBLINHMCSimBackend();
-	bool issueRequest(ReqId, Addr, bool, unsigned);
+	bool issueRequest(ReqId, Addr, bool,
+                          std::vector<uint64_t>,
+                          uint32_t, unsigned);
 	void setup();
 	void finish();
 	virtual bool clock(Cycle_t cycle);

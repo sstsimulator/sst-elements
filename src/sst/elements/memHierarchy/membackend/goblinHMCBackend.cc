@@ -19,7 +19,7 @@
 
 using namespace SST::MemHierarchy;
 
-GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : SimpleMemBackend(comp, params),
+GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : ExtMemBackend(comp, params),
 	owner(comp) {
 
 	int verbose = params.find<int>("verbose", 0);
@@ -242,7 +242,9 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : Simp
 	output->verbose(CALL_INFO, 1, 0, "Completed HMC Simulation Backend Initialization.\n");
 }
 
-bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes) {
+bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite,
+                                       std::vector<uint64_t> ins, uint32_t flags,
+                                       unsigned numBytes) {
 	// We have run out of tags
 	if(tag_queue.empty()) {
 		output->verbose(CALL_INFO, 4, 0, "Will not issue request this call, tag queue has no free entries.\n");
@@ -480,6 +482,7 @@ bool GOBLINHMCSimBackend::clock(Cycle_t cycle) {
 
 void GOBLINHMCSimBackend::processResponses() {
 	int rc = HMC_OK;
+        uint32_t flags;
 
 	printPendingRequests();
 
@@ -539,7 +542,7 @@ void GOBLINHMCSimBackend::processResponses() {
 							owner->getCurrentSimTimeNano() - matchedReq->getStartTime());
 
 						// Pass back to the controller to be handled, HMC sim is finished with it
-						handleMemResponse(matchedReq->getRequest());
+						handleMemResponse(matchedReq->getRequest(),flags);
 
 						// Clear element from our map, it has been processed so no longer needed
 						tag_req_map.erase(resp_tag);
