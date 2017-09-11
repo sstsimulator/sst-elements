@@ -35,8 +35,8 @@ namespace MemHierarchy {
 
 class HMCSimBackEndReq {
 	public:
-		HMCSimBackEndReq(MemBackend::ReqId r, Addr a, uint64_t sTime) :
-			req(r), addr(a), startTime(sTime) {}
+		HMCSimBackEndReq(MemBackend::ReqId r, Addr a, uint64_t sTime, bool hr) :
+			req(r), addr(a), startTime(sTime), hasResp(hr) {}
 		~HMCSimBackEndReq() {}
 
 		uint64_t getStartTime() const {
@@ -49,10 +49,14 @@ class HMCSimBackEndReq {
         Addr getAddr() const {
 			return addr;
 		}
+        bool hasResponse() const {
+                        return hasResp;
+                }
 	private:
         MemBackend::ReqId req;
         Addr addr;
-		uint64_t startTime;
+	uint64_t startTime;
+        bool hasResp;
 };
 
 class GOBLINHMCSimBackend : public ExtMemBackend {
