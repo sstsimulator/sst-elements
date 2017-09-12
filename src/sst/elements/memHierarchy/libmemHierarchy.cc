@@ -136,7 +136,7 @@ static const ElementInfoParam cache_params[] = {
     {"snoop_l1_invalidations",  "(bool) Forward invalidations from L1s to processors. Options: 0[off], 1[on]", "false"},
     {"debug",                   "(uint) Where to send output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",             "(uint) Output/debug verbosity level. Between 0 (no output) and 10 (everything). 1-3 gives warnings/info; 4-10 gives debug.", "1"},
-    {"debug_addr",              "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values.",""},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
     {"force_noncacheable_reqs", "(bool) Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "false"},
     {"min_packet_size",         "(string) Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
     /* Old parameters - deprecated or moved */
@@ -639,7 +639,7 @@ static const ElementInfoParam multithreadL1_params[] = {
     {"responses_per_cycle", "(uint) Number of responses to forward to threads each cycle (for all threads combined). 0 indicates unlimited", "0"},
     {"debug",               "(uint) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",         "(uint) Debug verbosity level. Between 0 and 10", "0"},
-    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values.",""},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
     {NULL, NULL, NULL}
 };
 
@@ -767,7 +767,7 @@ static const ElementInfoParam bus_params[] = {
     {"idle_max",            "(uint) Bus temporarily turns off clock after this amount of idle cycles", "6"},
     {"debug",               "(uint) Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {"debug_level",         "(uint) Debugging level: 0 to 10", "0"},
-    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values.",""},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
     {NULL, NULL}
 };
 
@@ -872,7 +872,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"trace_file",          "(string) File name (optional) of a trace-file to generate.", ""},
     {"debug",               "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "(uint) Debugging level: 0 to 10", "0"},
-    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values.",""},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
     {"listenercount",       "(uint) Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
     {"listener%(listenercount)d", "(string) Loads a listener module into the controller", ""},
     {"do_not_back",         "(bool) DO NOT use this parameter if simulation depends on correct memory values. Otherwise, set to '1' to reduce simulation's memory footprint", "0"},
@@ -1410,7 +1410,7 @@ static const ElementInfoParam memLink_params[] = {
     { "{cpu|mem}link.latency",          "(string) Link latency. Prefix 'cpulink' for up-link towards CPU or 'memlink' for down-link towards memory", "50ps"},
     { "{cpu|mem}link.debug",            "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     { "{cpu|mem}link.debug_level",      "(int) Debug verbosity level. Between 0 and 10", "0"},
-    { "{cpu|mem}link.debug_addr",       "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values.",""},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
     { "{cpu|mem}link.accept_region",    "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},
     { "{cpu|mem}link.port",             "(string) Set by parent component. Name of port this memLink sits on.", ""},
     { "{cpu|mem}link.addr_range_start", "(uint) Set by parent component. Lowest address handled by the parent.", "0"},
@@ -1452,7 +1452,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"entry_cache_size",        "Size (in # of entries) the controller will cache.", "0"},
     {"debug",                   "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",             "Debugging level: 0 to 10", "0"},
-    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values.",""},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
     {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
     {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--", "MESI"},
     {"mshr_num_entries",        "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},

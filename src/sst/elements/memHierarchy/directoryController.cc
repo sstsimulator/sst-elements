@@ -513,14 +513,16 @@ void DirectoryController::processPacket(MemEvent * ev, bool replay) {
             handleBackInv(ev);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1 , "%s, Error: Received unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    getName().c_str(), CommandString[(int)cmd], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+            dbg.fatal(CALL_INFO, -1 , "%s, Error: Received unrecognized request: %s.  Time = %" PRIu64 "ns\n",
+                    getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 }
 
 
 void DirectoryController::handleNoncacheableRequest(MemEventBase * ev) {
-    noncacheMemReqs[ev->getID()] = ev->getSrc();
+    if (!(ev->queryFlag(MemEventBase::F_NORESPONSE))) {
+        noncacheMemReqs[ev->getID()] = ev->getSrc();
+    }
     stat_NoncacheReceived->addData(1);
 
     ev->setSrc(getName());
@@ -532,6 +534,10 @@ void DirectoryController::handleNoncacheableRequest(MemEventBase * ev) {
 
 
 void DirectoryController::handleNoncacheableResponse(MemEventBase * ev) {
+    if (noncacheMemReqs.find(ev->getID()) == noncacheMemReqs.end()) {
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Received a noncacheable response that does not match a pending request. Event: %s\n. Time: %" PRIu64 "ns\n", 
+                getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }
     ev->setDst(noncacheMemReqs[ev->getID()]);
     ev->setSrc(getName());
 

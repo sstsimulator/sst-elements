@@ -345,7 +345,9 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
 /* For handling non-cache commands (including NONCACHEABLE data requests) */
 void Cache::processNoncacheable(MemEventBase* event) {
     if (CommandCPUSide[(int)event->getCmd()]) {
-        responseDst_.insert(std::make_pair(event->getID(), event->getSrc()));
+        if (!(event->queryFlag(MemEvent::F_NORESPONSE))) {
+            responseDst_.insert(std::make_pair(event->getID(), event->getSrc()));
+        }
         coherenceMgr_->forwardTowardsMem(event);
     } else {
         std::map<SST::Event::id_type,std::string>::iterator it = responseDst_.find(event->getResponseToID());
