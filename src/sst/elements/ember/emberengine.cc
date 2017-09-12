@@ -151,9 +151,8 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
 
         std::string moduleName = apiParams.find<std::string>( "module" );
         assert( ! moduleName.empty() );
-        Params osParams = params.find_prefix_params("os.");
-        std::string osName = osParams.find<std::string>("name");
-        Params modParams = params.find_prefix_params( osName + "." );
+
+        Params modParams = params.find_prefix_params( moduleName + "." );
 
         Hermes::Interface* api = dynamic_cast<Interface*>(
                         owner->loadSubComponent( 
@@ -321,6 +320,11 @@ void EmberEngine::handleEvent(Event* ev) {
         eEv->issue( getCurrentSimTimeNano(), 
                 new ArgStatic_Functor< EmberEngine, int, EmberEvent*, bool >(
                             this, &EmberEngine::completeFunctor, eEv ) );
+        break;
+
+      case EmberEvent::IssueCallback:
+        eEv->issue( getCurrentSimTimeNano(), 
+                    std::bind( &EmberEngine::completeCallback, this, eEv, std::placeholders::_1 ) );
         break;
 
       case EmberEvent::Complete:

@@ -1,6 +1,9 @@
 # Automatically generated SST Python input
 import sst
 
+DEBUG_SCRATCH = 0
+DEBUG_MEM = 0
+
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.ScratchCPU")
 comp_cpu.addParams({
@@ -16,8 +19,8 @@ comp_cpu.addParams({
 })
 comp_scratch = sst.Component("scratch", "memHierarchy.Scratchpad")
 comp_scratch.addParams({
-    #"debug" : 1,
-    #"debug_level" : 10,
+    "debug" : DEBUG_SCRATCH,
+    "debug_level" : 10,
     "clock" : "2GHz",
     "size" : "1KiB",
     "scratch_line_size" : 64,
@@ -26,12 +29,13 @@ comp_scratch.addParams({
     "backendConvertor" : "memHierarchy.simpleMemScratchBackendConvertor",
     "backendConvertor.backend" : "memHierarchy.simpleMem",
     "backendConvertor.backend.access_time" : "10ns",
+    "backendConvertor.debug_location" : 1,
+    "backendConvertor.debug_level" : 10,
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "coherence_protocol" : "MSI",
-      #"debug" : "1",
-      #"debug_level" : 10,
+      "debug" : DEBUG_MEM,
+      "debug_level" : 10,
       "backend.access_time" : "1000 ns",
       "clock" : "1GHz",
       "backend.mem_size" : "512MiB"

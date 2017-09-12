@@ -20,24 +20,23 @@
 #include "membackend/memBackend.h"
 
 namespace SST {
-	namespace MemHierarchy {
+namespace MemHierarchy {
 
-		class Messier : public SimpleMemBackend {
-			public:
-				Messier(Component *comp, Params &params);
-				virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
-				void handleMessierResp(SST::Event *event);
+class Messier : public SimpleMemBackend {
+public:
+    Messier(Component *comp, Params &params);
+    virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
+    void handleMessierResp(SST::Event *event);
+    virtual bool isClocked() { return false; }
 
+private:
+    SST::Link *cube_link;
+    std::set<ReqId> outToNVM;
+    SST::Link *nvm_link;
 
-			private:
+};
 
-				SST::Link *cube_link;
-				std::set<ReqId> outToNVM;
-				SST::Link *nvm_link;
-
-		};
-
-	}
+}
 }
 
 #endif

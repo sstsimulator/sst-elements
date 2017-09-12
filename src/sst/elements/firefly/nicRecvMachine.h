@@ -16,38 +16,85 @@
 
 class RecvMachine {
 
+        #include "nicShmemRecvMachine.h"
+
+        class StreamBase {
+          public:
+            StreamBase(Output& output, RecvMachine& rm) : 
+                m_dbg(output), m_rm(rm),m_recvEntry(NULL),m_sendEntry(NULL)
+            {}
+            virtual ~StreamBase() {
+                m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"notify \n");
+                if ( m_recvEntry ) {
+                    m_recvEntry->notify( m_hdr.src_vNicId, m_src, m_tag, m_matched_len );
+                    delete m_recvEntry;
+                }
+				if ( m_sendEntry ) {
+					m_rm.m_nic.m_sendMachine[0]->run( m_sendEntry );	
+				}
+            }
+            virtual void processPkt( FireflyNetworkEvent* ev ) {
+                m_rm.state_move_0( ev, this );
+            } 
+            RecvEntryBase* getRecvEntry() { return m_recvEntry; }
+            virtual size_t length() { return m_matched_len; }
+          protected:
+            Output&         m_dbg;
+            RecvMachine&    m_rm;
+			SendEntryBase*  m_sendEntry;
+            RecvEntryBase*  m_recvEntry;
+            MsgHdr          m_hdr;
+            int             m_src;
+            int             m_tag;
+            int             m_matched_len;
+        };
+
+        #include "nicMsgStream.h"
+        #include "nicRdmaStream.h"
+        #include "nicShmemStream.h"
+
       public:
-        RecvMachine( Nic& nic, Output& output ) :
-            m_nic(nic), m_dbg(output), m_rxMatchDelay( 100 ),
-            m_hostReadDelay( 200 ), m_blockedCallback( NULL ),
-            m_notifyCallback( false )
+
+        typedef std::function<void()> Callback;
+
+        RecvMachine( Nic& nic, int vc, int numVnics, 
+                int nodeId, int verboseLevel, int verboseMask,
+                int rxMatchDelay, int hostReadDelay, 
+                std::function<std::pair<Hermes::MemAddr,size_t>(int,uint64_t)> func ) :
+            m_nic(nic), 
+            m_vc(vc), 
+            m_rxMatchDelay( rxMatchDelay ),
+            m_hostReadDelay( hostReadDelay ),
+            m_blockedCallback( NULL ),
+            m_notifyCallback( false ), 
+            m_shmem( m_dbg )
 #ifdef NIC_RECV_DEBUG
             , m_msgCount(0) 
 #endif
         { 
+            char buffer[100];
+            snprintf(buffer,100,"@t:%d:Nic::RecvMachine::@p():@l vc=%d ",nodeId,m_vc);
+
+            m_dbg.init(buffer, verboseLevel, verboseMask, Output::STDOUT);
+            m_shmem.init( func );
+            setNotify();
         }
 
-        ~RecvMachine();
+        virtual ~RecvMachine();
 
-        void init( int numVnics, int rxMatchDelay, int hostReadDelay ) {
-            m_recvM.resize( numVnics );
-            m_rxMatchDelay = rxMatchDelay;
-            m_hostReadDelay = hostReadDelay;
-        }
-
-        void notify( int vc ) {
-            m_nic.schedCallback( std::bind( &Nic::RecvMachine::state_n0, this, vc ) );
+        void notify( ) {
+            m_nic.schedCallback( [=](){ state_0( getNetworkEvent( m_vc ) ); } );
             m_notifyCallback = false;
         }
 
-        void addDma( int vNic, int tag, RecvEntry* entry) {
-            m_recvM[ vNic ][ tag ].push_back( entry );
+        void addDma() {
+            m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
             if ( m_blockedCallback ) {
-                
                 m_nic.schedCallback( m_blockedCallback );
                 m_blockedCallback = NULL; 
             }
         }
+
         void printStatus( Output& out );
 
         void setNotify( ) {
@@ -56,35 +103,22 @@ class RecvMachine {
                                     m_nic.m_recvNotifyFunctor );
             m_notifyCallback = true;
         }
+        Nic& nic() { return m_nic; }
 
-      private:
-        void state_0( FireflyNetworkEvent* );
+      protected:
+        virtual void state_0( FireflyNetworkEvent* );
         void state_1( FireflyNetworkEvent* );
         void state_2( FireflyNetworkEvent* );
-        void state_3( FireflyNetworkEvent*, SendEntry*  );
-        void state_move_0( FireflyNetworkEvent* );
-        void state_move_1( FireflyNetworkEvent*, bool );
+        void state_move_0( FireflyNetworkEvent*, StreamBase* );
+        void state_move_1( FireflyNetworkEvent*, bool, StreamBase* );
+        void state_move_2( FireflyNetworkEvent* event );
         void checkNetwork();
-
-        bool findRecv( int src, MsgHdr& );
-        SendEntry* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
-        bool findPut(int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
-        size_t copyIn( Output& dbg, Nic::Entry& entry,
-                    FireflyNetworkEvent& event, std::vector<DmaVec>& vec );
-
-        void state_n0( int vc ) {
-            if ( vc == 0 ) {
-                state_0( getNetworkEvent( vc ) );
-            } else {
-                state_1( getNetworkEvent( vc ) );
-            }
-        }
 
         void processNeedRecv( FireflyNetworkEvent* event, Callback callback ) {
             m_blockedCallback = callback;
             MsgHdr& hdr = *(MsgHdr*) event->bufPtr();
             m_nic.notifyNeedRecv( hdr.dst_vNicId, hdr.src_vNicId,
-                     event->src, hdr.tag, hdr.len);
+                     event->src, hdr.len);
         }
 
         FireflyNetworkEvent* getNetworkEvent(int vc ) {
@@ -103,19 +137,58 @@ class RecvMachine {
             }
         }
 
-
         Nic&        m_nic;
-        Output&     m_dbg;
+        Output      m_dbg;
+        int         m_vc;
 
-        int                 m_rxMatchDelay;
-        int                 m_hostReadDelay;
-        Callback            m_blockedCallback;
+        int             m_rxMatchDelay;
+        int             m_hostReadDelay;
+        Callback        m_blockedCallback;
         bool            m_notifyCallback; 
-        std::map< int, RecvEntry* >     m_activeRecvM;
 
-        std::vector< std::map< int, std::deque<RecvEntry*> > > m_recvM;
-        
+        std::map< int, StreamBase* >    m_streamMap;
+
+        Shmem           m_shmem;
 #ifdef NIC_RECV_DEBUG 
-        unsigned int        m_msgCount;
+        unsigned int    m_msgCount;
 #endif
+};
+
+class CtlMsgRecvMachine : public RecvMachine {
+  public:
+    CtlMsgRecvMachine( Nic& nic, int vc, int numVnics, 
+                int nodeId, int verboseLevel, int verboseMask,
+                int rxMatchDelay, int hostReadDelay, 
+                std::function<std::pair<Hermes::MemAddr,size_t>(int,uint64_t)> func ) :
+        RecvMachine( nic, vc, numVnics, nodeId, verboseLevel, verboseMask, rxMatchDelay, hostReadDelay, func )
+    {}
+
+  private:
+    void state_3( SendEntryBase* entry ) {
+        m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
+        m_nic.m_sendMachine[0]->run( entry );
+
+        checkNetwork();
+    } 
+
+    void state_0( FireflyNetworkEvent* ev ) {
+
+        MsgHdr& hdr = *(MsgHdr*) ev->bufPtr();
+        RdmaMsgHdr& rdmaHdr = *(RdmaMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
+
+        m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"CtlMsg Get Operation src=%d len=%lu\n",ev->src,hdr.len);
+
+        assert( hdr.op == MsgHdr::Rdma && rdmaHdr.op == RdmaMsgHdr::Get  );
+        
+        SendEntryBase* entry = m_nic.findGet( ev->src, hdr, rdmaHdr );
+        assert(entry);
+
+        ev->bufPop(sizeof(MsgHdr) + sizeof(rdmaHdr) );
+
+        m_nic.schedCallback( 
+                std::bind( &Nic::CtlMsgRecvMachine::state_3, *this, entry ),
+                m_hostReadDelay );
+
+        delete ev;
+    }
 };

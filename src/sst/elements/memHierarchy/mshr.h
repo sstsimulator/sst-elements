@@ -109,7 +109,7 @@ public:
 
     // Bookkeeping getters/setters
     int getAcksNeeded(Addr baseAddr);
-    void setAcksNeeded(Addr baseAddr, int acksNeeded);
+    void setAcksNeeded(Addr baseAddr, int acksNeeded, MemEvent * event = nullptr);
     void incrementAcksNeeded(Addr baseAddr);
     void decrementAcksNeeded(Addr baseAddr);
     vector<uint8_t> * getTempData(Addr baseAddr);

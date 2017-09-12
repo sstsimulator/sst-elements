@@ -53,8 +53,12 @@ libmemHierarchy_la_SOURCES = \
 	membackend/simpleMemScratchBackendConvertor.cc \
 	membackend/cramSimBackend.h \
 	membackend/cramSimBackend.cc \
+	memEventBase.h \
 	memEvent.h \
-	scratchEvent.h \
+	moveEvent.h \
+	memLinkBase.h \
+	memLink.h \
+	memLink.cc \
 	memNIC.h \
 	memNIC.cc \
 	directoryController.h \
@@ -90,6 +94,7 @@ libmemHierarchy_la_SOURCES = \
 	scratchCPU.h \
 	scratchCPU.cc \
 	util.h \
+	memTypes.h \
 	dmaEngine.h \
 	dmaEngine.cc \
 	networkMemInspector.h \
@@ -151,6 +156,7 @@ EXTRA_DIST = \
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \
+	memEventBase.h \
 	memEvent.h \
 	memNIC.h \
 	membackend/memBackend.h \
@@ -164,7 +170,8 @@ nobase_sst_HEADERS = \
 	memoryController.h \
 	cacheListener.h \
 	bus.h \
-	util.h
+	util.h \
+	memTypes.h
 
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
 libmemHierarchy_la_LIBADD = 
@@ -189,6 +196,20 @@ AM_CPPFLAGS += $(DRAMSIM_CPPFLAGS) -DHAVE_LIBDRAMSIM
 libmemHierarchy_la_SOURCES += membackend/pagedMultiBackend.cc \
 	membackend/pagedMultiBackend.h
 nobase_sst_HEADERS += membackend/pagedMultiBackend.h
+
+endif
+
+if HAVE_HBMDRAMSIM
+libmemHierarchy_la_LDFLAGS += $(HBMDRAMSIM_LDFLAGS)
+libmemHierarchy_la_LIBADD += $(HBMDRAMSIM_LIB)
+libmemHierarchy_la_SOURCES += membackend/HBMdramSimBackend.cc \
+	membackend/HBMdramSimBackend.h
+nobase_sst_HEADERS += membackend/HBMdramSimBackend.h
+AM_CPPFLAGS += $(HBMDRAMSIM_CPPFLAGS) -DHAVE_HBMLIBDRAMSIM -DHAVE_HBMDRAMSIM
+
+libmemHierarchy_la_SOURCES += membackend/HBMpagedMultiBackend.cc \
+	membackend/HBMpagedMultiBackend.h
+nobase_sst_HEADERS += membackend/HBMpagedMultiBackend.h
 
 endif
 
@@ -232,6 +253,7 @@ AM_CPPFLAGS += $(HMC_FLAG)
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) DRAMSIM LIBDIR=$(DRAMSIM_LIBDIR)
+	$(SST_REGISTER_TOOL) HBMDRAMSIM LIBDIR=$(HBMDRAMSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) HYBRIDSIM LIBDIR=$(HYBRIDSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) NVDIMMSIM LIBDIR=$(NVDIMMSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) FDSIM LIBDIR=$(FDSIM_LIBDIR)

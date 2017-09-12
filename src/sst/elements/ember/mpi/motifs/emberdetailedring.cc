@@ -91,9 +91,9 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
 	}
 
 
-	verbose( CALL_INFO, 2, 1, "sendbuff=%" PRIx64 "\n",m_sendBuf.simVAddr);
-	verbose( CALL_INFO, 2, 1, "recvbuff=%" PRIx64 "\n",m_recvBuf.simVAddr);
-	verbose( CALL_INFO, 2, 1, "streambuff=%" PRIx64 "\n",m_streamBuf.simVAddr);
+	verbose( CALL_INFO, 2, 1, "sendbuff=%" PRIx64 "\n",m_sendBuf.getSimVAddr());
+	verbose( CALL_INFO, 2, 1, "recvbuff=%" PRIx64 "\n",m_recvBuf.getSimVAddr());
+	verbose( CALL_INFO, 2, 1, "streambuff=%" PRIx64 "\n",m_streamBuf.getSimVAddr());
 
     int to = mod( rank() + 1, size());
     int from = mod( (signed int) rank() - 1, size() );
@@ -167,7 +167,7 @@ void EmberDetailedRingGenerator::computeDetailed( std::queue<EmberEvent*>& evQ)
     params.insert("n", tmp.str() );
 
 	tmp.str( std::string() ); tmp.clear();
-	tmp << m_streamBuf.simVAddr;
+	tmp << m_streamBuf.getSimVAddr();
     params.insert("start_a", tmp.str() );
 
     params.insert("operandwidth", "8",true);

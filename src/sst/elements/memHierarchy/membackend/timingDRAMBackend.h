@@ -280,7 +280,7 @@ public:
         output->verbose(CALL_INFO, 2, DBG_MASK, "req=%llu\n", id ); 
         handleMemResponse( id );
     }
-    virtual void clock();
+    virtual bool clock(Cycle_t cycle);
     virtual void finish() {}
 
 private:

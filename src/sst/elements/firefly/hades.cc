@@ -48,7 +48,15 @@ Hades::Hades( Component* owner, Params& params ) :
         params.find<uint32_t>("verboseMask",0),
         Output::STDOUT );
 
-    Params tmpParams = params.find_prefix_params("nicParams." );
+    Params tmpParams = params.find_prefix_params("ctrlMsg.");
+    m_proto = dynamic_cast<ProtocolAPI*>(owner->loadSubComponent(
+                                    "firefly.CtrlMsgProto", owner, tmpParams ) );
+
+    Params funcParams = params.find_prefix_params("functionSM.");
+
+    m_functionSM = new FunctionSM( funcParams, owner, m_proto );
+
+    tmpParams = params.find_prefix_params("nicParams." );
 
     std::string moduleName = params.find<std::string>("nicModule"); 
 
@@ -126,6 +134,12 @@ Hades::Hades( Component* owner, Params& params ) :
 Hades::~Hades()
 {
     if ( m_virtNic ) delete m_virtNic;
+    delete m_proto;
+    delete m_functionSM;
+}
+void Hades::finish(  )
+{
+    m_proto->finish();
 }
 
 void Hades::_componentSetup()
@@ -158,6 +172,9 @@ void Hades::_componentSetup()
     snprintf(buffer,100,"@t:%#x:%d:Hades::@p():@l ",
                                     m_virtNic->getNodeId(), getNid());
     m_dbg.setPrefix(buffer);
+
+    m_proto->setVars( getInfo(), getNic(), getMemHeapLink(), m_functionSM->getRetLink() );
+    m_functionSM->setup(getInfo() );
 }
 
 void Hades::_componentInit(unsigned int phase )

@@ -55,7 +55,7 @@ class _CommReq : public MP::MessageRequestBase {
         m_done( false ),
         m_destRank( MP::AnySrc ),
         m_ignore( 0 ),
-        m_isMine( false ),
+        m_isMine( true ),
         m_finiDelay_ns( 0 )
     {
         m_hdr.count = getLength() / dtypeSize;

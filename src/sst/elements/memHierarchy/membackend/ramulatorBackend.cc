@@ -60,8 +60,9 @@ bool ramulatorMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigne
     return ok;
 }
 
-void ramulatorMemory::clock(){
+bool ramulatorMemory::clock(Cycle_t cycle){
     memSystem->tick();
+    return false;
 }
 
 void ramulatorMemory::finish(){

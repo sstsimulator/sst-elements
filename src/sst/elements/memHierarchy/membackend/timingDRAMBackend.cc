@@ -75,13 +75,14 @@ bool TimingDRAM::issueRequest( ReqId id, Addr addr, bool isWrite, unsigned numBy
     return ret;
 }
 
-void TimingDRAM::clock()
+bool TimingDRAM::clock(Cycle_t cycle)
 {
     output->verbose(CALL_INFO, 5, DBG_MASK, "cycle %llu\n",m_cycle);
     for ( unsigned i = 0; i < m_channels.size(); i++ ) {
         m_channels[i].clock(m_cycle);
     }
     ++m_cycle;
+    return false;
 }
 
 //==================================================================================

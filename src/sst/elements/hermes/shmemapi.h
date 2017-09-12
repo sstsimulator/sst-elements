@@ -20,40 +20,60 @@
 
 #include "hermes.h"
 
-using namespace SST;
-
 namespace SST {
 namespace Hermes {
 namespace Shmem {
 
-typedef Arg_FunctorBase< int, bool > Functor;
+typedef std::function<void(int)> Callback;
+
+typedef enum { LTE, LT, EQ, NE, GT, GTE } WaitOp;
+typedef enum { MOVE, AND, MAX, MIN, SUM, PROD, OR, XOR } ReduOp;
 
 class Interface : public Hermes::Interface {
     public:
 
     Interface( Component* parent ) : Hermes::Interface(parent) {}
     virtual ~Interface() {}
-    virtual void setOS( OS* ) { assert(0); }
 
-    virtual void start_pes(int,Functor*) {}
-    virtual void num_pes(Functor*) {}
-    virtual void my_pe(Functor*) {}
-    virtual void malloc(size_t, Functor*) {}
-    virtual void free(void*, Functor*) {}
-    virtual void realloc(void*, size_t, Functor*) {}
-    virtual void memalign(size_t, size_t, Functor*) {}
-#if 0
-    virtual void p<Type>( Type* target, Type value, int pe, Functor*) {}
-    virtual void put<Type>( Type* target, const Type* src, 
-                        size_t nelems, int pe, Functor* ) {}
-    virtual void putSS( void* target, const Type* src, 
-                        size_t nelems, int pe, Functor* ) {}
-    virtual void g<Type>( Type* target, int pe, Functor* ) {}
-    virtual void get<Type>( Type* target, const Type* src, 
-                        size_t nelems, int pe, Functor* ) {}
-    virtual void getSS( void* target, const Type* src, 
-                        size_t nelems, int pe, Functor* ) {}
-#endif
+    virtual void init(Callback) { assert(0); }
+    virtual void finalize(Callback) { assert(0); }
+
+    virtual void n_pes(int*, Callback) { assert(0); }
+    virtual void my_pe(int*, Callback) { assert(0); }
+
+    virtual void fence(Callback) { assert(0); }
+    virtual void quiet(Callback) { assert(0); }
+
+    virtual void barrier_all(Callback) { assert(0); }
+    virtual void barrier( int start, int stride, int size, Vaddr, Callback) { assert(0); }
+    virtual void broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start, 
+            int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
+    virtual void fcollect( Vaddr dest, Vaddr source, size_t nelems, int PE_start, 
+            int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
+    virtual void collect( Vaddr dest, Vaddr source, size_t nelems, int PE_start, 
+            int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
+    virtual void alltoall( Vaddr dest, Vaddr source, size_t nelems, int PE_start, 
+            int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
+    virtual void alltoalls( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize,
+            int PE_start, int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
+    virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start, 
+            int logPE_stride, int PE_size, Vaddr pSync, 
+            ReduOp, Hermes::Value::Type, Callback) { assert(0); }
+
+    virtual void malloc(MemAddr*, size_t, Callback) { assert(0); }
+    virtual void free(MemAddr&, Callback) { assert(0); }
+
+    virtual void get( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
+    virtual void put( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
+
+    virtual void getv( Value& result, Vaddr src, int pe, Callback) { assert(0); }
+    virtual void putv( Vaddr dest, Value& value, int pe, Callback) { assert(0); }
+
+    virtual void wait_until( Vaddr, WaitOp, Value&, Callback) { assert(0); }
+    virtual void cswap( Value& result, Vaddr, Value& cond, Value& value, int pe, Callback) { assert(0); }
+    virtual void swap( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
+    virtual void fadd( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
+    virtual void add( Vaddr, Value&, int pe, Callback) { assert(0); }
 };
 
 }

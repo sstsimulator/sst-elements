@@ -59,15 +59,11 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
-    // configure out links
-    mem_link = configureLink( "mem_link",
-            new Event::Handler<streamCPU>(this,
-                &streamCPU::
-                handleEvent) );
-    
-    if (!mem_link) {
-        out.fatal(CALL_INFO, -1, "Error creating mem_link\n");   
+    memory = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.memInterface", this, params));
+    if (!memory) {
+        out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
     }
+    memory->initialize("mem_link", new Interfaces::SimpleMem::Handler<streamCPU> (this, &streamCPU::handleEvent));
 
     addrOffset = params.find<uint64_t>("addressoffset", 0);
 
@@ -90,36 +86,25 @@ streamCPU::streamCPU() :
 
 void streamCPU::init(unsigned int phase)
 {
-	if ( !phase ) {
-		mem_link->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
-	}
+    memory->init(phase);
 }
 
 // incoming events are scanned and deleted
-void streamCPU::handleEvent(Event *ev)
+void streamCPU::handleEvent(Interfaces::SimpleMem::Request * req)
 {
 	//out.output("recv\n");
-	MemEvent *event = dynamic_cast<MemEvent*>(ev);
-	if (event) {
-		// May receive invalidates.  Just ignore 'em.
-		if ( event->getCmd() == Inv) return;
+    std::map<uint64_t, SimTime_t>::iterator i = requests.find(req->id);
+    if (i == requests.end()) {
+	out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->id);
+    } else {
+        SimTime_t et = getCurrentSimTime() - i->second;
+        requests.erase(i);
 
-		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
-		if ( i == requests.end() ) {
-			out.fatal(CALL_INFO, -1, "Event (%" PRIx64 ", %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
-		} else {
-			SimTime_t et = getCurrentSimTime() - i->second;
-			requests.erase(i);
-
-			out.verbose(CALL_INFO, 1, 0, "Received MemEvent (response to: %10" PRIu64 ", Addr=%15" PRIu64 ", Took: %7" PRIu64 "ns, %6lu pending requests).\n",
-				event->getResponseToID().first, event->getAddr(), et, requests.size());
-			num_reads_returned++;
-		}
-
-		delete event;
-	} else {
-		out.output("Error! Bad Event Type!\n");
-	}
+	out.verbose(CALL_INFO, 1, 0, "Received MemEvent (response to: %10" PRIu64 ", Addr=%15" PRIu64 ", Took: %7" PRIu64 "ns, %6lu pending requests).\n",
+                req->id, req->addr, et, requests.size());
+        num_reads_returned++;
+    }
+    delete req;
 }
 
 bool streamCPU::clockTic( Cycle_t )
@@ -137,15 +122,20 @@ bool streamCPU::clockTic( Cycle_t )
         for (int i = 0; i < reqsToSend; i++) {
 
     	    bool doWrite = do_write && (((rng.generateNextUInt32() % 10) == 0));
+            Interfaces::SimpleMem::Request::Command cmd = doWrite ? Interfaces::SimpleMem::Request::Write : Interfaces::SimpleMem::Request::Read;
 
-	    MemEvent *e = new MemEvent(this, nextAddr, nextAddr, doWrite ? GetX : GetS);
-            e->setSize(4); // Load 4 bytes
+            Interfaces::SimpleMem::Request *req = new Interfaces::SimpleMem::Request(cmd, nextAddr, 4/* 4 bytes*/);
+	    
 	    if ( doWrite ) {
-	        e->setPayload(4, (uint8_t*)&nextAddr);
+	        req->data.resize(4);
+                req->data[0] = (nextAddr >> 24) & 0xff;
+                req->data[1] = (nextAddr >> 16) & 0xff;
+                req->data[2] = (nextAddr >>  8) & 0xff;
+                req->data[3] = (nextAddr >>  0) & 0xff;
 	    }
 	    
-            mem_link->send(e);
-            requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
+            memory->sendRequest(req);
+            requests.insert(std::make_pair(req->id, getCurrentSimTime()));
 
 	    out.verbose(CALL_INFO, 1, 0, "Issued request %10d: %5s for address %20d.\n", numLS, (doWrite ? "write" : "read"), nextAddr);
 

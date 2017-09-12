@@ -54,8 +54,9 @@ bool HybridSimMemory::issueRequest( ReqId reqId, Addr addr, bool isWrite, unsign
 
 
 
-void HybridSimMemory::clock(){
+bool HybridSimMemory::clock(Cycle_t cycle){
     memSystem->update();
+    return false;
 }
 
 

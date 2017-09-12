@@ -36,6 +36,8 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 
     out.init("", 0, 0, Output::STDOUT);
 
+    verbose = params.find<bool>("verbose", false);
+
     commFreq = params.find<int>("commFreq", -1);
     if (commFreq < 0) {
         out.fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
@@ -95,9 +97,7 @@ trivialCPU::trivialCPU() :
 
 void trivialCPU::init(unsigned int phase)
 {
-	if ( !phase ) {
-		memory->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
-	}
+    memory->init(phase);
 }
 
 // incoming events are scanned and deleted
@@ -109,10 +109,10 @@ void trivialCPU::handleEvent(Interfaces::SimpleMem::Request *req)
     } else {
         SimTime_t et = getCurrentSimTime() - i->second;
         requests.erase(i);
-        out.output("%s: Received Request with command %d (addr 0x%" PRIx64 ") [Time: %" PRIu64 "] [%zu outstanding requests]\n",
-                getName().c_str(),
-                req->cmd, req->addr, et,
-                requests.size());
+        if (verbose) {
+            out.output("%s: Received Request with command %d (addr 0x%" PRIx64 ") [Time: %" PRIu64 "] [%zu outstanding requests]\n",
+                    getName().c_str(), req->cmd, req->addr, et, requests.size());
+        }
         num_reads_returned++;
     }
 
@@ -140,7 +140,7 @@ bool trivialCPU::clockTic( Cycle_t )
 
             for (int i = 0; i < reqsToSend; i++) {
 
-                Interfaces::SimpleMem::Addr addr = ((((Interfaces::SimpleMem::Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
+                Interfaces::SimpleMem::Addr addr = rng.generateNextUInt64();
                 
                 Interfaces::SimpleMem::Request::Command cmd = Interfaces::SimpleMem::Request::Read;
 
@@ -150,16 +150,21 @@ bool trivialCPU::clockTic( Cycle_t )
                 if ((do_write && 0 == instNum) || 1 == instNum) {
                     cmd = Interfaces::SimpleMem::Request::Write;
                     cmdString = "Write";
+                    addr = ((addr % maxAddr)>>2) << 2;
                 } else if (do_flush && 2 == instNum) {
                     cmd = Interfaces::SimpleMem::Request::FlushLine;
                     size = lineSize;
+                    addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeStart;
                     addr = addr - (addr % lineSize);
                     cmdString = "FlushLine";
                 } else if (do_flush && 3 == instNum) {
                     cmd = Interfaces::SimpleMem::Request::FlushLineInv;
                     size = lineSize;
+                    addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeStart;
                     addr = addr - (addr % lineSize);
                     cmdString = "FlushLineInv";
+                } else {
+                    addr = ((addr % maxAddr)>>2) << 2;
                 }
 
                 Interfaces::SimpleMem::Request *req = new Interfaces::SimpleMem::Request(cmd, addr, 4 /*4 bytes*/);
@@ -180,10 +185,12 @@ bool trivialCPU::clockTic( Cycle_t )
 
 		memory->sendRequest(req);
 		requests[req->id] =  getCurrentSimTime();
-
-		out.output("%s: %d Issued %s%s for address 0x%" PRIx64 "\n",
-                        getName().c_str(), numLS, noncacheable ? "Noncacheable " : "" , cmdString.c_str(), addr);
-		num_reads_issued++;
+                
+                if (verbose)
+		    out.output("%s: %d Issued %s%s for address 0x%" PRIx64 "\n",
+                            getName().c_str(), numLS, noncacheable ? "Noncacheable " : "" , cmdString.c_str(), addr);
+		
+                num_reads_issued++;
 
                 numLS--;
 	    }

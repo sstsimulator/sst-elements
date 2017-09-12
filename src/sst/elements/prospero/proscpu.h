@@ -46,6 +46,7 @@ public:
   ~ProsperoComponent();
 
   void setup() { }
+  void init(unsigned int phase);
   void finish();
 
 private:

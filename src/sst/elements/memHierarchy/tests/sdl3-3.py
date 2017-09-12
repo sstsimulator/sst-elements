@@ -1,6 +1,12 @@
 # Automatically generated SST Python input
 import sst
 
+DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_MEM = 0
+DEBUG_CORE0 = 0
+DEBUG_CORE1 = 0
+
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
 comp_cpu0.addParams({
@@ -19,7 +25,8 @@ comp_c0_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "2 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1 | DEBUG_CORE0,
+      "debug_level" : 10,
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({
@@ -38,7 +45,8 @@ comp_c1_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "2 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1 | DEBUG_CORE1,
+      "debug_level" : 10,
 })
 comp_bus = sst.Component("bus", "memHierarchy.Bus")
 comp_bus.addParams({
@@ -53,16 +61,18 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "8 KB",
-      "debug" : "0"
+      "debug" : DEBUG_L2,
+      "debug_level" : 10,
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "0",
       "backend.mem_size" : "512MiB",
       "printStats" : "1",
       "clock" : "1GHz",
-      "backend.access_time" : "100 ns"
+      "backend.access_time" : "100 ns",
+      "debug" : DEBUG_MEM,
+      "debug_level" : 10,
 })
 
 # Enable statistics

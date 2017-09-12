@@ -12,6 +12,8 @@ libcassini_la_SOURCES = \
 	cassini.cc \
 	strideprefetch.cc \
 	strideprefetch.h \
+	palaprefetch.h \
+	palaprefetch.cc \
 	nbprefetch.cc \
 	nbprefetch.h \
 	simpletlb.h \

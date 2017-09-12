@@ -20,11 +20,15 @@
 #include <sst/core/module.h>
 #include <sst/core/output.h>
 #include <sst/core/component.h>
+#include "sst/elements/hermes/shmemapi.h"
 
 #include "ioVec.h"
 
 namespace SST {
 namespace Firefly {
+
+class NicRespEvent;
+class NicShmemRespBaseEvent;
 
 class VirtNic : public SST::Module {
 
@@ -43,14 +47,17 @@ class VirtNic : public SST::Module {
         virtual ~HandlerBase4Args() {}
     };
 
-    template < typename T1, typename T2, typename T3 >
-    class HandlerBase3Args {
+    template < typename T1, typename T2 >
+    class HandlerBase2Args {
       public:
-        virtual bool operator()( T1, T2, T3 ) = 0;
-        virtual ~HandlerBase3Args() {}
+        virtual bool operator()( T1, T2 ) = 0;
+        virtual ~HandlerBase2Args() {}
     };
 
   public:
+
+    typedef std::function<void(Hermes::Value&)> CallbackV;
+    typedef std::function<void()> Callback;
 
     template <typename classT, typename argT >
     class Handler : public HandlerBase<argT> {
@@ -71,21 +78,21 @@ class VirtNic : public SST::Module {
         }
     };
 
-    template <typename classT, typename T1, typename T2, typename T3 >
-    class Handler3Args : public HandlerBase3Args< T1, T2, T3 > {
+    template <typename classT, typename T1, typename T2 >
+    class Handler2Args : public HandlerBase2Args< T1, T2 > {
       private:
-        typedef bool (classT::*PtrMember)( T1, T2, T3 );
+        typedef bool (classT::*PtrMember)( T1, T2 );
         classT* object;
         const PtrMember member;
 
       public:
-        Handler3Args( classT* const object, PtrMember member ) :
+        Handler2Args( classT* const object, PtrMember member ) :
             object(object),
             member(member)
         {}
 
-        bool operator()( T1 arg1, T2 arg2, T3 arg3) {
-            return (object->*member)( arg1, arg2, arg3);
+        bool operator()( T1 arg1, T2 arg2) {
+            return (object->*member)( arg1, arg2);
         }
     };
 
@@ -145,11 +152,24 @@ class VirtNic : public SST::Module {
     void get( int node, int tag, std::vector<IoVec>& vec, void* key );
     void regMem( int node, int tag, std::vector<IoVec>& vec, void *key );
 
+    void shmemInit( Hermes::Vaddr, Callback );
+    void shmemRegMem( Hermes::MemAddr&, size_t len, Callback );
+    void shmemWait( Hermes::Vaddr dest, Hermes::Shmem::WaitOp, Hermes::Value&, Callback );
+    void shmemPutv( int node, Hermes::Vaddr dest, Hermes::Value&, Callback );
+    void shmemGetv( int node, Hermes::Vaddr src, Hermes::Value::Type, CallbackV );
+    void shmemPut( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback );
+    void shmemGet( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback );
+    void shmemPutOp( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Hermes::Shmem::ReduOp, Hermes::Value::Type, Callback );
+    void shmemSwap( int node, Hermes::Vaddr dest, Hermes::Value& value, CallbackV );
+    void shmemCswap( int node, Hermes::Vaddr dest, Hermes::Value& cond, Hermes::Value& value, CallbackV );
+    void shmemAdd( int node, Hermes::Vaddr dest, Hermes::Value&, Callback );
+    void shmemFadd( int node, Hermes::Vaddr dest, Hermes::Value&, CallbackV );
+
     void setNotifyOnRecvDmaDone(
         VirtNic::HandlerBase4Args<int,int,size_t,void*>* functor);
     void setNotifyOnSendPioDone(VirtNic::HandlerBase<void*>* functor);
     void setNotifyOnGetDone(VirtNic::HandlerBase<void*>* functor);
-    void setNotifyNeedRecv( VirtNic::HandlerBase3Args<int,int,size_t>* functor);
+    void setNotifyNeedRecv( VirtNic::HandlerBase2Args<int,size_t>* functor);
 
     void notifyGetDone( void* key );
     void notifySendPioDone( void* key );
@@ -158,6 +178,10 @@ class VirtNic : public SST::Module {
 
   private:
 
+    void sendCmd( SimTime_t delay ,Event* ev) {
+        m_toNicLink->send( delay, ev );  
+    }
+         
 	int calcRealNicId( int nodeId ) {
 		if ( -1 == nodeId ) {
 			return -1;
@@ -170,6 +194,8 @@ class VirtNic : public SST::Module {
     }
 
     void handleEvent( Event * );
+    void handleMsgEvent( NicRespEvent * );
+    void handleShmemEvent( NicShmemRespBaseEvent * );
 
     int         m_realNicId;
     int         m_coreId;
@@ -182,7 +208,7 @@ class VirtNic : public SST::Module {
     VirtNic::HandlerBase<void*>* m_notifySendPioDone; 
     VirtNic::HandlerBase<void*>* m_notifySendDmaDone; 
     VirtNic::HandlerBase4Args<int, int, size_t, void*>* m_notifyRecvDmaDone; 
-    VirtNic::HandlerBase3Args<int, int, size_t>* m_notifyNeedRecv;
+    VirtNic::HandlerBase2Args<int, size_t>* m_notifyNeedRecv;
 };
 
 }

@@ -31,17 +31,50 @@ MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::Component *comp,
     SimpleMem(comp, params), owner_(comp), recvHandler_(NULL), link_(NULL)
 { 
     output.init("", 1, 0, Output::STDOUT); 
+
+    bool found;
+    UnitAlgebra size = UnitAlgebra(params.find<std::string>("scratchpad_size", "0B", found));
+    if (!found) 
+        output.fatal(CALL_INFO, -1, "Param not specified (%s): scratchpad_size - size of scratchpad\n", getName().c_str());
+    if (!size.hasUnits("B"))
+        output.fatal(CALL_INFO, -1, "Invalid param (%s): scratchpad_size - must have units of 'B'. SI units ok. You specified '%s'\n", getName().c_str(), size.toString().c_str());
+    remoteMemStart_ = size.getRoundedValue();
 }
 
 
-void MemHierarchyScratchInterface::sendInitData(SimpleMem::Request *req){
-    ScratchEvent * event = createScratchEvent(req);
+void MemHierarchyScratchInterface::init(unsigned int phase) {
+    if (!phase) {
+        // Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
+        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0));
+    }
+
+    while (SST::Event * ev = link_->recvInitData()) {
+        MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
+        if (memEvent) {
+            if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
+                baseAddrMask_ = ~(memEventC->getLineSize() - 1);
+                rqstr_ = memEventC->getSrc();
+                allNoncache_ = (Endpoint::Scratchpad == memEventC->getType());
+            }
+        }
+        delete ev;
+    }
+}
+
+void MemHierarchyScratchInterface::sendInitData(SimpleMem::Request *req) {
+    MemEventInit * event = new MemEventInit(getName(), Command::GetX, req->addrs[0], req->data);
     link_->sendInitData(event);
 }
 
 
 void MemHierarchyScratchInterface::sendRequest(SimpleMem::Request *req){
-    ScratchEvent *event = createScratchEvent(req);
+    MemEventBase * event;
+    if (req->addrs.size() > 1) {
+        event = createMoveEvent(req);
+    } else {
+        event = createMemEvent(req);
+    }
     requests_[event->getID()] = req;
     link_->send(event);
 }
@@ -50,7 +83,7 @@ void MemHierarchyScratchInterface::sendRequest(SimpleMem::Request *req){
 SimpleMem::Request* MemHierarchyScratchInterface::recvResponse(void){
     SST::Event *ev = link_->recv();
     if (NULL != ev) {
-        ScratchEvent *event = static_cast<ScratchEvent*>(ev);
+        MemEventBase *event = static_cast<MemEventBase*>(ev);
         Request *req = processIncoming(event);
         delete event;
         return req;
@@ -59,34 +92,64 @@ SimpleMem::Request* MemHierarchyScratchInterface::recvResponse(void){
 }
 
 
-ScratchEvent* MemHierarchyScratchInterface::createScratchEvent(SimpleMem::Request *req) const{
-    ScratchCommand cmd = ScratchNullCmd;
-    
-    switch ( req->cmd ) {
-        case SimpleMem::Request::Read:          
-            if (req->addrs.size() == 1) cmd = Read;
-            else cmd = ScratchGet;
-            break;
-        case SimpleMem::Request::Write:
-            if (req->addrs.size() == 1) cmd = Write;
-            else cmd = ScratchPut;
-            break;
-        case SimpleMem::Request::ReadResp:      cmd = ReadResp;     break;
-        case SimpleMem::Request::WriteResp:     cmd = WriteResp;    break;
-        default: output.fatal(CALL_INFO, -1, "Unknown req->cmd in createScratchEvent()\n");
+MemEvent * MemHierarchyScratchInterface::createMemEvent(SimpleMem::Request * req) const {
+    Command cmd = Command::NULLCMD;
+
+    switch (req->cmd) {
+        case SimpleMem::Request::Read :         cmd = Command::GetS;            break;
+        case SimpleMem::Request::Write :        cmd = Command::GetX;            break;
+        case SimpleMem::Request::FlushLine:     cmd = Command::FlushLine;       break;
+        case SimpleMem::Request::FlushLineInv:  cmd = Command::FlushLineInv;    break;
+        default: output.fatal(CALL_INFO, -1, "MemHierarchyScratchInterface received unknown command in createMemEvent\n");
     }
+
+    Addr baseAddr = req->addrs[0] & baseAddrMask_;
+
+    MemEvent * me = new MemEvent(owner_, req->addrs[0], baseAddr, cmd);
    
-    ScratchEvent *me = new ScratchEvent(parent->getName(), req->addrs[0], req->addrs[0], cmd);
+    /* Set remote memory accesses to noncacheable so that any cache avoids trying to cache the response */
+    if (me->getAddr() >= remoteMemStart_ || allNoncache_) {
+        me->setFlag(MemEvent::F_NONCACHEABLE);
+    }
 
     me->setSize(req->size);
+    me->setRqstr(rqstr_);
+    me->setSrc(rqstr_);
+    me->setDst(rqstr_);
 
-    if (cmd == Write) me->setPayload(req->data);
+    if (SimpleMem::Request::Write == req->cmd) {
+        if (req->data.size() == 0) req->data.resize(req->size, 0);
+        if (req->data.size() != req->size)
+            output.output("Warning: In memHierarchyScratchInterface, write request size does not match payload size. Request size: %zu, Payload size: %zu. Using payload size.\n", req->size, req->data.size());
+        me->setPayload(req->data);
+    }
+    return me;
+}
 
-    if (cmd == ScratchGet || cmd == ScratchPut) {
-        me->setSrcAddr(req->addrs[1]);
+
+MoveEvent* MemHierarchyScratchInterface::createMoveEvent(SimpleMem::Request *req) const{
+   Command cmd = Command::NULLCMD;
+
+    switch ( req->cmd ) {
+        case SimpleMem::Request::Read:  cmd = Command::Get; break;
+        case SimpleMem::Request::Write: cmd = Command::Put; break;
+        default: output.fatal(CALL_INFO, -1, "Unknown req->cmd in createMoveEvent()\n");
     }
 
-    me->setVirtualAddress(req->getVirtualAddress());
+    MoveEvent *me = new MoveEvent(parent->getName(), req->addrs[1], req->addrs[1], req->addrs[0], req->addrs[0], cmd);
+
+    if (cmd == Command::Get) {
+        me->setDstBaseAddr(req->addrs[0] & baseAddrMask_);
+    } else {
+        me->setSrcBaseAddr(req->addrs[1] & baseAddrMask_);
+    }
+
+    me->setRqstr(rqstr_);
+    me->setSrc(rqstr_);
+    me->setDst(rqstr_);
+    me->setSize(req->size);
+
+    me->setDstVirtualAddress(req->getVirtualAddress());
     me->setInstructionPointer(req->getInstructionPointer());
 
     me->setMemFlags(req->memFlags);
@@ -96,45 +159,46 @@ ScratchEvent* MemHierarchyScratchInterface::createScratchEvent(SimpleMem::Reques
 
 
 void MemHierarchyScratchInterface::handleIncoming(SST::Event *ev){
-    ScratchEvent *me = static_cast<ScratchEvent*>(ev);
+    MemEventBase *me = static_cast<MemEventBase*>(ev);
     SimpleMem::Request *req = processIncoming(me);
     if(req) (*recvHandler_)(req);
     delete me;
 }
 
 
-SimpleMem::Request* MemHierarchyScratchInterface::processIncoming(ScratchEvent *ev){
+SimpleMem::Request* MemHierarchyScratchInterface::processIncoming(MemEventBase *ev){
     SimpleMem::Request *req = NULL;
-    ScratchCommand cmd = ev->getCmd();
-    SST::Event::id_type origID = ev->getRespID();
+    Command cmd = ev->getCmd();
+    SST::Event::id_type origID = ev->getResponseToID();
     
-    std::map<ScratchEvent::id_type, SimpleMem::Request*>::iterator i = requests_.find(origID);
+    std::map<SST::Event::id_type, SimpleMem::Request*>::iterator i = requests_.find(origID);
     if(i != requests_.end()){
         req = i->second;
         requests_.erase(i);
         updateRequest(req, ev);
     }
     else{
-        output.fatal(CALL_INFO, -1, "Unable to find matching request.  Cmd = %s, Addr = %" PRIx64 ", respID = %" PRIx64 "\n", ScratchCommandString[ev->getCmd()], ev->getAddr(), ev->getRespID().first);
+        output.fatal(CALL_INFO, -1, "Unable to find matching request.  Cmd = %s, respID = %" PRIx64 "\n", CommandString[(int)ev->getCmd()], ev->getResponseToID().first);
     }
     return req;
 }
 
 
-void MemHierarchyScratchInterface::updateRequest(SimpleMem::Request* req, ScratchEvent *me) const{
+void MemHierarchyScratchInterface::updateRequest(SimpleMem::Request* req, MemEventBase *me) const{
     switch (me->getCmd()) {
-    case ReadResp:
-        req->cmd   = SimpleMem::Request::ReadResp;
-        if (!(me->getPayload().empty())) { // Payload empty for ScratchGet requests
-            req->data = me->getPayload();
-            req->size  = me->getPayload().size();
-        }
-        break;
-    case WriteResp:
-        req->cmd   = SimpleMem::Request::WriteResp;
-        break;
-    default:
-        output.fatal(CALL_INFO, -1, "Don't know how to deal with command %s\n", ScratchCommandString[me->getCmd()]);
+        case Command::AckMove:
+            req->cmd = SimpleMem::Request::ReadResp;
+            break;
+        case Command::GetSResp:
+            req->cmd   = SimpleMem::Request::ReadResp;
+            req->data = static_cast<MemEvent*>(me)->getPayload();
+            req->size  = req->data.size();
+            break;
+        case Command::GetXResp:
+            req->cmd   = SimpleMem::Request::WriteResp;
+            break;
+        default:
+            output.fatal(CALL_INFO, -1, "Don't know how to deal with command %s\n", CommandString[(int)me->getCmd()]);
     }
    // Always update memFlags to faciliate mem->processor communication
     req->memFlags = me->getMemFlags();

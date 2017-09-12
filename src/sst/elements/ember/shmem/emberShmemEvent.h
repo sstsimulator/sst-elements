@@ -14,8 +14,8 @@
 // distribution.
 
 
-#ifndef _H_EMBER_MPI_EVENT
-#define _H_EMBER_MPI_EVENT
+#ifndef _H_EMBER_SHMEM_EVENT
+#define _H_EMBER_SHMEM_EVENT
 
 #include "emberevent.h" 
 
@@ -24,19 +24,22 @@ using namespace Hermes;
 namespace SST {
 namespace Ember {
 
-class EmberMPIEvent : public EmberEvent {
+typedef Statistic<uint32_t> EmberEventTimeStatistic;
+
+class EmberShmemEvent : public EmberEvent {
 
   public:
 
-    EmberMPIEvent( MessageInterface& api, Output* output, Histo* histo = NULL):
-        EmberEvent( output, histo ), m_api( api )
+    EmberShmemEvent( Shmem::Interface& api, Output* output, 
+            EmberEventTimeStatistic* stat = NULL ):
+        EmberEvent( output, stat ), m_api( api )
     {
-        m_state = IssueFunctor;
+        m_state = IssueCallback;
     }
 
   protected:
 
-    MessageInterface&   m_api;
+    Shmem::Interface&   m_api;
 
   private:
 };

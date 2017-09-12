@@ -22,6 +22,7 @@
 
 #include "memEvent.h"
 #include "memNIC.h"
+#include "memLink.h"
 #include "cacheController.h"
 #include "Sieve/sieveController.h"
 #include "Sieve/broadcastShim.h"
@@ -34,7 +35,6 @@
 #include "dmaEngine.h"
 #include "memHierarchyInterface.h"
 #include "memHierarchyScratchInterface.h"
-#include "memNIC.h"
 #include "coherenceController.h"
 #include "MESICoherenceController.h"
 #include "MESIInternalDirectory.h"
@@ -82,11 +82,15 @@
 #include "membackend/flashSimBackend.h"
 #endif
 
+#ifdef HAVE_HBMLIBDRAMSIM
+#include "membackend/HBMdramSimBackend.h"
+#include "membackend/HBMpagedMultiBackend.h"
+#endif
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-static const char * memEvent_port_events[] = {"memHierarchy.MemEvent", NULL};
-static const char * scratchEvent_port_events[] = {"memHierarchy.ScratchEvent", NULL};
+static const char * memEvent_port_events[] = {"memHierarchy.MemEventBase", NULL};
 static const char * arielAlloc_port_events[] = {"ariel.arielAllocTrackEvent", NULL};
 static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
 
@@ -102,52 +106,53 @@ static Component* create_Cache(ComponentId_t id, Params& params)
 
 static const ElementInfoParam cache_params[] = {
     /* Required */
-    {"cache_frequency",         "Required, string - Clock frequency or period with units (Hz or s; SI units OK). For L1s, this is usually the same as the CPU's frequency."},
-    {"cache_size",              "Required, string - Cache size with units. Eg. 4KiB or 1MiB"},
-    {"associativity",           "Required, int - Associativity of the cache. In set associative mode, this is the number of ways."},
-    {"access_latency_cycles",   "Required, int - Latency (in cycles) to access the cache data array. This latency is paid by cache hits and coherence requests that need to return data."},
-    {"L1",                      "Required, bool - Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]", "false"},
+    {"cache_frequency",         "(string) Clock frequency or period with units (Hz or s; SI units OK). For L1s, this is usually the same as the CPU's frequency."},
+    {"cache_size",              "(string) Cache size with units. Eg. 4KiB or 1MiB"},
+    {"associativity",           "(int) Associativity of the cache. In set associative mode, this is the number of ways."},
+    {"access_latency_cycles",   "(int) Latency (in cycles) to access the cache data array. This latency is paid by cache hits and coherence requests that need to return data."},
+    {"L1",                      "(bool) Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]", "false"},
     /* Not required */
-    {"cache_line_size",         "Optional, int - Size of a cache line (aka cache block) in bytes.", "64"},
-    {"hash_function",           "Optional, int - 0 - none (default), 1 - linear, 2 - XOR", "0"},
-    {"coherence_protocol",      "Optional, string - Coherence protocol. Options: MESI, MSI, NONE", "MESI"},
-    {"replacement_policy",      "Optional, string - Replacement policy of the cache array. Options:  LRU[least-recently-used], LFU[least-frequently-used], Random, MRU[most-recently-used], or NMRU[not-most-recently-used]. ", "lru"},
-    {"cache_type",              "Optional, string - Cache type. Options: inclusive cache ('inclusive', required for L1s), non-inclusive cache ('noninclusive') or non-inclusive cache with a directory ('noninclusive_with_directory', required for non-inclusive caches with multiple upper level caches directly above them),", "inclusive"},
-    {"max_requests_per_cycle",  "Maximum number of requests to accept per cycle. 0 or negative is unlimited.", "-1"},
-    {"request_link_width",      "Optional, string - Limits number of request bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
-    {"response_link_width",     "Optional, string - Limits number of response bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
-    {"noninclusive_directory_repl",    "Optional, string - If non-inclusive directory exists, its replacement policy. LRU, LFU, MRU, NMRU, or RANDOM. (not case-sensitive).", "LRU"},
-    {"noninclusive_directory_entries", "Optional, int - Number of entries in the directory. Must be at least 1 if the non-inclusive directory exists.", "0"},
-    {"noninclusive_directory_associativity", "Optional, int - For a set-associative directory, number of ways.", "1"},
-    {"mshr_num_entries",        "Optional, int - Number of MSHR entries. Not valid for L1s because L1 MSHRs assumed to be sized for the CPU's load/store queue. Setting this to -1 will create a very large MSHR.", "-1"},
-    {"tag_access_latency_cycles", "Optional, int - Latency (in cycles) to access tag portion only of cache. Paid by misses and coherence requests that don't need data. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
-    {"mshr_latency_cycles",     "Optional, int - Latency (in cycles) to process responses in the cache and replay requests. Paid on the return/response path for misses instead of access_latency_cycles. If not specified, simple intrapolation is used based on the cache access latency", "-1"},
-    {"prefetcher",              "Optional, string - Name of prefetcher module", ""},
-    {"max_outstanding_prefetch","Optional, int - Maximum number of prefetch misses that can be outstanding, additional prefetches will be dropped/NACKed. Default is 1/2 of MSHR entries.", "0.5*mshr_num_entries"},
-    {"drop_prefetch_mshr_level","Optional, int - Drop/NACK prefetches if the number of in-use mshrs is greater than or equal to this number. Default is mshr_num_entries - 2.", "mshr_num_entries-2"},
-    {"num_cache_slices",        "Optional, int - For a distributed, shared cache, total number of cache slices", "1"},
-    {"slice_id",                "Optional, int - For distributed, shared caches, unique ID for this cache slice", "0"},
-    {"slice_allocation_policy", "Optional, string - Policy for allocating addresses among distributed shared cache. Options: rr[round-robin]", "rr"},
-    {"network_bw",              "Optional, int - When connected to a network, the network link bandwidth.", "80GiB/s"},
-    {"network_address",         "Optional, int - When connected to a network, the network address of this cache.", "0"},
-    {"network_input_buffer_size", "Optional, int - When connected to a network, size of the network's input buffer.", "1KiB"},
-    {"network_output_buffer_size","Optional, int - When connected to a network, size of the network;s output buffer.", "1KiB"},
-    {"maxRequestDelay",         "Optional, int - Set an error timeout if memory requests take longer than this in ns (0: disable)", "0"},
-    {"snoop_l1_invalidations",  "Optional, bool - Forward invalidations from L1s to processors. Options: 0[off], 1[on]", "false"},
-    {"debug",                   "Optional, int - Where to send output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",             "Optional, int - Output/debug verbosity level. Between 0 (no output) and 10 (everything). 1-3 gives warnings/info; 4-10 gives debug.", "1"},
-    {"debug_addr",              "Optional, int - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
-    {"force_noncacheable_reqs", "Optional, bool - Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "false"},
-    {"min_packet_size",         "Optional, int - Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
-    {"LL",                      "DEPRECATED - Now auto-detected during init."},
-    {"LLC",                     "DEPRECATED - Now auto-detected by configure."},
-    {"lower_is_noninclusive",   "DEPRECATED - Now auto-detected during init."},
-    {"statistics",              "DEPRECATED - Use Statistics API to get statistics for caches."},
-    {"stat_group_ids",          "DEPRECATED - Use Statistics API to get statistics for caches."},
-    {"network_num_vc",          "DEPRECATED - Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
-    {"directory_at_next_level", "DEPRECATED - Now auto-detected by configure."},
-    {"bottom_network",          "DEPRECATED - Now auto-detected by configure."},
-    {"top_network",             "DEPRECATED - Now auto-detected by configure."},
+    {"cache_line_size",         "(uint) Size of a cache line (aka cache block) in bytes.", "64"},
+    {"hash_function",           "(int) 0 - none (default), 1 - linear, 2 - XOR", "0"},
+    {"coherence_protocol",      "(string) Coherence protocol. Options: MESI, MSI, NONE", "MESI"},
+    {"replacement_policy",      "(string) Replacement policy of the cache array. Options:  LRU[least-recently-used], LFU[least-frequently-used], Random, MRU[most-recently-used], or NMRU[not-most-recently-used]. ", "lru"},
+    {"cache_type",              "(string) - Cache type. Options: inclusive cache ('inclusive', required for L1s), non-inclusive cache ('noninclusive') or non-inclusive cache with a directory ('noninclusive_with_directory', required for non-inclusive caches with multiple upper level caches directly above them),", "inclusive"},
+    {"max_requests_per_cycle",  "(int) Maximum number of requests to accept per cycle. 0 or negative is unlimited.", "-1"},
+    {"request_link_width",      "(string) Limits number of request bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
+    {"response_link_width",     "(string) Limits number of response bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
+    {"noninclusive_directory_repl",    "(string) If non-inclusive directory exists, its replacement policy. LRU, LFU, MRU, NMRU, or RANDOM. (not case-sensitive).", "LRU"},
+    {"noninclusive_directory_entries", "(uint) Number of entries in the directory. Must be at least 1 if the non-inclusive directory exists.", "0"},
+    {"noninclusive_directory_associativity", "(uint) For a set-associative directory, number of ways.", "1"},
+    {"mshr_num_entries",        "(int) Number of MSHR entries. Not valid for L1s because L1 MSHRs assumed to be sized for the CPU's load/store queue. Setting this to -1 will create a very large MSHR.", "-1"},
+    {"tag_access_latency_cycles", "(uint) Latency (in cycles) to access tag portion only of cache. Paid by misses and coherence requests that don't need data. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
+    {"mshr_latency_cycles",     "(uint) Latency (in cycles) to process responses in the cache and replay requests. Paid on the return/response path for misses instead of access_latency_cycles. If not specified, simple intrapolation is used based on the cache access latency", "1"},
+    {"prefetcher",              "(string) Name of prefetcher subcomponent", ""},
+    {"max_outstanding_prefetch","(uint) Maximum number of prefetch misses that can be outstanding, additional prefetches will be dropped/NACKed. Default is 1/2 of MSHR entries.", "0.5*mshr_num_entries"},
+    {"drop_prefetch_mshr_level","(uint) Drop/NACK prefetches if the number of in-use mshrs is greater than or equal to this number. Default is mshr_num_entries - 2.", "mshr_num_entries-2"},
+    {"num_cache_slices",        "(uint) For a distributed, shared cache, total number of cache slices", "1"},
+    {"slice_id",                "(uint) For distributed, shared caches, unique ID for this cache slice", "0"},
+    {"slice_allocation_policy", "(string) Policy for allocating addresses among distributed shared cache. Options: rr[round-robin]", "rr"},
+    {"maxRequestDelay",         "(uint) Set an error timeout if memory requests take longer than this in ns (0: disable)", "0"},
+    {"snoop_l1_invalidations",  "(bool) Forward invalidations from L1s to processors. Options: 0[off], 1[on]", "false"},
+    {"debug",                   "(uint) Where to send output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",             "(uint) Output/debug verbosity level. Between 0 (no output) and 10 (everything). 1-3 gives warnings/info; 4-10 gives debug.", "1"},
+    {"debug_addr",              "(int) Address to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
+    {"force_noncacheable_reqs", "(bool) Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "false"},
+    {"min_packet_size",         "(string) Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
+    /* Old parameters - deprecated or moved */
+    {"LL",                          "DEPRECATED - Now auto-detected during init."},
+    {"LLC",                         "DEPRECATED - Now auto-detected by configure."},
+    {"lower_is_noninclusive",       "DEPRECATED - Now auto-detected during init."},
+    {"statistics",                  "DEPRECATED - Use Statistics API to get statistics for caches."},
+    {"stat_group_ids",              "DEPRECATED - Use Statistics API to get statistics for caches."},
+    {"network_num_vc",              "DEPRECATED - Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
+    {"directory_at_next_level",     "DEPRECATED - Now auto-detected by configure."},
+    {"bottom_network",              "DEPRECATED - Now auto-detected by configure."},
+    {"top_network",                 "DEPRECATED - Now auto-detected by configure."},
+    {"network_address",             "DEPRECATED - Now auto-detected by link control."},
+    {"network_bw",                  "MOVED - Now a member of the MemNIC subcomponent.", "80GiB/s"},
+    {"network_input_buffer_size",   "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"},
+    {"network_output_buffer_size",  "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"},
     {NULL, NULL, NULL}
 };
 
@@ -167,16 +172,17 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"GetSHit_Blocked",     "GetS was blocked in MSHR at arrival and later was a cache hit", "count", 1},
     {"GetXHit_Arrival",     "GetX was handled at arrival and was a cache hit", "count", 1},
     {"GetXHit_Blocked",     "GetX was blocked in MSHR at arrival and  later was a cache hit", "count", 1},
-    {"GetSExHit_Arrival",   "GetSEx was handled at arrival and was a cache hit", "count", 1},
-    {"GetSExHit_Blocked",   "GetSEx was blocked in MSHR at arrival and  later was a cache hit", "count", 1},
+    {"GetSXHit_Arrival",   "GetSX was handled at arrival and was a cache hit", "count", 1},
+    {"GetSXHit_Blocked",   "GetSX was blocked in MSHR at arrival and  later was a cache hit", "count", 1},
     {"GetSMiss_Arrival",    "GetS was handled at arrival and was a cache miss", "count", 1},
     {"GetSMiss_Blocked",    "GetS was blocked in MSHR at arrival and later was a cache miss", "count", 1},
     {"GetXMiss_Arrival",    "GetX was handled at arrival and was a cache miss", "count", 1},
     {"GetXMiss_Blocked",    "GetX was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
-    {"GetSExMiss_Arrival",  "GetSEx was handled at arrival and was a cache miss", "count", 1},
-    {"GetSExMiss_Blocked",  "GetSEx was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
+    {"GetSXMiss_Arrival",  "GetSX was handled at arrival and was a cache miss", "count", 1},
+    {"GetSXMiss_Blocked",  "GetSX was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
     {"TotalEventsReceived", "Total number of events received by this cache", "events", 1},
     {"TotalEventsReplayed", "Total number of events that were initially blocked and then were replayed", "events", 1},
+    {"TotalNoncacheableEventsReceived", "Total number of non-cache or noncacheable cache events that were received by this cache and forward", "events", 1},
     {"MSHR_occupancy",      "Number of events in MSHR each cycle", "events", 1},
     {"Prefetch_requests",   "Number of prefetches received from prefetcher at this cache", "events", 1},
     {"Prefetch_hits",       "Number of prefetches that were cancelled due to cache or MSHR hit", "events", 1},
@@ -187,7 +193,7 @@ static const ElementInfoStatistic cache_statistics[] = {
     /* Event receives */
     {"GetS_recv",               "Event received: GetS", "count", 2},
     {"GetX_recv",               "Event received: GetX", "count", 2},
-    {"GetSEx_recv",             "Event received: GetSEx", "count", 2},
+    {"GetSX_recv",             "Event received: GetSX", "count", 2},
     {"GetSResp_recv",           "Event received: GetSResp", "count", 2},
     {"GetXResp_recv",           "Event received: GetXResp", "count", 2},
     {"PutM_recv",               "Event received: PutM", "count", 2},
@@ -204,7 +210,7 @@ static const ElementInfoStatistic coherence_statistics[] = {
     /* Event sends */
     {"eventSent_GetS",          "Number of GetS requests sent", "events", 2},
     {"eventSent_GetX",          "Number of GetX requests sent", "events", 2},
-    {"eventSent_GetSEx",        "Number of GetSEx requests sent", "events", 2},
+    {"eventSent_GetSX",        "Number of GetSX requests sent", "events", 2},
     {"eventSent_GetSResp",      "Number of GetSResp responses sent", "events", 2},
     {"eventSent_GetXResp",      "Number of GetXResp responses sent", "events", 2},
     {"eventSent_PutS",          "Number of PutS requests sent", "events", 2},
@@ -232,11 +238,12 @@ static const ElementInfoStatistic coherence_statistics[] = {
     {"stateEvent_GetX_S",           "Event/State: Number of times a GetX was seen in state S (Miss)", "count", 3},
     {"stateEvent_GetX_E",           "Event/State: Number of times a GetX was seen in state E (Hit)", "count", 3},
     {"stateEvent_GetX_M",           "Event/State: Number of times a GetX was seen in state M (Hit)", "count", 3},
-    {"stateEvent_GetSEx_I",         "Event/State: Number of times a GetSEx was seen in state I (Miss)", "count", 3},
-    {"stateEvent_GetSEx_S",         "Event/State: Number of times a GetSEx was seen in state S (Miss)", "count", 3},
-    {"stateEvent_GetSEx_E",         "Event/State: Number of times a GetSEx was seen in state E (Hit)", "count", 3},
-    {"stateEvent_GetSEx_M",         "Event/State: Number of times a GetSEx was seen in state M (Hit)", "count", 3},
+    {"stateEvent_GetSX_I",         "Event/State: Number of times a GetSX was seen in state I (Miss)", "count", 3},
+    {"stateEvent_GetSX_S",         "Event/State: Number of times a GetSX was seen in state S (Miss)", "count", 3},
+    {"stateEvent_GetSX_E",         "Event/State: Number of times a GetSX was seen in state E (Hit)", "count", 3},
+    {"stateEvent_GetSX_M",         "Event/State: Number of times a GetSX was seen in state M (Hit)", "count", 3},
     {"stateEvent_GetSResp_IS",      "Event/State: Number of times a GetSResp was seen in state IS", "count", 3},
+    {"stateEvent_GetXResp_IS",      "Event/State: Number of times a GetXResp was seen in state IS", "count", 3},
     {"stateEvent_GetSResp_IM",      "Event/State: Number of times a GetSResp was seen in state IM", "count", 3},
     {"stateEvent_GetXResp_IM",      "Event/State: Number of times a GetXResp was seen in state IM", "count", 3},
     {"stateEvent_GetXResp_SM",      "Event/State: Number of times a GetXResp was seen in state SM", "count", 3},
@@ -459,9 +466,9 @@ static const ElementInfoStatistic coherence_statistics[] = {
     {"latency_GetX_IM",         "Latency for write misses in I state", "cycles", 1},
     {"latency_GetX_SM",         "Latency for write misses in S state", "cycles", 1},
     {"latency_GetX_M",          "Latency for write misses that find the block owned by another cache in M state", "cycles", 1},
-    {"latency_GetSEx_IM",       "Latency for read-exclusive misses in I state", "cycles", 1},
-    {"latency_GetSEx_SM",       "Latency for read-exclusive misses in S state", "cycles", 1},
-    {"latency_GetSEx_M",        "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1},
+    {"latency_GetSX_IM",       "Latency for read-exclusive misses in I state", "cycles", 1},
+    {"latency_GetSX_SM",       "Latency for read-exclusive misses in S state", "cycles", 1},
+    {"latency_GetSX_M",        "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1},
     /* Miscellaneous */
     {"EventStalledForLockedCacheline",  "Number of times an event (FetchInv, FetchInvX, eviction, Fetch, etc.) was stalled because a cache line was locked", "instances", 1},
     {NULL, NULL, NULL, 0}
@@ -556,6 +563,19 @@ static const ElementInfoStatistic goblinhmcsim_statistics[] = {
 };
 #endif // HAVE_GOBLIN_HMCSIM
 
+#ifdef HAVE_HBMLIBDRAMSIM
+static const ElementInfoStatistic hbmDramSim_statistics[] = {
+    {"TotalBandwidth",      "Total Bandwidth",              "GB/s",   1},
+    {"BytesTransferred",    "Total Bytes Transferred",      "bytes",  1},
+    {"TotalReads",          "Total Queued Reads",           "count",  1},
+    {"TotalWrites",         "Total Queued Writes",          "count",  1},
+    {"TotalTransactions",   "Total Number of Transactions", "count",  1},
+    {"PendingReads",        "Pending Transactions",         "count",  1},
+    {"PendingReturns",      "Pending Returns",              "count",  1},
+
+    {NULL, NULL, NULL, 0}
+};
+#endif // HAVE_HBMLIBDRAMSIM
 
 /*****************************************************************************************
  *  SubComponent: MESIController
@@ -614,12 +634,12 @@ static Component* create_multithreadL1(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam multithreadL1_params[] = {
-    {"clock",               "Optional, int - Clock frequency or period with units (Hz or s; SI units OK)."},
-    {"requests_per_cycle",  "Optional, int - number of requests to forward to L1 each cycle (for all threads combined). 0 indicates unlimited", "0"},
-    {"responses_per_cycle", "Optional, int - number of responses to forward to threads each cycle (for all threads combined). 0 indicates unlimited", "0"},
-    {"debug",               "Optional, int - Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",         "Optional, int - Debug verbosity level. Between 0 and 10", "0"},
-    {"debug_addr",          "Optional, int - Address (in decimal) to debug. If not specified or set to -1, debug output for all addresses will be printed", "-1"},
+    {"clock",               "(string) Clock frequency or period with units (Hz or s; SI units OK)."},
+    {"requests_per_cycle",  "(uint) Number of requests to forward to L1 each cycle (for all threads combined). 0 indicates unlimited", "0"},
+    {"responses_per_cycle", "(uint) Number of responses to forward to threads each cycle (for all threads combined). 0 indicates unlimited", "0"},
+    {"debug",               "(uint) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",         "(uint) Debug verbosity level. Between 0 and 10", "0"},
+    {"debug_addr",          "(int) Address to debug. If not specified or set to -1, debug output for all addresses will be printed", "-1"},
     {NULL, NULL, NULL}
 };
 
@@ -640,20 +660,21 @@ static Component* create_scratchpad(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam scratchpad_params[] = {
-    {"clock",               "Required, string - Clock frequency or period with units (Hz or s; SI units OK)."},
-    {"size",                "Required, string - Size of the scratchpad in bytes (B), SI units ok"},
-    {"scratch_line_size",   "Optional, int - Number of bytes in a scratch line. size must be divisible by this number", "64"},
-    {"do_not_back",         "Optional, int - Whether to store actual data values in a backing store or not. Options: 0 (do not store), 1 (store). Do not unset unless simulation does not rely on correct data values!", "1"},
-    {"memory_addr_offset",  "Optional, int - Amount to offset remote addresses by. Default is 'size' so that remote memory addresses start at 0", "size"},
-    {"responses_per_cycle", "Optional, int - Maximum number of responses to return to processor each cycle. 0 is unlimited", "0"},
-    {"backendConvertor",    "Optional, string - backend convertor to use for the scratchpad", "memHierarchy.scratchpadBackendConvertor"},
-    {"debug",               "Optional, int - Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",         "Optional, int - Debug verbosity level. Between 0 and 10", "0"},
+    {"clock",               "(string) Clock frequency or period with units (Hz or s; SI units OK)."},
+    {"size",                "(string) Size of the scratchpad in bytes (B), SI units ok"},
+    {"scratch_line_size",   "(string) Number of bytes in a scratch line with units. 'size' must be divisible by this number.", "64B"},
+    {"memory_line_size",    "(string) Number of bytes in a remote memory line with units. Used to set base addresses for routing.", "64B"},
+    {"do_not_back",         "(bool) Whether to store actual data values in a backing store or not. Options: 0 (do not store), 1 (store). Do not unset unless simulation does not rely on correct data values!", "1"},
+    {"memory_addr_offset",  "(uint) Amount to offset remote addresses by. Default is 'size' so that remote memory addresses start at 0", "size"},
+    {"response_per_cycle",  "(uint) Maximum number of responses to return to processor each cycle. 0 is unlimited", "0"},
+    {"backendConvertor",    "(string) Backend convertor to use for the scratchpad", "memHierarchy.scratchpadBackendConvertor"},
+    {"debug",               "(uint) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",         "(uint) Debug verbosity level. Between 0 and 10", "0"},
     {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort scratchpad_ports[] = {
-    {"cpu", "Link to cpu/cache on the cpu side", scratchEvent_port_events},
+    {"cpu", "Link to cpu/cache on the cpu side", memEvent_port_events},
     {"memory", "Direct link to a memory or bus", memEvent_port_events},
     {"network", "Network link to memory", net_port_events},
     {NULL, NULL, NULL}
@@ -699,15 +720,15 @@ static Component* create_Sieve(ComponentId_t id, Params& params)
 
 static const ElementInfoParam sieve_params[] = {
     /* Required */
-    {"cache_size",              "Required, string - Cache size with units. Eg. 4KiB or 1MiB"},
-    {"associativity",           "Required, int - Associativity of the cache. In set associative mode, this is the number of ways."},
+    {"cache_size",              "(string) Cache size with units. Eg. 4KiB or 1MiB"},
+    {"associativity",           "(uint) Associativity of the cache. In set associative mode, this is the number of ways."},
     /* Not required */
-    {"cache_line_size",         "Optional, int - Size of a cache line (aka cache block) in bytes."},
-    {"profiler",                "Optional, string - Name of profiling module. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
-    {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",             "Optional, int - Debugging/verbosity level. Between 0 and 10", "0"},
-    {"output_file",             "Optional, string – Name of file to output malloc information to. Will have sequence number (and optional marker number) and .txt appended to it. E.g. sieveMallocRank-3.txt", "sieveMallocRank"},
-    {"reset_stats_at_buoy",     "Optional, int - Whether to reset allocation hit/miss stats when a buoy is found (i.e., when a new output file is dumped). Any value other than 0 is true." "0"},
+    {"cache_line_size",         "(uint) Size of a cache line (aka cache block) in bytes.", "64"},
+    {"profiler",                "(string) Name of profiling subcomponent. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
+    {"debug",                   "(uint) Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",             "(uint) Debugging/verbosity level. Between 0 and 10", "0"},
+    {"output_file",             "(string) Name of file to output malloc information to. Will have sequence number (and optional marker number) and .txt appended to it. E.g. sieveMallocRank-3.txt", "sieveMallocRank"},
+    {"reset_stats_at_buoy",     "(bool) Whether to reset allocation hit/miss stats when a buoy is found (i.e., when a new output file is dumped). Any value other than 0 is true." "0"},
     {NULL, NULL, NULL}
 };
 
@@ -739,14 +760,14 @@ static Component* create_Bus(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam bus_params[] = {
-    {"bus_frequency",       "Bus clock frequency"},
-    {"broadcast",           "If set, messages are broadcasted to all other ports", "0"},
-    {"fanout",              "If set, messages from the high network are replicated and sent to all low network ports", "0"},
-    {"bus_latency_cycles",  "Bus latency in cycles", "0"},
-    {"idle_max",            "Bus temporarily turns off clock after this amount of idle cycles", "6"},
-    {"debug",               "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
-    {"debug_level",         "Debugging level: 0 to 10", "0"},
-    {"debug_addr",          "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
+    {"bus_frequency",       "(string) Bus clock frequency"},
+    {"broadcast",           "(bool) If set, messages are broadcasted to all other ports", "0"},
+    {"fanout",              "(bool) If set, messages from the high network are replicated and sent to all low network ports", "0"},
+    {"bus_latency_cycles",  "(uint) Bus latency in cycles", "0"},
+    {"idle_max",            "(uint) Bus temporarily turns off clock after this amount of idle cycles", "6"},
+    {"debug",               "(uint) Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
+    {"debug_level",         "(uint) Debugging level: 0 to 10", "0"},
+    {"debug_addr",          "(int) Address to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {NULL, NULL}
 };
 
@@ -772,20 +793,22 @@ static const ElementInfoPort cpu_ports[] = {
 };
 
 static const ElementInfoParam cpu_params[] = {
-    {"verbose",                 "Determine how verbose the output from the CPU is", "1"},
-    {"clock",                   "Clock frequency", "1GHz"},
-    {"rngseed",                 "Set a seed for the random generation of addresses", "7"},
-    {"commFreq",                "How often to do a memory operation."},
-    {"memSize",                 "Size of physical memory."},
-    {"lineSize",                "Size of a cache line - used for flushes"},
-    {"maxOutstanding",          "Maximum Number of Outstanding memory requests."},
-    {"reqsPerIssue",            "Maximum number of requests to issue at a time"},
-    {"do_write",                "Enable writes to memory (versus just reads).", "1"},
-    {"do_flush",                "Enable flushes", "0"},
-    {"num_loadstore",           "Stop after this many reads and writes.", "-1"},
-    {"noncacheableRangeStart",  "Beginning of range of addresses that are noncacheable.", "0x0"},
-    {"noncacheableRangeEnd",    "End of range of addresses that are noncacheable.", "0x0"},
-    {"addressoffset",           "Apply an offset to a calculated address to check for non-alignment issues", "0"},
+    /* Required */
+    {"commFreq",                "(int) How often to do a memory operation."},
+    {"memSize",                 "(uint) Size of physical memory."},
+    /* Optional */
+    {"verbose",                 "(uint) Determine how verbose the output from the CPU is", "0"},
+    {"clock",                   "(string) Clock frequency", "1GHz"},
+    {"rngseed",                 "(int) Set a seed for the random generation of addresses", "7"},
+    {"lineSize",                "(uint) Size of a cache line - used for flushes", "64"},
+    {"maxOutstanding",          "(uint) Maximum Number of Outstanding memory requests.", "10"},
+    {"num_loadstore",           "(int) Stop after this many reads and writes.", "-1"},
+    {"reqsPerIssue",            "(uint) Maximum number of requests to issue at a time", "1"},
+    {"do_write",                "(bool) Enable writes to memory (versus just reads).", "1"},
+    {"do_flush",                "(bool) Enable flushes", "0"},
+    {"noncacheableRangeStart",  "(uint) Beginning of range of addresses that are noncacheable.", "0x0"},
+    {"noncacheableRangeEnd",    "(uint) End of range of addresses that are noncacheable.", "0x0"},
+    {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"},
     {NULL, NULL, NULL}
 };
 
@@ -804,15 +827,17 @@ static Component* create_scratchCPU(ComponentId_t id, Params& params){
 }
 
 static const ElementInfoParam scratch_cpu_params[] = {
-    {"rngseed",                 "Set a seed for the random generator used to create requests", "7"},
-    {"scratchSize",             "Size of the scratchpad in bytes"},
-    {"maxAddr",                 "Maximum address to generate (i.e., scratchSize + size of memory)"},
-    {"scratchLineSize",         "Line size for scratch, max request size for scratch", "64"},
-    {"memLineSize",             "Line size for memory, max request size for memory", "64"},
-    {"clock",                   "Clock frequency in Hz or period in s", "1GHz"},
-    {"maxOutstandingRequests",  "Maximum number of requests outstanding at a time", "8"},
-    {"maxRequestsPerCycle",     "Maximum number of requests to issue per cycle", "2"},
-    {"reqsToIssue",             "Number of requests to issue before ending simulation", "1000"},
+    /* Required */
+    {"scratchSize",             "(uint) Size of the scratchpad in bytes"},
+    {"maxAddr",                 "(uint) Maximum address to generate (i.e., scratchSize + size of memory)"},
+    /* Optional */
+    {"rngseed",                 "(int) Set a seed for the random generator used to create requests", "7"},
+    {"scratchLineSize",         "(uint) Line size for scratch, max request size for scratch", "64"},
+    {"memLineSize",             "(uint) Line size for memory, max request size for memory", "64"},
+    {"clock",                   "(string) Clock frequency in Hz or period in s", "1GHz"},
+    {"maxOutstandingRequests",  "(uint) Maximum number of requests outstanding at a time", "8"},
+    {"maxRequestsPerCycle",     "(uint) Maximum number of requests to issue per cycle", "2"},
+    {"reqsToIssue",             "(uint) Number of requests to issue before ending simulation", "1000"},
     {NULL, NULL, NULL}
 };
 
@@ -838,32 +863,34 @@ static Component* create_MemController(ComponentId_t id, Params& params){
 
 static const ElementInfoParam memctrl_params[] = {
     /* Required parameters */
-    {"backend.mem_size",    "Size of physical memory. NEW REQUIREMENT: must include units in 'B' (SI ok). Simple fix: add 'MiB' to old value."},
-    {"clock",               "Clock frequency of controller", NULL},
+    {"backend.mem_size",    "(string) Size of physical memory. NEW REQUIREMENT: must include units in 'B' (SI ok). Simple fix: add 'MiB' to old value."},
+    {"clock",               "(string) Clock frequency of controller"},
     /* Optional parameters */
-    {"backend",             "Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
-    {"coherence_protocol",  "Coherence protocol.  Supported: MESI (default), MSI. Only used when a directory controller is not present.", "MESI"},
-    {"request_width",       "Size of a DRAM request in bytes. Default 64", "64"},
-    {"max_requests_per_cycle",  "Maximum number of requests to accept per cycle. 0 or negative is unlimited. Default is 1 for simpleMem backend, unlimited otherwise.", "1"},
-    {"range_start",         "Address where physical memory begins", "0"},
-    {"interleave_size",     "Size of interleaved chunks in bytes with units (e.g., 64B or 4KiB). Note: This definition has CHANGED (used to be specified in KiB)", "0B"},
-    {"interleave_step",     "Distance between sucessive interleaved chunks on this controller in bytes (e.g., 512B or 16KiB) Note: This definition has CHANGED (used to be specified in KiB)", "0B"},
-    {"direct_link_latency", "Latency when using the 'direct_link', rather than 'snoop_link'", "10 ns"},
-    {"memory_file",         "Optional backing-store file to pre-load memory, or store resulting state", "N/A"},
-    {"trace_file",          "File name (optional) of a trace-file to generate.", ""},
-    {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-    {"debug_level",         "Debugging level: 0 to 10", "0"},
-    {"listenercount",       "Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
-    {"listener%(listenercount)d", "Loads a listener module into the controller", ""},
-    {"network_bw",          "Network link bandwidth.", NULL},
-    {"network_address",     "Network address of component.", ""},
-    {"network_input_buffer_size",   "Size of the network's input buffer.", "1KiB"},
-    {"network_output_buffer_size",  "Size of the network's output buffer.", "1KiB"},
-    {"do_not_back",         "DO NOT use this parameter if simulation depends on correct memory values. Otherwise, set to '1' to reduce simulation's memory footprint", "0"},
+    {"backend",             "(string) Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
+    {"request_width",       "(uint) Size of a DRAM request in bytes.", "64"},
+    {"max_requests_per_cycle",  "(int) Maximum number of requests to accept per cycle. 0 or negative is unlimited. Default is 1 for simpleMem backend, unlimited otherwise.", "1"},
+    {"trace_file",          "(string) File name (optional) of a trace-file to generate.", ""},
+    {"debug",               "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_level",         "(uint) Debugging level: 0 to 10", "0"},
+    {"listenercount",       "(uint) Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
+    {"listener%(listenercount)d", "(string) Loads a listener module into the controller", ""},
+    {"do_not_back",         "(bool) DO NOT use this parameter if simulation depends on correct memory values. Otherwise, set to '1' to reduce simulation's memory footprint", "0"},
+    {"memory_file",         "(string) Optional backing-store file to pre-load memory, or store resulting state", "N/A"},
+    {"addr_range_start",    "(uint) Lowest address handled by this memory.", "0"},
+    {"addr_range_end",      "(uint) Highest address handled by this memory.", "uint64_t-1"},
+    {"interleave_size",     "(string) Size of interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},
+    {"interleave_step",     "(string) Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},
+    /* Old parameters - deprecated or moved */
     {"mem_size",            "DEPRECATED. Use 'backend.mem_size' instead. Size of physical memory in MiB", "0"},
     {"statistics",          "DEPRECATED - use Statistics API to get statistics for memory controller","0"},
     {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"direct_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether memory is directly connected to a directory/cache (1) or is connected via the network (0)","1"},
+    {"coherence_protocol",  "DEPRECATED. No longer needed. Coherence protocol.  Supported: MESI (default), MSI. Only used when a directory controller is not present.", "MESI"},
+    {"network_address",     "DEPRECATED - Now auto-detected by link control."},
+    {"network_bw",          "MOVED. Now a member of the MemNIC subcomponent.", NULL},
+    {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"},
+    {"network_output_buffer_size",  "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"},
+    {"direct_link_latency", "MOVED. Now a member of the MemLink subcomponent.", "10 ns"},
     {NULL, NULL, NULL}
 };
 
@@ -896,12 +923,12 @@ static const ElementInfoStatistic memBackendConvertor_statistics[] = {
     { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
     { "total_cycles",                       "Total cycles called at the memory controller",     "cycles",   1 },
     { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1 },
-    { "requests_received_GetSEx",           "Number of GetSEx (read) requests received",        "requests", 1 },
+    { "requests_received_GetSX",           "Number of GetSX (read) requests received",        "requests", 1 },
     { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },
     { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },
     { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },
     { "latency_GetS",                       "Total latency of handled GetS requests",           "cycles",   1 },
-    { "latency_GetSEx",                     "Total latency of handled GetSEx requests",         "cycles",   1 },
+    { "latency_GetSX",                     "Total latency of handled GetSX requests",         "cycles",   1 },
     { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },
     { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 },
     { NULL, NULL, NULL, 0 }
@@ -917,13 +944,17 @@ static SubComponent* create_Mem_SimpleScratchBackendConvertor(Component* comp, P
 }
 
 static const ElementInfoStatistic scratchBackendConvertor_statistics[] = {
-    { "cycles_with_issue",                      "Total cycles with successful issue to backend", "cycles", 1},
+    { "cycles_with_issue",                      "Total cycles with successful issue to backend",    "cycles", 1},
     { "cycles_attempted_issue_but_rejected",    "Total cycles where an issue was attempted but backed rejected it", "cycles", 1},
-    { "total_cycles",                           "Total cycles executed at the scratchpad", "cycles", 1},
-    { "reads_received",                         "Number of reads received", "requests", 1},
-    { "writes_received",                        "Number of writes received", "requests", 1},
-    { "read_latency",                           "Latency for read requests", "cycles", 1},
-    { "write_latency",                          "Latency for write requests", "cycles", 1},
+    { "total_cycles",                           "Total cycles executed at the scratchpad",          "cycles", 1},
+    { "requests_received_GetS",                 "Number of GetS (read) requests received",          "requests", 1 },
+    { "requests_received_GetSX",                "Number of GetSX (read) requests received",         "requests", 1 },
+    { "requests_received_GetX",                 "Number of GetX (read) requests received",          "requests", 1 },
+    { "requests_received_PutM",                 "Number of PutM (write) requests received",         "requests", 1 },
+    { "latency_GetS",                           "Total latency of handled GetS requests",           "cycles",   1 },
+    { "latency_GetSX",                          "Total latency of handled GetSX requests",          "cycles",   1 },
+    { "latency_GetX",                           "Total latency of handled GetX requests",           "cycles",   1 },
+    { "latency_PutM",                           "Total latency of handled PutM requests",           "cycles",   1 },
     { NULL, NULL, NULL, 0 }
 };
 
@@ -936,8 +967,8 @@ static SubComponent* create_Mem_SimpleSim(Component* comp, Params& params){
 }
 
 static const ElementInfoParam simpleMem_params[] = {
-    {"verbose",          "Sets the verbosity of the backend output", "0" },
-    {"access_time",     "Constant latency of memory operation.", "100 ns"},
+    {"verbose",         "(uint) Sets the verbosity of the backend output", "0" },
+    {"access_time",     "(string) Constant latency of memory operation.", "100 ns"},
     {NULL, NULL}
 };
 
@@ -992,15 +1023,15 @@ static SubComponent* create_Mem_SimpleDRAM(Component* comp, Params& params) {
 }
 
 static const ElementInfoParam simpleDRAM_params[] = {
-    {"verbose",     "Sets the verbosity of the backend output", "0" },
-    {"cycle_time",  "Latency of a cycle or clock frequency (e.g., '4ns' and '250MHz' are both accepted)", "4ns"},
-    {"tCAS",        "Column access latency in cycles (i.e., access time if correct row is already open)", "9"},
-    {"tRCD",        "Row access latency in cycles (i.e., time to open a row)", "9"},
-    {"tRP",         "Precharge delay in cycles (i.e., time to close a row)", "9"},
-    {"banks",       "Number of banks", "8"},
-    {"bank_interleave_granularity", "Granularity of interleaving in bytes (B), generally a cache line. Must be a power of 2.", "64B"},
-    {"row_size",    "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
-    {"row_policy",  "Policy for managing the row buffer - open or closed.", "closed"},
+    {"verbose",     "(uint) Sets the verbosity of the backend output", "0" },
+    {"cycle_time",  "(string) Latency of a cycle or clock frequency (e.g., '4ns' and '250MHz' are both accepted)", "4ns"},
+    {"tCAS",        "(uint) Column access latency in cycles (i.e., access time if correct row is already open)", "9"},
+    {"tRCD",        "(uint) Row access latency in cycles (i.e., time to open a row)", "9"},
+    {"tRP",         "(uint) Precharge delay in cycles (i.e., time to close a row)", "9"},
+    {"banks",       "(uint) Number of banks", "8"},
+    {"bank_interleave_granularity", "(string) Granularity of interleaving in bytes (B), generally a cache line. Must be a power of 2.", "64B"},
+    {"row_size",    "(string) Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
+    {"row_policy",  "(string) Policy for managing the row buffer - open or closed.", "closed"},
     {NULL, NULL, NULL}
 };
 
@@ -1145,6 +1176,65 @@ static const ElementInfoStatistic pagedMultiMem_statistics[] = {
 
 #endif
 
+/*****************************************************************************************
+ *  SubComponent: hbmdramsim
+ *  Purpose: Memory backend, interface to DRAMSim using GaTech HBM mods
+ *****************************************************************************************/
+#if defined(HAVE_HBMLIBDRAMSIM)
+static SubComponent* create_Mem_HBMDRAMSim(Component* comp, Params& params){
+    return new HBMDRAMSimMemory(comp, params);
+}
+
+
+static const ElementInfoParam HBMdramsimMem_params[] = {
+    {"verbose",          "Sets the verbosity of the backend output", "0" },
+    {"device_ini",      "Name of DRAMSim Device config file", NULL},
+    {"system_ini",      "Name of DRAMSim Device system file", NULL},
+    {NULL, NULL, NULL}
+};
+
+
+/*****************************************************************************************
+ *  SubComponent: HBMpagedMultiMemory
+ *  Purpose: Memory backend, implements both HMC (via simpleMem) and DDR (via HBM DRAMSim)
+ *  and simulates caching between them
+ *****************************************************************************************/
+static SubComponent* HBMcreate_Mem_pagedMulti(Component* comp, Params& params){
+    return new HBMpagedMultiMemory(comp, params);
+}
+
+
+static const ElementInfoParam HBMpagedMultiMem_params[] = {
+    { "verbose",          "Sets the verbosity of the backend output", "0" },
+    {"device_ini",      "Name of DRAMSim Device config file", NULL},
+    {"system_ini",      "Name of DRAMSim Device system file", NULL},
+    {"collect_stats",      "Name of DRAMSim Device system file", "0"},
+    {"transfer_delay",      "Time (in ns) to transfer page to fast mem", "250"},
+    {"dramBackpressure",    "Don't issue page swaps if DRAM is too busy", "1"},
+    {"threshold",      "Threshold (touches/quantum)", "4"},
+    {"scan_threshold",      "scan Threshold (for SC strategies)", "4"},
+    {"seed",      "RNG Seed", "1447"},
+    {"page_add_strategy",      "Page Addition Strategy", "T"},
+    {"page_replace_strategy",      "Page Replacement Strategy", "FIFO"},
+    {"access_time", "Constant time memory access for \"fast\" memory", "35ns"},
+    {"max_fast_pages", "Number of \"fast\" (constant time) pages", "256"},
+    {"page_shift", "Size of page (2^x bytes)", "12"},
+    {"quantum", "time period for when page access counts is shifted", "5ms"},
+    {"accStatsPrefix","File name for acces pattern statistics",""},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoStatistic HBMpagedMultiMem_statistics[] = {
+    {"fast_hits", "Number of accesses that 'hit' a fast page", "count", 1},
+    {"fast_swaps", "Number of pages swapped between 'fast' and 'slow' memory", "count", 1},
+    {"fast_acc", "Number of total accesses to the memory backend", "count", 1},
+    {"t_pages", "Number of total pages", "count", 1},
+    {"cant_swap", "Number of times a page could not be swapped in because no victim page could be found because all candidates were swapping", "count", 1},
+    {"swap_delays", "Number of an access is delayed because the page is swapping", "count", 1},
+    { NULL, NULL, NULL, 0 }
+};
+#endif //HAVE_HBMLIBDRAMSIM
+
 
 /*****************************************************************************************
  *  SubComponent: hybridSimMemory
@@ -1281,12 +1371,53 @@ static SubComponent* create_ScratchInterface(Component *comp, Params &params) {
 }
 
 /*****************************************************************************************
- *  Module: memNIC
- *  Purpose: Wraps a memEvent in a simpleNetwork interface event
+ *  SubComponent: memNIC
+ *  Purpose: Wraps a memEventBase in a simpleNetwork interface event
  *****************************************************************************************/
-static Module* create_MemNIC(Component *comp, Params &params) {
+static SubComponent* create_MemNIC(Component *comp, Params &params) {
     return new MemNIC(comp, params);
 }
+
+static const ElementInfoParam memNIC_params[] = {
+    /* Optional */
+    { "memNIC.group",                       "(int) Group ID. See params 'sources' and 'destinations'. If not specified, the parent component will guess.", "1"},
+    { "memNIC.sources",                     "(comma-separated list of ints) List of group IDs that serve as sources for this component. If not specified, defaults to 'group - 1'.", "group-1"},
+    { "memNIC.destinations",                "(comma-separated list of ints) List of group IDs that serve as destinations for this component. If not specified, defaults to 'group + 1'.", "group+1"},
+    { "memNIC.network_bw",                  "(string) Network bandwidth", "80GiB/s" },
+    { "memNIC.network_input_buffer_size",   "(string) Size of input buffer", "1KiB"},
+    { "memNIC.network_output_buffer_size",  "(string) Size of output buffer", "1KiB"},
+    { "memNIC.min_packet_size",             "(string) Size of a packet without a payload (e.g., control message size)", "8B"},
+    { "memNIC.accept_region",               "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},
+    { "memNIC.port",                        "(string) Set by parent component. Name of port this NIC sits on.", ""},
+    { "memNIC.addr_range_start",            "(uint) Set by parent component. Lowest address handled by the parent.", "0"},
+    { "memNIC.addr_range_end",              "(uint) Set by parent component. Highest address handled by the parent.", "uint64_t-1"},
+    { "memNIC.interleave_size",             "(uint) Set by parent component. Size of interleaved chunks.", "0B"},
+    { "memNIC.interleave_step",             "(uint) Set by parent component. Distance between interleaved chunks.", "0B"},
+    { NULL, NULL, NULL }
+};
+
+/*****************************************************************************************
+ *  SubComponent: memLink
+ *  Purpose: Base class for memory component links. 
+ *           Wraps links in an address-aware subcomponent
+ *****************************************************************************************/
+static SubComponent* create_MemLink(Component * comp, Params &params) {
+    return new MemLink(comp, params);
+}
+
+static const ElementInfoParam memLink_params[] = {
+    { "{cpu|mem}link.latency",          "(string) Link latency. Prefix 'cpulink' for up-link towards CPU or 'memlink' for down-link towards memory", "50ps"},
+    { "{cpu|mem}link.debug",            "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    { "{cpu|mem}link.debug_level",      "(int) Debug verbosity level. Between 0 and 10", "0"},
+    { "{cpu|mem}link.debug_addr",       "(int) Address to debug. If not specified or set to -1, debug output for all addresses will be printed", "-1"},
+    { "{cpu|mem}link.accept_region",    "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},
+    { "{cpu|mem}link.port",             "(string) Set by parent component. Name of port this memLink sits on.", ""},
+    { "{cpu|mem}link.addr_range_start", "(uint) Set by parent component. Lowest address handled by the parent.", "0"},
+    { "{cpu|mem}link.addr_range_end",   "(uint) Set by parent component. Highest address handled by the parent.", "uint64_t-1"},
+    { "{cpu|mem}link.interleave_size",  "(string) Set by parent component. Size of interleaved chunks.", "0B"},
+    { "{cpu|mem}link.interleave_step",  "(string) Set by parent component. Distance between interleaved chunks.", "0B"},
+    { NULL, NULL, NULL }
+};
 
 /*****************************************************************************************
  *  Module: SandyBridgeAddrMapper
@@ -1315,32 +1446,32 @@ static Component* create_DirectoryController(ComponentId_t id, Params& params){
 }
 
 static const ElementInfoParam dirctrl_params[] = {
-    /* Required parameters */
-    {"network_address",         "Network address of component.", ""},
     /* Optional parameters */
-    {"network_bw",              "Network link bandwidth.", "80GiB/s"},
-    {"network_input_buffer_size",   "Size of the network's input buffer.", "1KiB"},
-    {"network_output_buffer_size",  "Size of the network's output buffer.", "1KiB"},
-    {"addr_range_start",        "Start of Address Range, for this controller.", "0"},
-    {"addr_range_end",          "End of Address Range, for this controller.", NULL},
-    {"interleave_size",         "Size of interleaved chunks in bytes. Note: This definition has CHANGED (used to be specified in KiB)", "0B"},
-    {"interleave_step",         "Distance between sucessive interleaved chunks on this controller in bytes. Note: This definition has CHANGED (used to be specified in KiB)", "0B"},
     {"clock",                   "Clock rate of controller.", "1GHz"},
     {"entry_cache_size",        "Size (in # of entries) the controller will cache.", "0"},
     {"debug",                   "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",             "Debugging level: 0 to 10", "0"},
-    {"debug_addr",              "Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
+    {"debug_addr",              "Address to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
-    {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--"},
+    {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--", "MESI"},
     {"mshr_num_entries",        "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},
     {"net_memory_name",         "For directories connected to a memory over the network: name of the memory this directory owns", ""},
     {"access_latency_cycles",   "Latency of directory access in cycles", "0"},
     {"mshr_latency_cycles",     "Latency of mshr access in cycles", "0"},
     {"max_requests_per_cycle",  "Maximum number of requests to process per cycle (0 or negative is unlimited)", "0"},
     {"mem_addr_start",          "Starting memory address for the chunk of memory that this directory controller addresses.", "0"},
+    {"addr_range_start",        "Lowest address handled by this directory.", "0"},
+    {"addr_range_end",          "Highest address handled by this directory.", "uint64_t-1"},
+    {"interleave_size",         "Size of interleaved chunks. E.g., to interleave 8B chunks among 3 directories, set size=8B, step=24B", "0B"},
+    {"interleave_step",         "Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 directories, set size=8B, step=24B", "0B"},
+    /* Old parameters - deprecated or moved */
     {"direct_mem_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether directory has a direct connection to memory (1) or is connected via a network (0)","1"},
     {"network_num_vc",          "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"statistics",              "DEPRECATED - Use the Statistics API to get statistics", "0"},
+    {"network_address",         "DEPRECATD - Now auto-detected by link control", ""},
+    {"network_bw",                  "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "80GiB/s"},
+    {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "1KiB"},
+    {"network_output_buffer_size",  "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "1KiB"},
     {NULL, NULL, NULL}
 };
 
@@ -1358,10 +1489,11 @@ static const ElementInfoStatistic dirctrl_statistics[] = {
     {"mshr_hits",                       "Number of requests that hit in the MSHRs",                             "requests",     1},
     {"requests_received_GetS",          "Number of GetS (read-shared) requests received",                       "requests",     1},
     {"requests_received_GetX",          "Number of GetX (write-exclusive) requests received",                   "requests",     1},
-    {"requests_received_GetSEx",        "Number of GetSEx (read-exclusive) requests received",                  "requests",     1},
+    {"requests_received_GetSX",        "Number of GetSX (read-exclusive) requests received",                    "requests",     1},
     {"requests_received_PutS",          "Number of PutS (shared replacement) requests received",                "requests",     1},
     {"requests_received_PutE",          "Number of PutE (clean exclusive replacement) requests received",       "requests",     1},
     {"requests_received_PutM",          "Number of PutM (dirty exclusive replacement) requests received",       "requests",     1},
+    {"requests_received_noncacheable",  "Number of noncacheable requests that were received and forwarded",     "requests",     1},
     {"responses_received_NACK",         "Number of NACK responses received",                                    "responses",    1},
     {"responses_received_FetchResp",    "Number of FetchResp responses received (response to FetchInv/Fetch)",  "responses",    1},
     {"responses_received_FetchXResp",   "Number of FetchXResp responses received (response to FetchXInv) ",     "responses",    1},
@@ -1376,7 +1508,7 @@ static const ElementInfoStatistic dirctrl_statistics[] = {
     {"requests_sent_FetchInv",          "Number of FetchInv (invalidate and fetch exclusive data) requests sent to LLCs",   "requests",     1},
     {"requests_sent_FetchInvX",         "Number of FetchInvX (fetch exclusive data and downgrade) requests sent to LLCs",   "requests",     1},
     {"responses_sent_NACK",             "Number of NACK responses sent to LLCs",                                            "responses",    1},
-    {"responses_sent_GetSResp",         "Number of GetSResp (data response to GetS or GetSEx) responses sent to LLCs",      "responses",    1},
+    {"responses_sent_GetSResp",         "Number of GetSResp (data response to GetS or GetSX) responses sent to LLCs",       "responses",    1},
     {"responses_sent_GetXResp",         "Number of GetXResp (data response to GetX) responses sent to LLCs",                "responses",    1},
     {"MSHR_occupancy",                  "Number of events in MSHR each cycle",                                  "events",       1},
     {NULL, NULL, NULL, 0}
@@ -1427,8 +1559,8 @@ static SubComponent* create_MemNetBridge(Component* comp, Params& params){
 }
 
 static const ElementInfoParam bridge_params[] = {
-    {"debug",                   "Optional, int - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-    {"debug_level",             "Optional, int - Debugging level. Between 0 and 10", "0"},
+    {"debug",                   "(int) Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",             "(int) Debugging level. Between 0 and 10", "0"},
     {NULL, NULL}
 };
 
@@ -1596,6 +1728,26 @@ static const ElementInfoSubComponent subcomponents[] = {
         "SST::MemHierarchy::MemBackend"
     },
 #endif
+#if defined(HAVE_HBMLIBDRAMSIM)
+    {
+        "hbmdramsim",
+        "HBM DRAMSim-driven memory timings",
+        NULL, /* Advanced help */
+        create_Mem_HBMDRAMSim, /* Module Alloc w/ params */
+        HBMdramsimMem_params,
+        hbmDramSim_statistics, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "HBMpagedMulti",
+        "HBM DRAMSim-driven memory timings with a fixed timing multi-level memory using paging",
+        NULL, /* Advanced help */
+        HBMcreate_Mem_pagedMulti, /* Module Alloc w/ params */
+        HBMpagedMultiMem_params,
+        HBMpagedMultiMem_statistics, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+#endif
 #if defined(HAVE_LIBHYBRIDSIM)
     {
         "hybridsim",
@@ -1713,6 +1865,23 @@ static const ElementInfoSubComponent subcomponents[] = {
         coherence_statistics,
         "SST::MemHierarchy::CoherenceController"
     },
+    {   "MemLink",
+        "Memory-oriented link interface",
+        NULL,
+        create_MemLink,
+        memLink_params,
+        NULL,
+        "SST::MemLink",
+    },
+    {   "MemNIC",
+        "Memory-oriented Network Interface",
+        NULL,
+        create_MemNIC,
+        memNIC_params,
+        NULL,
+        "SST::MemLink",
+    },
+            
     {NULL, NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -1725,15 +1894,6 @@ static const ElementInfoModule modules[] = {
         create_MemInterfaceModule,
         NULL,
         "SST::Interfaces::SimpleMem",
-    },
-    {
-        "memNIC",
-        "Memory-oriented Network Interface",
-        NULL, /* Advanced help */
-        NULL, /* ModuleAlloc */
-        create_MemNIC, /* Module Alloc w/ params */
-        NULL, /* Params */
-        NULL, /* Interface */
     },
     {
         "simpleAddrMapper",

@@ -29,6 +29,7 @@ emberParams = {
     "os.module"    : "firefly.hades",
     "os.name"      : "hermesParams",
     "api.0.module" : "firefly.hadesMP",
+    "api.1.module" : "firefly.hadesSHMEM",
     "verbose" : 0,
 }
 

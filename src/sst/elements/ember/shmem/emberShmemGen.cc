@@ -21,16 +21,10 @@
 using namespace SST;
 using namespace SST::Ember;
 
-const char* EmberShmemGenerator::m_eventName[] = {
-    FOREACH_ENUM(GENERATE_STRING)
-};
-
 EmberShmemGenerator::EmberShmemGenerator( 
-            Component* owner, Params& params) :
-    EmberGenerator(owner, params), 
-    m_printStats( 0 )
+            Component* owner, Params& params, std::string name) :
+    EmberGenerator(owner, params, name )
 {
-    m_printStats = (uint32_t) (params.find("printStats", 0));
 }
 
 EmberShmemGenerator::~EmberShmemGenerator()

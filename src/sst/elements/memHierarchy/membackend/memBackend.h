@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <map>
+#include <vector>
 
 #include "sst/elements/memHierarchy/membackend/memBackendConvertor.h"
 #include "sst/elements/memHierarchy/membackend/simpleMemBackendConvertor.h"
@@ -82,11 +83,12 @@ public:
 
     virtual void setup() {}
     virtual void finish() {}
-    virtual void clock() {} 
+    virtual bool clock(Cycle_t cycle) { return true; } 
     virtual size_t getMemSize() { return m_memSize; }
     virtual uint32_t getRequestWidth() { return m_reqWidth; }
     virtual int32_t getMaxReqPerCycle() { return m_maxReqPerCycle; } 
-    virtual const std::string& getClockFreq() { return m_clockFreq; } 
+    virtual const std::string& getClockFreq() { return m_clockFreq; }
+    virtual bool isClocked() { return true; }
 protected:
     Output*         output;
     std::string     m_clockFreq;
@@ -120,6 +122,25 @@ class MemFlagMemBackend : public MemBackend {
   public:
     MemFlagMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
+
+    void handleMemResponse( ReqId id, uint32_t flags ) {
+        m_respFunc( id, flags );
+    }
+
+    virtual void setResponseHandler( std::function<void(ReqId,uint32_t)> func ) {
+        m_respFunc = func;
+    }
+
+  private:
+    std::function<void(ReqId,uint32_t)> m_respFunc;
+};
+
+class ExtMemBackend : public MemBackend {
+  public:
+    ExtMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+    virtual bool issueRequest( ReqId, Addr, bool isWrite,
+                               std::vector<uint64_t> ins,
+                               uint32_t flags, unsigned numBytes ) = 0;
 
     void handleMemResponse( ReqId id, uint32_t flags ) {
         m_respFunc( id, flags );

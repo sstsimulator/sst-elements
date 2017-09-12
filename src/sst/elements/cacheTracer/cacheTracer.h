@@ -47,6 +47,7 @@ public:
     cacheTracer(SST::ComponentId_t id, Params& params);
     ~cacheTracer();
     void finish();
+    void init(unsigned int phase);
 
 private:
     // Functions

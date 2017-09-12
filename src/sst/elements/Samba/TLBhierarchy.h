@@ -129,6 +129,8 @@ namespace SST { namespace SambaComponent{
 		// Setting the memory link of the page table walker
 		bool setPTWLink(SST::Link * l) { PTW->set_ToMem(l); return true;}
 
+                // Setting the line size for the page table walker's dummy requests
+                void setLineSize(uint64_t size) { PTW->setLineSize(size); }
 
 	};
 

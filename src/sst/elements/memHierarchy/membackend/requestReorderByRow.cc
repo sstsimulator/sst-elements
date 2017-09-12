@@ -88,7 +88,7 @@ bool RequestReorderRow::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned
  * Issue as many requests as we can up to requestsPerCycle
  * by searching up to searchWindowSize requests
  */
-void RequestReorderRow::clock() {
+bool RequestReorderRow::clock(Cycle_t cycle) {
     
     if (!requestQueue.empty()) {
         
@@ -146,7 +146,8 @@ void RequestReorderRow::clock() {
         }
     } 
 
-    backend->clock();
+    bool unclock = backend->clock(cycle);
+    return false;
 }
 
 

@@ -30,7 +30,8 @@
 #include "mshr.h"
 #include "L1CoherenceController.h"
 #include "L1IncoherentController.h"
-
+#include "memNIC.h"
+#include "memLink.h"
 
 namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
@@ -266,7 +267,6 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     
     /* ----------------- MSHR ----------------- */
     mshr_               = new MSHR(d_, cf_.MSHRSize_, this->getName(), DEBUG_ALL, DEBUG_ADDR);
-    mshrNoncacheable_   = new MSHR(d_, HUGE_MSHR, this->getName(), DEBUG_ALL, DEBUG_ADDR);
     
     /* ---------------- Clock ---------------- */
     clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
@@ -294,25 +294,26 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     }
     
     /* Register statistics */
-    statTotalEventsReceived     = registerStatistic<uint64_t>("TotalEventsReceived");
-    statTotalEventsReplayed     = registerStatistic<uint64_t>("TotalEventsReplayed");
+    statTotalEventsReceived         = registerStatistic<uint64_t>("TotalEventsReceived");
+    statTotalEventsReplayed         = registerStatistic<uint64_t>("TotalEventsReplayed");
+    statNoncacheableEventsReceived  = registerStatistic<uint64_t>("TotalNoncacheableEventsReceived");
     statCacheHits               = registerStatistic<uint64_t>("CacheHits");
     statGetSHitOnArrival        = registerStatistic<uint64_t>("GetSHit_Arrival");   
     statGetXHitOnArrival        = registerStatistic<uint64_t>("GetXHit_Arrival");
-    statGetSExHitOnArrival      = registerStatistic<uint64_t>("GetSExHit_Arrival"); 
+    statGetSXHitOnArrival      = registerStatistic<uint64_t>("GetSXHit_Arrival"); 
     statGetSHitAfterBlocked     = registerStatistic<uint64_t>("GetSHit_Blocked");
     statGetXHitAfterBlocked     = registerStatistic<uint64_t>("GetXHit_Blocked");  
-    statGetSExHitAfterBlocked   = registerStatistic<uint64_t>("GetSExHit_Blocked");
+    statGetSXHitAfterBlocked   = registerStatistic<uint64_t>("GetSXHit_Blocked");
     statCacheMisses             = registerStatistic<uint64_t>("CacheMisses");
     statGetSMissOnArrival       = registerStatistic<uint64_t>("GetSMiss_Arrival");
     statGetXMissOnArrival       = registerStatistic<uint64_t>("GetXMiss_Arrival");
-    statGetSExMissOnArrival     = registerStatistic<uint64_t>("GetSExMiss_Arrival");
+    statGetSXMissOnArrival     = registerStatistic<uint64_t>("GetSXMiss_Arrival");
     statGetSMissAfterBlocked    = registerStatistic<uint64_t>("GetSMiss_Blocked");
     statGetXMissAfterBlocked    = registerStatistic<uint64_t>("GetXMiss_Blocked");
-    statGetSExMissAfterBlocked  = registerStatistic<uint64_t>("GetSExMiss_Blocked");
+    statGetSXMissAfterBlocked  = registerStatistic<uint64_t>("GetSXMiss_Blocked");
     statGetS_recv               = registerStatistic<uint64_t>("GetS_recv");
     statGetX_recv               = registerStatistic<uint64_t>("GetX_recv");
-    statGetSEx_recv             = registerStatistic<uint64_t>("GetSEx_recv");
+    statGetSX_recv             = registerStatistic<uint64_t>("GetSX_recv");
     statGetSResp_recv           = registerStatistic<uint64_t>("GetSResp_recv");
     statGetXResp_recv           = registerStatistic<uint64_t>("GetXResp_recv");
     statPutS_recv               = registerStatistic<uint64_t>("PutS_recv");
@@ -334,7 +335,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     std::string protocol = (cf_.protocol_ == CoherenceProtocol::MESI) ? "true" : "false";
     isLL = true;
     lowerIsNoninclusive = false;
-
+    expectWritebackAcks = false;
     Params coherenceParams;
     coherenceParams.insert("debug_level", params.find<std::string>("debug_level", "1"));
     coherenceParams.insert("debug", params.find<std::string>("debug", "0"));
@@ -370,7 +371,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         d_->fatal(CALL_INFO, -1, "%s, Failed to load CoherenceController.\n", this->Component::getName().c_str());
     }
 
-    coherenceMgr_->setLinks(lowNetPort_, highNetPort_, bottomNetworkLink_, topNetworkLink_);
+    coherenceMgr_->setLinks(linkUp_, linkDown_);
     coherenceMgr_->setMSHR(mshr_);
     coherenceMgr_->setCacheListener(listener_);
     coherenceMgr_->setDebug(DEBUG_ALL, DEBUG_ADDR);
@@ -417,95 +418,78 @@ void Cache::configureLinks(Params &params) {
             d_->fatal(CALL_INFO,-1,"%s, Error: no connected high ports detected. Please connect a bus/cache/core on port 'high_network_0'\n",
                     getName().c_str());
     }
+   
+    // Fix up parameters for creating NIC
+    bool found;
+    if (fixupParam(params, "network_bw", "memNIC.network_bw"))
+        d_->output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
+    if (fixupParam(params, "network_input_buffer_size", "memNIC.network_input_buffer_size"))
+        d_->output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+    if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))
+        d_->output(CALL_INFO, "Note (%s): Changed 'network_output_buffer_size' to 'memNIC.network_output_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+    if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
+        d_->output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size'. Change your input file to remove this notice.\n", getName().c_str());
 
+    Params nicParams = params.find_prefix_params("memNIC." );
+
+    Params memlink = params.find_prefix_params("memlink.");
+    memlink.insert("port", "low_network_0");
+    
+    Params cpulink = params.find_prefix_params("cpulink.");
+    cpulink.insert("port", "high_network_0");
 
     /* Finally configure the links */
     if (highNetExists && lowNetExists) {
         
-        d_->debug(_INFO_,"Configuring cache with a direct link above and one or more direct links below\n");
+        d_->debug(_INFO_,"Configuring cache with a direct link above and below\n");
         
-        // Configure low links
-        string linkName = "low_network_0";
-        uint32_t id = 0;
-        SST::Link * link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        d_->debug(_INFO_, "Low Network Link ID: %u\n", (uint)link->getId());
-        lowNetPort_ = link;
-        linkName = "low_network_" + std::to_string(id);
-        bottomNetworkLink_ = NULL;
-    
-        // Configure high link
-        link = configureLink("high_network_0", "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        d_->debug(_INFO_, "High Network Link ID: %u\n", (uint)link->getId());
-        highNetPort_ = link;
-        topNetworkLink_ = NULL;
-    
+        linkDown_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, memlink));
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+
+        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
+        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        clockLink_ = false; /* Currently only linkDown_ may need to be clocked */
+
     } else if (highNetExists && lowCacheExists) {
             
         d_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a cache below\n");
-        
-        // Configure low link
-        MemNIC::ComponentInfo myInfo;
-        myInfo.link_port = "cache";
-        myInfo.link_bandwidth = params.find<std::string>("network_bw", "80GiB/s");
-	myInfo.num_vcs = 1;
-        myInfo.name = getName();
-        myInfo.network_addr = params.find<int>("network_address");
-        myInfo.type = MemNIC::TypeCacheToCache; 
-        myInfo.link_inbuf_size = params.find<std::string>("network_input_buffer_size", "1KiB");
-        myInfo.link_outbuf_size = params.find<std::string>("network_output_buffer_size", "1KiB");
+        nicParams.find<std::string>("port", "", found);
+        if (!found) nicParams.insert("port", "cache");
+        nicParams.find<std::string>("group", "", found);
+        if (!found) nicParams.insert("group", "1");
 
-        MemNIC::ComponentTypeInfo typeInfo;
-        typeInfo.blocksize = cf_.lineSize_;
-        typeInfo.coherenceProtocol = cf_.protocol_;
-        typeInfo.cacheType = cf_.type_;
-
-        bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        bottomNetworkLink_->addTypeInfo(typeInfo);
-        UnitAlgebra packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
-        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
-        bottomNetworkLink_->setMinPacketSize(packet.getRoundedValue());
+        linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         
         // Configure high link
-        SST::Link * link = configureLink("high_network_0", "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        d_->debug(_INFO_, "High Network Link ID: %u\n", (uint)link->getId());
-        highNetPort_ = link;
-        topNetworkLink_ = NULL;
-
+        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
+        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
+    
     } else if (highNetExists && lowDirExists) {
             
         d_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a directory below\n");
+        nicParams.find<std::string>("port", "", found);
+        if (!found) nicParams.insert("port", "directory");
+        nicParams.find<std::string>("group", "", found);
+        if (!found) nicParams.insert("group", "2");
         
         // Configure low link
-        MemNIC::ComponentInfo myInfo;
-        myInfo.link_port = "directory";
-        myInfo.link_bandwidth = params.find<std::string>("network_bw", "80GiB/s");
-	myInfo.num_vcs = 1;
-        myInfo.name = getName();
-        myInfo.network_addr = params.find<int>("network_address");
-        myInfo.type = MemNIC::TypeCache; 
-        myInfo.link_inbuf_size = params.find<std::string>("network_input_buffer_size", "1KiB");
-        myInfo.link_outbuf_size = params.find<std::string>("network_output_buffer_size", "1KiB");
-
-        MemNIC::ComponentTypeInfo typeInfo;
-        typeInfo.blocksize = cf_.lineSize_;
-        typeInfo.coherenceProtocol = cf_.protocol_;
-        typeInfo.cacheType = cf_.type_;
-
-        bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        bottomNetworkLink_->addTypeInfo(typeInfo);
-        UnitAlgebra packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
-        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
-        bottomNetworkLink_->setMinPacketSize(packet.getRoundedValue());
+        linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
         // Configure high link
-        SST::Link * link = configureLink("high_network_0", "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        d_->debug(_INFO_, "High Network Link ID: %u\n", (uint)link->getId());
-        highNetPort_ = link;
-        topNetworkLink_ = NULL;
+        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
+        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
 
     } else {    // lowDirExists
         
         d_->debug(_INFO_, "Configuring cache with a single network link to talk to a cache above and a directory below\n");
+        nicParams.find<std::string>("port", "", found);
+        if (!found) nicParams.insert("port", "directory");
+        nicParams.find<std::string>("group", "", found);
+        if (!found) nicParams.insert("group", "2");
 
         // Configure low link
         // This NIC may need to account for cache slices. Check params.
@@ -522,19 +506,8 @@ void Cache::configureLinks(Params &params) {
             d2_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %d.\n", 
                     getName().c_str(), cacheSliceCount);
         }
-
-        MemNIC::ComponentInfo myInfo;
-        myInfo.link_port = "directory";
-        myInfo.link_bandwidth = params.find<std::string>("network_bw", "80GiB/s");
-	myInfo.num_vcs = 1;
-        myInfo.name = getName();
-        myInfo.network_addr = params.find<int>("network_address");
-        myInfo.type = MemNIC::TypeNetworkCache; 
-        myInfo.link_inbuf_size = params.find<std::string>("network_input_buffer_size", "1KiB");
-        myInfo.link_outbuf_size = params.find<std::string>("network_output_buffer_size", "1KiB");
-        MemNIC::ComponentTypeInfo typeInfo;
         uint64_t addrRangeStart = 0;
-        uint64_t addrRangeEnd = (uint64_t)-1;
+        uint64_t addrRangeEnd = (uint64_t) - 1;
         uint64_t interleaveSize = 0;
         uint64_t interleaveStep = 0;
         if (cacheSliceCount > 1) {
@@ -545,23 +518,18 @@ void Cache::configureLinks(Params &params) {
             }
             cf_.cacheArray_->setSliceAware(cacheSliceCount);
         }
-        typeInfo.rangeStart     = addrRangeStart;
-        typeInfo.rangeEnd       = addrRangeEnd;
-        typeInfo.interleaveSize = interleaveSize;
-        typeInfo.interleaveStep = interleaveStep;
-        typeInfo.blocksize      = cf_.lineSize_;
-        typeInfo.coherenceProtocol = cf_.protocol_;
-        typeInfo.cacheType = cf_.type_;
+        // Set region parameters
+        nicParams.insert("addr_range_start", std::to_string(addrRangeStart));
+        nicParams.insert("addr_range_end", std::to_string(addrRangeEnd));
+        nicParams.insert("interleave_size", std::to_string(interleaveSize) + "B");
+        nicParams.insert("interleave_step", std::to_string(interleaveStep) + "B");
         
-        bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        bottomNetworkLink_->addTypeInfo(typeInfo);
-        UnitAlgebra packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
-        if (!packet.hasUnits("B")) d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packet.toString().c_str());
-        bottomNetworkLink_->setMinPacketSize(packet.getRoundedValue());
+        linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
         // Configure high link
-        topNetworkLink_ = bottomNetworkLink_;
-    
+        linkUp_ = linkDown_;
+        clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
     }
 
     // Configure self link for prefetch/listener events

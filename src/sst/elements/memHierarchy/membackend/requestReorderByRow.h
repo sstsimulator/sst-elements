@@ -31,7 +31,7 @@ public:
 	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void setup();
     void finish();
-    void clock();
+    bool clock(Cycle_t cycle);
     virtual const std::string& getClockFreq() { return backend->getClockFreq(); }
 
 private:

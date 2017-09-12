@@ -433,8 +433,8 @@ bool pagedMultiMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned 
     }
 }
 
-void pagedMultiMemory::clock(){
-    DRAMSimMemory::clock();
+bool pagedMultiMemory::clock(Cycle_t cycle){
+    DRAMSimMemory::clock(cycle);
 
     // put things in the DRAM 
     while (!dramQ.empty()) {
@@ -446,6 +446,7 @@ void pagedMultiMemory::clock(){
             break;
         }
     }
+    return false;
 }
 
 

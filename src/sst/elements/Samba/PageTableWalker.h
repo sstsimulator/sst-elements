@@ -97,6 +97,8 @@ class PageTableWalker
 	SST::Cycle_t currTime;
 
 	SST::Component * Owner;
+        
+        uint64_t line_size; // For setting base address of MemEvents
 
 	public: 
 
@@ -110,6 +112,8 @@ class PageTableWalker
 	void finish(){}
 
 	void set_ToMem(SST::Link * l) { to_mem = l;} 
+
+        void setLineSize(uint64_t size) { line_size = size; }
 
 	// Find if it exists
 	bool check_hit(long long int vadd, int struct_id);
