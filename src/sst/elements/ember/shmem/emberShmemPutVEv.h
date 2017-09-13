@@ -22,28 +22,26 @@
 namespace SST {
 namespace Ember {
 
-template <  class TYPE >
-class EmberPutVShmemEvent : public EmberShmemEvent {
+class EmberPutvShmemEvent : public EmberShmemEvent {
 
 public:
-	EmberPutVShmemEvent( Shmem::Interface& api, Output* output,
-            Hermes::MemAddr dest, TYPE src, int pe, 
+	EmberPutvShmemEvent( Shmem::Interface& api, Output* output,
+            Hermes::Vaddr dest, Hermes::Value value, int pe, 
             EmberEventTimeStatistic* stat = NULL ) :
             EmberShmemEvent( api, output, stat ), 
-            m_dest(dest), m_src(src), m_length(sizeof(TYPE)), m_pe(pe) {}
-	~EmberPutVShmemEvent() {}
+            m_dest(dest), m_value(value), m_pe(pe) {}
+	~EmberPutvShmemEvent() {}
 
     std::string getName() { return "PutV"; }
 
-    void issue( uint64_t time, MP::Functor* functor ) {
+    void issue( uint64_t time, Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.putv( m_dest, m_src, m_length, m_pe, functor );
+        m_api.putv( m_dest, m_value, m_pe, callback );
     }
 private:
-    Hermes::MemAddr m_dest;
-    TYPE m_src;
-    size_t m_length;
+    Hermes::Vaddr m_dest;
+    Value m_value;
     int m_pe;
 };
 

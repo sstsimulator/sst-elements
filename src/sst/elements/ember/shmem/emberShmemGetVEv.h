@@ -22,28 +22,26 @@
 namespace SST {
 namespace Ember {
 
-template < class TYPE >
 class EmberGetVShmemEvent : public EmberShmemEvent {
 
 public:
 	EmberGetVShmemEvent( Shmem::Interface& api, Output* output,
-            TYPE* dest, Hermes::MemAddr src, int pe, 
+            Hermes::Value value, Hermes::Vaddr src, int pe, 
             EmberEventTimeStatistic* stat = NULL ) :
             EmberShmemEvent( api, output, stat ), 
-            m_dest(dest), m_src(src), m_length(sizeof(TYPE)), m_pe(pe) {}
+            m_value(value), m_src(src),  m_pe(pe) {}
 	~EmberGetVShmemEvent() {}
 
     std::string getName() { return "Malloc"; }
 
-    void issue( uint64_t time, MP::Functor* functor ) {
+    void issue( uint64_t time, Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.getv( m_dest, m_src, m_length, m_pe, functor );
+        m_api.getv( m_value, m_src, m_pe, callback );
     }
 private:
-    TYPE*  m_dest;
-    Hermes::MemAddr m_src;
-    size_t m_length;
+    Value  m_value;
+    Hermes::Vaddr m_src;
     int m_pe;
 };
 

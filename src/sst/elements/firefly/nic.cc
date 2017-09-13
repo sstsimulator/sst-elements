@@ -48,6 +48,13 @@ Nic::Nic(ComponentId_t id, Params &params) :
         params.find<uint32_t>("verboseMask",-1), 
         Output::STDOUT);
 
+	// The link between the NIC and HOST historically provided the latency of crossing a bus such as PCI
+	// hence it was configured at wire up with a value like 150ns. The NIC has since taken on some HOST functionality
+	// so the latency has been dropped to 1ns. The bus latency must still be added for some messages so the 
+	// NIC now sends these message to itself with a time of nic2host_lat_ns - "the latency of the link". 
+	m_nic2host_lat_ns = calcDelay_ns( params.find<SST::UnitAlgebra>("nic2host_lat", SST::UnitAlgebra("150ns")));
+	m_nic2host_base_lat_ns = 1;
+
     int rxMatchDelay = params.find<int>( "rxMatchDelay_ns", 100 );
     int txDelay =      params.find<int>( "txDelay_ns", 50 );
     int hostReadDelay = params.find<int>( "hostReadDelay_ns", 200 );
@@ -101,19 +108,18 @@ Nic::Nic(ComponentId_t id, Params &params) :
     }
     m_recvM.resize( m_num_vNics );
 
-    m_shmem = new Shmem( *this, m_dbg );
-
+    m_shmem = new Shmem( *this, m_num_vNics, m_dbg, getDelay_ns(), getDelay_ns() );
 
     m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
                 rxMatchDelay, hostReadDelay, 
-                std::bind( &Shmem::findRegion, m_shmem, _1 ) ) );
+                std::bind( &Shmem::findRegion, m_shmem, _1, _2 ) ) );
     m_recvMachine.push_back( new CtlMsgRecvMachine( *this, 1, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
                 rxMatchDelay, hostReadDelay, 
-                std::bind( &Shmem::findRegion, m_shmem, _1 ) ) );
+                std::bind( &Shmem::findRegion, m_shmem, _1, _2 ) ) );
 
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
@@ -174,10 +180,21 @@ Nic::~Nic()
             }
         }
     }
+	delete m_shmem;
 	delete m_linkControl;
+
+	for ( size_t i = 0; i < m_recvMachine.size(); i++ ) {
+		delete m_recvMachine[i];
+	}
+	for ( size_t i = 0; i < m_sendMachine.size(); i++ ) {
+		delete m_sendMachine[i];
+	}
 
 	if ( m_recvNotifyFunctor ) delete m_recvNotifyFunctor;
 	if ( m_sendNotifyFunctor ) delete m_sendNotifyFunctor;
+
+	if ( m_detailedCompute[0] ) delete m_detailedCompute[0];
+	if ( m_detailedCompute[1] ) delete m_detailedCompute[1];
 
     for ( int i = 0; i < m_num_vNics; i++ ) {
         delete m_vNicV[i];
@@ -209,20 +226,21 @@ void Nic::handleVnicEvent( Event* ev, int id )
 {
     NicCmdBaseEvent* event = static_cast<NicCmdBaseEvent*>(ev);
 
-    m_dbg.verbose(CALL_INFO,3,1,"type=%d\n",event->base_type);
-    
     switch ( event->base_type ) {
-    case NicCmdBaseEvent::Msg:
-        handleMsgEvent( static_cast<NicCmdEvent*>(event), id );
-        break;
-    case NicCmdBaseEvent::Shmem:
-        handleShmemEvent( static_cast<NicShmemCmdEvent*>(event), id );
-        break;
-    default:
-        assert(0);
-    }
-}
 
+      case NicCmdBaseEvent::Msg:
+		m_selfLink->send( getDelay_ns( ), new SelfEvent( ev, id ) );
+        break;
+
+      case NicCmdBaseEvent::Shmem:
+        m_shmem->handleEvent( static_cast<NicShmemCmdEvent*>(event), id );
+		break;
+
+	  default:
+		assert(0);
+	}
+}
+    
 void Nic::handleMsgEvent( NicCmdEvent* event, int id )
 {
     switch ( event->type ) {
@@ -249,41 +267,40 @@ void Nic::handleMsgEvent( NicCmdEvent* event, int id )
     }
 }
 
-void Nic::handleShmemEvent( NicShmemCmdEvent* event, int id )
-{
-
-    switch (event->type) {
-    case NicShmemCmdEvent::PutP:
-    case NicShmemCmdEvent::PutV:
-        m_shmem->put( event, id );
-        break;
-    case NicShmemCmdEvent::GetP:
-    case NicShmemCmdEvent::GetV:
-        m_shmem->get( event, id );
-        break;
-    case NicShmemCmdEvent::Fence:
-        m_shmem->fence( event, id );
-        break;
-    case NicShmemCmdEvent::RegMem:
-        m_shmem->regMem( event, id );
-        break;
-
-    default:
-        assert(0);
-    }
-}
-
 void Nic::handleSelfEvent( Event *e )
 {
     SelfEvent* event = static_cast<SelfEvent*>(e);
     
-    if ( event->callback ) {
+	switch ( event->type ) {
+	case SelfEvent::Callback:
         event->callback();
-    } else if ( event->entry ) {
+		break;
+	case SelfEvent::Entry:
         m_sendMachine[0]->run( static_cast<SendEntryBase*>(event->entry) );
-    }
-
+		break;
+	case SelfEvent::Event:
+		handleVnicEvent2( event->event, event->linkNum );
+		break;
+	}
     delete e;
+}
+
+void Nic::handleVnicEvent2( Event* ev, int id )
+{
+    NicCmdBaseEvent* event = static_cast<NicCmdBaseEvent*>(ev);
+
+    m_dbg.verbose(CALL_INFO,3,1,"core=%d type=%d\n",id,event->base_type);
+
+    switch ( event->base_type ) {
+    case NicCmdBaseEvent::Msg:
+        handleMsgEvent( static_cast<NicCmdEvent*>(event), id );
+        break;
+    case NicCmdBaseEvent::Shmem:
+        m_shmem->handleEvent2( static_cast<NicShmemCmdEvent*>(event), id );
+        break;
+    default:
+        assert(0);
+    }
 }
 
 void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
@@ -570,7 +587,16 @@ Nic::EntryBase* Nic::findRecv( int srcNode, MsgHdr& hdr, int tag  )
     return entry;
 }
 
-std::pair<Hermes::MemAddr, size_t> Nic::findShmem( uint64_t simVAddr )
+Hermes::MemAddr Nic::findShmem(  int core, Hermes::Vaddr addr, size_t length )
 {
-    return m_shmem->findRegion( simVAddr);
+    std::pair<Hermes::MemAddr, size_t> region = m_shmem->findRegion( core, addr);
+
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"found region core=%d Vaddr=%#" PRIx64 " length=%lu\n",
+        core, region.first.getSimVAddr(), region.second );
+
+    uint64_t offset =  addr - region.first.getSimVAddr();
+
+    assert(  addr + length <= region.first.getSimVAddr() + region.second );
+    return region.first.offset(offset);
 }
+

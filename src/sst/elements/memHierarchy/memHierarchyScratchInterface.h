@@ -25,7 +25,8 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
 #include <sst/core/interfaces/simpleMem.h>
-#include "scratchEvent.h"
+#include "moveEvent.h"
+#include "memEvent.h"
 #include "sst/core/output.h"
 
 namespace SST {
@@ -47,6 +48,8 @@ public:
     /** Link getter */
     virtual SST::Link* getLink(void) const { return link_; }
 
+    virtual void init(unsigned int phase);
+
     virtual void sendInitData(Request *req);
     virtual void sendRequest(Request *req);
     virtual Request* recvResponse(void);
@@ -59,18 +62,23 @@ private:
     void handleIncoming(SST::Event *ev);
     
     /** Process ScratchEvents into updated Requests*/
-    Interfaces::SimpleMem::Request* processIncoming(ScratchEvent *ev);
+    Interfaces::SimpleMem::Request* processIncoming(MemEventBase *ev);
 
     /** Update Request with results of ScratchEvent */
-    void updateRequest(Interfaces::SimpleMem::Request* req, ScratchEvent *me) const;
+    void updateRequest(Interfaces::SimpleMem::Request* req, MemEventBase *me) const;
     
     /** Function used internally to create the ScratchEvent that will be used by MemHierarchy */
-    ScratchEvent* createScratchEvent(Interfaces::SimpleMem::Request* req) const;
+    MoveEvent* createMoveEvent(Interfaces::SimpleMem::Request* req) const;
+    MemEvent* createMemEvent(Interfaces::SimpleMem::Request* req) const;
 
     Component*      owner_;
     HandlerBase*    recvHandler_;
     SST::Link*      link_;
-    std::map<ScratchEvent::id_type, Interfaces::SimpleMem::Request*> requests_;
+    std::map<SST::Event::id_type, Interfaces::SimpleMem::Request*> requests_;
+    Addr baseAddrMask_;
+    std::string rqstr_;
+    Addr remoteMemStart_;
+    bool allNoncache_;
 };
 
 }

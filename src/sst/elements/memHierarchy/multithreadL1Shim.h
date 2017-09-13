@@ -25,7 +25,7 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
-#include "memEvent.h"
+#include "memEventBase.h"
 #include "util.h"
 
 using namespace std;
@@ -72,13 +72,13 @@ private:
     TimeConverter* clock;
 
     /** Track outstanding requests for routing responses correctly */
-    std::map< MemEvent::id_type, unsigned int > threadRequestMap;
+    std::map<Event::id_type, unsigned int> threadRequestMap;
 
     /** Throughput control */
     uint64_t requestsPerCycle;
     uint64_t responsesPerCycle;
-    std::queue<MemEvent*> requestQueue;
-    std::queue<MemEvent*> responseQueue;
+    std::queue<MemEventBase*> requestQueue;
+    std::queue<MemEventBase*> responseQueue;
     
     inline void enableClock();
 };

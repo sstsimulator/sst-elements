@@ -137,7 +137,7 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
             // Check next address is aligned to a cache line boundary
             assert((targetAddress + (strideReach * stride)) % blockSize == 0);
 
-            ev = new MemEvent(parent, targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), GetS);
+            ev = new MemEvent(parent, targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), Command::GetS);
         }
         else
         {
@@ -154,7 +154,7 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
             {
                 output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %" PRIx64 ", prefetch address: %" PRIx64 " (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
                             targetAddress, targetPrefetchAddress, (strideReach * stride), stride);
-                ev = new MemEvent(parent, targetPrefetchAddress, targetPrefetchAddress, GetS);
+                ev = new MemEvent(parent, targetPrefetchAddress, targetPrefetchAddress, Command::GetS);
                 statPrefetchOpportunities->addData(1);
             }
             else
@@ -208,7 +208,7 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
             {
                 // Create a new read request, we cannot issue a write because the data will get
                 // overwritten and corrupt memory (even if we really do want to do a write)
-                MemEvent* newEv = new MemEvent(parent, ev->getAddr(), ev->getAddr(), GetS);
+                MemEvent* newEv = new MemEvent(parent, ev->getAddr(), ev->getAddr(), Command::GetS);
                 newEv->setSize(blockSize);
                 newEv->setPrefetchFlag(true);
 

@@ -23,6 +23,7 @@
 #include <sst/core/output.h>
 #include <sst/core/link.h>
 
+#include "sst/elements/hermes/shmemapi.h"
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
@@ -57,12 +58,15 @@ class Nic : public SST::Component  {
         unsigned short    dst_vNicId;
         unsigned short    src_vNicId;
     };
-    struct ShmemMsgHdr {
-        enum { Put, Get, GetResp } op;
-        uint64_t simVAddrSrc;
-        uint64_t simVAddrDest;
-        size_t   length;
-        uint64_t key;
+    struct __attribute__ ((packed)) ShmemMsgHdr {
+        ShmemMsgHdr() : op2(0) {}
+        enum Op : unsigned char { Ack, Put, Get, GetResp, Add, Fadd, Swap, Cswap } op;
+        unsigned char op2; 
+        unsigned char dataType;
+        unsigned char pad;
+        uint32_t length;
+        uint64_t vaddr;
+        uint64_t respKey;
     };
     struct RdmaMsgHdr {
         enum { Put, Get, GetResp } op;
@@ -75,14 +79,20 @@ class Nic : public SST::Component  {
     class SelfEvent : public SST::Event {
       public:
 
-        typedef std::function<void()> Callback;
+		enum { Callback, Entry, Event } type;
+        typedef std::function<void()> Callback_t;
+
         SelfEvent( void* entry) : 
-            entry(entry), callback(NULL) {}
-        SelfEvent( Callback _callback ) :
-            entry(NULL), callback( _callback) {}
+            type(Entry), entry(entry) {}
+        SelfEvent( Callback_t callback ) :
+            type(Callback), callback( callback) {}
+        SelfEvent( SST::Event* ev,  int linkNum  ) :
+            type(Event), event( ev), linkNum(linkNum) {}
         
         void*              entry;
-        Callback           callback;
+        Callback_t         callback;
+		SST::Event*        event;
+		int				   linkNum;
         
         NotSerializable(SelfEvent)
     };
@@ -105,6 +115,7 @@ class Nic : public SST::Component  {
 
     #include "nicVirtNic.h" 
     #include "nicShmem.h"
+    #include "nicShmemMove.h" 
     #include "nicEntryBase.h"
     #include "nicSendEntry.h"
     #include "nicShmemSendEntry.h" 
@@ -146,10 +157,14 @@ public:
     VirtNic* getVirtNic( int id ) {
         return m_vNicV[id];
     }
+	void shmemDecPending( int core ) {
+		m_shmem->decPending( core );
+	}
 
   private:
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
+    void handleVnicEvent2( Event*, int );
     void handleMsgEvent( NicCmdEvent* event, int id );
     void handleShmemEvent( NicShmemCmdEvent* event, int id );
     void dmaSend( NicCmdEvent*, int );
@@ -162,9 +177,20 @@ public:
     DmaRecvEntry* findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr );
     SendEntryBase* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
     EntryBase* findRecv( int srcNode, MsgHdr&, int tag );
-    std::pair<Hermes::MemAddr, size_t> findShmem( uint64_t simVAddr );
 
-    void schedEvent( SelfEvent* event, int delay = 0 ) {
+    Hermes::MemAddr findShmem( int core, Hermes::Vaddr  addr, size_t length );
+
+	SimTime_t calcDelay_ns( SST::UnitAlgebra val ) {
+		if ( val.hasUnits("ns") ) {
+			return val.getValue().toDouble()* 1000000000;
+		}
+		assert(0);
+	}
+	SimTime_t getDelay_ns( ) {
+		return m_nic2host_lat_ns - m_nic2host_base_lat_ns;
+	}
+
+    void schedEvent( SelfEvent* event, SimTime_t delay = 0 ) {
         m_selfLink->send( delay, event );
     }
 
@@ -232,6 +258,8 @@ public:
     std::vector<Thornhill::DetailedCompute*> m_detailedCompute;
 	bool m_useDetailedCompute;
     Shmem* m_shmem;
+	SimTime_t m_nic2host_lat_ns;
+	SimTime_t m_nic2host_base_lat_ns;
 
     uint16_t m_getKey;
   public:

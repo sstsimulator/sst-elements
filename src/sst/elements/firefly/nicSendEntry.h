@@ -17,8 +17,8 @@ class SendEntryBase {
   public:
     SendEntryBase( int local_vNic ) :
         m_local_vNic( local_vNic )
-    {}
-    virtual ~SendEntryBase() {}
+    { }
+    virtual ~SendEntryBase() { }
 
     virtual int local_vNic()   { return m_local_vNic; }
 
@@ -32,6 +32,7 @@ class SendEntryBase {
     virtual size_t hdrSize() = 0;
     virtual void copyOut( Output& dbg, int vc, int numBytes,
             FireflyNetworkEvent& event, std::vector<DmaVec>& vec ) = 0; 
+    virtual bool shouldDelete() { return true; }
 
   private:
     int m_local_vNic;

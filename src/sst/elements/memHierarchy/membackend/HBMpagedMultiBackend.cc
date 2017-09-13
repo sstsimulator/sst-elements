@@ -437,8 +437,8 @@ bool HBMpagedMultiMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsign
     }
 }
 
-void HBMpagedMultiMemory::clock(){
-    HBMDRAMSimMemory::clock();
+bool HBMpagedMultiMemory::clock(Cycle_t cycle){
+    HBMDRAMSimMemory::clock(cycle);
 
     // put things in the DRAM 
     while (!dramQ.empty()) {
@@ -450,6 +450,7 @@ void HBMpagedMultiMemory::clock(){
             break;
         }
     }
+    return false;
 }
 
 

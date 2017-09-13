@@ -54,9 +54,6 @@ const unsigned int exbi = pebi * 1024;
 typedef uint64_t Addr;
 
 // Event attributes
-enum class CommandClass {Request, Data, Ack, ForwardRequest};
-enum class BasicCommandClass {Request, Response};
-
 /*
  *  Replace uB or UB (where u/U is a SI unit)
  *  with uiB or UiB for unit algebra
@@ -84,14 +81,21 @@ inline bool isPowerOfTwo(unsigned int x) {
     return !(x & (x-1));   
 }
 
-inline void fixupParam( SST::Params& params, const std::string oldKey, const std::string newKey ) {
+/* 
+ * copy oldKey to newKey but don't overwrite if newKey already exists 
+ * return whether parameter was fixed
+ */
+inline bool fixupParam( SST::Params& params, const std::string oldKey, const std::string newKey ) {
     bool found;
+    if (params.contains(newKey)) return false;
 
-    std::string value = params.find<std::string>(oldKey,found);
-    if ( found ) {
-        params.insert( newKey , value );
+    std::string value = params.find<std::string>(oldKey, found);
+    if (found) {
+        params.insert(newKey, value);
+        return true;
     //    params.erase( oldKey );
     }
+    return false;
 }
 
 inline void fixupParams( Params& params, const std::string oldKey, const std::string newKey ) {
@@ -114,6 +118,8 @@ inline void fixupParams( Params& params, const std::string oldKey, const std::st
 typedef enum {IGNORE, DONE, STALL, BLOCK } CacheAction;
 
 enum class CoherenceProtocol {MSI, MESI, NONE};
+
+enum class Endpoint { CPU, Cache, Memory, Directory, Scratchpad };
 
 }}
 #endif	/* UTIL_H */

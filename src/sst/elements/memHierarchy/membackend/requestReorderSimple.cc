@@ -50,7 +50,7 @@ bool RequestReorderSimple::issueRequest(ReqId id, Addr addr, bool isWrite, unsig
  * Issue as many requests as we can up to requestsPerCycle
  * by searching up to searchWindowSize requests
  */
-void RequestReorderSimple::clock() {
+bool RequestReorderSimple::clock(Cycle_t cycle) {
     
     if (!requestQueue.empty()) {
         
@@ -81,7 +81,8 @@ void RequestReorderSimple::clock() {
             if (reqsSearchedThisCycle == searchWindowSize) break;
         }
     }
-    backend->clock();
+    bool unclock = backend->clock(cycle);
+    return false;
 }
 
 

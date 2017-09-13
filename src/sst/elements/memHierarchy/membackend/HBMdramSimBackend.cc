@@ -82,7 +82,7 @@ void HBMDRAMSimMemory::registerStatistics(){
   PendingRtns = registerStatistic<uint64_t>("PendingReturns");
 }
 
-void HBMDRAMSimMemory::clock(){
+bool HBMDRAMSimMemory::clock(Cycle_t cycle){
     memSystem->update();
 
     // retrieve the statistics
@@ -121,6 +121,7 @@ void HBMDRAMSimMemory::clock(){
     if( !memSystem->getStats( &pending_rtns, PENDING_RTN_TRANSACTIONS ) ){
       PendingRtns->addData(pending_rtns);
     }
+    return false;
 }
 
 void HBMDRAMSimMemory::finish(){

@@ -54,12 +54,12 @@ public:
             memset( &m_addr[1000], 0, 1000 );
             ((int*)&m_addr[32])[0] = 0xf00d0000 + m_my_pe;
             printf("%d:%s: simVAddr %#" PRIx64 " backing %p\n",m_my_pe, getMotifName().c_str(),m_addr.getSimVAddr(),m_addr.getBacking());
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             enQ_putv( evQ, 
                     m_addr,
                     (int) (0xdead0000 + m_my_pe + 1), 
                     (m_my_pe + 1) % m_n_pes );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             break;
 
         case 4:
@@ -69,7 +69,7 @@ public:
                     m_addr.offset(32), 
                     4,
                     (m_my_pe + 1) % m_n_pes );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             break;
 
         case 5:
@@ -79,7 +79,7 @@ public:
                     m_addr.offset(0), 
                     1000,
                     (m_my_pe + 1) % m_n_pes );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             break;
 
         case 6:
@@ -87,13 +87,13 @@ public:
                 printf("%d:%s: GET value=%#" PRIx32 "\n",m_my_pe, getMotifName().c_str(), ((int*)&m_addr[1000])[i]);
             }
             memset( &m_addr[0], 0xfe, 1000 );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             enQ_put( evQ, 
                     m_addr.offset(1000),
                     m_addr.offset(0), 
                     1000,
                     (m_my_pe + 1) % m_n_pes );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             break;
 
         case 7: 
@@ -104,7 +104,7 @@ public:
                     &m_local,
                     m_addr,
                     (m_my_pe + 1) % m_n_pes );
-            enQ_barrier( evQ );
+            enQ_barrier_all( evQ );
             break;
         case 8: 
             printf("%d:%s: GET value=%#" PRIx32 "\n",m_my_pe, getMotifName().c_str(), m_local );

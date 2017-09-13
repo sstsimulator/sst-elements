@@ -20,12 +20,11 @@
 #include <sst/core/simulation.h>
 
 #include "scratchpad.h"
-#include "scratchEvent.h"
-#include "memEvent.h"
 #include "membackend/scratchBackendConvertor.h"
 #include "util.h"
-#include "memNIC.h"
 #include <sst/core/interfaces/stringEvent.h>
+#include "memLink.h"
+#include "memNIC.h"
 
 using namespace std;
 using namespace SST;
@@ -39,13 +38,23 @@ using namespace SST::MemHierarchy;
  *  ---------------------------------------------------------------------------------
  *  Scratch Read    Read from scratchpad                        scratchLineSize
  *  Scratch Write   Write to scratchpad                         scratchLineSize
- *  ScratchGet      Read from remote memory into scratchpad
- *  ScratchPut      Write from scratchpad into remote memory    
+ *  Scratch Get     Read from remote memory into scratchpad
+ *  Scratch Put     Write from scratchpad into remote memory    
  *  Remote Read     Read from remote memory                     remoteMemLineSize
  *  Remote Write    Write to remote memory                      remoteMemLineSize
  *
- *  Ordering:
- *  - Only concerned with requests for same address
+ * Ordering:
+ *  - Only concerned with coherence (same address)
+ *  - No write acks from scratch or memory
+ *  - scratchpad can't reorder reads and writes to the same line or we'd need acks
+ *  - network can't reorder or we'll need acks and mshr structures for remote accesses
+ *
+ *
+ * Conflict resolution:
+ * * For CPU ordering, CPU is responsible for ensuring conflicting events
+ * that the app needs ordered aren't issued to the memory system in parallel
+ * Scratchpad will ensure that once CPU receives an ack for the event, a future event
+ * will be ordered later
  *
  */
 
@@ -56,8 +65,16 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     if (debugLevel < 0 || debugLevel > 10) 
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10\n");
     
-    Output out("", 1, 0, Output::STDOUT);
+    out.init("", 1, 0, Output::STDOUT);
     
+    std::string addrStr = params.find<std::string>("debug_addr", "-1");
+    if (addrStr == "-1") {
+        DEBUG_ADDR = 0;
+        DEBUG_ALL = true;
+    } else {
+        DEBUG_ADDR = params.find<Addr>("debug_addr", "0");
+        DEBUG_ALL = false;
+    }
 
     bool found;
     /* Get parameters and check validity */
@@ -110,9 +127,13 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         try {
             backing_ = new Backend::Backing(memFile, scratch_->getMemSize() );
         } catch (int) {
-            dbg.fatal(CALL_INFO, -1, "%s, Error - unable to MMAP backing store for scratchpad\n", getName().c_str());
+            dbg.fatal(CALL_INFO, -1, "%s, Error - unable to mmap backing store for scratchpad\n", getName().c_str());
         }
     }
+
+    // Assume no caching, may change during init
+    caching_ = false;
+    directory_ = false;
 
     // Create clock
     registerClock(clock_freq, new Clock::Handler<Scratchpad>(this, &Scratchpad::clock));
@@ -127,594 +148,1117 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     stat_ScratchReadIssued        = registerStatistic<uint64_t>("request_issued_scratch_read");
     stat_ScratchWriteIssued       = registerStatistic<uint64_t>("request_issued_scratch_write");
 
-    std::string cpuLinkLatency = params.find<std::string>("cpu_link_latency", "50ps");
-    std::string memLinkLatency = params.find<std::string>("mem_link_latency", "1ns");
-
     // Figure out port connections and set up links
     // Options: cpu and network; or cpu and memory;
-    // cpu is a ScratchEvent interface, memory & network are MemEvent interfaces (memory is a direct connect while network uses SimpleNetwork)
+    // cpu is a MoveEvent interface, memory & network are MemEvent interfaces (memory is a direct connect while network uses SimpleNetwork)
     bool memoryDirect = isPortConnected("memory");
-    bool memoryNetwork = isPortConnected("network");
-    if (!isPortConnected("cpu")) {
-        out.fatal(CALL_INFO, -1, "Invalid port configuration (%s): Scratchpad requires direct connection to CPU on 'cpu' port.\n", getName().c_str());
-    } else if (!memoryDirect && !memoryNetwork) {
+    bool scratchNetwork = isPortConnected("network");
+    bool cpuDirect = isPortConnected("cpu");
+    if (!cpuDirect && !scratchNetwork) {
+        out.fatal(CALL_INFO, -1, "Invalid port configuration (%s): Did not detect port for cpu-side events. Connect either 'cpu' or 'network'\n", getName().c_str());
+    } else if (!memoryDirect && !scratchNetwork) {
         out.fatal(CALL_INFO, -1, "Invalid port configuration (%s): Did not detect port for memory-side events. Connect either 'memory' or 'network'\n", getName().c_str());
+    } else if (cpuDirect && scratchNetwork && memoryDirect) {
+        out.fatal(CALL_INFO, -1, "Invalid port configuration (%s): Too many connected ports. Connect either 'cpu' or 'network' for cpu-side events and either 'memory' or 'network' for memory-side events\n",
+                getName().c_str());
     }
     
-    linkUp_ = configureLink( "cpu", cpuLinkLatency, new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingScratchEvent));
-
-    MemNIC::ComponentInfo myInfo;
-    MemNIC::ComponentTypeInfo typeInfo;
-    UnitAlgebra packet;
-    if (memoryNetwork) {
-        myInfo.link_port = "network";
-        myInfo.link_bandwidth = params.find<std::string>("network_bw", "80GiB/s");
-	myInfo.num_vcs = 1;
-        myInfo.name = getName();
-        myInfo.network_addr = params.find<int>("network_address");
-        myInfo.link_inbuf_size = params.find<std::string>("network_input_buffer_size", "1KiB");
-        myInfo.link_outbuf_size = params.find<std::string>("network_output_buffer_size", "1KiB");
-        
-        typeInfo.rangeStart = 0;
-        typeInfo.rangeEnd   = (uint64_t)-1;
-        typeInfo.interleaveSize = 0;
-        typeInfo.interleaveStep = 0;
-        typeInfo.blocksize = scratchLineSize_;
-        typeInfo.coherenceProtocol = CoherenceProtocol::NONE;
-        typeInfo.cacheType = ""; // Unused?
-        // Get min packet size
-        packet = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
-        if (!packet.hasUnits("B")) out.fatal(CALL_INFO, -1, "Invalid param (%s): min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", getName().c_str(), packet.toString().c_str());
-        
-        myInfo.type = MemNIC::TypeScratch;
-        linkNet_ = new MemNIC(this, &dbg, -1, myInfo, new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingMemEvent));
-        linkNet_->addTypeInfo(typeInfo);
-        linkDown_ = nullptr;
-    } else {
-        linkDown_ = configureLink( "memory", memLinkLatency, new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingMemEvent));
-        linkNet_ = nullptr;
+    if (cpuDirect) {
+        Params cpulink = params.find_prefix_params("cpulink.");
+        cpulink.insert("port", "cpu");
+        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
+        linkUp_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingCPUEvent));
+    }
+    if (memoryDirect) {
+        Params memlink = params.find_prefix_params("memlink.");
+        memlink.insert("port", "memory");
+        linkDown_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, memlink));
+        linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
     }
 
+    if (scratchNetwork) {
+        // Fix up parameters for nic params & warn that we're doing it
+        if (fixupParam(params, "network_bw", "memNIC.network_bw"))
+            out.output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
+        if (fixupParam(params, "network_input_buffer_size", "memNIC.network_input_buffer_size"))
+            out.output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+        if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))
+            out.output(CALL_INFO, "Note (%s): Changed 'network_output_buffer_size' to 'memNIC.network_output_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+        if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
+            out.output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+    
+        // These are defaults and will not overwrite user provided
+        Params nicParams = params.find_prefix_params("memNIC.");
+        nicParams.insert("addr_range_start", "0", false);
+        nicParams.insert("addr_range_end", std::to_string((uint64_t) - 1), false);
+        nicParams.insert("interleave_size", "0B", false);
+        nicParams.insert("interleave_step", "0B", false);
+        nicParams.insert("port", "network");
+        nicParams.insert("group", "3", false); // 3 is the default for anything that talks to memory but this can be set by user too so don't overwrite
+       
+        if (!memoryDirect) { /* Connect mem side to network */
+            linkDown_ = static_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+            linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
+            if (!cpuDirect) {
+                linkUp_ = linkDown_; /* Connect cpu side to same network */
+                linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingNetworkEvent));
+            }
+        } else {
+            linkUp_ = static_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+            linkUp_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingCPUEvent));
+        }
+    }
 
     // Initialize local variables
     timestamp_ = 0;
 }
 
-
-/* Events received from processor */
-void Scratchpad::processIncomingScratchEvent(SST::Event* event) {
-    ScratchEvent * ev = static_cast<ScratchEvent*>(event);
+/* Init
+ * 1. Initialize network if present
+ * 2. Inform our neighbors who we are (line size, endpoint type, whether to expect writeback acks, etc.)
+ * 3. Discover who our neighbors are, especially if any are caches and we need to be sending shoot downs
+ * 4. Forward any memory initialization events to memory
+ */
+void Scratchpad::init(unsigned int phase) {
     
-    ScratchCommand cmd = ev->getCmd();
+    //Init MemNIC if we have one - must be done before attempting to send anything on this link
+    linkUp_->init(phase);
+    if (linkUp_ != linkDown_) linkDown_->init(phase);
+
+    // Send initial info out
+    if (!phase) {
+        linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Scratchpad, true, true, scratchLineSize_));
+        if (linkUp_ != linkDown_) linkUp_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Scratchpad, true, true, scratchLineSize_));
+    }
+
+    // Handle incoming events
+    while (MemEventInit *initEv = linkUp_->recvInitData()) {
+        if (initEv->getCmd() == Command::NULLCMD) {
+#ifdef __SST_DEBUG_OUTPUT__
+            dbg.debug(_L10_, "%s received init event: %s\n", getName().c_str(), initEv->getBriefString().c_str());
+#endif
+            if (initEv->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                MemEventInitCoherence * initEvC = static_cast<MemEventInitCoherence*>(initEv);
+                if (initEvC->getType() == Endpoint::Cache) {
+                    caching_ = true;
+                    cacheStatus_.resize(scratchSize_/scratchLineSize_, false);
+                } else if (initEvC->getType() == Endpoint::Directory) {
+                    caching_ = true;
+                    directory_ = true;
+                    cacheStatus_.resize(scratchSize_/scratchLineSize_, false);
+                }
+                if (linkUp_->getSources()->empty()) { /* Network isn't getting these, we should */
+                    dbg.debug(_L10_, "\tinserting into sources\n");
+                    MemLink::EndpointInfo info;
+                    info.name =initEvC->getSrc();
+                    info.addr = 0;
+                    info.id = 0;
+                    info.region.setDefault();
+                    linkUp_->addSource(info);
+                }
+            }
+        } else { // Not a NULLCMD
+            MemEventInit * memRequest = new MemEventInit(getName(), initEv->getCmd(), initEv->getAddr() - remoteAddrOffset_, initEv->getPayload());
+            memRequest->setDst(linkDown_->findTargetDestination(memRequest->getAddr()));
+            linkDown_->sendInitData(memRequest);
+        }
+        delete initEv;
+    }
+    // Handle incoming events
+    while (MemEventInit *initEv = linkDown_->recvInitData()) {
+        if (initEv->getCmd() == Command::NULLCMD) {
+            dbg.debug(_L10_, "%s received init event: %s\n", getName().c_str(), initEv->getBriefString().c_str());
+
+            if (linkDown_->getDests()->empty()) { /* Network isn't getting these, we should */
+                MemLink::EndpointInfo info;
+                info.name = initEv->getSrc();
+                info.addr = 0;
+                info.id = 0;
+                info.region.setDefault();
+                linkDown_->addDest(info);
+            }
+        }
+        delete initEv;
+    }
+}
+
+
+/* setup. Empty for now */
+void Scratchpad::setup() { }
+
+
+/* 
+ * Events received from a network connection. 
+ * May be processor-side and/or remote memory
+ * Sort into process function according to source
+ */
+void Scratchpad::processIncomingNetworkEvent(SST::Event* event) {
+    MemEventBase * ev = static_cast<MemEventBase*>(event);
+    if (ev->getCmd() == Command::GetSResp || ev->getCmd() == Command::GetXResp)
+        processIncomingRemoteEvent(event);
+    else 
+        processIncomingCPUEvent(event);
+}
+
+
+/* 
+ * Handle events received from a processor
+ * - Read/write requests - remote and scratch
+ * - Put/get requests
+ * - (TODO) Flush requests
+ * - Shootdown acknowledgements
+ * - Acks
+ */
+void Scratchpad::processIncomingCPUEvent(SST::Event* event) {
+    MemEventBase * ev = static_cast<MemEventBase*>(event);
+    
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR))
+        dbg.debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n", timestamp_, getName().c_str(), ev->getVerboseString().c_str());
+#endif
+    Command cmd = ev->getCmd();
     
     
     switch(cmd) {    
-        case Read:
-            if (ev->getAddr() < scratchSize_) handleScratchRead(ev);
-            else handleRemoteRead(ev);
+        case Command::GetS:
+            handleRead(ev);
             break;
-        case Write:
-            if (ev->getAddr() < scratchSize_) handleScratchWrite(ev);
-            else handleRemoteWrite(ev);
+        case Command::GetX:
+        case Command::PutM:
+        case Command::PutE:
+        case Command::PutS:
+            handleWrite(ev);
             break;
-        case ScratchGet:
+        case Command::Get:
             handleScratchGet(ev);
             break;
-        case ScratchPut:
+        case Command::Put:
             handleScratchPut(ev);
             break;
+        /* The rest of the cases are for hierarchies with caches only */
+        case Command::AckInv:
+            handleAckInv(ev);
+            break;
+        case Command::FetchResp:
+            handleFetchResp(ev);
+            break;
+        case Command::NACK:
+            handleNack(ev);
+            break;
         default:
-            dbg.fatal(CALL_INFO, -1, "Scratchpad (%s) received unhandled event: cmd = %s, cycles = %" PRIu64 ".\n", getName().c_str(), ScratchCommandString[cmd], timestamp_);
+            dbg.fatal(CALL_INFO, -1, "Scratchpad (%s) received unhandled event: cmd = %s, cycles = %" PRIu64 ".\n", getName().c_str(), CommandString[(int)cmd], timestamp_);
     }
 }
 
-/* Events received from memory - must be read response but could be response to a memory read or a ScratchGet */
-void Scratchpad::processIncomingMemEvent(SST::Event * event) {
-    MemEvent * ev = static_cast<MemEvent*>(event);
-    std::map<SST::Event::id_type, SST::Event::id_type>::iterator idItr = remoteIDMap_.find(ev->getResponseToID());
 
-    if (idItr == remoteIDMap_.end()) {
-        dbg.fatal(CALL_INFO, -1, "(%s) Received data response from remote but no matching request in remoteIDMap_, id is (%" PRIu64 ", %" PRIu32 "), timestamp is %" PRIu64 "\n",
+/* 
+ * Handle events received from remote memory
+ * Writes are not ack'd so must be read responses, could be response
+ * to a memory read or a ScratchGet
+ */
+void Scratchpad::processIncomingRemoteEvent(SST::Event * event) {
+    MemEvent * ev = static_cast<MemEvent*>(event);
+
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR))
+        dbg.debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n", timestamp_, getName().c_str(), ev->getBriefString().c_str());
+#endif
+
+    // Determine what kind of event spawned this and pass off to handler
+    std::map<SST::Event::id_type,SST::Event::id_type>::iterator it = responseIDMap_.find(ev->getResponseToID());
+
+    if (it == responseIDMap_.end()) {
+        dbg.fatal(CALL_INFO, -1, "(%s) Received data response from remote but no matching request in responseIDMap_, id is (%" PRIu64 ", %" PRIu32 "), timestamp is %" PRIu64 "\n",
                 getName().c_str(), ev->getResponseToID().first, ev->getResponseToID().second, timestamp_);
     }
 
-    std::map<SST::Event::id_type, ScratchPair >::iterator reqItr = pendingPool_.find(idItr->second);
+    SST::Event::id_type requestID = it->second;
+    responseIDMap_.erase(it);
 
-    if (reqItr == pendingPool_.end()) {
-        dbg.fatal(CALL_INFO, -1, "(%s) Received data response from remote but no matching request in pendingPool, id is (%" PRIu64 ", %" PRIu32 "), timestamp is %" PRIu64 "\n",
-                getName().c_str(), idItr->second.first, idItr->second.second, timestamp_);
-    }
-    
-    ScratchEvent * reqEv = reqItr->second.request;
+    MemEventBase * requestBase = outstandingEventList_.find(requestID)->second.request;
 
-    // handle according to whether this is a read or a get
-    if (reqEv->getCmd() == ScratchGet) {
-    
-        dbg.debug(_L3_, "%" PRIu64 "  (%s)  MemEvent received: cmd: %s, addr: %" PRIu64 ", src: %s, size: %" PRIu32 "\n\tMatches request: cmd: %s, src addr: %" PRIu64 ", dst addr: %" PRIu64 "\n", 
-                timestamp_, getName().c_str(), CommandString[ev->getCmd()], reqEv->getAddr(), ev->getSrc().c_str(), ev->getSize(), ScratchCommandString[reqEv->getCmd()], reqEv->getAddr(), reqEv->getSrcAddr());
-
-
-        // update backing
-        if (backing_) {
-            for (size_t i = 0; i < ev->getSize(); i++) {
-                dbg.debug(_L5_, "\tUpdating backing store. (addr, new data): (%" PRIu64 ", %u)\n", reqEv->getAddr() + i, ev->getPayload()[i]);
-                backing_->set(reqEv->getAddr() + i, ev->getPayload()[i] );
-            }
-        }
-
-        // create scratch write(s)
-        uint32_t bytesLeft = reqEv->getSize();
-        Addr startAddr = reqEv->getAddr();
-        int payloadOffset = 0;
-        while (bytesLeft != 0) {
-            Addr baseAddr = startAddr & ~(scratchLineSize_ - 1);
-            uint32_t size = (baseAddr + scratchLineSize_) - startAddr;
-            if (size > bytesLeft) size = bytesLeft;
-            std::vector<uint8_t> data(ev->getPayload()[payloadOffset], ev->getPayload()[payloadOffset + size]); 
-
-            ScratchEvent * write = new ScratchEvent(getName().c_str(), startAddr, baseAddr, Write, data);
-            write->setRqstr(reqEv->getRqstr());
-            write->setVirtualAddress(reqEv->getVirtualAddress());
-            write->setInstructionPointer(reqEv->getInstructionPointer());
-            bytesLeft -= size;
-        
-            dbg.debug(_L4_, "\tCreated scratch request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 "\n", 
-                    ScratchCommandString[write->getCmd()], write->getAddr(), write->getBaseAddr(), write->getSize());
-        
-            // Check basic ordering -> don't issue repeat requests for the same line - if we change this, we can't send ack to proc immediately since
-            // the write(s) may not have been issued to the scratch when we send the ack
-            if (scratchMSHR_.find(write->getBaseAddr()) == scratchMSHR_.end()) {
-                dbg.debug(_L4_, "\tSending to scratch backend\n");
-                stat_ScratchWriteIssued->addData(1);
-                scratch_->handleScratchEvent(write);
-            } else {
-                dbg.debug(_L4_, "\tStalling in MSHR for conflicting access\n");
-                scratchMSHR_.find(write->getBaseAddr())->second.push(write);
-            }
-        }
-
-        // send ack to processor - if protocol is changed to not order reads/writes to same line @scratch then this ack should be delayed until all writes have been issued
-        // TODO add timing
-        ScratchEvent * respEv = reqEv->makeResponse();
-        respEv->setSrc(getName());
-        dbg.debug(_L4_, "\tSending processor response\n");
-        procMsgQueue_.insert(std::make_pair(timestamp_, respEv));
-
-    } else {
-        dbg.debug(_L3_, "%" PRIu64 "  (%s)  MemEvent received: cmd: %s, addr: %" PRIu64 ", src: %s, size: %" PRIu32 "\n\tMatches request: cmd: %s, addr: %" PRIu64 "\n", 
-                timestamp_, getName().c_str(), CommandString[ev->getCmd()], reqEv->getAddr(), ev->getSrc().c_str(), ev->getSize(), ScratchCommandString[reqEv->getCmd()], reqEv->getAddr());
-        ScratchEvent * respEv = reqEv->makeResponse();
-        respEv->setPayload(ev->getPayload());
-        respEv->setSrc(getName());
-
-        // send response to processor
-        dbg.debug(_L4_, "\tSending processor response\n");
-        procMsgQueue_.insert(std::make_pair(timestamp_, respEv));
-    } 
-        
-    // clean up
-    delete ev;
-    delete reqEv;
-    pendingPool_.erase(reqItr);
-    remoteIDMap_.erase(idItr);
-    
-    dbg.debug(_L3_, "\n");
+    if (requestBase->getCmd() == Command::Get) handleRemoteGetResponse(ev, requestID);
+    else handleRemoteReadResponse(ev, requestID);
 }
-    
 
-/***************** request and response handlers ***********************/
 
-/*
- *  
+/* 
+ * Clock handler 
+ * TODO turn off clock when idle
  */
-void Scratchpad::handleScratchRead(ScratchEvent * event) {
-    dbg.debug(_L3_, "%" PRIu64 "  (%s)  Read (scratch) received: addr: %" PRIu64 ", src: %s, size: %" PRIu32 "\n",
-            timestamp_, getName().c_str(), event->getAddr(), event->getSrc().c_str(), event->getSize());
-    
-    // set baseaddr
-    event->setBaseAddr(event->getAddr() & ~(scratchLineSize_ - 1));
-    
-    // record statistics
-    stat_ScratchReadReceived->addData(1);
-
-    // create response, we'll do this as events arrive to avoid mis-ordering if we're backing the scratchpad
-    ScratchEvent * respEvent = event->makeResponse();
-
-    for (size_t i = 0; i < event->getSize(); i++) {
-        respEvent->getPayload()[i] = !backing_ ? 0 : backing_->get(respEvent->getAddr() + i);
-        if (backing_) dbg.debug(_L5_, "\tSetting response data payload from backing store. (addr, data): (%" PRIu64 ", %u)\n", event->getAddr() + i, event->getPayload()[i]);
-    }
-
-    // record request in global pending q so we can find the response later
-    pendingPool_.insert(std::make_pair(event->getID(), ScratchPair(event, respEvent)));
-    
-    // check basic ordering -> don't issue repeat requests for the same line?
-    if (scratchMSHR_.find(event->getBaseAddr()) == scratchMSHR_.end()) {
-        dbg.debug(_L4_, "\tInserting into scratchMSHR, sending to scratch backend\n");
-        stat_ScratchReadIssued->addData(1);
-        scratch_->handleScratchEvent( event );
-        std::queue<ScratchEvent*> newq;
-        newq.push(event);
-        scratchMSHR_.insert(std::make_pair(event->getBaseAddr(), newq));
-    } else {
-        dbg.debug(_L4_, "\tStalling in MSHR for conflicting access\n");
-        scratchMSHR_.find(event->getBaseAddr())->second.push(event);
-    }
-    dbg.debug(_L3_, "\n");
-}
-
-/*
- *  Do not expect an ack for a write from the scratchpad so if we
- *  can issue this write immediately, also respond immediately
- */
-void Scratchpad::handleScratchWrite(ScratchEvent * event) {
-    dbg.debug(_L3_, "%" PRIu64 "  (%s)  Write (scratch) received: addr: %" PRIu64 ", src: %s, size: %" PRIu32 "\n",
-            timestamp_, getName().c_str(), event->getAddr(), event->getSrc().c_str(), event->getSize());
-    
-    // set baseaddr
-    event->setBaseAddr(event->getAddr() & ~(scratchLineSize_ - 1));
-    
-    // record statistics
-    stat_ScratchWriteReceived->addData(1);
-
-    // create response, we'll do this as events arrive to avoid mis-ordering if we're backing the scratchpad
-    ScratchEvent * respEvent = event->makeResponse();
-    respEvent->setSrc(getName());
-
-    if (backing_) {
-        for (size_t i = 0; i < event->getSize(); i++) {
-            dbg.debug(_L5_, "\tUpdating backing store. (addr, new data): (%" PRIu64 ", %u)\n", event->getAddr() + i, event->getPayload()[i]);
-            backing_->set (event->getAddr() + i, event->getPayload()[i] );
-        }
-    }
-    
-    // check basic ordering -> don't issue repeat requests for the same line
-    // TODO add timing
-    if (scratchMSHR_.find(event->getBaseAddr()) == scratchMSHR_.end()) {
-        dbg.debug(_L4_, "\tSending to scratch backend\n");
-        stat_ScratchWriteIssued->addData(1);
-        scratch_->handleScratchEvent(event);
-    } else {
-        dbg.debug(_L4_, "\tStalling in MSHR for conflicting access\n");
-        scratchMSHR_.find(event->getBaseAddr())->second.push(event);
-    }
-    
-    dbg.debug(_L4_, "\tSending processor response\n");
-    procMsgQueue_.insert(std::make_pair(timestamp_, respEvent));
-    dbg.debug(_L3_, "\n");
-}
-
-/*
- * Handle ScratchGet
- *  Send memEvent to memory
- */
-void Scratchpad::handleScratchGet(ScratchEvent * event) {
-    dbg.debug(_L3_, "%" PRIu64 "  (%s)  ScratchGet received: src addr: %" PRIu64 ", dst addr: %" PRIu64 ", src: %s, size: %" PRIu32 "\n",
-            timestamp_, getName().c_str(), event->getSrcAddr(), event->getAddr(), event->getSrc().c_str(), event->getSize());
-    
-    // set baseaddrs
-    event->setBaseAddr(event->getAddr() & ~(scratchLineSize_ - 1));
-    event->setSrcBaseAddr(event->getSrcAddr() & ~(remoteLineSize_ - 1));
-
-    // record statistics
-    stat_ScratchGetReceived->addData(1);
-    
-    // create memory request -> MemEvent so it's compatible with current memcontroller
-    MemEvent * memRequest = new MemEvent(this, event->getSrcAddr() - remoteAddrOffset_, event->getSrcBaseAddr() - remoteAddrOffset_, GetS, event->getSize());
-    memRequest->setFlag(MemEvent::F_NONCACHEABLE); // ensure this GetS treated like a non-cacheable read (so we want to use addr not baseaddr)
-    memRequest->setRqstr(event->getRqstr());
-    memRequest->setVirtualAddress(event->getVirtualAddress());
-    memRequest->setInstructionPointer(event->getInstructionPointer());
-
-    // record requests
-    pendingPool_.insert(std::make_pair(event->getID(), ScratchPair(event, (ScratchEvent*)nullptr)));
-    remoteIDMap_.insert(std::make_pair(memRequest->getID(), event->getID()));
-
-    // Assume the network orders requests from the same src so I don't have to worry about a prior write coming after this read
-    // TODO make sure this is a valid assumption!
-    uint64_t deliveryTime = timestamp_;
-    dbg.debug(_L4_, "\tSending memory request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 ", send at cycle %" PRIu64 "\n", 
-            CommandString[memRequest->getCmd()], memRequest->getAddr(), memRequest->getBaseAddr(), memRequest->getSize(), deliveryTime);
-    memMsgQueue_.insert(std::make_pair(deliveryTime, memRequest));
-    dbg.debug(_L3_, "\n");
-}
-
-
-void Scratchpad::handleScratchPut(ScratchEvent * event) {
-    dbg.debug(_L3_, "%" PRIu64 "  (%s)  ScratchPut received: src addr: %" PRIu64 ", dst addr: %" PRIu64 ", src: %s, size: %" PRIu32 "\n",
-            timestamp_, getName().c_str(), event->getSrcAddr(), event->getAddr(), event->getSrc().c_str(), event->getSize());
-    
-    // set baseaddrs
-    event->setBaseAddr(event->getAddr() &~(scratchLineSize_ - 1));
-    event->setSrcBaseAddr(event->getSrcAddr() &~(remoteLineSize_ -1));
-
-    // record statistics
-    stat_ScratchPutReceived->addData(1);
-
-    // create memory request
-    MemEvent * memRequest = new MemEvent(this, event->getAddr() - remoteAddrOffset_, event->getBaseAddr() - remoteAddrOffset_, GetX, event->getSize());
-    memRequest->setFlag(MemEvent::F_NONCACHEABLE);
-    memRequest->setFlag(MemEvent::F_NORESPONSE); // tell memory not to ack this
-    memRequest->setRqstr(event->getRqstr());
-    memRequest->setVirtualAddress(event->getVirtualAddress());
-    memRequest->setInstructionPointer(event->getInstructionPointer());
-
-    for (size_t i = 0; i < event->getSize(); i++) {
-        memRequest->getPayload()[i] = !backing_ ? 0 : backing_->get(event->getSrcAddr() + i);
-        if (backing_) dbg.debug(_L5_, "\tSetting memory write data payload from backing store. (addr, data): (%" PRIu64 ", %u)\n", event->getSrcAddr() + i, memRequest->getPayload()[i]);
-    }
-
-    pendingPool_.insert(std::make_pair(event->getID(), ScratchPair(event, memRequest)));
-
-    // create scratch request(s)
-    // keep track of which scratch requests map to a put and how many requests we're waiting for
-    uint32_t bytesLeft = event->getSize();
-    Addr startAddr = event->getSrcAddr();
-    uint64_t reqCount = 0;
-    while (bytesLeft != 0) {
-        Addr baseAddr = startAddr & ~(scratchLineSize_ - 1);
-        uint32_t size = (baseAddr + scratchLineSize_) - startAddr;
-        if (size > bytesLeft) size = bytesLeft;
-        ScratchEvent * read = new ScratchEvent(getName().c_str(), startAddr, baseAddr, Read, size);
-        read->setRqstr(event->getRqstr());
-        read->setVirtualAddress(event->getVirtualAddress());
-        read->setInstructionPointer(event->getInstructionPointer());
-        bytesLeft -= size;
-        
-        dbg.debug(_L4_, "\tCreated scratch request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 "\n", 
-                ScratchCommandString[read->getCmd()], read->getAddr(), read->getBaseAddr(), read->getSize());
-        // check basic ordering -> don't issue repeat requests for the same line
-        if (scratchMSHR_.find(baseAddr) == scratchMSHR_.end()) {
-            dbg.debug(_L4_, "\tInserting into scratchMSHR, sending to scratch backend\n");
-            stat_ScratchReadIssued->addData(1);
-            scratch_->handleScratchEvent(read);
-            std::queue<ScratchEvent*> newq;
-            newq.push(read);
-            scratchMSHR_.insert(std::make_pair(baseAddr, newq));
-        } else {
-            dbg.debug(_L4_, "\tStalling in MSHR for conflicting access\n");
-            scratchMSHR_.find(baseAddr)->second.push(read);
-        }
-        scratchIDMap_.insert(std::make_pair(read->getID(), std::make_pair(event->getID(), read->getBaseAddr()))); // so we can map it back
-        reqCount++;
-    }
-    
-    // record how many reads the ScratchPut is waiting for
-    scratchCounters_.insert(std::make_pair(event->getID(), reqCount));
-    dbg.debug(_L3_, "\n");
-    
-}
-
-void Scratchpad::handleRemoteRead(ScratchEvent * event) {
-    dbg.debug(_L3_, "%" PRIu64 "  (%s)  Read (remote) received: addr: %" PRIu64 ", src: %s, size: %" PRIu32 "\n",
-            timestamp_, getName().c_str(), event->getAddr(), event->getSrc().c_str(), event->getSize());
-    
-    // record statistics
-    stat_RemoteReadReceived->addData(1);
-    
-    // convert scratch to noncacheable MemEvent
-    MemEvent * memRequest = new MemEvent(this, event->getAddr() - remoteAddrOffset_, event->getBaseAddr() - remoteAddrOffset_, GetS, event->getSize());
-    memRequest->setFlag(MemEvent::F_NONCACHEABLE);
-    memRequest->setRqstr(event->getRqstr());
-    memRequest->setVirtualAddress(event->getVirtualAddress());
-    memRequest->setInstructionPointer(event->getInstructionPointer());
-
-    // record request
-    remoteIDMap_.insert(std::make_pair(memRequest->getID(), event->getID()));
-    pendingPool_.insert(std::make_pair(event->getID(), ScratchPair(event, (MemEvent*)nullptr)));
-    
-    uint64_t deliveryTime = timestamp_;
-    dbg.debug(_L4_, "\tSending memory request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 ", send at cycle %" PRIu64 "\n", 
-            CommandString[memRequest->getCmd()], memRequest->getAddr(), memRequest->getBaseAddr(), memRequest->getSize(), deliveryTime);
-    memMsgQueue_.insert(std::make_pair(deliveryTime, memRequest));
-    
-    dbg.debug(_L3_, "\n");
-}
-
-void Scratchpad::handleRemoteWrite(ScratchEvent * event) {
-    dbg.debug(_L3_, "%" PRIu64 "  (%s)  Write (remote) received: addr: %" PRIu64 ", src: %s, size: %" PRIu32 "\n",
-            timestamp_, getName().c_str(), event->getAddr(), event->getSrc().c_str(), event->getSize());
-    
-    // record statistics
-    stat_RemoteWriteReceived->addData(1);
-    
-    // convert scratch to noncacheable MemEvent
-    MemEvent * memRequest = new MemEvent(this, event->getAddr() - remoteAddrOffset_, event->getBaseAddr() - remoteAddrOffset_, GetX, event->getSize());
-    memRequest->setFlag(MemEvent::F_NONCACHEABLE);
-    memRequest->setFlag(MemEvent::F_NORESPONSE);
-    memRequest->setRqstr(event->getRqstr());
-    memRequest->setVirtualAddress(event->getVirtualAddress());
-    memRequest->setInstructionPointer(event->getInstructionPointer());
-
-    uint64_t deliveryTime = timestamp_;
-    dbg.debug(_L4_, "\tSending memory request. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 ", send at cycle %" PRIu64 "\n", 
-            CommandString[memRequest->getCmd()], memRequest->getAddr(), memRequest->getBaseAddr(), memRequest->getSize(), deliveryTime);
-    memMsgQueue_.insert(std::make_pair(deliveryTime, memRequest));
-
-    ScratchEvent * respEv = event->makeResponse();
-    respEv->setSrc(getName());
-    dbg.debug(_L4_, "\tSending processor response\n");
-    procMsgQueue_.insert(std::make_pair(timestamp_, respEv));
-    dbg.debug(_L3_, "\n");
-}
-
-
-void Scratchpad::handleScratchResponse(SST::Event::id_type id) {
-    std::map<SST::Event::id_type, ScratchPair>::iterator respItr = pendingPool_.find(id);
-    
-    
-    // response to reads generated by a put request
-    if (respItr == pendingPool_.end()) { 
-        std::map<SST::Event::id_type, std::pair<SST::Event::id_type, Addr> >::iterator it = scratchIDMap_.find(id);
-        if (it == scratchIDMap_.end()) {
-            dbg.fatal(CALL_INFO, -1, "Received data response from scratch but no matching request in scratchIDMap_\n");
-        }  
-    
-        SST::Event::id_type putID = it->second.first;
-        scratchCounters_.find(putID)->second--; // decrement count of reads we are waiting for
-        
-        ScratchEvent * debugEv = pendingPool_.find(putID)->second.request;
-        dbg.debug(_L3_, "%" PRIu64 "  (%s)  Scratch response received: request cmd: %s, addr: %" PRIu64 ", src: addr %" PRIu64 ", size: %" PRIu32 "\n",
-            timestamp_, getName().c_str(), ScratchCommandString[debugEv->getCmd()], debugEv->getAddr(), debugEv->getSrcAddr(), debugEv->getSize());
-        
-        // Clean up - remove from scratchMSHR & scratchIDMap
-        Addr bAddr = it->second.second;
-        removeFromMSHR(bAddr);
-        scratchIDMap_.erase(it);
-
-        // check if count has reached 0, if so, complete put
-        if (scratchCounters_.find(putID)->second == 0) {
-            ScratchEvent * reqEv = pendingPool_.find(putID)->second.request;
-            MemEvent * memRequest = pendingPool_.find(putID)->second.memRequest;
-            dbg.debug(_L4_, "\tScratchPut complete, send memory write and processor response\n");
-
-
-            // send write to memory
-            dbg.debug(_L4_, "\tSending memory write. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 ", send at cycle %" PRIu64 "\n", 
-                CommandString[memRequest->getCmd()], memRequest->getAddr(), memRequest->getBaseAddr(), memRequest->getSize(), timestamp_);
-            memMsgQueue_.insert(std::make_pair(timestamp_, memRequest));
-
-            // send ack to processor
-            ScratchEvent * respEv = reqEv->makeResponse();
-            respEv->setSrc(getName());
-            dbg.debug(_L4_, "\tSending processor response\n");
-            procMsgQueue_.insert(std::make_pair(timestamp_, respEv));
-
-            // clean up
-            scratchCounters_.erase(putID);
-            pendingPool_.erase(putID);
-            delete reqEv;
-        }
-
-    } else { // response to a read request
-        ScratchEvent * reqEv = respItr->second.request;
-        ScratchEvent * respEv = respItr->second.response;
-        respEv->setSrc(getName());
-        dbg.debug(_L3_, "%" PRIu64 "  (%s)  Scratch response received: request cmd: %s, addr: %" PRIu64 ", src: %s, size: %" PRIu32 "\n",
-            timestamp_, getName().c_str(), ScratchCommandString[respEv->getCmd()], respEv->getAddr(), respEv->getDst().c_str(), respEv->getSize());
-        
-        // return response from pending queue
-        dbg.debug(_L4_, "\tSending processor response\n");
-        procMsgQueue_.insert(std::make_pair(timestamp_, respEv));
-        
-        // remove request from mshr 
-        removeFromMSHR(respEv->getBaseAddr());
-
-        // clean up
-        pendingPool_.erase(respItr);
-    }
-    dbg.debug(_L3_, "\n");
-}
-
-// clock
 bool Scratchpad::clock(Cycle_t cycle) {
     timestamp_++;
-    bool sent = false; // For debugging pretty printing only
+    
+    bool debug = false;
 
     // issue ready events
     uint32_t responseThisCycle = (responsesPerCycle_ == 0) ? 1 : 0;
     while (!procMsgQueue_.empty() && procMsgQueue_.begin()->first < timestamp_) {
-        ScratchEvent * sendEv = procMsgQueue_.begin()->second;
-        dbg.debug(_L4_, "%" PRIu64 "  (%s)  Clock. Sending event from procMsgQueue: cmd: %s, addr: %" PRIu64 ", size: %" PRIu32 "\n", 
-                timestamp_, getName().c_str(), ScratchCommandString[sendEv->getCmd()], sendEv->getAddr(), sendEv->getSize());
+        MemEventBase * sendEv = procMsgQueue_.begin()->second;
+#ifdef __SST_DEBUG_OUTPUT
+        if (DEBUG_ALL || sendEv->doDebug(DEBUG_ADDR)) {
+            if (!debug) dbg.debug(_L4_, "\n");
+            debug = true;
+            dbg.debug(_L4_, "%" PRIu64 " (%s) Sending event to processor: %s\n", timestamp_, getName().c_str(), sendEv->getBriefString().c_str());
+        }
+#endif
         linkUp_->send(sendEv);
         procMsgQueue_.erase(procMsgQueue_.begin());
-        sent = true;
         responseThisCycle++;
         if (responseThisCycle == responsesPerCycle_) break;
     }
 
     while (!memMsgQueue_.empty() && memMsgQueue_.begin()->first < timestamp_) {
         MemEvent * sendEv = memMsgQueue_.begin()->second;
-        dbg.debug(_L4_, "%" PRIu64 "  (%s)  Clock. Sending event from memMsgQueue: cmd: %s, addr: %" PRIu64 ", size: %" PRIu32 "\n", 
-                timestamp_, getName().c_str(), CommandString[sendEv->getCmd()], sendEv->getAddr(), sendEv->getSize());
-        if (linkDown_) {
-            linkDown_->send(sendEv);
-        } else {
-            sendEv->setDst(linkNet_->findTargetDestination(sendEv->getBaseAddr()));
-            sendEv->setAddr(linkNet_->convertToDestinationAddress(sendEv->getDst(), sendEv->getAddr()));
-            sendEv->setBaseAddr(linkNet_->convertToDestinationAddress(sendEv->getDst(), sendEv->getBaseAddr()));
-            dbg.debug(_L4_, "\t\tSet destination/addresses to: dst: %s, addr: %" PRIu64 ", baseAddr: %" PRIu64 "\n",
-                    sendEv->getDst().c_str(), sendEv->getAddr(), sendEv->getBaseAddr());
-            linkNet_->send(sendEv);
+        sendEv->setDst(linkDown_->findTargetDestination(sendEv->getBaseAddr()));
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || sendEv->doDebug(DEBUG_ADDR)) {
+            if (!debug) dbg.debug(_L4_, "\n");
+            debug = true;
+            dbg.debug(_L4_, "%" PRIu64 " (%s) Sending event to memory: %s\n", timestamp_, getName().c_str(), sendEv->getBriefString().c_str());
         }
+#endif
+        linkDown_->send(sendEv);    
+        
         memMsgQueue_.erase(memMsgQueue_.begin());
-        sent = true;
     }
-    if (sent) dbg.debug(_L4_, "\n");
-    
 
-    // clock nic
-    if (linkNet_) linkNet_->clock();
+    linkDown_->clock();
+    if (linkUp_ != linkDown_) linkUp_->clock();
+    scratch_->clock(cycle); // Clock backend
 
-    // clock backend
-    scratch_->clock(cycle);
-    
     return false;
 }
 
-void Scratchpad::removeFromMSHR(Addr addr) {
-    
-    // Locate entry
-    std::unordered_map<Addr, std::queue<ScratchEvent*> >::iterator mshrItr = scratchMSHR_.find(addr);
 
-    // Remove top event from MSHR
-    mshrItr->second.pop();
-    
-    // Issue waiting request(s)
-    while (!mshrItr->second.empty()) {
-        ScratchEvent * reqEvent = mshrItr->second.front();
-        dbg.debug(_L4_, "\tSending stalled event to scratch backend. Cmd = %s, Addr = %" PRIu64 ", BaseAddr = %" PRIu64 ", Size = %" PRIu32 "\n",
-                ScratchCommandString[reqEvent->getCmd()], reqEvent->getAddr(), reqEvent->getBaseAddr(), reqEvent->getSize());
-        reqEvent->getCmd() == Read ? stat_ScratchReadIssued->addData(1) : stat_ScratchWriteIssued->addData(1);
-        scratch_->handleScratchEvent(reqEvent);
-        if (reqEvent->getCmd() == Read) break;
-        mshrItr->second.pop(); 
+/***************** request and response handlers ***********************/
+/*
+ *  Sort read requests into local (scratch) and remote
+ */
+void Scratchpad::handleRead(MemEventBase * event) {
+    MemEvent * ev = static_cast<MemEvent*>(event);
+
+    if (ev->getAddr() < scratchSize_) {
+        handleScratchRead(ev);
+    } else {
+        handleRemoteRead(ev);
     }
-
-    // Finally, erase entry if queue is empty
-    if (mshrItr->second.empty()) scratchMSHR_.erase(mshrItr);
 }
 
-// SST component functions
-void Scratchpad::init(unsigned int phase) {
-    // Init MemNIC if we have one
-    if (linkNet_) linkNet_->init(phase);
+/*
+ *  Sort write requests into local and remote
+ *  Also send coherence reads that correspond to processor writes to the read function
+ */
+void Scratchpad::handleWrite(MemEventBase * event) {
+    MemEvent * ev = static_cast<MemEvent*>(event);
+    if (ev->getAddr() < scratchSize_) {
+        if (ev->isWriteback() || ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
+            handleScratchWrite(ev);
+        } else {
+            handleScratchRead(ev);
+        }
+    } else {
+        handleRemoteWrite(ev);
+    }
+}
 
-    // Send initial info out
-    if (!phase) {
-        linkUp_->sendInitData(new SST::Interfaces::StringEvent("SST::MemHierarchy::ScratchEvent"));
+
+/*
+ *  Handle a scratch read
+ *  Commands:
+ *      - GetS
+ *      - GetSX
+ *      - GetX, cacheable
+ *  Put request in mshr, if no conflict, send to scratchpad and wait for response
+ */
+void Scratchpad::handleScratchRead(MemEvent * ev) {
+
+    stat_ScratchReadReceived->addData(1);
+
+    MemEvent * response = ev->makeResponse();
+    if (caching_ && !ev->queryFlag(MemEvent::F_NONCACHEABLE)) // Send data in exclusive state to let caches decide what to do with it
+        response->setCmd(Command::GetXResp);
+
+    MemEvent * read = new MemEvent(this, ev->getAddr(), ev->getBaseAddr(), Command::GetS, ev->getSize());
+    read->setRqstr(ev->getRqstr());
+    read->setVirtualAddress(ev->getVirtualAddress());
+    read->setInstructionPointer(ev->getInstructionPointer());
+
+    responseIDMap_.insert(std::make_pair(read->getID(),ev->getID()));
+    responseIDAddrMap_.insert(std::make_pair(read->getID(),ev->getBaseAddr()));
+    outstandingEventList_.insert(std::make_pair(ev->getID(),OutstandingEvent(ev,response)));
+
+    if (mshr_.find(ev->getBaseAddr()) == mshr_.end()) {
+        std::vector<uint8_t> data = doScratchRead(read);
+        response->setPayload(data);
+        mshr_.insert(std::make_pair(ev->getBaseAddr(), std::list<MSHREntry>(1,MSHREntry(ev->getID(), Command::GetS, true, false))));
+        if (caching_ && !ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
+            cacheStatus_.at(ev->getBaseAddr()/scratchLineSize_) = true;
+        }
+    } else {
+        mshr_.find(ev->getBaseAddr())->second.push_back(MSHREntry(ev->getID(), Command::GetS, read));
+    }
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR))
+        dbg.debug(_L5_, "\tInserting in mshr. Addr: 0x%" PRIx64 ". %s\n", ev->getBaseAddr(), mshr_.find(ev->getBaseAddr())->second.back().getString().c_str());
+#endif
+}
+
+
+/*
+ * Handle a scratch write
+ * Commands:
+ *      - GetX, noncacheable
+ *      - PutM/E/S
+ * Check for races with invalidations and handle as needed
+ * Send AckPut for clean writebacks (PutE/PutS) and drop them
+ * Send write to scratchpad after checking for conflicts in MSHR
+ *
+ * If this is a replacement from cache, mark as uncached
+ * If from directory, replacements don't neccessarily mean that block is no longer cached,
+ * so don't clear cached state.
+ */
+void Scratchpad::handleScratchWrite(MemEvent * ev) {
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR))
+        dbg.debug(_L5_, "\tHandling as scratch write\n");
+#endif
+
+    bool doWrite = false; // Decide whether to handle this write immediately EVEN if a conflict
+    bool inserted = false;
+    /* Check for writeback/invalidation races */
+    if (!directory_ && ev->isWriteback() && mshr_.find(ev->getBaseAddr()) != mshr_.end()) {
+        MSHREntry * entry = &(mshr_.find(ev->getBaseAddr())->second.front());
+        if (outstandingEventList_.find(entry->id)->second.request->getCmd() == Command::Get) {
+            handleAckInv(ev);
+            return;
+            // TODO handle corner cases where Get only writes partial line
+        } else if (outstandingEventList_.find(entry->id)->second.request->getCmd() == Command::Put) {
+            if (ev->getPayload().empty()) {
+                handleAckInv(ev);
+            } else {
+                handleFetchResp(ev);
+            }
+            return;
+        }
+    } 
+
+    /* Drop clean writebacks after sending AckPut */
+    if (ev->isWriteback() && !ev->getDirty()) {
+        if (caching_) {
+            cacheStatus_.at(ev->getBaseAddr()/scratchLineSize_) = directory_;
+        }
+        MemEvent * response = ev->makeResponse();
+        sendResponse(response);
+        delete ev;
+        return;
     }
 
-    // Handle incoming requests
-    while (SST::Event *ev = linkUp_->recvInitData()) {
-        ScratchEvent *sEv = dynamic_cast<ScratchEvent*>(ev);
-        if (sEv && sEv->getCmd() != ScratchNullCmd) {
-            MemEvent * memRequest = new MemEvent(this, sEv->getAddr(), sEv->getBaseAddr(), sEv->getCmd() == Read ? GetS : GetX, sEv->getSize());
-            // debug.dbg(_L3_, "%s received init event: Cmd: %s, Addr: %" PRIu64 ", BaseAddr: %" PRIu64 ", Size: %lu\n", 
-            //          CommandString[memRequest->getCmd()], memRequest->getAddr(), memRequest->getBaseAddr, memRequest->getSize());
-            //  debug.dbg(_L5_, "Payload: ");
-            //  for (std::vector<uint8_t>::iterator it = memRequest->getPayload().begin(); it != memRequest->getPayload().end()) {
-            //      debug.dbg(_L5_, "%u ", *it);
-            //  }
-            //  debug.dbg(_L5_, "\n");
-            if (linkNet_) {
-                memRequest->setDst(linkNet_->findTargetDestination(memRequest->getBaseAddr() - remoteAddrOffset_));
-                memRequest->setAddr(linkNet_->convertToDestinationAddress(memRequest->getDst(), memRequest->getAddr() - remoteAddrOffset_));
-                memRequest->setBaseAddr(linkNet_->convertToDestinationAddress(memRequest->getDst(), memRequest->getBaseAddr() - remoteAddrOffset_));
-                // debug.dbg(_L4_, "%s sending init event: Cmd: %s, Addr: %" PRIu64 ", BaseAddr: %" PRIu64 ", Size: %lu, Destination: %s\n",
-                //          CommandString[memRequest->getCmd()], memRequest->getAddr(), memRequest->getBaseAddr, memRequest->getSize(), memRequest->getDst().c_str());
-                linkNet_->sendInitData(memRequest);
-            } else {
-                // debug.dbg(_L4_, "%s sending init event: Cmd: %s, Addr: %" PRIu64 ", BaseAddr: %" PRIu64 ", Size: %lu, Destination: %s\n",
-                //          CommandString[memRequest->getCmd()], memRequest->getAddr(), memRequest->getBaseAddr, memRequest->getSize(), memRequest->getDst().c_str());
-                linkDown_->sendInitData(memRequest);
+    stat_ScratchWriteReceived->addData(1);
+
+    MemEvent * response = nullptr;
+    response = ev->makeResponse();
+
+    MemEvent * write = new MemEvent(this, ev->getAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload());
+    write->setRqstr(ev->getRqstr());
+    write->setVirtualAddress(ev->getVirtualAddress());
+    write->setInstructionPointer(ev->getInstructionPointer());
+    write->setFlag(MemEvent::F_NORESPONSE);
+    
+    if (directory_ && ev->isWriteback() && mshr_.find(ev->getBaseAddr()) != mshr_.end()) {
+        /* For directory - jump write ahead of a Put so we have correct data but otherwise
+         * do not resolve race by treating writeback as ackinv since it may not actually signal that
+         * the block is not present in caches */
+        std::list<MSHREntry>* entry = &(mshr_.find(ev->getBaseAddr())->second);
+        for (std::list<MSHREntry>::iterator it = entry->begin(); it != entry->end(); it++) {
+            if (it->cmd == Command::Put) {
+                if (it == entry->begin()) {
+                    doScratchWrite(write);
+                    sendResponse(response); /* Send response when request is sent to scratch, since scratch doesn't respond */
+                    delete ev;
+                } else {
+                    outstandingEventList_.insert(std::make_pair(ev->getID(),OutstandingEvent(ev,response)));
+                    it = entry->insert(it, MSHREntry(ev->getID(), Command::GetX, write));
+#ifdef __SST_DEBUG_OUTPUT__
+                    if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR))
+                        dbg.debug(_L5_, "\tInserting in mshr. Addr: 0x%" PRIx64 ". %s\n", ev->getBaseAddr(), it->getString().c_str());
+#endif
+                }
+                return;
             }
         }
-        delete sEv;
+    }
+
+    if (mshr_.find(ev->getBaseAddr()) == mshr_.end()) {
+        doScratchWrite(write);
+        sendResponse(response); /* Send response when request is sent to scratch since scratch doesn't respond */
+        delete ev;
+        /* Update cache state */
+        if (caching_ && !ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
+            cacheStatus_.at(ev->getBaseAddr()/scratchLineSize_) = directory_;
+        }
+    } else {
+        outstandingEventList_.insert(std::make_pair(ev->getID(),OutstandingEvent(ev,response)));
+        mshr_.find(ev->getBaseAddr())->second.push_back(MSHREntry(ev->getID(), Command::GetX, write));
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR))
+            dbg.debug(_L5_, "\tInserting in mshr. Addr: 0x%" PRIx64 ". %s\n", ev->getBaseAddr(), mshr_.find(ev->getBaseAddr())->second.back().getString().c_str());
+#endif
     }
 }
 
-void Scratchpad::setup() {}
 
-void Scratchpad::finish() {}
+/* 
+ * Handle scratch Get by copying 'size' bytes from remote address 
+ * srcAddr to scratch address dstAddr. 'Size' may exceed the scratch
+ * line size.
+ * 
+ * 1. Issue read to remote for 'size' bytes from srcAddr
+ * 2. If caching, send shootdowns for any cached blocks between
+ *    dstAddr & dstAddr+size. All dirty data is discarded.
+ * 3. Once the remote read returns, issue writes to the local scratch
+ *    starting at address dstAddr (may mean writing multiple blocks).
+ * 4. Once all writes are sent and all shootdown responses received,
+ *    send AckMove to processor. At this point, any scratch reads sent 
+ *    by the processor are guaranteed to return new data.
+ */
+void Scratchpad::handleScratchGet(MemEventBase * event) {
+    MoveEvent * ev = static_cast<MoveEvent*>(event);
+
+    stat_ScratchGetReceived->addData(1);
+
+    MoveEvent * response = ev->makeResponse();
+    outstandingEventList_.insert(std::make_pair(ev->getID(),OutstandingEvent(ev,response)));
+
+    // Issue remote read
+    ev->setSrcBaseAddr((ev->getSrcAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
+    MemEvent * remoteRead = new MemEvent(this, ev->getSrcAddr() - remoteAddrOffset_, ev->getSrcBaseAddr(), Command::GetS, ev->getSize());
+    remoteRead->setFlag(MemEvent::F_NONCACHEABLE);
+    remoteRead->setRqstr(ev->getRqstr());
+    remoteRead->setVirtualAddress(ev->getSrcVirtualAddress());
+    remoteRead->setInstructionPointer(ev->getInstructionPointer());
+    responseIDMap_.insert(std::make_pair(remoteRead->getID(), ev->getID()));
+
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || remoteRead->doDebug(DEBUG_ADDR))
+        dbg.debug(_L5_, "\tInserting event in memory queue. %s\n", remoteRead->getBriefString().c_str());
+#endif
+    memMsgQueue_.insert(std::make_pair(timestamp_, remoteRead));
+
+    // Insert into mshr and send inv if needed
+    // start base addr -> end base addr
+    // start base addr + size
+    uint32_t lineCount = 1 + (ev->getDstAddr() + ev->getSize() - ev->getDstBaseAddr() - 1)/ scratchLineSize_;
+    for (uint32_t i = 0; i < lineCount; i++) {
+        Addr baseAddr = ev->getDstBaseAddr() + i*scratchLineSize_;
+        if (mshr_.find(baseAddr) == mshr_.end()) {
+            bool needAck = startGet(baseAddr, ev);
+            mshr_.insert(std::make_pair(baseAddr, std::list<MSHREntry>(1, MSHREntry(ev->getID(), Command::Get, true, needAck))));
+        } else {
+            mshr_.find(baseAddr)->second.push_back(MSHREntry(ev->getID(), Command::Get, true));
+        }
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || (DEBUG_ADDR == baseAddr))
+            dbg.debug(_L5_, "\tInserting in mshr. Addr: 0x%" PRIx64 ". %s\n", baseAddr, mshr_.find(baseAddr)->second.back().getString().c_str());
+#endif
+        outstandingEventList_.find(ev->getID())->second.incrementCount();
+    }
+}
+
+
+/* 
+ * Handle scratch Put by copying 'size' bytes from scratch address 
+ * srcAddr to remote address dstAddr. 'Size' may exceed the scratch line size.
+ * 
+ * 1. If caching, send shootdowns for any cached blocks between
+ *    srcAddr & srcAddr+size. 
+ * 2. Send scratch read requests for any uncached blocks between
+ *    srcAddr & srcAddr+size.
+ * 3. Collect data scratch & shootdown responses in the payload of a write event.
+ *    If a shootdown response arrives without data (i.e., was clean or uncached), 
+ *    send a scratch read.
+ * 4. Once all data is received, send write to remote and AckMove to processor
+ */
+void Scratchpad::handleScratchPut(MemEventBase * event) {
+    MoveEvent *ev = static_cast<MoveEvent*>(event);
+
+    stat_ScratchPutReceived->addData(1);
+
+    MoveEvent * response = ev->makeResponse();
+    ev->setDstBaseAddr((ev->getDstBaseAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
+    
+    MemEvent * remoteWrite = new MemEvent(this, ev->getDstAddr() - remoteAddrOffset_, ev->getDstBaseAddr(), Command::GetX, ev->getSize());
+    remoteWrite->setZeroPayload(ev->getSize());
+    remoteWrite->setFlag(MemEvent::F_NONCACHEABLE);
+    remoteWrite->setFlag(MemEvent::F_NORESPONSE);
+
+    outstandingEventList_.insert(std::make_pair(ev->getID(), OutstandingEvent(ev, response, remoteWrite)));
+    
+    Addr addr = ev->getSrcAddr();
+    Addr baseAddr = ev->getSrcBaseAddr();
+    uint32_t bytesLeft = ev->getSize();
+    while (bytesLeft != 0) {
+        uint32_t size = (baseAddr + scratchLineSize_) - addr;
+        if (size > bytesLeft) size = bytesLeft;
+
+        if (mshr_.find(baseAddr) == mshr_.end()) {
+            bool needAck = startPut(baseAddr, ev);
+            mshr_.insert(std::make_pair(baseAddr, std::list<MSHREntry>(1, MSHREntry(ev->getID(), Command::Put, !needAck, needAck))));
+        } else {
+            mshr_.find(baseAddr)->second.push_back(MSHREntry(ev->getID(), Command::Put));
+        }
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || (DEBUG_ADDR == baseAddr))
+            dbg.debug(_L5_, "\tInserting in mshr. Addr: 0x%" PRIx64 ". %s\n", baseAddr, mshr_.find(baseAddr)->second.back().getString().c_str());
+#endif
+
+        bytesLeft -= size;
+        baseAddr += scratchLineSize_;
+        addr = baseAddr;
+        
+        outstandingEventList_.find(ev->getID())->second.incrementCount();
+    }
+}
+
+
+/*
+ * Handle a scratchpad response. Called by scratch backend.
+ * Responses:
+ *  Response to a ScratchPut's read request: call updatePut() to record response
+ *      in remote write's payload
+ *  All others (regular read responses): call finishRequest()
+ */
+void Scratchpad::handleScratchResponse(SST::Event::id_type responseID) {
+    SST::Event::id_type requestID = responseIDMap_.find(responseID)->second;
+    responseIDMap_.erase(responseID);
+    
+    Addr baseAddr = responseIDAddrMap_.find(responseID)->second;
+    responseIDAddrMap_.erase(responseID);
+
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
+        dbg.debug(_L3_, "\n%" PRIu64 " (%s) Received scratch response with ID <%" PRIu64 ",%" PRIu32 ">\n", timestamp_, getName().c_str(), responseID.first, responseID.second);
+#endif
+
+    if (outstandingEventList_.find(requestID)->second.request->getCmd() == Command::Put) {
+        updatePut(requestID);
+    } else { // Anything else - GetS, GetX, etc.
+        finishRequest(requestID);
+    }
+    updateMSHR(baseAddr);
+}
+
+
+/*
+ * Handle an AckInv response to a shootdown (Inv)
+ * 
+ * 1. Set cached status to false
+ * 2. Set state for the Get or Put to indicate a shootdown response was received
+ * 3. If we needed data (for a Put), send a read request to scratch
+ * 4. If this was the last shootdown response and we're not waiting for a scratch response,
+ *    finish the request
+ */
+void Scratchpad::handleAckInv(MemEventBase * event) {
+    MemEvent *response = static_cast<MemEvent*>(event);
+    Addr baseAddr = response->getBaseAddr();
+    
+    /* Look up request in mshr */
+    MSHREntry * entry = &(mshr_.find(baseAddr)->second.front());
+    SST::Event::id_type requestID = entry->id;
+    MoveEvent * request = static_cast<MoveEvent*>(outstandingEventList_.find(requestID)->second.request);
+    
+    /* Update cache status */
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) {
+        dbg.debug(_L5_, "Updating cache status for baseAddr %" PRIx64 " and line size %" PRIu64 ". cacheStatus size is %zu. ID is %" PRIu64 "\n",
+                baseAddr, scratchLineSize_, cacheStatus_.size(), baseAddr/scratchLineSize_);
+    }
+#endif
+
+    cacheStatus_.at(baseAddr/scratchLineSize_) = false;
+
+    if (entry->cmd == Command::Get) {
+        entry->needAck = false;
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
+            dbg.debug(_L5_, "\tUpdated mshr entry. %s\n", entry->getString().c_str());
+#endif
+
+        if (!entry->needData) {
+            updateGet(entry->id);
+            updateMSHR(baseAddr);
+        }
+    } else if (entry->cmd == Command::Put) { // Command::Put
+        // Send a read since we didn't get data
+        // Determine address and size for the read
+        entry->needAck = false;
+        entry->needData = true;
+#ifdef __SST_DEBUG_OUTPUT
+        if (DEBUG_ALL || DEBUG_ADDR == baseAddr) {
+            dbg.debug(_L5_, "\tUpdated mshr entry. %s\n", entry->getString().c_str());
+        }
+#endif
+        Addr addr = baseAddr;
+        if (addr == request->getSrcBaseAddr())
+            addr = request->getSrcAddr();
+
+        uint32_t size = deriveSize(addr, baseAddr, request->getSrcAddr(), request->getSize());
+        
+        MemEvent * read = new MemEvent(this, addr, baseAddr, Command::GetS, size);
+        read->setRqstr(request->getRqstr());
+        read->setVirtualAddress(request->getSrcVirtualAddress());
+        read->setInstructionPointer(request->getInstructionPointer());
+        responseIDMap_.insert(std::make_pair(read->getID(),requestID));
+        responseIDAddrMap_.insert(std::make_pair(read->getID(), baseAddr));
+
+        std::vector<uint8_t> data = doScratchRead(read);
+        std::vector<uint8_t> payload = outstandingEventList_.find(requestID)->second.remoteWrite->getPayload();
+        uint32_t offset = addr - request->getSrcAddr();
+        for (uint32_t i = 0; i < size; i++) {
+            payload[i+offset] = data[i];
+        }
+        outstandingEventList_.find(requestID)->second.remoteWrite->setPayload(payload);
+    } else {
+        dbg.fatal(CALL_INFO, -1, "%s, Error: unhandled case in handleAckInv. Time = %" PRIu64 ", Event = (%s).\n",
+                getName().c_str(), timestamp_, event->getVerboseString().c_str());
+    }
+    delete event;
+}
+
+
+/*
+ * Handle a FetchResp response to a shootdown.
+ * Can only be in response to a Put since we don't request data for Get shootdowns.
+ *
+ * 1. Set cached state to false
+ * 2. If data is dirty, send scratch write
+ * 3. Update payload for remote write
+ * 4. If there are no more scratch or shootdown responses to wait for, finish the put (updatePut())
+ */
+void Scratchpad::handleFetchResp(MemEventBase * event) {
+    MemEvent * response = static_cast<MemEvent*>(event);
+    Addr baseAddr = response->getBaseAddr();
+
+    /* Look up request in mshr */
+    MSHREntry * entry = &(mshr_.find(baseAddr)->second.front());
+    SST::Event::id_type requestID = entry->id;
+    MoveEvent * put = static_cast<MoveEvent*>(outstandingEventList_.find(requestID)->second.request);
+
+    /* Update cache status */
+    cacheStatus_.at(baseAddr/scratchLineSize_) = false;
+
+    // Send a write to scratch if the line was dirty since we forcefully invalidated
+    if (response->getDirty()) {
+        MemEvent * write = new MemEvent(this, response->getAddr(), baseAddr, Command::PutM, response->getPayload());
+        write->setRqstr(put->getRqstr());
+        write->setVirtualAddress(put->getSrcVirtualAddress());
+        write->setInstructionPointer(put->getInstructionPointer());
+        write->setFlag(MemEvent::F_NORESPONSE);
+        doScratchWrite(write);
+    }
+    // Determine the target address and size for updating the remote write payload
+    Addr addr = baseAddr;
+    if (addr == put->getSrcBaseAddr())
+        addr = put->getSrcAddr();
+    
+    uint32_t size = deriveSize(addr, baseAddr, put->getSrcAddr(), put->getSize());
+
+    // Update write payload
+    std::vector<uint8_t> payload = outstandingEventList_.find(requestID)->second.remoteWrite->getPayload();
+    uint32_t offset = addr - put->getSrcAddr();
+    for (uint32_t i = 0; i < size; i++) {
+        payload[i+offset] = response->getPayload()[i];
+    }
+    outstandingEventList_.find(requestID)->second.remoteWrite->setPayload(payload);
+
+    // Clear this mshr entry
+    updatePut(requestID);
+    updateMSHR(baseAddr);   // Delete mshr entry
+    delete response;        // Delete response
+}
+
+
+/**
+ * Handle NACKs
+ * Only invalidations will be NACKed since they are the
+ * only type of requests a scratchpad sends to caches
+ * (responses are never NACKed).
+ */
+void Scratchpad::handleNack(MemEventBase * event) {
+    MemEvent * nack = static_cast<MemEvent*>(event);
+
+    /* The only events that can be nacked are invalidations
+     * Check if we need to resend or if the inv has already
+     * been resolved.
+     */
+    MemEvent * nackedEvent = nack->getNACKedEvent();
+    if (mshr_.find(nackedEvent->getBaseAddr()) == mshr_.end()) {
+        delete nackedEvent;
+        delete nack;
+        return;
+    }
+
+    MSHREntry * entry = &(mshr_.find(nackedEvent->getBaseAddr())->second.front());
+    if (entry->needAck) {
+        // Determine whether nackedEvent actually matches request -> if not, don't resend
+        // resend inv
+
+        /* Compute backoff to avoid excessive NACKing */
+        int retries = nackedEvent->getRetries();
+        if (retries > 10) retries = 10;
+        uint64_t backoff = (0x1 << retries);
+        nackedEvent->incrementRetries();
+
+        procMsgQueue_.insert(std::make_pair(timestamp_ + backoff, nackedEvent));
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || nackedEvent->doDebug(DEBUG_ADDR)) {
+            dbg.debug(_L5_, "\tInserting nacked event in procesor queue. %s\n", nackedEvent->getBriefString().c_str());
+        }
+#endif
+    } else {
+        delete nackedEvent;
+    }
+
+    delete nack;
+}
+
+
+/*
+ * Handle a read request to a remote address.
+ * This bypasses the scratchpad completely.
+ */
+void Scratchpad::handleRemoteRead(MemEvent * event) {
+    stat_RemoteReadReceived->addData(1);
+
+    event->setBaseAddr((event->getAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
+    MemEvent * request = new MemEvent(this, event->getAddr() - remoteAddrOffset_, event->getBaseAddr(), Command::GetS, event->getSize());
+    request->setFlag(MemEvent::F_NONCACHEABLE); // Use byte not line address
+    request->setRqstr(event->getRqstr());
+    request->setVirtualAddress(event->getVirtualAddress());
+    request->setInstructionPointer(event->getInstructionPointer());
+    
+    MemEvent * response = event->makeResponse();
+    outstandingEventList_.insert(std::make_pair(event->getID(), OutstandingEvent(event, response)));
+    responseIDMap_.insert(std::make_pair(request->getID(), event->getID()));
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || request->doDebug(DEBUG_ADDR))
+        dbg.debug(_L5_, "\tInserting event in memory queue. %s\n", request->getBriefString().c_str());
+#endif
+    memMsgQueue_.insert(std::make_pair(timestamp_, request));
+}
+
+
+/*
+ * Handle a write request to a remote address.
+ * This bypasses the scratchpad completely.
+ * The remote will not Ack a write so we send a
+ * response to the processor immediately
+ */
+void Scratchpad::handleRemoteWrite(MemEvent * event) {
+    stat_RemoteWriteReceived->addData(1);
+
+    event->setBaseAddr((event->getAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
+    MemEvent * request = new MemEvent(this, event->getAddr() - remoteAddrOffset_, event->getBaseAddr(), Command::GetX, event->getPayload());
+    request->setFlag(MemEvent::F_NORESPONSE);
+    request->setFlag(MemEvent::F_NONCACHEABLE);
+    request->setRqstr(event->getRqstr());
+    request->setVirtualAddress(event->getVirtualAddress());
+    request->setInstructionPointer(event->getInstructionPointer());
+
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || request->doDebug(DEBUG_ADDR))
+        dbg.debug(_L5_, "\tInserting event in memory queue. %s\n", request->getBriefString().c_str());
+#endif
+    
+    memMsgQueue_.insert(std::make_pair(timestamp_, request));
+
+    MemEvent * response = event->makeResponse();
+
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || response->doDebug(DEBUG_ADDR))
+        dbg.debug(_L5_, "\tInserting event in processor queue. %s\n", response->getBriefString().c_str());
+#endif
+
+    procMsgQueue_.insert(std::make_pair(timestamp_, response));
+
+    delete event;
+}
+
+
+/*
+ * Handle a read response from remote memory in response to a ScratchGet 
+ * If from a ScratchGet, write data to scratchpad and send a response
+ * to the processor once all data is written.
+ */
+void Scratchpad::handleRemoteGetResponse(MemEvent * response, SST::Event::id_type requestID) {
+    
+    MoveEvent * request = static_cast<MoveEvent*>(outstandingEventList_.find(requestID)->second.request);
+    
+    uint32_t bytesLeft = request->getSize();
+    Addr addr = request->getDstAddr();
+    Addr baseAddr = request->getDstBaseAddr();
+    uint32_t payloadOffset = 0;
+
+    while (bytesLeft != 0) {
+        // Create write
+        uint32_t size = (baseAddr + scratchLineSize_) - addr;
+        if (size > bytesLeft) size = bytesLeft;
+        std::vector<uint8_t> data(response->getPayload()[payloadOffset],response->getPayload()[payloadOffset+size]);
+        MemEvent * write = new MemEvent(this, addr, baseAddr, Command::PutM, data);
+        write->setRqstr(request->getRqstr());
+        write->setVirtualAddress(request->getDstVirtualAddress());
+        write->setInstructionPointer(request->getInstructionPointer());
+        write->setFlag(MemEvent::F_NORESPONSE);
+        
+        if (mshr_.find(baseAddr)->second.front().id == requestID) {
+            doScratchWrite(write);
+            mshr_.find(baseAddr)->second.front().needData = false;
+#ifdef __SST_DEBUG_OUTPUT__
+            if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
+                dbg.debug(_L5_, "\tUpdated mshr entry. %s\n", mshr_.find(baseAddr)->second.front().getString().c_str());
+#endif
+            if (!mshr_.find(baseAddr)->second.front().needAck) {
+                updateGet(requestID);
+                updateMSHR(baseAddr);
+            }
+        } else {
+            // Find it
+            if (mshr_.find(baseAddr) == mshr_.end()) {
+                dbg.fatal(CALL_INFO, -1, "ERROR: remoteGetResponse but no matching entry in mshr for address 0x%" PRIx64 "\n", baseAddr);
+            }
+            for (std::list<MSHREntry>::iterator it = mshr_.find(baseAddr)->second.begin(); it != mshr_.find(baseAddr)->second.end(); it++) {
+                if (it->id == requestID) {
+                    it->scratch = write;
+                    it->needData = false;
+#ifdef __SST_DEBUG_OUTPUT__
+                    if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
+                        dbg.debug(_L5_, "\tUpdated mshr entry. %s\n", it->getString().c_str());
+#endif
+                }
+            }
+        }
+        payloadOffset += size;
+        bytesLeft -= size;
+        baseAddr += scratchLineSize_;
+        addr += size;
+    }
+    delete response;
+}
+
+void Scratchpad::handleRemoteReadResponse(MemEvent * response, SST::Event::id_type requestID) {
+    // Update response with payload and finish request
+    MemEvent * fwdResponse = static_cast<MemEvent*>(outstandingEventList_.find(requestID)->second.response);
+    fwdResponse->setPayload(response->getPayload());
+    
+    finishRequest(requestID);
+
+    delete response;
+}
+
+// Update MSHR
+void Scratchpad::updateMSHR(Addr baseAddr) {
+    // Remove top event
+    mshr_.find(baseAddr)->second.pop_front();
+
+    // Start next event
+    while (!mshr_.find(baseAddr)->second.empty()) {
+        MSHREntry * entry = &(mshr_.find(baseAddr)->second.front());
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
+            dbg.debug(_L5_, "\tProcessing MSHR entry. %s\n", entry->getString().c_str());
+#endif
+
+        if (entry->cmd == Command::GetS) {
+            std::vector<uint8_t> readData = doScratchRead(entry->scratch);
+            static_cast<MemEvent*>(outstandingEventList_.find(entry->id)->second.response)->setPayload(readData);
+#ifdef __SST_DEBUG_OUTPUT__
+            if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
+                dbg.debug(_L5_, "\t\tUpdated. %s\n", entry->getString().c_str());
+#endif
+            if (caching_ && (outstandingEventList_.find(entry->id)->second.request->queryFlag(MemEvent::F_NONCACHEABLE))) {
+                cacheStatus_.at(baseAddr/scratchLineSize_) = true;
+            }
+            break;
+        } else if (entry->cmd == Command::GetX) {
+            doScratchWrite(entry->scratch);
+            finishRequest(entry->id);
+            mshr_.find(baseAddr)->second.pop_front();
+#ifdef __SST_DEBUG_OUTPUT__
+            if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
+                dbg.debug(_L5_, "\t\tRemoved\n");
+#endif
+        } else if (entry->cmd == Command::Get) {
+            entry->needAck = startGet(baseAddr, static_cast<MoveEvent*>(outstandingEventList_.find(entry->id)->second.request));
+            if (!entry->needData) {
+                doScratchWrite(entry->scratch);
+                entry->scratch = nullptr;
+            }
+            if (!entry->needAck && !entry->needData) {
+                updateGet(entry->id);
+                mshr_.find(baseAddr)->second.pop_front();
+#ifdef __SST_DEBUG_OUTPUT__
+                if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
+                    dbg.debug(_L5_, "\t\tRemoved.\n");
+#endif
+            } else {
+#ifdef __SST_DEBUG_OUTPUT__
+                if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
+                    dbg.debug(_L5_, "\t\tUpdated. %s\n", entry->getString().c_str());
+#endif
+                break; // Still waiting on something
+            }
+        } else if (entry->cmd == Command::Put) {
+            entry->needAck = startPut(baseAddr, static_cast<MoveEvent*>(outstandingEventList_.find(entry->id)->second.request));
+            entry->needData = !entry->needAck;
+#ifdef __SST_DEBUG_OUTPUT__
+            if (DEBUG_ALL || DEBUG_ADDR == baseAddr)    
+                dbg.debug(_L5_, "\t\tUpdated. %s\n", entry->getString().c_str());
+#endif
+            break;
+        } else {
+            dbg.fatal(CALL_INFO, -1, "(%s) Updating MSHR but do not handle this case. Addr: 0x%" PRIx64 "\n", getName().c_str(), baseAddr);
+        }
+    }
+
+    // Clear mshr entry if list is empty
+    if (mshr_.find(baseAddr)->second.empty()) {
+        mshr_.erase(baseAddr);
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
+            dbg.debug(_L5_, "\tRemoved MSHR address 0x%" PRIx64 "\n", baseAddr);
+#endif
+    }
+}
+
+// Helper methods
+std::vector<uint8_t> Scratchpad::doScratchRead(MemEvent * event) {
+    stat_ScratchReadIssued->addData(1);
+
+    std::vector<uint8_t> data;
+    if (backing_) {
+        for (size_t i = 0; i < event->getSize(); i++) {
+            data.push_back(backing_->get(event->getAddr() + i));
+            dbg.debug(_L5_, "\tUpdating payload. (addr, data): (0x%" PRIx64 ", %u)\n", event->getAddr() + i, data.at(i));
+        }
+    } else {
+        data.resize(event->getSize(), 0);
+    }
+    dbg.debug(_L4_, "\tSending request to scratch: %s\n", event->getBriefString().c_str());
+    scratch_->handleMemEvent(event);
+    return data;
+}
+
+void Scratchpad::doScratchWrite(MemEvent * event) {
+    stat_ScratchWriteIssued->addData(1);
+
+    if (backing_) {
+        for (size_t i = 0; i < event->getSize(); i++) {
+            dbg.debug(_L5_, "\tUpdating backing store. (addr, new data): (0x%" PRIx64 ", %u)\n", event->getAddr() + i, event->getPayload()[i]);
+            backing_->set(event->getAddr() + i, event->getPayload()[i]);
+        }
+    }
+
+    dbg.debug(_L4_, "\tSending request to scratch: %s\n", event->getBriefString().c_str());
+    scratch_->handleMemEvent(event);
+}
+
+void Scratchpad::sendResponse(MemEventBase * event) {
+    dbg.debug(_L5_, "\tInserting event in processor queue. %s\n", event->getBriefString().c_str());
+    procMsgQueue_.insert(std::make_pair(timestamp_, event));
+}
+
+
+/* Start a Get request for a particular line by
+ * determining whether an inv for that line is needed
+ * Return whether inv was sent or not
+ */
+bool Scratchpad::startGet(Addr baseAddr, MoveEvent * get) {
+    if (caching_ && cacheStatus_.at(baseAddr/scratchLineSize_) == true) {
+        MemEvent * inv = new MemEvent(this, baseAddr, baseAddr, Command::ForceInv, scratchLineSize_);
+        inv->setRqstr(get->getRqstr());
+        inv->setDst(linkUp_->getSources()->begin()->name);
+        inv->setVirtualAddress(get->getDstVirtualAddress());
+        inv->setInstructionPointer(get->getInstructionPointer());
+        dbg.debug(_L5_, "\tInserting event in processor queue. %s\n", inv->getBriefString().c_str());
+        procMsgQueue_.insert(std::make_pair(timestamp_, inv));
+        return true;
+    }
+    return false;
+}
+
+/* Start a Put request for a particular line by
+ * determining whether a fetch/inv for that line
+ * is needed
+ * Return whether fetch was sent or not
+ */
+bool Scratchpad::startPut(Addr baseAddr, MoveEvent * put) {
+    if (caching_ && cacheStatus_.at(baseAddr/scratchLineSize_) == true) {
+        MemEvent * inv = new MemEvent(this, baseAddr, baseAddr, Command::FetchInv, scratchLineSize_);
+        inv->setRqstr(put->getRqstr());
+        inv->setDst(put->getSrc());
+        inv->setVirtualAddress(put->getSrcVirtualAddress());
+        inv->setInstructionPointer(put->getInstructionPointer());
+        dbg.debug(_L5_, "\tInserting event in processor queue. %s\n", inv->getBriefString().c_str());
+        procMsgQueue_.insert(std::make_pair(timestamp_, inv));
+        return true;
+    } else {
+        // Derive addr and size from baseAddr and the put request
+        Addr addr = baseAddr;
+        if (baseAddr == put->getSrcBaseAddr())
+            addr = put->getSrcAddr();
+        uint32_t size = deriveSize(addr, baseAddr, put->getSrcAddr(), put->getSize());
+
+        MemEvent * read = new MemEvent(this, addr, baseAddr, Command::GetS, size);
+        read->setRqstr(put->getRqstr());
+        read->setVirtualAddress(put->getSrcVirtualAddress());
+        read->setInstructionPointer(put->getInstructionPointer());
+        responseIDMap_.insert(std::make_pair(read->getID(), put->getID()));
+        responseIDAddrMap_.insert(std::make_pair(read->getID(), baseAddr));
+        
+        std::vector<uint8_t> data = doScratchRead(read);
+
+        std::vector<uint8_t> payload = outstandingEventList_.find(put->getID())->second.remoteWrite->getPayload();
+        uint32_t offset = addr - put->getSrcAddr();
+        for (uint32_t i = 0; i < size; i++) {
+            payload[i+offset] = data[i];
+        }
+        outstandingEventList_.find(put->getID())->second.remoteWrite->setPayload(payload);
+        return false;
+    }
+}
+
+void Scratchpad::updatePut(SST::Event::id_type putID) {
+    uint32_t count = outstandingEventList_.find(putID)->second.decrementCount();
+    if (count == 0) {
+        dbg.debug(_L5_, "\tInserting event in memory queue. %s\n", outstandingEventList_.find(putID)->second.remoteWrite->getBriefString().c_str());
+        memMsgQueue_.insert(std::make_pair(timestamp_, outstandingEventList_.find(putID)->second.remoteWrite));
+        sendResponse(outstandingEventList_.find(putID)->second.response);
+        delete outstandingEventList_.find(putID)->second.request;
+        outstandingEventList_.erase(putID);
+    }
+
+}
+
+void Scratchpad::updateGet(SST::Event::id_type getID) {
+    uint32_t count = outstandingEventList_.find(getID)->second.decrementCount();
+    if (count == 0) {
+        sendResponse(outstandingEventList_.find(getID)->second.response);
+        delete outstandingEventList_.find(getID)->second.request;
+        outstandingEventList_.erase(getID);
+    }
+}
+
+void Scratchpad::finishRequest(SST::Event::id_type requestID) {
+    if (outstandingEventList_.find(requestID)->second.response != nullptr)
+        sendResponse(outstandingEventList_.find(requestID)->second.response);
+    delete outstandingEventList_.find(requestID)->second.request;
+    outstandingEventList_.erase(requestID);
+}
+
+uint32_t Scratchpad::deriveSize(Addr addr, Addr baseAddr, Addr requestAddr, uint32_t requestSize) {
+    uint32_t size = baseAddr + scratchLineSize_ - addr;
+    if (addr + size > requestAddr + requestSize) {
+        size = requestAddr + requestSize - addr;
+    }
+    return size;
+}

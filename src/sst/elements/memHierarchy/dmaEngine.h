@@ -36,7 +36,7 @@ namespace MemHierarchy {
 class DMACommand : public Event {
 private:
     static uint64_t main_id;
-    MemEvent::id_type event_id;
+    SST::Event::id_type event_id;
 public:
     Addr dst;
     Addr src;
@@ -46,7 +46,7 @@ public:
     {
       event_id = std::make_pair(main_id++, origin->getId());
     }
-    MemEvent::id_type getID(void) const { return event_id; }
+    SST::Event::id_type getID(void) const { return event_id; }
 
 private:
     DMACommand() {} // For serialization
@@ -57,8 +57,8 @@ class DMAEngine : public Component {
 
     struct Request {
         DMACommand *command;
-        std::set<MemEvent::id_type> loadKeys;
-        std::set<MemEvent::id_type> storeKeys;
+        std::set<SST::Event::id_type> loadKeys;
+        std::set<SST::Event::id_type> storeKeys;
 
         Addr getDst() const { return command->dst; }
         Addr getSrc() const { return command->src; }
@@ -96,11 +96,11 @@ private:
 
     bool isIssuable(DMACommand *cmd) const;
     void startRequest(Request *req);
-    void processPacket(Request *req, MemEvent *ev);
+    void processPacket(Request *req, MemEventBase *ev);
 
     bool findOverlap(DMACommand *c1, DMACommand *c2) const;
     bool findOverlap(Addr a1, size_t s1, Addr a2, size_t s2) const;
-    Request* findRequest(MemEvent::id_type id);
+    Request* findRequest(SST::Event::id_type id);
     //std::string findTargetDirectory(Addr addr); Moved to MemNIC
 };
 

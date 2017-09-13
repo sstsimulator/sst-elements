@@ -19,11 +19,11 @@
 #include <sst/core/sst_types.h>
 
 #include <sst/core/component.h>
-#include <sst/core/link.h>
+#include <sst/core/event.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/cacheListener.h"
-#include "sst/elements/memHierarchy/memNIC.h"
+#include "sst/elements/memHierarchy/memLinkBase.h"
 #include "sst/elements/memHierarchy/membackend/backing.h"
 
 namespace SST {
@@ -33,14 +33,16 @@ class MemBackendConvertor;
 
 class MemController : public SST::Component {
 public:
-	typedef uint64_t ReqId;
+    typedef uint64_t ReqId;
 
     MemController(ComponentId_t id, Params &params);
     void init(unsigned int);
     void setup();
     void finish();
 
-    virtual void handleMemResponse( MemEvent* );
+    virtual void handleMemResponse( SST::Event::id_type id, uint32_t flags );
+    
+    SST::Cycle_t turnClockOn();
 
 private:
 
@@ -60,29 +62,36 @@ private:
 
     void handleEvent( SST::Event* );
     bool clock( SST::Cycle_t );
-    void performRequest( MemEvent* );
-    void performResponse( MemEvent* );
-    void recordResponsePayload( MemEvent* );
-    void processInitEvent( MemEvent* );
+    void writeData( MemEvent* );
+    void readData( MemEvent* );
+    void processInitEvent( MemEventInit* );
 
     Output dbg;
 
     MemBackendConvertor*    memBackendConvertor_;
     Backend::Backing*       backing_; 
 
-    SST::Link*  cacheLink_;         // Link to the rest of memHierarchy 
-    MemNIC*     networkLink_;       // Link to the rest of memHierarchy if we're communicating over a network
+    MemLinkBase* link_;         // Link to the rest of memHierarchy 
+    bool clockLink_;            // Flag - should we call clock() on this link or not
 
     std::vector<CacheListener*> listeners_;
     
-    std::map<SST::Event::id_type, vector<uint8_t> > payloads_; // To ensure 'correct' read-write ordering, payloads are constructed on message receive just like backing store writes
+    std::map<SST::Event::id_type, MemEvent*> outstandingEvents_; // For sending responses. Expect backend to respond to ALL requests so that we know the execution order
 
     bool isRequestAddressValid(Addr addr){
-        return (addr < memSize_);
+        return region_.contains(addr);
     }
 
-    int         protocol_;
     size_t      memSize_;
+
+    bool clockOn_;
+    Clock::Handler<MemController>* clockHandler_;
+    TimeConverter* clockTimeBase_;
+
+    MemRegion region_; // Which address region we are, for translating to local addresses
+    Addr privateMemOffset_; // If we reserve any memory locations for ourselves/directories/etc. and they are NOT part of the physical address space, shift regular addresses by this much
+    Addr translateToLocal(Addr addr);
+    Addr translateToGlobal(Addr addr);
 };
 
 }}

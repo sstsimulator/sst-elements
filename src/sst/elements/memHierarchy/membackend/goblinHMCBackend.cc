@@ -461,7 +461,7 @@ void GOBLINHMCSimBackend::collectStats(){
 #endif
 }
 
-void GOBLINHMCSimBackend::clock() {
+bool GOBLINHMCSimBackend::clock(Cycle_t cycle) {
 	output->verbose(CALL_INFO, 8, 0, "Clocking HMC...\n");
 	int rc = hmcsim_clock(&the_hmc);
 
@@ -475,6 +475,7 @@ void GOBLINHMCSimBackend::clock() {
 
 	// Call to process any responses from the HMC
 	processResponses();
+        return false;
 }
 
 void GOBLINHMCSimBackend::processResponses() {

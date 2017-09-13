@@ -32,10 +32,10 @@ public:
 
     std::string getName() { return "Free"; }
 
-    void issue( uint64_t time, MP::Functor* functor ) {
+    void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.free( m_val, functor );
+        m_api.free( m_val, callback );
     }
 private:
     Hermes::MemAddr m_val;

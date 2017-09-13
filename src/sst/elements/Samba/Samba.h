@@ -37,6 +37,7 @@
 
 #include "TLBhierarchy.h"
 #include "PageTableWalker.h"
+#include <sst/elements/memHierarchy/memEventBase.h>
 
 //#include "arielcore.h"
 
@@ -49,7 +50,8 @@ namespace SST {
 			public:
 
 				Samba(SST::ComponentId_t id, SST::Params& params); 
-				void setup()  { };
+				void init(unsigned int phase);
+                                void setup()  { };
 				void finish() {for(int i=0; i<(int) core_count; i++) TLB[i]->finish();};
 				void handleEvent(SST::Event* event) {};
 				bool tick(SST::Cycle_t x);

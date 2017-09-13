@@ -66,7 +66,27 @@
 #include "mpi/motifs/emberunstructured.h" //NetworkSim: added unstructured communication motif
 #include "mpi/motifs/embersiriustrace.h"
 #include "mpi/motifs/emberrandomgen.h"
+
 #include "shmem/motifs/emberShmemTest.h"
+#include "shmem/motifs/emberShmemWait.h"
+#include "shmem/motifs/emberShmemWaitUntil.h"
+#include "shmem/motifs/emberShmemPut.h"
+#include "shmem/motifs/emberShmemGet.h"
+#include "shmem/motifs/emberShmemPutv.h"
+#include "shmem/motifs/emberShmemGetv.h"
+#include "shmem/motifs/emberShmemFadd.h"
+#include "shmem/motifs/emberShmemAdd.h"
+#include "shmem/motifs/emberShmemCswap.h"
+#include "shmem/motifs/emberShmemSwap.h"
+#include "shmem/motifs/emberShmemBarrierAll.h"
+#include "shmem/motifs/emberShmemBarrier.h"
+#include "shmem/motifs/emberShmemBroadcast.h"
+#include "shmem/motifs/emberShmemCollect.h"
+#include "shmem/motifs/emberShmemFcollect.h"
+#include "shmem/motifs/emberShmemAlltoall.h"
+#include "shmem/motifs/emberShmemAlltoalls.h"
+#include "shmem/motifs/emberShmemReduction.h"
+
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
 
@@ -280,6 +300,261 @@ load_TrafficGen( Component* comp, Params& params ) {
 static SubComponent*
 load_ShmemTest( Component* comp, Params& params ) {
 	return new EmberShmemTestGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemPutInt( Component* comp, Params& params ) {
+	return new EmberShmemPutGenerator<int>(comp, params);
+}
+
+static SubComponent*
+load_ShmemPutLong( Component* comp, Params& params ) {
+	return new EmberShmemPutGenerator<long>(comp, params);
+}
+
+static SubComponent*
+load_ShmemPutFloat( Component* comp, Params& params ) {
+	return new EmberShmemPutGenerator<float>(comp, params);
+}
+
+static SubComponent*
+load_ShmemPutDouble( Component* comp, Params& params ) {
+	return new EmberShmemPutGenerator<double>(comp, params);
+}
+
+static SubComponent*
+load_ShmemPutvInt( Component* comp, Params& params ) {
+	return new EmberShmemPutvGenerator<int>(comp, params);
+}
+
+static SubComponent*
+load_ShmemPutvLong( Component* comp, Params& params ) {
+	return new EmberShmemPutvGenerator<long>(comp, params);
+}
+
+static SubComponent*
+load_ShmemPutvFloat( Component* comp, Params& params ) {
+	return new EmberShmemPutvGenerator<float>(comp, params);
+}
+
+static SubComponent*
+load_ShmemPutvDouble( Component* comp, Params& params ) {
+	return new EmberShmemPutvGenerator<double>(comp, params);
+}
+
+static SubComponent*
+load_ShmemGetInt( Component* comp, Params& params ) {
+	return new EmberShmemGetGenerator<int>(comp, params);
+}
+
+static SubComponent*
+load_ShmemGetLong( Component* comp, Params& params ) {
+	return new EmberShmemGetGenerator<long>(comp, params);
+}
+
+static SubComponent*
+load_ShmemGetFloat( Component* comp, Params& params ) {
+	return new EmberShmemGetGenerator<float>(comp, params);
+}
+
+static SubComponent*
+load_ShmemGetDouble( Component* comp, Params& params ) {
+	return new EmberShmemGetGenerator<double>(comp, params);
+}
+
+static SubComponent*
+load_ShmemGetvInt( Component* comp, Params& params ) {
+	return new EmberShmemGetvGenerator<int>(comp, params);
+}
+
+static SubComponent*
+load_ShmemGetvLong( Component* comp, Params& params ) {
+	return new EmberShmemGetvGenerator<long>(comp, params);
+}
+
+static SubComponent*
+load_ShmemGetvFloat( Component* comp, Params& params ) {
+	return new EmberShmemGetvGenerator<float>(comp, params);
+}
+
+static SubComponent*
+load_ShmemGetvDouble( Component* comp, Params& params ) {
+	return new EmberShmemGetvGenerator<double>(comp, params);
+}
+
+static SubComponent*
+load_ShmemAddInt( Component* comp, Params& params ) {
+	return new EmberShmemAddGenerator<int>(comp, params);
+}
+
+static SubComponent*
+load_ShmemAddLong( Component* comp, Params& params ) {
+	return new EmberShmemAddGenerator<long>(comp, params);
+}
+
+static SubComponent*
+load_ShmemAddFloat( Component* comp, Params& params ) {
+	return new EmberShmemAddGenerator<float>(comp, params);
+}
+
+static SubComponent*
+load_ShmemAddDouble( Component* comp, Params& params ) {
+	return new EmberShmemAddGenerator<double>(comp, params);
+}
+
+static SubComponent*
+load_ShmemFaddInt( Component* comp, Params& params ) {
+	return new EmberShmemFaddGenerator<int>(comp, params);
+}
+
+static SubComponent*
+load_ShmemFaddLong( Component* comp, Params& params ) {
+	return new EmberShmemFaddGenerator<long>(comp, params);
+}
+
+static SubComponent*
+load_ShmemFaddFloat( Component* comp, Params& params ) {
+	return new EmberShmemFaddGenerator<float>(comp, params);
+}
+
+static SubComponent*
+load_ShmemFaddDouble( Component* comp, Params& params ) {
+	return new EmberShmemFaddGenerator<double>(comp, params);
+}
+
+static SubComponent*
+load_ShmemCswapInt( Component* comp, Params& params ) {
+	return new EmberShmemCswapGenerator<int>(comp, params);
+}
+
+static SubComponent*
+load_ShmemCswapLong( Component* comp, Params& params ) {
+	return new EmberShmemCswapGenerator<long>(comp, params);
+}
+
+static SubComponent*
+load_ShmemCswapFloat( Component* comp, Params& params ) {
+	return new EmberShmemCswapGenerator<float>(comp, params);
+}
+
+static SubComponent*
+load_ShmemCswapDouble( Component* comp, Params& params ) {
+	return new EmberShmemCswapGenerator<double>(comp, params);
+}
+
+static SubComponent*
+load_ShmemSwapInt( Component* comp, Params& params ) {
+	return new EmberShmemSwapGenerator<int>(comp, params);
+}
+
+static SubComponent*
+load_ShmemSwapLong( Component* comp, Params& params ) {
+	return new EmberShmemSwapGenerator<long>(comp, params);
+}
+
+static SubComponent*
+load_ShmemWaitInt( Component* comp, Params& params ) {
+	return new EmberShmemWaitGenerator<int>(comp, params);
+}
+
+static SubComponent*
+load_ShmemWaitLong( Component* comp, Params& params ) {
+	return new EmberShmemWaitGenerator<long>(comp, params);
+}
+
+static SubComponent*
+load_ShmemWaitUntilInt( Component* comp, Params& params ) {
+	return new EmberShmemWaitUntilGenerator<int>(comp, params);
+}
+
+static SubComponent*
+load_ShmemWaitUntilLong( Component* comp, Params& params ) {
+	return new EmberShmemWaitUntilGenerator<long>(comp, params);
+}
+
+static SubComponent*
+load_ShmemBarrierAll( Component* comp, Params& params ) {
+	return new EmberShmemBarrierAllGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemBarrier( Component* comp, Params& params ) {
+	return new EmberShmemBarrierGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemBroadcast32( Component* comp, Params& params ) {
+	return new EmberShmemBroadcastGenerator<uint32_t>(comp, params);
+}
+
+static SubComponent*
+load_ShmemBroadcast64( Component* comp, Params& params ) {
+	return new EmberShmemBroadcastGenerator<uint64_t>(comp, params);
+}
+
+static SubComponent*
+load_ShmemFcollect32( Component* comp, Params& params ) {
+	return new EmberShmemFcollectGenerator<uint32_t>(comp, params);
+}
+
+static SubComponent*
+load_ShmemFcollect64( Component* comp, Params& params ) {
+	return new EmberShmemFcollectGenerator<uint64_t>(comp, params);
+}
+
+static SubComponent*
+load_ShmemCollect32( Component* comp, Params& params ) {
+	return new EmberShmemCollectGenerator<uint32_t>(comp, params);
+}
+
+static SubComponent*
+load_ShmemCollect64( Component* comp, Params& params ) {
+	return new EmberShmemCollectGenerator<uint64_t>(comp, params);
+}
+
+static SubComponent*
+load_ShmemAlltoall32( Component* comp, Params& params ) {
+	return new EmberShmemAlltoallGenerator<uint32_t>(comp, params);
+}
+
+static SubComponent*
+load_ShmemAlltoall64( Component* comp, Params& params ) {
+	return new EmberShmemAlltoallGenerator<uint64_t>(comp, params);
+}
+
+static SubComponent*
+load_ShmemAlltoalls32( Component* comp, Params& params ) {
+	return new EmberShmemAlltoallsGenerator<uint32_t>(comp, params);
+}
+
+static SubComponent*
+load_ShmemAlltoalls64( Component* comp, Params& params ) {
+	return new EmberShmemAlltoallsGenerator<uint64_t>(comp, params);
+}
+
+static SubComponent*
+load_ShmemReductionFloat( Component* comp, Params& params ) {
+	return new EmberShmemReductionGenerator<float>(comp, params);
+}
+
+static SubComponent*
+load_ShmemReductionDouble( Component* comp, Params& params ) {
+	return new EmberShmemReductionGenerator<double>(comp, params);
+}
+
+static SubComponent*
+load_ShmemReductionInt( Component* comp, Params& params ) {
+	return new EmberShmemReductionGenerator<int>(comp, params);
+}
+
+static SubComponent*
+load_ShmemReductionLong( Component* comp, Params& params ) {
+	return new EmberShmemReductionGenerator<long>(comp, params);
+}
+
+static SubComponent*
+load_ShmemReductionLongLong( Component* comp, Params& params ) {
+	return new EmberShmemReductionGenerator<long long>(comp, params);
 }
 
 
@@ -1082,6 +1357,414 @@ static const ElementInfoSubComponent subcomponents[] = {
 	"SHMEM test",
 	NULL,
 	load_ShmemTest,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemPutIntMotif",
+	"SHMEM put int",
+	NULL,
+	load_ShmemPutInt,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemPutLongMotif",
+	"SHMEM put long",
+	NULL,
+	load_ShmemPutLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemPutFloatMotif",
+	"SHMEM put float",
+	NULL,
+	load_ShmemPutFloat,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemPutDoubleMotif",
+	"SHMEM put double",
+	NULL,
+	load_ShmemPutDouble,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemPutvIntMotif",
+	"SHMEM putv int",
+	NULL,
+	load_ShmemPutvInt,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemPutvLongMotif",
+	"SHMEM putv long",
+	NULL,
+	load_ShmemPutvLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemPutvFloatMotif",
+	"SHMEM putv float",
+	NULL,
+	load_ShmemPutvFloat,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemPutvDoubleMotif",
+	"SHMEM putv",
+	NULL,
+	load_ShmemPutvDouble,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemGetIntMotif",
+	"SHMEM get int",
+	NULL,
+	load_ShmemGetInt,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemGetLongMotif",
+	"SHMEM get long",
+	NULL,
+	load_ShmemGetLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemGetFloatMotif",
+	"SHMEM get float",
+	NULL,
+	load_ShmemGetFloat,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemGetDoubleMotif",
+	"SHMEM get double",
+	NULL,
+	load_ShmemGetDouble,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemGetvIntMotif",
+	"SHMEM getv int",
+	NULL,
+	load_ShmemGetvInt,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemGetvLongMotif",
+	"SHMEM getv long",
+	NULL,
+	load_ShmemGetvLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemGetvFloatMotif",
+	"SHMEM getv float",
+	NULL,
+	load_ShmemGetvFloat,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemGetvDoubleMotif",
+	"SHMEM getv double",
+	NULL,
+	load_ShmemGetvDouble,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemWaitIntMotif",
+	"SHMEM wait int test",
+	NULL,
+	load_ShmemWaitInt,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemWaitLongMotif",
+	"SHMEM wait long test",
+	NULL,
+	load_ShmemWaitLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemWaitUntilIntMotif",
+	"SHMEM wait_until int test",
+	NULL,
+	load_ShmemWaitUntilInt,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemWaitUntilLongMotif",
+	"SHMEM wait_until long test",
+	NULL,
+	load_ShmemWaitUntilLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAddIntMotif",
+	"SHMEM add int",
+	NULL,
+	load_ShmemAddInt,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAddLongMotif",
+	"SHMEM add long",
+	NULL,
+	load_ShmemAddLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAddFloatMotif",
+	"SHMEM add float",
+	NULL,
+	load_ShmemAddFloat,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAddDoubleMotif",
+	"SHMEM add double",
+	NULL,
+	load_ShmemAddDouble,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemFaddIntMotif",
+	"SHMEM add int",
+	NULL,
+	load_ShmemFaddInt,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemFaddLongMotif",
+	"SHMEM fadd long",
+	NULL,
+	load_ShmemFaddLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemFaddFloatMotif",
+	"SHMEM fadd float",
+	NULL,
+	load_ShmemFaddFloat,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemFaddDoubleMotif",
+	"SHMEM fadd double",
+	NULL,
+	load_ShmemFaddDouble,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemCswapIntMotif",
+	"SHMEM cswap int",
+	NULL,
+	load_ShmemCswapInt,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemCswapLongMotif",
+	"SHMEM cswap ong",
+	NULL,
+	load_ShmemCswapLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemCswapFloatMotif",
+	"SHMEM cswap float",
+	NULL,
+	load_ShmemCswapFloat,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemCswapDoubleMotif",
+	"SHMEM cswap double",
+	NULL,
+	load_ShmemCswapDouble,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemSwapIntMotif",
+	"SHMEM swap int",
+	NULL,
+	load_ShmemSwapInt,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemSwapLongMotif",
+	"SHMEM swap long",
+	NULL,
+	load_ShmemSwapLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemBarrierAllMotif",
+	"SHMEM barrier_all",
+	NULL,
+	load_ShmemBarrierAll,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemBarrierMotif",
+	"SHMEM barrier",
+	NULL,
+	load_ShmemBarrier,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemBroadcast32Motif",
+	"SHMEM broadcast32",
+	NULL,
+	load_ShmemBroadcast32,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemBroadcast64Motif",
+	"SHMEM broadcast64",
+	NULL,
+	load_ShmemBroadcast64,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemFcollect32Motif",
+	"SHMEM fcollect32",
+	NULL,
+	load_ShmemFcollect32,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemFcollect64Motif",
+	"SHMEM fcollect64",
+	NULL,
+	load_ShmemFcollect64,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemCollect32Motif",
+	"SHMEM collect32",
+	NULL,
+	load_ShmemCollect32,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemCollect64Motif",
+	"SHMEM collect64",
+	NULL,
+	load_ShmemCollect64,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAlltoall32Motif",
+	"SHMEM alltoall32",
+	NULL,
+	load_ShmemAlltoall32,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAlltoall64Motif",
+	"SHMEM alltoall64",
+	NULL,
+	load_ShmemAlltoall64,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAlltoalls32Motif",
+	"SHMEM alltoalls32",
+	NULL,
+	load_ShmemAlltoalls32,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAlltoalls64Motif",
+	"SHMEM alltoalls64",
+	NULL,
+	load_ShmemAlltoalls64,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemReductionIntMotif",
+	"SHMEM reduction int",
+	NULL,
+	load_ShmemReductionInt,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemReductionLongMotif",
+	"SHMEM reduction long",
+	NULL,
+	load_ShmemReductionLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemReductionLongLongMotif",
+	"SHMEM reduction longlong",
+	NULL,
+	load_ShmemReductionLongLong,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemReductionFloatMotif",
+	"SHMEM reduction float",
+	NULL,
+	load_ShmemReductionFloat,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemReductionDoubleMotif",
+	"SHMEM reduction double",
+	NULL,
+	load_ShmemReductionDouble,
     shmemTest_params,
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"

@@ -53,7 +53,7 @@ void NextBlockPrefetcher::notifyAccess(const CacheListenerNotification& notify) 
 		for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
 			// Create a new read request, we cannot issue a write because the data will get
 			// overwritten and corrupt memory (even if we really do want to do a write)
-            		MemEvent* newEv = new MemEvent(parent, nextBlockAddr, nextBlockAddr, GetS);
+            		MemEvent* newEv = new MemEvent(parent, nextBlockAddr, nextBlockAddr, Command::GetS);
             		newEv->setSrc("Prefetcher");
             		newEv->setSize(blockSize);
             		newEv->setPrefetchFlag(true);

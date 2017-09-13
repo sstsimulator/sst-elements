@@ -31,7 +31,7 @@ networkMemInspector::networkMemInspector(Component *parent)
 
 void networkMemInspector::initialize(std::string id) {
     // Init the stats
-    for (int i = 0; i < LAST_CMD; ++i) {
+    for (int i = 0; i < (int)Command::LAST_CMD; ++i) {
         memCmdStat[i] = registerStatistic<uint64_t>(CommandString[i],id);
     }
 }
@@ -39,7 +39,7 @@ void networkMemInspector::initialize(std::string id) {
 void networkMemInspector::inspectNetworkData(SimpleNetwork::Request* req) {
     MemNIC::MemRtrEvent *mre = dynamic_cast<MemNIC::MemRtrEvent*>(req->inspectPayload());
     if (mre) {
-        memCmdStat[mre->event->getCmd()]->addData(1);
+        memCmdStat[(int)mre->event->getCmd()]->addData(1);
     } else {
         dbg.output(CALL_INFO,"Unexpected payload encountered. Ignoring.\n");
     }

@@ -76,33 +76,50 @@ libfirefly_la_SOURCES = \
 	hadesMP.h \
 	hadesSHMEM.cc \
 	hadesSHMEM.h \
+	shmem/alltoall.cc \
+	shmem/alltoall.h \
+	shmem/alltoalls.cc \
+	shmem/alltoalls.h \
+	shmem/barrier.cc \
+	shmem/barrier.h \
+	shmem/broadcast.cc \
+	shmem/broadcast.h \
+	shmem/collect.cc \
+	shmem/collect.h \
+	shmem/common.cc \
+	shmem/common.h \
+	shmem/fcollect.cc \
+	shmem/fcollect.h \
+	shmem/reduction.cc \
+	shmem/reduction.h \
 	merlinEvent.h \
 	virtNic.h \
 	virtNic.cc \
-	nic.h \
 	nic.cc \
-	nicEvents.h \
-	nicVirtNic.h \
-	nicShmem.h \
-	nicShmem.cc \
+	nic.h \
 	nicArbitrateDMA.h \
-	nicSendMachine.cc \
-	nicSendMachine.h \
-	nicRecvMachine.cc \
-	nicRecvMachine.h \
-	nicEntryBase.h \
 	nicEntryBase.cc \
-	nicRecvEntry.h \
-	nicShmemRecvMachine.h \
-	nicSendEntry.h \
-	nicShmemSendEntry.h \
-	nicShmemSendEntry.cc \
+	nicEntryBase.h \
+	nicEvents.h \
 	nicMsgStream.cc \
 	nicMsgStream.h \
 	nicRdmaStream.cc \
 	nicRdmaStream.h \
+	nicRecvEntry.h \
+	nicRecvMachine.cc \
+	nicRecvMachine.h \
+	nicSendEntry.h \
+	nicSendMachine.cc \
+	nicSendMachine.h \
+	nicShmem.cc \
+	nicShmem.h \
+	nicShmemMove.h \
+	nicShmemMove.cc \
+	nicShmemRecvMachine.h \
+	nicShmemSendEntry.h \
 	nicShmemStream.cc \
 	nicShmemStream.h \
+	nicVirtNic.h \
 	nodePerf.h
 
 libfirefly_la_LDFLAGS = -module -avoid-version
