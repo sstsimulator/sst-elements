@@ -1318,11 +1318,17 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
   	{ "dram_count",         "Sets the number of DRAM blocks per cube", "20" },
 	{ "xbar_depth",         "Sets the queue depth for the HMC X-bar", "8" },
         { "max_req_size",       "Sets the maximum requests which can be inflight from the controller side at any time", "32" },
+#ifdef HMC_DEV_DRAM_LATENCY
+        { "dram_latency",       "Sets the internal DRAM fetch latency in clock cycles", "2" },
+#endif
 	{ "trace-banks", 	"Decides where tracing for memory banks is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
 	{ "trace-queue", 	"Decides where tracing for queues is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
 	{ "trace-cmds", 	"Decides where tracing for commands is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
 	{ "trace-latency", 	"Decides where tracing for latency is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
 	{ "trace-stalls", 	"Decides where tracing for memory stalls is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
+#ifdef HMC_TRACE_POWER
+        { "trace-power",        "Decides where tracing for memory power is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
+#endif
 	{ "tag_count",		"Sets the number of inflight tags that can be pending at any point in time", "16" },
 	{ "capacity_per_device", "Sets the capacity of the device being simulated in GiB, min=2, max=8, default is 4", "4" },
 	{ NULL, NULL, NULL }

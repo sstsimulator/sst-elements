@@ -242,7 +242,6 @@ class HadesSHMEM : public Shmem::Interface
 	void delayReturn( Shmem::Callback callback, SimTime_t delay = 0 );
 
     void handleToDriver(SST::Event* e) {
-        dbg().verbose(CALL_INFO,1,1,"%p event=%p\n",this,e);
         DelayEvent* event = static_cast<DelayEvent*>(e);
 		if ( DelayEvent::One == event->type ) {
         	event->m_callback1();
