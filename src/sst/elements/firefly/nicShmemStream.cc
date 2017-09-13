@@ -70,6 +70,7 @@ Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, FireflyNetworkEvent*
 
 Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processAck( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_vNic, int dest_vNic )
 {
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Ack\n");
 	m_rm.m_nic.shmemDecPending( local_vNic );
 
     return std::bind( &Nic::RecvMachine::state_move_2, &m_rm, ev );
@@ -93,6 +94,8 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processPu
                                 (Hermes::Value::Type) hdr.dataType );
         } 
 
+		m_sendEntry = new ShmemAckSendEntry( local_vNic, ev->src, dest_vNic );
+
     } else {
         m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d respKey=%#" PRIx64 "\n",
             m_shmemHdr.op, m_shmemHdr.respKey);
@@ -114,8 +117,6 @@ Nic::RecvMachine::ShmemStream::Callback Nic::RecvMachine::ShmemStream::processPu
         }
     }
 	m_matched_len = hdr.length;
-
-	m_sendEntry = new ShmemAckSendEntry( local_vNic, ev->src, dest_vNic );
 
     return std::bind( &Nic::RecvMachine::state_move_0, &m_rm, ev, this );
 }
