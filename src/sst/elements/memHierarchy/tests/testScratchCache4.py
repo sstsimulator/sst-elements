@@ -71,7 +71,7 @@ comp_l2_0 = sst.Component("l2_0", "memHierarchy.Cache")
 comp_l2_0.addParams({
     "debug" : debugL2 | debugCore0,
     "debug_level" : 10,
-    "debug_addr" : "0x1340",
+    "debug_addr" : "[0x1340]",
     "cache_frequency" : core_clock,
     "cache_size" : "16KiB",
     "access_latency_cycles" : 5,
@@ -139,7 +139,7 @@ comp_l2_1 = sst.Component("l2_1", "memHierarchy.Cache")
 comp_l2_1.addParams({
     "debug" : debugL2 | debugCore1,
     "debug_level" : 10,
-    "debug_addr" : "0x1340",
+    "debug_addr" : "[0x1340]",
     "cache_frequency" : core_clock,
     "cache_size" : "16KiB",
     "access_latency_cycles" : 5,
@@ -155,7 +155,7 @@ comp_dir = sst.Component("dir", "memHierarchy.DirectoryController")
 comp_dir.addParams({
     "debug" : debugDir | debugCore0 | debugCore1,
     "debug_level" : 10,
-    "debug_addr" : "0x1340",
+    "debug_addr" : "[0x1340]",
     "entry_cache_size" : 1024,
     "coherence_protocol" : "MESI",
     "memNIC.network_address" : 2,
@@ -168,7 +168,7 @@ comp_scratch = sst.Component("scratch", "memHierarchy.Scratchpad")
 comp_scratch.addParams({
     "debug" : debugScratch | debugCore0 | debugCore1,
     "debug_level" : 10,
-    "debug_addr" : "0x1340",
+    "debug_addr" : "[0x1340]",
     "clock" : core_clock,
     "size" : "64KiB",
     "scratch_line_size" : 64,

@@ -32,6 +32,15 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+/* Debug macros */
+#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
+#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#else
+#define is_debug_addr(addr) false
+#define is_debug_event(ev) false
+#endif
+
 
 void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStall) {
     if (!replay) {
@@ -195,8 +204,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     
     
     // Debug
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR)) {
+    if (is_debug_event(ev)) {
         if (replay) {
             d_->debug(_L3_, "Replay. Name: %s. Cycles: %" PRIu64 ". Event: (%s)\n", this->getName().c_str(), timestamp_, ev->getVerboseString().c_str());
         } else {
@@ -205,7 +213,6 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         }
         cout << flush;
     }
-#endif
 
     // Set noncacheable requests if needed
     if (cf_.allNoncacheableRequests_) {
@@ -243,7 +250,6 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         canStall = cacheLine == nullptr || !(cacheLine->isLocked());
     }
 
-    profileEvent(event, cmd, replay, canStall);
 
     switch(cmd) {
         case Command::GetS:
@@ -253,6 +259,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             if (!replay && mshr_->isAlmostFull()) { 
                 // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
                 if (!cf_.L1_) {
+                    profileEvent(event, cmd, replay, canStall);
                     sendNACK(event);
                     break;
                 } else if (canStall) {
@@ -260,6 +267,8 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
                     return false;
                 }
             }
+            
+            profileEvent(event, cmd, replay, canStall);
             
             if (mshr_->isHit(baseAddr) && canStall) {
                 // Drop local prefetches if there are outstanding requests for the same address NOTE this includes replacements/inv/etc.
@@ -269,9 +278,9 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
                     break;
                 }
                 if (processRequestInMSHR(baseAddr, event)) {
-#ifdef __SST_DEBUG_OUTPUT__
-                    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
-#endif
+                    if (is_debug_addr(baseAddr)) 
+                        d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
+                    
                     event->setBlocked(true);
                 }
                 // track times in our separate queue
@@ -292,14 +301,17 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         case Command::GetSResp:
         case Command::GetXResp:
         case Command::FlushLineResp:
+            profileEvent(event, cmd, replay, canStall);
             processCacheResponse(event, baseAddr);
             break;
         case Command::PutS:
         case Command::PutM:
         case Command::PutE:
+            profileEvent(event, cmd, replay, canStall);
             processCacheReplacement(event, cmd, baseAddr, replay);
             break;
         case Command::NACK:
+            profileEvent(event, cmd, replay, canStall);
             origEvent = event->getNACKedEvent();
             processIncomingNACK(origEvent);
             delete event;
@@ -309,16 +321,19 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         case Command::FetchInvX:
         case Command::Inv:
         case Command::ForceInv:
+            profileEvent(event, cmd, replay, canStall);
             processCacheInvalidate(event, baseAddr, replay);
             break;
         case Command::AckPut:
         case Command::AckInv:
         case Command::FetchResp:
         case Command::FetchXResp:
+            profileEvent(event, cmd, replay, canStall);
             processFetchResp(event, baseAddr);
             break;
         case Command::FlushLine:
         case Command::FlushLineInv:
+            profileEvent(event, cmd, replay, canStall);
             processCacheFlush(event, baseAddr, replay);
             break;
         default:
@@ -330,7 +345,9 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
 /* For handling non-cache commands (including NONCACHEABLE data requests) */
 void Cache::processNoncacheable(MemEventBase* event) {
     if (CommandCPUSide[(int)event->getCmd()]) {
-        responseDst_.insert(std::make_pair(event->getID(), event->getSrc()));
+        if (!(event->queryFlag(MemEvent::F_NORESPONSE))) {
+            responseDst_.insert(std::make_pair(event->getID(), event->getSrc()));
+        }
         coherenceMgr_->forwardTowardsMem(event);
     } else {
         std::map<SST::Event::id_type,std::string>::iterator it = responseDst_.find(event->getResponseToID());

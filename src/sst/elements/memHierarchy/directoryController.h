@@ -46,8 +46,7 @@ class MemNIC;
 class DirectoryController : public Component {
 
     Output dbg;
-    bool DEBUG_ALL;
-    Addr DEBUG_ADDR;
+    std::set<Addr> DEBUG_ADDR;
     struct DirEntry;
 
     /* Total number of cache blocks we are responsible for */

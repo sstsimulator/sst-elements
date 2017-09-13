@@ -31,11 +31,11 @@ MultiThreadL1::MultiThreadL1(ComponentId_t id, Params &params) : Component(id) {
     
     int debugLevel = params.find<int>("debug_level", 0);
     debug.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
-    int dAddr = params.find<int>("debug_addr", -1);
-    DEBUG_ADDR = (Addr) dAddr;
-    if (dAddr == -1) DEBUG_ALL = true;
-    else DEBUG_ALL = false;
-
+    
+    std::vector<Addr> addrArr;
+    params.find_array<Addr>("debug_addr", addrArr);
+    for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++) 
+        DEBUG_ADDR.insert(*it);
 
     /* Setup clock */
     clockHandler = new Clock::Handler<MultiThreadL1>(this, &MultiThreadL1::tick);

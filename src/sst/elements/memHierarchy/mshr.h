@@ -68,7 +68,7 @@ struct mshrType {
 struct mshrEntry {
     vector<mshrType> mshrQueue; // Events and pointers to events for this address
     uint32_t        acksNeeded; // Acks needed for request at top of queue. Here instead of at cacheline for non-inclusive caches
-    vector<uint8_t> tempData;   // Temporary holding place for response data during replay of request events (for non-inclusive caches)
+    vector<uint8_t> dataBuffer;   // Temporary holding place for response data during replay of request events (for non-inclusive caches)
 };
 
 typedef map<Addr, mshrEntry >   mshrTable;
@@ -82,7 +82,7 @@ class MSHR {
 public:
         
     // used externally
-    MSHR(Output* dbg, int maxSize, string cacheName, bool debugAll, Addr debugAddr);                                     
+    MSHR(Output* dbg, int maxSize, string cacheName, std::set<Addr> debugAddr);
     bool exists(Addr baseAddr);                             
     vector<mshrType>* getAll(Addr);                       
     
@@ -112,9 +112,10 @@ public:
     void setAcksNeeded(Addr baseAddr, int acksNeeded, MemEvent * event = nullptr);
     void incrementAcksNeeded(Addr baseAddr);
     void decrementAcksNeeded(Addr baseAddr);
-    vector<uint8_t> * getTempData(Addr baseAddr);
-    void setTempData(Addr baseAddr, vector<uint8_t>& data);
-    void clearTempData(Addr baseAddr);
+    vector<uint8_t> * getDataBuffer(Addr baseAddr);
+    void setDataBuffer(Addr baseAddr, vector<uint8_t>& data);
+    void clearDataBuffer(Addr baseAddr);
+    bool isDataBufferValid(Addr baseAddr);
 
     // used internally
     bool insert(Addr baseAddr, mshrType entry);         // internal
@@ -138,8 +139,7 @@ private:
     int maxSize_;
     int prefetchCount_;
     string ownerName_;
-    bool DEBUG_ALL;
-    Addr DEBUG_ADDR;
+    std::set<Addr> DEBUG_ADDR;
 };
 }}
 #endif

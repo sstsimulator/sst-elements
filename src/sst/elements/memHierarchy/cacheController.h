@@ -16,7 +16,6 @@
 /*
  * File:   cache.h
  * Author: Caesar De la Paz III
- * Email:  caesar.sst@gmail.com
  */
 
 #ifndef _CACHECONTROLLER_H_
@@ -307,8 +306,7 @@ private:
     std::map<LinkId_t, SST::Link*>  linkIdMap_;
     std::map<MemEvent*,uint64>      startTimeList;
     std::map<MemEvent*,int> missTypeList;
-    bool                    DEBUG_ALL;
-    Addr                    DEBUG_ADDR;
+    std::set<Addr>          DEBUG_ADDR;
 
     // These parameters are for the coherence controller and are detected during init
     bool                    isLL;
