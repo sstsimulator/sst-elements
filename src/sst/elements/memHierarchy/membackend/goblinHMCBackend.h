@@ -18,6 +18,7 @@
 #define _H_SST_MEMH_GOBLIN_HMC_BACKEND
 
 #include <queue>
+#include <vector>
 
 #include <sst/core/component.h>
 #include <sst/core/elementinfo.h>
@@ -34,8 +35,8 @@ namespace MemHierarchy {
 
 class HMCSimBackEndReq {
 	public:
-		HMCSimBackEndReq(MemBackend::ReqId r, Addr a, uint64_t sTime) :
-			req(r), addr(a), startTime(sTime) {}
+		HMCSimBackEndReq(MemBackend::ReqId r, Addr a, uint64_t sTime, bool hr) :
+			req(r), addr(a), startTime(sTime), hasResp(hr) {}
 		~HMCSimBackEndReq() {}
 
 		uint64_t getStartTime() const {
@@ -48,19 +49,24 @@ class HMCSimBackEndReq {
         Addr getAddr() const {
 			return addr;
 		}
+        bool hasResponse() const {
+                        return hasResp;
+                }
 	private:
         MemBackend::ReqId req;
         Addr addr;
-		uint64_t startTime;
+	uint64_t startTime;
+        bool hasResp;
 };
 
-class GOBLINHMCSimBackend : public SimpleMemBackend {
+class GOBLINHMCSimBackend : public ExtMemBackend {
 
 public:
-	GOBLINHMCSimBackend() : SimpleMemBackend() {};
 	GOBLINHMCSimBackend(Component* comp, Params& params);
 	~GOBLINHMCSimBackend();
-	bool issueRequest(ReqId, Addr, bool, unsigned);
+	bool issueRequest(ReqId, Addr, bool,
+                          std::vector<uint64_t>,
+                          uint32_t, unsigned);
 	void setup();
 	void finish();
 	virtual bool clock(Cycle_t cycle);
