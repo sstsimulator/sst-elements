@@ -1331,6 +1331,8 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 #endif
 	{ "tag_count",		"Sets the number of inflight tags that can be pending at any point in time", "16" },
 	{ "capacity_per_device", "Sets the capacity of the device being simulated in GiB, min=2, max=8, default is 4", "4" },
+        { "cmc-config",         "Enables a CMC library command in HMCSim", "NONE" },
+        { "cmd-map",            "Maps an existing HMC or CMC command to the target command type", "NONE" },
 	{ NULL, NULL, NULL }
 };
 #endif
