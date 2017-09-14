@@ -20,6 +20,7 @@
 #include <iostream>
 #include <string>
 #include <ctime>
+#include <cmath>
 
 //local includes
 #include "c_TxnGen.hpp"
@@ -72,7 +73,15 @@ c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
                   << std::endl;
         //exit(-1);
     }
-
+    
+    uint32_t k_numBytesPerTransaction = x_params.find<std::uint32_t>("numBytesPerTransaction", 32, l_found);
+    if (!l_found) {
+        std::cout << "TxnGen:: numBytesPerTransaction is missing...  exiting"
+                  << std::endl;
+        exit(-1);
+    }
+    m_sizeOffset = (uint)log2(k_numBytesPerTransaction);
+    
     /*---- CONFIGURE LINKS ----*/
 
     // request-related links
@@ -315,9 +324,9 @@ c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
 
 uint64_t c_TxnGen::getNextAddress() {
     if(m_mode==e_TxnMode::RAND)
-        return (rand());
+        return (rand()<<m_sizeOffset);
     else
-        return (m_prevAddress+1);
+        return (m_prevAddress+(1<<m_sizeOffset));
 }
 
 

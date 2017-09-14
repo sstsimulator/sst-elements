@@ -77,6 +77,7 @@ namespace SST {
             uint32_t m_seqNum;
 
             uint32_t m_mode;
+            uint32_t m_sizeOffset;
 
 
             //links
