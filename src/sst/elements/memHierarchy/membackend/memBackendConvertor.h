@@ -40,12 +40,12 @@ class MemBackendConvertor : public SubComponent {
         static uint32_t getBaseId( ReqId id) { return id >> 32; }
         virtual uint64_t id()   { return ((uint64_t)m_reqId << 32); }
         virtual void decrement() { }
-        void increment( uint32_t bytes ) { }
+        virtual void increment( uint32_t bytes ) { }
         virtual bool isDone() { return true; } /* If we're asking, the answer is yes */
         virtual bool issueDone() { return true; } /* If we're asking, the answer is yes */
         virtual std::string getString() { 
             std::ostringstream str;
-            str << "ID: " << m_reqId << (isMemEv() ? "MemReq " : "CustomReq ");
+            str << "ID: " << m_reqId << (isMemEv() ? " MemReq " : " CustomReq ");
             return str.str();
         }
         bool isMemEv() { return m_memEv; }

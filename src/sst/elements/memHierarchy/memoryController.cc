@@ -191,7 +191,7 @@ void MemController::handleEvent(SST::Event* event) {
     MemEvent *ev = static_cast<MemEvent*>(event);
     
     if (is_debug_event(ev)) {
-        Debug(_L3_, "\n%" PRIu64 " (%s) Recieved: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
+        Debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
     }
 
     if (ev->isAddrGlobal()) {
