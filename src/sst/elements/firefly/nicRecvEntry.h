@@ -84,7 +84,7 @@ class ShmemRecvEntry : public RecvEntryBase {
 
     std::vector<IoVec>& ioVec() { assert(0); }
 
-    bool copyIn( Output& dbg, FireflyNetworkEvent& ev, std::vector<DmaVec>& vec ) {
+    bool copyIn( Output& dbg, FireflyNetworkEvent& ev, std::vector<MemOp>& vec ) {
         return m_shmemMove->copyIn( dbg, ev, vec );  
     }
 
@@ -105,7 +105,7 @@ class ShmemGetRespRecvEntry : public RecvEntryBase {
 
     std::vector<IoVec>& ioVec() { assert(0); }
 
-    bool copyIn( Output& dbg, FireflyNetworkEvent& ev, std::vector<DmaVec>& vec ) {
+    bool copyIn( Output& dbg, FireflyNetworkEvent& ev, std::vector<MemOp>& vec ) {
         return m_shmemMove->copyIn( dbg, ev, vec );  
     }
 
