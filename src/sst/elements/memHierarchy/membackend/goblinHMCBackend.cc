@@ -278,6 +278,13 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : ExtM
 		output->verbose(CALL_INFO, 1, 0, "Initialized successfully.\n");
 	}
 
+        rc = hmcsim_util_set_max_blocksize(&the_hmc, 0, 128);
+        if(0 != rc ){
+		output->fatal(CALL_INFO, -1, "Unable to initialize HMC back end max block size to 128\n" );
+        }else{
+		output->verbose(CALL_INFO, 1, 0, "Initialized block size successfully.\n");
+        }
+
 #if defined( HMC_TRACE_POWER )
         // load the power config
         rc = hmcsim_power_config( &the_hmc,
@@ -401,6 +408,21 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : ExtM
 
 	// We are done with all the config/
 	output->verbose(CALL_INFO, 1, 0, "Completed HMC Simulation Backend Initialization.\n");
+}
+
+bool GOBLINHMCSimBackend::HMCRqstToStr( hmc_rqst_t R,
+                                        std::string *S ){
+  int cur = 0;
+
+  while( __PACKETS[cur].name != "EOL" ){
+    if( __PACKETS[cur].type == R ){
+      *S = __PACKETS[cur].name;
+      return true;
+    }
+    cur++;
+  }
+
+  return false;
 }
 
 bool GOBLINHMCSimBackend::strToHMCRqst( std::string S,
@@ -629,6 +651,13 @@ bool GOBLINHMCSimBackend::issueMappedRequest(ReqId reqId, Addr addr, bool isWrit
     if( (MapCmd->getSrcType() == Src) &&
         ((unsigned)(MapCmd->getSrcSize()) == numBytes) ){
       // found a positive map
+      std::string name;
+      if( !HMCRqstToStr(MapCmd->getTargetType(), &name) ){
+        output->fatal(CALL_INFO, -1, "Unable to map hmc_rqst_t to name\n");
+      }
+      output->verbose(CALL_INFO, 8, 0,
+                      "Found mapped request target of %s\n", name.c_str() );
+
       break;
     }
     MapCmd = NULL;

@@ -291,6 +291,7 @@ private:
                       vector<string>& v);
 
         bool strToHMCRqst( std::string, hmc_rqst_t *, bool );
+        bool HMCRqstToStr( hmc_rqst_t R, std::string *S );
         bool isPostedRqst( hmc_rqst_t );
 
 	bool issueMappedRequest(ReqId, Addr, bool,
