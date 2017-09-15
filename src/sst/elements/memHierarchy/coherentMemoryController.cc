@@ -295,8 +295,10 @@ bool CoherentMemController::clock(Cycle_t cycle) {
         unclockLink = link_->clock();
     bool unclockBack = memBackendConvertor_->clock(cycle);
 
-    if (unclockLink && unclockBack) {
+    if (unclockLink && unclockBack && msgQueue_.empty()) {
         memBackendConvertor_->turnClockOff();
+        clockOn_ = false;
+        return true;
     }
 
     return false;
