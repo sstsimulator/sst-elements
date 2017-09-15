@@ -16,7 +16,7 @@
 class ShmemRecvMove {
   public:
     virtual ~ShmemRecvMove() {}
-    virtual bool copyIn( Output& dbg, FireflyNetworkEvent&, std::vector<DmaVec>& ) = 0;
+    virtual bool copyIn( Output& dbg, FireflyNetworkEvent&, std::vector<MemOp>& ) = 0;
     virtual bool isDone() = 0;
 };
 
@@ -26,7 +26,7 @@ class ShmemRecvMoveMem : public ShmemRecvMove {
     ShmemRecvMoveMem( void* ptr, size_t length, Shmem* shmem, int core, Hermes::Vaddr addr ) :
         m_ptr((uint8_t*)ptr), m_length( length ), m_shmem(shmem), m_core(core), m_addr( addr ), m_offset(0)  {}
 
-    virtual bool copyIn( Output& dbg, FireflyNetworkEvent&, std::vector<DmaVec>& );
+    virtual bool copyIn( Output& dbg, FireflyNetworkEvent&, std::vector<MemOp>& );
     bool isDone() { return m_offset == m_length; }
 
   protected:
@@ -46,7 +46,7 @@ class ShmemRecvMoveMemOp : public ShmemRecvMoveMem {
            Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType ) :
         ShmemRecvMoveMem( ptr, length, shmem, core, addr ), m_op( op ), m_dataType(dataType)
     {}
-    virtual bool copyIn( Output& dbg, FireflyNetworkEvent&, std::vector<DmaVec>& );
+    virtual bool copyIn( Output& dbg, FireflyNetworkEvent&, std::vector<MemOp>& );
     bool isDone() { return m_offset == m_length; }
   private:
     Hermes::Shmem::ReduOp m_op;
@@ -59,7 +59,7 @@ class ShmemRecvMoveValue : public ShmemRecvMove {
     ShmemRecvMoveValue( Hermes::Value& value ) : 
         m_value(value), m_offset(0)  {}
 
-    bool copyIn( Output& dbg, FireflyNetworkEvent&, std::vector<DmaVec>& );
+    bool copyIn( Output& dbg, FireflyNetworkEvent&, std::vector<MemOp>& );
     bool isDone() { return m_offset == m_value.getLength(); }
 
   private:
@@ -71,7 +71,7 @@ class ShmemSendMove {
   public:
     virtual ~ShmemSendMove() {}
     virtual void copyOut( Output& dbg, int vc, int numBytes,
-            FireflyNetworkEvent&, std::vector<DmaVec>& ) = 0;
+            FireflyNetworkEvent&, std::vector<MemOp>& ) = 0;
 
     virtual bool isDone() = 0;
 };
@@ -79,17 +79,18 @@ class ShmemSendMove {
 class ShmemSendMoveMem : public ShmemSendMove {
 
   public:
-    ShmemSendMoveMem( void* ptr, size_t length ) :
-        m_ptr((uint8_t*)ptr), m_length( length ), m_offset(0)  { }
+    ShmemSendMoveMem( void* ptr, size_t length, Hermes::Vaddr addr ) :
+        m_ptr((uint8_t*)ptr), m_length( length ), m_offset(0), m_addr(addr)  { }
 
     virtual void copyOut( Output& dbg, int vc, int numBytes,
-            FireflyNetworkEvent&, std::vector<DmaVec>& );
+            FireflyNetworkEvent&, std::vector<MemOp>& );
     bool isDone() { return m_offset == m_length; }
 
   private:
     uint8_t*  m_ptr;
     size_t m_length;
     size_t m_offset;
+    Hermes::Vaddr m_addr;
 };
 
 class ShmemSendMoveValue : public ShmemSendMove {
@@ -99,7 +100,7 @@ class ShmemSendMoveValue : public ShmemSendMove {
         m_value( value ), m_offset(0)  { }
 
     virtual void copyOut( Output& dbg, int vc, int numBytes,
-            FireflyNetworkEvent&, std::vector<DmaVec>& );
+            FireflyNetworkEvent&, std::vector<MemOp>& );
     bool isDone() { return m_offset == m_value.getLength(); }
 
   private:
@@ -114,7 +115,7 @@ class ShmemSendMove2Value : public ShmemSendMove {
         m_value1( value1 ), m_value2( value2), m_offset(0)  { }
 
     virtual void copyOut( Output& dbg, int vc, int numBytes,
-            FireflyNetworkEvent&, std::vector<DmaVec>& );
+            FireflyNetworkEvent&, std::vector<MemOp>& );
 
     bool isDone() { return m_offset == getLength(); }
 
