@@ -60,6 +60,7 @@
 #include "memNetBridge.h"
 #include "multithreadL1Shim.h"
 #include "scratchpad.h"
+#include "coherentMemoryController.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
@@ -908,6 +909,39 @@ static const ElementInfoPort memctrl_ports[] = {
     {NULL, NULL, NULL}
 };
 
+
+/*****************************************************************************************
+ *  Component: CoherentMemController
+ *  Purpose: Main memory controller, analagous to a single channel, supports custom memory
+ *  instructions which can issue cache line shootdowns
+ *****************************************************************************************/
+static Component* create_CoherentMemController(ComponentId_t id, Params& params){
+	return new CoherentMemController( id, params );
+}
+
+static const ElementInfoParam cohmemctrl_params[] = {
+    /* Required parameters */
+    {"backend.mem_size",    "(string) Size of physical memory. NEW REQUIREMENT: must include units in 'B' (SI ok). Simple fix: add 'MiB' to old value."},
+    {"clock",               "(string) Clock frequency of controller"},
+    /* Optional parameters */
+    {"backend",             "(string) Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
+    {"request_width",       "(uint) Size of a DRAM request in bytes.", "64"},
+    {"max_requests_per_cycle",  "(int) Maximum number of requests to accept per cycle. 0 or negative is unlimited. Default is 1 for simpleMem backend, unlimited otherwise.", "1"},
+    {"trace_file",          "(string) File name (optional) of a trace-file to generate.", ""},
+    {"debug",               "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_level",         "(uint) Debugging level: 0 to 10", "0"},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
+    {"listenercount",       "(uint) Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
+    {"listener%(listenercount)d", "(string) Loads a listener module into the controller", ""},
+    {"do_not_back",         "(bool) DO NOT use this parameter if simulation depends on correct memory values. Otherwise, set to '1' to reduce simulation's memory footprint", "0"},
+    {"memory_file",         "(string) Optional backing-store file to pre-load memory, or store resulting state", "N/A"},
+    {"addr_range_start",    "(uint) Lowest address handled by this memory.", "0"},
+    {"addr_range_end",      "(uint) Highest address handled by this memory.", "uint64_t-1"},
+    {"interleave_size",     "(string) Size of interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},
+    {"interleave_step",     "(string) Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},
+    {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""},
+    {NULL, NULL, NULL}
+};
 
 /*****************************************************************************************
  *  SubComponent: simpleMemBackendConvertor
@@ -1978,6 +2012,15 @@ static const ElementInfoComponent components[] = {
             COMPONENT_CATEGORY_MEMORY,
 	    memctrl_statistics
 	},
+        {   "CoherentMemController",
+            "Coherent memory controller component",
+            NULL,
+            create_CoherentMemController,
+            cohmemctrl_params,
+            memctrl_ports,
+            COMPONENT_CATEGORY_MEMORY,
+            memctrl_statistics
+        },
 	{   "DirectoryController",
 	    "Coherencey Directory Controller Component",
 	    NULL,

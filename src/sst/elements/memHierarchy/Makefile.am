@@ -20,6 +20,8 @@ libmemHierarchy_la_SOURCES = \
 	bus.cc \
 	memoryController.h \
 	memoryController.cc \
+	coherentMemoryController.h \
+	coherentMemoryController.cc \
 	membackend/timingDRAMBackend.cc \
 	membackend/timingDRAMBackend.h \
 	membackend/timingAddrMapper.h \
@@ -61,6 +63,7 @@ libmemHierarchy_la_SOURCES = \
 	memLink.cc \
 	memNIC.h \
 	memNIC.cc \
+	customCmdMemory.h \
 	directoryController.h \
 	directoryController.cc \
 	scratchpad.h \
@@ -159,6 +162,7 @@ nobase_sst_HEADERS = \
 	memEventBase.h \
 	memEvent.h \
 	memNIC.h \
+	customCmdMemory.h \
 	membackend/memBackend.h \
 	membackend/vaultSimBackend.h \
 	membackend/MessierBackend.h \
@@ -168,6 +172,7 @@ nobase_sst_HEADERS = \
 	membackend/requestReorderByRow.h \
 	membackend/delayBuffer.h \
 	memoryController.h \
+	coherentMemoryController.h \
 	cacheListener.h \
 	bus.h \
 	util.h \

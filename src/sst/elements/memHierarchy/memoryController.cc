@@ -43,7 +43,7 @@ using namespace SST::MemHierarchy;
 #else
 #define is_debug_addr(addr) false
 #define is_debug_event(ev) false
-#define Debug(addrfilter, level, fmt, ... )
+#define Debug(level, fmt, ... )
 #endif
 
 /*************************** Memory Controller ********************/

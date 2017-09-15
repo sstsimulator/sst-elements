@@ -88,6 +88,14 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
     }
 }
 
+void MemBackendConvertor::handleCustomEvent( CustomCmdInfo * info) {
+    uint32_t id = genReqId();
+    CustomReq* req = new CustomReq( info, id );
+    m_requestQueue.push_back( req );
+    m_pendingRequests[id] = req;
+    m_dbg.fatal(CALL_INFO, -1, "Error: %s, Custom events not supported. Event info: %s\n", getName().c_str(), info->getString().c_str());
+}
+
 bool MemBackendConvertor::clock(Cycle_t cycle) {
     m_cycleCount++;
 
@@ -98,9 +106,8 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
             break;
         }
 
-        MemReq* req = m_requestQueue.front();
-        Debug(_L10_, "Processing request: addr: %" PRIu64 ", baseAddr: %" PRIu64 ", processed: %" PRIu32 ", id: %" PRIu64 ", isWrite: %d\n",
-                req->addr(), req->baseAddr(), req->processed(), req->id(), req->isWrite());
+        BaseReq* req = m_requestQueue.front();
+        Debug(_L10_, "Processing request: %s\n", req->getString().c_str());
 
         if ( issue( req ) ) {
             cycleWithIssue = true;
@@ -113,7 +120,7 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
         reqsThisCycle++;
         req->increment( m_backendRequestWidth );
 
-        if ( req->processed() >= req->size() ) {
+        if ( req->issueDone() ) {
             Debug(_L10_, "Completed issue of request\n");
             m_requestQueue.pop_front();
         }
@@ -164,46 +171,57 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
         turnClockOn(cycle);
     }
 
-    uint32_t id = MemReq::getBaseId(reqId);
+    uint32_t id = BaseReq::getBaseId(reqId);
     MemEvent* resp = NULL;
 
     if ( m_pendingRequests.find( id ) == m_pendingRequests.end() ) {
         m_dbg.fatal(CALL_INFO, -1, "memory request not found\n");
     }
 
-    MemReq* req = m_pendingRequests[id];
+    BaseReq* req = m_pendingRequests[id];
 
     req->decrement( );
 
     if ( req->isDone() ) {
         m_pendingRequests.erase(id);
-        MemEvent* event = req->getMemEvent();
+
+        if (!req->isMemEv()) {
+       
+            CustomCmdInfo * info = static_cast<CustomReq*>(req)->getInfo();
+            if (!flags) flags = info->getFlags();
+            sendResponse(info->getID(), flags);
+            delete info; // NOTE move this if needed, currently memController doesn't need it
+
+        } else {
+
+            MemEvent* event = static_cast<MemReq*>(req)->getMemEvent();
     
-        Debug(_L10_,"doResponse req is done. %s\n", event->getBriefString().c_str()); 
+            Debug(_L10_,"doResponse req is done. %s\n", event->getBriefString().c_str()); 
         
-        Cycle_t latency = m_cycleCount - event->getDeliveryTime();
+            Cycle_t latency = m_cycleCount - event->getDeliveryTime();
 
-        doResponseStat( event->getCmd(), latency );
+            doResponseStat( event->getCmd(), latency );
         
-        if (!flags) flags = event->getFlags();
-        sendResponse(event->getID(), flags); // Needs to occur before a flush is completed since flush is dependent
+            if (!flags) flags = event->getFlags();
+            sendResponse(event->getID(), flags); // Needs to occur before a flush is completed since flush is dependent
 
-        // TODO clock responses
-        // Check for flushes that are waiting on this event to finish
-        if (m_dependentRequests.find(event) != m_dependentRequests.end()) {
-            std::set<MemEvent*, memEventCmp> flushes = m_dependentRequests.find(event)->second;
+            // TODO clock responses
+            // Check for flushes that are waiting on this event to finish
+            if (m_dependentRequests.find(event) != m_dependentRequests.end()) {
+                std::set<MemEvent*, memEventCmp> flushes = m_dependentRequests.find(event)->second;
             
-            for (std::set<MemEvent*, memEventCmp>::iterator it = flushes.begin(); it != flushes.end(); it++) {
-                (m_waitingFlushes.find(*it)->second).erase(event);
-                if ((m_waitingFlushes.find(*it)->second).empty()) {
-                    MemEvent * flush = *it;
-                    sendResponse(flush->getID(), (flush->getFlags() | MemEvent::F_SUCCESS));
-                    m_waitingFlushes.erase(flush);
+                for (std::set<MemEvent*, memEventCmp>::iterator it = flushes.begin(); it != flushes.end(); it++) {
+                    (m_waitingFlushes.find(*it)->second).erase(event);
+                    if ((m_waitingFlushes.find(*it)->second).empty()) {
+                        MemEvent * flush = *it;
+                        sendResponse(flush->getID(), (flush->getFlags() | MemEvent::F_SUCCESS));
+                        m_waitingFlushes.erase(flush);
+                    }
                 }
+                m_dependentRequests.erase(event);
             }
-            m_dependentRequests.erase(event);
+            delete req;
         }
-        delete req;
     }
 }
 
