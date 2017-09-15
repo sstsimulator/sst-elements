@@ -52,7 +52,7 @@ comp_memory.addParams({
       "backend.trace-cmds" : "1",
       "backend.trace-latency" : "1",
       "backend.trace-stalls" : "1",
-      "backend.cmd-map" : "RD:64:RD96"
+      "backend.cmd-map" : "[RD:64:RD96]"
 })
 
 
