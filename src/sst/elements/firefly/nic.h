@@ -27,6 +27,7 @@
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
+#include "simpleMemoryModel.h"
 
 namespace SST {
 namespace Firefly {
@@ -45,12 +46,9 @@ class Nic : public SST::Component  {
     typedef uint32_t NodeId;
     static const NodeId AnyId = -1;
 
-  private:
+	typedef SimpleMemoryModel::MemOp MemOp;
 
-	struct DmaVec {
-		uint64_t addr;
-		size_t   length;
-	};
+  private:
 
     struct MsgHdr {
         enum Op { Msg, Rdma, Shmem } op;
@@ -136,10 +134,10 @@ public:
     void printStatus(Output &out);
 
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
-            std::vector<DmaVec>& vec, std::string op, Callback callback );
+            std::vector<MemOp>& vec, std::string op, Callback callback );
 
-    void dmaRead( std::vector<DmaVec>& vec, Callback callback );
-    void dmaWrite( std::vector<DmaVec>& vec, Callback callback );
+    void dmaRead( std::vector<MemOp>& vec, Callback callback );
+    void dmaWrite( std::vector<MemOp>& vec, Callback callback );
 
     void schedCallback( Callback callback, uint64_t delay = 0 ) {
         schedEvent( new SelfEvent( callback ), delay);
@@ -260,6 +258,21 @@ public:
     Shmem* m_shmem;
 	SimTime_t m_nic2host_lat_ns;
 	SimTime_t m_nic2host_base_lat_ns;
+
+    SimTime_t calcHostMemDelay( std::vector< MemOp>& ops  ) {
+        if( ! m_simpleMemoryModel ) {
+            m_dbg.fatal( CALL_INFO,1,"Must configure with a SimpleMemmoryModel when running this simulation\n" );
+        }
+        return m_simpleMemoryModel->calcHostDelay( ops );
+    }
+    SimTime_t calcNicMemDelay( std::vector< MemOp>& ops  ) {
+        if( ! m_simpleMemoryModel ) {
+            m_dbg.fatal( CALL_INFO,1,"Must configure with a SimpleMemmoryModel when running this simulation\n" );
+        }
+        return m_simpleMemoryModel->calcNicDelay( ops );
+	}
+
+    SimpleMemoryModel*  m_simpleMemoryModel;
 
     uint16_t m_getKey;
   public:
