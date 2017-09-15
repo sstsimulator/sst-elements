@@ -286,7 +286,17 @@ private:
         void handleCMCConfig();
         void handleCmdMap();
 
+        void splitStr(const string& s,
+                      char delim,
+                      vector<string>& v);
+
         bool strToHMCRqst( std::string, hmc_rqst_t *, bool );
+        bool isPostedRqst( hmc_rqst_t );
+
+	bool issueMappedRequest(ReqId, Addr, bool,
+                                std::vector<uint64_t>,
+                                uint32_t, unsigned,
+                                uint8_t, uint16_t, bool*);
 
         void collectStats();
         void registerStatistics();

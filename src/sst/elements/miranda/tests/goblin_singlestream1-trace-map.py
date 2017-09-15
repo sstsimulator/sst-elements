@@ -47,20 +47,12 @@ comp_memory.addParams({
       "clock" : "1GHz",
       "backendConvertor" : "memHierarchy.extMemBackendConvertor",
       "backend" : "memHierarchy.goblinHMCSim",
-      "backend.device_count" : "1",
-      "backend.link_count" : "8",
-      "backend.vault_count" : "64",
-      "backend.queue_depth" : "64",
-      "backend.bank_count" : "16",
-      "backend.dram_count" : "20",
-      "backend.capacity_per_device" : "8",
-      "backend.xbar_depth" : "128",
-      "backend.max_req_size" : "128",
       "backend.trace-banks" : "1",
       "backend.trace-queue" : "1",
       "backend.trace-cmds" : "1",
       "backend.trace-latency" : "1",
-      "backend.trace-stalls" : "1"
+      "backend.trace-stalls" : "1",
+      "backend.cmd-map" : "RD:64:RD96"
 })
 
 
