@@ -33,6 +33,15 @@
 namespace SST {
 namespace MemHierarchy {
 
+typedef struct{
+  std::string name;
+  hmc_rqst_t type;
+  int data_len;
+  int rqst_len;
+  int rsp_len;
+  bool isCMC;
+} HMCPacket;
+
 typedef enum{
   SRC_WR,
   SRC_RD,

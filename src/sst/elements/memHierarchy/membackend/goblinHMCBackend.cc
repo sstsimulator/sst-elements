@@ -19,6 +19,141 @@
 
 using namespace SST::MemHierarchy;
 
+// all the standard and cmc hmc packets
+const HMCPacket __PACKETS[] = {
+  /* name : type : data_len : rqst_len : rsp_len : isCMC */
+  { "WR16",       WR16,       8,    16,   2,  false},
+  { "WR32",       WR32,       9,    32,   3,  false},
+  { "WR48",       WR48,       10,   48,   4,  false},
+  { "WR64",       WR64,       11,   64,   5,  false},
+  { "WR80",       WR80,       12,   80,   6,  false},
+  { "WR96",       WR96,       13,   96,   7,  false},
+  { "WR112",      WR112,      14,   112,  8,  false},
+  { "WR128",      WR128,      15,   128,  9,  false},
+  { "WR256",      WR256,      79,   256,  17, false},
+  { "P_WR16",     P_WR16,     8,    16,   2,  false},
+  { "P_WR32",     P_WR32,     9,    32,   3,  false},
+  { "P_WR48",     P_WR48,     10,   48,   4,  false},
+  { "P_WR64",     P_WR64,     11,   64,   5,  false},
+  { "P_WR80",     P_WR80,     12,   80,   6,  false},
+  { "P_WR96",     P_WR96,     13,   96,   7,  false},
+  { "P_WR112",    P_WR112,    14,   112,  8,  false},
+  { "P_WR128",    P_WR128,    15,   128,  9,  false},
+  { "P_WR256",    P_WR256,    79,   256,  17, false},
+  { "RD16",       RD16,       48,   16,   1,  false},
+  { "RD32",       RD32,       49,   32,   1,  false},
+  { "RD48",       RD48,       50,   48,   1,  false},
+  { "RD64",       RD64,       51,   64,   1,  false},
+  { "RD80",       RD80,       52,   80,   1,  false},
+  { "RD96",       RD96,       53,   96,   1,  false},
+  { "RD112",      RD112,      54,   112,  1,  false},
+  { "RD128",      RD128,      55,   128,  1,  false},
+  { "RD256",      RD256,      119,  256,  1,  false},
+  { "TWOADD8",    TWOADD8,    18,   16,   2,  false},
+  { "ADD16",      ADD16,      19,   16,   2,  false},
+  { "P_2ADD8",    P_2ADD8,    34,   16,   2,  false},
+  { "P_ADD16",    P_ADD16,    35,   16,   2,  false},
+  { "TWOADDS8R",  TWOADDS8R,  82,   16,   2,  false},
+  { "ADDS16R",    ADDS16R,    83,   16,   2,  false},
+  { "INC8",       INC8,       80,   0,    1,  false},
+  { "P_INC8",     P_INC8,     84,   0,    1,  false},
+  { "XOR16",      XOR16,      64,   16,   2,  false},
+  { "OR16",       OR16,       65,   16,   2,  false},
+  { "NOR16",      NOR16,      66,   16,   2,  false},
+  { "AND16",      AND16,      67,   16,   2,  false},
+  { "NAND16",     NAND16,     68,   16,   2,  false},
+  { "CASGT8",     CASGT8,     96,   16,   2,  false},
+  { "CASGT16",    CASGT16,    98,   16,   2,  false},
+  { "CASLT8",     CASLT8,     97,   16,   2,  false},
+  { "CASLT16",    CASLT16,    99,   16,   2,  false},
+  { "CASEQ8",     CASEQ8,     100,  16,   2,  false},
+  { "CASZERO16",  CASZERO16,  101,  16,   2,  false},
+  { "EQ8",        EQ8,        105,  16,   2,  false},
+  { "EQ16",       EQ16,       104,  16,   2,  false},
+  { "BWR",        BWR,        17,   16,   2,  false},
+  { "P_BWR",      P_BWR,      33,   16,   2,  false},
+  { "BWR8R",      BWR8R,      81,   16,   2,  false},
+  { "SWAP16",     SWAP16,     106,  16,   2,  false},
+  { "MD_WR",      MD_WR,      16,   16,   2,  false},
+  { "MD_RD",      MD_RD,      40,   8,    1,  false},
+
+  // cmc packets.  everything except for the name and the
+  // boolean is ignored
+  { "CMC04",      CMC04,      0,    0,    0,  true},
+  { "CMC05",      CMC05,      0,    0,    0,  true},
+  { "CMC06",      CMC06,      0,    0,    0,  true},
+  { "CMC07",      CMC07,      0,    0,    0,  true},
+  { "CMC20",      CMC20,      0,    0,    0,  true},
+  { "CMC21",      CMC21,      0,    0,    0,  true},
+  { "CMC22",      CMC22,      0,    0,    0,  true},
+  { "CMC23",      CMC23,      0,    0,    0,  true},
+  { "CMC32",      CMC32,      0,    0,    0,  true},
+  { "CMC36",      CMC36,      0,    0,    0,  true},
+  { "CMC37",      CMC37,      0,    0,    0,  true},
+  { "CMC38",      CMC38,      0,    0,    0,  true},
+  { "CMC39",      CMC39,      0,    0,    0,  true},
+  { "CMC41",      CMC41,      0,    0,    0,  true},
+  { "CMC42",      CMC42,      0,    0,    0,  true},
+  { "CMC43",      CMC43,      0,    0,    0,  true},
+  { "CMC44",      CMC44,      0,    0,    0,  true},
+  { "CMC45",      CMC45,      0,    0,    0,  true},
+  { "CMC46",      CMC46,      0,    0,    0,  true},
+  { "CMC47",      CMC47,      0,    0,    0,  true},
+  { "CMC56",      CMC56,      0,    0,    0,  true},
+  { "CMC57",      CMC57,      0,    0,    0,  true},
+  { "CMC58",      CMC58,      0,    0,    0,  true},
+  { "CMC59",      CMC59,      0,    0,    0,  true},
+  { "CMC60",      CMC60,      0,    0,    0,  true},
+  { "CMC61",      CMC61,      0,    0,    0,  true},
+  { "CMC62",      CMC62,      0,    0,    0,  true},
+  { "CMC63",      CMC63,      0,    0,    0,  true},
+  { "CMC69",      CMC69,      0,    0,    0,  true},
+  { "CMC70",      CMC70,      0,    0,    0,  true},
+  { "CMC71",      CMC71,      0,    0,    0,  true},
+  { "CMC72",      CMC72,      0,    0,    0,  true},
+  { "CMC73",      CMC73,      0,    0,    0,  true},
+  { "CMC74",      CMC74,      0,    0,    0,  true},
+  { "CMC75",      CMC75,      0,    0,    0,  true},
+  { "CMC76",      CMC76,      0,    0,    0,  true},
+  { "CMC77",      CMC77,      0,    0,    0,  true},
+  { "CMC78",      CMC78,      0,    0,    0,  true},
+  { "CMC85",      CMC85,      0,    0,    0,  true},
+  { "CMC86",      CMC86,      0,    0,    0,  true},
+  { "CMC87",      CMC87,      0,    0,    0,  true},
+  { "CMC88",      CMC88,      0,    0,    0,  true},
+  { "CMC89",      CMC89,      0,    0,    0,  true},
+  { "CMC90",      CMC90,      0,    0,    0,  true},
+  { "CMC91",      CMC91,      0,    0,    0,  true},
+  { "CMC92",      CMC92,      0,    0,    0,  true},
+  { "CMC93",      CMC93,      0,    0,    0,  true},
+  { "CMC94",      CMC94,      0,    0,    0,  true},
+  { "CMC102",     CMC102,     0,    0,    0,  true},
+  { "CMC103",     CMC103,     0,    0,    0,  true},
+  { "CMC107",     CMC107,     0,    0,    0,  true},
+  { "CMC108",     CMC108,     0,    0,    0,  true},
+  { "CMC109",     CMC109,     0,    0,    0,  true},
+  { "CMC110",     CMC110,     0,    0,    0,  true},
+  { "CMC111",     CMC111,     0,    0,    0,  true},
+  { "CMC112",     CMC112,     0,    0,    0,  true},
+  { "CMC113",     CMC113,     0,    0,    0,  true},
+  { "CMC114",     CMC114,     0,    0,    0,  true},
+  { "CMC115",     CMC115,     0,    0,    0,  true},
+  { "CMC116",     CMC116,     0,    0,    0,  true},
+  { "CMC117",     CMC117,     0,    0,    0,  true},
+  { "CMC118",     CMC118,     0,    0,    0,  true},
+  { "CMC120",     CMC120,     0,    0,    0,  true},
+  { "CMC121",     CMC121,     0,    0,    0,  true},
+  { "CMC122",     CMC122,     0,    0,    0,  true},
+  { "CMC123",     CMC123,     0,    0,    0,  true},
+  { "CMC124",     CMC124,     0,    0,    0,  true},
+  { "CMC125",     CMC125,     0,    0,    0,  true},
+  { "CMC126",     CMC126,     0,    0,    0,  true},
+  { "CMC127",     CMC127,     0,    0,    0,  true},
+
+  // last entry
+  { "EOL",        MD_RD,      0,    0,    0,  false}
+};
+
 GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : ExtMemBackend(comp, params),
 	owner(comp) {
 
@@ -272,6 +407,21 @@ bool GOBLINHMCSimBackend::strToHMCRqst( std::string S,
                                         hmc_rqst_t *R,
                                         bool isCMC ){
 
+  int cur = 0;
+
+  while( __PACKETS[cur].name != "EOL" ){
+    if( __PACKETS[cur].name == S ){
+      if( isCMC && __PACKETS[cur].isCMC ){
+        *R = __PACKETS[cur].type;
+        return true;
+      }else if( !isCMC ){
+        *R = __PACKETS[cur].type;
+        return true;
+      }
+    }
+    cur++;
+  }
+
   return false;
 }
 
@@ -306,7 +456,7 @@ void GOBLINHMCSimBackend::handleCMCConfig(){
       cmdstr = s.substr(0,pos);
       s.erase(0,pos+delim.length());
 
-      if( !strToHMCRqst( cmdstr, &rqst, false ) ){
+      if( !strToHMCRqst( cmdstr, &rqst, true ) ){
         output->fatal(CALL_INFO, -1,
                       "Unable find to a suitable CMC HMC command for: %s\n",
                       cmdstr.c_str() );
