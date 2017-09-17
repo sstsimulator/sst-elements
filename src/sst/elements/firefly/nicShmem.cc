@@ -131,7 +131,7 @@ void Nic::Shmem::wait( NicShmemOpCmdEvent* event, int id )
 {
     std::stringstream tmp;
     tmp << event->value;
-    m_dbg.verbose(CALL_INFO,1,1,"Shmem: core=%d addr=%" PRIx64 " value=%s\n", id, event->addr, tmp.str().c_str() );
+    m_dbg.verbose(CALL_INFO,1,1,"Shmem: core=%d addr=%" PRIx64 " value=%s op=%d\n", id, event->addr, tmp.str().c_str(), event->op );
 
     Op* op = new WaitOp(  event, getBacking( id, event->addr, event->value.getLength() ),
             [=]() {
@@ -260,6 +260,7 @@ void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
         m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), event->getCallback() );
 
         delete event;
+
 	} else {
 
     	ShmemGetbSendEntry* entry = new ShmemGetbSendEntry( id, event, 

@@ -121,8 +121,7 @@ public:
     }
 
     /* Setup debug info (this is cache-wide) */
-    void setDebug(bool debugAll, Addr debugAddr) {
-        DEBUG_ALL = debugAll;
+    void setDebug(std::set<Addr> debugAddr) {
         DEBUG_ADDR = debugAddr;
     }
 
@@ -153,8 +152,7 @@ protected:
     list<Response> outgoingEventQueueUp_;
     
     /* Debug control */
-    bool        DEBUG_ALL;
-    Addr        DEBUG_ADDR;
+    std::set<Addr>  DEBUG_ADDR;
 
     /* Output */
     Output*     output;

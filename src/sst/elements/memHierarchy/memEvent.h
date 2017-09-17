@@ -256,8 +256,8 @@ public:
         return MemEventBase::getBriefString() + str.str();
     }
     
-    virtual bool doDebug(Addr addr) override {
-        return (baseAddr_ == addr);
+    virtual bool doDebug(std::set<Addr> &addr) override {
+        return (addr.find(baseAddr_) != addr.end());
     }
 
     virtual Addr getRoutingAddress() override {

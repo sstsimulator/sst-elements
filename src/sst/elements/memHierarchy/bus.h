@@ -68,8 +68,7 @@ private:
 
 
     Output                          dbg_;
-    bool                            DEBUG_ALL;
-    Addr                            DEBUG_ADDR;
+    std::set<Addr>                  DEBUG_ADDR;
     int                             numHighNetPorts_,
                                     numLowNetPorts_,
 //                                    numHighNetPortsX_,

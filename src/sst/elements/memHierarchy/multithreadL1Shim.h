@@ -58,8 +58,7 @@ private:
     /** Output and debug */
     Output debug;
     Output output;
-    bool DEBUG_ALL;
-    Addr DEBUG_ADDR;
+    std::set<Addr> DEBUG_ADDR;
 
     /** Links */
     SST::Link * cacheLink;

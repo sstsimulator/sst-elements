@@ -220,10 +220,12 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     string packetSize           = params.find<std::string>("min_packet_size", "8B");
     bool snoopL1Invs            = false;
     if (cf_.L1_) snoopL1Invs    = params.find<bool>("snoop_l1_invalidations", false);
-    int64_t dAddr               = params.find<int64_t>("debug_addr",-1);
-    if (dAddr != -1) DEBUG_ALL = false;
-    else DEBUG_ALL = true;
-    DEBUG_ADDR = (Addr)dAddr;
+
+    std::vector<Addr> addrArr;
+    params.find_array<Addr>("debug_addr", addrArr);
+    for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++)
+        DEBUG_ADDR.insert(*it);
+    
     bool found;
     
     maxOutstandingPrefetch_     = params.find<int>("max_outstanding_prefetch", cf_.MSHRSize_ / 2, found);
@@ -266,7 +268,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     if (mshrLatency_ < 1) intrapolateMSHRLatency();
     
     /* ----------------- MSHR ----------------- */
-    mshr_               = new MSHR(d_, cf_.MSHRSize_, this->getName(), DEBUG_ALL, DEBUG_ADDR);
+    mshr_               = new MSHR(d_, cf_.MSHRSize_, this->getName(), DEBUG_ADDR);
     
     /* ---------------- Clock ---------------- */
     clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
@@ -374,7 +376,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     coherenceMgr_->setLinks(linkUp_, linkDown_);
     coherenceMgr_->setMSHR(mshr_);
     coherenceMgr_->setCacheListener(listener_);
-    coherenceMgr_->setDebug(DEBUG_ALL, DEBUG_ADDR);
+    coherenceMgr_->setDebug(DEBUG_ADDR);
 
 }
 

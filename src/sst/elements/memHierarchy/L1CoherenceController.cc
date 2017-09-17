@@ -19,6 +19,15 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+/* Debug macros */
+#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
+#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#else
+#define is_debug_addr(addr) false
+#define is_debug_event(ev) false
+#endif
+
 /*----------------------------------------------------------------------------------------------------------------------
  * L1 Coherence Controller 
  *---------------------------------------------------------------------------------------------------------------------*/
@@ -124,9 +133,8 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
     if (cacheLine == NULL) {
         recordStateEventCount(event->getCmd(), I);
         if (mshr_->pendingWriteback(event->getBaseAddr())) {
-#ifdef __SST_DEBUG_OUTPUT__
-            debug->debug(_L8_, "Treating Inv as AckPut, not sending AckInv\n");
-#endif
+            if (is_debug_event(event)) debug->debug(_L8_, "Treating Inv as AckPut, not sending AckInv\n");
+            
             mshr_->removeWriteback(event->getBaseAddr());
             return DONE;
         } else {
@@ -308,7 +316,8 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
                 /* L1s write back immediately */
                 if (!event->isStoreConditional() || cacheLine->isAtomic()) {
                     cacheLine->setData(event->getPayload(), event);
-                    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) {
+                    
+                    if (is_debug_addr(cacheLine->getBaseAddr())) {
                         printData(cacheLine->getData(), true);
                     }
                 }
@@ -405,9 +414,11 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
     switch (state) {
         case IS:
             cacheLine->setData(responseEvent->getPayload(), responseEvent);
-            if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) {
+            
+            if (is_debug_addr(cacheLine->getBaseAddr())) {
                 printData(cacheLine->getData(), true);
             }
+            
             if (responseEvent->getCmd() == Command::GetXResp && responseEvent->getDirty()) cacheLine->setState(M);
             else if (protocol_ && responseEvent->getCmd() == Command::GetXResp) cacheLine->setState(E);
             else cacheLine->setState(S);
@@ -419,19 +430,21 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
             break;
         case IM:
             cacheLine->setData(responseEvent->getPayload(), responseEvent);
-            if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) {
+            
+            if (is_debug_addr(cacheLine->getBaseAddr())) {
                 printData(cacheLine->getData(), true);
             }
+        
         case SM:
             cacheLine->setState(M);
             if (origRequest->getCmd() == Command::GetX) {
                 if (!origRequest->isStoreConditional() || cacheLine->isAtomic()) {
                     cacheLine->setData(origRequest->getPayload(), origRequest);
-#ifdef __SST_DEBUG_OUTPUT__
-                    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) {
+                    
+                    if (is_debug_addr(cacheLine->getBaseAddr())) {
                         printData(cacheLine->getData(), true);
                     }
-#endif
+                
                 }
                 /* Handle GetX as unlock (store-unlock) */
                 if (origRequest->queryFlag(MemEvent::F_LOCKED)) {
@@ -649,12 +662,9 @@ void L1CoherenceController::sendResponseDown(MemEvent* event, CacheLine* cacheLi
     MemEvent *responseEvent = event->makeResponse();
     responseEvent->setPayload(*cacheLine->getData());
 
-#ifdef __SST_DEBUG_OUTPUT__
-    //printf("Sending response down: ");
-    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) {
+    if (is_debug_addr(cacheLine->getBaseAddr())) {
         printData(cacheLine->getData(), false);
     }
-#endif
 
     responseEvent->setSize(cacheLine->getSize());
     
@@ -666,11 +676,9 @@ void L1CoherenceController::sendResponseDown(MemEvent* event, CacheLine* cacheLi
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime-1);
 
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) { 
+    if (is_debug_event(event)) { 
         debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[(int)responseEvent->getCmd()], responseEvent->getSrc().c_str());
     }
-#endif
 }
 
 
@@ -695,8 +703,8 @@ uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, std::vector<uin
     } else {
         responseEvent->setPayload(*data);
     }
-    //printf("Sending data up to core: ");
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) {
+    
+    if (is_debug_event(event)) {
         printData(data, false);
     }
 
@@ -707,10 +715,9 @@ uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, std::vector<uin
     addToOutgoingQueueUp(resp);
     
     // Debugging
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i\n", 
-            deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize());
-#endif
+    if (is_debug_event(responseEvent)) debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Response: (%s)\n", 
+            deliveryTime, timestamp_, responseEvent->getBriefString().c_str());
+    
     return deliveryTime;
 }
 
@@ -726,12 +733,12 @@ void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, boo
     uint64_t latency = tagLatency_;
     if (dirty || writebackCleanBlocks_) {
         writeback->setPayload(*cacheLine->getData());
-#ifdef __SST_DEBUG_OUTPUT__
+        
         //printf("Sending writeback data: ");
-        if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) {
+        if (is_debug_addr(cacheLine->getBaseAddr())) {
             printData(cacheLine->getData(), false);
         }
-#endif
+        
         latency = accessLatency_;
     }
         
@@ -746,10 +753,8 @@ void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, boo
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime-1);
     
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) 
+    if (is_debug_addr(cacheLine->getBaseAddr())) 
         debug->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s. With%s data.\n", deliveryTime, CommandString[(int)cmd], ((cmd == Command::PutM || writebackCleanBlocks_) ? "" : "out"));
-#endif
 }
 
 
@@ -769,9 +774,7 @@ void L1CoherenceController::sendAckInv(MemEvent * request, CacheLine * cacheLine
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime-1);
     
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == request->getBaseAddr()) debug->debug(_L3_,"Sending AckInv at cycle = %" PRIu64 "\n", deliveryTime);
-#endif
+    if (is_debug_event(request)) debug->debug(_L3_,"Sending AckInv at cycle = %" PRIu64 "\n", deliveryTime);
 }
 
 
@@ -795,11 +798,10 @@ void L1CoherenceController::forwardFlushLine(Addr baseAddr, Command cmd, string 
     Response resp = {flush, deliveryTime, packetHeaderBytes + flush->getPayloadSize()};
     addToOutgoingQueue(resp);
     if (cacheLine != NULL) cacheLine->setTimestamp(deliveryTime-1);
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) { 
+    
+    if (is_debug_addr(baseAddr)) {
         debug->debug(_L3_,"Forwarding Flush at cycle = %" PRIu64 ", Cmd = %s, Src = %s, %s\n", deliveryTime, CommandString[(int)flush->getCmd()], flush->getSrc().c_str(), payload ? "with data" : "without data");
     }
-#endif
 }
 
 
@@ -812,11 +814,10 @@ void L1CoherenceController::sendFlushResponse(MemEvent * requestEvent, bool succ
     uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : tagLatency_);
     Response resp = {flushResponse, deliveryTime, packetHeaderBytes};
     addToOutgoingQueueUp(resp);
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == requestEvent->getBaseAddr()) { 
+    
+    if (is_debug_event(requestEvent)) {
         debug->debug(_L3_,"Sending Flush Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[(int)flushResponse->getCmd()], flushResponse->getSrc().c_str());
     }
-#endif
 }
 
 

@@ -19,7 +19,7 @@
 
 using namespace SST::MemHierarchy;
 
-GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : SimpleMemBackend(comp, params),
+GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : ExtMemBackend(comp, params),
 	owner(comp) {
 
 	int verbose = params.find<int>("verbose", 0);
@@ -242,7 +242,9 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : Simp
 	output->verbose(CALL_INFO, 1, 0, "Completed HMC Simulation Backend Initialization.\n");
 }
 
-bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes) {
+bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite,
+                                       std::vector<uint64_t> ins, uint32_t flags,
+                                       unsigned numBytes) {
 	// We have run out of tags
 	if(tag_queue.empty()) {
 		output->verbose(CALL_INFO, 4, 0, "Will not issue request this call, tag queue has no free entries.\n");
@@ -260,9 +262,49 @@ bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite, uns
 
 	hmc_rqst_t       	req_type;
 
+        bool isPosted = false;
+        if( (flags & MemEvent::F_NORESPONSE) > 0 ){
+          isPosted = true;
+        }
+
 	// Check if the request is for a read or write then transform this into something
 	// for HMC simulator to use
-	if(isWrite) {
+	if( (isWrite) && (isPosted) ) {
+                switch( numBytes ){
+                case 8:
+                case 16:
+                  req_type = P_WR16;
+                  break;
+                case 32:
+                  req_type = P_WR32;
+                  break;
+                case 48:
+                  req_type = P_WR48;
+                  break;
+                case 64:
+                  req_type = P_WR64;
+                  break;
+                case 80:
+                  req_type = P_WR80;
+                  break;
+                case 96:
+                  req_type = P_WR96;
+                  break;
+                case 112:
+                  req_type = P_WR112;
+                  break;
+                case 128:
+                  req_type = P_WR128;
+                  break;
+                case 256:
+                  req_type = P_WR256;
+                  break;
+                default:
+                  // flag an error
+		  output->fatal(CALL_INFO, -1, "Unknown posted write request size: %d\n", numBytes );
+                  break;
+                }
+        }else if(isWrite) {
                 switch( numBytes ){
                 case 8:
                 case 16:
@@ -376,7 +418,9 @@ bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite, uns
 		output->verbose(CALL_INFO, 4, 0, "Issue of request for address %" PRIu64 " successfully accepted by HMC.\n", addr);
 
 		// Create the request entry which we keep in a table
-		HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr, owner->getCurrentSimTimeNano());
+		HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr,
+                                                                  owner->getCurrentSimTimeNano(),
+                                                                  isPosted);
 
 		// Add the tag and request into our table of pending
 		tag_req_map.insert( std::pair<uint16_t, HMCSimBackEndReq*>(req_tag, reqEntry) );
@@ -480,6 +524,7 @@ bool GOBLINHMCSimBackend::clock(Cycle_t cycle) {
 
 void GOBLINHMCSimBackend::processResponses() {
 	int rc = HMC_OK;
+        uint32_t flags;
 
 	printPendingRequests();
 
@@ -539,7 +584,7 @@ void GOBLINHMCSimBackend::processResponses() {
 							owner->getCurrentSimTimeNano() - matchedReq->getStartTime());
 
 						// Pass back to the controller to be handled, HMC sim is finished with it
-						handleMemResponse(matchedReq->getRequest());
+						handleMemResponse(matchedReq->getRequest(),flags);
 
 						// Clear element from our map, it has been processed so no longer needed
 						tag_req_map.erase(resp_tag);
@@ -564,6 +609,20 @@ void GOBLINHMCSimBackend::processResponses() {
 			}
 		}
 	}
+
+        // handle all the posted requests
+        std::map<uint16_t, HMCSimBackEndReq*>::iterator it;
+        for(it=tag_req_map.begin(); it!=tag_req_map.end(); it++ ){
+          uint16_t resp_tag = it->first;
+          HMCSimBackEndReq* matchedReq = it->second;
+          if( !matchedReq->hasResponse() ){
+            // i am a posted request
+            handleMemResponse(matchedReq->getRequest(),flags);
+            tag_req_map.erase(resp_tag);
+            tag_queue.push(resp_tag);
+          }
+          delete matchedReq;
+        }
 }
 
 GOBLINHMCSimBackend::~GOBLINHMCSimBackend() {
