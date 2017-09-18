@@ -461,63 +461,35 @@ void GOBLINHMCSimBackend::handleCMCConfig(){
     //    /PATH/TO/LIB.SO:CMD:RQST_FLITS:RSP_FLITS
     std::string s = cmcconfigs[i];
 
-    // parse the string
-    // -- /path/to/lib.so
-    if( pos = s.find(delim) != std::string::npos){
-      path = s.substr(0,pos);
-      s.erase(0,pos+delim.length());
+    std::vector<std::string> vstr;
+    splitStr(s,':',vstr);
 
-    }else{
+    if( vstr.size() != 4 ){
       // formatting error
       output->fatal(CALL_INFO, -1,
-                    "Unable to process cmc config: %s\n", s.c_str() );
+                    "Unable to process command map: %s\n", s.c_str() );
     }
 
+    // -- /path/to/lib.so
+    path = vstr[0];
+
     // -- cmd
-    if( pos = s.find(delim) != std::string::npos){
-      cmdstr = s.substr(0,pos);
-      s.erase(0,pos+delim.length());
-
-      if( !strToHMCRqst( cmdstr, &rqst, true ) ){
-        output->fatal(CALL_INFO, -1,
-                      "Unable find to a suitable CMC HMC command for: %s\n",
-                      cmdstr.c_str() );
-      }
-
-    }else{
-      // formatting error
+    cmdstr = vstr[1];
+    if( !strToHMCRqst( cmdstr, &rqst, true ) ){
       output->fatal(CALL_INFO, -1,
-                    "Unable to process cmc config: %s\n", s.c_str() );
+                    "Unable find to a suitable CMC HMC command for: %s\n",
+                    cmdstr.c_str() );
     }
 
     // -- rqst_flits
-    if( pos = s.find(delim) != std::string::npos){
-      std::string rf = s.substr(0,pos);
-      s.erase(0,pos+delim.length());
-
-      std::string::size_type sz;
-      rqst_flits = std::stoi(rf,&sz);
-    }else{
-      // formatting error
-      output->fatal(CALL_INFO, -1,
-                    "Unable to process cmc config: %s\n", s.c_str() );
-    }
+    std::string::size_type sz;
+    rqst_flits = std::stoi(vstr[2],&sz);
 
     // -- rsp_flits
-    if( pos = s.find(delim) != std::string::npos){
-      std::string rf = s.substr(0,pos);
-      s.erase(0,pos+delim.length());
-
-      std::string::size_type sz;
-      rsp_flits = std::stoi(rf,&sz);
-    }else{
-      // formatting error
-      output->fatal(CALL_INFO, -1,
-                    "Unable to process cmc config: %s\n", s.c_str() );
-    }
+    rsp_flits = std::stoi(vstr[3],&sz);
 
     // load the cmc command in HMCSim
-    std::vector<char> libchars( cmdstr.begin(), cmdstr.end() );
+    std::vector<char> libchars( path.begin(), path.end() );
     int rc = hmcsim_load_cmc(&the_hmc, &libchars[0] );
     if( rc != 0 ){
       output->fatal(CALL_INFO, -1,
@@ -571,7 +543,6 @@ void GOBLINHMCSimBackend::handleCmdMap(){
     // parse the string
     // -- WR | RD | POSTED | CUSTOM
     ctype = vstr[0];
-    std::cout << "ctype = " << ctype << "; whole string = " << s << std::endl;
     if( ctype == "WR" ){
       ctype_int = SRC_WR;
     }else if( ctype == "RD" ){
