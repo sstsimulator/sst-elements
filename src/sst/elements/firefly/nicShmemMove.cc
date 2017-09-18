@@ -21,7 +21,7 @@ using namespace SST;
 using namespace SST::Firefly;
 
 
-void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int vc, int numBytes, FireflyNetworkEvent& event, std::vector<DmaVec>& vec )
+void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int vc, int numBytes, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
 
     assert( m_ptr );
@@ -31,18 +31,22 @@ void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int vc, int numBytes, FireflyN
     dbg.verbose(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"Shmem: %d: pktSpace=%lu dataLeft=%lu xferSize=%lu\n",
                 vc, space, m_length - m_offset, len  );
 
+	vec.push_back( MemOp( m_addr, len, MemOp::Op::BusDmaFromHost ));
+
     event.bufAppend( m_ptr + m_offset ,len );
 
     m_offset += len; 
 }
 
-void Nic::ShmemSendMoveValue::copyOut( Output& dbg, int vc, int numBytes, FireflyNetworkEvent& event, std::vector<DmaVec>& vec )
+void Nic::ShmemSendMoveValue::copyOut( Output& dbg, int vc, int numBytes, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
     size_t space = numBytes - event.bufSize(); 
     size_t len = m_value.getLength() > space ? space : m_value.getLength(); 
 
     dbg.verbose(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"Shmem: %d: PacketSize=%d event.bufSpace()=%lu space=%lu len=%lu\n",
                 vc, numBytes, event.bufSize(), space, len );
+
+	vec.push_back( MemOp( 0, len, MemOp::Op::LocalLoad ));
 
     m_offset += len; 
     std::stringstream tmp;
@@ -54,7 +58,7 @@ void Nic::ShmemSendMoveValue::copyOut( Output& dbg, int vc, int numBytes, Firefl
     event.bufAppend( m_value.getPtr() ,len );
 }
 
-void Nic::ShmemSendMove2Value::copyOut( Output& dbg, int vc, int numBytes, FireflyNetworkEvent& event, std::vector<DmaVec>& vec )
+void Nic::ShmemSendMove2Value::copyOut( Output& dbg, int vc, int numBytes, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
     size_t space = numBytes - event.bufSize(); 
     assert( getLength() <= space );
@@ -63,6 +67,7 @@ void Nic::ShmemSendMove2Value::copyOut( Output& dbg, int vc, int numBytes, Firef
                 vc, numBytes, event.bufSize(), space, getLength() );
 
     m_offset += getLength(); 
+	vec.push_back( MemOp( 0, getLength(), MemOp::Op::LocalLoad ));
 
 #if 0
     std::stringstream tmp1;
@@ -76,7 +81,7 @@ void Nic::ShmemSendMove2Value::copyOut( Output& dbg, int vc, int numBytes, Firef
     event.bufAppend( m_value2.getPtr() , m_value2.getLength() );
 }
 
-bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std::vector<DmaVec>& vec )
+bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
     size_t length = event.bufSize();
 
@@ -94,13 +99,15 @@ bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std
         m_shmem->checkWaitOps( m_core, m_addr, length );
     }
 
+	vec.push_back( MemOp( m_addr, length, MemOp::Op::BusDmaToHost ));
+
     event.bufPop(length);
     m_offset += length;
 
     return m_offset == m_length;
 }
 
-bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, std::vector<DmaVec>& vec )
+bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
     size_t length = event.bufSize();
     dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Shmem: event.bufSize()=%lu\n",event.bufSize());
@@ -113,6 +120,8 @@ bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, s
         Hermes::Value src( m_dataType, event.bufPtr() );
         Hermes::Value dest( m_dataType, m_ptr + m_offset );
 
+		vec.push_back( MemOp( m_addr, dataLength, MemOp::Op::BusLoad ));
+		vec.push_back( MemOp( m_addr, dataLength, MemOp::Op::BusStore ));
 #if 0
         std::stringstream tmp1;
         tmp1 << src;
@@ -164,11 +173,12 @@ bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, s
     return m_offset == m_length;
 }
 
-bool Nic::ShmemRecvMoveValue::copyIn( Output& dbg, FireflyNetworkEvent& event, std::vector<DmaVec>& vec )
+bool Nic::ShmemRecvMoveValue::copyIn( Output& dbg, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
     size_t length = event.bufSize();
     dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Shmem: event.bufSize()=%lu\n",event.bufSize());
 
+	vec.push_back( MemOp( 0, length, MemOp::Op::LocalStore ));
     memcpy( m_value.getPtr(), event.bufPtr(), length);
 
     event.bufPop(length);

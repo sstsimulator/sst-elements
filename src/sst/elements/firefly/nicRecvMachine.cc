@@ -91,7 +91,7 @@ void Nic::RecvMachine::state_move_0( FireflyNetworkEvent* event, StreamBase* str
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
 				"src=%d event has %lu bytes\n", src,event->bufSize() );
 
-    std::vector< DmaVec > vec;
+    std::vector< MemOp > vec;
 
     long tmp = event->bufSize();
     bool ret = stream->getRecvEntry()->copyIn( m_dbg, *event, vec );
