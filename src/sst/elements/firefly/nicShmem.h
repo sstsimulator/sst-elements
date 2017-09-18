@@ -92,6 +92,8 @@ class Shmem {
         m_regMem.clear();
     }
 	void handleEvent( NicShmemCmdEvent* event, int id );
+	void handleHostEvent( NicShmemCmdEvent* event, int id );
+	void handleNicEvent( NicShmemCmdEvent* event, int id );
 	void handleEvent2( NicShmemCmdEvent* event, int id );
 	void decPending( int core ) {
 		m_pendingRemoteOps[core].second -= m_one;
@@ -115,7 +117,17 @@ private:
 	SimTime_t getHost2NicDelay_ns() { return m_host2NicDelay_ns; }
     void init( NicShmemInitCmdEvent*, int id );
     void regMem( NicShmemRegMemCmdEvent*, int id );
-    void wait( NicShmemOpCmdEvent*, int id );
+
+    void hostWait( NicShmemOpCmdEvent*, int id );
+    void hostPut( NicShmemPutCmdEvent*, int id );
+    void hostPutv( NicShmemPutvCmdEvent*, int id );
+    void hostGet( NicShmemGetCmdEvent*, int id );
+    void hostGetv( NicShmemGetvCmdEvent*, int id );
+    void hostAdd( NicShmemAddCmdEvent*, int id );
+    void hostFadd( NicShmemFaddCmdEvent*, int id );
+    void hostCswap( NicShmemCswapCmdEvent*, int id );
+    void hostSwap( NicShmemSwapCmdEvent*, int id );
+
     void put( NicShmemPutCmdEvent*, int id );
     void putv( NicShmemPutvCmdEvent*, int id );
     void get( NicShmemGetCmdEvent*, int id );
@@ -128,7 +140,9 @@ private:
     void* getBacking( int core, Hermes::Vaddr addr, size_t length ) {
         return  m_nic.findShmem( core, addr, length ).getBacking();
     }
-	void doReduction( Hermes::Shmem::ReduOp op, unsigned char* dest, unsigned char* src, size_t length, Hermes::Value::Type );
+	void doReduction( Hermes::Shmem::ReduOp op, int destCore, Hermes::Vaddr destAddr,
+            int srcCore, Hermes::Vaddr srcAddr, size_t length, Hermes::Value::Type,
+			std::vector<MemOp>& vec );
 
 	void incFreeCmdSlots( ) {
 		++m_freeCmdSlots;
