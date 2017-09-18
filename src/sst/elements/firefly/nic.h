@@ -260,16 +260,18 @@ public:
 	SimTime_t m_nic2host_base_lat_ns;
 
     SimTime_t calcHostMemDelay( std::vector< MemOp>& ops  ) {
-        if( ! m_simpleMemoryModel ) {
-            m_dbg.fatal( CALL_INFO,1,"Must configure with a SimpleMemmoryModel when running this simulation\n" );
-        }
-        return m_simpleMemoryModel->calcHostDelay( ops );
+        if( m_simpleMemoryModel ) {
+        	return m_simpleMemoryModel->calcHostDelay( ops );
+        } else {
+			return 0;
+		}
     }
     SimTime_t calcNicMemDelay( std::vector< MemOp>& ops  ) {
-        if( ! m_simpleMemoryModel ) {
-            m_dbg.fatal( CALL_INFO,1,"Must configure with a SimpleMemmoryModel when running this simulation\n" );
-        }
-        return m_simpleMemoryModel->calcNicDelay( ops );
+        if( m_simpleMemoryModel ) {
+        	return m_simpleMemoryModel->calcNicDelay( ops );
+        } else {
+			return 0;
+		}
 	}
 
     SimpleMemoryModel*  m_simpleMemoryModel;
