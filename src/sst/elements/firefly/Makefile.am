@@ -92,6 +92,7 @@ libfirefly_la_SOURCES = \
 	shmem/fcollect.h \
 	shmem/reduction.cc \
 	shmem/reduction.h \
+	simpleMemoryModel.h \
 	merlinEvent.h \
 	virtNic.h \
 	virtNic.cc \

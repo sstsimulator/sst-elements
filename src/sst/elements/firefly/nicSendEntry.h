@@ -31,7 +31,7 @@ class SendEntryBase {
     virtual void* hdr() = 0;
     virtual size_t hdrSize() = 0;
     virtual void copyOut( Output& dbg, int vc, int numBytes,
-            FireflyNetworkEvent& event, std::vector<DmaVec>& vec ) = 0; 
+            FireflyNetworkEvent& event, std::vector<MemOp>& vec ) = 0; 
     virtual bool shouldDelete() { return true; }
 
   private:
@@ -56,7 +56,7 @@ class CmdSendEntry: public SendEntryBase, public EntryBase {
     size_t totalBytes() { return EntryBase::totalBytes(); }
     bool isDone()       { return EntryBase::isDone(); }
     void copyOut( Output& dbg, int vc, int numBytes, 
-                FireflyNetworkEvent& event, std::vector<DmaVec>& vec ) {
+                FireflyNetworkEvent& event, std::vector<MemOp>& vec ) {
         EntryBase::copyOut(dbg,vc,numBytes, event, vec );
     }
 
@@ -105,7 +105,7 @@ class GetOrgnEntry : public MsgSendEntry {
 
     bool isDone()      { return true; }
     void copyOut( Output& dbg, int vc, int numBytes,
-                FireflyNetworkEvent& event, std::vector<DmaVec>& vec ) {}; 
+                FireflyNetworkEvent& event, std::vector<MemOp>& vec ) {}; 
 
     size_t totalBytes(){ return sizeof( m_hdr ); }
     MsgHdr::Op getOp() { return MsgHdr::Rdma; }
@@ -133,7 +133,7 @@ class PutOrgnEntry : public MsgSendEntry, public EntryBase {
     std::vector<IoVec>& ioVec() { return m_memRgn->iovec(); }
 
     void copyOut( Output& dbg, int vc, int numBytes,
-                FireflyNetworkEvent& event, std::vector<DmaVec>& vec ) {
+                FireflyNetworkEvent& event, std::vector<MemOp>& vec ) {
         EntryBase::copyOut(dbg,vc,numBytes, event, vec );
     }
 

@@ -35,6 +35,8 @@ libmemHierarchy_la_SOURCES = \
 	membackend/simpleMemBackendConvertor.cc \
 	membackend/hmcMemBackendConvertor.h \
 	membackend/hmcMemBackendConvertor.cc \
+	membackend/extMemBackendConvertor.h \
+	membackend/extMemBackendConvertor.cc \
 	membackend/delayBuffer.h \
 	membackend/delayBuffer.cc \
 	membackend/simpleMemBackend.h \
