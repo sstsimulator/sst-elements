@@ -64,6 +64,8 @@ libmemHierarchy_la_SOURCES = \
 	memNIC.h \
 	memNIC.cc \
 	customCmdMemory.h \
+	amoCustomCmdHandler.cc \
+	amoCustomCmdHandler.h \
 	directoryController.h \
 	directoryController.cc \
 	scratchpad.h \
@@ -163,6 +165,7 @@ nobase_sst_HEADERS = \
 	memEvent.h \
 	memNIC.h \
 	customCmdMemory.h \
+	amoCustomCmdHandler.h \
 	membackend/memBackend.h \
 	membackend/vaultSimBackend.h \
 	membackend/MessierBackend.h \
