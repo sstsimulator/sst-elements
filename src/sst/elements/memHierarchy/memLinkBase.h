@@ -188,8 +188,9 @@ protected:
     SST::Event::HandlerBase * recvHandler; // Event handler to call when an event is received
 
     // Data structures
-    std::set<EndpointInfo> sourceEndpointInfo;    // endpoint info for each source network endpoint
-    std::set<EndpointInfo> destEndpointInfo;      // endpoint info for each destination network endpoint
+    std::set<EndpointInfo> sourceEndpointInfo;  // endpoint info for each source network endpoint
+    std::set<EndpointInfo> destEndpointInfo;    // endpoint info for each destination network endpoint
+    std::queue<MemEventInit*> initReceiveQ;     // queue for messages received during init
 };
 
 } //namespace memHierarchy

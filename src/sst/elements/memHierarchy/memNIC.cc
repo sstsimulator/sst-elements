@@ -148,15 +148,26 @@ void MemNIC::init(unsigned int phase) {
             MemEventInit *ev = static_cast<MemEventInit*>(mre->event);
             dbg.debug(_L10_, "%s (memNIC) received mre during init. %s\n", getName().c_str(), mre->event->getVerboseString().c_str());
             
-            if (ev->getDst() == getName() && ev->getInitCmd() == MemEventInit::InitCommand::Region) {
-                MemEventInitRegion * rEv = static_cast<MemEventInitRegion*>(ev);
-                if (rEv->getSetRegion() && acceptRegion) {
-                    info.region = rEv->getRegion();
-                    dbg.debug(_L10_, "\tUpdating local region\n");
+            /* 
+             * Event is for us if:
+             *  1. We are the dst
+             *  2. Broadcast (dst = "") and:
+             *      src is a src/dst and a coherence init message
+             *      src is a src/dst?
+             */
+            if (ev->getInitCmd() == MemEventInit::InitCommand::Region) {
+                if (ev->getDst() == getName()) {
+                    MemEventInitRegion * rEv = static_cast<MemEventInitRegion*>(ev);
+                    if (rEv->getSetRegion() && acceptRegion) {
+                        info.region = rEv->getRegion();
+                        dbg.debug(_L10_, "\tUpdating local region\n");
+                    }
                 }
                 delete ev;
                 delete mre;
-            } else if (isSource(mre->event->getSrc()) || isDest(mre->event->getSrc())) {
+            } else if (
+                    (ev->getCmd() == Command::NULLCMD && (isSource(mre->event->getSrc()) || isDest(mre->event->getSrc()))) 
+                    || ev->getDst() == getName()) {
                 dbg.debug(_L10_, "\tInserting in initQueue\n");
                 initQueue.push(mre);
             }

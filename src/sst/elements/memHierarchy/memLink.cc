@@ -42,6 +42,34 @@ void MemLink::init(unsigned int phase) {
         dbg.debug(_L10_, "%s sending region init message: %s\n", getName().c_str(), ev->getVerboseString().c_str());
         link->sendInitData(ev);
     }
+
+    SST::Event * ev;
+    while ((ev = link->recvInitData())) {
+        MemEventInit * mEv = dynamic_cast<MemEventInit*>(ev);
+        if (mEv) {
+            if (mEv->getInitCmd() == MemEventInit::InitCommand::Region) {
+                MemEventInitRegion * mEvRegion = static_cast<MemEventInitRegion*>(mEv);
+                dbg.debug(_L10_, "%s received init message: %s\n", getName().c_str(), mEvRegion->getVerboseString().c_str());
+            
+                EndpointInfo epInfo;
+                epInfo.name = mEvRegion->getSrc();
+                epInfo.addr = 0;
+                epInfo.id = 0;
+                epInfo.region = mEvRegion->getRegion();
+                sourceEndpointInfo.insert(epInfo);
+                destEndpointInfo.insert(epInfo);
+
+                if (mEvRegion->getSetRegion() && acceptRegion) {
+                    dbg.debug(_L10_, "\tUpdating local region\n");
+                    info.region = mEvRegion->getRegion();
+                }
+                delete ev;
+            } else { /* No need to filter by source since this is a direct link */
+                initReceiveQ.push(mEv);
+            }
+        } else 
+            delete ev;
+    }
 }
 
 /**
@@ -56,34 +84,12 @@ void MemLink::sendInitData(MemEventInit * event) {
  * receive init data
  */
 MemEventInit * MemLink::recvInitData() {
-    SST::Event * ev;
-    while ((ev = link->recvInitData())) {
-        MemEventInit * mEv = dynamic_cast<MemEventInit*>(ev);
-        if (mEv) {
-            if (mEv->getInitCmd() == MemEventInit::InitCommand::Region) {
-                MemEventInitRegion * mEvRegion = dynamic_cast<MemEventInitRegion*>(mEv);
-                dbg.debug(_L10_, "%s received init message: %s\n", getName().c_str(), mEvRegion->getVerboseString().c_str());
-            
-                EndpointInfo epInfo;
-                epInfo.name = mEvRegion->getSrc();
-                epInfo.addr = 0;
-                epInfo.id = 0;
-                epInfo.region = mEvRegion->getRegion();
-                sourceEndpointInfo.insert(epInfo);
-                destEndpointInfo.insert(epInfo);
-
-                if (/*mEvRegion->getDst() == getName() &&*/ mEvRegion->getSetRegion() && acceptRegion) {
-                    dbg.debug(_L10_, "\tUpdating local region\n");
-                    info.region = mEvRegion->getRegion();
-                }
-            } else {
-                return mEv;
-            }
-        }
-        delete ev;
+    MemEventInit * me = nullptr;
+    if (!initReceiveQ.empty()) {
+        me = initReceiveQ.front();
+        initReceiveQ.pop();
     }
-            
-    return nullptr;
+    return me;
 }
 
 

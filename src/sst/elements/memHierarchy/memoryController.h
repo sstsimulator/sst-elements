@@ -36,16 +36,15 @@ public:
     typedef uint64_t ReqId;
 
     MemController(ComponentId_t id, Params &params);
-    void init(unsigned int);
-    void setup();
+    virtual void init(unsigned int);
+    virtual void setup();
     void finish();
 
     virtual void handleMemResponse( SST::Event::id_type id, uint32_t flags );
     
     SST::Cycle_t turnClockOn();
 
-private:
-
+protected:
     MemController();  // for serialization only
     ~MemController() {}
 
@@ -59,12 +58,13 @@ private:
             }
         }
     }
+    
+    virtual void handleEvent( SST::Event* );
+    virtual void processInitEvent( MemEventInit* );
 
-    void handleEvent( SST::Event* );
-    bool clock( SST::Cycle_t );
+    virtual bool clock( SST::Cycle_t );
     void writeData( MemEvent* );
     void readData( MemEvent* );
-    void processInitEvent( MemEventInit* );
 
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
@@ -77,8 +77,6 @@ private:
 
     std::vector<CacheListener*> listeners_;
     
-    std::map<SST::Event::id_type, MemEvent*> outstandingEvents_; // For sending responses. Expect backend to respond to ALL requests so that we know the execution order
-
     bool isRequestAddressValid(Addr addr){
         return region_.contains(addr);
     }
@@ -86,13 +84,18 @@ private:
     size_t      memSize_;
 
     bool clockOn_;
-    Clock::Handler<MemController>* clockHandler_;
-    TimeConverter* clockTimeBase_;
 
     MemRegion region_; // Which address region we are, for translating to local addresses
     Addr privateMemOffset_; // If we reserve any memory locations for ourselves/directories/etc. and they are NOT part of the physical address space, shift regular addresses by this much
     Addr translateToLocal(Addr addr);
     Addr translateToGlobal(Addr addr);
+    
+    Clock::Handler<MemController>* clockHandler_;
+    TimeConverter* clockTimeBase_;
+
+private:
+    
+    std::map<SST::Event::id_type, MemEvent*> outstandingEvents_; // For sending responses. Expect backend to respond to ALL requests so that we know the execution order
 };
 
 }}

@@ -242,7 +242,6 @@ void MemController::handleEvent(SST::Event* event) {
 }
 
 bool MemController::clock(Cycle_t cycle) {
-
     bool unclockLink = true;
     if (clockLink_) {
         unclockLink = link_->clock();
@@ -311,17 +310,16 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
 void MemController::init(unsigned int phase) {
     link_->init(phase);
     
-    /* Inherit region from our source(s) */
     region_ = link_->getRegion(); // This can change during init, but should stabilize before we start receiving init data
+    
+    /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
         link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth()));
     }
 
     while (MemEventInit *ev = link_->recvInitData()) {
-        if (ev->getDst() == getName()) {
-            processInitEvent(ev);
-        } else delete ev;
+        processInitEvent(ev);
     }
 }
 

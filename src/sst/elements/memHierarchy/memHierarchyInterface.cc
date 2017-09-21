@@ -31,30 +31,40 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &param
     SimpleMem(comp, params), owner_(comp), recvHandler_(NULL), link_(NULL)
 { 
     output.init("", 1, 0, Output::STDOUT);
+    rqstr_ = "";
 }
 
 
 void MemHierarchyInterface::init(unsigned int phase) {
+    /* Send region message */
     if (!phase) {
-        // Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
-        link_->sendInitData(new MemEventInitCoherence(parent->getName(), Endpoint::CPU, false, false, 0));
+        MemRegion region;
+        region.start = 0;
+        region.end = (uint64_t) - 1;
+        region.interleaveStep = 0;
+        region.interleaveSize = 0;
+        link_->sendInitData(new MemEventInitRegion(parent->getName(), region, false));
+
+        MemEventInitCoherence * event = new MemEventInitCoherence(parent->getName(), Endpoint::CPU, false, false, 0);
+        link_->sendInitData(event);
+
     }
 
     while (SST::Event * ev = link_->recvInitData()) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {
-            // Pick up info for initializing MemEvents
-            if (memEvent->getCmd() == Command::NULLCMD && memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
-                MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
-
-                baseAddrMask_ = ~(memEventC->getLineSize() - 1);
-                rqstr_ = memEventC->getSrc();
+            if (memEvent->getCmd() == Command::NULLCMD) {
+                rqstr_ = memEvent->getSrc();
+                if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                    MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
+                    baseAddrMask_ = ~(memEventC->getLineSize() - 1);
+                }
             }
         }
         delete ev;
     }
+    
 }
-
 
 void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
     MemEventInit *me = new MemEventInit(getName(), Command::GetX, req->addrs[0], req->data);

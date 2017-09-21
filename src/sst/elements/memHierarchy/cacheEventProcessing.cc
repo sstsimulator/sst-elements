@@ -416,8 +416,8 @@ void Cache::init(unsigned int phase) {
                 d_->debug(_L10_, "%s received init event: %s\n", 
                         this->getName().c_str(), event->getVerboseString().c_str());
             }
-            /* If event is from one of our destinations, update parameters */
-            if (linkDown_->isDest(event->getSrc()) && event->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+            /* If event is from one of our destinations, update parameters - link only returns events from destinations */
+            if (event->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(event);
                 if (eventC->getType() != Endpoint::Memory) { // All other types do coherence
                     isLL = false;
@@ -449,8 +449,10 @@ void Cache::init(unsigned int phase) {
             upperLevelCacheNames_.push_back(memEvent->getSrc());
         } else {
             d_->debug(_L10_, "%s received init event %s\n", getName().c_str(), memEvent->getVerboseString().c_str());
-        
-            linkDown_->sendInitData(new MemEventInit(*memEvent));
+            MemEventInit * mEv = memEvent->clone();
+            mEv->setSrc(getName());
+            mEv->setDst(linkDown_->findTargetDestination(mEv->getRoutingAddress()));
+            linkDown_->sendInitData(mEv);
         }
         delete memEvent;
     }
