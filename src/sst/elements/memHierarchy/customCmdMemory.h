@@ -21,6 +21,7 @@
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
+#include "sst/elements/memHierarchy/memEventBase.h"
 
 namespace SST {
 namespace MemHierarchy {
@@ -28,7 +29,8 @@ namespace MemHierarchy {
 /* Class defining information sent to memBackendConvertor */
 class CustomCmdInfo {
 public:
-    CustomCmdInfo(SST::Event::id_type id, std::string rqstr, uint32_t flags = 0) : id(id), rqstr(rqstr), flags(flags) { }
+    CustomCmdInfo() { }
+    CustomCmdInfo(SST::Event::id_type id, std::string rqstr, uint32_t flags = 0 ) : id(id), rqstr(rqstr), flags(flags) { }
 
     virtual std::string getString() { /* For debug */
         std::ostringstream idstring;
@@ -47,7 +49,7 @@ public:
     void clearFlag(void) { flags = 0; }
     bool queryFlag(uint32_t flag) const { return flags & flag; }
     void setFlags(uint32_t nflags) { flags = nflags; }
-    
+
     std::string getRqstr() { return rqstr; }
     void setRqstr(std::string rq) { rqstr = rq; }
 
