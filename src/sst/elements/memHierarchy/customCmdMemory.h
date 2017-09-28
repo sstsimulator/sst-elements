@@ -30,6 +30,7 @@ namespace MemHierarchy {
 class CustomCmdInfo {
 public:
     CustomCmdInfo() { }
+    CustomCmdInfo(SST::Event::id_type id, std::string rqstr) : id(id), rqstr(rqstr){ }
     CustomCmdInfo(SST::Event::id_type id, std::string rqstr, uint32_t flags = 0 ) : id(id), rqstr(rqstr), flags(flags) { }
 
     virtual std::string getString() { /* For debug */
@@ -44,6 +45,7 @@ public:
 
     /* Flag getters/setters - same as MemEventBase */
     uint32_t getFlags(void) const { return flags; }
+    void setID(SST::Event::id_type id) {id = id;}
     void setFlag(uint32_t flag) { flags = flags | flag; }
     void clearFlag(uint32_t flag) { flags = flags & (~flag); }
     void clearFlag(void) { flags = 0; }
@@ -66,7 +68,7 @@ protected:
 class CustomCmdMemHandler : public SST::SubComponent {
 
 public:
-    
+
     class MemEventInfo {
     public:
         std::set<Addr> addrs;   /* Cache line addresses accessed by this instruction */
@@ -92,13 +94,13 @@ public:
         for (std::vector<uint64_t>::iterator it = addrArray.begin(); it != addrArray.end(); it++) {
             DEBUG_ADDR.insert(*it);
         }
-        
+
     }
-    
+
     /* Destructor */
     ~CustomCmdMemHandler() { }
 
-    /* 
+    /*
      * Interface between handler and memController
      */
 
@@ -106,14 +108,14 @@ public:
      * to the memory controller so that it knows how to process the event 
      */
     virtual MemEventInfo receive(MemEventBase* ev) =0;
-    
+
     /* The memController will call ready when the event is ready to issue.
      * Events are ready immediately (back-to-back receive() and ready()) unless
      * the event needs to stall for some coherence action.
      * The handler should return a CustomCmdReq* which will be sent to the memBackendConvertor. 
      * The memBackendConvertor will then issue the unmodified CustomCmdReq* to the backend.
      * CustomCmdReq is intended as a base class for custom commands to define as needed.
-     */ 
+     */
     virtual CustomCmdInfo* ready(MemEventBase* ev) =0;
 
     /* When the memBackendConvertor returns a response, the memController will call this function, including
@@ -124,9 +126,9 @@ public:
      *  parent->translateLocalT
      */
     virtual MemEventBase* finish(MemEventBase *ev, uint64_t flags) =0;
-    
+
 protected:
-    
+
     // Debug
     Output dbg;
     std::set<Addr> DEBUG_ADDR;

@@ -39,15 +39,15 @@ ExtMemBackendConvertor::ExtMemBackendConvertor(Component *comp, Params &params) 
 
 }
 
-bool ExtMemBackendConvertor::issue( MemReq *req ) {
+bool ExtMemBackendConvertor::issue( BaseReq *req ) {
 
-    MemEvent* event = req->getMemEvent();
+    MemReq * mreq = static_cast<MemReq*>(req);
     std::vector<uint64_t> NULLVEC;
 
-    return static_cast<ExtMemBackend*>(m_backend)->issueRequest( req->id(),
-                                                                     req->addr(),
-                                                                     req->isWrite(),
+    return static_cast<ExtMemBackend*>(m_backend)->issueRequest( mreq->id(),
+                                                                     mreq->addr(),
+                                                                     mreq->isWrite(),
                                                                      NULLVEC, // this is null for now
-                                                                     event->getFlags(),
+                                                                     mreq->getMemEvent()->getFlags(),
                                                                      m_backendRequestWidth );
 }

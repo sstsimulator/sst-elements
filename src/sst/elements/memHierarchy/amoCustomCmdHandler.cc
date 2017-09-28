@@ -25,13 +25,9 @@ CustomCmdMemHandler::MemEventInfo AMOCustomCmdMemHandler::receive(MemEventBase* 
 }
 
 CustomCmdInfo* AMOCustomCmdMemHandler::ready(MemEventBase* ev){
-#if 0
-  CustomCmdInfo *CI = new CustomCmdInfo(ev->getID,
+  CustomCmdInfo *CI = new CustomCmdInfo(ev->getID(),
                                         ev->getRqstr(),
                                         MemEvent::F_SUCCESS);
-#endif
-  CustomCmdInfo *CI = new CustomCmdInfo();
-
   return CI;
 }
 
