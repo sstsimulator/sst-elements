@@ -18,6 +18,7 @@
 #define _H_SST_MEMH_GOBLIN_HMC_BACKEND
 
 #include <queue>
+#include <vector>
 
 #include <sst/core/component.h>
 #include <sst/core/elementinfo.h>
@@ -32,10 +33,60 @@
 namespace SST {
 namespace MemHierarchy {
 
+typedef struct{
+  std::string name;
+  hmc_rqst_t type;
+  int data_len;
+  int rqst_len;
+  int rsp_len;
+  bool isCMC;
+} HMCPacket;
+
+typedef enum{
+  SRC_WR,
+  SRC_RD,
+  SRC_POSTED,
+  SRC_CUSTOM,
+}CMCSrcReq;
+
+class HMCCMCConfig{
+public:
+  HMCCMCConfig( std::string P, hmc_rqst_t R, int RQ, int RS ) :
+    path(P), cmd(R), rqst_flits(RQ), rsp_flits(RS) {}
+  ~HMCCMCConfig();
+
+  std::string getPath() { return path; }
+  hmc_rqst_t getCmdType() { return cmd; }
+  int getRqstFlits() { return rqst_flits; }
+  int getRspFlits() { return rsp_flits; }
+
+private:
+  std::string path;
+  hmc_rqst_t cmd;
+  int rqst_flits;
+  int rsp_flits;
+};
+
+class HMCSimCmdMap{
+public:
+  HMCSimCmdMap( CMCSrcReq SRC, int SZ, hmc_rqst_t DEST ) :
+    src(SRC), size(SZ), rqst(DEST) {}
+  ~HMCSimCmdMap() {}
+
+  CMCSrcReq getSrcType() { return src; }
+  int getSrcSize() { return size; }
+  hmc_rqst_t getTargetType() { return rqst; }
+
+private:
+  CMCSrcReq src;    // source request type
+  int size;         // size of the request
+  hmc_rqst_t rqst;  // target request type
+};
+
 class HMCSimBackEndReq {
 	public:
-		HMCSimBackEndReq(MemBackend::ReqId r, Addr a, uint64_t sTime) :
-			req(r), addr(a), startTime(sTime) {}
+		HMCSimBackEndReq(MemBackend::ReqId r, Addr a, uint64_t sTime, bool hr) :
+			req(r), addr(a), startTime(sTime), hasResp(hr) {}
 		~HMCSimBackEndReq() {}
 
 		uint64_t getStartTime() const {
@@ -48,19 +99,24 @@ class HMCSimBackEndReq {
         Addr getAddr() const {
 			return addr;
 		}
+        bool hasResponse() const {
+                        return hasResp;
+                }
 	private:
         MemBackend::ReqId req;
         Addr addr;
-		uint64_t startTime;
+	uint64_t startTime;
+        bool hasResp;
 };
 
-class GOBLINHMCSimBackend : public SimpleMemBackend {
+class GOBLINHMCSimBackend : public ExtMemBackend {
 
 public:
-	GOBLINHMCSimBackend() : SimpleMemBackend() {};
 	GOBLINHMCSimBackend(Component* comp, Params& params);
 	~GOBLINHMCSimBackend();
-	bool issueRequest(ReqId, Addr, bool, unsigned);
+	bool issueRequest(ReqId, Addr, bool,
+                          std::vector<uint64_t>,
+                          uint32_t, unsigned);
 	void setup();
 	void finish();
 	virtual bool clock(Cycle_t cycle);
@@ -208,17 +264,40 @@ private:
 	uint32_t nextLink;
 
         std::vector<std::string> cmclibs;
+        std::vector<std::string> cmcconfigs;
+        std::vector<std::string> cmdmaps;
+
+        std::list<HMCSimCmdMap *> CmdMapping;
+        std::list<HMCCMCConfig *> CmcConfig;
 
 	std::string hmc_trace_file;
 	FILE* hmc_trace_file_handle;
 
 	// We have to create a packet up to the maximum the sim will allow
 	uint64_t hmc_packet[HMC_MAX_UQ_PACKET];
-	// We are allowed up to 128-bytes in a payload but we may use less
-	uint64_t hmc_payload[16];
+
+	// We are allowed up to 256-bytes in a payload but we may use less
+        // now supports HMCC Spec 2.1
+	uint64_t hmc_payload[32];
 
 	std::queue<uint16_t> tag_queue;
 	std::map<uint16_t, HMCSimBackEndReq*> tag_req_map;
+
+        void handleCMCConfig();
+        void handleCmdMap();
+
+        void splitStr(const string& s,
+                      char delim,
+                      vector<string>& v);
+
+        bool strToHMCRqst( std::string, hmc_rqst_t *, bool );
+        bool HMCRqstToStr( hmc_rqst_t R, std::string *S );
+        bool isPostedRqst( hmc_rqst_t );
+
+	bool issueMappedRequest(ReqId, Addr, bool,
+                                std::vector<uint64_t>,
+                                uint32_t, unsigned,
+                                uint8_t, uint16_t, bool*);
 
         void collectStats();
         void registerStatistics();

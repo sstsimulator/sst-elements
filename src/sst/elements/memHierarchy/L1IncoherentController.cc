@@ -19,6 +19,15 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+/* Debug macros */
+#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
+#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#else
+#define is_debug_addr(addr) false
+#define is_debug_event(ev) false
+#endif
+
 /*----------------------------------------------------------------------------------------------------------------------
  * L1 Incoherent Controller 
  * States:
@@ -79,9 +88,7 @@ CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, strin
  *  Obtain needed coherence permission from lower level cache/memory if coherence miss
  */
 CacheAction L1IncoherentController::handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay){
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr())   debug->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
-#endif
+    if (is_debug_addr(cacheLine->getBaseAddr()))   debug->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
 
     Command cmd = event->getCmd();
 
@@ -398,10 +405,9 @@ uint64_t L1IncoherentController::sendResponseUp(MemEvent * event, std::vector<ui
     Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize()};
     addToOutgoingQueueUp(resp);
 
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i\n", 
+    if (is_debug_event(event)) debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i\n", 
             deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize());
-#endif
+    
     return deliveryTime;
 }
 
@@ -424,9 +430,8 @@ void L1IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, st
     uint64_t deliveryTime = timestamp_ + accessLatency_;
     Response resp = {writeback, deliveryTime, packetHeaderBytes + writeback->getPayloadSize()};
     addToOutgoingQueue(resp);
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) debug->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s\n", deliveryTime, CommandString[(int)cmd]);
-#endif
+
+    if (is_debug_addr(cacheLine->getBaseAddr())) debug->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s\n", deliveryTime, CommandString[(int)cmd]);
 }
 
 
@@ -450,11 +455,10 @@ void L1IncoherentController::forwardFlushLine(Addr baseAddr, Command cmd, string
     Response resp = {flush, deliveryTime, packetHeaderBytes + flush->getPayloadSize()};
     addToOutgoingQueue(resp);
     if (cacheLine != NULL) cacheLine->setTimestamp(deliveryTime-1);
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) { 
+    
+    if (is_debug_addr(baseAddr)) {
         debug->debug(_L3_,"Forwarding Flush at cycle = %" PRIu64 ", Cmd = %s, Src = %s, %s\n", deliveryTime, CommandString[(int)flush->getCmd()], flush->getSrc().c_str(), payload ? "with data" : "without data");
     }
-#endif
 }
 
 
@@ -467,11 +471,10 @@ void L1IncoherentController::sendFlushResponse(MemEvent * requestEvent, bool suc
     uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : tagLatency_);
     Response resp = {flushResponse, deliveryTime, packetHeaderBytes};
     addToOutgoingQueueUp(resp);
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == requestEvent->getBaseAddr()) { 
+    
+    if (is_debug_event(requestEvent)) {
         debug->debug(_L3_,"Sending Flush Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[(int)flushResponse->getCmd()], flushResponse->getSrc().c_str());
     }
-#endif
 }
 
 

@@ -37,6 +37,11 @@ using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+
+// Debug macros
+#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+
 const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
 
 Bus::Bus(ComponentId_t id, Params& params) : Component(id) {
@@ -102,7 +107,7 @@ void Bus::broadcastEvent(SST::Event* ev) {
 void Bus::sendSingleEvent(SST::Event* ev) {
     MemEventBase *event = static_cast<MemEventBase*>(ev);
 #ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || event->doDebug(DEBUG_ADDR)) {
+    if (is_debug_event(event)) {
         dbg_.debug(_L3_,"\n\n");
         dbg_.debug(_L3_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
         dbg_.debug(_L3_,"Incoming Event. Name: %s, LinkID: %d, Event: %s\n",
@@ -113,7 +118,7 @@ void Bus::sendSingleEvent(SST::Event* ev) {
     SST::Link* dstLink = linkIdMap_[dstLinkId];
     MemEventBase* forwardEvent = event->clone();
 #ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || forwardEvent->doDebug(DEBUG_ADDR)) {
+    if (is_debug_event(forwardEvent)) {
         dbg_.debug(_L3_,"BCmd = %s \n", CommandString[(int)forwardEvent->getCmd()]);
         dbg_.debug(_L3_,"BDst = %s \n", forwardEvent->getDst().c_str());
         dbg_.debug(_L3_,"BSrc = %s \n", forwardEvent->getSrc().c_str());
@@ -178,15 +183,13 @@ void Bus::configureParameters(SST::Params& params) {
     int debugLevel = params.find<int>("debug_level", 0);
     
     dbg_.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
-    if (debugLevel < 0 || debugLevel > 10)     dbg_.fatal(CALL_INFO, -1, "Debugging level must be betwee 0 and 10. \n");
-    int64_t dAddr         = params.find<int64_t>("debug_addr", -1);
-    if (dAddr == -1) {
-        DEBUG_ADDR = (Addr) dAddr;
-        DEBUG_ALL = true;
-    } else {
-        DEBUG_ADDR = (Addr) dAddr;
-        DEBUG_ALL = false;
-    }
+    if (debugLevel < 0 || debugLevel > 10)     dbg_.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
+
+    std::vector<Addr> addrArr;
+    params.find_array<Addr>("debug_addr", addrArr);
+    for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++)
+        DEBUG_ADDR.insert(*it);
+    
     numHighNetPorts_  = 0;
     numLowNetPorts_   = 0;
     

@@ -186,7 +186,7 @@ public:
         return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_;
     }
 
-    virtual bool doDebug(Addr addr) {
+    virtual bool doDebug(std::set<Addr> &addr) {
         return true;    // Always debug unless we come up with a different way of determining it
     }
 

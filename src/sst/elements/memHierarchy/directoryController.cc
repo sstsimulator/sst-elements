@@ -22,6 +22,14 @@
 
 #include "memNIC.h"
 
+/* Debug macros */
+#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
+#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#else
+#define is_debug_addr(addr) false
+#define is_debug_event(ev) false
+#endif
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -57,13 +65,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     }
 
     // Debug address
-    int dAddr = params.find<int>("debug_addr", -1);
-    if (dAddr == -1) {
-        DEBUG_ADDR = (Addr) dAddr;
-        DEBUG_ALL = true;
-    } else {
-        DEBUG_ADDR = (Addr) dAddr;
-        DEBUG_ALL = false;
+    std::vector<Addr> addrArr;
+    params.find_array<Addr>("debug_addr", addrArr);
+    for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++) {
+        DEBUG_ADDR.insert(*it);
     }
 
     targetCount = 0;
@@ -98,7 +103,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     int mshrSize    = params.find<int>("mshr_num_entries",-1);
     if (mshrSize == -1) mshrSize = HUGE_MSHR;
     if (mshrSize < 1) dbg.fatal(CALL_INFO, -1, "Invalid param(%s): mshr_num_entries - must be at least 1 or else -1 to indicate a very large MSHR\n", getName().c_str());
-    mshr                = new MSHR(&dbg, mshrSize, this->getName(), DEBUG_ALL, DEBUG_ADDR); 
+    mshr                = new MSHR(&dbg, mshrSize, this->getName(), DEBUG_ADDR); 
     
     if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
     numTargets = 0;
@@ -254,12 +259,11 @@ void DirectoryController::handlePacket(SST::Event *event){
     /* Forward events that we don't handle */
     if (MemEventTypeArr[(int)evb->getCmd()] != MemEventType::Cache || evb->queryFlag(MemEvent::F_NONCACHEABLE)) {
 
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || evb->doDebug(DEBUG_ADDR)) {
+        if (is_debug_event(evb)) {
             dbg.debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n",
                     getCurrentSimTimeNano(), getName().c_str(), evb->getVerboseString().c_str());
         }
-#endif
+        
         if (BasicCommandClassArr[(int)evb->getCmd()] == BasicCommandClass::Request)
             handleNoncacheableRequest(evb);
         else
@@ -409,27 +413,28 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
     bool debugLine = false;
     while (!netMsgQueue.empty() && netMsgQueue.begin()->first <= timestamp) {
         MemEventBase * ev = netMsgQueue.begin()->second;
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR)) {
+        
+        if (is_debug_event(ev)) {
             if (!debugLine) dbg.debug(_L3_, "\n");
             debugLine = true;
             dbg.debug(_L3_, "%" PRIu64 " (%s) Sending event to network: %s\n",
                     getCurrentSimTimeNano(), getName().c_str(), ev->getBriefString().c_str());
         }
-#endif
+
         network->send(ev);
         netMsgQueue.erase(netMsgQueue.begin());
     }
+
     while (!memMsgQueue.empty() && memMsgQueue.begin()->first <= timestamp) {
         MemEventBase * ev = memMsgQueue.begin()->second;
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR)) {
+        
+        if (is_debug_event(ev)) {
             if (!debugLine) dbg.debug(_L3_, "\n");
             debugLine = true;
             dbg.debug(_L3_, "%" PRIu64 " (%s) Sending event to memory: %s\n",
                     getCurrentSimTimeNano(), getName().c_str(), ev->getBriefString().c_str());
         }
-#endif
+        
         sendEventToMem(ev);
         memMsgQueue.erase(memMsgQueue.begin());
     }
@@ -457,12 +462,11 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 }
 
 void DirectoryController::processPacket(MemEvent * ev, bool replay) {
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
+    if (is_debug_event(ev)) {
         dbg.debug(_L3_, "\n%" PRIu64 " (%s) Processing: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
         cout << flush;
     }
-#endif
+    
     if(! isRequestAddressValid(ev->getAddr()) ) {
 	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
                 getName().c_str(), ev->getBaseAddr(), CommandString[(int)ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
@@ -509,14 +513,16 @@ void DirectoryController::processPacket(MemEvent * ev, bool replay) {
             handleBackInv(ev);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1 , "%s, Error: Received unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    getName().c_str(), CommandString[(int)cmd], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+            dbg.fatal(CALL_INFO, -1 , "%s, Error: Received unrecognized request: %s.  Time = %" PRIu64 "ns\n",
+                    getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 }
 
 
 void DirectoryController::handleNoncacheableRequest(MemEventBase * ev) {
-    noncacheMemReqs[ev->getID()] = ev->getSrc();
+    if (!(ev->queryFlag(MemEventBase::F_NORESPONSE))) {
+        noncacheMemReqs[ev->getID()] = ev->getSrc();
+    }
     stat_NoncacheReceived->addData(1);
 
     ev->setSrc(getName());
@@ -528,6 +534,10 @@ void DirectoryController::handleNoncacheableRequest(MemEventBase * ev) {
 
 
 void DirectoryController::handleNoncacheableResponse(MemEventBase * ev) {
+    if (noncacheMemReqs.find(ev->getID()) == noncacheMemReqs.end()) {
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Received a noncacheable response that does not match a pending request. Event: %s\n. Time: %" PRIu64 "ns\n", 
+                getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }
     ev->setDst(noncacheMemReqs[ev->getID()]);
     ev->setSrc(getName());
 
@@ -561,9 +571,9 @@ void DirectoryController::handleGetS(MemEvent * ev, bool replay) {
     }
 
     if (!entry->isCached()) {
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || entry->getBaseAddr() == DEBUG_ADDR) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
-#endif
+        
+        if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        
         getDirEntryFromMemory(entry);
         return;
     }
@@ -609,9 +619,8 @@ void DirectoryController::handleGetX(MemEvent * ev, bool replay) {
         profileRequestRecv(ev, entry);
 
     if (!entry->isCached()) {
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || entry->getBaseAddr() == DEBUG_ADDR) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
-#endif
+        if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        
         getDirEntryFromMemory(entry);
         return;
     }
@@ -626,9 +635,9 @@ void DirectoryController::handleGetX(MemEvent * ev, bool replay) {
         case S:
             if (entry->getSharerCount() == 1 && entry->isSharer(node_id(ev->getSrc()))) {   // Special case: upgrade
                 mshr->removeFront(ev->getBaseAddr());
-#ifdef __SST_DEBUG_OUTPUT__
-                if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)ev->getCmd()], ev->getBaseAddr());
-#endif
+                
+                if (is_debug_event(ev)) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)ev->getCmd()], ev->getBaseAddr());
+                
                 entry->setState(M);
                 entry->removeSharer(node_name_to_id(ev->getSrc()));
                 entry->setOwner(node_name_to_id(ev->getSrc()));
@@ -636,11 +645,11 @@ void DirectoryController::handleGetX(MemEvent * ev, bool replay) {
                 respEv->setSize(cacheLineSize);
                 profileResponseSent(respEv);
                 sendEventToCaches(respEv, timestamp + accessLatency);
-#ifdef __SST_DEBUG_OUTPUT__
-                if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
+                
+                if (is_debug_event(ev)) {
                     dbg.debug(_L4_, "Sending response for 0x%" PRIx64 " to %s, send time: %" PRIu64 "\n", entry->getBaseAddr(), respEv->getDst().c_str(), timestamp + accessLatency);
                 }
-#endif
+                
                 postRequestProcessing(ev, entry, true);
                 replayWaitingEvents(entry->getBaseAddr());
                 updateCache(entry);                
@@ -718,22 +727,21 @@ void DirectoryController::handlePutE(MemEvent * ev) {
         if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
             stat_mshrHits->addData(1);
             bool inserted = mshr->insert(ev->getBaseAddr(),ev);
-#ifdef __SST_DEBUG_OUTPUT__
-            if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
+            
+            if (is_debug_event(ev)) {
                 dbg.debug(_L8_, "Inserting request in mshr. %s. MSHR size: %d\n", ev->getBriefString().c_str(), mshr->getSize());
             }
-#endif
+            
             if (!inserted) {
-#ifdef __SST_DEBUG_OUTPUT__
-                if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L8_, "MSHR is full. NACKing request\n");
-#endif
+                if (is_debug_event(ev)) dbg.debug(_L8_, "MSHR is full. NACKing request\n");
+                
                 mshrNACKRequest(ev);
                 return;
             }
         }
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
-#endif
+        
+        if (is_debug_event(ev)) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        
         getDirEntryFromMemory(entry);
         return;
     } 
@@ -782,22 +790,21 @@ void DirectoryController::handlePutM(MemEvent * ev) {
         if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
             stat_mshrHits->addData(1);
             bool inserted = mshr->insert(ev->getBaseAddr(),ev);
-#ifdef __SST_DEBUG_OUTPUT__
-            if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
+            
+            if (is_debug_event(ev)) {
                 dbg.debug(_L8_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[(int)ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
             }
-#endif
+            
             if (!inserted) {
-#ifdef __SST_DEBUG_OUTPUT__
-                if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L8_, "MSHR is full. NACKing request\n");
-#endif
+                if (is_debug_event(ev)) dbg.debug(_L8_, "MSHR is full. NACKing request\n");
+                
                 mshrNACKRequest(ev);
                 return;
             }
         }
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
-#endif
+        
+        if (is_debug_event(ev)) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        
         getDirEntryFromMemory(entry);
         return;
     } 
@@ -832,9 +839,9 @@ void DirectoryController::handlePutM(MemEvent * ev) {
 void DirectoryController::handleFlushLine(MemEvent * ev) {
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
     if (!entry->isCached()) {
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || entry->getBaseAddr() == DEBUG_ADDR) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
-#endif
+        
+        if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        
         getDirEntryFromMemory(entry);
         return;
     }
@@ -938,9 +945,8 @@ void DirectoryController::handleFlushLineInv(MemEvent * ev) {
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
     
     if (!entry->isCached()) {
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || entry->getBaseAddr() == DEBUG_ADDR) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
-#endif
+        if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        
         getDirEntryFromMemory(entry);
         return;
     }
@@ -1045,9 +1051,8 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
 
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
     MemEvent * reqEv = mshr->removeFront(ev->getBaseAddr());
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L4_, "Finishing Fetch for reqEv = %s.\n", reqEv->getBriefString().c_str());
-#endif
+    
+    if (is_debug_event(ev)) dbg.debug(_L4_, "Finishing Fetch for reqEv = %s.\n", reqEv->getBriefString().c_str());
     
     /* Error checking */
     if (!((uint32_t)entry->getOwner() == node_name_to_id(ev->getSrc()))) {
@@ -1112,9 +1117,7 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
 
 /* FetchXResp */
 void DirectoryController::handleFetchXResp(MemEvent * ev, bool keepEvent) {
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L4_, "Finishing Fetch.\n");
-#endif
+    if (is_debug_event(ev)) dbg.debug(_L4_, "Finishing Fetch.\n");
 
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
     MemEvent * reqEv = mshr->removeFront(ev->getBaseAddr());
@@ -1233,9 +1236,8 @@ void DirectoryController::handleBackInv(MemEvent* ev) {
     }
 
     if (!entry->isCached()) {
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || entry->getBaseAddr() == DEBUG_ADDR) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
-#endif
+        if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        
         getDirEntryFromMemory(entry);
         return;
     }
@@ -1283,22 +1285,20 @@ void DirectoryController::handleNACK(MemEvent * ev) {
     profileResponseRecv(ev);
     
     DirEntry *entry = getDirEntry(origEvent->getBaseAddr());
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
+    if (is_debug_event(ev)) {
         dbg.debug(_L5_, "Orig resp ID = (%" PRIu64 ",%d), Nack resp ID = (%" PRIu64 ",%d), last req ID = (%" PRIu64 ",%d)\n", 
 	        origEvent->getResponseToID().first, origEvent->getResponseToID().second, ev->getResponseToID().first, 
         	ev->getResponseToID().second, entry->lastRequest.first, entry->lastRequest.second);
     }
-#endif
+    
     /* Retry request if it has not already been handled */
     if ((ev->getResponseToID() == entry->lastRequest) || origEvent->getCmd() == Command::Inv) {
 	/* Re-send request */
 	sendEventToCaches(origEvent, timestamp + mshrLatency);
-#ifdef __SST_DEBUG_OUTPUT__
-	if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L5_,"Orig Cmd NACKed, retry = %s \n", CommandString[(int)origEvent->getCmd()]);
+	
+        if (is_debug_event(ev)) dbg.debug(_L5_,"Orig Cmd NACKed, retry = %s \n", CommandString[(int)origEvent->getCmd()]);
     } else {
-	if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L5_,"Orig Cmd NACKed, no retry = %s \n", CommandString[(int)origEvent->getCmd()]);
-#endif
+	if (is_debug_event(ev)) dbg.debug(_L5_,"Orig Cmd NACKed, no retry = %s \n", CommandString[(int)origEvent->getCmd()]);
     }
 
     delete ev;
@@ -1309,12 +1309,11 @@ void DirectoryController::handleNACK(MemEvent * ev) {
 /* Memory response handler - calls handler for each event from memory */
 void DirectoryController::handleMemoryResponse(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || ev->doDebug(DEBUG_ADDR)) {
+    
+    if (is_debug_event(ev)) {
         dbg.debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n",
                 getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
     }
-#endif
 
     if (!clockOn) {
         turnClockOn();
@@ -1370,10 +1369,8 @@ void DirectoryController::handleDataResponse(MemEvent * ev) {
     State state = entry->getState();
 
     MemEvent * reqEv = mshr->removeFront(ev->getBaseAddr());
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)reqEv->getCmd()], reqEv->getBaseAddr());
+    if (is_debug_event(ev)) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)reqEv->getCmd()], reqEv->getBaseAddr());
     //dbg.debug(_L9_, "\t%s\tHandling stalled event: %s, %s\n", CommandString[(int)reqEv->getCmd()], reqEv->getSrc().c_str());
-#endif
 
     MemEvent * respEv = NULL;
     switch (state) {
@@ -1406,11 +1403,9 @@ void DirectoryController::handleDataResponse(MemEvent * ev) {
     profileResponseSent(respEv);
     sendEventToCaches(respEv, timestamp + mshrLatency);
     
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
+    if (is_debug_event(ev)) {
         dbg.debug(_L4_, "\tSending requested data for 0x%" PRIx64 " to %s\n", entry->getBaseAddr(), respEv->getDst().c_str());
     }
-#endif
 
     postRequestProcessing(reqEv, entry, true);
     replayWaitingEvents(entry->getBaseAddr());
@@ -1421,10 +1416,10 @@ void DirectoryController::handleDataResponse(MemEvent * ev) {
 /* Handle FlushLineResp from memory */
 void DirectoryController::handleFlushLineResponse(MemEvent * ev) {
     MemEvent * reqEv = mshr->removeFront(ev->getBaseAddr());
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)reqEv->getCmd()], reqEv->getBaseAddr());
+    
+    if (is_debug_event(ev)) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)reqEv->getCmd()], reqEv->getBaseAddr());
     //dbg.debug(_L9_, "\t%s\tHandling stalled event: %s, %s\n", CommandString[(int)reqEv->getCmd()], reqEv->getSrc().c_str());
-#endif
+    
     reqEv->setMemFlags(ev->getMemFlags()); // Copy anything back up that needs to be
     
     MemEvent * me = reqEv->makeResponse();
@@ -1486,9 +1481,8 @@ void DirectoryController::issueInvalidates(MemEvent * ev, DirEntry * entry, Comm
         }
     }
     entry->lastRequest = DirEntry::NO_LAST_REQUEST;
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == entry->getBaseAddr()) dbg.debug(_L4_, "Sending Invalidates to fulfill request for exclusive, BsAddr = %" PRIx64 ".\n", entry->getBaseAddr());
-#endif
+    
+    if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L4_, "Sending Invalidates to fulfill request for exclusive, BsAddr = %" PRIx64 ".\n", entry->getBaseAddr());
 }
 
 /* Send Fetch to owner */
@@ -1511,12 +1505,11 @@ void DirectoryController::issueMemoryRequest(MemEvent * ev, DirEntry * entry) {
     uint64_t deliveryTime = timestamp + accessLatency;
 
     memMsgQueue.insert(std::make_pair(deliveryTime, reqEv));
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == entry->getBaseAddr()) {
+
+    if (is_debug_addr(entry->getBaseAddr())) {
         dbg.debug(_L5_, "\tRequesting data from memory.  Cmd = %s, BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n", 
                 CommandString[(int)reqEv->getCmd()], reqEv->getBaseAddr(), reqEv->getSize(), reqEv->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
     }
-#endif
 }
 
 
@@ -1561,9 +1554,8 @@ void DirectoryController::getDirEntryFromMemory(DirEntry * entry) {
     uint64_t deliveryTime = timestamp + accessLatency;
 
     memMsgQueue.insert(std::make_pair(deliveryTime, me));
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == entry->getBaseAddr()) dbg.debug(_L10_, "Requesting Entry from memory for 0x%" PRIx64 "(%" PRIu64 ", %d)\n", entry->getBaseAddr(), me->getID().first, me->getID().second);
-#endif
+    
+    if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L10_, "Requesting Entry from memory for 0x%" PRIx64 "(%" PRIu64 ", %d)\n", entry->getBaseAddr(), me->getID().first, me->getID().second);
 }
 
 
@@ -1607,9 +1599,8 @@ void DirectoryController::sendInvalidate(int target, MemEvent * reqEv, DirEntry*
     MemEvent *me = new MemEvent(this, entry->getBaseAddr(), entry->getBaseAddr(), cmd, cacheLineSize);
     me->setDst(nodeid_to_name[target]);
     me->setRqstr(reqEv->getRqstr());
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == reqEv->getBaseAddr()) dbg.debug(_L4_, "Sending Invalidate.  Dst: %s\n", nodeid_to_name[target].c_str());
-#endif
+    
+    if (is_debug_event(reqEv)) dbg.debug(_L4_, "Sending Invalidate.  Dst: %s\n", nodeid_to_name[target].c_str());
     profileRequestSent(me);
     
     uint64_t deliveryTime = timestamp + accessLatency;
@@ -1645,12 +1636,11 @@ void DirectoryController::forwardFlushRequest(MemEvent * event) {
     reqEv->setDst(memoryName);
 
     memMsgQueue.insert(std::make_pair(deliveryTime, reqEv));
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) {
-        dbg.debug(_L5_, "Forwarding FlushLine to memory.  BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n", 
+    
+    if (is_debug_event(event)) {
+        dbg.debug(_L5_, "Forwarding FlushLine to memory. BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n", 
                 reqEv->getBaseAddr(), reqEv->getSize(), reqEv->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
     }
-#endif
 }
 
 uint32_t DirectoryController::node_id(const std::string &name){
@@ -1693,9 +1683,8 @@ void DirectoryController::updateCache(DirEntry *entry){
 
         /* Find out if we're no longer cached, and just remove */
         if (entry->getState() == I){
-#ifdef __SST_DEBUG_OUTPUT__
-            if (DEBUG_ALL || DEBUG_ADDR == entry->getBaseAddr()) dbg.debug(_L10_, "Entry for 0x%" PRIx64 " has no references - purging\n", entry->getBaseAddr());
-#endif
+            if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L10_, "Entry for 0x%" PRIx64 " has no references - purging\n", entry->getBaseAddr());
+            
             directory.erase(entry->getBaseAddr());
             delete entry;
             return;
@@ -1709,9 +1698,8 @@ void DirectoryController::updateCache(DirEntry *entry){
                 // If the oldest entry is still in progress, everything is in progress
                 if(mshr->isHit(oldEntry->getBaseAddr())) break;
 
-#ifdef __SST_DEBUG_OUTPUT__
-                if (DEBUG_ALL || DEBUG_ADDR == entry->getBaseAddr()) dbg.debug(_L10_, "entryCache too large.  Evicting entry for 0x%" PRIx64 "\n", oldEntry->getBaseAddr());
-#endif
+                if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L10_, "entryCache too large.  Evicting entry for 0x%" PRIx64 "\n", oldEntry->getBaseAddr());
+                
                 entryCache.pop_back();
                 --entryCacheSize;
                 oldEntry->cacheIter = entryCache.end();
@@ -1759,11 +1747,11 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event, Comma
 
     uint64_t deliveryTime = timestamp + accessLatency;
     memMsgQueue.insert(std::make_pair(deliveryTime, ev));
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == data_event->getBaseAddr()) {
+    
+    if (is_debug_event(ev)) {
         dbg.debug(_L5_, "\tWriting back data. %s.\n", ev->getBriefString().c_str());
     }
-#endif
+    
     return ev->getID();
 }
 
@@ -1785,9 +1773,9 @@ void DirectoryController::replayWaitingEvents(Addr addr) {
         vector<mshrType> * replayEntries = mshr->getAll(addr);
         if (replayEntries->begin()->elem.isEvent()) {
             MemEvent *ev = (replayEntries->begin()->elem).getEvent();
-#ifdef __SST_DEBUG_OUTPUT__
-            if (DEBUG_ALL || DEBUG_ADDR == addr) dbg.debug(_L5_, "\tReactivating event. %s\n", ev->getBriefString().c_str());
-#endif
+
+            if (is_debug_addr(addr)) dbg.debug(_L5_, "\tReactivating event. %s\n", ev->getBriefString().c_str());
+            
             workQueue.insert(workQueue.begin(), ev);
         }
     }

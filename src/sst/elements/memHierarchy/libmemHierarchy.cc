@@ -63,6 +63,7 @@
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
+#include "membackend/extMemBackendConvertor.h"
 #endif
 
 #ifdef HAVE_LIBRAMULATOR
@@ -136,7 +137,7 @@ static const ElementInfoParam cache_params[] = {
     {"snoop_l1_invalidations",  "(bool) Forward invalidations from L1s to processors. Options: 0[off], 1[on]", "false"},
     {"debug",                   "(uint) Where to send output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",             "(uint) Output/debug verbosity level. Between 0 (no output) and 10 (everything). 1-3 gives warnings/info; 4-10 gives debug.", "1"},
-    {"debug_addr",              "(int) Address to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
     {"force_noncacheable_reqs", "(bool) Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "false"},
     {"min_packet_size",         "(string) Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
     /* Old parameters - deprecated or moved */
@@ -639,7 +640,7 @@ static const ElementInfoParam multithreadL1_params[] = {
     {"responses_per_cycle", "(uint) Number of responses to forward to threads each cycle (for all threads combined). 0 indicates unlimited", "0"},
     {"debug",               "(uint) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",         "(uint) Debug verbosity level. Between 0 and 10", "0"},
-    {"debug_addr",          "(int) Address to debug. If not specified or set to -1, debug output for all addresses will be printed", "-1"},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
     {NULL, NULL, NULL}
 };
 
@@ -767,7 +768,7 @@ static const ElementInfoParam bus_params[] = {
     {"idle_max",            "(uint) Bus temporarily turns off clock after this amount of idle cycles", "6"},
     {"debug",               "(uint) Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {"debug_level",         "(uint) Debugging level: 0 to 10", "0"},
-    {"debug_addr",          "(int) Address to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
     {NULL, NULL}
 };
 
@@ -872,6 +873,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"trace_file",          "(string) File name (optional) of a trace-file to generate.", ""},
     {"debug",               "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "(uint) Debugging level: 0 to 10", "0"},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
     {"listenercount",       "(uint) Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
     {"listener%(listenercount)d", "(string) Loads a listener module into the controller", ""},
     {"do_not_back",         "(bool) DO NOT use this parameter if simulation depends on correct memory values. Otherwise, set to '1' to reduce simulation's memory footprint", "0"},
@@ -1304,6 +1306,27 @@ static const ElementInfoParam Messier_params[] = {
  *  Purpose: Memory backend, interface to HMCSim (HMC memory)
  *****************************************************************************************/
 #ifdef HAVE_GOBLIN_HMCSIM
+static SubComponent* create_Mem_ExtBackendConvertor(Component* comp, Params& params){
+    return new ExtMemBackendConvertor(comp, params);
+}
+
+static const ElementInfoStatistic extMemBackendConvertor_statistics[] = {
+    /* Cache hits and misses */
+    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles",   1 },
+    { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
+    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles",   1 },
+    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1 },
+    { "requests_received_GetSX",           "Number of GetSX (read) requests received",        "requests", 1 },
+    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },
+    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },
+    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },
+    { "latency_GetS",                       "Total latency of handled GetS requests",           "cycles",   1 },
+    { "latency_GetSX",                     "Total latency of handled GetSX requests",         "cycles",   1 },
+    { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },
+    { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 },
+    { NULL, NULL, NULL, 0 }
+};
+
 static SubComponent* create_Mem_GOBLINHMCSim(Component* comp, Params& params){
     return new GOBLINHMCSimBackend(comp, params);
 }
@@ -1317,13 +1340,21 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
   	{ "dram_count",         "Sets the number of DRAM blocks per cube", "20" },
 	{ "xbar_depth",         "Sets the queue depth for the HMC X-bar", "8" },
         { "max_req_size",       "Sets the maximum requests which can be inflight from the controller side at any time", "32" },
+#ifdef HMC_DEV_DRAM_LATENCY
+        { "dram_latency",       "Sets the internal DRAM fetch latency in clock cycles", "2" },
+#endif
 	{ "trace-banks", 	"Decides where tracing for memory banks is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
 	{ "trace-queue", 	"Decides where tracing for queues is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
 	{ "trace-cmds", 	"Decides where tracing for commands is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
 	{ "trace-latency", 	"Decides where tracing for latency is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
 	{ "trace-stalls", 	"Decides where tracing for memory stalls is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
+#ifdef HMC_TRACE_POWER
+        { "trace-power",        "Decides where tracing for memory power is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
+#endif
 	{ "tag_count",		"Sets the number of inflight tags that can be pending at any point in time", "16" },
 	{ "capacity_per_device", "Sets the capacity of the device being simulated in GiB, min=2, max=8, default is 4", "4" },
+        { "cmc-config",         "Enables a CMC library command in HMCSim", "NONE" },
+        { "cmd-map",            "Maps an existing HMC or CMC command to the target command type", "NONE" },
 	{ NULL, NULL, NULL }
 };
 #endif
@@ -1409,7 +1440,7 @@ static const ElementInfoParam memLink_params[] = {
     { "{cpu|mem}link.latency",          "(string) Link latency. Prefix 'cpulink' for up-link towards CPU or 'memlink' for down-link towards memory", "50ps"},
     { "{cpu|mem}link.debug",            "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     { "{cpu|mem}link.debug_level",      "(int) Debug verbosity level. Between 0 and 10", "0"},
-    { "{cpu|mem}link.debug_addr",       "(int) Address to debug. If not specified or set to -1, debug output for all addresses will be printed", "-1"},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
     { "{cpu|mem}link.accept_region",    "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},
     { "{cpu|mem}link.port",             "(string) Set by parent component. Name of port this memLink sits on.", ""},
     { "{cpu|mem}link.addr_range_start", "(uint) Set by parent component. Lowest address handled by the parent.", "0"},
@@ -1451,7 +1482,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"entry_cache_size",        "Size (in # of entries) the controller will cache.", "0"},
     {"debug",                   "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",             "Debugging level: 0 to 10", "0"},
-    {"debug_addr",              "Address to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
     {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
     {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--", "MESI"},
     {"mshr_num_entries",        "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},
@@ -1760,6 +1791,15 @@ static const ElementInfoSubComponent subcomponents[] = {
     },
 #endif
 #ifdef HAVE_GOBLIN_HMCSIM
+    {
+        "extMemBackendConvertor",
+        "convert MemEvent to Ext mem backend",
+        NULL, /* Advanced help */
+        create_Mem_ExtBackendConvertor, /* Module Alloc w/ params */
+        NULL,
+        extMemBackendConvertor_statistics, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
     {
         "goblinHMCSim",
         "GOBLIN HMC Simulator driven memory timings",

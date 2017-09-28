@@ -30,9 +30,9 @@ class EntryBase {
         return bytes;
     }
     virtual void copyOut( Output&, int vc, int numBytes,
-               FireflyNetworkEvent&, std::vector<DmaVec>& vec  );
+               FireflyNetworkEvent&, std::vector<MemOp>& vec  );
     virtual bool copyIn( Output&,
-               FireflyNetworkEvent&, std::vector<DmaVec>& vec );
+               FireflyNetworkEvent&, std::vector<MemOp>& vec );
     virtual bool isDone()       { return ( currentVec() == ioVec().size() ); }
 
     virtual size_t& currentLen() { return m_currentLen; }

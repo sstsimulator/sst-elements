@@ -19,7 +19,142 @@
 
 using namespace SST::MemHierarchy;
 
-GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : SimpleMemBackend(comp, params),
+// all the standard and cmc hmc packets
+const HMCPacket __PACKETS[] = {
+  /* name : type : data_len : rqst_len : rsp_len : isCMC */
+  { "WR16",       WR16,       8,    16,   2,  false},
+  { "WR32",       WR32,       9,    32,   3,  false},
+  { "WR48",       WR48,       10,   48,   4,  false},
+  { "WR64",       WR64,       11,   64,   5,  false},
+  { "WR80",       WR80,       12,   80,   6,  false},
+  { "WR96",       WR96,       13,   96,   7,  false},
+  { "WR112",      WR112,      14,   112,  8,  false},
+  { "WR128",      WR128,      15,   128,  9,  false},
+  { "WR256",      WR256,      79,   256,  17, false},
+  { "P_WR16",     P_WR16,     8,    16,   2,  false},
+  { "P_WR32",     P_WR32,     9,    32,   3,  false},
+  { "P_WR48",     P_WR48,     10,   48,   4,  false},
+  { "P_WR64",     P_WR64,     11,   64,   5,  false},
+  { "P_WR80",     P_WR80,     12,   80,   6,  false},
+  { "P_WR96",     P_WR96,     13,   96,   7,  false},
+  { "P_WR112",    P_WR112,    14,   112,  8,  false},
+  { "P_WR128",    P_WR128,    15,   128,  9,  false},
+  { "P_WR256",    P_WR256,    79,   256,  17, false},
+  { "RD16",       RD16,       48,   16,   1,  false},
+  { "RD32",       RD32,       49,   32,   1,  false},
+  { "RD48",       RD48,       50,   48,   1,  false},
+  { "RD64",       RD64,       51,   64,   1,  false},
+  { "RD80",       RD80,       52,   80,   1,  false},
+  { "RD96",       RD96,       53,   96,   1,  false},
+  { "RD112",      RD112,      54,   112,  1,  false},
+  { "RD128",      RD128,      55,   128,  1,  false},
+  { "RD256",      RD256,      119,  256,  1,  false},
+  { "TWOADD8",    TWOADD8,    18,   16,   2,  false},
+  { "ADD16",      ADD16,      19,   16,   2,  false},
+  { "P_2ADD8",    P_2ADD8,    34,   16,   2,  false},
+  { "P_ADD16",    P_ADD16,    35,   16,   2,  false},
+  { "TWOADDS8R",  TWOADDS8R,  82,   16,   2,  false},
+  { "ADDS16R",    ADDS16R,    83,   16,   2,  false},
+  { "INC8",       INC8,       80,   0,    1,  false},
+  { "P_INC8",     P_INC8,     84,   0,    1,  false},
+  { "XOR16",      XOR16,      64,   16,   2,  false},
+  { "OR16",       OR16,       65,   16,   2,  false},
+  { "NOR16",      NOR16,      66,   16,   2,  false},
+  { "AND16",      AND16,      67,   16,   2,  false},
+  { "NAND16",     NAND16,     68,   16,   2,  false},
+  { "CASGT8",     CASGT8,     96,   16,   2,  false},
+  { "CASGT16",    CASGT16,    98,   16,   2,  false},
+  { "CASLT8",     CASLT8,     97,   16,   2,  false},
+  { "CASLT16",    CASLT16,    99,   16,   2,  false},
+  { "CASEQ8",     CASEQ8,     100,  16,   2,  false},
+  { "CASZERO16",  CASZERO16,  101,  16,   2,  false},
+  { "EQ8",        EQ8,        105,  16,   2,  false},
+  { "EQ16",       EQ16,       104,  16,   2,  false},
+  { "BWR",        BWR,        17,   16,   2,  false},
+  { "P_BWR",      P_BWR,      33,   16,   2,  false},
+  { "BWR8R",      BWR8R,      81,   16,   2,  false},
+  { "SWAP16",     SWAP16,     106,  16,   2,  false},
+  { "MD_WR",      MD_WR,      16,   16,   2,  false},
+  { "MD_RD",      MD_RD,      40,   8,    1,  false},
+
+  // cmc packets.  everything except for the name and the
+  // boolean is ignored
+  { "CMC04",      CMC04,      0,    0,    0,  true},
+  { "CMC05",      CMC05,      0,    0,    0,  true},
+  { "CMC06",      CMC06,      0,    0,    0,  true},
+  { "CMC07",      CMC07,      0,    0,    0,  true},
+  { "CMC20",      CMC20,      0,    0,    0,  true},
+  { "CMC21",      CMC21,      0,    0,    0,  true},
+  { "CMC22",      CMC22,      0,    0,    0,  true},
+  { "CMC23",      CMC23,      0,    0,    0,  true},
+  { "CMC32",      CMC32,      0,    0,    0,  true},
+  { "CMC36",      CMC36,      0,    0,    0,  true},
+  { "CMC37",      CMC37,      0,    0,    0,  true},
+  { "CMC38",      CMC38,      0,    0,    0,  true},
+  { "CMC39",      CMC39,      0,    0,    0,  true},
+  { "CMC41",      CMC41,      0,    0,    0,  true},
+  { "CMC42",      CMC42,      0,    0,    0,  true},
+  { "CMC43",      CMC43,      0,    0,    0,  true},
+  { "CMC44",      CMC44,      0,    0,    0,  true},
+  { "CMC45",      CMC45,      0,    0,    0,  true},
+  { "CMC46",      CMC46,      0,    0,    0,  true},
+  { "CMC47",      CMC47,      0,    0,    0,  true},
+  { "CMC56",      CMC56,      0,    0,    0,  true},
+  { "CMC57",      CMC57,      0,    0,    0,  true},
+  { "CMC58",      CMC58,      0,    0,    0,  true},
+  { "CMC59",      CMC59,      0,    0,    0,  true},
+  { "CMC60",      CMC60,      0,    0,    0,  true},
+  { "CMC61",      CMC61,      0,    0,    0,  true},
+  { "CMC62",      CMC62,      0,    0,    0,  true},
+  { "CMC63",      CMC63,      0,    0,    0,  true},
+  { "CMC69",      CMC69,      0,    0,    0,  true},
+  { "CMC70",      CMC70,      0,    0,    0,  true},
+  { "CMC71",      CMC71,      0,    0,    0,  true},
+  { "CMC72",      CMC72,      0,    0,    0,  true},
+  { "CMC73",      CMC73,      0,    0,    0,  true},
+  { "CMC74",      CMC74,      0,    0,    0,  true},
+  { "CMC75",      CMC75,      0,    0,    0,  true},
+  { "CMC76",      CMC76,      0,    0,    0,  true},
+  { "CMC77",      CMC77,      0,    0,    0,  true},
+  { "CMC78",      CMC78,      0,    0,    0,  true},
+  { "CMC85",      CMC85,      0,    0,    0,  true},
+  { "CMC86",      CMC86,      0,    0,    0,  true},
+  { "CMC87",      CMC87,      0,    0,    0,  true},
+  { "CMC88",      CMC88,      0,    0,    0,  true},
+  { "CMC89",      CMC89,      0,    0,    0,  true},
+  { "CMC90",      CMC90,      0,    0,    0,  true},
+  { "CMC91",      CMC91,      0,    0,    0,  true},
+  { "CMC92",      CMC92,      0,    0,    0,  true},
+  { "CMC93",      CMC93,      0,    0,    0,  true},
+  { "CMC94",      CMC94,      0,    0,    0,  true},
+  { "CMC102",     CMC102,     0,    0,    0,  true},
+  { "CMC103",     CMC103,     0,    0,    0,  true},
+  { "CMC107",     CMC107,     0,    0,    0,  true},
+  { "CMC108",     CMC108,     0,    0,    0,  true},
+  { "CMC109",     CMC109,     0,    0,    0,  true},
+  { "CMC110",     CMC110,     0,    0,    0,  true},
+  { "CMC111",     CMC111,     0,    0,    0,  true},
+  { "CMC112",     CMC112,     0,    0,    0,  true},
+  { "CMC113",     CMC113,     0,    0,    0,  true},
+  { "CMC114",     CMC114,     0,    0,    0,  true},
+  { "CMC115",     CMC115,     0,    0,    0,  true},
+  { "CMC116",     CMC116,     0,    0,    0,  true},
+  { "CMC117",     CMC117,     0,    0,    0,  true},
+  { "CMC118",     CMC118,     0,    0,    0,  true},
+  { "CMC120",     CMC120,     0,    0,    0,  true},
+  { "CMC121",     CMC121,     0,    0,    0,  true},
+  { "CMC122",     CMC122,     0,    0,    0,  true},
+  { "CMC123",     CMC123,     0,    0,    0,  true},
+  { "CMC124",     CMC124,     0,    0,    0,  true},
+  { "CMC125",     CMC125,     0,    0,    0,  true},
+  { "CMC126",     CMC126,     0,    0,    0,  true},
+  { "CMC127",     CMC127,     0,    0,    0,  true},
+
+  // last entry
+  { "EOL",        MD_RD,      0,    0,    0,  false}
+};
+
+GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : ExtMemBackend(comp, params),
 	owner(comp) {
 
 	int verbose = params.find<int>("verbose", 0);
@@ -106,6 +241,21 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : Simp
 
         params.find_array<std::string>("cmc-lib", cmclibs);
 
+        // These are the new CMC command config strings
+        // These are in the form:
+        //    /PATH/TO/LIB.SO:CMD:RQST_FLITS:RSP_FLITS
+        // CMD = command designator; one of "hmc_rqst_t"
+        params.find_array<std::string>("cmd-config", cmcconfigs);
+
+        // These are the new CMC command mappings.  We can
+        // map all the existing commands as well as any custom
+        // commands.
+        // These are in the form:
+        //    {WR|RD|POSTED|CUSTOM}:SIZE:CMD
+        // SIZE = integer size of the request (ignored for CUSTOM)
+        // CMD = target command to execute; one of "hmc_rqst_t"
+        params.find_array<std::string>("cmd-map", cmdmaps);
+
         // register the SST statistics
         if( (hmc_trace_level & HMC_TRACE_CMD) > 0 ){
           registerStatistics();
@@ -127,6 +277,13 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : Simp
 	} else {
 		output->verbose(CALL_INFO, 1, 0, "Initialized successfully.\n");
 	}
+
+        rc = hmcsim_util_set_max_blocksize(&the_hmc, 0, 128);
+        if(0 != rc ){
+		output->fatal(CALL_INFO, -1, "Unable to initialize HMC back end max block size to 128\n" );
+        }else{
+		output->verbose(CALL_INFO, 1, 0, "Initialized block size successfully.\n");
+        }
 
 #if defined( HMC_TRACE_POWER )
         // load the power config
@@ -153,6 +310,17 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : Simp
                           "Unable to initialize the HMC-Sim dram latency configuration; return code is %d\n", rc);
         }
 #endif
+
+
+        // handle cmc library configs
+        if( cmcconfigs.size() > 0 ){
+          handleCMCConfig();
+        }
+
+        // handle command mappings
+        if( cmdmaps.size() > 0 ){
+          handleCmdMap();
+        }
 
         // load the cmc libs
         for( unsigned i=0; i< cmclibs.size(); i++ ){
@@ -242,12 +410,321 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : Simp
 	output->verbose(CALL_INFO, 1, 0, "Completed HMC Simulation Backend Initialization.\n");
 }
 
-bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes) {
+bool GOBLINHMCSimBackend::HMCRqstToStr( hmc_rqst_t R,
+                                        std::string *S ){
+  int cur = 0;
+
+  while( __PACKETS[cur].name != "EOL" ){
+    if( __PACKETS[cur].type == R ){
+      *S = __PACKETS[cur].name;
+      return true;
+    }
+    cur++;
+  }
+
+  return false;
+}
+
+bool GOBLINHMCSimBackend::strToHMCRqst( std::string S,
+                                        hmc_rqst_t *R,
+                                        bool isCMC ){
+
+  int cur = 0;
+
+  while( __PACKETS[cur].name != "EOL" ){
+    if( __PACKETS[cur].name == S ){
+      if( isCMC && __PACKETS[cur].isCMC ){
+        *R = __PACKETS[cur].type;
+        return true;
+      }else if( !isCMC ){
+        *R = __PACKETS[cur].type;
+        return true;
+      }
+    }
+    cur++;
+  }
+
+  return false;
+}
+
+void GOBLINHMCSimBackend::handleCMCConfig(){
+  std::string delim = ":";
+  std::string cmdstr;
+  std::string path;
+  size_t pos = 0;
+  hmc_rqst_t rqst;
+  int rqst_flits = -1;
+  int rsp_flits = -1;
+
+  for( unsigned i=0; i<cmcconfigs.size(); i++ ){
+    // Format:
+    //    /PATH/TO/LIB.SO:CMD:RQST_FLITS:RSP_FLITS
+    std::string s = cmcconfigs[i];
+
+    std::vector<std::string> vstr;
+    splitStr(s,':',vstr);
+
+    if( vstr.size() != 4 ){
+      // formatting error
+      output->fatal(CALL_INFO, -1,
+                    "Unable to process command map: %s\n", s.c_str() );
+    }
+
+    // -- /path/to/lib.so
+    path = vstr[0];
+
+    // -- cmd
+    cmdstr = vstr[1];
+    if( !strToHMCRqst( cmdstr, &rqst, true ) ){
+      output->fatal(CALL_INFO, -1,
+                    "Unable find to a suitable CMC HMC command for: %s\n",
+                    cmdstr.c_str() );
+    }
+
+    // -- rqst_flits
+    std::string::size_type sz;
+    rqst_flits = std::stoi(vstr[2],&sz);
+
+    // -- rsp_flits
+    rsp_flits = std::stoi(vstr[3],&sz);
+
+    // load the cmc command in HMCSim
+    std::vector<char> libchars( path.begin(), path.end() );
+    int rc = hmcsim_load_cmc(&the_hmc, &libchars[0] );
+    if( rc != 0 ){
+      output->fatal(CALL_INFO, -1,
+        "Unable to HMC-Sim CMC Library and the return code is %d\n", rc);
+    }
+
+    // add the new config to our list
+    CmcConfig.push_back( new HMCCMCConfig( path, rqst, rqst_flits, rsp_flits ) );
+
+  }// end for
+}
+
+void GOBLINHMCSimBackend::splitStr(const string& s,
+                                   char c,
+                                   vector<string>& v) {
+  string::size_type i = 0;
+  string::size_type j = s.find(c);
+
+  while (j != string::npos) {
+    v.push_back(s.substr(i, j-i));
+    i = ++j;
+    j = s.find(c, j);
+    if (j == string::npos)
+      v.push_back(s.substr(i, s.length()));
+  }
+}
+
+void GOBLINHMCSimBackend::handleCmdMap(){
+  size_t pos = 0;
+  CMCSrcReq ctype_int;
+  int csize_int = -1;
+  std::string ctype;
+  std::string cstr;
+  std::string csize;
+  hmc_rqst_t rqst;
+
+  for( unsigned i=0; i<cmdmaps.size(); i++ ){
+    // Format:
+    //    {WR|RD|POSTED|CUSTOM}:SIZE:CMD
+    std::string s = cmdmaps[i];
+
+    std::vector<std::string> vstr;
+    splitStr(s,':',vstr);
+
+    if( vstr.size() != 3 ){
+      // formatting error
+      output->fatal(CALL_INFO, -1,
+                    "Unable to process command map: %s\n", s.c_str() );
+    }
+
+    // parse the string
+    // -- WR | RD | POSTED | CUSTOM
+    ctype = vstr[0];
+    if( ctype == "WR" ){
+      ctype_int = SRC_WR;
+    }else if( ctype == "RD" ){
+      ctype_int = SRC_RD;
+    }else if( ctype == "POSTED" ){
+      ctype_int = SRC_POSTED;
+    }else if( ctype == "CUSTOM" ){
+      ctype_int = SRC_CUSTOM;
+    }else{
+      // error
+      output->fatal(CALL_INFO, -1,
+                    "Erroneous command type in CMC config: %s\n",
+                    ctype.c_str() );
+    }
+
+    // -- size
+    csize = vstr[1];
+    std::string::size_type sz;
+    csize_int = std::stoi(csize,&sz);
+
+
+    // -- cmd
+    cstr = vstr[2];
+    if( !strToHMCRqst( cstr, &rqst, false ) ){
+      output->fatal(CALL_INFO, -1,
+                    "Unable find to a suitable HMC command for: %s\n",
+                    cstr.c_str() );
+    }
+
+    // add the new mapping to our list
+    CmdMapping.push_back( new HMCSimCmdMap(ctype_int, csize_int, rqst) );
+  }
+}
+
+bool GOBLINHMCSimBackend::isPostedRqst( hmc_rqst_t R ){
+  switch(R){
+  case P_WR16:
+  case P_WR32:
+  case P_WR48:
+  case P_WR64:
+  case P_WR80:
+  case P_WR96:
+  case P_WR112:
+  case P_WR128:
+  case P_WR256:
+  case P_2ADD8:
+  case P_ADD16:
+  case P_INC8:
+    return true;
+    break;
+  default:
+    return false;
+    break;
+  }
+  return false;
+}
+
+bool GOBLINHMCSimBackend::issueMappedRequest(ReqId reqId, Addr addr, bool isWrite,
+                                       std::vector<uint64_t> ins, uint32_t flags,
+                                       unsigned numBytes, uint8_t req_dev,
+                                       uint16_t req_tag, bool *Success) {
+  // Step 1: decode the incoming command type
+  CMCSrcReq Src = SRC_RD;
+  bool isPosted = false;
+  if( isWrite ){
+    Src = SRC_WR;
+  }
+  if( (flags & MemEvent::F_NORESPONSE) > 0 ){
+    Src = SRC_POSTED;
+  }
+  // TODO: handle SRC_CUSTOM requests
+
+  // Step 2: walk the CmdMapping table and look for a mapping
+  HMCSimCmdMap *MapCmd = NULL;
+  for( auto itr = CmdMapping.begin(); itr != CmdMapping.end(); ++itr ){
+    MapCmd = *itr;
+    if( (MapCmd->getSrcType() == Src) &&
+        ((unsigned)(MapCmd->getSrcSize()) == numBytes) ){
+      // found a positive map
+      std::string name;
+      if( !HMCRqstToStr(MapCmd->getTargetType(), &name) ){
+        output->fatal(CALL_INFO, -1, "Unable to map hmc_rqst_t to name\n");
+      }
+      output->verbose(CALL_INFO, 8, 0,
+                      "Found mapped request target of %s\n", name.c_str() );
+
+      break;
+    }
+    MapCmd = NULL;
+  }
+
+  // if our MapCmd is NULL, then nothing was found
+  if( MapCmd == NULL ){
+    return false;
+  }
+
+  // Step 3: build our new request
+  hmc_rqst_t req_type = MapCmd->getTargetType();
+
+  // -- check to see if the target mapped command is posted, NOT the source
+  if( isPostedRqst( req_type ) ){
+    isPosted = true;
+  }else{
+    isPosted = false;
+  }
+
+  const uint8_t           req_link   = (uint8_t) (nextLink);
+  nextLink = nextLink + 1;
+  nextLink = (nextLink == hmc_link_count) ? 0 : nextLink;
+
+  uint64_t                req_header = (uint64_t) 0;
+  uint64_t                req_tail   = (uint64_t) 0;
+
+  output->verbose(CALL_INFO, 8, 0, "Issuing mapped request: %" PRIu64 " %s tag: %" PRIu16 " dev: %" PRIu8 " link: %" PRIu8 "\n",
+  addr, (isWrite ? "WRITE" : "READ"), req_tag, req_dev, req_dev);
+
+  int rc = hmcsim_build_memrequest(&the_hmc,
+                                  req_dev,
+                                  addr,
+                                  req_tag,
+                                  req_type,
+                                  req_link,
+                                  hmc_payload,
+                                  &req_header,
+                                  &req_tail);
+
+  if(rc > 0) {
+    output->fatal(CALL_INFO, -1, "Unable to build a mapped request for address: %" PRIu64 "\n", addr);
+  }
+
+  hmc_packet[0] = req_header;
+  hmc_packet[1] = req_tail;
+
+  rc = hmcsim_send(&the_hmc, &hmc_packet[0]);
+
+  if(HMC_STALL == rc) {
+    output->verbose(CALL_INFO, 2, 0, "Issue revoked by HMC, reason: cube is stalled.\n");
+
+    // Restore tag for use later, remember this request did not succeed
+    tag_queue.push(req_tag);
+
+    // Return false, the request was not issued so we must tell memory controller to give it
+    // back to us when we are free
+    *Success = false;
+  } else if(0 == rc) {
+    output->verbose(CALL_INFO, 4, 0, "Issue of mapped request for address %" PRIu64 " successfully accepted by HMC.\n", addr);
+
+    // Create the request entry which we keep in a table
+    HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr,
+                                                      owner->getCurrentSimTimeNano(),
+                                                      isPosted);
+
+    // Add the tag and request into our table of pending
+    tag_req_map.insert( std::pair<uint16_t, HMCSimBackEndReq*>(req_tag, reqEntry) );
+
+    // Record the I/O statistics
+    if( (hmc_trace_level & HMC_TRACE_CMD) > 0 ){
+      recordIOStats( hmc_packet[0] );
+    }
+    *Success = true;
+  } else {
+    *Success = false;
+    output->fatal(CALL_INFO, -1, "Error issue request for address %" PRIu64 " into HMC on link %" PRIu8 "\n", addr, req_link);
+  }
+
+  // if there was a positive mapping, we return true
+  // the *Success flags determines whether the packet injection
+  // was successful or not
+  return true;
+}
+
+bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite,
+                                       std::vector<uint64_t> ins, uint32_t flags,
+                                       unsigned numBytes) {
 	// We have run out of tags
 	if(tag_queue.empty()) {
 		output->verbose(CALL_INFO, 4, 0, "Will not issue request this call, tag queue has no free entries.\n");
 		return false;
 	}
+
+	output->verbose(CALL_INFO, 8, 0, "Received request of size: %" PRIu32 " of type %s\n",
+		numBytes, (isWrite ? "WRITE" : "READ"));
 
 	// Zero out the packet ready for us to populate it with values below
 	zeroPacket(hmc_packet);
@@ -260,9 +737,66 @@ bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite, uns
 
 	hmc_rqst_t       	req_type;
 
+        // handle mapped commands
+        if( CmdMapping.size() > 0 ){
+          // we have mapped commands, check these first
+          bool Success;
+	  output->verbose(CALL_INFO, 4, 0, "Handling mapped requests\n");
+          if( issueMappedRequest( reqId, addr, isWrite,
+                                ins, flags,
+                                numBytes, req_dev, req_tag,
+                                &Success ) ){
+            // the incoming command was mapped
+            // return the 'Success' of the request
+            return Success;
+          }
+        }
+
+        // handle posted requests
+        bool isPosted = false;
+        if( (flags & MemEvent::F_NORESPONSE) > 0 ){
+	  output->verbose(CALL_INFO, 4, 0, "Request is marked as posted\n");
+          isPosted = true;
+        }
+
 	// Check if the request is for a read or write then transform this into something
 	// for HMC simulator to use
-	if(isWrite) {
+	if( (isWrite) && (isPosted) ) {
+                switch( numBytes ){
+                case 8:
+                case 16:
+                  req_type = P_WR16;
+                  break;
+                case 32:
+                  req_type = P_WR32;
+                  break;
+                case 48:
+                  req_type = P_WR48;
+                  break;
+                case 64:
+                  req_type = P_WR64;
+                  break;
+                case 80:
+                  req_type = P_WR80;
+                  break;
+                case 96:
+                  req_type = P_WR96;
+                  break;
+                case 112:
+                  req_type = P_WR112;
+                  break;
+                case 128:
+                  req_type = P_WR128;
+                  break;
+                case 256:
+                  req_type = P_WR256;
+                  break;
+                default:
+                  // flag an error
+		  output->fatal(CALL_INFO, -1, "Unknown posted write request size: %d\n", numBytes );
+                  break;
+                }
+        }else if(isWrite) {
                 switch( numBytes ){
                 case 8:
                 case 16:
@@ -373,10 +907,16 @@ bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite, uns
 		// back to us when we are free
 		return false;
 	} else if(0 == rc) {
-		output->verbose(CALL_INFO, 4, 0, "Issue of request for address %" PRIu64 " successfully accepted by HMC.\n", addr);
+                if( isPosted ){
+		  output->verbose(CALL_INFO, 4, 0, "Issue of posted request for address %" PRIu64 " successfully accepted by HMC.\n", addr);
+                }else{
+		  output->verbose(CALL_INFO, 4, 0, "Issue of request for address %" PRIu64 " successfully accepted by HMC.\n", addr);
+                }
 
 		// Create the request entry which we keep in a table
-		HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr, owner->getCurrentSimTimeNano());
+		HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr,
+                                                                  owner->getCurrentSimTimeNano(),
+                                                                  isPosted);
 
 		// Add the tag and request into our table of pending
 		tag_req_map.insert( std::pair<uint16_t, HMCSimBackEndReq*>(req_tag, reqEntry) );
@@ -480,6 +1020,7 @@ bool GOBLINHMCSimBackend::clock(Cycle_t cycle) {
 
 void GOBLINHMCSimBackend::processResponses() {
 	int rc = HMC_OK;
+        uint32_t flags;
 
 	printPendingRequests();
 
@@ -539,7 +1080,7 @@ void GOBLINHMCSimBackend::processResponses() {
 							owner->getCurrentSimTimeNano() - matchedReq->getStartTime());
 
 						// Pass back to the controller to be handled, HMC sim is finished with it
-						handleMemResponse(matchedReq->getRequest());
+						handleMemResponse(matchedReq->getRequest(),flags);
 
 						// Clear element from our map, it has been processed so no longer needed
 						tag_req_map.erase(resp_tag);
@@ -564,6 +1105,23 @@ void GOBLINHMCSimBackend::processResponses() {
 			}
 		}
 	}
+
+#if 0
+        // handle all the posted requests
+        std::map<uint16_t, HMCSimBackEndReq*>::iterator it;
+        for(it=tag_req_map.begin(); it!=tag_req_map.end(); it++ ){
+          uint16_t resp_tag = it->first;
+          HMCSimBackEndReq* matchedReq = it->second;
+          if( matchedReq->hasResponse() ){
+            // i am a posted request
+	    output->verbose(CALL_INFO, 4, 0, "Handling posted memory response for tag: %" PRIu16 "\n", resp_tag);
+            handleMemResponse(matchedReq->getRequest(),flags);
+            tag_req_map.erase(resp_tag);
+            tag_queue.push(resp_tag);
+            delete matchedReq;
+          }
+        }
+#endif
 }
 
 GOBLINHMCSimBackend::~GOBLINHMCSimBackend() {
@@ -574,6 +1132,19 @@ GOBLINHMCSimBackend::~GOBLINHMCSimBackend() {
 	fclose(hmc_trace_file_handle);
 
 	output->verbose(CALL_INFO, 1, 0, "Completed.\n");
+
+        // free the map list
+        for( auto itr = CmdMapping.begin(); itr != CmdMapping.end(); ++itr ){
+          HMCSimCmdMap *c = *itr;
+          delete c;
+        }
+
+        // free the cmc command list
+        for( auto itr = CmcConfig.begin(); itr != CmcConfig.end(); ++itr ){
+          HMCCMCConfig *c = *itr;
+          delete c;
+        }
+
 	delete output;
 }
 

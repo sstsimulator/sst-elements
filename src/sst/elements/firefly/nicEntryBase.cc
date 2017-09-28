@@ -30,7 +30,7 @@ static void print( Output& dbg, char* buf, int len )
 }
 
 bool Nic::EntryBase::copyIn( Output& dbg,
-                        FireflyNetworkEvent& event, std::vector<DmaVec>& vec )
+                        FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
     dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
                 "ioVec.size()=%lu\n", ioVec().size() );
@@ -44,7 +44,7 @@ bool Nic::EntryBase::copyIn( Output& dbg,
             size_t fromLen = event.bufSize();
             size_t len = toLen < fromLen ? toLen : fromLen;
 
-            DmaVec tmp;
+            MemOp tmp;
             tmp.length = len;
             tmp.addr = ioVec()[currentVec()].addr.getSimVAddr() +
                                                     currentPos();
@@ -86,7 +86,7 @@ bool Nic::EntryBase::copyIn( Output& dbg,
 
 void Nic::EntryBase::copyOut( Output& dbg, int vc, int numBytes,
                 FireflyNetworkEvent& event,
-                std::vector<DmaVec>& vec  )
+                std::vector<MemOp>& vec  )
 {
     dbg.verbose(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"Send: "
                     "%d: ioVec.size()=%lu\n", vc, ioVec().size() );
@@ -109,7 +109,7 @@ void Nic::EntryBase::copyOut( Output& dbg, int vc, int numBytes,
 
             const char* from =
                     (const char*) ioVec()[currentVec()].addr.getBacking() + currentPos();
-            DmaVec tmp;
+            MemOp tmp;
             tmp.addr = ioVec()[currentVec()].addr.getSimVAddr() + currentPos();
             tmp.length = len;
             vec.push_back(tmp);

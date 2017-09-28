@@ -124,9 +124,15 @@ public:
         return MemEventBase::getBriefString() + str.str();
     }
     
-    virtual bool doDebug(Addr addr) override {
-        if (addr >= dstBaseAddr_ && addr < dstAddr_ + size_) return true;
-        if (addr >= srcBaseAddr_ && addr < srcAddr_ + size_) return true;
+    virtual bool doDebug(std::set<Addr> &addr) override {
+        std::set<Addr>::iterator it = addr.lower_bound(dstBaseAddr_);
+        if (it != addr.end()) {
+            if (*it < dstAddr_ + size_) return true;
+        }
+        it = addr.lower_bound(srcBaseAddr_);
+        if (it != addr.end()) {
+            if (*it < srcAddr_ + size_) return true;
+        }
         return false;
     }
 

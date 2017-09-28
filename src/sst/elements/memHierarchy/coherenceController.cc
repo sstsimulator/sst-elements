@@ -21,6 +21,15 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+/* Debug macros */
+#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
+#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#else
+#define is_debug_addr(addr) false
+#define is_debug_event(ev) false
+#endif
+
 
 CoherenceController::CoherenceController(Component * comp, Params &params) : SubComponent(comp) {
     /* Output stream */
@@ -100,9 +109,7 @@ void CoherenceController::sendNACK(MemEvent * event, bool up, SimTime_t timeInNa
     if (up) addToOutgoingQueueUp(resp);
     else addToOutgoingQueue(resp);
 
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_,"Sending NACK at cycle = %" PRIu64 "\n", deliveryTime);
-#endif
+    if (is_debug_event(event)) debug->debug(_L3_,"Sending NACK at cycle = %" PRIu64 "\n", deliveryTime);
 }
 
 
@@ -126,10 +133,8 @@ uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vect
     Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize() };
     addToOutgoingQueueUp(resp);
     
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Payload Bytes = %zu\n", 
+    if (is_debug_event(event)) debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Payload Bytes = %zu\n", 
             deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getPayloadSize());
-#endif
 
     return deliveryTime;
 }
@@ -155,10 +160,7 @@ void CoherenceController::resendEvent(MemEvent * event, bool up) {
     if (!up) addToOutgoingQueue(resp);
     else addToOutgoingQueueUp(resp);
 
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_,"Sending request: Addr = %" PRIx64 ", BaseAddr = %" PRIx64 ", Cmd = %s\n", 
-            event->getAddr(), event->getBaseAddr(), CommandString[(int)event->getCmd()]);
-#endif
+    if (is_debug_event(event)) debug->debug(_L3_,"Sending request: %s\n", event->getBriefString().c_str());
 }
   
 
@@ -187,9 +189,8 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, Addr baseAddr, un
     Response fwdReq = {forwardEvent, deliveryTime, packetHeaderBytes + forwardEvent->getPayloadSize() };
     addToOutgoingQueue(fwdReq);
 
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) debug->debug(_L3_,"Forwarding request at cycle = %" PRIu64 "\n", deliveryTime);        
-#endif
+    if (is_debug_event(event)) debug->debug(_L3_,"Forwarding request at cycle = %" PRIu64 "\n", deliveryTime);        
+    
     return deliveryTime;
 }
 
@@ -241,12 +242,11 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
         
         outgoingEvent->setDst(linkDown_->findTargetDestination(outgoingEvent->getRoutingAddress()));
 
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || outgoingEvent->doDebug(DEBUG_ADDR)) {
+        if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
                     parent->getName().c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
         }
-#endif
+        
         linkDown_->send(outgoingEvent);
         outgoingEventQueue_.pop_front();
 
@@ -266,15 +266,13 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
             }
         }
 
-#ifdef __SST_DEBUG_OUTPUT__
-        if (DEBUG_ALL || outgoingEvent->doDebug(DEBUG_ADDR)) {
+        if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
                     parent->getName().c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
         }
-#endif
+        
         linkUp_->send(outgoingEvent);
         outgoingEventQueueUp_.pop_front();
-
     }
 
     // Return whether it's ok for the cache to turn off the clock - we need it on to be able to send waiting events

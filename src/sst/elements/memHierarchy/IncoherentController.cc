@@ -20,6 +20,15 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+/* Debug macros */
+#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
+#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#else
+#define is_debug_addr(addr) false
+#define is_debug_event(ev) false
+#endif
+
 /*----------------------------------------------------------------------------------------------------------------------
  * Incoherent Controller Implementation
  * Non-Inclusive caches do not allocate on Get* requests except for prefetches
@@ -71,9 +80,8 @@ CacheAction IncoherentController::handleEviction(CacheLine* wbCacheLine, string 
  *  Obtain needed coherence permission from lower level cache/memory if coherence miss
  */
 CacheAction IncoherentController::handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr())   debug->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
-#endif
+    if (is_debug_addr(cacheLine->getBaseAddr()))   
+        debug->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
 
     Command cmd = event->getCmd();
 
@@ -103,9 +111,8 @@ CacheAction IncoherentController::handleReplacement(MemEvent* event, CacheLine* 
         else if (reqEvent->getCmd() == Command::FlushLineInv) cacheLine->setState(I_B);
     }
 
-#ifdef __SST_DEBUG_OUTPUT__
-    if (cacheLine != NULL && (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()))   debug->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
-#endif
+    if (cacheLine != NULL && (is_debug_event(event)))
+        debug->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
 
 
     Command cmd = event->getCmd();
@@ -196,8 +203,8 @@ int IncoherentController::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine)
 CacheAction IncoherentController::handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
     State state = cacheLine->getState();
     vector<uint8_t>* data = cacheLine->getData();
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(cacheLine->getData(), false);
-    
+    if (is_debug_event(event)) printData(cacheLine->getData(), false);
+
     bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == parent->getName()));
     recordStateEventCount(event->getCmd(), state);
 
@@ -208,9 +215,9 @@ CacheAction IncoherentController::handleGetSRequest(MemEvent* event, CacheLine* 
             forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), 0, NULL);
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
             cacheLine->setState(IS);
-#ifdef __SST_DEBUG_OUTPUT__
-            debug->debug(_L6_,"Forwarding GetS, new state IS\n");
-#endif
+            
+            if (is_debug_event(event)) debug->debug(_L6_,"Forwarding GetS, new state IS\n");
+            
             return STALL;
         case E:
         case M:
@@ -244,16 +251,18 @@ CacheAction IncoherentController::handleGetXRequest(MemEvent* event, CacheLine* 
             forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), 0, NULL);
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
             cacheLine->setState(IM);
-#ifdef __SST_DEBUG_OUTPUT__
-            debug->debug(_L6_,"Forwarding GetX, new state IM\n");
-#endif
+            
+            if (is_debug_event(event)) debug->debug(_L6_,"Forwarding GetX, new state IM\n");
+            
             return STALL;
         case E:
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
             sendTime = sendResponseUp(event, cacheLine->getData(), replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
-            if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(cacheLine->getData(), false);
+            
+            if (is_debug_event(event)) printData(cacheLine->getData(), false);
+            
             return DONE;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received %s int unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
@@ -289,7 +298,8 @@ CacheAction IncoherentController::handlePutMRequest(MemEvent* event, CacheLine* 
         case M:
             if (event->getDirty()) {
                 cacheLine->setData(event->getPayload(), event);
-                if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(cacheLine->getData(), true);
+                
+                if (is_debug_event(event)) printData(cacheLine->getData(), true);
             }
             break;
         default:
@@ -339,7 +349,7 @@ CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, Ca
     }
 
     cacheLine->setData(responseEvent->getPayload(), responseEvent);
-    if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), true);
+    if (is_debug_event(responseEvent)) printData(cacheLine->getData(), true);
 
     State state = cacheLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);
@@ -353,13 +363,13 @@ CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, Ca
             if (!shouldRespond) return DONE;
             sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
-            if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), false);
+            if (is_debug_event(responseEvent)) printData(cacheLine->getData(), false);
             return DONE;
         case IM:
             cacheLine->setState(M); 
             sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
-            if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), false);
+            if (is_debug_event(responseEvent)) printData(cacheLine->getData(), false);
             return DONE;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Response received but state is not handled. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
@@ -385,7 +395,8 @@ void IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, stri
     newCommandEvent->setSize(cacheLine->getSize());
     if (cmd == Command::PutM || writebackCleanBlocks_) {
         newCommandEvent->setPayload(*cacheLine->getData());
-        if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) printData(cacheLine->getData(), false);
+        
+        if (is_debug_addr(cacheLine->getBaseAddr())) printData(cacheLine->getData(), false);
     }
     newCommandEvent->setRqstr(origRqstr);
     if (cacheLine->getState() == M) newCommandEvent->setDirty(true);
@@ -394,9 +405,7 @@ void IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, stri
     Response resp = {newCommandEvent, deliveryTime, packetHeaderBytes + newCommandEvent->getPayloadSize()};
     addToOutgoingQueue(resp);
 
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) debug->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s\n", deliveryTime, CommandString[(int)cmd]);
-#endif
+    if (is_debug_addr(cacheLine->getBaseAddr())) debug->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s\n", deliveryTime, CommandString[(int)cmd]);
 }
 
 
@@ -421,11 +430,10 @@ void IncoherentController::forwardFlushLine(Addr baseAddr, string origRqstr, Cac
     Response resp = {flush, deliveryTime, packetHeaderBytes + flush->getPayloadSize()};
     addToOutgoingQueue(resp);
     if (cacheLine) cacheLine->setTimestamp(deliveryTime-1);
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) {
+    
+    if (is_debug_addr(baseAddr)) {
         debug->debug(_L3_,"Forwarding %s at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", CommandString[(int)cmd], deliveryTime, CommandString[(int)flush->getCmd()], flush->getSrc().c_str());
     }
-#endif
 }
 
 
@@ -440,11 +448,10 @@ void IncoherentController::sendFlushResponse(MemEvent * requestEvent, bool succe
     uint64_t deliveryTime = timestamp_ + mshrLatency_;
     Response resp = {flushResponse, deliveryTime, packetHeaderBytes};
     addToOutgoingQueueUp(resp);
-#ifdef __SST_DEBUG_OUTPUT__
-    if (DEBUG_ALL || DEBUG_ADDR == requestEvent->getBaseAddr()) { 
+    
+    if (is_debug_event(requestEvent)) {
         debug->debug(_L3_,"Sending Flush Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[(int)flushResponse->getCmd()], flushResponse->getSrc().c_str());
     }
-#endif
 }
 
 

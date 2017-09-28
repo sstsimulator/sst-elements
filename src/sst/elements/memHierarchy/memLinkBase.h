@@ -65,9 +65,11 @@ public:
         dbg.init("", debugLevel, 0, (Output::output_location_t)debugLoc);
 
         // Filter debug by address
-        bool found;
-        DEBUG_ADDR = params.find<uint64_t>("debug_addr", 0, found);
-        DEBUG_ALL = !found;
+        std::vector<uint64_t> addrArray;
+        params.find_array<uint64_t>("debug_addr", addrArray);
+        for (std::vector<uint64_t>::iterator it = addrArray.begin(); it != addrArray.end(); it++) {
+            DEBUG_ADDR.insert(*it);
+        }
 
         // Set up address region
         uint64_t addrStart = params.find<uint64_t>("addr_range_start", 0);
@@ -173,8 +175,7 @@ protected:
     
     // Debug stuff
     Output dbg;
-    Addr DEBUG_ADDR;
-    bool DEBUG_ALL;
+    std::set<Addr> DEBUG_ADDR;
 
     // Local EndpointInfo
     EndpointInfo info;

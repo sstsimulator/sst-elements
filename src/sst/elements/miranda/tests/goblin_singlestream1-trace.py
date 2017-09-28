@@ -45,6 +45,7 @@ comp_memory.addParams({
       "backend.access_time" : "1000 ns",
       "backend.mem_size" : "512MiB",
       "clock" : "1GHz",
+      "backendConvertor" : "memHierarchy.extMemBackendConvertor",
       "backend" : "memHierarchy.goblinHMCSim",
       "backend.trace-banks" : "1",
       "backend.trace-queue" : "1",

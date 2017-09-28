@@ -70,7 +70,7 @@ void Nic::SendMachine::state_1( SendEntryBase* entry, FireflyNetworkEvent* ev )
         return;
     } 
 
-	std::vector< DmaVec > vec; 
+	std::vector< MemOp > vec; 
 
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "copyOut\n");
 

@@ -175,7 +175,9 @@ public:
     uint16_t global_slice_shadow;
 
     topo_dragonfly2_event() { }
-    topo_dragonfly2_event(const topo_dragonfly2::dgnfly2Addr &dest) : dest(dest) {}
+    topo_dragonfly2_event(const topo_dragonfly2::dgnfly2Addr &dest) :
+        dest(dest), global_slice(0)
+        {}
     ~topo_dragonfly2_event() { }
 
     virtual internal_router_event *clone(void) override

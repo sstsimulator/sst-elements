@@ -59,6 +59,7 @@ class NicShmemCmdEvent : public NicCmdBaseEvent {
 
     NicShmemCmdEvent( Type type ) :
         NicCmdBaseEvent( Shmem ), type(type) {}
+    virtual int getNode() { assert(0); }
 
     NotSerializable(NicShmemCmdEvent)
 };
@@ -71,6 +72,7 @@ class NicShmemInitCmdEvent : public NicShmemCmdEvent {
 
     Hermes::Vaddr addr;
     Callback      callback;
+    virtual int getNode() { return -1; }
 
     NotSerializable(NicShmemInitCmdEvent)
 };
@@ -81,6 +83,7 @@ class NicShmemRegMemCmdEvent : public NicShmemCmdEvent {
     NicShmemRegMemCmdEvent( Hermes::MemAddr& addr, size_t len, Callback callback ) :
         NicShmemCmdEvent( RegMem ), addr(addr), len(len), callback(callback) {}
 
+    virtual int getNode() { return -1; }
     Hermes::MemAddr addr;
     size_t          len;
     Callback        callback;
@@ -97,11 +100,13 @@ class NicShmemSendCmdEvent : public NicShmemCmdEvent {
     virtual ~NicShmemSendCmdEvent() {}
     int getVnic() { return vnic; }
     int getNode() { return node; }
+    virtual Hermes::Vaddr getMyAddr()  { assert(0); } 
     virtual Hermes::Vaddr getFarAddr() = 0;
     virtual void* getBacking() = 0;
     virtual size_t getLength() = 0;
     virtual Hermes::Value::Type   getDataType() { assert(0); }
     virtual Hermes::Shmem::ReduOp getOp() { return Hermes::Shmem::MOVE; } 
+    virtual Hermes::Value& getValue() { assert(0); }
 
   private:
     int vnic;
@@ -315,6 +320,7 @@ class NicShmemOpCmdEvent : public NicShmemCmdEvent {
         NicShmemCmdEvent( Wait ), addr(addr), op(op), value(value), callback(callback) {}
 
     Hermes::Vaddr getAddr()  { return addr; } 
+    virtual int getNode() { return -2; }
 
     Hermes::Shmem::WaitOp op;
     Hermes::Vaddr   addr;
