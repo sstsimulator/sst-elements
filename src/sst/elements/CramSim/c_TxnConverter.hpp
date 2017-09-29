@@ -43,7 +43,6 @@
 #include "c_BankCommand.hpp"
 //#include "c_TransactionToCommands.hpp"
 #include "c_DeviceDriver.hpp"
-#include "c_CtrlSubComponent.hpp"
 #include "c_CmdScheduler.hpp"
 #include "c_Transaction.hpp"
 #include "c_BankInfo.hpp"
@@ -55,7 +54,7 @@ namespace n_Bank {
 	class c_Controller;
 
 
-class c_TxnConverter: public c_CtrlSubComponent <c_Transaction*,c_BankCommand*> {
+class c_TxnConverter: public SubComponent{
 
 public:
 
@@ -83,6 +82,8 @@ private:
 	unsigned m_bankNums;
 	unsigned m_cmdSeqNum;
 
+	std::deque<c_Transaction*> m_inputQ;
+
 	// params
 	int k_relCommandWidth; // txn relative command width
 	bool k_useReadA;
@@ -90,16 +91,14 @@ private:
 	int k_bankPolicy;
 
 
-  // Statistics
-  Statistic<uint64_t>* s_readTxnsRecvd;
-  Statistic<uint64_t>* s_writeTxnsRecvd;
-  Statistic<uint64_t>* s_totalTxnsRecvd;
-  Statistic<uint64_t>* s_reqQueueSize;
-  Statistic<uint64_t>* s_resQueueSize;
+  	// Statistics
+	Statistic<uint64_t>* s_readTxnsRecvd;
+  	Statistic<uint64_t>* s_writeTxnsRecvd;
+  	Statistic<uint64_t>* s_totalTxnsRecvd;
+  	Statistic<uint64_t>* s_reqQueueSize;
+  	Statistic<uint64_t>* s_resQueueSize;
 
     //debug
-    int m_debugMask;
-	std::string m_debugPrefix;
 	Output *output;
 
 };

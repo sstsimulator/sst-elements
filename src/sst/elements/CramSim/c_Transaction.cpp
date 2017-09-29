@@ -42,11 +42,10 @@ c_Transaction::c_Transaction(ulong x_seqNum, e_TransactionType x_txnMnemonic,
 				false), m_numWaitingCommands(0), m_dataWidth(x_dataWidth), m_processed(
 				false) {
        
-	m_txnToString[e_TransactionType::READ] = "READ";
-	m_txnToString[e_TransactionType::WRITE] = "WRITE";
+//	m_txnToString[e_TransactionType::READ] = "READ";
+//	m_txnToString[e_TransactionType::WRITE] = "WRITE";
 	m_hasHashedAddr= false;
 
-	//std::cout << "0x" << std::hex << x_addr << std::dec << "\t";    m_hashedAddr.print();
 }
 
 void c_Transaction::setWaitingCommands(const unsigned x_numWaitingCommands) {
@@ -67,7 +66,11 @@ ulong c_Transaction::getAddress() const {
 }
 
 std::string c_Transaction::getTransactionString() const {
-	return (m_txnToString.find(m_txnMnemonic)->second);
+	if(m_txnMnemonic==e_TransactionType::READ)
+		return "READ";
+	else
+		return "WRITE";
+	//return (m_txnToString.find(m_txnMnemonic)->second);
 }
 
 e_TransactionType c_Transaction::getTransactionMnemonic() const {
@@ -121,14 +124,16 @@ void c_Transaction::print() const {
 	    << ", dataWidth = " << m_dataWidth << ", m_numWaitingCommands = "
 	    << std::dec << m_numWaitingCommands << ", isProcessed = "
 	    << std::boolalpha << m_processed << ", isResponseReady = "
-	    << std::boolalpha << m_isResponseReady;
+	    << std::boolalpha << m_isResponseReady <<std::endl;
 }
 
-void c_Transaction::print(SST::Output *x_output, const std::string x_prefix) const {
-	x_output->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %d CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
-				  Simulation::getSimulation()->getCurrentSimCycle(),
+
+void c_Transaction::print(SST::Output *x_output, const std::string x_prefix, SimTime_t x_cycle) const {
+	x_output->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %lld addr:0x%x CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
+				  x_cycle,
 				  getTransactionString().c_str(),
 					m_seqNum,
+							m_addr,
 				  getHashedAddress().getChannel(),
 				  getHashedAddress().getPChannel(),
 				  getHashedAddress().getRank(),
@@ -145,15 +150,17 @@ void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
   ser & m_seqNum;
   ser & m_txnMnemonic;
   ser & m_addr;
-  ser & m_txnToString;
+  //ser & m_txnToString;
     
   ser & m_isResponseReady;
   ser & m_numWaitingCommands;
   ser & m_dataWidth;
   ser & m_processed;
+	ser & m_hasHashedAddr;
+	//ser & m_hashedAddr;
 
   //std::cout << "Serializing Transaction " << this << " "; this->print();
     
   //ser & m_cmdPtrList;
-  ser & m_cmdSeqNumList;
+  //ser & m_cmdSeqNumList;
 }

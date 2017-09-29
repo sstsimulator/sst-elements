@@ -69,6 +69,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 			new Event::Handler<c_Dimm>(this,
 					&c_Dimm::handleOutCmdUnitResPtrEvent));
 
+        m_simCycle=0;
 	// read params here
 	bool l_found = false;
 
@@ -117,7 +118,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	Statistic<uint64_t> *l_totalRowHits = registerStatistic<uint64_t>("totalRowHits");
 	for (int l_i = 0; l_i != m_numBanks; ++l_i) {
-		c_Bank* l_entry = new c_Bank(x_params);
+		c_Bank* l_entry = new c_Bank(x_params,l_i);
 		m_banks.push_back(l_entry);
 
 		std::string l_statName;
@@ -162,6 +163,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 c_Dimm::~c_Dimm() {
 
+
 }
 
 c_Dimm::c_Dimm() :
@@ -173,15 +175,12 @@ void c_Dimm::printQueues() {
 	std::cout << __PRETTY_FUNCTION__ << std::endl;
 	std::cout << "m_cmdResQ.size() = " << m_cmdResQ.size() << std::endl;
 	for (auto& l_cmdPtr : m_cmdResQ)
-		(l_cmdPtr)->print();
+		(l_cmdPtr)->print(m_simCycle);
 }
 
 bool c_Dimm::clockTic(SST::Cycle_t) {
 	// std::cout << std::endl << std::endl << "DIMM:: clock tic" << std::endl;
-//	std::cout << std::endl << "@" << std::dec
-//			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//			<< __PRETTY_FUNCTION__ << std::endl;
-
+        m_simCycle++;
 	for (int l_i = 0; l_i != m_banks.size(); ++l_i) {
 //		std::cout << "Bank" << std::dec << l_i << " clockTic from DIMM"
 //				<< std::endl;
@@ -191,8 +190,6 @@ bool c_Dimm::clockTic(SST::Cycle_t) {
 			m_cmdResQ.push_back(l_resPtr);
 		}
 	}
-
-//	printQueues();
 
 	sendResponse();
 
@@ -213,9 +210,6 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 
 		c_BankCommand* l_cmdReq = l_cmdReqEventPtr->m_payload;
 
-//		std::cout << std::endl << "@" << std::dec
-//				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//				<< __PRETTY_FUNCTION__ << " received command " << std::endl;
 //		l_cmdReq->print();
 //		std::cout << std::endl;
 
@@ -269,9 +263,6 @@ void c_Dimm::sendResponse() {
 	// check if ResQ has cmds
 	while (!m_cmdResQ.empty()) {
 
-	  //std::cout << std::endl << "@" << std::dec
-	  //	    << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-	  //	    << __PRETTY_FUNCTION__ << std::endl;
 	  //m_cmdResQ.front()->print();
 	  //std::cout << std::endl;
 

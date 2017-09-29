@@ -78,11 +78,16 @@ libCramSim_la_SOURCES = \
 	c_CmdResEvent.hpp \
 	c_MemhBridge.hpp \
 	c_MemhBridge.cpp \
-	c_CtrlSubComponent.hpp \
 	c_TxnScheduler.cpp \
 	c_TxnScheduler.hpp \
 	c_CmdScheduler.cpp \
 	c_CmdScheduler.hpp \
+	c_TxnDispatcher.hpp \
+	c_TxnDispatcher.cpp \
+	c_TxnGen.hpp \
+	c_TxnGen.cpp \
+	c_TraceReader.cpp \
+	c_TraceReader.hpp \
 	memReqEvent.hpp 
 
 EXTRA_DIST = \

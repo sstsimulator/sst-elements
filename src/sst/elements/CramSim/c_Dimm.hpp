@@ -100,10 +100,11 @@ private:
 	int k_numBanksPerBankGroup;
 	int m_numBanks;
 
-
+        SimTime_t m_simCycle;
 	std::vector<c_Bank*> m_banks;
 
 	std::vector<c_BankCommand*> m_cmdResQ;
+
   
   // Statistics
   Statistic<uint64_t>* s_actCmdsRecvd;

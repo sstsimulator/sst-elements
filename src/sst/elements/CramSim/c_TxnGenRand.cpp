@@ -213,7 +213,7 @@ void c_TxnGenRand::handleInCtrlReqQTokenChgEvent(SST::Event *ev) {
 		m_CtrlReqQTokens += l_CtrlReqQTknChgEventPtr->m_payload;
 
 		//FIXME: Critical: This pointer is left dangling
-		//delete l_CtrlReqQTknChgEventPtr;
+		delete l_CtrlReqQTknChgEventPtr;
 
 		assert(m_CtrlReqQTokens >= 0);
 		assert(m_CtrlReqQTokens <= k_CtrlReqQEntries);
@@ -252,7 +252,7 @@ void c_TxnGenRand::handleInCtrlResPtrEvent(SST::Event* ev) {
 		m_txnResQ.push(l_txnResEventPtr->m_payload);
 
 		//FIXME: Critical: This pointer is left dangling
-		//delete l_txnResEventPtr;
+		delete l_txnResEventPtr;
 	} else {
 		std::cout << std::endl << std::endl << "TxnGen:: "
 				<< __PRETTY_FUNCTION__ << " ERROR:: Bad Event Type!"
@@ -309,6 +309,8 @@ void c_TxnGenRand::sendRequest() {
 void c_TxnGenRand::readResponse() {
 	if (m_txnResQ.size() > 0) {
 		c_Transaction* l_txn = m_txnResQ.front();
+		delete l_txn;	//added to resolve the memory leakage problem
+
 		m_txnResQ.pop();
 		// std::cout << "TxnGen::readResponse() Transaction printed: Addr-"
 		 //		<< std::hex << l_txn->getAddress() << std::endl;

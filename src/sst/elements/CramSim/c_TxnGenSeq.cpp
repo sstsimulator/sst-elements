@@ -305,6 +305,8 @@ void c_TxnGenSeq::sendRequest() {
 void c_TxnGenSeq::readResponse() {
 	if (m_txnResQ.size() > 0) {
 		c_Transaction* l_txn = m_txnResQ.front();
+		delete l_txn;	//added to resolve the memory leakage problem
+
 		m_txnResQ.pop();
 	//	std::cout << "TxnGen::readResponse() Transaction printed: Addr-"
 	//			<< l_txn->getAddress() << std::endl;

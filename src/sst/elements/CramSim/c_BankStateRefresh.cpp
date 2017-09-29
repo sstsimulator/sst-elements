@@ -59,7 +59,7 @@ c_BankStateRefresh::~c_BankStateRefresh() {
 
 // this function is called by the c_Bank that contains this state
 void c_BankStateRefresh::handleCommand(c_BankInfo* x_bank,
-		c_BankCommand* x_bankCommandPtr) {
+		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
 	std::cout << __PRETTY_FUNCTION__
 			<< " ERROR: should not receive a command in this state. This is a transitory state."
 			<< std::endl;
@@ -71,13 +71,10 @@ std::list<e_BankCommandType> c_BankStateRefresh::getAllowedCommands() {
 }
 
 // call this function every clock cycle
-void c_BankStateRefresh::clockTic(c_BankInfo* x_bank) {
+void c_BankStateRefresh::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 	if (0 < m_timer) {
 		--m_timer;
 
-		// std::cout << "@@" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle()
-		// 		<< ": m_timer = " << m_timer << std::endl;
 	} else {
 
 		auto l_p = new c_BankStateIdle(m_bankParams); // create pointer to the next state
@@ -85,9 +82,6 @@ void c_BankStateRefresh::clockTic(c_BankInfo* x_bank) {
 				e_BankCommandType::REF == m_prevCommandPtr->getCommandMnemonic());
 		// only cmd allowed to flow through to BankStateActive is ACT
 
-//		std::cout << "@@" << std::dec
-//				<< Simulation::getSimulation()->getCurrentSimCycle()
-//				<< ": m_timer = " << m_timer << std::endl;
 //		std::cout << __PRETTY_FUNCTION__ << " timer expired" << std::endl;
 //		std::cout << " for command ";
 //		m_prevCommandPtr->print();
@@ -95,13 +89,13 @@ void c_BankStateRefresh::clockTic(c_BankInfo* x_bank) {
 
 		m_prevCommandPtr->setResponseReady();
 
-		l_p->enter(x_bank, this, m_receivedCommandPtr);
+		l_p->enter(x_bank, this, m_receivedCommandPtr,x_cycle);
 	}
 }
 
 // call this function after receiving a command
 void c_BankStateRefresh::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-		c_BankCommand* x_cmdPtr) {
+		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 //	 std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
 
 	// Being in the refresh state does not make a REF cmd response ready.
@@ -113,7 +107,7 @@ void c_BankStateRefresh::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_allowedCommands.clear();
 	// this state should not have any allowed bank commands
 	// this is a transitory state
-	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = x_cycle;
 	x_bank->setNextCommandCycle(e_BankCommandType::REF,
 			std::max(
 					x_bank->getNextCommandCycle(e_BankCommandType::REF)

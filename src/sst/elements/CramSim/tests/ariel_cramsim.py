@@ -89,7 +89,7 @@ def setup_config_params():
 
 # Command line arguments
 g_boolUseDefaultConfig = False
-g_config_file = "../ddr4_verimem.cfg"
+g_config_file = "../ddr4.cfg"
 
 # Setup global parameters
 #[g_boolUseDefaultConfig, g_config_file] = read_arguments()
@@ -104,8 +104,8 @@ sst.setProgramOption("timebase", "1ps")
 
 
 ## Flags
-memDebug = 0
-memDebugLevel = 10
+memDebug = 1
+memDebugLevel = 1
 coherenceProtocol = "MESI"
 rplPolicy = "lru"
 busLat = "50 ps"
@@ -113,7 +113,7 @@ cacheFrequency = "2 Ghz"
 defaultLevel = 0
 cacheLineSize = 64
 
-corecount = 8
+corecount = 1
 
 ## Application Info
 os.environ['SIM_DESC'] = 'EIGHT_CORES'
@@ -139,7 +139,7 @@ sst_root = os.getenv( "SST_ROOT" )
 ariel = sst.Component("A0", "ariel.ariel")
 ## ariel.addParams(AppArgs)
 ariel.addParams({
-   "verbose"             : "0",
+   "verbose"             : "1",
    "maxcorequeue"        : "256",
    "maxissuepercycle"    : "2",
    "pipetimeout"         : "0",
@@ -170,6 +170,8 @@ def genMemHierarchy(cores):
       "backend" : "memHierarchy.cramsim",
       "backend.access_time" : "2 ns",   # Phy latency
       "backend.mem_size" : "512MiB",
+      "backend.max_outstanding_requests" : 256,
+	"backend.verbose" : 1,
        "request_width"         : cacheLineSize
    })
 
@@ -237,11 +239,17 @@ def genMemHierarchy(cores):
     # txn gen --> memHierarchy Bridge
    comp_memhBridge = sst.Component("memh_bridge", "CramSim.c_MemhBridge")
    comp_memhBridge.addParams(g_params);
-
+   comp_memhBridge.addParams({
+                        "verbose" : "0",
+                        "numTxnPerCycle" : g_params["numChannels"],
+                        "strTxnTraceFile" : "arielTrace",
+                        "boolPrintTxnTrace" : "1"
+                        })
    # controller
    comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
    comp_controller0.addParams(g_params)
    comp_controller0.addParams({
+                        "verbose" : "0",
 			"TxnConverter" : "CramSim.c_TxnConverter",
 			"AddrHasher" : "CramSim.c_AddressHasher",
 			"CmdScheduler" : "CramSim.c_CmdScheduler" ,
@@ -258,22 +266,9 @@ def genMemHierarchy(cores):
    link_dir_cramsim_link.connect( (memory, "cube_link", "2ns"), (comp_memhBridge, "linkCPU", "2ns") )
 
    # memhBridge(=TxnGen) <- Memory Controller (Req)(Token)
-   txnReqLink_0 = sst.Link("txnReqLink_0")
-   txnReqLink_0.connect( (comp_memhBridge, "outTxnGenReqPtr", g_params["clockCycle"]), (comp_controller0, "inTxnGenReqPtr", g_params["clockCycle"]) )
-
-   # TxnGen <- Memory Controller (Res)(Txn)
-   txnResLink_0 = sst.Link("txnResLink_0")
-   txnResLink_0.connect( (comp_memhBridge, "inCtrlResPtr", g_params["clockCycle"]), (comp_controller0, "outTxnGenResPtr", g_params["clockCycle"]) )
-
-
-   # TxnGen <- Memory Controller (Req)(Token)
-   txnTokenLink_0 = sst.Link("txnTokenLink_0")
-   txnTokenLink_0.connect( (comp_memhBridge, "inCtrlReqQTokenChg", g_params["clockCycle"]), (comp_controller0, "outTxnGenReqQTokenChg", g_params["clockCycle"]) )
-
    # TxnGen -> Memory Controller (Res)(Token)
-   txnTokenLink_1 = sst.Link("txnTokenLink_1")
-   txnTokenLink_1.connect( (comp_memhBridge, "outTxnGenResQTokenChg", g_params["clockCycle"]), (comp_controller0, "inTxnGenResQTokenChg", g_params["clockCycle"]) )
-
+   txnTokenLink_1 = sst.Link("txnReqLink_1")
+   txnTokenLink_1.connect( (comp_memhBridge, "lowLink", g_params["clockCycle"]), (comp_controller0, "inTxnGenReqPtr", g_params["clockCycle"]) )
 
    # Controller -> Dimm (Req)
    cmdReqLink_1 = sst.Link("cmdReqLink_1")
@@ -282,8 +277,14 @@ def genMemHierarchy(cores):
    # Controller <- Dimm (Res) (Cmd)
    cmdResLink_1 = sst.Link("cmdResLink_1")
    cmdResLink_1.connect( (comp_controller0, "inDeviceResPtr", g_params["clockCycle"]), (comp_dimm0, "outCtrlResPtr", g_params["clockCycle"]) )
+   
+   comp_controller0.enableAllStatistics()
+   comp_memhBridge.enableAllStatistics()
+   comp_dimm0.enableAllStatistics()
 
 
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
 
 genMemHierarchy(corecount)        
 

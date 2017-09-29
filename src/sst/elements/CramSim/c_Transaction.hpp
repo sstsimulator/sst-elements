@@ -40,6 +40,8 @@
 #include <memory>
 
 //sst includes
+
+#include <sst/core/component.h>
 #include <sst/core/serialization/serializable.h>
 #include <output.h>
 //local includes
@@ -61,7 +63,7 @@ private:
   ulong m_seqNum;
   e_TransactionType m_txnMnemonic;
   ulong m_addr;
-  std::map<e_TransactionType,std::string> m_txnToString;
+  //std::map<e_TransactionType,std::string> m_txnToString;
   
   bool m_isResponseReady;
   unsigned m_numWaitingCommands;
@@ -103,19 +105,27 @@ public:
   bool isProcessed() const;
   void isProcessed(bool x_processed);
   void print() const;
-  void print(SST::Output *x_output, std::string x_prefix) const;
+  void print(SST::Output *x_output, std::string x_prefix, SimTime_t x_cycle) const;
 
   const c_HashedAddress& getHashedAddress() const {
          return (m_hashedAddr);
   }
-  void setHashedAddress(c_HashedAddress &x_hashedAddr)
-  {
+  void setHashedAddress(c_HashedAddress &x_hashedAddr) {
       m_hashedAddr = x_hashedAddr;
       m_hasHashedAddr=true;
   }
         bool hasHashedAddress(){
             return m_hasHashedAddr;
         }
+
+        bool isRead(){
+            return m_txnMnemonic==e_TransactionType ::READ;
+        }
+
+        bool isWrite(){
+            return m_txnMnemonic==e_TransactionType ::WRITE;
+        }
+
 
   void serialize_order(SST::Core::Serialization::serializer &ser) override ;
   

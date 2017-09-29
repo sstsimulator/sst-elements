@@ -59,11 +59,11 @@ c_BankStateIdle::~c_BankStateIdle() {
 
 // this function is called by the c_Bank that contains this state
 void c_BankStateIdle::handleCommand(c_BankInfo* x_bank,
-		c_BankCommand* x_bankCommandPtr) {
+		c_BankCommand* x_bankCommandPtr,SimTime_t x_cycle) {
 	// std::cout << "Entered c_BankStateIdle::handleCommand() received command "
 	// 		<< std::endl;
-	SimTime_t l_time =
-			Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = x_cycle;
+
 	switch (x_bankCommandPtr->getCommandMnemonic()) {
 	case e_BankCommandType::ACT:
 		x_bank->setLastCommandCycle(e_BankCommandType::ACT, l_time);
@@ -90,8 +90,11 @@ std::list<e_BankCommandType> c_BankStateIdle::getAllowedCommands() {
 }
 
 // call this function every clock cycle
-void c_BankStateIdle::clockTic(c_BankInfo* x_bank) {
-	if (2 < m_timer) {
+void c_BankStateIdle::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
+
+	SimTime_t l_time = x_cycle;
+	
+        if (2 < m_timer) {
 		--m_timer;
 	} else {
 		--m_timer;
@@ -110,8 +113,6 @@ void c_BankStateIdle::clockTic(c_BankInfo* x_bank) {
 			}
 		} else {
 			if (m_receivedCommandPtr) {
-				SimTime_t l_time =
-						Simulation::getSimulation()->getCurrentSimCycle();
 			        //std::cout << "@@" << std::dec
 				//	  << l_time
 				//	  << ": now can process command response in IDLE state"
@@ -137,7 +138,7 @@ void c_BankStateIdle::clockTic(c_BankInfo* x_bank) {
 
 				assert(nullptr != m_receivedCommandPtr);
 				// make sure we have a command
-				l_p->enter(x_bank, this, m_receivedCommandPtr);
+				l_p->enter(x_bank, this, m_receivedCommandPtr,l_time);
 			}
 		}
 	}
@@ -145,19 +146,15 @@ void c_BankStateIdle::clockTic(c_BankInfo* x_bank) {
 
 // call this function after receiving a command
 void c_BankStateIdle::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-		c_BankCommand* x_cmdPtr) {
+		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 
-        //std::cout << "@@" << std::dec
-	//	  << Simulation::getSimulation()->getCurrentSimCycle()
-	//	  << ": m_timer = " << m_timer << std::endl;
-	//std::cout << "Entering " << __PRETTY_FUNCTION__ << std::endl;
 
 	x_bank->resetRowOpen();
 	m_prevCommandPtr = x_cmdPtr;
 
 	m_receivedCommandPtr = nullptr;
 
-	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = x_cycle;
 
 	m_allowedCommands.clear();
 	m_allowedCommands.push_back(e_BankCommandType::ACT);

@@ -64,7 +64,7 @@ using namespace SST::n_Bank;
  * @param owner
  * @param params
  */
-c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : c_CtrlSubComponent<c_BankCommand*,c_BankCommand*>(owner, params) {
+c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(owner) {
 
 	m_Owner = dynamic_cast<c_Controller *>(owner);
     output = m_Owner->getOutput();
@@ -416,11 +416,6 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : c_CtrlSubComp
 	releaseCommandBus();  //update the command bus status
 	m_isACTIssued.clear();
 	m_isACTIssued.resize(m_numRanks, false);
-
-	//set debug mask and debug prefix
-	m_debugMask = DVCCTRL;
-	m_debugPrefix="[Device Controller]";
-
 }
 
 /*!
@@ -462,10 +457,6 @@ void c_DeviceDriver::run() {
 	if (!m_inputQ.empty())
 		sendRequest();
 
-//	if(m_issued_cmd<m_numChannels)
-//	{
-//		output->verbose(CALL_INFO,2,0,"[cycle:%lld] low command issue rate",Simulation::getSimulation()->getCurrentSimCycle());
-//	}
 }
 
 /*!
@@ -474,7 +465,7 @@ void c_DeviceDriver::run() {
 void c_DeviceDriver::update() {
 	for (int l_i = 0; l_i != m_banks.size(); ++l_i) {
 
-		m_banks.at(l_i)->clockTic();
+		m_banks.at(l_i)->clockTic(m_Owner->getSimCycle());
 		// m_banks.at(l_i)->printState();
 	}
 	//update ACTFAWTracker info
@@ -505,7 +496,7 @@ void c_DeviceDriver::update() {
  */
 bool c_DeviceDriver::isCmdAllowed(c_BankCommand* x_bankCommandPtr)
 {
-	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = m_Owner->getSimCycle();
 	// get count of ACT cmds issued in the FAW
 	unsigned l_bankId=x_bankCommandPtr->getHashedAddress()->getBankId();
 
@@ -654,12 +645,12 @@ void c_DeviceDriver::sendRequest() {
 						assert((m_lastDataCmdType != ((l_cmdPtr))->getCommandMnemonic()) ||
 							   (m_lastPseudoChannel != (l_cmdPtr->getHashedAddress()->getPChannel())) ||
 							   (m_lastChannel !=(l_cmdPtr->getHashedAddress()->getChannel())) ||
-							   (Simulation::getSimulation()->getCurrentSimCycle() - m_lastDataCmdIssueCycle) >=
+							   (m_Owner->getSimCycle() - m_lastDataCmdIssueCycle) >=
 							   (std::min(m_bankParams.at("nBL"),
 										 std::max(m_bankParams.at("nCCD_L"), m_bankParams.at("nCCD_S")))));
 
 						m_lastChannel = ((l_cmdPtr))->getHashedAddress()->getChannel();
-						m_lastDataCmdIssueCycle = Simulation::getSimulation()->getCurrentSimCycle();
+						m_lastDataCmdIssueCycle = m_Owner->getSimCycle();
 						m_lastDataCmdType = ((l_cmdPtr))->getCommandMnemonic();
 						m_lastPseudoChannel = ((l_cmdPtr))->getHashedAddress()->getPChannel();
 					}
@@ -694,7 +685,7 @@ bool c_DeviceDriver::sendRefresh(unsigned x_requester) {
 	std::vector<c_BankCommand*> &cmdQ=m_refreshCmdQ[x_requester];
 
 	c_BankCommand* l_cmdPtr = cmdQ.front();
-    SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
+    SimTime_t l_time = m_Owner->getSimCycle();
 	std::vector<unsigned>& l_bankIdVec = l_cmdPtr->getBankIdVec();
 
 	//check if the target bank are ready for the current command
@@ -823,21 +814,21 @@ void c_DeviceDriver::releaseCommandBus() {
  */
 bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 		c_BankInfo* x_bank) {
-    SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
+    SimTime_t l_time = m_Owner->getSimCycle();
 
 	if (x_bank->isCommandAllowed(x_bankCommandPtr, l_time)) {
 	  if(k_printCmdTrace) {
 	    //if(x_bankCommandPtr->getCommandMnemonic() == e_BankCommandType::REF) {
 	    if(x_bankCommandPtr->isRefreshType()) {
 	      (*m_cmdTraceStream) << "@" << std::dec
-				  << Simulation::getSimulation()->getCurrentSimCycle()
+				  << m_Owner->getSimCycle()
 				  << " " << (x_bankCommandPtr)->getCommandString()
 				  << " " << std::dec << (x_bankCommandPtr)->getSeqNum()
 					<< " " << std::dec << x_bankCommandPtr->getBankId()
 							  << std::endl;
 	    } else {
 	      (*m_cmdTraceStream) << "@" << std::dec
-				  << Simulation::getSimulation()->getCurrentSimCycle()
+				  << m_Owner->getSimCycle()
 				  << " " << (x_bankCommandPtr)->getCommandString()
 				  << " " << std::dec << (x_bankCommandPtr)->getSeqNum()
 				  << " 0x" << std::hex << (x_bankCommandPtr)->getAddress()
@@ -856,7 +847,7 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 
 		#ifdef __SST_DEBUG_OUTPUT__
 				output->verbose(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
-				    Simulation::getSimulation()->getCurrentSimCycle(),
+				    m_Owner->getSimCycle(),
 				     x_bankCommandPtr->getCommandString().c_str(),
 				     x_bankCommandPtr->getHashedAddress()->getChannel(),
 				     x_bankCommandPtr->getHashedAddress()->getPChannel(),

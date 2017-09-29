@@ -78,7 +78,7 @@ class c_BankCommand;
     std::vector<c_BankInfo*>& getBankPtrs();
 
     void updateOtherBanksNextCommandCycles(c_BankGroup* x_initBankGroupPtr,
-					   c_BankCommand* x_cmdPtr);
+					   c_BankCommand* x_cmdPtr, SimTime_t x_cycle);
 
   private:
     c_Channel* m_channelPtr;

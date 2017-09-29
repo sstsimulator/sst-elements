@@ -43,8 +43,9 @@ namespace SST {
         class c_Controller;
 
         enum class e_txnSchedulingPolicy {FCFS, FRFCFS};
+        typedef std::list<c_Transaction*> TxnQueue;
 
-        class c_TxnScheduler: public c_CtrlSubComponent <c_Transaction*,c_Transaction*>  {
+        class c_TxnScheduler: public SubComponent{
         public:
 
             c_TxnScheduler(SST::Component *comp, SST::Params &x_params);
@@ -52,32 +53,39 @@ namespace SST {
 
             virtual void run();
             virtual bool push(c_Transaction* newTxn);
+            virtual bool isHit(c_Transaction* newTxn);
 
 
         private:
-            c_Transaction* getNextTxn(int x_ch);
-            void popTxn(int x_ch, c_Transaction* x_txn);
+            virtual c_Transaction* getNextTxn(TxnQueue& x_queue, int x_ch);
+            virtual bool hasDependancy(c_Transaction* x_txn, int x_ch);
+            virtual void popTxn(TxnQueue& x_queue, c_Transaction* x_txn);
 
             //**Controller
             c_Controller * m_controller;
             //**transaction converter
             c_TxnConverter* m_txnConverter;
-            //**Address mapper
-            c_AddressHasher* m_addrHasher;
             //**command Scheduler
             c_CmdScheduler* m_cmdScheduler;
 
-            //**per-channel transaction Queue
-            std::vector<std::list<c_Transaction*>> m_txnQ;
-            //**ID of the channel which will be scheduled first at the next cycle
-            int m_nextChannel;
+            //**per-channel transaction queue
+            std::vector<TxnQueue> m_txnQ;      // unified queue
+            //**per-channel tranaction queues for read-first scheduling
+            std::vector<TxnQueue> m_txnReadQ;  // read queue for read-first scheduling
+            std::vector<TxnQueue> m_txnWriteQ; // write queue for read-first scheduling
+            unsigned m_maxNumPendingWrite;
+            unsigned m_minNumPendingWrite;
 
             Output *output;
             unsigned m_numChannels;
+            bool m_flushWriteQueue;
 
             //parameters
             e_txnSchedulingPolicy k_txnSchedulingPolicy;
             unsigned k_numTxnQEntries;
+            float k_maxPendingWriteThreshold;
+            float k_minPendingWriteThreshold;
+            bool k_isReadFirstScheduling;
 
         };
     }

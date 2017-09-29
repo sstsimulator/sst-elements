@@ -41,7 +41,7 @@
 using namespace SST;
 using namespace SST::n_Bank;
 
-c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> (comp, x_params){
+c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : SubComponent(comp){
     m_owner = dynamic_cast<c_Controller*>(comp);
     m_deviceController=m_owner->getDeviceDriver();
     output=dynamic_cast<c_Controller*>(comp)->getOutput();
@@ -81,7 +81,8 @@ void c_CmdScheduler::run(){
 
     bool isSuccess = false;
     c_BankCommand *l_cmdPtr= nullptr;
-    SimTime_t  l_time=Simulation::getSimulation()->getCurrentSimCycle();
+    SimTime_t  l_time=m_owner->getSimCycle();
+
     for(unsigned l_ch=0;l_ch<m_numChannels;l_ch++) {
 
         unsigned nextBankIdx = m_nextCmdQIdx.at(l_ch);

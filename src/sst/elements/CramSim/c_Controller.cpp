@@ -47,6 +47,7 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     output = new SST::Output("CramSim.Controller[@f:@l:@p] ",
                              verbosity, 0, SST::Output::STDOUT);
 
+    m_simCycle=0;
 
     /** Get subcomponent parameters*/
     bool l_found;
@@ -115,8 +116,14 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     m_txnGenResQTokens = k_txnGenResQEntries;
     m_ReqQTokens= k_txnReqQEntries;
 
+    k_enableQuickResponse = (uint32_t)params.find<uint32_t>("boolEnableQuickRes", 0,l_found);
+    if (!l_found) {
+        std::cout << "boolEnableQuickRes param value is missing... disabled"
+                  << std::endl;
+    }
+
     // get configured clock frequency
-    k_controllerClockFreqStr = (string)params.find<string>("strControllerClockFrequency", "1GHz", l_found);
+    k_controllerClockFreqStr = (std::string)params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
     
     //configure SST link
     configure_link();
@@ -173,6 +180,8 @@ void c_Controller::configure_link() {
 
 // clock event handler
 bool c_Controller::clockTic(SST::Cycle_t clock) {
+    
+    m_simCycle++;
 
     sendResponse();
 
@@ -194,24 +203,38 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
             newTxn->setHashedAddress(l_hashedAddress);
         }
 
+        //If new transaction hits in the transaction queue, send a response immediately and do not access memory
+        if(k_enableQuickResponse && m_txnScheduler->isHit(newTxn))
+        {
+            newTxn->setResponseReady();
+            //delete the new transaction from request queue
+            l_it=m_ReqQ.erase(l_it);
+
+            #ifdef __SST_DEBUG_OUTPUT__
+                newTxn->print(output,"[TxnQueue hit]");
+            #endif
+            continue;
+        }
+        //insert new transaction into a transaction queue
         if(m_txnScheduler->push(newTxn)) {
+            //With fast write response mode, controller sends a response for a write request as soon as it push the request to a transaction queue.
+            if(k_enableQuickResponse && newTxn->isWrite())
+            {
+                //create a response and push it to the response queue.
+               c_Transaction* l_txnRes = new c_Transaction(newTxn->getSeqNum(),newTxn->getTransactionMnemonic(),newTxn->getAddress(),newTxn->getDataWidth());
+               l_txnRes->setResponseReady();
+                m_ResQ.push_back(l_txnRes);
+            }
+          
+
             l_it = m_ReqQ.erase(l_it);
 
             #ifdef __SST_DEBUG_OUTPUT__
-            output->verbose(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d\n",
-                          Simulation::getSimulation()->getCurrentSimCycle(),
-                          newTxn->getTransactionString().c_str(),
-                          newTxn->getHashedAddress().getChannel(),
-                          newTxn->getHashedAddress().getPChannel(),
-                          newTxn->getHashedAddress().getRank(),
-                          newTxn->getHashedAddress().getBankGroup(),
-                          newTxn->getHashedAddress().getBank(),
-                          newTxn->getHashedAddress().getRow(),
-                          newTxn->getHashedAddress().getCol());
+                newTxn->print(output,"[Controller queues new txn]");
             #endif
         }
         else
-            l_it++;
+            break;
     }
 
     // 3. run transaction Scheduler
@@ -228,7 +251,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
 
     // 7. send token to the transaction generator
     m_thisCycleTxnQTknChg = m_thisCycleTxnQTknChg-m_ReqQ.size();
-    if (m_thisCycleTxnQTknChg > 0) {
+    if (m_outTxnGenReqQTokenChgLink && m_thisCycleTxnQTknChg > 0) {
         sendTokenChg();
     }
 
@@ -266,15 +289,23 @@ void c_Controller::sendResponse() {
         c_Transaction* l_txnRes = nullptr;
         for (std::deque<c_Transaction*>::iterator l_it = m_ResQ.begin();
              l_it != m_ResQ.end();)  {
+	    if(m_txnGenResQTokens <= 0) {
+	      break;
+	    }
             if ((*l_it)->isResponseReady()) {
                 l_txnRes = *l_it;
                 l_it=m_ResQ.erase(l_it);
                 //break;
                 c_TxnResEvent* l_txnResEvPtr = new c_TxnResEvent();
                 l_txnResEvPtr->m_payload = l_txnRes;
-                m_outTxnGenResPtrLink->send(l_txnResEvPtr);
 
-                --m_txnGenResQTokens;
+                if(m_outTxnGenResPtrLink)
+                    m_outTxnGenResPtrLink->send(l_txnResEvPtr);
+                else
+                    m_inTxnGenReqPtrLink->send(l_txnResEvPtr);
+
+                if(m_outTxnGenReqQTokenChgLink)
+                  --m_txnGenResQTokens;
             }
             else
             {
@@ -294,6 +325,9 @@ void c_Controller::handleIncomingTransaction(SST::Event *ev){
     if (l_txnReqEventPtr) {
         c_Transaction* newTxn=l_txnReqEventPtr->m_payload;
 
+        #ifdef __SST_DEBUG_OUTPUT__
+        newTxn->print(output,"[c_Controller.handleIncommingTransaction]");
+        #endif
 
         m_ReqQ.push_back(newTxn);
         m_ResQ.push_back(newTxn);
@@ -316,9 +350,11 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
         ulong l_resSeqNum = l_cmdResEventPtr->m_payload->getSeqNum();
         // need to find which txn matches the command seq number in the txnResQ
         c_Transaction* l_txnRes = nullptr;
-        for(auto l_txIter : m_ResQ) {
-            if(l_txIter->matchesCmdSeqNum(l_resSeqNum)) {
-                l_txnRes = l_txIter;
+        std::deque<c_Transaction*>::iterator l_txIter;
+        for(l_txIter=m_ResQ.begin() ; l_txIter!=m_ResQ.end();l_txIter++) {
+            if((*l_txIter)->matchesCmdSeqNum(l_resSeqNum)) {
+                l_txnRes = *l_txIter;
+                break;
             }
         }
 
@@ -329,12 +365,18 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
 
         const unsigned l_cmdsLeft = l_txnRes->getWaitingCommands() - 1;
         l_txnRes->setWaitingCommands(l_cmdsLeft);
-        if (l_cmdsLeft == 0)
+        if (l_cmdsLeft == 0) {
             l_txnRes->setResponseReady();
-
+            // With quick response mode, controller sends a response to a requester for a write request as soon as the request is pushed to a transaction queue
+            // So, we don't need to send another response at this time. Just erase the request in the response queue.
+            if ( k_enableQuickResponse && !l_txnRes->isRead()) {
+                delete l_txnRes;
+                m_ResQ.erase(l_txIter);
+            }
+        }
 
         delete l_cmdResEventPtr->m_payload;         //now, free the memory space allocated to the commands for a transaction
-        //delete l_cmdResEventPtr;
+        delete l_cmdResEventPtr;
 
     } else {
         std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
@@ -372,7 +414,6 @@ void c_Controller::handleInDeviceReqQTokenChgEvent(SST::Event *ev) {
         assert(m_deviceReqQTokens >= 0);
         assert(m_deviceReqQTokens <= k_txnResQEntries);
 
-        //FIXME: Critical: This pointer is left dangling
         delete l_cmdUnitReqQTokenChgEventPtr;
     } else {
         std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"

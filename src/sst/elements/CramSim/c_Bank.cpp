@@ -46,7 +46,7 @@ using namespace SST::n_Bank;
 
 unsigned c_Bank::k_banks = 0;
 
-c_Bank::c_Bank(SST::Params& x_params) {
+c_Bank::c_Bank(SST::Params& x_params,unsigned x_bankId) {
 	// read params here
 
 /*	k_nRC = (uint32_t)x_params.find<uint32_t>("nRC", 55, l_found);
@@ -263,9 +263,13 @@ c_Bank::c_Bank(SST::Params& x_params) {
 
 	m_cmd = nullptr;
 
-	m_bankNum = k_banks;
-	k_banks++;
+	/*--static variable makes an error in multi-lane configuration.
+	    so, fixed to set the bank id with an input argument --*/
+	//m_bankNum = k_banks;
+	//k_banks++;
+	m_bankNum = x_bankId;
 
+        m_prevOpenRow = 0;
 
 	m_ACTCmdsReceived = 0;
 	m_READCmdsReceived = 0;
@@ -286,15 +290,11 @@ c_Bank::~c_Bank() {
 
 void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 
-  //std::cout << std::endl << "@" << std::dec
-  //<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-  //<< __PRETTY_FUNCTION__ << " " << this << std::endl;
-  //std::cout << std::endl;
 
   //std::cout << "bankNum " << m_bankNum << std::endl;
   if(m_cmd) {
-    std::cout << "m_cmd = ";       m_cmd->print();
-    std::cout << "x_cmd = ";       x_bankCommandPtr->print();
+   // std::cout << "m_cmd = ";       m_cmd->print();
+   // std::cout << "x_cmd = ";       x_bankCommandPtr->print();
   }
 
 	assert(nullptr == m_cmd);
@@ -306,7 +306,9 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 
 		m_cmd = x_bankCommandPtr;
 
-		switch (x_bankCommandPtr->getCommandMnemonic()){
+                unsigned l_row = m_cmd->getHashedAddress()->getRow();
+		
+                switch (x_bankCommandPtr->getCommandMnemonic()){
 			case e_BankCommandType::ACT:
 				m_ACTCmdsReceived++;
 				m_bankStats->s_bankACTsRecvd->addData(1);
@@ -315,15 +317,32 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 			case e_BankCommandType::READA:
 				m_READCmdsReceived++;
 				m_bankStats->s_bankREADsRecvd->addData(1);
+                                
+                                if(m_prevOpenRow == l_row)
+                                {
+                                    m_bankStats->s_bankRowHits->addData(1);
+                                    m_bankStats->s_totalRowHits->addData(1);
+                                }
+                                else
+                                    m_prevOpenRow = m_cmd->getHashedAddress()->getRow();
 				break;
 			case e_BankCommandType::WRITE:
 			case e_BankCommandType::WRITEA:
 				m_WRITECmdsReceived++;
 				m_bankStats->s_bankWRITEsRecvd->addData(1);
+                                
+                                if(m_prevOpenRow == l_row)
+                                {
+                                    m_bankStats->s_bankRowHits->addData(1);
+                                    m_bankStats->s_totalRowHits->addData(1);
+                                }else
+                                    m_prevOpenRow = m_cmd->getHashedAddress()->getRow();
+	
 				break;
 			case e_BankCommandType::PRE:
 				m_PRECmdsReceived++;
 				m_bankStats->s_bankPREsRecvd->addData(1);
+                                m_prevOpenRow=-1;
 				break;
 			case e_BankCommandType::REF:
 				break;
@@ -336,10 +355,6 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 
 c_BankCommand* c_Bank::clockTic() {
 
-//	std::cout << std::endl << "@" << std::dec
-//			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//			<< __PRETTY_FUNCTION__ << std::endl;
-//	std::cout << "m_cmd = " << m_cmd << std::endl;
 //	if (nullptr != m_cmd)
 //		m_cmd->print();
 

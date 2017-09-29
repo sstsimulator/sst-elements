@@ -48,7 +48,6 @@
 #include "c_BankCommand.hpp"
 #include "c_DeviceDriver.hpp"
 #include "c_Controller.hpp"
-#include "c_CtrlSubComponent.hpp"
 
 
 typedef unsigned long ulong;
@@ -60,7 +59,7 @@ namespace n_Bank{
 	class c_Controller;
 	enum class e_BankCommandType;
   
-class c_DeviceDriver: public c_CtrlSubComponent <c_BankCommand*,c_BankCommand*> {
+class c_DeviceDriver: public SubComponent{
 public:
 	c_DeviceDriver(Component *comp, Params& x_params);
 	~c_DeviceDriver();
@@ -104,6 +103,7 @@ private:
 
 	c_Controller *m_Owner;
 
+	std::deque<c_BankCommand*> m_inputQ;
 	std::vector<bool> m_blockBank;
 	std::set<unsigned> m_inflightWrites; // track inflight write commands
 	std::deque<unsigned> m_blockRowCmd; //command bus occupancy info
@@ -142,6 +142,7 @@ private:
 	std::vector<c_Channel*> m_channel;
     std::map<std::string, unsigned> m_bankParams;
 
+
 	int m_numChannels;
 	int m_numPseudoChannels;
 	int m_numRanks;
@@ -157,8 +158,6 @@ private:
 
 	//debug
 	Output *output;
-	DEBUG_MASK m_debugMask;
-	std::string m_debugPrefix;
 	uint64_t m_issued_cmd;
 };
 }

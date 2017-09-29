@@ -89,9 +89,9 @@ std::vector<c_BankInfo*> c_Channel::getBankPtrs() const {
 }
 
 void c_Channel::updateOtherBanksNextCommandCycles(c_Rank* x_initRankPtr,
-		c_BankCommand* x_cmdPtr) {
+		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 
-	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = x_cycle;
 
 //	std::cout << "@ " << std::dec << l_time << " Entered "
 //			<< __PRETTY_FUNCTION__ << std::endl;
