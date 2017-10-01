@@ -342,7 +342,7 @@ static const char* c_Controller_TxnGenReqToken_port_events[] = { "c_txnGenReqTok
 static const char* c_Controller_DeviceReqToken_port_events[] = { "c_DeviceReqTokenEvent", NULL };
 
 static const ElementInfoPort c_Controller_ports[] = {
-		{"inTxnGenReqPtr", "link to controller for incoming req cmds from txn gen", c_Controller_TxnGenReq_port_events},
+		{"txngenLink", "link to controller for incoming req cmds from txn gen", c_Controller_TxnGenReq_port_events},
 		{"outTxnGenResPtr", "link to controller for outgoing res cmds to txn gen", c_Controller_TxnGenRes_port_events},
 		{"inDeviceResPtr", "link to controller for incoming res cmds from device", c_Controller_DeviceRes_port_events},
 		{"outDeviceReqPtr", "link to controller for outgoing req cmds to device", c_Controller_DeviceReq_port_events},

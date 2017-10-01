@@ -155,7 +155,7 @@ void c_Controller::configure_link() {
                                                 new Event::Handler<c_Controller>(this,
                                                                                  &c_Controller::handleOutTxnGenReqQTokenChgEvent));
     // TxnGen -> Controller (Req) (Txn)
-    m_inTxnGenReqPtrLink = configureLink("inTxnGenReqPtr",
+    m_inTxnGenReqPtrLink = configureLink("txngenLink",
                                          new Event::Handler<c_Controller>(this,
                                                                           &c_Controller::handleIncomingTransaction));
     // TxnUnit <- Controller (Res) (Txn)
