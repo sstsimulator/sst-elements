@@ -97,18 +97,14 @@ comp_dimm = sst.Component("Dimm"+"0", "CramSim.c_Dimm")
 comp_dimm.addParams(g_params)
 
 # TXNGEN / Controller LINKS
-# TxnGen -> Controller (Req)(Txn)
+# TxnGen <-> Controller (Txn)
 txnReqLink_0 = sst.Link("txnReqLink_0_"+"0")
 txnReqLink_0.connect((comp_txnGen, "memLink", g_params["clockCycle"]), (comp_controller, "txngenLink", g_params["clockCycle"]) )
 
 
-# Controller -> Dimm (Req)
+# Controller <-> Dimm 
 cmdReqLink_1 = sst.Link("cmdReqLink_1_"+"0")
-cmdReqLink_1.connect( (comp_controller, "outDeviceReqPtr", g_params["clockCycle"]), (comp_dimm, "inCtrlReqPtr", g_params["clockCycle"]) )
-
-# Controller <- Dimm (Res) (Cmd)
-cmdResLink_1 = sst.Link("cmdResLink_1_"+"0")
-cmdResLink_1.connect( (comp_controller, "inDeviceResPtr", g_params["clockCycle"]), (comp_dimm, "outCtrlResPtr", g_params["clockCycle"]) )
+cmdReqLink_1.connect( (comp_controller, "memLink", g_params["clockCycle"]), (comp_dimm, "ctrlLink", g_params["clockCycle"]) )
 
 
 # enable all statistics

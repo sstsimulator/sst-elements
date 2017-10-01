@@ -250,23 +250,6 @@ static const ElementInfoStatistic c_CmdScheduler_stats[] = {
 };
 
 
-/*----SETUP c_CmdDriver STRUCTURES----*/
-static const ElementInfoParam c_CmdDriver_params[] = {
-		{"numCmdReqQEntries", "Total number of entries in Driver's buffer", NULL},
-		{"numTxnResQEntries", "Total number of entries in neighbor TxnConverter's Res queue", NULL},
-		{NULL, NULL, NULL } };
-
-static const char* c_CmdDriver_cmdRes_port_events[] = { "c_CmdResEvent", NULL };
-static const char* c_CmdDriver_cmdReq_port_events[] = { "c_CmdPtrPkgEvent", NULL };
-static const char* c_CmdDriver_token_port_events[] = {"c_TokenChgEvent", NULL};
-
-static const ElementInfoPort c_CmdDriver_ports[] = {
-		{"outCmdDrvReqQTokenChg", "link to c_CmdDriver for outgoing req txn token", c_CmdDriver_token_port_events},
-		{"inTxnCvtReqPtr", "link to c_CmdDriver for incoming req cmds", c_CmdDriver_cmdReq_port_events},
-		{"outCmdDrvResPtr", "link to c_CmdDriver for outgoing res txn", c_CmdDriver_cmdRes_port_events},
-		{NULL, NULL, NULL}
-};
-
 
 /*----SETUP c_DeviceDriver STRUCTURES----*/
 static const ElementInfoParam c_DeviceDriver_params[] = {
@@ -342,13 +325,8 @@ static const char* c_Controller_TxnGenReqToken_port_events[] = { "c_txnGenReqTok
 static const char* c_Controller_DeviceReqToken_port_events[] = { "c_DeviceReqTokenEvent", NULL };
 
 static const ElementInfoPort c_Controller_ports[] = {
-		{"txngenLink", "link to controller for incoming req cmds from txn gen", c_Controller_TxnGenReq_port_events},
-		{"outTxnGenResPtr", "link to controller for outgoing res cmds to txn gen", c_Controller_TxnGenRes_port_events},
-		{"inDeviceResPtr", "link to controller for incoming res cmds from device", c_Controller_DeviceRes_port_events},
-		{"outDeviceReqPtr", "link to controller for outgoing req cmds to device", c_Controller_DeviceReq_port_events},
-		{"inTxnGenResQTokenChg", "link to controller for incoming res txn tokens",c_Controller_TxnGenResToken_port_events},
-		{"outTxnGenReqQTokenChg", "link to controller for outgoing req txn tokens",c_Controller_TxnGenReqToken_port_events},
-		{"inDeviceReqQTokenChg", "link to controller for incoming req cmd tokens",c_Controller_DeviceReqToken_port_events},
+		{"txngenLink", "link to txn generator / txn dispatcher", c_Controller_TxnGenReq_port_events},
+		{"memLink", "link to memory", c_Controller_DeviceRes_port_events},
 		{NULL, NULL, NULL}
 };
 
@@ -370,8 +348,7 @@ static const char* c_Dimm_cmdReq_port_events[] = { "c_CmdReqEvent", NULL };
 static const char* c_Dimm_cmdRes_port_events[] = { "c_CmdResEvent", NULL };
 
 static const ElementInfoPort c_Dimm_ports[] = {
-		{"inCtrlReqPtr", "link to c_Dimm for incoming req cmds", c_Dimm_cmdReq_port_events},
-		{"outCtrlResPtr", "link to c_Dimm for outgoing res cmds", c_Dimm_cmdRes_port_events},
+		{"ctrlLink", "link to controller", c_Dimm_cmdReq_port_events},
 		{NULL, NULL, NULL}
 };
 

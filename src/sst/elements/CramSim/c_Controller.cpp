@@ -145,34 +145,12 @@ c_Controller::c_Controller() :
 // configure links
 void c_Controller::configure_link() {
 
-    // TxnUnit <--> Controller Links
-    // TxnGen -> Controller (Res) (Token)
-    m_inTxnGenResQTokenChgLink = configureLink("inTxnGenResQTokenChg",
-                                               new Event::Handler<c_Controller>(this,
-                                                                                &c_Controller::handleInTxnGenResQTokenChgEvent));
-    // TxnGen <- Controller (Req) (Token)
-    m_outTxnGenReqQTokenChgLink = configureLink("outTxnGenReqQTokenChg",
-                                                new Event::Handler<c_Controller>(this,
-                                                                                 &c_Controller::handleOutTxnGenReqQTokenChgEvent));
-    // TxnGen -> Controller (Req) (Txn)
-    m_inTxnGenReqPtrLink = configureLink("txngenLink",
+    // TxnGen <-> Controller (Txn)
+    m_txngenLink = configureLink("txngenLink",
                                          new Event::Handler<c_Controller>(this,
                                                                           &c_Controller::handleIncomingTransaction));
-    // TxnUnit <- Controller (Res) (Txn)
-    m_outTxnGenResPtrLink = configureLink("outTxnGenResPtr",
-                                          new Event::Handler<c_Controller>(this,
-                                                                           &c_Controller::handleOutTxnGenResPtrEvent));
-    // DeviceDriver <-> Bank Links
-    // Controller <- Device (Req) (Token)
-    m_inDeviceReqQTokenChgLink = configureLink("inDeviceReqQTokenChg",
-                                               new Event::Handler<c_Controller>(this,
-                                                                                &c_Controller::handleInDeviceReqQTokenChgEvent));
-    // Controller -> Device (Req) (Cmd)
-    m_outDeviceReqPtrLink = configureLink("outDeviceReqPtr",
-                                        new Event::Handler<c_Controller>(this,
-                                                                         &c_Controller::handleOutDeviceReqPtrEvent));
-    // Controller <- Device (Res) (Cmd)
-    m_inDeviceResPtrLink = configureLink("inDeviceResPtr",
+    // Controller <-> Device (Cmd)
+    m_memLink = configureLink("memLink",
                                        new Event::Handler<c_Controller>(this,
                                                                         &c_Controller::handleInDeviceResPtrEvent));
 }
@@ -249,11 +227,6 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
     // 6. run device driver
     m_deviceDriver->run();
 
-    // 7. send token to the transaction generator
-    m_thisCycleTxnQTknChg = m_thisCycleTxnQTknChg-m_ReqQ.size();
-    if (m_outTxnGenReqQTokenChgLink && m_thisCycleTxnQTknChg > 0) {
-        sendTokenChg();
-    }
 
     return false;
 }
@@ -263,20 +236,10 @@ void c_Controller::sendCommand(c_BankCommand* cmd)
 {
      c_CmdReqEvent *l_cmdReqEventPtr = new c_CmdReqEvent();
      l_cmdReqEventPtr->m_payload = cmd;
-     m_outDeviceReqPtrLink->send(l_cmdReqEventPtr);
+    //m_outDeviceReqPtrLink->send(l_cmdReqEventPtr);
+    m_memLink->send(l_cmdReqEventPtr);
 }
 
-
-void c_Controller::sendTokenChg() {
-    // only send tokens when space has opened up in queues
-    // there are no negative tokens. token subtraction must be performed
-    // in the source component immediately after sending an event
-
-    // send req q token chg
-    c_TokenChgEvent* l_txnReqQTokenChgEvent = new c_TokenChgEvent();
-    l_txnReqQTokenChgEvent->m_payload = m_thisCycleTxnQTknChg;
-    m_outTxnGenReqQTokenChgLink->send(l_txnReqQTokenChgEvent);
-}
 
 void c_Controller::sendResponse() {
 
@@ -295,17 +258,11 @@ void c_Controller::sendResponse() {
             if ((*l_it)->isResponseReady()) {
                 l_txnRes = *l_it;
                 l_it=m_ResQ.erase(l_it);
-                //break;
+
                 c_TxnResEvent* l_txnResEvPtr = new c_TxnResEvent();
                 l_txnResEvPtr->m_payload = l_txnRes;
 
-                if(m_outTxnGenResPtrLink)
-                    m_outTxnGenResPtrLink->send(l_txnResEvPtr);
-                else
-                    m_inTxnGenReqPtrLink->send(l_txnResEvPtr);
-
-                if(m_outTxnGenReqQTokenChgLink)
-                  --m_txnGenResQTokens;
+                m_txngenLink->send(l_txnResEvPtr);
             }
             else
             {

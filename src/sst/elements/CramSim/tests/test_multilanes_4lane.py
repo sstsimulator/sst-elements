@@ -79,16 +79,13 @@ for chid in range(numLanes):
 	# TXNGEN / Controller LINKS
 	# TxnGen -> Controller (Req)(Txn)
 	txnReqLink_0 = sst.Link("txnReqLink_0_"+(str(chid)))
-	txnReqLink_0.connect((comp_txnDispatcher, "lane_"+(str(chid)), g_params["clockCycle"]), (comp_controller, "inTxnGenReqPtr", g_params["clockCycle"]) )
+	txnReqLink_0.connect((comp_txnDispatcher, "lane_"+(str(chid)), g_params["clockCycle"]), (comp_controller, "txngenLink", g_params["clockCycle"]) )
 
 
 	# Controller -> Dimm (Req)
 	cmdReqLink_1 = sst.Link("cmdReqLink_1_"+(str(chid)))
-	cmdReqLink_1.connect( (comp_controller, "outDeviceReqPtr", g_params["clockCycle"]), (comp_dimm, "inCtrlReqPtr", g_params["clockCycle"]) )
+	cmdReqLink_1.connect( (comp_controller, "memLink", g_params["clockCycle"]), (comp_dimm, "ctrlLink", g_params["clockCycle"]) )
 
-	# Controller <- Dimm (Res) (Cmd)
-	cmdResLink_1 = sst.Link("cmdResLink_1_"+(str(chid)))
-	cmdResLink_1.connect( (comp_controller, "inDeviceResPtr", g_params["clockCycle"]), (comp_dimm, "outCtrlResPtr", g_params["clockCycle"]) )
 	
 
 	# enable all statistics

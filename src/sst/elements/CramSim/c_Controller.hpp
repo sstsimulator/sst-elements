@@ -128,16 +128,10 @@ namespace SST {
 		    // clock frequency
 			std::string k_controllerClockFreqStr;
 
-            // Transaction Generator <-> DeviceController Links
-
-            SST::Link *m_inTxnGenReqPtrLink;
-            SST::Link *m_outTxnGenResPtrLink;
-            SST::Link *m_outDeviceReqPtrLink;
-            SST::Link *m_inDeviceResPtrLink;
-
-            SST::Link *m_inDeviceReqQTokenChgLink;
-            SST::Link *m_inTxnGenResQTokenChgLink;
-            SST::Link *m_outTxnGenReqQTokenChgLink;
+            // Transaction Generator <-> Controller Links
+            SST::Link *m_txngenLink;
+            // Controller <-> Memory device Links
+            SST::Link *m_memLink;
         };
     }
 }

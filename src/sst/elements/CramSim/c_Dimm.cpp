@@ -53,23 +53,16 @@ using namespace SST::n_Bank;
 c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		Component(x_id) {
 
-	// tell the simulator not to end without us <-- why?
-	//registerAsPrimaryComponent();
-	//primaryComponentDoNotEndSim();
 
-	// configure links
+	m_simCycle=0;
 
-	// DIMM <-> CmdUnit Links
+	// / configure links
+	// DIMM <-> Controller Links
 	//// DIMM <-> CmdUnit (Req) (Cmd)
-	m_inCmdUnitReqPtrLink = configureLink("inCtrlReqPtr",
+	m_ctrlLink = configureLink("ctrlLink",
 			new Event::Handler<c_Dimm>(this,
 					&c_Dimm::handleInCmdUnitReqPtrEvent));
-	//// DIMM <-> CmdUnit (Res) (Cmd)
-	m_outCmdUnitResPtrLink = configureLink("outCtrlResPtr",
-			new Event::Handler<c_Dimm>(this,
-					&c_Dimm::handleOutCmdUnitResPtrEvent));
 
-        m_simCycle=0;
 	// read params here
 	bool l_found = false;
 
@@ -271,12 +264,8 @@ void c_Dimm::sendResponse() {
 	  m_cmdResQ.erase(
 			  std::remove(m_cmdResQ.begin(), m_cmdResQ.end(),
 				      m_cmdResQ.front()), m_cmdResQ.end());
-	  m_outCmdUnitResPtrLink->send(l_cmdResEventPtr);
+	//  m_outCmdUnitResPtrLink->send(l_cmdResEventPtr);
+		m_ctrlLink->send(l_cmdResEventPtr);
 	}
 }
 
-void c_Dimm::handleOutCmdUnitResPtrEvent(SST::Event *ev) {
-	// nothing to do here
-	std::cout << __PRETTY_FUNCTION__ << " ERROR: Should not be here"
-			<< std::endl;
-}
