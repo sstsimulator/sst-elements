@@ -55,7 +55,7 @@ comp_txnDispatcher.addParams({
 	})
 
 txnGenLink = sst.Link("txnGenLink")
-txnGenLink.connect((comp_txnGen, "lowLink", g_params["clockCycle"]),(comp_txnDispatcher,"txnGen",g_params["clockCycle"]))
+txnGenLink.connect((comp_txnGen, "memLink", g_params["clockCycle"]),(comp_txnDispatcher,"txnGen",g_params["clockCycle"]))
 
 
 # Configure controller and device

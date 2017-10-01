@@ -23,333 +23,154 @@
 
 #include <sst/core/stringize.h>
 
-
 //local includes
-#include "c_TracefileReader.hpp"
-#include "c_TxnReqEvent.hpp"
-#include "c_TxnResEvent.hpp"
-#include "c_TokenChgEvent.hpp"
+//#include "c_TxnReqEvent.hpp"
+//#include "c_TxnResEvent.hpp"
+#include "c_TraceFileReader.hpp"
 
+//using namespace std;
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace n_Bank;
 
-c_TracefileReader::c_TracefileReader(ComponentId_t x_id, Params& x_params) :
-	Component(x_id) {
+c_TraceFileReader::c_TraceFileReader(SST::ComponentId_t x_id, SST::Params& x_params):c_TxnGenBase(x_id,x_params)
+{
+    // trace file param
+    bool l_found=false;
 
-	/*---- LOAD PARAMS ----*/
+    // get trace file name
+    m_traceFileName = x_params.find<std::string>("traceFile", "nil", l_found);
+    if (!l_found)
+    {
+        std::cout << "TraceFileReader: traceFile name is missing... exiting"<<
+        std::endl;
+        exit(-1);
+    }
+    else
+    {
+        std::cout<< "TraceFileReader: tracefile name is" <<m_traceFileName<<std::endl;
+    }
+    m_traceFileStream = new std::ifstream(m_traceFileName, std::ifstream::in);
+    if(!(*m_traceFileStream))
+    {
+        std::cerr << "Unable to open trace file " << m_traceFileName << " Aborting!" <<
+        std::endl;
+        exit(-1);
+    }
 
-	//used for reading params
-	bool l_found = false;
+    // get trace file type
+    std::string l_traceFileType= x_params.find<std::string>("traceFileType", "DEFAULT", l_found);
+    if (!l_found)
+    {
+        std::cout << "TraceFileReader: traceFile type is missing... default (DRAMSim2 type)"<<
+        std::endl;
+    }
+    if(l_traceFileType=="DEFAULT" || l_traceFileType=="DRAMSIM2")
+    {
+        m_traceType=e_TracefileType::DEFAULT;
+    }
+    else if(l_traceFileType=="USIMM")
+    {
+        m_traceType=e_TracefileType ::USIMM;
+    }
+    else
+    {
+        std::cout << "TraceFileReader: trace file type error!!"<< std::endl;
+        exit(-1);
+    }
 
-	// internal params
-	m_seqNum = 0;
-	m_reqReadCount = 0;
-	m_reqWriteCount = 0;
-	m_resReadCount = 0;
-	m_resWriteCount = 0;
-
-	//internal queues' sizes
-	k_txnGenReqQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenReqQEntries", 100,
-			l_found);
-	if (!l_found) {
-		std::cout
-				<< "TxnGen:: numTxnGenReqQEntries value is missing... exiting"
-				<< std::endl;
-		exit(-1);
-	}
-
-	k_txnGenResQEntries = (uint32_t)x_params.find<uint32_t>("numTxnGenResQEntries", 100,
-			l_found);
-	if (!l_found) {
-		std::cout
-				<< "TxnGen:: numTxnGenResQEntries value is missing... exiting"
-				<< std::endl;
-		exit(-1);
-	}
-
-	//transaction unit queue entries
-	k_CtrlReqQEntries = (uint32_t)x_params.find<uint32_t>("numCtrlReqQEntries", 100,
-			l_found);
-	if (!l_found) {
-		std::cout << "TxnGen:: numCtrlReqQEntries value is missing... exiting"
-				<< std::endl;
-		exit(-1);
-	}
-	m_CtrlReqQTokens = k_CtrlReqQEntries;
-
-	// trace file param
-	m_traceFileName = x_params.find<std::string>("traceFile", "nil", l_found);
-	if (!l_found) {
-	  std::cout << "TxnGen:: traceFile name is missing... exiting" << std::endl;
-	  exit(-1);
-	}
-	m_traceFileStream = new std::ifstream(m_traceFileName, std::ifstream::in);
-	if(!(*m_traceFileStream)) {
-	  std::cerr << "Unable to open trace file " << m_traceFileName << " Aborting!" << std::endl;
-	  exit(-1);
-	}
-
-
-
-	// tell the simulator not to end without us
-	registerAsPrimaryComponent();
-	primaryComponentDoNotEndSim();
-
-	/*---- CONFIGURE LINKS ----*/
-
-	// request-related links
-	//// send to txn unit
-	m_outTxnGenReqPtrLink = configureLink(
-			"outTxnGenReqPtr",
-			new Event::Handler<c_TracefileReader>(this,
-					&c_TracefileReader::handleOutTxnGenReqPtrEvent));
-	//// accept token chg from txn unit
-	m_inCtrlReqQTokenChgLink = configureLink(
-			"inCtrlReqQTokenChg",
-			new Event::Handler<c_TracefileReader>(this,
-					&c_TracefileReader::handleInCtrlReqQTokenChgEvent));
-
-	// response-related links
-	//// accept from txn unit
-	m_inCtrlResPtrLink = configureLink(
-			"inCtrlResPtr",
-			new Event::Handler<c_TracefileReader>(this,
-					&c_TracefileReader::handleInCtrlResPtrEvent));
-	//// send token chg to txn unit
-	m_outTxnGenResQTokenChgLink = configureLink(
-			"outTxnGenResQTokenChg",
-			new Event::Handler<c_TracefileReader>(this,
-					&c_TracefileReader::handleOutTxnGenResQTokenChgEvent));
-
-	// get configured clock frequency
-	std::string l_controllerClockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
-	
-	//set our clock
-	registerClock(l_controllerClockFreqStr,
-			new Clock::Handler<c_TracefileReader>(this, &c_TracefileReader::clockTic));
-}
-
-c_TracefileReader::~c_TracefileReader() {
-  delete m_traceFileStream;
-}
-
-c_TracefileReader::c_TracefileReader() :
-	Component(-1) {
-	// for serialization only
-}
-
-bool c_TracefileReader::clockTic(Cycle_t) {
-	std::cout << std::endl << std::endl << "TxnGen::clock tic" << std::endl;
-
-
-		m_thisCycleResQTknChg = 0;
-
-		// store the current number of entries in the queue, later compute the change
-		m_thisCycleResQTknChg = m_txnResQ.size();
-
-		createTxn();
-		sendRequest();
-		readResponse();
-
-		m_thisCycleResQTknChg -= m_txnResQ.size();
-		sendTokenChg();
-
-	return false;
+    // tell the simulator not to end without us
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
 
 }
 
-c_Transaction* c_TracefileReader::getNextTransaction(std::string x_txnType, ulong x_addr, unsigned x_dataWidth) {
-      c_Transaction* l_txn = new c_Transaction(m_seqNum, m_stringToTxnTypeMap.at(x_txnType), x_addr, x_dataWidth);
-      m_seqNum++;
-      return l_txn;
-}
 
-void c_TracefileReader::createTxn() {
-  // check if txn can fit inside Req q
-	if (m_txnReqQ.size() < k_txnGenReqQEntries) {
-    std::string l_line;
-    if (std::getline(*m_traceFileStream, l_line)) {
-      Tokenizer<> l_tok(l_line);
-      unsigned l_numTokens = std::distance(l_tok.begin(), l_tok.end());
-      assert((3==l_numTokens) || (4==l_numTokens));
-      unsigned l_tokNum = 0;
-      unsigned l_txnInterval = 0;
-      std::string l_txnType;
-      ulong    l_txnAddress = 0;
-      unsigned l_txnDataWidth = 0;
+void c_TraceFileReader::createTxn()
+{
+// check if txn can fit inside Req q
+    while(m_txnReqQ.size()<k_numTxnPerCycle)
+    {
+        std::string l_line;
+        if (std::getline(*m_traceFileStream, l_line)) {
+            char_delimiter sep(" ");
+            Tokenizer<> l_tok(l_line, sep);
+            unsigned l_numTokens = std::distance(l_tok.begin(), l_tok.end());
+            unsigned l_tokNum = 0;
+            unsigned l_txnInterval = 0;
+            e_TransactionType l_txnType;
+            ulong l_txnAddress = 0;
+            unsigned l_txnDataWidth = 0;
 
-      for (Tokenizer<>::iterator l_iter = l_tok.begin();
-        l_iter != l_tok.end(); ++l_iter){
-            switch (l_tokNum) {
-              case 0:
-                l_txnInterval = std::atoi((*l_iter).c_str());
-                break;
-              case 1:
-                l_txnType = (*l_iter);
-                break;
-              case 2:
-                l_txnAddress = (ulong)strtoul((*l_iter).c_str(), NULL, 0);
-                break;
-              case 3:
-                l_txnDataWidth = std::atoi((*l_iter).c_str());
-                break;
-              default:
-                std::cout << "TxnGen: Should not be in this stage of switch statment"
-                  << std::endl;
-                exit(-1);
-                break;
+            for (Tokenizer<>::iterator l_iter =
+                    l_tok.begin(); l_iter != l_tok.end(); ++l_iter) {
+
+                //Trace file type is default (DRAMSim2)
+                if(m_traceType==e_TracefileType::DEFAULT) {
+                    switch (l_tokNum) {
+                        case 0:
+                            l_txnAddress = (ulong) strtoul((*l_iter).c_str(), NULL,
+                                                           0);
+                            break;
+                        case 1:
+                            if ((*l_iter).find("WR") != std::string::npos)
+                                l_txnType = e_TransactionType::WRITE;
+                            else
+                                l_txnType = e_TransactionType::READ;
+                            break;
+                        case 2:
+                            l_txnInterval = std::atoi((*l_iter).c_str());
+                            break;
+                        default:
+                            std::cout
+                                    << "TraceFileReader Should not be in this stage of switch statement"
+                                    << std::endl;
+                            exit(-1);
+                            break;
+                    }
+                }//Trace file type is USIMM
+                else if(m_traceType==e_TracefileType::USIMM) {
+                    switch (l_tokNum) {
+                        case 0:
+                            l_txnInterval = m_simCycle + std::atoi((*l_iter).c_str());
+
+                            break;
+                        case 1:
+                            if ((*l_iter).find("W") != std::string::npos)
+                                l_txnType = e_TransactionType::WRITE;
+                            else
+                                l_txnType = e_TransactionType::READ;
+                            break;
+                        case 2:
+                            l_txnAddress = (ulong)strtoul((*l_iter).c_str(), NULL, 0);
+                            break;
+                        case 3:
+                            break;
+                        default:
+                            std::cout
+                                    << "TraceFileReader Should not be in this stage of switch statement"
+                                    << std::endl;
+                            exit(-1);
+                    }
+                }
+                else
+                {
+                    std::cout<< "TraceFieReader: trace file type error!!"<<std::endl;
+                    exit(-1);
+                }
+                
+                ++l_tokNum;
             }
-            ++l_tokNum;
+
+            c_Transaction* l_txn = new c_Transaction(m_seqNum, l_txnType, l_txnAddress, 1);
+            std::pair<c_Transaction *, unsigned> l_entry = std::make_pair(l_txn, l_txnInterval);
+            m_txnReqQ.push_back(l_entry);
+            m_seqNum++;
+        } else {
+            
+            primaryComponentOKToEndSim();
+            std::cout << "TraceFileReader: Ran out of txn's to read" << std::endl;
+
+            break;
         }
-        std::transform(l_txnType.begin(), l_txnType.end(),
-          l_txnType.begin(), ::toupper);
-
-        c_Transaction* l_txn = getNextTransaction(l_txnType, l_txnAddress, l_txnDataWidth);
-				std::pair<c_Transaction*, unsigned> l_entry = std::make_pair(l_txn, l_txnInterval);
-        m_txnReqQ.push(l_entry);
-
-    		std::cout << std::endl << std::endl
-    				<< "TxnGen::createTxn() created txn seqNum = " << m_seqNum
-    				<< " addr=" << l_txnAddress << std::endl;
-      } else {
-        std::cout << "TxnGen:: Ran out of txn's to read" << std::endl;
-      }
-	} else {
-		std::cout << std::endl << std::endl
-				<< "TxnGen::createTxn() Did not create txn seqNum = "
-				<< m_seqNum << " txnReqQ is full" << std::endl;
-	}
+    }
 }
-
-
-void c_TracefileReader::handleInCtrlReqQTokenChgEvent(SST::Event *ev) {
-	c_TokenChgEvent* l_CtrlReqQTknChgEventPtr =
-			dynamic_cast<c_TokenChgEvent*> (ev);
-
-	if (l_CtrlReqQTknChgEventPtr) {
-		std::cout << "TxnGen::handleInCtrlReqQTokenChgEvent(): @"
-				<< std::dec
-				<< Simulation::getSimulation()->getCurrentSimCycle() << " "
-				<< __PRETTY_FUNCTION__ << std::endl;
-
-		m_CtrlReqQTokens += l_CtrlReqQTknChgEventPtr->m_payload;
-
-		//FIXME: Critical: This pointer is left dangling
-		delete l_CtrlReqQTknChgEventPtr;
-
-		assert(m_CtrlReqQTokens >= 0);
-		assert(m_CtrlReqQTokens <= k_CtrlReqQEntries);
-
-
-	} else {
-		std::cout << std::endl << std::endl << "TxnGen:: "
-				<< __PRETTY_FUNCTION__ << " ERROR:: Bad event type!"
-				<< std::endl;
-	}
-}
-
-void c_TracefileReader::handleInCtrlResPtrEvent(SST::Event* ev) {
-	// make sure the txn res q has at least one empty entry
-	// to accept a new txn ptr
-	assert(1 <= (k_txnGenResQEntries - m_txnResQ.size()));
-
-	c_TxnResEvent* l_txnResEventPtr = dynamic_cast<c_TxnResEvent*> (ev);
-	if (l_txnResEventPtr) {
-		std::cout << "TxnGen::handleInCtrlResPtrEvent(): @" << std::dec
-				<< Simulation::getSimulation()->getCurrentSimCycle() << " "
-				<< __PRETTY_FUNCTION__ << " Txn received: "<< std::endl;
-		l_txnResEventPtr->m_payload->print();
-		std::cout << std::endl;
-
-		if (l_txnResEventPtr->m_payload->getTransactionMnemonic()
-				== e_TransactionType::READ)
-			m_resReadCount++;
-		else
-			m_resWriteCount++;
-
-
-		m_txnResQ.push(l_txnResEventPtr->m_payload);
-
-		//FIXME: Critical: This pointer is left dangling
-		delete l_txnResEventPtr;
-	} else {
-		std::cout << std::endl << std::endl << "TxnGen:: "
-				<< __PRETTY_FUNCTION__ << " ERROR:: Bad Event Type!"
-				<< std::endl;
-	}
-}
-
-// dummy event functions
-void c_TracefileReader::handleOutTxnGenReqPtrEvent(SST::Event* ev) {
-	// nothing to do here
-	std::cout << __PRETTY_FUNCTION__ << " ERROR: Should not be here"
-			<< std::endl;
-}
-
-void c_TracefileReader::handleOutTxnGenResQTokenChgEvent(SST::Event* ev) {
-	// nothing to do here
-	std::cout << __PRETTY_FUNCTION__ << " ERROR: Should not be here"
-			<< std::endl;
-}
-
-void c_TracefileReader::sendTokenChg() {
-	// only send tokens when space has opened up in queues
-	// there are no negative tokens. token subtraction must be performed
-	// in the source component immediately after sending an event
-	if (m_thisCycleResQTknChg > 0) {
-
-		//send res q token chg
-		std::cout << "TxnGen::sendTokenChg(): sending tokens: "
-				<< m_thisCycleResQTknChg << std::endl;
-		c_TokenChgEvent* l_txnResQTokenChgEvPtr = new c_TokenChgEvent();
-		l_txnResQTokenChgEvPtr->m_payload = m_thisCycleResQTknChg;
-		m_outTxnGenResQTokenChgLink->send(l_txnResQTokenChgEvPtr);
-	}
-}
-
-void c_TracefileReader::sendRequest() {
-
-	if (m_CtrlReqQTokens > 0) {
-		if (m_txnReqQ.size() > 0) {
-
-			// confirm that interval timer has run out before contiuing
-			if (m_txnReqQ.front().second > 0) {
-				std::cout << __PRETTY_FUNCTION__ << ": Interval timer for front txn is not done"
-				<< std::endl;
-				m_txnReqQ.front().first->print();
-				std::cout << " - Interval:" << m_txnReqQ.front().second << std::endl;
-				--m_txnReqQ.front().second;
-				return;
-			}
-
-			std::cout << "TxnGen::sendRequest(): sending Txn=";
-			m_txnReqQ.front().first->print();
-			std::cout << std::endl;
-
-			if (m_txnReqQ.front().first->getTransactionMnemonic() == e_TransactionType::READ)
-				m_reqReadCount++;
-			else
-				m_reqWriteCount++;
-
-			c_TxnReqEvent* l_txnReqEvPtr = new c_TxnReqEvent();
-			l_txnReqEvPtr->m_payload = m_txnReqQ.front().first;
-			m_txnReqQ.pop();
-			m_outTxnGenReqPtrLink->send(l_txnReqEvPtr);
-			--m_CtrlReqQTokens;
-		}
-	}
-}
-
-void c_TracefileReader::readResponse() {
-	if (m_txnResQ.size() > 0) {
-		c_Transaction* l_txn = m_txnResQ.front();
-		m_txnResQ.pop();
-		std::cout << "TxnGen::readResponse() Transaction printed: Addr-"
-				<< l_txn->getAddress() << std::endl;
-	} else {
-		std::cout << "TxnGen::readResponse(): No transactions in res q to read"
-				<< std::endl;
-	}
-}
-
-// Element Libarary / Serialization stuff

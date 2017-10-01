@@ -58,7 +58,7 @@ comp_dimm.addParams(g_params)
 # TXNGEN / Controller LINKS
 # TxnGen -> Controller (Req)(Txn)
 txnReqLink_0 = sst.Link("txnReqLink_0_"+"0")
-txnReqLink_0.connect((comp_txnGen, "lowLink", g_params["clockCycle"]), (comp_controller, "inTxnGenReqPtr", g_params["clockCycle"]) )
+txnReqLink_0.connect((comp_txnGen, "memLink", g_params["clockCycle"]), (comp_controller, "inTxnGenReqPtr", g_params["clockCycle"]) )
 
 
 # Controller -> Dimm (Req)
