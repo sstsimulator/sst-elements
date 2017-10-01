@@ -98,7 +98,7 @@ void c_CmdScheduler::run(){
                         l_cmdQueue.pop_front();
 
                         #ifdef __SST_DEBUG_OUTPUT__
-                        l_cmdPtr->print(output, "[c_CmdScheduler]");
+                        l_cmdPtr->print(output, "[c_CmdScheduler]",m_owner->getSimCycle());
                         #endif
                     }
                 }

@@ -211,7 +211,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
             l_it=m_ReqQ.erase(l_it);
 
             #ifdef __SST_DEBUG_OUTPUT__
-                newTxn->print(output,"[TxnQueue hit]");
+                newTxn->print(output,"[TxnQueue hit]",m_simCycle);
             #endif
             continue;
         }
@@ -230,7 +230,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
             l_it = m_ReqQ.erase(l_it);
 
             #ifdef __SST_DEBUG_OUTPUT__
-                newTxn->print(output,"[Controller queues new txn]");
+                newTxn->print(output,"[Controller queues new txn]",m_simCycle);
             #endif
         }
         else
@@ -326,7 +326,7 @@ void c_Controller::handleIncomingTransaction(SST::Event *ev){
         c_Transaction* newTxn=l_txnReqEventPtr->m_payload;
 
         #ifdef __SST_DEBUG_OUTPUT__
-        newTxn->print(output,"[c_Controller.handleIncommingTransaction]");
+        newTxn->print(output,"[c_Controller.handleIncommingTransaction]",m_simCycle);
         #endif
 
         m_ReqQ.push_back(newTxn);

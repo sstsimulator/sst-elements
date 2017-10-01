@@ -55,6 +55,8 @@ namespace SST{
 
              uint32_t getLaneIdx(uint64_t x_addr);
 
+             SimTime_t m_simCycle;
+
              SST::Link *m_txnGenLink;
              std::vector<SST::Link*> m_laneLinks;
 
