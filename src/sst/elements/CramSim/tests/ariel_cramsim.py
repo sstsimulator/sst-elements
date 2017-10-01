@@ -263,21 +263,17 @@ def genMemHierarchy(cores):
 
 
    link_dir_cramsim_link = sst.Link("link_dir_cramsim_link")
-   link_dir_cramsim_link.connect( (memory, "cube_link", "2ns"), (comp_memhBridge, "linkCPU", "2ns") )
+   link_dir_cramsim_link.connect( (memory, "cube_link", "2ns"), (comp_memhBridge, "cpuLink", "2ns") )
 
-   # memhBridge(=TxnGen) <- Memory Controller (Req)(Token)
-   # TxnGen -> Memory Controller (Res)(Token)
-   txnTokenLink_1 = sst.Link("txnReqLink_1")
-   txnTokenLink_1.connect( (comp_memhBridge, "lowLink", g_params["clockCycle"]), (comp_controller0, "inTxnGenReqPtr", g_params["clockCycle"]) )
+   # memhBridge(=TxnGen) <-> Memory Controller 
+   memHLink = sst.Link("memHLink_1")
+   memHLink.connect( (comp_memhBridge, "memLink", g_params["clockCycle"]), (comp_controller0, "txngenLink", g_params["clockCycle"]) )
 
-   # Controller -> Dimm (Req)
-   cmdReqLink_1 = sst.Link("cmdReqLink_1")
-   cmdReqLink_1.connect( (comp_controller0, "outDeviceReqPtr", g_params["clockCycle"]), (comp_dimm0, "inCtrlReqPtr", g_params["clockCycle"]) )
+   # Controller <-> Dimm
+   cmdLink = sst.Link("cmdLink_1")
+   cmdLink.connect( (comp_controller0, "memLink", g_params["clockCycle"]), (comp_dimm0, "ctrlLink", g_params["clockCycle"]) )
 
-   # Controller <- Dimm (Res) (Cmd)
-   cmdResLink_1 = sst.Link("cmdResLink_1")
-   cmdResLink_1.connect( (comp_controller0, "inDeviceResPtr", g_params["clockCycle"]), (comp_dimm0, "outCtrlResPtr", g_params["clockCycle"]) )
-   
+
    comp_controller0.enableAllStatistics()
    comp_memhBridge.enableAllStatistics()
    comp_dimm0.enableAllStatistics()

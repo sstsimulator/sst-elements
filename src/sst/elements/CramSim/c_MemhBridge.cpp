@@ -72,7 +72,7 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 	/*---- CONFIGURE LINKS ----*/
 
 	// CPU links
-	m_linkCPU = configureLink( "linkCPU");
+	m_linkCPU = configureLink( "cpuLink");
 
 }
 
