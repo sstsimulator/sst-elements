@@ -60,7 +60,7 @@ class c_Transaction : public SST::Core::Serialization::serializable
 {
 
 private:
-  ulong m_seqNum;
+  uint64_t m_seqNum;
   e_TransactionType m_txnMnemonic;
   ulong m_addr;
   //std::map<e_TransactionType,std::string> m_txnToString;

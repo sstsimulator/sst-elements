@@ -96,16 +96,12 @@ void c_BankStateWrite::handleCommand(c_BankInfo* x_bank,
 			break;
 		}
 
-//		m_receivedCommandPtr->print();
-//		std::cout << std::endl;
 
 	}
 }
 
 void c_BankStateWrite::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 
-//	std::cout << "m_timer = " << m_timer << ", m_timerExit = " << m_timerExit
-//			<< std::endl;
 
 	SimTime_t l_time = x_cycle;
 
@@ -196,14 +192,6 @@ void c_BankStateWrite::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_prevCommandPtr = x_cmdPtr;
 	if (nullptr != m_prevCommandPtr) {
 		m_prevCommandPtr->setResponseReady();
-		//const unsigned l_cmdsLeft =
-		//		m_prevCommandPtr->getTransaction()->getWaitingCommands() - 1;
-		//m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
-		//if (l_cmdsLeft == 0)
-		//	m_prevCommandPtr->getTransaction()->setResponseReady();
-
-		//m_prevCommandPtr->print();
-		//std::cout << std::endl;
 
 		switch (m_prevCommandPtr->getCommandMnemonic()) {
 		case e_BankCommandType::WRITE:
@@ -227,14 +215,6 @@ void c_BankStateWrite::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 
 	SimTime_t l_time = x_cycle;
 
-// FIXME: add condition for modeling closed row or open row
-//
-//	m_timerExit = std::max(
-//			std::max(x_bank->getNextCommandCycle(e_BankCommandType::WRITEA),
-//					x_bank->getNextCommandCycle(e_BankCommandType::WRITEA)),
-//			l_time + m_bankParams->at("nCWL")
-//					+ m_bankParams->at("nBL") + m_bankParams->at("nWR") - 2)
-//			- l_time;
 
 	m_allowedCommands.clear();
 	m_allowedCommands.push_back(e_BankCommandType::READ);

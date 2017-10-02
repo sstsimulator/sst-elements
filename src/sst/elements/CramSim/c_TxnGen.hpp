@@ -37,53 +37,32 @@ namespace SST {
 
             void setup() {
             }
-            void finish() {
-                printf("Total Read-Txns Requests sent: %lu\n", m_resReadCount);
-                printf("Total Write-Txns Requests sent: %lu\n", m_resWriteCount);
-                printf("Total Txns Sents: %lu\n", m_resReadCount + m_resWriteCount);
-
-                printf("Total Read-Txns Responses received: %lu\n", m_resReadCount);
-                printf("Total Write-Txns Responses received: %lu\n", m_resWriteCount);
-                printf("Total Txns Received: %lu\n", m_resReadCount + m_resWriteCount);
-                std::cout << "Cycles Per Transaction (CPT) = "
-                          << std::dec << static_cast<double>(m_simCycle)
-                                         / static_cast<double>(m_resReadCount + m_resWriteCount) << std::endl;
-                printf("Component Finished.\n");
-
-                double l_txnsPerCycle=  static_cast<double>(m_resReadCount + m_resWriteCount) /static_cast<double>(m_simCycle);
-
-                s_txnsPerCycle->addData(l_txnsPerCycle);
-            }
+            void finish();
 
         protected:
             c_TxnGenBase(); //for serialization only
             virtual void createTxn()=0;
-
             virtual void handleResEvent(SST::Event *ev); //handleEvent
-
             virtual bool sendRequest(); //send out txn req ptr to Transaction unit
             virtual void readResponse(); //read from res q to output
-
             virtual bool clockTic(SST::Cycle_t); //called every cycle
 
+            //Simulation cycles
             SimTime_t m_simCycle;
 
+            //internal microarchitecture
             std::deque<std::pair<c_Transaction*, uint64_t>> m_txnReqQ;
             std::deque<c_Transaction*> m_txnResQ;
             std::map<uint64_t, uint64_t> m_outstandingReqs; //(txn_id, birth time)
             uint32_t m_numOutstandingReqs;
             uint64_t m_numTxns;
-            //Transaction info
             uint32_t m_seqNum;
-
-            uint32_t m_mode;
             uint32_t m_sizeOffset;
 
-
             //links
-            SST::Link* m_lowLink; //incoming txn unit res ptr
+            SST::Link* m_memLink;
 
-            //params for internal microarcitecture
+            //input parameters
             uint32_t k_numTxnPerCycle;
             uint32_t k_maxOutstandingReqs;
             uint64_t k_maxTxns;
@@ -91,7 +70,6 @@ namespace SST {
             // used to keep track of the response types being received
             uint64_t m_resReadCount;
             uint64_t m_resWriteCount;
-
             uint64_t m_reqReadCount;
             uint64_t m_reqWriteCount;
 

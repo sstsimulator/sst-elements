@@ -87,8 +87,8 @@ c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
     // request-related links
     //// send to txn unit
     //// send token chg to txn unit
-    m_lowLink = configureLink(
-            "lowLink",
+    m_memLink = configureLink(
+            "memLink",
             new Event::Handler<c_TxnGenBase>(this, &c_TxnGenBase::handleResEvent));
 
     // get configured clock frequency
@@ -119,6 +119,26 @@ c_TxnGenBase::c_TxnGenBase() :
     // for serialization only
 }
 
+void c_TxnGenBase::finish()
+{
+    printf("\n======= Simulation Report ============================\n");
+    printf("Total Read-Txns Requests sent: %llu\n", m_resReadCount);
+    printf("Total Write-Txns Requests sent: %llu\n", m_resWriteCount);
+    printf("Total Txns Sents: %llu\n", m_resReadCount + m_resWriteCount);
+
+    printf("Total Read-Txns Responses received: %llu\n", m_resReadCount);
+    printf("Total Write-Txns Responses received: %llu\n", m_resWriteCount);
+    printf("Total Txns Received: %llu\n", m_resReadCount + m_resWriteCount);
+    std::cout << "Cycles Per Transaction (CPT) = "
+                << std::dec << static_cast<double>(m_simCycle)
+                               / static_cast<double>(m_resReadCount + m_resWriteCount) << std::endl;
+    printf("Component Finished.\n");
+    printf("======================================================\n\n");
+
+    double l_txnsPerCycle=  static_cast<double>(m_resReadCount + m_resWriteCount) /static_cast<double>(m_simCycle);
+
+    s_txnsPerCycle->addData(l_txnsPerCycle);
+}
 
 bool c_TxnGenBase::clockTic(Cycle_t) {
     
@@ -187,7 +207,7 @@ void c_TxnGenBase::handleResEvent(SST::Event* ev) {
         s_txnsLatency->addData(l_latency);
 
 #ifdef __SST_DEBUG_OUTPUT__
-        output->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%x isRead:%d seqNum:%lld birthTime:%lld latency:%lld \n",l_currentCycle,l_txn->getAddress(),l_txn->isRead(), l_seqnum,m_outstandingReqs[l_seqnum],l_latency);
+        output->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%lx isRead:%d seqNum:%lld birthTime:%lld latency:%lld \n",l_currentCycle,l_txn->getAddress(),l_txn->isRead(), l_seqnum,m_outstandingReqs[l_seqnum],l_latency);
 #endif
 
 
@@ -234,8 +254,8 @@ bool c_TxnGenBase::sendRequest()
         l_txnReqEvPtr->m_payload = m_txnReqQ.front().first;
         m_txnReqQ.pop_front(); 
 
-        assert(m_lowLink!=NULL);
-        m_lowLink->send(l_txnReqEvPtr);
+        assert(m_memLink!=NULL);
+        m_memLink->send(l_txnReqEvPtr);
         
 
         c_Transaction *l_txn=l_txnReqEvPtr->m_payload;
@@ -316,6 +336,8 @@ c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
         k_randSeed = (SimTime_t)std::strtoul(l_randSeedStr.c_str(),NULL,0);
     }
     std::srand(k_randSeed);
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
 
 }
 

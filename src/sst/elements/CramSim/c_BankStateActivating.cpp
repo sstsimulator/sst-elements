@@ -70,8 +70,6 @@ void c_BankStateActivating::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 		--m_timer;
 
 	} else {
-		//std::cout << __PRETTY_FUNCTION__ << " timer expired" << std::endl;
-
 		auto l_p = new c_BankStateActive(m_bankParams); // create pointer to the next state
 		assert(e_BankCommandType::ACT == m_prevCommandPtr->getCommandMnemonic()); // only cmd allowed to flow through to BankStateActive is ACT
 		l_p->enter(x_bank, this, m_prevCommandPtr, x_cycle);

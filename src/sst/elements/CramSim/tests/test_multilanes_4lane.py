@@ -14,7 +14,7 @@ g_override_list = ""
 g_params = setup_config_params(g_config_file, g_overrided_list)
 
 numLanes = 4
-g_params["strAddressMapStr"] = "_rrrrrrrrrrrrrrr_BB_bb_lllllll_CCC_xx_hhhhhh_"
+g_params["strAddressMapStr"] = "_rrrrrrrrrrrrrrr_R_BB_bb_lllllllllll_CCC_xx_hhhhh_"
 laneIdxPos = "6:6"
 readWriteRatio = 0.5
 channelsPerLane = 8
@@ -55,7 +55,7 @@ comp_txnDispatcher.addParams({
 	})
 
 txnGenLink = sst.Link("txnGenLink")
-txnGenLink.connect((comp_txnGen, "lowLink", g_params["clockCycle"]),(comp_txnDispatcher,"txnGen",g_params["clockCycle"]))
+txnGenLink.connect((comp_txnGen, "memLink", g_params["clockCycle"]),(comp_txnDispatcher,"txnGen",g_params["clockCycle"]))
 
 
 # Configure controller and device
@@ -67,7 +67,7 @@ for chid in range(numLanes):
 	comp_controller.addParams({
 			"TxnScheduler" : "CramSim.c_TxnScheduler",
 			"TxnConverter" : "CramSim.c_TxnConverter",
-			"AddrHasher" : "CramSim.c_AddressHasher",
+			"AddrMapper" : "CramSim.c_AddressHasher",
 			"CmdScheduler" : "CramSim.c_CmdScheduler" ,
 			"DeviceDriver" : "CramSim.c_DeviceDriver"
 			})
@@ -79,16 +79,13 @@ for chid in range(numLanes):
 	# TXNGEN / Controller LINKS
 	# TxnGen -> Controller (Req)(Txn)
 	txnReqLink_0 = sst.Link("txnReqLink_0_"+(str(chid)))
-	txnReqLink_0.connect((comp_txnDispatcher, "lane_"+(str(chid)), g_params["clockCycle"]), (comp_controller, "inTxnGenReqPtr", g_params["clockCycle"]) )
+	txnReqLink_0.connect((comp_txnDispatcher, "lane_"+(str(chid)), g_params["clockCycle"]), (comp_controller, "txngenLink", g_params["clockCycle"]) )
 
 
 	# Controller -> Dimm (Req)
 	cmdReqLink_1 = sst.Link("cmdReqLink_1_"+(str(chid)))
-	cmdReqLink_1.connect( (comp_controller, "outDeviceReqPtr", g_params["clockCycle"]), (comp_dimm, "inCtrlReqPtr", g_params["clockCycle"]) )
+	cmdReqLink_1.connect( (comp_controller, "memLink", g_params["clockCycle"]), (comp_dimm, "ctrlLink", g_params["clockCycle"]) )
 
-	# Controller <- Dimm (Res) (Cmd)
-	cmdResLink_1 = sst.Link("cmdResLink_1_"+(str(chid)))
-	cmdResLink_1.connect( (comp_controller, "inDeviceResPtr", g_params["clockCycle"]), (comp_dimm, "outCtrlResPtr", g_params["clockCycle"]) )
 	
 
 	# enable all statistics

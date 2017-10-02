@@ -42,7 +42,6 @@ class c_BankStateRead;
 class c_BankStateReadA;
 class c_BankStateWrite;
 class c_BankStateWriteA;
-//class c_BankStatePrecharge;
 
 class c_BankStateActive: public c_BankState {
 

@@ -104,11 +104,6 @@ void c_BankStateWriteA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_prevCommandPtr = x_cmdPtr;
 	if (nullptr != m_prevCommandPtr) {
 		m_prevCommandPtr->setResponseReady();
-		//const unsigned l_cmdsLeft =
-		//		m_prevCommandPtr->getTransaction()->getWaitingCommands() - 1;
-		//m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
-		//if (l_cmdsLeft == 0)
-		//	m_prevCommandPtr->getTransaction()->setResponseReady();
 
 		switch (m_prevCommandPtr->getCommandMnemonic()) {
 		case e_BankCommandType::WRITEA:
@@ -125,11 +120,6 @@ void c_BankStateWriteA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 
 	SimTime_t l_time = x_cycle;
 
-//	m_timerExit = std::max(
-//			std::max(x_bank->getNextCommandCycle(e_BankCommandType::WRITEA),
-//					x_bank->getNextCommandCycle(e_BankCommandType::WRITEA)),
-//			l_time + m_bankParams->at("nCWL") + m_bankParams->at("nBL")
-//					+ m_bankParams->at("nWR") - 2) - l_time;
 
 	x_bank->setLastCommandCycle(e_BankCommandType::WRITEA,l_time);
 

@@ -13,13 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/*
- * c_TxnConverter.cpp
- *
- *  Created on: May 18, 2016
- *      Author: tkarkha
- */
-
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -87,13 +80,35 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) : S
 		exit(-1);
 	}
 
-	k_bankPolicy = (uint32_t) x_params.find<uint32_t>("bankPolicy", 0, l_found);
+	std::string l_bankPolicy = (std::string) x_params.find<std::string>("bankPolicy", "CLOSE", l_found);
 	if (!l_found) {
 		std::cout << "bankPolicy value is missing... exiting" << std::endl;
 		exit(-1);
 	}
+	if(l_bankPolicy=="CLOSE")
+		k_bankPolicy=0;
+	else if(l_bankPolicy=="OPEN")
+		k_bankPolicy=1;
+    else if(l_bankPolicy=="POPEN")
+    {
+        k_bankPolicy=2;
+		k_bankCloseTime =(SimTime_t) x_params.find<SimTime_t>("bankCloseTime",1000, l_found);
+		if(!l_found){
+			std::cout <<"bank policy is set to pseudo open policy, but bankCloseTime value is missing... exiting" <<std::endl;
+			exit(-1);
+		}
+		if(k_bankPolicy==2) {
+			for (auto &it:m_bankInfo)
+				it->setAutoPreTimer(k_bankCloseTime);
+		}
+    }
+	else
+	{
+		std::cout << "TxnConverter: bank policy error!!\n";
+		exit(-1);
+	}
 
-	if ((k_bankPolicy == 1) && (k_useReadA || k_useWriteA)) {
+	if ((k_bankPolicy == 1 || k_bankPolicy==2 ) && (k_useReadA || k_useWriteA)) {
 		std::cout << "Open bank/row and READA or WRITEA makes no sense" << std::endl;
 		exit(-1);
 	}
@@ -103,9 +118,6 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) : S
 	s_readTxnsRecvd = registerStatistic<uint64_t>("readTxnsRecvd");
 	s_writeTxnsRecvd = registerStatistic<uint64_t>("writeTxnsRecvd");
 	s_totalTxnsRecvd = registerStatistic<uint64_t>("totalTxnsRecvd");
-	s_reqQueueSize = registerStatistic<uint64_t>("reqQueueSize");
-	s_resQueueSize = registerStatistic<uint64_t>("resQueueSize");
-
 
 }
 
@@ -146,6 +158,12 @@ void c_TxnConverter::run(){
 			l_it++;
 	}
 
+	//For psuedo open page policy, update bankinfo
+	if(k_bankPolicy==2) {
+		for (auto &it:m_bankInfo)
+			if(it->isRowOpen())
+				it->clockTic(m_owner->getSimCycle());
+	}
 	assert(m_inputQ.empty());
 }
 
@@ -203,8 +221,8 @@ void c_TxnConverter::getPreCommands(
 	{
 		x_commandVec.push_back(
 			new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::ACT, x_nAddr, l_hashedAddr));
-	}//open policy
-	else if(k_bankPolicy==1)
+	}//open policy or pseudo open
+	else if(k_bankPolicy==1 || k_bankPolicy==2)
 	{
 		if(l_bankinfo->isRowOpen())
 		{
@@ -215,14 +233,24 @@ void c_TxnConverter::getPreCommands(
 				x_commandVec.push_back(new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::PRE, x_nAddr, l_hashedAddr));
 				//open row
 				x_commandVec.push_back(new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::ACT, x_nAddr, l_hashedAddr));
+
+				if(k_bankPolicy==2)
+				{
+					l_bankinfo->setAutoPreTimer(k_bankCloseTime);
+				}
 			}
 		} else
 		{
 			//open row
 			x_commandVec.push_back(
 					new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::ACT, x_nAddr, l_hashedAddr));
+			if(k_bankPolicy==2)
+				{
+					l_bankinfo->setAutoPreTimer(k_bankCloseTime);
+				}
 		}
 	}
+
 }
 
 
@@ -232,6 +260,7 @@ void c_TxnConverter::getPostCommands(
 	const c_HashedAddress &l_hashedAddr = x_txn->getHashedAddress();
 	e_BankCommandType l_CmdType;
 	bool l_useAutoPRE=false;
+
 
 	if(k_bankPolicy==0) //close policy
 	{
@@ -265,7 +294,7 @@ void c_TxnConverter::getPostCommands(
 					new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::PRE,
 									  x_nAddr, l_hashedAddr));
 
-	} else if(k_bankPolicy==1){		//open row policy
+	} else if(k_bankPolicy==1 || k_bankPolicy==2){		//open policy
 
 		if (e_TransactionType::READ == x_txn->getTransactionMnemonic())
 				l_CmdType=e_BankCommandType::READ;
@@ -275,6 +304,17 @@ void c_TxnConverter::getPostCommands(
 		x_commandVec.push_back(
 				new c_BankCommand(m_cmdSeqNum++, l_CmdType, x_nAddr, l_hashedAddr));
 
+		if(k_bankPolicy==2)
+		{
+			unsigned l_bankId=x_txn->getHashedAddress().getBankId();
+			c_BankInfo* l_bankinfo=m_bankInfo.at(l_bankId);
+
+			if(l_bankinfo->getAutoPreTimer()==0)
+			{
+				x_commandVec.push_back(new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::PRE,
+								  x_nAddr, l_hashedAddr));
+			}
+		}
 	} else{
 		printf("bank policy error!!");
 		exit(1);
@@ -290,11 +330,25 @@ void c_TxnConverter::updateBankInfo(c_Transaction* x_txn)
 	if(k_bankPolicy==0)//close policy
 	{
 		m_bankInfo.at(l_bankid)->resetRowOpen();
-	} else if(k_bankPolicy==1) //open row policy
+	} else if(k_bankPolicy==1) //open policy
 	{
 		m_bankInfo.at(l_bankid)->setRowOpen();
 		m_bankInfo.at(l_bankid)->setOpenRowNum(l_row);
-	} else{
+	}
+	else if(k_bankPolicy==2) //pseudo open policy
+	{
+
+		if(m_bankInfo.at(l_bankid)->getAutoPreTimer()==0)
+		{
+			m_bankInfo.at(l_bankid)->resetRowOpen();
+		}
+		else
+		{
+			m_bankInfo.at(l_bankid)->setRowOpen();
+			m_bankInfo.at(l_bankid)->setOpenRowNum(l_row);
+		}
+	}
+	else{
 		printf("bank policy error!!");
 		exit(1);
 	}

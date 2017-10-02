@@ -49,185 +49,6 @@ unsigned c_Bank::k_banks = 0;
 c_Bank::c_Bank(SST::Params& x_params,unsigned x_bankId) {
 	// read params here
 
-/*	k_nRC = (uint32_t)x_params.find<uint32_t>("nRC", 55, l_found);
-	if (!l_found) {
-		std::cout << "nRC value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nRRD = (uint32_t)x_params.find<uint32_t>("nRRD", 4, l_found);
-	if (!l_found) {
-		std::cout << "nRRD value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nRRD_L = (uint32_t)x_params.find<uint32_t>("nRRD_L", 6, l_found);
-	if (!l_found) {
-		std::cout << "nRRD_L value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nRRD_S = (uint32_t)x_params.find<uint32_t>("nRRD_S", 4, l_found);
-	if (!l_found) {
-		std::cout << "nRRD_S value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nRCD = (uint32_t)x_params.find<uint32_t>("nRCD", 16, l_found);
-	if (!l_found) {
-		std::cout << "nRRD_L value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nCCD = (uint32_t)x_params.find<uint32_t>("nCCD", 4, l_found);
-	if (!l_found) {
-		std::cout << "nCCD value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nCCD_L = (uint32_t)x_params.find<uint32_t>("nCCD_L", 5, l_found);
-	if (!l_found) {
-		std::cout << "nCCD_L value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nCCD_L_WR = (uint32_t)x_params.find<uint32_t>("nCCD_L_WR", 1, l_found);
-	if (!l_found) {
-		std::cout << "nCCD_L_WR value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nCCD_S = (uint32_t)x_params.find<uint32_t>("nCCD_S", 4, l_found);
-	if (!l_found) {
-		std::cout << "nCCD_S value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nAL = (uint32_t)x_params.find<uint32_t>("nAL", 15, l_found);
-	if (!l_found) {
-		std::cout << "nAL value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nCL = (uint32_t)x_params.find<uint32_t>("nCL", 16, l_found);
-	if (!l_found) {
-		std::cout << "nCL value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nCWL = (uint32_t)x_params.find<uint32_t>("nCWL", 16, l_found);
-	if (!l_found) {
-		std::cout << "nCWL value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nWR = (uint32_t)x_params.find<uint32_t>("nWR", 16, l_found);
-	if (!l_found) {
-		std::cout << "nWR value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nWTR = (uint32_t)x_params.find<uint32_t>("nWTR", 3, l_found);
-	if (!l_found) {
-		std::cout << "nWTR value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nWTR_L = (uint32_t)x_params.find<uint32_t>("nWTR_L", 9, l_found);
-	if (!l_found) {
-		std::cout << "nWTR_L value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nWTR_S = (uint32_t)x_params.find<uint32_t>("nWTR_S", 3, l_found);
-	if (!l_found) {
-		std::cout << "nWTR_S value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nRTW = (uint32_t)x_params.find<uint32_t>("nRTW", 4, l_found);
-	if (!l_found) {
-		std::cout << "nRTW value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nEWTR = (uint32_t)x_params.find<uint32_t>("nEWTR", 6, l_found);
-	if (!l_found) {
-		std::cout << "nEWTR value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nERTW = (uint32_t)x_params.find<uint32_t>("nERTW", 6, l_found);
-	if (!l_found) {
-		std::cout << "nERTW value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nEWTW = (uint32_t)x_params.find<uint32_t>("nEWTW", 6, l_found);
-	if (!l_found) {
-		std::cout << "nEWTW value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nERTR = (uint32_t)x_params.find<uint32_t>("nERTR", 6, l_found);
-	if (!l_found) {
-		std::cout << "nERTR value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nRAS = (uint32_t)x_params.find<uint32_t>("nRAS", 39, l_found);
-	if (!l_found) {
-		std::cout << "nRAS value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nRTP = (uint32_t)x_params.find<uint32_t>("nRTP", 9, l_found);
-	if (!l_found) {
-		std::cout << "nRTP value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nRP = (uint32_t)x_params.find<uint32_t>("nRP", 16, l_found);
-	if (!l_found) {
-		std::cout << "nRP value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nRFC = (uint32_t)x_params.find<uint32_t>("nRFC", 420, l_found);
-	if (!l_found) {
-		std::cout << "nRFC value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nREFI = (uint32_t)x_params.find<uint32_t>("nREFI", 9360, l_found);
-	if (!l_found) {
-		std::cout << "nREFI value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nFAW = (uint32_t)x_params.find<uint32_t>("nFAW", 16, l_found);
-	if (!l_found) {
-		std::cout << "nFAW value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_nBL = (uint32_t)x_params.find<uint32_t>("nBL", 4, l_found);
-	if (!l_found) {
-		std::cout << "nBL value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_numRows = (uint32_t)x_params.find<uint32_t>("numRows", 16384, l_found);
-	if (!l_found) {
-		std::cout << "numRows value is missing ... exiting" << std::endl;
-		exit(-1);
-	}
-
-	k_numCols = (uint32_t)x_params.find<uint32_t>("numCols", 128, l_found);
-	if (!l_found) {
-		std::cout << "numCols value is missing ... exiting" << std::endl;
-		exit(-1);
-	}*/
 	bool l_found = false;
 
 	/* BUFFER ALLOCATION PARAMETERS */
@@ -301,9 +122,6 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 
 	if (nullptr == m_cmd) {
 
-//		std::cout << "Bank accepted this command ";
-//		x_bankCommandPtr->print();
-
 		m_cmd = x_bankCommandPtr;
 
                 unsigned l_row = m_cmd->getHashedAddress()->getRow();
@@ -355,14 +173,10 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 
 c_BankCommand* c_Bank::clockTic() {
 
-//	if (nullptr != m_cmd)
-//		m_cmd->print();
 
 	c_BankCommand* l_resPtr = nullptr;
 	if (m_cmd != nullptr) {
 
-//		m_cmd->print();
-//		std::cout<<std::endl;
 
 		if (m_cmd->isResponseReady()) {
 			bool l_doSendRes = false;
@@ -405,25 +219,10 @@ c_BankCommand* c_Bank::clockTic() {
 			// waiting commands and delete the command
 			if (l_doSendRes) {
 
-			        //std::cout << __PRETTY_FUNCTION__ << ": Sending cmd:"
-				//		<< std::endl;
-				//m_cmd->print();
-				//std::cout << std::endl;
 
 				l_resPtr = m_cmd;
 				m_cmd = nullptr;
 			} else {
-
-//				std::cout << __PRETTY_FUNCTION__ << ": Destroying Cmd"
-//						<< std::endl;
-//				m_cmd->print();
-//				std::cout << std::endl;
-
-			        //c_Transaction* l_txnPtr = m_cmd->getTransaction();
-				//const unsigned l_cmdsLeft = l_txnPtr->getWaitingCommands() - 1;
-				//l_txnPtr->setWaitingCommands(l_cmdsLeft);
-				//if (l_cmdsLeft == 0)
-				//	l_txnPtr->setResponseReady();
 
 				delete m_cmd;
 				m_cmd = nullptr;
@@ -431,10 +230,6 @@ c_BankCommand* c_Bank::clockTic() {
 		}
 	}
 
-//	if (nullptr != l_resPtr) {
-//		std::cout << "Returning ptr l_resPtr = ";
-//		l_resPtr->print();
-//	}
 
 	return l_resPtr;
 } // c_BankCommand* c_Bank::clockTic()

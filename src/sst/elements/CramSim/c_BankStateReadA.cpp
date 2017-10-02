@@ -64,9 +64,6 @@ c_BankStateReadA::~c_BankStateReadA() {
 
 void c_BankStateReadA::handleCommand(c_BankInfo* x_bank,
 		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
-	// std::cout << __PRETTY_FUNCTION__
-	// 		<< "ERROR: Bank commands are irrelevant in the current state ... exiting simulation"
-	// 		<< std::endl;
 }
 
 void c_BankStateReadA::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
@@ -101,12 +98,6 @@ void c_BankStateReadA::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 			if (nullptr != m_nextStatePtr)
 				m_nextStatePtr->enter(x_bank, this, nullptr, x_cycle);
 		}
-		// std::cout << __PRETTY_FUNCTION__ << " timer expired" << std::endl;
-//               if (0 < m_timerExit) --m_timerExit;
-//               else {
-//		  auto l_p = new c_BankStatePrecharge(m_bankParams);
-//		  l_p->enter(x_bank, this, m_receivedCommandPtr);
-//               }
 	}
 
 }
@@ -121,11 +112,6 @@ void c_BankStateReadA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_prevCommandPtr = x_cmdPtr;
 	if (nullptr != m_prevCommandPtr) {
 		m_prevCommandPtr->setResponseReady();
-		//const unsigned l_cmdsLeft =
-		//		m_prevCommandPtr->getTransaction()->getWaitingCommands() - 1;
-		//m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
-		//if (l_cmdsLeft == 0)
-		//	m_prevCommandPtr->getTransaction()->setResponseReady();
 
 		switch (m_prevCommandPtr->getCommandMnemonic()) {
 		case e_BankCommandType::READA:

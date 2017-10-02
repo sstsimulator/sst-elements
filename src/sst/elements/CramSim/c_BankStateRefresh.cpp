@@ -82,11 +82,6 @@ void c_BankStateRefresh::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 				e_BankCommandType::REF == m_prevCommandPtr->getCommandMnemonic());
 		// only cmd allowed to flow through to BankStateActive is ACT
 
-//		std::cout << __PRETTY_FUNCTION__ << " timer expired" << std::endl;
-//		std::cout << " for command ";
-//		m_prevCommandPtr->print();
-//		std::cout << std::endl;
-
 		m_prevCommandPtr->setResponseReady();
 
 		l_p->enter(x_bank, this, m_receivedCommandPtr,x_cycle);
@@ -96,7 +91,6 @@ void c_BankStateRefresh::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 // call this function after receiving a command
 void c_BankStateRefresh::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
-//	 std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
 
 	// Being in the refresh state does not make a REF cmd response ready.
 	// Therefore it is forwarded to BankStateIdle

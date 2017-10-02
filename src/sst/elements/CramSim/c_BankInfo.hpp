@@ -36,7 +36,6 @@
 
 // CramSim includes
 #include "c_BankState.hpp"
-//#include "c_BankGroup.hpp"
 
 namespace SST {
 namespace n_Bank {

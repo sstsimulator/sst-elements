@@ -41,6 +41,8 @@ c_TxnDispatcher::c_TxnDispatcher(ComponentId_t x_id, Params &params):Component(x
     //*------ get parameters ----*//
     bool l_found=false;
 
+    m_simCycle=0;
+
     dbg.init("[TxnDispatcher]",params.find<int>("debug_level",0),0,
              (Output::output_location_t)params.find<int>("debug_location",Output::STDOUT));
 
@@ -124,6 +126,8 @@ c_TxnDispatcher::c_TxnDispatcher() :
 
 bool c_TxnDispatcher::clockTic(Cycle_t clock)
 {
+    m_simCycle++;
+
     while(!m_reqQ.empty())
     {
         sendRequest(m_reqQ.front());
@@ -147,7 +151,7 @@ void c_TxnDispatcher::handleTxnGenEvent(SST::Event *ev)
     m_reqQ.push_back(l_newReq);
 
     #ifdef __SST_DEBUG_OUTPUT__
-    l_newReq->m_payload->print(&dbg,"[c_TxnDispatcher.handleTxnGenEvent]");
+    l_newReq->m_payload->print(&dbg,"[c_TxnDispatcher.handleTxnGenEvent]",m_simCycle);
     #endif
 }
 
@@ -176,7 +180,7 @@ void c_TxnDispatcher::sendRequest(c_TxnReqEvent* x_newReq)
     assert(l_laneIdx < m_laneLinks.size());
 
     #ifdef __SST_DEBUG_OUTPUT__
-    dbg.verbose(CALL_INFO,1,0," Cycle:%lld, LaneIdxPosition:[%d:%d] Addr: 0x%lx LaneIdx: %d\n",
+    dbg.verbose(CALL_INFO,1,0," Cycle:%lld, LaneIdxPosition:[%d:%d] Addr: 0x%llx LaneIdx: %d\n",
              m_simCycle,m_laneIdxEnd,m_laneIdxStart,l_addr,l_laneIdx);
     #endif
 

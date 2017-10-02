@@ -23,32 +23,21 @@
 // local includes
 #include "c_MemhBridge.hpp"
 #include "c_AddressHasher.hpp"
-#include "c_TxnGenSeq.hpp"
-#include "c_TxnGenRand.hpp"
-#include "c_TracefileReader.hpp"
-#include "c_DramSimTraceReader.hpp"
-#include "c_USimmTraceReader.hpp"
-#include "c_TxnDriver.hpp"
 #include "c_TxnConverter.hpp"
 #include "c_TxnScheduler.hpp"
 #include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
-#include "c_CmdDriver.hpp"
 #include "c_DeviceDriver.hpp"
-#include "c_BankReceiver.hpp"
 #include "c_Dimm.hpp"
 #include "c_Controller.hpp"
 #include "c_TxnDispatcher.hpp"
 #include "c_TxnGen.hpp"
-#include "c_TraceReader.hpp"
+#include "c_TraceFileReader.hpp"
 
 
 // namespaces
 using namespace SST;
 using namespace SST::n_Bank;
-using namespace SST::n_CmdDriver;
-using namespace SST::n_TxnDriver;
-using namespace SST::n_BankReceiver;
 using namespace SST::Statistics;
 
 /*----ALLOCATORS FOR COMPONENTS----*/
@@ -59,68 +48,20 @@ create_c_MemhBridge(SST::ComponentId_t id, SST::Params& params) {
 	return new c_MemhBridge(id, params);
 }
 
-// c_TxnGenSeq
+// c_TxnGen
 static Component*
 create_c_TxnGen(SST::ComponentId_t id, SST::Params& params) {
 	return new c_TxnGen(id, params);
 }
 
-// c_TxnGenSeq
+// c_TraceFileReader
 static Component*
-create_c_TxnGenSeq(SST::ComponentId_t id, SST::Params& params) {
-	return new c_TxnGenSeq(id, params);
-}
-
-// c_TxnGenRand
-static Component*
-create_c_TxnGenRand(SST::ComponentId_t id, SST::Params& params){
-	return new c_TxnGenRand(id, params);
-}
-
-// c_TracefileReader
-static Component*
-create_c_TracefileReader(SST::ComponentId_t id, SST::Params& params){
-	return new c_TracefileReader(id, params);
-}
-
-// c_TraceReader
-static Component*
-create_c_TraceReader(SST::ComponentId_t id, SST::Params& params){
-	return new c_TraceReader(id, params);
-}
-
-// c_DramSimTraceReader
-static Component*
-create_c_DramSimTraceReader(SST::ComponentId_t id, SST::Params& params){
-	return new c_DramSimTraceReader(id, params);
-}
-
-// c_USimmTraceReader
-static Component*
-create_c_USimmTraceReader(SST::ComponentId_t id, SST::Params& params){
-	return new c_USimmTraceReader(id, params);
-}
-
-// c_TxnDriver
-static Component*
-create_c_TxnDriver(SST::ComponentId_t id, SST::Params& params){
-	return new c_TxnDriver(id, params);
+create_c_TraceFileReader(SST::ComponentId_t id, SST::Params& params){
+	return new c_TraceFileReader(id, params);
 }
 
 
-// c_CmdDriver
-static Component*
-create_c_CmdDriver(SST::ComponentId_t id, SST::Params& params){
-	return new c_CmdDriver(id, params);
-}
-
-
-// c_BankReceiver
-static Component*
-create_c_BankReceiver(SST::ComponentId_t id, SST::Params& params){
-	return new c_BankReceiver(id, params);
-}
-
+// c_TxnDispatcher
 static Component*
 create_c_TxnDispatcher(SST::ComponentId_t id, SST::Params& params) {
 	return new c_TxnDispatcher(id, params);
@@ -204,8 +145,8 @@ static const char* c_MemhBridge_mem_port_events[] = { "c_TxnReqEvent","c_TxnResE
 static const char* c_MemhBridge_CPU_events[] = {"c_CPUevent", NULL};
 
 static const ElementInfoPort c_MemhBridge_ports[] = {
-		{ "linkCPU", "link to/from CPU",c_MemhBridge_CPU_events},
-		{ "lowLink", "link to memory-side components (txn dispatcher or controller)", c_MemhBridge_mem_port_events },
+		{ "cpuLink", "link to/from CPU",c_MemhBridge_CPU_events},
+		{ "memLink", "link to memory-side components (txn dispatcher or controller)", c_MemhBridge_mem_port_events },
 		{ NULL, NULL, NULL } };
 
 static const ElementInfoStatistic c_MemhBridge_stats[] = {
@@ -220,25 +161,6 @@ static const ElementInfoStatistic c_MemhBridge_stats[] = {
   {NULL, NULL, NULL, 0}
 };
 
-/*----SETUP c_TxnGenSeq STRUCTURES----*/
-static const ElementInfoParam c_TxnGenSeq_params[] = {
-		{"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
-		{"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
-		{"numCtrlReqQEntries", "Total entries in the neighbor TxnConverter's Req queue", NULL},
-		{"readWriteRatio", "Ratio of read txn's to generate : write txn's to generate", NULL},
-		{ NULL, NULL, NULL } };
-
-static const char* c_TxnGenSeq_req_port_events[] = { "c_TxnReqEvent", NULL };
-static const char* c_TxnGenSeq_res_port_events[] = { "c_TxnResEvent", NULL };
-static const char* c_TxnGenSeq_token_port_events[] = {"c_TokenChgEvent", NULL};
-
-static const ElementInfoPort c_TxnGenSeq_ports[] = {
-		{ "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenSeq_req_port_events },
-		{ "inCtrlReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenSeq_token_port_events },
-		{ "inCtrlResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenSeq_res_port_events },
-		{ "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenSeq_token_port_events },
-		{ NULL, NULL, NULL } };
-
 /*----SETUP c_TxnGen STRUCTURES----*/
 static const ElementInfoParam c_TxnGen_params[] = {
 		{"maxOutstandingReqs", "Maximum number of the outstanding requests", NULL},
@@ -249,7 +171,7 @@ static const ElementInfoParam c_TxnGen_params[] = {
 static const char* c_TxnGen_port_events[] = { "c_TxnReqEvent", "c_TxnResEvent", NULL };
 
 static const ElementInfoPort c_TxnGen_ports[] = {
-		{ "lowLink", "link to memory-side components (txn dispatcher or controller)", c_TxnGen_port_events },
+		{ "memLink", "link to memory-side components (txn dispatcher or controller)", c_TxnGen_port_events },
 		{ NULL, NULL, NULL } };
 
 static const ElementInfoStatistic c_TxnGen_stats[] = {
@@ -264,67 +186,21 @@ static const ElementInfoStatistic c_TxnGen_stats[] = {
   {NULL, NULL, NULL, 0}
 };
 
-/*----SETUP c_TxnGenRand STRUCTURES----*/
-static const ElementInfoParam c_TxnGenRand_params[] = {
-		{"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
-		{"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
-		{"numCtrlReqQEntries", "Total entries in the neighbor TxnConverter's Req queue", NULL},
-		{"readWriteRatio", "Ratio of read txn's to generate : write txn's to generate", NULL},
-		{ NULL, NULL, NULL } };
-
-static const char* c_TxnGenRand_req_port_events[] = { "c_TxnReqEvent", NULL };
-static const char* c_TxnGenRand_res_port_events[] = { "c_TxnResEvent", NULL };
-static const char* c_TxnGenRand_token_port_events[] = {"c_TokenChgEvent", NULL};
-
-static const ElementInfoPort c_TxnGenRand_ports[] = {
-		{ "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenRand_req_port_events },
-		{ "inCtrlReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
-		{ "inCtrlResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
-		{ "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenRand_token_port_events },
-		{ NULL, NULL, NULL } };
-
-static const ElementInfoStatistic c_TxnGenRand_stats[] = {
-  {"readTxnsCompleted", "Number of read transactions completed", "reads", 1}, // Name, Desc, Units, Enable Level
-  {"writeTxnsCompleted", "Number of write transactions completed", "writes", 1},
-  {NULL, NULL, NULL, 0}
-};
-
 /*----SETUP c_TracefileReader STRUCTURES----*/
-static const ElementInfoParam c_TracefileReader_params[] = {
-		{"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
-		{"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
-		{"numCtrlReqQEntries", "Total entries in the neighbor TxnConverter's Req queue", NULL},
-		{"traceFile", "Location of trace file to read", NULL},
-		{ NULL, NULL, NULL } };
-
-static const char* c_TracefileReader_req_port_events[] = { "c_TxnReqEvent", NULL };
-static const char* c_TracefileReader_res_port_events[] = { "c_TxnResEvent", NULL };
-static const char* c_TracefileReader_token_port_events[] = {"c_TokenChgEvent", NULL};
-
-static const ElementInfoPort c_TracefileReader_ports[] = {
-		{ "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenRand_req_port_events },
-		{ "inCtrlReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
-		{ "inCtrlResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
-		{ "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenRand_token_port_events },
-		{ NULL, NULL, NULL } };
-
-
-
-
-/*----SETUP c_TraceReader STRUCTURES----*/
-static const ElementInfoParam c_TraceReader_params[] = {
+static const ElementInfoParam c_TraceFileReader_params[] = {
 		{"maxOutstandingReqs", "Maximum number of the outstanding requests", NULL},
 		{"numTxnPerCycle", "The number of transactions generated per cycle", NULL},
 		{"traceFile", "Location of trace file to read", NULL},
+                {"traceFileType", "Trace file type (DEFAULT or USIMM)",NULL},
 		{ NULL, NULL, NULL } };
 
-static const char* c_TraceReader_port_events[] = { "c_TxnReqEvent", "c_TxnResEvent", NULL };
+static const char* c_TraceFileReader_port_events[] = { "c_TxnReqEvent", "c_TxnResEvent", NULL };
 
-static const ElementInfoPort c_TraceReader_ports[] = {
-		{ "lowLink", "link to memory-side components (txn dispatcher or controller)", c_TraceReader_port_events },
+static const ElementInfoPort c_TraceFileReader_ports[] = {
+		{ "memLink", "link to memory-side components (txn dispatcher or controller)", c_TraceFileReader_port_events },
 		{ NULL, NULL, NULL } };
 
-static const ElementInfoStatistic c_TraceReader_stats[] = {
+static const ElementInfoStatistic c_TraceFileReader_stats[] = {
   {"readTxnsSent", "Number of read transactions sent", "reads", 1}, // Name, Desc, Units, Enable Level
   {"writeTxnsSent", "Number of write transactions sent", "writes", 1}, // Name, Desc, Units, Enable Level
   {"readTxnsCompleted", "Number of read transactions completed", "reads", 1}, // Name, Desc, Units, Enable Level
@@ -335,72 +211,6 @@ static const ElementInfoStatistic c_TraceReader_stats[] = {
   {"txnsLatency", "Average latency of (read/write) transactions", "cycles", 1},
   {NULL, NULL, NULL, 0}
 };
-
-/*----SETUP c_DramSimTraceReader STRUCTURES----*/
-static const ElementInfoParam c_DramSimTraceReader_params[] = {
-		{"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
-		{"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
-		{"numCtrlReqQEntries", "Total entries in the neighbor Ctrl's Req queue", NULL},
-		{"traceFile", "Location of trace file to read", NULL},
-		{ NULL, NULL, NULL } };
-
-static const char* c_DramSimTraceReader_req_port_events[] = { "c_TxnReqEvent", NULL };
-static const char* c_DramSimTraceReader_res_port_events[] = { "c_TxnResEvent", NULL };
-static const char* c_DramSimTraceReader_token_port_events[] = {"c_TokenChgEvent", NULL};
-
-static const ElementInfoPort c_DramSimTraceReader_ports[] = {
-		{ "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenRand_req_port_events },
-		{ "inCtrlReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
-		{ "inCtrlResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
-		{ "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenRand_token_port_events },
-		{ NULL, NULL, NULL } };
-
-static const ElementInfoStatistic c_DramSimTraceReader_stats[] = {
-  {"readTxnsCompleted", "Number of read transactions completed", "reads", 1}, // Name, Desc, Units, Enable Level
-  {"writeTxnsCompleted", "Number of write transactions completed", "writes", 1},
-  {NULL, NULL, NULL, 0}
-};
-
-/*----SETUP c_USimmTraceReader STRUCTURES----*/
-static const ElementInfoParam c_USimmTraceReader_params[] = {
-  {"numTxnGenReqQEntries", "Total entries allowed in the Req queue", NULL},
-  {"numTxnGenResQEntries", "Total entries allowed in the Res queue", NULL},
-  {"numCtrlReqQEntries", "Total entries in the neighbor Ctrl's Req queue", NULL},
-  {"traceFile", "Location of trace file to read", NULL},
-  { NULL, NULL, NULL } };
-
-static const char* c_USimmTraceReader_req_port_events[] = { "c_TxnReqEvent", NULL };
-static const char* c_USimmTraceReader_res_port_events[] = { "c_TxnResEvent", NULL };
-static const char* c_USimmTraceReader_token_port_events[] = {"c_TokenChgEvent", NULL};
-
-static const ElementInfoPort c_USimmTraceReader_ports[] = {
-  { "outTxnGenReqPtr", "link to c_TxnGen for outgoing req txn", c_TxnGenRand_req_port_events },
-  { "inCtrlReqQTokenChg", "link to c_TxnGen for incoming req token", c_TxnGenRand_token_port_events },
-  { "inCtrlResPtr", "link to c_TxnGen for incoming res txn", c_TxnGenRand_res_port_events },
-  { "outTxnGenResQTokenChg", "link to c_TxnGen for outgoing res token",c_TxnGenRand_token_port_events },
-  { NULL, NULL, NULL } };
-
-
-
-/*----SETUP c_TxnDriver STRUCTURES----*/
-static const ElementInfoParam c_TxnDriver_params[] = {
-		{"numTxnDrvBufferQEntries", "Total entries allowed in the buffer", NULL},
-		{"numTxnGenResQEntries", "Total entries allowed in the Res queue of the Txn Driver", NULL},
-		{ NULL, NULL, NULL } };
-
-
-static const char* c_TxnDriver_req_port_events[] = { "c_TxnReqEvent", NULL };
-static const char* c_TxnDriver_res_port_events[] = { "c_TxnResEvent", NULL };
-static const char* c_TxnDriver_token_port_events[] = {"c_TokenChgEvent", NULL};
-static const char* c_TxnDriver_txnreqtoken_port_events[] = {"c_TxnReqTokenChgEvent", NULL};
-
-static const ElementInfoPort c_TxnDriver_ports[] = {
-		{ "outTxnDrvReqQTokenChg", "link to c_TxnDriver for outgoing req token", c_TxnDriver_txnreqtoken_port_events },
-		{ "inTxnGenReqPtr", "link to c_TxnGen for incoming req txn", c_TxnGenRand_req_port_events },
-		{ "inTxnGenResQTokenChg", "link to c_TxnGen for incoming res token", c_TxnGenRand_token_port_events },
-		{ "outTxnDrvResPtr", "link to c_TxnGen for outgoing res txn",c_TxnGenRand_res_port_events },
-		{ NULL, NULL, NULL } };
-
 
 /*----SETUP c_TxnScheduler STRUCTURES----*/
 static const ElementInfoParam c_TxnScheduler_params[] = {
@@ -439,23 +249,6 @@ static const ElementInfoStatistic c_CmdScheduler_stats[] = {
 		{NULL, NULL, NULL, 0}
 };
 
-
-/*----SETUP c_CmdDriver STRUCTURES----*/
-static const ElementInfoParam c_CmdDriver_params[] = {
-		{"numCmdReqQEntries", "Total number of entries in Driver's buffer", NULL},
-		{"numTxnResQEntries", "Total number of entries in neighbor TxnConverter's Res queue", NULL},
-		{NULL, NULL, NULL } };
-
-static const char* c_CmdDriver_cmdRes_port_events[] = { "c_CmdResEvent", NULL };
-static const char* c_CmdDriver_cmdReq_port_events[] = { "c_CmdPtrPkgEvent", NULL };
-static const char* c_CmdDriver_token_port_events[] = {"c_TokenChgEvent", NULL};
-
-static const ElementInfoPort c_CmdDriver_ports[] = {
-		{"outCmdDrvReqQTokenChg", "link to c_CmdDriver for outgoing req txn token", c_CmdDriver_token_port_events},
-		{"inTxnCvtReqPtr", "link to c_CmdDriver for incoming req cmds", c_CmdDriver_cmdReq_port_events},
-		{"outCmdDrvResPtr", "link to c_CmdDriver for outgoing res txn", c_CmdDriver_cmdRes_port_events},
-		{NULL, NULL, NULL}
-};
 
 
 /*----SETUP c_DeviceDriver STRUCTURES----*/
@@ -514,9 +307,9 @@ static const ElementInfoStatistic c_DeviceDriver_stats[] = {
 };
 
 
-/*----SETUP c_Controller STRUCTURES----*/
+/*----SETUP Controller Component STRUCTURES----*/
 static const ElementInfoParam c_Controller_params[] = {
-		{"AddrHasher", "address hasher", "CramSim.c_AddressHasher"},
+		{"AddrMapper", "address hasher", "CramSim.c_AddressHasher"},
 		{"TxnScheduler", "Transaction Scheduler", "CramSim.c_TxnScheduler"},
 		{"TxnConverter", "Transaction Converter", "CramSim.c_TxnConverter"},
 		{"CmdScheduler", "Command Scheduler", "CramSim.c_CmdScheduler"},
@@ -532,48 +325,30 @@ static const char* c_Controller_TxnGenReqToken_port_events[] = { "c_txnGenReqTok
 static const char* c_Controller_DeviceReqToken_port_events[] = { "c_DeviceReqTokenEvent", NULL };
 
 static const ElementInfoPort c_Controller_ports[] = {
-		{"inTxnGenReqPtr", "link to controller for incoming req cmds from txn gen", c_Controller_TxnGenReq_port_events},
-		{"outTxnGenResPtr", "link to controller for outgoing res cmds to txn gen", c_Controller_TxnGenRes_port_events},
-		{"inDeviceResPtr", "link to controller for incoming res cmds from device", c_Controller_DeviceRes_port_events},
-		{"outDeviceReqPtr", "link to controller for outgoing req cmds to device", c_Controller_DeviceReq_port_events},
-		{"inTxnGenResQTokenChg", "link to controller for incoming res txn tokens",c_Controller_TxnGenResToken_port_events},
-		{"outTxnGenReqQTokenChg", "link to controller for outgoing req txn tokens",c_Controller_TxnGenReqToken_port_events},
-		{"inDeviceReqQTokenChg", "link to controller for incoming req cmd tokens",c_Controller_DeviceReqToken_port_events},
+		{"txngenLink", "link to txn generator / txn dispatcher", c_Controller_TxnGenReq_port_events},
+		{"memLink", "link to memory", c_Controller_DeviceRes_port_events},
 		{NULL, NULL, NULL}
 };
 
-/*----SETUP c_BankReceiver STRUCTURES----*/
-static const ElementInfoParam c_BankReceiver_params[] = {
-		{NULL, NULL, NULL } };
 
-static const char* c_BankReceiver_cmdReq_port_events[] = { "c_CmdReqEvent", NULL };
-static const char* c_BankReceiver_cmdRes_port_events[] = { "c_CmdResEvent", NULL };
-
-static const ElementInfoPort c_BankReceiver_ports[] = {
-		{"inDeviceDriverReqPtr", "link to c_BankReceiver for incoming req cmds", c_BankReceiver_cmdReq_port_events},
-		{"outDeviceDriverResPtr", "link to c_BankReceiver for outgoing res cmds", c_BankReceiver_cmdRes_port_events},
-		{NULL, NULL, NULL}
-};
-
-/*----SETUP c_BankReceiver STRUCTURES----*/
+/*----SETUP Memory Component STRUCTURES----*/
 static const ElementInfoParam c_Dimm_params[] = {
-		{"numRanksPerChannel", "Total number of ranks per channel", NULL},
-		{"numBankGroupsPerRank", "Total number of bank groups per rank", NULL},
-		{"numBanksPerBankGroup", "Total number of banks per group", NULL},
-		{"boolAllocateCmdResACT", "Allocate space in Controller Res Q for ACT Cmds", NULL},
-		{"boolAllocateCmdResREAD", "Allocate space in Controller Res Q for READ Cmds", NULL},
-		{"boolAllocateCmdResREADA", "Allocate space in Controller Res Q for READA Cmds", NULL},
-		{"boolAllocateCmdResWRITE", "Allocate space in Controller Res Q for WRITE Cmds", NULL},
-		{"boolAllocateCmdResWRITEA", "Allocate space in Controller Res Q for WRITEA Cmds", NULL},
-		{"boolAllocateCmdResPRE", "Allocate space in Controller Res Q for PRE Cmds", NULL},
-		{NULL, NULL, NULL } };
+                 {"numRanksPerChannel", "Total number of ranks per channel", NULL},
+                 {"numBankGroupsPerRank", "Total number of bank groups per rank", NULL},
+                 {"numBanksPerBankGroup", "Total number of banks per group", NULL},
+                 {"boolAllocateCmdResACT", "Allocate space in Controller Res Q for ACT Cmds", NULL},
+                 {"boolAllocateCmdResREAD", "Allocate space in Controller Res Q for READ Cmds", NULL},
+                 {"boolAllocateCmdResREADA", "Allocate space in Controller Res Q for READA Cmds", NULL},
+                 {"boolAllocateCmdResWRITE", "Allocate space in Controller Res Q for WRITE Cmds", NULL},
+                 {"boolAllocateCmdResWRITEA", "Allocate space in Controller Res Q for WRITEA Cmds", NULL},
+                 {"boolAllocateCmdResPRE", "Allocate space in Controller Res Q for PRE Cmds", NULL},
+                 {NULL, NULL, NULL } };
 
 static const char* c_Dimm_cmdReq_port_events[] = { "c_CmdReqEvent", NULL };
 static const char* c_Dimm_cmdRes_port_events[] = { "c_CmdResEvent", NULL };
 
 static const ElementInfoPort c_Dimm_ports[] = {
-		{"inCtrlReqPtr", "link to c_Dimm for incoming req cmds", c_Dimm_cmdReq_port_events},
-		{"outCtrlResPtr", "link to c_Dimm for outgoing res cmds", c_Dimm_cmdRes_port_events},
+		{"ctrlLink", "link to controller", c_Dimm_cmdReq_port_events},
 		{NULL, NULL, NULL}
 };
 
@@ -1880,86 +1655,15 @@ static const ElementInfoComponent CramSimComponents[] = {
 		c_TxnGen_ports, 							// Ports
 		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
 		c_TxnGen_stats 										// Statistics
-		},{ "c_TxnGenSeq", 							// Name
-		"Test Txn Sequential Generator",			// Description
-		NULL, 										// PrintHelp
-		create_c_TxnGenSeq, 						// Allocator
-		c_TxnGenSeq_params, 						// Parameters
-		c_TxnGenSeq_ports, 							// Ports
-		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		NULL 										// Statistics
 		},
-		{ "c_TxnGenRand", 							// Name
-		"Test Txn Random Generator",			 	// Description
-		NULL, 										// PrintHelp
-		create_c_TxnGenRand, 						// Allocator
-		c_TxnGenRand_params, 						// Parameters
-		c_TxnGenRand_ports, 						// Ports
-		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		c_TxnGenRand_stats								// Statistics
-		},
-		{ "c_TracefileReader", 							// Name
+		{ "c_TraceFileReader", 							// Name
 		"Test Trace file Generator",			 	// Description
 		NULL, 										// PrintHelp
-		create_c_TracefileReader, 						// Allocator
-		c_TracefileReader_params, 						// Parameters
-		c_TracefileReader_ports, 						// Ports
+		create_c_TraceFileReader, 						// Allocator
+		c_TraceFileReader_params, 						// Parameters
+		c_TraceFileReader_ports, 						// Ports
 		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		NULL 										// Statistics
-		},
-		{ "c_TraceReader", 							// Name
-		"Test Trace file Generator",			 	// Description
-		NULL, 										// PrintHelp
-		create_c_TraceReader, 						// Allocator
-		c_TraceReader_params, 						// Parameters
-		c_TraceReader_ports, 						// Ports
-		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		c_TraceReader_stats							// Statistics
-		},
-		{ "c_DramSimTraceReader", 							// Name
-		"Test DRAMSim2 Trace file Generator",			 	// Description
-		NULL, 										// PrintHelp
-		create_c_DramSimTraceReader, 						// Allocator
-		c_DramSimTraceReader_params, 						// Parameters
-		c_DramSimTraceReader_ports, 						// Ports
-		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		c_DramSimTraceReader_stats							// Statistics
-		},
-		{ "c_USimmTraceReader", 							// Name
-		"Test USimm Trace file Generator",			 	// Description
-		NULL, 										// PrintHelp
-		create_c_USimmTraceReader, 						// Allocator
-		c_USimmTraceReader_params, 						// Parameters
-		c_USimmTraceReader_ports, 						// Ports
-		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		NULL 										// Statistics
-		},
-		{ "c_TxnDriver", 							// Name
-		"Test Txn Driver",						 	// Description
-		NULL, 										// PrintHelp
-		create_c_TxnDriver, 						// Allocator
-		c_TxnDriver_params, 						// Parameters
-		c_TxnDriver_ports, 							// Ports
-		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		NULL 										// Statistics
-		},
-		{ "c_CmdDriver",	 						// Name
-		"Test Cmd Driver",				 			// Description
-		NULL, 										// PrintHelp
-		create_c_CmdDriver, 						// Allocator
-		c_CmdDriver_params, 						// Parameters
-		c_CmdDriver_ports, 							// Ports
-		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		NULL 										// Statistics
-		},
-		{ "c_BankReceiver",	 						// Name
-		"Test Bank Receiver",				 		// Description
-		NULL, 										// PrintHelp
-		create_c_BankReceiver, 						// Allocator
-		c_BankReceiver_params, 						// Parameters
-		c_BankReceiver_ports, 						// Ports
-		COMPONENT_CATEGORY_UNCATEGORIZED, 			// Category
-		NULL 										// Statistics
+		c_TraceFileReader_stats							// Statistics
 		},
 		{ "c_Dimm",			 						// Name
 		"Test DIMM",				 				// Description

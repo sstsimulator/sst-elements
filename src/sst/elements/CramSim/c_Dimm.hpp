@@ -78,16 +78,15 @@ private:
 
 	// BankReceiver <-> CmdUnit Handlers
 	void handleInCmdUnitReqPtrEvent(SST::Event *ev); // receive a cmd req from CmdUnit
-	void handleOutCmdUnitResPtrEvent(SST::Event *ev); // we do not need this function for functionality
-
-	// BankReceiver <-> CmdUnit Links
-	SST::Link* m_inCmdUnitReqPtrLink; // incoming cmdunit req ptr
-	SST::Link* m_outCmdUnitResPtrLink; // outgoing cmdunit res ptr
+	void printQueues();
 
 	void sendResponse();
 	void sendToBank(c_BankCommand* x_bankCommandPtr);
 
-	void printQueues();
+
+
+	// Links
+	SST::Link* m_ctrlLink;
 
 	// internal microarcitecture params
 	SimTime_t m_thisCycleReceivedCmds;
@@ -100,7 +99,7 @@ private:
 	int k_numBanksPerBankGroup;
 	int m_numBanks;
 
-        SimTime_t m_simCycle;
+    SimTime_t m_simCycle;
 	std::vector<c_Bank*> m_banks;
 
 	std::vector<c_BankCommand*> m_cmdResQ;

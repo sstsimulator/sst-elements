@@ -48,7 +48,9 @@ c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : SubComponent
     //create command queue
     m_numBanks=m_owner->getDeviceDriver()->getTotalNumBank();
     m_numChannels=m_owner->getDeviceDriver()->getNumChannel();
+    m_numRanksPerChannel=m_owner->getDeviceDriver()->getNumRanksPerChannel();
     m_numBanksPerChannel=m_numBanks/m_numChannels;
+    m_numBanksPerRank = m_numBanks/m_numRanksPerChannel;
 
     assert(m_numBanks>0);
     m_cmdQueues.clear();
@@ -62,12 +64,24 @@ c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : SubComponent
         }
     }
 
-
-
     bool l_found = false;
     k_numCmdQEntries = (uint32_t) x_params.find<uint32_t>("numCmdQEntries", 32, l_found);
     if (!l_found) {
         std::cout << "numCmdQEntries value is missing... it will be 32 (default)" << std::endl;
+    }
+
+    std::string l_cmdSchedulingPolicy = (std::string) x_params.find<std::string>("cmdSchedulingPolicy", "BANK", l_found);
+    if (!l_found) {
+        std::cout << "cmdScheduligPolicy is missing... it will be \"bank round robin\" (default)" << std::endl;
+    }
+    if(l_cmdSchedulingPolicy=="BANK")
+        m_schedulingPolicy = e_SchedulingPolicy::BANK;  //Bank Round Robin
+    else if(l_cmdSchedulingPolicy=="RANK")
+        m_schedulingPolicy = e_SchedulingPolicy::RANK;  //Rank Round Robin
+    else
+    {
+        std::cout << "CmdScheduler: scheduling policy error!\n";
+        exit(-1);
     }
 }
 
@@ -97,15 +111,23 @@ void c_CmdScheduler::run(){
                     if (isSuccess) {
                         l_cmdQueue.pop_front();
 
-                        #ifdef __SST_DEBUG_OUTPUT__
-                        l_cmdPtr->print(output, "[c_CmdScheduler]");
-                        #endif
+#ifdef __SST_DEBUG_OUTPUT__
+                        l_cmdPtr->print(output, "[c_CmdScheduler]",m_owner->getSimCycle());
+#endif
                     }
                 }
             }
-            nextBankIdx = (nextBankIdx + 1) % m_numBanksPerChannel;
+
+            if(m_schedulingPolicy==e_SchedulingPolicy::BANK)
+                nextBankIdx = (nextBankIdx + 1) % m_numBanksPerChannel;
+            else if(m_schedulingPolicy==e_SchedulingPolicy::RANK)
+                nextBankIdx=(nextBankIdx+m_numBanksPerRank)%(m_numBanksPerChannel-1);
+
         }
-        m_nextCmdQIdx.at(l_ch)=(m_nextCmdQIdx.at(l_ch)+1)%m_numBanksPerChannel;
+        if(m_schedulingPolicy==e_SchedulingPolicy::BANK)
+            m_nextCmdQIdx.at(l_ch)=(m_nextCmdQIdx.at(l_ch)+1)%m_numBanksPerChannel;
+        else if(m_schedulingPolicy==e_SchedulingPolicy::RANK)
+            m_nextCmdQIdx.at(l_ch)=(m_nextCmdQIdx.at(l_ch)+m_numBanksPerRank)%(m_numBanksPerChannel-1);
     }
 }
 

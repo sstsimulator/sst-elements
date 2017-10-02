@@ -38,7 +38,6 @@
 
 #include "c_BankState.hpp"
 #include "c_BankCommand.hpp"
-// #include "c_BankStateActive.hpp"
 
 
 namespace SST {

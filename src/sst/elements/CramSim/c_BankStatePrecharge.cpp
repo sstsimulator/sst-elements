@@ -61,9 +61,6 @@ c_BankStatePrecharge::~c_BankStatePrecharge() {
 
 void c_BankStatePrecharge::handleCommand(c_BankInfo* x_bank,
 		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
-	// std::cout << __PRETTY_FUNCTION__
-	// 		<< " ERROR: should not receive a command in this state. This is a transitory state."
-	// 		<< std::endl;
 }
 
 void c_BankStatePrecharge::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
@@ -71,25 +68,11 @@ void c_BankStatePrecharge::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 		--m_timer;
 
 
-//		if (m_prevCommandPtr)
-//			m_prevCommandPtr->print();
 
 	} else {
 
-		//FIXME: Remove. for testing only
-		//assert(1 == 0);
-//		std::cout << __PRETTY_FUNCTION__ << " timer expired ";
-//		if (m_prevCommandPtr)
-//			m_prevCommandPtr->print();
-
 		if (m_prevCommandPtr) {
 			m_prevCommandPtr->setResponseReady();
-			//const unsigned l_cmdsLeft =
-			//		m_prevCommandPtr->getTransaction()->getWaitingCommands()
-			//				- 1;
-			//m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
-			//if (l_cmdsLeft == 0)
-			//	m_prevCommandPtr->getTransaction()->setResponseReady();
 		}
 		auto l_p = new c_BankStateIdle(m_bankParams);
 		l_p->enter(x_bank, this, nullptr, x_cycle);
@@ -107,12 +90,6 @@ void c_BankStatePrecharge::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_allowedCommands.clear();
 
 	
-//	if (m_prevCommandPtr) {
-//		std::cout << "Previous command = ";
-//		m_prevCommandPtr->print();
-//		std::cout << std::endl;
-//	}
-
 // this state should not have any allowed bank commands
 // this is a transitory state
 

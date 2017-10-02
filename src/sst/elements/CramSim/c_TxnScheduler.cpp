@@ -172,7 +172,7 @@ void c_TxnScheduler::run(){
                 m_txnConverter->push(l_nextTxn);
 
                 #ifdef __SST_DEBUG_OUTPUT__
-                l_nextTxn->print(output, "[c_TxnScheduler]");
+                l_nextTxn->print(output, "[c_TxnScheduler]",m_controller->getSimCycle());
                 #endif
 
                 // pop it from inputQ
