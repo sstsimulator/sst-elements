@@ -45,9 +45,22 @@ bool ExtMemBackendConvertor::issue( BaseReq *req ) {
     std::vector<uint64_t> NULLVEC;
 
     return static_cast<ExtMemBackend*>(m_backend)->issueRequest( mreq->id(),
-                                                                     mreq->addr(),
-                                                                     mreq->isWrite(),
-                                                                     NULLVEC, // this is null for now
-                                                                     mreq->getMemEvent()->getFlags(),
-                                                                     m_backendRequestWidth );
+                                                                 mreq->addr(),
+                                                                 mreq->isWrite(),
+                                                                 NULLVEC, // this is null for normal requests
+                                                                 mreq->getMemEvent()->getFlags(),
+                                                                 m_backendRequestWidth );
 }
+
+void ExtMemBackendConvertor::handleCustomEvent( CustomCmdInfo* info ){
+
+    std::vector<uint64_t> NULLVEC;
+    static_cast<ExtMemBackend*>(m_backend)->issueRequest( info->getID().first,
+                                                          info->queryAddr(),
+                                                          false,  // this is handled by command mapping
+                                                          NULLVEC, // this is null for normal requests
+                                                          info->getFlags(),
+                                                          m_backendRequestWidth );
+}
+
+// EOF

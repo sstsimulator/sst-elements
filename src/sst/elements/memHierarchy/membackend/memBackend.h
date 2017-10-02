@@ -142,6 +142,9 @@ class ExtMemBackend : public MemBackend {
     virtual bool issueRequest( ReqId, Addr, bool isWrite,
                                std::vector<uint64_t> ins,
                                uint32_t flags, unsigned numBytes ) = 0;
+    virtual bool issueCustomRequest( ReqId, Addr, uint32_t Cmd,
+                                     std::vector<uint64_t> ins,
+                                     uint32_t flags, unsigned numBytes );
 
     void handleMemResponse( ReqId id, uint32_t flags ) {
         m_respFunc( id, flags );

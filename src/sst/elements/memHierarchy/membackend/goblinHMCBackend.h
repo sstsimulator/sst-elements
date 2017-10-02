@@ -117,6 +117,9 @@ public:
 	bool issueRequest(ReqId, Addr, bool,
                           std::vector<uint64_t>,
                           uint32_t, unsigned);
+	bool issueCustomRequest(ReqId, Addr, uint32_t,
+                                std::vector<uint64_t>,
+                                uint32_t, unsigned);
 	void setup();
 	void finish();
 	virtual bool clock(Cycle_t cycle);
