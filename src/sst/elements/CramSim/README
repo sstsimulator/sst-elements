@@ -28,7 +28,8 @@ RUNNING A SIMULATION:
     sst --lib-path:./libs/ PYTHON_TEST_FILE.py --model-options="--configfile=CONFIG.cfg --tracefile=TRACE.trc"
 
   Python file instantiates SST components and links them together. It also provides the simulator with access to "parameter knobs". Many different test
-  python files exist in ./tests/ . Here are some highlights. 
+  python files exist in ./tests/ . Here are some highlights.
+  Command-line examples are found in the "tests/run.py" file.
     - test_txngen.py : Runs simulation using a series of randomly or sequentially generated instructions. "mode" flag are required in the --model-options
       - seq   : sst --lib-path=.libs test_txngen.py --model-options="--configfile=CONFIG.cfg mode=seq"
       - rand  : sst --lib-path=.libs test_txngen.py --model-options="--configfile=CONFIG.cfg mode=rand"
@@ -72,16 +73,22 @@ MODEL OVERVIEW:
   - Txn Generator (multiple options):
     - c_TxnGen
       - Generates Txns in sequential/random-address order
-    - c_TracefileReader
+    - c_TraceFileReader
       - Reads Txns from a trace file (dramsim2 or usimm trace format)
 
-  - c_Controller
+  - Controller : c_Controller
     - Receives Txn requests from TxnGen and stores them. Every cycle a txn is removed from the buffer, converted to Cmds, and sent to c_DIMM
     - Receives Cmd responses from c_DIMM and updates the Txn that Cmd "belonged" to. Every cycle a completed txn is removed from the response buffer and returned to TxnGen
+    - Subcomponents
+      1) c_AddressHasher : address mapper that map the physical address to the device address (e.g., channel, rank, bank, and column index)
+      2) c_TxnScheduler :  transaction scheduler that reorder the transactions
+      3) c_TxnConverter :  transaction converter that converts read and write trasacntions to memory-specific commands (e.g., READ -> ACT/READ/PRECHARGE) 
+      4) c_CmdScheduler :  command scheduler that selects a command queue and picks memory commands from the command queue
+      5) c_DeviceDriver :  device driver that maintains status of memory devices and send commands to the memory devices 
 
-  - c_DIMM:
-    - Receives a Cmd request from CmdUnit and maps it to its particular bank before sending it to that bank.
-    - Receives a Cmd response from its internal banks and sends it back to CmdUnit
+  - Memory : c_DIMM
+    - Receives a Cmd request from Controller and maps it to its particular bank before sending it to that bank.
+    - Receives a Cmd response from its internal banks and sends it back to Controller
 
 
   ADDITIONAL INFO:
