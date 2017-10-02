@@ -13,13 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/*
- * c_TxnConverter.cpp
- *
- *  Created on: May 18, 2016
- *      Author: tkarkha
- */
-
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
