@@ -83,9 +83,9 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     m_txnScheduler= dynamic_cast<c_TxnScheduler*>(loadSubComponent(l_subCompName.c_str(), this, params));
 
     // set address hasher
-    l_subCompName = params.find<std::string>("AddrHasher", "CramSim.c_AddressHasher",l_found);
+    l_subCompName = params.find<std::string>("AddrMapper", "CramSim.c_AddressHasher",l_found);
     if(!l_found){
-        output->output("AddrHasher is not specified... AddressHasher (default) will be used\n");
+        output->output("AddrMapper is not specified... AddressHasher (default) will be used\n");
     }
     m_addrHasher= dynamic_cast<c_AddressHasher*>(loadSubComponent(l_subCompName.c_str(),this,params));
 

@@ -50,7 +50,7 @@ c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : SubComponent
     m_numChannels=m_owner->getDeviceDriver()->getNumChannel();
     m_numRanksPerChannel=m_owner->getDeviceDriver()->getNumRanksPerChannel();
     m_numBanksPerChannel=m_numBanks/m_numChannels;
-    m_numBanksPerRank = m_numBanks/m_numBanksPerRank;
+    m_numBanksPerRank = m_numBanks/m_numRanksPerChannel;
 
     assert(m_numBanks>0);
     m_cmdQueues.clear();
@@ -70,7 +70,7 @@ c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : SubComponent
         std::cout << "numCmdQEntries value is missing... it will be 32 (default)" << std::endl;
     }
 
-    std::string l_cmdSchedulingPolicy = (std::string) x_params.find<std::string>("cmdSchedulingPolicy", "BANK");
+    std::string l_cmdSchedulingPolicy = (std::string) x_params.find<std::string>("cmdSchedulingPolicy", "BANK", l_found);
     if (!l_found) {
         std::cout << "cmdScheduligPolicy is missing... it will be \"bank round robin\" (default)" << std::endl;
     }
@@ -83,7 +83,6 @@ c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : SubComponent
         std::cout << "CmdScheduler: scheduling policy error!\n";
         exit(-1);
     }
-
 }
 
 
