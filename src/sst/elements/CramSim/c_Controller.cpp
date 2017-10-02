@@ -90,32 +90,6 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     m_addrHasher= dynamic_cast<c_AddressHasher*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
 
-    /** Get SST link parameters*/
-    k_txnReqQEntries = (uint32_t)params.find<uint32_t>("numCtrlReqQEntries", 100,
-                                                         l_found);
-    if (!l_found) {
-        std::cout << "numCtrlReqQEntries param value is missing... default(100)"
-                  << std::endl;
-    }
-
-    k_txnResQEntries = (uint32_t)params.find<uint32_t>("numCtrlResQEntries", 100,
-                                                         l_found);
-    if (!l_found) {
-        std::cout << "numCtrlResQEntries param value is missing... default(100)"
-                  << std::endl;
-    }
-
-   //load neighboring component's params
-    k_txnGenResQEntries = (uint32_t)params.find<uint32_t>("numTxnGenResQEntries", 100,
-                                                            l_found);
-    if (!l_found) {
-        std::cout << "numTxnGenResQEntries param value is missing... exiting"
-                  << std::endl;
-        exit(-1);
-    }
-    m_txnGenResQTokens = k_txnGenResQEntries;
-    m_ReqQTokens= k_txnReqQEntries;
-
     k_enableQuickResponse = (uint32_t)params.find<uint32_t>("boolEnableQuickRes", 0,l_found);
     if (!l_found) {
         std::cout << "boolEnableQuickRes param value is missing... disabled"
@@ -162,8 +136,6 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
     m_simCycle++;
 
     sendResponse();
-
-    m_thisCycleTxnQTknChg = m_ReqQ.size();
 
     // 0. update device driver
     m_deviceDriver->update();
@@ -248,13 +220,10 @@ void c_Controller::sendResponse() {
     // - m_ResQ.size() > 0
     // - m_ResQ has an element which is response-ready
 
-    if ((m_txnGenResQTokens > 0) && (m_ResQ.size() > 0)) {
+    if ((m_ResQ.size() > 0)) {
         c_Transaction* l_txnRes = nullptr;
         for (std::deque<c_Transaction*>::iterator l_it = m_ResQ.begin();
              l_it != m_ResQ.end();)  {
-	    if(m_txnGenResQTokens <= 0) {
-	      break;
-	    }
             if ((*l_it)->isResponseReady()) {
                 l_txnRes = *l_it;
                 l_it=m_ResQ.erase(l_it);
@@ -298,9 +267,6 @@ void c_Controller::handleIncomingTransaction(SST::Event *ev){
 }
 
 
-void c_Controller::handleOutTxnGenResPtrEvent(SST::Event *ev){}
-
-
 void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
     c_CmdResEvent* l_cmdResEventPtr = dynamic_cast<c_CmdResEvent*>(ev);
     if (l_cmdResEventPtr) {
@@ -339,55 +305,5 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
         std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
                   << std::endl;
     }
-}
-void c_Controller::handleOutDeviceReqPtrEvent(SST::Event *ev){}
-
-
-void c_Controller::handleInTxnGenResQTokenChgEvent(SST::Event *ev) {
-    c_TokenChgEvent* l_txnGenResQTokenChgEventPtr =
-            dynamic_cast<c_TokenChgEvent*>(ev);
-    if (l_txnGenResQTokenChgEventPtr) {
-
-
-        m_txnGenResQTokens += l_txnGenResQTokenChgEventPtr->m_payload;
-
-        assert(m_txnGenResQTokens >= 0);
-        assert(m_txnGenResQTokens <= k_txnReqQEntries);
-
-        delete l_txnGenResQTokenChgEventPtr;
-    } else {
-        std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
-                  << std::endl;
-    }
-}
-
-void c_Controller::handleInDeviceReqQTokenChgEvent(SST::Event *ev) {
-    c_TokenChgEvent* l_cmdUnitReqQTokenChgEventPtr =
-            dynamic_cast<c_TokenChgEvent*>(ev);
-    if (l_cmdUnitReqQTokenChgEventPtr) {
-
-        m_deviceReqQTokens += l_cmdUnitReqQTokenChgEventPtr->m_payload;
-
-        assert(m_deviceReqQTokens >= 0);
-        assert(m_deviceReqQTokens <= k_txnResQEntries);
-
-        delete l_cmdUnitReqQTokenChgEventPtr;
-    } else {
-        std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
-                  << std::endl;
-    }
-}
-
-void c_Controller::handleOutTxnGenReqQTokenChgEvent(SST::Event *ev) {
-    // nothing to do here
-    std::cout << __PRETTY_FUNCTION__ << " ERROR: Should not be here"
-              << std::endl;
-}
-
-void c_Controller::setHashedAddress(c_Transaction* newTxn)
-{
-    c_HashedAddress l_hashedAddress;
-    m_addrHasher->fillHashedAddress(&l_hashedAddress, newTxn->getAddress());
-    newTxn->setHashedAddress(l_hashedAddress);
 }
 

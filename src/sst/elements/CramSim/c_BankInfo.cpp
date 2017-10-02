@@ -150,11 +150,6 @@ void c_BankInfo::clockTic(SimTime_t x_cycle) {
 
 	m_bankState->clockTic(this, x_cycle);
 
-	//TODO: Delete. For testing only
-	// std::cout << " m_nextCommandCycleMap:" << std::endl;
-	// for (std::map<e_BankCommandType, unsigned>::const_iterator it = m_nextCommandCycleMap.cbegin(); it != m_nextCommandCycleMap.cend(); ++it){
-	// 	std::cout << m_cmdToString.find(it->first)->second << " - " << std::dec << it->second << std::endl;
-	// }
 }
 
 std::list<e_BankCommandType> c_BankInfo::getAllowedCommands() {

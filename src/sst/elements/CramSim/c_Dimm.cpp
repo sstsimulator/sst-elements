@@ -172,11 +172,8 @@ void c_Dimm::printQueues() {
 }
 
 bool c_Dimm::clockTic(SST::Cycle_t) {
-	// std::cout << std::endl << std::endl << "DIMM:: clock tic" << std::endl;
         m_simCycle++;
 	for (int l_i = 0; l_i != m_banks.size(); ++l_i) {
-//		std::cout << "Bank" << std::dec << l_i << " clockTic from DIMM"
-//				<< std::endl;
 
 		c_BankCommand* l_resPtr = m_banks.at(l_i)->clockTic();
 		if (nullptr != l_resPtr) {
@@ -196,15 +193,9 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 	if (l_cmdReqEventPtr) {
 		// each cycle, the DIMM should only receive one req
 		m_thisCycleReceivedCmds++;
-		// FIXME: confirm removal of this assert
-		// tejask removed it because now we are allowing multiple
-		// requests in the DIMM in the same cycle
-		// assert(m_thisCycleReceivedCmds <= 1);
 
 		c_BankCommand* l_cmdReq = l_cmdReqEventPtr->m_payload;
 
-//		l_cmdReq->print();
-//		std::cout << std::endl;
 
 		switch(l_cmdReq->getCommandMnemonic()) {
 		case e_BankCommandType::ACT:
@@ -242,11 +233,8 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
 
   unsigned l_bankNum=0;
-  //if(x_bankCommandPtr->getBankIdVec().size()) {
-    l_bankNum = x_bankCommandPtr->getBankId();
-  //} else {
-  //  l_bankNum = x_bankCommandPtr->getHashedAddress()->getBankId();
- // }
+
+  l_bankNum = x_bankCommandPtr->getBankId();
   m_banks.at(l_bankNum)->handleCommand(x_bankCommandPtr);
   
 }
@@ -256,15 +244,12 @@ void c_Dimm::sendResponse() {
 	// check if ResQ has cmds
 	while (!m_cmdResQ.empty()) {
 
-	  //m_cmdResQ.front()->print();
-	  //std::cout << std::endl;
 
 	  c_CmdResEvent* l_cmdResEventPtr = new c_CmdResEvent();
 	  l_cmdResEventPtr->m_payload = m_cmdResQ.front();
 	  m_cmdResQ.erase(
 			  std::remove(m_cmdResQ.begin(), m_cmdResQ.end(),
 				      m_cmdResQ.front()), m_cmdResQ.end());
-	//  m_outCmdUnitResPtrLink->send(l_cmdResEventPtr);
 		m_ctrlLink->send(l_cmdResEventPtr);
 	}
 }

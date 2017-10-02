@@ -89,15 +89,13 @@ private:
 	bool k_useReadA;
 	bool k_useWriteA;
 	int k_bankPolicy;
-	uint32_t k_bankCloseTime;
+	SimTime_t k_bankCloseTime;
 
 
   	// Statistics
 	Statistic<uint64_t>* s_readTxnsRecvd;
   	Statistic<uint64_t>* s_writeTxnsRecvd;
   	Statistic<uint64_t>* s_totalTxnsRecvd;
-  	Statistic<uint64_t>* s_reqQueueSize;
-  	Statistic<uint64_t>* s_resQueueSize;
 
     //debug
 	Output *output;

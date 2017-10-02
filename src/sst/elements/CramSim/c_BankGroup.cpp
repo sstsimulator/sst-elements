@@ -176,8 +176,6 @@ void c_BankGroup::updateOtherBanksNextCommandCycles(c_BankInfo* x_initBankPtr,
 			break;
 		}
 
-//		std::cout << "updated banks: " << std::endl;
-//		l_bankPtr->print();
 	}
 	m_rankPtr->updateOtherBanksNextCommandCycles(this, x_cmdPtr, l_time);
 }

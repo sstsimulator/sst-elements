@@ -55,7 +55,6 @@ typedef unsigned long ulong;
 namespace SST {
 namespace n_Bank{
 
-//	class c_BankCommand;
 	class c_Controller;
 	enum class e_BankCommandType;
   
@@ -82,7 +81,6 @@ public:
 private:
 
 	c_DeviceDriver(); // for serialization only
-	//void update();
 	bool sendRefresh(unsigned rank);
 
 	void sendRequest(); // send request function that models close bank policy

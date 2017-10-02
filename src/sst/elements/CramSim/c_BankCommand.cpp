@@ -104,15 +104,6 @@ e_BankCommandType c_BankCommand::getCommandMnemonic() const {
 	return (m_cmdMnemonic);
 }
 
-// acceptTransaction is called from the process that converts a c_Transaction into one or more c_BankCommand objects
-// this function links the c_Transaction object with it constituent c_BankCommand objects
-//void c_BankCommand::acceptTransaction(c_Transaction* x_transaction) {
-//  m_transactionPtr = x_transaction;
-//}
-
-//c_Transaction* c_BankCommand::getTransaction() const {
-//  return (m_transactionPtr);
-//}
 
 void c_BankCommand::print(SimTime_t x_cycle) const {
   std::cout << "[" << this << " Cycle:" <<  x_cycle
@@ -134,7 +125,7 @@ void c_BankCommand::print(SimTime_t x_cycle) const {
 }
 
 void c_BankCommand::print(SST::Output *x_debugOutput, SimTime_t x_cycle) const {
-	x_debugOutput->verbose(CALL_INFO, 1, 0, "[BankCommand] Cycle:%ld," , x_cycle);
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "[BankCommand] Cycle:%llu," , x_cycle);
 	x_debugOutput->verbose(CALL_INFO, 1, 0, "CMD:%s,",this->getCommandString().c_str());
 	x_debugOutput->verbose(CALL_INFO, 1, 0,	"SEQNUM:%d,",this->getSeqNum());
 	x_debugOutput->verbose(CALL_INFO, 1, 0,	"ADDR:%lx,",this->getAddress());
@@ -152,7 +143,7 @@ void c_BankCommand::print(SST::Output *x_debugOutput, SimTime_t x_cycle) const {
 }
 
 void c_BankCommand::print(SST::Output *x_debugOutput,const std::string x_prefix, SimTime_t x_cycle) const {
-	x_debugOutput->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %d CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
+	x_debugOutput->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %llu CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
 							x_cycle,
 							getCommandString().c_str(),
 							m_seqNum,
@@ -167,16 +158,6 @@ void c_BankCommand::print(SST::Output *x_debugOutput,const std::string x_prefix,
 
 }
 
-// TODO: Implement ostream operator overloading for c_BankCommand class. For some reason overloading the ostream operator does not get found during runtime
-
-//std::ostream& operator<< (
-//    std::ostream&        x_stream,
-//    const c_BankCommand& x_bankCommand
-//)
-//{
-//    x_stream<<"[CMD: "<<x_bankCommand.getCommandString()<<", SEQNUM: "<<std::dec<<x_bankCommand.getSeqNum()<<" , ADDR: "<<std::hex<<x_bankCommand.getAddress()<<" , isResponseReady: "<<std::boolalpha<<x_bankCommand.isResponseReady()<<"]";
-//    return x_stream;
-//}
 
 void c_BankCommand::serialize_order(SST::Core::Serialization::serializer &ser)
 {
@@ -192,7 +173,4 @@ void c_BankCommand::serialize_order(SST::Core::Serialization::serializer &ser)
   
   ser & m_hashedAddr;
 
-  //std::cout << "Serializing BankCommand " << this << " "; this->print();
-  
-  //ser & m_transactionPtr;
 }

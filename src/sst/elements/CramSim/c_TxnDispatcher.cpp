@@ -180,7 +180,7 @@ void c_TxnDispatcher::sendRequest(c_TxnReqEvent* x_newReq)
     assert(l_laneIdx < m_laneLinks.size());
 
     #ifdef __SST_DEBUG_OUTPUT__
-    dbg.verbose(CALL_INFO,1,0," Cycle:%lld, LaneIdxPosition:[%d:%d] Addr: 0x%lx LaneIdx: %d\n",
+    dbg.verbose(CALL_INFO,1,0," Cycle:%lld, LaneIdxPosition:[%d:%d] Addr: 0x%llx LaneIdx: %d\n",
              m_simCycle,m_laneIdxEnd,m_laneIdxStart,l_addr,l_laneIdx);
     #endif
 

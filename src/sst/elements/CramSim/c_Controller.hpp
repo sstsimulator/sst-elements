@@ -73,23 +73,16 @@ namespace SST {
 
             virtual bool clockTic(SST::Cycle_t); // called every cycle
 
-            void setHashedAddress(c_Transaction* newTxn);
 
-            void sendTokenChg(); // should happen at the end of every cycle
             void sendResponse();
             void sendRequest();
             void configure_link();
             // Transaction Generator <-> Controller Handlers
             void handleIncomingTransaction(SST::Event *ev);
-            void handleOutTxnGenResPtrEvent(SST::Event *ev);
-            void handleInTxnGenResQTokenChgEvent(SST::Event *ev);
-            void handleOutTxnGenReqQTokenChgEvent(SST::Event *ev);
 
             // Controller <--> memory devices
-            void handleOutDeviceReqPtrEvent(SST::Event *ev);
             void handleInDeviceResPtrEvent(SST::Event *ev);
-            void handleInDeviceReqQTokenChgEvent(SST::Event *ev);
-    
+
             SimTime_t m_simCycle;
 
             SST::Output *output;
@@ -104,26 +97,8 @@ namespace SST {
             c_AddressHasher *m_addrHasher;
             c_DeviceDriver *m_deviceDriver;
 
-            //token changes from Txn gen
-            int m_ReqQTokens;
-            int m_txnGenResQTokens;
-            int m_deviceReqQTokens;
-            int m_thisCycleTxnQTknChg;
-
             // params for system configuration
-            int k_numChannelsPerDimm;
-            int k_numPseudoChannels;
-            int k_numRanksPerChannel;
-            int k_numBankGroupsPerRank;
-            int k_numBanksPerBankGroup;
-            int k_numColsPerBank;
-            int k_numRowsPerBank;
             int k_enableQuickResponse;
-
-            // params for internal architecture
-            int k_txnReqQEntries;
-            int k_txnResQEntries;
-            int k_txnGenResQEntries;
 
 		    // clock frequency
 			std::string k_controllerClockFreqStr;

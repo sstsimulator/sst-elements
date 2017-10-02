@@ -58,7 +58,7 @@ class c_BankCommand : public SST::Core::Serialization::serializable {
 
 private:
 
-	ulong m_seqNum;
+	uint64_t m_seqNum;
 	ulong    m_addr;
 	unsigned m_row;
 	unsigned m_bankId;
@@ -135,16 +135,6 @@ public:
 
 	ulong getAddress() const; //<! returns the address accessed by this command
 	std::string getCommandString() const;//<! returns the mnemonic of command
-
-	// FIXME: implement operator<<
-	//    friend inline std::ostream& operator<< (
-	//        std::ostream&        x_stream,
-	//        const c_BankCommand& x_bankCommand
-	//    )
-	//    {
-	//        x_stream<<"[CMD: "<<x_bankCommand.getCommandString()<<", SEQNUM: "<<std::dec<<x_bankCommand.getSeqNum()<<" , ADDR: "<<std::hex<<x_bankCommand.getAddress()<<" , isResponseReady: "<<std::boolalpha<<x_bankCommand.isResponseReady()<<"]";
-	//        return x_stream;
-	//    }
 
         void serialize_order(SST::Core::Serialization::serializer &ser) override ;
   

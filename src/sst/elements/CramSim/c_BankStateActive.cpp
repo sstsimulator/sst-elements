@@ -69,8 +69,6 @@ void c_BankStateActive::handleCommand(c_BankInfo* x_bank,
 
 	SimTime_t l_time = x_cycle;
 
-//	std::cout << "@ " << l_time << " " << __PRETTY_FUNCTION__ << std::endl;
-
 
 	if (nullptr == m_receivedCommandPtr) {
 		m_receivedCommandPtr = x_bankCommandPtr;
@@ -114,7 +112,6 @@ void c_BankStateActive::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 	if (0 < m_timer) {
 		--m_timer;
 	} else {
-	//	x_bank->setRowOpen();
 		if (m_receivedCommandPtr) {
 
 			if ((nullptr != m_nextStatePtr)
@@ -126,7 +123,6 @@ void c_BankStateActive::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 
 void c_BankStateActive::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
-//	std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
 
         SimTime_t l_time=x_cycle;
 
@@ -144,8 +140,6 @@ void c_BankStateActive::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 
 	m_receivedCommandPtr = nullptr;
 
-	//Todo: Why decrease the m_timer value by two?
-	//assert(m_bankParams->at("nCCD_L") > 2);
 
 	m_timer = m_bankParams->at("nCCD_L") - 2;
 

@@ -58,10 +58,7 @@ c_BankStateIdle::~c_BankStateIdle() {
 }
 
 // this function is called by the c_Bank that contains this state
-void c_BankStateIdle::handleCommand(c_BankInfo* x_bank,
-		c_BankCommand* x_bankCommandPtr,SimTime_t x_cycle) {
-	// std::cout << "Entered c_BankStateIdle::handleCommand() received command "
-	// 		<< std::endl;
+void c_BankStateIdle::handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr,SimTime_t x_cycle) {
 	SimTime_t l_time = x_cycle;
 
 	switch (x_bankCommandPtr->getCommandMnemonic()) {
@@ -101,36 +98,20 @@ void c_BankStateIdle::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 		if (1 == m_timer) {
 			if (m_prevCommandPtr) {
 				m_prevCommandPtr->setResponseReady();
-				//const unsigned l_cmdsLeft =
-				//		m_prevCommandPtr->getTransaction()->getWaitingCommands()
-				//				- 1;
-				//m_prevCommandPtr->getTransaction()->setWaitingCommands(
-				//		l_cmdsLeft);
-
-				//if (l_cmdsLeft == 0)
-				//	m_prevCommandPtr->getTransaction()->setResponseReady();
 
 			}
 		} else {
 			if (m_receivedCommandPtr) {
-			        //std::cout << "@@" << std::dec
-				//	  << l_time
-				//	  << ": now can process command response in IDLE state"
-				//	  << std::endl;
-
 				c_BankState* l_p = nullptr;
 				switch (m_receivedCommandPtr->getCommandMnemonic()) {
 				case e_BankCommandType::ACT:
 					l_p = new c_BankStateActivating(m_bankParams);
-//					x_bank->setLastCommandCycle(e_BankCommandType::ACT, l_time);
 					break;
 				case e_BankCommandType::REF:
 					l_p = new c_BankStateRefresh(m_bankParams);
-//					x_bank->setLastCommandCycle(e_BankCommandType::REF, l_time);
 					break;
 					case e_BankCommandType::PRE:
 						l_p = new c_BankStatePrecharge(m_bankParams);
-//					x_bank->setLastCommandCycle(e_BankCommandType::REF, l_time);
 						break;
 				default:
 				break;
@@ -182,7 +163,6 @@ void c_BankStateIdle::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 bool c_BankStateIdle::isCommandAllowed(c_BankCommand* x_cmdPtr,
 		c_BankInfo* x_bankPtr) {
 
-//	assert(x_cmdPtr->getCommandMnemonic()!=e_BankCommandType::PRE);
 // Cmd must be of an allowed type and BankState cannot already be processing another cmd
 	for (std::list<e_BankCommandType>::iterator l_iter =
 			m_allowedCommands.begin(); l_iter != m_allowedCommands.end();

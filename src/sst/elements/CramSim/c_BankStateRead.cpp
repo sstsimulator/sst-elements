@@ -50,7 +50,6 @@ using namespace SST::n_Bank;
 c_BankStateRead::c_BankStateRead(std::map<std::string, unsigned>* x_bankParams) :
 		m_receivedCommandPtr(nullptr) {
 
-	// std::cout << std::endl << __PRETTY_FUNCTION__ << std::endl;
 	m_currentState = e_BankState::READ;
 	m_bankParams = x_bankParams;
 }
@@ -65,7 +64,6 @@ void c_BankStateRead::handleCommand(c_BankInfo* x_bank,
 
 	SimTime_t l_time = x_cycle;
 
-//	std::cout << "@ " << l_time << __PRETTY_FUNCTION__ << std::endl;
 
 	if (nullptr == m_receivedCommandPtr) {
 		m_receivedCommandPtr = x_bankCommandPtr;
@@ -180,14 +178,6 @@ void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_prevCommandPtr = x_cmdPtr;
 	if (nullptr != m_prevCommandPtr) {
 		m_prevCommandPtr->setResponseReady();
-		//const unsigned l_cmdsLeft =
-		//		m_prevCommandPtr->getTransaction()->getWaitingCommands() - 1;
-		//m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
-		//if (l_cmdsLeft == 0)
-		//	m_prevCommandPtr->getTransaction()->setResponseReady();
-
-//		m_prevCommandPtr->print();
-//		std::cout << std::endl;
 
 		switch (m_prevCommandPtr->getCommandMnemonic()) {
 		case e_BankCommandType::WRITE:
@@ -213,14 +203,6 @@ void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_receivedCommandPtr = nullptr;
 
 	SimTime_t l_time = x_cycle;
-            // FIXME: add condition for modeling closed row or open row
-//
-//	m_timerExit = std::max(
-//			std::max(x_bank->getNextCommandCycle(e_BankCommandType::WRITEA),
-//					x_bank->getNextCommandCycle(e_BankCommandType::WRITEA)),
-//			l_time + m_bankParams->at("nCWL")
-//					+ m_bankParams->at("nBL") + m_bankParams->at("nWR") - 2)
-//			- l_time;
 
 	m_allowedCommands.clear();
 	m_allowedCommands.push_back(e_BankCommandType::READ);

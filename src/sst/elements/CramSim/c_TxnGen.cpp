@@ -207,7 +207,7 @@ void c_TxnGenBase::handleResEvent(SST::Event* ev) {
         s_txnsLatency->addData(l_latency);
 
 #ifdef __SST_DEBUG_OUTPUT__
-        output->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%x isRead:%d seqNum:%lld birthTime:%lld latency:%lld \n",l_currentCycle,l_txn->getAddress(),l_txn->isRead(), l_seqnum,m_outstandingReqs[l_seqnum],l_latency);
+        output->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%lx isRead:%d seqNum:%lld birthTime:%lld latency:%lld \n",l_currentCycle,l_txn->getAddress(),l_txn->isRead(), l_seqnum,m_outstandingReqs[l_seqnum],l_latency);
 #endif
 
 

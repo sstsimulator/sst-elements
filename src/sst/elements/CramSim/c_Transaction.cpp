@@ -42,8 +42,6 @@ c_Transaction::c_Transaction(ulong x_seqNum, e_TransactionType x_txnMnemonic,
 				false), m_numWaitingCommands(0), m_dataWidth(x_dataWidth), m_processed(
 				false) {
        
-//	m_txnToString[e_TransactionType::READ] = "READ";
-//	m_txnToString[e_TransactionType::WRITE] = "WRITE";
 	m_hasHashedAddr= false;
 
 }
@@ -85,11 +83,6 @@ bool c_Transaction::isResponseReady() {
 	return (m_isResponseReady);
 }
 
-//std::ostream& operator<< (std::ostream& x_stream, const c_Transaction& x_transaction)
-//{
-//  x_stream<<x_transaction.getTransactionString()<<", seqNum: "<<std::dec<<x_transaction.m_seqNum<<", address: "<<std::hex<<x_transaction.getAddress()<<std::dec<<", dataWidth = "<<x_transaction.m_dataWidth<<", m_numWaitingCommands = "<<std::dec<<x_transaction.m_numWaitingCommands<<", isProcessed = "<<std::boolalpha<<x_transaction.m_processed<<", isResponseReady = "<<std::boolalpha<<x_transaction.m_isResponseReady;
-//  return (x_stream);
-//}
 ulong c_Transaction::getSeqNum() const {
 	return (m_seqNum);
 }
@@ -129,7 +122,7 @@ void c_Transaction::print() const {
 
 
 void c_Transaction::print(SST::Output *x_output, const std::string x_prefix, SimTime_t x_cycle) const {
-	x_output->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %lld addr:0x%x CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
+	x_output->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %llu addr:0x%lx CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
 				  x_cycle,
 				  getTransactionString().c_str(),
 					m_seqNum,
@@ -157,10 +150,5 @@ void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
   ser & m_dataWidth;
   ser & m_processed;
 	ser & m_hasHashedAddr;
-	//ser & m_hashedAddr;
 
-  //std::cout << "Serializing Transaction " << this << " "; this->print();
-    
-  //ser & m_cmdPtrList;
-  //ser & m_cmdSeqNumList;
 }
