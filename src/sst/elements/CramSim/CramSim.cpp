@@ -309,7 +309,7 @@ static const ElementInfoStatistic c_DeviceDriver_stats[] = {
 
 /*----SETUP Controller Component STRUCTURES----*/
 static const ElementInfoParam c_Controller_params[] = {
-		{"AddrHasher", "address hasher", "CramSim.c_AddressHasher"},
+		{"AddrMapper", "address hasher", "CramSim.c_AddressHasher"},
 		{"TxnScheduler", "Transaction Scheduler", "CramSim.c_TxnScheduler"},
 		{"TxnConverter", "Transaction Converter", "CramSim.c_TxnConverter"},
 		{"CmdScheduler", "Command Scheduler", "CramSim.c_CmdScheduler"},

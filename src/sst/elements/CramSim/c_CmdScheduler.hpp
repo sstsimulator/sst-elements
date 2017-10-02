@@ -51,6 +51,7 @@ namespace SST{
 
 
         private:
+            enum e_SchedulingPolicy {BANK, RANK};
             typedef std::deque<c_BankCommand*> c_CmdQueue;
 
             c_Controller* m_owner;
@@ -62,8 +63,12 @@ namespace SST{
             Output* output;
             unsigned m_numBanks;
             unsigned m_numChannels;
+            unsigned m_numRanksPerChannel;
             unsigned m_numBanksPerChannel;
+            unsigned m_numBanksPerRank;
             unsigned k_numCmdQEntries;
+
+            enum e_SchedulingPolicy m_schedulingPolicy;
         };
     }
 }

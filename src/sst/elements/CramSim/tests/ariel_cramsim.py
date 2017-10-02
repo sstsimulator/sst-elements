@@ -48,7 +48,7 @@ def setup_config_params():
             "boolCmdQueueFindAnyIssuable":"""1""",
             "boolPrintCmdTrace":"""0""",
             "strAddressMapStr":"""_r_l_R_B_b_h_""",
-            "bankPolicy":"""0""",
+            "bankPolicy":"""CLOSE""",
             "nRC":"""55""",
             "nRRD":"""4""",
             "nRRD_L":"""6""",
@@ -251,7 +251,7 @@ def genMemHierarchy(cores):
    comp_controller0.addParams({
                         "verbose" : "0",
 			"TxnConverter" : "CramSim.c_TxnConverter",
-			"AddrHasher" : "CramSim.c_AddressHasher",
+			"AddrMapper" : "CramSim.c_AddressHasher",
 			"CmdScheduler" : "CramSim.c_CmdScheduler" ,
 			"DeviceController" : "CramSim.c_DeviceController"
 			})
