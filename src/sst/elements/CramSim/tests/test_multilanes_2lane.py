@@ -67,7 +67,7 @@ for chid in range(numLanes):
 	comp_controller.addParams({
 			"TxnScheduler" : "CramSim.c_TxnScheduler",
 			"TxnConverter" : "CramSim.c_TxnConverter",
-			"AddrHasher" : "CramSim.c_AddressHasher",
+			"AddrMapper" : "CramSim.c_AddressHasher",
 			"CmdScheduler" : "CramSim.c_CmdScheduler" ,
 			"DeviceDriver" : "CramSim.c_DeviceDriver"
 			})

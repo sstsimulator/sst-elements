@@ -245,7 +245,7 @@ def genMemHierarchy(cores):
    comp_controller0.addParams(g_params)
    comp_controller0.addParams({
 			"TxnConverter" : "CramSim.c_TxnConverter",
-			"AddrHasher" : "CramSim.c_AddressHasher",
+			"AddrMapper" : "CramSim.c_AddressHasher",
 			"CmdScheduler" : "CramSim.c_CmdScheduler" ,
 			"DeviceController" : "CramSim.c_DeviceController"
 			})
