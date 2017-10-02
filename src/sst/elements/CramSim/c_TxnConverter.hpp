@@ -89,6 +89,7 @@ private:
 	bool k_useReadA;
 	bool k_useWriteA;
 	int k_bankPolicy;
+	uint32_t k_bankCloseTime;
 
 
   	// Statistics

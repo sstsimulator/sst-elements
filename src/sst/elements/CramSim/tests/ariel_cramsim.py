@@ -48,7 +48,7 @@ def setup_config_params():
             "boolCmdQueueFindAnyIssuable":"""1""",
             "boolPrintCmdTrace":"""0""",
             "strAddressMapStr":"""_r_l_R_B_b_h_""",
-            "bankPolicy":"""0""",
+            "bankPolicy":"""CLOSE""",
             "nRC":"""55""",
             "nRRD":"""4""",
             "nRRD_L":"""6""",

@@ -80,13 +80,22 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) : S
 		exit(-1);
 	}
 
-	k_bankPolicy = (uint32_t) x_params.find<uint32_t>("bankPolicy", 0, l_found);
+	std::string l_bankPolicy = (std::string) x_params.find<std::string>("bankPolicy", "CLOSE", l_found);
 	if (!l_found) {
 		std::cout << "bankPolicy value is missing... exiting" << std::endl;
 		exit(-1);
 	}
+	if(l_bankPolicy=="CLOSE")
+		k_bankPolicy=0;
+	else if(l_bankPolicy=="OPEN")
+		k_bankPolicy=1;
+	else
+	{
+		std::cout << "TxnConverter: bank policy error!!\n";
+		exit(-1);
+	}
 
-	if ((k_bankPolicy == 1) && (k_useReadA || k_useWriteA)) {
+	if ((k_bankPolicy == 1 ) && (k_useReadA || k_useWriteA)) {
 		std::cout << "Open bank/row and READA or WRITEA makes no sense" << std::endl;
 		exit(-1);
 	}
@@ -98,7 +107,6 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) : S
 	s_totalTxnsRecvd = registerStatistic<uint64_t>("totalTxnsRecvd");
 	s_reqQueueSize = registerStatistic<uint64_t>("reqQueueSize");
 	s_resQueueSize = registerStatistic<uint64_t>("resQueueSize");
-
 
 }
 
@@ -196,8 +204,8 @@ void c_TxnConverter::getPreCommands(
 	{
 		x_commandVec.push_back(
 			new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::ACT, x_nAddr, l_hashedAddr));
-	}//open policy
-	else if(k_bankPolicy==1)
+	}//open policy or pseudo open
+	else if(k_bankPolicy==1 )
 	{
 		if(l_bankinfo->isRowOpen())
 		{
@@ -215,7 +223,9 @@ void c_TxnConverter::getPreCommands(
 			x_commandVec.push_back(
 					new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::ACT, x_nAddr, l_hashedAddr));
 		}
+
 	}
+
 }
 
 
@@ -225,6 +235,7 @@ void c_TxnConverter::getPostCommands(
 	const c_HashedAddress &l_hashedAddr = x_txn->getHashedAddress();
 	e_BankCommandType l_CmdType;
 	bool l_useAutoPRE=false;
+
 
 	if(k_bankPolicy==0) //close policy
 	{
@@ -258,7 +269,7 @@ void c_TxnConverter::getPostCommands(
 					new c_BankCommand(m_cmdSeqNum++, e_BankCommandType::PRE,
 									  x_nAddr, l_hashedAddr));
 
-	} else if(k_bankPolicy==1){		//open row policy
+	} else if(k_bankPolicy==1){		//open policy
 
 		if (e_TransactionType::READ == x_txn->getTransactionMnemonic())
 				l_CmdType=e_BankCommandType::READ;
@@ -267,6 +278,7 @@ void c_TxnConverter::getPostCommands(
 
 		x_commandVec.push_back(
 				new c_BankCommand(m_cmdSeqNum++, l_CmdType, x_nAddr, l_hashedAddr));
+
 
 	} else{
 		printf("bank policy error!!");
@@ -283,11 +295,12 @@ void c_TxnConverter::updateBankInfo(c_Transaction* x_txn)
 	if(k_bankPolicy==0)//close policy
 	{
 		m_bankInfo.at(l_bankid)->resetRowOpen();
-	} else if(k_bankPolicy==1) //open row policy
+	} else if(k_bankPolicy==1) //open policy
 	{
 		m_bankInfo.at(l_bankid)->setRowOpen();
 		m_bankInfo.at(l_bankid)->setOpenRowNum(l_row);
-	} else{
+	}
+	else{
 		printf("bank policy error!!");
 		exit(1);
 	}
