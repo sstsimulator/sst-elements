@@ -8,18 +8,24 @@ def read_arguments():
         boolDefaultConfig = True;
 
 	for arg in sys.argv:
-            if arg.find("--configfile=") != -1:
-		substrIndex = arg.find("=")+1
-		config_file = arg[substrIndex:]
-		print "Config file:", config_file
-		boolDefaultConfig = False;
+                if arg.find("--configfile=") != -1:
+                        substrIndex = arg.find("=")+1
+                        config_file = arg[substrIndex:]
+                        print "Config file:", config_file
+                        boolDefaultConfig = False;
 
-  	    elif arg != sys.argv[0]:
-                if arg.find("=") == -1:
-                    print "Malformed config override found!: ", arg
-                    exit(-1)
-                override_list.append(arg)
-                print "Override: ", override_list[-1]
+                elif arg.find("--traceFile=") != -1:  # just remove the -- argument signifier from the beginning
+                        substrIndex = arg.find("-")+2  
+                        override_list.append(arg[substrIndex:])
+                        print "Trace file:", arg[substrIndex:]
+                        
+                elif arg != sys.argv[0]:
+                        if arg.find("=") == -1:
+                                print "Malformed config override found!: ", arg
+                                exit(-1)
+                        override_list.append(arg)
+                        print "Override: ", override_list[-1]
+
 
 	
 	if boolDefaultConfig == True:
