@@ -36,7 +36,7 @@ my $seqLength = 30_000;
 my $mapFile = $ARGV[0];
 my $seqFile = $ARGV[1];
 
-my %mapKey = ('C' => 'chan', 'R' => 'rank', 'B' => 'bankGroup', 'b' => 'bank', 'r' => 'row', 'l' => 'col', 'h' => 'cacheLine');
+my %mapKey = ('C' => 'chan', 'c' => 'pChan', 'R' => 'rank', 'B' => 'bankGroup', 'b' => 'bank', 'r' => 'row', 'l' => 'col', 'h' => 'cacheLine');
 
 open(MAP,$mapFile) || die "Couldn't open address map file $mapFile: $!";
 
@@ -98,7 +98,7 @@ while(my $line = <SEQ>) {
 	    shift(@grep);
 	}
 
-	my @fileStructOrder = ('chan', 'rank', 'bankGroup', 'bank', 'row', 'col', 'cacheLine');
+	my @fileStructOrder = ('pChan', 'chan', 'rank', 'bankGroup', 'bank', 'row', 'col', 'cacheLine');
 
 	foreach my $curStruct (@fileStructOrder) {
 	    $pat = shift(@grep);

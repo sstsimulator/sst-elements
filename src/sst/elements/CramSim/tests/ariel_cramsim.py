@@ -1,100 +1,65 @@
-import sst 
+import sst
+import sys
+import time
 import os
 
-
+#######################################################################################################
 def read_arguments():
-    boolUseDefaultConfig = True
-#    config_file = getcwd()+"/ddr4_verimem.cfg"
-"""
-    for arg in sys.argv:
-        if arg.find("--configfile=") != -1:
-            substrIndex = arg.find("=")+1
-            config_file = arg[substrIndex:]
-            boolUseDefaultConfig = False
-            print "Config file:", config_file
-    return [boolUseDefaultConfig, config_file]
-"""
-def setup_config_params():
-    l_params = {}
-    if g_boolUseDefaultConfig:
-        print "Config file not found... using default configuration"
-        l_params = {
-            "clockCycle": "1ns",
-            "stopAtCycle": "10us",
-            "numTxnGenReqQEntries":"""50""",
-            "numTxnGenResQEntries":"""50""",
-            "numTxnUnitReqQEntries":"""50""",
-            "numTxnUnitResQEntries":"""50""",
-            "numCmdReqQEntries":"""400""",
-            "numCmdResQEntries":"""400""",
-            "numChannelsPerDimm":"""1""",
-            "numRanksPerChannel":"""2""",
-            "numBankGroupsPerRank":"""2""",
-            "numBanksPerBankGroup":"""2""",
-            "numRowsPerBank":"""32768""",
-            "numColsPerBank":"""2048""",
-            "numBytesPerTransaction":"""32""",
-            "relCommandWidth":"""1""",
-            "readWriteRatio":"""1""",
-            "boolUseReadA":"""0""",
-            "boolUseWriteA":"""0""",
-            "boolUseRefresh":"""0""",
-            "boolAllocateCmdResACT":"""0""",
-            "boolAllocateCmdResREAD":"""1""",
-            "boolAllocateCmdResREADA":"""1""",
-            "boolAllocateCmdResWRITE":"""1""",
-            "boolAllocateCmdResWRITEA":"""1""",
-            "boolAllocateCmdResPRE":"""0""",
-            "boolCmdQueueFindAnyIssuable":"""1""",
-            "boolPrintCmdTrace":"""0""",
-            "strAddressMapStr":"""_r_l_R_B_b_h_""",
-            "bankPolicy":"""0""",
-            "nRC":"""55""",
-            "nRRD":"""4""",
-            "nRRD_L":"""6""",
-            "nRRD_S":"""4""",
-            "nRCD":"""16""",
-            "nCCD":"""4""",
-            "nCCD_L":"""6""",
-            "nCCD_L_WR":"""1""",
-            "nCCD_S":"""4""",
-            "nAL":"""15""",
-            "nCL":"""16""",
-            "nCWL":"""12""",
-            "nWR":"""18""",
-            "nWTR":"""3""",
-            "nWTR_L":"""9""",
-            "nWTR_S":"""3""",
-            "nRTW":"""4""",
-            "nEWTR":"""6""",
-            "nERTW":"""6""",
-            "nEWTW":"""6""",
-            "nERTR":"""6""",
-            "nRAS":"""39""",
-            "nRTP":"""9""",
-            "nRP":"""16""",
-            "nRFC":"""420""",
-            "nREFI":"""9360""",
-            "nFAW":"""16""",
-            "nBL":"""4"""
-        }
-    else:
-        l_configFile = open(g_config_file, 'r')
-        for l_line in l_configFile:
-            l_tokens = l_line.split(' ')
-            #print l_tokens[0], ": ", l_tokens[1]
-            l_params[l_tokens[0]] = l_tokens[1]
+	config_file = list()
+        override_list = list()
+        boolDefaultConfig = True;
 
+	for arg in sys.argv:
+            if arg.find("--configfile=") != -1:
+		substrIndex = arg.find("=")+1
+		config_file = arg[substrIndex:]
+		print "Config file:", config_file
+		boolDefaultConfig = False;
+
+  	    elif arg != sys.argv[0]:
+                if arg.find("=") == -1:
+                    print "Malformed config override found!: ", arg
+                    exit(-1)
+                override_list.append(arg)
+                print "Override: ", override_list[-1]
+
+	
+	if boolDefaultConfig == True:
+		config_file = "../ddr4_verimem.cfg"
+		print "config file is not specified.. using ddr4_verimem.cfg"
+
+	return [config_file, override_list]
+
+
+
+def setup_config_params(config_file, override_list):
+    l_params = {}
+    l_configFile = open(config_file, 'r')
+    for l_line in l_configFile:
+        l_tokens = l_line.split()
+         #print l_tokens[0], ": ", l_tokens[1]
+        l_params[l_tokens[0]] = l_tokens[1]
+
+    for override in override_list:
+        l_tokens = override.split("=")
+        print "Override cfg", l_tokens[0], l_tokens[1]
+        l_params[l_tokens[0]] = l_tokens[1]
+     
     return l_params
 
+#######################################################################################################
+
+
+
 # Command line arguments
-g_boolUseDefaultConfig = True
-#g_config_file = ""
+g_boolUseDefaultConfig = False
+g_config_file = "../ddr4.cfg"
+g_override_list = ""
 
 # Setup global parameters
 #[g_boolUseDefaultConfig, g_config_file] = read_arguments()
-g_params = setup_config_params()
-
+[g_config_file, g_overrided_list] = read_arguments()
+g_params = setup_config_params(g_config_file, g_overrided_list)
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
@@ -104,8 +69,8 @@ sst.setProgramOption("timebase", "1ps")
 
 
 ## Flags
-memDebug = 0
-memDebugLevel = 10
+memDebug = 1
+memDebugLevel = 1
 coherenceProtocol = "MESI"
 rplPolicy = "lru"
 busLat = "50 ps"
@@ -113,7 +78,7 @@ cacheFrequency = "2 Ghz"
 defaultLevel = 0
 cacheLineSize = 64
 
-corecount = 8
+corecount = 1
 
 ## Application Info
 os.environ['SIM_DESC'] = 'EIGHT_CORES'
@@ -139,7 +104,7 @@ sst_root = os.getenv( "SST_ROOT" )
 ariel = sst.Component("A0", "ariel.ariel")
 ## ariel.addParams(AppArgs)
 ariel.addParams({
-   "verbose"             : "0",
+   "verbose"             : "1",
    "maxcorequeue"        : "256",
    "maxissuepercycle"    : "2",
    "pipetimeout"         : "0",
@@ -170,6 +135,8 @@ def genMemHierarchy(cores):
       "backend" : "memHierarchy.cramsim",
       "backend.access_time" : "2 ns",   # Phy latency
       "backend.mem_size" : "512MiB",
+      "backend.max_outstanding_requests" : 256,
+	"backend.verbose" : 1,
        "request_width"         : cacheLineSize
    })
 
@@ -233,76 +200,52 @@ def genMemHierarchy(cores):
    BusL3Link.connect((membus, "low_network_0", busLat), (l3, "high_network_0", busLat))
    L3MemCtrlLink = sst.Link("L3MemCtrl")
    L3MemCtrlLink.connect((l3, "low_network_0", busLat), (memory, "direct_link", busLat))
-   # address hasher
-   comp_addressHasher = sst.Component("AddrHash0", "CramSim.c_AddressHasher")
-   comp_addressHasher.addParams(g_params)
-
-
 
     # txn gen --> memHierarchy Bridge
    comp_memhBridge = sst.Component("memh_bridge", "CramSim.c_MemhBridge")
    comp_memhBridge.addParams(g_params);
+   comp_memhBridge.addParams({
+                        "verbose" : "0",
+                        "numTxnPerCycle" : g_params["numChannels"],
+                        "strTxnTraceFile" : "arielTrace",
+                        "boolPrintTxnTrace" : "1"
+                        })
+   # controller
+   comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
+   comp_controller0.addParams(g_params)
+   comp_controller0.addParams({
+                        "verbose" : "0",
+			"TxnConverter" : "CramSim.c_TxnConverter",
+			"AddrMapper" : "CramSim.c_AddressHasher",
+			"CmdScheduler" : "CramSim.c_CmdScheduler" ,
+			"DeviceController" : "CramSim.c_DeviceController"
+			})
 
-   # txn unit
-   comp_txnUnit0 = sst.Component("TxnUnit0", "CramSim.c_TxnUnit")
-   comp_txnUnit0.addParams(g_params)
 
-   # cmd unit
-   comp_cmdUnit0 = sst.Component("CmdUnit0", "CramSim.c_CmdUnit")
-   comp_cmdUnit0.addParams(g_params)
-
-   # bank receiver
+		# bank receiver
    comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
    comp_dimm0.addParams(g_params)
 
+
    link_dir_cramsim_link = sst.Link("link_dir_cramsim_link")
-   link_dir_cramsim_link.connect( (memory, "cube_link", "2ns"), (comp_memhBridge, "linkCPU", "2ns") )
+   link_dir_cramsim_link.connect( (memory, "cube_link", "2ns"), (comp_memhBridge, "cpuLink", "2ns") )
 
-   txnReqLink_0 = sst.Link("txnReqLink_0")
-   txnReqLink_0.connect( (comp_memhBridge, "outTxnGenReqPtr", g_params["clockCycle"]), (comp_txnUnit0, "inTxnGenReqPtr", g_params["clockCycle"]) )
+   # memhBridge(=TxnGen) <-> Memory Controller 
+   memHLink = sst.Link("memHLink_1")
+   memHLink.connect( (comp_memhBridge, "memLink", g_params["clockCycle"]), (comp_controller0, "txngenLink", g_params["clockCycle"]) )
 
-   # memhBridge(=TxnGen) <- TxnUnit (Req)(Token)
-   txnTokenLink_0 = sst.Link("txnTokenLink_0")
-   txnTokenLink_0.connect( (comp_memhBridge, "inTxnUnitReqQTokenChg", g_params["clockCycle"]), (comp_txnUnit0, "outTxnGenReqQTokenChg", g_params["clockCycle"]) )
-
-    # memhBridge(=TxnGen) <- TxnUnit (Res)(Txn)
-   txnResLink_0 = sst.Link("txnResLink_0")
-   txnResLink_0.connect( (comp_memhBridge, "inTxnUnitResPtr", g_params["clockCycle"]), (comp_txnUnit0, "outTxnGenResPtr", g_params["clockCycle"]) )
-
-   # memhBridge(=TxnGen) -> TxnUnit (Res)(Token)
-   txnTokenLink_1 = sst.Link("txnTokenLink_1")
-   txnTokenLink_1.connect( (comp_memhBridge, "outTxnGenResQTokenChg", g_params["clockCycle"]), (comp_txnUnit0, "inTxnGenResQTokenChg", g_params["clockCycle"]) )
+   # Controller <-> Dimm
+   cmdLink = sst.Link("cmdLink_1")
+   cmdLink.connect( (comp_controller0, "memLink", g_params["clockCycle"]), (comp_dimm0, "ctrlLink", g_params["clockCycle"]) )
 
 
-
-   # TXNUNIT / CMDUNIT LINKS
-   # TxnUnit -> CmdUnit (Req) (Cmd)
-   cmdReqLink_0 = sst.Link("cmdReqLink_0")
-   cmdReqLink_0.connect( (comp_txnUnit0, "outCmdUnitReqPtrPkg", g_params["clockCycle"]), (comp_cmdUnit0, "inTxnUnitReqPtr", g_params["clockCycle"]) )
-
-   # TxnUnit <- CmdUnit (Req) (Token)
-   cmdTokenLink_0 = sst.Link("cmdTokenLink_0")
-   cmdTokenLink_0.connect( (comp_txnUnit0, "inCmdUnitReqQTokenChg", g_params["clockCycle"]), (comp_cmdUnit0, "outTxnUnitReqQTokenChg", g_params["clockCycle"]) )
-
-    # TxnUnit <- CmdUnit (Res) (Cmd)
-   cmdResLink_0 = sst.Link("cmdResLink_0")
-   cmdResLink_0.connect( (comp_txnUnit0, "inCmdUnitResPtr", g_params["clockCycle"]), (comp_cmdUnit0, "outTxnUnitResPtr", g_params["clockCycle"]) )
+   comp_controller0.enableAllStatistics()
+   comp_memhBridge.enableAllStatistics()
+   comp_dimm0.enableAllStatistics()
 
 
-
-
-    # CMDUNIT / DIMM LINKS
-    # CmdUnit -> Dimm (Req) (Cmd)
-   cmdReqLink_1 = sst.Link("cmdReqLink_1")
-   cmdReqLink_1.connect( (comp_cmdUnit0, "outBankReqPtr", g_params["clockCycle"]), (comp_dimm0, "inCmdUnitReqPtr", g_params["clockCycle"]) )
-
-    # CmdUnit <- Dimm (Res) (Cmd)
-   cmdResLink_1 = sst.Link("cmdResLink_1")
-   cmdResLink_1.connect( (comp_cmdUnit0, "inBankResPtr", g_params["clockCycle"]), (comp_dimm0, "outCmdUnitResPtr", g_params["clockCycle"]) )
-
-
-
-
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
 
 genMemHierarchy(corecount)        
 

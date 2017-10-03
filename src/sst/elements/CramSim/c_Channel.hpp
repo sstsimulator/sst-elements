@@ -63,21 +63,25 @@ public:
 	}
 
 	c_Channel(std::map<std::string, unsigned>* x_bankParams);
+	c_Channel(std::map<std::string, unsigned>* x_bankParams, unsigned x_chId);
+
 	virtual ~c_Channel();
 
 	void acceptRank(c_Rank* x_rankPtr);
 
 	unsigned getNumBanks() const;
 	unsigned getNumRanks() const;
+	unsigned getChannelId() const;
 
 	std::vector<c_BankInfo*> getBankPtrs() const;
 
 	void updateOtherBanksNextCommandCycles(c_Rank* x_initRankPtr,
-			c_BankCommand* x_cmdPtr);
+			c_BankCommand* x_cmdPtr, SimTime_t x_cycle);
 
 private:
 	std::vector<c_Rank*> m_rankPtrs;
 	std::map<std::string, unsigned>* m_bankParams;
+	unsigned m_chId;
 
 };
 

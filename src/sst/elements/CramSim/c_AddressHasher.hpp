@@ -33,6 +33,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
+#include <sst/core/subcomponent.h>
 
 #include <memory>
 #include <map>
@@ -40,46 +41,59 @@
 // local includes
 //#include "c_BankCommand.hpp"
 #include "c_HashedAddress.hpp"
+#include "c_Controller.hpp"
+
 
 //<! This class holds information about global simulation state
 //<! any object in the simulator can access this class
 
 typedef unsigned long ulong;
+namespace SST {
+    namespace n_Bank {
+        class c_Controller;
 
-class c_AddressHasher: public SST::Component {
+        class c_AddressHasher : public SubComponent {
 
-public:
-  // Below is for calling in generic locations to obtain a pointer to the singleton instance
-  c_AddressHasher(SST::ComponentId_t x_id, SST::Params& x_params);
-  static c_AddressHasher* getInstance(); 
-  static c_AddressHasher* getInstance(SST::Params& x_params); // This reads the parameters and constructs the hash function
+        public:
+            // Below is for calling in generic locations to obtain a pointer to the singleton instance
+            c_AddressHasher(Component *comp, Params &params);
 
-  void fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address);
-  ulong getAddressForBankId(const unsigned x_bankId);
+            static c_AddressHasher *getInstance();
 
-private:
-  static c_AddressHasher* m_instance; //<! shared_ptr to instance of this class
+            static c_AddressHasher *
+            getInstance(Params &x_params); // This reads the parameters and constructs the hash function
 
-  c_AddressHasher()=delete;
-  c_AddressHasher(const c_AddressHasher&)=delete;
-  void operator=(const c_AddressHasher&)=delete;
+            void fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address);
 
-  c_AddressHasher(SST::Params& x_params);
+        private:
 
-  unsigned k_pNumChannels;
-  unsigned k_pNumRanks;
-  unsigned k_pNumBankGroups;
-  unsigned k_pNumBanks;
-  unsigned k_pNumRows;
-  unsigned k_pNumCols;
-  unsigned k_pBurstSize;
+            c_AddressHasher() = delete;
 
-  std::string k_addressMapStr = "rlbRBh";
-  std::map<std::string, std::vector<uint> > m_bitPositions;
-  std::map<std::string, uint> m_structureSizes;  // Used for checking that params agree
+            c_AddressHasher(const c_AddressHasher &) = delete;
 
-  // regex replacement stuff
-  void parsePattern(std::string *x_inStr, std::pair<std::string,uint> *x_outPair);
-};
+            void operator=(const c_AddressHasher &)= delete;
+
+            c_AddressHasher(Params &x_params);
+            ulong getAddressForBankId(const unsigned x_bankId);
+
+            c_Controller* m_owner;
+            unsigned k_pNumChannels;
+            unsigned k_pNumRanks;
+            unsigned k_pNumBankGroups;
+            unsigned k_pNumBanks;
+            unsigned k_pNumRows;
+            unsigned k_pNumCols;
+            unsigned k_pBurstSize;
+            unsigned k_pNumPseudoChannels;
+
+            std::string k_addressMapStr = "rlbRBh";
+            std::map<std::string, std::vector<uint> > m_bitPositions;
+            std::map<std::string, uint> m_structureSizes;  // Used for checking that params agree
+
+            // regex replacement stuff
+            void parsePattern(std::string *x_inStr, std::pair<std::string, uint> *x_outPair);
+        };
+    }
+}
 
 #endif // c_ADDRESSHASHER_HPP

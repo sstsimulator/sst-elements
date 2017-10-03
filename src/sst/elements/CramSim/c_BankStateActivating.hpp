@@ -38,7 +38,6 @@
 
 #include "c_BankState.hpp"
 #include "c_BankCommand.hpp"
-// #include "c_BankStateActive.hpp"
 
 
 namespace SST {
@@ -53,12 +52,12 @@ public:
 	c_BankStateActivating(std::map<std::string, unsigned>* x_bankParams);
 	~c_BankStateActivating();
 
-	virtual void handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr);
+	virtual void handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle);
 
-	virtual void clockTic(c_BankInfo* x_bank);
+	virtual void clockTic(c_BankInfo* x_bank, SimTime_t x_cycle);
 
 	virtual void enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-			c_BankCommand* x_cmdPtr);
+			c_BankCommand* x_cmdPtr, SimTime_t x_cycle);
 	virtual std::list<e_BankCommandType> getAllowedCommands();
 
 	virtual bool isCommandAllowed(c_BankCommand* x_cmdPtr,

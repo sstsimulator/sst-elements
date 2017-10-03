@@ -29,37 +29,37 @@ CramSimMemory::CramSimMemory(Component *comp, Params &params) : SimpleMemBackend
     cramsim_link = comp->configureLink( "cube_link", access_time,
             new Event::Handler<CramSimMemory>(this, &CramSimMemory::handleCramsimEvent));
 
-    output->init("CramSimMemory[@p:@l]: ", 10, 0, Output::STDOUT);
+    m_maxNumOutstandingReqs = params.find<int>("max_outstanding_requests",256);
+    output= new Output("CramSimMemory[@p:@l]: ", 1, 0, Output::STDOUT);
+
 }
 
 
-//bool DRAMSimMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned ){
 
 bool CramSimMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes ){
-#ifdef __SST_DEBUG_OUTPUT__
-    output->debug(_L10_, "Issued transaction to Cube Chain for address %" PRIx64 "\n", (Addr)addr);
-#endif
-    // TODO:  FIX THIS:  ugly hardcoded limit on outstanding requests
-    if (dramReqs.size() > 255) {
+
+    if(memReqs.size()>=m_maxNumOutstandingReqs) {
+        output->verbose(CALL_INFO, 1, 0, "the number of outstanding requests reaches to max %d\n",
+                        m_maxNumOutstandingReqs);
         return false;
     }
 
-    if (dramReqs.find(reqId) != dramReqs.end())
+    if (memReqs.find(reqId) != memReqs.end())
         output->fatal(CALL_INFO, -1, "Assertion failed");
 
-    dramReqs.insert( reqId );
+    memReqs.insert( reqId );
     cramsim_link->send( new CramSim::MemReqEvent(reqId,addr,isWrite,numBytes,0) );
     return true;
 }
 
 
 void CramSimMemory::handleCramsimEvent(SST::Event *event){
-    //TODO: Implement a handler for respense event from CramSim
+
     CramSim::MemRespEvent *ev = dynamic_cast<CramSim::MemRespEvent*>(event);
 
     if (ev) {
-        if ( dramReqs.find( ev->getReqId() ) != dramReqs.end() ) {
-            dramReqs.erase( ev->getReqId() );
+        if ( memReqs.find( ev->getReqId() ) != memReqs.end() ) {
+            memReqs.erase( ev->getReqId() );
             handleMemResponse( ev->getReqId());
       		delete event;
         } else {  

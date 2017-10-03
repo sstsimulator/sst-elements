@@ -1,0 +1,117 @@
+diff --git a/log b/log
+index b32d2d2..e69de29 100644
+--- a/log
++++ b/log
+@@ -1,51 +0,0 @@
+-diff --git a/src/sst/elements/CramSim/c_Bank.cpp b/src/sst/elements/CramSim/c_Bank.cpp
+-index 2bc0e81..6b0d5f4 100644
+---- a/src/sst/elements/CramSim/c_Bank.cpp
+-+++ b/src/sst/elements/CramSim/c_Bank.cpp
+-@@ -269,6 +269,7 @@ c_Bank::c_Bank(SST::Params& x_params,unsigned x_bankId) {
+- 	//k_banks++;
+- 	m_bankNum = x_bankId;
+- 
+-+        m_prevOpenRow = 0;
+- 
+- 	m_ACTCmdsReceived = 0;
+- 	m_READCmdsReceived = 0;
+-@@ -309,7 +310,9 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
+- 
+- 		m_cmd = x_bankCommandPtr;
+- 
+--		switch (x_bankCommandPtr->getCommandMnemonic()){
+-+                unsigned l_row = m_cmd->getHashedAddress()->getRow();
+-+		
+-+                switch (x_bankCommandPtr->getCommandMnemonic()){
+- 			case e_BankCommandType::ACT:
+- 				m_ACTCmdsReceived++;
+- 				m_bankStats->s_bankACTsRecvd->addData(1);
+-@@ -318,11 +321,27 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
+- 			case e_BankCommandType::READA:
+- 				m_READCmdsReceived++;
+- 				m_bankStats->s_bankREADsRecvd->addData(1);
+-+                                std::cout<<m_prevOpenRow<<" "<<l_row<<std::endl;
+-+                                if(m_prevOpenRow == l_row)
+-+                                {
+-+                                    m_bankStats->s_bankRowHits->addData(1);
+-+                                    m_bankStats->s_totalRowHits->addData(1);
+-+                                }
+-+                                else
+-+                                    m_prevOpenRow = m_cmd->getHashedAddress()->getRow();
+- 				break;
+- 			case e_BankCommandType::WRITE:
+- 			case e_BankCommandType::WRITEA:
+- 				m_WRITECmdsReceived++;
+- 				m_bankStats->s_bankWRITEsRecvd->addData(1);
+-+                                
+-+                                if(m_prevOpenRow == l_row)
+-+                                {
+-+                                    m_bankStats->s_bankRowHits->addData(1);
+-+                                    m_bankStats->s_totalRowHits->addData(1);
+-+                                }else
+-+                                    m_prevOpenRow = m_cmd->getHashedAddress()->getRow();
+-+	
+- 				break;
+- 			case e_BankCommandType::PRE:
+- 				m_PRECmdsReceived++;
+diff --git a/src/sst/elements/CramSim/c_Bank.cpp b/src/sst/elements/CramSim/c_Bank.cpp
+index 9ef61e9..51b4193 100644
+--- a/src/sst/elements/CramSim/c_Bank.cpp
++++ b/src/sst/elements/CramSim/c_Bank.cpp
+@@ -346,6 +346,7 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
+ 			case e_BankCommandType::PRE:
+ 				m_PRECmdsReceived++;
+ 				m_bankStats->s_bankPREsRecvd->addData(1);
++                                m_prevOpenRow=-1;
+ 				break;
+ 			case e_BankCommandType::REF:
+ 				break;
+diff --git a/src/sst/elements/CramSim/c_MemhBridge.cpp b/src/sst/elements/CramSim/c_MemhBridge.cpp
+index 30710d2..5ea1753 100644
+--- a/src/sst/elements/CramSim/c_MemhBridge.cpp
++++ b/src/sst/elements/CramSim/c_MemhBridge.cpp
+@@ -82,7 +82,7 @@ c_MemhBridge::~c_MemhBridge() {
+ 
+ 
+ void c_MemhBridge::createTxn() {
+-	    
++   
+     uint64_t l_cycle = Simulation::getSimulation()->getCurrentSimCycle();
+     
+     SST::Event* e = 0;
+@@ -125,7 +125,8 @@ void c_MemhBridge::readResponse() {
+ 
+ void c_MemhBridge::printTxn(bool x_isWrite, uint64_t x_addr){
+     std::string l_txnType;
+-    
++
++    uint64_t l_currentCycle = Simulation::getSimulation()->getCurrentSimCycle();
+     if(x_isWrite)
+         l_txnType="P_MEM_WR";
+     else
+@@ -133,7 +134,7 @@ void c_MemhBridge::printTxn(bool x_isWrite, uint64_t x_addr){
+ 
+     (*m_txnTraceStream) << "0x" << std::hex <<x_addr
+                         << " " <<l_txnType
+-                        << " " << "0"
++                        << " " << std::dec<<l_currentCycle
+                         <<std::endl;
+ 		
+ }
+diff --git a/src/sst/elements/CramSim/c_TraceReader.cpp b/src/sst/elements/CramSim/c_TraceReader.cpp
+index 1e1cc94..d5137c9 100644
+--- a/src/sst/elements/CramSim/c_TraceReader.cpp
++++ b/src/sst/elements/CramSim/c_TraceReader.cpp
+@@ -109,8 +109,11 @@ void c_TraceReader::createTxn()
+             m_txnReqQ.push_back(l_entry);
+ 
+         } else {
++            
++            primaryComponentOKToEndSim();
++            std::cout << "TxnGen:: Ran out of txn's to read" << std::endl;
++
+             break;
+-            //  std::cout << "TxnGen:: Ran out of txn's to read" << std::endl;
+         }
+     }
+ }

@@ -1,0 +1,6 @@
+# this is the master sequence file
+# Order is
+# Pseudo Channel rank bankgroup bank row col cacheline
+#c C R B b r l h 
+. 1 . 2 1 . . .
+1 . . 2 1 . . .

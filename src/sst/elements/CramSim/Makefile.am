@@ -9,38 +9,24 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libCramSim.la
 libCramSim_la_SOURCES = \
 	CramSim.cpp \
-	c_TxnGenSeq.hpp \
-	c_TxnGenSeq.cpp \
-	c_TxnGenRand.hpp \
-	c_TxnGenRand.cpp \
-	c_TracefileReader.hpp \
-	c_TracefileReader.cpp \
-	c_DramSimTraceReader.hpp \
-	c_DramSimTraceReader.cpp \
-	c_USimmTraceReader.hpp \
-	c_USimmTraceReader.cpp \
-	c_TxnDriver.hpp \
-	c_TxnDriver.cpp \
-	c_TxnUnit.hpp \
-	c_TxnUnit.cpp \
-	c_CmdDriver.hpp \
-	c_CmdDriver.cpp \
-	c_CmdUnit.hpp \
-	c_CmdUnit.cpp \
-	c_BankReceiver.hpp \
-	c_BankReceiver.cpp \
+	c_TraceFileReader.hpp \
+	c_TraceFileReader.cpp \
 	c_Dimm.hpp \
 	c_Dimm.cpp \
 	c_Bank.hpp \
 	c_Bank.cpp \
+	c_TxnConverter.hpp \
+	c_TxnConverter.cpp \
 	c_Transaction.hpp \
 	c_Transaction.cpp \
-	c_TransactionToCommands.hpp \
-	c_TransactionToCommands.cpp \
 	c_AddressHasher.hpp \
 	c_AddressHasher.cpp \
 	c_HashedAddress.hpp \
 	c_HashedAddress.cpp \
+	c_DeviceDriver.hpp \
+	c_DeviceDriver.cpp \
+	c_Controller.cpp \
+	c_Controller.hpp \
 	c_BankCommand.hpp \
 	c_BankCommand.cpp \
 	c_BankState.hpp \
@@ -78,6 +64,14 @@ libCramSim_la_SOURCES = \
 	c_CmdResEvent.hpp \
 	c_MemhBridge.hpp \
 	c_MemhBridge.cpp \
+	c_TxnScheduler.cpp \
+	c_TxnScheduler.hpp \
+	c_CmdScheduler.cpp \
+	c_CmdScheduler.hpp \
+	c_TxnDispatcher.hpp \
+	c_TxnDispatcher.cpp \
+	c_TxnGen.hpp \
+	c_TxnGen.cpp \
 	memReqEvent.hpp 
 
 EXTRA_DIST = \
