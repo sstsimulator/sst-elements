@@ -613,7 +613,6 @@ bool GOBLINHMCSimBackend::issueMappedRequest(ReqId reqId, Addr addr, bool isWrit
   if( (flags & MemEvent::F_NORESPONSE) > 0 ){
     Src = SRC_POSTED;
   }
-  // TODO: handle SRC_CUSTOM requests
 
   // Step 2: walk the CmdMapping table and look for a mapping
   HMCSimCmdMap *MapCmd = NULL;
@@ -714,6 +713,12 @@ bool GOBLINHMCSimBackend::issueMappedRequest(ReqId reqId, Addr addr, bool isWrit
   return true;
 }
 
+bool GOBLINHMCSimBackend::issueCustomRequest(ReqId reqId, Addr addr, uint32_t cmd,
+                                            std::vector<uint64_t> ins, uint32_t flags,
+                                            unsigned numBytes) {
+  // TODO: currently a placeholder
+  return true;
+}
 bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite,
                                        std::vector<uint64_t> ins, uint32_t flags,
                                        unsigned numBytes) {

@@ -30,8 +30,10 @@ namespace MemHierarchy {
 class CustomCmdInfo {
 public:
     CustomCmdInfo() { }
-    CustomCmdInfo(SST::Event::id_type id, std::string rqstr) : id(id), rqstr(rqstr){ }
-    CustomCmdInfo(SST::Event::id_type id, std::string rqstr, uint32_t flags = 0 ) : id(id), rqstr(rqstr), flags(flags) { }
+    CustomCmdInfo(SST::Event::id_type id, std::string rqstr, Addr addr) :
+      id(id), rqstr(rqstr), baseAddr(addr) { }
+    CustomCmdInfo(SST::Event::id_type id, std::string rqstr, Addr addr, uint32_t flags = 0 ) :
+      id(id), rqstr(rqstr), flags(flags), baseAddr(addr) { }
 
     virtual std::string getString() { /* For debug */
         std::ostringstream idstring;
@@ -55,9 +57,13 @@ public:
     std::string getRqstr() { return rqstr; }
     void setRqstr(std::string rq) { rqstr = rq; }
 
+    void setAddr(Addr A) { baseAddr = A; }
+    Addr queryAddr() { return baseAddr; }
+
 protected:
     SST::Event::id_type id; /* MemBackendConvertor needs ID for returning a response */
     uint32_t flags;
+    Addr baseAddr;
     std::string rqstr;
 };
 
@@ -112,7 +118,7 @@ public:
     /* The memController will call ready when the event is ready to issue.
      * Events are ready immediately (back-to-back receive() and ready()) unless
      * the event needs to stall for some coherence action.
-     * The handler should return a CustomCmdReq* which will be sent to the memBackendConvertor. 
+     * The handler should return a CustomCmdInfo* which will be sent to the memBackendConvertor. 
      * The memBackendConvertor will then issue the unmodified CustomCmdReq* to the backend.
      * CustomCmdReq is intended as a base class for custom commands to define as needed.
      */
