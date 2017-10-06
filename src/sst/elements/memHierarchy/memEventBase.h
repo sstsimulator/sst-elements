@@ -81,7 +81,7 @@ public:
 
     /** @return  Unique ID of this MemEvent */
     id_type getID(void) const { return eventID_; }
-    
+
     /** @return  Unique ID of the MemEvent that this is a response to */
     id_type getResponseToID(void) const { return responseToID_; }
 
@@ -202,6 +202,13 @@ public:
         return new MemEventBase(*this);
     }
 
+    /** Sets the custom command opcode */
+    void setCustomOpc(uint32_t Opc) { custOpc_ = Opc; }
+    /** Returns the custom command opcode */
+    uint32_t getCustomOpc(void) { return custOpc_; }
+    /** Returns true if the event includes a custom command */
+    bool isCustomCmd() { return cmd_ == Command::CustomReq; }
+
 protected:
     id_type         eventID_;           // Unique ID for this event
     id_type         responseToID_;      // For responses, holds the ID to which this event matches
@@ -211,6 +218,7 @@ protected:
     Command         cmd_;               // Command
     uint32_t        flags_;
     uint32_t        memFlags_;
+    uint32_t        custOpc_;           // Custom opcode
 
     MemEventBase() {} // For serialization only
 

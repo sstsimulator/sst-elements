@@ -95,7 +95,7 @@ void CoherentMemController::processInitEvent(MemEventInit* me) {
  */
 bool CoherentMemController::clock(Cycle_t cycle) {
     timestamp_++;
-    
+
     bool debug = false;
     while (!msgQueue_.empty() && msgQueue_.begin()->first < timestamp_) {
         MemEventBase * sendEv = msgQueue_.begin()->second;
@@ -229,10 +229,10 @@ void CoherentMemController::handleReplacement(MemEvent * ev) {
     }
 
     ev->setFlag(MemEventBase::F_NORESPONSE);
-    
+
     outstandingEventList_.insert(std::make_pair(ev->getID(), OutstandingEvent(ev, ev->getBaseAddr())));
     notifyListeners(ev);
-    
+
     if (mshr_.find(ev->getBaseAddr()) == mshr_.end()) {
         mshr_.insert(std::make_pair(ev->getBaseAddr(), std::list<MSHREntry>(1, MSHREntry(ev->getID(), ev->getCmd()))));
         cacheStatus_.at(ev->getBaseAddr()/lineSize_) = directory_;
@@ -255,7 +255,7 @@ void CoherentMemController::handleReplacement(MemEvent * ev) {
         entryList->push_back(MSHREntry(ev->getID(), ev->getCmd()));
     }
 }
-            
+
 
 /* 
  * Handle Flush request
@@ -283,7 +283,7 @@ void CoherentMemController::handleFlush(MemEvent * ev) {
             mshr_.find(put->getBaseAddr())->second.push_back(MSHREntry(put->getID(), put->getCmd()));
         }
     }
-    
+
     outstandingEventList_.insert(std::make_pair(ev->getID(), OutstandingEvent(ev, ev->getBaseAddr())));
     if (mshr_.find(ev->getBaseAddr()) == mshr_.end()) {
         mshr_.insert(std::make_pair(ev->getBaseAddr(), std::list<MSHREntry>(1, MSHREntry(ev->getID(), ev->getCmd()))));
@@ -306,9 +306,9 @@ void CoherentMemController::handleAckInv(MemEvent * ev) {
     }
 
     Addr baseAddr = ev->getBaseAddr();
-    
+
     delete ev;
-    
+
     /* Update cache status */
     cacheStatus_.at(baseAddr/lineSize_) = false;
 
@@ -452,6 +452,12 @@ bool CoherentMemController::doShootdown(Addr addr, MemEventBase * ev) {
 
 /* Handle MemResponse */
 void CoherentMemController::handleMemResponse(SST::Event::id_type id, uint32_t flags) {
+    std::map<SST::Event::id_type,OutstandingEvent>::iterator it = 
+      outstandingEventList_.find(id);
+    if( it == outstandingEventList_.end() ){
+      dbg.fatal(CALL_INFO, -1, "Coherent Memory controller (%s) received unrecgonized response ID: %" PRIu64 ", %" PRIu32 "", getName().c_str(), id.first, id.second);
+    }
+
     if (outstandingEventList_.find(id)->second.request->getCmd() == Command::CustomReq) {
         finishCustomReq(id, flags);
     } else {
@@ -467,13 +473,13 @@ void CoherentMemController::finishMemReq(SST::Event::id_type id, uint32_t flags)
         dbg.fatal(CALL_INFO, -1, "Memory controller (%s) received unrecgonized response ID: %" PRIu64 ", %" PRIu32 "", getName().c_str(), id.first, id.second);
 
     OutstandingEvent * outEv = &(it->second);
-    
+
     MemEvent * ev = static_cast<MemEvent*>(outEv->request);
     Addr baseAddr = *(outEv->addrs.begin()); /* Only one address */
     MSHREntry * entry = &(mshr_.find(baseAddr)->second.front());
-    
+
     outstandingEventList_.erase(id);
-    
+
     if (is_debug_event(ev)) {
         Debug(_L3_, "Memory Controller: %s - Response received to (%s)\n", getName().c_str(), ev->getVerboseString().c_str());
     }
@@ -483,7 +489,7 @@ void CoherentMemController::finishMemReq(SST::Event::id_type id, uint32_t flags)
     if (backing_ && (ev->getCmd() == Command::PutM || (ev->getCmd() == Command::GetX && noncacheable)) )
         MemController::writeData(ev);
 
-    /* Spcial case - response was for a writeback needed for a shootdown */
+    /* Special case - response was for a writeback needed for a shootdown */
     if (entry->writebacks.find(id) != entry->writebacks.end()) {
         entry->writebacks.erase(id);
         delete ev;
@@ -497,7 +503,7 @@ void CoherentMemController::finishMemReq(SST::Event::id_type id, uint32_t flags)
     }
 
     /* Handle regular MemEvent */
-    
+
     if (ev->queryFlag(MemEventBase::F_NORESPONSE)) {
         delete ev;
         updateMSHR(baseAddr);
@@ -522,9 +528,9 @@ void CoherentMemController::finishMemReq(SST::Event::id_type id, uint32_t flags)
     delete ev;
     updateMSHR(baseAddr);
 }
-    
 
-/* 
+
+/*
  * Finish custom command event
  * Calls handler's 'finish' function
  * Handler is responsible for:
@@ -539,7 +545,7 @@ void CoherentMemController::finishCustomReq(SST::Event::id_type id, uint32_t fla
     MemEventBase * resp = customCommandHandler_->finish(ev, flags);
     if (resp != nullptr)
         link_->send(resp);
-    
+
     delete ev;
 
     /* Clean up states */
@@ -550,8 +556,8 @@ void CoherentMemController::finishCustomReq(SST::Event::id_type id, uint32_t fla
 }
 
 
-/* 
- * Update MSHR state 
+/*
+ * Update MSHR state
  * 1. Remove finished event
  * 2. Start next event
  */

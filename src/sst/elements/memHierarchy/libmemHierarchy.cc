@@ -61,6 +61,7 @@
 #include "multithreadL1Shim.h"
 #include "scratchpad.h"
 #include "coherentMemoryController.h"
+#include "amoCustomCmdHandler.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
@@ -910,7 +911,6 @@ static const ElementInfoPort memctrl_ports[] = {
     {NULL, NULL, NULL}
 };
 
-
 /*****************************************************************************************
  *  Component: CoherentMemController
  *  Purpose: Main memory controller, analagous to a single channel, supports custom memory
@@ -943,6 +943,27 @@ static const ElementInfoParam cohmemctrl_params[] = {
     {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""},
     {NULL, NULL, NULL}
 };
+
+/*****************************************************************************************
+ *  SubComponent: AMOCustomCmdMemHandler
+ *  Purpose: (A)tomic (M)emory (O)peration CustomCmdMemHandler for issuing custom
+ *  AMO commands to memBackends that use ExtMemBackendConvertor
+ *****************************************************************************************/
+static SubComponent* create_Mem_AMOCustomCmdMemHandler(Component* comp, Params& params){
+	return new AMOCustomCmdMemHandler(comp, params);
+}
+
+#if 0
+static const ElementInfoParam amoCustomCmd_params[] = {
+    // currently no parameters
+    {NULL, NULL, NULL}
+}
+
+static const ElementInfoStatistic amoCustomCmd_statistics[] = {
+    // currently no statistics
+    { NULL, NULL, NULL, 0 }
+}
+#endif
 
 /*****************************************************************************************
  *  SubComponent: simpleMemBackendConvertor
@@ -1761,6 +1782,15 @@ static const ElementInfoSubComponent subcomponents[] = {
         requestReorderRow_params,
         NULL,
         "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "amoCustomCmdHandler",
+        "AMO custom command handler",
+        NULL,
+        create_Mem_AMOCustomCmdMemHandler,
+        NULL,//amoCustomCmd_params,
+        NULL,//amoCustomCmd_statistics,
+        "SST::MemHierarchy::AMOCustomCmdMemHandler"
     },
 #if defined(HAVE_LIBRAMULATOR)
     {

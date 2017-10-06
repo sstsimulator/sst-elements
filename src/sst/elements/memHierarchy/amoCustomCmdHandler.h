@@ -44,7 +44,7 @@ public:
 
   CustomCmdInfo* ready(MemEventBase* ev) override;
 
-  MemEventBase* finish(MemEventBase *ev, uint64_t flags) override;
+  MemEventBase* finish(MemEventBase *ev, uint32_t flags) override;
 
 protected:
 private:

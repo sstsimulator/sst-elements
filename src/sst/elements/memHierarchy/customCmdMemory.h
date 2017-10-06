@@ -31,9 +31,11 @@ class CustomCmdInfo {
 public:
     CustomCmdInfo() { }
     CustomCmdInfo(SST::Event::id_type id, std::string rqstr, Addr addr) :
-      id(id), rqstr(rqstr), baseAddr(addr) { }
+      id(id), rqstr(rqstr), baseAddr(addr), custOpc(0xFFFF) { }
     CustomCmdInfo(SST::Event::id_type id, std::string rqstr, Addr addr, uint32_t flags = 0 ) :
-      id(id), rqstr(rqstr), flags(flags), baseAddr(addr) { }
+      id(id), rqstr(rqstr), flags(flags), baseAddr(addr), custOpc(0xFFFF) { }
+    CustomCmdInfo(SST::Event::id_type id, std::string rqstr, Addr addr, uint32_t Opc, uint32_t flags = 0 ) :
+      id(id), rqstr(rqstr), flags(flags), baseAddr(addr), custOpc(Opc) { }
 
     virtual std::string getString() { /* For debug */
         std::ostringstream idstring;
@@ -60,11 +62,16 @@ public:
     void setAddr(Addr A) { baseAddr = A; }
     Addr queryAddr() { return baseAddr; }
 
+    /* Custom opcode handlers */
+    uint32_t getCustomOpc() { return custOpc; }
+    void setCustomOpc(uint32_t Opc) { custOpc = Opc; }
+
 protected:
     SST::Event::id_type id; /* MemBackendConvertor needs ID for returning a response */
     uint32_t flags;
     Addr baseAddr;
     std::string rqstr;
+    uint32_t custOpc;
 };
 
 /*
@@ -82,8 +89,7 @@ public:
 
         MemEventInfo(std::set<Addr> addrs, bool shootdown = false) : addrs(addrs), shootdown(shootdown) { }
         MemEventInfo(Addr addr, bool sdown = false) { addrs.insert(addr); shootdown = sdown; }
-        ~MemEventInfo();
-
+        ~MemEventInfo() {};
     };
 
 
@@ -131,7 +137,7 @@ public:
      *  parent->readData(): Read the backing store if the response needs data
      *  parent->translateLocalT
      */
-    virtual MemEventBase* finish(MemEventBase *ev, uint64_t flags) =0;
+    virtual MemEventBase* finish(MemEventBase *ev, uint32_t flags) =0;
 
 protected:
 
