@@ -116,7 +116,7 @@ private:
             OutstandingEvent(MemEventBase * request, Addr addr) : request(request), count(0) { addrs.insert(addr); }
             OutstandingEvent(MemEventBase * request, std::set<Addr> addrs) : request(request), addrs(addrs) { count = addrs.size(); }
 
-            uint32_t decrementCount() { return count--; }
+            uint32_t decrementCount() { return --count; }
             uint32_t getCount() { return count; }
     };
 
