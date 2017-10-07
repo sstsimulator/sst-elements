@@ -40,6 +40,8 @@ private:
 	uint64_t issueCount;
 	uint64_t nextAddr;
 	uint64_t startAddr;
+        uint32_t write_cmd;
+        uint32_t read_cmd;
 	Output*  out;
 	ReqOperation memOp;
 
