@@ -82,9 +82,6 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
     Debug(_L10_,"Creating MemReq. BaseAddr = %" PRIx64 ", Size: %" PRIu32 ", %s\n",
                         ev->getBaseAddr(), ev->getSize(), CommandString[(int)ev->getCmd()]);
 
-    printf( "Creating MemReq. BaseAddr = 0x%" PRIx64 ", Size: %" PRIu32 ", %s\n",
-                        ev->getBaseAddr(), ev->getSize(), CommandString[(int)ev->getCmd()]);
-
     if (!setupMemReq(ev)) {
         sendResponse(ev->getID(), ev->getFlags());
     }
