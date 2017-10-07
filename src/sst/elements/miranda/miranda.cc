@@ -189,6 +189,8 @@ static const ElementInfoParam spmvBench_params[] = {
     { "matrix_element_start_addr", "Sets the start address of the elements array", "0" },
     { "iterations",     "Sets the number of repeats to perform" },
     { "matrix_nnz_per_row", "Sets the number of non-zero elements per row", "9" },
+    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
+    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
