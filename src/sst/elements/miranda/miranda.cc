@@ -129,6 +129,8 @@ static const ElementInfoParam randomGen_params[] = {
     { "length",           "Length of requests", "8" },
     { "max_address",      "Maximum address allowed for generation", "16384" },
     { "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" },
+    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
+    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
