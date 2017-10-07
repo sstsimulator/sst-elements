@@ -953,18 +953,6 @@ static SubComponent* create_Mem_AMOCustomCmdMemHandler(Component* comp, Params& 
 	return new AMOCustomCmdMemHandler(comp, params);
 }
 
-#if 0
-static const ElementInfoParam amoCustomCmd_params[] = {
-    // currently no parameters
-    {NULL, NULL, NULL}
-}
-
-static const ElementInfoStatistic amoCustomCmd_statistics[] = {
-    // currently no statistics
-    { NULL, NULL, NULL, 0 }
-}
-#endif
-
 /*****************************************************************************************
  *  SubComponent: simpleMemBackendConvertor
  *  Purpose: Converts memEvents from a memory controller into cmd/addr/size for backends
