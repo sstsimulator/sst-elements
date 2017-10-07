@@ -55,10 +55,10 @@ STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
 	out->verbose(CALL_INFO, 1, 0, "Total arrays:      %" PRIu64 " bytes\n", (3 * n * reqLength));
 	out->verbose(CALL_INFO, 1, 0, "N-per-generate     %" PRIu64 "\n", n_per_call);
         if( write_cmd != 0xFFFF ){
-          out->verbose(CALL_INFO, 1, 0, "Custom WR opcode   %" PRIu32 "\b", write_cmd );
+          out->verbose(CALL_INFO, 1, 0, "Custom WR opcode   %" PRIu32 "\n", write_cmd );
         }
         if( read_cmd != 0xFFFF ){
-          out->verbose(CALL_INFO, 1, 0, "Custom RD opcode   %" PRIu32 "\b", read_cmd );
+          out->verbose(CALL_INFO, 1, 0, "Custom RD opcode   %" PRIu32 "\n", read_cmd );
         }
 }
 

@@ -141,6 +141,8 @@ static const ElementInfoParam gupsGen_params[] = {
     { "iterations",       "Number of iterations to perform", "1" },
     { "max_address",      "Maximum address allowed for generation", "536870912" /* 512MB */ },
     { "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" },
+    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
+    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
