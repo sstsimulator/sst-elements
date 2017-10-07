@@ -111,6 +111,7 @@ static const ElementInfoParam revSingleStreamGen_params[] = {
     { "verbose",          "Sets the verbosity of the output", "0" },
     { "datawidth",        "Sets the width of the memory operation", "8" },
     { "stride",           "Sets the stride, since this is a reverse stream this is subtracted per iteration, def=1", "1" },
+    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
