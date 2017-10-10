@@ -102,6 +102,7 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
         case SimpleMem::Request::FlushLine:     cmd = Command::FlushLine;    break;
         case SimpleMem::Request::FlushLineInv:  cmd = Command::FlushLineInv; break;
         case SimpleMem::Request::FlushLineResp: cmd = Command::FlushLineResp; break;
+        case SimpleMem::Request::CustomCmd:     cmd = Command::CustomReq;    break;
         default: output.fatal(CALL_INFO, -1, "Unknown req->cmd in createMemEvent()\n");
     }
 
@@ -121,6 +122,10 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
             output.output("Warning: In memHierarchyInterface, write request size does not match payload size. Request size: %zu. Payload size: %zu. MemEvent will use payload size\n", req->size, req->data.size());
 
         me->setPayload(req->data);
+    }
+
+    if(SimpleMem::Request::CustomCmd == req->cmd){
+      me->setCustomOpc(req->getCustomOpc());
     }
 
     if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
@@ -188,6 +193,9 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me)
         case Command::FlushLineResp:
         req->cmd = SimpleMem::Request::FlushLineResp;
         if (me->success()) req->flags |= (SimpleMem::Request::F_FLUSH_SUCCESS);
+        break;
+        case Command::CustomResp:
+        req->cmd = SimpleMem::Request::CustomCmd;
         break;
     default:
         output.fatal(CALL_INFO, -1, "Don't know how to deal with command %s\n", CommandString[(int)me->getCmd()]);

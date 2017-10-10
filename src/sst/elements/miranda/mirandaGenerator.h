@@ -31,7 +31,8 @@ namespace Miranda {
 typedef enum {
 	READ,
 	WRITE,
-	REQ_FENCE
+	REQ_FENCE,
+        CUSTOM
 } ReqOperation;
 
 static uint64_t nextGeneratorRequestID = 0;
@@ -178,16 +179,25 @@ public:
 		const ReqOperation cOpType) :
 		GeneratorRequest(),
 		addr(cAddr), length(cLength), op(cOpType) {}
+	MemoryOpRequest(const uint64_t cAddr,
+		const uint64_t cLength,
+                const uint32_t opc ) :
+		GeneratorRequest(),
+		addr(cAddr), length(cLength),
+                opcode(opc), op(CUSTOM) {}
 	~MemoryOpRequest() {}
 	ReqOperation getOperation() const { return op; }
 	bool isRead() const { return op == READ; }
 	bool isWrite() const { return op == WRITE; }
+        bool isCustom() const { return op == CUSTOM; }
 	uint64_t getAddress() const { return addr; }
 	uint64_t getLength() const { return length; }
+        uint32_t getOpcode() const { return opcode; }
 
 protected:
 	uint64_t addr;
 	uint64_t length;
+        uint32_t opcode;
 	ReqOperation op;
 };
 

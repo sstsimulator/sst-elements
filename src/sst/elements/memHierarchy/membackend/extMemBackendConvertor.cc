@@ -41,26 +41,34 @@ ExtMemBackendConvertor::ExtMemBackendConvertor(Component *comp, Params &params) 
 
 bool ExtMemBackendConvertor::issue( BaseReq *req ) {
 
-    MemReq * mreq = static_cast<MemReq*>(req);
     std::vector<uint64_t> NULLVEC;
 
-    return static_cast<ExtMemBackend*>(m_backend)->issueRequest( mreq->id(),
-                                                                 mreq->addr(),
-                                                                 mreq->isWrite(),
-                                                                 NULLVEC, // this is null for normal requests
-                                                                 mreq->getMemEvent()->getFlags(),
-                                                                 m_backendRequestWidth );
+    if( req->isCustCmd() ){
+      // issue custom request
+      CustomReq * mreq = static_cast<CustomReq*>(req);
+      CustomCmdInfo *info = mreq->getInfo();
+      return static_cast<ExtMemBackend*>(m_backend)->issueCustomRequest( mreq->id(),
+                                                                         info->queryAddr(),
+                                                                         info->getCustomOpc(),
+                                                                         NULLVEC, // this is null for normal requests
+                                                                         info->getFlags(),
+                                                                         m_backendRequestWidth );
+    }else{
+      // issue standard request
+      MemReq * mreq = static_cast<MemReq*>(req);
+      return static_cast<ExtMemBackend*>(m_backend)->issueRequest( mreq->id(),
+                                                                   mreq->addr(),
+                                                                   mreq->isWrite(),
+                                                                   NULLVEC, // this is null for normal requests
+                                                                   mreq->getMemEvent()->getFlags(),
+                                                                   m_backendRequestWidth );
+    }
 }
 
 void ExtMemBackendConvertor::handleCustomEvent( CustomCmdInfo* info ){
 
-    std::vector<uint64_t> NULLVEC;
-    static_cast<ExtMemBackend*>(m_backend)->issueRequest( info->getID().first,
-                                                          info->queryAddr(),
-                                                          false,  // this is handled by command mapping
-                                                          NULLVEC, // this is null for normal requests
-                                                          info->getFlags(),
-                                                          m_backendRequestWidth );
+    // required to insert the request in the pending queue
+    uint64_t id = setupExtMemReq(info);
 }
 
 // EOF

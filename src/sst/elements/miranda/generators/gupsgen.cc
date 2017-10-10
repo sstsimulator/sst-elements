@@ -34,11 +34,20 @@ GUPSGenerator::GUPSGenerator( Component* owner, Params& params ) :
 	maxAddr    = params.find<uint64_t>("max_address", 524288);
 	seed_a     = params.find<uint64_t>("seed_a", 11);
 	seed_b     = params.find<uint64_t>("seed_b", 31);
+        write_cmd  = params.find<uint32_t>("write_cmd", 0xFFFF );
+        read_cmd   = params.find<uint32_t>("read_cmd", 0xFFFF );
 	rng = new MarsagliaRNG(seed_a, seed_b);
 
 	out->verbose(CALL_INFO, 1, 0, "Will issue %" PRIu64 " operations\n", issueCount);
 	out->verbose(CALL_INFO, 1, 0, "Request lengths: %" PRIu64 " bytes\n", reqLength);
 	out->verbose(CALL_INFO, 1, 0, "Maximum address: %" PRIu64 "\n", maxAddr);
+
+        if( write_cmd != 0xFFFF ){
+          out->verbose(CALL_INFO, 1, 0, "Custom WR opcode %" PRIu32 "\n", write_cmd );
+        }
+        if( read_cmd != 0xFFFF ){
+          out->verbose(CALL_INFO, 1, 0, "Custom RD opcode %" PRIu32 "\n", read_cmd );
+        }
 
 	issueOpFences = params.find<std::string>("issue_op_fences", "yes") == "yes";
 }
@@ -58,8 +67,22 @@ void GUPSGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 
 	out->verbose(CALL_INFO, 4, 0, "Generating next request number: %" PRIu64 " at address %" PRIu64 "\n", issueCount, addr);
 
-	MemoryOpRequest* readAddr = new MemoryOpRequest(addr, reqLength, READ);
-	MemoryOpRequest* writeAddr = new MemoryOpRequest(addr, reqLength, WRITE);
+        MemoryOpRequest* readAddr;
+        MemoryOpRequest* writeAddr;
+
+        if( read_cmd == 0xFFFF ){
+          // issue standard read
+          readAddr = new MemoryOpRequest(addr, reqLength, READ);
+        }else{
+          // issue custom read
+          new MemoryOpRequest(addr, reqLength, read_cmd);
+        }
+
+        if( write_cmd == 0xFFFF ){
+	  writeAddr = new MemoryOpRequest(addr, reqLength, WRITE);
+        }else{
+	  writeAddr = new MemoryOpRequest(addr, reqLength, write_cmd);
+        }
 
 	writeAddr->addDependency(readAddr->getRequestID());
 

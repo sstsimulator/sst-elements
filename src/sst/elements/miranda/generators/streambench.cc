@@ -40,6 +40,10 @@ STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
 
 	n_per_call = params.find<uint64_t>("n_per_call", 1);
 
+        write_cmd = params.find<uint32_t>("write_cmd", 0xFFFF );
+
+        read_cmd = params.find<uint32_t>("read_cmd", 0xFFFF );
+
 	i = 0;
 
 	out->verbose(CALL_INFO, 1, 0, "STREAM-N length is %" PRIu64 "\n", n);
@@ -50,6 +54,12 @@ STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
 	out->verbose(CALL_INFO, 1, 0, "Array Length:      %" PRIu64 " bytes\n", (n * reqLength));
 	out->verbose(CALL_INFO, 1, 0, "Total arrays:      %" PRIu64 " bytes\n", (3 * n * reqLength));
 	out->verbose(CALL_INFO, 1, 0, "N-per-generate     %" PRIu64 "\n", n_per_call);
+        if( write_cmd != 0xFFFF ){
+          out->verbose(CALL_INFO, 1, 0, "Custom WR opcode   %" PRIu32 "\n", write_cmd );
+        }
+        if( read_cmd != 0xFFFF ){
+          out->verbose(CALL_INFO, 1, 0, "Custom RD opcode   %" PRIu32 "\n", read_cmd );
+        }
 }
 
 STREAMBenchGenerator::~STREAMBenchGenerator() {
@@ -65,9 +75,39 @@ void STREAMBenchGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 			break;
 		}
 
-		MemoryOpRequest* read_b  = new MemoryOpRequest(start_b + (i * reqLength), reqLength, READ);
-		MemoryOpRequest* read_c  = new MemoryOpRequest(start_c + (i * reqLength), reqLength, READ);
-		MemoryOpRequest* write_a = new MemoryOpRequest(start_a + (i * reqLength), reqLength, WRITE);
+                MemoryOpRequest* read_b;
+                MemoryOpRequest* read_c;
+                MemoryOpRequest* write_a;
+
+                if( read_cmd == 0xFFFF ){
+                  // issue standard read
+		  read_b  = new MemoryOpRequest(start_b + (i * reqLength),
+                                                reqLength,
+                                                READ);
+		  read_c  = new MemoryOpRequest(start_c + (i * reqLength),
+                                                reqLength,
+                                                READ);
+                }else{
+                  // issue custom read
+		  read_b  = new MemoryOpRequest(start_b + (i * reqLength),
+                                                reqLength,
+                                                read_cmd);
+		  read_c  = new MemoryOpRequest(start_c + (i * reqLength),
+                                                reqLength,
+                                                read_cmd);
+                }
+
+                if( write_cmd == 0xFFFF ){
+                  // issue standard write
+		  write_a = new MemoryOpRequest(start_a + (i * reqLength),
+                                                reqLength,
+                                                WRITE);
+                }else{
+                  // issue custom write
+		  write_a = new MemoryOpRequest(start_a + (i * reqLength),
+                                                reqLength,
+                                                write_cmd);
+                }
 
 		write_a->addDependency(read_b->getRequestID());
 		write_a->addDependency(read_c->getRequestID());

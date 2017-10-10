@@ -28,13 +28,19 @@ CustomCmdInfo* AMOCustomCmdMemHandler::ready(MemEventBase* ev){
   CustomCmdInfo *CI = new CustomCmdInfo(ev->getID(),
                                         ev->getRqstr(),
                                         ev->getRoutingAddress(),
+                                        ev->getCustomOpc(),
                                         MemEvent::F_SUCCESS);
   return CI;
 }
 
-MemEventBase* AMOCustomCmdMemHandler::finish(MemEventBase *ev, uint64_t flags){
-  MemEventBase *MEB = new MemEventBase(ev->getSrc(),
-                                        ev->getCmd());
+MemEventBase* AMOCustomCmdMemHandler::finish(MemEventBase *ev, uint32_t flags){
+  if(ev->queryFlag(MemEventBase::F_NORESPONSE)||
+     ((flags & MemEventBase::F_NORESPONSE)>0)){
+    // posted request
+    return nullptr;
+  }
+
+  MemEventBase *MEB = ev->makeResponse();
   return MEB;
 }
 

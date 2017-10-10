@@ -90,6 +90,8 @@ static const ElementInfoParam singleStreamGen_params[] = {
     { "length",           "Length of requests", "8" },
     { "max_address",      "Maximum address allowed for generation", "16384" },
     { "startat",          "Sets the start address for generation", "0" },
+    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
+    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -102,6 +104,8 @@ static const ElementInfoParam stencil3dGen_params[] = {
     { "startz",           "Sets the start location in Z-plane for this instance, parallelism implemented as Z-plane decomposition", "0" },
     { "endz",             "Sets the end location in Z-plane for this instance, parallelism implemented as Z-plane decomposition", "10" },
     { "iterations",       "Sets the number of iterations to perform over this mesh", "1"},
+    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
+    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -111,6 +115,7 @@ static const ElementInfoParam revSingleStreamGen_params[] = {
     { "verbose",          "Sets the verbosity of the output", "0" },
     { "datawidth",        "Sets the width of the memory operation", "8" },
     { "stride",           "Sets the stride, since this is a reverse stream this is subtracted per iteration, def=1", "1" },
+    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -129,6 +134,8 @@ static const ElementInfoParam randomGen_params[] = {
     { "length",           "Length of requests", "8" },
     { "max_address",      "Maximum address allowed for generation", "16384" },
     { "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" },
+    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
+    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -141,6 +148,8 @@ static const ElementInfoParam gupsGen_params[] = {
     { "iterations",       "Number of iterations to perform", "1" },
     { "max_address",      "Maximum address allowed for generation", "536870912" /* 512MB */ },
     { "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" },
+    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
+    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -152,6 +161,8 @@ static const ElementInfoParam streamBench_params[] = {
     { "start_a",          "Sets the start address of the array a", "0" },
     { "start_b",          "Sets the start address of the array b", "1024" },
     { "start_c",          "Sets the start address of the array c", "2048" },
+    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
+    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -180,6 +191,8 @@ static const ElementInfoParam spmvBench_params[] = {
     { "matrix_element_start_addr", "Sets the start address of the elements array", "0" },
     { "iterations",     "Sets the number of repeats to perform" },
     { "matrix_nnz_per_row", "Sets the number of non-zero elements per row", "9" },
+    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
+    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -280,10 +293,13 @@ static const ElementInfoSubComponent subcomponents[] = {
 static const ElementInfoStatistic basecpu_stats[] = {
 	{ "split_read_reqs",	"Number of read requests split over a cache line boundary",	"requests", 2 },
 	{ "split_write_reqs",	"Number of write requests split over a cache line boundary", 	"requests", 2 },
+        { "split_custom_reqs",  "NUmber of custom requests split over a cache line boundary",   "requests", 2 },
 	{ "read_reqs", 		"Number of read requests issued", 				"requests", 1 },
 	{ "write_reqs", 	"Number of write requests issued", 				"requests", 1 },
+        { "custom_reqs",        "Number of custom requests issued",                             "requests", 1 },
 	{ "total_bytes_read",   "Count the total bytes requested by read operations",		"bytes",    1 },
 	{ "total_bytes_write",  "Count the total bytes requested by write operations",      	"bytes",    1 },
+        { "total_bytes_custom", "Count the total bytes requested by custom operations",         "bytes",    1 },
 	{ "req_latency",        "Running total of all latency for all requests",                "ns",       2 },
     { "cycles_with_issue",  "Number of cycles which CPU was able to issue requests",        "cycles",   1 },
     { "cycles_no_issue",    "Number of cycles which CPU was not able to issue requests",    "cycles",   1 },

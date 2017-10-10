@@ -52,6 +52,9 @@ private:
 	uint32_t currentItr;
 	uint32_t maxItr;
 
+        uint32_t write_cmd;
+        uint32_t read_cmd;
+
 	Output*  out;
 
 };

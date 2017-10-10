@@ -45,6 +45,9 @@ private:
 	uint64_t n_per_call;
 	uint64_t i;
 
+        uint32_t write_cmd;
+        uint32_t read_cmd;
+
 	Output*  out;
 
 };
