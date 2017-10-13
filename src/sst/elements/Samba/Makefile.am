@@ -24,6 +24,7 @@ libSamba_la_CPPFLAGS = \
 	$(MPI_CPPFLAGS)
 
 libSamba_la_LDFLAGS = \
+	$(SST_SYSTEMC_LDFLAGS) \
 	-avoid-version
 
 libSamba_la_LIBADD = \
