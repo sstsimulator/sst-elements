@@ -82,8 +82,7 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) : S
 
 	std::string l_bankPolicy = (std::string) x_params.find<std::string>("bankPolicy", "CLOSE", l_found);
 	if (!l_found) {
-		std::cout << "bankPolicy value is missing... exiting" << std::endl;
-		exit(-1);
+		std::cout << "bankPolicy value is missing... it will be \"close-page policy\" (Default)" << std::endl;
 	}
 	if(l_bankPolicy=="CLOSE")
 		k_bankPolicy=0;

@@ -42,6 +42,7 @@ sstCmds = {
 	14:"sst --lib-path=../.libs ./test_txntrace.py --model-options=\"--configfile=%s traceFile=../traces/usimm.trc stopAtCycle=%s traceFileType=USIMM\"" % (sysconfig,stopAtCycle),		# basic test with usimm trace
 	15:"sst --lib-path=../.libs ./test_multilanes_4lane.py --model-options=\"--configfile=../ddr4_2400.cfg stopAtCycle=%s\"" % (stopAtCycle),						# basic test for txn dispatcher with 4lane
 	16:"mpirun -np 5 sst --lib-path=../.libs ./test_multilanes_4lane.py --model-options=\"--configfile=../ddr4_2400.cfg stopAtCycle=%s\"" % (stopAtCycle),			            	# basic test for txn dispatcher with 4lane(mpi)
+	17:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s mode=seq stopAtCycle=%s\"" % ("../hbm_legacy_4h.cfg",stopAtCycle), 							# basic test with random trace
 	}                                                                                                                                                                                       
 
 	

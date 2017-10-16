@@ -92,7 +92,7 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(
 
 	k_numPChannelsPerChannel= (uint32_t) params.find<uint32_t>("numPChannelsPerChannel", 1, l_found);
 	if (!l_found) {
-		std::cout << "numPChannelsPerChannel value is missing... " << std::endl;
+		std::cout << "numPChannelsPerChannel value is missing... disabled" << std::endl;
 		//exit(-1);
 	}
 
@@ -126,15 +126,14 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(
 		exit(-1);
 	}
 
-	k_useRefresh = (uint32_t) params.find<uint32_t>("boolUseRefresh", 1, l_found);
+	k_useRefresh = (uint32_t) params.find<uint32_t>("boolUseRefresh", 0, l_found);
 	if (!l_found) {
-		std::cout << "boolUseRefresh param value is missing... exiting" << std::endl;
-		exit(-1);
+		std::cout << "boolUseRefresh param value is missing... disabled" << std::endl;
 	}
 
 	k_useSBRefresh = (uint32_t) params.find<uint32_t>("boolUseSBRefresh", 0, l_found);
 	if (!l_found) {
-		std::cout << "boolUseSBRefresh (single bank refresh) param value is missing... disabled (default)" << std::endl;
+		std::cout << "boolUseSBRefresh (single bank refresh) param value is missing... disabled" << std::endl;
 	}
 
 	/* Device timing parameters*/
@@ -456,6 +455,19 @@ void c_DeviceDriver::run() {
 
 	if (!m_inputQ.empty())
 		sendRequest();
+
+	//send command to c_dimm if the command is ready
+	for (auto l_cmdPtrItr = m_outputQ.begin(); l_cmdPtrItr != m_outputQ.end();)  {
+		c_BankCommand* l_cmdPtr = (*l_cmdPtrItr);
+
+
+		if(l_cmdPtr->isResponseReady()) {
+			m_Owner->sendCommand(l_cmdPtr);
+			l_cmdPtrItr=m_outputQ.erase(l_cmdPtrItr);
+		}
+		else
+			l_cmdPtrItr++;
+	}
 
 }
 
@@ -862,8 +874,11 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 
 
 		x_bank->handleCommand(x_bankCommandPtr, l_time);
-		// send command to Dimm component
-		m_Owner->sendCommand(x_bankCommandPtr);
+
+
+		// push the command to output queue
+		m_outputQ.push_back(x_bankCommandPtr);
+
 
 
 		return true;
@@ -966,6 +981,12 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
 
 	//get channel id --> used for the command bus arbitration
 	unsigned l_ch=l_refreshRequester.front()->getBankGroupPtr()->getRankPtr()->getChannelPtr()->getChannelId();
+    unsigned l_pch=0;
+    if(m_numPseudoChannels>1)
+    {
+        l_ch=l_ch%m_numChannels;
+        l_pch=l_ch/m_numChannels;
+    }
 
 	m_refreshCmdQ[x_rankID].clear();
 
@@ -980,7 +1001,7 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
 	if(!l_bankVec.empty()) {
 
 		m_refreshCmdQ[x_rankID].push_back(
-				new c_BankCommand(0, e_BankCommandType::PRE, 0, c_HashedAddress(l_ch, 0, 0, 0, 0, 0, 0, 0), l_bankVec));
+				new c_BankCommand(0, e_BankCommandType::PRE, 0, c_HashedAddress(l_ch, l_pch, 0, 0, 0, 0, 0, 0), l_bankVec));
 
 	}
 
@@ -993,7 +1014,7 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
 	if(!l_bankVec.empty()) {
 
 		m_refreshCmdQ[x_rankID].push_back(
-				new c_BankCommand(0, e_BankCommandType::REF, 0, c_HashedAddress(l_ch, 0, 0, 0, 0, 0, 0, 0), l_bankVec));
+				new c_BankCommand(0, e_BankCommandType::REF, 0, c_HashedAddress(l_ch, l_pch, 0, 0, 0, 0, 0, 0), l_bankVec));
 
 	}
 

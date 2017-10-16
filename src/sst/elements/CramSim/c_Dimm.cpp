@@ -77,7 +77,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	k_numPChannelsPerChannel = (uint32_t)x_params.find<uint32_t>("numPChannelsPerChannel", 1,
 															l_found);
 	if (!l_found) {
-		std::cout << "numPChannelsPerChannel value is missing... "
+		std::cout << "numPChannelsPerChannel value is missing... disabled"
 				  << std::endl;
 		//exit(-1);
 	}
@@ -243,7 +243,6 @@ void c_Dimm::sendResponse() {
 
 	// check if ResQ has cmds
 	while (!m_cmdResQ.empty()) {
-
 
 	  c_CmdResEvent* l_cmdResEventPtr = new c_CmdResEvent();
 	  l_cmdResEventPtr->m_payload = m_cmdResQ.front();
