@@ -92,7 +92,7 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(
 
 	k_numPChannelsPerChannel= (uint32_t) params.find<uint32_t>("numPChannelsPerChannel", 1, l_found);
 	if (!l_found) {
-		std::cout << "numPChannelsPerChannel value is missing... " << std::endl;
+		std::cout << "numPChannelsPerChannel value is missing... disabled" << std::endl;
 		//exit(-1);
 	}
 
@@ -126,15 +126,14 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(
 		exit(-1);
 	}
 
-	k_useRefresh = (uint32_t) params.find<uint32_t>("boolUseRefresh", 1, l_found);
+	k_useRefresh = (uint32_t) params.find<uint32_t>("boolUseRefresh", 0, l_found);
 	if (!l_found) {
-		std::cout << "boolUseRefresh param value is missing... exiting" << std::endl;
-		exit(-1);
+		std::cout << "boolUseRefresh param value is missing... disabled" << std::endl;
 	}
 
 	k_useSBRefresh = (uint32_t) params.find<uint32_t>("boolUseSBRefresh", 0, l_found);
 	if (!l_found) {
-		std::cout << "boolUseSBRefresh (single bank refresh) param value is missing... disabled (default)" << std::endl;
+		std::cout << "boolUseSBRefresh (single bank refresh) param value is missing... disabled" << std::endl;
 	}
 
 	/* Device timing parameters*/
