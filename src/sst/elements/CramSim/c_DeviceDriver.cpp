@@ -457,6 +457,19 @@ void c_DeviceDriver::run() {
 	if (!m_inputQ.empty())
 		sendRequest();
 
+	//send command to c_dimm if the command is ready
+	for (auto l_cmdPtrItr = m_outputQ.begin(); l_cmdPtrItr != m_outputQ.end();)  {
+		c_BankCommand* l_cmdPtr = (*l_cmdPtrItr);
+
+
+		if(l_cmdPtr->isResponseReady()) {
+			m_Owner->sendCommand(l_cmdPtr);
+			l_cmdPtrItr=m_outputQ.erase(l_cmdPtrItr);
+		}
+		else
+			l_cmdPtrItr++;
+	}
+
 }
 
 /*!
@@ -862,8 +875,11 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 
 
 		x_bank->handleCommand(x_bankCommandPtr, l_time);
-		// send command to Dimm component
-		m_Owner->sendCommand(x_bankCommandPtr);
+
+
+		// push the command to output queue
+		m_outputQ.push_back(x_bankCommandPtr);
+
 
 
 		return true;

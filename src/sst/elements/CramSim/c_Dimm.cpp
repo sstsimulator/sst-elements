@@ -244,7 +244,6 @@ void c_Dimm::sendResponse() {
 	// check if ResQ has cmds
 	while (!m_cmdResQ.empty()) {
 
-
 	  c_CmdResEvent* l_cmdResEventPtr = new c_CmdResEvent();
 	  l_cmdResEventPtr->m_payload = m_cmdResQ.front();
 	  m_cmdResQ.erase(
