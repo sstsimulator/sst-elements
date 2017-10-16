@@ -966,6 +966,12 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
 
 	//get channel id --> used for the command bus arbitration
 	unsigned l_ch=l_refreshRequester.front()->getBankGroupPtr()->getRankPtr()->getChannelPtr()->getChannelId();
+    unsigned l_pch=0;
+    if(m_numPseudoChannels>1)
+    {
+        l_ch=l_ch%m_numChannels;
+        l_pch=l_ch/m_numChannels;
+    }
 
 	m_refreshCmdQ[x_rankID].clear();
 
@@ -980,7 +986,7 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
 	if(!l_bankVec.empty()) {
 
 		m_refreshCmdQ[x_rankID].push_back(
-				new c_BankCommand(0, e_BankCommandType::PRE, 0, c_HashedAddress(l_ch, 0, 0, 0, 0, 0, 0, 0), l_bankVec));
+				new c_BankCommand(0, e_BankCommandType::PRE, 0, c_HashedAddress(l_ch, l_pch, 0, 0, 0, 0, 0, 0), l_bankVec));
 
 	}
 
@@ -993,7 +999,7 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
 	if(!l_bankVec.empty()) {
 
 		m_refreshCmdQ[x_rankID].push_back(
-				new c_BankCommand(0, e_BankCommandType::REF, 0, c_HashedAddress(l_ch, 0, 0, 0, 0, 0, 0, 0), l_bankVec));
+				new c_BankCommand(0, e_BankCommandType::REF, 0, c_HashedAddress(l_ch, l_pch, 0, 0, 0, 0, 0, 0), l_bankVec));
 
 	}
 
