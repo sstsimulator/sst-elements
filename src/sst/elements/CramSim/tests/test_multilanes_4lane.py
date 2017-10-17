@@ -14,7 +14,7 @@ g_override_list = ""
 g_params = setup_config_params(g_config_file, g_overrided_list)
 
 numLanes = 4
-g_params["strAddressMapStr"] = "_rrrrrrrrrrrrrrr_R_BB_bb_lllllllllll_CCC_xx_hhhhh_"
+g_params["strAddressMapStr"] = "_rrrrrrrrrrrrrrr_R_BB_bb_lllllllllll_CCC_xx_hhhhhh_"
 laneIdxPos = "6:6"
 readWriteRatio = 0.5
 channelsPerLane = 8
