@@ -88,6 +88,7 @@ EXTRA_DIST = \
 	hbm_pseudo_4h.cfg \
 	test_system.cfg \
 	test_device.cfg \
+	ddr3_power.cfg \
 	tests/VeriMem/test_verimem1.py \
 	tests/test_txngen.py \
 	tests/test_txntrace.py

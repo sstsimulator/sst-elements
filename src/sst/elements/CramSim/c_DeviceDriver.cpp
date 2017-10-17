@@ -338,7 +338,7 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(
 		m_channel.push_back(l_channel);
 		//   int l_i = 0;
 		for (unsigned l_j = 0; l_j != k_numRanksPerChannel; ++l_j) {
-			std::cout << "Attaching Channel" << l_i << " to Rank" << l_rankNum << std::endl;
+			//std::cout << "Attaching Channel" << l_i << " to Rank" << l_rankNum << std::endl;
 			m_channel.at(l_i)->acceptRank(m_ranks.at(l_rankNum));
 			m_ranks.at(l_rankNum)->acceptChannel(m_channel.at(l_i));
 			++l_rankNum;
@@ -716,17 +716,8 @@ bool c_DeviceDriver::sendRefresh(unsigned x_requester) {
 	//send the command if the command bus is available
     if ( isCommandBusAvailable(l_cmdPtr)) {   //check if the command bus is available
 
-		if (l_bankIdVec.size() > 0){
-			for (auto &l_bankid:l_bankIdVec) {
-				c_BankInfo *l_bank = m_banks.at(l_bankid);
-				c_BankCommand *l_cmd = new c_BankCommand(l_cmdPtr->getSeqNum(), l_cmdPtr->getCommandMnemonic(),
-									 l_cmdPtr->getAddress(), l_bankid);
-				sendCommand((l_cmd), l_bank);
-			}
-		} else {
-			c_BankInfo *l_bank = m_banks.at(l_cmdPtr->getBankId());
-			sendCommand((l_cmdPtr), l_bank);
-		}
+		c_BankInfo *l_bank = m_banks.at(l_cmdPtr->getBankId());
+		sendCommand((l_cmdPtr), l_bank);
 
 		cmdQ.erase(cmdQ.begin());
 		occupyCommandBus(l_cmdPtr);
@@ -832,12 +823,25 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 	  if(k_printCmdTrace) {
 	    //if(x_bankCommandPtr->getCommandMnemonic() == e_BankCommandType::REF) {
 	    if(x_bankCommandPtr->isRefreshType()) {
-	      (*m_cmdTraceStream) << "@" << std::dec
-				  << m_Owner->getSimCycle()
-				  << " " << (x_bankCommandPtr)->getCommandString()
-				  << " " << std::dec << (x_bankCommandPtr)->getSeqNum()
-					<< " " << std::dec << x_bankCommandPtr->getBankId()
-							  << std::endl;
+			if(x_bankCommandPtr->getBankIdVec().size()>0)
+			{
+				for (auto &l_bankid:x_bankCommandPtr->getBankIdVec()) {
+					c_BankInfo *l_bank = m_banks.at(l_bankid);
+					(*m_cmdTraceStream) << "@" << std::dec
+										<< m_Owner->getSimCycle()
+										<< " " << (x_bankCommandPtr)->getCommandString()
+										<< " " << std::dec << (x_bankCommandPtr)->getSeqNum()
+										<< " " << std::dec << l_bankid
+										<< std::endl;
+				}
+			} else {
+				(*m_cmdTraceStream) << "@" << std::dec
+									<< m_Owner->getSimCycle()
+									<< " " << (x_bankCommandPtr)->getCommandString()
+									<< " " << std::dec << (x_bankCommandPtr)->getSeqNum()
+									<< " " << std::dec << x_bankCommandPtr->getBankId()
+									<< std::endl;
+			}
 	    } else {
 	      (*m_cmdTraceStream) << "@" << std::dec
 				  << m_Owner->getSimCycle()
@@ -872,14 +876,22 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 				     x_bankCommandPtr->getSeqNum());
 		#endif
 
-
-		x_bank->handleCommand(x_bankCommandPtr, l_time);
+		if(x_bankCommandPtr->getBankIdVec().size()>0)
+		{
+			for (auto &l_bankid:x_bankCommandPtr->getBankIdVec()) {
+				c_BankInfo *l_bank = m_banks.at(l_bankid);
+				c_BankCommand *l_cmd = new c_BankCommand(x_bankCommandPtr->getSeqNum(),
+														 x_bankCommandPtr->getCommandMnemonic(),
+														 x_bankCommandPtr->getAddress(), l_bankid);
+				l_bank->handleCommand(l_cmd, l_time);
+			}
+		}
+		else
+			x_bank->handleCommand(x_bankCommandPtr, l_time);
 
 
 		// push the command to output queue
 		m_outputQ.push_back(x_bankCommandPtr);
-
-
 
 		return true;
 	} else

@@ -31,6 +31,7 @@
 
 #include <vector>
 #include <queue>
+#include <stdlib.h>
 
 // SST includes
 #include <sst/core/component.h>
@@ -125,6 +126,13 @@ private:
 	Statistic<uint64_t>* s_preCmdsRecvd;
 	Statistic<uint64_t>* s_refCmdsRecvd;
 
+	std::vector<uint64_t> m_actCmdsRecvd;
+	std::vector<uint64_t> m_readCmdsRecvd;
+    std::vector<uint64_t> m_readACmdsRecvd;
+	std::vector<uint64_t> m_writeCmdsRecvd;
+	std::vector<uint64_t> m_writeACmdsRecvd;
+	std::vector<uint64_t> m_preCmdsRecvd;
+	std::vector<uint64_t> m_refCmdsRecvd;
 	std::vector<double> m_backgroundEnergy;
 	std::vector<double> m_readEnergy;
 	std::vector<double> m_writeEnergy;
