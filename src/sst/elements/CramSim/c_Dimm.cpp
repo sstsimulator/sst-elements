@@ -198,7 +198,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 			exit(-1);
 		}
 
-		k_VDD = (uint32_t) x_params.find<uint32_t>("VDD", 4, l_found);
+		k_VDD = (float) x_params.find<float>("VDD", 4, l_found);
 		if (!l_found) {
 			std::cout << "[c_Dimm] Power calculation is enabled, but VDD value is missing ... exiting" << std::endl;
 			exit(-1);
@@ -262,7 +262,17 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	m_writeACmdsRecvd.resize(m_numRanks);
 	m_preCmdsRecvd.resize(m_numRanks);
 	m_refCmdsRecvd.resize(m_numRanks);
-
+  
+        for(unsigned i=0; i<m_numRanks;i++)
+        {
+            m_actCmdsRecvd[i]=0;
+            m_readCmdsRecvd[i]=0;
+            m_readACmdsRecvd[i]=0;
+            m_writeCmdsRecvd[i]=0;
+            m_writeACmdsRecvd[i]=0;
+            m_preCmdsRecvd[i]=0;
+            m_refCmdsRecvd[i]=0;
+        }
 }
 
 c_Dimm::~c_Dimm() {
@@ -443,7 +453,7 @@ void c_Dimm::finish(){
 	std::cout << "Deleting DIMM" << std::endl;
 	std::cout << "======= CramSim Simulation Report [Memory Device] ===================================\n";
 
-	for(unsigned i=0; i<=m_numRanks;i++)
+	for(unsigned i=0; i<m_numRanks;i++)
 	{
 		l_actRecvd+=m_actCmdsRecvd[i];
 		l_readRecvd+=(m_readCmdsRecvd[i]+m_readACmdsRecvd[i]);
@@ -482,7 +492,7 @@ void c_Dimm::finish(){
             l_actprePower+= m_actpreEnergy[i]/m_simCycle;
             l_readPower+=m_readEnergy[i]/m_simCycle;
             l_writePower+=m_writeEnergy[i]/m_simCycle;
-            l_refreshPower+=m_readEnergy[i]/m_simCycle;
+            l_refreshPower+=m_refreshEnergy[i]/m_simCycle;
             l_backgroundPower+=m_backgroundEnergy[i]/m_simCycle;
         }
         double l_totalPower=l_actprePower+l_readPower+l_writePower+l_refreshPower+l_backgroundPower;

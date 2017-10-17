@@ -107,7 +107,7 @@ private:
 	int k_nRP;
 	int k_nRFC;
 	int k_nBL;
-	int k_VDD;
+	float k_VDD;
 
 	int m_numBanks;
 	int m_numRanks;
