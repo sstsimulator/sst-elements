@@ -83,7 +83,7 @@ EXTRA_DIST = \
 	ddr4_3200.cfg \
 	ddr4_verimem.cfg \
 	ddr4_verimem_openbank.cfg \
-	hbm_legacy_4h.cfg \ 
+	hbm_legacy_4h.cfg \
 	hbm_legacy_4h_sbr.cfg \
 	hbm_pseudo_4h.cfg \
 	test_system.cfg \
