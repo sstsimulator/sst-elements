@@ -987,6 +987,8 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
         l_ch=l_ch%m_numChannels;
         l_pch=l_ch/m_numChannels;
     }
+	c_HashedAddress *l_hashedAddress = new c_HashedAddress(l_ch, l_pch, 0, 0, 0, 0, 0, 0);
+	l_hashedAddress->setRankId(x_rankID);
 
 	m_refreshCmdQ[x_rankID].clear();
 
@@ -999,10 +1001,12 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
 	}
 	//todo: PRE --> PREA
 	if(!l_bankVec.empty()) {
+		c_HashedAddress *l_hashedAddress = new c_HashedAddress(l_ch, l_pch, 0, 0, 0, 0, 0, 0);
+		l_hashedAddress->setRankId(x_rankID);
 
 		m_refreshCmdQ[x_rankID].push_back(
-				new c_BankCommand(0, e_BankCommandType::PRE, 0, c_HashedAddress(l_ch, l_pch, 0, 0, 0, 0, 0, 0), l_bankVec));
-
+				new c_BankCommand(0, e_BankCommandType::PRE, 0, *l_hashedAddress, l_bankVec));
+		delete l_hashedAddress;
 	}
 
 
@@ -1012,10 +1016,12 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
 			l_bankVec.push_back(l_bank->getBankId());
 	}
 	if(!l_bankVec.empty()) {
+		c_HashedAddress *l_hashedAddress = new c_HashedAddress(l_ch, l_pch, 0, 0, 0, 0, 0, 0);
+		l_hashedAddress->setRankId(x_rankID);
 
 		m_refreshCmdQ[x_rankID].push_back(
-				new c_BankCommand(0, e_BankCommandType::REF, 0, c_HashedAddress(l_ch, l_pch, 0, 0, 0, 0, 0, 0), l_bankVec));
-
+				new c_BankCommand(0, e_BankCommandType::REF, 0, *l_hashedAddress, l_bankVec));
+		delete l_hashedAddress;
 	}
 
 	//add active commands
