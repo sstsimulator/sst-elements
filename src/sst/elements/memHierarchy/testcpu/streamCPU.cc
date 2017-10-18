@@ -14,7 +14,7 @@
 // distribution.
 
 #include <sst_config.h>
-#include "streamCPU.h"
+#include "testcpu/streamCPU.h"
 
 #include <sst/core/element.h>
 #include <sst/core/params.h>

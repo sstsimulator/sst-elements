@@ -18,7 +18,7 @@
 #define MESIINTERNALDIRCONTROLLER_H
 
 #include <iostream>
-#include "coherenceController.h"
+#include "coherencemgr/coherenceController.h"
 
 
 namespace SST { namespace MemHierarchy {

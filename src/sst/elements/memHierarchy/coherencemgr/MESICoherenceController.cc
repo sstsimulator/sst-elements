@@ -15,7 +15,8 @@
 
 #include <sst_config.h>
 #include <vector>
-#include "MESICoherenceController.h"
+#include "coherencemgr/MESICoherenceController.h"
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 

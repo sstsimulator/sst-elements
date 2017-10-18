@@ -29,7 +29,7 @@
 #include "cacheController.h"
 #include "memEvent.h"
 #include "mshr.h"
-#include "coherenceController.h"
+#include "coherencemgr/coherenceController.h"
 #include "hash.h"
 
 

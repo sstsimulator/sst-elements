@@ -17,7 +17,7 @@
 #define L1COHERENCECONTROLLER_H
 
 #include <iostream>
-#include "coherenceController.h"
+#include "coherencemgr/coherenceController.h"
 
 
 namespace SST { namespace MemHierarchy {

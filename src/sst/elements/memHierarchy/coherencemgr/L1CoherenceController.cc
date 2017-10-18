@@ -15,7 +15,8 @@
 
 #include <sst_config.h>
 #include <vector>
-#include "L1CoherenceController.h"
+#include "coherencemgr/L1CoherenceController.h"
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 

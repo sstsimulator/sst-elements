@@ -14,7 +14,7 @@
 // distribution.
 
 #include <sst_config.h>
-#include "trivialCPU.h"
+#include "testcpu/trivialCPU.h"
 
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>

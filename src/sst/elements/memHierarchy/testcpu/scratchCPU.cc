@@ -14,7 +14,7 @@
 // distribution.
 
 #include <sst_config.h>
-#include "scratchCPU.h"
+#include "testcpu/scratchCPU.h"
 #include "util.h"
 
 #include <sst/core/interfaces/stringEvent.h>

@@ -15,7 +15,8 @@
 
 #include <sst_config.h>
 #include <vector>
-#include "MESIInternalDirectory.h"
+#include "coherencemgr/MESIInternalDirectory.h"
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 

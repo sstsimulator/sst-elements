@@ -16,7 +16,8 @@
 
 #include <sst_config.h>
 #include <vector>
-#include "IncoherentController.h"
+#include "coherencemgr/IncoherentController.h"
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 
