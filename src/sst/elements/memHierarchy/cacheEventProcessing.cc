@@ -23,7 +23,7 @@
 #include <sst/core/interfaces/stringEvent.h>
 
 #include "cacheController.h"
-#include "coherenceController.h"
+#include "coherencemgr/coherenceController.h"
 #include "hash.h"
 
 #include "memEvent.h"
