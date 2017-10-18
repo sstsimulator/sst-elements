@@ -95,12 +95,12 @@ libmemHierarchy_la_SOURCES = \
 	cacheArray.h \
 	mshr.h \
 	mshr.cc \
-	trivialCPU.h \
-	trivialCPU.cc \
-	streamCPU.h \
-	streamCPU.cc \
-	scratchCPU.h \
-	scratchCPU.cc \
+	testcpu/trivialCPU.h \
+	testcpu/trivialCPU.cc \
+	testcpu/streamCPU.h \
+	testcpu/streamCPU.cc \
+	testcpu/scratchCPU.h \
+	testcpu/scratchCPU.cc \
 	util.h \
 	memTypes.h \
 	dmaEngine.h \
