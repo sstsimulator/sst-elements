@@ -26,52 +26,46 @@
 namespace SST {
 namespace MemHierarchy {
 
-/* Class defining information sent to memBackendConvertor */
+/* Class defining the information sent to the MemBackendConvertor */
 class CustomCmdInfo {
 public:
-    CustomCmdInfo() { }
-    CustomCmdInfo(SST::Event::id_type id, std::string rqstr, Addr addr) :
-      id(id), rqstr(rqstr), baseAddr(addr), custOpc(0xFFFF) { }
-    CustomCmdInfo(SST::Event::id_type id, std::string rqstr, Addr addr, uint32_t flags = 0 ) :
-      id(id), rqstr(rqstr), flags(flags), baseAddr(addr), custOpc(0xFFFF) { }
-    CustomCmdInfo(SST::Event::id_type id, std::string rqstr, Addr addr, uint32_t Opc, uint32_t flags = 0 ) :
-      id(id), rqstr(rqstr), flags(flags), baseAddr(addr), custOpc(Opc) { }
 
-    virtual std::string getString() { /* For debug */
+    /* Constructors */
+    CustomCmdInfo() { }
+    
+    CustomCmdInfo(SST::Event::id_type id, std::string rqstr, uint32_t flags = 0 ) :
+      id_(id), rqstr_(rqstr), flags_(flags) { }
+    
+    /* String-ify info for debug */
+    virtual std::string getString() { 
         std::ostringstream idstring;
-        idstring << "ID: <" << id.first << "," << id.second << ">";
+        idstring << "ID: <" << id_.first << "," << id_.second << ">";
         std::ostringstream flagstring;
-        flagstring << " Flags: 0x" << std::hex << flags;
+        flagstring << " Flags: 0x" << std::hex << flags_;
         return idstring.str() + flagstring.str();
     }
 
-    SST::Event::id_type getID() { return id; }
+    SST::Event::id_type getID() { return id_; }
+    void setID(SST::Event::id_type id) { id_ = id; }
 
     /* Flag getters/setters - same as MemEventBase */
-    uint32_t getFlags(void) const { return flags; }
-    void setID(SST::Event::id_type id) {id = id;}
-    void setFlag(uint32_t flag) { flags = flags | flag; }
-    void clearFlag(uint32_t flag) { flags = flags & (~flag); }
-    void clearFlag(void) { flags = 0; }
-    bool queryFlag(uint32_t flag) const { return flags & flag; }
-    void setFlags(uint32_t nflags) { flags = nflags; }
+    // Whole flag field operations
+    uint32_t getFlags(void) const { return flags_; }
+    void clearFlags(void) { flags_ = 0; }
+    void setFlags(uint32_t flags) { flags_ = flags; }
+    // Single flag operations
+    void setFlag(uint32_t flag) { flags_ = flags_ | flag; }
+    void clearFlag(uint32_t flag) { flags_ = flags_ & (~flag); }
+    bool queryFlag(uint32_t flag) const { return flags_ & flag; }
 
-    std::string getRqstr() { return rqstr; }
-    void setRqstr(std::string rq) { rqstr = rq; }
-
-    void setAddr(Addr A) { baseAddr = A; }
-    Addr queryAddr() { return baseAddr; }
-
-    /* Custom opcode handlers */
-    uint32_t getCustomOpc() { return custOpc; }
-    void setCustomOpc(uint32_t Opc) { custOpc = Opc; }
+    /* Requestor getters/setters */
+    std::string getRqstr() { return rqstr_; }
+    void setRqstr(std::string rq) { rqstr_ = rq; }
 
 protected:
-    SST::Event::id_type id; /* MemBackendConvertor needs ID for returning a response */
-    uint32_t flags;
-    Addr baseAddr;
-    std::string rqstr;
-    uint32_t custOpc;
+    SST::Event::id_type id_;    /* ID of matching MemEventBase */
+    uint32_t flags_;            /* Flags to be sent */
+    std::string rqstr_;         /* Requestor */
 };
 
 /*
@@ -84,11 +78,13 @@ public:
 
     class MemEventInfo {
     public:
-        std::set<Addr> addrs;   /* Cache line addresses accessed by this instruction */
+        std::set<Addr> addrs;   /* Cache line address(es) accessed by this instruction */
         bool shootdown;         /* Whether this event should be coherent w.r.t. caches (shootdown needed) */
 
+        /* Constructors */
         MemEventInfo(std::set<Addr> addrs, bool shootdown = false) : addrs(addrs), shootdown(shootdown) { }
         MemEventInfo(Addr addr, bool sdown = false) { addrs.insert(addr); shootdown = sdown; }
+        /* Destructor */
         ~MemEventInfo() {};
     };
 
@@ -100,7 +96,7 @@ public:
         int debugLoc = params.find<int>("debug", 0);
         dbg.init("", debugLevel, 0, (Output::output_location_t)debugLoc);
 
-        // Filter by debug address
+        // Filter by debug address - this is the standard memH debug code
         std::vector<uint64_t> addrArray;
         params.find_array<uint64_t>("debug_addr", addrArray);
         for (std::vector<uint64_t>::iterator it = addrArray.begin(); it != addrArray.end(); it++) {

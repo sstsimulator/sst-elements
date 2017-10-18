@@ -73,7 +73,7 @@ void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
 
 
 void MemHierarchyInterface::sendRequest(SimpleMem::Request *req){
-    MemEvent *me = createMemEvent(req);
+    MemEventBase *me = createMemEvent(req);
     requests_[me->getID()] = req;
     link_->send(me);
 }
@@ -91,7 +91,7 @@ SimpleMem::Request* MemHierarchyInterface::recvResponse(void){
 }
 
 
-MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
+MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
     Command cmd = Command::NULLCMD;
     
     switch ( req->cmd ) {
@@ -104,6 +104,10 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
         case SimpleMem::Request::FlushLineResp: cmd = Command::FlushLineResp; break;
         case SimpleMem::Request::CustomCmd:     cmd = Command::CustomReq;    break;
         default: output.fatal(CALL_INFO, -1, "Unknown req->cmd in createMemEvent()\n");
+    }
+
+    if (cmd == Command::CustomReq) {
+        return createCustomMemEvent(req);
     }
 
     Addr baseAddr = (req->addrs[0]) & baseAddrMask_;
@@ -124,10 +128,6 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
         me->setPayload(req->data);
     }
 
-    if(SimpleMem::Request::CustomCmd == req->cmd){
-      me->setCustomOpc(req->getCustomOpc());
-    }
-
     if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
         me->setFlag(MemEvent::F_NONCACHEABLE);
     
@@ -146,10 +146,24 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
 
     me->setMemFlags(req->memFlags);
 
-    //output.output("MemHInterface. Created event. %s\n", me->getVerboseString().c_str());
-
-    //totalRequests_++;
     return me;
+}
+
+
+CustomCmdEvent* MemHierarchyInterface::createCustomMemEvent(SimpleMem::Request * req) const {
+    CustomCmdEvent * cme = new CustomCmdEvent(getName().c_str(), req->addrs[0], Command::CustomReq, req->getCustomOpc());
+    cme->setRqstr(rqstr_);
+    cme->setDst(rqstr_);
+    
+    if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
+        cme->setFlag(MemEvent::F_NONCACHEABLE);
+    
+    cme->setVirtualAddress(req->getVirtualAddress());
+    cme->setInstructionPointer(req->getInstructionPointer());
+
+    cme->setMemFlags(req->memFlags);
+    
+    return cme;
 }
 
 

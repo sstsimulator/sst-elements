@@ -20,13 +20,14 @@
  */
 
 #include <sst_config.h>
+#include <sst/core/interfaces/stringEvent.h>
+
 #include "cacheController.h"
 #include "coherenceController.h"
 #include "hash.h"
 
 #include "memEvent.h"
 #include "memEventBase.h"
-#include <sst/core/interfaces/stringEvent.h>
 
 
 using namespace SST;

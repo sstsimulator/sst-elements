@@ -14,34 +14,37 @@
 // distribution.
 
 #include "amoCustomCmdHandler.h"
+#include "customOpCodeCmd.h"
+#include "customCmdEvent.h"
 
 using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 
 CustomCmdMemHandler::MemEventInfo AMOCustomCmdMemHandler::receive(MemEventBase* ev){
-  CustomCmdMemHandler::MemEventInfo MEI(ev->getRoutingAddress(),false);
-  return MEI;
+    CustomCmdMemHandler::MemEventInfo MEI(ev->getRoutingAddress(),false);
+    return MEI;
 }
 
 CustomCmdInfo* AMOCustomCmdMemHandler::ready(MemEventBase* ev){
-  CustomCmdInfo *CI = new CustomCmdInfo(ev->getID(),
-                                        ev->getRqstr(),
-                                        ev->getRoutingAddress(),
-                                        ev->getCustomOpc(),
-                                        MemEvent::F_SUCCESS);
-  return CI;
+    CustomCmdEvent * cme = static_cast<CustomCmdEvent*>(ev);
+    CustomOpCodeCmdInfo *CI = new CustomOpCodeCmdInfo(cme->getID(),
+                                        cme->getRqstr(),
+                                        cme->getRoutingAddress(),
+                                        cme->getOpCode(),
+                                        MemEventBase::F_SUCCESS);
+    return CI;
 }
 
 MemEventBase* AMOCustomCmdMemHandler::finish(MemEventBase *ev, uint32_t flags){
-  if(ev->queryFlag(MemEventBase::F_NORESPONSE)||
-     ((flags & MemEventBase::F_NORESPONSE)>0)){
-    // posted request
-    return nullptr;
-  }
+    if(ev->queryFlag(MemEventBase::F_NORESPONSE)||
+         ((flags & MemEventBase::F_NORESPONSE)>0)){
+        // posted request
+        return nullptr;
+    }
 
-  MemEventBase *MEB = ev->makeResponse();
-  return MEB;
+    MemEventBase *MEB = ev->makeResponse();
+    return MEB;
 }
 
 // EOF

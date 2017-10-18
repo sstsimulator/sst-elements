@@ -22,11 +22,12 @@
 
 #include <sst_config.h>
 #include <sst/core/stringize.h>
+#include <sst/core/params.h>
+
 #include "hash.h"
 #include "cacheController.h"
 #include "util.h"
 #include "cacheListener.h"
-#include <sst/core/params.h>
 #include "mshr.h"
 #include "L1CoherenceController.h"
 #include "L1IncoherentController.h"
