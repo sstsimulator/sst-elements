@@ -13,9 +13,11 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "amoCustomCmdHandler.h"
-#include "customOpCodeCmd.h"
-#include "customCmdEvent.h"
+#include <sst_config.h>
+
+#include "customcmd/amoCustomCmdHandler.h"
+#include "customcmd/customOpCodeCmd.h"
+#include "customcmd/customCmdEvent.h"
 
 using namespace std;
 using namespace SST;

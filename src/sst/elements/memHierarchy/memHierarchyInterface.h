@@ -26,7 +26,7 @@
 #include <sst/core/link.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include "memEvent.h"
-#include "customCmdEvent.h"
+#include "customcmd/customCmdEvent.h"
 #include "sst/core/output.h"
 
 namespace SST {

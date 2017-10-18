@@ -20,7 +20,7 @@
 #include "sst/elements/memHierarchy/memoryController.h"
 #include "membackend/extMemBackendConvertor.h"
 #include "membackend/memBackend.h"
-#include "customOpCodeCmd.h"
+#include "customcmd/customOpCodeCmd.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;

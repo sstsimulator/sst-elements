@@ -31,7 +31,7 @@
 #include "sst/elements/memHierarchy/cacheListener.h"
 #include "sst/elements/memHierarchy/memLinkBase.h"
 #include "sst/elements/memHierarchy/membackend/backing.h"
-#include "sst/elements/memHierarchy/customCmdMemory.h"
+#include "sst/elements/memHierarchy/customcmd/customCmdMemory.h"
 
 namespace SST {
 namespace MemHierarchy {

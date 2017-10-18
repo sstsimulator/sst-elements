@@ -17,6 +17,7 @@
 #define _MEMHIERARCHY_CUSTOMMEMEVENT_H_
 
 #include <sst/core/sst_types.h>
+
 #include "util.h"
 #include "memEventBase.h"
 #include "memTypes.h"

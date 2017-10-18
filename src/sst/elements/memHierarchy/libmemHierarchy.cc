@@ -61,7 +61,7 @@
 #include "multithreadL1Shim.h"
 #include "scratchpad.h"
 #include "coherentMemoryController.h"
-#include "amoCustomCmdHandler.h"
+#include "customcmd/amoCustomCmdHandler.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"

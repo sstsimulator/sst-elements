@@ -21,7 +21,7 @@
 #include <sst/core/event.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
-#include "sst/elements/memHierarchy/customCmdMemory.h"
+#include "sst/elements/memHierarchy/customcmd/customCmdMemory.h"
 
 namespace SST {
 namespace MemHierarchy {

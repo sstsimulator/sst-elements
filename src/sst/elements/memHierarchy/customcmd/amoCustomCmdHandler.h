@@ -24,7 +24,7 @@
 
 #include "memEventBase.h"
 #include "memEvent.h"
-#include "customCmdMemory.h"
+#include "customcmd/customCmdMemory.h"
 
 namespace SST {
 namespace MemHierarchy {
