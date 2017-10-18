@@ -29,6 +29,7 @@ libMessier_la_CPPFLAGS = \
 	$(MPI_CPPFLAGS)
 
 libMessier_la_LDFLAGS = \
+	$(SST_SYSTEMC_LDFLAGS) \
 	-avoid-version
 
 libMessier_la_LIBADD = \
