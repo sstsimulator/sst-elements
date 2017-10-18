@@ -52,7 +52,7 @@ class c_Bank {
 public:
 
 	//FIXME: Will this need a reference to the c_Dimm's link?
-	c_Bank(SST::Params& x_params);
+	c_Bank(SST::Params& x_params,unsigned x_bankid);
 	~c_Bank();
 
 	void print();
@@ -162,6 +162,7 @@ public:
 	}
 
   unsigned getBankNum() const {return m_bankNum;}
+	void setBankNum(unsigned x_bankNum){m_bankNum=x_bankNum;}
   void acceptStatistics(c_BankStatistics *x_bankStats);
   
 private:
@@ -226,6 +227,8 @@ private:
 	unsigned m_READCmdsSent;
 	unsigned m_WRITECmdsSent;
 	unsigned m_PRECmdsSent;
+
+        uint32_t m_prevOpenRow;
 
   // Statistics
   c_BankStatistics *m_bankStats;

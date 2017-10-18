@@ -1,0 +1,14 @@
+# This is little-endian (MSB first)
+# key
+# C - channel/MC
+# c - pseudo channel
+# R - rank
+# B - bankGroup
+# b - bank
+# r - row
+# l - column
+# h - cacheline
+#
+# This map matches the default present in hbm_verimem.cfg for CramSiM
+#
+c:0 C:3 R:0 r:14 l:6 B:1  b:2  h:5

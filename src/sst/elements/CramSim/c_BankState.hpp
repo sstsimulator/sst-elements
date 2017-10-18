@@ -60,12 +60,12 @@ public:
 	virtual ~c_BankState() {
 	}
 
-	virtual void handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr) = 0;
+	virtual void handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) = 0;
 
-	virtual void clockTic(c_BankInfo* x_bank) = 0;
+	virtual void clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) = 0;
 
 	virtual void enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-			c_BankCommand* x_cmdPtr) = 0;
+			c_BankCommand* x_cmdPtr, SimTime_t x_cycle) = 0;
 
 	virtual std::list<e_BankCommandType> getAllowedCommands() = 0;
 
@@ -79,8 +79,9 @@ public:
 //private:
 protected:
 	std::map<std::string, unsigned>* m_bankParams;
-
+        
 	e_BankState m_currentState;
+
 };
 }
 }

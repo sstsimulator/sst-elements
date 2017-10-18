@@ -8,7 +8,8 @@ def read_arguments():
     boolUseRandomTrace = True
     boolUseDefaultConfig = True
     trace_file = ""
-    config_file = ""
+    config_file_list = list()
+    override_list = list()
 
     for arg in sys.argv:
         if arg.find("--tracefile=") != -1:
@@ -17,12 +18,20 @@ def read_arguments():
             boolUseRandomTrace = False
             print "Trace file:", trace_file
 
-        if arg.find("--configfile=") != -1:
+        elif arg.find("--configfile=") != -1:
             substrIndex = arg.find("=")+1
-            config_file = arg[substrIndex:]
+            config_file_list.append(arg[substrIndex:])
             boolUseDefaultConfig = False
-            print "Config file:", config_file
-    return [boolUseRandomTrace, trace_file, boolUseDefaultConfig, config_file]
+            print "Config file list:", config_file_list
+
+        elif arg != sys.argv[0]:
+            if arg.find("=") == -1:
+                print "Malformed config override found!: ", arg
+                exit(-1)
+            override_list.append(arg)
+            print "Override: ", override_list[-1]
+            
+    return [boolUseRandomTrace, trace_file, boolUseDefaultConfig, config_file_list, override_list]
 
 def setup_config_params():
     l_params = {}
@@ -81,12 +90,18 @@ def setup_config_params():
             "nBL":"""4"""
         }
     else:
-        l_configFile = open(g_config_file, 'r')
-        for l_line in l_configFile:
-            l_tokens = l_line.split()
-            #print l_tokens[0], ": ", l_tokens[1]
-            l_params[l_tokens[0]] = l_tokens[1]
+        for g_config_file in g_config_file_list:
+            l_configFile = open(g_config_file, 'r')
+            for l_line in l_configFile:
+                l_tokens = l_line.split()
+                #print l_tokens[0], ": ", l_tokens[1]
+                l_params[l_tokens[0]] = l_tokens[1]
 
+    for override in g_override_list:
+        l_tokens = override.split("=")
+        print "Override cfg", l_tokens[0], l_tokens[1]
+        l_params[l_tokens[0]] = l_tokens[1]
+        
     if not g_boolUseRandomTrace:
         l_params["traceFile"] = g_trace_file
     else:
@@ -97,9 +112,9 @@ def setup_config_params():
 def setup_txn_generator(params):
     l_txnGenStr = ""
     if g_boolUseRandomTrace:
-        l_txnGen = "CramSim.c_TxnGenRand"
+        l_txnGen = "CramSim.c_TxnGen"
     else:
-        l_txnGen = "CramSim.c_DramSimTraceReader"
+        l_txnGen = "CramSim.c_TraceFileReader"
     l_txnGen = sst.Component("TxnGen0", l_txnGen)
     l_txnGen.addParams(params)
     return l_txnGen
@@ -108,10 +123,11 @@ def setup_txn_generator(params):
 g_boolUseRandomTrace = True
 g_boolUseDefaultConfig = True
 g_trace_file = ""
-g_config_file = ""
+g_config_file_list = list()
+g_override_list = list()
 
 # Setup global parameters
-[g_boolUseRandomTrace, g_trace_file, g_boolUseDefaultConfig, g_config_file] = read_arguments()
+[g_boolUseRandomTrace, g_trace_file, g_boolUseDefaultConfig, g_config_file_list, g_override_list] = read_arguments()
 g_params = setup_config_params()
 
 
@@ -122,72 +138,39 @@ sst.setProgramOption("stopAtCycle", g_params["stopAtCycle"])
 
 # Define the simulation components
 
-# address hasher
-comp_addressHasher = sst.Component("AddrHash0", "CramSim.c_AddressHasher")
-comp_addressHasher.addParams(g_params)
-
 # txn gen
 comp_txnGen0 = setup_txn_generator(g_params)
 
-# txn unit
-comp_txnUnit0 = sst.Component("TxnUnit0", "CramSim.c_TxnUnit")
-comp_txnUnit0.addParams(g_params)
+# controller
+comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
+comp_controller0.addParams(g_params)
+comp_controller0.addParams({
+		"TxnScheduler" : "CramSim.c_TxnScheduler",
+		"TxnConverter" : "CramSim.c_TxnConverter",
+		"AddrMapper" : "CramSim.c_AddressHasher",
+		"CmdScheduler" : "CramSim.c_CmdScheduler" ,
+		"DeviceDriver" : "CramSim.c_DeviceDriver"
+		})
 
-# cmd unit
-comp_cmdUnit0 = sst.Component("CmdUnit0", "CramSim.c_CmdUnit")
-comp_cmdUnit0.addParams(g_params)
+
 
 # bank receiver
 comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
 comp_dimm0.addParams(g_params)
 
+
+
 # Define simulation links
 
-
-# TXNGEN / TXNUNIT LINKS
-# TxnGen -> TxnUnit (Req)(Txn)
+# TXNGEN / Controller LINKS
+# TxnGen <-> Controller
 txnReqLink_0 = sst.Link("txnReqLink_0")
-txnReqLink_0.connect( (comp_txnGen0, "outTxnGenReqPtr", g_params["clockCycle"]), (comp_txnUnit0, "inTxnGenReqPtr", g_params["clockCycle"]) )
+txnReqLink_0.connect( (comp_txnGen0, "memLink", g_params["clockCycle"]), (comp_controller0, "txngenLink", g_params["clockCycle"]) )
 
-# TxnGen <- TxnUnit (Req)(Token)
-txnTokenLink_0 = sst.Link("txnTokenLink_0")
-txnTokenLink_0.connect( (comp_txnGen0, "inTxnUnitReqQTokenChg", g_params["clockCycle"]), (comp_txnUnit0, "outTxnGenReqQTokenChg", g_params["clockCycle"]) )
-
-# TxnGen <- TxnUnit (Res)(Txn)
-txnResLink_0 = sst.Link("txnResLink_0")
-txnResLink_0.connect( (comp_txnGen0, "inTxnUnitResPtr", g_params["clockCycle"]), (comp_txnUnit0, "outTxnGenResPtr", g_params["clockCycle"]) )
-
-# TxnGen -> TxnUnit (Res)(Token)
-txnTokenLink_1 = sst.Link("txnTokenLink_1")
-txnTokenLink_1.connect( (comp_txnGen0, "outTxnGenResQTokenChg", g_params["clockCycle"]), (comp_txnUnit0, "inTxnGenResQTokenChg", g_params["clockCycle"]) )
-
-
-
-
-# TXNUNIT / CMDUNIT LINKS
-# TxnUnit -> CmdUnit (Req) (Cmd)
-cmdReqLink_0 = sst.Link("cmdReqLink_0")
-cmdReqLink_0.connect( (comp_txnUnit0, "outCmdUnitReqPtrPkg", g_params["clockCycle"]), (comp_cmdUnit0, "inTxnUnitReqPtr", g_params["clockCycle"]) )
-
-# TxnUnit <- CmdUnit (Req) (Token)
-cmdTokenLink_0 = sst.Link("cmdTokenLink_0")
-cmdTokenLink_0.connect( (comp_txnUnit0, "inCmdUnitReqQTokenChg", g_params["clockCycle"]), (comp_cmdUnit0, "outTxnUnitReqQTokenChg", g_params["clockCycle"]) )
-
-# TxnUnit <- CmdUnit (Res) (Cmd)
-cmdResLink_0 = sst.Link("cmdResLink_0")
-cmdResLink_0.connect( (comp_txnUnit0, "inCmdUnitResPtr", g_params["clockCycle"]), (comp_cmdUnit0, "outTxnUnitResPtr", g_params["clockCycle"]) )
-
-
-
-
-# CMDUNIT / DIMM LINKS
-# CmdUnit -> Dimm (Req) (Cmd)
+# Controller <-> Dimm
 cmdReqLink_1 = sst.Link("cmdReqLink_1")
-cmdReqLink_1.connect( (comp_cmdUnit0, "outBankReqPtr", g_params["clockCycle"]), (comp_dimm0, "inCmdUnitReqPtr", g_params["clockCycle"]) )
+cmdReqLink_1.connect( (comp_controller0, "memLink", g_params["clockCycle"]), (comp_dimm0, "ctrlLink", g_params["clockCycle"]) )
 
-# CmdUnit <- Dimm (Res) (Cmd)
-cmdResLink_1 = sst.Link("cmdResLink_1")
-cmdResLink_1.connect( (comp_cmdUnit0, "inBankResPtr", g_params["clockCycle"]), (comp_dimm0, "outCmdUnitResPtr", g_params["clockCycle"]) )
 
 
 

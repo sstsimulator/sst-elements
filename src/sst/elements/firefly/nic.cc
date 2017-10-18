@@ -35,7 +35,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_sendNotifyCnt(0),
     m_detailedCompute( 2, NULL ),
     m_useDetailedCompute(false),
-    m_getKey(10)
+    m_getKey(10),
+    m_simpleMemoryModel(NULL)
 {
     m_myNodeId = params.find<int>("nid", -1);
     assert( m_myNodeId != -1 );
@@ -109,6 +110,10 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_recvM.resize( m_num_vNics );
 
     m_shmem = new Shmem( *this, m_num_vNics, m_dbg, getDelay_ns(), getDelay_ns() );
+
+    if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
+        m_simpleMemoryModel = new SimpleMemoryModel();
+    }
 
     m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
@@ -407,7 +412,7 @@ bool Nic::recvNotify(int vc)
 }
 
 void Nic::detailedMemOp( Thornhill::DetailedCompute* detailed,
-        std::vector<DmaVec>& vec, std::string op, Callback callback ) {
+        std::vector<MemOp>& vec, std::string op, Callback callback ) {
 
     std::deque< std::pair< std::string, SST::Params> > gens;
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_DETAILED_MEM,
@@ -475,9 +480,11 @@ void Nic::detailedMemOp( Thornhill::DetailedCompute* detailed,
     }
 }
 
-void Nic::dmaRead( std::vector<DmaVec>& vec, Callback callback ) {
+void Nic::dmaRead( std::vector<MemOp>& vec, Callback callback ) {
 
-    if ( m_useDetailedCompute && m_detailedCompute[0] ) {
+    if ( m_simpleMemoryModel ) {
+        schedCallback( callback, calcNicMemDelay( vec ) );
+    } else if ( m_useDetailedCompute && m_detailedCompute[0] ) {
 
         detailedMemOp( m_detailedCompute[0], vec, "Read", callback );
 
@@ -490,9 +497,11 @@ void Nic::dmaRead( std::vector<DmaVec>& vec, Callback callback ) {
     }
 }
 
-void Nic::dmaWrite( std::vector<DmaVec>& vec, Callback callback ) {
+void Nic::dmaWrite( std::vector<MemOp>& vec, Callback callback ) {
 
-    if ( m_useDetailedCompute && m_detailedCompute[1] ) {
+    if ( m_simpleMemoryModel ) {
+        schedCallback( callback, calcNicMemDelay( vec ) );
+    } else if ( m_useDetailedCompute && m_detailedCompute[1] ) {
 
         detailedMemOp( m_detailedCompute[1], vec, "Write", callback );
 

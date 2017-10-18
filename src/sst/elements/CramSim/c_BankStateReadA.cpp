@@ -63,18 +63,15 @@ c_BankStateReadA::~c_BankStateReadA() {
 // handle automatic state changes in function clockTic( ... )
 
 void c_BankStateReadA::handleCommand(c_BankInfo* x_bank,
-		c_BankCommand* x_bankCommandPtr) {
-	// std::cout << __PRETTY_FUNCTION__
-	// 		<< "ERROR: Bank commands are irrelevant in the current state ... exiting simulation"
-	// 		<< std::endl;
+		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
 }
 
-void c_BankStateReadA::clockTic(c_BankInfo* x_bank) {
+void c_BankStateReadA::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 	if (0 < m_timerEnter) {
 		--m_timerEnter;
 	} else {
 		if (0 == m_timerExit) {
-			SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
+			SimTime_t l_time = x_cycle;
 			m_nextStatePtr = new c_BankStatePrecharge(m_bankParams);
 			x_bank->setLastCommandCycle(e_BankCommandType::PRE, l_time);
 			SimTime_t l_nextCycle = std::max(
@@ -99,20 +96,14 @@ void c_BankStateReadA::clockTic(c_BankInfo* x_bank) {
 			--m_timerExit;
 		} else {
 			if (nullptr != m_nextStatePtr)
-				m_nextStatePtr->enter(x_bank, this, nullptr);
+				m_nextStatePtr->enter(x_bank, this, nullptr, x_cycle);
 		}
-		// std::cout << __PRETTY_FUNCTION__ << " timer expired" << std::endl;
-//               if (0 < m_timerExit) --m_timerExit;
-//               else {
-//		  auto l_p = new c_BankStatePrecharge(m_bankParams);
-//		  l_p->enter(x_bank, this, m_receivedCommandPtr);
-//               }
 	}
 
 }
 
 void c_BankStateReadA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-		c_BankCommand* x_cmdPtr) {
+		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 
 //	std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
 
@@ -121,11 +112,6 @@ void c_BankStateReadA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_prevCommandPtr = x_cmdPtr;
 	if (nullptr != m_prevCommandPtr) {
 		m_prevCommandPtr->setResponseReady();
-		//const unsigned l_cmdsLeft =
-		//		m_prevCommandPtr->getTransaction()->getWaitingCommands() - 1;
-		//m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
-		//if (l_cmdsLeft == 0)
-		//	m_prevCommandPtr->getTransaction()->setResponseReady();
 
 		switch (m_prevCommandPtr->getCommandMnemonic()) {
 		case e_BankCommandType::READA:
@@ -142,7 +128,7 @@ void c_BankStateReadA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 		m_prevCommandPtr = nullptr;
 	}
 
-	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = x_cycle;
 
 	x_bank->setLastCommandCycle(e_BankCommandType::READA,l_time);
 

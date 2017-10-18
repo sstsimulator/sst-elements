@@ -87,7 +87,7 @@ class SendMachine {
         } 
 
         void copyOut( Output& dbg, FireflyNetworkEvent& event,
-                                Nic::EntryBase& entry, std::vector<DmaVec>& );
+                                Nic::EntryBase& entry, std::vector<MemOp>& );
 
         Nic&        m_nic;
         Output      m_dbg;
