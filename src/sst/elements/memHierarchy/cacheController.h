@@ -34,7 +34,7 @@
 #include "cacheArray.h"
 #include "mshr.h"
 #include "replacementManager.h"
-#include "coherenceController.h"
+#include "coherencemgr/coherenceController.h"
 #include "util.h"
 #include "cacheListener.h"
 #include "memLinkBase.h"

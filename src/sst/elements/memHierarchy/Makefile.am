@@ -73,22 +73,22 @@ libmemHierarchy_la_SOURCES = \
 	directoryController.cc \
 	scratchpad.h \
 	scratchpad.cc \
-	coherenceController.h \
-	coherenceController.cc \
+	coherencemgr/coherenceController.h \
+	coherencemgr/coherenceController.cc \
 	memHierarchyInterface.cc \
 	memHierarchyInterface.h \
 	memHierarchyScratchInterface.cc \
 	memHierarchyScratchInterface.h \
-	MESIInternalDirectory.h \
-	MESIInternalDirectory.cc \
-	MESICoherenceController.h \
-	MESICoherenceController.cc \
-	IncoherentController.h \
-	IncoherentController.cc \
-	L1IncoherentController.h \
-	L1IncoherentController.cc \
-	L1CoherenceController.h \
-	L1CoherenceController.cc \
+	coherencemgr/MESIInternalDirectory.h \
+	coherencemgr/MESIInternalDirectory.cc \
+	coherencemgr/MESICoherenceController.h \
+	coherencemgr/MESICoherenceController.cc \
+	coherencemgr/IncoherentController.h \
+	coherencemgr/IncoherentController.cc \
+	coherencemgr/L1IncoherentController.h \
+	coherencemgr/L1IncoherentController.cc \
+	coherencemgr/L1CoherenceController.h \
+	coherencemgr/L1CoherenceController.cc \
 	multithreadL1Shim.h \
 	multithreadL1Shim.cc \
 	cacheArray.cc \

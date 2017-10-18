@@ -29,8 +29,8 @@
 #include "util.h"
 #include "cacheListener.h"
 #include "mshr.h"
-#include "L1CoherenceController.h"
-#include "L1IncoherentController.h"
+#include "coherencemgr/L1CoherenceController.h"
+#include "coherencemgr/L1IncoherentController.h"
 #include "memNIC.h"
 #include "memLink.h"
 
