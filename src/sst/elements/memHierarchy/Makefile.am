@@ -161,6 +161,7 @@ nobase_sst_HEADERS = \
 	memEventBase.h \
 	memEvent.h \
 	memNIC.h \
+	memLinkBase.h \
 	membackend/memBackend.h \
 	membackend/vaultSimBackend.h \
 	membackend/MessierBackend.h \
