@@ -1382,7 +1382,7 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 	{ "queue_depth",	"Sets the depth of the HMC request queue, min=2, max=65536, default=2", "2" },
   	{ "dram_count",         "Sets the number of DRAM blocks per cube", "20" },
 	{ "xbar_depth",         "Sets the queue depth for the HMC X-bar", "8" },
-        { "max_req_size",       "Sets the maximum requests which can be inflight from the controller side at any time", "32" },
+        { "max_req_size",       "Sets the maximum request size, in bytes", "64" },
 #ifdef HMC_DEV_DRAM_LATENCY
         { "dram_latency",       "Sets the internal DRAM fetch latency in clock cycles", "2" },
 #endif
