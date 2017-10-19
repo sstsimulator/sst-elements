@@ -50,6 +50,7 @@
 #include "membackend/requestReorderByRow.h"
 #include "membackend/delayBuffer.h"
 #include "membackend/simpleMemBackendConvertor.h"
+#include "membackend/flagMemBackendConvertor.h"
 #include "membackend/timingDRAMBackend.h"
 #include "membackend/timingTransaction.h"
 #include "membackend/timingPagePolicy.h"
@@ -64,6 +65,7 @@
 #include "customcmd/amoCustomCmdHandler.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
+#include "membackend/extMemBackendConvertor.h"
 #include "membackend/goblinHMCBackend.h"
 #endif
 
@@ -477,6 +479,27 @@ static const ElementInfoStatistic coherence_statistics[] = {
 };
 
 #ifdef HAVE_GOBLIN_HMCSIM
+static SubComponent* create_Mem_ExtBackendConvertor(Component* comp, Params& params){
+    return new ExtMemBackendConvertor(comp, params);
+}
+
+static const ElementInfoStatistic extMemBackendConvertor_statistics[] = {
+    /* Cache hits and misses */
+    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles",   1 },
+    { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
+    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles",   1 },
+    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1 },
+    { "requests_received_GetSX",           "Number of GetSX (read) requests received",        "requests", 1 },
+    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },
+    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },
+    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },
+    { "latency_GetS",                       "Total latency of handled GetS requests",           "cycles",   1 },
+    { "latency_GetSX",                     "Total latency of handled GetSX requests",         "cycles",   1 },
+    { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },
+    { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 },
+    { NULL, NULL, NULL, 0 }
+};
+
 static const ElementInfoStatistic goblinhmcsim_statistics[] = {
     {"WR16",            "Operation count for HMC WR16",       "count", 1},
     {"WR32",            "Operation count for HMC WR32",       "count", 1},
@@ -1001,6 +1024,15 @@ static const ElementInfoStatistic scratchBackendConvertor_statistics[] = {
     { "latency_PutM",                           "Total latency of handled PutM requests",           "cycles",   1 },
     { NULL, NULL, NULL, 0 }
 };
+
+/*****************************************************************************************
+ *  SubComponent: simpleMemBackendConvertor
+ *  Purpose: Converts memEvents from a memory controller into cmd/addr/size for backends
+ *  which use the 'simpleMem' backend interface
+ *****************************************************************************************/
+static SubComponent* create_Mem_FlagBackendConvertor(Component* comp, Params& params){
+    return new FlagMemBackendConvertor(comp, params);
+}
 
 /*****************************************************************************************
  *  SubComponent: simpleMem
@@ -1643,21 +1675,30 @@ static const ElementInfoSubComponent subcomponents[] = {
     },
     {
         "simpleMemBackendConvertor",
-        "convert MemEvent to base mem backend",
+        "Convert MemEventBase to base mem backend",
         NULL, /* Advanced help */
         create_Mem_SimpleBackendConvertor, /* Module Alloc w/ params */
         NULL,
         memBackendConvertor_statistics, /* statistics */
-        "SST::MemHierarchy::MemBackend"
+        "SST::MemHierarchy::MemBackendConvertor"
     },
     {
         "simpleMemScratchBackendConvertor",
-        "convert ScratchEvent to base mem backend",
+        "Convert MemEventBase to base mem backend, uses different interface than simpleMemBackendConvertor",
         NULL, /* Advanced help */
         create_Mem_SimpleScratchBackendConvertor, /* Module Alloc w/ params */
         NULL,
         scratchBackendConvertor_statistics,
-        "SST::MemHierarchy::MemBackend"
+        "SST::MemHierarchy::MemBackendConvertor"
+    },
+    {
+        "flagMemBackendConvertor",
+        "Convert MemEventBase to mem backend, pass flags with request/response",
+        NULL,
+        create_Mem_FlagBackendConvertor,
+        NULL,
+        memBackendConvertor_statistics,
+        "SST::MemHierarchy::MemBackendConvertor"
     },
     {
         "simpleMem",
@@ -1821,6 +1862,15 @@ static const ElementInfoSubComponent subcomponents[] = {
     },
 #endif
 #ifdef HAVE_GOBLIN_HMCSIM
+    {
+        "extMemBackendConvertor",
+        "Convert MemEventBase to Ext mem backend",
+        NULL,
+        create_Mem_ExtBackendConvertor,
+        NULL,
+        memBackendConvertor_statistics,
+        "SST::MemHierarchy::MemBackendConvertor"
+    },
     {
         "goblinHMCSim",
         "GOBLIN HMC Simulator driven memory timings",

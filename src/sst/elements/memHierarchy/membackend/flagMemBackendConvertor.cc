@@ -39,9 +39,12 @@ FlagMemBackendConvertor::FlagMemBackendConvertor(Component *comp, Params &params
 }
 
 bool FlagMemBackendConvertor::issue( BaseReq *breq ) {
-    MemReq * req = static_cast<MemReq*>(breq);
-
-    MemEvent* event = req->getMemEvent();
-
-    return static_cast<FlagMemBackend*>(m_backend)->issueRequest( req->id(), req->addr(), req->isWrite(), event->getFlags(), m_backendRequestWidth );
+    if (breq->isMemEv()) {
+        MemReq * req = static_cast<MemReq*>(breq);
+        MemEvent* event = req->getMemEvent();
+        return static_cast<FlagMemBackend*>(m_backend)->issueRequest( req->id(), req->addr(), req->isWrite(), event->getFlags(), m_backendRequestWidth );
+    } else {
+        CustomReq * req = static_cast<CustomReq*>(breq);
+        return static_cast<FlagMemBackend*>(m_backend)->issueCustomRequest(req->id(), req->getInfo());
+    }
 }

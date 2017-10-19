@@ -35,6 +35,8 @@ libmemHierarchy_la_SOURCES = \
 	membackend/simpleMemBackendConvertor.cc \
 	membackend/flagMemBackendConvertor.h \
 	membackend/flagMemBackendConvertor.cc \
+	membackend/extMemBackendConvertor.h \
+	membackend/extMemBackendConvertor.cc \
 	membackend/delayBuffer.h \
 	membackend/delayBuffer.cc \
 	membackend/simpleMemBackend.h \
@@ -243,7 +245,7 @@ endif
 if USE_GOBLIN_HMCSIM
 libmemHierarchy_la_SOURCES += \
 	membackend/goblinHMCBackend.cc \
-	membackend/goblinHMCBackend.h
+	membackend/goblinHMCBackend.h \
 nobase_sst_HEADERS += membackend/goblinHMCBackend.h
 libmemHierarchy_la_LDFLAGS += $(GOBLIN_HMCSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(GOBLIN_HMCSIM_LIB)
