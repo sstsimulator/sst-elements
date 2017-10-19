@@ -65,7 +65,6 @@
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
-#include "membackend/extMemBackendConvertor.h"
 #endif
 
 #ifdef HAVE_LIBRAMULATOR
@@ -947,7 +946,7 @@ static const ElementInfoParam cohmemctrl_params[] = {
 /*****************************************************************************************
  *  SubComponent: AMOCustomCmdMemHandler
  *  Purpose: (A)tomic (M)emory (O)peration CustomCmdMemHandler for issuing custom
- *  AMO commands to memBackends that use ExtMemBackendConvertor
+ *  AMO commands to memBackends
  *****************************************************************************************/
 static SubComponent* create_Mem_AMOCustomCmdMemHandler(Component* comp, Params& params){
 	return new AMOCustomCmdMemHandler(comp, params);
@@ -1349,27 +1348,6 @@ static const ElementInfoParam Messier_params[] = {
  *  Purpose: Memory backend, interface to HMCSim (HMC memory)
  *****************************************************************************************/
 #ifdef HAVE_GOBLIN_HMCSIM
-static SubComponent* create_Mem_ExtBackendConvertor(Component* comp, Params& params){
-    return new ExtMemBackendConvertor(comp, params);
-}
-
-static const ElementInfoStatistic extMemBackendConvertor_statistics[] = {
-    /* Cache hits and misses */
-    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles",   1 },
-    { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
-    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles",   1 },
-    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1 },
-    { "requests_received_GetSX",           "Number of GetSX (read) requests received",        "requests", 1 },
-    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },
-    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },
-    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },
-    { "latency_GetS",                       "Total latency of handled GetS requests",           "cycles",   1 },
-    { "latency_GetSX",                     "Total latency of handled GetSX requests",         "cycles",   1 },
-    { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },
-    { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 },
-    { NULL, NULL, NULL, 0 }
-};
-
 static SubComponent* create_Mem_GOBLINHMCSim(Component* comp, Params& params){
     return new GOBLINHMCSimBackend(comp, params);
 }
@@ -1843,15 +1821,6 @@ static const ElementInfoSubComponent subcomponents[] = {
     },
 #endif
 #ifdef HAVE_GOBLIN_HMCSIM
-    {
-        "extMemBackendConvertor",
-        "convert MemEvent to Ext mem backend",
-        NULL, /* Advanced help */
-        create_Mem_ExtBackendConvertor, /* Module Alloc w/ params */
-        NULL,
-        extMemBackendConvertor_statistics, /* statistics */
-        "SST::MemHierarchy::MemBackend"
-    },
     {
         "goblinHMCSim",
         "GOBLIN HMC Simulator driven memory timings",

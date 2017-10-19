@@ -22,7 +22,7 @@
 namespace SST {
 namespace MemHierarchy {
 
-class VaultSimMemory : public MemFlagMemBackend {
+class VaultSimMemory : public FlagMemBackend {
 public:
     VaultSimMemory(Component *comp, Params &params);
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes );

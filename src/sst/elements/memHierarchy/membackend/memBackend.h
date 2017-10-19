@@ -84,12 +84,21 @@ public:
 
     virtual void setup() {}
     virtual void finish() {}
+    
+    /* Called by parent's clock() function */
     virtual bool clock(Cycle_t cycle) { return true; } 
+    
+    /* Interface to parent */
     virtual size_t getMemSize() { return m_memSize; }
     virtual uint32_t getRequestWidth() { return m_reqWidth; }
     virtual int32_t getMaxReqPerCycle() { return m_maxReqPerCycle; } 
     virtual const std::string& getClockFreq() { return m_clockFreq; }
     virtual bool isClocked() { return true; }
+    virtual bool issueCustomRequest(ReqId, CustomCmdInfo*) {
+        output->fatal(CALL_INFO, -1, "Error (%s): This backend cannot handle custom requests\n");
+        return false;
+    }
+
 protected:
     Output*         output;
     std::string     m_clockFreq;
@@ -100,6 +109,7 @@ protected:
     std::function<const std::string&(ReqId)> m_getRequestor;
 };
 
+/* MemBackend - timing only */
 class SimpleMemBackend : public MemBackend {
   public:
     SimpleMemBackend() : MemBackend() {} 
@@ -119,9 +129,10 @@ class SimpleMemBackend : public MemBackend {
     std::function<void(ReqId)> m_respFunc;
 };
 
-class MemFlagMemBackend : public MemBackend {
+/* MemBackend - timing and passes request/response flags */
+class FlagMemBackend : public MemBackend {
   public:
-    MemFlagMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+    FlagMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
 
     void handleMemResponse( ReqId id, uint32_t flags ) {

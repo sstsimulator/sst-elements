@@ -151,10 +151,10 @@ MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) con
 
 
 CustomCmdEvent* MemHierarchyInterface::createCustomMemEvent(SimpleMem::Request * req) const {
-    CustomCmdEvent * cme = new CustomCmdEvent(getName().c_str(), req->addrs[0], Command::CustomReq, req->getCustomOpc());
+    CustomCmdEvent * cme = new CustomCmdEvent(getName().c_str(), req->addrs[0], Command::CustomReq, req->getCustomOpc(), req->size);
     cme->setRqstr(rqstr_);
     cme->setDst(rqstr_);
-    
+
     if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
         cme->setFlag(MemEvent::F_NONCACHEABLE);
     
