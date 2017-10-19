@@ -30,25 +30,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 //SST includes
 #include "sst_config.h"
 
 // C++ includes
 #include <algorithm>
-#include <string>
 #include <assert.h>
+#include <iostream>
+#include <stdlib.h>
+
+#include <sst/core/stringize.h>
 
 // CramSim includes
 #include "c_Dimm.hpp"
-#include "c_AddressHasher.hpp"
-#include "c_Transaction.hpp"
-#include "c_Bank.hpp"
 #include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
-#include "c_BankCommand.hpp"
-#include <sst/core/event.h>
-#include <sst/core/component.h>
-#include <sst/core/sst_types.h>
 
 using namespace SST;
 using namespace SST::n_Bank;
@@ -56,24 +53,34 @@ using namespace SST::n_Bank;
 c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		Component(x_id) {
 
-	// tell the simulator not to end without us <-- why?
-	//registerAsPrimaryComponent();
-	//primaryComponentDoNotEndSim();
 
-	// configure links
+	m_simCycle=0;
 
-	// DIMM <-> CmdUnit Links
+	// / configure links
+	// DIMM <-> Controller Links
 	//// DIMM <-> CmdUnit (Req) (Cmd)
-	m_inCmdUnitReqPtrLink = configureLink("inCmdUnitReqPtr",
+	m_ctrlLink = configureLink("ctrlLink",
 			new Event::Handler<c_Dimm>(this,
 					&c_Dimm::handleInCmdUnitReqPtrEvent));
-	//// DIMM <-> CmdUnit (Res) (Cmd)
-	m_outCmdUnitResPtrLink = configureLink("outCmdUnitResPtr",
-			new Event::Handler<c_Dimm>(this,
-					&c_Dimm::handleOutCmdUnitResPtrEvent));
 
 	// read params here
 	bool l_found = false;
+
+	k_numChannels = (uint32_t)x_params.find<uint32_t>("numChannels", 1,
+															 l_found);
+	if (!l_found) {
+		std::cout << "numChannelsPerDimm value is missing... exiting"
+				  << std::endl;
+		exit(-1);
+	}
+
+	k_numPChannelsPerChannel = (uint32_t)x_params.find<uint32_t>("numPChannelsPerChannel", 1,
+															l_found);
+	if (!l_found) {
+		std::cout << "numPChannelsPerChannel value is missing... "
+				  << std::endl;
+		//exit(-1);
+	}
 
 	k_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 100,
 			l_found);
@@ -99,12 +106,12 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		exit(-1);
 	}
 
-	m_numBanks = k_numRanksPerChannel * k_numBankGroupsPerRank
+	m_numBanks = k_numChannels * k_numPChannelsPerChannel * k_numRanksPerChannel * k_numBankGroupsPerRank
 			* k_numBanksPerBankGroup;
 
 	Statistic<uint64_t> *l_totalRowHits = registerStatistic<uint64_t>("totalRowHits");
 	for (int l_i = 0; l_i != m_numBanks; ++l_i) {
-		c_Bank* l_entry = new c_Bank(x_params);
+		c_Bank* l_entry = new c_Bank(x_params,l_i);
 		m_banks.push_back(l_entry);
 
 		std::string l_statName;
@@ -131,8 +138,11 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 	m_thisCycleReceivedCmds = 0;
 
+	// get configured clock frequency
+	std::string l_controllerClockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
+    
 	//set our clock
-	registerClock("1GHz", new Clock::Handler<c_Dimm>(this, &c_Dimm::clockTic));
+	registerClock(l_controllerClockFreqStr, new Clock::Handler<c_Dimm>(this, &c_Dimm::clockTic));
 
 	// Statistics setup
 	s_actCmdsRecvd     = registerStatistic<uint64_t>("actCmdsRecvd");
@@ -146,6 +156,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 c_Dimm::~c_Dimm() {
 
+
 }
 
 c_Dimm::c_Dimm() :
@@ -157,26 +168,18 @@ void c_Dimm::printQueues() {
 	std::cout << __PRETTY_FUNCTION__ << std::endl;
 	std::cout << "m_cmdResQ.size() = " << m_cmdResQ.size() << std::endl;
 	for (auto& l_cmdPtr : m_cmdResQ)
-		(l_cmdPtr)->print();
+		(l_cmdPtr)->print(m_simCycle);
 }
 
 bool c_Dimm::clockTic(SST::Cycle_t) {
-	// std::cout << std::endl << std::endl << "DIMM:: clock tic" << std::endl;
-//	std::cout << std::endl << "@" << std::dec
-//			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//			<< __PRETTY_FUNCTION__ << std::endl;
-
+        m_simCycle++;
 	for (int l_i = 0; l_i != m_banks.size(); ++l_i) {
-//		std::cout << "Bank" << std::dec << l_i << " clockTic from DIMM"
-//				<< std::endl;
 
 		c_BankCommand* l_resPtr = m_banks.at(l_i)->clockTic();
 		if (nullptr != l_resPtr) {
 			m_cmdResQ.push_back(l_resPtr);
 		}
 	}
-
-//	printQueues();
 
 	sendResponse();
 
@@ -190,18 +193,9 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 	if (l_cmdReqEventPtr) {
 		// each cycle, the DIMM should only receive one req
 		m_thisCycleReceivedCmds++;
-		// FIXME: confirm removal of this assert
-		// tejask removed it because now we are allowing multiple
-		// requests in the DIMM in the same cycle
-		// assert(m_thisCycleReceivedCmds <= 1);
 
 		c_BankCommand* l_cmdReq = l_cmdReqEventPtr->m_payload;
 
-//		std::cout << std::endl << "@" << std::dec
-//				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//				<< __PRETTY_FUNCTION__ << " received command " << std::endl;
-//		l_cmdReq->print();
-//		std::cout << std::endl;
 
 		switch(l_cmdReq->getCommandMnemonic()) {
 		case e_BankCommandType::ACT:
@@ -239,11 +233,8 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
 
   unsigned l_bankNum=0;
-  if(x_bankCommandPtr->getCommandMnemonic() == e_BankCommandType::REF) {
-    l_bankNum = x_bankCommandPtr->getBankId();
-  } else {
-    l_bankNum = x_bankCommandPtr->getHashedAddress()->getBankId();
-  }
+
+  l_bankNum = x_bankCommandPtr->getBankId();
   m_banks.at(l_bankNum)->handleCommand(x_bankCommandPtr);
   
 }
@@ -251,25 +242,15 @@ void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
 void c_Dimm::sendResponse() {
 
 	// check if ResQ has cmds
-	if (m_cmdResQ.size() > 0) {
+	while (!m_cmdResQ.empty()) {
 
-	  //std::cout << std::endl << "@" << std::dec
-	  //	    << Simulation::getSimulation()->getCurrentSimCycle() << ": "
-	  //	    << __PRETTY_FUNCTION__ << std::endl;
-	  //m_cmdResQ.front()->print();
-	  //std::cout << std::endl;
 
 	  c_CmdResEvent* l_cmdResEventPtr = new c_CmdResEvent();
 	  l_cmdResEventPtr->m_payload = m_cmdResQ.front();
 	  m_cmdResQ.erase(
 			  std::remove(m_cmdResQ.begin(), m_cmdResQ.end(),
 				      m_cmdResQ.front()), m_cmdResQ.end());
-	  m_outCmdUnitResPtrLink->send(l_cmdResEventPtr);
+		m_ctrlLink->send(l_cmdResEventPtr);
 	}
 }
 
-void c_Dimm::handleOutCmdUnitResPtrEvent(SST::Event *ev) {
-	// nothing to do here
-	std::cout << __PRETTY_FUNCTION__ << " ERROR: Should not be here"
-			<< std::endl;
-}

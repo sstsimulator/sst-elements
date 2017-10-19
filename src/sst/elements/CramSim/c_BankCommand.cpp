@@ -27,7 +27,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include <assert.h>
-
+#include "sst/core/simulation.h"
 #include "c_BankCommand.hpp"
 //#include "c_Transaction.hpp"
 
@@ -36,9 +36,9 @@ using namespace SST::n_Bank;
 
 c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 			     e_BankCommandType x_cmdMnemonic, ulong x_addr,
-			     c_HashedAddress &x_hashedAddr) :
+			     const c_HashedAddress &x_hashedAddr) :
 		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
-		m_isResponseReady(false), m_hashedAddr(x_hashedAddr) {
+		m_isResponseReady(false), m_hashedAddr(x_hashedAddr), m_bankId(x_hashedAddr.getBankId()), m_isRefreshType(false) {
 
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";
 	m_cmdToString[e_BankCommandType::ACT] = "ACT";
@@ -55,9 +55,9 @@ c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 			     e_BankCommandType x_cmdMnemonic, ulong x_addr,
 			     unsigned x_bankId) :
 		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
-		m_isResponseReady(false), m_bankId(x_bankId) {
+		m_isResponseReady(false), m_bankId(x_bankId), m_isRefreshType(true) {
 
-        assert(x_cmdMnemonic == e_BankCommandType::REF); // This constructor only for REF cmds!
+	assert(x_cmdMnemonic == e_BankCommandType::REF ||x_cmdMnemonic == e_BankCommandType::PRE); // This constructor only for REF cmds!
 
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";
 	m_cmdToString[e_BankCommandType::ACT] = "ACT";
@@ -71,13 +71,14 @@ c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 }
 
 c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
-			     e_BankCommandType x_cmdMnemonic, ulong x_addr,
+			     e_BankCommandType x_cmdMnemonic, ulong x_addr, const c_HashedAddress &x_hashedAddr,
 			     std::vector<unsigned> &x_bankIdVec) :
 		m_seqNum(x_cmdSeqNum), m_addr(x_addr), m_cmdMnemonic(x_cmdMnemonic),
-		m_isResponseReady(false), m_bankIdVec(x_bankIdVec) {
+		m_isResponseReady(false), m_bankIdVec(x_bankIdVec), m_isRefreshType(true) {
 
-        assert(x_cmdMnemonic == e_BankCommandType::REF); // This constructor only for REF cmds!
+        assert((x_cmdMnemonic == e_BankCommandType::REF||x_cmdMnemonic == e_BankCommandType::PRE)); // This constructor only for REF cmds!
 
+	m_hashedAddr = x_hashedAddr;
 	m_bankId = x_bankIdVec.front();
 	
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";
@@ -103,37 +104,60 @@ e_BankCommandType c_BankCommand::getCommandMnemonic() const {
 	return (m_cmdMnemonic);
 }
 
-// acceptTransaction is called from the process that converts a c_Transaction into one or more c_BankCommand objects
-// this function links the c_Transaction object with it constituent c_BankCommand objects
-//void c_BankCommand::acceptTransaction(c_Transaction* x_transaction) {
-//  m_transactionPtr = x_transaction;
-//}
 
-//c_Transaction* c_BankCommand::getTransaction() const {
-//  return (m_transactionPtr);
-//}
-
-void c_BankCommand::print() const {
-
-  std::cout << "[" << this << " CMD: " << this->getCommandString() << ", SEQNUM: "
-	    << std::dec << this->getSeqNum() << " , ADDR: 0x" << std::hex
-	    << this->getAddress() << " , isResponseReady: " << std::boolalpha
-	    << this->isResponseReady() << " row: " << this->getHashedAddress()->getRow()
-	    << " BankId: " << std::dec << this->getBankId() << "]"
-	    << std::endl;
+void c_BankCommand::print(SimTime_t x_cycle) const {
+  std::cout << "[" << this << " Cycle:" <<  x_cycle
+			<< " CMD: " << this->getCommandString()
+			<< ", SEQNUM: " << std::dec << this->getSeqNum()
+			<< ", ADDR: 0x" << std::hex << this->getAddress()
+			<< ", isResponseReady: " << std::boolalpha << this->isResponseReady()
+		    << ", BankId: " << std::dec << this->getHashedAddress()->getBankId()
+			<< ", Ch: " << std::dec << this->getHashedAddress()->getChannel()
+			<< ", Pch: " << std::dec << this->getHashedAddress()->getPChannel()
+		    << ", Rank: " << std::dec << this->getHashedAddress()->getRank()
+			<< ", BG: " << std::dec << this->getHashedAddress()->getBankGroup()
+			<< ", Bank: " << std::dec << this->getHashedAddress()->getBank()
+			<< ", Row: " << std::dec << this->getHashedAddress()->getRow()
+			<< ", Col: " << std::dec << this->getHashedAddress()->getCol()
+		  	<< ", Cacheline: " << std::dec << this->getHashedAddress()->getCacheline() << "]"
+			<< std::endl;
 
 }
 
-// TODO: Implement ostream operator overloading for c_BankCommand class. For some reason overloading the ostream operator does not get found during runtime
+void c_BankCommand::print(SST::Output *x_debugOutput, SimTime_t x_cycle) const {
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "[BankCommand] Cycle:%llu," , x_cycle);
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "CMD:%s,",this->getCommandString().c_str());
+	x_debugOutput->verbose(CALL_INFO, 1, 0,	"SEQNUM:%d,",this->getSeqNum());
+	x_debugOutput->verbose(CALL_INFO, 1, 0,	"ADDR:%lx,",this->getAddress());
+	x_debugOutput->verbose(CALL_INFO, 1, 0,	"isResponseReady:%d,",this->isResponseReady());
+	x_debugOutput->verbose(CALL_INFO, 1, 0,	"BankId:%d, ", this->getHashedAddress()->getBankId());
+	x_debugOutput->verbose(CALL_INFO, 1, 0,	"Ch:%d,",this->getHashedAddress()->getChannel());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "Pch:%d, ",this->getHashedAddress()->getPChannel());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "Rank:%d,",this->getHashedAddress()->getRank());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "BG:%d,", this->getHashedAddress()->getBankGroup());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "Bank:%d,",this->getHashedAddress()->getBank());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "Row:%d,",this->getHashedAddress()->getRow());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "Col:%d,",this->getHashedAddress()->getCol());
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "Cacheline:%d\n",this->getHashedAddress()->getCacheline());
+	x_debugOutput->flush();
+}
 
-//std::ostream& operator<< (
-//    std::ostream&        x_stream,
-//    const c_BankCommand& x_bankCommand
-//)
-//{
-//    x_stream<<"[CMD: "<<x_bankCommand.getCommandString()<<", SEQNUM: "<<std::dec<<x_bankCommand.getSeqNum()<<" , ADDR: "<<std::hex<<x_bankCommand.getAddress()<<" , isResponseReady: "<<std::boolalpha<<x_bankCommand.isResponseReady()<<"]";
-//    return x_stream;
-//}
+void c_BankCommand::print(SST::Output *x_debugOutput,const std::string x_prefix, SimTime_t x_cycle) const {
+	x_debugOutput->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %llu CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
+							x_cycle,
+							getCommandString().c_str(),
+							m_seqNum,
+							getHashedAddress()->getChannel(),
+							getHashedAddress()->getPChannel(),
+							getHashedAddress()->getRank(),
+							getHashedAddress()->getBankGroup(),
+							getHashedAddress()->getBank(),
+							getHashedAddress()->getRow(),
+							getHashedAddress()->getCol(),
+							getHashedAddress()->getBankId());
+
+}
+
 
 void c_BankCommand::serialize_order(SST::Core::Serialization::serializer &ser)
 {
@@ -149,7 +173,4 @@ void c_BankCommand::serialize_order(SST::Core::Serialization::serializer &ser)
   
   ser & m_hashedAddr;
 
-  //std::cout << "Serializing BankCommand " << this << " "; this->print();
-  
-  //ser & m_transactionPtr;
 }

@@ -1358,6 +1358,7 @@ static SubComponent* create_Mem_CramSim(Component* comp, Params& params){
 static const ElementInfoParam cramsimMem_params[] = {
         { "verbose",          "Sets the verbosity of the backend output", "0" },
         {"access_time",     "When not using DRAMSim, latency of memory operation.", "100 ns"},
+        {"max_outstanding_requests", "maximum number of the outstanding requests", "256"},
         {NULL, NULL, NULL}
 };
 

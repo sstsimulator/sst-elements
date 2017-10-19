@@ -42,7 +42,6 @@ class c_BankStateRead;
 class c_BankStateReadA;
 class c_BankStateWrite;
 class c_BankStateWriteA;
-//class c_BankStatePrecharge;
 
 class c_BankStateActive: public c_BankState {
 
@@ -51,11 +50,11 @@ public:
 	c_BankStateActive(std::map<std::string, unsigned>* x_bankParams);
 	~c_BankStateActive();
 
-	virtual void handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr);
+	virtual void handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr, SimTime_t x_simCycle);
 
-	virtual void clockTic(c_BankInfo* x_bank);
+	virtual void clockTic(c_BankInfo* x_bank, SimTime_t x_simCycle);
 
-	virtual void enter(c_BankInfo* x_bank, c_BankState* x_prevState, c_BankCommand* x_cmdPtr);
+	virtual void enter(c_BankInfo* x_bank, c_BankState* x_prevState, c_BankCommand* x_cmdPtr, SimTime_t x_simCycle);
 
 	virtual std::list<e_BankCommandType> getAllowedCommands();
 

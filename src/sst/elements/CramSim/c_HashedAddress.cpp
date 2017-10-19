@@ -38,7 +38,7 @@ using namespace std;
 //}
 
 void c_HashedAddress::print() const {
-  std::cout << "Channel: " << m_channel << " Rank: " << m_rank
+  std::cout << "Channel: " << m_channel << " PseudoChannel: "<<m_pchannel<<" Rank: " << m_rank
 	    << " BankGroup: " << m_bankgroup << " Bank: " << m_bank
 	    << " Row: " << m_row << " Col: " << m_col
 	    << " Cacheline: " << m_cacheline

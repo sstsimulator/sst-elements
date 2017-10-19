@@ -65,17 +65,14 @@ c_BankStateActive::~c_BankStateActive() {
 }
 
 void c_BankStateActive::handleCommand(c_BankInfo* x_bank,
-		c_BankCommand* x_bankCommandPtr) {
+		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
 
-	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
-
-//	std::cout << "@ " << l_time << " " << __PRETTY_FUNCTION__ << std::endl;
+	SimTime_t l_time = x_cycle;
 
 
 	if (nullptr == m_receivedCommandPtr) {
 		m_receivedCommandPtr = x_bankCommandPtr;
 
-		SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
 
 		m_nextStatePtr = nullptr;
 		switch (m_receivedCommandPtr->getCommandMnemonic()) {
@@ -106,71 +103,43 @@ void c_BankStateActive::handleCommand(c_BankInfo* x_bank,
 			break;
 		}
 
-//		std::cout << std::endl << "@" << std::dec
-//				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//				<< __PRETTY_FUNCTION__ << std::endl;
-//		m_receivedCommandPtr->print();
-//		std::cout << std::endl;
 
 	}
 }
 
-void c_BankStateActive::clockTic(c_BankInfo* x_bank) {
-	//	std::cout << std::endl << "@" << std::dec
-	//			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-	//			<< __PRETTY_FUNCTION__ << std::endl;
-	//	std::cout << "m_timer = " << m_timer << std::endl;
+void c_BankStateActive::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 
 	if (0 < m_timer) {
 		--m_timer;
 	} else {
-		x_bank->setRowOpen();
 		if (m_receivedCommandPtr) {
 
 			if ((nullptr != m_nextStatePtr)
 					&& (m_receivedCommandPtr != nullptr))
-				m_nextStatePtr->enter(x_bank, this, m_receivedCommandPtr);
+				m_nextStatePtr->enter(x_bank, this, m_receivedCommandPtr, x_cycle);
 		}
 	}
 }
 
 void c_BankStateActive::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-		c_BankCommand* x_cmdPtr) {
-//	std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
+		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 
-	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
-
-//std::cout << std::endl << "@" << std::dec
-//		<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//		<< __PRETTY_FUNCTION__ << std::endl;
-//x_cmdPtr->print();
-//std::cout << std::endl;
+        SimTime_t l_time=x_cycle;
 
 	x_bank->setOpenRowNum(x_cmdPtr->getHashedAddress()->getRow());
+	x_bank->setRowOpen();
 	m_prevCommandPtr = x_cmdPtr;
 	m_nextStatePtr = nullptr;
 
 	m_prevCommandPtr = x_cmdPtr;
 	if (nullptr != m_prevCommandPtr) {
 		m_prevCommandPtr->setResponseReady();
-		//const unsigned l_cmdsLeft =
-		//		m_prevCommandPtr->getTransaction()->getWaitingCommands() - 1;
-		//m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
-		//if (l_cmdsLeft == 0)
-		//	m_prevCommandPtr->getTransaction()->setResponseReady();
-
-//	std::cout << std::endl << "@" << std::dec
-//			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//			<< __PRETTY_FUNCTION__ << std::endl;
-//	m_prevCommandPtr->print();
-//	std::cout << std::endl;
 
 		m_prevCommandPtr = nullptr;
 	}
 
 	m_receivedCommandPtr = nullptr;
 
-	assert(m_bankParams->at("nCCD_L") > 2);
 
 	m_timer = m_bankParams->at("nCCD_L") - 2;
 
@@ -178,36 +147,36 @@ void c_BankStateActive::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_allowedCommands.push_back(e_BankCommandType::READ);
 	x_bank->setNextCommandCycle(e_BankCommandType::READ,
 			std::max(x_bank->getNextCommandCycle(e_BankCommandType::READ),
-					l_time + m_bankParams->at("nRCD")) - 2);
+				 l_time + m_bankParams->at("nRCD") - 2));
 
 	m_allowedCommands.push_back(e_BankCommandType::READA);
 	x_bank->setNextCommandCycle(e_BankCommandType::READA,
 			std::max(x_bank->getNextCommandCycle(e_BankCommandType::READA),
-					l_time + m_bankParams->at("nRCD")) - 2);
+				 l_time + m_bankParams->at("nRCD") - 2));
 
 	m_allowedCommands.push_back(e_BankCommandType::WRITE);
 	x_bank->setNextCommandCycle(e_BankCommandType::WRITE,
 			std::max(x_bank->getNextCommandCycle(e_BankCommandType::WRITE),
-					l_time + m_bankParams->at("nRCD")) - 2);
+				 l_time + m_bankParams->at("nRCD") - 2));
 
 	m_allowedCommands.push_back(e_BankCommandType::WRITEA);
 	x_bank->setNextCommandCycle(e_BankCommandType::WRITEA,
 			std::max(x_bank->getNextCommandCycle(e_BankCommandType::WRITEA),
-					l_time + m_bankParams->at("nRCD")) - 2);
+				 l_time + m_bankParams->at("nRCD") - 2));
 
 	m_allowedCommands.push_back(e_BankCommandType::PRE);
 	x_bank->setNextCommandCycle(e_BankCommandType::PRE,
-			(std::max(x_bank->getNextCommandCycle(e_BankCommandType::PRE),
-					std::max(
-							x_bank->getLastCommandCycle(e_BankCommandType::ACT)
-									+ m_bankParams->at("nRAS"),
-							std::max(
-									x_bank->getLastCommandCycle(
-											e_BankCommandType::WRITE)
-											+ m_bankParams->at("nWR"),
-									x_bank->getLastCommandCycle(
-											e_BankCommandType::READ)
-											+ m_bankParams->at("nRTP"))))) - 2);
+				    (std::max(x_bank->getNextCommandCycle(e_BankCommandType::PRE),
+					      std::max(
+						       x_bank->getLastCommandCycle(e_BankCommandType::ACT)
+						       + m_bankParams->at("nRAS"),
+						       std::max(
+								x_bank->getLastCommandCycle(
+											    e_BankCommandType::WRITE)
+								+ m_bankParams->at("nWR"),
+								x_bank->getLastCommandCycle(
+											    e_BankCommandType::READ)
+								+ m_bankParams->at("nRTP"))))));
 
 	x_bank->changeState(this);
 	if (nullptr != x_prevState)

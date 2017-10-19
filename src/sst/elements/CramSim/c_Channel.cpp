@@ -45,6 +45,11 @@ c_Channel::c_Channel(std::map<std::string, unsigned>* x_bankParams) {
 	m_rankPtrs.clear();
 }
 
+c_Channel::c_Channel(std::map<std::string, unsigned>* x_bankParams, unsigned x_chId) : c_Channel(x_bankParams) {
+		m_chId = x_chId;
+}
+
+
 c_Channel::~c_Channel() {
 	for (unsigned l_i = 0; l_i != m_rankPtrs.size(); ++l_i)
 		if (m_rankPtrs.at(l_i) != nullptr)
@@ -68,10 +73,14 @@ unsigned c_Channel::getNumRanks() const {
 	return m_rankPtrs.size();
 }
 
+unsigned c_Channel::getChannelId() const {
+	return m_chId;
+}
+
 std::vector<c_BankInfo*> c_Channel::getBankPtrs() const {
 	std::vector<c_BankInfo*> l_allBankPtrs;
 	for (auto& l_rankPtr : m_rankPtrs) {
-		std::vector<c_BankInfo*> l_entryPtrs = l_rankPtr->getBankPtrs();
+		std::vector<c_BankInfo*>& l_entryPtrs = l_rankPtr->getBankPtrs();
 		l_allBankPtrs.insert(l_allBankPtrs.end(), l_entryPtrs.begin(),
 				l_entryPtrs.end());
 	}
@@ -80,12 +89,9 @@ std::vector<c_BankInfo*> c_Channel::getBankPtrs() const {
 }
 
 void c_Channel::updateOtherBanksNextCommandCycles(c_Rank* x_initRankPtr,
-		c_BankCommand* x_cmdPtr) {
+		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 
-	SimTime_t l_time = Simulation::getSimulation()->getCurrentSimCycle();
-
-//	std::cout << "@ " << std::dec << l_time << " Entered "
-//			<< __PRETTY_FUNCTION__ << std::endl;
+	SimTime_t l_time = x_cycle;
 
 	for (auto& l_rankPtr : m_rankPtrs) {
 
@@ -95,10 +101,6 @@ void c_Channel::updateOtherBanksNextCommandCycles(c_Rank* x_initRankPtr,
 
 		for (auto& l_bankPtr : l_rankPtr->getBankPtrs()) {
 
-//			std::cout << __PRETTY_FUNCTION__ << " Updating " << std::endl;
-//			x_cmdPtr->print();
-//			l_bankPtr->print();
-//			std::cout << std::endl;
 
 			switch (x_cmdPtr->getCommandMnemonic()) {
 			case e_BankCommandType::READ:
@@ -136,7 +138,6 @@ void c_Channel::updateOtherBanksNextCommandCycles(c_Rank* x_initRankPtr,
 								+ m_bankParams->at("nERTW")
 								- m_bankParams->at("nCWL"));
 
-//				std::cout << "For WRITE/WRITEA l_nextCycle = " << std::dec << l_nextCycle << std::endl;
 
 				l_bankPtr->setNextCommandCycle(e_BankCommandType::WRITE,
 						l_nextCycle);
@@ -180,7 +181,6 @@ void c_Channel::updateOtherBanksNextCommandCycles(c_Rank* x_initRankPtr,
 												m_bankParams->at("nCCD_L")))
 								+ m_bankParams->at("nEWTW"));
 
-//				std::cout << "For WRITE/WRITEA l_nextCycle = " << std::dec << l_nextCycle << std::endl;
 
 				l_bankPtr->setNextCommandCycle(e_BankCommandType::WRITE,
 						l_nextCycle);
@@ -193,10 +193,6 @@ void c_Channel::updateOtherBanksNextCommandCycles(c_Rank* x_initRankPtr,
 				break;
 			}
 
-//			std::cout << __PRETTY_FUNCTION__ << " Updated " << std::endl;
-//			x_cmdPtr->print();
-//			l_bankPtr->print();
-//			std::cout << std::endl;
 
 		}
 	}
