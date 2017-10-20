@@ -51,7 +51,8 @@ public:
         {"num_vns",      "Number of requested virtual networks."},
         {"link_bw",      "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
         {"topology",     "Name of the topology subcomponent that should be loaded to control routing."},
-        {"remap",        "Creates a logical to physical mapping shifted by remap amount.", "0"}
+        {"remap",        "Creates a logical to physical mapping shifted by remap amount.", "0"},
+        {"linkcontrol_type","Set the SimpleNetwork ", "merlin.linkcontrol"}
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -72,9 +73,13 @@ private:
     int packets_sent;
     int packets_recd;
     int stalled_cycles;
-
+    int expected_recv_count;
+    
     bool done;
     bool initialized;
+    int init_state;
+    int init_count;
+    int init_broadcast_count;
     
     SST::Interfaces::SimpleNetwork* link_control;
 

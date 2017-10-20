@@ -39,11 +39,6 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
-// local includes
-//#include "c_Rank.hpp"
-//#include "c_BankInfo.hpp"
-//#include "c_BankCommand.hpp"
-
 namespace SST {
 namespace n_Bank {
 
@@ -54,15 +49,6 @@ class c_BankCommand;
 class c_BankGroup {
 public:
 
-	// friend std::ostream& operator<<(std::ostream& x_stream,
-	// 		const c_BankGroup& x_bankGroup) {
-	// 	x_stream<<"Bank Group:"<<std::endl;
-	// 	  for(unsigned l_i=0; l_i<x_bankGroup.m_bankPtrs.size(); ++l_i) {
-	// 	    x_stream<<(x_bankGroup.m_bankPtrs.at(l_i))<<std::endl;
-	// 	  }
-	//
-	// 	  return x_stream;
-	// }
 
         c_BankGroup(std::map<std::string, unsigned>* x_bankParams, unsigned x_Id);
 	virtual ~c_BankGroup();
@@ -73,9 +59,10 @@ public:
 	unsigned getNumBanks() const;
         unsigned getBankGroupId() const;
 	std::vector<c_BankInfo*> getBankPtrs() const;
+	c_Rank* getRankPtr() const;
 
 	void updateOtherBanksNextCommandCycles(c_BankInfo* x_initBankPtr,
-			c_BankCommand* x_cmdPtr);
+			c_BankCommand* x_cmdPtr, SimTime_t x_cycle);
 
 private:
         unsigned m_bankGroupId;

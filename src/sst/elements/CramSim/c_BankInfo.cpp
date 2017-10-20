@@ -45,7 +45,7 @@ c_BankInfo::c_BankInfo() :
 		m_bankState(new c_BankStateIdle(nullptr)) {
 
 	reset();
-	m_bankState->enter(this, nullptr, nullptr);
+	m_bankState->enter(this, nullptr, nullptr,0);
 }
 
 c_BankInfo::c_BankInfo(std::map<std::string, unsigned>* x_bankParams,
@@ -55,7 +55,7 @@ c_BankInfo::c_BankInfo(std::map<std::string, unsigned>* x_bankParams,
                 m_autoPrechargeTimer(0) {
 
 	reset();
-	m_bankState->enter(this, nullptr, nullptr);
+	m_bankState->enter(this, nullptr, nullptr,0);
 
 }
 c_BankInfo::~c_BankInfo() {
@@ -139,21 +139,17 @@ void c_BankInfo::handleCommand(c_BankCommand* x_bankCommandPtr,
 	assert(
 			x_simCycle >= m_nextCommandCycleMap[x_bankCommandPtr->getCommandMnemonic()]);
 
-	m_bankState->handleCommand(this, x_bankCommandPtr);
-	m_bankGroupPtr->updateOtherBanksNextCommandCycles(this, x_bankCommandPtr);
+
+	m_bankState->handleCommand(this, x_bankCommandPtr,x_simCycle);
+	m_bankGroupPtr->updateOtherBanksNextCommandCycles(this, x_bankCommandPtr, x_simCycle);
 }
 
-void c_BankInfo::clockTic() {
+void c_BankInfo::clockTic(SimTime_t x_cycle) {
 	if (0 < m_autoPrechargeTimer)
 		--m_autoPrechargeTimer;
 
-	m_bankState->clockTic(this);
+	m_bankState->clockTic(this, x_cycle);
 
-	//TODO: Delete. For testing only
-	// std::cout << " m_nextCommandCycleMap:" << std::endl;
-	// for (std::map<e_BankCommandType, unsigned>::const_iterator it = m_nextCommandCycleMap.cbegin(); it != m_nextCommandCycleMap.cend(); ++it){
-	// 	std::cout << m_cmdToString.find(it->first)->second << " - " << std::dec << it->second << std::endl;
-	// }
 }
 
 std::list<e_BankCommandType> c_BankInfo::getAllowedCommands() {
@@ -166,11 +162,11 @@ bool c_BankInfo::isCommandAllowed(c_BankCommand* x_cmdPtr,
 	assert(nullptr != m_bankState);
 
 	if (m_bankState->isCommandAllowed(x_cmdPtr, this)) {
-		assert(
-				m_nextCommandCycleMap.find(x_cmdPtr->getCommandMnemonic()) != m_nextCommandCycleMap.end());
-		if (m_nextCommandCycleMap.find(x_cmdPtr->getCommandMnemonic())->second
-				<= x_simCycle)
+		assert(m_nextCommandCycleMap.find(x_cmdPtr->getCommandMnemonic()) != m_nextCommandCycleMap.end());
+		if (m_nextCommandCycleMap.find(x_cmdPtr->getCommandMnemonic())->second <= x_simCycle)
 			l_canAccept = true;
+
+
 	}
 
 	return l_canAccept;

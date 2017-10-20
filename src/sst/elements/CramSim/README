@@ -25,16 +25,28 @@ INSTALLATION:
 
 RUNNING A SIMULATION:
   - Syntax:
-    sst --lib-path:./libs/ PYTHON_TEST_FILE.py --model-options="--configfile=CONFIG.cfg --tracefile=TRACE.trc"
+    sst --lib-path:./libs/ PYTHON_TEST_FILE.py --model-options="--configfile=CONFIG.cfg --tracefile=TRACE.trc cfgOverrideKey=cfgOverrideVal"
 
   Python file instantiates SST components and links them together. It also provides the simulator with access to "parameter knobs". Many different test
-  python files exist in ./tests/ . Here are some highlights
-    - test_txngenrand2.py: Runs simulation using a series of randomly generated instructions. --model-options flag not required
-    - test_txngenseq3.py: Runs simulation using a series of sequentially generated instructions --model-options flag not required
-    - test_txntrace1.py: Runs simulation with a commandline-provided trace file and config file. Trace format is "INTERVAL TXN_TYPE TXN_ADDRESS TXN_WIDTH"
-    - test_txntrace2.py: Runs simulation with a commandline-provided trace file and config file. Trace format is the same as DRAMSim2's
-    - test_txntrace3.py: Runs simulation with a commandline-provided trace file and config file. Trace format is the same as USimm's
-    - test_txntrace4.py: Similar to test_txntrace3.py but is intended to be used as part of the Verimem test suite
+  python files exist in ./tests/ . Here are some highlights.
+  Command-line examples are found in the "tests/run.py" file.
+    - test_txngen.py : Runs simulation using a series of randomly or sequentially generated instructions. "mode" flag are required in the --model-options
+      - seq   : sst --lib-path=.libs test_txngen.py --model-options="--configfile=CONFIG.cfg mode=seq"
+      - rand  : sst --lib-path=.libs test_txngen.py --model-options="--configfile=CONFIG.cfg mode=rand"
+
+    - test_txntrace.py: Runs simulation with a commandline-provided trace file and config file. "traceFileType" flag are required in the --model-options
+      - default (dramsim2 type) : sst --lib-path=.libs test_txntrace.py --model-options="--configfile=CONFIG.cfg traceFileType=DEFAULT traceFile=TRACE.trc"
+      - usimm type              : sst --lib-path=.libs test_txntrace.py --model-options="--configfile=CONFIG.cfg traceFileType=USIMM traceFile=TRACE.trc"
+
+    - Both test_txngen.py and test_txntrace.py allow overriding of config parameters in the --model-options. Simply add the config name and value (e.g. nBL=8).
+      Detailed example : sst --lib-path=.libs/ tests/test_txngen.py --model-options="--configfile=ddr4.cfg mode=rand nBL=8 nWR=30 dumpConfig=1"
+      The special override dumpConfig=1 will print all the global config params read from the config files and resulting from overrides to the output
+
+    - Both test_txngen.py and test_txntrace.py also allow multiple config files to be specified in --model-options. Later config files take precedence whenever there is a config conflict.
+      Example: sst --lib-path=.libs/ tests/test_txngen.py --model-options="--configfile=test_system.cfg --configfile=test_device.cfg nBL=8"
+      
+    - test_txntrace4.py : Similar to test_txntrace.py but is intended to be used as part of the Verimem test suite
+
 
 VERIMEM:
   Verimem is a series of traces intended to be run to confirm the validity of the results of a simulator. Verimem's test traces that apply to the
@@ -63,37 +75,27 @@ CramSim.cpp:
   can properly map them together.
 
 MODEL OVERVIEW:
-  Each SST component listed is connected to the component above it and below it using a group of unidirectional links
+  Each SST component listed is connected to the component above it and below it
 
   - Txn Generator (multiple options):
-    - c_TxnGenSeq
-      - Generates Txns in sequential-address order
-    - c_TxnGenRand
-      - Generates Txns in random-address order
-    - c_TracefileReader
-      - Reads Txns from a trace file
-    - c_DramSimTraceReader
-      - Reads Txns from a DRAMSim2 trace file
-    - c_USimmTraceReader
-      - Reads Txns from a USimm trace file
+    - c_TxnGen
+      - Generates Txns in sequential/random-address order
+    - c_TraceFileReader
+      - Reads Txns from a trace file (dramsim2 or usimm trace format)
 
-    - Generates txn requests and buffers them. Every cycle a txn is removed from the buffer and sent to TxnUnit
-    - Receives txn responses from TxnUnit. Every cycle a txn is removed from the buffer and marked as complete.
+  - Controller : c_Controller
+    - Receives Txn requests from TxnGen and stores them. Every cycle a txn is removed from the buffer, converted to Cmds, and sent to c_DIMM
+    - Receives Cmd responses from c_DIMM and updates the Txn that Cmd "belonged" to. Every cycle a completed txn is removed from the response buffer and returned to TxnGen
+    - Subcomponents
+      1) c_AddressHasher : address mapper that map the physical address to the device address (e.g., channel, rank, bank, and column index)
+      2) c_TxnScheduler :  transaction scheduler that reorder the transactions
+      3) c_TxnConverter :  transaction converter that converts read and write trasacntions to memory-specific commands (e.g., READ -> ACT/READ/PRECHARGE) 
+      4) c_CmdScheduler :  command scheduler that selects a command queue and picks memory commands from the command queue
+      5) c_DeviceDriver :  device driver that maintains status of memory devices and send commands to the memory devices 
 
-  - c_TxnUnit
-    - Receives Txn requests from TxnGen and stores them. Every cycle a txn is removed from the buffer, converted to Cmds, and sent to CmdUnit
-    - Receives Cmd responses from CmdUnit and updates the Txn that Cmd "belonged" to. Every cycle a completed txn is removed from the response buffer and returned to TxnGen
-
-  - c_CmdUnit
-    - Receives Cmd requests from TxnUnit and stores them. Every cycle a cmd is removed, mapped to its correct bank, and sent to DIMM. In addition, the cmd is
-        fed to the CmdUnit's internal reference to each bank's BankState.
-        - c_BankState:
-          - Implemented using State Design Pattern. Current states supported: IDLE, ACTIVATING, ACTIVE, READ, READA, WRITE, WRITEA, PRECHARGE, REFRESH
-    - Receives Cmd responses from DIMM and stores them. Every cycle a cmd is removed and sent to TxnUnit
-
-  - c_DIMM:
-    - Receives a Cmd request from CmdUnit and maps it to its particular bank before sending it to that bank.
-    - Receives a Cmd response from its internal banks and sends it back to CmdUnit
+  - Memory : c_DIMM
+    - Receives a Cmd request from Controller and maps it to its particular bank before sending it to that bank.
+    - Receives a Cmd response from its internal banks and sends it back to Controller
 
 
   ADDITIONAL INFO:
@@ -106,6 +108,7 @@ MODEL OVERVIEW:
       - The underscore '_' can be used as spacers to increase readability of address maps
       - Address map key:
       	C - Channel
+        c - PseudoChannel
 	R - Rank
 	B - BankGroup
 	b - Bank
@@ -155,33 +158,4 @@ RUNNING A SIMULATION WITH CPU MODELS:
    - run
     $ cd $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests
     $ sst macsim_cramsim.py
-
-
-3. Run with Gem5
-   - Apply patch files for SST
-    $ cd $SST_CORE_ROOT
-	$ patch -p0 < $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests/patches/core.patch
-    $ cd $SST_ELEMENT_ROOT/src/sst/elements/memHierarchy
-	$ patch -p0 < ../CramSim/tests/patches/memH.patch
-
-   - Install
-    $ cd $SST_CORE_ROOT
-    $ ./autogen.sh
-	$ ./configure --prefix=$SST_CORE_HOME
-    $ make install
-    $ cd $SST_ELEMENT_ROOT
-    $ ./autogen.sh
-    $ ./configure --prefix=$SST_ELEMENT_HOME --with-sst-core=$SST_CORE_HOME
-	$ make install
-	$ cd $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests
-    $ ./get_gem5.sh
-
-   - run 
-    $ cd $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests
-    $ sst gem5_cramsim.py
-
-   - Connect to the simulated console interface
-    $ cd $SST_ELEMENT_ROOT/src/sst/elements/gem5/util/term
-	$ sudo make install
-	$ ./m5term localhost 3456
 

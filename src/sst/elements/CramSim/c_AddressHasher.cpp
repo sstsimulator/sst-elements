@@ -36,20 +36,17 @@
 #include "c_AddressHasher.hpp"
 
 using namespace std;
+using namespace SST;
+using namespace n_Bank;
 
-c_AddressHasher* c_AddressHasher::m_instance = nullptr;
 
-c_AddressHasher::c_AddressHasher(SST::ComponentId_t x_id, SST::Params& x_params) :
-  Component(x_id) {
+c_AddressHasher::c_AddressHasher(Component * comp, Params &params) : SubComponent(comp) {
 
-  getInstance(x_params);
-  
-}
+  m_owner = dynamic_cast<c_Controller *>(comp);
 
-c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   // read params here
   bool l_found = false;
-  k_addressMapStr = (string)x_params.find<string>("strAddressMapStr", "_r_l_b_R_B_h_", l_found);
+  k_addressMapStr = (string)params.find<string>("strAddressMapStr", "_r_l_b_R_B_h_", l_found);
   cout << "Address map string: " << k_addressMapStr << endl;
 
   string l_mapCopy = k_addressMapStr;
@@ -59,34 +56,7 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
   // remove trailing newline
   l_mapCopy.erase(remove(l_mapCopy.begin(), l_mapCopy.end(), '\n'), l_mapCopy.end());
 
-  /* This code uses regex, not supported in gcc 4.8.x
-   * use the crappy crap code I implemented to replace it until compiler versions advance
-  regex l_regex("([rlbRBCh])(:([[:digit:]]+))*$");
-  smatch l_match;
-  uint l_curPos = 0;
-  vector<string> l_simpleOrder;
 
-  while(!l_mapCopy.empty()) {
-    if(regex_search(l_mapCopy,l_match,l_regex)) {
-      string l_bitstr = l_match[3];
-      if(l_match.length() == 1) {
-	l_bitstr = "1";
-      }
-      //cout << "1 " << l_match[1] << " 3 " << l_bitstr << " length " << l_match.length() << endl;
-      m_structureSizes[l_match[1]] += stoi(l_bitstr);
-      for(int ii=0; ii < stoi(l_bitstr); ii++) {
-	m_bitPositions[l_match[1]].push_back(l_curPos);
-	l_curPos++;
-      }
-      l_simpleOrder.push_back(l_match[1]);
-    } else {
-      cerr << "Unable to parse address map string! Incorrectly formatted! Aborting\n";
-      cerr << "Parsed until " << l_mapCopy << endl;
-      exit(-1);
-    }
-    l_mapCopy = regex_replace(l_mapCopy,l_regex,string("")); // remove the matched portion
-  } // while !l_mapCopy.empty()
-  */
 
   // this is replacement code for the above, which is generally safer than my implemention
   // of parsePattern below
@@ -107,14 +77,16 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
 
 
   // pull config file sizes
-  k_pNumChannels = (uint32_t)x_params.find<uint32_t>("numChannelsPerDimm", 1,l_found);
-  k_pNumRanks = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 1,l_found);
-  k_pNumBankGroups = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank", 1,l_found);
-  k_pNumBanks = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup", 1,l_found);
-  k_pNumRows = (uint32_t)x_params.find<uint32_t>("numRowsPerBank", 1,l_found);
-  k_pNumCols = (uint32_t)x_params.find<uint32_t>("numColsPerBank", 1,l_found);
-  k_pBurstSize = (uint32_t)x_params.find<uint32_t>("numBytesPerTransaction", 1,l_found);
-  
+  k_pNumChannels = m_owner->getDeviceDriver()->getNumChannel();
+  k_pNumRanks = m_owner->getDeviceDriver()->getNumRanksPerChannel();
+  k_pNumBankGroups = m_owner->getDeviceDriver()->getNumBankGroupsPerRank();
+  k_pNumBanks = m_owner->getDeviceDriver()->getNumBanksPerBankGroup();
+  k_pNumRows = m_owner->getDeviceDriver()->getNumRowsPerBank();
+  k_pNumCols = m_owner->getDeviceDriver()->getNumColPerBank();
+  k_pBurstSize = (uint32_t)params.find<uint32_t>("numBytesPerTransaction", 1,l_found);
+  k_pNumPseudoChannels = m_owner->getDeviceDriver()->getNumPChPerChannel();
+  assert(k_pNumPseudoChannels>0);
+
   // check for simple version address map
   bool l_allSimple = true;
   for(auto l_iter : m_bitPositions) {
@@ -133,6 +105,7 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
     l_curPos = 0;
     map<string, uint> l_cfgBits;
     l_cfgBits["C"] = (uint)log2(k_pNumChannels);
+    l_cfgBits["c"] = (uint)log2(k_pNumPseudoChannels);   // set the number of address bits assigned to pseudo channel.
     l_cfgBits["R"] = (uint)log2(k_pNumRanks);
     l_cfgBits["B"] = (uint)log2(k_pNumBankGroups);
     l_cfgBits["b"] = (uint)log2(k_pNumBanks);
@@ -170,6 +143,26 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
     }
     if(l_aNumChannels < k_pNumChannels) { // some addresses have nowhere to go
       cerr << "Error!: Number of address map channels is smaller than numChannelsPerDimm. Aborting!" << endl;
+      exit(-1);
+    }
+  } // else found in map
+
+   //Pseudo channel
+   l_it = m_structureSizes.find("c"); // Pseudo channel
+  if(l_it == m_structureSizes.end()) { // if not found
+  if(k_pNumPseudoChannels > 1) {
+      cerr << "Number of Pseudo Channels (" << k_pNumPseudoChannels << ") is greater than 1, but no "
+	   << "Channels were specified (c) in the address map! Aborting!" << endl;
+      exit(-1);
+    }
+  } else { // found in map
+    auto l_aNumPChannels = (1 << l_it->second);
+    if(l_aNumPChannels > k_pNumPseudoChannels) {
+      cerr << "Warning!: Number of address map channels is larger than numPseudoChannels." << endl;
+      cerr << "Some channels will be unused" << endl << endl;
+    }
+    if(l_aNumPChannels < k_pNumPseudoChannels) { // some addresses have nowhere to go
+      cerr << "Error!: Number of address map channels is smaller than numPseudoChannels. Aborting!" << endl;
       exit(-1);
     }
   } // else found in map
@@ -293,21 +286,6 @@ c_AddressHasher::c_AddressHasher(SST::Params& x_params) {
 
 } // c_AddressHasher(SST::Params)
 
-c_AddressHasher* c_AddressHasher::getInstance(SST::Params& x_params) {
-  if (nullptr == m_instance) {
-    m_instance = new c_AddressHasher(x_params);
-  }
-  return m_instance;
-}
-
-c_AddressHasher* c_AddressHasher::getInstance() {
-  if (nullptr == m_instance) {
-    cerr << "Error:: c_AddressHasher getInstance() called without first constructing it using getInstance(SST::Params)" << endl;
-    cerr << "The simulation must first construct an object that constructs the addressHasher (e.g. CmdUnit)" << endl;
-    exit(-1);
-  }
-  return m_instance;
-}
 
 void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address) {
   ulong l_cur=0;
@@ -316,132 +294,162 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
   //channel
   auto l_bitPos = m_bitPositions.find("C");
   if(l_bitPos == m_bitPositions.end()) { // not found
-    x_hashAddr->m_channel = 0;
+    x_hashAddr->setChannel(0);
   } else {
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
-    x_hashAddr->m_channel = l_cur;
+    x_hashAddr->setChannel(l_cur);
   }
-  
+
+  //pseudo channel
+   l_bitPos = m_bitPositions.find("c");
+  if(l_bitPos == m_bitPositions.end()) { // not found
+    x_hashAddr->setPChannel(0);
+  } else {
+    l_cur=0;
+    for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
+      ulong l_val = l_bitPos->second[l_cnt];
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
+
+      l_cur |= l_tmp;
+    }
+    x_hashAddr->setPChannel(l_cur);
+  }
+
   //rank
   l_bitPos = m_bitPositions.find("R");
   if(l_bitPos == m_bitPositions.end()) { // not found
-    x_hashAddr->m_rank = 0;
+    x_hashAddr->setRank(0);
   } else {
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
-    x_hashAddr->m_rank = l_cur;
+    x_hashAddr->setRank(l_cur);
   }
 
   //bankGroup
   l_bitPos = m_bitPositions.find("B");
   if(l_bitPos == m_bitPositions.end()) { // not found
-    x_hashAddr->m_bankgroup = 0;
+    x_hashAddr->setBankGroup(0);
   } else {
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
-    x_hashAddr->m_bankgroup = l_cur;
+    x_hashAddr->setBankGroup(l_cur);
   }
 
   //bank
   l_bitPos = m_bitPositions.find("b");
   if(l_bitPos == m_bitPositions.end()) { // not found
-    x_hashAddr->m_bank = 0;
+    x_hashAddr->setBank(0);
   } else {
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
-    x_hashAddr->m_bank = l_cur;
+    x_hashAddr->setBank(l_cur);
   }
 
   //row
   l_bitPos = m_bitPositions.find("r");
   if(l_bitPos == m_bitPositions.end()) { // not found
-    x_hashAddr->m_row = 0;
+    x_hashAddr->setRow(0);
   } else {
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
-    x_hashAddr->m_row = l_cur;
+    x_hashAddr->setRow(l_cur);
   }
 
   //col
   l_bitPos = m_bitPositions.find("l");
   if(l_bitPos == m_bitPositions.end()) { // not found
-    x_hashAddr->m_col = 0;
+    x_hashAddr->setCol(0);
   } else {
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
-    x_hashAddr->m_col = l_cur;
+    x_hashAddr->setCol(l_cur);
   }
 
   //cacheline
   l_bitPos = m_bitPositions.find("h");
   if(l_bitPos == m_bitPositions.end()) { // not found
-    x_hashAddr->m_cacheline = 0;
+    x_hashAddr->setCacheline(0);
   } else {
     l_cur=0;
     for(l_cnt=0;l_cnt<l_bitPos->second.size();l_cnt++) {
       ulong l_val = l_bitPos->second[l_cnt];
-      ulong l_tmp = ((1 << l_val) & x_address) >> (l_val - l_cnt);
+      ulong l_tmp = (((ulong)1 << l_val) & x_address) >> (l_val - l_cnt);
 
       l_cur |= l_tmp;
     }
-    x_hashAddr->m_cacheline = l_cur;
+    x_hashAddr->setCacheline(l_cur);
   }
   
-  x_hashAddr->m_bankId =
-    x_hashAddr->m_bank
-    + x_hashAddr->m_bankgroup * k_pNumBanks
-    + x_hashAddr->m_rank      * k_pNumBanks * k_pNumBankGroups
-    + x_hashAddr->m_channel   * k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
-    
-  //cout << "0x" << std::hex << x_address << std::dec << "\t";  x_hashAddr->print();
+  unsigned l_bankId =
+    x_hashAddr->getBank()
+    + x_hashAddr->getBankGroup() * k_pNumBanks
+    + x_hashAddr->getRank()    * k_pNumBanks * k_pNumBankGroups
+    + x_hashAddr->getPChannel()  *  k_pNumBanks * k_pNumBankGroups * k_pNumRanks
+    + x_hashAddr->getChannel()   * k_pNumPseudoChannels * k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
+
+
+  unsigned l_rankId =
+            x_hashAddr->getRank()
+          + x_hashAddr->getPChannel()  * k_pNumRanks
+          + x_hashAddr->getChannel()   * k_pNumPseudoChannels * k_pNumRanks;
+
+  x_hashAddr->setBankId(l_bankId);
+  x_hashAddr->setRankId(l_rankId);
+   // cout << "0x" << std::hex << x_address << std::dec << "\t";  x_hashAddr->print();
   
 } // fillHashedAddress(c_HashedAddress, x_address)
 
 ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
   // obtain the bank group rank and channel of this bankId;
   unsigned l_cur = x_bankId;
-  unsigned l_chanSize = k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
+  unsigned l_chanSize = k_pNumBanks * k_pNumBankGroups * k_pNumRanks * k_pNumPseudoChannels;
+  unsigned l_pchanSize = k_pNumBanks * k_pNumBankGroups * k_pNumRanks;
   unsigned l_rankSize = k_pNumBanks * k_pNumBankGroups;
   unsigned l_bankGroupSize = k_pNumBanks;
 
-  unsigned l_chan=0,l_rank=0,l_bankgroup=0,l_bank=0;
+  unsigned l_chan=0,l_pchan=0,l_rank=0,l_bankgroup=0,l_bank=0;
 
   cout << "Getting an address for bankId " << x_bankId << endl;
 
   while(l_cur >= l_chanSize) {
     l_cur -= l_chanSize;
     l_chan++;
+  }
+
+  while(l_cur >= l_pchanSize) {
+    l_cur -= l_pchanSize;
+    l_pchan++;
   }
 
   while(l_cur >= l_rankSize) {
@@ -456,7 +464,7 @@ ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
 
   l_bank = l_cur;
 
-  cout << "Final " << l_chan << " " << l_rank << " " << l_bankgroup << " " << l_bank << endl;
+  cout << "Final " << l_chan << " " << l_pchan << " "<< l_rank << " " << l_bankgroup << " " << l_bank << endl;
 
   ulong l_address = 0;
   {
@@ -499,6 +507,19 @@ ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
   }
 
   {
+    ulong l_tmp = l_pchan;
+    ulong l_tOut = 0;
+    unsigned l_curPos = 0;
+    while(l_tmp) {
+      l_tOut += (l_tmp & 0x1) << m_bitPositions["c"][l_curPos];
+      l_tmp >>= 1;
+      l_curPos++;
+    }
+
+    l_address += l_tOut;
+  }
+
+  {
     ulong l_tmp = l_chan;
     ulong l_tOut = 0;
     unsigned l_curPos = 0;
@@ -511,7 +532,7 @@ ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
     l_address += l_tOut;
   }
 
-  cout << "Returning address 0x" << std::hex << l_address << std::dec << endl;
+ // cout << "Returning address 0x" << std::hex << l_address << std::dec << endl;
   
   return(l_address);
 } // getAddressForBankId(const unsigned x_bankId)
@@ -547,7 +568,7 @@ void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint> *x_ou
       l_sizeStr = *l_sIter + l_sizeStr;
     } else if(isalpha(*l_sIter)) {
       if(!(*l_sIter == 'r' || *l_sIter == 'l' || *l_sIter == 'R' || *l_sIter == 'B' ||
-	   *l_sIter == 'b' || *l_sIter == 'C' || *l_sIter == 'h')) {
+	   *l_sIter == 'b' || *l_sIter == 'C' || *l_sIter == 'h' ||*l_sIter == 'c' ||*l_sIter == 'x')) {
 	cerr << "Parsing error at " << *l_sIter << " in address map string " << *x_inStr << endl;
 	exit(-1);
       }

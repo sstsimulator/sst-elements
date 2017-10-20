@@ -236,23 +236,6 @@ void topo_dragonfly2::route(int port, int vc, internal_router_event* ev)
         }
     }
 
-    // /* Minimal Route */
-    // if ( td_ev->dest.group != group_id ) {
-    //     if ( td_ev->dest.mid_group != group_id ) {
-    //         next_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice);
-    //     } else {
-    //         next_port = port_for_group(td_ev->dest.group, td_ev->global_slice);
-    //     }
-    // } else if ( td_ev->dest.router != router_id ) {
-    //     next_port = port_for_router(td_ev->dest.router);
-    // } else {
-    //     next_port = td_ev->dest.host;
-    // }
-
-    // if ( td_ev->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
-    //     output.output("TRACE(%d): route()\n",
-    //                   td_ev->getTraceID());
-    // }
 
     output.verbose(CALL_INFO, 1, 1, "%u:%u, Recv: %d/%d  Setting Next Port/VC:  %u/%u\n", group_id, router_id, port, vc, next_port, td_ev->getVC());
     td_ev->setNextPort(next_port);
@@ -488,8 +471,24 @@ void topo_dragonfly2::routeInitData(int port, internal_router_event* ev, std::ve
             }
         }
     } else {
-        route(port, 0, ev);
-        outPorts.push_back(ev->getNextPort());
+        //Not all data structures used for routing during run are
+        //initialized yet, so we need to just do a quick minimal
+        //routing scheme for init.
+        // route(port, 0, ev);
+
+        // TraceFunction(CALL_INFO);
+        // Minimal Route
+        int next_port;
+        if ( td_ev->dest.group != group_id ) {
+            next_port = port_for_group(td_ev->dest.group, td_ev->global_slice);
+        }
+        else if ( td_ev->dest.router != router_id ) {
+            next_port = port_for_router(td_ev->dest.router);
+        }
+        else {
+            next_port = td_ev->dest.host;
+        }
+        outPorts.push_back(next_port);
     }
 
 }
