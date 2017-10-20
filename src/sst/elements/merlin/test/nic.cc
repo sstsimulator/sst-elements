@@ -71,14 +71,20 @@ nic::nic(ComponentId_t cid, Params& params) :
     remap = params.find<int>("remap", 0);
     id = (net_id + remap) % num_peers;
 
+    UnitAlgebra message_size = params.find<std::string>("message_size","400b");
+    if ( message_size.hasUnits("B") ) message_size  *= UnitAlgebra("8b/B");
+    msg_size = message_size.getRoundedValue();
 
     std::string linkcontrol_type = params.find<std::string>("linkcontrol_type","merlin.linkcontrol");
     // Create a LinkControl object
     // NOTE:  This MUST be the same length as 'num_vns'
     link_control = (SimpleNetwork*)loadSubComponent(linkcontrol_type, this, params);
     
-    UnitAlgebra buf_size("1kB");
-    link_control->initialize("rtr", link_bw, num_vns, buf_size, buf_size);
+    UnitAlgebra in_buf_size = params.find<UnitAlgebra>("in_buf_size","1kB");
+    UnitAlgebra out_buf_size = params.find<UnitAlgebra>("in_buf_size","1kB");
+
+    
+    link_control->initialize("rtr", link_bw, num_vns, in_buf_size, out_buf_size);
 
     last_target = id;
     next_seq = new int[num_peers];
@@ -102,6 +108,14 @@ nic::~nic()
 
 void nic::finish()
 {
+    if ( init_count != num_peers ) {
+        output.output("NIC %d didn't receive all complete point-to-point messages.  Only recieved %d\n",net_id,init_count);
+    }
+
+    if ( init_broadcast_count != (num_peers -1 ) ) {
+        output.output("NIC %d didn't receive all complete broadcast messages.  Only recieved %d\n",net_id,init_broadcast_count);
+    }
+
     link_control->finish();
     output.output("Nic %d had %d stalled cycles.\n",id,stalled_cycles);
 }
@@ -123,6 +137,17 @@ void nic::setup()
     }
 }
 
+void nic::complete(unsigned int phase) {
+    link_control->complete(phase);
+    
+    if ( phase == 0 ) {
+        init_count = 0;
+        init_broadcast_count = 0;
+        init_state = 0;
+    }
+
+    init_complete(phase);
+}
 
 /*
   During init, each endpoint will send a broadcast and a point to
@@ -131,19 +156,18 @@ void nic::setup()
   each rank will receive the number of broadcasts equal to its net_id
   before broadcasthing.
 
-  0 - Wait until the network is initialized, then endpoint 0 will send a broadcast.
-
-  1 - Send a broadcast after enough broadcast messages have been received.
-
-  2 - Wait until all broadcast messages have been received, then
-  endpoint 0 will send point to point messages to all ranks.
-
 */
 
 void
 nic::init(unsigned int phase) {
     link_control->init(phase);
 
+    init_complete(phase);
+}
+
+void
+nic::init_complete(unsigned int phase) {
+    
     // output.output("%d: init_state = %d\n",net_id,init_state);
     
     switch ( init_state ) {
@@ -398,7 +422,6 @@ bool
 nic::clock_handler(Cycle_t cycle)
 {
     static const int send_vc = 0;
-    static const int size_in_bits = 64;
     expected_recv_count = num_peers*num_msg;
 
     if ( !done && (packets_recd >= expected_recv_count) ) {
@@ -409,7 +432,7 @@ nic::clock_handler(Cycle_t cycle)
 
     // Send packets
     if ( packets_sent < expected_recv_count ) {
-        if ( link_control->spaceToSend(send_vc,size_in_bits) ) {
+        if ( link_control->spaceToSend(send_vc,msg_size) ) {
             last_target++;
             last_target %= num_peers;
             
@@ -421,7 +444,7 @@ nic::clock_handler(Cycle_t cycle)
             req->src = net_id;
 
             req->vn = send_vc;
-            req->size_in_bits = size_in_bits;
+            req->size_in_bits = msg_size;
             req->givePayload(ev);
 
             link_control->send(req,send_vc);
