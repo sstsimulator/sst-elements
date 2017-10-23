@@ -30,6 +30,7 @@
 #include <queue>
 
 #include "sst/elements/kingsley/nocEvents.h"
+#include "sst/elements/kingsley/lru_unit.h"
 
 using namespace SST;
 
@@ -118,6 +119,9 @@ private:
     int local_ports;
     bool use_dense_map;
     const int* dense_map;
+
+    lru_unit<int> local_lru;
+    lru_unit<int> mesh_lru;
     
     bool clock_handler(Cycle_t cycle);
     // Statistic<uint64_t>** xbar_stalls;
