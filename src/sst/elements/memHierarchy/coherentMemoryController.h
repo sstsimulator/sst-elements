@@ -31,12 +31,9 @@
 #include "sst/elements/memHierarchy/cacheListener.h"
 #include "sst/elements/memHierarchy/memLinkBase.h"
 #include "sst/elements/memHierarchy/membackend/backing.h"
-#include "sst/elements/memHierarchy/customcmd/customCmdMemory.h"
 
 namespace SST {
 namespace MemHierarchy {
-
-class MemBackendConvertor;
 
 class CoherentMemController : public MemController {
 public:
@@ -82,7 +79,7 @@ private:
 
     // Custom command handler 
     // TODO ability to specify multiple handlers
-    CustomCmdMemHandler * customCommandHandler_;
+    //CustomCmdMemHandler * customCommandHandler_;
 
     // Outgoing event handling
     Cycle_t timestamp_;

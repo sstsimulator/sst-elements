@@ -25,6 +25,7 @@
 #include "sst/elements/memHierarchy/cacheListener.h"
 #include "sst/elements/memHierarchy/memLinkBase.h"
 #include "sst/elements/memHierarchy/membackend/backing.h"
+#include "sst/elements/memHierarchy/customcmd/customCmdMemory.h"
 
 namespace SST {
 namespace MemHierarchy {
@@ -81,7 +82,7 @@ protected:
         return region_.contains(addr);
     }
 
-    size_t      memSize_;
+    size_t memSize_;
 
     bool clockOn_;
 
@@ -92,10 +93,14 @@ protected:
     
     Clock::Handler<MemController>* clockHandler_;
     TimeConverter* clockTimeBase_;
+    
+    CustomCmdMemHandler * customCommandHandler_;
 
 private:
     
-    std::map<SST::Event::id_type, MemEvent*> outstandingEvents_; // For sending responses. Expect backend to respond to ALL requests so that we know the execution order
+    std::map<SST::Event::id_type, MemEventBase*> outstandingEvents_; // For sending responses. Expect backend to respond to ALL requests so that we know the execution order
+
+    void handleCustomEvent(MemEventBase* ev);
 };
 
 }}

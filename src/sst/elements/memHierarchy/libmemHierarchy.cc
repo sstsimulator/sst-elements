@@ -906,6 +906,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"addr_range_end",      "(uint) Highest address handled by this memory.", "uint64_t-1"},
     {"interleave_size",     "(string) Size of interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},
     {"interleave_step",     "(string) Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},
+    {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""},
     /* Old parameters - deprecated or moved */
     {"mem_size",            "DEPRECATED. Use 'backend.mem_size' instead. Size of physical memory in MiB", "0"},
     {"statistics",          "DEPRECATED - use Statistics API to get statistics for memory controller","0"},

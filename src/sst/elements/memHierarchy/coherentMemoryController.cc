@@ -22,6 +22,7 @@
 #include "coherentMemoryController.h"
 #include "util.h"
 
+#include "sst/elements/memHierarchy/customcmd/customCmdMemory.h"
 #include "membackend/memBackendConvertor.h"
 #include "memLink.h"
 #include "memNIC.h"
@@ -42,19 +43,10 @@ using namespace SST::MemHierarchy;
 #endif
 
 /* Construct CoherentMemController
- *  Load custom handler
- *  TODO enable multiple handlers for different events
  *  Initialize directory_ variable to indicate whether a directory is in the system
  *      For a directory, a replacement is not synonymous with eviction
  */
 CoherentMemController::CoherentMemController(ComponentId_t id, Params &params) : MemController(id, params) {
-    std::string customHandlerName = params.find<std::string>("customCmdHandler", "");
-    if (customHandlerName != "") {
-        customCommandHandler_ = dynamic_cast<CustomCmdMemHandler*>(loadSubComponent(customHandlerName, this, params));
-    } else {
-        customCommandHandler_ = nullptr;
-    }
-
     directory_ = false; /* Updated during init */
 }
 
