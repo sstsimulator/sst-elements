@@ -66,10 +66,4 @@ bool ExtMemBackendConvertor::issue( BaseReq *req ) {
     }
 }
 
-void ExtMemBackendConvertor::handleCustomEvent( CustomCmdInfo* info ){
-
-    // required to insert the request in the pending queue
-    uint64_t id = setupExtMemReq(info);
-}
-
 // EOF

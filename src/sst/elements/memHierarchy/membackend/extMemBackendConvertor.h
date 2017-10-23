@@ -31,7 +31,6 @@ class ExtMemBackendConvertor : public MemBackendConvertor {
     virtual void handleMemResponse( ReqId reqId, uint32_t flags  ) {
         doResponse( reqId, flags );
     }
-    virtual void handleCustomEvent( CustomCmdInfo* );
 };
 
 }

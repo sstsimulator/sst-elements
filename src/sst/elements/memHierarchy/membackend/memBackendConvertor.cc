@@ -92,7 +92,6 @@ void MemBackendConvertor::handleCustomEvent( CustomCmdInfo * info) {
     CustomReq* req = new CustomReq( info, id );
     m_requestQueue.push_back( req );
     m_pendingRequests[id] = req;
-    m_dbg.fatal(CALL_INFO, -1, "Error: %s, Custom events not supported. Event info: %s\n", getName().c_str(), info->getString().c_str());
 }
 
 bool MemBackendConvertor::clock(Cycle_t cycle) {

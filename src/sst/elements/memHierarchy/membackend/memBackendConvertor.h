@@ -34,7 +34,10 @@ class MemBackendConvertor : public SubComponent {
 
     class BaseReq {
     public:
-        BaseReq( uint32_t reqId ) : m_reqId(reqId), m_memEv(true), m_Cust(false) { }
+
+        enum class ReqType { BASE, MEM, CUSTOM };
+
+        BaseReq( uint32_t reqId, ReqType(type) ) : m_reqId(reqId), m_type(type) { }
         ~BaseReq() { }
 
         static uint32_t getBaseId( ReqId id) { return id >> 32; }
@@ -48,19 +51,18 @@ class MemBackendConvertor : public SubComponent {
             str << "ID: " << m_reqId << (isMemEv() ? " MemReq " : " CustomReq ");
             return str.str();
         }
-        bool isMemEv() { return m_memEv; }
-        bool isCustCmd() { return m_Cust; }
+        bool isMemEv() { return m_type == ReqType::MEM; }
+        bool isCustCmd() { return m_type == ReqType::CUSTOM; }
         virtual std::string getRqstr() { return ""; }
     protected:
         uint32_t m_reqId;
-        bool m_memEv;
-        bool m_Cust;
+        ReqType m_type;
     };
 
     class CustomReq : public BaseReq {
     public:
-        CustomReq(CustomCmdInfo * info, uint32_t reqId) : BaseReq(reqId), 
-            m_info(info) { m_memEv = false; m_Cust = true; }
+        CustomReq(CustomCmdInfo * info, uint32_t reqId) : BaseReq(reqId, BaseReq::ReqType::CUSTOM), 
+            m_info(info) { }
         ~CustomReq() { }
 
         CustomCmdInfo* getInfo() { return m_info; }
@@ -73,7 +75,7 @@ class MemBackendConvertor : public SubComponent {
 
     class MemReq : public BaseReq {
       public:
-        MemReq( MemEvent* event, uint32_t reqId ) : BaseReq(reqId), 
+        MemReq( MemEvent* event, uint32_t reqId ) : BaseReq(reqId, BaseReq::ReqType::MEM), 
             m_event(event), m_offset(0), m_numReq(0) { }
         ~MemReq() { }
 
@@ -140,14 +142,6 @@ class MemBackendConvertor : public SubComponent {
     // generates a MemReq for the target custom command
     // this is utilized by inherited ExtMemBackendConvertor's
     // such that all the requests are consolidated in one place
-    uint64_t setupExtMemReq( CustomCmdInfo *CI ) {
-      uint32_t id = genReqId();
-      CustomReq* req = new CustomReq( CI, id );
-      m_requestQueue.push_back( req );
-      m_pendingRequests[id] = req;
-      return req->id();
-    }
-
   protected:
     ~MemBackendConvertor() {
         while ( m_requestQueue.size()) {
