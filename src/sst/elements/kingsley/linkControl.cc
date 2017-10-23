@@ -144,6 +144,7 @@ void LinkControl::init(unsigned int phase)
 
         for ( int i = 0; i < req_vns; ++i ) {
             outbuf_credits[i] = outbuf_size.getRoundedValue() / flit_size;
+            in_ret_credits[i] = inbuf_size.getRoundedValue() /flit_size;
         }
        
         init_state = 2;
