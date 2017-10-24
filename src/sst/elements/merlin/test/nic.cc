@@ -71,7 +71,7 @@ nic::nic(ComponentId_t cid, Params& params) :
     remap = params.find<int>("remap", 0);
     id = (net_id + remap) % num_peers;
 
-    UnitAlgebra message_size = params.find<std::string>("message_size","400b");
+    UnitAlgebra message_size = params.find<std::string>("message_size","64b");
     if ( message_size.hasUnits("B") ) message_size  *= UnitAlgebra("8b/B");
     msg_size = message_size.getRoundedValue();
 
