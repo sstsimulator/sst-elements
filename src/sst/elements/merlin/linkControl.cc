@@ -394,12 +394,12 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     return ret;
 }
 
-void LinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req)
+void LinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
 {
     rtr_link->sendUntimedData(new RtrEvent(req));
 }
 
-SST::Interfaces::SimpleNetwork::Request* LinkControl::recvInitData()
+SST::Interfaces::SimpleNetwork::Request* LinkControl::recvUntimedData()
 {
     if ( init_events.size() ) {
         RtrEvent *ev = init_events.front();
@@ -413,6 +413,13 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recvInitData()
     }
 }
 
+void LinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req) {
+    sendUntimedData(req);
+}
+
+SST::Interfaces::SimpleNetwork::Request* LinkControl::recvInitData() {
+    return recvUntimedData();
+}
 
 
 void LinkControl::handle_input(Event* ev)

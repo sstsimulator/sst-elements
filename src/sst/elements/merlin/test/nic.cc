@@ -81,7 +81,7 @@ nic::nic(ComponentId_t cid, Params& params) :
     link_control = (SimpleNetwork*)loadSubComponent(linkcontrol_type, this, params);
     
     UnitAlgebra in_buf_size = params.find<UnitAlgebra>("in_buf_size","1kB");
-    UnitAlgebra out_buf_size = params.find<UnitAlgebra>("in_buf_size","1kB");
+    UnitAlgebra out_buf_size = params.find<UnitAlgebra>("out_buf_size","1kB");
 
     
     link_control->initialize("rtr", link_bw, num_vns, in_buf_size, out_buf_size);
@@ -168,8 +168,6 @@ nic::init(unsigned int phase) {
 void
 nic::init_complete(unsigned int phase) {
     
-    // output.output("%d: init_state = %d\n",net_id,init_state);
-    
     switch ( init_state ) {
     case 0:
     {
@@ -185,7 +183,7 @@ nic::init_complete(unsigned int phase) {
             SimpleNetwork::Request* req =
                 new SimpleNetwork::Request(SimpleNetwork::INIT_BROADCAST_ADDR, net_id,
                                            0, true, true);
-            link_control->sendInitData(req);
+            link_control->sendUntimedData(req);
             init_state = 2;
         }
         else {
@@ -208,7 +206,7 @@ nic::init_complete(unsigned int phase) {
             SimpleNetwork::Request* req =
                 new SimpleNetwork::Request(SimpleNetwork::INIT_BROADCAST_ADDR, net_id,
                                            0, true, true);
-            link_control->sendInitData(req);
+            link_control->sendUntimedData(req);
             init_state = 2;
         }
         break;
@@ -239,7 +237,7 @@ nic::init_complete(unsigned int phase) {
                 // output.output("Rank %d sending point-to-point messages\n",net_id);
                 for ( int i = 0; i < num_peers; ++i ) {
                     req = new SimpleNetwork::Request(i, net_id, 0, true, true);
-                    link_control->sendInitData(req);
+                    link_control->sendUntimedData(req);
                 }
                 init_state = 4;
             }
@@ -264,7 +262,7 @@ nic::init_complete(unsigned int phase) {
             // output.output("Rank %d sending point-to-point messages\n",net_id);
             for ( int i = 0; i < num_peers; ++i ) {
                 req = new SimpleNetwork::Request(i, net_id, 0, true, true);
-                link_control->sendInitData(req);
+                link_control->sendUntimedData(req);
             }
             init_state = 4;
         }        
