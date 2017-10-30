@@ -130,6 +130,7 @@ public:
     ~hr_router();
     
     void init(unsigned int phase);
+    void complete(unsigned int phase);
     void setup();
     void finish();
 

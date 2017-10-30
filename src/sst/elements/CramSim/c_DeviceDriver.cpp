@@ -374,6 +374,7 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(
 	m_lastDataCmdIssueCycle = 0;
 	m_lastDataCmdType = e_BankCommandType::READ;
 	m_lastPseudoChannel = 0;
+	m_lastChannel=0;
 
 	// reset command bus
 	m_blockColCmd.resize(k_numChannels);

@@ -492,12 +492,12 @@ hr_router::init(unsigned int phase)
                  */
                 switch ( topo->getPortState(*j) ) {
                 case Topology::R2N:
-                    ports[*j]->sendInitData(ire->getEncapsulatedEvent()->clone());
+                    ports[*j]->sendUntimedData(ire->getEncapsulatedEvent()->clone());
                     break;
                 case Topology::R2R: {
                     internal_router_event *new_ire = ire->clone();
                     new_ire->setEncapsulatedEvent(ire->getEncapsulatedEvent()->clone());
-                    ports[*j]->sendInitData(new_ire);
+                    ports[*j]->sendUntimedData(new_ire);
                     break;
                 }
                 default:
@@ -509,7 +509,7 @@ hr_router::init(unsigned int phase)
     }
 
     
-    // Alsways do the above.  A few specific things to do during init
+    // Always do the above.  A few specific things to do during init
 
     // After phase 1, all the PortControl blocks will have reported
     // the requested VNs.  Now we need to translate this to the number
@@ -524,6 +524,43 @@ hr_router::init(unsigned int phase)
         init_vcs();
     }
 
+}
+
+void
+hr_router::complete(unsigned int phase)
+{
+    for ( int i = 0; i < num_ports; i++ ) {
+        // std::cout << "Calling init on port: " << i << ", in phase " << phase << std::endl;
+        ports[i]->complete(phase);
+        Event *ev = NULL;
+        while ( (ev = ports[i]->recvInitData()) != NULL ) {
+            internal_router_event *ire = dynamic_cast<internal_router_event*>(ev);
+            if ( ire == NULL ) {
+                ire = topo->process_InitData_input(static_cast<RtrEvent*>(ev));
+            }
+            std::vector<int> outPorts;
+            topo->routeInitData(i, ire, outPorts);
+            for ( std::vector<int>::iterator j = outPorts.begin() ; j != outPorts.end() ; ++j ) {
+                /* Little tricky here.  Need to clone both the event, and the
+                 * encapsulated event.
+                 */
+                switch ( topo->getPortState(*j) ) {
+                case Topology::R2N:
+                    ports[*j]->sendUntimedData(ire->getEncapsulatedEvent()->clone());
+                    break;
+                case Topology::R2R: {
+                    internal_router_event *new_ire = ire->clone();
+                    new_ire->setEncapsulatedEvent(ire->getEncapsulatedEvent()->clone());
+                    ports[*j]->sendUntimedData(new_ire);
+                    break;
+                }
+                default:
+                    break;
+                }
+            }
+            delete ire;
+        }
+    }    
 }
 
 void
