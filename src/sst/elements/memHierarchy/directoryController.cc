@@ -172,7 +172,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memParams.insert("interleave_size", ilSize, false);
             memParams.insert("interleave_step", ilStep, false);
             memLink = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, memParams));
-            memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handleMemoryResponse));
+            memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
             if (!memLink) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
             }
