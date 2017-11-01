@@ -24,7 +24,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 CustomCmdMemHandler::MemEventInfo AMOCustomCmdMemHandler::receive(MemEventBase* ev){
-    CustomCmdMemHandler::MemEventInfo MEI(ev->getRoutingAddress(),false);
+    CustomCmdMemHandler::MemEventInfo MEI(ev->getRoutingAddress(),true);
     return MEI;
 }
 

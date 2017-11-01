@@ -1590,6 +1590,7 @@ static const ElementInfoStatistic dirctrl_statistics[] = {
     {"memory_requests_directory_entry_write","Number of write requests for a directory entry sent to memory",   "requests",     1},
     {"memory_requests_data_read",       "Number of read requests for data sent to memory",                      "requests",     1},
     {"memory_requests_data_write",      "Number of write requests for data sent to memory",                     "requests",     1},
+    {"memory_requests_data_custom",     "Number of custom requests for data sent to memory",                    "requests",     1},
     {"requests_sent_Inv",               "Number of Inv (invalidate) requests sent to LLCs",                     "requests",     1},
     {"requests_sent_FetchInv",          "Number of FetchInv (invalidate and fetch exclusive data) requests sent to LLCs",   "requests",     1},
     {"requests_sent_FetchInvX",         "Number of FetchInvX (fetch exclusive data and downgrade) requests sent to LLCs",   "requests",     1},

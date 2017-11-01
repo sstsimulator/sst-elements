@@ -107,6 +107,7 @@ class DirectoryController : public Component {
     // Sent events - to mem
     Statistic<uint64_t> * stat_dataReads;
     Statistic<uint64_t> * stat_dataWrites;
+    Statistic<uint64_t> * stat_dataCustom;
     Statistic<uint64_t> * stat_dirEntryReads;
     Statistic<uint64_t> * stat_dirEntryWrites;
     // Sent events - to caches
