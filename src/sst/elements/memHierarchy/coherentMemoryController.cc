@@ -39,7 +39,7 @@ using namespace SST::MemHierarchy;
 #else
 #define is_debug_addr(addr) false
 #define is_debug_event(ev) false
-#define DEBUG(level, fmt, ... )
+#define Debug(level, fmt, ... )
 #endif
 
 /* Construct CoherentMemController
