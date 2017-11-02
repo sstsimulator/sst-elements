@@ -8,7 +8,7 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
-	"generator" : "miranda.STREAMBenchGenerator",
+	"generator" : "miranda.STREAMBenchGeneratorCustomCmd",
 	"generatorParams.verbose" : 0,
 	"generatorParams.startat" : 3,
 	"generatorParams.count" : 500000,

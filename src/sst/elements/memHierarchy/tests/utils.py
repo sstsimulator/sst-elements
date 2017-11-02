@@ -36,7 +36,7 @@ class Config:
 
         self.app = cp.get('CPU', 'application')
         self.coreConfigParams = dict(cp.items(self.app))
-        if self.app == 'miranda.STREAMBenchGenerator':
+        if self.app == 'miranda.STREAMBenchGeneratorCustomCmd':
             self.coreConfig = self._streamCoreConfig
         elif self.app == 'miranda.SPMVGenerator':
             self.coreConfig = self._SPMVCoreConfig
@@ -59,7 +59,7 @@ class Config:
         streamN = int(self.coreConfigParams['total_streamn'])
         params = dict()
         params['max_reqs_cycle'] =  self.max_reqs_cycle
-        params['generator'] = 'miranda.STREAMBenchGenerator'
+        params['generator'] = 'miranda.STREAMBenchGeneratorCustomCmd'
         params['generatorParams.n'] = streamN / self.total_cores
         params['generatorParams.start_a'] = ( (streamN * 32) / self.total_cores ) * core_id
         params['generatorParams.start_b'] = ( (streamN * 32) / self.total_cores ) * core_id + (streamN * 32)

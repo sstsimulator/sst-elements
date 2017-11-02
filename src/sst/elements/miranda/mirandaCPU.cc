@@ -282,113 +282,115 @@ void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 }
 
 void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
-	const uint64_t reqAddress = req->getAddress();
-	const uint64_t reqLength  = req->getLength();
-	bool isRead               = req->isRead();
-        bool isCustom             = req->isCustom();
-        ReqOperation operation    = req->getOperation();
-	const uint64_t lineOffset = reqAddress % cacheLine;
+    const uint64_t reqAddress = req->getAddress();
+    const uint64_t reqLength  = req->getLength();
+    bool isRead               = req->isRead();
+    bool isCustom             = req->isCustom();
+    ReqOperation operation    = req->getOperation();
+    const uint64_t lineOffset = reqAddress % cacheLine;
 
-        if( !isCustom ){
-	  out->verbose(CALL_INFO, 4, 0, "Issue request: address=0x%" PRIx64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
-		reqAddress, reqLength, (isRead ? "READ" : "WRITE"), lineOffset);
+    if( !isCustom ){
+        out->verbose(CALL_INFO, 4, 0, "Issue request: address=0x%" PRIx64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
+                reqAddress, reqLength, (isRead ? "READ" : "WRITE"), lineOffset);
+    }else{
+        out->verbose(CALL_INFO, 4, 0, "Issue request: address=0x%" PRIx64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
+                reqAddress, reqLength, "CUSTOM", lineOffset);
+    }
+        
+    if (statBytes[operation] != nullptr)
+        statBytes[operation]->addData(reqLength);
+
+    if(lineOffset + reqLength > cacheLine) {
+        // Request is for a split operation (i.e. split over cache lines)
+    	const uint64_t lowerLength = cacheLine - lineOffset;
+        const uint64_t upperLength = reqLength - lowerLength;
+
+    	// Ensure that lengths are calculated correctly.
+        assert(lowerLength + upperLength == reqLength);
+
+    	const uint64_t lowerAddress = memMgr->mapAddress(reqAddress);
+        const uint64_t upperAddress = memMgr->mapAddress((lowerAddress - lowerAddress % cacheLine) + cacheLine);
+
+	out->verbose(CALL_INFO, 4, 0, "Issuing a split cache line operation:\n");
+    	out->verbose(CALL_INFO, 4, 0, "L -> Address: %" PRIu64 ", Length=%" PRIu64 "\n",
+                lowerAddress, lowerLength);
+	out->verbose(CALL_INFO, 4, 0, "U -> Address: %" PRIu64 ", Length=%" PRIu64 "\n",
+                upperAddress, upperLength);
+
+        SimpleMem::Request *reqLower;
+        SimpleMem::Request *reqUpper;
+        
+        if( isCustom ){
+            CustomOpRequest * creq = static_cast<CustomOpRequest*>(req);
+            // build a custom request event
+            reqLower = new SimpleMem::Request(
+                    SimpleMem::Request::CustomCmd,
+                    lowerAddress, lowerLength, creq->getOpcode(),0,0);
+
+	    reqUpper = new SimpleMem::Request(
+                    SimpleMem::Request::CustomCmd,
+                    upperAddress, upperLength, creq->getOpcode(),0,0);
         }else{
-	  out->verbose(CALL_INFO, 4, 0, "Issue request: address=0x%" PRIx64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
-		reqAddress, reqLength, "CUSTOM", lineOffset);
+            // build a normal event
+            reqLower = new SimpleMem::Request(
+                    isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
+                    lowerAddress, lowerLength);
+
+	    reqUpper = new SimpleMem::Request(
+                    isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
+                    upperAddress, upperLength);
         }
         
-        if (statBytes[operation] != nullptr)
-            statBytes[operation]->addData(reqLength);
+        CPURequest* newCPUReq = new CPURequest(req->getRequestID());
+    	newCPUReq->incPartCount();
+        newCPUReq->incPartCount();
+    	newCPUReq->setIssueTime(getCurrentSimTimeNano());
 
-	if(lineOffset + reqLength > cacheLine) {
-		// Request is for a split operation (i.e. split over cache lines)
-		const uint64_t lowerLength = cacheLine - lineOffset;
-		const uint64_t upperLength = reqLength - lowerLength;
+    	requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(reqLower->id, newCPUReq) );
+        requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(reqUpper->id, newCPUReq) );
 
-		// Ensure that lengths are calculated correctly.
-		assert(lowerLength + upperLength == reqLength);
+    	out->verbose(CALL_INFO, 4, 0, "Issuing requesting into cache link...\n");
+        cache_link->sendRequest(reqLower);
+    	cache_link->sendRequest(reqUpper);
+        out->verbose(CALL_INFO, 4, 0, "Completed issue.\n");
 
-		const uint64_t lowerAddress = memMgr->mapAddress(reqAddress);
-		const uint64_t upperAddress = memMgr->mapAddress((lowerAddress - lowerAddress % cacheLine) +
-						cacheLine);
+        requestsPending[operation] += 2;
 
-		out->verbose(CALL_INFO, 4, 0, "Issuing a split cache line operation:\n");
-		out->verbose(CALL_INFO, 4, 0, "L -> Address: %" PRIu64 ", Length=%" PRIu64 "\n",
-			lowerAddress, lowerLength);
-		out->verbose(CALL_INFO, 4, 0, "U -> Address: %" PRIu64 ", Length=%" PRIu64 "\n",
-			upperAddress, upperLength);
+    	// Keep track of split requests
+        if (statSplitReqs[operation] != nullptr)
+            statSplitReqs[operation]->addData(1);
+    
+    } else {
+        // This is not a split load, i.e. issue in a single transaction
+        SimpleMem::Request *request;
+        if( isCustom ){
+            CustomOpRequest* creq = static_cast<CustomOpRequest*>(req);
+            // issue custom request
+            request = new SimpleMem::Request(
+                    SimpleMem::Request::CustomCmd,
+                    memMgr->mapAddress(reqAddress), reqLength,
+                    creq->getOpcode(),0,0);
+        }else{
+            // issue standard request
+	    request = new SimpleMem::Request(
+                    isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
+    		    memMgr->mapAddress(reqAddress), reqLength);
+        }
 
-                SimpleMem::Request *reqLower;
-                SimpleMem::Request *reqUpper;
+        request->setVirtualAddress(memMgr->mapAddress(reqAddress));
 
-                if( isCustom ){
-                  // build a custom request event
-		  reqLower = new SimpleMem::Request(
-                        SimpleMem::Request::CustomCmd,
-			lowerAddress, lowerLength, req->getOpcode(),0,0);
+        CPURequest* newCPUReq = new CPURequest(req->getRequestID());
+        newCPUReq->incPartCount();
+        newCPUReq->setIssueTime(getCurrentSimTimeNano());
 
-		  reqUpper = new SimpleMem::Request(
-                        SimpleMem::Request::CustomCmd,
-			upperAddress, upperLength, req->getOpcode(),0,0);
-                }else{
-                  // build a normal event
-		  reqLower = new SimpleMem::Request(
-			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
-			lowerAddress, lowerLength);
+        requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(request->id, newCPUReq) );
+        cache_link->sendRequest(request);
 
-		  reqUpper = new SimpleMem::Request(
-			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
-			upperAddress, upperLength);
-                }
-
-		CPURequest* newCPUReq = new CPURequest(req->getRequestID());
-		newCPUReq->incPartCount();
-		newCPUReq->incPartCount();
-		newCPUReq->setIssueTime(getCurrentSimTimeNano());
-
-		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(reqLower->id, newCPUReq) );
-		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(reqUpper->id, newCPUReq) );
-
-		out->verbose(CALL_INFO, 4, 0, "Issuing requesting into cache link...\n");
-		cache_link->sendRequest(reqLower);
-		cache_link->sendRequest(reqUpper);
-		out->verbose(CALL_INFO, 4, 0, "Completed issue.\n");
-
-                requestsPending[operation] += 2;
-
-		// Keep track of split requests
-		if (statSplitReqs[operation] != nullptr)
-                    statSplitReqs[operation]->addData(1);
-	} else {
-		// This is not a split laod, i.e. issue in a single transaction
-                SimpleMem::Request *request;
-                if( isCustom ){
-                  // issue custom request
-		  request = new SimpleMem::Request(
-                        SimpleMem::Request::CustomCmd,
-			memMgr->mapAddress(reqAddress), reqLength,
-                        req->getOpcode(),0,0);
-                }else{
-                  // issue standard request
-		  request = new SimpleMem::Request(
-			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
-			memMgr->mapAddress(reqAddress), reqLength);
-                }
-
-		request->setVirtualAddress(memMgr->mapAddress(reqAddress));
-
-		CPURequest* newCPUReq = new CPURequest(req->getRequestID());
-		newCPUReq->incPartCount();
-		newCPUReq->setIssueTime(getCurrentSimTimeNano());
-
-		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(request->id, newCPUReq) );
-		cache_link->sendRequest(request);
-
-                requestsPending[operation]++;
+        requestsPending[operation]++;
                 
-                if (statReqs[operation] != nullptr)
-                    statReqs[operation]->addData(1);
-	}
+        if (statReqs[operation] != nullptr)
+            statReqs[operation]->addData(1);
+    }
 }
 
 bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
