@@ -144,7 +144,7 @@ class Config:
             "associativity": 8,
             "access_latency_cycles": 6,
             "mshr_num_entries" : 16,
-            "network_bw": self.ring_bandwidth,
+            "memNIC.network_bw": self.ring_bandwidth,
             # Default params
             #"cache_line_size": 64,
             #"coherence_protocol": self.coherence_protocol,
@@ -155,7 +155,7 @@ class Config:
         return dict({
             #"backend" : "memHierarchy.simpleMem",
             #"backend.access_time" : "30ns",
-            #"network_bw": self.ring_bandwidth,
+            #"memNIC.network_bw": self.ring_bandwidth,
             "backend.mem_size" : self.memory_capacity,
             "backend.clock" : self.memory_clock,
             "do_not_back" : 1,
@@ -188,11 +188,11 @@ class Config:
         return dict({
             "entry_cache_size": 256*1024*1024, #Entry cache size of mem/blocksize
             "clock": self.memory_clock,
-            "network_bw": self.ring_bandwidth,
+            "memNIC.network_bw": self.ring_bandwidth,
             "debug" : 0,
             "debug_level" : 10,
-            "addr_range_start" : 0,
-            "addr_range_end" : (int(filter(str.isdigit, self.memory_capacity)) * 1024 * 1024),
+            "memNIC.addr_range_start" : 0,
+            "memNIC.addr_range_end" : (int(filter(str.isdigit, self.memory_capacity)) * 1024 * 1024),
             # Default params
             # "coherence_protocol": coherence_protocol,
             })

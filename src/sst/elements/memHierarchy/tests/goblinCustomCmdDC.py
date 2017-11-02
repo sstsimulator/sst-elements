@@ -39,7 +39,6 @@ for next_core_id in range(config.total_cores):
 
     l2 = sst.Component("l2cache_%d"%(next_core_id), "memHierarchy.Cache")
     l2.addParams(config.getL2Params())
-    l2.addParam( "network_address", next_core_id )
 
     connect("cpu_cache_link_%d"%next_core_id,
             cpu, "cache_link",
@@ -62,7 +61,6 @@ mem.addParams(config.getMemParams())
 
 dc = sst.Component("dc", "memHierarchy.DirectoryController")
 dc.addParams(config.getDCParams(0))
-dc.addParam("network_address", config.total_cores)
 
 connect("mem_link_0",
         mem, "direct_link",
