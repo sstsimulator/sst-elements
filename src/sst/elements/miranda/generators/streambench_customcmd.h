@@ -14,8 +14,8 @@
 // distribution.
 
 
-#ifndef _H_SST_MIRANDA_SINGLE_STREAM_GEN
-#define _H_SST_MIRANDA_SINGLE_STREAM_GEN
+#ifndef _H_SST_MIRANDA_STREAM_BENCH_GEN_CUSTOMCMD
+#define _H_SST_MIRANDA_STREAM_BENCH_GEN_CUSTOMCMD
 
 #include <sst/elements/miranda/mirandaGenerator.h>
 #include <sst/core/output.h>
@@ -25,23 +25,30 @@
 namespace SST {
 namespace Miranda {
 
-class SingleStreamGenerator : public RequestGenerator {
+class STREAMBenchGenerator_CustomCmd : public RequestGenerator {
 
 public:
-	SingleStreamGenerator( Component* owner, Params& params );
-	~SingleStreamGenerator();
+	STREAMBenchGenerator_CustomCmd( Component* owner, Params& params );
+	~STREAMBenchGenerator_CustomCmd();
 	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
 	bool isFinished();
 	void completed();
 
 private:
 	uint64_t reqLength;
-	uint64_t maxAddr;
-	uint64_t issueCount;
-	uint64_t nextAddr;
-	uint64_t startAddr;
+
+	uint64_t start_a;
+	uint64_t start_b;
+	uint64_t start_c;
+
+	uint64_t n;
+	uint64_t n_per_call;
+	uint64_t i;
+
+        uint32_t custom_write_opcode;
+        uint32_t custom_read_opcode;
+
 	Output*  out;
-	ReqOperation memOp;
 
 };
 

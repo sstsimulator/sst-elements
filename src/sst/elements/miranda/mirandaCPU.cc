@@ -32,18 +32,19 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	std::stringstream prefix;
 	prefix << "@t:" <<getName() << ":RequestGenCPU[@p:@l]: ";
 	out = new Output( prefix.str(), verbose, 0, SST::Output::STDOUT);
-
-	maxLoadRequestsPending = params.find<uint32_t>("maxloadmemreqpending", 16);
-	maxStoreRequestsPending = params.find<uint32_t>("maxstorememreqpending", 16);
-	maxCustomRequestsPending = params.find<uint32_t>("maxcustommemreqpending", 16);
-	requestsLoadPending = requestsStorePending = requestsCustomPending = 0;
+        
+	maxRequestsPending[READ] = params.find<uint32_t>("maxloadmemreqpending", 16);
+	maxRequestsPending[WRITE] = params.find<uint32_t>("maxstorememreqpending", 16);
+	maxRequestsPending[CUSTOM] = params.find<uint32_t>("maxcustommemreqpending", 16);
+	
+        requestsPending[READ] = requestsPending[WRITE] = requestsPending[CUSTOM] = 0;
 
 	out->verbose(CALL_INFO, 1, 0, "Configured CPU to allow %" PRIu32 " maximum Load requests to be memory to be outstanding.\n",
-		maxLoadRequestsPending);
+		maxRequestsPending[READ]);
 	out->verbose(CALL_INFO, 1, 0, "Configured CPU to allow %" PRIu32 " maximum Store requests to be memory to be outstanding.\n",
-		maxStoreRequestsPending);
+		maxRequestsPending[WRITE]);
 	out->verbose(CALL_INFO, 1, 0, "Configured CPU to allow %" PRIu32 " maximum Custom requests to be memory to be outstanding.\n",
-		maxCustomRequestsPending);
+		maxRequestsPending[CUSTOM]);
 
 	std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
 	out->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
@@ -139,17 +140,17 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	}
 
 
-	statReadReqs   		  = registerStatistic<uint64_t>( "read_reqs" );
-	statWriteReqs  		  = registerStatistic<uint64_t>( "write_reqs" );
-        statCustomReqs            = registerStatistic<uint64_t>( "custom_reqs" );
-	statSplitReadReqs 	  = registerStatistic<uint64_t>( "split_read_reqs" );
-	statSplitWriteReqs    	  = registerStatistic<uint64_t>( "split_write_reqs" );
-	statSplitCustomReqs    	  = registerStatistic<uint64_t>( "split_custom_reqs" );
+        statReqs[READ]            = registerStatistic<uint64_t>( "read_reqs" );
+	statReqs[WRITE]		  = registerStatistic<uint64_t>( "write_reqs" );
+        statReqs[CUSTOM]          = registerStatistic<uint64_t>( "custom_reqs" );
+	statSplitReqs[READ] 	  = registerStatistic<uint64_t>( "split_read_reqs" );
+	statSplitReqs[WRITE]      = registerStatistic<uint64_t>( "split_write_reqs" );
+	statSplitReqs[CUSTOM]  	  = registerStatistic<uint64_t>( "split_custom_reqs" );
 	statCyclesWithIssue 	  = registerStatistic<uint64_t>( "cycles_with_issue" );
 	statCyclesWithoutIssue 	  = registerStatistic<uint64_t>( "cycles_no_issue" );
-	statBytesRead 		  = registerStatistic<uint64_t>( "total_bytes_read" );
-	statBytesWritten 	  = registerStatistic<uint64_t>( "total_bytes_write" );
-        statBytesCustom           = registerStatistic<uint64_t>( "total_bytes_custom" );
+	statBytes[READ] 	  = registerStatistic<uint64_t>( "total_bytes_read" );
+	statBytes[WRITE] 	  = registerStatistic<uint64_t>( "total_bytes_write" );
+        statBytes[CUSTOM]         = registerStatistic<uint64_t>( "total_bytes_custom" );
 	statReqLatency 		  = registerStatistic<uint64_t>( "req_latency" );
 	statTime                  = registerStatistic<uint64_t>( "time" );
 	statCyclesHitFence        = registerStatistic<uint64_t>( "cycles_hit_fence" );
@@ -166,9 +167,9 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	out->verbose(CALL_INFO, 1, 0, "- Max reorder lookups             %" PRIu32 "\n", maxOpLookup);
 	out->verbose(CALL_INFO, 1, 0, "- Clock:                          %s\n", cpuClock.c_str());
 	out->verbose(CALL_INFO, 1, 0, "- Cache line size:                %" PRIu64 " bytes\n", cacheLine);
-	out->verbose(CALL_INFO, 1, 0, "- Max Load requests pending:      %" PRIu32 "\n", maxLoadRequestsPending);
-	out->verbose(CALL_INFO, 1, 0, "- Max Store requests pending:     %" PRIu32 "\n", maxStoreRequestsPending);
-	out->verbose(CALL_INFO, 1, 0, "- Max Custom requests pending:     %" PRIu32 "\n", maxCustomRequestsPending);
+	out->verbose(CALL_INFO, 1, 0, "- Max Load requests pending:      %" PRIu32 "\n", maxRequestsPending[READ]);
+	out->verbose(CALL_INFO, 1, 0, "- Max Store requests pending:     %" PRIu32 "\n", maxRequestsPending[WRITE]);
+	out->verbose(CALL_INFO, 1, 0, "- Max Custom requests pending:     %" PRIu32 "\n", maxRequestsPending[CUSTOM]);
 	out->verbose(CALL_INFO, 1, 0, "Configuration completed.\n");
 }
 
@@ -255,11 +256,11 @@ void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 		// Decrement pending requests, we have recv'd a response
 			
 		if ( ev->cmd == Interfaces::SimpleMem::Request::Command::ReadResp ) { 
-			requestsLoadPending--;
+			requestsPending[READ]--;
 		} else if ( ev->cmd == Interfaces::SimpleMem::Request::Command::WriteResp ) { 
-			requestsStorePending--;
+			requestsPending[WRITE]--;
 		} else if( ev->cmd == Interfaces::SimpleMem::Request::Command::CustomCmd ){
-                        requestsCustomPending--;
+                        requestsPending[CUSTOM]--;
                 }
 
 		// If all the parts of this request are now completed then we will mark it for
@@ -285,6 +286,7 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 	const uint64_t reqLength  = req->getLength();
 	bool isRead               = req->isRead();
         bool isCustom             = req->isCustom();
+        ReqOperation operation    = req->getOperation();
 	const uint64_t lineOffset = reqAddress % cacheLine;
 
         if( !isCustom ){
@@ -294,14 +296,9 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 	  out->verbose(CALL_INFO, 4, 0, "Issue request: address=0x%" PRIx64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
 		reqAddress, reqLength, "CUSTOM", lineOffset);
         }
-
-	if(isRead) {
-		statBytesRead->addData(reqLength);
-	} else if( isCustom ){
-                statBytesCustom->addData(reqLength);
-        } else {
-		statBytesWritten->addData(reqLength);
-	}
+        
+        if (statBytes[operation] != nullptr)
+            statBytes[operation]->addData(reqLength);
 
 	if(lineOffset + reqLength > cacheLine) {
 		// Request is for a split operation (i.e. split over cache lines)
@@ -357,22 +354,11 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 		cache_link->sendRequest(reqUpper);
 		out->verbose(CALL_INFO, 4, 0, "Completed issue.\n");
 
-		if ( isRead ) {
-			requestsLoadPending += 2;
-                }else if( isCustom ){
-                        requestsCustomPending += 2;
-		} else {
-			requestsStorePending += 2;
-		}
+                requestsPending[operation] += 2;
 
 		// Keep track of split requests
-		if(isRead) {
-			statSplitReadReqs->addData(1);
-                }else if(isCustom){
-                        statSplitCustomReqs->addData(1);
-		} else {
-			statSplitWriteReqs->addData(1);
-		}
+		if (statSplitReqs[operation] != nullptr)
+                    statSplitReqs[operation]->addData(1);
 	} else {
 		// This is not a split laod, i.e. issue in a single transaction
                 SimpleMem::Request *request;
@@ -398,21 +384,10 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(request->id, newCPUReq) );
 		cache_link->sendRequest(request);
 
-		if ( isRead ) {
-			requestsLoadPending++;
-                }else if ( isCustom ){
-                        requestsCustomPending++;
-		} else {
-			requestsStorePending++;
-		}
-
-		if(isRead) {
-			statReadReqs->addData(1);
-                }else if( isCustom ){
-                        statCustomReqs->addData(1);
-		} else {
-			statWriteReqs->addData(1);
-		}
+                requestsPending[operation]++;
+                
+                if (statReqs[operation] != nullptr)
+                    statReqs[operation]->addData(1);
 	}
 }
 
@@ -422,145 +397,143 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
         out->verbose(CALL_INFO, 2,0, "unregister\n");
         return true;
     }
+    statCycles->addData(1);
 
-	statCycles->addData(1);
+    if (reqGen->isFinished()) {
+        if ( (pendingRequests.size() == 0) &&
+                (0 == requestsPending[READ]) &&
+                (0 == requestsPending[WRITE]) &&
+                (0 == requestsPending[CUSTOM]) ) {
+            out->verbose(CALL_INFO, 4, 0, "Request generator complete and no requests pending, simulation can halt.\n");
+            
+            // Tell the statistics engine how long we have executed for
+            statTime->addData(getCurrentSimTimeNano());
+            
+            reqGen->completed();
+            delete reqGen;
+            reqGen = NULL;
+            
+            if ( NULL == srcLink ) {
+                primaryComponentOKToEndSim();
+            } else {
+                if ( srcReqEvent->generators.empty() ) {
+                    MirandaRspEvent* event = new MirandaRspEvent;
+                    event->key = static_cast<MirandaReqEvent*>(srcReqEvent)->key;
+                    delete srcReqEvent;
+                    srcLink->send(0,event);
+                    
+                    return true;
+                } else {
+                    loadGenerator( srcReqEvent );
+                    return false;
+                }
+            
+            }
+	    
+            // Deregister here
+            return true;
+        }
+    }
+    
+    // Process the request which may require splitting into multiple
+    // requests (if breaks over a cache line)
+    out->verbose(CALL_INFO, 2, 0, "Load Requests pending %" PRIu32 ", maximum permitted %" PRIu32 ".\n",
+            requestsPending[READ], maxRequestsPending[READ]);
+    out->verbose(CALL_INFO, 2, 0, "Store Requests pending %" PRIu32 ", maximum permitted %" PRIu32 ".\n",
+            requestsPending[WRITE], maxRequestsPending[WRITE]);
+    out->verbose(CALL_INFO, 2, 0, "Custom Requests pending %" PRIu32 ", maximum permitted %" PRIu32 ".\n",
+            requestsPending[CUSTOM], maxRequestsPending[CUSTOM]);
 
-	if(reqGen->isFinished()) {
-		if( (pendingRequests.size() == 0) &&
-                    (0 == requestsLoadPending) &&
-                    (0 == requestsStorePending) &&
-                    (0 == requestsCustomPending) ) {
-			out->verbose(CALL_INFO, 4, 0, "Request generator complete and no requests pending, simulation can halt.\n");
+    bool issued = false;
+    uint32_t reqsIssuedThisCycle = 0;
+    std::vector<uint32_t> delReqs;
+    
+    // We need to generate at least as many requests as can be looked up in the OoO window
+    // otherwise the issue will have starvation.
+    for(int i = pendingRequests.size(); i < maxOpLookup; ++i) {
+        if( reqGen->isFinished()) {
+            break;
+    	} else {
+            reqGen->generate(&pendingRequests);
+    	}
+    }
+    
+    for(uint32_t i = 0; i < pendingRequests.size(); ++i) {
+        if(reqsIssuedThisCycle == reqMaxPerCycle) {
+            statMaxIssuePerCycle->addData(1);
+            break;
+    	}
 
-			// Tell the statistics engine how long we have executed for
-			statTime->addData(getCurrentSimTimeNano());
-
-			reqGen->completed();
-			delete reqGen;
-			reqGen = NULL;
-
-			if ( NULL == srcLink ) {
-				primaryComponentOKToEndSim();
-			} else {
-				if ( srcReqEvent->generators.empty() ) {
-					MirandaRspEvent* event = new MirandaRspEvent;
-					event->key = static_cast<MirandaReqEvent*>(srcReqEvent)->key;
-					delete srcReqEvent;
-					srcLink->send(0,event);
-
-					return true;
-				} else {
-					loadGenerator( srcReqEvent );
-					return false;
-				}
-
-			}
-			// Deregister here
-			return true;
-		}
-	}
-
-	// Process the request which may require splitting into multiple
-	// requests (if breaks over a cache line)
-	out->verbose(CALL_INFO, 2, 0, "Load Requests pending %" PRIu32 ", maximum permitted %" PRIu32 ".\n",
-		requestsLoadPending, maxLoadRequestsPending);
-	out->verbose(CALL_INFO, 2, 0, "Store Requests pending %" PRIu32 ", maximum permitted %" PRIu32 ".\n",
-		requestsStorePending, maxStoreRequestsPending);
-	out->verbose(CALL_INFO, 2, 0, "Custom Requests pending %" PRIu32 ", maximum permitted %" PRIu32 ".\n",
-		requestsCustomPending, maxStoreRequestsPending);
-
-	bool issued = false;
-	uint32_t reqsIssuedThisCycle = 0;
-	std::vector<uint32_t> delReqs;
-
-	// We need to generate at least as many requests as can be looked up in the OoO window
-	// otherwise the issue will have starvation.
-	for(int i = pendingRequests.size(); i < maxOpLookup; ++i) {
-		if( reqGen->isFinished()) {
-			break;
-		} else {
-			reqGen->generate(&pendingRequests);
-		}
-	}
-
-	for(uint32_t i = 0; i < pendingRequests.size(); ++i) {
-		if(reqsIssuedThisCycle == reqMaxPerCycle) {
-			statMaxIssuePerCycle->addData(1);
-			break;
-		}
-
-		// Only a certain number of lookups are allowed, if we exceed this then we
-		// must exit the issue loop
-		if(i == maxOpLookup) {
-			out->verbose(CALL_INFO, 2, 0, "Hit maximum reorder limit this cycle, no further operations will issue.\n");
-			statCyclesHitReorderLimit->addData(1);
-			break;
-		}
+	// Only a certain number of lookups are allowed, if we exceed this then we
+        // must exit the issue loop
+    	if(i == maxOpLookup) {
+            out->verbose(CALL_INFO, 2, 0, "Hit maximum reorder limit this cycle, no further operations will issue.\n");
+            statCyclesHitReorderLimit->addData(1);
+            break;
+    	}
 
         MemoryOpRequest* memOpReq;
-		GeneratorRequest* nxtRq = pendingRequests.at(i);
+	GeneratorRequest* nxtRq = pendingRequests.at(i);
 
-		if(nxtRq->getOperation() == REQ_FENCE) {
-			if(0 == requestsInFlight.size()) {
-				out->verbose(CALL_INFO, 4, 0, "Fence operation completed, no pending requests, will be retired.\n");
-
-				// Keep record we will delete fence at i
-				delReqs.push_back(i);
-
-				// Delete the fence
-				delete nxtRq;
-			} else {
-				out->verbose(CALL_INFO, 4, 0, "Fence operation in flight (>0 pending requests), stall.\n");
-			}
-
-			statCyclesHitFence->addData(1);
-
-			// Fence operations do now allow anything else to complete in this cycle
-			break;
+	if(nxtRq->getOperation() == REQ_FENCE) {
+            if(0 == requestsInFlight.size()) {
+		out->verbose(CALL_INFO, 4, 0, "Fence operation completed, no pending requests, will be retired.\n");
+                
+                // Keep record we will delete fence at i
+    		delReqs.push_back(i);
+		
+                // Delete the fence
+    		delete nxtRq;
+            } else {
+                out->verbose(CALL_INFO, 4, 0, "Fence operation in flight (>0 pending requests), stall.\n");
+            }
+            
+            statCyclesHitFence->addData(1);
+            
+            // Fence operations do now allow anything else to complete in this cycle
+            break;
 
         } else if ( ( memOpReq = dynamic_cast<MemoryOpRequest*>(nxtRq) ) ) {
 
-            if( ( memOpReq->isRead() && requestsLoadPending < maxLoadRequestsPending ) || 
-                ( memOpReq->isWrite() && requestsStorePending < maxStoreRequestsPending) || 
-                ( memOpReq->isCustom() && requestsCustomPending < maxCustomRequestsPending ) ) {
+            if( requestsPending[memOpReq->getOperation()] < maxRequestsPending[memOpReq->getOperation()] ) {
                 out->verbose(CALL_INFO, 4, 0, "Will attempt to issue as free slots in the load/store unit.\n");
 
 
-				if(nxtRq->canIssue()) {
+		if(nxtRq->canIssue()) {
                     issued = true;
-					reqsIssuedThisCycle++;
+                    reqsIssuedThisCycle++;
+                    
+                    out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " encountered, cleared to be issued, %" PRIu32 " issued this cycle.\n",
+                            nxtRq->getRequestID(), reqsIssuedThisCycle);
 
-					out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " encountered, cleared to be issued, %" PRIu32 " issued this cycle.\n",
-                                                nxtRq->getRequestID(), reqsIssuedThisCycle);
-
-					// Keep record we will delete at index i
-					delReqs.push_back(i);
-
-					//MemoryOpRequest* memOpReq = dynamic_cast<MemoryOpRequest*>(nxtRq);
-					issueRequest(memOpReq);
-
-					delete nxtRq;
-				} else {
-					out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " in queue, has dependencies which are not satisfied, wait.\n",
-                                                        nxtRq->getRequestID());
-                }
-			} else {
-			    out->verbose(CALL_INFO, 4, 0, "All load/store/custom slots occupied, no more issues will be attempted.\n");
-			    break;
-            }
+    		    // Keep record we will delete at index i
+                    delReqs.push_back(i);
+                    
+                    //MemoryOpRequest* memOpReq = dynamic_cast<MemoryOpRequest*>(nxtRq);
+                    issueRequest(memOpReq);
+                    
+                    delete nxtRq;
 		} else {
-	        out->fatal(CALL_INFO, -1, "Error, invalid operation \n");
-		}
-	}
-
-	pendingRequests.erase(delReqs);
-
-	if(issued) {
-		statCyclesWithIssue->addData(1);
+                    out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " in queue, has dependencies which are not satisfied, wait.\n",
+                            nxtRq->getRequestID());
+                }
+    	    } else {
+                out->verbose(CALL_INFO, 4, 0, "All load/store/custom slots occupied, no more issues will be attempted.\n");
+    	        break;
+            }
 	} else {
-		out->verbose(CALL_INFO, 4, 0, "Will not issue, not free slots in load/store unit.\n");
-		statCyclesWithoutIssue->addData(1);
-	}
+            out->fatal(CALL_INFO, -1, "Error, invalid operation \n");
+        }
+    }
 
-	return false;
+    pendingRequests.erase(delReqs);
+
+    if(issued) {
+	statCyclesWithIssue->addData(1);
+    } else {
+	out->verbose(CALL_INFO, 4, 0, "Will not issue, not free slots in load/store unit.\n");
+	statCyclesWithoutIssue->addData(1);
+    }
+
+    return false;
 }

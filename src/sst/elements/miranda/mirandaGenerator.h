@@ -32,7 +32,8 @@ typedef enum {
 	READ,
 	WRITE,
 	REQ_FENCE,
-        CUSTOM
+        CUSTOM,
+        OPCOUNT
 } ReqOperation;
 
 static uint64_t nextGeneratorRequestID = 0;
@@ -174,7 +175,7 @@ private:
 
 class MemoryOpRequest : public GeneratorRequest {
 public:
-	MemoryOpRequest(const uint64_t cAddr,
+        MemoryOpRequest(const uint64_t cAddr,
 		const uint64_t cLength,
 		const ReqOperation cOpType) :
 		GeneratorRequest(),

@@ -62,9 +62,6 @@ public:
 		matrixElementsStartAddr = params.find<uint64_t>("matrix_element_start_addr", nextStartAddr);
 
 		iterations = params.find<uint64_t>("iterations", 1);
-
-                write_cmd = params.find<uint32_t>("write_cmd", 0xFFFF );
-                read_cmd = params.find<uint32_t>("read_cmd", 0xFFFF );
 	}
 
 	~SPMVGenerator() {
@@ -75,36 +72,16 @@ public:
 		for(uint64_t row = localRowStart; row < localRowEnd; row++) {
 			out->verbose(CALL_INFO, 2, 0, "Generating access for row %" PRIu64 "\n", row);
 
-                        MemoryOpRequest* readStart;
-                        MemoryOpRequest* readEnd;
-                        if( read_cmd == 0xFFFF ){
-                          // issue standard read
-			  readStart = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * row), ordinalWidth, READ);
-			  readEnd   = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * (row + 1)), ordinalWidth, READ);
-                        }else{
-                          // issue custom read
-			  readStart = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * row), ordinalWidth, read_cmd);
-			  readEnd   = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * (row + 1)), ordinalWidth, read_cmd);
-                        }
+                        MemoryOpRequest* readStart = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * row), ordinalWidth, READ);
+                        MemoryOpRequest* readEnd   = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * (row + 1)), ordinalWidth, READ);
 
 			q->push_back(readStart);
 			q->push_back(readEnd);
 
-                        MemoryOpRequest* readResultCurrentValue;
-                        MemoryOpRequest* writeResult;
-                        if( write_cmd == 0xFFFF ){
-                          // issue standard write
-			  readResultCurrentValue = new MemoryOpRequest(rhsVecStartAddr +
+                        MemoryOpRequest* readResultCurrentValue = new MemoryOpRequest(rhsVecStartAddr +
 				(row * matrixNNZPerRow), elementWidth, WRITE);
-			  writeResult = new MemoryOpRequest(rhsVecStartAddr +
+                        MemoryOpRequest* writeResult = new MemoryOpRequest(rhsVecStartAddr +
 				(row * matrixNNZPerRow), elementWidth, WRITE);
-                        }else{
-                          // issue custom write
-			  readResultCurrentValue = new MemoryOpRequest(rhsVecStartAddr +
-				(row * matrixNNZPerRow), elementWidth, write_cmd);
-			  writeResult = new MemoryOpRequest(rhsVecStartAddr +
-				(row * matrixNNZPerRow), elementWidth, write_cmd);
-                        }
 
 			writeResult->addDependency(readResultCurrentValue->getRequestID());
 
@@ -118,26 +95,12 @@ public:
 				out->verbose(CALL_INFO, 4, 0, "Generating access for row %" PRIu64 ", column: %" PRIu64 "\n",
 					row, col);
 
-                                MemoryOpRequest* readMatElement;
-                                MemoryOpRequest* readCol;
-                                MemoryOpRequest* readLHSElem;
-                                if( read_cmd == 0xFFFF ){
-                                  // issue standard read
-				  readMatElement = new MemoryOpRequest(matrixElementsStartAddr +
-					(row * matrixNNZPerRow + col) * elementWidth, elementWidth, READ);
-				  readCol = new MemoryOpRequest(matrixColumnIndicesStartAddr +
+                                MemoryOpRequest* readMatElement = new MemoryOpRequest(matrixElementsStartAddr +
+                                        (row * matrixNNZPerRow + col) * elementWidth, elementWidth, READ);
+                                MemoryOpRequest* readCol = new MemoryOpRequest(matrixColumnIndicesStartAddr +
 					(row * matrixNNZPerRow + col) * ordinalWidth, ordinalWidth, READ);
-				  readLHSElem = new MemoryOpRequest(lhsVecStartAddr +
+                                MemoryOpRequest* readLHSElem = new MemoryOpRequest(lhsVecStartAddr +
 					(row * matrixNNZPerRow + col) * elementWidth, elementWidth, READ);
-                                }else{
-                                  // issue custom read
-				  readMatElement = new MemoryOpRequest(matrixElementsStartAddr +
-					(row * matrixNNZPerRow + col) * elementWidth, elementWidth, read_cmd);
-				  readCol = new MemoryOpRequest(matrixColumnIndicesStartAddr +
-					(row * matrixNNZPerRow + col) * ordinalWidth, ordinalWidth, read_cmd);
-				  readLHSElem = new MemoryOpRequest(lhsVecStartAddr +
-					(row * matrixNNZPerRow + col) * elementWidth, elementWidth, read_cmd);
-                                }
 
 				readCol->addDependency(readStart->getRequestID());
 				readCol->addDependency(readEnd->getRequestID());
@@ -179,8 +142,6 @@ private:
 	uint64_t localRowEnd;
 	uint64_t matrixColumnIndicesStartAddr;
 	uint64_t matrixElementsStartAddr;
-        uint32_t write_cmd;
-        uint32_t read_cmd;
 
 };
 

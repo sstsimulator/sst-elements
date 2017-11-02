@@ -16,8 +16,6 @@ comp_cpu.addParams({
 	"generatorParams.verbose" : 0,
 	"generatorParams.n" : 10000,
         "generatorParams.operandwidth" : 16,
-        "generatorParams.write_cmd" : 10,
-        "generatorParams.read_cmd" : 20,
 	"printStats" : 1,
 })
 

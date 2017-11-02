@@ -41,8 +41,6 @@ private:
 	uint64_t reqLength;
 	uint64_t maxAddr;
 	uint64_t issueCount;
-        uint32_t write_cmd;
-        uint32_t read_cmd;
 	bool issueOpFences;
 	SSTRandom* rng;
 	Output*  out;

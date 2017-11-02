@@ -8,7 +8,7 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
-	"generator" : "miranda.STREAMBenchGenerator",
+	"generator" : "miranda.STREAMBenchGeneratorCustomCmd",
 	"generatorParams.verbose" : 0,
 	"generatorParams.startat" : 3,
 	"generatorParams.count" : 500000,
@@ -40,7 +40,6 @@ comp_l1cache.addParams({
 # Enable statistics outputs
 comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
-#comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory = sst.Component("memory", "memHierarchy.CoherentMemController")
 comp_memory.addParams({
       "coherence_protocol" : "MESI",

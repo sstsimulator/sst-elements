@@ -40,7 +40,6 @@ private:
 	uint64_t datawidth;
 	uint64_t nextIndex;
 	uint64_t stride;
-        uint32_t read_cmd;
 
 	Output*  out;
 

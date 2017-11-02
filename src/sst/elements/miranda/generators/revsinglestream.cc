@@ -31,7 +31,6 @@ ReverseSingleStreamGenerator::ReverseSingleStreamGenerator( Component* owner, Pa
 	startIndex  = params.find<uint64_t>("start_at", 1024);
 	datawidth   = params.find<uint64_t>("datawidth", 8);
 	stride      = params.find<uint64_t>("stride", 1);
-        read_cmd    = params.find<uint32_t>("read_cmd", 0xFFFF );
 
 	if(startIndex < stopIndex) {
 		out->fatal(CALL_INFO, -1, "Start address (%" PRIu64 ") must be greater than stop address (%" PRIu64 ") in reverse stream generator",
@@ -43,10 +42,6 @@ ReverseSingleStreamGenerator::ReverseSingleStreamGenerator( Component* owner, Pa
 	out->verbose(CALL_INFO, 1, 0, "Data width:            %" PRIu64 "\n", datawidth);
 	out->verbose(CALL_INFO, 1, 0, "Stride:                %" PRIu64 "\n", stride);
 
-        if( read_cmd != 0xFFFF ){
-          out->verbose(CALL_INFO, 1, 0, "Custom RD opcode %" PRIu32 "\n", read_cmd );
-        }
-
 	nextIndex = startIndex;
 }
 
@@ -57,13 +52,7 @@ ReverseSingleStreamGenerator::~ReverseSingleStreamGenerator() {
 void ReverseSingleStreamGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 	out->verbose(CALL_INFO, 4, 0, "Generating next request at address: %" PRIu64 "\n", nextIndex);
 
-        if( read_cmd == 0xFFFF ){
-          // issue standard request
-	  q->push_back(new MemoryOpRequest(nextIndex * datawidth, datawidth, READ));
-        }else{
-          // issue custom request
-	  q->push_back(new MemoryOpRequest(nextIndex * datawidth, datawidth, read_cmd));
-        }
+	q->push_back(new MemoryOpRequest(nextIndex * datawidth, datawidth, READ));
 
 	// What is the next address?
 	nextIndex = nextIndex - stride;

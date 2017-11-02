@@ -37,17 +37,9 @@ RandomGenerator::RandomGenerator( Component* owner, Params& params ) :
 	out->verbose(CALL_INFO, 1, 0, "Will issue %" PRIu64 " operations\n", issueCount);
 	out->verbose(CALL_INFO, 1, 0, "Request lengths: %" PRIu64 " bytes\n", reqLength);
 	out->verbose(CALL_INFO, 1, 0, "Maximum address: %" PRIu64 "\n", maxAddr);
-        write_cmd  = params.find<uint32_t>("write_cmd", 0xFFFF );
-        read_cmd   = params.find<uint32_t>("read_cmd", 0xFFFF );
 
 	issueOpFences = params.find<std::string>("issue_op_fences", "yes") == "yes";
 
-        if( write_cmd != 0xFFFF ){
-          out->verbose(CALL_INFO, 1, 0, "Custom WR opcode %" PRIu32 "\n", write_cmd );
-        }
-        if( read_cmd != 0xFFFF ){
-          out->verbose(CALL_INFO, 1, 0, "Custom RD opcode %" PRIu32 "\n", read_cmd );
-        }
 }
 
 RandomGenerator::~RandomGenerator() {
@@ -67,22 +59,10 @@ void RandomGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 	const double op_decide = rng->nextUniform();
 
 	// Populate request
-        if( write_cmd == 0xFFFF ){
-          // issue standard operation
-	  q->push_back(new MemoryOpRequest(addr, reqLength, (op_decide < 0.5) ? READ : WRITE));
-        }else{
-          // issue custom operation
-          MemoryOpRequest *op;
-          if( op_decide < 0.5 ){
-            op = new MemoryOpRequest( addr, reqLength, read_cmd );
-          }else{
-            op = new MemoryOpRequest( addr, reqLength, write_cmd );
-          }
-          q->push_back(op);
-        }
+	q->push_back(new MemoryOpRequest(addr, reqLength, (op_decide < 0.5) ? READ : WRITE));
 
-	if(issueOpFences) {
-		q->push_back(new FenceOpRequest());
+	if (issueOpFences) {
+	    q->push_back(new FenceOpRequest());
 	}
 
 	issueCount--;

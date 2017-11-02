@@ -16,16 +16,16 @@
 
 #include <sst_config.h>
 #include <sst/core/params.h>
-#include <sst/elements/miranda/generators/streambench.h>
+#include <sst/elements/miranda/generators/streambench_customcmd.h>
 
 using namespace SST::Miranda;
 
-STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
+STREAMBenchGenerator_CustomCmd::STREAMBenchGenerator_CustomCmd( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
 
 	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 
-	out = new Output("STREAMBenchGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
+	out = new Output("STREAMBenchGenerator_CustomCmd[@p:@l]: ", verbose, 0, Output::STDOUT);
 
 	n = params.find<uint64_t>("n", 10000);
 	reqLength = params.find<uint64_t>("operandwidth", 8);
@@ -40,6 +40,10 @@ STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
 
 	n_per_call = params.find<uint64_t>("n_per_call", 1);
 
+        custom_write_opcode = params.find<uint32_t>("write_cmd", 0xFFFF );
+
+        custom_read_opcode = params.find<uint32_t>("read_cmd", 0xFFFF );
+
 	i = 0;
 
 	out->verbose(CALL_INFO, 1, 0, "STREAM-N length is %" PRIu64 "\n", n);
@@ -50,13 +54,19 @@ STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
 	out->verbose(CALL_INFO, 1, 0, "Array Length:      %" PRIu64 " bytes\n", (n * reqLength));
 	out->verbose(CALL_INFO, 1, 0, "Total arrays:      %" PRIu64 " bytes\n", (3 * n * reqLength));
 	out->verbose(CALL_INFO, 1, 0, "N-per-generate     %" PRIu64 "\n", n_per_call);
+        if( custom_write_opcode != 0xFFFF ){
+          out->verbose(CALL_INFO, 1, 0, "Custom WR opcode   %" PRIu32 "\n", custom_write_opcode );
+        }
+        if( custom_read_opcode != 0xFFFF ){
+          out->verbose(CALL_INFO, 1, 0, "Custom RD opcode   %" PRIu32 "\n", custom_read_opcode );
+        }
 }
 
-STREAMBenchGenerator::~STREAMBenchGenerator() {
+STREAMBenchGenerator_CustomCmd::~STREAMBenchGenerator_CustomCmd() {
 	delete out;
 }
 
-void STREAMBenchGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
+void STREAMBenchGenerator_CustomCmd::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 	for(uint64_t j = 0; j < n_per_call; ++j) {
 		out->verbose(CALL_INFO, 4, 0, "Array index: %" PRIu64 "\n", i);
 
@@ -65,9 +75,39 @@ void STREAMBenchGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 			break;
 		}
 
-                MemoryOpRequest* read_b  = new MemoryOpRequest(start_b + (i * reqLength), reqLength, READ);
-                MemoryOpRequest* read_c  = new MemoryOpRequest(start_c + (i * reqLength), reqLength, READ);
-                MemoryOpRequest* write_a = new MemoryOpRequest(start_a + (i * reqLength), reqLength, WRITE);
+                MemoryOpRequest* read_b;
+                MemoryOpRequest* read_c;
+                MemoryOpRequest* write_a;
+
+                if( custom_read_opcode == 0xFFFF ){
+                  // issue standard read
+		  read_b  = new MemoryOpRequest(start_b + (i * reqLength),
+                                                reqLength,
+                                                READ);
+		  read_c  = new MemoryOpRequest(start_c + (i * reqLength),
+                                                reqLength,
+                                                READ);
+                }else{
+                  // issue custom read
+		  read_b  = new MemoryOpRequest(start_b + (i * reqLength),
+                                                reqLength,
+                                                custom_read_opcode);
+		  read_c  = new MemoryOpRequest(start_c + (i * reqLength),
+                                                reqLength,
+                                                custom_read_opcode);
+                }
+
+                if( custom_write_opcode == 0xFFFF ){
+                  // issue standard write
+		  write_a = new MemoryOpRequest(start_a + (i * reqLength),
+                                                reqLength,
+                                                WRITE);
+                }else{
+                  // issue custom write
+		  write_a = new MemoryOpRequest(start_a + (i * reqLength),
+                                                reqLength,
+                                                custom_write_opcode);
+                }
 
 		write_a->addDependency(read_b->getRequestID());
 		write_a->addDependency(read_c->getRequestID());
@@ -85,10 +125,10 @@ void STREAMBenchGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 	}
 }
 
-bool STREAMBenchGenerator::isFinished() {
+bool STREAMBenchGenerator_CustomCmd::isFinished() {
 	return (i == n);
 }
 
-void STREAMBenchGenerator::completed() {
+void STREAMBenchGenerator_CustomCmd::completed() {
 
 }

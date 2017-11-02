@@ -32,6 +32,7 @@
 #include "generators/nullgen.h"
 #include "generators/copygen.h"
 #include "generators/spmvgen.h"
+#include "generators/streambench_customcmd.h"
 
 using namespace SST;
 using namespace SST::Miranda;
@@ -76,6 +77,10 @@ static SubComponent* load_SPMVGenerator(Component* owner, Params& params) {
 	return new SPMVGenerator(owner, params);
 }
 
+static SubComponent* load_STREAMGenerator_CustomCmd(Component* owner, Params& params) {
+        return new STREAMBenchGenerator_CustomCmd(owner, params);
+}
+
 static Component* load_MirandaBaseCPU(ComponentId_t id, Params& params) {
 	return new RequestGenCPU(id, params);
 }
@@ -90,8 +95,6 @@ static const ElementInfoParam singleStreamGen_params[] = {
     { "length",           "Length of requests", "8" },
     { "max_address",      "Maximum address allowed for generation", "16384" },
     { "startat",          "Sets the start address for generation", "0" },
-    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
-    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -104,8 +107,6 @@ static const ElementInfoParam stencil3dGen_params[] = {
     { "startz",           "Sets the start location in Z-plane for this instance, parallelism implemented as Z-plane decomposition", "0" },
     { "endz",             "Sets the end location in Z-plane for this instance, parallelism implemented as Z-plane decomposition", "10" },
     { "iterations",       "Sets the number of iterations to perform over this mesh", "1"},
-    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
-    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -115,7 +116,6 @@ static const ElementInfoParam revSingleStreamGen_params[] = {
     { "verbose",          "Sets the verbosity of the output", "0" },
     { "datawidth",        "Sets the width of the memory operation", "8" },
     { "stride",           "Sets the stride, since this is a reverse stream this is subtracted per iteration, def=1", "1" },
-    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -134,8 +134,6 @@ static const ElementInfoParam randomGen_params[] = {
     { "length",           "Length of requests", "8" },
     { "max_address",      "Maximum address allowed for generation", "16384" },
     { "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" },
-    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
-    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -148,8 +146,6 @@ static const ElementInfoParam gupsGen_params[] = {
     { "iterations",       "Number of iterations to perform", "1" },
     { "max_address",      "Maximum address allowed for generation", "536870912" /* 512MB */ },
     { "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" },
-    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
-    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -161,8 +157,6 @@ static const ElementInfoParam streamBench_params[] = {
     { "start_a",          "Sets the start address of the array a", "0" },
     { "start_b",          "Sets the start address of the array b", "1024" },
     { "start_c",          "Sets the start address of the array c", "2048" },
-    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
-    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
 
@@ -191,10 +185,22 @@ static const ElementInfoParam spmvBench_params[] = {
     { "matrix_element_start_addr", "Sets the start address of the elements array", "0" },
     { "iterations",     "Sets the number of repeats to perform" },
     { "matrix_nnz_per_row", "Sets the number of non-zero elements per row", "9" },
+    { NULL, NULL, NULL }
+};
+
+static const ElementInfoParam streamBench_customcmd_params[] = {
+    { "verbose",          "Sets the verbosity output of the generator", "0" },
+    { "n",                "Sets the number of elements in the STREAM arrays", "10000" },
+    { "n_per_call",       "Sets the number of iterations to generate per call to the generation function", "1"},
+    { "operandwidth",     "Sets the length of the request, default=8 (i.e. one double)", "8" },
+    { "start_a",          "Sets the start address of the array a", "0" },
+    { "start_b",          "Sets the start address of the array b", "1024" },
+    { "start_c",          "Sets the start address of the array c", "2048" },
     { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
     { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
     { NULL, NULL, NULL }
 };
+
 
 static const ElementInfoSubComponent subcomponents[] = {
 	{
@@ -239,6 +245,15 @@ static const ElementInfoSubComponent subcomponents[] = {
 		NULL,
 		load_STREAMGenerator,
 		streamBench_params,
+		NULL,
+		"SST::Miranda::RequestGenerator"
+	},
+	{
+		"STREAMBenchGeneratorCustomCmd",
+		"Creates a representation of the STREAM benchmark using custom memory commands",
+		NULL,
+		load_STREAMGenerator_CustomCmd,
+		streamBench_customcmd_params,
 		NULL,
 		"SST::Miranda::RequestGenerator"
 	},

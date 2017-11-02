@@ -44,8 +44,6 @@ private:
 	uint64_t iterations;
 	uint64_t seed_a;
 	uint64_t seed_b;
-        uint32_t write_cmd;
-        uint32_t read_cmd;
 	SSTRandom* rng;
 	Output*  out;
 	bool issueOpFences;
