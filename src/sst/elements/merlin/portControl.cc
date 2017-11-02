@@ -546,7 +546,30 @@ PortControl::init(unsigned int phase) {
 }
 
 void
+PortControl::complete(unsigned int phase) {
+    if ( !connected ) return;
+    Event *ev;
+
+    // Need to get all the init events
+    while ( ( ev = port_link->recvInitData() ) != NULL ) {
+        init_events.push_back(ev);
+    }
+}
+
+void
 PortControl::sendInitData(Event *ev)
+{
+    sendUntimedData(ev);
+}
+
+Event*
+PortControl::recvInitData()
+{
+    return recvUntimedData();
+}
+
+void
+PortControl::sendUntimedData(Event *ev)
 {
     if ( connected ) {
         port_link->sendInitData(ev);
@@ -554,7 +577,7 @@ PortControl::sendInitData(Event *ev)
 }
 
 Event*
-PortControl::recvInitData()
+PortControl::recvUntimedData()
 {
     if ( connected && init_events.size() ) {
         Event *ev = init_events.front();

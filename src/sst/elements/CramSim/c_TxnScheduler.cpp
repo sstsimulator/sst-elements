@@ -80,7 +80,7 @@ c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) : S
 
     k_isReadFirstScheduling = (unsigned) x_params.find<unsigned>("boolReadFirstTxnScheduling",0,l_found);
     if (!l_found) {
-        std::cout << "boolReadFirstTxnScheduling value is missing... it will be 32 (default)" << std::endl;
+        std::cout << "boolReadFirstTxnScheduling value is missing... disabled" << std::endl;
     }
 
 

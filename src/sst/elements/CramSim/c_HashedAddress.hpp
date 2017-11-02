@@ -80,6 +80,7 @@ public:
     ser & m_col;
     ser & m_cacheline;
     ser & m_bankId;
+    ser & m_rankId;
   }
   
   ImplementSerializable(c_HashedAddress);

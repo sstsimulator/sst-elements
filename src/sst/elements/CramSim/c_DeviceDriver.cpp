@@ -92,7 +92,7 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(
 
 	k_numPChannelsPerChannel= (uint32_t) params.find<uint32_t>("numPChannelsPerChannel", 1, l_found);
 	if (!l_found) {
-		std::cout << "numPChannelsPerChannel value is missing... " << std::endl;
+		std::cout << "numPChannelsPerChannel value is missing... disabled" << std::endl;
 		//exit(-1);
 	}
 
@@ -126,15 +126,14 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(
 		exit(-1);
 	}
 
-	k_useRefresh = (uint32_t) params.find<uint32_t>("boolUseRefresh", 1, l_found);
+	k_useRefresh = (uint32_t) params.find<uint32_t>("boolUseRefresh", 0, l_found);
 	if (!l_found) {
-		std::cout << "boolUseRefresh param value is missing... exiting" << std::endl;
-		exit(-1);
+		std::cout << "boolUseRefresh param value is missing... disabled" << std::endl;
 	}
 
 	k_useSBRefresh = (uint32_t) params.find<uint32_t>("boolUseSBRefresh", 0, l_found);
 	if (!l_found) {
-		std::cout << "boolUseSBRefresh (single bank refresh) param value is missing... disabled (default)" << std::endl;
+		std::cout << "boolUseSBRefresh (single bank refresh) param value is missing... disabled" << std::endl;
 	}
 
 	/* Device timing parameters*/
@@ -339,7 +338,7 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(
 		m_channel.push_back(l_channel);
 		//   int l_i = 0;
 		for (unsigned l_j = 0; l_j != k_numRanksPerChannel; ++l_j) {
-			std::cout << "Attaching Channel" << l_i << " to Rank" << l_rankNum << std::endl;
+			//std::cout << "Attaching Channel" << l_i << " to Rank" << l_rankNum << std::endl;
 			m_channel.at(l_i)->acceptRank(m_ranks.at(l_rankNum));
 			m_ranks.at(l_rankNum)->acceptChannel(m_channel.at(l_i));
 			++l_rankNum;
@@ -375,6 +374,7 @@ c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(
 	m_lastDataCmdIssueCycle = 0;
 	m_lastDataCmdType = e_BankCommandType::READ;
 	m_lastPseudoChannel = 0;
+	m_lastChannel=0;
 
 	// reset command bus
 	m_blockColCmd.resize(k_numChannels);
@@ -456,6 +456,30 @@ void c_DeviceDriver::run() {
 
 	if (!m_inputQ.empty())
 		sendRequest();
+
+	//send command to c_dimm if the command is ready
+	for (auto l_cmdPtrItr = m_outputQ.begin(); l_cmdPtrItr != m_outputQ.end();)  {
+		c_BankCommand* l_cmdPtr = (*l_cmdPtrItr);
+
+
+		if(l_cmdPtr->isResponseReady()) {
+			//send only one command for all bank refresh and precharge
+			if(l_cmdPtr->getBankIdVec().size()>0)
+			{
+				if(l_cmdPtr->getSeqNum()==l_cmdPtr->getBankIdVec().front())
+				{
+					m_Owner->sendCommand(l_cmdPtr);
+				} else
+					delete l_cmdPtr;
+			}
+			else
+				m_Owner->sendCommand(l_cmdPtr);
+
+			l_cmdPtrItr=m_outputQ.erase(l_cmdPtrItr);
+		}
+		else
+			l_cmdPtrItr++;
+	}
 
 }
 
@@ -688,7 +712,7 @@ bool c_DeviceDriver::sendRefresh(unsigned x_requester) {
     SimTime_t l_time = m_Owner->getSimCycle();
 	std::vector<unsigned>& l_bankIdVec = l_cmdPtr->getBankIdVec();
 
-	//check if the target bank are ready for the current command
+	//check if the target banks are ready for the current command
 	if(l_bankIdVec.size()>0) {
 		for (auto &l_bankid:l_bankIdVec) {
 			c_BankInfo *l_bank = m_banks.at(l_bankid);
@@ -703,22 +727,26 @@ bool c_DeviceDriver::sendRefresh(unsigned x_requester) {
 
 	//send the command if the command bus is available
     if ( isCommandBusAvailable(l_cmdPtr)) {   //check if the command bus is available
-
-		if (l_bankIdVec.size() > 0){
-			for (auto &l_bankid:l_bankIdVec) {
+		if(l_cmdPtr->getBankIdVec().size()>0)
+		{
+			for (auto &l_bankid:l_cmdPtr->getBankIdVec()) {
 				c_BankInfo *l_bank = m_banks.at(l_bankid);
-				c_BankCommand *l_cmd = new c_BankCommand(l_cmdPtr->getSeqNum(), l_cmdPtr->getCommandMnemonic(),
-									 l_cmdPtr->getAddress(), l_bankid);
-				sendCommand((l_cmd), l_bank);
+				c_BankCommand *l_cmd = new c_BankCommand(l_bankid,
+														 l_cmdPtr->getCommandMnemonic(),
+														 l_cmdPtr->getAddress(), *(l_cmdPtr->getHashedAddress()), l_cmdPtr->getBankIdVec());
+
+				sendCommand(l_cmd, l_bank);
+
 			}
-		} else {
+		}
+		else {
 			c_BankInfo *l_bank = m_banks.at(l_cmdPtr->getBankId());
 			sendCommand((l_cmdPtr), l_bank);
 		}
 
+
 		cmdQ.erase(cmdQ.begin());
 		occupyCommandBus(l_cmdPtr);
-
 
 		return true;
 	}
@@ -818,14 +846,20 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 
 	if (x_bank->isCommandAllowed(x_bankCommandPtr, l_time)) {
 	  if(k_printCmdTrace) {
+
+		  unsigned l_bankId=0;
 	    //if(x_bankCommandPtr->getCommandMnemonic() == e_BankCommandType::REF) {
+		  if(x_bankCommandPtr->getBankIdVec().size()>0)
+			  l_bankId=x_bankCommandPtr->getSeqNum();
+		  else
+			  l_bankId=x_bankCommandPtr->getBankId();
 	    if(x_bankCommandPtr->isRefreshType()) {
-	      (*m_cmdTraceStream) << "@" << std::dec
-				  << m_Owner->getSimCycle()
-				  << " " << (x_bankCommandPtr)->getCommandString()
-				  << " " << std::dec << (x_bankCommandPtr)->getSeqNum()
-					<< " " << std::dec << x_bankCommandPtr->getBankId()
-							  << std::endl;
+				(*m_cmdTraceStream) << "@" << std::dec
+									<< m_Owner->getSimCycle()
+									<< " " << (x_bankCommandPtr)->getCommandString()
+									<< " " << std::dec << (x_bankCommandPtr)->getSeqNum()
+									<< " " << std::dec << l_bankId
+									<< std::endl;
 	    } else {
 	      (*m_cmdTraceStream) << "@" << std::dec
 				  << m_Owner->getSimCycle()
@@ -860,11 +894,10 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 				     x_bankCommandPtr->getSeqNum());
 		#endif
 
-
 		x_bank->handleCommand(x_bankCommandPtr, l_time);
-		// send command to Dimm component
-		m_Owner->sendCommand(x_bankCommandPtr);
 
+		// push the command to output queue
+		m_outputQ.push_back(x_bankCommandPtr);
 
 		return true;
 	} else
@@ -966,6 +999,14 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
 
 	//get channel id --> used for the command bus arbitration
 	unsigned l_ch=l_refreshRequester.front()->getBankGroupPtr()->getRankPtr()->getChannelPtr()->getChannelId();
+    unsigned l_pch=0;
+    if(m_numPseudoChannels>1)
+    {
+        l_ch=l_ch%m_numChannels;
+        l_pch=l_ch/m_numChannels;
+    }
+	c_HashedAddress *l_hashedAddress = new c_HashedAddress(l_ch, l_pch, 0, 0, 0, 0, 0, 0);
+	l_hashedAddress->setRankId(x_rankID);
 
 	m_refreshCmdQ[x_rankID].clear();
 
@@ -978,10 +1019,12 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
 	}
 	//todo: PRE --> PREA
 	if(!l_bankVec.empty()) {
+		c_HashedAddress *l_hashedAddress = new c_HashedAddress(l_ch, l_pch, 0, 0, 0, 0, 0, 0);
+		l_hashedAddress->setRankId(x_rankID);
 
 		m_refreshCmdQ[x_rankID].push_back(
-				new c_BankCommand(0, e_BankCommandType::PRE, 0, c_HashedAddress(l_ch, 0, 0, 0, 0, 0, 0, 0), l_bankVec));
-
+				new c_BankCommand(0, e_BankCommandType::PRE, 0, *l_hashedAddress, l_bankVec));
+		delete l_hashedAddress;
 	}
 
 
@@ -991,10 +1034,12 @@ void c_DeviceDriver::createRefreshCmds(unsigned x_rankID) {
 			l_bankVec.push_back(l_bank->getBankId());
 	}
 	if(!l_bankVec.empty()) {
+		c_HashedAddress *l_hashedAddress = new c_HashedAddress(l_ch, l_pch, 0, 0, 0, 0, 0, 0);
+		l_hashedAddress->setRankId(x_rankID);
 
 		m_refreshCmdQ[x_rankID].push_back(
-				new c_BankCommand(0, e_BankCommandType::REF, 0, c_HashedAddress(l_ch, 0, 0, 0, 0, 0, 0, 0), l_bankVec));
-
+				new c_BankCommand(0, e_BankCommandType::REF, 0, *l_hashedAddress, l_bankVec));
+		delete l_hashedAddress;
 	}
 
 	//add active commands

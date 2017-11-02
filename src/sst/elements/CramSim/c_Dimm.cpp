@@ -69,7 +69,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	k_numChannels = (uint32_t)x_params.find<uint32_t>("numChannels", 1,
 															 l_found);
 	if (!l_found) {
-		std::cout << "numChannelsPerDimm value is missing... exiting"
+		std::cout << "[c_Dimm] numChannelsPerDimm value is missing... exiting"
 				  << std::endl;
 		exit(-1);
 	}
@@ -77,7 +77,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	k_numPChannelsPerChannel = (uint32_t)x_params.find<uint32_t>("numPChannelsPerChannel", 1,
 															l_found);
 	if (!l_found) {
-		std::cout << "numPChannelsPerChannel value is missing... "
+		std::cout << "[c_Dimm] numPChannelsPerChannel value is missing... disabled"
 				  << std::endl;
 		//exit(-1);
 	}
@@ -85,7 +85,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	k_numRanksPerChannel = (uint32_t)x_params.find<uint32_t>("numRanksPerChannel", 100,
 			l_found);
 	if (!l_found) {
-		std::cout << "numRanksPerChannel value is missing... exiting"
+		std::cout << "[c_Dimm] numRanksPerChannel value is missing... exiting"
 				<< std::endl;
 		exit(-1);
 	}
@@ -93,7 +93,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	k_numBankGroupsPerRank = (uint32_t)x_params.find<uint32_t>("numBankGroupsPerRank", 100,
 			l_found);
 	if (!l_found) {
-		std::cout << "numBankGroupsPerRank value is missing... exiting"
+		std::cout << "[c_Dimm] numBankGroupsPerRank value is missing... exiting"
 				<< std::endl;
 		exit(-1);
 	}
@@ -101,13 +101,116 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	k_numBanksPerBankGroup = (uint32_t)x_params.find<uint32_t>("numBanksPerBankGroup", 100,
 			l_found);
 	if (!l_found) {
-		std::cout << "numBanksPerBankGroup value is missing... exiting"
+		std::cout << "[c_Dimm] numBanksPerBankGroup value is missing... exiting"
 				<< std::endl;
 		exit(-1);
 	}
 
-	m_numBanks = k_numChannels * k_numPChannelsPerChannel * k_numRanksPerChannel * k_numBankGroupsPerRank
-			* k_numBanksPerBankGroup;
+	k_boolPowerCalc = (bool) x_params.find<bool> ("boolPowerCalc", false, l_found);
+	if(!l_found){
+		std::cout << "[c_Dimm] boolPowerCalc value is missing... disabled"
+				  << std::endl;
+	}
+
+
+	m_numRanks = k_numChannels * k_numPChannelsPerChannel * k_numRanksPerChannel;
+	m_numBanks = m_numRanks* k_numBankGroupsPerRank * k_numBanksPerBankGroup;
+
+	if(k_boolPowerCalc)
+	{
+		int l_numRank=k_numRanksPerChannel*k_numChannels*k_numPChannelsPerChannel;
+		m_actpreEnergy.resize(m_numRanks);
+		m_refreshEnergy.resize(m_numRanks);
+		m_readEnergy.resize(m_numRanks);
+		m_writeEnergy.resize(m_numRanks);
+		m_refreshEnergy.resize(m_numRanks);
+		m_backgroundEnergy.resize(m_numRanks);
+
+		k_IDD0 = (uint32_t)x_params.find<uint32_t>("IDD0", 0, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but IDD0 value is missing... exiting"
+					  << std::endl;
+			exit(-1);
+		}
+
+		k_IDD2N = (uint32_t)x_params.find<uint32_t>("IDD2N", 0, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but IDD2N value is missing... exiting"
+					  << std::endl;
+			exit(-1);
+		}
+
+		k_IDD2P = (uint32_t)x_params.find<uint32_t>("IDD2P", 0, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but IDD2P value is missing... exiting"
+					  << std::endl;
+			exit(-1);
+		}
+
+		k_IDD3N = (uint32_t)x_params.find<uint32_t>("IDD3N", 0, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but IDD3N value is missing... exiting"
+					  << std::endl;
+			exit(-1);
+		}
+
+		k_IDD4R = (uint32_t)x_params.find<uint32_t>("IDD4R", 0, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but IDD4R value is missing... exiting"
+					  << std::endl;
+			exit(-1);
+		}
+		k_IDD4W = (uint32_t)x_params.find<uint32_t>("IDD4W", 0, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but IDD4W value is missing... exiting"
+					  << std::endl;
+			exit(-1);
+		}
+
+		k_IDD5 = (uint32_t)x_params.find<uint32_t>("IDD5", 0, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but IDD5 value is missing... exiting"
+					  << std::endl;
+			exit(-1);
+		}
+
+		k_nRAS = (uint32_t) x_params.find<uint32_t>("nRAS", 39, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but nRAS value is missing ... exiting" << std::endl;
+			exit(-1);
+		}
+
+		k_nRP = (uint32_t) x_params.find<uint32_t>("nRP", 16, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but nRP value is missing ... exiting" << std::endl;
+			exit(-1);
+		}
+
+		k_nRFC = (uint32_t) x_params.find<uint32_t>("nRFC", 420, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but nRFC value is missing ... exiting" << std::endl;
+			exit(-1);
+		}
+
+		k_nBL = (uint32_t) x_params.find<uint32_t>("nBL", 4, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but nBL value is missing ... exiting" << std::endl;
+			exit(-1);
+		}
+
+		k_VDD = (float) x_params.find<float>("VDD", 4, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but VDD value is missing ... exiting" << std::endl;
+			exit(-1);
+		}
+
+		k_numDevices = (uint32_t) x_params.find<uint32_t>("numDevices", 4, l_found);
+		if (!l_found) {
+			std::cout << "[c_Dimm] Power calculation is enabled, but numDevices value is missing ... exiting" << std::endl;
+			exit(-1);
+		}
+
+	}
 
 	Statistic<uint64_t> *l_totalRowHits = registerStatistic<uint64_t>("totalRowHits");
 	for (int l_i = 0; l_i != m_numBanks; ++l_i) {
@@ -136,13 +239,12 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		m_bankStatsVec.push_back(l_bankStats);
 	}
 
-	m_thisCycleReceivedCmds = 0;
-
 	// get configured clock frequency
-	std::string l_controllerClockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
+	std::string l_clockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
     
 	//set our clock
-	registerClock(l_controllerClockFreqStr, new Clock::Handler<c_Dimm>(this, &c_Dimm::clockTic));
+	m_clockHandler=new Clock::Handler<c_Dimm>(this, &c_Dimm::clockTic);
+	registerClock(l_clockFreqStr, m_clockHandler);
 
 	// Statistics setup
 	s_actCmdsRecvd     = registerStatistic<uint64_t>("actCmdsRecvd");
@@ -152,6 +254,25 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	s_writeACmdsRecvd  = registerStatistic<uint64_t>("writeACmdsRecvd");
 	s_preCmdsRecvd     = registerStatistic<uint64_t>("preCmdsRecvd");
 	s_refCmdsRecvd     = registerStatistic<uint64_t>("refCmdsRecvd");
+
+	m_actCmdsRecvd.resize(m_numRanks);
+	m_readCmdsRecvd.resize(m_numRanks);
+	m_readACmdsRecvd.resize(m_numRanks);
+	m_writeCmdsRecvd.resize(m_numRanks);
+	m_writeACmdsRecvd.resize(m_numRanks);
+	m_preCmdsRecvd.resize(m_numRanks);
+	m_refCmdsRecvd.resize(m_numRanks);
+  
+        for(unsigned i=0; i<m_numRanks;i++)
+        {
+            m_actCmdsRecvd[i]=0;
+            m_readCmdsRecvd[i]=0;
+            m_readACmdsRecvd[i]=0;
+            m_writeCmdsRecvd[i]=0;
+            m_writeACmdsRecvd[i]=0;
+            m_preCmdsRecvd[i]=0;
+            m_refCmdsRecvd[i]=0;
+        }
 }
 
 c_Dimm::~c_Dimm() {
@@ -172,7 +293,7 @@ void c_Dimm::printQueues() {
 }
 
 bool c_Dimm::clockTic(SST::Cycle_t) {
-        m_simCycle++;
+	m_simCycle++;
 	for (int l_i = 0; l_i != m_banks.size(); ++l_i) {
 
 		c_BankCommand* l_resPtr = m_banks.at(l_i)->clockTic();
@@ -183,7 +304,9 @@ bool c_Dimm::clockTic(SST::Cycle_t) {
 
 	sendResponse();
 
-	m_thisCycleReceivedCmds = 0;
+	if(k_boolPowerCalc)
+		updateBackgroundEnergy();
+
 	return false;
 }
 
@@ -191,37 +314,46 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 
 	c_CmdReqEvent* l_cmdReqEventPtr = dynamic_cast<c_CmdReqEvent*>(ev);
 	if (l_cmdReqEventPtr) {
-		// each cycle, the DIMM should only receive one req
-		m_thisCycleReceivedCmds++;
 
 		c_BankCommand* l_cmdReq = l_cmdReqEventPtr->m_payload;
-
+		unsigned l_rank=l_cmdReq->getHashedAddress()->getRankId();
+		assert(l_rank<m_numRanks);
 
 		switch(l_cmdReq->getCommandMnemonic()) {
 		case e_BankCommandType::ACT:
 		  s_actCmdsRecvd->addData(1);
+				m_actCmdsRecvd[l_rank]+=1;
 		  break;
 		case e_BankCommandType::READ:
 		  s_readCmdsRecvd->addData(1);
+				m_readCmdsRecvd[l_rank]+=1;
 		  break;
 		case e_BankCommandType::READA:
 		  s_readACmdsRecvd->addData(1);
-		  break;
+				m_readACmdsRecvd[l_rank]+=1;
+				break;
 		case e_BankCommandType::WRITE:
 		  s_writeCmdsRecvd->addData(1);
+				m_writeCmdsRecvd[l_rank]+=1;
 		  break;
 		case e_BankCommandType::WRITEA:
 		  s_writeACmdsRecvd->addData(1);
+				m_writeACmdsRecvd[l_rank]+=1;
 		  break;
 		case e_BankCommandType::PRE:
 		  s_preCmdsRecvd->addData(1);
+				m_preCmdsRecvd[l_rank]+=1;
 		  break;
 		case e_BankCommandType::REF:
 		  s_refCmdsRecvd->addData(1);
+				m_refCmdsRecvd[l_rank]+=1;
 		  break;
 		}
 
 		sendToBank(l_cmdReq);
+
+		if(k_boolPowerCalc)
+			updateDynamicEnergy(l_cmdReq);
 
 		delete l_cmdReqEventPtr;
 	} else {
@@ -230,20 +362,67 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 	}
 }
 
-void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
+void c_Dimm::updateDynamicEnergy(c_BankCommand* x_bankCommandPtr)
+{
+	double_t l_energy=0;
+	int l_rank = x_bankCommandPtr->getHashedAddress()->getRankId();
+	assert(l_rank<m_numRanks);
 
-  unsigned l_bankNum=0;
-
-  l_bankNum = x_bankCommandPtr->getBankId();
-  m_banks.at(l_bankNum)->handleCommand(x_bankCommandPtr);
-  
+	switch(x_bankCommandPtr->getCommandMnemonic()) {
+		case e_BankCommandType::ACT:
+			l_energy = ((k_IDD0 * (k_nRAS+k_nRP))-((k_IDD3N * k_nRAS) + (k_IDD2N * (k_nRP)))) * k_VDD * k_numDevices; //active and precharge
+			m_actpreEnergy[l_rank]+=l_energy;
+			break;
+		case e_BankCommandType::READ:
+		case e_BankCommandType::READA:
+			l_energy = ((k_IDD4R-k_IDD3N) * k_nBL) * k_VDD * k_numDevices;
+			m_readEnergy[l_rank]+=l_energy;
+			break;
+		case e_BankCommandType::WRITE:
+		case e_BankCommandType::WRITEA:
+			l_energy = ((k_IDD4W-k_IDD3N) * k_nBL) * k_VDD * k_numDevices;
+			m_writeEnergy[l_rank]+=l_energy;
+			break;
+		case e_BankCommandType::PRE:
+			break;
+		case e_BankCommandType::REF:
+			//Todo: per-bank refresh
+			l_energy = ((k_IDD5-k_IDD3N) * k_nRFC) * k_VDD * k_numDevices;
+			m_refreshEnergy[l_rank]+=l_energy;
+			break;
+	}
 }
+
+void c_Dimm::updateBackgroundEnergy()
+{
+	//Todo: update background energy depeding on bank status
+
+	for(unsigned i=0;i<m_numRanks;i++)
+	{
+		m_backgroundEnergy[i]+= k_IDD3N * k_VDD * k_numDevices;
+	}
+}
+void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
+	unsigned l_bankNum = 0;
+	if (x_bankCommandPtr->getBankIdVec().size() > 0) {
+		for (auto &l_bankid:x_bankCommandPtr->getBankIdVec()) {
+			c_BankCommand *l_cmd = new c_BankCommand(x_bankCommandPtr->getSeqNum(), x_bankCommandPtr->getCommandMnemonic(),
+													 x_bankCommandPtr->getAddress(), l_bankid);
+			l_cmd->setResponseReady();
+			m_banks.at(l_bankid)->handleCommand(l_cmd);
+		}
+		delete x_bankCommandPtr;
+	} else {
+		l_bankNum = x_bankCommandPtr->getBankId();
+		m_banks.at(l_bankNum)->handleCommand(x_bankCommandPtr);
+	}
+}
+
 
 void c_Dimm::sendResponse() {
 
 	// check if ResQ has cmds
 	while (!m_cmdResQ.empty()) {
-
 
 	  c_CmdResEvent* l_cmdResEventPtr = new c_CmdResEvent();
 	  l_cmdResEventPtr->m_payload = m_cmdResQ.front();
@@ -253,4 +432,95 @@ void c_Dimm::sendResponse() {
 		m_ctrlLink->send(l_cmdResEventPtr);
 	}
 }
+
+void c_Dimm::finish(){
+
+	double l_actprePower=0;
+	double l_readPower =0;
+	double l_writePower =0;
+	double l_refreshPower=0;
+	double l_backgroundPower=0;
+
+	uint64_t l_actRecvd=0;
+	uint64_t l_readRecvd=0;
+	uint64_t l_writeRecvd=0;
+	uint64_t l_refreshRecvd=0;
+	uint64_t l_prechRecvd=0;
+	uint64_t l_totalRecvd=0;
+
+	std::cout.setf(std::ios::fixed);
+	std::cout.precision(2);
+	std::cout << "Deleting DIMM" << std::endl;
+	std::cout << "======= CramSim Simulation Report [Memory Device] ===================================\n";
+
+	for(unsigned i=0; i<m_numRanks;i++)
+	{
+		l_actRecvd+=m_actCmdsRecvd[i];
+		l_readRecvd+=(m_readCmdsRecvd[i]+m_readACmdsRecvd[i]);
+		l_writeRecvd+=(m_writeCmdsRecvd[i]+m_writeACmdsRecvd[i]);
+		l_prechRecvd+=(m_preCmdsRecvd[i]);
+		l_refreshRecvd+=(m_refCmdsRecvd[i]);
+	}
+	l_totalRecvd=l_actRecvd+l_readRecvd+l_writeRecvd+l_prechRecvd+l_refreshRecvd;
+
+	std::cout << " 1. Received Commands"	<<	std::endl;
+	std::cout << "  - Total : " << l_totalRecvd << std::endl;
+	std::cout << "  - Active : "
+			  << l_actRecvd
+			  << "(" << (double)l_actRecvd/(double)l_totalRecvd*100 << "%)"
+			  <<std::endl;
+	std::cout << "  - Read : "
+			  << l_readRecvd
+			  << "(" << (double)l_readRecvd/(double)l_totalRecvd*100 << "%)"
+			  <<std::endl;
+	std::cout << "  - Write : "
+			  << l_writeRecvd
+			  << "(" << (double)l_writeRecvd/(double)l_totalRecvd*100 << "%)"
+			  <<std::endl;
+	std::cout << "  - Precharge : "
+			  << l_prechRecvd
+			  << "(" << (double)l_prechRecvd/(double)l_totalRecvd*100 << "%)"
+			  <<std::endl;
+	std::cout << "  - Refresh : "
+			  << l_refreshRecvd
+			  << "(" << (double)l_refreshRecvd/(double)l_totalRecvd*100 << "%)"
+			  <<std::endl;
+
+    if(k_boolPowerCalc)
+    {
+        for(unsigned i=0;i<m_numRanks;i++) {
+            l_actprePower+= m_actpreEnergy[i]/m_simCycle;
+            l_readPower+=m_readEnergy[i]/m_simCycle;
+            l_writePower+=m_writeEnergy[i]/m_simCycle;
+            l_refreshPower+=m_refreshEnergy[i]/m_simCycle;
+            l_backgroundPower+=m_backgroundEnergy[i]/m_simCycle;
+        }
+        double l_totalPower=l_actprePower+l_readPower+l_writePower+l_refreshPower+l_backgroundPower;
+		std::cout <<std::endl;
+        std::cout << " 2. Power Consumption"	<<	std::endl;
+        std::cout << "  - Total Power (mW) : " << l_totalPower << std::endl;
+        std::cout << "  - Active/Precharge Power (mW) : "
+                  << l_actprePower
+                  << "(" << l_actprePower/l_totalPower*100 << "%)"
+                  <<std::endl;
+        std::cout << "  - Read Power (mW) : "
+                  << l_readPower
+                  << "(" << l_readPower/l_totalPower*100 << "%)"
+                  << std::endl;
+        std::cout << "  - Write Power (mW) : "
+                  << l_writePower
+                  << "(" <<l_writePower/l_totalPower*100 << "%)"
+                  << std::endl;
+        std::cout << "  - Refresh Power (mW) : "
+                  << l_refreshPower
+                  << "(" <<l_refreshPower/l_totalPower*100 << "%)"
+                  << std::endl;
+        std::cout << "  - Background Power (mW) : "
+                  << l_backgroundPower
+                  << "(" << l_backgroundPower/l_totalPower*100 << "%)"
+                  << std::endl;
+	}
+	std::cout << "=====================================================================================\n";
+}
+
 

@@ -274,6 +274,7 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
         // need to find which txn matches the command seq number in the txnResQ
         c_Transaction* l_txnRes = nullptr;
         std::deque<c_Transaction*>::iterator l_txIter;
+
         for(l_txIter=m_ResQ.begin() ; l_txIter!=m_ResQ.end();l_txIter++) {
             if((*l_txIter)->matchesCmdSeqNum(l_resSeqNum)) {
                 l_txnRes = *l_txIter;

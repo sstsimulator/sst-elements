@@ -121,7 +121,7 @@ c_TxnGenBase::c_TxnGenBase() :
 
 void c_TxnGenBase::finish()
 {
-    printf("\n======= Simulation Report ============================\n");
+    printf("\n======= CramSim Simulation Report [Transaction Generator] ============================\n");
     printf("Total Read-Txns Requests sent: %llu\n", m_resReadCount);
     printf("Total Write-Txns Requests sent: %llu\n", m_resWriteCount);
     printf("Total Txns Sents: %llu\n", m_resReadCount + m_resWriteCount);
@@ -133,7 +133,7 @@ void c_TxnGenBase::finish()
                 << std::dec << static_cast<double>(m_simCycle)
                                / static_cast<double>(m_resReadCount + m_resWriteCount) << std::endl;
     printf("Component Finished.\n");
-    printf("======================================================\n\n");
+    printf("========================================================================================\n\n");
 
     double l_txnsPerCycle=  static_cast<double>(m_resReadCount + m_resWriteCount) /static_cast<double>(m_simCycle);
 

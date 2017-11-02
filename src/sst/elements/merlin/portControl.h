@@ -204,10 +204,13 @@ public:
     void setup();
     void finish();
     void init(unsigned int phase);
+    void complete(unsigned int phase);
     
 
     void sendInitData(Event *ev);
     Event* recvInitData();
+    void sendUntimedData(Event *ev);
+    Event* recvUntimedData();
     
     void dumpState(std::ostream& stream);
     void printStatus(Output& out, int out_port_busy, int in_port_busy);
