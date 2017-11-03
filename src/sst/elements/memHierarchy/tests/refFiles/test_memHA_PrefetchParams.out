@@ -3126,6 +3126,7 @@ Completed @ 4394 ns
  directory0.responses_sent_GetXResp : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; 
  directory0.MSHR_occupancy : Accumulator : Sum.u64 = 494; SumSQ.u64 = 494; Count.u64 = 1697; 
  directory0.requests_received_noncacheable : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ directory0.requests_received_custom : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory0.row_already_open : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory0.no_row_open : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; 
  memory0.wrong_row_open : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -3173,6 +3174,7 @@ Completed @ 4394 ns
  directory1.responses_sent_GetXResp : Accumulator : Sum.u64 = 24; SumSQ.u64 = 24; Count.u64 = 24; 
  directory1.MSHR_occupancy : Accumulator : Sum.u64 = 478; SumSQ.u64 = 478; Count.u64 = 1666; 
  directory1.requests_received_noncacheable : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ directory1.requests_received_custom : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory1.row_already_open : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory1.no_row_open : Accumulator : Sum.u64 = 24; SumSQ.u64 = 24; Count.u64 = 24; 
  memory1.wrong_row_open : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 

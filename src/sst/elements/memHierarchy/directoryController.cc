@@ -172,7 +172,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memParams.insert("interleave_size", ilSize, false);
             memParams.insert("interleave_step", ilStep, false);
             memLink = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, memParams));
-            memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handleMemoryResponse));
+            memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
             if (!memLink) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
             }
@@ -228,6 +228,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_GetXRespSent               = registerStatistic<uint64_t>("responses_sent_GetXResp");
     stat_MSHROccupancy              = registerStatistic<uint64_t>("MSHR_occupancy");
     stat_NoncacheReceived           = registerStatistic<uint64_t>("requests_received_noncacheable");
+    stat_CustomReceived             = registerStatistic<uint64_t>("requests_received_custom");
 
 }
 
@@ -350,7 +351,7 @@ inline void DirectoryController::profileRequestSent(MemEvent * event) {
         break;
     default:
         break;
-        
+
     }
 }
 
@@ -524,6 +525,9 @@ void DirectoryController::handleNoncacheableRequest(MemEventBase * ev) {
         noncacheMemReqs[ev->getID()] = ev->getSrc();
     }
     stat_NoncacheReceived->addData(1);
+
+    if (ev->getCmd() == Command::CustomReq)
+        stat_CustomReceived->addData(1);
 
     ev->setSrc(getName());
     ev->setDst(memoryName);

@@ -26,6 +26,7 @@
 #include <sst/core/link.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include "memEvent.h"
+#include "customcmd/customCmdEvent.h"
 #include "sst/core/output.h"
 
 namespace SST {
@@ -67,7 +68,10 @@ private:
     void updateRequest(Interfaces::SimpleMem::Request* req, MemEvent *me) const;
     
     /** Function used internally to create the memEvent that will be used by MemHierarchy */
-    MemEvent* createMemEvent(Interfaces::SimpleMem::Request* req) const;
+    MemEventBase* createMemEvent(Interfaces::SimpleMem::Request* req) const;
+
+    /** Function used internally to create the custom memEvent that will be used by MemHierarchy */
+    CustomCmdEvent* createCustomMemEvent(Interfaces::SimpleMem::Request* req) const;
 
     Component*      owner_;
     HandlerBase*    recvHandler_;

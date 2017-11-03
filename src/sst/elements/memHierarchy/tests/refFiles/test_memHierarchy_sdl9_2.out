@@ -1624,10 +1624,11 @@ TrivialCPU cpu7 Finished after 1000 issued reads, 1000 returned (104240 clocks)
  dirctrl.requests_sent_FetchInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  dirctrl.requests_sent_FetchInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  dirctrl.responses_sent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- dirctrl.responses_sent_GetSResp : Accumulator : Sum.u64 = 457; SumSQ.u64 = 457; Count.u64 = 457; 
- dirctrl.responses_sent_GetXResp : Accumulator : Sum.u64 = 84; SumSQ.u64 = 84; Count.u64 = 84; 
+ dirctrl.responses_sent_GetSResp : Accumulator : Sum.u64 = 57; SumSQ.u64 = 57; Count.u64 = 57; 
+ dirctrl.responses_sent_GetXResp : Accumulator : Sum.u64 = 44; SumSQ.u64 = 44; Count.u64 = 44; 
  dirctrl.MSHR_occupancy : Accumulator : Sum.u64 = 7320; SumSQ.u64 = 10220; Count.u64 = 102965; 
  dirctrl.requests_received_noncacheable : Accumulator : Sum.u64 = 440; SumSQ.u64 = 440; Count.u64 = 440; 
+ dirctrl.requests_received_custom : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory.requests_received_GetS : Accumulator : Sum.u64 = 457; SumSQ.u64 = 457; Count.u64 = 457; 
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory.requests_received_GetX : Accumulator : Sum.u64 = 43; SumSQ.u64 = 43; Count.u64 = 43; 

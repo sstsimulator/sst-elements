@@ -28,7 +28,9 @@ libmiranda_la_SOURCES = \
 	generators/gupsgen.cc \
 	generators/nullgen.h \
 	generators/spmvgen.h \
-	generators/copygen.h
+	generators/copygen.h \
+	generators/streambench_customcmd.h \
+	generators/streambench_customcmd.cc
 
 EXTRA_DIST = \
 	tests/randomgen.py \
@@ -38,6 +40,6 @@ EXTRA_DIST = \
 	tests/streambench.py \
 	tests/inorderstream.py \
 	tests/copybench.py \
-	tests/gupsgen.py
+	tests/gupsgen.py 
 
 libmiranda_la_LDFLAGS = -module -avoid-version

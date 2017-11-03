@@ -65,9 +65,9 @@ void STREAMBenchGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 			break;
 		}
 
-		MemoryOpRequest* read_b  = new MemoryOpRequest(start_b + (i * reqLength), reqLength, READ);
-		MemoryOpRequest* read_c  = new MemoryOpRequest(start_c + (i * reqLength), reqLength, READ);
-		MemoryOpRequest* write_a = new MemoryOpRequest(start_a + (i * reqLength), reqLength, WRITE);
+                MemoryOpRequest* read_b  = new MemoryOpRequest(start_b + (i * reqLength), reqLength, READ);
+                MemoryOpRequest* read_c  = new MemoryOpRequest(start_c + (i * reqLength), reqLength, READ);
+                MemoryOpRequest* write_a = new MemoryOpRequest(start_a + (i * reqLength), reqLength, WRITE);
 
 		write_a->addDependency(read_b->getRequestID());
 		write_a->addDependency(read_c->getRequestID());

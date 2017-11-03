@@ -20,6 +20,7 @@
 #include "sst/elements/memHierarchy/memoryController.h"
 #include "membackend/extMemBackendConvertor.h"
 #include "membackend/memBackend.h"
+#include "customcmd/customOpCodeCmd.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -39,15 +40,30 @@ ExtMemBackendConvertor::ExtMemBackendConvertor(Component *comp, Params &params) 
 
 }
 
-bool ExtMemBackendConvertor::issue( MemReq *req ) {
+bool ExtMemBackendConvertor::issue( BaseReq *req ) {
 
-    MemEvent* event = req->getMemEvent();
     std::vector<uint64_t> NULLVEC;
 
-    return static_cast<ExtMemBackend*>(m_backend)->issueRequest( req->id(),
-                                                                     req->addr(),
-                                                                     req->isWrite(),
-                                                                     NULLVEC, // this is null for now
-                                                                     event->getFlags(),
-                                                                     m_backendRequestWidth );
+    if( req->isCustCmd() ){
+      // issue custom request
+      CustomReq * mreq = static_cast<CustomReq*>(req);
+      CustomOpCodeCmdInfo *info = static_cast<CustomOpCodeCmdInfo*>(mreq->getInfo());
+      return static_cast<ExtMemBackend*>(m_backend)->issueCustomRequest( mreq->id(),
+                                                                         info->getAddr(),
+                                                                         info->getOpCode(),
+                                                                         NULLVEC, // this is null for normal requests
+                                                                         info->getFlags(),
+                                                                         m_backendRequestWidth );
+    }else{
+      // issue standard request
+      MemReq * mreq = static_cast<MemReq*>(req);
+      return static_cast<ExtMemBackend*>(m_backend)->issueRequest( mreq->id(),
+                                                                   mreq->addr(),
+                                                                   mreq->isWrite(),
+                                                                   NULLVEC, // this is null for normal requests
+                                                                   mreq->getMemEvent()->getFlags(),
+                                                                   m_backendRequestWidth );
+    }
 }
+
+// EOF

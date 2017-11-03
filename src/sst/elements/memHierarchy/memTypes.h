@@ -73,18 +73,6 @@ enum class MemEventType { Cache, Move, Custom };                    // For parsi
     X(Put,              AckMove,        Request,    Request,        1, 0,   Move) \
     X(Get,              AckMove,        Request,    Request,        1, 0,   Move) \
     X(AckMove,          NULLCMD,        Response,   Ack,            0, 0,   Move) \
-    /* Atomic Requests*/\
-    X(AMOFetchAdd,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Add */\
-    X(AMOFetchSub,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Sub */\
-    X(AMOFetchOr,       AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Or */\
-    X(AMOFetchAnd,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and And */\
-    X(AMOFetchXor,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Xor */\
-    X(AMOFetchNand,     AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Nand */\
-    X(AMOCAS,           AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Compare and Swap */\
-    /* Extended Requests */\
-    X(ExtReq,           ExtResp,        Request,    Request,        1, 0,   Custom) /* Extended Request: Custom request with response */\
-    X(ExtResp,          NULLCMD,        Response,   Data,           0, 0,   Custom) /* Extended Response: Used for custom memory operation responses */\
-    X(ExtAck,           NULLCMD,        Response,   Ack,            0, 0,   Custom) /* Extended Response: Used for custom memory operation acks */\
     /* Custom request types. Use to extend memH events by creating a memEventBase-derivative with \
      * memEventBase.cmd set to one of these and custom commands defined in the derivative. See memEventInit (and its derivatives) for an example\
      * Note there is one req for each typical traffic class (request, data, ack) - memH may in the future sort network traffic by class\
