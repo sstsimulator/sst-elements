@@ -218,7 +218,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_PutSRespReceived           = registerStatistic<uint64_t>("responses_received_PutS");
     stat_dataReads                  = registerStatistic<uint64_t>("memory_requests_data_read");
     stat_dataWrites                 = registerStatistic<uint64_t>("memory_requests_data_write");
-    stat_dataCustom                 = registerStatistic<uint64_t>("memory_requests_data_custom");
     stat_dirEntryReads              = registerStatistic<uint64_t>("memory_requests_directory_entry_read");
     stat_dirEntryWrites             = registerStatistic<uint64_t>("memory_requests_directory_entry_write");
     stat_InvSent                    = registerStatistic<uint64_t>("requests_sent_Inv"); 
@@ -229,6 +228,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_GetXRespSent               = registerStatistic<uint64_t>("responses_sent_GetXResp");
     stat_MSHROccupancy              = registerStatistic<uint64_t>("MSHR_occupancy");
     stat_NoncacheReceived           = registerStatistic<uint64_t>("requests_received_noncacheable");
+    stat_CustomReceived             = registerStatistic<uint64_t>("requests_received_custom");
 
 }
 
@@ -349,8 +349,6 @@ inline void DirectoryController::profileRequestSent(MemEvent * event) {
         case Command::Inv:
         stat_InvSent->addData(1);
         break;
-        case Command::CustomReq:
-        stat_dataCustom->addData(1);
     default:
         break;
 
@@ -527,6 +525,9 @@ void DirectoryController::handleNoncacheableRequest(MemEventBase * ev) {
         noncacheMemReqs[ev->getID()] = ev->getSrc();
     }
     stat_NoncacheReceived->addData(1);
+
+    if (ev->getCmd() == Command::CustomReq)
+        stat_CustomReceived->addData(1);
 
     ev->setSrc(getName());
     ev->setDst(memoryName);
