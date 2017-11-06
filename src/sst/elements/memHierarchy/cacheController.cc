@@ -479,7 +479,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
     bool cont;
     int i = 0;
     
-    if (is_debug_addr(baseAddr)) d_->debug(_L3_,"---------Replaying Events--------- Size: %lu\n", entries.size());
+    if (is_debug_addr(baseAddr)) d_->debug(_L3_,"---------Replaying Events--------- Size: %zu\n", entries.size());
     
     bool writebackInProgress = false;   // Use this to allow replay of pointers but NOT events for this addr because an eviction is in progress
     

@@ -470,7 +470,7 @@ void MemController::processInitEvent( MemEventInit* me ) {
         if (is_debug_event(me)) { Debug(_L10_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }
     } else {
         Output out("", 0, 0, Output::STDERR);
-        out.debug(_L10_,"Memory received unexpected Init Command: %d\n", me->getCmd());
+        out.debug(_L10_,"Memory received unexpected Init Command: %d\n", (int)me->getCmd());
     }
 
     delete me;
