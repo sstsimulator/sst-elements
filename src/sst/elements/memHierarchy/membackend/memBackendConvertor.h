@@ -53,7 +53,7 @@ class MemBackendConvertor : public SubComponent {
         }
         bool isMemEv() { return m_type == ReqType::MEM; }
         bool isCustCmd() { return m_type == ReqType::CUSTOM; }
-        virtual std::string getRqstr() { return ""; }
+        virtual const std::string getRqstr() { return ""; }
     protected:
         uint32_t m_reqId;
         ReqType m_type;
@@ -66,7 +66,7 @@ class MemBackendConvertor : public SubComponent {
         ~CustomReq() { }
 
         CustomCmdInfo* getInfo() { return m_info; }
-        std::string getRqstr() { return m_info->getRqstr(); }
+        const std::string getRqstr() override { return m_info->getRqstr(); }
     private:
         CustomCmdInfo * m_info;
         uint32_t m_CustCmd;
@@ -88,7 +88,7 @@ class MemBackendConvertor : public SubComponent {
         MemEvent* getMemEvent() { return m_event; }
         bool isWrite()          { return (m_event->getCmd() == Command::PutM || (m_event->queryFlag(MemEvent::F_NONCACHEABLE) && m_event->getCmd() == Command::GetX)) ? true : false; }
         uint32_t size()         { return m_event->getSize(); }
-        std::string rqstr()     { return m_event->getRqstr(); }
+        const std::string getRqstr() override { return m_event->getRqstr(); }
 
         void increment( uint32_t bytes ) {
             m_offset += bytes;

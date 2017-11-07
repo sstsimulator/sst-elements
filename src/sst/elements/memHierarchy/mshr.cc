@@ -213,7 +213,7 @@ bool MSHR::insert(Addr baseAddr, MemEvent* event) {
     insert(baseAddr, mshrType(event));
     
     if (is_debug_addr(baseAddr)) {
-        d_->debug(_L9_, "\tMSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", 
+        d_->debug(_L9_, "\tMSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %zu\n", 
                 baseAddr, event->getAddr(), CommandString[(int)event->getCmd()], size_, map_[baseAddr].mshrQueue.size());
     }
 
@@ -258,7 +258,7 @@ bool MSHR::insertInv(Addr baseAddr, MemEvent* event, bool inProgress) {
     
     if (LIKELY(ret)) {
         if (is_debug_addr(baseAddr)) {
-            d_->debug(_L9_, "\tMSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", 
+            d_->debug(_L9_, "\tMSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %zu\n", 
                     baseAddr, event->getAddr(), CommandString[(int)event->getCmd()], size_, map_[baseAddr].mshrQueue.size());
         }
     } else if (is_debug_addr(baseAddr)) d_->debug(_L9_, "\tMSHR Full.  Event could not be inserted.\n");
@@ -439,7 +439,7 @@ bool MSHR::removeElement(Addr baseAddr, mshrType entry) {
     mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) return false;    
    
-    if (is_debug_addr(baseAddr)) d_->debug(_L9_,"\tMSHR Entry size = %lu\n", it->second.mshrQueue.size());
+    if (is_debug_addr(baseAddr)) d_->debug(_L9_,"\tMSHR Entry size = %zu\n", it->second.mshrQueue.size());
     
     vector<mshrType>& res = (it->second).mshrQueue;
     vector<mshrType>::iterator itv = std::find_if(res.begin(), res.end(), MSHREntryCompare(&entry));
@@ -470,7 +470,7 @@ bool MSHR::elementIsHit(Addr baseAddr, MemEvent *event) {
     mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) return false;    
     
-    if (is_debug_addr(baseAddr)) d_->debug(_L9_,"\tMSHR Entry size = %lu\n", it->second.mshrQueue.size());
+    if (is_debug_addr(baseAddr)) d_->debug(_L9_,"\tMSHR Entry size = %zu\n", it->second.mshrQueue.size());
     
     vector<mshrType>& res = (it->second).mshrQueue;
     vector<mshrType>::iterator itv = std::find_if (res.begin(), res.end(), MSHREntryCompare(&entry));

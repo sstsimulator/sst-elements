@@ -74,11 +74,11 @@ public:
         delete output;
     }
 
-    virtual void setGetRequestorHandler( std::function<const std::string&(ReqId)> func ) {
+    virtual void setGetRequestorHandler( std::function<const std::string(ReqId)> func ) {
         m_getRequestor = func;
     } 
 
-    std::string getRequestor( ReqId id ) {
+    const std::string getRequestor( ReqId id ) {
         return m_getRequestor( id );
     }
 
@@ -95,7 +95,7 @@ public:
     virtual const std::string& getClockFreq() { return m_clockFreq; }
     virtual bool isClocked() { return true; }
     virtual bool issueCustomRequest(ReqId, CustomCmdInfo*) {
-        output->fatal(CALL_INFO, -1, "Error (%s): This backend cannot handle custom requests\n");
+        output->fatal(CALL_INFO, -1, "Error (%s): This backend cannot handle custom requests\n", getName().c_str());
         return false;
     }
 
@@ -106,7 +106,7 @@ protected:
     size_t          m_memSize;
     int32_t         m_reqWidth;
 
-    std::function<const std::string&(ReqId)> m_getRequestor;
+    std::function<const std::string(ReqId)> m_getRequestor;
 };
 
 /* MemBackend - timing only */
