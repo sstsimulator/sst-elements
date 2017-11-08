@@ -24,7 +24,39 @@ namespace MemHierarchy {
 using namespace  TimingDRAM_NS;
 
 class TimingDRAM : public SimpleMemBackend {
+public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(TimingDRAM, "memHierarchy", "timingDRAM", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Moderately-detailed timing model for DRAM", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+            /* Inherited from MemBackend */
+            {"debug_level",     "(uint) Debugging level: 0 (no output) to 10 (all output). Output also requires that SST Core be compiled with '--enable-debug'", "0"},
+            {"debug_mask",      "(uint) Mask on debug_level", "0"},
+            {"debug_location",  "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE", "0"},
+            {"clock", "(string) Clock frequency - inherited from MemController", NULL},
+            {"max_requests_per_cycle", "(int) Maximum number of requests to accept each cycle. Use 0 or -1 for unlimited.", "-1"},
+            {"request_width", "(int) Maximum size, in bytes, for a request", "64"},
+            {"mem_size", "(string) Size of memory with units (SI ok). E.g., '2GiB'.", NULL},
+            /* Own parameters */
+            {"id", "ID number for this TimingDRAM instance", NULL},
+            {"dbg_level", "Output verbosity for debug", "1"},
+            {"dbg_mask", "Mask on dbg_level", "-1"},
+            {"addrMapper", "Address map subcomponent", "memHierarchy.simpleAddrMapper"},
+            {"channels", "Number of channels", "1"},
+            {"channel.numRanks", "Number of ranks per channel", "1"},
+            {"channel.transaction_Q_size", "Size of transaction queue", "32"},
+            {"channel.rank.numBanks", "Number of banks per rank", "8"},
+            {"channel.rank.bank.CL", "Column access latency in cycles", "11"},
+            {"channel.rank.bank.CL_WR", "Column write latency", "11"},
+            {"channel.rank.bank.RCD", "Row access latency in cycles", "11"},
+            {"channel.rank.bank.TRP", "Precharge delay in cycles", "11"},
+            {"channel.rank.bank.dataCycles", "", "4"},
+            {"channel.rank.bank.transactionQ", "Transaction queue model (subcomponent)", "memHierarchy.fifoTransactionQ"},
+            {"channel.rank.bank.pagePolicy", "Policy subcomponent for managing row buffer", "memHierarchy.simplePagePolicy"})
 
+/* Begin class definition */
+private:
     const uint64_t DBG_MASK = 0x1;
 
     class Cmd;

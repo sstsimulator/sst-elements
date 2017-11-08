@@ -24,6 +24,7 @@
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/link.h>
+#include <sst/core/elementinfo.h>
 
 #include "sst/elements/memHierarchy/memEventBase.h"
 #include "sst/elements/memHierarchy/memEvent.h"
@@ -42,7 +43,23 @@ namespace MemHierarchy {
 class MemLink : public MemLinkBase {
 
 public:
-    
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(MemLink, "memHierarchy", "MemLink", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Memory-oriented link interface", "SST::MemLinkBase")
+
+    SST_ELI_DOCUMENT_PARAMS(
+            { "{cpu|mem}link.latency",          "(string) Link latency. Prefix 'cpulink' for up-link towards CPU or 'memlink' for down-link towards memory", "50ps"},
+            { "{cpu|mem}link.debug",            "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+            { "{cpu|mem}link.debug_level",      "(int) Debug verbosity level. Between 0 and 10", "0"},
+            { "debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
+            { "{cpu|mem}link.accept_region",    "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},
+            { "{cpu|mem}link.port",             "(string) Set by parent component. Name of port this memLink sits on.", ""},
+            { "{cpu|mem}link.addr_range_start", "(uint) Set by parent component. Lowest address handled by the parent.", "0"},
+            { "{cpu|mem}link.addr_range_end",   "(uint) Set by parent component. Highest address handled by the parent.", "uint64_t-1"},
+            { "{cpu|mem}link.interleave_size",  "(string) Set by parent component. Size of interleaved chunks.", "0B"},
+            { "{cpu|mem}link.interleave_step",  "(string) Set by parent component. Distance between interleaved chunks.", "0B"} )
+
+/* Begin class definition */
     class MemEventLinkInit : public MemEventBase {
         public:
             MemEventLinkInit(std::string src, MemRegion region) : MemEventBase(src, Command::NULLCMD), region(region) { }

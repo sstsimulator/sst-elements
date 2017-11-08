@@ -36,6 +36,25 @@ namespace MemHierarchy {
 
 class HybridSimMemory : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(HybridSimMemory, "memHierarchy", "hybridsim", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "HybridSim-driven memory timings", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+            /* Inherited from MemBackend */
+            {"debug_level",     "(uint) Debugging level: 0 (no output) to 10 (all output). Output also requires that SST Core be compiled with '--enable-debug'", "0"},
+            {"debug_mask",      "(uint) Mask on debug_level", "0"},
+            {"debug_location",  "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE", "0"},
+            {"clock", "(string) Clock frequency - inherited from MemController", NULL},
+            {"max_requests_per_cycle", "(int) Maximum number of requests to accept each cycle. Use 0 or -1 for unlimited.", "-1"},
+            {"request_width", "(int) Maximum size, in bytes, for a request", "64"},
+            {"mem_size", "(string) Size of memory with units (SI ok). E.g., '2GiB'.", NULL},
+            /* Own parameters */
+            {"verbose", "Sets the verbosity of the backend output", "0"},
+            {"device_ini", "Name of the HybridSim Device config file", NULL},
+            {"system_ini", "Name of the HybridSim Device system file", NULL} )
+
+/* Begin class definition */
     HybridSimMemory(Component *comp, Params &params);
     bool issueRequest( ReqId, Addr, bool, unsigned );
     bool clock(Cycle_t cycle);

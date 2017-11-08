@@ -24,6 +24,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
+#include <sst/core/elementinfo.h>
 
 #include "memEvent.h"
 #include "memNIC.h"
@@ -54,7 +55,23 @@ private:
 
 
 class DMAEngine : public Component {
+public:
+/* Element Library Info */
+    SST_ELI_REGISTER_COMPONENT(DMAEngine, "memHierarchy", "DMAEngine", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "DMA Engine", COMPONENT_CATEGORY_MEMORY)
 
+    SST_ELI_DOCUMENT_PARAMS(
+            {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+            {"debug_level",     "Debugging level: 0 to 10", "0"},
+            {"clockRate",       "Clock Rate for processing DMAs.", "1GHz"},
+            {"netAddr",         "Network address of component.", NULL},
+            {"network_num_vc",  "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
+            {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"} )
+
+    SST_ELI_DOCUMENT_PORTS( {"netLink", "Network Link", {"memHierarchy.MemRtrEvent"} } )
+
+/* Begin class definition */
+private:
     struct Request {
         DMACommand *command;
         std::set<SST::Event::id_type> loadKeys;
