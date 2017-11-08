@@ -64,7 +64,11 @@ public:
     SST_ELI_DOCUMENT_PORTS(
             {"direct_link", "Direct connection to a cache/directory controller", {"memHierarchy.MemEventBase"} },
             {"network",     "Network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },
-            {"external_backend",    "Memory backend link to an external (non-memHierarchy) component", { NULL} } ) /* Supported event depends on MemBackend and memory component, not dictated by memHierarchy */
+            {"cube_link",   "DEPRECATED. Use named subcomponents and their links instead.", {"sst.Event"} } )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
+            {"backendConvertor", "Convertor to translate incoming memory events for the backend", "SST::MemHierarchy::MemBackendConvertor"},
+            {"customCmdHandler", "Optional handler for custom command types", "SST::MemHierarchy::CustomCmdMemHandler"} )
 
 /* Begin class definition */
     typedef uint64_t ReqId;

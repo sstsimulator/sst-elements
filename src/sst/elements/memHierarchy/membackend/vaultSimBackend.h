@@ -40,6 +40,8 @@ public:
             /* Own parameters */
             {"access_time", "Link latency for the link to the VaultSim memory model. With units (SI ok).", "100ns"} )
 
+    SST_ELI_DOCUMENT_PORTS( {"cube_link", "Link to VaultSim.", {"VaultSimC.MemRespEvent", "VaultSimC.MemReqEvent"} } )
+
 /* Begin class definition */
     VaultSimMemory(Component *comp, Params &params);
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes );

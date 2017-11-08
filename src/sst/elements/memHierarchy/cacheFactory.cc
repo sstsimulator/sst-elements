@@ -107,11 +107,9 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     createPrefetcher(params, mshrSize);
 
     
-    bool noncacheableRequests   = params.find<bool>("force_noncacheable_reqs", false);
+    allNoncacheableRequests_    = params.find<bool>("force_noncacheable_reqs", false);
     maxRequestsPerCycle_        = params.find<int>("max_requests_per_cycle",-1);
     string packetSize           = params.find<std::string>("min_packet_size", "8B");
-    bool snoopL1Invs            = false;
-    if (L1_) snoopL1Invs    = params.find<bool>("snoop_l1_invalidations", false);
 
     UnitAlgebra packetSize_ua(packetSize);
     if (!packetSize_ua.hasUnits("B")) {
@@ -422,9 +420,9 @@ CacheArray* Cache::createCacheArray(Params &params) {
     std::string sizeStr = params.find<std::string>("cache_size", "", found);
     if (!found) d_->fatal(CALL_INFO, -1, "%s, Param not specified: cache_size\n", getName().c_str());
     
-    uint64_t lineSize = params.find<uint64_t>("cache_line_size", 64);
+    unsigned int lineSize = params.find<uint64_t>("cache_line_size", 64);
     
-    uint64_t assoc = params.find<uint64_t>("associativity", -1, found);
+    uint64_t assoc = params.find<uint64_t>("associativity", -1, found); // uint64_t to match cache size in case we have a fully associative cache
     if (!found) d_->fatal(CALL_INFO, -1, "%s, Param not specified: associativity\n", getName().c_str());
 
     std::string replacement = params.find<std::string>("replacement_policy", "lru");
@@ -448,7 +446,7 @@ CacheArray* Cache::createCacheArray(Params &params) {
     uint64_t cacheSize = ua.getRoundedValue();
     
     if (lineSize > cacheSize) 
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_size must be larger than cache_line_size. You specified: cache_size = '%s', cache_line_size = '%u'\n", getName().c_str(), sizeStr.c_str(), lineSize);
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%u'\n", getName().c_str(), sizeStr.c_str(), lineSize);
     if (!isPowerOfTwo(lineSize)) d_->fatal(CALL_INFO, -1, "%s, cache_line_size - must be a power of 2. You specified '%u'.\n", getName().c_str(), lineSize);
 
     uint64_t lines = cacheSize / lineSize;
@@ -473,7 +471,7 @@ CacheArray* Cache::createCacheArray(Params &params) {
     else if (hashFunc == 2) ht = new XorHashFunction;
     else                    ht = new PureIdHashFunction;
 
-    if (type_ == "inclusive" || type_ == "noninclusive_") {
+    if (type_ == "inclusive" || type_ == "noninclusive") {
         return new SetAssociativeArray(d_, lines, lineSize, assoc, rmgr, ht, !L1_);
     } else if (type_ == "noninclusive_with_directory") {
         /* Construct */

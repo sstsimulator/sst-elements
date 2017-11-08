@@ -28,7 +28,7 @@ namespace SST { namespace MemHierarchy {
 
 class MESIInternalDirectory : public CoherenceController {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(MESIInternalDirectory, "memHierarchy", "MESIInternalDirectory", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_SUBCOMPONENT(MESIInternalDirectory, "memHierarchy", "MESICacheDirectoryCoherenceController", SST_ELI_ELEMENT_VERSION(1,0,0), 
             "Implements MESI or MSI coherence for cache that is co-located with a directory, for noninclusive last-level caches", "SST::MemHierarchy::CoherenceController")
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -137,6 +137,7 @@ public:
         {"stateEvent_FetchInv_EInvX",   "Event/State: Number of times a FetchInv was seen in state E_InvX", "count", 3},
         {"stateEvent_FetchInv_MInv",    "Event/State: Number of times a FetchInv was seen in state M_Inv", "count", 3},
         {"stateEvent_FetchInv_MInvX",   "Event/State: Number of times a FetchInv was seen in state M_InvX", "count", 3},
+        {"stateEvent_FetchInv_SD",      "Event/State: Number of times a FetchInv was seen in state S_D", "count", 3},
         {"stateEvent_FetchInv_ED",      "Event/State: Number of times a FetchInv was seen in state E_D", "count", 3},
         {"stateEvent_FetchInv_MD",      "Event/State: Number of times a FetchInv was seen in state M_D", "count", 3},
         {"stateEvent_FetchInv_IB",      "Event/State: Number of times a FetchInv was seen in state I_B", "count", 3},

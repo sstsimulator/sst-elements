@@ -26,8 +26,8 @@ namespace MemHierarchy {
 class RequestReorderSimple : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(RequestReorderSimple, "memHierarchy", "reorderByRow", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Request re-orderer, groups requests by row", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT(RequestReorderSimple, "memHierarchy", "reorderSimple", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Simple request re-orderer, issues the first N requests that are accepted by the backend", "SST::MemHierarchy::MemBackend")
     
     SST_ELI_DOCUMENT_PARAMS(
             /* Inherited from MemBackend */
@@ -39,13 +39,10 @@ public:
             {"request_width", "(int) Maximum size, in bytes, for a request", "64"},
             {"mem_size", "(string) Size of memory with units (SI ok). E.g., '2GiB'.", NULL},
             /* Own parameters */
-            {"verbose",                     "Sets the verbosity of the backend output", "0"},
-            {"max_issue_per_cycle",         "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
-            {"banks",                       "Number of banks", "8"},
-            {"bank_interleave_granularity", "Granularity of interleaving in bytes (B), generally a cache line. Must be a power of 2.", "64B"},
-            {"row_size",                    "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
-            {"reorder_limit",               "Maximum number of request to reorder to a rwo before changing rows.", "1"},
-            {"backend",                     "Backend memory system.", "memHierarchy.simpleDRAM"} )
+            {"verbose", "Sets the verbosity of the backend output", "0"},
+            {"max_issue_per_cycle", "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+            {"search_window_size",  "Maximum number of requests to search each cycle. 0 or negative is unlimited.", "-1"},
+            {"backend",             "Backend memory system", "memHierarchy.simpleDRAM"} )
 
 /* Begin class definition */
     RequestReorderSimple();

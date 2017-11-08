@@ -41,6 +41,8 @@ public:
             {"verbose", "Sets the verbosity of the backend output", "0"},
             {"access_time", "Link latency for the link to the Messier memory model. With units (SI ok).", "1ns"} )
 
+    SST_ELI_DOCUMENT_PORTS( {"cube_link", "Link to Messier", {"Messier.MemReqEvent", "Messier.MemRespEvent"} } )
+
 /* Begin class definition */
     Messier(Component *comp, Params &params);
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
