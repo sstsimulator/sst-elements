@@ -27,20 +27,20 @@
 #include "Sieve/sieveController.h"
 #include "Sieve/broadcastShim.h"
 #include "bus.h"
-#include "trivialCPU.h"
-#include "scratchCPU.h"
-#include "streamCPU.h"
+#include "testcpu/trivialCPU.h"
+#include "testcpu/scratchCPU.h"
+#include "testcpu/streamCPU.h"
 #include "memoryController.h"
 #include "directoryController.h"
 #include "dmaEngine.h"
 #include "memHierarchyInterface.h"
 #include "memHierarchyScratchInterface.h"
-#include "coherenceController.h"
-#include "MESICoherenceController.h"
-#include "MESIInternalDirectory.h"
-#include "IncoherentController.h"
-#include "L1CoherenceController.h"
-#include "L1IncoherentController.h"
+#include "coherencemgr/coherenceController.h"
+#include "coherencemgr/MESICoherenceController.h"
+#include "coherencemgr/MESIInternalDirectory.h"
+#include "coherencemgr/IncoherentController.h"
+#include "coherencemgr/L1CoherenceController.h"
+#include "coherencemgr/L1IncoherentController.h"
 #include "membackend/memBackend.h"
 #include "membackend/simpleMemBackend.h"
 #include "membackend/simpleDRAMBackend.h"
@@ -50,6 +50,7 @@
 #include "membackend/requestReorderByRow.h"
 #include "membackend/delayBuffer.h"
 #include "membackend/simpleMemBackendConvertor.h"
+#include "membackend/flagMemBackendConvertor.h"
 #include "membackend/timingDRAMBackend.h"
 #include "membackend/timingTransaction.h"
 #include "membackend/timingPagePolicy.h"
@@ -60,10 +61,12 @@
 #include "memNetBridge.h"
 #include "multithreadL1Shim.h"
 #include "scratchpad.h"
+#include "coherentMemoryController.h"
+#include "customcmd/amoCustomCmdHandler.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
-#include "membackend/goblinHMCBackend.h"
 #include "membackend/extMemBackendConvertor.h"
+#include "membackend/goblinHMCBackend.h"
 #endif
 
 #ifdef HAVE_LIBRAMULATOR
@@ -476,6 +479,27 @@ static const ElementInfoStatistic coherence_statistics[] = {
 };
 
 #ifdef HAVE_GOBLIN_HMCSIM
+static SubComponent* create_Mem_ExtBackendConvertor(Component* comp, Params& params){
+    return new ExtMemBackendConvertor(comp, params);
+}
+
+static const ElementInfoStatistic extMemBackendConvertor_statistics[] = {
+    /* Cache hits and misses */
+    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles",   1 },
+    { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
+    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles",   1 },
+    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1 },
+    { "requests_received_GetSX",           "Number of GetSX (read) requests received",        "requests", 1 },
+    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },
+    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },
+    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },
+    { "latency_GetS",                       "Total latency of handled GetS requests",           "cycles",   1 },
+    { "latency_GetSX",                     "Total latency of handled GetSX requests",         "cycles",   1 },
+    { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },
+    { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 },
+    { NULL, NULL, NULL, 0 }
+};
+
 static const ElementInfoStatistic goblinhmcsim_statistics[] = {
     {"WR16",            "Operation count for HMC WR16",       "count", 1},
     {"WR32",            "Operation count for HMC WR32",       "count", 1},
@@ -882,6 +906,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"addr_range_end",      "(uint) Highest address handled by this memory.", "uint64_t-1"},
     {"interleave_size",     "(string) Size of interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},
     {"interleave_step",     "(string) Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},
+    {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""},
     /* Old parameters - deprecated or moved */
     {"mem_size",            "DEPRECATED. Use 'backend.mem_size' instead. Size of physical memory in MiB", "0"},
     {"statistics",          "DEPRECATED - use Statistics API to get statistics for memory controller","0"},
@@ -909,6 +934,47 @@ static const ElementInfoPort memctrl_ports[] = {
     {NULL, NULL, NULL}
 };
 
+/*****************************************************************************************
+ *  Component: CoherentMemController
+ *  Purpose: Main memory controller, analagous to a single channel, supports custom memory
+ *  instructions which can issue cache line shootdowns
+ *****************************************************************************************/
+static Component* create_CoherentMemController(ComponentId_t id, Params& params){
+	return new CoherentMemController( id, params );
+}
+
+static const ElementInfoParam cohmemctrl_params[] = {
+    /* Required parameters */
+    {"backend.mem_size",    "(string) Size of physical memory. NEW REQUIREMENT: must include units in 'B' (SI ok). Simple fix: add 'MiB' to old value."},
+    {"clock",               "(string) Clock frequency of controller"},
+    /* Optional parameters */
+    {"backend",             "(string) Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
+    {"request_width",       "(uint) Size of a DRAM request in bytes.", "64"},
+    {"max_requests_per_cycle",  "(int) Maximum number of requests to accept per cycle. 0 or negative is unlimited. Default is 1 for simpleMem backend, unlimited otherwise.", "1"},
+    {"trace_file",          "(string) File name (optional) of a trace-file to generate.", ""},
+    {"debug",               "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_level",         "(uint) Debugging level: 0 to 10", "0"},
+    {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
+    {"listenercount",       "(uint) Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
+    {"listener%(listenercount)d", "(string) Loads a listener module into the controller", ""},
+    {"do_not_back",         "(bool) DO NOT use this parameter if simulation depends on correct memory values. Otherwise, set to '1' to reduce simulation's memory footprint", "0"},
+    {"memory_file",         "(string) Optional backing-store file to pre-load memory, or store resulting state", "N/A"},
+    {"addr_range_start",    "(uint) Lowest address handled by this memory.", "0"},
+    {"addr_range_end",      "(uint) Highest address handled by this memory.", "uint64_t-1"},
+    {"interleave_size",     "(string) Size of interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},
+    {"interleave_step",     "(string) Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},
+    {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""},
+    {NULL, NULL, NULL}
+};
+
+/*****************************************************************************************
+ *  SubComponent: AMOCustomCmdMemHandler
+ *  Purpose: (A)tomic (M)emory (O)peration CustomCmdMemHandler for issuing custom
+ *  AMO commands to memBackends
+ *****************************************************************************************/
+static SubComponent* create_Mem_AMOCustomCmdMemHandler(Component* comp, Params& params){
+	return new AMOCustomCmdMemHandler(comp, params);
+}
 
 /*****************************************************************************************
  *  SubComponent: simpleMemBackendConvertor
@@ -959,6 +1025,15 @@ static const ElementInfoStatistic scratchBackendConvertor_statistics[] = {
     { "latency_PutM",                           "Total latency of handled PutM requests",           "cycles",   1 },
     { NULL, NULL, NULL, 0 }
 };
+
+/*****************************************************************************************
+ *  SubComponent: simpleMemBackendConvertor
+ *  Purpose: Converts memEvents from a memory controller into cmd/addr/size for backends
+ *  which use the 'simpleMem' backend interface
+ *****************************************************************************************/
+static SubComponent* create_Mem_FlagBackendConvertor(Component* comp, Params& params){
+    return new FlagMemBackendConvertor(comp, params);
+}
 
 /*****************************************************************************************
  *  SubComponent: simpleMem
@@ -1307,27 +1382,6 @@ static const ElementInfoParam Messier_params[] = {
  *  Purpose: Memory backend, interface to HMCSim (HMC memory)
  *****************************************************************************************/
 #ifdef HAVE_GOBLIN_HMCSIM
-static SubComponent* create_Mem_ExtBackendConvertor(Component* comp, Params& params){
-    return new ExtMemBackendConvertor(comp, params);
-}
-
-static const ElementInfoStatistic extMemBackendConvertor_statistics[] = {
-    /* Cache hits and misses */
-    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles",   1 },
-    { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
-    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles",   1 },
-    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1 },
-    { "requests_received_GetSX",           "Number of GetSX (read) requests received",        "requests", 1 },
-    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },
-    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },
-    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },
-    { "latency_GetS",                       "Total latency of handled GetS requests",           "cycles",   1 },
-    { "latency_GetSX",                     "Total latency of handled GetSX requests",         "cycles",   1 },
-    { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },
-    { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 },
-    { NULL, NULL, NULL, 0 }
-};
-
 static SubComponent* create_Mem_GOBLINHMCSim(Component* comp, Params& params){
     return new GOBLINHMCSimBackend(comp, params);
 }
@@ -1340,7 +1394,7 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 	{ "queue_depth",	"Sets the depth of the HMC request queue, min=2, max=65536, default=2", "2" },
   	{ "dram_count",         "Sets the number of DRAM blocks per cube", "20" },
 	{ "xbar_depth",         "Sets the queue depth for the HMC X-bar", "8" },
-        { "max_req_size",       "Sets the maximum requests which can be inflight from the controller side at any time", "32" },
+        { "max_req_size",       "Sets the maximum request size, in bytes", "64" },
 #ifdef HMC_DEV_DRAM_LATENCY
         { "dram_latency",       "Sets the internal DRAM fetch latency in clock cycles", "2" },
 #endif
@@ -1526,6 +1580,7 @@ static const ElementInfoStatistic dirctrl_statistics[] = {
     {"requests_received_PutE",          "Number of PutE (clean exclusive replacement) requests received",       "requests",     1},
     {"requests_received_PutM",          "Number of PutM (dirty exclusive replacement) requests received",       "requests",     1},
     {"requests_received_noncacheable",  "Number of noncacheable requests that were received and forwarded",     "requests",     1},
+    {"requests_received_custom",        "Number of custom requests that were received and forwarded",           "requests",     1},
     {"responses_received_NACK",         "Number of NACK responses received",                                    "responses",    1},
     {"responses_received_FetchResp",    "Number of FetchResp responses received (response to FetchInv/Fetch)",  "responses",    1},
     {"responses_received_FetchXResp",   "Number of FetchXResp responses received (response to FetchXInv) ",     "responses",    1},
@@ -1623,21 +1678,30 @@ static const ElementInfoSubComponent subcomponents[] = {
     },
     {
         "simpleMemBackendConvertor",
-        "convert MemEvent to base mem backend",
+        "Convert MemEventBase to base mem backend",
         NULL, /* Advanced help */
         create_Mem_SimpleBackendConvertor, /* Module Alloc w/ params */
         NULL,
         memBackendConvertor_statistics, /* statistics */
-        "SST::MemHierarchy::MemBackend"
+        "SST::MemHierarchy::MemBackendConvertor"
     },
     {
         "simpleMemScratchBackendConvertor",
-        "convert ScratchEvent to base mem backend",
+        "Convert MemEventBase to base mem backend, uses different interface than simpleMemBackendConvertor",
         NULL, /* Advanced help */
         create_Mem_SimpleScratchBackendConvertor, /* Module Alloc w/ params */
         NULL,
         scratchBackendConvertor_statistics,
-        "SST::MemHierarchy::MemBackend"
+        "SST::MemHierarchy::MemBackendConvertor"
+    },
+    {
+        "flagMemBackendConvertor",
+        "Convert MemEventBase to mem backend, pass flags with request/response",
+        NULL,
+        create_Mem_FlagBackendConvertor,
+        NULL,
+        memBackendConvertor_statistics,
+        "SST::MemHierarchy::MemBackendConvertor"
     },
     {
         "simpleMem",
@@ -1729,6 +1793,15 @@ static const ElementInfoSubComponent subcomponents[] = {
         NULL,
         "SST::MemHierarchy::MemBackend"
     },
+    {
+        "amoCustomCmdHandler",
+        "AMO custom command handler",
+        NULL,
+        create_Mem_AMOCustomCmdMemHandler,
+        NULL,//amoCustomCmd_params,
+        NULL,//amoCustomCmd_statistics,
+        "SST::MemHierarchy::AMOCustomCmdMemHandler"
+    },
 #if defined(HAVE_LIBRAMULATOR)
     {
         "ramulator",
@@ -1794,12 +1867,12 @@ static const ElementInfoSubComponent subcomponents[] = {
 #ifdef HAVE_GOBLIN_HMCSIM
     {
         "extMemBackendConvertor",
-        "convert MemEvent to Ext mem backend",
-        NULL, /* Advanced help */
-        create_Mem_ExtBackendConvertor, /* Module Alloc w/ params */
+        "Convert MemEventBase to Ext mem backend",
         NULL,
-        extMemBackendConvertor_statistics, /* statistics */
-        "SST::MemHierarchy::MemBackend"
+        create_Mem_ExtBackendConvertor,
+        NULL,
+        memBackendConvertor_statistics,
+        "SST::MemHierarchy::MemBackendConvertor"
     },
     {
         "goblinHMCSim",
@@ -2012,6 +2085,15 @@ static const ElementInfoComponent components[] = {
             COMPONENT_CATEGORY_MEMORY,
 	    memctrl_statistics
 	},
+        {   "CoherentMemController",
+            "Coherent memory controller component",
+            NULL,
+            create_CoherentMemController,
+            cohmemctrl_params,
+            memctrl_ports,
+            COMPONENT_CATEGORY_MEMORY,
+            memctrl_statistics
+        },
 	{   "DirectoryController",
 	    "Coherencey Directory Controller Component",
 	    NULL,

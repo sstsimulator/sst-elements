@@ -69,18 +69,20 @@ private:
 
 class HMCSimCmdMap{
 public:
-  HMCSimCmdMap( CMCSrcReq SRC, int SZ, hmc_rqst_t DEST ) :
-    src(SRC), size(SZ), rqst(DEST) {}
+  HMCSimCmdMap( CMCSrcReq SRC, uint32_t OPC, int SZ, hmc_rqst_t DEST ) :
+    src(SRC), opc(OPC), size(SZ), rqst(DEST) {}
   ~HMCSimCmdMap() {}
 
   CMCSrcReq getSrcType() { return src; }
   int getSrcSize() { return size; }
+  uint32_t getOpcode() { return opc; }
   hmc_rqst_t getTargetType() { return rqst; }
 
 private:
   CMCSrcReq src;    // source request type
   int size;         // size of the request
   hmc_rqst_t rqst;  // target request type
+  uint32_t opc;     // custom opcode
 };
 
 class HMCSimBackEndReq {
@@ -117,6 +119,9 @@ public:
 	bool issueRequest(ReqId, Addr, bool,
                           std::vector<uint64_t>,
                           uint32_t, unsigned);
+	bool issueCustomRequest(ReqId, Addr, uint32_t,
+                                std::vector<uint64_t>,
+                                uint32_t, unsigned);
 	void setup();
 	void finish();
 	virtual bool clock(Cycle_t cycle);
@@ -293,6 +298,7 @@ private:
         bool strToHMCRqst( std::string, hmc_rqst_t *, bool );
         bool HMCRqstToStr( hmc_rqst_t R, std::string *S );
         bool isPostedRqst( hmc_rqst_t );
+        bool isReadRqst( hmc_rqst_t );
 
 	bool issueMappedRequest(ReqId, Addr, bool,
                                 std::vector<uint64_t>,

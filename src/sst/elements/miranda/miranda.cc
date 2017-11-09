@@ -32,6 +32,7 @@
 #include "generators/nullgen.h"
 #include "generators/copygen.h"
 #include "generators/spmvgen.h"
+#include "generators/streambench_customcmd.h"
 
 using namespace SST;
 using namespace SST::Miranda;
@@ -74,6 +75,10 @@ static SubComponent* load_Stencil3DGenerator(Component* owner, Params& params) {
 
 static SubComponent* load_SPMVGenerator(Component* owner, Params& params) {
 	return new SPMVGenerator(owner, params);
+}
+
+static SubComponent* load_STREAMGenerator_CustomCmd(Component* owner, Params& params) {
+        return new STREAMBenchGenerator_CustomCmd(owner, params);
 }
 
 static Component* load_MirandaBaseCPU(ComponentId_t id, Params& params) {
@@ -183,6 +188,20 @@ static const ElementInfoParam spmvBench_params[] = {
     { NULL, NULL, NULL }
 };
 
+static const ElementInfoParam streamBench_customcmd_params[] = {
+    { "verbose",          "Sets the verbosity output of the generator", "0" },
+    { "n",                "Sets the number of elements in the STREAM arrays", "10000" },
+    { "n_per_call",       "Sets the number of iterations to generate per call to the generation function", "1"},
+    { "operandwidth",     "Sets the length of the request, default=8 (i.e. one double)", "8" },
+    { "start_a",          "Sets the start address of the array a", "0" },
+    { "start_b",          "Sets the start address of the array b", "1024" },
+    { "start_c",          "Sets the start address of the array c", "2048" },
+    { "write_cmd",        "Sets the custom opcode for writes", "0xFFFF" },
+    { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" },
+    { NULL, NULL, NULL }
+};
+
+
 static const ElementInfoSubComponent subcomponents[] = {
 	{
 		"SingleStreamGenerator",
@@ -226,6 +245,15 @@ static const ElementInfoSubComponent subcomponents[] = {
 		NULL,
 		load_STREAMGenerator,
 		streamBench_params,
+		NULL,
+		"SST::Miranda::RequestGenerator"
+	},
+	{
+		"STREAMBenchGeneratorCustomCmd",
+		"Creates a representation of the STREAM benchmark using custom memory commands",
+		NULL,
+		load_STREAMGenerator_CustomCmd,
+		streamBench_customcmd_params,
 		NULL,
 		"SST::Miranda::RequestGenerator"
 	},
@@ -280,10 +308,13 @@ static const ElementInfoSubComponent subcomponents[] = {
 static const ElementInfoStatistic basecpu_stats[] = {
 	{ "split_read_reqs",	"Number of read requests split over a cache line boundary",	"requests", 2 },
 	{ "split_write_reqs",	"Number of write requests split over a cache line boundary", 	"requests", 2 },
+        { "split_custom_reqs",  "NUmber of custom requests split over a cache line boundary",   "requests", 2 },
 	{ "read_reqs", 		"Number of read requests issued", 				"requests", 1 },
 	{ "write_reqs", 	"Number of write requests issued", 				"requests", 1 },
+        { "custom_reqs",        "Number of custom requests issued",                             "requests", 1 },
 	{ "total_bytes_read",   "Count the total bytes requested by read operations",		"bytes",    1 },
 	{ "total_bytes_write",  "Count the total bytes requested by write operations",      	"bytes",    1 },
+        { "total_bytes_custom", "Count the total bytes requested by custom operations",         "bytes",    1 },
 	{ "req_latency",        "Running total of all latency for all requests",                "ns",       2 },
     { "cycles_with_issue",  "Number of cycles which CPU was able to issue requests",        "cycles",   1 },
     { "cycles_no_issue",    "Number of cycles which CPU was not able to issue requests",    "cycles",   1 },

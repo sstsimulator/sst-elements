@@ -43,7 +43,7 @@ using namespace SST::MemHierarchy;
 #else
 #define is_debug_addr(addr) false
 #define is_debug_event(ev) false
-#define Debug(addrfilter, level, fmt, ... )
+#define Debug(level, fmt, ... )
 #endif
 
 /*************************** Memory Controller ********************/
@@ -180,6 +180,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     clockOn_ = true;
 
     registerTimeBase("1 ns", true);
+
+    /* Custom command handler */
+    std::string customHandlerName = params.find<std::string>("customCmdHandler", "");
+    if (customHandlerName != "") {
+        customCommandHandler_ = dynamic_cast<CustomCmdMemHandler*>(loadSubComponent(customHandlerName, this, params));
+    } else {
+        customCommandHandler_ = nullptr;
+    }
 }
 
 void MemController::handleEvent(SST::Event* event) {
@@ -188,18 +196,26 @@ void MemController::handleEvent(SST::Event* event) {
         memBackendConvertor_->turnClockOn(cycle);
     }
     
-    MemEvent *ev = static_cast<MemEvent*>(event);
+    MemEventBase *meb = static_cast<MemEventBase*>(event);
     
-    if (is_debug_event(ev)) {
-        Debug(_L3_, "\n%" PRIu64 " (%s) Recieved: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
+    if (is_debug_event(meb)) {
+        Debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n", getCurrentSimTimeNano(), getName().c_str(), meb->getVerboseString().c_str());
     }
+    
+    Command cmd = meb->getCmd();
+
+    if (cmd == Command::CustomReq) {
+        handleCustomEvent(meb);
+        return;
+    }
+
+    MemEvent * ev = static_cast<MemEvent*>(meb);
 
     if (ev->isAddrGlobal()) {
         ev->setBaseAddr(translateToLocal(ev->getBaseAddr()));
         ev->setAddr(translateToLocal(ev->getAddr()));
     }
 
-    Command cmd = ev->getCmd();
 
     // Notify our listeners that we have received an event
     switch (cmd) {
@@ -242,7 +258,6 @@ void MemController::handleEvent(SST::Event* event) {
 }
 
 bool MemController::clock(Cycle_t cycle) {
-
     bool unclockLink = true;
     if (clockLink_) {
         unclockLink = link_->clock();
@@ -266,18 +281,47 @@ Cycle_t MemController::turnClockOn() {
     return cycle;
 }
 
+void MemController::handleCustomEvent(MemEventBase * ev) {
+    if (!customCommandHandler_) 
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Received custom event but no handler loaded. Ev = %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
+
+    CustomCmdMemHandler::MemEventInfo evInfo = customCommandHandler_->receive(ev);
+    if (evInfo.shootdown) {
+        Debug(_WARNING_, "%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString().c_str());
+    }
+    
+    CustomCmdInfo * info = customCommandHandler_->ready(ev);
+    outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
+    memBackendConvertor_->handleCustomEvent(info);
+}
+
+
 void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
 
-    std::map<SST::Event::id_type,MemEvent*>::iterator it = outstandingEvents_.find(id);
+    std::map<SST::Event::id_type,MemEventBase*>::iterator it = outstandingEvents_.find(id);
     if (it == outstandingEvents_.end())
         dbg.fatal(CALL_INFO, -1, "Memory controller (%s) received unrecognized response ID: %" PRIu64 ", %" PRIu32 "", getName().c_str(), id.first, id.second);
 
-    MemEvent * ev = it->second;
+    MemEventBase * evb = it->second;
     outstandingEvents_.erase(it);
 
-    if (is_debug_event(ev)) {
-        Debug(_L3_, "Memory Controller: %s - Response received to (%s)\n", getName().c_str(), ev->getVerboseString().c_str());
+    if (is_debug_event(evb)) {
+        Debug(_L3_, "Memory Controller: %s - Response received to (%s)\n", getName().c_str(), evb->getVerboseString().c_str());
     }
+
+    /* Handle custom events */
+    if (evb->getCmd() == Command::CustomReq) {
+        MemEventBase * resp = customCommandHandler_->finish(evb, flags);
+        if (resp != nullptr)
+            link_->send(resp);
+        delete evb;
+        return;        
+    }
+
+    /* Handle MemEvents */
+    MemEvent * ev = static_cast<MemEvent*>(evb);
+
     bool noncacheable  = ev->queryFlag(MemEvent::F_NONCACHEABLE);
     
     /* Write data. Here instead of receive to try to match backing access order to backend execute order */
@@ -311,17 +355,16 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
 void MemController::init(unsigned int phase) {
     link_->init(phase);
     
-    /* Inherit region from our source(s) */
     region_ = link_->getRegion(); // This can change during init, but should stabilize before we start receiving init data
+    
+    /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
         link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth()));
     }
 
     while (MemEventInit *ev = link_->recvInitData()) {
-        if (ev->getDst() == getName()) {
-            processInitEvent(ev);
-        } else delete ev;
+        processInitEvent(ev);
     }
 }
 
@@ -427,7 +470,7 @@ void MemController::processInitEvent( MemEventInit* me ) {
         if (is_debug_event(me)) { Debug(_L10_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }
     } else {
         Output out("", 0, 0, Output::STDERR);
-        out.debug(_L10_,"Memory received unexpected Init Command: %d\n", me->getCmd());
+        out.debug(_L10_,"Memory received unexpected Init Command: %d\n", (int)me->getCmd());
     }
 
     delete me;

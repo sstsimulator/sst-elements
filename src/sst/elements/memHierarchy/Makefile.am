@@ -20,6 +20,8 @@ libmemHierarchy_la_SOURCES = \
 	bus.cc \
 	memoryController.h \
 	memoryController.cc \
+	coherentMemoryController.h \
+	coherentMemoryController.cc \
 	membackend/timingDRAMBackend.cc \
 	membackend/timingDRAMBackend.h \
 	membackend/timingAddrMapper.h \
@@ -31,8 +33,8 @@ libmemHierarchy_la_SOURCES = \
 	membackend/memBackendConvertor.cc \
 	membackend/simpleMemBackendConvertor.h \
 	membackend/simpleMemBackendConvertor.cc \
-	membackend/hmcMemBackendConvertor.h \
-	membackend/hmcMemBackendConvertor.cc \
+	membackend/flagMemBackendConvertor.h \
+	membackend/flagMemBackendConvertor.cc \
 	membackend/extMemBackendConvertor.h \
 	membackend/extMemBackendConvertor.cc \
 	membackend/delayBuffer.h \
@@ -63,38 +65,43 @@ libmemHierarchy_la_SOURCES = \
 	memLink.cc \
 	memNIC.h \
 	memNIC.cc \
+	customcmd/customCmdEvent.h \
+	customcmd/customCmdMemory.h \
+	customcmd/customOpCodeCmd.h \
+	customcmd/amoCustomCmdHandler.cc \
+	customcmd/amoCustomCmdHandler.h \
 	directoryController.h \
 	directoryController.cc \
 	scratchpad.h \
 	scratchpad.cc \
-	coherenceController.h \
-	coherenceController.cc \
+	coherencemgr/coherenceController.h \
+	coherencemgr/coherenceController.cc \
 	memHierarchyInterface.cc \
 	memHierarchyInterface.h \
 	memHierarchyScratchInterface.cc \
 	memHierarchyScratchInterface.h \
-	MESIInternalDirectory.h \
-	MESIInternalDirectory.cc \
-	MESICoherenceController.h \
-	MESICoherenceController.cc \
-	IncoherentController.h \
-	IncoherentController.cc \
-	L1IncoherentController.h \
-	L1IncoherentController.cc \
-	L1CoherenceController.h \
-	L1CoherenceController.cc \
+	coherencemgr/MESIInternalDirectory.h \
+	coherencemgr/MESIInternalDirectory.cc \
+	coherencemgr/MESICoherenceController.h \
+	coherencemgr/MESICoherenceController.cc \
+	coherencemgr/IncoherentController.h \
+	coherencemgr/IncoherentController.cc \
+	coherencemgr/L1IncoherentController.h \
+	coherencemgr/L1IncoherentController.cc \
+	coherencemgr/L1CoherenceController.h \
+	coherencemgr/L1CoherenceController.cc \
 	multithreadL1Shim.h \
 	multithreadL1Shim.cc \
 	cacheArray.cc \
 	cacheArray.h \
 	mshr.h \
 	mshr.cc \
-	trivialCPU.h \
-	trivialCPU.cc \
-	streamCPU.h \
-	streamCPU.cc \
-	scratchCPU.h \
-	scratchCPU.cc \
+	testcpu/trivialCPU.h \
+	testcpu/trivialCPU.cc \
+	testcpu/streamCPU.h \
+	testcpu/streamCPU.cc \
+	testcpu/scratchCPU.h \
+	testcpu/scratchCPU.cc \
 	util.h \
 	memTypes.h \
 	dmaEngine.h \
@@ -161,6 +168,10 @@ nobase_sst_HEADERS = \
 	memEventBase.h \
 	memEvent.h \
 	memNIC.h \
+	customcmd/customCmdEvent.h \
+	customcmd/customCmdMemory.h \
+	customcmd/customOpCodeCmd.h \
+	customcmd/amoCustomCmdHandler.h \
 	membackend/memBackend.h \
 	membackend/vaultSimBackend.h \
 	membackend/MessierBackend.h \
@@ -170,6 +181,7 @@ nobase_sst_HEADERS = \
 	membackend/requestReorderByRow.h \
 	membackend/delayBuffer.h \
 	memoryController.h \
+	coherentMemoryController.h \
 	cacheListener.h \
 	bus.h \
 	util.h \

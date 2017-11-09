@@ -1,11 +1,14 @@
  cpu.read_reqs : Accumulator : Sum.u64 = 250060; SumSQ.u64 = 250060; Count.u64 = 250060; 
  cpu.write_reqs : Accumulator : Sum.u64 = 249940; SumSQ.u64 = 249940; Count.u64 = 249940; 
+ cpu.custom_reqs : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  cpu.split_read_reqs : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  cpu.split_write_reqs : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.split_custom_reqs : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  cpu.cycles_with_issue : Accumulator : Sum.u64 = 500000; SumSQ.u64 = 500000; Count.u64 = 500000; 
  cpu.cycles_no_issue : Accumulator : Sum.u64 = 989235106; SumSQ.u64 = 989235106; Count.u64 = 989235106; 
  cpu.total_bytes_read : Accumulator : Sum.u64 = 2000480; SumSQ.u64 = 16003840; Count.u64 = 250060; 
  cpu.total_bytes_write : Accumulator : Sum.u64 = 1999520; SumSQ.u64 = 15996160; Count.u64 = 249940; 
+ cpu.total_bytes_custom : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  cpu.req_latency : Accumulator : Sum.u64 = 494367553; SumSQ.u64 = 496488802781; Count.u64 = 500000; 
  cpu.time : Accumulator : Sum.u64 = 494867553; SumSQ.u64 = 244893895012207809; Count.u64 = 1; 
  cpu.cycles_hit_fence : Accumulator : Sum.u64 = 989735106; SumSQ.u64 = 989735106; Count.u64 = 989735106; 

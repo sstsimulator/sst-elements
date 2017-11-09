@@ -4078,6 +4078,7 @@ TrivialCPU cpu7 Finished after 1500 issued reads, 1500 returned (114058 clocks)
  directory0.responses_sent_GetXResp : Accumulator : Sum.u64 = 5914; SumSQ.u64 = 5914; Count.u64 = 5914; 
  directory0.MSHR_occupancy : Accumulator : Sum.u64 = 441018; SumSQ.u64 = 3766314; Count.u64 = 66859; 
  directory0.requests_received_noncacheable : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ directory0.requests_received_custom : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory0.row_already_open : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory0.no_row_open : Accumulator : Sum.u64 = 5914; SumSQ.u64 = 5914; Count.u64 = 5914; 
  memory0.wrong_row_open : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -4125,6 +4126,7 @@ TrivialCPU cpu7 Finished after 1500 issued reads, 1500 returned (114058 clocks)
  directory1.responses_sent_GetXResp : Accumulator : Sum.u64 = 6084; SumSQ.u64 = 6084; Count.u64 = 6084; 
  directory1.MSHR_occupancy : Accumulator : Sum.u64 = 446360; SumSQ.u64 = 3819778; Count.u64 = 66604; 
  directory1.requests_received_noncacheable : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ directory1.requests_received_custom : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory1.row_already_open : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory1.no_row_open : Accumulator : Sum.u64 = 6084; SumSQ.u64 = 6084; Count.u64 = 6084; 
  memory1.wrong_row_open : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 

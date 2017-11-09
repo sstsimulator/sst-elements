@@ -81,7 +81,7 @@ public:
 
     /** @return  Unique ID of this MemEvent */
     id_type getID(void) const { return eventID_; }
-    
+
     /** @return  Unique ID of the MemEvent that this is a response to */
     id_type getResponseToID(void) const { return responseToID_; }
 

@@ -267,7 +267,7 @@ TimingDRAM::Bank::Bank( Component* comp, Params& params, unsigned mc, unsigned c
 
 TimingDRAM::Cmd* TimingDRAM::Bank::popCmd( SimTime_t cycle, SimTime_t dataBusAvailCycle )
 {
-    m_output->verbosePrefix(prefix(),CALL_INFO, 4, DBG_MASK, "numCmds=%lu\n", m_cmdQ.size() );
+    m_output->verbosePrefix(prefix(),CALL_INFO, 4, DBG_MASK, "numCmds=%zu\n", m_cmdQ.size() );
     update( cycle );
 
     Cmd* cmd = NULL;

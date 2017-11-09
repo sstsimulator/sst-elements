@@ -26,7 +26,7 @@
 
 #include "sst/elements/memHierarchy/membackend/memBackendConvertor.h"
 #include "sst/elements/memHierarchy/membackend/simpleMemBackendConvertor.h"
-#include "sst/elements/memHierarchy/membackend/hmcMemBackendConvertor.h"
+#include "sst/elements/memHierarchy/membackend/flagMemBackendConvertor.h"
 #include "sst/elements/memHierarchy/membackend/extMemBackendConvertor.h"
 
 #define NO_STRING_DEFINED "N/A"
@@ -74,22 +74,31 @@ public:
         delete output;
     }
 
-    virtual void setGetRequestorHandler( std::function<const std::string&(ReqId)> func ) {
+    virtual void setGetRequestorHandler( std::function<const std::string(ReqId)> func ) {
         m_getRequestor = func;
     } 
 
-    std::string getRequestor( ReqId id ) {
+    const std::string getRequestor( ReqId id ) {
         return m_getRequestor( id );
     }
 
     virtual void setup() {}
     virtual void finish() {}
+    
+    /* Called by parent's clock() function */
     virtual bool clock(Cycle_t cycle) { return true; } 
+    
+    /* Interface to parent */
     virtual size_t getMemSize() { return m_memSize; }
     virtual uint32_t getRequestWidth() { return m_reqWidth; }
     virtual int32_t getMaxReqPerCycle() { return m_maxReqPerCycle; } 
     virtual const std::string& getClockFreq() { return m_clockFreq; }
     virtual bool isClocked() { return true; }
+    virtual bool issueCustomRequest(ReqId, CustomCmdInfo*) {
+        output->fatal(CALL_INFO, -1, "Error (%s): This backend cannot handle custom requests\n", getName().c_str());
+        return false;
+    }
+
 protected:
     Output*         output;
     std::string     m_clockFreq;
@@ -97,9 +106,10 @@ protected:
     size_t          m_memSize;
     int32_t         m_reqWidth;
 
-    std::function<const std::string&(ReqId)> m_getRequestor;
+    std::function<const std::string(ReqId)> m_getRequestor;
 };
 
+/* MemBackend - timing only */
 class SimpleMemBackend : public MemBackend {
   public:
     SimpleMemBackend() : MemBackend() {} 
@@ -119,9 +129,10 @@ class SimpleMemBackend : public MemBackend {
     std::function<void(ReqId)> m_respFunc;
 };
 
-class MemFlagMemBackend : public MemBackend {
+/* MemBackend - timing and passes request/response flags */
+class FlagMemBackend : public MemBackend {
   public:
-    MemFlagMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+    FlagMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
 
     void handleMemResponse( ReqId id, uint32_t flags ) {
@@ -142,6 +153,9 @@ class ExtMemBackend : public MemBackend {
     virtual bool issueRequest( ReqId, Addr, bool isWrite,
                                std::vector<uint64_t> ins,
                                uint32_t flags, unsigned numBytes ) = 0;
+    virtual bool issueCustomRequest( ReqId, Addr, uint32_t Cmd,
+                                     std::vector<uint64_t> ins,
+                                     uint32_t flags, unsigned numBytes ) = 0;
 
     void handleMemResponse( ReqId id, uint32_t flags ) {
         m_respFunc( id, flags );

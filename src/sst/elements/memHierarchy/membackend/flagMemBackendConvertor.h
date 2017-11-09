@@ -14,20 +14,20 @@
 // distribution.
 
 
-#ifndef __SST_MEMH_HMCMEMBACKENDCONVERTOR__
-#define __SST_MEMH_HMCMEMBACKENDCONVERTOR__
+#ifndef __SST_MEMH_FLAGMEMBACKENDCONVERTOR__
+#define __SST_MEMH_FLAGMEMBACKENDCONVERTOR__
 
 #include "sst/elements/memHierarchy/membackend/memBackendConvertor.h"
 
 namespace SST {
 namespace MemHierarchy {
 
-class HMCMemBackendConvertor : public MemBackendConvertor {
+class FlagMemBackendConvertor : public MemBackendConvertor {
  
   public:
-    HMCMemBackendConvertor(Component *comp, Params &params);
+    FlagMemBackendConvertor(Component *comp, Params &params);
 
-    virtual bool issue( MemReq* req );
+    virtual bool issue( BaseReq* req );
     virtual void handleMemResponse( ReqId reqId, uint32_t flags  ) {
         doResponse( reqId, flags );
     }
