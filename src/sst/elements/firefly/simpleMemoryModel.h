@@ -85,7 +85,12 @@ class SimpleMemoryModel {
 		case MemOp::LocalStore: return "LocalStore";
 		case MemOp::HostLoad: return "HostLoad";
 		case MemOp::HostStore: return "HostStore";
+		case MemOp::NotInit: return "NotInit"; 
+		case MemOp::HostCopy: return "HostCopy"; 
+		case MemOp::BusDmaToHost: return "BusDmaToHost"; 
+		case MemOp::BusDmaFromHost: return "BusDmaFromHost";	
 		}
+		return "";
 	}
 }; 
 
