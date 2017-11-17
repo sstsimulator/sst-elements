@@ -36,8 +36,11 @@ using namespace SST::MemHierarchy;
 using namespace SST;
 using namespace SST::MessierComponent;
 
-
-
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 
 // This is the constructor of the NVM-based DIMM
 
@@ -1000,3 +1003,6 @@ void NVM_DIMM::handleRequest(SST::Event* e)
 		push_request(tmp); // Push the request
 }
 
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#pragma GCC diagnostic pop
+#endif
