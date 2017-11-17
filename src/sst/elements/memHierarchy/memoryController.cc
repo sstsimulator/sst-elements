@@ -98,7 +98,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
-    if (nullptr == (memBackendConvertor_ = dynamic_cast<MemBackendConvertor*>(loadNamedSubComponent("backendConvertor"))) {
+    if (nullptr == (memBackendConvertor_ = dynamic_cast<MemBackendConvertor*>(loadNamedSubComponent("backendConvertor")))) {
         /* Load the old-fashioned way */
         Params tmpParams = params.find_prefix_params("backendConvertor.");
         memBackendConvertor_  = dynamic_cast<MemBackendConvertor*>(loadSubComponent(name, this, tmpParams));
@@ -188,7 +188,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     registerTimeBase("1 ns", true);
 
     /* Custom command handler */
-    if (nullptr == (customCmdHandler_ = dynamic_cast<CustomCmdMemHandler*>(loadNamedSubComponent("customCmdHandler")))) {
+    if (nullptr == (customCommandHandler_ = dynamic_cast<CustomCmdMemHandler*>(loadNamedSubComponent("customCmdHandler")))) {
         std::string customHandlerName = params.find<std::string>("customCmdHandler", "");
         if (customHandlerName != "") {
             customCommandHandler_ = dynamic_cast<CustomCmdMemHandler*>(loadSubComponent(customHandlerName, this, params));

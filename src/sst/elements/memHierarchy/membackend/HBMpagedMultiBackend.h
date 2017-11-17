@@ -153,19 +153,8 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT(HBMpagedMultMemory, "memHierarchy", "HBMpagedMultiMemory", SST_ELI_ELEMENT_VERSION(1,0,0), 
             "HBM DRAMSim-driven memory timings with a fixed timing multi-level memory using paging", "SST::MemHierarchy::MemBackend")
 
-    SST_ELI_DOCUMENT_PARAMS(
-            /* Inherited from MemBackend */
-            {"debug_level", "(uint) Debugging level: 0 (no output) to 10 (all output). Output also requires that SST Core be compiled with '--enable-debug'", "0"},
-            {"debug_mask", "(uint) Mask on debug_level", "0"},
-            {"debug_location", "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE", "0"},
-            {"clock", "(string) Clock frequency - inherited from MemController", NULL},
-            {"max_requests_per_cycle", "(int) Maximum number of requests to accept each cycle. Use 0 or -1 for unlimited.", "-1"},
-            {"request_width", "(int) Maximum size, in bytes, for a request", "64"},
-            {"mem_size", "(string) Size of memory with units (SI ok). E.g., '2GiB'.", NULL},
+    SST_ELI_DOCUMENT_PARAMS( HBMDRAMSIMEMORY_ELI_PARAMS,
             /* Own parameters */
-            { "verbose", "Sets the verbosity of the backend output", "0" },
-            {"device_ini", "Name of DRAMSim Device config file", NULL},
-            {"system_ini", "Name of DRAMSim Device system file", NULL},
             {"collect_stats", "Name of DRAMSim Device system file", "0"},
             {"transfer_delay", "Time (in ns) to transfer page to fast mem", "250"},
             {"dramBackpressure", "Don't issue page swaps if DRAM is too busy", "1"},
@@ -180,7 +169,7 @@ public:
             {"quantum", "Time period for when page access counts is shifted", "5ms"},
             {"accStatsPrefix", "File name for acces pattern statistics", ""} )
     
-    SST_ELI_DOCUMENT_STATISTICS(
+    SST_ELI_DOCUMENT_STATISTICS( HBMDRAMSIMMEMORY_ELI_STATS,
             {"fast_hits", "Number of accesses that 'hit' a fast page", "count", 1},
             {"fast_swaps", "Number of pages swapped between 'fast' and 'slow' memory", "count", 1},
             {"fast_acc", "Number of total accesses to the memory backend", "count", 1},

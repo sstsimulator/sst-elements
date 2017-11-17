@@ -61,7 +61,7 @@ public:
 
     SST_ELI_DOCUMENT_PORTS(
             {"low_network_%(low_network_ports)d", "Ports connected to lower level caches (closer to main memory)", {"memHierarchy.MemEventBase"} },
-            {"high_network_%(low_network_ports)d", "Ports connected to higher level caches (closer to CPU)", {"memHierarchy.MemEventBase"} } )
+            {"high_network_%(high_network_ports)d", "Ports connected to higher level caches (closer to CPU)", {"memHierarchy.MemEventBase"} } )
 
 /* Class definition */
 

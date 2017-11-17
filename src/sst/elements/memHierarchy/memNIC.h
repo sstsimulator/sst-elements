@@ -47,24 +47,21 @@ class MemNIC : public MemLinkBase {
 
 public:
 /* Element Library Info */
+#define MEMNIC_ELI_PARAMS MEMLINKBASE_ELI_PARAMS, \
+        { "group",                       "(int) Group ID. See params 'sources' and 'destinations'. If not specified, the parent component will guess.", "1"},\
+        { "sources",                     "(comma-separated list of ints) List of group IDs that serve as sources for this component. If not specified, defaults to 'group - 1'.", "group-1"},\
+        { "destinations",                "(comma-separated list of ints) List of group IDs that serve as destinations for this component. If not specified, defaults to 'group + 1'.", "group+1"},\
+        { "network_bw",                  "(string) Network bandwidth", "80GiB/s" },\
+        { "network_input_buffer_size",   "(string) Size of input buffer", "1KiB"},\
+        { "network_output_buffer_size",  "(string) Size of output buffer", "1KiB"},\
+        { "min_packet_size",             "(string) Size of a packet without a payload (e.g., control message size)", "8B"},\
+        { "port",                        "(string) Set by parent component. Name of port this NIC sits on.", ""}
+
+    
     SST_ELI_REGISTER_SUBCOMPONENT(MemNIC, "memHierarchy", "MemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Memory-oriented network interface", "SST::MemLink")
+            "Memory-oriented network interface", "SST::MemLinkBase")
 
-    SST_ELI_DOCUMENT_PARAMS(
-        { "memNIC.group",                       "(int) Group ID. See params 'sources' and 'destinations'. If not specified, the parent component will guess.", "1"},
-        { "memNIC.sources",                     "(comma-separated list of ints) List of group IDs that serve as sources for this component. If not specified, defaults to 'group - 1'.", "group-1"},
-        { "memNIC.destinations",                "(comma-separated list of ints) List of group IDs that serve as destinations for this component. If not specified, defaults to 'group + 1'.", "group+1"},
-        { "memNIC.network_bw",                  "(string) Network bandwidth", "80GiB/s" },
-        { "memNIC.network_input_buffer_size",   "(string) Size of input buffer", "1KiB"},
-        { "memNIC.network_output_buffer_size",  "(string) Size of output buffer", "1KiB"},
-        { "memNIC.min_packet_size",             "(string) Size of a packet without a payload (e.g., control message size)", "8B"},
-        { "memNIC.accept_region",               "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},
-        { "memNIC.port",                        "(string) Set by parent component. Name of port this NIC sits on.", ""},
-        { "memNIC.addr_range_start",            "(uint) Set by parent component. Lowest address handled by the parent.", "0"},
-        { "memNIC.addr_range_end",              "(uint) Set by parent component. Highest address handled by the parent.", "uint64_t-1"},
-        { "memNIC.interleave_size",             "(uint) Set by parent component. Size of interleaved chunks.", "0B"},
-        { "memNIC.interleave_step",             "(uint) Set by parent component. Distance between interleaved chunks.", "0B"} )
-
+    SST_ELI_DOCUMENT_PARAMS( MEMNIC_ELI_PARAMS )
 
 /* Begin class definition */    
     /* Constructor */

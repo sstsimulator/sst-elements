@@ -37,6 +37,14 @@ namespace MemHierarchy {
 class MemBackend : public SubComponent {
 public:
 
+#define MEMBACKEND_ELI_PARAMS {"debug_level",     "(uint) Debugging level: 0 (no output) to 10 (all output). Output also requires that SST Core be compiled with '--enable-debug'", "0"},\
+            {"debug_mask",      "(uint) Mask on debug_level", "0"},\
+            {"debug_location",  "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE", "0"},\
+            {"clock", "(string) Clock frequency - inherited from MemController", NULL},\
+            {"max_requests_per_cycle", "(int) Maximum number of requests to accept each cycle. Use 0 or -1 for unlimited.", "-1"},\
+            {"request_width", "(int) Maximum size, in bytes, for a request", "64"},\
+            {"mem_size", "(string) Size of memory with units (SI ok). E.g., '2GiB'.", NULL}
+
     typedef MemBackendConvertor::ReqId ReqId;
     MemBackend();
 

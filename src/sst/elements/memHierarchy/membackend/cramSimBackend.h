@@ -30,15 +30,7 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT(CramSimMemory, "memHierarchy", "cramsim", SST_ELI_ELEMENT_VERSION(1,0,0),
             "CramSim memory timings", "SST::MemHierarchy::MemBackend")
     
-    SST_ELI_DOCUMENT_PARAMS(
-            /* Inherited from MemBackend */
-            {"debug_level",     "(uint) Debugging level: 0 (no output) to 10 (all output). Output also requires that SST Core be compiled with '--enable-debug'", "0"},
-            {"debug_mask",      "(uint) Mask on debug_level", "0"},
-            {"debug_location",  "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE", "0"},
-            {"clock", "(string) Clock frequency - inherited from MemController", NULL},
-            {"max_requests_per_cycle", "(int) Maximum number of requests to accept each cycle. Use 0 or -1 for unlimited.", "-1"},
-            {"request_width", "(int) Maximum size, in bytes, for a request", "64"},
-            {"mem_size", "(string) Size of memory with units (SI ok). E.g., '2GiB'.", NULL},
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
             {"verbose", "Sets the verbosity of the backend output", "0"},
             {"access_time", "(string) Link latency for link to CramSim. With units (SI ok).", "100ns"}, 
