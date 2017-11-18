@@ -19,15 +19,16 @@
 
 
 //Constructor for pool
-Pool::Pool(long long int st1, long long int size1)
+Pool::Pool(long long int st1, long long int size1, int framesize)
 {
 
 	start = st1;
 	size = size1;
-	
-	// Create free frames of size 4KB, note that the size is in KB
-	for(int i=0; i< size/4; i++)
-		freelist.push_back(new Frame(((long long int) i*4096) + start, 0));
+	frsize = framesize;
+
+	// Create free frames of size framesize, note that the size is in KB
+	for(int i=0; i< size/framesize; i++)
+		freelist.push_back(new Frame(((long long int) i*frsize*1024) + start, 0));
 
 
 
@@ -37,8 +38,22 @@ Pool::Pool(long long int st1, long long int size1)
 long long int Pool::allocate_frame(int N)
 {
 
+	// Make sure we have free frames first
+	if(freelist.empty())
+		return -1;
 
+	// For now, we will assume you can only allocate 1 frame, TODO: We will implemenet a buddy-allocator style that enables allocating contigous physical spaces
+	if(N>=1)
+		return -1;
+	else
+	{
+		// Simply, pop the first free frame and assign it
+		Frame * temp = freelist.front();
+		freelist.popfront();
+		alloclist[temp->starting_address] = temp;
+		return temp->starting_address;
 
+	}
 
 }
 
@@ -48,9 +63,24 @@ int Pool::deallocate_frame(long long int X, int N)
 {
 
 
+	// For now, we will assume you can free only 1 frame, TODO: We will implemenet a buddy-allocator style that enables allocating and freeing contigous physical spaces
+	if(N>=1)
+		return -1;
+	else
+	{
+		// If we can find the frame to be free in the allocated list
+		if(alloclist.find(X)!=alloclist.end())
+		{
+			// Remove from allocation map and add to free list
+			Frame * temp = alloclist[X];
+			freelist.push_back(temp);
+			alloclist.erase(X);
 
+		}
+		else // Means we couldn't find an allocated frame that is being unmapped
+			return -1;
 
-
+	}
 
 
 }

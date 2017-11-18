@@ -43,6 +43,9 @@ class Pool{
 
 	public:
 
+		//Constructor for pool
+		Pool(long long int st1, long long int size1, int framesize);
+
 		// The size of the memory pool in KBs
 		long long int size; 
 
@@ -55,6 +58,11 @@ class Pool{
 		// Freeing N frames starting from Address X, this will return -1 if we find that these frames were not allocated
 		int deallocate_frame(long long int X, int N);
 
+		// Current number of free frames
+		int freeframes() { return freelist.size(); }
+
+		// Frame size in KBs
+		int frsize;
 
 	private:
 		// The list of free frames
