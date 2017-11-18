@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <poll.h>
-
+#include "mempool.h"
 
 
 using namespace std;
@@ -71,6 +71,8 @@ namespace SST {
 
 				SST::Link * event_link; // Note that this is a self-link for events
 			
+				Pool * mempools; // This represents the memory pools of the system
+
 				long long int max_inst;
 				char* named_pipe;
 				int* pipe_id;

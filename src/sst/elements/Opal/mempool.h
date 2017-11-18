@@ -1,0 +1,67 @@
+// Copyright 2009-2017 Sandia Corporation. Under the terms
+// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2009-2017, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+//
+
+
+/* Author: Amro Awad
+ * E-mail: amro.awad@ucf.edu
+ */
+
+#include<list>
+#include<map>
+
+// This defines a physical frame of size 4KB by default
+class Frame{
+
+	public:
+		// Constructor
+		Frame() { starting_address = 0; metadata = 0;}
+
+		// Constructor with paramteres
+		Frame(long long int st, long long int md) { starting_address = st; metadata = 0;}
+
+		// The starting address of the frame
+		long long int starting_address;
+
+		// This will be used to store information about current allocation
+		int metadata;
+
+};
+
+
+// This class defines a memory pool 
+
+class Pool{
+
+	public:
+
+		// The size of the memory pool in KBs
+		long long int size; 
+
+		// The starting address of the memory pool
+		long long int start;
+
+		// Allocate N contigiuous frames, returns the starting address if successfull, or -1 if it fails!
+		long long int allocate_frame(int N);
+
+		// Freeing N frames starting from Address X, this will return -1 if we find that these frames were not allocated
+		int deallocate_frame(long long int X, int N);
+
+
+	private:
+		// The list of free frames
+		std::list<Frame> freelist;
+
+		// The list of allocated frames --- the key is the starting physical address
+		std::map<long long int, Frame> alloclist;
+
+
+};
