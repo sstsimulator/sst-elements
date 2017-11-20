@@ -20,6 +20,7 @@
 
 #include <sst/elements/hermes/shmemapi.h>
 
+#include "embergettimeev.h"
 #include "emberShmemInitEv.h"
 #include "emberShmemFiniEv.h"
 #include "emberShmemMyPeEv.h"
@@ -62,6 +63,8 @@ public:
     virtual void completed( const SST::Output*, uint64_t time );
 
 protected:
+	inline void enQ_getTime( Queue&, uint64_t* time );
+
     inline void enQ_init( Queue& );
     inline void enQ_fini( Queue& );
 
@@ -157,6 +160,11 @@ private:
 static inline Hermes::Shmem::Interface* shmem_cast( Hermes::Interface *in )
 {
     return static_cast<Hermes::Shmem::Interface*>(in);
+}
+
+void EmberShmemGenerator::enQ_getTime( Queue& q, uint64_t* time )
+{
+    q.push( new EmberGetTimeEvent( &getOutput(), time ) );
 }
 
 void EmberShmemGenerator::enQ_init( Queue& q )
