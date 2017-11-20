@@ -37,6 +37,17 @@ namespace MemHierarchy {
 
 class CoherentMemController : public MemController {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_COMPONENT(CoherentMemController, "memHierarchy", "CoherentMemController", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Coherent memory controller, supports cache shootdowns and interfaces to a main memory model for timing", COMPONENT_CATEGORY_MEMORY)
+
+    SST_ELI_DOCUMENT_PARAMS( MEMCONTROLLER_ELI_PARAMS )
+
+    SST_ELI_DOCUMENT_PORTS( MEMCONTROLLER_ELI_PORTS )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( MEMCONTROLLER_ELI_SUBCOMPONENTSLOTS )
+
+/* Begin class definition */
     typedef uint64_t ReqId;
 
     CoherentMemController(ComponentId_t id, Params &params);

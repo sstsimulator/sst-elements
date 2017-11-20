@@ -34,207 +34,86 @@
 #include "memNIC.h"
 #include "memLink.h"
 
-namespace SST{ namespace MemHierarchy{
-    using namespace SST::MemHierarchy;
-    using namespace std;
+using namespace SST::MemHierarchy;
+using namespace std;
 
-Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
+/* Main constructor for Cache */
+Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
  
     /* --------------- Output Class --------------- */
-    Output* dbg = new Output();
-    int debugLevel = params.find<int>("debug_level", 1);
-    
-    dbg->init("--->  ", debugLevel, 0,(Output::output_location_t)params.find<int>("debug", 0));
-    if (debugLevel < 0 || debugLevel > 10)     dbg->fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
-    dbg->debug(_INFO_,"\n--------------------------- Initializing [Memory Hierarchy] --------------------------- \n\n");
-
-    // Find deprecated parameters and warn/fatal
-    // Currently deprecated parameters are: 'LLC', statistcs, network_num_vc, directory_at_next_level, bottom_network, top_network
-    Output out("", 1, 0, Output::STDOUT);
-    bool found;
-    params.find<int>("LL", 0, found);
-    if (found) {
-        out.output("cacheFactory, ** Found deprecated parameter: LL ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
-    }
-    params.find<int>("LLC", 0, found);
-    if (found) {
-        out.output("cacheFactory, ** Found deprecated parameter: LLC ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
-    }
-    params.find<int>("bottom_network", 0, found);
-    if (found) {
-        out.output("cacheFactory, ** Found deprecated parameter: bottom_network ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
-    }
-    params.find<int>("top_network", 0, found);
-    if (found) {
-        out.output("cacheFactory, ** Found deprecated parameter: top_network ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
-    }
-    params.find<int>("directory_at_next_level", 0, found);
-    if (found) {
-        out.output("cacheFactory, ** Found deprecated parameter: directory_at_next_level ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
-    }
-    params.find<int>("network_num_vc", 0, found);
-    if (found) {
-        out.output("cacheFactory, ** Found deprecated parameter: network_num_vc ** MemHierarchy does not use multiple virtual channels. Remove this parameter from your input deck to eliminate this message.\n");
-    }
-    params.find<int>("lower_is_noninclusive", 0, found);
-    if (found) {
-        out.output("cacheFactory, ** Found deprecated parameter: lower_is_noninclusive ** The value of this parameter is now auto-detected. Remove this parameter from your input deck to eliminate this message.\n");
-    }
-
-    /* --------------- Get Parameters --------------- */
-    string frequency            = params.find<std::string>("cache_frequency", "" );            //Hertz
-    string replacement          = params.find<std::string>("replacement_policy", "LRU");
-    int associativity           = params.find<int>("associativity", -1);
-    int hashFunc                = params.find<int>("hash_function", 0);
-    string sizeStr              = params.find<std::string>("cache_size", "");                  //Bytes
-    int lineSize                = params.find<int>("cache_line_size", 64);            //Bytes
-    int accessLatency           = params.find<int>("access_latency_cycles", -1);      //ns
-    int mshrSize                = params.find<int>("mshr_num_entries", -1);           //number of entries
-    string preF                 = params.find<std::string>("prefetcher");
-    bool L1                     = params.find<bool>("L1", false);
-    string coherenceProtocol    = params.find<std::string>("coherence_protocol", "mesi");
-    bool noncacheableRequests   = params.find<bool>("force_noncacheable_reqs", false);
-    string cacheType            = params.find<std::string>("cache_type", "inclusive");
-    SimTime_t maxWaitTime       = params.find<SimTime_t>("maxRequestDelay", 0);  // Nanoseconds
-    string dirReplacement       = params.find<std::string>("noninclusive_directory_repl", "LRU");
-    int dirAssociativity        = params.find<int>("noninclusive_directory_associativity", 1);
-    int dirNumEntries           = params.find<int>("noninclusive_directory_entries", 0);
-    
-    /* Convert all strings to lower case */
-    to_lower(coherenceProtocol);
-    to_lower(replacement);
-    to_lower(dirReplacement);
-    to_lower(cacheType);
-
-    /* Check user specified all required fields */
-    if (frequency.empty())           dbg->fatal(CALL_INFO, -1, "Param not specified: frequency - cache frequency.\n");
-    if (-1 >= associativity)         dbg->fatal(CALL_INFO, -1, "Param not specified: associativity\n");
-    if (sizeStr.empty())             dbg->fatal(CALL_INFO, -1, "Param not specified: cache_size\n");
-    if (-1 == lineSize)              dbg->fatal(CALL_INFO, -1, "Param not specified: cache_line_size - number of bytes in a cacheline (block size)\n");
-    if (accessLatency == -1 )        dbg->fatal(CALL_INFO, -1, "Param not specified: access_latency_cycles - access time for cache\n");
-    
-    /* Ensure that cache level/coherence/inclusivity params are valid */
-    if (cacheType != "inclusive" && cacheType != "noninclusive" && cacheType != "noninclusive_with_directory") 
-        dbg->fatal(CALL_INFO, -1, "Invalid param: cache_type - valid options are 'inclusive' or 'noninclusive' or 'noninclusive_with_directory'. You specified '%s'.\n", cacheType.c_str());
-    
-    if (cacheType == "noninclusive_with_directory") {
-        if (dirAssociativity <= -1) dbg->fatal(CALL_INFO, -1, "Param not specified: directory_associativity - this must be specified if cache_type is noninclusive_with_directory. You specified %d\n", dirAssociativity);
-        if (dirNumEntries <= 0)     dbg->fatal(CALL_INFO, -1, "Invalid param: noninlusive_directory_entries - must be at least 1 if cache_type is noninclusive_with_directory. You specified %d\n", dirNumEntries);
-    }
-    
-    if (L1) {
-        if (cacheType != "inclusive")
-            dbg->fatal(CALL_INFO, -1, "Invalid param: cache_type - must be 'inclusive' for an L1. You specified '%s'.\n", cacheType.c_str());
-    } else {
-        if (coherenceProtocol == "none" && cacheType != "noninclusive") 
-            dbg->fatal(CALL_INFO, -1, "Invalid param combo: cache_type and coherence_protocol - non-coherent caches are noninclusive. You specified: cache_type = '%s', coherence_protocol = '%s'\n", 
-                    cacheType.c_str(), coherenceProtocol.c_str()); 
-    }
-
-    /* NACKing to from L1 to the CPU doesnt really happen in CPUs*/
-    //if (L1 && mshrSize != -1)   dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be -1 for L1s, memHierarchy assumes L1 MSHR is sized to match the CPU's load/store queue. You specified %d\n", mshrSize);
-    
-    /* Ensure mshr size is large enough to avoid deadlock*/
-    if (-1 == mshrSize) mshrSize = HUGE_MSHR;
-    if (mshrSize < 2)   dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
-
-    /* ---------------- Initialization ----------------- */
-    HashFunction* ht;
-    if (hashFunc == 1) {
-      ht = new LinearHashFunction;
-    } else if (hashFunc == 2) {
-      ht = new XorHashFunction;
-    } else {
-      ht = new PureIdHashFunction;
-    }
-    
-    fixByteUnits(sizeStr); // Convert e.g., KB to KiB for unit alg
-    UnitAlgebra ua(sizeStr);
-    if (!ua.hasUnits("B")) {
-        dbg->fatal(CALL_INFO, -1, "Invalid param: cache_size - must have units of bytes (B). Ex: '32KiB'. SI units are ok. You specified '%s'\n", sizeStr.c_str());
-    }
-    uint64_t cacheSize = ua.getRoundedValue();
-    uint numLines = cacheSize/lineSize;
-    CoherenceProtocol protocol = CoherenceProtocol::MSI;
-    
-    if (coherenceProtocol == "mesi")      protocol = CoherenceProtocol::MESI;
-    else if (coherenceProtocol == "msi")  protocol = CoherenceProtocol::MSI;
-    else if (coherenceProtocol == "none") protocol = CoherenceProtocol::NONE;
-    else dbg->fatal(CALL_INFO,-1, "Invalid param: coherence_protocol - must be 'msi', 'mesi', or 'none'\n");
-
-    CacheArray * cacheArray = NULL;
-    CacheArray * dirArray = NULL;
-    ReplacementMgr* replManager = NULL;
-    ReplacementMgr* dirReplManager = NULL;
-    if (cacheType == "inclusive" || cacheType == "noninclusive") {
-        if (SST::strcasecmp(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (SST::strcasecmp(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
-        else if (SST::strcasecmp(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
-        else if (SST::strcasecmp(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (SST::strcasecmp(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
-        else dbg->fatal(CALL_INFO, -1, "Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
-        cacheArray = new SetAssociativeArray(dbg, numLines, lineSize, associativity, replManager, ht, !L1);
-    } else if (cacheType == "noninclusive_with_directory") {
-        if (SST::strcasecmp(replacement, "lru")) replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (SST::strcasecmp(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
-        else if (SST::strcasecmp(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
-        else if (SST::strcasecmp(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
-        else if (SST::strcasecmp(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
-        else dbg->fatal(CALL_INFO, -1, "Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
-        if (SST::strcasecmp(dirReplacement, "lru"))          dirReplManager = new LRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
-        else if (SST::strcasecmp(dirReplacement, "lfu"))     dirReplManager = new LFUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
-        else if (SST::strcasecmp(dirReplacement, "random"))  dirReplManager = new RandomReplacementMgr(dbg, dirAssociativity);
-        else if (SST::strcasecmp(dirReplacement, "mru"))     dirReplManager = new MRUReplacementMgr(dbg, dirNumEntries, dirAssociativity, true);
-        else if (SST::strcasecmp(dirReplacement, "nmru"))    dirReplManager = new NMRUReplacementMgr(dbg, dirNumEntries, dirAssociativity);
-        else dbg->fatal(CALL_INFO, -1, "Invalid param: directory_replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
-        cacheArray = new DualSetAssociativeArray(dbg, static_cast<uint>(lineSize), ht, true, dirNumEntries, dirAssociativity, dirReplManager, numLines, associativity, replManager);
-    }
-    
-
-    CacheConfig config = {frequency, cacheArray, dirArray, protocol, dbg, replManager, numLines,
-	static_cast<uint>(lineSize),
-	static_cast<uint>(mshrSize), L1,
-	noncacheableRequests, maxWaitTime, cacheType};
-    return new Cache(id, params, config);
-}
-
-
-
-Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(id) {
-    cf_     = config;
-    d_      = cf_.dbg_;
-    d_->debug(_INFO_,"--------------------------- Initializing [Cache]: %s... \n", this->Component::getName().c_str());
-    pMembers();
-    errorChecking();
+    d_ = new Output();
+    d_->init("--->  ", params.find<int>("debug_level", 1), 0,(Output::output_location_t)params.find<int>("debug", 0));
     
     d2_ = new Output();
     d2_->init("", params.find<int>("debug_level", 1), 0,(Output::output_location_t)params.find<int>("debug", SST::Output::NONE));
-   
-    Output out("", 1, 0, Output::STDOUT);
     
-    int stats                   = params.find<int>("statistics", 0);
-    accessLatency_              = params.find<uint64_t>("access_latency_cycles", 0);
-    tagLatency_                 = params.find<uint64_t>("tag_access_latency_cycles",accessLatency_);
-    string prefetcher           = params.find<std::string>("prefetcher");
-    mshrLatency_                = params.find<uint64_t>("mshr_latency_cycles", 0);
-    maxRequestsPerCycle_        = params.find<int>("max_requests_per_cycle",-1);
-    string packetSize           = params.find<std::string>("min_packet_size", "8B");
-    bool snoopL1Invs            = false;
-    if (cf_.L1_) snoopL1Invs    = params.find<bool>("snoop_l1_invalidations", false);
-
+    /* Debug filtering */
     std::vector<Addr> addrArr;
     params.find_array<Addr>("debug_addr", addrArr);
     for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++)
         DEBUG_ADDR.insert(*it);
     
     bool found;
+
+    /* Warn about deprecated parameters */
+    checkDeprecatedParams(params);
+
+    /* Pull out parameters that the cache keeps - the rest will be pulled as needed */
+    // L1
+    L1_ = params.find<bool>("L1", false);
     
-    maxOutstandingPrefetch_     = params.find<int>("max_outstanding_prefetch", cf_.MSHRSize_ / 2, found);
-    dropPrefetchLevel_          = params.find<int>("drop_prefetch_mshr_level", cf_.MSHRSize_ - 2, found);
-    if (!found && cf_.MSHRSize_ == 2) { // MSHR min size is 2
-        dropPrefetchLevel_ = cf_.MSHRSize_ - 1;
-    } else if (found && dropPrefetchLevel_ >= cf_.MSHRSize_) {
-        dropPrefetchLevel_ = cf_.MSHRSize_ - 1; // Always have to leave one free for deadlock avoidance
+    // Protocol
+    std::string protStr = params.find<std::string>("coherence_protocol", "mesi");
+    to_lower(protStr);
+    if (protStr == "mesi") protocol_ = CoherenceProtocol::MESI;
+    else if (protStr == "msi") protocol_ = CoherenceProtocol::MSI;
+    else if (protStr == "none") protocol_ = CoherenceProtocol::NONE;
+    else d_->fatal(CALL_INFO,-1, "%s, Invalid param: coherence_protocol - must be 'msi', 'mesi', or 'none'.\n", getName().c_str());
+    
+    // Type
+    type_ = params.find<std::string>("cache_type", "inclusive");
+    to_lower(type_);
+    if (type_ != "inclusive" && type_ != "noninclusive" && type_ != "noninclusive_with_directory")
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_type - valid options are 'inclusive' or 'noninclusive' or 'noninclusive_with_directory'. You specified '%s'.\n", getName().c_str(), type_.c_str());
+    
+    // Latency
+    accessLatency_ = params.find<uint64_t>("access_latency_cycles", 0, found);
+    if (!found) d_->fatal(CALL_INFO, -1, "%s, Param not specified: access_latency_cycles - access time for cache.\n", getName().c_str());
+
+    tagLatency_ = params.find<uint64_t>("tag_access_latency_cycles", accessLatency_);
+
+
+    // Error check parameter combinations
+    if (accessLatency_ < 1) d_->fatal(CALL_INFO,-1, "%s, Invalid param: access_latency_cycles - must be at least 1. You specified %" PRIu64 "\n", 
+            this->Component::getName().c_str(), accessLatency_);
+    
+    if (L1_ && type_ != "inclusive") {
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_type - must be 'inclusive' for an L1. You specified '%s'.\n", getName().c_str(), type_.c_str());
+    } else if (!L1_ && protocol_ == CoherenceProtocol::NONE && type_ != "noninclusive") {
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_type and coherence_protocol - non-coherent caches are noninclusive. You specified: cache_type = '%s', coherence_protocol = '%s'\n", 
+                getName().c_str(), type_.c_str(), protStr.c_str()); 
+    }
+
+    /* Construct cache structures */
+    cacheArray_ = createCacheArray(params);
+
+    /* Create clock, deadlock timeout, etc. */
+    createClock(params);
+    
+    /* Create MSHR */
+    int mshrSize = createMSHR(params);
+
+    /* Load prefetcher if any */
+    createPrefetcher(params, mshrSize);
+
+    
+    allNoncacheableRequests_    = params.find<bool>("force_noncacheable_reqs", false);
+    maxRequestsPerCycle_        = params.find<int>("max_requests_per_cycle",-1);
+    string packetSize           = params.find<std::string>("min_packet_size", "8B");
+
+    UnitAlgebra packetSize_ua(packetSize);
+    if (!packetSize_ua.hasUnits("B")) {
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packetSize.c_str());
     }
 
     if (maxRequestsPerCycle_ == 0) {
@@ -242,100 +121,20 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     }
     requestsThisCycle_ = 0;
 
-    /* --------------- Check parameters -------------*/
-    if (accessLatency_ < 1) d_->fatal(CALL_INFO,-1, "%s, Invalid param: access_latency_cycles - must be at least 1. You specified %" PRIu64 "\n", 
-            this->Component::getName().c_str(), accessLatency_);
-  
-    if (stats != 0) {
-        out.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sst-info for available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", this->Component::getName().c_str());
-    }
-    UnitAlgebra packetSize_ua(packetSize);
-    if (!packetSize_ua.hasUnits("B")) {
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packetSize.c_str());
-    }
-
-    /* --------------- Prefetcher ---------------*/
-    if (prefetcher.empty()) {
-	Params emptyParams;
-	listener_ = new CacheListener(this, emptyParams);
-    } else {
-	Params prefetcherParams = params.find_prefix_params("prefetcher." );
-	listener_ = dynamic_cast<CacheListener*>(loadSubComponent(prefetcher, this, prefetcherParams));
-    }
-
-    listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
-
-    /* ---------------- Latency ---------------- */
-    if (mshrLatency_ < 1) intrapolateMSHRLatency();
-    
-    /* ----------------- MSHR ----------------- */
-    mshr_               = new MSHR(d_, cf_.MSHRSize_, this->getName(), DEBUG_ADDR);
-    
-    /* ---------------- Clock ---------------- */
-    clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
-    defaultTimeBase_    = registerClock(cf_.cacheFrequency_, clockHandler_);
-    
-    registerTimeBase("2 ns", true);       //  TODO:  Is this right?
-
-    clockIsOn_ = true;
-    
-    /* ------------- Member variables intialization ------------- */
+    /* Configure links */
     configureLinks(params);
-    timestamp_              = 0;
-    // Figure out interval to check max wait time and associated delay for one shot if we're asleep
-    checkMaxWaitInterval_   = cf_.maxWaitTime_ / 4;
-    // Doubtful that this corner case will occur but just in case...
-    if (cf_.maxWaitTime_ > 0 && checkMaxWaitInterval_ == 0) checkMaxWaitInterval_ = cf_.maxWaitTime_;
-    if (cf_.maxWaitTime_ > 0) {
-        ostringstream oss;
-        oss << checkMaxWaitInterval_;
-        string interval = oss.str() + "ns";
-        maxWaitWakeupExists_ = false;
-        maxWaitSelfLink_ = configureSelfLink("maxWait", interval, new Event::Handler<Cache>(this, &Cache::maxWaitWakeup));
-    } else {
-        maxWaitWakeupExists_ = true;
-    }
-    
+
     /* Register statistics */
-    statTotalEventsReceived         = registerStatistic<uint64_t>("TotalEventsReceived");
-    statTotalEventsReplayed         = registerStatistic<uint64_t>("TotalEventsReplayed");
-    statNoncacheableEventsReceived  = registerStatistic<uint64_t>("TotalNoncacheableEventsReceived");
-    statCacheHits               = registerStatistic<uint64_t>("CacheHits");
-    statGetSHitOnArrival        = registerStatistic<uint64_t>("GetSHit_Arrival");   
-    statGetXHitOnArrival        = registerStatistic<uint64_t>("GetXHit_Arrival");
-    statGetSXHitOnArrival      = registerStatistic<uint64_t>("GetSXHit_Arrival"); 
-    statGetSHitAfterBlocked     = registerStatistic<uint64_t>("GetSHit_Blocked");
-    statGetXHitAfterBlocked     = registerStatistic<uint64_t>("GetXHit_Blocked");  
-    statGetSXHitAfterBlocked   = registerStatistic<uint64_t>("GetSXHit_Blocked");
-    statCacheMisses             = registerStatistic<uint64_t>("CacheMisses");
-    statGetSMissOnArrival       = registerStatistic<uint64_t>("GetSMiss_Arrival");
-    statGetXMissOnArrival       = registerStatistic<uint64_t>("GetXMiss_Arrival");
-    statGetSXMissOnArrival     = registerStatistic<uint64_t>("GetSXMiss_Arrival");
-    statGetSMissAfterBlocked    = registerStatistic<uint64_t>("GetSMiss_Blocked");
-    statGetXMissAfterBlocked    = registerStatistic<uint64_t>("GetXMiss_Blocked");
-    statGetSXMissAfterBlocked  = registerStatistic<uint64_t>("GetSXMiss_Blocked");
-    statGetS_recv               = registerStatistic<uint64_t>("GetS_recv");
-    statGetX_recv               = registerStatistic<uint64_t>("GetX_recv");
-    statGetSX_recv             = registerStatistic<uint64_t>("GetSX_recv");
-    statGetSResp_recv           = registerStatistic<uint64_t>("GetSResp_recv");
-    statGetXResp_recv           = registerStatistic<uint64_t>("GetXResp_recv");
-    statPutS_recv               = registerStatistic<uint64_t>("PutS_recv");
-    statPutM_recv               = registerStatistic<uint64_t>("PutM_recv");
-    statPutE_recv               = registerStatistic<uint64_t>("PutE_recv");
-    statFetchInv_recv           = registerStatistic<uint64_t>("FetchInv_recv");
-    statFetchInvX_recv          = registerStatistic<uint64_t>("FetchInvX_recv");
-    statInv_recv                = registerStatistic<uint64_t>("Inv_recv");
-    statNACK_recv               = registerStatistic<uint64_t>("NACK_recv");
-    statMSHROccupancy           = registerStatistic<uint64_t>("MSHR_occupancy");
-    if (!prefetcher.empty()) {
-        statPrefetchRequest         = registerStatistic<uint64_t>("Prefetch_requests");
-        statPrefetchHit             = registerStatistic<uint64_t>("Prefetch_hits");
-        statPrefetchDrop            = registerStatistic<uint64_t>("Prefetch_drops");
-    }
-    /* --------------- Coherence Controllers --------------- */
+    registerStatistics();
+
+    createCoherenceManager(params);
+}
+
+
+void Cache::createCoherenceManager(Params &params) {
     coherenceMgr_ = NULL;
-    std::string inclusive = (cf_.type_ == "inclusive") ? "true" : "false";
-    std::string protocol = (cf_.protocol_ == CoherenceProtocol::MESI) ? "true" : "false";
+    std::string inclusive = (type_ == "inclusive") ? "true" : "false";
+    std::string protocol = (protocol_ == CoherenceProtocol::MESI) ? "true" : "false";
     isLL = true;
     lowerIsNoninclusive = false;
     expectWritebackAcks = false;
@@ -345,7 +144,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     coherenceParams.insert("access_latency_cycles", std::to_string(accessLatency_));
     coherenceParams.insert("mshr_latency_cycles", std::to_string(mshrLatency_));
     coherenceParams.insert("tag_access_latency_cycles", std::to_string(tagLatency_));
-    coherenceParams.insert("cache_line_size", std::to_string(cf_.lineSize_));
+    coherenceParams.insert("cache_line_size", params.find<std::string>("cache_line_size", "64"));
     coherenceParams.insert("protocol", protocol);   // Not used by all managers
     coherenceParams.insert("inclusive", inclusive); // Not used by all managers
     coherenceParams.insert("snoop_l1_invalidations", params.find<std::string>("snoop_l1_invalidations", "false")); // Not used by all managers
@@ -353,9 +152,9 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     coherenceParams.insert("response_link_width", params.find<std::string>("response_link_width", "0B"));
     coherenceParams.insert("min_packet_size", params.find<std::string>("min_packet_size", "8B"));
 
-    if (!cf_.L1_) {
-        if (cf_.protocol_ != CoherenceProtocol::NONE) {
-            if (cf_.type_ != "noninclusive_with_directory") {
+    if (!L1_) {
+        if (protocol_ != CoherenceProtocol::NONE) {
+            if (type_ != "noninclusive_with_directory") {
                 coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.MESICoherenceController", this, coherenceParams));
             } else {
                 coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.MESICacheDirectoryCoherenceController", this, coherenceParams));
@@ -364,7 +163,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
             coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.IncoherentController", this, coherenceParams));
         }
     } else {
-        if (cf_.protocol_ != CoherenceProtocol::NONE) {
+        if (protocol_ != CoherenceProtocol::NONE) {
             coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.L1CoherenceController", this, coherenceParams));
         } else {
             coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.L1IncoherentController", this, coherenceParams));
@@ -514,12 +313,13 @@ void Cache::configureLinks(Params &params) {
         uint64_t interleaveSize = 0;
         uint64_t interleaveStep = 0;
         if (cacheSliceCount > 1) {
+            int lineSize = params.find<int>("cache_line_size", 64);
             if (sliceAllocPolicy == "rr") {
-                addrRangeStart = sliceID*cf_.lineSize_;
-                interleaveSize = cf_.lineSize_;
-                interleaveStep = cacheSliceCount*cf_.lineSize_;
+                addrRangeStart = sliceID*lineSize;
+                interleaveSize = lineSize;
+                interleaveStep = cacheSliceCount*lineSize;
             }
-            cf_.cacheArray_->setSliceAware(cacheSliceCount);
+            cacheArray_->setSliceAware(cacheSliceCount);
         }
         // Set region parameters
         nicParams.insert("addr_range_start", std::to_string(addrRangeStart));
@@ -535,21 +335,60 @@ void Cache::configureLinks(Params &params) {
         clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
     }
 
+}
+
+void Cache::createPrefetcher(Params &params, int mshrSize) {
+    bool found;
+    string prefetcher           = params.find<std::string>("prefetcher", "");
+    maxOutstandingPrefetch_     = params.find<int>("max_outstanding_prefetch", mshrSize / 2, found);
+    dropPrefetchLevel_          = params.find<int>("drop_prefetch_mshr_level", mshrSize - 2, found);
+    if (!found && mshrSize == 2) { // MSHR min size is 2
+        dropPrefetchLevel_ = mshrSize - 1;
+    } else if (found && dropPrefetchLevel_ >= mshrSize) {
+        dropPrefetchLevel_ = mshrSize - 1; // Always have to leave one free for deadlock avoidance
+    }
+    
+    if (prefetcher.empty()) {
+	Params emptyParams;
+	listener_ = new CacheListener(this, emptyParams);
+    } else {
+	Params prefetcherParams = params.find_prefix_params("prefetcher." );
+        listener_ = dynamic_cast<CacheListener*>(loadSubComponent(prefetcher, this, prefetcherParams));
+        
+        statPrefetchRequest         = registerStatistic<uint64_t>("Prefetch_requests");
+        statPrefetchHit             = registerStatistic<uint64_t>("Prefetch_hits");
+        statPrefetchDrop            = registerStatistic<uint64_t>("Prefetch_drops");
+    }
+
+    listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
+    
     // Configure self link for prefetch/listener events
     prefetchLink_ = configureSelfLink("Self", "50ps", new Event::Handler<Cache>(this, &Cache::processPrefetchEvent));
 }
+    
 
 
 
-void Cache::intrapolateMSHRLatency() {
+int Cache::createMSHR(Params &params) {
+    int mshrSize = params.find<int>("mshr_num_entries", -1);           //number of entries
+    mshrLatency_ = params.find<uint64_t>("mshr_latency_cycles", 0);
+    
+    if (mshrSize == -1) mshrSize = HUGE_MSHR; // Set in mshr.h
+    if (mshrSize < 2) d_->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
+    
+    mshr_ = new MSHR(d_, mshrSize, this->getName(), DEBUG_ADDR);
+    
+    if (mshrLatency_ > 0) return mshrSize;
+    
+    if (L1_) {
+        mshrLatency_ = 1;
+        return mshrSize;
+    }
+   
+    // Otherwise if mshrLatency isn't set or is 0, intrapolate from cache latency
     uint64 N = 200; // max cache latency supported by the intrapolation method
     int y[N];
 
-    if (cf_.L1_) {
-        mshrLatency_ = 1;
-        return;
-    }
-    
     /* L2 */
     y[0] = 0;
     y[1] = 1;
@@ -570,6 +409,189 @@ void Cache::intrapolateMSHRLatency() {
 
     Output out("", 1, 0, Output::STDOUT);
     out.verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %" PRIu64 " cycles.\n", getName().c_str(), mshrLatency_);
+    
+    return mshrSize;
 }
 
-}}
+/* Create the cache array */
+CacheArray* Cache::createCacheArray(Params &params) {
+    /* Get parameters and error check */
+    bool found;
+    std::string sizeStr = params.find<std::string>("cache_size", "", found);
+    if (!found) d_->fatal(CALL_INFO, -1, "%s, Param not specified: cache_size\n", getName().c_str());
+    
+    unsigned int lineSize = params.find<uint64_t>("cache_line_size", 64);
+    
+    uint64_t assoc = params.find<uint64_t>("associativity", -1, found); // uint64_t to match cache size in case we have a fully associative cache
+    if (!found) d_->fatal(CALL_INFO, -1, "%s, Param not specified: associativity\n", getName().c_str());
+
+    std::string replacement = params.find<std::string>("replacement_policy", "lru");
+    std::string dReplacement = params.find<std::string>("noninclusive_directory_repl", "lru");
+    uint64_t dEntries = params.find<uint64_t>("noninclusive_directory_entries", 0);
+    uint64_t dAssoc = params.find<uint64_t>("noninclusive_directory_associativity", 1);
+
+    int hashFunc = params.find<int>("hash_function", 0);
+
+    /* Error check parameters and compute derived parameters */
+    /* Fix up parameters */
+    fixByteUnits(sizeStr);
+    to_lower(replacement);
+    to_lower(dReplacement);
+
+    UnitAlgebra ua(sizeStr);
+    if (!ua.hasUnits("B")) {
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_size - must have units of bytes(B). Ex: '32KiB'. SI units are ok. You specified '%s'.", getName().c_str(), sizeStr.c_str());
+    }
+
+    uint64_t cacheSize = ua.getRoundedValue();
+    
+    if (lineSize > cacheSize) 
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%u'\n", getName().c_str(), sizeStr.c_str(), lineSize);
+    if (!isPowerOfTwo(lineSize)) d_->fatal(CALL_INFO, -1, "%s, cache_line_size - must be a power of 2. You specified '%u'.\n", getName().c_str(), lineSize);
+
+    uint64_t lines = cacheSize / lineSize;
+    
+    if (assoc < 1 || assoc > lines) 
+        d_->fatal(CALL_INFO, -1, "%s, Invalid param: associativity - must be at least 1 (direct mapped) and less than or equal to the number of cache lines (cache_size / cache_line_size). You specified '%" PRIu64 "'\n", 
+                getName().c_str(), assoc);
+
+    if (type_ == "noninclusive_with_directory") { /* Error check dir params */
+        if (dAssoc < 1 || dAssoc > dEntries) 
+            d_->fatal(CALL_INFO, -1, "%s, Invalid param: noninclusive_directory_associativity - must be at least 1 (direct mapped) and less than or equal to noninclusive_directory_entries. You specified '%" PRIu64 "'\n", 
+                    getName().c_str(), dAssoc);
+        if (dEntries < 1)
+            d_->fatal(CALL_INFO, -1, "%s, Invalid param: noninclusive_directory_entries - must be at least 1 if cache_type is noninclusive_with_directory. You specified '%" PRIu64 "'.\n", getName().c_str(), dEntries);
+    }
+
+    /* Build cache array */
+    ReplacementMgr* rmgr = constructReplacementManager(replacement, lines, assoc);
+
+    HashFunction * ht;
+    if (hashFunc == 1)      ht = new LinearHashFunction;
+    else if (hashFunc == 2) ht = new XorHashFunction;
+    else                    ht = new PureIdHashFunction;
+
+    if (type_ == "inclusive" || type_ == "noninclusive") {
+        return new SetAssociativeArray(d_, lines, lineSize, assoc, rmgr, ht, !L1_);
+    } else if (type_ == "noninclusive_with_directory") {
+        /* Construct */
+        ReplacementMgr* drmgr = constructReplacementManager(dReplacement, dEntries, dAssoc);
+        return new DualSetAssociativeArray(d_, lineSize, ht, true, dEntries, dAssoc, drmgr, lines, assoc, rmgr);
+    }
+}
+
+/* Create a replacement manager */
+ReplacementMgr* Cache::constructReplacementManager(std::string policy, uint64_t lines, uint64_t associativity) { 
+    if (SST::strcasecmp(policy, "lru"))
+        return new LRUReplacementMgr(d_, lines, associativity, true);
+    
+    if (SST::strcasecmp(policy, "lfu"))
+        return new LFUReplacementMgr(d_, lines, associativity);
+    
+    if (SST::strcasecmp(policy, "random"))
+        return new RandomReplacementMgr(d_, associativity);
+    
+    if (SST::strcasecmp(policy, "mru"))    
+        return new MRUReplacementMgr(d_, lines, associativity, true);
+
+    if (SST::strcasecmp(policy, "nmru"))   
+        return new NMRUReplacementMgr(d_, lines, associativity);
+    
+    d_->fatal(CALL_INFO, -1, "%s, Invalid param: (directory_)replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified '%s'.\n",
+            getName().c_str(), policy.c_str());
+    
+    return nullptr;
+}
+
+void Cache::createClock(Params &params) {
+    /* Create clock */
+    bool found;
+    std::string frequency = params.find<std::string>("cache_frequency", "", found);
+    if (!found)
+        d_->fatal(CALL_INFO, -1, "%s, Param not specified: frequency - cache frequency.\n", getName().c_str());
+    
+    clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
+    defaultTimeBase_    = registerClock(frequency, clockHandler_);
+    
+    registerTimeBase("2 ns", true);       //  TODO:  Is this right?
+    
+    clockIsOn_ = true;
+    timestamp_ = 0;
+    
+    // Deadlock timeout
+    maxWaitTime_ = params.find<SimTime_t>("maxRequestDelay", 0);  // Nanoseconds
+    checkMaxWaitInterval_ = maxWaitTime_ / 4;
+    // Doubtful that this corner case will occur but just in case...
+    if (maxWaitTime_ > 0 && checkMaxWaitInterval_ == 0) checkMaxWaitInterval_ = maxWaitTime_;
+    if (maxWaitTime_ > 0) {
+        ostringstream oss;
+        oss << checkMaxWaitInterval_;
+        string interval = oss.str() + "ns";
+        maxWaitWakeupExists_ = false;
+        maxWaitSelfLink_ = configureSelfLink("maxWait", interval, new Event::Handler<Cache>(this, &Cache::maxWaitWakeup));
+    } else {
+        maxWaitWakeupExists_ = true;
+    }
+}
+
+/* Check for deprecated parameters and warn/fatal */
+void Cache::checkDeprecatedParams(Params &params) {
+    Output out("", 1, 0, Output::STDOUT);
+    bool found;
+    
+    /* Standard error messages */
+    std::string defError = "This parameter is no longer neccessary.";
+    std::string autoDetectError = "The value of this parameter is now auto-detected.";
+    
+    std::map<std::string,std::string> depMap;
+    
+    /* Deprecated parameters */
+    depMap["LL"] = autoDetectError;
+    depMap["LLC"] = autoDetectError;
+    depMap["bottom_network"] = autoDetectError;
+    depMap["top_network"] = autoDetectError;
+    depMap["directory_at_next_level"] = autoDetectError;
+    depMap["lower_is_noninclusive"] = autoDetectError;
+    depMap["network_num_vc"] = "MemHierarchy does not use multiple virtual channels.";
+    depMap["statistics"] = "MemHierarchy now uses the SST Statistics API. This parameter has no effect!";
+
+    for (std::map<std::string,std::string>::iterator it = depMap.begin(); it != depMap.end(); it++) {
+        params.find<std::string>(it->first, "", found);
+        if (found) {
+            out.output("%s, ** Found deprecated parameter: %s ** %s Remove this parameter from your input deck to eliminate this message.\n", getName().c_str(), it->first.c_str(), it->second.c_str());
+        }
+    }
+}
+
+void Cache::registerStatistics() {
+    statTotalEventsReceived         = registerStatistic<uint64_t>("TotalEventsReceived");
+    statTotalEventsReplayed         = registerStatistic<uint64_t>("TotalEventsReplayed");
+    statNoncacheableEventsReceived  = registerStatistic<uint64_t>("TotalNoncacheableEventsReceived");
+    statCacheHits                   = registerStatistic<uint64_t>("CacheHits");
+    statGetSHitOnArrival            = registerStatistic<uint64_t>("GetSHit_Arrival");   
+    statGetXHitOnArrival            = registerStatistic<uint64_t>("GetXHit_Arrival");
+    statGetSXHitOnArrival           = registerStatistic<uint64_t>("GetSXHit_Arrival"); 
+    statGetSHitAfterBlocked         = registerStatistic<uint64_t>("GetSHit_Blocked");
+    statGetXHitAfterBlocked         = registerStatistic<uint64_t>("GetXHit_Blocked");  
+    statGetSXHitAfterBlocked        = registerStatistic<uint64_t>("GetSXHit_Blocked");
+    statCacheMisses                 = registerStatistic<uint64_t>("CacheMisses");
+    statGetSMissOnArrival           = registerStatistic<uint64_t>("GetSMiss_Arrival");
+    statGetXMissOnArrival           = registerStatistic<uint64_t>("GetXMiss_Arrival");
+    statGetSXMissOnArrival          = registerStatistic<uint64_t>("GetSXMiss_Arrival");
+    statGetSMissAfterBlocked        = registerStatistic<uint64_t>("GetSMiss_Blocked");
+    statGetXMissAfterBlocked        = registerStatistic<uint64_t>("GetXMiss_Blocked");
+    statGetSXMissAfterBlocked       = registerStatistic<uint64_t>("GetSXMiss_Blocked");
+    statGetS_recv                   = registerStatistic<uint64_t>("GetS_recv");
+    statGetX_recv                   = registerStatistic<uint64_t>("GetX_recv");
+    statGetSX_recv                  = registerStatistic<uint64_t>("GetSX_recv");
+    statGetSResp_recv               = registerStatistic<uint64_t>("GetSResp_recv");
+    statGetXResp_recv               = registerStatistic<uint64_t>("GetXResp_recv");
+    statPutS_recv                   = registerStatistic<uint64_t>("PutS_recv");
+    statPutM_recv                   = registerStatistic<uint64_t>("PutM_recv");
+    statPutE_recv                   = registerStatistic<uint64_t>("PutE_recv");
+    statFetchInv_recv               = registerStatistic<uint64_t>("FetchInv_recv");
+    statFetchInvX_recv              = registerStatistic<uint64_t>("FetchInvX_recv");
+    statInv_recv                    = registerStatistic<uint64_t>("Inv_recv");
+    statNACK_recv                   = registerStatistic<uint64_t>("NACK_recv");
+    statMSHROccupancy               = registerStatistic<uint64_t>("MSHR_occupancy");
+}

@@ -41,7 +41,17 @@ namespace MemHierarchy {
 class MemLinkBase : public SST::SubComponent {
 
 public:
-    
+
+#define MEMLINKBASE_ELI_PARAMS { "debug",              "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},\
+    { "debug_level",        "(int) Debug verbosity level. Between 0 and 10", "0"},\
+    { "debug_addr",         "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},\
+    { "accept_region",      "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},\
+    { "addr_range_start",   "(uint) Set by parent component. Lowest address handled by the parent.", "0"},\
+    { "addr_range_end",     "(uint) Set by parent component. Highest address handled by the parent.", "uint64_t-1"},\
+    { "interleave_size",    "(string) Set by parent component. Size of interleaved chunks.", "0B"},\
+    { "interleave_step",    "(string) Set by parent component. Distance between interleaved chunks.", "0B"}
+
+
     // Struct identifying an endpoint
     struct EndpointInfo {
         std::string name;

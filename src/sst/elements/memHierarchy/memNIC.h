@@ -18,12 +18,12 @@
 
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <queue>
 
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
 #include "sst/elements/memHierarchy/memEventBase.h"
@@ -46,7 +46,24 @@ namespace MemHierarchy {
 class MemNIC : public MemLinkBase {
 
 public:
+/* Element Library Info */
+#define MEMNIC_ELI_PARAMS MEMLINKBASE_ELI_PARAMS, \
+        { "group",                       "(int) Group ID. See params 'sources' and 'destinations'. If not specified, the parent component will guess.", "1"},\
+        { "sources",                     "(comma-separated list of ints) List of group IDs that serve as sources for this component. If not specified, defaults to 'group - 1'.", "group-1"},\
+        { "destinations",                "(comma-separated list of ints) List of group IDs that serve as destinations for this component. If not specified, defaults to 'group + 1'.", "group+1"},\
+        { "network_bw",                  "(string) Network bandwidth", "80GiB/s" },\
+        { "network_input_buffer_size",   "(string) Size of input buffer", "1KiB"},\
+        { "network_output_buffer_size",  "(string) Size of output buffer", "1KiB"},\
+        { "min_packet_size",             "(string) Size of a packet without a payload (e.g., control message size)", "8B"},\
+        { "port",                        "(string) Set by parent component. Name of port this NIC sits on.", ""}
+
     
+    SST_ELI_REGISTER_SUBCOMPONENT(MemNIC, "memHierarchy", "MemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Memory-oriented network interface", "SST::MemLinkBase")
+
+    SST_ELI_DOCUMENT_PARAMS( MEMNIC_ELI_PARAMS )
+
+/* Begin class definition */    
     /* Constructor */
     MemNIC(Component * comp, Params &params);
     

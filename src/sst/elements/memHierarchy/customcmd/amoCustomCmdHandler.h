@@ -21,6 +21,7 @@
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
+#include <sst/core/elementinfo.h>
 
 #include "memEventBase.h"
 #include "memEvent.h"
@@ -35,6 +36,11 @@ namespace MemHierarchy {
  */
 class AMOCustomCmdMemHandler : public CustomCmdMemHandler {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(AMOCustomCmdMemHandler, "memHierarchy", "amoCustomCmdHandler", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Custom command handler for atomics (AMO)", "SST::MemHierarchy::CustomCmdMemHandler")
+
+/* Begin class defintion */
   AMOCustomCmdMemHandler(Component * comp, Params &params)
     : CustomCmdMemHandler(comp,params) {}
 

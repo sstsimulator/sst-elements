@@ -348,6 +348,11 @@ void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 		  s_refCmdsRecvd->addData(1);
 				m_refCmdsRecvd[l_rank]+=1;
 		  break;
+		case e_BankCommandType::ERR:
+		case e_BankCommandType::PREA:
+		case e_BankCommandType::PDX:
+		case e_BankCommandType::PDE:
+		  break;
 		}
 
 		sendToBank(l_cmdReq);
@@ -369,7 +374,7 @@ void c_Dimm::updateDynamicEnergy(c_BankCommand* x_bankCommandPtr)
 	assert(l_rank<m_numRanks);
 
 	switch(x_bankCommandPtr->getCommandMnemonic()) {
-		case e_BankCommandType::ACT:
+	    case e_BankCommandType::ACT:
 			l_energy = ((k_IDD0 * (k_nRAS+k_nRP))-((k_IDD3N * k_nRAS) + (k_IDD2N * (k_nRP)))) * k_VDD * k_numDevices; //active and precharge
 			m_actpreEnergy[l_rank]+=l_energy;
 			break;
@@ -390,6 +395,11 @@ void c_Dimm::updateDynamicEnergy(c_BankCommand* x_bankCommandPtr)
 			l_energy = ((k_IDD5-k_IDD3N) * k_nRFC) * k_VDD * k_numDevices;
 			m_refreshEnergy[l_rank]+=l_energy;
 			break;
+		case e_BankCommandType::ERR:
+		case e_BankCommandType::PREA:
+		case e_BankCommandType::PDX:
+		case e_BankCommandType::PDE:
+		  break;
 	}
 }
 

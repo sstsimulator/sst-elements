@@ -29,15 +29,14 @@ namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
     using namespace std;
 
-Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params) {
+Sieve::Sieve(ComponentId_t id, Params &params) : Component(id) {
  
     /* --------------- Output Class --------------- */
-    Output* output = new Output();
+    output_ = new Output();
     int debugLevel = params.find<int>("debug_level", 0);
     
-    output->init("--->  ", debugLevel, 0,(Output::output_location_t)params.find<int>("debug", 0));
-    if(debugLevel < 0 || debugLevel > 10)     output->fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
-    output->debug(_INFO_,"\n--------------------------- Initializing [Memory Hierarchy] --------------------------- \n\n");
+    output_->init("--->  ", debugLevel, 0,(Output::output_location_t)params.find<int>("debug", 0));
+    if(debugLevel < 0 || debugLevel > 10)     output_->fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
 
     /* --------------- Get Parameters --------------- */
     // LRU - default replacement policy
@@ -46,31 +45,23 @@ Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params) {
     int lineSize                = params.find<int>("cache_line_size", -1);            //Bytes
 
     /* Check user specified all required fields */
-    if(-1 >= associativity)         output->fatal(CALL_INFO, -1, "Param not specified: associativity\n");
-    if(sizeStr.empty())             output->fatal(CALL_INFO, -1, "Param not specified: cache_size\n");
-    if(-1 == lineSize)              output->fatal(CALL_INFO, -1, "Param not specified: cache_line_size - number of bytes in a cacheline (block size)\n");
+    if(-1 >= associativity)         output_->fatal(CALL_INFO, -1, "Param not specified: associativity\n");
+    if(sizeStr.empty())             output_->fatal(CALL_INFO, -1, "Param not specified: cache_size\n");
+    if(-1 == lineSize)              output_->fatal(CALL_INFO, -1, "Param not specified: cache_line_size - number of bytes in a cacheline (block size)\n");
     
     fixByteUnits(sizeStr);
     UnitAlgebra ua(sizeStr);
     if (!ua.hasUnits("B")) {
-        output->fatal(CALL_INFO, -1, "Invalid param: cache_size - must have units of bytes (e.g., B, KB,etc.)\n");
+        output_->fatal(CALL_INFO, -1, "Invalid param: cache_size - must have units of bytes (e.g., B, KB,etc.)\n");
     }
     uint64_t cacheSize = ua.getRoundedValue();
     uint numLines = cacheSize/lineSize;
 
     /* ---------------- Initialization ----------------- */
     HashFunction* ht = new PureIdHashFunction;
-    ReplacementMgr* replManager = new LRUReplacementMgr(output, numLines, associativity, true);
-    CacheArray* cacheArray = new SetAssociativeArray(output, numLines, lineSize, associativity, replManager, ht, false);
+    ReplacementMgr* replManager = new LRUReplacementMgr(output_, numLines, associativity, true);
+    cacheArray_ = new SetAssociativeArray(output_, numLines, lineSize, associativity, replManager, ht, false);
     
-    return new Sieve(id, params, cacheArray, output);
-}
-
-
-
-Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output) : Component(id) {
-    cacheArray_ = cacheArray;
-    output_ = output;
     output_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
 
     /* file output */ 

@@ -24,6 +24,7 @@
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/link.h>
+#include <sst/core/elementinfo.h>
 
 #include "sst/elements/memHierarchy/memEventBase.h"
 #include "sst/elements/memHierarchy/memEvent.h"
@@ -42,7 +43,18 @@ namespace MemHierarchy {
 class MemLink : public MemLinkBase {
 
 public:
-    
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(MemLink, "memHierarchy", "MemLink", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Memory-oriented link interface", "SST::MemLinkBase")
+
+    /* Define params, inherit from base class */
+#define MEMLINK_ELI_PARAMS MEMLINKBASE_ELI_PARAMS, \
+    { "latency",            "(string) Link latency. Prefix 'cpulink' for up-link towards CPU or 'memlink' for down-link towards memory", "50ps"},\
+    { "port",               "(string) Set by parent component. Name of port this memLink sits on.", ""}
+
+    SST_ELI_DOCUMENT_PARAMS( { MEMLINK_ELI_PARAMS }  )
+
+/* Begin class definition */
     class MemEventLinkInit : public MemEventBase {
         public:
             MemEventLinkInit(std::string src, MemRegion region) : MemEventBase(src, Command::NULLCMD), region(region) { }

@@ -26,6 +26,21 @@ namespace MemHierarchy {
 
 class RequestReorderRow : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(RequestReorderRow, "memHierarchy", "reorderByRow", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Request re-orderer, groups requests by row", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"verbose",                     "Sets the verbosity of the backend output", "0"},
+            {"max_issue_per_cycle",         "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+            {"banks",                       "Number of banks", "8"},
+            {"bank_interleave_granularity", "Granularity of interleaving in bytes (B), generally a cache line. Must be a power of 2.", "64B"},
+            {"row_size",                    "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
+            {"reorder_limit",               "Maximum number of request to reorder to a rwo before changing rows.", "1"},
+            {"backend",                     "Backend memory system.", "memHierarchy.simpleDRAM"} )
+
+/* Begin class definition */
     RequestReorderRow();
     RequestReorderRow(Component *comp, Params &params);
 	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
