@@ -27,7 +27,7 @@
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
-#include "simpleMemoryModel.h"
+#include "memoryModel/simpleMemoryModel.h"
 
 namespace SST {
 namespace Firefly {
@@ -136,8 +136,8 @@ public:
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
 
-    void dmaRead( std::vector<MemOp>& vec, Callback callback );
-    void dmaWrite( std::vector<MemOp>& vec, Callback callback );
+    void dmaRead( std::vector<MemOp>* vec, Callback callback );
+    void dmaWrite( std::vector<MemOp>* vec, Callback callback );
 
     void schedCallback( Callback callback, uint64_t delay = 0 ) {
         schedEvent( new SelfEvent( callback ), delay);
@@ -259,18 +259,24 @@ public:
 	SimTime_t m_nic2host_lat_ns;
 	SimTime_t m_nic2host_base_lat_ns;
 
-    SimTime_t calcHostMemDelay( std::vector< MemOp>& ops  ) {
+    SimTime_t calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
         if( m_simpleMemoryModel ) {
-        	return m_simpleMemoryModel->calcHostDelay( ops );
+        	return m_simpleMemoryModel->schedHostCallback( core, ops, callback );
         } else {
-			return 0;
+			schedCallback(callback);
+			delete ops;
 		}
     }
-    SimTime_t calcNicMemDelay( std::vector< MemOp>& ops  ) {
+
+	#define NIC_SendThread SimpleMemoryModel::NIC_Thread::Send
+	#define NIC_RecvThread SimpleMemoryModel::NIC_Thread::Recv
+
+    void calcNicMemDelay( SimpleMemoryModel::NIC_Thread who, std::vector< MemOp>* ops, std::function<void()> callback ) {
         if( m_simpleMemoryModel ) {
-        	return m_simpleMemoryModel->calcNicDelay( ops );
+        	m_simpleMemoryModel->schedNicCallback( who, ops, callback );
         } else {
-			return 0;
+			schedCallback(callback);
+			delete ops;
 		}
 	}
 
