@@ -25,9 +25,11 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
 #include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/elementinfo.h>
+#include <sst/core/output.h>
+
 #include "moveEvent.h"
 #include "memEvent.h"
-#include "sst/core/output.h"
 
 namespace SST {
 
@@ -40,6 +42,11 @@ namespace MemHierarchy {
 class MemHierarchyScratchInterface : public Interfaces::SimpleMem {
 
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(MemHierarchyScratchInterface, "memHierarchy", "scratchInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Interface to a scratchpad", "SST::Interfaces::SimpleMem")
+
+/* Begin class definition */
     MemHierarchyScratchInterface(SST::Component *comp, Params &params);
     
     /** Initialize the link to be used to connect with MemHierarchy */

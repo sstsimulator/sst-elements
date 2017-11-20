@@ -42,6 +42,29 @@ namespace SST {
 namespace MemHierarchy {
 
 class HBMDRAMSimMemory : public SimpleMemBackend {
+public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(HBMDRAMSimMemory, "memHierarchy", "HBMDRAMSimMemory", SST_ELI_ELEMENT_VERSION(1,0,0), "HBM DRAMSim-driven memory timings", "SST::MemHierarchy::MemBackend")
+
+#define HBMDRAMSIMMEMORY_ELI_PARAMS MEMBACKEND_ELI_PARAMS,\
+            /* Own parameters */\
+            {"verbose",     "Sets the verbosity of the backend output", "0" },\
+            {"device_ini",  "Name of the DRAMSim Device config file",   NULL },\
+            {"system_ini",  "Name of the DRAMSim Device system file",   NULL }
+
+    SST_ELI_DOCUMENT_PARAMS( HBMDRAMSIMMEMORY_ELI_PARAMS )
+
+#define HBMDRAMSIMMEMORY_ELI_STATS {"TotalBandwidth",      "Total Bandwidth",              "GB/s",     1},\
+            {"BytesTransferred",    "Total Bytes Transferred",      "bytes",    1},\
+            {"TotalReads",          "Total Queued Reads",           "count",    1},\
+            {"TotalWrites",         "Total Queued Writes",          "count",    1},\
+            {"TotalTransactions",   "Total Number of Transactions", "count",    1},\
+            {"PendingReads",        "Pending Transactions",         "count",    1},\
+            {"PendingReturns",      "Pending Returns",              "count",    1} 
+
+    SST_ELI_DOCUMENT_STATISTICS( HBMDRAMSIMMEMORY_ELI_STATS )
+
+/* Class definition */
 private:
   Statistic<double>* TBandwidth;
   Statistic<uint64_t>* BytesTransferred;

@@ -50,6 +50,11 @@ class AddrMapper : public SST::Module {
 
 class SimpleAddrMapper : public AddrMapper {
   public:
+/* Element Library Info */
+    SST_ELI_REGISTER_MODULE(SimpleAddrMapper, "memHierarchy", "simpleAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Simple address mapper", "SST::MemHierarchy::AddrMapper")
+    
+/* Begin class definition */
     SimpleAddrMapper( Params &params ) : 
         AddrMapper(), 
         m_baseShift( 6 ),
@@ -93,6 +98,11 @@ class SimpleAddrMapper : public AddrMapper {
 
 class SandyBridgeAddrMapper : public AddrMapper {
   public:
+/* Element Library Info */
+    SST_ELI_REGISTER_MODULE(SandyBridgeAddrMapper, "memHierarchy", "sandyBridgeAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Sandy Bridge address mapper", "SST::MemHierarchy::AddrMapper")
+    
+/* Begin class definition */
     SandyBridgeAddrMapper( Params &params ) : AddrMapper() 
     { }
 

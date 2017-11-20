@@ -25,9 +25,11 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
 #include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/elementinfo.h>
+#include <sst/core/output.h>
+
 #include "memEvent.h"
 #include "customcmd/customCmdEvent.h"
-#include "sst/core/output.h"
 
 namespace SST {
 
@@ -40,6 +42,11 @@ namespace MemHierarchy {
 class MemHierarchyInterface : public Interfaces::SimpleMem {
 
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(MemHierarchyInterface, "memHierarchy", "memInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Interface to memory hierarchy. Converts SimpleMem requests into MemEventBases.", "SST::Interfaces::SimpleMem")
+
+/* Begin class definition */
     MemHierarchyInterface(SST::Component *comp, Params &params);
     
     /** Initialize the link to be used to connect with MemHierarchy */

@@ -26,7 +26,7 @@ namespace MemHierarchy {
 class MemBackend;
 
 class ScratchBackendConvertor : public SubComponent {
-  public:
+public:
     typedef uint64_t ReqId; 
 
     class MemReq {

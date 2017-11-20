@@ -21,6 +21,7 @@
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/rng/marsaglia.h>
+#include <sst/core/elementinfo.h>
 
 #include <unordered_map>
 
@@ -32,7 +33,24 @@ namespace MemHierarchy {
 class ScratchCPU : public Component {
 
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_COMPONENT(ScratchCPU, "memHierarchy", "ScratchCPU", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Simple test CPU for scratchpad interface", COMPONENT_CATEGORY_PROCESSOR)
 
+    SST_ELI_DOCUMENT_PARAMS(
+            {"scratchSize",             "(uint) Size of the scratchpad in bytes"},
+            {"maxAddr",                 "(uint) Maximum address to generate (i.e., scratchSize + size of memory)"},
+            {"rngseed",                 "(int) Set a seed for the random generator used to create requests", "7"},
+            {"scratchLineSize",         "(uint) Line size for scratch, max request size for scratch", "64"},
+            {"memLineSize",             "(uint) Line size for memory, max request size for memory", "64"},
+            {"clock",                   "(string) Clock frequency in Hz or period in s", "1GHz"},
+            {"maxOutstandingRequests",  "(uint) Maximum number of requests outstanding at a time", "8"},
+            {"maxRequestsPerCycle",     "(uint) Maximum number of requests to issue per cycle", "2"},
+            {"reqsToIssue",             "(uint) Number of requests to issue before ending simulation", "1000"} )
+
+    SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to cache", { "memHierarchy.MemEventBase" } } )
+
+/* Begin class definition */
     ScratchCPU(ComponentId_t id, Params& params);
     ~ScratchCPU() {}
     virtual void init(unsigned int phase);

@@ -44,7 +44,75 @@ namespace SST { namespace MemHierarchy {
 class MemNIC;
 
 class DirectoryController : public Component {
+public:
+/* Element Library Info */
+    SST_ELI_REGISTER_COMPONENT(DirectoryController, "memHierarchy", "DirectoryController", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Coherence directory, MSI or MESI", COMPONENT_CATEGORY_MEMORY)
 
+    SST_ELI_DOCUMENT_PARAMS( 
+            {"clock",                   "Clock rate of controller.", "1GHz"},
+            {"entry_cache_size",        "Size (in # of entries) the controller will cache.", "0"},
+            {"debug",                   "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+            {"debug_level",             "Debugging level: 0 to 10", "0"},
+            {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
+            {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
+            {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--", "MESI"},
+            {"mshr_num_entries",        "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},
+            {"net_memory_name",         "For directories connected to a memory over the network: name of the memory this directory owns", ""},
+            {"access_latency_cycles",   "Latency of directory access in cycles", "0"},
+            {"mshr_latency_cycles",     "Latency of mshr access in cycles", "0"},
+            {"max_requests_per_cycle",  "Maximum number of requests to process per cycle (0 or negative is unlimited)", "0"},
+            {"mem_addr_start",          "Starting memory address for the chunk of memory that this directory controller addresses.", "0"},
+            {"addr_range_start",        "Lowest address handled by this directory.", "0"},
+            {"addr_range_end",          "Highest address handled by this directory.", "uint64_t-1"},
+            {"interleave_size",         "Size of interleaved chunks. E.g., to interleave 8B chunks among 3 directories, set size=8B, step=24B", "0B"},
+            {"interleave_step",         "Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 directories, set size=8B, step=24B", "0B"},
+            /* Old parameters - deprecated or moved */
+            {"direct_mem_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether directory has a direct connection to memory (1) or is connected via a network (0)","1"}, // Remove SST 8.0
+            {"network_num_vc",          "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"}, // Remove SST 9.0
+            {"statistics",              "DEPRECATED - Use the Statistics API to get statistics", "0"},  // Remove SST 8.0
+            {"network_address",         "DEPRECATD - Now auto-detected by link control", ""},   // Remove SST 9.0
+            {"network_bw",                  "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "80GiB/s"}, // Remove SST 9.0
+            {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "1KiB"}, // Remove SST 9.0
+            {"network_output_buffer_size",  "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "1KiB"}) // Remove SST 9.0
+
+    SST_ELI_DOCUMENT_PORTS(
+            {"memory", "Link to memory controller", { "memHierarchy.MemEventBase" } },
+            {"network","Link to network", { "memHierarchy.MemRtrEvent" } } )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+            {"replacement_request_latency",     "Total latency in ns of all replacement (put*) requests handled",       "nanoseconds",  1},
+            {"get_request_latency",             "Total latency in ns of all get* requests handled",                     "nanoseconds",  1},
+            {"directory_cache_hits",            "Number of requests that hit in the directory cache",                   "requests",     1},
+            {"mshr_hits",                       "Number of requests that hit in the MSHRs",                             "requests",     1},
+            {"requests_received_GetS",          "Number of GetS (read-shared) requests received",                       "requests",     1},
+            {"requests_received_GetX",          "Number of GetX (write-exclusive) requests received",                   "requests",     1},
+            {"requests_received_GetSX",        "Number of GetSX (read-exclusive) requests received",                    "requests",     1},
+            {"requests_received_PutS",          "Number of PutS (shared replacement) requests received",                "requests",     1},
+            {"requests_received_PutE",          "Number of PutE (clean exclusive replacement) requests received",       "requests",     1},
+            {"requests_received_PutM",          "Number of PutM (dirty exclusive replacement) requests received",       "requests",     1},
+            {"requests_received_noncacheable",  "Number of noncacheable requests that were received and forwarded",     "requests",     1},
+            {"requests_received_custom",        "Number of custom requests that were received and forwarded",           "requests",     1},
+            {"responses_received_NACK",         "Number of NACK responses received",                                    "responses",    1},
+            {"responses_received_FetchResp",    "Number of FetchResp responses received (response to FetchInv/Fetch)",  "responses",    1},
+            {"responses_received_FetchXResp",   "Number of FetchXResp responses received (response to FetchXInv) ",     "responses",    1},
+            {"responses_received_PutS",         "Number of PutS (shared replacement) requests received that raced with an Inv/Fetch* and were treated as a response to that Inv/Fetch*",   "requests",     1},
+            {"responses_received_PutE",         "Number of PutE (clean exclusive replacement) requests received that raced with a Fetch* and were treated as a response to that Fetch*",   "requests",     1},
+            {"responses_received_PutM",         "Number of PutM (dirty exclusive replacement) requests received that raced with a Fetch* and were treated as a response to that Fetch*",   "requests",     1},
+            {"memory_requests_directory_entry_read", "Number of read requests for a directory entry sent to memory",    "requests",     1},
+            {"memory_requests_directory_entry_write","Number of write requests for a directory entry sent to memory",   "requests",     1},
+            {"memory_requests_data_read",       "Number of read requests for data sent to memory",                      "requests",     1},
+            {"memory_requests_data_write",      "Number of write requests for data sent to memory",                     "requests",     1},
+            {"requests_sent_Inv",               "Number of Inv (invalidate) requests sent to LLCs",                     "requests",     1},
+            {"requests_sent_FetchInv",          "Number of FetchInv (invalidate and fetch exclusive data) requests sent to LLCs",   "requests",     1},
+            {"requests_sent_FetchInvX",         "Number of FetchInvX (fetch exclusive data and downgrade) requests sent to LLCs",   "requests",     1},
+            {"responses_sent_NACK",             "Number of NACK responses sent to LLCs",                                            "responses",    1},
+            {"responses_sent_GetSResp",         "Number of GetSResp (data response to GetS or GetSX) responses sent to LLCs",       "responses",    1},
+            {"responses_sent_GetXResp",         "Number of GetXResp (data response to GetX) responses sent to LLCs",                "responses",    1},
+            {"MSHR_occupancy",                  "Number of events in MSHR each cycle",                                  "events",       1} )
+
+/* Begin class definition */
+private:
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
     struct DirEntry;

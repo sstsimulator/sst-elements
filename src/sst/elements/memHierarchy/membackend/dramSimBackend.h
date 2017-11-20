@@ -36,6 +36,19 @@ namespace MemHierarchy {
 
 class DRAMSimMemory : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(DRAMSimMemory, "memHierarchy", "dramsim", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "DRAMSim-driven memory timings", "SST::MemHierarchy::MemBackend")
+    
+#define DRAMSIM_ELI_PARAMS MEMBACKEND_ELI_PARAMS,\
+            /* Own parameters */\
+            {"verbose",     "Sets the verbosity of the backend output", "0"},\
+            {"device_ini",  "Name of the DRAMSim Device config file",   NULL},\
+            {"system_ini",  "Name of the DRAMSim Device system file",   NULL}
+
+    SST_ELI_DOCUMENT_PARAMS( DRAMSIM_ELI_PARAMS )
+
+/* Begin class definition */
     DRAMSimMemory(Component *comp, Params &params);
 	virtual bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool clock(Cycle_t cycle);
