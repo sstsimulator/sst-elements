@@ -26,6 +26,11 @@
 namespace SST {
 namespace MemHierarchy {
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
+
 class MemBackend;
 
 class MemBackendConvertor : public SubComponent {
@@ -302,6 +307,9 @@ class MemBackendConvertor : public SubComponent {
 
 };
 
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 }
 }
 #endif

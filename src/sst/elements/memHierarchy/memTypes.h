@@ -196,7 +196,7 @@ static const char* StateString[] __attribute__((unused)) = {
 #undef X
 };
 
-static State NextState[] = {
+static State NextState[] __attribute__((unused)) = {
 #define X(a,b) b,
     STATE_TYPES
 #undef X

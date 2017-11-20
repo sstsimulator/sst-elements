@@ -34,6 +34,11 @@ using namespace SST;
 
 namespace SST{ namespace MessierComponent{
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
+    
 	enum EventType { READ_COMPLETION, WRITE_COMPLETION, DEVICE_READY, HIT_MISS, INVALIDATE_WRITE};
 
 	// Thie defines a class for events of Messier
@@ -71,6 +76,9 @@ namespace SST{ namespace MessierComponent{
 
 	};
 
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 }}
 

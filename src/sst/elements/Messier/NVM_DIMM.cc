@@ -36,8 +36,11 @@ using namespace SST::MemHierarchy;
 using namespace SST;
 using namespace SST::MessierComponent;
 
-
-
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 
 // This is the constructor of the NVM-based DIMM
 
@@ -291,7 +294,7 @@ bool NVM_DIMM::try_flush_wb()
 
 	bool flush_write = false;
 
-	bool pull_idle = false;
+//	bool pull_idle = false;
 	int MAX_WRITES = params->max_writes;
 
 	if(WB->flush() || (transactions.empty() && !WB->empty()) || (params->modulo && !WB->empty()))
@@ -834,7 +837,8 @@ void NVM_DIMM::handleEvent( SST::Event* e )
 
 						m_memChan->send(respEvent);
 
-						if(cache!=NULL)
+						if(cache!=NULL) 
+						{
 							if(!cache->check_hit(temp->Address))
 							{
 								cache->insert_block(temp->Address, false);
@@ -846,7 +850,7 @@ void NVM_DIMM::handleEvent( SST::Event* e )
 								cache->update_lru(temp->Address);
 
 							}
-
+                        }
 
 						delete NVM_EVENT_MAP[temp->req_ID];
 
@@ -866,6 +870,7 @@ void NVM_DIMM::handleEvent( SST::Event* e )
 					m_memChan->send(respEvent);
 
 					if(cache!=NULL)
+					{
 						if(!cache->check_hit(temp->Address))
 						{
 							cache->insert_block(temp->Address, false);
@@ -877,6 +882,7 @@ void NVM_DIMM::handleEvent( SST::Event* e )
 							cache->update_lru(temp->Address);
 
 						}
+					}
 
 
 					delete NVM_EVENT_MAP[temp->req_ID];
@@ -997,3 +1003,6 @@ void NVM_DIMM::handleRequest(SST::Event* e)
 		push_request(tmp); // Push the request
 }
 
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#pragma GCC diagnostic pop
+#endif

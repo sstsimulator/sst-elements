@@ -24,6 +24,11 @@
 
 namespace SST { namespace MemHierarchy {
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
+
 using namespace std;
 
 class CustomCmdEvent : public MemEventBase {
@@ -132,6 +137,10 @@ public:
     ImplementSerializable(SST::MemHierarchy::CustomCmdEvent);
 
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 }}
 
