@@ -318,6 +318,8 @@ hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 emberParams['verbose'] = emberVerbose
 emberParams['firefly.hadesSHMEM.verboseLevel'] = 0 
 emberParams['firefly.hadesSHMEM.verboseMask'] = -1
+emberParams['firefly.hadesSHMEM.enterLat_ns'] = 57 
+emberParams['firefly.hadesSHMEM.returnLat_ns'] = 57 
 if embermotifLog:
     emberParams['motifLog'] = embermotifLog
 if emberrankmapper:
