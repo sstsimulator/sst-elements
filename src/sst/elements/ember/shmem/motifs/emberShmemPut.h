@@ -29,10 +29,12 @@ class EmberShmemPutGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemPutGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemPut" ), m_phase(0)
+		EmberShmemGenerator(owner, params, "ShmemPut" ), m_phase(-2)
 	{ 
+        m_biDir = params.find<bool>("arg.biDir", 0);
         m_nelems = params.find<int>("arg.nelems", 1);
         m_printResults = params.find<bool>("arg.printResults", false );
+		m_iterations = (uint32_t) params.find("arg.iterations", 1);
         int status;
         std::string tname = typeid(TYPE).name();
 		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
@@ -43,14 +45,12 @@ public:
     bool generate( std::queue<EmberEvent*>& evQ) 
 	{
         bool ret = false;
-        switch ( m_phase ) {
-        case 0:
+		if ( -2 == m_phase ) {
             enQ_init( evQ );
             enQ_n_pes( evQ, &m_num_pes );
             enQ_my_pe( evQ, &m_my_pe );
-            break;
-
-        case 1:
+            enQ_malloc( evQ, &m_src, m_nelems * sizeof(TYPE) * 2);
+		} else if ( -1 == m_phase ) {
 
             if ( 0 == m_my_pe ) {
                 printf("%d:%s: num_pes=%d nelems=%d type=\"%s\"\n",m_my_pe,
@@ -60,11 +60,6 @@ public:
 
             m_other_pe = (m_my_pe + 1) % m_num_pes;
 
-            enQ_malloc( evQ, &m_src, m_nelems * sizeof(TYPE) * 2);
-            break;
-
-        case 2:
-            
             m_dest = m_src.offset<TYPE>(m_nelems ); 
 
             for ( int i = 0; i < m_nelems; i++ ) {
@@ -73,30 +68,51 @@ public:
 			
 			bzero( &m_dest.at<TYPE>(0), sizeof(TYPE) * m_nelems);
             enQ_barrier_all( evQ );
-            break;
 
-        case 3:
-            enQ_put( evQ, 
+			enQ_getTime( evQ, &m_startTime );
+
+		} else if ( m_phase < m_iterations ) {
+
+			if ( 0 == m_my_pe || m_biDir ) {
+            	enQ_put( evQ, 
 					m_dest,
 					m_src,
                     m_nelems*sizeof(TYPE),
                     m_other_pe );
-            enQ_barrier_all( evQ );
-            break;
+			} else { 
+            	enQ_barrier_all( evQ );
+				ret = true;
+			}
 
-        case 4:
-            for ( int i = 0; i < m_nelems; i++ ) {
-				TYPE want = ((m_my_pe + 1) % 2 )  + i;
-				if ( m_printResults ) {
-                	std::stringstream tmp;
-                	tmp << " got="<< m_dest.at<TYPE>(i) << " want=" <<  want;
-                	printf("%d:%s: PUT %s\n",m_my_pe, getMotifName().c_str(), tmp.str().c_str());
-				}
-                assert( m_dest.at<TYPE>(i) == want );
-            }
+			if ( m_phase + 1 == m_iterations ) {
+				enQ_getTime( evQ, &m_stopTime );
+            	enQ_barrier_all( evQ );
+			}
+
+		} else {
+			
+            if ( m_biDir ) {
+            	for ( int i = 0; i < m_nelems; i++ ) {
+					TYPE want = ((m_my_pe + 1) % 2 )  + i;
+					if ( m_printResults ) {
+                		std::stringstream tmp;
+                		tmp << " got="<< m_dest.at<TYPE>(i) << " want=" <<  want;
+                		printf("%d:%s: PUT %s\n",m_my_pe, getMotifName().c_str(), tmp.str().c_str());
+					}
+                	assert( m_dest.at<TYPE>(i) == want );
+            	}
+			}
 		    ret = true;
             if ( 0 == m_my_pe ) {
-                printf("%d:%s: exit\n",m_my_pe, getMotifName().c_str());
+                double totalTime = (double)(m_stopTime - m_startTime)/1000000000.0;
+                double latency = (totalTime/m_iterations);
+                printf("%d:%s: message-size %d, iterations %d, total-time %.3lf us, time-per %.3lf us, %.3f GB/s\n",m_my_pe,
+                            getMotifName().c_str(),
+                            m_nelems * sizeof(TYPE),
+                            m_iterations,
+                            totalTime * 1000000.0,
+                            latency * 1000000.0,
+                            (m_nelems*sizeof(TYPE) / latency )/1000000000.0 * ( m_biDir ? 2 : 1 )  );
             }
         }
         ++m_phase;
@@ -104,10 +120,14 @@ public:
 	}
   private:
 
+	bool m_biDir;
+	uint64_t m_startTime;
+	uint64_t m_stopTime;
     bool m_printResults;
     std::string m_type_name;		
     Hermes::MemAddr m_src;
     Hermes::MemAddr m_dest;
+	int m_iterations;
     int m_nelems;
     int* m_from;
     int* m_to;
