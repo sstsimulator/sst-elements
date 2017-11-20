@@ -13,6 +13,11 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
+
 class NicInitEvent : public Event {
 
   public:
@@ -449,3 +454,7 @@ class NicRespEvent : public NicRespBaseEvent {
 
     NotSerializable(NicRespEvent)
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
