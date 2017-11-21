@@ -24,7 +24,31 @@ namespace MemHierarchy {
 using namespace  TimingDRAM_NS;
 
 class TimingDRAM : public SimpleMemBackend {
+public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(TimingDRAM, "memHierarchy", "timingDRAM", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Moderately-detailed timing model for DRAM", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"id", "ID number for this TimingDRAM instance", NULL},
+            {"dbg_level", "Output verbosity for debug", "1"},
+            {"dbg_mask", "Mask on dbg_level", "-1"},
+            {"addrMapper", "Address map subcomponent", "memHierarchy.simpleAddrMapper"},
+            {"channels", "Number of channels", "1"},
+            {"channel.numRanks", "Number of ranks per channel", "1"},
+            {"channel.transaction_Q_size", "Size of transaction queue", "32"},
+            {"channel.rank.numBanks", "Number of banks per rank", "8"},
+            {"channel.rank.bank.CL", "Column access latency in cycles", "11"},
+            {"channel.rank.bank.CL_WR", "Column write latency", "11"},
+            {"channel.rank.bank.RCD", "Row access latency in cycles", "11"},
+            {"channel.rank.bank.TRP", "Precharge delay in cycles", "11"},
+            {"channel.rank.bank.dataCycles", "", "4"},
+            {"channel.rank.bank.transactionQ", "Transaction queue model (subcomponent)", "memHierarchy.fifoTransactionQ"},
+            {"channel.rank.bank.pagePolicy", "Policy subcomponent for managing row buffer", "memHierarchy.simplePagePolicy"})
 
+/* Begin class definition */
+private:
     const uint64_t DBG_MASK = 0x1;
 
     class Cmd;

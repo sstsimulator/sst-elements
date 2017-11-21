@@ -23,6 +23,7 @@
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
 
@@ -41,16 +42,42 @@ using namespace std;
 
 class Sieve : public SST::Component {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_COMPONENT(Sieve, "memHierarchy", "Sieve", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Simple cache filtering component to model last-level caches", COMPONENT_CATEGORY_MEMORY)
 
+    SST_ELI_DOCUMENT_PARAMS(
+            {"cache_size",              "(string) Cache size with units. Eg. 4KiB or 1MiB"},
+            {"associativity",           "(uint) Associativity of the cache. In set associative mode, this is the number of ways."},
+            {"cache_line_size",         "(uint) Size of a cache line (aka cache block) in bytes.", "64"},
+            {"profiler",                "(string) Name of profiling subcomponent. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
+            {"debug",                   "(uint) Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+            {"debug_level",             "(uint) Debugging/verbosity level. Between 0 and 10", "0"},
+            {"output_file",             "(string) Name of file to output malloc information to. Will have sequence number (and optional marker number) and .txt appended to it. E.g. sieveMallocRank-3.txt", "sieveMallocRank"},
+            {"reset_stats_at_buoy",     "(bool) Whether to reset allocation hit/miss stats when a buoy is found (i.e., when a new output file is dumped). Any value other than 0 is true." "0"} )
+
+    SST_ELI_DOCUMENT_PORTS(
+            {"cpu_link_%(port)d", "Ports connected to the CPUs", {"memHierarchy.MemEventBase"}},
+            {"alloc_link_%(port)d", "Ports connected to the CPUs' allocation/free notification ports", {"ariel.arielAllocTrackEvent"}} )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+            {"ReadHits",    "Number of read requests that hit in the sieve", "count", 1},
+            {"ReadMisses",  "Number of read requests that missed in the sieve", "count", 1},
+            {"WriteHits",   "Number of write requests that hit in the sieve", "count", 1},
+            {"WriteMisses", "Number of write requests that missed in the sieve", "count", 1},
+            {"UnassociatedReadMisses", "Number of read misses that did not match a malloc", "count", 1},
+            {"UnassociatedWriteMisses", "Number of write misses that did not match a malloc", "count", 1} )
+
+/* Begin class definition */
     typedef CacheArray::CacheLine CacheLine;
     typedef unsigned int uint;
     typedef uint64_t uint64;
+    
+    /** Constructor for Sieve Component */
+    Sieve(ComponentId_t id, Params &params);
 
     virtual void init(unsigned int);
     virtual void finish(void);
-    
-    /** Creates cache componennt */
-    static Sieve* sieveFactory(SST::ComponentId_t id, SST::Params& params);
     
     /** Computes the 'Base Address' of the requests.  The base address point the first address of the cache line */
     Addr toBaseAddr(Addr addr){
@@ -59,7 +86,6 @@ public:
     }
     
 private:
-    struct SieveConfig;
     struct mallocEntry {
         uint64_t id;    // ID assigned by ariel
         uint64_t size;  // Number of bytes
@@ -83,9 +109,6 @@ private:
     /** misses not associated with an alloc'd region */
 
     void recordMiss(Addr addr, bool isRead);
-    
-    /** Constructor for Sieve Component */
-    Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output);
     
     /** Destructor for Sieve Component */
     ~Sieve();

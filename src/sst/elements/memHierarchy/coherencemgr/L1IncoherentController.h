@@ -17,6 +17,9 @@
 #define L1INCOHERENTCONTROLLER_H
 
 #include <iostream>
+
+#include <sst/core/elementinfo.h>
+
 #include "coherencemgr/coherenceController.h"
 
 
@@ -24,6 +27,75 @@ namespace SST { namespace MemHierarchy {
 
 class L1IncoherentController : public CoherenceController {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(L1IncoherentController, "memHierarchy", "L1IncoherentController", SST_ELI_ELEMENT_VERSION(1,0,0), 
+            "Implements an L1 cache without coherence", "SST::MemHierarchy::CoherenceController")
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        /* Event sends */
+        {"eventSent_GetS",              "Number of GetS requests sent", "events", 2},
+        {"eventSent_GetX",              "Number of GetX requests sent", "events", 2},
+        {"eventSent_GetSX",             "Number of GetSX requests sent", "events", 2},
+        {"eventSent_GetSResp",          "Number of GetSResp responses sent", "events", 2},
+        {"eventSent_GetXResp",          "Number of GetXResp responses sent", "events", 2},
+        {"eventSent_PutE",              "Number of PutE requests sent", "events", 2},
+        {"eventSent_PutM",              "Number of PutM requests sent", "events", 2},
+        {"eventSent_NACK_up",           "Number of NACKs sent up (towards CPU)", "events", 2},
+        {"eventSent_NACK_down",         "Number of NACKs sent down (towards main memory)", "events", 2},
+        {"eventSent_FlushLine",         "Number of FlushLine requests sent", "events", 2},
+        {"eventSent_FlushLineInv",      "Number of FlushLineInv requests sent", "events", 2},
+        {"eventSent_FlushLineResp",     "Number of FlushLineResp responses sent", "events", 2},
+        /* Event/State combinations - Count how many times an event was seen in particular state */
+        {"stateEvent_GetS_I",           "Event/State: Number of times a GetS was seen in state I (Miss)", "count", 3},
+        {"stateEvent_GetS_E",           "Event/State: Number of times a GetS was seen in state E (Hit)", "count", 3},
+        {"stateEvent_GetS_M",           "Event/State: Number of times a GetS was seen in state M (Hit)", "count", 3},
+        {"stateEvent_GetX_I",           "Event/State: Number of times a GetX was seen in state I (Miss)", "count", 3},
+        {"stateEvent_GetX_E",           "Event/State: Number of times a GetX was seen in state E (Hit)", "count", 3},
+        {"stateEvent_GetX_M",           "Event/State: Number of times a GetX was seen in state M (Hit)", "count", 3},
+        {"stateEvent_GetSX_I",          "Event/State: Number of times a GetSX was seen in state I (Miss)", "count", 3},
+        {"stateEvent_GetSX_E",          "Event/State: Number of times a GetSX was seen in state E (Hit)", "count", 3},
+        {"stateEvent_GetSX_M",          "Event/State: Number of times a GetSX was seen in state M (Hit)", "count", 3},
+        {"stateEvent_GetSResp_IS",      "Event/State: Number of times a GetSResp was seen in state IS", "count", 3},
+        {"stateEvent_GetXResp_IM",      "Event/State: Number of times a GetXResp was seen in state IM", "count", 3},
+        {"stateEvent_FlushLine_I",      "Event/State: Number of times a FlushLine was seen in state I", "count", 3},
+        {"stateEvent_FlushLine_E",      "Event/State: Number of times a FlushLine was seen in state E", "count", 3},
+        {"stateEvent_FlushLine_M",      "Event/State: Number of times a FlushLine was seen in state M", "count", 3},
+        {"stateEvent_FlushLine_IS",     "Event/State: Number of times a FlushLine was seen in state IS", "count", 3},
+        {"stateEvent_FlushLine_IM",     "Event/State: Number of times a FlushLine was seen in state IM", "count", 3},
+        {"stateEvent_FlushLine_IB",     "Event/State: Number of times a FlushLine was seen in state I_B", "count", 3},
+        {"stateEvent_FlushLine_SB",     "Event/State: Number of times a FlushLine was seen in state S_B", "count", 3},
+        {"stateEvent_FlushLineInv_I",       "Event/State: Number of times a FlushLineInv was seen in state I", "count", 3},
+        {"stateEvent_FlushLineInv_E",       "Event/State: Number of times a FlushLineInv was seen in state E", "count", 3},
+        {"stateEvent_FlushLineInv_M",       "Event/State: Number of times a FlushLineInv was seen in state M", "count", 3},
+        {"stateEvent_FlushLineInv_IS",      "Event/State: Number of times a FlushLineInv was seen in state IS", "count", 3},
+        {"stateEvent_FlushLineInv_IM",      "Event/State: Number of times a FlushLineInv was seen in state IM", "count", 3},
+        {"stateEvent_FlushLineInv_IB",      "Event/State: Number of times a FlushLineInv was seen in state I_B", "count", 3},
+        {"stateEvent_FlushLineInv_SB",      "Event/State: Number of times a FlushLineInv was seen in state S_B", "count", 3},
+        {"stateEvent_FlushLineResp_I",      "Event/State: Number of times a FlushLineResp was seen in state I", "count", 3},
+        {"stateEvent_FlushLineResp_IB",     "Event/State: Number of times a FlushLineResp was seen in state I_B", "count", 3},
+        {"stateEvent_FlushLineResp_SB",     "Event/State: Number of times a FlushLineResp was seen in state S_B", "count", 3},
+        /* Eviction - count attempts to evict in a particular state */
+        {"evict_I",                 "Eviction: Attempted to evict a block in state I", "count", 3},
+        {"evict_E",                 "Eviction: Attempted to evict a block in state E", "count", 3},
+        {"evict_M",                 "Eviction: Attempted to evict a block in state M", "count", 3},
+        {"evict_IS",                "Eviction: Attempted to evict a block in state IS", "count", 3},
+        {"evict_IM",                "Eviction: Attempted to evict a block in state IM", "count", 3},
+        {"evict_IB",                "Eviction: Attempted to evict a block in state S_B", "count", 3},
+        {"evict_SB",                "Eviction: Attempted to evict a block in state I_B", "count", 3},
+        /* Latency for different kinds of misses*/
+        {"latency_GetS_IS",         "Latency for read misses in I state", "cycles", 1},
+        {"latency_GetS_M",          "Latency for read misses that find the block owned by another cache in M state", "cycles", 1},
+        {"latency_GetX_IM",         "Latency for write misses in I state", "cycles", 1},
+        {"latency_GetX_SM",         "Latency for write misses in S state", "cycles", 1},
+        {"latency_GetX_M",          "Latency for write misses that find the block owned by another cache in M state", "cycles", 1},
+        {"latency_GetSX_IM",        "Latency for read-exclusive misses in I state", "cycles", 1},
+        {"latency_GetSX_SM",        "Latency for read-exclusive misses in S state", "cycles", 1},
+        {"latency_GetSX_M",         "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1})
+
+/* Class definition */
+    
+        
+/* Begin class definition */    
     /** Constructor for L1IncoherentController */
     L1IncoherentController(Component* comp, Params& params) : CoherenceController(comp, params) {
         debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");

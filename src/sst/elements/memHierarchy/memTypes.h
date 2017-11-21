@@ -136,11 +136,10 @@ static const MemEventType MemEventTypeArr[] = {
 };
 
 // statistics for the network memory inspector
-static const ElementInfoStatistic networkMemoryInspector_statistics[] = {
+static const std::vector<ElementInfoStatistic> networkMemoryInspector_statistics = {
 #define X(a,b,c,d,e,f,g) { #a, #a, "memEvents", 1},
     X_CMDS
 #undef X
-    { NULL, NULL, NULL, 0 }
 };
 
 
@@ -197,7 +196,7 @@ static const char* StateString[] __attribute__((unused)) = {
 #undef X
 };
 
-static State NextState[] = {
+static State NextState[] __attribute__((unused)) = {
 #define X(a,b) b,
     STATE_TYPES
 #undef X

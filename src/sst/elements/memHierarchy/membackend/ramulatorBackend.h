@@ -31,6 +31,16 @@ namespace MemHierarchy {
 
 class ramulatorMemory : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(ramulatorMemory, "memHierarchy", "ramulator", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Ramulator-driven memory timings", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"verbose",     "Sets the verbosity of the backend output", "0"},
+            {"configFile",  "Name of the Ramulator Device config file", NULL} )
+
+/* Begin class definition */
     ramulatorMemory(Component *comp, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
     //virtual bool issueRequest(DRAMReq *req);
