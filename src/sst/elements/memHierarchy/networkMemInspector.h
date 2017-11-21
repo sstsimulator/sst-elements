@@ -20,6 +20,9 @@
 
 #include <sst/core/output.h>
 #include <sst/core/interfaces/simpleNetwork.h>
+#include <sst/core/elementinfo.h>
+
+#include "memTypes.h"
 #include "memEvent.h"
 
 using namespace SST;
@@ -27,9 +30,16 @@ using namespace SST::Interfaces;
 
 namespace SST { namespace MemHierarchy {
 
-        class networkMemInspector : public SimpleNetwork::NetworkInspector {
-        public:
-            networkMemInspector(Component *parent);
+class networkMemInspector : public SimpleNetwork::NetworkInspector {
+public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(networkMemInspector, "memHierarchy", "networkMemoryInspector", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Used to classify memory traffic going through a network router", "SST::Interfaces::SimpleNetwork::NetworkInspector")
+
+    SST_ELI_DOCUMENT_STATISTICS( networkMemoryInspector_statistics ) // Defined in memTypes.h via x macro
+
+/* Begin class definition */
+            networkMemInspector(Component *parent, Params &params);
             
             virtual ~networkMemInspector() {}
             

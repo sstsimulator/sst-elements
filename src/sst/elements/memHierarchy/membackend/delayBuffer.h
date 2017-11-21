@@ -25,6 +25,17 @@ namespace MemHierarchy {
 
 class DelayBuffer : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(DelayBuffer, "memHierarchy", "DelayBuffer", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Delays requests by a specified time", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"verbose", "Sets the verbosity of the backend output", "0"},
+            {"backend", "Backend memory system", "memHierarchy.simpleMem"},
+            {"request_delay", "Constant delay to be added to requests with units (e.g., 1us)", "0ns"} )
+
+/* Begin class definition */
     DelayBuffer();
     DelayBuffer(Component *comp, Params &params);
 	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );

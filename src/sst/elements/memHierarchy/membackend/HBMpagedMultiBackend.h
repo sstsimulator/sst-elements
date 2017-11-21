@@ -149,8 +149,37 @@ struct HBMpageInfo {
 
 class HBMpagedMultiMemory : public HBMDRAMSimMemory {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(HBMpagedMultMemory, "memHierarchy", "HBMpagedMultiMemory", SST_ELI_ELEMENT_VERSION(1,0,0), 
+            "HBM DRAMSim-driven memory timings with a fixed timing multi-level memory using paging", "SST::MemHierarchy::MemBackend")
+
+    SST_ELI_DOCUMENT_PARAMS( HBMDRAMSIMEMORY_ELI_PARAMS,
+            /* Own parameters */
+            {"collect_stats", "Name of DRAMSim Device system file", "0"},
+            {"transfer_delay", "Time (in ns) to transfer page to fast mem", "250"},
+            {"dramBackpressure", "Don't issue page swaps if DRAM is too busy", "1"},
+            {"threshold", "Threshold (touches/quantum)", "4"},
+            {"scan_threshold", "Scan Threshold (for SC strategies)", "4"},
+            {"seed", "RNG Seed", "1447"},
+            {"page_add_strategy", "Page Addition Strategy", "T"},
+            {"page_replace_strategy", "Page Replacement Strategy", "FIFO"},
+            {"access_time", "Constant time memory access for \"fast\" memory", "35ns"},
+            {"max_fast_pages", "Number of \"fast\" (constant time) pages", "256"},
+            {"page_shift", "Size of page (2^x bytes)", "12"},
+            {"quantum", "Time period for when page access counts is shifted", "5ms"},
+            {"accStatsPrefix", "File name for acces pattern statistics", ""} )
+    
+    SST_ELI_DOCUMENT_STATISTICS( HBMDRAMSIMMEMORY_ELI_STATS,
+            {"fast_hits", "Number of accesses that 'hit' a fast page", "count", 1},
+            {"fast_swaps", "Number of pages swapped between 'fast' and 'slow' memory", "count", 1},
+            {"fast_acc", "Number of total accesses to the memory backend", "count", 1},
+            {"t_pages", "Number of total pages", "count", 1},
+            {"cant_swap", "Number of times a page could not be swapped in because no victim page could be found because all candidates were swapping", "count", 1},
+            {"swap_delays", "Number of an access is delayed because the page is swapping", "count", 1} )
+    
+/* Class definition */
     HBMpagedMultiMemory(Component *comp, Params &params);
-	virtual bool issueRequest(ReqId, Addr, bool, unsigned );
+    virtual bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool clock(Cycle_t cycle);
     virtual void finish();
 
