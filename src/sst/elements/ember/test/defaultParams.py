@@ -23,7 +23,7 @@ nicParams = {
     "rxMatchDelay_ns" : 100,
     "txDelay_ns" : 50,
     "nic2host_lat" : "150ns",
-    "useSimpleMemoryModel" : 1,
+    "useSimpleMemoryModel" : 0,
 	"simpleMemoryModel.verboseLevel" : 0,
 	"simpleMemoryModel.verboseMask" : 1<<3,
 
