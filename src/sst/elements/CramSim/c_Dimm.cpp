@@ -47,6 +47,8 @@
 #include "c_CmdReqEvent.hpp"
 #include "c_CmdResEvent.hpp"
 
+#include <cmath>
+
 using namespace SST;
 using namespace SST::n_Bank;
 
