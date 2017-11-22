@@ -79,12 +79,9 @@ public:
 					m_src,
                     m_nelems*sizeof(TYPE),
                     m_other_pe );
-			} else { 
-            	enQ_barrier_all( evQ );
-				ret = true;
 			}
 
-			if ( m_phase + 1 == m_iterations ) {
+			if (  ( ! m_biDir && 0 != m_my_pe ) || m_phase + 1 == m_iterations ) {
 				enQ_getTime( evQ, &m_stopTime );
             	enQ_barrier_all( evQ );
 			}
