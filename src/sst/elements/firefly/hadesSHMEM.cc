@@ -101,7 +101,7 @@ void HadesSHMEM::init2(Shmem::Callback callback)
     m_my_pe = m_os->getInfo()->getGroup(MP::GroupWorld)->getMyRank();
     dbg().verbose(CALL_INFO,1,1,"my_pe=%d num_pes=%d\n",m_my_pe,m_num_pes);
 
-    m_common = new ShmemCommon( m_my_pe, m_num_pes, 10, 2 );
+    m_common = new ShmemCommon( m_my_pe, m_num_pes, 10, 8 );
     m_barrier = new ShmemBarrier( *this, *m_common );
     m_broadcast = new ShmemBroadcast( *this, *m_common );
     m_collect = new ShmemCollect( *this, *m_common );
@@ -179,11 +179,7 @@ void HadesSHMEM::my_pe2(int* val, Shmem::Callback callback )
 
 void HadesSHMEM::quiet(Shmem::Callback callback)
 {
-	delayEnter(
-			[=]() {
-				this->quiet2( callback );
-		  	}
-	);
+	wait_until( m_pendingRemoteOps.getSimVAddr(), Shmem::EQ, m_zero, callback ); 
 }
 
 void HadesSHMEM::quiet2(Shmem::Callback callback)
@@ -262,6 +258,8 @@ void HadesSHMEM::barrier_all2(Shmem::Callback callback)
 
     m_barrier->start( 0, 0, m_num_pes, m_pSync.getSimVAddr(), 
             [=](int) { 
+
+    			dbg().verbose(CALL_INFO,1,1,"barrier_all2() complete\n");
 				this->delayReturn( callback );
             }
 	);
@@ -433,7 +431,7 @@ void HadesSHMEM::get2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int 
     m_os->getNic()->shmemGet( pe, dest, src, length, 
                 [=]() {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
-                    this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+                    this->delayReturn( callback );
                 }
             );
 }
@@ -462,13 +460,18 @@ void HadesSHMEM::getv2( Hermes::Value& value, Hermes::Vaddr src, int pe, Shmem::
                     Hermes::Value _value = value;
                     ::memcpy( _value.getPtr(), newValue.getPtr(), _value.getLength() );
 
-                    this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+                    this->delayReturn( callback );
                 }
             );
 }
 
 void HadesSHMEM::put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, Shmem::Callback callback)
 {
+	if ( length == 0 ) {
+		
+		delay( callback, 0, 0 );
+		return; 
+	}
 	delayEnter( 
 			[=]() {
 				this->put2( dest, src, length, pe, callback );
@@ -504,7 +507,7 @@ void HadesSHMEM::putOp2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, in
     m_os->getNic()->shmemPutOp( pe, dest, src, length, op, dataType, 
                 [=]() {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
-                    this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+                    this->delayReturn( callback );
                 }
             );
 }
@@ -528,7 +531,7 @@ void HadesSHMEM::putv2(Hermes::Vaddr dest, Hermes::Value& value, int pe, Shmem::
     m_os->getNic()->shmemPutv( pe, dest, value,
                 [=]() {
                     this->dbg().verbose(CALL_INFO,1,1,"\n");
-                    this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+                    this->delayReturn( callback );
                 }
             );
 }
@@ -550,8 +553,8 @@ void HadesSHMEM::wait_until2(Hermes::Vaddr addr, Hermes::Shmem::WaitOp op, Herme
 
     m_os->getNic()->shmemWait( addr, op, value,
                 [=]() {
-                    this->dbg().verbose(CALL_INFO,1,1,"\n");
-                    this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+                    this->dbg().verbose(CALL_INFO,1,1,"wait_until2() addr=%#lx done\n",addr);
+                    this->delayReturn( callback );
                 }
             );
 }
@@ -581,7 +584,7 @@ void HadesSHMEM::swap2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value&
                     Hermes::Value _result = result;
                     ::memcpy( _result.getPtr(), newValue.getPtr(), value.getLength() );
 
-                    this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+                    this->delayReturn( callback );
                 }
             );
 }
@@ -614,7 +617,7 @@ void HadesSHMEM::cswap2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value
                     Hermes::Value _result = result;
                     ::memcpy( _result.getPtr(), newValue.getPtr(), value.getLength() );
 
-                    this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+                    this->delayReturn( callback );
                 }
             );
 }
@@ -637,9 +640,9 @@ void HadesSHMEM::add2( Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::
 
     m_os->getNic()->shmemAdd( pe, addr, value, 
                 [=]( ) {
-                    this->dbg().verbose(CALL_INFO,1,1,"\n");
+                    this->dbg().verbose(CALL_INFO,1,1,"add2() done\n");
 
-                    this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+                    this->delayReturn( callback );
                 }
             );
 }
@@ -668,7 +671,7 @@ void HadesSHMEM::fadd2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value&
                     Hermes::Value _result = result;
                     ::memcpy( _result.getPtr(), newValue.getPtr(), _result.getLength() );
 
-                    this->m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
+                    this->delayReturn( callback );
                 }
             );
 }

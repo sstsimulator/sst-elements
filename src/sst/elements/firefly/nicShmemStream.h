@@ -15,23 +15,18 @@
 
 class ShmemStream : public StreamBase {
   public:
-    typedef std::function<void()> Callback;
-
-	struct Ret {
-    	SimTime_t delay;
-    	Callback  callback;
-	};
+    //typedef std::function<void()> Callback;
 
     ShmemStream( Output&, FireflyNetworkEvent*, RecvMachine& );
 
   private:
-    Ret processAck( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
-    Ret processPut( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
-    Ret processGetResp( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
-    Ret processGet( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
-    Ret processFadd( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
-    Ret processAdd( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
-    Ret processCswap( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
-    Ret processSwap( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
+    void processAck( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
+    void processPut( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
+    void processGetResp( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
+    void processGet( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
+    void processFadd( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
+    void processAdd( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
+    void processCswap( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
+    void processSwap( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     ShmemMsgHdr m_shmemHdr;
 };

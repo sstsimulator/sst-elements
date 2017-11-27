@@ -52,7 +52,7 @@ void CommCreateFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     }  
     delete event;
 
-    BarrierStartEvent* tmp = new BarrierStartEvent( MP::GroupWorld  );
+    BarrierStartEvent* tmp = new BarrierStartEvent( event->oldComm  );
 
     BarrierFuncSM::handleStartEvent(static_cast<SST::Event*>(tmp), retval );
 }

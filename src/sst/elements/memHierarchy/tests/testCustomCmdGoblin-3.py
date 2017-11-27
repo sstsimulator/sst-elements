@@ -8,14 +8,12 @@ from utils import *
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", help="specify configuration file", required=False)
 parser.add_argument("-v", "--verbose", help="increase verbosity of output", action="store_true")
-parser.add_argument("-s", "--statfile", help="statistics file", default="./stats.csv")
 parser.add_argument("-l", "--statlevel", help="statistics level", type=int, default=16)
 
 args = parser.parse_args()
 
 verbose = args.verbose
 cfgFile = "miranda.cfg"
-statFile = args.statfile
 statLevel = args.statlevel
 
 # Build Configuration Information
@@ -78,10 +76,6 @@ connect("dc_link_0",
 sst.setStatisticLoadLevel(statLevel)
 sst.enableAllStatisticsForAllComponents({"type":"sst.AccumulatorStatistic"})
 
-sst.setStatisticOutput("sst.statOutputCSV")
-sst.setStatisticOutputOptions( {
-    "filepath"  : statFile,
-    "separator" : ", "
-    } )
+sst.setStatisticOutput("sst.statOutputConsole")
 
 print "Completed configuring the EX3 model"
