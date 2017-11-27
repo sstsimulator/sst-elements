@@ -17,6 +17,8 @@ emberVerbose = 0
 embermotifLog = ''
 emberrankmapper = ''
 
+useSimpleMemoryModel=False
+
 statNodeList = []
 jobid = 0
 loadFile = '' 
@@ -65,7 +67,8 @@ try:
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
 		"rtrArb=","embermotifLog=",	"rankmapper=","motifAPI=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
-        "detailedNameModel=","detailedModelParams=","detailedModelNodes="])
+        "detailedNameModel=","detailedModelParams=","detailedModelNodes=",
+		"useSimpleMemoryModel"])
 
 except getopt.GetoptError as err:
     print str(err)
@@ -132,6 +135,8 @@ for o, a in opts:
         simConfig = a
     elif o in ("--platParams"):
         platParams = a
+    elif o in ("--useSimpleMemoryModel"):
+		useSimpleMemoryModel=True
     else:
         assert False, "unhandle option" 
 
@@ -311,6 +316,8 @@ if rndmPlacement and bgPercentage > 0:
 
 nicParams['verboseLevel'] = debug
 nicParams['verboseMask'] = 1
+if useSimpleMemoryModel:
+	nicParams['useSimpleMemoryModel'] = 1
 hermesParams['hermesParams.verboseLevel'] = debug
 hermesParams['hermesParams.nicParams.verboseLevel'] = debug
 hermesParams['hermesParams.functionSM.verboseLevel'] = debug
@@ -318,6 +325,8 @@ hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 emberParams['verbose'] = emberVerbose
 emberParams['firefly.hadesSHMEM.verboseLevel'] = 0 
 emberParams['firefly.hadesSHMEM.verboseMask'] = -1
+emberParams['firefly.hadesSHMEM.enterLat_ns'] = 57 
+emberParams['firefly.hadesSHMEM.returnLat_ns'] = 57 
 if embermotifLog:
     emberParams['motifLog'] = embermotifLog
 if emberrankmapper:

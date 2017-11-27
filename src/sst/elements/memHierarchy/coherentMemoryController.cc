@@ -48,6 +48,7 @@ using namespace SST::MemHierarchy;
  */
 CoherentMemController::CoherentMemController(ComponentId_t id, Params &params) : MemController(id, params) {
     directory_ = false; /* Updated during init */
+    timestamp_ = 0;
 }
 
 

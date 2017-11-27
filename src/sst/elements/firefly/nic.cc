@@ -109,10 +109,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     }
     m_recvM.resize( m_num_vNics );
 
-    m_shmem = new Shmem( *this, m_num_vNics, m_dbg, getDelay_ns(), getDelay_ns() );
+    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, getDelay_ns(), getDelay_ns() );
 
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
-        m_simpleMemoryModel = new SimpleMemoryModel();
+        Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
+        m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics );
     }
 
     m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
@@ -482,37 +483,42 @@ void Nic::detailedMemOp( Thornhill::DetailedCompute* detailed,
     }
 }
 
-void Nic::dmaRead( std::vector<MemOp>& vec, Callback callback ) {
+void Nic::dmaRead( std::vector<MemOp>* vec, Callback callback ) {
 
     if ( m_simpleMemoryModel ) {
-        schedCallback( callback, calcNicMemDelay( vec ) );
+        calcNicMemDelay( NIC_SendThread, vec, callback );
     } else if ( m_useDetailedCompute && m_detailedCompute[0] ) {
 
-        detailedMemOp( m_detailedCompute[0], vec, "Read", callback );
+        detailedMemOp( m_detailedCompute[0], *vec, "Read", callback );
+        delete vec;
 
     } else {
         size_t len = 0;
-        for ( unsigned i = 0; i < vec.size(); i++ ) {
-            len += vec[i].length;
+        for ( unsigned i = 0; i < vec->size(); i++ ) {
+            len += (*vec)[i].length;
         }
         m_arbitrateDMA->canIRead( callback, len );
+        delete vec;
     }
 }
 
-void Nic::dmaWrite( std::vector<MemOp>& vec, Callback callback ) {
+void Nic::dmaWrite( std::vector<MemOp>* vec, Callback callback ) {
+
 
     if ( m_simpleMemoryModel ) {
-        schedCallback( callback, calcNicMemDelay( vec ) );
+       	calcNicMemDelay( NIC_RecvThread, vec, callback );
     } else if ( m_useDetailedCompute && m_detailedCompute[1] ) {
 
-        detailedMemOp( m_detailedCompute[1], vec, "Write", callback );
+        detailedMemOp( m_detailedCompute[1], *vec, "Write", callback );
+        delete vec;
 
     } else {
         size_t len = 0;
-        for ( unsigned i = 0; i < vec.size(); i++ ) {
-            len += vec[i].length;
+        for ( unsigned i = 0; i < vec->size(); i++ ) {
+            len += (*vec)[i].length;
         }
         m_arbitrateDMA->canIWrite( callback, len );
+        delete vec;
     }
 }
 

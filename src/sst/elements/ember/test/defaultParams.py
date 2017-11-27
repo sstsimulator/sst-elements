@@ -23,6 +23,30 @@ nicParams = {
     "rxMatchDelay_ns" : 100,
     "txDelay_ns" : 50,
     "nic2host_lat" : "150ns",
+    "useSimpleMemoryModel" : 0,
+	"simpleMemoryModel.verboseLevel" : 0,
+	"simpleMemoryModel.verboseMask" : 1<<3,
+
+	"simpleMemoryModel.hostCacheUnitSize" : 612, 
+	"simpleMemoryModel.hostCacheNumMSHR" : 16, 
+	"simpleMemoryModel.hostCacheLineSize" : 64, 
+
+	"simpleMemoryModel.memNumSlots" : 128, 
+
+	"simpleMemoryModel.nicCacheUnitSize" : 2, 
+
+	"simpleMemoryModel.memReadLat_ns" : 150, 
+	"simpleMemoryModel.memWriteLat_ns" : 40, 
+	"simpleMemoryModel.widgetSlots" : 32, 
+
+	"simpleMemoryModel.nicNumLoadSlots" : 16, 
+	"simpleMemoryModel.nicNumStoreSlots" : 16, 
+
+	"simpleMemoryModel.nicHostLoadSlots" : 1, 
+	"simpleMemoryModel.nicHostStoreSlots" : 1, 
+	#"simpleMemoryModel.busBandwidth_GB" : 15.6, 
+	#"simpleMemoryModel.busBandwidth_GB" : 9.6, 
+	"simpleMemoryModel.busBandwidth_GB" : 10, 
 }
 
 emberParams = {

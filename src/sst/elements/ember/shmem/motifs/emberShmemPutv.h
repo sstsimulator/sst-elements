@@ -41,9 +41,10 @@ class EmberShmemPutvGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemPutvGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemPutv" ), m_phase(0) 
+		EmberShmemGenerator(owner, params, "ShmemPutv" ), m_phase(-2) 
 	{ 
         m_printResults = params.find<bool>("arg.printResults", false );
+		m_iterations = (uint32_t) params.find("arg.iterations", 1);
         int status;
         std::string tname = typeid(TYPE).name();
 		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
@@ -54,35 +55,35 @@ public:
     bool generate( std::queue<EmberEvent*>& evQ) 
 	{
         bool ret = false;
-        switch ( m_phase ) {
-        case 0:
+		if ( -2 == m_phase ) {
             enQ_init( evQ );
             enQ_n_pes( evQ, &m_num_pes );
             enQ_my_pe( evQ, &m_my_pe );
-            break;
+            enQ_malloc( evQ, &m_dest, sizeof(TYPE) );
+		} else if ( -1 == m_phase ) {
 
-        case 1:
             if ( 0 == m_my_pe ) {
                 printf("%d:%s: num_pes=%d type=\"%s\"\n",m_my_pe,
                         getMotifName().c_str(), m_num_pes, m_type_name.c_str());
                 assert( 2 == m_num_pes );
             }
-            enQ_malloc( evQ, &m_dest, sizeof(TYPE) );
-            break;
-
-        case 2:
             
 			m_dest.at<TYPE>(0) = 0;
             enQ_barrier_all( evQ );
+			enQ_getTime( evQ, &m_startTime );
 
 			m_value = genSeed<TYPE>() + m_my_pe; 
+		} else if ( m_phase < m_iterations ) {
 
             enQ_putv( evQ, m_dest, m_value, (m_my_pe + 1) % m_num_pes );
-            enQ_barrier_all( evQ );
 
-            break;
+            if ( m_phase + 1 == m_iterations ) {
+                enQ_getTime( evQ, &m_stopTime );
+                enQ_barrier_all( evQ );
+            }
 
-        case 3:
+		} else {
+
 			if ( m_printResults ) {
 				std::stringstream tmp;
                	tmp << " got="<< m_dest.at<TYPE>(0) << " want=" <<  genSeed<TYPE>() + ((m_my_pe + 1) % 2);
@@ -94,7 +95,13 @@ public:
 		    ret = true;
 
             if ( 0 == m_my_pe ) {
-                printf("%d:%s: exit\n",m_my_pe, getMotifName().c_str());
+                double totalTime = (double)(m_stopTime - m_startTime)/1000000000.0;
+                double latency = (totalTime/m_iterations);
+                printf("%d:%s: iterations %d, total-time %.3lf us, time-per %.3lf us\n",m_my_pe,
+                            getMotifName().c_str(),
+                            m_iterations,
+                            totalTime * 1000000.0,
+                            latency * 1000000.0 );
             }
 
         }
@@ -102,6 +109,9 @@ public:
         return ret;
 	}
   private:
+	int m_iterations;
+    uint64_t m_startTime;
+    uint64_t m_stopTime;
 	bool m_printResults;
 	std::string  m_type_name;
     Hermes::MemAddr m_dest;
