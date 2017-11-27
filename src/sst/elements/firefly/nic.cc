@@ -342,8 +342,10 @@ void Nic::dmaRecv( NicCmdEvent *e, int vNicNum )
     m_dbg.verbose(CALL_INFO,1,1,"vNicNum=%d src=%d tag=%#x length=%lu\n",
                    vNicNum, e->node, e->tag, entry->totalBytes());
 
-    m_recvM[ vNicNum ][ e->tag ].push_back( entry );
-    m_recvMachine[0]->addDma( );
+	
+    if ( ! m_recvMachine[0]->checkBlockedNetwork( entry, vNicNum ) ) {
+        m_recvM[ vNicNum ][ e->tag ].push_back( entry );
+    }
 }
 
 void Nic::get( NicCmdEvent *e, int vNicNum )

@@ -67,10 +67,7 @@ void Nic::RecvMachine::state_0( FireflyNetworkEvent* ev )
 void Nic::RecvMachine::state_2( FireflyNetworkEvent* ev )
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
-    processNeedRecv( 
-        ev,
-        std::bind( &Nic::RecvMachine::state_0, this, ev )
-    );
+    processNeedRecv( ev );
 }
 
 void Nic::RecvMachine::checkNetwork( )

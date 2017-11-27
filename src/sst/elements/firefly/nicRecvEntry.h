@@ -43,6 +43,7 @@ class DmaRecvEntry : public RecvEntryBase {
 
     std::vector<IoVec>& ioVec() { return m_cmd->iovec; }
     int node()  { return m_cmd->node; }
+    int tag() { return m_cmd->tag; }
 
   private:
     NicCmdEvent* m_cmd;
