@@ -1288,16 +1288,18 @@ void GOBLINHMCSimBackend::processResponses() {
 
         // handle all the posted requests
         std::map<uint16_t, HMCSimBackEndReq*>::iterator it;
-        for(it=tag_req_map.begin(); it!=tag_req_map.end(); it++ ){
+        for(it=tag_req_map.begin(); it!=tag_req_map.end();){
           uint16_t resp_tag = it->first;
           HMCSimBackEndReq* matchedReq = it->second;
           if( !matchedReq->hasResponse() ){
             // i am a posted request
 	    output->verbose(CALL_INFO, 4, 0, "Handling posted memory response for tag: %" PRIu16 "\n", resp_tag);
             handleMemResponse(matchedReq->getRequest(),flags);
-            tag_req_map.erase(resp_tag);
+            it = tag_req_map.erase(it);
             tag_queue.push(resp_tag);
             delete matchedReq;
+          } else {
+            it++;
           }
         }
 }
