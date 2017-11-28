@@ -149,9 +149,9 @@ EXTRA_DIST = \
 	tests/testBackendSimpleDRAM-1.py \
 	tests/testBackendSimpleDRAM-2.py \
 	tests/testBackendVaultSim.py \
-	tests/testCustomCMDGoblin-1.py \
-	tests/testCustomCMDGoblin-2.py \
-	tests/testCustomCMDGoblin-3.py \
+	tests/testCustomCmdGoblin-1.py \
+	tests/testCustomCmdGoblin-2.py \
+	tests/testCustomCmdGoblin-3.py \
 	tests/testDistributedCaches.py \
 	tests/testFlushes.py \
 	tests/testFlushes-2.py \
