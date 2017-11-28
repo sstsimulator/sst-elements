@@ -125,6 +125,7 @@ EXTRA_DIST = \
         Sieve/tests/ompsievetest.c \
         Sieve/tests/sieve-test.py \
 	tests/example.py \
+	tests/miranda.cfg \
 	tests/sdl-1.py \
 	tests/sdl2-1.py \
 	tests/sdl-2.py \
@@ -164,7 +165,8 @@ EXTRA_DIST = \
 	tests/testScratchDirect.py \
 	tests/testScratchNetwork.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
-	tests/system.ini
+	tests/system.ini \
+	tests/utils.py
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \
