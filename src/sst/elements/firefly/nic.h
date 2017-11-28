@@ -42,7 +42,44 @@ namespace Firefly {
 
 class Nic : public SST::Component  {
 
+	class LinkControlWidget {
+
+	  public:
+		LinkControlWidget( Nic* nic) : m_nic(nic), m_notifiers(2,NULL), m_num(0) {
+		}
+
+		inline bool notify( int vn ) {
+        	m_nic->m_dbg.verbose(CALL_INFO,2,1,"Widget vn=%d\n",vn);
+			if ( m_notifiers[vn] ) {
+       			m_nic->m_dbg.verbose(CALL_INFO,2,1,"Widget call notifier num=%d\n", m_num -1);
+				m_notifiers[vn]();
+				m_notifiers[vn] = NULL;
+				--m_num;
+			}
+
+			return m_num > 0; 
+		}
+
+		inline void setNotifyOnReceive( std::function<void()> notifier, int vn ) {
+        	m_nic->m_dbg.verbose(CALL_INFO,2,1,"Widget vn=%d num=%d\n",vn,m_num);
+			if ( m_num == 0 ) {
+				m_nic->setRecvNotifier();
+			}
+			assert( m_notifiers[vn] == NULL );
+			m_notifiers[vn] = notifier;
+			++m_num;
+		}
+
+	  private:
+		Nic* m_nic;
+		int m_num;
+		std::vector< std::function<void()> > m_notifiers;
+	};
+
+
   public:
+
+
     typedef uint32_t NodeId;
     static const NodeId AnyId = -1;
 
@@ -226,6 +263,11 @@ public:
         return ++m_getKey;
     }
 
+    void setRecvNotifier() {
+        m_dbg.verbose(CALL_INFO,2,1,"\n");
+        m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
+    }
+
     int NetToId( int x ) { return x; }
     int IdToNet( int x ) { return x; }
 
@@ -250,6 +292,7 @@ public:
     SST::Interfaces::SimpleNetwork::Handler<Nic>* m_sendNotifyFunctor;
     bool sendNotify(int);
     bool recvNotify(int);
+    LinkControlWidget m_linkWidget;
 
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;

@@ -29,6 +29,8 @@ using namespace SST::Firefly;
 using namespace SST::Interfaces;
 using namespace std::placeholders;
 
+int Nic::SendMachine::m_packetId = 0;
+
 Nic::Nic(ComponentId_t id, Params &params) :
     Component( id ),
     m_sendNotify( 2, false ),
@@ -36,7 +38,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_detailedCompute( 2, NULL ),
     m_useDetailedCompute(false),
     m_getKey(10),
-    m_simpleMemoryModel(NULL)
+    m_simpleMemoryModel(NULL),
+    m_linkWidget(this)
 {
     m_myNodeId = params.find<int>("nid", -1);
     assert( m_myNodeId != -1 );
@@ -408,10 +411,7 @@ bool Nic::recvNotify(int vc)
 {
     m_dbg.verbose(CALL_INFO,2,1,"network event available vc=%d\n",vc);
 
-    m_recvMachine[vc]->notify( );
-
-    // remove this notifier
-    return false;
+    return m_linkWidget.notify( vc );
 }
 
 void Nic::detailedMemOp( Thornhill::DetailedCompute* detailed,

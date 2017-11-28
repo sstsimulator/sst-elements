@@ -82,10 +82,6 @@ class RecvMachine {
 
         virtual ~RecvMachine();
 
-        void notify( ) {
-            m_nic.schedCallback( [=](){ state_0( getNetworkEvent( m_vc ) ); } );
-            m_notifyCallback = false;
-        }
 
         bool checkBlockedNetwork( DmaRecvEntry* entry, int vNicNum ) {
 			bool retval = false;
@@ -134,11 +130,19 @@ class RecvMachine {
 
         void setNotify( ) {
             assert( ! m_notifyCallback );
-            m_nic.m_linkControl->setNotifyOnReceive(
-                                    m_nic.m_recvNotifyFunctor );
+            m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "\n");
+            m_nic.m_linkWidget.setNotifyOnReceive(
+                                    std::bind(&Nic::RecvMachine::notify, this), m_vc );
             m_notifyCallback = true;
         }
         Nic& nic() { return m_nic; }
+
+	private:
+        void notify( ) {
+            m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "\n");
+            m_nic.schedCallback( [=](){ state_0( getNetworkEvent( m_vc ) ); } );
+            m_notifyCallback = false;
+        }
 
       protected:
         virtual void state_0( FireflyNetworkEvent* );
@@ -223,7 +227,7 @@ class CtlMsgRecvMachine : public RecvMachine {
         ev->bufPop(sizeof(MsgHdr) + sizeof(rdmaHdr) );
 
         m_nic.schedCallback( 
-                std::bind( &Nic::CtlMsgRecvMachine::state_3, *this, entry ),
+                std::bind( &Nic::CtlMsgRecvMachine::state_3, this, entry ),
                 m_hostReadDelay );
 
         delete ev;
