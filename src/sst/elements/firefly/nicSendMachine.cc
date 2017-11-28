@@ -99,10 +99,10 @@ void Nic::SendMachine::state_2( SendEntryBase* entry, FireflyNetworkEvent *ev )
         req->setTraceType( SimpleNetwork::Request::FULL );
         req->setTraceID( m_packetId );
     }
-    ++m_packetId;
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE,
-					"dst=%" PRIu64 " sending event with %zu bytes\n",req->dest,
-                                                        ev->bufSize());
+					"dst=%" PRIu64 " sending event with %zu bytes packetId=%lu\n",req->dest,
+                                                        ev->bufSize(), (uint64_t)m_packetId);
+    ++m_packetId;
     bool sent = m_nic.m_linkControl->send( req, m_vc );
     assert( sent );
 
