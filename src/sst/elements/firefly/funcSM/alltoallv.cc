@@ -37,13 +37,14 @@ void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     assert( NULL == m_event );
     m_event = static_cast< AlltoallStartEvent* >(e);
 
-    m_dbg.verbose(CALL_INFO,1,0,"Start size=%d\n",m_size);
 
     ++m_seq;
     m_count = 1;
     m_state = PostRecv;
     m_size = m_info->getGroup( m_event->group )->getSize();
     m_rank = m_info->getGroup( m_event->group )->getMyRank();
+
+    m_dbg.verbose(CALL_INFO,1,0,"Start size=%d\n",m_size);
 
     void* recv = recvChunkPtr(m_rank);
     void* send = sendChunkPtr(m_rank);
