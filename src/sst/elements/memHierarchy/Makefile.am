@@ -142,12 +142,16 @@ EXTRA_DIST = \
 	tests/sdl9-2.py \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
+	tests/testBackendGoblinHMC.py \
 	tests/testBackendPagedMulti.py \
 	tests/testBackendReorderRow.py \
 	tests/testBackendReorderSimple.py \
 	tests/testBackendSimpleDRAM-1.py \
 	tests/testBackendSimpleDRAM-2.py \
 	tests/testBackendVaultSim.py \
+	test/testCustomCMDGoblin_1.py \
+        test/testCustomCMDGoblin_2.py \
+        test/testCustomCMDGoblin_3.py \
 	tests/testDistributedCaches.py \
 	tests/testFlushes.py \
 	tests/testFlushes-2.py \
