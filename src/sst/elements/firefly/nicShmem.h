@@ -23,6 +23,7 @@ class Shmem {
         enum Type { Wait } m_type;  
         Op( Type type, NicShmemOpCmdEvent* cmd, Callback callback ) : m_type(type), m_cmd(cmd), m_callback(callback) {}
         virtual ~Op() { 
+			delete m_cmd;
         }
         Callback&  callback() { return m_callback; }
         virtual bool checkOp( ) = 0;

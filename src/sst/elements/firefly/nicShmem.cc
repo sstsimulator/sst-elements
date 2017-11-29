@@ -306,11 +306,12 @@ void Nic::Shmem::hostWait( NicShmemOpCmdEvent* event, int id )
     tmp << event->value;
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,1,"core=%d addr=%" PRIx64 " value=%s op=%d\n", id, event->addr, tmp.str().c_str(), event->op );
 
+	Callback callback = event->callback;
     Op* op = new WaitOp(  event, getBacking( id, event->addr, event->value.getLength() ),
             [=]() {
 				//std::vector<MemOp> vec;
                 m_dbg.verbosePrefix( prefix(),CALL_INFO,1,1,"Nic::Shmem::wait complete\n");
-                m_nic.getVirtNic(id)->notifyShmem( 0, event->callback );
+                m_nic.getVirtNic(id)->notifyShmem( 0, callback );
                 //m_nic.getVirtNic(id)->notifyShmem( m_nic.calcHostMemDelay(vec), event->callback );
             } 
         );
