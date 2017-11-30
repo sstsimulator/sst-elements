@@ -49,7 +49,7 @@ long long int Pool::allocate_frame(int N)
 	{
 		// Simply, pop the first free frame and assign it
 		Frame * temp = freelist.front();
-		freelist.popfront();
+		freelist.pop_front();
 		alloclist[temp->starting_address] = temp;
 		return temp->starting_address;
 

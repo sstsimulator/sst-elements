@@ -24,6 +24,7 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/interfaces/simpleMem.h>
 
+#include "OpalEvent.h"
 #include <sst/core/output.h>
 #include "sst/core/elementinfo.h"
 #include <cstring>
@@ -68,6 +69,8 @@ namespace SST {
 
 					SST_ELI_DOCUMENT_PARAMS(
 							{"clock",              "Internal Controller Clock Rate.", "1.0 Ghz"},
+							{"num_nodes", "number of disaggregated nodes in the system", "1"},
+							{"num_cores", "total number of cores. this will be used to account for TLB shootdown latency", "1"},
 							{"num_pools",          "This determines the number of memory pools", "1"},
 							{"num_domains", "The number of domains in the system, typically similar to number of sockets/SoCs", "1"},
 							{"allocation_policy",          "0 is private pools, then clustered pools, then public pools", "0"},
@@ -85,10 +88,8 @@ namespace SST {
 							)
 
 					SST_ELI_DOCUMENT_PORTS(
-							{"Nlink", "Link to the simpleComponent to the North", { "simpleComponent.simpleComponentEvent", "" } },
-							{"Slink", "Link to the simpleComponent to the South", { "simpleComponent.simpleComponentEvent", "" } },
-							{"Elink", "Link to the simpleComponent to the East",  { "simpleComponent.simpleComponentEvent", "" } },
-							{"Wlink", "Link to the simpleComponent to the West",  { "simpleComponent.simpleComponentEvent", "" } }
+							{"requestLink%(num_cores)d", "Link to receive allocation requests", { "OpalComponent.OpalEvent", "" } },
+							{"shootdownLink%(num_cores)d", "Link to send shootdown requests to Samba units", { "OpalComponent.OpalEvent", "" } },
 							)
 
 					// Optional since there is nothing to document

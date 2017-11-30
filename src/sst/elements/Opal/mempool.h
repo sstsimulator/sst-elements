@@ -66,10 +66,10 @@ class Pool{
 
 	private:
 		// The list of free frames
-		std::list<Frame> freelist;
+		std::list<Frame*> freelist;
 
 		// The list of allocated frames --- the key is the starting physical address
-		std::map<long long int, Frame> alloclist;
+		std::map<long long int, Frame*> alloclist;
 
 
 };

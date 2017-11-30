@@ -6,6 +6,8 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libOpal.la 
 
 libOpal_la_SOURCES = \
+	mempool.h \
+	mempool.cpp \
 	Opal.cc \
 	Opal.h \
         Opal_Event.h 	
