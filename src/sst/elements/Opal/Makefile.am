@@ -6,20 +6,9 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libOpal.la 
 
 libOpal_la_SOURCES = \
-	Cache.h \
-	memReqEvent.h \
 	Opal.cc \
 	Opal.h \
-	Bank.h \
-	Rank.h \
-        Opal_Event.h \
-	WriteBuffer.h \
-	WriteBuffer.cc \
-	NVM_Request.h \
-	NVM_DIMM.h \
-	NVM_DIMM.cc \
-	NVM_Params.h 
-	
+        Opal_Event.h 	
 
 
 libOpal_la_CPPFLAGS = \

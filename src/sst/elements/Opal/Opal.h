@@ -46,7 +46,6 @@ using namespace SST;
 namespace SST {
 	namespace OpalComponent {
 
-		class NVM_PARAMS;
 
 		class Opal : public SST::Component {
 			public:
@@ -56,8 +55,6 @@ namespace SST {
 				void finish() {};
 				void handleEvent(SST::Event* event) {};
 				bool tick(SST::Cycle_t x);
-
-				void parser(NVM_PARAMS * nvm, SST::Params& params);				
 
 				SST_ELI_REGISTER_COMPONENT(
 						Opal,
