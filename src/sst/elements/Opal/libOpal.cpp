@@ -14,7 +14,7 @@
 // Author: Amro Awad (E-mail aawad@sandia.gov)
 //
 #include <sst_config.h>
-#include "sst/core/element.h"
+#include "sst/core/elementinfo.h"
 #include <Opal.h>
 
 using namespace SST;
