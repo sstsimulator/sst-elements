@@ -67,10 +67,7 @@ void Nic::RecvMachine::state_0( FireflyNetworkEvent* ev )
 void Nic::RecvMachine::state_2( FireflyNetworkEvent* ev )
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
-    processNeedRecv( 
-        ev,
-        std::bind( &Nic::RecvMachine::state_0, this, ev )
-    );
+    processNeedRecv( ev );
 }
 
 void Nic::RecvMachine::checkNetwork( )
@@ -91,10 +88,10 @@ void Nic::RecvMachine::state_move_0( FireflyNetworkEvent* event, StreamBase* str
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
 				"src=%d event has %lu bytes\n", src,event->bufSize() );
 
-    std::vector< MemOp > vec;
+    std::vector< MemOp >* vec = new std::vector< MemOp >;
 
     long tmp = event->bufSize();
-    bool ret = stream->getRecvEntry()->copyIn( m_dbg, *event, vec );
+    bool ret = stream->getRecvEntry()->copyIn( m_dbg, *event, *vec );
 
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
 				"copyIn %lu bytes %s\n", tmp - event->bufSize(), ret ? "stream is done":"");

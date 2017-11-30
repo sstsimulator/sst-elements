@@ -83,12 +83,12 @@ void ProcessQueuesState::setVars( VirtNic* nic, Info* info, MemoryBase* mem,
 
     char buffer[100];
     snprintf(buffer,100,"@t:%d:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
-                            m_nic->getNodeId(), m_info->worldRank());
+                            m_nic->getRealNodeId(), m_info->worldRank());
     dbg().setPrefix(buffer);
 }
 
 void ProcessQueuesState:: finish() {
-    dbg().verbose(CALL_INFO,1,0,"pstdRcvQ=%lu recvdMsgQ=%lu loopResp=%lu %lu\n",
+    dbg().verbose(CALL_INFO,1,0,"pstdRcvQ=%lu recvdMsgQ=%lu loopResp=%lu funcStack=%lu\n",
     m_pstdRcvQ.size(), m_recvdMsgQ.size(), m_loopResp.size(), m_funcStack.size() );
 }
 
@@ -129,7 +129,8 @@ void ProcessQueuesState::enterSend( _CommReq* req, uint64_t exitDelay )
 {
     m_exitDelay = exitDelay;
     req->setSrcRank( getMyRank( req ) );
-    dbg().verbose(CALL_INFO,1,1,"req=%p$ delay=%" PRIu64 "\n", req, exitDelay );
+    dbg().verbose(CALL_INFO,1,1,"req=%p delay=%" PRIu64 " destRank=%d\n", req, exitDelay, 
+				req->getDestRank() );
 
     uint64_t delay = txDelay( req->getLength() );
 
@@ -259,7 +260,7 @@ void ProcessQueuesState::processSendLoop( _CommReq* req )
 
 void ProcessQueuesState::enterRecv( _CommReq* req, uint64_t exitDelay )
 {
-    dbg().verbose(CALL_INFO,1,1,"req=%p$ delay=%" PRIu64 "\n", req, exitDelay );
+    dbg().verbose(CALL_INFO,1,1,"req=%p$ delay=%" PRIu64 " rank=%d\n", req, exitDelay, req->hdr().rank );
     m_exitDelay = exitDelay;
 
     if ( m_postedShortBuffers.size() < MaxPostedShortBuffers ) {

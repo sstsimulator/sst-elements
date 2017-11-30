@@ -36,7 +36,7 @@ typedef enum {
         OPCOUNT
 } ReqOperation;
 
-static uint64_t nextGeneratorRequestID = 0;
+static std::atomic<uint64_t> nextGeneratorRequestID(0);
 
 class GeneratorRequest {
 public:

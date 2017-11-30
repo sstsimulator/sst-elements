@@ -128,6 +128,10 @@ class VirtNic : public SST::Module {
 		return m_coreId;
 	}
 
+    int getRealNodeId() {
+		return m_realNicId;
+    }
+
     int getNodeId() {
 		return m_realNicId * m_numCores + m_coreId;
     }

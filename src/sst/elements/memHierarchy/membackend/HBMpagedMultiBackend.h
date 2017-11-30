@@ -150,10 +150,10 @@ struct HBMpageInfo {
 class HBMpagedMultiMemory : public HBMDRAMSimMemory {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(HBMpagedMultMemory, "memHierarchy", "HBMpagedMultiMemory", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_SUBCOMPONENT(HBMpagedMultiMemory, "memHierarchy", "HBMpagedMultiMemory", SST_ELI_ELEMENT_VERSION(1,0,0), 
             "HBM DRAMSim-driven memory timings with a fixed timing multi-level memory using paging", "SST::MemHierarchy::MemBackend")
 
-    SST_ELI_DOCUMENT_PARAMS( HBMDRAMSIMEMORY_ELI_PARAMS,
+    SST_ELI_DOCUMENT_PARAMS( HBMDRAMSIMMEMORY_ELI_PARAMS,
             /* Own parameters */
             {"collect_stats", "Name of DRAMSim Device system file", "0"},
             {"transfer_delay", "Time (in ns) to transfer page to fast mem", "250"},

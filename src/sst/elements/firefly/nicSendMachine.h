@@ -26,7 +26,6 @@ class SendMachine {
             m_txDelay( txDelay ),
             m_packetSizeInBytes( packetSizeInBytes ),
             m_vc( vc ),
-			m_packetId( 0 ),
             m_notifyCallback(NULL)
 #ifdef NIC_SEND_DEBUG
             , m_msgCount(0)
@@ -95,7 +94,7 @@ class SendMachine {
         std::deque<SendEntryBase*>  m_sendQ;
         int                     m_txDelay;
         unsigned int            m_packetSizeInBytes;
-        int                     m_packetId;
+        static int                     m_packetId;
         Callback                m_notifyCallback;
 		int						m_vc;
 #ifdef NIC_SEND_DEBUG
