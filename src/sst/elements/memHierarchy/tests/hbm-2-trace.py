@@ -31,7 +31,7 @@ comp_memory.addParams({
       "backend.device_ini" : "HBMDevice.ini",
       "backend.system_ini" : "HBMSystem.ini",
       "backend.mem_size" : "512MiB",
-      "backend" : "memHierarchy.hbmdramsim",
+      "backend" : "memHierarchy.HBMDRAMSimMemory",
       "backend.tracing" : "1"
 })
 
