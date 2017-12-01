@@ -251,7 +251,9 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : ExtM
         // map all the existing commands as well as any custom
         // commands.
         // These are in the form:
-        //    {WR|RD|POSTED|CUSTOM}:SIZE:CMD
+        //    {WR|RD|POSTED|CUSTOM}:OPC:SIZE:CMD
+        // OPC = integer that designates custom command opcodes; if not
+        //        using custom commands (CUSTOM), this is ignored
         // SIZE = integer size of the request (ignored for CUSTOM)
         // CMD = target command to execute; one of "hmc_rqst_t"
         params.find_array<std::string>("cmd-map", cmdmaps);
@@ -327,12 +329,16 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : ExtM
           if( cmclibs[i].length() > 0 ){
             // attempt to add the cmc lib
             output->verbose(CALL_INFO, 1, 0,
-                            "Initializing HMC-Sim CMC Library...\n" );
-            std::vector<char> libchars( cmclibs[i].begin(), cmclibs[i].end() );
-            rc = hmcsim_load_cmc(&the_hmc, &libchars[0] );
+                            "Initializing HMC-Sim CMC Library: %s\n", cmclibs[i].c_str() );
+            char *libpath = new char[cmclibs[i].size()+1];
+            std::copy(cmclibs[i].begin(), cmclibs[i].end(), libpath);
+            libpath[cmclibs[i].size()] = '\0';
+
+            rc = hmcsim_load_cmc(&the_hmc, libpath );
+            delete libpath;
             if( rc != 0 ){
 	      output->fatal(CALL_INFO, -1,
-                            "Unable to HMC-Sim CMC Library and the return code is %d\n", rc);
+                            "Unable to load HMC-Sim CMC Library and the return code is %d\n", rc);
             }
           }
         }
@@ -349,7 +355,8 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : ExtM
 		if(0 == rc) {
 			output->verbose(CALL_INFO, 1, 0, "Successfully configured link.\n");
 		} else {
-			output->fatal(CALL_INFO, 1, 0, "Error configuring link %" PRIu32 ", code=%d\n", i, rc);
+			output->fatal(CALL_INFO, 1, 0,
+                          "Error configuring link %" PRIu32 ", code=%" PRId32 "\n", i, rc);
 		}
 
 		nextLink = 0;
@@ -467,7 +474,7 @@ void GOBLINHMCSimBackend::handleCMCConfig(){
     if( vstr.size() != 4 ){
       // formatting error
       output->fatal(CALL_INFO, -1,
-                    "Unable to process command map: %s\n", s.c_str() );
+                    "Unable to process cmc config: %s\n", s.c_str() );
     }
 
     // -- /path/to/lib.so
@@ -482,18 +489,22 @@ void GOBLINHMCSimBackend::handleCMCConfig(){
     }
 
     // -- rqst_flits
-    std::string::size_type sz;
-    rqst_flits = std::stoi(vstr[2],&sz);
+    std::string::size_type sz1;
+    rqst_flits = std::stoi(vstr[2],&sz1);
 
     // -- rsp_flits
-    rsp_flits = std::stoi(vstr[3],&sz);
+    std::string::size_type sz2;
+    rsp_flits = std::stoi(vstr[3],&sz2);
 
     // load the cmc command in HMCSim
-    std::vector<char> libchars( path.begin(), path.end() );
-    int rc = hmcsim_load_cmc(&the_hmc, &libchars[0] );
+    char *libpath = new char[path.size()+1];
+    std::copy(path.begin(), path.end(), libpath);
+    libpath[path.size()] = '\0';
+    int rc = hmcsim_load_cmc(&the_hmc, &libpath[0] );
+    delete libpath;
     if( rc != 0 ){
       output->fatal(CALL_INFO, -1,
-        "Unable to HMC-Sim CMC Library and the return code is %d\n", rc);
+        "Unable to load the mapped HMC-Sim CMC Library %s and the return code is %d\n", path.c_str(), rc);
     }
 
     // add the new config to our list
@@ -521,9 +532,11 @@ void GOBLINHMCSimBackend::handleCmdMap(){
   size_t pos = 0;
   CMCSrcReq ctype_int;
   int csize_int = -1;
+  uint32_t copc_uint = 0xFFFF;
   std::string ctype;
   std::string cstr;
   std::string csize;
+  std::string copc;
   hmc_rqst_t rqst;
 
   for( unsigned i=0; i<cmdmaps.size(); i++ ){
@@ -534,7 +547,7 @@ void GOBLINHMCSimBackend::handleCmdMap(){
     std::vector<std::string> vstr;
     splitStr(s,':',vstr);
 
-    if( vstr.size() != 3 ){
+    if( vstr.size() != 4 ){
       // formatting error
       output->fatal(CALL_INFO, -1,
                     "Unable to process command map: %s\n", s.c_str() );
@@ -558,14 +571,18 @@ void GOBLINHMCSimBackend::handleCmdMap(){
                     ctype.c_str() );
     }
 
-    // -- size
-    csize = vstr[1];
+    // -- opcode
+    copc = vstr[1];
     std::string::size_type sz;
+    copc_uint = std::stoi(copc,&sz);
+
+    // -- size
+    csize = vstr[2];
     csize_int = std::stoi(csize,&sz);
 
 
     // -- cmd
-    cstr = vstr[2];
+    cstr = vstr[3];
     if( !strToHMCRqst( cstr, &rqst, false ) ){
       output->fatal(CALL_INFO, -1,
                     "Unable find to a suitable HMC command for: %s\n",
@@ -573,8 +590,27 @@ void GOBLINHMCSimBackend::handleCmdMap(){
     }
 
     // add the new mapping to our list
-    CmdMapping.push_back( new HMCSimCmdMap(ctype_int, csize_int, rqst) );
+    CmdMapping.push_back( new HMCSimCmdMap(ctype_int, copc_uint,
+                                           csize_int, rqst) );
   }
+}
+
+bool GOBLINHMCSimBackend::isReadRqst( hmc_rqst_t R ){
+  switch(R){
+  case RD16:
+  case RD32:
+  case RD48:
+  case RD64:
+  case RD80:
+  case RD96:
+  case RD112:
+  case RD128:
+  case RD256:
+    return true;
+  default:
+    return false;
+  }
+  return false;
 }
 
 bool GOBLINHMCSimBackend::isPostedRqst( hmc_rqst_t R ){
@@ -607,13 +643,13 @@ bool GOBLINHMCSimBackend::issueMappedRequest(ReqId reqId, Addr addr, bool isWrit
   // Step 1: decode the incoming command type
   CMCSrcReq Src = SRC_RD;
   bool isPosted = false;
+  bool isRead = false;
   if( isWrite ){
     Src = SRC_WR;
   }
   if( (flags & MemEvent::F_NORESPONSE) > 0 ){
     Src = SRC_POSTED;
   }
-  // TODO: handle SRC_CUSTOM requests
 
   // Step 2: walk the CmdMapping table and look for a mapping
   HMCSimCmdMap *MapCmd = NULL;
@@ -647,6 +683,13 @@ bool GOBLINHMCSimBackend::issueMappedRequest(ReqId reqId, Addr addr, bool isWrit
     isPosted = true;
   }else{
     isPosted = false;
+  }
+
+  // -- check to see whether this is a read request
+  isRead = isReadRqst( req_type );
+  if( isPosted && isRead ){
+    // can't have posted reads
+    output->fatal(CALL_INFO, -1, "Mapped posted reads are illegal\n" );
   }
 
   const uint8_t           req_link   = (uint8_t) (nextLink);
@@ -688,12 +731,12 @@ bool GOBLINHMCSimBackend::issueMappedRequest(ReqId reqId, Addr addr, bool isWrit
     // back to us when we are free
     *Success = false;
   } else if(0 == rc) {
-    output->verbose(CALL_INFO, 4, 0, "Issue of mapped request for address %" PRIu64 " successfully accepted by HMC.\n", addr);
+    output->verbose(CALL_INFO, 4, 0, "Issue of mapped request for address 0X%" PRIx64 " successfully accepted by HMC.\n", addr);
 
     // Create the request entry which we keep in a table
     HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr,
                                                       owner->getCurrentSimTimeNano(),
-                                                      isPosted);
+                                                      !isPosted);
 
     // Add the tag and request into our table of pending
     tag_req_map.insert( std::pair<uint16_t, HMCSimBackEndReq*>(req_tag, reqEntry) );
@@ -714,6 +757,134 @@ bool GOBLINHMCSimBackend::issueMappedRequest(ReqId reqId, Addr addr, bool isWrit
   return true;
 }
 
+bool GOBLINHMCSimBackend::issueCustomRequest(ReqId reqId, Addr addr, uint32_t cmd,
+                                            std::vector<uint64_t> ins, uint32_t flags,
+                                            unsigned numBytes) {
+  // Step 1: try to grab a tag
+  // We have run out of tags
+  if(tag_queue.empty()) {
+    output->verbose(CALL_INFO, 4, 0,
+                    "Will not issue request this call, tag queue has no free entries.\n");
+    return false;
+  }
+
+  output->verbose(CALL_INFO, 8, 0,
+    "Received custom request of opcode %" PRIu32 " of size: %" PRIu32 "\n",
+    cmd, numBytes);
+
+
+  // Step 2: walk the CmdMapping table and look for a mapping
+  HMCSimCmdMap *MapCmd = NULL;
+  std::string name;
+  for( auto itr = CmdMapping.begin(); itr != CmdMapping.end(); ++itr ){
+    MapCmd = *itr;
+    if( (MapCmd->getOpcode() == cmd) &&
+        ((unsigned)(MapCmd->getSrcSize()) == numBytes) ){
+      // found a positive map
+      if( !HMCRqstToStr(MapCmd->getTargetType(), &name) ){
+        std::string tStr;
+        output->fatal(CALL_INFO, -1, "Unable to map hmc_rqst_t=%d to name\n", (int)(MapCmd->getTargetType()));
+      }
+      output->verbose(CALL_INFO, 8, 0,
+                      "Found mapped request target of %s\n", name.c_str() );
+
+      break;
+    }
+    MapCmd = NULL;
+  }
+
+  // -- if our MapCmd is NULL, then nothing was found
+  if( MapCmd == NULL ){
+    return false;
+  }
+
+  // Step 3: attempt to issue the request
+
+  // Zero out the packet ready for us to populate it with values below
+  zeroPacket(hmc_packet);
+
+  output->verbose(CALL_INFO, 4, 0, "Queue front is: %" PRIu16 "\n", tag_queue.front());
+
+  const uint8_t     req_dev  = 0;
+  const uint16_t    req_tag  = (uint16_t) tag_queue.front();
+  tag_queue.pop();
+
+  hmc_rqst_t req_type = MapCmd->getTargetType();
+
+  const uint8_t     req_link   = (uint8_t) (nextLink);
+  nextLink = nextLink + 1;
+  nextLink = (nextLink == hmc_link_count) ? 0 : nextLink;
+
+  uint64_t          req_header = (uint64_t) 0;
+  uint64_t          req_tail   = (uint64_t) 0;
+
+  // -- determine if the request is posted
+  bool isPosted = isPostedRqst(req_type);
+
+  // -- check to see whether this is a read request
+  bool isRead = isReadRqst( req_type );
+  if( isPosted && isRead ){
+    // can't have posted reads
+    output->fatal(CALL_INFO, -1, "Mapped posted reads are illegal\n" );
+  }
+
+  output->verbose(CALL_INFO, 8, 0,
+    "Issuing custom request: %" PRIu64 " cmd=%s tag: %" PRIu16 " dev: %" PRIu8 " link: %" PRIu8 "\n",
+    addr, name.c_str(), req_tag, req_dev, req_dev);
+
+  int rc = hmcsim_build_memrequest(&the_hmc,
+                                  req_dev,
+                                  addr,
+                                  req_tag,
+                                  req_type,
+                                  req_link,
+                                  hmc_payload,
+                                  &req_header,
+                                  &req_tail);
+
+  if(rc > 0) {
+    output->fatal(CALL_INFO, -1, "Unable to build a custom request for address: %" PRIu64 "\n", addr);
+  }
+
+  hmc_packet[0] = req_header;
+  hmc_packet[1] = req_tail;
+  
+  rc = hmcsim_send(&the_hmc, &hmc_packet[0]);
+
+  if(HMC_STALL == rc) {
+    output->verbose(CALL_INFO, 2, 0, "Issue revoked by HMC, reason: cube is stalled.\n");
+
+    // Restore tag for use later, remember this request did not succeed
+    tag_queue.push(req_tag);
+
+    // Return false, the request was not issued so we must tell memory controller to give it
+    // back to us when we are free
+    return false;
+  } else if(0 == rc) {
+    output->verbose(CALL_INFO, 4, 0,
+      "Issue of custom request for %s at address 0x%" PRIx64 " successfully accepted by HMC.\n",
+      name.c_str(), addr);
+
+    // Create the request entry which we keep in a table
+    HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr,
+                                                      owner->getCurrentSimTimeNano(),
+                                                      !isPosted);
+
+    // Add the tag and request into our table of pending
+    tag_req_map.insert( std::pair<uint16_t, HMCSimBackEndReq*>(req_tag, reqEntry) );
+
+    // Record the I/O statistics
+    if( (hmc_trace_level & HMC_TRACE_CMD) > 0 ){
+      recordIOStats( hmc_packet[0] );
+    }
+  } else {
+    output->fatal(CALL_INFO, -1,
+      "Error issue request for %s at address %" PRIu64 " into HMC on link %" PRIu8 "\n",
+      name.c_str(), addr, req_link);
+  }
+
+  return true;
+}
 bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite,
                                        std::vector<uint64_t> ins, uint32_t flags,
                                        unsigned numBytes) {
@@ -758,6 +929,12 @@ bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite,
 	  output->verbose(CALL_INFO, 4, 0, "Request is marked as posted\n");
           isPosted = true;
         }
+        bool isRead = isReadRqst( req_type );
+        if( isPosted && isRead ){
+          // can't have posted reads
+          output->fatal(CALL_INFO, -1, "Mapped posted reads are illegal\n" );
+        }
+
 
 	// Check if the request is for a read or write then transform this into something
 	// for HMC simulator to use
@@ -897,6 +1074,9 @@ bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite,
 
 	rc = hmcsim_send(&the_hmc, &hmc_packet[0]);
 
+        std::string RqstStr;
+        HMCRqstToStr( req_type, &RqstStr );
+
 	if(HMC_STALL == rc) {
 		output->verbose(CALL_INFO, 2, 0, "Issue revoked by HMC, reason: cube is stalled.\n");
 
@@ -908,15 +1088,15 @@ bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite,
 		return false;
 	} else if(0 == rc) {
                 if( isPosted ){
-		  output->verbose(CALL_INFO, 4, 0, "Issue of posted request for address %" PRIu64 " successfully accepted by HMC.\n", addr);
+		  output->verbose(CALL_INFO, 4, 0, "Issue of posted request %s for address 0X%" PRIx64 " successfully accepted by HMC.\n", RqstStr.c_str(), addr);
                 }else{
-		  output->verbose(CALL_INFO, 4, 0, "Issue of request for address %" PRIu64 " successfully accepted by HMC.\n", addr);
+		  output->verbose(CALL_INFO, 4, 0, "Issue of request %s for address 0X%" PRIx64 " successfully accepted by HMC.\n", RqstStr.c_str(), addr);
                 }
 
 		// Create the request entry which we keep in a table
 		HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr,
                                                                   owner->getCurrentSimTimeNano(),
-                                                                  isPosted);
+                                                                  !isPosted);
 
 		// Add the tag and request into our table of pending
 		tag_req_map.insert( std::pair<uint16_t, HMCSimBackEndReq*>(req_tag, reqEntry) );
@@ -1025,7 +1205,7 @@ void GOBLINHMCSimBackend::processResponses() {
 	printPendingRequests();
 
 	for(uint32_t i = 0; i < (uint32_t) the_hmc.num_links; ++i) {
-		output->verbose(CALL_INFO, 4, 0, "Pooling responses on link %d...\n", i);
+		output->verbose(CALL_INFO, 6, 0, "Polling responses on link %d...\n", i);
 
 		rc = HMC_OK;
 
@@ -1075,7 +1255,7 @@ void GOBLINHMCSimBackend::processResponses() {
 					} else {
 						HMCSimBackEndReq* matchedReq = locate_tag->second;
 
-						output->verbose(CALL_INFO, 4, 0, "Matched tag %" PRIu16 " to request for address: %" PRIu64 ", processing time: %" PRIu64 "ns\n",
+						output->verbose(CALL_INFO, 4, 0, "Matched tag %" PRIu16 " to request for address: 0x%" PRIx64 ", processing time: %" PRIu64 "ns\n",
 							resp_tag, matchedReq->getAddr(),
 							owner->getCurrentSimTimeNano() - matchedReq->getStartTime());
 
@@ -1106,13 +1286,12 @@ void GOBLINHMCSimBackend::processResponses() {
 		}
 	}
 
-#if 0
         // handle all the posted requests
         std::map<uint16_t, HMCSimBackEndReq*>::iterator it;
         for(it=tag_req_map.begin(); it!=tag_req_map.end(); it++ ){
           uint16_t resp_tag = it->first;
           HMCSimBackEndReq* matchedReq = it->second;
-          if( matchedReq->hasResponse() ){
+          if( !matchedReq->hasResponse() ){
             // i am a posted request
 	    output->verbose(CALL_INFO, 4, 0, "Handling posted memory response for tag: %" PRIu16 "\n", resp_tag);
             handleMemResponse(matchedReq->getRequest(),flags);
@@ -1121,7 +1300,6 @@ void GOBLINHMCSimBackend::processResponses() {
             delete matchedReq;
           }
         }
-#endif
 }
 
 GOBLINHMCSimBackend::~GOBLINHMCSimBackend() {
@@ -1468,12 +1646,12 @@ void GOBLINHMCSimBackend::zeroPacket(uint64_t* packet) const {
 }
 
 void GOBLINHMCSimBackend::printPendingRequests() {
-	output->verbose(CALL_INFO, 4, 0, "Pending requests:\n");
+	output->verbose(CALL_INFO, 8, 0, "Pending requests:\n");
 
 	std::map<uint16_t, HMCSimBackEndReq*>::iterator pending_itr;
 
 	for(pending_itr = tag_req_map.begin(); pending_itr != tag_req_map.end(); pending_itr++) {
-		output->verbose(CALL_INFO, 8, 0, "Tag: %8" PRIu16 " for address %" PRIu64 "\n",
+		output->verbose(CALL_INFO, 8, 0, "Tag: %8" PRIu16 " for address 0X%" PRIx64 "\n",
 			pending_itr->first, pending_itr->second->getAddr());
 	}
 }

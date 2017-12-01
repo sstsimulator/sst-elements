@@ -110,7 +110,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 				addr.setBacking( m_bufV[ child + 1 ] );
                 proto()->irecv( addr, m_bufLen,
                         m_yyy->calcChild( child ), 
-                        genTag(), &m_recvReqV[ child ] );
+                        genTag(), m_event->group,  &m_recvReqV[ child ] );
                 return;
 
               case WaitUpState::Waiting:
@@ -141,7 +141,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                                                             m_yyy->parent());
 			addr.setSimVAddr( 1 );
 			addr.setBacking( ptr );
-            proto()->send( addr, m_bufLen, m_yyy->parent(), genTag() );
+            proto()->send( addr, m_bufLen, m_yyy->parent(), genTag(), m_event->group );
             return;
         }
 
@@ -155,7 +155,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 			addr.setSimVAddr( 1 );
 			addr.setBacking( m_event->result.getBacking() );
             proto()->recv( addr, m_bufLen, m_yyy->parent(),
-                                                         genTag() );
+                                                         genTag(), m_event->group );
             return;
         }
 
@@ -178,7 +178,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 				addr.setBacking( m_event->result.getBacking() );
                 proto()->isend( addr, m_bufLen,
                         m_yyy->calcChild( child ), 
-                        genTag(), &m_sendReqV[ child ] );
+                        genTag(), m_event->group, &m_sendReqV[ child ] );
 			
 				return;
 			  case SendDownState::Waiting:

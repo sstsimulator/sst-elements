@@ -72,15 +72,15 @@ public:
 		for(uint64_t row = localRowStart; row < localRowEnd; row++) {
 			out->verbose(CALL_INFO, 2, 0, "Generating access for row %" PRIu64 "\n", row);
 
-			MemoryOpRequest* readStart = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * row), ordinalWidth, READ);
-			MemoryOpRequest* readEnd   = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * (row + 1)), ordinalWidth, READ);
+                        MemoryOpRequest* readStart = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * row), ordinalWidth, READ);
+                        MemoryOpRequest* readEnd   = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * (row + 1)), ordinalWidth, READ);
 
 			q->push_back(readStart);
 			q->push_back(readEnd);
 
-			MemoryOpRequest* readResultCurrentValue = new MemoryOpRequest(rhsVecStartAddr +
+                        MemoryOpRequest* readResultCurrentValue = new MemoryOpRequest(rhsVecStartAddr +
 				(row * matrixNNZPerRow), elementWidth, WRITE);
-			MemoryOpRequest* writeResult = new MemoryOpRequest(rhsVecStartAddr +
+                        MemoryOpRequest* writeResult = new MemoryOpRequest(rhsVecStartAddr +
 				(row * matrixNNZPerRow), elementWidth, WRITE);
 
 			writeResult->addDependency(readResultCurrentValue->getRequestID());
@@ -95,11 +95,11 @@ public:
 				out->verbose(CALL_INFO, 4, 0, "Generating access for row %" PRIu64 ", column: %" PRIu64 "\n",
 					row, col);
 
-				MemoryOpRequest* readMatElement = new MemoryOpRequest(matrixElementsStartAddr +
-					(row * matrixNNZPerRow + col) * elementWidth, elementWidth, READ);
-				MemoryOpRequest* readCol = new MemoryOpRequest(matrixColumnIndicesStartAddr +
+                                MemoryOpRequest* readMatElement = new MemoryOpRequest(matrixElementsStartAddr +
+                                        (row * matrixNNZPerRow + col) * elementWidth, elementWidth, READ);
+                                MemoryOpRequest* readCol = new MemoryOpRequest(matrixColumnIndicesStartAddr +
 					(row * matrixNNZPerRow + col) * ordinalWidth, ordinalWidth, READ);
-				MemoryOpRequest* readLHSElem = new MemoryOpRequest(lhsVecStartAddr +
+                                MemoryOpRequest* readLHSElem = new MemoryOpRequest(lhsVecStartAddr +
 					(row * matrixNNZPerRow + col) * elementWidth, elementWidth, READ);
 
 				readCol->addDependency(readStart->getRequestID());

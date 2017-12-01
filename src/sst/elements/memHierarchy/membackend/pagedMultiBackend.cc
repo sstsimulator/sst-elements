@@ -468,7 +468,7 @@ void pagedMultiMemory::printAccStats() {
 }
 
 void pagedMultiMemory::finish(){
-    printf("fast_t_pages: %lu\n", pageMap.size());
+    printf("fast_t_pages: %zu\n", pageMap.size());
     
     tPages->addData(pageMap.size());
 

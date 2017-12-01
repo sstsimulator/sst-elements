@@ -31,7 +31,7 @@ class BarrierFuncSM :  public CollectiveTreeFuncSM
 
 		Hermes::MemAddr addr(1,NULL);
         CollectiveStartEvent* tmp = new CollectiveStartEvent( addr, addr, 0,
-                MP::CHAR, MP::MAX, 0, MP::GroupWorld, 
+                MP::CHAR, MP::MAX, 0, event->group, 
                                 CollectiveStartEvent::Allreduce );
 
         delete event;

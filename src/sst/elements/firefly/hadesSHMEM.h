@@ -98,6 +98,10 @@ class HadesSHMEM : public Shmem::Interface
             addr.setSimVAddr( m_curAddr );
 
             m_curAddr += n;
+            // allign on cache line
+            m_curAddr += 64;
+            m_curAddr &= ~(64-1);
+
             if ( m_back ) {
                 addr.setBacking( ::malloc(n) );
             }

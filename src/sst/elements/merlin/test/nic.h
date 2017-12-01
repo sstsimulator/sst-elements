@@ -48,8 +48,11 @@ public:
         {"id",           "Network ID of endpoint."},
         {"num_peers",    "Total number of endpoints in network."},
         {"num_messages", "Total number of messages to send to each endpoint."},
+        {"message_size", "Size of each message to be sent specified in either b or B (can include SI prefix)."},
         {"num_vns",      "Number of requested virtual networks."},
         {"link_bw",      "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
+        {"in_buf_size",  "Size of linkcontrol input buffer specified in either b/s or B/s (can include SI prefix).", "1kB"},
+        {"out_buf_size", "Size of linkcontrol output buffer specified in either b/s or B/s (can include SI prefix).", "1kB"},
         {"topology",     "Name of the topology subcomponent that should be loaded to control routing."},
         {"remap",        "Creates a logical to physical mapping shifted by remap amount.", "0"},
         {"linkcontrol_type","Set the SimpleNetwork ", "merlin.linkcontrol"}
@@ -64,12 +67,15 @@ private:
 
     // SST::Interfaces::SimpleNetwork::nid_t id;
     int id;
-    int net_id;
-    int num_peers;
     int num_vns;
     int last_vn;
 
+    // passed in parameters
+    int net_id;
+    int num_peers;
+    int msg_size;
     int num_msg;
+    
     int packets_sent;
     int packets_recd;
     int stalled_cycles;
@@ -96,12 +102,14 @@ public:
     ~nic();
 
     void init(unsigned int phase);
+    void complete(unsigned int phase);
     void setup(); 
     void finish();
 
 
 private:
     bool clock_handler(Cycle_t cycle);
+    void init_complete(unsigned int phase);
 
 };
 

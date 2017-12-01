@@ -36,6 +36,17 @@ namespace MemHierarchy {
 
 class HybridSimMemory : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(HybridSimMemory, "memHierarchy", "hybridsim", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "HybridSim-driven memory timings", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"verbose", "Sets the verbosity of the backend output", "0"},
+            {"device_ini", "Name of the HybridSim Device config file", NULL},
+            {"system_ini", "Name of the HybridSim Device system file", NULL} )
+
+/* Begin class definition */
     HybridSimMemory(Component *comp, Params &params);
     bool issueRequest( ReqId, Addr, bool, unsigned );
     bool clock(Cycle_t cycle);

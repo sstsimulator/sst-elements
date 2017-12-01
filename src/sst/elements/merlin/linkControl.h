@@ -160,6 +160,7 @@ public:
                     const UnitAlgebra& out_buf_size);
     void setup();
     void init(unsigned int phase);
+    void complete(unsigned int phase);
     void finish();
 
     // Returns true if there is space in the output buffer and false
@@ -180,6 +181,9 @@ public:
 
     void sendInitData(SST::Interfaces::SimpleNetwork::Request* ev);
     SST::Interfaces::SimpleNetwork::Request* recvInitData();
+
+    void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev);
+    SST::Interfaces::SimpleNetwork::Request* recvUntimedData();
 
     // const PacketStats& getPacketStats(void) const { return stats; }
 

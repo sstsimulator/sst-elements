@@ -81,23 +81,18 @@ private:
 	MirandaRequestQueue<GeneratorRequest*> pendingRequests;
 	MirandaMemoryManager* memMgr;
 
-	uint32_t maxLoadRequestsPending;
-	uint32_t maxStoreRequestsPending;
-	uint32_t requestsLoadPending;
-	uint32_t requestsStorePending;
+        uint32_t maxRequestsPending[OPCOUNT];
+	uint32_t requestsPending[OPCOUNT];
 	uint32_t reqMaxPerCycle;
 	uint64_t cacheLine;
 	uint32_t maxOpLookup;
 
-	Statistic<uint64_t>* statReadReqs;
-	Statistic<uint64_t>* statWriteReqs;
-	Statistic<uint64_t>* statSplitReadReqs;
-	Statistic<uint64_t>* statSplitWriteReqs;
+        Statistic<uint64_t>* statReqs[OPCOUNT];
+	Statistic<uint64_t>* statSplitReqs[OPCOUNT];
 	Statistic<uint64_t>* statCyclesWithIssue;
 	Statistic<uint64_t>* statMaxIssuePerCycle;
 	Statistic<uint64_t>* statCyclesWithoutIssue;
-	Statistic<uint64_t>* statBytesRead;
-	Statistic<uint64_t>* statBytesWritten;
+	Statistic<uint64_t>* statBytes[OPCOUNT];
 	Statistic<uint64_t>* statReqLatency;
 	Statistic<uint64_t>* statTime;
 	Statistic<uint64_t>* statCyclesHitFence;

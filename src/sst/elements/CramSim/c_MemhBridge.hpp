@@ -32,6 +32,12 @@
 
 namespace SST {
 namespace n_Bank {
+    
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
+    
 class c_MemhBridge: public c_TxnGenBase {
 
 
@@ -63,6 +69,10 @@ private:
 
 
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 } // namespace n_Bank
 } // namespace SST

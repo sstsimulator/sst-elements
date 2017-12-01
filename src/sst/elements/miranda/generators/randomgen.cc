@@ -39,6 +39,7 @@ RandomGenerator::RandomGenerator( Component* owner, Params& params ) :
 	out->verbose(CALL_INFO, 1, 0, "Maximum address: %" PRIu64 "\n", maxAddr);
 
 	issueOpFences = params.find<std::string>("issue_op_fences", "yes") == "yes";
+
 }
 
 RandomGenerator::~RandomGenerator() {
@@ -60,8 +61,8 @@ void RandomGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 	// Populate request
 	q->push_back(new MemoryOpRequest(addr, reqLength, (op_decide < 0.5) ? READ : WRITE));
 
-	if(issueOpFences) {
-		q->push_back(new FenceOpRequest());
+	if (issueOpFences) {
+	    q->push_back(new FenceOpRequest());
 	}
 
 	issueCount--;

@@ -47,7 +47,6 @@ comp_memory.addParams({
       "clock" : "1GHz"
 })
 
-
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
 link_cpu_cache_link.connect( (comp_cpu, "cache_link", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )

@@ -17,6 +17,8 @@
 #ifndef _H_SST_MEMH_CRAM_SIM_BACKEND
 #define _H_SST_MEMH_CRAM_SIM_BACKEND
 
+#include <sst/core/elementinfo.h>
+
 #include "membackend/memBackend.h"
 
 namespace SST {
@@ -24,6 +26,20 @@ namespace MemHierarchy {
 
 class CramSimMemory : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(CramSimMemory, "memHierarchy", "cramsim", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "CramSim memory timings", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"verbose", "Sets the verbosity of the backend output", "0"},
+            {"access_time", "(string) Link latency for link to CramSim. With units (SI ok).", "100ns"}, 
+            {"max_outstanding_requests", "Maximum number of outstanding requests", "256"} )
+
+    SST_ELI_DOCUMENT_PORTS(
+            {"cube_link",   "Link to CramSim",  {"CramSim.MemReqEvent", "CramSim.MemRespEvent"} } )
+
+/* Begin class definition */
     CramSimMemory(Component *comp, Params &params);
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     virtual bool isClocked() { return false; }

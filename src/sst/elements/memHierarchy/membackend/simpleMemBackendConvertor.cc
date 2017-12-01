@@ -30,6 +30,12 @@ SimpleMemBackendConvertor::SimpleMemBackendConvertor(Component *comp, Params &pa
     static_cast<SimpleMemBackend*>(m_backend)->setResponseHandler( std::bind( &SimpleMemBackendConvertor::handleMemResponse, this, _1 ) );
 }
 
-bool SimpleMemBackendConvertor::issue( MemReq* req ) {
-    return static_cast<SimpleMemBackend*>(m_backend)->issueRequest( req->id(), req->addr(), req->isWrite(), m_backendRequestWidth );
+bool SimpleMemBackendConvertor::issue( BaseReq* req ) {
+    if (req->isMemEv()) {
+        MemReq * mreq = static_cast<MemReq*>(req);
+        return static_cast<SimpleMemBackend*>(m_backend)->issueRequest( mreq->id(), mreq->addr(), mreq->isWrite(), m_backendRequestWidth );
+    } else {
+        CustomReq * creq = static_cast<CustomReq*>(req);
+        return static_cast<SimpleMemBackend*>(m_backend)->issueCustomRequest( creq->id(), creq->getInfo() );
+    }
 }

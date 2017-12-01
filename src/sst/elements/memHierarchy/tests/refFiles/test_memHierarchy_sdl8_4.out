@@ -1108,6 +1108,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104240 clocks)
  dirctrl.responses_sent_GetXResp : Accumulator : Sum.u64 = 47; SumSQ.u64 = 47; Count.u64 = 47; 
  dirctrl.MSHR_occupancy : Accumulator : Sum.u64 = 7808; SumSQ.u64 = 10908; Count.u64 = 102965; 
  dirctrl.requests_received_noncacheable : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ dirctrl.requests_received_custom : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory.requests_received_GetS : Accumulator : Sum.u64 = 60; SumSQ.u64 = 60; Count.u64 = 60; 
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory.requests_received_GetX : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; 

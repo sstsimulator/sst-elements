@@ -70,11 +70,11 @@ void Nic::SendMachine::state_1( SendEntryBase* entry, FireflyNetworkEvent* ev )
         return;
     } 
 
-	std::vector< MemOp > vec; 
+	std::vector< MemOp >* vec = new std::vector< MemOp >; 
 
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "copyOut\n");
 
-    entry->copyOut( m_dbg, m_vc, m_packetSizeInBytes, *ev, vec ); 
+    entry->copyOut( m_dbg, m_vc, m_packetSizeInBytes, *ev, *vec ); 
 
     m_nic.dmaRead( vec,
 		std::bind( &Nic::SendMachine::state_2, this, entry, ev )
