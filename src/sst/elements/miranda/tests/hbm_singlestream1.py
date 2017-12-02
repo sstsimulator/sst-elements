@@ -45,8 +45,7 @@ comp_memory.addParams({
       "backend.access_time" : "1000 ns",
       "backend.mem_size" : "512MiB",
       "clock" : "1GHz",
-      #"backend" : "memHierarchy.goblinHMCSim"
-      "backend" : "memHierarchy.hbmdramsim",
+      "backend" : "memHierarchy.HBMDRAMSimMemory",
       "backend.access_time" : "100 ns",
       "backend.device_ini" : "HBMDevice.ini",
       "backend.system_ini" : "HBMSystem.ini",
