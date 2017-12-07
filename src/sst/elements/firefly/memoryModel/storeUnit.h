@@ -2,12 +2,14 @@
 
 
 class StoreUnit : public Unit {
+	std::string m_name;
   public:
     StoreUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, int numSlots, std::string name ) :
-        Unit( model, dbg ), m_qSize(numSlots),  m_storeDelay( 1 ), m_cache(cache), m_blocked(false), m_blockedSrc(NULL), m_scheduled(false) {
+        Unit( model, dbg ), m_qSize(numSlots),  m_storeDelay( 1 ), m_cache(cache), m_blocked(false), m_blockedSrc(NULL), m_scheduled(false), m_name(name) {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::"+ name + "StoreUnit::@p():@l ";
     }
 
+	std::string& name() { return m_name; }
     bool store( UnitBase* src, MemReq* req ) {
 
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#lx length=%lu pending=%lu\n",req->addr,req->length,m_pendingQ.size());

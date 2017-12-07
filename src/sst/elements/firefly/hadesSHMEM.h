@@ -32,6 +32,9 @@
 #include "shmem/alltoalls.h"
 #include "shmem/reduction.h"
 
+#define SHMEM_BASE      1<<0
+#define SHMEM_BARRIER   1<<1
+
 using namespace Hermes;
 
 namespace SST {
@@ -235,10 +238,10 @@ class HadesSHMEM : public Shmem::Interface
         return m_heap->findBacking(addr);
     }
 
+    Output& dbg() { return m_dbg; }
   private:
     virtual void malloc(Hermes::MemAddr*,size_t,Callback);
     Output m_dbg;
-    Output& dbg() { return m_dbg; }
     Hades*      m_os;
 
 	void delayEnter( Callback callback, SimTime_t delay = 0 );

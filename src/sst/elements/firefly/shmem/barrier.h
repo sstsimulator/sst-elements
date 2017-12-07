@@ -24,10 +24,12 @@ namespace Firefly {
 
 class HadesSHMEM;
 
-class ShmemBarrier : ShmemCollective {
+class ShmemBarrier : protected ShmemCollective {
   public:
     ShmemBarrier( HadesSHMEM& api, ShmemCommon& common ) : ShmemCollective( api, common )
-    { }
+    { 
+		m_prefix = "@t:" + std::to_string(common.my_pe()) + ":ShmemBarrier::@p():@l ";
+	}
     void start( int PE_start, int logPE_stride, int PE_size, Hermes::Vaddr pSync, Hermes::Shmem::Callback );
   private:
 
