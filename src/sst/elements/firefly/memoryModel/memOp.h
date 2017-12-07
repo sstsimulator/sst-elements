@@ -92,6 +92,7 @@
 
         const char* getName( ) {
             switch( type ) {
+            case NotInit: return "NotInit";
             case BusLoad: return "BusLoad";
             case BusStore: return "BusStore";
             case LocalLoad: return "LocalLoad";
