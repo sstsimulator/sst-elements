@@ -3,7 +3,7 @@
 #
 
 # Set Version of SST Elements Library
-AC_INIT([SST Elements Library], [-dev], [sst@sandia.gov])
+AC_INIT([SST Elements Library], [7.2.0], [sst@sandia.gov])
 
 AC_PREREQ([2.59])
 AC_COPYRIGHT([Copyright Sandia National Laboratories, 2004-2017])
