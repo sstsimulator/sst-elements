@@ -38,7 +38,7 @@ namespace Firefly {
 #define NIC_DBG_DETAILED_MEM 1<<2
 #define NIC_DBG_SEND_MACHINE 1<<3
 #define NIC_DBG_RECV_MACHINE 1<<4
-
+#define NIC_SHMEM 1 << 5 
 
 class Nic : public SST::Component  {
 
@@ -215,6 +215,10 @@ public:
 
     Hermes::MemAddr findShmem( int core, Hermes::Vaddr  addr, size_t length );
 
+	SimTime_t getShmemRxDelay_ns() {
+		return m_shmemRxDelay_ns; 
+	}
+
 	SimTime_t calcDelay_ns( SST::UnitAlgebra val ) {
 		if ( val.hasUnits("ns") ) {
 			return val.getValue().toDouble()* 1000000000;
@@ -301,6 +305,7 @@ public:
     Shmem* m_shmem;
 	SimTime_t m_nic2host_lat_ns;
 	SimTime_t m_nic2host_base_lat_ns;
+	SimTime_t m_shmemRxDelay_ns; 
 
     SimTime_t calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
         if( m_simpleMemoryModel ) {
