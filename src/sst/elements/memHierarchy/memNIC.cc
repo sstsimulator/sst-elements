@@ -47,7 +47,8 @@ MemNIC::MemNIC(Component * parent, Params &params) : MemLinkBase(parent, params)
     std::string linkInbufSize = params.find<std::string>("network_input_buffer_size", "1KiB");
     std::string linkOutbufSize = params.find<std::string>("network_output_buffer_size", "1KiB");
 
-    link_control = (SimpleNetwork*)parent->loadSubComponent("merlin.linkcontrol", parent, params); // But link control doesn't use params so manually initialize
+    link_control = (SimpleNetwork*)parent->loadSubComponent(params.find<std::string>("linkcontrol", "merlin.linkcontrol"), parent, params); 
+    // But link control doesn't use params so manually initialize
     link_control->initialize(linkName, UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
 
     // Get source/destination parameters
