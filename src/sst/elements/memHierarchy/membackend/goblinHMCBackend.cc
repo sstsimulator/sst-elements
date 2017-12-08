@@ -1200,7 +1200,7 @@ bool GOBLINHMCSimBackend::clock(Cycle_t cycle) {
 
 void GOBLINHMCSimBackend::processResponses() {
 	int rc = HMC_OK;
-        uint32_t flags;
+        uint32_t flags = 0;
 
 	printPendingRequests();
 
