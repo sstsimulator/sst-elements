@@ -87,6 +87,7 @@
 #include "shmem/motifs/emberShmemAlltoalls.h"
 #include "shmem/motifs/emberShmemReduction.h"
 #include "shmem/motifs/emberShmemRing.h"
+#include "shmem/motifs/emberShmemAtomicInc.h"
 
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
@@ -562,6 +563,12 @@ static SubComponent*
 load_ShmemRing( Component* comp, Params& params ) {
 	return new EmberShmemRingGenerator<int>(comp, params);
 }
+
+static SubComponent*
+load_ShmemAtomicInc( Component* comp, Params& params ) {
+	return new EmberShmemAtomicIncGenerator(comp, params);
+}
+
 
 //NetworkSim: loader for the stop motif
 static SubComponent*
@@ -1778,6 +1785,14 @@ static const ElementInfoSubComponent subcomponents[] = {
 	"SHMEM ring",
 	NULL,
 	load_ShmemRing,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAtomicIncMotif",
+	"SHMEM atomicInc",
+	NULL,
+	load_ShmemAtomicInc,
     shmemTest_params,
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
