@@ -16,7 +16,7 @@
 		}
 
         bool store( UnitBase* src, MemReq* req ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"addr=%#lx length=%lu\n",req->addr,req->length);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"%s addr=%#lx length=%lu\n",src->name().c_str(), req->addr,req->length);
 			if ( ! m_blockedSrc ) {
 				if ( m_unit->store( this, req ) ) {
 					m_blockedSrc = src;
@@ -32,7 +32,7 @@
 
 
         bool load( UnitBase* src, MemReq* req, Callback callback ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"addr=%#lx length=%lu\n",req->addr,req->length);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"%s addr=%#lx length=%lu\n",src->name().c_str(), req->addr,req->length);
 
 			if ( ! m_blockedSrc ) {
 				if ( m_unit->load( this, req, callback ) ) {
@@ -42,13 +42,13 @@
 					return false; 
 				}
 			} else {
-				m_blockedQ.push_back( Entry( Entry::Store, src, req, callback ) );	
+				m_blockedQ.push_back( Entry( Entry::Load, src, req, callback ) );	
 				return true;
 			}
 		}
 
 		void processQ( ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"\n");
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,MUX_MASK,"\n");
 			assert( ! m_blockedQ.empty() );
 			Entry& entry = m_blockedQ.front();
 
@@ -71,10 +71,11 @@
 		}
 
 		void resume( UnitBase* src = NULL ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"\n");
-			assert( m_blockedSrc );
-			m_model.schedResume( 1, m_blockedSrc );
-			m_blockedSrc = NULL;
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,MUX_MASK,"\n");
+			if ( m_blockedSrc ) {
+				m_model.schedResume( 1, m_blockedSrc );
+				m_blockedSrc = NULL;
+			}
 
 			if ( ! m_blockedQ.empty() ) {
 				processQ();
