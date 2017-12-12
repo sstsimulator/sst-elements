@@ -3,7 +3,7 @@ import sst
 # Test functions
 # SimpleMemBackend w/ close page policy
 # Memory controller connected to network
-# do_not_back = 1
+# backing = none
 # MESI coherence protocol
 
 # Define the simulation components
@@ -172,7 +172,7 @@ comp_memory.addParams({
     "backend" : "memHierarchy.simpleDRAM",
     "clock" : "1GHz",
     "max_requests_per_cycle" : 1,
-    "do_not_back" : 1,
+    "backing" : "none",
     "backend.tCAS" : 3,
     "backend.tRCD" : 3,
     "backend.tRP" : 3,

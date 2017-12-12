@@ -140,7 +140,7 @@ for x in range(memories):
     comp_memory.addParams({
         "clock" : "500MHz",
         "max_requests_per_cycle" : 2,
-        "do_not_back" : 1,
+        "backing" : "none",
         # Backend parameters
         "backend" : "memHierarchy.simpleDRAM",
         "backend.mem_size" : "512MiB",
