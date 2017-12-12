@@ -207,7 +207,7 @@ class SandyBridgeAddrMapper : public AddrMapper {
     { }
     
     virtual void setNumChannels( unsigned int num  ) { 
-        if (num != 0) {
+        if (num != 1) {
             Output output("", 1, 0, Output::STDOUT);
             output.fatal(CALL_INFO, -1, "SandyBridgeAddrMapper, Error: memHierarchy.sandyBridgeAddrMapper does not support multiple channels\n");
         }
