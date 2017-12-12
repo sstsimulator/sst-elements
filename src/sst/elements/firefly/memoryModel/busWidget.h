@@ -35,13 +35,16 @@ struct WidgetEntry {
 };
 
 class BusLoadWidget : public Unit {
+
+	std::string m_name;
   public:
     BusLoadWidget( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, int width, int qSize ) :
         Unit( model, dbg ), m_cache(cache), m_width(width), m_qSize(qSize),
-			m_blocked(false), m_scheduled(false), m_blockedSrc(NULL) , m_numPending(0)
+			m_blocked(false), m_scheduled(false), m_blockedSrc(NULL) , m_numPending(0), m_name("BusLoadWidget")
     {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::BusLoadWidget::@p():@l ";
     }
+    std::string& name() { return m_name; } 
 
     bool load( UnitBase* src, MemReq* req, Callback callback ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#lx length=%lu pending=%d\n",req->addr, req->length, m_numPending );
@@ -150,13 +153,15 @@ class BusLoadWidget : public Unit {
 
 
 class BusStoreWidget : public Unit {
+	std::string m_name;
   public:
     BusStoreWidget( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, int width, int qSize ) :
-        Unit( model, dbg ), m_cache(cache), m_width(width), m_blocked(false), m_qSize(qSize), m_blockedSrc(NULL), m_scheduled(false)
+        Unit( model, dbg ), m_cache(cache), m_width(width), m_blocked(false), m_qSize(qSize), m_blockedSrc(NULL), m_scheduled(false), m_name( "BusStoreWidget" )
     {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::BusStoreWidget::@p():@l ";
     }
 
+    std::string& name() { return m_name; } 
     bool store( UnitBase* src, MemReq* req ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#lx length=%lu\n",req->addr,req->length);
 		assert( NULL == m_blockedSrc );

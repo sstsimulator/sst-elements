@@ -15,6 +15,7 @@
 	  public:
 
 		virtual void resume( UnitBase* src = NULL ) { assert(0); }
+		virtual std::string& name() { assert(0); }
 		~UnitBase() {}
 	};
 
