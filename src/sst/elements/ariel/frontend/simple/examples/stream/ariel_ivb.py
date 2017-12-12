@@ -98,7 +98,7 @@ l3_params = {
 mem_params = {
 	"coherence_protocol" : coherence_protocol,
 	"backend.access_time" : "30ns",
-	"do_not_back" : 1,
+	"backing" : "none",
 	"rangeStart" : 0,
 	"backend.mem_size" : str(memory_capacity / (groups * memory_controllers_per_group)) + "MiB",
 	"clock" : memory_clock,

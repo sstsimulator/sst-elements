@@ -161,7 +161,7 @@ comp_memory.addParams({
     "backend.mem_size" : "512MiB",
     "clock" : "500MHz",
     "max_requests_per_cycle" : 1,
-    "do_not_back" : 1,
+    "backing" : "none",
     "backend" : "memHierarchy.DelayBuffer",
     "backend.request_delay" : "150ns",
     "backend.backend" : "memHierarchy.simpleDRAM",
