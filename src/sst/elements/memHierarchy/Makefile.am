@@ -149,6 +149,10 @@ EXTRA_DIST = \
 	tests/testBackendReorderSimple.py \
 	tests/testBackendSimpleDRAM-1.py \
 	tests/testBackendSimpleDRAM-2.py \
+	tests/testBackendtimingDRAM-1.py \
+	tests/testBackendtimingDRAM-2.py \
+	tests/testBackendtimingDRAM-3.py \
+	tests/testBackendtimingDRAM-4.py \
 	tests/testBackendVaultSim.py \
 	tests/testCustomCmdGoblin-1.py \
 	tests/testCustomCmdGoblin-2.py \
