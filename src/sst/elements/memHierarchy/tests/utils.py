@@ -158,7 +158,7 @@ class Config:
             #"memNIC.network_bw": self.ring_bandwidth,
             "backend.mem_size" : self.memory_capacity,
             "backend.clock" : self.memory_clock,
-            "backing" : "none"
+            "backing" : "none",
             "debug" : "1",
             #"system_ini" : "system.ini",
             #"clock" : "1Ghz",

@@ -164,7 +164,7 @@ comp_memory.addParams({
     "backend.mem_size" : "512MiB",
     "clock" : "500MHz",
     "max_requests_per_cycle" : 50,
-    "backing" : "none"
+    "backing" : "none",
     "backend" : "memHierarchy.reorderByRow",
     "backend.max_issue_per_cycle" : 2,
     "backend.reorder_limit" : "20",
