@@ -81,6 +81,7 @@ class SimpleMemoryModel : SubComponent {
 		int hostNumLoadSlots = params.find<int>( "hostNumLoadSlots", 32 );
 		int hostNumStoreSlots = params.find<int>( "hostNumLoadSlots", 32 );
 		double busBandwidth = params.find<double>("busBandwidth_GB", 10 );
+		int busNumLinks = params.find<double>("busNumLinks", 16 );
 
 		int hostCacheNumMSHR = params.find<int>( "hostCacheNumMSHR", 10 );
 		int hostCacheLineSize = params.find<int>( "hostCacheLineSize", 64 );
@@ -91,7 +92,7 @@ class SimpleMemoryModel : SubComponent {
 		m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
 		m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "HostCache" );
 
-		m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, hostCacheLineSize, widgetSlots );
+		m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, busNumLinks, hostCacheLineSize, widgetSlots );
 
 		//m_nicCacheUnit = new CacheUnit( *this, m_dbg, id, m_busBridgeUnit, nicCacheUnitSize, nicCacheLineSize, 10, "Nic" );
 		
