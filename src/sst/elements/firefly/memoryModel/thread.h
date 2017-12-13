@@ -93,6 +93,11 @@ class Thread : public UnitBase {
 
 			Work* work = m_workQ.front();
 
+			if ( op->callback ) {
+				assert( !isLoad );
+ 				op->callback();
+			}
+
 			m_currentOp = work->popOp();
 
 			// if this work entry is done
