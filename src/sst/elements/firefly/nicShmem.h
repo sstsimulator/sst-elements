@@ -114,7 +114,7 @@ class Shmem {
         } 
         assert(0);
     }
-    void checkWaitOps( int core, Hermes::Vaddr addr, size_t length, bool nic = false );
+    void checkWaitOps( int core, Hermes::Vaddr addr, size_t length );
 
 private:
 	SimTime_t getNic2HostDelay_ns() { return m_nic2HostDelay_ns; }
