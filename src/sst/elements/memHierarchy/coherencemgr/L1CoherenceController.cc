@@ -316,7 +316,7 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
             if (cmd == Command::GetX) {
                 /* L1s write back immediately */
                 if (!event->isStoreConditional() || cacheLine->isAtomic()) {
-                    cacheLine->setData(event->getPayload(), event);
+                    cacheLine->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
                     
                     if (is_debug_addr(cacheLine->getBaseAddr())) {
                         printData(cacheLine->getData(), true);
@@ -414,7 +414,7 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
     uint64_t sendTime = 0;
     switch (state) {
         case IS:
-            cacheLine->setData(responseEvent->getPayload(), responseEvent);
+            cacheLine->setData(responseEvent->getPayload(), 0);
             
             if (is_debug_addr(cacheLine->getBaseAddr())) {
                 printData(cacheLine->getData(), true);
@@ -430,7 +430,7 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
             cacheLine->setTimestamp(sendTime-1);
             break;
         case IM:
-            cacheLine->setData(responseEvent->getPayload(), responseEvent);
+            cacheLine->setData(responseEvent->getPayload(), 0);
             
             if (is_debug_addr(cacheLine->getBaseAddr())) {
                 printData(cacheLine->getData(), true);
@@ -440,7 +440,7 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
             cacheLine->setState(M);
             if (origRequest->getCmd() == Command::GetX) {
                 if (!origRequest->isStoreConditional() || cacheLine->isAtomic()) {
-                    cacheLine->setData(origRequest->getPayload(), origRequest);
+                    cacheLine->setData(origRequest->getPayload(), origRequest->getAddr() - origRequest->getBaseAddr());
                     
                     if (is_debug_addr(cacheLine->getBaseAddr())) {
                         printData(cacheLine->getData(), true);
@@ -691,8 +691,7 @@ uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, std::vector<uin
      
     if (!noncacheable) {
         /* Only return the desire word */
-        Addr base    = (event->getAddr()) & ~(((Addr)lineSize_) - 1);
-        Addr offset  = event->getAddr() - base;
+        Addr offset  = event->getAddr() - event->getBaseAddr();
         if (cmd != Command::GetX) {
             responseEvent->setPayload(event->getSize(), &data->at(offset));
         } else {

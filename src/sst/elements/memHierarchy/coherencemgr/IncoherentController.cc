@@ -284,7 +284,7 @@ CacheAction IncoherentController::handlePutMRequest(MemEvent* event, CacheLine* 
     
     switch (state) {
         case I:
-            cacheLine->setData(event->getPayload(), event);
+            cacheLine->setData(event->getPayload(), 0);
             if (event->getDirty()) cacheLine->setState(M);
             else cacheLine->setState(E);
             break;
@@ -298,7 +298,7 @@ CacheAction IncoherentController::handlePutMRequest(MemEvent* event, CacheLine* 
             if (event->getDirty()) cacheLine->setState(M);
         case M:
             if (event->getDirty()) {
-                cacheLine->setData(event->getPayload(), event);
+                cacheLine->setData(event->getPayload(), 0);
                 
                 if (is_debug_event(event)) printData(cacheLine->getData(), true);
             }
@@ -349,7 +349,7 @@ CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, Ca
         return DONE;
     }
 
-    cacheLine->setData(responseEvent->getPayload(), responseEvent);
+    cacheLine->setData(responseEvent->getPayload(), 0);
     if (is_debug_event(responseEvent)) printData(cacheLine->getData(), true);
 
     State state = cacheLine->getState();

@@ -14,19 +14,16 @@
 // distribution.
 
 /*
- * File:   cacheArray.h
  * Author: Caesar De la Paz III
- * Email:  caesar.sst@gmail.com
  */
 
 #ifndef CACHEARRAY_H
 #define CACHEARRAY_H
 
 #include <vector>
-#include <cstdlib>
-#include <bitset>
+
+#include "memTypes.h"
 #include "hash.h"
-#include "memEvent.h"
 #include "sst/core/output.h"
 #include "util.h"
 #include "replacementManager.h"
@@ -60,13 +57,11 @@ public:
         // Data getter/setter
         vector<uint8_t>* getData() { return &data_; }
 
-        void setData(vector<uint8_t> data, MemEvent* ev) {
-            if (ev->getPayloadSize() == size_) data_ = data;
-            else {
-                Addr offset = ev->getAddr() - ev->getBaseAddr();
-                for(uint32_t i = 0; i < ev->getPayloadSize() ; i++ ) {
-                    data_[offset + i] = ev->getPayload()[i];
-                }
+        void setData(vector<uint8_t> data, uint32_t offset) {
+            std::copy(data.begin(), data.end(), data_.begin() + offset);
+            if (data.size() + offset > size_) { // TODO can we remove this check somehow?
+                dbg_->fatal(CALL_INFO, -1, "Error: Cacheline write exceeds line size. Size: %" PRIu32 ", Offset: %" PRIu32 ", Write size: %zu\n",
+                        size_, offset, data.size());
             }
         }
 
@@ -232,13 +227,11 @@ public:
         vector<uint8_t>* getData() { return &data_; }
 
         /** Setter for cache line data - write only specified bits*/
-        void setData(vector<uint8_t> data, MemEvent* memEvent) {
-            if (memEvent->getPayloadSize() == size_) data_ = data;
-            else {
-                Addr offset = memEvent->getAddr() - baseAddr_;
-                for(uint32_t i = 0; i < memEvent->getPayloadSize() ; i++ ) {
-                    data_[offset + i] = memEvent->getPayload()[i];
-                }
+        void setData(vector<uint8_t> data, uint32_t offset) {
+            std::copy(data.begin(), data.end(), data_.begin() + offset);
+            if (data.size() + offset > size_) { // TODO can we remove this check somehow?
+                dbg_->fatal(CALL_INFO, -1, "Error: Cacheline write exceeds line size. Size: %" PRIu32 ", Offset: %" PRIu32 ", Write size: %zu\n",
+                        size_, offset, data.size());
             }
         }
 

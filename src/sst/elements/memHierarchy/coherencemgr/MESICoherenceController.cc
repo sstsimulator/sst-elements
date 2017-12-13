@@ -540,7 +540,7 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
                 cacheLine->clearOwner();
                 cacheLine->addSharer(event->getSrc());
                 if (event->getDirty()) {
-                    cacheLine->setData(event->getPayload(), event);
+                    cacheLine->setData(event->getPayload(), 0);
                     cacheLine->setState(M);
                 }
             }
@@ -564,7 +564,7 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
                 cacheLine->clearOwner();
                 cacheLine->addSharer(event->getSrc());
                 if (event->getDirty()) {
-                    cacheLine->setData(event->getPayload(), event);
+                    cacheLine->setData(event->getPayload(), 0);
                     cacheLine->setState(MI);
                 }
             }
@@ -575,7 +575,7 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
                 cacheLine->clearOwner();
                 cacheLine->addSharer(event->getSrc());
                 if (event->getDirty()) {
-                    cacheLine->setData(event->getPayload(), event);
+                    cacheLine->setData(event->getPayload(), 0);
                     cacheLine->setState(M_Inv);
                 }
             }
@@ -587,7 +587,7 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
                 cacheLine->addSharer(event->getSrc());
                 mshr_->decrementAcksNeeded(event->getBaseAddr());
                 if (event->getDirty()) {
-                    cacheLine->setData(event->getPayload(), event);
+                    cacheLine->setData(event->getPayload(), 0);
                     cacheLine->setState(M_InvX);
                 }
             }
@@ -651,7 +651,7 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
                 cacheLine->setState(M);
                 state = M;
             }
-            cacheLine->setData(event->getPayload(), event);
+            cacheLine->setData(event->getPayload(), 0);
         }
     }
     
@@ -853,7 +853,7 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
                         parent->getName().c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
             }
         }
-        line->setData(event->getPayload(), event);
+        line->setData(event->getPayload(), 0);
         
         if (is_debug_event(event)) printData(line->getData(), true);
         
@@ -1020,7 +1020,7 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
         }
     } 
     if (event->getDirty() || !inclusive_) {
-        cacheLine->setData(event->getPayload(), event);
+        cacheLine->setData(event->getPayload(), 0);
     }
     cacheLine->clearOwner();
             
@@ -1446,7 +1446,7 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
     
     switch (state) {
         case IS:
-            cacheLine->setData(responseEvent->getPayload(), responseEvent);
+            cacheLine->setData(responseEvent->getPayload(), 0);
             
             if (is_debug_event(responseEvent)) printData(cacheLine->getData(), true);
             
@@ -1473,7 +1473,7 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
             
             return DONE;
         case IM:
-            cacheLine->setData(responseEvent->getPayload(), responseEvent);
+            cacheLine->setData(responseEvent->getPayload(), 0);
             
             if (is_debug_event(responseEvent)) printData(cacheLine->getData(), true);
         case SM:
@@ -1509,7 +1509,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
     CacheAction action = (mshr_->getAcksNeeded(responseEvent->getBaseAddr()) == 0) ? DONE : IGNORE;
 
     // Update data
-    if (state != I) cacheLine->setData(responseEvent->getPayload(), responseEvent);
+    if (state != I) cacheLine->setData(responseEvent->getPayload(), 0);
     
     if (state != I && (is_debug_event(responseEvent))) printData(cacheLine->getData(), true);
 
@@ -1548,7 +1548,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
             } else if (reqEvent->getCmd() == Command::FlushLine) {
                 if (responseEvent->getDirty()) {
                     cacheLine->setState(M);
-                    cacheLine->setData(responseEvent->getPayload(), responseEvent);
+                    cacheLine->setData(responseEvent->getPayload(), 0);
                 } else {
                     cacheLine->setState(E);
                 }
@@ -1556,7 +1556,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 break;
             } else if (reqEvent->getCmd() == Command::FetchInv) {    // Raced with FlushLine
                 if (responseEvent->getDirty()) {
-                    cacheLine->setData(responseEvent->getPayload(), responseEvent);
+                    cacheLine->setData(responseEvent->getPayload(), 0);
                 }
                 if (cacheLine->numSharers() > 0) {
                     invalidateAllSharers(cacheLine, reqEvent->getRqstr(), true);
@@ -1571,7 +1571,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 cacheLine->addSharer(reqEvent->getSrc());
                 if (responseEvent->getDirty()) {
                     cacheLine->setState(M);
-                    cacheLine->setData(responseEvent->getPayload(), responseEvent);
+                    cacheLine->setData(responseEvent->getPayload(), 0);
                 } else cacheLine->setState(E);
                 sendTime = sendResponseUp(reqEvent, cacheLine->getData(), true, cacheLine->getTimestamp());
                 cacheLine->setTimestamp(sendTime);
@@ -1584,7 +1584,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 if (cacheLine->getOwner() == responseEvent->getSrc()) cacheLine->clearOwner();
                 if (responseEvent->getDirty()) {
                     cacheLine->setState(M);
-                    cacheLine->setData(responseEvent->getPayload(), responseEvent);
+                    cacheLine->setData(responseEvent->getPayload(), 0);
                 } else cacheLine->setState(E);
                 if (action != DONE) { // Sanity check...
                     debug->fatal(CALL_INFO, -1, "%s, Error: Received a FetchResp to a FlushLineInv but still waiting on more acks. Event = %s. Time = %" PRIu64 "ns\n",
@@ -1607,7 +1607,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
             } else if (reqEvent->getCmd() == Command::FlushLine) {
                 if (responseEvent->getDirty()) {
                     cacheLine->setState(M);
-                    cacheLine->setData(responseEvent->getPayload(), responseEvent);
+                    cacheLine->setData(responseEvent->getPayload(), 0);
                 } else {
                     cacheLine->setState(E);
                 }
@@ -1615,7 +1615,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 break;
             } else if (reqEvent->getCmd() == Command::FetchInv) {
                 if (responseEvent->getDirty()) {
-                    cacheLine->setData(responseEvent->getPayload(), responseEvent);
+                    cacheLine->setData(responseEvent->getPayload(), 0);
                 }
                 if (cacheLine->numSharers() > 0) {
                     invalidateAllSharers(cacheLine, reqEvent->getRqstr(), true);
@@ -1637,7 +1637,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
             cacheLine->clearOwner();
             if (reqEvent->getCmd() == Command::FlushLineInv) {
                 if (cacheLine->getOwner() == responseEvent->getSrc()) cacheLine->clearOwner();
-                if (responseEvent->getDirty()) cacheLine->setData(responseEvent->getPayload(), responseEvent);
+                if (responseEvent->getDirty()) cacheLine->setData(responseEvent->getPayload(), 0);
                 cacheLine->setState(M);
                 if (action != DONE) { // Sanity check...
                     debug->fatal(CALL_INFO, -1, "%s, Error: Received a FetchResp to a FlushLineInv but still waiting on more acks. Event = %s. Time = %" PRIu64 "ns\n",
