@@ -34,6 +34,7 @@ TrivialCPU cpu Finished after 10000 issued reads, 10000 returned (1004898 clocks
  l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 4628642; SumSQ.u64 = 15229844; Count.u64 = 2009792; 
+ l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_M : Accumulator : Sum.u64 = 1013; SumSQ.u64 = 1013; Count.u64 = 1013; 
@@ -158,6 +159,7 @@ TrivialCPU cpu Finished after 10000 issued reads, 10000 returned (1004898 clocks
  l2cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.MSHR_occupancy : Accumulator : Sum.u64 = 4126908; SumSQ.u64 = 12555698; Count.u64 = 2009771; 
+ l2cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.evict_M : Accumulator : Sum.u64 = 957; SumSQ.u64 = 957; Count.u64 = 957; 
@@ -347,6 +349,7 @@ TrivialCPU cpu Finished after 10000 issued reads, 10000 returned (1004898 clocks
  l3cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.MSHR_occupancy : Accumulator : Sum.u64 = 3210628; SumSQ.u64 = 8306010; Count.u64 = 2009746; 
+ l3cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.evict_M : Accumulator : Sum.u64 = 904; SumSQ.u64 = 904; Count.u64 = 904; 
