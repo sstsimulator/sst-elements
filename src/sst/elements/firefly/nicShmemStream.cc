@@ -163,12 +163,15 @@ void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetwork
 
     local += got;
 
-    m_rm.m_nic.m_shmem->checkWaitOps( local_vNic, addr.getSimVAddr(), local.getLength(), true );
-
 	m_matched_len = hdr.length;
 
+	Hermes::Vaddr tmpAddr = addr.getSimVAddr(); 
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusLoad ) );
-	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore ) );
+	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore, 
+		[=]() {
+			m_rm.m_nic.m_shmem->checkWaitOps( local_vNic, tmpAddr, local.getLength() );
+		}
+	) ); 
 
     int srcNode = ev->src;
 	m_rm.nic().schedCallback( [=]() {
@@ -200,10 +203,14 @@ void Nic::RecvMachine::ShmemStream::processFadd( ShmemMsgHdr& hdr, FireflyNetwor
 
     local += got;
 
-	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusLoad ) );
-	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore ) );
+	Hermes::Vaddr tmpAddr = addr.getSimVAddr();
 
-    m_rm.m_nic.m_shmem->checkWaitOps( local_vNic, addr.getSimVAddr(), local.getLength(), true );
+	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusLoad ) );
+	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore,
+		[=]() {
+			m_rm.m_nic.m_shmem->checkWaitOps( local_vNic, tmpAddr, local.getLength() );
+		}
+	) ); 
 
     int srcNode = ev->src;
 
