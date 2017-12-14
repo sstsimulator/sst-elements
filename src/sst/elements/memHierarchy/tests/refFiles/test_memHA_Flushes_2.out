@@ -1615,7 +1615,7 @@ TrivialCPU cpu5 Finished after 1500 issued reads, 1500 returned (14807 clocks)
  l1cache4.Inv_recv : Accumulator : Sum.u64 = 311; SumSQ.u64 = 311; Count.u64 = 311; 
  l1cache4.NACK_recv : Accumulator : Sum.u64 = 1291; SumSQ.u64 = 1291; Count.u64 = 1291; 
  l1cache4.MSHR_occupancy : Accumulator : Sum.u64 = 254815; SumSQ.u64 = 3735157; Count.u64 = 17944; 
- l1cache4444nk_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache4.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache4.evict_E : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; 
  l1cache4.evict_M : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; 

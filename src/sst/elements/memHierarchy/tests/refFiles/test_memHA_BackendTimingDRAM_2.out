@@ -3012,7 +3012,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15870077 clocks
  c7.l2cache.Inv_recv : Accumulator : Sum.u64 = 41; SumSQ.u64 = 41; Count.u64 = 41; 
  c7.l2cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c7.l2cache.MSHR_occupancy : Accumulator : Sum.u64 = 105952900; SumSQ.u64 = 1055086860; Count.u64 = 10656198; 
- c2.l2cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ c7.l2cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c7.l2cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c7.l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c7.l2cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
