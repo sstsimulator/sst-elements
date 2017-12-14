@@ -18,6 +18,8 @@
 
 #include <sst/core/sst_types.h>
 
+#include <sst/core/elibase.h>   // For ElementInfoStatistic
+
 #include "util.h"
 
 namespace SST { namespace MemHierarchy {
