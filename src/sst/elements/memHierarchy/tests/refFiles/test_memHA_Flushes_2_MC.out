@@ -2848,7 +2848,7 @@ TrivialCPU cpu2 Finished after 1500 issued reads, 1500 returned (15837 clocks)
  l3cache2.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache2.NACK_recv : Accumulator : Sum.u64 = 54; SumSQ.u64 = 54; Count.u64 = 54; 
  l3cache2.MSHR_occupancy : Accumulator : Sum.u64 = 50825; SumSQ.u64 = 290297; Count.u64 = 10462; 
- l1cache2.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l3cache2.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache2.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache2.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache2.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
