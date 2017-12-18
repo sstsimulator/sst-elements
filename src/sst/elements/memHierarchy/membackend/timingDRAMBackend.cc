@@ -99,6 +99,8 @@ TimingDRAM::Channel::Channel( Component* comp, TimingDRAM* mem, Params& params, 
     unsigned numRanks = params.find<unsigned>("numRanks", 1);
     m_maxPendingTrans = params.find<unsigned>("transaction_Q_size", 32);
 
+    m_pendingCount = 0;
+
     m_mapper->setNumRanks( numRanks );
 
     if ( m_printConfig ) {
