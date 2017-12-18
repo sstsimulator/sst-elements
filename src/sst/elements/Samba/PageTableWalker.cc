@@ -77,6 +77,9 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 
 	latency = ((uint32_t) params.find<uint32_t>("latency_PTWC", 1));
 
+
+	emulate_faults  = ((uint32_t) params.find<uint32_t>("emulate_faults", 0));
+
 	// For now, we assume a typicaly x86-64 system with 4 levels of page table
 	sizes = 4;
 
@@ -153,6 +156,19 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 }
 
 
+void PageTableWalker::recvOpal(SST::Event * event)
+{
+
+// There is 2 types of event could be received from Opal: TLB Shootdown or Physical Page Grant
+
+
+// If TLB Shootdown, push an event to the TLBHierarchy, so it goes ahead and stop servicing new requests, and send TLB Shootdown all TLBUnits, also we need to update our page table to reflect the new change?
+
+// This event gives physical page to some specific request
+
+
+
+}
 
 void PageTableWalker::recvResp(SST::Event * event)
 {

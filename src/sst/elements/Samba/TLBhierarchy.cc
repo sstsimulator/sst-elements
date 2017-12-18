@@ -154,7 +154,7 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 	PTW->tick(x);
 
 	curr_time = x;
-	// Step 1, check if not empty, then propogate it to L1 TLB
+	// Step 1, check if not empty, then propogate it to L1 cache
 	while(!mem_reqs.empty())
 	{
 
@@ -177,7 +177,6 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 
 		mem_reqs.pop_back();
 
-		// Take it and submit it to L1 TLB, then retire
 
 
 	}

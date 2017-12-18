@@ -68,9 +68,13 @@ namespace SST {
 
 				TLBhierarchy ** TLB;
 
+				int emulate_faults; // This indicates if Opal is used or not
+				
 				SST::Link ** mmu_to_cache;
 
 				SST::Link ** ptw_to_mem;
+
+				SST::Link ** ptw_to_opal;
 			
 				long long int max_inst;
 				char* named_pipe;
