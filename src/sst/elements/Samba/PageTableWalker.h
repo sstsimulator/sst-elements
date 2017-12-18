@@ -56,6 +56,7 @@ namespace SST { namespace SambaComponent{
 
 		SST::Link * to_opal; // This links the Page table walker to the opal memory manager
 
+		int * hold; // This is used to tell the TLB hierarchy to stall, to emulate overhead of page fault handler or TLB shootdown
 
 		// Holds CR3 value of current context
 		long long int CR3;
@@ -150,6 +151,8 @@ namespace SST { namespace SambaComponent{
 		int find_victim_way(long long int vadd, int struct_id);
 
 		void setServiceBack( std::vector<SST::Event *> * x) { service_back = x;}
+
+		void setHold(int * tmp) { hold = tmp; }
 
 		void recvResp(SST::Event* event);
 

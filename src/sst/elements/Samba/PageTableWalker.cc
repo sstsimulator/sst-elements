@@ -68,6 +68,8 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
 
 
+	// Initialize CR3 with -1, to indicate that the root page table hasn't been allocated yet
+	CR3 = -1;
 
 	self_connected = ((uint32_t) params.find<uint32_t>("self_connected", 0));
 
@@ -163,6 +165,8 @@ void PageTableWalker::recvOpal(SST::Event * event)
 
 
 // If TLB Shootdown, push an event to the TLBHierarchy, so it goes ahead and stop servicing new requests, and send TLB Shootdown all TLBUnits, also we need to update our page table to reflect the new change?
+
+// Here we should push the hold button --- *hold=1;, until a TLB shootdown delay or page fault is subtituted
 
 // This event gives physical page to some specific request
 

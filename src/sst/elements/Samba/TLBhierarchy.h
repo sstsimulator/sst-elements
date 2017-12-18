@@ -78,6 +78,10 @@ namespace SST { namespace SambaComponent{
 		// This vector holds the current requests to be translated
 		std::vector<SST::Event *> mem_reqs;
 
+                // This tells TLB hierarchy to stall due to emulated page fault or TLB Shootdown
+                int hold;
+
+
 		// This vector holds the current requests to be translated
 		std::map<SST::Event *, long long int> mem_reqs_sizes;
 
