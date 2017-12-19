@@ -25,8 +25,17 @@ namespace MemHierarchy {
 namespace Backend {
 
 class Backing {
-  public:
-    Backing( std::string memoryFile, size_t size, size_t offset = 0 ) :m_fd(-1), m_size(size), m_offset(offset) {
+public:
+    Backing( ) { }
+    ~Backing() { }
+
+    virtual void set( Addr addr, uint8_t value ) = 0;
+    virtual uint8_t get( Addr addr) = 0;
+};
+
+class BackingMMAP : public Backing {
+public:
+    BackingMMAP(std::string memoryFile, size_t size, size_t offset = 0) : Backing(), m_fd(-1), m_size(size), m_offset(offset) {
         int flags = MAP_PRIVATE;
         if ( ! memoryFile.empty() ) {
             m_fd = open(memoryFile.c_str(), O_RDWR);
@@ -42,24 +51,45 @@ class Backing {
             throw 2;
         }
     }
-    ~Backing() {
+
+    ~BackingMMAP() {
         munmap( m_buffer, m_size );
         if ( -1 != m_fd ) {
             close( m_fd );
         }
     }
+
     void set( Addr addr, uint8_t value ) {
         m_buffer[addr - m_offset ] = value;
     }
+    
     uint8_t get( Addr addr ) {
         return m_buffer[addr - m_offset];
     }
-
-  private:
+private:
     uint8_t* m_buffer;
     int m_fd;
     int m_size;
     size_t m_offset;
+};
+
+class BackingMalloc : public Backing {
+public:
+    BackingMalloc(size_t size) {
+        m_buffer.reserve(size); /* Guess what our size will be */
+    }
+
+    void set( Addr addr, uint8_t value ) {
+        m_buffer[addr] = value;
+    }
+
+    uint8_t get( Addr addr ) {
+        if (m_buffer.find(addr) == m_buffer.end())
+            m_buffer[addr] = 0;
+        return m_buffer[addr];
+    }
+private:
+    std::unordered_map<Addr,uint8_t> m_buffer;
 };
 
 }

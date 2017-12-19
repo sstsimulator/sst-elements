@@ -229,7 +229,7 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
             if (cmd == Command::GetX) {
                 /* L1s write back immediately */
                 if (!event->isStoreConditional() || cacheLine->isAtomic()) {
-                    cacheLine->setData(event->getPayload(), event);
+                    cacheLine->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
                 }
                 /* Handle GetX as unlock (store-unlock) */
                 if (event->queryFlag(MemEvent::F_LOCKED)) {
@@ -309,7 +309,7 @@ CacheAction L1IncoherentController::handleFlushLineInvRequest(MemEvent * event, 
 
 void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest){
     
-    cacheLine->setData(responseEvent->getPayload(), responseEvent);
+    cacheLine->setData(responseEvent->getPayload(), 0);
     bool shouldRespond = !(origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName()));
     
     State state = cacheLine->getState();
@@ -331,7 +331,7 @@ void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLi
             cacheLine->setState(M);
             if (origRequest->getCmd() == Command::GetX) {
                 if (!origRequest->isStoreConditional() || cacheLine->isAtomic()) {
-                    cacheLine->setData(origRequest->getPayload(), origRequest);
+                    cacheLine->setData(origRequest->getPayload(), origRequest->getAddr() - origRequest->getBaseAddr());
 
                 }
                 /* Handle GetX as unlock (store-unlock) */

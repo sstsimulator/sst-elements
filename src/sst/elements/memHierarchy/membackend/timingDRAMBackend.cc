@@ -126,6 +126,10 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
             m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "cycle=%llu retire %s for rank=%d bank=%d row=%d\n",
                     cycle, cmd->getName().c_str(), cmd->getRank(), cmd->getBank(), cmd->getRow());
 
+            if (cmd->getTrans() != nullptr) {
+                m_retiredTrans.push(cmd->getTrans());
+            }
+
             delete (*iter);
             iter = m_issuedCmds.erase(iter); 
         } else {
@@ -133,13 +137,14 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
         }
     }
  
-    if ( ! m_pendingTrans.empty() && m_pendingTrans.front()->isRetired() ) {
-        m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "send response\n");
+    if ( ! m_retiredTrans.empty() ) {
+        m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "send response: reqId=%llu bank=%d addr=%#llx, createTime=%" PRIu64 "\n", m_retiredTrans.front()->id, m_retiredTrans.front()->bank, m_retiredTrans.front()->addr, m_retiredTrans.front()->createTime);
 
-        m_mem->handleResponse( m_pendingTrans.front()->id );
-        delete m_pendingTrans.front();
+        m_mem->handleResponse( m_retiredTrans.front()->id );
+        delete m_retiredTrans.front();
 
-        m_pendingTrans.pop_front();
+        m_retiredTrans.pop();
+        m_pendingCount--;
     }
 
     Cmd* cmd = popCmd( cycle, m_dataBusAvailCycle );
@@ -294,8 +299,8 @@ void TimingDRAM::Bank::update( SimTime_t current )
         return;
     }
 
-    m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "addr=%#llx current row=%d trans row=%d\n",
-            trans->addr, m_row, trans->row );
+    m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "addr=%#llx current row=%d trans row=%d, time=%" PRIu64 "\n",
+            trans->addr, m_row, trans->row, trans->createTime );
 
     Cmd* cmd;
 

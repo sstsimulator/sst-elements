@@ -97,6 +97,12 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     /* Construct cache structures */
     cacheArray_ = createCacheArray(params);
 
+    /* Banks */
+    unsigned int banks = params.find<unsigned int>("banks", 0);
+    bankStatus_.resize(banks, false);
+    bankConflictBuffer_.resize(banks);
+    cacheArray_->setBanked(banks);
+
     /* Create clock, deadlock timeout, etc. */
     createClock(params);
     
@@ -594,4 +600,5 @@ void Cache::registerStatistics() {
     statInv_recv                    = registerStatistic<uint64_t>("Inv_recv");
     statNACK_recv                   = registerStatistic<uint64_t>("NACK_recv");
     statMSHROccupancy               = registerStatistic<uint64_t>("MSHR_occupancy");
+    statBankConflicts               = registerStatistic<uint64_t>("Bank_conflicts");
 }

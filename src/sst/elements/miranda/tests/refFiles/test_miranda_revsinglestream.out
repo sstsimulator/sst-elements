@@ -53,6 +53,7 @@ ReverseSingleStreamGenerator[ReverseSingleStreamGenerator:43]: Stride:          
  l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 253960; SumSQ.u64 = 3877344; Count.u64 = 16661; 
+ l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.Prefetch_requests : Accumulator : Sum.u64 = 4092; SumSQ.u64 = 4092; Count.u64 = 4092; 
  l1cache.Prefetch_hits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.Prefetch_drops : Accumulator : Sum.u64 = 3965; SumSQ.u64 = 3965; Count.u64 = 3965; 

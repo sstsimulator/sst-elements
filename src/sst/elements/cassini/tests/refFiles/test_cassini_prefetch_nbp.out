@@ -33,6 +33,7 @@ Completed @ 11127977 ns
  l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 83955490; SumSQ.u64 = 678118726; Count.u64 = 22255950; 
+ l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.Prefetch_requests : Accumulator : Sum.u64 = 6250; SumSQ.u64 = 6250; Count.u64 = 6250; 
  l1cache.Prefetch_hits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.Prefetch_drops : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
