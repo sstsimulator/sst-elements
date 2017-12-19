@@ -21,8 +21,8 @@ using namespace SST;
 using namespace SST::Firefly;
 
 Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, FireflyNetworkEvent* ev,
-       RecvMachine& rm  ) : 
-    StreamBase(output, rm )
+       RecvMachine& rm, int unit ) : 
+    StreamBase(output, rm, unit )
 {
     m_hdr = *(MsgHdr*) ev->bufPtr();
     m_shmemHdr = *(ShmemMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
@@ -138,7 +138,7 @@ void Nic::RecvMachine::ShmemStream::processGet( ShmemMsgHdr& hdr, FireflyNetwork
 	Hermes::Vaddr simVaddr = addr.getSimVAddr();
     int srcNode = ev->src;
     m_rm.nic().schedCallback( [=]() {
-    	m_rm.nic().calcNicMemDelay( NIC_RecvThread, memOps, 
+    	m_rm.nic().calcNicMemDelay( m_unit, memOps, 
 			[=]() {
     			m_rm.nic().m_sendMachine[0]->run( new ShmemPut2SendEntry( local_vNic, srcNode, dest_vNic, backing, 
                 	hdr.length, hdr.respKey, simVaddr ) );
@@ -175,7 +175,7 @@ void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetwork
 
     int srcNode = ev->src;
 	m_rm.nic().schedCallback( [=]() {
-    	m_rm.nic().calcNicMemDelay( NIC_RecvThread, memOps,
+    	m_rm.nic().calcNicMemDelay( m_unit, memOps,
 			[=]() {
 				m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"processAdd() send Ack to %d\n",srcNode);
 				m_sendEntry = new ShmemAckSendEntry( local_vNic, srcNode, dest_vNic );
@@ -215,14 +215,17 @@ void Nic::RecvMachine::ShmemStream::processFadd( ShmemMsgHdr& hdr, FireflyNetwor
     int srcNode = ev->src;
 
     m_rm.nic().schedCallback( [=]() {
-    	m_rm.nic().calcNicMemDelay( NIC_RecvThread, memOps, 
+
+    	m_rm.nic().calcNicMemDelay( m_unit, memOps, 
 			[=]() {
     			m_rm.nic().m_sendMachine[0]->run( new ShmemPut2SendEntry( local_vNic, srcNode, dest_vNic, save, hdr.respKey ) );
-    			m_rm.state_move_2( ev );
+				m_rm.state_move_4( ev, this );
 			}
 		);	
-	}, 
-	m_rm.nic().getShmemRxDelay_ns() );
+        m_rm.state_move_3( ev );
+
+	}, m_rm.nic().getShmemRxDelay_ns() );
+
 }
 
 void Nic::RecvMachine::ShmemStream::processSwap( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_vNic, int dest_vNic )
@@ -245,7 +248,7 @@ void Nic::RecvMachine::ShmemStream::processSwap( ShmemMsgHdr& hdr, FireflyNetwor
 
     int srcNode = ev->src;
 	m_rm.nic().schedCallback( [=]() {
-    	m_rm.nic().calcNicMemDelay( NIC_RecvThread, memOps,
+    	m_rm.nic().calcNicMemDelay( m_unit, memOps,
 			[=]() {
     			m_rm.nic().m_sendMachine[0]->run( new ShmemPut2SendEntry( local_vNic, srcNode, dest_vNic, save, hdr.respKey ) );
     			m_rm.state_move_2( ev );
@@ -280,7 +283,7 @@ void Nic::RecvMachine::ShmemStream::processCswap( ShmemMsgHdr& hdr, FireflyNetwo
 
     int srcNode = ev->src;
 	m_rm.nic().schedCallback( [=]() {
-    	m_rm.nic().calcNicMemDelay( NIC_RecvThread, memOps,
+    	m_rm.nic().calcNicMemDelay( m_unit, memOps,
 			[=]() {
     			m_rm.nic().m_sendMachine[0]->run( new ShmemPut2SendEntry( local_vNic, srcNode, dest_vNic, save, hdr.respKey ) );
     			m_rm.state_move_2( ev );

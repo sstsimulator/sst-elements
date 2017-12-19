@@ -173,8 +173,8 @@ public:
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
 
-    void dmaRead( std::vector<MemOp>* vec, Callback callback );
-    void dmaWrite( std::vector<MemOp>* vec, Callback callback );
+    void dmaRead( int unit, std::vector<MemOp>* vec, Callback callback );
+    void dmaWrite( int unit, std::vector<MemOp>* vec, Callback callback );
 
     void schedCallback( Callback callback, uint64_t delay = 0 ) {
         schedEvent( new SelfEvent( callback ), delay);
@@ -306,6 +306,7 @@ public:
 	SimTime_t m_nic2host_lat_ns;
 	SimTime_t m_nic2host_base_lat_ns;
 	SimTime_t m_shmemRxDelay_ns; 
+	int m_numNicUnits;
 
     SimTime_t calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
         if( m_simpleMemoryModel ) {
@@ -316,12 +317,33 @@ public:
 		}
     }
 
-	#define NIC_SendThread SimpleMemoryModel::NIC_Thread::Send
-	#define NIC_RecvThread SimpleMemoryModel::NIC_Thread::Recv
+    bool initNicUnitPool( int num) {
+        m_numNicUnits = num;
+        for ( int i = 0; i < num; i++ ) {
+            m_availNicUnits.push_back(i);
+        } 
+    }
 
-    void calcNicMemDelay( SimpleMemoryModel::NIC_Thread who, std::vector< MemOp>* ops, std::function<void()> callback ) {
+    int allocNicUnit() {
+        int unit = -1;
+        if ( ! m_availNicUnits.empty() ) {
+            unit = m_availNicUnits.front();
+            m_availNicUnits.pop_front();
+        }
+
+        m_dbg.verbose(CALL_INFO,2,1,"unit=%d\n",unit);
+        return unit;
+    }
+
+    void freeNicUnit( int unit ) {
+        m_dbg.verbose(CALL_INFO,2,1,"unit=%d\n",unit);
+        m_availNicUnits.push_back( unit );
+        assert( m_availNicUnits.size() < m_numNicUnits );
+    }
+
+    void calcNicMemDelay( int unit, std::vector< MemOp>* ops, std::function<void()> callback ) {
         if( m_simpleMemoryModel ) {
-        	m_simpleMemoryModel->schedNicCallback( who, ops, callback );
+        	m_simpleMemoryModel->schedNicCallback( unit, ops, callback );
         } else {
 			schedCallback(callback);
 			delete ops;
@@ -329,7 +351,7 @@ public:
 	}
 
     SimpleMemoryModel*  m_simpleMemoryModel;
-
+    std::deque<int> m_availNicUnits;
     uint16_t m_getKey;
   public:
 	int m_tracedPkt;

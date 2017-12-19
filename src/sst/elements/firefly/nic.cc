@@ -66,6 +66,10 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
+    int numNicUnits  =     params.find<int>( "numNicUnits", 4 );
+    assert( numNicUnits >= 4 );
+
+    initNicUnitPool( numNicUnits );
 
     UnitAlgebra xxx = params.find<SST::UnitAlgebra>( "packetSize" );
     int packetSizeInBytes;
@@ -117,7 +121,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
-        m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics );
+        m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics, numNicUnits );
     }
 
     m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
@@ -134,11 +138,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 0  ) );
+                txDelay, packetSizeInBytes, 0, allocNicUnit() ) );
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId,
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 1  ) );
+                txDelay, packetSizeInBytes, 1, allocNicUnit() ) );
     m_memRgnM.resize( m_vNicV.size() );
 
     float dmaBW  = params.find<float>( "dmaBW_GBs", 0.0 ); 
@@ -484,10 +488,10 @@ void Nic::detailedMemOp( Thornhill::DetailedCompute* detailed,
     }
 }
 
-void Nic::dmaRead( std::vector<MemOp>* vec, Callback callback ) {
+void Nic::dmaRead( int unit, std::vector<MemOp>* vec, Callback callback ) {
 
     if ( m_simpleMemoryModel ) {
-        calcNicMemDelay( NIC_SendThread, vec, callback );
+        calcNicMemDelay( unit, vec, callback );
     } else if ( m_useDetailedCompute && m_detailedCompute[0] ) {
 
         detailedMemOp( m_detailedCompute[0], *vec, "Read", callback );
@@ -503,11 +507,11 @@ void Nic::dmaRead( std::vector<MemOp>* vec, Callback callback ) {
     }
 }
 
-void Nic::dmaWrite( std::vector<MemOp>* vec, Callback callback ) {
+void Nic::dmaWrite( int unit, std::vector<MemOp>* vec, Callback callback ) {
 
 
     if ( m_simpleMemoryModel ) {
-       	calcNicMemDelay( NIC_RecvThread, vec, callback );
+       	calcNicMemDelay( unit, vec, callback );
     } else if ( m_useDetailedCompute && m_detailedCompute[1] ) {
 
         detailedMemOp( m_detailedCompute[1], *vec, "Write", callback );
