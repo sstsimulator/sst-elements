@@ -62,7 +62,8 @@ namespace SST {
 				void operator=(const Samba&); // do not implement
 
 				int create_pinchild(char* prog_binary, char** arg_list){return 0;}
-
+				
+	    		        SST::Link * event_link; // Note that this is a self-link for events
 
 				SST::Link ** cpu_to_mmu;
 

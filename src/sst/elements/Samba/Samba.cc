@@ -104,6 +104,14 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 			link4 = configureLink(link_buffer4, "30ps", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvOpal));
 			ptw_to_opal[i] = link4;
 			TLB[i]->setOpalLink(link4);
+
+			sprintf(link_buffer, "event_bus");
+
+			event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::handleEvent));
+
+			TLB[i]->getPTW()->setEventChannel(event_link);
+
+
 		}
 
 		TLB[i]->setPTWLink(link3); // We make a connection from the TLB hierarchy to the memory hierarchy, for page table walking purposes

@@ -62,21 +62,29 @@ namespace SST { namespace SambaComponent{
 		long long int CR3;
 
 		// Holds the PGD physical pointers, the key is the 9 bits 39-47, i.e., VA/(4096*512*512*512)
-		std<long long int, long long int> PGD;
+		std::map<long long int, long long int> PGD;
 
 		// Holds the PUD physical pointers, the key is the 9 bits 30-38, i.e., VA/(4096*512*512)
-		std<long long int, long long int> PUD;
+		std::map<long long int, long long int> PUD;
 
 		// Holds the PMD physical pointers, the key is the 9 bits 21-29, i.e., VA/(4096*512)
-		std<long long int, long long int> PMD;
+		std::map<long long int, long long int> PMD;
 
 		// Holds the PTE physical pointers, the key is the 9 bits 12-20, i.e., VA/(4096)
-		std<long long int, long long int> PTE; // This should give you the exact physical address of the page
+		std::map<long long int, long long int> PTE; // This should give you the exact physical address of the page
+
+
+		// The structures below are used to quickly check if the page is mapped or not
+		std::map<long long int,int> MAPPED_PAGE_SIZE4KB;
+		std::map<long long int,int> MAPPED_PAGE_SIZE2MB;
+		std::map<long long int,int> MAPPED_PAGE_SIZE1GB;
+
+		// This link is used to send internal events within the page table walker
+		SST::Link * s_EventChan;
 
 
 
-
-
+		bool stall; // This indicates the page table walker is stalling due to a fault
 
 		int  * sets; //stores the number of sets
 
@@ -136,6 +144,9 @@ namespace SST { namespace SambaComponent{
 		// Does the translation and updating the statistics of miss/hit
 		long long int translate(long long int vadd);
 
+
+		void setEventChannel(SST::Link * x) { s_EventChan = x; }
+
 		void finish(){}
 
 		void set_ToMem(SST::Link * l) { to_mem = l;} 
@@ -179,6 +190,7 @@ namespace SST { namespace SambaComponent{
 
 		Statistic<uint64_t>* statPageTableWalkerMisses;
 
+	        void handleEvent(SST::Event* event);
 
 		int getHits(){return hits;}
 		int getMisses(){return misses;}
