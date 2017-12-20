@@ -162,6 +162,7 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 void PageTableWalker::handleEvent( SST::Event* e )
 {
 
+
 // For each page fault,
 // 1 -- check if CR3 for VA exist, if not
 // Send request to Opal and save state of current fault at 3
@@ -173,6 +174,27 @@ void PageTableWalker::handleEvent( SST::Event* e )
 
 
 //// ******** Important, for each level, we will update MAPPED_PAGE_SIZE** and PGD/PMD/PUD/PTE so the actual physical address is used later
+    SambaEvent * temp_ptr =  dynamic_cast<SambaComponent::SambaEvent*> (e);
+
+        if(temp_ptr==NULL)
+                std::cout<<" Error in Casting to SambaEvent "<<std::endl;
+
+	if(temp_ptr->getType() == EventType::PAGE_FAULT)
+	{
+
+		// Send request to Opal starting from the first unmapped level (L4/CR3 if first fault in system)
+
+	}
+	else if(temp_ptr->getType() == EventType::OPAL_RESPONSE)
+	{
+
+		// If opal response and it is the lst, i.e., PTE, then just do the following:
+		// (1) update page table and maps of mapped pages -- (2) stall = false, *hold=0
+		// Otherwise
+		// Update the page tables to reflect new page table entries/tables, then issue a new opal request to build next level
+
+
+	}
 
 
 }
@@ -278,8 +300,10 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 			if(fault)
 			{
-
-
+				SambaEvent * tse = new SambaEvent(EventType::PAGE_FAULT);
+				tse->setAddress(addr);
+				tse->setAddress(4096);
+				s_EventChan->send(10, tse);
 				stall = true;
 				*hold = 1;
 				return false;
