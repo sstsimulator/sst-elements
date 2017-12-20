@@ -17,7 +17,7 @@
 #include <sst_config.h>
 #include "PageTableWalker.h"
 #include <sst/core/link.h>
-
+#include "Samba_Event.h"
 #include<iostream>
 
 using namespace SST::SambaComponent;
