@@ -201,6 +201,9 @@ class Value {
   private:
     void copy( Value& dest, const Value& src ) {
 
+		if ( NULL == src.m_ptr ) { 
+			return; 
+		}
         if ( dest.m_type == Empty ) {
             dest.m_type = src.m_type;
             dest.m_length = src.getLength();
@@ -341,7 +344,11 @@ class MemAddr {
     }
 
     void* getBacking( size_t offset = 0 ) {
-        return (uint8_t*) backing + offset;
+	   	void* ptr = NULL;
+		if ( backing ) {
+        	ptr =  (uint8_t*) backing + offset;
+		}
+		return ptr;
     }
     void setBacking( void* ptr ) {
         backing = ptr;
