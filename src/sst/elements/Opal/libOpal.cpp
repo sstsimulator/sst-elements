@@ -35,6 +35,7 @@ const char *memEventList[] = {
 static const ElementInfoParam Opal_params[] = {
     {"clock",              "Internal Controller Clock Rate.", "1.0 Ghz"},
     {"num_pools",	   "This determines the number of memory pools", "1"},
+    {"corecount",	   "This determines the number of cores on each node", "1"},
     {"num_domains", "The number of domains in the system, typically similar to number of sockets/SoCs", "1"},
     {"allocation_policy",	   "0 is private pools, then clustered pools, then public pools", "0"},
     {"size%(num_pools)", "Size of each memory pool in KBs", "8388608"},

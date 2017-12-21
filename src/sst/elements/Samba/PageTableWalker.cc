@@ -17,10 +17,12 @@
 #include <sst_config.h>
 #include "PageTableWalker.h"
 #include <sst/core/link.h>
+#include <sst/elements/Opal/Opal_Event.h>
 #include "Samba_Event.h"
 #include<iostream>
 
 using namespace SST::SambaComponent;
+using namespace SST::OpalComponent;
 using namespace SST::MemHierarchy;
 using namespace SST;
 
@@ -183,6 +185,11 @@ void PageTableWalker::handleEvent( SST::Event* e )
 	{
 
 		// Send request to Opal starting from the first unmapped level (L4/CR3 if first fault in system)
+		OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+                tse->setResp(50,0,4096);
+                to_opal->send(10, tse);
+
+
 
 	}
 	else if(temp_ptr->getType() == EventType::OPAL_RESPONSE)
@@ -193,6 +200,9 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		// Otherwise
 		// Update the page tables to reflect new page table entries/tables, then issue a new opal request to build next level
 
+		// For now, just assume only the page will be mappe and requested from Opal
+		stall = false;
+		*hold = 0;
 
 	}
 
@@ -206,7 +216,9 @@ void PageTableWalker::recvOpal(SST::Event * event)
 {
 
 // Whenever we receve request from Opal, we just create event that will be handled by handleEvent
-
+  SambaEvent * tse = new SambaEvent(EventType::OPAL_RESPONSE);
+                                tse->setResp(6666,4096);
+                                s_EventChan->send(10, tse);
 
 
 }
@@ -301,11 +313,11 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 			if(fault)
 			{
 				SambaEvent * tse = new SambaEvent(EventType::PAGE_FAULT);
-				tse->setAddress(addr);
-				tse->setAddress(4096);
+				tse->setResp(addr,4096);
 				s_EventChan->send(10, tse);
 				stall = true;
 				*hold = 1;
+				MAPPED_PAGE_SIZE4KB[addr/page_size[0]] = 0; // FIXME: Hack to avoid propogating faulting VA through all events, only for initial testing
 				return false;
 			}
 

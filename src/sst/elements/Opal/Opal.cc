@@ -28,15 +28,30 @@ using namespace SST;
 using namespace SST::OpalComponent;
 
 
-#define MESSIER_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
+#define OPAL_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
 
 
-// Here we do the initialization of the Samba units of the system, connecting them to the cores and instantiating TLB hierachy objects for each one
 
 Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 
-	//registerClock( cpu_clock, new Clock::Handler<Opal>(this, &Opal::tick ) );
+	int core_count = (uint32_t) params.find<uint32_t>("num_cores", 1);
+
+	Handlers = new core_handler[core_count];
+
+	samba_to_opal = new SST::Link * [core_count];
+
+	char* link_buffer = (char*) malloc(sizeof(char) * 256);
+
+	for(uint32_t i = 0; i < core_count; ++i) {
+		sprintf(link_buffer, "requestLink%" PRIu32, i);
+		SST::Link * link = configureLink(link_buffer, "0ps", new Event::Handler<core_handler>((&Handlers[i]), &core_handler::handleRequest));
+		samba_to_opal[i] = link;
+		Handlers[i].singLink = link;
+		Handlers[i].id = i;
+	}
+
+	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
 
 }
 
@@ -54,7 +69,20 @@ bool Opal::tick(SST::Cycle_t x)
 {
 
 	// We tick the MMU hierarchy of each core
-//	for(uint32_t i = 0; i < core_count; ++i)
+	//	for(uint32_t i = 0; i < core_count; ++i)
 
 	return false;
 }
+
+
+void Opal::handleRequest( SST::Event* e )
+{
+
+
+
+
+
+
+
+}
+

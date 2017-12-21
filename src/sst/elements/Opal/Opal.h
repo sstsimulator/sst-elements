@@ -24,7 +24,7 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/interfaces/simpleMem.h>
 
-#include "OpalEvent.h"
+#include "Opal_Event.h"
 #include <sst/core/output.h>
 #include "sst/core/elementinfo.h"
 #include <cstring>
@@ -38,14 +38,30 @@
 #include <poll.h>
 #include "mempool.h"
 
-
 using namespace std;
 using namespace SST;
 
-//using namespace SST::OpalComponent;
+using namespace SST::OpalComponent;
+
+
 
 namespace SST {
 	namespace OpalComponent {
+
+		class core_handler{
+			public:
+
+				int id;
+				SST::Link * singLink;
+				void handleRequest(SST::Event* e)
+				{
+					OpalEvent * tse = new OpalEvent(EventType::RESPONSE);
+					tse->setResp(50,66666,4096);
+					singLink->send(10, tse);
+				}
+
+
+		};
 
 
 		class Opal : public SST::Component {
@@ -55,7 +71,9 @@ namespace SST {
 				void setup()  { };
 				void finish() {};
 				void handleEvent(SST::Event* event) {};
+				void handleRequest( SST::Event* e );
 				bool tick(SST::Cycle_t x);
+				core_handler * Handlers;
 
 				SST_ELI_REGISTER_COMPONENT(
 						Opal,
@@ -104,6 +122,7 @@ namespace SST {
 					int create_pinchild(char* prog_binary, char** arg_list){return 0;}
 
 					SST::Link * m_memChan; 
+					SST::Link ** samba_to_opal; 
 
 					SST::Link * event_link; // Note that this is a self-link for events
 
