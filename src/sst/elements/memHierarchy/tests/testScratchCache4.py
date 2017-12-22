@@ -173,7 +173,7 @@ comp_scratch.addParams({
     "size" : "64KiB",
     "scratch_line_size" : 64,
     "memory_line_size" : 128,
-    "do_not_back" : 1,
+    "backing" : "none",
     "backendConvertor" : "memHierarchy.simpleMemScratchBackendConvertor",
     "backendConvertor.backend" : "memHierarchy.simpleMem",
     "backendConvertor.backend.access_time" : "10ns",
@@ -197,7 +197,7 @@ comp_memory0 = sst.Component("memory0", "memHierarchy.MemController")
 comp_memory0.addParams({
       #"debug" : "1",
       #"debug_level" : 10,
-      "do_not_back" : 1,
+      "backing" : "none",
       "clock" : "1GHz",
       #"backendConvertor.debug_location" : 1,
       #"backendConvertor.debug_level" : 10,
@@ -214,7 +214,7 @@ comp_memory1 = sst.Component("memory1", "memHierarchy.MemController")
 comp_memory1.addParams({
       #"debug" : "1",
       #"debug_level" : 10,
-      "do_not_back" : 1,
+      "backing" : "none",
       "backend.access_time" : "50ns",
       "clock" : "1GHz",
       "backend.mem_size" : "512MiB",

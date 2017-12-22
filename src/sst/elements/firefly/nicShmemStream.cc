@@ -191,17 +191,20 @@ void Nic::RecvMachine::ShmemStream::processFadd( ShmemMsgHdr& hdr, FireflyNetwor
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%#" PRIx64 "\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
     Hermes::MemAddr addr = m_rm.nic().findShmem( local_vNic, hdr.vaddr, hdr.length ); 
+
 	std::vector< MemOp >* memOps = new std::vector< MemOp >;
 
     assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) );
 
-    Hermes::Value* save = new Hermes::Value( (Hermes::Value::Type)hdr.dataType );
+   	Hermes::Value* save = new Hermes::Value( (Hermes::Value::Type)hdr.dataType );
     Hermes::Value local( (Hermes::Value::Type) hdr.dataType, addr.getBacking());
-    Hermes::Value got( (Hermes::Value::Type) hdr.dataType, ev->bufPtr() );
 
-    *save = local;
+	if ( addr.getBacking() ) {
+    	Hermes::Value got( (Hermes::Value::Type) hdr.dataType, ev->bufPtr() );
 
-    local += got;
+    	*save = local;
+    	local += got;
+	}
 
 	Hermes::Vaddr tmpAddr = addr.getSimVAddr();
 

@@ -449,11 +449,13 @@ void Nic::Shmem::hostFadd( NicShmemFaddCmdEvent* event, int id )
                 getBacking( event->getVnic(), event->getFarAddr(), event->getLength() ) );
 	std::vector<MemOp>* vec = new std::vector<MemOp>;
 
-    Hermes::Value save = Hermes::Value( event->getDataType() ); 
+   	Hermes::Value save = Hermes::Value( event->getDataType() ); 
 
-    save = local;
+	if ( local.getPtr() ) {
 
-    local += event->getValue();
+    	save = local;
+    	local += event->getValue();
+	}
 
     checkWaitOps( event->getVnic(), event->getFarAddr(), local.getLength() );
 
@@ -467,7 +469,6 @@ void Nic::Shmem::hostFadd( NicShmemFaddCmdEvent* event, int id )
     		delete event;
 		}
 	);
-
 }
 
 

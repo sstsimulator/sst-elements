@@ -98,7 +98,7 @@ comp_dirctrl.addParams({
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-    "do_not_back" : 1,
+    "backing" : "none",
     "backend" : "memHierarchy.timingDRAM",
     "backend.id" : 0,
     "backend.addrMapper" : "memHierarchy.roundRobinAddrMapper",

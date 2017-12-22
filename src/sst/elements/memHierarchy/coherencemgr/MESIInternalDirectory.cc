@@ -500,7 +500,7 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
     }
     // Set data, either to cache or to MSHR
     if (dirLine->getDataLine() != NULL) {
-        dirLine->getDataLine()->setData(event->getPayload(), event);
+        dirLine->getDataLine()->setData(event->getPayload(), 0);
         printData(dirLine->getDataLine()->getData(), true);
     } else if (mshr_->isHit(dirLine->getBaseAddr())) mshr_->setDataBuffer(dirLine->getBaseAddr(), event->getPayload());
     
@@ -690,7 +690,7 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
     recordStateEventCount(event->getCmd(), state);
 
     bool isCached = dirLine->getDataLine() != NULL;
-    if (isCached) dirLine->getDataLine()->setData(event->getPayload(), event);
+    if (isCached) dirLine->getDataLine()->setData(event->getPayload(), 0);
     else if (mshr_->isHit(dirLine->getBaseAddr())) mshr_->setDataBuffer(dirLine->getBaseAddr(), event->getPayload());
 
     if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(event->getBaseAddr());
@@ -801,7 +801,7 @@ CacheAction MESIInternalDirectory::handleFlushLineRequest(MemEvent * event, Cach
 
     bool isCached = dirLine && dirLine->getDataLine() != NULL;
     if (event->getPayloadSize() != 0) {
-        if (isCached) dirLine->getDataLine()->setData(event->getPayload(), event);
+        if (isCached) dirLine->getDataLine()->setData(event->getPayload(), 0);
         else if (mshr_->isHit(event->getBaseAddr())) mshr_->setDataBuffer(event->getBaseAddr(), event->getPayload());
     }
 
@@ -914,7 +914,7 @@ CacheAction MESIInternalDirectory::handleFlushLineInvRequest(MemEvent * event, C
 
     bool isCached = dirLine && dirLine->getDataLine() != NULL;
     if (event->getPayloadSize() != 0) {
-        if (isCached) dirLine->getDataLine()->setData(event->getPayload(), event);
+        if (isCached) dirLine->getDataLine()->setData(event->getPayload(), 0);
         else if (mshr_->isHit(event->getBaseAddr())) mshr_->setDataBuffer(event->getBaseAddr(), event->getPayload());
     }
 
@@ -1630,7 +1630,7 @@ CacheAction MESIInternalDirectory::handleDataResponse(MemEvent* responseEvent, C
             if (responseEvent->getCmd() == Command::GetXResp && protocol_) dirLine->setState(E);
             else dirLine->setState(S);
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), responseEvent);
+            if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), 0);
             if (!shouldRespond) return DONE;
             if (dirLine->getState() == E) {
                 dirLine->setOwner(origRequest->getSrc());
@@ -1643,7 +1643,7 @@ CacheAction MESIInternalDirectory::handleDataResponse(MemEvent* responseEvent, C
             if (is_debug_event(responseEvent)) printData(&responseEvent->getPayload(), false);
             return DONE;
         case IM:
-            if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), responseEvent);
+            if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), 0);
         case SM:
             dirLine->setState(M);
             dirLine->setOwner(origRequest->getSrc());
@@ -1674,7 +1674,7 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
     CacheAction action = (mshr_->getAcksNeeded(responseEvent->getBaseAddr()) == 0) ? DONE : IGNORE;
     
     bool isCached = dirLine->getDataLine() != NULL;
-    if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), responseEvent);    // Update local data if needed
+    if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), 0);    // Update local data if needed
     recordStateEventCount(responseEvent->getCmd(), state);
     
     uint64_t sendTime = 0; 
@@ -1768,7 +1768,7 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
                     dirLine->setState(M);
                 } else if (reqEvent->getCmd() == Command::FlushLineInv) {
                     if (responseEvent->getDirty()) {
-                        if (dirLine->getDataLine() != NULL) dirLine->getDataLine()->setData(responseEvent->getPayload(), responseEvent);
+                        if (dirLine->getDataLine() != NULL) dirLine->getDataLine()->setData(responseEvent->getPayload(), 0);
                         else mshr_->setDataBuffer(responseEvent->getBaseAddr(), responseEvent->getPayload());
                     }
                     if (responseEvent->getDirty() || state == M_Inv) dirLine->setState(M);

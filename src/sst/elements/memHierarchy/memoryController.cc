@@ -159,13 +159,30 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     privateMemOffset_ = 0;
 
     // Set up backing store if needed
-    std::string memoryFile = params.find<std::string>("memory_file", NO_STRING_DEFINED );
-    if ( ! params.find<bool>("do_not_back",false)  ) {
+    std::string backingType = params.find<std::string>("backing", "malloc", found); /* Default to using a malloc backing store */
+    backing_ = nullptr;
+    if (!found) {
+        bool oldBackVal = params.find<bool>("do_not_back", false, found);
+        if (found) {
+            out.output("%s, ** Found deprecated parameter: do_not_back ** Use 'backing' parameter instead and specify 'none', 'malloc', or 'mmap'. Remove this parameter from your input deck to eliminate this message.\n", 
+                    getName().c_str());
+        }
+        if (oldBackVal) backingType = "malloc";
+    }
+
+    if (backingType != "none" && backingType != "mmap" && backingType != "malloc") {
+        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: backing. Must be one of 'none', 'malloc', or 'mmap'. You specified: %s\n",
+                getName().c_str(), backingType.c_str());
+    }
+
+    if (backingType == "mmap") {
+        std::string memoryFile = params.find<std::string>("memory_file", NO_STRING_DEFINED );
+
         if ( 0 == memoryFile.compare( NO_STRING_DEFINED ) ) {
             memoryFile.clear();
         }
         try { 
-            backing_ = new Backend::Backing( memoryFile, memBackendConvertor_->getMemSize() );
+            backing_ = new Backend::BackingMMAP( memoryFile, memBackendConvertor_->getMemSize() );
         }
         catch ( int e) {
             if (e == 1) 
@@ -175,9 +192,18 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             else 
                 dbg.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
         }
-    } else if (memoryFile != NO_STRING_DEFINED) {
-            dbg.fatal(CALL_INFO, -1, "%s, Error - conflicting parameters. 'do_not_back' cannot be true if 'memory_file' is specified.  memory_file = %s\n",
-                getName().c_str(), memoryFile.c_str());
+    } else if (backingType == "malloc") {
+        std::string size = params.find<std::string>("backing_size_hint", "1MiB");
+        UnitAlgebra size_ua(size);
+        if (!size_ua.hasUnits("B")) {
+            out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: backing_size_hint. Must have units of bytes (B). SI ok. You specified: %s\n",
+                    getName().c_str(), size.c_str());
+        }
+        size_t sizeBytes = size_ua.getRoundedValue();
+        if (sizeBytes > memBackendConvertor_->getMemSize() ) 
+            sizeBytes = memBackendConvertor_->getMemSize();
+
+        backing_ = new Backend::BackingMalloc(sizeBytes);
     }
 
     /* Clock Handler */

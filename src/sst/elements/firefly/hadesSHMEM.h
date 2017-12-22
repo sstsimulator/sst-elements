@@ -86,7 +86,7 @@ class HadesSHMEM : public Shmem::Interface
             size_t length;
         };
       public:
-        Heap( bool back = false ) : m_curAddr(0x1000), m_back(back) {}
+        Heap( ) : m_curAddr(0x1000) {}
 		~Heap() { 
             std::map<Hermes::Vaddr,Entry>::iterator iter = m_map.begin();
             for ( ; iter != m_map.end(); ++iter ) {
@@ -96,7 +96,7 @@ class HadesSHMEM : public Shmem::Interface
 				}
 			}
 		}
-        Hermes::MemAddr malloc( size_t n ) {
+        Hermes::MemAddr malloc( size_t n, bool backed ) {
             Hermes::MemAddr addr( Hermes::MemAddr::Shmem );
             addr.setSimVAddr( m_curAddr );
 
@@ -105,7 +105,7 @@ class HadesSHMEM : public Shmem::Interface
             m_curAddr += 64;
             m_curAddr &= ~(64-1);
 
-            if ( m_back ) {
+            if ( backed ) {
                 addr.setBacking( ::malloc(n) );
             }
             m_map[ addr.getSimVAddr() ] = Entry( addr, n );
@@ -135,7 +135,6 @@ class HadesSHMEM : public Shmem::Interface
         }
       private:
         size_t m_curAddr;
-        bool   m_back;
         std::map<Hermes::Vaddr, Entry > m_map;
     };
 
@@ -198,8 +197,8 @@ class HadesSHMEM : public Shmem::Interface
                         int logPE_stride, int PE_size, Vaddr pSync,
                         Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
 
-    virtual void malloc(Hermes::MemAddr*,size_t,Shmem::Callback);
-    virtual void malloc2(Hermes::MemAddr*,size_t,Shmem::Callback);
+    virtual void malloc(Hermes::MemAddr*,size_t,bool backed, Shmem::Callback);
+    virtual void malloc2(Hermes::MemAddr*,size_t,bool backed, Shmem::Callback);
     virtual void free(Hermes::MemAddr*,Shmem::Callback);
 
     virtual void getv(Hermes::Value&, Hermes::Vaddr src, int pe, Shmem::Callback);
@@ -240,7 +239,7 @@ class HadesSHMEM : public Shmem::Interface
 
     Output& dbg() { return m_dbg; }
   private:
-    virtual void malloc(Hermes::MemAddr*,size_t,Callback);
+    virtual void malloc(Hermes::MemAddr*,size_t,bool backed,Callback);
     Output m_dbg;
     Hades*      m_os;
 

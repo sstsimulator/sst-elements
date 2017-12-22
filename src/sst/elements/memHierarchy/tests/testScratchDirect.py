@@ -25,7 +25,7 @@ comp_scratch.addParams({
     "size" : "1KiB",
     "scratch_line_size" : 64,
     "memory_line_size" : 64,
-    "do_not_back" : 1,
+    "backing" : "none",
     "backendConvertor" : "memHierarchy.simpleMemScratchBackendConvertor",
     "backendConvertor.backend" : "memHierarchy.simpleMem",
     "backendConvertor.backend.access_time" : "10ns",

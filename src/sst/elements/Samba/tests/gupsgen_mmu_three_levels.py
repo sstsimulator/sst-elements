@@ -33,7 +33,6 @@ comp_l1cache.addParams({
       "prefetcher" : "cassini.StridePrefetcher",
       "L1" : "1",
       "cache_size" : "8KB",
-      "do_not_back" : 1
 })
 
 # Enable statistics outputs
