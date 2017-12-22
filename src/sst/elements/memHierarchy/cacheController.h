@@ -27,6 +27,7 @@
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
@@ -45,10 +46,118 @@ namespace SST { namespace MemHierarchy {
 
 using namespace std;
 
+/*
+ * Component: memHirearchy.Cache
+ *
+ * Cache controller
+ */
 
 class Cache : public SST::Component {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_COMPONENT(Cache, "memHierarchy", "Cache", SST_ELI_ELEMENT_VERSION(1,0,0), "Cache controller", COMPONENT_CATEGORY_MEMORY)
+    
+    SST_ELI_DOCUMENT_PARAMS(
+            /* Required */
+            {"cache_frequency",         "(string) Clock frequency or period with units (Hz or s; SI units OK). For L1s, this is usually the same as the CPU's frequency.", NULL},
+            {"cache_size",              "(string) Cache size with units. Eg. 4KiB or 1MiB"},
+            {"associativity",           "(int) Associativity of the cache. In set associative mode, this is the number of ways."},
+            {"access_latency_cycles",   "(int) Latency (in cycles) to access the cache data array. This latency is paid by cache hits and coherence requests that need to return data."},
+            {"L1",                      "(bool) Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]", "false"},
+            /* Not required */
+            {"cache_line_size",         "(uint) Size of a cache line (aka cache block) in bytes.", "64"},
+            {"hash_function",           "(int) 0 - none (default), 1 - linear, 2 - XOR", "0"},
+            {"coherence_protocol",      "(string) Coherence protocol. Options: MESI, MSI, NONE", "MESI"},
+            {"replacement_policy",      "(string) Replacement policy of the cache array. Options:  LRU[least-recently-used], LFU[least-frequently-used], Random, MRU[most-recently-used], or NMRU[not-most-recently-used]. ", "lru"},
+            {"cache_type",              "(string) - Cache type. Options: inclusive cache ('inclusive', required for L1s), non-inclusive cache ('noninclusive') or non-inclusive cache with a directory ('noninclusive_with_directory', required for non-inclusive caches with multiple upper level caches directly above them),", "inclusive"},
+            {"max_requests_per_cycle",  "(int) Maximum number of requests to accept per cycle. 0 or negative is unlimited.", "-1"},
+            {"request_link_width",      "(string) Limits number of request bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
+            {"response_link_width",     "(string) Limits number of response bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
+            {"noninclusive_directory_repl",    "(string) If non-inclusive directory exists, its replacement policy. LRU, LFU, MRU, NMRU, or RANDOM. (not case-sensitive).", "LRU"},
+            {"noninclusive_directory_entries", "(uint) Number of entries in the directory. Must be at least 1 if the non-inclusive directory exists.", "0"},
+            {"noninclusive_directory_associativity", "(uint) For a set-associative directory, number of ways.", "1"},
+            {"mshr_num_entries",        "(int) Number of MSHR entries. Not valid for L1s because L1 MSHRs assumed to be sized for the CPU's load/store queue. Setting this to -1 will create a very large MSHR.", "-1"},
+            {"tag_access_latency_cycles", 
+                "(uint) Latency (in cycles) to access tag portion only of cache. Paid by misses and coherence requests that don't need data. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
+            {"mshr_latency_cycles",     
+                "(uint) Latency (in cycles) to process responses in the cache and replay requests. Paid on the return/response path for misses instead of access_latency_cycles. If not specified, simple intrapolation is used based on the cache access latency", "1"},
+            {"prefetcher",              "(string) Name of prefetcher subcomponent", ""},
+            {"max_outstanding_prefetch","(uint) Maximum number of prefetch misses that can be outstanding, additional prefetches will be dropped/NACKed. Default is 1/2 of MSHR entries.", "0.5*mshr_num_entries"},
+            {"drop_prefetch_mshr_level","(uint) Drop/NACK prefetches if the number of in-use mshrs is greater than or equal to this number. Default is mshr_num_entries - 2.", "mshr_num_entries-2"},
+            {"num_cache_slices",        "(uint) For a distributed, shared cache, total number of cache slices", "1"},
+            {"slice_id",                "(uint) For distributed, shared caches, unique ID for this cache slice", "0"},
+            {"slice_allocation_policy", "(string) Policy for allocating addresses among distributed shared cache. Options: rr[round-robin]", "rr"},
+            {"maxRequestDelay",         "(uint) Set an error timeout if memory requests take longer than this in ns (0: disable)", "0"},
+            {"snoop_l1_invalidations",  "(bool) Forward invalidations from L1s to processors. Options: 0[off], 1[on]", "false"},
+            {"debug",                   "(uint) Where to send output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+            {"debug_level",             "(uint) Output/debug verbosity level. Between 0 (no output) and 10 (everything). 1-3 gives warnings/info; 4-10 gives debug.", "1"},
+            {"debug_addr",              "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
+            {"force_noncacheable_reqs", "(bool) Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "false"},
+            {"min_packet_size",         "(string) Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
+            {"banks",                   "(uint) Number of cache banks: One access per bank per cycle. Use '0' to simulate no bank limits (only limits on bandwidth then are max_requests_per_cycle and *_link_width", "0"},
+            /* Old parameters - deprecated or moved */
+            {"LL",                          "DEPRECATED - Now auto-detected during init."}, // Remove 8.0
+            {"LLC",                         "DEPRECATED - Now auto-detected by configure."}, // Remove 8.0
+            {"lower_is_noninclusive",       "DEPRECATED - Now auto-detected during init."}, // Remove 8.0
+            {"statistics",                  "DEPRECATED - Use Statistics API to get statistics for caches."}, // Remove 8.0
+            {"stat_group_ids",              "DEPRECATED - Use Statistics API to get statistics for caches."},  // Remove 8.0
+            {"network_num_vc",              "DEPRECATED - Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"}, // Remove 8.0
+            {"directory_at_next_level",     "DEPRECATED - Now auto-detected by configure."}, // Remove 8.0
+            {"bottom_network",              "DEPRECATED - Now auto-detected by configure."}, // Remove 8.0
+            {"top_network",                 "DEPRECATED - Now auto-detected by configure."}, // Remove 8.0
+            {"network_address",             "DEPRECATED - Now auto-detected by link control."}, // Remove 9.0
+            {"network_bw",                  "MOVED - Now a member of the MemNIC subcomponent.", "80GiB/s"}, // Remove 9.0
+            {"network_input_buffer_size",   "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}, // Remove 9.0
+            {"network_output_buffer_size",  "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}) // Remove 9.0
+  
+    SST_ELI_DOCUMENT_PORTS(
+            {"low_network_0",   "Port connected to lower level caches (closer to main memory)", {"memHierarchy.MemEventBase"} },
+            {"high_network_0",  "Port connected to higher level caches (closer to CPU)",        {"memHierarchy.MemEventBase"} },
+            {"directory",       "Network link port to directory",                               {"memHierarchy.MemRtrEvent"} },
+            {"cache",           "Network link port to cache",                                   {"memHierarchy.MemRtrEvent"} })
 
+    SST_ELI_DOCUMENT_STATISTICS(
+            /* Cache hits and misses */
+            {"CacheHits",               "Total number of cache hits", "count", 1},
+            {"CacheMisses",             "Total number of cache misses", "count", 1},
+            {"GetSHit_Arrival",         "GetS was handled at arrival and was a cache hit", "count", 1},
+            {"GetSHit_Blocked",         "GetS was blocked in MSHR at arrival and later was a cache hit", "count", 1},
+            {"GetXHit_Arrival",         "GetX was handled at arrival and was a cache hit", "count", 1},
+            {"GetXHit_Blocked",         "GetX was blocked in MSHR at arrival and  later was a cache hit", "count", 1},
+            {"GetSXHit_Arrival",        "GetSX was handled at arrival and was a cache hit", "count", 1},
+            {"GetSXHit_Blocked",        "GetSX was blocked in MSHR at arrival and  later was a cache hit", "count", 1},
+            {"GetSMiss_Arrival",        "GetS was handled at arrival and was a cache miss", "count", 1},
+            {"GetSMiss_Blocked",        "GetS was blocked in MSHR at arrival and later was a cache miss", "count", 1},
+            {"GetXMiss_Arrival",        "GetX was handled at arrival and was a cache miss", "count", 1},
+            {"GetXMiss_Blocked",        "GetX was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
+            {"GetSXMiss_Arrival",       "GetSX was handled at arrival and was a cache miss", "count", 1},
+            {"GetSXMiss_Blocked",       "GetSX was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
+            {"TotalEventsReceived",     "Total number of events received by this cache", "events", 1},
+            {"TotalEventsReplayed",     "Total number of events that were initially blocked and then were replayed", "events", 1},
+            {"TotalNoncacheableEventsReceived", "Total number of non-cache or noncacheable cache events that were received by this cache and forward", "events", 1},
+            {"MSHR_occupancy",          "Number of events in MSHR each cycle", "events", 1},
+            {"Bank_conflicts",          "Total number of bank conflicts detected", "count", 1},
+            {"Prefetch_requests",       "Number of prefetches received from prefetcher at this cache", "events", 1},
+            {"Prefetch_hits",           "Number of prefetches that were cancelled due to cache or MSHR hit", "events", 1},
+            {"Prefetch_drops",          "Number of prefetches that were cancelled because the cache was too busy or too many prefetches were outstanding", "events", 1},
+            /* Coherence events - break down GetS between S/E */
+            {"SharedReadResponse",      "Coherence: Received shared response to a GetS request", "count", 2},
+            {"ExclusiveReadResponse",   "Coherence: Received exclusive response to a GetS request", "count", 2},
+            /*Event receives */
+            {"GetS_recv",               "Event received: GetS", "count", 2},
+            {"GetX_recv",               "Event received: GetX", "count", 2},
+            {"GetSX_recv",              "Event received: GetSX", "count", 2},
+            {"GetSResp_recv",           "Event received: GetSResp", "count", 2},
+            {"GetXResp_recv",           "Event received: GetXResp", "count", 2},
+            {"PutM_recv",               "Event received: PutM", "count", 2},
+            {"PutS_recv",               "Event received: PutS", "count", 2},
+            {"PutE_recv",               "Event received: PutE", "count", 2},
+            {"FetchInv_recv",           "Event received: FetchInv", "count", 2},
+            {"FetchInvX_recv",          "Event received: FetchInvX", "count", 2},
+            {"Inv_recv",                "Event received: Inv", "count", 2},
+            {"NACK_recv",               "Event: NACK received", "count", 2})
+
+/* Class definition */ 
     typedef CacheArray::CacheLine           CacheLine;
     typedef CacheArray::DataLine            DataLine;
     typedef map<Addr, mshrEntry>            mshrTable;
@@ -57,24 +166,29 @@ public:
 
     friend class InstructionStream;
     
+    /** Constructor for Cache Component */
+    Cache(ComponentId_t id, Params &params);
+    
     virtual void init(unsigned int);
     virtual void setup(void);
     virtual void finish(void);
     
-    /** Creates cache componennt */
-    static Cache* cacheFactory(SST::ComponentId_t id, SST::Params& params);
-    
     /** Computes the 'Base Address' of the requests.  The base address point the first address of the cache line */
     Addr toBaseAddr(Addr addr){
-        return (addr) & ~(cf_.cacheArray_->getLineSize() - 1);
+        return (addr) & ~(cacheArray_->getLineSize() - 1);
     }
 
 private:
-    struct CacheConfig;
-    
-    /** Constructor for Cache Component */
-    Cache(ComponentId_t id, Params &params, CacheConfig config);
-    
+    /** Constructor helper methods */
+    void checkDeprecatedParams(Params &params);
+    ReplacementMgr* constructReplacementManager(std::string policy, uint64_t lines, uint64_t associativity);
+    CacheArray* createCacheArray(Params &params);
+    int createMSHR(Params &params);
+    void createPrefetcher(Params &params, int mshrSize);
+    void createClock(Params &params);
+    void registerStatistics();
+    void createCoherenceManager(Params &params);
+
     /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
     void processIncomingEvent(SST::Event *event);
     
@@ -114,7 +228,6 @@ private:
         need to wait (stall) until the replacement is in a 'stable' state */
     inline bool allocateLine(MemEvent *event, Addr baseAddr);
     inline bool allocateCacheLine(MemEvent *event, Addr baseAddr);
-    inline bool allocateDirLine(MemEvent *event, Addr baseAddr);
     inline bool allocateDirCacheLine(MemEvent *event, Addr baseAddr, CacheLine * dirLine, bool noStall);
 
     /** Function attempts to send all responses for previous events that 'blocked' due to an outstanding request.
@@ -179,56 +292,7 @@ private:
 
     /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough, 
          the clock gets deregistered from TimeVortx and reregistered only when an event is received */
-    bool clockTick(Cycle_t time) {
-        timestamp_++;
-        bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
-        
-        bool nicIdle = true;
-        if (clockLink_) nicIdle = linkDown_->clock();
-
-        if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
-        
-        // MSHR occupancy
-        statMSHROccupancy->addData(mshr_->getSize());
-        
-        // If we have waiting requests send them now
-        requestsThisCycle_ = 0;
-        std::queue<MemEventBase*>   tmpBuffer;
-        while (!requestBuffer_.empty()) {
-            if (requestsThisCycle_ == maxRequestsPerCycle_) {
-                break;
-            }
-            
-            bool wasProcessed = processEvent(requestBuffer_.front(), false);
-            if (wasProcessed) {
-                requestsThisCycle_++;
-            } else {
-                tmpBuffer.push(requestBuffer_.front());
-            }
-            
-            requestBuffer_.pop();
-            queuesEmpty = false;
-        }
-        if (!tmpBuffer.empty()) {
-            while (!requestBuffer_.empty()) {
-                tmpBuffer.push(requestBuffer_.front());
-                requestBuffer_.pop();
-            }
-            requestBuffer_.swap(tmpBuffer);
-        }
-
-        // Disable lower-level cache clocks if they're idle
-        if (queuesEmpty && nicIdle && clockIsOn_) {
-            clockIsOn_ = false;
-            lastActiveClockCycle_ = time;
-            if (!maxWaitWakeupExists_) {
-                maxWaitWakeupExists_ = true;
-                maxWaitSelfLink_->send(1, NULL);
-            }
-            return true;
-        }
-        return false;
-    }
+    bool clockTick(Cycle_t time);
 
     void maxWaitWakeup(SST::Event * ev) {
         checkMaxWait();
@@ -251,7 +315,7 @@ private:
 
         if ( oldReq ) {
             SimTime_t waitTime = curTime - oldReq->getInitializationTime();
-            if ( waitTime > cf_.maxWaitTime_ ) {
+            if ( waitTime > maxWaitTime_ ) {
                 d_->fatal(CALL_INFO, 1, "%s, Error: Maximum Cache Request time reached!\n"
                         "Event: %s 0x%" PRIx64 " from %s. Time = %" PRIu64 " ns\n",
                         getName().c_str(), CommandString[(int)oldReq->getCmd()], oldReq->getAddr(), oldReq->getSrc().c_str(), curTime);
@@ -259,54 +323,49 @@ private:
         }
     }
 
-    struct CacheConfig{
-        string cacheFrequency_;
-        CacheArray* cacheArray_;
-        CacheArray* directoryArray_;
-        CoherenceProtocol protocol_;
-        Output* dbg_;
-        ReplacementMgr* rm_;
-        uint numLines_;
-        uint lineSize_;
-        uint MSHRSize_;
-        bool L1_;
-        bool allNoncacheableRequests_;
-        SimTime_t maxWaitTime_;
-        string type_;
-    };
-    
-    CacheConfig             cf_;
-    uint                    ID_;
+    /* Cache parameters */
+    std::string             type_;
+    CoherenceProtocol       protocol_;
+    bool                    L1_;
+    bool                    allNoncacheableRequests_;
+    SimTime_t               maxWaitTime_;
+    unsigned int            maxBytesUpPerCycle_;
+    unsigned int            maxBytesDownPerCycle_;
+    uint64_t                accessLatency_;
+    uint64_t                tagLatency_;
+    uint64_t                mshrLatency_;
+    int                     dropPrefetchLevel_;
+    int                     maxOutstandingPrefetch_;
+    int                     maxRequestsPerCycle_;
+
+    /* Cache structures */
+    CacheArray*             cacheArray_;
     CacheListener*          listener_;
     MemLinkBase*            linkUp_;
     MemLinkBase*            linkDown_;
     Link*                   prefetchLink_;
     Link*                   maxWaitSelfLink_;
-    Output*                 d_;
-    Output*                 d2_;
-    vector<string>          lowerLevelCacheNames_;
-    vector<string>          upperLevelCacheNames_;
     MSHR*                   mshr_;
-    std::map<SST::Event::id_type, std::string> responseDst_; 
     CoherenceController*    coherenceMgr_;
-    uint64_t                accessLatency_;
-    uint64_t                tagLatency_;
-    uint64_t                mshrLatency_;
-    uint64_t                timestamp_;
-    int                     dropPrefetchLevel_;
-    int                     maxOutstandingPrefetch_;
-    int                     maxRequestsPerCycle_;
-    int                     requestsThisCycle_;
-    unsigned int            maxBytesUpPerCycle_;
-    unsigned int            maxBytesDownPerCycle_;
-    std::queue<MemEventBase*>       requestBuffer_;
     Clock::Handler<Cache>*  clockHandler_;
     TimeConverter*          defaultTimeBase_;
-    std::map<string, LinkId_t>      nameMap_;
-    std::map<LinkId_t, SST::Link*>  linkIdMap_;
-    std::map<MemEvent*,uint64>      startTimeList;
-    std::map<MemEvent*,int> missTypeList;
+    
+    /* Debug and output */
+    Output*                 d_;
+    Output*                 d2_;
     std::set<Addr>          DEBUG_ADDR;
+    
+    /* Variables */
+    vector<string>          lowerLevelCacheNames_;
+    vector<string>          upperLevelCacheNames_;
+    uint64_t                timestamp_;
+    int                     requestsThisCycle_;
+    std::map<SST::Event::id_type, std::string> responseDst_; 
+    std::queue<MemEventBase*>       requestBuffer_;                 // Buffer requests that can't be processed due to port limits
+    std::vector< std::queue<MemEventBase*> > bankConflictBuffer_;   // Buffer requests that have bank conflicts
+    std::map<MemEvent*,uint64>      startTimeList_;
+    std::map<MemEvent*,int>         missTypeList_;
+    std::vector<bool>               bankStatus_;    // TODO change if we want multiported banks
 
     // These parameters are for the coherence controller and are detected during init
     bool                    isLL;
@@ -359,6 +418,7 @@ private:
     Statistic<uint64_t>* statInvStalledByLockedLine;
 
     Statistic<uint64_t>* statMSHROccupancy;
+    Statistic<uint64_t>* statBankConflicts;
 
     // Prefetch statistics
     Statistic<uint64_t>* statPrefetchRequest;

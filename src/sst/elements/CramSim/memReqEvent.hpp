@@ -21,6 +21,11 @@
 namespace SST {
 namespace CramSim {
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
+
 typedef uint64_t Addr;
 typedef uint64_t ReqId;
 
@@ -95,6 +100,11 @@ class MemRespEvent : public SST::Event {
 
     ImplementSerializable(MemRespEvent);
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 }
 }
 

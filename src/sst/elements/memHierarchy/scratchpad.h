@@ -20,6 +20,7 @@
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
 #include <map>
@@ -37,6 +38,39 @@ class ScratchBackendConvertor;
 
 class Scratchpad : public SST::Component {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_COMPONENT(Scratchpad, "memHierarchy", "Scratchpad", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Scratchpad memory", COMPONENT_CATEGORY_MEMORY)
+
+    SST_ELI_DOCUMENT_PARAMS(
+            {"clock",               "(string) Clock frequency or period with units (Hz or s; SI units OK).", NULL},
+            {"size",                "(string) Size of the scratchpad in bytes (B), SI units ok", NULL},
+            {"scratch_line_size",   "(string) Number of bytes in a scratch line with units. 'size' must be divisible by this number.", "64B"},
+            {"memory_line_size",    "(string) Number of bytes in a remote memory line with units. Used to set base addresses for routing.", "64B"},
+            {"backing",             "(string) Type of backing store to use. Options: 'none' - no backing store (only use if simulation does not require correct memory values), 'malloc', or 'mmap'", "malloc"},\
+            {"backing_size_hint",   "(string) For 'malloc' backing stores, estimated size of the working set. Backing map will be sized for this many bytes initially", "1MiB"},\
+            {"memory_addr_offset",  "(uint) Amount to offset remote addresses by. Default is 'size' so that remote memory addresses start at 0", "size"},
+            {"response_per_cycle",  "(uint) Maximum number of responses to return to processor each cycle. 0 is unlimited", "0"},
+            {"backendConvertor",    "(string) Backend convertor to use for the scratchpad", "memHierarchy.scratchpadBackendConvertor"},
+            {"debug",               "(uint) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+            {"debug_level",         "(uint) Debug verbosity level. Between 0 and 10", "0"} )
+            
+    SST_ELI_DOCUMENT_PORTS(
+            {"cpu", "Link to cpu/cache on the cpu side", {"memHierarchy.MemEventBase"}},
+            {"memory", "Direct link to a memory or bus", {"memHierarchy.MemEventBase"}},
+            {"network", "Network link to memory", {"memHierarchy.MemRtrEvent"}} )
+                 
+    SST_ELI_DOCUMENT_STATISTICS(
+            {"request_received_scratch_read",   "Number of scratchpad reads received from CPU", "count", 1},
+            {"request_received_scratch_write",  "Number of scratchpad writes received from CPU", "count", 1},
+            {"request_received_remote_read",    "Number of remote memory reads received from CPU", "count", 1},
+            {"request_received_remote_write",   "Number of remote memory writes received from CPU", "count", 1},
+            {"request_received_scratch_get",    "Number of scratchpad Gets received from CPU (copy from memory to scratch)", "count", 1},
+            {"request_received_scratch_put",    "Number of scratchpad Puts received from CPU (copy from scratch to memory)", "count", 1},
+            {"request_issued_scratch_read",     "Number of scratchpad reads issued to scratchpad", "count", 1},
+            {"request_issued_scratch_write",    "Number of scratchpad writes issued to scratchpad", "count", 1} )
+
+/* Begin class defintion */
     Scratchpad(ComponentId_t id, Params &params);
     void init(unsigned int);
     void setup();
@@ -58,7 +92,6 @@ private:
     // Parameters - scratchpad
     uint64_t scratchSize_;      // Size of the total scratchpad in bytes - any address above this is assumed to address remote memory
     uint64_t scratchLineSize_;  // Size of each line in the scratchpad in bytes
-    bool doNotBack_;            // For very large scratchpads where data doesn't matter
     
     // Parameters - memory
     uint64_t remoteAddrOffset_;   // Offset for remote addresses, defaults to scratchSize (i.e., CPU addr scratchSize = mem addr 0)

@@ -68,8 +68,11 @@ class API : public ProtocolAPI {
     void send( const Hermes::MemAddr&, size_t len, MP::RankID dest, uint64_t tag, 
                             MP::Communicator grp );
     void isend( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag, CommReq* );
+    void isend( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag,
+							MP::Communicator, CommReq* );
     void sendv( std::vector<IoVec>&, nid_t dest, uint64_t tag );
     void recv( const Hermes::MemAddr&, size_t len, nid_t src, uint64_t tag );
+    void recv( const Hermes::MemAddr&, size_t len, nid_t src, uint64_t tag, MP::Communicator grp );
     void irecv( const Hermes::MemAddr&, size_t len, nid_t src, uint64_t tag, CommReq* );
     void irecv( const Hermes::MemAddr&, size_t len, MP::RankID src, uint64_t tag, 
                 MP::Communicator grp, CommReq* );

@@ -20,6 +20,7 @@
 
 #include <sst/elements/hermes/shmemapi.h>
 
+#include "embergettimeev.h"
 #include "emberShmemInitEv.h"
 #include "emberShmemFiniEv.h"
 #include "emberShmemMyPeEv.h"
@@ -62,6 +63,8 @@ public:
     virtual void completed( const SST::Output*, uint64_t time );
 
 protected:
+	inline void enQ_getTime( Queue&, uint64_t* time );
+
     inline void enQ_init( Queue& );
     inline void enQ_fini( Queue& );
 
@@ -124,7 +127,7 @@ protected:
 
     inline void enQ_fence( Queue& );
     inline void enQ_quiet( Queue& );
-    inline void enQ_malloc( Queue&, Hermes::MemAddr*, size_t );
+    inline void enQ_malloc( Queue&, Hermes::MemAddr*, size_t, bool backed = true );
     inline void enQ_free( Queue&, Hermes::MemAddr );
 
     template <class TYPE>
@@ -157,6 +160,11 @@ private:
 static inline Hermes::Shmem::Interface* shmem_cast( Hermes::Interface *in )
 {
     return static_cast<Hermes::Shmem::Interface*>(in);
+}
+
+void EmberShmemGenerator::enQ_getTime( Queue& q, uint64_t* time )
+{
+    q.push( new EmberGetTimeEvent( &getOutput(), time ) );
 }
 
 void EmberShmemGenerator::enQ_init( Queue& q )
@@ -333,10 +341,10 @@ void EmberShmemGenerator::enQ_quiet( Queue& q )
 }
 
 
-void EmberShmemGenerator::enQ_malloc( Queue& q, Hermes::MemAddr* ptr, size_t num )
+void EmberShmemGenerator::enQ_malloc( Queue& q, Hermes::MemAddr* ptr, size_t num, bool backed )
 {
     verbose(CALL_INFO,2,0,"\n");
-    q.push( new EmberMallocShmemEvent( *shmem_cast(m_api), &getOutput(), ptr, num ) );
+    q.push( new EmberMallocShmemEvent( *shmem_cast(m_api), &getOutput(), ptr, num, backed ) );
 }
 
 void EmberShmemGenerator::enQ_free( Queue& q, Hermes::MemAddr addr )

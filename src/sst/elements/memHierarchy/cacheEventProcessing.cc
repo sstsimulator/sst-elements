@@ -94,7 +94,7 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
     bool wasBlocked = event->blocked();                             // Event was blocked, now we're starting to handle it
     if (wasBlocked) event->setBlocked(false);
     if (cmd == Command::GetS || cmd == Command::GetX || cmd == Command::GetSX) {
-        if (mshr_->isFull() || (!cf_.L1_ && !replay && mshr_->isAlmostFull()  && !(cacheHit == 0))) { 
+        if (mshr_->isFull() || (!L1_ && !replay && mshr_->isAlmostFull()  && !(cacheHit == 0))) { 
                 return; // profile later, this event is getting NACKed 
         }
     }
@@ -109,9 +109,9 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                     statCacheMisses->addData(1);
                     statGetSMissOnArrival->addData(1);
                     if (cacheHit == 1 || cacheHit == 2) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 0));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 0));
                     } else if (cacheHit == 3) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 1));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 1));
                     }
                 }
             } else if (wasBlocked) {        // Blocked event, now unblocked
@@ -122,9 +122,9 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                     statCacheMisses->addData(1);
                     statGetSMissAfterBlocked->addData(1);
                     if (cacheHit == 1 || cacheHit == 2) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 0));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 0));
                     } else if (cacheHit == 3) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 1));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 1));
                     }
                 }
             }
@@ -138,11 +138,11 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                     statCacheMisses->addData(1);
                     statGetXMissOnArrival->addData(1);
                     if (cacheHit == 1) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 2));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 2));
                     } else if (cacheHit == 2) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 3));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 3));
                     } else if (cacheHit == 3) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 4));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 4));
                     }
                 }
             } else if (wasBlocked) {        // Blocked event, now unblocked
@@ -153,11 +153,11 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                     statCacheMisses->addData(1);
                     statGetXMissAfterBlocked->addData(1);
                     if (cacheHit == 1) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 2));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 2));
                     } else if (cacheHit == 2) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 3));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 3));
                     } else if (cacheHit == 3) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 4));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 4));
                     }
                 }
             }
@@ -171,11 +171,11 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                     statCacheMisses->addData(1);
                     statGetSXMissOnArrival->addData(1);
                     if (cacheHit == 1) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 5));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 5));
                     } else if (cacheHit == 2) { 
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 6));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 6));
                     } else if (cacheHit == 3) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 7));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 7));
                     }
                 }
             } else if (wasBlocked) {        // Blocked event, now unblocked
@@ -186,11 +186,11 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                     statCacheMisses->addData(1);
                     statGetSXMissAfterBlocked->addData(1);
                     if (cacheHit == 1) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 5));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 5));
                     } else if (cacheHit == 2) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 6));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 6));
                     } else if (cacheHit == 3) {
-                        missTypeList.insert(std::pair<MemEvent*,int>(event, 7));
+                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 7));
                     }
                 }
             }
@@ -216,7 +216,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     }
 
     // Set noncacheable requests if needed
-    if (cf_.allNoncacheableRequests_) {
+    if (allNoncacheableRequests_) {
         ev->setFlag(MemEvent::F_NONCACHEABLE);
     }
     bool noncacheable = ev->queryFlag(MemEvent::F_NONCACHEABLE);
@@ -234,8 +234,23 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     Addr baseAddr   = event->getBaseAddr();
     
     // TODO this is a temporary check while we ensure that the source sets baseAddr correctly
-    if (baseAddr % cf_.cacheArray_->getLineSize() != 0) {
-        d_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %" PRIu64 ". Event: %s\n", getName().c_str(), cf_.cacheArray_->getLineSize(), ev->getVerboseString().c_str());
+    if (baseAddr % cacheArray_->getLineSize() != 0) {
+        d_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %" PRIu64 ". Event: %s\n", getName().c_str(), cacheArray_->getLineSize(), ev->getVerboseString().c_str());
+    }
+    
+    // Check bank free before we do anything
+    if (bankStatus_.size() > 0) {
+        Addr bank = cacheArray_->getBank(event->getBaseAddr());
+        if (bankStatus_[bank]) { // bank conflict
+            if (is_debug_event(event))
+            d_->debug(_L3_, "Bank conflict on bank %u\n", bank);
+            statBankConflicts->addData(1);
+            bankConflictBuffer_[bank].push(event);
+            return true; // Accepted but we're stopping now
+        } else {
+            d_->debug(_L3_, "No bank conflict, setting bank %u to busy\n", bank);
+            bankStatus_[bank] = true;
+        }
     }
     
     MemEvent* origEvent;
@@ -245,12 +260,11 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     else statTotalEventsReplayed->addData(1);
     
     // Cannot stall if this is a GetX to L1 and the line is locked because GetX is the unlock!
-    bool canStall = !cf_.L1_ || event->getCmd() != Command::GetX;
+    bool canStall = !L1_ || event->getCmd() != Command::GetX;
     if (!canStall) {
-        CacheLine * cacheLine = cf_.cacheArray_->lookup(baseAddr, false);
+        CacheLine * cacheLine = cacheArray_->lookup(baseAddr, false);
         canStall = cacheLine == nullptr || !(cacheLine->isLocked());
     }
-
 
     switch(cmd) {
         case Command::GetS:
@@ -259,7 +273,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             // Determine if request should be NACKed: Request cannot be handled immediately and there are no free MSHRs to buffer the request
             if (!replay && mshr_->isAlmostFull()) { 
                 // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
-                if (!cf_.L1_) {
+                if (!L1_) {
                     profileEvent(event, cmd, replay, canStall);
                     sendNACK(event);
                     break;
@@ -285,16 +299,16 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
                     event->setBlocked(true);
                 }
                 // track times in our separate queue
-                if (startTimeList.find(event) == startTimeList.end()) {
-                    startTimeList.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
+                if (startTimeList_.find(event) == startTimeList_.end()) {
+                    startTimeList_.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
                 }
 
                 break;
             }
             
             // track times in our separate queue
-            if (startTimeList.find(event) == startTimeList.end()) {
-                startTimeList.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
+            if (startTimeList_.find(event) == startTimeList_.end()) {
+                startTimeList_.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
             }
             
             processCacheRequest(event, cmd, baseAddr, replay);
@@ -409,7 +423,7 @@ void Cache::init(unsigned int phase) {
         linkDown_->init(phase);
 
         if (!phase)
-            linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, cf_.type_ == "inclusive", cf_.type_ != "inclusive", cf_.cacheArray_->getLineSize()));
+            linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize()));
 
         /*  */
         while(MemEventInit *event = linkDown_->recvInitData()) {
@@ -440,8 +454,8 @@ void Cache::init(unsigned int phase) {
     
     if (!phase) {
         // MemEventInit: Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
-        linkUp_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, cf_.type_ == "inclusive", cf_.type_ != "inclusive", cf_.cacheArray_->getLineSize()));
-        linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, cf_.type_ == "inclusive", cf_.type_ != "inclusive", cf_.cacheArray_->getLineSize()));
+        linkUp_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize()));
+        linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize()));
     }
 
     while (MemEventInit * memEvent = linkUp_->recvInitData()) {
@@ -511,8 +525,8 @@ void Cache::setup() {
         uint64_t ilStep = 0;
         uint64_t ilSize = 0;
         if (lowerLevelCacheNames_.size() > 1) { // RR slice addressing
-            ilStep = cf_.cacheArray_->getLineSize() * lowerLevelCacheNames_.size();
-            ilSize = cf_.cacheArray_->getLineSize();
+            ilStep = cacheArray_->getLineSize() * lowerLevelCacheNames_.size();
+            ilSize = cacheArray_->getLineSize();
         }
         for (int i = 0; i < lowerLevelCacheNames_.size(); i++) {
             MemLinkBase::EndpointInfo info;
@@ -540,10 +554,8 @@ void Cache::setup() {
 
 void Cache::finish() {
     listener_->printStats(*d_);
-    delete cf_.cacheArray_;
+    delete cacheArray_;
     delete d_;
-    linkIdMap_.clear();
-    nameMap_.clear();
 }
 
 /* Main handler for links to upper and lower caches/cores/buses/etc */
@@ -573,3 +585,70 @@ void Cache::processIncomingEvent(SST::Event* ev) {
         }
     }
 }
+
+/* Clock handler */
+bool Cache::clockTick(Cycle_t time) {
+    timestamp_++;
+    bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
+        
+    bool nicIdle = true;
+    if (clockLink_) nicIdle = linkDown_->clock();
+
+    if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
+        
+    // MSHR occupancy
+    statMSHROccupancy->addData(mshr_->getSize());
+        
+    // Clear bank status and issue conflicted requests
+    bool conflicts = false;
+    for (unsigned int bank = 0; bank < bankStatus_.size(); bank++) {
+        bankStatus_[bank] = false;
+        while (!bankConflictBuffer_[bank].empty() && !bankStatus_[bank]) {
+            conflicts = true;
+            if (is_debug_event(bankConflictBuffer_[bank].front())) 
+                d_->debug(_L9_,"%s, Retrying event from bank conflict. Bank: %u, Event: %s\n", getName().c_str(), bank, bankConflictBuffer_[bank].front()->getBriefString().c_str());
+                
+            bool processed = processEvent(bankConflictBuffer_[bank].front(), false);
+            if (!processed) break;
+            bankConflictBuffer_[bank].pop();
+        }
+    }
+
+    // Accept any incoming requests that were delayed because of port limits
+    requestsThisCycle_ = 0;
+    std::queue<MemEventBase*>   tmpBuffer;
+    while (!requestBuffer_.empty()) {
+        if (requestsThisCycle_ == maxRequestsPerCycle_) {
+            break;
+        }
+        
+        bool wasProcessed = processEvent(requestBuffer_.front(), false);
+        if (wasProcessed) {
+            requestsThisCycle_++;
+        } else {
+            tmpBuffer.push(requestBuffer_.front());
+        }
+            
+        requestBuffer_.pop();
+        queuesEmpty = false;
+    }
+    if (!tmpBuffer.empty()) {
+        while (!requestBuffer_.empty()) {
+            tmpBuffer.push(requestBuffer_.front());
+            requestBuffer_.pop();
+        }
+        requestBuffer_.swap(tmpBuffer);
+    }
+    // Disable lower-level cache clocks if they're idle
+    if (queuesEmpty && nicIdle && clockIsOn_ && !conflicts) {
+        clockIsOn_ = false;
+        lastActiveClockCycle_ = time;
+        if (!maxWaitWakeupExists_) {
+            maxWaitWakeupExists_ = true;
+            maxWaitSelfLink_->send(1, NULL);
+        }
+        return true;
+    }
+    return false;
+}
+

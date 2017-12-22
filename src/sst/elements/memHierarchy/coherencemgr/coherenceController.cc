@@ -88,9 +88,9 @@ CoherenceController::CoherenceController(Component * comp, Params &params) : Sub
     stat_latency_GetX_IM =      registerStatistic<uint64_t>("latency_GetX_IM");
     stat_latency_GetX_SM =      registerStatistic<uint64_t>("latency_GetX_SM");
     stat_latency_GetX_M =       registerStatistic<uint64_t>("latency_GetX_M");
-    stat_latency_GetSX_IM =    registerStatistic<uint64_t>("latency_GetSX_IM");
-    stat_latency_GetSX_SM =    registerStatistic<uint64_t>("latency_GetSX_SM");
-    stat_latency_GetSX_M =     registerStatistic<uint64_t>("latency_GetSX_M");
+    stat_latency_GetSX_IM =     registerStatistic<uint64_t>("latency_GetSX_IM");
+    stat_latency_GetSX_SM =     registerStatistic<uint64_t>("latency_GetSX_SM");
+    stat_latency_GetSX_M =      registerStatistic<uint64_t>("latency_GetSX_M");
 }
 
 

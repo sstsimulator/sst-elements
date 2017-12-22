@@ -24,6 +24,15 @@ namespace MemHierarchy {
 
 class SimpleMemory : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(SimpleMemory, "memHierarchy", "simpleMem", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Basic constant-access-time memory timing model", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"access_time", "(string) Constant latency of memory operations. With units (SI ok).", "100ns"} )
+
+/* Begin class definition */
     SimpleMemory();
     SimpleMemory(Component *comp, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );

@@ -105,9 +105,6 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     // Throughput limits
     responsesPerCycle_ = params.find<uint32_t>("response_per_cycle",0);
 
-    // To back or not to back
-    doNotBack_ = params.find<bool>("do_not_back", false);
-    
     // Remote address computation
     remoteAddrOffset_ = params.find<uint64_t>("memory_addr_offset", scratchSize_);
 
@@ -124,16 +121,52 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     scratch_ = dynamic_cast<ScratchBackendConvertor*>(loadSubComponent(bkName, this, bkParams));
     
     // Initialize scratchpad entries
-    if (doNotBack_) {
-        backing_ = NULL;
-    } else {
-        std::string memFile = "";
-        memFile.clear();
-        try {
-            backing_ = new Backend::Backing(memFile, scratch_->getMemSize() );
-        } catch (int) {
-            dbg.fatal(CALL_INFO, -1, "%s, Error - unable to mmap backing store for scratchpad\n", getName().c_str());
+    // Set up backing store if needed
+    std::string backingType = params.find<std::string>("backing", "malloc", found); /* Default to using a malloc backing store */
+    if (!found) {
+        bool oldBackVal = params.find<bool>("do_not_back", false, found);
+        if (found) {
+            out.output("%s, ** Found deprecated parameter: do_not_back ** Use 'backing' parameter instead and specify 'none', 'malloc', or 'mmap'. Remove this parameter from your input deck to eliminate this message.\n", 
+                    getName().c_str());
         }
+        if (oldBackVal) backingType = "malloc";
+    }
+
+    if (backingType != "none" && backingType != "mmap" && backingType != "malloc") {
+        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: backing. Must be one of 'none', 'malloc', or 'mmap'. You specified: %s\n",
+                getName().c_str(), backingType.c_str());
+    }
+
+    backing_ = nullptr;
+    if (backingType == "mmap") {
+        std::string memoryFile = params.find<std::string>("memory_file", "" );
+
+        if ( 0 == memoryFile.compare( "" ) ) {
+            memoryFile.clear();
+        }
+        try { 
+            backing_ = new Backend::BackingMMAP( memoryFile, scratch_->getMemSize() );
+        }
+        catch ( int e) {
+            if (e == 1) 
+                dbg.fatal(CALL_INFO, -1, "%s, Error - unable to open memory_file. You specified '%s'.\n", getName().c_str(), memoryFile.c_str());
+            else if (e == 2)
+                dbg.fatal(CALL_INFO, -1, "%s, Error - mmap of backing store failed.\n", getName().c_str());
+            else 
+                dbg.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
+        }
+    } else if (backingType == "malloc") {
+        std::string size = params.find<std::string>("backing_size_hint", "1MiB");
+        UnitAlgebra size_ua(size);
+        if (!size_ua.hasUnits("B")) {
+            out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: backing_size_hint. Must have units of bytes (B). SI ok. You specified: %s\n",
+                    getName().c_str(), size.c_str());
+        }
+        size_t sizeBytes = size_ua.getRoundedValue();
+        if (sizeBytes > scratch_->getMemSize() ) 
+            sizeBytes = scratch_->getMemSize();
+
+        backing_ = new Backend::BackingMalloc(sizeBytes);
     }
 
     // Assume no caching, may change during init

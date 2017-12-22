@@ -24,6 +24,17 @@ namespace MemHierarchy {
 
 class VaultSimMemory : public FlagMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(VaultSimMemory, "memHierarchy", "vaultsim", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Backend to interface with VaultSimC, a generic vaulted memory model", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"access_time", "Link latency for the link to the VaultSim memory model. With units (SI ok).", "100ns"} )
+
+    SST_ELI_DOCUMENT_PORTS( {"cube_link", "Link to VaultSim.", {"VaultSimC.MemRespEvent", "VaultSimC.MemReqEvent"} } )
+
+/* Begin class definition */
     VaultSimMemory(Component *comp, Params &params);
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes );
     virtual bool isClocked() { return false; }

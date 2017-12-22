@@ -23,10 +23,10 @@ class Shmem {
         enum Type { Wait } m_type;  
         Op( Type type, NicShmemOpCmdEvent* cmd, Callback callback ) : m_type(type), m_cmd(cmd), m_callback(callback) {}
         virtual ~Op() { 
-            m_callback();
-            delete m_cmd;
+			delete m_cmd;
         }
-        virtual bool checkOp( ) = 0;
+        Callback&  callback() { return m_callback; }
+        virtual bool checkOp( Output& ) = 0;
         bool inRange( Hermes::Vaddr addr, size_t length ) {
             //printf("%s() addr=%lu length=%lu\n",__func__,addr, length);
             return ( m_cmd->addr >= addr && m_cmd->addr + m_cmd->value.getLength() <= addr + length );
@@ -45,12 +45,10 @@ class Shmem {
             m_value( cmd->value.getType(), backing ) 
         {} 
 
-        bool checkOp() {
-#if 0
+        bool checkOp( Output& dbg ) {
             std::stringstream tmp;
             tmp << m_value << " " << m_cmd->op << " " << m_cmd->value;
-            printf("%s %s\n",__func__,tmp.str().c_str());
-#endif
+            dbg.verbose( CALL_INFO,1,NIC_SHMEM,"%s %s\n",__func__,tmp.str().c_str());
             switch ( m_cmd->op ) {
               case Hermes::Shmem::NE:
                 return m_value != m_cmd->value; 
@@ -79,11 +77,17 @@ class Shmem {
         Hermes::Value m_value;
     }; 
 
+	std::string m_prefix;
+		
+	const char* prefix() { return m_prefix.c_str(); }
   public:
-    Shmem( Nic& nic, int numVnics, Output& output, SimTime_t nic2HostDelay_ns, SimTime_t host2NicDelay_ns ) : 
-		m_nic( nic ), m_dbg(output), m_one( (long) 1 ), m_freeCmdSlots( 32 ),
+    Shmem( Nic& nic, int id, int numVnics, Output& output, SimTime_t nic2HostDelay_ns, SimTime_t host2NicDelay_ns ) : 
+		m_nic( nic ), m_dbg(output), m_one( (long) 1 ), m_freeCmdSlots( 1000 ),
     	m_nic2HostDelay_ns(nic2HostDelay_ns), m_host2NicDelay_ns(host2NicDelay_ns)
     {
+        m_prefix = "@t:" + std::to_string(id) + ":Nic::Shmem::@p():@l ";
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_SHMEM,"this=%p\n",this );
+
 		m_regMem.resize( numVnics ); 
 		m_pendingOps.resize( numVnics );
 		m_pendingRemoteOps.resize( numVnics );
@@ -110,7 +114,7 @@ class Shmem {
         } 
         assert(0);
     }
-    void checkWaitOps( int core, Hermes::Vaddr addr, size_t length );
+    void checkWaitOps( int core, Hermes::Vaddr addr, size_t length, bool nic = false );
 
 private:
 	SimTime_t getNic2HostDelay_ns() { return m_nic2HostDelay_ns; }

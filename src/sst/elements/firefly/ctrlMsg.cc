@@ -82,7 +82,7 @@ void API::setVars( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem, Lin
     );
 
     char buffer[100];
-    snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::API::@p():@l ", nic->getNodeId(), m_info->worldRank());
+    snprintf(buffer,100,"@t:%d:%d:CtrlMsg::API::@p():@l ", nic->getRealNodeId(), m_info->worldRank());
     m_dbg.setPrefix(buffer);
 
     m_processQueuesState->setVars( nic, m_info, m_mem, m_memHeapLink, retLink );
@@ -155,6 +155,17 @@ void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t t
     sendv_common( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, req );
 }
 
+void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag, 
+				MP::Communicator group, CommReq* req)
+{
+    std::vector<IoVec> ioVec(1);
+    ioVec[0].addr = addr;
+    ioVec[0].len = len;
+
+    assert(req);
+    sendv_common( ioVec, MP::CHAR, dest, tag, group, req );
+}
+
 void API::sendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag )
 {
     sendv_common( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, NULL );
@@ -187,6 +198,16 @@ void API::recv( const Hermes::MemAddr& addr, size_t len, nid_t src, uint64_t tag
     ioVec[0].len = len;
     recvv_common( ioVec, MP::CHAR, src, tag, MP::GroupWorld, NULL );
 }
+
+void API::recv( const Hermes::MemAddr& addr, size_t len, nid_t src, uint64_t tag,
+			MP::Communicator group)
+{
+    std::vector<IoVec> ioVec(1);
+    ioVec[0].addr = addr; 
+    ioVec[0].len = len;
+    recvv_common( ioVec, MP::CHAR, src, tag, group, NULL );
+}
+
 
 void API::irecv( const Hermes::MemAddr& addr, size_t len, nid_t src, uint64_t tag, CommReq* req )
 {

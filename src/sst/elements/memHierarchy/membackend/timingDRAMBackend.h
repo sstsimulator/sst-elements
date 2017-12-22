@@ -13,6 +13,8 @@
 #ifndef _H_SST_MEMH_TIMING_DRAM_BACKEND
 #define _H_SST_MEMH_TIMING_DRAM_BACKEND
 
+#include <queue>
+
 #include "membackend/simpleMemBackend.h"
 #include "membackend/timingAddrMapper.h"
 #include "membackend/timingTransaction.h"
@@ -24,7 +26,31 @@ namespace MemHierarchy {
 using namespace  TimingDRAM_NS;
 
 class TimingDRAM : public SimpleMemBackend {
+public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(TimingDRAM, "memHierarchy", "timingDRAM", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Moderately-detailed timing model for DRAM", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"id", "ID number for this TimingDRAM instance", NULL},
+            {"dbg_level", "Output verbosity for debug", "1"},
+            {"dbg_mask", "Mask on dbg_level", "-1"},
+            {"addrMapper", "Address map subcomponent", "memHierarchy.simpleAddrMapper"},
+            {"channels", "Number of channels", "1"},
+            {"channel.numRanks", "Number of ranks per channel", "1"},
+            {"channel.transaction_Q_size", "Size of transaction queue", "32"},
+            {"channel.rank.numBanks", "Number of banks per rank", "8"},
+            {"channel.rank.bank.CL", "Column access latency in cycles", "11"},
+            {"channel.rank.bank.CL_WR", "Column write latency", "11"},
+            {"channel.rank.bank.RCD", "Row access latency in cycles", "11"},
+            {"channel.rank.bank.TRP", "Precharge delay in cycles", "11"},
+            {"channel.rank.bank.dataCycles", "", "4"},
+            {"channel.rank.bank.transactionQ", "Transaction queue model (subcomponent)", "memHierarchy.fifoTransactionQ"},
+            {"channel.rank.bank.pagePolicy", "Policy subcomponent for managing row buffer", "memHierarchy.simplePagePolicy"})
 
+/* Begin class definition */
+private:
     const uint64_t DBG_MASK = 0x1;
 
     class Cmd;
@@ -112,9 +138,6 @@ class TimingDRAM : public SimpleMemBackend {
         }
 
         ~Cmd() {
-            if ( m_trans ) {
-                m_trans->setRetired();
-            }
             m_bank->clearLastCmd();
         }
 
@@ -177,7 +200,7 @@ class TimingDRAM : public SimpleMemBackend {
         unsigned getRank()      { return m_bank->getRank(); }
         unsigned getBank()      { return m_bank->getBank(); }
         unsigned getRow()       { return m_row; }
-
+        Transaction* getTrans() { return m_trans; }
       private:
 
         Bank*           m_bank;
@@ -234,18 +257,17 @@ class TimingDRAM : public SimpleMemBackend {
 
         bool issue( SimTime_t createTime, ReqId id, Addr addr, bool isWrite, unsigned numBytes ) {
 
-            if ( m_maxPendingTrans == m_pendingTrans.size() ) {
+            if ( m_maxPendingTrans == m_pendingCount ) {
                 return false;
             } 
 
             unsigned rank = m_mapper->getRank( addr);
 
-            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%llu rank=%d addr=%#llx\n", id, rank, addr );
+            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%llu rank=%d addr=%#llx, createTime=%" PRIu64 "\n", id, rank, addr, createTime );
 
             Transaction* trans = new Transaction( createTime, id, addr, isWrite, numBytes, m_mapper->getBank(addr),
                                                 m_mapper->getRow(addr) );
-            m_pendingTrans.push_back( trans );
-
+            m_pendingCount++;
             m_ranks[ rank ].pushTrans( trans );
             return true;
         }
@@ -265,9 +287,10 @@ class TimingDRAM : public SimpleMemBackend {
 
         unsigned            m_dataBusAvailCycle; 
         unsigned            m_maxPendingTrans;
+        unsigned            m_pendingCount;
 
         std::list<Cmd*>     m_issuedCmds;
-        std::deque<Transaction*> m_pendingTrans;
+        std::queue<Transaction*> m_retiredTrans;
     };
 
     static bool m_printConfig;

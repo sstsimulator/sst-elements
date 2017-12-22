@@ -299,9 +299,9 @@ int main(int argc, char* argv[]) {
 		}
 
 		char whiteBlock[3];
-		whiteBlock[0] = 255;
-		whiteBlock[1] = 255;
-		whiteBlock[2] = 255;
+		whiteBlock[0] = (char)255;
+		whiteBlock[1] = (char)255;
+		whiteBlock[2] = (char)255;
 
 		char commBlock[3];
 

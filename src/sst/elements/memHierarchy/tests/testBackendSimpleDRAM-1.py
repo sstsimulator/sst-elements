@@ -160,7 +160,7 @@ comp_memory.addParams({
     "backend" : "memHierarchy.simpleDRAM",
     "clock" : "1GHz",
     "max_requests_per_cycle" : 1,
-    "do_not_back" : 1,
+    "backing" : "none",
     "backend.tCAS" : 3, # 11@800MHz roughly coverted to 200MHz
     "backend.tRCD" : 3,
     "backend.tRP" : 3,

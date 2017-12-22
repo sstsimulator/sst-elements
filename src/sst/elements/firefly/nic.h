@@ -27,7 +27,7 @@
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
-#include "simpleMemoryModel.h"
+#include "memoryModel/simpleMemoryModel.h"
 
 namespace SST {
 namespace Firefly {
@@ -38,11 +38,48 @@ namespace Firefly {
 #define NIC_DBG_DETAILED_MEM 1<<2
 #define NIC_DBG_SEND_MACHINE 1<<3
 #define NIC_DBG_RECV_MACHINE 1<<4
-
+#define NIC_SHMEM 1 << 5 
 
 class Nic : public SST::Component  {
 
+	class LinkControlWidget {
+
+	  public:
+		LinkControlWidget( Nic* nic) : m_nic(nic), m_notifiers(2,NULL), m_num(0) {
+		}
+
+		inline bool notify( int vn ) {
+        	m_nic->m_dbg.verbose(CALL_INFO,2,1,"Widget vn=%d\n",vn);
+			if ( m_notifiers[vn] ) {
+       			m_nic->m_dbg.verbose(CALL_INFO,2,1,"Widget call notifier num=%d\n", m_num -1);
+				m_notifiers[vn]();
+				m_notifiers[vn] = NULL;
+				--m_num;
+			}
+
+			return m_num > 0; 
+		}
+
+		inline void setNotifyOnReceive( std::function<void()> notifier, int vn ) {
+        	m_nic->m_dbg.verbose(CALL_INFO,2,1,"Widget vn=%d num=%d\n",vn,m_num);
+			if ( m_num == 0 ) {
+				m_nic->setRecvNotifier();
+			}
+			assert( m_notifiers[vn] == NULL );
+			m_notifiers[vn] = notifier;
+			++m_num;
+		}
+
+	  private:
+		Nic* m_nic;
+		int m_num;
+		std::vector< std::function<void()> > m_notifiers;
+	};
+
+
   public:
+
+
     typedef uint32_t NodeId;
     static const NodeId AnyId = -1;
 
@@ -136,8 +173,8 @@ public:
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
 
-    void dmaRead( std::vector<MemOp>& vec, Callback callback );
-    void dmaWrite( std::vector<MemOp>& vec, Callback callback );
+    void dmaRead( std::vector<MemOp>* vec, Callback callback );
+    void dmaWrite( std::vector<MemOp>* vec, Callback callback );
 
     void schedCallback( Callback callback, uint64_t delay = 0 ) {
         schedEvent( new SelfEvent( callback ), delay);
@@ -177,6 +214,10 @@ public:
     EntryBase* findRecv( int srcNode, MsgHdr&, int tag );
 
     Hermes::MemAddr findShmem( int core, Hermes::Vaddr  addr, size_t length );
+
+	SimTime_t getShmemRxDelay_ns() {
+		return m_shmemRxDelay_ns; 
+	}
 
 	SimTime_t calcDelay_ns( SST::UnitAlgebra val ) {
 		if ( val.hasUnits("ns") ) {
@@ -226,6 +267,11 @@ public:
         return ++m_getKey;
     }
 
+    void setRecvNotifier() {
+        m_dbg.verbose(CALL_INFO,2,1,"\n");
+        m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
+    }
+
     int NetToId( int x ) { return x; }
     int IdToNet( int x ) { return x; }
 
@@ -250,6 +296,7 @@ public:
     SST::Interfaces::SimpleNetwork::Handler<Nic>* m_sendNotifyFunctor;
     bool sendNotify(int);
     bool recvNotify(int);
+    LinkControlWidget m_linkWidget;
 
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
@@ -258,19 +305,26 @@ public:
     Shmem* m_shmem;
 	SimTime_t m_nic2host_lat_ns;
 	SimTime_t m_nic2host_base_lat_ns;
+	SimTime_t m_shmemRxDelay_ns; 
 
-    SimTime_t calcHostMemDelay( std::vector< MemOp>& ops  ) {
+    SimTime_t calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
         if( m_simpleMemoryModel ) {
-        	return m_simpleMemoryModel->calcHostDelay( ops );
+        	return m_simpleMemoryModel->schedHostCallback( core, ops, callback );
         } else {
-			return 0;
+			schedCallback(callback);
+			delete ops;
 		}
     }
-    SimTime_t calcNicMemDelay( std::vector< MemOp>& ops  ) {
+
+	#define NIC_SendThread SimpleMemoryModel::NIC_Thread::Send
+	#define NIC_RecvThread SimpleMemoryModel::NIC_Thread::Recv
+
+    void calcNicMemDelay( SimpleMemoryModel::NIC_Thread who, std::vector< MemOp>* ops, std::function<void()> callback ) {
         if( m_simpleMemoryModel ) {
-        	return m_simpleMemoryModel->calcNicDelay( ops );
+        	m_simpleMemoryModel->schedNicCallback( who, ops, callback );
         } else {
-			return 0;
+			schedCallback(callback);
+			delete ops;
 		}
 	}
 
