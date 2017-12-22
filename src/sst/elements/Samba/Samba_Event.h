@@ -44,6 +44,7 @@ namespace SST{ namespace SambaComponent{
 
 			int ev;
 			long long int address;
+			long long int paddress;
 			int size;
 		public:
 
@@ -53,8 +54,9 @@ namespace SST{ namespace SambaComponent{
 			void setType(int ev1) { ev = static_cast<EventType>(ev1);}
 			int getType() { return ev; }
 			
-			void setResp(long long int add, int sz) { address = add; size = sz;}
+			void setResp(long long int add, long long int padd, int sz) { address = add; paddress = padd; size = sz;}
 			long long int getAddress() { return address; }
+			long long int getPaddress() { return paddress; }
 			int getSize() { return size; }
 
 			void serialize_order(SST::Core::Serialization::serializer &ser) {

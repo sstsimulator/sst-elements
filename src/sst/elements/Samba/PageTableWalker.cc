@@ -165,21 +165,21 @@ void PageTableWalker::handleEvent( SST::Event* e )
 {
 
 
-// For each page fault,
-// 1 -- check if CR3 for VA exist, if not
-// Send request to Opal and save state of current fault at 3
-// one recvOpal is called due to response from Opal, recvOpal will create an event that will trigger HandleEvent
-// If HandleEvent comes and state is 3, it again changes state to 2 and send a request to Opal...
-//
-// Finally, one a physical page is assigned, the stall is set to false, and *hold is reset
+	// For each page fault,
+	// 1 -- check if CR3 for VA exist, if not
+	// Send request to Opal and save state of current fault at 3
+	// one recvOpal is called due to response from Opal, recvOpal will create an event that will trigger HandleEvent
+	// If HandleEvent comes and state is 3, it again changes state to 2 and send a request to Opal...
+	//
+	// Finally, one a physical page is assigned, the stall is set to false, and *hold is reset
 
 
 
-//// ******** Important, for each level, we will update MAPPED_PAGE_SIZE** and PGD/PMD/PUD/PTE so the actual physical address is used later
-    SambaEvent * temp_ptr =  dynamic_cast<SambaComponent::SambaEvent*> (e);
+	//// ******** Important, for each level, we will update MAPPED_PAGE_SIZE** and PGD/PMD/PUD/PTE so the actual physical address is used later
+	SambaEvent * temp_ptr =  dynamic_cast<SambaComponent::SambaEvent*> (e);
 
-        if(temp_ptr==NULL)
-                std::cout<<" Error in Casting to SambaEvent "<<std::endl;
+	if(temp_ptr==NULL)
+		std::cout<<" Error in Casting to SambaEvent "<<std::endl;
 
 	if(temp_ptr->getType() == EventType::PAGE_FAULT)
 	{
@@ -188,8 +188,8 @@ void PageTableWalker::handleEvent( SST::Event* e )
 
 		std::cout<<"Received a page fault "<<std::endl;
 		OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
-                tse->setResp(50,0,4096);
-                to_opal->send(10, tse);
+		tse->setResp(temp_ptr->getAddress(),0,4096);
+		to_opal->send(10, tse);
 
 
 
@@ -203,7 +203,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		// Update the page tables to reflect new page table entries/tables, then issue a new opal request to build next level
 
 		// For now, just assume only the page will be mappe and requested from Opal
-		std::cout<<"Received an Opal Response "<<std::endl;
+		std::cout<<"Received an Opal Response with Physical address "<<temp_ptr->getPaddress()<<std::endl;
 		stall = false;
 		*hold = 0;
 
@@ -218,12 +218,15 @@ void PageTableWalker::handleEvent( SST::Event* e )
 void PageTableWalker::recvOpal(SST::Event * event)
 {
 
-// Whenever we receve request from Opal, we just create event that will be handled by handleEvent
-  SambaEvent * tse = new SambaEvent(EventType::OPAL_RESPONSE);
-                                tse->setResp(6666,4096);
-                                s_EventChan->send(10, tse);
 
-  std::cout<<"Received a pack from Opal link "<<std::endl;
+	OpalEvent * temp_ptr =  dynamic_cast<OpalComponent::OpalEvent*> (event);
+
+	// Whenever we receve request from Opal, we just create event that will be handled by handleEvent
+	SambaEvent * tse = new SambaEvent(EventType::OPAL_RESPONSE);
+	tse->setResp(temp_ptr->getAddress(), temp_ptr->getPaddress(),4096);
+	s_EventChan->send(10, tse);
+
+	std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
 
 
 }
@@ -318,7 +321,8 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 			if(fault)
 			{
 				SambaEvent * tse = new SambaEvent(EventType::PAGE_FAULT);
-				tse->setResp(addr,4096);
+				std::cout<<"Fault at address "<<addr<<std::endl;
+				tse->setResp(addr,0,4096);
 				s_EventChan->send(10, tse);
 				stall = true;
 				*hold = 1;

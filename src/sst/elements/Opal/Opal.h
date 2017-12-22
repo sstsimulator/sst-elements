@@ -55,8 +55,9 @@ namespace SST {
 				SST::Link * singLink;
 				void handleRequest(SST::Event* e)
 				{
+					OpalEvent * temp_ptr =  dynamic_cast<OpalComponent::OpalEvent*> (e);
 					OpalEvent * tse = new OpalEvent(EventType::RESPONSE);
-					tse->setResp(50,66666,4096);
+					tse->setResp(temp_ptr->getAddress(),66666,4096);
 					singLink->send(10, tse);
 				}
 
