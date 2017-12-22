@@ -52,8 +52,6 @@ namespace SST { namespace SambaComponent{
 		// Which level, this can be any value starting from 0 for L1 and up to N, in an N+1 levels TLB system
 		int levels;
 
-		// This defines the size of the TLB in number of entries, regardless of the type (e.g., page size) of entry
-		int size;
 
 		// This is the link to propogate requests to the cache hierarchy
 		SST::Component * Owner;
@@ -64,6 +62,7 @@ namespace SST { namespace SambaComponent{
 
 		SST::Link * to_cpu;
 
+		SST::Link * to_opal;
 
 		std::map<int, TLB *> TLB_CACHE;
 
@@ -78,6 +77,10 @@ namespace SST { namespace SambaComponent{
 
 		// This vector holds the current requests to be translated
 		std::vector<SST::Event *> mem_reqs;
+
+                // This tells TLB hierarchy to stall due to emulated page fault or TLB Shootdown
+                int hold;
+
 
 		// This vector holds the current requests to be translated
 		std::map<SST::Event *, long long int> mem_reqs_sizes;
@@ -100,9 +103,10 @@ namespace SST { namespace SambaComponent{
 		void handleEvent_CACHE(SST::Event * event);
 		// Handling Events arriving from CPU, mostly requests from Ariel
 		void handleEvent_CPU(SST::Event * event);
+		// Handling Events arriving from Opal, the memory manager
+		void handleEvent_OPAL(SST::Event * event);
+
 		// Constructor for component
-
-
 		TLBhierarchy(ComponentId_t id, Params& params);
 		TLBhierarchy(ComponentId_t id, Params& params, int tlb_id);
 		TLBhierarchy(int tlb_id,SST::Component * owner);
@@ -128,6 +132,9 @@ namespace SST { namespace SambaComponent{
 
 		// Setting the memory link of the page table walker
 		bool setPTWLink(SST::Link * l) { PTW->set_ToMem(l); return true;}
+
+		// Setting the link to the memory manager
+		bool setOpalLink(SST::Link * l) { to_opal = l ; PTW->set_ToOpal(l); return true;}
 
                 // Setting the line size for the page table walker's dummy requests
                 void setLineSize(uint64_t size) { PTW->setLineSize(size); }
