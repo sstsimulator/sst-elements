@@ -35,6 +35,10 @@ using namespace SST::OpalComponent;
 Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 
+ registerAsPrimaryComponent();
+//    primaryComponentDoNotEndSim();
+
+
 	int core_count = (uint32_t) params.find<uint32_t>("num_cores", 1);
 
 	Handlers = new core_handler[core_count];
@@ -53,6 +57,7 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
 
+	registerClock( cpu_clock, new Clock::Handler<Opal>(this, &Opal::tick ) );
 }
 
 

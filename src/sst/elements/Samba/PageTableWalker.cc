@@ -185,6 +185,8 @@ void PageTableWalker::handleEvent( SST::Event* e )
 	{
 
 		// Send request to Opal starting from the first unmapped level (L4/CR3 if first fault in system)
+
+		std::cout<<"Received a page fault "<<std::endl;
 		OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
                 tse->setResp(50,0,4096);
                 to_opal->send(10, tse);
@@ -201,6 +203,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		// Update the page tables to reflect new page table entries/tables, then issue a new opal request to build next level
 
 		// For now, just assume only the page will be mappe and requested from Opal
+		std::cout<<"Received an Opal Response "<<std::endl;
 		stall = false;
 		*hold = 0;
 
@@ -219,6 +222,8 @@ void PageTableWalker::recvOpal(SST::Event * event)
   SambaEvent * tse = new SambaEvent(EventType::OPAL_RESPONSE);
                                 tse->setResp(6666,4096);
                                 s_EventChan->send(10, tse);
+
+  std::cout<<"Received a pack from Opal link "<<std::endl;
 
 
 }

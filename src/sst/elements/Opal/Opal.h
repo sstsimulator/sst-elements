@@ -74,7 +74,7 @@ namespace SST {
 				void handleRequest( SST::Event* e );
 				bool tick(SST::Cycle_t x);
 				core_handler * Handlers;
-
+				~Opal() { };
 				SST_ELI_REGISTER_COMPONENT(
 						Opal,
 						"Opal",
@@ -98,7 +98,6 @@ namespace SST {
 							{"cluster_size", "This determines the number of NUMA domains in each cluster, if clustering is used", "1"},
 							{"memtype%(num_pools)", "0 for typical DRAM, 1 for die-stacked DRAM, 2 for NVM", "0"},
 							{"typepriority%(num_pools)", "0 means die-stacked, typical DRAM, then NVM", "0"},
-							{ NULL, NULL }
 							)
 
 					// Optional since there is nothing to document
@@ -119,7 +118,6 @@ namespace SST {
 					Opal(const Opal&); // do not implement
 					void operator=(const Opal&); // do not implement
 
-					int create_pinchild(char* prog_binary, char** arg_list){return 0;}
 
 					SST::Link * m_memChan; 
 					SST::Link ** samba_to_opal; 
