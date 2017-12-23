@@ -55,13 +55,14 @@ namespace SST {
 				SST::Link * singLink;
 				int dummy_address;
 				core_handler() { dummy_address = 0;}				
+				unsigned int latency;
 
 				void handleRequest(SST::Event* e)
 				{
 					OpalEvent * temp_ptr =  dynamic_cast<OpalComponent::OpalEvent*> (e);
 					OpalEvent * tse = new OpalEvent(EventType::RESPONSE);
 					tse->setResp(temp_ptr->getAddress(),dummy_address++,4096);
-					singLink->send(10, tse);
+					singLink->send(latency, tse);
 				}
 
 
@@ -91,6 +92,7 @@ namespace SST {
 
 					SST_ELI_DOCUMENT_PARAMS(
 							{"clock",              "Internal Controller Clock Rate.", "1.0 Ghz"},
+							{"latency", "The time to be spent to service a memory request", "1000"},
 							{"num_nodes", "number of disaggregated nodes in the system", "1"},
 							{"num_cores", "total number of cores. this will be used to account for TLB shootdown latency", "1"},
 							{"num_pools",          "This determines the number of memory pools", "1"},
@@ -129,6 +131,8 @@ namespace SST {
 					SST::Link * event_link; // Note that this is a self-link for events
 
 					Pool * mempools; // This represents the memory pools of the system
+
+					unsigned int latency; // The page fault latency/ the time spent by Opal to service a memory allocation request
 
 					long long int max_inst;
 					char* named_pipe;

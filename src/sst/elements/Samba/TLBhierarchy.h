@@ -68,7 +68,7 @@ namespace SST { namespace SambaComponent{
 
 		// Here is the defintion of the page table walker of the TLB hierarchy
 		PageTableWalker * PTW;
-		
+
 
 		std::string clock_frequency_str;
 
@@ -78,8 +78,8 @@ namespace SST { namespace SambaComponent{
 		// This vector holds the current requests to be translated
 		std::vector<SST::Event *> mem_reqs;
 
-                // This tells TLB hierarchy to stall due to emulated page fault or TLB Shootdown
-                int hold;
+		// This tells TLB hierarchy to stall due to emulated page fault or TLB Shootdown
+		int hold;
 
 
 		// This vector holds the current requests to be translated
@@ -106,6 +106,15 @@ namespace SST { namespace SambaComponent{
 		// Handling Events arriving from Opal, the memory manager
 		void handleEvent_OPAL(SST::Event * event);
 
+
+		void setPageTablePointers( long long int * cr3, std::map<long long int, long long int> * pgd,  std::map<long long int, long long int> * pud,  std::map<long long int, long long int> * pmd,  std::map<long long int, long long int> * pte,  std::map<long long int,int> * gb,  std::map<long long int,int> * mb,  std::map<long long int,int> * kb)
+		{
+
+
+			if(PTW!=NULL)
+				PTW->setPageTablePointers(cr3, pgd, pud, pmd, pte, gb, mb, kb);
+
+		}
 		// Constructor for component
 		TLBhierarchy(ComponentId_t id, Params& params);
 		TLBhierarchy(ComponentId_t id, Params& params, int tlb_id);
@@ -121,9 +130,9 @@ namespace SST { namespace SambaComponent{
 		long long int translate(long long int VA);
 
 		Statistic<uint64_t>* total_waiting;
-	//	std::map<int, Statistic<uint64_t>*> statTLBHits;
+		//	std::map<int, Statistic<uint64_t>*> statTLBHits;
 
-	//	std::map<int, Statistic<uint64_t>*> statTLBMisses;
+		//	std::map<int, Statistic<uint64_t>*> statTLBMisses;
 		// Sets the to cache link, this should be called from Samba component when creating links between TLB structures and CPUs 
 		bool setCacheLink(SST::Link * TO_CACHE) { to_cache = TO_CACHE; return true;}
 
@@ -136,8 +145,8 @@ namespace SST { namespace SambaComponent{
 		// Setting the link to the memory manager
 		bool setOpalLink(SST::Link * l) { to_opal = l ; PTW->set_ToOpal(l); return true;}
 
-                // Setting the line size for the page table walker's dummy requests
-                void setLineSize(uint64_t size) { PTW->setLineSize(size); }
+		// Setting the line size for the page table walker's dummy requests
+		void setLineSize(uint64_t size) { PTW->setLineSize(size); }
 
 	};
 

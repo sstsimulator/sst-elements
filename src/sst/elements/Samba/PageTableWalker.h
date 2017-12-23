@@ -60,26 +60,33 @@ namespace SST { namespace SambaComponent{
 
 		int * hold; // This is used to tell the TLB hierarchy to stall, to emulate overhead of page fault handler or TLB shootdown
 
+
+		// ------------- Note that we assume that for each Samba componenet instance, all units run the same VMA, thus all share the same page table
+		// ------------- Our assumption is based on the fact that Ariel instances (mapped one-to-one to Samba instances) can only run one application
+
 		// Holds CR3 value of current context
-		long long int CR3;
+		long long int *CR3;
 
 		// Holds the PGD physical pointers, the key is the 9 bits 39-47, i.e., VA/(4096*512*512*512)
-		std::map<long long int, long long int> PGD;
+		std::map<long long int, long long int> * PGD;
 
 		// Holds the PUD physical pointers, the key is the 9 bits 30-38, i.e., VA/(4096*512*512)
-		std::map<long long int, long long int> PUD;
+		std::map<long long int, long long int> * PUD;
 
 		// Holds the PMD physical pointers, the key is the 9 bits 21-29, i.e., VA/(4096*512)
-		std::map<long long int, long long int> PMD;
+		std::map<long long int, long long int> * PMD;
 
 		// Holds the PTE physical pointers, the key is the 9 bits 12-20, i.e., VA/(4096)
-		std::map<long long int, long long int> PTE; // This should give you the exact physical address of the page
+		std::map<long long int, long long int> * PTE; // This should give you the exact physical address of the page
 
 
 		// The structures below are used to quickly check if the page is mapped or not
-		std::map<long long int,int> MAPPED_PAGE_SIZE4KB;
-		std::map<long long int,int> MAPPED_PAGE_SIZE2MB;
-		std::map<long long int,int> MAPPED_PAGE_SIZE1GB;
+		std::map<long long int,int> * MAPPED_PAGE_SIZE4KB;
+		std::map<long long int,int> * MAPPED_PAGE_SIZE2MB;
+		std::map<long long int,int> * MAPPED_PAGE_SIZE1GB;
+
+
+
 
 		// This link is used to send internal events within the page table walker
 		SST::Link * s_EventChan;
@@ -143,6 +150,18 @@ namespace SST { namespace SambaComponent{
 		PageTableWalker(int page_size, int assoc, PageTableWalker * next_level, int size);
 		PageTableWalker(int tlb_id, PageTableWalker * Next_level,int level, SST::Component * owner, SST::Params& params);
 
+		void setPageTablePointers( long long int * cr3, std::map<long long int, long long int> * pgd,  std::map<long long int, long long int> * pud,  std::map<long long int, long long int> * pmd,  std::map<long long int, long long int> * pte,  std::map<long long int,int> * gb,  std::map<long long int,int> * mb,  std::map<long long int,int> * kb)
+		{
+			CR3 = cr3;
+			PGD = pgd;
+			PUD = pud;
+			PMD = pmd;
+			PTE = pte;
+			MAPPED_PAGE_SIZE4KB = kb;
+			MAPPED_PAGE_SIZE2MB = mb;
+			MAPPED_PAGE_SIZE1GB = gb;
+		}
+
 		// Does the translation and updating the statistics of miss/hit
 		long long int translate(long long int vadd);
 
@@ -192,7 +211,7 @@ namespace SST { namespace SambaComponent{
 
 		Statistic<uint64_t>* statPageTableWalkerMisses;
 
-	        void handleEvent(SST::Event* event);
+		void handleEvent(SST::Event* event);
 
 		int getHits(){return hits;}
 		int getMisses(){return misses;}
