@@ -16,7 +16,7 @@ comp_cpu.addParams({
 	"generator" : "miranda.GUPSGenerator",
 	"generatorParams.verbose" : 0,
 	"generatorParams.count" : 10000,
-	"generatorParams.max_address" : ((memory_mb) / 2) * 1024 * 1024,
+	"generatorParams.max_address" : ((memory_mb) / 2) * 1024 *1024,
 })
 
 # Enable statistics outputs
