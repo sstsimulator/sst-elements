@@ -41,6 +41,8 @@ namespace SST { namespace SambaComponent{
 	{
 
 
+		int fault_level; // indicates the step where the page fault handler is at
+
 		int sizes; // This indicates the number of sizes supported
 
 		long long int * page_size; // By default, lets assume 4KB pages

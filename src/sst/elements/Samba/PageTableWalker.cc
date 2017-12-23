@@ -64,6 +64,7 @@ PageTableWalker::PageTableWalker(int Page_size, int Assoc, PageTableWalker * Nex
 PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int level, SST::Component * owner, SST::Params& params)
 {
 
+	fault_level = 0;
 
 	std::string LEVEL = std::to_string(level);
 
@@ -188,6 +189,19 @@ void PageTableWalker::handleEvent( SST::Event* e )
 
 		std::cout<<"Received a page fault "<<std::endl;
 		OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+
+		if(CR3 == -1)
+			fault_level = 0;
+		else if(PGD.find(temp_ptr->getAddress()/page_size[3]) == PGD.end())
+			fault_level = 1;
+		else if(PUD.find(temp_ptr->getAddress()/page_size[2]) == PUD.end())
+			fault_level = 2;
+		else if(PMD.find(temp_ptr->getAddress()/page_size[1]) == PMD.end())
+			fault_level = 3;
+		else if(PTE.find(temp_ptr->getAddress()/page_size[0]) == PTE.end())
+			fault_level = 4;
+
+
 		tse->setResp(temp_ptr->getAddress(),0,4096);
 		to_opal->send(10, tse);
 
@@ -203,10 +217,55 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		// Update the page tables to reflect new page table entries/tables, then issue a new opal request to build next level
 
 		// For now, just assume only the page will be mappe and requested from Opal
-		std::cout<<"Received an Opal Response with Physical address "<<temp_ptr->getPaddress()<<std::endl;
-		stall = false;
-		*hold = 0;
+		if(fault_level == 0)
+		{
+			// We are building the first page in the page table!
+			CR3 = temp_ptr->getPaddress();
+			fault_level++;
+			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+			tse->setResp(temp_ptr->getAddress(),0,4096);
+			to_opal->send(10, tse);
 
+		}
+		else if(fault_level == 1)
+		{
+			PGD[temp_ptr->getAddress()/page_size[3]] = temp_ptr->getPaddress();
+			fault_level++;
+			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+			tse->setResp(temp_ptr->getAddress(),0,4096);
+			to_opal->send(10, tse);
+
+		}
+		else if(fault_level == 2)
+		{
+			PUD[temp_ptr->getAddress()/page_size[2]] = temp_ptr->getPaddress();
+			fault_level++;
+			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+			tse->setResp(temp_ptr->getAddress(),0,4096);
+			to_opal->send(10, tse);
+
+		}
+
+		else if(fault_level == 3)
+		{
+			PMD[temp_ptr->getAddress()/page_size[1]] = temp_ptr->getPaddress();
+			fault_level++;
+			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+			tse->setResp(temp_ptr->getAddress(),0,4096);
+			to_opal->send(10, tse);
+
+		}
+		else if(fault_level == 4)
+		{
+			std::cout<<"Received an Opal Response with Physical address "<<temp_ptr->getPaddress()<<std::endl;
+			stall = false;
+			*hold = 0;
+			PTE[temp_ptr->getAddress()/page_size[0]] = temp_ptr->getPaddress();
+			fault_level = 0;
+
+		}
+
+		delete temp_ptr;
 	}
 
 
@@ -227,7 +286,7 @@ void PageTableWalker::recvOpal(SST::Event * event)
 	s_EventChan->send(10, tse);
 
 	std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
-
+	delete temp_ptr;
 
 }
 
