@@ -72,8 +72,6 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 
 	stall = false; // No stall initially; no page faults
 
-	// Initialize CR3 with -1, to indicate that the root page table hasn't been allocated yet
-	CR3 = -1;
 
 	self_connected = ((uint32_t) params.find<uint32_t>("self_connected", 0));
 
@@ -187,18 +185,18 @@ void PageTableWalker::handleEvent( SST::Event* e )
 
 		// Send request to Opal starting from the first unmapped level (L4/CR3 if first fault in system)
 
-		std::cout<<"Received a page fault "<<std::endl;
+//		std::cout<<"Received a page fault "<<std::endl;
 		OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 
-		if(CR3 == -1)
+		if((*CR3) == -1)
 			fault_level = 0;
-		else if(PGD.find(temp_ptr->getAddress()/page_size[3]) == PGD.end())
+		else if((*PGD).find(temp_ptr->getAddress()/page_size[3]) == (*PGD).end())
 			fault_level = 1;
-		else if(PUD.find(temp_ptr->getAddress()/page_size[2]) == PUD.end())
+		else if((*PUD).find(temp_ptr->getAddress()/page_size[2]) == (*PUD).end())
 			fault_level = 2;
-		else if(PMD.find(temp_ptr->getAddress()/page_size[1]) == PMD.end())
+		else if((*PMD).find(temp_ptr->getAddress()/page_size[1]) == (*PMD).end())
 			fault_level = 3;
-		else if(PTE.find(temp_ptr->getAddress()/page_size[0]) == PTE.end())
+		else if((*PTE).find(temp_ptr->getAddress()/page_size[0]) == (*PTE).end())
 			fault_level = 4;
 
 
@@ -220,7 +218,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		if(fault_level == 0)
 		{
 			// We are building the first page in the page table!
-			CR3 = temp_ptr->getPaddress();
+			(*CR3) = temp_ptr->getPaddress();
 			fault_level++;
 			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 			tse->setResp(temp_ptr->getAddress(),0,4096);
@@ -229,7 +227,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		}
 		else if(fault_level == 1)
 		{
-			PGD[temp_ptr->getAddress()/page_size[3]] = temp_ptr->getPaddress();
+			(*PGD)[temp_ptr->getAddress()/page_size[3]] = temp_ptr->getPaddress();
 			fault_level++;
 			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 			tse->setResp(temp_ptr->getAddress(),0,4096);
@@ -238,7 +236,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		}
 		else if(fault_level == 2)
 		{
-			PUD[temp_ptr->getAddress()/page_size[2]] = temp_ptr->getPaddress();
+			(*PUD)[temp_ptr->getAddress()/page_size[2]] = temp_ptr->getPaddress();
 			fault_level++;
 			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 			tse->setResp(temp_ptr->getAddress(),0,4096);
@@ -248,7 +246,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 
 		else if(fault_level == 3)
 		{
-			PMD[temp_ptr->getAddress()/page_size[1]] = temp_ptr->getPaddress();
+			(*PMD)[temp_ptr->getAddress()/page_size[1]] = temp_ptr->getPaddress();
 			fault_level++;
 			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 			tse->setResp(temp_ptr->getAddress(),0,4096);
@@ -257,10 +255,10 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		}
 		else if(fault_level == 4)
 		{
-			std::cout<<"Received an Opal Response with Physical address "<<temp_ptr->getPaddress()<<std::endl;
+//			std::cout<<"Received an Opal Response with Physical address "<<temp_ptr->getPaddress()<<std::endl;
 			stall = false;
 			*hold = 0;
-			PTE[temp_ptr->getAddress()/page_size[0]] = temp_ptr->getPaddress();
+			(*PTE)[temp_ptr->getAddress()/page_size[0]] = temp_ptr->getPaddress();
 			fault_level = 0;
 
 		}
@@ -285,7 +283,7 @@ void PageTableWalker::recvOpal(SST::Event * event)
 	tse->setResp(temp_ptr->getAddress(), temp_ptr->getPaddress(),4096);
 	s_EventChan->send(10, tse);
 
-	std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
+//	std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
 	delete temp_ptr;
 
 }
@@ -305,6 +303,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 	insert_way(WID_Add[pw_id], find_victim_way(WID_Add[pw_id], WSR_COUNT[pw_id]), WSR_COUNT[pw_id]);
 
+	long long int addr = WID_Add[pw_id];
 
 	WSR_READY[pw_id]=true;
 
@@ -323,6 +322,26 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 
 		long long int dummy_add = rand()%10000000;
+
+		// Time to use actual page table addresses if we have page tables
+		if(emulate_faults)
+		{
+
+			long long int page_table_start;
+			if(WSR_COUNT[pw_id]==4)
+			   page_table_start = (*PGD)[addr/page_size[3]];
+			else if(WSR_COUNT[pw_id]==3)
+			   page_table_start = (*PUD) [addr/page_size[2]];
+			else if(WSR_COUNT[pw_id]==2)
+			   page_table_start = (*PMD) [addr/page_size[1]];
+			else if (WSR_COUNT[pw_id] == 1)
+			   page_table_start = (*PTE) [addr/page_size[0]];
+
+			//std::cout<<"Walking step "<<4-WSR_COUNT[pw_id]<<" The address to read from "<<page_table_start<<std::endl;
+
+			dummy_add = page_table_start*4096 + (addr/page_size[WSR_COUNT[pw_id]-1])%512;
+
+		}
 		uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
 		MemEvent *e = new MemEvent(Owner, dummy_add, dummy_base_add, Command::GetS);
 		SST::Event * ev = e;
@@ -374,18 +393,18 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 		{
 
 			bool fault = true;
-			if(MAPPED_PAGE_SIZE4KB.find(addr/page_size[0])!=MAPPED_PAGE_SIZE4KB.end() || MAPPED_PAGE_SIZE2MB.find(addr/page_size[1])!=MAPPED_PAGE_SIZE2MB.end() || MAPPED_PAGE_SIZE1GB.find(addr/page_size[2])!=MAPPED_PAGE_SIZE1GB.end())
+			if((*MAPPED_PAGE_SIZE4KB).find(addr/page_size[0])!=(*MAPPED_PAGE_SIZE4KB).end() || (*MAPPED_PAGE_SIZE2MB).find(addr/page_size[1])!=(*MAPPED_PAGE_SIZE2MB).end() || (*MAPPED_PAGE_SIZE1GB).find(addr/page_size[2])!=(*MAPPED_PAGE_SIZE1GB).end())
 				fault = false;
 
 			if(fault)
 			{
 				SambaEvent * tse = new SambaEvent(EventType::PAGE_FAULT);
-				std::cout<<"Fault at address "<<addr<<std::endl;
+			//	std::cout<<"Fault at address "<<addr<<std::endl;
 				tse->setResp(addr,0,4096);
 				s_EventChan->send(10, tse);
 				stall = true;
 				*hold = 1;
-				MAPPED_PAGE_SIZE4KB[addr/page_size[0]] = 0; // FIXME: Hack to avoid propogating faulting VA through all events, only for initial testing
+				(*MAPPED_PAGE_SIZE4KB)[addr/page_size[0]] = 0; // FIXME: Hack to avoid propogating faulting VA through all events, only for initial testing
 				return false;
 			}
 
@@ -444,6 +463,13 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 					WID_EV[++mmu_id] = (*st_1);
 
 					long long int dummy_add = rand()%10000000;
+
+					// Use actual page table base to start the walking if we have real page tables
+					if(emulate_faults)
+					{
+						dummy_add = (*CR3)*4096 + (addr/page_size[2])%512;
+					}
+
 					uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
 					MemEvent *e = new MemEvent(Owner, dummy_add, dummy_base_add, Command::GetS);
 					SST::Event * ev = e;

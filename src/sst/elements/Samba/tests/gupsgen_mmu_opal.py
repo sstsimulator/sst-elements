@@ -43,7 +43,7 @@ comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MESI",
       "backend.access_time" : "50 ns",
-      "backend.mem_size" : str(memory_mb * 1024 * 1024) + "B",
+      "backend.mem_size" : str(memory_mb  * 1024) + "B",
       "clock" : "1GHz"
 })
 
@@ -104,6 +104,7 @@ opal = sst.Component("opal0", "Opal")
 
 opal.addParams({
   "num_cores": 1,
+  "latency" : 100,
 });
 
 # Define the simulation links

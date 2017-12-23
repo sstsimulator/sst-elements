@@ -20,6 +20,7 @@
 
 #include <sst_config.h>
 #include <string>
+#include<iostream>
 #include "Opal.h"
 
 
@@ -40,6 +41,9 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 
 	int core_count = (uint32_t) params.find<uint32_t>("num_cores", 1);
+	latency = (uint32_t) params.find<uint32_t>("latency", 1);
+
+	std::cout<<"The latency is "<<latency<<std::endl;
 
 	Handlers = new core_handler[core_count];
 
@@ -49,10 +53,11 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	for(uint32_t i = 0; i < core_count; ++i) {
 		sprintf(link_buffer, "requestLink%" PRIu32, i);
-		SST::Link * link = configureLink(link_buffer, "0ps", new Event::Handler<core_handler>((&Handlers[i]), &core_handler::handleRequest));
+		SST::Link * link = configureLink(link_buffer, "1ns", new Event::Handler<core_handler>((&Handlers[i]), &core_handler::handleRequest));
 		samba_to_opal[i] = link;
 		Handlers[i].singLink = link;
 		Handlers[i].id = i;
+		Handlers[i].latency = latency;
 	}
 
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
