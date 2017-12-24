@@ -154,7 +154,12 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	uint32_t maxCoreQueueLen     = (uint32_t) params.find<uint32_t>("maxcorequeue", 64);
 	uint32_t maxPendingTransCore = (uint32_t) params.find<uint32_t>("maxtranscore", 16);
 	uint64_t cacheLineSize       = (uint64_t) params.find<uint32_t>("cachelinesize", 64);
-	opal_enabled  = (bool) params.find<uint32_t>("opal_enabled", 0);
+	int op_e = (uint32_t) params.find<uint32_t>("opal_enabled", 0);
+
+	if(op_e == 1)
+		opal_enabled = true;
+	else
+		opal_enabled = false;
 
 	/////////////////////////////////////////////////////////////////////////////////////
 

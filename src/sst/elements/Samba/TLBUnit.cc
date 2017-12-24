@@ -135,7 +135,7 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 			lru[id][i]=new int[assoc[id]];
 			for(int j=0; j<assoc[id];j++)
 			{
-				tags[id][i][j]=-66666666666;
+				tags[id][i][j]=-1;
 				lru[id][i][j]=j;
 			}
 		}

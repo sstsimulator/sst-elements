@@ -148,7 +148,7 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 			lru[id][i]=new int[assoc[id]];
 			for(int j=0; j<assoc[id];j++)
 			{
-				tags[id][i][j]=-666666;
+				tags[id][i][j]=-1;
 				lru[id][i][j]=j;
 			}
 		}
@@ -434,7 +434,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				ready_by[ev] = x + latency;
 
 			// Tracking the hit request size
-			ready_by_size[ev] = os_page_size;
+			ready_by_size[ev] = page_size[hit_id]/1024;
 
 			st_1 = not_serviced.erase(st_1);
 		}

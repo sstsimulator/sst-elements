@@ -87,6 +87,7 @@ class ArielCore {
 		void handleAllocationEvent(ArielAllocateEvent* aEv);
 		void handleFreeEvent(ArielFreeEvent* aFE);
 		void handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE);
+		void setOpal() { opal_enabled = true; } 
 
 		void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 		void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
@@ -100,6 +101,7 @@ class ArielCore {
 	private:
 		bool processNextEvent();
 		bool refillQueue();
+		bool opal_enabled;
 		uint32_t coreID;
 		uint32_t maxPendingTransactions;
 		Output* output;

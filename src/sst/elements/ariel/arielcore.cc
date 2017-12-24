@@ -42,6 +42,8 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	owner = own;
 	memmgr = memMgr;
 
+	opal_enabled = false;
+
 	coreQ = new std::queue<ArielEvent*>();
 	pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
 	pending_transaction_count = 0;
@@ -539,7 +541,7 @@ void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
 			aEv->getVirtualAddress(), aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getInstructionPointer());
 
 	// If Opal is enabled, make sure you pass these requests to it
-	if(OpalLink)
+	if(opal_enabled)
 	{
 		 OpalEvent * tse = new OpalEvent(OpalComponent::EventType::HINT);
 		 tse->type = aEv->getAllocationLevel();
