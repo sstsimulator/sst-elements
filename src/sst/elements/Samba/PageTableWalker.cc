@@ -148,7 +148,7 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 			lru[id][i]=new int[assoc[id]];
 			for(int j=0; j<assoc[id];j++)
 			{
-				tags[id][i][j]=-1;
+				tags[id][i][j]=-666666;
 				lru[id][i][j]=j;
 			}
 		}
@@ -255,7 +255,6 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		}
 		else if(fault_level == 4)
 		{
-//			std::cout<<"Received an Opal Response with Physical address "<<temp_ptr->getPaddress()<<std::endl;
 			stall = false;
 			*hold = 0;
 			(*PTE)[temp_ptr->getAddress()/page_size[0]] = temp_ptr->getPaddress();
@@ -283,7 +282,7 @@ void PageTableWalker::recvOpal(SST::Event * event)
 	tse->setResp(temp_ptr->getAddress(), temp_ptr->getPaddress(),4096);
 	s_EventChan->send(10, tse);
 
-//	std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
+	//std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()/4096<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
 	delete temp_ptr;
 
 }
@@ -337,7 +336,6 @@ void PageTableWalker::recvResp(SST::Event * event)
 			else if (WSR_COUNT[pw_id] == 1)
 			   page_table_start = (*PTE) [addr/page_size[0]];
 
-			//std::cout<<"Walking step "<<4-WSR_COUNT[pw_id]<<" The address to read from "<<page_table_start<<std::endl;
 
 			dummy_add = page_table_start*4096 + (addr/page_size[WSR_COUNT[pw_id]-1])%512;
 
@@ -436,7 +434,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				ready_by[ev] = x + latency;
 
 			// Tracking the hit request size
-			ready_by_size[ev] = page_size[hit_id]/1024;
+			ready_by_size[ev] = os_page_size;
 
 			st_1 = not_serviced.erase(st_1);
 		}
@@ -542,8 +540,11 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				update_lru(addr, 0);
 
 
-
 			service_back->push_back(st->first);
+
+			if((*PTE).find(addr/4096)==(*PTE).end())
+				std::cout<<"******* Major issue is in Page Table Walker **** "<<std::endl;
+
 
 			(*service_back_size)[st->first]=ready_by_size[st->first];
 

@@ -107,7 +107,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 			ptw_to_opal[i] = link4;
 			TLB[i]->setOpalLink(link4);
 
-			sprintf(link_buffer, "event_bus");
+			sprintf(link_buffer, "event_bus%" PRIu32, i);
 
 			event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::handleEvent));
 

@@ -79,7 +79,7 @@ class ArielCore {
 		void createFreeEvent(uint64_t vAddr);
 		void createExitEvent();
 		void createSwitchPoolEvent(uint32_t pool);
-
+		void setOpalLink(Link * opallink);
                 void setCacheLink(SimpleMem* newCacheLink, Link* allocLink);
 		void handleEvent(SimpleMem::Request* event);
 		void handleReadRequest(ArielReadEvent* wEv);
@@ -107,6 +107,7 @@ class ArielCore {
 		bool isHalted;
 		SimpleMem* cacheLink;
                 Link* allocLink;
+                Link* OpalLink;
 		ArielTunnel *tunnel;
 		std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
 		uint32_t maxIssuePerCycle;

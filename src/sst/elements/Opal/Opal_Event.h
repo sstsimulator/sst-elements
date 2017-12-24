@@ -23,7 +23,7 @@
 #include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
-#include <sst/elements/memHierarchy/memEvent.h>
+#include <../memHierarchy/memEvent.h>
 #include<map>
 #include<list>
 
@@ -33,19 +33,20 @@ using namespace SST;
 
 namespace SST{ namespace OpalComponent{
 
-	enum EventType { REQUEST, RESPONSE, UNMAP, UMAPACK, SHOOTDOWN, SDACK};
+	enum EventType { HINT, REQUEST, RESPONSE, UNMAP, UMAPACK, SHOOTDOWN, SDACK};
 
 	// Thie defines a class for events of Opal
 	class OpalEvent : public SST::Event
 	{
 
 		private:
-		OpalEvent() { } // For serialization
+		OpalEvent() {type = -1; } // For serialization
 
 			int ev;
 			long long int address;
 			long long int paddress;
 			int size;
+
 		public:
 
 			OpalEvent(EventType y) : SST::Event()
@@ -54,6 +55,8 @@ namespace SST{ namespace OpalComponent{
 			void setType(int ev1) { ev = static_cast<EventType>(ev1);}
 			int getType() { return ev; }
 			
+			int type;
+
 			void setResp(long long int add, long long int padd, int sz) { address = add; paddress = padd; size = sz;}
 			long long int getAddress() { return address; }
 			long long int getPaddress() { return paddress; }

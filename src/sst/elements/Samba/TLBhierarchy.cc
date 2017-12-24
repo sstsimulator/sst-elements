@@ -66,7 +66,7 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 	std::string LEVEL = std::to_string(1);
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
 
-
+	emulate_faults  = ((uint32_t) params.find<uint32_t>("emulate_faults", 0));
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
 	sprintf(subID, "%" PRIu32, coreID);
@@ -176,6 +176,17 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 		uint64_t time_diff = (uint64_t ) x - time_tracker[event];
 		time_tracker.erase(event);
 		total_waiting->addData(time_diff);
+		
+		// Here we override the physical address provided by ariel memory manage by the one provided by Opal
+		if(emulate_faults)
+		{
+			long long int vaddr = ((MemEvent*) event)->getVirtualAddress();
+			if((*PTE).find(vaddr/4096)==(*PTE).end())
+				std::cout<<"Error: That page has never been mapped : "<<vaddr/4096<<std::endl;
+
+			((MemEvent*) event)->setAddr((((*PTE)[vaddr/4096]*4096 + vaddr%4096)/64)*64);
+			((MemEvent*) event)->setBaseAddr((((*PTE)[vaddr/4096]*4096 + vaddr%4096)/64)*64);
+		}
 		to_cache->send(event);
 
 		// We remove the size of that translation, we might for future versions use the translation size to obtain statistics
