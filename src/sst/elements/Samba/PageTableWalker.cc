@@ -185,7 +185,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 
 		// Send request to Opal starting from the first unmapped level (L4/CR3 if first fault in system)
 
-//		std::cout<<"Received a page fault "<<std::endl;
+		//		std::cout<<"Received a page fault "<<std::endl;
 		OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 
 		if((*CR3) == -1)
@@ -328,13 +328,13 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 			long long int page_table_start;
 			if(WSR_COUNT[pw_id]==4)
-			   page_table_start = (*PGD)[addr/page_size[3]];
+				page_table_start = (*PGD)[addr/page_size[3]];
 			else if(WSR_COUNT[pw_id]==3)
-			   page_table_start = (*PUD) [addr/page_size[2]];
+				page_table_start = (*PUD) [addr/page_size[2]];
 			else if(WSR_COUNT[pw_id]==2)
-			   page_table_start = (*PMD) [addr/page_size[1]];
+				page_table_start = (*PMD) [addr/page_size[1]];
 			else if (WSR_COUNT[pw_id] == 1)
-			   page_table_start = (*PTE) [addr/page_size[0]];
+				page_table_start = (*PTE) [addr/page_size[0]];
 
 
 			dummy_add = page_table_start*4096 + (addr/page_size[WSR_COUNT[pw_id]-1])%512;
@@ -397,7 +397,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 			if(fault)
 			{
 				SambaEvent * tse = new SambaEvent(EventType::PAGE_FAULT);
-			//	std::cout<<"Fault at address "<<addr<<std::endl;
+				//	std::cout<<"Fault at address "<<addr<<std::endl;
 				tse->setResp(addr,0,4096);
 				s_EventChan->send(10, tse);
 				stall = true;
@@ -434,7 +434,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				ready_by[ev] = x + latency;
 
 			// Tracking the hit request size
-			ready_by_size[ev] = page_size[hit_id]/1024;
+			ready_by_size[ev] = os_page_size; //page_size[hit_id]/1024;
 
 			st_1 = not_serviced.erase(st_1);
 		}
@@ -542,8 +542,10 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 			service_back->push_back(st->first);
 
-			if((*PTE).find(addr/4096)==(*PTE).end())
-				std::cout<<"******* Major issue is in Page Table Walker **** "<<std::endl;
+
+			if(emulate_faults)
+				if((*PTE).find(addr/4096)==(*PTE).end())
+					std::cout<<"******* Major issue is in Page Table Walker **** "<<std::endl;
 
 
 			(*service_back_size)[st->first]=ready_by_size[st->first];
