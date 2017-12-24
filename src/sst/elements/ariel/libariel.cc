@@ -120,12 +120,14 @@ static const ElementInfoParam ariel_params[] = {
     {"clock", "Clock rate at which events are generated and processed", "1GHz"},
     {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
     {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
+    {"opal_enabled", "If enabled, MLM allocation hints will be communicated to the centralized memory manager", "0"},
     {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort ariel_ports[] = {
     {"cache_link_%(corecount)d", "Each core's link to its cache", NULL},
     {"alloc_link_%(corecount)d", "Each core's link to an allocation tracker (e.g. memSieve)", NULL},
+    {"opal_link_%(corecount)d", "Each core's link to a centralized memory manager (Opal)", NULL},
     {NULL, NULL, NULL}
 };
 

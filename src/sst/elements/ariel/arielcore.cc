@@ -14,8 +14,10 @@
 // distribution.
 
 #include <sst_config.h>
-
+#include <../Opal/Opal_Event.h>
 #include "arielcore.h"
+
+using namespace SST::OpalComponent;
 
 #define ARIEL_CORE_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
 
@@ -39,6 +41,8 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	cacheLineSize = cacheLineSz;
 	owner = own;
 	memmgr = memMgr;
+
+	opal_enabled = false;
 
 	coreQ = new std::queue<ArielEvent*>();
 	pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
@@ -106,6 +110,13 @@ ArielCore::~ArielCore() {
 	if(enableTracing && traceGen) {
 		delete traceGen;
 	}
+}
+
+void ArielCore::setOpalLink(Link * opallink)
+{
+
+OpalLink = opallink;
+
 }
 
 void ArielCore::setCacheLink(SimpleMem* newLink, Link* newAllocLink) {
@@ -528,6 +539,17 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
 	output->verbose(CALL_INFO, 2, 0, "Handling a memory allocation event, vAddr=%" PRIu64 ", length=%" PRIu64 ", at level=%" PRIu32 " with malloc ID=%" PRIu64 "\n",
 			aEv->getVirtualAddress(), aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getInstructionPointer());
+
+	// If Opal is enabled, make sure you pass these requests to it
+	if(opal_enabled)
+	{
+		 OpalEvent * tse = new OpalEvent(OpalComponent::EventType::HINT);
+		 tse->type = aEv->getAllocationLevel();
+                 tse->setResp(aEv->getVirtualAddress(),0,4096);
+		 OpalLink->send(tse);
+
+	}
+
 
 	if (allocLink) {
 		output->verbose(CALL_INFO, 2, 0, " Sending memory allocation event to allocate monitor\n");

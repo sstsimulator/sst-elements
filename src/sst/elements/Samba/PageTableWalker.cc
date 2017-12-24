@@ -185,7 +185,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 
 		// Send request to Opal starting from the first unmapped level (L4/CR3 if first fault in system)
 
-//		std::cout<<"Received a page fault "<<std::endl;
+		//		std::cout<<"Received a page fault "<<std::endl;
 		OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 
 		if((*CR3) == -1)
@@ -255,7 +255,6 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		}
 		else if(fault_level == 4)
 		{
-//			std::cout<<"Received an Opal Response with Physical address "<<temp_ptr->getPaddress()<<std::endl;
 			stall = false;
 			*hold = 0;
 			(*PTE)[temp_ptr->getAddress()/page_size[0]] = temp_ptr->getPaddress();
@@ -283,7 +282,7 @@ void PageTableWalker::recvOpal(SST::Event * event)
 	tse->setResp(temp_ptr->getAddress(), temp_ptr->getPaddress(),4096);
 	s_EventChan->send(10, tse);
 
-//	std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
+	//std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()/4096<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
 	delete temp_ptr;
 
 }
@@ -329,15 +328,14 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 			long long int page_table_start;
 			if(WSR_COUNT[pw_id]==4)
-			   page_table_start = (*PGD)[addr/page_size[3]];
+				page_table_start = (*PGD)[addr/page_size[3]];
 			else if(WSR_COUNT[pw_id]==3)
-			   page_table_start = (*PUD) [addr/page_size[2]];
+				page_table_start = (*PUD) [addr/page_size[2]];
 			else if(WSR_COUNT[pw_id]==2)
-			   page_table_start = (*PMD) [addr/page_size[1]];
+				page_table_start = (*PMD) [addr/page_size[1]];
 			else if (WSR_COUNT[pw_id] == 1)
-			   page_table_start = (*PTE) [addr/page_size[0]];
+				page_table_start = (*PTE) [addr/page_size[0]];
 
-			//std::cout<<"Walking step "<<4-WSR_COUNT[pw_id]<<" The address to read from "<<page_table_start<<std::endl;
 
 			dummy_add = page_table_start*4096 + (addr/page_size[WSR_COUNT[pw_id]-1])%512;
 
@@ -399,7 +397,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 			if(fault)
 			{
 				SambaEvent * tse = new SambaEvent(EventType::PAGE_FAULT);
-			//	std::cout<<"Fault at address "<<addr<<std::endl;
+				//	std::cout<<"Fault at address "<<addr<<std::endl;
 				tse->setResp(addr,0,4096);
 				s_EventChan->send(10, tse);
 				stall = true;
@@ -436,7 +434,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				ready_by[ev] = x + latency;
 
 			// Tracking the hit request size
-			ready_by_size[ev] = page_size[hit_id]/1024;
+			ready_by_size[ev] = os_page_size; //page_size[hit_id]/1024;
 
 			st_1 = not_serviced.erase(st_1);
 		}
@@ -542,8 +540,13 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				update_lru(addr, 0);
 
 
-
 			service_back->push_back(st->first);
+
+
+			if(emulate_faults)
+				if((*PTE).find(addr/4096)==(*PTE).end())
+					std::cout<<"******* Major issue is in Page Table Walker **** "<<std::endl;
+
 
 			(*service_back_size)[st->first]=ready_by_size[st->first];
 

@@ -56,6 +56,8 @@ namespace SST { namespace SambaComponent{
 		// This is the link to propogate requests to the cache hierarchy
 		SST::Component * Owner;
 
+		// If faults are emulated
+	        int emulate_faults;
 
 		SST::Link * to_cache;
 
@@ -94,6 +96,29 @@ namespace SST { namespace SambaComponent{
 		// This represents the maximum number of outstanding requests for this structure
 		int max_outstanding; 
 
+		// Holds CR3 value of current context
+		long long int *CR3;
+		//
+		// Holds the PGD physical pointers, the key is the 9 bits 39-47, i.e., VA/(4096*512*512*512)
+		std::map<long long int, long long int> * PGD;
+
+		// Holds the PUD physical pointers, the key is the 9 bits 30-38, i.e., VA/(4096*512*512)
+		std::map<long long int, long long int> * PUD;
+
+		// Holds the PMD physical pointers, the key is the 9 bits 21-29, i.e., VA/(4096*512)
+		std::map<long long int, long long int> * PMD;
+
+		// Holds the PTE physical pointers, the key is the 9 bits 12-20, i.e., VA/(4096)
+		std::map<long long int, long long int> * PTE; // This should give you the exact physical address of the page
+
+
+		// The structures below are used to quickly check if the page is mapped or not
+		std::map<long long int,int> * MAPPED_PAGE_SIZE4KB;
+		std::map<long long int,int> * MAPPED_PAGE_SIZE2MB;
+		std::map<long long int,int> * MAPPED_PAGE_SIZE1GB;
+
+
+
 		public:
 
 
@@ -109,8 +134,15 @@ namespace SST { namespace SambaComponent{
 
 		void setPageTablePointers( long long int * cr3, std::map<long long int, long long int> * pgd,  std::map<long long int, long long int> * pud,  std::map<long long int, long long int> * pmd,  std::map<long long int, long long int> * pte,  std::map<long long int,int> * gb,  std::map<long long int,int> * mb,  std::map<long long int,int> * kb)
 		{
-
-
+	                CR3 = cr3;
+                        PGD = pgd;
+                        PUD = pud;
+                        PMD = pmd;
+                        PTE = pte;
+                        MAPPED_PAGE_SIZE4KB = kb;
+                        MAPPED_PAGE_SIZE2MB = mb;
+                        MAPPED_PAGE_SIZE1GB = gb;	
+	
 			if(PTW!=NULL)
 				PTW->setPageTablePointers(cr3, pgd, pud, pmd, pte, gb, mb, kb);
 
