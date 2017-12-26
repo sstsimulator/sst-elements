@@ -544,8 +544,8 @@ void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
 	if(opal_enabled)
 	{
 		 OpalEvent * tse = new OpalEvent(OpalComponent::EventType::HINT);
-		 tse->type = aEv->getAllocationLevel();
-                 tse->setResp(aEv->getVirtualAddress(),0,4096);
+		 tse->hint = aEv->getAllocationLevel();
+                 tse->setResp(aEv->getVirtualAddress(), 0, aEv->getAllocationLength() );
 		 OpalLink->send(tse);
 
 	}

@@ -40,9 +40,9 @@ namespace SST{ namespace OpalComponent{
 	{
 
 		private:
-		OpalEvent() {type = -1; } // For serialization
+		OpalEvent() {hint = -1; } // For serialization
 
-			int ev;
+			EventType ev;
 			long long int address;
 			long long int paddress;
 			int size;
@@ -55,7 +55,7 @@ namespace SST{ namespace OpalComponent{
 			void setType(int ev1) { ev = static_cast<EventType>(ev1);}
 			int getType() { return ev; }
 			
-			int type;
+			int hint;
 
 			void setResp(long long int add, long long int padd, int sz) { address = add; paddress = padd; size = sz;}
 			long long int getAddress() { return address; }
