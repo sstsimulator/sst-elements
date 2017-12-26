@@ -805,23 +805,23 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         fprintf(stderr,"Replacement complete.\n");
         return;
 #endif
-    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "mlm_malloc") {
+    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && RTN_Name(rtn) == "mlm_malloc") {
         // This means we want a special malloc to be used (needs a TLB map inside the virtual core)
         fprintf(stderr,"Identified routine: mlm_malloc, replacing with Ariel equivalent...\n");
         AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) ariel_mlm_malloc);
         fprintf(stderr,"Replacement complete. (%p)\n", ret);
         return;
-    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "mlm_free") {
+    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && RTN_Name(rtn) == "mlm_free") {
         fprintf(stderr,"Identified routine: mlm_free, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) ariel_mlm_free);
         fprintf(stderr, "Replacement complete.\n");
         return;
-    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "mlm_set_pool") {
+    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && RTN_Name(rtn) == "mlm_set_pool") {
         fprintf(stderr, "Identified routine: mlm_set_pool, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) ariel_mlm_set_pool);
         fprintf(stderr, "Replacement complete.\n");
         return;
-    } else if ((InterceptMultiLevelMemory.Value() > 0) && (
+    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && (
                 RTN_Name(rtn) == "malloc" || RTN_Name(rtn) == "_malloc" || RTN_Name(rtn) == "__libc_malloc" || RTN_Name(rtn) == "__libc_memalign" || RTN_Name(rtn) == "_gfortran_malloc")) {
     		
         fprintf(stderr, "Identified routine: malloc/_malloc, replacing with Ariel equivalent...\n");
@@ -839,7 +839,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
                        IARG_END);
 
         RTN_Close(rtn);
-    } else if ((InterceptMultiLevelMemory.Value() > 0) && (
+    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && (
                 RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free" || RTN_Name(rtn) == "__libc_free" || RTN_Name(rtn) == "_gfortran_free")) {
 
         fprintf(stderr, "Identified routine: free/_free, replacing with Ariel equivalent...\n");

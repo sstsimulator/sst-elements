@@ -40,18 +40,19 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 //    primaryComponentDoNotEndSim();
 
 
-	int core_count = (uint32_t) params.find<uint32_t>("num_cores", 1);
+	core_count = (uint32_t) params.find<uint32_t>("num_cores", 1);
 	latency = (uint32_t) params.find<uint32_t>("latency", 1);
 
 	std::cout<<"The latency is "<<latency<<std::endl;
 
-	Handlers = new core_handler[core_count];
+	Handlers = new core_handler[core_count*2];
 
-	samba_to_opal = new SST::Link * [core_count];
+	// Note the links can also come directly form Ariel to send hints, rathar than only from Samba's Page Table Walker
+	samba_to_opal = new SST::Link * [core_count*2];
 
 	char* link_buffer = (char*) malloc(sizeof(char) * 256);
 
-	for(uint32_t i = 0; i < core_count; ++i) {
+	for(uint32_t i = 0; i < core_count*2; ++i) {
 		sprintf(link_buffer, "requestLink%" PRIu32, i);
 		SST::Link * link = configureLink(link_buffer, "1ns", new Event::Handler<core_handler>((&Handlers[i]), &core_handler::handleRequest));
 		samba_to_opal[i] = link;

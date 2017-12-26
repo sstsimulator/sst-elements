@@ -60,9 +60,20 @@ namespace SST {
 				void handleRequest(SST::Event* e)
 				{
 					OpalEvent * temp_ptr =  dynamic_cast<OpalComponent::OpalEvent*> (e);
-					OpalEvent * tse = new OpalEvent(EventType::RESPONSE);
-					tse->setResp(temp_ptr->getAddress(),dummy_address++,4096);
-					singLink->send(latency, tse);
+
+
+					if(temp_ptr->getType() == EventType::HINT)
+					{
+
+						std::cout<<"MLM Hint : level "<<temp_ptr->hint<<" Starting address is "<< temp_ptr->getAddress() <<" Size: "<<temp_ptr->getSize()<<std::endl;
+
+					}
+					else
+					{
+						OpalEvent * tse = new OpalEvent(EventType::RESPONSE);
+						tse->setResp(temp_ptr->getAddress(),dummy_address++,4096);
+						singLink->send(latency, tse);
+					}
 				}
 
 
@@ -111,7 +122,7 @@ namespace SST {
 							)
 
 					SST_ELI_DOCUMENT_PORTS(
-							{"requestLink%(num_cores)d", "Link to receive allocation requests", { "OpalComponent.OpalEvent", "" } },
+							{"requestLink%(num_cores*2)d", "Link to receive allocation requests", { "OpalComponent.OpalEvent", "" } },
 							{"shootdownLink%(num_cores)d", "Link to send shootdown requests to Samba units", { "OpalComponent.OpalEvent", "" } },
 							)
 
@@ -124,6 +135,8 @@ namespace SST {
 					Opal(const Opal&); // do not implement
 					void operator=(const Opal&); // do not implement
 
+
+					int core_count;
 
 					SST::Link * m_memChan; 
 					SST::Link ** samba_to_opal; 
