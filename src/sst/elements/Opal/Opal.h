@@ -68,6 +68,11 @@ namespace SST {
 						std::cout<<"MLM Hint : level "<<temp_ptr->hint<<" Starting address is "<< temp_ptr->getAddress() <<" Size: "<<temp_ptr->getSize()<<std::endl;
 
 					}
+					else if (temp_ptr->getType() == EventType::MMAP)
+					{
+
+						std::cout<<"Opal has received an MMAP CALL with ID "<<temp_ptr->fileID<<std::endl;
+					}
 					else
 					{
 						OpalEvent * tse = new OpalEvent(EventType::RESPONSE);

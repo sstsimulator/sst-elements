@@ -33,6 +33,9 @@ enum ArielShmemCmd_t {
     ARIEL_START_INSTRUCTION = 32,
     ARIEL_END_INSTRUCTION = 64,
     ARIEL_ISSUE_TLM_MAP = 80,
+    ARIEL_ISSUE_TLM_MMAP = 81,
+    ARIEL_ISSUE_TLM_MUNMAP = 82,
+    ARIEL_ISSUE_TLM_FENCE = 83,
     ARIEL_ISSUE_TLM_FREE = 100,
     ARIEL_SWITCH_POOL = 110,
     ARIEL_NOOP = 128,
@@ -54,6 +57,21 @@ struct ArielCommand {
             uint64_t alloc_len;
             uint32_t alloc_level;
         } mlm_map;
+         struct {
+            uint64_t vaddr;
+            uint64_t alloc_len;
+            uint32_t alloc_level;
+	    uint32_t fileID;
+        } mlm_mmap;
+         struct {
+            uint64_t vaddr;
+            uint64_t alloc_len;
+            uint32_t alloc_level;
+	    uint32_t fileID;
+        } mlm_munmap;
+	struct{
+	    uint64_t vaddr;
+	} mlm_fence;
         struct {
             uint64_t vaddr;
         } mlm_free;

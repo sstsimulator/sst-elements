@@ -75,6 +75,7 @@ class ArielCore {
 		void createReadEvent(uint64_t addr, uint32_t size);
 		void createWriteEvent(uint64_t addr, uint32_t size);
     		void createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level, uint64_t ip);
+		void createMmapEvent(uint32_t fileID, uint64_t vAddr, uint64_t length, uint32_t level, uint64_t instPtr);
 		void createNoOpEvent();
 		void createFreeEvent(uint64_t vAddr);
 		void createExitEvent();
@@ -85,6 +86,7 @@ class ArielCore {
 		void handleReadRequest(ArielReadEvent* wEv);
 		void handleWriteRequest(ArielWriteEvent* wEv);
 		void handleAllocationEvent(ArielAllocateEvent* aEv);
+		void handleMmapEvent(ArielMmapEvent* aEv);
 		void handleFreeEvent(ArielFreeEvent* aFE);
 		void handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE);
 		void setOpal() { opal_enabled = true; } 

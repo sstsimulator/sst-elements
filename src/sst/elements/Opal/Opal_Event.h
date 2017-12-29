@@ -26,6 +26,7 @@
 #include <../memHierarchy/memEvent.h>
 #include<map>
 #include<list>
+#include<string>
 
 
 using namespace SST; 
@@ -33,7 +34,17 @@ using namespace SST;
 
 namespace SST{ namespace OpalComponent{
 
-	enum EventType { HINT, REQUEST, RESPONSE, UNMAP, UMAPACK, SHOOTDOWN, SDACK};
+	enum EventType { HINT, MMAP, REQUEST, RESPONSE, UNMAP, UMAPACK, SHOOTDOWN, SDACK};
+
+//	enum HintType { DRAM, NVM, HBM, HMC, SCRATCHPAD, BURSTBUFFER, };
+
+// **************** Important *****************
+//	Levels hints are: 0 for DRAM
+//	1: NVM
+//	2: HBM
+//	3: HMC
+//	4: SCRATCHPAD
+//	5: BURSTBUFFER
 
 	// Thie defines a class for events of Opal
 	class OpalEvent : public SST::Event
@@ -56,7 +67,7 @@ namespace SST{ namespace OpalComponent{
 			int getType() { return ev; }
 			
 			int hint;
-
+			int fileID;
 			void setResp(long long int add, long long int padd, int sz) { address = add; paddress = padd; size = sz;}
 			long long int getAddress() { return address; }
 			long long int getPaddress() { return paddress; }
