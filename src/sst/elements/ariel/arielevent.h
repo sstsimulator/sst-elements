@@ -30,6 +30,7 @@ enum ArielEventType {
 	CORE_EXIT,
 	NOOP,
 	MALLOC,
+	MMAP,
 	FREE,
 	SWITCH_POOL
 };

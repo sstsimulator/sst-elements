@@ -621,6 +621,68 @@ void ariel_mlm_set_pool(int new_pool) {
 	default_pool = (UINT32) new_pool;
 }
 
+
+
+void* ariel_mmap_mlm(int fileID, size_t size, int level)
+{
+
+    THREADID currentThread = PIN_ThreadId();
+    UINT32 thr = (UINT32) currentThread;
+
+#ifdef ARIEL_DEBUG
+    fprintf(stderr, "%u, Perform a mlm_mmap from Ariel %zu, level %d\n", thr, size, level);
+#endif
+    if(0 == size) {
+        fprintf(stderr, "YOU REQUESTED ZERO BYTES\n");
+        void *bt_entries[64];
+        int entry_returned = backtrace(bt_entries, 64);
+        backtrace_symbols(bt_entries, entry_returned);
+        exit(-8);
+    }
+
+    size_t page_diff = size % ((size_t)4096);
+    size_t npages = size / ((size_t)4096);
+
+    size_t real_req_size = 4096 * (npages + ((page_diff == 0) ? 0 : 1));
+
+#ifdef ARIEL_DEBUG
+    fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu) \n",
+            size, real_req_size, thr);
+#endif
+
+    void* real_ptr = 0;
+    posix_memalign(&real_ptr, 4096, real_req_size);
+
+    const uint64_t virtualAddress = (uint64_t) real_ptr;
+    const uint64_t allocationLength = (uint64_t) real_req_size;
+    const uint32_t allocationLevel = (uint32_t) level;
+
+
+    ArielCommand ac;
+    ac.command = ARIEL_ISSUE_TLM_MMAP;
+    ac.mlm_mmap.vaddr = virtualAddress;
+    ac.mlm_mmap.alloc_len = allocationLength;
+    ac.mlm_mmap.alloc_level = allocationLevel;
+    ac.mlm_mmap.fileID = fileID;
+    std::cout<<"Before ******"<<std::endl;
+    std::cout<<"File ID at FESIMPLE IS : "<<ac.mlm_mmap.fileID<<std::endl;
+    std::cout<<"After ******"<<std::endl;
+
+    tunnel->writeMessage(thr, ac);
+
+#ifdef ARIEL_DEBUG
+    fprintf(stderr, "%u: Ariel mlm_malloc call allocates data at address: 0x%llx\n",
+            thr, (uint64_t) real_ptr);
+#endif
+
+    PIN_GetLock(&mainLock, thr);
+        allocated_list.push_back(real_ptr);
+    PIN_ReleaseLock(&mainLock);
+        return real_ptr;
+
+}
+
+
 void* ariel_mlm_malloc(size_t size, int level) {
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
@@ -861,7 +923,26 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_output_stats_buoy);
         fprintf(stderr, "Replacement complete\n");
         return;
+    } else if (RTN_Name(rtn) == "ariel_flushline" || RTN_Name(rtn) == "_ariel_flushline") {
+
+	return;
     }
+    else if (RTN_Name(rtn) == "ariel_fence" || RTN_Name(rtn) == "_ariel_fence") {
+
+	return;
+    }
+    else if (RTN_Name(rtn) == "ariel_mmap_mlm" || RTN_Name(rtn) == "_ariel_mmap_mlm") {
+	 AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) ariel_mmap_mlm);
+	return;
+    }
+    else if (RTN_Name(rtn) == "ariel_munmap_mlm" || RTN_Name(rtn) == "_ariel_munmap_mlm") {
+
+	return;
+    }
+
+
+
+
 
 }
 
