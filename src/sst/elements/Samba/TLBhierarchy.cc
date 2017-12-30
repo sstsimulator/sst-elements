@@ -61,12 +61,12 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 	coreID=tlb_id;
 
 
-
+	hold = 0;  // Hold is set to 1 by the page table walker due to fault or shootdown, note that since we don't execute page fault handler or TLB shootdown routine on the core, we just stall TLB hierarchy to emulate the performance effect
 
 	std::string LEVEL = std::to_string(1);
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
 
-
+	emulate_faults  = ((uint32_t) params.find<uint32_t>("emulate_faults", 0));
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
 	sprintf(subID, "%" PRIu32, coreID);
@@ -89,13 +89,13 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 	{
 		TLB_CACHE[level]->setServiceBack(TLB_CACHE[level-1]->getPushedBack());	
 		TLB_CACHE[level]->setServiceBackSize(TLB_CACHE[level-1]->getPushedBackSize());
-	
+
 	}
 
 
 	PTW->setServiceBack(TLB_CACHE[levels]->getPushedBack());
 	PTW->setServiceBackSize(TLB_CACHE[levels]->getPushedBackSize());
-
+	PTW->setHold(&hold);
 
 	TLB_CACHE[1]->setServiceBack(&mem_reqs);
 	TLB_CACHE[1]->setServiceBackSize(&mem_reqs_sizes);
@@ -145,6 +145,12 @@ void TLBhierarchy::handleEvent_CPU(SST::Event* event) {
 bool TLBhierarchy::tick(SST::Cycle_t x)
 {
 
+	if(hold==1) // If the page table walker is suggesting to hold, the TLBhierarchy will stop processing any events
+	{
+		PTW->tick(x);
+		return false;
+	}
+
 	for(int level=levels; level >= 1; level--)
 	{
 		TLB_CACHE[level]->tick(x);
@@ -154,22 +160,33 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 	PTW->tick(x);
 
 	curr_time = x;
-	// Step 1, check if not empty, then propogate it to L1 TLB
+	// Step 1, check if not empty, then propogate it to L1 cache
 	while(!mem_reqs.empty())
 	{
 
 		SST::Event * event= mem_reqs.back();
-		
+
 		if(time_tracker.find(event)==time_tracker.end())
 		{ 
-		  std::cout<<"Something wrong happened"<<std::endl;
-		   mem_reqs_sizes.erase(event);
-		   mem_reqs.pop_back();
-		   continue;
+			std::cout<<"Something wrong happened"<<std::endl;
+			mem_reqs_sizes.erase(event);
+			mem_reqs.pop_back();
+			continue;
 		}
 		uint64_t time_diff = (uint64_t ) x - time_tracker[event];
 		time_tracker.erase(event);
 		total_waiting->addData(time_diff);
+		
+		// Here we override the physical address provided by ariel memory manage by the one provided by Opal
+		if(emulate_faults)
+		{
+			long long int vaddr = ((MemEvent*) event)->getVirtualAddress();
+			if((*PTE).find(vaddr/4096)==(*PTE).end())
+				std::cout<<"Error: That page has never been mapped : "<<vaddr/4096<<std::endl;
+
+			((MemEvent*) event)->setAddr((((*PTE)[vaddr/4096]*4096 + vaddr%4096)/64)*64);
+			((MemEvent*) event)->setBaseAddr((((*PTE)[vaddr/4096]*4096 + vaddr%4096)/64)*64);
+		}
 		to_cache->send(event);
 
 		// We remove the size of that translation, we might for future versions use the translation size to obtain statistics
@@ -177,7 +194,6 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 
 		mem_reqs.pop_back();
 
-		// Take it and submit it to L1 TLB, then retire
 
 
 	}

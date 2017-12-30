@@ -154,6 +154,12 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	uint32_t maxCoreQueueLen     = (uint32_t) params.find<uint32_t>("maxcorequeue", 64);
 	uint32_t maxPendingTransCore = (uint32_t) params.find<uint32_t>("maxtranscore", 16);
 	uint64_t cacheLineSize       = (uint64_t) params.find<uint32_t>("cachelinesize", 64);
+	int op_e = (uint32_t) params.find<uint32_t>("opal_enabled", 0);
+
+	if(op_e == 1)
+		opal_enabled = true;
+	else
+		opal_enabled = false;
 
 	/////////////////////////////////////////////////////////////////////////////////////
 
@@ -330,6 +336,14 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
             cpu_to_alloc_tracker_links = 0;
         }
 
+
+	if(opal_enabled)
+	{	 
+	    output->verbose(CALL_INFO, 1, 0, "Creating core to Opal links...\n");
+            cpu_to_opal_links = (Link**) malloc( sizeof(Link*) * core_count );
+       	}
+
+
 	output->verbose(CALL_INFO, 1, 0, "Creating processor cores and cache links...\n");
 	cpu_cores = (ArielCore**) malloc( sizeof(ArielCore*) * core_count );
 
@@ -355,6 +369,15 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                 } else {
                     cpu_cores[i]->setCacheLink(cpu_to_cache_links[i], 0);
                 }
+
+		if(opal_enabled)
+		{
+		     sprintf(link_buffer, "opal_link_%" PRIu32, i);
+                     cpu_to_opal_links[i] = configureLink(link_buffer);
+		     cpu_cores[i]->setOpalLink(cpu_to_opal_links[i]);
+		     cpu_cores[i]->setOpal();
+		}
+
 	}
 	free(link_buffer);
 

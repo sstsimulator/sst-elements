@@ -75,18 +75,21 @@ class ArielCore {
 		void createReadEvent(uint64_t addr, uint32_t size);
 		void createWriteEvent(uint64_t addr, uint32_t size);
     		void createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level, uint64_t ip);
+		void createMmapEvent(uint32_t fileID, uint64_t vAddr, uint64_t length, uint32_t level, uint64_t instPtr);
 		void createNoOpEvent();
 		void createFreeEvent(uint64_t vAddr);
 		void createExitEvent();
 		void createSwitchPoolEvent(uint32_t pool);
-
+		void setOpalLink(Link * opallink);
                 void setCacheLink(SimpleMem* newCacheLink, Link* allocLink);
 		void handleEvent(SimpleMem::Request* event);
 		void handleReadRequest(ArielReadEvent* wEv);
 		void handleWriteRequest(ArielWriteEvent* wEv);
 		void handleAllocationEvent(ArielAllocateEvent* aEv);
+		void handleMmapEvent(ArielMmapEvent* aEv);
 		void handleFreeEvent(ArielFreeEvent* aFE);
 		void handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE);
+		void setOpal() { opal_enabled = true; } 
 
 		void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 		void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
@@ -100,6 +103,7 @@ class ArielCore {
 	private:
 		bool processNextEvent();
 		bool refillQueue();
+		bool opal_enabled;
 		uint32_t coreID;
 		uint32_t maxPendingTransactions;
 		Output* output;
@@ -107,6 +111,7 @@ class ArielCore {
 		bool isHalted;
 		SimpleMem* cacheLink;
                 Link* allocLink;
+                Link* OpalLink;
 		ArielTunnel *tunnel;
 		std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
 		uint32_t maxIssuePerCycle;
