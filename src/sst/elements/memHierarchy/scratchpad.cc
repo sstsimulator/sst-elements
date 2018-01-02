@@ -122,24 +122,37 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     
     // Initialize scratchpad entries
     // Set up backing store if needed
-    std::string backingType = params.find<std::string>("backing", "malloc", found); /* Default to using a malloc backing store */
+    std::string backingType = params.find<std::string>("backing", "mmap", found); /* Default to using an mmap backing store, fall back on malloc */
+    backing_ = nullptr;
     if (!found) {
         bool oldBackVal = params.find<bool>("do_not_back", false, found);
         if (found) {
             out.output("%s, ** Found deprecated parameter: do_not_back ** Use 'backing' parameter instead and specify 'none', 'malloc', or 'mmap'. Remove this parameter from your input deck to eliminate this message.\n", 
                     getName().c_str());
         }
-        if (oldBackVal) backingType = "malloc";
+        if (oldBackVal) backingType = "none";
     }
 
     if (backingType != "none" && backingType != "mmap" && backingType != "malloc") {
         out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: backing. Must be one of 'none', 'malloc', or 'mmap'. You specified: %s\n",
                 getName().c_str(), backingType.c_str());
     }
+        
+    std::string mallocSize = params.find<std::string>("backing_size_unit", "1MiB");
+    UnitAlgebra size_ua(mallocSize);
+    if (!size_ua.hasUnits("B")) {
+        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: backing_size_unit. Must have units of bytes (B). SI ok. You specified: %s\n",
+                getName().c_str(), mallocSize.c_str());
+    }
+    size_t sizeBytes = size_ua.getRoundedValue();
+    if (sizeBytes > scratch_->getMemSize()) {
+        // Since getMemSize() might not be a power of 2, but malloc store needs it....get a reasonably close power of 2
+        sizeBytes = 1 << log2Of(scratch_->getMemSize());
+    }
 
     backing_ = nullptr;
     if (backingType == "mmap") {
-        std::string memoryFile = params.find<std::string>("memory_file", "" );
+        std::string memoryFile = params.find<std::string>("memory_file", "");
 
         if ( 0 == memoryFile.compare( "" ) ) {
             memoryFile.clear();
@@ -150,22 +163,13 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         catch ( int e) {
             if (e == 1) 
                 dbg.fatal(CALL_INFO, -1, "%s, Error - unable to open memory_file. You specified '%s'.\n", getName().c_str(), memoryFile.c_str());
-            else if (e == 2)
-                dbg.fatal(CALL_INFO, -1, "%s, Error - mmap of backing store failed.\n", getName().c_str());
-            else 
+            else if (e == 2) {
+                out.output("%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
+                backing_ = new Backend::BackingMalloc(sizeBytes);
+            } else 
                 dbg.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
         }
     } else if (backingType == "malloc") {
-        std::string size = params.find<std::string>("backing_size_hint", "1MiB");
-        UnitAlgebra size_ua(size);
-        if (!size_ua.hasUnits("B")) {
-            out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: backing_size_hint. Must have units of bytes (B). SI ok. You specified: %s\n",
-                    getName().c_str(), size.c_str());
-        }
-        size_t sizeBytes = size_ua.getRoundedValue();
-        if (sizeBytes > scratch_->getMemSize() ) 
-            sizeBytes = scratch_->getMemSize();
-
         backing_ = new Backend::BackingMalloc(sizeBytes);
     }
 
@@ -1147,13 +1151,9 @@ std::vector<uint8_t> Scratchpad::doScratchRead(MemEvent * event) {
     stat_ScratchReadIssued->addData(1);
 
     std::vector<uint8_t> data;
+    data.resize(event->getSize(), 0);
     if (backing_) {
-        for (size_t i = 0; i < event->getSize(); i++) {
-            data.push_back(backing_->get(event->getAddr() + i));
-            dbg.debug(_L5_, "\tUpdating payload. (addr, data): (0x%" PRIx64 ", %u)\n", event->getAddr() + i, data.at(i));
-        }
-    } else {
-        data.resize(event->getSize(), 0);
+        backing_->get(event->getAddr(), event->getSize(), data);
     }
     dbg.debug(_L4_, "\tSending request to scratch: %s\n", event->getBriefString().c_str());
     scratch_->handleMemEvent(event);
@@ -1164,10 +1164,7 @@ void Scratchpad::doScratchWrite(MemEvent * event) {
     stat_ScratchWriteIssued->addData(1);
 
     if (backing_) {
-        for (size_t i = 0; i < event->getSize(); i++) {
-            dbg.debug(_L5_, "\tUpdating backing store. (addr, new data): (0x%" PRIx64 ", %u)\n", event->getAddr() + i, event->getPayload()[i]);
-            backing_->set(event->getAddr() + i, event->getPayload()[i]);
-        }
+        backing_->set(event->getAddr(), event->getSize(), event->getPayload());
     }
 
     dbg.debug(_L4_, "\tSending request to scratch: %s\n", event->getBriefString().c_str());
