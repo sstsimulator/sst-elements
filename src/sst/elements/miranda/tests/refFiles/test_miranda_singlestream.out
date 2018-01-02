@@ -19,6 +19,9 @@
  l1cache.prefetches_issued : Accumulator : Sum.u64 = 61524; SumSQ.u64 = 61524; Count.u64 = 61524; 
  l1cache.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 2867; SumSQ.u64 = 2867; Count.u64 = 2867; 
  l1cache.prefetches_canceled_by_history : Accumulator : Sum.u64 = 93414; SumSQ.u64 = 93414; Count.u64 = 93414; 
+ l1cache.Prefetch_requests : Accumulator : Sum.u64 = 61524; SumSQ.u64 = 61524; Count.u64 = 61524; 
+ l1cache.Prefetch_hits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache.Prefetch_drops : Accumulator : Sum.u64 = 56269; SumSQ.u64 = 56269; Count.u64 = 56269; 
  l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 686532; SumSQ.u64 = 686532; Count.u64 = 686532; 
  l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 499990; SumSQ.u64 = 499990; Count.u64 = 499990; 
  l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -48,11 +51,8 @@
  l1cache.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 969358448; SumSQ.u64 = 15673261874; Count.u64 = 60187881; 
+ l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 969353193; SumSQ.u64 = 15673199015; Count.u64 = 60187881; 
  l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache.Prefetch_requests : Accumulator : Sum.u64 = 61524; SumSQ.u64 = 61524; Count.u64 = 61524; 
- l1cache.Prefetch_hits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache.Prefetch_drops : Accumulator : Sum.u64 = 56269; SumSQ.u64 = 56269; Count.u64 = 56269; 
  l1cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_E : Accumulator : Sum.u64 = 62476; SumSQ.u64 = 62476; Count.u64 = 62476; 
  l1cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -60,7 +60,7 @@
  l1cache.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache.latency_GetS_IS : Accumulator : Sum.u64 = 125271286; SumSQ.u64 = 251054196664; Count.u64 = 62508; 
+ l1cache.latency_GetS_IS : Accumulator : Sum.u64 = 125266031; SumSQ.u64 = 251033129383; Count.u64 = 62508; 
  l1cache.latency_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.latency_GetX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.latency_GetX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
