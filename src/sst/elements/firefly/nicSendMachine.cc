@@ -76,7 +76,7 @@ void Nic::SendMachine::state_1( SendEntryBase* entry, FireflyNetworkEvent* ev )
 
     entry->copyOut( m_dbg, m_vc, m_packetSizeInBytes, *ev, *vec ); 
 
-    m_nic.dmaRead( vec,
+    m_nic.dmaRead( m_unit, vec,
 		std::bind( &Nic::SendMachine::state_2, this, entry, ev )
     ); 
 	// don't put code after this, the callback may be called serially

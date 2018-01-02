@@ -15,7 +15,7 @@
 
 class MsgStream : public StreamBase {
   public:
-    MsgStream( Output&, FireflyNetworkEvent*, RecvMachine& );
+    MsgStream( Output&, FireflyNetworkEvent*, RecvMachine&, int unit );
     virtual void processPkt( FireflyNetworkEvent* ev, DmaRecvEntry* entry = NULL ) {
 			
 		if ( ! m_recvEntry ) {

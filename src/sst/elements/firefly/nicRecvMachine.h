@@ -20,9 +20,11 @@ class RecvMachine {
 
         class StreamBase {
           public:
-            StreamBase(Output& output, RecvMachine& rm) : 
-                m_dbg(output), m_rm(rm),m_recvEntry(NULL),m_sendEntry(NULL)
-            {}
+            StreamBase(Output& output, RecvMachine& rm, int unit) : 
+                m_dbg(output), m_rm(rm),m_unit(unit),m_recvEntry(NULL),m_sendEntry(NULL)
+            {
+				assert( unit >= 0 );
+            }
             virtual ~StreamBase() {
                 m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"notify \n");
                 if ( m_recvEntry ) {
@@ -32,12 +34,14 @@ class RecvMachine {
 				if ( m_sendEntry ) {
 					m_rm.m_nic.m_sendMachine[0]->run( m_sendEntry );	
 				}
+				m_rm.freeNicUnit( m_unit );
             }
             virtual void processPkt( FireflyNetworkEvent* ev, DmaRecvEntry* entry = NULL ) {
                 m_rm.state_move_0( ev, this );
             } 
             RecvEntryBase* getRecvEntry() { return m_recvEntry; }
             virtual size_t length() { return m_matched_len; }
+            int getUnit() { return m_unit; }		
           protected:
             Output&         m_dbg;
             RecvMachine&    m_rm;
@@ -47,6 +51,7 @@ class RecvMachine {
             int             m_src;
             int             m_tag;
             int             m_matched_len;
+            int             m_unit;
         };
 
         #include "nicMsgStream.h"
@@ -78,10 +83,19 @@ class RecvMachine {
             m_dbg.init(buffer, verboseLevel, verboseMask, Output::STDOUT);
             m_shmem.init( func );
             setNotify();
+            m_unit = nic.allocNicUnit();
+            assert( m_unit >= 0 );
         }
 
         virtual ~RecvMachine();
 
+        bool freeNicUnit( int unit ) {
+            m_nic.freeNicUnit( unit );
+            if ( m_unit == -1 ) {
+                m_unit = m_nic.allocNicUnit( );
+                checkNetwork();
+            }
+        }
 
         bool checkBlockedNetwork( DmaRecvEntry* entry, int vNicNum ) {
 			bool retval = false;
@@ -151,6 +165,8 @@ class RecvMachine {
         void state_move_0( FireflyNetworkEvent*, StreamBase* );
         void state_move_1( FireflyNetworkEvent*, bool, StreamBase* );
         void state_move_2( FireflyNetworkEvent* event );
+        void state_move_3( FireflyNetworkEvent* event );
+        void state_move_4( FireflyNetworkEvent* event, StreamBase* );
         void checkNetwork();
 
         void processNeedRecv( FireflyNetworkEvent* event ) {
@@ -181,10 +197,11 @@ class RecvMachine {
         Nic&        m_nic;
         Output      m_dbg;
         int         m_vc;
+        int         m_unit;
+        int         m_rxMatchDelay;
+        int         m_hostReadDelay;
+        bool        m_notifyCallback; 
 
-        int             m_rxMatchDelay;
-        int             m_hostReadDelay;
-        bool            m_notifyCallback; 
         FireflyNetworkEvent* m_blockedNetworkEvent;
 
         std::map< int, StreamBase* >    m_streamMap;

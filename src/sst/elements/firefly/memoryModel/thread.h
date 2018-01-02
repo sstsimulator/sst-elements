@@ -3,12 +3,14 @@
 class Work {
 
   public:
-    Work( std::vector< MemOp >* ops, Callback callback ) : m_ops(ops), m_callback(callback), m_pos(0) {}
+    Work( std::vector< MemOp >* ops, Callback callback, SimTime_t start ) : m_ops(ops), 
+			m_callback(callback), m_start(start), m_pos(0) {}
 
     ~Work() {
         m_callback();
         delete m_ops;
     }
+    SimTime_t start() { return m_start; }
 
 	size_t getNumOps() { return m_ops->size(); }
 
@@ -21,6 +23,7 @@ class Work {
 	}
 
   private:
+    SimTime_t				m_start;
     int 					m_pos;
     Callback 				m_callback;
     std::vector< MemOp >*   m_ops;
@@ -93,6 +96,11 @@ class Thread : public UnitBase {
 
 			Work* work = m_workQ.front();
 
+			if ( op->callback ) {
+				assert( !isLoad );
+ 				op->callback();
+			}
+
 			m_currentOp = work->popOp();
 
 			// if this work entry is done
@@ -157,7 +165,8 @@ class Thread : public UnitBase {
     }
 	
 	void workDone( Work* work ) {
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work %p done\n",work);
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work %p done latency=%lu\n",work, 
+					m_model.getCurrentSimTimeNano() - work->start());
 		delete work;
 	}
 

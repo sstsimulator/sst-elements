@@ -576,7 +576,7 @@ void Nic::Shmem::doReduction( Hermes::Shmem::ReduOp op, int destCore, Hermes::Va
 	}
 }
 
-void Nic::Shmem::checkWaitOps( int core, Hermes::Vaddr addr, size_t length, bool nic )
+void Nic::Shmem::checkWaitOps( int core, Hermes::Vaddr addr, size_t length )
 {
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"core=%d addr=%" PRIx64" len=%lu\n", core, addr, length );
 
@@ -588,13 +588,8 @@ void Nic::Shmem::checkWaitOps( int core, Hermes::Vaddr addr, size_t length, bool
         Op* op = *iter;
         if ( op->inRange( addr, length ) && op->checkOp( m_dbg ) ) {
 			
-			SimTime_t delay = 0;		
-			if ( nic ) {
-				// this is the nic-to-host delay when an operation in the nic triggers
-				// a wait, what should the delay be?
- 				delay = 50;
-			}
-    		m_nic.getVirtNic(core)->notifyShmem( delay, op->callback() );
+        	m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"notify %d\n");
+			m_nic.schedCallback( op->callback() );
             delete op; 
             iter = m_pendingOps[core].erase(iter);
         } else {
