@@ -151,7 +151,7 @@ void Nic::RecvMachine::ShmemStream::processGet( ShmemMsgHdr& hdr, FireflyNetwork
 
 void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_vNic, int dest_vNic )
 {
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation srcNode=%d %d myAddr=%#" PRIx64 " length=%u respKey=%#" PRIx64 "\n",
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation srcNode=%d op=%d myAddr=%#" PRIx64 " length=%u respKey=%#" PRIx64 "\n",
             ev->src, m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
     Hermes::MemAddr addr = m_rm.nic().findShmem( local_vNic, hdr.vaddr, hdr.length ); 
 	std::vector< MemOp >* memOps = new std::vector< MemOp >;
@@ -169,6 +169,7 @@ void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetwork
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusLoad ) );
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore, 
 		[=]() {
+			m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"processAdd() checkWaitOps\n");
 			m_rm.m_nic.m_shmem->checkWaitOps( local_vNic, tmpAddr, local.getLength() );
 		}
 	) ); 
