@@ -62,6 +62,8 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 
 	max_outstanding = ((uint32_t) params.find<uint32_t>("max_outstanding_L"+LEVEL, 4));
 
+	emulate_faults = ((uint32_t) params.find<uint32_t>("emulate_faults", 0));
+
 	latency = ((uint32_t) params.find<uint32_t>("latency_L"+LEVEL, 1));
 
 	// This indicates the number of page sizes supported for this level

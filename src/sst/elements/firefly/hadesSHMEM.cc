@@ -33,7 +33,7 @@ HadesSHMEM::HadesSHMEM(Component* owner, Params& params) :
 
     m_selfLink = configureSelfLink("ShmemToDriver", "1 ns",
             new Event::Handler<HadesSHMEM>(this,&HadesSHMEM::handleToDriver));
-    m_heap = new Heap(true);
+    m_heap = new Heap();
 
 	m_enterLat_ns = params.find<int>("enterLat_ns",30);
 	m_returnLat_ns = params.find<int>("returnLat_ns",30);
@@ -113,7 +113,7 @@ void HadesSHMEM::init2(Shmem::Callback callback)
 	// need space for global pSync, scratch for collect and pending remote operations count
     m_localDataSize = sizeof(ShmemCollective::pSync_t) + sizeof(long) * 3;
 
-    malloc( &m_localData, m_localDataSize, 
+    malloc( &m_localData, m_localDataSize, true, 
             [=]() { 
                 m_pSync = m_localData;
                 m_pSync.at<ShmemCollective::pSync_t>(0) = 0;
@@ -207,32 +207,30 @@ void HadesSHMEM::fence2(Shmem::Callback callback)
 	delayReturn( callback );
 }
 
-void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, Shmem::Callback callback )
+void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, bool backed, Shmem::Callback callback )
 {
 	delayEnter(
 			[=]() {
-				this->malloc2( ptr, size, callback );
+				this->malloc2( ptr, size, backed, callback );
 		  	}
 	);
 }
 
-void HadesSHMEM::malloc2( Hermes::MemAddr* ptr, size_t size, Shmem::Callback callback )
+void HadesSHMEM::malloc2( Hermes::MemAddr* ptr, size_t size, bool backed, Shmem::Callback callback )
 {
     dbg().verbose(CALL_INFO,1,SHMEM_BASE," maddr ptr=%p size=%lu\n",ptr,size);
-    malloc( ptr, size, 
+    malloc( ptr, size, backed, 
             [=]() { 
 				this->delayReturn( callback );
             }
     );
 }
 
-void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, Callback callback )
+void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, bool backed, Callback callback )
 {
     dbg().verbose(CALL_INFO,1,SHMEM_BASE," maddr ptr=%p size=%lu\n",ptr,size);
 
-    *ptr =  m_heap->malloc( size );
-
-    dbg().verbose(CALL_INFO,1,SHMEM_BASE,"\n");
+    *ptr =  m_heap->malloc( size, backed );
 
 	m_os->getNic()->shmemRegMem( *ptr, size, callback) ; 
 }

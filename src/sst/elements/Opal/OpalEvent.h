@@ -1,7 +1,7 @@
 // Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-//
+// 
 // Copyright (c) 2009-2017, Sandia Corporation
 // All rights reserved.
 //
@@ -13,38 +13,29 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-
-#ifndef _H_SST_ARIEL_EVENT
-#define _H_SST_ARIEL_EVENT
-
-
+#ifndef _OPALEVENT_H
+#define _OPALEVENT_H
 
 namespace SST {
-namespace ArielComponent {
+namespace OpalComponent {
 
-enum ArielEventType {
-	READ_ADDRESS,
-	WRITE_ADDRESS,
-	START_DMA_TRANSFER,
-	WAIT_ON_DMA_TRANSFER,
-	CORE_EXIT,
-	NOOP,
-	MALLOC,
-	MMAP,
-	FREE,
-	SWITCH_POOL
+class OpalEvent : public SST::Event 
+{
+public:
+    typedef std::vector<char> dataVec;
+    OpalEvent() : SST::Event() { }
+    dataVec payload;
+
+public:	
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+        Event::serialize_order(ser);
+        ser & payload;
+    }
+    
+    ImplementSerializable(SST::OpalComponent::OpalEvent);     
 };
 
-class ArielEvent {
+} // namespace SimpleComponent
+} // namespace SST
 
-	public:
-		ArielEvent();
-		virtual ~ArielEvent();
-		virtual ArielEventType getEventType() const = 0;
-
-};
-
-}
-}
-
-#endif
+#endif /* _SIMPLECOMPONENTEVENT_H */

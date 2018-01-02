@@ -65,13 +65,15 @@ static const ElementInfoParam Samba_params[] = {
     {"parallel_mode_L%(levels)d", "this is for the corner case of having a one cycle overlap with accessing cache","0"},
     {"page_walk_latency", "Each page table walk latency in nanoseconds", "50"},
     {"self_connected", "Determines if the page walkers are acutally connected to memory hierarchy or just add fixed latency (self-connected)", "0"},
+    {"emulate_faults", "This indicates if the page faults should be emulated through requesting pages from Opal", "0"},
     {NULL, NULL, NULL},
 };
 
 
 
 static const ElementInfoPort Samba_ports[] = {
-    {"cpu_to_mmu%(corecount)d", "Each Samba link to its core", NULL},
+    {"cpu_to_mmu%(corecount)d", "Each Samba has link to its core", NULL},
+    {"ptw_to_opal%(corecount)d", "Each Samba has link to page fault handler (memory manager)", NULL},
     {"mmu_to_cache%(corecount)d", "Each Samba to its corresponding cache", NULL},
     {"ptw_to_mem%(corecount)d", "Each TLB hierarchy has a link to the memory for page walking", NULL},
     {"alloc_link_%(corecount)d", "Each core's link to an allocation tracker (e.g. memSieve)", NULL},
