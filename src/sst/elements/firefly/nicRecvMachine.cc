@@ -117,7 +117,7 @@ void Nic::RecvMachine::state_move_1( FireflyNetworkEvent* event, bool done, Stre
 
         delete m_streamMap[src];
         m_streamMap.erase(src);
-        m__unit = m_nic.allocNicUnit();
+        m_unit = m_nic.allocNicUnit();
 
         if ( ! event->bufEmpty() ) {
             m_dbg.fatal(CALL_INFO,-1,
