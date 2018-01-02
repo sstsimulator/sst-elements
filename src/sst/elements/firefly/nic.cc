@@ -492,39 +492,48 @@ void Nic::dmaRead( int unit, std::vector<MemOp>* vec, Callback callback ) {
 
     if ( m_simpleMemoryModel ) {
         calcNicMemDelay( unit, vec, callback );
-    } else if ( m_useDetailedCompute && m_detailedCompute[0] ) {
-
-        detailedMemOp( m_detailedCompute[0], *vec, "Read", callback );
-        delete vec;
-
     } else {
-        size_t len = 0;
-        for ( unsigned i = 0; i < vec->size(); i++ ) {
-            len += (*vec)[i].length;
-        }
-        m_arbitrateDMA->canIRead( callback, len );
-        delete vec;
+		for ( unsigned i = 0;  i <  vec->size(); i++ ) {
+			assert( (*vec)[i].callback == NULL );
+		}
+		if ( m_useDetailedCompute && m_detailedCompute[0] ) {
+
+        	detailedMemOp( m_detailedCompute[0], *vec, "Read", callback );
+        	delete vec;
+
+    	} else {
+        	size_t len = 0;
+        	for ( unsigned i = 0; i < vec->size(); i++ ) {
+            	len += (*vec)[i].length;
+        	}
+        	m_arbitrateDMA->canIRead( callback, len );
+        	delete vec;
+		}
     }
 }
 
 void Nic::dmaWrite( int unit, std::vector<MemOp>* vec, Callback callback ) {
 
-
     if ( m_simpleMemoryModel ) {
        	calcNicMemDelay( unit, vec, callback );
-    } else if ( m_useDetailedCompute && m_detailedCompute[1] ) {
+    } else { 
+		for ( unsigned i = 0;  i <  vec->size(); i++ ) {
+			assert( (*vec)[i].callback == NULL );
+		}
+		if ( m_useDetailedCompute && m_detailedCompute[1] ) {
 
-        detailedMemOp( m_detailedCompute[1], *vec, "Write", callback );
-        delete vec;
+        	detailedMemOp( m_detailedCompute[1], *vec, "Write", callback );
+        	delete vec;
 
-    } else {
-        size_t len = 0;
-        for ( unsigned i = 0; i < vec->size(); i++ ) {
-            len += (*vec)[i].length;
-        }
-        m_arbitrateDMA->canIWrite( callback, len );
-        delete vec;
-    }
+    	} else {
+        	size_t len = 0;
+        	for ( unsigned i = 0; i < vec->size(); i++ ) {
+            	len += (*vec)[i].length;
+        	}
+        	m_arbitrateDMA->canIWrite( callback, len );
+        	delete vec;
+    	}
+	}
 }
 
 Nic::DmaRecvEntry* Nic::findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )

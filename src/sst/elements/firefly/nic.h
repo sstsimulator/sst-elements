@@ -345,6 +345,9 @@ public:
         if( m_simpleMemoryModel ) {
         	m_simpleMemoryModel->schedNicCallback( unit, ops, callback );
         } else {
+        	for ( unsigned i = 0;  i <  ops->size(); i++ ) {
+            	assert( (*ops)[i].callback == NULL );
+        	}
 			schedCallback(callback);
 			delete ops;
 		}
