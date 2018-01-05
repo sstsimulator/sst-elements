@@ -63,6 +63,8 @@ class TLB
 
 	int misses; // number of misses
 
+	int emulate_faults; // If set, then page faults will send requests to Opal
+
 	int os_page_size; // This is a hack for the size of the frames returned by the OS, by default
 
 	int latency; // indicates the latency in cycles

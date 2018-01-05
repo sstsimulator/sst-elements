@@ -127,7 +127,7 @@ protected:
 
     inline void enQ_fence( Queue& );
     inline void enQ_quiet( Queue& );
-    inline void enQ_malloc( Queue&, Hermes::MemAddr*, size_t );
+    inline void enQ_malloc( Queue&, Hermes::MemAddr*, size_t, bool backed = true );
     inline void enQ_free( Queue&, Hermes::MemAddr );
 
     template <class TYPE>
@@ -341,10 +341,10 @@ void EmberShmemGenerator::enQ_quiet( Queue& q )
 }
 
 
-void EmberShmemGenerator::enQ_malloc( Queue& q, Hermes::MemAddr* ptr, size_t num )
+void EmberShmemGenerator::enQ_malloc( Queue& q, Hermes::MemAddr* ptr, size_t num, bool backed )
 {
     verbose(CALL_INFO,2,0,"\n");
-    q.push( new EmberMallocShmemEvent( *shmem_cast(m_api), &getOutput(), ptr, num ) );
+    q.push( new EmberMallocShmemEvent( *shmem_cast(m_api), &getOutput(), ptr, num, backed ) );
 }
 
 void EmberShmemGenerator::enQ_free( Queue& q, Hermes::MemAddr addr )

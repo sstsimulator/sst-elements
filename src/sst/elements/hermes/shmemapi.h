@@ -60,7 +60,7 @@ class Interface : public Hermes::Interface {
             int logPE_stride, int PE_size, Vaddr pSync, 
             ReduOp, Hermes::Value::Type, Callback) { assert(0); }
 
-    virtual void malloc(MemAddr*, size_t, Callback) { assert(0); }
+    virtual void malloc(MemAddr*, size_t, bool backed, Callback) { assert(0); }
     virtual void free(MemAddr&, Callback) { assert(0); }
 
     virtual void get( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }

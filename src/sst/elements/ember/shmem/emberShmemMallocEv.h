@@ -26,9 +26,9 @@ class EmberMallocShmemEvent : public EmberShmemEvent {
 
 public:
 	EmberMallocShmemEvent( Shmem::Interface& api, Output* output,
-            Hermes::MemAddr* ptr, size_t val, 
+            Hermes::MemAddr* ptr, size_t val, bool backed, 
             EmberEventTimeStatistic* stat = NULL ) :
-            EmberShmemEvent( api, output, stat ), m_ptr(ptr), m_val(val) {}
+            EmberShmemEvent( api, output, stat ), m_ptr(ptr), m_val(val), m_backed(backed) {}
 	~EmberMallocShmemEvent() {}
 
     std::string getName() { return "Malloc"; }
@@ -36,9 +36,10 @@ public:
     void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.malloc( m_ptr, m_val, callback );
+        m_api.malloc( m_ptr, m_val, m_backed, callback );
     }
 private:
+	bool m_backed;
     Hermes::MemAddr* m_ptr;
     size_t m_val;
 };

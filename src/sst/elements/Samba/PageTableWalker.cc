@@ -17,10 +17,12 @@
 #include <sst_config.h>
 #include "PageTableWalker.h"
 #include <sst/core/link.h>
-
+#include <sst/elements/Opal/Opal_Event.h>
+#include "Samba_Event.h"
 #include<iostream>
 
 using namespace SST::SambaComponent;
+using namespace SST::OpalComponent;
 using namespace SST::MemHierarchy;
 using namespace SST;
 
@@ -62,11 +64,13 @@ PageTableWalker::PageTableWalker(int Page_size, int Assoc, PageTableWalker * Nex
 PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int level, SST::Component * owner, SST::Params& params)
 {
 
+	fault_level = 0;
 
 	std::string LEVEL = std::to_string(level);
 
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
 
+	stall = false; // No stall initially; no page faults
 
 
 	self_connected = ((uint32_t) params.find<uint32_t>("self_connected", 0));
@@ -76,6 +80,9 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 	max_outstanding = ((uint32_t) params.find<uint32_t>("max_outstanding_PTWC", 4));
 
 	latency = ((uint32_t) params.find<uint32_t>("latency_PTWC", 1));
+
+
+	emulate_faults  = ((uint32_t) params.find<uint32_t>("emulate_faults", 0));
 
 	// For now, we assume a typicaly x86-64 system with 4 levels of page table
 	sizes = 4;
@@ -152,7 +159,133 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 
 }
 
+// Handling internal events that are sent by the Page Table Walker
+void PageTableWalker::handleEvent( SST::Event* e )
+{
 
+
+	// For each page fault,
+	// 1 -- check if CR3 for VA exist, if not
+	// Send request to Opal and save state of current fault at 3
+	// one recvOpal is called due to response from Opal, recvOpal will create an event that will trigger HandleEvent
+	// If HandleEvent comes and state is 3, it again changes state to 2 and send a request to Opal...
+	//
+	// Finally, one a physical page is assigned, the stall is set to false, and *hold is reset
+
+
+
+	//// ******** Important, for each level, we will update MAPPED_PAGE_SIZE** and PGD/PMD/PUD/PTE so the actual physical address is used later
+	SambaEvent * temp_ptr =  dynamic_cast<SambaComponent::SambaEvent*> (e);
+
+	if(temp_ptr==NULL)
+		std::cout<<" Error in Casting to SambaEvent "<<std::endl;
+
+	if(temp_ptr->getType() == EventType::PAGE_FAULT)
+	{
+
+		// Send request to Opal starting from the first unmapped level (L4/CR3 if first fault in system)
+
+		//		std::cout<<"Received a page fault "<<std::endl;
+		OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+
+		if((*CR3) == -1)
+			fault_level = 0;
+		else if((*PGD).find(temp_ptr->getAddress()/page_size[3]) == (*PGD).end())
+			fault_level = 1;
+		else if((*PUD).find(temp_ptr->getAddress()/page_size[2]) == (*PUD).end())
+			fault_level = 2;
+		else if((*PMD).find(temp_ptr->getAddress()/page_size[1]) == (*PMD).end())
+			fault_level = 3;
+		else if((*PTE).find(temp_ptr->getAddress()/page_size[0]) == (*PTE).end())
+			fault_level = 4;
+
+
+		tse->setResp(temp_ptr->getAddress(),0,4096);
+		to_opal->send(10, tse);
+
+
+
+	}
+	else if(temp_ptr->getType() == EventType::OPAL_RESPONSE)
+	{
+
+		// If opal response and it is the lst, i.e., PTE, then just do the following:
+		// (1) update page table and maps of mapped pages -- (2) stall = false, *hold=0
+		// Otherwise
+		// Update the page tables to reflect new page table entries/tables, then issue a new opal request to build next level
+
+		// For now, just assume only the page will be mappe and requested from Opal
+		if(fault_level == 0)
+		{
+			// We are building the first page in the page table!
+			(*CR3) = temp_ptr->getPaddress();
+			fault_level++;
+			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+			tse->setResp(temp_ptr->getAddress(),0,4096);
+			to_opal->send(10, tse);
+
+		}
+		else if(fault_level == 1)
+		{
+			(*PGD)[temp_ptr->getAddress()/page_size[3]] = temp_ptr->getPaddress();
+			fault_level++;
+			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+			tse->setResp(temp_ptr->getAddress(),0,4096);
+			to_opal->send(10, tse);
+
+		}
+		else if(fault_level == 2)
+		{
+			(*PUD)[temp_ptr->getAddress()/page_size[2]] = temp_ptr->getPaddress();
+			fault_level++;
+			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+			tse->setResp(temp_ptr->getAddress(),0,4096);
+			to_opal->send(10, tse);
+
+		}
+
+		else if(fault_level == 3)
+		{
+			(*PMD)[temp_ptr->getAddress()/page_size[1]] = temp_ptr->getPaddress();
+			fault_level++;
+			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+			tse->setResp(temp_ptr->getAddress(),0,4096);
+			to_opal->send(10, tse);
+
+		}
+		else if(fault_level == 4)
+		{
+			stall = false;
+			*hold = 0;
+			(*PTE)[temp_ptr->getAddress()/page_size[0]] = temp_ptr->getPaddress();
+			fault_level = 0;
+
+		}
+
+		delete temp_ptr;
+	}
+
+
+}
+
+
+
+
+void PageTableWalker::recvOpal(SST::Event * event)
+{
+
+
+	OpalEvent * temp_ptr =  dynamic_cast<OpalComponent::OpalEvent*> (event);
+
+	// Whenever we receve request from Opal, we just create event that will be handled by handleEvent
+	SambaEvent * tse = new SambaEvent(EventType::OPAL_RESPONSE);
+	tse->setResp(temp_ptr->getAddress(), temp_ptr->getPaddress(),4096);
+	s_EventChan->send(10, tse);
+
+	//std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()/4096<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
+	delete temp_ptr;
+
+}
 
 void PageTableWalker::recvResp(SST::Event * event)
 {
@@ -169,6 +302,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 	insert_way(WID_Add[pw_id], find_victim_way(WID_Add[pw_id], WSR_COUNT[pw_id]), WSR_COUNT[pw_id]);
 
+	long long int addr = WID_Add[pw_id];
 
 	WSR_READY[pw_id]=true;
 
@@ -187,7 +321,26 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 
 		long long int dummy_add = rand()%10000000;
-                uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
+
+		// Time to use actual page table addresses if we have page tables
+		if(emulate_faults)
+		{
+
+			long long int page_table_start;
+			if(WSR_COUNT[pw_id]==4)
+				page_table_start = (*PGD)[addr/page_size[3]];
+			else if(WSR_COUNT[pw_id]==3)
+				page_table_start = (*PUD) [addr/page_size[2]];
+			else if(WSR_COUNT[pw_id]==2)
+				page_table_start = (*PMD) [addr/page_size[1]];
+			else if (WSR_COUNT[pw_id] == 1)
+				page_table_start = (*PTE) [addr/page_size[0]];
+
+
+			dummy_add = page_table_start*4096 + (addr/page_size[WSR_COUNT[pw_id]-1])%512;
+
+		}
+		uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
 		MemEvent *e = new MemEvent(Owner, dummy_add, dummy_base_add, Command::GetS);
 		SST::Event * ev = e;
 
@@ -212,6 +365,15 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 	st_1 = not_serviced.begin();
 	en_1 = not_serviced.end();
 
+
+	// In case we are currently servicing a page fault, just return until this is dealt with
+	if(stall && emulate_faults)
+	{
+
+		return false;
+	}
+
+
 	int dispatched=0;
 	for(;st_1!=not_serviced.end(); st_1++)
 	{
@@ -224,6 +386,27 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 		SST::Event * ev = *st_1; 
 		uint64_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
+		// A sneak-peak if the access is going to cause a page fault
+		if(emulate_faults==1)
+		{
+
+			bool fault = true;
+			if((*MAPPED_PAGE_SIZE4KB).find(addr/page_size[0])!=(*MAPPED_PAGE_SIZE4KB).end() || (*MAPPED_PAGE_SIZE2MB).find(addr/page_size[1])!=(*MAPPED_PAGE_SIZE2MB).end() || (*MAPPED_PAGE_SIZE1GB).find(addr/page_size[2])!=(*MAPPED_PAGE_SIZE1GB).end())
+				fault = false;
+
+			if(fault)
+			{
+				SambaEvent * tse = new SambaEvent(EventType::PAGE_FAULT);
+				//	std::cout<<"Fault at address "<<addr<<std::endl;
+				tse->setResp(addr,0,4096);
+				s_EventChan->send(10, tse);
+				stall = true;
+				*hold = 1;
+				(*MAPPED_PAGE_SIZE4KB)[addr/page_size[0]] = 0; // FIXME: Hack to avoid propogating faulting VA through all events, only for initial testing
+				return false;
+			}
+
+		}
 
 		// Those track if any hit in one of the supported pages' structures
 		int hit_id=0;
@@ -251,7 +434,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				ready_by[ev] = x + latency;
 
 			// Tracking the hit request size
-			ready_by_size[ev] = page_size[hit_id]/1024;
+			ready_by_size[ev] = os_page_size; //page_size[hit_id]/1024;
 
 			st_1 = not_serviced.erase(st_1);
 		}
@@ -278,7 +461,14 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 					WID_EV[++mmu_id] = (*st_1);
 
 					long long int dummy_add = rand()%10000000;
-                                        uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
+
+					// Use actual page table base to start the walking if we have real page tables
+					if(emulate_faults)
+					{
+						dummy_add = (*CR3)*4096 + (addr/page_size[2])%512;
+					}
+
+					uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
 					MemEvent *e = new MemEvent(Owner, dummy_add, dummy_base_add, Command::GetS);
 					SST::Event * ev = e;
 
@@ -350,8 +540,13 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				update_lru(addr, 0);
 
 
-
 			service_back->push_back(st->first);
+
+
+			if(emulate_faults)
+				if((*PTE).find(addr/4096)==(*PTE).end())
+					std::cout<<"******* Major issue is in Page Table Walker **** "<<std::endl;
+
 
 			(*service_back_size)[st->first]=ready_by_size[st->first];
 

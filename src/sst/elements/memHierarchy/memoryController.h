@@ -51,7 +51,7 @@ public:
             {"listenercount",       "(uint) Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},\
             {"listener%(listenercount)d", "(string) Loads a listener module into the controller", ""},\
             {"backing",             "(string) Type of backing store to use. Options: 'none' - no backing store (only use if simulation does not require correct memory values), 'malloc', or 'mmap'", "malloc"},\
-            {"backing_size_hint",   "(string) For 'malloc' backing stores, estimated size of the working set. Backing map will be sized for this many bytes initially", "1MiB"},\
+            {"backing_size_unit",   "(string) For 'malloc' backing stores, malloc granularity", "1MiB"},\
             {"memory_file",         "(string) Optional backing-store file to pre-load memory, or store resulting state", "N/A"},\
             {"addr_range_start",    "(uint) Lowest address handled by this memory.", "0"},\
             {"addr_range_end",      "(uint) Highest address handled by this memory.", "uint64_t-1"},\
