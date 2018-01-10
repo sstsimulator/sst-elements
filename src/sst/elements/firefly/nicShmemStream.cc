@@ -159,9 +159,11 @@ void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetwork
     assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) );
 
     Hermes::Value local( (Hermes::Value::Type) hdr.dataType, addr.getBacking());
-    Hermes::Value got( (Hermes::Value::Type) hdr.dataType, ev->bufPtr() );
 
-    local += got;
+    if ( addr.getBacking() ) {
+        Hermes::Value got( (Hermes::Value::Type) hdr.dataType, ev->bufPtr() );
+        local += got;
+    }
 
 	m_matched_len = hdr.length;
 
@@ -200,12 +202,12 @@ void Nic::RecvMachine::ShmemStream::processFadd( ShmemMsgHdr& hdr, FireflyNetwor
    	Hermes::Value* save = new Hermes::Value( (Hermes::Value::Type)hdr.dataType );
     Hermes::Value local( (Hermes::Value::Type) hdr.dataType, addr.getBacking());
 
-	if ( addr.getBacking() ) {
-    	Hermes::Value got( (Hermes::Value::Type) hdr.dataType, ev->bufPtr() );
+    if ( addr.getBacking() ) {
+        Hermes::Value got( (Hermes::Value::Type) hdr.dataType, ev->bufPtr() );
 
-    	*save = local;
-    	local += got;
-	}
+        *save = local;
+        local += got;
+    }
 
 	Hermes::Vaddr tmpAddr = addr.getSimVAddr();
 
@@ -243,12 +245,14 @@ void Nic::RecvMachine::ShmemStream::processSwap( ShmemMsgHdr& hdr, FireflyNetwor
 
     Hermes::Value local( (Hermes::Value::Type)hdr.dataType, addr.getBacking());
     Hermes::Value* save = new Hermes::Value( (Hermes::Value::Type)hdr.dataType );
-    *save = local;
-    Hermes::Value swap( (Hermes::Value::Type)hdr.dataType, ev->bufPtr() );
+    if ( addr.getBacking() ) {
+        Hermes::Value swap( (Hermes::Value::Type)hdr.dataType, ev->bufPtr() );
+        *save = local;
+        local = swap;
+   }
 
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusLoad ) );
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore ) );
-    local = swap;
 
     int srcNode = ev->src;
 	m_rm.nic().schedCallback( [=]() {
@@ -270,6 +274,8 @@ void Nic::RecvMachine::ShmemStream::processCswap( ShmemMsgHdr& hdr, FireflyNetwo
 	std::vector< MemOp >* memOps = new std::vector< MemOp >;
 
     assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) * 2 );
+
+	assert ( addr.getBacking() );
 
     Hermes::Value local( (Hermes::Value::Type) hdr.dataType, addr.getBacking());
     Hermes::Value* save = new Hermes::Value( (Hermes::Value::Type) hdr.dataType );

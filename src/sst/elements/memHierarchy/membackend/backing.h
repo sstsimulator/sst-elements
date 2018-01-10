@@ -30,7 +30,10 @@ public:
     ~Backing() { }
 
     virtual void set( Addr addr, uint8_t value ) = 0;
+    virtual void set( Addr addr, size_t size, std::vector<uint8_t>& data) = 0;
+
     virtual uint8_t get( Addr addr) = 0;
+    virtual void get( Addr addr, size_t size, std::vector<uint8_t>& data) = 0;
 };
 
 class BackingMMAP : public Backing {
@@ -62,10 +65,21 @@ public:
     void set( Addr addr, uint8_t value ) {
         m_buffer[addr - m_offset ] = value;
     }
-    
+
+    void set (Addr addr, size_t size, std::vector<uint8_t> &data) {
+        for (size_t i = 0; i < size; i++) 
+            m_buffer[addr + i] = data[i];
+    }
+
     uint8_t get( Addr addr ) {
         return m_buffer[addr - m_offset];
     }
+
+    void get( Addr addr, size_t size, std::vector<uint8_t> &data) {
+        for (size_t i = 0; i < size; i++)
+            data[i] = m_buffer[addr + i];
+    }
+
 private:
     uint8_t* m_buffer;
     int m_fd;
@@ -76,20 +90,84 @@ private:
 class BackingMalloc : public Backing {
 public:
     BackingMalloc(size_t size) {
-        m_buffer.reserve(size); /* Guess what our size will be */
+        m_allocUnit = size;
+        /* Alloc unit needs to be pwr-2 */
+        if (!isPowerOfTwo(m_allocUnit)) {
+            Output out("", 1, 0, Output::STDOUT);
+            out.fatal(CALL_INFO, -1, "BackingMalloc: Error - size must be a power of two. Got: %u\n", size);
+        }
+        m_shift = log2Of(m_allocUnit);
     }
 
     void set( Addr addr, uint8_t value ) {
-        m_buffer[addr] = value;
+        Addr bAddr = addr >> m_shift;
+        Addr offset = addr - (bAddr << m_shift);
+        allocIfNeeded(bAddr);
+        m_buffer[bAddr][offset] = value;
+    }
+
+    void set( Addr addr, size_t size, std::vector<uint8_t> &data ) {
+        /* Account for size exceeding alloc unit size */
+        Addr bAddr = addr >> m_shift;
+        Addr offset = addr - (bAddr << m_shift);
+        size_t dataOffset = 0;
+        
+        allocIfNeeded(bAddr);
+
+        while (dataOffset != size) {
+            m_buffer[bAddr][offset] = data[dataOffset];
+            offset++;
+            dataOffset++;
+
+            if (offset == m_allocUnit) {
+                offset = 0;
+                bAddr++;
+                allocIfNeeded(bAddr);
+            }
+        }
+    }        
+
+    void get (Addr addr, size_t size, std::vector<uint8_t> &data) {
+        Addr bAddr = addr >> m_shift;
+        Addr offset = addr - (bAddr << m_shift);
+        size_t dataOffset = 0;
+        
+        allocIfNeeded(bAddr);
+        
+        while (dataOffset != size) {
+            data[dataOffset] = m_buffer[bAddr][offset];
+            offset++;
+            dataOffset++;
+            if (offset == m_allocUnit) {
+                bAddr++;
+                offset = 0;
+                allocIfNeeded(bAddr);
+            }
+        }
     }
 
     uint8_t get( Addr addr ) {
-        if (m_buffer.find(addr) == m_buffer.end())
-            m_buffer[addr] = 0;
-        return m_buffer[addr];
+        Addr bAddr = addr >> m_shift;
+        Addr offset = addr - (bAddr << m_shift);
+        allocIfNeeded(bAddr);
+        return m_buffer[bAddr][offset];
     }
+
 private:
-    std::unordered_map<Addr,uint8_t> m_buffer;
+    void allocIfNeeded(Addr bAddr) {
+        if (m_buffer.find(bAddr) == m_buffer.end()) {
+            uint8_t* data = (uint8_t*) malloc(sizeof(uint8_t)*m_allocUnit);
+            if (!data) {
+                Output out("", 1, 0, Output::STDOUT);
+                out.fatal(CALL_INFO, -1, "BackingMalloc: Error - malloc failed.\n");
+            }
+            m_buffer[bAddr] = data;
+        }
+    }
+
+    std::unordered_map<Addr,uint8_t*> m_buffer;
+    unsigned int m_allocUnit;
+    unsigned int m_shift;
 };
 
 }

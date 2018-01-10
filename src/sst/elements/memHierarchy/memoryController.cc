@@ -159,7 +159,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     privateMemOffset_ = 0;
 
     // Set up backing store if needed
-    std::string backingType = params.find<std::string>("backing", "malloc", found); /* Default to using a malloc backing store */
+    std::string backingType = params.find<std::string>("backing", "mmap", found); /* Default to using an mmap backing store, fall back on malloc */
     backing_ = nullptr;
     if (!found) {
         bool oldBackVal = params.find<bool>("do_not_back", false, found);
@@ -167,12 +167,26 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             out.output("%s, ** Found deprecated parameter: do_not_back ** Use 'backing' parameter instead and specify 'none', 'malloc', or 'mmap'. Remove this parameter from your input deck to eliminate this message.\n", 
                     getName().c_str());
         }
-        if (oldBackVal) backingType = "malloc";
+        if (oldBackVal) backingType = "none";
     }
 
     if (backingType != "none" && backingType != "mmap" && backingType != "malloc") {
         out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: backing. Must be one of 'none', 'malloc', or 'mmap'. You specified: %s\n",
                 getName().c_str(), backingType.c_str());
+    }
+        
+    std::string size = params.find<std::string>("backing_size_unit", "1MiB");
+    UnitAlgebra size_ua(size);
+    if (!size_ua.hasUnits("B")) {
+        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: backing_size_unit. Must have units of bytes (B). SI ok. You specified: %s\n",
+                getName().c_str(), size.c_str());
+    }
+    size_t sizeBytes = size_ua.getRoundedValue();
+    
+    if (sizeBytes > memBackendConvertor_->getMemSize()) {
+        sizeBytes = memBackendConvertor_->getMemSize();
+        // Since getMemSize() might not be a power of 2, but malloc store needs it....get a reasonably close power of 2
+        sizeBytes = 1 << log2Of(memBackendConvertor_->getMemSize());
     }
 
     if (backingType == "mmap") {
@@ -187,22 +201,13 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         catch ( int e) {
             if (e == 1) 
                 dbg.fatal(CALL_INFO, -1, "%s, Error - unable to open memory_file. You specified '%s'.\n", getName().c_str(), memoryFile.c_str());
-            else if (e == 2)
-                dbg.fatal(CALL_INFO, -1, "%s, Error - mmap of backing store failed.\n", getName().c_str());
-            else 
+            else if (e == 2) {
+                out.output("%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
+                backing_ = new Backend::BackingMalloc(sizeBytes);
+            } else 
                 dbg.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
         }
     } else if (backingType == "malloc") {
-        std::string size = params.find<std::string>("backing_size_hint", "1MiB");
-        UnitAlgebra size_ua(size);
-        if (!size_ua.hasUnits("B")) {
-            out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: backing_size_hint. Must have units of bytes (B). SI ok. You specified: %s\n",
-                    getName().c_str(), size.c_str());
-        }
-        size_t sizeBytes = size_ua.getRoundedValue();
-        if (sizeBytes > memBackendConvertor_->getMemSize() ) 
-            sizeBytes = memBackendConvertor_->getMemSize();
-
         backing_ = new Backend::BackingMalloc(sizeBytes);
     }
 
@@ -423,17 +428,17 @@ void MemController::writeData(MemEvent* event) {
 
     if (event->getCmd() == Command::PutM) { /* Write request to memory */
         if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
+            
+        backing_->set(addr, event->getSize(), event->getPayload());
         
-        for (size_t i = 0; i < event->getSize(); i++)
-            backing_->set( addr + i, event->getPayload()[i] );
         return;
     }
     
     if (noncacheable && event->getCmd() == Command::GetX) {
         if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
         
-        for (size_t i = 0; i < event->getSize(); i++)
-            backing_->set( addr + i, event->getPayload()[i] );
+        backing_->set(addr, event->getSize(), event->getPayload());
+        
         return;
     }
 
@@ -449,8 +454,7 @@ void MemController::readData(MemEvent* event) {
 
     if (!backing_) return;
 
-    for ( size_t i = 0 ; i < event->getSize() ; i++)
-        payload[i] = backing_->get( localAddr + i );
+    backing_->get(localAddr, event->getSize(), payload);
     
     event->setPayload(payload);
 }
@@ -494,9 +498,7 @@ void MemController::processInitEvent( MemEventInit* me ) {
         Addr addr = me->getAddr();
         if (is_debug_event(me)) { Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         if ( isRequestAddressValid(addr) && backing_ ) {
-            for ( size_t i = 0 ; i < me->getPayload().size() ; i++) {
-                backing_->set( addr + i,  me->getPayload()[i] );
-            }
+            backing_->set(addr, me->getPayload().size(), me->getPayload());
         }
     } else if (Command::NULLCMD == me->getCmd()) {
         if (is_debug_event(me)) { Debug(_L10_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }

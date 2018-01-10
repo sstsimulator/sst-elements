@@ -24,7 +24,6 @@ using namespace SST::Firefly;
 void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int vc, int numBytes, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
 
-    assert( m_ptr );
     size_t space = numBytes - event.bufSize(); 
     size_t len = (m_length - m_offset) > space ? space : (m_length - m_offset); 
 
@@ -33,7 +32,11 @@ void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int vc, int numBytes, FireflyN
 
 	vec.push_back( MemOp( m_addr, len, MemOp::Op::BusDmaFromHost ));
 
-    event.bufAppend( m_ptr + m_offset ,len );
+	if ( m_ptr ) {
+    	event.bufAppend( m_ptr + m_offset ,len );
+	} else {
+    	event.bufAppend( NULL, len );
+	}
 
     m_offset += len; 
 }
@@ -187,7 +190,9 @@ bool Nic::ShmemRecvMoveValue::copyIn( Output& dbg, FireflyNetworkEvent& event, s
     dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Shmem: event.bufSize()=%lu\n",event.bufSize());
 
 	vec.push_back( MemOp( 0, length, MemOp::Op::LocalStore ));
-    memcpy( m_value.getPtr(), event.bufPtr(), length);
+    if ( m_value.getPtr() ) {
+        memcpy( m_value.getPtr(), event.bufPtr(), length);
+    }
 
     event.bufPop(length);
 

@@ -341,7 +341,9 @@ void Nic::Shmem::hostPut( NicShmemPutCmdEvent* event, int id )
    		unsigned char* dest = (unsigned char*) getBacking( event->getVnic(), event->getFarAddr(), event->getLength() );
    		unsigned char* src = (unsigned char*) getBacking( id, event->getMyAddr(), event->getLength() );
 
-    	memcpy( dest, src, event->getLength() );
+		if ( dest && src ) {
+    		memcpy( dest, src, event->getLength() );
+		}
 
     	vec->push_back( MemOp( event->getFarAddr(), event->getMyAddr(), event->getLength(), MemOp::Op::HostCopy ));
 
@@ -366,7 +368,9 @@ void Nic::Shmem::hostPutv( NicShmemPutvCmdEvent* event, int id )
 
 	std::vector<MemOp>* vec = new std::vector<MemOp>;
 
-    local = event->getValue();
+    if ( local.getPtr() ) {
+        local = event->getValue();
+    }
 
     checkWaitOps( event->getVnic(), event->getFarAddr(), local.getLength() );
 
@@ -407,7 +411,9 @@ void Nic::Shmem::hostGet( NicShmemGetCmdEvent* event, int id )
 
     void* src = getBacking( event->getVnic(), event->getFarAddr(), event->getLength() );
     void* dest = getBacking( id, event->getMyAddr(), event->getLength() );
-    memcpy( dest, src, event->getLength() );
+	if ( dest && src ) {
+    	memcpy( dest, src, event->getLength() );
+	}
 
    	vec->push_back( MemOp( event->getFarAddr(), event->getMyAddr(), event->getLength(), MemOp::Op::HostCopy ));
 
@@ -427,7 +433,9 @@ void Nic::Shmem::hostAdd( NicShmemAddCmdEvent* event, int id )
 
 	std::vector<MemOp>* vec = new std::vector<MemOp>;
 
-    local += event->getValue();
+    if ( local.getPtr() ) {
+        local += event->getValue();
+	}
 
     checkWaitOps( event->getVnic(), event->getFarAddr(), local.getLength() );
 
@@ -480,6 +488,8 @@ void Nic::Shmem::hostCswap( NicShmemCswapCmdEvent* event, int id )
 
     Hermes::Value save = Hermes::Value( event->getDataType() ); 
 
+	assert( local.getPtr() );
+
     save = local;
 
    	vec->push_back( MemOp( event->getFarAddr(), event->getLength(), MemOp::Op::HostLoad ));
@@ -508,9 +518,10 @@ void Nic::Shmem::hostSwap( NicShmemSwapCmdEvent* event, int id )
     Hermes::Value save = Hermes::Value( event->getDataType() ); 
 	std::vector<MemOp>* vec = new std::vector<MemOp>;
 
-    save = local;
-
-    local = event->getValue();
+    if ( local.getPtr() ) {
+        save = local;
+        local = event->getValue();
+    }
 
     checkWaitOps( event->getVnic(), event->getFarAddr(), local.getLength() );
 
