@@ -239,6 +239,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 			(*PUD)[temp_ptr->getAddress()/page_size[2]] = temp_ptr->getPaddress();
 			fault_level++;
 			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+			(*MAPPED_PAGE_SIZE1GB)[temp_ptr->getAddress()/page_size[2]] = 0;
 			tse->setResp(temp_ptr->getAddress(),0,4096);
 			to_opal->send(10, tse);
 
@@ -247,6 +248,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		else if(fault_level == 3)
 		{
 			(*PMD)[temp_ptr->getAddress()/page_size[1]] = temp_ptr->getPaddress();
+			(*MAPPED_PAGE_SIZE2MB)[temp_ptr->getAddress()/page_size[1]] = 0;
 			fault_level++;
 			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 			tse->setResp(temp_ptr->getAddress(),0,4096);
@@ -258,6 +260,9 @@ void PageTableWalker::handleEvent( SST::Event* e )
 			stall = false;
 			*hold = 0;
 			(*PTE)[temp_ptr->getAddress()/page_size[0]] = temp_ptr->getPaddress();
+
+			(*MAPPED_PAGE_SIZE4KB)[temp_ptr->getAddress()/page_size[0]] = 0;
+
 			fault_level = 0;
 
 		}
@@ -336,7 +341,6 @@ void PageTableWalker::recvResp(SST::Event * event)
 			else if (WSR_COUNT[pw_id] == 1)
 				page_table_start = (*PTE) [addr/page_size[0]];
 
-
 			dummy_add = page_table_start*4096 + (addr/page_size[WSR_COUNT[pw_id]-1])%512;
 
 		}
@@ -402,7 +406,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				s_EventChan->send(10, tse);
 				stall = true;
 				*hold = 1;
-				(*MAPPED_PAGE_SIZE4KB)[addr/page_size[0]] = 0; // FIXME: Hack to avoid propogating faulting VA through all events, only for initial testing
+//				(*MAPPED_PAGE_SIZE4KB)[addr/page_size[0]] = 0; // FIXME: Hack to avoid propogating faulting VA through all events, only for initial testing
 				return false;
 			}
 
@@ -545,9 +549,10 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 			if(emulate_faults)
 				if((*PTE).find(addr/4096)==(*PTE).end())
+					{
 					std::cout<<"******* Major issue is in Page Table Walker **** "<<std::endl;
-
-
+					std::cout<<"The address is "<<hex<<addr/4096<<std::endl;
+					}
 			(*service_back_size)[st->first]=ready_by_size[st->first];
 
 
