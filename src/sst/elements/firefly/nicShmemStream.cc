@@ -180,11 +180,15 @@ void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetwork
 	m_rm.nic().schedCallback( [=]() {
     	m_rm.nic().calcNicMemDelay( m_unit, memOps,
 			[=]() {
+#if 0
 				m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"processAdd() send Ack to %d\n",srcNode);
 				m_sendEntry = new ShmemAckSendEntry( local_vNic, srcNode, dest_vNic );
-    			m_rm.state_move_2( ev );
+#endif
+    			m_rm.state_move_4( ev, this );
 			}
 		);
+		m_sendEntry = new ShmemAckSendEntry( local_vNic, srcNode, dest_vNic );
+        m_rm.state_move_3( ev );
 	},
 	m_rm.nic().getShmemRxDelay_ns() );
 }
