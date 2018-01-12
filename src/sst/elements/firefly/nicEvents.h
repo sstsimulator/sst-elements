@@ -145,14 +145,14 @@ class NicShmemPutCmdEvent : public NicShmemSendCmdEvent {
   public:
     typedef std::function<void()> Callback;
     NicShmemPutCmdEvent( int vnic, int node, Hermes::Vaddr dest, Hermes::Vaddr src, 
-            size_t length, Callback callback, Hermes::Shmem::ReduOp op = Hermes::Shmem::MOVE ) :
+            size_t length, bool blocking, Callback callback, Hermes::Shmem::ReduOp op = Hermes::Shmem::MOVE ) :
         NicShmemSendCmdEvent( Put, vnic, node ), destAddr(dest), srcAddr(src), 
-        length(length), callback(callback), op(op)
+        length(length), blocking(blocking), callback(callback), op(op)
     { }
     NicShmemPutCmdEvent( int vnic, int node, Hermes::Vaddr dest, Hermes::Vaddr src, 
         size_t length, Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType,  Callback callback  ) :
         NicShmemSendCmdEvent( Put, vnic, node ), destAddr(dest), srcAddr(src), 
-        length(length), callback(callback), op(op), dataType(dataType)
+        length(length), blocking(false), callback(callback), op(op), dataType(dataType)
     { }
 
     Hermes::Vaddr getFarAddr()  override { return destAddr; } 
@@ -164,12 +164,14 @@ class NicShmemPutCmdEvent : public NicShmemSendCmdEvent {
 
     Callback getCallback()      { return callback; } 
     Hermes::Vaddr getMyAddr()   { return srcAddr; } 
+    bool isBlocking() {  return blocking; }
 
   private:
 
     Hermes::Vaddr   destAddr;
     Hermes::Vaddr   srcAddr;
     size_t          length;
+    bool            blocking;
     Callback        callback;
 
     Hermes::Value::Type dataType;
@@ -184,9 +186,9 @@ class NicShmemGetCmdEvent : public NicShmemSendCmdEvent {
     typedef std::function<void( )> Callback;
 
     NicShmemGetCmdEvent( int vnic, int node,
-            Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, 
+            Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, bool blocking, 
             Callback callback ) :
-        NicShmemSendCmdEvent( Get, vnic, node ), dest(dest), src(src), length( length ), 
+        NicShmemSendCmdEvent( Get, vnic, node ), dest(dest), src(src), length( length ), blocking(blocking),
         callback(callback)
     {}
 
@@ -195,12 +197,14 @@ class NicShmemGetCmdEvent : public NicShmemSendCmdEvent {
     void* getBacking()          override { return NULL; } 
     Callback getCallback()      { return callback; } 
     Hermes::Vaddr getMyAddr()   { return dest; } 
+    bool isBlocking() {  return blocking; }
 
   private:
     Hermes::Vaddr src;
     Hermes::Vaddr dest;
     Callback callback;
     size_t length;
+    bool blocking;
 
 	NotSerializable(NicShmemGetCmdEvent)
 };
