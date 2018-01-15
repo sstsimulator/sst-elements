@@ -40,20 +40,30 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
 
     switch (event->type) {
       case NicShmemCmdEvent::Add:
+		--m_freeCmdSlots;	
+        m_pendingRemoteOps[id].second += m_one;
+        m_nic.getVirtNic(id)->notifyShmem( 0, static_cast< NicShmemAddCmdEvent*>(event)->getCallback() );
+		break;
       case NicShmemCmdEvent::Putv:
 		--m_freeCmdSlots;	
+        m_pendingRemoteOps[id].second += m_one;
+        m_nic.getVirtNic(id)->notifyShmem( 0, static_cast< NicShmemPutvCmdEvent*>(event)->getCallback() );
 		break;
 
       case NicShmemCmdEvent::Put:
             if ( ! static_cast<NicShmemPutCmdEvent*>(event)->isBlocking() ) {
 		        --m_freeCmdSlots;	
+                m_pendingRemoteOps[id].second += m_one;
+                m_nic.getVirtNic(id)->notifyShmem( 0, static_cast<NicShmemPutCmdEvent*>(event)->getCallback() );
             }
         break;
 
       case NicShmemCmdEvent::Get:
         {
-            if ( !  static_cast<NicShmemGetCmdEvent*>(event)->isBlocking() ) {
+            if ( ! static_cast<NicShmemGetCmdEvent*>(event)->isBlocking() ) {
 		        --m_freeCmdSlots;	
+                m_pendingRemoteOps[id].second += m_one;
+                m_nic.getVirtNic(id)->notifyShmem( 0, static_cast<NicShmemGetCmdEvent*>(event)->getCallback() );
             }
         }
         break;
@@ -181,8 +191,6 @@ void Nic::Shmem::put( NicShmemPutCmdEvent* event, int id )
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"core=%d far=%" PRIx64" len=%lu\n",
                             id, event->getFarAddr(), event->getLength() );
 
-    m_pendingRemoteOps[id].second += m_one;
-
     std::stringstream tmp;
     tmp << m_pendingRemoteOps[id].second;
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"pendingRemoteOps=%s\n",tmp.str().c_str());
@@ -201,17 +209,12 @@ void Nic::Shmem::put( NicShmemPutCmdEvent* event, int id )
 
     m_nic.m_sendMachine[0]->run( entry );
 
-    if ( ! event->isBlocking() ) {
-        m_nic.getVirtNic(id)->notifyShmem( 0, event->getCallback() );
-    }
 }
 
 void Nic::Shmem::putv( NicShmemPutvCmdEvent* event, int id )
 {
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"core=%d farCore=%d far=%" PRIx64" len=%lu\n", 
 			id, event->getVnic(), event->getFarAddr(), event->getLength() );
-
-    m_pendingRemoteOps[id].second += m_one;
 
     std::stringstream tmp;
     tmp << m_pendingRemoteOps[id].second;
@@ -225,7 +228,6 @@ void Nic::Shmem::putv( NicShmemPutvCmdEvent* event, int id )
 
     m_nic.m_sendMachine[0]->run( entry );
 
-    m_nic.getVirtNic(id)->notifyShmem( 0, static_cast< NicShmemPutvCmdEvent*>(event)->getCallback() );
 }
 
 
@@ -248,9 +250,6 @@ void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
 {
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"core=%d far=%" PRIx64" len=%lu\n", id, event->getFarAddr(), event->getLength() );
 
-    m_pendingRemoteOps[id].second += m_one;
-
-
     std::stringstream tmp;
     tmp << m_pendingRemoteOps[id].second;
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"pendingRemoteOps=%s\n",tmp.str().c_str());
@@ -268,10 +267,6 @@ void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
     );  
 
 	m_nic.m_sendMachine[0]->run( entry );
-
-    if ( ! event->isBlocking() ) { 
-        m_nic.getVirtNic(id)->notifyShmem( 0, event->getCallback() );
-    }
 }
 
 
@@ -279,8 +274,6 @@ void Nic::Shmem::add( NicShmemAddCmdEvent* event, int id )
 {
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"core=%d farNode=%d farCore=%d far=%" PRIx64" len=%lu\n", id,
 			event->getNode(), event->getVnic(), event->getFarAddr(), event->getLength() );
-
-    m_pendingRemoteOps[id].second += m_one;
 
     std::stringstream tmp;
     tmp << m_pendingRemoteOps[id].second;
@@ -294,7 +287,6 @@ void Nic::Shmem::add( NicShmemAddCmdEvent* event, int id )
 
     m_nic.m_sendMachine[0]->run( entry );
 
-    m_nic.getVirtNic(id)->notifyShmem( 0, static_cast< NicShmemAddCmdEvent*>(event)->getCallback() );
 }
 
 void Nic::Shmem::fadd( NicShmemFaddCmdEvent* event, int id )
