@@ -152,7 +152,7 @@ class NicShmemPutCmdEvent : public NicShmemSendCmdEvent {
     NicShmemPutCmdEvent( int vnic, int node, Hermes::Vaddr dest, Hermes::Vaddr src, 
         size_t length, Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType,  Callback callback  ) :
         NicShmemSendCmdEvent( Put, vnic, node ), destAddr(dest), srcAddr(src), 
-        length(length), blocking(false), callback(callback), op(op), dataType(dataType)
+        length(length), blocking(true), callback(callback), op(op), dataType(dataType)
     { }
 
     Hermes::Vaddr getFarAddr()  override { return destAddr; } 
