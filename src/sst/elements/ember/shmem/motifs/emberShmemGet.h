@@ -82,6 +82,7 @@ public:
                     m_src, 
                     m_nelems*sizeof(TYPE),
                     m_other_pe );
+                enQ_barrier_all( evQ );
             } else {
                 enQ_get_nbi( evQ, 
                     m_dest,
