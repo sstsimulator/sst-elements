@@ -100,6 +100,7 @@ class Shmem {
 	void handleNicEvent( NicShmemCmdEvent* event, int id );
 	void handleEvent2( NicShmemCmdEvent* event, int id );
 	void decPending( int core ) {
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_SHMEM,"\n" );
 		m_pendingRemoteOps[core].second -= m_one;
 		checkWaitOps( core, m_pendingRemoteOps[core].first, m_pendingRemoteOps[core].second.getLength() );
 	}	
