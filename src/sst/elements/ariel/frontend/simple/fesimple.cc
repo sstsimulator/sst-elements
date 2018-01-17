@@ -54,6 +54,7 @@
 
 #undef __STDC_FORMAT_MACROS
 
+
 using namespace SST::ArielComponent;
 
 KNOB<UINT32> TrapFunctionProfile(KNOB_MODE_WRITEONCE, "pintool",
@@ -630,7 +631,7 @@ void* ariel_mmap_mlm(int fileID, size_t size, int level)
     UINT32 thr = (UINT32) currentThread;
 
 #ifdef ARIEL_DEBUG
-    fprintf(stderr, "%u, Perform a mmap_mlm from Ariel %zu, level %d\n",
+    fprintf(stderr, "%u: Perform a mmap_mlm from Ariel %zu, level %d\n",
             thr, size, level);
 #endif
 
@@ -689,7 +690,7 @@ void* ariel_mlm_malloc(size_t size, int level) {
     UINT32 thr = (UINT32) currentThread;
 
 #ifdef ARIEL_DEBUG
-    fprintf(stderr, "%u, Perform a mlm_malloc from Ariel %zu, level %d\n", thr, size, level);
+    fprintf(stderr, "%u: Perform a mlm_malloc from Ariel %zu, level %d\n", thr, size, level);
 #endif
 
     if(0 == size) {
