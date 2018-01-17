@@ -605,10 +605,10 @@ void ariel_mlm_set_pool(int new_pool) {
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
 
-#ifdef ARIEL_DEBUG
-    fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu) \n", size, real_req_size,
-            thr);
-#endif
+// #ifdef ARIEL_DEBUG
+//     fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu) \n", size, real_req_size,
+//             thr);
+// #endif
 
     const uint32_t newDefaultPool = (uint32_t) new_pool;
 
@@ -630,9 +630,12 @@ void* ariel_mmap_mlm(int fileID, size_t size, int level)
     UINT32 thr = (UINT32) currentThread;
 
 #ifdef ARIEL_DEBUG
-    fprintf(stderr, "%u, Perform a mlm_mmap from Ariel %zu, level %d\n", thr, size, level);
+    fprintf(stderr, "%u, Perform a mmap_mlm from Ariel %zu, level %d\n",
+            thr, size, level);
 #endif
-    if(0 == size) {
+
+    if(0 == size)
+    {
         fprintf(stderr, "YOU REQUESTED ZERO BYTES\n");
         void *bt_entries[64];
         int entry_returned = backtrace(bt_entries, 64);
@@ -657,7 +660,6 @@ void* ariel_mmap_mlm(int fileID, size_t size, int level)
     const uint64_t allocationLength = (uint64_t) real_req_size;
     const uint32_t allocationLevel = (uint32_t) level;
 
-
     ArielCommand ac;
     ac.command = ARIEL_ISSUE_TLM_MMAP;
     ac.mlm_mmap.vaddr = virtualAddress;
@@ -671,7 +673,7 @@ void* ariel_mmap_mlm(int fileID, size_t size, int level)
     tunnel->writeMessage(thr, ac);
 
 #ifdef ARIEL_DEBUG
-    fprintf(stderr, "%u: Ariel mlm_malloc call allocates data at address: 0x%llx\n",
+    fprintf(stderr, "%u: Ariel mmap_mlm call allocates data at address: 0x%llx\n",
             thr, (uint64_t) real_ptr);
 #endif
 
@@ -679,7 +681,6 @@ void* ariel_mmap_mlm(int fileID, size_t size, int level)
         allocated_list.push_back(real_ptr);
     PIN_ReleaseLock(&mainLock);
         return real_ptr;
-
 }
 
 
@@ -690,6 +691,7 @@ void* ariel_mlm_malloc(size_t size, int level) {
 #ifdef ARIEL_DEBUG
     fprintf(stderr, "%u, Perform a mlm_malloc from Ariel %zu, level %d\n", thr, size, level);
 #endif
+
     if(0 == size) {
         fprintf(stderr, "YOU REQUESTED ZERO BYTES\n");
         void *bt_entries[64];

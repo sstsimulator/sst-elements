@@ -24,7 +24,7 @@ void* mlm_malloc(size_t size, int level) {
 
 void ariel_enable() { }
 
-void * ariel_mmap_mlm(int ID, size_t size, int level) {return malloc(size);}
+void * ariel_mmap_mlm(int ID, size_t size, int level) { return malloc(size); }
 
 }
 
