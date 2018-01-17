@@ -32,8 +32,6 @@ groups = 1
 
 os.environ['OMP_NUM_THREADS'] = str(cores_per_group * groups/2)
 
-#os.environ['OMP_NUM_THREADS'] = str(1)
-
 l3cache_blocks_per_group = 2
 l3cache_block_size = "2MB"
 
@@ -54,13 +52,13 @@ num_pages = memory_capacity * 1024 / page_size
 streamN = 1000000
 
 l1_prefetch_params = {
-	"prefetcher": "cassini.StridePrefetcher",
-       	"prefetcher.reach": 4,
+	"prefetcher": "cassini.PalaPrefetcher",
+      "prefetcher.reach": 4,
 	"prefetcher.detect_range" : 1
 }
 
 l2_prefetch_params = {
-       	"prefetcher": "cassini.StridePrefetcher",
+       	"prefetcher": "cassini.PalaPrefetcher",
        	"prefetcher.reach": 16,
 	"prefetcher.detect_range" : 1
 }
@@ -154,10 +152,10 @@ arielParams = {
     "maxtranscore": 16,
     "pipetimeout" : 0,
     "corecount" : groups * cores_per_group/2,
-    "memorylevels" : 1,
-    "pagecount0" : num_pages,
-    "pagesize0" : page_size * 1024,
-    "defaultlevel" : 0,
+    "memmgr.memorylevels" : 1,
+    "memmgr.pagecount0" : num_pages,
+    "memmgr.pagesize0" : page_size * 1024,
+    "memmgr.defaultlevel" : 0,
     "arielmode" : 0,
     "appargcount" : 4,
     "apparg0": "-s",
@@ -262,7 +260,7 @@ l3_params = {
 
 mem_params = {
     	"backend.mem_size" : str(memory_capacity / (groups * memory_controllers_per_group)) + "MiB",
-    	"do_not_back" : 1,
+    	"backing" : "none",
     	"backend" : "memHierarchy.Messier",
     	"backendConvertor.backend" : "memHierarchy.Messier",
     	"backend.clock" : clock,
