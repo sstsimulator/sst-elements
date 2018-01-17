@@ -16,11 +16,11 @@
  * E-mail: aawad@sandia.gov
  */
 
-
+#include <string>
+#include <iostream>
 
 #include <sst_config.h>
-#include <string>
-#include<iostream>
+
 #include "Opal.h"
 
 

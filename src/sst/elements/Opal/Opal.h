@@ -15,17 +15,6 @@
  * E-mail: amro.awad@ucf.edu
  */
 
-
-#include <sst/core/sst_types.h>
-#include <sst/core/event.h>
-#include <sst/core/component.h>
-#include <sst/core/link.h>
-#include <sst/core/timeConverter.h>
-#include <sst/core/interfaces/simpleMem.h>
-
-#include "Opal_Event.h"
-#include <sst/core/output.h>
-#include "sst/core/elementinfo.h"
 #include <cstring>
 #include <string>
 #include <fstream>
@@ -35,6 +24,17 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <poll.h>
+
+#include <sst/core/sst_types.h>
+#include <sst/core/event.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
+#include <sst/core/timeConverter.h>
+#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/output.h>
+#include <sst/core/elementinfo.h>
+
+#include "Opal_Event.h"
 #include "mempool.h"
 
 using namespace std;
