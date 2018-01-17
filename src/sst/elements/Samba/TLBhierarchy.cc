@@ -169,7 +169,7 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 		{
 			long long int vaddr = ((MemEvent*) event)->getVirtualAddress();
 			if((*PTE).find(vaddr/4096)==(*PTE).end())
-				std::cout<<"Error: That page has never been mapped : " << vaddr / 4096 << std::endl;
+				std::cout<<"Error: That page has never been mapped:  " << vaddr / 4096 << std::endl;
 
 			((MemEvent*) event)->setAddr((((*PTE)[vaddr / 4096] * 4096 + vaddr % 4096) / 64) * 64);
 			((MemEvent*) event)->setBaseAddr((((*PTE)[vaddr / 4096] * 4096 + vaddr % 4096) / 64) * 64);
