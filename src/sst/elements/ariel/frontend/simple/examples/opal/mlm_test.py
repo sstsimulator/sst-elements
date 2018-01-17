@@ -288,11 +288,11 @@ messier_params = {
 }
 
 dc_params = {
-        "interleave_size": str(mem_interleave_size) + "B",
-        "interleave_step": str((groups * memory_controllers_per_group) * (mem_interleave_size)) + "B",
+        "memNIC.interleave_size": str(mem_interleave_size) + "B",
+        "memNIC.interleave_step": str((groups * memory_controllers_per_group) * (mem_interleave_size)) + "B",
         "entry_cache_size": 256*1024*1024, #Entry cache size of mem/blocksize
         "clock": memory_clock,
-       	"network_bw": ring_bandwidth,
+        "memNIC.network_bw": ring_bandwidth,
         # Default params
 	# "coherence_protocol": coherence_protocol,
 }
@@ -445,8 +445,8 @@ for next_group in range(groups):
 		dc = sst.Component("dc_" + str(next_memory_ctrl_id), "memHierarchy.DirectoryController")
 		dc.addParams({
 			"network_address" : next_network_id,
-			"addr_range_start" : next_memory_ctrl_id * mem_interleave_size,
-			"addr_range_end" : (memory_capacity * 1024 * 1024) - (groups * memory_controllers_per_group * mem_interleave_size) + (next_memory_ctrl_id * mem_interleave_size)
+			"memNIC.addr_range_start" : next_memory_ctrl_id * mem_interleave_size,
+			"memNIC.addr_range_end" : (memory_capacity * 1024 * 1024) - (groups * memory_controllers_per_group * mem_interleave_size) + (next_memory_ctrl_id * mem_interleave_size)
 		})
 		dc.addParams(dc_params)
 
