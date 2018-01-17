@@ -63,14 +63,17 @@ namespace SST
 
 					if(temp_ptr->getType() == EventType::HINT)
 					{
-						std::cerr << "MLM Hint : level "<< temp_ptr->hint << " Starting address is "<< std::hex << temp_ptr->getAddress();
+						std::cerr << "MLM Hint(0) : level "<< temp_ptr->hint << " Starting address is "<< std::hex << temp_ptr->getAddress();
                                     std::cerr << std::dec << " Size: "<< temp_ptr->getSize();
                                     std::cerr << " Ending address is " << std::hex << temp_ptr->getAddress() + temp_ptr->getSize() - 1;
                                     std::cerr << std::dec << std::endl;
 					}
-					else if (temp_ptr->getType() == EventType::MMAP)
+					else if(temp_ptr->getType() == EventType::MMAP)
 					{
-						std::cerr << "Opal has received an MMAP CALL with ID " << temp_ptr->fileID << std::endl;
+                                    std::cerr << "MLM mmap(" << temp_ptr->fileID<< ") : level "<< temp_ptr->hint << " Starting address is "<< std::hex << temp_ptr->getAddress();
+                                    std::cerr << std::dec << " Size: "<< temp_ptr->getSize();
+                                    std::cerr << " Ending address is " << std::hex << temp_ptr->getAddress() + temp_ptr->getSize() - 1;
+                                    std::cerr << std::dec << std::endl;
 					}
 					else
 					{
