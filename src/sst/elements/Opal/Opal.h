@@ -16,7 +16,6 @@
  */
 
 
-
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
@@ -44,11 +43,13 @@ using namespace SST;
 using namespace SST::OpalComponent;
 
 
+namespace SST
+{
+	namespace OpalComponent
+	{
 
-namespace SST {
-	namespace OpalComponent {
-
-		class core_handler{
+		class core_handler
+		{
 			public:
 
 				int id;
@@ -61,17 +62,14 @@ namespace SST {
 				{
 					OpalEvent * temp_ptr =  dynamic_cast<OpalComponent::OpalEvent*> (e);
 
-
 					if(temp_ptr->getType() == EventType::HINT)
 					{
-
-						std::cout<<"MLM Hint : level "<<temp_ptr->hint<<" Starting address is "<< temp_ptr->getAddress() <<" Size: "<<temp_ptr->getSize()<<std::endl;
-
+						std::cout << "MLM Hint : level "<< temp_ptr->hint << " Starting address is "<< std::hex << temp_ptr->getAddress();
+                                    std::cout << std::dec << " Size: "<< temp_ptr->getSize() << std::endl;
 					}
 					else if (temp_ptr->getType() == EventType::MMAP)
 					{
-
-						std::cout<<"Opal has received an MMAP CALL with ID "<<temp_ptr->fileID<<std::endl;
+						std::cout << "Opal has received an MMAP CALL with ID " << temp_ptr->fileID << std::endl;
 					}
 					else
 					{
@@ -80,12 +78,11 @@ namespace SST {
 						singLink->send(latency, tse);
 					}
 				}
+		};// END core_handler
 
 
-		};
-
-
-		class Opal : public SST::Component {
+		class Opal : public SST::Component
+		{
 			public:
 
 				Opal( SST::ComponentId_t id, SST::Params& params); 
@@ -107,13 +104,13 @@ namespace SST {
 
 
 					SST_ELI_DOCUMENT_PARAMS(
-							{"clock",              "Internal Controller Clock Rate.", "1.0 Ghz"},
+							{"clock", "Internal Controller Clock Rate.", "1.0 Ghz"},
 							{"latency", "The time to be spent to service a memory request", "1000"},
 							{"num_nodes", "number of disaggregated nodes in the system", "1"},
 							{"num_cores", "total number of cores. this will be used to account for TLB shootdown latency", "1"},
-							{"num_pools",          "This determines the number of memory pools", "1"},
+							{"num_pools", "This determines the number of memory pools", "1"},
 							{"num_domains", "The number of domains in the system, typically similar to number of sockets/SoCs", "1"},
-							{"allocation_policy",          "0 is private pools, then clustered pools, then public pools", "0"},
+							{"allocation_policy", "0 is private pools, then clustered pools, then public pools", "0"},
 							{"size%(num_pools)", "Size of each memory pool in KBs", "8388608"},
 							{"startaddress%(num_pools)", "the starting physical address of the pool", "0"},
 							{"type%(num_pools)", "0 means private for specific NUMA domain, 1 means shared among specific NUMA domains, 2 means public", "2"},
@@ -140,8 +137,7 @@ namespace SST {
 					Opal(const Opal&); // do not implement
 					void operator=(const Opal&); // do not implement
 
-
-					int core_count;
+					uint32_t core_count;
 
 					SST::Link * m_memChan; 
 					SST::Link ** samba_to_opal; 
@@ -158,14 +154,10 @@ namespace SST {
 					std::string user_binary;
 					Output* output;
 
-
 					Statistic<long long int>* statReadRequests;
 					Statistic<long long int>* statWriteRequests;
 					Statistic<long long int>* statAvgTime;
 
-
-
-		};
-
-	}
-}
+		};// END Opal
+	}// END OpalComponent
+}//END SST

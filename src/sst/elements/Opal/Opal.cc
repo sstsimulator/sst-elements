@@ -33,12 +33,11 @@ using namespace SST::OpalComponent;
 
 
 
-Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
-
+Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id)
+{
 
  registerAsPrimaryComponent();
 //    primaryComponentDoNotEndSim();
-
 
 	core_count = (uint32_t) params.find<uint32_t>("num_cores", 1);
 	latency = (uint32_t) params.find<uint32_t>("latency", 1);
@@ -52,7 +51,8 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	char* link_buffer = (char*) malloc(sizeof(char) * 256);
 
-	for(uint32_t i = 0; i < core_count*2; ++i) {
+	for(uint32_t i = 0; i < core_count * 2; ++i)
+      {
 		sprintf(link_buffer, "requestLink%" PRIu32, i);
 		SST::Link * link = configureLink(link_buffer, "1ns", new Event::Handler<core_handler>((&Handlers[i]), &core_handler::handleRequest));
 		samba_to_opal[i] = link;
@@ -65,7 +65,6 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	registerClock( cpu_clock, new Clock::Handler<Opal>(this, &Opal::tick ) );
 }
-
 
 
 Opal::Opal() : Component(-1)
@@ -88,9 +87,6 @@ bool Opal::tick(SST::Cycle_t x)
 
 void Opal::handleRequest( SST::Event* e )
 {
-
-
-
 
 
 
