@@ -87,12 +87,12 @@ public:
 					    m_src,
                         m_nelems*sizeof(TYPE),
                         m_other_pe );
+                    enQ_quiet( evQ );
                 }
 			}
 
 			if (  ( ! m_biDir && 0 != m_my_pe ) || m_phase + 1 == m_iterations ) {
 				enQ_getTime( evQ, &m_stopTime );
-                enQ_quiet( evQ );
             	enQ_barrier_all( evQ );
 			}
 
