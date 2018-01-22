@@ -51,20 +51,17 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
 		break;
 
       case NicShmemCmdEvent::Put:
-            m_pendingRemoteOps[id].second += m_one;
-            if ( ! static_cast<NicShmemPutCmdEvent*>(event)->isBlocking() ) {
-		        --m_freeCmdSlots;	
-                m_nic.getVirtNic(id)->notifyShmem( 0, static_cast<NicShmemPutCmdEvent*>(event)->getCallback() );
-            }
+        m_pendingRemoteOps[id].second += m_one;
+        if ( ! static_cast<NicShmemPutCmdEvent*>(event)->isBlocking() ) {
+		    --m_freeCmdSlots;	
+            m_nic.getVirtNic(id)->notifyShmem( 0, static_cast<NicShmemPutCmdEvent*>(event)->getCallback() );
+        }
         break;
 
       case NicShmemCmdEvent::Get:
-        {
-            m_pendingRemoteOps[id].second += m_one;
-            if ( ! static_cast<NicShmemGetCmdEvent*>(event)->isBlocking() ) {
-		        --m_freeCmdSlots;	
-                m_nic.getVirtNic(id)->notifyShmem( 0, static_cast<NicShmemGetCmdEvent*>(event)->getCallback() );
-            }
+        if ( ! static_cast<NicShmemGetCmdEvent*>(event)->isBlocking() ) {
+		    --m_freeCmdSlots;	
+            m_nic.getVirtNic(id)->notifyShmem( 0, static_cast<NicShmemGetCmdEvent*>(event)->getCallback() );
         }
         break;
 
