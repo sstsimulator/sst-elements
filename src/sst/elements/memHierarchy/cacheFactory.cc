@@ -371,6 +371,8 @@ void Cache::createPrefetcher(Params &params, int mshrSize) {
     // Configure self link for prefetch/listener events
     // Delay prefetches by a cycle TODO parameterize - let user specify prefetch delay
     std::string frequency = params.find<std::string>("cache_frequency", "", found);
+    prefetchDelay_ = params.find<SimTime_t>("prefetch_delay_cycles", 1);
+
     prefetchLink_ = configureSelfLink("Self", frequency, new Event::Handler<Cache>(this, &Cache::processPrefetchEvent));
 }
     
