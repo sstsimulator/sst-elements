@@ -47,7 +47,7 @@ class Shmem {
 
         bool checkOp( Output& dbg ) {
             std::stringstream tmp;
-            tmp << m_value << " " << m_cmd->op << " " << m_cmd->value;
+            tmp << "memoryValue=" << m_value << " op=" << m_cmd->op << " cmdValue=" << m_cmd->value;
             dbg.verbose( CALL_INFO,1,NIC_SHMEM,"%s %s\n",__func__,tmp.str().c_str());
             switch ( m_cmd->op ) {
               case Hermes::Shmem::NE:
@@ -100,6 +100,9 @@ class Shmem {
 	void handleNicEvent( NicShmemCmdEvent* event, int id );
 	void handleEvent2( NicShmemCmdEvent* event, int id );
 	void decPending( int core ) {
+		long value = m_pendingRemoteOps[core].second.get<long>();
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_SHMEM,"count=%lu\n", value );
+        assert(value>0);
 		m_pendingRemoteOps[core].second -= m_one;
 		checkWaitOps( core, m_pendingRemoteOps[core].first, m_pendingRemoteOps[core].second.getLength() );
 	}	
