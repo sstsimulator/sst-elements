@@ -117,6 +117,10 @@ void Nic::RecvMachine::ShmemStream::processGetResp( ShmemMsgHdr& hdr, FireflyNet
 
         Hermes::MemAddr memAddr = m_rm.nic().findShmem( local_vNic, addr, hdr.length ); 
 
+        if ( ! static_cast<NicShmemGetCmdEvent*>(entry->getCmd())->isBlocking() ) {
+	        m_rm.m_nic.shmemDecPending( local_vNic );
+        }
+
         m_recvEntry = new ShmemGetbRespRecvEntry( m_rm.m_nic.m_shmem, local_vNic, hdr.length, static_cast<ShmemGetbSendEntry*>(entry), 
                 memAddr.getBacking() );
     }

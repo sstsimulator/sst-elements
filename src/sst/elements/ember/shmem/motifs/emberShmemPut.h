@@ -35,6 +35,7 @@ public:
         m_nelems = params.find<int>("arg.nelems", 1);
         m_printResults = params.find<bool>("arg.printResults", false );
 		m_iterations = (uint32_t) params.find("arg.iterations", 1);
+		m_blocking = (bool) params.find("arg.blocking", true);
         int status;
         std::string tname = typeid(TYPE).name();
 		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
@@ -74,11 +75,20 @@ public:
 		} else if ( m_phase < m_iterations ) {
 
 			if ( 0 == m_my_pe || m_biDir ) {
-            	enQ_put( evQ, 
-					m_dest,
-					m_src,
-                    m_nelems*sizeof(TYPE),
-                    m_other_pe );
+                if ( m_blocking ) {
+            	    enQ_put( evQ, 
+					    m_dest,
+					    m_src,
+                        m_nelems*sizeof(TYPE),
+                        m_other_pe );
+                } else {
+            	    enQ_put_nbi( evQ, 
+					    m_dest,
+					    m_src,
+                        m_nelems*sizeof(TYPE),
+                        m_other_pe );
+                    enQ_quiet( evQ );
+                }
 			}
 
 			if (  ( ! m_biDir && 0 != m_my_pe ) || m_phase + 1 == m_iterations ) {
@@ -117,6 +127,7 @@ public:
 	}
   private:
 
+    bool m_blocking;
 	bool m_biDir;
 	uint64_t m_startTime;
 	uint64_t m_stopTime;

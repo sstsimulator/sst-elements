@@ -83,6 +83,8 @@ class Interface : public Hermes::Interface {
 
     virtual void get( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
     virtual void put( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
+    virtual void get_nbi( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
+    virtual void put_nbi( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
 
     virtual void getv( Value& result, Vaddr src, int pe, Callback) { assert(0); }
     virtual void putv( Vaddr dest, Value& value, int pe, Callback) { assert(0); }
