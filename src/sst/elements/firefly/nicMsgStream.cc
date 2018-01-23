@@ -21,8 +21,8 @@ using namespace SST;
 using namespace SST::Firefly;
 
 Nic::RecvMachine::MsgStream::MsgStream( Output& output, FireflyNetworkEvent* ev,
-       RecvMachine& rm  ) : 
-    StreamBase(output,rm)
+       RecvMachine& rm, int unit  ) : 
+    StreamBase(output,rm,unit)
 {
     m_hdr = *(MsgHdr*) ev->bufPtr();
     m_tag = *(int*) ev->bufPtr( sizeof(MsgHdr) );
