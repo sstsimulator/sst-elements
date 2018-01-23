@@ -26,10 +26,10 @@ class EmberGetShmemEvent : public EmberShmemEvent {
 
 public:
 	EmberGetShmemEvent( Shmem::Interface& api, Output* output,
-            Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, 
+            Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking,
             EmberEventTimeStatistic* stat = NULL ) :
             EmberShmemEvent( api, output, stat ), 
-            m_dest(dest), m_src(src), m_length(length), m_pe(pe) {}
+            m_dest(dest), m_src(src), m_length(length), m_pe(pe), m_blocking(blocking) {}
 	~EmberGetShmemEvent() {}
 
     std::string getName() { return "Malloc"; }
@@ -37,13 +37,18 @@ public:
     void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.get( m_dest, m_src, m_length, m_pe, callback );
+        if ( m_blocking) {
+            m_api.get( m_dest, m_src, m_length, m_pe, callback );
+        } else {
+            m_api.get_nbi( m_dest, m_src, m_length, m_pe, callback );
+        }
     }
 private:
     Hermes::Vaddr m_dest;
     Hermes::Vaddr m_src;
     size_t m_length;
     int m_pe;
+    bool m_blocking;
 };
 
 }
