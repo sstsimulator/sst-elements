@@ -377,7 +377,7 @@ void Cache::processNoncacheable(MemEventBase* event) {
 
 
 void Cache::handlePrefetchEvent(SST::Event* ev) {
-    prefetchLink_->send(1, ev);
+    prefetchLink_->send(prefetchDelay_, ev);
 }
 
 /* Handler for self events, namely prefetches */

@@ -145,28 +145,23 @@ void MultiThreadL1::finish() {}
 void MultiThreadL1::init(unsigned int phase) {
     SST::Event * ev;
 
-    if (!phase) {
-        for (int i = 0; i < threadLinks.size(); i++) {
-            threadLinks[i]->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
-        }
-    }
-
     // Pass CPU events to memory hierarchy, generally these are memory initialization
     for (int i = 0; i < threadLinks.size(); i++) {
         while ((ev = threadLinks[i]->recvInitData()) != NULL) {
             MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
             if (memEvent) {
-                cacheLink->sendInitData(new MemEventInit(*memEvent));
+                cacheLink->sendInitData(memEvent->clone());
             }
             delete ev;
         }
     }
     
+    // Broadcast L1 events to connected CPUs
     while ((ev = cacheLink->recvInitData()) != NULL) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {
             for (int i = 0; i < threadLinks.size(); i++) {
-                threadLinks[i]->sendInitData(new MemEventInit(*memEvent));
+                threadLinks[i]->sendInitData(memEvent->clone());
             }
         }
         delete ev;
