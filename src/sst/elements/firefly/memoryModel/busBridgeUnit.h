@@ -181,7 +181,7 @@ class BusBridgeUnit : public Unit {
 		
 		SimTime_t delay = numBytes/m_bandwidth_GB;
 		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"bytes=%lu delay=%lu\n",numBytes, delay);
-        return delay * m_numLinks;
+        return delay;
     }
 
     size_t TLP_overhead() {
