@@ -77,22 +77,7 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
       default:
         assert(0);
     }
-	std::vector<MemOp>* vec = new std::vector<MemOp>;
-
-#if 1 
-   	vec->push_back( MemOp( 0, 16, MemOp::Op::HostBusWrite ) ); 
-
-	SimTime_t start = m_nic.getCurrentSimTimeNano();
-	m_nic.calcHostMemDelay(id, vec, 
-
-		[=]() {
-			//printf( "%lu\n", m_nic.getCurrentSimTimeNano()- start);
-			handleEvent2( event, id );
-		}
-	);
-#else
 	m_nic.schedEvent(  new SelfEvent( event, id ), getHost2NicDelay_ns() );
-#endif
 }
 
 void Nic::Shmem::handleEvent2( NicShmemCmdEvent* event, int id )
