@@ -80,7 +80,7 @@ class SimpleMemoryModel : SubComponent {
 		int nicNumStoreSlots = params.find<int>( "nicNumStoreSlots", 32 );
 		int hostNumLoadSlots = params.find<int>( "hostNumLoadSlots", 32 );
 		int hostNumStoreSlots = params.find<int>( "hostNumLoadSlots", 32 );
-		double busBandwidth = params.find<double>("busBandwidth_GB", 10 );
+		double busBandwidth = params.find<double>("busBandwidth_Gbs", 7.8 );
 		int busNumLinks = params.find<double>("busNumLinks", 16 );
 
 		int hostCacheNumMSHR = params.find<int>( "hostCacheNumMSHR", 10 );
@@ -204,6 +204,7 @@ class SimpleMemoryModel : SubComponent {
 	}
 
 	NicUnit& nicUnit() { return *m_nicUnit; }
+	BusBridgeUnit& busUnit() { return *m_busBridgeUnit; }
 
   private:
 
