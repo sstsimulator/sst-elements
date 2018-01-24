@@ -21,16 +21,18 @@ class SendMachine {
       public:
         typedef std::function<void()> Callback;
         SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask,
-              int txDelay, int packetSizeInBytes, int vc  ) :
+              int txDelay, int packetSizeInBytes, int vc, int unit  ) :
             m_nic(nic), 
             m_txDelay( txDelay ),
             m_packetSizeInBytes( packetSizeInBytes ),
             m_vc( vc ),
+            m_unit( unit ),
             m_notifyCallback(NULL)
 #ifdef NIC_SEND_DEBUG
             , m_msgCount(0)
 #endif
         {
+            assert( m_unit >= 0 );
             char buffer[100];
             snprintf(buffer,100,"@t:%d:Nic::SendMachine::@p():@l vc=%d ",nodeId,m_vc);
 
@@ -97,6 +99,7 @@ class SendMachine {
         static int                     m_packetId;
         Callback                m_notifyCallback;
 		int						m_vc;
+		int						m_unit;	
 #ifdef NIC_SEND_DEBUG
         unsigned int            m_msgCount;
 #endif

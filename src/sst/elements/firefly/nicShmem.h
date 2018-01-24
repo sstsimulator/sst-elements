@@ -47,7 +47,7 @@ class Shmem {
 
         bool checkOp( Output& dbg ) {
             std::stringstream tmp;
-            tmp << "memoryValue=" << m_value << " op=" << m_cmd->op << " cmdValue=" << m_cmd->value;
+            tmp << "op=" << WaitOpName(m_cmd->op) << " testValue=" << m_cmd->value << " memValue=" << m_value;
             dbg.verbose( CALL_INFO,1,NIC_SHMEM,"%s %s\n",__func__,tmp.str().c_str());
             switch ( m_cmd->op ) {
               case Hermes::Shmem::NE:
@@ -117,7 +117,7 @@ class Shmem {
         } 
         assert(0);
     }
-    void checkWaitOps( int core, Hermes::Vaddr addr, size_t length, bool nic = false );
+    void checkWaitOps( int core, Hermes::Vaddr addr, size_t length );
 
 private:
 	SimTime_t getNic2HostDelay_ns() { return m_nic2HostDelay_ns; }

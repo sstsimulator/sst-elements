@@ -15,8 +15,8 @@ class BusBridgeUnit : public Unit {
     };
 
   public:
-    BusBridgeUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, double bandwidth, int cacheLineSize, int widgetSlots ) :
-        Unit( model, dbg ), m_cache(cache), m_bandwidth_GB( bandwidth ), m_blocked(2,NULL), 
+    BusBridgeUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, double bandwidth, int numLinks, int cacheLineSize, int widgetSlots ) :
+        Unit( model, dbg ), m_cache(cache), m_bandwidth_GB( bandwidth ), m_numLinks(numLinks), m_blocked(2,NULL),
 		m_reqBus(*this,id, "Req", true, std::bind(&BusBridgeUnit::processReq,this,std::placeholders::_1 ) ), 
 		m_respBus(*this,id, "Resp", false,std::bind(&BusBridgeUnit::processResp,this,std::placeholders::_1 ) ) 
     {
@@ -196,8 +196,9 @@ class BusBridgeUnit : public Unit {
 	Bus m_respBus;
 	std::vector<UnitBase*> m_blocked;
 
-    Unit* m_cache;
+	Unit* m_cache;
 	Unit* m_loadWidget;
 	Unit* m_storeWidget;
-    double m_bandwidth_GB;
+	int m_numLinks;
+	double m_bandwidth_GB;
 };

@@ -23,6 +23,9 @@ ReverseSingleStreamGenerator[ReverseSingleStreamGenerator:43]: Stride:          
  l1cache.prefetches_issued : Accumulator : Sum.u64 = 4092; SumSQ.u64 = 4092; Count.u64 = 4092; 
  l1cache.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 127; SumSQ.u64 = 127; Count.u64 = 127; 
  l1cache.prefetches_canceled_by_history : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; 
+ l1cache.Prefetch_requests : Accumulator : Sum.u64 = 4092; SumSQ.u64 = 4092; Count.u64 = 4092; 
+ l1cache.Prefetch_hits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ l1cache.Prefetch_drops : Accumulator : Sum.u64 = 3965; SumSQ.u64 = 3965; Count.u64 = 3965; 
  l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 20603; SumSQ.u64 = 20603; Count.u64 = 20603; 
  l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -52,11 +55,8 @@ ReverseSingleStreamGenerator[ReverseSingleStreamGenerator:43]: Stride:          
  l1cache.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 253960; SumSQ.u64 = 3877344; Count.u64 = 16661; 
+ l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 253833; SumSQ.u64 = 3873407; Count.u64 = 16661; 
  l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache.Prefetch_requests : Accumulator : Sum.u64 = 4092; SumSQ.u64 = 4092; Count.u64 = 4092; 
- l1cache.Prefetch_hits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache.Prefetch_drops : Accumulator : Sum.u64 = 3965; SumSQ.u64 = 3965; Count.u64 = 3965; 
  l1cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_E : Accumulator : Sum.u64 = 8287; SumSQ.u64 = 8287; Count.u64 = 8287; 
  l1cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -64,7 +64,7 @@ ReverseSingleStreamGenerator[ReverseSingleStreamGenerator:43]: Stride:          
  l1cache.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache.latency_GetS_IS : Accumulator : Sum.u64 = 253960; SumSQ.u64 = 7760232; Count.u64 = 8319; 
+ l1cache.latency_GetS_IS : Accumulator : Sum.u64 = 253833; SumSQ.u64 = 7752231; Count.u64 = 8319; 
  l1cache.latency_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.latency_GetX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.latency_GetX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
