@@ -82,6 +82,7 @@ public:
             {"mshr_latency_cycles",     
                 "(uint) Latency (in cycles) to process responses in the cache and replay requests. Paid on the return/response path for misses instead of access_latency_cycles. If not specified, simple intrapolation is used based on the cache access latency", "1"},
             {"prefetcher",              "(string) Name of prefetcher subcomponent", ""},
+            {"prefetch_delay_cycles",   "(uint) Delay prefetches from prefetcher by this number of cycles.", "1"},
             {"max_outstanding_prefetch","(uint) Maximum number of prefetch misses that can be outstanding, additional prefetches will be dropped/NACKed. Default is 1/2 of MSHR entries.", "0.5*mshr_num_entries"},
             {"drop_prefetch_mshr_level","(uint) Drop/NACK prefetches if the number of in-use mshrs is greater than or equal to this number. Default is mshr_num_entries - 2.", "mshr_num_entries-2"},
             {"num_cache_slices",        "(uint) For a distributed, shared cache, total number of cache slices", "1"},
@@ -336,6 +337,7 @@ private:
     uint64_t                mshrLatency_;
     int                     dropPrefetchLevel_;
     int                     maxOutstandingPrefetch_;
+    SimTime_t               prefetchDelay_;
     int                     maxRequestsPerCycle_;
 
     /* Cache structures */
