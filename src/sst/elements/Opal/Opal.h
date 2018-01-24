@@ -14,6 +14,9 @@
 /* Author: Amro Awad
  * E-mail: amro.awad@ucf.edu
  */
+/* Author: Vamsee Reddy Kommareddy
+ * E-mail: vamseereddy@knights.ucf.edu
+ */
 
 #include <cstring>
 #include <string>
@@ -24,6 +27,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <poll.h>
+#include <queue>
 
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
@@ -47,43 +51,7 @@ namespace SST
 	namespace OpalComponent
 	{
 
-		class core_handler
-		{
-			public:
-
-				int id;
-				SST::Link * singLink;
-				int dummy_address;
-				core_handler() { dummy_address = 0;}				
-				unsigned int latency;
-
-				void handleRequest(SST::Event* e)
-				{
-					OpalEvent * temp_ptr =  dynamic_cast<OpalComponent::OpalEvent*> (e);
-
-					if(temp_ptr->getType() == EventType::HINT)
-					{
-						std::cerr << "MLM Hint(0) : level "<< temp_ptr->hint << " Starting address is "<< std::hex << temp_ptr->getAddress();
-                                    std::cerr << std::dec << " Size: "<< temp_ptr->getSize();
-                                    std::cerr << " Ending address is " << std::hex << temp_ptr->getAddress() + temp_ptr->getSize() - 1;
-                                    std::cerr << std::dec << std::endl;
-					}
-					else if(temp_ptr->getType() == EventType::MMAP)
-					{
-                                    std::cerr << "MLM mmap(" << temp_ptr->fileID<< ") : level "<< temp_ptr->hint << " Starting address is "<< std::hex << temp_ptr->getAddress();
-                                    std::cerr << std::dec << " Size: "<< temp_ptr->getSize();
-                                    std::cerr << " Ending address is " << std::hex << temp_ptr->getAddress() + temp_ptr->getSize() - 1;
-                                    std::cerr << std::dec << std::endl;
-					}
-					else
-					{
-						OpalEvent * tse = new OpalEvent(EventType::RESPONSE);
-						tse->setResp(temp_ptr->getAddress(),dummy_address++,4096);
-						singLink->send(latency, tse);
-					}
-				}
-		};// END core_handler
-
+		class core_handler;
 
 		class Opal : public SST::Component
 		{
@@ -96,6 +64,9 @@ namespace SST
 				void handleRequest( SST::Event* e );
 				bool tick(SST::Cycle_t x);
 				core_handler * Handlers;
+				std::queue<OpalEvent*> hintlist;
+				std::queue<OpalEvent*> requestQ;
+
 				~Opal() { };
 				SST_ELI_REGISTER_COMPONENT(
 						Opal,
@@ -110,12 +81,23 @@ namespace SST
 					SST_ELI_DOCUMENT_PARAMS(
 							{"clock", "Internal Controller Clock Rate.", "1.0 Ghz"},
 							{"latency", "The time to be spent to service a memory request", "1000"},
+							{"verbose", "debug level", "1"},
+							{"max_inst", "maximum number of instructions per cycle", "1"},
 							{"num_nodes", "number of disaggregated nodes in the system", "1"},
-							{"num_cores", "total number of cores. this will be used to account for TLB shootdown latency", "1"},
+							{"cores_per_node", "total number of cores. this will be used to account for TLB shootdown latency", "1"},
+							{"num_ports", "total number of request links", "2"},
 							{"num_pools", "This determines the number of memory pools", "1"},
 							{"num_domains", "The number of domains in the system, typically similar to number of sockets/SoCs", "1"},
 							{"allocation_policy", "0 is private pools, then clustered pools, then public pools", "0"},
-							{"size%(num_pools)", "Size of each memory pool in KBs", "8388608"},
+							{"shared_mempools", "This determines the number of shared memory pools", "1"},
+							{"shared_mem.mempool%(shared_mempools).start", "the starting physical address of each shared memory pool in KBs", "0"},
+							{"shared_mem.mempool%(shared_mempools).size", "Size of each shared memory pool in KBs", "1024"},
+							{"shared_mem.mempool%(shared_mempools).frame_size", "Size of each shared memory pool in KBs", "4"},
+							{"shared_mem.mempool%(shared_mempools).mem_tech", "memory technology of each shared memory pool in KBs", "0"},
+							{"local_mem.mempool%(num_nodes).start", "the starting physical address of each local memory pool in KBs", "0"},
+							{"local_mem.mempool%(num_nodes).size", "Size of each local memory pool in KBs", "1024"},
+							{"local_mem.mempool%(num_nodes).frame_size", "frame size of each local memory pool in KBs", "4"},
+							{"local_mem.mempool%(num_nodes).mem_tech", "memory technology of each local memory pool in KBs", "0"},
 							{"startaddress%(num_pools)", "the starting physical address of the pool", "0"},
 							{"type%(num_pools)", "0 means private for specific NUMA domain, 1 means shared among specific NUMA domains, 2 means public", "2"},
 							{"cluster_size", "This determines the number of NUMA domains in each cluster, if clustering is used", "1"},
@@ -128,8 +110,8 @@ namespace SST
 							)
 
 					SST_ELI_DOCUMENT_PORTS(
-							{"requestLink%(num_cores*2)d", "Link to receive allocation requests", { "OpalComponent.OpalEvent", "" } },
-							{"shootdownLink%(num_cores)d", "Link to send shootdown requests to Samba units", { "OpalComponent.OpalEvent", "" } },
+							{"requestLink%(num_ports)d", "Link to receive allocation requests", { "OpalComponent.OpalEvent", "" } },
+							{"shootdownLink%(num_nodes*num_cores)d", "Link to send shootdown requests to Samba units", { "OpalComponent.OpalEvent", "" } },
 							)
 
 					// Optional since there is nothing to document
@@ -141,7 +123,8 @@ namespace SST
 					Opal(const Opal&); // do not implement
 					void operator=(const Opal&); // do not implement
 
-					uint32_t core_count;
+					uint32_t cores_per_node;
+					uint32_t num_nodes;
 
 					SST::Link * m_memChan; 
 					SST::Link ** samba_to_opal; 
@@ -149,6 +132,17 @@ namespace SST
 					SST::Link * event_link; // Note that this is a self-link for events
 
 					Pool * mempools; // This represents the memory pools of the system
+
+					uint32_t num_shared_mempools;
+
+					//shared memory - memory pool number and its pool
+					std::map<int, Pool*> shared_mem;
+
+					//local memory - core number and its pool
+					std::map<int, Pool*> local_mem;
+
+					//allocation of memory pool history
+					std::map<int, int> allochist;
 
 					unsigned int latency; // The page fault latency/ the time spent by Opal to service a memory allocation request
 
@@ -163,5 +157,59 @@ namespace SST
 					Statistic<long long int>* statAvgTime;
 
 		};// END Opal
+
+		class core_handler
+		{
+			public:
+
+				int id;
+				SST::Link * singLink;
+				int dummy_address;
+				core_handler() { dummy_address = 0;}
+				unsigned int latency;
+				Opal *owner;
+				void setOwner(Opal *owner_) { owner = owner_; }
+
+				void handleRequest(SST::Event* e)
+				{
+					OpalEvent *ev =  dynamic_cast<OpalComponent::OpalEvent*> (e);
+
+					switch(ev->getType())
+					{
+					case EventType::HINT:
+						{
+
+							std::cerr << "MLM Hint(0) : level "<< ev->hint << " Starting address is "<< std::hex << ev->getAddress();
+                            std::cerr << std::dec << " Size: "<< ev->getSize();
+                            std::cerr << " Ending address is " << std::hex << ev->getAddress() + ev->getSize() - 1;
+                            std::cerr << std::dec << std::endl;
+						}
+						break;
+					case EventType::MMAP:
+						{
+				            std::cerr << "MLM mmap(" << ev->fileID<< ") : level "<< ev->hint << " Starting address is "<< std::hex << ev->getAddress();
+							std::cerr << std::dec << " Size: "<< ev->getSize();
+							std::cerr << " Ending address is " << std::hex << ev->getAddress() + ev->getSize() - 1;
+							std::cerr << std::dec << std::endl;
+						}
+						break;
+
+					case EventType::UNMAP:
+						{
+							std::cout<<"Opal has received an UNMAP CALL with virtual address: "<<ev->getAddress()<<" Size: "<<ev->getSize()<<std::endl;
+							owner->requestQ.push(ev);
+						}
+						break;
+
+					default:
+						{
+							std::cout<<"Opal has received a REQUEST CALL with virtual address: "<<ev->getAddress()<<" Size: "<<ev->getSize()<<std::endl;
+							owner->requestQ.push(ev);
+						}
+					}
+				}
+
+		};// END core_handler
+
 	}// END OpalComponent
 }//END SST
