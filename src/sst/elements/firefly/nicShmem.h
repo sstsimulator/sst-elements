@@ -81,8 +81,8 @@ class Shmem {
 		
 	const char* prefix() { return m_prefix.c_str(); }
   public:
-    Shmem( Nic& nic, int id, int numVnics, Output& output, SimTime_t nic2HostDelay_ns, SimTime_t host2NicDelay_ns ) : 
-		m_nic( nic ), m_dbg(output), m_one( (long) 1 ), m_freeCmdSlots( 1000 ),
+    Shmem( Nic& nic, int id, int numVnics, Output& output, int numCmdSlots, SimTime_t nic2HostDelay_ns, SimTime_t host2NicDelay_ns ) : 
+		m_nic( nic ), m_dbg(output), m_one( (long) 1 ), m_freeCmdSlots( numCmdSlots ),
     	m_nic2HostDelay_ns(nic2HostDelay_ns), m_host2NicDelay_ns(host2NicDelay_ns)
     {
         m_prefix = "@t:" + std::to_string(id) + ":Nic::Shmem::@p():@l ";
