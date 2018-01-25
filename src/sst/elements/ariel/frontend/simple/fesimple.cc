@@ -54,6 +54,7 @@
 
 #undef __STDC_FORMAT_MACROS
 
+
 using namespace SST::ArielComponent;
 
 KNOB<UINT32> TrapFunctionProfile(KNOB_MODE_WRITEONCE, "pintool",
@@ -605,10 +606,10 @@ void ariel_mlm_set_pool(int new_pool) {
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
 
-#ifdef ARIEL_DEBUG
-    fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu) \n", size, real_req_size,
-            thr);
-#endif
+// #ifdef ARIEL_DEBUG
+//     fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu) \n", size, real_req_size,
+//             thr);
+// #endif
 
     const uint32_t newDefaultPool = (uint32_t) new_pool;
 
@@ -621,13 +622,77 @@ void ariel_mlm_set_pool(int new_pool) {
 	default_pool = (UINT32) new_pool;
 }
 
+
+
+void* ariel_mmap_mlm(int fileID, size_t size, int level)
+{
+
+    THREADID currentThread = PIN_ThreadId();
+    UINT32 thr = (UINT32) currentThread;
+
+#ifdef ARIEL_DEBUG
+    fprintf(stderr, "%u: Perform a mmap_mlm from Ariel %zu, level %d\n",
+            thr, size, level);
+#endif
+
+    if(0 == size)
+    {
+        fprintf(stderr, "YOU REQUESTED ZERO BYTES\n");
+        void *bt_entries[64];
+        int entry_returned = backtrace(bt_entries, 64);
+        backtrace_symbols(bt_entries, entry_returned);
+        exit(-8);
+    }
+
+    size_t page_diff = size % ((size_t)4096);
+    size_t npages = size / ((size_t)4096);
+
+    size_t real_req_size = 4096 * (npages + ((page_diff == 0) ? 0 : 1));
+
+#ifdef ARIEL_DEBUG
+    fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu) \n",
+            size, real_req_size, thr);
+#endif
+
+    void* real_ptr = 0;
+    posix_memalign(&real_ptr, 4096, real_req_size);
+
+    const uint64_t virtualAddress = (uint64_t) real_ptr;
+    const uint64_t allocationLength = (uint64_t) real_req_size;
+    const uint32_t allocationLevel = (uint32_t) level;
+
+    ArielCommand ac;
+    ac.command = ARIEL_ISSUE_TLM_MMAP;
+    ac.mlm_mmap.vaddr = virtualAddress;
+    ac.mlm_mmap.alloc_len = allocationLength;
+    ac.mlm_mmap.alloc_level = allocationLevel;
+    ac.mlm_mmap.fileID = fileID;
+    std::cout<<"Before ******"<<std::endl;
+    std::cout<<"File ID at FESIMPLE IS : "<<ac.mlm_mmap.fileID<<std::endl;
+    std::cout<<"After ******"<<std::endl;
+
+    tunnel->writeMessage(thr, ac);
+
+#ifdef ARIEL_DEBUG
+    fprintf(stderr, "%u: Ariel mmap_mlm call allocates data at address: 0x%llx\n",
+            thr, (uint64_t) real_ptr);
+#endif
+
+    PIN_GetLock(&mainLock, thr);
+        allocated_list.push_back(real_ptr);
+    PIN_ReleaseLock(&mainLock);
+        return real_ptr;
+}
+
+
 void* ariel_mlm_malloc(size_t size, int level) {
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
 
 #ifdef ARIEL_DEBUG
-    fprintf(stderr, "%u, Perform a mlm_malloc from Ariel %zu, level %d\n", thr, size, level);
+    fprintf(stderr, "%u: Perform a mlm_malloc from Ariel %zu, level %d\n", thr, size, level);
 #endif
+
     if(0 == size) {
         fprintf(stderr, "YOU REQUESTED ZERO BYTES\n");
         void *bt_entries[64];
@@ -805,23 +870,23 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         fprintf(stderr,"Replacement complete.\n");
         return;
 #endif
-    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "mlm_malloc") {
+    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && RTN_Name(rtn) == "mlm_malloc") {
         // This means we want a special malloc to be used (needs a TLB map inside the virtual core)
         fprintf(stderr,"Identified routine: mlm_malloc, replacing with Ariel equivalent...\n");
         AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) ariel_mlm_malloc);
         fprintf(stderr,"Replacement complete. (%p)\n", ret);
         return;
-    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "mlm_free") {
+    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && RTN_Name(rtn) == "mlm_free") {
         fprintf(stderr,"Identified routine: mlm_free, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) ariel_mlm_free);
         fprintf(stderr, "Replacement complete.\n");
         return;
-    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "mlm_set_pool") {
+    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && RTN_Name(rtn) == "mlm_set_pool") {
         fprintf(stderr, "Identified routine: mlm_set_pool, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) ariel_mlm_set_pool);
         fprintf(stderr, "Replacement complete.\n");
         return;
-    } else if ((InterceptMultiLevelMemory.Value() > 0) && (
+    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && (
                 RTN_Name(rtn) == "malloc" || RTN_Name(rtn) == "_malloc" || RTN_Name(rtn) == "__libc_malloc" || RTN_Name(rtn) == "__libc_memalign" || RTN_Name(rtn) == "_gfortran_malloc")) {
     		
         fprintf(stderr, "Identified routine: malloc/_malloc, replacing with Ariel equivalent...\n");
@@ -839,7 +904,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
                        IARG_END);
 
         RTN_Close(rtn);
-    } else if ((InterceptMultiLevelMemory.Value() > 0) && (
+    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && (
                 RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free" || RTN_Name(rtn) == "__libc_free" || RTN_Name(rtn) == "_gfortran_free")) {
 
         fprintf(stderr, "Identified routine: free/_free, replacing with Ariel equivalent...\n");
@@ -861,7 +926,26 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_output_stats_buoy);
         fprintf(stderr, "Replacement complete\n");
         return;
+    } else if (RTN_Name(rtn) == "ariel_flushline" || RTN_Name(rtn) == "_ariel_flushline") {
+
+	return;
     }
+    else if (RTN_Name(rtn) == "ariel_fence" || RTN_Name(rtn) == "_ariel_fence") {
+
+	return;
+    }
+    else if (RTN_Name(rtn) == "ariel_mmap_mlm" || RTN_Name(rtn) == "_ariel_mmap_mlm") {
+	 AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) ariel_mmap_mlm);
+	return;
+    }
+    else if (RTN_Name(rtn) == "ariel_munmap_mlm" || RTN_Name(rtn) == "_ariel_munmap_mlm") {
+
+	return;
+    }
+
+
+
+
 
 }
 

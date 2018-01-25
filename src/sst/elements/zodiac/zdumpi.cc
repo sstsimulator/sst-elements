@@ -31,9 +31,9 @@ ZodiacDUMPITraceReader::ZodiacDUMPITraceReader(ComponentId_t id, Params& params)
     string msgiface = params.find<std::string>("msgapi");
 
     if ( msgiface == "" ) {
-        msgapi = new SST::Hermes::MP::Interface();
+        msgapi = new SST::Hermes::MP::Interface(this);
     } else {
-	msgapi = dynamic_cast<SST::Hermes::MP::Interface*>(loadSubcomponent(msgiface, this, params));
+	msgapi = dynamic_cast<SST::Hermes::MP::Interface*>(loadSubComponent(msgiface, this, params));
 
         if(NULL == msgapi) {
 		std::cerr << "Message API: " << msgiface << " could not be loaded." << std::endl;

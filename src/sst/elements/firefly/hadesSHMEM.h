@@ -32,6 +32,9 @@
 #include "shmem/alltoalls.h"
 #include "shmem/reduction.h"
 
+#define SHMEM_BASE      1<<0
+#define SHMEM_BARRIER   1<<1
+
 using namespace Hermes;
 
 namespace SST {
@@ -83,7 +86,7 @@ class HadesSHMEM : public Shmem::Interface
             size_t length;
         };
       public:
-        Heap( bool back = false ) : m_curAddr(0x1000), m_back(back) {}
+        Heap( ) : m_curAddr(0x1000) {}
 		~Heap() { 
             std::map<Hermes::Vaddr,Entry>::iterator iter = m_map.begin();
             for ( ; iter != m_map.end(); ++iter ) {
@@ -93,7 +96,7 @@ class HadesSHMEM : public Shmem::Interface
 				}
 			}
 		}
-        Hermes::MemAddr malloc( size_t n ) {
+        Hermes::MemAddr malloc( size_t n, bool backed ) {
             Hermes::MemAddr addr( Hermes::MemAddr::Shmem );
             addr.setSimVAddr( m_curAddr );
 
@@ -102,7 +105,7 @@ class HadesSHMEM : public Shmem::Interface
             m_curAddr += 64;
             m_curAddr &= ~(64-1);
 
-            if ( m_back ) {
+            if ( backed ) {
                 addr.setBacking( ::malloc(n) );
             }
             m_map[ addr.getSimVAddr() ] = Entry( addr, n );
@@ -132,7 +135,6 @@ class HadesSHMEM : public Shmem::Interface
         }
       private:
         size_t m_curAddr;
-        bool   m_back;
         std::map<Hermes::Vaddr, Entry > m_map;
     };
 
@@ -195,19 +197,21 @@ class HadesSHMEM : public Shmem::Interface
                         int logPE_stride, int PE_size, Vaddr pSync,
                         Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
 
-    virtual void malloc(Hermes::MemAddr*,size_t,Shmem::Callback);
-    virtual void malloc2(Hermes::MemAddr*,size_t,Shmem::Callback);
+    virtual void malloc(Hermes::MemAddr*,size_t,bool backed, Shmem::Callback);
+    virtual void malloc2(Hermes::MemAddr*,size_t,bool backed, Shmem::Callback);
     virtual void free(Hermes::MemAddr*,Shmem::Callback);
 
     virtual void getv(Hermes::Value&, Hermes::Vaddr src, int pe, Shmem::Callback);
     virtual void getv2(Hermes::Value&, Hermes::Vaddr src, int pe, Shmem::Callback);
+    virtual void get_nbi(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
     virtual void get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
-    virtual void get2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
+    virtual void get2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback);
 
     virtual void putv(Hermes::Vaddr dest, Hermes::Value&, int pe, Shmem::Callback);
     virtual void putv2(Hermes::Vaddr dest, Hermes::Value&, int pe, Shmem::Callback);
+    virtual void put_nbi(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
     virtual void put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
-    virtual void put2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
+    virtual void put2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback);
 
     virtual void putOp(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, 
             Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
@@ -235,10 +239,10 @@ class HadesSHMEM : public Shmem::Interface
         return m_heap->findBacking(addr);
     }
 
-  private:
-    virtual void malloc(Hermes::MemAddr*,size_t,Callback);
-    Output m_dbg;
     Output& dbg() { return m_dbg; }
+  private:
+    virtual void malloc(Hermes::MemAddr*,size_t,bool backed,Callback);
+    Output m_dbg;
     Hades*      m_os;
 
 	void delayEnter( Callback callback, SimTime_t delay = 0 );

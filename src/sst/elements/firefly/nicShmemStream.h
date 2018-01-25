@@ -15,9 +15,8 @@
 
 class ShmemStream : public StreamBase {
   public:
-    //typedef std::function<void()> Callback;
 
-    ShmemStream( Output&, FireflyNetworkEvent*, RecvMachine& );
+    ShmemStream( Output&, FireflyNetworkEvent*, RecvMachine&, int unit );
 
   private:
     void processAck( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );

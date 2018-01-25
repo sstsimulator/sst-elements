@@ -39,6 +39,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104054 clocks)
  c0.l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 105329; SumSQ.u64 = 174275; Count.u64 = 208105; 
+ c0.l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -163,6 +164,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104054 clocks)
  c1.l1cache.Inv_recv : Accumulator : Sum.u64 = 87; SumSQ.u64 = 87; Count.u64 = 87; 
  c1.l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 112632; SumSQ.u64 = 189200; Count.u64 = 208105; 
+ c1.l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -287,6 +289,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104054 clocks)
  n0.l2cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.MSHR_occupancy : Accumulator : Sum.u64 = 190552; SumSQ.u64 = 572538; Count.u64 = 207193; 
+ n0.l2cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n0.l2cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -476,6 +479,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104054 clocks)
  c2.l1cache.Inv_recv : Accumulator : Sum.u64 = 87; SumSQ.u64 = 87; Count.u64 = 87; 
  c2.l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c2.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 112450; SumSQ.u64 = 187002; Count.u64 = 208105; 
+ c2.l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c2.l1cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c2.l1cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c2.l1cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -600,6 +604,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104054 clocks)
  c3.l1cache.Inv_recv : Accumulator : Sum.u64 = 87; SumSQ.u64 = 87; Count.u64 = 87; 
  c3.l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c3.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 106907; SumSQ.u64 = 175737; Count.u64 = 208105; 
+ c3.l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c3.l1cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c3.l1cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c3.l1cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -724,6 +729,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104054 clocks)
  n1.l2cache.Inv_recv : Accumulator : Sum.u64 = 87; SumSQ.u64 = 87; Count.u64 = 87; 
  n1.l2cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.MSHR_occupancy : Accumulator : Sum.u64 = 194521; SumSQ.u64 = 595997; Count.u64 = 207387; 
+ n1.l2cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  n1.l2cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -913,6 +919,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104054 clocks)
  l3cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.MSHR_occupancy : Accumulator : Sum.u64 = 118436; SumSQ.u64 = 266796; Count.u64 = 207265; 
+ l3cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l3cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 

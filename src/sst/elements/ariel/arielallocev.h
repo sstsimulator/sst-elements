@@ -50,6 +50,36 @@ class ArielAllocateEvent : public ArielEvent {
 
 };
 
+class ArielMmapEvent : public ArielEvent {
+
+	public:
+    		ArielMmapEvent(uint32_t fileID, uint64_t vAddr, uint64_t len, uint32_t lev, uint64_t ip) :
+			FileID(fileID),
+			virtualAddress(vAddr),
+			allocateLength(len),
+			level(lev),
+			instPtr(ip) {
+
+		}
+
+		~ArielMmapEvent() {}
+		ArielEventType getEventType() const { return MMAP; }
+		uint64_t getVirtualAddress() const { return virtualAddress; }
+		uint64_t getAllocationLength() const { return allocateLength; }
+		uint32_t getAllocationLevel() const { return level; }
+    		uint64_t getInstructionPointer() const { return instPtr; }
+		uint32_t getFileID() const { return FileID; }
+
+	protected:
+		uint64_t virtualAddress;
+		uint64_t allocateLength;
+		uint32_t level;
+    		uint64_t instPtr;
+		uint32_t FileID;
+
+};
+
+
 }
 }
 

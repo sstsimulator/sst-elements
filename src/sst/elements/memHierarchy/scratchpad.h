@@ -47,7 +47,8 @@ public:
             {"size",                "(string) Size of the scratchpad in bytes (B), SI units ok", NULL},
             {"scratch_line_size",   "(string) Number of bytes in a scratch line with units. 'size' must be divisible by this number.", "64B"},
             {"memory_line_size",    "(string) Number of bytes in a remote memory line with units. Used to set base addresses for routing.", "64B"},
-            {"do_not_back",         "(bool) Whether to store actual data values in a backing store or not. Options: 0 (do not store), 1 (store). Do not unset unless simulation does not rely on correct data values!", "1"},
+            {"backing",             "(string) Type of backing store to use. Options: 'none' - no backing store (only use if simulation does not require correct memory values), 'malloc', or 'mmap'", "malloc"},\
+            {"backing_size_unit",   "(string) For 'malloc' backing stores, malloc granularity", "1MiB"},\
             {"memory_addr_offset",  "(uint) Amount to offset remote addresses by. Default is 'size' so that remote memory addresses start at 0", "size"},
             {"response_per_cycle",  "(uint) Maximum number of responses to return to processor each cycle. 0 is unlimited", "0"},
             {"backendConvertor",    "(string) Backend convertor to use for the scratchpad", "memHierarchy.scratchpadBackendConvertor"},
@@ -91,7 +92,6 @@ private:
     // Parameters - scratchpad
     uint64_t scratchSize_;      // Size of the total scratchpad in bytes - any address above this is assumed to address remote memory
     uint64_t scratchLineSize_;  // Size of each line in the scratchpad in bytes
-    bool doNotBack_;            // For very large scratchpads where data doesn't matter
     
     // Parameters - memory
     uint64_t remoteAddrOffset_;   // Offset for remote addresses, defaults to scratchSize (i.e., CPU addr scratchSize = mem addr 0)

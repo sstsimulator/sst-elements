@@ -49,13 +49,13 @@ void Nic::RecvMachine::state_0( FireflyNetworkEvent* ev )
         MsgHdr& hdr = *(MsgHdr*) ev->bufPtr();
         switch ( hdr.op ) {
           case MsgHdr::Msg:
-            m_streamMap[ev->src] = new MsgStream( m_dbg, ev, *this );
+            m_streamMap[ev->src] = new MsgStream( m_dbg, ev, *this, m_unit );
             break;
           case MsgHdr::Rdma:
-            m_streamMap[ev->src] = new RdmaStream( m_dbg, ev, *this );
+            m_streamMap[ev->src] = new RdmaStream( m_dbg, ev, *this, m_unit );
             break;
           case MsgHdr::Shmem:
-            m_streamMap[ev->src] = new ShmemStream( m_dbg, ev, *this );
+            m_streamMap[ev->src] = new ShmemStream( m_dbg, ev, *this, m_unit );
             break;
         }
     } else {
@@ -67,10 +67,7 @@ void Nic::RecvMachine::state_0( FireflyNetworkEvent* ev )
 void Nic::RecvMachine::state_2( FireflyNetworkEvent* ev )
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
-    processNeedRecv( 
-        ev,
-        std::bind( &Nic::RecvMachine::state_0, this, ev )
-    );
+    processNeedRecv( ev );
 }
 
 void Nic::RecvMachine::checkNetwork( )
@@ -99,7 +96,7 @@ void Nic::RecvMachine::state_move_0( FireflyNetworkEvent* event, StreamBase* str
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
 				"copyIn %lu bytes %s\n", tmp - event->bufSize(), ret ? "stream is done":"");
 
-    m_nic.dmaWrite( vec,
+    m_nic.dmaWrite( stream->getUnit(), vec,
             std::bind( &Nic::RecvMachine::state_move_1, this, event, ret, stream ) ); 
 
 	// don't put code after this, the callback may be called serially
@@ -120,6 +117,7 @@ void Nic::RecvMachine::state_move_1( FireflyNetworkEvent* event, bool done, Stre
 
         delete m_streamMap[src];
         m_streamMap.erase(src);
+        m_unit = m_nic.allocNicUnit();
 
         if ( ! event->bufEmpty() ) {
             m_dbg.fatal(CALL_INFO,-1,
@@ -134,7 +132,11 @@ void Nic::RecvMachine::state_move_1( FireflyNetworkEvent* event, bool done, Stre
         delete event;
     }
 
-    checkNetwork();
+    if ( m_unit > -1 ) {
+        checkNetwork();
+    } else {
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"no NicUnits, blocking\n");
+    }
 }
 
 void Nic::RecvMachine::state_move_2( FireflyNetworkEvent* event )
@@ -142,10 +144,36 @@ void Nic::RecvMachine::state_move_2( FireflyNetworkEvent* event )
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
     delete m_streamMap[event->src];
     m_streamMap.erase(event->src);
+	m_unit = m_nic.allocNicUnit();
+
     delete event;
-    checkNetwork();
+
+    if ( m_unit > -1 ) {
+        checkNetwork();
+    } else {
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"no NicUnits, blocking\n");
+	}
 }
 
+void Nic::RecvMachine::state_move_3( FireflyNetworkEvent* event )
+{
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
+    m_streamMap.erase(event->src);
+	m_unit = m_nic.allocNicUnit();
+
+    if ( m_unit > -1 ) {
+        checkNetwork();
+    } else {
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"no NicUnits, blocking\n");
+    }
+}
+
+void Nic::RecvMachine::state_move_4( FireflyNetworkEvent* event, StreamBase* stream )
+{
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
+    delete stream;
+    delete event;
+}
 
 void Nic::RecvMachine::printStatus( Output& out ) {
 #ifdef NIC_RECV_DEBUG

@@ -172,7 +172,7 @@ comp_memory.addParams({
       "backend.mem_size" : "512MiB",
       "clock" : "1GHz",
       "max_requests_per_cycle" : 4,
-      "do_not_back" : 1,
+      "backing" : "none",
       "backend" : "memHierarchy.goblinHMCSim",
       "backendConvertor" : "memHierarchy.extMemBackendConvertor",
       "backend.device_count" : 1,

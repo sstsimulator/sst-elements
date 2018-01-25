@@ -14,8 +14,10 @@
 // distribution.
 
 #include <sst_config.h>
-
+#include <../Opal/Opal_Event.h>
 #include "arielcore.h"
+
+using namespace SST::OpalComponent;
 
 #define ARIEL_CORE_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
 
@@ -39,6 +41,8 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	cacheLineSize = cacheLineSz;
 	owner = own;
 	memmgr = memMgr;
+
+	opal_enabled = false;
 
 	coreQ = new std::queue<ArielEvent*>();
 	pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
@@ -106,6 +110,13 @@ ArielCore::~ArielCore() {
 	if(enableTracing && traceGen) {
 		delete traceGen;
 	}
+}
+
+void ArielCore::setOpalLink(Link * opallink)
+{
+
+OpalLink = opallink;
+
 }
 
 void ArielCore::setCacheLink(SimpleMem* newLink, Link* newAllocLink) {
@@ -231,6 +242,14 @@ void ArielCore::createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t le
 				vAddr, length, level, instPtr));
 }
 
+void ArielCore::createMmapEvent(uint32_t fileID, uint64_t vAddr, uint64_t length, uint32_t level, uint64_t instPtr) {
+	ArielMmapEvent* ev = new ArielMmapEvent(fileID, vAddr, length, level, instPtr);
+	coreQ->push(ev);
+
+	ARIEL_CORE_VERBOSE(2, output->verbose(CALL_INFO, 2, 0, "Generated an mmap event, vAddr(map)=%" PRIu64 ", length=%" PRIu64 " in level %" PRIu32 " from IP %" PRIx64 "\n",
+				vAddr, length, level, instPtr));
+}
+
 void ArielCore::createFreeEvent(uint64_t vAddr) {
 	ArielFreeEvent* ev = new ArielFreeEvent(vAddr);
 	coreQ->push(ev);
@@ -342,7 +361,12 @@ bool ArielCore::refillQueue() {
 
 			case ARIEL_NOOP:
 				createNoOpEvent();
+				break;	
+
+			case ARIEL_ISSUE_TLM_MMAP:
+				createMmapEvent(ac.mlm_mmap.fileID, ac.mlm_mmap.vaddr, ac.mlm_mmap.alloc_len, ac.mlm_mmap.alloc_level, ac.instPtr);
 				break;
+
 
 			case ARIEL_ISSUE_TLM_MAP:
 				createAllocateEvent(ac.mlm_map.vaddr, ac.mlm_map.alloc_len, ac.mlm_map.alloc_level, ac.instPtr);
@@ -525,9 +549,39 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 	statWriteRequestSizes->addData(writeLength);
 }
 
+
+
+void ArielCore::handleMmapEvent(ArielMmapEvent* aEv) {
+
+       if(opal_enabled)
+        {
+                 OpalEvent * tse = new OpalEvent(OpalComponent::EventType::MMAP);
+                 tse->hint = aEv->getAllocationLevel();
+		 tse->fileID = aEv->getFileID();
+		 std::cout<<"Before sending to Opal.. file ID is : "<<tse->fileID<<std::endl;
+
+                 tse->setResp(aEv->getVirtualAddress(), 0, aEv->getAllocationLength() );
+                 OpalLink->send(tse);
+
+        }
+
+
+}
+
 void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
 	output->verbose(CALL_INFO, 2, 0, "Handling a memory allocation event, vAddr=%" PRIu64 ", length=%" PRIu64 ", at level=%" PRIu32 " with malloc ID=%" PRIu64 "\n",
 			aEv->getVirtualAddress(), aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getInstructionPointer());
+
+	// If Opal is enabled, make sure you pass these requests to it
+	if(opal_enabled)
+	{
+		 OpalEvent * tse = new OpalEvent(OpalComponent::EventType::HINT);
+		 tse->hint = aEv->getAllocationLevel();
+                 tse->setResp(aEv->getVirtualAddress(), 0, aEv->getAllocationLength() );
+		 OpalLink->send(tse);
+
+	}
+
 
 	if (allocLink) {
 		output->verbose(CALL_INFO, 2, 0, " Sending memory allocation event to allocate monitor\n");
@@ -634,6 +688,12 @@ bool ArielCore::processNextEvent() {
 			ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is MALLOC\n", coreID));
 			removeEvent = true;
 			handleAllocationEvent(dynamic_cast<ArielAllocateEvent*>(nextEvent));
+			break;
+
+		case MMAP:
+			ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is MMAP\n", coreID));
+			removeEvent = true;
+			handleMmapEvent(dynamic_cast<ArielMmapEvent*>(nextEvent));
 			break;
 
 		case CORE_EXIT:

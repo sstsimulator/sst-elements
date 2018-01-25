@@ -1,11 +1,14 @@
    class MemOp {
-	  public:
-        enum Op { NotInit, BusLoad, BusStore, LocalLoad, LocalStore, HostLoad, HostStore, HostCopy, BusDmaToHost, BusDmaFromHost };
 
-        MemOp( ) : addr(0), length(0), type(NotInit), offset(0) {}
-        MemOp( Hermes::Vaddr addr, size_t length, Op op) : addr(addr), length(length), type(op), offset(0) {}
-        MemOp( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Op op) : 
-				dest(dest), src(src), length(length), type(op), offset(0), chunk(0)  {
+        typedef std::function<void()> Callback;
+
+	  public:
+        enum Op { NotInit, BusLoad, BusStore, LocalLoad, LocalStore, HostLoad, HostStore, HostCopy, BusDmaToHost, BusDmaFromHost, HostBusWrite, HostBusRead };
+
+        MemOp( ) : addr(0), length(0), type(NotInit), offset(0), callback(NULL) {}
+        MemOp( Hermes::Vaddr addr, size_t length, Op op, Callback callback = NULL ) : addr(addr), length(length), type(op), offset(0), callback(callback) {}
+        MemOp( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Op op, Callback callback = NULL ) : 
+				dest(dest), src(src), length(length), type(op), offset(0), chunk(0), callback(callback)  {
 			//printf("%s() dest=%#lx src=%#lx length=%lu\n",__func__,dest,src,length);
 		}
 
@@ -41,6 +44,9 @@
 			}
 		}
 
+		bool isWrite() {
+			return type == HostBusWrite;
+		}
 		bool isLoad() {
 			if ( HostCopy == type ) {
 				if ( 1 == chunk % 2 ) {
@@ -86,12 +92,14 @@
         Hermes::Vaddr addr;
         Hermes::Vaddr src;
         Hermes::Vaddr dest;
+        Callback callback;
 
         size_t   length;
 		size_t offset;
 
         const char* getName( ) {
             switch( type ) {
+            case NotInit: return "NotInit";
             case BusLoad: return "BusLoad";
             case BusStore: return "BusStore";
             case LocalLoad: return "LocalLoad";
@@ -101,6 +109,8 @@
             case HostCopy: return "HostCopy";
             case BusDmaToHost: return "BusDmaToHost";
             case BusDmaFromHost: return "BusDmaFromHost";
+            case HostBusWrite: return "HostBusWrite";
+            case HostBusRead: return "HostBusRead";
             }
         }
      private: 

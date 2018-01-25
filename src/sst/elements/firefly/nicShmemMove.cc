@@ -24,7 +24,6 @@ using namespace SST::Firefly;
 void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int vc, int numBytes, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
 
-    assert( m_ptr );
     size_t space = numBytes - event.bufSize(); 
     size_t len = (m_length - m_offset) > space ? space : (m_length - m_offset); 
 
@@ -33,7 +32,11 @@ void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int vc, int numBytes, FireflyN
 
 	vec.push_back( MemOp( m_addr, len, MemOp::Op::BusDmaFromHost ));
 
-    event.bufAppend( m_ptr + m_offset ,len );
+	if ( m_ptr ) {
+    	event.bufAppend( m_ptr + m_offset ,len );
+	} else {
+    	event.bufAppend( NULL, len );
+	}
 
     m_offset += len; 
 }
@@ -95,9 +98,13 @@ bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std
         memcpy(  m_ptr + m_offset, event.bufPtr(), length);
     }
 
-    m_shmem->checkWaitOps( m_core, m_addr + m_offset, length, true );
-
-	vec.push_back( MemOp( m_addr, length, MemOp::Op::BusDmaToHost ));
+	size_t tmpOffset = m_addr + m_offset;
+	int tmpCore = m_core;
+	vec.push_back( MemOp( m_addr, length, MemOp::Op::BusDmaToHost, 
+		[=] () {
+			m_shmem->checkWaitOps( tmpCore, tmpOffset, length );
+		}
+	)); 
 
     event.bufPop(length);
     m_offset += length;
@@ -118,8 +125,6 @@ bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, s
         Hermes::Value src( m_dataType, event.bufPtr() );
         Hermes::Value dest( m_dataType, m_ptr + m_offset );
 
-		vec.push_back( MemOp( m_addr, dataLength, MemOp::Op::BusLoad ));
-		vec.push_back( MemOp( m_addr, dataLength, MemOp::Op::BusStore ));
 #if 0
         std::stringstream tmp1;
         tmp1 << src;
@@ -160,7 +165,15 @@ bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, s
                 m_op,tmp1.str().c_str(), tmp2.str().c_str(), tmp3.str().c_str());
 #endif
 
-        m_shmem->checkWaitOps( m_core, m_addr + m_offset, dataLength, true );
+		size_t tmpOffset = m_addr + m_offset; 
+		int tmpCore = m_core;
+		vec.push_back( MemOp( m_addr, dataLength, MemOp::Op::BusLoad ));
+		vec.push_back( MemOp( m_addr, dataLength, MemOp::Op::BusStore,
+			[=]() {
+        		m_shmem->checkWaitOps( tmpCore, tmpOffset, dataLength );
+			}
+ 		));
+
         event.bufPop(dataLength);
         m_offset += dataLength;
     }
@@ -177,7 +190,9 @@ bool Nic::ShmemRecvMoveValue::copyIn( Output& dbg, FireflyNetworkEvent& event, s
     dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Shmem: event.bufSize()=%lu\n",event.bufSize());
 
 	vec.push_back( MemOp( 0, length, MemOp::Op::LocalStore ));
-    memcpy( m_value.getPtr(), event.bufPtr(), length);
+    if ( m_value.getPtr() ) {
+        memcpy( m_value.getPtr(), event.bufPtr(), length);
+    }
 
     event.bufPop(length);
 

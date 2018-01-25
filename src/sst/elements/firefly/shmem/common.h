@@ -78,6 +78,8 @@ class ShmemCollective {
     }    
 #endif
 
+    std::string m_prefix;
+    const char* prefix() { return m_prefix.c_str(); }
     HadesSHMEM&     m_api;
     ShmemCommon&    m_common;
 

@@ -33,7 +33,7 @@ comp_l1cache.addParams({
       "prefetcher" : "cassini.StridePrefetcher",
       "L1" : "1",
       "cache_size" : "8KB",
-      "do_not_back" : 1
+      "backing" : "none",
 })
 
 # Enable statistics outputs
@@ -46,7 +46,7 @@ nvm_mem_params = {
    # "network_bw" : mesh_link_bw,
    # "max_requests_per_cycle" : 1,
     "backend.mem_size" : "1024MB", 
-    "do_not_back" : 1,
+    "backing" : "none",
     "backend" : "memHierarchy.Messier",
     "backendConvertor.backend" : "memHierarchy.Messier",
     "backend.clock" : "1024 MHz",

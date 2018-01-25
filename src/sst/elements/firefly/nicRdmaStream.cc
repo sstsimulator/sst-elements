@@ -21,8 +21,8 @@ using namespace SST;
 using namespace SST::Firefly;
 
 Nic::RecvMachine::RdmaStream::RdmaStream( Output& output, FireflyNetworkEvent* ev,
-       RecvMachine& rm  ) : 
-    StreamBase( output, rm )
+       RecvMachine& rm, int unit ) : 
+    StreamBase( output, rm, unit )
 {
     m_hdr = *(MsgHdr*) ev->bufPtr();
     RdmaMsgHdr& rdmaHdr = *(RdmaMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
@@ -35,7 +35,7 @@ Nic::RecvMachine::RdmaStream::RdmaStream( Output& output, FireflyNetworkEvent* e
       case RdmaMsgHdr::Put:
       case RdmaMsgHdr::GetResp:
         {
-          m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"Put Op\n");
+          m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"%s Op\n", rdmaHdr.op == RdmaMsgHdr::Put ? "Put":"GetResp");
 
           m_recvEntry = m_rm.nic().findPut( ev->src, m_hdr, rdmaHdr );
           ev->bufPop(sizeof(MsgHdr) + sizeof(rdmaHdr) );

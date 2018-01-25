@@ -97,6 +97,12 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     /* Construct cache structures */
     cacheArray_ = createCacheArray(params);
 
+    /* Banks */
+    unsigned int banks = params.find<unsigned int>("banks", 0);
+    bankStatus_.resize(banks, false);
+    bankConflictBuffer_.resize(banks);
+    cacheArray_->setBanked(banks);
+
     /* Create clock, deadlock timeout, etc. */
     createClock(params);
     
@@ -363,7 +369,11 @@ void Cache::createPrefetcher(Params &params, int mshrSize) {
     listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
     
     // Configure self link for prefetch/listener events
-    prefetchLink_ = configureSelfLink("Self", "50ps", new Event::Handler<Cache>(this, &Cache::processPrefetchEvent));
+    // Delay prefetches by a cycle TODO parameterize - let user specify prefetch delay
+    std::string frequency = params.find<std::string>("cache_frequency", "", found);
+    prefetchDelay_ = params.find<SimTime_t>("prefetch_delay_cycles", 1);
+
+    prefetchLink_ = configureSelfLink("Self", frequency, new Event::Handler<Cache>(this, &Cache::processPrefetchEvent));
 }
     
 
@@ -594,4 +604,5 @@ void Cache::registerStatistics() {
     statInv_recv                    = registerStatistic<uint64_t>("Inv_recv");
     statNACK_recv                   = registerStatistic<uint64_t>("NACK_recv");
     statMSHROccupancy               = registerStatistic<uint64_t>("MSHR_occupancy");
+    statBankConflicts               = registerStatistic<uint64_t>("Bank_conflicts");
 }
