@@ -21,6 +21,7 @@
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
 
+#include <algorithm>
 #include <sstream>
 #include <string>
 
@@ -588,7 +589,7 @@ noc_mesh::init(unsigned int phase)
             if ( (1 << i) & endpoint_locations ) {
                 nie = new NocInitEvent();
                 nie->command = NocInitEvent::REPORT_FLIT_SIZE;
-                nie->int_value = flit_size;
+                nie->ua_value = UnitAlgebra("1b") * flit_size;
                 ports[i]->sendInitData(nie);
             }
         }
