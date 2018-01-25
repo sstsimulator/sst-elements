@@ -140,7 +140,13 @@ void LinkControl::init(unsigned int phase)
         ev = rtr_link->recvInitData();
         if ( NULL == ev ) break;
         init_ev = static_cast<NocInitEvent*>(ev);
-        flit_size = init_ev->int_value;
+        UnitAlgebra flit_size_ua = init_ev->ua_value;
+        flit_size = flit_size_ua.getRoundedValue();
+        
+        UnitAlgebra link_clock = link_bw / flit_size_ua;
+        
+        TimeConverter* tc = getTimeConverter(link_clock);
+        output_timing->setDefaultTimeBase(tc);
 
         for ( int i = 0; i < req_vns; ++i ) {
             outbuf_credits[i] = outbuf_size.getRoundedValue() / flit_size;
