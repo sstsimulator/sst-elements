@@ -549,10 +549,10 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 			if(emulate_faults)
 				if((*PTE).find(addr/4096)==(*PTE).end())
-					{
-					std::cout<<"******* Major issue is in Page Table Walker **** "<<std::endl;
-					std::cout<<"The address is "<<hex<<addr/4096<<std::endl;
-					}
+                        {
+					std::cout << "******* Major issue is in Page Table Walker **** " << std::endl;
+					std::cout << "The address is "<< hex << addr << " (" << addr / 4096 << ")" << std::endl;
+                        }
 			(*service_back_size)[st->first]=ready_by_size[st->first];
 
 

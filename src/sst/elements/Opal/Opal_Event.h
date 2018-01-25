@@ -15,6 +15,9 @@
 /* Author: Amro Awad
  * E-mail: aawad@sandia.gov
  */
+/* Author: Vamsee Reddy Kommareddy
+ * E-mail: vamseereddy@knights.ucf.edu
+ */
 
 #ifndef _H_SST_OPAL_EVENT
 #define _H_SST_OPAL_EVENT
@@ -35,7 +38,8 @@ using namespace SST;
 namespace SST{ namespace OpalComponent{
 
 	enum EventType { HINT, MMAP, REQUEST, RESPONSE, UNMAP, UMAPACK, SHOOTDOWN, SDACK};
-
+	enum MemType { LOCAL, SHARED };
+	enum MemTech { DRAM, NVM, HBM, HMC, SCRATCHPAD, BURSTBUFFER};
 //	enum HintType { DRAM, NVM, HBM, HMC, SCRATCHPAD, BURSTBUFFER, };
 
 // **************** Important *****************
@@ -57,15 +61,23 @@ namespace SST{ namespace OpalComponent{
 			long long int address;
 			long long int paddress;
 			int size;
+			int nodeId;
+			MemType memType;
 
 		public:
 
 			OpalEvent(EventType y) : SST::Event()
-		{ ev = y;}
+		{ ev = y; memType = SST::OpalComponent::MemType::LOCAL;}
 
 			void setType(int ev1) { ev = static_cast<EventType>(ev1);}
 			int getType() { return ev; }
 			
+			void setMemType(int mtype) { memType = static_cast<MemType>(mtype);}
+			MemType getMemType() { return memType; }
+
+			void setNodeId(int id) { nodeId = id; }
+			int getNodeId() { return nodeId; }
+
 			int hint;
 			int fileID;
 			void setResp(long long int add, long long int padd, int sz) { address = add; paddress = padd; size = sz;}
