@@ -60,6 +60,9 @@ namespace SST
 				Opal( SST::ComponentId_t id, SST::Params& params); 
 				void setup()  { };
 				void finish() {};
+				bool getAllocationMemType( int node );
+				void allocLocalMemPool( int node, long long int vAddress, int size );
+				void allocSharedMemPool( int node, long long int vAddress, int size );
 				void handleEvent(SST::Event* event) {};
 				void handleRequest( SST::Event* e );
 				bool tick(SST::Cycle_t x);
@@ -141,8 +144,11 @@ namespace SST
 					//local memory - core number and its pool
 					std::map<int, Pool*> local_mem;
 
-					//allocation of memory pool history
-					std::map<int, int> allochist;
+					//next allocation memory (local/shared)
+					std::map<int, int> nextallocmem;
+
+					//memory allocation policy. 0:proportional  1: alternate  2: round robin
+					uint32_t allocpolicy;
 
 					unsigned int latency; // The page fault latency/ the time spent by Opal to service a memory allocation request
 
