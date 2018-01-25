@@ -47,11 +47,11 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	cores_per_node = (uint32_t) params.find<uint32_t>("cores_per_node", 1);
 	num_nodes = (uint32_t) params.find<uint32_t>("num_nodes", 1);
 	latency = (uint32_t) params.find<uint32_t>("latency", 1);
+	allocpolicy = (uint32_t) params.find<uint32_t>("allocation_policy", 0);
 
 	Pool *pool;
 	char* buffer = (char*) malloc(sizeof(char) * 256);
 
-	/* shared memory */
 	/* shared memory */
 	num_shared_mempools = params.find<uint32_t>("shared_mempools", 0);
 	std::cerr << "Number of Shared Memory Pools: "<< num_shared_mempools << endl;
@@ -77,7 +77,7 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		pool = new Pool(memPoolParams);
 		pool->set_memPool_type(SST::OpalComponent::MemType::LOCAL);
 		local_mem[i] = pool;
-		allochist[i] = 0; // 0 for local memory
+		nextallocmem[i] = 0; // 0 for local memory
 		std::cerr << "Local Memory Pool: " << buffer;
 	}
 
@@ -108,7 +108,89 @@ Opal::Opal() : Component(-1)
 	//
 }
 
+//shared or local
+bool Opal::getAllocationMemType( int node )
+{
+	bool memType = false;
 
+	switch(allocpolicy)
+	{
+	case 0:
+		//proportional allocation policy
+		memType = (nextallocmem[node] == 0) ? false : true;
+		nextallocmem[node] = ( nextallocmem[node] + 1 ) % ( num_shared_mempools + 1 );
+		break;
+
+	case 1:
+		//alternate allocation policy
+		memType = (nextallocmem[node] == 0) ? false : true;
+		nextallocmem[node] = ( nextallocmem[node] + 1 ) % 2;
+		break;
+
+	case 2:
+		//round robin allocation policy
+		break;
+
+	default:
+		//proportional allocation policy
+		memType = (nextallocmem[node] == 0) ? false : true;
+		nextallocmem[node] = ( nextallocmem[node] + 1 ) % ( num_shared_mempools + 1 );
+		break;
+
+	}
+
+	return memType;
+}
+
+void Opal::allocLocalMemPool(int node, long long int vAddress, int size )
+{
+	Pool *mempool = local_mem[node];
+	MemPoolResponse pool_resp = mempool->allocate_frames(size);
+
+	if(pool_resp.pAddress != -1) {
+		//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Allocate physical memory %" PRIu64 " for virtual address %" PRIu64 " in the local memory with %" PRIu32 " frames\n",
+		//		getName().c_str(), node, pool_resp.pAddress, ev->getAddress, pool_resp.num_frames);
+		OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
+		tse->setResp(vAddress, pool_resp.pAddress, pool_resp.num_frames*pool_resp.frame_size);
+		Handlers[node].singLink->send(latency, tse);
+	}
+	else{
+		//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Could not allocate memory for virtual address %" PRIu64 " from Local memory \n",
+		//		getName().c_str(), node, ev->getAddress,);
+		OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
+		tse->setResp(vAddress, -1, 0);
+		Handlers[node].singLink->send(latency, tse);
+	}
+}
+
+void Opal::allocSharedMemPool(int node, long long int vAddress, int size )
+{
+	Pool *mempool;
+	MemPoolResponse pool_resp;
+	pool_resp.pAddress = -1;
+
+	for (std::map<int, Pool*>::iterator it = shared_mem.begin(); it != shared_mem.end(); ++it) {
+		mempool = it->second;
+		pool_resp = mempool->allocate_frames(size);
+
+		if(pool_resp.pAddress != -1) {
+			//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Allocate physical memory %" PRIu64 " for virtual address %" PRIu64 " in the shared memory pool %" PRIu32 "with %" PRIu32 " frames\n",
+			//		getName().c_str(), node, pool_resp.pAddress, vAddress, *it, pool_resp.num_frames);
+			OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
+			tse->setResp(vAddress, pool_resp.pAddress, pool_resp.num_frames*pool_resp.frame_size);
+			Handlers[node].singLink->send(latency, tse);
+			break;
+		}
+	}
+
+	if(pool_resp.pAddress == -1) {
+		//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Could not allocate memory for virtual address %" PRIu64 " from any shared memory pool \n",
+		//		getName().c_str(), node, vAddress);
+		OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
+		tse->setResp(vAddress, -1, 0);
+		Handlers[node].singLink->send(latency, tse);
+	}
+}
 
 bool Opal::tick(SST::Cycle_t x)
 {
@@ -117,7 +199,6 @@ bool Opal::tick(SST::Cycle_t x)
 
 	while(!requestQ.empty()) {
 		if(inst_served < max_inst) {
-			MemPoolResponse pool_resp;
 
 			OpalEvent *ev = requestQ.front();
 			int node_num = ev->getNodeId();
@@ -138,56 +219,16 @@ bool Opal::tick(SST::Cycle_t x)
 			case SST::OpalComponent::EventType::REQUEST:
 			{
 
-				Pool*  mempool;
-
-				if( !allochist[node_num] )
+				int memType = getAllocationMemType(node_num);
+				if( !memType )
 				{
-					mempool = local_mem[node_num];
-					pool_resp = mempool->allocate_frames(ev->getSize());
-
-					//if the local memory allocates the required memory then its not required to allocate from the shared memory. If not the memory is allocated form the shared memory.
-					if(pool_resp.pAddress != -1) {
-						//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Allocate physical memory %" PRIu64 " for virtual address %" PRIu64 " in the local memory with %" PRIu32 " frames\n",
-						//		getName().c_str(), node_num, pool_resp.pAddress, ev->getAddress, pool_resp.num_frames);
-						OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
-						tse->setResp(ev->getAddress(), pool_resp.pAddress, pool_resp.num_frames*pool_resp.frame_size);
-						Handlers[node_num].singLink->send(latency, tse);
-					}
-					else{
-						//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Could not allocate memory for virtual address %" PRIu64 " from Local memory \n",
-						//		getName().c_str(), node_num, ev->getAddress,);
-						OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
-						tse->setResp(ev->getAddress(), -1, 0);
-						Handlers[node_num].singLink->send(latency, tse);
-					}
+					allocLocalMemPool( node_num, ev->getAddress(), ev->getSize() );
 				}
 				else
 				{
-					pool_resp.pAddress = -1;
-					for (std::map<int, Pool*>::iterator it = shared_mem.begin(); it != shared_mem.end(); ++it) {
-						mempool = it->second;
-						pool_resp = mempool->allocate_frames(ev->getSize());
-
-						if(pool_resp.pAddress != -1) {
-							//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Allocate physical memory %" PRIu64 " for virtual address %" PRIu64 " in the shared memory pool %" PRIu32 "with %" PRIu32 " frames\n",
-							//		getName().c_str(), node_num, pool_resp.pAddress, ev->getAddress, *it, pool_resp.num_frames);
-							OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
-							tse->setResp(ev->getAddress(), pool_resp.pAddress, pool_resp.num_frames*pool_resp.frame_size);
-							Handlers[node_num].singLink->send(latency, tse);
-							break;
-						}
-					}
-
-					if(pool_resp.pAddress == -1) {
-						//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Could not allocate memory for virtual address %" PRIu64 " from any shared memory pool \n",
-						//		getName().c_str(), node_num, ev->getAddress,);
-						OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
-						tse->setResp(ev->getAddress(), -1, 0);
-						Handlers[node_num].singLink->send(latency, tse);
-					}
-
+					allocSharedMemPool( node_num, ev->getAddress(), ev->getSize() );
 				}
-				allochist[node_num] = (allochist[node_num] + 1) % ( num_shared_mempools + 1 );
+
 
 			}
 			break;
