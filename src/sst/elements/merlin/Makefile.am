@@ -60,6 +60,15 @@ libmerlin_la_SOURCES = \
 	pymodule.c \
 	pymerlin.py
 
+EXTRA_DIST = \
+	tests/dragon_128_test.py \
+	tests/dragon_72_test.py \
+	tests/fattree_128_test.py \
+	tests/fattree_256_test.py \
+	tests/torus_128_test.py \
+	tests/torus_5_trafficgen.py \
+	tests/torus_64_test.py
+
 sstdir = $(includedir)/sst/elements/merlin
 nobase_sst_HEADERS = \
 	linkControl.h \

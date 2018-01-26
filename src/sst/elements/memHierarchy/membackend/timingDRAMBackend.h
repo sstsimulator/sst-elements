@@ -13,6 +13,8 @@
 #ifndef _H_SST_MEMH_TIMING_DRAM_BACKEND
 #define _H_SST_MEMH_TIMING_DRAM_BACKEND
 
+#include <queue>
+
 #include "membackend/simpleMemBackend.h"
 #include "membackend/timingAddrMapper.h"
 #include "membackend/timingTransaction.h"
@@ -136,9 +138,6 @@ private:
         }
 
         ~Cmd() {
-            if ( m_trans ) {
-                m_trans->setRetired();
-            }
             m_bank->clearLastCmd();
         }
 
@@ -201,7 +200,7 @@ private:
         unsigned getRank()      { return m_bank->getRank(); }
         unsigned getBank()      { return m_bank->getBank(); }
         unsigned getRow()       { return m_row; }
-
+        Transaction* getTrans() { return m_trans; }
       private:
 
         Bank*           m_bank;
@@ -258,18 +257,17 @@ private:
 
         bool issue( SimTime_t createTime, ReqId id, Addr addr, bool isWrite, unsigned numBytes ) {
 
-            if ( m_maxPendingTrans == m_pendingTrans.size() ) {
+            if ( m_maxPendingTrans == m_pendingCount ) {
                 return false;
             } 
 
             unsigned rank = m_mapper->getRank( addr);
 
-            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%llu rank=%d addr=%#llx\n", id, rank, addr );
+            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%llu rank=%d addr=%#llx, createTime=%" PRIu64 "\n", id, rank, addr, createTime );
 
             Transaction* trans = new Transaction( createTime, id, addr, isWrite, numBytes, m_mapper->getBank(addr),
                                                 m_mapper->getRow(addr) );
-            m_pendingTrans.push_back( trans );
-
+            m_pendingCount++;
             m_ranks[ rank ].pushTrans( trans );
             return true;
         }
@@ -289,9 +287,10 @@ private:
 
         unsigned            m_dataBusAvailCycle; 
         unsigned            m_maxPendingTrans;
+        unsigned            m_pendingCount;
 
         std::list<Cmd*>     m_issuedCmds;
-        std::deque<Transaction*> m_pendingTrans;
+        std::queue<Transaction*> m_retiredTrans;
     };
 
     static bool m_printConfig;

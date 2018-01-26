@@ -76,7 +76,7 @@ void Nic::SendMachine::state_1( SendEntryBase* entry, FireflyNetworkEvent* ev )
 
     entry->copyOut( m_dbg, m_vc, m_packetSizeInBytes, *ev, *vec ); 
 
-    m_nic.dmaRead( vec,
+    m_nic.dmaRead( m_unit, vec,
 		std::bind( &Nic::SendMachine::state_2, this, entry, ev )
     ); 
 	// don't put code after this, the callback may be called serially
@@ -94,15 +94,15 @@ void Nic::SendMachine::state_2( SendEntryBase* entry, FireflyNetworkEvent *ev )
     req->givePayload( ev );
 
     if ( (m_nic.m_tracedPkt == m_packetId || m_nic.m_tracedPkt == -2) 
-                    && m_nic.m_tracedNode ==  m_nic.getNodeId() ) 
+                   && m_nic.m_tracedNode ==  m_nic.getNodeId() ) 
     {
         req->setTraceType( SimpleNetwork::Request::FULL );
         req->setTraceID( m_packetId );
+        ++m_packetId;
     }
-    ++m_packetId;
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE,
-					"dst=%" PRIu64 " sending event with %zu bytes\n",req->dest,
-                                                        ev->bufSize());
+					"dst=%" PRIu64 " sending event with %zu bytes packetId=%lu\n",req->dest,
+                                                        ev->bufSize(), (uint64_t)m_packetId);
     bool sent = m_nic.m_linkControl->send( req, m_vc );
     assert( sent );
 

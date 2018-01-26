@@ -52,11 +52,15 @@ class ArielCPU : public SST::Component {
         ArielCore** cpu_cores;
         Interfaces::SimpleMem** cpu_to_cache_links;
         SST::Link **cpu_to_alloc_tracker_links;
+
+	SST::Link **cpu_to_opal_links;
+
         pid_t child_pid;
 
         uint32_t core_count;
         ArielTunnel* tunnel;
         bool stopTicking;
+	bool opal_enabled;
 	std::string appLauncher;
         bool useAllocTracker;
 

@@ -26,10 +26,9 @@ void CommCreateFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     assert( event );
     
     m_dbg.verbose(CALL_INFO,1,0,"oldGroup=%d\n", event->oldComm );
-    m_dbg.verbose(CALL_INFO,1,0,"nRaks=%lu\n", 
-                event->nRanks );
+    m_dbg.verbose(CALL_INFO,1,0,"nRaks=%lu\n", event->nRanks );
 
-    Group* oldGrp = m_info->getGroup( event->oldComm);
+    Group* oldGrp = m_info->getGroup( event->oldComm );
     assert(oldGrp);
 
     uint32_t cnt = oldGrp->getSize();
@@ -50,9 +49,12 @@ void CommCreateFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
         }
 
     }  
-    delete event;
+
+    m_dbg.verbose(CALL_INFO,1,0,"newGroup=%d size=%d\n", *event->newComm, newGroup->getSize() );
 
     BarrierStartEvent* tmp = new BarrierStartEvent( event->oldComm  );
+
+    delete event;
 
     BarrierFuncSM::handleStartEvent(static_cast<SST::Event*>(tmp), retval );
 }

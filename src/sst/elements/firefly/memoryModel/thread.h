@@ -3,12 +3,14 @@
 class Work {
 
   public:
-    Work( std::vector< MemOp >* ops, Callback callback ) : m_ops(ops), m_callback(callback), m_pos(0) {}
+    Work( std::vector< MemOp >* ops, Callback callback, SimTime_t start ) : m_ops(ops),
+                        m_callback(callback), m_start(start), m_pos(0) {}
 
     ~Work() {
         m_callback();
         delete m_ops;
     }
+    SimTime_t start() { return m_start; }
 
 	size_t getNumOps() { return m_ops->size(); }
 
@@ -21,6 +23,7 @@ class Work {
 	}
 
   private:
+    SimTime_t               m_start;
     int 					m_pos;
     Callback 				m_callback;
     std::vector< MemOp >*   m_ops;
@@ -40,19 +43,19 @@ class Thread : public UnitBase {
 
 	void addWork( Work* work ) { 
 		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work=%p numOps=%lu workSize=%lu blocked=%d\n",
-														work, work->getNumOps(), m_workQ.size(), m_blocked );
+														work, work->getNumOps(), m_workQ.size(), (int) m_blocked );
 		m_workQ.push_back( work ); 
 
 		if ( ! m_blocked && 1 == m_workQ.size() ) {
 
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"prime pump\n");		
+			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"prime pump\n");		
 			m_currentOp = m_workQ.front()->popOp();
 			process();
         }
 	}
 
 	void resume( UnitBase* src = NULL ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work=%lu\n");
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"work=%lu\n", m_workQ.size() );
 		
 		m_blocked = false;
 		if ( ! m_workQ.empty() ) {
@@ -66,7 +69,7 @@ class Thread : public UnitBase {
 	
     void process() {
 
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"enter\n");
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"enter\n");
 		assert( ! m_workQ.empty() ); 
 
         MemOp* op;
@@ -80,39 +83,59 @@ class Thread : public UnitBase {
         size_t length = op->getCurrentLength( m_maxAccessSize );
 		op->incOffset( length );
 
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"op=%s op.length=%lu offset=%lu addr=%#lx length=%lu\n",
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op=%s op.length=%lu offset=%lu addr=%#lx length=%lu\n",
                             op->getName(), op->length, op->offset, addr, length );
 
     	Callback callback = NULL;
 
-		bool isLoad = op->isLoad();
 		MemOp::Op type = op->getOp();
 
 		if ( op->isDone() ) { 
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"op is done\n");
+		    bool isLoad = op->isLoad();
+			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op %s is done\n",op->getName());
 
 			Work* work = m_workQ.front();
+
+            if ( op->callback ) {
+                assert( !isLoad );
+			    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"callback\n");
+                if ( op->isWrite() ) {
+                    callback = op->callback;
+                } else {
+                    op->callback();
+                }
+            }
 
 			m_currentOp = work->popOp();
 
 			// if this work entry is done
 			if ( ! m_currentOp ) {
 				if ( isLoad ) {
-					m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"last load of op and work\n");
+					m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"last load of op and work\n");
             		callback = std::bind( &Thread::workDone, this, work);
 				} else {
-					m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work %p done\n",work);
-					delete work;
+					m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"work %p done, workQ=%lu\n",work,m_workQ.size());
+					workDone(work);
 				}	
 				m_workQ.pop_front();
 
 				if ( ! m_workQ.empty() ) {
 					m_currentOp = m_workQ.front()->popOp();
 				}
+			} else {
+
+				if ( isLoad ) {
+					m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"last load of op\n");
+            		callback = std::bind( &Thread::process, this);
+				}
 			}
 		}
 
         switch( type ) {
+		  case MemOp::HostBusWrite:
+            m_blocked = m_model.busUnit().write( this, new MemReq( addr, length), callback );
+		    break;
+
 		  case MemOp::NotInit:
 		    break;
 
@@ -142,15 +165,17 @@ class Thread : public UnitBase {
         }
 
 		if ( m_blocked ) {
-        	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"blocked\n");
+        	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"blocked\n");
 		} else if ( ! callback && ! m_workQ.empty() )  {
-        	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"schedule process()\n");
+        	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"schedule process()\n");
 			m_model.schedCallback( 1, std::bind(&Thread::process, this ) ); 
 		}
+       	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"blocked=%d\n",(int)m_blocked);
     }
 	
 	void workDone( Work* work ) {
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work %p done\n",work);
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work %p done, latency=%lu\n",work,
+                    m_model.getCurrentSimTimeNano() - work->start());
 		delete work;
 	}
 

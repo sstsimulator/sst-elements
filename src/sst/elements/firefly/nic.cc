@@ -29,6 +29,8 @@ using namespace SST::Firefly;
 using namespace SST::Interfaces;
 using namespace std::placeholders;
 
+int Nic::SendMachine::m_packetId = 0;
+
 Nic::Nic(ComponentId_t id, Params &params) :
     Component( id ),
     m_sendNotify( 2, false ),
@@ -36,7 +38,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_detailedCompute( 2, NULL ),
     m_useDetailedCompute(false),
     m_getKey(10),
-    m_simpleMemoryModel(NULL)
+    m_simpleMemoryModel(NULL),
+    m_linkWidget(this)
 {
     m_myNodeId = params.find<int>("nid", -1);
     assert( m_myNodeId != -1 );
@@ -59,9 +62,15 @@ Nic::Nic(ComponentId_t id, Params &params) :
     int rxMatchDelay = params.find<int>( "rxMatchDelay_ns", 100 );
     int txDelay =      params.find<int>( "txDelay_ns", 50 );
     int hostReadDelay = params.find<int>( "hostReadDelay_ns", 200 );
+    m_shmemRxDelay_ns = params.find<int>( "shmemRxDelay_ns",0); 
 
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
+    int numNicUnits  =     params.find<int>( "numNicUnits", 4 );
+    assert( numNicUnits >= 4 );
+    int numShmemCmdSlots  =     params.find<int>( "numShmemCmdSlots", 32 );
+
+    initNicUnitPool( numNicUnits );
 
     UnitAlgebra xxx = params.find<SST::UnitAlgebra>( "packetSize" );
     int packetSizeInBytes;
@@ -109,11 +118,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     }
     m_recvM.resize( m_num_vNics );
 
-    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, getDelay_ns(), getDelay_ns() );
+    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
 
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
-        m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics );
+        m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics, numNicUnits );
     }
 
     m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
@@ -130,11 +139,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 0  ) );
+                txDelay, packetSizeInBytes, 0, allocNicUnit() ) );
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId,
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 1  ) );
+                txDelay, packetSizeInBytes, 1, allocNicUnit() ) );
     m_memRgnM.resize( m_vNicV.size() );
 
     float dmaBW  = params.find<float>( "dmaBW_GBs", 0.0 ); 
@@ -343,8 +352,10 @@ void Nic::dmaRecv( NicCmdEvent *e, int vNicNum )
     m_dbg.verbose(CALL_INFO,1,1,"vNicNum=%d src=%d tag=%#x length=%lu\n",
                    vNicNum, e->node, e->tag, entry->totalBytes());
 
-    m_recvM[ vNicNum ][ e->tag ].push_back( entry );
-    m_recvMachine[0]->addDma( );
+	
+    if ( ! m_recvMachine[0]->checkBlockedNetwork( entry, vNicNum ) ) {
+        m_recvM[ vNicNum ][ e->tag ].push_back( entry );
+    }
 }
 
 void Nic::get( NicCmdEvent *e, int vNicNum )
@@ -406,10 +417,7 @@ bool Nic::recvNotify(int vc)
 {
     m_dbg.verbose(CALL_INFO,2,1,"network event available vc=%d\n",vc);
 
-    m_recvMachine[vc]->notify( );
-
-    // remove this notifier
-    return false;
+    return m_linkWidget.notify( vc );
 }
 
 void Nic::detailedMemOp( Thornhill::DetailedCompute* detailed,
@@ -481,43 +489,52 @@ void Nic::detailedMemOp( Thornhill::DetailedCompute* detailed,
     }
 }
 
-void Nic::dmaRead( std::vector<MemOp>* vec, Callback callback ) {
+void Nic::dmaRead( int unit, std::vector<MemOp>* vec, Callback callback ) {
 
     if ( m_simpleMemoryModel ) {
-        calcNicMemDelay( NIC_SendThread, vec, callback );
-    } else if ( m_useDetailedCompute && m_detailedCompute[0] ) {
-
-        detailedMemOp( m_detailedCompute[0], *vec, "Read", callback );
-        delete vec;
-
+        calcNicMemDelay( unit, vec, callback );
     } else {
-        size_t len = 0;
-        for ( unsigned i = 0; i < vec->size(); i++ ) {
-            len += (*vec)[i].length;
-        }
-        m_arbitrateDMA->canIRead( callback, len );
-        delete vec;
+		for ( unsigned i = 0;  i <  vec->size(); i++ ) {
+			assert( (*vec)[i].callback == NULL );
+		}
+		if ( m_useDetailedCompute && m_detailedCompute[0] ) {
+
+        	detailedMemOp( m_detailedCompute[0], *vec, "Read", callback );
+        	delete vec;
+
+    	} else {
+        	size_t len = 0;
+        	for ( unsigned i = 0; i < vec->size(); i++ ) {
+            	len += (*vec)[i].length;
+        	}
+        	m_arbitrateDMA->canIRead( callback, len );
+        	delete vec;
+		}
     }
 }
 
-void Nic::dmaWrite( std::vector<MemOp>* vec, Callback callback ) {
-
+void Nic::dmaWrite( int unit, std::vector<MemOp>* vec, Callback callback ) {
 
     if ( m_simpleMemoryModel ) {
-       	calcNicMemDelay( NIC_RecvThread, vec, callback );
-    } else if ( m_useDetailedCompute && m_detailedCompute[1] ) {
+       	calcNicMemDelay( unit, vec, callback );
+    } else { 
+		for ( unsigned i = 0;  i <  vec->size(); i++ ) {
+			assert( (*vec)[i].callback == NULL );
+		}
+		if ( m_useDetailedCompute && m_detailedCompute[1] ) {
 
-        detailedMemOp( m_detailedCompute[1], *vec, "Write", callback );
-        delete vec;
+        	detailedMemOp( m_detailedCompute[1], *vec, "Write", callback );
+        	delete vec;
 
-    } else {
-        size_t len = 0;
-        for ( unsigned i = 0; i < vec->size(); i++ ) {
-            len += (*vec)[i].length;
-        }
-        m_arbitrateDMA->canIWrite( callback, len );
-        delete vec;
-    }
+    	} else {
+        	size_t len = 0;
+        	for ( unsigned i = 0; i < vec->size(); i++ ) {
+            	len += (*vec)[i].length;
+        	}
+        	m_arbitrateDMA->canIWrite( callback, len );
+        	delete vec;
+    	}
+	}
 }
 
 Nic::DmaRecvEntry* Nic::findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )

@@ -8,13 +8,16 @@ class LoadUnit : public Unit {
 		Callback callback;
 	};
 
+	std::string m_name;
   public:
     LoadUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, int numSlots, std::string name ) :
         Unit( model, dbg ),  m_qSize(numSlots), m_cache(cache), m_loadDelay( 1 ), m_blocked(false), m_scheduled(false), 
-			m_blockedSrc(NULL) , m_numPending(0)
+			m_blockedSrc(NULL) , m_numPending(0), m_name(name)
 	{
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "LoadUnit::@p():@l ";
     }
+
+	std::string& name() { return m_name; }
 
     bool load( UnitBase* src, MemReq* req, Callback callback ) {
 

@@ -15,5 +15,5 @@
 
 class RdmaStream : public StreamBase {
   public:
-    RdmaStream( Output&, FireflyNetworkEvent*, RecvMachine& );
+    RdmaStream( Output&, FireflyNetworkEvent*, RecvMachine&, int unit );
 };

@@ -82,7 +82,7 @@ void API::setVars( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem, Lin
     );
 
     char buffer[100];
-    snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::API::@p():@l ", nic->getNodeId(), m_info->worldRank());
+    snprintf(buffer,100,"@t:%d:%d:CtrlMsg::API::@p():@l ", nic->getRealNodeId(), m_info->worldRank());
     m_dbg.setPrefix(buffer);
 
     m_processQueuesState->setVars( nic, m_info, m_mem, m_memHeapLink, retLink );

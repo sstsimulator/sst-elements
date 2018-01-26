@@ -164,7 +164,7 @@ comp_memory.addParams({
     "backend.mem_size" : "512MiB",
     "clock" : "500MHz",
     "max_requests_per_cycle" : 50,
-    "do_not_back" : 1,
+    "backing" : "none",
     # Backend 1: delay buffer
     "backend" : "memHierarchy.DelayBuffer",
     "backend.request_delay" : "20ns",

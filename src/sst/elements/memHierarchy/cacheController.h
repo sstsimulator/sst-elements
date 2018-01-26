@@ -82,6 +82,7 @@ public:
             {"mshr_latency_cycles",     
                 "(uint) Latency (in cycles) to process responses in the cache and replay requests. Paid on the return/response path for misses instead of access_latency_cycles. If not specified, simple intrapolation is used based on the cache access latency", "1"},
             {"prefetcher",              "(string) Name of prefetcher subcomponent", ""},
+            {"prefetch_delay_cycles",   "(uint) Delay prefetches from prefetcher by this number of cycles.", "1"},
             {"max_outstanding_prefetch","(uint) Maximum number of prefetch misses that can be outstanding, additional prefetches will be dropped/NACKed. Default is 1/2 of MSHR entries.", "0.5*mshr_num_entries"},
             {"drop_prefetch_mshr_level","(uint) Drop/NACK prefetches if the number of in-use mshrs is greater than or equal to this number. Default is mshr_num_entries - 2.", "mshr_num_entries-2"},
             {"num_cache_slices",        "(uint) For a distributed, shared cache, total number of cache slices", "1"},
@@ -94,6 +95,7 @@ public:
             {"debug_addr",              "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
             {"force_noncacheable_reqs", "(bool) Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "false"},
             {"min_packet_size",         "(string) Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
+            {"banks",                   "(uint) Number of cache banks: One access per bank per cycle. Use '0' to simulate no bank limits (only limits on bandwidth then are max_requests_per_cycle and *_link_width", "0"},
             /* Old parameters - deprecated or moved */
             {"LL",                          "DEPRECATED - Now auto-detected during init."}, // Remove 8.0
             {"LLC",                         "DEPRECATED - Now auto-detected by configure."}, // Remove 8.0
@@ -135,6 +137,7 @@ public:
             {"TotalEventsReplayed",     "Total number of events that were initially blocked and then were replayed", "events", 1},
             {"TotalNoncacheableEventsReceived", "Total number of non-cache or noncacheable cache events that were received by this cache and forward", "events", 1},
             {"MSHR_occupancy",          "Number of events in MSHR each cycle", "events", 1},
+            {"Bank_conflicts",          "Total number of bank conflicts detected", "count", 1},
             {"Prefetch_requests",       "Number of prefetches received from prefetcher at this cache", "events", 1},
             {"Prefetch_hits",           "Number of prefetches that were cancelled due to cache or MSHR hit", "events", 1},
             {"Prefetch_drops",          "Number of prefetches that were cancelled because the cache was too busy or too many prefetches were outstanding", "events", 1},
@@ -290,56 +293,7 @@ private:
 
     /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough, 
          the clock gets deregistered from TimeVortx and reregistered only when an event is received */
-    bool clockTick(Cycle_t time) {
-        timestamp_++;
-        bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
-        
-        bool nicIdle = true;
-        if (clockLink_) nicIdle = linkDown_->clock();
-
-        if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
-        
-        // MSHR occupancy
-        statMSHROccupancy->addData(mshr_->getSize());
-        
-        // If we have waiting requests send them now
-        requestsThisCycle_ = 0;
-        std::queue<MemEventBase*>   tmpBuffer;
-        while (!requestBuffer_.empty()) {
-            if (requestsThisCycle_ == maxRequestsPerCycle_) {
-                break;
-            }
-            
-            bool wasProcessed = processEvent(requestBuffer_.front(), false);
-            if (wasProcessed) {
-                requestsThisCycle_++;
-            } else {
-                tmpBuffer.push(requestBuffer_.front());
-            }
-            
-            requestBuffer_.pop();
-            queuesEmpty = false;
-        }
-        if (!tmpBuffer.empty()) {
-            while (!requestBuffer_.empty()) {
-                tmpBuffer.push(requestBuffer_.front());
-                requestBuffer_.pop();
-            }
-            requestBuffer_.swap(tmpBuffer);
-        }
-
-        // Disable lower-level cache clocks if they're idle
-        if (queuesEmpty && nicIdle && clockIsOn_) {
-            clockIsOn_ = false;
-            lastActiveClockCycle_ = time;
-            if (!maxWaitWakeupExists_) {
-                maxWaitWakeupExists_ = true;
-                maxWaitSelfLink_->send(1, NULL);
-            }
-            return true;
-        }
-        return false;
-    }
+    bool clockTick(Cycle_t time);
 
     void maxWaitWakeup(SST::Event * ev) {
         checkMaxWait();
@@ -383,6 +337,7 @@ private:
     uint64_t                mshrLatency_;
     int                     dropPrefetchLevel_;
     int                     maxOutstandingPrefetch_;
+    SimTime_t               prefetchDelay_;
     int                     maxRequestsPerCycle_;
 
     /* Cache structures */
@@ -408,9 +363,11 @@ private:
     uint64_t                timestamp_;
     int                     requestsThisCycle_;
     std::map<SST::Event::id_type, std::string> responseDst_; 
-    std::queue<MemEventBase*>       requestBuffer_;
+    std::queue<MemEventBase*>       requestBuffer_;                 // Buffer requests that can't be processed due to port limits
+    std::vector< std::queue<MemEventBase*> > bankConflictBuffer_;   // Buffer requests that have bank conflicts
     std::map<MemEvent*,uint64>      startTimeList_;
     std::map<MemEvent*,int>         missTypeList_;
+    std::vector<bool>               bankStatus_;    // TODO change if we want multiported banks
 
     // These parameters are for the coherence controller and are detected during init
     bool                    isLL;
@@ -463,6 +420,7 @@ private:
     Statistic<uint64_t>* statInvStalledByLockedLine;
 
     Statistic<uint64_t>* statMSHROccupancy;
+    Statistic<uint64_t>* statBankConflicts;
 
     // Prefetch statistics
     Statistic<uint64_t>* statPrefetchRequest;

@@ -238,6 +238,21 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         d_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %" PRIu64 ". Event: %s\n", getName().c_str(), cacheArray_->getLineSize(), ev->getVerboseString().c_str());
     }
     
+    // Check bank free before we do anything
+    if (bankStatus_.size() > 0) {
+        Addr bank = cacheArray_->getBank(event->getBaseAddr());
+        if (bankStatus_[bank]) { // bank conflict
+            if (is_debug_event(event))
+            d_->debug(_L3_, "Bank conflict on bank %u\n", bank);
+            statBankConflicts->addData(1);
+            bankConflictBuffer_[bank].push(event);
+            return true; // Accepted but we're stopping now
+        } else {
+            d_->debug(_L3_, "No bank conflict, setting bank %u to busy\n", bank);
+            bankStatus_[bank] = true;
+        }
+    }
+    
     MemEvent* origEvent;
     
     // Update statistics
@@ -250,7 +265,6 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         CacheLine * cacheLine = cacheArray_->lookup(baseAddr, false);
         canStall = cacheLine == nullptr || !(cacheLine->isLocked());
     }
-
 
     switch(cmd) {
         case Command::GetS:
@@ -363,7 +377,7 @@ void Cache::processNoncacheable(MemEventBase* event) {
 
 
 void Cache::handlePrefetchEvent(SST::Event* ev) {
-    prefetchLink_->send(1, ev);
+    prefetchLink_->send(prefetchDelay_, ev);
 }
 
 /* Handler for self events, namely prefetches */
@@ -571,3 +585,70 @@ void Cache::processIncomingEvent(SST::Event* ev) {
         }
     }
 }
+
+/* Clock handler */
+bool Cache::clockTick(Cycle_t time) {
+    timestamp_++;
+    bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
+        
+    bool nicIdle = true;
+    if (clockLink_) nicIdle = linkDown_->clock();
+
+    if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
+        
+    // MSHR occupancy
+    statMSHROccupancy->addData(mshr_->getSize());
+        
+    // Clear bank status and issue conflicted requests
+    bool conflicts = false;
+    for (unsigned int bank = 0; bank < bankStatus_.size(); bank++) {
+        bankStatus_[bank] = false;
+        while (!bankConflictBuffer_[bank].empty() && !bankStatus_[bank]) {
+            conflicts = true;
+            if (is_debug_event(bankConflictBuffer_[bank].front())) 
+                d_->debug(_L9_,"%s, Retrying event from bank conflict. Bank: %u, Event: %s\n", getName().c_str(), bank, bankConflictBuffer_[bank].front()->getBriefString().c_str());
+                
+            bool processed = processEvent(bankConflictBuffer_[bank].front(), false);
+            if (!processed) break;
+            bankConflictBuffer_[bank].pop();
+        }
+    }
+
+    // Accept any incoming requests that were delayed because of port limits
+    requestsThisCycle_ = 0;
+    std::queue<MemEventBase*>   tmpBuffer;
+    while (!requestBuffer_.empty()) {
+        if (requestsThisCycle_ == maxRequestsPerCycle_) {
+            break;
+        }
+        
+        bool wasProcessed = processEvent(requestBuffer_.front(), false);
+        if (wasProcessed) {
+            requestsThisCycle_++;
+        } else {
+            tmpBuffer.push(requestBuffer_.front());
+        }
+            
+        requestBuffer_.pop();
+        queuesEmpty = false;
+    }
+    if (!tmpBuffer.empty()) {
+        while (!requestBuffer_.empty()) {
+            tmpBuffer.push(requestBuffer_.front());
+            requestBuffer_.pop();
+        }
+        requestBuffer_.swap(tmpBuffer);
+    }
+    // Disable lower-level cache clocks if they're idle
+    if (queuesEmpty && nicIdle && clockIsOn_ && !conflicts) {
+        clockIsOn_ = false;
+        lastActiveClockCycle_ = time;
+        if (!maxWaitWakeupExists_) {
+            maxWaitWakeupExists_ = true;
+            maxWaitSelfLink_->send(1, NULL);
+        }
+        return true;
+    }
+    return false;
+}
+

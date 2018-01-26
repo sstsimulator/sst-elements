@@ -15,14 +15,21 @@
 
 class MsgStream : public StreamBase {
   public:
-    MsgStream( Output&, FireflyNetworkEvent*, RecvMachine& );
-    virtual void processPkt( FireflyNetworkEvent* ev ) {
-		if (! m_recvEntry) {
-			m_recvEntry = static_cast<DmaRecvEntry *>( m_rm.nic().findRecv( m_src, m_hdr, m_tag ) );
+    MsgStream( Output&, FireflyNetworkEvent*, RecvMachine&, int unit );
+    virtual void processPkt( FireflyNetworkEvent* ev, DmaRecvEntry* entry = NULL ) {
+			
+		if ( ! m_recvEntry ) {
+			if ( entry ) {
+				m_recvEntry = entry;
+			} else { 
+				m_recvEntry = static_cast<DmaRecvEntry *>( m_rm.nic().findRecv( m_src, m_hdr, m_tag ) );
+			}
+			
+			assert(m_recvEntry);
+
        		ev->bufPop( sizeof(MsgHdr) );
         	ev->bufPop( sizeof(m_tag) );
 		}
-		assert(m_recvEntry);
 
     	m_rm.state_move_0( ev, this );
     }

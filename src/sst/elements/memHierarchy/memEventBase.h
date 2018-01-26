@@ -17,9 +17,7 @@
 #define MEMHIERARHCY_MEMEVENTBASE_H
 
 #include <sst/core/sst_types.h>
-#include <sst/core/component.h>
 #include <sst/core/event.h>
-#include "sst/core/element.h"
 
 #include "util.h"
 #include "memTypes.h"
