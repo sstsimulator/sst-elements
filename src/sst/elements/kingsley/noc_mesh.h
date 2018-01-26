@@ -57,7 +57,8 @@ public:
         {"link_bw",            "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
         {"flit_size",          "Flit size specified in either b or B (can include SI prefix)."},
         {"input_buf_size",     "Size of input buffers in either b or B (can use SI prefix).  Default is 2*flit_size."},
-        {"ues_dense_map",      "Set to true to have a dense network id map instead of the sparse map normally used.","false"},
+        {"port_priority_equal","Set to true to have all port have equal priority (usually endpoint ports have higher priority).","false"},
+        {"use_dense_map",      "Set to true to have a dense network id map instead of the sparse map normally used.","false"},
         // {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
     )
 
@@ -118,6 +119,7 @@ private:
     int* port_credits;
     int local_ports;
     bool use_dense_map;
+    bool port_priority_equal;
     const int* dense_map;
 
     lru_unit<int> local_lru;
@@ -140,6 +142,7 @@ public:
     ~noc_mesh();
     
     void init(unsigned int phase);
+    void complete(unsigned int phase);
     void setup();
     void finish();
 

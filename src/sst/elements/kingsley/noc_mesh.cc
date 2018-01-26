@@ -56,6 +56,9 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
 
     use_dense_map = params.find<bool>("use_dense_map",false);
 
+    port_priority_equal = params.find<bool>("port_priority_equal",false);
+    std::cout << "port_priority_equal = " << port_priority_equal << std::endl;
+    
     // Parse all the timing parameters
 
     bool found = false;
@@ -448,12 +451,21 @@ void noc_mesh::setup()
     // Set up the lru units
 
     // First do the endpoints
-    for ( int i = local_port_start; i < local_port_start + local_ports; ++i ) {
-        if ( ports[i] != NULL ) {
-            local_lru.insert(i);
+    if ( port_priority_equal ) {
+        for ( int i = local_port_start; i < local_port_start + local_ports; ++i ) {
+            if ( ports[i] != NULL ) {
+                mesh_lru.insert(i);
+            }
         }
     }
-    local_lru.finalize();
+    else {
+        for ( int i = local_port_start; i < local_port_start + local_ports; ++i ) {
+            if ( ports[i] != NULL ) {
+                local_lru.insert(i);
+            }
+        }
+        local_lru.finalize();
+    }
     
     // Now the mesh ports
     for ( int i = 0; i < local_port_start; ++i ) {
@@ -1157,6 +1169,130 @@ noc_mesh::init(unsigned int phase)
 
     return;
 
+
+}
+
+void
+noc_mesh::complete(unsigned int phase)
+{
+    // Simply route messages that are sent by the endpoints
+    for ( int i = 0; i < local_port_start + local_ports; ++i ) {
+        if ( ports[i] != NULL ) {
+            bool endpoint = (1 << i) & endpoint_locations;
+            while ( true ) { // Go until there are no more events
+                Event* ev = ports[i]->recvInitData();
+                if ( NULL == ev ) break;
+                
+                noc_mesh_event* nme;
+                if ( endpoint ) {
+                    NocPacket* packet = static_cast<NocPacket*>(ev);
+                    nme = wrap_incoming_packet(packet);
+                    
+                }
+                else {
+                    nme = static_cast<noc_mesh_event*>(ev);
+                }
+                
+                // Route the packet, but look for broadcasts first
+                if ( nme->egress_port == -1 ) {
+                    // This is a broadcast, need to decide which
+                    // phase we are in:
+                    //
+                    // endpoint: just came from endpoint, need to
+                    // send it all 4 directions.
+                    //
+                    // east/west: if it came from east or west,
+                    // send to opposite direction and north and
+                    // south.
+                    //
+                    // north/south: if it came from north or
+                    // south, just send in opposite direction.
+                    //
+                    // All of these case will deliver to all the
+                    // endpoints (except that we don't send it to
+                    // the endpoint we just got it from if we are
+                    // in that phase).
+                    
+                    // Send east.  We send east if this came from
+                    // an endpoint or from the west.
+                    if ( endpoint || ( (1 << i ) & west_mask ) ) {
+                        // No need to send east if this is the
+                        // eastern edge
+                        if ( !(edge_status & east_mask) ) {
+                            ports[east_port]->sendInitData(nme->clone());
+                        }
+                    }
+                    
+                    // Send west.  We send west if this came from
+                    // an endpoint or from the east.
+                    if ( endpoint || ( (1 << i ) & east_mask ) ) {
+                        // No need to send east if this is the
+                        // eastern edge
+                        if ( !(edge_status & west_mask) ) {
+                            ports[west_port]->sendInitData(nme->clone());
+                        }
+                    }
+                    
+                    // Send north.  We send north if this came
+                    // from an endpoint, or from the east, west or
+                    // south.
+                    if ( endpoint || ( (1 << i ) & west_mask ) ||
+                         ( (1 << i ) & east_mask ) || ( (1 << i ) & south_mask )) {
+                        // No need to send north if this is the
+                        // northern edge
+                        if ( !(edge_status & north_mask) ) {
+                            ports[north_port]->sendInitData(nme->clone());
+                        }
+                    }
+                    
+                    // Send south.  We send south if this came
+                    // from an endpoint, or from the east, west or
+                    // north.
+                    if ( endpoint || ( (1 << i ) & west_mask ) ||
+                         ( (1 << i ) & east_mask ) || ( (1 << i ) & north_mask )) {
+                        // No need to send south if this is the
+                        // southern edge
+                        if ( !(edge_status & south_mask) ) {
+                            ports[south_port]->sendInitData(nme->clone());
+                        }
+                    }
+                    
+                    // Now send to all the endpoints
+                    bool sent = false;
+                    NocPacket* packet = nme->encap_ev;
+                    nme->encap_ev = NULL;
+                    delete nme;
+                    for ( int j = 0; j < local_port_start + local_ports; ++j ) {
+                        if ( endpoint && ( i == j ) ) continue;  // No need to send back to src
+                        if ( (1 << j) & endpoint_locations ) {
+                            if (!sent) {
+                                ports[j]->sendInitData(packet);
+                                sent = true;
+                            }
+                            else {
+                                ports[j]->sendInitData(packet->clone());
+                            }
+                        }
+                    }
+                    if ( !sent ) delete packet;
+                    
+                }
+                else { // Not a broadcast
+                    route(nme);
+                    if ( (1 << nme->next_port) & endpoint_locations ) {
+                        ports[nme->next_port]->sendInitData(nme->encap_ev);
+                        nme->encap_ev = NULL;
+                        delete nme;
+                    }
+                    else {
+                        ports[nme->next_port]->sendInitData(nme);
+                    }       
+                }
+            }
+        }
+    }
+    
+    return;
 
 }
 

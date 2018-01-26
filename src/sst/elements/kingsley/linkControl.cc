@@ -142,7 +142,7 @@ void LinkControl::init(unsigned int phase)
         init_ev = static_cast<NocInitEvent*>(ev);
         UnitAlgebra flit_size_ua = init_ev->ua_value;
         flit_size = flit_size_ua.getRoundedValue();
-        
+
         UnitAlgebra link_clock = link_bw / flit_size_ua;
         
         TimeConverter* tc = getTimeConverter(link_clock);
@@ -209,6 +209,44 @@ void LinkControl::init(unsigned int phase)
         }
         break;
     }
+}
+
+void LinkControl::complete(unsigned int phase)
+{
+    Event* ev;
+    NocInitEvent* init_ev;
+    // For all other phases, look for credit events, any other
+    // events get passed up to containing component by adding them
+    // to init_events queue
+    while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
+        BaseNocEvent* bev = static_cast<BaseNocEvent*>(ev);
+        switch (bev->getType()) {
+        case BaseNocEvent::CREDIT:
+        {
+            credit_event* ce = static_cast<credit_event*>(bev);
+            // output.output("%d: Got a credit event for VN %d with %d credits\n",id,ce->vn,ce->credits);
+            if ( ce->vn < req_vns ) {  // Ignore credit events for VNs I don't have
+                rtr_credits[ce->vn] += ce->credits;
+            }
+            delete ev;
+            // if ( waiting && have_packets ) {
+            //     output_timing->send(1,NULL);
+            //     waiting = false;
+            // }
+        }
+        break;
+        case BaseNocEvent::PACKET:
+            init_events.push_back(static_cast<NocPacket*>(ev));
+            break;
+        default:
+            // This shouldn't happen.  Only NocPackets (PACKET
+            // types) should not be handled in the LinkControl
+            // object.
+            // output.fatal(CALL_INFO, 1, "Reached state where a non-NocPacket was not handled.");
+            break;
+        }
+    }
+    return;
 }
 
 
@@ -284,7 +322,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     // For now, we're just going to send the credits back to the
     // other side.  The required BW to do this will not be taken
     // into account.
-    rtr_link->send(1,new credit_event(event->request->vn,in_ret_credits[event->request->vn]));
+    rtr_link->send(new credit_event(event->request->vn,in_ret_credits[event->request->vn]));
     in_ret_credits[event->request->vn] = 0;
 
     // printf("%d: Returning credits on VN: %d for packet from %llu",id, event->request->vn, event->request->src);
