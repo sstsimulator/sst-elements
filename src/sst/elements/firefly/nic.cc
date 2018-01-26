@@ -39,6 +39,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_useDetailedCompute(false),
     m_getKey(10),
     m_simpleMemoryModel(NULL),
+    m_respKey(0),
     m_linkWidget(this)
 {
     m_myNodeId = params.find<int>("nid", -1);
@@ -82,11 +83,14 @@ Nic::Nic(ComponentId_t id, Params &params) :
         assert(0);
     }
 
-	UnitAlgebra buf_size = params.find<SST::UnitAlgebra>("buffer_size" );
+	UnitAlgebra input_buf_size = params.find<SST::UnitAlgebra>("input_buf_size" );
+	UnitAlgebra output_buf_size = params.find<SST::UnitAlgebra>("output_buf_size" );
 	UnitAlgebra link_bw = params.find<SST::UnitAlgebra>("link_bw" );
 
-    m_dbg.verbose(CALL_INFO,1,1,"id=%d buffer_size=%s link_bw=%s "
-			"packetSize=%d\n", m_myNodeId, buf_size.toString().c_str(),
+    m_dbg.verbose(CALL_INFO,1,1,"id=%d input_buf_size=%s output_buf_size=%s link_bw=%s "
+			"packetSize=%d\n", m_myNodeId, 
+            input_buf_size.toString().c_str(),
+            output_buf_size.toString().c_str(),
 			link_bw.toString().c_str(), packetSizeInBytes);
 
     m_linkControl = (SimpleNetwork*)loadSubComponent(
@@ -94,7 +98,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     assert( m_linkControl );
 
 	m_linkControl->initialize(params.find<std::string>("rtrPortName","rtr"),
-                              link_bw, 2, buf_size, buf_size);
+                              link_bw, 2, input_buf_size, output_buf_size);
 
     m_recvNotifyFunctor =
         new SimpleNetwork::Handler<Nic>(this,&Nic::recvNotify );
@@ -540,7 +544,7 @@ void Nic::dmaWrite( int unit, std::vector<MemOp>* vec, Callback callback ) {
 Nic::DmaRecvEntry* Nic::findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )
 {
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
-                    "src=%d len=%lu\n",src,hdr.len);
+                    "src=%d len=%lu\n",src,rdmahdr.len);
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
                     "rgnNum=%d offset=%d respKey=%d\n",
             rdmahdr.rgnNum, rdmahdr.offset, rdmahdr.respKey);
@@ -585,18 +589,17 @@ Nic::SendEntryBase* Nic::findGet( int src,
                                     rdmaHdr.respKey, entry );
 }
 
-Nic::EntryBase* Nic::findRecv( int srcNode, MsgHdr& hdr, int tag  )
+Nic::EntryBase* Nic::findRecv( int srcNode, MsgHdr& hdr, MatchMsgHdr& matchHdr  )
 {
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"need a recv entry, srcNic=%d src_vNic=%d "
                 "dst_vNic=%d tag=%#x len=%lu\n", srcNode, hdr.src_vNicId,
-                        hdr.dst_vNicId, tag, hdr.len);
+                        hdr.dst_vNicId, matchHdr.tag, matchHdr.len);
 
-    if ( m_recvM[hdr.dst_vNicId].find( tag ) == m_recvM[hdr.dst_vNicId].end() ) {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"did't match tag\n");
+    if ( m_recvM[hdr.dst_vNicId].find( matchHdr.tag ) == m_recvM[hdr.dst_vNicId].end() ) { m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"did't match tag\n");
         return NULL;
     }
 
-    DmaRecvEntry* entry = m_recvM[ hdr.dst_vNicId][ tag ].front();
+    DmaRecvEntry* entry = m_recvM[ hdr.dst_vNicId][ matchHdr.tag ].front();
     if ( entry->node() != -1 && entry->node() != srcNode ) {
         m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
                 "didn't match node  want=%#x src=%#x\n",
@@ -606,15 +609,15 @@ Nic::EntryBase* Nic::findRecv( int srcNode, MsgHdr& hdr, int tag  )
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
                 "recv entry size %lu\n",entry->totalBytes());
 
-    if ( entry->totalBytes() < hdr.len ) {
+    if ( entry->totalBytes() < matchHdr.len ) {
         assert(0);
     }
 
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"found a receive entry\n");
 
-    m_recvM[ hdr.dst_vNicId ][ tag ].pop_front();
-    if ( m_recvM[ hdr.dst_vNicId ][ tag ].empty() ) {
-        m_recvM[ hdr.dst_vNicId ].erase( tag );
+    m_recvM[ hdr.dst_vNicId ][ matchHdr.tag ].pop_front();
+    if ( m_recvM[ hdr.dst_vNicId ][ matchHdr.tag ].empty() ) {
+        m_recvM[ hdr.dst_vNicId ].erase( matchHdr.tag );
     }
     return entry;
 }

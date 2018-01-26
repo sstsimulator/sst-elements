@@ -45,7 +45,10 @@ class CmdSendEntry: public SendEntryBase, public EntryBase {
         SendEntryBase( local_vNic ),
         m_cmd(cmd),
         m_callback(callback)
-    { }
+    {
+        m_hdr.len = totalBytes();
+        m_hdr.tag = m_cmd->tag;
+    }
 
     ~CmdSendEntry() {
         m_callback (m_cmd->key );
@@ -63,10 +66,11 @@ class CmdSendEntry: public SendEntryBase, public EntryBase {
     MsgHdr::Op getOp()  { return MsgHdr::Msg; }
     int dst_vNic( )     { return m_cmd->dst_vNic; }
     int dest()          { return m_cmd->node; }
-    void* hdr()         { return &m_cmd->tag; }
-    size_t hdrSize()    { return sizeof(m_cmd->tag); }
+    void* hdr()         { return &m_hdr; }
+    size_t hdrSize()    { return sizeof(m_hdr); }
 
   private:
+    MatchMsgHdr         m_hdr;
     NicCmdEvent* m_cmd;
     std::function<void(void*)> m_callback;
 };
