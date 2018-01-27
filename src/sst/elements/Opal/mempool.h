@@ -14,9 +14,21 @@
 /* Author: Amro Awad
  * E-mail: amro.awad@ucf.edu
  */
+/* Author: Vamsee Reddy Kommareddy
+ * E-mail: vamseereddy@knights.ucf.edu
+ */
 
 #include<list>
 #include<map>
+#include<cmath>
+
+#include "Opal_Event.h"
+
+typedef struct mpr{
+	long long int pAddress;
+	int num_frames;
+	int frame_size;
+}MemPoolResponse;
 
 // This defines a physical frame of size 4KB by default
 class Frame{
@@ -44,7 +56,7 @@ class Pool{
 	public:
 
 		//Constructor for pool
-		Pool(long long int st1, long long int size1, int framesize);
+		Pool(Params parmas);
 
 		// The size of the memory pool in KBs
 		long long int size; 
@@ -55,8 +67,14 @@ class Pool{
 		// Allocate N contigiuous frames, returns the starting address if successfull, or -1 if it fails!
 		long long int allocate_frame(int N);
 
+		// Allocate 'size' contigiuous memory, returns a structure with starting address and number of frames allocated
+		MemPoolResponse allocate_frames(int size);
+
 		// Freeing N frames starting from Address X, this will return -1 if we find that these frames were not allocated
 		int deallocate_frame(long long int X, int N);
+
+		// Deallocate 'size' contigiuous memory starting from physical address 'starting_pAddress', returns a structure which indicates success or not
+		MemPoolResponse deallocate_frames(int size, long long int starting_pAddress);
 
 		// Current number of free frames
 		int freeframes() { return freelist.size(); }
@@ -64,7 +82,26 @@ class Pool{
 		// Frame size in KBs
 		int frsize;
 
+		void set_memPool_type(SST::OpalComponent::MemType _memType) { memType = _memType; }
+
+		SST::OpalComponent::MemType get_memPool_type() { return memType; }
+
+		void set_memPool_tech(SST::OpalComponent::MemTech _memTech) { memTech = _memTech; }
+
+		SST::OpalComponent::MemTech get_memPool_tech() { return memTech; }
+
+		void build_mem();
+
 	private:
+
+		Output *output;
+
+		//shared or local
+		SST::OpalComponent::MemType memType;
+
+		//Memory technology
+		SST::OpalComponent::MemTech memTech;
+
 		// The list of free frames
 		std::list<Frame*> freelist;
 

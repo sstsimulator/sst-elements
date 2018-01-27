@@ -68,6 +68,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
     int numNicUnits  =     params.find<int>( "numNicUnits", 4 );
     assert( numNicUnits >= 4 );
+    int numShmemCmdSlots  =     params.find<int>( "numShmemCmdSlots", 32 );
 
     initNicUnitPool( numNicUnits );
 
@@ -117,7 +118,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     }
     m_recvM.resize( m_num_vNics );
 
-    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, getDelay_ns(), getDelay_ns() );
+    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
 
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );

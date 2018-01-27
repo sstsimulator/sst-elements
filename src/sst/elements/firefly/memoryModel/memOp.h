@@ -3,7 +3,7 @@
         typedef std::function<void()> Callback;
 
 	  public:
-        enum Op { NotInit, BusLoad, BusStore, LocalLoad, LocalStore, HostLoad, HostStore, HostCopy, BusDmaToHost, BusDmaFromHost };
+        enum Op { NotInit, BusLoad, BusStore, LocalLoad, LocalStore, HostLoad, HostStore, HostCopy, BusDmaToHost, BusDmaFromHost, HostBusWrite, HostBusRead };
 
         MemOp( ) : addr(0), length(0), type(NotInit), offset(0), callback(NULL) {}
         MemOp( Hermes::Vaddr addr, size_t length, Op op, Callback callback = NULL ) : addr(addr), length(length), type(op), offset(0), callback(callback) {}
@@ -44,6 +44,9 @@
 			}
 		}
 
+		bool isWrite() {
+			return type == HostBusWrite;
+		}
 		bool isLoad() {
 			if ( HostCopy == type ) {
 				if ( 1 == chunk % 2 ) {
@@ -106,6 +109,8 @@
             case HostCopy: return "HostCopy";
             case BusDmaToHost: return "BusDmaToHost";
             case BusDmaFromHost: return "BusDmaFromHost";
+            case HostBusWrite: return "HostBusWrite";
+            case HostBusRead: return "HostBusRead";
             }
         }
      private: 

@@ -33,6 +33,7 @@ void Nic::Shmem::handleEvent( NicShmemCmdEvent* event, int id )
 
 void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
 {
+    m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"node=%d core=%d type=%d\n", event->getNode(), id, event->type ); 
 	if( m_freeCmdSlots == 0 ) {
 		m_pendingCmds.push_back( std::make_pair(event,id ) );
 		return;
@@ -77,7 +78,17 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
       default:
         assert(0);
     }
-	m_nic.schedEvent(  new SelfEvent( event, id ), getHost2NicDelay_ns() );
+    SimTime_t start = m_nic.getCurrentSimTimeNano();
+    std::vector<MemOp>* vec = new std::vector<MemOp>;
+    vec->push_back( MemOp( 0, 16, MemOp::Op::HostBusWrite,
+         [=]() {
+            m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"handleNicEvent latency=%lu\n", 
+                            m_nic.getCurrentSimTimeNano() - start);
+            handleEvent2( event, id );
+        }
+     ) );
+
+    m_nic.calcHostMemDelay(id, vec, [=]() { });
 }
 
 void Nic::Shmem::handleEvent2( NicShmemCmdEvent* event, int id )
