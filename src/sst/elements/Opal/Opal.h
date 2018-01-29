@@ -61,8 +61,8 @@ namespace SST
 				void setup()  { };
 				void finish() {};
 				bool getAllocationMemType( int node );
-				void allocLocalMemPool( int node, long long int vAddress, int size );
-				void allocSharedMemPool( int node, long long int vAddress, int size );
+				long long int allocLocalMemPool( int node, int link, long long int vAddress, int size );
+				long long int allocSharedMemPool( int node, int link, long long int vAddress, int size );
 				void handleEvent(SST::Event* event) {};
 				void handleRequest( SST::Event* e );
 				bool tick(SST::Cycle_t x);
@@ -169,6 +169,7 @@ namespace SST
 			public:
 
 				int id;
+				int nodeID;
 				SST::Link * singLink;
 				int dummy_address;
 				core_handler() { dummy_address = 0;}
@@ -209,7 +210,9 @@ namespace SST
 
 					default:
 						{
-							std::cout<<"Opal has received a REQUEST CALL with virtual address: "<<ev->getAddress()<<" Size: "<<ev->getSize()<<std::endl;
+							std::cout<<"Opal has received a REQUEST CALL with virtual address: "<< std::hex << ev->getAddress()<<" Size: "<<ev->getSize()<<std::endl;
+							ev->setNodeId(nodeID);
+							ev->setLinkId(id);
 							owner->requestQ.push(ev);
 						}
 					}
@@ -219,3 +222,4 @@ namespace SST
 
 	}// END OpalComponent
 }//END SST
+

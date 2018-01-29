@@ -82,6 +82,15 @@ class Pool{
 		// Frame size in KBs
 		int frsize;
 
+		//Total number of frames
+		int num_frames;
+
+		//real size of the memory pool
+		long long int real_size;
+
+		//number of free frames
+		int available_frames;
+
 		void set_memPool_type(SST::OpalComponent::MemType _memType) { memType = _memType; }
 
 		SST::OpalComponent::MemType get_memPool_type() { return memType; }
@@ -110,3 +119,4 @@ class Pool{
 
 
 };
+
