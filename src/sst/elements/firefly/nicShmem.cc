@@ -251,6 +251,8 @@ void Nic::Shmem::getv( NicShmemGetvCmdEvent* event, int id )
             } 
     ); 
 
+    entry->setRespKey(m_nic.genRespKey(entry));
+
     m_nic.m_sendMachine[0]->run( entry );
 }
 
@@ -273,6 +275,8 @@ void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
                 }
             } 
     );  
+
+    entry->setRespKey(m_nic.genRespKey(entry));
 
 	m_nic.m_sendMachine[0]->run( entry );
 }
@@ -309,6 +313,8 @@ void Nic::Shmem::fadd( NicShmemFaddCmdEvent* event, int id )
             } 
     ); 
 
+    entry->setRespKey(m_nic.genRespKey(entry));
+
     m_nic.m_sendMachine[0]->run( entry );
 }
 
@@ -324,6 +330,8 @@ void Nic::Shmem::cswap( NicShmemCswapCmdEvent* event, int id )
             } 
     ); 
 
+    entry->setRespKey(m_nic.genRespKey(entry));
+
     m_nic.m_sendMachine[0]->run( entry );
 }
 
@@ -338,6 +346,8 @@ void Nic::Shmem::swap( NicShmemSwapCmdEvent* event, int id )
                 m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), callback, value );
             } 
     ); 
+
+    entry->setRespKey(m_nic.genRespKey(entry));
 
     m_nic.m_sendMachine[0]->run( entry );
 }

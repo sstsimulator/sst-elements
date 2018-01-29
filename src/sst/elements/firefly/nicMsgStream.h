@@ -22,15 +22,17 @@ class MsgStream : public StreamBase {
 			if ( entry ) {
 				m_recvEntry = entry;
 			} else { 
-				m_recvEntry = static_cast<DmaRecvEntry *>( m_rm.nic().findRecv( m_src, m_hdr, m_tag ) );
+				m_recvEntry = static_cast<DmaRecvEntry *>( m_rm.nic().findRecv( m_src, m_hdr, m_matchHdr) );
 			}
 			
 			assert(m_recvEntry);
 
        		ev->bufPop( sizeof(MsgHdr) );
-        	ev->bufPop( sizeof(m_tag) );
+        	ev->bufPop( sizeof(MatchMsgHdr) );
 		}
 
     	m_rm.state_move_0( ev, this );
     }
+  private:
+    MatchMsgHdr m_matchHdr;
 };

@@ -60,12 +60,14 @@ class ShmemRespSendEntry: public ShmemCmdSendEntry {
     ShmemRespSendEntry( int local_vNic, NicShmemSendCmdEvent* event ) : 
         ShmemCmdSendEntry( local_vNic, event )
     {
-        assert( sizeof( m_hdr.respKey) == sizeof(m_event )); 
         m_hdr.vaddr = m_event->getFarAddr();
         m_hdr.length = m_event->getLength(); 
-        m_hdr.respKey = (size_t) this;
     }
     bool shouldDelete() { return false; }
+
+    void setRespKey( RespKey_t key ) {
+        m_hdr.respKey = key;
+    }
 
     size_t totalBytes() { return 0; } 
     bool isDone() { return true; }
