@@ -39,7 +39,6 @@ void Nic::SendMachine::state_0( SendEntryBase* entry )
     ++m_msgCount;
 #endif
     hdr.op= entry->getOp();
-    hdr.len = entry->totalBytes();
     hdr.dst_vNicId = entry->dst_vNic();
     hdr.src_vNicId = entry->local_vNic(); 
 

@@ -43,6 +43,7 @@ namespace Firefly {
 
 class Nic : public SST::Component  {
 
+    typedef unsigned RespKey_t;
 	class LinkControlWidget {
 
 	  public:
@@ -88,23 +89,29 @@ class Nic : public SST::Component  {
 
   private:
 
-    struct MsgHdr {
-        enum Op { Msg, Rdma, Shmem } op;
-        size_t len;
-        unsigned short    dst_vNicId;
-        unsigned short    src_vNicId;
+    struct __attribute__ ((packed)) MsgHdr {
+        enum Op : unsigned char { Msg, Rdma, Shmem } op;
+        unsigned int    dst_vNicId : 12 ;
+        unsigned int    src_vNicId : 12 ;
     };
+
+    struct __attribute__ ((packed)) MatchMsgHdr {
+        size_t len;
+        int    tag;
+    };
+
     struct __attribute__ ((packed)) ShmemMsgHdr {
         ShmemMsgHdr() : op2(0) {}
-        enum Op : unsigned char { Ack, Put, Get, GetResp, Add, Fadd, Swap, Cswap } op;
-        unsigned char op2; 
-        unsigned char dataType;
-        unsigned char pad;
-        uint32_t length;
         uint64_t vaddr;
-        uint64_t respKey;
+        uint32_t length;
+        enum Op { Ack, Put, Get, GetResp, Add, Fadd, Swap, Cswap };
+        unsigned char op : 3; 
+        unsigned char op2 : 3; 
+        unsigned char dataType : 3;
+        uint8_t respKey : 7;
     };
     struct RdmaMsgHdr {
+        size_t len;
         enum { Put, Get, GetResp } op;
         uint16_t    rgnNum;
         uint16_t    respKey;
@@ -212,7 +219,7 @@ public:
     void processNetworkEvent( FireflyNetworkEvent* );
     DmaRecvEntry* findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr );
     SendEntryBase* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
-    EntryBase* findRecv( int srcNode, MsgHdr&, int tag );
+    EntryBase* findRecv( int srcNode, MsgHdr&, MatchMsgHdr& );
 
     Hermes::MemAddr findShmem( int core, Hermes::Vaddr  addr, size_t length );
 
@@ -353,6 +360,24 @@ public:
 			delete ops;
 		}
 	}
+    RespKey_t m_respKey;
+    RespKey_t genRespKey( void* ptr ) {
+        assert( m_respKeyMap.find(m_respKey) == m_respKeyMap.end() );
+        RespKey_t key = m_respKey++;
+        m_respKeyMap[key++] = ptr;  
+        m_respKey &= (128 - 1);
+        m_dbg.verbose(CALL_INFO,2,1,"key=%#x nextKey=%#x\n",key,m_respKey);
+        return key;
+    }
+    void* getRespKeyValue( RespKey_t key ) {
+        --key;  
+        m_dbg.verbose(CALL_INFO,2,1,"key=%#x\n",key);
+        void* value = m_respKeyMap[key];
+        m_respKeyMap.erase(key);
+        return value; 
+    }
+
+    std::map<RespKey_t,void*> m_respKeyMap;
 
     SimpleMemoryModel*  m_simpleMemoryModel;
     std::deque<int> m_availNicUnits;
