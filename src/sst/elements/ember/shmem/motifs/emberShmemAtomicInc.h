@@ -19,6 +19,7 @@
 
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
+#include "rng/xorshift.h"
 #include <cxxabi.h>
 
 namespace SST {
@@ -37,7 +38,10 @@ public:
 		m_printTotals = params.find<bool>("arg.printTotals", false);
 		m_backed = params.find<bool>("arg.backed", false);
 		m_outLoop = params.find<int>("arg.outLoop", 1);
+		m_ranksPerNode = params.find<int>("arg.ranksPerNode", 0);
 		m_times.resize(m_outLoop);
+        assert( m_ranksPerNode );
+        rng = new SST::RNG::XORShiftRNG(); 
 	}
 
     bool generate( std::queue<EmberEvent*>& evQ) 
@@ -50,9 +54,11 @@ public:
             enQ_malloc( evQ, &m_dest, sizeof(long) * m_dataSize, m_backed );
 		} else if ( -2 == m_phase ) {
 
+            m_myNode = m_my_pe/m_ranksPerNode;
+
             if ( 0 == m_my_pe ) {
-                printf("%d:%s: num_pes=%d dataSize=%d updates=%d iterations=%d outerLoop=%d %s\n",m_my_pe,
-                        getMotifName().c_str(), m_num_pes, m_dataSize, m_updates, m_iterations, m_outLoop,
+                printf("%d:%s: myNode=%d num_pes=%d dataSize=%d updates=%d iterations=%d outerLoop=%d %s\n",m_my_pe,
+                        getMotifName().c_str(), m_myNode, m_num_pes, m_dataSize, m_updates, m_iterations, m_outLoop,
 						m_useFadd ? "fadd":"add" );
             }
             
@@ -66,17 +72,35 @@ public:
 
     		struct timeval start;
     		gettimeofday( &start, NULL );
+#if 0
 			m_randSeed = (unsigned int) (start.tv_usec);
+#else
+			rng->seed( (unsigned int) (start.tv_usec));
+#endif
 
 			enQ_getTime( evQ, &m_startTime );
 
 		} else if ( m_phase < m_iterations * m_updates ) {
 
+#if 0
 			int dest = rand_r(&m_randSeed) % m_num_pes;
-			while( dest == m_my_pe ) {
+#else
+			int dest = rng->generateNextUInt32()  % m_num_pes;
+#endif
+
+            while( dest / m_ranksPerNode == m_myNode ) {
+			//while( dest == m_my_pe ) {
+#if 0
 				dest = rand_r(&m_randSeed) % m_num_pes;
+#else
+			    dest = rng->generateNextUInt32()  % m_num_pes;
+#endif
 			}
+#if 0
 			Hermes::MemAddr addr = m_dest.offset<long>( rand_r(&m_randSeed) % m_dataSize );
+#else
+			Hermes::MemAddr addr = m_dest.offset<long>( rng->generateNextUInt32() % m_dataSize );
+#endif
 	
 			if ( m_useFadd ) { 
             	enQ_fadd( evQ, &m_result, addr, &m_one, dest );
@@ -90,7 +114,9 @@ public:
 		} else if ( m_phase == m_iterations * m_updates ) {
 
 			if ( 0 == m_my_pe ) {
-				printf("outerLoop done %d\n",m_outLoop);
+				//printf("outerLoop done %d\n",m_outLoop);
+				printf(".");
+                fflush(stdout);
 			}
 			--m_outLoop;
 
@@ -107,6 +133,7 @@ public:
 		    ret = true;
 
             if ( 0 == m_my_pe ) {
+				printf("\n");
 				double updateTotal = ( (double) m_iterations * (double) m_updates * (double) m_num_pes );
 				double Gupdates = updateTotal * 1.0e-9;
 				double maxTime = 0;
@@ -144,9 +171,15 @@ public:
         return ret;
 	}
   private:
+    int m_myNode;
+    int m_ranksPerNode;
 	int m_outLoop;
 	std::vector<double> m_times;
+#if 0
     unsigned int m_randSeed;
+#else
+    RNG::XORShiftRNG* rng;
+#endif
 	bool m_backed;
 	bool m_printTotals;
 	bool m_useFadd;
