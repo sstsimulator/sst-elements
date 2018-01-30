@@ -368,7 +368,6 @@ for a in params['ember']:
         print "set emberParams {}={}".format( key, value )
     emberParams[key] = value
 
-print hermesParams
 for a in params['hermes']:
     key, value = a.split("=")
     if key in hermesParams:
@@ -376,8 +375,6 @@ for a in params['hermes']:
     else:
         print "set hermesParams {}={}".format( key, value )
     hermesParams[key] = value
-
-print hermesParams
 
 sst.merlin._params["link_lat"] = networkParams['link_lat']
 sst.merlin._params["link_bw"] = networkParams['link_bw']   
