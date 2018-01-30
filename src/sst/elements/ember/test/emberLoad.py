@@ -143,10 +143,8 @@ for o, a in opts:
     elif o in ("--platParams"):
         platParams = a
     elif o in ("--param"):
-        print a
         key,value = a.split(":")
-        params[key] = [value]  
-        print params
+        params[key] += [value]  
     elif o in ("--useSimpleMemoryModel"):
 		useSimpleMemoryModel=True
     else:
