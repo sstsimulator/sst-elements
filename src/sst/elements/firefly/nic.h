@@ -364,15 +364,17 @@ public:
     RespKey_t genRespKey( void* ptr ) {
         assert( m_respKeyMap.find(m_respKey) == m_respKeyMap.end() );
         RespKey_t key = m_respKey++;
-        m_respKeyMap[key++] = ptr;  
+        m_respKeyMap[key] = ptr;  
         m_respKey &= (128 - 1);
-        m_dbg.verbose(CALL_INFO,2,1,"key=%#x nextKey=%#x\n",key,m_respKey);
+        if ( 0 == m_respKey ) {
+            ++m_respKey;
+        }
+        m_dbg.verbose(CALL_INFO,2,1,"map[%#x]=%p nextkey=%#x\n",key-1,ptr,m_respKey);
         return key;
     }
     void* getRespKeyValue( RespKey_t key ) {
-        --key;  
-        m_dbg.verbose(CALL_INFO,2,1,"key=%#x\n",key);
         void* value = m_respKeyMap[key];
+        m_dbg.verbose(CALL_INFO,2,1,"map[%#x]=%p\n",key,value);
         m_respKeyMap.erase(key);
         return value; 
     }
