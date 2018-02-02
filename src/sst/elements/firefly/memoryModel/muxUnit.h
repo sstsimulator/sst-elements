@@ -11,7 +11,7 @@
 		};
 
 	  public:
-		MuxUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* unit, std::string name ) : Unit( model, dbg), m_unit(unit), m_blockedSrc(NULL)  {
+		MuxUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* unit, std::string name ) : Unit( model, dbg), m_unit(unit), m_blockedSrc(NULL), m_scheduled(false)  {
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "MuxUnit::@p():@l ";
 		}
 
@@ -48,6 +48,7 @@
 		}
 
 		void processQ( ) {
+            m_scheduled = false;
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,MUX_MASK,"\n");
 			assert( ! m_blockedQ.empty() );
 			Entry& entry = m_blockedQ.front();
@@ -62,6 +63,7 @@
 			if ( ! blocked ) {
 				m_model.schedResume( 1, entry.src  );
 				if ( m_blockedQ.size() > 1 ) {
+                    m_scheduled = true;
 					m_model.schedCallback( 1, std::bind( &MuxUnit::processQ, this ) );
 				}
 			} else {
@@ -77,7 +79,7 @@
 				m_blockedSrc = NULL;
 			}
 
-			if ( ! m_blockedQ.empty() ) {
+			if ( !m_scheduled && ! m_blockedQ.empty() ) {
 				processQ();
 			}
 		}
@@ -86,4 +88,5 @@
 		UnitBase* m_blockedSrc;
 		Unit* m_unit;
 		std::deque<Entry> m_blockedQ;
+        bool m_scheduled;
 	};
