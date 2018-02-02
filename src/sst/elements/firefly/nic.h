@@ -365,7 +365,7 @@ public:
         assert( m_respKeyMap.find(m_respKey) == m_respKeyMap.end() );
         RespKey_t key = m_respKey++;
         m_respKeyMap[key] = ptr;  
-        m_respKey &= (128 - 1);
+        m_respKey &= 0x7f;
         if ( 0 == m_respKey ) {
             ++m_respKey;
         }
