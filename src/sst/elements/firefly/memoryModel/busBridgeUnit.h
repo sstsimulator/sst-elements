@@ -4,6 +4,7 @@
 
 class BusBridgeUnit : public Unit {
 
+
 	struct Entry {
         Entry( UnitBase* src, MemReq* req, Callback callback = NULL ) : src(src), req(req), callback(callback),
 				addr(req->addr), length(req->length) {}
@@ -12,11 +13,13 @@ class BusBridgeUnit : public Unit {
 		UnitBase* src;
 		Hermes::Vaddr addr;
 		size_t length; 
+		SimTime_t qd;
+		SimTime_t xmit;
     };
 
   public:
-    BusBridgeUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, double bandwidth, int cacheLineSize, int widgetSlots ) :
-        Unit( model, dbg ), m_cache(cache), m_bandwidth_GB( bandwidth ), m_blocked(2,NULL), 
+    BusBridgeUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, double bandwidth, int numLinks, int cacheLineSize, int widgetSlots ) :
+        Unit( model, dbg ), m_cache(cache), m_bandwidth_GB( bandwidth ), m_numLinks(numLinks), m_blocked(2,NULL),
 		m_reqBus(*this,id, "Req", true, std::bind(&BusBridgeUnit::processReq,this,std::placeholders::_1 ) ), 
 		m_respBus(*this,id, "Resp", false,std::bind(&BusBridgeUnit::processResp,this,std::placeholders::_1 ) ) 
     {
@@ -44,13 +47,25 @@ class BusBridgeUnit : public Unit {
     bool load( UnitBase* src, MemReq* req, Callback callback  ) {
 		
 		Entry* entry = new Entry( src, req, callback );
+		entry->qd = m_model.getCurrentSimTimeNano();
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#lx length=%lu\n",entry,req->addr,req->length);
 		m_reqBus.addReq( entry );
 		return true;
 	}
+
+    bool write( UnitBase* src, MemReq* req, Callback callback ) {
+		Entry* entry = new Entry( src, req, callback );
+		entry->qd = m_model.getCurrentSimTimeNano();
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#lx length=%lu\n",entry,req->addr,req->length);
+		src->incPendingWrites();
+		m_respBus.addReq( entry );
+		return src->numPendingWrites() == 10;
+	}
+
     bool store( UnitBase* src, MemReq* req ) {
 
 		Entry* entry = new Entry( src, req );
+		entry->qd = m_model.getCurrentSimTimeNano();
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#lx length=%lu\n",entry,req->addr,req->length);
 		m_reqBus.addReq( entry );
 		return true;
@@ -113,7 +128,8 @@ class BusBridgeUnit : public Unit {
 						delay = m_unit.calcByteDelay( entry->length + m_unit.TLP_overhead() - 4 );
 					}
 					busy = true;
-		
+					
+					entry->xmit = m_unit.m_model.getCurrentSimTimeNano();
 					m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p\n",entry);
 					m_unit.m_model.schedCallback( delay, std::bind( &Bus::reqArrived, this, entry ) );
 				}
@@ -127,17 +143,27 @@ class BusBridgeUnit : public Unit {
 	};
 			
 	void processResp( Entry* entry ) {
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#lx length=%lu\n",entry,entry->addr, entry->length );
+		SimTime_t now = m_model.getCurrentSimTimeNano();
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#lx length=%lu Time=%lu\n",entry,entry->addr, entry->length, now - entry->qd );
 		m_reqBus.addDLL( numDLLbytes() );
 		if ( entry->callback ) { 
 			entry->callback();
 		}
+		if( 0 == entry->addr ) {
+			if ( entry->src->numPendingWrites() == 10 ) {
+				m_model.schedResume( 1, entry->src );
+			}
+			entry->src->decPendingWrites();
+		}
+
 		delete entry;
 	}
 
 	void processReq( Entry* entry ) {
 
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p\n",entry);
+		SimTime_t now = m_model.getCurrentSimTimeNano();
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p qdTime=%lu xmitTime=%lu\n",entry,
+				entry->xmit - entry->qd, now - entry->xmit);
         SimTime_t issueTime = m_model.getCurrentSimTimeNano();
 
 		m_respBus.addDLL( numDLLbytes() );
@@ -179,9 +205,9 @@ class BusBridgeUnit : public Unit {
 
     SimTime_t calcByteDelay( size_t numBytes ) {
 		
-		SimTime_t delay = numBytes/m_bandwidth_GB;
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"bytes=%lu delay=%lu\n",numBytes, delay);
-        return delay;
+		double delay = (numBytes/(m_numLinks/8))/m_bandwidth_GB;
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"bytes=%lu delay=%f\n",numBytes, (float) delay );
+        return round(delay);
     }
 
     size_t TLP_overhead() {
@@ -196,8 +222,9 @@ class BusBridgeUnit : public Unit {
 	Bus m_respBus;
 	std::vector<UnitBase*> m_blocked;
 
-    Unit* m_cache;
+	Unit* m_cache;
 	Unit* m_loadWidget;
 	Unit* m_storeWidget;
-    double m_bandwidth_GB;
+	int m_numLinks;
+	double m_bandwidth_GB;
 };

@@ -33,6 +33,7 @@ public:
 	{ 
         m_nelems = params.find<int>("arg.nelems", 1);
         m_printResults = params.find<bool>("arg.printResults", false );
+        m_blocking = params.find<bool>("arg.blocking", true );
         int status;
         std::string tname = typeid(TYPE).name();
 		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
@@ -75,12 +76,21 @@ public:
             break;
 
         case 3:
-            enQ_get( evQ, 
+            if ( m_blocking ) {
+                enQ_get( evQ, 
                     m_dest,
                     m_src, 
                     m_nelems*sizeof(TYPE),
                     m_other_pe );
-            enQ_barrier_all( evQ );
+                enQ_barrier_all( evQ );
+            } else {
+                enQ_get_nbi( evQ, 
+                    m_dest,
+                    m_src, 
+                    m_nelems*sizeof(TYPE),
+                    m_other_pe );
+                enQ_quiet( evQ );
+            }
             break;
 
         case 4: 
@@ -102,6 +112,7 @@ public:
         return ret;
 	}
   private:
+    bool m_blocking;
     bool m_printResults;
     std::string m_type_name;
     Hermes::MemAddr m_src;

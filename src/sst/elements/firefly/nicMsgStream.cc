@@ -21,22 +21,22 @@ using namespace SST;
 using namespace SST::Firefly;
 
 Nic::RecvMachine::MsgStream::MsgStream( Output& output, FireflyNetworkEvent* ev,
-       RecvMachine& rm  ) : 
-    StreamBase(output,rm)
+       RecvMachine& rm, int unit  ) : 
+    StreamBase(output,rm,unit)
 {
     m_hdr = *(MsgHdr*) ev->bufPtr();
-    m_tag = *(int*) ev->bufPtr( sizeof(MsgHdr) );
+    MatchMsgHdr& matchHdr = *(MatchMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
     m_src = ev->src;
 
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Msg Operation srcNode=%d tag=%#x lenght=%lu\n",
-                            m_src,m_tag,m_hdr.len);
+                            m_src,matchHdr.tag,matchHdr.len);
 
     Callback callback;
 
-    m_recvEntry = static_cast<DmaRecvEntry *>( m_rm.nic().findRecv( m_src, m_hdr, m_tag ) );
+    m_recvEntry = static_cast<DmaRecvEntry *>( m_rm.nic().findRecv( m_src, m_hdr, matchHdr ) );
     if ( m_recvEntry ) {
         ev->bufPop( sizeof(MsgHdr) );
-        ev->bufPop( sizeof(m_tag) );
+        ev->bufPop( sizeof(MatchMsgHdr) );
 
         callback = std::bind( &Nic::RecvMachine::state_move_0, &m_rm, ev, this );
 
@@ -45,5 +45,6 @@ Nic::RecvMachine::MsgStream::MsgStream( Output& output, FireflyNetworkEvent* ev,
     }
     m_rm.nic().schedCallback( callback, m_rm.m_rxMatchDelay );
 
-    m_matched_len = m_hdr.len;
+    m_matched_len = matchHdr.len;
+    m_matched_tag = matchHdr.tag;
 }

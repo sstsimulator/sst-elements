@@ -33,6 +33,7 @@ void Nic::Shmem::handleEvent( NicShmemCmdEvent* event, int id )
 
 void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
 {
+    m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"node=%d core=%d type=%d\n", event->getNode(), id, event->type ); 
 	if( m_freeCmdSlots == 0 ) {
 		m_pendingCmds.push_back( std::make_pair(event,id ) );
 		return;
@@ -40,18 +41,32 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
 
     switch (event->type) {
       case NicShmemCmdEvent::Add:
+        m_pendingRemoteOps[id].second += m_one;
 		--m_freeCmdSlots;	
         m_nic.getVirtNic(id)->notifyShmem( 0, static_cast< NicShmemAddCmdEvent*>(event)->getCallback() );
 		break;
-
       case NicShmemCmdEvent::Putv:
+        m_pendingRemoteOps[id].second += m_one;
 		--m_freeCmdSlots;	
         m_nic.getVirtNic(id)->notifyShmem( 0, static_cast< NicShmemPutvCmdEvent*>(event)->getCallback() );
 		break;
 
       case NicShmemCmdEvent::Put:
-      case NicShmemCmdEvent::Init:
+        m_pendingRemoteOps[id].second += m_one;
+        if ( ! static_cast<NicShmemPutCmdEvent*>(event)->isBlocking() ) {
+		    --m_freeCmdSlots;	
+            m_nic.getVirtNic(id)->notifyShmem( 0, static_cast<NicShmemPutCmdEvent*>(event)->getCallback() );
+        }
+        break;
+
       case NicShmemCmdEvent::Get:
+        if ( ! static_cast<NicShmemGetCmdEvent*>(event)->isBlocking() ) {
+		    --m_freeCmdSlots;	
+            m_nic.getVirtNic(id)->notifyShmem( 0, static_cast<NicShmemGetCmdEvent*>(event)->getCallback() );
+        }
+        break;
+
+      case NicShmemCmdEvent::Init:
       case NicShmemCmdEvent::Getv:
       case NicShmemCmdEvent::RegMem:
       case NicShmemCmdEvent::Wait:
@@ -63,7 +78,17 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
       default:
         assert(0);
     }
-	m_nic.schedEvent(  new SelfEvent( event, id ), getHost2NicDelay_ns() );
+    SimTime_t start = m_nic.getCurrentSimTimeNano();
+    std::vector<MemOp>* vec = new std::vector<MemOp>;
+    vec->push_back( MemOp( 0, 16, MemOp::Op::HostBusWrite,
+         [=]() {
+            m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"handleNicEvent latency=%lu\n", 
+                            m_nic.getCurrentSimTimeNano() - start);
+            handleEvent2( event, id );
+        }
+     ) );
+
+    m_nic.calcHostMemDelay(id, vec, [=]() { });
 }
 
 void Nic::Shmem::handleEvent2( NicShmemCmdEvent* event, int id )
@@ -171,9 +196,8 @@ void Nic::Shmem::regMem( NicShmemRegMemCmdEvent* event, int id )
 
 void Nic::Shmem::put( NicShmemPutCmdEvent* event, int id )
 {
-    m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"core=%d far=%" PRIx64" len=%lu\n", id, event->getFarAddr(), event->getLength() );
-
-    m_pendingRemoteOps[id].second += m_one;
+    m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"core=%d farNode=%d farAddr=%" PRIx64" len=%lu\n",
+                            id, event->getNode(), event->getFarAddr(), event->getLength() );
 
     std::stringstream tmp;
     tmp << m_pendingRemoteOps[id].second;
@@ -183,19 +207,22 @@ void Nic::Shmem::put( NicShmemPutCmdEvent* event, int id )
     ShmemPutSendEntry* entry = new ShmemPutbSendEntry( id, event, getBacking( id, event->getMyAddr(), event->getLength() ),
 					[=]() {
                         m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"Nic::Shmem::put complete\n");
-        				m_nic.getVirtNic(id)->notifyShmem( 0, callback );
+                        if ( event->isBlocking() ) {
+        				    m_nic.getVirtNic(id)->notifyShmem( 0, callback );
+                        } else {
+						    incFreeCmdSlots();
+                        }
 					}
     );
 
     m_nic.m_sendMachine[0]->run( entry );
+
 }
 
 void Nic::Shmem::putv( NicShmemPutvCmdEvent* event, int id )
 {
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"core=%d farCore=%d far=%" PRIx64" len=%lu\n", 
 			id, event->getVnic(), event->getFarAddr(), event->getLength() );
-
-    m_pendingRemoteOps[id].second += m_one;
 
     std::stringstream tmp;
     tmp << m_pendingRemoteOps[id].second;
@@ -208,6 +235,7 @@ void Nic::Shmem::putv( NicShmemPutvCmdEvent* event, int id )
     );
 
     m_nic.m_sendMachine[0]->run( entry );
+
 }
 
 
@@ -223,6 +251,8 @@ void Nic::Shmem::getv( NicShmemGetvCmdEvent* event, int id )
             } 
     ); 
 
+    entry->setRespKey(m_nic.genRespKey(entry));
+
     m_nic.m_sendMachine[0]->run( entry );
 }
 
@@ -230,13 +260,23 @@ void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
 {
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"core=%d far=%" PRIx64" len=%lu\n", id, event->getFarAddr(), event->getLength() );
 
+    std::stringstream tmp;
+    tmp << m_pendingRemoteOps[id].second;
+    m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"pendingRemoteOps=%s\n",tmp.str().c_str());
+
     NicShmemRespEvent::Callback callback = event->getCallback();
     ShmemGetbSendEntry* entry = new ShmemGetbSendEntry( id, event, 
             [=]() {
                 m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"Nic::Shmem::getv complete\n");
-                m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), callback );
+                if ( event->isBlocking() ) {
+                    m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), callback );
+                } else {
+                    incFreeCmdSlots();
+                }
             } 
     );  
+
+    entry->setRespKey(m_nic.genRespKey(entry));
 
 	m_nic.m_sendMachine[0]->run( entry );
 }
@@ -246,8 +286,6 @@ void Nic::Shmem::add( NicShmemAddCmdEvent* event, int id )
 {
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"core=%d farNode=%d farCore=%d far=%" PRIx64" len=%lu\n", id,
 			event->getNode(), event->getVnic(), event->getFarAddr(), event->getLength() );
-
-    m_pendingRemoteOps[id].second += m_one;
 
     std::stringstream tmp;
     tmp << m_pendingRemoteOps[id].second;
@@ -260,6 +298,7 @@ void Nic::Shmem::add( NicShmemAddCmdEvent* event, int id )
     ); 
 
     m_nic.m_sendMachine[0]->run( entry );
+
 }
 
 void Nic::Shmem::fadd( NicShmemFaddCmdEvent* event, int id )
@@ -273,6 +312,8 @@ void Nic::Shmem::fadd( NicShmemFaddCmdEvent* event, int id )
                 m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), callback, value );
             } 
     ); 
+
+    entry->setRespKey(m_nic.genRespKey(entry));
 
     m_nic.m_sendMachine[0]->run( entry );
 }
@@ -289,6 +330,8 @@ void Nic::Shmem::cswap( NicShmemCswapCmdEvent* event, int id )
             } 
     ); 
 
+    entry->setRespKey(m_nic.genRespKey(entry));
+
     m_nic.m_sendMachine[0]->run( entry );
 }
 
@@ -303,6 +346,8 @@ void Nic::Shmem::swap( NicShmemSwapCmdEvent* event, int id )
                 m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), callback, value );
             } 
     ); 
+
+    entry->setRespKey(m_nic.genRespKey(entry));
 
     m_nic.m_sendMachine[0]->run( entry );
 }
@@ -587,7 +632,7 @@ void Nic::Shmem::doReduction( Hermes::Shmem::ReduOp op, int destCore, Hermes::Va
 	}
 }
 
-void Nic::Shmem::checkWaitOps( int core, Hermes::Vaddr addr, size_t length, bool nic )
+void Nic::Shmem::checkWaitOps( int core, Hermes::Vaddr addr, size_t length )
 {
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"core=%d addr=%" PRIx64" len=%lu\n", core, addr, length );
 
@@ -599,13 +644,8 @@ void Nic::Shmem::checkWaitOps( int core, Hermes::Vaddr addr, size_t length, bool
         Op* op = *iter;
         if ( op->inRange( addr, length ) && op->checkOp( m_dbg ) ) {
 			
-			SimTime_t delay = 0;		
-			if ( nic ) {
-				// this is the nic-to-host delay when an operation in the nic triggers
-				// a wait, what should the delay be?
- 				delay = 50;
-			}
-    		m_nic.getVirtNic(core)->notifyShmem( delay, op->callback() );
+        	m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"notify %d\n");
+			m_nic.schedCallback( op->callback() );
             delete op; 
             iter = m_pendingOps[core].erase(iter);
         } else {

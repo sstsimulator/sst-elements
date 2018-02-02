@@ -14,9 +14,23 @@
 	class UnitBase {
 	  public:
 
+		UnitBase() : m_pendingWrite(0) {}
 		virtual void resume( UnitBase* src = NULL ) { assert(0); }
 		virtual std::string& name() { assert(0); }
 		~UnitBase() {}
+		void incPendingWrites() {
+			++m_pendingWrite;
+		}
+		void decPendingWrites() {
+			assert( m_pendingWrite>0);
+			--m_pendingWrite;
+		}
+		int numPendingWrites() {
+			return m_pendingWrite;
+		} 
+
+	  private:
+		int m_pendingWrite;
 	};
 
     class Unit : public UnitBase {
@@ -25,6 +39,7 @@
 
         virtual bool load( UnitBase* src, MemReq*, Callback callback ) { assert(0); }
         virtual bool store( UnitBase* src, MemReq* ) { assert(0); }
+        virtual bool write( UnitBase* src, MemReq* ) { assert(0); }
 
       protected:
         const char* prefix() { return m_prefix.c_str(); }
