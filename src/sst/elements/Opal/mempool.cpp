@@ -27,9 +27,9 @@ Pool::Pool(Params params)
 
 	output = new SST::Output("OpalMemPool[@f:@l:@p] ", 16, 0, SST::Output::STDOUT);
 
-	size = (uint64_t) params.find<uint64_t>("size", 0); // in KB's
-	start = (uint64_t) params.find<uint64_t>("start", 0);
-	frsize = (uint64_t) params.find<uint64_t>("frame_size", 4); //4KB frame size
+	size = params.find<long long int>("size", 0); // in KB's
+	start = params.find<long long int>("start", 0);
+	frsize = params.find<int>("frame_size", 4); //4KB frame size
 
 	/* memory technology
 	 * 0: DRAM
@@ -48,7 +48,7 @@ Pool::Pool(Params params)
 		memTech = SST::OpalComponent::MemTech::DRAM;
 	}
 
-	std::cerr << "Pool size: " << size << " start: " << start << " frame size: " << frsize << " mem tech: " << _memTech;
+	std::cerr << "Pool start: " << start << " size: " << size << " frame size: " << frsize << " mem tech: " << _memTech << std::endl;
 	build_mem();
 
 }
@@ -56,14 +56,17 @@ Pool::Pool(Params params)
 //Create free frames of size framesize, note that the size is in KB
 void Pool::build_mem()
 {
-	int i=0, num_frames;
+	int i=0;
 	Frame *frame;
 	num_frames = ceil(size/frsize);
+	real_size = num_frames * frsize;
 
-	for(i=0; i< num_frames; i++){
+	for(i=0; i< num_frames; i++) {
 		frame = new Frame(((long long int) i*frsize*1024) + start, 0);
 		freelist.push_back(frame);
 	}
+
+	available_frames = num_frames;
 
 	return;
 
@@ -73,8 +76,13 @@ MemPoolResponse Pool::allocate_frames(int _size)
 {
 
 	MemPoolResponse mpr;
-	int frames = ceil(_size/frsize);
+	int frames = ceil(_size/(frsize*1024));
 	std::list<Frame*> frames_allocated;
+
+	if(available_frames < frames) {
+		mpr.pAddress = -1;
+		return mpr;
+	}
 
 	// Fixme: Shuffle memory to make continuous memory available
 	while(frames) {
@@ -85,7 +93,7 @@ MemPoolResponse Pool::allocate_frames(int _size)
 				freelist.push_back(frame);
 				alloclist.erase(frame->starting_address);
 				frames_allocated.pop_front();
-
+				available_frames--;
 			}
 			mpr.pAddress = -1;
 			break;
@@ -96,7 +104,7 @@ MemPoolResponse Pool::allocate_frames(int _size)
 			freelist.pop_front();
 			alloclist[frame->starting_address] = frame;
 			frames_allocated.push_back(frame);
-
+			available_frames++;
 		}
 		frames--;
 
@@ -104,7 +112,7 @@ MemPoolResponse Pool::allocate_frames(int _size)
 
 	if(!frames_allocated.empty()) {
 		mpr.pAddress = ((Frame *)frames_allocated.front())->starting_address;
-		mpr.num_frames = ceil(_size/frsize);
+		mpr.num_frames = ceil(_size/(frsize*1024));
 		mpr.frame_size = frsize;
 	}
 	else
@@ -206,5 +214,6 @@ int Pool::deallocate_frame(long long int X, int N)
 
 	return 0;
 }
+
 
 

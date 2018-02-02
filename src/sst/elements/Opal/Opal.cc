@@ -59,12 +59,14 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	Params sharedMemParams = params.find_prefix_params("shared_mem.");
 
 	for(int i = 0; i < num_shared_mempools; i++) {
+		memset(buffer, 0 , 256);
 		sprintf(buffer, "mempool%" PRIu32 ".", i);
 		Params memPoolParams = sharedMemParams.find_prefix_params(buffer);
+		std::cerr << "Configuring Shared " << buffer << std::endl;
 		pool = new Pool(memPoolParams);
 		pool->set_memPool_type(SST::OpalComponent::MemType::SHARED);
 		shared_mem[i] = pool;
-		std::cerr << "Shared Memory pool: " << buffer;
+
 	}
 
 	/* local memory for each node */
@@ -72,13 +74,14 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	memset(buffer, 0 , 256);
 	for(int i=0; i<num_nodes; i++) {
+		memset(buffer, 0 , 256);
 		sprintf(buffer, "mempool%" PRIu32 ".", i);
 		Params memPoolParams = localMemParams.find_prefix_params(buffer);
+		std::cerr << "Configuring Local " << buffer << std::endl;
 		pool = new Pool(memPoolParams);
 		pool->set_memPool_type(SST::OpalComponent::MemType::LOCAL);
 		local_mem[i] = pool;
 		nextallocmem[i] = 0; // 0 for local memory
-		std::cerr << "Local Memory Pool: " << buffer;
 	}
 
 	Handlers = new core_handler[num_nodes*cores_per_node*2];
@@ -92,6 +95,7 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		samba_to_opal[i] = link;
 		Handlers[i].singLink = link;
 		Handlers[i].id = i;
+		Handlers[i].nodeID = i/(cores_per_node*2);
 		Handlers[i].latency = latency;
 		Handlers[i].setOwner(this);
 	}
@@ -142,7 +146,7 @@ bool Opal::getAllocationMemType( int node )
 	return memType;
 }
 
-void Opal::allocLocalMemPool(int node, long long int vAddress, int size )
+long long int Opal::allocLocalMemPool(int node, int linkId, long long int vAddress, int size )
 {
 	Pool *mempool = local_mem[node];
 	MemPoolResponse pool_resp = mempool->allocate_frames(size);
@@ -151,19 +155,14 @@ void Opal::allocLocalMemPool(int node, long long int vAddress, int size )
 		//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Allocate physical memory %" PRIu64 " for virtual address %" PRIu64 " in the local memory with %" PRIu32 " frames\n",
 		//		getName().c_str(), node, pool_resp.pAddress, ev->getAddress, pool_resp.num_frames);
 		OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
-		tse->setResp(vAddress, pool_resp.pAddress, pool_resp.num_frames*pool_resp.frame_size);
-		Handlers[node].singLink->send(latency, tse);
+		tse->setResp(vAddress, pool_resp.pAddress, pool_resp.num_frames*pool_resp.frame_size*1024);
+		Handlers[linkId].singLink->send(latency, tse);
 	}
-	else{
-		//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Could not allocate memory for virtual address %" PRIu64 " from Local memory \n",
-		//		getName().c_str(), node, ev->getAddress,);
-		OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
-		tse->setResp(vAddress, -1, 0);
-		Handlers[node].singLink->send(latency, tse);
-	}
+
+	return pool_resp.pAddress;
 }
 
-void Opal::allocSharedMemPool(int node, long long int vAddress, int size )
+long long int Opal::allocSharedMemPool(int node, int linkId, long long int vAddress, int size )
 {
 	Pool *mempool;
 	MemPoolResponse pool_resp;
@@ -178,18 +177,12 @@ void Opal::allocSharedMemPool(int node, long long int vAddress, int size )
 			//		getName().c_str(), node, pool_resp.pAddress, vAddress, *it, pool_resp.num_frames);
 			OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
 			tse->setResp(vAddress, pool_resp.pAddress, pool_resp.num_frames*pool_resp.frame_size);
-			Handlers[node].singLink->send(latency, tse);
+			Handlers[linkId].singLink->send(latency, tse);
 			break;
 		}
 	}
 
-	if(pool_resp.pAddress == -1) {
-		//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Could not allocate memory for virtual address %" PRIu64 " from any shared memory pool \n",
-		//		getName().c_str(), node, vAddress);
-		OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
-		tse->setResp(vAddress, -1, 0);
-		Handlers[node].singLink->send(latency, tse);
-	}
+	return pool_resp.pAddress;
 }
 
 bool Opal::tick(SST::Cycle_t x)
@@ -202,6 +195,7 @@ bool Opal::tick(SST::Cycle_t x)
 
 			OpalEvent *ev = requestQ.front();
 			int node_num = ev->getNodeId();
+			int linkId = ev->getLinkId();
 
 			switch(ev->getType()) {
 			case SST::OpalComponent::EventType::MMAP:
@@ -218,17 +212,22 @@ bool Opal::tick(SST::Cycle_t x)
 
 			case SST::OpalComponent::EventType::REQUEST:
 			{
-
+				long long int address;
 				int memType = getAllocationMemType(node_num);
+
 				if( !memType )
 				{
-					allocLocalMemPool( node_num, ev->getAddress(), ev->getSize() );
+					address = allocLocalMemPool( node_num, linkId, ev->getAddress(), ev->getSize() );
+					if(address == -1)
+						address = allocSharedMemPool( node_num, linkId, ev->getAddress(), ev->getSize() );
 				}
 				else
 				{
-					allocSharedMemPool( node_num, ev->getAddress(), ev->getSize() );
+					address = allocSharedMemPool( node_num, linkId, ev->getAddress(), ev->getSize() );
 				}
 
+				if(address == -1)
+					std::cerr << "Opal: Memory is drained out" << std::endl;
 
 			}
 			break;
@@ -264,5 +263,6 @@ void Opal::handleRequest( SST::Event* e )
 
 
 }
+
 
 
