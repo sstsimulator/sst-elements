@@ -210,7 +210,7 @@ namespace SST
 
 					default:
 						{
-							std::cout<<"Opal has received a REQUEST CALL with virtual address: "<< std::hex << ev->getAddress()<<" Size: "<<ev->getSize()<<std::endl;
+							//std::cout<<"Opal has received a REQUEST CALL with virtual address: "<< std::hex << ev->getAddress()<<" Size: "<<ev->getSize()<<std::endl;
 							ev->setNodeId(nodeID);
 							ev->setLinkId(id);
 							owner->requestQ.push(ev);

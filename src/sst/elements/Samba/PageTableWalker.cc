@@ -285,7 +285,7 @@ void PageTableWalker::recvOpal(SST::Event * event)
 	// Whenever we receve request from Opal, we just create event that will be handled by handleEvent
 	SambaEvent * tse = new SambaEvent(EventType::OPAL_RESPONSE);
 	tse->setResp(temp_ptr->getAddress(), temp_ptr->getPaddress(),4096);
-	std::cerr << "Receviced Virtual addres: " << std::hex << temp_ptr->getAddress() << " Physical address: " << std::hex << temp_ptr->getAddress() << " size: " << temp_ptr->getSize() << std::endl;
+	//std::cerr << "Receviced Virtual addres: " << std::hex << temp_ptr->getAddress() << " Physical address: " << std::hex << temp_ptr->getAddress() << " size: " << temp_ptr->getSize() << std::endl;
 	s_EventChan->send(10, tse);
 
 	//std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()/4096<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
