@@ -39,7 +39,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_useDetailedCompute(false),
     m_getKey(10),
     m_simpleMemoryModel(NULL),
-    m_respKey(0),
+    m_respKey(1),
     m_linkWidget(this)
 {
     m_myNodeId = params.find<int>("nid", -1);
