@@ -68,15 +68,13 @@ class RecvMachine {
 
         RecvMachine( Nic& nic, int vc, int numVnics, 
                 int nodeId, int verboseLevel, int verboseMask,
-                int rxMatchDelay, int hostReadDelay, 
-                std::function<std::pair<Hermes::MemAddr,size_t>(int,uint64_t)> func ) :
+                int rxMatchDelay, int hostReadDelay ) :
             m_nic(nic), 
             m_vc(vc), 
             m_rxMatchDelay( rxMatchDelay ),
             m_hostReadDelay( hostReadDelay ),
             m_blockedNetworkEvent( NULL ), 
-            m_notifyCallback( false ), 
-            m_shmem( m_dbg )
+            m_notifyCallback( false )
 #ifdef NIC_RECV_DEBUG
             , m_msgCount(0) 
 #endif
@@ -85,7 +83,6 @@ class RecvMachine {
             snprintf(buffer,100,"@t:%d:Nic::RecvMachine::@p():@l vc=%d ",nodeId,m_vc);
 
             m_dbg.init(buffer, verboseLevel, verboseMask, Output::STDOUT);
-            m_shmem.init( func );
             setNotify();
             m_unit = nic.allocNicUnit();
             assert( m_unit >= 0 );
@@ -212,7 +209,6 @@ class RecvMachine {
 
         std::map< int, StreamBase* >    m_streamMap;
 
-        Shmem           m_shmem;
 #ifdef NIC_RECV_DEBUG 
         unsigned int    m_msgCount;
 #endif
@@ -222,9 +218,8 @@ class CtlMsgRecvMachine : public RecvMachine {
   public:
     CtlMsgRecvMachine( Nic& nic, int vc, int numVnics, 
                 int nodeId, int verboseLevel, int verboseMask,
-                int rxMatchDelay, int hostReadDelay, 
-                std::function<std::pair<Hermes::MemAddr,size_t>(int,uint64_t)> func ) :
-        RecvMachine( nic, vc, numVnics, nodeId, verboseLevel, verboseMask, rxMatchDelay, hostReadDelay, func )
+                int rxMatchDelay, int hostReadDelay ) :
+        RecvMachine( nic, vc, numVnics, nodeId, verboseLevel, verboseMask, rxMatchDelay, hostReadDelay )
     {}
 
   private:

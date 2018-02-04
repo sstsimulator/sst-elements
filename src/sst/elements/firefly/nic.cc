@@ -39,7 +39,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_useDetailedCompute(false),
     m_getKey(10),
     m_simpleMemoryModel(NULL),
-    m_respKey(0),
+    m_respKey(1),
     m_linkWidget(this)
 {
     m_myNodeId = params.find<int>("nid", -1);
@@ -132,13 +132,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                rxMatchDelay, hostReadDelay, 
-                std::bind( &Shmem::findRegion, m_shmem, _1, _2 ) ) );
+                rxMatchDelay, hostReadDelay ) );
     m_recvMachine.push_back( new CtlMsgRecvMachine( *this, 1, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                rxMatchDelay, hostReadDelay, 
-                std::bind( &Shmem::findRegion, m_shmem, _1, _2 ) ) );
+                rxMatchDelay, hostReadDelay ) ); 
 
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
