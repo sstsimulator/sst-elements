@@ -44,7 +44,8 @@ class Hades : public OS
     virtual void _componentSetup();
     virtual void finish();
 
-    int getNid();
+    int getRank();
+    int getNodeNum();
     int getNumNids();
 
     int sizeofDataType( MP::PayloadDataType type ) { 
