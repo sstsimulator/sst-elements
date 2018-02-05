@@ -20,6 +20,7 @@
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>
+#include "libs/misc.h"
 
 namespace SST {
 namespace Ember {
@@ -38,6 +39,9 @@ public:
 		m_backed = params.find<bool>("arg.backed", false);
 		m_outLoop = params.find<int>("arg.outLoop", 1);
 		m_times.resize(m_outLoop);
+        
+        m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
+        assert(m_miscLib);
 	}
 
     bool generate( std::queue<EmberEvent*>& evQ) 
@@ -48,11 +52,12 @@ public:
             enQ_n_pes( evQ, &m_num_pes );
             enQ_my_pe( evQ, &m_my_pe );
             enQ_malloc( evQ, &m_dest, sizeof(long) * m_dataSize, m_backed );
+            m_miscLib->getNodeNum( evQ, &m_node_num );
 		} else if ( -2 == m_phase ) {
 
             if ( 0 == m_my_pe ) {
-                printf("%d:%s: num_pes=%d dataSize=%d updates=%d iterations=%d outerLoop=%d %s\n",m_my_pe,
-                        getMotifName().c_str(), m_num_pes, m_dataSize, m_updates, m_iterations, m_outLoop,
+                printf("%d:%s: num_pes=%d node_num=%d dataSize=%d updates=%d iterations=%d outerLoop=%d %s\n",m_my_pe,
+                        getMotifName().c_str(), m_num_pes, m_node_num, m_dataSize, m_updates, m_iterations, m_outLoop,
 						m_useFadd ? "fadd":"add" );
             }
             
@@ -144,6 +149,7 @@ public:
         return ret;
 	}
   private:
+    EmberMiscLib* m_miscLib;
 	int m_outLoop;
 	std::vector<double> m_times;
     unsigned int m_randSeed;
@@ -162,6 +168,7 @@ public:
     int m_phase;
     int m_my_pe;
     int m_num_pes;
+    int m_node_num;
 };
 
 }
