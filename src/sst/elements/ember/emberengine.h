@@ -59,6 +59,11 @@ public:
 		return m_memHeapLink;
 	}
 
+    EmberLib* getLib( std::string name ) {
+        assert( m_apiMap.find( name ) != m_apiMap.end() );
+        return m_apiMap[name]->lib; 
+    }
+
 private:
 	bool refillQueue() {
 		return m_generator->generate( evQueue );
@@ -84,6 +89,7 @@ private:
     struct ApiInfo {
         Hermes::Interface* api;
         EmberGeneratorData* data;
+        EmberLib*           lib;
     };
 
     typedef std::map< std::string, ApiInfo* > ApiMap; 

@@ -24,7 +24,7 @@ namespace SST {
 namespace Hermes {
 namespace Shmem {
 
-typedef std::function<void(int)> Callback;
+typedef Hermes::Callback Callback;
 
 typedef enum { LTE, LT, EQ, NE, GT, GTE } WaitOp;
 
