@@ -96,7 +96,7 @@ void ZodiacSiriusTraceReader::setup() {
     os->_componentSetup();
     msgapi->setup();
 
-    rank = os->getNid();
+    rank = os->getRank();
 
     eventQ = new std::queue<ZodiacEvent*>();
 
