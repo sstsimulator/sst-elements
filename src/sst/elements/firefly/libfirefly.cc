@@ -25,6 +25,7 @@
 #include <hades.h>
 #include <hadesMP.h>
 #include <hadesSHMEM.h>
+#include <hadesMisc.h>
 #include <virtNic.h>
 #include <funcSM/init.h>
 #include <funcSM/fini.h>
@@ -150,6 +151,17 @@ static const ElementInfoParam hadesMPModule_params[] = {
 	{"defaultModule","Sets the default function module","firefly"},
 	{NULL, NULL}
 };
+
+static SubComponent*
+load_hadesMisc(Component* comp, Params& params)
+{
+    return new HadesMisc(comp, params);
+}
+
+static const ElementInfoParam hadesMiscModule_params[] = {
+	{NULL, NULL}
+};
+
 
 static const ElementInfoParam hadesModule_params[] = {
     {"mapType","Sets the type of data structure to use for mapping ranks to NICs", ""},
@@ -656,6 +668,14 @@ static const ElementInfoSubComponent subcomponents[] = {
       hadesSHMEMModule_params,
       NULL,
       "SST::Hermes::MP::Interface"
+    },
+    { "hadesMisc",
+      "Firefly Hermes Misc module",
+      NULL,
+      load_hadesMisc,
+      hadesMiscModule_params,
+      NULL,
+      "SST::Hermes::Misc::Interface"
     },
     { "CtrlMsgProto",
       "Ctrl Message Pootocol",
