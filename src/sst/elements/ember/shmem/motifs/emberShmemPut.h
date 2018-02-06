@@ -89,11 +89,13 @@ public:
                         m_other_pe );
                     enQ_quiet( evQ );
                 }
-			}
+			} else {
+                m_phase = m_iterations - 1;
+            }
 
-			if (  ( ! m_biDir && 0 != m_my_pe ) || m_phase + 1 == m_iterations ) {
-				enQ_getTime( evQ, &m_stopTime );
-            	enQ_barrier_all( evQ );
+			if (  m_phase + 1 == m_iterations ) {
+                enQ_getTime( evQ, &m_stopTime );
+                enQ_barrier_all( evQ );
 			}
 
 		} else {
