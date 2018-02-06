@@ -30,6 +30,7 @@ class Interface : public Hermes::Interface {
     Interface( Component* parent ) : Hermes::Interface(parent) {}
 
     virtual void getNodeNum( int*, Callback) { assert(0); }
+    virtual void getNumNodes( int*, Callback) { assert(0); }
 };
 
 }

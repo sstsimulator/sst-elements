@@ -55,6 +55,7 @@ Hades::Hades( Component* owner, Params& params ) :
 
     Params funcParams = params.find_prefix_params("functionSM.");
 
+    m_numNodes = params.find<int>("numNodes",0); 
     m_functionSM = new FunctionSM( funcParams, owner, m_proto );
 
     tmpParams = params.find_prefix_params("nicParams." );
@@ -186,17 +187,6 @@ void Hades::_componentInit(unsigned int phase )
 int Hades::getNodeNum() 
 {
     return m_virtNic->getRealNodeId();
-}
-
-int Hades::getNumNids()
-{
-    int size = -1;
-	Group* group = m_info.getGroup(MP::GroupWorld);
-	if ( group ) { 
-    	size = group->getSize();
-	}
-    m_dbg.verbose(CALL_INFO,1,1,"size=%d\n",size);
-    return size;
 }
 
 int Hades::getRank() 

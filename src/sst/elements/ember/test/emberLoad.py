@@ -333,10 +333,12 @@ hermesParams['hermesParams.nicParams.verboseLevel'] = debug
 hermesParams['hermesParams.functionSM.verboseLevel'] = debug
 hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 emberParams['verbose'] = emberVerbose
+hermesParams['hermesParams.numNodes'] = topoInfo.getNumNodes() 
 emberParams['firefly.hadesSHMEM.verboseLevel'] = 0 
 emberParams['firefly.hadesSHMEM.verboseMask'] = -1
 emberParams['firefly.hadesSHMEM.enterLat_ns'] = 57 
 emberParams['firefly.hadesSHMEM.returnLat_ns'] = 57 
+
 if embermotifLog:
     emberParams['motifLog'] = embermotifLog
 if emberrankmapper:
