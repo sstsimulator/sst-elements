@@ -11,17 +11,18 @@
 # you can have multiple jobs
 # two jobs can not have the same NID 
 
-[JOB_ID] 1 
+[JOB_ID] 10 
 [NID_LIST] 0-13 
 
 [MOTIF] Init
-[MOTIF] Ring iterations=1
+[MOTIF] 
+Halo2D iterations=10  messagesize=128
 [MOTIF] Fini
 
-[JOB_ID] 10 
+[JOB_ID] 1 
 [NID_LIST]
 14,15 
 
 [MOTIF] Init 
-[MOTIF] Ring iterations=1
+[MOTIF] PingPong iterations=100
 [MOTIF] Fini
