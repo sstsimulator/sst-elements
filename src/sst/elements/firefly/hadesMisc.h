@@ -38,6 +38,11 @@ class HadesMisc : public Misc::Interface
     virtual void setOS( OS* os ) {
         m_os = static_cast<Hades*>(os);
     }
+    void getNumNodes( int* ptr, Callback callback) { 
+        *ptr = m_os->getNumNodes();
+        callback(0);
+    }
+
     void getNodeNum( int* ptr, Callback callback) { 
         *ptr = m_os->getNodeNum();
         callback(0);

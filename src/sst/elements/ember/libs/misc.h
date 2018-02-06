@@ -11,6 +11,7 @@
 #include "embergen.h"
 #include "libs/emberLib.h"
 #include "libs/miscEvents/emberGetNodeNumEvent.h"
+#include "libs/miscEvents/emberGetNumNodesEvent.h"
 
 using namespace Hermes;
 
@@ -25,6 +26,10 @@ class EmberMiscLib : public EmberLib {
 
     void getNodeNum( EmberGenerator::Queue& q, int* ptr ) {
         q.push( new EmberGetNodeNumEvent( *m_api, m_output, ptr ) ); 
+    }
+
+    void getNumNodes( EmberGenerator::Queue& q, int* ptr ) {
+        q.push( new EmberGetNumNodesEvent( *m_api, m_output, ptr ) ); 
     }
 
   private:
