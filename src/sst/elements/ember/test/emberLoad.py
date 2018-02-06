@@ -376,6 +376,8 @@ for a in params['hermes']:
         print "set hermesParams {}={}".format( key, value )
     hermesParams[key] = value
 
+nicParams["packetSize"] =	networkParams['packetSize']
+nicParams["link_bw"] = networkParams['link_bw']
 sst.merlin._params["link_lat"] = networkParams['link_lat']
 sst.merlin._params["link_bw"] = networkParams['link_bw']   
 sst.merlin._params["xbar_bw"] = networkParams['link_bw'] 
