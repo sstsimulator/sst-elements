@@ -7,8 +7,7 @@ def getWorkFlow( defaults ):
     workFlow.append( motif )
 
     motif = dict.copy( defaults )
-    #motif['cmd'] = "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=2 pey=4 pez=0 kba=10"     
-    motif['cmd'] = "PingPong"
+    motif['cmd'] = "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=2 pey=4 pez=0 kba=10"     
     workFlow.append( motif )
 
     motif = dict.copy( defaults )
@@ -31,7 +30,7 @@ def getNetwork():
 	#topo = ''
 	#shape = ''
 	topo = 'torus'
-	shape = '2'
+	shape = '2x2x2'
 
 	return platform, topo, shape 
 
