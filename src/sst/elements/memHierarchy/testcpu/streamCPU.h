@@ -31,7 +31,7 @@
 
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/rng/marsaglia.h>
-#include "memEvent.h"
+#include <sst/elements/memHierarchy/memEvent.h>
 
 namespace SST {
 namespace MemHierarchy {

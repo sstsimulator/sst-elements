@@ -29,10 +29,10 @@
 
 #include <unordered_map>
 
-#include "../cacheArray.h"
-#include "../replacementManager.h"
-#include "../util.h"
-#include "../../ariel/arielalloctrackev.h"
+#include <sst/elements/memHierarchy/cacheArray.h>
+#include <sst/elements/memHierarchy/replacementManager.h>
+#include <sst/elements/memHierarchy/util.h>
+#include <sst/elements/ariel/arielalloctrackev.h>
 
 
 namespace SST { namespace MemHierarchy {

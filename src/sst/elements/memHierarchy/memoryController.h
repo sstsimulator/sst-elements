@@ -22,11 +22,11 @@
 #include <sst/core/event.h>
 #include <sst/core/elementinfo.h>
 
-#include "sst/elements/memHierarchy/memEvent.h"
-#include "sst/elements/memHierarchy/cacheListener.h"
-#include "sst/elements/memHierarchy/memLinkBase.h"
-#include "sst/elements/memHierarchy/membackend/backing.h"
-#include "sst/elements/memHierarchy/customcmd/customCmdMemory.h"
+#include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/elements/memHierarchy/cacheListener.h>
+#include <sst/elements/memHierarchy/memLinkBase.h>
+#include <sst/elements/memHierarchy/membackend/backing.h>
+#include <sst/elements/memHierarchy/customcmd/customCmdMemory.h>
 
 namespace SST {
 namespace MemHierarchy {

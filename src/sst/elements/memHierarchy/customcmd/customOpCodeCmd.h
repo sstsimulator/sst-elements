@@ -16,7 +16,7 @@
 #ifndef _MEMHIERARCHY_CUSTOMOPCODECMD_H_
 #define _MEMHIERARCHY_CUSTOMOPCODECMD_H_
 
-#include "sst/elements/memHierarchy/customcmd/customCmdMemory.h"
+#include <sst/elements/memHierarchy/customcmd/customCmdMemory.h>
 
 namespace SST {
 namespace MemHierarchy {

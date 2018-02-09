@@ -28,8 +28,8 @@
 #include <sst/core/output.h>
 
 
-#include "../util.h"
-#include "../../ariel/arielalloctrackev.h"
+#include <sst/elements/memHierarchy/util.h>
+#include <sst/elements/ariel/arielalloctrackev.h>
 
 
 namespace SST { namespace MemHierarchy {

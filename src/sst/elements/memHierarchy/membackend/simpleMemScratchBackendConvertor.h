@@ -19,7 +19,7 @@
 
 #include <sst/core/elementinfo.h>
 
-#include "sst/elements/memHierarchy/membackend/scratchBackendConvertor.h"
+#include <sst/elements/memHierarchy/membackend/scratchBackendConvertor.h>
 
 namespace SST {
 namespace MemHierarchy {

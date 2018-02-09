@@ -22,8 +22,8 @@
 #ifndef REPLACEMENT_MGR_H
 #define	REPLACEMENT_MGR_H
 
-#include "memEvent.h"
-#include "sst/core/rng/marsaglia.h"
+#include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/core/rng/marsaglia.h>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 

@@ -26,10 +26,10 @@
 #include <map>
 #include <list>
 
-#include "sst/elements/memHierarchy/membackend/backing.h"
-#include "moveEvent.h"
-#include "memEvent.h"
-#include "memLinkBase.h"
+#include <sst/elements/memHierarchy/membackend/backing.h>
+#include <sst/elements/memHierarchy/moveEvent.h>
+#include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/elements/memHierarchy/memLinkBase.h>
 
 namespace SST {
 namespace MemHierarchy {
