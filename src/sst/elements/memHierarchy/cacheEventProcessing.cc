@@ -242,12 +242,12 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         Addr bank = cacheArray_->getBank(event->getBaseAddr());
         if (bankStatus_[bank]) { // bank conflict
             if (is_debug_event(event))
-            d_->debug(_L3_, "Bank conflict on bank %u\n", bank);
+            d_->debug(_L3_, "Bank conflict on bank %" PRIu64 "\n", bank);
             statBankConflicts->addData(1);
             bankConflictBuffer_[bank].push(event);
             return true; // Accepted but we're stopping now
         } else {
-            d_->debug(_L3_, "No bank conflict, setting bank %u to busy\n", bank);
+            d_->debug(_L3_, "No bank conflict, setting bank %" PRIu64 " to busy\n", bank);
             bankStatus_[bank] = true;
         }
     }

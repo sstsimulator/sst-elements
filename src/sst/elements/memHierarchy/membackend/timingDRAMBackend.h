@@ -229,7 +229,7 @@ private:
         void pushTrans( Transaction* trans ) {
             unsigned bank = m_mapper->getBank( trans->addr);
             
-            m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#llx\n",
+            m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#" PRIx64 "\n",
                 bank,trans->addr);
 
             m_banks[bank].pushTrans( trans );
@@ -263,7 +263,7 @@ private:
 
             unsigned rank = m_mapper->getRank( addr);
 
-            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%llu rank=%d addr=%#llx, createTime=%" PRIu64 "\n", id, rank, addr, createTime );
+            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%" PRIu64 " rank=%d addr=%#" PRIx64 ", createTime=%" PRIu64 "\n", id, rank, addr, createTime );
 
             Transaction* trans = new Transaction( createTime, id, addr, isWrite, numBytes, m_mapper->getBank(addr),
                                                 m_mapper->getRow(addr) );
@@ -300,7 +300,7 @@ public:
     TimingDRAM(Component*, Params& );
     virtual bool issueRequest( ReqId, Addr, bool, unsigned );
     void handleResponse(ReqId  id ) {
-        output->verbose(CALL_INFO, 2, DBG_MASK, "req=%llu\n", id ); 
+        output->verbose(CALL_INFO, 2, DBG_MASK, "req=%" PRIu64 "\n", id ); 
         handleMemResponse( id );
     }
     virtual bool clock(Cycle_t cycle);
