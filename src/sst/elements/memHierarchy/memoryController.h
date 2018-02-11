@@ -97,6 +97,10 @@ public:
     virtual void handleMemResponse( SST::Event::id_type id, uint32_t flags );
     
     SST::Cycle_t turnClockOn();
+    
+    /* For updating memory values. CustomMemoryCommand should call this */
+    void writeData( MemEvent* );
+    void readData( MemEvent* );
 
 protected:
     MemController();  // for serialization only
@@ -117,8 +121,6 @@ protected:
     virtual void processInitEvent( MemEventInit* );
 
     virtual bool clock( SST::Cycle_t );
-    void writeData( MemEvent* );
-    void readData( MemEvent* );
 
     Output dbg;
     std::set<Addr> DEBUG_ADDR;

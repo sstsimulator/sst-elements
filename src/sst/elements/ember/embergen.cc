@@ -55,6 +55,11 @@ EmberGenerator::EmberGenerator( Component* owner, Params& params,
     } 
 }
 
+EmberLib* EmberGenerator::getLib(std::string name )
+{
+    return static_cast<EmberEngine*>(parent)->getLib( name );
+}
+
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-security"

@@ -26,7 +26,7 @@ namespace SST {
 namespace Ember {
 
 typedef Hermes::MP::Functor FOO;
-typedef Hermes::Shmem::Callback Callback;
+typedef Hermes::Callback Callback;
 
 #undef FOREACH_ENUM
 #define FOREACH_ENUM(NAME) \

@@ -34,6 +34,7 @@
 #include "emberconstdistrib.h"
 #include "embercomputeev.h"
 #include "emberdetailedcomputeev.h"
+#include "libs/emberLib.h"
 
 namespace SST {
 namespace Ember {
@@ -65,9 +66,10 @@ class EmberGenerator : public SubComponent {
 
     virtual bool primary( ) { return true; }
 
-   virtual std::string getComputeModelName() {
-       return "";
-   }
+    virtual std::string getComputeModelName() {
+        return "";
+    }
+    EmberLib* getLib(std::string name );
 
   protected:
 

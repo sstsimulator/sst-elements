@@ -44,8 +44,8 @@ class Hades : public OS
     virtual void _componentSetup();
     virtual void finish();
 
-    int getNid();
-    int getNumNids();
+    int getRank();
+    int getNodeNum();
 
     int sizeofDataType( MP::PayloadDataType type ) { 
         return m_info.sizeofDataType(type); 
@@ -67,6 +67,7 @@ class Hades : public OS
     Info*               getInfo() { return &m_info; }
     FunctionSM&         getFunctionSM() { return *m_functionSM; }
     ProtocolAPI&        getMsgStack() { return *m_proto; }
+    int                 getNumNodes() { return m_numNodes; } 
 
   private:
 
@@ -83,6 +84,7 @@ class Hades : public OS
     SharedRegion*                        m_sreg;
     int                                  m_netMapSize;
     std::string                          m_netMapName;
+    int                                  m_numNodes;
 };
 
 } // namesapce Firefly 

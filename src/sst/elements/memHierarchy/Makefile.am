@@ -177,6 +177,8 @@ nobase_sst_HEADERS = \
 	memEventBase.h \
 	memEvent.h \
 	memNIC.h \
+	memLink.h \
+	memHierarchyInterface.h \
 	customcmd/customCmdEvent.h \
 	customcmd/customCmdMemory.h \
 	customcmd/customOpCodeCmd.h \
