@@ -26,7 +26,7 @@
 #include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
-#include <../memHierarchy/memEvent.h>
+#include <sst/elements/memHierarchy/memEvent.h>
 #include<map>
 #include<list>
 #include<string>
