@@ -88,11 +88,15 @@ class SimpleMemoryModel : SubComponent {
 		int nicCacheLineSize = params.find<int>( "nicCacheLineSize", 256 );
 		int widgetSlots = params.find<int>( "widgetSlots", 64 );
 
+		int DLL_bytes = params.find<int>( "DLL_bytes", 16 );
+		int TLP_overhead = params.find<int>( "TLP_overhead", 30 );
+
 		m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
 		m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
 		m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "HostCache" );
 
-		m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, busNumLinks, hostCacheLineSize, widgetSlots );
+		m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, busNumLinks,
+                                                                TLP_overhead, DLL_bytes, hostCacheLineSize, widgetSlots );
 
 		//m_nicCacheUnit = new CacheUnit( *this, m_dbg, id, m_busBridgeUnit, nicCacheUnitSize, nicCacheLineSize, 10, "Nic" );
 		
@@ -184,7 +188,11 @@ class SimpleMemoryModel : SubComponent {
 	void addWork( int slot, Work* work ) {
 		// we send an event to ourselves to break the call chain, we will eventually call a 
 		// callback provided by the caller of this function, this call back may re-enter here 
-		m_selfLink->send( 0 , new SelfEvent( slot, work ) );
+		if ( m_threads[slot].isIdle() ) {
+		    m_selfLink->send( 0 , new SelfEvent( slot, work ) );
+        } else {
+		    m_threads[slot].addWork( work );
+        }
 	}
 
 	virtual SimTime_t schedHostCallback( int core, std::vector< MemOp >* ops, Callback callback ) {
