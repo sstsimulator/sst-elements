@@ -10,7 +10,11 @@ class StoreUnit : public Unit {
     }
 
 	std::string& name() { return m_name; }
-    bool store( UnitBase* src, MemReq* req ) {
+    bool storeCB( UnitBase* src, MemReq* req, Callback callback = NULL ) {
+
+        if ( callback ) {
+			m_model.schedCallback( 1, callback );
+        }
 
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#lx length=%lu pending=%lu\n",req->addr,req->length,m_pendingQ.size());
 		assert( NULL == m_blockedSrc );

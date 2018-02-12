@@ -1,18 +1,22 @@
-  
 
 class Work {
 
   public:
     Work( std::vector< MemOp >* ops, Callback callback, SimTime_t start ) : m_ops(ops),
-                        m_callback(callback), m_start(start), m_pos(0) {}
+                        m_callback(callback), m_start(start), m_pos(0) {
+        if( 0 == ops->size() ) {
+            ops->push_back( MemOp( MemOp::Op::NoOp ) );
+        }
+    }
 
     ~Work() {
         m_callback();
         delete m_ops;
     }
-    SimTime_t start() { return m_start; }
 
-	size_t getNumOps() { return m_ops->size(); }
+    SimTime_t start()   { return m_start; }
+	size_t getNumOps()  { return m_ops->size(); }
+    bool isDone()       { return m_pos ==  m_ops->size(); }
 
 	MemOp* popOp() {
 		if ( m_pos <  m_ops->size() )  {
@@ -22,6 +26,11 @@ class Work {
 		}
 	}
 
+    void print( Output& dbg, const char* prefix ) {
+        for ( unsigned i = 0; i < m_ops->size(); i++ ) {
+           dbg.verbosePrefix(prefix,CALL_INFO,1,THREAD_MASK,"%s %#x %lu\n",(*m_ops)[i].getName(), (*m_ops)[i].addr, (*m_ops)[i].length );
+        }
+    }
   private:
     SimTime_t               m_start;
     int 					m_pos;
@@ -35,22 +44,26 @@ class Thread : public UnitBase {
   public:	  
      Thread( SimpleMemoryModel& model, std::string name, Output& output, int id, int accessSize, Unit* load, Unit* store ) : 
 			m_model(model), m_dbg(output), m_loadUnit(load), m_storeUnit(store),
-			m_maxAccessSize( accessSize ), m_currentOp(NULL), m_blocked(false)
+			m_maxAccessSize( accessSize ), m_currentOp(NULL), m_waitingOnOp(NULL), m_blocked(false)
 	{
 		m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name +"::@p():@l ";
         m_dbg.verbosePrefix( prefix(), CALL_INFO,1,THREAD_MASK,"this=%p\n",this );
 	}
+
+    bool isIdle() {
+        return !m_workQ.size();
+    }
 
 	void addWork( Work* work ) { 
 		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work=%p numOps=%lu workSize=%lu blocked=%d\n",
 														work, work->getNumOps(), m_workQ.size(), (int) m_blocked );
 		m_workQ.push_back( work ); 
 
-		if ( ! m_blocked && 1 == m_workQ.size() ) {
+        work->print(m_dbg,prefix());
 
+		if ( ! m_blocked && ! m_currentOp ) {
 			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"prime pump\n");		
-			m_currentOp = m_workQ.front()->popOp();
-			process();
+			process( );
         }
 	}
 
@@ -58,85 +71,50 @@ class Thread : public UnitBase {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"work=%lu\n", m_workQ.size() );
 		
 		m_blocked = false;
-		if ( ! m_workQ.empty() ) {
+        if ( m_currentOp ) {
+            process( m_currentOp ); 
+        } else if ( ! m_workQ.empty() ) {
 			process();
 		}
 	}
 
   private:
 
-    const char* prefix() { return m_prefix.c_str(); }
-	
-    void process() {
+    void process( MemOp* op = NULL ) {
 
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"enter\n");
-		assert( ! m_workQ.empty() ); 
-
-        MemOp* op;
-		if ( m_currentOp ) {
-			op = m_currentOp;
-		} else {
-			op = &m_noop;
-		}
+        assert( ! m_workQ.empty() );
+		Work* work = m_workQ.front();
+        if ( ! op ) {
+		    op = work->popOp();
+        }
 
         Hermes::Vaddr addr = op->getCurrentAddr();
         size_t length = op->getCurrentLength( m_maxAccessSize );
 		op->incOffset( length );
 
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op=%s op.length=%lu offset=%lu addr=%#lx length=%lu\n",
-                            op->getName(), op->length, op->offset, addr, length );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"opPtr=%p op=%s op.length=%lu offset=%lu addr=%#lx length=%lu\n",
+                            op, op->getName(), op->length, op->offset, addr, length );
 
-    	Callback callback = NULL;
-
-		MemOp::Op type = op->getOp();
-
-		if ( op->isDone() ) { 
-		    bool isLoad = op->isLoad();
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op %s is done\n",op->getName());
-
-			Work* work = m_workQ.front();
-
-            if ( op->callback ) {
-                assert( !isLoad );
-			    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"callback\n");
-                if ( op->isWrite() ) {
-                    callback = op->callback;
-                } else {
-                    op->callback();
-                }
+        if ( work->isDone() ) {
+            if ( op->isDone() ) {
+                // if the work is done and the Op is done pop the work Q so 
+                m_workQ.pop_front();
             }
+        } else {
+            work = NULL; 
+        }
+        
+        // note that "work" will be a valid  ptr for all of the issues of the last Op 
+        // because we don't know which one will complete last
+    	Callback callback = std::bind(&Thread::opCallback,this, work, op );
 
-			m_currentOp = work->popOp();
+        switch( op->getOp() ) {
+          case MemOp::NoOp:
+	        m_model.schedCallback( 1, callback );
+            break;
 
-			// if this work entry is done
-			if ( ! m_currentOp ) {
-				if ( isLoad ) {
-					m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"last load of op and work\n");
-            		callback = std::bind( &Thread::workDone, this, work);
-				} else {
-					m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"work %p done, workQ=%lu\n",work,m_workQ.size());
-					workDone(work);
-				}	
-				m_workQ.pop_front();
-
-				if ( ! m_workQ.empty() ) {
-					m_currentOp = m_workQ.front()->popOp();
-				}
-			} else {
-
-				if ( isLoad ) {
-					m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"last load of op\n");
-            		callback = std::bind( &Thread::process, this);
-				}
-			}
-		}
-
-        switch( type ) {
 		  case MemOp::HostBusWrite:
             m_blocked = m_model.busUnit().write( this, new MemReq( addr, length), callback );
-		    break;
-
-		  case MemOp::NotInit:
 		    break;
 
           case MemOp::LocalLoad:
@@ -144,13 +122,13 @@ class Thread : public UnitBase {
             break;
 
           case MemOp::LocalStore:
-            m_blocked = m_model.nicUnit().store( this, new MemReq( 0, 0) );
+            m_blocked = m_model.nicUnit().storeCB( this, new MemReq( 0, 0), callback );
             break;
 
           case MemOp::HostStore:
           case MemOp::BusStore:
           case MemOp::BusDmaToHost:
-            m_blocked = m_storeUnit->store( this, new MemReq( addr, length ) );
+            m_blocked = m_storeUnit->storeCB( this, new MemReq( addr, length ), callback );
             break;
 
           case MemOp::HostLoad:
@@ -160,34 +138,80 @@ class Thread : public UnitBase {
             break;
 
           default:
-			printf("%d\n",type);
+			printf("%d\n",op->getOp() );
             assert(0);
+        }
+
+        // if the Op is done it means we are issing the last chunk of this Op
+        if ( op->isDone() ) {
+            m_currentOp = NULL;
+        } else {
+            m_currentOp = op;
         }
 
 		if ( m_blocked ) {
         	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"blocked\n");
-		} else if ( ! callback && ! m_workQ.empty() )  {
-        	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"schedule process()\n");
-			m_model.schedCallback( 1, std::bind(&Thread::process, this ) ); 
-		}
-       	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"blocked=%d\n",(int)m_blocked);
-    }
-	
-	void workDone( Work* work ) {
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work %p done, latency=%lu\n",work,
-                    m_model.getCurrentSimTimeNano() - work->start());
-		delete work;
-	}
+            // resume() will be called
+            // the OP callback will also be called
+		} else if ( m_currentOp ) {
+        	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op is not done\n");
+			m_model.schedCallback( 1, std::bind(&Thread::process, this, m_currentOp ) ); 
+        } else {
 
-	MemOp* m_currentOp;
-	bool m_blocked;
+            if ( ! m_workQ.empty() )  {
+                
+                // the just issued Op is complete, get the next Op
+		        m_currentOp = m_workQ.front()->popOp();
+
+       	        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"currentOp=%s nextOp=%s\n",op->getName(), m_currentOp->getName());
+
+                // if the just issued Op and the next Op are the same we don't have to stall the pipeline
+                if ( op->getOp() == m_currentOp->getOp() ) { 
+        	        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"schedule process()\n");
+			        m_model.schedCallback( 1, std::bind(&Thread::process, this, m_currentOp ) ); 
+                } else {
+        	        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"stalled on Op %p\n",op);
+                    m_waitingOnOp = op;
+                }
+            }
+		}
+    }
+
+    void opCallback( Work* work, MemOp* op ) {
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"opPtr=%p %s waitingOnOp=%p\n",op,op->getName(),m_waitingOnOp);
+
+        op->decPending();
+
+        if ( op->canBeRetired() ) {
+            if ( op->callback ) {
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"do op callback\n");
+                op->callback();
+            }
+		    if ( work ) { 
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"delete work %p\n",work);
+                delete work;
+            }
+        }
+
+        if ( op == m_waitingOnOp ) {
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"issue the stalled Op\n");
+            m_waitingOnOp = NULL;
+            assert( m_currentOp );
+            process( m_currentOp );
+        }
+    }
+
+    const char* prefix() { return m_prefix.c_str(); }
 	
-	MemOp			  m_noop;
-	std::string m_prefix;
-	SimpleMemoryModel& m_model;
-    std::deque<Work*> m_workQ;
-    Unit*             m_loadUnit;
-    Unit*             m_storeUnit;
-    Output& 		  m_dbg;
-    int 		      m_maxAccessSize;
+	MemOp*  m_currentOp;
+	MemOp*  m_waitingOnOp;
+	bool    m_blocked;
+	
+	std::string         m_prefix;
+	SimpleMemoryModel&  m_model;
+    std::deque<Work*>   m_workQ;
+    Unit*               m_loadUnit;
+    Unit*               m_storeUnit;
+    Output& 		    m_dbg;
+    int 		        m_maxAccessSize;
 };
