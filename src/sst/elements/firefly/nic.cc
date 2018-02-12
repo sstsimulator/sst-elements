@@ -29,7 +29,7 @@ using namespace SST::Firefly;
 using namespace SST::Interfaces;
 using namespace std::placeholders;
 
-int Nic::SendMachine::m_packetId = 0;
+int Nic::SendMachine::OutQ::m_packetId = 0;
 
 Nic::Nic(ComponentId_t id, Params &params) :
     Component( id ),
@@ -70,6 +70,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     int numNicUnits  =     params.find<int>( "numNicUnits", 4 );
     assert( numNicUnits >= 4 );
     int numShmemCmdSlots  =     params.find<int>( "numShmemCmdSlots", 32 );
+    int maxSendMachineQsize  =     params.find<int>( "maxSendMachineQsize", 1 );
 
     initNicUnitPool( numNicUnits );
 
@@ -141,11 +142,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 0, allocNicUnit() ) );
+                txDelay, packetSizeInBytes, 0, allocNicUnit(), maxSendMachineQsize ) );
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId,
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 1, allocNicUnit() ) );
+                txDelay, packetSizeInBytes, 1, allocNicUnit(), maxSendMachineQsize ) );
     m_memRgnM.resize( m_vNicV.size() );
 
     float dmaBW  = params.find<float>( "dmaBW_GBs", 0.0 ); 
