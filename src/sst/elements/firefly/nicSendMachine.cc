@@ -199,8 +199,8 @@ void Nic::SendMachine::OutQ::send( std::pair< FireflyNetworkEvent*, int>& entry 
         req->setTraceID( m_packetId );
         ++m_packetId;
     }
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE,
-					"dst=%" PRIu64 " sending event with %zu bytes packetId=%lu\n",req->dest,
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE,
+					"dst=%" PRIu64 " sending event with %zu bytes packetId=%" PRIu64 "\n",req->dest,
                                                         ev->bufSize(), (uint64_t)m_packetId);
     bool sent = m_nic.m_linkControl->send( req, m_vc );
     assert( sent );

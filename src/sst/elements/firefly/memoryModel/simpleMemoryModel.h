@@ -195,17 +195,17 @@ class SimpleMemoryModel : SubComponent {
         }
 	}
 
-	virtual SimTime_t schedHostCallback( int core, std::vector< MemOp >* ops, Callback callback ) {
+	virtual void schedHostCallback( int core, std::vector< MemOp >* ops, Callback callback ) {
 		SimTime_t now = getCurrentSimTimeNano();
-		m_dbg.verbose(CALL_INFO,1,1,"now=%lu\n",now );
+		m_dbg.verbose(CALL_INFO,1,1,"now=%" PRIu64 "\n",now );
 
 		int id = m_numNicThreads + core;
 		addWork( id, new Work( ops, callback, now ) );
 	}
 
-	virtual SimTime_t schedNicCallback( int unit, std::vector< MemOp >* ops, Callback callback ) { 
+	virtual void schedNicCallback( int unit, std::vector< MemOp >* ops, Callback callback ) { 
 		SimTime_t now = getCurrentSimTimeNano();
-		m_dbg.verbose(CALL_INFO,1,1,"now=%lu unit=%d\n", now, unit );
+		m_dbg.verbose(CALL_INFO,1,1,"now=%" PRIu64 " unit=%d\n", now, unit );
 		assert( unit >=0 );
 
 		addWork( unit, new Work( ops, callback, now ) );

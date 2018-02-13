@@ -47,7 +47,7 @@ class BusLoadWidget : public Unit {
     std::string& name() { return m_name; } 
 
     bool load( UnitBase* src, MemReq* req, Callback callback ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#lx length=%lu pending=%d\n",req->addr, req->length, m_numPending );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu pending=%d\n",req->addr, req->length, m_numPending );
 
         m_pendingQ.push_back( WidgetEntry( m_width, req, m_model.getCurrentSimTimeNano(), callback ) );
 		delete req;
@@ -79,7 +79,7 @@ class BusLoadWidget : public Unit {
 
 		MemReq* req = new MemReq( entry.getAddr(), m_width );
 		entry.inc();
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#lx length=%lu\n",req->addr,req->length);
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 
 		Callback callback;
 
@@ -90,7 +90,8 @@ class BusLoadWidget : public Unit {
 
 				SimTime_t latency = m_model.getCurrentSimTimeNano() - entry.issueTime;
 				--m_numPending;
-				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#lx complete, latency=%lu\n",entry.addr,latency);
+				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " complete, latency=%" PRIu64 "\n",
+                        entry.addr,latency);
 				if ( entry.callback ) {
 	                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"tell src load is complete\n");
                    	m_model.schedCallback( 1, entry.callback );		
@@ -163,7 +164,7 @@ class BusStoreWidget : public Unit {
 
     std::string& name() { return m_name; } 
     bool store( UnitBase* src, MemReq* req ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#lx length=%lu\n",req->addr,req->length);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 		assert( NULL == m_blockedSrc );
 
 		m_pendingQ.push_back( WidgetEntry( m_width, req, 0 ) );
@@ -196,7 +197,7 @@ class BusStoreWidget : public Unit {
 		MemReq* req = new MemReq( entry.getAddr(), m_width );
 		entry.inc();
 		
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#lx length=%lu\n",req->addr,req->length);
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
         m_blocked = m_cache->store( this, req );
 
 		if ( entry.isDone() ) {

@@ -92,8 +92,12 @@ class Thread : public UnitBase {
         size_t length = op->getCurrentLength( m_maxAccessSize );
 		op->incOffset( length );
 
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"opPtr=%p op=%s op.length=%lu offset=%lu addr=%#lx length=%lu\n",
-                            op, op->getName(), op->length, op->offset, addr, length );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op=%s op.length=%lu offset=%lu addr=%#" PRIx64 " length=%lu\n",
+                            op->getName(), op->length, op->offset, addr, length );
+
+    	Callback callback = NULL;
+
+		MemOp::Op type = op->getOp();
 
         if ( work->isDone() ) {
             if ( op->isDone() ) {

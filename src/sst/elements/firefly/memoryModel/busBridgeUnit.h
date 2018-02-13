@@ -50,7 +50,7 @@ class BusBridgeUnit : public Unit {
 		
 		Entry* entry = new Entry( src, req, callback );
 		entry->qd = m_model.getCurrentSimTimeNano();
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#lx length=%lu\n",entry,req->addr,req->length);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu\n",entry,req->addr,req->length);
 		m_reqBus.addReq( entry );
 		return true;
 	}
@@ -58,7 +58,7 @@ class BusBridgeUnit : public Unit {
     bool write( UnitBase* src, MemReq* req, Callback callback ) {
 		Entry* entry = new Entry( src, req, callback );
 		entry->qd = m_model.getCurrentSimTimeNano();
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#lx length=%lu\n",entry,req->addr,req->length);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu\n",entry,req->addr,req->length);
 		src->incPendingWrites();
 		m_respBus.addReq( entry );
 		return src->numPendingWrites() == 10;
@@ -68,7 +68,7 @@ class BusBridgeUnit : public Unit {
 
 		Entry* entry = new Entry( src, req );
 		entry->qd = m_model.getCurrentSimTimeNano();
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#lx length=%lu\n",entry,req->addr,req->length);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu\n",entry,req->addr,req->length);
 		m_reqBus.addReq( entry );
 		return true;
     }
@@ -150,8 +150,8 @@ class BusBridgeUnit : public Unit {
 			
 	void processResp( Entry* entry ) {
 		SimTime_t now = m_model.getCurrentSimTimeNano();
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#lx length=%lu Time=%lu\n",
-                                entry,entry->addr, entry->length, now - entry->qd );
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu Time=%" PRIu64"\n",
+                entry,entry->addr, entry->length, now - entry->qd );
 		m_reqBus.addDLL( numDLLbytes() );
 		if ( entry->callback ) { 
 			entry->callback();
@@ -169,9 +169,8 @@ class BusBridgeUnit : public Unit {
 	void processReq( Entry* entry ) {
 
 		SimTime_t now = m_model.getCurrentSimTimeNano();
-
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#lx length=%lu qdTime=%lu xmitTime=%lu\n",
-                entry, entry->addr, entry->length, entry->xmit - entry->qd, now - entry->xmit);
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p qdTime=%" PRIu64 " xmitTime=%" PRIu64 "\n",
+                    entry, entry->xmit - entry->qd, now - entry->xmit);
         SimTime_t issueTime = m_model.getCurrentSimTimeNano();
 
 		m_respBus.addDLL( numDLLbytes() );
@@ -183,7 +182,7 @@ class BusBridgeUnit : public Unit {
             size_t length = entry->req->length;
 			if ( m_loadWidget->load( this, entry->req, 
 				[=]() {
-       				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"load callback, entry=%p addr=%#lx length=%lu\n",
+       				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu\n",
 									entry, addr, length );
 					m_respBus.addReq( entry );
 				}) ) 

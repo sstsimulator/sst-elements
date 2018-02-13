@@ -36,6 +36,7 @@ libember_la_SOURCES = \
 	libs/emberLib.h \
 	libs/misc.h \
 	libs/miscEvents/emberGetNodeNumEvent.h \
+	libs/miscEvents/emberGetNumNodesEvent.h \
 	libs/miscEvents/emberMiscEvent.h \
 	mpi/embermpigen.h \
 	mpi/embermpigen.cc \
