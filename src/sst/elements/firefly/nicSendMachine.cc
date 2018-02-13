@@ -81,7 +81,7 @@ void  Nic::SendMachine::InQ::enque( std::vector< MemOp >* vec, FireflyNetworkEve
 {
     ++m_numPending;
 
-    m_dbg.verbosePrefix(prefix(), CALL_INFO,2,NIC_DBG_SEND_MACHINE, "get timing for packet %lu size=%lu\n",
+    m_dbg.verbosePrefix(prefix(), CALL_INFO,2,NIC_DBG_SEND_MACHINE, "get timing for packet %" PRIu64 " size=%lu\n",
                  m_pktNum,ev->bufSize());
 
     m_nic.dmaRead( m_unit, vec,
@@ -92,7 +92,7 @@ void  Nic::SendMachine::InQ::enque( std::vector< MemOp >* vec, FireflyNetworkEve
 
 void Nic::SendMachine::InQ::ready( FireflyNetworkEvent* ev, int dest, Callback callback, uint64_t pktNum )
 {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_SEND_MACHINE, "packet %lu is ready, expected=%lu\n",pktNum,m_expectedPkt);
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_SEND_MACHINE, "packet %" PRIu64 " is ready, expected=%" PRIu64 "\n",pktNum,m_expectedPkt);
     assert(pktNum == m_expectedPkt++);
 
     if ( m_pendingQ.empty() && ! m_outQ->isFull() ) {
