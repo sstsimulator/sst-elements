@@ -155,7 +155,7 @@ class SendMachine {
         void run( SendEntryBase* entry  ) {
             m_sendQ.push_back( entry );
             if ( 1 == m_sendQ.size() ) {
-                initStream( m_sendQ.front() );
+                streamInit( m_sendQ.front() );
             } else {
                 m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "Q send entry\n");
             }
@@ -169,9 +169,9 @@ class SendMachine {
 
       private:
 
-        void initStream( SendEntryBase* );
+        void streamInit( SendEntryBase* );
         void getPayload( SendEntryBase*, FireflyNetworkEvent* );
-        void finiStream( SendEntryBase* );
+        void streamFini( SendEntryBase* );
 
         Nic&    m_nic;
         Output  m_dbg;

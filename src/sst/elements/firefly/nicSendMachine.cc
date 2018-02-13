@@ -21,7 +21,7 @@ using namespace SST;
 using namespace SST::Firefly;
 using namespace SST::Interfaces;
 
-void Nic::SendMachine::initStream( SendEntryBase* entry )
+void Nic::SendMachine::streamInit( SendEntryBase* entry )
 {
     MsgHdr hdr;
 
@@ -53,7 +53,7 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
         entry->copyOut( m_dbg, m_vc, m_packetSizeInBytes, *ev, *vec ); 
         m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "enque load from host, %lu bytes\n",ev->bufSize());
         if ( entry->isDone() ) {
-            m_inQ->enque( vec, ev, entry->dest(), std::bind( &Nic::SendMachine::finiStream, this, entry ) );
+            m_inQ->enque( vec, ev, entry->dest(), std::bind( &Nic::SendMachine::streamFini, this, entry ) );
         } else {
             m_inQ->enque( vec, ev, entry->dest() );
             m_nic.schedCallback( std::bind( &Nic::SendMachine::getPayload, this, entry, new FireflyNetworkEvent ), 1);
@@ -64,7 +64,7 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
         m_inQ->wakeMeUp( std::bind( &Nic::SendMachine::getPayload, this, entry, ev ) );
     }
 }
-void Nic::SendMachine::finiStream( SendEntryBase* entry ) 
+void Nic::SendMachine::streamFini( SendEntryBase* entry ) 
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "stream done\n");
     if ( entry->shouldDelete() ) {
@@ -73,7 +73,7 @@ void Nic::SendMachine::finiStream( SendEntryBase* entry )
     }
     m_sendQ.pop_front();
     if ( m_sendQ.size() ) {
-        initStream( m_sendQ.front() );
+        streamInit( m_sendQ.front() );
     }
 }
 
