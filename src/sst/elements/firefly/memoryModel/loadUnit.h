@@ -21,7 +21,7 @@ class LoadUnit : public Unit {
 
     bool load( UnitBase* src, MemReq* req, Callback callback ) {
 
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"addr=%#lx length=%lu pending=%lu\n",req->addr, req->length, m_pendingQ.size() );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",req->addr, req->length, m_pendingQ.size() );
 
 		m_pendingQ.push_back( Entry( req, callback ) );
 		++m_numPending; 
@@ -46,7 +46,7 @@ class LoadUnit : public Unit {
 	void process() {
 		assert( ! m_pendingQ.empty() );
         Entry& entry = m_pendingQ.front();
-     	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"addr=%#lx length=%lu pending=%lu\n",entry.req->addr,entry.req->length,m_pendingQ.size() );
+     	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",entry.req->addr,entry.req->length,m_pendingQ.size() );
 
         assert( m_blocked == false );
         m_scheduled = false;
@@ -60,7 +60,7 @@ class LoadUnit : public Unit {
 
                 SimTime_t latency = m_model.getCurrentSimTimeNano() - issueTime;
 
-        		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"latency=%lu addr=%#lx length=%lu pending=%lu\n",
+        		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"latency=%" PRIu64 " addr=%#" PRIx64 " length=%lu pending=%lu\n",
 													latency,addr,length,m_pendingQ.size() );
 
 				--m_numPending;

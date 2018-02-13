@@ -316,16 +316,16 @@ public:
 	SimTime_t m_shmemRxDelay_ns; 
 	int m_numNicUnits;
 
-    SimTime_t calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
+    void calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
         if( m_simpleMemoryModel ) {
-        	return m_simpleMemoryModel->schedHostCallback( core, ops, callback );
+        	m_simpleMemoryModel->schedHostCallback( core, ops, callback );
         } else {
 			schedCallback(callback);
 			delete ops;
 		}
     }
 
-    bool initNicUnitPool( int num) {
+    void initNicUnitPool( int num) {
         m_numNicUnits = num;
         for ( int i = 0; i < num; i++ ) {
             m_availNicUnits.push_back(i);

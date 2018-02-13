@@ -46,13 +46,13 @@
 		std::deque<Entry*> m_blockedQ;
 
         bool store( UnitBase* src, MemReq* req ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx length=%lu\n",req->addr,req->length);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 
 			return addEntry( new Entry( Entry::Store, src, req, m_model.getCurrentSimTimeNano()  ) ); 
 		}
 
         bool load( UnitBase* src, MemReq* req, Callback callback ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx length=%lu\n",req->addr,req->length);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 
 			return addEntry( new Entry( Entry::Load, src, req, m_model.getCurrentSimTimeNano(), callback ) ); 
 		}
@@ -81,7 +81,7 @@
 	  private:
 		
 		bool addEntry( Entry* entry ) {
-       		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#lx pending=%d\n", 
+       		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#" PRIx64 " pending=%d\n", 
 					entry->op == Entry::Load?"Load":"Store",entry->req->addr,m_numPending);
 
 			entry->req->addr = alignAddr( entry->req->addr );
@@ -102,11 +102,11 @@
 		}
 
 		void checkHit( Entry* entry ) {
-           	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#lx\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
+           	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#" PRIx64 "\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
             if ( isValid( entry->req->addr ) ) { 
 				hit( entry );
 			} else if ( isPending(entry->req->addr ) ) {
-				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"pending addr=%#lx\n",entry->req->addr);
+				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"pending addr=%#" PRIx64 "\n",entry->req->addr);
            		m_pendingMap[entry->req->addr].push_back( entry );
 			} else {
 
@@ -122,12 +122,12 @@
 			m_scheduled = false;
 			assert( ! m_blockedQ.empty() );
 			Entry* entry = m_blockedQ.front();
-           	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#lx\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
+           	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#" PRIx64 "\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
 			m_blockedQ.pop_front();
             if ( isValid( entry->req->addr ) ) { 
 				hit( entry );
 			} else if ( isPending(entry->req->addr ) ) {
-				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"pending addr=%#lx\n",entry->req->addr);
+				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"pending addr=%#" PRIx64 "\n",entry->req->addr);
            		m_pendingMap[entry->req->addr].push_back( entry );
 			} else {
 				miss( entry );
@@ -136,7 +136,7 @@
 		}
 
 		void hit( Entry* entry ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx\n",entry->req->addr);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 "\n",entry->req->addr);
 
 			decNumPending();
 
@@ -157,11 +157,11 @@
 
 		void miss( Entry* entry ) {
 
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx\n",entry->req->addr);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 "\n",entry->req->addr);
 
             if ( ! isPending(entry->req->addr) ) {
 				Hermes::Vaddr evictAddr = evict();
-           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"evict addr=%#lx\n", evictAddr );
+           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"evict addr=%#" PRIx64 "\n", evictAddr );
 
 				if ( m_memory->store( this, new MemReq( evictAddr, m_cacheLineSize ) ) ) {
 					m_missEntry = entry;
@@ -174,7 +174,7 @@
 
 		void miss2( Entry* entry ) {
 
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx\n",entry->req->addr);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 "\n",entry->req->addr);
 			if ( entry->op == Entry::Store ) {
 				store( entry );
 			} else {
@@ -184,7 +184,7 @@
 		}
 
 		void store( Entry *entry ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx\n",entry->req->addr);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 "\n",entry->req->addr);
 			decNumPending();
             if ( ! isPending(entry->req->addr) ) {
 				insert( entry->req->addr );
@@ -197,17 +197,17 @@
 		}
 
 		void load( Entry *entry ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx numIssued=%d\n",entry->req->addr, m_numIssuedLoads);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " numIssued=%d\n",entry->req->addr, m_numIssuedLoads);
 
 			if ( m_numIssuedLoads == m_numMSHR ) {
-            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx blocked MSHR\n",entry->req->addr);
+            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " blocked MSHR\n",entry->req->addr);
 				m_mshrEntry = entry;
 				setState( BlockedMSHR );
 				return;
 			}
 			++m_numIssuedLoads;
 
-           	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx issue load\n",entry->req->addr);
+           	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " issue load\n",entry->req->addr);
 			MemReq* req = new MemReq( entry->req->addr, m_cacheLineSize );
 			if ( m_memory->load( this, req, std::bind(&CacheUnit::loadDone, this, entry->req->addr, m_model.getCurrentSimTimeNano() ) ) ) {
 				setState( BlockedLoad );
@@ -222,7 +222,7 @@
 
 		void loadDone( Hermes::Vaddr addr, SimTime_t startTime )
 		{
-   			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx latency=%lu numIssued=%d\n",
+   			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " latency=%" PRIu64 " numIssued=%d\n",
 							addr,m_model.getCurrentSimTimeNano()-startTime, m_numIssuedLoads);
 			while ( ! m_pendingMap[addr].empty() ) {
 				decNumPending();
@@ -276,7 +276,7 @@
         }
 
         bool isValid( Hermes::Vaddr addr ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#lx %s mapSize=%lu\n",
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#" PRIx64 " %s mapSize=%lu\n",
 					addr, m_addrMap.find(addr) != m_addrMap.end() ? "True":"False",m_addrMap.size());
             return m_addrMap.find(addr) != m_addrMap.end();
         }
@@ -291,7 +291,7 @@
         Hermes::Vaddr evict() {
 
             Hermes::Vaddr addr = m_ageList.get_front_value();
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#lx ptr=%p mapSize=%lu\n", addr, m_addrMap[ addr ], m_addrMap.size() );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#" PRIx64 " ptr=%p mapSize=%lu\n", addr, m_addrMap[ addr ], m_addrMap.size() );
 
             m_addrMap.erase( addr );
             m_ageList.pop_front();
@@ -299,7 +299,7 @@
         }
 
         void insert( Hermes::Vaddr addr ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#lx mapSize=%lu\n",addr, m_addrMap.size());
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#" PRIx64 " mapSize=%lu\n",addr, m_addrMap.size());
             assert( m_addrMap.find(addr) == m_addrMap.end() );
 			assert( m_addrMap.size() < m_size );
             m_ageList.push_back( addr );

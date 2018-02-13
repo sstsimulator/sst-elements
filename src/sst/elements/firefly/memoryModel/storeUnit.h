@@ -12,7 +12,7 @@ class StoreUnit : public Unit {
 	std::string& name() { return m_name; }
     bool store( UnitBase* src, MemReq* req ) {
 
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#lx length=%lu pending=%lu\n",req->addr,req->length,m_pendingQ.size());
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",req->addr,req->length,m_pendingQ.size());
 		assert( NULL == m_blockedSrc );
 		m_pendingQ.push_back( req );
 
@@ -36,7 +36,7 @@ class StoreUnit : public Unit {
 
 	void process( ) {
 		MemReq* req = m_pendingQ.front();
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#lx length=%lu\n",req->addr,req->length);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 
 		assert( m_blocked == false );
 		m_scheduled = false;

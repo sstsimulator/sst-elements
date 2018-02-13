@@ -8,12 +8,12 @@
         }
 
         bool store( UnitBase* src, MemReq* req ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#lx length=%lu\n",req->addr, req->length);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr, req->length);
             return work( m_writeLat_ns, Write, req, src );
         }
 
         bool load( UnitBase* src, MemReq* req, Callback callback ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#lx length=%lu\n",req->addr,req->length);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
             return work( m_readLat_ns, Read, req, src, callback );
         }
 
@@ -50,7 +50,7 @@
 
                     SimTime_t latency = m_model.getCurrentSimTimeNano() - issueTime;
 
-                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"%s complete latency=%lu addr=%#lx length=%lu\n",
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"%s complete latency=%" PRIu64 " addr=%#" PRIx64 " length=%lu\n",
                                                         op == Read ? "Read":"Write" ,latency, req->addr, req->length);
 
                     if ( callback ) {
