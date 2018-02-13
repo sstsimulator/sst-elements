@@ -135,7 +135,7 @@ class BusBridgeUnit : public Unit {
 					
 					entry->xmit = m_unit.m_model.getCurrentSimTimeNano();
                     SimTime_t now = m_unit.m_model.getCurrentSimTimeNano();
-                    m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#lx length=%lu delay=%lu Time=%lu\n",
+                    m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu delay=%" PRIu64 " Time=%" PRIu64 "\n",
                                     entry,entry->addr, entry->length, delay, now - entry->qd );
 					m_unit.m_model.schedCallback( delay, std::bind( &Bus::reqArrived, this, entry ) );
 				}

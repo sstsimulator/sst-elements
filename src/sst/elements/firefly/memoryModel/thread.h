@@ -28,7 +28,7 @@ class Work {
 
     void print( Output& dbg, const char* prefix ) {
         for ( unsigned i = 0; i < m_ops->size(); i++ ) {
-           dbg.verbosePrefix(prefix,CALL_INFO,1,THREAD_MASK,"%s %#x %lu\n",(*m_ops)[i].getName(), (*m_ops)[i].addr, (*m_ops)[i].length );
+           dbg.verbosePrefix(prefix,CALL_INFO,1,THREAD_MASK,"%s %#" PRIx64 " %lu\n",(*m_ops)[i].getName(), (*m_ops)[i].addr, (*m_ops)[i].length );
         }
     }
   private:
@@ -94,8 +94,6 @@ class Thread : public UnitBase {
 
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op=%s op.length=%lu offset=%lu addr=%#" PRIx64 " length=%lu\n",
                             op->getName(), op->length, op->offset, addr, length );
-
-    	Callback callback = NULL;
 
 		MemOp::Op type = op->getOp();
 
