@@ -575,7 +575,7 @@ void HadesSHMEM::wait_until2(Hermes::Vaddr addr, Hermes::Shmem::WaitOp op, Herme
 
     m_os->getNic()->shmemWait( addr, op, value,
                 [=]() {
-                    this->dbg().verbose(CALL_INFO,1,SHMEM_BASE,"wait_until2() addr=%#lx done\n",addr);
+                    this->dbg().verbose(CALL_INFO,1,SHMEM_BASE,"wait_until2() addr=%#" PRIx64 " done\n",addr);
                     this->delayReturn( callback );
                 }
             );

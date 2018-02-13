@@ -82,7 +82,7 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
     std::vector<MemOp>* vec = new std::vector<MemOp>;
     vec->push_back( MemOp( 0, 16, MemOp::Op::HostBusWrite,
          [=]() {
-            m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"handleNicEvent latency=%lu\n", 
+            m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"handleNicEvent latency=%" PRIu64 "\n", 
                             m_nic.getCurrentSimTimeNano() - start);
             handleEvent2( event, id );
         }
@@ -644,7 +644,7 @@ void Nic::Shmem::checkWaitOps( int core, Hermes::Vaddr addr, size_t length )
         Op* op = *iter;
         if ( op->inRange( addr, length ) && op->checkOp( m_dbg ) ) {
 			
-        	m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"notify %d\n");
+        	m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_SHMEM,"notify\n");
 			m_nic.schedCallback( op->callback() );
             delete op; 
             iter = m_pendingOps[core].erase(iter);
