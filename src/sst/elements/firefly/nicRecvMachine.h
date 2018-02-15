@@ -28,7 +28,7 @@ class RecvMachine {
 				assert( unit >= 0 );
             }
             virtual ~StreamBase() {
-                m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"this=%p latency=%lu\n",this,
+                m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"this=%p latency=%" PRIu64 "\n",this,
                                             m_rm.nic().getCurrentSimTimeNano()-m_start);
                 if ( m_recvEntry ) {
                     m_recvEntry->notify( m_hdr.src_vNicId, m_src, m_matched_tag, m_matched_len );
@@ -90,7 +90,7 @@ class RecvMachine {
 
         virtual ~RecvMachine();
 
-        bool freeNicUnit( int unit ) {
+        void freeNicUnit( int unit ) {
             m_nic.freeNicUnit( unit );
             if ( m_unit == -1 ) {
                 m_unit = m_nic.allocNicUnit( );
