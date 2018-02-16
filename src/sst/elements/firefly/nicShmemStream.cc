@@ -20,23 +20,21 @@
 using namespace SST;
 using namespace SST::Firefly;
 
-Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, FireflyNetworkEvent* ev,
-       RecvMachine& rm, int unit, int srcNode, int srcPid, int destPid ) : 
-    StreamBase(output, rm, unit, srcNode, srcPid, destPid )
+Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, Ctx* ctx, int unit,
+        int srcNode, int srcPid, int destPid, FireflyNetworkEvent* ev) : 
+    StreamBase(output, ctx, unit, srcNode, srcPid, destPid )
 {
-    m_hdr = *(MsgHdr*) ev->bufPtr();
     m_shmemHdr = *(ShmemMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
 
     ev->bufPop(sizeof(MsgHdr) + sizeof(m_shmemHdr) );
 
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"srcNode=%d srcPid=%d\n", m_srcNode, m_srcPid );
 
-    m_rm.nic().schedCallback( 
-            std::bind( &Nic::RecvMachine::ShmemStream::processOp, this, m_shmemHdr, ev, m_myPid, m_srcPid ),
-            m_rm.nic().getShmemRxDelay_ns() ); 
+    m_startCallback = std::bind( &Nic::RecvMachine::ShmemStream::processOp, this, ev );
+    m_startDelay = m_ctx->nic().getShmemRxDelay_ns(); 
 }
 
-void Nic::RecvMachine::ShmemStream::processOp( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_pid, int dest_pid ) 
+void Nic::RecvMachine::ShmemStream::processOp( FireflyNetworkEvent* ev ) 
 {
     switch ( m_shmemHdr.op ) { 
         
@@ -82,8 +80,8 @@ void Nic::RecvMachine::ShmemStream::processAck( ShmemMsgHdr& hdr, FireflyNetwork
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Ack srcNode=%d\n",ev->getSrcNode());
 
-    m_rm.m_nic.shmemDecPending( pid );
-    m_rm.nic().schedCallback( std::bind( &Nic::RecvMachine::clearMapAndDeleteStream, &m_rm, pid, this ) );  
+    m_ctx->nic().shmemDecPending( pid );
+    m_ctx->clearMapAndDeleteStream(this);
 
     delete ev;
 }
@@ -93,12 +91,12 @@ void Nic::RecvMachine::ShmemStream::processPut( ShmemMsgHdr& hdr, FireflyNetwork
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation opNum=%d myAddr=%#" PRIx64 " length=%u\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length);
         
-    Hermes::MemAddr addr = m_rm.nic().findShmem( local_pid, hdr.vaddr, hdr.length ); 
+    Hermes::MemAddr addr = m_ctx->findShmem( local_pid, hdr.vaddr, hdr.length ); 
 
     if ( hdr.op2 == Hermes::Shmem::MOVE ) {
-        m_recvEntry = new ShmemRecvEntry( m_rm.m_nic.m_shmem, local_pid, addr, hdr.length );
+        m_recvEntry = new ShmemRecvEntry( m_ctx->getShmem(), local_pid, addr, hdr.length );
     }else{
-        m_recvEntry = new ShmemRecvEntry( m_rm.m_nic.m_shmem, local_pid, addr, hdr.length,
+        m_recvEntry = new ShmemRecvEntry( m_ctx->getShmem(), local_pid, addr, hdr.length,
                             (Hermes::Shmem::ReduOp) hdr.op2, 
                             (Hermes::Value::Type) hdr.dataType );
     } 
@@ -115,23 +113,23 @@ void Nic::RecvMachine::ShmemStream::processGetResp( ShmemMsgHdr& hdr, FireflyNet
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d respKey=%d\n",
             m_shmemHdr.op, m_shmemHdr.respKey);
 
-    ShmemRespSendEntry* entry = (ShmemRespSendEntry*) m_rm.nic().getRespKeyValue(hdr.respKey);
+    ShmemRespSendEntry* entry = (ShmemRespSendEntry*) m_ctx->nic().getRespKeyValue(hdr.respKey);
 
     if ( entry->getCmd()->type == NicShmemCmdEvent::Getv || 
            entry->getCmd()->type == NicShmemCmdEvent::Fadd || 
            entry->getCmd()->type == NicShmemCmdEvent::Swap || 
            entry->getCmd()->type == NicShmemCmdEvent::Cswap ) {
-        m_recvEntry = new ShmemGetvRespRecvEntry( m_rm.m_nic.m_shmem, hdr.length, static_cast<ShmemGetvSendEntry*>(entry) );
+        m_recvEntry = new ShmemGetvRespRecvEntry( m_ctx->getShmem(), hdr.length, static_cast<ShmemGetvSendEntry*>(entry) );
     } else {
         Hermes::Vaddr addr = static_cast<NicShmemGetCmdEvent*>(entry->getCmd())->getMyAddr();
 
-        Hermes::MemAddr memAddr = m_rm.nic().findShmem( local_pid, addr, hdr.length ); 
+        Hermes::MemAddr memAddr = m_ctx->findShmem( local_pid, addr, hdr.length ); 
 
         if ( ! static_cast<NicShmemGetCmdEvent*>(entry->getCmd())->isBlocking() ) {
-	        m_rm.m_nic.shmemDecPending( local_pid );
+	        m_ctx->nic().shmemDecPending( local_pid );
         }
 
-        m_recvEntry = new ShmemGetbRespRecvEntry( m_rm.m_nic.m_shmem, local_pid, hdr.length, static_cast<ShmemGetbSendEntry*>(entry), 
+        m_recvEntry = new ShmemGetbRespRecvEntry( m_ctx->getShmem(), local_pid, hdr.length, static_cast<ShmemGetbSendEntry*>(entry), 
                 memAddr.getBacking() );
     }
 
@@ -145,18 +143,18 @@ void Nic::RecvMachine::ShmemStream::processGet( ShmemMsgHdr& hdr, FireflyNetwork
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%d\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
 
-    Hermes::MemAddr addr = m_rm.nic().findShmem( local_pid, hdr.vaddr, hdr.length ); 
+    Hermes::MemAddr addr = m_ctx->findShmem( local_pid, hdr.vaddr, hdr.length ); 
 	std::vector< MemOp >* memOps = new std::vector< MemOp >;
 
 	void* backing = addr.getBacking();
 	Hermes::Vaddr simVaddr = addr.getSimVAddr();
     int srcNode = ev->getSrcNode();
 
-    m_rm.nic().calcNicMemDelay( m_unit, memOps, 
+    m_ctx->calcNicMemDelay( m_unit, memOps, 
 			[=]() {
-    			m_rm.nic().m_sendMachine[0]->run( new ShmemPut2SendEntry( local_pid, srcNode, dest_pid, backing, 
+    			m_ctx->runSend(0, new ShmemPut2SendEntry( local_pid, srcNode, dest_pid, backing, 
                 	hdr.length, hdr.respKey, simVaddr ) );
-                m_rm.nic().schedCallback( std::bind( &Nic::RecvMachine::clearMapAndDeleteStream, &m_rm, local_pid, this ) );  
+                m_ctx->clearMapAndDeleteStream( this );  
 			}
     );	
 
@@ -167,7 +165,8 @@ void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetwork
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation srcNode=%d op=%d myAddr=%#" PRIx64 " length=%u respKey=%d\n",
             ev->getSrcNode(), m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
-    Hermes::MemAddr addr = m_rm.nic().findShmem( local_pid, hdr.vaddr, hdr.length ); 
+
+    Hermes::MemAddr addr = m_ctx->findShmem( local_pid, hdr.vaddr, hdr.length ); 
 	std::vector< MemOp >* memOps = new std::vector< MemOp >;
 
     assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) );
@@ -186,19 +185,19 @@ void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetwork
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore, 
 		[=]() {
 			m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"processAdd() checkWaitOps\n");
-			m_rm.m_nic.m_shmem->checkWaitOps( local_pid, tmpAddr, local.getLength() );
+			m_ctx->checkWaitOps( local_pid, tmpAddr, local.getLength() );
 		}
 	) ); 
 
     int srcNode = ev->getSrcNode();
-   	m_rm.nic().calcNicMemDelay( m_unit, memOps,
+   	m_ctx->calcNicMemDelay( m_unit, memOps,
 			[=]() {
 				m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"processAdd() send Ack to %d\n",srcNode);
 				m_sendEntry = new ShmemAckSendEntry( local_pid, srcNode, dest_pid );
-                m_rm.nic().schedCallback( std::bind( &Nic::RecvMachine::deleteStream, &m_rm, this ) );  
+                m_ctx->deleteStream(this);
 			}
 		);
-    m_rm.clearStreamMap( local_pid, getSrcKey() );
+    m_ctx->clearStreamMap( getSrcKey() );
     delete ev;
 }
 
@@ -206,7 +205,7 @@ void Nic::RecvMachine::ShmemStream::processFadd( ShmemMsgHdr& hdr, FireflyNetwor
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%d\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
-    Hermes::MemAddr addr = m_rm.nic().findShmem( local_pid, hdr.vaddr, hdr.length ); 
+    Hermes::MemAddr addr = m_ctx->findShmem( local_pid, hdr.vaddr, hdr.length ); 
 
 	std::vector< MemOp >* memOps = new std::vector< MemOp >;
 
@@ -227,15 +226,15 @@ void Nic::RecvMachine::ShmemStream::processFadd( ShmemMsgHdr& hdr, FireflyNetwor
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusLoad ) );
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore,
 		[=]() {
-			m_rm.m_nic.m_shmem->checkWaitOps( local_pid, tmpAddr, local.getLength() );
+			m_ctx->checkWaitOps( local_pid, tmpAddr, local.getLength() );
 		}
 	) ); 
 
     int srcNode = ev->getSrcNode();
-   	m_rm.nic().calcNicMemDelay( m_unit, memOps, 
+   	m_ctx->calcNicMemDelay( m_unit, memOps, 
 			[=]() {
-    			m_rm.nic().m_sendMachine[0]->run( new ShmemPut2SendEntry( local_pid, srcNode, dest_pid, save, hdr.respKey ) );
-                m_rm.nic().schedCallback( std::bind( &Nic::RecvMachine::clearMapAndDeleteStream, &m_rm, local_pid, this ) ); 
+    			m_ctx->runSend( 0, new ShmemPut2SendEntry( local_pid, srcNode, dest_pid, save, hdr.respKey ) );
+                m_ctx->clearMapAndDeleteStream( this ); 
 			}
 	);	
     delete ev;
@@ -245,7 +244,8 @@ void Nic::RecvMachine::ShmemStream::processSwap( ShmemMsgHdr& hdr, FireflyNetwor
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%d\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
-    Hermes::MemAddr addr = m_rm.nic().findShmem( local_pid, hdr.vaddr, hdr.length ); 
+
+    Hermes::MemAddr addr = m_ctx->findShmem( local_pid, hdr.vaddr, hdr.length ); 
 	std::vector< MemOp >* memOps = new std::vector< MemOp >;
 
     assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) );
@@ -262,10 +262,10 @@ void Nic::RecvMachine::ShmemStream::processSwap( ShmemMsgHdr& hdr, FireflyNetwor
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore ) );
 
     int srcNode = ev->getSrcNode();
-   	m_rm.nic().calcNicMemDelay( m_unit, memOps,
+   	m_ctx->calcNicMemDelay( m_unit, memOps,
 			[=]() {
-    			m_rm.nic().m_sendMachine[0]->run( new ShmemPut2SendEntry( local_pid, srcNode, dest_pid, save, hdr.respKey ) );
-                m_rm.nic().schedCallback( std::bind( &Nic::RecvMachine::clearMapAndDeleteStream, &m_rm, local_pid, this ) );  
+    			m_ctx->runSend( 0, new ShmemPut2SendEntry( local_pid, srcNode, dest_pid, save, hdr.respKey ) );
+                m_ctx->clearMapAndDeleteStream( this );
 			}	
 	);
     delete ev;
@@ -275,7 +275,8 @@ void Nic::RecvMachine::ShmemStream::processCswap( ShmemMsgHdr& hdr, FireflyNetwo
 {
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"SHMEM Operation %d myAddr=%#" PRIx64 " length=%u respKey=%d\n",
             m_shmemHdr.op, m_shmemHdr.vaddr, m_shmemHdr.length, m_shmemHdr.respKey);
-    Hermes::MemAddr addr = m_rm.nic().findShmem( local_pid, hdr.vaddr, hdr.length ); 
+
+    Hermes::MemAddr addr = m_ctx->findShmem( local_pid, hdr.vaddr, hdr.length ); 
 	std::vector< MemOp >* memOps = new std::vector< MemOp >;
 
     assert( ev->bufSize() == Hermes::Value::getLength((Hermes::Value::Type)hdr.dataType) * 2 );
@@ -297,10 +298,10 @@ void Nic::RecvMachine::ShmemStream::processCswap( ShmemMsgHdr& hdr, FireflyNetwo
     }
 
     int srcNode = ev->getSrcNode();
-   	m_rm.nic().calcNicMemDelay( m_unit, memOps,
+   	m_ctx->calcNicMemDelay( m_unit, memOps,
 		    [=]() {
-    			m_rm.nic().m_sendMachine[0]->run( new ShmemPut2SendEntry( local_pid, srcNode, dest_pid, save, hdr.respKey ) );
-                m_rm.nic().schedCallback( std::bind( &Nic::RecvMachine::clearMapAndDeleteStream, &m_rm, local_pid, this ) );  
+    			m_ctx->runSend( 0, new ShmemPut2SendEntry( local_pid, srcNode, dest_pid, save, hdr.respKey ) );
+                m_ctx->clearMapAndDeleteStream( this );  
 			}
 	);
     delete ev;

@@ -20,16 +20,15 @@
 using namespace SST;
 using namespace SST::Firefly;
 
-Nic::RecvMachine::RdmaStream::RdmaStream( Output& output, FireflyNetworkEvent* ev,
-       RecvMachine& rm, int unit, int srcNode, int srcPid, int destPid ) : 
-    StreamBase( output, rm, unit, srcNode, srcPid, destPid )
+Nic::RecvMachine::RdmaStream::RdmaStream( Output& output, Ctx* ctx, int unit, int srcNode,
+        int srcPid, int destPid, FireflyNetworkEvent* ev ) :
+    StreamBase( output, ctx, unit, srcNode, srcPid, destPid )
 {
-    m_hdr = *(MsgHdr*) ev->bufPtr();
+    MsgHdr& hdr         = *(MsgHdr*) ev->bufPtr();
     RdmaMsgHdr& rdmaHdr = *(RdmaMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
 
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"RDMA Operation\n");
 
-    Callback callback;
     switch ( rdmaHdr.op  ) {
 
       case RdmaMsgHdr::Put:
@@ -37,9 +36,9 @@ Nic::RecvMachine::RdmaStream::RdmaStream( Output& output, FireflyNetworkEvent* e
         {
           m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"%s Op\n", rdmaHdr.op == RdmaMsgHdr::Put ? "Put":"GetResp");
 
-          m_recvEntry = m_rm.findPut( m_srcPid, m_srcNode, m_hdr, rdmaHdr );
+          m_recvEntry = m_ctx->findPut( m_srcNode, hdr, rdmaHdr );
           ev->bufPop(sizeof(MsgHdr) + sizeof(rdmaHdr) );
-          callback = std::bind( &Nic::RecvMachine::StreamBase::processPkt, this, ev );
+          m_startCallback  = std::bind( &Nic::RecvMachine::StreamBase::processPkt, this, ev );
         }
         break;
 
@@ -47,6 +46,4 @@ Nic::RecvMachine::RdmaStream::RdmaStream( Output& output, FireflyNetworkEvent* e
         assert(0);
     }
     m_matched_len = m_recvEntry->totalBytes();
-
-    m_rm.nic().schedCallback( callback, 0 );
 }

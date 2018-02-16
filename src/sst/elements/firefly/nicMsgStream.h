@@ -15,7 +15,5 @@
 
 class MsgStream : public StreamBase {
   public:
-    MsgStream( Output&, FireflyNetworkEvent*, RecvMachine&, int unit, int srcNode, int srcPid, int destPid );
-  private:
-    MatchMsgHdr m_matchHdr;
+    MsgStream( Output&, Ctx*, int unit, int srcNode, int srcPid, int destPid, FireflyNetworkEvent* );
 };

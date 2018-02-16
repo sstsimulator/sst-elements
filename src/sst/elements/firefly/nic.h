@@ -316,7 +316,9 @@ public:
         } 
     }
 
-    int allocNicUnit() {
+    int allocNicUnit( int pid = -1) {
+        return m_availNicUnits.front();
+#if 0
         int unit = -1;
         if ( ! m_availNicUnits.empty() ) {
             unit = m_availNicUnits.front();
@@ -325,12 +327,15 @@ public:
 
         m_dbg.verbose(CALL_INFO,2,1,"unit=%d\n",unit);
         return unit;
+#endif
     }
 
-    void freeNicUnit( int unit ) {
+    void freeNicUnit( int pid ) {
+#if 0
         m_dbg.verbose(CALL_INFO,2,1,"unit=%d\n",unit);
         m_availNicUnits.push_back( unit );
         assert( m_availNicUnits.size() < m_numNicUnits );
+#endif
     }
 
     void calcNicMemDelay( int unit, std::vector< MemOp>* ops, std::function<void()> callback ) {
