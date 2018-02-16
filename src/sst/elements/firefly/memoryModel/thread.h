@@ -190,7 +190,7 @@ class Thread : public UnitBase {
                 op->callback();
             }
 		    if ( work ) { 
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"delete work %p\n",work);
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete work %p\n",work);
                 delete work;
             }
         }
