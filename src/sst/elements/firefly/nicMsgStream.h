@@ -15,24 +15,7 @@
 
 class MsgStream : public StreamBase {
   public:
-    MsgStream( Output&, FireflyNetworkEvent*, RecvMachine&, int unit );
-    virtual void processPkt( FireflyNetworkEvent* ev, DmaRecvEntry* entry = NULL ) {
-			
-		if ( ! m_recvEntry ) {
-			if ( entry ) {
-				m_recvEntry = entry;
-			} else { 
-				m_recvEntry = static_cast<DmaRecvEntry *>( m_rm.nic().findRecv( m_src, m_hdr, m_matchHdr) );
-			}
-			
-			assert(m_recvEntry);
-
-       		ev->bufPop( sizeof(MsgHdr) );
-        	ev->bufPop( sizeof(MatchMsgHdr) );
-		}
-
-    	m_rm.state_move_0( ev, this );
-    }
+    MsgStream( Output&, FireflyNetworkEvent*, RecvMachine&, int unit, int srcNode, int srcPid, int destPid );
   private:
     MatchMsgHdr m_matchHdr;
 };
