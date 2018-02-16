@@ -93,7 +93,7 @@ class SimpleMemoryModel : SubComponent {
 
 		m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
 		m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
-		m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "HostCache" );
+	    m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "HostCache" );
 
 		m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, busNumLinks,
                                                                 TLP_overhead, DLL_bytes, hostCacheLineSize, widgetSlots );
@@ -147,7 +147,6 @@ class SimpleMemoryModel : SubComponent {
 
 		UnitAlgebra hostBW = params.find<SST::UnitAlgebra>("host_bw", SST::UnitAlgebra("12GiB/s"));
 		UnitAlgebra busBW = params.find<SST::UnitAlgebra>("bus_bw", SST::UnitAlgebra("12GiB/s"));
-		UnitAlgebra busLatency = params.find<SST::UnitAlgebra>("bus_latency", SST::UnitAlgebra("150ns"));
 
 		m_selfLink = comp->configureSelfLink("Nic::SimpleMemoryModel", "1 ns",
         new Event::Handler<SimpleMemoryModel>(this,&SimpleMemoryModel::handleSelfEvent));
@@ -230,7 +229,6 @@ class SimpleMemoryModel : SubComponent {
 	int 		m_numNicThreads;
 	uint32_t    m_hostBW;
 	uint32_t    m_nicBW;
-	uint32_t    m_busLatency;
 	Output		m_dbg;
 }; 
 
