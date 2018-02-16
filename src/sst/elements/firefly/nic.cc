@@ -121,7 +121,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
         m_vNicV.push_back( new VirtNic( *this, i,
 			params.find<std::string>("corePortName","core") ) );
     }
-    m_recvM.resize( m_num_vNics );
 
     m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
 
@@ -147,7 +146,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
                 txDelay, packetSizeInBytes, 1, allocNicUnit(), maxSendMachineQsize ) );
-    m_memRgnM.resize( m_vNicV.size() );
 
     float dmaBW  = params.find<float>( "dmaBW_GBs", 0.0 ); 
     float dmaContentionMult = params.find<float>( "dmaContentionMult", 0.0 );
@@ -188,16 +186,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
 Nic::~Nic()
 {
-    for ( unsigned i = 0; i < m_recvM.size(); i++ ) {
-        std::map< int, std::deque<DmaRecvEntry*> >::iterator iter;
-
-        for ( iter = m_recvM[i].begin(); iter != m_recvM[i].end(); ++iter ) {
-            while ( ! (*iter).second.empty() ) {
-                delete (*iter).second.front();
-                (*iter).second.pop_front();
-            }
-        }
-    }
 	delete m_shmem;
 	delete m_linkControl;
 
@@ -355,10 +343,8 @@ void Nic::dmaRecv( NicCmdEvent *e, int vNicNum )
     m_dbg.verbose(CALL_INFO,1,1,"vNicNum=%d src=%d tag=%#x length=%lu\n",
                    vNicNum, e->node, e->tag, entry->totalBytes());
 
-	
-    if ( ! m_recvMachine[0]->checkBlockedNetwork( entry, vNicNum ) ) {
-        m_recvM[ vNicNum ][ e->tag ].push_back( entry );
-    }
+    	
+    m_recvMachine[0]->postRecv( vNicNum, entry );
 }
 
 void Nic::get( NicCmdEvent *e, int vNicNum )
@@ -367,12 +353,11 @@ void Nic::get( NicCmdEvent *e, int vNicNum )
 
     DmaRecvEntry::Callback callback = std::bind( &Nic::notifyRecvDmaDone, this, vNicNum, _1, _2, _3, _4, _5 );
 
-    m_getOrgnM[ getKey ] = new DmaRecvEntry( e, callback );
+    DmaRecvEntry* entry = new DmaRecvEntry( e, callback );
+    m_recvMachine[0]->regGetOrigin( vNicNum, getKey, entry);
 
-    m_dbg.verbose(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
-                        "vecLen=%lu totalBytes=%lu\n",
-                vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(), 
-                m_getOrgnM[ getKey ]->totalBytes() );
+    m_dbg.verbose(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x vecLen=%lu totalBytes=%lu\n",
+                vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(), entry->totalBytes() );
 
     m_sendMachine[1]->run( new GetOrgnEntry( vNicNum, e->node, e->dst_vNic, e->tag, getKey) );
 }
@@ -395,7 +380,8 @@ void Nic::regMemRgn( NicCmdEvent *e, int vNicNum )
 {
     m_dbg.verbose(CALL_INFO,1,1,"rgnNum %d\n",e->tag);
     
-    m_memRgnM[ vNicNum ][ e->tag ] = new MemRgnEntry( vNicNum, e->iovec );
+    m_recvMachine[1]->regMemRgn( vNicNum, e->tag, new MemRgnEntry( e->iovec ) );
+
     delete e;
 }
 
@@ -538,87 +524,6 @@ void Nic::dmaWrite( int unit, std::vector<MemOp>* vec, Callback callback ) {
         	delete vec;
     	}
 	}
-}
-
-Nic::DmaRecvEntry* Nic::findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )
-{
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
-                    "src=%d len=%lu\n",src,rdmahdr.len);
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
-                    "rgnNum=%d offset=%d respKey=%d\n",
-            rdmahdr.rgnNum, rdmahdr.offset, rdmahdr.respKey);
-
-    DmaRecvEntry* entry = NULL;
-    if ( RdmaMsgHdr::GetResp == rdmahdr.op ) {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"GetResp\n");
-        entry = m_getOrgnM[ rdmahdr.respKey ];
-
-        m_getOrgnM.erase(rdmahdr.respKey);
-
-    } else if ( RdmaMsgHdr::Put == rdmahdr.op ) {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"Put\n");
-        assert(0);
-    } else {
-        assert(0);
-    }
-
-    return entry;
-}
-
-Nic::SendEntryBase* Nic::findGet( int src,
-                        MsgHdr& hdr, RdmaMsgHdr& rdmaHdr  )
-{
-    // Note that we are not doing a strong check here. We are only checking that
-    // the tag matches.
-    if ( m_memRgnM[ hdr.dst_vNicId ].find( rdmaHdr.rgnNum ) ==
-                                m_memRgnM[ hdr.dst_vNicId ].end() ) {
-        assert(0);
-    }
-
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"rgnNum=%d offset=%d respKey=%d\n",
-                        rdmaHdr.rgnNum, rdmaHdr.offset, rdmaHdr.respKey );
-
-    MemRgnEntry* entry = m_memRgnM[ hdr.dst_vNicId ][rdmaHdr.rgnNum];
-    assert( entry );
-
-    m_memRgnM[ hdr.dst_vNicId ].erase(rdmaHdr.rgnNum);
-
-    return new PutOrgnEntry( entry->vNicNum(),
-                                    src, hdr.src_vNicId,
-                                    rdmaHdr.respKey, entry );
-}
-
-Nic::EntryBase* Nic::findRecv( int srcNode, MsgHdr& hdr, MatchMsgHdr& matchHdr  )
-{
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"need a recv entry, srcNic=%d src_vNic=%d "
-                "dst_vNic=%d tag=%#x len=%lu\n", srcNode, hdr.src_vNicId,
-                        hdr.dst_vNicId, matchHdr.tag, matchHdr.len);
-
-    if ( m_recvM[hdr.dst_vNicId].find( matchHdr.tag ) == m_recvM[hdr.dst_vNicId].end() ) { m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"did't match tag\n");
-        return NULL;
-    }
-
-    DmaRecvEntry* entry = m_recvM[ hdr.dst_vNicId][ matchHdr.tag ].front();
-    if ( entry->node() != -1 && entry->node() != srcNode ) {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
-                "didn't match node  want=%#x src=%#x\n",
-                                            entry->node(), srcNode );
-        return NULL;
-    }
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
-                "recv entry size %lu\n",entry->totalBytes());
-
-    if ( entry->totalBytes() < matchHdr.len ) {
-        assert(0);
-    }
-
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"found a receive entry\n");
-
-    m_recvM[ hdr.dst_vNicId ][ matchHdr.tag ].pop_front();
-    if ( m_recvM[ hdr.dst_vNicId ][ matchHdr.tag ].empty() ) {
-        m_recvM[ hdr.dst_vNicId ].erase( matchHdr.tag );
-    }
-    return entry;
 }
 
 Hermes::MemAddr Nic::findShmem(  int core, Hermes::Vaddr addr, size_t length )
