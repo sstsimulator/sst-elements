@@ -61,10 +61,10 @@
 			}	
 
 			if ( ! blocked ) {
-				m_model.schedResume( 1, entry.src  );
+				m_model.schedResume( 0, entry.src  );
 				if ( m_blockedQ.size() > 1 ) {
                     m_scheduled = true;
-					m_model.schedCallback( 1, std::bind( &MuxUnit::processQ, this ) );
+					m_model.schedCallback( 0, std::bind( &MuxUnit::processQ, this ) );
 				}
 			} else {
 				m_blockedSrc = entry.src;
@@ -75,7 +75,7 @@
 		void resume( UnitBase* src = NULL ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,MUX_MASK,"\n");
 			if ( m_blockedSrc ) {
-				m_model.schedResume( 1, m_blockedSrc );
+				m_model.schedResume( 0, m_blockedSrc );
 				m_blockedSrc = NULL;
 			}
 

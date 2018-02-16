@@ -11,7 +11,7 @@ class LoadUnit : public Unit {
 	std::string m_name;
   public:
     LoadUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, int numSlots, std::string name ) :
-        Unit( model, dbg ),  m_qSize(numSlots), m_cache(cache), m_loadDelay( 1 ), m_blocked(false), m_scheduled(false), 
+        Unit( model, dbg ),  m_qSize(numSlots), m_cache(cache),  m_blocked(false), m_scheduled(false), 
 			m_blockedSrc(NULL) , m_numPending(0), m_name(name)
 	{
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "LoadUnit::@p():@l ";
@@ -28,7 +28,7 @@ class LoadUnit : public Unit {
 
         if ( m_numPending <= m_qSize ) {
             if ( ! m_blocked && ! m_scheduled ) {
-                m_model.schedCallback( 1, std::bind( &LoadUnit::process, this ) );
+                m_model.schedCallback( 0, std::bind( &LoadUnit::process, this ) );
                 m_scheduled = true;
             }
 		}
@@ -66,19 +66,19 @@ class LoadUnit : public Unit {
 				--m_numPending;
 				if ( entry.callback ) {
 					m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"tell src load is complete\n");
-					m_model.schedCallback( 1, entry.callback );
+					m_model.schedCallback( 0, entry.callback );
 				}
 
         		if ( m_blockedSrc ) {
 					m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"unblock src\n");
-					m_model.schedResume( 1, m_blockedSrc );
+					m_model.schedResume( 0, m_blockedSrc );
             		m_blockedSrc = NULL;
         		}
 
         		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"%s\n",m_blocked? "blocked" : "not blocked");
 
         		if ( ! m_blocked && ! m_scheduled && ! m_pendingQ.empty() ) {
-            		m_model.schedCallback( 1, std::bind( &LoadUnit::process, this ) );
+            		m_model.schedCallback( 0, std::bind( &LoadUnit::process, this ) );
             		m_scheduled = true;
         		}
 			}
@@ -107,5 +107,4 @@ class LoadUnit : public Unit {
     Unit*  m_cache;
     std::deque<Entry> m_pendingQ;
     int m_qSize;
-    int m_loadDelay;
 };

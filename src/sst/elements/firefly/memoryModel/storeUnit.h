@@ -5,7 +5,7 @@ class StoreUnit : public Unit {
 	std::string m_name;
   public:
     StoreUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, int numSlots, std::string name ) :
-        Unit( model, dbg ), m_qSize(numSlots),  m_storeDelay( 1 ), m_cache(cache), m_blocked(false), m_blockedSrc(NULL), m_scheduled(false), m_name(name) {
+        Unit( model, dbg ), m_qSize(numSlots), m_cache(cache), m_blocked(false), m_blockedSrc(NULL), m_scheduled(false), m_name(name) {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::"+ name + "StoreUnit::@p():@l ";
     }
 
@@ -13,7 +13,7 @@ class StoreUnit : public Unit {
     bool storeCB( UnitBase* src, MemReq* req, Callback callback = NULL ) {
 
         if ( callback ) {
-			m_model.schedCallback( 1, callback );
+			m_model.schedCallback( 0, callback );
         }
 
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",req->addr,req->length,m_pendingQ.size());
@@ -22,7 +22,7 @@ class StoreUnit : public Unit {
 
 		if ( m_pendingQ.size() < m_qSize + 1) {
 			if ( ! m_blocked && ! m_scheduled ) {
-				m_model.schedCallback( 1, std::bind( &StoreUnit::process, this ) ); 
+				m_model.schedCallback( 0, std::bind( &StoreUnit::process, this ) ); 
 				m_scheduled = true;
 			}
 		}
@@ -50,12 +50,12 @@ class StoreUnit : public Unit {
 
 		if ( m_blockedSrc ) {
         	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"unblock src\n");
-			m_model.schedResume( 1, m_blockedSrc );
+			m_model.schedResume( 0, m_blockedSrc );
 			m_blockedSrc = NULL;
 		}
 
 		if ( ! m_blocked && ! m_pendingQ.empty() ) {
-			m_model.schedCallback( 1, std::bind( &StoreUnit::process, this ) ); 
+			m_model.schedCallback( 0, std::bind( &StoreUnit::process, this ) ); 
 			m_scheduled = true;
 		}
 	}
@@ -76,8 +76,6 @@ class StoreUnit : public Unit {
 	bool    m_blocked;
     Unit*   m_cache;
     int     m_qSize;
-
-    SimTime_t m_storeDelay;
 
     std::deque<MemReq*>       m_pendingQ;
 };

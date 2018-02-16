@@ -56,7 +56,7 @@ class BusLoadWidget : public Unit {
         if ( m_numPending < m_qSize + 1 ) {
             if ( ! m_blocked && ! m_scheduled ) {
             	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
-                m_model.schedCallback( 1, std::bind( &BusLoadWidget::process, this ) );
+                m_model.schedCallback( 0, std::bind( &BusLoadWidget::process, this ) );
                 m_scheduled = true;
             }
         }
@@ -94,12 +94,12 @@ class BusLoadWidget : public Unit {
                         entry.addr,latency);
 				if ( entry.callback ) {
 	                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"tell src load is complete\n");
-                   	m_model.schedCallback( 1, entry.callback );		
+                   	m_model.schedCallback( 0, entry.callback );		
 				}
 
                	if ( m_blockedSrc ) {
                    	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"unblock src\n");
-                   	m_model.schedResume( 1, m_blockedSrc, this );
+                   	m_model.schedResume( 0, m_blockedSrc, this );
                    	m_blockedSrc = NULL;
                	}
 
@@ -107,7 +107,7 @@ class BusLoadWidget : public Unit {
 
                	if ( ! m_blocked && ! m_scheduled && ! m_pendingQ.empty() ) {
            			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
-                   	m_model.schedCallback( 1, std::bind( &BusLoadWidget::process, this ) );
+                   	m_model.schedCallback( 0, std::bind( &BusLoadWidget::process, this ) );
                    	m_scheduled = true;
                	}
 			}; 
@@ -119,7 +119,7 @@ class BusLoadWidget : public Unit {
 
                	if ( ! m_blocked && ! m_scheduled && ! m_pendingQ.empty() ) {
            			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
-                   	m_model.schedCallback( 1, std::bind( &BusLoadWidget::process, this ) );
+                   	m_model.schedCallback( 0, std::bind( &BusLoadWidget::process, this ) );
                    	m_scheduled = true;
                	}
 			};
@@ -128,7 +128,7 @@ class BusLoadWidget : public Unit {
 
       	if ( ! m_blocked && ! m_scheduled && ! m_pendingQ.empty() ) {
        		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
-           	m_model.schedCallback( 1, std::bind( &BusLoadWidget::process, this ) );
+           	m_model.schedCallback( 0, std::bind( &BusLoadWidget::process, this ) );
            	m_scheduled = true;
        	}
 	}
@@ -173,7 +173,7 @@ class BusStoreWidget : public Unit {
         if ( m_pendingQ.size() < m_qSize + 1) {
             if ( ! m_blocked && ! m_scheduled ) {
            		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
-                m_model.schedCallback( 1, std::bind( &BusStoreWidget::process, this ) );
+                m_model.schedCallback( 0, std::bind( &BusStoreWidget::process, this ) );
                 m_scheduled = true;
             }
         }
@@ -205,14 +205,14 @@ class BusStoreWidget : public Unit {
 			m_pendingQ.pop_front();
         	if ( m_blockedSrc ) {
             	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"unblock src\n");
-            	m_model.schedResume( 1, m_blockedSrc, this );
+            	m_model.schedResume( 0, m_blockedSrc, this );
             	m_blockedSrc = NULL;
         	}
 		}
 
         if ( ! m_blocked && ! m_pendingQ.empty() ) {
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
-            m_model.schedCallback( 1, std::bind( &BusStoreWidget::process, this ) );
+            m_model.schedCallback( 0, std::bind( &BusStoreWidget::process, this ) );
             m_scheduled = true;
         }
 	}

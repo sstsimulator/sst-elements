@@ -34,13 +34,13 @@ class BusBridgeUnit : public Unit {
 		if ( unit == m_loadWidget ) {
         	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"load\n");
 			if ( m_blocked[0] ) { 
-				m_model.schedResume( 1, m_blocked[0] );
+				m_model.schedResume( 0, m_blocked[0] );
 				m_blocked[0] = NULL;
 			}
 		} else {
         	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"store\n" );
 			if ( m_blocked[1] ) { 
-				m_model.schedResume( 1, m_blocked[1] );
+				m_model.schedResume( 0, m_blocked[1] );
 				m_blocked[1] = NULL;
 			}
 		} 
@@ -158,7 +158,7 @@ class BusBridgeUnit : public Unit {
 		}
 		if( 0 == entry->addr ) {
 			if ( entry->src->numPendingWrites() == 10 ) {
-				m_model.schedResume( 1, entry->src );
+				m_model.schedResume( 0, entry->src );
 			}
 			entry->src->decPendingWrites();
 		}
@@ -182,8 +182,8 @@ class BusBridgeUnit : public Unit {
             size_t length = entry->req->length;
 			if ( m_loadWidget->load( this, entry->req, 
 				[=]() {
-       				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu\n",
-									entry, addr, length );
+       				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"load done entry=%p addr=%#" PRIx64 " length=%lu latency=%" PRIu64 "\n",
+									entry, addr, length, m_model.getCurrentSimTimeNano() - now );
 					m_respBus.addReq( entry );
 				}) ) 
 			{
@@ -204,7 +204,7 @@ class BusBridgeUnit : public Unit {
 		}
 
 		if ( resumeSrc ) {
-			m_model.schedResume( 1, resumeSrc );
+			m_model.schedResume( 0, resumeSrc );
 		} else {
 			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"blocked\n");
 		} 

@@ -9,34 +9,35 @@
 
         bool store( UnitBase* src, MemReq* req ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr, req->length);
-            return work( m_writeLat_ns, Write, req, src );
+            return work( m_writeLat_ns, Write, req, src, m_model.getCurrentSimTimeNano() );
         }
 
         bool load( UnitBase* src, MemReq* req, Callback callback ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
-            return work( m_readLat_ns, Read, req, src, callback );
+            return work( m_readLat_ns, Read, req, src, m_model.getCurrentSimTimeNano(), callback );
         }
 
       private:
 
         struct XXX {
 
-            XXX( SimTime_t delay, Op op, MemReq* memReq, UnitBase* src, Callback callback ) :
-                delay(delay), op(op), memReq(memReq), src(src), callback( callback )
-            {}
+            XXX( SimTime_t delay, Op op, MemReq* memReq, UnitBase* src, Callback callback, SimTime_t qTime ) :
+                delay(delay), op(op), memReq(memReq), src(src), callback( callback ), qTime(qTime)
+            { }
             SimTime_t delay;
             Op op;
 			MemReq* memReq;
             UnitBase* src;
 			Callback callback;
+            SimTime_t qTime;
         };
 
-        bool work( SimTime_t delay, Op op, MemReq* req,  UnitBase* src, Callback callback = NULL ) {
+        bool work( SimTime_t delay, Op op, MemReq* req,  UnitBase* src, SimTime_t qTime, Callback callback = NULL ) {
 
             if ( m_pending == m_numSlots ) {
 
 				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"blocking src\n");
-                m_blocked.push_back( XXX( delay, op, req, src, callback ) );
+                m_blocked.push_back( XXX( delay, op, req, src, callback, m_model.getCurrentSimTimeNano() ) );
                 return true;
             }
 
@@ -50,11 +51,11 @@
 
                     SimTime_t latency = m_model.getCurrentSimTimeNano() - issueTime;
 
-                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"%s complete latency=%" PRIu64 " addr=%#" PRIx64 " length=%lu\n",
-                                                        op == Read ? "Read":"Write" ,latency, req->addr, req->length);
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"%s complete latency=%" PRIu64 " qLatency=%" PRIu64 " addr=%#" PRIx64 " length=%lu\n",
+                                                        op == Read ? "Read":"Write" ,latency, issueTime-qTime, req->addr, req->length);
 
                     if ( callback ) {
-                        m_model.schedCallback( 1, callback);
+                        m_model.schedCallback( 0, callback);
                     }
 
 					delete req;
@@ -62,8 +63,8 @@
                     if ( ! m_blocked.empty() ) {
 		
                         XXX& xxx = m_blocked.front( );
-                        work( xxx.delay, xxx.op, xxx.memReq, xxx.src, xxx.callback );
-                		m_model.schedResume( 1, xxx.src );
+                        work( xxx.delay, xxx.op, xxx.memReq, xxx.src, xxx.qTime, xxx.callback );
+                		m_model.schedResume( 0, xxx.src );
                         m_blocked.pop_front();
                     }
                 }
