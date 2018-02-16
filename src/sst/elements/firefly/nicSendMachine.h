@@ -38,13 +38,13 @@ class SendMachine {
             }
 
             void wakeMeUp( Callback  callback) {
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_SEND_MACHINE, "set wakeup\n");
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "set wakeup\n");
                 assert(! m_wakeUpCallback);
                 m_wakeUpCallback = callback;
             }
 
             void notify() {
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_SEND_MACHINE, "network is unblocked\n");
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "network is unblocked\n");
                 assert( m_notifyCallback );
                 m_scheduled = true;
                 m_nic.schedCallback( m_notifyCallback ); 
@@ -59,7 +59,7 @@ class SendMachine {
             bool canSend( uint64_t numBytes ) {
                 bool ret = m_nic.m_linkControl->spaceToSend( m_vc, numBytes * 8); 
                 if ( ! ret ) {
-                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_SEND_MACHINE, "network is blocked\n");
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "network is blocked\n");
                     setCanSendCallback( std::bind( &Nic::SendMachine::OutQ::runSendQ, this ) ); 
                 }
                 return ret;
@@ -84,7 +84,6 @@ class SendMachine {
         };
 
         class InQ {
-
 
             std::string m_prefix;
             const char* prefix() { return m_prefix.c_str(); }
