@@ -22,157 +22,225 @@ using namespace SST::Firefly;
 
 static void print( Output& dbg, char* buf, int len );
 
-Nic::RecvMachine::~RecvMachine()
+void Nic::RecvMachine::processPkt( FireflyNetworkEvent* ev )
 {
-// for some reason the causes a fault when 
-// testSuite_scheduler_DetailedNetwork.sh
-// terminates a simulation
-#if 0
-    while ( ! m_streamMap.empty() ) {
-        delete m_streamMap.begin()->second;
-        m_streamMap.erase( m_streamMap.begin() );
+    int destPid = ev->getDestPid();
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"got a network pkt from node=%d pid=%d for pid=%d\n",
+                        ev->getSrcNode(),ev->getSrcPid(), destPid );
+
+    SrcKey srcKey = getSrcKey( ev->getSrcNode(), ev->getSrcPid() );
+
+    std::map< SrcKey, StreamBase* >& tmp = m_streamMap[ destPid ];
+
+    // this packet is part of an active stream to a pid
+    if ( tmp.find(srcKey) != tmp.end() )  { 
+
+        if ( ev->getIsHdr() ) { 
+            assert( ! m_blockedNetworkEvents[ destPid ] ); 
+            m_blockedNetworkEvents[ destPid ] = ev;
+            checkNetworkForData();
+        } else {
+
+            StreamBase* stream =  tmp[srcKey];
+
+            if ( stream->isBlocked() ) {
+                stream->setWakeup( std::bind(&Nic::RecvMachine::wakeup, this, stream, ev ));
+                m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"blocked by stream\n");
+                // this recv machine is blocked 
+            } else {
+                stream->processPkt(ev);
+            }
+        }
+    } else {
+        int unit = m_nic.allocNicUnit( );
+        if ( -1 == unit ) {
+            m_blockedNetworkEvent = ev;
+            m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"blocked by unit\n");
+            // this recv machine is blocked 
+            
+        // packet is for a destPid/srcNode/srcPid that is not active 
+        } else { 
+            //========================================================
+            // FIX UNIT ALLOCATION, need one Unit per process
+            //========================================================
+            m_streamMap[destPid][srcKey] = newStream( unit, ev );
+            checkNetworkForData();
+        } 
     }
-#endif
 }
 
-void Nic::RecvMachine::state_0( FireflyNetworkEvent* ev )
+Nic::RecvMachine::StreamBase* Nic::RecvMachine::newStream( int unit, FireflyNetworkEvent* ev )
 {
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"got a network pkt from %d\n",ev->src);
-    assert( ev );
-
-    // is there an active stream for this src node?
-    if ( m_streamMap.find( ev->src ) == m_streamMap.end() ) {
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"new stream\n");
 
 #ifdef NIC_RECV_DEBUG
         ++m_msgCount;
 #endif
-        MsgHdr& hdr = *(MsgHdr*) ev->bufPtr();
-        switch ( hdr.op ) {
-          case MsgHdr::Msg:
-            m_streamMap[ev->src] = new MsgStream( m_dbg, ev, *this, m_unit );
-            break;
-          case MsgHdr::Rdma:
-            m_streamMap[ev->src] = new RdmaStream( m_dbg, ev, *this, m_unit );
-            break;
-          case MsgHdr::Shmem:
-            m_streamMap[ev->src] = new ShmemStream( m_dbg, ev, *this, m_unit );
-            break;
-        }
-    } else {
-        m_streamMap[ev->src]->processPkt( ev );
-    } 
-}
-
-// Need Recv
-void Nic::RecvMachine::state_2( FireflyNetworkEvent* ev )
-{
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
-    processNeedRecv( ev );
-}
-
-void Nic::RecvMachine::checkNetwork( )
-{
-    FireflyNetworkEvent* ev = getNetworkEvent(m_vc);
-    if ( ev ) {
-        state_0( ev );
-    } else {
-        setNotify();
+    MsgHdr& hdr = *(MsgHdr*) ev->bufPtr();
+    switch ( hdr.op ) {
+      case MsgHdr::Msg:
+        return new MsgStream( m_dbg, ev, *this, unit, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid() );
+        break;
+      case MsgHdr::Rdma:
+        return new RdmaStream( m_dbg, ev, *this, unit, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid() );
+        break;
+      case MsgHdr::Shmem:
+        return new ShmemStream( m_dbg, ev, *this, unit, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid() );
+        break;
     }
+    assert(0);
 }
 
-void Nic::RecvMachine::state_move_0( FireflyNetworkEvent* event, StreamBase* stream  )
-{
-    int src = event->src;
-    EntryBase* entry = stream->getRecvEntry();
+void Nic::RecvMachine::StreamBase::processPkt( FireflyNetworkEvent* ev  ) {
 
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
-				"src=%d event has %lu bytes\n", src,event->bufSize() );
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"get timing for packet %" PRIu64 " size=%lu\n",
+                                                m_pktNum,ev->bufSize());
+    assert(m_numPending < m_rm.getMaxQsize() ); 
+    ++m_numPending;
 
     std::vector< MemOp >* vec = new std::vector< MemOp >;
+    bool ret = getRecvEntry()->copyIn( m_dbg, *ev, *vec );
 
-    long tmp = event->bufSize();
-    bool ret = stream->getRecvEntry()->copyIn( m_dbg, *event, *vec );
+    if ( 0 == ev->bufSize() ) {
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE, "network event is done\n");
+        delete ev;
+    }
+   
+    Callback callback = NULL;
 
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
-				"copyIn %lu bytes %s\n", tmp - event->bufSize(), ret ? "stream is done":"");
+    if ( ret || length() == getRecvEntry()->currentLen() ) {
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE, "this stream is done\n");
+        callback = std::bind( &Nic::RecvMachine::clearMapAndDeleteStream, &m_rm, getMyPid(), this );
+    }
+    m_rm.nic().dmaWrite( m_unit, vec, std::bind( &Nic::RecvMachine::StreamBase::ready, this, callback, m_pktNum++ ) ); 
 
-    m_nic.dmaWrite( stream->getUnit(), vec,
-            std::bind( &Nic::RecvMachine::state_move_1, this, event, ret, stream ) ); 
-
-	// don't put code after this, the callback may be called serially
+    m_rm.checkNetworkForData();
 }
 
-void Nic::RecvMachine::state_move_1( FireflyNetworkEvent* event, bool done, StreamBase* stream )
+void Nic::RecvMachine::StreamBase::ready( Callback callback, uint64_t pktNum ) {
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE, "packet %" PRIu64 " is ready\n",pktNum);
+    assert(pktNum== m_expectedPkt++);
+    --m_numPending;
+    if ( callback ) {
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE, "we have a callback\n");
+        callback();
+    }
+    if ( m_wakeupCallback ) {
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE, "wakeup recv machine\n");
+        m_wakeupCallback( );
+        m_wakeupCallback = NULL;
+    }
+}
+
+
+Nic::EntryBase* Nic::RecvMachine::findRecv( int myPid, int srcNode, int srcPid, MsgHdr& hdr, MatchMsgHdr& matchHdr  )
 {
-    int src = event->src;
-    EntryBase* entry = stream->getRecvEntry();
+   m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"need a recv entry, srcNic=%d srcPid=%d "
+                "myPid=%d tag=%#x len=%lu\n", srcNode, srcPid, myPid, matchHdr.tag, matchHdr.len);
 
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
-		"src=%d currentLen %lu bytes\n", src, entry->currentLen());
+    DmaRecvEntry* entry = NULL;
 
-    if ( done || stream->length() == entry->currentLen() ) {
+    std::deque<DmaRecvEntry*>::iterator iter = m_postedRecvs[myPid].begin();
 
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
-				"recv entry done, srcNic=%d\n", src );
+    for ( ; iter != m_postedRecvs[myPid].end(); ++iter ) {
+        entry = (*iter);
+        m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"check Posted Recv with tag=%#x node=%d\n",entry->tag(),entry->node());
 
-        delete m_streamMap[src];
-        m_streamMap.erase(src);
-        m_unit = m_nic.allocNicUnit();
-
-        if ( ! event->bufEmpty() ) {
-            m_dbg.fatal(CALL_INFO,-1,
-                "src=%d buffer not empty, %lu bytes remain\n",
-										src,event->bufSize());
+        if ( matchHdr.tag != entry->tag() ) {
+            continue;
         }
-    }
+        if ( -1 != entry->node() && srcNode != entry->node() ) {
+            continue;
+        }
+        if ( entry->totalBytes() < matchHdr.len ) {
+            assert(0);
+        }
 
-    if ( 0 == event->bufSize() ) {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
-				"network event is done\n");
-        delete event;
-    }
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"found recv entry, size %lu\n",entry->totalBytes());
 
-    if ( m_unit > -1 ) {
-        checkNetwork();
-    } else {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"no NicUnits, blocking\n");
+        m_postedRecvs[myPid].erase(iter);
+        return entry;
     }
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"no match\n");
+
+    return NULL;
 }
 
-void Nic::RecvMachine::state_move_2( FireflyNetworkEvent* event )
+Nic::SendEntryBase* Nic::RecvMachine::findGet( int pid, int srcNode, int srcPid, RdmaMsgHdr& rdmaHdr  )
 {
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
-    delete m_streamMap[event->src];
-    m_streamMap.erase(event->src);
-	m_unit = m_nic.allocNicUnit();
-
-    delete event;
-
-    if ( m_unit > -1 ) {
-        checkNetwork();
-    } else {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"no NicUnits, blocking\n");
-	}
-}
-
-void Nic::RecvMachine::state_move_3( FireflyNetworkEvent* event )
-{
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
-    m_streamMap.erase(event->src);
-	m_unit = m_nic.allocNicUnit();
-
-    if ( m_unit > -1 ) {
-        checkNetwork();
-    } else {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"no NicUnits, blocking\n");
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"pid=%d srcNode=%d srcPid=%d rgnNum=%d offset=%d respKey=%d\n",
+                        pid, srcNode, srcPid, rdmaHdr.rgnNum, rdmaHdr.offset, rdmaHdr.respKey );
+    // Note that we are not doing a strong check here. We are only checking that
+    // the tag matches.
+    if ( m_memRgnM[ pid ].find( rdmaHdr.rgnNum ) == m_memRgnM[ pid ].end() ) {
+        assert(0);
     }
+
+    MemRgnEntry* entry = m_memRgnM[ pid ][rdmaHdr.rgnNum];
+    assert( entry );
+
+    m_memRgnM[ pid ].erase(rdmaHdr.rgnNum);
+
+    return new PutOrgnEntry( pid, srcNode, srcPid, rdmaHdr.respKey, entry );
 }
 
-void Nic::RecvMachine::state_move_4( FireflyNetworkEvent* event, StreamBase* stream )
+Nic::DmaRecvEntry* Nic::RecvMachine::findPut( int pid, int srcNode, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )
 {
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "srcNode=%d rgnNum=%d offset=%d respKey=%d\n",
+            srcNode, rdmahdr.rgnNum, rdmahdr.offset, rdmahdr.respKey);
+
+    DmaRecvEntry* entry = NULL;
+    if ( RdmaMsgHdr::GetResp == rdmahdr.op ) {
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"GetResp\n");
+        entry = m_getOrgnM[pid][ rdmahdr.respKey ];
+
+        m_getOrgnM[pid].erase(rdmahdr.respKey);
+
+    } else if ( RdmaMsgHdr::Put == rdmahdr.op ) {
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"Put\n");
+        assert(0);
+    } else {
+        assert(0);
+    }
+
+    return entry;
+}
+
+
+bool Nic::RecvMachine::StreamBase::postedRecv( DmaRecvEntry* entry ) {
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
-    delete stream;
-    delete event;
+    if ( ! m_blockedNeedRecv ) return false;
+
+    FireflyNetworkEvent* event = m_blockedNeedRecv;
+
+    MsgHdr& hdr = *(MsgHdr*) event->bufPtr();
+    MatchMsgHdr& matchHdr = *(MatchMsgHdr*) ((unsigned char*)event->bufPtr() + sizeof( MsgHdr ));
+
+    int srcNode = event->getSrcNode();
+
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"event tag %#x, posted recv tag %#x\n",matchHdr.tag, entry->tag());
+    if ( entry->tag() != matchHdr.tag ) {
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"did't match tag\n");
+        return false;
+    }
+
+    if ( entry->node() != -1 && entry->node() != srcNode ) {
+        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "didn't match node  want=%#x src=%#x\n", entry->node(), srcNode );
+        return false;
+    }
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "recv entry size %lu\n",entry->totalBytes());
+
+    if ( entry->totalBytes() < matchHdr.len ) {
+        assert(0);
+    }
+    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "matched\n");
+
+    m_recvEntry = entry;
+    event->bufPop( sizeof(MsgHdr) + sizeof(MatchMsgHdr));
+
+    processPkt( m_blockedNeedRecv );
+    m_blockedNeedRecv = NULL;
+    return true;
 }
 
 void Nic::RecvMachine::printStatus( Output& out ) {
