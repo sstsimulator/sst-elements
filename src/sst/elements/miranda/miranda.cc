@@ -209,6 +209,7 @@ static const ElementInfoParam streamBench_customcmd_params[] = {
 static const ElementInfoParam stake_params[] = {
     { "verbose",          "Sets the verbosity output of the generator", "0" },
     { "cores",            "Sets the number of cores in the spike instance", "1" },
+    { "mem_size",         "Sets the RISC-V Spike memory subsystem size", "2048" },
     { "log",              "Generate a log of the execution", "0" },
     { "isa",              "Set the respective RISC-V ISA", "RV64IMAFDC" },
     { "pc",               "Override the default ELF entry point", "0x80000000"},

@@ -20,6 +20,8 @@
 
 using namespace SST::Miranda;
 
+Stake *__GStake;
+
 Stake::Stake( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
 
@@ -33,6 +35,7 @@ Stake::Stake( Component* owner, Params& params ) :
 
         log = params.find<bool>("log", false);
         cores = params.find<size_t>("cores", 1);
+        msize = params.find<std::string>("mem_size", "2048");
         pc = params.find<uint64_t>("pc", 0x80000000);
         isa = params.find<std::string>("isa", "RV64IMAFDC");
         pk = params.find<std::string>("proxy_kernel", "pk");
@@ -51,8 +54,8 @@ Stake::Stake( Component* owner, Params& params ) :
         }
 
         out->verbose(CALL_INFO, 1, 0, "RISC-V Cores = %" PRIu32 "\n", cores );
-        out->verbose(CALL_INFO, 1, 0, "Starting PC = %" PRIx64 "\n", pc );
-        out->verbose(CALL_INFO, 1, 0, "ISA = %s\n", isa );
+        out->verbose(CALL_INFO, 1, 0, "Starting PC = 0x%" PRIx64 "\n", pc );
+        out->verbose(CALL_INFO, 1, 0, "ISA = %s\n", isa.c_str() );
         if( ext.length() > 0 ){
           out->verbose(CALL_INFO, 1, 0, "RoCC Extension = %s\n", ext );
         }
@@ -61,6 +64,7 @@ Stake::Stake( Component* owner, Params& params ) :
         }
 
         done = false;
+        __GStake = this;
 }
 
 Stake::~Stake() {
@@ -99,6 +103,17 @@ std::vector<std::pair<reg_t, mem_t*>> Stake::make_mems(const char* arg){
         return res;
 }
 
+extern "C" void SR(uint64_t addr,
+                   uint32_t reqLength,
+                   bool Read,
+                   bool Write,
+                   bool Atomic,
+                   bool Custom,
+                   uint32_t Code ){
+        __GStake->StakeRequest(addr,reqLength,Read,Write,Atomic,Custom,Code);
+}
+
+
 void Stake::StakeRequest(uint64_t addr,
                          uint32_t reqLength,
                          bool Read,
@@ -117,9 +132,11 @@ void Stake::StakeRequest(uint64_t addr,
           out->verbose(CALL_INFO, 8, 0,
                        "Issuing WRITE request for address %" PRIu64 "\n", addr );
         }else if( Atomic ){
+          req = new MemoryOpRequest( addr, reqLength, READ );
           out->verbose(CALL_INFO, 8, 0,
                        "Issuing ATOMIC request for address %" PRIu64 "\n", addr );
         }else if( Custom ){
+          req = new MemoryOpRequest( addr, reqLength, READ );
           out->verbose(CALL_INFO, 8, 0,
                        "Issuing CUSTOM request for address %" PRIu64 "\n", addr );
         }else{
@@ -135,7 +152,7 @@ void Stake::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
         MQ = q;
 
         // setup the input variables
-        std::vector<std::pair<reg_t, mem_t*>> mems = make_mems("2048");
+        std::vector<std::pair<reg_t, mem_t*>> mems = make_mems(msize.c_str());
         std::vector<std::string> htif_args;
         std::vector<int> hartids; // null hartid vector
 
@@ -149,10 +166,12 @@ void Stake::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
         spike->set_debug(false);
         spike->set_log(log);
         spike->set_histogram(false);
-        spike->set_sst_func((void *)(&SST::Miranda::Stake::StakeRequest));
+        //spike->set_sst_func((void *)(&SST::Miranda::Stake::StakeRequest));
+        spike->set_sst_func((void *)(&SR));
 
         // run the sim
         rtn = spike->run();
+        done = true;
 }
 
 bool Stake::isFinished() {

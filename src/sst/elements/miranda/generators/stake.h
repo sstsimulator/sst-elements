@@ -58,6 +58,7 @@ private:
         int rtn;            // return code from the simulator
         size_t cores;       // number of RISC-V cores
         uint64_t pc;        // starting pc
+        std::string msize;  // size of the memory subsystem
         std::string isa;    // isa string
         std::string pk;     // proxy kernel
         std::string bin;    // ELF binary
@@ -74,5 +75,15 @@ private:
 
 }
 }
+
+#ifdef __cplusplus
+extern "C"{
+#endif
+void SR(uint64_t addr, uint32_t RegLen,
+        bool Read, bool Write, bool Atomic, bool Custom,
+        uint32_t Code );
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif
