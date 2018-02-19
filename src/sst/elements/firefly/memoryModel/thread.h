@@ -201,12 +201,13 @@ class Thread : public UnitBase {
                     while ( ! m_OOOwork.empty() ) {
                         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"check OOO, looking for %d\n",m_lastDelete);
                         if ( m_OOOwork.find( m_lastDelete ) != m_OOOwork.end() ) {
+                            work = m_OOOwork[ m_lastDelete ];
                             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"retire OOO work %p\n",m_OOOwork[m_lastDelete]);
                             while ( ! work->m_pendingCallbacks.empty() ) {
                                 work->m_pendingCallbacks.front()();
                                 work->m_pendingCallbacks.pop_front();
                             }
-                            delete m_OOOwork[m_lastDelete];
+                            delete work;
                             m_OOOwork.erase( m_lastDelete++ );
                         } else {
                             break;
