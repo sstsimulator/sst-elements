@@ -56,7 +56,7 @@ bool Nic::RecvMachine::Ctx::processPkt( FireflyNetworkEvent* ev ) {
         }
     } else { // packet is for a destPid/srcNode/srcPid that is not active
         
-        StreamBase* stream = m_streamMap[srcKey] = newStream( m_rm.m_nic.allocNicUnit( m_pid ), ev );
+        StreamBase* stream = m_streamMap[srcKey] = newStream( allocNicUnit(), ev );
 
         Callback callback = stream->getStartCallback(); 
         SimTime_t delay = stream->getStartDelay();
