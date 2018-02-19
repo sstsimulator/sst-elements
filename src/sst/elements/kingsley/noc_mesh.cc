@@ -325,6 +325,12 @@ noc_mesh::clock_handler(Cycle_t cycle)
             
             // Get the next port
             int port = event->next_port;
+
+            // Check to see if the port is busy
+            if ( port_busy[port] > 0 ) {
+                continue;
+            }
+            
             // Check to see if there are enough credits to send on
             // that port
             // output.output("(%d,%d): clock_handler(): port_credits[%d] = %d\n",my_x,my_y,port,port_credits[port]);
@@ -384,6 +390,12 @@ noc_mesh::clock_handler(Cycle_t cycle)
             noc_mesh_event* event = port_queues[lru_port].front();
             // Get the next port
             int port = event->next_port;
+
+            // Check to see if the port is busy
+            if ( port_busy[port] > 0 ) {
+                continue;
+            }
+            
             // Check to see if there are enough credits to send on
             // that port
             // output.output("(%d,%d): clock_handler(): port_credits[%d] = %d\n",my_x,my_y,port,port_credits[port]);
