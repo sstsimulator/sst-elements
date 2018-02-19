@@ -85,18 +85,17 @@
 
             void deleteStream2( StreamBase* stream ) {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE,"%p\n",stream);
-                m_rm.nic().freeNicUnit( m_pid );
+                m_rm.nic().freeNicUnit( stream->getUnit() );
                 delete stream;
             }
             SimTime_t getRxMatchDelay() {
                 return m_rm.m_rxMatchDelay;
             }
 
-#if 0
-            SimTime_t getRxMatchDelay() {
-                return m_rm.m_rxMatchDelay;
+            int allocNicUnit() {
+                return m_rm.m_nic.allocNicUnit( m_pid );
             }
-#endif
+
             void clearStreamMap( SrcKey key ) {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
                 m_streamMap.erase(key);
