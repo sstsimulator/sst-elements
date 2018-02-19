@@ -104,21 +104,40 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
     // Configure directional ports
     Event::Handler<noc_mesh,int>* dummy_handler = new Event::Handler<noc_mesh,int>(this,&noc_mesh::handle_input_r2r,-1);
 
-    // ports[north_port] = configureLink("north", new Event::Handler<noc_mesh,int>(this,&noc_mesh::handle_input_r2r,north_port));
 
-    // ports[south_port] = configureLink("south", new Event::Handler<noc_mesh,int>(this,&noc_mesh::handle_input_r2r,south_port));
+    // Configure all the links and add all the statistics
+    send_bit_count = new Statistic<uint64_t>*[local_ports + 4];
+    output_port_stalls = new Statistic<uint64_t>*[local_ports + 4];
+    xbar_stalls = new Statistic<uint64_t>*[local_ports + 4];
 
-    // ports[east_port] = configureLink("east", new Event::Handler<noc_mesh,int>(this,&noc_mesh::handle_input_r2r,east_port));
 
-    // ports[west_port] = configureLink("west", new Event::Handler<noc_mesh,int>(this,&noc_mesh::handle_input_r2r,west_port));
-
+    // North port
     ports[north_port] = configureLink("north", dummy_handler);
+    // stats
+    send_bit_count[north_port] = registerStatistic<uint64_t>("send_bit_count","north");
+    output_port_stalls[north_port] = registerStatistic<uint64_t>("output_port_stalls","north");
+    xbar_stalls[north_port] = registerStatistic<uint64_t>("xbar_stalls","north");
 
+    // South port
     ports[south_port] = configureLink("south", dummy_handler);
+    // stats
+    send_bit_count[south_port] = registerStatistic<uint64_t>("send_bit_count","south");
+    output_port_stalls[south_port] = registerStatistic<uint64_t>("output_port_stalls","south");
+    xbar_stalls[south_port] = registerStatistic<uint64_t>("xbar_stalls","south");
 
+    // East port
     ports[east_port] = configureLink("east", dummy_handler);
+    // stats
+    send_bit_count[east_port] = registerStatistic<uint64_t>("send_bit_count","east");
+    output_port_stalls[east_port] = registerStatistic<uint64_t>("output_port_stalls","east");
+    xbar_stalls[east_port] = registerStatistic<uint64_t>("xbar_stalls","east");
 
+    // West port
     ports[west_port] = configureLink("west", dummy_handler);
+    // stats
+    send_bit_count[west_port] = registerStatistic<uint64_t>("send_bit_count","west");
+    output_port_stalls[west_port] = registerStatistic<uint64_t>("output_port_stalls","west");
+    xbar_stalls[west_port] = registerStatistic<uint64_t>("xbar_stalls","west");
 
     // Configure local ports
     for ( int i = 0; i < local_ports; ++i ) {
@@ -129,6 +148,11 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
             configureLink(port_name.str(),
                           // new Event::Handler<noc_mesh,int>(this,&noc_mesh::handle_input_ep2r,local_port_start+i));
                           dummy_handler);
+
+        // stats
+        send_bit_count[local_port_start + i] = registerStatistic<uint64_t>("send_bit_count",port_name.str());
+        output_port_stalls[local_port_start + 1] = registerStatistic<uint64_t>("output_port_stalls",port_name.str());
+        xbar_stalls[local_port_start + i] = registerStatistic<uint64_t>("xbar_stalls",port_name.str());
     }
 
     
@@ -328,6 +352,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
 
             // Check to see if the port is busy
             if ( port_busy[port] > 0 ) {
+                xbar_stalls[i]->addData(1);
                 continue;
             }
             
@@ -348,11 +373,13 @@ noc_mesh::clock_handler(Cycle_t cycle)
                 port_busy[port] = event->encap_ev->getSizeInFlits();
                 if ( edge_status & ( 1 << port) ) {
                     ports[port]->send(event->encap_ev);
+                    send_bit_count[port]->addData(event->encap_ev->request->size_in_bits);
                     event->encap_ev = NULL;
                     delete event;
                 }
                 else {
                     ports[port]->send(event);
+                    send_bit_count[port]->addData(event->encap_ev->request->size_in_bits);
                 }
                 if ( ttype == SimpleNetwork::Request::FULL ) {
                     output.output("TRACE(%d): %" PRIu64 " ns: Sent an event to router from router: (%d,%d)"
@@ -372,6 +399,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
                 local_lru.satisfied(true);
             }
             else {
+                output_port_stalls[port]->addData(1);
                 local_lru.satisfied(false);
             }
         }
@@ -393,6 +421,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
 
             // Check to see if the port is busy
             if ( port_busy[port] > 0 ) {
+                xbar_stalls[i]->addData(1);
                 continue;
             }
             
@@ -413,11 +442,13 @@ noc_mesh::clock_handler(Cycle_t cycle)
                 port_busy[port] = event->encap_ev->getSizeInFlits();
                 if ( edge_status & (1 << port) ) {
                     ports[port]->send(event->encap_ev);
+                    send_bit_count[port]->addData(event->encap_ev->request->size_in_bits);
                     event->encap_ev = NULL;
                     delete event;
                 }
                 else {
                     ports[port]->send(event);
+                    send_bit_count[port]->addData(event->encap_ev->request->size_in_bits);
                 }
                 if ( ttype == SimpleNetwork::Request::FULL ) {
                     output.output("TRACE(%d): %" PRIu64 " ns: Sent an event on link %d from router: (%d,%d)"
@@ -438,6 +469,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
                 mesh_lru.satisfied(true);
             }
             else {
+                output_port_stalls[port]->addData(1);
                 mesh_lru.satisfied(false);
             }
         }

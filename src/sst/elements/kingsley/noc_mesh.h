@@ -71,12 +71,11 @@ public:
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
-        // { "send_bit_count",     "Count number of bits sent on link", "bits", 1},
+        { "send_bit_count",     "Count number of bits sent on link", "bits", 1},
         // { "send_packet_count",  "Count number of packets sent on link", "packets", 1},
-        // { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
-        // { "xbar_stalls",        "Count number of cycles the xbar is stalled", "cycles", 1},
+        { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
+        { "xbar_stalls",        "Count number of cycles the xbar is stalled", "cycles", 1},
         // { "idle_time",          "Amount of time spent idle for a given port", "units of core timebase", 1},
-        // { "width_adj_count",    "Number of times that link width was increased or decreased", "width adjustment count", 1}
     )
 
     static const int north_port = 0;
@@ -136,6 +135,11 @@ private:
 
     void route(noc_mesh_event* event);
     
+
+    Statistic<uint64_t>** send_bit_count;
+    Statistic<uint64_t>** output_port_stalls;
+    Statistic<uint64_t>** xbar_stalls;
+
     
 public:
     noc_mesh(ComponentId_t cid, Params& params);
