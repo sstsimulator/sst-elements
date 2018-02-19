@@ -313,6 +313,7 @@ public:
 
     void initNicUnitPool( int num, std::string policy ) {
         m_numNicUnits = num;
+        m_dbg.verbose(CALL_INFO,3,1,"num=%d policy=%s\n",num, policy.c_str());
         if ( 0 == policy.compare("RoundRobin") ) {
             m_nicUnitAllocPolicy = RoundRobin;
         } else if ( 0 == policy.compare("PerContext") ) {
@@ -330,11 +331,12 @@ public:
             break;
           case PerContext:
             unit = pid % m_numNicUnits;
+            break;
           default:
             assert(0);
         }
 
-        m_dbg.verbose(CALL_INFO,3,1,"pic=%d unit=%d\n",pid, unit);
+        m_dbg.verbose(CALL_INFO,3,1,"pid=%d unit=%d\n",pid, unit);
         return unit;
     }
 

@@ -75,7 +75,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     initNicUnitPool(
         numNicUnits, 
-        params.find<std::string>( "numNicAllocationPoligy", "RoundRobin" ) 
+        params.find<std::string>( "nicAllocationPolicy", "RoundRobin" ) 
     );
 
     UnitAlgebra xxx = params.find<SST::UnitAlgebra>( "packetSize" );
