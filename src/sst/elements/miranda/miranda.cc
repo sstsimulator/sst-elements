@@ -33,7 +33,10 @@
 #include "generators/copygen.h"
 #include "generators/spmvgen.h"
 #include "generators/streambench_customcmd.h"
+
+#ifdef HAVE_STAKE
 #include "generators/stake.h"
+#endif
 
 using namespace SST;
 using namespace SST::Miranda;
@@ -82,9 +85,11 @@ static SubComponent* load_STREAMGenerator_CustomCmd(Component* owner, Params& pa
         return new STREAMBenchGenerator_CustomCmd(owner, params);
 }
 
+#ifdef HAVE_STAKE
 static SubComponent* load_Stake(Component* owner, Params& params) {
         return new Stake(owner, params);
 }
+#endif
 
 static Component* load_MirandaBaseCPU(ComponentId_t id, Params& params) {
 	return new RequestGenCPU(id, params);
@@ -206,6 +211,7 @@ static const ElementInfoParam streamBench_customcmd_params[] = {
     { NULL, NULL, NULL }
 };
 
+#ifdef HAVE_STAKE
 static const ElementInfoParam stake_params[] = {
     { "verbose",          "Sets the verbosity output of the generator", "0" },
     { "cores",            "Sets the number of cores in the spike instance", "1" },
@@ -219,6 +225,7 @@ static const ElementInfoParam stake_params[] = {
     { "extlib",           "Shared library to load", "NULL" },
     { NULL, NULL, NULL }
 };
+#endif
 
 
 static const ElementInfoSubComponent subcomponents[] = {
@@ -321,6 +328,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 		NULL,
 		"SST::Miranda::RequestGenerator"
 	},
+#ifdef HAVE_STAKE
         {
                 "Stake",
                 "Instantiates a RISC-V Spike instance to drive memory traffic",
@@ -330,6 +338,7 @@ static const ElementInfoSubComponent subcomponents[] = {
                 NULL,
                 "SST::Miranda::RequestGenerator"
         },
+#endif
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
