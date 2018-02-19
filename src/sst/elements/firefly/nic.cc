@@ -70,6 +70,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
     int numShmemCmdSlots =    params.find<int>( "numShmemCmdSlots", 32 );
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
+    int maxRecvMachineQsize = params.find<int>( "maxRecvMachineQsize", 1 );
 
     int numNicUnits =    params.find<int>( "numNicUnits", 4 );
 
@@ -136,11 +137,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                rxMatchDelay, hostReadDelay ) );
+                rxMatchDelay, hostReadDelay, maxRecvMachineQsize ) );
     m_recvMachine.push_back( new CtlMsgRecvMachine( *this, 1, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                rxMatchDelay, hostReadDelay ) ); 
+                rxMatchDelay, hostReadDelay, maxRecvMachineQsize ) ); 
 
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
