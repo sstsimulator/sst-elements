@@ -299,6 +299,8 @@ public:
 	SimTime_t m_nic2host_base_lat_ns;
 	SimTime_t m_shmemRxDelay_ns; 
 	int m_numNicUnits;
+    int m_curNicUnit;
+    enum { RoundRobin, PerContext } m_nicUnitAllocPolicy;
 
     void calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
         if( m_simpleMemoryModel ) {
@@ -309,33 +311,35 @@ public:
 		}
     }
 
-    void initNicUnitPool( int num) {
+    void initNicUnitPool( int num, std::string policy ) {
         m_numNicUnits = num;
-        for ( int i = 0; i < num; i++ ) {
-            m_availNicUnits.push_back(i);
-        } 
+        if ( 0 == policy.compare("RoundRobin") ) {
+            m_nicUnitAllocPolicy = RoundRobin;
+        } else if ( 0 == policy.compare("PerContext") ) {
+            m_nicUnitAllocPolicy = PerContext;
+        } else {
+            assert(0);
+        }
     }
 
-    int allocNicUnit( int pid = -1) {
-        return m_availNicUnits.front();
-#if 0
-        int unit = -1;
-        if ( ! m_availNicUnits.empty() ) {
-            unit = m_availNicUnits.front();
-            m_availNicUnits.pop_front();
+    int allocNicUnit( int pid ) {
+        int unit;
+        switch ( m_nicUnitAllocPolicy ) {
+          case RoundRobin:
+            unit = m_curNicUnit++ % m_numNicUnits;            
+            break;
+          case PerContext:
+            unit = pid % m_numNicUnits;
+          default:
+            assert(0);
         }
 
-        m_dbg.verbose(CALL_INFO,2,1,"unit=%d\n",unit);
+        m_dbg.verbose(CALL_INFO,3,1,"pic=%d unit=%d\n",pid, unit);
         return unit;
-#endif
     }
 
-    void freeNicUnit( int pid ) {
-#if 0
-        m_dbg.verbose(CALL_INFO,2,1,"unit=%d\n",unit);
-        m_availNicUnits.push_back( unit );
-        assert( m_availNicUnits.size() < m_numNicUnits );
-#endif
+    void freeNicUnit( int unit ) {
+        m_dbg.verbose(CALL_INFO,3,1,"unit=%d\n",unit);
     }
 
     void calcNicMemDelay( int unit, std::vector< MemOp>* ops, std::function<void()> callback ) {

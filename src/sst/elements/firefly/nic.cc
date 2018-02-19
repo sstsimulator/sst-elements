@@ -40,7 +40,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_getKey(10),
     m_simpleMemoryModel(NULL),
     m_respKey(1),
-    m_linkWidget(this)
+    m_linkWidget(this),
+    m_curNicUnit(0)
 {
     m_myNodeId = params.find<int>("nid", -1);
     assert( m_myNodeId != -1 );
@@ -67,12 +68,15 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
-    int numNicUnits  =     params.find<int>( "numNicUnits", 4 );
-    assert( numNicUnits >= 4 );
-    int numShmemCmdSlots  =     params.find<int>( "numShmemCmdSlots", 32 );
-    int maxSendMachineQsize  =     params.find<int>( "maxSendMachineQsize", 1 );
+    int numShmemCmdSlots =    params.find<int>( "numShmemCmdSlots", 32 );
+    int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
 
-    initNicUnitPool( numNicUnits );
+    int numNicUnits =    params.find<int>( "numNicUnits", 4 );
+
+    initNicUnitPool(
+        numNicUnits, 
+        params.find<std::string>( "numNicAllocationPoligy", "RoundRobin" ) 
+    );
 
     UnitAlgebra xxx = params.find<SST::UnitAlgebra>( "packetSize" );
     int packetSizeInBytes;
@@ -141,11 +145,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 0, allocNicUnit(), maxSendMachineQsize ) );
+                txDelay, packetSizeInBytes, 0, maxSendMachineQsize ) );
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId,
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 1, allocNicUnit(), maxSendMachineQsize ) );
+                txDelay, packetSizeInBytes, 1, maxSendMachineQsize ) );
 
     float dmaBW  = params.find<float>( "dmaBW_GBs", 0.0 ); 
     float dmaContentionMult = params.find<float>( "dmaContentionMult", 0.0 );
