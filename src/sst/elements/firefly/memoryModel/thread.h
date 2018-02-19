@@ -31,6 +31,7 @@ class Work {
            dbg.verbosePrefix(prefix,CALL_INFO,1,THREAD_MASK,"%s %#" PRIx64 " %lu\n",(*m_ops)[i].getName(), (*m_ops)[i].addr, (*m_ops)[i].length );
         }
     }
+    int m_workNum;
   private:
     SimTime_t               m_start;
     int 					m_pos;
@@ -44,7 +45,7 @@ class Thread : public UnitBase {
   public:	  
      Thread( SimpleMemoryModel& model, std::string name, Output& output, int id, int accessSize, Unit* load, Unit* store ) : 
 			m_model(model), m_dbg(output), m_loadUnit(load), m_storeUnit(store),
-			m_maxAccessSize( accessSize ), m_currentOp(NULL), m_waitingOnOp(NULL), m_blocked(false)
+			m_maxAccessSize( accessSize ), m_currentOp(NULL), m_waitingOnOp(NULL), m_blocked(false), m_curWorkNum(0),m_lastDelete(0)
 	{
 		m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name +"::@p():@l ";
         m_dbg.verbosePrefix( prefix(), CALL_INFO,1,THREAD_MASK,"this=%p\n",this );
@@ -57,6 +58,7 @@ class Thread : public UnitBase {
 	void addWork( Work* work ) { 
 		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work=%p numOps=%lu workSize=%lu blocked=%d\n",
 														work, work->getNumOps(), m_workQ.size(), (int) m_blocked );
+        work->m_workNum = m_curWorkNum++;
 		m_workQ.push_back( work ); 
 
         work->print(m_dbg,prefix());
@@ -190,8 +192,26 @@ class Thread : public UnitBase {
                 op->callback();
             }
 		    if ( work ) { 
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete work %p\n",work);
-                delete work;
+
+
+                if ( work->m_workNum  == m_lastDelete ) {
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete work %p %d\n",work, work->m_workNum);
+                    delete work;
+                    ++m_lastDelete;
+                    while ( ! m_OOOwork.empty() ) {
+                        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"check OOO, looking for %d\n",m_lastDelete);
+                        if ( m_OOOwork.find( m_lastDelete ) != m_OOOwork.end() ) {
+                            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"retire OOO work %p\n",m_OOOwork[m_lastDelete]);
+                            delete m_OOOwork[m_lastDelete];
+                            m_OOOwork.erase( m_lastDelete++ );
+                        } else {
+                            break;
+                        }
+                    }
+                } else {
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"OOO work %p %d\n",work,work->m_workNum);
+                    m_OOOwork[work->m_workNum] = work;
+                } 
             }
         }
 
@@ -216,4 +236,8 @@ class Thread : public UnitBase {
     Unit*               m_storeUnit;
     Output& 		    m_dbg;
     int 		        m_maxAccessSize;
+    int                 m_curWorkNum;
+    int                 m_lastDelete;
+    std::map<int,Work*> m_OOOwork;
 };
+
