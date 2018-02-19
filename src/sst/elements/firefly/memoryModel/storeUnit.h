@@ -12,13 +12,10 @@ class StoreUnit : public Unit {
 	std::string& name() { return m_name; }
     bool storeCB( UnitBase* src, MemReq* req, Callback callback = NULL ) {
 
-        if ( callback ) {
-			m_model.schedCallback( 0, callback );
-        }
 
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",req->addr,req->length,m_pendingQ.size());
 		assert( NULL == m_blockedSrc );
-		m_pendingQ.push_back( req );
+		m_pendingQ.push_back( std::make_pair(req, callback) );
 
 		if ( m_pendingQ.size() < m_qSize + 1) {
 			if ( ! m_blocked && ! m_scheduled ) {
@@ -39,13 +36,16 @@ class StoreUnit : public Unit {
   private:
 
 	void process( ) {
-		MemReq* req = m_pendingQ.front();
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
+		std::pair<MemReq*,Callback>& front = m_pendingQ.front();
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#" PRIx64 " length=%lu\n",front.first->addr,front.first->length);
 
 		assert( m_blocked == false );
 		m_scheduled = false;
 
-        m_blocked = m_cache->store( this, req );
+        m_blocked = m_cache->store( this, front.first );
+        if ( front.second ) {
+            m_model.schedCallback( 0, front.second );
+        }
 		m_pendingQ.pop_front();
 
 		if ( m_blockedSrc ) {
@@ -77,5 +77,5 @@ class StoreUnit : public Unit {
     Unit*   m_cache;
     int     m_qSize;
 
-    std::deque<MemReq*>       m_pendingQ;
+    std::deque< std::pair<MemReq*,Callback> >       m_pendingQ;
 };
