@@ -47,6 +47,7 @@ void Nic::SendMachine::streamInit( SendEntryBase* entry )
 
 void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev ) 
 {
+    int unit = entry->getUnit();
     ev->setDestPid( entry->dst_vNic() );
     ev->setSrcPid( entry->local_vNic() ); 
     if ( ! m_inQ->isFull() ) {
@@ -54,9 +55,9 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
         entry->copyOut( m_dbg, m_vc, m_packetSizeInBytes, *ev, *vec ); 
         m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "enque load from host, %lu bytes\n",ev->bufSize());
         if ( entry->isDone() ) {
-            m_inQ->enque( vec, ev, entry->dest(), std::bind( &Nic::SendMachine::streamFini, this, entry ) );
+            m_inQ->enque( unit, vec, ev, entry->dest(), std::bind( &Nic::SendMachine::streamFini, this, entry ) );
         } else {
-            m_inQ->enque( vec, ev, entry->dest() );
+            m_inQ->enque( unit, vec, ev, entry->dest() );
             m_nic.schedCallback( std::bind( &Nic::SendMachine::getPayload, this, entry, new FireflyNetworkEvent ), 1);
         }
 
@@ -70,6 +71,7 @@ void Nic::SendMachine::streamFini( SendEntryBase* entry )
     m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "stream done for pid=%d\n",entry->local_vNic());
     if ( entry->shouldDelete() ) {
         m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "delete SendEntry entry, pid=%d\n",entry->local_vNic());
+        m_nic.freeNicUnit( entry->getUnit() );
         delete entry;
     }
     m_sendQ.pop_front();
@@ -78,14 +80,14 @@ void Nic::SendMachine::streamFini( SendEntryBase* entry )
     }
 }
 
-void  Nic::SendMachine::InQ::enque( std::vector< MemOp >* vec, FireflyNetworkEvent* ev, int dest, Callback callback )
+void  Nic::SendMachine::InQ::enque( int unit, std::vector< MemOp >* vec, FireflyNetworkEvent* ev, int dest, Callback callback )
 {
     ++m_numPending;
 
     m_dbg.verbosePrefix(prefix(), CALL_INFO,2,NIC_DBG_SEND_MACHINE, "get timing for packet %" PRIu64 " size=%lu numPending=%d\n",
                  m_pktNum,ev->bufSize(), m_numPending);
 
-    m_nic.dmaRead( m_unit, vec,
+    m_nic.dmaRead( unit, vec,
 		std::bind( &Nic::SendMachine::InQ::ready, this,  ev, dest, callback, m_pktNum++ )
     ); 
 	// don't put code after this, the callback may be called serially

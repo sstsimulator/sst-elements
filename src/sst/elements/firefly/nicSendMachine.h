@@ -90,9 +90,9 @@ class SendMachine {
           public:
             typedef std::function<void()> Callback;
 
-            InQ(Nic& nic, Output& output, OutQ* outQ, int unit, int maxQsize ) : 
-                    m_nic(nic), m_dbg(output), m_outQ(outQ), m_numPending(0),m_maxQsize(maxQsize), m_callback(NULL),
-                     m_unit( unit ), m_pktNum(0), m_expectedPkt(0)
+            InQ(Nic& nic, Output& output, OutQ* outQ, int maxQsize ) : 
+                m_nic(nic), m_dbg(output), m_outQ(outQ), m_numPending(0),m_maxQsize(maxQsize), m_callback(NULL),
+                m_pktNum(0), m_expectedPkt(0)
             {
                 m_prefix = "@t:"+ std::to_string(nic.getNodeId()) +":Nic::SendMachine::InQ::@p():@l ";
             }
@@ -101,7 +101,7 @@ class SendMachine {
                 return m_numPending == m_maxQsize;
             }
 
-            void  enque( std::vector< MemOp >* vec, FireflyNetworkEvent* ev, int dest, Callback callback = NULL );
+            void  enque( int unit, std::vector< MemOp >* vec, FireflyNetworkEvent* ev, int dest, Callback callback = NULL );
         
             void wakeMeUp( Callback  callback) {
                 assert(!m_callback);
@@ -128,7 +128,6 @@ class SendMachine {
             Callback    m_callback;
             int         m_numPending;
             int         m_maxQsize;
-            int         m_unit;
             uint64_t    m_pktNum;
             uint64_t    m_expectedPkt;
             std::deque<Entry> m_pendingQ;
@@ -137,21 +136,21 @@ class SendMachine {
       public:
         typedef std::function<void()> Callback;
         SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask,
-              int txDelay, int packetSizeInBytes, int vc, int unit, int maxQsize  ) :
+              int txDelay, int packetSizeInBytes, int vc, int maxQsize  ) :
             m_nic(nic), m_txDelay( txDelay ), m_packetSizeInBytes( packetSizeInBytes), m_vc(vc)
         {
-            assert( unit >= 0 );
             char buffer[100];
             snprintf(buffer,100,"@t:%d:Nic::SendMachine::@p():@l vc=%d ",nodeId,vc);
 
             m_dbg.init(buffer, verboseLevel, verboseMask, Output::STDOUT);
             m_outQ = new OutQ( nic, m_dbg, vc, maxQsize );
-            m_inQ = new InQ( nic, m_dbg, m_outQ, unit, maxQsize );
+            m_inQ = new InQ( nic, m_dbg, m_outQ, maxQsize );
         }
 
         ~SendMachine() { }
 
-        void run( SendEntryBase* entry  ) {
+        void run( SendEntryBase* entry ) {
+            entry->setUnit( m_nic.allocNicUnit( entry->local_vNic() ) );
             m_sendQ.push_back( entry );
             if ( 1 == m_sendQ.size() ) {
                 streamInit( m_sendQ.front() );
