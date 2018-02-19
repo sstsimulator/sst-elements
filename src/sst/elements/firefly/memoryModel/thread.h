@@ -83,7 +83,7 @@ class Thread : public UnitBase {
         size_t length = op->getCurrentLength( m_maxAccessSize );
 		op->incOffset( length );
 
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op=%s op.length=%lu offset=%lu addr=%#lx length=%lu\n",
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op=%s op.length=%lu offset=%lu addr=%#" PRIx64 " length=%lu\n",
                             op->getName(), op->length, op->offset, addr, length );
 
     	Callback callback = NULL;
@@ -174,7 +174,7 @@ class Thread : public UnitBase {
     }
 	
 	void workDone( Work* work ) {
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work %p done, latency=%lu\n",work,
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work %p done, latency=%" PRIu64 "\n",work,
                     m_model.getCurrentSimTimeNano() - work->start());
 		delete work;
 	}

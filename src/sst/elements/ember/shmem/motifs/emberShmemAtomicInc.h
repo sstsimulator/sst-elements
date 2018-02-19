@@ -137,11 +137,11 @@ public:
             }
 
 			if ( m_backed && m_printTotals ) {
-				long mytotal = 0;
+				uint32_t mytotal = 0;
 				for ( int i = 0; i < m_dataSize; ++i ) {
 					mytotal +=  m_dest.at<long>(i) ;
 				}
-            	printf("%s: PE: %d total is: %lld\n", getMotifName().c_str(), m_my_pe, mytotal );
+            	printf("%s: PE: %d total is: %" PRIu32 "\n", getMotifName().c_str(), m_my_pe, mytotal );
 			}
 			
         }
