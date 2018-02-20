@@ -255,7 +255,7 @@
 			--m_numPending;
          	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"numPending=%d\n",m_numPending);
 			if ( m_blockedSrc ) { 
-           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"unblock src\n");
+           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"unblock src schedResume\n");
                	m_model.schedResume( 0, m_blockedSrc );
                	m_blockedSrc = NULL;
 			} 
