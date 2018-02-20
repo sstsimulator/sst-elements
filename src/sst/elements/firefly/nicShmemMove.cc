@@ -30,7 +30,7 @@ void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int vc, int numBytes, FireflyN
     dbg.verbose(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"Shmem: %d: pktSpace=%lu dataLeft=%lu xferSize=%lu\n",
                 vc, space, m_length - m_offset, len  );
 
-	vec.push_back( MemOp( m_addr, len, MemOp::Op::BusDmaFromHost ));
+	vec.push_back( MemOp( m_addr + m_offset, len, MemOp::Op::BusDmaFromHost ));
 
 	if ( m_ptr ) {
     	event.bufAppend( m_ptr + m_offset ,len );
@@ -88,9 +88,9 @@ bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std
 {
     size_t length = event.bufSize();
 
-    dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Shmem: event.bufSize()=%lu\n",event.bufSize() );
-    dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Shmem: length=%lu offset=%lu\n",m_length, m_offset );
-    dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Shmem: backing=%p addr=%#" PRIx64 "\n", m_ptr, m_addr );
+    dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,"Shmem: event.bufSize()=%lu\n",event.bufSize() );
+    dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,"Shmem: length=%lu offset=%lu\n",m_length, m_offset );
+    dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,"Shmem: backing=%p addr=%#" PRIx64 "\n", m_ptr + m_offset, m_addr + m_offset );
 
     assert( length <= m_length - m_offset );
 
@@ -100,7 +100,7 @@ bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std
 
 	size_t tmpOffset = m_addr + m_offset;
 	int tmpCore = m_core;
-	vec.push_back( MemOp( m_addr, length, MemOp::Op::BusDmaToHost, 
+	vec.push_back( MemOp( m_addr + m_offset, length, MemOp::Op::BusDmaToHost, 
 		[=] () {
 			m_shmem->checkWaitOps( tmpCore, tmpOffset, length );
 		}
@@ -115,8 +115,8 @@ bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std
 bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
     size_t length = event.bufSize();
-    dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Shmem: event.bufSize()=%lu\n",event.bufSize());
-    dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Shmem: backing=%p addr=%#" PRIx64 "\n", m_ptr, m_addr );
+    dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,"Shmem: event.bufSize()=%lu\n",event.bufSize());
+    dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,"Shmem: backing=%p addr=%#" PRIx64 "\n", m_ptr, m_addr );
 
     assert ( m_ptr );
     size_t dataLength = Hermes::Value::getLength(m_dataType);
@@ -187,7 +187,7 @@ bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, s
 bool Nic::ShmemRecvMoveValue::copyIn( Output& dbg, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
     size_t length = event.bufSize();
-    dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Shmem: event.bufSize()=%lu\n",event.bufSize());
+    dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,"Shmem: event.bufSize()=%lu\n",event.bufSize());
 
 	vec.push_back( MemOp( 0, length, MemOp::Op::LocalStore ));
     if ( m_value.getPtr() ) {
