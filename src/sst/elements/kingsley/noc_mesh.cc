@@ -352,7 +352,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
 
             // Check to see if the port is busy
             if ( port_busy[port] > 0 ) {
-                xbar_stalls[i]->addData(1);
+                xbar_stalls[port]->addData(1);
                 continue;
             }
             
@@ -421,7 +421,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
 
             // Check to see if the port is busy
             if ( port_busy[port] > 0 ) {
-                xbar_stalls[i]->addData(1);
+                xbar_stalls[port]->addData(1);
                 continue;
             }
             
