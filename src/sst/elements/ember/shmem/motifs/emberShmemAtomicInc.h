@@ -89,6 +89,7 @@ public:
             	enQ_add( evQ, addr, &m_one, dest );
 			}
             if ( m_phase + 1 == m_iterations * m_updates ) {
+                enQ_barrier_all( evQ );
                 enQ_getTime( evQ, &m_stopTime );
 			}
 
