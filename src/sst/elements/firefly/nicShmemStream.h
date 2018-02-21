@@ -16,10 +16,11 @@
 class ShmemStream : public StreamBase {
   public:
 
-    ShmemStream( Output&, FireflyNetworkEvent*, RecvMachine&, int unit );
+    ShmemStream( Output&, Ctx*, int unit, int srcNode, int srcPid, int destPid, FireflyNetworkEvent* );
 
   private:
-    void processAck( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
+    void processOp( FireflyNetworkEvent* ev );
+    void processAck( ShmemMsgHdr&, FireflyNetworkEvent*, int );
     void processPut( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     void processGetResp( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     void processGet( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );

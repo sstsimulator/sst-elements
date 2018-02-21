@@ -15,20 +15,15 @@
 		};
     #include "cacheList.h"
       public:
-        CacheUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* memory, int size, int cacheLineSize, int numMSHR, std::string name ) :
-            Unit( model, dbg ), m_size(size), m_memory(memory), m_numPending(0), m_blockedSrc(NULL), m_numMSHR(numMSHR), m_scheduled(false),
-			m_cacheLineSize(cacheLineSize), m_qSize(32), m_numIssuedLoads(0), m_state( Idle ), m_missEntry(NULL), m_mshrEntry(NULL)
+        CacheUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* memory, int cacheSize, int cacheLineSize, int numMSHR, std::string name ) :
+            Unit( model, dbg ), m_cacheSize(cacheSize), m_memory(memory), m_numPending(0), m_blockedSrc(NULL), m_numMSHR(numMSHR), m_scheduled(false),
+			m_cacheLineSize(cacheLineSize), m_qSize(m_numMSHR), m_numIssuedLoads(0), m_state( Idle ), m_missEntry(NULL), m_mshrEntry(NULL)
 		{
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "CacheUnit::@p():@l ";
 
-			if ( numMSHR > size ) {
-				m_numMSHR = size;
-			}
+			assert( m_numMSHR <= m_cacheSize );
 
-			if ( m_qSize > size ) {
-				m_qSize = size;
-			}
-			for ( unsigned i = 0; i < size; i++ ) {
+			for ( unsigned i = 0; i < m_cacheSize; i++ ) {
 				insert( (i + 1 ) * m_cacheLineSize );
 			}
         }
@@ -90,7 +85,7 @@
 
 			assert( m_numPending <= m_qSize ); 
 
-            m_model.schedCallback( 1, std::bind( &CacheUnit::checkHit, this, entry ) );
+            m_model.schedCallback( 0, std::bind( &CacheUnit::checkHit, this, entry ) );
 				
 			if ( m_numPending == m_qSize ) {
            		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"pending Q is full\n");
@@ -142,7 +137,7 @@
 
             updateAge( entry->req->addr );
 			if ( entry->callback ) {
-				m_model.schedCallback( 1, entry->callback );
+				m_model.schedCallback( 0, entry->callback );
 			}
 			delete entry;
 		}
@@ -190,7 +185,7 @@
 				insert( entry->req->addr );
 			}
 			if ( entry->callback ) {
-				m_model.schedCallback( 1, entry->callback );
+				m_model.schedCallback( 0, entry->callback );
 			}
 			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"state=%d blocked=%lu\n", m_state, m_blockedQ.size());
 			delete entry;
@@ -227,7 +222,7 @@
 			while ( ! m_pendingMap[addr].empty() ) {
 				decNumPending();
 				if ( m_pendingMap[addr].front()->callback ) {
-					m_model.schedCallback( 1, m_pendingMap[addr].front()->callback );
+					m_model.schedCallback( 0, m_pendingMap[addr].front()->callback );
 				}
 				delete m_pendingMap[addr].front();
 				m_pendingMap[addr].pop_front();
@@ -250,7 +245,7 @@
 
 		void schedule() {
 			if ( ! m_scheduled && Idle == m_state && ! m_blockedQ.empty() ) {
-            	m_model.schedCallback( 1, std::bind( &CacheUnit::checkHit2, this ) );
+            	m_model.schedCallback( 0, std::bind( &CacheUnit::checkHit2, this ) );
 				m_scheduled = true;
 			}
 		}
@@ -258,9 +253,10 @@
 		void decNumPending() {
 			assert(m_numPending);
 			--m_numPending;
+         	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"numPending=%d\n",m_numPending);
 			if ( m_blockedSrc ) { 
-           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"unblock src\n");
-               	m_model.schedResume( 1, m_blockedSrc );
+           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"unblock src schedResume\n");
+               	m_model.schedResume( 0, m_blockedSrc );
                	m_blockedSrc = NULL;
 			} 
 		}
@@ -301,13 +297,13 @@
         void insert( Hermes::Vaddr addr ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#" PRIx64 " mapSize=%lu\n",addr, m_addrMap.size());
             assert( m_addrMap.find(addr) == m_addrMap.end() );
-			assert( m_addrMap.size() < m_size );
+			assert( m_addrMap.size() < m_cacheSize );
             m_ageList.push_back( addr );
             m_addrMap[addr] = m_ageList.end();
         }
 
 		int m_cacheLineSize;
-        int m_size;
+        int m_cacheSize;
         Unit* m_memory;
 
         std::map<Hermes::Vaddr, std::deque<Entry*> > m_pendingMap;

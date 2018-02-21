@@ -123,6 +123,10 @@ libfirefly_la_SOURCES = \
 	nicRecvEntry.h \
 	nicRecvMachine.cc \
 	nicRecvMachine.h \
+	nicRecvCtx.cc \
+	nicRecvCtx.h \
+	nicRecvStream.cc \
+	nicRecvStream.h \
 	nicSendEntry.h \
 	nicSendMachine.cc \
 	nicSendMachine.h \

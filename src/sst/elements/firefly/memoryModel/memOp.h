@@ -3,12 +3,14 @@
         typedef std::function<void()> Callback;
 
 	  public:
-        enum Op { NotInit, BusLoad, BusStore, LocalLoad, LocalStore, HostLoad, HostStore, HostCopy, BusDmaToHost, BusDmaFromHost, HostBusWrite, HostBusRead };
+        enum Op { NotInit, NoOp, BusLoad, BusStore, LocalLoad, LocalStore, HostLoad, HostStore, HostCopy, BusDmaToHost, BusDmaFromHost, HostBusWrite, HostBusRead };
 
-        MemOp( ) : addr(0), length(0), type(NotInit), offset(0), callback(NULL) {}
-        MemOp( Hermes::Vaddr addr, size_t length, Op op, Callback callback = NULL ) : addr(addr), length(length), type(op), offset(0), callback(callback) {}
+        MemOp( ) : addr(0), length(0), type(NotInit), offset(0), callback(NULL), m_pending(0) {}
+        MemOp( Op op ) : addr(0), length(0), type(op), offset(0), callback(NULL), m_pending(0) {}
+        MemOp( Hermes::Vaddr addr, size_t length, Op op, Callback callback = NULL ) : 
+                addr(addr), length(length), type(op), offset(0), callback(callback), m_pending(0) {}
         MemOp( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Op op, Callback callback = NULL ) : 
-				dest(dest), src(src), length(length), type(op), offset(0), chunk(0), callback(callback)  {
+				dest(dest), src(src), length(length), type(op), offset(0), chunk(0), callback(callback), m_pending(0) {
 			//printf("%s() dest=%#lx src=%#lx length=%lu\n",__func__,dest,src,length);
 		}
 
@@ -42,6 +44,7 @@
 			} else {
 				offset += chunkSize;
 			}
+            ++m_pending;
 		}
 
 		bool isWrite() {
@@ -70,6 +73,12 @@
 			}
 		}
 
+        void decPending() {
+            --m_pending;
+        }
+        bool canBeRetired() { 
+            return isDone() && 0 == m_pending; 
+        }
 		bool isDone() { 
 			return offset == length; 
 		}
@@ -93,6 +102,7 @@
         Hermes::Vaddr src;
         Hermes::Vaddr dest;
         Callback callback;
+        int m_pending;
 
         size_t   length;
 		size_t offset;
@@ -100,6 +110,7 @@
         const char* getName( ) {
             switch( type ) {
             case NotInit: return "NotInit";
+            case NoOp: return "NoOp";
             case BusLoad: return "BusLoad";
             case BusStore: return "BusStore";
             case LocalLoad: return "LocalLoad";
