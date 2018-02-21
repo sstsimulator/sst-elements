@@ -106,6 +106,7 @@ libfirefly_la_SOURCES = \
 	memoryModel/nicUnit.h \
 	memoryModel/storeUnit.h \
 	memoryModel/thread.h \
+	memoryModel/tlb.h \
 	memoryModel/unit.h \
 	merlinEvent.h \
 	virtNic.h \
