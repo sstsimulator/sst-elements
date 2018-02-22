@@ -27,7 +27,7 @@
 #include <sst/core/event.h>
 #include <sst/core/subcomponent.h>
 
-#include "memEvent.h"
+#include "sst/elements/memHierarchy/memEvent.h"
 
 using namespace SST;
 

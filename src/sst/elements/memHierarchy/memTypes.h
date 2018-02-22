@@ -20,7 +20,7 @@
 
 #include <sst/core/elibase.h>   // For ElementInfoStatistic
 
-#include "util.h"
+#include "sst/elements/memHierarchy/util.h"
 
 namespace SST { namespace MemHierarchy {
 
