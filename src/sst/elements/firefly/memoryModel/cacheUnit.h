@@ -13,19 +13,15 @@
 			MemReq* req;
 			SimTime_t time;
 		};
-    #include "cacheList.h"
       public:
         CacheUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* memory, int cacheSize, int cacheLineSize, int numMSHR, std::string name ) :
-            Unit( model, dbg ), m_cacheSize(cacheSize), m_memory(memory), m_numPending(0), m_blockedSrc(NULL), m_numMSHR(numMSHR), m_scheduled(false),
-			m_cacheLineSize(cacheLineSize), m_qSize(m_numMSHR), m_numIssuedLoads(0), m_state( Idle ), m_missEntry(NULL), m_mshrEntry(NULL)
+            Unit( model, dbg ),  m_memory(memory), m_numPending(0), m_blockedSrc(NULL), m_numMSHR(numMSHR), m_scheduled(false),
+			m_cacheLineSize(cacheLineSize), m_qSize(m_numMSHR), m_numIssuedLoads(0), m_state( Idle ), m_missEntry(NULL),
+            m_mshrEntry(NULL), m_cache( cacheSize )
 		{
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "CacheUnit::@p():@l ";
 
-			assert( m_numMSHR <= m_cacheSize );
-
-			for ( unsigned i = 0; i < m_cacheSize; i++ ) {
-				insert( (i + 1 ) * m_cacheLineSize );
-			}
+			assert( m_numMSHR <= cacheSize );
         }
 
 		enum State { Idle, BlockedStore, BlockedLoad, BlockedMSHR } m_state;
@@ -98,7 +94,7 @@
 
 		void checkHit( Entry* entry ) {
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#" PRIx64 "\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
-            if ( isValid( entry->req->addr ) ) { 
+            if ( m_cache.isValid( entry->req->addr ) ) { 
 				hit( entry );
 			} else if ( isPending(entry->req->addr ) ) {
 				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"pending addr=%#" PRIx64 "\n",entry->req->addr);
@@ -119,7 +115,7 @@
 			Entry* entry = m_blockedQ.front();
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#" PRIx64 "\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
 			m_blockedQ.pop_front();
-            if ( isValid( entry->req->addr ) ) { 
+            if ( m_cache.isValid( entry->req->addr ) ) { 
 				hit( entry );
 			} else if ( isPending(entry->req->addr ) ) {
 				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"pending addr=%#" PRIx64 "\n",entry->req->addr);
@@ -135,7 +131,7 @@
 
 			decNumPending();
 
-            updateAge( entry->req->addr );
+            m_cache.updateAge( entry->req->addr );
 			if ( entry->callback ) {
 				m_model.schedCallback( 0, entry->callback );
 			}
@@ -155,7 +151,7 @@
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 "\n",entry->req->addr);
 
             if ( ! isPending(entry->req->addr) ) {
-				Hermes::Vaddr evictAddr = evict();
+				Hermes::Vaddr evictAddr = m_cache.evict();
            		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"evict addr=%#" PRIx64 "\n", evictAddr );
 
 				if ( m_memory->store( this, new MemReq( evictAddr, m_cacheLineSize ) ) ) {
@@ -182,7 +178,7 @@
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 "\n",entry->req->addr);
 			decNumPending();
             if ( ! isPending(entry->req->addr) ) {
-				insert( entry->req->addr );
+				m_cache.insert( entry->req->addr );
 			}
 			if ( entry->callback ) {
 				m_model.schedCallback( 0, entry->callback );
@@ -229,7 +225,7 @@
 			}
 			m_pendingMap.erase( addr );
 
-			insert( addr );
+			m_cache.insert( addr );
 
 			--m_numIssuedLoads;
 
@@ -271,42 +267,9 @@
             return m_pendingMap.find(addr) != m_pendingMap.end();
         }
 
-        bool isValid( Hermes::Vaddr addr ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#" PRIx64 " %s mapSize=%lu\n",
-					addr, m_addrMap.find(addr) != m_addrMap.end() ? "True":"False",m_addrMap.size());
-            return m_addrMap.find(addr) != m_addrMap.end();
-        }
-
-        void updateAge( Hermes::Vaddr addr ) {
-            //m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#lx %p\n",addr, m_addrMap[addr]);
-
-            m_ageList.move_to_back( m_addrMap[addr] );
-            m_addrMap[addr] = m_ageList.end();
-        }
-
-        Hermes::Vaddr evict() {
-
-            Hermes::Vaddr addr = m_ageList.get_front_value();
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#" PRIx64 " ptr=%p mapSize=%lu\n", addr, m_addrMap[ addr ], m_addrMap.size() );
-
-            m_addrMap.erase( addr );
-            m_ageList.pop_front();
-			return addr;
-        }
-
-        void insert( Hermes::Vaddr addr ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#" PRIx64 " mapSize=%lu\n",addr, m_addrMap.size());
-            assert( m_addrMap.find(addr) == m_addrMap.end() );
-			assert( m_addrMap.size() < m_cacheSize );
-            m_ageList.push_back( addr );
-            m_addrMap[addr] = m_ageList.end();
-        }
-
 		int m_cacheLineSize;
-        int m_cacheSize;
         Unit* m_memory;
+        Cache m_cache;
 
         std::map<Hermes::Vaddr, std::deque<Entry*> > m_pendingMap;
-        List<Hermes::Vaddr> m_ageList;
-        std::map<Hermes::Vaddr, List<Hermes::Vaddr>::Entry > m_addrMap;
     };
