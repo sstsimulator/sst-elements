@@ -24,7 +24,7 @@
 #include <sst/core/elementinfo.h>
 #include <sst/core/params.h>
 #include <sst/core/output.h>
-#include <membackend/memBackend.h>
+#include <sst/elements/memHierarchy/membackend/memBackend.h>
 
 #include <list>
 

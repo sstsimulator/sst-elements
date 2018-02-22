@@ -15,10 +15,10 @@
 
 #include <queue>
 
-#include "membackend/simpleMemBackend.h"
-#include "membackend/timingAddrMapper.h"
-#include "membackend/timingTransaction.h"
-#include "membackend/timingPagePolicy.h"
+#include <sst/elements/memHierarchy/membackend/simpleMemBackend.h>
+#include <sst/elements/memHierarchy/membackend/timingAddrMapper.h>
+#include <sst/elements/memHierarchy/membackend/timingTransaction.h>
+#include <sst/elements/memHierarchy/membackend/timingPagePolicy.h>
 
 namespace SST {
 namespace MemHierarchy {

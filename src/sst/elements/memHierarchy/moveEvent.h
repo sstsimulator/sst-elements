@@ -18,10 +18,10 @@
 
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
-#include "sst/core/element.h"
-#include "util.h"
-#include "memTypes.h"
-#include "memEventBase.h"
+#include <sst/core/element.h>
+#include <sst/elements/memHierarchy/util.h>
+#include <sst/elements/memHierarchy/memTypes.h>
+#include <sst/elements/memHierarchy/memEventBase.h>
 
 namespace SST { namespace MemHierarchy {
 

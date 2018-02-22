@@ -32,10 +32,10 @@
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
-#include "memLink.h"
-#include "memEvent.h"
-#include "util.h"
-#include "mshr.h"
+#include <sst/elements/memHierarchy/memLink.h>
+#include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/elements/memHierarchy/util.h>
+#include <sst/elements/memHierarchy/mshr.h>
 
 using namespace std;
 

@@ -23,7 +23,7 @@
 #ifndef HASH_H
 #define	HASH_H
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include <stdint.h>
 
 

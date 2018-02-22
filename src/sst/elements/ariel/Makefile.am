@@ -79,7 +79,7 @@ all-local: frontend/simple/fesimple.cc
 	-I$(PINTOOL_DIR)/extras/components/include \
 	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
 	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
-	-I$(top_srcdir)/src/sst \
+	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/sst/elements/ariel \
 	-fomit-frame-pointer -fno-stack-protector \
 	-Wl,-exported_symbols_list \
@@ -111,7 +111,7 @@ all-local:
 	-I$(PINTOOL_DIR)/extras/components/include \
 	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
 	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
-	-I$(top_srcdir)/src/sst \
+	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/sst/elements/ariel \
 	-Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
 	-L$(PINTOOL_DIR)/intel64/lib \

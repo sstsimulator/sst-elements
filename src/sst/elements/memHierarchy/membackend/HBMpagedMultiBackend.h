@@ -20,7 +20,7 @@
 #define _H_SST_MEMH_HBM_PAGEDMULTI_BACKEND
 
 #include <queue>
-#include "membackend/HBMdramSimBackend.h"
+#include <sst/elements/memHierarchy/membackend/HBMdramSimBackend.h>
 #include "sst/core/rng/sstrng.h"
 
 #ifdef DEBUG

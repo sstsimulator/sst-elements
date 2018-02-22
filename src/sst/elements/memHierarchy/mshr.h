@@ -23,8 +23,8 @@
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 
-#include <memEvent.h>
-#include <util.h>
+#include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/elements/memHierarchy/util.h>
 #include <string>
 #include <sstream>
 

@@ -21,7 +21,7 @@
 
 #include <sst/core/elementinfo.h>
 
-#include "coherencemgr/coherenceController.h"
+#include <sst/elements/memHierarchy/coherencemgr/coherenceController.h>
 
 
 namespace SST { namespace MemHierarchy {

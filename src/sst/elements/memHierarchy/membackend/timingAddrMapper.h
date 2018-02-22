@@ -14,7 +14,7 @@
 #define _H_SST_MEMH_ADDR_MAPPER
 
 #include <sst/core/module.h>
-#include "sst/elements/memHierarchy/util.h"
+#include <sst/elements/memHierarchy/util.h>
 
 namespace SST {
 namespace MemHierarchy {

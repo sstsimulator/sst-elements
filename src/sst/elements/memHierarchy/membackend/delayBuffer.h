@@ -17,7 +17,7 @@
 #ifndef _H_SST_MEMH_DELAY_BUFFER
 #define _H_SST_MEMH_DELAY_BUFFER
 
-#include "membackend/memBackend.h"
+#include <sst/elements/memHierarchy/membackend/memBackend.h>
 #include <queue>
 
 namespace SST {

@@ -26,8 +26,8 @@
 #include <sst/core/output.h>
 #include <sst/core/elementinfo.h>
 
-#include "memEvent.h"
-#include "memNIC.h"
+#include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/elements/memHierarchy/memNIC.h>
 
 
 namespace SST {
