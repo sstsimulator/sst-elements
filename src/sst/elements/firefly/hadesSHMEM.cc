@@ -179,6 +179,7 @@ void HadesSHMEM::my_pe2(int* val, Shmem::Callback callback )
 
 void HadesSHMEM::quiet(Shmem::Callback callback)
 {
+    dbg().verbose(CALL_INFO,1,SHMEM_BASE,"\n");
 	wait_until( m_pendingRemoteOps.getSimVAddr(), Shmem::EQ, m_zero, callback ); 
 }
 
@@ -416,17 +417,26 @@ void HadesSHMEM::get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int p
 {
 	delayEnter(
 			[=]() {
-				this->get2( dest, src, length, pe, callback );
+				this->get2( dest, src, length, pe, true, callback );
 		  	}
 	);
 }
 
-void HadesSHMEM::get2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, Shmem::Callback callback)
+void HadesSHMEM::get_nbi(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, Shmem::Callback callback)
+{
+	delayEnter(
+			[=]() {
+				this->get2( dest, src, length, pe, false, callback );
+		  	}
+	);
+}
+
+void HadesSHMEM::get2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback)
 {
     dbg().verbose(CALL_INFO,1,SHMEM_BASE,"destSimVAddr=%#" PRIx64 " srcSimVaddr=%#" PRIx64 " length=%lu\n",
                     dest, src, length);
 
-    m_os->getNic()->shmemGet( pe, dest, src, length, 
+    m_os->getNic()->shmemGet( pe, dest, src, length, blocking, 
                 [=]() {
                     this->dbg().verbose(CALL_INFO,1,SHMEM_BASE,"\n");
                     this->delayReturn( callback );
@@ -472,15 +482,29 @@ void HadesSHMEM::put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int p
 	}
 	delayEnter( 
 			[=]() {
-				this->put2( dest, src, length, pe, callback );
+				this->put2( dest, src, length, pe, true, callback );
 		  	}
 		 );
 }
 
-void HadesSHMEM::put2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, Shmem::Callback callback)
+void HadesSHMEM::put_nbi(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, Shmem::Callback callback)
+{
+	if ( length == 0 ) {
+		
+		delay( callback, 0, 0 );
+		return; 
+	}
+	delayEnter( 
+			[=]() {
+				this->put2( dest, src, length, pe, false, callback );
+		  	}
+		 );
+}
+
+void HadesSHMEM::put2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback)
 {
     dbg().verbose(CALL_INFO,1,SHMEM_BASE,"\n");
-    m_os->getNic()->shmemPut( pe, dest, src, length, 
+    m_os->getNic()->shmemPut( pe, dest, src, length, blocking, 
                 [=]() {
                     this->dbg().verbose(CALL_INFO,1,SHMEM_BASE,"\n");
 					this->delayReturn( callback );

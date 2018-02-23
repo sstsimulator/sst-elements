@@ -39,6 +39,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_useDetailedCompute(false),
     m_getKey(10),
     m_simpleMemoryModel(NULL),
+    m_respKey(0),
     m_linkWidget(this)
 {
     m_myNodeId = params.find<int>("nid", -1);
@@ -66,6 +67,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
+    int numNicUnits  =     params.find<int>( "numNicUnits", 4 );
+    assert( numNicUnits >= 4 );
+    int numShmemCmdSlots  =     params.find<int>( "numShmemCmdSlots", 32 );
+
+    initNicUnitPool( numNicUnits );
 
     UnitAlgebra xxx = params.find<SST::UnitAlgebra>( "packetSize" );
     int packetSizeInBytes;
@@ -77,11 +83,14 @@ Nic::Nic(ComponentId_t id, Params &params) :
         assert(0);
     }
 
-	UnitAlgebra buf_size = params.find<SST::UnitAlgebra>("buffer_size" );
+	UnitAlgebra input_buf_size = params.find<SST::UnitAlgebra>("input_buf_size" );
+	UnitAlgebra output_buf_size = params.find<SST::UnitAlgebra>("output_buf_size" );
 	UnitAlgebra link_bw = params.find<SST::UnitAlgebra>("link_bw" );
 
-    m_dbg.verbose(CALL_INFO,1,1,"id=%d buffer_size=%s link_bw=%s "
-			"packetSize=%d\n", m_myNodeId, buf_size.toString().c_str(),
+    m_dbg.verbose(CALL_INFO,1,1,"id=%d input_buf_size=%s output_buf_size=%s link_bw=%s "
+			"packetSize=%d\n", m_myNodeId, 
+            input_buf_size.toString().c_str(),
+            output_buf_size.toString().c_str(),
 			link_bw.toString().c_str(), packetSizeInBytes);
 
     m_linkControl = (SimpleNetwork*)loadSubComponent(
@@ -89,7 +98,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     assert( m_linkControl );
 
 	m_linkControl->initialize(params.find<std::string>("rtrPortName","rtr"),
-                              link_bw, 2, buf_size, buf_size);
+                              link_bw, 2, input_buf_size, output_buf_size);
 
     m_recvNotifyFunctor =
         new SimpleNetwork::Handler<Nic>(this,&Nic::recvNotify );
@@ -113,11 +122,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     }
     m_recvM.resize( m_num_vNics );
 
-    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, getDelay_ns(), getDelay_ns() );
+    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
 
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
-        m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics );
+        m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics, numNicUnits );
     }
 
     m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
@@ -134,11 +143,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 0  ) );
+                txDelay, packetSizeInBytes, 0, allocNicUnit() ) );
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId,
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 1  ) );
+                txDelay, packetSizeInBytes, 1, allocNicUnit() ) );
     m_memRgnM.resize( m_vNicV.size() );
 
     float dmaBW  = params.find<float>( "dmaBW_GBs", 0.0 ); 
@@ -484,49 +493,58 @@ void Nic::detailedMemOp( Thornhill::DetailedCompute* detailed,
     }
 }
 
-void Nic::dmaRead( std::vector<MemOp>* vec, Callback callback ) {
+void Nic::dmaRead( int unit, std::vector<MemOp>* vec, Callback callback ) {
 
     if ( m_simpleMemoryModel ) {
-        calcNicMemDelay( NIC_SendThread, vec, callback );
-    } else if ( m_useDetailedCompute && m_detailedCompute[0] ) {
-
-        detailedMemOp( m_detailedCompute[0], *vec, "Read", callback );
-        delete vec;
-
+        calcNicMemDelay( unit, vec, callback );
     } else {
-        size_t len = 0;
-        for ( unsigned i = 0; i < vec->size(); i++ ) {
-            len += (*vec)[i].length;
-        }
-        m_arbitrateDMA->canIRead( callback, len );
-        delete vec;
+		for ( unsigned i = 0;  i <  vec->size(); i++ ) {
+			assert( (*vec)[i].callback == NULL );
+		}
+		if ( m_useDetailedCompute && m_detailedCompute[0] ) {
+
+        	detailedMemOp( m_detailedCompute[0], *vec, "Read", callback );
+        	delete vec;
+
+    	} else {
+        	size_t len = 0;
+        	for ( unsigned i = 0; i < vec->size(); i++ ) {
+            	len += (*vec)[i].length;
+        	}
+        	m_arbitrateDMA->canIRead( callback, len );
+        	delete vec;
+		}
     }
 }
 
-void Nic::dmaWrite( std::vector<MemOp>* vec, Callback callback ) {
-
+void Nic::dmaWrite( int unit, std::vector<MemOp>* vec, Callback callback ) {
 
     if ( m_simpleMemoryModel ) {
-       	calcNicMemDelay( NIC_RecvThread, vec, callback );
-    } else if ( m_useDetailedCompute && m_detailedCompute[1] ) {
+       	calcNicMemDelay( unit, vec, callback );
+    } else { 
+		for ( unsigned i = 0;  i <  vec->size(); i++ ) {
+			assert( (*vec)[i].callback == NULL );
+		}
+		if ( m_useDetailedCompute && m_detailedCompute[1] ) {
 
-        detailedMemOp( m_detailedCompute[1], *vec, "Write", callback );
-        delete vec;
+        	detailedMemOp( m_detailedCompute[1], *vec, "Write", callback );
+        	delete vec;
 
-    } else {
-        size_t len = 0;
-        for ( unsigned i = 0; i < vec->size(); i++ ) {
-            len += (*vec)[i].length;
-        }
-        m_arbitrateDMA->canIWrite( callback, len );
-        delete vec;
-    }
+    	} else {
+        	size_t len = 0;
+        	for ( unsigned i = 0; i < vec->size(); i++ ) {
+            	len += (*vec)[i].length;
+        	}
+        	m_arbitrateDMA->canIWrite( callback, len );
+        	delete vec;
+    	}
+	}
 }
 
 Nic::DmaRecvEntry* Nic::findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )
 {
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
-                    "src=%d len=%lu\n",src,hdr.len);
+                    "src=%d len=%lu\n",src,rdmahdr.len);
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
                     "rgnNum=%d offset=%d respKey=%d\n",
             rdmahdr.rgnNum, rdmahdr.offset, rdmahdr.respKey);
@@ -571,18 +589,17 @@ Nic::SendEntryBase* Nic::findGet( int src,
                                     rdmaHdr.respKey, entry );
 }
 
-Nic::EntryBase* Nic::findRecv( int srcNode, MsgHdr& hdr, int tag  )
+Nic::EntryBase* Nic::findRecv( int srcNode, MsgHdr& hdr, MatchMsgHdr& matchHdr  )
 {
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"need a recv entry, srcNic=%d src_vNic=%d "
                 "dst_vNic=%d tag=%#x len=%lu\n", srcNode, hdr.src_vNicId,
-                        hdr.dst_vNicId, tag, hdr.len);
+                        hdr.dst_vNicId, matchHdr.tag, matchHdr.len);
 
-    if ( m_recvM[hdr.dst_vNicId].find( tag ) == m_recvM[hdr.dst_vNicId].end() ) {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"did't match tag\n");
+    if ( m_recvM[hdr.dst_vNicId].find( matchHdr.tag ) == m_recvM[hdr.dst_vNicId].end() ) { m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"did't match tag\n");
         return NULL;
     }
 
-    DmaRecvEntry* entry = m_recvM[ hdr.dst_vNicId][ tag ].front();
+    DmaRecvEntry* entry = m_recvM[ hdr.dst_vNicId][ matchHdr.tag ].front();
     if ( entry->node() != -1 && entry->node() != srcNode ) {
         m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
                 "didn't match node  want=%#x src=%#x\n",
@@ -592,15 +609,15 @@ Nic::EntryBase* Nic::findRecv( int srcNode, MsgHdr& hdr, int tag  )
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,
                 "recv entry size %lu\n",entry->totalBytes());
 
-    if ( entry->totalBytes() < hdr.len ) {
+    if ( entry->totalBytes() < matchHdr.len ) {
         assert(0);
     }
 
     m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"found a receive entry\n");
 
-    m_recvM[ hdr.dst_vNicId ][ tag ].pop_front();
-    if ( m_recvM[ hdr.dst_vNicId ][ tag ].empty() ) {
-        m_recvM[ hdr.dst_vNicId ].erase( tag );
+    m_recvM[ hdr.dst_vNicId ][ matchHdr.tag ].pop_front();
+    if ( m_recvM[ hdr.dst_vNicId ][ matchHdr.tag ].empty() ) {
+        m_recvM[ hdr.dst_vNicId ].erase( matchHdr.tag );
     }
     return entry;
 }

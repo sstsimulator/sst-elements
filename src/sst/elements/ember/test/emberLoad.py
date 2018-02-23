@@ -50,6 +50,13 @@ detailedModelParams = ""
 simConfig = ""
 platParams = ""
 
+params = { 
+'network': [],
+'nic': [],
+'ember': [],
+'hermes': []
+} 
+
 motifAPI='HadesMP'
 
 motifDefaults = { 
@@ -68,7 +75,7 @@ try:
 		"rtrArb=","embermotifLog=",	"rankmapper=","motifAPI=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
         "detailedNameModel=","detailedModelParams=","detailedModelNodes=",
-		"useSimpleMemoryModel"])
+		"useSimpleMemoryModel","param="])
 
 except getopt.GetoptError as err:
     print str(err)
@@ -135,6 +142,9 @@ for o, a in opts:
         simConfig = a
     elif o in ("--platParams"):
         platParams = a
+    elif o in ("--param"):
+        key,value = a.split(":")
+        params[key] += [value]  
     elif o in ("--useSimpleMemoryModel"):
 		useSimpleMemoryModel=True
     else:
@@ -332,8 +342,37 @@ if embermotifLog:
 if emberrankmapper:
     emberParams['rankmapper'] = emberrankmapper
 
-print "EMBER: network: BW={0} pktSize={1} flitSize={2}".format(
-        networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize'])
+for a in params['network']:
+    key, value = a.split("=")
+    if key in networkParams:
+        print "override networkParams {}={} with {}".format( key, networkParams[key], value )
+    else:
+        print "set networkParams {}={}".format( key, value )
+    networkParams[key] = value
+
+for a in params['nic']:
+    key, value = a.split("=")
+    if key in nicParams:
+        print "override nicParams {}={} with {}".format( key, nicParams[key], value )
+    else:
+        print "set nicParams {}={}".format( key, value )
+    nicParams[key] = value
+
+for a in params['ember']:
+    key, value = a.split("=")
+    if key in emberParams:
+        print "override emberParams {}={} with {}".format( key, emberParams[key], value )
+    else:
+        print "set emberParams {}={}".format( key, value )
+    emberParams[key] = value
+
+for a in params['hermes']:
+    key, value = a.split("=")
+    if key in hermesParams:
+        print "override hermesParams {}={} with {}".format( key, hermesParams[key], value )
+    else:
+        print "set hermesParams {}={}".format( key, value )
+    hermesParams[key] = value
 
 sst.merlin._params["link_lat"] = networkParams['link_lat']
 sst.merlin._params["link_bw"] = networkParams['link_bw']   
@@ -341,8 +380,8 @@ sst.merlin._params["xbar_bw"] = networkParams['link_bw']
 sst.merlin._params["flit_size"] = networkParams['flitSize'] 
 sst.merlin._params["input_latency"] = networkParams['input_latency'] 
 sst.merlin._params["output_latency"] = networkParams['output_latency'] 
-sst.merlin._params["input_buf_size"] = networkParams['buffer_size'] 
-sst.merlin._params["output_buf_size"] = networkParams['buffer_size'] 
+sst.merlin._params["input_buf_size"] = networkParams['input_buf_size'] 
+sst.merlin._params["output_buf_size"] = networkParams['output_buf_size'] 
 
 if "network_inspectors" in networkParams.keys():
     sst.merlin._params["network_inspectors"] = networkParams['network_inspectors']
@@ -350,11 +389,16 @@ if "network_inspectors" in networkParams.keys():
 if rtrArb:
 	sst.merlin._params["xbar_arb"] = "merlin." + rtrArb 
 
+
+print "EMBER: network: BW={0} pktSize={1} flitSize={2}".format(
+        networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize'])
+
 sst.merlin._params.update( topoInfo.getNetworkParams() )
 
 epParams = {} 
 epParams.update(emberParams)
 epParams.update(hermesParams)
+
 
 loadInfo = LoadInfo( nicParams, epParams, numNodes, numCores, topoInfo.getNumNodes(), model )
 

@@ -27,6 +27,24 @@ namespace Shmem {
 typedef std::function<void(int)> Callback;
 
 typedef enum { LTE, LT, EQ, NE, GT, GTE } WaitOp;
+
+static std::string WaitOpName( WaitOp op ) {
+	switch( op ) {
+		case LTE:
+			return "LTE";
+		case LT:
+			return "LT";
+		case EQ:
+			return "EQ";
+		case NE:
+			return "NE";
+		case GT:
+			return "GT";
+		case GTE:
+			return "GTE";
+	}
+}
+
 typedef enum { MOVE, AND, MAX, MIN, SUM, PROD, OR, XOR } ReduOp;
 
 class Interface : public Hermes::Interface {
@@ -65,6 +83,8 @@ class Interface : public Hermes::Interface {
 
     virtual void get( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
     virtual void put( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
+    virtual void get_nbi( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
+    virtual void put_nbi( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
 
     virtual void getv( Value& result, Vaddr src, int pe, Callback) { assert(0); }
     virtual void putv( Vaddr dest, Value& value, int pe, Callback) { assert(0); }

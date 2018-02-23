@@ -62,8 +62,8 @@ class SimpleMemoryModel : SubComponent {
   public:
 	enum NIC_Thread { Send, Recv };
 
-    SimpleMemoryModel( Component* comp, Params& params, int id, int numCores ) : 
-		SubComponent( comp ), m_numNicThreads(2)
+    SimpleMemoryModel( Component* comp, Params& params, int id, int numCores, int numNicUnits ) : 
+		SubComponent( comp ), m_numNicThreads(numNicUnits)
 	{
     	char buffer[100];
     	snprintf(buffer,100,"@t:%d:SimpleMemoryModel::@p():@l ",id);
@@ -80,7 +80,8 @@ class SimpleMemoryModel : SubComponent {
 		int nicNumStoreSlots = params.find<int>( "nicNumStoreSlots", 32 );
 		int hostNumLoadSlots = params.find<int>( "hostNumLoadSlots", 32 );
 		int hostNumStoreSlots = params.find<int>( "hostNumLoadSlots", 32 );
-		double busBandwidth = params.find<double>("busBandwidth_GB", 10 );
+		double busBandwidth = params.find<double>("busBandwidth_Gbs", 7.8 );
+		int busNumLinks = params.find<double>("busNumLinks", 16 );
 
 		int hostCacheNumMSHR = params.find<int>( "hostCacheNumMSHR", 10 );
 		int hostCacheLineSize = params.find<int>( "hostCacheLineSize", 64 );
@@ -91,7 +92,7 @@ class SimpleMemoryModel : SubComponent {
 		m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
 		m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "HostCache" );
 
-		m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, hostCacheLineSize, widgetSlots );
+		m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, busNumLinks, hostCacheLineSize, widgetSlots );
 
 		//m_nicCacheUnit = new CacheUnit( *this, m_dbg, id, m_busBridgeUnit, nicCacheUnitSize, nicCacheLineSize, 10, "Nic" );
 		
@@ -146,7 +147,6 @@ class SimpleMemoryModel : SubComponent {
 
 		m_selfLink = comp->configureSelfLink("Nic::SimpleMemoryModel", "1 ns",
         new Event::Handler<SimpleMemoryModel>(this,&SimpleMemoryModel::handleSelfEvent));
-
 	}
 
     virtual ~SimpleMemoryModel() {}
@@ -192,17 +192,19 @@ class SimpleMemoryModel : SubComponent {
 		m_dbg.verbose(CALL_INFO,1,1,"now=%lu\n",now );
 
 		int id = m_numNicThreads + core;
-		addWork( id, new Work( ops, callback ) );
+		addWork( id, new Work( ops, callback, now ) );
 	}
 
-	virtual SimTime_t schedNicCallback( NIC_Thread who, std::vector< MemOp >* ops, Callback callback ) { 
+	virtual SimTime_t schedNicCallback( int unit, std::vector< MemOp >* ops, Callback callback ) { 
 		SimTime_t now = getCurrentSimTimeNano();
-		m_dbg.verbose(CALL_INFO,1,1,"now=%lu\n", now );
+		m_dbg.verbose(CALL_INFO,1,1,"now=%lu unit=%d\n", now, unit );
+		assert( unit >=0 );
 
-		addWork( who, new Work( ops, callback ) );
+		addWork( unit, new Work( ops, callback, now ) );
 	}
 
 	NicUnit& nicUnit() { return *m_nicUnit; }
+	BusBridgeUnit& busUnit() { return *m_busBridgeUnit; }
 
   private:
 

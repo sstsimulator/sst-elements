@@ -142,6 +142,8 @@ protected:
 
     inline void enQ_get( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
     inline void enQ_put( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
+    inline void enQ_get_nbi( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
+    inline void enQ_put_nbi( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
 
     template <class TYPE>
     inline void enQ_add( Queue&, Hermes::MemAddr, TYPE*, int pe );
@@ -358,7 +360,15 @@ void EmberShmemGenerator::enQ_get( Queue& q, Hermes::MemAddr dest,
 {
     verbose(CALL_INFO,2,0,"\n");
     q.push( new EmberGetShmemEvent( *shmem_cast(m_api), &getOutput(),  
-                dest.getSimVAddr(), src.getSimVAddr(), length, pe ) );
+                dest.getSimVAddr(), src.getSimVAddr(), length, pe, true ) );
+}
+
+void EmberShmemGenerator::enQ_get_nbi( Queue& q, Hermes::MemAddr dest, 
+        Hermes::MemAddr src, size_t length, int pe )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberGetShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                dest.getSimVAddr(), src.getSimVAddr(), length, pe, false ) );
 }
 
 template <class TYPE>
@@ -375,7 +385,15 @@ void EmberShmemGenerator::enQ_put( Queue& q, Hermes::MemAddr dest,
 {
     verbose(CALL_INFO,2,0,"\n");
     q.push( new EmberPutShmemEvent( *shmem_cast(m_api), &getOutput(),  
-                dest.getSimVAddr(), src.getSimVAddr(), length, pe ) );
+                dest.getSimVAddr(), src.getSimVAddr(), length, pe, true ) );
+}
+
+void EmberShmemGenerator::enQ_put_nbi( Queue& q, Hermes::MemAddr dest, 
+        Hermes::MemAddr src, size_t length, int pe )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberPutShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                dest.getSimVAddr(), src.getSimVAddr(), length, pe, false ) );
 }
 
 template <class TYPE>

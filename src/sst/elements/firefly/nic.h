@@ -17,6 +17,7 @@
 #ifndef COMPONENTS_FIREFLY_NIC_H 
 #define COMPONENTS_FIREFLY_NIC_H 
 
+#include <math.h>
 #include <sstream>
 #include <sst/core/module.h>
 #include <sst/core/component.h>
@@ -42,6 +43,7 @@ namespace Firefly {
 
 class Nic : public SST::Component  {
 
+    typedef unsigned RespKey_t;
 	class LinkControlWidget {
 
 	  public:
@@ -87,23 +89,29 @@ class Nic : public SST::Component  {
 
   private:
 
-    struct MsgHdr {
-        enum Op { Msg, Rdma, Shmem } op;
-        size_t len;
-        unsigned short    dst_vNicId;
-        unsigned short    src_vNicId;
+    struct __attribute__ ((packed)) MsgHdr {
+        enum Op : unsigned char { Msg, Rdma, Shmem } op;
+        unsigned int    dst_vNicId : 12 ;
+        unsigned int    src_vNicId : 12 ;
     };
+
+    struct __attribute__ ((packed)) MatchMsgHdr {
+        size_t len;
+        int    tag;
+    };
+
     struct __attribute__ ((packed)) ShmemMsgHdr {
         ShmemMsgHdr() : op2(0) {}
-        enum Op : unsigned char { Ack, Put, Get, GetResp, Add, Fadd, Swap, Cswap } op;
-        unsigned char op2; 
-        unsigned char dataType;
-        unsigned char pad;
-        uint32_t length;
         uint64_t vaddr;
-        uint64_t respKey;
+        uint32_t length;
+        enum Op { Ack, Put, Get, GetResp, Add, Fadd, Swap, Cswap };
+        unsigned char op : 3; 
+        unsigned char op2 : 3; 
+        unsigned char dataType : 3;
+        uint8_t respKey : 7;
     };
     struct RdmaMsgHdr {
+        size_t len;
         enum { Put, Get, GetResp } op;
         uint16_t    rgnNum;
         uint16_t    respKey;
@@ -173,8 +181,8 @@ public:
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
 
-    void dmaRead( std::vector<MemOp>* vec, Callback callback );
-    void dmaWrite( std::vector<MemOp>* vec, Callback callback );
+    void dmaRead( int unit, std::vector<MemOp>* vec, Callback callback );
+    void dmaWrite( int unit, std::vector<MemOp>* vec, Callback callback );
 
     void schedCallback( Callback callback, uint64_t delay = 0 ) {
         schedEvent( new SelfEvent( callback ), delay);
@@ -211,7 +219,7 @@ public:
     void processNetworkEvent( FireflyNetworkEvent* );
     DmaRecvEntry* findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr );
     SendEntryBase* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
-    EntryBase* findRecv( int srcNode, MsgHdr&, int tag );
+    EntryBase* findRecv( int srcNode, MsgHdr&, MatchMsgHdr& );
 
     Hermes::MemAddr findShmem( int core, Hermes::Vaddr  addr, size_t length );
 
@@ -306,6 +314,7 @@ public:
 	SimTime_t m_nic2host_lat_ns;
 	SimTime_t m_nic2host_base_lat_ns;
 	SimTime_t m_shmemRxDelay_ns; 
+	int m_numNicUnits;
 
     SimTime_t calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
         if( m_simpleMemoryModel ) {
@@ -316,20 +325,62 @@ public:
 		}
     }
 
-	#define NIC_SendThread SimpleMemoryModel::NIC_Thread::Send
-	#define NIC_RecvThread SimpleMemoryModel::NIC_Thread::Recv
+    bool initNicUnitPool( int num) {
+        m_numNicUnits = num;
+        for ( int i = 0; i < num; i++ ) {
+            m_availNicUnits.push_back(i);
+        } 
+    }
 
-    void calcNicMemDelay( SimpleMemoryModel::NIC_Thread who, std::vector< MemOp>* ops, std::function<void()> callback ) {
+    int allocNicUnit() {
+        int unit = -1;
+        if ( ! m_availNicUnits.empty() ) {
+            unit = m_availNicUnits.front();
+            m_availNicUnits.pop_front();
+        }
+
+        m_dbg.verbose(CALL_INFO,2,1,"unit=%d\n",unit);
+        return unit;
+    }
+
+    void freeNicUnit( int unit ) {
+        m_dbg.verbose(CALL_INFO,2,1,"unit=%d\n",unit);
+        m_availNicUnits.push_back( unit );
+        assert( m_availNicUnits.size() < m_numNicUnits );
+    }
+
+    void calcNicMemDelay( int unit, std::vector< MemOp>* ops, std::function<void()> callback ) {
         if( m_simpleMemoryModel ) {
-        	m_simpleMemoryModel->schedNicCallback( who, ops, callback );
+        	m_simpleMemoryModel->schedNicCallback( unit, ops, callback );
         } else {
+        	for ( unsigned i = 0;  i <  ops->size(); i++ ) {
+            	assert( (*ops)[i].callback == NULL );
+        	}
 			schedCallback(callback);
 			delete ops;
 		}
 	}
+    RespKey_t m_respKey;
+    RespKey_t genRespKey( void* ptr ) {
+        assert( m_respKeyMap.find(m_respKey) == m_respKeyMap.end() );
+        RespKey_t key = m_respKey++;
+        m_respKeyMap[key++] = ptr;  
+        m_respKey &= (128 - 1);
+        m_dbg.verbose(CALL_INFO,2,1,"key=%#x nextKey=%#x\n",key,m_respKey);
+        return key;
+    }
+    void* getRespKeyValue( RespKey_t key ) {
+        --key;  
+        m_dbg.verbose(CALL_INFO,2,1,"key=%#x\n",key);
+        void* value = m_respKeyMap[key];
+        m_respKeyMap.erase(key);
+        return value; 
+    }
+
+    std::map<RespKey_t,void*> m_respKeyMap;
 
     SimpleMemoryModel*  m_simpleMemoryModel;
-
+    std::deque<int> m_availNicUnits;
     uint16_t m_getKey;
   public:
 	int m_tracedPkt;
