@@ -22,11 +22,12 @@
 
 #include <vector>
 
-#include "memTypes.h"
-#include "hash.h"
-#include "sst/core/output.h"
-#include "util.h"
-#include "replacementManager.h"
+#include <sst/core/output.h>
+
+#include "sst/elements/memHierarchy/memTypes.h"
+#include "sst/elements/memHierarchy/hash.h"
+#include "sst/elements/memHierarchy/util.h"
+#include "sst/elements/memHierarchy/replacementManager.h"
 
 using namespace std;
 

@@ -158,6 +158,10 @@ MemEventBase* MemHierarchyInterface::createCustomEvent(SimpleMem::Request * req)
     if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
         cme->setFlag(MemEvent::F_NONCACHEABLE);
     
+    if (req->data.size() != 0) {
+        cme->setPayload(req->data); // Note this updates cme->size to payload.size()...
+        cme->setSize(req->size);    // Assume this is what we want, not the copied payload size
+    }
     cme->setVirtualAddress(req->getVirtualAddress());
     cme->setInstructionPointer(req->getInstructionPointer());
 
@@ -226,8 +230,10 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me)
 
 
 void MemHierarchyInterface::updateCustomRequest(SimpleMem::Request* req, MemEventBase *ev) const{
+    CustomCmdEvent* cev = static_cast<CustomCmdEvent*>(ev);
     req->cmd = SimpleMem::Request::CustomCmd;
-    req->memFlags = ev->getMemFlags();
+    req->memFlags = cev->getMemFlags();
+    req->data = cev->getPayload();
 }
 
 bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler){

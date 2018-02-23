@@ -17,16 +17,16 @@
 #define _MSHR_H_
 
 #include <map>
+#include <string>
+#include <sstream>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 
-#include <memEvent.h>
-#include <util.h>
-#include <string>
-#include <sstream>
+#include "sst/elements/memHierarchy/memEvent.h"
+#include "sst/elements/memHierarchy/util.h"
 
 namespace SST { namespace MemHierarchy {
 

@@ -19,7 +19,7 @@
 
 #include <sst/core/elementinfo.h>
 
-#include "membackend/memBackend.h"
+#include "sst/elements/memHierarchy/membackend/memBackend.h"
 
 namespace SST {
 namespace MemHierarchy {
