@@ -63,6 +63,7 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
         if ( ! static_cast<NicShmemGetCmdEvent*>(event)->isBlocking() ) {
 		    --m_freeCmdSlots;	
             m_nic.getVirtNic(id)->notifyShmem( 0, static_cast<NicShmemGetCmdEvent*>(event)->getCallback() );
+            m_pendingRemoteOps[id].second += m_one;
         }
         break;
 
