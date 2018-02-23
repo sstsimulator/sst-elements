@@ -85,6 +85,7 @@ namespace SST{ namespace OpalComponent{
 			int hint;
 			int fileID;
 			void setResp(long long int add, long long int padd, int sz) { address = add; paddress = padd; size = sz;}
+			void setResp(long long int add, long long int padd, int sz, int n) { address = add; paddress = padd; size = sz; nodeId = n;}
 			long long int getAddress() { return address; }
 			long long int getPaddress() { return paddress; }
 
