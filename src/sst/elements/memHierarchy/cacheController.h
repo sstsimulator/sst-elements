@@ -64,6 +64,7 @@ public:
             {"associativity",           "(int) Associativity of the cache. In set associative mode, this is the number of ways."},
             {"access_latency_cycles",   "(int) Latency (in cycles) to access the cache data array. This latency is paid by cache hits and coherence requests that need to return data."},
             {"L1",                      "(bool) Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]", "false"},
+            {"node",					"Node number in multinode evnironment"},
             /* Not required */
             {"cache_line_size",         "(uint) Size of a cache line (aka cache block) in bytes.", "64"},
             {"hash_function",           "(int) 0 - none (default), 1 - linear, 2 - XOR", "0"},
@@ -337,6 +338,7 @@ private:
     int                     dropPrefetchLevel_;
     int                     maxOutstandingPrefetch_;
     int                     maxRequestsPerCycle_;
+    uint32_t				node;
 
     /* Cache structures */
     CacheArray*             cacheArray_;

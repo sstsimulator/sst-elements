@@ -130,10 +130,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     free(nextListenerName);
     free(nextListenerParams);
 
+    char *node_buffer = (char*) malloc(sizeof(char) * 256);
+    uint32_t node_num = params.find<uint32_t>("node", 0);
+    sprintf(node_buffer, "%" PRIu32, node_num);
 
     if (isPortConnected("direct_link")) {
         Params linkParams = params.find_prefix_params("cpulink.");
         linkParams.insert("port", "direct_link");
+        linkParams.insert("node", node_buffer);
         linkParams.insert("latency", link_lat, false);
         linkParams.insert("accept_region", "1", false);
         link_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, linkParams));
@@ -147,6 +151,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
         Params nicParams = params.find_prefix_params("memNIC.");
         nicParams.insert("port", "network");
+        nicParams.insert("node", node_buffer);
         nicParams.insert("group", "4", false);
         nicParams.insert("accept_region", "1", false);
 
@@ -155,6 +160,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         clockLink_ = true;
     }
     
+    free(node_buffer);
+
     region_ = link_->getRegion();
     privateMemOffset_ = 0;
 

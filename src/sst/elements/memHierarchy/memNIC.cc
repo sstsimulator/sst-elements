@@ -36,6 +36,7 @@ MemNIC::MemNIC(Component * parent, Params &params) : MemLinkBase(parent, params)
     
     // Get network parameters and create link control
     std::string linkName = params.find<std::string>("port", "");
+
     if (linkName == "") 
         dbg.fatal(CALL_INFO, -1, "Param not specified(%s): port - the name of the port that the MemNIC is attached to. This should be set internally by components creating the memNIC.\n",
                 getName().c_str());
@@ -131,15 +132,17 @@ void MemNIC::init(unsigned int phase) {
         if (imre) {
             // Record name->address map for all other endpoints
             networkAddressMap.insert(std::make_pair(imre->info.name, imre->info.addr));
-            
+
             dbg.debug(_L10_, "%s (memNIC) received imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
                     getName().c_str(), imre->info.name.c_str(), imre->info.addr, imre->info.id, imre->info.region.start, imre->info.region.end, imre->info.region.interleaveSize, imre->info.region.interleaveStep);
 
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
-                sourceEndpointInfo.insert(imre->info);
+                //sourceEndpointInfo.insert(imre->info);
+                addSource(imre->info);
                 dbg.debug(_L10_, "\tAdding to sourceEndpointInfo. %zu sources found\n", sourceEndpointInfo.size());
             } else if (destIDs.find(imre->info.id) != destIDs.end()) {
-                destEndpointInfo.insert(imre->info);
+                //destEndpointInfo.insert(imre->info);
+                addDest(imre->info);
                 dbg.debug(_L10_, "\tAdding to destEndpointInfo. %zu destinations found\n", destEndpointInfo.size());
             }
             delete imre;
@@ -307,9 +310,11 @@ MemEventBase* MemNIC::recv() {
                         getName().c_str(), imre->info.name.c_str());
             }
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
-                sourceEndpointInfo.insert(imre->info);
+                //sourceEndpointInfo.insert(imre->info);
+            	addSource(imre->info);
             } else if (destIDs.find(imre->info.id) != destIDs.end()) {
-                destEndpointInfo.insert(imre->info);
+                //destEndpointInfo.insert(imre->info);
+            	addSource(imre->info);
             }
             delete imre;
         }

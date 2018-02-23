@@ -152,8 +152,13 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
         out.output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size' in params. Change your input file to remove this notice.\n", getName().c_str());
 
+    char *node_buffer = (char*) malloc(sizeof(char) * 256);
+    uint32_t node_num = params.find<uint32_t>("node", 0);
+    sprintf(node_buffer, "%" PRIu32, node_num);
+
         Params nicParams = params.find_prefix_params("memNIC.");
         nicParams.insert("port", "network");
+        nicParams.insert("node", node_buffer);
 
         nicParams.insert("group", "3", false);
         int cl = nicParams.find<int>("group");
@@ -166,6 +171,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         if (isPortConnected("memory")) {
             Params memParams = params.find_prefix_params("memlink.");
             memParams.insert("port", "memory");
+            memParams.insert("node", node_buffer);
             memParams.insert("latency", "1ns");
             memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);
             memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);
@@ -185,6 +191,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
         }
 
+    free(node_buffer);
 
     clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
     defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
@@ -252,7 +259,7 @@ DirectoryController::~DirectoryController(){
 void DirectoryController::handlePacket(SST::Event *event){
     MemEventBase *evb = static_cast<MemEventBase*>(event);
     evb->setDeliveryTime(getCurrentSimTimeNano());
-     
+
     if (!clockOn) {
         turnClockOn();
     }

@@ -59,6 +59,9 @@ public:
     virtual void sendRequest(Request *req);
     virtual Request* recvResponse(void);
 
+    void setNode(uint32_t node_num) { node = node_num; }
+    uint32_t getNode() { return node; }
+
     void init(unsigned int phase);
 
 
@@ -87,6 +90,7 @@ private:
     Output output;
     Addr baseAddrMask_;
     std::string rqstr_;
+    uint32_t node;
 };
 
 }

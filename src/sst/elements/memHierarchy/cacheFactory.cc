@@ -238,17 +238,26 @@ void Cache::configureLinks(Params &params) {
     if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
         d_->output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size'. Change your input file to remove this notice.\n", getName().c_str());
 
+    char *node_buffer = (char*) malloc(sizeof(char) * 256);
+    node = params.find<uint32_t>("node", 0);
+    sprintf(node_buffer, "%" PRIu32, node);
+
     Params nicParams = params.find_prefix_params("memNIC." );
+    nicParams.insert("node", node_buffer);
 
     Params memlink = params.find_prefix_params("memlink.");
     memlink.insert("port", "low_network_0");
-    
+    memlink.insert("node", node_buffer);
+
     Params cpulink = params.find_prefix_params("cpulink.");
     cpulink.insert("port", "high_network_0");
+    cpulink.insert("node", node_buffer);
+
+    free(node_buffer);
 
     /* Finally configure the links */
     if (highNetExists && lowNetExists) {
-        
+
         d_->debug(_INFO_,"Configuring cache with a direct link above and below\n");
         
         linkDown_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, memlink));
@@ -259,7 +268,7 @@ void Cache::configureLinks(Params &params) {
         clockLink_ = false; /* Currently only linkDown_ may need to be clocked */
 
     } else if (highNetExists && lowCacheExists) {
-            
+
         d_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a cache below\n");
         nicParams.find<std::string>("port", "", found);
         if (!found) nicParams.insert("port", "cache");
@@ -275,7 +284,7 @@ void Cache::configureLinks(Params &params) {
         clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
     
     } else if (highNetExists && lowDirExists) {
-            
+
         d_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a directory below\n");
         nicParams.find<std::string>("port", "", found);
         if (!found) nicParams.insert("port", "directory");
@@ -292,7 +301,7 @@ void Cache::configureLinks(Params &params) {
         clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
 
     } else {    // lowDirExists
-        
+
         d_->debug(_INFO_, "Configuring cache with a single network link to talk to a cache above and a directory below\n");
         nicParams.find<std::string>("port", "", found);
         if (!found) nicParams.insert("port", "directory");
@@ -328,10 +337,14 @@ void Cache::configureLinks(Params &params) {
             cacheArray_->setSliceAware(cacheSliceCount);
         }
         // Set region parameters
-        nicParams.insert("addr_range_start", std::to_string(addrRangeStart));
-        nicParams.insert("addr_range_end", std::to_string(addrRangeEnd));
-        nicParams.insert("interleave_size", std::to_string(interleaveSize) + "B");
-        nicParams.insert("interleave_step", std::to_string(interleaveStep) + "B");
+        nicParams.find<std::string>("addr_range_start", "", found);
+        if (!found) nicParams.insert("addr_range_start", std::to_string(addrRangeStart));
+        nicParams.find<std::string>("addr_range_end", "", found);
+        if (!found) nicParams.insert("addr_range_end", std::to_string(addrRangeEnd));
+        nicParams.find<std::string>("interleave_size", "", found);
+        if (!found) nicParams.insert("interleave_size", std::to_string(interleaveSize) + "B");
+        nicParams.find<std::string>("interleave_step", "", found);
+        if (!found) nicParams.insert("interleave_step", std::to_string(interleaveStep) + "B");
         
         linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
