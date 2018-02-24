@@ -67,7 +67,7 @@ class StridePrefetcher : public SST::MemHierarchy::CacheListener {
         )
 
         SST_ELI_DOCUMENT_STATISTICS(
-                { "prefetches_issed", "Number of prefetch requests issued", "prefetches", 1 },
+                { "prefetches_issued", "Number of prefetch requests issued", "prefetches", 1 },
 		{ "prefetches_canceled_by_page_boundary",
 			"Prefetches which would not be executed because they span over a page boundary.", "prefetches", 1 },
 		{ "prefetches_canceled_by_history",

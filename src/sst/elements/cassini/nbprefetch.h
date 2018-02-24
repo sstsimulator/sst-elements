@@ -58,7 +58,7 @@ class NextBlockPrefetcher : public SST::MemHierarchy::CacheListener {
 	)
 
 	SST_ELI_DOCUMENT_STATISTICS(
-		{ "prefetches_issed", "Number of prefetch requests issued", "prefetches", 1 },
+		{ "prefetches_issued", "Number of prefetch requests issued", "prefetches", 1 },
 		{ "miss_events_processed", "Number of cache misses received", "misses", 2 },
 		{ "hit_events_processed", "Number of cache hits received", "hits", 2 }
 	)
