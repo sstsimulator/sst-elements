@@ -10,7 +10,7 @@ template< class T >
 
             struct Item {
                 Item( ) {}
-                Item( T value ) : value(value) { assert(value);}
+                Item( T value ) : value(value) { }
                 T value;
                 Item* prev;
                 Item* next;
