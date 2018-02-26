@@ -2,8 +2,9 @@
 class Work {
 
   public:
-    Work( std::vector< MemOp >* ops, Callback callback, SimTime_t start ) : m_ops(ops),
-                        m_callback(callback), m_start(start), m_pos(0) {
+    Work( int pid, std::vector< MemOp >* ops, Callback callback, SimTime_t start ) :
+        m_pid(pid), m_ops(ops), m_callback(callback), m_start(start), m_pos(0) 
+    {
         if( 0 == ops->size() ) {
             ops->push_back( MemOp( MemOp::Op::NoOp ) );
         }
@@ -14,6 +15,7 @@ class Work {
         delete m_ops;
     }
 
+    int getPid()        { return m_pid; } 
     SimTime_t start()   { return m_start; }
 	size_t getNumOps()  { return m_ops->size(); }
     bool isDone()       { return m_pos ==  m_ops->size(); }
@@ -38,6 +40,7 @@ class Work {
     int 					m_pos;
     Callback 				m_callback;
     std::vector< MemOp >*   m_ops;
+    int                     m_pid;
 };
 
 
@@ -98,6 +101,7 @@ class Thread : public UnitBase {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op=%s op.length=%lu offset=%lu addr=%#" PRIx64 " length=%lu\n",
                             op->getName(), op->length, op->offset, addr, length );
 
+        int pid = work->getPid();
 		MemOp::Op type = op->getOp();
 
         bool deleteWork = false;
@@ -119,7 +123,7 @@ class Thread : public UnitBase {
             break;
 
 		  case MemOp::HostBusWrite:
-            m_blocked = m_model.busUnit().write( this, new MemReq( addr, length), callback );
+            m_blocked = m_model.busUnit().write( this, new MemReq( addr, length ), callback );
 		    break;
 
           case MemOp::LocalLoad:
@@ -133,13 +137,13 @@ class Thread : public UnitBase {
           case MemOp::HostStore:
           case MemOp::BusStore:
           case MemOp::BusDmaToHost:
-            m_blocked = m_storeUnit->storeCB( this, new MemReq( addr, length ), callback );
+            m_blocked = m_storeUnit->storeCB( this, new MemReq( addr, length, pid ), callback );
             break;
 
           case MemOp::HostLoad:
           case MemOp::BusLoad:
           case MemOp::BusDmaFromHost:
-            m_blocked = m_loadUnit->load( this, new MemReq( addr, length ), callback );
+            m_blocked = m_loadUnit->load( this, new MemReq( addr, length, pid ), callback );
             break;
 
           default:
