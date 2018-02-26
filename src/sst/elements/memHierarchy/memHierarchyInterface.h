@@ -90,6 +90,14 @@ private:
     MemEventBase* createMemEvent(Interfaces::SimpleMem::Request* req) const;
 
     HandlerBase*    recvHandler_;
+
+    SST::Link*      link_;
+    std::map<MemEvent::id_type, Interfaces::SimpleMem::Request*> requests_;
+    Output output;
+    Addr baseAddrMask_;
+    std::string rqstr_;
+    uint32_t node;
+
 };
 
 }

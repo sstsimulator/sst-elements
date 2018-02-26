@@ -56,7 +56,9 @@ class Pool{
 	public:
 
 		//Constructor for pool
-		Pool(Params parmas);
+		Pool(SST::Component* own, Params parmas, SST::OpalComponent::MemType mem_type, int id);
+
+		void finish() {}
 
 		// The size of the memory pool in KBs
 		long long int size; 
@@ -65,7 +67,7 @@ class Pool{
 		long long int start;
 
 		// Allocate N contigiuous frames, returns the starting address if successfull, or -1 if it fails!
-		long long int allocate_frame(int N);
+		MemPoolResponse allocate_frame(int N);
 
 		// Allocate 'size' contigiuous memory, returns a structure with starting address and number of frames allocated
 		MemPoolResponse allocate_frames(int size);
@@ -99,11 +101,27 @@ class Pool{
 
 		SST::OpalComponent::MemTech get_memPool_tech() { return memTech; }
 
+		void set_localMemID(int id) { localMemID = id; }
+
+		int get_localMemID(int id) { return localMemID; }
+
+		void set_sharedMemID(int id) { sharedMemID = id; }
+
+		int get_sharedMemID(int id) { return sharedMemID; }
+
 		void build_mem();
 
 	private:
 
+		SST::Component* owner;
+
 		Output *output;
+
+		//local memory pool id
+		int localMemID;
+
+		//shared memory pool id
+		int sharedMemID;
 
 		//shared or local
 		SST::OpalComponent::MemType memType;
@@ -117,6 +135,7 @@ class Pool{
 		// The list of allocated frames --- the key is the starting physical address
 		std::map<long long int, Frame*> alloclist;
 
+		Statistic<uint64_t>* memUsage;
 
 };
 

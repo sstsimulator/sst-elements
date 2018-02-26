@@ -68,6 +68,7 @@ public:
             {"addr_range_end",          "Highest address handled by this directory.", "uint64_t-1"},
             {"interleave_size",         "Size of interleaved chunks. E.g., to interleave 8B chunks among 3 directories, set size=8B, step=24B", "0B"},
             {"interleave_step",         "Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 directories, set size=8B, step=24B", "0B"},
+            {"node",					"Node number in multinode environment"},
             /* Old parameters - deprecated or moved */
             {"direct_mem_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether directory has a direct connection to memory (1) or is connected via a network (0)","1"}, // Remove SST 8.0
             {"network_num_vc",          "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"}, // Remove SST 9.0
