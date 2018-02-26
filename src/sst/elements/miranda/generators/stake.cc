@@ -40,6 +40,7 @@ Stake::Stake( Component* owner, Params& params ) :
         isa = params.find<std::string>("isa", "RV64IMAFDC");
         pk = params.find<std::string>("proxy_kernel", "pk");
         bin = params.find<std::string>("bin", "");
+        args = params.find<std::string>("args", "");
         ext = params.find<std::string>("ext", "");
         extlib = params.find<std::string>("extlib","");
 
@@ -159,6 +160,7 @@ void Stake::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
         // initiate the spike simulator
         htif_args.push_back(pk);
         htif_args.push_back(bin);
+        htif_args.push_back(args);
         spike = new sim_t(isa.c_str(), cores, false, (reg_t)(pc),
                           mems, htif_args, hartids, 2 );
 

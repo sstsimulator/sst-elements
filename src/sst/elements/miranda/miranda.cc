@@ -221,6 +221,7 @@ static const ElementInfoParam stake_params[] = {
     { "pc",               "Override the default ELF entry point", "0x80000000"},
     { "proxy_kernel",     "Set the default proxy kernel", "pk"},
     { "bin",              "Set the RISC-V ELF binary", "NULL"},
+    { "args",             "Set the RISC-V binary arguments", "NULL"},
     { "extension",        "Specify the RoCC extension", "NULL" },
     { "extlib",           "Shared library to load", "NULL" },
     { NULL, NULL, NULL }
