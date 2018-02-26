@@ -130,6 +130,8 @@ public:
         ser & addr_;
         ser & addrGlobal_;
         ser & opCode_;
+        ser & size_;
+        ser & payload_;
         ser & instPtr_;
         ser & vAddr_;
     }
