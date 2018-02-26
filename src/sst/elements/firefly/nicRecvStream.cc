@@ -72,7 +72,8 @@ void Nic::RecvMachine::StreamBase::processPkt( FireflyNetworkEvent* ev  ) {
     Callback callback = NULL;
     bool finished = ret || length() == getRecvEntry()->currentLen();
 
-    m_ctx->nic().dmaWrite( m_unit, vec, std::bind( &Nic::RecvMachine::StreamBase::ready, this, finished, m_pktNum++ ) );
+    m_ctx->nic().dmaWrite( m_unit, m_myPid, vec, 
+            std::bind( &Nic::RecvMachine::StreamBase::ready, this, finished, m_pktNum++ ) );
 }
 
 void Nic::RecvMachine::StreamBase::ready( bool finished, uint64_t pktNum ) {

@@ -173,8 +173,8 @@ public:
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
 
-    void dmaRead( int unit, std::vector<MemOp>* vec, Callback callback );
-    void dmaWrite( int unit, std::vector<MemOp>* vec, Callback callback );
+    void dmaRead( int unit, int pid, std::vector<MemOp>* vec, Callback callback );
+    void dmaWrite( int unit, int pid, std::vector<MemOp>* vec, Callback callback );
 
     void schedCallback( Callback callback, uint64_t delay = 0 ) {
         schedEvent( new SelfEvent( callback ), delay);
@@ -344,9 +344,9 @@ public:
         m_dbg.verbose(CALL_INFO,3,1,"unit=%d\n",unit);
     }
 
-    void calcNicMemDelay( int unit, std::vector< MemOp>* ops, std::function<void()> callback ) {
+    void calcNicMemDelay( int unit, int pid, std::vector< MemOp>* ops, std::function<void()> callback ) {
         if( m_simpleMemoryModel ) {
-        	m_simpleMemoryModel->schedNicCallback( unit, ops, callback );
+        	m_simpleMemoryModel->schedNicCallback( unit, pid, ops, callback );
         } else {
         	for ( unsigned i = 0;  i <  ops->size(); i++ ) {
             	assert( (*ops)[i].callback == NULL );
@@ -355,6 +355,7 @@ public:
 			delete ops;
 		}
 	}
+
     RespKey_t m_respKey;
     RespKey_t genRespKey( void* ptr ) {
         assert( m_respKeyMap.find(m_respKey) == m_respKeyMap.end() );
