@@ -61,9 +61,6 @@ public:
     virtual void sendRequest(Request *req);
     virtual Request* recvResponse(void);
     
-    void setNode(uint32_t node_num) { node = node_num; }
-    uint32_t getNode() { return node; }
-
     Output output;
 
 private:
@@ -89,7 +86,7 @@ private:
     std::string rqstr_;
     Addr remoteMemStart_;
     bool allNoncache_;
-    uint32_t node;
+
 };
 
 }
