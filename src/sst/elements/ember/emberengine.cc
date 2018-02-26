@@ -22,6 +22,7 @@
 #include "emberengine.h"
 #include "embergen.h"
 #include "embermotiflog.h"
+#include "libs/misc.h"
 
 using namespace std;
 using namespace SST::Ember;
@@ -164,6 +165,11 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
         tmp[ api->getName() ] = new ApiInfo;
         tmp[ api->getName() ]->data = NULL;
         tmp[ api->getName() ]->api = api;
+        tmp[ api->getName() ]->lib = NULL;
+        if ( 0 == api->getName().compare("HadesMisc") ) {
+            tmp[ api->getName() ]->lib = 
+                new EmberMiscLib( getOutput(), static_cast<Misc::Interface*>(api) );
+        } 
     }
 
     return tmp;
@@ -239,8 +245,8 @@ void EmberEngine::setup() {
     }
 
     std::ostringstream prefix;
-    prefix << "@t:" << m_jobId << ":" << m_os->getNid() << ":EmberEngine:@p:@l: ";
-    //std::cout << "@t:" << m_jobId << ":" << m_os->getNid() << ":EmberEngine:@p:@l: " << std::endl; //NetworkSim
+    prefix << "@t:" << m_jobId << ":" << m_os->getRank() << ":EmberEngine:@p:@l: ";
+    //std::cout << "@t:" << m_jobId << ":" << m_os->getRank() << ":EmberEngine:@p:@l: " << std::endl; //NetworkSim
 
     output.setPrefix( prefix.str() );
 

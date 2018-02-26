@@ -20,31 +20,28 @@
 using namespace SST;
 using namespace SST::Firefly;
 
-Nic::RecvMachine::MsgStream::MsgStream( Output& output, FireflyNetworkEvent* ev,
-       RecvMachine& rm, int unit  ) : 
-    StreamBase(output,rm,unit)
+Nic::RecvMachine::MsgStream::MsgStream( Output& output, Ctx* ctx, int unit,
+        int srcNode, int srcPid, int destPid, FireflyNetworkEvent* ev ) : 
+    StreamBase(output,ctx,unit,srcNode,srcPid,destPid)
 {
-    m_hdr = *(MsgHdr*) ev->bufPtr();
+    MsgHdr& hdr =           *(MsgHdr*) ev->bufPtr();
     MatchMsgHdr& matchHdr = *(MatchMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
-    m_src = ev->src;
 
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Msg Operation srcNode=%d tag=%#x lenght=%lu\n",
-                            m_src,matchHdr.tag,matchHdr.len);
+    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Msg Operation srcNode=%d tag=%#x length=%lu\n",
+                            m_srcNode,matchHdr.tag,matchHdr.len);
 
-    Callback callback;
-
-    m_recvEntry = static_cast<DmaRecvEntry *>( m_rm.nic().findRecv( m_src, m_hdr, matchHdr ) );
-    if ( m_recvEntry ) {
-        ev->bufPop( sizeof(MsgHdr) );
-        ev->bufPop( sizeof(MatchMsgHdr) );
-
-        callback = std::bind( &Nic::RecvMachine::state_move_0, &m_rm, ev, this );
-
-    } else {
-        callback = std::bind( &Nic::RecvMachine::state_2, &m_rm, ev );
-    }
-    m_rm.nic().schedCallback( callback, m_rm.m_rxMatchDelay );
+    m_recvEntry = static_cast<DmaRecvEntry *>( m_ctx->findRecv( m_srcNode, m_srcPid, hdr, matchHdr ) );
 
     m_matched_len = matchHdr.len;
     m_matched_tag = matchHdr.tag;
+    m_startDelay = m_ctx->getRxMatchDelay();
+
+    if ( m_recvEntry ) {
+        ev->bufPop( sizeof(MsgHdr) + sizeof(MatchMsgHdr) );
+
+        m_startCallback = std::bind( &Nic::RecvMachine::StreamBase::processPkt, this, ev );
+
+    } else {
+        m_startCallback = std::bind( &Nic::RecvMachine::StreamBase::needRecv, this, ev );
+    }
 }

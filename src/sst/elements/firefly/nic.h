@@ -78,9 +78,7 @@ class Nic : public SST::Component  {
 		std::vector< std::function<void()> > m_notifiers;
 	};
 
-
   public:
-
 
     typedef uint32_t NodeId;
     static const NodeId AnyId = -1;
@@ -91,8 +89,6 @@ class Nic : public SST::Component  {
 
     struct __attribute__ ((packed)) MsgHdr {
         enum Op : unsigned char { Msg, Rdma, Shmem } op;
-        unsigned int    dst_vNicId : 12 ;
-        unsigned int    src_vNicId : 12 ;
     };
 
     struct __attribute__ ((packed)) MatchMsgHdr {
@@ -111,7 +107,6 @@ class Nic : public SST::Component  {
         uint8_t respKey : 7;
     };
     struct RdmaMsgHdr {
-        size_t len;
         enum { Put, Get, GetResp } op;
         uint16_t    rgnNum;
         uint16_t    respKey;
@@ -142,16 +137,13 @@ class Nic : public SST::Component  {
 
     class MemRgnEntry {
       public:
-        MemRgnEntry( int _vNicNum, std::vector<IoVec>& iovec ) : 
-            m_vNicNum( _vNicNum ),
+        MemRgnEntry( std::vector<IoVec>& iovec ) : 
             m_iovec( iovec )
         { }
 
         std::vector<IoVec>& iovec() { return m_iovec; } 
-        int vNicNum() { return m_vNicNum; }
 
       private:
-        int          m_vNicNum;
         std::vector<IoVec>  m_iovec;
         
     };
@@ -217,9 +209,6 @@ public:
     void put( NicCmdEvent*, int );
     void regMemRgn( NicCmdEvent*, int );
     void processNetworkEvent( FireflyNetworkEvent* );
-    DmaRecvEntry* findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr );
-    SendEntryBase* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
-    EntryBase* findRecv( int srcNode, MsgHdr&, MatchMsgHdr& );
 
     Hermes::MemAddr findShmem( int core, Hermes::Vaddr  addr, size_t length );
 
@@ -254,11 +243,10 @@ public:
         m_vNicV[vNic]->notifyRecvDmaDone( src_vNic, src, tag, len, key );
     }
 
-    void notifyNeedRecv( int vNic, int src_vNic, int src, size_t length ) {
-    	m_dbg.verbose(CALL_INFO,2,1,"src_vNic=%d src=%d len=%lu\n",
-                                            src_vNic,src,length);
+    void notifyNeedRecv( int pid, int srcNode, int srcPid, size_t length ) {
+    	m_dbg.verbose(CALL_INFO,2,1,"srcNode=%d srcPid=%d len=%lu\n", srcNode, srcPid, length);
 
-        m_vNicV[vNic]->notifyNeedRecv( src_vNic, src, length );
+        m_vNicV[pid]->notifyNeedRecv( srcPid, srcNode, length );
     }
 
     void notifyPutDone( int vNic, void* key ) {
@@ -287,10 +275,6 @@ public:
     std::vector<RecvMachine*> m_recvMachine;
     ArbitrateDMA* m_arbitrateDMA;
 
-    std::vector< std::map< int, std::deque<DmaRecvEntry*> > > m_recvM;
-    std::vector< std::map< int, MemRgnEntry* > > m_memRgnM;
-    std::map< int, DmaRecvEntry* > m_getOrgnM;
- 
     int                     m_myNodeId;
     int                     m_num_vNics;
     SST::Link*              m_selfLink;
@@ -315,38 +299,49 @@ public:
 	SimTime_t m_nic2host_base_lat_ns;
 	SimTime_t m_shmemRxDelay_ns; 
 	int m_numNicUnits;
+    int m_curNicUnit;
+    enum { RoundRobin, PerContext } m_nicUnitAllocPolicy;
 
-    SimTime_t calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
+    void calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
         if( m_simpleMemoryModel ) {
-        	return m_simpleMemoryModel->schedHostCallback( core, ops, callback );
+        	m_simpleMemoryModel->schedHostCallback( core, ops, callback );
         } else {
 			schedCallback(callback);
 			delete ops;
 		}
     }
 
-    bool initNicUnitPool( int num) {
+    void initNicUnitPool( int num, std::string policy ) {
         m_numNicUnits = num;
-        for ( int i = 0; i < num; i++ ) {
-            m_availNicUnits.push_back(i);
-        } 
+        m_dbg.verbose(CALL_INFO,3,1,"num=%d policy=%s\n",num, policy.c_str());
+        if ( 0 == policy.compare("RoundRobin") ) {
+            m_nicUnitAllocPolicy = RoundRobin;
+        } else if ( 0 == policy.compare("PerContext") ) {
+            m_nicUnitAllocPolicy = PerContext;
+        } else {
+            assert(0);
+        }
     }
 
-    int allocNicUnit() {
-        int unit = -1;
-        if ( ! m_availNicUnits.empty() ) {
-            unit = m_availNicUnits.front();
-            m_availNicUnits.pop_front();
+    int allocNicUnit( int pid ) {
+        int unit;
+        switch ( m_nicUnitAllocPolicy ) {
+          case RoundRobin:
+            unit = m_curNicUnit++ % m_numNicUnits;            
+            break;
+          case PerContext:
+            unit = pid % m_numNicUnits;
+            break;
+          default:
+            assert(0);
         }
 
-        m_dbg.verbose(CALL_INFO,2,1,"unit=%d\n",unit);
+        m_dbg.verbose(CALL_INFO,3,1,"pid=%d unit=%d\n",pid, unit);
         return unit;
     }
 
     void freeNicUnit( int unit ) {
-        m_dbg.verbose(CALL_INFO,2,1,"unit=%d\n",unit);
-        m_availNicUnits.push_back( unit );
-        assert( m_availNicUnits.size() < m_numNicUnits );
+        m_dbg.verbose(CALL_INFO,3,1,"unit=%d\n",unit);
     }
 
     void calcNicMemDelay( int unit, std::vector< MemOp>* ops, std::function<void()> callback ) {
@@ -364,15 +359,17 @@ public:
     RespKey_t genRespKey( void* ptr ) {
         assert( m_respKeyMap.find(m_respKey) == m_respKeyMap.end() );
         RespKey_t key = m_respKey++;
-        m_respKeyMap[key++] = ptr;  
-        m_respKey &= (128 - 1);
-        m_dbg.verbose(CALL_INFO,2,1,"key=%#x nextKey=%#x\n",key,m_respKey);
+        m_respKeyMap[key] = ptr;  
+        m_respKey &= 0x7f;
+        if ( 0 == m_respKey ) {
+            ++m_respKey;
+        }
+        m_dbg.verbose(CALL_INFO,2,1,"map[%#x]=%p nextkey=%#x\n",key-1,ptr,m_respKey);
         return key;
     }
     void* getRespKeyValue( RespKey_t key ) {
-        --key;  
-        m_dbg.verbose(CALL_INFO,2,1,"key=%#x\n",key);
         void* value = m_respKeyMap[key];
+        m_dbg.verbose(CALL_INFO,2,1,"map[%#x]=%p\n",key,value);
         m_respKeyMap.erase(key);
         return value; 
     }

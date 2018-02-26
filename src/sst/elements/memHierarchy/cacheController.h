@@ -23,6 +23,8 @@
 
 #include <queue>
 #include <map>
+#include <string>
+#include <sstream>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
@@ -32,15 +34,13 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 
-#include "cacheArray.h"
-#include "mshr.h"
-#include "replacementManager.h"
-#include "coherencemgr/coherenceController.h"
-#include "util.h"
-#include "cacheListener.h"
-#include "memLinkBase.h"
-#include <string>
-#include <sstream>
+#include "sst/elements/memHierarchy/cacheArray.h"
+#include "sst/elements/memHierarchy/mshr.h"
+#include "sst/elements/memHierarchy/replacementManager.h"
+#include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
+#include "sst/elements/memHierarchy/util.h"
+#include "sst/elements/memHierarchy/cacheListener.h"
+#include "sst/elements/memHierarchy/memLinkBase.h"
 
 namespace SST { namespace MemHierarchy {
 

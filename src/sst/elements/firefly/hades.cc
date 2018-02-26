@@ -21,6 +21,7 @@
 #include <sst/core/params.h>
 #include <sst/core/link.h>
 
+#include "hadesMisc.h"
 #include "sst/elements/thornhill/detailedCompute.h"
 
 #include <stdlib.h>
@@ -54,6 +55,7 @@ Hades::Hades( Component* owner, Params& params ) :
 
     Params funcParams = params.find_prefix_params("functionSM.");
 
+    m_numNodes = params.find<int>("numNodes",0); 
     m_functionSM = new FunctionSM( funcParams, owner, m_proto );
 
     tmpParams = params.find_prefix_params("nicParams." );
@@ -170,7 +172,7 @@ void Hades::_componentSetup()
 
     char buffer[100];
     snprintf(buffer,100,"@t:%#x:%d:Hades::@p():@l ",
-                                    m_virtNic->getNodeId(), getNid());
+                                    m_virtNic->getNodeId(), getRank());
     m_dbg.setPrefix(buffer);
 
     m_proto->setVars( getInfo(), getNic(), getMemHeapLink(), m_functionSM->getRetLink() );
@@ -180,22 +182,14 @@ void Hades::_componentSetup()
 void Hades::_componentInit(unsigned int phase )
 {
     m_virtNic->init( phase );
-
-
 }
 
-int Hades::getNumNids()
+int Hades::getNodeNum() 
 {
-    int size = -1;
-	Group* group = m_info.getGroup(MP::GroupWorld);
-	if ( group ) { 
-    	size = group->getSize();
-	}
-    m_dbg.verbose(CALL_INFO,1,1,"size=%d\n",size);
-    return size;
+    return m_virtNic->getRealNodeId();
 }
 
-int Hades::getNid() 
+int Hades::getRank() 
 {
     int rank = m_info.worldRank();
     m_dbg.verbose(CALL_INFO,1,1,"rank=%d\n",rank);

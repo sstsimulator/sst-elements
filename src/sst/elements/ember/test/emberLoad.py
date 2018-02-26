@@ -333,10 +333,12 @@ hermesParams['hermesParams.nicParams.verboseLevel'] = debug
 hermesParams['hermesParams.functionSM.verboseLevel'] = debug
 hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 emberParams['verbose'] = emberVerbose
+hermesParams['hermesParams.numNodes'] = topoInfo.getNumNodes() 
 emberParams['firefly.hadesSHMEM.verboseLevel'] = 0 
 emberParams['firefly.hadesSHMEM.verboseMask'] = -1
 emberParams['firefly.hadesSHMEM.enterLat_ns'] = 57 
 emberParams['firefly.hadesSHMEM.returnLat_ns'] = 57 
+
 if embermotifLog:
     emberParams['motifLog'] = embermotifLog
 if emberrankmapper:
@@ -374,6 +376,8 @@ for a in params['hermes']:
         print "set hermesParams {}={}".format( key, value )
     hermesParams[key] = value
 
+nicParams["packetSize"] =	networkParams['packetSize']
+nicParams["link_bw"] = networkParams['link_bw']
 sst.merlin._params["link_lat"] = networkParams['link_lat']
 sst.merlin._params["link_bw"] = networkParams['link_bw']   
 sst.merlin._params["xbar_bw"] = networkParams['link_bw'] 

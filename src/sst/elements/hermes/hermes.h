@@ -31,6 +31,8 @@ namespace SST {
 
 namespace Hermes {
 
+typedef std::function<void(int)> Callback;
+
 typedef uint64_t Vaddr;
 
 class Value {
@@ -374,7 +376,8 @@ class OS : public SubComponent {
     virtual void _componentInit( unsigned int phase ) {}
     virtual void _componentSetup( void ) {}
     virtual void printStatus( Output& ) {}
-    virtual int  getNid() { assert(0); }
+    virtual int  getRank() { assert(0); }
+    virtual int  getNodeNum() { assert(0); }
     virtual void finish() {}
     virtual NodePerf* getNodePerf() { assert(0); }
     virtual Thornhill::DetailedCompute* getDetailedCompute() { assert(0); }

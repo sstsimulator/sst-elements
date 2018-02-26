@@ -10,6 +10,7 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libhermes.la
 libhermes_la_SOURCES = \
 	msgapi.h \
+	miscapi.h \
 	hermes.cc \
 	hermes.h \
 	functor.h \

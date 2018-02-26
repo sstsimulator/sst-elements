@@ -28,8 +28,8 @@
 #include <sst/core/elementinfo.h>
 #include <sst/core/output.h>
 
-#include "memEvent.h"
-#include "customcmd/customCmdEvent.h"
+#include "sst/elements/memHierarchy/memEvent.h"
+#include "sst/elements/memHierarchy/customcmd/customCmdEvent.h"
 
 namespace SST {
 
@@ -61,7 +61,19 @@ public:
 
     void init(unsigned int phase);
 
+protected:
+    /** Function to create the custom memEvent that will be used by MemHierarchy */
+    virtual MemEventBase* createCustomEvent(Interfaces::SimpleMem::Request* req) const;
 
+    /** Function to update a SimpleMem request with a custom memEvent response */
+    virtual void updateCustomRequest(Interfaces::SimpleMem::Request* req, MemEventBase *ev) const;
+    
+    Component*  owner_;
+    Output      output;
+    Addr        baseAddrMask_;
+    std::string rqstr_;
+    std::map<MemEventBase::id_type, Interfaces::SimpleMem::Request*> requests_;
+    SST::Link*  link_;
 
 private:
 
@@ -69,25 +81,23 @@ private:
     void handleIncoming(SST::Event *ev);
     
     /** Process MemEvents into updated Requests*/
-    Interfaces::SimpleMem::Request* processIncoming(MemEvent *ev);
+    Interfaces::SimpleMem::Request* processIncoming(MemEventBase *ev);
 
-    /** Update Request with results of MemEvent */
+    /** Update Request with results of MemEvent. Calls updateCustomRequest for custom events. */
     void updateRequest(Interfaces::SimpleMem::Request* req, MemEvent *me) const;
     
     /** Function used internally to create the memEvent that will be used by MemHierarchy */
     MemEventBase* createMemEvent(Interfaces::SimpleMem::Request* req) const;
 
-    /** Function used internally to create the custom memEvent that will be used by MemHierarchy */
-    CustomCmdEvent* createCustomMemEvent(Interfaces::SimpleMem::Request* req) const;
-
-    Component*      owner_;
     HandlerBase*    recvHandler_;
+
     SST::Link*      link_;
     std::map<MemEvent::id_type, Interfaces::SimpleMem::Request*> requests_;
     Output output;
     Addr baseAddrMask_;
     std::string rqstr_;
     uint32_t node;
+
 };
 
 }

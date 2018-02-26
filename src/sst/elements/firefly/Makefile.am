@@ -76,6 +76,7 @@ libfirefly_la_SOURCES = \
 	hadesMP.h \
 	hadesSHMEM.cc \
 	hadesSHMEM.h \
+	hadesMisc.h \
 	shmem/alltoall.cc \
 	shmem/alltoall.h \
 	shmem/alltoalls.cc \
@@ -122,6 +123,10 @@ libfirefly_la_SOURCES = \
 	nicRecvEntry.h \
 	nicRecvMachine.cc \
 	nicRecvMachine.h \
+	nicRecvCtx.cc \
+	nicRecvCtx.h \
+	nicRecvStream.cc \
+	nicRecvStream.h \
 	nicSendEntry.h \
 	nicSendMachine.cc \
 	nicSendMachine.h \

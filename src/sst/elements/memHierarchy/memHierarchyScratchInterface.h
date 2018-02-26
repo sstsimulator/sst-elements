@@ -28,8 +28,8 @@
 #include <sst/core/elementinfo.h>
 #include <sst/core/output.h>
 
-#include "moveEvent.h"
-#include "memEvent.h"
+#include "sst/elements/memHierarchy/moveEvent.h"
+#include "sst/elements/memHierarchy/memEvent.h"
 
 namespace SST {
 
