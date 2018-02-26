@@ -160,7 +160,23 @@ void Stake::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
         // initiate the spike simulator
         htif_args.push_back(pk);
         htif_args.push_back(bin);
-        htif_args.push_back(args);
+
+        // split the cli args into tokens
+        auto i = 0;
+        auto pos = args.find(' ');
+        if( pos == std::string::npos ){
+          // single argument
+          htif_args.push_back(args.substr(i,args.length()));
+        }
+        while( pos != std::string::npos ){
+          htif_args.push_back(args.substr(i,pos-i));
+          i = ++pos;
+          pos = args.find(' ',pos);
+          if( pos == std::string::npos ){
+            htif_args.push_back(args.substr(i,args.length()));
+          }
+        }
+
         spike = new sim_t(isa.c_str(), cores, false, (reg_t)(pc),
                           mems, htif_args, hartids, 2 );
 
