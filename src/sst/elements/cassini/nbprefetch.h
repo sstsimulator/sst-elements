@@ -26,6 +26,7 @@
 #include <sst/core/timeConverter.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/elements/memHierarchy/cacheListener.h>
+#include <sst/core/elementinfo.h>
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -42,6 +43,25 @@ class NextBlockPrefetcher : public SST::MemHierarchy::CacheListener {
 	void notifyAccess(const CacheListenerNotification& notify);
 	void registerResponseCallback(Event::HandlerBase *handler);
 	void printStats(Output& out);
+
+	SST_ELI_REGISTER_SUBCOMPONENT(
+		NextBlockPrefetcher,
+		"cassini",
+		"NextBlockPrefetcher",
+		SST_ELI_ELEMENT_VERSION(1,0,0),
+		"Next Block Prefetcher",
+		"SST::Cassini::CacheListener"
+	)
+
+	SST_ELI_DOCUMENT_PARAMS(
+		{ "cache_line_size", "Size of the cache line the prefetcher is attached to", "64" }
+	)
+
+	SST_ELI_DOCUMENT_STATISTICS(
+		{ "prefetches_issued", "Number of prefetch requests issued", "prefetches", 1 },
+		{ "miss_events_processed", "Number of cache misses received", "misses", 2 },
+		{ "hit_events_processed", "Number of cache hits received", "hits", 2 }
+	)
 
     private:
 	std::vector<Event::HandlerBase*> registeredCallbacks;

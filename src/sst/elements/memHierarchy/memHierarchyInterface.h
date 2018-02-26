@@ -28,8 +28,8 @@
 #include <sst/core/elementinfo.h>
 #include <sst/core/output.h>
 
-#include "memEvent.h"
-#include "customcmd/customCmdEvent.h"
+#include "sst/elements/memHierarchy/memEvent.h"
+#include "sst/elements/memHierarchy/customcmd/customCmdEvent.h"
 
 namespace SST {
 
@@ -90,6 +90,8 @@ private:
     MemEventBase* createMemEvent(Interfaces::SimpleMem::Request* req) const;
 
     HandlerBase*    recvHandler_;
+
+
 };
 
 }

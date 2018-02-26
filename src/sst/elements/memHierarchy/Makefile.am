@@ -178,11 +178,14 @@ nobase_sst_HEADERS = \
 	memEvent.h \
 	memNIC.h \
 	memLink.h \
+	memLinkBase.h \
 	memHierarchyInterface.h \
+	memHierarchyScratchInterface.h \
 	customcmd/customCmdEvent.h \
 	customcmd/customCmdMemory.h \
 	customcmd/customOpCodeCmd.h \
 	customcmd/amoCustomCmdHandler.h \
+	membackend/backing.h \
 	membackend/memBackend.h \
 	membackend/vaultSimBackend.h \
 	membackend/MessierBackend.h \
@@ -191,6 +194,12 @@ nobase_sst_HEADERS = \
 	membackend/requestReorderSimple.h \
 	membackend/requestReorderByRow.h \
 	membackend/delayBuffer.h \
+	membackend/memBackendConvertor.h \
+	membackend/extMemBackendConvertor.h \
+	membackend/flagMemBackendConvertor.h \
+	membackend/scratchBackendConvertor.h \
+	membackend/simpleMemBackendConvertor.h \
+	membackend/simpleMemScratchBackendConvertor.h \
 	memoryController.h \
 	coherentMemoryController.h \
 	cacheListener.h \
