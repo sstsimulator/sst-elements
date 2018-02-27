@@ -22,6 +22,11 @@
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "CacheUnit::@p():@l ";
 
 			assert( m_numMSHR <= cacheSize );
+
+            // start with a full cache 
+            for ( unsigned i = 0; i < cacheSize; i++ ) {
+               m_cache.insert( (i + 1 ) * m_cacheLineSize );
+            }
         }
 
 		enum State { Idle, BlockedStore, BlockedLoad, BlockedMSHR } m_state;
