@@ -95,9 +95,10 @@ class SimpleMemoryModel : SubComponent {
 		int TLP_overhead = params.find<int>( "TLP_overhead", 30 );
 
 		int tlbPageSize = params.find<int>( "tlbPageSize", 1024*1024*4 );
-		int tlbSize = params.find<int>( "tlbSize", 1 );
+		int tlbSize = params.find<int>( "tlbSize", 0 );
 		int tlbMissLat_ns = params.find<int>( "tlbMissLat_ns", 0 );
 		int numWalkers = params.find<int>( "numWalkers", 1 );
+		int numTlbSlots = params.find<int>( "numTlbSlots", 1 );
 
 		m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
 		m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
@@ -135,13 +136,12 @@ class SimpleMemoryModel : SubComponent {
 					new StoreUnit( *this, m_dbg, id,
 						m_busBridgeUnit,
 						nicNumStoreSlots, unitName.str().c_str() ),
-                        tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers, nicNumStoreSlots, nicNumLoadSlots
+                        tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers, numTlbSlots, numTlbSlots 
                         );
 
 			m_threads.push_back( 
 				Thread( *this, threadName.str(), m_dbg, id, 256, tlb, tlb )	
  			); 
-
 		}
 		for ( int i = 0; i < numCores; i++ ) {
 			threadName.str("");
