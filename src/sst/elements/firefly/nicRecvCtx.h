@@ -59,7 +59,7 @@
 
 
             void calcNicMemDelay( int unit, std::vector< MemOp>* ops, std::function<void()> callback ) {
-                m_rm.nic().calcNicMemDelay( unit, ops, callback );
+                m_rm.nic().calcNicMemDelay( unit, m_pid, ops, callback );
             }
 
             void schedCallback( Callback callback, uint64_t delay = 0 ) {

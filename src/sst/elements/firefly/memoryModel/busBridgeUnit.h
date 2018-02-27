@@ -4,7 +4,6 @@
 
 class BusBridgeUnit : public Unit {
 
-
 	struct Entry {
         Entry( UnitBase* src, MemReq* req, Callback callback = NULL ) : src(src), req(req), callback(callback),
 				addr(req->addr), length(req->length) {}

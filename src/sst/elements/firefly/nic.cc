@@ -483,10 +483,10 @@ void Nic::detailedMemOp( Thornhill::DetailedCompute* detailed,
     }
 }
 
-void Nic::dmaRead( int unit, std::vector<MemOp>* vec, Callback callback ) {
+void Nic::dmaRead( int unit, int pid, std::vector<MemOp>* vec, Callback callback ) {
 
     if ( m_simpleMemoryModel ) {
-        calcNicMemDelay( unit, vec, callback );
+        calcNicMemDelay( unit, pid, vec, callback );
     } else {
 		for ( unsigned i = 0;  i <  vec->size(); i++ ) {
 			assert( (*vec)[i].callback == NULL );
@@ -507,10 +507,10 @@ void Nic::dmaRead( int unit, std::vector<MemOp>* vec, Callback callback ) {
     }
 }
 
-void Nic::dmaWrite( int unit, std::vector<MemOp>* vec, Callback callback ) {
+void Nic::dmaWrite( int unit, int pid, std::vector<MemOp>* vec, Callback callback ) {
 
     if ( m_simpleMemoryModel ) {
-       	calcNicMemDelay( unit, vec, callback );
+       	calcNicMemDelay( unit, pid, vec, callback );
     } else { 
 		for ( unsigned i = 0;  i <  vec->size(); i++ ) {
 			assert( (*vec)[i].callback == NULL );
