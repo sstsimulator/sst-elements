@@ -12,8 +12,11 @@ class Tlb : public Unit {
   public:
     Tlb( SimpleMemoryModel& model, Output& dbg, int id, Unit* load, Unit* store, int size, int pageSize, int tlbMissLat_ns,
             int numWalkers, int maxStores, int maxLoads ) :
-        Unit( model, dbg ), m_curPid(-1), m_cache( size ), m_pageMask( ~(pageSize - 1) ), m_load(load), m_store(store),
+        Unit( model, dbg ), m_curPid(-1), m_cache( size ), m_cacheSize( size), m_pageMask( ~(pageSize - 1) ),
+        m_load(load), 
+        m_store(store),
         m_storeBlocked( false ), 
+        m_loadBlocked( false ), 
         m_numWalkers(numWalkers), 
         m_tlbMissLat_ns( tlbMissLat_ns ),
         m_maxPendingStores(maxStores),
@@ -29,7 +32,6 @@ class Tlb : public Unit {
                         size, m_pageMask, numWalkers );
     }
 
-    int m_tlbMissLat_ns;
     void resume( UnitBase* unit ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"\n");
 
@@ -212,6 +214,7 @@ class Tlb : public Unit {
 
     bool lookup( int pid, uint64_t addr  ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"pid=%d addr=%#" PRIx64 "\n",pid, addr );
+        if ( m_cacheSize == 0 ) { return true; }
 
         assert ( -1 == m_curPid || pid == m_curPid ); 
 
@@ -229,12 +232,14 @@ class Tlb : public Unit {
 
     Unit* m_load;
     Unit* m_store;
+    int m_cacheSize;
     int m_maxPendingStores;
     int m_maxPendingLoads;
     int m_numPendingStores;
     int m_numPendingLoads;
     int m_numWalkers;
     int m_pendingWalk;
+    int m_tlbMissLat_ns;
 
     bool m_storeBlocked;
     bool m_loadBlocked;
