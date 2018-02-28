@@ -130,10 +130,19 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     free(nextListenerName);
     free(nextListenerParams);
 
+    char *node_buffer1 = (char*) malloc(sizeof(char) * 256);
+    char *node_buffer2 = (char*) malloc(sizeof(char) * 256);
+    char *node_buffer3 = (char*) malloc(sizeof(char) * 256);
+    sprintf(node_buffer1, "%" PRIu32, params.find<uint32_t>("node", 0));
+    sprintf(node_buffer2, "%" PRIu32, params.find<uint32_t>("shared_memory", 0));
+    sprintf(node_buffer3, "%" PRIu32, params.find<uint32_t>("local_memory_size", 0));
 
     if (isPortConnected("direct_link")) {
         Params linkParams = params.find_prefix_params("cpulink.");
         linkParams.insert("port", "direct_link");
+        linkParams.insert("node", node_buffer1);
+        linkParams.insert("shared_memory", node_buffer2);
+        linkParams.insert("local_memory_size", node_buffer3);
         linkParams.insert("latency", link_lat, false);
         linkParams.insert("accept_region", "1", false);
         link_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, linkParams));
@@ -147,6 +156,9 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
         Params nicParams = params.find_prefix_params("memNIC.");
         nicParams.insert("port", "network");
+        nicParams.insert("node", node_buffer1);
+        nicParams.insert("shared_memory", node_buffer2);
+        nicParams.insert("local_memory_size", node_buffer3);
         nicParams.insert("group", "4", false);
         nicParams.insert("accept_region", "1", false);
 
@@ -155,6 +167,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         clockLink_ = true;
     }
     
+    free(node_buffer1);
+	free(node_buffer2);
+	free(node_buffer3);
+
     region_ = link_->getRegion();
     privateMemOffset_ = 0;
 
