@@ -380,7 +380,7 @@ void LinkControl::handle_input(Event* ev)
         // If we're waiting, we need to send a wakeup event to the
         // output queues
         if ( waiting ) {
-            output_timing->send(1,NULL);
+            output_timing->send(0,NULL);
             waiting = false;
         }
         break;

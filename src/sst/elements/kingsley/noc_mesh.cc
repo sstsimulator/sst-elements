@@ -57,7 +57,6 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
     use_dense_map = params.find<bool>("use_dense_map",false);
 
     port_priority_equal = params.find<bool>("port_priority_equal",false);
-    std::cout << "port_priority_equal = " << port_priority_equal << std::endl;
     
     // Parse all the timing parameters
 
@@ -329,6 +328,7 @@ noc_mesh::handle_input_ep2r(Event* ev, int port)
 bool
 noc_mesh::clock_handler(Cycle_t cycle)
 {
+    // TraceFunction trace(CALL_INFO);
     // Decrement all the busy values
     for ( int i = 0; i < local_port_start + local_ports; ++i ) {
         port_busy[i]--;
@@ -353,6 +353,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
             // Check to see if the port is busy
             if ( port_busy[port] > 0 ) {
                 xbar_stalls[port]->addData(1);
+                local_lru.satisfied(false);
                 continue;
             }
             
@@ -419,9 +420,11 @@ noc_mesh::clock_handler(Cycle_t cycle)
             // Get the next port
             int port = event->next_port;
 
+
             // Check to see if the port is busy
             if ( port_busy[port] > 0 ) {
                 xbar_stalls[port]->addData(1);
+                mesh_lru.satisfied(false);
                 continue;
             }
             
