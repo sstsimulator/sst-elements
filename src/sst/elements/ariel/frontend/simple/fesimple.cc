@@ -71,6 +71,8 @@ KNOB<UINT32> StartupMode(KNOB_MODE_WRITEONCE, "pintool",
     "s", "1", "Mode for configuring profile behavior, 1 = start enabled, 0 = start disabled, 2 = attempt auto detect");
 KNOB<UINT32> InterceptMultiLevelMemory(KNOB_MODE_WRITEONCE, "pintool",
     "m", "1", "Should intercept multi-level memory allocations, copies and frees, 1 = start enabled, 0 = start disabled");
+KNOB<string> UseMallocMap(KNOB_MODE_WRITEONCE, "pintool",
+    "u", "", "Should intercept ariel_malloc_flag() and interpret using a malloc map: specify filename or leave blank for disabled");
 KNOB<UINT32> KeepMallocStackTrace(KNOB_MODE_WRITEONCE, "pintool",
     "k", "1", "Should keep shadow stack and dump on malloc calls. 1 = enabled, 0 = disabled");
 KNOB<UINT32> DefaultMemoryPool(KNOB_MODE_WRITEONCE, "pintool",
@@ -98,6 +100,18 @@ std::vector< std::set<ADDRINT> > instPtrsList;
 UINT32 overridePool;
 bool shouldOverride;
 
+// For mlm stuff
+// Map each location ID to the set of repeats that should go to fast mem
+set<int64_t> fastmemlocs;
+// Flag whether to send next intercept malloc to fast memory or not
+struct mallocFlagInfo {
+    bool valid;
+    int count;
+    int level;
+    int id;
+    mallocFlagInfo(bool a, int b, int c, int d) : valid(a), count(b), level(c), id(d) {}
+};
+std::vector<mallocFlagInfo> toFast;
 
 /****************************************************************/
 /********************** SHADOW STACK ****************************/
@@ -813,12 +827,23 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation) {
         ac.mlm_map.alloc_len = allocationLength;
 
 
-        if(shouldOverride) {
+        if (UseMallocMap.Value() != "") {
+            if (toFast[thr].valid) {
+                ac.mlm_map.alloc_level = toFast[thr].level;
+                ac.instPtr = toFast[thr].id;
+                toFast[thr].count--;
+                if (toFast[thr].count == 0) {
+                    toFast[thr].valid = false;
+                }
+                tunnel->writeMessage(thr, ac);
+            }
+        } else if (shouldOverride) {
             ac.mlm_map.alloc_level = overridePool;
-        } else {
+            tunnel->writeMessage(thr, ac);
+        } else if (InterceptMultiLevelMemory.Value()) {
             ac.mlm_map.alloc_level = allocationLevel;
+            tunnel->writeMessage(thr, ac);
         }
-        tunnel->writeMessage(thr, ac);
         
     	/*printf("ARIEL: Created a malloc of size: %" PRIu64 " in Ariel\n",
          * (UINT64) allocationLength);*/
@@ -837,10 +862,37 @@ VOID ariel_postfree_instrument(ADDRINT allocLocation) {
     tunnel->writeMessage(thr, ac);
 }
 
+void mapped_ariel_malloc_flag_fortran(int* mallocLocId, int* count, int* level) {
+    THREADID thr = PIN_ThreadId();
+    int64_t id = (int64_t) *mallocLocId;
+    // Set malloc flag for this thread
+    if (fastmemlocs.find(id) != fastmemlocs.end()) {
+        toFast[thr].valid = true;
+        toFast[thr].count = *count;
+        toFast[thr].level = *level;
+        toFast[thr].id = id;
+    } else {
+        toFast[thr].valid = false;
+    }
+}
+
+void mapped_ariel_malloc_flag(int64_t mallocLocId, int count, int level) {
+    THREADID thr = PIN_ThreadId();
+    
+    // Set malloc flag for this thread
+    if (fastmemlocs.find(mallocLocId) != fastmemlocs.end()) {
+        toFast[thr].valid = true;
+        toFast[thr].count = count;
+        toFast[thr].level = level;
+        toFast[thr].id = mallocLocId;
+    } else {
+        toFast[thr].valid = false;
+    }
+}
+
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
     if (KeepMallocStackTrace.Value() == 1) {
         fprintf(rtnNameMap, "0x%" PRIx64 ", %s\n", RTN_Address(rtn), RTN_Name(rtn).c_str());   
-
     }
 
     if (RTN_Name(rtn) == "ariel_enable" || RTN_Name(rtn) == "_ariel_enable" || RTN_Name(rtn) == "__arielfort_MOD_ariel_enable") {
@@ -929,26 +981,38 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
     } else if (RTN_Name(rtn) == "ariel_flushline" || RTN_Name(rtn) == "_ariel_flushline") {
 
 	return;
-    }
-    else if (RTN_Name(rtn) == "ariel_fence" || RTN_Name(rtn) == "_ariel_fence") {
+    } else if (RTN_Name(rtn) == "ariel_fence" || RTN_Name(rtn) == "_ariel_fence") {
 
 	return;
-    }
-    else if (RTN_Name(rtn) == "ariel_mmap_mlm" || RTN_Name(rtn) == "_ariel_mmap_mlm") {
+    } else if (RTN_Name(rtn) == "ariel_mmap_mlm" || RTN_Name(rtn) == "_ariel_mmap_mlm") {
 	 AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) ariel_mmap_mlm);
 	return;
-    }
-    else if (RTN_Name(rtn) == "ariel_munmap_mlm" || RTN_Name(rtn) == "_ariel_munmap_mlm") {
+    } else if (RTN_Name(rtn) == "ariel_munmap_mlm" || RTN_Name(rtn) == "_ariel_munmap_mlm") {
 
 	return;
+    } else if (UseMallocMap.Value() != "") {
+        if (RTN_Name(rtn) == "ariel_malloc_flag" || RTN_Name(rtn) == "_ariel_malloc_flag") {
+        
+            fprintf(stderr, "Identified routine: ariel_malloc_flag, replacing with Ariel equivalent..\n");
+            RTN_Replace(rtn, (AFUNPTR) mapped_ariel_malloc_flag);
+            return;
+
+        } else if (RTN_Name(rtn) == "__arielfort_MOD_ariel_malloc_flag") {
+            fprintf(stderr, "Identified routine: ariel_malloc_flag, replacing with Ariel equivalent..\n");
+            RTN_Replace(rtn, (AFUNPTR) mapped_ariel_malloc_flag_fortran);
+            return;
+        }
     }
-
-
-
-
-
 }
 
+void loadFastMemLocations() {
+    std::ifstream infile(UseMallocMap.Value().c_str());
+    int64_t val;
+    while (infile >> val) {
+        fastmemlocs.insert(val);
+    }
+    infile.close();
+}
 
 /*(===================================================================== */
 /* Print Help Message                                                    */
@@ -1063,6 +1127,13 @@ int main(int argc, char *argv[])
     // Instrument traces to capture stack
     if (KeepMallocStackTrace.Value() == 1)
         TRACE_AddInstrumentFunction(InstrumentTrace, 0);
+    
+    if (UseMallocMap.Value() != "") {
+        loadFastMemLocations();
+        for (int i = 0; i < core_count; i++) {
+            toFast.push_back(mallocFlagInfo(false, 0, 0, 0));
+        }
+    }
 
     fprintf(stderr, "ARIEL: Starting program.\n");
     fflush(stdout);
