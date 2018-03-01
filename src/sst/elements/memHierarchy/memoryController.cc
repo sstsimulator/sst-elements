@@ -468,9 +468,8 @@ void MemController::readData(MemEvent* event) {
     vector<uint8_t> payload;
     payload.resize(event->getSize(), 0);
 
-    if (!backing_) return;
-
-    backing_->get(localAddr, event->getSize(), payload);
+    if (backing_)
+        backing_->get(localAddr, event->getSize(), payload);
     
     event->setPayload(payload);
 }
