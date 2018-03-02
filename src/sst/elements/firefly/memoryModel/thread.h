@@ -121,7 +121,7 @@ class Thread : public UnitBase {
 
         switch( op->getOp() ) {
           case MemOp::NoOp:
-	        m_model.schedCallback( 1, callback );
+	        m_model.schedCallback( 0, callback );
             break;
 
 		  case MemOp::HostBusWrite:
@@ -177,7 +177,7 @@ class Thread : public UnitBase {
             // the OP callback will also be called
 		} else if ( m_nextOp && ! m_waitingOnOp ) { 
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"schedule process()\n");
-		    m_model.schedCallback( 1, std::bind(&Thread::process, this, m_nextOp ) ); 
+		    m_model.schedCallback( 0, std::bind(&Thread::process, this, m_nextOp ) ); 
         }
     }
 
