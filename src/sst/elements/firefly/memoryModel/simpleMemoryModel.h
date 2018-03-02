@@ -82,7 +82,7 @@ class SimpleMemoryModel : SubComponent {
 		int nicNumLoadSlots = params.find<int>( "nicNumLoadSlots", 32 );
 		int nicNumStoreSlots = params.find<int>( "nicNumStoreSlots", 32 );
 		int hostNumLoadSlots = params.find<int>( "hostNumLoadSlots", 32 );
-		int hostNumStoreSlots = params.find<int>( "hostNumLoadSlots", 32 );
+		int hostNumStoreSlots = params.find<int>( "hostNumStoreSlots", 32 );
 		double busBandwidth = params.find<double>("busBandwidth_Gbs", 7.8 );
 		int busNumLinks = params.find<double>("busNumLinks", 16 );
 
@@ -159,14 +159,13 @@ class SimpleMemoryModel : SubComponent {
 			);
 		}
 
-		UnitAlgebra hostBW = params.find<SST::UnitAlgebra>("host_bw", SST::UnitAlgebra("12GiB/s"));
-		UnitAlgebra busBW = params.find<SST::UnitAlgebra>("bus_bw", SST::UnitAlgebra("12GiB/s"));
-
 		m_selfLink = comp->configureSelfLink("Nic::SimpleMemoryModel", "1 ns",
         new Event::Handler<SimpleMemoryModel>(this,&SimpleMemoryModel::handleSelfEvent));
 	}
 
-    virtual ~SimpleMemoryModel() {}
+    virtual ~SimpleMemoryModel() {
+        delete m_hostCacheUnit;
+    }
 
 	void schedCallback( SimTime_t delay, Callback callback ){
 		m_selfLink->send( delay , new SelfEvent( callback ) );
