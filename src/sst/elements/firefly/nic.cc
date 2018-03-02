@@ -66,17 +66,21 @@ Nic::Nic(ComponentId_t id, Params &params) :
     int hostReadDelay = params.find<int>( "hostReadDelay_ns", 200 );
     m_shmemRxDelay_ns = params.find<int>( "shmemRxDelay_ns",0); 
 
+    m_num_vNics = params.find<int>("num_vNics", 1 );
+
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
     int numShmemCmdSlots =    params.find<int>( "numShmemCmdSlots", 32 );
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
     int maxRecvMachineQsize = params.find<int>( "maxRecvMachineQsize", 1 );
 
-    int numNicUnits =    params.find<int>( "numNicUnits", 4 );
+    int numNicUnits =    params.find<int>( "numNicUnits", 1 );
+    int recvMachineUnit =    params.find<int>( "recvMachineUnit", 0 );
+    int sendMachineUnit =    params.find<int>( "sendMachineUnit", 0 );
 
     initNicUnitPool(
-        numNicUnits, 
-        params.find<std::string>( "nicAllocationPolicy", "RoundRobin" ) 
+        numNicUnits, m_num_vNics,
+        params.find<std::string>( "nicAllocationPolicy", "PerContext" ) 
     );
 
     UnitAlgebra xxx = params.find<SST::UnitAlgebra>( "packetSize" );
@@ -121,7 +125,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_dbg.verbose(CALL_INFO,2,1,"IdToNet()=%d\n", IdToNet( m_myNodeId ) );
 
-    m_num_vNics = params.find<int>("num_vNics", 1 );
     for ( int i = 0; i < m_num_vNics; i++ ) {
         m_vNicV.push_back( new VirtNic( *this, i,
 			params.find<std::string>("corePortName","core") ) );
@@ -137,20 +140,20 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                rxMatchDelay, hostReadDelay, maxRecvMachineQsize ) );
+                rxMatchDelay, hostReadDelay, maxRecvMachineQsize, recvMachineUnit ) );
     m_recvMachine.push_back( new CtlMsgRecvMachine( *this, 1, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                rxMatchDelay, hostReadDelay, maxRecvMachineQsize ) ); 
+                rxMatchDelay, hostReadDelay, maxRecvMachineQsize, recvMachineUnit ) ); 
 
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 0, maxSendMachineQsize ) );
+                txDelay, packetSizeInBytes, 0, maxSendMachineQsize, sendMachineUnit ) );
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId,
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 1, maxSendMachineQsize ) );
+                txDelay, packetSizeInBytes, 1, maxSendMachineQsize, sendMachineUnit ) );
 
     float dmaBW  = params.find<float>( "dmaBW_GBs", 0.0 ); 
     float dmaContentionMult = params.find<float>( "dmaContentionMult", 0.0 );
@@ -191,6 +194,9 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
 Nic::~Nic()
 {
+    if ( m_simpleMemoryModel ) {
+        delete m_simpleMemoryModel;
+    }  
 	delete m_shmem;
 	delete m_linkControl;
 
