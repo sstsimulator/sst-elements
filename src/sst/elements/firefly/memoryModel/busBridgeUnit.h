@@ -20,7 +20,7 @@ class BusBridgeUnit : public Unit {
     BusBridgeUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, double bandwidth, int numLinks,
                             int TLP_overhead, int dll_bytes, int cacheLineSize, int widgetSlots ) :
         Unit( model, dbg ), m_cache(cache), m_bandwidth_GB( bandwidth ), m_numLinks(numLinks), m_blocked(2,NULL),
-        m_TLP_overhead(TLP_overhead), m_DLL_bytes(dll_bytes),
+        m_TLP_overhead(TLP_overhead), m_DLL_bytes(dll_bytes), m_cacheLineSize( cacheLineSize ),
 		m_reqBus(*this,id, "Req", true, std::bind(&BusBridgeUnit::processReq,this,std::placeholders::_1 ) ), 
 		m_respBus(*this,id, "Resp", false,std::bind(&BusBridgeUnit::processResp,this,std::placeholders::_1 ) ) 
     {
@@ -47,6 +47,7 @@ class BusBridgeUnit : public Unit {
 
     bool load( UnitBase* src, MemReq* req, Callback callback  ) {
 		
+        //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 		Entry* entry = new Entry( src, req, callback );
 		entry->qd = m_model.getCurrentSimTimeNano();
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu\n",entry,req->addr,req->length);
@@ -65,6 +66,7 @@ class BusBridgeUnit : public Unit {
 
     bool store( UnitBase* src, MemReq* req ) {
 
+        //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 		Entry* entry = new Entry( src, req );
 		entry->qd = m_model.getCurrentSimTimeNano();
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu\n",entry,req->addr,req->length);
@@ -234,5 +236,6 @@ class BusBridgeUnit : public Unit {
     int m_TLP_overhead;
     int m_DLL_bytes;
 	int m_numLinks;
+    int m_cacheLineSize;
 	double m_bandwidth_GB;
 };
