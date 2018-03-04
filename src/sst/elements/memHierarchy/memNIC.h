@@ -130,6 +130,7 @@ public:
             ser & info.name;
             ser & info.addr;
             ser & info.id;
+            ser & info.node;
             ser & info.region.start;
             ser & info.region.end;
             ser & info.region.interleaveSize;

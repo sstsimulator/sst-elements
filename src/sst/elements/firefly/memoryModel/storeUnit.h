@@ -50,7 +50,7 @@ class StoreUnit : public Unit {
 
 		if ( m_blockedSrc ) {
         	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"unblock src\n");
-			m_model.schedResume( 0, m_blockedSrc );
+			m_model.schedResume( 0, m_blockedSrc, this );
 			m_blockedSrc = NULL;
 		}
 

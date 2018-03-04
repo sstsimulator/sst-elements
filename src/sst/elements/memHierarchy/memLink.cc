@@ -55,9 +55,12 @@ void MemLink::init(unsigned int phase) {
                 epInfo.name = mEvRegion->getSrc();
                 epInfo.addr = 0;
                 epInfo.id = 0;
+                epInfo.node = node;
                 epInfo.region = mEvRegion->getRegion();
-                sourceEndpointInfo.insert(epInfo);
-                destEndpointInfo.insert(epInfo);
+                //sourceEndpointInfo.insert(epInfo);
+                //destEndpointInfo.insert(epInfo);
+                addSource(epInfo);
+                addDest(epInfo);
 
                 if (mEvRegion->getSetRegion() && acceptRegion) {
                     dbg.debug(_L10_, "\tUpdating local region\n");

@@ -136,10 +136,12 @@ void MemNIC::init(unsigned int phase) {
                     getName().c_str(), imre->info.name.c_str(), imre->info.addr, imre->info.id, imre->info.region.start, imre->info.region.end, imre->info.region.interleaveSize, imre->info.region.interleaveStep);
 
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
-                sourceEndpointInfo.insert(imre->info);
+                //sourceEndpointInfo.insert(imre->info);
+            	addSource(imre->info);
                 dbg.debug(_L10_, "\tAdding to sourceEndpointInfo. %zu sources found\n", sourceEndpointInfo.size());
             } else if (destIDs.find(imre->info.id) != destIDs.end()) {
-                destEndpointInfo.insert(imre->info);
+                //destEndpointInfo.insert(imre->info);
+            	addDest(imre->info);
                 dbg.debug(_L10_, "\tAdding to destEndpointInfo. %zu destinations found\n", destEndpointInfo.size());
             }
             delete imre;
@@ -307,9 +309,11 @@ MemEventBase* MemNIC::recv() {
                         getName().c_str(), imre->info.name.c_str());
             }
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
-                sourceEndpointInfo.insert(imre->info);
+                //sourceEndpointInfo.insert(imre->info);
+            	addSource(imre->info);
             } else if (destIDs.find(imre->info.id) != destIDs.end()) {
-                destEndpointInfo.insert(imre->info);
+                //destEndpointInfo.insert(imre->info);
+            	addDest(imre->info);
             }
             delete imre;
         }
