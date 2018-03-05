@@ -30,6 +30,7 @@ using namespace SST::Interfaces;
 using namespace std::placeholders;
 
 int Nic::SendMachine::OutQ::m_packetId = 0;
+int Nic::ShmemSendMove::m_alignment = 64;
 
 Nic::Nic(ComponentId_t id, Params &params) :
     Component( id ),
@@ -66,6 +67,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     int hostReadDelay = params.find<int>( "hostReadDelay_ns", 200 );
     m_shmemRxDelay_ns = params.find<int>( "shmemRxDelay_ns",0); 
 
+
     m_num_vNics = params.find<int>("num_vNics", 1 );
 
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
@@ -73,6 +75,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     int numShmemCmdSlots =    params.find<int>( "numShmemCmdSlots", 32 );
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
     int maxRecvMachineQsize = params.find<int>( "maxRecvMachineQsize", 1 );
+    Nic::ShmemSendMove::m_alignment = params.find<int>("shmemSendAlignment",64);
 
     int numNicUnits =    params.find<int>( "numNicUnits", 1 );
     int recvMachineUnit =    params.find<int>( "recvMachineUnit", 0 );
@@ -83,6 +86,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
         params.find<std::string>( "nicAllocationPolicy", "RoundRobin" ) 
     );
 
+    int packetOverhead = params.find<int>("packetOverhead",0);
     UnitAlgebra xxx = params.find<SST::UnitAlgebra>( "packetSize" );
     int packetSizeInBytes;
     if ( xxx.hasUnits( "B" ) ) {
@@ -92,6 +96,12 @@ Nic::Nic(ComponentId_t id, Params &params) :
     } else {
         assert(0);
     }
+
+    // after subtracting the message headers and the overhead we need at least this much payload
+    // there is nothing magic about 64 it just seemed reasonable, it could be lower
+    int minPayload = 64;
+    assert( packetSizeInBytes - packetOverhead > sizeof(MsgHdr) + 
+        std::max(sizeof(ShmemMsgHdr),  sizeof(RdmaMsgHdr) ) + minPayload ); 
 
 	UnitAlgebra input_buf_size = params.find<SST::UnitAlgebra>("input_buf_size" );
 	UnitAlgebra output_buf_size = params.find<SST::UnitAlgebra>("output_buf_size" );
@@ -149,11 +159,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 0, maxSendMachineQsize, sendMachineUnit ) );
+                txDelay, packetSizeInBytes, packetOverhead, 0, maxSendMachineQsize, sendMachineUnit ) );
     m_sendMachine.push_back( new SendMachine( *this,  m_myNodeId,
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                txDelay, packetSizeInBytes, 1, maxSendMachineQsize, sendMachineUnit ) );
+                txDelay, packetSizeInBytes, packetOverhead, 1, maxSendMachineQsize, sendMachineUnit ) );
 
     float dmaBW  = params.find<float>( "dmaBW_GBs", 0.0 ); 
     float dmaContentionMult = params.find<float>( "dmaContentionMult", 0.0 );
