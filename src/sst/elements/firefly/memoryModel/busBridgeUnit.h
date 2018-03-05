@@ -47,10 +47,10 @@ class BusBridgeUnit : public Unit {
 
     bool load( UnitBase* src, MemReq* req, Callback callback  ) {
 		
-        //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 		Entry* entry = new Entry( src, req, callback );
 		entry->qd = m_model.getCurrentSimTimeNano();
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu\n",entry,req->addr,req->length);
+        assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 		m_reqBus.addReq( entry );
 		return true;
 	}
@@ -66,10 +66,11 @@ class BusBridgeUnit : public Unit {
 
     bool store( UnitBase* src, MemReq* req ) {
 
-        //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 		Entry* entry = new Entry( src, req );
 		entry->qd = m_model.getCurrentSimTimeNano();
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu\n",entry,req->addr,req->length);
+
+        assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 		m_reqBus.addReq( entry );
 		return true;
     }
