@@ -154,7 +154,7 @@ public:
     // void recvTopologyEvent(int port, TopologyEvent* ev);
     
     // void dumpState(std::ostream& stream);
-    // void printStatus(Output& out);
+    void printStatus(Output& out);
 
 
 };

@@ -1343,3 +1343,50 @@ noc_mesh::complete(unsigned int phase)
 
 }
 
+
+void
+noc_mesh::printStatus(Output& out)
+{
+    out.output("Start Router:  id = (%d, %d)\n", my_x, my_y);
+
+    std::vector<std::pair<std::string,int> > vec;
+    int port = north_port;
+    vec.push_back(std::make_pair("North", port));
+    port = south_port;
+    vec.push_back(std::make_pair("South", port));
+    port = east_port;
+    vec.push_back(std::make_pair("East", port));
+    port = west_port;
+    vec.push_back(std::make_pair("West", port));
+
+    for ( int i = 0; i < local_ports; ++i ) {
+        std::string str = "local_port" + std::to_string(i);
+        vec.push_back(std::make_pair(str,i+local_port_start));
+    }
+
+    // Add local ports
+
+    for ( auto& pinfo : vec ) {
+        out.output("  %s port:\n", pinfo.first.c_str());
+        if ( ports[pinfo.second] != NULL ) {
+            out.output("    Port busy = %d\n",port_busy[pinfo.second]);
+            out.output("    Port credits = %d\n",port_credits[pinfo.second]);
+            out.output("    Input queue total packets = %lu, head packet info:\n",port_queues[pinfo.second].size());
+            if ( port_queues[pinfo.second].empty() ) {
+                out.output("      <empty>\n");
+            }
+            else {
+                noc_mesh_event* event = port_queues[pinfo.second].front();
+                out.output("      src = %lld, dest = %lld, next_port = %d, flits = %d\n",
+                           event->encap_ev->request->src, event->encap_ev->request->dest,
+                           event->next_port, event->encap_ev->getSizeInFlits());
+            }
+        }
+        else {
+            out.output("    UNUSED\n");
+        }
+    }
+    
+    out.output("End Router: id = (%d, %d)\n\n", my_x, my_y);
+}
+
