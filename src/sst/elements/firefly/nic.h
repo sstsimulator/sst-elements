@@ -105,8 +105,6 @@ class Nic : public SST::Component  {
         unsigned char op2 : 3; 
         unsigned char dataType : 3;
         uint32_t respKey : 24;
-        uint8_t pad[46]; // we want the payload of a stream to be aligned on cache line,
-                         // so packetSize - stream headers (MsgHdr and this header) should be a multiple of a cache line
     };
     struct RdmaMsgHdr {
         enum { Put, Get, GetResp } op;
@@ -319,10 +317,8 @@ public:
         m_dbg.verbose(CALL_INFO,3,1,"num=%d policy=%s\n",numUnits, policy.c_str());
         if ( 0 == policy.compare("RoundRobin") ) {
             m_nicUnitAllocPolicy = RoundRobin;
-            assert(0);
         } else if ( 0 == policy.compare("PerContext") ) {
             m_nicUnitAllocPolicy = PerContext;
-
             m_numNicUnitsPerCtx = m_numNicUnits/numCtx;
         } else {
             assert(0);
