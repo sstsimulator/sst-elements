@@ -13,6 +13,7 @@
 			MemReq* req;
 			SimTime_t time;
 		};
+        std::string stats;
       public:
         CacheUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* memory, int cacheSize, int cacheLineSize, int numMSHR, std::string name ) :
             Unit( model, dbg ),  m_memory(memory), m_numPending(0), m_blockedSrc(NULL), m_numMSHR(numMSHR), m_scheduled(false),
@@ -20,6 +21,7 @@
             m_mshrEntry(NULL), m_cache( cacheSize ), m_hitCnt(0), m_total(0)
 		{
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "CacheUnit::@p():@l ";
+            stats = std::to_string(id) + ":SimpleMemoryModel::" + name + "CacheUnit:: ";
 
 			assert( m_numMSHR <= cacheSize );
 
@@ -29,7 +31,7 @@
             }
         }
         ~CacheUnit() {
-//            m_dbg.output("CacheUnit: total requests %" PRIu64 " %f percent hits\n",m_total, (float)m_hitCnt/(float)m_total);
+            //m_dbg.output("%s total requests %" PRIu64 " %f percent hits\n",stats.c_str(), m_total, (float)m_hitCnt/(float)m_total);
         }
 
         uint64_t m_hitCnt;
@@ -50,14 +52,14 @@
         bool store( UnitBase* src, MemReq* req ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 
-            //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
+            assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 			return addEntry( new Entry( Entry::Store, src, req, m_model.getCurrentSimTimeNano()  ) ); 
 		}
 
         bool load( UnitBase* src, MemReq* req, Callback callback ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 
-            //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
+            assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 			return addEntry( new Entry( Entry::Load, src, req, m_model.getCurrentSimTimeNano(), callback ) ); 
 		}
 
