@@ -21,8 +21,6 @@ using namespace SST;
 using namespace SST::Firefly;
 
 
-int Nic::ShmemSendMove::m_alignment = 64;
-
 void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int vc, int numBytes, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
 
