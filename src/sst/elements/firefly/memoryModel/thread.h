@@ -8,6 +8,7 @@ class Work {
         if( 0 == ops->size() ) {
             ops->push_back( MemOp( MemOp::Op::NoOp ) );
         }
+#if 0
         std::vector< MemOp >::iterator iter = (*ops).begin();
         size_t x = (*ops).size();
         while ( iter != (*ops).end() ) {
@@ -32,6 +33,7 @@ class Work {
                 ++iter;
             }
         }
+#endif
 #if 0
         if ( x !=(*ops).size() ) {
             printf("%s() grew %lu\n",__func__, (*ops).size() - x );
