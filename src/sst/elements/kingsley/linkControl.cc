@@ -486,6 +486,27 @@ void LinkControl::handle_output(Event* ev)
     // send_bit_count->addData(send_event->request->size_in_bits);
 }
 
+void
+LinkControl::printStatus(Output& out)
+{
+    out.output("Start LinkControl for Component %s:\n", parent->getName().c_str());
+
+    out.output("  Router credits = %d\n",rtr_credits[0]);
+    out.output("  Output Buffer credits = %d\n",outbuf_credits[0]);
+    out.output("  Input queue total packets = %lu\n",input_buf[0].size());
+    out.output("  Input queue total packets = %lu, head packet info:\n",output_buf[0].size());
+    if ( output_buf[0].empty() ) {
+        out.output("    <empty>\n");
+    }
+    else {
+        NocPacket* event = output_buf[0].front();
+        out.output("      src = %lld, dest = %lld, flits = %d\n",
+                   event->request->src, event->request->dest,
+                   event->getSizeInFlits());
+    }
+    
+    out.output("End LinkControl for Component %s\n", parent->getName().c_str());
+}
 
 } // namespace Merlin
 } // namespace SST

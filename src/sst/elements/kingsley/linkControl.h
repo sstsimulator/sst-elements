@@ -166,6 +166,7 @@ public:
     inline nid_t getEndpointID() const { return id; }
     inline const UnitAlgebra& getLinkBW() const { return link_bw; }
 
+    void printStatus(Output& out);
     
 private:
     bool network_initialized;
