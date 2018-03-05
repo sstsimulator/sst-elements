@@ -1347,7 +1347,7 @@ noc_mesh::complete(unsigned int phase)
 void
 noc_mesh::printStatus(Output& out)
 {
-    out.output("Start Router:  id = (%d, %d)\n", my_x, my_y);
+    out.output("Start Router %s:  id = (%d, %d)\n", getName().c_str(), my_x, my_y);
 
     std::vector<std::pair<std::string,int> > vec;
     int port = north_port;
@@ -1387,6 +1387,6 @@ noc_mesh::printStatus(Output& out)
         }
     }
     
-    out.output("End Router: id = (%d, %d)\n\n", my_x, my_y);
+    out.output("End Router %s: id = (%d, %d)\n\n", getName().c_str(), my_x, my_y);
 }
 
