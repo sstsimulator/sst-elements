@@ -2,12 +2,41 @@
 class Work {
 
   public:
-    Work( int pid, std::vector< MemOp >* ops, Callback callback, SimTime_t start ) :
+    Work( int pid, std::vector< MemOp >* ops, Callback callback, SimTime_t start, int alignment = 64 ) :
         m_pid(pid), m_ops(ops), m_callback(callback), m_start(start), m_pos(0) 
     {
         if( 0 == ops->size() ) {
             ops->push_back( MemOp( MemOp::Op::NoOp ) );
         }
+        std::vector< MemOp >::iterator iter = (*ops).begin();
+        size_t x = (*ops).size();
+        while ( iter != (*ops).end() ) {
+            if ( iter->addr & (alignment -1) ) {
+                //printf("%s() not aligned addr=%#" PRIx64 " length=%" PRIu64 "\n",__func__, iter->addr, iter->length);
+                if ( iter->length < alignment ) {
+                    //printf("%s() fix addr=%#" PRIx64 " length=%" PRIu64 "\n",__func__, iter->addr, iter->length);
+                    iter->addr = iter->addr & ~(alignment-1);
+                    iter->length = alignment;
+                    ++iter;
+                } else {
+                    MemOp op = MemOp( iter->addr & ~(alignment-1), alignment, iter->getOp() );
+                    //printf("%s() insert addr=%#" PRIx64 " length=%" PRIu64 "\n",__func__, op.addr, op.length);
+
+                    iter->length = iter->length - (iter->addr & (alignment-1));  
+                    iter->length = iter->length + alignment & ~(alignment-1);  
+                    iter->addr = op.addr + alignment; 
+                    //printf("%s() fix addr=%#" PRIx64 " length=%" PRIu64 "\n",__func__, iter->addr, iter->length);
+                    iter = (*ops).insert( iter, op );
+                }
+            } else {
+                ++iter;
+            }
+        }
+#if 0
+        if ( x !=(*ops).size() ) {
+            printf("%s() grew %lu\n",__func__, (*ops).size() - x );
+        }
+#endif
     }
 
     ~Work() {
