@@ -162,6 +162,7 @@ class BusBridgeUnit : public Unit {
 				m_model.schedResume( 0, entry->src );
 			}
 			entry->src->decPendingWrites();
+            delete entry->req;
 		}
 
 		delete entry;
