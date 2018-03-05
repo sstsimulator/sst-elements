@@ -21,14 +21,23 @@ using namespace SST;
 using namespace SST::Firefly;
 
 
+int Nic::ShmemSendMove::m_alignment = 64;
+
 void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int vc, int numBytes, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
 
-    size_t space = numBytes - event.bufSize(); 
-    size_t len = (m_length - m_offset) > space ? space : (m_length - m_offset); 
+    size_t bufSpace = numBytes - event.bufSize(); 
+    size_t left = m_length - m_offset;
+    size_t len;
+    
+    if ( left > bufSpace  ) {
+        len = bufSpace & ~( m_alignment - 1);
+    } else {
+        len = left;
+    } 
 
     dbg.verbose(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"Shmem: %d: pktSpace=%lu dataLeft=%lu xferSize=%lu\n",
-                vc, space, m_length - m_offset, len  );
+                vc, bufSpace, left, len  );
 
 	vec.push_back( MemOp( m_addr + m_offset, len, MemOp::Op::BusDmaFromHost ));
 
