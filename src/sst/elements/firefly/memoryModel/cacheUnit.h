@@ -52,14 +52,14 @@
         bool store( UnitBase* src, MemReq* req ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 
-            assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
+            //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 			return addEntry( new Entry( Entry::Store, src, req, m_model.getCurrentSimTimeNano()  ) ); 
 		}
 
         bool load( UnitBase* src, MemReq* req, Callback callback ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 
-            assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
+            //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 			return addEntry( new Entry( Entry::Load, src, req, m_model.getCurrentSimTimeNano(), callback ) ); 
 		}
 
