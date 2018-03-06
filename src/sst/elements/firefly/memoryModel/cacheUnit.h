@@ -13,13 +13,15 @@
 			MemReq* req;
 			SimTime_t time;
 		};
+        std::string stats;
       public:
         CacheUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* memory, int cacheSize, int cacheLineSize, int numMSHR, std::string name ) :
             Unit( model, dbg ),  m_memory(memory), m_numPending(0), m_blockedSrc(NULL), m_numMSHR(numMSHR), m_scheduled(false),
 			m_cacheLineSize(cacheLineSize), m_qSize(m_numMSHR), m_numIssuedLoads(0), m_state( Idle ), m_missEntry(NULL),
-            m_mshrEntry(NULL), m_cache( cacheSize )
+            m_mshrEntry(NULL), m_cache( cacheSize ), m_hitCnt(0), m_total(0)
 		{
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "CacheUnit::@p():@l ";
+            stats = std::to_string(id) + ":SimpleMemoryModel::" + name + "CacheUnit:: ";
 
 			assert( m_numMSHR <= cacheSize );
 
@@ -28,6 +30,12 @@
                m_cache.insert( (i + 1 ) * m_cacheLineSize );
             }
         }
+        ~CacheUnit() {
+            //m_dbg.output("%s total requests %" PRIu64 " %f percent hits\n",stats.c_str(), m_total, (float)m_hitCnt/(float)m_total);
+        }
+
+        uint64_t m_hitCnt;
+        uint64_t m_total; 
 
 		enum State { Idle, BlockedStore, BlockedLoad, BlockedMSHR } m_state;
 		int m_numIssuedLoads;
@@ -44,12 +52,14 @@
         bool store( UnitBase* src, MemReq* req ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 
+            //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 			return addEntry( new Entry( Entry::Store, src, req, m_model.getCurrentSimTimeNano()  ) ); 
 		}
 
         bool load( UnitBase* src, MemReq* req, Callback callback ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 
+            //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 			return addEntry( new Entry( Entry::Load, src, req, m_model.getCurrentSimTimeNano(), callback ) ); 
 		}
 
@@ -99,7 +109,9 @@
 
 		void checkHit( Entry* entry ) {
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#" PRIx64 "\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
+            ++m_total;
             if ( m_cache.isValid( entry->req->addr ) ) { 
+                ++m_hitCnt;
 				hit( entry );
 			} else if ( isPending(entry->req->addr ) ) {
 				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"pending addr=%#" PRIx64 "\n",entry->req->addr);

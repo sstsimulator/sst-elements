@@ -24,9 +24,9 @@ class SendMachine {
             const char* prefix() { return m_prefix.c_str(); }
           public:
 
-            OutQ( Nic& nic, Output& output, int vc, int maxQsize) : 
+            OutQ( Nic& nic, Output& output, int vc, int maxQsize ) : 
                 m_nic(nic), m_dbg(output), m_maxQsize(maxQsize),
-                m_vc(vc), m_wakeUpCallback(NULL), m_notifyCallback(NULL), m_scheduled(false)
+                m_vc(vc), m_wakeUpCallback(NULL), m_notifyCallback(NULL), m_scheduled(false) 
             {
                 m_prefix = "@t:"+ std::to_string(nic.getNodeId()) +":Nic::SendMachine::OutQ::@p():@l ";
             }
@@ -136,8 +136,9 @@ class SendMachine {
       public:
         typedef std::function<void()> Callback;
         SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask,
-              int txDelay, int packetSizeInBytes, int vc, int maxQsize  ) :
-            m_nic(nic), m_txDelay( txDelay ), m_packetSizeInBytes( packetSizeInBytes), m_vc(vc)
+              int txDelay, int packetSizeInBytes, int pktOverhead, int vc, int maxQsize, int unit ) :
+            m_nic(nic), m_txDelay( txDelay ), m_packetSizeInBytes( packetSizeInBytes - pktOverhead), m_vc(vc), m_unit(unit),
+            m_pktOverhead(pktOverhead)
         {
             char buffer[100];
             snprintf(buffer,100,"@t:%d:Nic::SendMachine::@p():@l vc=%d ",nodeId,vc);
@@ -150,7 +151,7 @@ class SendMachine {
         ~SendMachine() { }
 
         void run( SendEntryBase* entry ) {
-            entry->setUnit( m_nic.allocNicUnit( entry->local_vNic() ) );
+            entry->setUnit( m_nic.allocNicUnit( entry->local_vNic(), m_unit ) );
             m_sendQ.push_back( entry );
             if ( 1 == m_sendQ.size() ) {
                 streamInit( m_sendQ.front() );
@@ -178,6 +179,8 @@ class SendMachine {
         int     m_txDelay;
         int     m_packetSizeInBytes;
         int     m_vc;
+        int     m_unit;
+        int     m_pktOverhead;
 
         std::deque<SendEntryBase*>  m_sendQ;
 };

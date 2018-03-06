@@ -104,7 +104,7 @@ class Nic : public SST::Component  {
         unsigned char op : 3; 
         unsigned char op2 : 3; 
         unsigned char dataType : 3;
-        uint8_t respKey : 7;
+        uint32_t respKey : 24;
     };
     struct RdmaMsgHdr {
         enum { Put, Get, GetResp } op;
@@ -300,6 +300,7 @@ public:
 	SimTime_t m_shmemRxDelay_ns; 
 	int m_numNicUnits;
     int m_curNicUnit;
+    int m_numNicUnitsPerCtx;
     enum { RoundRobin, PerContext } m_nicUnitAllocPolicy;
 
     void calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
@@ -311,26 +312,28 @@ public:
 		}
     }
 
-    void initNicUnitPool( int num, std::string policy ) {
-        m_numNicUnits = num;
-        m_dbg.verbose(CALL_INFO,3,1,"num=%d policy=%s\n",num, policy.c_str());
+    void initNicUnitPool( int numUnits, int numCtx, std::string policy ) {
+        m_numNicUnits = numUnits;
+        m_dbg.verbose(CALL_INFO,3,1,"num=%d policy=%s\n",numUnits, policy.c_str());
         if ( 0 == policy.compare("RoundRobin") ) {
             m_nicUnitAllocPolicy = RoundRobin;
         } else if ( 0 == policy.compare("PerContext") ) {
             m_nicUnitAllocPolicy = PerContext;
+            m_numNicUnitsPerCtx = m_numNicUnits/numCtx;
         } else {
             assert(0);
         }
     }
 
-    int allocNicUnit( int pid ) {
+    int allocNicUnit( int pid, int num ) {
         int unit;
         switch ( m_nicUnitAllocPolicy ) {
           case RoundRobin:
             unit = m_curNicUnit++ % m_numNicUnits;            
             break;
           case PerContext:
-            unit = pid % m_numNicUnits;
+            assert( num < m_numNicUnitsPerCtx ); 
+            unit = pid * m_numNicUnitsPerCtx + num;
             break;
           default:
             assert(0);
@@ -361,7 +364,7 @@ public:
         assert( m_respKeyMap.find(m_respKey) == m_respKeyMap.end() );
         RespKey_t key = m_respKey++;
         m_respKeyMap[key] = ptr;  
-        m_respKey &= 0x7f;
+        m_respKey &= 0xffffff;
         if ( 0 == m_respKey ) {
             ++m_respKey;
         }
