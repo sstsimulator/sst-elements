@@ -33,7 +33,7 @@ class RecvMachine {
 
         RecvMachine( Nic& nic, int vc, int numVnics, 
                 int nodeId, int verboseLevel, int verboseMask,
-                int rxMatchDelay, int hostReadDelay, int maxQsize ) :
+                int rxMatchDelay, int hostReadDelay, int maxQsize, int unit ) :
             m_nic(nic), 
             m_vc(vc), 
             m_rxMatchDelay( rxMatchDelay ),
@@ -46,7 +46,7 @@ class RecvMachine {
             m_dbg.init(buffer, verboseLevel, verboseMask, Output::STDOUT);
             setNotify();
             for ( unsigned i=0; i < numVnics; i++) {
-                m_ctxMap.push_back( new Ctx( m_dbg, *this, i, maxQsize ) );
+                m_ctxMap.push_back( new Ctx( m_dbg, *this, i, unit, maxQsize ) );
             }
         }
 
@@ -75,7 +75,7 @@ class RecvMachine {
             FireflyNetworkEvent* ev = getNetworkEvent( m_vc );
             if ( ev ) {
                 m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"packet available\n");
-                m_nic.schedCallback( std::bind( &Nic::RecvMachine::processPkt, this, ev ), 1);
+                m_nic.schedCallback( std::bind( &Nic::RecvMachine::processPkt, this, ev ), 0);
             } else {
                 m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"network idle\n");
                 setNotify();
@@ -139,8 +139,8 @@ class CtlMsgRecvMachine : public RecvMachine {
   public:
     CtlMsgRecvMachine( Nic& nic, int vc, int numVnics, 
                 int nodeId, int verboseLevel, int verboseMask,
-                int rxMatchDelay, int hostReadDelay, int maxQsize ) :
-        RecvMachine( nic, vc, numVnics, nodeId, verboseLevel, verboseMask, rxMatchDelay, hostReadDelay, maxQsize )
+                int rxMatchDelay, int hostReadDelay, int maxQsize, int unit ) :
+        RecvMachine( nic, vc, numVnics, nodeId, verboseLevel, verboseMask, rxMatchDelay, hostReadDelay, maxQsize, unit )
     {}
 
   private:

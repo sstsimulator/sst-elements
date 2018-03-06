@@ -30,6 +30,11 @@ class Tlb : public Unit {
 
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"tlbSize=%d, pageMask=%#" PRIx64 ", numWalkers=%d\n",
                         size, m_pageMask, numWalkers );
+
+        // we need to start with a full cache, what's in it doesn't mater
+        for ( unsigned i = 0; i < size; i++ ) {
+            m_cache.insert( ( i + 1 ) );
+        }
     }
 
     void resume( UnitBase* unit ) {
@@ -202,8 +207,8 @@ class Tlb : public Unit {
 
 
     void walk( int pid, uint64_t addr, Callback callback ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"pid=%d addr=%#" PRIx64 "\n",pid, addr );
-        m_cache.evict();
+        Hermes::Vaddr evictAddr = m_cache.evict();
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"pid=%d addr=%#" PRIx64 " evictAddr=%#" PRIx64 "\n",pid, addr, evictAddr );
         m_model.schedCallback( m_tlbMissLat_ns, 
             [=](){               
                 m_cache.insert( addr );
@@ -213,17 +218,19 @@ class Tlb : public Unit {
     }
 
     bool lookup( int pid, uint64_t addr  ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"pid=%d addr=%#" PRIx64 "\n",pid, addr );
         if ( m_cacheSize == 0 ) { return true; }
 
         assert ( -1 == m_curPid || pid == m_curPid ); 
 
+        bool retval;
         if ( m_cache.isValid( addr) ) {
             m_cache.updateAge( addr );
-            return true;
+            retval = true;
         } else {
-            return false;
+            retval = false;
         }
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"pid=%d addr=%#" PRIx64 " %s\n",pid, addr, retval ? "hit":"miss" );
+        return retval;
     }
 
     Hermes::Vaddr getPageAddr(Hermes::Vaddr addr ) {

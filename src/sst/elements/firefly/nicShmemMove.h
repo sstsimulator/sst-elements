@@ -74,6 +74,7 @@ class ShmemSendMove {
             FireflyNetworkEvent&, std::vector<MemOp>& ) = 0;
 
     virtual bool isDone() = 0;
+    static  int m_alignment;
 };
 
 class ShmemSendMoveMem : public ShmemSendMove {

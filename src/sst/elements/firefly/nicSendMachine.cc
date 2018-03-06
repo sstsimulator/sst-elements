@@ -34,7 +34,7 @@ void Nic::SendMachine::streamInit( SendEntryBase* entry )
         "setup hdr, srcPid=%d, destNode=%d dstPid=%d bytes=%lu\n",
         entry->local_vNic(), entry->dest(), entry->dst_vNic(), entry->totalBytes() ) ;
 
-    FireflyNetworkEvent* ev = new FireflyNetworkEvent;
+    FireflyNetworkEvent* ev = new FireflyNetworkEvent( m_pktOverhead );
     ev->setDestPid( entry->dst_vNic() );
     ev->setSrcPid( entry->local_vNic() ); 
     ev->setIsHdr();
@@ -59,7 +59,7 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
             m_inQ->enque( unit, pid, vec, ev, entry->dest(), std::bind( &Nic::SendMachine::streamFini, this, entry ) );
         } else {
             m_inQ->enque( unit, pid, vec, ev, entry->dest() );
-            m_nic.schedCallback( std::bind( &Nic::SendMachine::getPayload, this, entry, new FireflyNetworkEvent ), 1);
+            m_nic.schedCallback( std::bind( &Nic::SendMachine::getPayload, this, entry, new FireflyNetworkEvent( m_pktOverhead) ), 0);
         }
 
     } else {
@@ -148,7 +148,7 @@ void Nic::SendMachine::OutQ::enque( FireflyNetworkEvent* ev, int dest )
 {
     m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "size=%lu\n", m_queue.size());
     m_queue.push_back( std::make_pair(ev,dest) );
-    if ( ! m_notifyCallback && ! m_scheduled && canSend( ev->bufSize() ) )  {
+    if ( ! m_notifyCallback && ! m_scheduled && canSend( ev->payloadSize() ) )  {
         runSendQ();
     }
 }
@@ -161,26 +161,27 @@ void Nic::SendMachine::OutQ::runSendQ(  )
 
     std::pair< FireflyNetworkEvent*, int>& entry = m_queue.front();
 
-    if ( canSend( entry.first->bufSize() ) ) {
+    if ( canSend( entry.first->payloadSize() ) ) {
         send( entry );
         m_queue.pop_front();
     } else {
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "not enough space\n");
         //assert(0);
         return;
     }
 
     if ( ! m_queue.empty() ) {
         std::pair< FireflyNetworkEvent*, int>& entry = m_queue.front();
-        if ( canSend( entry.first->bufSize() ) ) {
+        if ( canSend( entry.first->payloadSize() ) ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "schedule runSendQ()\n");
             m_scheduled = true;
-            m_nic.schedCallback( std::bind( &Nic::SendMachine::OutQ::runSendQ, this ),1);
+            m_nic.schedCallback( std::bind( &Nic::SendMachine::OutQ::runSendQ, this ),0);
         } 
     }
 
     if ( m_wakeUpCallback ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "call wakeup callback\n");
-        m_nic.schedCallback( m_wakeUpCallback, 1);
+        m_nic.schedCallback( m_wakeUpCallback, 0);
         m_wakeUpCallback = NULL;
     }
 }

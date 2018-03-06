@@ -2,7 +2,8 @@
             std::string m_prefix;
             const char* prefix() { return m_prefix.c_str(); }
           public:
-            Ctx( Output& output, RecvMachine& rm, int pid, int qsize ) : m_dbg(output), m_rm(rm), m_pid(pid), 
+            Ctx( Output& output, RecvMachine& rm, int pid, int unit, int qsize ) :
+                    m_dbg(output), m_rm(rm), m_pid(pid), m_unit( unit ), 
                     m_blockedNetworkEvent(NULL), m_maxQsize(qsize) {
                 m_prefix = "@t:"+ std::to_string(rm.nic().getNodeId()) +":Nic::RecvMachine::Ctx" + std::to_string(pid) + "::@p():@l ";
             }
@@ -93,7 +94,7 @@
             }
 
             int allocNicUnit() {
-                return m_rm.m_nic.allocNicUnit( m_pid );
+                return m_rm.m_nic.allocNicUnit( m_pid, m_unit );
             }
 
             void clearStreamMap( SrcKey key ) {
@@ -119,6 +120,7 @@
             StreamBase* newStream( int unit, FireflyNetworkEvent* );
             Output&         m_dbg;
             RecvMachine&    m_rm;
+            int                              m_unit;
             int                              m_pid;
             std::map< SrcKey, StreamBase*>   m_streamMap;
             FireflyNetworkEvent*             m_blockedNetworkEvent;

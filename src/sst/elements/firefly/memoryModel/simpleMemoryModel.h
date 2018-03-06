@@ -82,7 +82,7 @@ class SimpleMemoryModel : SubComponent {
 		int nicNumLoadSlots = params.find<int>( "nicNumLoadSlots", 32 );
 		int nicNumStoreSlots = params.find<int>( "nicNumStoreSlots", 32 );
 		int hostNumLoadSlots = params.find<int>( "hostNumLoadSlots", 32 );
-		int hostNumStoreSlots = params.find<int>( "hostNumLoadSlots", 32 );
+		int hostNumStoreSlots = params.find<int>( "hostNumStoreSlots", 32 );
 		double busBandwidth = params.find<double>("busBandwidth_Gbs", 7.8 );
 		int busNumLinks = params.find<double>("busNumLinks", 16 );
 
@@ -99,6 +99,7 @@ class SimpleMemoryModel : SubComponent {
 		int tlbMissLat_ns = params.find<int>( "tlbMissLat_ns", 0 );
 		int numWalkers = params.find<int>( "numWalkers", 1 );
 		int numTlbSlots = params.find<int>( "numTlbSlots", 1 );
+        int nicToHostMTU = params.find<int>( "nicToHostMTU", 256 );
 
 		m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
 		m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
@@ -140,7 +141,7 @@ class SimpleMemoryModel : SubComponent {
                         );
 
 			m_threads.push_back( 
-				Thread( *this, threadName.str(), m_dbg, id, 256, tlb, tlb )	
+				Thread( *this, threadName.str(), m_dbg, id, nicToHostMTU, tlb, tlb )	
  			); 
 		}
 		for ( int i = 0; i < numCores; i++ ) {
@@ -159,14 +160,13 @@ class SimpleMemoryModel : SubComponent {
 			);
 		}
 
-		UnitAlgebra hostBW = params.find<SST::UnitAlgebra>("host_bw", SST::UnitAlgebra("12GiB/s"));
-		UnitAlgebra busBW = params.find<SST::UnitAlgebra>("bus_bw", SST::UnitAlgebra("12GiB/s"));
-
 		m_selfLink = comp->configureSelfLink("Nic::SimpleMemoryModel", "1 ns",
         new Event::Handler<SimpleMemoryModel>(this,&SimpleMemoryModel::handleSelfEvent));
 	}
 
-    virtual ~SimpleMemoryModel() {}
+    virtual ~SimpleMemoryModel() {
+        delete m_hostCacheUnit;
+    }
 
 	void schedCallback( SimTime_t delay, Callback callback ){
 		m_selfLink->send( delay , new SelfEvent( callback ) );
