@@ -39,7 +39,7 @@ Nic::RecvMachine::StreamBase::~StreamBase() {
         delete m_recvEntry;
     }
     if ( m_sendEntry ) {
-        m_ctx->nic().m_sendMachine[0]->run( m_sendEntry );
+        m_ctx->nic().qSendEntry( m_sendEntry );
     }
 }
 
