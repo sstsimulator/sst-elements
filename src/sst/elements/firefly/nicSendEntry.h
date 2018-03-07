@@ -21,8 +21,6 @@ class SendEntryBase {
     virtual ~SendEntryBase() { }
 
     virtual int local_vNic()   { return m_local_vNic; }
-    virtual int getUnit() { return m_nicUnit; }
-    virtual void setUnit( int unit ) { m_nicUnit = unit; }
 
     virtual MsgHdr::Op getOp() = 0;
     virtual size_t totalBytes() = 0;
@@ -42,7 +40,6 @@ class SendEntryBase {
 
   private:
     int m_local_vNic;
-    int m_nicUnit;
 };
 
 class CmdSendEntry: public SendEntryBase, public EntryBase {
