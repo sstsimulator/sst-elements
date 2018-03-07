@@ -95,11 +95,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
         assert(0);
     }
 
-    // after subtracting the message headers and the overhead we need at least this much payload
-    // there is nothing magic about 64 it just seemed reasonable, it could be lower
-    int minPayload = 64;
-    assert( packetSizeInBytes - packetOverhead > sizeof(MsgHdr) + 
-        std::max(sizeof(ShmemMsgHdr),  sizeof(RdmaMsgHdr) ) + minPayload ); 
+    int minPktPayload = 64;
+    assert( ( packetSizeInBytes - packetOverhead ) >= minPktPayload );
 
 	UnitAlgebra input_buf_size = params.find<SST::UnitAlgebra>("input_buf_size" );
 	UnitAlgebra output_buf_size = params.find<SST::UnitAlgebra>("output_buf_size" );

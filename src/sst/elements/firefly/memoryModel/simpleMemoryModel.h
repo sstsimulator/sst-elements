@@ -99,6 +99,7 @@ class SimpleMemoryModel : SubComponent {
 		int tlbMissLat_ns = params.find<int>( "tlbMissLat_ns", 0 );
 		int numWalkers = params.find<int>( "numWalkers", 1 );
 		int numTlbSlots = params.find<int>( "numTlbSlots", 1 );
+        int nicToHostMTU = params.find<int>( "nicToHostMTU", 256 );
 
 		m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
 		m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
@@ -140,7 +141,7 @@ class SimpleMemoryModel : SubComponent {
                         );
 
 			m_threads.push_back( 
-				Thread( *this, threadName.str(), m_dbg, id, 256, tlb, tlb )	
+				Thread( *this, threadName.str(), m_dbg, id, nicToHostMTU, tlb, tlb )	
  			); 
 		}
 		for ( int i = 0; i < numCores; i++ ) {
