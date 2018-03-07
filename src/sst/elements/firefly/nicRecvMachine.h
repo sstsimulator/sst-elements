@@ -87,7 +87,7 @@ class RecvMachine {
             assert( ! m_notifyCallback );
             if( ! m_notifyCallback ) {
                 m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "\n");
-                m_nic.m_linkWidget.setNotifyOnReceive(
+                m_nic.m_linkRecvWidget->setNotify(
                                     std::bind(&Nic::RecvMachine::processNetworkData, this), m_vc );
                 m_notifyCallback = true;
             }
@@ -129,45 +129,7 @@ class RecvMachine {
         }
 
         int         m_vc;
-        int         m_unit;
         int         m_rxMatchDelay;
         bool        m_notifyCallback; 
 
-};
-
-class CtlMsgRecvMachine : public RecvMachine {
-  public:
-    CtlMsgRecvMachine( Nic& nic, int vc, int numVnics, 
-                int nodeId, int verboseLevel, int verboseMask,
-                int rxMatchDelay, int hostReadDelay, int maxQsize, int unit ) :
-        RecvMachine( nic, vc, numVnics, nodeId, verboseLevel, verboseMask, rxMatchDelay, hostReadDelay, maxQsize, unit )
-    {}
-
-  private:
-    void queueResponse( SendEntryBase* entry ) {
-        m_nic.m_sendMachine[0]->run( entry );
-        checkNetworkForData();
-    } 
-
-    void processPkt( FireflyNetworkEvent* ev ) {
-
-        MsgHdr& hdr = *(MsgHdr*) ev->bufPtr();
-        RdmaMsgHdr& rdmaHdr = *(RdmaMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
-
-        m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"CtlMsg Get Operation srcNode=%d op=%d rgn=%d resp=%d, offset=%d\n",
-                ev->getSrcNode(), rdmaHdr.op, rdmaHdr.rgnNum, rdmaHdr.respKey, rdmaHdr.offset );
-
-        assert( hdr.op == MsgHdr::Rdma && rdmaHdr.op == RdmaMsgHdr::Get  );
-        
-        SendEntryBase* entry = m_ctxMap[ev->getDestPid()]->findGet( ev->getSrcNode(), ev->getSrcPid(), rdmaHdr );
-        assert(entry);
-
-        ev->bufPop(sizeof(MsgHdr) + sizeof(rdmaHdr) );
-
-        m_nic.schedCallback( 
-                std::bind( &Nic::CtlMsgRecvMachine::queueResponse, this, entry ),
-                m_hostReadDelay );
-
-        delete ev;
-    }
 };
