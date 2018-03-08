@@ -53,9 +53,9 @@ class Nic : public SST::Component  {
 		}
 
 		inline bool notify( int vn ) {
-        	m_dbg.verbose(CALL_INFO,2,1,"Widget vn=%d\n",vn);
+        	m_dbg.debug(CALL_INFO,2,1,"Widget vn=%d\n",vn);
 			if ( m_notifiers[vn] ) {
-       			m_dbg.verbose(CALL_INFO,2,1,"Widget call notifier, number still installed %d\n", m_num -1);
+       			m_dbg.debug(CALL_INFO,2,1,"Widget call notifier, number still installed %d\n", m_num -1);
 				m_notifiers[vn]();
 				m_notifiers[vn] = NULL;
 				--m_num;
@@ -65,7 +65,7 @@ class Nic : public SST::Component  {
 		}
 
 		inline void setNotify( std::function<void()> notifier, int vn ) {
-        	m_dbg.verbose(CALL_INFO,2,1,"Widget vn=%d, number now installed %d\n",vn,m_num+1);
+        	m_dbg.debug(CALL_INFO,2,1,"Widget vn=%d, number now installed %d\n",vn,m_num+1);
 			if ( m_num == 0 ) {
                 m_callback();
 			}
@@ -238,18 +238,18 @@ public:
     }
 
     void notifyNeedRecv( int pid, int srcNode, int srcPid, size_t length ) {
-    	m_dbg.verbose(CALL_INFO,2,1,"srcNode=%d srcPid=%d len=%lu\n", srcNode, srcPid, length);
+    	m_dbg.debug(CALL_INFO,2,1,"srcNode=%d srcPid=%d len=%lu\n", srcNode, srcPid, length);
 
         m_vNicV[pid]->notifyNeedRecv( srcPid, srcNode, length );
     }
 
     void notifyPutDone( int vNic, void* key ) {
-        m_dbg.verbose(CALL_INFO,2,1,"%p\n",key);
+        m_dbg.debug(CALL_INFO,2,1,"%p\n",key);
         assert(0);
     }
 
     void notifyGetDone( int vNic, int, int, int, size_t, void* key ) {
-        m_dbg.verbose(CALL_INFO,2,1,"%p\n",key);
+        m_dbg.debug(CALL_INFO,2,1,"%p\n",key);
         m_vNicV[vNic]->notifyGetDone( key );
     }
 
@@ -259,14 +259,14 @@ public:
 
     bool sendNotify(int vc)
     {
-        m_dbg.verbose(CALL_INFO,2,1,"network can send on vc=%d\n",vc);
+        m_dbg.debug(CALL_INFO,2,1,"network can send on vc=%d\n",vc);
         return m_linkSendWidget->notify( vc );
     }
 
 
     bool recvNotify(int vc)
     {
-        m_dbg.verbose(CALL_INFO,2,1,"network event available vc=%d\n",vc);
+        m_dbg.debug(CALL_INFO,2,1,"network event available vc=%d\n",vc);
         return m_linkRecvWidget->notify( vc );
     }
 
@@ -306,20 +306,20 @@ public:
 
     void qSendEntry( SendEntryBase* entry ) {
         
-        m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "myPid=%d destNode=%d destPid=%d size=%" PRIu64 "\n",
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "myPid=%d destNode=%d destPid=%d size=%" PRIu64 "\n",
                     entry->local_vNic(), entry->dest(), entry->dst_vNic(), entry->totalBytes() );
 
         if ( entry->isCtrl() ) {
-            m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "ctrl\n");
+            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "ctrl\n");
             m_sendMachine[m_ctrlSendMachine]->qSendEntry( entry );
         } else {
-            m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "std\n");
+            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "std\n");
             m_sendMachine[m_stdSendMachine]->qSendEntry( entry );
         }
     }
 
     void notifyHavePkt( int id ) {
-        m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"id=%d current src=%d\n",id, m_curNetworkSrc);
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"id=%d current src=%d\n",id, m_curNetworkSrc);
         if ( -1 == m_curNetworkSrc ) {
             m_curNetworkSrc = id;
             feedTheNetwork();
@@ -338,7 +338,7 @@ public:
 
     void initNicUnitPool( int numUnits, int numCtx, std::string policy ) {
         m_numNicUnits = numUnits;
-        m_dbg.verbose(CALL_INFO,3,1,"num=%d policy=%s\n",numUnits, policy.c_str());
+        m_dbg.debug(CALL_INFO,3,1,"num=%d policy=%s\n",numUnits, policy.c_str());
         if ( 0 == policy.compare("RoundRobin") ) {
             m_nicUnitAllocPolicy = RoundRobin;
         } else if ( 0 == policy.compare("PerContext") ) {
@@ -363,12 +363,12 @@ public:
             assert(0);
         }
 
-        m_dbg.verbose(CALL_INFO,3,1,"pid=%d unit=%d\n",pid, unit);
+        m_dbg.debug(CALL_INFO,3,1,"pid=%d unit=%d\n",pid, unit);
         return unit;
     }
 
     void freeNicUnit( int unit ) {
-        m_dbg.verbose(CALL_INFO,3,1,"unit=%d\n",unit);
+        m_dbg.debug(CALL_INFO,3,1,"unit=%d\n",unit);
     }
 
     void calcNicMemDelay( int unit, int pid, std::vector< MemOp>* ops, std::function<void()> callback ) {
@@ -392,12 +392,12 @@ public:
         if ( 0 == m_respKey ) {
             ++m_respKey;
         }
-        m_dbg.verbose(CALL_INFO,2,1,"map[%#x]=%p nextkey=%#x\n",key-1,ptr,m_respKey);
+        m_dbg.debug(CALL_INFO,2,1,"map[%#x]=%p nextkey=%#x\n",key-1,ptr,m_respKey);
         return key;
     }
     void* getRespKeyValue( RespKey_t key ) {
         void* value = m_respKeyMap[key];
-        m_dbg.verbose(CALL_INFO,2,1,"map[%#x]=%p\n",key,value);
+        m_dbg.debug(CALL_INFO,2,1,"map[%#x]=%p\n",key,value);
         m_respKeyMap.erase(key);
         return value; 
     }

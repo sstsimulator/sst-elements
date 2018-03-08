@@ -74,10 +74,10 @@ class RecvMachine {
         void checkNetworkForData() {
             FireflyNetworkEvent* ev = getNetworkEvent( m_vc );
             if ( ev ) {
-                m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"packet available\n");
+                m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"packet available\n");
                 m_nic.schedCallback( std::bind( &Nic::RecvMachine::processPkt, this, ev ), 0);
             } else {
-                m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"network idle\n");
+                m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"network idle\n");
                 setNotify();
             }
         }
@@ -86,7 +86,7 @@ class RecvMachine {
         void setNotify( ) {
             assert( ! m_notifyCallback );
             if( ! m_notifyCallback ) {
-                m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "\n");
+                m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "\n");
                 m_nic.m_linkRecvWidget->setNotify(
                                     std::bind(&Nic::RecvMachine::processNetworkData, this), m_vc );
                 m_notifyCallback = true;
@@ -94,7 +94,7 @@ class RecvMachine {
         }
 
         void processNetworkData() {
-            m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "\n");
+            m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "\n");
 
             // this notifier was called by the LinkControl object, the RecvMachine may 
             // re-install the LinkControl notifier, if it does there would be a cycle
@@ -108,7 +108,7 @@ class RecvMachine {
             if ( ! m_ctxMap[ ev->getDestPid() ]->processPkt( ev ) ) {
                 checkNetworkForData();
             } else {
-      		    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"blocked\n");
+      		    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"blocked\n");
             }
         }
 

@@ -30,7 +30,7 @@ void Nic::SendMachine::streamInit( SendEntryBase* entry )
 #endif
     hdr.op= entry->getOp();
 
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE,
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,
         "setup hdr, srcPid=%d, destNode=%d dstPid=%d bytes=%lu\n",
         entry->local_vNic(), entry->dest(), entry->dst_vNic(), entry->totalBytes() ) ;
 
@@ -56,7 +56,7 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
     if ( ! m_inQ->isFull() ) {
 	    std::vector< MemOp >* vec = new std::vector< MemOp >; 
         entry->copyOut( m_dbg, m_packetSizeInBytes, *ev, *vec ); 
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "enque load from host, %lu bytes\n",ev->bufSize());
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "enque load from host, %lu bytes\n",ev->bufSize());
         if ( entry->isDone() ) {
             m_inQ->enque( m_unit, pid, vec, ev, entry->dest(), std::bind( &Nic::SendMachine::streamFini, this, entry ) );
         } else {
@@ -65,16 +65,16 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
         }
 
     } else {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "blocked by host\n");
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "blocked by host\n");
         m_inQ->wakeMeUp( std::bind( &Nic::SendMachine::getPayload, this, entry, ev ) );
     }
 }
 void Nic::SendMachine::streamFini( SendEntryBase* entry ) 
 {
 
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "stream done for pid=%d\n",entry->local_vNic());
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "stream done for pid=%d\n",entry->local_vNic());
     if ( entry->shouldDelete() ) {
-        m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "delete SendEntry entry, pid=%d\n",entry->local_vNic());
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "delete SendEntry entry, pid=%d\n",entry->local_vNic());
         delete entry;
     }
     if ( m_I_manage ) {

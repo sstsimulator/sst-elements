@@ -62,7 +62,7 @@ public:
 
     virtual void issue( uint64_t time, FOO* = NULL ) {
         if ( m_output ) {
-            m_output->verbose(CALL_INFO, 3, 0, "%s\n",getName().c_str());
+            m_output->debug(CALL_INFO, 3, 0, "%s\n",getName().c_str());
         }
         m_issueTime = time;
         m_state = Complete;
@@ -70,7 +70,7 @@ public:
 
     virtual void issue( uint64_t time, Callback ) {
         if ( m_output ) {
-            m_output->verbose(CALL_INFO, 3, 0, "%s\n",getName().c_str());
+            m_output->debug(CALL_INFO, 3, 0, "%s\n",getName().c_str());
         }
         m_issueTime = time;
         m_state = Complete;
@@ -79,7 +79,7 @@ public:
     virtual bool complete( uint64_t time, int retval = 0 ) {
 
         if ( m_output ) {
-            m_output->verbose(CALL_INFO, 3, 0, "%s\n",getName().c_str());
+            m_output->debug(CALL_INFO, 3, 0, "%s\n",getName().c_str());
         }
         
         if ( m_evStat ) {
@@ -89,7 +89,7 @@ public:
     }
 
     virtual uint64_t completeDelayNS() {
-        m_output->verbose(CALL_INFO, 2, 0, "delay=%" PRIu64 " ns\n",
+        m_output->debug(CALL_INFO, 2, 0, "delay=%" PRIu64 " ns\n",
                                                 m_completeDelayNS);
         return m_completeDelayNS;
     }

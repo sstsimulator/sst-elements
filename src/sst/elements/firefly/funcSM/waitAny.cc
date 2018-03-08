@@ -28,7 +28,7 @@ WaitAnyFuncSM::WaitAnyFuncSM( SST::Params& params ) :
 void WaitAnyFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
     assert( NULL == m_event );
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
 
     m_event = static_cast< WaitAnyStartEvent* >(e);
 
@@ -38,7 +38,7 @@ void WaitAnyFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
 void WaitAnyFuncSM::handleEnterEvent( Retval& retval )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
     retval.setExit(0);
     delete m_event;
     m_event = NULL;

@@ -94,7 +94,7 @@ void Nic::RecvMachine::StreamBase::ready( bool finished, uint64_t pktNum ) {
 }
 
 bool Nic::RecvMachine::StreamBase::postedRecv( DmaRecvEntry* entry ) {
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
     if ( ! m_blockedNeedRecv ) return false;
 
     FireflyNetworkEvent* event = m_blockedNeedRecv;
@@ -104,22 +104,22 @@ bool Nic::RecvMachine::StreamBase::postedRecv( DmaRecvEntry* entry ) {
 
     int srcNode = event->getSrcNode();
 
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"event tag %#x, posted recv tag %#x\n",matchHdr.tag, entry->tag());
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"event tag %#x, posted recv tag %#x\n",matchHdr.tag, entry->tag());
     if ( entry->tag() != matchHdr.tag ) {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"did't match tag\n");
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"did't match tag\n");
         return false;
     }
 
     if ( entry->node() != -1 && entry->node() != srcNode ) {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "didn't match node  want=%#x src=%#x\n", entry->node(), srcNode );
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "didn't match node  want=%#x src=%#x\n", entry->node(), srcNode );
         return false;
     }
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "recv entry size %lu\n",entry->totalBytes());
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "recv entry size %lu\n",entry->totalBytes());
 
     if ( entry->totalBytes() < matchHdr.len ) {
         assert(0);
     }
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "matched\n");
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "matched\n");
 
     m_recvEntry = entry;
     event->bufPop( sizeof(MsgHdr) + sizeof(MatchMsgHdr));

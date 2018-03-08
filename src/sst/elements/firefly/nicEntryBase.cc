@@ -23,16 +23,16 @@ using namespace SST::Firefly;
 static void print( Output& dbg, char* buf, int len )
 {
     std::string tmp;
-    dbg.verbose(CALL_INFO,4,NIC_DBG_RECV_MACHINE,"addr=%p len=%d\n",buf,len);
+    dbg.debug(CALL_INFO,4,NIC_DBG_RECV_MACHINE,"addr=%p len=%d\n",buf,len);
     for ( int i = 0; i < len; i++ ) {
-        dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE, "%#03x\n",(unsigned char)buf[i]);
+        dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MACHINE, "%#03x\n",(unsigned char)buf[i]);
     }
 }
 
 bool Nic::EntryBase::copyIn( Output& dbg,
                         FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
-    dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
+    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
                 "ioVec.size()=%lu\n", ioVec().size() );
 
 
@@ -52,7 +52,7 @@ bool Nic::EntryBase::copyIn( Output& dbg,
 
             char* toPtr = (char*) ioVec()[currentVec()].addr.getBacking() +
                                                         currentPos();
-            dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
+            dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
                             "toBufSpace=%lu fromAvail=%lu, "
                             "memcpy len=%lu\n", toLen,fromLen,len);
 
@@ -71,14 +71,14 @@ bool Nic::EntryBase::copyIn( Output& dbg,
             if ( event.bufEmpty() &&
                     currentPos() != ioVec()[currentVec()].len )
             {
-                dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
+                dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
                             "event buffer empty\n");
                 break;
             }
         }
     }
 
-    dbg.verbose(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
+    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
                 "currentVec=%lu, currentPos=%lu\n",
                 currentVec(), currentPos());
     return ( currentVec() == ioVec().size() ) ;
@@ -88,14 +88,14 @@ void Nic::EntryBase::copyOut( Output& dbg, int numBytes,
                 FireflyNetworkEvent& event,
                 std::vector<MemOp>& vec  )
 {
-    dbg.verbose(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"Send: "
+    dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"Send: "
                     "ioVec.size()=%lu\n", ioVec().size() );
 
     for ( ; currentVec() < ioVec().size() &&
                 event.bufSize() <  numBytes;
                 currentVec()++, currentPos() = 0 ) {
 
-        dbg.verbose(CALL_INFO,3,1,"vec[%lu].len %lu\n",currentVec(),
+        dbg.debug(CALL_INFO,3,1,"vec[%lu].len %lu\n",currentVec(),
                     ioVec()[currentVec()].len );
 
         if ( ioVec()[currentVec()].len ) {
@@ -104,7 +104,7 @@ void Nic::EntryBase::copyOut( Output& dbg, int numBytes,
 
             size_t len = toLen < fromLen ? toLen : fromLen;
 
-            dbg.verbose(CALL_INFO,3,1,"toBufSpace=%lu fromAvail=%lu, "
+            dbg.debug(CALL_INFO,3,1,"toBufSpace=%lu fromAvail=%lu, "
                             "memcpy len=%lu\n", toLen,fromLen,len);
 
             const char* from =
@@ -126,5 +126,5 @@ void Nic::EntryBase::copyOut( Output& dbg, int numBytes,
             }
         }
     }
-    dbg.verbose(CALL_INFO,3,1,"currentVec()=%lu, currentPos()=%lu\n", currentVec(), currentPos());
+    dbg.debug(CALL_INFO,3,1,"currentVec()=%lu, currentPos()=%lu\n", currentVec(), currentPos());
 }
