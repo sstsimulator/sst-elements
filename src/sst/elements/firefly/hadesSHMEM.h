@@ -148,7 +148,7 @@ class HadesSHMEM : public Shmem::Interface
 
     virtual void setOS( OS* os ) {
         m_os = static_cast<Hades*>(os);
-        dbg().verbose(CALL_INFO,2,0,"\n");
+        dbg().debug(CALL_INFO,2,0,"\n");
     }
 
     virtual void init(Shmem::Callback);
