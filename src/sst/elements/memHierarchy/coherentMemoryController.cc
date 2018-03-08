@@ -612,22 +612,3 @@ void CoherentMemController::replayMemEvent(MemEvent * ev) {
     }
 }
 
-
-/* Backing store interactions for custom command subcomponents */
-void CoherentMemController::writeData(Addr addr, std::vector<uint8_t> * data) {
-    if (!backing_) return;
-
-    for (size_t i = 0; i < data->size(); i++)
-        backing_->set(addr + i, data->at(i));
-}
-
-
-void CoherentMemController::readData(Addr addr, size_t bytes, std::vector<uint8_t> &data) {
-    data.resize(bytes, 0);
-    
-    if (!backing_) return;
-
-    for (size_t i = 0; i < bytes; i++)
-        data[i] = backing_->get(addr + i);
-}
-

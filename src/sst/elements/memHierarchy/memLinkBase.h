@@ -163,13 +163,13 @@ public:
         }
 
         if(sharedMemEnabled) {
-        	if(localMemSize) {
-        		Addr tempAddr = addr & (localMemSize-1);
-        		for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
-        			if(it->region.contains(tempAddr)) return it->name;
-        		}
+            if(localMemSize) {
+        	Addr tempAddr = addr & (localMemSize-1);
+                for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+        	    if(it->region.contains(tempAddr)) return it->name;
         	}
-		}
+            }
+	}
 
         /* Build error string */
         stringstream error;
