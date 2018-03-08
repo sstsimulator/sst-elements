@@ -30,7 +30,7 @@ void RecvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     assert( NULL == m_event ); 
     m_event = static_cast< RecvStartEvent* >(e);
 
-    m_dbg.verbose(CALL_INFO,1,0,"%s buf=%p count=%d type=%d src=%d tag=%#x \n",
+    m_dbg.debug(CALL_INFO,1,0,"%s buf=%p count=%d type=%d src=%d tag=%#x \n",
                 m_event->req ? "Irecv":"Recv", 
                 &m_event->buf,
                 m_event->count,
