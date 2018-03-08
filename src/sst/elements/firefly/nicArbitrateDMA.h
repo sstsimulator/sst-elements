@@ -41,7 +41,7 @@ class ArbitrateDMA {
 
     void canIWrite( Callback callback, int bytes ) {
 
-        m_dbg.verbose(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,"bytes=%d\n",bytes);
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,"bytes=%d\n",bytes);
         uint64_t delay = foo( m_xx[Write], m_xx[Read], bytes  );
         if ( delay ) {
             m_nic.schedCallback( callback, delay );
@@ -51,7 +51,7 @@ class ArbitrateDMA {
     }
 
     void canIRead( Callback callback, int bytes ) {
-        m_dbg.verbose(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,"bytes=%d\n",bytes);
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,"bytes=%d\n",bytes);
         uint64_t delay = foo( m_xx[Read], m_xx[Write], bytes  );
         if ( delay ) {
             m_nic.schedCallback( callback, delay );
@@ -71,7 +71,7 @@ class ArbitrateDMA {
             xx.avail = m_bufferSize;
         }
 
-        m_dbg.verbose(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,
 				"avail Bytes %ld, delta %" PRIu64 " ns, "
             	"added %ld \n", xx.avail, delta, add ); 
 		//assert( xx.avail >= 0 );
