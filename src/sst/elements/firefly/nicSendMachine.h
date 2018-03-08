@@ -141,14 +141,14 @@ class SendMachine {
         }       
 
         void run( SendEntryBase* entry ) {
-            m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "new stream\n");
+            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "new stream\n");
             assert( ! m_I_manage );
             m_activeEntry = entry;
             streamInit( entry );
         }
 
         void qSendEntry( SendEntryBase* entry ) {
-            m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "new stream\n");
+            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "new stream\n");
             assert( m_I_manage );
             m_sendQ.push_back( entry );
             if ( m_sendQ.size() == 1 ) {
