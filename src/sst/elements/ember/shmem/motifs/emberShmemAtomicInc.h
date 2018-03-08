@@ -20,6 +20,11 @@
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>
+
+#define USE_SST_RNG 1
+#ifdef USE_SST_RNG
+#include "rng/xorshift.h"
+#endif
 #include "libs/misc.h"
 
 namespace SST {
@@ -42,6 +47,9 @@ public:
         
         m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
         assert(m_miscLib);
+#if USE_SST_RNG
+        m_rng = new SST::RNG::XORShiftRNG();
+#endif
 	}
 
     bool generate( std::queue<EmberEvent*>& evQ) 
@@ -71,17 +79,17 @@ public:
 
     		struct timeval start;
     		gettimeofday( &start, NULL );
-			m_randSeed = (unsigned int) (start.tv_usec);
+			initRngSeed( start.tv_usec );
 
 			enQ_getTime( evQ, &m_startTime );
 
 		} else if ( m_phase < m_iterations * m_updates ) {
 
-			int dest = rand_r(&m_randSeed) % m_num_pes;
+			int dest = genRand() % m_num_pes; 
 			while( dest == m_my_pe ) {
-				dest = rand_r(&m_randSeed) % m_num_pes;
+				dest = genRand() % m_num_pes;
 			}
-			Hermes::MemAddr addr = m_dest.offset<long>( rand_r(&m_randSeed) % m_dataSize );
+			Hermes::MemAddr addr = m_dest.offset<long>( genRand() % m_dataSize );
 	
 			if ( m_useFadd ) { 
             	enQ_fadd( evQ, &m_result, addr, &m_one, dest );
@@ -150,10 +158,34 @@ public:
         return ret;
 	}
   private:
+
+    uint32_t genRand() {
+        uint32_t retval;
+#if USE_SST_RNG 
+        retval = m_rng->generateNextUInt32();
+#else
+        retval = rand_r(&m_randSeed);
+#endif
+        return retval;
+    } 
+    void initRngSeed( unsigned int seed ) {
+#if USE_SST_RNG 
+        m_rng->seed( seed );
+#else
+	    m_randSeed = seed;
+#endif
+    }
+
     EmberMiscLib* m_miscLib;
 	int m_outLoop;
 	std::vector<double> m_times;
+
+#if USE_SST_RNG 
+    SST::RNG::XORShiftRNG* m_rng;
+#else
     unsigned int m_randSeed;
+#endif
+
 	bool m_backed;
 	bool m_printTotals;
 	bool m_useFadd;
