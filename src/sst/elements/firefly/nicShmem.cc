@@ -216,7 +216,7 @@ void Nic::Shmem::put( NicShmemPutCmdEvent* event, int id )
 					}
     );
 
-    m_nic.m_sendMachine[0]->run( entry );
+    m_nic.qSendEntry( entry );
 
 }
 
@@ -235,7 +235,7 @@ void Nic::Shmem::putv( NicShmemPutvCmdEvent* event, int id )
 					} 
     );
 
-    m_nic.m_sendMachine[0]->run( entry );
+    m_nic.qSendEntry( entry );
 
 }
 
@@ -254,7 +254,7 @@ void Nic::Shmem::getv( NicShmemGetvCmdEvent* event, int id )
 
     entry->setRespKey(m_nic.genRespKey(entry));
 
-    m_nic.m_sendMachine[0]->run( entry );
+    m_nic.qSendEntry( entry );
 }
 
 void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
@@ -279,7 +279,7 @@ void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
 
     entry->setRespKey(m_nic.genRespKey(entry));
 
-	m_nic.m_sendMachine[0]->run( entry );
+	m_nic.qSendEntry( entry );
 }
 
 
@@ -298,7 +298,7 @@ void Nic::Shmem::add( NicShmemAddCmdEvent* event, int id )
 					} 
     ); 
 
-    m_nic.m_sendMachine[0]->run( entry );
+    m_nic.qSendEntry( entry );
 
 }
 
@@ -316,7 +316,7 @@ void Nic::Shmem::fadd( NicShmemFaddCmdEvent* event, int id )
 
     entry->setRespKey(m_nic.genRespKey(entry));
 
-    m_nic.m_sendMachine[0]->run( entry );
+    m_nic.qSendEntry( entry );
 }
 
 void Nic::Shmem::cswap( NicShmemCswapCmdEvent* event, int id )
@@ -333,7 +333,7 @@ void Nic::Shmem::cswap( NicShmemCswapCmdEvent* event, int id )
 
     entry->setRespKey(m_nic.genRespKey(entry));
 
-    m_nic.m_sendMachine[0]->run( entry );
+    m_nic.qSendEntry( entry );
 }
 
 void Nic::Shmem::swap( NicShmemSwapCmdEvent* event, int id )
@@ -350,7 +350,7 @@ void Nic::Shmem::swap( NicShmemSwapCmdEvent* event, int id )
 
     entry->setRespKey(m_nic.genRespKey(entry));
 
-    m_nic.m_sendMachine[0]->run( entry );
+    m_nic.qSendEntry( entry );
 }
 
 void Nic::Shmem::hostWait( NicShmemOpCmdEvent* event, int id )

@@ -29,7 +29,7 @@ class EntryBase {
         }
         return bytes;
     }
-    virtual void copyOut( Output&, int vc, int numBytes,
+    virtual void copyOut( Output&, int numBytes,
                FireflyNetworkEvent&, std::vector<MemOp>& vec );
     virtual bool copyIn( Output&,
                FireflyNetworkEvent&, std::vector<MemOp>& vec );

@@ -26,6 +26,30 @@ bool Nic::RecvMachine::Ctx::processPkt( FireflyNetworkEvent* ev ) {
                         ev->getSrcNode(),ev->getSrcPid(), m_pid );
     SrcKey srcKey = getSrcKey( ev->getSrcNode(), ev->getSrcPid() );
 
+    if ( ev->getIsCtrl() ) {
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"got a control message\n");
+        StreamBase* stream = newStream( allocNicUnit(), ev );
+
+        Callback callback = stream->getStartCallback(); 
+        SimTime_t delay = stream->getStartDelay();
+        if ( delay ) {
+            assert( callback );
+            schedCallback( 
+                [=](){ 
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE,"new stream callback\n");
+                    callback(); 
+                    m_rm.checkNetworkForData(); 
+                }, 
+                delay );
+            return true;
+        } else {
+            if ( callback ) {
+                callback();
+            }
+            return false;
+        }
+    }   
+
     bool blocked = false;
     // this packet is part of an active stream to a pid
     if ( m_streamMap.find(srcKey) != m_streamMap.end() )  {
@@ -81,7 +105,7 @@ bool Nic::RecvMachine::Ctx::processPkt( FireflyNetworkEvent* ev ) {
 
 Nic::RecvMachine::StreamBase* Nic::RecvMachine::Ctx::newStream( int unit, FireflyNetworkEvent* ev )
 {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE,"new stream\n");
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
 
 #ifdef NIC_RECV_DEBUG
         ++m_msgCount;

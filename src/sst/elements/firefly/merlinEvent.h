@@ -28,16 +28,18 @@ class FireflyNetworkEvent : public Event {
 
   public:
 
-    FireflyNetworkEvent( ) : offset(0), bufLen(0), isHdr(false), pktOverhead(0) {
+    FireflyNetworkEvent( ) : offset(0), bufLen(0), isHdr(false), isCtrl(false), pktOverhead(0) {
         buf.reserve( 1000 );
         assert( 0 == buf.size() );
     }
 
-    FireflyNetworkEvent( int pktOverhead, size_t reserve = 1000 ) : offset(0), bufLen(0), isHdr(false), pktOverhead(pktOverhead) {
+    FireflyNetworkEvent( int pktOverhead, size_t reserve = 1000 ) : offset(0), bufLen(0), isHdr(false), isCtrl(false), pktOverhead(pktOverhead) {
         buf.reserve( reserve );
         assert( 0 == buf.size() );
     }
 
+    void setIsCtrl() { isCtrl = true; }
+    bool getIsCtrl() { return isCtrl; }
     void setIsHdr() { isHdr = true; }
     bool getIsHdr() { return isHdr; }
     int calcPayloadSizeInBits() { return payloadSize() * 8; }
@@ -88,6 +90,7 @@ class FireflyNetworkEvent : public Event {
         srcPid = me->srcPid;
         destPid = me->destPid;
         isHdr = me->isHdr;
+        isCtrl = me->isCtrl;
         offset = me->offset;
         pktOverhead = me->pktOverhead;
     }
@@ -101,6 +104,7 @@ class FireflyNetworkEvent : public Event {
         srcPid = me.srcPid;
         destPid = me.destPid;
         isHdr = me.isHdr;
+        isCtrl = me.isCtrl;
         offset = me.offset;
         pktOverhead = me.pktOverhead;
     }
@@ -128,6 +132,7 @@ class FireflyNetworkEvent : public Event {
     int             srcPid;
     int             destPid;
     bool            isHdr;
+    bool            isCtrl;
     int             pktOverhead;
     
     size_t          offset;
@@ -145,6 +150,8 @@ class FireflyNetworkEvent : public Event {
         ser & srcPid;
         ser & destPid;
         ser & pktOverhead;
+        ser & isHdr;
+        ser & isCtrl;
     }
     
     ImplementSerializable(SST::Firefly::FireflyNetworkEvent);     

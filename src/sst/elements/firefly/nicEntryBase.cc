@@ -84,12 +84,12 @@ bool Nic::EntryBase::copyIn( Output& dbg,
     return ( currentVec() == ioVec().size() ) ;
 }
 
-void Nic::EntryBase::copyOut( Output& dbg, int vc, int numBytes,
+void Nic::EntryBase::copyOut( Output& dbg, int numBytes,
                 FireflyNetworkEvent& event,
                 std::vector<MemOp>& vec  )
 {
     dbg.verbose(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"Send: "
-                    "%d: ioVec.size()=%lu\n", vc, ioVec().size() );
+                    "ioVec.size()=%lu\n", ioVec().size() );
 
     for ( ; currentVec() < ioVec().size() &&
                 event.bufSize() <  numBytes;
