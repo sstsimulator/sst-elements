@@ -40,7 +40,7 @@ class HadesMP : public MP::Interface
 	virtual void finish() {} 
 	virtual void setOS( OS* os ) { 
 		m_os = static_cast<Hades*>(os); 
-		dbg().verbose(CALL_INFO,2,0,"\n");
+		dbg().debug(CALL_INFO,2,0,"\n");
 	}
 
 	int sizeofDataType( MP::PayloadDataType type ) {
