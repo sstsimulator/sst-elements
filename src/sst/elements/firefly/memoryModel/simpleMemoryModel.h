@@ -180,10 +180,10 @@ class SimpleMemoryModel : SubComponent {
 		SimTime_t now = getCurrentSimTimeNano();
 		SelfEvent* event = static_cast<SelfEvent*>(ev); 
 		if ( event->callback ) {
-			m_dbg.verbose(CALL_INFO,1,1,"callback\n");
+			m_dbg.debug(CALL_INFO,1,1,"callback\n");
 			event->callback();
 		} else if ( event->unit ) {
-			m_dbg.verbose(CALL_INFO,1,1,"resume %p\n",event->srcUnit);
+			m_dbg.debug(CALL_INFO,1,1,"resume %p\n",event->srcUnit);
 			if ( event->srcUnit ) {
 				event->unit->resume( event->srcUnit );
 			} else {
@@ -210,7 +210,7 @@ class SimpleMemoryModel : SubComponent {
 
 	virtual void schedHostCallback( int core, std::vector< MemOp >* ops, Callback callback ) {
 		SimTime_t now = getCurrentSimTimeNano();
-		m_dbg.verbose(CALL_INFO,1,1,"now=%" PRIu64 "\n",now );
+		m_dbg.debug(CALL_INFO,1,1,"now=%" PRIu64 "\n",now );
 
 		int id = m_numNicThreads + core;
 		addWork( id, new Work( core, ops, callback, now ) );
@@ -218,7 +218,7 @@ class SimpleMemoryModel : SubComponent {
 
 	virtual void schedNicCallback( int unit, int pid, std::vector< MemOp >* ops, Callback callback ) { 
 		SimTime_t now = getCurrentSimTimeNano();
-		m_dbg.verbose(CALL_INFO,1,1,"now=%" PRIu64 " unit=%d\n", now, unit );
+		m_dbg.debug(CALL_INFO,1,1,"now=%" PRIu64 " unit=%d\n", now, unit );
 		assert( unit >=0 );
 
 		addWork( unit, new Work( pid, ops, callback, now ) );
