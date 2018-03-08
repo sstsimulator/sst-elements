@@ -32,7 +32,7 @@ CustomCmdInfo* AMOCustomCmdMemHandler::ready(MemEventBase* ev){
     CustomCmdEvent * cme = static_cast<CustomCmdEvent*>(ev);
     CustomOpCodeCmdInfo *CI = new CustomOpCodeCmdInfo(cme->getID(),
                                         cme->getRqstr(),
-                                        cme->getRoutingAddress(),
+                                        cme->getAddr(),
                                         cme->getOpCode(),
                                         MemEventBase::F_SUCCESS);
     return CI;

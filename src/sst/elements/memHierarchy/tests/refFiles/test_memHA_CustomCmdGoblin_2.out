@@ -4,17 +4,17 @@
  cpu.split_read_reqs : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  cpu.split_write_reqs : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  cpu.split_custom_reqs : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- cpu.cycles_with_issue : Accumulator : Sum.u64 = 18133; SumSQ.u64 = 18133; Count.u64 = 18133; 
- cpu.cycles_no_issue : Accumulator : Sum.u64 = 13156; SumSQ.u64 = 13156; Count.u64 = 13156; 
+ cpu.cycles_with_issue : Accumulator : Sum.u64 = 18751; SumSQ.u64 = 18751; Count.u64 = 18751; 
+ cpu.cycles_no_issue : Accumulator : Sum.u64 = 18790; SumSQ.u64 = 18790; Count.u64 = 18790; 
  cpu.total_bytes_read : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  cpu.total_bytes_write : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  cpu.total_bytes_custom : Accumulator : Sum.u64 = 240000; SumSQ.u64 = 1920000; Count.u64 = 30000; 
- cpu.req_latency : Accumulator : Sum.u64 = 220126; SumSQ.u64 = 1837370; Count.u64 = 30000; 
- cpu.time : Accumulator : Sum.u64 = 15645; SumSQ.u64 = 244766025; Count.u64 = 1; 
+ cpu.req_latency : Accumulator : Sum.u64 = 270079; SumSQ.u64 = 2914563; Count.u64 = 30000; 
+ cpu.time : Accumulator : Sum.u64 = 18771; SumSQ.u64 = 352350441; Count.u64 = 1; 
  cpu.cycles_hit_fence : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- cpu.cycles_max_issue : Accumulator : Sum.u64 = 11867; SumSQ.u64 = 11867; Count.u64 = 11867; 
+ cpu.cycles_max_issue : Accumulator : Sum.u64 = 11249; SumSQ.u64 = 11249; Count.u64 = 11249; 
  cpu.cycles_max_reorder : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- cpu.cycles : Accumulator : Sum.u64 = 31290; SumSQ.u64 = 31290; Count.u64 = 31290; 
+ cpu.cycles : Accumulator : Sum.u64 = 37542; SumSQ.u64 = 37542; Count.u64 = 37542; 
  l1cache.prefetch_opportunities : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.prefetches_issued : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -51,7 +51,7 @@
  l1cache.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 31287; 
+ l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 37539; 
  l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -154,4 +154,4 @@
  l1cache.stateEvent_FlushLineInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.stateEvent_FetchInv_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.stateEvent_FetchInvX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
-Simulation is complete, simulated time: 15.645 us
+Simulation is complete, simulated time: 18.771 us
