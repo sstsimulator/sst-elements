@@ -16,6 +16,7 @@
 #ifndef _SST_PROSPERO_H
 #define _SST_PROSPERO_H
 
+#include "sst/core/elementinfo.h"
 #include "sst/core/output.h"
 #include "sst/core/component.h"
 #include "sst/core/element.h"
@@ -48,6 +49,25 @@ public:
   void setup() { }
   void init(unsigned int phase);
   void finish();
+
+  SST_ELI_REGISTER_COMPONENT(
+        ProsperoComponent,
+        "prosperoCPU",
+        "prospero",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Prospero CPU Memory Trace Replay Engine",
+        COMPONENT_CATEGORY_PROCESSOR
+   )
+
+   SST_ELI_DOCUMENT_PARAMS(
+	{ "verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0" },
+    	{ "cache_line_size", "Sets the length of the cache line in bytes, this should match the L1 cache", "64" },
+    	{ "reader",  "The trace reader module to load", "prospero.ProsperoTextTraceReader" },
+    	{ "pagesize", "Sets the page size for the Prospero simple virtual memory manager", "4096"},
+    	{ "clock", "Sets the clock of the core", "2GHz"} ,
+    	{ "max_outstanding", "Sets the maximum number of outstanding transactions that the memory system will allow", "16"},
+    	{ "max_issue_per_cycle", "Sets the maximum number of new transactions that the system can issue per cycle", "2"},
+   )
 
 private:
   ProsperoComponent();                         // Serialization only
