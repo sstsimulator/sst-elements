@@ -33,8 +33,8 @@ public:
 
 	SST_ELI_REGISTER_SUBCOMPONENT(
                	ProsperoTextTraceReader,
-               	"ProsperoTextTraceReader",
                	"prospero",
+               	"ProsperoTextTraceReader",
                	SST_ELI_ELEMENT_VERSION(1,0,0),
                	"Text Trace Reader",
 	       	"SST::Prospero::ProsperoTraceReader"

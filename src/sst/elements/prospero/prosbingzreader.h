@@ -32,8 +32,8 @@ public:
 
 	SST_ELI_REGISTER_SUBCOMPONENT(
                	ProsperoCompressedBinaryTraceReader,
-               	"ProsperoBCompressedinaryTraceReader",
                	"prospero",
+               	"ProsperoBCompressedinaryTraceReader",
                	SST_ELI_ELEMENT_VERSION(1,0,0),
                	"Compressed Binary Trace Reader",
 	       	"SST::Prospero::ProsperoTraceReader"
