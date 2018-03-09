@@ -615,6 +615,8 @@ bool ArielCore::processNextEvent() {
 		}
 	}
 
+	updateCycle = true;
+
 	ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Processing next event in core %" PRIu32 "...\n", coreID));
 
 	ArielEvent* nextEvent = coreQ->front();
@@ -730,6 +732,7 @@ bool ArielCore::processNextEvent() {
 	void ArielCore::tick() {
 		if(! isHalted) {
 			ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Ticking core id %" PRIu32 "\n", coreID));
+			updateCycle = false;
 			for(uint32_t i = 0; i < maxIssuePerCycle; ++i) {
 				bool didProcess = processNextEvent();
 
@@ -744,8 +747,10 @@ bool ArielCore::processNextEvent() {
 
 			}
 
-			currentCycles++;
-			statCycles->addData(1);
+			if( updateCycle ) {
+				currentCycles++;
+				statCycles->addData(1);
+			}
 		}
 
 		if(inst_count >= max_insts && (max_insts!=0) && (coreID==0))
