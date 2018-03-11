@@ -69,6 +69,10 @@ public:
     	{ "max_issue_per_cycle", "Sets the maximum number of new transactions that the system can issue per cycle", "2"},
    )
 
+   SST_ELI_DOCUMENT_PORTS(
+	{ "cache_link", "Link to the memHierarchy cache", { "memHierarchy.memEvent", "" } }
+   )
+
 private:
   ProsperoComponent();                         // Serialization only
   ProsperoComponent(const ProsperoComponent&); // Do not impl.
