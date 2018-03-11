@@ -14,7 +14,6 @@ libzodiac_la_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libzodiac.la
 libzodiac_la_SOURCES = \
-	zodiac.cc \
 	ztrace.cc \
 	ztrace.h \
 	zevent.h \
