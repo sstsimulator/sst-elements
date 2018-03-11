@@ -26,6 +26,7 @@
 #include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/subcomponent.h>
+#include <sst/core/warnmacros.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
 
@@ -66,11 +67,11 @@ private:
 class CacheListener : public SubComponent {
 public:
 
-    CacheListener(Component* owner, Params& params) : SubComponent(owner) {}
+    CacheListener(Component* owner, Params& UNUSED(params)) : SubComponent(owner) {}
     virtual ~CacheListener() {}
 
-    virtual void printStats(Output &out) {}
-    virtual void notifyAccess(const CacheListenerNotification& notify) {}
+    virtual void printStats(Output &UNUSED(out)) {}
+    virtual void notifyAccess(const CacheListenerNotification& UNUSED(notify)) {}
     virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }
 };
 

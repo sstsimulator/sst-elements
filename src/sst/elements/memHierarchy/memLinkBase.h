@@ -25,6 +25,7 @@
 #include <sst/core/output.h>
 #include <sst/core/link.h>
 #include <sst/core/subcomponent.h>
+#include <sst/core/warnmacros.h>
 
 #include "sst/elements/memHierarchy/memEventBase.h"
 #include "sst/elements/memHierarchy/memEvent.h"
@@ -128,7 +129,7 @@ public:
 
     /* Initialization functions for parent */
     virtual void setRecvHandler(Event::HandlerBase * handler) { recvHandler = handler; }
-    virtual void init(unsigned int phase) { }
+    virtual void init(unsigned int UNUSED(phase)) { }
     virtual void finish() { }
     virtual void setup() { 
 #ifdef __SST_DEBUG_OUTPUT__
@@ -151,7 +152,7 @@ public:
      * Extra functions for MemLink derivatives 
      */
     virtual bool clock() { return true; } // No clock
-    virtual uint64_t lookupNetworkAddress(const std::string &dst) const { return 0; } // No network address
+    virtual uint64_t lookupNetworkAddress(const std::string &UNUSED(dst)) const { return 0; } // No network address
 
     // Link call back for incoming events
     void recvNotify(SST::Event * ev) { (*recvHandler)(ev); }
@@ -202,8 +203,8 @@ public:
 
     }
     
-    virtual bool isDest(std::string str) { return true; } // Anything we get on this link is valid for a dest 
-    virtual bool isSource(std::string str) { return true; } // Anything we get on this link is valid for a source
+    virtual bool isDest(std::string UNUSED(str)) { return true; } // Anything we get on this link is valid for a dest 
+    virtual bool isSource(std::string UNUSED(str)) { return true; } // Anything we get on this link is valid for a source
 
     MemRegion getRegion() { return info.region; }
     void setRegion(MemRegion region) { info.region = region; }

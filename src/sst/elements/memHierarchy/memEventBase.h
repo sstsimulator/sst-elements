@@ -18,6 +18,7 @@
 
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
+#include <sst/core/warnmacros.h>
 
 #include "sst/elements/memHierarchy/util.h"
 #include "sst/elements/memHierarchy/memTypes.h"
@@ -184,7 +185,7 @@ public:
         return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_;
     }
 
-    virtual bool doDebug(std::set<Addr> &addr) {
+    virtual bool doDebug(std::set<Addr> &UNUSED(addr)) {
         return true;    // Always debug unless we come up with a different way of determining it
     }
 
