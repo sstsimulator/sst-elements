@@ -99,7 +99,8 @@ void HadesSHMEM::init2(Shmem::Callback callback)
 {
     m_num_pes = m_os->getInfo()->getGroup(MP::GroupWorld)->getSize();
     m_my_pe = m_os->getInfo()->getGroup(MP::GroupWorld)->getMyRank();
-    dbg().debug(CALL_INFO,1,SHMEM_BASE,"my_pe=%d num_pes=%d\n",m_my_pe,m_num_pes);
+    dbg().debug(CALL_INFO,1,SHMEM_BASE,"my_pe=%d num_pes=%d net_pe=%d\n",m_my_pe,m_num_pes, calcNetPE( m_my_pe ));
+            m_my_pe, 
 
     m_common = new ShmemCommon( m_my_pe, m_num_pes, 10, 8 );
     m_barrier = new ShmemBarrier( *this, *m_common );
@@ -436,7 +437,7 @@ void HadesSHMEM::get2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int 
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"destSimVAddr=%#" PRIx64 " srcSimVaddr=%#" PRIx64 " length=%lu\n",
                     dest, src, length);
 
-    m_os->getNic()->shmemGet( pe, dest, src, length, blocking, 
+    m_os->getNic()->shmemGet( calcNetPE(pe), dest, src, length, blocking, 
                 [=]() {
                     this->dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
                     this->delayReturn( callback );
@@ -460,7 +461,7 @@ void HadesSHMEM::getv2( Hermes::Value& value, Hermes::Vaddr src, int pe, Shmem::
 
     Hermes::Value::Type type = value.getType(); 
 
-    m_os->getNic()->shmemGetv( pe, src, type, 
+    m_os->getNic()->shmemGetv( calcNetPE(pe), src, type, 
 
                 [=]( Hermes::Value& newValue ) {
                     this->dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
@@ -504,7 +505,7 @@ void HadesSHMEM::put_nbi(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, i
 void HadesSHMEM::put2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback)
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    m_os->getNic()->shmemPut( pe, dest, src, length, blocking, 
+    m_os->getNic()->shmemPut( calcNetPE(pe), dest, src, length, blocking, 
                 [=]() {
                     this->dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
 					this->delayReturn( callback );
@@ -526,7 +527,7 @@ void HadesSHMEM::putOp2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, in
                 Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Shmem::Callback callback)
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    m_os->getNic()->shmemPutOp( pe, dest, src, length, op, dataType, 
+    m_os->getNic()->shmemPutOp( calcNetPE(pe), dest, src, length, op, dataType, 
                 [=]() {
                     this->dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
                     this->delayReturn( callback );
@@ -550,7 +551,7 @@ void HadesSHMEM::putv2(Hermes::Vaddr dest, Hermes::Value& value, int pe, Shmem::
     tmp << value;
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"destSimVaddr=%#" PRIx64 " value=%s\n", dest, tmp.str().c_str() );
 
-    m_os->getNic()->shmemPutv( pe, dest, value,
+    m_os->getNic()->shmemPutv( calcNetPE(pe), dest, value,
                 [=]() {
                     this->dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
                     this->delayReturn( callback );
@@ -598,7 +599,7 @@ void HadesSHMEM::swap2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value&
     tmp1 << value;
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s\n",addr, tmp1.str().c_str());
 
-    m_os->getNic()->shmemSwap( pe, addr,  value, 
+    m_os->getNic()->shmemSwap( calcNetPE(pe), addr,  value, 
 
                 [=]( Hermes::Value& newValue ) {
                     this->dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
@@ -631,7 +632,7 @@ void HadesSHMEM::cswap2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value
     tmp2 << cond;
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s cond=%s\n",addr, tmp1.str().c_str(),tmp2.str().c_str());
 
-    m_os->getNic()->shmemCswap( pe, addr, cond, value, 
+    m_os->getNic()->shmemCswap( calcNetPE(pe), addr, cond, value, 
 
                 [=]( Hermes::Value& newValue ) {
                     this->dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
@@ -660,7 +661,7 @@ void HadesSHMEM::add2( Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::
     tmp << value;
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s\n",addr, tmp.str().c_str());
 
-    m_os->getNic()->shmemAdd( pe, addr, value, 
+    m_os->getNic()->shmemAdd( calcNetPE(pe), addr, value, 
                 [=]( ) {
                     this->dbg().debug(CALL_INFO,1,SHMEM_BASE,"add2() done\n");
 
@@ -686,7 +687,7 @@ void HadesSHMEM::fadd2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value&
     tmp << value;
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s\n",addr, tmp.str().c_str());
 
-    m_os->getNic()->shmemFadd( pe, addr, value, 
+    m_os->getNic()->shmemFadd( calcNetPE(pe), addr, value, 
                 [=]( Hermes::Value& newValue ) {
                     this->dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
 
