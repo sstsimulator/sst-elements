@@ -29,6 +29,19 @@ public:
         ~ProsperoBinaryTraceReader();
         ProsperoTraceEntry* readNextEntry();
 
+ 	SST_ELI_REGISTER_SUBCOMPONENT(
+        	ProsperoBinaryTraceReader,
+        	"prospero",
+        	"ProsperoBinaryTraceReader",
+        	SST_ELI_ELEMENT_VERSION(1,0,0),
+        	"Binary Trace Reader",
+        	"SST::Prospero::ProsperoTraceReader"
+    	)
+
+	SST_ELI_DOCUMENT_PARAMS(
+		{ "file", "Sets the file for the trace reader to use", "" }
+	)
+
 private:
 	void copy(char* target, const char* source,
 		const size_t offset, const size_t len);
