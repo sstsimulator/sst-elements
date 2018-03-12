@@ -259,6 +259,10 @@ class HadesSHMEM : public Shmem::Interface
         delete e;
     }
 
+    int calcNetPE( int pe ) {
+        return m_os->getInfo()->getGroup( MP::GroupWorld )->getMapping( pe ) ;
+    }
+
     FunctionSM& functionSM() { return m_os->getFunctionSM(); }
     SST::Link*      m_selfLink;
 

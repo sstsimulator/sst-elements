@@ -249,18 +249,25 @@ class LoadInfo:
 
 		tmp = []
 		nidlist=''
+		api=''
+    
 		for item in stage1:
 			tag,str = item.split(' ', 1)
 				
 			if tag == '[JOB_ID]':	
+				api = '' 
 				tmp.append([])
 				tmp[-1].append( str )
+			elif tag == '[API]':	
+				api = str
 			elif tag == '[NID_LIST]':	
 				nidlist = str
 				tmp[-1].append( [] )  
 			elif tag == '[MOTIF]':	
 				tmp[-1][-1].append( dict.copy(defaultParams) )  
 				tmp[-1][-1][-1]['cmd'] = '-nidList=' + nidlist + ' ' + str 
+				if api :
+				    tmp[-1][-1][-1]['api'] = api
 		return tmp 
 		
 	def initFile(self, defaultParams, fileName, statNodeList ):

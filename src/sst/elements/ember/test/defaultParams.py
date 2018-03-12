@@ -26,7 +26,6 @@ nicParams = {
     "txDelay_ns" : 50,
     "nic2host_lat" : "150ns",
     "useSimpleMemoryModel" : 0,
-	"simpleMemoryModel.verboseLevel" : 0,
 # simpleMemoryModel.verboseMask: values 
 #define BUS_WIDGET_MASK 1<<1
 #define CACHE_MASK      1<<2
@@ -36,6 +35,7 @@ nicParams = {
 #define STORE_MASK      1<<6
 #define THREAD_MASK     1<<7
 #define BUS_BRIDGE_MASK 1<<8
+	"simpleMemoryModel.verboseLevel" : 0,
 	"simpleMemoryModel.verboseMask" : -1,
 
 	"simpleMemoryModel.hostCacheUnitSize" : 612, 
