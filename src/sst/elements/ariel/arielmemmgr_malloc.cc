@@ -154,7 +154,15 @@ void ArielMemoryManagerMalloc::allocate(const uint64_t size, const uint32_t leve
 	pageAllocations[level]->insert( std::pair<uint64_t, uint64_t>(virtualAddress, roundedSize) );
 }
 
-
+/*
+ *  Note on allocation alignment:
+ *  Physical and virtual mapping may not be aligned the same (have different page/cache-line offsets).
+ *  This happens because the VA assigned by the OS may be different than the VA that would have been assigned in an MLM environment.
+ *  For example the app allocates location A to VA 0 and location B to VA 8, but in simulation we'd like A to be in memory pool 0 and B to be in pool 1.
+ *  Then A & B share a virtual cache block but not a simulated physical cache block.
+ *
+ *  Therefore, Ariel should immediately translate virtual to physical addresses and ALWAYS use physical addresses when computing offsets.
+ */
 bool ArielMemoryManagerMalloc::allocateMalloc(const uint64_t size, const uint32_t level, const uint64_t virtualAddress) {
     output->verbose(CALL_INFO, 4, 0, "Allocate malloc received. VA: %" PRIu64 ". Size: %" PRIu64 ". Level: %" PRIu32 ".\n", virtualAddress, size, level);
 
@@ -308,6 +316,7 @@ uint64_t ArielMemoryManagerMalloc::translateAddress(uint64_t virtAddr) {
                     bool allocated = false;
                     for (uint32_t i = 0; i < memoryLevels; i++) {
                         if (canAllocateInLevel(8, i)) {
+                            offset = virtAddr % pageSizes[i];
                             allocate(8, i, virtAddr - offset);
                             allocated = true;
                             break;

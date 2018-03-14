@@ -424,14 +424,18 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 		return;
 	}
 
-	const uint64_t addr_offset  = readAddress % ((uint64_t) cacheLineSize);
+	// NOTE: Physical and virtual addresses may not be aligned the same w.r.t. line size if map-on-malloc is being used (arielinterceptcalls != 0), so use physical offsets to determine line splits
+        // There is a chance that the non-alignment causes an undetected bug if an access spans multiple malloc regions that are contiguous in VA space but non-contiguous in PA space. 
+        // However, a single access spanning multiple malloc'd regions shouldn't happen...
+        // Addresses mapped via first touch are always line/page aligned
+        const uint64_t physAddr = memmgr->translateAddress(readAddress);
+	const uint64_t addr_offset  = physAddr % ((uint64_t) cacheLineSize);
 
 	if((addr_offset + readLength) <= cacheLineSize) {
 		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split read request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 					coreID, readAddress, readLength));
 
 		// We do not need to perform a split operation
-		const uint64_t physAddr = memmgr->translateAddress(readAddress);
 
 		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing read, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
 					coreID, readAddress, readLength, physAddr));
@@ -445,30 +449,30 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 		const uint64_t leftAddr = readAddress;
 		const uint64_t leftSize = cacheLineSize - addr_offset;
 
-		const uint64_t rightAddr = (readAddress - addr_offset) + ((uint64_t) cacheLineSize);
-		const uint64_t rightSize = (readAddress + ((uint64_t) readLength)) % ((uint64_t) cacheLineSize);
+		const uint64_t rightAddr = (readAddress + ((uint64_t) cacheLineSize)) - addr_offset;
+		const uint64_t rightSize = readLength - leftSize;
 
-		const uint64_t physLeftAddr = memmgr->translateAddress(leftAddr);
+		const uint64_t physLeftAddr = physAddr;
 		const uint64_t physRightAddr = memmgr->translateAddress(rightAddr);
 
 		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address read, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu64 ", RightSize=%" PRIu64 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n", 
 					coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr));
 
 		if(perform_checks > 0) {
-			if( (leftSize + rightSize) != readLength ) {
+		/*	if( (leftSize + rightSize) != readLength ) {
 				output->fatal(CALL_INFO, -4, "Core %" PRIu32 " read request for address %" PRIu64 ", length=%" PRIu64 ", split into left address=%" PRIu64 ", left size=%" PRIu64 ", right address=%" PRIu64 ", right size=%" PRIu64 " does not equal read length (cache line of length %" PRIu64 ")\n",
 						coreID, readAddress, readLength, leftAddr, leftSize, rightAddr, rightSize, cacheLineSize);
-			}
+			}*/
 
-			if( ((leftAddr + leftSize) % cacheLineSize) != 0) {
+			if( ((physLeftAddr + leftSize) % cacheLineSize) != 0) {
 				output->fatal(CALL_INFO, -4, "Error leftAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
 						leftAddr, leftSize, cacheLineSize);
 			}
 
-			if( ((rightAddr + rightSize) % cacheLineSize) > cacheLineSize ) {
+    			/*if( ((physRightAddr + rightSize) % cacheLineSize) > cacheLineSize ) { 
 				output->fatal(CALL_INFO, -4, "Error rightAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
 						leftAddr, leftSize, cacheLineSize);
-			}
+			}*/
 		}
 
 		commitReadEvent(physLeftAddr, leftAddr, (uint32_t) leftSize);
@@ -492,15 +496,16 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 				writeLength, coreID, cacheLineSize);
 		return;
 	}
+        
+        // See note in handleReadRequest() on alignment issues
+	const uint64_t physAddr = memmgr->translateAddress(writeAddress);
+	const uint64_t addr_offset  = physAddr % ((uint64_t) cacheLineSize);
 
-	const uint64_t addr_offset  = writeAddress % ((uint64_t) cacheLineSize);
-
+	// We do not need to perform a split operation
 	if((addr_offset + writeLength) <= cacheLineSize) {
 		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 					coreID, writeAddress, writeLength));
 
-		// We do not need to perform a split operation
-		const uint64_t physAddr = memmgr->translateAddress(writeAddress);
 
 		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing write, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
 					coreID, writeAddress, writeLength, physAddr));
@@ -514,30 +519,30 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 		const uint64_t leftAddr = writeAddress;
 		const uint64_t leftSize = cacheLineSize - addr_offset;
 
-		const uint64_t rightAddr = (writeAddress - addr_offset) + ((uint64_t) cacheLineSize);
-		const uint64_t rightSize = (writeAddress + ((uint64_t) writeLength)) % ((uint64_t) cacheLineSize);
+		const uint64_t rightAddr = (writeAddress + ((uint64_t) cacheLineSize)) - addr_offset;
+		const uint64_t rightSize = writeLength - leftSize;
 
-		const uint64_t physLeftAddr = memmgr->translateAddress(leftAddr);
+		const uint64_t physLeftAddr = physAddr;
 		const uint64_t physRightAddr = memmgr->translateAddress(rightAddr);
 
 		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address write, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu64 ", RightSize=%" PRIu64 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n", 
 					coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr));
 
 		if(perform_checks > 0) {
-			if( (leftSize + rightSize) != writeLength ) {
+		/*	if( (leftSize + rightSize) != writeLength ) {
 				output->fatal(CALL_INFO, -4, "Core %" PRIu32 " write request for address %" PRIu64 ", length=%" PRIu64 ", split into left address=%" PRIu64 ", left size=%" PRIu64 ", right address=%" PRIu64 ", right size=%" PRIu64 " does not equal write length (cache line of length %" PRIu64 ")\n",
 						coreID, writeAddress, writeLength, leftAddr, leftSize, rightAddr, rightSize, cacheLineSize);
-			}
+			}*/
 
-			if( ((leftAddr + leftSize) % cacheLineSize) != 0) {
+			if( ((physLeftAddr + leftSize) % cacheLineSize) != 0) {
 				output->fatal(CALL_INFO, -4, "Error leftAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
 						leftAddr, leftSize, cacheLineSize);
 			}
 
-			if( ((rightAddr + rightSize) % cacheLineSize) > cacheLineSize ) {
+			/*if( ((rightAddr + rightSize) % cacheLineSize) > cacheLineSize ) {
 				output->fatal(CALL_INFO, -4, "Error rightAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
 						leftAddr, leftSize, cacheLineSize);
-			}
+			}*/
 		}
 
 		commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize);

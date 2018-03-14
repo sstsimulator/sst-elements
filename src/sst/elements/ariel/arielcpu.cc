@@ -188,14 +188,18 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Model specifies that there are %" PRIu32 " application arguments\n", app_argc);
 
 	uint32_t pin_startup_mode = (uint32_t) params.find<uint32_t>("arielmode", 2);
-	uint32_t intercept_multilev_mem = (uint32_t) params.find<uint32_t>("arielinterceptcalls", 0);
+	uint32_t intercept_mem_allocations = (uint32_t) params.find<uint32_t>("arielinterceptcalls", 0);
+        
+        // Always enable allocation interception if using opal...
+        if (opal_enabled)
+            intercept_mem_allocations = 1;
 
-    switch(intercept_multilev_mem) {
+    switch(intercept_mem_allocations) {
         case 0:
-		output->verbose(CALL_INFO, 1, 0, "Interception and re-instrumentation of multi-level memory calls is DISABLED.\n");
+		output->verbose(CALL_INFO, 1, 0, "Interception and instrumentation of multi-level memory and malloc/free calls is DISABLED.\n");
 		break;
 	default:
-		output->verbose(CALL_INFO, 1, 0, "Interception and instrumentation of multi-level memory calls is ENABLED.\n");
+		output->verbose(CALL_INFO, 1, 0, "Interception and instrumentation of multi-level memory and malloc/free calls is ENABLED.\n");
 		break;
     }
     
@@ -276,7 +280,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     sprintf(execute_args[arg-1], "%" PRIu32, pin_startup_mode);
     execute_args[arg++] = const_cast<char*>("-m");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, intercept_multilev_mem);
+    sprintf(execute_args[arg-1], "%" PRIu32, intercept_mem_allocations);
     execute_args[arg++] = const_cast<char*>("-k");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%" PRIu32, keep_malloc_stack_trace);
