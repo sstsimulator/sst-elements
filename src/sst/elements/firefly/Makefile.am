@@ -76,6 +76,7 @@ libfirefly_la_SOURCES = \
 	hadesMP.h \
 	hadesSHMEM.cc \
 	hadesSHMEM.h \
+	hadesMisc.h \
 	shmem/alltoall.cc \
 	shmem/alltoall.h \
 	shmem/alltoalls.cc \
@@ -104,7 +105,9 @@ libfirefly_la_SOURCES = \
 	memoryModel/muxUnit.h \
 	memoryModel/nicUnit.h \
 	memoryModel/storeUnit.h \
+	memoryModel/tlbUnit.h \
 	memoryModel/thread.h \
+	memoryModel/cache.h \
 	memoryModel/unit.h \
 	merlinEvent.h \
 	virtNic.h \
@@ -122,6 +125,10 @@ libfirefly_la_SOURCES = \
 	nicRecvEntry.h \
 	nicRecvMachine.cc \
 	nicRecvMachine.h \
+	nicRecvCtx.cc \
+	nicRecvCtx.h \
+	nicRecvStream.cc \
+	nicRecvStream.h \
 	nicSendEntry.h \
 	nicSendMachine.cc \
 	nicSendMachine.h \

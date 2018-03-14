@@ -33,7 +33,7 @@ class MakeProgressFuncSM :  public FunctionSMInterface
     virtual void handleStartEvent( SST::Event *e, Retval& retval ) {
 
 		assert( NULL == m_event );
-        m_dbg.verbose(CALL_INFO,1,0,"\n");
+        m_dbg.debug(CALL_INFO,1,0,"\n");
 
 		m_event = static_cast<MakeProgressStartEvent*>(e);
 

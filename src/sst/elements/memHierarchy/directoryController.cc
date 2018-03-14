@@ -152,8 +152,18 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
         out.output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size' in params. Change your input file to remove this notice.\n", getName().c_str());
 
+    char *node_buffer1 = (char*) malloc(sizeof(char) * 256);
+    char *node_buffer2 = (char*) malloc(sizeof(char) * 256);
+    char *node_buffer3 = (char*) malloc(sizeof(char) * 256);
+    sprintf(node_buffer1, "%" PRIu32, params.find<uint32_t>("node", 0));
+    sprintf(node_buffer2, "%" PRIu32, params.find<uint32_t>("shared_memory", 0));
+    sprintf(node_buffer3, "%" PRIu32, params.find<uint32_t>("local_memory_size", 0));
+
         Params nicParams = params.find_prefix_params("memNIC.");
         nicParams.insert("port", "network");
+        nicParams.insert("node", node_buffer1);
+        nicParams.insert("shared_memory", node_buffer2);
+        nicParams.insert("local_memory_size", node_buffer3);
 
         nicParams.insert("group", "3", false);
         int cl = nicParams.find<int>("group");
@@ -166,6 +176,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         if (isPortConnected("memory")) {
             Params memParams = params.find_prefix_params("memlink.");
             memParams.insert("port", "memory");
+            memParams.insert("node", node_buffer1);
+            memParams.insert("shared_memory", node_buffer2);
+            memParams.insert("local_memory_size", node_buffer3);
             memParams.insert("latency", "1ns");
             memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);
             memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);
@@ -185,6 +198,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
         }
 
+    free(node_buffer1);
+    free(node_buffer2);
+    free(node_buffer3);
 
     clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
     defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);

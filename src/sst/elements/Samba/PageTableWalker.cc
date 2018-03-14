@@ -239,7 +239,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 			(*PUD)[temp_ptr->getAddress()/page_size[2]] = temp_ptr->getPaddress();
 			fault_level++;
 			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
-			(*MAPPED_PAGE_SIZE1GB)[temp_ptr->getAddress()/page_size[2]] = 0;
+			//(*MAPPED_PAGE_SIZE1GB)[temp_ptr->getAddress()/page_size[2]] = 0;
 			tse->setResp(temp_ptr->getAddress(),0,4096);
 			to_opal->send(10, tse);
 
@@ -248,7 +248,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		else if(fault_level == 3)
 		{
 			(*PMD)[temp_ptr->getAddress()/page_size[1]] = temp_ptr->getPaddress();
-			(*MAPPED_PAGE_SIZE2MB)[temp_ptr->getAddress()/page_size[1]] = 0;
+			//(*MAPPED_PAGE_SIZE2MB)[temp_ptr->getAddress()/page_size[1]] = 0;
 			fault_level++;
 			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 			tse->setResp(temp_ptr->getAddress(),0,4096);
@@ -285,6 +285,7 @@ void PageTableWalker::recvOpal(SST::Event * event)
 	// Whenever we receve request from Opal, we just create event that will be handled by handleEvent
 	SambaEvent * tse = new SambaEvent(EventType::OPAL_RESPONSE);
 	tse->setResp(temp_ptr->getAddress(), temp_ptr->getPaddress(),4096);
+	//std::cerr << "Receviced Virtual addres: " << std::hex << temp_ptr->getAddress() << " Physical address: " << std::hex << temp_ptr->getAddress() << " size: " << temp_ptr->getSize() << std::endl;
 	s_EventChan->send(10, tse);
 
 	//std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()/4096<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
@@ -341,7 +342,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 			else if (WSR_COUNT[pw_id] == 1)
 				page_table_start = (*PTE) [addr/page_size[0]];
 
-			dummy_add = page_table_start*4096 + (addr/page_size[WSR_COUNT[pw_id]-1])%512;
+			dummy_add = page_table_start + (addr/page_size[WSR_COUNT[pw_id]-1])%512;
 
 		}
 		uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
@@ -469,7 +470,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 					// Use actual page table base to start the walking if we have real page tables
 					if(emulate_faults)
 					{
-						dummy_add = (*CR3)*4096 + (addr/page_size[2])%512;
+						dummy_add = (*CR3) + (addr/page_size[2])%512;
 					}
 
 					uint64_t dummy_base_add = dummy_add & ~(line_size - 1);

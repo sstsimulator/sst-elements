@@ -232,7 +232,6 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     MemEvent * event = static_cast<MemEvent*>(ev);
     Command cmd     = event->getCmd();
     Addr baseAddr   = event->getBaseAddr();
-    
     // TODO this is a temporary check while we ensure that the source sets baseAddr correctly
     if (baseAddr % cacheArray_->getLineSize() != 0) {
         d_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %" PRIu64 ". Event: %s\n", getName().c_str(), cacheArray_->getLineSize(), ev->getVerboseString().c_str());
@@ -243,12 +242,12 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         Addr bank = cacheArray_->getBank(event->getBaseAddr());
         if (bankStatus_[bank]) { // bank conflict
             if (is_debug_event(event))
-            d_->debug(_L3_, "Bank conflict on bank %u\n", bank);
+            d_->debug(_L3_, "Bank conflict on bank %" PRIu64 "\n", bank);
             statBankConflicts->addData(1);
             bankConflictBuffer_[bank].push(event);
             return true; // Accepted but we're stopping now
         } else {
-            d_->debug(_L3_, "No bank conflict, setting bank %u to busy\n", bank);
+            d_->debug(_L3_, "No bank conflict, setting bank %" PRIu64 " to busy\n", bank);
             bankStatus_[bank] = true;
         }
     }
@@ -509,6 +508,7 @@ void Cache::setup() {
             info.name = upperLevelCacheNames_[i];
             info.addr = 0;
             info.id = 0;
+            info.node = node;
             info.region.setDefault();
             srcNames.insert(info);
         }
@@ -533,6 +533,7 @@ void Cache::setup() {
             info.name = lowerLevelCacheNames_[i];
             info.addr = 0;
             info.id = 0;
+            info.node = node;
             info.region.setDefault();
             info.region.interleaveStep = ilStep;
             info.region.interleaveSize = ilSize;

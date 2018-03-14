@@ -48,7 +48,7 @@ class Shmem {
         bool checkOp( Output& dbg ) {
             std::stringstream tmp;
             tmp << "op=" << WaitOpName(m_cmd->op) << " testValue=" << m_cmd->value << " memValue=" << m_value;
-            dbg.verbose( CALL_INFO,1,NIC_SHMEM,"%s %s\n",__func__,tmp.str().c_str());
+            dbg.debug( CALL_INFO,1,NIC_SHMEM,"%s %s\n",__func__,tmp.str().c_str());
             switch ( m_cmd->op ) {
               case Hermes::Shmem::NE:
                 return m_value != m_cmd->value; 

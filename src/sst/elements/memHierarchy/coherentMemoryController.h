@@ -52,10 +52,6 @@ public:
 
     CoherentMemController(ComponentId_t id, Params &params);
 
-    /* Utilities for CustomCmd subcomponent */
-    void writeData(Addr addr, std::vector<uint8_t> * data);
-    void readData(Addr addr, size_t bytes, std::vector<uint8_t> &data);
-
     /* Event handling */
     void handleMemResponse(SST::Event::id_type id, uint32_t flags);
 

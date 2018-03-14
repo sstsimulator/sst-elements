@@ -16,7 +16,7 @@
 #ifndef COHERENCECONTROLLER_H
 #define COHERENCECONTROLLER_H
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
@@ -25,10 +25,10 @@
 #include <sst/core/output.h>
 
 #include "util.h"
-#include "cacheListener.h"
-#include "cacheArray.h"
-#include "mshr.h"
-#include "memLinkBase.h"
+#include "sst/elements/memHierarchy/cacheListener.h"
+#include "sst/elements/memHierarchy/cacheArray.h"
+#include "sst/elements/memHierarchy/mshr.h"
+#include "sst/elements/memHierarchy/memLinkBase.h"
 
 namespace SST { namespace MemHierarchy {
 using namespace std;

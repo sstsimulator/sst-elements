@@ -17,7 +17,7 @@
 #ifndef _H_SST_MEMH_VAULT_SIM_BACKEND
 #define _H_SST_MEMH_VAULT_SIM_BACKEND
 
-#include "membackend/memBackend.h"
+#include "sst/elements/memHierarchy/membackend/memBackend.h"
 
 namespace SST {
 namespace MemHierarchy {

@@ -11,7 +11,8 @@ networkParams = {
     "input_latency" : "50ns",
     "output_latency" : "50ns",
     "flitSize" : "8B",
-    "buffer_size" : "14KB",
+    "input_buf_size" : "14KB",
+    "output_buf_size" : "14KB",
 }
 
 nicParams = {
@@ -19,13 +20,23 @@ nicParams = {
     "module" : "merlin.linkcontrol",
     "packetSize" : networkParams['packetSize'],
     "link_bw" : networkParams['link_bw'],
-    "buffer_size" : networkParams['buffer_size'],
+    "input_buf_size" : networkParams['input_buf_size'],
+    "output_buf_size" : networkParams['output_buf_size'],
     "rxMatchDelay_ns" : 100,
     "txDelay_ns" : 50,
     "nic2host_lat" : "150ns",
     "useSimpleMemoryModel" : 0,
+# simpleMemoryModel.verboseMask: values 
+#define BUS_WIDGET_MASK 1<<1
+#define CACHE_MASK      1<<2
+#define LOAD_MASK       1<<3
+#define MEM_MASK        1<<4
+#define MUX_MASK        1<<5
+#define STORE_MASK      1<<6
+#define THREAD_MASK     1<<7
+#define BUS_BRIDGE_MASK 1<<8
 	"simpleMemoryModel.verboseLevel" : 0,
-	"simpleMemoryModel.verboseMask" : 1<<3,
+	"simpleMemoryModel.verboseMask" : -1,
 
 	"simpleMemoryModel.hostCacheUnitSize" : 612, 
 	"simpleMemoryModel.hostCacheNumMSHR" : 16, 
@@ -44,9 +55,8 @@ nicParams = {
 
 	"simpleMemoryModel.nicHostLoadSlots" : 1, 
 	"simpleMemoryModel.nicHostStoreSlots" : 1, 
-	#"simpleMemoryModel.busBandwidth_GB" : 15.6, 
-	#"simpleMemoryModel.busBandwidth_GB" : 9.6, 
-	"simpleMemoryModel.busBandwidth_GB" : 10, 
+
+    "simpleMemoryModel.busBandwidth_GB" : 7.8,
 }
 
 emberParams = {
@@ -54,6 +64,7 @@ emberParams = {
     "os.name"      : "hermesParams",
     "api.0.module" : "firefly.hadesMP",
     "api.1.module" : "firefly.hadesSHMEM",
+    "api.2.module" : "firefly.hadesMisc",
     "verbose" : 0,
 }
 

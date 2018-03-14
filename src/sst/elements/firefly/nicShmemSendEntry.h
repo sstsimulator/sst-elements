@@ -47,7 +47,7 @@ class ShmemAckSendEntry: public ShmemSendEntryBase {
     int dest() { return m_dest_node; }
     size_t totalBytes() { return 0; } 
     bool isDone() { return true; }
-    virtual void copyOut( Output&, int vc, int numBytes, 
+    virtual void copyOut( Output&, int numBytes, 
             FireflyNetworkEvent&, std::vector<MemOp>& ) {};
   private:
 	int m_dest_vNic;
@@ -60,16 +60,18 @@ class ShmemRespSendEntry: public ShmemCmdSendEntry {
     ShmemRespSendEntry( int local_vNic, NicShmemSendCmdEvent* event ) : 
         ShmemCmdSendEntry( local_vNic, event )
     {
-        assert( sizeof( m_hdr.respKey) == sizeof(m_event )); 
         m_hdr.vaddr = m_event->getFarAddr();
         m_hdr.length = m_event->getLength(); 
-        m_hdr.respKey = (size_t) this;
     }
     bool shouldDelete() { return false; }
 
+    void setRespKey( RespKey_t key ) {
+        m_hdr.respKey = key;
+    }
+
     size_t totalBytes() { return 0; } 
     bool isDone() { return true; }
-    virtual void copyOut( Output&, int vc, int numBytes, 
+    virtual void copyOut( Output&, int numBytes, 
             FireflyNetworkEvent&, std::vector<MemOp>& ) {};
     NicShmemSendCmdEvent* getCmd() { return m_event; }
 };
@@ -104,9 +106,9 @@ class ShmemFaddSendEntry: public ShmemRespSendEntry {
 
     void callback( Hermes::Value& value ) { m_callback(value); }
 
-    void copyOut( Output& dbg, int vc, int numBytes, 
+    void copyOut( Output& dbg, int numBytes, 
             FireflyNetworkEvent& ev, std::vector<MemOp>&  vec) { 
-        m_shmemMove->copyOut( dbg, vc, numBytes, ev, vec ); 
+        m_shmemMove->copyOut( dbg, numBytes, ev, vec ); 
     }
   private:
     Callback  m_callback;
@@ -127,9 +129,9 @@ class ShmemSwapSendEntry: public ShmemRespSendEntry {
 
     void callback( Hermes::Value& value ) { m_callback(value); }
 
-    void copyOut( Output& dbg, int vc, int numBytes, 
+    void copyOut( Output& dbg, int numBytes, 
             FireflyNetworkEvent& ev, std::vector<MemOp>&  vec) { 
-        m_shmemMove->copyOut( dbg, vc, numBytes, ev, vec ); 
+        m_shmemMove->copyOut( dbg, numBytes, ev, vec ); 
     }
   private:
     Callback        m_callback;
@@ -150,9 +152,9 @@ class ShmemCswapSendEntry: public ShmemRespSendEntry {
 
     void callback( Hermes::Value& value ) { m_callback(value); }
 
-    void copyOut( Output& dbg, int vc, int numBytes, 
+    void copyOut( Output& dbg, int numBytes, 
             FireflyNetworkEvent& ev, std::vector<MemOp>&  vec) { 
-        m_shmemMove->copyOut( dbg, vc, numBytes, ev, vec ); 
+        m_shmemMove->copyOut( dbg, numBytes, ev, vec ); 
     }
   private:
     Callback        m_callback;
@@ -197,9 +199,9 @@ class ShmemPutSendEntry: public ShmemCmdSendEntry  {
 
     size_t totalBytes() { return m_hdr.length; } 
     bool isDone() { return m_shmemMove->isDone(); }
-    void copyOut( Output& dbg, int vc, int numBytes, 
+    void copyOut( Output& dbg, int numBytes, 
             FireflyNetworkEvent& ev, std::vector<MemOp>& vec ) {
-        m_shmemMove->copyOut( dbg, vc, numBytes, ev, vec ); 
+        m_shmemMove->copyOut( dbg, numBytes, ev, vec ); 
     };
 
   protected:
@@ -279,10 +281,9 @@ class ShmemPut2SendEntry: public ShmemSendEntryBase  {
 
     size_t totalBytes() { return m_hdr.length; } 
     bool isDone() { return m_shmemMove->isDone(); }
-    void copyOut( Output& dbg, int vc, int numBytes, 
+    void copyOut( Output& dbg, int numBytes, 
             FireflyNetworkEvent& ev, std::vector<MemOp>& vec ) {
-        m_shmemMove->copyOut( dbg, vc, numBytes, ev, vec ); 
-    };
+        m_shmemMove->copyOut( dbg, numBytes, ev, vec ); };
 
   private:
     ShmemSendMove* m_shmemMove;

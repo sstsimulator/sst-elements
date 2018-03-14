@@ -1301,7 +1301,7 @@ TrivialCPU cpu3 Finished after 2000 issued reads, 2000 returned (1586439 clocks)
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory.total_cycles : Accumulator : Sum.u64 = 1596807; SumSQ.u64 = 2549792595249; Count.u64 = 1; 
  memory.packet_latency : Accumulator : Sum.u64 = 1065526; SumSQ.u64 = 144651892; Count.u64 = 8173; 
- memory.send_bit_count : Accumulator : Sum.u64 = 480640; SumSQ.u64 = 30760960; Count.u64 = 7510; 
+ memory.send_bit_count : Accumulator : Sum.u64 = 4325760; SumSQ.u64 = 2491637760; Count.u64 = 7510; 
  memory.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory.idle_time : Accumulator : Sum.u64 = 360975000; SumSQ.u64 = 28026733000000; Count.u64 = 6485; 
 Simulation is complete, simulated time: 1.59681 ms

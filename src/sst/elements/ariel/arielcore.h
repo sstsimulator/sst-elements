@@ -123,6 +123,7 @@ class ArielCore {
 		const uint32_t perform_checks;
 		bool enableTracing;
 		uint64_t currentCycles;
+		bool updateCycle;
 
 		// This indicates the current number of executed instructions by this core
 		long long int inst_count;

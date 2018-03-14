@@ -19,11 +19,12 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
-#include "sst/core/element.h"
+#include <sst/core/element.h>
+#include <sst/core/warnmacros.h>
 
-#include "util.h"
-#include "memEventBase.h"
-#include "memTypes.h"
+#include "sst/elements/memHierarchy/util.h"
+#include "sst/elements/memHierarchy/memEventBase.h"
+#include "sst/elements/memHierarchy/memTypes.h"
 
 namespace SST { namespace MemHierarchy {
 
@@ -90,7 +91,7 @@ public:
     }
 
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(State state) {
+    MemEvent* makeResponse(State UNUSED(state)) {
         MemEvent *me = makeResponse();
         return me;
     }

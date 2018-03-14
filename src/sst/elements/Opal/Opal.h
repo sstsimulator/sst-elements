@@ -59,10 +59,10 @@ namespace SST
 
 				Opal( SST::ComponentId_t id, SST::Params& params); 
 				void setup()  { };
-				void finish() {};
-				bool getAllocationMemType( int node );
-				void allocLocalMemPool( int node, long long int vAddress, int size );
-				void allocSharedMemPool( int node, long long int vAddress, int size );
+				void finish();
+				void setNextMemPool( int node );
+				long long int allocLocalMemPool( int node, int link, long long int vAddress, int size );
+				long long int allocSharedMemPool( int node, int link, long long int vAddress, int size );
 				void handleEvent(SST::Event* event) {};
 				void handleRequest( SST::Event* e );
 				bool tick(SST::Cycle_t x);
@@ -110,6 +110,8 @@ namespace SST
 
 					// Optional since there is nothing to document
 					SST_ELI_DOCUMENT_STATISTICS(
+							{ "local_mem_usage", "Number of local memory frames used", "requests", 1},
+							{ "shared_mem_usage", "Number of local memory frames used", "requests", 1},
 							)
 
 					SST_ELI_DOCUMENT_PORTS(
@@ -140,12 +142,15 @@ namespace SST
 
 					//shared memory - memory pool number and its pool
 					std::map<int, Pool*> shared_mem;
+					long long int shared_mem_size;
 
 					//local memory - core number and its pool
 					std::map<int, Pool*> local_mem;
+					std::map<int, long long int> local_mem_size;
 
 					//next allocation memory (local/shared)
 					std::map<int, int> nextallocmem;
+					std::map<int, int> allocatedmempool;
 
 					//memory allocation policy. 0:proportional  1: alternate  2: round robin
 					uint32_t allocpolicy;
@@ -157,10 +162,12 @@ namespace SST
 					int* pipe_id;
 					std::string user_binary;
 					Output* output;
+					int verbosity;
 
 					Statistic<long long int>* statReadRequests;
 					Statistic<long long int>* statWriteRequests;
 					Statistic<long long int>* statAvgTime;
+
 
 		};// END Opal
 
@@ -169,6 +176,7 @@ namespace SST
 			public:
 
 				int id;
+				int nodeID;
 				SST::Link * singLink;
 				int dummy_address;
 				core_handler() { dummy_address = 0;}
@@ -185,10 +193,10 @@ namespace SST
 					case EventType::HINT:
 						{
 
-							std::cerr << "MLM Hint(0) : level "<< ev->hint << " Starting address is "<< std::hex << ev->getAddress();
-                            std::cerr << std::dec << " Size: "<< ev->getSize();
-                            std::cerr << " Ending address is " << std::hex << ev->getAddress() + ev->getSize() - 1;
-                            std::cerr << std::dec << std::endl;
+							//std::cerr << "MLM Hint(0) : level "<< ev->hint << " Starting address is "<< std::hex << ev->getAddress();
+                            //std::cerr << std::dec << " Size: "<< ev->getSize();
+                            //std::cerr << " Ending address is " << std::hex << ev->getAddress() + ev->getSize() - 1;
+                            //std::cerr << std::dec << std::endl;
 						}
 						break;
 					case EventType::MMAP:
@@ -209,7 +217,9 @@ namespace SST
 
 					default:
 						{
-							std::cout<<"Opal has received a REQUEST CALL with virtual address: "<<ev->getAddress()<<" Size: "<<ev->getSize()<<std::endl;
+							//std::cout<<"Opal has received a REQUEST CALL with virtual address: "<< std::hex << ev->getAddress()<<" Size: "<<ev->getSize()<<std::endl;
+							ev->setNodeId(nodeID);
+							ev->setLinkId(id);
 							owner->requestQ.push(ev);
 						}
 					}
@@ -219,3 +229,4 @@ namespace SST
 
 	}// END OpalComponent
 }//END SST
+

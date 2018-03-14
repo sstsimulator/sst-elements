@@ -11,13 +11,13 @@
 		};
 
 	  public:
-		MuxUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* unit, std::string name ) : Unit( model, dbg), m_unit(unit), m_blockedSrc(NULL)  {
+		MuxUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* unit, std::string name ) : Unit( model, dbg), m_unit(unit), m_blockedSrc(NULL), m_scheduled(false)  {
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "MuxUnit::@p():@l ";
 		}
 
         bool store( UnitBase* src, MemReq* req ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"%s addr=%#lx length=%lu\n",src->name().c_str(), req->addr,req->length);
-			if ( ! m_blockedSrc ) {
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"%s addr=%#" PRIx64 " length=%lu\n",src->name().c_str(), req->addr,req->length);
+			if ( ! m_blockedSrc && ! m_scheduled ) {
 				if ( m_unit->store( this, req ) ) {
 					m_blockedSrc = src;
 					return true;
@@ -32,9 +32,9 @@
 
 
         bool load( UnitBase* src, MemReq* req, Callback callback ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"%s addr=%#lx length=%lu\n",src->name().c_str(), req->addr,req->length);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"%s addr=%#" PRIx64 " length=%lu\n",src->name().c_str(), req->addr,req->length);
 
-			if ( ! m_blockedSrc ) {
+			if ( ! m_blockedSrc && ! m_scheduled ) {
 				if ( m_unit->load( this, req, callback ) ) {
 					m_blockedSrc = src;
 					return true;
@@ -48,6 +48,7 @@
 		}
 
 		void processQ( ) {
+            m_scheduled = false;
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,MUX_MASK,"\n");
 			assert( ! m_blockedQ.empty() );
 			Entry& entry = m_blockedQ.front();
@@ -60,9 +61,10 @@
 			}	
 
 			if ( ! blocked ) {
-				m_model.schedResume( 1, entry.src  );
+				m_model.schedResume( 0, entry.src  );
 				if ( m_blockedQ.size() > 1 ) {
-					m_model.schedCallback( 1, std::bind( &MuxUnit::processQ, this ) );
+                    m_scheduled = true;
+					m_model.schedCallback( 0, std::bind( &MuxUnit::processQ, this ) );
 				}
 			} else {
 				m_blockedSrc = entry.src;
@@ -73,11 +75,11 @@
 		void resume( UnitBase* src = NULL ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,MUX_MASK,"\n");
 			if ( m_blockedSrc ) {
-				m_model.schedResume( 1, m_blockedSrc );
+				m_model.schedResume( 0, m_blockedSrc );
 				m_blockedSrc = NULL;
 			}
 
-			if ( ! m_blockedQ.empty() ) {
+			if ( !m_scheduled && ! m_blockedQ.empty() ) {
 				processQ();
 			}
 		}
@@ -86,4 +88,5 @@
 		UnitBase* m_blockedSrc;
 		Unit* m_unit;
 		std::deque<Entry> m_blockedQ;
+        bool m_scheduled;
 	};

@@ -21,6 +21,12 @@
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>
 
+#define USE_SST_RNG 1
+#ifdef USE_SST_RNG
+#include "rng/xorshift.h"
+#endif
+#include "libs/misc.h"
+
 namespace SST {
 namespace Ember {
 
@@ -38,6 +44,12 @@ public:
 		m_backed = params.find<bool>("arg.backed", false);
 		m_outLoop = params.find<int>("arg.outLoop", 1);
 		m_times.resize(m_outLoop);
+        
+        m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
+        assert(m_miscLib);
+#if USE_SST_RNG
+        m_rng = new SST::RNG::XORShiftRNG();
+#endif
 	}
 
     bool generate( std::queue<EmberEvent*>& evQ) 
@@ -48,11 +60,12 @@ public:
             enQ_n_pes( evQ, &m_num_pes );
             enQ_my_pe( evQ, &m_my_pe );
             enQ_malloc( evQ, &m_dest, sizeof(long) * m_dataSize, m_backed );
+            m_miscLib->getNodeNum( evQ, &m_node_num );
 		} else if ( -2 == m_phase ) {
 
             if ( 0 == m_my_pe ) {
-                printf("%d:%s: num_pes=%d dataSize=%d updates=%d iterations=%d outerLoop=%d %s\n",m_my_pe,
-                        getMotifName().c_str(), m_num_pes, m_dataSize, m_updates, m_iterations, m_outLoop,
+                printf("%d:%s: num_pes=%d node_num=%d dataSize=%d updates=%d iterations=%d outerLoop=%d %s\n",m_my_pe,
+                        getMotifName().c_str(), m_num_pes, m_node_num, m_dataSize, m_updates, m_iterations, m_outLoop,
 						m_useFadd ? "fadd":"add" );
             }
             
@@ -66,17 +79,17 @@ public:
 
     		struct timeval start;
     		gettimeofday( &start, NULL );
-			m_randSeed = (unsigned int) (start.tv_usec);
+			initRngSeed( start.tv_usec );
 
 			enQ_getTime( evQ, &m_startTime );
 
 		} else if ( m_phase < m_iterations * m_updates ) {
 
-			int dest = rand_r(&m_randSeed) % m_num_pes;
+			int dest = genRand() % m_num_pes; 
 			while( dest == m_my_pe ) {
-				dest = rand_r(&m_randSeed) % m_num_pes;
+				dest = genRand() % m_num_pes;
 			}
-			Hermes::MemAddr addr = m_dest.offset<long>( rand_r(&m_randSeed) % m_dataSize );
+			Hermes::MemAddr addr = m_dest.offset<long>( genRand() % m_dataSize );
 	
 			if ( m_useFadd ) { 
             	enQ_fadd( evQ, &m_result, addr, &m_one, dest );
@@ -84,6 +97,7 @@ public:
             	enQ_add( evQ, addr, &m_one, dest );
 			}
             if ( m_phase + 1 == m_iterations * m_updates ) {
+                enQ_barrier_all( evQ );
                 enQ_getTime( evQ, &m_stopTime );
 			}
 
@@ -132,11 +146,11 @@ public:
             }
 
 			if ( m_backed && m_printTotals ) {
-				long mytotal = 0;
+				uint32_t mytotal = 0;
 				for ( int i = 0; i < m_dataSize; ++i ) {
 					mytotal +=  m_dest.at<long>(i) ;
 				}
-            	printf("%s: PE: %d total is: %lld\n", getMotifName().c_str(), m_my_pe, mytotal );
+            	printf("%s: PE: %d total is: %" PRIu32 "\n", getMotifName().c_str(), m_my_pe, mytotal );
 			}
 			
         }
@@ -144,9 +158,34 @@ public:
         return ret;
 	}
   private:
+
+    uint32_t genRand() {
+        uint32_t retval;
+#if USE_SST_RNG 
+        retval = m_rng->generateNextUInt32();
+#else
+        retval = rand_r(&m_randSeed);
+#endif
+        return retval;
+    } 
+    void initRngSeed( unsigned int seed ) {
+#if USE_SST_RNG 
+        m_rng->seed( seed );
+#else
+	    m_randSeed = seed;
+#endif
+    }
+
+    EmberMiscLib* m_miscLib;
 	int m_outLoop;
 	std::vector<double> m_times;
+
+#if USE_SST_RNG 
+    SST::RNG::XORShiftRNG* m_rng;
+#else
     unsigned int m_randSeed;
+#endif
+
 	bool m_backed;
 	bool m_printTotals;
 	bool m_useFadd;
@@ -162,6 +201,7 @@ public:
     int m_phase;
     int m_my_pe;
     int m_num_pes;
+    int m_node_num;
 };
 
 }

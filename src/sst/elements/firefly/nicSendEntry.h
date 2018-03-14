@@ -16,7 +16,7 @@
 class SendEntryBase {
   public:
     SendEntryBase( int local_vNic ) :
-        m_local_vNic( local_vNic )
+        m_local_vNic( local_vNic ), m_isCtrl(false)
     { }
     virtual ~SendEntryBase() { }
 
@@ -30,9 +30,13 @@ class SendEntryBase {
     virtual int dest() = 0;
     virtual void* hdr() = 0;
     virtual size_t hdrSize() = 0;
-    virtual void copyOut( Output& dbg, int vc, int numBytes,
+    virtual void copyOut( Output& dbg, int numBytes,
             FireflyNetworkEvent& event, std::vector<MemOp>& vec ) = 0; 
     virtual bool shouldDelete() { return true; }
+    bool isCtrl() { return m_isCtrl; }
+
+  protected:
+    bool m_isCtrl;
 
   private:
     int m_local_vNic;
@@ -45,7 +49,10 @@ class CmdSendEntry: public SendEntryBase, public EntryBase {
         SendEntryBase( local_vNic ),
         m_cmd(cmd),
         m_callback(callback)
-    { }
+    {
+        m_hdr.len = totalBytes();
+        m_hdr.tag = m_cmd->tag;
+    }
 
     ~CmdSendEntry() {
         m_callback (m_cmd->key );
@@ -55,18 +62,19 @@ class CmdSendEntry: public SendEntryBase, public EntryBase {
     std::vector<IoVec>& ioVec() { return m_cmd->iovec; }
     size_t totalBytes() { return EntryBase::totalBytes(); }
     bool isDone()       { return EntryBase::isDone(); }
-    void copyOut( Output& dbg, int vc, int numBytes, 
+    void copyOut( Output& dbg, int numBytes, 
                 FireflyNetworkEvent& event, std::vector<MemOp>& vec ) {
-        EntryBase::copyOut(dbg,vc,numBytes, event, vec );
+        EntryBase::copyOut(dbg,numBytes, event, vec );
     }
 
     MsgHdr::Op getOp()  { return MsgHdr::Msg; }
     int dst_vNic( )     { return m_cmd->dst_vNic; }
     int dest()          { return m_cmd->node; }
-    void* hdr()         { return &m_cmd->tag; }
-    size_t hdrSize()    { return sizeof(m_cmd->tag); }
+    void* hdr()         { return &m_hdr; }
+    size_t hdrSize()    { return sizeof(m_hdr); }
 
   private:
+    MatchMsgHdr         m_hdr;
     NicCmdEvent* m_cmd;
     std::function<void(void*)> m_callback;
 };
@@ -99,12 +107,13 @@ class GetOrgnEntry : public MsgSendEntry {
         m_hdr.rgnNum = rgnNum;
         m_hdr.offset = -1;
         m_hdr.op = RdmaMsgHdr::Get;
+        m_isCtrl = true;
     }
 
     ~GetOrgnEntry() { }
 
     bool isDone()      { return true; }
-    void copyOut( Output& dbg, int vc, int numBytes,
+    void copyOut( Output& dbg, int numBytes,
                 FireflyNetworkEvent& event, std::vector<MemOp>& vec ) {}; 
 
     size_t totalBytes(){ return sizeof( m_hdr ); }
@@ -132,9 +141,9 @@ class PutOrgnEntry : public MsgSendEntry, public EntryBase {
 
     std::vector<IoVec>& ioVec() { return m_memRgn->iovec(); }
 
-    void copyOut( Output& dbg, int vc, int numBytes,
+    void copyOut( Output& dbg, int numBytes,
                 FireflyNetworkEvent& event, std::vector<MemOp>& vec ) {
-        EntryBase::copyOut(dbg,vc,numBytes, event, vec );
+        EntryBase::copyOut(dbg,numBytes, event, vec );
     }
 
     size_t totalBytes() { return EntryBase::totalBytes(); }

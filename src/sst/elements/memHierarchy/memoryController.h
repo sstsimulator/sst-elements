@@ -58,6 +58,7 @@ public:
             {"interleave_size",     "(string) Size of interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},\
             {"interleave_step",     "(string) Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},\
             {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""},\
+            {"node",					"Node number in multinode environment"},\
             /* Old parameters - deprecated or moved */\
             {"do_not_back",         "DEPRECATED. Use parameter 'backing' instead.", "0"}, /* Remove 9.0 */\
             {"mem_size",            "DEPRECATED. Use 'backend.mem_size' instead. Size of physical memory in MiB", "0"}, /* Remove 8.0 */\
@@ -97,6 +98,10 @@ public:
     virtual void handleMemResponse( SST::Event::id_type id, uint32_t flags );
     
     SST::Cycle_t turnClockOn();
+    
+    /* For updating memory values. CustomMemoryCommand should call this */
+    void writeData(Addr addr, std::vector<uint8_t>* data);
+    void readData(Addr addr, size_t size, std::vector<uint8_t>& data);
 
 protected:
     MemController();  // for serialization only
@@ -117,8 +122,6 @@ protected:
     virtual void processInitEvent( MemEventInit* );
 
     virtual bool clock( SST::Cycle_t );
-    void writeData( MemEvent* );
-    void readData( MemEvent* );
 
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
@@ -134,6 +137,9 @@ protected:
     bool isRequestAddressValid(Addr addr){
         return region_.contains(addr);
     }
+    
+    void writeData( MemEvent* );
+    void readData( MemEvent* );
 
     size_t memSize_;
 

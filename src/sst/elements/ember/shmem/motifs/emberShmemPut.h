@@ -89,11 +89,13 @@ public:
                         m_other_pe );
                     enQ_quiet( evQ );
                 }
-			}
+			} else {
+                m_phase = m_iterations - 1;
+            }
 
-			if (  ( ! m_biDir && 0 != m_my_pe ) || m_phase + 1 == m_iterations ) {
-				enQ_getTime( evQ, &m_stopTime );
-            	enQ_barrier_all( evQ );
+			if (  m_phase + 1 == m_iterations ) {
+                enQ_getTime( evQ, &m_stopTime );
+                enQ_barrier_all( evQ );
 			}
 
 		} else {
@@ -115,7 +117,7 @@ public:
                 double latency = (totalTime/m_iterations);
                 printf("%d:%s: message-size %d, iterations %d, total-time %.3lf us, time-per %.3lf us, %.3f GB/s\n",m_my_pe,
                             getMotifName().c_str(),
-                            m_nelems * sizeof(TYPE),
+                            (int) (m_nelems * sizeof(TYPE)),
                             m_iterations,
                             totalTime * 1000000.0,
                             latency * 1000000.0,
