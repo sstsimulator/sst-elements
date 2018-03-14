@@ -128,7 +128,11 @@ Hades::Hades( Component* owner, Params& params ) :
 
         m_sreg = getGlobalSharedRegion( m_netMapName,
                     m_netMapSize*sizeof(int), new SharedRegionMerger());
-        m_sreg->modifyArray( netMapId, netId );
+
+        if ( 0 == params.find<int>("coreId",0) ) {
+            m_sreg->modifyArray( netMapId, netId );
+        }
+
         m_sreg->publish();
 	}
 }
