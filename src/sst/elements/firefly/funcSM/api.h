@@ -70,7 +70,7 @@ class FunctionSMInterface : public Module {
             params.find<uint32_t>("verboseMask",-1), 
             Output::STDOUT );
     
-        m_dbg.verbose(CALL_INFO,1,0,"\n");
+        m_dbg.debug(CALL_INFO,1,0,"\n");
     }
 
     virtual ~FunctionSMInterface() {} 

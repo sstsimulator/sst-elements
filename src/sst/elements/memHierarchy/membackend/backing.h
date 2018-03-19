@@ -94,7 +94,7 @@ public:
         /* Alloc unit needs to be pwr-2 */
         if (!isPowerOfTwo(m_allocUnit)) {
             Output out("", 1, 0, Output::STDOUT);
-            out.fatal(CALL_INFO, -1, "BackingMalloc: Error - size must be a power of two. Got: %u\n", size);
+            out.fatal(CALL_INFO, -1, "BackingMalloc: Error - size must be a power of two. Got: %zu\n", size);
         }
         m_shift = log2Of(m_allocUnit);
     }

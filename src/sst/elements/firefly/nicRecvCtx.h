@@ -8,6 +8,7 @@
                 m_prefix = "@t:"+ std::to_string(rm.nic().getNodeId()) +":Nic::RecvMachine::Ctx" + std::to_string(pid) + "::@p():@l ";
             }
 
+            int getHostReadDelay() { return m_rm.m_hostReadDelay; }
             bool processPkt( FireflyNetworkEvent* ev );
             DmaRecvEntry* findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr );
             EntryBase* findRecv( int srcNode, int srcPid, MsgHdr& hdr, MatchMsgHdr& matchHdr  );
@@ -68,7 +69,7 @@
             }
 
             void runSend( int num, SendEntryBase* entry ) {
-                m_rm.nic().m_sendMachine[0]->run( entry );
+                m_rm.nic().qSendEntry( entry );
             } 
 
             // this function is called by a Stream object, we don't want to delete ourself,

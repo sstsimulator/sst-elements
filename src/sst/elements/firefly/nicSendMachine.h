@@ -24,11 +24,11 @@ class SendMachine {
             const char* prefix() { return m_prefix.c_str(); }
           public:
 
-            OutQ( Nic& nic, Output& output, int vc, int maxQsize ) : 
-                m_nic(nic), m_dbg(output), m_maxQsize(maxQsize),
-                m_vc(vc), m_wakeUpCallback(NULL), m_notifyCallback(NULL), m_scheduled(false) 
+            OutQ( Nic& nic, Output& output, int myId, int maxQsize ) : 
+                m_nic(nic), m_dbg(output), m_id(myId), m_maxQsize(maxQsize),
+                m_wakeUpCallback(NULL)
             {
-                m_prefix = "@t:"+ std::to_string(nic.getNodeId()) +":Nic::SendMachine::OutQ::@p():@l ";
+                m_prefix = "@t:"+ std::to_string(nic.getNodeId()) +":Nic::SendMachine" + std::to_string(myId) + "::OutQ::@p():@l ";
             }
 
             void enque( FireflyNetworkEvent* ev, int dest );
@@ -43,41 +43,27 @@ class SendMachine {
                 m_wakeUpCallback = callback;
             }
 
-            void notify() {
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "network is unblocked\n");
-                assert( m_notifyCallback );
-                m_scheduled = true;
-                m_nic.schedCallback( m_notifyCallback ); 
-                m_notifyCallback = NULL;
+            bool empty() {
+                return m_queue.empty();
+            }
+            std::pair< FireflyNetworkEvent*, int>& front() {
+                return m_queue.front();
+            }
+            void pop() {
+                if ( m_wakeUpCallback ) {
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "call wakeup callback\n");
+                    m_nic.schedCallback( m_wakeUpCallback, 0);
+                    m_wakeUpCallback = NULL;
+                }
+                return m_queue.pop_front();
             }
 
           private:
-            void send( std::pair< FireflyNetworkEvent*, int>& );
-
-            void runSendQ( );
-
-            bool canSend( uint64_t numBytes ) {
-                bool ret = m_nic.m_linkControl->spaceToSend( m_vc, numBytes * 8); 
-                if ( ! ret ) {
-                    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "network is blocked\n");
-                    setCanSendCallback( std::bind( &Nic::SendMachine::OutQ::runSendQ, this ) ); 
-                }
-                return ret;
-            }
-
-            void setCanSendCallback( Callback callback ) {
-                assert( ! m_notifyCallback );
-                m_notifyCallback = callback;
-                m_nic.setNotifyOnSend( m_vc );
-            }
 
             Nic&        m_nic;
             Output&     m_dbg;
-            int         m_vc;
+            int         m_id;
             int         m_maxQsize;
-            bool        m_scheduled;
-            static int  m_packetId;
-            Callback    m_notifyCallback;
             Callback    m_wakeUpCallback;
 
             std::deque< std::pair< FireflyNetworkEvent*, int> > m_queue;
@@ -90,11 +76,11 @@ class SendMachine {
           public:
             typedef std::function<void()> Callback;
 
-            InQ(Nic& nic, Output& output, OutQ* outQ, int maxQsize ) : 
+            InQ(Nic& nic, Output& output, int myId, OutQ* outQ, int maxQsize ) : 
                 m_nic(nic), m_dbg(output), m_outQ(outQ), m_numPending(0),m_maxQsize(maxQsize), m_callback(NULL),
                 m_pktNum(0), m_expectedPkt(0)
             {
-                m_prefix = "@t:"+ std::to_string(nic.getNodeId()) +":Nic::SendMachine::InQ::@p():@l ";
+                m_prefix = "@t:"+ std::to_string(nic.getNodeId()) +":Nic::SendMachine" + std::to_string(myId)  +"::InQ::@p():@l ";
             }
 
             bool isFull() {
@@ -134,37 +120,45 @@ class SendMachine {
         };
 
       public:
-        typedef std::function<void()> Callback;
-        SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask,
-              int txDelay, int packetSizeInBytes, int pktOverhead, int vc, int maxQsize, int unit ) :
-            m_nic(nic), m_txDelay( txDelay ), m_packetSizeInBytes( packetSizeInBytes - pktOverhead), m_vc(vc), m_unit(unit),
-            m_pktOverhead(pktOverhead)
+
+        SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask, int myId,
+              int txDelay, int packetSizeInBytes, int pktOverhead, int maxQsize, int unit, bool flag = false ) :
+            m_nic(nic), m_id(myId), m_txDelay( txDelay ), m_packetSizeInBytes( packetSizeInBytes - pktOverhead ), 
+            m_unit(unit), m_pktOverhead(pktOverhead), m_activeEntry(NULL), m_I_manage( flag )
         {
             char buffer[100];
-            snprintf(buffer,100,"@t:%d:Nic::SendMachine::@p():@l vc=%d ",nodeId,vc);
+            snprintf(buffer,100,"@t:%d:Nic::SendMachine%d::@p():@l ",nodeId,myId);
 
             m_dbg.init(buffer, verboseLevel, verboseMask, Output::STDOUT);
-            m_outQ = new OutQ( nic, m_dbg, vc, maxQsize );
-            m_inQ = new InQ( nic, m_dbg, m_outQ, maxQsize );
+            m_outQ = new OutQ( nic, m_dbg, myId, maxQsize );
+            m_inQ = new InQ( nic, m_dbg, myId, m_outQ, maxQsize );
         }
 
         ~SendMachine() { }
 
+        bool isBusy() {
+            return m_activeEntry;
+        }       
+
         void run( SendEntryBase* entry ) {
-            entry->setUnit( m_nic.allocNicUnit( entry->local_vNic(), m_unit ) );
+            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "new stream\n");
+            assert( ! m_I_manage );
+            m_activeEntry = entry;
+            streamInit( entry );
+        }
+
+        void qSendEntry( SendEntryBase* entry ) {
+            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "new stream\n");
+            assert( m_I_manage );
             m_sendQ.push_back( entry );
-            if ( 1 == m_sendQ.size() ) {
-                streamInit( m_sendQ.front() );
-            } else {
-                m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "Q send entry\n");
+            if ( m_sendQ.size() == 1 ) {
+                streamInit( entry );
             }
         }
 
-        void notify() {
-            m_outQ->notify();
-        }
-
-        void printStatus( Output& out ); 
+        bool netPktQ_empty() { return m_outQ->empty(); }
+        void netPktQ_pop() { return m_outQ->pop(); }
+        std::pair< FireflyNetworkEvent*, int>& netPktQ_front() { return m_outQ->front(); }
 
       private:
 
@@ -172,15 +166,16 @@ class SendMachine {
         void getPayload( SendEntryBase*, FireflyNetworkEvent* );
         void streamFini( SendEntryBase* );
 
+        int     m_id;
         Nic&    m_nic;
         Output  m_dbg;
         OutQ*   m_outQ;
         InQ*    m_inQ;
         int     m_txDelay;
         int     m_packetSizeInBytes;
-        int     m_vc;
         int     m_unit;
         int     m_pktOverhead;
-
-        std::deque<SendEntryBase*>  m_sendQ;
+        bool    m_I_manage;
+        SendEntryBase* m_activeEntry;
+        std::deque< SendEntryBase* > m_sendQ;
 };

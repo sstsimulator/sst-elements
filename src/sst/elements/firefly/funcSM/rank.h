@@ -32,7 +32,7 @@ class RankFuncSM :  public FunctionSMInterface
         RankStartEvent* event = static_cast< RankStartEvent* >(e);
         *event->rank = m_info->getGroup(event->group)->getMyRank();
         
-        m_dbg.verbose(CALL_INFO,1,0,"%d\n",*event->rank);
+        m_dbg.debug(CALL_INFO,1,0,"%d\n",*event->rank);
 
         retval.setExit(0);
         delete e;

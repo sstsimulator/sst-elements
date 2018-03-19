@@ -27,7 +27,7 @@ Nic::RecvMachine::MsgStream::MsgStream( Output& output, Ctx* ctx, int unit,
     MsgHdr& hdr =           *(MsgHdr*) ev->bufPtr();
     MatchMsgHdr& matchHdr = *(MatchMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
 
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Msg Operation srcNode=%d tag=%#x length=%lu\n",
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Msg Operation srcNode=%d tag=%#x length=%lu\n",
                             m_srcNode,matchHdr.tag,matchHdr.len);
 
     m_recvEntry = static_cast<DmaRecvEntry *>( m_ctx->findRecv( m_srcNode, m_srcPid, hdr, matchHdr ) );

@@ -56,7 +56,7 @@ public:
         }
         m_completeDelayNS *= m_computeDistrib->sample(time);
 
-        m_output->verbose(CALL_INFO, 2, 0, "Adjust time by noise "
+        m_output->debug(CALL_INFO, 2, 0, "Adjust time by noise "
                 "distribution to give: %" PRIu64 "ns\n", m_completeDelayNS );
     }
 

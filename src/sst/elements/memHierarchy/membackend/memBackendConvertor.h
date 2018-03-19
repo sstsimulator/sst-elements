@@ -19,6 +19,7 @@
 
 #include <sst/core/subcomponent.h>
 #include <sst/core/event.h>
+#include <sst/core/warnmacros.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/customcmd/customCmdMemory.h"
@@ -65,12 +66,12 @@ class MemBackendConvertor : public SubComponent {
         enum class ReqType { BASE, MEM, CUSTOM };
 
         BaseReq( uint32_t reqId, ReqType(type) ) : m_reqId(reqId), m_type(type) { }
-        ~BaseReq() { }
+        virtual ~BaseReq() { }
 
         static uint32_t getBaseId( ReqId id) { return id >> 32; }
         virtual uint64_t id()   { return ((uint64_t)m_reqId << 32); }
         virtual void decrement() { }
-        virtual void increment( uint32_t bytes ) { }
+        virtual void increment( uint32_t UNUSED(bytes) ) { }
         virtual bool isDone() { return true; } /* If we're asking, the answer is yes */
         virtual bool issueDone() { return true; } /* If we're asking, the answer is yes */
         virtual std::string getString() {

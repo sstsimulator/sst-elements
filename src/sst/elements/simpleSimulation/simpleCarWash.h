@@ -12,6 +12,7 @@
 #ifndef _UNCLEEDSCARWASH_H
 #define _UNCLEEDSCARWASH_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/component.h>
 #include <sst/core/rng/marsaglia.h>
 
@@ -65,6 +66,20 @@ public:
 		int soapInv;
 		int brushInv;
     } CAR_WASH_INV;
+
+    SST_ELI_REGISTER_COMPONENT(
+        simpleCarWash,
+        "simpleSimulation",
+        "simpleCarWash",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Simple Demo Componnent",
+	COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+	{ "clock", "Clock frequency", "1GHz" },
+    	{ "clockcount", "Number of clock ticks to execute", "100000" }
+    )
 
 private:
     simpleCarWash();  // for serialization only

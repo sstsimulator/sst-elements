@@ -100,8 +100,8 @@ public:
     SST::Cycle_t turnClockOn();
     
     /* For updating memory values. CustomMemoryCommand should call this */
-    void writeData( MemEvent* );
-    void readData( MemEvent* );
+    void writeData(Addr addr, std::vector<uint8_t>* data);
+    void readData(Addr addr, size_t size, std::vector<uint8_t>& data);
 
 protected:
     MemController();  // for serialization only
@@ -137,6 +137,9 @@ protected:
     bool isRequestAddressValid(Addr addr){
         return region_.contains(addr);
     }
+    
+    void writeData( MemEvent* );
+    void readData( MemEvent* );
 
     size_t memSize_;
 

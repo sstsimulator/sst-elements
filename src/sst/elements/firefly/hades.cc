@@ -120,7 +120,7 @@ Hades::Hades( Component* owner, Params& params ) :
         	netMapId = netId; 
     	}
 
-    	m_dbg.verbose(CALL_INFO,1,2,"netId=%d netMapId=%d netMapSize=%d\n",
+    	m_dbg.debug(CALL_INFO,1,2,"netId=%d netMapId=%d netMapSize=%d\n",
             netId, netMapId, m_netMapSize );
 
         m_netMapName = params.find<std::string>( "netMapName" );
@@ -128,7 +128,11 @@ Hades::Hades( Component* owner, Params& params ) :
 
         m_sreg = getGlobalSharedRegion( m_netMapName,
                     m_netMapSize*sizeof(int), new SharedRegionMerger());
-        m_sreg->modifyArray( netMapId, netId );
+
+        if ( 0 == params.find<int>("coreId",0) ) {
+            m_sreg->modifyArray( netMapId, netId );
+        }
+
         m_sreg->publish();
 	}
 }
@@ -146,7 +150,7 @@ void Hades::finish(  )
 
 void Hades::_componentSetup()
 {
-    m_dbg.verbose(CALL_INFO,1,1,"nodeId %d numCores %d, coreNum %d\n",
+    m_dbg.debug(CALL_INFO,1,1,"nodeId %d numCores %d, coreNum %d\n",
       m_virtNic->getNodeId(), m_virtNic->getNumCores(), m_virtNic->getCoreId());
 
 	if ( m_netMapSize > 0 ) {
@@ -160,13 +164,13 @@ void Hades::_componentSetup()
 
     	for ( int i =0; i < group->getSize(); i++ ) {
         	if ( nid == group->getMapping( i ) ) {
-           		m_dbg.verbose(CALL_INFO,1,2,"rank %d -> nid %d\n", i, nid );
+           		m_dbg.debug(CALL_INFO,1,2,"rank %d -> nid %d\n", i, nid );
             	group->setMyRank( i );
             	break;
         	} 
 		}
 
-    	m_dbg.verbose(CALL_INFO,1,2,"nid %d, numRanks %u, myRank %u \n",
+    	m_dbg.debug(CALL_INFO,1,2,"nid %d, numRanks %u, myRank %u \n",
 								nid, group->getSize(),group->getMyRank() );
 	}
 
@@ -192,6 +196,6 @@ int Hades::getNodeNum()
 int Hades::getRank() 
 {
     int rank = m_info.worldRank();
-    m_dbg.verbose(CALL_INFO,1,1,"rank=%d\n",rank);
+    m_dbg.debug(CALL_INFO,1,1,"rank=%d\n",rank);
     return rank;
 }
