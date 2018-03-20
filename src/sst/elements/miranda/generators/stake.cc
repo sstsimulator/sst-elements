@@ -177,6 +177,10 @@ void Stake::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
           }
         }
 
+        for( unsigned j=0; j<htif_args.size(); j++ ){
+          out->verbose(CALL_INFO, 4, 0, "HTIF_ARGS[%d] = %s\n",j,htif_args[j].c_str() );
+        }
+
         spike = new sim_t(isa.c_str(), cores, false, (reg_t)(pc),
                           mems, htif_args, hartids, 2 );
 
@@ -189,6 +193,7 @@ void Stake::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 
         // run the sim
         rtn = spike->run();
+        out->verbose(CALL_INFO, 4, 0, "COMPLETED STAKE EXECUTION; DIGESTING MEMORY REQUESTS\n" );
         done = true;
 }
 
