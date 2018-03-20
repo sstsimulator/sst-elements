@@ -188,7 +188,6 @@ void Stake::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
         spike->set_debug(false);
         spike->set_log(log);
         spike->set_histogram(false);
-        //spike->set_sst_func((void *)(&SST::Miranda::Stake::StakeRequest));
         spike->set_sst_func((void *)(&SR));
 
         // run the sim
