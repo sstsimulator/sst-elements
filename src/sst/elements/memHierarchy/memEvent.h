@@ -20,6 +20,7 @@
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/element.h>
+#include <sst/core/warnmacros.h>
 
 #include "sst/elements/memHierarchy/util.h"
 #include "sst/elements/memHierarchy/memEventBase.h"
@@ -90,7 +91,7 @@ public:
     }
 
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(State state) {
+    MemEvent* makeResponse(State UNUSED(state)) {
         MemEvent *me = makeResponse();
         return me;
     }

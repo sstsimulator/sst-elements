@@ -28,14 +28,22 @@ class FireflyNetworkEvent : public Event {
 
   public:
 
-    FireflyNetworkEvent( size_t reserve = 1000 ) : offset(0), bufLen(0), isHdr(false) {
+    FireflyNetworkEvent( ) : offset(0), bufLen(0), isHdr(false), isCtrl(false), pktOverhead(0) {
+        buf.reserve( 1000 );
+        assert( 0 == buf.size() );
+    }
+
+    FireflyNetworkEvent( int pktOverhead, size_t reserve = 1000 ) : offset(0), bufLen(0), isHdr(false), isCtrl(false), pktOverhead(pktOverhead) {
         buf.reserve( reserve );
         assert( 0 == buf.size() );
     }
 
+    void setIsCtrl() { isCtrl = true; }
+    bool getIsCtrl() { return isCtrl; }
     void setIsHdr() { isHdr = true; }
     bool getIsHdr() { return isHdr; }
-    int calcPayloadSizeInBits() { return bufSize() * 8; }
+    int calcPayloadSizeInBits() { return payloadSize() * 8; }
+    int payloadSize() { return pktOverhead + bufSize(); }
     void setSrcNode(int node ) { srcNode = node; }
     void setSrcPid( int pid ) { srcPid = pid; }
     void setDestPid( int pid ) { destPid = pid; }
@@ -82,7 +90,9 @@ class FireflyNetworkEvent : public Event {
         srcPid = me->srcPid;
         destPid = me->destPid;
         isHdr = me->isHdr;
+        isCtrl = me->isCtrl;
         offset = me->offset;
+        pktOverhead = me->pktOverhead;
     }
 
     FireflyNetworkEvent(const FireflyNetworkEvent &me) :
@@ -94,7 +104,9 @@ class FireflyNetworkEvent : public Event {
         srcPid = me.srcPid;
         destPid = me.destPid;
         isHdr = me.isHdr;
+        isCtrl = me.isCtrl;
         offset = me.offset;
+        pktOverhead = me.pktOverhead;
     }
 
     virtual Event* clone(void) override
@@ -120,6 +132,8 @@ class FireflyNetworkEvent : public Event {
     int             srcPid;
     int             destPid;
     bool            isHdr;
+    bool            isCtrl;
+    int             pktOverhead;
     
     size_t          offset;
     size_t          bufLen;
@@ -135,7 +149,9 @@ class FireflyNetworkEvent : public Event {
         ser & srcNode;
         ser & srcPid;
         ser & destPid;
+        ser & pktOverhead;
         ser & isHdr;
+        ser & isCtrl;
     }
     
     ImplementSerializable(SST::Firefly::FireflyNetworkEvent);     

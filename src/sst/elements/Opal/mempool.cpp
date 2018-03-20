@@ -22,33 +22,50 @@
 
 
 //Constructor for pool
-Pool::Pool(Params params)
+Pool::Pool(SST::Component* own, Params params, SST::OpalComponent::MemType mem_type, int id)
 {
+
+	owner = own;
 
 	output = new SST::Output("OpalMemPool[@f:@l:@p] ", 16, 0, SST::Output::STDOUT);
 
 	size = params.find<long long int>("size", 0); // in KB's
+
 	start = params.find<long long int>("start", 0);
+
 	frsize = params.find<int>("frame_size", 4); //4KB frame size
+
+	char* subID = (char*) malloc(sizeof(char) * 32);
+	sprintf(subID, "%" PRIu32, id);
+
+	memType = mem_type;
+	if(memType == SST::OpalComponent::MemType::LOCAL) {
+		localMemID = id;
+		memUsage = own->registerStatistic<uint64_t>( "local_mem_usage", subID );
+	}
+	else {
+		sharedMemID = id;
+		memUsage = own->registerStatistic<uint64_t>( "shared_mem_usage", subID );
+	}
+
+	free(subID);
 
 	/* memory technology
 	 * 0: DRAM
 	 * 1: NVRAM
 	 */
-	uint32_t _memTech = (uint32_t) params.find<uint64_t>("mem_tech", 0);
-	switch(_memTech)
+	uint32_t mem_tech = (uint32_t) params.find<uint64_t>("mem_tech", 0);
+	switch(mem_tech)
 	{
-	case 0:
-		memTech = SST::OpalComponent::MemTech::DRAM;
-		break;
 	case 1:
 		memTech = SST::OpalComponent::MemTech::NVM;
 		break;
+	case 0:
 	default:
 		memTech = SST::OpalComponent::MemTech::DRAM;
 	}
 
-	std::cerr << "Pool start: " << start << " size: " << size << " frame size: " << frsize << " mem tech: " << _memTech << std::endl;
+	std::cerr << "Pool start: " << start << " size: " << size << " frame size: " << frsize << " mem tech: " << mem_tech << std::endl;
 	build_mem();
 
 }
@@ -93,7 +110,7 @@ MemPoolResponse Pool::allocate_frames(int _size)
 				freelist.push_back(frame);
 				alloclist.erase(frame->starting_address);
 				frames_allocated.pop_front();
-				available_frames--;
+				available_frames++;
 			}
 			mpr.pAddress = -1;
 			break;
@@ -104,7 +121,7 @@ MemPoolResponse Pool::allocate_frames(int _size)
 			freelist.pop_front();
 			alloclist[frame->starting_address] = frame;
 			frames_allocated.push_back(frame);
-			available_frames++;
+			available_frames--;
 		}
 		frames--;
 
@@ -114,6 +131,8 @@ MemPoolResponse Pool::allocate_frames(int _size)
 		mpr.pAddress = ((Frame *)frames_allocated.front())->starting_address;
 		mpr.num_frames = ceil(_size/(frsize*1024));
 		mpr.frame_size = frsize;
+		memUsage->addData(mpr.num_frames);
+
 	}
 	else
 		mpr.pAddress = -1;
@@ -123,23 +142,31 @@ MemPoolResponse Pool::allocate_frames(int _size)
 }
 
 // Allocate N contigiuous frames, returns the starting address if successfull, or -1 if it fails!
-long long int Pool::allocate_frame(int N)
+MemPoolResponse Pool::allocate_frame(int N)
 {
 
+	MemPoolResponse mpr;
 	// Make sure we have free frames first
-	if(freelist.empty())
-		return -1;
-
+	if(freelist.empty()) {
+		mpr.pAddress = -1;
+		return mpr;
+	}
 	// For now, we will assume you can only allocate 1 frame, TODO: We will implemenet a buddy-allocator style that enables allocating contigous physical spaces
-	if(N>=1)
-		return -1;
+	if(N>1) {
+		mpr.pAddress = -1;
+		return mpr;
+	}
 	else
 	{
 		// Simply, pop the first free frame and assign it
 		Frame * temp = freelist.front();
 		freelist.pop_front();
 		alloclist[temp->starting_address] = temp;
-		return temp->starting_address;
+		memUsage->addData(1);
+		mpr.pAddress = temp->starting_address;
+		mpr.frame_size = frsize;
+		mpr.num_frames = 1;
+		return mpr;
 
 	}
 

@@ -27,6 +27,7 @@ class SimpleMemoryModel : SubComponent {
 #define STORE_MASK      1<<6
 #define THREAD_MASK     1<<7
 #define BUS_BRIDGE_MASK 1<<8
+#define TLB_MASK        1<<9
  public:
 
 #include "memOp.h"
@@ -35,9 +36,11 @@ class SimpleMemoryModel : SubComponent {
 
    typedef std::function<void()> Callback;
 
+#include "cache.h"
 #include "memReq.h"
 #include "unit.h"
 #include "thread.h"
+#include "tlbUnit.h"
 #include "nicUnit.h"
 #include "busBridgeUnit.h"
 #include "loadUnit.h"
@@ -79,7 +82,7 @@ class SimpleMemoryModel : SubComponent {
 		int nicNumLoadSlots = params.find<int>( "nicNumLoadSlots", 32 );
 		int nicNumStoreSlots = params.find<int>( "nicNumStoreSlots", 32 );
 		int hostNumLoadSlots = params.find<int>( "hostNumLoadSlots", 32 );
-		int hostNumStoreSlots = params.find<int>( "hostNumLoadSlots", 32 );
+		int hostNumStoreSlots = params.find<int>( "hostNumStoreSlots", 32 );
 		double busBandwidth = params.find<double>("busBandwidth_Gbs", 7.8 );
 		int busNumLinks = params.find<double>("busNumLinks", 16 );
 
@@ -90,6 +93,13 @@ class SimpleMemoryModel : SubComponent {
 
 		int DLL_bytes = params.find<int>( "DLL_bytes", 16 );
 		int TLP_overhead = params.find<int>( "TLP_overhead", 30 );
+
+		int tlbPageSize = params.find<int>( "tlbPageSize", 1024*1024*4 );
+		int tlbSize = params.find<int>( "tlbSize", 0 );
+		int tlbMissLat_ns = params.find<int>( "tlbMissLat_ns", 0 );
+		int numWalkers = params.find<int>( "numWalkers", 1 );
+		int numTlbSlots = params.find<int>( "numTlbSlots", 1 );
+        int nicToHostMTU = params.find<int>( "nicToHostMTU", 256 );
 
 		m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
 		m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
@@ -102,10 +112,15 @@ class SimpleMemoryModel : SubComponent {
 		
 		m_nicUnit = new NicUnit( *this, m_dbg, id );
 
+		std::stringstream tlbName;
 		std::stringstream unitName;
 		std::stringstream threadName; 
 		for ( int i = 0; i < m_numNicThreads; i++ ) {
 		
+            tlbName.str("");
+            tlbName.clear();
+            tlbName << "NicThreadTlb" << i;
+
 			threadName.str("");
 			threadName.clear();
 			threadName << "NicThread" << i;
@@ -114,20 +129,20 @@ class SimpleMemoryModel : SubComponent {
 			unitName.clear();
 			unitName << "Nic" << i;
 
-			m_threads.push_back( 
-				Thread( *this, threadName.str(), m_dbg, id, 256, 
-					
+            Tlb* tlb = new Tlb( *this, m_dbg, id, 
 					new LoadUnit( *this, m_dbg, id,
 						m_busBridgeUnit,
-						nicNumLoadSlots, unitName.str().c_str()  ),
+						nicNumLoadSlots, unitName.str().c_str() ),
 
 					new StoreUnit( *this, m_dbg, id,
-						m_busBridgeUnit, 
-						nicNumStoreSlots, unitName.str().c_str() ) 
+						m_busBridgeUnit,
+						nicNumStoreSlots, unitName.str().c_str() ),
+                        tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers, numTlbSlots, numTlbSlots 
+                        );
 
-			 	)	
+			m_threads.push_back( 
+				Thread( *this, threadName.str(), m_dbg, id, nicToHostMTU, tlb, tlb )	
  			); 
-
 		}
 		for ( int i = 0; i < numCores; i++ ) {
 			threadName.str("");
@@ -145,14 +160,13 @@ class SimpleMemoryModel : SubComponent {
 			);
 		}
 
-		UnitAlgebra hostBW = params.find<SST::UnitAlgebra>("host_bw", SST::UnitAlgebra("12GiB/s"));
-		UnitAlgebra busBW = params.find<SST::UnitAlgebra>("bus_bw", SST::UnitAlgebra("12GiB/s"));
-
 		m_selfLink = comp->configureSelfLink("Nic::SimpleMemoryModel", "1 ns",
         new Event::Handler<SimpleMemoryModel>(this,&SimpleMemoryModel::handleSelfEvent));
 	}
 
-    virtual ~SimpleMemoryModel() {}
+    virtual ~SimpleMemoryModel() {
+        delete m_hostCacheUnit;
+    }
 
 	void schedCallback( SimTime_t delay, Callback callback ){
 		m_selfLink->send( delay , new SelfEvent( callback ) );
@@ -166,10 +180,10 @@ class SimpleMemoryModel : SubComponent {
 		SimTime_t now = getCurrentSimTimeNano();
 		SelfEvent* event = static_cast<SelfEvent*>(ev); 
 		if ( event->callback ) {
-			m_dbg.verbose(CALL_INFO,1,1,"callback\n");
+			m_dbg.debug(CALL_INFO,1,1,"callback\n");
 			event->callback();
 		} else if ( event->unit ) {
-			m_dbg.verbose(CALL_INFO,1,1,"resume %p\n",event->srcUnit);
+			m_dbg.debug(CALL_INFO,1,1,"resume %p\n",event->srcUnit);
 			if ( event->srcUnit ) {
 				event->unit->resume( event->srcUnit );
 			} else {
@@ -196,18 +210,18 @@ class SimpleMemoryModel : SubComponent {
 
 	virtual void schedHostCallback( int core, std::vector< MemOp >* ops, Callback callback ) {
 		SimTime_t now = getCurrentSimTimeNano();
-		m_dbg.verbose(CALL_INFO,1,1,"now=%" PRIu64 "\n",now );
+		m_dbg.debug(CALL_INFO,1,1,"now=%" PRIu64 "\n",now );
 
 		int id = m_numNicThreads + core;
-		addWork( id, new Work( ops, callback, now ) );
+		addWork( id, new Work( core, ops, callback, now ) );
 	}
 
-	virtual void schedNicCallback( int unit, std::vector< MemOp >* ops, Callback callback ) { 
+	virtual void schedNicCallback( int unit, int pid, std::vector< MemOp >* ops, Callback callback ) { 
 		SimTime_t now = getCurrentSimTimeNano();
-		m_dbg.verbose(CALL_INFO,1,1,"now=%" PRIu64 " unit=%d\n", now, unit );
+		m_dbg.debug(CALL_INFO,1,1,"now=%" PRIu64 " unit=%d\n", now, unit );
 		assert( unit >=0 );
 
-		addWork( unit, new Work( ops, callback, now ) );
+		addWork( unit, new Work( pid, ops, callback, now ) );
 	}
 
 	NicUnit& nicUnit() { return *m_nicUnit; }

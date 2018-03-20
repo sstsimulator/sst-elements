@@ -238,13 +238,34 @@ void Cache::configureLinks(Params &params) {
     if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
         d_->output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size'. Change your input file to remove this notice.\n", getName().c_str());
 
+    char *node_buffer1 = (char*) malloc(sizeof(char) * 256);
+    char *node_buffer2 = (char*) malloc(sizeof(char) * 256);
+    char *node_buffer3 = (char*) malloc(sizeof(char) * 256);
+    node = params.find<uint32_t>("node", 0);
+    sprintf(node_buffer1, "%" PRIu32, node);
+    sprintf(node_buffer2, "%" PRIu32, params.find<uint32_t>("shared_memory", 0));
+    sprintf(node_buffer3, "%" PRIu32, params.find<uint32_t>("local_memory_size", 0));
+
     Params nicParams = params.find_prefix_params("memNIC." );
+    nicParams.insert("node", node_buffer1);
+    nicParams.insert("shared_memory", node_buffer2);
+    nicParams.insert("local_memory_size", node_buffer3);
 
     Params memlink = params.find_prefix_params("memlink.");
     memlink.insert("port", "low_network_0");
+    memlink.insert("node", node_buffer1);
+    memlink.insert("shared_memory", node_buffer2);
+    memlink.insert("local_memory_size", node_buffer3);
     
     Params cpulink = params.find_prefix_params("cpulink.");
     cpulink.insert("port", "high_network_0");
+    cpulink.insert("node", node_buffer1);
+    cpulink.insert("shared_memory", node_buffer2);
+    cpulink.insert("local_memory_size", node_buffer3);
+
+    free(node_buffer1);
+    free(node_buffer2);
+    free(node_buffer3);
 
     /* Finally configure the links */
     if (highNetExists && lowNetExists) {
@@ -328,10 +349,14 @@ void Cache::configureLinks(Params &params) {
             cacheArray_->setSliceAware(cacheSliceCount);
         }
         // Set region parameters
-        nicParams.insert("addr_range_start", std::to_string(addrRangeStart));
-        nicParams.insert("addr_range_end", std::to_string(addrRangeEnd));
-        nicParams.insert("interleave_size", std::to_string(interleaveSize) + "B");
-        nicParams.insert("interleave_step", std::to_string(interleaveStep) + "B");
+        nicParams.find<std::string>("addr_range_start", "", found);
+        if (!found) nicParams.insert("addr_range_start", std::to_string(addrRangeStart));
+        nicParams.find<std::string>("addr_range_end", "", found);
+        if (!found) nicParams.insert("addr_range_end", std::to_string(addrRangeEnd));
+        nicParams.find<std::string>("interleave_size", "", found);
+        if (!found) nicParams.insert("interleave_size", std::to_string(interleaveSize) + "B");
+        nicParams.find<std::string>("interleave_step", "", found);
+        if (!found) nicParams.insert("interleave_step", std::to_string(interleaveStep) + "B");
         
         linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));

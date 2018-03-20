@@ -2,11 +2,13 @@
             std::string m_prefix;
             const char* prefix() { return m_prefix.c_str(); }
           public:
-            Ctx( Output& output, RecvMachine& rm, int pid, int qsize ) : m_dbg(output), m_rm(rm), m_pid(pid), 
+            Ctx( Output& output, RecvMachine& rm, int pid, int unit, int qsize ) :
+                    m_dbg(output), m_rm(rm), m_pid(pid), m_unit( unit ), 
                     m_blockedNetworkEvent(NULL), m_maxQsize(qsize) {
                 m_prefix = "@t:"+ std::to_string(rm.nic().getNodeId()) +":Nic::RecvMachine::Ctx" + std::to_string(pid) + "::@p():@l ";
             }
 
+            int getHostReadDelay() { return m_rm.m_hostReadDelay; }
             bool processPkt( FireflyNetworkEvent* ev );
             DmaRecvEntry* findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr );
             EntryBase* findRecv( int srcNode, int srcPid, MsgHdr& hdr, MatchMsgHdr& matchHdr  );
@@ -59,7 +61,7 @@
 
 
             void calcNicMemDelay( int unit, std::vector< MemOp>* ops, std::function<void()> callback ) {
-                m_rm.nic().calcNicMemDelay( unit, ops, callback );
+                m_rm.nic().calcNicMemDelay( unit, m_pid, ops, callback );
             }
 
             void schedCallback( Callback callback, uint64_t delay = 0 ) {
@@ -67,7 +69,7 @@
             }
 
             void runSend( int num, SendEntryBase* entry ) {
-                m_rm.nic().m_sendMachine[0]->run( entry );
+                m_rm.nic().qSendEntry( entry );
             } 
 
             // this function is called by a Stream object, we don't want to delete ourself,
@@ -93,7 +95,7 @@
             }
 
             int allocNicUnit() {
-                return m_rm.m_nic.allocNicUnit( m_pid );
+                return m_rm.m_nic.allocNicUnit( m_pid, m_unit );
             }
 
             void clearStreamMap( SrcKey key ) {
@@ -119,6 +121,7 @@
             StreamBase* newStream( int unit, FireflyNetworkEvent* );
             Output&         m_dbg;
             RecvMachine&    m_rm;
+            int                              m_unit;
             int                              m_pid;
             std::map< SrcKey, StreamBase*>   m_streamMap;
             FireflyNetworkEvent*             m_blockedNetworkEvent;

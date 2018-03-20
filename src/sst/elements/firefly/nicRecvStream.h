@@ -16,6 +16,12 @@ class StreamBase {
             virtual void processPkt( FireflyNetworkEvent* ev );
             bool isBlocked();
             void needRecv( FireflyNetworkEvent* ev );
+        
+            void qSend( SendEntryBase* entry ) {
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
+                m_ctx->runSend( m_unit, entry );
+                m_ctx->deleteStream( this );
+            }
 
             void setWakeup( Callback callback )    {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");

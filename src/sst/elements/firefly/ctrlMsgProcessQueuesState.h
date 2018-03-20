@@ -326,7 +326,7 @@ class ProcessQueuesState : SubComponent
     _CommReq*	searchPostedRecv( MatchHdr& hdr, int& delay );
 
     void exit( int delay = 0 ) {
-        dbg().verbose(CALL_INFO,2,1,"exit ProcessQueuesState\n"); 
+        dbg().debug(CALL_INFO,2,1,"exit ProcessQueuesState\n"); 
         passCtrlToFunction( m_exitDelay + delay );
         m_exitDelay = 0;
     }

@@ -2,11 +2,43 @@
 class Work {
 
   public:
-    Work( std::vector< MemOp >* ops, Callback callback, SimTime_t start ) : m_ops(ops),
-                        m_callback(callback), m_start(start), m_pos(0) {
+    Work( int pid, std::vector< MemOp >* ops, Callback callback, SimTime_t start, int alignment = 64 ) :
+        m_pid(pid), m_ops(ops), m_callback(callback), m_start(start), m_pos(0) 
+    {
         if( 0 == ops->size() ) {
             ops->push_back( MemOp( MemOp::Op::NoOp ) );
         }
+#if 0
+        std::vector< MemOp >::iterator iter = (*ops).begin();
+        size_t x = (*ops).size();
+        while ( iter != (*ops).end() ) {
+            if ( iter->addr & (alignment -1) ) {
+                //printf("%s() not aligned addr=%#" PRIx64 " length=%" PRIu64 "\n",__func__, iter->addr, iter->length);
+                if ( iter->length < alignment ) {
+                    //printf("%s() fix addr=%#" PRIx64 " length=%" PRIu64 "\n",__func__, iter->addr, iter->length);
+                    iter->addr = iter->addr & ~(alignment-1);
+                    iter->length = alignment;
+                    ++iter;
+                } else {
+                    MemOp op = MemOp( iter->addr & ~(alignment-1), alignment, iter->getOp() );
+                    //printf("%s() insert addr=%#" PRIx64 " length=%" PRIu64 "\n",__func__, op.addr, op.length);
+
+                    iter->length = iter->length - (iter->addr & (alignment-1));  
+                    iter->length = iter->length + alignment & ~(alignment-1);  
+                    iter->addr = op.addr + alignment; 
+                    //printf("%s() fix addr=%#" PRIx64 " length=%" PRIu64 "\n",__func__, iter->addr, iter->length);
+                    iter = (*ops).insert( iter, op );
+                }
+            } else {
+                ++iter;
+            }
+        }
+#endif
+#if 0
+        if ( x !=(*ops).size() ) {
+            printf("%s() grew %lu\n",__func__, (*ops).size() - x );
+        }
+#endif
     }
 
     ~Work() {
@@ -14,6 +46,7 @@ class Work {
         delete m_ops;
     }
 
+    int getPid()        { return m_pid; } 
     SimTime_t start()   { return m_start; }
 	size_t getNumOps()  { return m_ops->size(); }
     bool isDone()       { return m_pos ==  m_ops->size(); }
@@ -38,6 +71,7 @@ class Work {
     int 					m_pos;
     Callback 				m_callback;
     std::vector< MemOp >*   m_ops;
+    int                     m_pid;
 };
 
 
@@ -46,7 +80,7 @@ class Thread : public UnitBase {
   public:	  
      Thread( SimpleMemoryModel& model, std::string name, Output& output, int id, int accessSize, Unit* load, Unit* store ) : 
 			m_model(model), m_dbg(output), m_loadUnit(load), m_storeUnit(store),
-			m_maxAccessSize( accessSize ), m_currentOp(NULL), m_waitingOnOp(NULL), m_blocked(false), m_curWorkNum(0),m_lastDelete(0)
+			m_maxAccessSize( accessSize ), m_nextOp(NULL), m_waitingOnOp(NULL), m_blocked(false), m_curWorkNum(0),m_lastDelete(0)
 	{
 		m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name +"::@p():@l ";
         m_dbg.verbosePrefix( prefix(), CALL_INFO,1,THREAD_MASK,"this=%p\n",this );
@@ -64,7 +98,7 @@ class Thread : public UnitBase {
 
         work->print(m_dbg,prefix());
 
-		if ( ! m_blocked && ! m_currentOp ) {
+		if ( ! m_blocked && ! m_nextOp ) {
 			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"prime pump\n");		
 			process( );
         }
@@ -74,8 +108,10 @@ class Thread : public UnitBase {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"work=%lu\n", m_workQ.size() );
 		
 		m_blocked = false;
-        if ( m_currentOp ) {
-            process( m_currentOp ); 
+        if ( m_waitingOnOp ) { return; } 
+
+        if ( m_nextOp ) {
+            process( m_nextOp ); 
         } else if ( ! m_workQ.empty() ) {
 			process();
 		}
@@ -98,6 +134,7 @@ class Thread : public UnitBase {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op=%s op.length=%lu offset=%lu addr=%#" PRIx64 " length=%lu\n",
                             op->getName(), op->length, op->offset, addr, length );
 
+        int pid = work->getPid();
 		MemOp::Op type = op->getOp();
 
         bool deleteWork = false;
@@ -115,11 +152,11 @@ class Thread : public UnitBase {
 
         switch( op->getOp() ) {
           case MemOp::NoOp:
-	        m_model.schedCallback( 1, callback );
+	        m_model.schedCallback( 0, callback );
             break;
 
 		  case MemOp::HostBusWrite:
-            m_blocked = m_model.busUnit().write( this, new MemReq( addr, length), callback );
+            m_blocked = m_model.busUnit().write( this, new MemReq( addr, length ), callback );
 		    break;
 
           case MemOp::LocalLoad:
@@ -133,13 +170,13 @@ class Thread : public UnitBase {
           case MemOp::HostStore:
           case MemOp::BusStore:
           case MemOp::BusDmaToHost:
-            m_blocked = m_storeUnit->storeCB( this, new MemReq( addr, length ), callback );
+            m_blocked = m_storeUnit->storeCB( this, new MemReq( addr, length, pid ), callback );
             break;
 
           case MemOp::HostLoad:
           case MemOp::BusLoad:
           case MemOp::BusDmaFromHost:
-            m_blocked = m_loadUnit->load( this, new MemReq( addr, length ), callback );
+            m_blocked = m_loadUnit->load( this, new MemReq( addr, length, pid ), callback );
             break;
 
           default:
@@ -149,37 +186,30 @@ class Thread : public UnitBase {
 
         // if the Op is done it means we are issing the last chunk of this Op
         if ( op->isDone() ) {
-            m_currentOp = NULL;
+            if ( ! m_workQ.empty() )  {
+                // the just issued Op is complete, get the next Op
+                m_nextOp = m_workQ.front()->popOp();
+            } else {
+                m_nextOp = NULL;
+            }
         } else {
-            m_currentOp = op;
+            m_nextOp = op;
+        }
+
+        m_waitingOnOp = NULL;
+        if ( m_nextOp && op->getOp() != m_nextOp->getOp() ) { 
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"stalled on Op %p\n",op);
+            m_waitingOnOp = op;
         }
 
 		if ( m_blocked ) {
         	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"blocked\n");
             // resume() will be called
             // the OP callback will also be called
-		} else if ( m_currentOp ) {
-        	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op is not done\n");
-			m_model.schedCallback( 1, std::bind(&Thread::process, this, m_currentOp ) ); 
-        } else {
-
-            if ( ! m_workQ.empty() )  {
-                
-                // the just issued Op is complete, get the next Op
-		        m_currentOp = m_workQ.front()->popOp();
-
-       	        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"currentOp=%s nextOp=%s\n",op->getName(), m_currentOp->getName());
-
-                // if the just issued Op and the next Op are the same we don't have to stall the pipeline
-                if ( op->getOp() == m_currentOp->getOp() ) { 
-        	        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"schedule process()\n");
-			        m_model.schedCallback( 1, std::bind(&Thread::process, this, m_currentOp ) ); 
-                } else {
-        	        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"stalled on Op %p\n",op);
-                    m_waitingOnOp = op;
-                }
-            }
-		}
+		} else if ( m_nextOp && ! m_waitingOnOp ) { 
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"schedule process()\n");
+		    m_model.schedCallback( 0, std::bind(&Thread::process, this, m_nextOp ) ); 
+        }
     }
 
     void opCallback( Work* work, MemOp* op, bool deleteWork ) {
@@ -226,14 +256,16 @@ class Thread : public UnitBase {
         if ( op == m_waitingOnOp ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"issue the stalled Op\n");
             m_waitingOnOp = NULL;
-            assert( m_currentOp );
-            process( m_currentOp );
+            if ( ! m_blocked ) {
+                assert( m_nextOp );
+                process( m_nextOp );
+            }
         }
     }
 
     const char* prefix() { return m_prefix.c_str(); }
 	
-	MemOp*  m_currentOp;
+	MemOp*  m_nextOp;
 	MemOp*  m_waitingOnOp;
 	bool    m_blocked;
 	

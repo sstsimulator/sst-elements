@@ -91,7 +91,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
         } else {
             ptr += rank * chunkSize( rank );
         }
-        m_dbg.verbose(CALL_INFO,2,0,"rank %d, ptr %p\n", rank, ptr);
+        m_dbg.debug(CALL_INFO,2,0,"rank %d, ptr %p\n", rank, ptr);
  
         return ptr;
     }
@@ -105,7 +105,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
             size = m_info->sizeofDataType( m_event->recvtype ) *
                                                 m_event->recvcnt;
         } 
-        m_dbg.verbose(CALL_INFO,2,0,"rank %d, size %lu\n",rank,size);
+        m_dbg.debug(CALL_INFO,2,0,"rank %d, size %lu\n",rank,size);
         return size;
     }
 

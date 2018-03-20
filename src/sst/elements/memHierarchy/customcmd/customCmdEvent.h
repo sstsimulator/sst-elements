@@ -34,12 +34,15 @@ using namespace std;
 class CustomCmdEvent : public MemEventBase {
 public:
 
-    CustomCmdEvent(std::string src, Addr addr, Command cmd, uint32_t opc = 0, uint32_t size = 0) : 
-        MemEventBase(src, cmd), addr_(addr), addrGlobal_(true), opCode_(opc), size_(size), instPtr_(0), vAddr_(0) { }
+    CustomCmdEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, uint32_t opc = 0, uint32_t size = 0) : 
+        MemEventBase(src, cmd), addr_(addr), baseAddr_(baseAddr), addrGlobal_(true), opCode_(opc), size_(size), instPtr_(0), vAddr_(0) { }
 
     /* Getters/setters */
     void setAddr(Addr addr) { addr_ = addr; }
     Addr getAddr() { return addr_; }
+
+    void setBaseAddr(Addr baseAddr) { baseAddr_ = baseAddr; }
+    Addr getBaseAddr() { return baseAddr_; }
 
     void setAddrGlobal(bool val) { addrGlobal_ = val; }
     bool isAddrGlobal() { return addrGlobal_; }
@@ -81,6 +84,7 @@ public:
     virtual std::string getVerboseString() override {
         std::ostringstream str;
         str << std::hex << " Addr: 0x" << addr_;
+        str << std::hex << " BaseAddr: 0x" << baseAddr_;
         str << (addrGlobal_ ? "(Global)" : "(Local)");
         str << " Size: " << std::dec << size_;
         str << " VA: 0x" << std::hex << vAddr_ << " IP: 0x" << instPtr_;
@@ -91,17 +95,18 @@ public:
     virtual std::string getBriefString() {
         std::ostringstream str;
         str << std::hex << " Addr: 0x" << addr_;
+        str << std::hex << " BaseAddr: 0x" << baseAddr_;
         str << std::dec << " Size: " << size_;
         str << std::hex << " OpCode: 0x" << opCode_;
         return MemEventBase::getBriefString() + str.str();
     }
 
     virtual bool doDebug(std::set<Addr> &addr) {
-        return (addr.find(addr_) != addr.end());
+        return (addr.find(baseAddr_) != addr.end());
     }
 
     virtual Addr getRoutingAddress() {
-        return addr_;
+        return baseAddr_;
     }
 
     virtual CustomCmdEvent* clone(void) override {
@@ -113,7 +118,8 @@ public:
     }
 
 private:
-    Addr                    addr_;      /* TODO is baseAddr needed? */
+    Addr                    addr_;
+    Addr                    baseAddr_;
     bool                    addrGlobal_;/* Is address global or local? */
     uint32_t                opCode_;    /* Custom Op Code */
     uint32_t                size_;      /* Number of bytes requested, payload size, etc. */
@@ -128,8 +134,11 @@ public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         MemEventBase::serialize_order(ser);
         ser & addr_;
+        ser & baseAddr_;
         ser & addrGlobal_;
         ser & opCode_;
+        ser & size_;
+        ser & payload_;
         ser & instPtr_;
         ser & vAddr_;
     }

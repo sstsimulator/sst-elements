@@ -31,7 +31,7 @@ class SizeFuncSM :  public FunctionSMInterface
 
         SizeStartEvent* event = static_cast< SizeStartEvent* >(e);
 
-        m_dbg.verbose(CALL_INFO,1,0,"group=%d\n",event->group);
+        m_dbg.debug(CALL_INFO,1,0,"group=%d\n",event->group);
 
         assert( m_info->getGroup(event->group) );
         *event->size = m_info->getGroup(event->group)->getSize();

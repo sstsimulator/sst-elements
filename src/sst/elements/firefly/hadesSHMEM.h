@@ -148,7 +148,7 @@ class HadesSHMEM : public Shmem::Interface
 
     virtual void setOS( OS* os ) {
         m_os = static_cast<Hades*>(os);
-        dbg().verbose(CALL_INFO,2,0,"\n");
+        dbg().debug(CALL_INFO,2,0,"\n");
     }
 
     virtual void init(Shmem::Callback);
@@ -257,6 +257,10 @@ class HadesSHMEM : public Shmem::Interface
         	event->m_callback2( event->m_retval );
 		}
         delete e;
+    }
+
+    int calcNetPE( int pe ) {
+        return m_os->getInfo()->getGroup( MP::GroupWorld )->getMapping( pe ) ;
     }
 
     FunctionSM& functionSM() { return m_os->getFunctionSM(); }

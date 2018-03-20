@@ -40,20 +40,22 @@ namespace Firefly {
 #define NIC_DBG_SEND_MACHINE 1<<3
 #define NIC_DBG_RECV_MACHINE 1<<4
 #define NIC_SHMEM 1 << 5 
+#define NIC_DBG_SEND_NETWORK 1<<6
 
 class Nic : public SST::Component  {
 
     typedef unsigned RespKey_t;
 	class LinkControlWidget {
 
+        typedef std::function<void()> Callback;
 	  public:
-		LinkControlWidget( Nic* nic) : m_nic(nic), m_notifiers(2,NULL), m_num(0) {
+		LinkControlWidget( Output& output, Callback callback ) : m_dbg(output), m_notifiers(1,NULL), m_num(0), m_callback(callback) {
 		}
 
 		inline bool notify( int vn ) {
-        	m_nic->m_dbg.verbose(CALL_INFO,2,1,"Widget vn=%d\n",vn);
+        	m_dbg.debug(CALL_INFO,2,1,"Widget vn=%d\n",vn);
 			if ( m_notifiers[vn] ) {
-       			m_nic->m_dbg.verbose(CALL_INFO,2,1,"Widget call notifier num=%d\n", m_num -1);
+       			m_dbg.debug(CALL_INFO,2,1,"Widget call notifier, number still installed %d\n", m_num -1);
 				m_notifiers[vn]();
 				m_notifiers[vn] = NULL;
 				--m_num;
@@ -62,10 +64,10 @@ class Nic : public SST::Component  {
 			return m_num > 0; 
 		}
 
-		inline void setNotifyOnReceive( std::function<void()> notifier, int vn ) {
-        	m_nic->m_dbg.verbose(CALL_INFO,2,1,"Widget vn=%d num=%d\n",vn,m_num);
+		inline void setNotify( std::function<void()> notifier, int vn ) {
+        	m_dbg.debug(CALL_INFO,2,1,"Widget vn=%d, number now installed %d\n",vn,m_num+1);
 			if ( m_num == 0 ) {
-				m_nic->setRecvNotifier();
+                m_callback();
 			}
 			assert( m_notifiers[vn] == NULL );
 			m_notifiers[vn] = notifier;
@@ -73,7 +75,8 @@ class Nic : public SST::Component  {
 		}
 
 	  private:
-		Nic* m_nic;
+        Callback m_callback;
+        Output& m_dbg;
 		int m_num;
 		std::vector< std::function<void()> > m_notifiers;
 	};
@@ -104,7 +107,7 @@ class Nic : public SST::Component  {
         unsigned char op : 3; 
         unsigned char op2 : 3; 
         unsigned char dataType : 3;
-        uint8_t respKey : 7;
+        uint32_t respKey : 24;
     };
     struct RdmaMsgHdr {
         enum { Put, Get, GetResp } op;
@@ -168,27 +171,18 @@ public:
     void init( unsigned int phase );
     int getNodeId() { return m_myNodeId; }
     int getNum_vNics() { return m_num_vNics; }
-    void printStatus(Output &out);
+    void printStatus(Output &out) {}
 
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
 
-    void dmaRead( int unit, std::vector<MemOp>* vec, Callback callback );
-    void dmaWrite( int unit, std::vector<MemOp>* vec, Callback callback );
+    void dmaRead( int unit, int pid, std::vector<MemOp>* vec, Callback callback );
+    void dmaWrite( int unit, int pid, std::vector<MemOp>* vec, Callback callback );
 
     void schedCallback( Callback callback, uint64_t delay = 0 ) {
         schedEvent( new SelfEvent( callback ), delay);
     }
 
-    void setNotifyOnSend( int vc ) {
-        assert( ! m_sendNotify[vc] ); 
-        m_sendNotify[vc] = true;
-        ++m_sendNotifyCnt;
-        m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
-    }
-
-    std::vector<bool> m_sendNotify;
-    int m_sendNotifyCnt;
     VirtNic* getVirtNic( int id ) {
         return m_vNicV[id];
     }
@@ -244,18 +238,18 @@ public:
     }
 
     void notifyNeedRecv( int pid, int srcNode, int srcPid, size_t length ) {
-    	m_dbg.verbose(CALL_INFO,2,1,"srcNode=%d srcPid=%d len=%lu\n", srcNode, srcPid, length);
+    	m_dbg.debug(CALL_INFO,2,1,"srcNode=%d srcPid=%d len=%lu\n", srcNode, srcPid, length);
 
         m_vNicV[pid]->notifyNeedRecv( srcPid, srcNode, length );
     }
 
     void notifyPutDone( int vNic, void* key ) {
-        m_dbg.verbose(CALL_INFO,2,1,"%p\n",key);
+        m_dbg.debug(CALL_INFO,2,1,"%p\n",key);
         assert(0);
     }
 
     void notifyGetDone( int vNic, int, int, int, size_t, void* key ) {
-        m_dbg.verbose(CALL_INFO,2,1,"%p\n",key);
+        m_dbg.debug(CALL_INFO,2,1,"%p\n",key);
         m_vNicV[vNic]->notifyGetDone( key );
     }
 
@@ -263,9 +257,17 @@ public:
         return ++m_getKey;
     }
 
-    void setRecvNotifier() {
-        m_dbg.verbose(CALL_INFO,2,1,"\n");
-        m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
+    bool sendNotify(int vc)
+    {
+        m_dbg.debug(CALL_INFO,2,1,"network can send on vc=%d\n",vc);
+        return m_linkSendWidget->notify( vc );
+    }
+
+
+    bool recvNotify(int vc)
+    {
+        m_dbg.debug(CALL_INFO,2,1,"network event available vc=%d\n",vc);
+        return m_linkRecvWidget->notify( vc );
     }
 
     int NetToId( int x ) { return x; }
@@ -279,16 +281,11 @@ public:
     int                     m_num_vNics;
     SST::Link*              m_selfLink;
 
-    // the interface to to Merlin
-    // Merlin::LinkControl*                m_linkControl;
-    // Merlin::LinkControl::Handler<Nic> * m_recvNotifyFunctor;
-    // Merlin::LinkControl::Handler<Nic> * m_sendNotifyFunctor;
     SST::Interfaces::SimpleNetwork*     m_linkControl;
     SST::Interfaces::SimpleNetwork::Handler<Nic>* m_recvNotifyFunctor;
     SST::Interfaces::SimpleNetwork::Handler<Nic>* m_sendNotifyFunctor;
-    bool sendNotify(int);
-    bool recvNotify(int);
-    LinkControlWidget m_linkWidget;
+    LinkControlWidget* m_linkRecvWidget;
+    LinkControlWidget* m_linkSendWidget;
 
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
@@ -300,7 +297,35 @@ public:
 	SimTime_t m_shmemRxDelay_ns; 
 	int m_numNicUnits;
     int m_curNicUnit;
+    int m_numNicUnitsPerCtx;
     enum { RoundRobin, PerContext } m_nicUnitAllocPolicy;
+
+    void feedTheNetwork( );
+    void sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc );
+    void notifySendDone( int id ) { }
+
+    void qSendEntry( SendEntryBase* entry ) {
+        
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "myPid=%d destNode=%d destPid=%d size=%" PRIu64 "\n",
+                    entry->local_vNic(), entry->dest(), entry->dst_vNic(), entry->totalBytes() );
+
+        if ( entry->isCtrl() ) {
+            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "ctrl\n");
+            m_sendMachine[m_ctrlSendMachine]->qSendEntry( entry );
+        } else {
+            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "std\n");
+            m_sendMachine[m_stdSendMachine]->qSendEntry( entry );
+        }
+    }
+
+    void notifyHavePkt( int id ) {
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"id=%d current src=%d\n",id, m_curNetworkSrc);
+        if ( -1 == m_curNetworkSrc ) {
+            m_curNetworkSrc = id;
+            feedTheNetwork();
+        } 
+    }
+
 
     void calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
         if( m_simpleMemoryModel ) {
@@ -311,42 +336,44 @@ public:
 		}
     }
 
-    void initNicUnitPool( int num, std::string policy ) {
-        m_numNicUnits = num;
-        m_dbg.verbose(CALL_INFO,3,1,"num=%d policy=%s\n",num, policy.c_str());
+    void initNicUnitPool( int numUnits, int numCtx, std::string policy ) {
+        m_numNicUnits = numUnits;
+        m_dbg.debug(CALL_INFO,3,1,"num=%d policy=%s\n",numUnits, policy.c_str());
         if ( 0 == policy.compare("RoundRobin") ) {
             m_nicUnitAllocPolicy = RoundRobin;
         } else if ( 0 == policy.compare("PerContext") ) {
             m_nicUnitAllocPolicy = PerContext;
+            m_numNicUnitsPerCtx = m_numNicUnits/numCtx;
         } else {
             assert(0);
         }
     }
 
-    int allocNicUnit( int pid ) {
+    int allocNicUnit( int pid, int num ) {
         int unit;
         switch ( m_nicUnitAllocPolicy ) {
           case RoundRobin:
             unit = m_curNicUnit++ % m_numNicUnits;            
             break;
           case PerContext:
-            unit = pid % m_numNicUnits;
+            assert( num < m_numNicUnitsPerCtx ); 
+            unit = pid * m_numNicUnitsPerCtx + num;
             break;
           default:
             assert(0);
         }
 
-        m_dbg.verbose(CALL_INFO,3,1,"pid=%d unit=%d\n",pid, unit);
+        m_dbg.debug(CALL_INFO,3,1,"pid=%d unit=%d\n",pid, unit);
         return unit;
     }
 
     void freeNicUnit( int unit ) {
-        m_dbg.verbose(CALL_INFO,3,1,"unit=%d\n",unit);
+        m_dbg.debug(CALL_INFO,3,1,"unit=%d\n",unit);
     }
 
-    void calcNicMemDelay( int unit, std::vector< MemOp>* ops, std::function<void()> callback ) {
+    void calcNicMemDelay( int unit, int pid, std::vector< MemOp>* ops, std::function<void()> callback ) {
         if( m_simpleMemoryModel ) {
-        	m_simpleMemoryModel->schedNicCallback( unit, ops, callback );
+        	m_simpleMemoryModel->schedNicCallback( unit, pid, ops, callback );
         } else {
         	for ( unsigned i = 0;  i <  ops->size(); i++ ) {
             	assert( (*ops)[i].callback == NULL );
@@ -355,21 +382,22 @@ public:
 			delete ops;
 		}
 	}
+
     RespKey_t m_respKey;
     RespKey_t genRespKey( void* ptr ) {
         assert( m_respKeyMap.find(m_respKey) == m_respKeyMap.end() );
         RespKey_t key = m_respKey++;
         m_respKeyMap[key] = ptr;  
-        m_respKey &= 0x7f;
+        m_respKey &= 0xffffff;
         if ( 0 == m_respKey ) {
             ++m_respKey;
         }
-        m_dbg.verbose(CALL_INFO,2,1,"map[%#x]=%p nextkey=%#x\n",key-1,ptr,m_respKey);
+        m_dbg.debug(CALL_INFO,2,1,"map[%#x]=%p nextkey=%#x\n",key-1,ptr,m_respKey);
         return key;
     }
     void* getRespKeyValue( RespKey_t key ) {
         void* value = m_respKeyMap[key];
-        m_dbg.verbose(CALL_INFO,2,1,"map[%#x]=%p\n",key,value);
+        m_dbg.debug(CALL_INFO,2,1,"map[%#x]=%p\n",key,value);
         m_respKeyMap.erase(key);
         return value; 
     }
@@ -379,7 +407,12 @@ public:
     SimpleMemoryModel*  m_simpleMemoryModel;
     std::deque<int> m_availNicUnits;
     uint16_t m_getKey;
-  public:
+    int m_ctrlSendMachine;
+    int m_stdSendMachine;
+    int m_curNetworkSrc;
+    int m_numNetworkSrcs;
+
+    static int  m_packetId;
 	int m_tracedPkt;
 	int m_tracedNode;
 }; 

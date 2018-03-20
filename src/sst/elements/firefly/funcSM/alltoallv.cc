@@ -44,7 +44,7 @@ void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_size = m_info->getGroup( m_event->group )->getSize();
     m_rank = m_info->getGroup( m_event->group )->getMyRank();
 
-    m_dbg.verbose(CALL_INFO,1,0,"Start size=%d\n",m_size);
+    m_dbg.debug(CALL_INFO,1,0,"Start size=%d\n",m_size);
 
     void* recv = recvChunkPtr(m_rank);
     void* send = sendChunkPtr(m_rank);
@@ -63,7 +63,7 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
       case PostRecv:
 
         if ( m_count == m_size ) {
-            m_dbg.verbose(CALL_INFO,1,0,"leave\n");
+            m_dbg.debug(CALL_INFO,1,0,"leave\n");
             retval.setExit(0);
             delete m_event;
             m_event = NULL;
@@ -71,7 +71,7 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
         }
         rank = mod((long) m_rank - m_count, m_size);
 
-        m_dbg.verbose(CALL_INFO,1,0,"count=%d irecv src=%d\n", 
+        m_dbg.debug(CALL_INFO,1,0,"count=%d irecv src=%d\n", 
                                                         m_count, rank );
 
 		addr.setSimVAddr( 1 ); 
@@ -84,7 +84,7 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
       case Send:
         rank = mod((long) m_rank + m_count, m_size);
 
-        m_dbg.verbose(CALL_INFO,1,0,"count=%d send dest=%d\n", 
+        m_dbg.debug(CALL_INFO,1,0,"count=%d send dest=%d\n", 
                                                         m_count, rank );
 
 		
@@ -96,7 +96,7 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
         break;
 
       case WaitRecv:
-        m_dbg.verbose(CALL_INFO,1,0,"count=%d wait\n", m_count );
+        m_dbg.debug(CALL_INFO,1,0,"count=%d wait\n", m_count );
         proto()->wait( &m_recvReq );
         ++m_count;
         m_state = PostRecv;
