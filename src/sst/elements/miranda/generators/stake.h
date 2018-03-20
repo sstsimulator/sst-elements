@@ -62,6 +62,7 @@ private:
         std::string isa;    // isa string
         std::string pk;     // proxy kernel
         std::string bin;    // ELF binary
+        std::string args;   // Binary args
         std::string ext;    // RoCC extension
         std::string extlib; // extension library
 
