@@ -40,6 +40,7 @@ Stake::Stake( Component* owner, Params& params ) :
         isa = params.find<std::string>("isa", "RV64IMAFDC");
         pk = params.find<std::string>("proxy_kernel", "pk");
         bin = params.find<std::string>("bin", "");
+        args = params.find<std::string>("args", "");
         ext = params.find<std::string>("ext", "");
         extlib = params.find<std::string>("extlib","");
 
@@ -159,6 +160,27 @@ void Stake::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
         // initiate the spike simulator
         htif_args.push_back(pk);
         htif_args.push_back(bin);
+
+        // split the cli args into tokens
+        auto i = 0;
+        auto pos = args.find(' ');
+        if( pos == std::string::npos ){
+          // single argument
+          htif_args.push_back(args.substr(i,args.length()));
+        }
+        while( pos != std::string::npos ){
+          htif_args.push_back(args.substr(i,pos-i));
+          i = ++pos;
+          pos = args.find(' ',pos);
+          if( pos == std::string::npos ){
+            htif_args.push_back(args.substr(i,args.length()));
+          }
+        }
+
+        for( unsigned j=0; j<htif_args.size(); j++ ){
+          out->verbose(CALL_INFO, 4, 0, "HTIF_ARGS[%d] = %s\n",j,htif_args[j].c_str() );
+        }
+
         spike = new sim_t(isa.c_str(), cores, false, (reg_t)(pc),
                           mems, htif_args, hartids, 2 );
 
@@ -166,11 +188,11 @@ void Stake::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
         spike->set_debug(false);
         spike->set_log(log);
         spike->set_histogram(false);
-        //spike->set_sst_func((void *)(&SST::Miranda::Stake::StakeRequest));
         spike->set_sst_func((void *)(&SR));
 
         // run the sim
         rtn = spike->run();
+        out->verbose(CALL_INFO, 4, 0, "COMPLETED STAKE EXECUTION; DIGESTING MEMORY REQUESTS\n" );
         done = true;
 }
 
