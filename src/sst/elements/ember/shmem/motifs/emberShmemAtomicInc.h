@@ -31,7 +31,9 @@ namespace SST {
 namespace Ember {
 
 class EmberShmemAtomicIncGenerator : public EmberShmemGenerator {
-
+    
+    enum { Add, Fadd, Putv } m_op;
+    std::string m_opStr;
 public:
 	EmberShmemAtomicIncGenerator(SST::Component* owner, Params& params) :
 		EmberShmemGenerator(owner, params, "ShmemAtomicInc" ), m_phase(-3), m_one(1)
@@ -39,7 +41,17 @@ public:
         m_dataSize = params.find<int>("arg.dataSize", 32*1024*1024 );
 		m_updates = params.find<int>("arg.updates", 4096);
 		m_iterations = params.find<int>("arg.iterations", 1);
-		m_useFadd = params.find<bool>("arg.useFadd", false);
+		m_opStr = params.find<std::string>("arg.op", "add");
+        if ( m_opStr.compare("add") == 0 ) {
+            m_op = Add;
+        } else if ( m_opStr.compare("fadd") == 0 ) {
+            m_op = Fadd;
+        } else if ( m_opStr.compare("putv") == 0 ) {
+            m_op = Putv;
+        } else {
+            assert(0);
+        }
+        
 		m_printTotals = params.find<bool>("arg.printTotals", false);
 		m_backed = params.find<bool>("arg.backed", false);
 		m_outLoop = params.find<int>("arg.outLoop", 1);
@@ -61,17 +73,19 @@ public:
             enQ_my_pe( evQ, &m_my_pe );
             enQ_malloc( evQ, &m_dest, sizeof(long) * m_dataSize, m_backed );
             m_miscLib->getNodeNum( evQ, &m_node_num );
+            m_miscLib->getNumNodes( evQ, &m_num_nodes );
 		} else if ( -2 == m_phase ) {
 
             if ( 0 == m_my_pe ) {
-                printf("%d:%s: num_pes=%d node_num=%d dataSize=%d updates=%d iterations=%d outerLoop=%d %s\n",m_my_pe,
-                        getMotifName().c_str(), m_num_pes, m_node_num, m_dataSize, m_updates, m_iterations, m_outLoop,
-						m_useFadd ? "fadd":"add" );
+                printf("%d:%s: num_pes=%d num_nodes=%d node_num=%d dataSize=%d updates=%d iterations=%d outerLoop=%d %s\n",m_my_pe,
+                        getMotifName().c_str(), m_num_pes, m_num_nodes, m_node_num, m_dataSize, m_updates, m_iterations, m_outLoop,
+						m_opStr.c_str() );
             }
             
 			if ( m_backed ) {
 				bzero( &m_dest.at<long>(0), sizeof(long) * m_dataSize);
 			}
+//            printf("pe=%d addr=%#" PRIx64" \n",m_my_pe, m_dest.getSimVAddr());
 
             enQ_barrier_all( evQ );
 
@@ -86,15 +100,21 @@ public:
 		} else if ( m_phase < m_iterations * m_updates ) {
 
 			int dest = genRand() % m_num_pes; 
-			while( dest == m_my_pe ) {
+			while( calcNode(dest) == m_node_num ) {
 				dest = genRand() % m_num_pes;
 			}
 			Hermes::MemAddr addr = m_dest.offset<long>( genRand() % m_dataSize );
 	
-			if ( m_useFadd ) { 
+			switch ( m_op ) { 
+              case Fadd:
             	enQ_fadd( evQ, &m_result, addr, &m_one, dest );
-			} else {
-            	enQ_add( evQ, addr, &m_one, dest );
+                break;
+              case Add:
+                enQ_add( evQ, addr, &m_one, dest );
+                break;
+              case Putv:
+                enQ_putv( evQ, addr, &m_one, dest );
+                break;
 			}
             if ( m_phase + 1 == m_iterations * m_updates ) {
                 enQ_barrier_all( evQ );
@@ -159,6 +179,14 @@ public:
 	}
   private:
 
+    int calcNode(int pe ) {
+        if ( m_num_pes == m_num_nodes ) {
+            return pe;
+        } else {
+            return pe/m_num_nodes; 
+        }
+    }
+
     uint32_t genRand() {
         uint32_t retval;
 #if USE_SST_RNG 
@@ -188,7 +216,6 @@ public:
 
 	bool m_backed;
 	bool m_printTotals;
-	bool m_useFadd;
 	long m_one;
 	int m_dataSize;
 	int m_updates;
@@ -202,6 +229,7 @@ public:
     int m_my_pe;
     int m_num_pes;
     int m_node_num;
+    int m_num_nodes;
 };
 
 }
