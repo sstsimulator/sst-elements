@@ -31,21 +31,21 @@ void Nic::SendMachine::streamInit( SendEntryBase* entry )
     hdr.op= entry->getOp();
 
     m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,
-        "setup hdr, srcPid=%d, destNode=%d dstPid=%d bytes=%lu\n",
+        "%p setup hdr, srcPid=%d, destNode=%d dstPid=%d bytes=%lu\n", entry,
         entry->local_vNic(), entry->dest(), entry->dst_vNic(), entry->totalBytes() ) ;
 
     FireflyNetworkEvent* ev = new FireflyNetworkEvent(m_pktOverhead );
     ev->setDestPid( entry->dst_vNic() );
     ev->setSrcPid( entry->local_vNic() ); 
-    ev->setIsHdr();
+    ev->setHdr();
     if ( entry->isCtrl() ) {
-        ev->setIsCtrl();
+        ev->setCtrl();
     } 
 
     ev->bufAppend( &hdr, sizeof(hdr) );
     ev->bufAppend( entry->hdr(), entry->hdrSize() );
 
-    m_nic.schedCallback( std::bind( &Nic::SendMachine::getPayload, this, entry, ev ), m_txDelay );
+    m_nic.schedCallback( std::bind( &Nic::SendMachine::getPayload, this, entry, ev ), entry->txDelay() );
 }
 
 void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev ) 
@@ -58,6 +58,7 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
         entry->copyOut( m_dbg, m_packetSizeInBytes, *ev, *vec ); 
         m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "enque load from host, %lu bytes\n",ev->bufSize());
         if ( entry->isDone() ) {
+            ev->setTail();
             m_inQ->enque( m_unit, pid, vec, ev, entry->dest(), std::bind( &Nic::SendMachine::streamFini, this, entry ) );
         } else {
             m_inQ->enque( m_unit, pid, vec, ev, entry->dest() );
@@ -71,11 +72,11 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
 }
 void Nic::SendMachine::streamFini( SendEntryBase* entry ) 
 {
-
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "stream done for pid=%d\n",entry->local_vNic());
     if ( entry->shouldDelete() ) {
-        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "delete SendEntry entry, pid=%d\n",entry->local_vNic());
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "%p delete SendEntry entry, pid=%d\n",entry, entry->local_vNic());
         delete entry;
+    } else {
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "%p pid=%d\n",entry);
     }
     if ( m_I_manage ) {
         m_sendQ.pop_front();
