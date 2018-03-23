@@ -15,5 +15,7 @@
 
 class RdmaStream : public StreamBase {
   public:
-    RdmaStream( Output&, Ctx*, int unit, int srcNode, int srcPid, int destPid, FireflyNetworkEvent* ); 
+    RdmaStream( Output&, Ctx*, int srcNode, int srcPid, int destPid, FireflyNetworkEvent* ); 
+  protected:
+    void processPktHdr( FireflyNetworkEvent* ev );
 };
