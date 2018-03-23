@@ -48,7 +48,7 @@ class Shmem {
         bool checkOp( Output& dbg ) {
             std::stringstream tmp;
             tmp << "op=" << WaitOpName(m_cmd->op) << " testValue=" << m_cmd->value << " memValue=" << m_value;
-            dbg.debug( CALL_INFO,1,NIC_SHMEM,"%s %s\n",__func__,tmp.str().c_str());
+            dbg.debug( CALL_INFO,1,NIC_DBG_SHMEM,"%s %s\n",__func__,tmp.str().c_str());
             switch ( m_cmd->op ) {
               case Hermes::Shmem::NE:
                 return m_value != m_cmd->value; 
@@ -86,7 +86,7 @@ class Shmem {
     	m_nic2HostDelay_ns(nic2HostDelay_ns), m_host2NicDelay_ns(host2NicDelay_ns)
     {
         m_prefix = "@t:" + std::to_string(id) + ":Nic::Shmem::@p():@l ";
-        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_SHMEM,"this=%p\n",this );
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"this=%p\n",this );
 
 		m_regMem.resize( numVnics ); 
 		m_pendingOps.resize( numVnics );
@@ -99,9 +99,17 @@ class Shmem {
 	void handleHostEvent( NicShmemCmdEvent* event, int id );
 	void handleNicEvent( NicShmemCmdEvent* event, int id );
 	void handleEvent2( NicShmemCmdEvent* event, int id );
+	long getPending( int core ) {
+		return  m_pendingRemoteOps[core].second.get<long>();
+    }
+    void incPending( int core ) {
+		long value = m_pendingRemoteOps[core].second.get<long>();
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"pid=%d count=%lu\n", core, value );
+        m_pendingRemoteOps[core].second += m_one;
+    }
 	void decPending( int core ) {
 		long value = m_pendingRemoteOps[core].second.get<long>();
-        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_SHMEM,"count=%lu\n", value );
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"pid=%d count=%lu\n", core, value );
         assert(value>0);
 		m_pendingRemoteOps[core].second -= m_one;
 		checkWaitOps( core, m_pendingRemoteOps[core].first, m_pendingRemoteOps[core].second.getLength() );
