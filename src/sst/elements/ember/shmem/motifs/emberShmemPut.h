@@ -94,8 +94,8 @@ public:
             }
 
 			if (  m_phase + 1 == m_iterations ) {
-                enQ_getTime( evQ, &m_stopTime );
                 enQ_barrier_all( evQ );
+                enQ_getTime( evQ, &m_stopTime );
 			}
 
 		} else {
