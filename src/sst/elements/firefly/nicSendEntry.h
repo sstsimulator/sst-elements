@@ -16,7 +16,7 @@
 class SendEntryBase {
   public:
     SendEntryBase( int local_vNic ) :
-        m_local_vNic( local_vNic ), m_isCtrl(false)
+        m_local_vNic( local_vNic ), m_isCtrl(false), m_isAck(false)
     { }
     virtual ~SendEntryBase() { }
 
@@ -34,11 +34,17 @@ class SendEntryBase {
             FireflyNetworkEvent& event, std::vector<MemOp>& vec ) = 0; 
     virtual bool shouldDelete() { return true; }
     bool isCtrl() { return m_isCtrl; }
+    bool isAck() { return m_isAck; }
+    int txDelay() { return m_txDelay; }
+    void setTxDelay(int delay) { m_txDelay = delay; } 
+
 
   protected:
     bool m_isCtrl;
+    bool m_isAck;
 
   private:
+    int m_txDelay;
     int m_local_vNic;
 };
 

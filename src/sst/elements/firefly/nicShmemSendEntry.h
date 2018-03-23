@@ -42,6 +42,7 @@ class ShmemAckSendEntry: public ShmemSendEntryBase {
         ShmemSendEntryBase( local_vNic ), m_dest_node(dest_node), m_dest_vNic(dest_vNic)
     { 
         m_hdr.op = ShmemMsgHdr::Ack; 
+        m_isAck = true;
     }
     int dst_vNic() { return m_dest_vNic; }
     int dest() { return m_dest_node; }
