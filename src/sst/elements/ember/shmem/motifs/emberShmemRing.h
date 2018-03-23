@@ -14,8 +14,8 @@
 // distribution.
 
 
-#ifndef _H_EMBER_SHMEM_RING2
-#define _H_EMBER_SHMEM_RING2
+#ifndef _H_EMBER_SHMEM_RING
+#define _H_EMBER_SHMEM_RING
 
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
