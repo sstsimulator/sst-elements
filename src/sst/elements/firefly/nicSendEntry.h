@@ -38,7 +38,6 @@ class SendEntryBase {
     int txDelay() { return m_txDelay; }
     void setTxDelay(int delay) { m_txDelay = delay; } 
 
-
   protected:
     bool m_isCtrl;
     bool m_isAck;
