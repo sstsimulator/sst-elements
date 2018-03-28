@@ -47,7 +47,7 @@ Nic::RecvMachine::MsgStream::MsgStream( Output& output, Ctx* ctx,
 
 void Nic::RecvMachine::MsgStream::processPktHdr( FireflyNetworkEvent* ev ) {
 
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"Msg Operation srcNode=%d tag=%#x length=%lu\n",
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"Msg Operation srcNode=%d tag=%#x length=%d\n",
                             m_srcNode,m_matched_tag,m_matched_len);
 
     ev->bufPop( sizeof(MsgHdr) + sizeof(MatchMsgHdr) );
