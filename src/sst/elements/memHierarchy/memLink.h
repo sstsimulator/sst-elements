@@ -100,6 +100,11 @@ public:
     virtual void send(MemEventBase * ev);
     virtual MemEventBase * recv();
 
+    /* Debug */
+    virtual void printStatus(Output &out) {
+        out.output("  MemHierarchy::MemLink: No status given\n");
+    }
+
 protected:
     
     // Link

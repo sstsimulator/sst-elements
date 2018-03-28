@@ -115,6 +115,7 @@ public:
 
 /* Begin class definition */
 private:
+    Output out;
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
     struct DirEntry;
@@ -368,6 +369,24 @@ private:
             owner        = -1;
         }
 
+        std::string getString() {
+            std::ostringstream str;
+            str << "State: " << StateString[state];
+            str << " Sharers: [";
+            bool first = true;
+            for (int i = 0; i < sharers.size(); i++) {
+                if (sharers[i]) {
+                    if (!first) str << ",";
+                    str << i;
+                    first = false;
+                }
+            }
+            str << "] Owner: " << owner;
+            str << " Cached: " << (cached ? "y" : "n");
+            str << " Acks: " << waitingAcks;
+            return str.str();
+        }
+
         bool isCached() {
             return cached;
         }
@@ -452,8 +471,9 @@ public:
     void init(unsigned int phase);
     void finish(void);
     
-    /** Print status of entries/work queue */
-    void printStatus(Output &out);
+    /** Debug - triggered by output.fatal() or SIGUSR2 */
+    virtual void printStatus(Output &out);
+    virtual void emergencyShutdown();
     
     /** Function handles responses from Main Memory.  
         "Advances" the state of the directory entry */
