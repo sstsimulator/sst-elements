@@ -41,11 +41,12 @@ namespace Firefly {
 #define NIC_DBG_DETAILED_MEM 1<<2
 #define NIC_DBG_SEND_MACHINE 1<<3
 #define NIC_DBG_RECV_MACHINE 1<<4
-#define NIC_DBG_SHMEM 1 << 5 
+#define NIC_DBG_SHMEM        1<<5 
 #define NIC_DBG_SEND_NETWORK 1<<6
-#define NIC_DBG_RECV_CTX 1<<7
-#define NIC_DBG_RECV_STREAM 1<<8
-#define NIC_DBG_RECV_MOVE 1<<9
+#define NIC_DBG_RECV_CTX     1<<7
+#define NIC_DBG_RECV_STREAM  1<<8
+#define NIC_DBG_RECV_MOVE    1<<9
+#define NIC_DBG_LINK_CTRL    1<<10
 
 class Nic : public SST::Component  {
 
@@ -58,9 +59,9 @@ class Nic : public SST::Component  {
 		}
 
 		inline bool notify( int vn ) {
-        	m_dbg.debug(CALL_INFO,2,1,"Widget vn=%d\n",vn);
+        	m_dbg.debug(CALL_INFO,1,NIC_DBG_LINK_CTRL,"Widget vn=%d\n",vn);
 			if ( m_notifiers[vn] ) {
-       			m_dbg.debug(CALL_INFO,2,1,"Widget call notifier, number still installed %d\n", m_num -1);
+       			m_dbg.debug(CALL_INFO,1,NIC_DBG_LINK_CTRL,"Widget call notifier, number still installed %d\n", m_num -1);
 				m_notifiers[vn]();
 				m_notifiers[vn] = NULL;
 				--m_num;
@@ -70,7 +71,7 @@ class Nic : public SST::Component  {
 		}
 
 		inline void setNotify( std::function<void()> notifier, int vn ) {
-        	m_dbg.debug(CALL_INFO,2,1,"Widget vn=%d, number now installed %d\n",vn,m_num+1);
+        	m_dbg.debug(CALL_INFO,1, NIC_DBG_LINK_CTRL,"Widget vn=%d, number now installed %d\n",vn,m_num+1);
 			if ( m_num == 0 ) {
                 m_callback();
 			}
@@ -132,6 +133,8 @@ class Nic : public SST::Component  {
                 return "Swap";
             case Cswap:
                 return "Cswap";
+            default:
+                assert(0);
             }
         }
     };
@@ -218,6 +221,12 @@ public:
 	}
 
   private:
+    typedef uint64_t DestKey;
+    static DestKey getDestKey(int node, int pid) { return (DestKey) node << 32 | pid; }
+
+    std::vector< std::unordered_set< DestKey > > m_sendEntryInProgress;
+    std::list<SendEntryBase*> m_sendEntryQ;
+
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
     void handleVnicEvent2( Event*, int );
@@ -300,8 +309,9 @@ public:
     int NetToId( int x ) { return x; }
     int IdToNet( int x ) { return x; }
 
-    std::vector<SendMachine*> m_sendMachine;
-    std::vector<RecvMachine*> m_recvMachine;
+    std::vector<SendMachine*>   m_sendMachineV;
+    std::deque<SendMachine*>    m_sendMachineQ;
+    RecvMachine* m_recvMachine;
     ArbitrateDMA* m_arbitrateDMA;
 
     int                     m_myNodeId;
@@ -327,36 +337,17 @@ public:
 
     void feedTheNetwork( );
     void sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc );
-    void notifySendDone( int id ) { }
+    void notifySendDone( SendMachine* mach, SendEntryBase* entry );
 
-    void qSendEntry( SendEntryBase* entry ) {
-        
-        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "myPid=%d destNode=%d destPid=%d size=%" PRIu64 " %s\n",
-                    entry->local_vNic(), entry->dest(), entry->dst_vNic(), entry->totalBytes(),
-                    entry->isCtrl() ? "Ctrl" : entry->isAck() ? "Ack" : "Std");
-
-    
-        if ( entry->isCtrl() ) {
-            entry->setTxDelay(0);
-            m_sendMachine[m_ctrlSendMachine]->qSendEntry( entry );
-        } else {
-            if ( entry->isAck() ) {
-                entry->setTxDelay(0);
-            } else {
-                entry->setTxDelay(m_txDelay);
-            }
-            m_sendMachine[m_stdSendMachine]->qSendEntry( entry );
-        }
-    }
+    void qSendEntry( SendEntryBase* entry );
 
     void notifyHavePkt( int id ) {
         m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_NETWORK,"id=%d current src=%d\n",id, m_curNetworkSrc);
         if ( -1 == m_curNetworkSrc ) {
             m_curNetworkSrc = id;
             feedTheNetwork();
-        } 
+        }
     }
-
 
     void calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
         if( m_simpleMemoryModel ) {
@@ -415,12 +406,10 @@ public:
     SimpleMemoryModel*  m_simpleMemoryModel;
     std::deque<int> m_availNicUnits;
     uint16_t m_getKey;
-    int m_ctrlSendMachine;
-    int m_stdSendMachine;
     int m_curNetworkSrc;
-    int m_numNetworkSrcs;
     int m_txDelay;
 
+    static int  MaxPayload;
     static int  m_packetId;
 	int m_tracedPkt;
 	int m_tracedNode;
