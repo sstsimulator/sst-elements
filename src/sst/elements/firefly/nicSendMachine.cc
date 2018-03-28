@@ -38,7 +38,7 @@ void Nic::SendMachine::streamInit( SendEntryBase* entry )
     ev->setDestPid( entry->dst_vNic() );
     ev->setSrcPid( entry->local_vNic() ); 
     ev->setHdr();
-    if ( entry->isCtrl() ) {
+    if ( entry->isCtrl() || entry->isAck() ) {
         ev->setCtrl();
     } 
 
