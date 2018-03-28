@@ -16,7 +16,8 @@ networkParams = {
     "input_latency" : "10ns",
     "output_latency" : "10ns",
     "flitSize" : "8B",
-    "buffer_size" : "14KB",
+    "input_buf_size" : "14KB",
+    "output_buf_size" : "14KB",
 }
 
 nicParams = {
@@ -24,7 +25,8 @@ nicParams = {
     "topology" : networkParams['topology'], 
     "packetSize" : networkParams['packetSize'],
     "link_bw" : networkParams['link_bw'],
-    "buffer_size" : networkParams['buffer_size'],
+    "input_buf_size" : networkParams['input_buf_size'],
+    "output_buf_size" : networkParams['output_buf_size'],
     "rxMatchDelay_ns" : 100,
     "txDelay_ns" : 50,
     "nic2host_lat" : "150ns",
