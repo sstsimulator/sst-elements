@@ -122,8 +122,8 @@ class SendMachine {
       public:
 
         SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask, int myId,
-              int txDelay, int packetSizeInBytes, int pktOverhead, int maxQsize, int unit, bool flag = false ) :
-            m_nic(nic), m_id(myId), m_txDelay( txDelay ), m_packetSizeInBytes( packetSizeInBytes - pktOverhead ), 
+              int packetSizeInBytes, int pktOverhead, int maxQsize, int unit, bool flag = false ) :
+            m_nic(nic), m_id(myId), m_packetSizeInBytes( packetSizeInBytes - pktOverhead ), 
             m_unit(unit), m_pktOverhead(pktOverhead), m_activeEntry(NULL), m_I_manage( flag )
         {
             char buffer[100];
@@ -171,7 +171,6 @@ class SendMachine {
         Output  m_dbg;
         OutQ*   m_outQ;
         InQ*    m_inQ;
-        int     m_txDelay;
         int     m_packetSizeInBytes;
         int     m_unit;
         int     m_pktOverhead;

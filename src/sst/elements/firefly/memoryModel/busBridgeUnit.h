@@ -18,14 +18,14 @@ class BusBridgeUnit : public Unit {
 
   public:
     BusBridgeUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, double bandwidth, int numLinks,
-                            int TLP_overhead, int dll_bytes, int cacheLineSize, int widgetSlots ) :
+                int latency, int TLP_overhead, int dll_bytes, int cacheLineSize, int widgetSlots ) :
         Unit( model, dbg ), m_cache(cache), m_bandwidth_GB( bandwidth ), m_numLinks(numLinks), m_blocked(2,NULL),
-        m_TLP_overhead(TLP_overhead), m_DLL_bytes(dll_bytes), m_cacheLineSize( cacheLineSize ),
+        m_TLP_overhead(TLP_overhead), m_DLL_bytes(dll_bytes), m_cacheLineSize( cacheLineSize ), m_latency(latency),
 		m_reqBus(*this,id, "Req", true, std::bind(&BusBridgeUnit::processReq,this,std::placeholders::_1 ) ), 
 		m_respBus(*this,id, "Resp", false,std::bind(&BusBridgeUnit::processResp,this,std::placeholders::_1 ) ) 
     {
-		m_loadWidget = new BusLoadWidget( model, dbg, id, cache, cacheLineSize, widgetSlots );
-		m_storeWidget = new BusStoreWidget( model, dbg, id, cache, cacheLineSize, widgetSlots );
+		m_loadWidget = new BusLoadWidget( model, dbg, id, cache, cacheLineSize, widgetSlots, latency );
+		m_storeWidget = new BusStoreWidget( model, dbg, id, cache, cacheLineSize, widgetSlots, latency );
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::BusBridgeUnit::@p():@l ";
     }
 
@@ -49,7 +49,7 @@ class BusBridgeUnit : public Unit {
 		
 		Entry* entry = new Entry( src, req, callback );
 		entry->qd = m_model.getCurrentSimTimeNano();
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu\n",entry,req->addr,req->length);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"src=%p entry=%p addr=%#" PRIx64 " length=%lu\n",src, entry,req->addr,req->length);
         //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
 		m_reqBus.addReq( entry );
 		return true;
@@ -88,7 +88,8 @@ class BusBridgeUnit : public Unit {
 
 		void addReq( Entry* req ) {  
 			m_pendingReqQ.push_back(req); 
-            m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"q size=%lu\n",m_pendingReqQ.size());
+            m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"src=%p %s %#" PRIx64 " q size=%lu\n",
+                    req->src, req->callback?"load":"store", req->addr, m_pendingReqQ.size());
 			process();
 		}
 		void addDLL( int bytes ) {  
@@ -155,7 +156,7 @@ class BusBridgeUnit : public Unit {
                 entry,entry->addr, entry->length, now - entry->qd );
 		m_reqBus.addDLL( numDLLbytes() );
 		if ( entry->callback ) { 
-			entry->callback();
+            m_model.schedCallback(m_latency, entry->callback );
 		}
 		if( 0 == entry->addr ) {
 			if ( entry->src->numPendingWrites() == 10 ) {
@@ -206,6 +207,7 @@ class BusBridgeUnit : public Unit {
 		}
 
 		if ( resumeSrc ) {
+			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"resume %p\n",resumeSrc);
 			m_model.schedResume( 0, resumeSrc );
 		} else {
 			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"blocked\n");
@@ -234,6 +236,7 @@ class BusBridgeUnit : public Unit {
 	Unit* m_cache;
 	Unit* m_loadWidget;
 	Unit* m_storeWidget;
+    int m_latency;
     int m_TLP_overhead;
     int m_DLL_bytes;
 	int m_numLinks;

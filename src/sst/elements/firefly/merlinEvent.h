@@ -28,20 +28,24 @@ class FireflyNetworkEvent : public Event {
 
   public:
 
-    FireflyNetworkEvent( ) : offset(0), bufLen(0), isHdr(false), isCtrl(false), pktOverhead(0) {
+    FireflyNetworkEvent( ) : offset(0), bufLen(0), m_isHdr(false), m_isCtrl(false), pktOverhead(0) {
         buf.reserve( 1000 );
         assert( 0 == buf.size() );
     }
 
-    FireflyNetworkEvent( int pktOverhead, size_t reserve = 1000 ) : offset(0), bufLen(0), isHdr(false), isCtrl(false), pktOverhead(pktOverhead) {
+    FireflyNetworkEvent( int pktOverhead, size_t reserve = 1000 ) : offset(0), bufLen(0), 
+            m_isHdr(false), m_isTail(false), m_isCtrl(false), pktOverhead(pktOverhead) {
         buf.reserve( reserve );
         assert( 0 == buf.size() );
     }
 
-    void setIsCtrl() { isCtrl = true; }
-    bool getIsCtrl() { return isCtrl; }
-    void setIsHdr() { isHdr = true; }
-    bool getIsHdr() { return isHdr; }
+    void setCtrl() { m_isCtrl = true; }
+    bool isCtrl() { return m_isCtrl; }
+    void setHdr() { m_isHdr = true; }
+    void clearHdr() { m_isHdr = false; }
+    bool isHdr() { return m_isHdr; }
+    void setTail() { m_isTail = true; }
+    bool isTail() { return m_isTail; }
     int calcPayloadSizeInBits() { return payloadSize() * 8; }
     int payloadSize() { return pktOverhead + bufSize(); }
     void setSrcNode(int node ) { srcNode = node; }
@@ -89,8 +93,9 @@ class FireflyNetworkEvent : public Event {
         srcNode = me->srcNode;
         srcPid = me->srcPid;
         destPid = me->destPid;
-        isHdr = me->isHdr;
-        isCtrl = me->isCtrl;
+        m_isHdr = me->m_isHdr;
+        m_isTail = me->m_isTail;
+        m_isCtrl = me->m_isCtrl;
         offset = me->offset;
         pktOverhead = me->pktOverhead;
     }
@@ -103,8 +108,9 @@ class FireflyNetworkEvent : public Event {
         srcNode = me.srcNode;
         srcPid = me.srcPid;
         destPid = me.destPid;
-        isHdr = me.isHdr;
-        isCtrl = me.isCtrl;
+        m_isHdr = me.m_isHdr;
+        m_isTail = me.m_isTail;
+        m_isCtrl = me.m_isCtrl;
         offset = me.offset;
         pktOverhead = me.pktOverhead;
     }
@@ -131,8 +137,9 @@ class FireflyNetworkEvent : public Event {
     int             srcNode;
     int             srcPid;
     int             destPid;
-    bool            isHdr;
-    bool            isCtrl;
+    bool            m_isHdr;
+    bool            m_isTail;
+    bool            m_isCtrl;
     int             pktOverhead;
     
     size_t          offset;
@@ -150,8 +157,9 @@ class FireflyNetworkEvent : public Event {
         ser & srcPid;
         ser & destPid;
         ser & pktOverhead;
-        ser & isHdr;
-        ser & isCtrl;
+        ser & m_isHdr;
+        ser & m_isTail;
+        ser & m_isCtrl;
     }
     
     ImplementSerializable(SST::Firefly::FireflyNetworkEvent);     

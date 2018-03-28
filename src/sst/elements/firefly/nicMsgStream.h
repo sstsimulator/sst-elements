@@ -15,5 +15,10 @@
 
 class MsgStream : public StreamBase {
   public:
-    MsgStream( Output&, Ctx*, int unit, int srcNode, int srcPid, int destPid, FireflyNetworkEvent* );
+    MsgStream( Output&, Ctx*, int srcNode, int srcPid, int destPid, FireflyNetworkEvent* );
+    bool isBlocked() {
+        return  m_recvEntry == NULL;
+    }
+  protected:
+    void processPktHdr( FireflyNetworkEvent* ev );
 };

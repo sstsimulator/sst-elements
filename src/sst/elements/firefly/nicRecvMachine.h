@@ -33,7 +33,7 @@ class RecvMachine {
 
         RecvMachine( Nic& nic, int vc, int numVnics, 
                 int nodeId, int verboseLevel, int verboseMask,
-                int rxMatchDelay, int hostReadDelay, int maxQsize, int unit ) :
+                int rxMatchDelay, int hostReadDelay, int maxQsize ) :
             m_nic(nic), 
             m_vc(vc), 
             m_rxMatchDelay( rxMatchDelay ),
@@ -46,7 +46,7 @@ class RecvMachine {
             m_dbg.init(buffer, verboseLevel, verboseMask, Output::STDOUT);
             setNotify();
             for ( unsigned i=0; i < numVnics; i++) {
-                m_ctxMap.push_back( new Ctx( m_dbg, *this, i, unit, maxQsize ) );
+                m_ctxMap.push_back( new Ctx( m_dbg, *this, i, maxQsize ) );
             }
         }
 
