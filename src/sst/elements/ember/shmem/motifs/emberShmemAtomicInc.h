@@ -85,7 +85,6 @@ public:
 			if ( m_backed ) {
 				bzero( &m_dest.at<long>(0), sizeof(long) * m_dataSize);
 			}
-//            printf("pe=%d addr=%#" PRIx64" \n",m_my_pe, m_dest.getSimVAddr());
 
             enQ_barrier_all( evQ );
 
@@ -117,6 +116,7 @@ public:
                 break;
 			}
             if ( m_phase + 1 == m_iterations * m_updates ) {
+                enQ_quiet(evQ);
                 enQ_barrier_all( evQ );
                 enQ_getTime( evQ, &m_stopTime );
 			}
@@ -180,11 +180,7 @@ public:
   private:
 
     int calcNode(int pe ) {
-        if ( m_num_pes == m_num_nodes ) {
-            return pe;
-        } else {
-            return pe/m_num_nodes; 
-        }
+        return pe/(m_num_pes/m_num_nodes); 
     }
 
     uint32_t genRand() {
