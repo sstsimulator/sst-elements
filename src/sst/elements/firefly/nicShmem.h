@@ -161,6 +161,7 @@ private:
 
 	void incFreeCmdSlots( ) {
 		++m_freeCmdSlots;
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"\n" );
 		if ( ! m_pendingCmds.empty() ) {
 			handleEvent( m_pendingCmds.front().first, m_pendingCmds.front().second );
 			m_pendingCmds.pop_front();
