@@ -65,7 +65,7 @@ class BusLoadWidget : public Unit {
         }
     }
 
-    bool load2( WidgetEntry* entry, int pending ) {
+    void load2( WidgetEntry* entry, int pending ) {
         m_pendingQ.push_back( entry );
 
         if ( pending < m_qSize + 1 ) {
@@ -193,7 +193,7 @@ class BusStoreWidget : public Unit {
     }
 
 
-    bool store2( WidgetEntry* entry, int pending ) {
+    void store2( WidgetEntry* entry, int pending ) {
 		m_pendingQ.push_back( entry );
         if ( m_numPending < m_qSize + 1) {
             if ( ! m_blocked && ! m_scheduled ) {
