@@ -29,7 +29,7 @@ TrivialCPU cpu Finished after 1000 issued reads, 1000 returned (104054 clocks)
  l1cache.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 39276; SumSQ.u64 = 47872; Count.u64 = 208104; 
+ l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 39276; SumSQ.u64 = 47872; Count.u64 = 208108; 
  l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -138,11 +138,3 @@ TrivialCPU cpu Finished after 1000 issued reads, 1000 returned (104054 clocks)
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory.total_cycles : Accumulator : Sum.u64 = 104054; SumSQ.u64 = 10827234916; Count.u64 = 1; 
 Simulation is complete, simulated time: 104.054 us
-== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' == 
-== Loading system model file 'system.ini' == 
-WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE
-===== MemorySystem 0 =====
-CH. 0 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank
-===== MemorySystem 1 =====
-CH. 1 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank
-DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz
