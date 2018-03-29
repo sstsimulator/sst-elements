@@ -4,27 +4,33 @@ class StreamBase {
             std::string m_prefix;
             const char* prefix() { return m_prefix.c_str(); }
           public:
-            StreamBase(Output& output, Ctx* ctx, int unit, int srcNode, int srcPid, int myPid );
+            StreamBase(Output& output, Ctx* ctx, int srcNode, int srcPid, int myPid );
             virtual ~StreamBase();
 
             virtual SimTime_t getRxMatchDelay() { return m_ctx->getRxMatchDelay(); }
-            virtual Callback getStartCallback() { return m_startCallback; }
-            virtual SimTime_t getStartDelay()   { return m_startDelay; }
-
             bool postedRecv( DmaRecvEntry* entry );
 
-            virtual void processPkt( FireflyNetworkEvent* ev );
-            bool isBlocked();
+            virtual void processPkt( FireflyNetworkEvent* ev ) {
+                if ( ev->isHdr() ) {
+                    processPktHdr(ev);
+                } else {
+                    processPktBody(ev);
+                }
+            }
+            virtual void processPktHdr( FireflyNetworkEvent* ev ) { assert(0); }
+            virtual void processPktBody( FireflyNetworkEvent* ev );
+
+            virtual bool isBlocked();
             void needRecv( FireflyNetworkEvent* ev );
         
             void qSend( SendEntryBase* entry ) {
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM,"\n");
                 m_ctx->runSend( m_unit, entry );
                 m_ctx->deleteStream( this );
             }
 
             void setWakeup( Callback callback )    {
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM,"\n");
                 m_wakeupCallback = callback;
             }
 
@@ -41,9 +47,6 @@ class StreamBase {
             void ready( bool, uint64_t pktNum );
 
             FireflyNetworkEvent* m_blockedNeedRecv;
-
-            SimTime_t       m_startDelay;
-            Callback        m_startCallback;
             Callback        m_wakeupCallback;
             Output&         m_dbg;
             Ctx*            m_ctx;

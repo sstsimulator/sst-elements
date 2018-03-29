@@ -141,6 +141,7 @@ libfirefly_la_SOURCES = \
 	nicShmemStream.cc \
 	nicShmemStream.h \
 	nicVirtNic.h \
+	nicUnitPool.h \
 	nodePerf.h
 
 libfirefly_la_LDFLAGS = -module -avoid-version

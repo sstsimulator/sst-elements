@@ -22,90 +22,70 @@ using namespace SST::Firefly;
 
 bool Nic::RecvMachine::Ctx::processPkt( FireflyNetworkEvent* ev ) {
 
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"got a network pkt from node=%d pid=%d for pid=%d\n",
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"got a network pkt from node=%d pid=%d for pid=%d\n",
                         ev->getSrcNode(),ev->getSrcPid(), m_pid );
-    SrcKey srcKey = getSrcKey( ev->getSrcNode(), ev->getSrcPid() );
 
-    if ( ev->getIsCtrl() ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"got a control message\n");
-        StreamBase* stream = newStream( allocNicUnit(), ev );
-
-        Callback callback = stream->getStartCallback(); 
-        SimTime_t delay = stream->getStartDelay();
-        if ( delay ) {
-            assert( callback );
-            schedCallback( 
-                [=](){ 
-                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE,"new stream callback\n");
-                    callback(); 
-                    m_rm.checkNetworkForData(); 
-                }, 
-                delay );
-            return true;
-        } else {
-            if ( callback ) {
-                callback();
-            }
-            return false;
-        }
-    }   
-
-    bool blocked = false;
-    // this packet is part of an active stream to a pid
-    if ( m_streamMap.find(srcKey) != m_streamMap.end() )  {
-
-        if ( ev->getIsHdr() ) {
-            assert( ! m_blockedNetworkEvent );
-            m_blockedNetworkEvent = ev;
-            blocked = true; 
-        } else {
-
-            StreamBase* stream =  m_streamMap[srcKey];
-
-            if ( stream->isBlocked() ) {
-                stream->setWakeup( 
-                        [=]() {
-                            processPkt( ev );
-                            m_rm.checkNetworkForData(); 
-                        }
-                    );
-                        
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"blocked by stream\n");
-                // this recv machine is blocked
-                blocked = true; 
-                
-            } else {
-                stream->processPkt(ev);
-            }
-        }
-    } else { // packet is for a destPid/srcNode/srcPid that is not active
-        
-        StreamBase* stream = m_streamMap[srcKey] = newStream( allocNicUnit(), ev );
-
-        Callback callback = stream->getStartCallback(); 
-        SimTime_t delay = stream->getStartDelay();
-        if ( delay ) {
-            assert( callback );
-            schedCallback( 
-                [=](){ 
-                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
-                    callback(); 
-                    m_rm.checkNetworkForData(); 
-                }, 
-                delay );
-            blocked = true;
-        } else {
-            if ( callback ) {
-                callback();
-            }
-        }
+    if ( ev->isCtrl() ) {
+        return processCtrlPkt( ev );
+    } else {
+        return processStdPkt( ev );
     }
-    return blocked;
 }
 
-Nic::RecvMachine::StreamBase* Nic::RecvMachine::Ctx::newStream( int unit, FireflyNetworkEvent* ev )
+bool Nic::RecvMachine::Ctx::processCtrlPkt( FireflyNetworkEvent* ev ) {
+
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"got a control message\n");
+    StreamBase* stream = newStream( ev );
+
+    stream->processPkt( ev );
+    return false;
+}
+
+bool Nic::RecvMachine::Ctx::processStdPkt( FireflyNetworkEvent* ev ) {
+    bool blocked = false;
+    SrcKey srcKey = getSrcKey( ev->getSrcNode(), ev->getSrcPid() );
+
+    StreamBase* stream;
+    if ( ev->isHdr() ) {
+        assert ( m_streamMap.find(srcKey) == m_streamMap.end() ); 
+
+        stream = newStream( ev );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"new stream %p %s\n",stream, ev->isTail()? "single packet stream":"");
+
+        if ( ! ev->isTail() ) { 
+            m_streamMap[srcKey] = stream;
+        }
+
+    } else { 
+        assert ( m_streamMap.find(srcKey) != m_streamMap.end() ); 
+
+        stream = m_streamMap[srcKey]; 
+
+        if ( ev->isTail() ) { 
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"tail packet %p\n",stream );
+            m_streamMap.erase(srcKey); 
+        }
+    }
+
+    if ( stream->isBlocked() ) {
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"stream is blocked %p\n",stream );
+        stream->setWakeup( 
+            [=]() {
+                m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"processStdPkt",1,NIC_DBG_RECV_CTX,"stream is unblocked %p\n",stream );
+                stream->processPkt( ev );
+                m_rm.checkNetworkForData(); 
+            }
+        );
+        return true;
+    } else {
+        stream->processPkt(ev);
+        return false;
+    } 
+}
+
+Nic::RecvMachine::StreamBase* Nic::RecvMachine::Ctx::newStream( FireflyNetworkEvent* ev )
 {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"\n");
 
 #ifdef NIC_RECV_DEBUG
         ++m_msgCount;
@@ -113,13 +93,13 @@ Nic::RecvMachine::StreamBase* Nic::RecvMachine::Ctx::newStream( int unit, Firefl
     MsgHdr& hdr = *(MsgHdr*) ev->bufPtr();
     switch ( hdr.op ) {
       case MsgHdr::Msg:
-        return new MsgStream( m_dbg, this, unit, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev );
+        return new MsgStream( m_dbg, this, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev );
         break;
       case MsgHdr::Rdma:
-        return new RdmaStream( m_dbg, this, unit, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev );
+        return new RdmaStream( m_dbg, this, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev );
         break;
       case MsgHdr::Shmem:
-        return new ShmemStream( m_dbg, this, unit, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev );
+        return new ShmemStream( m_dbg, this, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev );
         break;
     }
     assert(0);
@@ -127,7 +107,7 @@ Nic::RecvMachine::StreamBase* Nic::RecvMachine::Ctx::newStream( int unit, Firefl
 
 Nic::EntryBase* Nic::RecvMachine::Ctx::findRecv( int srcNode, int srcPid, MsgHdr& hdr, MatchMsgHdr& matchHdr  )
 {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"need a recv entry, srcNic=%d srcPid=%d "
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"need a recv entry, srcNic=%d srcPid=%d "
                 "tag=%#x len=%lu\n", srcNode, srcPid, matchHdr.tag, matchHdr.len);
 
     DmaRecvEntry* entry = NULL;
@@ -136,7 +116,7 @@ Nic::EntryBase* Nic::RecvMachine::Ctx::findRecv( int srcNode, int srcPid, MsgHdr
 
     for ( ; iter != m_postedRecvs.end(); ++iter ) {
         entry = (*iter);
-        m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"check Posted Recv with tag=%#x node=%d\n",entry->tag(),entry->node());
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_CTX,"check Posted Recv with tag=%#x node=%d\n",entry->tag(),entry->node());
 
         if ( matchHdr.tag != entry->tag() ) {
             continue;
@@ -148,19 +128,19 @@ Nic::EntryBase* Nic::RecvMachine::Ctx::findRecv( int srcNode, int srcPid, MsgHdr
             assert(0);
         }
 
-        m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"found recv entry, size %lu\n",entry->totalBytes());
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_CTX,"found recv entry, size %lu\n",entry->totalBytes());
 
         m_postedRecvs.erase(iter);
         return entry;
     }
-    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"no match\n");
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_CTX,"no match\n");
 
     return NULL;
 }
 
 Nic::SendEntryBase* Nic::RecvMachine::Ctx::findGet( int srcNode, int srcPid, RdmaMsgHdr& rdmaHdr  )
 {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE,"srcNode=%d srcPid=%d rgnNum=%d offset=%d respKey=%d\n",
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"srcNode=%d srcPid=%d rgnNum=%d offset=%d respKey=%d\n",
                         srcNode, srcPid, rdmaHdr.rgnNum, rdmaHdr.offset, rdmaHdr.respKey );
     // Note that we are not doing a strong check here. We are only checking that
     // the tag matches.
@@ -178,18 +158,18 @@ Nic::SendEntryBase* Nic::RecvMachine::Ctx::findGet( int srcNode, int srcPid, Rdm
 
 Nic::DmaRecvEntry* Nic::RecvMachine::Ctx::findPut( int srcNode, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )
 {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE, "srcNode=%d rgnNum=%d offset=%d respKey=%d\n",
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX, "srcNode=%d rgnNum=%d offset=%d respKey=%d\n",
             srcNode, rdmahdr.rgnNum, rdmahdr.offset, rdmahdr.respKey);
 
     DmaRecvEntry* entry = NULL;
     if ( RdmaMsgHdr::GetResp == rdmahdr.op ) {
-        m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"GetResp\n");
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_CTX,"GetResp\n");
         entry = m_getOrgnM[ rdmahdr.respKey ];
 
         m_getOrgnM.erase(rdmahdr.respKey);
 
     } else if ( RdmaMsgHdr::Put == rdmahdr.op ) {
-        m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"Put\n");
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_CTX,"Put\n");
         assert(0);
     } else {
         assert(0);

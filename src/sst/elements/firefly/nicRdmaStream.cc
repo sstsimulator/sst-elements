@@ -20,31 +20,37 @@
 using namespace SST;
 using namespace SST::Firefly;
 
-Nic::RecvMachine::RdmaStream::RdmaStream( Output& output, Ctx* ctx, int unit, int srcNode,
+Nic::RecvMachine::RdmaStream::RdmaStream( Output& output, Ctx* ctx, int srcNode,
         int srcPid, int destPid, FireflyNetworkEvent* ev ) :
-    StreamBase( output, ctx, unit, srcNode, srcPid, destPid )
+    StreamBase( output, ctx, srcNode, srcPid, destPid )
 {
+    m_unit = m_ctx->allocRecvUnit();
+}
+void Nic::RecvMachine::RdmaStream::processPktHdr( FireflyNetworkEvent* ev ) {
+
     MsgHdr& hdr         = *(MsgHdr*) ev->bufPtr();
     RdmaMsgHdr& rdmaHdr = *(RdmaMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
 
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"RDMA Operation\n");
-
+    Callback callback;
+    int delay = 0;
     switch ( rdmaHdr.op  ) {
 
       case RdmaMsgHdr::Put:
       case RdmaMsgHdr::GetResp:
         {
-          m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"%s Op\n", rdmaHdr.op == RdmaMsgHdr::Put ? "Put":"GetResp");
+          m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_STREAM,"%s Op\n", rdmaHdr.op == RdmaMsgHdr::Put ? "Put":"GetResp");
 
           m_recvEntry = m_ctx->findPut( m_srcNode, hdr, rdmaHdr );
           ev->bufPop(sizeof(MsgHdr) + sizeof(rdmaHdr) );
-          m_startCallback  = std::bind( &Nic::RecvMachine::StreamBase::processPkt, this, ev );
+          ev->clearHdr();
           m_matched_len = m_recvEntry->totalBytes();
+
+          callback  = std::bind( &Nic::RecvMachine::StreamBase::processPkt, this, ev );
         }
         break;
       case RdmaMsgHdr::Get:
         {
-          m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"CtlMsg Get Operation srcNode=%d op=%d rgn=%d resp=%d, offset=%d\n",
+          m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"CtlMsg Get Operation srcNode=%d op=%d rgn=%d resp=%d, offset=%d\n",
                 ev->getSrcNode(), rdmaHdr.op, rdmaHdr.rgnNum, rdmaHdr.respKey, rdmaHdr.offset );
 
           SendEntryBase* entry = m_ctx->findGet( ev->getSrcNode(), ev->getSrcPid(), rdmaHdr );
@@ -52,14 +58,15 @@ Nic::RecvMachine::RdmaStream::RdmaStream( Output& output, Ctx* ctx, int unit, in
 
           ev->bufPop(sizeof(MsgHdr) + sizeof(rdmaHdr) );
 
-          m_startCallback = std::bind( &Nic::RecvMachine::StreamBase::qSend, this, entry );
-          m_startDelay = m_ctx->getHostReadDelay();
+          callback = std::bind( &Nic::RecvMachine::StreamBase::qSend, this, entry );
+          delay = m_ctx->getHostReadDelay();
 
-        delete ev;
+          delete ev;
         }
         break;
 
       default:
         assert(0);
     }
+    m_ctx->nic().schedCallback( callback, delay );
 }
