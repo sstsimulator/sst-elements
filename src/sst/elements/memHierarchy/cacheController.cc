@@ -483,7 +483,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
                         mshr_->insertAll(pointerAddr, pointerEntries);
                         break;
                     } else {
-                        d_->fatal(CALL_INFO, -1, "%s, Error: Reactivating events for addr = 0x%" PRIx64 " and encountered unexpected mshr entry not of type MemEvent. Time = %" PRIu64 " ns\n",
+                        out_->fatal(CALL_INFO, -1, "%s, Error: Reactivating events for addr = 0x%" PRIx64 " and encountered unexpected mshr entry not of type MemEvent. Time = %" PRIu64 " ns\n",
                                 this->getName().c_str(), pointerAddr, getCurrentSimTimeNano());
                     }
                 }
@@ -642,7 +642,7 @@ void Cache::reActivateEventWaitingForUserLock(CacheLine* cacheLine) {
    --------------------------------------- */
 MemEvent* Cache::getOrigReq(const vector<mshrType> entries) {
     if (entries.front().elem.isAddr()) {
-        d_->fatal(CALL_INFO, -1, "%s, Error: Request at front of the mshr is not of type MemEvent. Time = %" PRIu64 "\n",
+        out_->fatal(CALL_INFO, -1, "%s, Error: Request at front of the mshr is not of type MemEvent. Time = %" PRIu64 "\n",
                 this->getName().c_str(), getCurrentSimTimeNano());
     }
 
@@ -700,7 +700,7 @@ void Cache::processIncomingNACK(MemEvent* origReqEvent) {
     } else if (origReqEvent->fromLowNetNACK()) {
         coherenceMgr_->resendEvent(origReqEvent, false);
     } else
-        d_->fatal(CALL_INFO, -1, "Command type not recognized, Cmd = %s\n", CommandString[(int)origReqEvent->getCmd()]);
+        out_->fatal(CALL_INFO, -1, "%s, ProcessIncomingNACK, command not recognized. Event: %s\n", getName().c_str(), origReqEvent->getVerboseString().c_str());
 }
 
 void Cache::printLine(Addr addr) {
@@ -730,5 +730,32 @@ void Cache::printLine(Addr addr) {
 bool operator== ( const mshrType& n1, const mshrType& n2) {
     if (n1.elem.isAddr()) return false;
     return((n1.elem).getEvent() == (n2.elem).getEvent());
+}
+
+void Cache::printStatus(Output &out) {
+    out.output("MemHierarchy::Cache %s\n", getName().c_str());
+    out.output("  Clock is %s. Last active cycle: %" PRIu64 "\n", clockIsOn_ ? "on" : "off", timestamp_);
+    out.output("  Requests waiting to be handled by cache: %zu\n", requestBuffer_.size());
+    out.output("  Requests waiting for bank access: %zu\n", bankConflictBuffer_.size());
+    if (mshr_) {
+        out.output("  MSHR Status:\n");
+        mshr_->printStatus(out);
+    }
+    if (linkUp_ && linkUp_ != linkDown_) {
+        out.output("  Up link status: ");
+        linkUp_->printStatus(out);
+        out.output("  Down link status: ");
+    } else {
+        out.output("  Link status: ");
+    }
+    if (linkDown_) linkDown_->printStatus(out);
+
+    out.output("  Cache contents:\n");
+    cacheArray_->printCacheArray(out);
+    out.output("End MemHierarchy::Cache\n\n");
+}
+
+void Cache::emergencyShutdown() {
+    printStatus(*out_);
 }
 

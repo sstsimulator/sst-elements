@@ -32,7 +32,7 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104053 clocks)
  c0.l1cache.FetchInvX_recv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  c0.l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- c0.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 115387; SumSQ.u64 = 182033; Count.u64 = 208103; 
+ c0.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 115387; SumSQ.u64 = 182033; Count.u64 = 208106; 
  c0.l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c0.l1cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -157,7 +157,7 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104053 clocks)
  c1.l1cache.FetchInvX_recv : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; 
  c1.l1cache.Inv_recv : Accumulator : Sum.u64 = 21; SumSQ.u64 = 21; Count.u64 = 21; 
  c1.l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- c1.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 125225; SumSQ.u64 = 202821; Count.u64 = 208103; 
+ c1.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 125225; SumSQ.u64 = 202821; Count.u64 = 208106; 
  c1.l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  c1.l1cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -282,7 +282,7 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104053 clocks)
  l2cache.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache.MSHR_occupancy : Accumulator : Sum.u64 = 142168; SumSQ.u64 = 375004; Count.u64 = 207938; 
+ l2cache.MSHR_occupancy : Accumulator : Sum.u64 = 142168; SumSQ.u64 = 375004; Count.u64 = 208106; 
  l2cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -456,8 +456,8 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104053 clocks)
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  memory.total_cycles : Accumulator : Sum.u64 = 104053; SumSQ.u64 = 10827026809; Count.u64 = 1; 
 Simulation is complete, simulated time: 104.053 us
-== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' == 
-== Loading system model file 'system.ini' == 
+== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' ==
+== Loading system model file 'system.ini' ==
 WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE
 ===== MemorySystem 0 =====
 CH. 0 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank

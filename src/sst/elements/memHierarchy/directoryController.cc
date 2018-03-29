@@ -50,7 +50,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     // Detect deprecated parameters and warn/fatal
     // Currently deprecated - direct_mem_link, network_num_vc, statistics
     bool found;
-    Output out("", 1, 0, Output::STDOUT);
+    out.init("", 1, 0, Output::STDOUT);
     params.find<int>("statistics", 0, found);
     if (found) {
         out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sst-info to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
@@ -1589,15 +1589,39 @@ void DirectoryController::mshrNACKRequest(MemEvent* ev, bool mem) {
         sendEventToCaches(nackEv, timestamp + 1);
 }
 
-void DirectoryController::printStatus(Output &out){
-    out.output("MemHierarchy::DirectoryController %s\n", getName().c_str());
-    out.output("\t# Entries in cache:  %zu\n", entryCacheSize);
-    out.output("\t# Requests in queue:  %zu\n", workQueue.size());
+void DirectoryController::printStatus(Output &statusOut) {
+    statusOut.output("MemHierarchy::DirectoryController %s\n", getName().c_str());
+    statusOut.output("  Cached entries:  %zu\n", entryCacheSize);
+    statusOut.output("  Requests waiting to be handled:  %zu\n", workQueue.size());
     for(std::list<MemEvent*>::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i){
-        out.output("\t\t(%" PRIu64 ", %d)\n", (*i)->getID().first, (*i)->getID().second);
+        statusOut.output("    %s\n", (*i)->getVerboseString().c_str());
     }
+    
+    if (mshr) {
+        statusOut.output("  MSHR Status:\n");
+        mshr->printStatus(statusOut);
+    }
+    
+    if (network) {
+        statusOut.output("  NIC Status: ");
+        network->printStatus(statusOut);
+    }
+
+    if (memLink) {
+        statusOut.output("  Memory Link Status: ");
+        memLink->printStatus(statusOut);
+    }
+
+    statusOut.output("  Directory entries:\n");
+    for (std::unordered_map<Addr, DirEntry*>::iterator it = directory.begin(); it != directory.end(); it++) {
+        statusOut.output("    0x%" PRIx64 " %s\n", it->first, it->second->getString().c_str());
+    }
+    statusOut.output("End MemHierarchy::DirectoryController\n\n");
 }
 
+void DirectoryController::emergencyShutdown() {
+    printStatus(out);
+}
 
 
 DirectoryController::DirEntry* DirectoryController::getDirEntry(Addr baseAddr){

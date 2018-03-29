@@ -122,7 +122,9 @@ public:
     bool insert(Addr keyAddr, Addr ptrAddr);         // internal
     bool insertInv(Addr baseAddr, mshrType entry, bool inProgress);         // internal
     bool removeElement(Addr baseAddr, mshrType entry);  // internal
-    
+
+    // debug
+    void printStatus(Output& out);
 
     // unimplemented or unused functions
     void printEntry(Addr baseAddr);                         // not implemented

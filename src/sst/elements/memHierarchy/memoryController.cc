@@ -45,6 +45,13 @@ using namespace SST::MemHierarchy;
 #define is_debug_event(ev) false
 #define Debug(level, fmt, ... )
 #endif
+/*
+ *  Debug levels:
+ *  3  - event receive/response
+ *  4  - backing store
+ *  9  - init()
+ *  10 - address translation
+ */
 
 /*************************** Memory Controller ********************/
 MemController::MemController(ComponentId_t id, Params &params) : Component(id), backing_(NULL) {
@@ -60,7 +67,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     // Output for debug
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)
-        dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
+        out.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
 
     // Debug address
     std::vector<Addr> addrArr;
@@ -70,7 +77,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     }
 
     // Output for warnings
-    Output out("", 1, 0, Output::STDOUT);
+    out.init("", 1, 0, Output::STDOUT);
     
     // Check for deprecated parameters and warn/fatal
     // Currently deprecated - mem_size (replaced by backend.mem_size), network_num_vc, statistic, direct_link 
@@ -151,7 +158,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     } else {
 
         if (!isPortConnected("network")) {
-            dbg.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
+            out.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
         }
 
         Params nicParams = params.find_prefix_params("memNIC.");
@@ -216,12 +223,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         }
         catch ( int e) {
             if (e == 1) 
-                dbg.fatal(CALL_INFO, -1, "%s, Error - unable to open memory_file. You specified '%s'.\n", getName().c_str(), memoryFile.c_str());
+                out.fatal(CALL_INFO, -1, "%s, Error - unable to open memory_file. You specified '%s'.\n", getName().c_str(), memoryFile.c_str());
             else if (e == 2) {
                 out.output("%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
                 backing_ = new Backend::BackingMalloc(sizeBytes);
             } else 
-                dbg.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
+                out.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
         }
     } else if (backingType == "malloc") {
         backing_ = new Backend::BackingMalloc(sizeBytes);
@@ -306,7 +313,7 @@ void MemController::handleEvent(SST::Event* event) {
             delete ev;
             break;
         default:
-            dbg.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[(int)cmd]);
+            out.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[(int)cmd]);
     }
 }
 
@@ -336,12 +343,12 @@ Cycle_t MemController::turnClockOn() {
 
 void MemController::handleCustomEvent(MemEventBase * ev) {
     if (!customCommandHandler_) 
-        dbg.fatal(CALL_INFO, -1, "%s, Error: Received custom event but no handler loaded. Ev = %s. Time = %" PRIu64 "ns\n",
+        out.fatal(CALL_INFO, -1, "%s, Error: Received custom event but no handler loaded. Ev = %s. Time = %" PRIu64 "ns\n",
                 getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
 
     CustomCmdMemHandler::MemEventInfo evInfo = customCommandHandler_->receive(ev);
     if (evInfo.shootdown) {
-        Debug(_WARNING_, "%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString().c_str());
+        out.output("%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString().c_str());
     }
     
     CustomCmdInfo * info = customCommandHandler_->ready(ev);
@@ -354,7 +361,7 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
 
     std::map<SST::Event::id_type,MemEventBase*>::iterator it = outstandingEvents_.find(id);
     if (it == outstandingEvents_.end())
-        dbg.fatal(CALL_INFO, -1, "Memory controller (%s) received unrecognized response ID: %" PRIu64 ", %" PRIu32 "", getName().c_str(), id.first, id.second);
+        out.fatal(CALL_INFO, -1, "Memory controller (%s) received unrecognized response ID: %" PRIu64 ", %" PRIu32 "", getName().c_str(), id.first, id.second);
 
     MemEventBase * evb = it->second;
     outstandingEvents_.erase(it);
@@ -530,17 +537,34 @@ void MemController::processInitEvent( MemEventInit* me ) {
     if (Command::GetX == me->getCmd()) {
         me->setAddr(translateToLocal(me->getAddr()));
         Addr addr = me->getAddr();
-        if (is_debug_event(me)) { Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
+        if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         if ( isRequestAddressValid(addr) && backing_ ) {
             backing_->set(addr, me->getPayload().size(), me->getPayload());
         }
     } else if (Command::NULLCMD == me->getCmd()) {
-        if (is_debug_event(me)) { Debug(_L10_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }
+        if (is_debug_event(me)) { Debug(_L9_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }
     } else {
-        Output out("", 0, 0, Output::STDERR);
         out.debug(_L10_,"Memory received unexpected Init Command: %d\n", (int)me->getCmd());
     }
 
     delete me;
 }
 
+void MemController::printStatus(Output &statusOut) {
+    statusOut.output("MemHierarchy::MemoryController %s\n", getName().c_str());
+    
+    statusOut.output("  Outstanding events: %zu\n", outstandingEvents_.size());
+    for (std::map<SST::Event::id_type, MemEventBase*>::iterator it = outstandingEvents_.begin(); it != outstandingEvents_.end(); it++) {
+        statusOut.output("    %s\n", it->second->getVerboseString().c_str());
+    }
+    
+    statusOut.output("  Link Status: ");
+    if (link_) 
+        link_->printStatus(statusOut);
+    
+    statusOut.output("End MemHierarchy::MemoryController\n\n");
+}
+
+void MemController::emergencyShutdown() {
+    printStatus(out);
+}

@@ -142,6 +142,11 @@ public:
 #endif
     }
 
+    /* Debug - triggered by output.fatal() or SIGUSR2 */
+    virtual void printStatus(Output &out) {
+        out.output("  MemHierarchy::MemLinkBase: No status given\n");
+    }
+
     /* Send and receive functions for MemLink */
     virtual void sendInitData(MemEventInit * ev) =0;
     virtual MemEventInit* recvInitData() =0;
