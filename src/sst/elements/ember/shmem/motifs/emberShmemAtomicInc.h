@@ -55,6 +55,7 @@ public:
 		m_printTotals = params.find<bool>("arg.printTotals", false);
 		m_backed = params.find<bool>("arg.backed", false);
 		m_outLoop = params.find<int>("arg.outLoop", 1);
+		m_num_nodes = params.find<int>("arg.numNodes", -1);
 		m_times.resize(m_outLoop);
         
         m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
@@ -73,7 +74,9 @@ public:
             enQ_my_pe( evQ, &m_my_pe );
             enQ_malloc( evQ, &m_dest, sizeof(long) * m_dataSize, m_backed );
             m_miscLib->getNodeNum( evQ, &m_node_num );
-            m_miscLib->getNumNodes( evQ, &m_num_nodes );
+            if ( -1 == m_num_nodes ) {
+                m_miscLib->getNumNodes( evQ, &m_num_nodes );
+            }
 		} else if ( -2 == m_phase ) {
 
             if ( 0 == m_my_pe ) {
