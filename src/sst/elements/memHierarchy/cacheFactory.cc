@@ -511,7 +511,7 @@ CacheArray* Cache::createCacheArray(Params &params) {
 
     if (type_ == "inclusive" || type_ == "noninclusive") {
         return new SetAssociativeArray(d_, lines, lineSize, assoc, rmgr, ht, !L1_);
-    } else if (type_ == "noninclusive_with_directory") {
+    } else { //type_ == "noninclusive_with_directory" --> Already checked that this string is valid
         /* Construct */
         ReplacementMgr* drmgr = constructReplacementManager(dReplacement, dEntries, dAssoc);
         return new DualSetAssociativeArray(d_, lineSize, ht, true, dEntries, dAssoc, drmgr, lines, assoc, rmgr);
