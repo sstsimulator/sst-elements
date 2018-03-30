@@ -59,7 +59,7 @@ namespace SST{ namespace SambaComponent{
 			long long int getPaddress() { return paddress; }
 			int getSize() { return size; }
 
-			void serialize_order(SST::Core::Serialization::serializer &ser) {
+			void serialize_order(SST::Core::Serialization::serializer &ser) override {
 				Event::serialize_order(ser);
 			}
 
