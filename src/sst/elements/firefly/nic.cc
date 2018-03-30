@@ -29,7 +29,7 @@ using namespace SST::Firefly;
 using namespace SST::Interfaces;
 using namespace std::placeholders;
 
-int Nic::MaxPayload = (1L<<32) - 1;
+int Nic::MaxPayload = (int)((1L<<32) - 1);
 int Nic::m_packetId = 0;
 int Nic::ShmemSendMove::m_alignment = 64;
 
