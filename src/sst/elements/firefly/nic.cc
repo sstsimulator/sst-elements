@@ -65,7 +65,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
     int hostReadDelay = params.find<int>( "hostReadDelay_ns", 200 );
     m_shmemRxDelay_ns = params.find<int>( "shmemRxDelay_ns",0); 
 
-
     m_num_vNics = params.find<int>("num_vNics", 1 );
 
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
