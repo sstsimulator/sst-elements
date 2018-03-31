@@ -34,15 +34,10 @@ class Tlb : public Unit {
 
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"tlbSize=%d, pageMask=%#" PRIx64 ", numWalkers=%d\n",
                         size, m_pageMask, numWalkers );
-
-        // we need to start with a full cache, what's in it doesn't mater
-        for ( unsigned i = 0; i < size; i++ ) {
-            m_cache.insert( ( i + 1 ) );
-        }
     }
 
     ~Tlb() {
-        if ( m_total ) {
+        if ( 0 && m_total ) {
             m_dbg.output("%s total requests %" PRIu64 " %f percent hits,  %f percent flushes\n",
                     stats.c_str(), m_total, (float)m_hitCnt/(float)m_total, (float)m_flush/(float)m_total);
         }

@@ -100,7 +100,6 @@ void HadesSHMEM::init2(Shmem::Callback callback)
     m_num_pes = m_os->getInfo()->getGroup(MP::GroupWorld)->getSize();
     m_my_pe = m_os->getInfo()->getGroup(MP::GroupWorld)->getMyRank();
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"my_pe=%d num_pes=%d net_pe=%d\n",m_my_pe,m_num_pes, calcNetPE( m_my_pe ));
-            m_my_pe, 
 
     m_common = new ShmemCommon( m_my_pe, m_num_pes, 10, 8 );
     m_barrier = new ShmemBarrier( *this, *m_common );

@@ -109,11 +109,6 @@ class DragonFly2Info(TopoInfo):
 		self.params["dragonfly:num_groups"] =  nGrp
 		self.params["dragonfly:algorithm"] =  "minimal" 
 
-                print lcl
-                print nRtrs
-                print glbl
-                print nGrp
-                
 		self.numNodes = int(nGrp) * hostsPerGroup
                 print self.numNodes
                 
