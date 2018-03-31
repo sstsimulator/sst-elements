@@ -54,7 +54,7 @@ class BusLoadWidget : public Unit {
 		delete req;
 
         ++m_numPending;
-        m_model.schedCallback( 150, std::bind( &BusLoadWidget::load2, this, entry, m_numPending ) );
+        m_model.schedCallback( m_latency, std::bind( &BusLoadWidget::load2, this, entry, m_numPending ) );
 
         if ( m_numPending == m_qSize  ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"blocking src\n");
@@ -181,7 +181,7 @@ class BusStoreWidget : public Unit {
 		delete req;
 
         ++m_numPending;
-        m_model.schedCallback( 150, std::bind( &BusStoreWidget::store2, this, entry, m_numPending ) );
+        m_model.schedCallback( m_latency, std::bind( &BusStoreWidget::store2, this, entry, m_numPending ) );
 
         if ( m_numPending == m_qSize  ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"blocking src\n");

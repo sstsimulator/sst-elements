@@ -187,7 +187,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_0.FetchInvX_recv : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; 
  l1cache_0.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_0.NACK_recv : Accumulator : Sum.u64 = 77; SumSQ.u64 = 77; Count.u64 = 77; 
- l1cache_0.MSHR_occupancy : Accumulator : Sum.u64 = 173546; SumSQ.u64 = 3064098; Count.u64 = 11361; 
+ l1cache_0.MSHR_occupancy : Accumulator : Sum.u64 = 173546; SumSQ.u64 = 3064098; Count.u64 = 11681; 
  l1cache_0.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_0.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_0.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -300,7 +300,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_0.packet_latency : Accumulator : Sum.u64 = 460; SumSQ.u64 = 460; Count.u64 = 637; 
  l2cache_0.send_bit_count : Accumulator : Sum.u64 = 42816; SumSQ.u64 = 3919872; Count.u64 = 637; 
  l2cache_0.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_0.idle_time : Accumulator : Sum.u64 = 2502830; SumSQ.u64 = 175829351346; Count.u64 = 474; 
+ l2cache_0.idle_time : Accumulator : Sum.u64 = 2621568; SumSQ.u64 = 189928063990; Count.u64 = 475; 
  l2cache_0.TotalEventsReceived : Accumulator : Sum.u64 = 859; SumSQ.u64 = 859; Count.u64 = 859; 
  l2cache_0.TotalEventsReplayed : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; 
  l2cache_0.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 624; SumSQ.u64 = 624; Count.u64 = 624; 
@@ -330,7 +330,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_0.FetchInvX_recv : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; 
  l2cache_0.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_0.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_0.MSHR_occupancy : Accumulator : Sum.u64 = 130658; SumSQ.u64 = 1713768; Count.u64 = 11364; 
+ l2cache_0.MSHR_occupancy : Accumulator : Sum.u64 = 130658; SumSQ.u64 = 1713768; Count.u64 = 11681; 
  l2cache_0.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_0.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_0.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -591,7 +591,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_1.FetchInvX_recv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; 
  l1cache_1.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_1.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache_1.MSHR_occupancy : Accumulator : Sum.u64 = 169673; SumSQ.u64 = 2778873; Count.u64 = 11668; 
+ l1cache_1.MSHR_occupancy : Accumulator : Sum.u64 = 169673; SumSQ.u64 = 2778873; Count.u64 = 11681; 
  l1cache_1.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_1.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_1.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -734,7 +734,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_1.FetchInvX_recv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; 
  l2cache_1.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_1.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_1.MSHR_occupancy : Accumulator : Sum.u64 = 110758; SumSQ.u64 = 1175960; Count.u64 = 11667; 
+ l2cache_1.MSHR_occupancy : Accumulator : Sum.u64 = 110758; SumSQ.u64 = 1175960; Count.u64 = 11681; 
  l2cache_1.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_1.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_1.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -995,7 +995,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_2.FetchInvX_recv : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; 
  l1cache_2.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_2.NACK_recv : Accumulator : Sum.u64 = 119; SumSQ.u64 = 119; Count.u64 = 119; 
- l1cache_2.MSHR_occupancy : Accumulator : Sum.u64 = 179553; SumSQ.u64 = 3265693; Count.u64 = 11611; 
+ l1cache_2.MSHR_occupancy : Accumulator : Sum.u64 = 179553; SumSQ.u64 = 3265693; Count.u64 = 11681; 
  l1cache_2.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_2.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_2.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -1108,7 +1108,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_2.packet_latency : Accumulator : Sum.u64 = 495; SumSQ.u64 = 495; Count.u64 = 641; 
  l2cache_2.send_bit_count : Accumulator : Sum.u64 = 44096; SumSQ.u64 = 4591616; Count.u64 = 641; 
  l2cache_2.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_2.idle_time : Accumulator : Sum.u64 = 2631178; SumSQ.u64 = 118122196686; Count.u64 = 466; 
+ l2cache_2.idle_time : Accumulator : Sum.u64 = 2655926; SumSQ.u64 = 118734660190; Count.u64 = 467; 
  l2cache_2.TotalEventsReceived : Accumulator : Sum.u64 = 910; SumSQ.u64 = 910; Count.u64 = 910; 
  l2cache_2.TotalEventsReplayed : Accumulator : Sum.u64 = 21; SumSQ.u64 = 21; Count.u64 = 21; 
  l2cache_2.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 624; SumSQ.u64 = 624; Count.u64 = 624; 
@@ -1138,7 +1138,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_2.FetchInvX_recv : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; 
  l2cache_2.Inv_recv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  l2cache_2.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_2.MSHR_occupancy : Accumulator : Sum.u64 = 131071; SumSQ.u64 = 1736745; Count.u64 = 11614; 
+ l2cache_2.MSHR_occupancy : Accumulator : Sum.u64 = 131071; SumSQ.u64 = 1736745; Count.u64 = 11681; 
  l2cache_2.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_2.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_2.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -1399,7 +1399,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_3.FetchInvX_recv : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; 
  l1cache_3.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_3.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache_3.MSHR_occupancy : Accumulator : Sum.u64 = 179489; SumSQ.u64 = 3150549; Count.u64 = 11646; 
+ l1cache_3.MSHR_occupancy : Accumulator : Sum.u64 = 179489; SumSQ.u64 = 3150549; Count.u64 = 11681; 
  l1cache_3.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_3.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_3.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -1542,7 +1542,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_3.FetchInvX_recv : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; 
  l2cache_3.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_3.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_3.MSHR_occupancy : Accumulator : Sum.u64 = 112876; SumSQ.u64 = 1196932; Count.u64 = 11645; 
+ l2cache_3.MSHR_occupancy : Accumulator : Sum.u64 = 112876; SumSQ.u64 = 1196932; Count.u64 = 11681; 
  l2cache_3.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_3.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_3.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -1803,7 +1803,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_4.FetchInvX_recv : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; 
  l1cache_4.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_4.NACK_recv : Accumulator : Sum.u64 = 90; SumSQ.u64 = 90; Count.u64 = 90; 
- l1cache_4.MSHR_occupancy : Accumulator : Sum.u64 = 179218; SumSQ.u64 = 3291994; Count.u64 = 11612; 
+ l1cache_4.MSHR_occupancy : Accumulator : Sum.u64 = 179218; SumSQ.u64 = 3291994; Count.u64 = 11681; 
  l1cache_4.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_4.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_4.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -1916,7 +1916,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_4.packet_latency : Accumulator : Sum.u64 = 436; SumSQ.u64 = 436; Count.u64 = 639; 
  l2cache_4.send_bit_count : Accumulator : Sum.u64 = 44992; SumSQ.u64 = 5238784; Count.u64 = 639; 
  l2cache_4.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_4.idle_time : Accumulator : Sum.u64 = 2617527; SumSQ.u64 = 112101891847; Count.u64 = 465; 
+ l2cache_4.idle_time : Accumulator : Sum.u64 = 2641889; SumSQ.u64 = 112695398891; Count.u64 = 466; 
  l2cache_4.TotalEventsReceived : Accumulator : Sum.u64 = 875; SumSQ.u64 = 875; Count.u64 = 875; 
  l2cache_4.TotalEventsReplayed : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; 
  l2cache_4.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 624; SumSQ.u64 = 624; Count.u64 = 624; 
@@ -1946,7 +1946,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_4.FetchInvX_recv : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; 
  l2cache_4.Inv_recv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  l2cache_4.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_4.MSHR_occupancy : Accumulator : Sum.u64 = 129756; SumSQ.u64 = 1709426; Count.u64 = 11615; 
+ l2cache_4.MSHR_occupancy : Accumulator : Sum.u64 = 129756; SumSQ.u64 = 1709426; Count.u64 = 11681; 
  l2cache_4.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_4.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_4.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -2207,7 +2207,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_5.FetchInvX_recv : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; 
  l1cache_5.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_5.NACK_recv : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; 
- l1cache_5.MSHR_occupancy : Accumulator : Sum.u64 = 172744; SumSQ.u64 = 2817886; Count.u64 = 11619; 
+ l1cache_5.MSHR_occupancy : Accumulator : Sum.u64 = 172744; SumSQ.u64 = 2817886; Count.u64 = 11681; 
  l1cache_5.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_5.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_5.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -2350,7 +2350,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_5.FetchInvX_recv : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; 
  l2cache_5.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_5.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_5.MSHR_occupancy : Accumulator : Sum.u64 = 114000; SumSQ.u64 = 1246986; Count.u64 = 11618; 
+ l2cache_5.MSHR_occupancy : Accumulator : Sum.u64 = 114000; SumSQ.u64 = 1246986; Count.u64 = 11681; 
  l2cache_5.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_5.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_5.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -2611,7 +2611,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_6.FetchInvX_recv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; 
  l1cache_6.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_6.NACK_recv : Accumulator : Sum.u64 = 99; SumSQ.u64 = 99; Count.u64 = 99; 
- l1cache_6.MSHR_occupancy : Accumulator : Sum.u64 = 178133; SumSQ.u64 = 3180975; Count.u64 = 11392; 
+ l1cache_6.MSHR_occupancy : Accumulator : Sum.u64 = 178133; SumSQ.u64 = 3180975; Count.u64 = 11681; 
  l1cache_6.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_6.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_6.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -2724,7 +2724,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_6.packet_latency : Accumulator : Sum.u64 = 460; SumSQ.u64 = 460; Count.u64 = 645; 
  l2cache_6.send_bit_count : Accumulator : Sum.u64 = 45888; SumSQ.u64 = 5591040; Count.u64 = 645; 
  l2cache_6.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_6.idle_time : Accumulator : Sum.u64 = 2605561; SumSQ.u64 = 169255925065; Count.u64 = 484; 
+ l2cache_6.idle_time : Accumulator : Sum.u64 = 2711896; SumSQ.u64 = 180563057290; Count.u64 = 485; 
  l2cache_6.TotalEventsReceived : Accumulator : Sum.u64 = 904; SumSQ.u64 = 904; Count.u64 = 904; 
  l2cache_6.TotalEventsReplayed : Accumulator : Sum.u64 = 20; SumSQ.u64 = 20; Count.u64 = 20; 
  l2cache_6.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 624; SumSQ.u64 = 624; Count.u64 = 624; 
@@ -2754,7 +2754,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_6.FetchInvX_recv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; 
  l2cache_6.Inv_recv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  l2cache_6.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_6.MSHR_occupancy : Accumulator : Sum.u64 = 132998; SumSQ.u64 = 1772778; Count.u64 = 11395; 
+ l2cache_6.MSHR_occupancy : Accumulator : Sum.u64 = 132998; SumSQ.u64 = 1772778; Count.u64 = 11681; 
  l2cache_6.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_6.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_6.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -3015,7 +3015,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_7.FetchInvX_recv : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; 
  l1cache_7.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_7.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache_7.MSHR_occupancy : Accumulator : Sum.u64 = 167780; SumSQ.u64 = 2658516; Count.u64 = 11590; 
+ l1cache_7.MSHR_occupancy : Accumulator : Sum.u64 = 167780; SumSQ.u64 = 2658516; Count.u64 = 11681; 
  l1cache_7.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_7.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_7.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -3158,7 +3158,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_7.FetchInvX_recv : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; 
  l2cache_7.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_7.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_7.MSHR_occupancy : Accumulator : Sum.u64 = 113845; SumSQ.u64 = 1213823; Count.u64 = 11589; 
+ l2cache_7.MSHR_occupancy : Accumulator : Sum.u64 = 113845; SumSQ.u64 = 1213823; Count.u64 = 11681; 
  l2cache_7.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_7.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_7.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -3419,7 +3419,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_8.FetchInvX_recv : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; 
  l1cache_8.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_8.NACK_recv : Accumulator : Sum.u64 = 101; SumSQ.u64 = 101; Count.u64 = 101; 
- l1cache_8.MSHR_occupancy : Accumulator : Sum.u64 = 176882; SumSQ.u64 = 3162464; Count.u64 = 11473; 
+ l1cache_8.MSHR_occupancy : Accumulator : Sum.u64 = 176882; SumSQ.u64 = 3162464; Count.u64 = 11681; 
  l1cache_8.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_8.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_8.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -3532,7 +3532,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_8.packet_latency : Accumulator : Sum.u64 = 466; SumSQ.u64 = 466; Count.u64 = 639; 
  l2cache_8.send_bit_count : Accumulator : Sum.u64 = 44992; SumSQ.u64 = 5238784; Count.u64 = 639; 
  l2cache_8.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_8.idle_time : Accumulator : Sum.u64 = 2402869; SumSQ.u64 = 82102894593; Count.u64 = 444; 
+ l2cache_8.idle_time : Accumulator : Sum.u64 = 2479495; SumSQ.u64 = 87974438469; Count.u64 = 445; 
  l2cache_8.TotalEventsReceived : Accumulator : Sum.u64 = 887; SumSQ.u64 = 887; Count.u64 = 887; 
  l2cache_8.TotalEventsReplayed : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; 
  l2cache_8.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 624; SumSQ.u64 = 624; Count.u64 = 624; 
@@ -3562,7 +3562,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_8.FetchInvX_recv : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; 
  l2cache_8.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_8.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_8.MSHR_occupancy : Accumulator : Sum.u64 = 129770; SumSQ.u64 = 1689922; Count.u64 = 11476; 
+ l2cache_8.MSHR_occupancy : Accumulator : Sum.u64 = 129770; SumSQ.u64 = 1689922; Count.u64 = 11681; 
  l2cache_8.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_8.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_8.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -3823,7 +3823,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_9.FetchInvX_recv : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; 
  l1cache_9.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_9.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache_9.MSHR_occupancy : Accumulator : Sum.u64 = 175933; SumSQ.u64 = 2991319; Count.u64 = 11661; 
+ l1cache_9.MSHR_occupancy : Accumulator : Sum.u64 = 175933; SumSQ.u64 = 2991319; Count.u64 = 11681; 
  l1cache_9.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_9.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_9.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -3966,7 +3966,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_9.FetchInvX_recv : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; 
  l2cache_9.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_9.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_9.MSHR_occupancy : Accumulator : Sum.u64 = 112652; SumSQ.u64 = 1180196; Count.u64 = 11660; 
+ l2cache_9.MSHR_occupancy : Accumulator : Sum.u64 = 112652; SumSQ.u64 = 1180196; Count.u64 = 11681; 
  l2cache_9.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_9.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_9.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -4227,7 +4227,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_10.FetchInvX_recv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; 
  l1cache_10.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_10.NACK_recv : Accumulator : Sum.u64 = 67; SumSQ.u64 = 67; Count.u64 = 67; 
- l1cache_10.MSHR_occupancy : Accumulator : Sum.u64 = 170237; SumSQ.u64 = 2995669; Count.u64 = 11599; 
+ l1cache_10.MSHR_occupancy : Accumulator : Sum.u64 = 170237; SumSQ.u64 = 2995669; Count.u64 = 11681; 
  l1cache_10.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_10.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_10.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -4340,7 +4340,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_10.packet_latency : Accumulator : Sum.u64 = 493; SumSQ.u64 = 493; Count.u64 = 639; 
  l2cache_10.send_bit_count : Accumulator : Sum.u64 = 45504; SumSQ.u64 = 5566464; Count.u64 = 639; 
  l2cache_10.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_10.idle_time : Accumulator : Sum.u64 = 2534520; SumSQ.u64 = 110676644170; Count.u64 = 470; 
+ l2cache_10.idle_time : Accumulator : Sum.u64 = 2563780; SumSQ.u64 = 111532791770; Count.u64 = 471; 
  l2cache_10.TotalEventsReceived : Accumulator : Sum.u64 = 864; SumSQ.u64 = 864; Count.u64 = 864; 
  l2cache_10.TotalEventsReplayed : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; 
  l2cache_10.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 624; SumSQ.u64 = 624; Count.u64 = 624; 
@@ -4370,7 +4370,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_10.FetchInvX_recv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; 
  l2cache_10.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_10.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_10.MSHR_occupancy : Accumulator : Sum.u64 = 129856; SumSQ.u64 = 1718946; Count.u64 = 11602; 
+ l2cache_10.MSHR_occupancy : Accumulator : Sum.u64 = 129856; SumSQ.u64 = 1718946; Count.u64 = 11681; 
  l2cache_10.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_10.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_10.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -4631,7 +4631,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_11.FetchInvX_recv : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; 
  l1cache_11.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_11.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache_11.MSHR_occupancy : Accumulator : Sum.u64 = 176183; SumSQ.u64 = 2922863; Count.u64 = 11660; 
+ l1cache_11.MSHR_occupancy : Accumulator : Sum.u64 = 176183; SumSQ.u64 = 2922863; Count.u64 = 11681; 
  l1cache_11.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_11.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_11.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -4774,7 +4774,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_11.FetchInvX_recv : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; 
  l2cache_11.Inv_recv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  l2cache_11.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_11.MSHR_occupancy : Accumulator : Sum.u64 = 115849; SumSQ.u64 = 1226717; Count.u64 = 11659; 
+ l2cache_11.MSHR_occupancy : Accumulator : Sum.u64 = 115849; SumSQ.u64 = 1226717; Count.u64 = 11681; 
  l2cache_11.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_11.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_11.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -5035,7 +5035,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_12.FetchInvX_recv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; 
  l1cache_12.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_12.NACK_recv : Accumulator : Sum.u64 = 78; SumSQ.u64 = 78; Count.u64 = 78; 
- l1cache_12.MSHR_occupancy : Accumulator : Sum.u64 = 177661; SumSQ.u64 = 3244171; Count.u64 = 11628; 
+ l1cache_12.MSHR_occupancy : Accumulator : Sum.u64 = 177661; SumSQ.u64 = 3244171; Count.u64 = 11681; 
  l1cache_12.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_12.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_12.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -5148,7 +5148,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_12.packet_latency : Accumulator : Sum.u64 = 482; SumSQ.u64 = 482; Count.u64 = 639; 
  l2cache_12.send_bit_count : Accumulator : Sum.u64 = 45504; SumSQ.u64 = 5566464; Count.u64 = 639; 
  l2cache_12.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_12.idle_time : Accumulator : Sum.u64 = 2429981; SumSQ.u64 = 82920467759; Count.u64 = 465; 
+ l2cache_12.idle_time : Accumulator : Sum.u64 = 2448327; SumSQ.u64 = 83257043475; Count.u64 = 466; 
  l2cache_12.TotalEventsReceived : Accumulator : Sum.u64 = 865; SumSQ.u64 = 865; Count.u64 = 865; 
  l2cache_12.TotalEventsReplayed : Accumulator : Sum.u64 = 24; SumSQ.u64 = 24; Count.u64 = 24; 
  l2cache_12.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 624; SumSQ.u64 = 624; Count.u64 = 624; 
@@ -5178,7 +5178,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_12.FetchInvX_recv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; 
  l2cache_12.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_12.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_12.MSHR_occupancy : Accumulator : Sum.u64 = 130170; SumSQ.u64 = 1717510; Count.u64 = 11631; 
+ l2cache_12.MSHR_occupancy : Accumulator : Sum.u64 = 130170; SumSQ.u64 = 1717510; Count.u64 = 11681; 
  l2cache_12.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_12.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_12.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -5439,7 +5439,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_13.FetchInvX_recv : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; 
  l1cache_13.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_13.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache_13.MSHR_occupancy : Accumulator : Sum.u64 = 182027; SumSQ.u64 = 3131263; Count.u64 = 11680; 
+ l1cache_13.MSHR_occupancy : Accumulator : Sum.u64 = 182028; SumSQ.u64 = 3131264; Count.u64 = 11681; 
  l1cache_13.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_13.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_13.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -5582,7 +5582,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_13.FetchInvX_recv : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; 
  l2cache_13.Inv_recv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
  l2cache_13.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_13.MSHR_occupancy : Accumulator : Sum.u64 = 111554; SumSQ.u64 = 1190162; Count.u64 = 11679; 
+ l2cache_13.MSHR_occupancy : Accumulator : Sum.u64 = 111556; SumSQ.u64 = 1190164; Count.u64 = 11681; 
  l2cache_13.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_13.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_13.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -5843,7 +5843,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_14.FetchInvX_recv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; 
  l1cache_14.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_14.NACK_recv : Accumulator : Sum.u64 = 106; SumSQ.u64 = 106; Count.u64 = 106; 
- l1cache_14.MSHR_occupancy : Accumulator : Sum.u64 = 179492; SumSQ.u64 = 3259680; Count.u64 = 11642; 
+ l1cache_14.MSHR_occupancy : Accumulator : Sum.u64 = 179492; SumSQ.u64 = 3259680; Count.u64 = 11681; 
  l1cache_14.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_14.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_14.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -5956,7 +5956,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_14.packet_latency : Accumulator : Sum.u64 = 490; SumSQ.u64 = 490; Count.u64 = 641; 
  l2cache_14.send_bit_count : Accumulator : Sum.u64 = 45632; SumSQ.u64 = 5574656; Count.u64 = 641; 
  l2cache_14.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_14.idle_time : Accumulator : Sum.u64 = 2481378; SumSQ.u64 = 126987350696; Count.u64 = 471; 
+ l2cache_14.idle_time : Accumulator : Sum.u64 = 2494460; SumSQ.u64 = 127158489420; Count.u64 = 472; 
  l2cache_14.TotalEventsReceived : Accumulator : Sum.u64 = 908; SumSQ.u64 = 908; Count.u64 = 908; 
  l2cache_14.TotalEventsReplayed : Accumulator : Sum.u64 = 21; SumSQ.u64 = 21; Count.u64 = 21; 
  l2cache_14.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 624; SumSQ.u64 = 624; Count.u64 = 624; 
@@ -5986,7 +5986,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_14.FetchInvX_recv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; 
  l2cache_14.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_14.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_14.MSHR_occupancy : Accumulator : Sum.u64 = 131666; SumSQ.u64 = 1735262; Count.u64 = 11645; 
+ l2cache_14.MSHR_occupancy : Accumulator : Sum.u64 = 131666; SumSQ.u64 = 1735262; Count.u64 = 11681; 
  l2cache_14.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_14.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_14.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -6247,7 +6247,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_15.FetchInvX_recv : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; 
  l1cache_15.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_15.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache_15.MSHR_occupancy : Accumulator : Sum.u64 = 181690; SumSQ.u64 = 3045220; Count.u64 = 11622; 
+ l1cache_15.MSHR_occupancy : Accumulator : Sum.u64 = 181690; SumSQ.u64 = 3045220; Count.u64 = 11681; 
  l1cache_15.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_15.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache_15.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
@@ -6390,7 +6390,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_15.FetchInvX_recv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; 
  l2cache_15.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_15.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l2cache_15.MSHR_occupancy : Accumulator : Sum.u64 = 113991; SumSQ.u64 = 1185613; Count.u64 = 11621; 
+ l2cache_15.MSHR_occupancy : Accumulator : Sum.u64 = 113991; SumSQ.u64 = 1185613; Count.u64 = 11681; 
  l2cache_15.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_15.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l2cache_15.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 

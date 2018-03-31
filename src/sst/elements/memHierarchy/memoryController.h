@@ -123,6 +123,7 @@ protected:
 
     virtual bool clock( SST::Cycle_t );
 
+    Output out;
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
 
@@ -154,6 +155,10 @@ protected:
     TimeConverter* clockTimeBase_;
     
     CustomCmdMemHandler * customCommandHandler_;
+
+    /* Debug -triggered by output.fatal() and/or SIGUSR2 */
+    virtual void printStatus(Output &out);
+    virtual void emergencyShutdown();
 
 private:
     
