@@ -19,6 +19,7 @@
 
 #include <queue>
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
@@ -37,6 +38,81 @@ class EmberEvent;
 class EmberGeneratorData;
 
 class EmberEngine : public SST::Component {
+public:
+    SST_ELI_REGISTER_COMPONENT(
+        EmberEngine,
+        "Ember",
+        "EmberEngine",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Base communicator motif engine.",
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+        { "module", "Sets the OS module", ""},
+        { "verbose", "Sets the output verbosity of the component", "0" },
+        { "jobId", "Sets the job id", "-1"},
+        { "netMapName", "used internally", "-1"},
+        { "_apiName", "used internally", "-1"},
+        { "_jobId", "used internally", "-1"},
+        { "_motifNum", "used internally", "-1"},
+
+        { "motif_count", "Sets the number of motifs which will be run in this simulation, default is 1", "1"},
+
+        { "distribModule", "Sets the distribution SST module for compute modeling, default is a constant distribution of mean 1", "1.0"},
+
+        { "rankmapper", "Sets the rank mapping SST module to load to rank translations, default is linear mapping", "ember.LinearMap" },
+
+        { "mapFile", "Sets the name of the input file for custom map", "mapFile.txt" },
+
+        { "motif%(motif_count)d", "Sets the event generator or motif for the engine", "ember.EmberPingPongGenerator" },
+
+        { "name", "Sets the event generator or motif for the engine", "ember.EmberPingPongGenerator" },
+        { "api", "Sets the api used by a motif", "hermesParams" },
+
+        { "spyplotmode", "Sets the spyplot generation mode, 0 = none, 1 = spy on sends", "0" },
+
+        { "motifLog", "Sets a file path to a file where motif execution details are written, empty = no log", "" },
+
+        { "Send_bin_width", "Bin width of the send time histogram", "5" },
+        { "Compute_bin_width", "Bin width of the compute time histogram", "5" },
+        { "Init_bin_width", "Bin width of the init time histogram", "5" },
+        { "Finalize_bin_width", "Bin width of the finalize time histogram", "5"},
+        { "Recv_bin_width", "Bin width of the recv time histogram", "5" },
+        { "Rank_bin_width", "Bin width of the rank time histogram", "5" },
+        { "Size_bin_width", "Bin width of the size time histogram", "5" },
+        { "Recv_bin_width", "Bin width of the recv time histogram", "5" },
+        { "Irecv_bin_width", "Bin width of the irecv time histogram", "5" },
+        { "Isend_bin_width", "Bin width of the isend time histogram", "5" },
+        { "Wait_bin_width", "Bin width of the wait time histogram", "5" },
+        { "Waitall_bin_width", "Bin width of the waitall time histogram", "5" },
+        { "Waitany_bin_width", "Bin width of the waitany time histogram", "5" },
+        { "Barrier_bin_width", "Bin width of the barrier time histogram", "5" },
+        { "Recvsize_bin_width", "Bin width of the recv sizes (bytes) histogram", "64" },
+        { "Sendsize_bin_width", "Bin width of the send sizes (bytes) histogram", "64" },
+        { "Allreduce_bin_width", "Bin width of the allreduce time histogram", "5" },
+        { "Alltoall_bin_width", "Bin width of the alltoall time histogram", "5" },
+        { "Alltoallv_bin_width", "Bin width of the alltoallv time histogram", "5" },
+        { "Reduce_bin_width", "Bin width of the reduce time histogram", "5" },
+        { "Bcast_bin_width", "Bin width of the bcast time histogram", "5" },
+        { "Commsplit_bin_width", "Bin width of the comm_split time histogram", "5" },
+        { "Commcreate_bin_width", "Bin width of the comm_create time histogram", "5" },
+        { "Commdestroy_bin_width", "Bin width of the comm_destroy time histogram", "5" },
+        { "Gettime_bin_width", "Bin width of the gettime time histogram", "5" },
+
+
+        { "noisegen", "Sets the noise generator for the system", "constant" },
+        { "noisemean", "Sets the mean of a Gaussian noise generator", "1.0" },
+        { "noisestddev", "Sets the standard deviation of a noise generator", "0.1" },
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"detailed%(num_vNics)d", "Port connected to the detailed model", {}},
+        {"nic", "Port connected to the nic", {}},
+        {"loop", "Port connected to the loopBack", {}},
+        {"memoryHeap", "Port connected to the memory heap", {}},
+    )
+
 public:
 	EmberEngine( SST::ComponentId_t id, SST::Params& params );
 	~EmberEngine();

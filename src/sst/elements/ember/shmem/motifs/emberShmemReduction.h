@@ -36,6 +36,20 @@ checkType( ) { assert(0); }
 template <class TYPE>
 class EmberShmemReductionGenerator : public EmberShmemGenerator {
 
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemReductionGenerator,
+        "Ember",
+        "ShmemReductionDoubleMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM reduction double",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
     enum Op { AND, OR, XOR, SUM, PROD, MAX, MIN } m_op;
 	enum Type { Int, Long, LongLong, Float, Double } m_type;
 public:
