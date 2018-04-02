@@ -16,12 +16,24 @@
 #ifndef COMPONENTS_FIREFLY_NODE_PERF_H
 #define COMPONENTS_FIREFLY_NODE_PERF_H
 
+#include <sst/core/elementinfo.h>
 #include "sst/elements/hermes/hermes.h"
 
 namespace SST {
 namespace Firefly {
 
 class SimpleNodePerf : public NodePerf {
+
+  public:
+    SST_ELI_REGISTER_MODULE(
+        SimpleNodePerf,
+        "firefly",
+        "SimpleNodePerf",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        "SST::Firefly::SimpleNodePerf"
+    )
+  private:
 
   public:
     SimpleNodePerf( Params& params ) {

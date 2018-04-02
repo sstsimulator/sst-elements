@@ -19,6 +19,7 @@
 
 #include <math.h>
 #include <sstream>
+#include <sst/core/elementinfo.h>
 #include <sst/core/module.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
@@ -50,6 +51,46 @@ namespace Firefly {
 
 class Nic : public SST::Component  {
 
+  public:
+    SST_ELI_REGISTER_COMPONENT(
+        Nic,
+        "firefly",
+        "nic",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        COMPONENT_CATEGORY_SYSTEM
+        )
+    SST_ELI_DOCUMENT_PARAMS(
+        { "nid", "node id on network", "-1"},
+        { "tracedPkt", "packet to trace", "-1"},
+        { "tracedNode", "node to trace", "-1"},
+        { "rtrPortName", "Port connected to the router", "rtr"},
+        { "corePortName", "Port connected to the core", "core"},
+        { "num_vNics", "Sets number of cores", "1"},
+        { "verboseLevel", "Sets the output verbosity of the component", "1"},
+        { "verboseMask", "Sets the output mask of the component", "1"},
+        { "rxMatchDelay_ns", "Sets the delay for a receive match", "100"},
+        { "txDelay_ns", "Sets the delay for a send", "100"},
+        { "hostReadDelay_ns", "Sets the delay for a read from the host", "200"},
+        { "dmaBW_GBs", "set the one way DMA bandwidth", "100"},
+        { "dmaContentionMult", "set the DMA contention mult", "100"},
+        { "topology", "Sets the network topology", "merlin.torus"},
+        { "fattree:loading", "Sets the number of ports on edge router connected to nodes", "8"},
+        { "fattree:radix", "Sets the number of ports on the network switches", "16"},
+        { "packetSize", "Sets the size of the network packet in bytes", "64"},
+        { "link_bw", "Sets the bandwidth of link connected to the router", "500Mhz"},
+        { "buffer_size", "Sets the buffer size of the link connected to the router", "128"},
+        { "module", "Sets the link control module", "merlin.linkcontrol"},
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr", "Port connected to the router", {}},
+        {"read", "Port connected to the detailed model", {}},
+        {"write", "Port connected to the detailed model", {}},
+        {"core%(num_vNics)d", "Ports connected to the network driver", {}},
+    ) 
+
+  private:
     typedef unsigned RespKey_t;
 	class LinkControlWidget {
 

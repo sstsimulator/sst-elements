@@ -24,6 +24,16 @@ namespace Firefly {
 class AllreduceFuncSM :  public CollectiveTreeFuncSM 
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        AllreduceFuncSM,
+        "firefly",
+        "Allreduce",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
+  public:
     AllreduceFuncSM( SST::Params& params ) : CollectiveTreeFuncSM( params ) { }
 
     virtual void handleStartEvent( SST::Event* e, Retval& retval ) {

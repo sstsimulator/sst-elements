@@ -17,6 +17,7 @@
 #ifndef COMPONENTS_FIREFLY_HADESSHMEM_H
 #define COMPONENTS_FIREFLY_HADESSHMEM_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/params.h>
 
 #include <stdlib.h>
@@ -43,6 +44,15 @@ namespace Firefly {
 class HadesSHMEM : public Shmem::Interface
 {
   public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        HadesSHMEM,
+        "firefly",
+        "hadesSHMEM",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
     typedef std::function<void()> Callback;
 
   private:

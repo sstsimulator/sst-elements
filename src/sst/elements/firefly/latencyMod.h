@@ -18,6 +18,7 @@
 #define COMPONENTS_FIREFLY_LATENCYMOD_H
 
 #include <sst/core/module.h>
+#include <sst/core/elementinfo.h>
 
 namespace SST {
 namespace Firefly {

@@ -38,7 +38,7 @@ API::API( Component* owner, Params& params ) :
         m_dbg_mask,
         Output::STDOUT );
 
-    m_processQueuesState = new ProcessQueuesState( owner, params );
+    m_processQueuesState = dynamic_cast<ProcessQueuesState*>( owner->loadSubComponent( "firefly.ctrlMsg", owner, params) );
 
     m_mem = new Memory( owner, params );
     static_cast<Memory*>(m_mem)->setOutput( &m_dbg );

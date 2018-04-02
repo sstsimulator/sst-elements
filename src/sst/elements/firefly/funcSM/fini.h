@@ -23,6 +23,15 @@ namespace Firefly {
 
 class FiniFuncSM :  public BarrierFuncSM 
 {
+ public:
+    SST_ELI_REGISTER_MODULE(
+        FiniFuncSM,
+        "firefly",
+        "Fini",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
   public:
     FiniFuncSM( SST::Params& params ) : BarrierFuncSM( params ) {}
 

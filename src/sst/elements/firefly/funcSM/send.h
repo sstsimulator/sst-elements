@@ -25,7 +25,15 @@ namespace Firefly {
 
 class SendFuncSM :  public FunctionSMInterface
 {
-//    enum { Wait, Exit } m_state;
+  public:
+    SST_ELI_REGISTER_MODULE(
+        SendFuncSM,
+        "firefly",
+        "Send",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
 
   public:
     SendFuncSM( SST::Params& params );

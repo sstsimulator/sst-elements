@@ -16,6 +16,7 @@
 #ifndef COMPONENTS_FIREFLY_CTRLMSG_H
 #define COMPONENTS_FIREFLY_CTRLMSG_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/component.h>
 #include "protocolAPI.h"
 #include "ctrlMsgFunctors.h"
@@ -53,6 +54,17 @@ class API : public ProtocolAPI {
     typedef std::function<void(nid_t, uint32_t, size_t)> Callback2;
 
   public:
+   SST_ELI_REGISTER_SUBCOMPONENT(
+        API,
+        "firefly",
+        "CtrlMsgProto",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
     API( Component* owner, Params& );
     ~API();
 
