@@ -441,6 +441,26 @@ public:
         EmberShmemReductionGenerator(owner,  params) { } 
 };
 
+class EmberShmemReductionDoubleGenerator : public EmberShmemReductionGenerator<double> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemReductionDoubleGenerator,
+        "ember",
+        "ShmemReductionDoubleMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM reduction double",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    ) 
+
+public:
+    EmberShmemReductionDoubleGenerator( SST::Component* owner, Params& params ) : 
+        EmberShmemReductionGenerator(owner,  params) { } 
+};
+
 class EmberShmemReductionFloatGenerator : public EmberShmemReductionGenerator<float> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
