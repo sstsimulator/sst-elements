@@ -103,6 +103,86 @@ public:
     int m_num_pes;
 };
 
+class EmberShmemFaddIntGenerator : public EmberShmemFaddGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemFaddIntGenerator,
+        "ember",
+        "ShmemFaddIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM fadd int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemFaddIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemFaddGenerator(owner,  params) { }
+};
+
+class EmberShmemFaddLongGenerator : public EmberShmemFaddGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemFaddLongGenerator,
+        "ember",
+        "ShmemFaddLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM fadd long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemFaddLongGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemFaddGenerator(owner,  params) { }
+};
+
+class EmberShmemFaddDobuleGenerator : public EmberShmemFaddGenerator<double> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemFaddDobuleGenerator,
+        "ember",
+        "ShmemFaddDobuleMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM fadd double",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemFaddDobuleGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemFaddGenerator(owner,  params) { }
+};
+
+class EmberShmemFaddFloatGenerator : public EmberShmemFaddGenerator<float> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemFaddFloatGenerator,
+        "ember",
+        "ShmemFaddFloatMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM fadd float",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemFaddFloatGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemFaddGenerator(owner,  params) { }
+};
+
 }
 }
 

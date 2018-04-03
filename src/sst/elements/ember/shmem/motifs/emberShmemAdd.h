@@ -93,6 +93,85 @@ public:
     int m_num_pes;
 };
 
+class EmberShmemAddIntGenerator : public EmberShmemAddGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemAddIntGenerator,
+        "ember",
+        "ShmemAddIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM add int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemAddIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemAddGenerator(owner,  params) { }
+};
+
+class EmberShmemAddLongGenerator : public EmberShmemAddGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemAddLongGenerator,
+        "ember",
+        "ShmemAddLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM add long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemAddLongGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemAddGenerator(owner,  params) { }
+};
+
+class EmberShmemAddDobuleGenerator : public EmberShmemAddGenerator<double> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemAddDobuleGenerator,
+        "ember",
+        "ShmemAddDobuleMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM add double",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemAddDobuleGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemAddGenerator(owner,  params) { }
+};
+
+class EmberShmemAddFloatGenerator : public EmberShmemAddGenerator<float> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemAddFloatGenerator,
+        "ember",
+        "ShmemAddFloatMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM add float",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemAddFloatGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemAddGenerator(owner,  params) { }
+};
 }
 }
 

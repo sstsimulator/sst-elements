@@ -36,19 +36,6 @@ checkType( ) { assert(0); }
 template <class TYPE>
 class EmberShmemReductionGenerator : public EmberShmemGenerator {
 
-public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
-        EmberShmemReductionGenerator,
-        "Ember",
-        "ShmemReductionDoubleMotif",
-        SST_ELI_ELEMENT_VERSION(1,0,0),
-        "SHMEM reduction double",
-        "SST::Ember::EmberGenerator"
-
-    )
-
-    SST_ELI_DOCUMENT_PARAMS(
-    )
 
     enum Op { AND, OR, XOR, SUM, PROD, MAX, MIN } m_op;
 	enum Type { Int, Long, LongLong, Float, Double } m_type;
@@ -392,6 +379,86 @@ public:
     int m_my_pe;
     int m_num_pes;
     int m_phase;
+};
+
+class EmberShmemReductionIntGenerator : public EmberShmemReductionGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemReductionIntGenerator,
+        "ember",
+        "ShmemReductionIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM reduction int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    ) 
+
+public:
+    EmberShmemReductionIntGenerator( SST::Component* owner, Params& params ) : 
+        EmberShmemReductionGenerator(owner,  params) { } 
+};
+
+class EmberShmemReductionLongGenerator : public EmberShmemReductionGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemReductionLongGenerator,
+        "ember",
+        "ShmemReductionLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM reduction long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    ) 
+
+public:
+    EmberShmemReductionLongGenerator( SST::Component* owner, Params& params ) : 
+        EmberShmemReductionGenerator(owner,  params) { } 
+};
+
+class EmberShmemReductionLongLongGenerator : public EmberShmemReductionGenerator<long long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemReductionLongLongGenerator,
+        "ember",
+        "ShmemReductionLongLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM reduction long long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    ) 
+
+public:
+    EmberShmemReductionLongLongGenerator( SST::Component* owner, Params& params ) : 
+        EmberShmemReductionGenerator(owner,  params) { } 
+};
+
+class EmberShmemReductionFloatGenerator : public EmberShmemReductionGenerator<float> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemReductionFloatGenerator,
+        "ember",
+        "ShmemReductionFloatMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM reduction float",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    ) 
+
+public:
+    EmberShmemReductionFloatGenerator( SST::Component* owner, Params& params ) : 
+        EmberShmemReductionGenerator(owner,  params) { } 
 };
 
 }

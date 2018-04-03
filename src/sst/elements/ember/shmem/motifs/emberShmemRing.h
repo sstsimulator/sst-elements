@@ -30,7 +30,7 @@ class EmberShmemRingGenerator : public EmberShmemGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemRingGenerator,
-        "Ember",
+        "ember",
         "ShmemRingMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM ring",

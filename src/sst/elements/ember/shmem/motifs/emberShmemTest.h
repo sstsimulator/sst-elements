@@ -28,7 +28,7 @@ class EmberShmemTestGenerator : public EmberShmemGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemTestGenerator,
-        "Ember",
+        "ember",
         "ShmemTestMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM test",

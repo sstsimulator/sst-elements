@@ -121,6 +121,86 @@ public:
     int m_num_pes;
 };
 
+class EmberShmemPutvIntGenerator : public EmberShmemPutvGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemPutvIntGenerator,
+        "ember",
+        "ShmemPutvIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM putv int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemPutvIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemPutvGenerator(owner,  params) { }
+};
+
+class EmberShmemPutvLongGenerator : public EmberShmemPutvGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemPutvLongGenerator,
+        "ember",
+        "ShmemPutvLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM putv long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemPutvLongGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemPutvGenerator(owner,  params) { }
+};
+
+class EmberShmemPutvDobuleGenerator : public EmberShmemPutvGenerator<double> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemPutvDobuleGenerator,
+        "ember",
+        "ShmemPutvDobuleMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM putv double",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemPutvDobuleGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemPutvGenerator(owner,  params) { }
+};
+
+class EmberShmemPutvFloatGenerator : public EmberShmemPutvGenerator<float> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemPutvFloatGenerator,
+        "ember",
+        "ShmemPutvFloatMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM putv float",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemPutvFloatGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemPutvGenerator(owner,  params) { }
+};
+
 }
 }
 

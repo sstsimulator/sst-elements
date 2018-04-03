@@ -35,7 +35,7 @@ class EmberShmemAtomicIncGenerator : public EmberShmemGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemAtomicIncGenerator,
-        "Ember",
+        "ember",
         "ShmemAtomicIncMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM atomicInc",
