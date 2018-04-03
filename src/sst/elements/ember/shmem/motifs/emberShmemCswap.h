@@ -144,12 +144,12 @@ public:
         EmberShmemCswapGenerator(owner,  params) { }
 };
 
-class EmberShmemCswapDobuleGenerator : public EmberShmemCswapGenerator<double> {
+class EmberShmemCswapDoubleGenerator : public EmberShmemCswapGenerator<double> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
-        EmberShmemCswapDobuleGenerator,
+        EmberShmemCswapDoubleGenerator,
         "ember",
-        "ShmemCswapDobuleMotif",
+        "ShmemCswapDoubleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM cswap double",
         "SST::Ember::EmberGenerator"
@@ -160,7 +160,7 @@ public:
     )
 
 public:
-    EmberShmemCswapDobuleGenerator( SST::Component* owner, Params& params ) :
+    EmberShmemCswapDoubleGenerator( SST::Component* owner, Params& params ) :
         EmberShmemCswapGenerator(owner,  params) { }
 };
 

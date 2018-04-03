@@ -133,12 +133,12 @@ public:
         EmberShmemAddGenerator(owner,  params) { }
 };
 
-class EmberShmemAddDobuleGenerator : public EmberShmemAddGenerator<double> {
+class EmberShmemAddDoubleGenerator : public EmberShmemAddGenerator<double> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
-        EmberShmemAddDobuleGenerator,
+        EmberShmemAddDoubleGenerator,
         "ember",
-        "ShmemAddDobuleMotif",
+        "ShmemAddDoubleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM add double",
         "SST::Ember::EmberGenerator"
@@ -149,7 +149,7 @@ public:
     )
 
 public:
-    EmberShmemAddDobuleGenerator( SST::Component* owner, Params& params ) :
+    EmberShmemAddDoubleGenerator( SST::Component* owner, Params& params ) :
         EmberShmemAddGenerator(owner,  params) { }
 };
 

@@ -161,12 +161,12 @@ public:
         EmberShmemPutvGenerator(owner,  params) { }
 };
 
-class EmberShmemPutvDobuleGenerator : public EmberShmemPutvGenerator<double> {
+class EmberShmemPutvDoubleGenerator : public EmberShmemPutvGenerator<double> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
-        EmberShmemPutvDobuleGenerator,
+        EmberShmemPutvDoubleGenerator,
         "ember",
-        "ShmemPutvDobuleMotif",
+        "ShmemPutvDoubleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM putv double",
         "SST::Ember::EmberGenerator"
@@ -177,7 +177,7 @@ public:
     )
 
 public:
-    EmberShmemPutvDobuleGenerator( SST::Component* owner, Params& params ) :
+    EmberShmemPutvDoubleGenerator( SST::Component* owner, Params& params ) :
         EmberShmemPutvGenerator(owner,  params) { }
 };
 

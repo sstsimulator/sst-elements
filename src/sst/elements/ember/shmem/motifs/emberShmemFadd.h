@@ -143,12 +143,12 @@ public:
         EmberShmemFaddGenerator(owner,  params) { }
 };
 
-class EmberShmemFaddDobuleGenerator : public EmberShmemFaddGenerator<double> {
+class EmberShmemFaddDoubleGenerator : public EmberShmemFaddGenerator<double> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
-        EmberShmemFaddDobuleGenerator,
+        EmberShmemFaddDoubleGenerator,
         "ember",
-        "ShmemFaddDobuleMotif",
+        "ShmemFaddDoubleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM fadd double",
         "SST::Ember::EmberGenerator"
@@ -159,7 +159,7 @@ public:
     )
 
 public:
-    EmberShmemFaddDobuleGenerator( SST::Component* owner, Params& params ) :
+    EmberShmemFaddDoubleGenerator( SST::Component* owner, Params& params ) :
         EmberShmemFaddGenerator(owner,  params) { }
 };
 
