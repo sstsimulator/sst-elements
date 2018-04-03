@@ -27,7 +27,7 @@ class EmberRandomTrafficGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberRandomTrafficGenerator,
-        "Ember",
+        "ember",
         "RandomMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a random traffic pattern communication",

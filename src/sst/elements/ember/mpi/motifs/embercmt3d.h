@@ -28,7 +28,7 @@ class EmberCMT3DGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberCMT3DGenerator,
-        "Ember",
+        "ember",
         "CMT3DMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs nearest neighbor exchange over a 3D machine decomposition",

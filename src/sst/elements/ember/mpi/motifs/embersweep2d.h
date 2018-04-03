@@ -26,7 +26,7 @@ class EmberSweep2DGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberSweep2DGenerator,
-        "Ember",
+        "ember",
         "Sweep2DMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a 2D sweep exchange Motif with multiple vertex communication ordering",

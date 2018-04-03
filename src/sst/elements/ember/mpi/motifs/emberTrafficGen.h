@@ -29,7 +29,7 @@ class EmberTrafficGenGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberTrafficGenGenerator,
-        "Ember",
+        "ember",
         "TrafficGenMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Models network traffic",

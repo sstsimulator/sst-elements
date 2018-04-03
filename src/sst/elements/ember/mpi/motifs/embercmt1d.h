@@ -28,7 +28,7 @@ class EmberCMT1DGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberCMT1DGenerator,
-        "Ember",
+        "ember",
         "CMT1DMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs nearest neighbor exchange over a linear/1D decomposition",

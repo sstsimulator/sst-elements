@@ -27,7 +27,7 @@ class EmberBcastGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberBcastGenerator,
-        "Ember",
+        "ember",
         "BcastMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a broadcast operation with type set to float64 from a user-specified reduction-tree root",

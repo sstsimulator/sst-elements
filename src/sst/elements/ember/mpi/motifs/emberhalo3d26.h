@@ -27,7 +27,7 @@ class EmberHalo3D26Generator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberHalo3D26Generator,
-        "Ember",
+        "ember",
         "Halo3D26Motif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a 3D 26-non-blocking motif",

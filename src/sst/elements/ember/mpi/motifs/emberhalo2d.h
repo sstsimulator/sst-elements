@@ -27,7 +27,7 @@ class EmberHalo2DGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberHalo2DGenerator,
-        "Ember",
+        "ember",
          "Halo2DMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a 2D halo exchange Motif",

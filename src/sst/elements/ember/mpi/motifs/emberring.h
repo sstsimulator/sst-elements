@@ -27,7 +27,7 @@ class EmberRingGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberRingGenerator,
-        "Ember",
+        "ember",
         "RingMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a Ring Motif",

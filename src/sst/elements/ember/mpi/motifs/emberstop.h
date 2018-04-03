@@ -28,7 +28,7 @@ class EmberStopGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberStopGenerator,
-        "Ember",
+        "ember",
         "StopMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "NetworkSim: Performs a Barrier Motif and gives a fatal",

@@ -27,7 +27,7 @@ class EmberDetailedStreamGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberDetailedStreamGenerator,
-        "Ember",
+        "ember",
         "DetailedStreamMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a Stream Motif with detailed model",

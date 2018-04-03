@@ -30,7 +30,7 @@ class EmberSIRIUSTraceGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberSIRIUSTraceGenerator,
-        "Ember",
+        "ember",
         "SIRIUSTraceMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a SIRIUS trace-based execution",

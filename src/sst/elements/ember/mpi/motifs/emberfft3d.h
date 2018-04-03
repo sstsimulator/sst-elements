@@ -27,7 +27,7 @@ class EmberFFT3DGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberFFT3DGenerator,
-        "Ember",
+        "ember",
         "FFT3DMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Models an FFT",

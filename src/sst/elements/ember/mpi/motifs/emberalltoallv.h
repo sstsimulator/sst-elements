@@ -27,7 +27,7 @@ class EmberAlltoallvGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberAlltoallvGenerator,
-        "Ember",
+        "ember",
         "AlltoallvMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a Alltoallv operation with type set to float64 and operation SUM",

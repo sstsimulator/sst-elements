@@ -26,7 +26,7 @@ class EmberHalo2DNBRGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberHalo2DNBRGenerator,
-        "Ember",
+        "ember",
         "Halo2DNBRMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a 2D halo exchange Motif with non-blocking receives",

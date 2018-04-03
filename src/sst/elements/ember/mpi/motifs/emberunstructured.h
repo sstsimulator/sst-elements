@@ -24,7 +24,7 @@ class EmberUnstructuredGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberUnstructuredGenerator,
-        "Ember",
+        "ember",
         "UnstructuredMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "NetworkSim: Performs an Unstructured Communication Motif based on an input graph",

@@ -27,7 +27,7 @@ class EmberCommGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberCommGenerator,
-        "Ember",
+        "ember",
         "CommMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a comm_split test.",

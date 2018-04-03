@@ -27,7 +27,7 @@ class EmberNullGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberNullGenerator,
-        "Ember",
+        "ember",
         "NullMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs an idle on the node, no traffic can be generated.",

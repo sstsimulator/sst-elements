@@ -34,7 +34,7 @@ class Ember3DAMRGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         Ember3DAMRGenerator,
-        "Ember",
+        "ember",
         "3DAMRMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Models an adaptive refinement step from MiniAMR",

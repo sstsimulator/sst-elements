@@ -27,7 +27,7 @@ class EmberSweep3DGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberSweep3DGenerator,
-        "Ember",
+        "ember",
         "Sweep3DMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a 3D sweep communication motif from all 8 vertices",

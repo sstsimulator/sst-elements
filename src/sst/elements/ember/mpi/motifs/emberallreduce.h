@@ -27,7 +27,7 @@ class EmberAllreduceGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberAllreduceGenerator,
-        "Ember",
+        "ember",
         "AllreduceMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a Allreduce operation with type set to float64 and operation SUM",

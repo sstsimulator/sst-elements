@@ -27,7 +27,7 @@ class EmberHalo3DGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberHalo3DGenerator,
-        "Ember",
+        "ember",
         "Halo3DMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a 3D blocking motif",

@@ -27,7 +27,7 @@ class EmberNASLUGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberNASLUGenerator,
-        "Ember",
+        "ember",
         "NASLUMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a NAS-LU communication motif from 2 (opposite) vertices",

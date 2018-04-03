@@ -27,7 +27,7 @@ class EmberAllPingPongGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberAllPingPongGenerator,
-        "Ember",
+        "ember",
         "AllPingPongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a All Ping Pong Motif",

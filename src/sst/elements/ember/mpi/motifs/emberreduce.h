@@ -27,7 +27,7 @@ class EmberReduceGenerator : public EmberMessagePassingGenerator {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmberReduceGenerator,
-        "Ember",
+        "ember",
         "ReduceMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a reduction operation with type set to float64 and operation SUM from a user-specified reduction-tree root",
