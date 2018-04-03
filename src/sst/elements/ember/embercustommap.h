@@ -31,7 +31,7 @@ class EmberCustomRankMap : public EmberRankMap {
 public:
     SST_ELI_REGISTER_MODULE(
         EmberCustomRankMap,
-        "Ember",
+        "ember",
         "CustomMap",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "NetworkSim: Performs a custom mapping of MPI ranks based on an input file",

@@ -41,7 +41,7 @@ class EmberEngine : public SST::Component {
 public:
     SST_ELI_REGISTER_COMPONENT(
         EmberEngine,
-        "Ember",
+        "ember",
         "EmberEngine",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Base communicator motif engine.",

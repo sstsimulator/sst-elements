@@ -27,7 +27,7 @@ class EmberConstDistribution : public EmberComputeDistribution {
 public:
    SST_ELI_REGISTER_MODULE(
         EmberConstDistribution,
-        "Ember",
+        "ember",
         "ConstDistrib",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Constant compute distribution model",

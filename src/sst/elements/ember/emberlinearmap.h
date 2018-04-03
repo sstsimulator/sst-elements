@@ -27,7 +27,7 @@ public:
 
     SST_ELI_REGISTER_MODULE(
         EmberLinearRankMap,
-        "Ember",
+        "ember",
         "LinearMap",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a linear mapping of MPI ranks",

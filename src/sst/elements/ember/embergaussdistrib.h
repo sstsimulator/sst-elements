@@ -28,7 +28,7 @@ class EmberGaussianDistribution : public EmberComputeDistribution {
 public:
     SST_ELI_REGISTER_MODULE(
         EmberGaussianDistribution, 
-        "Ember",
+        "ember",
         "GaussianDistrib",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Gaussian distributed compute noise model",
