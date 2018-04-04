@@ -93,6 +93,8 @@ class ArielCore {
 		void handleMmapEvent(ArielMmapEvent* aEv);
 		void handleFreeEvent(ArielFreeEvent* aFE);
 		void handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE);
+		void handleFlushEvent(ArielFlushEvent *flEv);
+		void handleFenceEvent(ArielFenceEvent *fEv);
 		void setOpal() { opal_enabled = true; } 
 
 		void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
