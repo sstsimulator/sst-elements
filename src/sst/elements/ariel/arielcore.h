@@ -73,6 +73,8 @@ class ArielCore {
 		bool isCoreHalted() const;
 		void tick();
 		void halt();
+		void fence();
+		void unfence();
 		void finishCore();
 		void createReadEvent(uint64_t addr, uint32_t size);
 		void createWriteEvent(uint64_t addr, uint32_t size);
@@ -95,6 +97,7 @@ class ArielCore {
 
 		void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 		void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
+		void commitFlushEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 
 		// Setting the max number of instructions to be simulated
 		void setMaxInsts(long long int i){max_insts=i;}
