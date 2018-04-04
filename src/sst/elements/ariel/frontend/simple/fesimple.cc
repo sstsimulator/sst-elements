@@ -298,6 +298,28 @@ VOID copy(void* dest, const void* input, UINT32 length) {
 	}
 }
 
+VOID WriteFlushInstructionMarker(UINT32 thr, ADDRINT ip, ADDRINT vaddr)
+{
+	ArielCommand ac;
+	ac.command = ARIEL_FLUSHLINE_INSTRUCTION; /*  Send the Flush instruction commmand */
+	ac.instPtr = (uint64_t) ip;
+	ac.flushline.vaddr = (uint32_t) vaddr;
+
+	tunnel->writeMessage(thr, ac);
+
+}
+
+VOID WriteFenceInstructionMarker(UINT32 thr, ADDRINT ip)
+{
+	ArielCommand ac;
+	ac.command = ARIEL_FENCE;
+	ac.instPtr = (uint64_t) ip;
+	
+	tunnel->writeMessage(thr, ac);
+
+
+}
+
 VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr, ADDRINT ip,
 	UINT32 instClass, UINT32 simdOpWidth) {
 
@@ -570,6 +592,25 @@ int mapped_clockgettime(clockid_t clock, struct timespec *tp) {
     return 0;
 }
 #endif
+
+void mapped_ariel_flushline(void *virtualAddress)
+{
+	THREADID currentThread = PIN_ThreadId();
+	UINT32 thr = (UINT32) currentThread;
+	ADDRINT ip = IARG_INST_PTR;
+	ADDRINT vaddr = (uint64_t) virtualAddress;
+
+	WriteFlushInstructionMarker(thr, ip, vaddr);
+}
+
+void mapped_ariel_fence(void *virtualAddress)
+{
+	THREADID currentThread = PIN_ThreadId();
+	UINT32 thr = (UINT32) currentThread;
+	ADDRINT ip = IARG_INST_PTR;
+
+	WriteFenceInstructionMarker(thr, ip);
+}
 
 int ariel_mlm_memcpy(void* dest, void* source, size_t size) {
 #ifdef ARIEL_DEBUG
@@ -979,10 +1020,14 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         fprintf(stderr, "Replacement complete\n");
         return;
     } else if (RTN_Name(rtn) == "ariel_flushline" || RTN_Name(rtn) == "_ariel_flushline") {
-
+	fprintf(stderr, "Identified routine: ariel_flushline, replacing with Ariel equivalent..\n");
+	RTN_Replace(rtn, (AFUNPTR) mapped_ariel_flushline);
+	fprintf(stderr, "Replacement complete\n");
 	return;
     } else if (RTN_Name(rtn) == "ariel_fence" || RTN_Name(rtn) == "_ariel_fence") {
-
+	fprintf(stderr, "Identified routine: ariel_fence, replacing with Ariel equivalent..\n");
+	RTN_Replace(rtn, (AFUNPTR) mapped_ariel_fence);
+	fprintf(stderr, "Replacement complete\n");
 	return;
     } else if (RTN_Name(rtn) == "ariel_mmap_mlm" || RTN_Name(rtn) == "_ariel_mmap_mlm") {
 	 AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) ariel_mmap_mlm);

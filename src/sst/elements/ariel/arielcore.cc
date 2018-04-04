@@ -21,6 +21,13 @@ using namespace SST::OpalComponent;
 
 #define ARIEL_CORE_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
 
+uint32_t originalMaxPendingTransaction; // Variable holding the original pending maxPendingTransactions 
+
+uint32_t flushCompleteCounter; // Variable holding the ending cycle count for the latest flush. 
+
+uint64_t ticksFencedCounter = 0; /* Variable holding the number of ticks we're fenced */
+				/* Added to stats */
+
 ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 		uint32_t thisCoreID, uint32_t maxPendTrans,
 		Output* out, uint32_t maxIssuePerCyc,
@@ -29,6 +36,9 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	output(out), tunnel(tunnel), perform_checks(perform_address_checks),
 	verbosity(static_cast<uint32_t>(out->getVerboseLevel()))
 {
+	// set both counters for flushes to 0
+	flushCompleteCounter = 0;
+
 	output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
 	inst_count = 0;
 	cacheLink = coreToCacheLink;
@@ -176,6 +186,27 @@ void ArielCore::commitWriteEvent(const uint64_t address,
 	}
 }
 
+// Although flushes are not technically memory transaction events like writing and reading, they are treated
+// as such for the purposes of determining the number of pending transactions in the queue. Thus, this function
+// is referred to as a commit
+
+void ArielCore::commitFlushEvent(const uint64_t address,
+		const uint64_t virtAddress, const uint32_t length){
+	if(length > 0) {
+		/*  Todo: should the request specify the physical address, or the virtual address? */
+		SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::FlushLineInv, address, length);
+		req->setVirtualAddress(virtAddress);
+		pending_transaction_count++;
+		pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
+
+		if(enableTracing){
+			printTraceEntry(false, (const uint64_t) req->addrs[0], (const uint32_t) length);
+		}
+
+		cacheLink->sendRequest(req);
+	}
+}
+
 void ArielCore::handleEvent(SimpleMem::Request* event) {
 	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling a memory event.\n", coreID));
 
@@ -205,6 +236,21 @@ void ArielCore::finishCore() {
 
 void ArielCore::halt() {
 	isHalted = true;
+}
+
+// When this is called, set the maxPendingTransactions to 0 
+void ArielCore::fence(){
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Current pending transaction count: %" PRIu32, pending_transaction_count));
+	maxPendingTransactions = 0;
+	isFenced = true;
+}
+
+// When this is called, end the fence, and output fencing statistics (if enabled)
+void ArielCore::unfence()
+{
+	isFenced = false; 
+	maxPendingTransactions = originalMaxPendingTransaction;
+	/* Todo:   Register statistics  */
 }
 
 
@@ -273,6 +319,19 @@ void ArielCore::createExitEvent() {
 
 bool ArielCore::isCoreHalted() const {
 	return isHalted;
+}
+
+bool isCoreFenced() const {
+	// returns true iff isFenced is true
+	return isFenced;
+}
+
+bool ArielCore::hasDrainCompleted() const {
+	// Returns true iff pending_transaction_count is 0
+	if(pending_transaction_count == 0)
+		return true;
+	else
+		return false;
 }
 
 bool ArielCore::refillQueue() {
@@ -604,10 +663,37 @@ void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
 	}
 }
 
+void ArielCore::handleFlushEvent(ArielFlushEvent *flEv)
+{
+	const uint64_t virtualAddress = (uint64_t) flEv->getVirtualAddress();
+	const uint64_t readLength = (uint64_t) flEv->getLength();
+
+	const uint64_t physAddr = memmgr->translateAddress(virtualAddress);
+	commitFlushEvent(physAddr, virtualAddress, (uint32_t) readLength);
+}
+
+void ArielCore::handleFenceEvent(ArielFenceEvent *fEv)
+{
+	/*  Todo: Should we treat this like the Flush event, and require that the Fence
+	 *  be put into a transaction queue?  */
+	// Possibility A:
+	fence();
+	// Possibility B:
+	// commitFenceEvent();
+}
+
 void ArielCore::printCoreStatistics() {
 }
 
 bool ArielCore::processNextEvent() {
+
+	// Upon every call, check if the core is drained and we are fenced. If so, unfence
+	if(isFenced() && hasDrainCompleted())
+	{
+		unfence();
+		return true; /* Todo: reevaluate if this is needed */
+	}
+
 	// Attempt to refill the queue
 	if(coreQ->empty()) {
 		bool addedItems = refillQueue();
@@ -710,6 +796,29 @@ bool ArielCore::processNextEvent() {
 			output->verbose(CALL_INFO, 2, 0, "Core %" PRIu32 " has called exit.\n", coreID);
 			return true;
 
+		case FLUSH:
+			ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is a FLUSH\n", coreID));
+			if(pending_transaction_count < maxPendingTransactions)
+			{
+				ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Found a FLUSH event, fewer pending transactions than permitted so will process..\n"));
+				statInstructionCount->addData(1);
+				inst_count++;
+				handleFlushEvent(dynamic_cast<ArielFenceEvent*>(nextEvent));
+				removeEvent = true;
+			}
+			else
+			{
+				ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Pending transaction queue is currently full for core %" PRIu32 ",core will stall for new events\n", coreID));
+			}
+			break;
+			
+		case FENCE:
+			/*  Todo: should we check if core is fenced first?  */
+			ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is a FENCE\n", coreID));
+			std::cout << "Core ID:" << coreID << " PROCESSED A FENCE EVENT" << std::endl;
+			handleFenceEvent(dynamic_cast<ArielFenceEvent*>(nextEvent));
+			break;
+			
 		default:
 			output->fatal(CALL_INFO, -4, "Unknown event type has arrived on core %" PRIu32 "\n", coreID);
 			break;
@@ -735,6 +844,8 @@ bool ArielCore::processNextEvent() {
 	bool started=false;
 
 	void ArielCore::tick() {
+		// todo: if the core is fenced, increment the current cycle counter
+
 		if(! isHalted) {
 			ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Ticking core id %" PRIu32 "\n", coreID));
 			updateCycle = false;
