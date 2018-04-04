@@ -45,6 +45,8 @@
 #include "arielallocev.h"
 #include "arielfreeev.h"
 #include "arielnoop.h"
+#include "arielflushev.h"
+#include "arielfenceev.h"
 #include "arielswitchpool.h"
 #include "arielalloctrackev.h"
 
