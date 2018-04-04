@@ -99,7 +99,7 @@ private:
     uint64_t maxOutstanding;
     uint32_t maxReqsPerIssue;
     uint64_t num_reads_issued, num_reads_returned;
-    uint64_t noncacheableRangeStart, noncacheableRangeEnd;
+    uint64_t noncacheableRangeStart, noncacheableRangeEnd, noncacheableSize;
     uint64_t clock_ticks;
     size_t noncacheableReads, noncacheableWrites;
     Statistic<uint64_t>* requestsPendingCycle;
