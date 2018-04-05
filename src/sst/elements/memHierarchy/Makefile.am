@@ -239,7 +239,7 @@ libmemHierarchy_la_LIBADD += $(HBMDRAMSIM_LIB)
 libmemHierarchy_la_SOURCES += membackend/HBMdramSimBackend.cc \
 	membackend/HBMdramSimBackend.h
 nobase_sst_HEADERS += membackend/HBMdramSimBackend.h
-AM_CPPFLAGS += $(HBMDRAMSIM_CPPFLAGS) -DHAVE_HBMLIBDRAMSIM -DHAVE_HBMDRAMSIM
+AM_CPPFLAGS += $(HBMDRAMSIM_CPPFLAGS) -DHAVE_LIBHBMDRAMSIM
 
 libmemHierarchy_la_SOURCES += membackend/HBMpagedMultiBackend.cc \
 	membackend/HBMpagedMultiBackend.h
