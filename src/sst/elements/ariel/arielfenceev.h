@@ -14,8 +14,8 @@
 // distribution.
 
 
-#ifndef _H_SST_ARIEL_FREE_EVENT
-#define _H_SST_ARIEL_FREE_EVENT
+#ifndef _H_SST_ARIEL_FENCE_EVENT
+#define _H_SST_ARIEL_FENCE_EVENT
 
 #include "arielevent.h"
 

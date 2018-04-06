@@ -71,6 +71,8 @@ class ArielCore {
 			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
 		~ArielCore();
 		bool isCoreHalted() const;
+		bool isCoreFenced() const;
+		bool hasDrainCompleted() const;
 		void tick();
 		void halt();
 		void fence();
@@ -83,6 +85,8 @@ class ArielCore {
 		void createNoOpEvent();
 		void createFreeEvent(uint64_t vAddr);
 		void createExitEvent();
+		void createFlushEvent(uint64_t vAddr);
+		void createFenceEvent();
 		void createSwitchPoolEvent(uint32_t pool);
 		void setOpalLink(Link * opallink);
                 void setCacheLink(SimpleMem* newCacheLink, Link* allocLink);
@@ -116,6 +120,7 @@ class ArielCore {
 		Output* output;
 		std::queue<ArielEvent*>* coreQ;
 		bool isHalted;
+		bool isFenced;
 		SimpleMem* cacheLink;
                 Link* allocLink;
                 Link* OpalLink;

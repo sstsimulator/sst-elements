@@ -40,7 +40,7 @@ enum ArielShmemCmd_t {
     ARIEL_SWITCH_POOL = 110,
     ARIEL_NOOP = 128,
     ARIEL_OUTPUT_STATS = 140,
-    ARIEL_FLUSH_INSTRUCTION = 154,
+    ARIEL_FLUSHLINE_INSTRUCTION = 154,
     ARIEL_FENCE_INSTRUCTION = 155,
 };
 
@@ -88,7 +88,7 @@ struct ArielCommand {
 	struct
 	{
 		uint64_t vaddr;
-	}flush; 
+	}flushline; 
     };
 };
 
