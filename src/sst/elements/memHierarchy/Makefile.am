@@ -144,6 +144,8 @@ EXTRA_DIST = \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
 	tests/testBackendGoblinHMC.py \
+	tests/testBackendHBMDRAMSim.py \
+	tests/testBackendHBMPagedMulti.py \
 	tests/testBackendPagedMulti.py \
 	tests/testBackendReorderRow.py \
 	tests/testBackendReorderSimple.py \
@@ -170,6 +172,10 @@ EXTRA_DIST = \
 	tests/testScratchNetwork.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini \
+	tests/ddr_device.ini \
+	tests/ddr_system.ini \
+	tests/hbm_device.ini \
+	tests/hbm_system.ini \
 	tests/utils.py
 
 sstdir = $(includedir)/sst/elements/memHierarchy
