@@ -14,8 +14,8 @@
 // distribution.
 
 
-#ifndef _H_SST_ARIEL_FREE_EVENT
-#define _H_SST_ARIEL_FREE_EVENT
+#ifndef _H_SST_ARIEL_FLUSH_EVENT
+#define _H_SST_ARIEL_FLUSH_EVENT
 
 #include "arielevent.h"
 
@@ -27,6 +27,10 @@ namespace ArielComponent {
 class ArielFlushEvent : public ArielEvent {
 
 	public:
+		ArielFlushEvent(uint64_t vAddr) :
+			virtualAddress(vAddr){
+			}
+		~ArielFlushEvent() {}
 		ArielEventType getEventType() const { return FLUSH; }
 		uint64_t getVirtualAddress() const { return virtualAddress;}
 		uint64_t getAddress() const { return address; }

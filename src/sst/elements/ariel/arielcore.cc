@@ -45,6 +45,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	allocLink = 0;
 	coreID = thisCoreID;
 	maxPendingTransactions = maxPendTrans;
+	originalMaxPendingTransaction = maxPendingTransactions;
 	isHalted = false;
 	maxIssuePerCycle = maxIssuePerCyc;
 	maxQLength = maxQLen;
@@ -310,6 +311,20 @@ void ArielCore::createWriteEvent(uint64_t address, uint32_t length) {
 	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a WRITE event, addr=%" PRIu64 ", length=%" PRIu32 "\n", address, length));
 }
 
+void ArielCore::createFlushEvent(uint64_t vAddr){
+	ArielFlushEvent *ev = new ArielFlushEvent(vAddr);
+	coreQ->push(ev);
+
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO,4,0, "Generated a FLUSH event.\n"));
+}
+
+void ArielCore::createFenceEvent(){
+	ArielFenceEvent *ev = new ArielFenceEvent();
+	coreQ->push(ev);
+
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a FENCE event.\n"));
+}
+
 void ArielCore::createExitEvent() {
 	ArielExitEvent* xEv = new ArielExitEvent();
 	coreQ->push(xEv);
@@ -321,7 +336,7 @@ bool ArielCore::isCoreHalted() const {
 	return isHalted;
 }
 
-bool isCoreFenced() const {
+bool ArielCore::isCoreFenced() const {
 	// returns true iff isFenced is true
 	return isFenced;
 }
@@ -421,6 +436,14 @@ bool ArielCore::refillQueue() {
 			case ARIEL_NOOP:
 				createNoOpEvent();
 				break;	
+
+			case ARIEL_FLUSHLINE_INSTRUCTION:
+				createFlushEvent(ac.flushline.vaddr);
+				break;
+
+			case ARIEL_FENCE_INSTRUCTION:
+				createFenceEvent();
+				break;
 
 			case ARIEL_ISSUE_TLM_MMAP:
 				createMmapEvent(ac.mlm_mmap.fileID, ac.mlm_mmap.vaddr, ac.mlm_mmap.alloc_len, ac.mlm_mmap.alloc_level, ac.instPtr);
@@ -688,7 +711,7 @@ void ArielCore::printCoreStatistics() {
 bool ArielCore::processNextEvent() {
 
 	// Upon every call, check if the core is drained and we are fenced. If so, unfence
-	if(isFenced() && hasDrainCompleted())
+	if(isCoreFenced() && hasDrainCompleted())
 	{
 		unfence();
 		return true; /* Todo: reevaluate if this is needed */
@@ -716,7 +739,7 @@ bool ArielCore::processNextEvent() {
 	switch(nextEvent->getEventType()) {
 		case NOOP:
 			ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is NOOP\n", coreID));
-			 statInstructionCount->addData(1);
+			statInstructionCount->addData(1);
 			inst_count++;
 			statNoopCount->addData(1);
 			removeEvent = true;
@@ -728,7 +751,7 @@ bool ArielCore::processNextEvent() {
 			//		if(pendingTransactions->size() < maxPendingTransactions) {
 			if(pending_transaction_count < maxPendingTransactions) {
 				ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Found a read event, fewer pending transactions than permitted so will process...\n"));
-				 statInstructionCount->addData(1);
+				statInstructionCount->addData(1);
 				inst_count++;
 				removeEvent = true;
 				handleReadRequest(dynamic_cast<ArielReadEvent*>(nextEvent));
@@ -744,7 +767,7 @@ bool ArielCore::processNextEvent() {
 			//		if(pendingTransactions->size() < maxPendingTransactions) {
 			if(pending_transaction_count < maxPendingTransactions) {
 				ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Found a write event, fewer pending transactions than permitted so will process...\n"));
-				 statInstructionCount->addData(1);
+				statInstructionCount->addData(1);
 				inst_count++;
 					removeEvent = true;
 				handleWriteRequest(dynamic_cast<ArielWriteEvent*>(nextEvent));
@@ -803,7 +826,7 @@ bool ArielCore::processNextEvent() {
 				ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Found a FLUSH event, fewer pending transactions than permitted so will process..\n"));
 				statInstructionCount->addData(1);
 				inst_count++;
-				handleFlushEvent(dynamic_cast<ArielFenceEvent*>(nextEvent));
+				handleFlushEvent(dynamic_cast<ArielFlushEvent*>(nextEvent));
 				removeEvent = true;
 			}
 			else
@@ -817,6 +840,7 @@ bool ArielCore::processNextEvent() {
 			ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is a FENCE\n", coreID));
 			std::cout << "Core ID:" << coreID << " PROCESSED A FENCE EVENT" << std::endl;
 			handleFenceEvent(dynamic_cast<ArielFenceEvent*>(nextEvent));
+			removeEvent = true;
 			break;
 			
 		default:

@@ -312,7 +312,7 @@ VOID WriteFlushInstructionMarker(UINT32 thr, ADDRINT ip, ADDRINT vaddr)
 VOID WriteFenceInstructionMarker(UINT32 thr, ADDRINT ip)
 {
 	ArielCommand ac;
-	ac.command = ARIEL_FENCE;
+	ac.command = ARIEL_FENCE_INSTRUCTION;
 	ac.instPtr = (uint64_t) ip;
 	
 	tunnel->writeMessage(thr, ac);
