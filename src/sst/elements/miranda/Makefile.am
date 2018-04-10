@@ -12,6 +12,7 @@ libmiranda_la_SOURCES = \
 	mirandaCPU.cc \
 	mirandaCPU.h	\
 	mirandaMemMgr.h \
+	mirandaIncGen.cc \
 	generators/singlestream.h \
 	generators/singlestream.cc \
 	generators/randomgen.h \
