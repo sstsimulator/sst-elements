@@ -20,6 +20,7 @@
 
 #include "embergen.h"
 
+#include <sst/core/elementinfo.h>
 #include <sst/elements/hermes/msgapi.h>
 
 #include "emberMPIEvent.h"

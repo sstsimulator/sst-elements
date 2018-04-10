@@ -31,6 +31,19 @@ namespace SST {
 namespace Ember {
 
 class EmberShmemAtomicIncGenerator : public EmberShmemGenerator {
+
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemAtomicIncGenerator,
+        "ember",
+        "ShmemAtomicIncMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM atomicInc",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
     
     enum { Add, Fadd, Putv } m_op;
     std::string m_opStr;

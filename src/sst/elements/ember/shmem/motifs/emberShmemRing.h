@@ -28,6 +28,19 @@ template< class TYPE >
 class EmberShmemRingGenerator : public EmberShmemGenerator {
 
 public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemRingGenerator,
+        "ember",
+        "ShmemRingMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM ring",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
 	EmberShmemRingGenerator(SST::Component* owner, Params& params) :
 		EmberShmemGenerator(owner, params, "ShmemRing" ), m_phase(-2) 
 	{ 

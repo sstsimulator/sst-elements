@@ -28,6 +28,19 @@ namespace SST {
 namespace Ember {
 
 class EmberCustomRankMap : public EmberRankMap {
+public:
+    SST_ELI_REGISTER_MODULE(
+        EmberCustomRankMap,
+        "ember",
+        "CustomMap",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "NetworkSim: Performs a custom mapping of MPI ranks based on an input file",
+        "SST::Ember::EmberRankMap"
+    )
+    SST_ELI_DOCUMENT_PARAMS(
+        {   "mapFile",          "Sets the name of the input file for custom map", "customMap.txt" },
+        {   "_mapjobId",        "Sets the jobId for custom map", "-1" },
+    )
 
 public:
 

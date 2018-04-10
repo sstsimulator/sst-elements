@@ -99,6 +99,46 @@ public:
     int m_n_pes;
 };
 
+class EmberShmemSwapIntGenerator : public EmberShmemSwapGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemSwapIntGenerator,
+        "ember",
+        "ShmemSwapIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM swap int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemSwapIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemSwapGenerator(owner,  params) { }
+};
+
+class EmberShmemSwapLongGenerator : public EmberShmemSwapGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemSwapLongGenerator,
+        "ember",
+        "ShmemSwapLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM swap long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemSwapLongGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemSwapGenerator(owner,  params) { }
+};
+
 }
 }
 

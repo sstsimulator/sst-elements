@@ -18,6 +18,7 @@
 
 #include "embergen.h"
 
+#include <sst/core/elementinfo.h>
 #include <sst/elements/hermes/shmemapi.h>
 
 #include "embergettimeev.h"

@@ -128,6 +128,43 @@ public:
     int m_num_pes;
     int m_phase;
 };
+class EmberShmemCollect32Generator : public EmberShmemCollectGenerator<uint32_t> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemCollect32Generator,
+        "ember",
+        "ShmemCollect32Motif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM collects32",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemCollect32Generator(SST::Component* owner, Params& params) :
+    EmberShmemCollectGenerator( owner, params) {}
+};
+
+class EmberShmemCollect64Generator : public EmberShmemCollectGenerator<uint64_t> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemCollect64Generator,
+        "ember",
+        "ShmemCollect64Motif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM collects64",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemCollect64Generator(SST::Component* owner, Params& params) :
+    EmberShmemCollectGenerator( owner, params) {}
+};
 
 }
 }
