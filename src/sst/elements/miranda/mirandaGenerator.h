@@ -18,7 +18,7 @@
 #define _H_SST_MEM_H_REQUEST_GEN
 
 #include <stdint.h>
-//#include <sst/core/module.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
