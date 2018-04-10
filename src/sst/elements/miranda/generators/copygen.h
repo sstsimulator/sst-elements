@@ -22,8 +22,6 @@
 
 #include <queue>
 
-using namespace SST::RNG;
-
 namespace SST {
 namespace Miranda {
 
