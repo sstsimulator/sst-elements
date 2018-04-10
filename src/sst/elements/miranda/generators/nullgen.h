@@ -37,7 +37,7 @@ public:
 	void completed() { }
 
         SST_ELI_REGISTER_SUBCOMPONENT(
-		EmptyGenerator
+		EmptyGenerator,
                	"miranda",
                 "EmptyGenerator",
                 SST_ELI_ELEMENT_VERSION(1,0,0),
