@@ -33,6 +33,7 @@ libfirefly_la_SOURCES = \
 	scaleLatMod.h \
 	loopBack.h \
 	loopBack.cc \
+	libfirefly.cc \
 	functionSM.cc \
 	functionSM.h \
 	funcSM/api.h \
