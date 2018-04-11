@@ -519,13 +519,13 @@ noc_mesh::clock_handler(Cycle_t cycle)
 
 void noc_mesh::setup()
 {
-    if ( use_dense_map ) {
-        if ( my_x == 1 && my_y == 1 ) {
-            for ( int i = 0; i < total_endpoints; ++i ) {
-                output.output("%d - %d\n",i,dense_map[i]);
-            }
-        }
-    }
+    // if ( use_dense_map ) {
+    //     if ( my_x == 1 && my_y == 1 ) {
+    //         for ( int i = 0; i < total_endpoints; ++i ) {
+    //             output.output("%d - %d\n",i,dense_map[i]);
+    //         }
+    //     }
+    // }
 
     // Set up the lru units
 

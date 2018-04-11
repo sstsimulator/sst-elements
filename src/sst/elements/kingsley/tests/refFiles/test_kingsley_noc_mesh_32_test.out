@@ -1,0 +1,97 @@
+19490:  0 Finished sending packets (total of 10)
+19490:  1 Finished sending packets (total of 10)
+19490:  2 Finished sending packets (total of 10)
+19490:  3 Finished sending packets (total of 10)
+19490:  4 Finished sending packets (total of 10)
+19490:  5 Finished sending packets (total of 10)
+19490:  6 Finished sending packets (total of 10)
+19490:  7 Finished sending packets (total of 10)
+19490:  9 Finished sending packets (total of 10)
+19490:  8 Finished sending packets (total of 10)
+19490:  10 Finished sending packets (total of 10)
+19490:  11 Finished sending packets (total of 10)
+19490:  12 Finished sending packets (total of 10)
+19490:  13 Finished sending packets (total of 10)
+19490:  15 Finished sending packets (total of 10)
+19490:  14 Finished sending packets (total of 10)
+19490:  16 Finished sending packets (total of 10)
+19490:  17 Finished sending packets (total of 10)
+19490:  18 Finished sending packets (total of 10)
+19490:  19 Finished sending packets (total of 10)
+19490:  21 Finished sending packets (total of 10)
+19490:  20 Finished sending packets (total of 10)
+19490:  24 Finished sending packets (total of 10)
+19490:  22 Finished sending packets (total of 10)
+19490:  23 Finished sending packets (total of 10)
+19490:  26 Finished sending packets (total of 10)
+19490:  25 Finished sending packets (total of 10)
+19490:  28 Finished sending packets (total of 10)
+19490:  27 Finished sending packets (total of 10)
+19490:  31 Finished sending packets (total of 10)
+19490:  30 Finished sending packets (total of 10)
+19490:  29 Finished sending packets (total of 10)
+20452: NIC 0 received all packets (total of 320)!
+20452: NIC 1 received all packets (total of 320)!
+20452: NIC 2 received all packets (total of 320)!
+20452: NIC 3 received all packets (total of 320)!
+20452: NIC 4 received all packets (total of 320)!
+20452: NIC 5 received all packets (total of 320)!
+20452: NIC 6 received all packets (total of 320)!
+20452: NIC 7 received all packets (total of 320)!
+20452: NIC 9 received all packets (total of 320)!
+20452: NIC 8 received all packets (total of 320)!
+20452: NIC 10 received all packets (total of 320)!
+20452: NIC 11 received all packets (total of 320)!
+20452: NIC 12 received all packets (total of 320)!
+20452: NIC 13 received all packets (total of 320)!
+20452: NIC 15 received all packets (total of 320)!
+20452: NIC 14 received all packets (total of 320)!
+20452: NIC 16 received all packets (total of 320)!
+20452: NIC 17 received all packets (total of 320)!
+20452: NIC 18 received all packets (total of 320)!
+20452: NIC 19 received all packets (total of 320)!
+20452: NIC 21 received all packets (total of 320)!
+20452: NIC 20 received all packets (total of 320)!
+20452: NIC 24 received all packets (total of 320)!
+20452: NIC 22 received all packets (total of 320)!
+20452: NIC 23 received all packets (total of 320)!
+20452: NIC 26 received all packets (total of 320)!
+20452: NIC 25 received all packets (total of 320)!
+20452: NIC 28 received all packets (total of 320)!
+20452: NIC 27 received all packets (total of 320)!
+20452: NIC 31 received all packets (total of 320)!
+20452: NIC 30 received all packets (total of 320)!
+20452: NIC 29 received all packets (total of 320)!
+Nic 29 had 19170 stalled cycles.
+Nic 30 had 19170 stalled cycles.
+Nic 31 had 19170 stalled cycles.
+Nic 27 had 19170 stalled cycles.
+Nic 28 had 19170 stalled cycles.
+Nic 25 had 19170 stalled cycles.
+Nic 26 had 19170 stalled cycles.
+Nic 23 had 19170 stalled cycles.
+Nic 22 had 19170 stalled cycles.
+Nic 24 had 19170 stalled cycles.
+Nic 20 had 19170 stalled cycles.
+Nic 21 had 19170 stalled cycles.
+Nic 19 had 19170 stalled cycles.
+Nic 18 had 19170 stalled cycles.
+Nic 17 had 19170 stalled cycles.
+Nic 16 had 19170 stalled cycles.
+Nic 14 had 19170 stalled cycles.
+Nic 15 had 19170 stalled cycles.
+Nic 13 had 19170 stalled cycles.
+Nic 12 had 19170 stalled cycles.
+Nic 11 had 19170 stalled cycles.
+Nic 10 had 19170 stalled cycles.
+Nic 8 had 19170 stalled cycles.
+Nic 9 had 19170 stalled cycles.
+Nic 7 had 19170 stalled cycles.
+Nic 6 had 19170 stalled cycles.
+Nic 5 had 19170 stalled cycles.
+Nic 4 had 19170 stalled cycles.
+Nic 3 had 19170 stalled cycles.
+Nic 2 had 19170 stalled cycles.
+Nic 1 had 19170 stalled cycles.
+Nic 0 had 19170 stalled cycles.
+Simulation is complete, simulated time: 20.452 us
