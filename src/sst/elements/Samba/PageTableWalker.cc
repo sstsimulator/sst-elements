@@ -332,7 +332,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 		if(emulate_faults)
 		{
 
-			long long int page_table_start;
+			long long int page_table_start = 0;
 			if(WSR_COUNT[pw_id]==4)
 				page_table_start = (*PGD)[addr/page_size[3]];
 			else if(WSR_COUNT[pw_id]==3)

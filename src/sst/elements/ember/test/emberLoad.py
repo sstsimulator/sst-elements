@@ -336,8 +336,8 @@ emberParams['verbose'] = emberVerbose
 hermesParams['hermesParams.numNodes'] = topoInfo.getNumNodes() 
 emberParams['firefly.hadesSHMEM.verboseLevel'] = 0 
 emberParams['firefly.hadesSHMEM.verboseMask'] = -1
-emberParams['firefly.hadesSHMEM.enterLat_ns'] = 57 
-emberParams['firefly.hadesSHMEM.returnLat_ns'] = 57 
+emberParams['firefly.hadesSHMEM.enterLat_ns'] = 7 
+emberParams['firefly.hadesSHMEM.returnLat_ns'] = 7 
 
 if embermotifLog:
     emberParams['motifLog'] = embermotifLog

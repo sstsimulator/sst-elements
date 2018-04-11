@@ -161,6 +161,7 @@ class EmberEP( EndPoint ):
             ep.addParams( {'hermesParams.netId': nodeID } )
             ep.addParams( {'hermesParams.netMapId': calcNetMapId( nodeID, self.nidList ) } ) 
             ep.addParams( {'hermesParams.netMapSize': self.numNids } ) 
+            ep.addParams( {'hermesParams.coreId': x } ) 
 
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) +
                                             "_Link"  )

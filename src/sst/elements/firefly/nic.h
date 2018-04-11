@@ -19,6 +19,7 @@
 
 #include <math.h>
 #include <sstream>
+#include <sst/core/elementinfo.h>
 #include <sst/core/module.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
@@ -30,6 +31,8 @@
 #include "merlinEvent.h"
 #include "memoryModel/simpleMemoryModel.h"
 
+#define CALL_INFO_LAMBDA     __LINE__, __FILE__
+
 namespace SST {
 namespace Firefly {
 
@@ -39,11 +42,55 @@ namespace Firefly {
 #define NIC_DBG_DETAILED_MEM 1<<2
 #define NIC_DBG_SEND_MACHINE 1<<3
 #define NIC_DBG_RECV_MACHINE 1<<4
-#define NIC_SHMEM 1 << 5 
+#define NIC_DBG_SHMEM        1<<5 
 #define NIC_DBG_SEND_NETWORK 1<<6
+#define NIC_DBG_RECV_CTX     1<<7
+#define NIC_DBG_RECV_STREAM  1<<8
+#define NIC_DBG_RECV_MOVE    1<<9
+#define NIC_DBG_LINK_CTRL    1<<10
 
 class Nic : public SST::Component  {
 
+  public:
+    SST_ELI_REGISTER_COMPONENT(
+        Nic,
+        "firefly",
+        "nic",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        COMPONENT_CATEGORY_SYSTEM
+        )
+    SST_ELI_DOCUMENT_PARAMS(
+        { "nid", "node id on network", "-1"},
+        { "tracedPkt", "packet to trace", "-1"},
+        { "tracedNode", "node to trace", "-1"},
+        { "rtrPortName", "Port connected to the router", "rtr"},
+        { "corePortName", "Port connected to the core", "core"},
+        { "num_vNics", "Sets number of cores", "1"},
+        { "verboseLevel", "Sets the output verbosity of the component", "1"},
+        { "verboseMask", "Sets the output mask of the component", "1"},
+        { "rxMatchDelay_ns", "Sets the delay for a receive match", "100"},
+        { "txDelay_ns", "Sets the delay for a send", "100"},
+        { "hostReadDelay_ns", "Sets the delay for a read from the host", "200"},
+        { "dmaBW_GBs", "set the one way DMA bandwidth", "100"},
+        { "dmaContentionMult", "set the DMA contention mult", "100"},
+        { "topology", "Sets the network topology", "merlin.torus"},
+        { "fattree:loading", "Sets the number of ports on edge router connected to nodes", "8"},
+        { "fattree:radix", "Sets the number of ports on the network switches", "16"},
+        { "packetSize", "Sets the size of the network packet in bytes", "64"},
+        { "link_bw", "Sets the bandwidth of link connected to the router", "500Mhz"},
+        { "buffer_size", "Sets the buffer size of the link connected to the router", "128"},
+        { "module", "Sets the link control module", "merlin.linkcontrol"},
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr", "Port connected to the router", {}},
+        {"read", "Port connected to the detailed model", {}},
+        {"write", "Port connected to the detailed model", {}},
+        {"core%(num_vNics)d", "Ports connected to the network driver", {}},
+    ) 
+
+  private:
     typedef unsigned RespKey_t;
 	class LinkControlWidget {
 
@@ -53,9 +100,9 @@ class Nic : public SST::Component  {
 		}
 
 		inline bool notify( int vn ) {
-        	m_dbg.debug(CALL_INFO,2,1,"Widget vn=%d\n",vn);
+        	m_dbg.debug(CALL_INFO,1,NIC_DBG_LINK_CTRL,"Widget vn=%d\n",vn);
 			if ( m_notifiers[vn] ) {
-       			m_dbg.debug(CALL_INFO,2,1,"Widget call notifier, number still installed %d\n", m_num -1);
+       			m_dbg.debug(CALL_INFO,1,NIC_DBG_LINK_CTRL,"Widget call notifier, number still installed %d\n", m_num -1);
 				m_notifiers[vn]();
 				m_notifiers[vn] = NULL;
 				--m_num;
@@ -65,7 +112,7 @@ class Nic : public SST::Component  {
 		}
 
 		inline void setNotify( std::function<void()> notifier, int vn ) {
-        	m_dbg.debug(CALL_INFO,2,1,"Widget vn=%d, number now installed %d\n",vn,m_num+1);
+        	m_dbg.debug(CALL_INFO,1, NIC_DBG_LINK_CTRL,"Widget vn=%d, number now installed %d\n",vn,m_num+1);
 			if ( m_num == 0 ) {
                 m_callback();
 			}
@@ -108,6 +155,29 @@ class Nic : public SST::Component  {
         unsigned char op2 : 3; 
         unsigned char dataType : 3;
         uint32_t respKey : 24;
+
+        std::string getOpStr( ) {
+            switch(op){
+            case Ack:
+                return "Ack";
+            case Put:
+                return "Put";
+            case Get:
+                return "Get";
+            case GetResp:
+                return "GetResp";
+            case Add:
+                return "Add";
+            case Fadd:
+                return "Fadd";
+            case Swap:
+                return "Swap";
+            case Cswap:
+                return "Cswap";
+            default:
+                assert(0);
+            }
+        }
     };
     struct RdmaMsgHdr {
         enum { Put, Get, GetResp } op;
@@ -161,6 +231,7 @@ class Nic : public SST::Component  {
     #include "nicSendMachine.h"
     #include "nicRecvMachine.h"
     #include "nicArbitrateDMA.h"
+    #include "nicUnitPool.h"
 
 public:
 
@@ -191,6 +262,12 @@ public:
 	}
 
   private:
+    typedef uint64_t DestKey;
+    static DestKey getDestKey(int node, int pid) { return (DestKey) node << 32 | pid; }
+
+    std::vector< std::unordered_set< DestKey > > m_sendEntryInProgress;
+    std::list<SendEntryBase*> m_sendEntryQ;
+
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
     void handleVnicEvent2( Event*, int );
@@ -273,8 +350,9 @@ public:
     int NetToId( int x ) { return x; }
     int IdToNet( int x ) { return x; }
 
-    std::vector<SendMachine*> m_sendMachine;
-    std::vector<RecvMachine*> m_recvMachine;
+    std::vector<SendMachine*>   m_sendMachineV;
+    std::deque<SendMachine*>    m_sendMachineQ;
+    RecvMachine* m_recvMachine;
     ArbitrateDMA* m_arbitrateDMA;
 
     int                     m_myNodeId;
@@ -295,37 +373,22 @@ public:
 	SimTime_t m_nic2host_lat_ns;
 	SimTime_t m_nic2host_base_lat_ns;
 	SimTime_t m_shmemRxDelay_ns; 
-	int m_numNicUnits;
-    int m_curNicUnit;
-    int m_numNicUnitsPerCtx;
-    enum { RoundRobin, PerContext } m_nicUnitAllocPolicy;
+
+    UnitPool* m_unitPool;
 
     void feedTheNetwork( );
     void sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc );
-    void notifySendDone( int id ) { }
+    void notifySendDone( SendMachine* mach, SendEntryBase* entry );
 
-    void qSendEntry( SendEntryBase* entry ) {
-        
-        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "myPid=%d destNode=%d destPid=%d size=%" PRIu64 "\n",
-                    entry->local_vNic(), entry->dest(), entry->dst_vNic(), entry->totalBytes() );
-
-        if ( entry->isCtrl() ) {
-            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "ctrl\n");
-            m_sendMachine[m_ctrlSendMachine]->qSendEntry( entry );
-        } else {
-            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "std\n");
-            m_sendMachine[m_stdSendMachine]->qSendEntry( entry );
-        }
-    }
+    void qSendEntry( SendEntryBase* entry );
 
     void notifyHavePkt( int id ) {
-        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"id=%d current src=%d\n",id, m_curNetworkSrc);
+        m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_NETWORK,"id=%d current src=%d\n",id, m_curNetworkSrc);
         if ( -1 == m_curNetworkSrc ) {
             m_curNetworkSrc = id;
             feedTheNetwork();
-        } 
+        }
     }
-
 
     void calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
         if( m_simpleMemoryModel ) {
@@ -336,39 +399,16 @@ public:
 		}
     }
 
-    void initNicUnitPool( int numUnits, int numCtx, std::string policy ) {
-        m_numNicUnits = numUnits;
-        m_dbg.debug(CALL_INFO,3,1,"num=%d policy=%s\n",numUnits, policy.c_str());
-        if ( 0 == policy.compare("RoundRobin") ) {
-            m_nicUnitAllocPolicy = RoundRobin;
-        } else if ( 0 == policy.compare("PerContext") ) {
-            m_nicUnitAllocPolicy = PerContext;
-            m_numNicUnitsPerCtx = m_numNicUnits/numCtx;
-        } else {
-            assert(0);
-        }
+    int allocNicAckUnit() {
+        return m_unitPool->allocAckUnit();
     }
 
-    int allocNicUnit( int pid, int num ) {
-        int unit;
-        switch ( m_nicUnitAllocPolicy ) {
-          case RoundRobin:
-            unit = m_curNicUnit++ % m_numNicUnits;            
-            break;
-          case PerContext:
-            assert( num < m_numNicUnitsPerCtx ); 
-            unit = pid * m_numNicUnitsPerCtx + num;
-            break;
-          default:
-            assert(0);
-        }
-
-        m_dbg.debug(CALL_INFO,3,1,"pid=%d unit=%d\n",pid, unit);
-        return unit;
+    int allocNicSendUnit() {
+        return m_unitPool->allocSendUnit();
     }
 
-    void freeNicUnit( int unit ) {
-        m_dbg.debug(CALL_INFO,3,1,"unit=%d\n",unit);
+    int allocNicRecvUnit( int pid ) {
+        return m_unitPool->allocRecvUnit( pid );
     }
 
     void calcNicMemDelay( int unit, int pid, std::vector< MemOp>* ops, std::function<void()> callback ) {
@@ -402,16 +442,15 @@ public:
         return value; 
     }
 
-    std::map<RespKey_t,void*> m_respKeyMap;
+    std::unordered_map<RespKey_t,void*> m_respKeyMap;
 
     SimpleMemoryModel*  m_simpleMemoryModel;
     std::deque<int> m_availNicUnits;
     uint16_t m_getKey;
-    int m_ctrlSendMachine;
-    int m_stdSendMachine;
     int m_curNetworkSrc;
-    int m_numNetworkSrcs;
+    int m_txDelay;
 
+    static int  MaxPayload;
     static int  m_packetId;
 	int m_tracedPkt;
 	int m_tracedNode;

@@ -95,9 +95,9 @@ bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std
 {
     size_t length = event.bufSize();
 
-    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MACHINE,"event.bufSize()=%lu\n",event.bufSize() );
-    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MACHINE,"length=%lu offset=%lu\n",m_length, m_offset );
-    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MACHINE,"backing=%p addr=%#" PRIx64 "\n", m_ptr + m_offset, m_addr + m_offset );
+    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MOVE,"event.bufSize()=%lu\n",event.bufSize() );
+    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MOVE,"length=%lu offset=%lu\n",m_length, m_offset );
+    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MOVE,"backing=%p addr=%#" PRIx64 "\n", m_ptr + m_offset, m_addr + m_offset );
 
     assert( length <= m_length - m_offset );
 
@@ -122,8 +122,8 @@ bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std
 bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
     size_t length = event.bufSize();
-    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MACHINE,"event.bufSize()=%lu\n",event.bufSize());
-    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MACHINE,"backing=%p addr=%#" PRIx64 "\n", m_ptr, m_addr );
+    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MOVE,"event.bufSize()=%lu\n",event.bufSize());
+    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MOVE,"backing=%p addr=%#" PRIx64 "\n", m_ptr, m_addr );
 
     assert ( m_ptr );
     size_t dataLength = Hermes::Value::getLength(m_dataType);
@@ -186,7 +186,7 @@ bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, s
     }
     assert( event.bufSize() == 0 );
 
-    dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"\n");
+    dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MOVE,"\n");
 
     return m_offset == m_length;
 }
@@ -194,7 +194,7 @@ bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, s
 bool Nic::ShmemRecvMoveValue::copyIn( Output& dbg, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
     size_t length = event.bufSize();
-    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MACHINE,"event.bufSize()=%lu\n",event.bufSize());
+    dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MOVE,"event.bufSize()=%lu\n",event.bufSize());
 
 	vec.push_back( MemOp( 0, length, MemOp::Op::LocalStore ));
     if ( m_value.getPtr() ) {

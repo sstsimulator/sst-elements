@@ -14,8 +14,8 @@
 // distribution.
 
 
-#ifndef _H_EMBER_SHMEM_RING2
-#define _H_EMBER_SHMEM_RING2
+#ifndef _H_EMBER_SHMEM_RING
+#define _H_EMBER_SHMEM_RING
 
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
@@ -26,6 +26,19 @@ namespace Ember {
 
 template< class TYPE >
 class EmberShmemRingGenerator : public EmberShmemGenerator {
+
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemRingGenerator,
+        "ember",
+        "ShmemRingMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM ring",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
 
 public:
 	EmberShmemRingGenerator(SST::Component* owner, Params& params) :

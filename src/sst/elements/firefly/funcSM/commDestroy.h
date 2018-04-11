@@ -24,6 +24,15 @@ namespace Firefly {
 class CommDestroyFuncSM :  public BarrierFuncSM
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        CommDestroyFuncSM,
+        "firefly",
+        "CommDestroy",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+  public:
     CommDestroyFuncSM( SST::Params& params )
         : BarrierFuncSM( params ) {}
 

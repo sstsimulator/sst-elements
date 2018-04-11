@@ -2,7 +2,7 @@
 AC_DEFUN([SST_CHECK_HBMDRAMSIM], [
   AC_ARG_WITH([hbmdramsim],
     [AS_HELP_STRING([--with-hbmdramsim@<:@=DIR@:>@],
-      [Use HBM DRAMSim package installed in optionally specified DIR])])
+      [Use HBMDRAMSim package installed in optionally specified DIR])])
 
   sst_check_hbmdramsim_happy="yes"
   AS_IF([test "$with_hbmdramsim" = "no"], [sst_check_hbmdramsim_happy="no"])
@@ -12,7 +12,7 @@ AC_DEFUN([SST_CHECK_HBMDRAMSIM], [
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_hbmdramsim" -a "$with_hbmdramsim" != "yes"],
-    [HBMDRAMSIM_CPPFLAGS="-I$with_hbmdramsim -DHAVE_HBMDRAMSIM -DHAVE_HBMLIBDRAMSIM"
+    [HBMDRAMSIM_CPPFLAGS="-I$with_hbmdramsim -DHAVE_HBMDRAMSIM"
      CPPFLAGS="$HBMDRAMSIM_CPPFLAGS $CPPFLAGS"
      HBMDRAMSIM_LDFLAGS="-L$with_hbmdramsim"
      HBMDRAMSIM_LIBDIR="$with_hbmdramsim"
@@ -23,8 +23,8 @@ AC_DEFUN([SST_CHECK_HBMDRAMSIM], [
 
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([HBMDRAMSim.h], [], [sst_check_hbmdramsim_happy="no"])
-  AC_CHECK_LIB([dramsim], [libhbmdramsim_is_present],
-    [HBMDRAMSIM_LIB="-ldramsim"], [sst_check_hbmdramsim_happy="no"])
+  AC_CHECK_LIB([hbmdramsim], [libhbmdramsim_is_present],
+    [HBMDRAMSIM_LIB="-lhbmdramsim"], [sst_check_hbmdramsim_happy="no"])
   AC_LANG_POP(C++)
 
   CPPFLAGS="$CPPFLAGS_saved"
@@ -37,8 +37,8 @@ AC_DEFUN([SST_CHECK_HBMDRAMSIM], [
   AC_SUBST([HBMDRAMSIM_LIBDIR])
   AM_CONDITIONAL([HAVE_HBMDRAMSIM], [test "$sst_check_hbmdramsim_happy" = "yes"])
   AS_IF([test "$sst_check_hbmdramsim_happy" = "yes"],
-        [AC_DEFINE([HAVE_HBMDRAMSIM], [1], [Set to 1 if HBM DRAMSim was found])])
-  AC_DEFINE_UNQUOTED([HBMDRAMSIM_LIBDIR], ["$HBMDRAMSIM_LIBDIR"], [Path to HBM DRAMSim library])
+        [AC_DEFINE([HAVE_HBMDRAMSIM], [1], [Set to 1 if HBMDRAMSim was found])])
+  AC_DEFINE_UNQUOTED([HBMDRAMSIM_LIBDIR], ["$HBMDRAMSIM_LIBDIR"], [Path to HBMDRAMSim library])
 
   AS_IF([test "$sst_check_hbmdramsim_happy" = "yes"], [$1], [$2])
 ])

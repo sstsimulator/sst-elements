@@ -25,7 +25,7 @@ template< class T >
                 m_head.next = &m_tail;
 				m_tail.prev = &m_head;
 				m_tail.next = NULL;
-                myPrintf("%s() head=%p tai=%p\n",__func__, &m_head,&m_tail);
+                myPrintf("%s() head=%p tail=%p\n",__func__, &m_head,&m_tail);
             }
 			~List() {
                 clear();

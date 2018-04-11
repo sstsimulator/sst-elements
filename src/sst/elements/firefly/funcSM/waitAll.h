@@ -26,6 +26,15 @@ namespace Firefly {
 class WaitAllFuncSM :  public FunctionSMInterface
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        WaitAllFuncSM,
+        "firefly",
+        "WaitAll",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+  public:
     WaitAllFuncSM( SST::Params& params );
 
     virtual void handleStartEvent( SST::Event*, Retval& );

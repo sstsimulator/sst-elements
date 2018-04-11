@@ -24,6 +24,15 @@ namespace Firefly {
 class CommSplitFuncSM :  public AllgatherFuncSM
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        CommSplitFuncSM,
+        "firefly",
+        "CommSplit",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+  public:
     CommSplitFuncSM( SST::Params& params )
         : AllgatherFuncSM( params ), m_commSplitEvent(0) {}
 

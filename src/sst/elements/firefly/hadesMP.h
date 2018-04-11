@@ -17,6 +17,7 @@
 #ifndef COMPONENTS_FIREFLY_HADESMP_H
 #define COMPONENTS_FIREFLY_HADESMP_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/params.h>
 
 #include "sst/elements/hermes/msgapi.h"
@@ -30,6 +31,25 @@ namespace Firefly {
 
 class HadesMP : public MP::Interface 
 {
+  public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        HadesMP,
+        "firefly",
+        "hadesMP",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+    SST_ELI_DOCUMENT_PARAMS(
+        {"verboseLevel", "Sets the output verbosity of the component", "1"},
+        {"verboseMask", "Sets the output mask of the component", "1"},
+        {"defaultEnterLatency","Sets the default function enter latency","30000"},
+        {"defaultReturnLatency","Sets the default function return latency","30000"},
+        {"nodeId", "internal", ""},
+        {"enterLatency","internal",""},
+        {"returnLatency","internal",""},
+        {"defaultModule","Sets the default function module","firefly"},
+    ) 
   public:
     HadesMP(Component*, Params&);
     ~HadesMP() {}

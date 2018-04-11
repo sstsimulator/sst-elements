@@ -25,6 +25,15 @@ namespace Firefly {
 class SizeFuncSM :  public FunctionSMInterface
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        SizeFuncSM,
+        "firefly",
+        "Size",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+  public:
     SizeFuncSM( SST::Params& params ) : FunctionSMInterface( params ) {}
 
     virtual void handleStartEvent( SST::Event *e, Retval& retval ) {

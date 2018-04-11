@@ -36,7 +36,7 @@ Completed @ 10833858 ns
  l1cache.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
- l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 96063379; SumSQ.u64 = 657048011; Count.u64 = 21667712; 
+ l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 96063383; SumSQ.u64 = 657048015; Count.u64 = 21667716; 
  l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
  l1cache.evict_E : Accumulator : Sum.u64 = 5291; SumSQ.u64 = 5291; Count.u64 = 5291; 

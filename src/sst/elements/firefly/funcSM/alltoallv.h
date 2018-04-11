@@ -36,6 +36,17 @@ namespace Firefly {
 
 class AlltoallvFuncSM :  public FunctionSMInterface
 {
+  public:
+    SST_ELI_REGISTER_MODULE(
+        AlltoallvFuncSM,
+        "firefly",
+        "Alltoallv",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+  private:
+
     enum StateEnum {
          FOREACH_ENUM(GENERATE_ENUM)
     } m_state;

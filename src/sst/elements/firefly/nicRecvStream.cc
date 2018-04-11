@@ -20,19 +20,17 @@
 using namespace SST;
 using namespace SST::Firefly;
 
-Nic::RecvMachine::StreamBase::StreamBase(Output& output, Ctx* ctx, int unit, int srcNode, int srcPid, int myPid ) :
-    m_dbg(output), m_ctx(ctx), m_unit(unit), m_srcNode(srcNode), m_srcPid(srcPid), m_myPid( myPid ),
-    m_recvEntry(NULL),m_sendEntry(NULL), m_numPending(0), m_pktNum(0), m_expectedPkt(0), m_blockedNeedRecv(NULL),
-    m_startDelay(0), m_startCallback(NULL)
+Nic::RecvMachine::StreamBase::StreamBase(Output& output, Ctx* ctx, int srcNode, int srcPid, int myPid ) :
+    m_dbg(output), m_ctx(ctx), m_unit(-1), m_srcNode(srcNode), m_srcPid(srcPid), m_myPid( myPid ),
+    m_recvEntry(NULL),m_sendEntry(NULL), m_numPending(0), m_pktNum(0), m_expectedPkt(0), m_blockedNeedRecv(NULL)
 {
     m_prefix = "@t:"+ std::to_string(ctx->nic().getNodeId()) +":Nic::RecvMachine::StreamBase::@p():@l ";
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE,"this=%p\n",this);
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_STREAM,"this=%p\n",this);
     m_start = m_ctx->nic().getCurrentSimTimeNano();
-    assert( unit >= 0 );
 }
 
 Nic::RecvMachine::StreamBase::~StreamBase() {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE,"this=%p latency=%" PRIu64 "\n",this,
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_STREAM,"this=%p latency=%" PRIu64 "\n",this,
                                             m_ctx->nic().getCurrentSimTimeNano()-m_start);
     if ( m_recvEntry ) {
         m_recvEntry->notify( m_srcPid, m_srcNode, m_matched_tag, m_matched_len );
@@ -44,19 +42,19 @@ Nic::RecvMachine::StreamBase::~StreamBase() {
 }
 
 bool Nic::RecvMachine::StreamBase::isBlocked()    {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"%d\n",m_numPending == m_ctx->getMaxQsize());
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM,"%d\n",m_numPending == m_ctx->getMaxQsize());
     return m_numPending == m_ctx->getMaxQsize();
 }
 
 void Nic::RecvMachine::StreamBase::needRecv( FireflyNetworkEvent* ev ) {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM,"\n");
     m_blockedNeedRecv = ev;
     m_ctx->needRecv( this );
 }
 
-void Nic::RecvMachine::StreamBase::processPkt( FireflyNetworkEvent* ev  ) {
+void Nic::RecvMachine::StreamBase::processPktBody( FireflyNetworkEvent* ev  ) {
 
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE,"get timing for packet %" PRIu64 " size=%lu\n",
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM,"get timing for packet %" PRIu64 " size=%lu\n",
                                                 m_pktNum,ev->bufSize());
     assert(m_numPending < m_ctx->getMaxQsize() );
     ++m_numPending;
@@ -65,7 +63,7 @@ void Nic::RecvMachine::StreamBase::processPkt( FireflyNetworkEvent* ev  ) {
     bool ret = getRecvEntry()->copyIn( m_dbg, *ev, *vec );
 
     if ( 0 == ev->bufSize() ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE, "network event is done\n");
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM, "network event is done\n");
         delete ev;
     }
 
@@ -77,24 +75,24 @@ void Nic::RecvMachine::StreamBase::processPkt( FireflyNetworkEvent* ev  ) {
 }
 
 void Nic::RecvMachine::StreamBase::ready( bool finished, uint64_t pktNum ) {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE, "packet %" PRIu64 " is ready\n",pktNum);
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM, "packet %" PRIu64 " is ready\n",pktNum);
     assert(pktNum== m_expectedPkt++);
     --m_numPending;
 
     if ( finished ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_MACHINE, "this stream is done\n");
-        m_ctx->clearMapAndDeleteStream( this );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM, "this stream is done\n");
+        m_ctx->deleteStream( this );
     }
 
     if ( m_wakeupCallback ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_MACHINE, "wakeup recv machine\n");
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_STREAM, "wakeup recv machine\n");
         m_wakeupCallback( );
         m_wakeupCallback = NULL;
     }
 }
 
 bool Nic::RecvMachine::StreamBase::postedRecv( DmaRecvEntry* entry ) {
-    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"\n");
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_STREAM,"\n");
     if ( ! m_blockedNeedRecv ) return false;
 
     FireflyNetworkEvent* event = m_blockedNeedRecv;
@@ -104,27 +102,29 @@ bool Nic::RecvMachine::StreamBase::postedRecv( DmaRecvEntry* entry ) {
 
     int srcNode = event->getSrcNode();
 
-    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"event tag %#x, posted recv tag %#x\n",matchHdr.tag, entry->tag());
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_STREAM,"event tag %#x, posted recv tag %#x\n",matchHdr.tag, entry->tag());
     if ( entry->tag() != matchHdr.tag ) {
-        m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"did't match tag\n");
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_STREAM,"did't match tag\n");
         return false;
     }
 
     if ( entry->node() != -1 && entry->node() != srcNode ) {
-        m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "didn't match node  want=%#x src=%#x\n", entry->node(), srcNode );
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_STREAM, "didn't match node  want=%#x src=%#x\n", entry->node(), srcNode );
         return false;
     }
-    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "recv entry size %lu\n",entry->totalBytes());
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_STREAM, "recv entry size %lu\n",entry->totalBytes());
 
     if ( entry->totalBytes() < matchHdr.len ) {
         assert(0);
     }
-    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "matched\n");
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_STREAM, "matched\n");
 
     m_recvEntry = entry;
     event->bufPop( sizeof(MsgHdr) + sizeof(MatchMsgHdr));
-
-    processPkt( m_blockedNeedRecv );
+ 
     m_blockedNeedRecv = NULL;
+    event->clearHdr();
+    m_ctx->schedCallback( m_wakeupCallback );
+    m_wakeupCallback = NULL;
     return true;
 }

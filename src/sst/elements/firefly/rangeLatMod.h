@@ -19,6 +19,7 @@
 
 #include "latencyMod.h"
 #include <cmath>
+#include <sst/core/elementinfo.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/unitAlgebra.h>
@@ -32,6 +33,16 @@ namespace SST {
 namespace Firefly {
 
 class RangeLatMod : public LatencyMod {
+  public:
+    SST_ELI_REGISTER_MODULE(
+        RangeLatMod,
+        "firefly",
+        "LatencyMod",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        "SST::Firefly::RangeLatMod"
+    )
+  private:
 
     struct Entry {
         size_t start;

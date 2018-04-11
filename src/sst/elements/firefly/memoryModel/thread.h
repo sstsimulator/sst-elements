@@ -86,6 +86,13 @@ class Thread : public UnitBase {
         m_dbg.verbosePrefix( prefix(), CALL_INFO,1,THREAD_MASK,"this=%p\n",this );
 	}
 
+    ~Thread() {
+        delete m_loadUnit;
+        if ( m_loadUnit != m_storeUnit ) {
+            delete m_storeUnit;
+        }
+    }
+
     bool isIdle() {
         return !m_workQ.size();
     }

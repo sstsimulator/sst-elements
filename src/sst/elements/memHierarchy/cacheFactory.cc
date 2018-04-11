@@ -41,6 +41,9 @@ using namespace std;
 Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
  
     /* --------------- Output Class --------------- */
+    out_ = new Output();
+    out_->init("", 1, 0, Output::STDOUT);
+
     d_ = new Output();
     d_->init("--->  ", params.find<int>("debug_level", 1), 0,(Output::output_location_t)params.find<int>("debug", 0));
     
@@ -68,29 +71,29 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     if (protStr == "mesi") protocol_ = CoherenceProtocol::MESI;
     else if (protStr == "msi") protocol_ = CoherenceProtocol::MSI;
     else if (protStr == "none") protocol_ = CoherenceProtocol::NONE;
-    else d_->fatal(CALL_INFO,-1, "%s, Invalid param: coherence_protocol - must be 'msi', 'mesi', or 'none'.\n", getName().c_str());
+    else out_->fatal(CALL_INFO,-1, "%s, Invalid param: coherence_protocol - must be 'msi', 'mesi', or 'none'.\n", getName().c_str());
     
     // Type
     type_ = params.find<std::string>("cache_type", "inclusive");
     to_lower(type_);
     if (type_ != "inclusive" && type_ != "noninclusive" && type_ != "noninclusive_with_directory")
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_type - valid options are 'inclusive' or 'noninclusive' or 'noninclusive_with_directory'. You specified '%s'.\n", getName().c_str(), type_.c_str());
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_type - valid options are 'inclusive' or 'noninclusive' or 'noninclusive_with_directory'. You specified '%s'.\n", getName().c_str(), type_.c_str());
     
     // Latency
     accessLatency_ = params.find<uint64_t>("access_latency_cycles", 0, found);
-    if (!found) d_->fatal(CALL_INFO, -1, "%s, Param not specified: access_latency_cycles - access time for cache.\n", getName().c_str());
+    if (!found) out_->fatal(CALL_INFO, -1, "%s, Param not specified: access_latency_cycles - access time for cache.\n", getName().c_str());
 
     tagLatency_ = params.find<uint64_t>("tag_access_latency_cycles", accessLatency_);
 
 
     // Error check parameter combinations
-    if (accessLatency_ < 1) d_->fatal(CALL_INFO,-1, "%s, Invalid param: access_latency_cycles - must be at least 1. You specified %" PRIu64 "\n", 
+    if (accessLatency_ < 1) out_->fatal(CALL_INFO,-1, "%s, Invalid param: access_latency_cycles - must be at least 1. You specified %" PRIu64 "\n", 
             this->Component::getName().c_str(), accessLatency_);
     
     if (L1_ && type_ != "inclusive") {
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_type - must be 'inclusive' for an L1. You specified '%s'.\n", getName().c_str(), type_.c_str());
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_type - must be 'inclusive' for an L1. You specified '%s'.\n", getName().c_str(), type_.c_str());
     } else if (!L1_ && protocol_ == CoherenceProtocol::NONE && type_ != "noninclusive") {
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_type and coherence_protocol - non-coherent caches are noninclusive. You specified: cache_type = '%s', coherence_protocol = '%s'\n", 
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_type and coherence_protocol - non-coherent caches are noninclusive. You specified: cache_type = '%s', coherence_protocol = '%s'\n", 
                 getName().c_str(), type_.c_str(), protStr.c_str()); 
     }
 
@@ -119,7 +122,7 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
 
     UnitAlgebra packetSize_ua(packetSize);
     if (!packetSize_ua.hasUnits("B")) {
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packetSize.c_str());
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packetSize.c_str());
     }
 
     if (maxRequestsPerCycle_ == 0) {
@@ -176,7 +179,7 @@ void Cache::createCoherenceManager(Params &params) {
         }
     }
     if (coherenceMgr_ == NULL) {
-        d_->fatal(CALL_INFO, -1, "%s, Failed to load CoherenceController.\n", this->Component::getName().c_str());
+        out_->fatal(CALL_INFO, -1, "%s, Failed to load CoherenceController.\n", this->Component::getName().c_str());
     }
 
     coherenceMgr_->setLinks(linkUp_, linkDown_);
@@ -210,33 +213,33 @@ void Cache::configureLinks(Params &params) {
     /* Check for valid port combos */
     if (highNetExists) {
         if (!lowCacheExists && !lowDirExists && !lowNetExists)
-            d_->fatal(CALL_INFO,-1,"%s, Error: no connected low ports detected. Please connect one of 'cache' or 'directory' or connect N components to 'low_network_n' where n is in the range 0 to N-1\n",
+            out_->fatal(CALL_INFO,-1,"%s, Error: no connected low ports detected. Please connect one of 'cache' or 'directory' or connect N components to 'low_network_n' where n is in the range 0 to N-1\n",
                     getName().c_str());
         if ((lowCacheExists && (lowDirExists || lowNetExists)) || (lowDirExists && lowNetExists))  
-            d_->fatal(CALL_INFO,-1,"%s, Error: multiple connected low port types detected. Please only connect one of 'cache', 'directory', or connect N components to 'low_network_n' where n is in the range 0 to N-1\n",
+            out_->fatal(CALL_INFO,-1,"%s, Error: multiple connected low port types detected. Please only connect one of 'cache', 'directory', or connect N components to 'low_network_n' where n is in the range 0 to N-1\n",
                     getName().c_str());
         if (isPortConnected("high_network_1"))
-            d_->fatal(CALL_INFO,-1,"%s, Error: multiple connected high ports detected. Use the 'Bus' component to connect multiple entities to port 'high_network_0' (e.g., connect 2 L1s to a bus and connect the bus to the L2)\n",
+            out_->fatal(CALL_INFO,-1,"%s, Error: multiple connected high ports detected. Use the 'Bus' component to connect multiple entities to port 'high_network_0' (e.g., connect 2 L1s to a bus and connect the bus to the L2)\n",
                     getName().c_str());
     } else {
         if (!lowDirExists) 
-            d_->fatal(CALL_INFO,-1,"%s, Error: no connected ports detected. Valid ports are high_network_0, cache, directory, and low_network_n\n",
+            out_->fatal(CALL_INFO,-1,"%s, Error: no connected ports detected. Valid ports are high_network_0, cache, directory, and low_network_n\n",
                     getName().c_str());
         if (lowCacheExists || lowNetExists)
-            d_->fatal(CALL_INFO,-1,"%s, Error: no connected high ports detected. Please connect a bus/cache/core on port 'high_network_0'\n",
+            out_->fatal(CALL_INFO,-1,"%s, Error: no connected high ports detected. Please connect a bus/cache/core on port 'high_network_0'\n",
                     getName().c_str());
     }
    
     // Fix up parameters for creating NIC
     bool found;
     if (fixupParam(params, "network_bw", "memNIC.network_bw"))
-        d_->output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
+        out_->output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
     if (fixupParam(params, "network_input_buffer_size", "memNIC.network_input_buffer_size"))
-        d_->output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+        out_->output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
     if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))
-        d_->output(CALL_INFO, "Note (%s): Changed 'network_output_buffer_size' to 'memNIC.network_output_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+        out_->output(CALL_INFO, "Note (%s): Changed 'network_output_buffer_size' to 'memNIC.network_output_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
     if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
-        d_->output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size'. Change your input file to remove this notice.\n", getName().c_str());
+        out_->output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size'. Change your input file to remove this notice.\n", getName().c_str());
 
     char *node_buffer1 = (char*) malloc(sizeof(char) * 256);
     char *node_buffer2 = (char*) malloc(sizeof(char) * 256);
@@ -327,9 +330,9 @@ void Cache::configureLinks(Params &params) {
         string sliceAllocPolicy     = params.find<std::string>("slice_allocation_policy", "rr");
         if (cacheSliceCount == 1) sliceID = 0;
         else if (cacheSliceCount > 1) {
-            if (sliceID >= cacheSliceCount) d_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_id - should be between 0 and num_cache_slices-1. You specified %d.\n",
+            if (sliceID >= cacheSliceCount) out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_id - should be between 0 and num_cache_slices-1. You specified %d.\n",
                     getName().c_str(), sliceID);
-            if (sliceAllocPolicy != "rr") d_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified '%s'.\n",
+            if (sliceAllocPolicy != "rr") out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified '%s'.\n",
                     getName().c_str(), sliceAllocPolicy.c_str());
         } else {
             d2_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %d.\n", 
@@ -409,7 +412,7 @@ int Cache::createMSHR(Params &params) {
     mshrLatency_ = params.find<uint64_t>("mshr_latency_cycles", 0);
     
     if (mshrSize == -1) mshrSize = HUGE_MSHR; // Set in mshr.h
-    if (mshrSize < 2) d_->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
+    if (mshrSize < 2) out_->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
     
     mshr_ = new MSHR(d_, mshrSize, this->getName(), DEBUG_ADDR);
     
@@ -438,7 +441,7 @@ int Cache::createMSHR(Params &params) {
     for(uint64 idx = 68; idx < N;  idx++) y[idx] = 32;
     
     if (accessLatency_ > N) {
-        d_->fatal(CALL_INFO, -1, "%s, Error: cannot intrapolate MSHR latency if cache latency > 200. Set 'mshr_latency_cycles' or reduce cache latency. Cache latency: %" PRIu64 "\n", getName().c_str(), accessLatency_);
+        out_->fatal(CALL_INFO, -1, "%s, Error: cannot intrapolate MSHR latency if cache latency > 200. Set 'mshr_latency_cycles' or reduce cache latency. Cache latency: %" PRIu64 "\n", getName().c_str(), accessLatency_);
     }
     mshrLatency_ = y[accessLatency_];
 
@@ -453,12 +456,12 @@ CacheArray* Cache::createCacheArray(Params &params) {
     /* Get parameters and error check */
     bool found;
     std::string sizeStr = params.find<std::string>("cache_size", "", found);
-    if (!found) d_->fatal(CALL_INFO, -1, "%s, Param not specified: cache_size\n", getName().c_str());
+    if (!found) out_->fatal(CALL_INFO, -1, "%s, Param not specified: cache_size\n", getName().c_str());
     
     unsigned int lineSize = params.find<uint64_t>("cache_line_size", 64);
     
     uint64_t assoc = params.find<uint64_t>("associativity", -1, found); // uint64_t to match cache size in case we have a fully associative cache
-    if (!found) d_->fatal(CALL_INFO, -1, "%s, Param not specified: associativity\n", getName().c_str());
+    if (!found) out_->fatal(CALL_INFO, -1, "%s, Param not specified: associativity\n", getName().c_str());
 
     std::string replacement = params.find<std::string>("replacement_policy", "lru");
     std::string dReplacement = params.find<std::string>("noninclusive_directory_repl", "lru");
@@ -475,27 +478,27 @@ CacheArray* Cache::createCacheArray(Params &params) {
 
     UnitAlgebra ua(sizeStr);
     if (!ua.hasUnits("B")) {
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_size - must have units of bytes(B). Ex: '32KiB'. SI units are ok. You specified '%s'.", getName().c_str(), sizeStr.c_str());
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_size - must have units of bytes(B). Ex: '32KiB'. SI units are ok. You specified '%s'.", getName().c_str(), sizeStr.c_str());
     }
 
     uint64_t cacheSize = ua.getRoundedValue();
     
     if (lineSize > cacheSize) 
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%u'\n", getName().c_str(), sizeStr.c_str(), lineSize);
-    if (!isPowerOfTwo(lineSize)) d_->fatal(CALL_INFO, -1, "%s, cache_line_size - must be a power of 2. You specified '%u'.\n", getName().c_str(), lineSize);
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%u'\n", getName().c_str(), sizeStr.c_str(), lineSize);
+    if (!isPowerOfTwo(lineSize)) out_->fatal(CALL_INFO, -1, "%s, cache_line_size - must be a power of 2. You specified '%u'.\n", getName().c_str(), lineSize);
 
     uint64_t lines = cacheSize / lineSize;
     
     if (assoc < 1 || assoc > lines) 
-        d_->fatal(CALL_INFO, -1, "%s, Invalid param: associativity - must be at least 1 (direct mapped) and less than or equal to the number of cache lines (cache_size / cache_line_size). You specified '%" PRIu64 "'\n", 
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param: associativity - must be at least 1 (direct mapped) and less than or equal to the number of cache lines (cache_size / cache_line_size). You specified '%" PRIu64 "'\n", 
                 getName().c_str(), assoc);
 
     if (type_ == "noninclusive_with_directory") { /* Error check dir params */
         if (dAssoc < 1 || dAssoc > dEntries) 
-            d_->fatal(CALL_INFO, -1, "%s, Invalid param: noninclusive_directory_associativity - must be at least 1 (direct mapped) and less than or equal to noninclusive_directory_entries. You specified '%" PRIu64 "'\n", 
+            out_->fatal(CALL_INFO, -1, "%s, Invalid param: noninclusive_directory_associativity - must be at least 1 (direct mapped) and less than or equal to noninclusive_directory_entries. You specified '%" PRIu64 "'\n", 
                     getName().c_str(), dAssoc);
         if (dEntries < 1)
-            d_->fatal(CALL_INFO, -1, "%s, Invalid param: noninclusive_directory_entries - must be at least 1 if cache_type is noninclusive_with_directory. You specified '%" PRIu64 "'.\n", getName().c_str(), dEntries);
+            out_->fatal(CALL_INFO, -1, "%s, Invalid param: noninclusive_directory_entries - must be at least 1 if cache_type is noninclusive_with_directory. You specified '%" PRIu64 "'.\n", getName().c_str(), dEntries);
     }
 
     /* Build cache array */
@@ -508,7 +511,7 @@ CacheArray* Cache::createCacheArray(Params &params) {
 
     if (type_ == "inclusive" || type_ == "noninclusive") {
         return new SetAssociativeArray(d_, lines, lineSize, assoc, rmgr, ht, !L1_);
-    } else if (type_ == "noninclusive_with_directory") {
+    } else { //type_ == "noninclusive_with_directory" --> Already checked that this string is valid
         /* Construct */
         ReplacementMgr* drmgr = constructReplacementManager(dReplacement, dEntries, dAssoc);
         return new DualSetAssociativeArray(d_, lineSize, ht, true, dEntries, dAssoc, drmgr, lines, assoc, rmgr);
@@ -532,7 +535,7 @@ ReplacementMgr* Cache::constructReplacementManager(std::string policy, uint64_t 
     if (SST::strcasecmp(policy, "nmru"))   
         return new NMRUReplacementMgr(d_, lines, associativity);
     
-    d_->fatal(CALL_INFO, -1, "%s, Invalid param: (directory_)replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified '%s'.\n",
+    out_->fatal(CALL_INFO, -1, "%s, Invalid param: (directory_)replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified '%s'.\n",
             getName().c_str(), policy.c_str());
     
     return nullptr;
@@ -543,7 +546,7 @@ void Cache::createClock(Params &params) {
     bool found;
     std::string frequency = params.find<std::string>("cache_frequency", "", found);
     if (!found)
-        d_->fatal(CALL_INFO, -1, "%s, Param not specified: frequency - cache frequency.\n", getName().c_str());
+        out_->fatal(CALL_INFO, -1, "%s, Param not specified: frequency - cache frequency.\n", getName().c_str());
     
     clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
     defaultTimeBase_    = registerClock(frequency, clockHandler_);
