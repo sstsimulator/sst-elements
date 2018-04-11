@@ -17,6 +17,7 @@
 #ifndef COMPONENTS_FIREFLY_HADESMISC_H
 #define COMPONENTS_FIREFLY_HADESMISC_H
 
+#include <sst/core/elementinfo.h>
 #include "sst/elements/hermes/miscapi.h"
 #include "hades.h"
 
@@ -28,6 +29,16 @@ namespace Firefly {
 class HadesMisc : public Misc::Interface
 {
   public:
+  public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        HadesMisc,
+        "firefly",
+        "hadesMisc",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
     HadesMisc(Component* owner, Params&) : Interface(owner), m_os(NULL) {}
     ~HadesMisc() {}
 

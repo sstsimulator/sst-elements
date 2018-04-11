@@ -39,15 +39,9 @@ class ProtocolAPI;
         NAME(MakeProgress)   \
         NAME(Barrier)   \
         NAME(Allreduce)   \
-        NAME(Reduce)   \
         NAME(Allgather)   \
-        NAME(Allgatherv)   \
-        NAME(Gather)   \
         NAME(Gatherv)   \
-        NAME(Alltoall)   \
         NAME(Alltoallv)   \
-        NAME(Irecv)   \
-        NAME(Isend)   \
         NAME(Send)   \
         NAME(Recv)   \
         NAME(Wait)   \

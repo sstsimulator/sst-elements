@@ -26,6 +26,16 @@ namespace Firefly {
 class MakeProgressFuncSM :  public FunctionSMInterface 
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        MakeProgressFuncSM,
+        "firefly",
+        "MakeProgress",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
+  public:
     MakeProgressFuncSM( SST::Params& params ) : FunctionSMInterface( params ), m_event(NULL) {}
 
 	virtual std::string protocolName() { return "CtrlMsgProtocol"; }

@@ -24,6 +24,16 @@ namespace Firefly {
 class BarrierFuncSM :  public CollectiveTreeFuncSM 
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        BarrierFuncSM,
+        "firefly",
+        "Barrier",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
+  public:
     BarrierFuncSM( SST::Params& params ) : CollectiveTreeFuncSM( params ) {}
 
     virtual void handleStartEvent( SST::Event* e, Retval& retval ) {

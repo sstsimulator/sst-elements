@@ -19,6 +19,7 @@
 #include <functional>
 #include <stdint.h>
 #include "ctrlMsg.h"
+#include <sst/core/elementinfo.h>
 #include <sst/core/output.h>
 
 #include "info.h"
@@ -45,8 +46,51 @@ typedef int region_t;
 
 class MemoryBase;
 
-class ProcessQueuesState : SubComponent
+class ProcessQueuesState : public SubComponent
 {
+  public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        ProcessQueuesState,
+        "firefly",
+        "ctrlMsg",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {"shortMsgLength","Sets the short to long message transition point", "16000"},
+        {"verboseLevel","Set the verbose level", "1"},
+        {"debug","Set the debug level", "0"},
+        {"txMemcpyMod","Set the module used to calculate TX mempcy latency", ""},
+        {"rxMemcpyMod","Set the module used to calculate RX mempcy latency", ""},
+        {"matchDelay_ns","Sets the time to do a match", "100"},
+        {"txSetupMod","Set the module used to calculate TX setup latency", ""},
+        {"rxSetupMod","Set the module used to calculate RX setup latency", ""},
+        {"txFiniMod","Set the module used to calculate TX fini latency", ""},
+        {"rxFiniMod","Set the module used to calculate RX fini latency", ""},
+        {"rxPostMod","Set the module used to calculate RX post latency", ""},
+        {"loopBackPortName","Sets port name to use when connecting to the loopBack component","loop"},
+        {"rxNicDelay_ns","", "0"},
+        {"txNicDelay_ns","", "0"},
+        {"sendReqFiniDelay_ns","", "0"},
+        {"recvReqFiniDelay_ns","", "0"},
+        {"sendAckDelay_ns","", "0"},
+        {"regRegionXoverLength","Sets the transition point page pinning", "4096"},
+        {"regRegionPerPageDelay_ns","Sets the time to pin pages", "0"},
+        {"regRegionBaseDelay_ns","Sets the base time to pin pages", "0"},
+        {"sendStateDelay_ps","", "0"},
+        {"recvStateDelay_ps","", "0"},
+        {"waitallStateDelay_ps","", "0"},
+        {"waitanyStateDelay_ps","", "0"},
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "posted_receive_list", "", "count", 1 },
+        { "received_msg_list", "", "count", 1 }
+    )
+
+  private:
     typedef std::function<void(nid_t, uint32_t, size_t)> Callback2;
     typedef std::function<void()> VoidFunction;
 

@@ -24,6 +24,15 @@ namespace Firefly {
 class CommCreateFuncSM :  public BarrierFuncSM
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        CommCreateFuncSM,
+        "firefly",
+        "CommCreate",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+  public:
     CommCreateFuncSM( SST::Params& params )
         : BarrierFuncSM( params ) {}
 
