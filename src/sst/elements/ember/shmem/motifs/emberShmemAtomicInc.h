@@ -30,21 +30,10 @@
 namespace SST {
 namespace Ember {
 
+
+template < class TYPE >
 class EmberShmemAtomicIncGenerator : public EmberShmemGenerator {
 
-public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
-        EmberShmemAtomicIncGenerator,
-        "ember",
-        "ShmemAtomicIncMotif",
-        SST_ELI_ELEMENT_VERSION(1,0,0),
-        "SHMEM atomicInc",
-        "SST::Ember::EmberGenerator"
-    )
-
-    SST_ELI_DOCUMENT_PARAMS(
-    )
-    
     enum { Add, Fadd, Putv } m_op;
     std::string m_opStr;
 public:
@@ -85,7 +74,7 @@ public:
             enQ_init( evQ );
             enQ_n_pes( evQ, &m_num_pes );
             enQ_my_pe( evQ, &m_my_pe );
-            enQ_malloc( evQ, &m_dest, sizeof(long) * m_dataSize, m_backed );
+            enQ_malloc( evQ, &m_dest, sizeof(TYPE) * m_dataSize, m_backed );
             m_miscLib->getNodeNum( evQ, &m_node_num );
             if ( -1 == m_num_nodes ) {
                 m_miscLib->getNumNodes( evQ, &m_num_nodes );
@@ -99,7 +88,7 @@ public:
             }
             
 			if ( m_backed ) {
-				bzero( &m_dest.at<long>(0), sizeof(long) * m_dataSize);
+				bzero( &m_dest.at<TYPE>(0), sizeof(TYPE) * m_dataSize);
 			}
 
             enQ_barrier_all( evQ );
@@ -118,7 +107,7 @@ public:
 			while( calcNode(dest) == m_node_num ) {
 				dest = genRand() % m_num_pes;
 			}
-			Hermes::MemAddr addr = m_dest.offset<long>( genRand() % m_dataSize );
+			Hermes::MemAddr addr = m_dest.offset<TYPE>( genRand() % m_dataSize );
 	
 			switch ( m_op ) { 
               case Fadd:
@@ -184,7 +173,7 @@ public:
 			if ( m_backed && m_printTotals ) {
 				uint32_t mytotal = 0;
 				for ( int i = 0; i < m_dataSize; ++i ) {
-					mytotal +=  m_dest.at<long>(i) ;
+					mytotal +=  m_dest.at<TYPE>(i) ;
 				}
             	printf("%s: PE: %d total is: %" PRIu32 "\n", getMotifName().c_str(), m_my_pe, mytotal );
 			}
@@ -228,7 +217,7 @@ public:
 
 	bool m_backed;
 	bool m_printTotals;
-	long m_one;
+	TYPE m_one;
 	int m_dataSize;
 	int m_updates;
 	int m_iterations;
@@ -236,7 +225,7 @@ public:
     uint64_t m_stopTime;
 	Hermes::MemAddr m_dest;
 	std::string  m_type_name;
-	long m_result;
+	TYPE m_result;
     int m_phase;
     int m_my_pe;
     int m_num_pes;
@@ -244,6 +233,42 @@ public:
     int m_num_nodes;
 };
 
+class EmberShmemAtomicIncIntGenerator : public EmberShmemAtomicIncGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemAtomicIncIntGenerator,
+        "ember",
+        "ShmemAtomicIncIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM atomic inc int",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+public:
+	EmberShmemAtomicIncIntGenerator(SST::Component* owner, Params& params) :
+	    EmberShmemAtomicIncGenerator(owner, params) {} 
+};
+    
+class EmberShmemAtomicIncLongGenerator : public EmberShmemAtomicIncGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemAtomicIncLongGenerator,
+        "ember",
+        "ShmemAtomicIncLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM atomic inc long",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+public:
+	EmberShmemAtomicIncLongGenerator(SST::Component* owner, Params& params) :
+	    EmberShmemAtomicIncGenerator(owner, params) {} 
+};
+    
 }
 }
 
