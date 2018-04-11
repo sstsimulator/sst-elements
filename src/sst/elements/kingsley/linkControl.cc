@@ -91,7 +91,7 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
             new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
 
     // Register statistics
-    // packet_latency = registerStatistic<uint64_t>("packet_latency");
+    packet_latency = registerStatistic<uint64_t>("packet_latency");
     // send_bit_count = registerStatistic<uint64_t>("send_bit_count");
     // output_port_stalls = registerStatistic<uint64_t>("output_port_stalls");
     // idle_time = registerStatistic<uint64_t>("idle_time");
@@ -255,7 +255,7 @@ void LinkControl::finish(void)
     // Clean up all the events left in the queues.  This will help
     // track down real memory leaks as all this events won't be in the
     // way.
-    for ( int i = 0; i < req_vns; i++ ) {
+/*    for ( int i = 0; i < req_vns; i++ ) {
         while ( !input_buf[i].empty() ) {
             delete input_buf[i].front();
             input_buf[i].pop();
@@ -264,7 +264,7 @@ void LinkControl::finish(void)
             delete output_buf[i].front();
             output_buf[i].pop();
         }
-    }
+    }*/
 }
 
 
@@ -400,8 +400,8 @@ void LinkControl::handle_input(Event* ev)
                           event->request->vn,
                           event->request->src);
         }
-        // SimTime_t lat = parent->getCurrentSimTimeNano() - event->getInjectionTime();
-        // packet_latency->addData(lat);
+        SimTime_t lat = parent->getCurrentSimTimeNano() - event->getInjectionTime();
+        packet_latency->addData(lat);
 
         if ( receiveFunctor != NULL ) {
             bool keep = (*receiveFunctor)(0 /*event->vn*/);
@@ -452,7 +452,7 @@ void LinkControl::handle_output(Event* ev)
         output_timing->send(size,NULL);
         
         // // Add in inject time so we can track latencies
-        // send_event->setInjectionTime(parent->getCurrentSimTimeNano());
+        send_event->setInjectionTime(parent->getCurrentSimTimeNano());
         
         // Subtract credits
         rtr_credits[vn] -= size;

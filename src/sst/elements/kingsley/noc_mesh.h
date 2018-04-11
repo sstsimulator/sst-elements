@@ -111,6 +111,9 @@ private:
 
     Clock::Handler<noc_mesh>* my_clock_handler;
     TimeConverter* clock_tc;
+    void clock_wakeup();
+    bool clock_is_off;
+    Cycle_t last_time = 0;
 
     Link** ports;
     port_queue_t* port_queues;

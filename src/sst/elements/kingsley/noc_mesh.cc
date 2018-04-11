@@ -95,7 +95,7 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
     // Register the clock
     my_clock_handler = new Clock::Handler<noc_mesh>(this,&noc_mesh::clock_handler);
     clock_tc = registerClock( clock_freq, my_clock_handler);
-    
+    clock_is_off = false;
     
     // Configure the ports
     ports = new Link*[local_port_start + local_ports];
@@ -103,6 +103,7 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
     // Configure directional ports
     Event::Handler<noc_mesh,int>* dummy_handler = new Event::Handler<noc_mesh,int>(this,&noc_mesh::handle_input_r2r,-1);
 
+    last_time = 0;
 
     // Configure all the links and add all the statistics
     send_bit_count = new Statistic<uint64_t>*[local_ports + 4];
@@ -215,6 +216,8 @@ noc_mesh::handle_input_r2r(Event* ev, int port)
         
         // Put the event into the proper queue
         port_queues[port].push(event);
+        if (clock_is_off) 
+            clock_wakeup();
         break;
     }
     default:
@@ -306,6 +309,8 @@ noc_mesh::handle_input_ep2r(Event* ev, int port)
    
         // Need to put the event into the proper queue
         port_queues[port].push(event);
+        if (clock_is_off)
+            clock_wakeup();
         break;
     }
     default:
@@ -324,10 +329,29 @@ noc_mesh::handle_input_ep2r(Event* ev, int port)
 //     out.output("End Router: id = %d\n", id);
 // }
 
+void noc_mesh::clock_wakeup() {
+    Cycle_t time = reregisterClock(clock_tc, my_clock_handler);
+    Cycle_t cyclesOff = time - last_time - 1;
+    // Update busy values
+    for ( int i = 0; i < local_port_start + local_ports; ++i) {
+        port_busy[i] = (port_busy[i] < cyclesOff) ? 0 : port_busy[i] - cyclesOff;
+    }
+
+    unsigned int local_progress = (cyclesOff * local_lru.size()) % (local_lru.size() * 2);
+    unsigned int mesh_progress = (cyclesOff * mesh_lru.size()) % (mesh_lru.size() * 2);
+    // Update lru info
+    for (unsigned int i = 0; i < local_progress; i++)
+        local_lru.satisfied(false);
+
+    for (unsigned int i = 0; i < mesh_progress; i++)
+        mesh_lru.satisfied(false);
+    clock_is_off = false;
+}
 
 bool
 noc_mesh::clock_handler(Cycle_t cycle)
 {
+    last_time = cycle;
     // TraceFunction trace(CALL_INFO);
     // Decrement all the busy values
     for ( int i = 0; i < local_port_start + local_ports; ++i ) {
@@ -335,6 +359,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
         if (port_busy[i] < 0) port_busy[i] = 0;
     }
 
+    bool keepClockOn = false;
     // Progress all the messages
 
     // For now, give local_ports priority in the order they were
@@ -354,6 +379,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
             if ( port_busy[port] > 0 ) {
                 xbar_stalls[port]->addData(1);
                 local_lru.satisfied(false);
+                keepClockOn = true;
                 continue;
             }
             
@@ -403,6 +429,8 @@ noc_mesh::clock_handler(Cycle_t cycle)
                 output_port_stalls[port]->addData(1);
                 local_lru.satisfied(false);
             }
+            if (!port_queues[lru_port].empty())
+                keepClockOn = true;
         }
         else {
             local_lru.satisfied(false);
@@ -414,7 +442,6 @@ noc_mesh::clock_handler(Cycle_t cycle)
     // for ( int i = 0; i < local_port_start; i++ ) {
     for ( unsigned int i = 0; i < mesh_lru.size(); ++i ) {
         int lru_port = mesh_lru.top();
-        // if ( !port_queues[i].empty() ) {
         if ( !port_queues[lru_port].empty() ) {
             noc_mesh_event* event = port_queues[lru_port].front();
             // Get the next port
@@ -425,6 +452,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
             if ( port_busy[port] > 0 ) {
                 xbar_stalls[port]->addData(1);
                 mesh_lru.satisfied(false);
+                keepClockOn = true;
                 continue;
             }
             
@@ -475,14 +503,18 @@ noc_mesh::clock_handler(Cycle_t cycle)
                 output_port_stalls[port]->addData(1);
                 mesh_lru.satisfied(false);
             }
+            if (!port_queues[lru_port].empty())
+                keepClockOn = true;
         }
         else {
             mesh_lru.satisfied(false);
         }
         
     }
+    clock_is_off = !keepClockOn;
+
     // Stay on clock list
-    return false;
+    return !keepClockOn;
 }
 
 void noc_mesh::setup()
