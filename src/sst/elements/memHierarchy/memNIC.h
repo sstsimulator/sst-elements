@@ -153,7 +153,6 @@ class MemNICBase : public MemLinkBase {
  *
  */
 class MemNIC : public MemNICBase {
-
 public:
 /* Element Library Info */
 #define MEMNIC_ELI_PARAMS MEMNICBASE_ELI_PARAMS, \
@@ -179,12 +178,12 @@ public:
     ~MemNIC() { }
 
     /* Functions called by parent for handling events */
-    bool clock();
-    void send(MemEventBase * ev);
-    MemEventBase * recv();
+    virtual bool clock();
+    virtual void send(MemEventBase * ev);
+    virtual MemEventBase * recv();
     
     /* Callback to notify when link_control receives a message */
-    bool recvNotify(int);
+    virtual bool recvNotify(int);
 
     /* Helper functions */
     size_t getSizeInBits(MemEventBase * ev);

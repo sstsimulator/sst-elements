@@ -110,7 +110,7 @@ public:
     /***** Setup and initialization functions *****/
 
     /* Initialize variables that tell this coherence controller how to interact with the cache below it */
-    void setupLowerStatus(bool isLastLevel, bool isNoninclusive, bool isDir);
+    void configureCoherence(bool isLastLevel, bool expectWritebackAck, bool lowerIsNoninclusive, bool ackWritebacks);
 
     /* Setup pointers to other subcomponents/cache structures */
     void setCacheListener(CacheListener* ptr) { listener_ = ptr; }
@@ -130,6 +130,9 @@ public:
     virtual void recordEventSentUp(Command cmd) =0;
     virtual void recordEventSentDown(Command cmd) =0;
     
+    /**** Debug support *****/
+    void printStatus(Output& out);
+
 protected:
     struct Response {
         MemEventBase* event;
@@ -162,6 +165,7 @@ protected:
     bool            writebackCleanBlocks_;  // Writeback clean data as opposed to just a coherence msg
     bool            silentEvictClean_;      // Silently evict clean blocks (currently ok when just mem below us)
     bool            expectWritebackAck_;    // Whether we should expect a writeback ack
+    bool            ackWritebacks_;         // Whether we should send acks for writebacks
     bool            lastLevel_;             // Whether we are the lowest coherence level and should not send coherence messages down
 
     /* General parameters and structures */

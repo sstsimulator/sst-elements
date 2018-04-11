@@ -389,17 +389,29 @@ void CoherenceController::recordEvictionState(State state) {
 
 
 /* Setup variables controlling interactions with other memory levels */
-void CoherenceController::setupLowerStatus(bool isLastCoherenceLevel, bool expectWritebackAck, bool lowerIsNoninclusive) {
+void CoherenceController::configureCoherence(bool isLastCoherenceLevel, bool expectWritebackAck, bool lowerIsNoninclusive, bool ackWritebacks) {
     silentEvictClean_ = isLastCoherenceLevel; // Level below us doesn't do coherence so just drop clean blocks
     lastLevel_ = isLastCoherenceLevel;
     expectWritebackAck_ = expectWritebackAck; // Level below us will send writeback acks so wait for it
     writebackCleanBlocks_ = lowerIsNoninclusive; // Attach a payload to clean writebacks if the lower level might not have data
-
-    //silentEvictClean_       = isLastCoherenceLevel; // Silently evict clean blocks if there's just a memory below us
-    //expectWritebackAck_     = !isLastCoherenceLevel && (lowerIsDirectory || lowerIsNoninclusive);  // Expect writeback ack if there's a dir below us or a non-inclusive cache
-    //writebackCleanBlocks_   = lowerIsNoninclusive;  // Writeback clean data if lower is non-inclusive - otherwise control message only
-        
+    ackWritebacks_ = ackWritebacks;
 }
 
 
+/**************************************/
+/*********** Debug support ************/
+/**************************************/
+
+void CoherenceController::printStatus(Output& out) {
+    out.output("  Begin MemHierarchy::CoherenceController %s\n", getName().c_str());
+    out.output("    Events waiting in outgoingEventQueue: %zu\n", outgoingEventQueue_.size());
+    for (list<Response>::iterator it = outgoingEventQueue_.begin(); it!= outgoingEventQueue_.end(); it++) {
+        out.output("      Time: %" PRIu64 ", Event: %s\n", (*it).deliveryTime, (*it).event->getVerboseString().c_str());
+    }
+    out.output("    Events waiting in outgoingEventQueueUp_: %zu\n", outgoingEventQueueUp_.size());
+    for (list<Response>::iterator it = outgoingEventQueueUp_.begin(); it!= outgoingEventQueueUp_.end(); it++) {
+        out.output("      Time: %" PRIu64 ", Event: %s\n", (*it).deliveryTime, (*it).event->getVerboseString().c_str());
+    }
+    out.output("  End MemHierarchy::CoherenceController\n");
+}
    

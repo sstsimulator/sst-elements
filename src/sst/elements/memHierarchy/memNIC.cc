@@ -31,11 +31,9 @@ using namespace SST::Interfaces;
 #define is_debug_event(ev) false
 #endif
 
-
-/******************************************************************/
-/*** MemNICBase implementation ************************************/
-/******************************************************************/
-
+/*******************************************************************/
+/*** MemNICBase implementation *************************************/
+/*******************************************************************/
 MemNICBase::MemNICBase(Component * parent, Params &params) : MemLinkBase(parent, params) {
     // Get source/destination parameters
     // Each NIC has a group ID and talks to those with IDs in sources and destinations
@@ -83,7 +81,7 @@ void MemNICBase::nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned 
             initSendQueue.pop();
         }
     }
-
+    
     // On first init round, send our region out to all others
     if (networkReady && !initMsgSent) {
         info.addr = linkcontrol->getEndpointID();
@@ -183,11 +181,9 @@ uint64_t MemNICBase::lookupNetworkAddress(const std::string & dst) const {
 }
 
 
-
-
-/******************************************************************/
-/*** MemNIC implementation ************************************/
-/******************************************************************/
+/*******************************************************************/
+/*** MemNIC implementation *****************************************/
+/*******************************************************************/
 
 /* Constructor */
 MemNIC::MemNIC(Component * parent, Params &params) : MemNICBase(parent, params) {
@@ -206,6 +202,7 @@ MemNIC::MemNIC(Component * parent, Params &params) : MemNICBase(parent, params) 
     std::string linkOutbufSize = params.find<std::string>("network_output_buffer_size", "1KiB");
 
     link_control = (SimpleNetwork*)parent->loadSubComponent("merlin.linkcontrol", parent, params); // But link control doesn't use params so manually initialize
+    // But link control doesn't use params so manually initialize
     link_control->initialize(linkName, UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
 
     // Packet size
@@ -220,10 +217,12 @@ MemNIC::MemNIC(Component * parent, Params &params) : MemNICBase(parent, params) 
     link_control->setNotifyOnReceive(new SimpleNetwork::Handler<MemNIC>(this, &MemNIC::recvNotify));
 }
 
+
 void MemNIC::init(unsigned int phase) {
     link_control->init(phase);  // This MUST be called before anything else
     MemNICBase::nicInit(link_control, phase);
 }
+
 
 /* 
  * Called by parent on a clock 

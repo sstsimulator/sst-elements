@@ -116,7 +116,13 @@ public:
             {"low_network_0",   "Port connected to lower level caches (closer to main memory)", {"memHierarchy.MemEventBase"} },
             {"high_network_0",  "Port connected to higher level caches (closer to CPU)",        {"memHierarchy.MemEventBase"} },
             {"directory",       "Network link port to directory",                               {"memHierarchy.MemRtrEvent"} },
-            {"cache",           "Network link port to cache",                                   {"memHierarchy.MemRtrEvent"} })
+            {"directory1",       "Network link port to directory",                               {"memHierarchy.MemRtrEvent"} },
+            {"directory2",       "Network link port to directory",                               {"memHierarchy.MemRtrEvent"} },
+            {"directory3",       "Network link port to directory",                               {"memHierarchy.MemRtrEvent"} },
+            {"cache",           "Network link port to cache",                                   {"memHierarchy.MemRtrEvent"} },
+            {"cache1",           "Network link port to cache",                                   {"memHierarchy.MemRtrEvent"} },
+            {"cache2",           "Network link port to cache",                                   {"memHierarchy.MemRtrEvent"} },
+            {"cache3",           "Network link port to cache",                                   {"memHierarchy.MemRtrEvent"} })
 
     SST_ELI_DOCUMENT_STATISTICS(
             /* Cache hits and misses */
@@ -382,7 +388,8 @@ private:
     bool                    isLL;
     bool                    lowerIsNoninclusive;
     bool                    expectWritebackAcks;
-
+    bool                    ackWritebacks;
+    
     /* Performance enhancement: turn clocks off when idle */
     bool                    clockIsOn_;                 // Tell us whether clock is on or off
     SimTime_t               lastActiveClockCycle_;      // Cycle we turned the clock off at - for re-syncing stats

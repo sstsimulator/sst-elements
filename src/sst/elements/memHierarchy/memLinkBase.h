@@ -151,7 +151,6 @@ public:
     virtual void sendInitData(MemEventInit * ev) =0;
     virtual MemEventInit* recvInitData() =0;
     virtual void send(MemEventBase * ev) =0;
-    virtual MemEventBase * recv() =0;
 
     /* 
      * Extra functions for MemLink derivatives 

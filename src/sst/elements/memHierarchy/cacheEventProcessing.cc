@@ -232,6 +232,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     MemEvent * event = static_cast<MemEvent*>(ev);
     Command cmd     = event->getCmd();
     Addr baseAddr   = event->getBaseAddr();
+    
     // TODO this is a temporary check while we ensure that the source sets baseAddr correctly
     if (baseAddr % cacheArray_->getLineSize() != 0) {
         out_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %" PRIu64 ". Event: %s\n", getName().c_str(), cacheArray_->getLineSize(), ev->getVerboseString().c_str());
@@ -242,12 +243,12 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         Addr bank = cacheArray_->getBank(event->getBaseAddr());
         if (bankStatus_[bank]) { // bank conflict
             if (is_debug_event(event))
-            d_->debug(_L3_, "Bank conflict on bank %" PRIu64 "\n", bank);
+            d_->debug(_L3_, "Bank conflict on bank %u\n", bank);
             statBankConflicts->addData(1);
             bankConflictBuffer_[bank].push(event);
             return true; // Accepted but we're stopping now
         } else {
-            d_->debug(_L3_, "No bank conflict, setting bank %" PRIu64 " to busy\n", bank);
+            d_->debug(_L3_, "No bank conflict, setting bank %u to busy\n", bank);
             bankStatus_[bank] = true;
         }
     }
@@ -287,6 +288,8 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             if (mshr_->isHit(baseAddr) && canStall) {
                 // Drop local prefetches if there are outstanding requests for the same address NOTE this includes replacements/inv/etc.
                 if (event->isPrefetch() && event->getRqstr() == this->getName()) {
+                    if (is_debug_addr(baseAddr))
+                        d_->debug(_L6_, "Drop prefetch: cache hit\n");
                     statPrefetchDrop->addData(1);
                     delete event;
                     break;
@@ -408,11 +411,26 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
 }
 
 
-
+/*
+ *  MemHierarchy initialization for caches:
+ *  1. Discovery of other endpoints - determine which kinds of endpoints are our sources and destinations (e.g., cpu? another cache? memory?)
+ *      - Affects coherence protocol - we do not need to do upgrade requests to memory for example
+ *  2. Handshake on coherence protocol
+ *      - Whether Writeback Acks (AckPut) are going to be exchanged -> neccessary when ordering is not implicit. 
+ *          - Non-inclusive caches so that Inv/Fetch/Put are ordered correctly
+ *          - Caches on out-of-order networks (including multiple ordered networks), where packet delivery can occur out of (global) send order
+ *      - Whether caches are inclusive or not (as in whether to expect that the other cache always knows where a block is)
+ *      - Coherence line granularity
+ *  3. For distributed/sliced caches, record the address regions assigned to each slice so we can forward requests correctly
+ *  4. Initialize memory's backing store, if needed, by forwarding data messages from CPU to memory
+ */
 void Cache::init(unsigned int phase) {
     if (linkUp_ == linkDown_) {
         linkDown_->init(phase);
 
+        // Coherence: endpoint type, inclusive, needWBAck, lineSize
+        // Need WB Acks if writeback recipient is (1) non-inclusive or (2) connected via separate data/control networks (so that requests & writebacks are ordered)
+        // But we can detect separate networks locally so we set expectWritebackAcks for that case in cacheFactory
         if (!phase)
             linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize()));
 
@@ -444,15 +462,21 @@ void Cache::init(unsigned int phase) {
     linkDown_->init(phase);
     
     if (!phase) {
-        // MemEventInit: Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
-        linkUp_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize()));
-        linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize()));
+        // MemEventInit: Name, NULLCMD, Endpoint type, inclusive of all upper levels, use writeback acks, line size
+        linkUp_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", ackWritebacks, cacheArray_->getLineSize()));
+        linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", expectWritebackAcks, cacheArray_->getLineSize()));
     }
 
     while (MemEventInit * memEvent = linkUp_->recvInitData()) {
         if (memEvent->getCmd() == Command::NULLCMD) {
             d_->debug(_L10_, "%s received init event %s\n", getName().c_str(), memEvent->getVerboseString().c_str());
             upperLevelCacheNames_.push_back(memEvent->getSrc());
+            if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);
+                if (eventC->getWBAck()) {
+                    ackWritebacks = true;
+                }
+            }
         } else {
             d_->debug(_L10_, "%s received init event %s\n", getName().c_str(), memEvent->getVerboseString().c_str());
             MemEventInit * mEv = memEvent->clone();
@@ -500,7 +524,6 @@ void Cache::setup() {
             info.name = upperLevelCacheNames_[i];
             info.addr = 0;
             info.id = 0;
-            info.node = node;
             info.region.setDefault();
             srcNames.insert(info);
         }
@@ -525,7 +548,6 @@ void Cache::setup() {
             info.name = lowerLevelCacheNames_[i];
             info.addr = 0;
             info.id = 0;
-            info.node = node;
             info.region.setDefault();
             info.region.interleaveStep = ilStep;
             info.region.interleaveSize = ilSize;
@@ -541,7 +563,7 @@ void Cache::setup() {
     linkUp_->setup();
     if (linkUp_ != linkDown_) linkDown_->setup();
 
-    coherenceMgr_->setupLowerStatus(isLL, expectWritebackAcks, lowerIsNoninclusive);
+    coherenceMgr_->configureCoherence(isLL, expectWritebackAcks, lowerIsNoninclusive, ackWritebacks);
 }
 
 

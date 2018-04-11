@@ -42,7 +42,7 @@ using namespace std;
 
 namespace SST { namespace MemHierarchy {
 
-class MemNIC;
+class MemNICBase;
 
 class DirectoryController : public Component {
 public:
@@ -80,7 +80,10 @@ public:
 
     SST_ELI_DOCUMENT_PORTS(
             {"memory", "Link to memory controller", { "memHierarchy.MemEventBase" } },
-            {"network","Link to network", { "memHierarchy.MemRtrEvent" } } )
+            {"network","Link to network", { "memHierarchy.MemRtrEvent" } },
+            {"network1","Link to network", { "memHierarchy.MemRtrEvent" } }, 
+            {"network2","Link to network", { "memHierarchy.MemRtrEvent" } },
+            {"network3","Link to network", { "memHierarchy.MemRtrEvent" } } )
 
     SST_ELI_DOCUMENT_STATISTICS(
             {"replacement_request_latency",     "Total latency in ns of all replacement (put*) requests handled",       "nanoseconds",  1},
@@ -197,14 +200,14 @@ private:
     std::vector<std::string>                nodeid_to_name;
     
     /* Queue of packets to work on */
-    std::list<MemEvent*>                    workQueue;
+    std::list<std::pair<MemEvent*,bool> >   workQueue;
     std::map<MemEvent::id_type, Addr>       memReqs;
     std::map<MemEvent::id_type, Addr>       dirEntryMiss;
     std::map<MemEvent::id_type, std::string> noncacheMemReqs;
 
     /* Network connections */
     MemLink*    memLink;
-    MemNIC*     network;
+    MemNICBase* network;
     string      memoryName; // if connected to mem via network, this should be the name of the memory we own - param is memory_name
     
     std::multimap<uint64_t,MemEventBase*>   netMsgQueue;

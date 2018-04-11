@@ -885,7 +885,7 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
         case E:
         case M:
         case S_B:
-            if (!inclusive_) sendWritebackAck(event);
+            if (ackWritebacks_) sendWritebackAck(event);
             return DONE;
         /* Races with evictions */
         case SI:
@@ -1032,7 +1032,7 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
         case E:
             if (event->getDirty()) cacheLine->setState(M);
         case M:
-            if (!inclusive_) sendWritebackAck(event);
+            if (ackWritebacks_) sendWritebackAck(event);
             break;
         /* Races with evictions */
         case EI:
@@ -1443,7 +1443,8 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
     bool shouldRespond = !(origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName()));
     
     uint64_t sendTime = 0;
-    
+    bool upgrade = false;
+
     switch (state) {
         case IS:
             cacheLine->setData(responseEvent->getPayload(), 0);
@@ -1459,7 +1460,7 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
             if (!inclusive_ && cacheLine->getState() != S) { // Transfer E/M permission
                 cacheLine->setOwner(origRequest->getSrc());
                 sendTime = sendResponseUp(origRequest, Command::GetXResp, &responseEvent->getPayload(), state == M, true, cacheLine->getTimestamp());
-            } else if (protocol_ && cacheLine->getState() != S) { // Send exclusive response
+            } else if (protocol_ && cacheLine->getState() != S && mshr_->lookup(responseEvent->getBaseAddr()).size() == 1) { // Send exclusive response unless another request is waiting
                 cacheLine->setOwner(origRequest->getSrc());
                 sendTime = sendResponseUp(origRequest, Command::GetXResp, &responseEvent->getPayload(), true, cacheLine->getTimestamp());
             } else { // Default shared response

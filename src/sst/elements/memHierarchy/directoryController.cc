@@ -75,6 +75,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     registerTimeBase("1 ns", true);
     
+    waitWBAck = false;
     entryCacheMaxSize = params.find<size_t>("entry_cache_size", 32768);
     entryCacheSize = 0;
     std::string net_bw = params.find<std::string>("network_bw", "80GiB/s");
@@ -132,7 +133,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     /* Get latencies */
     accessLatency   = params.find<uint64_t>("access_latency_cycles", 0);
     mshrLatency     = params.find<uint64_t>("mshr_latency_cycles", 0);
-
+    
     /* Set up links/network to cache & memory */
     /* First, fixup nic parameters and warn that we're doing it */
     if (fixupParam(params, "network_bw", "memNIC.network_bw"))
@@ -151,56 +152,64 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         out.output(CALL_INFO, "Note (%s): Changed 'interleave_step' to 'memNIC.interleave_step' in params. Change your input file to remove this notice.\n", getName().c_str());
     if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
         out.output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size' in params. Change your input file to remove this notice.\n", getName().c_str());
-
-    char *node_buffer1 = (char*) malloc(sizeof(char) * 256);
-    char *node_buffer2 = (char*) malloc(sizeof(char) * 256);
-    char *node_buffer3 = (char*) malloc(sizeof(char) * 256);
-    sprintf(node_buffer1, "%" PRIu32, params.find<uint32_t>("node", 0));
-    sprintf(node_buffer2, "%" PRIu32, params.find<uint32_t>("shared_memory", 0));
-    sprintf(node_buffer3, "%" PRIu32, params.find<uint32_t>("local_memory_size", 0));
-
-        Params nicParams = params.find_prefix_params("memNIC.");
-        nicParams.insert("port", "network");
-        nicParams.insert("node", node_buffer1);
-        nicParams.insert("shared_memory", node_buffer2);
-        nicParams.insert("local_memory_size", node_buffer3);
-
-        nicParams.insert("group", "3", false);
-        int cl = nicParams.find<int>("group");
-        nicParams.insert("sources", std::to_string(cl - 1), false);
-        nicParams.insert("destinations", std::to_string(cl + 1), false);
-        
-        network = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
-        network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
     
-        if (isPortConnected("memory")) {
-            Params memParams = params.find_prefix_params("memlink.");
-            memParams.insert("port", "memory");
-            memParams.insert("node", node_buffer1);
-            memParams.insert("shared_memory", node_buffer2);
-            memParams.insert("local_memory_size", node_buffer3);
-            memParams.insert("latency", "1ns");
-            memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);
-            memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);
-            memParams.insert("interleave_size", ilSize, false);
-            memParams.insert("interleave_step", ilStep, false);
-            memLink = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, memParams));
-            memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-            if (!memLink) {
-                dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
-            }
-            memoryName = "";
-        } else {
-            memoryName  = params.find<std::string>("net_memory_name", "");
-            if (memoryName == "") 
-                dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller. If you did not intend to connect to memory over the network, please connect memory to the 'memory' port and ignore this parameter.\n", getName().c_str());
-            memLink = NULL;
+    Params nicParams = params.find_prefix_params("memNIC.");
 
+    nicParams.insert("group", "3", false);
+    int cl = nicParams.find<int>("group");
+    nicParams.insert("sources", std::to_string(cl - 1), false);
+    nicParams.insert("destinations", std::to_string(cl + 1), false);
+
+    // Opal?
+    std::string opalNode = params.find<std::string>("node", "0");
+    std::string opalSharedMem = params.find<std::string>("shared_memory", "0");
+    std::string opalMemSize = params.find<std::string>("local_memory_size", "0");
+    nicParams.insert("node", opalNode);
+    nicParams.insert("shared_memory", opalSharedMem);
+    nicParams.insert("local_memory_size", opalMemSize);
+
+    unsigned int portCount = 1;
+    if (isPortConnected("network1")) portCount++;
+    if (isPortConnected("network2")) portCount++;
+    if (isPortConnected("network3")) portCount++;
+    if (portCount == 4) {
+        nicParams.insert("req.port", "network");
+        nicParams.insert("ack.port", "network1");
+        nicParams.insert("fwd.port", "network2");
+        nicParams.insert("data.port", "network3");
+        nicParams.insert("clock", params.find<std::string>("clock", "1GHz"));
+        network = dynamic_cast<MemNICBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
+    } else {
+        nicParams.insert("port", "network");
+        network = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+    }
+
+    network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+    
+    if (isPortConnected("memory")) {
+        Params memParams = params.find_prefix_params("memlink.");
+        memParams.insert("port", "memory");
+        memParams.insert("latency", "1ns");
+        memParams.insert("node", opalNode);
+        memParams.insert("shared_memory", opalSharedMem);
+        memParams.insert("local_memory_size", opalMemSize);
+        memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);
+        memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);
+        memParams.insert("interleave_size", ilSize, false);
+        memParams.insert("interleave_step", ilStep, false);
+        memLink = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, memParams));
+        memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        if (!memLink) {
+            dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
         }
+        memoryName = "";
+    } else {
+        memoryName  = params.find<std::string>("net_memory_name", "");
+        if (memoryName == "") 
+            dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller. If you did not intend to connect to memory over the network, please connect memory to the 'memory' port and ignore this parameter.\n", getName().c_str());
+        memLink = NULL;
 
-    free(node_buffer1);
-    free(node_buffer2);
-    free(node_buffer3);
+    }
 
     clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
     defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
@@ -211,9 +220,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     // Timestamp - aka cycle count
     timestamp = 0;
-
-    // Coherence protocol configuration
-    waitWBAck = false; // Don't expect WB Acks
 
     // Register statistics
     stat_replacementRequestLatency  = registerStatistic<uint64_t>("replacement_request_latency");
@@ -257,7 +263,7 @@ DirectoryController::~DirectoryController(){
     directory.clear();
     
     while(workQueue.size()){
-        MemEvent *front = workQueue.front();
+        MemEvent *front = workQueue.front().first;
         delete front;
         workQueue.pop_front();
     }
@@ -276,10 +282,10 @@ void DirectoryController::handlePacket(SST::Event *event){
     /* Forward events that we don't handle */
     if (MemEventTypeArr[(int)evb->getCmd()] != MemEventType::Cache || evb->queryFlag(MemEvent::F_NONCACHEABLE)) {
 
-        if (is_debug_event(evb)) {
+        /*if (is_debug_event(evb)) {
             dbg.debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n",
                     getCurrentSimTimeNano(), getName().c_str(), evb->getVerboseString().c_str());
-        }
+        }*/
         
         if (BasicCommandClassArr[(int)evb->getCmd()] == BasicCommandClass::Request)
             handleNoncacheableRequest(evb);
@@ -290,11 +296,12 @@ void DirectoryController::handlePacket(SST::Event *event){
     }
     
     MemEvent *ev = static_cast<MemEvent*>(event);
+    
     if (ev->getCmd() == Command::GetSResp || ev->getCmd() == Command::GetXResp || ev->getCmd() == Command::FlushLineResp 
             || ev->getCmd() == Command::ForceInv || ev->getCmd() == Command::FetchInv || ev->getCmd() == Command::AckPut) {
         handleMemoryResponse(event);
     } else {
-        workQueue.push_back(ev);
+        workQueue.push_back(std::make_pair(ev,false));
     }
 }
 
@@ -462,9 +469,10 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
     int requestsThisCycle = 0;
     while(!workQueue.empty()) {
         requestsThisCycle++;
-        MemEvent *event = workQueue.front();
+        MemEvent *event = workQueue.front().first;
+        bool replay = workQueue.front().second;
         workQueue.erase(workQueue.begin());
-	processPacket(event, false);
+	processPacket(event, replay);
         if (requestsThisCycle == maxRequestsPerCycle) {
             break;
         }
@@ -480,7 +488,7 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 
 void DirectoryController::processPacket(MemEvent * ev, bool replay) {
     if (is_debug_event(ev)) {
-        dbg.debug(_L3_, "\n%" PRIu64 " (%s) Processing: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
+        dbg.debug(_L3_, "\n%" PRIu64 " (%s) Processing (%s): %s\n", getCurrentSimTimeNano(), getName().c_str(), replay ? "replay" : "new", ev->getVerboseString().c_str());
         cout << flush;
     }
     
@@ -575,7 +583,9 @@ void DirectoryController::handleGetS(MemEvent * ev, bool replay) {
     /* Locate directory entry and allocate if needed */
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
     /* Put request in MSHR (all GetS requests need to be buffered while they wait for data) and stall if there are waiting requests ahead of us */
+    bool wasHit = true;
     if (!(mshr->elementIsHit(ev->getBaseAddr(), ev))) {
+        wasHit = false;
         bool conflict = mshr->isHit(ev->getBaseAddr());
         if (!mshr->insert(ev->getBaseAddr(), ev)) {
             mshrNACKRequest(ev);
@@ -613,7 +623,8 @@ void DirectoryController::handleGetS(MemEvent * ev, bool replay) {
             issueFetch(ev, entry, Command::FetchInvX);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "Directory %s received GetS but state is %s\n", getName().c_str(), StateString[state]);
+            dbg.fatal(CALL_INFO, -1, "Directory %s received GetS but state is %s. Replay: %s. Was hit: %s Event: %s\n", 
+                    getName().c_str(), StateString[state], replay ? "yes" : "no", wasHit ? "yes" : "no", ev->getVerboseString().c_str());
     }
 }
 
@@ -683,7 +694,7 @@ void DirectoryController::handleGetX(MemEvent * ev, bool replay) {
             issueFetch(ev, entry, Command::FetchInv);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "Directory %s received %s but state is %s\n", getName().c_str(), CommandString[(int)ev->getCmd()], StateString[state]);
+            dbg.fatal(CALL_INFO, -1, "Directory %s received %s but state is %s. Event: %s\n", getName().c_str(), CommandString[(int)ev->getCmd()], StateString[state], ev->getVerboseString().c_str());
     }
 }
 
@@ -790,8 +801,8 @@ void DirectoryController::handlePutE(MemEvent * ev) {
             postRequestProcessing(ev, entry, false);  // profile & delete ev
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutE but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    getName().c_str(), StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutE but state is %s. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 }
 
@@ -846,8 +857,8 @@ void DirectoryController::handlePutM(MemEvent * ev) {
             handleFetchResp(ev, false);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutM but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles.\n",
-                    getName().c_str(), StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano(), timestamp);
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutM but state is %s. Event: %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles.\n",
+                    getName().c_str(), StateString[state], ev->getVerboseString().c_str(), getCurrentSimTimeNano(), timestamp);
     }
 }
 
@@ -950,8 +961,8 @@ void DirectoryController::handleFlushLine(MemEvent * ev) {
             } else if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received FlushLine but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    getName().c_str(), StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received FlushLine but state is %s. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 }
 
@@ -1059,8 +1070,8 @@ void DirectoryController::handleFlushLineInv(MemEvent * ev) {
             } else if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received FlushLineInv but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    getName().c_str(), StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received FlushLineInv but state is %s. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 }
 
@@ -1117,8 +1128,8 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
             }
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received %s but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles\n",
-                    getName().c_str(), CommandString[(int)ev->getCmd()], StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano(), timestamp);
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received %s but state is %s. Event: %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles\n",
+                    getName().c_str(), CommandString[(int)ev->getCmd()], StateString[state], ev->getVerboseString().c_str(), getCurrentSimTimeNano(), timestamp);
     }   
     respEv->setPayload(ev->getPayload());
     profileResponseSent(respEv);
@@ -1414,7 +1425,7 @@ void DirectoryController::handleDataResponse(MemEvent * ev) {
             entry->clearSharers();  // Case SM: new owner was a sharer
             break;
         default:
-            dbg.fatal(CALL_INFO,1,"Directory %s received Get Response for addr 0x%" PRIx64 " but state is %s\n", getName().c_str(), ev->getBaseAddr(), StateString[state]);
+            dbg.fatal(CALL_INFO,1,"Directory %s received Get Response for addr 0x%" PRIx64 " but state is %s. Event: %s\n", getName().c_str(), ev->getBaseAddr(), StateString[state], ev->getVerboseString().c_str());
     }
 
     respEv->setSize(cacheLineSize);
@@ -1477,7 +1488,7 @@ void DirectoryController::handleDirEntryMemoryResponse(MemEvent * ev) {
             entry->setState(M);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "Directory Controller %s: DirEntry response received for addr 0x%" PRIx64 " but state is %s\n", getName().c_str(), entry->getBaseAddr(), StateString[st]);
+            dbg.fatal(CALL_INFO, -1, "Directory Controller %s: DirEntry response received for addr 0x%" PRIx64 " but state is %s. Event: %s\n", getName().c_str(), entry->getBaseAddr(), StateString[st], ev->getVerboseString().c_str());
     }
     MemEvent * reqEv = mshr->lookupFront(dirAddr);
     processPacket(reqEv, true);
@@ -1560,7 +1571,7 @@ void DirectoryController::getDirEntryFromMemory(DirEntry * entry) {
         case M_d:
             return; // Already requested, just stall
         default:
-            dbg.fatal(CALL_INFO,-1,"Direcctory Controller %s: cache miss for addr 0x%" PRIx64 " but state is %s\n",getName().c_str(),entry->getBaseAddr(), StateString[st]);
+            dbg.fatal(CALL_INFO,-1,"Direcctory Controller %s: cache miss for addr 0x%" PRIx64 " but state is %s.\n",getName().c_str(),entry->getBaseAddr(), StateString[st]);
     }
     
     Addr entryAddr       = 0; /* Dummy addr reused for dir cache misses */
@@ -1593,8 +1604,8 @@ void DirectoryController::printStatus(Output &statusOut) {
     statusOut.output("MemHierarchy::DirectoryController %s\n", getName().c_str());
     statusOut.output("  Cached entries:  %zu\n", entryCacheSize);
     statusOut.output("  Requests waiting to be handled:  %zu\n", workQueue.size());
-    for(std::list<MemEvent*>::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i){
-        statusOut.output("    %s\n", (*i)->getVerboseString().c_str());
+    for(std::list<std::pair<MemEvent*,bool> >::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i){
+        statusOut.output("    %s, %s\n", i->first->getVerboseString().c_str(), i->second ? "replay" : "new");
     }
     
     if (mshr) {
@@ -1622,7 +1633,6 @@ void DirectoryController::printStatus(Output &statusOut) {
 void DirectoryController::emergencyShutdown() {
     printStatus(out);
 }
-
 
 DirectoryController::DirEntry* DirectoryController::getDirEntry(Addr baseAddr){
     std::unordered_map<Addr,DirEntry*>::iterator i = directory.find(baseAddr);
@@ -1818,9 +1828,9 @@ void DirectoryController::replayWaitingEvents(Addr addr) {
         if (replayEntries->begin()->elem.isEvent()) {
             MemEvent *ev = (replayEntries->begin()->elem).getEvent();
 
-            if (is_debug_addr(addr)) dbg.debug(_L5_, "\tReactivating event. %s\n", ev->getBriefString().c_str());
+            if (is_debug_addr(addr)) dbg.debug(_L3_, "\t%s Reactivating event. %s\n", getName().c_str(), ev->getBriefString().c_str());
             
-            workQueue.insert(workQueue.begin(), ev);
+            workQueue.insert(workQueue.begin(), std::make_pair(ev,true));
         }
     }
 }
