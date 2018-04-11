@@ -32,6 +32,7 @@
 #include <bitset>
 #include <set>
 #include <sst_config.h>
+#include <elf.h>
 
 #ifdef HAVE_LIBZ
 
@@ -112,6 +113,246 @@ struct mallocFlagInfo {
     mallocFlagInfo(bool a, int b, int c, int d) : valid(a), count(b), level(c), id(d) {}
 };
 std::vector<mallocFlagInfo> toFast;
+
+// Added for VDSO
+// Much of this is borrowed from zsim
+enum VdsoFunc { VF_CLOCK_GETTIME, VF_GETTIMEOFDAY};
+static std::map<ADDRINT, VdsoFunc> vdsoEntryMap;
+static uintptr_t vdsoStart;
+static uintptr_t vdsoEnd;
+// Per-thread VDSO function call data
+struct VdsoPatchData {
+    union {
+        struct timespec *tp;
+        struct timeval *tv;
+    };
+    VdsoFunc func;
+    uint32_t level;
+};
+VdsoPatchData *vdsoPatchData;
+
+// VDSO analysis 
+VOID VdsoEntryPoint(THREADID thr, uint32_t func, ADDRINT arg0, ADDRINT arg1) {
+    if (!vdsoPatchData[thr].level) {
+        if ((VdsoFunc)func == VF_CLOCK_GETTIME) {
+            vdsoPatchData[thr].tp = (struct timespec*) arg1;
+        } else {
+            vdsoPatchData[thr].tv = (struct timeval*) arg0;
+        }
+        vdsoPatchData[thr].func = (VdsoFunc)func;
+        vdsoPatchData[thr].level++;
+    }
+}
+
+VOID VdsoCallPoint(THREADID thr) {
+    vdsoPatchData[thr].level++;
+}
+
+VOID VdsoRetPoint(THREADID thr) {
+    if (vdsoPatchData[thr].level == 0) {
+        return;
+    } else if (vdsoPatchData[thr].level > 1) {
+        vdsoPatchData[thr].level--;
+        return;
+    } else {
+        vdsoPatchData[thr].level = 0;
+        if (vdsoPatchData[thr].func == VF_CLOCK_GETTIME) {
+            if (vdsoPatchData[thr].tp == NULL) return;
+            tunnel->getTimeNs(vdsoPatchData[thr].tp);
+        } else {
+            if (vdsoPatchData[thr].tv == NULL) return;
+            tunnel->getTime(vdsoPatchData[thr].tv);
+        }
+    }
+}
+
+// VDSO instrumentation
+static struct vdso_info {
+    bool valid;
+    uintptr_t load_addr;
+    uintptr_t load_offset;
+    Elf64_Sym *symtab;
+    const char *symstrings;
+    Elf64_Word *bucket, *chain;
+    Elf64_Word nbucket, nchain;
+    Elf64_Versym *versym;
+    Elf64_Verdef *verdef;
+} vdso_info;
+
+static unsigned long elf_hash(const char *name) {
+    unsigned long h = 0;
+    while (*name) {
+        h = (h << 4) + *name++;
+        unsigned long g = h & 0xf0000000;
+        if (g)
+            h ^= g >> 24;
+        h &= ~g;
+    }
+    return h;
+}
+
+void vdso_init_from_sysinfo_ehdr(uintptr_t base) {
+    size_t i;
+    bool found_vaddr = false;
+    vdso_info.valid = false;
+    vdso_info.load_addr = base;
+
+    Elf64_Ehdr *hdr = (Elf64_Ehdr*)base;
+    Elf64_Phdr *pt = (Elf64_Phdr*)(vdso_info.load_addr + hdr->e_phoff);
+    Elf64_Dyn *dyn = 0;
+
+    for (i = 0; i < hdr->e_phnum; i++) {
+        if (pt[i].p_type == PT_LOAD && !found_vaddr) {
+            found_vaddr = true;
+            vdso_info.load_offset = base + (uintptr_t)pt[i].p_offset - (uintptr_t)pt[i].p_vaddr;
+        } else if (pt[i].p_type == PT_DYNAMIC) {
+            dyn = (Elf64_Dyn*)(base + pt[i].p_offset);
+        }
+    }
+
+    if (!found_vaddr || !dyn)
+        return; // Uh-oh
+
+    Elf64_Word *hash = 0;
+    vdso_info.symstrings = 0;
+    vdso_info.symtab = 0;
+    vdso_info.versym = 0;
+    vdso_info.verdef = 0;
+    for (i = 0; dyn[i].d_tag != DT_NULL; i++) {
+        switch (dyn[i].d_tag) {
+        case DT_STRTAB:
+            vdso_info.symstrings = (const char *) ((uintptr_t)dyn[i].d_un.d_ptr + vdso_info.load_offset);
+            break;
+        case DT_SYMTAB:
+            vdso_info.symtab = (Elf64_Sym *) ((uintptr_t)dyn[i].d_un.d_ptr + vdso_info.load_offset);
+            break;
+        case DT_HASH:
+            hash = (Elf64_Word*) ((uintptr_t)dyn[i].d_un.d_ptr + vdso_info.load_offset);
+            break;
+        case DT_VERSYM:
+            vdso_info.versym = (Elf64_Versym*) ((uintptr_t)dyn[i].d_un.d_ptr + vdso_info.load_offset);
+            break;
+        case DT_VERDEF:
+            vdso_info.verdef = (Elf64_Verdef*)((uintptr_t)dyn[i].d_un.d_ptr + vdso_info.load_offset);
+            break;
+        }
+    }
+
+    if (!vdso_info.symstrings || !vdso_info.symtab || !hash) return; // Uh-oh
+
+    if (!vdso_info.verdef)
+        vdso_info.versym = 0;
+
+    vdso_info.nbucket = hash[0];
+    vdso_info.nchain = hash[1];
+    vdso_info.bucket = &hash[2];
+    vdso_info.chain = &hash[vdso_info.nbucket + 2];
+
+    vdso_info.valid = true;
+}
+
+static bool vdso_match_version(Elf64_Versym ver, const char *name, Elf64_Word hash) {
+    ver &= 0x7fff;
+    Elf64_Verdef *def = vdso_info.verdef;
+    while (true) {
+        if ((def->vd_flags & VER_FLG_BASE) == 0 && (def->vd_ndx & 0x7fff) == ver) 
+            break;
+
+        if (def->vd_next == 0)
+            return false;
+        def = (Elf64_Verdef*)((char*)def + def->vd_next);
+    }
+
+    Elf64_Verdaux *aux = (Elf64_Verdaux*)((char*)def + def->vd_aux);
+    return def->vd_hash == hash && !strcmp(name, vdso_info.symstrings + aux->vda_name);
+}
+
+void *vdso_sym(const char *version, const char *name) {
+    unsigned long ver_hash;
+    if (!vdso_info.valid) return 0;
+
+    ver_hash = elf_hash(version);
+    Elf64_Word chain = vdso_info.bucket[elf_hash(name) % vdso_info.nbucket];
+
+    for (; chain != STN_UNDEF; chain = vdso_info.chain[chain]) {
+        Elf64_Sym *sym = &vdso_info.symtab[chain];
+
+        if (ELF64_ST_TYPE(sym->st_info) != STT_FUNC)
+            continue;
+
+        if (ELF64_ST_BIND(sym->st_info) != STB_GLOBAL && ELF64_ST_BIND(sym->st_info) != STB_WEAK)
+            continue;
+
+        if (sym->st_shndx == SHN_UNDEF)
+            continue;
+        
+        if (strcmp(name, vdso_info.symstrings + sym->st_name))
+            continue;
+
+        if (vdso_info.versym && !vdso_match_version(vdso_info.versym[chain], version, ver_hash))
+            continue;
+
+        return (void*) (vdso_info.load_offset + sym->st_value);
+    }
+    return 0;
+}
+
+struct Section {
+    uintptr_t start;
+    uintptr_t end;
+};
+
+static Section FindSection(const char* sec) {
+    /* Find VDSO section */
+    char buf[129];
+    buf[128] = '\0';
+    FILE *fp = fopen("/proc/self/maps", "r");
+
+    Section res = {0x0, 0x0};
+
+    if (fp) {
+        while (fgets(buf, 128, fp)) {
+            if (strstr(buf, sec)) {
+                char * dash = strchr(buf, '-');
+                if (dash) {
+                    *dash = '\0';
+                    res.start = strtoul(buf, nullptr, 16);
+                    res.end = strtoul(dash+1, nullptr, 16);
+                }
+            }
+        }
+    }
+    return res;
+}
+
+void VdsoInit() {
+    Section vdso = FindSection("vdso");
+    vdsoStart = vdso.start;
+    vdsoEnd = vdso.end;
+
+    if (!vdsoEnd) return; // Uh-oh
+
+    vdso_init_from_sysinfo_ehdr(vdsoStart);
+
+    ADDRINT vdsoFuncAddr = (ADDRINT) vdso_sym("LINUX_2.6", "clock_gettime");
+    if (vdsoFuncAddr != 0)
+        vdsoEntryMap[vdsoFuncAddr] = VF_CLOCK_GETTIME;
+
+    vdsoFuncAddr = (ADDRINT) vdso_sym("LINUX_2.6", "__vdso_clock_gettime");
+    if (vdsoFuncAddr != 0)
+        vdsoEntryMap[vdsoFuncAddr] = VF_CLOCK_GETTIME;
+
+    vdsoFuncAddr = (ADDRINT) vdso_sym("LINUX_2.6", "gettimeofday");
+    if (vdsoFuncAddr != 0)
+        vdsoEntryMap[vdsoFuncAddr] = VF_GETTIMEOFDAY;
+    
+    vdsoFuncAddr = (ADDRINT) vdso_sym("LINUX_2.6", "__vdso_gettimeofday");
+    if (vdsoFuncAddr != 0)
+        vdsoEntryMap[vdsoFuncAddr] = VF_GETTIMEOFDAY;
+}
+
+
+// End VDSO
 
 /****************************************************************/
 /********************** SHADOW STACK ****************************/
@@ -526,6 +767,20 @@ VOID InstrumentInstruction(INS ins, VOID *v)
     		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) IncrementFunctionRecord,
 	    		IARG_PTR, (void*) funcRecord, IARG_END);
 	}
+
+        // Look for VDSO calls to a time routine
+        ADDRINT insAddr = INS_Address(ins);
+        if (insAddr >= vdsoStart && insAddr < vdsoEnd) {
+            if (vdsoEntryMap.find(insAddr) != vdsoEntryMap.end()) {
+                VdsoFunc func = vdsoEntryMap[insAddr];
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) VdsoEntryPoint,
+                        IARG_THREAD_ID, IARG_UINT32, (uint32_t)func, IARG_REG_VALUE, REG_RDI, IARG_REG_VALUE, REG_RSI, IARG_END);
+            } else if (INS_IsCall(ins)) {
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) VdsoCallPoint, IARG_THREAD_ID, IARG_END);
+            } else if (INS_IsRet(ins)) {
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) VdsoRetPoint, IARG_THREAD_ID, IARG_END);
+            }
+        }
 }
 
 void mapped_ariel_enable() {
@@ -1073,6 +1328,9 @@ int main(int argc, char *argv[])
     lastMallocLoc = (UINT64*) malloc(sizeof(UINT64) * core_count);
     mallocIndex = 0;
 
+    // Init vdso stuff
+    vdsoPatchData = (VdsoPatchData*) malloc(sizeof(VdsoPatchData) * core_count);
+
     if (KeepMallocStackTrace.Value() == 1) {
         arielStack.resize(core_count);  // Need core_count stacks
         rtnNameMap = fopen("routine_name_map.txt", "wt");
@@ -1123,7 +1381,8 @@ int main(int argc, char *argv[])
 
     INS_AddInstrumentFunction(InstrumentInstruction, 0);
     RTN_AddInstrumentFunction(InstrumentRoutine, 0);
-    
+    VdsoInit(); // Find VDSO info
+
     // Instrument traces to capture stack
     if (KeepMallocStackTrace.Value() == 1)
         TRACE_AddInstrumentFunction(InstrumentTrace, 0);
