@@ -81,7 +81,6 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 	assert(nullptr == m_cmd);
 
 	if (nullptr == m_cmd) {
-
 		m_cmd = x_bankCommandPtr;
 
                 unsigned l_row = m_cmd->getHashedAddress()->getRow();
@@ -96,13 +95,11 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 				m_READCmdsReceived++;
 				m_bankStats->s_bankREADsRecvd->addData(1);
                                 
-                if(m_prevOpenRow == l_row)
-                {
-                      m_bankStats->s_bankRowHits->addData(1);
-                      m_bankStats->s_totalRowHits->addData(1);
-                }
-                else
-                      m_prevOpenRow = m_cmd->getHashedAddress()->getRow();
+                                if(m_prevOpenRow == l_row) {
+                                    m_bankStats->s_bankRowHits->addData(1);
+                                    m_bankStats->s_totalRowHits->addData(1);
+                                } else
+                                    m_prevOpenRow = m_cmd->getHashedAddress()->getRow();
 				break;
 			case e_BankCommandType::WRITE:
 			case e_BankCommandType::WRITEA:
@@ -131,15 +128,14 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 	}
 }
 
-c_BankCommand* c_Bank::clockTic() {
+c_BankCommand* c_Bank::clockTic(bool& l_active) {
+        l_active = false;
 
 	c_BankCommand* l_resPtr = nullptr;
 	if (m_cmd != nullptr) {
-
-
-		if (m_cmd->isResponseReady()) {
-			bool l_doSendRes = false;
-			switch (m_cmd->getCommandMnemonic()) {
+	    if (m_cmd->isResponseReady()) {
+		bool l_doSendRes = false;
+		switch (m_cmd->getCommandMnemonic()) {
 				case e_BankCommandType::ACT:
 					m_ACTCmdsSent++;
 					break;
@@ -186,12 +182,14 @@ c_BankCommand* c_Bank::clockTic() {
 		}
 	}
 
+        if (m_cmd != nullptr) {
+            l_active = true;
+        }
 
 	return l_resPtr;
 } // c_BankCommand* c_Bank::clockTic()
 
 void c_Bank::acceptStatistics(c_BankStatistics *x_bankStats) {
-  assert(m_bankStats == NULL);
   m_bankStats = x_bankStats;
 }
 

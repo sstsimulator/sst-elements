@@ -26,8 +26,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef c_ADDRESSHASHER_HPP
-#define c_ADDRESSHASHER_HPP
+#ifndef c_HBM2ADDRMAP_HPP
+#define c_HBM2ADDRMAP_HPP
 
 // sst includes
 #include <sst/core/component.h>
@@ -42,7 +42,7 @@
 //#include "c_BankCommand.hpp"
 #include "c_HashedAddress.hpp"
 #include "c_Controller.hpp"
-
+#include "c_AddressHasher.hpp"
 
 //<! This class holds information about global simulation state
 //<! any object in the simulator can access this class
@@ -52,45 +52,29 @@ namespace SST {
     namespace n_Bank {
         class c_Controller;
 
-        class c_AddressHasher : public SubComponent {
+        class c_HBM2AddrMap : public c_AddressHasher {
 
         public:
             // Below is for calling in generic locations to obtain a pointer to the singleton instance
-            c_AddressHasher(Component *comp, Params &params);
-
-            static c_AddressHasher *getInstance();
-
-            static c_AddressHasher *
-            getInstance(Params &x_params); // This reads the parameters and constructs the hash function
+            c_HBM2AddrMap(Component *comp, Params &params);
 
             virtual void fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address);
-
-        protected:
-            c_AddressHasher() = delete;
-
-            c_AddressHasher(const c_AddressHasher &) = delete;
-
-            void operator=(const c_AddressHasher &)= delete;
-
-            c_AddressHasher(Params &x_params);
-
-            c_Controller* m_owner;
-            unsigned k_pNumChannels;
-            unsigned k_pNumRanks;
-            unsigned k_pNumBankGroups;
-            unsigned k_pNumBanks;
-            unsigned k_pNumRows;
-            unsigned k_pNumCols;
-            unsigned k_pBurstSize;
-            unsigned k_pNumPseudoChannels;
+        
         private:
-            ulong getAddressForBankId(const unsigned x_bankId);
-            std::string k_addressMapStr = "rlbRBh";
-            std::map<std::string, std::vector<uint> > m_bitPositions;
-            std::map<std::string, uint> m_structureSizes;  // Used for checking that params agree
-
-            // regex replacement stuff
-            void parsePattern(std::string *x_inStr, std::pair<std::string, uint> *x_outPair);
+            unsigned long k_burstBits;
+            unsigned long k_colFillBits;
+            unsigned long k_colFillMask;
+            unsigned long k_chanBits;
+            unsigned long k_chanMask;
+            unsigned long k_pChanBits;
+            unsigned long k_pChanMask;
+            unsigned long k_groupBits;
+            unsigned long k_groupMask;
+            unsigned long k_bankBits;
+            unsigned long k_bankMask;
+            unsigned long k_colRemainBits;
+            unsigned long k_colRemainMask;
+            unsigned long k_rowMask;
         };
     }
 }

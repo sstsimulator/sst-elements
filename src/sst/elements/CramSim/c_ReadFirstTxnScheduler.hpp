@@ -28,58 +28,41 @@
 // limitations under the License.
 
 
-#ifndef C_TXNSCHEDULER_HPP
-#define C_TXNSCHEDULER_HPP
+#ifndef C_READFIRSTTXNSCHEDULER_HPP
+#define C_READFIRSTTXNSCHEDULER_HPP
 
 #include "c_Transaction.hpp"
 #include "c_TxnConverter.hpp"
 #include "c_Controller.hpp"
-
+#include "c_TxnScheduler.hpp"
 
 namespace SST {
     namespace n_Bank {
-        class c_AddressHasher;
-        class c_TxnConverter;
-        class c_Controller;
-
-        enum class e_txnSchedulingPolicy {FCFS, FRFCFS};
-        typedef std::list<c_Transaction*> TxnQueue;
-
-        class c_TxnScheduler: public SubComponent{
+        class c_ReadFirstTxnScheduler: public c_TxnScheduler {
         public:
 
-            c_TxnScheduler(SST::Component *comp, SST::Params &x_params);
-            ~c_TxnScheduler();
+            c_ReadFirstTxnScheduler(SST::Component *comp, SST::Params &x_params);
+            virtual ~c_ReadFirstTxnScheduler();
 
             virtual void run();
             virtual bool push(c_Transaction* newTxn);
             virtual bool isHit(c_Transaction* newTxn);
-
-        protected:
-            //**Controller
-            c_Controller * m_controller;
-            //**transaction converter
-            c_TxnConverter* m_txnConverter;
-            //**command Scheduler
-            c_CmdScheduler* m_cmdScheduler;
-            
-            Output *output;
-            unsigned m_numChannels;
-            
-            e_txnSchedulingPolicy k_txnSchedulingPolicy;
-            unsigned k_numTxnQEntries;
-
-            std::set<int> m_activeChannels;
 
         private:
             virtual c_Transaction* getNextTxn(TxnQueue& x_queue, int x_ch);
             virtual bool hasDependancy(c_Transaction* x_txn, int x_ch);
             virtual void popTxn(TxnQueue& x_queue, c_Transaction* x_txn);
 
-            //**per-channel transaction queue
-            std::vector<TxnQueue> m_txnQ;      // unified queue
+            //**per-channel tranaction queues for read-first scheduling
+            std::vector<TxnQueue> m_txnReadQ;  // read queue for read-first scheduling
+            std::vector<TxnQueue> m_txnWriteQ; // write queue for read-first scheduling
+            unsigned m_maxNumPendingWrite;
+            unsigned m_minNumPendingWrite;
 
             bool m_flushWriteQueue;
+
+            float k_maxPendingWriteThreshold;
+            float k_minPendingWriteThreshold;
         };
     }
 }

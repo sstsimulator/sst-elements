@@ -21,6 +21,8 @@ libCramSim_la_SOURCES = \
 	c_Transaction.cpp \
 	c_AddressHasher.hpp \
 	c_AddressHasher.cpp \
+	c_HBM2AddrMap.hpp \
+	c_HBM2AddrMap.cpp \
 	c_HashedAddress.hpp \
 	c_HashedAddress.cpp \
 	c_DeviceDriver.hpp \
@@ -66,6 +68,8 @@ libCramSim_la_SOURCES = \
 	c_MemhBridge.cpp \
 	c_TxnScheduler.cpp \
 	c_TxnScheduler.hpp \
+	c_ReadFirstTxnScheduler.cpp \
+	c_ReadFirstTxnScheduler.hpp \
 	c_CmdScheduler.cpp \
 	c_CmdScheduler.hpp \
 	c_TxnDispatcher.hpp \

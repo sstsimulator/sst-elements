@@ -35,77 +35,86 @@
 #include <assert.h>
 
 // local includes
-#include "c_TxnScheduler.hpp"
+#include "c_ReadFirstTxnScheduler.hpp"
+#include "c_ReadFirstTxnScheduler.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
 using namespace std;
 
-c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) : SubComponent(owner) {
-    m_controller = dynamic_cast<c_Controller *>(owner);
-    m_txnConverter = m_controller->getTxnConverter();
-    m_cmdScheduler = m_controller->getCmdScheduler();
-
-    output = m_controller->getOutput();
-
-    //initialize member variables
-    m_numChannels = m_controller->getDeviceDriver()->getNumChannel();
-    assert(m_numChannels>0);
-
-    bool l_found=false;
-
-    string l_txnSchedulingPolicy= (string) x_params.find<std::string>("txnSchedulingPolicy","FCFS", l_found);
-    if(!l_found) {
-        std::cout << "txnSchedulingPolicy value is missing... FCFS policy will be used" << std::endl;
-    }
-
-    if(l_txnSchedulingPolicy=="FCFS")
-    {
-        k_txnSchedulingPolicy=e_txnSchedulingPolicy::FCFS;
-    }
-    else if(l_txnSchedulingPolicy=="FRFCFS")
-    {
-        k_txnSchedulingPolicy=e_txnSchedulingPolicy::FRFCFS;
-    } else
-    {
-        std::cout << "unsupported txnSchedulingPolicy ("<<l_txnSchedulingPolicy<<"),, exit"<< std::endl;
-        exit(1);
-    }
-
-
-    k_numTxnQEntries = (unsigned) x_params.find<unsigned>("numTxnQEntries", 32, l_found);
-    if (!l_found) {
-        std::cout << "numTxnQEntries value is missing... it will be 32 (default)" << std::endl;
-    }
-
-
-
+c_ReadFirstTxnScheduler::c_ReadFirstTxnScheduler(SST::Component *owner, SST::Params& x_params) : c_TxnScheduler(owner, x_params) {
     //initialize per-channel transaction queues
-    m_txnQ.resize(m_numChannels);
+    m_txnReadQ.resize(m_numChannels);
+    m_txnWriteQ.resize(m_numChannels);
+
+    bool l_found;
+
+    k_maxPendingWriteThreshold = (float) x_params.find<float>("maxPendingWriteThreshold", 1, l_found);
+    if (!l_found) {
+        std::cout << "maxPendingWriteThreshold value is missing... it will be 1.0 (default)" << std::endl;
+    } else {
+        if (k_maxPendingWriteThreshold > 1) {
+            std::cout << "maxPendingWriteThreshold value should be greater than 0 and less than (or equal to) one"
+                        << std::endl;
+            exit(1);
+        }
+    }
+
+    k_minPendingWriteThreshold = (float) x_params.find<float>("minPendingWriteThreshold", 0.2, l_found);
+    if (!l_found) {
+        std::cout << "minPendingWriteThreshold value is missing... it will be 1.0 (default)" << std::endl;
+    } else {
+        if (k_minPendingWriteThreshold > k_maxPendingWriteThreshold) {
+            std::cout << "minPendingWriteThreshold value should be smaller than maxPendingWriteThreshold"
+                        << std::endl;
+            exit(1);
+        }
+    }
+
+    m_maxNumPendingWrite = (unsigned) ((float) k_numTxnQEntries * k_maxPendingWriteThreshold);
+    m_minNumPendingWrite = (unsigned) ((float) k_numTxnQEntries * k_minPendingWriteThreshold);
+    m_flushWriteQueue = false;
 }
 
-c_TxnScheduler::~c_TxnScheduler() {
+c_ReadFirstTxnScheduler::~c_ReadFirstTxnScheduler() {
 
 }
 
 
-void c_TxnScheduler::run(){
+void c_ReadFirstTxnScheduler::run(){
     
+    std::cout << getName() << " active channels: " << m_activeChannels.size() << std::endl;
+
     for(std::set<int>::iterator it = m_activeChannels.begin(); it != m_activeChannels.end();) {
         //int l_channelID=0; l_channelID<m_numChannels; l_channelID++) {
         int l_channelID = *it;
-        
-        std::set<int>::iterator next = it;
-        next++;
 
         //0. select queue
-        TxnQueue* l_queue = &(m_txnQ[l_channelID]);
-        
+        TxnQueue* l_queue= nullptr;
+        if (m_txnWriteQ[l_channelID].size() >= m_maxNumPendingWrite || m_txnReadQ[l_channelID].size()==0) {
+            m_flushWriteQueue = true;
+            l_queue = &(m_txnWriteQ[l_channelID]);
+        } else if (m_txnWriteQ[l_channelID].size() < m_minNumPendingWrite && m_txnReadQ[l_channelID].size()!=0) {
+            m_flushWriteQueue = false;
+            l_queue = &(m_txnReadQ[l_channelID]);
+        }
+
         //1. select a transaction from the transaction queue
         c_Transaction* l_nextTxn=nullptr;
         if(l_queue->size())
             l_nextTxn=getNextTxn(*l_queue, l_channelID);
+          //1.1. With read-first scheduling, we change the queue if there are no issuable transactions in the selected queue
+        if(l_nextTxn== nullptr)
+        {
+            if(m_flushWriteQueue ==true)
+                l_queue = &m_txnReadQ[l_channelID];
+            else
+                l_queue = &m_txnWriteQ[l_channelID];
+            if(l_queue->size())
+                l_nextTxn=getNextTxn(*l_queue, l_channelID);
+        }
 
+        std::set<int>::iterator next = it++;
         //2. send the selected transaction to transaction converter
         if(l_nextTxn!=nullptr) {
             if(m_cmdScheduler->getToken(l_nextTxn->getHashedAddress())>=3) {
@@ -114,12 +123,12 @@ void c_TxnScheduler::run(){
                 m_txnConverter->push(l_nextTxn);
 
                 #ifdef __SST_DEBUG_OUTPUT__
-                l_nextTxn->print(output, "[c_TxnScheduler]",m_controller->getSimCycle());
+                l_nextTxn->print(output, "[c_ReadFirstTxnScheduler]",m_controller->getSimCycle());
                 #endif
 
                 // pop it from inputQ
                 popTxn(*l_queue , l_nextTxn);
-                if (m_txnQ[l_channelID].empty())
+                if (m_txnWriteQ[l_channelID].empty() && m_txnReadQ[l_channelID].empty())
                     m_activeChannels.erase(it);
             }
         }
@@ -128,7 +137,7 @@ void c_TxnScheduler::run(){
 }
 
 
-c_Transaction* c_TxnScheduler::getNextTxn(TxnQueue& x_queue, int x_ch)
+c_Transaction* c_ReadFirstTxnScheduler::getNextTxn(TxnQueue& x_queue, int x_ch)
 {
 
     assert(x_queue.size()!=0);
@@ -170,21 +179,31 @@ c_Transaction* c_TxnScheduler::getNextTxn(TxnQueue& x_queue, int x_ch)
 }
 
 
-void c_TxnScheduler::popTxn(TxnQueue &x_txnQ, c_Transaction* x_Txn)
+void c_ReadFirstTxnScheduler::popTxn(TxnQueue &x_txnQ, c_Transaction* x_Txn)
 {
     x_txnQ.remove(x_Txn);
 }
 
-bool c_TxnScheduler::push(c_Transaction* newTxn)
+bool c_ReadFirstTxnScheduler::push(c_Transaction* newTxn)
 {
     int l_channelId=newTxn->getHashedAddress().getChannel();
     bool l_success=false;
-    if (m_txnQ.at(l_channelId).size() < k_numTxnQEntries) {
-        m_txnQ.at(l_channelId).push_back(newTxn);
-        l_success=true;
+    if(newTxn->isRead())
+    {
+        if(m_txnReadQ[l_channelId].size()< k_numTxnQEntries) {
+            m_txnReadQ[l_channelId].push_back(newTxn);
+            l_success = true;
+        }
+        else
+            l_success=false;
     } else
-        l_success=false;
-    
+    {
+        if(m_txnWriteQ[l_channelId].size()< k_numTxnQEntries) {
+            l_success=true;
+            m_txnWriteQ[l_channelId].push_back(newTxn);
+        }else
+            l_success=false;
+    }
     if (l_success)
         m_activeChannels.insert(l_channelId);
     return l_success;
@@ -192,7 +211,7 @@ bool c_TxnScheduler::push(c_Transaction* newTxn)
 
 
 //Check if read transactions get data from the transaction queue
-bool c_TxnScheduler::isHit(c_Transaction* x_txn)
+bool c_ReadFirstTxnScheduler::isHit(c_Transaction* x_txn)
 {
     int l_channelId=x_txn->getHashedAddress().getChannel();
     TxnQueue* l_queue=nullptr;
@@ -201,13 +220,13 @@ bool c_TxnScheduler::isHit(c_Transaction* x_txn)
 
     if(l_isRead)
     {
-        l_queue = &m_txnQ.at(l_channelId);
+        l_queue = &m_txnWriteQ.at(l_channelId);
 
         //traverse the transaction queue in reverse order
         for (TxnQueue::reverse_iterator l_txnItr = l_queue->rbegin(); l_txnItr != l_queue->rend(); ++l_txnItr) {
             c_Transaction *l_txn = *l_txnItr;
 
-            if (l_txn->isWrite() && (l_txn->getAddress() == x_txn->getAddress())) {
+            if ((l_txn->getAddress() == x_txn->getAddress())) {
                 l_isHit = true;
                 break;
             }
@@ -217,12 +236,15 @@ bool c_TxnScheduler::isHit(c_Transaction* x_txn)
     return l_isHit;
 }
 
-bool c_TxnScheduler::hasDependancy(c_Transaction *x_txn, int x_ch)
+bool c_ReadFirstTxnScheduler::hasDependancy(c_Transaction *x_txn, int x_ch)
 {
     TxnQueue* l_queue= nullptr;
     bool l_hasDependancy = false;
 
-    l_queue=&m_txnQ[x_ch];
+    if(x_txn->isRead())
+        l_queue = &m_txnWriteQ[x_ch];
+    else
+        l_queue= &m_txnReadQ[x_ch];
 
     for(auto &l_txn: *l_queue)
     {

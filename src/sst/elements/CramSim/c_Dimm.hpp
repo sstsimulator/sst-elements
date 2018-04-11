@@ -71,6 +71,7 @@ private:
 	void operator=(const c_Dimm&); // do not implement
 
 	virtual bool clockTic(SST::Cycle_t); // called every cycle
+        virtual void turnClockOn();
 
 	// BankReceiver <-> CmdUnit Handlers
 	void handleInCmdUnitReqPtrEvent(SST::Event *ev); // receive a cmd req from CmdUnit
@@ -86,6 +87,8 @@ private:
 
 	// Clock Handler
 	Clock::HandlerBase *m_clockHandler;
+        TimeConverter* m_timeBase;
+        bool m_clockOn;
 
 	// params
 	int k_numChannels;
@@ -111,6 +114,8 @@ private:
 
 	int m_numBanks;
 	int m_numRanks;
+
+        std::set<int> m_activeBanks;
 
     SimTime_t m_simCycle;
 	std::vector<c_Bank*> m_banks;
