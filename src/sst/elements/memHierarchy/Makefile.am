@@ -144,7 +144,7 @@ EXTRA_DIST = \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
 	tests/testBackendGoblinHMC.py \
-	tests/testBackendHBMDRAMSim.py \
+	tests/testBackendHBMDramsim.py \
 	tests/testBackendHBMPagedMulti.py \
 	tests/testBackendPagedMulti.py \
 	tests/testBackendReorderRow.py \
