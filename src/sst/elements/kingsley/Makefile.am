@@ -11,6 +11,7 @@ libkingsley_la_SOURCES = \
 	nocEvents.h \
 	noc_mesh.h \
 	noc_mesh.cc \
+	lru_unit.h \
 	linkControl.h \
 	linkControl.cc 
 
