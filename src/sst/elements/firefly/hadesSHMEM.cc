@@ -231,7 +231,7 @@ void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, bool backed, Callbac
 {
     *ptr =  m_heap->malloc( size, backed );
 
-    dbg().debug(CALL_INFO,1,SHMEM_BASE," maddr %#" PRIx64 " size=%lu\n",*ptr,size);
+    dbg().debug(CALL_INFO,1,SHMEM_BASE," maddr ptr=%p size=%lu\n",ptr,size);
 
 	m_os->getNic()->shmemRegMem( *ptr, size, callback) ; 
 }

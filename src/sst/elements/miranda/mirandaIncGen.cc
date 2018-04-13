@@ -1,0 +1,12 @@
+
+#include "generators/copygen.h"
+#include "generators/gupsgen.h"
+#include "generators/inorderstreambench.h"
+#include "generators/nullgen.h"
+#include "generators/randomgen.h"
+#include "generators/revsinglestream.h"
+#include "generators/singlestream.h"
+#include "generators/spmvgen.h"
+#include "generators/stencil3dbench.h"
+#include "generators/streambench.h"
+#include "generators/streambench_customcmd.h"

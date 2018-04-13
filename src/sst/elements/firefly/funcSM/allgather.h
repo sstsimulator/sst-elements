@@ -38,6 +38,17 @@ namespace Firefly {
 
 class AllgatherFuncSM :  public FunctionSMInterface
 {
+  public:
+    SST_ELI_REGISTER_MODULE(
+        AllgatherFuncSM,
+        "firefly",
+        "Allgather",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    ) 
+
+  private:
     enum StateEnum {
         FOREACH_ENUM(GENERATE_ENUM)
     } m_state;

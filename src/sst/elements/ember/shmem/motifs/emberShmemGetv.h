@@ -105,6 +105,86 @@ public:
     int m_num_pes;
 };
 
+class EmberShmemGetvIntGenerator : public EmberShmemGetvGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemGetvIntGenerator,
+        "ember",
+        "ShmemGetvIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM getv int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemGetvIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemGetvGenerator(owner,  params) { }
+};
+
+class EmberShmemGetvLongGenerator : public EmberShmemGetvGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemGetvLongGenerator,
+        "ember",
+        "ShmemGetvLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM getv long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemGetvLongGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemGetvGenerator(owner,  params) { }
+};
+
+class EmberShmemGetvDoubleGenerator : public EmberShmemGetvGenerator<double> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemGetvDoubleGenerator,
+        "ember",
+        "ShmemGetvDoubleMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM getv double",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemGetvDoubleGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemGetvGenerator(owner,  params) { }
+};
+
+class EmberShmemGetvFloatGenerator : public EmberShmemGetvGenerator<float> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemGetvFloatGenerator,
+        "ember",
+        "ShmemGetvFloatMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM getv float",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemGetvFloatGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemGetvGenerator(owner,  params) { }
+};
+
 }
 }
 

@@ -18,12 +18,27 @@
 #define _H_SST_EMBER_GAUSSIAN_COMPUTE_DISTRIBUTION
 
 #include "emberdistrib.h"
+#include <sst/core/elementinfo.h>
 #include <sst/core/rng/gaussian.h>
 
 namespace SST {
 namespace Ember {
 
 class EmberGaussianDistribution : public EmberComputeDistribution {
+public:
+    SST_ELI_REGISTER_MODULE(
+        EmberGaussianDistribution, 
+        "ember",
+        "GaussianDistrib",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Gaussian distributed compute noise model",
+        "SST::Ember::EmberComputeDistribution"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {   "mean",         "Sets the mean value of the Gaussian distribution", "1.0" },
+        {   "stddev",       "Sets the standard deviation of the Gaussian distribution", "0.25" },
+    )    
 
 public:
 	EmberGaussianDistribution(Component* owner, Params& params);

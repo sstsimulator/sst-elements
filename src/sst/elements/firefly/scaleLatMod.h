@@ -18,6 +18,7 @@
 #define COMPONENTS_FIREFLY_SCALELATMOD_H
 
 #include "latencyMod.h"
+#include <sst/core/elementinfo.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/unitAlgebra.h>
@@ -28,6 +29,17 @@ namespace Firefly {
 #define SCALELATMOD_DBG 0
 
 class ScaleLatMod : public LatencyMod { 
+
+  public:
+    SST_ELI_REGISTER_MODULE(
+        ScaleLatMod,
+        "firefly",
+        "ScaleLatMod",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        "SST::Firefly::ScaleLatMod"
+    )
+  private:
 
     struct Entry {
         uint64_t start;

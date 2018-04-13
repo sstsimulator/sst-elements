@@ -25,6 +25,15 @@ namespace Firefly {
 class RankFuncSM :  public FunctionSMInterface
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        RankFuncSM,
+        "firefly",
+        "Rank",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+  public:
     RankFuncSM( SST::Params& params ) : FunctionSMInterface( params ) {}
 
     virtual void handleStartEvent( SST::Event *e, Retval& retval ) {

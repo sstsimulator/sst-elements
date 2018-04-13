@@ -130,6 +130,44 @@ public:
     int m_phase;
 };
 
+class EmberShmemFcollect32Generator : public EmberShmemFcollectGenerator<uint32_t> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemFcollect32Generator,
+        "ember",
+        "ShmemFcollect32Motif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM fcollects32",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemFcollect32Generator(SST::Component* owner, Params& params) :
+    EmberShmemFcollectGenerator( owner, params) {}
+};
+
+class EmberShmemFcollect64Generator : public EmberShmemFcollectGenerator<uint64_t> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemFcollect64Generator,
+        "ember",
+        "ShmemFcollect64Motif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM fcollects64",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemFcollect64Generator(SST::Component* owner, Params& params) :
+    EmberShmemFcollectGenerator( owner, params) {}
+};
+
 }
 }
 

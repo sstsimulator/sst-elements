@@ -144,6 +144,8 @@ EXTRA_DIST = \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
 	tests/testBackendGoblinHMC.py \
+	tests/testBackendHBMDramsim.py \
+	tests/testBackendHBMPagedMulti.py \
 	tests/testBackendPagedMulti.py \
 	tests/testBackendReorderRow.py \
 	tests/testBackendReorderSimple.py \
@@ -170,6 +172,10 @@ EXTRA_DIST = \
 	tests/testScratchNetwork.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini \
+	tests/ddr_device.ini \
+	tests/ddr_system.ini \
+	tests/hbm_device.ini \
+	tests/hbm_system.ini \
 	tests/utils.py
 
 sstdir = $(includedir)/sst/elements/memHierarchy
@@ -239,7 +245,7 @@ libmemHierarchy_la_LIBADD += $(HBMDRAMSIM_LIB)
 libmemHierarchy_la_SOURCES += membackend/HBMdramSimBackend.cc \
 	membackend/HBMdramSimBackend.h
 nobase_sst_HEADERS += membackend/HBMdramSimBackend.h
-AM_CPPFLAGS += $(HBMDRAMSIM_CPPFLAGS) -DHAVE_HBMLIBDRAMSIM -DHAVE_HBMDRAMSIM
+AM_CPPFLAGS += $(HBMDRAMSIM_CPPFLAGS) -DHAVE_LIBHBMDRAMSIM
 
 libmemHierarchy_la_SOURCES += membackend/HBMpagedMultiBackend.cc \
 	membackend/HBMpagedMultiBackend.h

@@ -17,6 +17,7 @@
 #ifndef COMPONENTS_FIREFLY_VIRTNIC_H
 #define COMPONENTS_FIREFLY_VIRTNIC_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/module.h>
 #include <sst/core/output.h>
 #include <sst/core/component.h>
@@ -31,6 +32,24 @@ class NicRespEvent;
 class NicShmemRespBaseEvent;
 
 class VirtNic : public SST::Module {
+
+  public:
+    SST_ELI_REGISTER_MODULE(
+        VirtNic,
+        "firefly",
+        "VirtNic",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        "SST::Firefly::VirtNic"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {"debugLevel", "Sets the output verbosity of the component", "1"},
+        {"debug", "Sets the messaging API of the end point", "0"},
+        {"portName", "Sets the name of the port for the link", "nic"},
+    ) 
+
+  private:
 
     // Functor classes for handling callbacks
     template < typename argT >

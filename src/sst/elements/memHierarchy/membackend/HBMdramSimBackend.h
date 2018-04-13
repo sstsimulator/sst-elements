@@ -85,7 +85,7 @@ public:
 protected:
     void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
-    DRAMSim::MultiChannelMemorySystem *memSystem;
+    HBMDRAMSim::MultiChannelMemorySystem *memSystem;
     std::map<uint64_t, std::deque<ReqId> > dramReqs;
 };
 

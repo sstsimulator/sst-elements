@@ -24,6 +24,7 @@
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace HBMDRAMSim;
 
 HBMDRAMSimMemory::HBMDRAMSimMemory(Component *comp, Params &params)
   : SimpleMemBackend(comp, params){
@@ -41,19 +42,19 @@ HBMDRAMSimMemory::HBMDRAMSimMemory(Component *comp, Params &params)
 
     UnitAlgebra ramSize = UnitAlgebra(params.find<std::string>("mem_size", "0B"));
     if (ramSize.getRoundedValue() % (1024*1024) != 0) {
-        output->fatal(CALL_INFO, -1, "For DRAMSim, backend.mem_size must be a multiple of 1MiB. Note: for units in base-10 use 'MB', for base-2 use 'MiB'. You specified '%s'\n", ramSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "For HBMDRAMSim, backend.mem_size must be a multiple of 1MiB. Note: for units in base-10 use 'MB', for base-2 use 'MiB'. You specified '%s'\n", ramSize.toString().c_str());
     }
     unsigned int ramSizeMiB = ramSize.getRoundedValue() / (1024*1024);
 
-    memSystem = DRAMSim::getMemorySystemInstance(
+    memSystem = HBMDRAMSim::getMemorySystemInstance(
             deviceIniFilename, systemIniFilename, "", ramSizeMiB);
 
-    DRAMSim::Callback<HBMDRAMSimMemory, void, unsigned int, uint64_t, uint64_t>
+    HBMDRAMSim::Callback<HBMDRAMSimMemory, void, unsigned int, uint64_t, uint64_t>
         *readDataCB, *writeDataCB;
 
-    readDataCB = new DRAMSim::Callback<HBMDRAMSimMemory, void, unsigned int, uint64_t, uint64_t>(
+    readDataCB = new HBMDRAMSim::Callback<HBMDRAMSimMemory, void, unsigned int, uint64_t, uint64_t>(
             this, &HBMDRAMSimMemory::dramSimDone);
-    writeDataCB = new DRAMSim::Callback<HBMDRAMSimMemory, void, unsigned int, uint64_t, uint64_t>(
+    writeDataCB = new HBMDRAMSim::Callback<HBMDRAMSimMemory, void, unsigned int, uint64_t, uint64_t>(
             this, &HBMDRAMSimMemory::dramSimDone);
 
     memSystem->RegisterCallbacks(readDataCB, writeDataCB, NULL);

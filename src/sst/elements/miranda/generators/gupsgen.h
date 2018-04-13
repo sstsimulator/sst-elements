@@ -37,6 +37,26 @@ public:
 	bool isFinished();
 	void completed();
 
+	SST_ELI_REGISTER_SUBCOMPONENT(
+               	GUPSGenerator,
+               	"miranda",
+                "GUPSGenerator",
+               	SST_ELI_ELEMENT_VERSION(1,0,0),
+		"Creates a random stream of accesses to read-modify-write",
+                "SST::Miranda::RequestGenerator"
+       	)
+
+        SST_ELI_DOCUMENT_PARAMS(
+		{ "verbose",          "Sets the verbosity output of the generator", "0" },
+   	 	{ "seed_a",           "Sets the seed-a for the random generator", "11" },
+    		{ "seed_b",           "Sets the seed-b for the random generator", "31" },
+    		{ "count",            "Count for number of items being requested", "1024" },
+    		{ "length",           "Length of requests", "8" },
+    		{ "iterations",       "Number of iterations to perform", "1" },
+    		{ "max_address",      "Maximum address allowed for generation", "536870912" /* 512MB */ },
+	    	{ "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" }
+        )
+
 private:
 	uint64_t reqLength;
 	uint64_t maxAddr;
