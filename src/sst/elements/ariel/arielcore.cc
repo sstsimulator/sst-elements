@@ -829,7 +829,6 @@ bool ArielCore::processNextEvent() {
 		case FENCE:
 			/*  Todo: should we check if core is fenced first?  */
 			ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is a FENCE\n", coreID));
-			std::cout << "Core ID:" << coreID << " PROCESSED A FENCE EVENT" << std::endl;
 			handleFenceEvent(dynamic_cast<ArielFenceEvent*>(nextEvent));
 			removeEvent = true;
 			break;
