@@ -42,6 +42,18 @@ enum ArielPageMappingPolicy {
 class ArielMemoryManager : public SubComponent {
 
 	public:
+            /* ELI defines for ArielMemoryManager subcomponents */
+        #define ARIEL_ELI_MEMMGR_PARAMS {"verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},\
+            {"vtop_translate",  "Set to yes to perform virt-phys translation (TLB) or no to disable", "yes"},\
+            {"pagemappolicy",   "Select the page mapping policy for Ariel [LINEAR|RANDOMIZED]", "LINEAR"},\
+            {"translatecacheentries", "Keep a translation cache of this many entries to improve emulated core performance", "4096"}
+
+        #define ARIEL_ELI_MEMMGR_STATS { "tlb_hits", "Hits in the simple Ariel TLB", "hits", 2 },\
+            { "tlb_evicts",           "Number of evictions in the simple Ariel TLB", "evictions", 2 },\
+            { "tlb_translate_queries","Number of TLB translations performed", "translations", 2 },\
+            { "tlb_shootdown",        "Number of TLB clears because of page-frees", "shootdowns", 2 },\
+            { "tlb_page_allocs",      "Number of pages allocated by the memory manager", "pages", 2 }
+
             /* Constructor
              *  Supports multiple memory pools with independent page sizes/counts
              *  Constructs free page sets for each memory pool

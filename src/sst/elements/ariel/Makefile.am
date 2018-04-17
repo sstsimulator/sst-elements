@@ -11,7 +11,6 @@ endif
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libariel.la
 libariel_la_SOURCES = \
-	libariel.cc \
 	arielcpu.cc \
 	arielcpu.h \
 	arielcore.cc \
