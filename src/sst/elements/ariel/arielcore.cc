@@ -23,10 +23,7 @@ using namespace SST::OpalComponent;
 
 uint32_t originalMaxPendingTransaction; // Variable holding the original pending maxPendingTransactions 
 
-uint32_t flushCompleteCounter; // Variable holding the ending cycle count for the latest flush. 
 
-uint64_t ticksFencedCounter = 0; /* Variable holding the number of ticks we're fenced */
-				/* Added to stats */
 
 ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 		uint32_t thisCoreID, uint32_t maxPendTrans,
@@ -37,8 +34,6 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	verbosity(static_cast<uint32_t>(out->getVerboseLevel()))
 {
 	// set both counters for flushes to 0
-	flushCompleteCounter = 0;
-
 	output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
 	inst_count = 0;
 	cacheLink = coreToCacheLink;
