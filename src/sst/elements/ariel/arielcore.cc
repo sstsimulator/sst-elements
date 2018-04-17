@@ -196,13 +196,9 @@ void ArielCore::commitFlushEvent(const uint64_t address,
 	if(length > 0) {
 		/*  Todo: should the request specify the physical address, or the virtual address? */
 		SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::FlushLineInv, address, length);
-		req->setVirtualAddress(virtAddress);
+		req->addAddress(address);
 		pending_transaction_count++;
 		pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
-
-		if(enableTracing){
-			printTraceEntry(false, (const uint64_t) req->addrs[0], (const uint32_t) length);
-		}
 
 		cacheLink->sendRequest(req);
 	}
