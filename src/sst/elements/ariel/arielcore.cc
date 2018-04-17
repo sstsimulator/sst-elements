@@ -200,6 +200,9 @@ void ArielCore::commitFlushEvent(const uint64_t address,
 }
 
 void ArielCore::handleEvent(SimpleMem::Request* event) {
+	if(isCoreFenced() && hasDrainCompleted())
+		unfence();
+	
 	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling a memory event.\n", coreID));
 
 	SimpleMem::Request::id_t mev_id = event->id;
@@ -702,11 +705,7 @@ void ArielCore::printCoreStatistics() {
 bool ArielCore::processNextEvent() {
 
 	// Upon every call, check if the core is drained and we are fenced. If so, unfence
-	if(isCoreFenced() && hasDrainCompleted())
-	{
-		unfence();
-		return true; /* Todo: reevaluate if this is needed */
-	}
+//		return true; /* Todo: reevaluate if this is needed */
 
 	// Attempt to refill the queue
 	if(coreQ->empty()) {
