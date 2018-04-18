@@ -7,6 +7,9 @@ AC_DEFUN([SST_ariel_CONFIG], [
   SST_CHECK_PTRACE_SET_TRACER()
   SST_CHECK_SHM()
 
+  # Use LIBZ
+  SST_CHECK_LIBZ()
+
   AS_IF( [test "$have_pin" = 1], [sst_check_ariel="yes"], [sst_check_ariel="no"] )
   AS_IF([test "$sst_check_ariel" = "yes"], [$1], [$2])
 ])
