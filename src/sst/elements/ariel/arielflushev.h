@@ -18,6 +18,7 @@
 #define _H_SST_ARIEL_FLUSH_EVENT
 
 #include "arielevent.h"
+#include "arielcore.h"
 
 using namespace SST;
 
@@ -29,6 +30,7 @@ class ArielFlushEvent : public ArielEvent {
 	public:
 		ArielFlushEvent(uint64_t vAddr) :
 			virtualAddress(vAddr){
+				length = cacheLineSize;
 			}
 		~ArielFlushEvent() {}
 		ArielEventType getEventType() const { return FLUSH; }

@@ -111,6 +111,8 @@ class ArielCore {
 		void printCoreStatistics();
 		void printTraceEntry(const bool isRead, const uint64_t address, const uint32_t length);
 
+		uint64_t getCacheLineSize(){return cacheLineSize;}
+
 	private:
 		bool processNextEvent();
 		bool refillQueue();
