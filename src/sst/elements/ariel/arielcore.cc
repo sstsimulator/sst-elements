@@ -21,9 +21,6 @@ using namespace SST::OpalComponent;
 
 #define ARIEL_CORE_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
 
-uint32_t originalMaxPendingTransaction; // Variable holding the original pending maxPendingTransactions 
-
-
 
 ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 		uint32_t thisCoreID, uint32_t maxPendTrans,
@@ -40,7 +37,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	allocLink = 0;
 	coreID = thisCoreID;
 	maxPendingTransactions = maxPendTrans;
-	originalMaxPendingTransaction = maxPendingTransactions;
+	setOriginalMaxPendingTransactions(maxPendingTransactions);
 	isHalted = false;
 	maxIssuePerCycle = maxIssuePerCyc;
 	maxQLength = maxQLen;
@@ -244,7 +241,7 @@ void ArielCore::fence(){
 void ArielCore::unfence()
 {
 	isFenced = false; 
-	maxPendingTransactions = originalMaxPendingTransaction;
+	maxPendingTransactions = getOriginalMaxPendingTransactions(); 
 	/* Todo:   Register statistics  */
 }
 
