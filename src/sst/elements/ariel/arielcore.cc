@@ -306,7 +306,7 @@ void ArielCore::createWriteEvent(uint64_t address, uint32_t length) {
 }
 
 void ArielCore::createFlushEvent(uint64_t vAddr){
-	ArielFlushEvent *ev = new ArielFlushEvent(vAddr);
+	ArielFlushEvent *ev = new ArielFlushEvent(vAddr, cacheLineSize);
 	coreQ->push(ev);
 
 	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO,4,0, "Generated a FLUSH event.\n"));

@@ -17,6 +17,8 @@
 #ifndef _H_SST_ARIEL_FLUSH_EVENT
 #define _H_SST_ARIEL_FLUSH_EVENT
 
+#include <sst_config.h> 
+#include <../Opal/Opal_Event.h>
 #include "arielevent.h"
 #include "arielcore.h"
 
@@ -28,7 +30,7 @@ namespace ArielComponent {
 class ArielFlushEvent : public ArielEvent {
 
 	public:
-		ArielFlushEvent(uint64_t vAddr) :
+		ArielFlushEvent(uint64_t vAddr, uint64_t cacheLineSize) :
 			virtualAddress(vAddr){
 				length = cacheLineSize;
 			}
