@@ -169,13 +169,11 @@
 				Hermes::Vaddr evictAddr = m_cache.evict();
            		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"evict addr=%#" PRIx64 "\n", evictAddr );
 
-                if ( evictAddr != -1 ) { 
-				    if ( m_memory->store( this, new MemReq( evictAddr, m_cacheLineSize ) ) ) {
-					    m_missEntry = entry;
-					    setState( BlockedStore );
-					    return;
-				    }
-                }
+			    if ( m_memory->store( this, new MemReq( evictAddr, m_cacheLineSize ) ) ) {
+			        m_missEntry = entry;
+				    setState( BlockedStore );
+				    return;
+		        } 
 			}
 			miss2( entry );
 		}
