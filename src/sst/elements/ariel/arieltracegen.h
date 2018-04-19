@@ -18,6 +18,7 @@
 #define _H_SST_ARIEL_TRACE_GEN
 
 #include <sst/core/module.h>
+#include <sst/core/elementinfo.h>
 
 namespace SST {
 namespace ArielComponent {

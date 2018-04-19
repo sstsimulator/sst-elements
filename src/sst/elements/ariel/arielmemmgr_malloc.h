@@ -19,7 +19,9 @@
 
 #include <sst/core/component.h>
 #include <sst/core/output.h>
-#include <arielmemmgr.h>
+#include <sst/core/elementinfo.h>
+
+#include "arielmemmgr.h"
 
 #include <stdint.h>
 #include <deque>
@@ -34,6 +36,24 @@ namespace ArielComponent {
 class ArielMemoryManagerMalloc : public ArielMemoryManager {
 
 	public:
+            /* SST ELI */
+            SST_ELI_REGISTER_SUBCOMPONENT(ArielMemoryManagerMalloc, "ariel", "MemoryManagerMalloc", SST_ELI_ELEMENT_VERSION(1,0,0),
+                    "MLM memory manager which supports malloc/free in different memory pools", "SST::ArielComponent::ArielMemoryManager")
+
+#define MEMMGR_MALLOC_ELI_PARAMS ARIEL_ELI_MEMMGR_PARAMS,\
+            {"memorylevels",    "Number of memory levels in the system", "1"},\
+            {"defaultlevel",    "Default memory level", "0"},\
+            {"pagesize%(memorylevels)d", "Page size for memory Level x", "4096"},\
+            {"pagecount%(memorylevels)d", "Page count for memory Level x", "131072"},\
+            {"page_populate_%(memorylevels)d", "Pre-populate/partially pre-populate a page table for a level in memory, this is the file to read in.", ""}
+
+            SST_ELI_DOCUMENT_PARAMS( MEMMGR_MALLOC_ELI_PARAMS )
+
+            SST_ELI_DOCUMENT_STATISTICS( ARIEL_ELI_MEMMGR_STATS )
+
+
+            /* ArielMemoryManagerMalloc */
+
 	    ArielMemoryManagerMalloc(SST::Component* owner, Params& params);
     	    ~ArielMemoryManagerMalloc();
 	

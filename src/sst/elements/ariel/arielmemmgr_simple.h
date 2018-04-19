@@ -19,7 +19,9 @@
 
 #include <sst/core/component.h>
 #include <sst/core/output.h>
-#include <arielmemmgr.h>
+#include <sst/core/elementinfo.h>
+
+#include "arielmemmgr.h"
 
 #include <stdint.h>
 #include <deque>
@@ -34,7 +36,22 @@ namespace ArielComponent {
 class ArielMemoryManagerSimple : public ArielMemoryManager {
 
 	public:
-	    ArielMemoryManagerSimple(SST::Component* owner, Params& params);
+            /* SST ELI */
+            SST_ELI_REGISTER_SUBCOMPONENT(ArielMemoryManagerSimple, "ariel", "MemoryManagerSimple", SST_ELI_ELEMENT_VERSION(1,0,0),
+                    "Simple allocate-on-first touch memory manager", "SST::ArielComponent::ArielMemoryManager")
+
+#define MEMMGR_SIMPLE_ELI_PARAMS ARIEL_ELI_MEMMGR_PARAMS,\
+            {"pagesize0", "Page size", "4096"},\
+            {"pagecount0", "Page count", "131072"},\
+            {"page_populate_0", "Pre-populate/partially pre-poulate the page table, this is the file to read in.", ""}
+
+            SST_ELI_DOCUMENT_PARAMS( MEMMGR_SIMPLE_ELI_PARAMS )
+
+            SST_ELI_DOCUMENT_STATISTICS( ARIEL_ELI_MEMMGR_STATS )
+
+            /* ArielMemoryManagerSimple */
+	    
+            ArielMemoryManagerSimple(SST::Component* owner, Params& params);
     	    ~ArielMemoryManagerSimple();
 		
 	    uint64_t translateAddress(uint64_t virtAddr);
