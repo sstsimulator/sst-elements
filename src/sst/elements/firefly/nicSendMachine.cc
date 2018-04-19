@@ -72,6 +72,7 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
 }
 void Nic::SendMachine::streamFini( SendEntryBase* entry ) 
 {
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "%p pid=%d\n",entry,m_id);
     if ( m_I_manage ) {
         m_sendQ.pop_front();
         if ( ! m_sendQ.empty() )  {
@@ -85,10 +86,7 @@ void Nic::SendMachine::streamFini( SendEntryBase* entry )
     if ( entry->shouldDelete() ) {
         m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "%p delete SendEntry entry, pid=%d\n",entry, entry->local_vNic());
         delete entry;
-    } else {
-        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "%p pid=%d\n",entry,m_id);
     }
-
 }
 
 void  Nic::SendMachine::InQ::enque( int unit, int pid, std::vector< MemOp >* vec,

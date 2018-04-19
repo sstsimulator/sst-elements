@@ -265,8 +265,7 @@ public:
     typedef uint64_t DestKey;
     static DestKey getDestKey(int node, int pid) { return (DestKey) node << 32 | pid; }
 
-    std::vector< std::unordered_set< DestKey > > m_sendEntryInProgress;
-    std::list<SendEntryBase*> m_sendEntryQ;
+    std::vector< std::pair< bool, std::deque<  std::pair< SimTime_t, SendEntryBase*> > > > m_sendEntryQ;
 
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
