@@ -23,6 +23,7 @@
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <algorithm>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -51,7 +52,7 @@ namespace SST
 	namespace OpalComponent
 	{
 
-		class core_handler;
+		class NodePrivateInfo;
 
 		class Opal : public SST::Component
 		{
@@ -61,14 +62,18 @@ namespace SST
 				void setup()  { };
 				void finish();
 				void setNextMemPool( int node );
-				long long int allocLocalMemPool( int node, int link, long long int vAddress, int size );
-				long long int allocSharedMemPool( int node, int link, long long int vAddress, int size );
+				long long int allocateMemory( SST::OpalComponent::MemType memType, int node, int requested_size, int *allocated_size);
 				void handleEvent(SST::Event* event) {};
 				void handleRequest( SST::Event* e );
 				bool tick(SST::Cycle_t x);
-				core_handler * Handlers;
-				std::queue<OpalEvent*> hintlist;
 				std::queue<OpalEvent*> requestQ;
+
+				long long int isAddressReserved(int node,long long int vAddress);
+				void registerHint(int node, int fileId, long long int vAddress, int size);
+				long long int processRequest(int node, int coreId, long long int page_fault_vAddress, int size);
+				long long int allocateFromReservedMemory(int node, long long int reserved_address, long long int vAddress, int requested_size, int *allocated_size);
+				long long int allocateSharedMemory(int node, int size, int *allocated_size);
+				long long int allocateLocalMemory(int node, int size, int *allocated_size);
 
 				~Opal() { };
 				SST_ELI_REGISTER_COMPONENT(
@@ -128,34 +133,17 @@ namespace SST
 					Opal(const Opal&); // do not implement
 					void operator=(const Opal&); // do not implement
 
-					uint32_t cores_per_node;
 					uint32_t num_nodes;
-
-					SST::Link * m_memChan; 
-					SST::Link ** samba_to_opal; 
-
-					SST::Link * event_link; // Note that this is a self-link for events
-
-					Pool * mempools; // This represents the memory pools of the system
-
 					uint32_t num_shared_mempools;
 
 					//shared memory - memory pool number and its pool
 					std::map<int, Pool*> shared_mem;
 					long long int shared_mem_size;
 
-					//local memory - core number and its pool
-					std::map<int, Pool*> local_mem;
-					std::map<int, long long int> local_mem_size;
+					//node specific information
+					NodePrivateInfo **nodeInfo;
 
-					//next allocation memory (local/shared)
-					std::map<int, int> nextallocmem;
-					std::map<int, int> allocatedmempool;
-
-					//memory allocation policy. 0:proportional  1: alternate  2: round robin
-					uint32_t allocpolicy;
-
-					unsigned int latency; // The page fault latency/ the time spent by Opal to service a memory allocation request
+					std::map<int, std::pair<std::list<int>, long long int> > mmapFileIdHints;
 
 					long long int max_inst;
 					char* named_pipe;
@@ -175,8 +163,8 @@ namespace SST
 		{
 			public:
 
-				int id;
-				int nodeID;
+				int nodeId;
+				int linkId;
 				SST::Link * singLink;
 				int dummy_address;
 				core_handler() { dummy_address = 0;}
@@ -205,6 +193,8 @@ namespace SST
 							std::cerr << std::dec << " Size: "<< ev->getSize();
 							std::cerr << " Ending address is " << std::hex << ev->getAddress() + ev->getSize() - 1;
 							std::cerr << std::dec << std::endl;
+							ev->setLinkId(linkId);
+							owner->requestQ.push(ev);
 						}
 						break;
 
@@ -218,8 +208,8 @@ namespace SST
 					default:
 						{
 							//std::cout<<"Opal has received a REQUEST CALL with virtual address: "<< std::hex << ev->getAddress()<<" Size: "<<ev->getSize()<<std::endl;
-							ev->setNodeId(nodeID);
-							ev->setLinkId(id);
+							ev->setNodeId(nodeId);
+							ev->setLinkId(linkId);
 							owner->requestQ.push(ev);
 						}
 					}
@@ -227,6 +217,58 @@ namespace SST
 
 		};// END core_handler
 
+		class NodePrivateInfo
+		{
+			public:
+				NodePrivateInfo(Opal *_owner, uint32_t node, Params params) {//int num_cores, int allocPolicy, Pool *pool, long long int size, int latency) {
+					owner = _owner;
+					node_num = node;
+					cores = (uint32_t) params.find<uint32_t>("cores", 1);
+					latency = (uint32_t) params.find<uint32_t>("latency", 1);
+					memoryAllocationPolicy = (uint32_t) params.find<uint32_t>("allocation_policy", 0);
+					nextallocmem = 0;
+					allocatedmempool = 0;
+					memory_pool = new Pool(owner, (Params) params.find_prefix_params("memory."), SST::OpalComponent::MemType::LOCAL, node);
+					memory_size = (uint32_t) params.find<uint32_t>("memory.size", 1);
+					page_size = (uint32_t) params.find<uint32_t>("memory.frame_size", 1);
+					Handlers = new core_handler[cores*2];
+
+					std::cerr << "Node: " << node_num << " Allocation policy: " << memoryAllocationPolicy << std::endl;
+
+					for(uint32_t i=0; i<cores*2; i++) {
+						Handlers[i].latency = latency;
+						Handlers[i].nodeId = node_num;
+						Handlers[i].linkId = i;
+						Handlers[i].owner = owner;
+					}
+
+				}
+
+				Opal *owner;
+				uint32_t node_num;
+				uint32_t cores;
+				uint32_t latency;
+
+				/* allocation policies */
+				uint32_t memoryAllocationPolicy;
+				int nextallocmem;
+				int allocatedmempool;
+
+				/* local memory */
+				Pool* memory_pool;
+				uint32_t page_size; // page size of the node in KB's
+				uint32_t memory_size;
+
+				/* links to Ariel Core and Samba MMU*/
+				core_handler *Handlers;
+
+				// virtual address, fileId, size
+				std::map<long long int, std::pair<int, std::pair<int, int> > > reservedSpace;
+
+		};
+
+
 	}// END OpalComponent
 }//END SST
+
 
