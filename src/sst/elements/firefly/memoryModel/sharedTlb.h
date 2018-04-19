@@ -7,7 +7,7 @@ class SharedTlb {
 public:
     SharedTlb( SimpleMemoryModel& model, Output& dbg, int id, int size, int pageSize, int tlbMissLat_ns, int numWalkers ) :
         m_model(model), m_dbg(dbg), m_tlbMissLat_ns(tlbMissLat_ns), m_numWalkers(numWalkers), m_pageMask( ~(pageSize - 1) ),
-        m_cache(size), m_total(0), m_hitCnt(0), m_numLookups(0), m_maxNumLookups(numWalkers)
+        m_cache(size), m_total(0), m_hitCnt(0), m_numLookups(0), m_maxNumLookups(numWalkers), m_cacheSize(size)
         //m_cache(4,128,pageSize), m_total(0), m_hitCnt(0), m_numLookups(0), m_maxNumLookups(numWalkers)
         //m_cache(512,1,pageSize), m_total(0), m_hitCnt(0), m_numLookups(0), m_maxNumLookups(numWalkers)
     {
@@ -22,6 +22,12 @@ public:
         ++m_total;
         uint64_t pageAddr = processPageAddr(req); 
         uint64_t physAddr = processPhysAddr(req);
+
+        if ( 0 == m_cacheSize ) {
+            ++m_hitCnt;
+            return physAddr;
+        }
+
 
         if (  m_cache.isValid( pageAddr ) ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Hit: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
@@ -61,6 +67,7 @@ public:
 private:
 
     std::deque< std::pair< MemReq*, Callback > > m_pendingLookups;
+    int m_cacheSize;
     int m_numLookups;
     int m_maxNumLookups;
     uint64_t m_total;
