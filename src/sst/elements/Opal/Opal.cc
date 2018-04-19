@@ -43,18 +43,18 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
     verbosity = (uint32_t) params.find<uint32_t>("verbose", 1);
 	output = new SST::Output("OpalComponent[@f:@l:@p] ", verbosity, 0, SST::Output::STDOUT);
 
+
 	max_inst = (uint32_t) params.find<uint32_t>("max_inst", 1);
-	cores_per_node = (uint32_t) params.find<uint32_t>("cores_per_node", 1);
 	num_nodes = (uint32_t) params.find<uint32_t>("num_nodes", 1);
-	latency = (uint32_t) params.find<uint32_t>("latency", 1);
-	allocpolicy = (uint32_t) params.find<uint32_t>("allocation_policy", 0);
-	std::cerr << "Allocation policy: " << allocpolicy << std::endl;
+	nodeInfo = new NodePrivateInfo*[num_nodes];
 	std::cerr << "Maximum Instructions per cycle: " << max_inst << std::endl;
 
-	Pool *pool;
+
 	char* buffer = (char*) malloc(sizeof(char) * 256);
 
-	/* shared memory */
+	/* Configuring shared memory */
+	/*----------------------------------------------------------------------------------------*/
+
 	num_shared_mempools = params.find<uint32_t>("shared_mempools", 0);
 	std::cerr << "Number of Shared Memory Pools: "<< num_shared_mempools << endl;
 
@@ -67,43 +67,31 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		sprintf(buffer, "mempool%" PRIu32 ".", i);
 		Params memPoolParams = sharedMemParams.find_prefix_params(buffer);
 		std::cerr << "Configuring Shared " << buffer << std::endl;
-		pool = new Pool(this, memPoolParams, SST::OpalComponent::MemType::SHARED, i);
-		shared_mem[i] = pool;
+		shared_mem[i] = new Pool(this, memPoolParams, SST::OpalComponent::MemType::SHARED, i);
 		shared_mem_size += memPoolParams.find<long long int>("size", 0);
 	}
 
-	/* local memory for each node */
-	Params localMemParams = params.find_prefix_params("local_mem.");
+	/* Configuring nodes */
+	/*----------------------------------------------------------------------------------------*/
 
-	memset(buffer, 0 , 256);
+	int linksCount = 0;
 	for(i = 0; i < num_nodes; i++) {
 		memset(buffer, 0 , 256);
-		sprintf(buffer, "mempool%" PRIu32 ".", i);
-		Params memPoolParams = localMemParams.find_prefix_params(buffer);
-		std::cerr << "Configuring Local " << buffer << std::endl;
-		pool = new Pool(this, memPoolParams, SST::OpalComponent::MemType::LOCAL, i);
-		local_mem[i] = pool;
-		nextallocmem[i] = 0; // 0 for local memory
-		allocatedmempool[i] = 0;
-		local_mem_size[i] = memPoolParams.find<long long int>("size", 0);
+		sprintf(buffer, "node%" PRIu32 ".", i);
+		Params nodePrivateParams = params.find_prefix_params(buffer);
+		nodeInfo[i] = new NodePrivateInfo(this, i, nodePrivateParams);
+		for(uint32_t j=0; j<nodeInfo[i]->cores*2; j++) {
+			memset(buffer, 0 , 256);
+			sprintf(buffer, "requestLink%" PRIu32, linksCount + j);
+			nodeInfo[i]->Handlers[j].singLink = configureLink(buffer, "1ns", new Event::Handler<core_handler>((&nodeInfo[i]->Handlers[j]), &core_handler::handleRequest));
+		}
+		linksCount += nodeInfo[i]->cores*2;
 	}
 
-	Handlers = new core_handler[num_nodes*cores_per_node*2];
-	samba_to_opal = new SST::Link * [num_nodes*cores_per_node*2]; // Note the links can also come directly form Ariel to send hints, rather than only from Samba's Page Table Walker
+	free(buffer);
 
-	/* creating links from samba and ariel core's of each node */
-	memset(buffer, 0 , 256);
-	for(i = 0; i < num_nodes*cores_per_node*2; i++) {
-		sprintf(buffer, "requestLink%" PRIu32, i);
-		SST::Link * link = configureLink(buffer, "1ns", new Event::Handler<core_handler>((&Handlers[i]), &core_handler::handleRequest));
-		samba_to_opal[i] = link;
-		Handlers[i].singLink = link;
-		Handlers[i].id = i;
-		Handlers[i].nodeID = i/(cores_per_node*2);
-		Handlers[i].latency = latency;
-		Handlers[i].setOwner(this);
-	}
-
+	/* registering clock */
+	/*----------------------------------------------------------------------------------------*/
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
 	registerClock( cpu_clock, new Clock::Handler<Opal>(this, &Opal::tick ) );
 }
@@ -119,75 +107,212 @@ Opal::Opal() : Component(-1)
 //shared or local
 void Opal::setNextMemPool( int node )
 {
-	switch(allocpolicy)
+	switch(nodeInfo[node]->memoryAllocationPolicy)
 	{
+	case 4:
+		//random allocation policy
+		nodeInfo[node]->allocatedmempool = rand() % ( num_shared_mempools + 1 );
+		break;
+
 	case 3:
 		//proportional allocation policy
-		nextallocmem[node] = ( nextallocmem[node] + 1 ) % ( shared_mem_size/local_mem_size[node] + 1 );
-		allocatedmempool[node] = nextallocmem[node] ? ( allocatedmempool[node] + 1 ) % ( num_shared_mempools + 1)
-					? ( allocatedmempool[node] + 1 ) % ( num_shared_mempools + 1) : 1 : 0;
+		nodeInfo[node]->nextallocmem = ( nodeInfo[node]->nextallocmem + 1 ) % ( shared_mem_size/nodeInfo[node]->memory_size + 1 );
+		nodeInfo[node]->allocatedmempool = nodeInfo[node]->nextallocmem ? ( nodeInfo[node]->allocatedmempool + 1 ) % ( num_shared_mempools + 1)
+					? ( nodeInfo[node]->allocatedmempool + 1 ) % ( num_shared_mempools + 1) : 1 : 0;
 
 		break;
 
 	case 2:
 		//round robin allocation policy
-		nextallocmem[node] = ( nextallocmem[node] + 1 ) % ( num_shared_mempools + 1 );
-		allocatedmempool[node] = nextallocmem[node];
+		nodeInfo[node]->nextallocmem = ( nodeInfo[node]->nextallocmem + 1 ) % ( num_shared_mempools + 1 );
+		nodeInfo[node]->allocatedmempool = nodeInfo[node]->nextallocmem;
 		break;
 
 	case 1:
 		//alternate allocation policy
-		if( allocatedmempool[node] != 0) {
-			allocatedmempool[node] = 0;
+		if( nodeInfo[node]->allocatedmempool != 0) {
+			nodeInfo[node]->allocatedmempool = 0;
 		} else {
-			nextallocmem[node] = ( nextallocmem[node] + 1 ) % ( num_shared_mempools + 1 )
-								? ( nextallocmem[node] + 1 ) % ( num_shared_mempools + 1 ) : 1;
-			allocatedmempool[node] = nextallocmem[node];
+			nodeInfo[node]->nextallocmem = ( nodeInfo[node]->nextallocmem + 1 ) % ( num_shared_mempools + 1 )
+								? ( nodeInfo[node]->nextallocmem + 1 ) % ( num_shared_mempools + 1 ) : 1;
+			nodeInfo[node]->allocatedmempool = nodeInfo[node]->nextallocmem;
 		}
 		break;
 
 	case 0:
 	default:
 		//local memory first
-		allocatedmempool[node] = 0;
+		nodeInfo[node]->allocatedmempool = 0;
 		break;
 
 	}
 
 }
 
-long long int Opal::allocLocalMemPool(int node, int linkId, long long int vAddress, int size )
+long long int Opal::allocateMemory( SST::OpalComponent::MemType memType, int node, int requested_size, int *allocated_size)
 {
-	Pool *mempool = local_mem[node];
-	MemPoolResponse pool_resp = mempool->allocate_frames(size);
+	Pool *mempool;
+	if( memType == SST::OpalComponent::MemType::LOCAL)
+		mempool = nodeInfo[node]->memory_pool;
+	else
+		mempool = shared_mem[nodeInfo[node]->allocatedmempool -1];
 
-	if(pool_resp.pAddress != -1) {
-		//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Allocate physical memory %" PRIu64 " for virtual address %" PRIu64 " in the local memory with %" PRIu32 " frames\n",
-		//		getName().c_str(), node, pool_resp.pAddress, ev->getAddress, pool_resp.num_frames);
-		OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
-		tse->setResp(vAddress, pool_resp.pAddress, pool_resp.num_frames*pool_resp.frame_size*1024,node);
-		Handlers[linkId].singLink->send(latency, tse);
+	MemPoolResponse pool_resp = mempool->allocate_frames(requested_size);
 
-	}
+	if(pool_resp.pAddress != -1)
+		*allocated_size = pool_resp.num_frames*pool_resp.frame_size*1024;
 
+	std::cerr << getName().c_str() << " Node: " << node << " Allocated address: " << pool_resp.pAddress << " of size: " << allocated_size << std::endl;
 	return pool_resp.pAddress;
 }
 
-long long int Opal::allocSharedMemPool(int node, int linkId, long long int vAddress, int size )
+void Opal::registerHint(int node, int fileId, long long int vAddress, int size)
 {
-	Pool *mempool = shared_mem[allocatedmempool[node] -1];
-	MemPoolResponse pool_resp = mempool->allocate_frames(size);
 
-	if(pool_resp.pAddress != -1) {
-		//output->verbose(CALL_INFO, 2, 0, "%s, Node %" PRIu32 ": Allocate physical memory %" PRIu64 " for virtual address %" PRIu64 " in the shared memory pool %" PRIu32 "with %" PRIu32 " frames\n",
-		//		getName().c_str(), node, pool_resp.pAddress, vAddress, *it, pool_resp.num_frames);
-		OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
-		tse->setResp(vAddress, pool_resp.pAddress, pool_resp.num_frames*pool_resp.frame_size*1024,node);
-		Handlers[linkId].singLink->send(latency, tse);
+	std::map<int, std::pair<std::list<int>, long long int> >::iterator fileIdHint = mmapFileIdHints.find(fileId);
+
+	//fileId is already registered by another node
+	if( fileIdHint != mmapFileIdHints.end() )
+	{
+		//search for nodeId
+		std::list<int> it = (fileIdHint->second).first;
+	    auto it1 = std::find(it.begin(), it.end(), node);
+		if( it1 != it.end() )
+		{
+			std::cerr << "Physical memory " << std::hex << (fileIdHint->second).second << " is already allocated for fileId: " << fileIdHint->first << " in the same node" << std::endl;
+		}
+		else
+		{
+			it.push_back(node);
+			nodeInfo[node]->reservedSpace.insert(std::make_pair(vAddress, std::make_pair(fileId, std::make_pair(size,0))));
+		}
+	}
+	else
+	{
+		std::list<int> it;
+		it.push_back(node);
+		mmapFileIdHints.insert(std::make_pair(fileId, std::make_pair( it, -1 )));
+
+		nodeInfo[node]->reservedSpace.insert(std::make_pair(vAddress, std::make_pair(fileId, std::make_pair(size,0))));
+
+	}
+}
+
+long long int Opal::isAddressReserved(int node,long long int vAddress)
+{
+	for (std::map<long long int, std::pair<int, std::pair<int, int> > >::iterator it= (nodeInfo[node]->reservedSpace).begin(); it!=(nodeInfo[node]->reservedSpace).end(); ++it)
+	{
+		long long int virtAddress = it->first;
+		int reservedSize = (it->second).second.first;
+		if(virtAddress <= vAddress && vAddress < virtAddress + reservedSize)
+			return virtAddress;
+	}
+
+	return -1;
+}
+
+long long int Opal::allocateLocalMemory(int node, int size, int *allocated_size)
+{
+	int allocated_pAddress = -1;
+
+	allocated_pAddress = allocateMemory( SST::OpalComponent::MemType::LOCAL, node, size, allocated_size ); // 0 search in local memory
+	//If local memory is full then allocate memory from next shared memory pool according to the allocation policy
+	if(allocated_pAddress == -1) {
+		OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Local Memory is drained out\n", node));
+		uint32_t search_count;
+		for(search_count = 0; search_count < num_shared_mempools && allocated_pAddress == -1; search_count++) {
+			if(nodeInfo[node]->memoryAllocationPolicy) {
+				setNextMemPool(node);
+				if( !nodeInfo[node]->allocatedmempool ) //local memory is already full. No point searching in local memory again
+					setNextMemPool(node);
+				allocated_pAddress = allocateMemory( SST::OpalComponent::MemType::SHARED, node, size, allocated_size );
+			} else {
+				nodeInfo[node]->allocatedmempool = (rand()%num_shared_mempools) + 1;
+				allocated_pAddress = allocateMemory( SST::OpalComponent::MemType::SHARED, node, size, allocated_size );
+			}
+		}
+	}
+	setNextMemPool(node);
+
+	return allocated_pAddress;
+}
+
+long long int Opal::allocateSharedMemory(int node, int size, int *allocated_size)
+{
+	int allocated_pAddress = -1;
+
+	allocated_pAddress = allocateMemory( SST::OpalComponent::MemType::SHARED, node, size, allocated_size );
+	if(allocated_pAddress == -1) {
+		uint32_t search_count;
+		for(search_count = 0; search_count < num_shared_mempools && allocated_pAddress == -1; search_count++)
+		{
+			setNextMemPool(node);
+			allocated_pAddress = allocateMemory( SST::OpalComponent::MemType::SHARED, node, size, allocated_size );
+		}
+	}
+	setNextMemPool(node);
+
+	return allocated_pAddress;
+}
+
+long long int Opal::allocateFromReservedMemory(int node, long long int reserved_address, long long int vAddress, int requested_size, int *allocated_size)
+{
+	long long int address = -1;
+
+	int fileID = nodeInfo[node]->reservedSpace[reserved_address].first;
+	int size_reserved = nodeInfo[node]->reservedSpace[reserved_address].second.first;
+	int size_used = nodeInfo[node]->reservedSpace[reserved_address].second.second;
+
+	if( size_used == 0 )
+	{
+		address = allocateSharedMemory(node, size_reserved, allocated_size);
+		if(address == -1)
+			output->fatal(CALL_INFO, -1, "Opal: Memory is drained out\n");
+
+		mmapFileIdHints[fileID].second = address;
+		nodeInfo[node]->reservedSpace[reserved_address].second.second = requested_size;
+		*allocated_size = size_reserved;
+	}
+	else if( size_used+requested_size <= size_reserved )
+	{
+		address = mmapFileIdHints[fileID].second + size_used;
+		nodeInfo[node]->reservedSpace[reserved_address].second.second += requested_size;
+	}
+	else
+	{
+		output->fatal(CALL_INFO, -1, "Opal: address :%lld requested with fileId:%d has no space left\n", vAddress, fileID);
+	}
+
+	return address;
+}
+
+long long int Opal::processRequest(int node, int linkId, long long int page_fault_vAddress, int size)
+{
+	long long int allocated_pAddress = -1;
+	int allocated_size = 1;
+
+	//what if 4 pages are reserved and 3rd page virtual address is received. Find the valid virtual address to search
+	long long int reserved_address;
+	reserved_address = isAddressReserved(node, page_fault_vAddress);
+	if( reserved_address != -1)
+		allocated_pAddress = allocateFromReservedMemory(node, reserved_address, page_fault_vAddress, size, &allocated_size);
+	else {
+		if( !nodeInfo[node]->allocatedmempool )
+			allocated_pAddress = allocateLocalMemory(node, size, &allocated_size);
+		else
+			allocated_pAddress = allocateSharedMemory(node, size, &allocated_size);
 
 	}
 
-	return pool_resp.pAddress;
+	if( allocated_pAddress != -1 ) {
+		OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
+		tse->setResp(page_fault_vAddress, allocated_pAddress, allocated_size);//pool_resp.num_frames*pool_resp.frame_size*1024);
+		nodeInfo[node]->Handlers[linkId].singLink->send(nodeInfo[node]->latency, tse);
+	}
+	else
+		output->fatal(CALL_INFO, -1, "Opal: Memory is drained out\n");
+
+	return allocated_pAddress;
 }
 
 bool Opal::tick(SST::Cycle_t x)
@@ -200,12 +325,14 @@ bool Opal::tick(SST::Cycle_t x)
 
 			OpalEvent *ev = requestQ.front();
 			int node_num = ev->getNodeId();
-			int linkId = ev->getLinkId();
 
 			switch(ev->getType()) {
 			case SST::OpalComponent::EventType::MMAP:
 			{
 				OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Opal has received an MMAP CALL\n", node_num));
+				//size should be in the multiple of page size (4096) from ariel core
+				registerHint(node_num, ev->fileID, ev->getAddress(), ev->getSize());
+
 			}
 			break;
 
@@ -217,45 +344,8 @@ bool Opal::tick(SST::Cycle_t x)
 
 			case SST::OpalComponent::EventType::REQUEST:
 			{
-				long long int address;
-
-				if( !allocatedmempool[node_num] )
-				{
-					address = allocLocalMemPool( node_num, linkId, ev->getAddress(), ev->getSize() ); // 0 search in local memory
-					//If local memory is full then allocate memory from next shared memory pool according to the allocation policy
-					if(address == -1) {
-						uint32_t search_count;
-						OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Local Memory is drained out\n", node_num));
-						for(search_count = 0; search_count < num_shared_mempools && address == -1; search_count++) {
-							if(allocpolicy) {
-								setNextMemPool(node_num);
-								if( !allocatedmempool[node_num] ) //local memory is already full. No point searching in local memory again
-									setNextMemPool(node_num);
-								address = allocSharedMemPool( node_num, linkId, ev->getAddress(), ev->getSize() );
-							} else {
-								allocatedmempool[node_num] = (rand()%num_shared_mempools) + 1;
-								address = allocSharedMemPool( node_num, linkId, ev->getAddress(), ev->getSize() );
-							}
-						}
-					}
-					setNextMemPool(node_num);
-				}
-				else
-				{
-					address = allocSharedMemPool( node_num, linkId, ev->getAddress(), ev->getSize() );
-					if(address == -1) {
-						uint32_t search_count;
-						for(search_count = 0; search_count < num_shared_mempools && address == -1; search_count++) {
-							setNextMemPool(node_num);
-							address = allocSharedMemPool( node_num, linkId, ev->getAddress(), ev->getSize() );
-
-						}
-					}
-					setNextMemPool(node_num);
-				}
-
-				if(address == -1)
-					output->fatal(CALL_INFO, -1, "Opal: Memory is drained out\n");
+				//size is 4096 (4K pages) from PTW
+				processRequest(node_num, ev->getLinkId(), ev->getAddress(), ev->getSize());
 
 			}
 			break;
@@ -295,13 +385,14 @@ void Opal::handleRequest( SST::Event* e )
 
 void Opal::finish()
 {
-	uint32_t mem;
+	uint32_t i;
 
-	for(mem = 0; mem < num_nodes; mem++ )
-	  local_mem[mem]->finish();
+	for(i = 0; i < num_nodes; i++ )
+	  nodeInfo[i]->memory_pool->finish();
 
 
-	for(mem = 0; mem < num_shared_mempools; mem++ )
-	  shared_mem[mem]->finish();
+	for(i = 0; i < num_shared_mempools; i++ )
+	  shared_mem[i]->finish();
 
 }
+

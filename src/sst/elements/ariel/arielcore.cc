@@ -559,7 +559,7 @@ void ArielCore::handleMmapEvent(ArielMmapEvent* aEv) {
                  tse->hint = aEv->getAllocationLevel();
 		 tse->fileID = aEv->getFileID();
 		 std::cout<<"Before sending to Opal.. file ID is : "<<tse->fileID<<std::endl;
-
+		 // length should be in multiple of page size
                  tse->setResp(aEv->getVirtualAddress(), 0, aEv->getAllocationLength() );
                  OpalLink->send(tse);
 
