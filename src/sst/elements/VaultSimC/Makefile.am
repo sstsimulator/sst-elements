@@ -16,7 +16,6 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libVaultSimC.la
 
 libVaultSimC_la_SOURCES = \
-	libVaultSimGen.cpp \
 	logicLayer.h \
 	logicLayer.cpp \
 	cpu.h \
