@@ -140,10 +140,4 @@ bool cpu::clock( Cycle_t current )
   return false;
 }
 
-extern "C" {
-	Component* create_cpu( SST::ComponentId_t id,  SST::Params& params )
-	{
-		return new cpu( id, params );
-	}
-}
 
