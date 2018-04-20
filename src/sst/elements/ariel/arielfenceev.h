@@ -28,12 +28,6 @@ class ArielFenceEvent : public ArielEvent {
 
 	public:
 		ArielEventType getEventType() const { return FENCE; }
-		uint64_t getAddress() const { return address; }
-		uint64_t getLength() const { return length; }
-
-	protected:
-		uint64_t address;
-		uint64_t length;
 
 };
 
