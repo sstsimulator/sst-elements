@@ -197,8 +197,6 @@ void ArielCore::commitFlushEvent(const uint64_t address,
 }
 
 void ArielCore::handleEvent(SimpleMem::Request* event) {
-	if(isCoreFenced() && hasDrainCompleted())
-		unfence();
 	
 	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling a memory event.\n", coreID));
 
@@ -211,6 +209,8 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
 
 		pendingTransactions->erase(find_entry);
 		pending_transaction_count--;
+		if(isCoreFenced() && hasDrainCompleted())
+			unfence();
 	} else {
 		output->fatal(CALL_INFO, -4, "Memory event response to core: %" PRIu32 " was not found in pending list.\n", coreID);
 	}
