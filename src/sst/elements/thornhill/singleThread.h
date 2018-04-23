@@ -16,6 +16,7 @@
 #ifndef _H_THORNHILL_SINGLE_THREAD
 #define _H_THORNHILL_SINGLE_THREAD
 
+#include <sst/core/elementinfo.h>
 #include "detailedCompute.h"
 
 namespace SST {
@@ -23,6 +24,15 @@ namespace Thornhill {
 
 class SingleThread : public DetailedCompute {
 
+  public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        SingleThread,
+        "thornhill",
+        "hadesSHMEM",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
 	struct Entry {
       Entry( std::function<int()>& _finiHandler ) : finiHandler( _finiHandler ) {}
     	std::function<int()> finiHandler; 
