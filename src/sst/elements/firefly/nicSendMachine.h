@@ -156,6 +156,7 @@ class SendMachine {
             }
         }
 
+        int getId() { return m_id; }
         bool netPktQ_empty() { return m_outQ->empty(); }
         void netPktQ_pop() { return m_outQ->pop(); }
         std::pair< FireflyNetworkEvent*, int>& netPktQ_front() { return m_outQ->front(); }

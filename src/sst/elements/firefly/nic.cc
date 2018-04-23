@@ -152,7 +152,10 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			params.find<std::string>("corePortName","core") ) );
     }
 
-    m_sendEntryInProgress.resize( m_num_vNics );
+    m_sendEntryQ.resize( m_num_vNics );
+    for ( unsigned i = 0; i < m_num_vNics; i++ ) {
+        m_sendEntryQ[i].first = false;
+    }
 
     m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
 
@@ -426,44 +429,45 @@ void Nic::qSendEntry( SendEntryBase* entry ) {
     } else {
         entry->setTxDelay(m_txDelay);
 
-        DestKey destKey = getDestKey( entry->dest(), entry->dst_vNic() );
-
-        if ( m_sendEntryInProgress[entry->local_vNic()].find(destKey) != 
-                m_sendEntryInProgress[entry->local_vNic()].end() || m_sendMachineQ.empty() ) {
-            m_sendEntryQ.push_back(entry);
-            m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_NETWORK,"qsize=%zu\n", m_sendEntryQ.size());
-        } else { 
-            m_sendEntryInProgress[entry->local_vNic()].insert(destKey);
-            m_sendMachineQ.front()->run(entry);
-            m_sendMachineQ.pop_front();
-        }
+        int pid = entry->local_vNic();
+        if ( ! m_sendMachineQ.empty() && ! m_sendEntryQ[ pid ].first ) {
+            m_sendEntryQ[pid].first = true;
+            m_sendMachineQ.front()->run( entry );
+            m_sendMachineQ.pop_front();         
+        } else {
+            m_sendEntryQ[ pid ].second.push_back(std::make_pair( getCurrentSimTimeNano(), entry ) );
+        }        
     }
 }
 
 void Nic::notifySendDone( SendMachine* mach, SendEntryBase* entry  ) {
 
-    m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_NETWORK,"qsize=%zu\n", m_sendEntryQ.size());
+    int pid = entry->local_vNic();
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"machine=%d pid=%d\n", mach->getId(), pid );
 
-    DestKey destKey = getDestKey( entry->dest(), entry->dst_vNic() );
+    m_sendEntryQ[pid].first = false;
 
-    m_sendEntryInProgress[entry->local_vNic()].erase(destKey);
+    SimTime_t cur = -1; 
+    int next = -1;
 
-    if ( m_sendEntryQ.empty() ) {
-        m_sendMachineQ.push_back(mach);        
+    for ( unsigned i = 0; i < m_sendEntryQ.size(); i++ ) {
+
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"check pid=%d size=%zu\n", i, m_sendEntryQ[i].second.size( ));
+
+        if ( ! m_sendEntryQ[i].first && 
+                ! m_sendEntryQ[i].second.empty() && m_sendEntryQ[i].second.front( ).first < cur ) {
+            next = i;
+        }            
+    }
+
+    if ( next > -1 ) {
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"run pid=%d \n", next);
+        m_sendEntryQ[next].first = false;
+        mach->run(m_sendEntryQ[ next ].second.front().second );
+        m_sendEntryQ[ next ].second.pop_front();
     } else {
-        std::list<SendEntryBase*>::iterator iter = m_sendEntryQ.begin(); 
-
-        for ( ; iter != m_sendEntryQ.end(); ++iter ) {
-            entry = *iter;
-            destKey = getDestKey( entry->dest(), entry->dst_vNic() );
-            if ( m_sendEntryInProgress[entry->local_vNic()].find(destKey) == m_sendEntryInProgress[entry->local_vNic()].end() ) {
-                m_sendEntryInProgress[entry->local_vNic()].insert(destKey);
-                mach->run( entry );
-                m_sendEntryQ.erase( iter);
-                break;
-            } 
-        }
-    }      
+        m_sendMachineQ.push_back(mach);        
+    }
 }
 
 void Nic::feedTheNetwork( )
