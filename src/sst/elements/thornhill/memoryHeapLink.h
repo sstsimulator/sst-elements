@@ -16,6 +16,8 @@
 #ifndef _H_THORNHILL_MEMORY_HEAP_LINK
 #define _H_THORNHILL_MEMORY_HEAP_LINK
 
+
+#include <sst/core/elementinfo.h>
 #include <functional>
 #include "sst/core/subcomponent.h"
 #include "sst/core/link.h"
@@ -25,6 +27,16 @@ namespace SST {
 namespace Thornhill {
 
 class MemoryHeapLink : public SubComponent {
+
+  public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        MemoryHeapLink,
+        "thornhill",
+        "MemoryHeapLink",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
 
 	struct Entry {
 		Entry( std::function<void(uint64_t)> _fini ) : fini( _fini ) {}
