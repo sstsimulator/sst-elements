@@ -28,7 +28,7 @@ class SingleThread : public DetailedCompute {
     SST_ELI_REGISTER_SUBCOMPONENT(
         SingleThread,
         "thornhill",
-        "hadesSHMEM",
+        "SingleThread",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
         ""
