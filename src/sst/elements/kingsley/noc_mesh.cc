@@ -151,7 +151,7 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
 
         // stats
         send_bit_count[local_port_start + i] = registerStatistic<uint64_t>("send_bit_count",port_name.str());
-        output_port_stalls[local_port_start + 1] = registerStatistic<uint64_t>("output_port_stalls",port_name.str());
+        output_port_stalls[local_port_start + i] = registerStatistic<uint64_t>("output_port_stalls",port_name.str());
         xbar_stalls[local_port_start + i] = registerStatistic<uint64_t>("xbar_stalls",port_name.str());
     }
 
