@@ -32,8 +32,9 @@
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
+#include <sst/core/elementinfo.h>
 
-#include "sst/elements/memHierarchy/memLink.h"
+#include "sst/elements/memHierarchy/memLinkBase.h"
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/util.h"
 #include "sst/elements/memHierarchy/mshr.h"
@@ -41,8 +42,6 @@
 using namespace std;
 
 namespace SST { namespace MemHierarchy {
-
-class MemNIC;
 
 class DirectoryController : public Component {
 public:
@@ -70,17 +69,18 @@ public:
             {"interleave_step",         "Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 directories, set size=8B, step=24B", "0B"},
             {"node",					"Node number in multinode environment"},
             /* Old parameters - deprecated or moved */
-            {"direct_mem_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether directory has a direct connection to memory (1) or is connected via a network (0)","1"}, // Remove SST 8.0
             {"network_num_vc",          "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"}, // Remove SST 9.0
-            {"statistics",              "DEPRECATED - Use the Statistics API to get statistics", "0"},  // Remove SST 8.0
             {"network_address",         "DEPRECATD - Now auto-detected by link control", ""},   // Remove SST 9.0
             {"network_bw",                  "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "80GiB/s"}, // Remove SST 9.0
             {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "1KiB"}, // Remove SST 9.0
             {"network_output_buffer_size",  "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "1KiB"}) // Remove SST 9.0
 
     SST_ELI_DOCUMENT_PORTS(
-            {"memory", "Link to memory controller", { "memHierarchy.MemEventBase" } },
-            {"network","Link to network", { "memHierarchy.MemRtrEvent" } } )
+            {"memory",      "Link to memory controller", { "memHierarchy.MemEventBase" } },
+            {"network",     "Link to network; doubles as request network for split networks", { "memHierarchy.MemRtrEvent" } },
+            {"network_ack", "For split networks, link to response/ack network",     { "memHierarchy.MemRtrEvent" } },
+            {"network_fwd", "For split networks, link to forward request network",  { "memHierarchy.MemRtrEvent" } },
+            {"network_data","For split networks, link to data network",             { "memHierarchy.MemRtrEvent" } })
 
     SST_ELI_DOCUMENT_STATISTICS(
             {"replacement_request_latency",     "Total latency in ns of all replacement (put*) requests handled",       "nanoseconds",  1},
@@ -197,15 +197,15 @@ private:
     std::vector<std::string>                nodeid_to_name;
     
     /* Queue of packets to work on */
-    std::list<MemEvent*>                    workQueue;
+    std::list<std::pair<MemEvent*,bool> >   workQueue;
     std::map<MemEvent::id_type, Addr>       memReqs;
     std::map<MemEvent::id_type, Addr>       dirEntryMiss;
     std::map<MemEvent::id_type, std::string> noncacheMemReqs;
 
     /* Network connections */
-    MemLink*    memLink;
-    MemNIC*     network;
-    string      memoryName; // if connected to mem via network, this should be the name of the memory we own - param is memory_name
+    MemLinkBase*    memLink;
+    MemLinkBase*    network;
+    string          memoryName; // if connected to mem via network, this should be the name of the memory we own - param is memory_name
     
     std::multimap<uint64_t,MemEventBase*>   netMsgQueue;
     std::multimap<uint64_t,MemEventBase*>   memMsgQueue;

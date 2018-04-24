@@ -16,7 +16,6 @@
 /*
  * File:   cacheFactory.cc
  * Author: Caesar De la Paz III
- * Email:  caesar.sst@gmail.com
  */
 
 
@@ -31,8 +30,7 @@
 #include "mshr.h"
 #include "coherencemgr/L1CoherenceController.h"
 #include "coherencemgr/L1IncoherentController.h"
-#include "memNIC.h"
-#include "memLink.h"
+#include "memLinkBase.h"
 
 using namespace SST::MemHierarchy;
 using namespace std;
@@ -200,10 +198,10 @@ void Cache::createCoherenceManager(Params &params) {
  *      directory                       : connected to a network talking to a cache above and a directory below (single network connection)
  */
 void Cache::configureLinks(Params &params) {
-    bool highNetExists  = false;    // high_network_0 is connected
-    bool lowCacheExists = false;    // cache is connected
-    bool lowDirExists   = false;    // directory is connected
-    bool lowNetExists   = false;    // low_network_%d port(s) are connected
+    bool highNetExists  = false;    // high_network_0 is connected -> direct link toward CPU (to bus or directly to other component)
+    bool lowCacheExists = false;    // cache is connected -> direct link towards memory to cache
+    bool lowDirExists   = false;    // directory is connected -> network link towards memory to directory
+    bool lowNetExists   = false;    // low_network_%d port(s) are connected -> direct link towards memory (to bus or other component)
 
     highNetExists   = isPortConnected("high_network_0");
     lowCacheExists  = isPortConnected("cache");
@@ -230,7 +228,7 @@ void Cache::configureLinks(Params &params) {
                     getName().c_str());
     }
    
-    // Fix up parameters for creating NIC
+    // Fix up parameters for creating NIC - eventually we'll stop doing this
     bool found;
     if (fixupParam(params, "network_bw", "memNIC.network_bw"))
         out_->output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
@@ -241,87 +239,108 @@ void Cache::configureLinks(Params &params) {
     if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
         out_->output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size'. Change your input file to remove this notice.\n", getName().c_str());
 
-    char *node_buffer1 = (char*) malloc(sizeof(char) * 256);
-    char *node_buffer2 = (char*) malloc(sizeof(char) * 256);
-    char *node_buffer3 = (char*) malloc(sizeof(char) * 256);
-    node = params.find<uint32_t>("node", 0);
-    sprintf(node_buffer1, "%" PRIu32, node);
-    sprintf(node_buffer2, "%" PRIu32, params.find<uint32_t>("shared_memory", 0));
-    sprintf(node_buffer3, "%" PRIu32, params.find<uint32_t>("local_memory_size", 0));
+    std::string opalNode = params.find<std::string>("node", "0");
+    std::string opalShMem = params.find<std::string>("shared_memory", "0");
+    std::string opalSize = params.find<std::string>("local_memory_size", "0");
 
     Params nicParams = params.find_prefix_params("memNIC." );
-    nicParams.insert("node", node_buffer1);
-    nicParams.insert("shared_memory", node_buffer2);
-    nicParams.insert("local_memory_size", node_buffer3);
+    nicParams.insert("node", opalNode);
+    nicParams.insert("shared_memory", opalShMem);
+    nicParams.insert("local_memory_size", opalSize);
 
     Params memlink = params.find_prefix_params("memlink.");
     memlink.insert("port", "low_network_0");
-    memlink.insert("node", node_buffer1);
-    memlink.insert("shared_memory", node_buffer2);
-    memlink.insert("local_memory_size", node_buffer3);
+    memlink.insert("node", opalNode);
+    memlink.insert("shared_memory", opalShMem);
+    memlink.insert("local_memory_size", opalSize);
     
     Params cpulink = params.find_prefix_params("cpulink.");
     cpulink.insert("port", "high_network_0");
-    cpulink.insert("node", node_buffer1);
-    cpulink.insert("shared_memory", node_buffer2);
-    cpulink.insert("local_memory_size", node_buffer3);
-
-    free(node_buffer1);
-    free(node_buffer2);
-    free(node_buffer3);
+    cpulink.insert("node", opalNode);
+    cpulink.insert("shared_memory", opalShMem);
+    cpulink.insert("local_memory_size", opalSize);
 
     /* Finally configure the links */
     if (highNetExists && lowNetExists) {
         
         d_->debug(_INFO_,"Configuring cache with a direct link above and below\n");
         
-        linkDown_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, memlink));
+        linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, memlink));
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
-        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
+        linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockLink_ = false; /* Currently only linkDown_ may need to be clocked */
 
     } else if (highNetExists && lowCacheExists) {
             
         d_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a cache below\n");
-        nicParams.find<std::string>("port", "", found);
-        if (!found) nicParams.insert("port", "cache");
+        
         nicParams.find<std::string>("group", "", found);
         if (!found) nicParams.insert("group", "1");
+        
+        if (isPortConnected("cache_ack") && isPortConnected("cache_fwd") && isPortConnected("cache_data")) {
+            nicParams.find<std::string>("req.port", "", found);
+            if (!found) nicParams.insert("req.port", "cache");
+            nicParams.find<std::string>("ack.port", "", found);
+            if (!found) nicParams.insert("ack.port", "cache_ack");
+            nicParams.find<std::string>("fwd.port", "", found);
+            if (!found) nicParams.insert("fwd.port", "cache_fwd");
+            nicParams.find<std::string>("data.port", "", found);
+            if (!found) nicParams.insert("data.port", "cache_data");
+            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
+        } else {
+            nicParams.find<std::string>("port", "", found);
+            if (!found) nicParams.insert("port", "cache");
+            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+        }
 
-        linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         
         // Configure high link
-        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
+        linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
     
     } else if (highNetExists && lowDirExists) {
             
         d_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a directory below\n");
-        nicParams.find<std::string>("port", "", found);
-        if (!found) nicParams.insert("port", "directory");
+        
         nicParams.find<std::string>("group", "", found);
         if (!found) nicParams.insert("group", "2");
         
+        if (isPortConnected("directory_ack") && isPortConnected("directory_fwd") && isPortConnected("directory_data")) {
+            nicParams.find<std::string>("req.port", "", found);
+            if (!found) nicParams.insert("req.port", "directory");
+            nicParams.find<std::string>("ack.port", "", found);
+            if (!found) nicParams.insert("ack.port", "directory_ack");
+            nicParams.find<std::string>("fwd.port", "", found);
+            if (!found) nicParams.insert("fwd.port", "directory_fwd");
+            nicParams.find<std::string>("data.port", "", found);
+            if (!found) nicParams.insert("data.port", "directory_data");
+            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
+        } else { 
+            nicParams.find<std::string>("port", "", found);
+            if (!found) nicParams.insert("port", "directory");
+            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+        }
         // Configure low link
-        linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
         // Configure high link
-        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
+        linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
 
     } else {    // lowDirExists
         
-        d_->debug(_INFO_, "Configuring cache with a single network link to talk to a cache above and a directory below\n");
-        nicParams.find<std::string>("port", "", found);
-        if (!found) nicParams.insert("port", "directory");
+        d_->debug(_INFO_, "Configuring cache with a network to talk to both a cache above and a directory below\n");
+        
         nicParams.find<std::string>("group", "", found);
         if (!found) nicParams.insert("group", "2");
+        
+        nicParams.find<std::string>("port", "", found);
+        if (!found) nicParams.insert("port", "directory");
 
         // Configure low link
         // This NIC may need to account for cache slices. Check params.
@@ -361,7 +380,23 @@ void Cache::configureLinks(Params &params) {
         nicParams.find<std::string>("interleave_step", "", found);
         if (!found) nicParams.insert("interleave_step", std::to_string(interleaveStep) + "B");
         
-        linkDown_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+        if (isPortConnected("directory_ack") && isPortConnected("directory_fwd") && isPortConnected("directory_data") &&
+                isPortConnected("cache_ack") && isPortConnected("cache_fwd") && isPortConnected("cache_data")) {
+            nicParams.find<std::string>("req.port", "", found);
+            if (!found) nicParams.insert("req.port", "directory");
+            nicParams.find<std::string>("ack.port", "", found);
+            if (!found) nicParams.insert("ack.port", "directory_ack");
+            nicParams.find<std::string>("fwd.port", "", found);
+            if (!found) nicParams.insert("fwd.port", "directory_fwd");
+            nicParams.find<std::string>("data.port", "", found);
+            if (!found) nicParams.insert("data.port", "directory_data");
+            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
+        } else { 
+            nicParams.find<std::string>("port", "", found);
+            if (!found) nicParams.insert("port", "directory");
+            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+        }
+        
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
         // Configure high link
@@ -584,14 +619,7 @@ void Cache::checkDeprecatedParams(Params &params) {
     std::map<std::string,std::string> depMap;
     
     /* Deprecated parameters */
-    depMap["LL"] = autoDetectError;
-    depMap["LLC"] = autoDetectError;
-    depMap["bottom_network"] = autoDetectError;
-    depMap["top_network"] = autoDetectError;
-    depMap["directory_at_next_level"] = autoDetectError;
-    depMap["lower_is_noninclusive"] = autoDetectError;
-    depMap["network_num_vc"] = "MemHierarchy does not use multiple virtual channels.";
-    depMap["statistics"] = "MemHierarchy now uses the SST Statistics API. This parameter has no effect!";
+    depMap["network_address"] = autoDetectError;
 
     for (std::map<std::string,std::string>::iterator it = depMap.begin(); it != depMap.end(); it++) {
         params.find<std::string>(it->first, "", found);
