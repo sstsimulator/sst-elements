@@ -189,6 +189,7 @@ void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetwork
         local += got;
     }
 
+    size_t localLen=local.getLength();
 	m_matched_len = hdr.length;
 
 	Hermes::Vaddr tmpAddr = addr.getSimVAddr(); 
@@ -196,7 +197,7 @@ void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetwork
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore, 
 		[=]() {
 			m_dbg.debug(CALL_INFO_LAMBDA, "processAdd",1,NIC_DBG_RECV_STREAM,"checkWaitOps\n");
-			m_ctx->checkWaitOps( local_pid, tmpAddr, local.getLength() );
+			m_ctx->checkWaitOps( local_pid, tmpAddr, localLen );
 		}
 	) ); 
 
@@ -231,12 +232,13 @@ void Nic::RecvMachine::ShmemStream::processFadd( ShmemMsgHdr& hdr, FireflyNetwor
         local += got;
     }
 
+    size_t localLen=local.getLength();
 	Hermes::Vaddr tmpAddr = addr.getSimVAddr();
 
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusLoad ) );
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore,
 		[=]() {
-			m_ctx->checkWaitOps( local_pid, tmpAddr, local.getLength() );
+			m_ctx->checkWaitOps( local_pid, tmpAddr, localLen );
 		}
 	) ); 
 
@@ -301,9 +303,10 @@ void Nic::RecvMachine::ShmemStream::processCswap( ShmemMsgHdr& hdr, FireflyNetwo
     Hermes::Value cond( (Hermes::Value::Type) hdr.dataType, ev->bufPtr() );
 
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusLoad ) );
+    size_t localLen=local.getLength();
 
     if ( local == cond ) {
-        memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore ) );
+        memOps->push_back( MemOp( addr.getSimVAddr(), localLen, MemOp::Op::BusStore ) );
         local = swap;
     }
 
