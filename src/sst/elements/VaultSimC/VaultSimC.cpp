@@ -288,10 +288,3 @@ bool VaultSimC::clock( Cycle_t current ) {
 #endif /* HAVE_LIBPHX */
 
 
-extern "C" {
-    VaultSimC* VaultSimCAllocComponent( SST::ComponentId_t id,  SST::Params& params )
-    {
-        return new VaultSimC( id, params );
-    }
-}
-

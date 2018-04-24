@@ -38,6 +38,26 @@ class cpu : public Component {
 
 public: // functions
 
+    SST_ELI_REGISTER_COMPONENT(
+                               cpu,
+                               "VaultSimC",
+                               "cpu",
+                               SST_ELI_ELEMENT_VERSION(1,0,0),
+                               "A simple 'cpu' ",
+                               COMPONENT_CATEGORY_PROCESSOR)
+
+    SST_ELI_DOCUMENT_PARAMS(
+                            {"clock",              "Simple CPU Clock Rate."},
+                            {"threads",            "Number of simulated threads in cpu."},
+                            {"app",                "Synthetic Application. 0:miniMD-like 1:phdMesh-like. (See app.cpp for details)."},
+                            {"bwlimit",            "Maximum number of memory instructions issued by the processor per cycle. Note, each thread can only have at most 2 outstanding memory references at a time. "},
+                            {"seed",               "Optional random number generator seed. If not defined or 0, uses srandomdev()."}
+                            )
+
+    SST_ELI_DOCUMENT_PORTS(
+                           {"toMem", "Link to the memory system", {"memEvent",""}}
+                           )
+
   cpu( ComponentId_t id, Params& params );
   void finish();
   

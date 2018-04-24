@@ -16,6 +16,8 @@
 #ifndef COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 #define COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 
+#define CALL_INFO_LAMBDA     __LINE__, __FILE__
+
 class SimpleMemoryModel : SubComponent {
 
 
@@ -29,6 +31,7 @@ class SimpleMemoryModel : SubComponent {
 #define BUS_BRIDGE_MASK 1<<8
 #define TLB_MASK        1<<9
 #define SM_MASK        1<<10
+#define SHARED_TLB_MASK 1<<11
  public:
 
 #include "memOp.h"
@@ -38,10 +41,13 @@ class SimpleMemoryModel : SubComponent {
    typedef std::function<void()> Callback;
 
 #include "cache.h"
+#include "nWayCache.h"
 #include "memReq.h"
+#include "sharedTlb.h"
 #include "unit.h"
 #include "thread.h"
 #include "tlbUnit.h"
+#include "sharedTlbUnit.h"
 #include "nicUnit.h"
 #include "busBridgeUnit.h"
 #include "loadUnit.h"
@@ -112,6 +118,8 @@ class SimpleMemoryModel : SubComponent {
 
 		//m_nicCacheUnit = new CacheUnit( *this, m_dbg, id, m_busBridgeUnit, nicCacheUnitSize, nicCacheLineSize, 10, "Nic" );
 		
+        m_sharedTlb = new SharedTlb( *this, m_dbg, id, tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers );
+		
 		m_nicUnit = new NicUnit( *this, m_dbg, id );
 
 		std::stringstream tlbName;
@@ -123,6 +131,17 @@ class SimpleMemoryModel : SubComponent {
 			unitName.clear();
 			unitName << "Nic" << i;
 
+            SharedTlbUnit* tlb = new SharedTlbUnit( *this, m_dbg, id, unitName.str().c_str(), m_sharedTlb, 
+					new LoadUnit( *this, m_dbg, id,
+						m_busBridgeUnit,
+						nicNumLoadSlots, unitName.str().c_str() ),
+
+					new StoreUnit( *this, m_dbg, id,
+						m_busBridgeUnit,
+						nicNumStoreSlots, unitName.str().c_str() ),
+                        numTlbSlots, numTlbSlots 
+                        );
+#if 0
             Tlb* tlb = new Tlb( *this, m_dbg, id, unitName.str().c_str(), 
 					new LoadUnit( *this, m_dbg, id,
 						m_busBridgeUnit,
@@ -133,6 +152,7 @@ class SimpleMemoryModel : SubComponent {
 						nicNumStoreSlots, unitName.str().c_str() ),
                         tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers, numTlbSlots, numTlbSlots 
                         );
+#endif
 
 			m_threads.push_back( 
 				new Thread( *this, unitName.str(), m_dbg, id, nicToHostMTU, tlb, tlb )	
@@ -159,6 +179,7 @@ class SimpleMemoryModel : SubComponent {
 	}
 
     virtual ~SimpleMemoryModel() {
+        m_sharedTlb->printStats();
         delete m_hostCacheUnit;
         for ( unsigned i = 0; i < m_threads.size(); i++ ) {
             delete m_threads[i];
@@ -234,6 +255,7 @@ class SimpleMemoryModel : SubComponent {
 	BusBridgeUnit*  m_busBridgeUnit;
 	NicUnit* 		m_nicUnit;
 	CacheUnit* 		m_nicCacheUnit;
+    SharedTlb*      m_sharedTlb;
 
 	std::vector<Thread*> m_threads;
 

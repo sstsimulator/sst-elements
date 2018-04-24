@@ -45,6 +45,8 @@
 #include "arielallocev.h"
 #include "arielfreeev.h"
 #include "arielnoop.h"
+#include "arielflushev.h"
+#include "arielfenceev.h"
 #include "arielswitchpool.h"
 #include "arielalloctrackev.h"
 
@@ -69,8 +71,12 @@ class ArielCore {
 			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
 		~ArielCore();
 		bool isCoreHalted() const;
+		bool isCoreFenced() const;
+		bool hasDrainCompleted() const;
 		void tick();
 		void halt();
+		void fence();
+		void unfence();
 		void finishCore();
 		void createReadEvent(uint64_t addr, uint32_t size);
 		void createWriteEvent(uint64_t addr, uint32_t size);
@@ -79,9 +85,12 @@ class ArielCore {
 		void createNoOpEvent();
 		void createFreeEvent(uint64_t vAddr);
 		void createExitEvent();
+		void createFlushEvent(uint64_t vAddr);
+		void createFenceEvent();
 		void createSwitchPoolEvent(uint32_t pool);
 		void setOpalLink(Link * opallink);
                 void setCacheLink(SimpleMem* newCacheLink, Link* allocLink);
+		void setOriginalMaxPendingTransactions(uint32_t maxPendingTransactions){originalMaxPendingTransactions = maxPendingTransactions;}
 		void handleEvent(SimpleMem::Request* event);
 		void handleReadRequest(ArielReadEvent* wEv);
 		void handleWriteRequest(ArielWriteEvent* wEv);
@@ -89,10 +98,15 @@ class ArielCore {
 		void handleMmapEvent(ArielMmapEvent* aEv);
 		void handleFreeEvent(ArielFreeEvent* aFE);
 		void handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE);
+		void handleFlushEvent(ArielFlushEvent *flEv);
+		void handleFenceEvent(ArielFenceEvent *fEv);
 		void setOpal() { opal_enabled = true; } 
+		
+		uint32_t getOriginalMaxPendingTransactions(){return maxPendingTransactions;}
 
 		void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 		void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
+		void commitFlushEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 
 		// Setting the max number of instructions to be simulated
 		void setMaxInsts(long long int i){max_insts=i;}
@@ -109,6 +123,7 @@ class ArielCore {
 		Output* output;
 		std::queue<ArielEvent*>* coreQ;
 		bool isHalted;
+		bool isFenced;
 		SimpleMem* cacheLink;
                 Link* allocLink;
                 Link* OpalLink;
@@ -153,6 +168,7 @@ class ArielCore {
 		Statistic<uint64_t>* statFPSPOps;
 
 		uint64_t pending_transaction_count;
+		uint32_t originalMaxPendingTransactions;
 
 };
 
