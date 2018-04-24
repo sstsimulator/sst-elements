@@ -221,18 +221,21 @@ class Thread : public UnitBase {
 
     void opCallback( Work* work, MemOp* op, bool deleteWork ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"opPtr=%p %s waitingOnOp=%p\n",op,op->getName(),m_waitingOnOp);
-
         op->decPending();
 
         if ( op->canBeRetired() ) {
             if ( work->m_workNum  == m_lastDelete ) {
+                while ( ! work->m_pendingCallbacks.empty() ) {
+                    work->m_pendingCallbacks.front()();
+                    work->m_pendingCallbacks.pop_front();
+                }
                 if ( op->callback ) {
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"do op callback\n");
                     op->callback();
                 }
 
                 if ( deleteWork ) {
-                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete work %p %d\n",work, work->m_workNum);
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete work=%p %d\n",work, work->m_workNum);
                     delete work;
                     ++m_lastDelete;
                     while ( ! m_OOOwork.empty() ) {
@@ -253,7 +256,9 @@ class Thread : public UnitBase {
                 }
             } else {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"OOO work %p %d\n",work,work->m_workNum);
-                m_OOOwork[work->m_workNum] = work;
+                if ( deleteWork ) {
+                    m_OOOwork[work->m_workNum] = work;
+                }
                 if ( op->callback ) {
                     work->m_pendingCallbacks.push_back(op->callback);
                 }

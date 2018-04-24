@@ -266,11 +266,3 @@ bool logicLayer::clock( Cycle_t current )
 
   return false;
 }
-
-extern "C" {
-	Component* create_logicLayer( SST::ComponentId_t id,  SST::Params& params )
-	{
-		return new logicLayer( id, params );
-	}
-}
-

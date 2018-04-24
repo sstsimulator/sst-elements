@@ -190,11 +190,9 @@ class Nic : public SST::Component  {
     class SelfEvent : public SST::Event {
       public:
 
-		enum { Callback, Entry, Event } type;
+		enum { Callback, Event } type;
         typedef std::function<void()> Callback_t;
 
-        SelfEvent( void* entry) : 
-            type(Entry), entry(entry) {}
         SelfEvent( Callback_t callback ) :
             type(Callback), callback( callback) {}
         SelfEvent( SST::Event* ev,  int linkNum  ) :

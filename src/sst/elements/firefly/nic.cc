@@ -312,9 +312,6 @@ void Nic::handleSelfEvent( Event *e )
 	case SelfEvent::Callback:
         event->callback();
 		break;
-	case SelfEvent::Entry:
-        qSendEntry( static_cast<SendEntryBase*>(event->entry) );
-		break;
 	case SelfEvent::Event:
 		handleVnicEvent2( event->event, event->linkNum );
 		break;
