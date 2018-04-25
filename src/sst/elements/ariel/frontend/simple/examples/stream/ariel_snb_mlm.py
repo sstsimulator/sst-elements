@@ -117,7 +117,7 @@ print "Configuring Ariel processor model (" + str(groups * cores_per_group) + " 
 
 ariel = sst.Component("A0", "ariel.ariel")
 ariel.addParams({
-        "verbose"             : "0",
+        "verbose"             : "2",
         "maxcorequeue"        : "256",
         "maxtranscore"        : "16",
         "maxissuepercycle"    : "2",
@@ -127,9 +127,12 @@ ariel.addParams({
         "arielinterceptcalls" : "1",
        	"arielmode"           : "1",
         "corecount"           : groups * cores_per_group,
-       	"memmgr.memorylevels" : "1",
+        "memmgr"              : "ariel.MemoryManagerMalloc",
+       	"memmgr.memorylevels" : "2",
         "memmgr.defaultlevel" : 0,
-	"memmgr.pagecount0"   : "1048576",
+	"memmgr.pagecount0"   : "524288",
+	"memmgr.pagecount1"   : "524288",
+        "mallocmapfile"       : "malloc.txt",
         "clock"               : str(clock)
 })
 
