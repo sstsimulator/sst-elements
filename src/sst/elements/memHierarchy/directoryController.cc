@@ -50,7 +50,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     // Detect deprecated parameters and warn/fatal
     // Currently deprecated - network_num_vc
     bool found;
-    out.init("", 1, 0, Output::STDOUT);
+    out.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
     params.find<int>("network_num_vc", 0, found);
     if (found) {
         out.output("%s, ** Found deprecated parameter: network_num_vc ** MemHierarchy does not use multiple virtual channels. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
@@ -1623,7 +1623,8 @@ void DirectoryController::printStatus(Output &statusOut) {
 }
 
 void DirectoryController::emergencyShutdown() {
-    printStatus(out);
+    if (out.getVerboseLevel() > 1)
+        printStatus(out);
 }
 
 

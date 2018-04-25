@@ -1,3 +1,12 @@
+--->  --------------------------- Initializing [Set Associative Cache Array]... 
+--->  Sets: 8 
+--->  Lines: 32 
+--->  Line size: 64 
+--->  Associativity: 4 
+
+--->  Configuring cache with a direct link above and below
+--->  --------------------------- Initializing [L1Controller] ... 
+
  cpu.read_reqs : Accumulator : Sum.u64 = 20000; SumSQ.u64 = 20000; Count.u64 = 20000; Min.u64 = 1; Max.u64 = 1; 
  cpu.write_reqs : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  cpu.custom_reqs : Accumulator : Sum.u64 = 10000; SumSQ.u64 = 10000; Count.u64 = 10000; Min.u64 = 1; Max.u64 = 1; 

@@ -77,7 +77,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     }
 
     // Output for warnings
-    out.init("", 1, 0, Output::STDOUT);
+    out.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
     
     // Check for deprecated parameters and warn/fatal
     // Currently deprecated - mem_size (replaced by backend.mem_size), network_num_vc, statistic, direct_link 
@@ -230,7 +230,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             if (e == 1) 
                 out.fatal(CALL_INFO, -1, "%s, Error - unable to open memory_file. You specified '%s'.\n", getName().c_str(), memoryFile.c_str());
             else if (e == 2) {
-                out.output("%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
+                out.verbose(CALL_INFO, 1, 0, "%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
                 backing_ = new Backend::BackingMalloc(sizeBytes);
             } else 
                 out.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
@@ -353,7 +353,7 @@ void MemController::handleCustomEvent(MemEventBase * ev) {
 
     CustomCmdMemHandler::MemEventInfo evInfo = customCommandHandler_->receive(ev);
     if (evInfo.shootdown) {
-        out.output("%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString().c_str());
+        out.verbose(CALL_INFO, 1, 0, "%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString().c_str());
     }
     
     CustomCmdInfo * info = customCommandHandler_->ready(ev);
@@ -571,5 +571,6 @@ void MemController::printStatus(Output &statusOut) {
 }
 
 void MemController::emergencyShutdown() {
-    printStatus(out);
+    if (out.getVerboseLevel() > 1)
+        printStatus(out);
 }

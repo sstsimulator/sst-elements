@@ -40,7 +40,7 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
  
     /* --------------- Output Class --------------- */
     out_ = new Output();
-    out_->init("", 1, 0, Output::STDOUT);
+    out_->init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
 
     d_ = new Output();
     d_->init("--->  ", params.find<int>("debug_level", 1), 0,(Output::output_location_t)params.find<int>("debug", 0));

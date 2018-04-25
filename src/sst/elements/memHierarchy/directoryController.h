@@ -52,9 +52,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS( 
             {"clock",                   "Clock rate of controller.", "1GHz"},
             {"entry_cache_size",        "Size (in # of entries) the controller will cache.", "0"},
-            {"debug",                   "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-            {"debug_level",             "Debugging level: 0 to 10", "0"},
-            {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
+            {"debug",                   "Where to send debug output. 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+            {"debug_level",             "Debugging level: 0 to 10. Must configure sst-core with '--enable-debug'. 1=info, 2-10=debug output", "0"},
+            {"debug_addr",              "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
+            {"verbose",                 "Output verbosity for warnings/errors. 0[fatal error only], 1[warnings], 2[full state dump on fatal error]","1"},
             {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
             {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--", "MESI"},
             {"mshr_num_entries",        "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},

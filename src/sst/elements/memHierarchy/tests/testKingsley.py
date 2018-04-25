@@ -44,6 +44,8 @@ debugMemCtrl = max(debugAll, 0)
 debugNIC = max(debugAll, 0)
 debugLev = 3
 
+# Verbose
+verbose = 2
 
 l1_cache_params = {
     "cache_frequency"    : core_clock,
@@ -62,8 +64,9 @@ l1_cache_params = {
     #"request_link_width" : "72B",
     #"response_link_width" : "36B",
     "L1"                 : 1,
+    "verbose"            : verbose,
     "debug"              : debugL1,
-    "debug_level"        : debugLev
+    "debug_level"        : debugLev,
 }
 
 l2_prefetch_params = {
@@ -104,6 +107,7 @@ l2_cache_params = {
     "memNIC.data.network_output_buffer_size" : data_network_buffers,
     "memNIC.debug" : debugNIC,
     "memNIC.debug_level" : debugLev,
+    "verbose" : verbose,
     "debug"              : debugL2,
     "debug_level"        : debugLev
 }
@@ -127,6 +131,7 @@ ddr_dc_params = {
     "memNIC.fwd.network_output_buffer_size" : ctrl_network_buffers,
     "memNIC.data.network_input_buffer_size" : data_network_buffers,
     "memNIC.data.network_output_buffer_size" : data_network_buffers,
+    "verbose" : verbose,
     "debug"             : debugDDRDC,
     "debug_level"       : debugLev
 }
@@ -134,6 +139,7 @@ ddr_dc_params = {
 ##### TimingDRAM #####
 # DDR4-2400
 ddr_mem_timing_params = {
+    "verbose" : verbose,
     "backing" : "none",
     "backend" : "memHierarchy.timingDRAM",
     "backend.clock" : "1200MHz",

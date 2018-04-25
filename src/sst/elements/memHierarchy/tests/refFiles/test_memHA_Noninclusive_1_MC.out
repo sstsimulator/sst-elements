@@ -12,12 +12,12 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu5 Finished after 1500 issued reads, 1500 returned (111953 clocks)
 TrivialCPU cpu4 Finished after 1500 issued reads, 1500 returned (111770 clocks)
-TrivialCPU cpu6 Finished after 1500 issued reads, 1500 returned (109015 clocks)
 TrivialCPU cpu3 Finished after 1500 issued reads, 1500 returned (113137 clocks)
 TrivialCPU cpu0 Finished after 1500 issued reads, 1500 returned (114494 clocks)
+TrivialCPU cpu6 Finished after 1500 issued reads, 1500 returned (109015 clocks)
 TrivialCPU cpu1 Finished after 1500 issued reads, 1500 returned (108700 clocks)
-TrivialCPU cpu7 Finished after 1500 issued reads, 1500 returned (114058 clocks)
 TrivialCPU cpu2 Finished after 1500 issued reads, 1500 returned (111842 clocks)
+TrivialCPU cpu7 Finished after 1500 issued reads, 1500 returned (114058 clocks)
  network.send_bit_count.port0 : Accumulator : Sum.u64 = 1152576; SumSQ.u64 = 663883776; Count.u64 = 2001; Min.u64 = 576; Max.u64 = 576; 
  network.send_packet_count.port0 : Accumulator : Sum.u64 = 2001; SumSQ.u64 = 2001; Count.u64 = 2001; Min.u64 = 1; Max.u64 = 1; 
  network.output_port_stalls.port0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
