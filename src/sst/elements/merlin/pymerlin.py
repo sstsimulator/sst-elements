@@ -398,7 +398,7 @@ class topoHyperX(Topo):
                 name = "link.%s:%s:%d"%(name2, name1, num)
             if name not in links:
                 links[name] = sst.Link(name)
-            print "Getting link with name: %s"%name
+            #print "Getting link with name: %s"%name
             return links[name]
 
         # loop through the routers to hook up links
@@ -407,7 +407,7 @@ class topoHyperX(Topo):
             mydims = idToLoc(i)
             mylocstr = self.formatShape(mydims)
 
-            print "Creating router %s (%d)"%(mylocstr,i)
+            #print "Creating router %s (%d)"%(mylocstr,i)
             
             rtr = sst.Component("rtr.%s"%mylocstr, "merlin.hr_router")
             rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
@@ -426,7 +426,7 @@ class topoHyperX(Topo):
                         # Hook up "width" number of links for this dimension
                         for num in xrange(self.dimwidths[dim]):
                             rtr.addLink(getLink(mylocstr, theirlocstr, num), "port%d"%port, _params["link_lat"])
-                            print "Wired up port %d"%port
+                            #print "Wired up port %d"%port
                             port = port + 1
                     
 
@@ -954,6 +954,67 @@ class BisectionEndPoint(EndPoint):
     def enableAllStatistics(self,interval):
         self.enableAllStats = True;
         self.statInterval = interval;
+
+
+class Pt2ptEndPoint(EndPoint):
+    def __init__(self):
+        EndPoint.__init__(self)
+        #self.enableAllStats = False;
+        #self.statInterval = "0"
+        self.epKeys.extend(["link_bw", "packet_size", "packets_to_send", "buffer_size", "src", "dest"])
+        self.epOptKeys.extend(["linkcontrol"])
+
+    def getName(self):
+        return "pt2pt Test End Point"
+
+    def prepParams(self):
+        #if "checkerboard" not in _params:
+        #    _params["checkerboard"] = "1"
+        pass
+        
+    def build(self, nID, extraKeys):
+        nic = sst.Component("pt2ptNic.%d"%nID, "merlin.pt2pt_test")
+        nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
+        nic.addParams(_params.subset(extraKeys))
+        nic.addParam("id", nID)
+        if self.enableAllStats:
+            nic.enableAllStatistics({"type":"sst.AccumulatorStatistic", "rate":self.statInterval})
+        return (nic, "rtr", _params["link_lat"])
+        #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
+
+    def enableAllStatistics(self,interval):
+        self.enableAllStats = True;
+        self.statInterval = interval;
+
+
+class OfferedLoadEndPoint(EndPoint):
+    def __init__(self):
+        EndPoint.__init__(self)
+        #self.enableAllStats = False;
+        #self.statInterval = "0"
+        self.epKeys.extend(["offered_load", "num_peers", "link_bw", "message_size", "buffer_size", "pattern"])
+        self.epOptKeys.extend(["linkcontrol"])
+
+    def getName(self):
+        return "Offered Load End Point"
+
+    def prepParams(self):
+        pass
+        
+    def build(self, nID, extraKeys):
+        nic = sst.Component("offered_load.%d"%nID, "merlin.offered_load")
+        nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
+        nic.addParams(_params.subset(extraKeys))
+        nic.addParam("id", nID)
+        if self.enableAllStats:
+            nic.enableAllStatistics({"type":"sst.AccumulatorStatistic", "rate":self.statInterval})
+        return (nic, "rtr", _params["link_lat"])
+        #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
+
+    def enableAllStatistics(self,interval):
+        self.enableAllStats = True;
+        self.statInterval = interval;
+
 
 
 class ShiftEndPoint(EndPoint):
