@@ -63,6 +63,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	statNoopCount     = own->registerStatistic<uint64_t>( "no_ops", subID );
 	statInstructionCount = own->registerStatistic<uint64_t>( "instruction_count", subID );
 	statCycles = own->registerStatistic<uint64_t>( "cycles", subID );
+        statActiveCycles = own->registerStatistic<uint64_t>( "active_cycles", subID );
 
 	statFPSPIns = own->registerStatistic<uint64_t>("fp_sp_ins", subID);
 	statFPDPIns = own->registerStatistic<uint64_t>("fp_dp_ins", subID);
@@ -872,14 +873,16 @@ bool ArielCore::processNextEvent() {
 					started = true;
 
 			}
+                        
+                        currentCycles++;
+                        statCycles->addData(1);
 
 			if( updateCycle ) {
-				currentCycles++;
-				statCycles->addData(1);
+                            statActiveCycles->addData(1);
 			}
 		}
 
-		if(inst_count >= max_insts && (max_insts!=0) && (coreID==0))
+		if (inst_count >= max_insts && (max_insts!=0) && (coreID==0))
 			isHalted=true;
 
 	}

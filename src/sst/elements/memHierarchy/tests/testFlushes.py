@@ -13,6 +13,7 @@ coreclock = "2.4GHz"
 uncoreclock = "1.4GHz"
 coherence = "MESI"
 network_bw = "60GB/s"
+verbose = 2
 
 # Create merlin network - this is just simple single router
 comp_network = sst.Component("network", "merlin.hr_router")
@@ -53,6 +54,7 @@ for x in range(cores):
         "cache_size" : "2KiB",  # super tiny for lots of traffic
         "associativity" : 2,
         "L1" : 1,
+        "verbose" : verbose,
     })
 
     comp_l2cache = sst.Component("l2cache" + str(x), "memHierarchy.Cache")
@@ -67,6 +69,7 @@ for x in range(cores):
         "associativity" : 4,
         "max_requests_per_cycle" : 1,
         "mshr_num_entries" : 8,
+        "verbose" : verbose,
         # MemNIC parameters
         "memNIC.network_bw" : network_bw,
         "memNIC.network_address" : x,
@@ -95,6 +98,7 @@ for x in range(caches):
         "cache_size" : "1MiB",
         "associativity" : 32,
         "mshr_num_entries" : 8,
+        "verbose" : verbose,
         # Distributed cache parameters
         "num_cache_slices" : caches,
         "slice_allocation_policy" : "rr", # Round-robin
@@ -117,6 +121,7 @@ for x in range(memories):
         "coherence_protocol" : coherence,
         "entry_cache_size" : 32768,
         "mshr_num_entries" : 16,
+        "verbose" : verbose,
         # MemNIC parameters
         "memNIC.interleave_size" : "64B",    # Interleave at line granularity between memories
         "memNIC.interleave_step" : str(memories * 64) + "B",
@@ -133,6 +138,7 @@ for x in range(memories):
         "clock" : "500MHz",
         "max_requests_per_cycle" : 2,
         "backing" : "none",
+        "verbose" : verbose,
         # Backend parameters
         "backend" : "memHierarchy.simpleDRAM",
         "backend.mem_size" : "512MiB",

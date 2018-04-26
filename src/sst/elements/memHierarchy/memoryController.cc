@@ -77,7 +77,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     }
 
     // Output for warnings
-    out.init("", 1, 0, Output::STDOUT);
+    out.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
     
     // Check for deprecated parameters and warn/fatal
     // Currently deprecated - mem_size (replaced by backend.mem_size), network_num_vc, statistic, direct_link 
@@ -137,19 +137,18 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     free(nextListenerName);
     free(nextListenerParams);
 
-    char *node_buffer1 = (char*) malloc(sizeof(char) * 256);
-    char *node_buffer2 = (char*) malloc(sizeof(char) * 256);
-    char *node_buffer3 = (char*) malloc(sizeof(char) * 256);
-    sprintf(node_buffer1, "%" PRIu32, params.find<uint32_t>("node", 0));
-    sprintf(node_buffer2, "%" PRIu32, params.find<uint32_t>("shared_memory", 0));
-    sprintf(node_buffer3, "%" PRIu32, params.find<uint32_t>("local_memory_size", 0));
+
+    // Opal
+    std::string opalNode = params.find<std::string>("node", "0");
+    std::string opalShMem = params.find<std::string>("shared_memory", "0");
+    std::string opalSize = params.find<std::string>("local_memory_size", "0");
 
     if (isPortConnected("direct_link")) {
         Params linkParams = params.find_prefix_params("cpulink.");
         linkParams.insert("port", "direct_link");
-        linkParams.insert("node", node_buffer1);
-        linkParams.insert("shared_memory", node_buffer2);
-        linkParams.insert("local_memory_size", node_buffer3);
+        linkParams.insert("node", opalNode);
+        linkParams.insert("shared_memory", opalShMem);
+        linkParams.insert("local_memory_size", opalSize);
         linkParams.insert("latency", link_lat, false);
         linkParams.insert("accept_region", "1", false);
         link_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, linkParams));
@@ -162,22 +161,28 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         }
 
         Params nicParams = params.find_prefix_params("memNIC.");
-        nicParams.insert("port", "network");
-        nicParams.insert("node", node_buffer1);
-        nicParams.insert("shared_memory", node_buffer2);
-        nicParams.insert("local_memory_size", node_buffer3);
+        nicParams.insert("node", opalNode);
+        nicParams.insert("shared_memory", opalShMem);
+        nicParams.insert("local_memory_size", opalSize);
+        
         nicParams.insert("group", "4", false);
         nicParams.insert("accept_region", "1", false);
 
-        link_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams)); 
+        if (isPortConnected("network_ack") && isPortConnected("network_fwd") && isPortConnected("network_data")) {
+            nicParams.insert("req.port", "network");
+            nicParams.insert("ack.port", "network_ack");
+            nicParams.insert("fwd.port", "network_fwd");
+            nicParams.insert("data.port", "network_data");
+            link_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams)); 
+        } else {
+            nicParams.insert("port", "network");
+            link_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams)); 
+        }
+
         link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
         clockLink_ = true;
     }
     
-    free(node_buffer1);
-	free(node_buffer2);
-	free(node_buffer3);
-
     region_ = link_->getRegion();
     privateMemOffset_ = 0;
 
@@ -225,7 +230,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             if (e == 1) 
                 out.fatal(CALL_INFO, -1, "%s, Error - unable to open memory_file. You specified '%s'.\n", getName().c_str(), memoryFile.c_str());
             else if (e == 2) {
-                out.output("%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
+                out.verbose(CALL_INFO, 1, 0, "%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
                 backing_ = new Backend::BackingMalloc(sizeBytes);
             } else 
                 out.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
@@ -239,7 +244,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     clockTimeBase_ = registerClock(memBackendConvertor_->getClockFreq(), clockHandler_);
     clockOn_ = true;
 
-    registerTimeBase("1 ns", true);
+    registerTimeBase("1 ns", true); // TODO - is this needed? We already registered a clock...
 
     /* Custom command handler */
     if (nullptr == (customCommandHandler_ = dynamic_cast<CustomCmdMemHandler*>(loadNamedSubComponent("customCmdHandler")))) {
@@ -348,7 +353,7 @@ void MemController::handleCustomEvent(MemEventBase * ev) {
 
     CustomCmdMemHandler::MemEventInfo evInfo = customCommandHandler_->receive(ev);
     if (evInfo.shootdown) {
-        out.output("%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString().c_str());
+        out.verbose(CALL_INFO, 1, 0, "%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString().c_str());
     }
     
     CustomCmdInfo * info = customCommandHandler_->ready(ev);
@@ -566,5 +571,6 @@ void MemController::printStatus(Output &statusOut) {
 }
 
 void MemController::emergencyShutdown() {
-    printStatus(out);
+    if (out.getVerboseLevel() > 1)
+        printStatus(out);
 }
