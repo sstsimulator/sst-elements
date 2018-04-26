@@ -103,12 +103,17 @@ private:
     int* input_buf_count;
     int* output_buf_count;
 
+    // Keep track of how many items are in the output queues.  This
+    // can be used by topology objects to make adaptive routing
+    // decisions.
+    int* output_queue_lengths;
+    
     // Variables to keep track of credits.  You need to keep track of
     // the credits available for your next buffer, as well as track
     // the credits you need to return to the buffer sending data to
     // you,
     int* xbar_in_credits;
-
+    
     int* port_ret_credits;
     int* port_out_credits;
     
@@ -197,7 +202,7 @@ public:
                 std::vector<std::string>& inspector_names,
 				const float dlink_thresh);
 
-    void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits);
+    void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths);
 
 
     ~PortControl();

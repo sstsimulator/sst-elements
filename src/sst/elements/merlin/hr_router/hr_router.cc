@@ -637,16 +637,19 @@ hr_router::init_vcs()
 
     vc_heads = new internal_router_event*[num_ports*num_vcs];
     xbar_in_credits = new int[num_ports*num_vcs];
+    output_queue_lengths = new int[num_ports*num_vcs];
     for ( int i = 0; i < num_ports*num_vcs; i++ ) {
         vc_heads[i] = NULL;
         xbar_in_credits[i] = 0;
+        output_queue_lengths[i] = 0;
     }
     
     for ( int i = 0; i < num_ports; i++ ) {
-        ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs]);
-    }    
+        ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],&output_queue_lengths[i*num_vcs]);
+    }
 
     topo->setOutputBufferCreditArray(xbar_in_credits, num_vcs);
+    topo->setOutputQueueLengthsArray(output_queue_lengths, num_vcs);
 
     // Now that we have the number of VCs we can finish initializing
     // arbitration logic

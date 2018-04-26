@@ -95,6 +95,7 @@ private:
     PortControl** ports;
     internal_router_event** vc_heads;
     int* xbar_in_credits;
+    int* output_queue_lengths;
 
 #if VERIFY_DECLOCKING
     bool clocking;
@@ -136,6 +137,7 @@ public:
 
     void notifyEvent();
     int const* getOutputBufferCredits() {return xbar_in_credits;}
+    int const* getOutputQueueLengths() {return output_queue_lengths;}
 
     void sendTopologyEvent(int port, TopologyEvent* ev);
     void recvTopologyEvent(int port, TopologyEvent* ev);
