@@ -10,7 +10,7 @@ class Tlb : public Unit {
     };
     
   public:
-    Tlb( SimpleMemoryModel& model, Output& dbg, int id, Unit* load, Unit* store, int size, int pageSize, int tlbMissLat_ns,
+    Tlb( SimpleMemoryModel& model, Output& dbg, int id, std::string name, Unit* load, Unit* store, int size, int pageSize, int tlbMissLat_ns,
             int numWalkers, int maxStores, int maxLoads ) :
         Unit( model, dbg ), m_curPid(-1), m_cache( size ), m_cacheSize( size), m_pageMask( ~(pageSize - 1) ),
         m_load(load), 
@@ -24,18 +24,29 @@ class Tlb : public Unit {
         m_numPendingStores(0),
         m_numPendingLoads(0),
         m_pendingWalks(0),
-        m_blockedStoreSrc(NULL)
+        m_blockedStoreSrc(NULL),
+        m_hitCnt(0),
+        m_total(0),
+        m_flush(0)
     {
-        m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::Tlb::@p():@l ";
+        m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::"+name+"TlbUnit::@p():@l ";
+        stats = std::to_string(id) + ":SimpleMemoryModel::" + name + "TlbUnit:: ";
 
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"tlbSize=%d, pageMask=%#" PRIx64 ", numWalkers=%d\n",
                         size, m_pageMask, numWalkers );
+    }
 
-        // we need to start with a full cache, what's in it doesn't mater
-        for ( unsigned i = 0; i < size; i++ ) {
-            m_cache.insert( ( i + 1 ) );
+    ~Tlb() {
+        if ( 0 && m_total ) {
+            m_dbg.output("%s total requests %" PRIu64 " %f percent hits,  %f percent flushes\n",
+                    stats.c_str(), m_total, (float)m_hitCnt/(float)m_total, (float)m_flush/(float)m_total);
         }
     }
+
+    std::string stats;
+    uint64_t m_hitCnt;
+    uint64_t m_total;
+    uint64_t m_flush;
 
     void resume( UnitBase* unit ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"\n");
@@ -63,6 +74,7 @@ class Tlb : public Unit {
 
     bool storeCB( UnitBase* src, MemReq* req, Callback callback ) {
 
+        req->addr |= (uint64_t) req->pid << 56; 
         Hermes::Vaddr addr = getPageAddr(req->addr);
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"req Addr %#" PRIx64 ", page Addr %#" PRIx64 "\n", addr, req->addr );
 
@@ -88,6 +100,7 @@ class Tlb : public Unit {
     }
 
     bool load( UnitBase* src, MemReq* req, Callback callback ) {
+        req->addr |= (uint64_t) req->pid << 56; 
         Hermes::Vaddr addr = getPageAddr(req->addr);
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"%#" PRIx64 " %#" PRIx64 "\n", addr, req->addr );
 
@@ -219,11 +232,21 @@ class Tlb : public Unit {
 
     bool lookup( int pid, uint64_t addr  ) {
         if ( m_cacheSize == 0 ) { return true; }
+        ++m_total;
 
+#if 0
+        if (  pid != m_curPid ) {  
+            printf("%d %d\n",m_curPid, pid);
+            ++m_flush;
+            m_curPid = pid;
+            m_cache.invalidate();
+        }
         assert ( -1 == m_curPid || pid == m_curPid ); 
+#endif
 
         bool retval;
         if ( m_cache.isValid( addr) ) {
+            ++m_hitCnt;
             m_cache.updateAge( addr );
             retval = true;
         } else {

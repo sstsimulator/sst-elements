@@ -69,8 +69,8 @@ KNOB<UINT32> MaxCoreCount(KNOB_MODE_WRITEONCE, "pintool",
     "c", "1", "Maximum core count to use for data pipes.");
 KNOB<UINT32> StartupMode(KNOB_MODE_WRITEONCE, "pintool",
     "s", "1", "Mode for configuring profile behavior, 1 = start enabled, 0 = start disabled, 2 = attempt auto detect");
-KNOB<UINT32> InterceptMultiLevelMemory(KNOB_MODE_WRITEONCE, "pintool",
-    "m", "1", "Should intercept multi-level memory allocations, copies and frees, 1 = start enabled, 0 = start disabled");
+KNOB<UINT32> InterceptMemAllocations(KNOB_MODE_WRITEONCE, "pintool",
+    "m", "1", "Should intercept multi-level memory allocations, mallocs, and frees, 1 = start enabled, 0 = start disabled");
 KNOB<string> UseMallocMap(KNOB_MODE_WRITEONCE, "pintool",
     "u", "", "Should intercept ariel_malloc_flag() and interpret using a malloc map: specify filename or leave blank for disabled");
 KNOB<UINT32> KeepMallocStackTrace(KNOB_MODE_WRITEONCE, "pintool",
@@ -296,6 +296,28 @@ VOID copy(void* dest, const void* input, UINT32 length) {
 	for(UINT32 i = 0; i < length; ++i) {
 		((char*) dest)[i] = ((char*) input)[i];
 	}
+}
+
+VOID WriteFlushInstructionMarker(UINT32 thr, ADDRINT ip, ADDRINT vaddr)
+{
+	ArielCommand ac;
+	ac.command = ARIEL_FLUSHLINE_INSTRUCTION; /*  Send the Flush instruction commmand */
+	ac.instPtr = (uint64_t) ip;
+	ac.flushline.vaddr = (uint32_t) vaddr;
+
+	tunnel->writeMessage(thr, ac);
+
+}
+
+VOID WriteFenceInstructionMarker(UINT32 thr, ADDRINT ip)
+{
+	ArielCommand ac;
+	ac.command = ARIEL_FENCE_INSTRUCTION;
+	ac.instPtr = (uint64_t) ip;
+	
+	tunnel->writeMessage(thr, ac);
+
+
 }
 
 VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr, ADDRINT ip,
@@ -571,6 +593,25 @@ int mapped_clockgettime(clockid_t clock, struct timespec *tp) {
 }
 #endif
 
+void mapped_ariel_flushline(void *virtualAddress)
+{
+	THREADID currentThread = PIN_ThreadId();
+	UINT32 thr = (UINT32) currentThread;
+	ADDRINT ip = IARG_INST_PTR;
+	ADDRINT vaddr = (uint64_t) virtualAddress;
+
+	WriteFlushInstructionMarker(thr, ip, vaddr);
+}
+
+void mapped_ariel_fence(void *virtualAddress)
+{
+	THREADID currentThread = PIN_ThreadId();
+	UINT32 thr = (UINT32) currentThread;
+	ADDRINT ip = IARG_INST_PTR;
+
+	WriteFenceInstructionMarker(thr, ip);
+}
+
 int ariel_mlm_memcpy(void* dest, void* source, size_t size) {
 #ifdef ARIEL_DEBUG
 	fprintf(stderr, "Perform a mlm_memcpy from Ariel from %p to %p length %llu\n",
@@ -840,7 +881,7 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation) {
         } else if (shouldOverride) {
             ac.mlm_map.alloc_level = overridePool;
             tunnel->writeMessage(thr, ac);
-        } else if (InterceptMultiLevelMemory.Value()) {
+        } else if (InterceptMemAllocations.Value()) {
             ac.mlm_map.alloc_level = allocationLevel;
             tunnel->writeMessage(thr, ac);
         }
@@ -922,23 +963,23 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         fprintf(stderr,"Replacement complete.\n");
         return;
 #endif
-    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && RTN_Name(rtn) == "mlm_malloc") {
+    } else if ((InterceptMemAllocations.Value() > 0) && RTN_Name(rtn) == "mlm_malloc") {
         // This means we want a special malloc to be used (needs a TLB map inside the virtual core)
         fprintf(stderr,"Identified routine: mlm_malloc, replacing with Ariel equivalent...\n");
         AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) ariel_mlm_malloc);
         fprintf(stderr,"Replacement complete. (%p)\n", ret);
         return;
-    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && RTN_Name(rtn) == "mlm_free") {
+    } else if ((InterceptMemAllocations.Value() > 0) && RTN_Name(rtn) == "mlm_free") {
         fprintf(stderr,"Identified routine: mlm_free, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) ariel_mlm_free);
         fprintf(stderr, "Replacement complete.\n");
         return;
-    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && RTN_Name(rtn) == "mlm_set_pool") {
+    } else if ((InterceptMemAllocations.Value() > 0) && RTN_Name(rtn) == "mlm_set_pool") {
         fprintf(stderr, "Identified routine: mlm_set_pool, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) ariel_mlm_set_pool);
         fprintf(stderr, "Replacement complete.\n");
         return;
-    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && (
+    } else if ((InterceptMemAllocations.Value() > 0) && (
                 RTN_Name(rtn) == "malloc" || RTN_Name(rtn) == "_malloc" || RTN_Name(rtn) == "__libc_malloc" || RTN_Name(rtn) == "__libc_memalign" || RTN_Name(rtn) == "_gfortran_malloc")) {
     		
         fprintf(stderr, "Identified routine: malloc/_malloc, replacing with Ariel equivalent...\n");
@@ -956,7 +997,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
                        IARG_END);
 
         RTN_Close(rtn);
-    } else if ((InterceptMultiLevelMemory.Value() > 0 || true) && (
+    } else if ((InterceptMemAllocations.Value() > 0) && (
                 RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free" || RTN_Name(rtn) == "__libc_free" || RTN_Name(rtn) == "_gfortran_free")) {
 
         fprintf(stderr, "Identified routine: free/_free, replacing with Ariel equivalent...\n");
@@ -979,10 +1020,14 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         fprintf(stderr, "Replacement complete\n");
         return;
     } else if (RTN_Name(rtn) == "ariel_flushline" || RTN_Name(rtn) == "_ariel_flushline") {
-
+	fprintf(stderr, "Identified routine: ariel_flushline, replacing with Ariel equivalent..\n");
+	RTN_Replace(rtn, (AFUNPTR) mapped_ariel_flushline);
+	fprintf(stderr, "Replacement complete\n");
 	return;
     } else if (RTN_Name(rtn) == "ariel_fence" || RTN_Name(rtn) == "_ariel_fence") {
-
+	fprintf(stderr, "Identified routine: ariel_fence, replacing with Ariel equivalent..\n");
+	RTN_Replace(rtn, (AFUNPTR) mapped_ariel_fence);
+	fprintf(stderr, "Replacement complete\n");
 	return;
     } else if (RTN_Name(rtn) == "ariel_mmap_mlm" || RTN_Name(rtn) == "_ariel_mmap_mlm") {
 	 AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) ariel_mmap_mlm);

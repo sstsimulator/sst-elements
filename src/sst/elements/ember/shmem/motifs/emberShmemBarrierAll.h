@@ -26,6 +26,19 @@ namespace Ember {
 class EmberShmemBarrierAllGenerator : public EmberShmemGenerator {
 
 public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemBarrierAllGenerator,
+        "ember",
+        "ShmemBarrierAllMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM barrier_all",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
 	EmberShmemBarrierAllGenerator(SST::Component* owner, Params& params) :
 		EmberShmemGenerator(owner, params, "ShmemBarrierAll" ), m_phase(-1) 
 	{ 

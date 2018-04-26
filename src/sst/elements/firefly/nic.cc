@@ -29,6 +29,7 @@ using namespace SST::Firefly;
 using namespace SST::Interfaces;
 using namespace std::placeholders;
 
+int Nic::MaxPayload = (int)((1L<<32) - 1);
 int Nic::m_packetId = 0;
 int Nic::ShmemSendMove::m_alignment = 64;
 
@@ -39,8 +40,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_getKey(10),
     m_simpleMemoryModel(NULL),
     m_respKey(1),
-    m_curNetworkSrc(-1),
-    m_curNicUnit(0)
+    m_curNetworkSrc(-1)
 {
     m_myNodeId = params.find<int>("nid", -1);
     assert( m_myNodeId != -1 );
@@ -61,10 +61,9 @@ Nic::Nic(ComponentId_t id, Params &params) :
 	m_nic2host_base_lat_ns = 1;
 
     int rxMatchDelay = params.find<int>( "rxMatchDelay_ns", 100 );
-    int txDelay =      params.find<int>( "txDelay_ns", 50 );
+    m_txDelay =      params.find<int>( "txDelay_ns", 50 );
     int hostReadDelay = params.find<int>( "hostReadDelay_ns", 200 );
     m_shmemRxDelay_ns = params.find<int>( "shmemRxDelay_ns",0); 
-
 
     m_num_vNics = params.find<int>("num_vNics", 1 );
 
@@ -74,14 +73,19 @@ Nic::Nic(ComponentId_t id, Params &params) :
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
     int maxRecvMachineQsize = params.find<int>( "maxRecvMachineQsize", 1 );
     Nic::ShmemSendMove::m_alignment = params.find<int>("shmemSendAlignment",64);
+    int numSendMachines = params.find<int>( "numSendMachines",1);
+    if ( numSendMachines < 1 ) {
+        m_dbg.fatal(CALL_INFO,-1,"Error: numSendMachines must be greater than 1, requested %d\n",numSendMachines);
+    }    
+    ++numSendMachines;
 
-    int numNicUnits =    params.find<int>( "numNicUnits", 1 );
-    int recvMachineUnit =    params.find<int>( "recvMachineUnit", 0 );
-    int sendMachineUnit =    params.find<int>( "sendMachineUnit", 0 );
-
-    initNicUnitPool(
-        numNicUnits, m_num_vNics,
-        params.find<std::string>( "nicAllocationPolicy", "RoundRobin" ) 
+    m_unitPool = new UnitPool( 
+        m_dbg,
+        params.find<std::string>( "nicAllocationPolicy", "RoundRobin" ), 
+        params.find<int>( "numRecvNicUnits", 1 ),
+        numSendMachines,
+        1,
+        m_num_vNics
     );
 
     int packetOverhead = params.find<int>("packetOverhead",0);
@@ -148,32 +152,38 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			params.find<std::string>("corePortName","core") ) );
     }
 
+    m_sendEntryQ.resize( m_num_vNics );
+    for ( unsigned i = 0; i < m_num_vNics; i++ ) {
+        m_sendEntryQ[i].first = false;
+    }
+
     m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
 
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
-        m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics, numNicUnits );
+        smmParams.insert( "busLatency",  std::to_string(m_nic2host_lat_ns), false );
+        m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics, m_unitPool->getTotal() );
     }
 
-    m_recvMachine.push_back( new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
+    m_recvMachine = new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                rxMatchDelay, hostReadDelay, maxRecvMachineQsize, recvMachineUnit ) );
+                rxMatchDelay, hostReadDelay, maxRecvMachineQsize );
 
-    m_ctrlSendMachine = 0;
-    m_stdSendMachine = 1;
-    m_numNetworkSrcs = 2;
-
-    m_sendMachine.resize(m_numNetworkSrcs);
-    m_sendMachine[m_ctrlSendMachine] = new SendMachine( *this,  m_myNodeId, 
+    m_sendMachineV.resize(numSendMachines);
+    for ( int i = 0; i < numSendMachines - 1; i++ ) {
+        SendMachine* sm = new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                m_ctrlSendMachine, txDelay, packetSizeInBytes, packetOverhead, maxSendMachineQsize, sendMachineUnit, true );
-
-    m_sendMachine[m_stdSendMachine] = new SendMachine( *this,  m_myNodeId, 
+                i, packetSizeInBytes, packetOverhead, maxSendMachineQsize, allocNicSendUnit(), false );
+        m_sendMachineQ.push_back( sm  ); 
+        m_sendMachineV[i] = sm;
+    }
+    
+    m_sendMachineV[ numSendMachines - 1] = new SendMachine( *this,  m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                m_stdSendMachine, txDelay, packetSizeInBytes, packetOverhead, maxSendMachineQsize, sendMachineUnit, true );
+                m_sendMachineV.size()-1, packetSizeInBytes, packetOverhead, maxSendMachineQsize, allocNicSendUnit(), true ); 
 
     float dmaBW  = params.find<float>( "dmaBW_GBs", 0.0 ); 
     float dmaContentionMult = params.find<float>( "dmaContentionMult", 0.0 );
@@ -220,11 +230,9 @@ Nic::~Nic()
 	delete m_shmem;
 	delete m_linkControl;
 
-	for ( size_t i = 0; i < m_recvMachine.size(); i++ ) {
-		delete m_recvMachine[i];
-	}
-	for ( size_t i = 0; i < m_sendMachine.size(); i++ ) {
-		delete m_sendMachine[i];
+	delete m_recvMachine;
+    for ( int i = 0; i <  m_sendMachineV.size(); i++ ) {
+		delete m_sendMachineV[i];
 	}
 
 	if ( m_recvNotifyFunctor ) delete m_recvNotifyFunctor;
@@ -304,9 +312,6 @@ void Nic::handleSelfEvent( Event *e )
 	case SelfEvent::Callback:
         event->callback();
 		break;
-	case SelfEvent::Entry:
-        qSendEntry( static_cast<SendEntryBase*>(event->entry) );
-		break;
 	case SelfEvent::Event:
 		handleVnicEvent2( event->event, event->linkNum );
 		break;
@@ -367,7 +372,7 @@ void Nic::dmaRecv( NicCmdEvent *e, int vNicNum )
                    vNicNum, e->node, e->tag, entry->totalBytes());
 
     	
-    m_recvMachine[0]->postRecv( vNicNum, entry );
+    m_recvMachine->postRecv( vNicNum, entry );
 }
 
 void Nic::get( NicCmdEvent *e, int vNicNum )
@@ -377,7 +382,7 @@ void Nic::get( NicCmdEvent *e, int vNicNum )
     DmaRecvEntry::Callback callback = std::bind( &Nic::notifyRecvDmaDone, this, vNicNum, _1, _2, _3, _4, _5 );
 
     DmaRecvEntry* entry = new DmaRecvEntry( e, callback );
-    m_recvMachine[0]->regGetOrigin( vNicNum, getKey, entry);
+    m_recvMachine->regGetOrigin( vNicNum, getKey, entry);
 
     m_dbg.debug(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x vecLen=%lu totalBytes=%lu\n",
                 vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(), entry->totalBytes() );
@@ -403,26 +408,84 @@ void Nic::regMemRgn( NicCmdEvent *e, int vNicNum )
 {
     m_dbg.debug(CALL_INFO,1,1,"rgnNum %d\n",e->tag);
     
-    m_recvMachine[0]->regMemRgn( vNicNum, e->tag, new MemRgnEntry( e->iovec ) );
+    m_recvMachine->regMemRgn( vNicNum, e->tag, new MemRgnEntry( e->iovec ) );
 
     delete e;
 }
 
+void Nic::qSendEntry( SendEntryBase* entry ) {
+
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "myPid=%d destNode=%d destPid=%d size=%zu %s\n",
+                    entry->local_vNic(), entry->dest(), entry->dst_vNic(), entry->totalBytes(),
+                    entry->isCtrl() ? "Ctrl" : entry->isAck() ? "Ack" : "Std");
+
+    if ( entry->totalBytes() >= MaxPayload ) {
+        m_dbg.fatal(CALL_INFO, -1, "Error: maximum network message size must be less than %d bytes, requested size %zu\n",
+                                        MaxPayload, entry->totalBytes());
+    }
+    if ( entry->isCtrl() || entry->isAck() ) {
+        entry->setTxDelay(0);
+        m_sendMachineV[m_sendMachineV.size() - 1]->qSendEntry( entry );
+    } else {
+        entry->setTxDelay(m_txDelay);
+
+        int pid = entry->local_vNic();
+        if ( ! m_sendMachineQ.empty() && ! m_sendEntryQ[ pid ].first ) {
+            m_sendEntryQ[pid].first = true;
+            m_sendMachineQ.front()->run( entry );
+            m_sendMachineQ.pop_front();         
+        } else {
+            m_sendEntryQ[ pid ].second.push_back(std::make_pair( getCurrentSimTimeNano(), entry ) );
+        }        
+    }
+}
+
+void Nic::notifySendDone( SendMachine* mach, SendEntryBase* entry  ) {
+
+    int pid = entry->local_vNic();
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"machine=%d pid=%d\n", mach->getId(), pid );
+
+    m_sendEntryQ[pid].first = false;
+
+    SimTime_t cur = -1; 
+    int next = -1;
+
+    for ( unsigned i = 0; i < m_sendEntryQ.size(); i++ ) {
+
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"check pid=%d size=%zu\n", i, m_sendEntryQ[i].second.size( ));
+
+        if ( ! m_sendEntryQ[i].first && 
+                ! m_sendEntryQ[i].second.empty() && m_sendEntryQ[i].second.front( ).first < cur ) {
+            next = i;
+        }            
+    }
+
+    if ( next > -1 ) {
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"run pid=%d \n", next);
+        m_sendEntryQ[next].first = false;
+        mach->run(m_sendEntryQ[ next ].second.front().second );
+        m_sendEntryQ[ next ].second.pop_front();
+    } else {
+        m_sendMachineQ.push_back(mach);        
+    }
+}
+
 void Nic::feedTheNetwork( )
 {
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"\n");
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_NETWORK,"\n");
 
     int vc = 0;
 
+    assert( m_curNetworkSrc >=0  );
     bool sentPkt;
     do {
         sentPkt = false;
-        for ( unsigned i = 0; i < m_numNetworkSrcs; i++ ) {
+        for ( unsigned i = 0; i < m_sendMachineV.size(); i++ ) {
 
-            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"checking network src %d\n", m_curNetworkSrc);
-            if ( ! m_sendMachine[m_curNetworkSrc]->netPktQ_empty() ) {
+            m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_NETWORK,"checking network src %d\n", m_curNetworkSrc);
+            if ( ! m_sendMachineV[m_curNetworkSrc]->netPktQ_empty() ) {
 
-                std::pair< FireflyNetworkEvent*, int>& pkt = m_sendMachine[m_curNetworkSrc]->netPktQ_front();
+                std::pair< FireflyNetworkEvent*, int>& pkt = m_sendMachineV[m_curNetworkSrc]->netPktQ_front();
                 bool ret = m_linkControl->spaceToSend( vc, pkt.first->calcPayloadSizeInBits() );
                 if ( ! ret ) {
                     m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"blocking on network\n");
@@ -435,12 +498,12 @@ void Nic::feedTheNetwork( )
                     return;
                 } else {
                     sendPkt( pkt, vc );
-                    m_sendMachine[m_curNetworkSrc]->netPktQ_pop();
+                    m_sendMachineV[m_curNetworkSrc]->netPktQ_pop();
                     sentPkt = true;
                 }
             }
             ++m_curNetworkSrc;
-            m_curNetworkSrc %= m_numNetworkSrcs;
+            m_curNetworkSrc %= m_sendMachineV.size();
         }
     } while( sentPkt );
     m_curNetworkSrc = -1;
@@ -464,7 +527,7 @@ void Nic::sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc )
         req->setTraceID( m_packetId );
         ++m_packetId;
     }
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,
+    m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_NETWORK,
                     "dst=%" PRIu64 " sending event with %zu bytes packetId=%" PRIu64 "\n",req->dest,
                                                         ev->bufSize(), (uint64_t)m_packetId);
     bool sent = m_linkControl->send( req, vc );
@@ -592,7 +655,7 @@ Hermes::MemAddr Nic::findShmem(  int core, Hermes::Vaddr addr, size_t length )
 {
     std::pair<Hermes::MemAddr, size_t> region = m_shmem->findRegion( core, addr);
 
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"found region core=%d Vaddr=%#" PRIx64 " length=%lu\n",
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_SHMEM,"found region core=%d Vaddr=%#" PRIx64 " length=%lu\n",
         core, region.first.getSimVAddr(), region.second );
 
     uint64_t offset =  addr - region.first.getSimVAddr();

@@ -124,6 +124,18 @@ public:
             LLSCAtomic_             = false;
         }
 
+        std::string getString() {
+            std::ostringstream str;
+            str << std::hex << "0x" << baseAddr_;
+            str << " State: " << StateString[state_];
+            str << " Sharers: [";
+            for (std::set<std::string>::iterator it = sharers_.begin(); it != sharers_.end(); it++) {
+                if (it != sharers_.begin()) str << ",";
+                str << *it;
+            }
+            str << "] Owner: " << owner_;
+            return str.str();
+        }
 
         /** Getter for size. Constant field - no setter */
         unsigned int getSize() { return size_; }
@@ -281,6 +293,12 @@ public:
 
     void setBanked(unsigned int numBanks) {
         banks_ = numBanks;
+    }
+
+    void printCacheArray(Output &out) {
+        for (unsigned int i = 0; i < numLines_; i++) {
+            out.output("   %u %s\n", i, lines_[i]->getString().c_str());
+        }
     }
 
 private:

@@ -23,6 +23,19 @@ namespace SST {
 namespace Ember {
 
 class EmberLinearRankMap : public EmberRankMap {
+public:
+
+    SST_ELI_REGISTER_MODULE(
+        EmberLinearRankMap,
+        "ember",
+        "LinearMap",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Performs a linear mapping of MPI ranks",
+        "SST::Ember::EmberRankMap"
+    ) 
+
+    SST_ELI_DOCUMENT_PARAMS(
+    ) 
 
 public:
 

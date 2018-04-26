@@ -17,12 +17,26 @@
 #ifndef _H_SST_EMBER_CONSTANT_COMPUTE_DISTRIBUTION
 #define _H_SST_EMBER_CONSTANT_COMPUTE_DISTRIBUTION
 
+#include <sst/core/elementinfo.h>
 #include "emberdistrib.h"
 
 namespace SST {
 namespace Ember {
 
 class EmberConstDistribution : public EmberComputeDistribution {
+public:
+   SST_ELI_REGISTER_MODULE(
+        EmberConstDistribution,
+        "ember",
+        "ConstDistrib",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Constant compute distribution model",
+        "SST::Ember::EmberComputeDistribution"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {   "constant",     "Sets the constant value to return in the distribution.", "1.0" },
+    )
 
 public:
 	EmberConstDistribution(Component* owner, Params& params);

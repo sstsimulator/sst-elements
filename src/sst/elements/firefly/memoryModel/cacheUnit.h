@@ -24,14 +24,12 @@
             stats = std::to_string(id) + ":SimpleMemoryModel::" + name + "CacheUnit:: ";
 
 			assert( m_numMSHR <= cacheSize );
-
-            // start with a full cache 
-            for ( unsigned i = 0; i < cacheSize; i++ ) {
-               m_cache.insert( (i + 1 ) * m_cacheLineSize );
-            }
         }
         ~CacheUnit() {
-            //m_dbg.output("%s total requests %" PRIu64 " %f percent hits\n",stats.c_str(), m_total, (float)m_hitCnt/(float)m_total);
+            if ( m_total ) {
+                m_dbg.output("%s total requests %" PRIu64 " %f percent hits\n",
+                            stats.c_str(), m_total, (float)m_hitCnt/(float)m_total);
+            }
         }
 
         uint64_t m_hitCnt;
@@ -171,11 +169,11 @@
 				Hermes::Vaddr evictAddr = m_cache.evict();
            		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"evict addr=%#" PRIx64 "\n", evictAddr );
 
-				if ( m_memory->store( this, new MemReq( evictAddr, m_cacheLineSize ) ) ) {
-					m_missEntry = entry;
-					setState( BlockedStore );
-					return;
-				}
+			    if ( m_memory->store( this, new MemReq( evictAddr, m_cacheLineSize ) ) ) {
+			        m_missEntry = entry;
+				    setState( BlockedStore );
+				    return;
+		        } 
 			}
 			miss2( entry );
 		}

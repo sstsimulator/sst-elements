@@ -13,33 +13,25 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sst_config.h>
 
-#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
+#ifndef _H_SST_ARIEL_FENCE_EVENT
+#define _H_SST_ARIEL_FENCE_EVENT
 
-#include <sst/core/element.h>
-#include <sst/core/configGraph.h>
+#include "arielevent.h"
 
-#include <stdio.h>
-#include <stdarg.h>
+using namespace SST;
 
-#include "msgapi.h"
+namespace SST {
+namespace ArielComponent {
 
-using namespace std;
-using namespace SST::Hermes;
+class ArielFenceEvent : public ArielEvent {
 
+	public:
+		ArielEventType getEventType() const { return FENCE; }
 
-extern "C" {
-    ElementLibraryInfo hermes_eli = {
-        "hermes",
-        "Message exchange interfaces",
-        NULL, //components,
-	NULL,
-	NULL,
-	NULL, //modules,
-	// partitioners,
-	// generators,
-	NULL,
-	NULL,
-    };
+};
+
 }
+}
+
+#endif

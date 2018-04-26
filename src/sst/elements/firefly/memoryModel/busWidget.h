@@ -38,8 +38,8 @@ class BusLoadWidget : public Unit {
 
 	std::string m_name;
   public:
-    BusLoadWidget( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, int width, int qSize ) :
-        Unit( model, dbg ), m_cache(cache), m_width(width), m_qSize(qSize),
+    BusLoadWidget( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, int width, int qSize, int latency ) :
+        Unit( model, dbg ), m_cache(cache), m_width(width), m_qSize(qSize), m_latency(latency),
 			m_blocked(false), m_scheduled(false), m_blockedSrc(NULL) , m_numPending(0), m_name("BusLoadWidget")
     {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::BusLoadWidget::@p():@l ";
@@ -47,19 +47,14 @@ class BusLoadWidget : public Unit {
     std::string& name() { return m_name; } 
 
     bool load( UnitBase* src, MemReq* req, Callback callback ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu pending=%d\n",req->addr, req->length, m_numPending );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu pending=%d\n",
+                        req->addr, req->length, m_numPending );
 
-        m_pendingQ.push_back( WidgetEntry( m_width, req, m_model.getCurrentSimTimeNano(), callback ) );
+        WidgetEntry* entry = new WidgetEntry( m_width, req, m_model.getCurrentSimTimeNano(), callback );
 		delete req;
-        ++m_numPending;
 
-        if ( m_numPending < m_qSize + 1 ) {
-            if ( ! m_blocked && ! m_scheduled ) {
-            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
-                m_model.schedCallback( 0, std::bind( &BusLoadWidget::process, this ) );
-                m_scheduled = true;
-            }
-        }
+        ++m_numPending;
+        m_model.schedCallback( m_latency, std::bind( &BusLoadWidget::load2, this, entry, m_numPending ) );
 
         if ( m_numPending == m_qSize  ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"blocking src\n");
@@ -70,9 +65,21 @@ class BusLoadWidget : public Unit {
         }
     }
 
+    void load2( WidgetEntry* entry, int pending ) {
+        m_pendingQ.push_back( entry );
+
+        if ( pending < m_qSize + 1 ) {
+            if ( ! m_blocked && ! m_scheduled ) {
+            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
+                m_model.schedCallback( 0, std::bind( &BusLoadWidget::process, this ) );
+                m_scheduled = true;
+            }
+        }
+    }
+
 	void process() {
         assert( ! m_pendingQ.empty() );
-        WidgetEntry& entry = m_pendingQ.front();
+        WidgetEntry& entry = *m_pendingQ.front();
 
         assert( m_blocked == false );
         m_scheduled = false;
@@ -111,6 +118,7 @@ class BusLoadWidget : public Unit {
                    	m_scheduled = true;
                	}
 			}; 
+			delete m_pendingQ.front();
 			m_pendingQ.pop_front();
 		} else {
 			callback = [=](){
@@ -142,6 +150,7 @@ class BusLoadWidget : public Unit {
         }
     }
   private:
+    int m_latency;
 	int m_numPending;
 	int m_qSize;
 	bool m_scheduled;
@@ -149,15 +158,16 @@ class BusLoadWidget : public Unit {
     Unit* m_cache;
     int   m_width;
     UnitBase* m_blockedSrc;
-	std::deque<WidgetEntry> m_pendingQ;
+	std::deque<WidgetEntry *> m_pendingQ;
 };
 
 
 class BusStoreWidget : public Unit {
 	std::string m_name;
   public:
-    BusStoreWidget( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, int width, int qSize ) :
-        Unit( model, dbg ), m_cache(cache), m_width(width), m_blocked(false), m_qSize(qSize), m_blockedSrc(NULL), m_scheduled(false), m_name( "BusStoreWidget" )
+    BusStoreWidget( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, int width, int qSize, int latency ) :
+        Unit( model, dbg ), m_cache(cache), m_width(width), m_qSize(qSize), m_latency(latency),
+        m_blocked(false), m_blockedSrc(NULL), m_scheduled(false), m_numPending(0), m_name( "BusStoreWidget" )
     {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::BusStoreWidget::@p():@l ";
     }
@@ -167,23 +177,30 @@ class BusStoreWidget : public Unit {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 		assert( NULL == m_blockedSrc );
 
-		m_pendingQ.push_back( WidgetEntry( m_width, req, 0 ) );
+		WidgetEntry* entry = new WidgetEntry( m_width, req, 0 );
 		delete req;
 
-        if ( m_pendingQ.size() < m_qSize + 1) {
-            if ( ! m_blocked && ! m_scheduled ) {
-           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
-                m_model.schedCallback( 0, std::bind( &BusStoreWidget::process, this ) );
-                m_scheduled = true;
-            }
-        }
+        ++m_numPending;
+        m_model.schedCallback( m_latency, std::bind( &BusStoreWidget::store2, this, entry, m_numPending ) );
 
-        if ( m_pendingQ.size() == m_qSize  ) {
+        if ( m_numPending == m_qSize  ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"blocking src\n");
             m_blockedSrc = src;
             return true;
         } else {
             return false;
+        }
+    }
+
+
+    void store2( WidgetEntry* entry, int pending ) {
+		m_pendingQ.push_back( entry );
+        if ( m_numPending < m_qSize + 1) {
+            if ( ! m_blocked && ! m_scheduled ) {
+           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
+                m_model.schedCallback( 0, std::bind( &BusStoreWidget::process, this ) );
+                m_scheduled = true;
+            }
         }
     }
 
@@ -193,7 +210,7 @@ class BusStoreWidget : public Unit {
 
 		m_scheduled = false;
 
-		WidgetEntry& entry= m_pendingQ.front();
+		WidgetEntry& entry= *m_pendingQ.front();
 		MemReq* req = new MemReq( entry.getAddr(), m_width );
 		entry.inc();
 		
@@ -202,6 +219,8 @@ class BusStoreWidget : public Unit {
 
 		if ( entry.isDone() ) {
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"entry done\n");
+			--m_numPending;
+			delete m_pendingQ.front();
 			m_pendingQ.pop_front();
         	if ( m_blockedSrc ) {
             	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"unblock src\n");
@@ -227,11 +246,13 @@ class BusStoreWidget : public Unit {
     }
 
   private:
+    int m_numPending;
+    int m_latency;
 	int m_qSize;
 	bool m_scheduled;
 	bool m_blocked;
     Unit* m_cache;
     int   m_width;
     UnitBase* m_blockedSrc;
-	std::deque<WidgetEntry> m_pendingQ;
+	std::deque<WidgetEntry*> m_pendingQ;
 };

@@ -183,6 +183,7 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemPutv.h \
 	shmem/motifs/emberShmemReduction.h \
 	shmem/motifs/emberShmemRing.h \
+	shmem/motifs/emberShmemRing2.h \
 	shmem/motifs/emberShmemSwap.h \
 	shmem/motifs/emberShmemTest.h \
 	shmem/motifs/emberShmemWait.h \

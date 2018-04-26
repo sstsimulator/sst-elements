@@ -11,7 +11,6 @@ endif
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libariel.la
 libariel_la_SOURCES = \
-	libariel.cc \
 	arielcpu.cc \
 	arielcpu.h \
 	arielcore.cc \
@@ -23,6 +22,8 @@ libariel_la_SOURCES = \
 	arielmemmgr_malloc.h \
 	arielreadev.h \
 	arielexitev.h \
+	arielfenceev.h \
+	arielflushev.h \
 	arielwriteev.h \
 	arielevent.cc \
 	arielevent.h \
@@ -35,7 +36,7 @@ libariel_la_SOURCES = \
 	ariel_shmem.h \
 	arieltracegen.h \
 	arieltexttracegen.h \
-	arielgzbintracegen.h
+	arieltexttracegen.cc
 
 EXTRA_DIST = \
 	frontend/simple/fesimple.cc \
@@ -50,8 +51,17 @@ EXTRA_DIST = \
 	frontend/simple/examples/stream/memHstream.py \
 	frontend/simple/examples/stream/stream.c
 
+
 libariel_la_LDFLAGS = -module -avoid-version
 libariel_la_LIBADD = $(SHM_LIB)
+
+if USE_LIBZ
+libariel_la_LDFLAGS += $(LIBZ_LDFLAGS)
+libariel_la_LIBADD += $(LIBZ_LIB)
+AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
+libariel_la_SOURCES += arielgzbintracegen.h arielgzbintracegen.cc
+endif
+
 libariel_la_CPPFLAGS = \
 	-DARIEL_TRACE_LIB=$(libdir)/sst \
         -DARIEL_TOOL_DIR="$(libexecdir)" \
@@ -64,6 +74,7 @@ nobase_sst_HEADERS = \
 	arieltracegen.h
 
 libexec_PROGRAMS =
+
 
 if SST_COMPILE_OSX
 

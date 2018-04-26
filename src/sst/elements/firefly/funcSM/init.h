@@ -26,6 +26,16 @@ namespace Firefly {
 class InitFuncSM :  public FunctionSMInterface 
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        InitFuncSM,
+        "firefly",
+        "Init",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
+  public:
     InitFuncSM( SST::Params& params ) : FunctionSMInterface( params ), m_event(NULL) {}
 
 	virtual std::string protocolName() { return "CtrlMsgProtocol"; }

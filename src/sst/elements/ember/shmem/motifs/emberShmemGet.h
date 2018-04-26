@@ -124,6 +124,85 @@ public:
     int m_num_pes;
 };
 
+class EmberShmemGetIntGenerator : public EmberShmemGetGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemGetIntGenerator,
+        "ember",
+        "ShmemGetIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM get int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemGetIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemGetGenerator(owner,  params) { }
+};
+
+class EmberShmemGetLongGenerator : public EmberShmemGetGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemGetLongGenerator,
+        "ember",
+        "ShmemGetLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM get long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemGetLongGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemGetGenerator(owner,  params) { }
+};
+
+class EmberShmemGetDoubleGenerator : public EmberShmemGetGenerator<double> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemGetDoubleGenerator,
+        "ember",
+        "ShmemGetDoubleMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM get double",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemGetDoubleGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemGetGenerator(owner,  params) { }
+};
+
+class EmberShmemGetFloatGenerator : public EmberShmemGetGenerator<float> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemGetFloatGenerator,
+        "ember",
+        "ShmemGetFloatMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM get float",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemGetFloatGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemGetGenerator(owner,  params) { }
+};
 }
 }
 

@@ -61,6 +61,34 @@ class NicShmemCmdEvent : public NicCmdBaseEvent {
   public:
 
     enum Type { Init, RegMem, Fence, Put, Putv, Get, Getv, Wait, Add, Fadd, Swap, Cswap } type;
+    std::string getTypeStr( ) {
+        switch( type ) {
+            case Init:
+            return "Init";
+            case RegMem:
+            return "RegMem";
+            case Fence:
+            return "Fence";
+            case Put:
+            return "Put";
+            case Putv:
+            return "Putv";
+            case Get:
+            return "Get";
+            case Getv:
+            return "Getv";
+            case Wait:
+            return "Wait";
+            case Add:
+            return "Add";
+            case Fadd:
+            return "Fadd";
+            case Swap:
+            return "Swap";
+            case Cswap:
+            return "Cswap";
+        }
+    }
 
     NicShmemCmdEvent( Type type ) :
         NicCmdBaseEvent( Shmem ), type(type) {}

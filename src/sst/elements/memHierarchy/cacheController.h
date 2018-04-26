@@ -180,6 +180,10 @@ public:
         return (addr) & ~(cacheArray_->getLineSize() - 1);
     }
 
+    /* Debug/fatal */
+    void printStatus(Output & out); // Called on SIGUSR2
+    void emergencyShutdown();       // Called on output.fatal(), (SIGINT/SIGTERM)
+
 private:
     /** Constructor helper methods */
     void checkDeprecatedParams(Params &params);
@@ -295,6 +299,8 @@ private:
     /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough, 
          the clock gets deregistered from TimeVortx and reregistered only when an event is received */
     bool clockTick(Cycle_t time);
+    void turnClockOn();
+    void turnClockOff();
 
     void maxWaitWakeup(SST::Event * ev) {
         checkMaxWait();
@@ -318,7 +324,7 @@ private:
         if ( oldReq ) {
             SimTime_t waitTime = curTime - oldReq->getInitializationTime();
             if ( waitTime > maxWaitTime_ ) {
-                d_->fatal(CALL_INFO, 1, "%s, Error: Maximum Cache Request time reached!\n"
+                out_->fatal(CALL_INFO, 1, "%s, Error: Maximum Cache Request time reached!\n"
                         "Event: %s 0x%" PRIx64 " from %s. Time = %" PRIu64 " ns\n",
                         getName().c_str(), CommandString[(int)oldReq->getCmd()], oldReq->getAddr(), oldReq->getSrc().c_str(), curTime);
             }
@@ -355,6 +361,7 @@ private:
     TimeConverter*          defaultTimeBase_;
     
     /* Debug and output */
+    Output*                 out_;
     Output*                 d_;
     Output*                 d2_;
     std::set<Addr>          DEBUG_ADDR;

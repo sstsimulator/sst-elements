@@ -200,22 +200,23 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
             doResponseStat( event->getCmd(), latency );
 
             if (!flags) flags = event->getFlags();
+            SST::Event::id_type evID = event->getID();
             sendResponse(event->getID(), flags); // Needs to occur before a flush is completed since flush is dependent
 
             // TODO clock responses
             // Check for flushes that are waiting on this event to finish
-            if (m_dependentRequests.find(event) != m_dependentRequests.end()) {
-                std::set<MemEvent*, memEventCmp> flushes = m_dependentRequests.find(event)->second;
+            if (m_dependentRequests.find(evID) != m_dependentRequests.end()) {
+                std::set<MemEvent*, memEventCmp> flushes = m_dependentRequests.find(evID)->second;
 
                 for (std::set<MemEvent*, memEventCmp>::iterator it = flushes.begin(); it != flushes.end(); it++) {
-                    (m_waitingFlushes.find(*it)->second).erase(event);
+                    (m_waitingFlushes.find(*it)->second).erase(evID);
                     if ((m_waitingFlushes.find(*it)->second).empty()) {
                         MemEvent * flush = *it;
                         sendResponse(flush->getID(), (flush->getFlags() | MemEvent::F_SUCCESS));
                         m_waitingFlushes.erase(flush);
                     }
                 }
-                m_dependentRequests.erase(event);
+                m_dependentRequests.erase(evID);
             }
             delete req;
         }

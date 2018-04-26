@@ -61,7 +61,8 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 
     noncacheableRangeStart = params.find<uint64_t>("noncacheableRangeStart", 0);
     noncacheableRangeEnd = params.find<uint64_t>("noncacheableRangeEnd", 0);
-    
+    noncacheableSize = noncacheableRangeEnd - noncacheableRangeStart;
+
     maxReqsPerIssue = params.find<uint32_t>("reqsPerIssue", 1);
     if (maxReqsPerIssue < 1) {
         out.fatal(CALL_INFO, -1, "TrivialCPU cannot issue less than one request at a time...fix your input deck\n");
@@ -154,13 +155,18 @@ bool trivialCPU::clockTic( Cycle_t )
                 } else if (do_flush && 2 == instNum) {
                     cmd = Interfaces::SimpleMem::Request::FlushLine;
                     size = lineSize;
-                    addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeStart;
+                    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
+                    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
+                        addr += noncacheableRangeEnd;
                     addr = addr - (addr % lineSize);
                     cmdString = "FlushLine";
                 } else if (do_flush && 3 == instNum) {
                     cmd = Interfaces::SimpleMem::Request::FlushLineInv;
                     size = lineSize;
-                    addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeStart;
+                    addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeEnd;
+                    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
+                    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
+                        addr += noncacheableRangeEnd;
                     addr = addr - (addr % lineSize);
                     cmdString = "FlushLineInv";
                 } else {

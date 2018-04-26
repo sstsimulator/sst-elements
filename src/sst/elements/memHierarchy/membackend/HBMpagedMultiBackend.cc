@@ -29,6 +29,7 @@
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace HBMDRAMSim;
 
 HBMpagedMultiMemory::HBMpagedMultiMemory(Component *comp, Params &params)
   : HBMDRAMSimMemory(comp, params), pagesInFast(0), lastMin(0) {
@@ -124,12 +125,12 @@ HBMpagedMultiMemory::HBMpagedMultiMemory(Component *comp, Params &params)
 
     if (modelSwaps) {
         // use our own callbacks
-        DRAMSim::Callback<HBMpagedMultiMemory, void, unsigned int, uint64_t, uint64_t>
+        HBMDRAMSim::Callback<HBMpagedMultiMemory, void, unsigned int, uint64_t, uint64_t>
             *readDataCB, *writeDataCB;
 
-        readDataCB = new DRAMSim::Callback<HBMpagedMultiMemory, void, unsigned int,
+        readDataCB = new HBMDRAMSim::Callback<HBMpagedMultiMemory, void, unsigned int,
                                            uint64_t, uint64_t>(this, &HBMpagedMultiMemory::dramSimDone);
-        writeDataCB = new DRAMSim::Callback<HBMpagedMultiMemory, void, unsigned int, 
+        writeDataCB = new HBMDRAMSim::Callback<HBMpagedMultiMemory, void, unsigned int, 
                                             uint64_t, uint64_t>(this, &HBMpagedMultiMemory::dramSimDone);
 
         memSystem->RegisterCallbacks(readDataCB, writeDataCB, NULL);
@@ -494,7 +495,7 @@ void HBMpagedMultiMemory::handleSelfEvent(SST::Event *event){
         // read to the slow.
         // issue to dram
         req->isWrite = true;
-        //assert(DRAMSimMemory::issueRequest(req));
+        //assert(HBMDRAMSimMemory::issueRequest(req));
         queueRequest(req);
         swapToSlow_Writes[req] = si->second;
         swapToSlow_Reads.erase(ev);
@@ -547,7 +548,7 @@ void HBMpagedMultiMemory::moveToFast(HBMpageInfo &page) {
     for (int i = 0; i < numTransfers; ++i) {
         Req *nreq = new Req(0, addr, false, 64);
 	//printf("  -issued to %p\n", (void*)addr);
-        //assert(DRAMSimMemory::issueRequest(nreq));
+        //assert(HBMDRAMSimMemory::issueRequest(nreq));
         queueRequest(nreq);
         addr += 64;
         swapToFast_Reads[nreq] = &page; // record that this is a swap
@@ -634,7 +635,7 @@ void HBMpagedMultiMemory::swapDone(HBMpageInfo *page, const uint64_t addr) {
         Req *req = *it;
         if (page->swapDir == HBMpageInfo::FtoS) {
             // just finished moving page from fast to slow mem, so issue to DRAM
-            //assert(DRAMSimMemory::issueRequest(req));
+            //assert(HBMDRAMSimMemory::issueRequest(req));
             queueRequest(req);
         } else {
             // just finished moving page from slow to fast, so issue to fast

@@ -94,8 +94,8 @@ public:
             }
 
 			if (  m_phase + 1 == m_iterations ) {
-                enQ_getTime( evQ, &m_stopTime );
                 enQ_barrier_all( evQ );
+                enQ_getTime( evQ, &m_stopTime );
 			}
 
 		} else {
@@ -147,6 +147,85 @@ public:
     int m_num_pes;
 };
 
+class EmberShmemPutIntGenerator : public EmberShmemPutGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemPutIntGenerator,
+        "ember",
+        "ShmemPutIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM put int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemPutIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemPutGenerator(owner,  params) { }
+};
+
+class EmberShmemPutLongGenerator : public EmberShmemPutGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemPutLongGenerator,
+        "ember",
+        "ShmemPutLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM put long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemPutLongGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemPutGenerator(owner,  params) { }
+};
+
+class EmberShmemPutDoubleGenerator : public EmberShmemPutGenerator<double> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemPutDoubleGenerator,
+        "ember",
+        "ShmemPutDoubleMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM put double",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemPutDoubleGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemPutGenerator(owner,  params) { }
+};
+
+class EmberShmemPutFloatGenerator : public EmberShmemPutGenerator<float> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemPutFloatGenerator,
+        "ember",
+        "ShmemPutFloatMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM put float",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemPutFloatGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemPutGenerator(owner,  params) { }
+};
 }
 }
 

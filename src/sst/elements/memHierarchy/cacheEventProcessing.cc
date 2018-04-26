@@ -234,7 +234,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     Addr baseAddr   = event->getBaseAddr();
     // TODO this is a temporary check while we ensure that the source sets baseAddr correctly
     if (baseAddr % cacheArray_->getLineSize() != 0) {
-        d_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %" PRIu64 ". Event: %s\n", getName().c_str(), cacheArray_->getLineSize(), ev->getVerboseString().c_str());
+        out_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %" PRIu64 ". Event: %s\n", getName().c_str(), cacheArray_->getLineSize(), ev->getVerboseString().c_str());
     }
     
     // Check bank free before we do anything
@@ -351,7 +351,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             processCacheFlush(event, baseAddr, replay);
             break;
         default:
-            d_->fatal(CALL_INFO, -1, "%s, Command not supported. Time = %" PRIu64 "ns, Event = %s", getName().c_str(), getCurrentSimTimeNano(), event->getVerboseString().c_str());
+            out_->fatal(CALL_INFO, -1, "%s, Command not supported. Time = %" PRIu64 "ns, Event = %s", getName().c_str(), getCurrentSimTimeNano(), event->getVerboseString().c_str());
     }
     return true;
 }
@@ -366,7 +366,7 @@ void Cache::processNoncacheable(MemEventBase* event) {
     } else {
         std::map<SST::Event::id_type,std::string>::iterator it = responseDst_.find(event->getResponseToID());
         if (it == responseDst_.end()) {
-            d_->fatal(CALL_INFO, 01, "%s, Error: noncacheable response received does not match a request. Event: (%s). Time: %" PRIu64 "\n",
+            out_->fatal(CALL_INFO, 01, "%s, Error: noncacheable response received does not match a request. Event: (%s). Time: %" PRIu64 "\n",
                     getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
         }
         coherenceMgr_->forwardTowardsCPU(event, it->second);
@@ -386,15 +386,7 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
     event->setRqstr(this->getName());
 
     if (!clockIsOn_) {
-        Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
-        timestamp_ = time - 1;
-        coherenceMgr_->updateTimestamp(timestamp_);
-        int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
-        for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
-            statMSHROccupancy->addData(mshr_->getSize());
-        }
-        //d_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), time, timestamp_, getCurrentSimTimeNano());
-        clockIsOn_ = true;
+        turnClockOn();
     }
 
     // Record received prefetch
@@ -516,7 +508,7 @@ void Cache::setup() {
     }
     names = linkUp_->getSources();
     if (names->empty()) 
-        d_->fatal(CALL_INFO, -1,"%s did not find any sources\n", getName().c_str());
+        out_->fatal(CALL_INFO, -1,"%s did not find any sources\n", getName().c_str());
 
     names = linkDown_->getDests();
     if (names->empty()) {
@@ -544,7 +536,7 @@ void Cache::setup() {
 
     names = linkDown_->getDests();
     if (names->empty())
-        d_->fatal(CALL_INFO, -1, "%s did not find any destinations\n", getName().c_str());
+        out_->fatal(CALL_INFO, -1, "%s did not find any destinations\n", getName().c_str());
 
     linkUp_->setup();
     if (linkUp_ != linkDown_) linkDown_->setup();
@@ -554,25 +546,21 @@ void Cache::setup() {
 
 
 void Cache::finish() {
+    if (!clockIsOn_) { // Correct statistics
+        turnClockOn();
+    }
     listener_->printStats(*d_);
-    delete cacheArray_;
-    delete d_;
+    linkDown_->finish();
+    if (linkUp_ != linkDown_) linkUp_->finish();
 }
 
 /* Main handler for links to upper and lower caches/cores/buses/etc */
 void Cache::processIncomingEvent(SST::Event* ev) {
     MemEventBase* event = static_cast<MemEventBase*>(ev);
     if (!clockIsOn_) {
-        Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
-        timestamp_ = time - 1;
-        coherenceMgr_->updateTimestamp(timestamp_);
-        int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
-        for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
-            statMSHROccupancy->addData(mshr_->getSize());
-        }
-        //d_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), time, timestamp_, getCurrentSimTimeNano());
-        clockIsOn_ = true;
+        turnClockOn();
     }
+
     if (requestsThisCycle_ == maxRequestsPerCycle_) {
         requestBuffer_.push(event);
     } else {
@@ -642,14 +630,29 @@ bool Cache::clockTick(Cycle_t time) {
     }
     // Disable lower-level cache clocks if they're idle
     if (queuesEmpty && nicIdle && clockIsOn_ && !conflicts) {
-        clockIsOn_ = false;
-        lastActiveClockCycle_ = time;
-        if (!maxWaitWakeupExists_) {
-            maxWaitWakeupExists_ = true;
-            maxWaitSelfLink_->send(1, NULL);
-        }
+        turnClockOff();
         return true;
     }
     return false;
 }
 
+void Cache::turnClockOn() {
+    Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
+    timestamp_ = time - 1;
+    coherenceMgr_->updateTimestamp(timestamp_);
+    int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
+    for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
+        statMSHROccupancy->addData(mshr_->getSize());
+    }
+    //d_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), time, timestamp_, getCurrentSimTimeNano());
+    clockIsOn_ = true;
+}
+
+void Cache::turnClockOff() {
+    clockIsOn_ = false;
+    lastActiveClockCycle_ = timestamp_;
+    if (!maxWaitWakeupExists_) {
+        maxWaitWakeupExists_ = true;
+        maxWaitSelfLink_->send(1, NULL);
+    }
+}
