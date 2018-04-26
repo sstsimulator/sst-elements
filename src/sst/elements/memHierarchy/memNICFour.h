@@ -125,7 +125,7 @@ public:
                 return omre;
             }
 
-            virtual bool hasClientData() const { return true; }
+            virtual bool hasClientData() const override { return true; }
 
             void serialize_order(SST::Core::Serialization::serializer &ser) override {
                 MemRtrEvent::serialize_order(ser);

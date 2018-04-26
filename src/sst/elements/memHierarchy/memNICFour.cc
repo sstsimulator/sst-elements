@@ -13,8 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <array>
 #include <sst_config.h>
-#include "memNICFour.h"
+#include "sst/elements/memHierarchy/memNICFour.h"
 
 #include <sst/core/simulation.h>
 
