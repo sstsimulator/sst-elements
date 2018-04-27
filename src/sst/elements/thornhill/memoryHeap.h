@@ -16,12 +16,25 @@
 #ifndef _H_THORNHILL_MEMORY_HEAP
 #define _H_THORNHILL_MEMORY_HEAP
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/component.h>
 
 namespace SST {
 namespace Thornhill {
 
 class MemoryHeap : public Component {
+  public:
+    SST_ELI_REGISTER_COMPONENT(
+        MemoryHeap,
+        "thornhill",
+        "MemoryHeap",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+    SST_ELI_DOCUMENT_PORTS(
+        {"detailed%(num_ports)d", "Port connected to Memory Heap client", {}},
+    )
 
   public:
     MemoryHeap( ComponentId_t id, Params& params );

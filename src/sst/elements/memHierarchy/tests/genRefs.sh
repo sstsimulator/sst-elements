@@ -22,46 +22,46 @@ wait
 
 # Some of the DRAMSim files have output that I don't see except on Jenkins
 #sdl-2 
-echo "== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' ==" >> refFiles/test_memHierarchy_sdl_2.out
-echo "== Loading system model file 'system.ini' ==" >> refFiles/test_memHierarchy_sdl_2.out
+echo "== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' == " >> refFiles/test_memHierarchy_sdl_2.out
+echo "== Loading system model file 'system.ini' == " >> refFiles/test_memHierarchy_sdl_2.out
 echo "WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE" >> refFiles/test_memHierarchy_sdl_2.out
-echo "===== MemorySystem 0 ====" >> refFiles/test_memHierarchy_sdl_2.out
+echo "===== MemorySystem 0 =====" >> refFiles/test_memHierarchy_sdl_2.out
 echo "CH. 0 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank" >> refFiles/test_memHierarchy_sdl_2.out
 echo "===== MemorySystem 1 =====" >> refFiles/test_memHierarchy_sdl_2.out
 echo "CH. 1 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank" >> refFiles/test_memHierarchy_sdl_2.out
 echo "DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz" >> refFiles/test_memHierarchy_sdl_2.out
 #sdl-3
-echo "== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' ==" >> refFiles/test_memHierarchy_sdl_3.out
-echo "== Loading system model file 'system.ini' ==" >> refFiles/test_memHierarchy_sdl_3.out
+echo "== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' == " >> refFiles/test_memHierarchy_sdl_3.out
+echo "== Loading system model file 'system.ini' == " >> refFiles/test_memHierarchy_sdl_3.out
 echo "WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE" >> refFiles/test_memHierarchy_sdl_3.out
-echo "===== MemorySystem 0 ====" >> refFiles/test_memHierarchy_sdl_3.out
+echo "===== MemorySystem 0 =====" >> refFiles/test_memHierarchy_sdl_3.out
 echo "CH. 0 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank" >> refFiles/test_memHierarchy_sdl_3.out
 echo "===== MemorySystem 1 =====" >> refFiles/test_memHierarchy_sdl_3.out
 echo "CH. 1 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank" >> refFiles/test_memHierarchy_sdl_3.out
 echo "DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz" >> refFiles/test_memHierarchy_sdl_3.out
 #sdl3-2
-echo "== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' ==" >> refFiles/test_memHierarchy_sdl3_2.out
-echo "== Loading system model file 'system.ini' ==" >> refFiles/test_memHierarchy_sdl3_2.out
+echo "== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' == " >> refFiles/test_memHierarchy_sdl3_2.out
+echo "== Loading system model file 'system.ini' == " >> refFiles/test_memHierarchy_sdl3_2.out
 echo "WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE" >> refFiles/test_memHierarchy_sdl3_2.out
-echo "===== MemorySystem 0 ====" >> refFiles/test_memHierarchy_sdl3_2.out
+echo "===== MemorySystem 0 =====" >> refFiles/test_memHierarchy_sdl3_2.out
 echo "CH. 0 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank" >> refFiles/test_memHierarchy_sdl3_2.out
 echo "===== MemorySystem 1 =====" >> refFiles/test_memHierarchy_sdl3_2.out
 echo "CH. 1 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank" >> refFiles/test_memHierarchy_sdl3_2.out
 echo "DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz" >> refFiles/test_memHierarchy_sdl3_2.out
 #sdl4-2
-echo "== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' ==" >> refFiles/test_memHierarchy_sdl4_2.out
-echo "== Loading system model file 'system.ini' ==" >> refFiles/test_memHierarchy_sdl4_2.out
+echo "== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' == " >> refFiles/test_memHierarchy_sdl4_2.out
+echo "== Loading system model file 'system.ini' == " >> refFiles/test_memHierarchy_sdl4_2.out
 echo "WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE" >> refFiles/test_memHierarchy_sdl4_2.out
-echo "===== MemorySystem 0 ====" >> refFiles/test_memHierarchy_sdl4_2.out
+echo "===== MemorySystem 0 =====" >> refFiles/test_memHierarchy_sdl4_2.out
 echo "CH. 0 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank" >> refFiles/test_memHierarchy_sdl4_2.out
 echo "===== MemorySystem 1 =====" >> refFiles/test_memHierarchy_sdl4_2.out
 echo "CH. 1 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank" >> refFiles/test_memHierarchy_sdl4_2.out
 echo "DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz" >> refFiles/test_memHierarchy_sdl4_2.out
 # sdl5-1
-echo "== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' ==" >> refFiles/test_memHierarchy_sdl5_1.out
-echo "== Loading system model file 'system.ini' ==" >> refFiles/test_memHierarchy_sdl5_1.out
+echo "== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' == " >> refFiles/test_memHierarchy_sdl5_1.out
+echo "== Loading system model file 'system.ini' == " >> refFiles/test_memHierarchy_sdl5_1.out
 echo "WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE" >> refFiles/test_memHierarchy_sdl5_1.out
-echo "===== MemorySystem 0 ====" >> refFiles/test_memHierarchy_sdl5_1.out
+echo "===== MemorySystem 0 =====" >> refFiles/test_memHierarchy_sdl5_1.out
 echo "CH. 0 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank" >> refFiles/test_memHierarchy_sdl5_1.out
 echo "===== MemorySystem 1 =====" >> refFiles/test_memHierarchy_sdl5_1.out
 echo "CH. 1 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank" >> refFiles/test_memHierarchy_sdl5_1.out
@@ -134,4 +134,5 @@ sst -n2 testPrefetchParams.py > refFiles/test_memHA_PrefetchParams_MC.out &
 sst -n2 testThroughputThrottling.py > refFiles/test_memHA_ThroughputThrottling_MC.out &
 wait
 
-echo "Done!
+echo "Done!"
+

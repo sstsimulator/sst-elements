@@ -22,6 +22,8 @@ libariel_la_SOURCES = \
 	arielmemmgr_malloc.h \
 	arielreadev.h \
 	arielexitev.h \
+	arielfenceev.h \
+	arielflushev.h \
 	arielwriteev.h \
 	arielevent.cc \
 	arielevent.h \

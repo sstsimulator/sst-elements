@@ -32,7 +32,9 @@ enum ArielEventType {
 	MALLOC,
 	MMAP,
 	FREE,
-	SWITCH_POOL
+	SWITCH_POOL,
+	FLUSH,
+	FENCE
 };
 
 class ArielEvent {

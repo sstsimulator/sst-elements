@@ -45,8 +45,9 @@ public:
             {"backend",             "(string) Backend memory model to use for timing.  Defaults to simpleMem", "memHierarchy.simpleMem"},\
             {"max_requests_per_cycle",  "(int) Maximum number of requests to accept per cycle. 0 or negative is unlimited. Default is 1 for simpleMem backend, unlimited otherwise.", "1"},\
             {"trace_file",          "(string) File name (optional) of a trace-file to generate.", ""},\
+            {"verbose",             "(uint) Output verbosity for warnings/errors. 0[fatal error only], 1[warnings], 2[full state dump on fatal error]","1"},\
+            {"debug_level",         "(uint) Debugging level: 0 to 10. Must configure sst-core with '--enable-debug'. 1=info, 2-10=debug output", "0"},\
             {"debug",               "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},\
-            {"debug_level",         "(uint) Debugging level: 0 to 10", "0"},\
             {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},\
             {"listenercount",       "(uint) Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},\
             {"listener%(listenercount)d", "(string) Loads a listener module into the controller", ""},\
@@ -61,10 +62,7 @@ public:
             {"node",					"Node number in multinode environment"},\
             /* Old parameters - deprecated or moved */\
             {"do_not_back",         "DEPRECATED. Use parameter 'backing' instead.", "0"}, /* Remove 9.0 */\
-            {"mem_size",            "DEPRECATED. Use 'backend.mem_size' instead. Size of physical memory in MiB", "0"}, /* Remove 8.0 */\
-            {"statistics",          "DEPRECATED - use Statistics API to get statistics for memory controller","0"}, /* Remove 8.0 */\
             {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"}, /* Remove 9.0 */\
-            {"direct_link",         "DEPRECATED. Now auto-detected by configure. Specifies whether memory is directly connected to a directory/cache (1) or is connected via the network (0)","1"}, /* Remove 8.0 */\
             {"coherence_protocol",  "DEPRECATED. No longer needed. Coherence protocol.  Supported: MESI (default), MSI. Only used when a directory controller is not present.", "MESI"}, /* Remove 9.0 */\
             {"network_address",     "DEPRECATED - Now auto-detected by link control."}, /* Remove 9.0 */\
             {"network_bw",          "MOVED. Now a member of the MemNIC subcomponent.", NULL}, /* Remove 9.0 */\
@@ -76,7 +74,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS( MEMCONTROLLER_ELI_PARAMS )
 
 #define MEMCONTROLLER_ELI_PORTS {"direct_link", "Direct connection to a cache/directory controller", {"memHierarchy.MemEventBase"} },\
-            {"network",     "Network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
+            {"network",     "Network connection to a cache/directory controller; also request network for split networks", {"memHierarchy.MemRtrEvent"} },\
+            {"network_ack", "For split networks, ack/response network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
+            {"network_fwd", "For split networks, forward request network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
+            {"network_data","For split networks, data network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
             {"cube_link",   "DEPRECATED. Use named subcomponents and their links instead.", {"sst.Event"} }
 
     SST_ELI_DOCUMENT_PORTS( MEMCONTROLLER_ELI_PORTS )

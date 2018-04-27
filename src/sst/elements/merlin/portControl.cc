@@ -47,7 +47,7 @@ PortControl::send(internal_router_event* ev, int vc)
 {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "send start:" << std::endl;
+        // std::cout << "send start:" << std::endl;
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
@@ -55,6 +55,7 @@ PortControl::send(internal_router_event* ev, int vc)
 	// if ( xbar_in_credits[vc] < ev->getFlitCount() ) return false;
     
 	xbar_in_credits[vc] -= ev->getFlitCount();
+    output_queue_lengths[vc] += ev->getFlitCount();
 	ev->setVC(vc);
 
 	output_buf[vc].push(ev);
@@ -66,7 +67,7 @@ PortControl::send(internal_router_event* ev, int vc)
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "send end:" << std::endl;
+        // std::cout << "send end:" << std::endl;
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
@@ -85,7 +86,7 @@ PortControl::recv(int vc)
 {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "recv start:" << std::endl;
+        // std::cout << "recv start:" << std::endl;
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
@@ -116,7 +117,7 @@ PortControl::recv(int vc)
     
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "recv start:" << std::endl;
+        // std::cout << "recv start:" << std::endl;
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
@@ -254,7 +255,7 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
 
 
 void
-PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_credits_in)
+PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_credits_in, int* output_queue_lengths_in)
 {
     vc_heads = vc_heads_in;
     // If the port is not connected, we still need to initialize
@@ -267,7 +268,8 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
     }
     num_vcs = vcs;
     xbar_in_credits = xbar_in_credits_in;
-
+    output_queue_lengths = output_queue_lengths_in;
+    
     // Input and output buffers
     input_buf = new port_queue_t[vcs];
     output_buf = new port_queue_t[vcs];
@@ -420,12 +422,14 @@ PortControl::init(unsigned int phase) {
         init_ev->ua_value = link_bw;
         port_link->sendInitData(init_ev);
         
+        // std::cout << "FLIT - isHostPort(" << port_number << "): " << topo->isHostPort(port_number) << std::endl;
         // If this is a host port, send the endpoint ID to the LinkControl
         if ( topo->isHostPort(port_number) ) {
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_FLIT_SIZE;
             init_ev->ua_value = flit_size;
             port_link->sendInitData(init_ev);
+            // std::cout << "FLIT_SIZE: " << flit_size.toStringBestSI() << std::endl;
         
             RtrInitEvent* ev = new RtrInitEvent();
             ev->command = RtrInitEvent::REPORT_ID;
@@ -754,7 +758,7 @@ PortControl::handle_input_r2r(Event* ev)
 {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "handle_input_r2r start:" << std::endl;
+        // std::cout << "handle_input_r2r start:" << std::endl;
         ev->print("  ", Simulation::getSimulation()->getSimulationOutput());
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
@@ -924,7 +928,8 @@ PortControl::handle_output_r2r(Event* ev) {
 	    // Need to return credits to the output buffer
 	    int size = send_event->getFlitCount();
 	    xbar_in_credits[vc_to_send] += size;
-	    
+        output_queue_lengths[vc_to_send] -= size;
+        
 	    // Send an event to wake up again after this packet is sent.
 	    output_timing->send(size,NULL); 
 	    
@@ -1081,7 +1086,8 @@ PortControl::handle_output_n2r(Event* ev) {
 	    // Need to return credits to the output buffer
 	    int size = send_event->getFlitCount();
 	    xbar_in_credits[vc_to_send] += size;
-	    
+        output_queue_lengths[vc_to_send] -= size;
+        
 	    // Send an event to wake up again after this packet is sent.
 	    output_timing->send(size,NULL); 
 	    

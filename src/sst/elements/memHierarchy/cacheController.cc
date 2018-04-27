@@ -756,6 +756,7 @@ void Cache::printStatus(Output &out) {
 }
 
 void Cache::emergencyShutdown() {
-    printStatus(*out_);
+    if (out_->getVerboseLevel() > 1)
+        printStatus(*out_);
 }
 

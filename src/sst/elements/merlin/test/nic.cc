@@ -196,7 +196,7 @@ nic::init_complete(unsigned int phase) {
         // SimpleNetwork::Request* req = link_control->recvInitData();
         SimpleNetwork::Request* req;
         while ( (req = link_control->recvInitData() ) != NULL ) {
-            // std::cout << "NIC " << id << " Received an init event in phase " << phase << "!" << std::endl;
+            // std::cout << "NIC " << id << " Received an init event from " << req->src << " in phase " << phase << "!" << std::endl;
             delete req;
             init_broadcast_count++;
         }
@@ -215,7 +215,7 @@ nic::init_complete(unsigned int phase) {
     {   
         SimpleNetwork::Request* req;
         while ( (req = link_control->recvInitData() ) != NULL ) {
-            // std::cout << "NIC " << id << " Received an init event in phase " << phase << "!" << std::endl;
+            // std::cout << "NIC " << id << " Received an init event from " << req->src << " in phase " << phase << "!" << std::endl;
 
             // It's possible some of the point to point will overlap
             // some of the broadcasts, so we need to check to see
