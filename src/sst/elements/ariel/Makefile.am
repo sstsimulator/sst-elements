@@ -42,14 +42,16 @@ EXTRA_DIST = \
 	frontend/simple/fesimple.cc \
 	frontend/simple/examples/multicore.py \
 	frontend/simple/examples/stream/Makefile \
-	frontend/simple/examples/stream/Makefile \
 	frontend/simple/examples/stream/ariel_ivb.py \
 	frontend/simple/examples/stream/ariel_snb.py \
 	frontend/simple/examples/stream/runstream.py \
 	frontend/simple/examples/stream/runstreamSt.py \
 	frontend/simple/examples/stream/runstreamNB.py \
 	frontend/simple/examples/stream/memHstream.py \
-	frontend/simple/examples/stream/stream.c
+	frontend/simple/examples/stream/ariel_snb_mlm.py \
+	frontend/simple/examples/stream/malloc.txt \
+	frontend/simple/examples/stream/stream.c \
+	frontend/simple/examples/stream/stream_malloc.c
 
 
 libariel_la_LDFLAGS = -module -avoid-version
