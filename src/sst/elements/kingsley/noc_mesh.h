@@ -58,6 +58,7 @@ public:
         {"flit_size",          "Flit size specified in either b or B (can include SI prefix)."},
         {"input_buf_size",     "Size of input buffers in either b or B (can use SI prefix).  Default is 2*flit_size."},
         {"port_priority_equal","Set to true to have all port have equal priority (usually endpoint ports have higher priority).","false"},
+        {"route_y_first",      "Set to true to rout Y-dimension first.","false"},
         {"use_dense_map",      "Set to true to have a dense network id map instead of the sparse map normally used.","false"},
         // {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
     )
@@ -107,6 +108,9 @@ private:
     int my_x;
     int my_y;
 
+    bool route_y_first;
+    
+    
     typedef std::queue<noc_mesh_event*> port_queue_t;
 
     Clock::Handler<noc_mesh>* my_clock_handler;
@@ -124,8 +128,9 @@ private:
     bool port_priority_equal;
     const int* dense_map;
 
-    lru_unit<int> local_lru;
-    lru_unit<int> mesh_lru;
+    std::vector< lru_unit<int> > lru_units;
+    // lru_unit<int> local_lru;
+    // lru_unit<int> mesh_lru;
     
     bool clock_handler(Cycle_t cycle);
     // Statistic<uint64_t>** xbar_stalls;
@@ -142,7 +147,10 @@ private:
     Statistic<uint64_t>** send_bit_count;
     Statistic<uint64_t>** output_port_stalls;
     Statistic<uint64_t>** xbar_stalls;
-
+    // Statistic<uint64_t>** xbar_stalls_prioirty;
+    // Statistic<uint64_t>** xbar_stalls_normal;
+    // Statistic<uint64_t>** output_idle;
+    
     
 public:
     noc_mesh(ComponentId_t cid, Params& params);
