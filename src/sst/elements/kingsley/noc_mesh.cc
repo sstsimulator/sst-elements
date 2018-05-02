@@ -336,15 +336,19 @@ void noc_mesh::clock_wakeup() {
     for ( int i = 0; i < local_port_start + local_ports; ++i) {
         port_busy[i] = (port_busy[i] < cyclesOff) ? 0 : port_busy[i] - cyclesOff;
     }
-
-    unsigned int local_progress = (cyclesOff * local_lru.size()) % (local_lru.size() * 2);
-    unsigned int mesh_progress = (cyclesOff * mesh_lru.size()) % (mesh_lru.size() * 2);
+    
     // Update lru info
-    for (unsigned int i = 0; i < local_progress; i++)
-        local_lru.satisfied(false);
+    if (local_lru.size() > 0) {
+        unsigned int local_progress = (cyclesOff * local_lru.size()) % (local_lru.size() * 2);
+        for (unsigned int i = 0; i < local_progress; i++)
+            local_lru.satisfied(false);
 
+    }
+
+    unsigned int mesh_progress = (cyclesOff * mesh_lru.size()) % (mesh_lru.size() * 2);
     for (unsigned int i = 0; i < mesh_progress; i++)
         mesh_lru.satisfied(false);
+
     clock_is_off = false;
 }
 
