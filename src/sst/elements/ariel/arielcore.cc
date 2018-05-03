@@ -863,39 +863,38 @@ bool ArielCore::processNextEvent() {
 	// Just to mark the starting of the simulation
 	bool started=false;
 
-	void ArielCore::tick() {
-		// todo: if the core is fenced, increment the current cycle counter
+void ArielCore::tick() {
+	// todo: if the core is fenced, increment the current cycle counter
 
-		if(!isHalted) {
-			ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Ticking core id %" PRIu32 "\n", coreID));
-			updateCycle = false;
+	if(!isHalted) {
+		ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Ticking core id %" PRIu32 "\n", coreID));
+		updateCycle = false;
 
-			if(!isStalled) {
-				for(uint32_t i = 0; i < maxIssuePerCycle; ++i) {
-					bool didProcess = processNextEvent();
+		if(!isStalled) {
+			for(uint32_t i = 0; i < maxIssuePerCycle; ++i) {
+				bool didProcess = processNextEvent();
 
-					// If we didnt process anything in the call or we have halted then
-					// we stop the ticking and return
-					if( (!didProcess) || isHalted || isStalled ) {
-						break;
-					}
-
-					if(didProcess)
-						started = true;
-
+				// If we didnt process anything in the call or we have halted then
+				// we stop the ticking and return
+				if( (!didProcess) || isHalted || isStalled ) {
+					break;
 				}
-			}
 
-			currentCycles++;
-			statCycles->addData(1);
-
-			if( updateCycle ) {
-				statActiveCycles->addData(1);
+				if(didProcess)
+					started = true;
 			}
 		}
 
-		if(inst_count >= max_insts && (max_insts!=0) && (coreID==0))
-			isHalted=true;
+		currentCycles++;
+		statCycles->addData(1);
 
+		if( updateCycle ) {
+			statActiveCycles->addData(1);
+		}
 	}
+
+	if(inst_count >= max_insts && (max_insts!=0) && (coreID==0))
+		isHalted=true;
+
+}
 
