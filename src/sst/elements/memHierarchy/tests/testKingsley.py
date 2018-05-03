@@ -27,7 +27,6 @@ ctrl_network_params = {
         "link_bw" : ctrl_mesh_link_bw,
         "flit_size" : str(ctrl_mesh_flit) + "B",
         "input_buf_size" : ctrl_network_buffers,
-        "port_priority_equal" : 1,
 }
 
 data_network_params = {
