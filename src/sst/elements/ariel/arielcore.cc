@@ -871,14 +871,12 @@ bool ArielCore::processNextEvent() {
 			updateCycle = false;
 
 			if(!isStalled) {
-				ARIEL_CORE_VERBOSE(1, output->verbose(CALL_INFO, 1, 0, "Ticking core id %" PRIu32 "\n", coreID));
-
 				for(uint32_t i = 0; i < maxIssuePerCycle; ++i) {
 					bool didProcess = processNextEvent();
 
 					// If we didnt process anything in the call or we have halted then
 					// we stop the ticking and return
-					if( (!didProcess) || isHalted ) {
+					if( (!didProcess) || isHalted || isStalled ) {
 						break;
 					}
 
@@ -886,13 +884,13 @@ bool ArielCore::processNextEvent() {
 						started = true;
 
 				}
+			}
 
-				currentCycles++;
-				statCycles->addData(1);
+			currentCycles++;
+			statCycles->addData(1);
 
-				if( updateCycle ) {
-					statActiveCycles->addData(1);
-				}
+			if( updateCycle ) {
+				statActiveCycles->addData(1);
 			}
 		}
 
