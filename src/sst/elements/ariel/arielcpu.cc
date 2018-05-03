@@ -53,7 +53,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	core_count = (uint32_t) params.find<uint32_t>("corecount", 1);
 
-	long long int max_insts = (uint64_t) params.find<uint64_t>("max_insts", 0);
+	uint64_t max_insts = (uint64_t) params.find<uint64_t>("max_insts", 0);
 
 	output->verbose(CALL_INFO, 1, 0, "Configuring for %" PRIu32 " cores...\n", core_count);
 
@@ -592,7 +592,7 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
 	stopTicking = false;
 	output->verbose(CALL_INFO, 16, 0, "Main processor tick, will issue to individual cores...\n");
 
-        tunnel->updateTime(getCurrentSimTimeNano());
+	tunnel->updateTime(getCurrentSimTimeNano());
 	tunnel->incrementCycles();
 
 	// Keep ticking unless one of the cores says it is time to stop.
