@@ -92,6 +92,8 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
     
     UnitAlgebra clock_freq = link_bw_ua / flit_size_ua;
 
+    route_y_first = params.find<bool>("route_y_first",false);
+    
     // Register the clock
     my_clock_handler = new Clock::Handler<noc_mesh>(this,&noc_mesh::clock_handler);
     clock_tc = registerClock( clock_freq, my_clock_handler);
@@ -172,24 +174,47 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
 void
 noc_mesh::route(noc_mesh_event* event)
 {
-    // Compute next port
-    if ( event->dest_mesh_loc.first > my_x ) {
-        event->next_port = east_port;
-    }
-    else if ( event->dest_mesh_loc.first < my_x) {
-        event->next_port = west_port;
-    }
-    else {
+    if ( route_y_first ) {
+        // Compute next port
         if ( event->dest_mesh_loc.second > my_y ) {
             event->next_port = north_port;
         }
-        else if ( event->dest_mesh_loc.second < my_y) {
+        else if ( event->dest_mesh_loc.second < my_y ) {
             event->next_port = south_port;
         }
         else {
-            event->next_port = event->egress_port;
+            if ( event->dest_mesh_loc.first > my_x ) {
+                event->next_port = east_port;
+            }
+            else if ( event->dest_mesh_loc.first < my_x) {
+                event->next_port = west_port;
+            }
+            else {
+                event->next_port = event->egress_port;
+            }
+        }    
+    }
+
+    else {
+        // Compute next port
+        if ( event->dest_mesh_loc.first > my_x ) {
+            event->next_port = east_port;
         }
-    }    
+        else if ( event->dest_mesh_loc.first < my_x) {
+            event->next_port = west_port;
+        }
+        else {
+            if ( event->dest_mesh_loc.second > my_y ) {
+                event->next_port = north_port;
+            }
+            else if ( event->dest_mesh_loc.second < my_y) {
+                event->next_port = south_port;
+            }
+            else {
+                event->next_port = event->egress_port;
+            }
+        }
+    }
 }
 
 
@@ -336,19 +361,15 @@ void noc_mesh::clock_wakeup() {
     for ( int i = 0; i < local_port_start + local_ports; ++i) {
         port_busy[i] = (port_busy[i] < cyclesOff) ? 0 : port_busy[i] - cyclesOff;
     }
-    
-    // Update lru info
-    if (local_lru.size() > 0) {
-        unsigned int local_progress = (cyclesOff * local_lru.size()) % (local_lru.size() * 2);
-        for (unsigned int i = 0; i < local_progress; i++)
-            local_lru.satisfied(false);
 
-    }
+    // unsigned int local_progress = (cyclesOff * local_lru.size()) % (local_lru.size() * 2);
+    // unsigned int mesh_progress = (cyclesOff * mesh_lru.size()) % (mesh_lru.size() * 2);
+    // // Update lru info
+    // for (unsigned int i = 0; i < local_progress; i++)
+    //     local_lru.satisfied(false);
 
-    unsigned int mesh_progress = (cyclesOff * mesh_lru.size()) % (mesh_lru.size() * 2);
-    for (unsigned int i = 0; i < mesh_progress; i++)
-        mesh_lru.satisfied(false);
-
+    // for (unsigned int i = 0; i < mesh_progress; i++)
+    //     mesh_lru.satisfied(false);
     clock_is_off = false;
 }
 
@@ -366,155 +387,83 @@ noc_mesh::clock_handler(Cycle_t cycle)
     bool keepClockOn = false;
     // Progress all the messages
 
-    // For now, give local_ports priority in the order they were
-    // hooked up
-    // for ( int i = 0; i < local_ports; i++ ) {
-    for ( unsigned int i = 0; i < local_lru.size(); i++ ) {
-        int lru_port = local_lru.top();
-        // if ( !port_queues[local_port_start + i].empty() ) {
-        if ( !port_queues[lru_port].empty() ) {
-            // noc_mesh_event* event = port_queues[local_port_start + i].front();
-            noc_mesh_event* event = port_queues[lru_port].front();
-            
-            // Get the next port
-            int port = event->next_port;
 
-            // Check to see if the port is busy
-            if ( port_busy[port] > 0 ) {
-                xbar_stalls[port]->addData(1);
-                local_lru.satisfied(false);
-                keepClockOn = true;
-                continue;
-            }
-            
-            // Check to see if there are enough credits to send on
-            // that port
-            // output.output("(%d,%d): clock_handler(): port_credits[%d] = %d\n",my_x,my_y,port,port_credits[port]);
-            if ( port_credits[port] >= event->encap_ev->getSizeInFlits() ) {
-                int trace_id = event->encap_ev->request->getTraceID();
-                int vn = event->encap_ev->vn;
-                SST::Interfaces::SimpleNetwork::nid_t src = event->encap_ev->request->src;
-                SST::Interfaces::SimpleNetwork::nid_t dest = event->encap_ev->request->dest;
-                SST::Interfaces::SimpleNetwork::Request::TraceType ttype = event->encap_ev->request->getTraceType();
-                int flits = event->encap_ev->getSizeInFlits();
+    // Prioirty goes in order of the lru_units list.  First entry has
+    // highest priority, second has second highest, etc
+    for ( auto& lru : lru_units ) {
+        for ( unsigned int i = 0; i < lru.size(); i++ ) {
+            int lru_port = lru.top();
+            if ( !port_queues[lru_port].empty() ) {
+                // noc_mesh_event* event = port_queues[local_port_start + i].front();
+                noc_mesh_event* event = port_queues[lru_port].front();
                 
-                // port_queues[local_port_start + i].pop();
-                port_queues[lru_port].pop();
-                port_credits[port] -= event->encap_ev->getSizeInFlits();
-                port_busy[port] = event->encap_ev->getSizeInFlits();
-                if ( edge_status & ( 1 << port) ) {
-                    ports[port]->send(event->encap_ev);
-                    send_bit_count[port]->addData(event->encap_ev->request->size_in_bits);
-                    event->encap_ev = NULL;
-                    delete event;
+                // Get the next port
+                int port = event->next_port;
+
+                // Check to see if the port is busy
+                if ( port_busy[port] > 0 ) {
+                    xbar_stalls[port]->addData(1);
+                    lru.satisfied(false);
+                    keepClockOn = true;
+                    continue;
+                }
+            
+                // Check to see if there are enough credits to send on
+                // that port
+                // output.output("(%d,%d): clock_handler(): port_credits[%d] = %d\n",my_x,my_y,port,port_credits[port]);
+                if ( port_credits[port] >= event->encap_ev->getSizeInFlits() ) {
+                    int trace_id = event->encap_ev->request->getTraceID();
+                    int vn = event->encap_ev->vn;
+                    SST::Interfaces::SimpleNetwork::nid_t src = event->encap_ev->request->src;
+                    SST::Interfaces::SimpleNetwork::nid_t dest = event->encap_ev->request->dest;
+                    SST::Interfaces::SimpleNetwork::Request::TraceType ttype = event->encap_ev->request->getTraceType();
+                    int flits = event->encap_ev->getSizeInFlits();
+                    
+                    // port_queues[local_port_start + i].pop();
+                    port_queues[lru_port].pop();
+                    port_credits[port] -= event->encap_ev->getSizeInFlits();
+                    port_busy[port] = event->encap_ev->getSizeInFlits();
+                    if ( edge_status & ( 1 << port) ) {
+                        ports[port]->send(event->encap_ev);
+                        send_bit_count[port]->addData(event->encap_ev->request->size_in_bits);
+                        event->encap_ev = NULL;
+                        delete event;
+                    }
+                    else {
+                        ports[port]->send(event);
+                        send_bit_count[port]->addData(event->encap_ev->request->size_in_bits);
+                    }
+                    if ( ttype == SimpleNetwork::Request::FULL ) {
+                        output.output("TRACE(%d): %" PRIu64 " ns: Sent an event to router from router: (%d,%d)"
+                                      " (%s) on VC %d from src %" PRIu64 " to dest %" PRIu64 ".\n",
+                                      trace_id,
+                                      getCurrentSimTimeNano(),
+                                      my_x, my_y,
+                                      getName().c_str(),
+                                      vn,
+                                      src,
+                                      dest);
+                    }
+                    // Need to send credit event back to last router
+                    credit_event* cr_ev = new credit_event(0, flits);
+                    // ports[local_port_start + i]->send(cr_ev);
+                    ports[lru_port]->send(cr_ev);
+                    lru.satisfied(true);
                 }
                 else {
-                    ports[port]->send(event);
-                    send_bit_count[port]->addData(event->encap_ev->request->size_in_bits);
+                    output_port_stalls[port]->addData(1);
+                    lru.satisfied(false);
                 }
-                if ( ttype == SimpleNetwork::Request::FULL ) {
-                    output.output("TRACE(%d): %" PRIu64 " ns: Sent an event to router from router: (%d,%d)"
-                                  " (%s) on VC %d from src %" PRIu64 " to dest %" PRIu64 ".\n",
-                                  trace_id,
-                                  getCurrentSimTimeNano(),
-                                  my_x, my_y,
-                                  getName().c_str(),
-                                  vn,
-                                  src,
-                                  dest);
-                }
-                // Need to send credit event back to last router
-                credit_event* cr_ev = new credit_event(0, flits);
-                // ports[local_port_start + i]->send(cr_ev);
-                ports[lru_port]->send(cr_ev);
-                local_lru.satisfied(true);
+                if (!port_queues[lru_port].empty())
+                    keepClockOn = true;
             }
             else {
-                output_port_stalls[port]->addData(1);
-                local_lru.satisfied(false);
+                lru.satisfied(false);
             }
-            if (!port_queues[lru_port].empty())
-                keepClockOn = true;
-        }
-        else {
-            local_lru.satisfied(false);
         }
     }
-
-    // Now progress all the other ports (for now, just in order to get
-    // things started.  Will fix arbitration later)
-    // for ( int i = 0; i < local_port_start; i++ ) {
-    for ( unsigned int i = 0; i < mesh_lru.size(); ++i ) {
-        int lru_port = mesh_lru.top();
-        if ( !port_queues[lru_port].empty() ) {
-            noc_mesh_event* event = port_queues[lru_port].front();
-            // Get the next port
-            int port = event->next_port;
-
-
-            // Check to see if the port is busy
-            if ( port_busy[port] > 0 ) {
-                xbar_stalls[port]->addData(1);
-                mesh_lru.satisfied(false);
-                keepClockOn = true;
-                continue;
-            }
-            
-            // Check to see if there are enough credits to send on
-            // that port
-            // output.output("(%d,%d): clock_handler(): port_credits[%d] = %d\n",my_x,my_y,port,port_credits[port]);
-            if ( port_credits[port] >= event->encap_ev->getSizeInFlits() ) {
-                int trace_id = event->encap_ev->request->getTraceID();
-                int vn = event->encap_ev->vn;
-                SST::Interfaces::SimpleNetwork::nid_t src = event->encap_ev->request->src;
-                SST::Interfaces::SimpleNetwork::nid_t dest = event->encap_ev->request->dest;
-                SST::Interfaces::SimpleNetwork::Request::TraceType ttype = event->encap_ev->request->getTraceType();
-                int flits = event->encap_ev->getSizeInFlits();
-                
-                // port_queues[i].pop();
-                port_queues[lru_port].pop();
-                port_credits[port] -= event->encap_ev->getSizeInFlits();
-                port_busy[port] = event->encap_ev->getSizeInFlits();
-                if ( edge_status & (1 << port) ) {
-                    ports[port]->send(event->encap_ev);
-                    send_bit_count[port]->addData(event->encap_ev->request->size_in_bits);
-                    event->encap_ev = NULL;
-                    delete event;
-                }
-                else {
-                    ports[port]->send(event);
-                    send_bit_count[port]->addData(event->encap_ev->request->size_in_bits);
-                }
-                if ( ttype == SimpleNetwork::Request::FULL ) {
-                    output.output("TRACE(%d): %" PRIu64 " ns: Sent an event on link %d from router: (%d,%d)"
-                                  " (%s) on VC %d from src %" PRIu64 " to dest %" PRIu64 ".\n",
-                                  trace_id,
-                                  getCurrentSimTimeNano(),
-                                  port,
-                                  my_x, my_y,
-                                  getName().c_str(),
-                                  vn,
-                                  src,
-                                  dest);
-                }
-                // Need to send credit event back to last router
-                credit_event* cr_ev = new credit_event(0, flits);
-                // ports[i]->send(cr_ev);
-                ports[lru_port]->send(cr_ev);
-                mesh_lru.satisfied(true);
-            }
-            else {
-                output_port_stalls[port]->addData(1);
-                mesh_lru.satisfied(false);
-            }
-            if (!port_queues[lru_port].empty())
-                keepClockOn = true;
-        }
-        else {
-            mesh_lru.satisfied(false);
-        }
-        
-    }
+    
+    // }
     clock_is_off = !keepClockOn;
 
     // Stay on clock list
@@ -534,29 +483,28 @@ void noc_mesh::setup()
     // Set up the lru units
 
     // First do the endpoints
-    if ( port_priority_equal ) {
-        for ( int i = local_port_start; i < local_port_start + local_ports; ++i ) {
-            if ( ports[i] != NULL ) {
-                mesh_lru.insert(i);
-            }
+    lru_units.resize(1);
+    for ( int i = local_port_start; i < local_port_start + local_ports; ++i ) {
+        if ( ports[i] != NULL ) {
+            lru_units[0].insert(i);
         }
     }
-    else {
-        for ( int i = local_port_start; i < local_port_start + local_ports; ++i ) {
-            if ( ports[i] != NULL ) {
-                local_lru.insert(i);
-            }
-        }
-        local_lru.finalize();
+    
+
+    // If the priorities aren't equal, create another lru_unit for the
+    // lower priority ports
+    if ( !port_priority_equal ) {
+        lru_units[0].finalize();
+        lru_units.resize(2);        
     }
     
     // Now the mesh ports
     for ( int i = 0; i < local_port_start; ++i ) {
         if ( ports[i] != NULL ) {
-            mesh_lru.insert(i);
+            lru_units.back().insert(i);
         }
     }
-    mesh_lru.finalize();
+    lru_units.back().finalize();
 }
 
 void noc_mesh::finish()
