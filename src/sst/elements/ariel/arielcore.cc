@@ -857,8 +857,7 @@ bool ArielCore::processNextEvent() {
 					(uint32_t)pendingTransactions->size(), maxPendingTransactions));
 		return false;
 	}
-	}
-
+}
 
 	// Just to mark the starting of the simulation
 	bool started=false;
