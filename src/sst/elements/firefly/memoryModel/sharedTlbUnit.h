@@ -83,6 +83,7 @@ class SharedTlbUnit : public Unit {
 
         if ( blockedStore() ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Blocking source, pid %d, req Addr %#" PRIx64 "\n", req->pid, req->addr );
+            assert( ! m_blockedStoreSrc );
             m_blockedStoreSrc = src;
             return true;
         } else {
@@ -104,6 +105,7 @@ class SharedTlbUnit : public Unit {
         }
         if ( blockedLoad() ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Blocking source, pid %d, req Addr %#" PRIx64 "\n", req->pid, req->addr );
+            assert( ! m_blockedLoadSrc );
             m_blockedLoadSrc = src;
             return true;
         } else {
@@ -152,16 +154,30 @@ class SharedTlbUnit : public Unit {
         return blockedTlb() || m_readyLoads.size() >= m_maxPendingLoads; 
     }
 
-    void storeAddrResolved( Callback callback, MemReq* req, uint64_t addr ) {
+    void checkBlockedSrcs() {
+        bool flag = true;
+        if ( m_blockedLoadSrc ) {
+            if ( m_readyLoads.size() < m_maxPendingLoads ) { 
+                m_model.schedResume( 0, m_blockedLoadSrc );
+                m_blockedLoadSrc = NULL;
+                flag = false;
+            } 
+        }   
 
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 " pendingLookups=%d\n",
-                                         req->addr, addr, m_pendingLookups);
-        if ( m_blockedStoreSrc ) {
-            if ( m_readyStores.size() < m_maxPendingStores && blockedTlb() ) { 
+        if ( flag && m_blockedStoreSrc ) {
+            if ( m_readyStores.size() < m_maxPendingStores  ) { 
                 m_model.schedResume( 0, m_blockedStoreSrc );
                 m_blockedStoreSrc = NULL;
             }
         } 
+    }
+
+    void storeAddrResolved( Callback callback, MemReq* req, uint64_t addr ) {
+
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 " pendingLookups=%d\n",
+                                         req->addr, addr, m_pendingLookups);
+
+        checkBlockedSrcs();
 
         assert( m_pendingLookups > 0 );
         --m_pendingLookups;
@@ -184,12 +200,7 @@ class SharedTlbUnit : public Unit {
 
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 " pendingLookups=%d\n",
                                          req->addr, addr, m_pendingLookups);
-        if ( m_blockedLoadSrc ) {
-            if ( m_readyLoads.size() < m_maxPendingLoads && blockedTlb() ) { 
-                m_model.schedResume( 0, m_blockedLoadSrc );
-                m_blockedLoadSrc = NULL;
-            }
-        } 
+        checkBlockedSrcs();
 
         assert( m_pendingLookups > 0 );
         --m_pendingLookups;
