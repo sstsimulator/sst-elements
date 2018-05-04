@@ -71,10 +71,12 @@ class BusBridgeUnit : public Unit {
     bool write( UnitBase* src, MemReq* req, Callback callback ) {
 		Entry* entry = new Entry( src, req, callback );
 		entry->qd = m_model.getCurrentSimTimeNano();
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu\n",entry,req->addr,req->length);
 		src->incPendingWrites();
 		m_respBus.addReq( entry );
-		return src->numPendingWrites() == 10;
+        bool ret = src->numPendingWrites() == 10;
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu %s %p\n",
+                entry,req->addr,req->length, ret ? "blocked":"",src);
+		return ret; 
 	}
 
     bool store( UnitBase* src, MemReq* req ) {
@@ -173,6 +175,7 @@ class BusBridgeUnit : public Unit {
 		}
 		if( 0 == entry->addr ) {
 			if ( entry->src->numPendingWrites() == 10 ) {
+		        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"unblock src\n");
 				m_model.schedResume( 0, entry->src );
 			}
 			entry->src->decPendingWrites();
