@@ -128,7 +128,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         }
         free(level_buffer);
 /** End memory manager subcomponent parameter translation */
-        
+
         std::string memorymanager = params.find<std::string>("memmgr", "ariel.MemoryManagerSimple");
         if (!memorymanager.empty()) {
             // Warn about memory levels and the selected memory manager if needed
@@ -147,7 +147,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         } else {
             output->fatal(CALL_INFO, -1, "Failed to load memory manager: no manager specified. Please set the 'memmgr' parameter in your input deck\n");
         }
-	
+
         output->verbose(CALL_INFO, 1, 0, "Memory manager construction is completed.\n");
 
 	uint32_t maxIssuesPerCycle   = (uint32_t) params.find<uint32_t>("maxissuepercycle", 1);
@@ -189,7 +189,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	uint32_t pin_startup_mode = (uint32_t) params.find<uint32_t>("arielmode", 2);
 	uint32_t intercept_mem_allocations = (uint32_t) params.find<uint32_t>("arielinterceptcalls", 0);
-        
+
         // Always enable allocation interception if using opal...
         if (opal_enabled)
             intercept_mem_allocations = 1;
@@ -202,12 +202,12 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		output->verbose(CALL_INFO, 1, 0, "Interception and instrumentation of multi-level memory and malloc/free calls is ENABLED.\n");
 		break;
     }
-    
+
     uint32_t keep_malloc_stack_trace = (uint32_t) params.find<uint32_t>("arielstack", 0);
-    output->verbose(CALL_INFO, 1, 0, "Tracking the stack and dumping on malloc calls is %s.\n", 
+    output->verbose(CALL_INFO, 1, 0, "Tracking the stack and dumping on malloc calls is %s.\n",
             keep_malloc_stack_trace == 1 ? "ENABLED" : "DISABLED");
 
-    std::string malloc_map_filename = params.find<std::string>("mallocmapfile", ""); 
+    std::string malloc_map_filename = params.find<std::string>("mallocmapfile", "");
     if (malloc_map_filename == "") {
         output->verbose(CALL_INFO, 1, 0, "Malloc map file is DISABLED\n");
     } else {
@@ -299,7 +299,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		sprintf(argv_buffer, "apparg%" PRIu32, aa);
 		std::string argv_i = params.find<std::string>(argv_buffer, "");
 
-		output->verbose(CALL_INFO, 1, 0, "Found application argument %" PRIu32 " (%s) = %s\n", 
+		output->verbose(CALL_INFO, 1, 0, "Found application argument %" PRIu32 " (%s) = %s\n",
 			aa, argv_buffer, argv_i.c_str());
 		execute_args[arg] = (char*) malloc(sizeof(char) * (argv_i.size() + 1));
 		strcpy(execute_args[arg], argv_i.c_str());
@@ -352,7 +352,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 
 	if(opal_enabled)
-	{	 
+	{
 	    output->verbose(CALL_INFO, 1, 0, "Creating core to Opal links...\n");
             cpu_to_opal_links = (Link**) malloc( sizeof(Link*) * core_count );
        	}
@@ -427,7 +427,7 @@ void ArielCPU::init(unsigned int phase)
         output->verbose(CALL_INFO, 1, 0, "Child has attached!\n");
     }
 
-    for (uint32_t i = 0; i < core_count; i++) { 
+    for (uint32_t i = 0; i < core_count; i++) {
         cpu_to_cache_links[i]->init(phase);
     }
 }
@@ -490,11 +490,11 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 
 	if(the_child != 0) {
 	    // Set the member variable child_pid in case the waitpid() below fails
-	    // this allows the fatal process to kill the process and prevent it 
-	    // from becoming a zombie process.  Because as we all know, zombies are 
+	    // this allows the fatal process to kill the process and prevent it
+	    // from becoming a zombie process.  Because as we all know, zombies are
 	    // bad and eat your brains...
 	    child_pid = the_child;
-	    
+
 		// This is the parent, return the PID of our child process
         /* Wait a second, and check to see that the child actually started */
         sleep(1);
@@ -518,12 +518,12 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
                         "Launching trace child failed!  Child Stopped with Signal  %d\n",
                         WSTOPSIG(pstat));
             }
-            else { 
+            else {
                 output->fatal(CALL_INFO, 1,
                     "Launching trace child failed!  Unknown Problem; pstat = %d\n",
                     pstat);
             }
-            
+
         } else if ( check < 0 ) {
             perror("waitpid");
             output->fatal(CALL_INFO, 1,
@@ -598,18 +598,18 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
 	// Keep ticking unless one of the cores says it is time to stop.
 	for(uint32_t i = 0; i < core_count; ++i) {
 		cpu_cores[i]->tick();
-		
+
 		if(cpu_cores[i]->isCoreHalted()) {
 			stopTicking = true;
 			break;
 		}
 	}
-	
+
 	// Its time to end, that's all folks
 	if(stopTicking) {
 		primaryComponentOKToEndSim();
 	}
-	
+
 	return stopTicking;
 }
 
