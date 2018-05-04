@@ -26,7 +26,7 @@ class Shmem {
 			delete m_cmd;
         }
         Callback&  callback() { return m_callback; }
-        virtual bool checkOp( Output& ) = 0;
+        virtual bool checkOp( Output&, int core ) = 0;
         bool inRange( Hermes::Vaddr addr, size_t length ) {
             //printf("%s() addr=%lu length=%lu\n",__func__,addr, length);
             return ( m_cmd->addr >= addr && m_cmd->addr + m_cmd->value.getLength() <= addr + length );
@@ -45,10 +45,10 @@ class Shmem {
             m_value( cmd->value.getType(), backing ) 
         {} 
 
-        bool checkOp( Output& dbg ) {
+        bool checkOp( Output& dbg, int core ) {
             std::stringstream tmp;
             tmp << "op=" << WaitOpName(m_cmd->op) << " testValue=" << m_cmd->value << " memValue=" << m_value;
-            dbg.debug( CALL_INFO,1,NIC_DBG_SHMEM,"%s %s\n",__func__,tmp.str().c_str());
+            dbg.debug( CALL_INFO,1,NIC_DBG_SHMEM,"%s core=%d %s\n",__func__,core,tmp.str().c_str());
             switch ( m_cmd->op ) {
               case Hermes::Shmem::NE:
                 return m_value != m_cmd->value; 
@@ -104,12 +104,12 @@ class Shmem {
     }
     void incPending( int core ) {
 		long value = m_pendingRemoteOps[core].second.get<long>();
-        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"pid=%d count=%lu\n", core, value );
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"core=%d count=%lu\n", core, value );
         m_pendingRemoteOps[core].second += m_one;
     }
 	void decPending( int core ) {
 		long value = m_pendingRemoteOps[core].second.get<long>();
-        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"pid=%d count=%lu\n", core, value );
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"core=%d count=%lu\n", core, value );
         assert(value>0);
 		m_pendingRemoteOps[core].second -= m_one;
 		checkWaitOps( core, m_pendingRemoteOps[core].first, m_pendingRemoteOps[core].second.getLength() );
@@ -138,10 +138,11 @@ private:
     void hostPutv( NicShmemPutvCmdEvent*, int id );
     void hostGet( NicShmemGetCmdEvent*, int id );
     void hostGetv( NicShmemGetvCmdEvent*, int id );
+
     void hostAdd( NicShmemAddCmdEvent*, int id );
     void hostFadd( NicShmemFaddCmdEvent*, int id );
-    void hostCswap( NicShmemCswapCmdEvent*, int id );
-    void hostSwap( NicShmemSwapCmdEvent*, int id );
+    void sameNodeCswap( NicShmemCswapCmdEvent*, int id );
+    void sameNodeSwap( NicShmemSwapCmdEvent*, int id );
 
     void put( NicShmemPutCmdEvent*, int id );
     void putv( NicShmemPutvCmdEvent*, int id );
