@@ -107,6 +107,12 @@ bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std
 
 	size_t tmpOffset = m_addr + m_offset;
 	int tmpCore = m_core;
+
+    // On mutrino it appears that a putv of an int does a load store, until this is sorted out completely just
+    // do a load before the store for same items
+    if ( length <= 64 ) {
+	    vec.push_back( MemOp( m_addr + m_offset, length, MemOp::Op::BusDmaFromHost) ); 
+    }
 	vec.push_back( MemOp( m_addr + m_offset, length, MemOp::Op::BusDmaToHost, 
 		[=] () {
 			m_shmem->checkWaitOps( tmpCore, tmpOffset, length );
