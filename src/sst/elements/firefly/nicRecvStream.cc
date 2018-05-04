@@ -37,6 +37,8 @@ Nic::RecvMachine::StreamBase::~StreamBase() {
         delete m_recvEntry;
     }
     if ( m_sendEntry ) {
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_STREAM,"core=%d targetNode=%d targetCore=%d\n",
+                getMyPid(), m_sendEntry->dest(), m_sendEntry->dst_vNic() );
         m_ctx->nic().qSendEntry( m_sendEntry );
     }
 }
