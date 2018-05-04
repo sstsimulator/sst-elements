@@ -66,6 +66,7 @@ sst.setStatisticOutput("sst.statOutputConsole")
 # Statistic defaults to Accumulator
 ariel.enableStatistics([
       "cycles",
+      "active_cycles",
       "instruction_count",
       "read_requests",
       "write_requests"

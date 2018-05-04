@@ -39,6 +39,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	maxPendingTransactions = maxPendTrans;
 	setOriginalMaxPendingTransactions(maxPendingTransactions);
 	isHalted = false;
+	isStalled = false;
 	maxIssuePerCycle = maxIssuePerCyc;
 	maxQLength = maxQLen;
 	cacheLineSize = cacheLineSz;
@@ -231,6 +232,10 @@ void ArielCore::halt() {
 	isHalted = true;
 }
 
+void ArielCore::stall() {
+	isStalled = true;
+}
+
 // When this is called, set the maxPendingTransactions to 0 
 void ArielCore::fence(){
 	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Current pending transaction count: %" PRIu32, pending_transaction_count));
@@ -326,6 +331,10 @@ void ArielCore::createExitEvent() {
 
 bool ArielCore::isCoreHalted() const {
 	return isHalted;
+}
+
+bool ArielCore::isCoreStalled() const {
+	return isStalled;
 }
 
 bool ArielCore::isCoreFenced() const {
@@ -848,42 +857,43 @@ bool ArielCore::processNextEvent() {
 					(uint32_t)pendingTransactions->size(), maxPendingTransactions));
 		return false;
 	}
-	}
-
+}
 
 	// Just to mark the starting of the simulation
 	bool started=false;
 
-	void ArielCore::tick() {
-		// todo: if the core is fenced, increment the current cycle counter
+void ArielCore::tick() {
+	// todo: if the core is fenced, increment the current cycle counter
 
-		if(! isHalted) {
-			ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Ticking core id %" PRIu32 "\n", coreID));
-			updateCycle = false;
+	if(!isHalted) {
+		ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Ticking core id %" PRIu32 "\n", coreID));
+		updateCycle = false;
+
+		if(!isStalled) {
 			for(uint32_t i = 0; i < maxIssuePerCycle; ++i) {
 				bool didProcess = processNextEvent();
 
 				// If we didnt process anything in the call or we have halted then
 				// we stop the ticking and return
-				if( (!didProcess) || isHalted) {
+				if( (!didProcess) || isHalted || isStalled ) {
 					break;
 				}
 
 				if(didProcess)
 					started = true;
-
-			}
-                        
-                        currentCycles++;
-                        statCycles->addData(1);
-
-			if( updateCycle ) {
-                            statActiveCycles->addData(1);
 			}
 		}
 
-		if (inst_count >= max_insts && (max_insts!=0) && (coreID==0))
-			isHalted=true;
+		currentCycles++;
+		statCycles->addData(1);
 
+		if( updateCycle ) {
+			statActiveCycles->addData(1);
+		}
 	}
+
+	if(inst_count >= max_insts && (max_insts!=0) && (coreID==0))
+		isHalted=true;
+
+}
 

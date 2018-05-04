@@ -26,13 +26,14 @@ data_network_buffers = "288B"
 ctrl_network_params = {
         "link_bw" : ctrl_mesh_link_bw,
         "flit_size" : str(ctrl_mesh_flit) + "B",
-        "input_buf_size" : ctrl_network_buffers
+        "input_buf_size" : ctrl_network_buffers,
 }
 
 data_network_params = {
         "link_bw" : data_mesh_link_bw,
         "flit_size" : str(data_mesh_flit) + "B",
-        "input_buf_size" : data_network_buffers
+        "input_buf_size" : data_network_buffers,
+        "port_priority_equal" : 1,
 }
 
 # Debug parameters for memH
@@ -511,10 +512,4 @@ for y in range(0, mesh_stops_y):
 # Enable SST Statistics Outputs for this simulation
 sst.setStatisticLoadLevel(16)
 sst.enableAllStatisticsForAllComponents({"type":"sst.AccumulatorStatistic"})
-
-sst.setStatisticOutput("sst.statOutputCSV")
-sst.setStatisticOutputOptions( {
-        "filepath"  : "test.stat",
-        "separator" : ", "
-} )
-
+sst.setStatisticOutput("sst.statOutputConsole")
