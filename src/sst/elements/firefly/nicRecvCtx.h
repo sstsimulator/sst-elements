@@ -57,7 +57,7 @@
             }
 
             void checkWaitOps( int core, Hermes::Vaddr addr, size_t length ) {
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"\n");
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"\n");
                 m_rm.m_nic.m_shmem->checkWaitOps( core, addr, length );
             }
 
@@ -79,7 +79,8 @@
             void deleteStream( StreamBase* stream ) {
                 m_rm.nic().schedCallback( [=]() 
                     {
-                        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"deleteStream( %p )\n",stream);
+                        m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"deleteStream",1,NIC_DBG_RECV_CTX,"%p\n",stream);
+                        m_rm.decActiveStream();
                         delete stream;
                     } 
                 );
