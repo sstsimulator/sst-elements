@@ -59,6 +59,7 @@ public:
 		m_backed = params.find<bool>("arg.backed", false);
 		m_outLoop = params.find<int>("arg.outLoop", 1);
 		m_num_nodes = params.find<int>("arg.numNodes", -1);
+		m_randAddr = params.find<int>("arg.randAddr", 1);
 		m_times.resize(m_outLoop);
         
         m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
@@ -108,7 +109,13 @@ public:
 		} else if ( m_phase < m_iterations * m_updates ) {
             int dest = calcDestPe(); 
 
-			Hermes::MemAddr addr = m_dest.offset<TYPE>( genRand() % m_dataSize );
+            
+			Hermes::MemAddr addr;
+            if ( m_randAddr ) {
+			    addr = m_dest.offset<TYPE>( genRand() % m_dataSize );
+            } else {
+                addr = m_dest.offset<TYPE>( 0 );
+            }
 	
 			switch ( m_op ) { 
               case Fadd:
@@ -136,6 +143,9 @@ public:
 			}
 
 			if ( m_outLoop > 0 ) {
+			    if ( m_backed ) {
+				    bzero( &m_dest.at<TYPE>(0), sizeof(TYPE) * m_dataSize);
+			    }
 				m_phase = -1;
             } else {
 				++m_phase;
@@ -227,6 +237,7 @@ public:
     unsigned int m_randSeed;
 #endif
 
+    bool m_randAddr;
 	bool m_backed;
 	bool m_printTotals;
 	TYPE m_one;
@@ -289,8 +300,13 @@ private:
         if( this->m_my_pe == this->m_num_pes - 1 ) {
             pe = this->genRand() % (this->m_num_pes - 1);
         } else {
+
             int pecountHS = this->m_num_pes + this->m_hotMult;
             pe = this->genRand() % pecountHS;
+
+            while( pe == this->m_my_pe ) {
+                pe = this->genRand() % pecountHS;
+            } 
 
             // If we generate a PE higher than we have
             // clamp ourselves to the highest PE
