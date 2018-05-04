@@ -371,6 +371,7 @@ public:
     // version will ignore it.  If topology needs the information, it
     // will need to overload function to store it.
     virtual void setOutputBufferCreditArray(int const* array, int vcs) {};
+    virtual void setOutputQueueLengthsArray(int const* array, int vcs) {};
 	
     // When TopologyEvents arrive, they are sent directly to the
     // topology object for the router

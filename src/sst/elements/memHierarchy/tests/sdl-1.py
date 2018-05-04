@@ -2,6 +2,8 @@
 import sst
 
 # Define the simulation components
+verbose = 2
+
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
       "do_write" : "1",
@@ -11,24 +13,26 @@ comp_cpu.addParams({
 })
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
-      "access_latency_cycles" : "4",
-      "cache_frequency" : "2 Ghz",
-      "replacement_policy" : "lru",
-      "coherence_protocol" : "MSI",
-      "associativity" : "4",
-      "cache_line_size" : "64",
-      #"debug" : "1",
-      #"debug_level" : "10",
-      "L1" : "1",
-      "cache_size" : "2 KB"
+    "access_latency_cycles" : "4",
+    "cache_frequency" : "2 Ghz",
+    "replacement_policy" : "lru",
+    "coherence_protocol" : "MSI",
+    "associativity" : "4",
+    "cache_line_size" : "64",
+    #"debug" : "1",
+    #"debug_level" : "10",
+    "verbose" : verbose,
+    "L1" : "1",
+    "cache_size" : "2KiB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "coherence_protocol" : "MSI",
-      #"debug" : "1",
-      "backend.access_time" : "1000 ns",
-      "clock" : "1GHz",
-      "backend.mem_size" : "512MiB"
+    "coherence_protocol" : "MSI",
+    #"debug" : "1",
+    "backend.access_time" : "1000 ns",
+    "clock" : "1GHz",
+    "backend.mem_size" : "512MiB",
+    "verbose" : verbose,
 })
 
 # Enable statistics

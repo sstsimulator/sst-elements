@@ -321,6 +321,126 @@ class topoMesh(Topo):
                 port = port+1
 
 
+class topoHyperX(Topo):
+    def __init__(self):
+        Topo.__init__(self)
+        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "hyperx:shape", "hyperx:width", "hyperx:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoOptKeys = ["xbar_arb"]
+    def getName(self):
+        return "HyperX"
+    def prepParams(self):
+#        if "xbar_arb" not in _params:
+#            _params["xbar_arb"] = "merlin.xbar_arb_lru"
+        self.nd = int(_params["num_dims"])
+        peers = 1
+        radix = 0
+        self.dims = []
+        self.dimwidths = []
+        if not "hyperx:shape" in _params:
+            for x in xrange(self.nd):
+                print "Dim %d size:"%x
+                ds = int(raw_input())
+                self.dims.append(ds);
+            _params["hyperx:shape"] = self.formatShape(self.dims)
+        else:
+            self.dims = [int(x) for x in _params["hyperx:shape"].split('x')]
+        if not "hyperx:width" in _params:
+            for x in xrange(self.nd):
+                print "Dim %d width (# of links in this dimension):" % x
+                dw = int(raw_input())
+                self.dimwidths.append(dw)
+            _params["hyperx:width"] = self.formatShape(self.dimwidths)
+        else:
+            self.dimwidths = [int(x) for x in _params["hyperx:width"].split('x')]
+
+        local_ports = int(_params["hyperx:local_ports"])
+        radix = local_ports
+        for x in xrange(self.nd):
+            radix += (self.dimwidths[x] * (self.dims[x]-1))
+
+        for x in self.dims:
+            peers = peers * x
+        peers = peers * local_ports
+
+        _params["num_peers"] = peers
+        _params["num_dims"] = self.nd
+        _params["topology"] = _params["topology"] = "merlin.hyperx"
+        _params["debug"] = debug
+        _params["num_ports"] = _params["router_radix"] = radix
+        _params["num_vns"] = 2
+        _params["hyperx:local_ports"] = local_ports
+
+    def formatShape(self, arr):
+        return 'x'.join([str(x) for x in arr])
+
+    def build(self):
+        def idToLoc(rtr_id):
+            foo = list()
+            for i in xrange(self.nd-1, 0, -1):
+                div = 1
+                for j in range(0, i):
+                    div = div * self.dims[j]
+                value = (rtr_id / div)
+                foo.append(value)
+                rtr_id = rtr_id - (value * div)
+            foo.append(rtr_id)
+            foo.reverse()
+            return foo
+
+
+        num_routers = _params["num_peers"] / _params["hyperx:local_ports"]
+        links = dict()
+        def getLink(name1, name2, num):
+            # Sort name1 and name2 so order doesn't matter
+            if str(name1) < str(name2):
+                name = "link.%s:%s:%d"%(name1, name2, num)
+            else:
+                name = "link.%s:%s:%d"%(name2, name1, num)
+            if name not in links:
+                links[name] = sst.Link(name)
+            #print "Getting link with name: %s"%name
+            return links[name]
+
+        # loop through the routers to hook up links
+        for i in xrange(num_routers):
+            # set up 'mydims'
+            mydims = idToLoc(i)
+            mylocstr = self.formatShape(mydims)
+
+            #print "Creating router %s (%d)"%(mylocstr,i)
+            
+            rtr = sst.Component("rtr.%s"%mylocstr, "merlin.hr_router")
+            rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
+            rtr.addParam("id", i)
+
+            port = 0
+            # Connect to all routers that only differ in one location index
+            for dim in xrange(self.nd):
+                theirdims = mydims[:]
+
+                # We have links to every other router in each dimension
+                for router in xrange(self.dims[dim]):
+                    if router != mydims[dim]: # no link to ourselves
+                        theirdims[dim] = router
+                        theirlocstr = self.formatShape(theirdims)
+                        # Hook up "width" number of links for this dimension
+                        for num in xrange(self.dimwidths[dim]):
+                            rtr.addLink(getLink(mylocstr, theirlocstr, num), "port%d"%port, _params["link_lat"])
+                            #print "Wired up port %d"%port
+                            port = port + 1
+                    
+
+            for n in xrange(_params["hyperx:local_ports"]):
+                nodeID = int(_params["hyperx:local_ports"]) * i + n
+                ep = self._getEndPoint(nodeID).build(nodeID, {})
+                if ep:
+                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    if self.bundleEndpoints:
+                       nicLink.setNoCut()
+                    nicLink.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
+                port = port+1
+
+
 
 
 
@@ -834,6 +954,67 @@ class BisectionEndPoint(EndPoint):
     def enableAllStatistics(self,interval):
         self.enableAllStats = True;
         self.statInterval = interval;
+
+
+class Pt2ptEndPoint(EndPoint):
+    def __init__(self):
+        EndPoint.__init__(self)
+        #self.enableAllStats = False;
+        #self.statInterval = "0"
+        self.epKeys.extend(["link_bw", "packet_size", "packets_to_send", "buffer_size", "src", "dest"])
+        self.epOptKeys.extend(["linkcontrol"])
+
+    def getName(self):
+        return "pt2pt Test End Point"
+
+    def prepParams(self):
+        #if "checkerboard" not in _params:
+        #    _params["checkerboard"] = "1"
+        pass
+        
+    def build(self, nID, extraKeys):
+        nic = sst.Component("pt2ptNic.%d"%nID, "merlin.pt2pt_test")
+        nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
+        nic.addParams(_params.subset(extraKeys))
+        nic.addParam("id", nID)
+        if self.enableAllStats:
+            nic.enableAllStatistics({"type":"sst.AccumulatorStatistic", "rate":self.statInterval})
+        return (nic, "rtr", _params["link_lat"])
+        #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
+
+    def enableAllStatistics(self,interval):
+        self.enableAllStats = True;
+        self.statInterval = interval;
+
+
+class OfferedLoadEndPoint(EndPoint):
+    def __init__(self):
+        EndPoint.__init__(self)
+        #self.enableAllStats = False;
+        #self.statInterval = "0"
+        self.epKeys.extend(["offered_load", "num_peers", "link_bw", "message_size", "buffer_size", "pattern"])
+        self.epOptKeys.extend(["linkcontrol"])
+
+    def getName(self):
+        return "Offered Load End Point"
+
+    def prepParams(self):
+        pass
+        
+    def build(self, nID, extraKeys):
+        nic = sst.Component("offered_load.%d"%nID, "merlin.offered_load")
+        nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
+        nic.addParams(_params.subset(extraKeys))
+        nic.addParam("id", nID)
+        if self.enableAllStats:
+            nic.enableAllStatistics({"type":"sst.AccumulatorStatistic", "rate":self.statInterval})
+        return (nic, "rtr", _params["link_lat"])
+        #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
+
+    def enableAllStatistics(self,interval):
+        self.enableAllStats = True;
+        self.statInterval = interval;
+
 
 
 class ShiftEndPoint(EndPoint):

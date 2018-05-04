@@ -130,6 +130,9 @@ public:
     virtual void recordEventSentUp(Command cmd) =0;
     virtual void recordEventSentDown(Command cmd) =0;
     
+    /**** Debug support *****/
+    void printStatus(Output& out);
+
 protected:
     struct Response {
         MemEventBase* event;

@@ -21,6 +21,12 @@ libmerlin_la_SOURCES = \
 	reorderLinkControl.cc \
 	bridge.h \
 	bridge.cc \
+	offeredload/offered_load.h \
+	offeredload/offered_load.cc \
+	target_generator/target_generator.h \
+	target_generator/target_generator.cc \
+	target_generator/bit_complement.h \
+	target_generator/uniform.h \
 	test/nic.h \
 	test/nic.cc \
 	test/route_test/route_test.h \
@@ -43,6 +49,8 @@ libmerlin_la_SOURCES = \
 	topology/dragonfly2.cc \
 	topology/singlerouter.h \
 	topology/singlerouter.cc \
+	topology/hyperx.h \
+	topology/hyperx.cc \
 	hr_router/hr_router.h \
 	hr_router/hr_router.cc \
 	hr_router/xbar_arb_age.h \

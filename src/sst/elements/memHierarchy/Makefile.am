@@ -65,6 +65,8 @@ libmemHierarchy_la_SOURCES = \
 	memLink.cc \
 	memNIC.h \
 	memNIC.cc \
+	memNICFour.h \
+	memNICFour.cc \
 	customcmd/customCmdEvent.h \
 	customcmd/customCmdMemory.h \
 	customcmd/customOpCodeCmd.h \
@@ -164,6 +166,7 @@ EXTRA_DIST = \
 	tests/testFlushes-2.py \
 	tests/testHashXor.py \
 	tests/testIncoherent.py \
+	tests/testKingsley.py \
 	tests/testNoninclusive-1.py \
 	tests/testNoninclusive-2.py \
 	tests/testPrefetchParams.py \
@@ -183,6 +186,7 @@ nobase_sst_HEADERS = \
 	memEventBase.h \
 	memEvent.h \
 	memNIC.h \
+	memNICFour.h \
 	memLink.h \
 	memLinkBase.h \
 	memHierarchyInterface.h \
@@ -298,4 +302,5 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) NVDIMMSIM LIBDIR=$(NVDIMMSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) FDSIM LIBDIR=$(FDSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) GOBLIN_HMCSIM LIBDIR=$(GOBLIN_HMCSIM_LIBDIR)
+	$(SST_REGISTER_TOOL) RAMULATOR LIBDIR=$(RAMULATOR_LIBDIR)
 

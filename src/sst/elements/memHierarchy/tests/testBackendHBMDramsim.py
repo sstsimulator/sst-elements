@@ -12,7 +12,8 @@ cpu_params = {
         "num_loadstore" : 1000,
         "commFreq" : 20,
         "do_write" : 1,
-        "clock" : clock
+        "clock" : clock,
+        "verbose" : 0
 }
 
 l1_params = {
@@ -23,12 +24,14 @@ l1_params = {
       "associativity" : 2,
       "cache_size" : "1KiB", # Really small to force mem traffic
       "L1" : 1,
+      "mshr_latency_cycles" : 2,
       "debug_level" : 10,
       "debug" : "0"
 }
 
 l2_params = {
       "access_latency_cycles" : 6,
+      "mshr_latency_cycles" : 2,
       "cache_frequency" : clock,
       "replacement_policy" : "lru",
       "coherence_protocol" : "MSI",
@@ -85,6 +88,7 @@ comp_n2_bus.addParams({ "bus_frequency" : "2 Ghz" })
 comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
 comp_l3cache.addParams({
       "access_latency_cycles" : "9",
+      "mshr_latency_cycles" : 2,
       "cache_frequency" : clock,
       "replacement_policy" : "lru",
       "coherence_protocol" : "MSI",

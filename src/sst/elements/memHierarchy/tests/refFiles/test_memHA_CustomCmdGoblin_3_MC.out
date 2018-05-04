@@ -6696,11 +6696,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  dc.idle_time : Accumulator : Sum.u64 = 14053; SumSQ.u64 = 42233009; Count.u64 = 13; Min.u64 = 0; Max.u64 = 4973; 
  dc.replacement_request_latency : Accumulator : Sum.u64 = 141; SumSQ.u64 = 19881; Count.u64 = 1; Min.u64 = 141; Max.u64 = 141; 
  dc.get_request_latency : Accumulator : Sum.u64 = 67732; SumSQ.u64 = 1974594; Count.u64 = 5132; Min.u64 = 9; Max.u64 = 257; 
- dc.directory_cache_hits : Accumulator : Sum.u64 = 5135; SumSQ.u64 = 5135; Count.u64 = 5135; Min.u64 = 1; Max.u64 = 1; 
+ dc.directory_cache_hits : Accumulator : Sum.u64 = 5130; SumSQ.u64 = 5130; Count.u64 = 5130; Min.u64 = 1; Max.u64 = 1; 
  dc.mshr_hits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc.requests_received_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- dc.requests_received_GetS : Accumulator : Sum.u64 = 5133; SumSQ.u64 = 5133; Count.u64 = 5133; Min.u64 = 1; Max.u64 = 1; 
+ dc.requests_received_GetS : Accumulator : Sum.u64 = 5128; SumSQ.u64 = 5128; Count.u64 = 5128; Min.u64 = 1; Max.u64 = 1; 
  dc.requests_received_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc.requests_received_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc.requests_received_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
