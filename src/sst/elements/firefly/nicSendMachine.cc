@@ -84,7 +84,7 @@ void Nic::SendMachine::streamFini( SendEntryBase* entry )
     }
 
     if ( entry->shouldDelete() ) {
-        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "%p delete SendEntry entry, pid=%d\n",entry, entry->local_vNic());
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "%p delete SendEntry entry, pid=%d\n",entry, entry->local_vNic());
         delete entry;
     }
 }
