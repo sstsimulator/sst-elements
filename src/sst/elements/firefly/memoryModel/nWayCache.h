@@ -12,7 +12,7 @@ public:
         m_pageShift = calcPow( pageSize ); 
         m_setShift = calcPow( nSets ); 
         
-        printf("%s():%d m_setMask=%d m_pageShift=%d m_setShift=%d\n",__func__,__LINE__,m_setMask,m_pageShift,m_setShift);
+        printf("%s():%d m_setMask=%" PRIx64 " m_pageShift=%d m_setShift=%d\n",__func__,__LINE__,m_setMask,m_pageShift,m_setShift);
     } 
 
     bool isValid( Hermes::Vaddr addr ) {
