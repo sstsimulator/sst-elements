@@ -33,12 +33,15 @@ class RecvMachine {
 
         RecvMachine( Nic& nic, int vc, int numVnics, 
                 int nodeId, int verboseLevel, int verboseMask,
-                int rxMatchDelay, int hostReadDelay, int maxQsize ) :
+                int rxMatchDelay, int hostReadDelay, int maxQsize, int maxActiveStreams ) :
             m_nic(nic), 
             m_vc(vc), 
             m_rxMatchDelay( rxMatchDelay ),
             m_hostReadDelay( hostReadDelay ),
-            m_notifyCallback( false )
+            m_notifyCallback( false ),
+            m_numActiveStreams( 0 ),
+            m_maxActiveStreams( maxActiveStreams ),
+            m_blockedPkt(NULL)
         { 
             char buffer[100];
             snprintf(buffer,100,"@t:%d:Nic::RecvMachine::@p():@l vc=%d ",nodeId,m_vc);
@@ -64,6 +67,18 @@ class RecvMachine {
         }    
         Nic& nic() { return m_nic; }
         void printStatus( Output& out );
+
+        void decActiveStream() {
+            --m_numActiveStreams;
+            assert( m_numActiveStreams >= 0 );
+             
+            if ( m_blockedPkt ) {
+      		    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"unblocked\n");
+                assert( m_blockedPkt );
+                processPkt2( m_blockedPkt );
+                m_blockedPkt = NULL;
+            }
+        }
 
     protected:
         Nic&        m_nic;
@@ -103,12 +118,31 @@ class RecvMachine {
             m_notifyCallback = false;
         }
 
+
+        int m_maxActiveStreams; 
+        int m_numActiveStreams;
+        FireflyNetworkEvent* m_blockedPkt;
         virtual void processPkt( FireflyNetworkEvent* ev ) {
+
+            if ( ev->isHdr() ) {
+                ++m_numActiveStreams;
+            } 
+
+            if ( m_numActiveStreams == m_maxActiveStreams + 1) {
+      		    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"blocked on available streams\n");
+                assert( ! m_blockedPkt );
+                m_blockedPkt = ev;
+            } else {
+                processPkt2( ev );
+            } 
+        }
+                
+        virtual void processPkt2( FireflyNetworkEvent* ev ) {
             // if the event was consumed, we can can check for the next
             if ( ! m_ctxMap[ ev->getDestPid() ]->processPkt( ev ) ) {
                 checkNetworkForData();
             } else {
-      		    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"blocked\n");
+      		    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"blocked by context\n");
             }
         }
 
