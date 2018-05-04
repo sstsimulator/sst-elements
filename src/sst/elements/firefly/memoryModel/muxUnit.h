@@ -32,12 +32,15 @@
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"%s addr=%#" PRIx64 " length=%lu\n",src->name().c_str(), req->addr,req->length);
 			if ( ! m_blockedSrc && ! m_scheduled ) {
 				if ( m_unit->store( this, req ) ) {
+
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
 					m_blockedSrc = src;
 					return true;
 				} else { 
 					return false; 
 				}
 			} else {
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
 				m_blockedQ.push_back( Entry( Entry::Store, src, req ) );	
 				return true;
 			}
@@ -49,12 +52,14 @@
 
 			if ( ! m_blockedSrc && ! m_scheduled ) {
 				if ( m_unit->load( this, req, callback ) ) {
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
 					m_blockedSrc = src;
 					return true;
 				} else { 
 					return false; 
 				}
 			} else {
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
 				m_blockedQ.push_back( Entry( Entry::Load, src, req, callback ) );	
 				return true;
 			}
@@ -74,6 +79,7 @@
 			}	
 
 			if ( ! blocked ) {
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"unblocking\n");
 				m_model.schedResume( 0, entry.src  );
 				if ( m_blockedQ.size() > 1 ) {
                     m_scheduled = true;
@@ -88,9 +94,11 @@
 		void resume( UnitBase* src = NULL ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,MUX_MASK,"\n");
 			if ( m_blockedSrc ) {
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"unblocking\n");
 				m_model.schedResume( 0, m_blockedSrc );
 				m_blockedSrc = NULL;
 			}
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,MUX_MASK,"scheduled=%d numBlocked=%zu\n",m_scheduled, m_blockedQ.size());
 
 			if ( !m_scheduled && ! m_blockedQ.empty() ) {
 				processQ();
