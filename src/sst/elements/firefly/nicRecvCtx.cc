@@ -90,7 +90,6 @@ Nic::RecvMachine::StreamBase* Nic::RecvMachine::Ctx::newStream( FireflyNetworkEv
 #ifdef NIC_RECV_DEBUG
         ++m_msgCount;
 #endif
-    m_rm.incActiveStream();
     MsgHdr& hdr = *(MsgHdr*) ev->bufPtr();
     switch ( hdr.op ) {
       case MsgHdr::Msg:

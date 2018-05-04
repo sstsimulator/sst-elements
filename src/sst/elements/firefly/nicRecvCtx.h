@@ -80,7 +80,6 @@
                 m_rm.nic().schedCallback( [=]() 
                     {
                         m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"deleteStream",1,NIC_DBG_RECV_CTX,"%p\n",stream);
-                        m_rm.decActiveStream();
                         delete stream;
                     } 
                 );
