@@ -79,10 +79,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     }    
     ++numSendMachines;
 
+    int numRecvNicUnits = params.find<int>( "numRecvNicUnits", 1 );
     m_unitPool = new UnitPool( 
         m_dbg,
         params.find<std::string>( "nicAllocationPolicy", "RoundRobin" ), 
-        params.find<int>( "numRecvNicUnits", 1 ),
+        numRecvNicUnits,
         numSendMachines,
         1,
         m_num_vNics
@@ -168,7 +169,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_recvMachine = new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                rxMatchDelay, hostReadDelay, maxRecvMachineQsize );
+                rxMatchDelay, hostReadDelay, maxRecvMachineQsize, numRecvNicUnits + 1 );
 
     m_sendMachineV.resize(numSendMachines);
     for ( int i = 0; i < numSendMachines - 1; i++ ) {
@@ -415,7 +416,7 @@ void Nic::regMemRgn( NicCmdEvent *e, int vNicNum )
 
 void Nic::qSendEntry( SendEntryBase* entry ) {
 
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "myPid=%d destNode=%d destPid=%d size=%zu %s\n",
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "myPid=%d destNode=%d destPid=%d size=%zu %s\n",
                     entry->local_vNic(), entry->dest(), entry->dst_vNic(), entry->totalBytes(),
                     entry->isCtrl() ? "Ctrl" : entry->isAck() ? "Ack" : "Std");
 
@@ -443,7 +444,7 @@ void Nic::qSendEntry( SendEntryBase* entry ) {
 void Nic::notifySendDone( SendMachine* mach, SendEntryBase* entry  ) {
 
     int pid = entry->local_vNic();
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"machine=%d pid=%d\n", mach->getId(), pid );
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"machine=%d pid=%d\n", mach->getId(), pid );
 
     m_sendEntryQ[pid].first = false;
 
@@ -452,7 +453,7 @@ void Nic::notifySendDone( SendMachine* mach, SendEntryBase* entry  ) {
 
     for ( unsigned i = 0; i < m_sendEntryQ.size(); i++ ) {
 
-        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"check pid=%d size=%zu\n", i, m_sendEntryQ[i].second.size( ));
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"check pid=%d size=%zu\n", i, m_sendEntryQ[i].second.size( ));
 
         if ( ! m_sendEntryQ[i].first && 
                 ! m_sendEntryQ[i].second.empty() && m_sendEntryQ[i].second.front( ).first < cur ) {
@@ -461,12 +462,12 @@ void Nic::notifySendDone( SendMachine* mach, SendEntryBase* entry  ) {
     }
 
     if ( next > -1 ) {
-        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"run pid=%d \n", next);
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"run pid=%d \n", next);
         m_sendEntryQ[next].first = false;
         mach->run(m_sendEntryQ[ next ].second.front().second );
         m_sendEntryQ[ next ].second.pop_front();
     } else {
-        m_sendMachineQ.push_back(mach);        
+        m_sendMachineQ.push_back(mach);
     }
 }
 
