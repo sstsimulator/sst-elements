@@ -22,7 +22,7 @@ class ShmemStream : public StreamBase {
     void processPktHdr( FireflyNetworkEvent* ev );
   private:
     void processOp( FireflyNetworkEvent* ev );
-    void processAck( ShmemMsgHdr&, FireflyNetworkEvent*, int );
+    void processAck( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     void processPut( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     void processGetResp( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     void processGet( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
