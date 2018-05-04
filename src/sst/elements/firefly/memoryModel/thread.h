@@ -75,7 +75,7 @@ class Work {
 
     void print( Output& dbg, const char* prefix ) {
         for ( unsigned i = 0; i < m_ops->size(); i++ ) {
-           dbg.verbosePrefix(prefix,CALL_INFO,1,THREAD_MASK,"%s %#" PRIx64 " %lu\n",(*m_ops)[i].getName(), (*m_ops)[i].addr, (*m_ops)[i].length );
+           dbg.verbosePrefix(prefix,CALL_INFO,2,THREAD_MASK,"%s %#" PRIx64 " %lu\n",(*m_ops)[i].getName(), (*m_ops)[i].addr, (*m_ops)[i].length );
         }
     }
     int m_workNum;
@@ -191,12 +191,14 @@ class Thread : public UnitBase {
           case MemOp::HostStore:
           case MemOp::BusStore:
           case MemOp::BusDmaToHost:
+            addr |= (uint64_t) pid << 56;
             m_blocked = m_storeUnit->storeCB( this, new MemReq( addr, length, pid ), callback );
             break;
 
           case MemOp::HostLoad:
           case MemOp::BusLoad:
           case MemOp::BusDmaFromHost:
+            addr |= (uint64_t) pid << 56;
             m_blocked = m_loadUnit->load( this, new MemReq( addr, length, pid ), callback );
             break;
 
@@ -253,10 +255,10 @@ class Thread : public UnitBase {
                     delete work;
                     ++m_lastDelete;
                     while ( ! m_OOOwork.empty() ) {
-                        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"check OOO, looking for %d\n",m_lastDelete);
+                        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"check OOO, looking for %d\n",m_lastDelete);
                         if ( m_OOOwork.find( m_lastDelete ) != m_OOOwork.end() ) {
                             work = m_OOOwork[ m_lastDelete ];
-                            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"retire OOO work %p\n",m_OOOwork[m_lastDelete]);
+                            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete OOO work %p\n",m_OOOwork[m_lastDelete]);
                             while ( ! work->m_pendingCallbacks.empty() ) {
                                 work->m_pendingCallbacks.front()();
                                 work->m_pendingCallbacks.pop_front();
