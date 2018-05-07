@@ -52,7 +52,7 @@ class SharedTlbUnit : public Unit {
             assert( m_storeBlocked );
             m_storeBlocked = false;
             while( ! m_storeBlocked && ! m_readyStores.empty() ) {
-                m_loadBlocked = passUpLoad( m_readyLoads.front() );
+                m_storeBlocked = passUpStore( m_readyStores.front() );
                 m_readyStores.pop_front();
             }
         }
