@@ -107,6 +107,19 @@ private:
     // can be used by topology objects to make adaptive routing
     // decisions.
     int* output_queue_lengths;
+
+    // Tracks whether queue_lengths are per VC or for the entire port.
+    // If for the entire port, it will increment and decrement all VCs
+    // so that they track the enire queue occupancy for the port.
+    bool oql_track_port;
+
+    // Tracks whether or not the output_queue_lengths will track only
+    // the local output port, or will also track the next input queue.
+    // In this mode, it only decrements the count on returned credits
+    // from next router.
+    bool oql_track_remote;
+
+    
     
     // Variables to keep track of credits.  You need to keep track of
     // the credits available for your next buffer, as well as track
@@ -200,7 +213,7 @@ public:
                 SimTime_t output_latency_cycles, std::string output_latency_timebase,
                 const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size,
                 std::vector<std::string>& inspector_names,
-				const float dlink_thresh);
+				const float dlink_thresh, bool oql_track_port, bool oql_track_remote);
 
     void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths);
 
