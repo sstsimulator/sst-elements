@@ -29,6 +29,10 @@ class LoadUnit : public Unit {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "LoadUnit::@p():@l ";
     }
 
+    void printStatus( Output& out, int id ) {
+        out.output("NIC %d: %s pending=%d\n",id, m_name.c_str(), m_numPending );
+    }
+
 	std::string& name() { return m_name; }
 
     bool load( UnitBase* src, MemReq* req, Callback callback ) {

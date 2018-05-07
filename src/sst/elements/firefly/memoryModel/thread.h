@@ -91,9 +91,11 @@ class Work {
 
 class Thread : public UnitBase {
 
+    std::string m_name;
+
   public:	  
      Thread( SimpleMemoryModel& model, std::string name, Output& output, int id, int accessSize, Unit* load, Unit* store ) : 
-			m_model(model), m_dbg(output), m_loadUnit(load), m_storeUnit(store),
+			m_model(model), m_name(name), m_dbg(output), m_id(id), m_loadUnit(load), m_storeUnit(store), 
 			m_maxAccessSize( accessSize ), m_nextOp(NULL), m_waitingOnOp(NULL), m_blocked(false), m_curWorkNum(0),m_lastDelete(0)
 	{
 		m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name +"::@p():@l ";
@@ -105,6 +107,23 @@ class Thread : public UnitBase {
         if ( m_loadUnit != m_storeUnit ) {
             delete m_storeUnit;
         }
+    }
+
+    void printStatus( Output& out, int id ) {
+        out.output( "NIC %d: %s cur=%d last=%d blocked=%d %p %p\n",id, m_name.c_str(), m_curWorkNum, m_lastDelete, m_blocked, m_nextOp, m_waitingOnOp );
+        if ( m_workQ.size() ) {
+            out.output( "NIC %d: %s work.size=%zu\n", id, m_name.c_str(), m_workQ.size() );
+            std::deque<Work*>::iterator iter = m_workQ.begin();
+
+            for ( ; iter != m_workQ.end(); ++iter) {
+                (*iter)->print(out,"");
+            } 
+        }
+        if ( m_OOOwork.size() ) {
+            out.output( "NIC %d: %s OOOwork.size: %zu \n", id, m_name.c_str(), m_OOOwork.size() );
+        }
+        m_loadUnit->printStatus( out, id );
+        m_storeUnit->printStatus( out, id );
     }
 
     bool isIdle() {
@@ -306,6 +325,7 @@ class Thread : public UnitBase {
     int 		        m_maxAccessSize;
     int                 m_curWorkNum;
     int                 m_lastDelete;
+    int                 m_id;
     std::map<int,Work*> m_OOOwork;
 };
 
