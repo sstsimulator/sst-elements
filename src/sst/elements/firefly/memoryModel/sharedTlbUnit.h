@@ -23,9 +23,11 @@ class SharedTlbUnit : public Unit {
         Callback callback;
     };
     
+    std::string m_name;
   public:
     SharedTlbUnit( SimpleMemoryModel& model, Output& dbg, int id, std::string name, SharedTlb* tlb, Unit* load, Unit* store, int maxStores, int maxLoads ) :
         Unit( model, dbg ),
+        m_name(name),
         m_tlb(tlb),
         m_load(load), 
         m_store(store),
@@ -42,6 +44,11 @@ class SharedTlbUnit : public Unit {
     }
 
     ~SharedTlbUnit() {
+    }
+
+
+    void printStatus( Output& out, int id ) {
+        out.output("NIC %d: %s pending=%d %p %p\n",id, m_name.c_str(), m_pendingLookups, m_blockedStoreSrc, m_blockedLoadSrc );
     }
 
     void resume( UnitBase* unit ) {
@@ -120,7 +127,7 @@ class SharedTlbUnit : public Unit {
         bool retval = m_load->load( this, entry->req, entry->callback );
         delete entry;
 
-        if ( m_readyStores.size() == m_maxPendingLoads ) {
+        if ( m_readyLoads.size() == m_maxPendingLoads ) {
             assert( m_blockedLoadSrc );
             m_model.schedResume( 0, m_blockedLoadSrc );
             m_blockedLoadSrc = NULL;
@@ -134,7 +141,7 @@ class SharedTlbUnit : public Unit {
         bool retval = m_store->storeCB( this, entry->req, entry->callback );
         delete entry;
 
-        if ( m_readyLoads.size() == m_maxPendingStores ) {
+        if ( m_readyStores.size() == m_maxPendingStores ) {
             assert( m_blockedStoreSrc );
             m_model.schedResume( 0, m_blockedStoreSrc );
             m_blockedStoreSrc = NULL;
