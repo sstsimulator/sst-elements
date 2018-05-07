@@ -41,7 +41,8 @@ class RecvMachine {
             m_notifyCallback( false ),
             m_numActiveStreams( 0 ),
             m_maxActiveStreams( maxActiveStreams ),
-            m_blockedPkt(NULL)
+            m_blockedPkt(NULL),
+            m_receivedPkts(0)
         { 
             char buffer[100];
             snprintf(buffer,100,"@t:%d:Nic::RecvMachine::@p():@l vc=%d ",nodeId,m_vc);
@@ -79,6 +80,7 @@ class RecvMachine {
                 m_blockedPkt = NULL;
             }
         }
+        int getNumReceivedPkts() { return m_receivedPkts; }
 
     protected:
         Nic&        m_nic;
@@ -149,6 +151,7 @@ class RecvMachine {
         FireflyNetworkEvent* getNetworkEvent(int vc ) {
             SST::Interfaces::SimpleNetwork::Request* req =
                 m_nic.m_linkControl->recv(vc);
+            ++m_receivedPkts;
             if ( req ) {
                 Event* payload = req->takePayload();
                 if ( NULL == payload ) return NULL;
@@ -162,6 +165,7 @@ class RecvMachine {
             }
         }
 
+        int m_receivedPkts;
         int         m_vc;
         int         m_rxMatchDelay;
         bool        m_notifyCallback; 

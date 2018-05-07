@@ -40,7 +40,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_getKey(10),
     m_simpleMemoryModel(NULL),
     m_respKey(1),
-    m_curNetworkSrc(-1)
+    m_curNetworkSrc(-1),
+    m_sentPkts(0)
 {
     m_myNodeId = params.find<int>("nid", -1);
     assert( m_myNodeId != -1 );
@@ -515,6 +516,7 @@ void Nic::sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc )
     FireflyNetworkEvent* ev = entry.first;
     assert( ev->bufSize() );
 
+    ++m_sentPkts;
     SimpleNetwork::Request* req = new SimpleNetwork::Request();
     req->dest = IdToNet( entry.second );
     req->src = IdToNet( m_myNodeId );
