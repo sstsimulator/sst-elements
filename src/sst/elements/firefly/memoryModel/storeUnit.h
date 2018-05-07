@@ -9,7 +9,12 @@ class StoreUnit : public Unit {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::"+ name + "StoreUnit::@p():@l ";
     }
 
+
 	std::string& name() { return m_name; }
+
+    void printStatus( Output& out, int id ) {
+        out.output("NIC %d: %s pending=%zu\n",id, m_name.c_str(), m_pendingQ.size() );
+    }
     bool storeCB( UnitBase* src, MemReq* req, Callback callback = NULL ) {
 
 

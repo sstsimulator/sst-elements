@@ -28,6 +28,7 @@
 		int numPendingWrites() {
 			return m_pendingWrite;
 		} 
+        virtual void printStatus( Output&, int ) {assert(0);}
 
 	  private:
 		int m_pendingWrite;

@@ -245,6 +245,13 @@ class SimpleMemoryModel : SubComponent {
 	NicUnit& nicUnit() { return *m_nicUnit; }
 	BusBridgeUnit& busUnit() { return *m_busBridgeUnit; }
 
+    void printStatus( Output& out, int id ) {
+        for ( unsigned i = 0; i < m_threads.size(); i++ ) {
+            m_threads[i]->printStatus( out, id ); 
+        }
+    }
+
+
   private:
 
 	Link* m_selfLink;
