@@ -143,6 +143,8 @@ EXTRA_DIST = \
 	tests/sdl8-4.py \
 	tests/sdl9-1.py \
 	tests/sdl9-2.py \
+	tests/sdl4-2-ramulator.py \
+	tests/sdl5-1-ramulator.py \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
 	tests/testBackendGoblinHMC.py \
@@ -175,11 +177,12 @@ EXTRA_DIST = \
 	tests/testScratchNetwork.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini \
+	tests/ramulator-ddr3.cfg \
 	tests/ddr_device.ini \
 	tests/ddr_system.ini \
 	tests/hbm_device.ini \
 	tests/hbm_system.ini \
-	tests/utils.py
+	tests/utils.py \
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \
