@@ -40,6 +40,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	setOriginalMaxPendingTransactions(maxPendingTransactions);
 	isHalted = false;
 	isStalled = false;
+      isFenced = false;
 	maxIssuePerCycle = maxIssuePerCyc;
 	maxQLength = maxQLen;
 	cacheLineSize = cacheLineSz;
@@ -238,7 +239,7 @@ void ArielCore::stall() {
 
 // When this is called, set the maxPendingTransactions to 0 
 void ArielCore::fence(){
-	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Current pending transaction count: %" PRIu32, pending_transaction_count));
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core: %" PRIu32 " FENCE:  Current pending transaction count: %" PRIu32 " (%" PRIu32 ")\n", coreID, pending_transaction_count, maxPendingTransactions));
 	maxPendingTransactions = 0;
 	isFenced = true;
 }
@@ -246,9 +247,10 @@ void ArielCore::fence(){
 // When this is called, end the fence, and output fencing statistics (if enabled)
 void ArielCore::unfence()
 {
-	isFenced = false; 
-	maxPendingTransactions = getOriginalMaxPendingTransactions(); 
-	/* Todo:   Register statistics  */
+      ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core: %" PRIu32 " UNFENCE:  Current pending transaction count: %" PRIu32 " (%" PRIu32 ")\n", coreID, pending_transaction_count, maxPendingTransactions));
+      isFenced = false;
+      maxPendingTransactions = getOriginalMaxPendingTransactions();
+      /* Todo:   Register statistics  */
 }
 
 
