@@ -21,8 +21,8 @@ using namespace SST::ArielComponent;
 ArielTextTraceGenerator::ArielTextTraceGenerator(Component* owner, Params& params) :
     ArielTraceGenerator() {
         
-        tracePrefix = params.find<std::string>("trace_prefix", "ariel-core");
-	coreID = 0;
+    tracePrefix = params.find<std::string>("trace_prefix", "ariel-core");
+    coreID = 0;
 }
 
 ArielTextTraceGenerator::~ArielTextTraceGenerator() {

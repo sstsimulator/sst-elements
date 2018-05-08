@@ -26,56 +26,56 @@ namespace ArielComponent {
 
 class ArielAllocateEvent : public ArielEvent {
 
-	public:
-    		ArielAllocateEvent(uint64_t vAddr, uint64_t len, uint32_t lev, uint64_t ip) :
-			virtualAddress(vAddr),
-			allocateLength(len),
-			level(lev),
-			instPtr(ip) {
+    public:
+        ArielAllocateEvent(uint64_t vAddr, uint64_t len, uint32_t lev, uint64_t ip) :
+                virtualAddress(vAddr),
+                allocateLength(len),
+                level(lev),
+                instPtr(ip) {
 
-		}
+        }
 
-		~ArielAllocateEvent() {}
-		ArielEventType getEventType() const { return MALLOC; }
-		uint64_t getVirtualAddress() const { return virtualAddress; }
-		uint64_t getAllocationLength() const { return allocateLength; }
-		uint32_t getAllocationLevel() const { return level; }
-    		uint64_t getInstructionPointer() const { return instPtr; }
+        ~ArielAllocateEvent() {}
+        ArielEventType getEventType() const { return MALLOC; }
+        uint64_t getVirtualAddress() const { return virtualAddress; }
+        uint64_t getAllocationLength() const { return allocateLength; }
+        uint32_t getAllocationLevel() const { return level; }
+        uint64_t getInstructionPointer() const { return instPtr; }
 
-	protected:
-		uint64_t virtualAddress;
-		uint64_t allocateLength;
-		uint32_t level;
-    		uint64_t instPtr;
+    protected:
+        uint64_t virtualAddress;
+        uint64_t allocateLength;
+        uint32_t level;
+        uint64_t instPtr;
 
 };
 
 class ArielMmapEvent : public ArielEvent {
 
-	public:
-    		ArielMmapEvent(uint32_t fileID, uint64_t vAddr, uint64_t len, uint32_t lev, uint64_t ip) :
-			FileID(fileID),
-			virtualAddress(vAddr),
-			allocateLength(len),
-			level(lev),
-			instPtr(ip) {
+    public:
+        ArielMmapEvent(uint32_t fileID, uint64_t vAddr, uint64_t len, uint32_t lev, uint64_t ip) :
+                FileID(fileID),
+                virtualAddress(vAddr),
+                allocateLength(len),
+                level(lev),
+                instPtr(ip) {
 
-		}
+        }
 
-		~ArielMmapEvent() {}
-		ArielEventType getEventType() const { return MMAP; }
-		uint64_t getVirtualAddress() const { return virtualAddress; }
-		uint64_t getAllocationLength() const { return allocateLength; }
-		uint32_t getAllocationLevel() const { return level; }
-    		uint64_t getInstructionPointer() const { return instPtr; }
-		uint32_t getFileID() const { return FileID; }
+        ~ArielMmapEvent() {}
+        ArielEventType getEventType() const { return MMAP; }
+        uint64_t getVirtualAddress() const { return virtualAddress; }
+        uint64_t getAllocationLength() const { return allocateLength; }
+        uint32_t getAllocationLevel() const { return level; }
+        uint64_t getInstructionPointer() const { return instPtr; }
+        uint32_t getFileID() const { return FileID; }
 
-	protected:
-		uint64_t virtualAddress;
-		uint64_t allocateLength;
-		uint32_t level;
-    		uint64_t instPtr;
-		uint32_t FileID;
+    protected:
+        uint64_t virtualAddress;
+        uint64_t allocateLength;
+        uint32_t level;
+        uint64_t instPtr;
+        uint32_t FileID;
 
 };
 

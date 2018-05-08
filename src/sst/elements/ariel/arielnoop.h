@@ -26,12 +26,13 @@ namespace ArielComponent {
 
 class ArielNoOpEvent : public ArielEvent {
 
-	public:
-		ArielNoOpEvent() {}
-		~ArielNoOpEvent() {}
-		ArielEventType getEventType() const {
-			return NOOP;
-		}
+    public:
+        ArielNoOpEvent() {}
+        ~ArielNoOpEvent() {}
+        
+        ArielEventType getEventType() const {
+                return NOOP;
+        }
 
 };
 

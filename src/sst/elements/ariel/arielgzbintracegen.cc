@@ -38,7 +38,7 @@ void ArielCompressedBinaryTraceGenerator::publishEntry(const uint64_t picoS,
         const ArielTraceEntryOperation op) {
 		
     const char op_type = (READ == op) ? 'R' : 'W';
-    
+
     copy(&buffer[0], &picoS, sizeof(uint64_t));
     copy(&buffer[sizeof(uint64_t)], &op_type, sizeof(char));
     copy(&buffer[sizeof(uint64_t) + sizeof(char)], &physAddr, sizeof(uint64_t));
@@ -62,6 +62,6 @@ void ArielCompressedBinaryTraceGenerator::copy(char* dest, const void* src, cons
     const char* src_c = (char*) src;
 
     for(size_t i = 0; i < length; ++i) {
-	dest[i] = src_c[i];
+        dest[i] = src_c[i];
     }
 }
