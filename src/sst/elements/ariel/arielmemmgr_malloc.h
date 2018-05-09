@@ -35,10 +35,10 @@ namespace ArielComponent {
 
 class ArielMemoryManagerMalloc : public ArielMemoryManager {
 
-	public:
-            /* SST ELI */
-            SST_ELI_REGISTER_SUBCOMPONENT(ArielMemoryManagerMalloc, "ariel", "MemoryManagerMalloc", SST_ELI_ELEMENT_VERSION(1,0,0),
-                    "MLM memory manager which supports malloc/free in different memory pools", "SST::ArielComponent::ArielMemoryManager")
+    public:
+        /* SST ELI */
+        SST_ELI_REGISTER_SUBCOMPONENT(ArielMemoryManagerMalloc, "ariel", "MemoryManagerMalloc", SST_ELI_ELEMENT_VERSION(1,0,0),
+                "MLM memory manager which supports malloc/free in different memory pools", "SST::ArielComponent::ArielMemoryManager")
 
 #define MEMMGR_MALLOC_ELI_PARAMS ARIEL_ELI_MEMMGR_PARAMS,\
             {"memorylevels",    "Number of memory levels in the system", "1"},\
@@ -47,47 +47,45 @@ class ArielMemoryManagerMalloc : public ArielMemoryManager {
             {"pagecount%(memorylevels)d", "Page count for memory Level x", "131072"},\
             {"page_populate_%(memorylevels)d", "Pre-populate/partially pre-populate a page table for a level in memory, this is the file to read in.", ""}
 
-            SST_ELI_DOCUMENT_PARAMS( MEMMGR_MALLOC_ELI_PARAMS )
+        SST_ELI_DOCUMENT_PARAMS( MEMMGR_MALLOC_ELI_PARAMS )
+        SST_ELI_DOCUMENT_STATISTICS( ARIEL_ELI_MEMMGR_STATS )
 
-            SST_ELI_DOCUMENT_STATISTICS( ARIEL_ELI_MEMMGR_STATS )
 
+        /* ArielMemoryManagerMalloc */
+        ArielMemoryManagerMalloc(SST::Component* owner, Params& params);
+        ~ArielMemoryManagerMalloc();
 
-            /* ArielMemoryManagerMalloc */
+        void setDefaultPool(uint32_t pool);
+        uint32_t getDefaultPool();
 
-	    ArielMemoryManagerMalloc(SST::Component* owner, Params& params);
-    	    ~ArielMemoryManagerMalloc();
-	
-            void setDefaultPool(uint32_t pool);
-            uint32_t getDefaultPool();
+        uint64_t translateAddress(uint64_t virtAddr);
+        void printStats();
 
-	    uint64_t translateAddress(uint64_t virtAddr);
-	    void printStats();
-
-            void freeMalloc(const uint64_t vAddr);
-            bool allocateMalloc(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
+        void freeMalloc(const uint64_t vAddr);
+        bool allocateMalloc(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
         
-        private:
-            void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
-            bool canAllocateInLevel(const uint64_t size, const uint32_t level);
+    private:
+        void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
+        bool canAllocateInLevel(const uint64_t size, const uint32_t level);
 
-            struct mallocInfo {
-                uint64_t size;
-                uint32_t level;
-                std::unordered_set<uint64_t>* VAKeys;
-                mallocInfo(uint64_t size, uint32_t level, std::unordered_set<uint64_t>* VAKeys) : size(size), level(level), VAKeys(VAKeys) {};
-            };
+        struct mallocInfo {
+            uint64_t size;
+            uint32_t level;
+            std::unordered_set<uint64_t>* VAKeys;
+            mallocInfo(uint64_t size, uint32_t level, std::unordered_set<uint64_t>* VAKeys) : size(size), level(level), VAKeys(VAKeys) {};
+        };
 
-            std::map<uint64_t, uint64_t> mallocPrimaryVAMap;    // Map VA of each PA to the primary VA of the malloc -> used to find the mallocInfo
-            std::map<uint64_t, uint64_t> mallocTranslations;    // Map VA to PA for mallocs -> primary lookup
-            std::map<uint64_t, mallocInfo> mallocInformation;   // Map mallocID to information about the malloc -> use for frees/allocs
+        std::map<uint64_t, uint64_t> mallocPrimaryVAMap;    // Map VA of each PA to the primary VA of the malloc -> used to find the mallocInfo
+        std::map<uint64_t, uint64_t> mallocTranslations;    // Map VA to PA for mallocs -> primary lookup
+        std::map<uint64_t, mallocInfo> mallocInformation;   // Map mallocID to information about the malloc -> use for frees/allocs
 
-            uint32_t defaultLevel;
-            uint32_t memoryLevels;
-            uint64_t* pageSizes;
+        uint32_t defaultLevel;
+        uint32_t memoryLevels;
+        uint64_t* pageSizes;
 
-            std::deque<uint64_t>** freePages;
-            std::unordered_map<uint64_t, uint64_t>** pageAllocations;
-            std::unordered_map<uint64_t, uint64_t>** pageTables;
+        std::deque<uint64_t>** freePages;
+        std::unordered_map<uint64_t, uint64_t>** pageAllocations;
+        std::unordered_map<uint64_t, uint64_t>** pageTables;
 };
 
 }
