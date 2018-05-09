@@ -195,9 +195,9 @@ elif "fattree" == netTopo:
 	topo = topoFatTree()
 
 elif "dragonfly" == netTopo:
-		
+	# Only supports legacy dragonfly	
 	topoInfo = DragonFlyInfo(netShape)
-	topo = topoDragonFly()
+	topo = topoDragonFlyLegacy()
 
 else:
 	sys.exit("how did we get here")

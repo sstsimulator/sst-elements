@@ -796,6 +796,87 @@ class topoDragonFly(Topo):
                 router_num = router_num +1
 
 
+class topoDragonFlyLegacy(Topo):
+    def __init__(self):
+        Topo.__init__(self)
+        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoOptKeys = ["xbar_arb","link_bw:host","link_bw:group","link_bw:global","input_latency:host","input_latency:group","input_latency:global","output_latency:host","output_latency:group","output_latency:global","input_buf_size:host","input_buf_size:group","input_buf_size:global","output_buf_size:host","output_buf_size:group","output_buf_size:global",]
+    def getName(self):
+        return "DragonflyLegacy"
+
+    def prepParams(self):
+#        if "xbar_arb" not in _params:
+#            _params["xbar_arb"] = "merlin.xbar_arb_lru"
+        _params["topology"] = "merlin.dragonfly"
+        _params["debug"] = debug
+        _params["num_vns"] = 1
+        _params["router_radix"] = int(_params["router_radix"])
+        _params["num_ports"] = int(_params["router_radix"])
+        _params["dragonfly:hosts_per_router"] = int(_params["dragonfly:hosts_per_router"])
+        _params["dragonfly:routers_per_group"] = int(_params["dragonfly:routers_per_group"])
+        _params["dragonfly:intergroup_per_router"] = int(_params["dragonfly:intergroup_per_router"])
+        _params["dragonfly:num_groups"] = int(_params["dragonfly:num_groups"])
+        _params["num_peers"] = _params["dragonfly:hosts_per_router"] * _params["dragonfly:routers_per_group"] * _params["dragonfly:num_groups"]
+
+        if (_params["dragonfly:routers_per_group"]-1 + _params["dragonfly:hosts_per_router"] + _params["dragonfly:intergroup_per_router"]) > _params["router_radix"]:
+            print "ERROR: # of ports per router is only %d\n" % _params["router_radix"]
+            sys.exit(1)
+        if _params["dragonfly:num_groups"] > 2:
+            foo = _params["dragonfly:algorithm"]
+            self.topoKeys.append("dragonfly:algorithm")
+
+
+    def build(self):
+        links = dict()
+        def getLink(name):
+            if name not in links:
+                links[name] = sst.Link(name)
+            return links[name]
+
+        router_num = 0
+        nic_num = 0
+        # GROUPS
+        for g in xrange(_params["dragonfly:num_groups"]):
+            tgt_grp = 0
+
+            # GROUP ROUTERS
+            for r in xrange(_params["dragonfly:routers_per_group"]):
+                rtr = sst.Component("rtr:G%dR%d"%(g, r), "merlin.hr_router")
+                rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
+                rtr.addParam("id", router_num)
+
+                port = 0
+                for p in xrange(_params["dragonfly:hosts_per_router"]):
+                    ep = self._getEndPoint(nic_num).build(nic_num, {})
+                    if ep:
+                        link = sst.Link("link:g%dr%dh%d"%(g, r, p))
+                        if self.bundleEndpoints:
+                            link.setNoCut()
+                        link.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
+                    nic_num = nic_num + 1
+                    port = port + 1
+
+                for p in xrange(_params["dragonfly:routers_per_group"]):
+                    if p != r:
+                        src = min(p,r)
+                        dst = max(p,r)
+                        rtr.addLink(getLink("link:g%dr%dr%d"%(g, src, dst)), "port%d"%port, _params["link_lat"])
+                        port = port + 1
+                
+                for p in xrange(_params["dragonfly:intergroup_per_router"]):
+                    if (tgt_grp%_params["dragonfly:num_groups"]) == g:
+                        tgt_grp = tgt_grp +1
+
+                    src_g = min(g, tgt_grp%_params["dragonfly:num_groups"])
+                    dst_g = max(g, tgt_grp%_params["dragonfly:num_groups"])
+
+                    rtr.addLink(getLink("link:g%dg%d:%d"%(src_g, dst_g, tgt_grp/_params["dragonfly:num_groups"])), "port%d"%port, _params["link_lat"])
+                    port = port +1
+                    tgt_grp = tgt_grp +1
+
+                router_num = router_num +1
+
+
 class topoDragonFly2(Topo):
     def __init__(self):
         Topo.__init__(self)

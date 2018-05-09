@@ -91,9 +91,9 @@ class ArielCore {
 		void createFlushEvent(uint64_t vAddr);
 		void createFenceEvent();
 		void createSwitchPoolEvent(uint32_t pool);
-		void setOpalLink(Link * opallink);
+
 		void setCacheLink(SimpleMem* newCacheLink, Link* allocLink);
-		void setOriginalMaxPendingTransactions(uint32_t maxPendingTransactions){originalMaxPendingTransactions = maxPendingTransactions;}
+
 		void handleEvent(SimpleMem::Request* event);
 		void handleReadRequest(ArielReadEvent* wEv);
 		void handleWriteRequest(ArielWriteEvent* wEv);
@@ -103,10 +103,10 @@ class ArielCore {
 		void handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE);
 		void handleFlushEvent(ArielFlushEvent *flEv);
 		void handleFenceEvent(ArielFenceEvent *fEv);
-		void setOpal() { opal_enabled = true; } 
-		
-		uint32_t getOriginalMaxPendingTransactions(){return maxPendingTransactions;}
 
+		void setOpal() { opal_enabled = true; } 
+		void setOpalLink(Link * opallink);
+		
 		void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 		void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 		void commitFlushEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
@@ -173,7 +173,6 @@ class ArielCore {
 		Statistic<uint64_t>* statFPSPOps;
 
 		uint64_t pending_transaction_count;
-		uint32_t originalMaxPendingTransactions;
 
 };
 
