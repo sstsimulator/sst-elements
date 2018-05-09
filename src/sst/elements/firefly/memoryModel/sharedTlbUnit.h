@@ -52,7 +52,6 @@ class SharedTlbUnit : public Unit {
     }
 
     void resume( UnitBase* unit ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"\n");
 
         if ( unit == m_store ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"store unblocked\n");
@@ -127,8 +126,8 @@ class SharedTlbUnit : public Unit {
         bool retval = m_load->load( this, entry->req, entry->callback );
         delete entry;
 
-        if ( m_readyLoads.size() == m_maxPendingLoads ) {
-            assert( m_blockedLoadSrc );
+        if ( m_blockedLoadSrc && m_readyLoads.size() == m_maxPendingLoads ) {
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
             m_model.schedResume( 0, m_blockedLoadSrc );
             m_blockedLoadSrc = NULL;
         }
@@ -141,11 +140,12 @@ class SharedTlbUnit : public Unit {
         bool retval = m_store->storeCB( this, entry->req, entry->callback );
         delete entry;
 
-        if ( m_readyStores.size() == m_maxPendingStores ) {
-            assert( m_blockedStoreSrc );
+        if ( m_blockedStoreSrc && m_readyStores.size() == m_maxPendingStores ) {
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
             m_model.schedResume( 0, m_blockedStoreSrc );
             m_blockedStoreSrc = NULL;
         }
+
         return retval;
     }
 
@@ -165,6 +165,7 @@ class SharedTlbUnit : public Unit {
         bool flag = true;
         if ( m_blockedLoadSrc ) {
             if ( m_readyLoads.size() < m_maxPendingLoads ) { 
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
                 m_model.schedResume( 0, m_blockedLoadSrc );
                 m_blockedLoadSrc = NULL;
                 flag = false;
@@ -173,6 +174,7 @@ class SharedTlbUnit : public Unit {
 
         if ( flag && m_blockedStoreSrc ) {
             if ( m_readyStores.size() < m_maxPendingStores  ) { 
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
                 m_model.schedResume( 0, m_blockedStoreSrc );
                 m_blockedStoreSrc = NULL;
             }
