@@ -807,7 +807,7 @@ class topoDragonFlyLegacy(Topo):
     def prepParams(self):
 #        if "xbar_arb" not in _params:
 #            _params["xbar_arb"] = "merlin.xbar_arb_lru"
-        _params["topology"] = "merlin.dragonfly"
+        _params["topology"] = "merlin.dragonfly_legacy"
         _params["debug"] = debug
         _params["num_vns"] = 1
         _params["router_radix"] = int(_params["router_radix"])
