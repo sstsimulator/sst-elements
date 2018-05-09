@@ -62,26 +62,68 @@ class Nic : public SST::Component  {
         )
     SST_ELI_DOCUMENT_PARAMS(
         { "nid", "node id on network", "-1"},
-        { "tracedPkt", "packet to trace", "-1"},
-        { "tracedNode", "node to trace", "-1"},
-        { "rtrPortName", "Port connected to the router", "rtr"},
-        { "corePortName", "Port connected to the core", "core"},
-        { "num_vNics", "Sets number of cores", "1"},
-        { "verboseLevel", "Sets the output verbosity of the component", "1"},
-        { "verboseMask", "Sets the output mask of the component", "1"},
+        { "verboseLevel", "Sets the output verbosity of the component", "0"},
+        { "verboseMask", "Sets the output mask of the component", "-1"},
+        { "nic2host_lat", "Sets the latency over the Host to NIC bus", "150ns"},
         { "rxMatchDelay_ns", "Sets the delay for a receive match", "100"},
         { "txDelay_ns", "Sets the delay for a send", "100"},
         { "hostReadDelay_ns", "Sets the delay for a read from the host", "200"},
+        { "shmemRxDelay_ns", "Sets the delay for a SHMEM receive operation", "0"},
+        { "num_vNics", "Sets number of cores", "1"},
+        { "tracedPkt", "packet to trace", "-1"},
+        { "tracedNode", "node to trace", "-1"},
+        { "numShmemCmdSlots", "Sets the size of the Host to NIC SHMEM command queue", "32"},
+        { "maxSendMachineQsize", "Sets the number of pending memory operations", "1"},
+        { "maxRecvMachineQsize", "Sets the number of pending memory operations", "1"},
+        { "shmemSendAlignment", "Sets the send stream transfer alignment", "64"},
+        { "numSendMachines", "Sets the number of send machines", "1"},
+        { "numRecvNicUnits", "Sets the number of receive units", "1"},
+        { "packetOverhead", "Sets the overhead of a network packet", "0"},
+        { "packetSize", "Sets the size of the network packet in bytes", "64"},
+        { "input_buf_size", "Sets the buffer size of the link connected to the router", "128"},
+        { "output_buf_size", "Sets the buffer size of the link connected to the router", "128"},
+        { "link_bw", "Sets the bandwidth of link connected to the router", "500Mhz"},
+        { "module", "Sets the link control module", "merlin.linkcontrol"},
+        { "rtrPortName", "Port connected to the router", "rtr"},
+        { "corePortName", "Port connected to the core", "core"},
+
+        { "useSimpleMemoryModel", "If set to 1 use the simple memory model", "0"},
+
         { "dmaBW_GBs", "set the one way DMA bandwidth", "100"},
         { "dmaContentionMult", "set the DMA contention mult", "100"},
-        { "topology", "Sets the network topology", "merlin.torus"},
-        { "fattree:loading", "Sets the number of ports on edge router connected to nodes", "8"},
-        { "fattree:radix", "Sets the number of ports on the network switches", "16"},
-        { "packetSize", "Sets the size of the network packet in bytes", "64"},
-        { "link_bw", "Sets the bandwidth of link connected to the router", "500Mhz"},
-        { "buffer_size", "Sets the buffer size of the link connected to the router", "128"},
-        { "module", "Sets the link control module", "merlin.linkcontrol"},
+
+        { "simpleMemoryModel.verboseLevel","Sets the verbosity level of output","0"},
+        { "simpleMemoryModel.verboseMask","Set the output mask","-1"},
+
+        { "simpleMemoryModel.memReadLat_ns","Sets the latency for a memory read","150"},
+        { "simpleMemoryModel.memWriteLat_ns","Sets the latency for a memory write","150"},
+        { "simpleMemoryModel.memNumSlots","Sets the max number of outstanding memory operations","10"},
+
+        { "simpleMemoryModel.nicNumLoadSlots","Sets the max number of outstanding loads for units on the NIC","32"},
+        { "simpleMemoryModel.nicNumStoreSlots","Sets the max number of outstanding stores for the units on the NIC","32"},
+        { "simpleMemoryModel.hostNumLoadSlots","Sets the max number of outstanding loads for the units on the Host","32"},
+        { "simpleMemoryModel.hostNumStoreSlots","Sets the max number of outstanding stores for the units on the Host","32"},
+
+        { "simpleMemoryModel.busBandwidth_Gbs","Sets the Host to NIC bus link bandwidth","7.8"},
+        { "simpleMemoryModel.busNumLinks","Sets the number of Host to NIC bus links","16"},
+        { "simpleMemoryModel.busLatency","Set the Host to NIC bus overhead","0"},
+        { "simpleMemoryModel.DLL_bytes","Sets the number of bytes of overhead for a packet at the data link level","16"},
+        { "simpleMemoryModel.TLP_overhead","Sets the number of bytes of overhead for a packet at the transaction level","30"},
+        { "simpleMemoryModel.nicToHostMTU","Sets the size the MTU between the Host and NIC","256"},
+        { "simpleMemoryModel.widgetSlots","Set the depth of queues between the Host to NIC bus and the cache","64"},
+
+        { "simpleMemoryModel.hostCacheUnitSize","Sets the number of slots in the Host cache","32"},
+        { "simpleMemoryModel.hostCacheNumMSHR","Sets the max number of outstanding request to memory","10"},
+        { "simpleMemoryModel.hostCacheLineSize","Sets the cache line size","64"},
+
+
+        { "simpleMemoryModel.tlbPageSize","Sets the TLB page size","2097152"},
+        { "simpleMemoryModel.tlbSize","Sets the number of slots in the TLB","0"},
+        { "simpleMemoryModel.tlbMissLat_ns","Sets the latency for a TLB miss","0"},
+        { "simpleMemoryModel.numWalkers","Sets the number of outsanding TLB misses","1"},
+        { "simpleMemoryModel.numTlbSlots","Sets the number of requests the TLB will queue","1"},
     )
+
 
     SST_ELI_DOCUMENT_PORTS(
         {"rtr", "Port connected to the router", {}},
