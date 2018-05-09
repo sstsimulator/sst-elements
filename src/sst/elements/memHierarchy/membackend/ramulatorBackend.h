@@ -50,7 +50,11 @@ public:
 protected:
     ramulator::Gem5Wrapper *memSystem;
     std::function<void(ramulator::Request&)> callBackFunc;
+
+    // Track outstanding requests
     std::map<uint64_t, std::deque<ReqId> > dramReqs;
+    std::set<ReqId> writes;
+
     void ramulatorDone(ramulator::Request& req);
 };
 
