@@ -36,34 +36,34 @@ namespace Merlin {
 
 class topo_dragonfly2_event;
 
-struct RouterPortPair {
+struct RouterPortPair2 {
     uint16_t router;
     uint16_t port;
 
-    RouterPortPair(int router, int port) :
+    RouterPortPair2(int router, int port) :
         router(router),
         port(port)
         {}
 
-    RouterPortPair() {}
+    RouterPortPair2() {}
 };
 
-class RouteToGroup {
+class RouteToGroup2 {
 private:
-    const RouterPortPair* data;
+    const RouterPortPair2* data;
     SharedRegion* region;
     size_t groups;
     size_t routes;
     
     
 public:
-    RouteToGroup() {}
+    RouteToGroup2() {}
 
     void init(SharedRegion* sr, size_t g, size_t r);
 
-    const RouterPortPair& getRouterPortPair(int group, int route_number);
+    const RouterPortPair2& getRouterPortPair(int group, int route_number);
 
-    void setRouterPortPair(int group, int route_number, const RouterPortPair& pair);
+    void setRouterPortPair(int group, int route_number, const RouterPortPair2& pair);
 };
 
 
@@ -112,7 +112,7 @@ public:
         ADAPTIVE_LOCAL
     };
 
-    RouteToGroup group_to_global_port;
+    RouteToGroup2 group_to_global_port;
     
     struct dgnfly2Params params;
     RouteAlgo algorithm;

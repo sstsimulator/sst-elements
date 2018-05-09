@@ -55,7 +55,15 @@ PortControl::send(internal_router_event* ev, int vc)
 	// if ( xbar_in_credits[vc] < ev->getFlitCount() ) return false;
     
 	xbar_in_credits[vc] -= ev->getFlitCount();
-    output_queue_lengths[vc] += ev->getFlitCount();
+    if ( oql_track_port ) {
+        int flits = ev->getFlitCount();
+        for ( int i = 0; i < num_vcs; ++i ) {
+            output_queue_lengths[i] += flits;
+        }
+    }
+    else {
+        output_queue_lengths[vc] += ev->getFlitCount();
+    }
 	ev->setVC(vc);
 
 	output_buf[vc].push(ev);
@@ -135,7 +143,7 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
                          SimTime_t output_latency_cycles, std::string output_latency_timebase,
                          const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size,
                          std::vector<std::string>& inspector_names,
-						 const float dlink_thresh) :
+						 const float dlink_thresh, bool oql_track_port, bool oql_track_remote) :
     rtr_id(rtr_id),
     num_vcs(-1),
     link_bw(link_bw),
@@ -154,6 +162,8 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
 	dlink_thresh(dlink_thresh),
 	sai_port_disabled(false),
 	ongoing_transmit(false),
+    oql_track_port(oql_track_port),
+    oql_track_remote(oql_track_remote),
     is_idle(true),
 	is_active(false),
     waiting(true),
@@ -684,7 +694,19 @@ PortControl::handle_input_n2r(Event* ev)
     {
 	    credit_event* ce = static_cast<credit_event*>(ev);
 	    port_out_credits[ce->vc] += ce->credits;
-	    delete ce;
+
+        if ( oql_track_remote ) {
+            if ( oql_track_port ) {
+                for ( int i = 0; i < num_vcs; ++i ) {
+                    output_queue_lengths[i] -= ce->credits;
+                }
+            }
+            else {
+                output_queue_lengths[ce->vc] -= ce->credits;
+            }
+        }
+
+        delete ce;
         
 	    // If we're waiting, we need to send a wakeup event to the
 	    // output queues
@@ -928,7 +950,16 @@ PortControl::handle_output_r2r(Event* ev) {
 	    // Need to return credits to the output buffer
 	    int size = send_event->getFlitCount();
 	    xbar_in_credits[vc_to_send] += size;
-        output_queue_lengths[vc_to_send] -= size;
+        if ( !oql_track_remote ) {
+            if ( oql_track_port ) {
+                for ( int i = 0; i < num_vcs; ++i ) {
+                    output_queue_lengths[i] -= size;
+                }
+            }
+            else {
+                output_queue_lengths[vc_to_send] -= size;
+            }
+        }
         
 	    // Send an event to wake up again after this packet is sent.
 	    output_timing->send(size,NULL); 
@@ -1086,7 +1117,16 @@ PortControl::handle_output_n2r(Event* ev) {
 	    // Need to return credits to the output buffer
 	    int size = send_event->getFlitCount();
 	    xbar_in_credits[vc_to_send] += size;
-        output_queue_lengths[vc_to_send] -= size;
+        if ( !oql_track_remote ) {
+            if ( oql_track_port ) {
+                for ( int i = 0; i < num_vcs; ++i ) {
+                    output_queue_lengths[i] -= size;
+                }
+            }
+            else {
+                output_queue_lengths[vc_to_send] -= size;
+            }
+        }
         
 	    // Send an event to wake up again after this packet is sent.
 	    output_timing->send(size,NULL); 
