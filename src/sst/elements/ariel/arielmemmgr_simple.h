@@ -35,35 +35,33 @@ namespace ArielComponent {
 
 class ArielMemoryManagerSimple : public ArielMemoryManager {
 
-	public:
-            /* SST ELI */
-            SST_ELI_REGISTER_SUBCOMPONENT(ArielMemoryManagerSimple, "ariel", "MemoryManagerSimple", SST_ELI_ELEMENT_VERSION(1,0,0),
-                    "Simple allocate-on-first touch memory manager", "SST::ArielComponent::ArielMemoryManager")
+    public:
+        /* SST ELI */
+        SST_ELI_REGISTER_SUBCOMPONENT(ArielMemoryManagerSimple, "ariel", "MemoryManagerSimple", SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Simple allocate-on-first touch memory manager", "SST::ArielComponent::ArielMemoryManager")
 
 #define MEMMGR_SIMPLE_ELI_PARAMS ARIEL_ELI_MEMMGR_PARAMS,\
             {"pagesize0", "Page size", "4096"},\
             {"pagecount0", "Page count", "131072"},\
             {"page_populate_0", "Pre-populate/partially pre-poulate the page table, this is the file to read in.", ""}
 
-            SST_ELI_DOCUMENT_PARAMS( MEMMGR_SIMPLE_ELI_PARAMS )
+        SST_ELI_DOCUMENT_PARAMS( MEMMGR_SIMPLE_ELI_PARAMS )
+        SST_ELI_DOCUMENT_STATISTICS( ARIEL_ELI_MEMMGR_STATS )
 
-            SST_ELI_DOCUMENT_STATISTICS( ARIEL_ELI_MEMMGR_STATS )
+        /* ArielMemoryManagerSimple */
+        ArielMemoryManagerSimple(SST::Component* owner, Params& params);
+        ~ArielMemoryManagerSimple();
 
-            /* ArielMemoryManagerSimple */
-	    
-            ArielMemoryManagerSimple(SST::Component* owner, Params& params);
-    	    ~ArielMemoryManagerSimple();
-		
-	    uint64_t translateAddress(uint64_t virtAddr);
-	    void printStats();
-        
-        private:
-            void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
-            
-            uint64_t pageSize;
-            std::deque<uint64_t> freePages;
-            
-            std::unordered_map<uint64_t, uint64_t> pageTable;
+        uint64_t translateAddress(uint64_t virtAddr);
+        void printStats();
+
+    private:
+        void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
+
+        uint64_t pageSize;
+        std::deque<uint64_t> freePages;
+
+        std::unordered_map<uint64_t, uint64_t> pageTable;
 };
 
 }
