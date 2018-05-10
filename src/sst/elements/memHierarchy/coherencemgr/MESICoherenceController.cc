@@ -1459,7 +1459,7 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
             if (!inclusive_ && cacheLine->getState() != S) { // Transfer E/M permission
                 cacheLine->setOwner(origRequest->getSrc());
                 sendTime = sendResponseUp(origRequest, Command::GetXResp, &responseEvent->getPayload(), state == M, true, cacheLine->getTimestamp());
-            } else if (protocol_ && cacheLine->getState() != S) { // Send exclusive response
+            } else if (protocol_ && cacheLine->getState() != S && mshr_->lookup(responseEvent->getBaseAddr()).size() == 1) { // Send exclusive response unless another request is waiting
                 cacheLine->setOwner(origRequest->getSrc());
                 sendTime = sendResponseUp(origRequest, Command::GetXResp, &responseEvent->getPayload(), true, cacheLine->getTimestamp());
             } else { // Default shared response

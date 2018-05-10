@@ -29,26 +29,25 @@ namespace ArielComponent {
 
 class ArielTextTraceGenerator : public ArielTraceGenerator {
 
-public:
-    
-    SST_ELI_REGISTER_MODULE(ArielTextTraceGenerator, "ariel", "TextTraceGenerator", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Provides tracing to text file capabilities", "SST::ArielComponent::ArielTraceGenerator")
-    
-    SST_ELI_DOCUMENT_PARAMS( { "trace_prefix", "Sets the prefix for the trace file", "ariel-core-" } )
+    public:
+        SST_ELI_REGISTER_MODULE(ArielTextTraceGenerator, "ariel", "TextTraceGenerator", SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Provides tracing to text file capabilities", "SST::ArielComponent::ArielTraceGenerator")
 
-    ArielTextTraceGenerator(Component* owner, Params& params);
+        SST_ELI_DOCUMENT_PARAMS( { "trace_prefix", "Sets the prefix for the trace file", "ariel-core-" } )
 
-    ~ArielTextTraceGenerator(); 
+        ArielTextTraceGenerator(Component* owner, Params& params);
 
-    void publishEntry(const uint64_t picoS, const uint64_t physAddr,
-            const uint32_t reqLength, const ArielTraceEntryOperation op);
+        ~ArielTextTraceGenerator();
 
-    void setCoreID(const uint32_t core); 
+        void publishEntry(const uint64_t picoS, const uint64_t physAddr,
+                const uint32_t reqLength, const ArielTraceEntryOperation op);
 
-private:
-    FILE* textFile;
-    std::string tracePrefix;
-    uint32_t coreID;
+        void setCoreID(const uint32_t core);
+
+    private:
+        FILE* textFile;
+        std::string tracePrefix;
+        uint32_t coreID;
 
 };
 

@@ -41,7 +41,6 @@ class SimpleMemoryModel : SubComponent {
    typedef std::function<void()> Callback;
 
 #include "cache.h"
-#include "nWayCache.h"
 #include "memReq.h"
 #include "sharedTlb.h"
 #include "unit.h"
@@ -80,27 +79,26 @@ class SimpleMemoryModel : SubComponent {
 
     	m_dbg.init(buffer, params.find<uint32_t>("verboseLevel",0), params.find<uint32_t>("verboseMask",-1), Output::STDOUT);
 
-		int hostCacheUnitSize = params.find<int>( "hostCacheUnitSize", 32 );
 		int memReadLat_ns = params.find<int>( "memReadLat_ns", 150 );
 		int memWriteLat_ns = params.find<int>( "memWriteLat_ns", 150 );
 		int memNumSlots = params.find<int>( "memNumSlots", 10 );
 
-		int nicCacheUnitSize = params.find<int>( "nicCacheUnitSize", 32 );
 		int nicNumLoadSlots = params.find<int>( "nicNumLoadSlots", 32 );
 		int nicNumStoreSlots = params.find<int>( "nicNumStoreSlots", 32 );
 		int hostNumLoadSlots = params.find<int>( "hostNumLoadSlots", 32 );
 		int hostNumStoreSlots = params.find<int>( "hostNumStoreSlots", 32 );
+
 		double busBandwidth = params.find<double>("busBandwidth_Gbs", 7.8 );
 		int busNumLinks = params.find<double>("busNumLinks", 16 );
 		int busLatency = params.find<double>("busLatency", 0 );
-
-		int hostCacheNumMSHR = params.find<int>( "hostCacheNumMSHR", 10 );
-		int hostCacheLineSize = params.find<int>( "hostCacheLineSize", 64 );
-		int nicCacheLineSize = params.find<int>( "nicCacheLineSize", 256 );
-		int widgetSlots = params.find<int>( "widgetSlots", 64 );
-
 		int DLL_bytes = params.find<int>( "DLL_bytes", 16 );
 		int TLP_overhead = params.find<int>( "TLP_overhead", 30 );
+
+		int hostCacheUnitSize = params.find<int>( "hostCacheUnitSize", 32 );
+		int hostCacheNumMSHR = params.find<int>( "hostCacheNumMSHR", 10 );
+		int hostCacheLineSize = params.find<int>( "hostCacheLineSize", 64 );
+		int widgetSlots = params.find<int>( "widgetSlots", 64 );
+
 
 		int tlbPageSize = params.find<int>( "tlbPageSize", 1024*1024*4 );
 		int tlbSize = params.find<int>( "tlbSize", 0 );
@@ -116,7 +114,6 @@ class SimpleMemoryModel : SubComponent {
 		m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, busNumLinks, busLatency,
                                                                 TLP_overhead, DLL_bytes, hostCacheLineSize, widgetSlots );
 
-		//m_nicCacheUnit = new CacheUnit( *this, m_dbg, id, m_busBridgeUnit, nicCacheUnitSize, nicCacheLineSize, 10, "Nic" );
 		
         m_sharedTlb = new SharedTlb( *this, m_dbg, id, tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers );
 		

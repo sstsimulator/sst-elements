@@ -1,3 +1,5 @@
+// -*- mode: c++ -*-
+
 // Copyright 2009-2017 Sandia Corporation. Under the terms
 // of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
@@ -13,33 +15,12 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sst_config.h>
+#include <sst/elements/merlin/target_generator/uniform.h>
+#include <sst/elements/merlin/target_generator/bit_complement.h>
 
-#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
+namespace SST {
+namespace Merlin {
 
-#include <sst/core/element.h>
-#include <sst/core/configGraph.h>
+} //namespace Merlin
+} //namespace SST
 
-#include <stdio.h>
-#include <stdarg.h>
-
-#include "msgapi.h"
-
-using namespace std;
-using namespace SST::Hermes;
-
-
-extern "C" {
-    ElementLibraryInfo hermes_eli = {
-        "hermes",
-        "Message exchange interfaces",
-        NULL, //components,
-	NULL,
-	NULL,
-	NULL, //modules,
-	// partitioners,
-	// generators,
-	NULL,
-	NULL,
-    };
-}

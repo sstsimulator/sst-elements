@@ -64,6 +64,8 @@ public:
         {"input_buf_size",     "Size of input buffers specified in b or B (can include SI prefix)."},
         {"output_buf_size",    "Size of output buffers specified in b or B (can include SI prefix)."},
         {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
+        {"oql_track_port",     "Set to true to track output queue length for an entire port.  False tracks per VC.", "false"},
+        {"oql_track_remote",   "Set to true to track output queue length including remote input queue.  False tracks only local queue.", "false"},
         {"debug",              "Turn on debugging for router. Set to 1 for on, 0 for off.", "0"}
     )
 
@@ -95,6 +97,7 @@ private:
     PortControl** ports;
     internal_router_event** vc_heads;
     int* xbar_in_credits;
+    int* output_queue_lengths;
 
 #if VERIFY_DECLOCKING
     bool clocking;
@@ -136,6 +139,7 @@ public:
 
     void notifyEvent();
     int const* getOutputBufferCredits() {return xbar_in_credits;}
+    int const* getOutputQueueLengths() {return output_queue_lengths;}
 
     void sendTopologyEvent(int port, TopologyEvent* ev);
     void recvTopologyEvent(int port, TopologyEvent* ev);

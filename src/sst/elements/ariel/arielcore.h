@@ -45,6 +45,8 @@
 #include "arielallocev.h"
 #include "arielfreeev.h"
 #include "arielnoop.h"
+#include "arielflushev.h"
+#include "arielfenceev.h"
 #include "arielswitchpool.h"
 #include "arielalloctrackev.h"
 
@@ -61,98 +63,116 @@ namespace ArielComponent {
 
 class ArielCore {
 
-	public:
-		ArielCore(ArielTunnel *tunnel, SimpleMem *coreToCacheLink,
-                uint32_t thisCoreID, uint32_t maxPendTans,
-                Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen,
-                uint64_t cacheLineSz, SST::Component* owner,
-			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
-		~ArielCore();
-		bool isCoreHalted() const;
-		void tick();
-		void halt();
-		void finishCore();
-		void createReadEvent(uint64_t addr, uint32_t size);
-		void createWriteEvent(uint64_t addr, uint32_t size);
-    		void createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level, uint64_t ip);
-		void createMmapEvent(uint32_t fileID, uint64_t vAddr, uint64_t length, uint32_t level, uint64_t instPtr);
-		void createNoOpEvent();
-		void createFreeEvent(uint64_t vAddr);
-		void createExitEvent();
-		void createSwitchPoolEvent(uint32_t pool);
-		void setOpalLink(Link * opallink);
-                void setCacheLink(SimpleMem* newCacheLink, Link* allocLink);
-		void handleEvent(SimpleMem::Request* event);
-		void handleReadRequest(ArielReadEvent* wEv);
-		void handleWriteRequest(ArielWriteEvent* wEv);
-		void handleAllocationEvent(ArielAllocateEvent* aEv);
-		void handleMmapEvent(ArielMmapEvent* aEv);
-		void handleFreeEvent(ArielFreeEvent* aFE);
-		void handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE);
-		void setOpal() { opal_enabled = true; } 
+    public:
+        ArielCore(ArielTunnel *tunnel, SimpleMem *coreToCacheLink,
+            uint32_t thisCoreID, uint32_t maxPendTans,
+            Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen,
+            uint64_t cacheLineSz, SST::Component* owner,
+                ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
+        ~ArielCore();
 
-		void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
-		void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
+        bool isCoreHalted() const;
+        bool isCoreStalled() const;
+        bool isCoreFenced() const;
+        bool hasDrainCompleted() const;
+        void tick();
+        void halt();
+        void stall();
+        void fence();
+        void unfence();
+        void finishCore();
+        void createReadEvent(uint64_t addr, uint32_t size);
+        void createWriteEvent(uint64_t addr, uint32_t size);
+        void createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level, uint64_t ip);
+        void createMmapEvent(uint32_t fileID, uint64_t vAddr, uint64_t length, uint32_t level, uint64_t instPtr);
+        void createNoOpEvent();
+        void createFreeEvent(uint64_t vAddr);
+        void createExitEvent();
+        void createFlushEvent(uint64_t vAddr);
+        void createFenceEvent();
+        void createSwitchPoolEvent(uint32_t pool);
 
-		// Setting the max number of instructions to be simulated
-		void setMaxInsts(long long int i){max_insts=i;}
+        void setCacheLink(SimpleMem* newCacheLink, Link* allocLink);
 
-		void printCoreStatistics();
-		void printTraceEntry(const bool isRead, const uint64_t address, const uint32_t length);
+        void handleEvent(SimpleMem::Request* event);
+        void handleReadRequest(ArielReadEvent* wEv);
+        void handleWriteRequest(ArielWriteEvent* wEv);
+        void handleAllocationEvent(ArielAllocateEvent* aEv);
+        void handleMmapEvent(ArielMmapEvent* aEv);
+        void handleFreeEvent(ArielFreeEvent* aFE);
+        void handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE);
+        void handleFlushEvent(ArielFlushEvent *flEv);
+        void handleFenceEvent(ArielFenceEvent *fEv);
 
-	private:
-		bool processNextEvent();
-		bool refillQueue();
-		bool opal_enabled;
-		uint32_t coreID;
-		uint32_t maxPendingTransactions;
-		Output* output;
-		std::queue<ArielEvent*>* coreQ;
-		bool isHalted;
-		SimpleMem* cacheLink;
-                Link* allocLink;
-                Link* OpalLink;
-		ArielTunnel *tunnel;
-		std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
-		uint32_t maxIssuePerCycle;
-		uint32_t maxQLength;
-		uint64_t cacheLineSize;
-		SST::Component* owner;
-		ArielMemoryManager* memmgr;
-		const uint32_t verbosity;
-		const uint32_t perform_checks;
-		bool enableTracing;
-		uint64_t currentCycles;
-		bool updateCycle;
+        void setOpal() { opal_enabled = true; }
+        void setOpalLink(Link * opallink);
 
-		// This indicates the current number of executed instructions by this core
-		long long int inst_count;
+        void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
+        void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
+        void commitFlushEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 
-		// This indicates the max number of instructions before halting the simulation
-		long long int max_insts;
+        // Setting the max number of instructions to be simulated
+        void setMaxInsts(uint64_t i){max_insts=i;}
 
-		ArielTraceGenerator* traceGen;
+        void printCoreStatistics();
+        void printTraceEntry(const bool isRead, const uint64_t address, const uint32_t length);
 
-		Statistic<uint64_t>* statReadRequests;
-		Statistic<uint64_t>* statWriteRequests;
-		Statistic<uint64_t>* statReadRequestSizes;
-		Statistic<uint64_t>* statWriteRequestSizes;
-		Statistic<uint64_t>* statSplitReadRequests;
-		Statistic<uint64_t>* statSplitWriteRequests;
-		Statistic<uint64_t>* statNoopCount;
-		Statistic<uint64_t>* statInstructionCount;
-		Statistic<uint64_t>* statCycles;
+    private:
+        bool processNextEvent();
+        bool refillQueue();
+        bool opal_enabled;
+        uint32_t coreID;
+        uint32_t maxPendingTransactions;
+        Output* output;
+        std::queue<ArielEvent*>* coreQ;
+        bool isStalled;
+        bool isHalted;
+        bool isFenced;
+        SimpleMem* cacheLink;
+        Link* allocLink;
+        Link* OpalLink;
+        ArielTunnel *tunnel;
+        std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
+        uint32_t maxIssuePerCycle;
+        uint32_t maxQLength;
+        uint64_t cacheLineSize;
+        SST::Component* owner;
+        ArielMemoryManager* memmgr;
+        const uint32_t verbosity;
+        const uint32_t perform_checks;
+        bool enableTracing;
+        uint64_t currentCycles;
+        bool updateCycle;
 
-		Statistic<uint64_t>* statFPDPIns;
-		Statistic<uint64_t>* statFPDPSIMDIns;
-		Statistic<uint64_t>* statFPDPScalarIns;
-		Statistic<uint64_t>* statFPDPOps;
-		Statistic<uint64_t>* statFPSPIns;
-		Statistic<uint64_t>* statFPSPSIMDIns;
-		Statistic<uint64_t>* statFPSPScalarIns;
-		Statistic<uint64_t>* statFPSPOps;
+        // This indicates the current number of executed instructions by this core
+        uint64_t inst_count;
 
-		uint64_t pending_transaction_count;
+        // This indicates the max number of instructions before halting the simulation
+        uint64_t max_insts;
+
+        ArielTraceGenerator* traceGen;
+
+        Statistic<uint64_t>* statReadRequests;
+        Statistic<uint64_t>* statWriteRequests;
+        Statistic<uint64_t>* statReadRequestSizes;
+        Statistic<uint64_t>* statWriteRequestSizes;
+        Statistic<uint64_t>* statSplitReadRequests;
+        Statistic<uint64_t>* statSplitWriteRequests;
+        Statistic<uint64_t>* statNoopCount;
+        Statistic<uint64_t>* statInstructionCount;
+        Statistic<uint64_t>* statCycles;
+        Statistic<uint64_t>* statActiveCycles;
+
+        Statistic<uint64_t>* statFPDPIns;
+        Statistic<uint64_t>* statFPDPSIMDIns;
+        Statistic<uint64_t>* statFPDPScalarIns;
+        Statistic<uint64_t>* statFPDPOps;
+        Statistic<uint64_t>* statFPSPIns;
+        Statistic<uint64_t>* statFPSPSIMDIns;
+        Statistic<uint64_t>* statFPSPScalarIns;
+        Statistic<uint64_t>* statFPSPOps;
+
+        uint64_t pending_transaction_count;
 
 };
 

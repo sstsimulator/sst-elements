@@ -401,5 +401,24 @@ void CoherenceController::setupLowerStatus(bool isLastCoherenceLevel, bool expec
         
 }
 
+/**************************************/
+/*********** Debug support ************/
+/**************************************/
+ 
+void CoherenceController::printStatus(Output& out) {
+    out.output("  Begin MemHierarchy::CoherenceController %s\n", getName().c_str());
+    
+    out.output("    Events waiting in outgoingEventQueue: %zu\n", outgoingEventQueue_.size());
+    for (list<Response>::iterator it = outgoingEventQueue_.begin(); it!= outgoingEventQueue_.end(); it++) {
+        out.output("      Time: %" PRIu64 ", Event: %s\n", (*it).deliveryTime, (*it).event->getVerboseString().c_str());
+    }
+    
+    out.output("    Events waiting in outgoingEventQueueUp_: %zu\n", outgoingEventQueueUp_.size());
+    for (list<Response>::iterator it = outgoingEventQueueUp_.begin(); it!= outgoingEventQueueUp_.end(); it++) {
+        out.output("      Time: %" PRIu64 ", Event: %s\n", (*it).deliveryTime, (*it).event->getVerboseString().c_str());
+    }
+   
+    out.output("  End MemHierarchy::CoherenceController\n");
+}
 
    

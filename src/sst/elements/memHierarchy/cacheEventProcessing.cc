@@ -287,6 +287,8 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             if (mshr_->isHit(baseAddr) && canStall) {
                 // Drop local prefetches if there are outstanding requests for the same address NOTE this includes replacements/inv/etc.
                 if (event->isPrefetch() && event->getRqstr() == this->getName()) {
+                    if (is_debug_addr(baseAddr))
+                        d_->debug(_L6_, "Drop prefetch: cache hit\n");
                     statPrefetchDrop->addData(1);
                     delete event;
                     break;
@@ -500,7 +502,6 @@ void Cache::setup() {
             info.name = upperLevelCacheNames_[i];
             info.addr = 0;
             info.id = 0;
-            info.node = node;
             info.region.setDefault();
             srcNames.insert(info);
         }
@@ -525,7 +526,6 @@ void Cache::setup() {
             info.name = lowerLevelCacheNames_[i];
             info.addr = 0;
             info.id = 0;
-            info.node = node;
             info.region.setDefault();
             info.region.interleaveStep = ilStep;
             info.region.interleaveSize = ilSize;
