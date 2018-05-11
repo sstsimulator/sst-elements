@@ -17,8 +17,14 @@ class MsgStream : public StreamBase {
   public:
     MsgStream( Output&, Ctx*, int srcNode, int srcPid, int destPid, FireflyNetworkEvent* );
     bool isBlocked() {
-        return  m_recvEntry == NULL;
+        return  m_recvEntry == NULL || m_blocked;
     }
   protected:
-    void processPktHdr( FireflyNetworkEvent* ev );
+    void processFirstPkt( FireflyNetworkEvent* ev ) {
+        m_blocked = false;
+        m_ctx->schedCallback( m_wakeupCallback );
+        m_wakeupCallback = NULL;
+    }
+  private:
+    bool m_blocked;
 };
