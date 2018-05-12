@@ -37,7 +37,7 @@ using namespace SST;
 
 namespace SST{ namespace OpalComponent{
 
-	enum EventType { HINT, MMAP, REQUEST, RESPONSE, UNMAP, UMAPACK, SHOOTDOWN, SDACK};
+	enum EventType { HINT, MMAP, REQUEST, RESPONSE, UNMAP, UMAPACK, SHOOTDOWN, INVALIDADDR, SDACK};
 	enum MemType { LOCAL, SHARED };
 	enum MemTech { DRAM, NVM, HBM, HMC, SCRATCHPAD, BURSTBUFFER};
 //	enum HintType { DRAM, NVM, HBM, HMC, SCRATCHPAD, BURSTBUFFER, };
@@ -55,15 +55,19 @@ namespace SST{ namespace OpalComponent{
 	{
 
 		private:
-		OpalEvent() {hint = -1; } // For serialization
+		OpalEvent() {} // For serialization
 
 			EventType ev;
-			long long int address;
-			long long int paddress;
+			uint64_t address;
+			uint64_t paddress;
+			int faultLevel;
 			int size;
 			int nodeId;
-			int linkId;
+			int coreId;
 			MemType memType;
+			int shootdownId;
+			int hint;
+			int fileId;
 
 		public:
 
@@ -79,19 +83,42 @@ namespace SST{ namespace OpalComponent{
 			void setNodeId(int id) { nodeId = id; }
 			int getNodeId() { return nodeId; }
 
-			void setLinkId(int id) { linkId = id; }
-			int getLinkId() { return linkId; }
+			void setCoreId(int id) { coreId = id; }
+			int getCoreId() { return coreId; }
 			
-			int hint;
-			int fileID;
-			void setResp(long long int add, long long int padd, int sz) { address = add; paddress = padd; size = sz;}
-			long long int getAddress() { return address; }
-			long long int getPaddress() { return paddress; }
+			void setResp(uint64_t add, uint64_t padd, int sz) { address = add; paddress = padd; size = sz;}
+
+			void setAddress(uint64_t add) { address = add; }
+			uint64_t getAddress() { return address; }
+
+			uint64_t getPaddress() { return paddress; }
 
 			int getSize() { return size; }
 
-			void serialize_order(SST::Core::Serialization::serializer &ser) override {
+			void setFaultLevel(int level) { faultLevel = level; }
+			int getFaultLevel() { return faultLevel; }
+
+			void setShootdownId(int id) { shootdownId = id; }
+			int getShootdownId() { return shootdownId; }
+
+			void setFileId(int id) { fileId = id; }
+			int getFileId() { return fileId; }
+
+			void setHint(int x) { hint = x; }
+			int getHint() { return hint; }
+
+			void serialize_order(SST::Core::Serialization::serializer &ser) {
 				Event::serialize_order(ser);
+				ser & ev;
+				ser & address;
+				ser & paddress;
+				ser & size;
+				ser & nodeId;
+				ser & coreId;
+				ser & memType;
+				ser & shootdownId;
+				ser & hint;
+				ser & fileId;
 			}
 
 

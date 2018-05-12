@@ -52,6 +52,12 @@ class HadesSHMEM : public Shmem::Interface
         "",
         ""
     )
+    SST_ELI_DOCUMENT_PARAMS(
+        {"verboseLevel","Sets the level of debug verbosity",""},
+        {"verboseMask","Sets the debug mask",""},
+        {"enterLat_ns","Sets the latency of entering a SHMEM call","" },
+        {"returnLat_ns","Sets the latency of returning from a SHMEM call","" },
+    )
 
     typedef std::function<void()> Callback;
 

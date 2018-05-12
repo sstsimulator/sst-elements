@@ -26,14 +26,15 @@ namespace ArielComponent {
 
 class ArielFreeEvent : public ArielEvent {
 
-	public:
-		ArielFreeEvent(uint64_t vAddr) : virtualAddress(vAddr) {}
-		~ArielFreeEvent() {}
-		ArielEventType getEventType() const { return FREE; }
-		uint64_t getVirtualAddress() const { return virtualAddress; }
+    public:
+        ArielFreeEvent(uint64_t vAddr) : virtualAddress(vAddr) {}
+        ~ArielFreeEvent() {}
+        
+        ArielEventType getEventType() const { return FREE; }
+        uint64_t getVirtualAddress() const { return virtualAddress; }
 
-	protected:
-		const uint64_t virtualAddress;
+    protected:
+        const uint64_t virtualAddress;
 
 };
 

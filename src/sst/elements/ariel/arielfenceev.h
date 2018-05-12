@@ -26,8 +26,8 @@ namespace ArielComponent {
 
 class ArielFenceEvent : public ArielEvent {
 
-	public:
-		ArielEventType getEventType() const { return FENCE; }
+    public:
+        ArielEventType getEventType() const { return FENCE; }
 
 };
 

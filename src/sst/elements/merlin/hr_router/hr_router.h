@@ -64,6 +64,8 @@ public:
         {"input_buf_size",     "Size of input buffers specified in b or B (can include SI prefix)."},
         {"output_buf_size",    "Size of output buffers specified in b or B (can include SI prefix)."},
         {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
+        {"oql_track_port",     "Set to true to track output queue length for an entire port.  False tracks per VC.", "false"},
+        {"oql_track_remote",   "Set to true to track output queue length including remote input queue.  False tracks only local queue.", "false"},
         {"debug",              "Turn on debugging for router. Set to 1 for on, 0 for off.", "0"}
     )
 

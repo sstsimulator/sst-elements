@@ -40,16 +40,21 @@ namespace SST { namespace SambaComponent{
 	class PageTableWalker
 	{
 
+		Output* output;
+
+		int id;
 
 		int fault_level; // indicates the step where the page fault handler is at
 
 		int sizes; // This indicates the number of sizes supported
 
-		long long int * page_size; // By default, lets assume 4KB pages
+		uint64_t * page_size; // By default, lets assume 4KB pages
 
 		int * assoc; // This represents the associativiety
 
-		long long int *** tags; // This will hold the tags
+		uint64_t *** tags; // This will hold the tags
+
+		bool *** valid; // This will hold the status of tags
 
 		int *** lru; // This will hold the lru positions
 
@@ -58,33 +63,41 @@ namespace SST { namespace SambaComponent{
 
 		SST::Link * to_opal; // This links the Page table walker to the opal memory manager
 
-		int * hold; // This is used to tell the TLB hierarchy to stall, to emulate overhead of page fault handler or TLB shootdown
+		int * hold; // This is used to tell the TLB hierarchy to stall, to emulate overhead of page fault handler
 
+		int * shootdown; // This is used to indicate TLB hierarchy that TLB shootdown is in progress
+
+		int shootdownId;
+
+		std::list<uint64_t> buffer;
+		std::list<uint64_t> * invalid_addrs; // This is used to store address invalidation requests.
 
 		// ------------- Note that we assume that for each Samba componenet instance, all units run the same VMA, thus all share the same page table
 		// ------------- Our assumption is based on the fact that Ariel instances (mapped one-to-one to Samba instances) can only run one application
 
 		// Holds CR3 value of current context
-		long long int *CR3;
+		uint64_t *CR3;
+		int cr3_init;
 
 		// Holds the PGD physical pointers, the key is the 9 bits 39-47, i.e., VA/(4096*512*512*512)
-		std::map<long long int, long long int> * PGD;
+		std::map<uint64_t, uint64_t> * PGD;
 
 		// Holds the PUD physical pointers, the key is the 9 bits 30-38, i.e., VA/(4096*512*512)
-		std::map<long long int, long long int> * PUD;
+		std::map<uint64_t, uint64_t> * PUD;
 
 		// Holds the PMD physical pointers, the key is the 9 bits 21-29, i.e., VA/(4096*512)
-		std::map<long long int, long long int> * PMD;
+		std::map<uint64_t, uint64_t> * PMD;
 
 		// Holds the PTE physical pointers, the key is the 9 bits 12-20, i.e., VA/(4096)
-		std::map<long long int, long long int> * PTE; // This should give you the exact physical address of the page
+		std::map<uint64_t, uint64_t> * PTE; // This should give you the exact physical address of the page
 
 
 		// The structures below are used to quickly check if the page is mapped or not
-		std::map<long long int,int> * MAPPED_PAGE_SIZE4KB;
-		std::map<long long int,int> * MAPPED_PAGE_SIZE2MB;
-		std::map<long long int,int> * MAPPED_PAGE_SIZE1GB;
+		std::map<uint64_t,int> * MAPPED_PAGE_SIZE4KB;
+		std::map<uint64_t,int> * MAPPED_PAGE_SIZE2MB;
+		std::map<uint64_t,int> * MAPPED_PAGE_SIZE1GB;
 
+		std::map<uint64_t,int> *PENDING_OPAL_REQS;
 
 
 
@@ -94,6 +107,8 @@ namespace SST { namespace SambaComponent{
 
 
 		bool stall; // This indicates the page table walker is stalling due to a fault
+
+		uint64_t stall_addr; // stores the address for which ptw was stalled
 
 		int  * sets; //stores the number of sets
 
@@ -150,7 +165,8 @@ namespace SST { namespace SambaComponent{
 		PageTableWalker(int page_size, int assoc, PageTableWalker * next_level, int size);
 		PageTableWalker(int tlb_id, PageTableWalker * Next_level,int level, SST::Component * owner, SST::Params& params);
 
-		void setPageTablePointers( long long int * cr3, std::map<long long int, long long int> * pgd,  std::map<long long int, long long int> * pud,  std::map<long long int, long long int> * pmd,  std::map<long long int, long long int> * pte,  std::map<long long int,int> * gb,  std::map<long long int,int> * mb,  std::map<long long int,int> * kb)
+		void setPageTablePointers( uint64_t * cr3, std::map<uint64_t, uint64_t> * pgd,  std::map<uint64_t, uint64_t> * pud,  std::map<uint64_t, uint64_t> * pmd, std::map<uint64_t, uint64_t> * pte,
+				std::map<uint64_t,int> * gb,  std::map<uint64_t,int> * mb,  std::map<uint64_t,int> * kb, std::map<uint64_t,int> * pr)
 		{
 			CR3 = cr3;
 			PGD = pgd;
@@ -160,10 +176,13 @@ namespace SST { namespace SambaComponent{
 			MAPPED_PAGE_SIZE4KB = kb;
 			MAPPED_PAGE_SIZE2MB = mb;
 			MAPPED_PAGE_SIZE1GB = gb;
+			PENDING_OPAL_REQS = pr;
+
+			cr3_init = 0;
 		}
 
 		// Does the translation and updating the statistics of miss/hit
-		long long int translate(long long int vadd);
+		uint64_t translate(uint64_t vadd);
 
 
 		void setEventChannel(SST::Link * x) { s_EventChan = x; }
@@ -176,15 +195,25 @@ namespace SST { namespace SambaComponent{
 
 		void setLineSize(uint64_t size) { line_size = size; }
 
+		// invalidate PTWC
+		void invalidate(uint64_t vadd);
+
+		// shootdown ack
+		void sendShootdownAck();
+
 		// Find if it exists
-		bool check_hit(long long int vadd, int struct_id);
+		bool check_hit(uint64_t vadd, int struct_id);
 
 		// To insert the translaiton
-		int find_victim_way(long long int vadd, int struct_id);
+		int find_victim_way(uint64_t vadd, int struct_id);
 
 		void setServiceBack( std::vector<SST::Event *> * x) { service_back = x;}
 
 		void setHold(int * tmp) { hold = tmp; }
+
+		void setShootDown(int * tmp) { shootdown = tmp; }
+
+		void setInvalidate(std::list<uint64_t> * x) { invalid_addrs = x; }
 
 		void recvResp(SST::Event* event);
 
@@ -199,12 +228,12 @@ namespace SST { namespace SambaComponent{
 		std::map<long long int, int> WSR_COUNT;
 		std::map<long long int, bool> WSR_READY;
 
-		std::map<long long int, long long int> WID_Add;
+		std::map<long long int, uint64_t> WID_Add;
 
 		std::map<long long int, SST::Event *> WID_EV;
 		std::map<id_type, long long int> MEM_REQ;
 
-		void update_lru(long long int vaddr, int struct_id);
+		void update_lru(uint64_t vaddr, int struct_id);
 
 
 		Statistic<uint64_t>* statPageTableWalkerHits;
@@ -216,7 +245,7 @@ namespace SST { namespace SambaComponent{
 		int getHits(){return hits;}
 		int getMisses(){return misses;}
 
-		void insert_way(long long int vaddr, int way, int struct_id);
+		void insert_way(uint64_t vaddr, int way, int struct_id);
 
 		// This one is to push a request to this structure
 		void push_request(SST::Event * x) {not_serviced.push_back(x);}

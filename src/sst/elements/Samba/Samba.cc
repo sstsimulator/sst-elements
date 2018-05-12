@@ -33,7 +33,7 @@ using namespace SST::SambaComponent;
 
 Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
-	CR3 = -1;
+	//CR3 = -1;
 
 	core_count = (uint32_t) params.find<uint32_t>("corecount", 1);
 
@@ -112,7 +112,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 			event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::handleEvent));
 
 			TLB[i]->getPTW()->setEventChannel(event_link);
-			TLB[i]->setPageTablePointers(&CR3, &PGD, &PUD, &PMD, &PTE, &MAPPED_PAGE_SIZE1GB, &MAPPED_PAGE_SIZE2MB, &MAPPED_PAGE_SIZE4KB);
+			TLB[i]->setPageTablePointers(&CR3, &PGD, &PUD, &PMD, &PTE, &MAPPED_PAGE_SIZE1GB, &MAPPED_PAGE_SIZE2MB, &MAPPED_PAGE_SIZE4KB, &PENDING_OPAL_REQS);
 
 		}
 

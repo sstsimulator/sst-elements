@@ -21,10 +21,10 @@ class TLBentry
 	bool permissions; 
 
 	// Maintains the virtual address, note that this is in the granularity of the page size of this entry
-	long long int VA;
+	uint64_t VA;
 
 	// Maintains the physical address, note that this is in the granularity of the page size of this entry
-	long long int PA;
+	uint64_t PA;
 
 	// Valid, indidicate if the entry is valid or not
 	bool valid;
@@ -34,13 +34,13 @@ class TLBentry
 	// Constructor
 	TLBentry(int PAGE_SIZE, bool PERMISSIONS){page_size=PAGE_SIZE; permissions=PERMISSIONS; VA=0; PA=0; valid=0;}
 
-	void setEntry(long long int va, long long int pa, int PAGE_SIZE, bool PERMISSIONS){}
+	void setEntry(uint64_t va, uint64_t pa, int PAGE_SIZE, bool PERMISSIONS){}
 
 	bool IsValid(){return valid;}
 	void Invalidate(){valid = false;}
 
-	long long int getVA(){return VA;}
-	long long int getPA(){return PA;}
+	uint64_t getVA(){return VA;}
+	uint64_t getPA(){return PA;}
 	bool getPermission(){return permissions;}
 
 

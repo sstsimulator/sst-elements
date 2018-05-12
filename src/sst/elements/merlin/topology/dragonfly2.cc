@@ -28,24 +28,24 @@ using namespace SST::Merlin;
 
 
 void
-RouteToGroup::init(SharedRegion* sr, size_t g, size_t r)
+RouteToGroup2::init(SharedRegion* sr, size_t g, size_t r)
 {
     region = sr;
-    data = sr->getPtr<const RouterPortPair*>();
+    data = sr->getPtr<const RouterPortPair2*>();
     groups = g;
     routes = r;
     
 }
 
-const RouterPortPair&
-RouteToGroup::getRouterPortPair(int group, int route_number)
+const RouterPortPair2&
+RouteToGroup2::getRouterPortPair(int group, int route_number)
 {
-    // data = static_cast<RouterPortPair*>(region->getRawPtr());
+    // data = static_cast<RouterPortPair2*>(region->getRawPtr());
     return data[group*routes + route_number];
 }
 
 void
-RouteToGroup::setRouterPortPair(int group, int route_number, const RouterPortPair& pair) {
+RouteToGroup2::setRouterPortPair(int group, int route_number, const RouterPortPair2& pair) {
     // output.output("%d, %d, %d, %d\n",group,route_number,pair.router,pair.port);
     region->modifyArray(group*routes+route_number,pair);
 }
@@ -101,7 +101,7 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
     
     // Get a shared region
     SharedRegion* sr = Simulation::getSharedRegionManager()->getGlobalSharedRegion("dragonfly:group_to_global_port",
-                                                                                  ((params.g-1) * params.n) * sizeof(RouterPortPair),
+                                                                                  ((params.g-1) * params.n) * sizeof(RouterPortPair2),
                                                                                    new SharedRegionMerger());
     // Set up the RouteToGroup object
     group_to_global_port.init(sr, params.g, params.n);
@@ -119,7 +119,7 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
         int router = i / params.h;
         int port = (i % params.h) + params.p + params.a - 1;
         
-        RouterPortPair rpp;
+        RouterPortPair2 rpp;
         rpp.router = router;
         rpp.port = port;
         group_to_global_port.setRouterPortPair(group, route_num, rpp);
@@ -466,7 +466,7 @@ void topo_dragonfly2::routeInitData(int port, internal_router_event* ev, std::ve
 
         if ( broadcast_to_groups ) {
             for ( int p = 0; p < (int)(params.g - 1); p++ ) {
-                const RouterPortPair& pair = group_to_global_port.getRouterPortPair(p,0);
+                const RouterPortPair2& pair = group_to_global_port.getRouterPortPair(p,0);
                 if ( pair.router == router_id ) outPorts.push_back((int)(pair.port));
             }
         }
@@ -587,7 +587,7 @@ uint32_t topo_dragonfly2::port_for_group(uint32_t group, uint32_t slice, int id)
         break;
     }
 
-    const RouterPortPair& pair = group_to_global_port.getRouterPortPair(group,slice);
+    const RouterPortPair2& pair = group_to_global_port.getRouterPortPair(group,slice);
 
     if ( pair.router == router_id ) {
         return pair.port;

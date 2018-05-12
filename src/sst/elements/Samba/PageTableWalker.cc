@@ -64,6 +64,10 @@ PageTableWalker::PageTableWalker(int Page_size, int Assoc, PageTableWalker * Nex
 PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int level, SST::Component * owner, SST::Params& params)
 {
 
+	output = new SST::Output("OpalComponent[@f:@l:@p] ", 1, 0, SST::Output::STDOUT);
+
+	id = tlb_id;
+
 	fault_level = 0;
 
 	std::string LEVEL = std::to_string(level);
@@ -107,17 +111,18 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 
 	size = new int[sizes]; 
 	assoc = new int[sizes];
-	page_size = new long long int[sizes];
+	page_size = new uint64_t[sizes];
 	sets = new int[sizes];
-	tags = new long long int**[sizes];
+	tags = new uint64_t**[sizes];
+	valid = new bool**[sizes];
 	lru = new int **[sizes];
 
 
 	// page table offsets
 	page_size[0] = 1024*4;
 	page_size[1] = 512*1024*4;
-	page_size[2] = (long long int) 512*512*1024*4;
-	page_size[3] = (long long int) 512*512*512*1024*4;
+	page_size[2] = (uint64_t) 512*512*1024*4;
+	page_size[3] = (uint64_t) 512*512*512*1024*4;
 
 	for(int i=0; i < sizes; i++)
 	{
@@ -138,17 +143,21 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 	for(int id=0; id< sizes; id++)
 	{
 
-		tags[id] = new long long int*[sets[id]];
+		tags[id] = new uint64_t*[sets[id]];
+
+		valid[id] = new bool*[sets[id]];
 
 		lru[id] = new int*[sets[id]];
 
 		for(int i=0; i < sets[id]; i++)
 		{
-			tags[id][i]=new long long int[assoc[id]];
+			tags[id][i]=new uint64_t[assoc[id]];
+			valid[id][i]=new bool[assoc[id]];
 			lru[id][i]=new int[assoc[id]];
 			for(int j=0; j<assoc[id];j++)
 			{
-				tags[id][i][j]=-1;
+				tags[id][i][j]=0;
+				valid[id][i][j]=false;
 				lru[id][i][j]=j;
 			}
 		}
@@ -188,7 +197,8 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		//		std::cout<<"Received a page fault "<<std::endl;
 		OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 
-		if((*CR3) == -1)
+		//if((*CR3) == -1)
+		if(!cr3_init)
 			fault_level = 0;
 		else if((*PGD).find(temp_ptr->getAddress()/page_size[3]) == (*PGD).end())
 			fault_level = 1;
@@ -198,9 +208,12 @@ void PageTableWalker::handleEvent( SST::Event* e )
 			fault_level = 3;
 		else if((*PTE).find(temp_ptr->getAddress()/page_size[0]) == (*PTE).end())
 			fault_level = 4;
+		else
+			output->fatal(CALL_INFO, -1, "MMU: DANGER!!\n");
 
 
 		tse->setResp(temp_ptr->getAddress(),0,4096);
+		tse->setFaultLevel(fault_level);
 		to_opal->send(10, tse);
 
 
@@ -218,10 +231,12 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		if(fault_level == 0)
 		{
 			// We are building the first page in the page table!
+			cr3_init = 1;
 			(*CR3) = temp_ptr->getPaddress();
 			fault_level++;
 			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 			tse->setResp(temp_ptr->getAddress(),0,4096);
+			tse->setFaultLevel(fault_level);
 			to_opal->send(10, tse);
 
 		}
@@ -231,39 +246,57 @@ void PageTableWalker::handleEvent( SST::Event* e )
 			fault_level++;
 			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 			tse->setResp(temp_ptr->getAddress(),0,4096);
+			tse->setFaultLevel(fault_level);
 			to_opal->send(10, tse);
 
 		}
 		else if(fault_level == 2)
 		{
 			(*PUD)[temp_ptr->getAddress()/page_size[2]] = temp_ptr->getPaddress();
-			fault_level++;
-			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
-			//(*MAPPED_PAGE_SIZE1GB)[temp_ptr->getAddress()/page_size[2]] = 0;
-			tse->setResp(temp_ptr->getAddress(),0,4096);
-			to_opal->send(10, tse);
+			//if(temp_ptr->getSize() == page_size[2]) {
+			//	(*MAPPED_PAGE_SIZE1GB)[temp_ptr->getAddress()/page_size[2]] = 0;
+			//	fault_level = 0;
+			//	stall = false;
+			//	*hold = 0;
+
+			//} else {
+				fault_level++;
+				OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+				tse->setResp(temp_ptr->getAddress(),0,4096);
+				tse->setFaultLevel(fault_level);
+				to_opal->send(10, tse);
+
+			//}
 
 		}
 
 		else if(fault_level == 3)
 		{
 			(*PMD)[temp_ptr->getAddress()/page_size[1]] = temp_ptr->getPaddress();
-			//(*MAPPED_PAGE_SIZE2MB)[temp_ptr->getAddress()/page_size[1]] = 0;
-			fault_level++;
-			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
-			tse->setResp(temp_ptr->getAddress(),0,4096);
-			to_opal->send(10, tse);
+			//if(temp_ptr->getSize() == page_size[1]) {
+			//	(*MAPPED_PAGE_SIZE2MB)[temp_ptr->getAddress()/page_size[1]] = 0;
+			//	fault_level = 0;
+			//	stall = false;
+			//	*hold = 0;
+
+			//} else {
+				fault_level++;
+				OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+				tse->setResp(temp_ptr->getAddress(),0,4096);
+				tse->setFaultLevel(fault_level);
+				to_opal->send(10, tse);
+
+			//}
 
 		}
 		else if(fault_level == 4)
 		{
-			stall = false;
-			*hold = 0;
 			(*PTE)[temp_ptr->getAddress()/page_size[0]] = temp_ptr->getPaddress();
-
 			(*MAPPED_PAGE_SIZE4KB)[temp_ptr->getAddress()/page_size[0]] = 0;
-
 			fault_level = 0;
+			//stall = false;
+			//*hold = 0;
+			(*PENDING_OPAL_REQS).erase(temp_ptr->getAddress()/page_size[0]);
 
 		}
 
@@ -279,17 +312,71 @@ void PageTableWalker::handleEvent( SST::Event* e )
 void PageTableWalker::recvOpal(SST::Event * event)
 {
 
+	OpalEvent * ev =  dynamic_cast<OpalComponent::OpalEvent*> (event);
 
-	OpalEvent * temp_ptr =  dynamic_cast<OpalComponent::OpalEvent*> (event);
+	switch(ev->getType()) {
+	case SST::OpalComponent::EventType::RESPONSE:
+	{
+		SambaEvent * tse = new SambaEvent(EventType::OPAL_RESPONSE);
+		tse->setResp(ev->getAddress(), ev->getPaddress(),4096);
+		s_EventChan->send(10, tse);
+	}
+	break;
 
-	// Whenever we receve request from Opal, we just create event that will be handled by handleEvent
-	SambaEvent * tse = new SambaEvent(EventType::OPAL_RESPONSE);
-	tse->setResp(temp_ptr->getAddress(), temp_ptr->getPaddress(),4096);
-	//std::cerr << "Receviced Virtual addres: " << std::hex << temp_ptr->getAddress() << " Physical address: " << std::hex << temp_ptr->getAddress() << " size: " << temp_ptr->getSize() << std::endl;
-	s_EventChan->send(10, tse);
+	case SST::OpalComponent::EventType::INVALIDADDR:
+	{
+		*shootdown = 1;
+		shootdownId = ev->getShootdownId();
 
-	//std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()/4096<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
-	delete temp_ptr;
+		uint64_t newPaddress = ev->getPaddress();
+		uint64_t vaddress = ev->getAddress();
+		int faultLevel = ev->getFaultLevel();
+
+		// update physical address. get the level to update
+		// only by core 0
+		if(id == 0) {
+			if(faultLevel == 0 ) {
+				*CR3 = newPaddress;
+			}
+			else if(faultLevel == 1) {
+				if((*PGD).find(vaddress/page_size[3]) != (*PGD).end()) {
+					(*PGD)[vaddress/page_size[3]] = newPaddress;
+				}
+			}
+			else if(faultLevel == 2) {
+				if((*PUD).find(vaddress/page_size[2]) != (*PUD).end()){
+					(*PUD)[vaddress/page_size[2]] = newPaddress;
+				}
+			}
+			else if(faultLevel == 3) {
+				if((*PMD).find(vaddress/page_size[1]) != (*PMD).end()) {
+					(*PMD)[vaddress/page_size[1]] = newPaddress;
+				}
+			}
+			else if(faultLevel == 4) {
+				if((*PTE).find(vaddress/page_size[0]) != (*PTE).end()) {
+					(*PTE)[vaddress/page_size[0]] = newPaddress;
+				}
+			}
+			else
+				output->fatal(CALL_INFO, -1, "MMU: IVALIDATION DANGER!!\n");
+		}
+		// store the address to be invalidated
+		buffer.push_back(ev->getAddress());
+	}
+	break;
+
+	case SST::OpalComponent::EventType::SHOOTDOWN:
+	{
+		invalid_addrs->splice(invalid_addrs->begin(), buffer);
+	}
+	break;
+
+	default:
+		output->fatal(CALL_INFO, -1, "PTW unknown request from opal\n");
+	}
+
+	delete ev;
 
 }
 
@@ -308,7 +395,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 	insert_way(WID_Add[pw_id], find_victim_way(WID_Add[pw_id], WSR_COUNT[pw_id]), WSR_COUNT[pw_id]);
 
-	long long int addr = WID_Add[pw_id];
+	uint64_t addr = WID_Add[pw_id];
 
 	WSR_READY[pw_id]=true;
 
@@ -326,13 +413,13 @@ void PageTableWalker::recvResp(SST::Event * event)
 	{
 
 
-		long long int dummy_add = rand()%10000000;
+		uint64_t dummy_add = rand()%10000000;
 
 		// Time to use actual page table addresses if we have page tables
 		if(emulate_faults)
 		{
 
-			long long int page_table_start = 0;
+			uint64_t page_table_start = 0;
 			if(WSR_COUNT[pw_id]==4)
 				page_table_start = (*PGD)[addr/page_size[3]];
 			else if(WSR_COUNT[pw_id]==3)
@@ -375,12 +462,17 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 	if(stall && emulate_faults)
 	{
 
+		if((*PENDING_OPAL_REQS).find(stall_addr/page_size[0])==(*PENDING_OPAL_REQS).end()) {
+			stall = false;
+			*hold = 0;
+		}
+
 		return false;
 	}
 
 
 	int dispatched=0;
-	for(;st_1!=not_serviced.end(); st_1++)
+	for(;st_1!=not_serviced.end() && !(*shootdown); st_1++)
 	{
 		dispatched++;
 
@@ -401,10 +493,16 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 			if(fault)
 			{
-				SambaEvent * tse = new SambaEvent(EventType::PAGE_FAULT);
-				//	std::cout<<"Fault at address "<<addr<<std::endl;
-				tse->setResp(addr,0,4096);
-				s_EventChan->send(10, tse);
+				if((*PENDING_OPAL_REQS).find(addr/page_size[0])==(*PENDING_OPAL_REQS).end()) {
+					(*PENDING_OPAL_REQS)[addr/page_size[0]] = 0;
+					SambaEvent * tse = new SambaEvent(EventType::PAGE_FAULT);
+					//	std::cout<<"Fault at address "<<addr<<std::endl;
+					tse->setResp(addr,0,4096);
+					s_EventChan->send(10, tse);
+
+				}
+
+				stall_addr = addr;
 				stall = true;
 				*hold = 1;
 //				(*MAPPED_PAGE_SIZE4KB)[addr/page_size[0]] = 0; // FIXME: Hack to avoid propogating faulting VA through all events, only for initial testing
@@ -465,7 +563,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 					WID_EV[++mmu_id] = (*st_1);
 
-					long long int dummy_add = rand()%10000000;
+					uint64_t dummy_add = rand()%10000000;
 
 					// Use actual page table base to start the walking if we have real page tables
 					if(emulate_faults)
@@ -598,27 +696,55 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 
 
-void PageTableWalker::insert_way(long long int vaddr, int way, int struct_id)
+void PageTableWalker::insert_way(uint64_t vaddr, int way, int struct_id)
 {
 
 	int set=abs_int_Samba((vaddr/page_size[struct_id])%sets[struct_id]);
 	tags[struct_id][set][way]=vaddr/page_size[struct_id];
-
+	valid[struct_id][set][way]=true;
 
 }
 
 
 // Does the translation and updating the statistics of miss/hit
-long long int PageTableWalker::translate(long long int vadd)
+uint64_t PageTableWalker::translate(uint64_t vadd)
 {
 	return 1;
 
 }
 
 
+// Invalidate TLB entries
+void PageTableWalker::invalidate(uint64_t vadd)
+{
+
+	for(int id=0; id<sizes; id++)
+	{
+		int set= abs_int_Samba((vadd/page_size[id])%sets[id]);
+		for(int i=0; i<assoc[id]; i++) {
+			if(tags[id][set][i]==vadd/page_size[id]) {
+				valid[id][set][i] = false;
+				break;
+			}
+		}
+	}
+
+}
+
+
+// done with shootdown, send shootdown ack
+void PageTableWalker::sendShootdownAck()
+{
+	OpalEvent * tse = new OpalEvent(OpalComponent::EventType::SDACK);
+	tse->setShootdownId(shootdownId);
+	to_opal->send(10, tse);
+	*shootdown = 0;
+}
+
+
 
 // Find if it exists
-bool PageTableWalker::check_hit(long long int vadd, int struct_id)
+bool PageTableWalker::check_hit(uint64_t vadd, int struct_id)
 {
 
 
@@ -626,13 +752,13 @@ bool PageTableWalker::check_hit(long long int vadd, int struct_id)
 
 	for(int i=0; i<assoc[struct_id];i++)
 		if(tags[struct_id][set][i]==vadd/page_size[struct_id])
-			return true;
+			return valid[struct_id][set][i];
 
 	return false;
 }
 
 // To insert the translaiton
-int PageTableWalker::find_victim_way(long long int vadd, int struct_id)
+int PageTableWalker::find_victim_way(uint64_t vadd, int struct_id)
 {
 
 	int set= abs_int_Samba((vadd/page_size[struct_id])%sets[struct_id]);
@@ -646,7 +772,7 @@ int PageTableWalker::find_victim_way(long long int vadd, int struct_id)
 }
 
 // This function updates the LRU policy for a given address
-void PageTableWalker::update_lru(long long int vaddr, int struct_id)
+void PageTableWalker::update_lru(uint64_t vaddr, int struct_id)
 {
 
 	int lru_place=assoc[struct_id]-1;
