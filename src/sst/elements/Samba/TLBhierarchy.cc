@@ -54,10 +54,14 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 
 	hold = 0;  // Hold is set to 1 by the page table walker due to fault or shootdown, note that since we don't execute page fault handler or TLB shootdown routine on the core, we just stall TLB hierarchy to emulate the performance effect
 
+	shootdown = 0;  // Hold is set to 1 by the page table walker due to shootdown
+
 	std::string LEVEL = std::to_string(1);
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
 
 	emulate_faults  = ((uint32_t) params.find<uint32_t>("emulate_faults", 0));
+
+	max_shootdown_width = ((uint32_t) params.find<uint32_t>("max_shootdown_width", 4));
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
 	sprintf(subID, "%" PRIu32, coreID);
@@ -87,6 +91,8 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 	PTW->setServiceBack(TLB_CACHE[levels]->getPushedBack());
 	PTW->setServiceBackSize(TLB_CACHE[levels]->getPushedBackSize());
 	PTW->setHold(&hold);
+	PTW->setShootDown(&shootdown);
+	PTW->setInvalidate(&invalid_addrs);
 
 	TLB_CACHE[1]->setServiceBack(&mem_reqs);
 	TLB_CACHE[1]->setServiceBackSize(&mem_reqs_sizes);
@@ -110,7 +116,7 @@ TLBhierarchy::TLBhierarchy(ComponentId_t id, Params& params, int tlb_id)
 
 
 // For now, implement to return a dummy address
-long long int TLBhierarchy::translate(long long int VA) { return 0;}
+uint64_t TLBhierarchy::translate(uint64_t VA) { return 0;}
 
 
 void TLBhierarchy::handleEvent_CACHE( SST::Event * ev )
@@ -133,6 +139,31 @@ void TLBhierarchy::handleEvent_CPU(SST::Event* event)
 
 bool TLBhierarchy::tick(SST::Cycle_t x)
 {
+	if(shootdown)
+	{
+		int dispatched = 0;
+
+		while(!invalid_addrs.empty()){
+
+			if(dispatched >= max_shootdown_width)
+				return false;
+
+			for(int level = levels; level >= 1; level--)
+				TLB_CACHE[level]->invalidate(invalid_addrs.front());
+
+			PTW->invalidate(invalid_addrs.front());
+
+			invalid_addrs.pop_front();
+
+			if(invalid_addrs.empty())
+				PTW->sendShootdownAck();
+
+			dispatched++;
+		}
+
+		return false;
+	}
+
 	if(hold==1) // If the page table walker is suggesting to hold, the TLBhierarchy will stop processing any events
 	{
 		PTW->tick(x);
@@ -167,7 +198,7 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 		// Here we override the physical address provided by ariel memory manage by the one provided by Opal
 		if(emulate_faults)
 		{
-			long long int vaddr = ((MemEvent*) event)->getVirtualAddress();
+			uint64_t vaddr = ((MemEvent*) event)->getVirtualAddress();
 			if((*PTE).find(vaddr/4096)==(*PTE).end())
 				std::cout<<"Error: That page has never been mapped:  " << vaddr / 4096 << std::endl;
 

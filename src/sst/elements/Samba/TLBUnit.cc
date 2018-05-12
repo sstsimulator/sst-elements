@@ -47,6 +47,9 @@ TLB::TLB(int Page_size, int Assoc, TLB * Next_level, int Size)
 TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::Params& params)
 {
 
+	Owner = owner;
+
+	id = tlb_id;
 
 	level = Level;
 
@@ -81,6 +84,7 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 	// The stats that will appear, not that these stats are going to be part of the Samba unit
 	statTLBHits = owner->registerStatistic<uint64_t>( "tlb_hits", subID);
 	statTLBMisses = owner->registerStatistic<uint64_t>( "tlb_misses", subID );
+	statTLBShootdowns = owner->registerStatistic<uint64_t>( "tlb_shootdown", subID );
 
 	max_width = ((uint32_t) params.find<uint32_t>("max_width_L"+LEVEL, 4));
 
@@ -93,7 +97,8 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 	assoc = new int[sizes];
 	page_size = new int[sizes];
 	sets = new int[sizes];
-	tags = new long long int**[sizes];
+	tags = new uint64_t**[sizes];
+	valid = new bool**[sizes];
 	lru = new int **[sizes];
 
 
@@ -125,17 +130,21 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 	for(int id=0; id< sizes; id++)
 	{
 
-		tags[id] = new long long int*[sets[id]];
+		tags[id] = new uint64_t*[sets[id]];
+
+		valid[id] = new bool*[sets[id]];
 
 		lru[id] = new int*[sets[id]];
 
 		for(int i=0; i < sets[id]; i++)
 		{
-			tags[id][i]=new long long int[assoc[id]];
+			tags[id][i]=new uint64_t[assoc[id]];
+			valid[id][i]=new bool[assoc[id]];
 			lru[id][i]=new int[assoc[id]];
 			for(int j=0; j<assoc[id];j++)
 			{
 				tags[id][i][j]=-1;
+				valid[id][i][j]=true;
 				lru[id][i][j]=j;
 			}
 		}
@@ -426,19 +435,19 @@ bool TLB::tick(SST::Cycle_t x)
 
 
 // Used to insert a new translation on a specific way of the TLB structure
-void TLB::insert_way(long long int vaddr, int way, int struct_id)
+void TLB::insert_way(uint64_t vaddr, int way, int struct_id)
 {
 
 	int set=abs_int((vaddr/page_size[struct_id])%sets[struct_id]);
 	tags[struct_id][set][way]=vaddr/page_size[struct_id];
-
+	valid[struct_id][set][way]=true;
 
 }
 
 
 
 // This function will be used later to get the translation of a specific virtual address (if cached)
-long long int TLB::translate(long long int vadd)
+uint64_t TLB::translate(uint64_t vadd)
 {
 	return 1;
 
@@ -446,21 +455,41 @@ long long int TLB::translate(long long int vadd)
 
 
 
+// Invalidate TLB entries
+void TLB::invalidate(uint64_t vadd)
+{
+
+	for(int id=0; id<sizes; id++)
+	{
+		int set= abs_int((vadd/page_size[id])%sets[id]);
+		for(int i=0; i<assoc[id]; i++) {
+			if(tags[id][set][i]==vadd/page_size[id]) {
+				valid[id][set][i] = false;
+				break;
+			}
+		}
+	}
+
+	//statTLBShootdowns->addData(1);
+}
+
+
+
 // Find if the translation  exists on structure struct_id
-bool TLB::check_hit(long long int vadd, int struct_id)
+bool TLB::check_hit(uint64_t vadd, int struct_id)
 {
 
 
 	int set= abs_int((vadd/page_size[struct_id])%sets[struct_id]);
 	for(int i=0; i<assoc[struct_id];i++)
 		if(tags[struct_id][set][i]==vadd/page_size[struct_id])
-			return true;
+			return valid[struct_id][set][i];
 
 	return false;
 }
 
 // To insert the translaiton
-int TLB::find_victim_way(long long int vadd, int struct_id)
+int TLB::find_victim_way(uint64_t vadd, int struct_id)
 {
 
 	int set= abs_int((vadd/page_size[struct_id])%sets[struct_id]);
@@ -474,7 +503,7 @@ int TLB::find_victim_way(long long int vadd, int struct_id)
 }
 
 // This function updates the LRU position for a given address of a specific structure
-void TLB::update_lru(long long int vaddr, int struct_id)
+void TLB::update_lru(uint64_t vaddr, int struct_id)
 {
 
 	int lru_place=assoc[struct_id]-1;
