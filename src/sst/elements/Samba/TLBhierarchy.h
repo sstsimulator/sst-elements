@@ -59,6 +59,8 @@ namespace SST { namespace SambaComponent{
 		// If faults are emulated
 	        int emulate_faults;
 
+	    int max_shootdown_width;
+
 		SST::Link * to_cache;
 
 
@@ -80,9 +82,14 @@ namespace SST { namespace SambaComponent{
 		// This vector holds the current requests to be translated
 		std::vector<SST::Event *> mem_reqs;
 
-		// This tells TLB hierarchy to stall due to emulated page fault or TLB Shootdown
+		// This tells TLB hierarchy to stall due to emulated page fault
 		int hold;
 
+		// This tells TLB hierarchy to invalidate all TLB entries due to TLB Shootdown
+		int shootdown;
+
+		// This vector holds the invalidation requests
+		std::list<uint64_t> invalid_addrs;
 
 		// This vector holds the current requests to be translated
 		std::map<SST::Event *, long long int> mem_reqs_sizes;
@@ -97,26 +104,27 @@ namespace SST { namespace SambaComponent{
 		int max_outstanding; 
 
 		// Holds CR3 value of current context
-		long long int *CR3;
+		uint64_t *CR3;
 		//
 		// Holds the PGD physical pointers, the key is the 9 bits 39-47, i.e., VA/(4096*512*512*512)
-		std::map<long long int, long long int> * PGD;
+		std::map<uint64_t, uint64_t> * PGD;
 
 		// Holds the PUD physical pointers, the key is the 9 bits 30-38, i.e., VA/(4096*512*512)
-		std::map<long long int, long long int> * PUD;
+		std::map<uint64_t, uint64_t> * PUD;
 
 		// Holds the PMD physical pointers, the key is the 9 bits 21-29, i.e., VA/(4096*512)
-		std::map<long long int, long long int> * PMD;
+		std::map<uint64_t, uint64_t> * PMD;
 
 		// Holds the PTE physical pointers, the key is the 9 bits 12-20, i.e., VA/(4096)
-		std::map<long long int, long long int> * PTE; // This should give you the exact physical address of the page
+		std::map<uint64_t, uint64_t> * PTE; // This should give you the exact physical address of the page
 
 
 		// The structures below are used to quickly check if the page is mapped or not
-		std::map<long long int,int> * MAPPED_PAGE_SIZE4KB;
-		std::map<long long int,int> * MAPPED_PAGE_SIZE2MB;
-		std::map<long long int,int> * MAPPED_PAGE_SIZE1GB;
+		std::map<uint64_t,int> * MAPPED_PAGE_SIZE4KB;
+		std::map<uint64_t,int> * MAPPED_PAGE_SIZE2MB;
+		std::map<uint64_t,int> * MAPPED_PAGE_SIZE1GB;
 
+		std::map<uint64_t,int> *PENDING_OPAL_REQS;
 
 
 		public:
@@ -132,7 +140,8 @@ namespace SST { namespace SambaComponent{
 		void handleEvent_OPAL(SST::Event * event);
 
 
-		void setPageTablePointers( long long int * cr3, std::map<long long int, long long int> * pgd,  std::map<long long int, long long int> * pud,  std::map<long long int, long long int> * pmd,  std::map<long long int, long long int> * pte,  std::map<long long int,int> * gb,  std::map<long long int,int> * mb,  std::map<long long int,int> * kb)
+		void setPageTablePointers( uint64_t * cr3, std::map<uint64_t, uint64_t> * pgd,  std::map<uint64_t, uint64_t> * pud,  std::map<uint64_t, uint64_t> * pmd, std::map<uint64_t, uint64_t> * pte,
+				std::map<uint64_t,int> * gb,  std::map<uint64_t,int> * mb,  std::map<uint64_t,int> * kb, std::map<uint64_t,int> * pr)
 		{
 	                CR3 = cr3;
                         PGD = pgd;
@@ -141,10 +150,11 @@ namespace SST { namespace SambaComponent{
                         PTE = pte;
                         MAPPED_PAGE_SIZE4KB = kb;
                         MAPPED_PAGE_SIZE2MB = mb;
-                        MAPPED_PAGE_SIZE1GB = gb;	
-	
+                        MAPPED_PAGE_SIZE1GB = gb;
+                        PENDING_OPAL_REQS = pr;
+
 			if(PTW!=NULL)
-				PTW->setPageTablePointers(cr3, pgd, pud, pmd, pte, gb, mb, kb);
+				PTW->setPageTablePointers(cr3, pgd, pud, pmd, pte, gb, mb, kb, pr);
 
 		}
 		// Constructor for component
@@ -159,7 +169,7 @@ namespace SST { namespace SambaComponent{
 
 		TLBhierarchy() {};
 		// Doing the translation
-		long long int translate(long long int VA);
+		uint64_t translate(uint64_t VA);
 
 		Statistic<uint64_t>* total_waiting;
 		//	std::map<int, Statistic<uint64_t>*> statTLBHits;
