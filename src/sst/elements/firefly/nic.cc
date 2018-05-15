@@ -70,6 +70,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
+    SimTime_t shmemSendSetupLat =  params.find<SimTime_t>( "shmemSendSetupLat", 100 ) ;
     int numShmemCmdSlots =    params.find<int>( "numShmemCmdSlots", 32 );
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
     int maxRecvMachineQsize = params.find<int>( "maxRecvMachineQsize", 1 );
@@ -101,7 +102,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
         assert(0);
     }
 
-    int minPktPayload = 64;
+    int minPktPayload = 32;
     assert( ( packetSizeInBytes - packetOverhead ) >= minPktPayload );
 
 	UnitAlgebra input_buf_size = params.find<SST::UnitAlgebra>("input_buf_size" );
@@ -159,7 +160,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
         m_sendEntryQ[i].first = false;
     }
 
-    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
+    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns(), shmemSendSetupLat );
 
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );

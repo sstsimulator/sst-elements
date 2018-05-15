@@ -81,9 +81,10 @@ class Shmem {
 		
 	const char* prefix() { return m_prefix.c_str(); }
   public:
-    Shmem( Nic& nic, int id, int numVnics, Output& output, int numCmdSlots, SimTime_t nic2HostDelay_ns, SimTime_t host2NicDelay_ns ) : 
+    Shmem( Nic& nic, int id, int numVnics, Output& output, int numCmdSlots, SimTime_t nic2HostDelay_ns, SimTime_t host2NicDelay_ns,
+                SimTime_t sendSetupLatency ) : 
 		m_nic( nic ), m_dbg(output), m_one( (long) 1 ), m_freeCmdSlots( numCmdSlots ),
-    	m_nic2HostDelay_ns(nic2HostDelay_ns), m_host2NicDelay_ns(host2NicDelay_ns)
+    	m_nic2HostDelay_ns(nic2HostDelay_ns), m_host2NicDelay_ns(host2NicDelay_ns), m_sendSetupLatency( sendSetupLatency )
     {
         m_prefix = "@t:" + std::to_string(id) + ":Nic::Shmem::@p():@l ";
         m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"this=%p\n",this );
@@ -180,4 +181,5 @@ private:
     std::vector<std::vector< std::pair<Hermes::MemAddr, size_t> > > m_regMem;
 	SimTime_t m_nic2HostDelay_ns;
 	SimTime_t m_host2NicDelay_ns;
+    SimTime_t m_sendSetupLatency;
 };
