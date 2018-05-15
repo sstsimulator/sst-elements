@@ -110,7 +110,6 @@ class DragonFly2Info(TopoInfo):
 		self.params["dragonfly:algorithm"] =  "minimal" 
 
 		self.numNodes = int(nGrp) * hostsPerGroup
-                print self.numNodes
                 
 	def getNetworkParams(self):
 		return self.params
