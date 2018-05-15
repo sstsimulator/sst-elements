@@ -73,7 +73,8 @@ class ArielCPU : public SST::Component {
         {"clock", "Clock rate at which events are generated and processed", "1GHz"},
         {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
         {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
-        {"opal_enabled", "If enabled, MLM allocation hints will be communicated to the centralized memory manager", "0"})
+        {"opal_enabled", "If enabled, MLM allocation hints will be communicated to the centralized memory manager", "0"},
+        {"opal_latency", "latency to communicate to the centralized memory manager", "32ps"})
 
     SST_ELI_DOCUMENT_PORTS(
         {"cache_link_%(corecount)d", "Each core's link to its cache", {}},

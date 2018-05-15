@@ -45,6 +45,8 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	int  page_walk_latency = ((uint32_t) params.find<uint32_t>("page_walk_latency", 50));
 
+	std::string opal_latency = params.find<std::string>("opal_latency", "30ps");
+
 	TLB = new TLBhierarchy*[core_count];
 	std::cout<<"Initialized with "<<core_count<<" cores"<<std::endl;
 
@@ -103,7 +105,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 		if(emulate_faults==1)
 		{
-			link4 = configureLink(link_buffer4, "30ps", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvOpal));
+			link4 = configureLink(link_buffer4, opal_latency, new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvOpal));
 			ptw_to_opal[i] = link4;
 			TLB[i]->setOpalLink(link4);
 

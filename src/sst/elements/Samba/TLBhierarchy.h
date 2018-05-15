@@ -89,7 +89,7 @@ namespace SST { namespace SambaComponent{
 		int shootdown;
 
 		// This vector holds the invalidation requests
-		std::list<uint64_t> invalid_addrs;
+		std::list<Address_t> invalid_addrs;
 
 		// This vector holds the current requests to be translated
 		std::map<SST::Event *, long long int> mem_reqs_sizes;
@@ -104,27 +104,27 @@ namespace SST { namespace SambaComponent{
 		int max_outstanding; 
 
 		// Holds CR3 value of current context
-		uint64_t *CR3;
+		Address_t *CR3;
 		//
 		// Holds the PGD physical pointers, the key is the 9 bits 39-47, i.e., VA/(4096*512*512*512)
-		std::map<uint64_t, uint64_t> * PGD;
+		std::map<Address_t, Address_t> * PGD;
 
 		// Holds the PUD physical pointers, the key is the 9 bits 30-38, i.e., VA/(4096*512*512)
-		std::map<uint64_t, uint64_t> * PUD;
+		std::map<Address_t, Address_t> * PUD;
 
 		// Holds the PMD physical pointers, the key is the 9 bits 21-29, i.e., VA/(4096*512)
-		std::map<uint64_t, uint64_t> * PMD;
+		std::map<Address_t, Address_t> * PMD;
 
 		// Holds the PTE physical pointers, the key is the 9 bits 12-20, i.e., VA/(4096)
-		std::map<uint64_t, uint64_t> * PTE; // This should give you the exact physical address of the page
+		std::map<Address_t, Address_t> * PTE; // This should give you the exact physical address of the page
 
 
 		// The structures below are used to quickly check if the page is mapped or not
-		std::map<uint64_t,int> * MAPPED_PAGE_SIZE4KB;
-		std::map<uint64_t,int> * MAPPED_PAGE_SIZE2MB;
-		std::map<uint64_t,int> * MAPPED_PAGE_SIZE1GB;
+		std::map<Address_t,int> * MAPPED_PAGE_SIZE4KB;
+		std::map<Address_t,int> * MAPPED_PAGE_SIZE2MB;
+		std::map<Address_t,int> * MAPPED_PAGE_SIZE1GB;
 
-		std::map<uint64_t,int> *PENDING_OPAL_REQS;
+		std::map<Address_t,int> *PENDING_OPAL_REQS;
 
 
 		public:
@@ -140,8 +140,8 @@ namespace SST { namespace SambaComponent{
 		void handleEvent_OPAL(SST::Event * event);
 
 
-		void setPageTablePointers( uint64_t * cr3, std::map<uint64_t, uint64_t> * pgd,  std::map<uint64_t, uint64_t> * pud,  std::map<uint64_t, uint64_t> * pmd, std::map<uint64_t, uint64_t> * pte,
-				std::map<uint64_t,int> * gb,  std::map<uint64_t,int> * mb,  std::map<uint64_t,int> * kb, std::map<uint64_t,int> * pr)
+		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte,
+				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr)
 		{
 	                CR3 = cr3;
                         PGD = pgd;
@@ -169,7 +169,7 @@ namespace SST { namespace SambaComponent{
 
 		TLBhierarchy() {};
 		// Doing the translation
-		uint64_t translate(uint64_t VA);
+		Address_t translate(Address_t VA);
 
 		Statistic<uint64_t>* total_waiting;
 		//	std::map<int, Statistic<uint64_t>*> statTLBHits;

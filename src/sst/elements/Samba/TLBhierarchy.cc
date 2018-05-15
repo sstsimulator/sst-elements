@@ -116,7 +116,7 @@ TLBhierarchy::TLBhierarchy(ComponentId_t id, Params& params, int tlb_id)
 
 
 // For now, implement to return a dummy address
-uint64_t TLBhierarchy::translate(uint64_t VA) { return 0;}
+Address_t TLBhierarchy::translate(Address_t VA) { return 0;}
 
 
 void TLBhierarchy::handleEvent_CACHE( SST::Event * ev )
@@ -198,7 +198,7 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 		// Here we override the physical address provided by ariel memory manage by the one provided by Opal
 		if(emulate_faults)
 		{
-			uint64_t vaddr = ((MemEvent*) event)->getVirtualAddress();
+			Address_t vaddr = ((MemEvent*) event)->getVirtualAddress();
 			if((*PTE).find(vaddr/4096)==(*PTE).end())
 				std::cout<<"Error: That page has never been mapped:  " << vaddr / 4096 << std::endl;
 

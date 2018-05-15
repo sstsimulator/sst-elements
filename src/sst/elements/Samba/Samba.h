@@ -59,16 +59,16 @@ namespace SST {
 				// Following are the page table components of the application running on the Ariel instance that owns this Samba unit
 				// Note, the application might be multi-threaded, however, all threads will share the sambe page table components below
 
-				uint64_t CR3;
-				std::map<uint64_t, uint64_t> PGD;
-				std::map<uint64_t, uint64_t> PUD;
-				std::map<uint64_t, uint64_t> PMD;
-				std::map<uint64_t, uint64_t> PTE;
-				std::map<uint64_t,int>  MAPPED_PAGE_SIZE4KB;
-				std::map<uint64_t,int>  MAPPED_PAGE_SIZE2MB;
-				std::map<uint64_t,int>  MAPPED_PAGE_SIZE1GB;
+				Address_t CR3;
+				std::map<Address_t, Address_t> PGD;
+				std::map<Address_t, Address_t> PUD;
+				std::map<Address_t, Address_t> PMD;
+				std::map<Address_t, Address_t> PTE;
+				std::map<Address_t,int>  MAPPED_PAGE_SIZE4KB;
+				std::map<Address_t,int>  MAPPED_PAGE_SIZE2MB;
+				std::map<Address_t,int>  MAPPED_PAGE_SIZE1GB;
 
-				std::map<uint64_t,int> PENDING_OPAL_REQS;
+				std::map<Address_t,int> PENDING_OPAL_REQS;
 
 
 			private:

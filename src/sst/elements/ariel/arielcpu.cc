@@ -154,6 +154,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     uint32_t maxPendingTransCore = (uint32_t) params.find<uint32_t>("maxtranscore", 16);
     uint64_t cacheLineSize       = (uint64_t) params.find<uint32_t>("cachelinesize", 64);
     int op_e = (uint32_t) params.find<uint32_t>("opal_enabled", 0);
+    std::string op_latency = params.find<std::string>("opal_latency", "30ps");
 
     if(op_e == 1)
         opal_enabled = true;
@@ -384,7 +385,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
         if(opal_enabled) {
             sprintf(link_buffer, "opal_link_%" PRIu32, i);
-            cpu_to_opal_links[i] = configureLink(link_buffer, "30ps", new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleInterruptEvent));
+            cpu_to_opal_links[i] = configureLink(link_buffer, op_latency, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleInterruptEvent));
             cpu_cores[i]->setOpalLink(cpu_to_opal_links[i]);
             cpu_cores[i]->setOpal();
         }

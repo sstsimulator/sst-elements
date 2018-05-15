@@ -31,6 +31,7 @@
 // This file defines the page table walker and 
 
 typedef std::pair<uint64_t, int> id_type;
+typedef uint64_t Address_t;
 
 using namespace SST::Interfaces;
 using namespace SST;
@@ -52,7 +53,7 @@ namespace SST { namespace SambaComponent{
 
 		int * assoc; // This represents the associativiety
 
-		uint64_t *** tags; // This will hold the tags
+		Address_t *** tags; // This will hold the tags
 
 		bool *** valid; // This will hold the status of tags
 
@@ -69,35 +70,35 @@ namespace SST { namespace SambaComponent{
 
 		int shootdownId;
 
-		std::list<uint64_t> buffer;
-		std::list<uint64_t> * invalid_addrs; // This is used to store address invalidation requests.
+		std::list<Address_t> buffer;
+		std::list<Address_t> * invalid_addrs; // This is used to store address invalidation requests.
 
 		// ------------- Note that we assume that for each Samba componenet instance, all units run the same VMA, thus all share the same page table
 		// ------------- Our assumption is based on the fact that Ariel instances (mapped one-to-one to Samba instances) can only run one application
 
 		// Holds CR3 value of current context
-		uint64_t *CR3;
+		Address_t *CR3;
 		int cr3_init;
 
 		// Holds the PGD physical pointers, the key is the 9 bits 39-47, i.e., VA/(4096*512*512*512)
-		std::map<uint64_t, uint64_t> * PGD;
+		std::map<Address_t, Address_t> * PGD;
 
 		// Holds the PUD physical pointers, the key is the 9 bits 30-38, i.e., VA/(4096*512*512)
-		std::map<uint64_t, uint64_t> * PUD;
+		std::map<Address_t, Address_t> * PUD;
 
 		// Holds the PMD physical pointers, the key is the 9 bits 21-29, i.e., VA/(4096*512)
-		std::map<uint64_t, uint64_t> * PMD;
+		std::map<Address_t, Address_t> * PMD;
 
 		// Holds the PTE physical pointers, the key is the 9 bits 12-20, i.e., VA/(4096)
-		std::map<uint64_t, uint64_t> * PTE; // This should give you the exact physical address of the page
+		std::map<Address_t, Address_t> * PTE; // This should give you the exact physical address of the page
 
 
 		// The structures below are used to quickly check if the page is mapped or not
-		std::map<uint64_t,int> * MAPPED_PAGE_SIZE4KB;
-		std::map<uint64_t,int> * MAPPED_PAGE_SIZE2MB;
-		std::map<uint64_t,int> * MAPPED_PAGE_SIZE1GB;
+		std::map<Address_t,int> * MAPPED_PAGE_SIZE4KB;
+		std::map<Address_t,int> * MAPPED_PAGE_SIZE2MB;
+		std::map<Address_t,int> * MAPPED_PAGE_SIZE1GB;
 
-		std::map<uint64_t,int> *PENDING_OPAL_REQS;
+		std::map<Address_t,int> *PENDING_OPAL_REQS;
 
 
 
@@ -108,7 +109,7 @@ namespace SST { namespace SambaComponent{
 
 		bool stall; // This indicates the page table walker is stalling due to a fault
 
-		uint64_t stall_addr; // stores the address for which ptw was stalled
+		Address_t stall_addr; // stores the address for which ptw was stalled
 
 		int  * sets; //stores the number of sets
 
@@ -165,8 +166,8 @@ namespace SST { namespace SambaComponent{
 		PageTableWalker(int page_size, int assoc, PageTableWalker * next_level, int size);
 		PageTableWalker(int tlb_id, PageTableWalker * Next_level,int level, SST::Component * owner, SST::Params& params);
 
-		void setPageTablePointers( uint64_t * cr3, std::map<uint64_t, uint64_t> * pgd,  std::map<uint64_t, uint64_t> * pud,  std::map<uint64_t, uint64_t> * pmd, std::map<uint64_t, uint64_t> * pte,
-				std::map<uint64_t,int> * gb,  std::map<uint64_t,int> * mb,  std::map<uint64_t,int> * kb, std::map<uint64_t,int> * pr)
+		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte,
+				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr)
 		{
 			CR3 = cr3;
 			PGD = pgd;
@@ -182,7 +183,7 @@ namespace SST { namespace SambaComponent{
 		}
 
 		// Does the translation and updating the statistics of miss/hit
-		uint64_t translate(uint64_t vadd);
+		Address_t translate(Address_t vadd);
 
 
 		void setEventChannel(SST::Link * x) { s_EventChan = x; }
@@ -196,16 +197,16 @@ namespace SST { namespace SambaComponent{
 		void setLineSize(uint64_t size) { line_size = size; }
 
 		// invalidate PTWC
-		void invalidate(uint64_t vadd);
+		void invalidate(Address_t vadd);
 
 		// shootdown ack
 		void sendShootdownAck();
 
 		// Find if it exists
-		bool check_hit(uint64_t vadd, int struct_id);
+		bool check_hit(Address_t vadd, int struct_id);
 
 		// To insert the translaiton
-		int find_victim_way(uint64_t vadd, int struct_id);
+		int find_victim_way(Address_t vadd, int struct_id);
 
 		void setServiceBack( std::vector<SST::Event *> * x) { service_back = x;}
 
@@ -213,7 +214,7 @@ namespace SST { namespace SambaComponent{
 
 		void setShootDown(int * tmp) { shootdown = tmp; }
 
-		void setInvalidate(std::list<uint64_t> * x) { invalid_addrs = x; }
+		void setInvalidate(std::list<Address_t> * x) { invalid_addrs = x; }
 
 		void recvResp(SST::Event* event);
 
@@ -228,12 +229,12 @@ namespace SST { namespace SambaComponent{
 		std::map<long long int, int> WSR_COUNT;
 		std::map<long long int, bool> WSR_READY;
 
-		std::map<long long int, uint64_t> WID_Add;
+		std::map<long long int, Address_t> WID_Add;
 
 		std::map<long long int, SST::Event *> WID_EV;
 		std::map<id_type, long long int> MEM_REQ;
 
-		void update_lru(uint64_t vaddr, int struct_id);
+		void update_lru(Address_t vaddr, int struct_id);
 
 
 		Statistic<uint64_t>* statPageTableWalkerHits;
@@ -245,7 +246,7 @@ namespace SST { namespace SambaComponent{
 		int getHits(){return hits;}
 		int getMisses(){return misses;}
 
-		void insert_way(uint64_t vaddr, int way, int struct_id);
+		void insert_way(Address_t vaddr, int way, int struct_id);
 
 		// This one is to push a request to this structure
 		void push_request(SST::Event * x) {not_serviced.push_back(x);}

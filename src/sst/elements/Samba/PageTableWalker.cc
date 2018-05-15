@@ -113,7 +113,7 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 	assoc = new int[sizes];
 	page_size = new uint64_t[sizes];
 	sets = new int[sizes];
-	tags = new uint64_t**[sizes];
+	tags = new Address_t**[sizes];
 	valid = new bool**[sizes];
 	lru = new int **[sizes];
 
@@ -143,7 +143,7 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 	for(int id=0; id< sizes; id++)
 	{
 
-		tags[id] = new uint64_t*[sets[id]];
+		tags[id] = new Address_t*[sets[id]];
 
 		valid[id] = new bool*[sets[id]];
 
@@ -151,7 +151,7 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 
 		for(int i=0; i < sets[id]; i++)
 		{
-			tags[id][i]=new uint64_t[assoc[id]];
+			tags[id][i]=new Address_t[assoc[id]];
 			valid[id][i]=new bool[assoc[id]];
 			lru[id][i]=new int[assoc[id]];
 			for(int j=0; j<assoc[id];j++)
@@ -328,13 +328,13 @@ void PageTableWalker::recvOpal(SST::Event * event)
 		*shootdown = 1;
 		shootdownId = ev->getShootdownId();
 
-		uint64_t newPaddress = ev->getPaddress();
-		uint64_t vaddress = ev->getAddress();
+		Address_t newPaddress = ev->getPaddress();
+		Address_t vaddress = ev->getAddress();
 		int faultLevel = ev->getFaultLevel();
 
 		// update physical address. get the level to update
 		// only by core 0
-		if(id == 0) {
+		if(0 == id) {
 			if(faultLevel == 0 ) {
 				*CR3 = newPaddress;
 			}
@@ -395,7 +395,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 	insert_way(WID_Add[pw_id], find_victim_way(WID_Add[pw_id], WSR_COUNT[pw_id]), WSR_COUNT[pw_id]);
 
-	uint64_t addr = WID_Add[pw_id];
+	Address_t addr = WID_Add[pw_id];
 
 	WSR_READY[pw_id]=true;
 
@@ -413,13 +413,13 @@ void PageTableWalker::recvResp(SST::Event * event)
 	{
 
 
-		uint64_t dummy_add = rand()%10000000;
+		Address_t dummy_add = rand()%10000000;
 
 		// Time to use actual page table addresses if we have page tables
 		if(emulate_faults)
 		{
 
-			uint64_t page_table_start = 0;
+			Address_t page_table_start = 0;
 			if(WSR_COUNT[pw_id]==4)
 				page_table_start = (*PGD)[addr/page_size[3]];
 			else if(WSR_COUNT[pw_id]==3)
@@ -432,7 +432,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 			dummy_add = page_table_start + (addr/page_size[WSR_COUNT[pw_id]-1])%512;
 
 		}
-		uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
+		Address_t dummy_base_add = dummy_add & ~(line_size - 1);
 		MemEvent *e = new MemEvent(Owner, dummy_add, dummy_base_add, Command::GetS);
 		SST::Event * ev = e;
 
@@ -481,7 +481,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 			break;
 
 		SST::Event * ev = *st_1; 
-		uint64_t addr = ((MemEvent*) ev)->getVirtualAddress();
+		Address_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
 		// A sneak-peak if the access is going to cause a page fault
 		if(emulate_faults==1)
@@ -563,7 +563,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 					WID_EV[++mmu_id] = (*st_1);
 
-					uint64_t dummy_add = rand()%10000000;
+					Address_t dummy_add = rand()%10000000;
 
 					// Use actual page table base to start the walking if we have real page tables
 					if(emulate_faults)
@@ -571,7 +571,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 						dummy_add = (*CR3) + (addr/page_size[2])%512;
 					}
 
-					uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
+					Address_t dummy_base_add = dummy_add & ~(line_size - 1);
 					MemEvent *e = new MemEvent(Owner, dummy_add, dummy_base_add, Command::GetS);
 					SST::Event * ev = e;
 
@@ -629,7 +629,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 		{
 
 
-			uint64_t addr = ((MemEvent*) st->first)->getVirtualAddress();
+			Address_t addr = ((MemEvent*) st->first)->getVirtualAddress();
 
 
 			// Double checking that we actually still don't have it inserted
@@ -696,7 +696,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 
 
-void PageTableWalker::insert_way(uint64_t vaddr, int way, int struct_id)
+void PageTableWalker::insert_way(Address_t vaddr, int way, int struct_id)
 {
 
 	int set=abs_int_Samba((vaddr/page_size[struct_id])%sets[struct_id]);
@@ -707,7 +707,7 @@ void PageTableWalker::insert_way(uint64_t vaddr, int way, int struct_id)
 
 
 // Does the translation and updating the statistics of miss/hit
-uint64_t PageTableWalker::translate(uint64_t vadd)
+Address_t PageTableWalker::translate(Address_t vadd)
 {
 	return 1;
 
@@ -715,7 +715,7 @@ uint64_t PageTableWalker::translate(uint64_t vadd)
 
 
 // Invalidate TLB entries
-void PageTableWalker::invalidate(uint64_t vadd)
+void PageTableWalker::invalidate(Address_t vadd)
 {
 
 	for(int id=0; id<sizes; id++)
@@ -744,7 +744,7 @@ void PageTableWalker::sendShootdownAck()
 
 
 // Find if it exists
-bool PageTableWalker::check_hit(uint64_t vadd, int struct_id)
+bool PageTableWalker::check_hit(Address_t vadd, int struct_id)
 {
 
 
@@ -758,7 +758,7 @@ bool PageTableWalker::check_hit(uint64_t vadd, int struct_id)
 }
 
 // To insert the translaiton
-int PageTableWalker::find_victim_way(uint64_t vadd, int struct_id)
+int PageTableWalker::find_victim_way(Address_t vadd, int struct_id)
 {
 
 	int set= abs_int_Samba((vadd/page_size[struct_id])%sets[struct_id]);
@@ -772,7 +772,7 @@ int PageTableWalker::find_victim_way(uint64_t vadd, int struct_id)
 }
 
 // This function updates the LRU policy for a given address
-void PageTableWalker::update_lru(uint64_t vaddr, int struct_id)
+void PageTableWalker::update_lru(Address_t vaddr, int struct_id)
 {
 
 	int lru_place=assoc[struct_id]-1;

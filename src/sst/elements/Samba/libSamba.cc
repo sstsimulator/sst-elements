@@ -66,6 +66,7 @@ static const ElementInfoParam Samba_params[] = {
     {"page_walk_latency", "Each page table walk latency in nanoseconds", "50"},
     {"self_connected", "Determines if the page walkers are acutally connected to memory hierarchy or just add fixed latency (self-connected)", "0"},
     {"emulate_faults", "This indicates if the page faults should be emulated through requesting pages from Opal", "0"},
+    {"opal_latency", "latency to communicate to the centralized memory manager", "32ps"},
     {NULL, NULL, NULL},
 };
 

@@ -97,7 +97,7 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 	assoc = new int[sizes];
 	page_size = new int[sizes];
 	sets = new int[sizes];
-	tags = new uint64_t**[sizes];
+	tags = new Address_t**[sizes];
 	valid = new bool**[sizes];
 	lru = new int **[sizes];
 
@@ -130,7 +130,7 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 	for(int id=0; id< sizes; id++)
 	{
 
-		tags[id] = new uint64_t*[sets[id]];
+		tags[id] = new Address_t*[sets[id]];
 
 		valid[id] = new bool*[sets[id]];
 
@@ -138,7 +138,7 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 
 		for(int i=0; i < sets[id]; i++)
 		{
-			tags[id][i]=new uint64_t[assoc[id]];
+			tags[id][i]=new Address_t[assoc[id]];
 			valid[id][i]=new bool[assoc[id]];
 			lru[id][i]=new int[assoc[id]];
 			for(int j=0; j<assoc[id];j++)
@@ -181,7 +181,7 @@ bool TLB::tick(SST::Cycle_t x)
 
 		SST::Event * ev = pushed_back.back();
 
-		uint64_t addr = ((MemEvent*) ev)->getVirtualAddress();
+		Address_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
 
 
@@ -270,7 +270,7 @@ bool TLB::tick(SST::Cycle_t x)
 			break;
 
 		SST::Event * ev = *st_1; 
-		uint64_t addr = ((MemEvent*) ev)->getVirtualAddress();
+		Address_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
 
 		// Those track if any hit in one of the supported pages' structures
@@ -374,7 +374,7 @@ bool TLB::tick(SST::Cycle_t x)
 
 			//	std::cout<<"The request was read at "<<st->second<<" The time now is "<<x<<std::endl;
 
-			uint64_t addr = ((MemEvent*) st->first)->getVirtualAddress();
+			Address_t addr = ((MemEvent*) st->first)->getVirtualAddress();
 
 
 			if(SIZE_LOOKUP.find(ready_by_size[st->first])!= SIZE_LOOKUP.end())
@@ -435,7 +435,7 @@ bool TLB::tick(SST::Cycle_t x)
 
 
 // Used to insert a new translation on a specific way of the TLB structure
-void TLB::insert_way(uint64_t vaddr, int way, int struct_id)
+void TLB::insert_way(Address_t vaddr, int way, int struct_id)
 {
 
 	int set=abs_int((vaddr/page_size[struct_id])%sets[struct_id]);
@@ -447,7 +447,7 @@ void TLB::insert_way(uint64_t vaddr, int way, int struct_id)
 
 
 // This function will be used later to get the translation of a specific virtual address (if cached)
-uint64_t TLB::translate(uint64_t vadd)
+Address_t TLB::translate(Address_t vadd)
 {
 	return 1;
 
@@ -456,7 +456,7 @@ uint64_t TLB::translate(uint64_t vadd)
 
 
 // Invalidate TLB entries
-void TLB::invalidate(uint64_t vadd)
+void TLB::invalidate(Address_t vadd)
 {
 
 	for(int id=0; id<sizes; id++)
@@ -476,7 +476,7 @@ void TLB::invalidate(uint64_t vadd)
 
 
 // Find if the translation  exists on structure struct_id
-bool TLB::check_hit(uint64_t vadd, int struct_id)
+bool TLB::check_hit(Address_t vadd, int struct_id)
 {
 
 
@@ -489,7 +489,7 @@ bool TLB::check_hit(uint64_t vadd, int struct_id)
 }
 
 // To insert the translaiton
-int TLB::find_victim_way(uint64_t vadd, int struct_id)
+int TLB::find_victim_way(Address_t vadd, int struct_id)
 {
 
 	int set= abs_int((vadd/page_size[struct_id])%sets[struct_id]);
@@ -503,7 +503,7 @@ int TLB::find_victim_way(uint64_t vadd, int struct_id)
 }
 
 // This function updates the LRU position for a given address of a specific structure
-void TLB::update_lru(uint64_t vaddr, int struct_id)
+void TLB::update_lru(Address_t vaddr, int struct_id)
 {
 
 	int lru_place=assoc[struct_id]-1;
