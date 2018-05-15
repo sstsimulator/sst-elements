@@ -34,6 +34,12 @@ Messier::Messier(Component *comp, Params &params) : SimpleMemBackend(comp,params
 	nvm_link = comp->configureLink( "cube_link", access_time,
 			new Event::Handler<Messier>(this, &Messier::handleMessierResp));
 
+	bool found = false;
+        std::string encStr = params.find<std::string>("encryption_mode", "none", found);
+	bool found_i = false;
+        std::string intStr =  params.find<std::string>("integrity_mode", "none", found_i);
+
+
 //	using std::placeholders::_1;
 //	using std::placeholders::_2;
 //	static_cast<MessierBackend*>(m_backend)->setResponseHandler( std::bind( &Messier::handleMemResponse, this, _1,_2 ) );
