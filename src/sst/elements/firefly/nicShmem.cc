@@ -59,9 +59,8 @@ void Nic::Shmem::handleEvent( NicShmemCmdEvent* event, int id )
 			m_nic.schedCallback( 
                 [=]() {
                     handleNicEvent( event, id );
-                    //hostAdd( static_cast<NicShmemAddCmdEvent*>(event), id );
                 },
-                125 );
+                m_sendSetupLatency );
         }        
         break;
 
