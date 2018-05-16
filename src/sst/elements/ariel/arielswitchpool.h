@@ -26,22 +26,22 @@ namespace ArielComponent {
 
 class ArielSwitchPoolEvent : public ArielEvent {
 
-	public:
-		ArielSwitchPoolEvent(uint32_t newPool) : pool(newPool) {
-		}
+    public:
+        ArielSwitchPoolEvent(uint32_t newPool) : pool(newPool) {
+        }
 
-		~ArielSwitchPoolEvent() {}
+        ~ArielSwitchPoolEvent() {}
 
-		ArielEventType getEventType() const {
-			return SWITCH_POOL;
-		};
+        ArielEventType getEventType() const {
+                return SWITCH_POOL;
+        };
 
-		uint32_t getPool() const {
-			return pool;
-		}
+        uint32_t getPool() const {
+                return pool;
+        }
 
-	private:
-		const uint32_t pool;
+    private:
+        const uint32_t pool;
 
 };
 

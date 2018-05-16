@@ -21,41 +21,41 @@ namespace ArielComponent {
 
 class arielAllocTrackEvent : public SST::Event 
 {
-public:
-    enum arielAllocTrackType {
-        ALLOC,
-        FREE,
-        BUOY
-    };
+    public:
+        enum arielAllocTrackType {
+            ALLOC,
+            FREE,
+            BUOY
+        };
 
-    arielAllocTrackEvent(arielAllocTrackType t, uint64_t va, uint64_t len, uint32_t lev, uint64_t ip) : 
-        SST::Event(), type(t), virtualAddress(va), allocateLength(len), level(lev), instPtr(ip) { }
+        arielAllocTrackEvent(arielAllocTrackType t, uint64_t va, uint64_t len, uint32_t lev, uint64_t ip) :
+            SST::Event(), type(t), virtualAddress(va), allocateLength(len), level(lev), instPtr(ip) { }
 
-    arielAllocTrackType getType() const {return type;}
-    uint64_t getVirtualAddress() const {return virtualAddress;}
-    uint64_t getAllocateLength() const {return allocateLength;}
-    uint32_t getLevel() const {return level;}
-    uint64_t getInstructionPointer() const {return instPtr;}
+        arielAllocTrackType getType() const {return type;}
+        uint64_t getVirtualAddress() const {return virtualAddress;}
+        uint64_t getAllocateLength() const {return allocateLength;}
+        uint32_t getLevel() const {return level;}
+        uint64_t getInstructionPointer() const {return instPtr;}
 
-private:
-    arielAllocTrackType type;
-    uint64_t virtualAddress;
-    uint64_t allocateLength;
-    uint32_t level;
-    uint64_t instPtr;
+    private:
+        arielAllocTrackType type;
+        uint64_t virtualAddress;
+        uint64_t allocateLength;
+        uint32_t level;
+        uint64_t instPtr;
 
-	arielAllocTrackEvent() {} // For serialization only
+        arielAllocTrackEvent() {} // For serialization only
 
-public:	
-    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
-        Event::serialize_order(ser);
-        ser & type;
-        ser & virtualAddress;
-        ser & allocateLength;
-        ser & level;
-    }
-    
-    ImplementSerializable(SST::ArielComponent::arielAllocTrackEvent);     
+    public:
+        void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+            Event::serialize_order(ser);
+            ser & type;
+            ser & virtualAddress;
+            ser & allocateLength;
+            ser & level;
+        }
+
+        ImplementSerializable(SST::ArielComponent::arielAllocTrackEvent);
 };
 
 } // namespace ArielComponent
