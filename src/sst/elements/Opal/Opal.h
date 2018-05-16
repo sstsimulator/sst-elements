@@ -122,8 +122,13 @@ namespace SST
 
 					// Optional since there is nothing to document
 					SST_ELI_DOCUMENT_STATISTICS(
-							{ "local_mem_usage", "Number of local memory frames used", "requests", 1},
-							{ "shared_mem_usage", "Number of local memory frames used", "requests", 1},
+							{ "local_mem_usage", "Number of pages allocated in local memory", "requests", 1},
+							{ "shared_mem_usage", "Number of pages allocated in shared memory", "requests", 1},
+							{ "local_mem_mapped", "Number of pages mapped in local memory", "requests", 1},
+							{ "shared_mem_mapped", "Number of pages mapped in shared memory", "requests", 1},
+							{ "local_mem_unmapped", "Number of pages unmapped while memory allocation in local memory", "requests", 1},
+							{ "shared_mem_unmapped", "Number of pages unmapped while memory allocation in local memory", "requests", 1},
+							{ "node_tlb_shootdowns", "Number of tlb shootdowns initiated in a node", "requests", 1},
 							{ "num_of_pages_migrated", "Number of pages migrated", "requests", 1},
 							)
 

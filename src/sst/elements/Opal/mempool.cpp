@@ -42,10 +42,17 @@ Pool::Pool(SST::Component* own, Params params, SST::OpalComponent::MemType mem_t
 
 	poolId = id;
 
-	if(memType == SST::OpalComponent::MemType::LOCAL)
+	if(memType == SST::OpalComponent::MemType::LOCAL) {
 		memUsage = own->registerStatistic<uint64_t>( "local_mem_usage", subID );
-	else
+		mappedMemory = own->registerStatistic<uint64_t>( "local_mem_mapped", subID );
+		unmappedMemory = own->registerStatistic<uint64_t>( "local_mem_unmapped", subID );
+		tlbShootdowns = own->registerStatistic<uint64_t>( "node_tlb_shootdowns", subID );
+	}
+	else {
 		memUsage = own->registerStatistic<uint64_t>( "shared_mem_usage", subID );
+		mappedMemory = own->registerStatistic<uint64_t>( "shared_mem_mapped", subID );
+		unmappedMemory = own->registerStatistic<uint64_t>( "shared_mem_unmapped", subID );
+	}
 
 	free(subID);
 
@@ -127,7 +134,6 @@ REQRESPONSE Pool::allocate_frames(int pages)
 	}
 
 	if(!frames_allocated.empty()) {
-		memUsage->addData(pages);
 		response.address = (frames_allocated.front())->starting_address;
 		response.pages = pages;
 		response.status = 1;
@@ -159,7 +165,6 @@ REQRESPONSE Pool::allocate_frame(int N)
 		Frame * temp = freelist.front();
 		freelist.pop_front();
 		alloclist[temp->starting_address] = temp;
-		memUsage->addData(1);
 		available_frames--;
 		response.address = temp->starting_address;
 		response.pages = 1;
@@ -242,5 +247,26 @@ REQRESPONSE Pool::deallocate_frame(uint64_t X, int N)
 	return response;
 }
 
+void Pool::profileStats(int stat)
+{
+	switch(stat){
+	case 0:
+		memUsage->addData(1);
+		break;
+	case 1:
+		mappedMemory->addData(1);
+		break;
+	case 2:
+		unmappedMemory->addData(1);
+		break;
+	case 3:
+		tlbShootdowns->addData(1);
+		break;
+
+	//default:
+		//own->output->fatal(CALL_INFO, -1, "%s, Error - Unknown statistic\n", own->getName().c_str());
+	}
+
+}
 
 

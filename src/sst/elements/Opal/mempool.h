@@ -110,6 +110,8 @@ class Pool{
 
 		void build_mem();
 
+		void profileStats(int stat);
+
 	private:
 
 		SST::Component* owner;
@@ -132,6 +134,9 @@ class Pool{
 		std::map<uint64_t, Frame*> alloclist;
 
 		Statistic<uint64_t>* memUsage;
+		Statistic<uint64_t>* mappedMemory;
+		Statistic<uint64_t>* unmappedMemory;
+		Statistic<uint64_t>* tlbShootdowns;
 
 };
 

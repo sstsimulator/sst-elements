@@ -188,6 +188,7 @@ void Opal::processHint(int node, int fileId, uint64_t vAddress, int size)
 	{
 		std::list<int> *it = new std::list<int>;
 		std::list<uint64_t> *pa = new std::list<uint64_t>;
+
 		it->push_back(node);
 		mmapFileIdHints.insert(std::make_pair(fileId, std::make_pair( it, pa )));
 		nodeInfo[node]->reservedSpace.insert(std::make_pair(vAddress, std::make_pair(fileId, std::make_pair( ceil(size/(nodeInfo[node]->page_size*1024)), 0))));
@@ -273,6 +274,8 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 					}
 
 					setNextMemPool( node );
+					sharedMemoryInfo[sharedMemPoolId]->profileStats(0);
+					sharedMemoryInfo[sharedMemPoolId]->profileStats(1);
 					response.pages = pages;
 					response.status = 1;
 					break;
@@ -304,6 +307,8 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 				}
 
 				sharedMemPoolId = i;
+				sharedMemoryInfo[sharedMemPoolId]->profileStats(0);
+				sharedMemoryInfo[sharedMemPoolId]->profileStats(1);
 				response.pages = pages;
 				response.status = 1;
 				break;
@@ -331,6 +336,9 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 
 				response.address = response_m.address;
 
+				nodeInfo[node]->pool->profileStats(0);
+				nodeInfo[node]->pool->profileStats(1);
+				sharedMemoryInfo[sharedMemPoolId]->profileStats(2);
 			}
 			else{
 				// replace page from local memory
@@ -346,6 +354,9 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 
 				// store the address to invalidate
 				nodeInfo[node]->coreInfo[coreId].addInvalidAddress(sm_address, lm_page.second.first, lm_page.second.second);
+
+				nodeInfo[node]->pool->profileStats(2);
+				sharedMemoryInfo[sharedMemPoolId]->profileStats(2);
 
 				response.address = lm_address;
 				response.pages = 1;
@@ -377,6 +388,8 @@ REQRESPONSE Opal::allocateLocalMemory(int node, int coreId, uint64_t vAddress, i
 				output->fatal(CALL_INFO, -1, "Opal: Allocating local memory. This should never happen\n");
 		}
 
+		pool->profileStats(0);
+		pool->profileStats(1);
 		response.pages = pages;
 		response.status = 1;
 		response.page_migration = 0;
@@ -521,6 +534,7 @@ void Opal::migratePages(int node, int coreId)
 	std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > lm_pages = nodeInfo[node]->getPagesToMigrate();
 
 	// get shared memory pages
+	int sharedMemPoolId;
 	std::list<uint64_t> sm_pages;
 	for(uint32_t i = 0; i<num_shared_mempools; i++) {
 
@@ -540,8 +554,11 @@ void Opal::migratePages(int node, int coreId)
 					output->fatal(CALL_INFO, -1, "Opal: Allocating shared memory. This should never happen\n");
 
 				sm_pages.push_back(response.address);
+				sharedMemoryInfo[i]->profileStats(0);
+				sharedMemoryInfo[i]->profileStats(1);
 			}
 
+			sharedMemPoolId = i;
 			response.pages = nodeInfo[node]->num_pages_to_migrate;
 			response.status = 1;
 			break;
@@ -579,6 +596,9 @@ void Opal::migratePages(int node, int coreId)
 		nodeInfo[node]->coreInfo[coreId].addInvalidAddress(sm_address, it.second.first, it.second.second);
 
 		lm_pages.pop_front();
+
+		nodeInfo[node]->pool->profileStats(2);
+		sharedMemoryInfo[sharedMemPoolId]->profileStats(2);
 
 		statPagesMigrated->addData(1);
 
@@ -654,6 +674,8 @@ void Opal::tlbShootdown(int node, int coreId, int shootdownId)
 			tse->setShootdownId(shootdownId);
 			nodeInfo[n]->coreInfo[c].mmuLink->send(nodeInfo[n]->latency, tse);
 		}
+
+	nodeInfo[n]->pool->profileStats(3);
 
 }
 
