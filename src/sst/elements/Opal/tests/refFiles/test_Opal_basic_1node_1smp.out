@@ -1,0 +1,126 @@
+ArielComponent[arielcpu.cc:51:ArielCPU] Creating Ariel component...
+ArielComponent[arielcpu.cc:57:ArielCPU] Configuring for 2 cores...
+ArielComponent[arielcpu.cc:60:ArielCPU] Configuring for check addresses = no
+ArielComponent[arielcpu.cc:142:ArielCPU] Loading memory manger: ariel.MemoryManagerSimple
+ArielComponent[arielcpu.cc:150:ArielCPU] Memory manager construction is completed.
+ArielComponent[arielcpu.cc:187:ArielCPU] Model specifies that there are 0 application arguments
+ArielComponent[arielcpu.cc:201:ArielCPU] Interception and instrumentation of multi-level memory and malloc/free calls is ENABLED.
+ArielComponent[arielcpu.cc:206:ArielCPU] Tracking the stack and dumping on malloc calls is DISABLED.
+ArielComponent[arielcpu.cc:211:ArielCPU] Malloc map file is DISABLED
+ArielComponent[arielcpu.cc:218:ArielCPU] Base pipe name: /sst_shmem_19847-0-1681692777
+ArielComponent[arielcpu.cc:229:ArielCPU] Processing application arguments...
+ArielComponent[arielcpu.cc:335:ArielCPU] Completed processing application arguments.
+ArielComponent[arielcpu.cc:342:ArielCPU] Creating core to cache links...
+ArielComponent[arielcpu.cc:354:ArielCPU] Creating core to Opal links...
+ArielComponent[arielcpu.cc:359:ArielCPU] Creating processor cores and cache links...
+ArielComponent[arielcpu.cc:362:ArielCPU] Configuring cores and cache links...
+ArielComponent[arielcpu.cc:396:ArielCPU] Registering ArielCPU clock at 2GHz
+ArielComponent[arielcpu.cc:400:ArielCPU] Clocks registered.
+ArielComponent[arielcpu.cc:408:ArielCPU] Completed initialization of the Ariel CPU.
+Initialized with 2 cores
+Before initialization 
+Assigning the PTW correctly
+Assigning the PTW correctly
+After initialization 
+l2cache_0: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
+l2cache_1: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
+l2cache_2: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
+l2cache_3: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
+l3cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 3 cycles.
+0:TimingDRAM::TimingDRAM():51:mc=0: number of channels: 2
+0:TimingDRAM::TimingDRAM():52:mc=0: address mapper:     memHierarchy.roundRobinAddrMapper
+0:TimingDRAM:Channel:Channel():107:mc=0:chan=0: max pending trans: 32
+0:TimingDRAM:Channel:Channel():108:mc=0:chan=0: number of ranks:   2
+0:TimingDRAM:Rank:Rank():204:mc=0:chan=0:rank=0: number of banks: 16
+0:TimingDRAM:Bank:Bank():263:mc=0:chan=0:rank=0:bank=0: CL:           14
+0:TimingDRAM:Bank:Bank():264:mc=0:chan=0:rank=0:bank=0: CL_WR:        12
+0:TimingDRAM:Bank:Bank():265:mc=0:chan=0:rank=0:bank=0: RCD:          14
+0:TimingDRAM:Bank:Bank():266:mc=0:chan=0:rank=0:bank=0: TRP:          14
+0:TimingDRAM:Bank:Bank():267:mc=0:chan=0:rank=0:bank=0: dataCycles:   2
+0:TimingDRAM:Bank:Bank():268:mc=0:chan=0:rank=0:bank=0: transactionQ: memHierarchy.fifoTransactionQ
+0:TimingDRAM:Bank:Bank():269:mc=0:chan=0:rank=0:bank=0: pagePolicy:   memHierarchy.simplePagePolicy
+The value of tRCD is 300
+After initialization 
+SSTARIEL: Loading Ariel Tool to connect to SST on pipe: /sst_shmem_19847-0-1681692777 max instruction count: 1000000000 max core count: 2
+SSTARIEL: Function profiling is disabled.
+ArielComponent[arielcpu.cc:416:init] Launching PIN...
+ArielComponent[arielcpu.cc:421:init] Returned from launching PIN.  Waiting for child to attach.
+ArielComponent[arielcpu.cc:424:init] Child has attached!
+ArielComponent[arielcpu.cc:437:finish] Ariel Processor Information:
+ArielComponent[arielcpu.cc:438:finish] Completed at: 189294 nanoseconds.
+ArielComponent[arielcpu.cc:439:finish] Ariel Component Statistics (By Core)
+
+Ariel Memory Management Statistics:
+---------------------------------------------------------------------
+Page Table Sizes:
+- Map entries         37
+Page Table Coverages:
+- Bytes               151552
+ cpu.tlb_hits : Accumulator : Sum.u64 = 3249; SumSQ.u64 = 3249; Count.u64 = 3249; 
+ cpu.tlb_evicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.tlb_translate_queries : Accumulator : Sum.u64 = 4271; SumSQ.u64 = 4271; Count.u64 = 4271; 
+ cpu.tlb_shootdown : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.tlb_page_allocs : Accumulator : Sum.u64 = 37; SumSQ.u64 = 37; Count.u64 = 37; 
+ cpu.read_requests.0 : Accumulator : Sum.u64 = 2890; SumSQ.u64 = 2890; Count.u64 = 2890; 
+ cpu.write_requests.0 : Accumulator : Sum.u64 = 1341; SumSQ.u64 = 1341; Count.u64 = 1341; 
+ cpu.read_request_sizes.0 : Accumulator : Sum.u64 = 17268; SumSQ.u64 = 137080; Count.u64 = 2890; 
+ cpu.write_request_sizes.0 : Accumulator : Sum.u64 = 10102; SumSQ.u64 = 94728; Count.u64 = 1341; 
+ cpu.split_read_requests.0 : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; 
+ cpu.split_write_requests.0 : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; 
+ cpu.no_ops.0 : Accumulator : Sum.u64 = 5769; SumSQ.u64 = 5769; Count.u64 = 5769; 
+ cpu.instruction_count.0 : Accumulator : Sum.u64 = 10000; SumSQ.u64 = 10000; Count.u64 = 10000; 
+ cpu.cycles.0 : Accumulator : Sum.u64 = 378588; SumSQ.u64 = 378588; Count.u64 = 378588; 
+ cpu.active_cycles.0 : Accumulator : Sum.u64 = 226217; SumSQ.u64 = 226217; Count.u64 = 226217; 
+ cpu.fp_sp_ins.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_dp_ins.0 : Accumulator : Sum.u64 = 134; SumSQ.u64 = 134; Count.u64 = 134; 
+ cpu.fp_sp_simd_ins.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_dp_simd_ins.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_sp_scalar_ins.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_dp_scalar_ins.0 : Accumulator : Sum.u64 = 134; SumSQ.u64 = 134; Count.u64 = 134; 
+ cpu.fp_sp_ops.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_dp_ops.0 : Accumulator : Sum.u64 = 134; SumSQ.u64 = 134; Count.u64 = 134; 
+ cpu.read_requests.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.write_requests.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.read_request_sizes.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.write_request_sizes.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.split_read_requests.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.split_write_requests.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.no_ops.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.instruction_count.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.cycles.1 : Accumulator : Sum.u64 = 378587; SumSQ.u64 = 378587; Count.u64 = 378587; 
+ cpu.active_cycles.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_sp_ins.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_dp_ins.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_sp_simd_ins.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_dp_simd_ins.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_sp_scalar_ins.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_dp_scalar_ins.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_sp_ops.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ cpu.fp_dp_ops.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ mmu.tlb_hits.Core0_PTWC : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; 
+ mmu.tlb_misses.Core0_PTWC : Accumulator : Sum.u64 = 48; SumSQ.u64 = 48; Count.u64 = 48; 
+ mmu.total_waiting.0 : Accumulator : Sum.u64 = 3507296; SumSQ.u64 = 60048981612; Count.u64 = 4234; 
+ mmu.tlb_hits.Core0_L2 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ mmu.tlb_misses.Core0_L2 : Accumulator : Sum.u64 = 55; SumSQ.u64 = 55; Count.u64 = 55; 
+ mmu.tlb_shootdown.Core0_L2 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ mmu.tlb_hits.Core0_L1 : Accumulator : Sum.u64 = 4112; SumSQ.u64 = 4112; Count.u64 = 4112; 
+ mmu.tlb_misses.Core0_L1 : Accumulator : Sum.u64 = 122; SumSQ.u64 = 122; Count.u64 = 122; 
+ mmu.tlb_shootdown.Core0_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ mmu.tlb_hits.Core1_PTWC : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ mmu.tlb_misses.Core1_PTWC : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ mmu.total_waiting.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ mmu.tlb_hits.Core1_L2 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ mmu.tlb_misses.Core1_L2 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ mmu.tlb_shootdown.Core1_L2 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ mmu.tlb_hits.Core1_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ mmu.tlb_misses.Core1_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ mmu.tlb_shootdown.Core1_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ opal.shared_mem_usage.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ opal.shared_mem_mapped.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ opal.shared_mem_unmapped.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ opal.local_mem_usage.0 : Accumulator : Sum.u64 = 54; SumSQ.u64 = 54; Count.u64 = 54; 
+ opal.local_mem_mapped.0 : Accumulator : Sum.u64 = 54; SumSQ.u64 = 54; Count.u64 = 54; 
+ opal.local_mem_unmapped.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ opal.node_tlb_shootdowns.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+ opal.num_of_pages_migrated : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; 
+Simulation is complete, simulated time: 189.294 us
