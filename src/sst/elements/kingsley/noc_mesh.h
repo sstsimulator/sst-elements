@@ -203,8 +203,17 @@ public:
         return ret;
     }
             
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+        BaseNocEvent::serialize_order(ser);
+        ser & dest_mesh_loc;
+        ser & egress_port;
+        ser & next_port;
+        ser & encap_ev;
+    }
     
-    
+private:
+    ImplementSerializable(SST::Kingsley::noc_mesh_event)
+        
 };
 
     

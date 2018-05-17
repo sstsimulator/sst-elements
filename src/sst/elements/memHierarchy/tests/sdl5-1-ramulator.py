@@ -136,7 +136,7 @@ comp_memory.addParams({
       "debug" : "0",
       "clock" : "1GHz",
       "backend.mem_size" : "512MiB",
-      "backend.configFile" : "/Users/afrodri/Public/ramulator/configs/DDR3-config.cfg",
+      "backend.configFile" : "ramulator-ddr3.cfg",
       "backend" : "memHierarchy.ramulator"
 })
 

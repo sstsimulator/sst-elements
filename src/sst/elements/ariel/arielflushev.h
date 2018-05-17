@@ -29,21 +29,22 @@ namespace ArielComponent {
 
 class ArielFlushEvent : public ArielEvent {
 
-	public:
-		ArielFlushEvent(uint64_t vAddr, uint64_t cacheLineSize) :
-			virtualAddress(vAddr){
-				length = cacheLineSize;
-			}
-		~ArielFlushEvent() {}
-		ArielEventType getEventType() const { return FLUSH; }
-		uint64_t getVirtualAddress() const { return virtualAddress;}
-		uint64_t getAddress() const { return address; }
-		uint64_t getLength() const { return length; }
+    public:
+        ArielFlushEvent(uint64_t vAddr, uint64_t cacheLineSize) :
+                virtualAddress(vAddr){
+                    length = cacheLineSize;
+                }
+        ~ArielFlushEvent() {}
+        
+        ArielEventType getEventType() const { return FLUSH; }
+        uint64_t getVirtualAddress() const { return virtualAddress;}
+        uint64_t getAddress() const { return address; }
+        uint64_t getLength() const { return length; }
 
-	protected:
-		uint64_t virtualAddress;
-		uint64_t address;
-		uint64_t length;
+    protected:
+        uint64_t virtualAddress;
+        uint64_t address;
+        uint64_t length;
 
 };
 

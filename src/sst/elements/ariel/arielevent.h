@@ -23,26 +23,26 @@ namespace SST {
 namespace ArielComponent {
 
 enum ArielEventType {
-	READ_ADDRESS,
-	WRITE_ADDRESS,
-	START_DMA_TRANSFER,
-	WAIT_ON_DMA_TRANSFER,
-	CORE_EXIT,
-	NOOP,
-	MALLOC,
-	MMAP,
-	FREE,
-	SWITCH_POOL,
-	FLUSH,
-	FENCE
+    READ_ADDRESS,
+    WRITE_ADDRESS,
+    START_DMA_TRANSFER,
+    WAIT_ON_DMA_TRANSFER,
+    CORE_EXIT,
+    NOOP,
+    MALLOC,
+    MMAP,
+    FREE,
+    SWITCH_POOL,
+    FLUSH,
+    FENCE
 };
 
 class ArielEvent {
 
-	public:
-		ArielEvent();
-		virtual ~ArielEvent();
-		virtual ArielEventType getEventType() const = 0;
+    public:
+        ArielEvent();
+        virtual ~ArielEvent();
+        virtual ArielEventType getEventType() const = 0;
 
 };
 

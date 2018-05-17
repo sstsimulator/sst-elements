@@ -101,9 +101,9 @@ class ArielCPU : public SST::Component {
         { "cycles",               "Statistic for counting cycles of the Ariel core.", "cycles", 1 },
         { "active_cycles",        "Statistic for counting active cycles (cycles not idle) of the Ariel core.", "cycles", 1 })
         
-    /* Ariel class */
+        /* Ariel class */
         ArielCPU(ComponentId_t id, Params& params);
-	~ArielCPU();
+        ~ArielCPU();
         virtual void emergencyShutdown();
         virtual void init(unsigned int phase);
         virtual void setup() {}
@@ -118,19 +118,19 @@ class ArielCPU : public SST::Component {
         Interfaces::SimpleMem** cpu_to_cache_links;
         SST::Link **cpu_to_alloc_tracker_links;
 
-	SST::Link **cpu_to_opal_links;
+        SST::Link **cpu_to_opal_links;
 
         pid_t child_pid;
 
         uint32_t core_count;
         ArielTunnel* tunnel;
         bool stopTicking;
-	bool opal_enabled;
-	std::string appLauncher;
+        bool opal_enabled;
+        std::string appLauncher;
         bool useAllocTracker;
 
         char **execute_args;
-	std::map<std::string, std::string> execute_env;
+        std::map<std::string, std::string> execute_env;
 
 };
 
