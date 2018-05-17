@@ -351,7 +351,7 @@ public:
     )
 public:
 	EmberShmemNSAtomicIncIntGenerator(SST::Component* owner, Params& params) :
-	    EmberShmemAtomicIncGenerator(owner, params, "ShmemHSAtomicIncInt") { } 
+	    EmberShmemAtomicIncGenerator(owner, params, "ShmemNSAtomicIncInt") { } 
 };
 
 class EmberShmemHotAtomicIncIntGenerator : public EmberShmemAtomicIncGenerator<int, 2> {
