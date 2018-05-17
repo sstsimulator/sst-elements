@@ -91,10 +91,10 @@ class RecvMachine {
         void checkNetworkForData() {
             FireflyNetworkEvent* ev = getNetworkEvent( m_vc );
             if ( ev ) {
-                m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"packet available\n");
+                m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"packet available\n");
                 m_nic.schedCallback( std::bind( &Nic::RecvMachine::processPkt, this, ev ), 0);
             } else {
-                m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"network idle\n");
+                m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"network idle\n");
                 setNotify();
             }
         }
@@ -111,7 +111,7 @@ class RecvMachine {
         }
 
         void processNetworkData() {
-            m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "\n");
+            m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "\n");
 
             // this notifier was called by the LinkControl object, the RecvMachine may 
             // re-install the LinkControl notifier, if it does there would be a cycle
@@ -131,7 +131,7 @@ class RecvMachine {
             } 
 
             if ( m_numActiveStreams == m_maxActiveStreams + 1) {
-      		    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"blocked on available streams\n");
+      		    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"blocked on available streams\n");
                 assert( ! m_blockedPkt );
                 m_blockedPkt = ev;
             } else {
