@@ -128,7 +128,8 @@ namespace SST
 							{ "shared_mem_mapped", "Number of pages mapped in shared memory", "requests", 1},
 							{ "local_mem_unmapped", "Number of pages unmapped while memory allocation in local memory", "requests", 1},
 							{ "shared_mem_unmapped", "Number of pages unmapped while memory allocation in local memory", "requests", 1},
-							{ "node_tlb_shootdowns", "Number of tlb shootdowns initiated in a node", "requests", 1},
+							{ "tlb_shootdowns", "Number of tlb shootdowns initiated in a node", "requests", 1},
+							{ "tlb_shootdown_delay", "Total tlb shootdown delays in a node(initiating core)", "requests", 1},
 							{ "num_of_pages_migrated", "Number of pages migrated", "requests", 1},
 							)
 
@@ -223,6 +224,7 @@ namespace SST
 					owner = _owner;
 					node_num = node;
 					cores = (uint32_t) params.find<uint32_t>("cores", 1);
+					clock = (uint32_t) params.find<uint32_t>("clock", 2000); // in MHz
 					latency = (uint32_t) params.find<uint32_t>("latency", 1);
 					memoryAllocationPolicy = (uint32_t) params.find<uint32_t>("allocation_policy", 0);
 					page_migration = (uint32_t) params.find<uint32_t>("page_migration", 0);
@@ -249,6 +251,7 @@ namespace SST
 				Opal *owner;
 				uint32_t node_num;
 				uint32_t cores;
+				uint32_t clock;
 				uint32_t latency;
 
 				/* core specific information*/
@@ -315,7 +318,6 @@ namespace SST
 					std::pair<uint64_t, std::pair<uint64_t, int> > migrate_page;
 					auto it = localPageList.begin();
 					std::advance(it, rand() % localPageList.size());
-					std::cerr << " paddress: " << it->first << " vaddress: " << it->second.first << " fault_level: " << it->second.second << std::endl;
 					migrate_page = std::make_pair(it->first, it->second);
 					localPageList.erase(it->first);
 					return migrate_page;

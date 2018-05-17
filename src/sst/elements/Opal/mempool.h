@@ -110,7 +110,7 @@ class Pool{
 
 		void build_mem();
 
-		void profileStats(int stat);
+		void profileStats(int stat, int value);
 
 	private:
 
@@ -137,6 +137,7 @@ class Pool{
 		Statistic<uint64_t>* mappedMemory;
 		Statistic<uint64_t>* unmappedMemory;
 		Statistic<uint64_t>* tlbShootdowns;
+		Statistic<uint64_t>* tlbShootdownDelay;
 
 };
 

@@ -274,13 +274,17 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 					}
 
 					setNextMemPool( node );
-					sharedMemoryInfo[sharedMemPoolId]->profileStats(0);
-					sharedMemoryInfo[sharedMemPoolId]->profileStats(1);
+					sharedMemoryInfo[sharedMemPoolId]->profileStats(0,pages);
+					sharedMemoryInfo[sharedMemPoolId]->profileStats(1,pages);
 					response.pages = pages;
 					response.status = 1;
 					break;
 				}
 			}
+
+			if(!response.status)
+				output->fatal(CALL_INFO, -1, "Opal: Memory is drained out\n");
+
 		}
 	}
 
@@ -307,14 +311,17 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 				}
 
 				sharedMemPoolId = i;
-				sharedMemoryInfo[sharedMemPoolId]->profileStats(0);
-				sharedMemoryInfo[sharedMemPoolId]->profileStats(1);
+				sharedMemoryInfo[sharedMemPoolId]->profileStats(0,pages);
+				sharedMemoryInfo[sharedMemPoolId]->profileStats(1,pages);
 				response.pages = pages;
 				response.status = 1;
 				break;
 			}
 
 		}
+
+		if(!response.status)
+			output->fatal(CALL_INFO, -1, "Opal: Memory is drained out\n");
 
 	}
 
@@ -336,9 +343,9 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 
 				response.address = response_m.address;
 
-				nodeInfo[node]->pool->profileStats(0);
-				nodeInfo[node]->pool->profileStats(1);
-				sharedMemoryInfo[sharedMemPoolId]->profileStats(2);
+				nodeInfo[node]->pool->profileStats(0,1);
+				nodeInfo[node]->pool->profileStats(1,1);
+				sharedMemoryInfo[sharedMemPoolId]->profileStats(2,1);
 			}
 			else{
 				// replace page from local memory
@@ -355,8 +362,8 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 				// store the address to invalidate
 				nodeInfo[node]->coreInfo[coreId].addInvalidAddress(sm_address, lm_page.second.first, lm_page.second.second);
 
-				nodeInfo[node]->pool->profileStats(2);
-				sharedMemoryInfo[sharedMemPoolId]->profileStats(2);
+				nodeInfo[node]->pool->profileStats(2,1);
+				sharedMemoryInfo[sharedMemPoolId]->profileStats(2,1);
 
 				response.address = lm_address;
 				response.pages = 1;
@@ -388,8 +395,8 @@ REQRESPONSE Opal::allocateLocalMemory(int node, int coreId, uint64_t vAddress, i
 				output->fatal(CALL_INFO, -1, "Opal: Allocating local memory. This should never happen\n");
 		}
 
-		pool->profileStats(0);
-		pool->profileStats(1);
+		pool->profileStats(0,1);
+		pool->profileStats(1,1);
 		response.pages = pages;
 		response.status = 1;
 		response.page_migration = 0;
@@ -554,8 +561,8 @@ void Opal::migratePages(int node, int coreId)
 					output->fatal(CALL_INFO, -1, "Opal: Allocating shared memory. This should never happen\n");
 
 				sm_pages.push_back(response.address);
-				sharedMemoryInfo[i]->profileStats(0);
-				sharedMemoryInfo[i]->profileStats(1);
+				sharedMemoryInfo[i]->profileStats(0,1);
+				sharedMemoryInfo[i]->profileStats(1,1);
 			}
 
 			sharedMemPoolId = i;
@@ -597,8 +604,8 @@ void Opal::migratePages(int node, int coreId)
 
 		lm_pages.pop_front();
 
-		nodeInfo[node]->pool->profileStats(2);
-		sharedMemoryInfo[sharedMemPoolId]->profileStats(2);
+		nodeInfo[node]->pool->profileStats(2,1);
+		sharedMemoryInfo[sharedMemPoolId]->profileStats(2,1);
 
 		statPagesMigrated->addData(1);
 
@@ -631,7 +638,7 @@ void Opal::tlbShootdown(int node, int coreId, int shootdownId)
 		int n=node;
 		for(uint32_t c=0; c<nodeInfo[n]->cores; c++) {
 			OpalEvent *tse = new OpalEvent(EventType::SHOOTDOWN);
-			nodeInfo[n]->coreInfo[c].coreLink->send(nodeInfo[n]->latency, tse); // Interrupt all the cores
+			nodeInfo[n]->coreInfo[c].coreLink->send(tse); // Stall all the cores
 		}
 
 
@@ -644,7 +651,7 @@ void Opal::tlbShootdown(int node, int coreId, int shootdownId)
 		tse->setResp(it.second.first,it.first,0);
 		tse->setFaultLevel(it.second.second);
 		tse->setShootdownId(shootdownId);
-		nodeInfo[n]->coreInfo[0].mmuLink->send(nodeInfo[n]->latency, tse);
+		nodeInfo[n]->coreInfo[0].mmuLink->send(tse); // 1ns to update address
 		temp.pop_front();
 	}
 
@@ -659,12 +666,16 @@ void Opal::tlbShootdown(int node, int coreId, int shootdownId)
 				tse->setResp(it.second.first,it.first,0);
 				tse->setFaultLevel(it.second.second);
 				tse->setShootdownId(shootdownId);
-				nodeInfo[n]->coreInfo[c].mmuLink->send(nodeInfo[n]->latency, tse);
+				nodeInfo[n]->coreInfo[c].mmuLink->send(tse); // 1ns to update address
 			}
 
 		invalidAddrs->pop_front();
 	}
 
+
+	// this include IPI + context switching latency with respect to number of cores
+	// 15000 cycles for 2 cores
+	int shootdown_latency = (nodeInfo[node]->cores/2)*(15000/nodeInfo[node]->clock)*1000; // in ns
 
 	// initiate shootdown
 	//for(uint32_t n=0; n<num_nodes; n++)
@@ -672,10 +683,11 @@ void Opal::tlbShootdown(int node, int coreId, int shootdownId)
 		for(uint32_t c=0; c<nodeInfo[n]->cores; c++) {
 			OpalEvent *tse = new OpalEvent(EventType::SHOOTDOWN);
 			tse->setShootdownId(shootdownId);
-			nodeInfo[n]->coreInfo[c].mmuLink->send(nodeInfo[n]->latency, tse);
+			nodeInfo[n]->coreInfo[c].mmuLink->send(shootdown_latency, tse);
 		}
 
-	nodeInfo[n]->pool->profileStats(3);
+	nodeInfo[n]->pool->profileStats(3,1);
+	nodeInfo[n]->pool->profileStats(4,shootdown_latency);
 
 }
 

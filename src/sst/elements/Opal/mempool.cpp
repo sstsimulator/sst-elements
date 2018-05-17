@@ -46,7 +46,8 @@ Pool::Pool(SST::Component* own, Params params, SST::OpalComponent::MemType mem_t
 		memUsage = own->registerStatistic<uint64_t>( "local_mem_usage", subID );
 		mappedMemory = own->registerStatistic<uint64_t>( "local_mem_mapped", subID );
 		unmappedMemory = own->registerStatistic<uint64_t>( "local_mem_unmapped", subID );
-		tlbShootdowns = own->registerStatistic<uint64_t>( "node_tlb_shootdowns", subID );
+		tlbShootdowns = own->registerStatistic<uint64_t>( "tlb_shootdowns", subID );
+		tlbShootdownDelay = own->registerStatistic<uint64_t>( "tlb_shootdown_delay", subID );
 	}
 	else {
 		memUsage = own->registerStatistic<uint64_t>( "shared_mem_usage", subID );
@@ -247,22 +248,24 @@ REQRESPONSE Pool::deallocate_frame(uint64_t X, int N)
 	return response;
 }
 
-void Pool::profileStats(int stat)
+void Pool::profileStats(int stat, int value)
 {
 	switch(stat){
 	case 0:
-		memUsage->addData(1);
+		memUsage->addData(value);
 		break;
 	case 1:
-		mappedMemory->addData(1);
+		mappedMemory->addData(value);
 		break;
 	case 2:
-		unmappedMemory->addData(1);
+		unmappedMemory->addData(value);
 		break;
 	case 3:
-		tlbShootdowns->addData(1);
+		tlbShootdowns->addData(value);
 		break;
-
+	case 4:
+		tlbShootdownDelay->addData(value);
+		break;
 	//default:
 		//own->output->fatal(CALL_INFO, -1, "%s, Error - Unknown statistic\n", own->getName().c_str());
 	}
