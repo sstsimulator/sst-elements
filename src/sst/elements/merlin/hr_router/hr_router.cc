@@ -220,6 +220,9 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     std::string inspector_config = params.find<std::string>("network_inspectors", "");
     split(inspector_config,",",inspector_names);
 
+    bool oql_track_port = params.find<bool>("oql_track_port","false");
+    bool oql_track_remote = params.find<bool>("oql_track_remote","false");
+    
     params.enableVerify(false);
     for ( int i = 0; i < num_ports; i++ ) {
         in_port_busy[i] = 0;
@@ -245,7 +248,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
                                    getLogicalGroupParam(params,topo,i,"input_buf_size"),
                                    getLogicalGroupParam(params,topo,i,"output_buf_size"),
                                    inspector_names,
-								   std::stof(getLogicalGroupParam(params,topo,i,"dlink_thresh", "-1")));
+								   std::stof(getLogicalGroupParam(params,topo,i,"dlink_thresh", "-1")),
+                                   oql_track_port,oql_track_remote);
         
     }
     params.enableVerify(true);
