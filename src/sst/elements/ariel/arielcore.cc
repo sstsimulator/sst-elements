@@ -901,7 +901,7 @@ void ArielCore::tick() {
         currentCycles++;
         statCycles->addData(1);
 
-        if( updateCycle ) {
+        if( updateCycle || isStalled) {
                 statActiveCycles->addData(1);
         }
     }

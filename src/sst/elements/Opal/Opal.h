@@ -78,7 +78,7 @@ namespace SST
 				void processInvalidAddrEvent(int node, int coreId, uint64_t vaddress);
 				void processTLBShootdownAck(int node, int coreId, int shootdownId);
 				void tlbShootdown(int node, int coreId, int shootdownId);
-				void migratePages(int node, int coreId);
+				void migratePages(int node, int coreId, int pages);
 
 				std::queue<OpalEvent*> requestQ;
 
@@ -301,9 +301,9 @@ namespace SST
 				}
 
 				// choose pages to migrate randomly
-				std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > getPagesToMigrate() {
+				std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > getPagesToMigrate(int pages) {
 					std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > migrate_pages;
-					for(int i=0; i<num_pages_to_migrate; i++) {
+					for(int i=0; i<pages; i++) {
 						auto it = localPageList.begin();
 						std::advance(it, rand() % localPageList.size());
 						migrate_pages.push_back(std::make_pair(it->first, it->second));
