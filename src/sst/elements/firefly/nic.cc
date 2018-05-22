@@ -538,8 +538,10 @@ void Nic::sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc )
         ++m_packetId;
     }
     m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_NETWORK,
-                    "dst=%" PRIu64 " sending event with %zu bytes packetId=%" PRIu64 "\n",req->dest,
-                                                        ev->bufSize(), (uint64_t)m_packetId);
+                    "dst=%" PRIu64 " sending event with %zu bytes packetId=%" PRIu64 " %s %s\n",req->dest,
+                                                    ev->bufSize(), (uint64_t)m_packetId, 
+                                                    ev->isHdr() ? "Hdr":"", 
+                                                    ev->isTail() ? "Tail":"" );
     bool sent = m_linkControl->send( req, vc );
     assert( sent );
 }
