@@ -20,6 +20,13 @@ class SendMachine {
 
         class OutQ {
             typedef std::function<void()> Callback;
+
+            struct Entry  {
+                Entry( std::pair< FireflyNetworkEvent*, int> data,  Callback callback = NULL ) : data(data), callback(callback) {}
+                std::pair< FireflyNetworkEvent*, int>  data;
+                Callback callback;
+            };
+
             std::string m_prefix;
             const char* prefix() { return m_prefix.c_str(); }
           public:
@@ -31,7 +38,7 @@ class SendMachine {
                 m_prefix = "@t:"+ std::to_string(nic.getNodeId()) +":Nic::SendMachine" + std::to_string(myId) + "::OutQ::@p():@l ";
             }
 
-            void enque( FireflyNetworkEvent* ev, int dest );
+            void enque( FireflyNetworkEvent* ev, int dest, Callback );
 
             bool isFull() { 
                 return m_queue.size() == m_maxQsize; 
@@ -47,7 +54,7 @@ class SendMachine {
                 return m_queue.empty();
             }
             std::pair< FireflyNetworkEvent*, int>& front() {
-                return m_queue.front();
+                return  m_queue.front().data;
             }
             void pop() {
                 if ( m_wakeUpCallback ) {
@@ -55,7 +62,12 @@ class SendMachine {
                     m_nic.schedCallback( m_wakeUpCallback, 0);
                     m_wakeUpCallback = NULL;
                 }
-                return m_queue.pop_front();
+             
+                if ( m_queue.front().callback ) {
+                     m_queue.front().callback(); 
+                }
+
+                m_queue.pop_front();
             }
 
           private:
@@ -66,7 +78,8 @@ class SendMachine {
             int         m_maxQsize;
             Callback    m_wakeUpCallback;
 
-            std::deque< std::pair< FireflyNetworkEvent*, int> > m_queue;
+            //std::deque< std::pair< FireflyNetworkEvent*, int> > m_queue;
+            std::deque< Entry > m_queue;
         };
 
         class InQ {
@@ -160,7 +173,7 @@ class SendMachine {
 
         int getId() { return m_id; }
         bool netPktQ_empty() { return m_outQ->empty(); }
-        void netPktQ_pop() { return m_outQ->pop(); }
+        void netPktQ_pop() { m_outQ->pop(); }
         std::pair< FireflyNetworkEvent*, int>& netPktQ_front() { return m_outQ->front(); }
 
       private:
