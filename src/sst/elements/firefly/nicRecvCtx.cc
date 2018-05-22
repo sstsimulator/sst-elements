@@ -47,10 +47,10 @@ bool Nic::RecvMachine::Ctx::processStdPkt( FireflyNetworkEvent* ev ) {
 
     StreamBase* stream;
     if ( ev->isHdr() ) {
-        assert ( m_streamMap.find(srcKey) == m_streamMap.end() ); 
 
         stream = newStream( ev );
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"new stream %p %s\n",stream, ev->isTail()? "single packet stream":"");
+        assert ( m_streamMap.find(srcKey) == m_streamMap.end() ); 
 
         if ( ! ev->isTail() ) { 
             m_streamMap[srcKey] = stream;
