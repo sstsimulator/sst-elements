@@ -64,6 +64,8 @@ bool Nic::RecvMachine::Ctx::processStdPkt( FireflyNetworkEvent* ev ) {
         if ( ev->isTail() ) { 
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"tail packet %p\n",stream );
             m_streamMap.erase(srcKey); 
+        } else {
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"body packet %p\n",stream );
         }
     }
 
