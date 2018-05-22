@@ -31,13 +31,13 @@ class BusBridgeUnit : public Unit {
 
     void resume( UnitBase* unit = 0 ) {
 		if ( unit == m_loadWidget ) {
-        	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"load\n");
+        	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"load\n");
 			if ( m_blocked[0] ) { 
 				m_model.schedResume( 0, m_blocked[0] );
 				m_blocked[0] = NULL;
 			}
 		} else {
-        	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"store\n" );
+        	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"store\n" );
 			if ( m_blocked[1] ) { 
 				m_model.schedResume( 0, m_blocked[1] );
 				m_blocked[1] = NULL;
@@ -90,12 +90,12 @@ class BusBridgeUnit : public Unit {
 
 		void addReq( Entry* req ) {  
 			m_pendingReqQ.push_back(req); 
-            m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"src=%p %s %#" PRIx64 " q size=%lu\n",
+            m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"src=%p %s %#" PRIx64 " q size=%lu\n",
                     req->src, req->callback?"load":"store", req->addr, m_pendingReqQ.size());
 			process();
 		}
 		void addDLL( int bytes ) {  
-            m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"q size=%lu\n",m_pendingDLLQ.size());
+            m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"q size=%lu\n",m_pendingDLLQ.size());
 			m_pendingDLLQ.push_back(bytes); 
 			process();
 		}
@@ -139,7 +139,7 @@ class BusBridgeUnit : public Unit {
 					
 					entry->xmit = m_unit.m_model.getCurrentSimTimeNano();
                     SimTime_t now = m_unit.m_model.getCurrentSimTimeNano();
-                    m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu delay=%" PRIu64 " Time=%" PRIu64 "\n",
+                    m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu delay=%" PRIu64 " Time=%" PRIu64 "\n",
                                     entry,entry->addr, entry->length, delay, now - entry->qd );
 					m_unit.m_model.schedCallback( delay, std::bind( &Bus::reqArrived, this, entry ) );
 				}
@@ -162,7 +162,7 @@ class BusBridgeUnit : public Unit {
 		}
 		if( 0 == entry->addr ) {
 			if ( entry->src->numPendingWrites() == 10 ) {
-		        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"unblock src\n");
+		        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"unblock src\n");
 				m_model.schedResume( 0, entry->src );
 			}
 			entry->src->decPendingWrites();
@@ -175,7 +175,7 @@ class BusBridgeUnit : public Unit {
 	void processReq( Entry* entry ) {
 
 		SimTime_t now = m_model.getCurrentSimTimeNano();
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p qdTime=%" PRIu64 " xmitTime=%" PRIu64 "\n",
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"entry=%p qdTime=%" PRIu64 " xmitTime=%" PRIu64 "\n",
                     entry, entry->xmit - entry->qd, now - entry->xmit);
         SimTime_t issueTime = m_model.getCurrentSimTimeNano();
 
@@ -188,7 +188,7 @@ class BusBridgeUnit : public Unit {
             size_t length = entry->req->length;
 			if ( m_loadWidget->load( this, entry->req, 
 				[=]() {
-       				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"load done entry=%p addr=%#" PRIx64 " length=%lu latency=%" PRIu64 "\n",
+       				m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"processReq",1,BUS_BRIDGE_MASK,"load done entry=%p addr=%#" PRIx64 " length=%lu latency=%" PRIu64 "\n",
 									entry, addr, length, m_model.getCurrentSimTimeNano() - now );
 					m_respBus.addReq( entry );
 				}) ) 
@@ -210,17 +210,17 @@ class BusBridgeUnit : public Unit {
 		}
 
 		if ( resumeSrc ) {
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"resume %p\n",resumeSrc);
+			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"resume %p\n",resumeSrc);
 			m_model.schedResume( 0, resumeSrc );
 		} else {
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"blocked\n");
+			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"blocked\n");
 		} 
 	}	
 
     SimTime_t calcByteDelay( size_t numBytes ) {
 		
 		double delay = (numBytes/(m_numLinks/8))/m_bandwidth_GB;
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"bytes=%lu delay=%f\n",numBytes, (float) delay );
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"bytes=%lu delay=%f\n",numBytes, (float) delay );
         return round(delay);
     }
 
