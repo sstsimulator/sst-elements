@@ -16,6 +16,9 @@
 class MsgStream : public StreamBase {
   public:
     MsgStream( Output&, Ctx*, int srcNode, int srcPid, int destPid, FireflyNetworkEvent* );
+    ~MsgStream() {
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"\n");
+    }
     bool isBlocked() {
         return  m_recvEntry == NULL || m_blocked;
     }
