@@ -124,7 +124,7 @@ class SendMachine {
         SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask, int myId,
               int packetSizeInBytes, int pktOverhead, int maxQsize, int unit, bool flag = false ) :
             m_nic(nic), m_id(myId), m_packetSizeInBytes( packetSizeInBytes - pktOverhead ), 
-            m_unit(unit), m_pktOverhead(pktOverhead), m_activeEntry(NULL), m_I_manage( flag )
+            m_unit(unit), m_pktOverhead(pktOverhead), m_activeEntry(NULL), m_I_manage( flag ), m_numSent(0)
         {
             char buffer[100];
             snprintf(buffer,100,"@t:%d:Nic::SendMachine%d::@p():@l ",nodeId,myId);
@@ -135,6 +135,8 @@ class SendMachine {
         }
 
         ~SendMachine() { }
+
+        int getNumSent() { return m_numSent; }
 
         bool isBusy() {
             return m_activeEntry;
@@ -178,4 +180,6 @@ class SendMachine {
         bool    m_I_manage;
         SendEntryBase* m_activeEntry;
         std::deque< SendEntryBase* > m_sendQ;
+
+        int m_numSent;
 };

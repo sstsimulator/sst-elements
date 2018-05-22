@@ -73,6 +73,7 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
 void Nic::SendMachine::streamFini( SendEntryBase* entry ) 
 {
     m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "%p pid=%d\n",entry,m_id);
+    ++m_numSent;
     if ( m_I_manage ) {
         m_sendQ.pop_front();
         if ( ! m_sendQ.empty() )  {

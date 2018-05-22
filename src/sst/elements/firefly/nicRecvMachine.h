@@ -42,7 +42,8 @@ class RecvMachine {
             m_numActiveStreams( 0 ),
             m_maxActiveStreams( maxActiveStreams ),
             m_blockedPkt(NULL),
-            m_receivedPkts(0)
+            m_receivedPkts(0),
+            m_numMsgRcvd(0)
         { 
             char buffer[100];
             snprintf(buffer,100,"@t:%d:Nic::RecvMachine::@p():@l vc=%d ",nodeId,m_vc);
@@ -54,7 +55,8 @@ class RecvMachine {
             }
         }
 
-        virtual ~RecvMachine(){}
+        int getNumReceived() { return m_numMsgRcvd; }
+        virtual ~RecvMachine(){ }
 
         void regMemRgn( int pid, int rgnNum, MemRgnEntry* entry ) {
             m_ctxMap[pid]->regMemRgn( rgnNum, entry );
@@ -159,12 +161,16 @@ class RecvMachine {
                     static_cast<FireflyNetworkEvent*>(payload);
                 event->setSrcNode( m_nic.NetToId( req->src ) );
                 delete req;
+                if ( ! event->isCtrl() && event->isHdr() ) {
+                    ++m_numMsgRcvd;
+                } 
                 return event;
             } else {
                 return NULL;
             }
         }
 
+        int m_numMsgRcvd;
         int m_receivedPkts;
         int         m_vc;
         int         m_rxMatchDelay;
