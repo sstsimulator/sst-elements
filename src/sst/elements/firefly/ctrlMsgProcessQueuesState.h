@@ -30,6 +30,15 @@
 #include "ctrlMsgCommReq.h"
 #include "ctrlMsgWaitReq.h"
 
+#define DBG_MSK_PQS_APP_SIDE 1 << 0
+#define DBG_MSK_PQS_INT 1 << 1 
+#define DBG_MSK_PQS_Q 1 << 2 
+#define DBG_MSK_PQS_CB 1 << 3 
+#define DBG_MSK_PQS_LOOP 1<< 4
+#define DBG_MSK_PQS_NEED_RECV 1<< 5 
+#define DBG_MSK_PQS_POST_SHORT 1<< 6 
+
+
 namespace SST {
 namespace Firefly {
 namespace CtrlMsg {
@@ -370,7 +379,7 @@ class ProcessQueuesState : public SubComponent
     _CommReq*	searchPostedRecv( MatchHdr& hdr, int& delay );
 
     void exit( int delay = 0 ) {
-        dbg().debug(CALL_INFO,2,1,"exit ProcessQueuesState\n"); 
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"exit ProcessQueuesState\n"); 
         passCtrlToFunction( m_exitDelay + delay );
         m_exitDelay = 0;
     }
@@ -433,6 +442,7 @@ class ProcessQueuesState : public SubComponent
         m_delayLink->send( delay, new DelayEvent(callback) );
     }  
     void passCtrlToFunction( uint64_t delay = 0 ) {
+        dbg().debug(CALL_INFO,1,DBG_MSK_PQS_APP_SIDE,"\n"); 
         m_returnToCaller->send( delay, NULL );
     }
 
@@ -483,6 +493,8 @@ class ProcessQueuesState : public SubComponent
 
     Statistic<uint64_t>* m_statRcvdMsg;
     Statistic<uint64_t>* m_statPstdRcv;
+    int m_numSent;
+    int m_numRecv;
 };
 
 }
