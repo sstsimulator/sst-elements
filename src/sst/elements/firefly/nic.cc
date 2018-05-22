@@ -167,7 +167,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
         smmParams.insert( "busLatency",  std::to_string(m_nic2host_lat_ns), false );
         m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics, m_unitPool->getTotal() );
     }
-
     
     m_recvMachine = new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
