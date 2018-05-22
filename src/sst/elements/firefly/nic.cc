@@ -168,10 +168,12 @@ Nic::Nic(ComponentId_t id, Params &params) :
         m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics, m_unitPool->getTotal() );
     }
 
+    
     m_recvMachine = new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                rxMatchDelay, hostReadDelay, maxRecvMachineQsize, numRecvNicUnits + 1 );
+                rxMatchDelay, hostReadDelay, maxRecvMachineQsize, 
+                params.find<>( "maxActiveRecvStreams", 1024*1024) );
 
     m_sendMachineV.resize(numSendMachines);
     for ( int i = 0; i < numSendMachines - 1; i++ ) {
@@ -233,10 +235,14 @@ Nic::~Nic()
 	delete m_shmem;
 	delete m_linkControl;
 
+    int numRcvd = m_recvMachine->getNumReceived();
+    int numSent=0;
 	delete m_recvMachine;
     for ( int i = 0; i <  m_sendMachineV.size(); i++ ) {
+        numSent += m_sendMachineV[i]->getNumSent();
 		delete m_sendMachineV[i];
 	}
+    m_dbg.debug(CALL_INFO,1,1,"                                                             finish numSent=%d numRcvd=%d\n",numSent,numRcvd);
 
 	if ( m_recvNotifyFunctor ) delete m_recvNotifyFunctor;
 	if ( m_sendNotifyFunctor ) delete m_sendNotifyFunctor;
