@@ -31,6 +31,8 @@ public:
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
             {"verbose", "Sets the verbosity of the backend output", "0"},
+	    {"encryption_mode",  "(string) encryption - none or AES-CTR.", "none"},
+	    {"integrity_mode",  "(string) Integrity - none or Bonsai-MT.", "none"},
             {"access_time", "Link latency for the link to the Messier memory model. With units (SI ok).", "1ns"} )
 
     SST_ELI_DOCUMENT_PORTS( {"cube_link", "Link to Messier", {"Messier.MemReqEvent", "Messier.MemRespEvent"} } )
