@@ -47,6 +47,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     memmgr = memMgr;
 
     opal_enabled = false;
+    writePayloads = params.find<int>("writepayloadtrace") == 0 ? false : true;
 
     coreQ = new std::queue<ArielEvent*>();
     pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
@@ -160,13 +161,30 @@ void ArielCore::commitReadEvent(const uint64_t address,
 }
 
 void ArielCore::commitWriteEvent(const uint64_t address,
-            const uint64_t virtAddress, const uint32_t length) {
+            const uint64_t virtAddress, const uint32_t length, const uint8_t* payload) {
 
     if(length > 0) {
         SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, address, length);
         req->setVirtualAddress(virtAddress);
 
-        // TODO BJM:  DO we need to fill in dummy data?
+		if( writePayloads ) {
+			if(verbosity >= 16) {
+				char* buffer = new char[64];
+				std::string payloadString = "";
+				
+				for(int i = 0; i < length; ++i) {
+					sprintf(buffer, "0x%X ", payload[i]);
+					payloadString.append(buffer);
+				}
+				
+				delete buffer;
+				
+				output->verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s }\n",
+					length, payloadString.c_str());
+			}
+		
+			req->setPayload( (uint8_t*) payload, length );
+		}
 
         pending_transaction_count++;
         pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
@@ -301,8 +319,8 @@ void ArielCore::createFreeEvent(uint64_t vAddr) {
     ARIEL_CORE_VERBOSE(2, output->verbose(CALL_INFO, 2, 0, "Generated a free event for virtual address=%" PRIu64 "\n", vAddr));
 }
 
-void ArielCore::createWriteEvent(uint64_t address, uint32_t length) {
-    ArielWriteEvent* ev = new ArielWriteEvent(address, length);
+void ArielCore::createWriteEvent(uint64_t address, uint32_t length, const uint8_t* payload) {
+    ArielWriteEvent* ev = new ArielWriteEvent(address, length, payload);
     coreQ->push(ev);
 
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a WRITE event, addr=%" PRIu64 ", length=%" PRIu32 "\n", address, length));
@@ -416,7 +434,7 @@ bool ArielCore::refillQueue() {
                                     break;
 
                             case ARIEL_PERFORM_WRITE:
-                                    createWriteEvent(ac.inst.addr, ac.inst.size);
+                                    createWriteEvent(ac.inst.addr, ac.inst.size, &ac.inst.payload[0]);
                                     break;
 
                             case ARIEL_END_INSTRUCTION:
@@ -589,7 +607,12 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
         ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing write, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n",
                             coreID, writeAddress, writeLength, physAddr));
 
-        commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength);
+		if( writePayloads ) {
+			uint8_t* payloadPtr = wEv->getPayload();
+        	commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, payloadPtr);
+        } else {
+        	commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, NULL);
+        }
     } else {
         ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
                             coreID, writeAddress, writeLength));
@@ -624,8 +647,15 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
             }*/
         }
 
-        commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize);
-        commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize);
+		if( writePayloads ) {
+			uint8_t* payloadPtr = wEv->getPayload();
+		
+        	commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize, payloadPtr);
+        	commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize, &payloadPtr[leftSize]);
+        } else {
+        	commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize, NULL);
+        	commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize, NULL);
+        }
         statSplitWriteRequests->addData(1);
     }
 
