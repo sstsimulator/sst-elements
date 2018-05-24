@@ -82,7 +82,7 @@ class ArielCore {
         void unfence();
         void finishCore();
         void createReadEvent(uint64_t addr, uint32_t size);
-        void createWriteEvent(uint64_t addr, uint32_t size);
+        void createWriteEvent(uint64_t addr, uint32_t size, const uint8_t* payload);
         void createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level, uint64_t ip);
         void createMmapEvent(uint32_t fileID, uint64_t vAddr, uint64_t length, uint32_t level, uint64_t instPtr);
         void createNoOpEvent();
@@ -108,7 +108,7 @@ class ArielCore {
         void setOpalLink(Link * opallink);
 
         void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
-        void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
+        void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length, const uint8_t* payload);
         void commitFlushEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 
         // Setting the max number of instructions to be simulated
@@ -121,6 +121,7 @@ class ArielCore {
         bool processNextEvent();
         bool refillQueue();
         bool opal_enabled;
+        bool writePayloads;
         uint32_t coreID;
         uint32_t maxPendingTransactions;
         Output* output;

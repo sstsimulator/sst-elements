@@ -53,6 +53,7 @@ struct ArielCommand {
             uint64_t addr;
             uint32_t instClass;
             uint32_t simdElemCount;
+	    	uint8_t  payload[64];
         } inst;
         struct {
             uint64_t vaddr;

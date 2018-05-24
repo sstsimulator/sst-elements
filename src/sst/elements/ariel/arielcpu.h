@@ -73,6 +73,7 @@ class ArielCPU : public SST::Component {
         {"clock", "Clock rate at which events are generated and processed", "1GHz"},
         {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
         {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
+        {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"},
         {"opal_enabled", "If enabled, MLM allocation hints will be communicated to the centralized memory manager", "0"})
 
     SST_ELI_DOCUMENT_PORTS(

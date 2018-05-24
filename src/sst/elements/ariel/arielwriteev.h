@@ -27,11 +27,18 @@ namespace ArielComponent {
 class ArielWriteEvent : public ArielEvent {
 
     public:
-        ArielWriteEvent(uint64_t wAddr, uint32_t length) :
+        ArielWriteEvent(uint64_t wAddr, uint32_t length, const uint8_t* payloadData) :
                 writeAddress(wAddr), writeLength(length) {
+                
+                payload = new uint8_t[length];
+                
+                for( int i = 0; i < length; ++i ) {
+                	payload[i] = payloadData[i];
+                }
         }
 
         ~ArielWriteEvent() {
+        	delete payload;
         }
 
         ArielEventType getEventType() const {
@@ -45,10 +52,15 @@ class ArielWriteEvent : public ArielEvent {
         uint32_t getLength() const {
                 return writeLength;
         }
+        
+        uint8_t* getPayload() const {
+        		return payload;
+        }
 
     private:
         const uint64_t writeAddress;
         const uint32_t writeLength;
+              uint8_t* payload;
 
 };
 

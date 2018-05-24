@@ -220,7 +220,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     appLauncher = params.find<std::string>("launcher", PINTOOL_EXECUTABLE);
 
     const uint32_t launch_param_count = (uint32_t) params.find<uint32_t>("launchparamcount", 0);
-    const uint32_t pin_arg_count = 27 + launch_param_count;
+    const uint32_t pin_arg_count = 29 + launch_param_count;
 
     execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
@@ -237,6 +237,13 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("15");
 #endif
     execute_args[arg++] = const_cast<char*>("-follow_execv");
+    execute_args[arg++] = const_cast<char*>("-w");
+
+	if( params.find<int>("writepayloadtrace") == 0 ) {
+    	execute_args[arg++] = const_cast<char*>("0");
+    } else {
+    	execute_args[arg++] = const_cast<char*>("1");
+    }
 
     char* param_name_buffer = (char*) malloc(sizeof(char) * 512);
 
