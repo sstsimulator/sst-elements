@@ -90,7 +90,7 @@ CacheAction L1CoherenceController::handleEviction(CacheLine* wbCacheLine, string
 
 
 /**
- *  Obtain bock if a cache miss
+ *  Obtain block if a cache miss
  *  Obtain needed coherence permission from lower level cache/memory if coherence miss
  */
 CacheAction L1CoherenceController::handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay){
