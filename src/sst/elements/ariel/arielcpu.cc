@@ -237,13 +237,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("15");
 #endif
     execute_args[arg++] = const_cast<char*>("-follow_execv");
-    execute_args[arg++] = const_cast<char*>("-w");
-
-	if( params.find<int>("writepayloadtrace") == 0 ) {
-    	execute_args[arg++] = const_cast<char*>("0");
-    } else {
-    	execute_args[arg++] = const_cast<char*>("1");
-    }
 
     char* param_name_buffer = (char*) malloc(sizeof(char) * 512);
 
@@ -266,6 +259,14 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-t");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (ariel_tool.size() + 1));
     strcpy(execute_args[arg-1], ariel_tool.c_str());
+    execute_args[arg++] = const_cast<char*>("-w");
+
+	if( params.find<int>("writepayloadtrace") == 0 ) {
+    	execute_args[arg++] = const_cast<char*>("0");
+    } else {
+    	execute_args[arg++] = const_cast<char*>("1");
+    }
+
     execute_args[arg++] = const_cast<char*>("-p");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name.c_str());

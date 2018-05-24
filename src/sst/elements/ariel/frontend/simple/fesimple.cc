@@ -82,6 +82,9 @@ KNOB<UINT32> DefaultMemoryPool(KNOB_MODE_WRITEONCE, "pintool",
 
 #define ARIEL_MAX(a,b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
+   
+#define ARIEL_MIN(a,b) \
+   ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
 typedef struct {
     int64_t insExecuted;
@@ -361,7 +364,12 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADD
     ac.inst.simdElemCount = simdOpWidth;
     
     if( writeTrace ) {
-    	PIN_SafeCopy( &ac.inst.payload[0], address, writeSize );
+//    	if( writeSize > ARIEL_MAX_PAYLOAD_SIZE ) {
+//    		fprintf(stderr, "Error: Payload exceeds maximum size (%d > %d)\n",
+//    			writeSize, ARIEL_MAX_PAYLOAD_SIZE);
+//    		exit(-1);
+//    	}
+    	PIN_SafeCopy( &ac.inst.payload[0], address, ARIEL_MIN( writeSize, ARIEL_MAX_PAYLOAD_SIZE ) );
 	}
 	
     tunnel->writeMessage(thr, ac);

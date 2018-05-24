@@ -47,7 +47,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     memmgr = memMgr;
 
     opal_enabled = false;
-    writePayloads = params.find<int>("writepayloadtrace") ? false : true;
+    writePayloads = params.find<int>("writepayloadtrace") == 0 ? false : true;
 
     coreQ = new std::queue<ArielEvent*>();
     pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
@@ -168,6 +168,21 @@ void ArielCore::commitWriteEvent(const uint64_t address,
         req->setVirtualAddress(virtAddress);
 
 		if( writePayloads ) {
+			if(verbosity >= 16) {
+				char* buffer = new char[64];
+				std::string payloadString = "";
+				
+				for(int i = 0; i < length; ++i) {
+					sprintf(buffer, "0x%X ", payload[i]);
+					payloadString.append(buffer);
+				}
+				
+				delete buffer;
+				
+				output->verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s }\n",
+					length, payloadString.c_str());
+			}
+		
 			req->setPayload( (uint8_t*) payload, length );
 		}
 
@@ -593,10 +608,10 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
                             coreID, writeAddress, writeLength, physAddr));
 
 		if( writePayloads ) {
-        	commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, NULL);
-        } else {
-        	uint8_t* payloadPtr = wEv->getPayload();
+			uint8_t* payloadPtr = wEv->getPayload();
         	commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, payloadPtr);
+        } else {
+        	commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, NULL);
         }
     } else {
         ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",

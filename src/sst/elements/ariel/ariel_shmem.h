@@ -21,6 +21,8 @@
 #include <sst/core/interprocess/ipctunnel.h>
 #include "ariel_inst_class.h"
 
+#define ARIEL_MAX_PAYLOAD_SIZE 64
+
 namespace SST {
 namespace ArielComponent {
 
@@ -53,7 +55,7 @@ struct ArielCommand {
             uint64_t addr;
             uint32_t instClass;
             uint32_t simdElemCount;
-	    	uint8_t  payload[64];
+	    	uint8_t  payload[ARIEL_MAX_PAYLOAD_SIZE];
         } inst;
         struct {
             uint64_t vaddr;
