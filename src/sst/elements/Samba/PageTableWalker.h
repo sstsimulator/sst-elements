@@ -265,8 +265,6 @@ namespace SST { namespace SambaComponent{
 		// This one is to push a request to this structure
 		void push_request(SST::Event * x) {not_serviced.push_back(x);}
 
-		void push_invalidAddress(SST::Event * x) {service_shootdown.push_back(x);}
-
 		bool tick(SST::Cycle_t x);
 
 

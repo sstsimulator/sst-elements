@@ -181,7 +181,7 @@ void Opal::processHint(int node, int fileId, uint64_t vAddress, int size)
 
 			it->push_back(node);
 			//(fileIdHint->second).first = it;
-			nodeInfo[node]->reservedSpace.insert(std::make_pair(vAddress, std::make_pair(fileId, std::make_pair( ceil(size/(nodeInfo[node]->page_size*1024)), 0))));
+			nodeInfo[node]->reservedSpace.insert(std::make_pair(vAddress/4096, std::make_pair(fileId, std::make_pair( ceil(size/(nodeInfo[node]->page_size*1024)), 0))));
 		}
 	}
 	else
@@ -191,7 +191,7 @@ void Opal::processHint(int node, int fileId, uint64_t vAddress, int size)
 
 		it->push_back(node);
 		mmapFileIdHints.insert(std::make_pair(fileId, std::make_pair( it, pa )));
-		nodeInfo[node]->reservedSpace.insert(std::make_pair(vAddress, std::make_pair(fileId, std::make_pair( ceil(size/(nodeInfo[node]->page_size*1024)), 0))));
+		nodeInfo[node]->reservedSpace.insert(std::make_pair(vAddress/4096, std::make_pair(fileId, std::make_pair( ceil(size/(nodeInfo[node]->page_size*1024)), 0))));
 
 	}
 }
@@ -236,13 +236,15 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 			Pool *pool = sharedMemoryInfo[sharedMemPoolId];
 			for(int j=0; j<pages; j++) {
 				response = pool->allocate_frame(1);
-				nodeInfo[node]->insertFrame(response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
+				nodeInfo[node]->insertFrame(coreId, response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
 
 				if(!response.status)
 					output->fatal(CALL_INFO, -1, "Opal: Allocating shared memory. This should never happen\n");
 			}
 
 			setNextMemPool( node );
+			sharedMemoryInfo[sharedMemPoolId]->profileStats(0,pages);
+			sharedMemoryInfo[sharedMemPoolId]->profileStats(1,pages);
 			response.pages = pages;
 			response.status = 1;
 		}
@@ -267,7 +269,7 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 					Pool *pool = sharedMemoryInfo[sharedMemPoolId];
 					for(int j=0; j<pages; j++) {
 						response = pool->allocate_frame(1);
-						nodeInfo[node]->insertFrame(response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
+						nodeInfo[node]->insertFrame(coreId, response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
 
 						if(!response.status)
 							output->fatal(CALL_INFO, -1, "Opal: Allocating shared memory. This should never happen\n");
@@ -304,7 +306,7 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 				Pool *pool = sharedMemoryInfo[i];
 				for(int j=0; j<pages; j++) {
 					response = pool->allocate_frame(1);
-					nodeInfo[node]->insertFrame(response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
+					nodeInfo[node]->insertFrame(coreId, response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
 
 					if(!response.status)
 						output->fatal(CALL_INFO, -1, "Opal: Allocating shared memory. This should never happen\n");
@@ -339,7 +341,7 @@ REQRESPONSE Opal::allocateLocalMemory(int node, int coreId, uint64_t vAddress, i
 		Pool *pool = nodeInfo[node]->pool;
 		for(int i=0; i<pages; i++) {
 			response = pool->allocate_frame(1);
-			nodeInfo[node]->insertFrame(response.address, vAddress, fault_level, SST::OpalComponent::MemType::LOCAL);
+			nodeInfo[node]->insertFrame(coreId, response.address, vAddress, fault_level, SST::OpalComponent::MemType::LOCAL);
 			if(!response.status)
 				output->fatal(CALL_INFO, -1, "Opal: Allocating local memory. This should never happen\n");
 		}
@@ -354,7 +356,10 @@ REQRESPONSE Opal::allocateLocalMemory(int node, int coreId, uint64_t vAddress, i
 	else {
 		OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Local Memory is drained out\n", node));
 
-		if(nodeInfo[node]->page_migration && !nodeInfo[node]->memoryAllocationPolicy) {
+		if(nodeInfo[node]->page_migration && !nodeInfo[node]->memoryAllocationPolicy || 4 == fault_level) {
+			if(4 == fault_level)
+				std::cerr << getName().c_str() << " migrating a page to allocate memory for node " << node << " core " << coreId << " CR3" << std::endl;
+
 			response.page_migration = 1;
 		}
 		else {
@@ -398,7 +403,7 @@ REQRESPONSE Opal::allocateFromReservedMemory(int node, uint64_t reserved_vAddres
 				Pool *pool = sharedMemoryInfo[i];
 				for(int j=0; j<pages_reserved; j++) {
 					response = pool->allocate_frame(1);
-					//nodeInfo[node]->insertFrame(response.address, vAddress, SST::OpalComponent::MemType::SHARED); // Not saving reserved frames in node information as these should not be migrated.
+					//nodeInfo[node]->insertFrame(coreId, response.address, vAddress, SST::OpalComponent::MemType::SHARED); // Not saving reserved frames in node information as these should not be migrated.
 					reserved_pAddress->push_back( response.address );
 
 					if(!response.status)
@@ -439,44 +444,57 @@ REQRESPONSE Opal::allocateFromReservedMemory(int node, uint64_t reserved_vAddres
 bool Opal::processRequest(int node, int coreId, uint64_t vAddress, int fault_level, int size)
 {
 
+	REQRESPONSE response;
 	int pages = ceil(size/(nodeInfo[node]->page_size*1024));
 
 	// If multiple pages are requested how are the physical addresses sent to the requester as in future sue to opal parallelization continuous addresses cannot be allocated
 	if(pages != 1)
 		output->fatal(CALL_INFO, -1, "Opal: currently opal does not support multiple page allocations\n");
 
-	// check if memory is to be allocated from the reserved address space
-	REQRESPONSE response = isAddressReserved(node, vAddress);
-
-	if( response.status )
-		response = allocateFromReservedMemory(node, response.address, vAddress, pages);
-
-	else {
-		if( !nodeInfo[node]->allocatedmempool ) {
-			response = allocateLocalMemory(node, coreId, vAddress, fault_level, pages);
-			if(response.page_migration) {
-				if(nodeInfo[node]->page_migration && 0==nodeInfo[node]->page_migration_policy && !nodeInfo[node]->memoryAllocationPolicy)
-				{
-					// Bulk page migrations
-					migratePages(node, coreId, nodeInfo[node]->num_pages_to_migrate);
-				}
-				else if(nodeInfo[node]->page_migration && 1==nodeInfo[node]->page_migration_policy && !nodeInfo[node]->memoryAllocationPolicy)
-				{
-					//First touch policy
-					migratePages(node, coreId, 1);
-				}
-				else
-					output->fatal(CALL_INFO, -1, "Opal: Page migration policy not detected. This should not happen\n");
-
-				return false;
-			}
-			//std::cerr << getName() << " Node: " << node << " vAddress: " << vAddress << " allocated local  address: " << response.address << " pages: " << response.pages << " size: " << response.pages*(nodeInfo[node]->page_size*1024) << std::endl;
+	// if the page fault request is for CR3 register allocate the memory from local memory
+	if(4 == fault_level)
+	{
+		response = allocateLocalMemory(node, coreId, vAddress, fault_level, pages);
+		if(response.page_migration) {
+			migratePages(node, coreId, 1);
+			return false;
 		}
+	}
+	else
+	{
+
+		// check if memory is to be allocated from the reserved address space
+		response = isAddressReserved(node, vAddress);
+
+		if( response.status )
+			response = allocateFromReservedMemory(node, response.address, vAddress, pages);
+
 		else {
-			response = allocateSharedMemory(node, coreId, vAddress, fault_level, pages);
-			//std::cerr << getName() << " Node: " << node << " vAddress: " << vAddress << " allocated shared address: " << response.address << " pages: " << response.pages << " size: " << response.pages*(nodeInfo[node]->page_size*1024) << std::endl;
-		}
+			if( !nodeInfo[node]->allocatedmempool ) {
+				response = allocateLocalMemory(node, coreId, vAddress, fault_level, pages);
+				if(response.page_migration) {
+					if(nodeInfo[node]->page_migration && 0==nodeInfo[node]->page_migration_policy && !nodeInfo[node]->memoryAllocationPolicy)
+					{
+						// Bulk page migrations
+						migratePages(node, coreId, nodeInfo[node]->num_pages_to_migrate);
+					}
+					else if(nodeInfo[node]->page_migration && 1==nodeInfo[node]->page_migration_policy && !nodeInfo[node]->memoryAllocationPolicy)
+					{
+						// Only one page migration
+						migratePages(node, coreId, 1);
+					}
+					else
+						output->fatal(CALL_INFO, -1, "Opal: Page migration policy not detected. This should not happen\n");
 
+					return false;
+				}
+				//std::cout << getName() << " Node: " << node << " core " << coreId << " vAddress: " << vAddress << " allocated local  address: " << response.address << " pages: " << " level: " << fault_level  << std::endl;
+			}
+			else {
+				response = allocateSharedMemory(node, coreId, vAddress, fault_level, pages);
+				//std::cout << getName() << " Node: " << node << " core " << coreId << " vAddress: " << vAddress << " allocated shared address: " << response.address << " pages: " << " level: " << fault_level << std::endl;
+			}
+		}
 	}
 
 	if( response.status ) {
@@ -554,7 +572,7 @@ void Opal::migratePages(int node, int coreId, int pages)
 		it.first = sm_address;
 
 		// move the local page to shared memory
-		nodeInfo[node]->insertFrame(sm_address, it.second.first, it.second.second, SST::OpalComponent::MemType::SHARED);
+		nodeInfo[node]->insertFrame(coreId, sm_address, it.second.first, it.second.second, SST::OpalComponent::MemType::SHARED);
 
 		// unmap local memory
 		nodeInfo[node]->pool->deallocate_frame(lm_address,1);
@@ -571,8 +589,12 @@ void Opal::migratePages(int node, int coreId, int pages)
 
 	}
 
-	processShootdownEvent(node,coreId);
+	int shootdownId = nodeInfo[node]->coreInfo[coreId].id;
+	// register tlb shootdown id
+	tlbShootdownInfo[shootdownId] = std::make_pair(node, coreId);
 
+	// initiate tlb shootdown
+	tlbShootdown(node, coreId, shootdownId);
 
 }
 
@@ -663,7 +685,6 @@ void Opal::processTLBShootdownAck(int node, int coreId, int shootdownId)
 	if(nodeInfo[n]->coreInfo[c].sdAckCount < 0)
 		std::cerr << getName().c_str() << " DANGER!! sdAckCount less than 0" << std::endl;
 
-
 	OpalEvent *tse = new OpalEvent(EventType::SDACK);
 	nodeInfo[node]->coreInfo[coreId].coreLink->send(nodeInfo[node]->latency, tse);
 
@@ -690,12 +711,42 @@ void Opal::processInvalidAddrEvent(int node, int coreId, uint64_t vAddress)
 	//nodeInfo[node]->coreInfo[coreId].invalidAddrs(vAddress);
 }
 
-void Opal::processShootdownEvent(int node, int coreId)
+void Opal::processShootdownEvent(int node, int coreId, uint64_t vaddress, uint64_t paddress, int fault_level)
 {
 	int shootdownId = nodeInfo[node]->coreInfo[coreId].id;
 
 	// register tlb shootdown id
 	tlbShootdownInfo[shootdownId] = std::make_pair(node, coreId);
+
+	std::pair<uint64_t, int> temp = nodeInfo[node]->globalPageList[paddress];
+	//std::cout << getName().c_str() << " Node: " << node << " core: " << coreId << " paddress: " << std::hex << paddress << " vaddress: " << temp.first << " and level: " << temp.second << " vaddress: " << vaddress << std::endl;
+	if(temp.first != vaddress)
+		output->fatal(CALL_INFO, -1, "%s, Error - unknown shootdown request\n", getName().c_str());
+
+	std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > lm_pages = nodeInfo[node]->getPagesToMigrate(1);
+
+	if(lm_pages.size() > 1)
+		output->fatal(CALL_INFO, -1, "%s, Error - shootdown request local memory migration pages more than 1\n", getName().c_str());
+
+
+	auto it = lm_pages.front();
+
+	// move the local page to shared memory
+	nodeInfo[node]->removeFrame(paddress, SST::OpalComponent::MemType::SHARED);
+	nodeInfo[node]->insertFrame(coreId, paddress, it.second.first, it.second.second, SST::OpalComponent::MemType::SHARED);
+
+	nodeInfo[node]->insertFrame(coreId, it.first, vaddress, fault_level, SST::OpalComponent::MemType::LOCAL);
+
+	// store the address to invalidate
+	nodeInfo[node]->coreInfo[coreId].addInvalidAddress(paddress, it.second.first, it.second.second);
+	nodeInfo[node]->coreInfo[coreId].addInvalidAddress(it.first, vaddress, fault_level);
+
+	lm_pages.pop_front();
+
+	//nodeInfo[node]->pool->profileStats(2,1);
+	//sharedMemoryInfo[sharedMemPoolId]->profileStats(2,1);
+
+	statPagesMigrated->addData(1);
 
 	// initiate tlb shootdown
 	tlbShootdown(node, coreId, shootdownId);
@@ -751,7 +802,7 @@ bool Opal::tick(SST::Cycle_t x)
 			case SST::OpalComponent::EventType::SHOOTDOWN:
 			{
 				OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Opal has received an SHOOTDOWN CALL\n", ev->getNodeId()));
-				processShootdownEvent(ev->getNodeId(), ev->getCoreId());
+				processShootdownEvent(ev->getNodeId(), ev->getCoreId(), ev->getAddress(), ev->getPaddress(), ev->getFaultLevel());
 			}
 			break;
 

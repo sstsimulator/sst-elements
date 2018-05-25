@@ -74,7 +74,7 @@ namespace SST
 
 				bool processRequest(int node, int coreId, uint64_t vAddress, int fault_level, int size);
 				void processHint(int node, int fileId, uint64_t vAddress, int size);
-				void processShootdownEvent(int node, int coreId);
+				void processShootdownEvent(int node, int coreId, uint64_t vaddress, uint64_t paddress, int fault_level);
 				void processInvalidAddrEvent(int node, int coreId, uint64_t vaddress);
 				void processTLBShootdownAck(int node, int coreId, int shootdownId);
 				void tlbShootdown(int node, int coreId, int shootdownId);
@@ -214,6 +214,7 @@ namespace SST
 				void setInvalidAddresses (std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > ia) { invalidAddrs = ia; }
 				std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > * getInvalidAddresses() { return &invalidAddrs; }
 
+				uint64_t cr3;
 
 		};// END CorePrivateInfo
 
@@ -282,22 +283,29 @@ namespace SST
 
 
 
-				void insertFrame(uint64_t pAddress, uint64_t vAddress, int fault_level, SST::OpalComponent::MemType memType) {
-					if( memType == SST::OpalComponent::MemType::LOCAL ) {
+				void insertFrame(int coreId, uint64_t pAddress, uint64_t vAddress, int fault_level, SST::OpalComponent::MemType memType) {
+					if(4==fault_level)
+						coreInfo[coreId].cr3 = pAddress;
+					else if( memType == SST::OpalComponent::MemType::LOCAL ) {
 						localPageList[pAddress] = std::make_pair(vAddress,fault_level);
 					}
-					else {
+					else if( memType == SST::OpalComponent::MemType::SHARED ) {
 						globalPageList[pAddress] = std::make_pair(vAddress,fault_level);
 					}
+					else
+						std::cout << "Opal: insert frame Error!!!!"  <<std::endl;
+
 				}
 
 				void removeFrame(uint64_t pAddress, SST::OpalComponent::MemType memType) {
 					if( memType == SST::OpalComponent::MemType::LOCAL ) {
 						localPageList.erase(pAddress);
 					}
-					else {
+					else if( memType == SST::OpalComponent::MemType::SHARED ) {
 						globalPageList.erase(pAddress);
 					}
+					else
+						std::cout << "Opal: insert frame Error!!!!"  <<std::endl;
 				}
 
 				// choose pages to migrate randomly
