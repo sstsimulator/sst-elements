@@ -1,8 +1,8 @@
-// Copyright 2009-2018 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,6 +20,8 @@
 
 #include <sst/core/interprocess/ipctunnel.h>
 #include "ariel_inst_class.h"
+
+#define ARIEL_MAX_PAYLOAD_SIZE 64
 
 namespace SST {
 namespace ArielComponent {
@@ -53,6 +55,7 @@ struct ArielCommand {
             uint64_t addr;
             uint32_t instClass;
             uint32_t simdElemCount;
+	    	uint8_t  payload[ARIEL_MAX_PAYLOAD_SIZE];
         } inst;
         struct {
             uint64_t vaddr;

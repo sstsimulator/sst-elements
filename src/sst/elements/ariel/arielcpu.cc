@@ -1,8 +1,8 @@
-// Copyright 2009-2018 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -220,7 +220,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     appLauncher = params.find<std::string>("launcher", PINTOOL_EXECUTABLE);
 
     const uint32_t launch_param_count = (uint32_t) params.find<uint32_t>("launchparamcount", 0);
-    const uint32_t pin_arg_count = 27 + launch_param_count;
+    const uint32_t pin_arg_count = 29 + launch_param_count;
 
     execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
@@ -259,6 +259,14 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-t");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (ariel_tool.size() + 1));
     strcpy(execute_args[arg-1], ariel_tool.c_str());
+    execute_args[arg++] = const_cast<char*>("-w");
+
+	if( params.find<int>("writepayloadtrace") == 0 ) {
+    	execute_args[arg++] = const_cast<char*>("0");
+    } else {
+    	execute_args[arg++] = const_cast<char*>("1");
+    }
+
     execute_args[arg++] = const_cast<char*>("-p");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name.c_str());

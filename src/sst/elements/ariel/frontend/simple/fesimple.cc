@@ -1,8 +1,8 @@
-// Copyright 2009-2018 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -57,6 +57,8 @@
 
 using namespace SST::ArielComponent;
 
+KNOB<UINT32> PerformWriteTrace(KNOB_MODE_WRITEONCE, "pintool",
+    "w", "0", "Perform write tracing (i.e copy values directly into SST memory operations) (0 = disabled, 1 = enabled)");
 KNOB<UINT32> TrapFunctionProfile(KNOB_MODE_WRITEONCE, "pintool",
     "t", "0", "Function profiling level (0 = disabled, 1 = enabled)");
 KNOB<string> SSTNamedPipe(KNOB_MODE_WRITEONCE, "pintool",
@@ -80,6 +82,9 @@ KNOB<UINT32> DefaultMemoryPool(KNOB_MODE_WRITEONCE, "pintool",
 
 #define ARIEL_MAX(a,b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
+   
+#define ARIEL_MIN(a,b) \
+   ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
 typedef struct {
     int64_t insExecuted;
@@ -99,6 +104,7 @@ UINT64* lastMallocLoc;
 std::vector< std::set<ADDRINT> > instPtrsList;
 UINT32 overridePool;
 bool shouldOverride;
+bool writeTrace;
 
 // For mlm stuff
 // Map each location ID to the set of repeats that should go to fast mem
@@ -356,7 +362,16 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADD
     ac.inst.size = writeSize;
     ac.inst.instClass = instClass;
     ac.inst.simdElemCount = simdOpWidth;
-
+    
+    if( writeTrace ) {
+//    	if( writeSize > ARIEL_MAX_PAYLOAD_SIZE ) {
+//    		fprintf(stderr, "Error: Payload exceeds maximum size (%d > %d)\n",
+//    			writeSize, ARIEL_MAX_PAYLOAD_SIZE);
+//    		exit(-1);
+//    	}
+    	PIN_SafeCopy( &ac.inst.payload[0], address, ARIEL_MIN( writeSize, ARIEL_MAX_PAYLOAD_SIZE ) );
+	}
+	
     tunnel->writeMessage(thr, ac);
 }
 
@@ -1139,6 +1154,16 @@ int main(int argc, char *argv[])
         fprintf(stderr, "ARIEL-SST: Use pool: %" PRIu32 " instead of application provided\n", overridePool);
     } else {
         fprintf(stderr, "ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.\n");
+    }
+    
+    if(PerformWriteTrace.Value() > 0) {
+    	writeTrace = true;
+    }
+    
+    if( writeTrace ) {
+    	if( SSTVerbosity.Value() > 0 ) {
+    		printf("SSTARIEL: Performing write tracing (this is an expensive operation.)\n");
+    	}
     }
 
     core_count = MaxCoreCount.Value();
