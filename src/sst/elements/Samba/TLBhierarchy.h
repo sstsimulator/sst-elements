@@ -52,12 +52,21 @@ namespace SST { namespace SambaComponent{
 		// Which level, this can be any value starting from 0 for L1 and up to N, in an N+1 levels TLB system
 		int levels;
 
+		Output * output;
 
 		// This is the link to propogate requests to the cache hierarchy
 		SST::Component * Owner;
 
 		// If faults are emulated
-	        int emulate_faults;
+	    int emulate_faults;
+
+	    // Enable page migration if Opal is used
+		int page_migration;
+
+		// Page migration policy
+		PageMigrationType page_migration_policy;
+
+		uint64_t memory_size;
 
 	    int max_shootdown_width;
 
@@ -85,8 +94,11 @@ namespace SST { namespace SambaComponent{
 		// This tells TLB hierarchy to stall due to emulated page fault
 		int hold;
 
-		// This tells TLB hierarchy to invalidate all TLB entries due to TLB Shootdown
+		// This tells TLB hierarchy to invalidate all TLB entries due to TLB Shootdown from other cores
 		int shootdown;
+
+		// This tells TLB hierarchy to invalidate all TLB entries due to TLB Shootdown from the same core
+		int own_shootdown;
 
 		// This vector holds the invalidation requests
 		std::list<Address_t> invalid_addrs;
@@ -124,7 +136,8 @@ namespace SST { namespace SambaComponent{
 		std::map<Address_t,int> * MAPPED_PAGE_SIZE2MB;
 		std::map<Address_t,int> * MAPPED_PAGE_SIZE1GB;
 
-		std::map<Address_t,int> *PENDING_OPAL_REQS;
+		std::map<Address_t,int> *PENDING_PAGE_FAULTS;
+		std::map<Address_t,int> *PENDING_SHOOTDOWN_EVENTS;
 
 
 		public:
@@ -141,7 +154,7 @@ namespace SST { namespace SambaComponent{
 
 
 		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte,
-				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr)
+				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr, std::map<Address_t,int> * sr)
 		{
 	                CR3 = cr3;
                         PGD = pgd;
@@ -151,10 +164,11 @@ namespace SST { namespace SambaComponent{
                         MAPPED_PAGE_SIZE4KB = kb;
                         MAPPED_PAGE_SIZE2MB = mb;
                         MAPPED_PAGE_SIZE1GB = gb;
-                        PENDING_OPAL_REQS = pr;
+                        PENDING_PAGE_FAULTS = pr;
+                        PENDING_SHOOTDOWN_EVENTS = sr;
 
 			if(PTW!=NULL)
-				PTW->setPageTablePointers(cr3, pgd, pud, pmd, pte, gb, mb, kb, pr);
+				PTW->setPageTablePointers(cr3, pgd, pud, pmd, pte, gb, mb, kb, pr, sr);
 
 		}
 		// Constructor for component

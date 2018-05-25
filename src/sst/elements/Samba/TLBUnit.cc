@@ -49,7 +49,7 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 
 	Owner = owner;
 
-	id = tlb_id;
+	coreId = tlb_id;
 
 	level = Level;
 
@@ -461,16 +461,18 @@ void TLB::invalidate(Address_t vadd)
 
 	for(int id=0; id<sizes; id++)
 	{
-		int set= abs_int((vadd/page_size[id])%sets[id]);
+		//std::cout << Owner->getName().c_str() << " TLB " << coreId << " id: " << id << " invalidate address: " << vadd << " index: " << vadd*page_size[0]/page_size[id] << std::endl;
+		int set= abs_int((vadd*page_size[0]/page_size[id])%sets[id]);
 		for(int i=0; i<assoc[id]; i++) {
-			if(tags[id][set][i]==vadd/page_size[id]) {
+			if(tags[id][set][i]==vadd*page_size[0]/page_size[id] && valid[id][set][i]) {
+				//std::cout << Owner->getName().c_str() << " TLB " << coreId << " invalidate address: " << vadd << " index: " << vadd*page_size[0]/page_size[id] << " found" << std::endl;
 				valid[id][set][i] = false;
 				break;
 			}
 		}
 	}
 
-	//statTLBShootdowns->addData(1);
+	statTLBShootdowns->addData(1);
 }
 
 

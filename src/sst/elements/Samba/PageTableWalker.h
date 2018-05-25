@@ -32,6 +32,8 @@
 
 typedef std::pair<uint64_t, int> id_type;
 typedef uint64_t Address_t;
+enum PageMigrationType { NONE, FTP};
+// FTP: First touch policy
 
 using namespace SST::Interfaces;
 using namespace SST;
@@ -43,7 +45,7 @@ namespace SST { namespace SambaComponent{
 
 		Output* output;
 
-		int id;
+		int coreId;
 
 		int fault_level; // indicates the step where the page fault handler is at
 
@@ -66,12 +68,16 @@ namespace SST { namespace SambaComponent{
 
 		int * hold; // This is used to tell the TLB hierarchy to stall, to emulate overhead of page fault handler
 
-		int * shootdown; // This is used to indicate TLB hierarchy that TLB shootdown is in progress
+		int * shootdown; // This is used to indicate TLB hierarchy that TLB shootdown from other cores is in progress
+
+		int * own_shootdown; // This is used to indicate TLB hierarchy that TLB shootdown from the same core is in progress
 
 		int shootdownId;
 
 		std::list<Address_t> buffer;
 		std::list<Address_t> * invalid_addrs; // This is used to store address invalidation requests.
+
+
 
 		// ------------- Note that we assume that for each Samba componenet instance, all units run the same VMA, thus all share the same page table
 		// ------------- Our assumption is based on the fact that Ariel instances (mapped one-to-one to Samba instances) can only run one application
@@ -98,7 +104,8 @@ namespace SST { namespace SambaComponent{
 		std::map<Address_t,int> * MAPPED_PAGE_SIZE2MB;
 		std::map<Address_t,int> * MAPPED_PAGE_SIZE1GB;
 
-		std::map<Address_t,int> *PENDING_OPAL_REQS;
+		std::map<Address_t,int> *PENDING_PAGE_FAULTS;
+		std::map<Address_t,int> *PENDING_SHOOTDOWN_EVENTS;
 
 
 
@@ -124,6 +131,10 @@ namespace SST { namespace SambaComponent{
 		int latency; // indicates the latency in cycles
 
 		int emulate_faults; // if set, the page faults will be communicated to Opal
+
+		int *page_migration;
+
+		PageMigrationType *page_migration_policy;
 
 		int upper_link_latency; // This indicates the upper link latency
 
@@ -167,7 +178,7 @@ namespace SST { namespace SambaComponent{
 		PageTableWalker(int tlb_id, PageTableWalker * Next_level,int level, SST::Component * owner, SST::Params& params);
 
 		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte,
-				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr)
+				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr, std::map<Address_t,int> * sr)
 		{
 			CR3 = cr3;
 			PGD = pgd;
@@ -177,7 +188,8 @@ namespace SST { namespace SambaComponent{
 			MAPPED_PAGE_SIZE4KB = kb;
 			MAPPED_PAGE_SIZE2MB = mb;
 			MAPPED_PAGE_SIZE1GB = gb;
-			PENDING_OPAL_REQS = pr;
+			PENDING_PAGE_FAULTS = pr;
+			PENDING_SHOOTDOWN_EVENTS = sr;
 
 			cr3_init = 0;
 		}
@@ -212,9 +224,11 @@ namespace SST { namespace SambaComponent{
 
 		void setHold(int * tmp) { hold = tmp; }
 
-		void setShootDown(int * tmp) { shootdown = tmp; }
+		void setShootDownEvents(int * sd, int * own_sd, std::list<Address_t> * x) { shootdown = sd; own_shootdown = own_sd; invalid_addrs = x;}
 
-		void setInvalidate(std::list<Address_t> * x) { invalid_addrs = x; }
+		void setPageMigration(int *page_mig, PageMigrationType *policy) { page_migration = page_mig; page_migration_policy = policy; }
+
+		void initaitePageMigration(Address_t vaddress, Address_t paddress);
 
 		void recvResp(SST::Event* event);
 
@@ -250,6 +264,8 @@ namespace SST { namespace SambaComponent{
 
 		// This one is to push a request to this structure
 		void push_request(SST::Event * x) {not_serviced.push_back(x);}
+
+		void push_invalidAddress(SST::Event * x) {service_shootdown.push_back(x);}
 
 		bool tick(SST::Cycle_t x);
 

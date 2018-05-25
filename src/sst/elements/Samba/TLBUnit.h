@@ -34,7 +34,7 @@ class TLB
 
 	SST::Component *Owner;
 
-	int id;
+	int coreId;
 
 	int level; // This indicates the level of the TLB Unit
 

@@ -68,7 +68,8 @@ namespace SST {
 				std::map<Address_t,int>  MAPPED_PAGE_SIZE2MB;
 				std::map<Address_t,int>  MAPPED_PAGE_SIZE1GB;
 
-				std::map<Address_t,int> PENDING_OPAL_REQS;
+				std::map<Address_t,int> PENDING_PAGE_FAULTS;
+				std::map<Address_t,int> PENDING_SHOOTDOWN_EVENTS;
 
 
 			private:

@@ -48,6 +48,8 @@ TLBhierarchy::TLBhierarchy(int tlb_id, SST::Component * owner)
 TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Params& params)
 {
 
+	output = new SST::Output("OpalComponent[@f:@l:@p] ", 1, 0, SST::Output::STDOUT);
+
 	levels = Levels;
 	Owner = owner;
 	coreID=tlb_id;
@@ -60,6 +62,35 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
 
 	emulate_faults  = ((uint32_t) params.find<uint32_t>("emulate_faults", 0));
+
+	page_migration  = ((uint32_t) params.find<uint32_t>("page_migration", 0));
+
+	if(page_migration)
+	{
+		int pageMigPolicy  = ((uint32_t) params.find<uint32_t>("page_migration_policy", 0));
+		if(pageMigPolicy == 0)
+			page_migration_policy = PageMigrationType::NONE;
+		else if(pageMigPolicy == 1)
+			page_migration_policy = PageMigrationType::FTP;
+
+		bool found;
+		std::string mem_size = ((std::string) params.find<std::string>("memory", "", found));
+		if (!found) output->fatal(CALL_INFO, -1, "%s, Param not specified: memory_size\n", Owner->getName().c_str());
+
+		trim(mem_size);
+		size_t pos;
+		std::string checkstring = "kKmMgGtTpP";
+		if ((pos = mem_size.find_first_of(checkstring)) != std::string::npos) {
+			pos++;
+			if (pos < mem_size.length() && mem_size[pos] == 'B') {
+				mem_size.insert(pos, "i");
+			}
+		}
+		UnitAlgebra ua(mem_size);
+		memory_size = ua.getRoundedValue();
+		//std::cout<< Owner->getName().c_str() << " Core: " << coreID << std::hex << " Memory size: " << memory_size << std::endl;
+
+	}
 
 	max_shootdown_width = ((uint32_t) params.find<uint32_t>("max_shootdown_width", 4));
 
@@ -91,8 +122,8 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 	PTW->setServiceBack(TLB_CACHE[levels]->getPushedBack());
 	PTW->setServiceBackSize(TLB_CACHE[levels]->getPushedBackSize());
 	PTW->setHold(&hold);
-	PTW->setShootDown(&shootdown);
-	PTW->setInvalidate(&invalid_addrs);
+	PTW->setShootDownEvents(&shootdown,&own_shootdown,&invalid_addrs);
+	PTW->setPageMigration(&page_migration,&page_migration_policy);
 
 	TLB_CACHE[1]->setServiceBack(&mem_reqs);
 	TLB_CACHE[1]->setServiceBackSize(&mem_reqs_sizes);
@@ -139,19 +170,22 @@ void TLBhierarchy::handleEvent_CPU(SST::Event* event)
 
 bool TLBhierarchy::tick(SST::Cycle_t x)
 {
-	if(shootdown)
+	if(shootdown || own_shootdown)
 	{
 		int dispatched = 0;
+		Address_t addr;
 
 		while(!invalid_addrs.empty()){
 
 			if(dispatched >= max_shootdown_width)
 				return false;
 
-			for(int level = levels; level >= 1; level--)
-				TLB_CACHE[level]->invalidate(invalid_addrs.front());
+			addr = invalid_addrs.front();
 
-			PTW->invalidate(invalid_addrs.front());
+			for(int level = levels; level >= 1; level--)
+				TLB_CACHE[level]->invalidate(addr);
+
+			PTW->invalidate(addr);
 
 			invalid_addrs.pop_front();
 
@@ -179,7 +213,7 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 
 	curr_time = x;
 	// Step 1, check if not empty, then propogate it to L1 cache
-	while(!mem_reqs.empty())
+	while(!mem_reqs.empty() && !shootdown && !hold)
 	{
 		SST::Event * event= mem_reqs.back();
 
@@ -191,10 +225,6 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 			continue;
 		}
 
-		uint64_t time_diff = (uint64_t ) x - time_tracker[event];
-		time_tracker.erase(event);
-		total_waiting->addData(time_diff);
-		
 		// Here we override the physical address provided by ariel memory manage by the one provided by Opal
 		if(emulate_faults)
 		{
@@ -204,7 +234,21 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 
 			((MemEvent*) event)->setAddr((((*PTE)[vaddr / 4096] + vaddr % 4096) / 64) * 64);
 			((MemEvent*) event)->setBaseAddr((((*PTE)[vaddr / 4096] + vaddr % 4096) / 64) * 64);
+
+			if(page_migration && page_migration_policy == PageMigrationType::FTP) {
+				//std::cout<< Owner->getName().c_str() << " Core: " << coreID << " vaddress: " << std::hex << vaddr << " paddress: " << (*PTE)[vaddr / 4096] << " Memory size: " << memory_size << std::endl;
+				if((*PTE)[vaddr / 4096] >= memory_size) {
+					PTW->initaitePageMigration(vaddr, (*PTE)[vaddr / 4096]);
+					return false;
+				}
+			}
+
 		}
+
+		uint64_t time_diff = (uint64_t ) x - time_tracker[event];
+		time_tracker.erase(event);
+		total_waiting->addData(time_diff);
+
 		to_cache->send(event);
 
 		// We remove the size of that translation, we might for future versions use the translation size to obtain statistics
