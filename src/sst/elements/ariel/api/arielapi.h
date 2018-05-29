@@ -17,8 +17,6 @@
 #ifndef _H_ARIEL_CLIENT_API
 #define _H_ARIEL_CLIENT_API
 
-#include "arielapi.c"
-
 void ariel_enable();
 void ariel_fence();
 
