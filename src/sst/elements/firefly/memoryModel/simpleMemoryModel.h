@@ -72,7 +72,7 @@ class SimpleMemoryModel : SubComponent {
 	enum NIC_Thread { Send, Recv };
 
     SimpleMemoryModel( Component* comp, Params& params, int id, int numCores, int numNicUnits ) : 
-		SubComponent( comp ), m_numNicThreads(numNicUnits)
+		SubComponent( comp ), m_numNicThreads(numNicUnits), m_hostCacheUnit(NULL)
 	{
     	char buffer[100];
     	snprintf(buffer,100,"@t:%d:SimpleMemoryModel::@p():@l ",id);
@@ -171,7 +171,9 @@ class SimpleMemoryModel : SubComponent {
 
     virtual ~SimpleMemoryModel() {
         m_sharedTlb->printStats();
-        delete m_hostCacheUnit;
+        if ( m_hostCacheUnit ) {
+            delete m_hostCacheUnit;
+        }
         for ( unsigned i = 0; i < m_threads.size(); i++ ) {
             delete m_threads[i];
         }
