@@ -39,6 +39,7 @@ HadesSHMEM::HadesSHMEM(Component* owner, Params& params) :
 
 	m_enterLat_ns = params.find<int>("enterLat_ns",30);
 	m_returnLat_ns = params.find<int>("returnLat_ns",30);
+	m_blockingReturnLat_ns = params.find<int>("blockingReturnLat_ns",300);
 }
 
 HadesSHMEM::~HadesSHMEM() { 
@@ -445,7 +446,7 @@ void HadesSHMEM::get2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int 
     m_os->getNic()->shmemGet( calcNetPE(pe), dest, src, length, blocking, 
                 [=]() {
                     this->dbg().debug(CALL_INFO_LAMBDA,"get",1,SHMEM_BASE,"returning\n");
-                    this->delayReturn( callback );
+                    this->delayReturn( callback, m_blockingReturnLat_ns );
                 }
             );
 }
@@ -474,7 +475,7 @@ void HadesSHMEM::getv2( Hermes::Value& value, Hermes::Vaddr src, int pe, Shmem::
                     Hermes::Value _value = value;
                     ::memcpy( _value.getPtr(), newValue.getPtr(), _value.getLength() );
 
-                    this->delayReturn( callback );
+                    this->delayReturn( callback, m_blockingReturnLat_ns );
                 }
             );
 }
@@ -612,7 +613,7 @@ void HadesSHMEM::swap2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value&
                     Hermes::Value _result = result;
                     ::memcpy( _result.getPtr(), newValue.getPtr(), value.getLength() );
 
-                    this->delayReturn( callback );
+                    this->delayReturn( callback, m_blockingReturnLat_ns );
                 }
             );
 }
@@ -645,7 +646,7 @@ void HadesSHMEM::cswap2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value
                     Hermes::Value _result = result;
                     ::memcpy( _result.getPtr(), newValue.getPtr(), value.getLength() );
 
-                    this->delayReturn( callback );
+                    this->delayReturn( callback, m_blockingReturnLat_ns );
                 }
             );
 }
@@ -699,7 +700,7 @@ void HadesSHMEM::fadd2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value&
                     Hermes::Value _result = result;
                     ::memcpy( _result.getPtr(), newValue.getPtr(), _result.getLength() );
 
-                    this->delayReturn( callback );
+                    this->delayReturn( callback, m_blockingReturnLat_ns );
                 }
             );
 }
