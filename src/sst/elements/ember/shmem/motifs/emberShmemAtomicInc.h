@@ -34,12 +34,13 @@ namespace Ember {
 template < class TYPE, int VAL >
 class EmberShmemAtomicIncBaseGenerator : public EmberShmemGenerator {
 
-    enum { Add, Fadd, Putv } m_op;
+    enum { Add, Fadd, Putv, Getv } m_op;
     std::string m_opStr;
 public:
 	EmberShmemAtomicIncBaseGenerator(SST::Component* owner, Params& params, std::string name) :
 		EmberShmemGenerator(owner, params, name ), m_phase(-3), m_one(1)
 	{ 
+        m_computeTime = params.find<int>("arg.computeTime", 50 );
         m_dataSize = params.find<int>("arg.dataSize", 32*1024*1024 );
 		m_updates = params.find<int>("arg.updates", 4096);
 		m_iterations = params.find<int>("arg.iterations", 1);
@@ -51,6 +52,8 @@ public:
             m_op = Fadd;
         } else if ( m_opStr.compare("putv") == 0 ) {
             m_op = Putv;
+        } else if ( m_opStr.compare("getv") == 0 ) {
+            m_op = Getv;
         } else {
             assert(0);
         }
@@ -107,8 +110,8 @@ public:
 			enQ_getTime( evQ, &m_startTime );
 
 		} else if ( m_phase < m_iterations * m_updates ) {
-            int dest = calcDestPe(); 
 
+            int dest = calcDestPe(); 
             
 			Hermes::MemAddr addr;
             if ( m_randAddr ) {
@@ -116,6 +119,7 @@ public:
             } else {
                 addr = m_dest.offset<TYPE>( 0 );
             }
+            enQ_compute( evQ, m_computeTime );
 	
 			switch ( m_op ) { 
               case Fadd:
@@ -126,6 +130,9 @@ public:
                 break;
               case Putv:
                 enQ_putv( evQ, addr, &m_one, dest );
+                break;
+              case Getv:
+                enQ_getv( evQ, &m_one, addr, dest );
                 break;
 			}
             if ( m_phase + 1 == m_iterations * m_updates ) {
@@ -173,11 +180,11 @@ public:
 					}
 				} 
 
-                printf("%s: GUpdates  = %.9lf\n", getMotifName().c_str(), Gupdates ); 
-                printf("%s: Min Time      = %.9lf\n", getMotifName().c_str(), minTime );
-                printf("%s: Max Time      = %.9lf\n", getMotifName().c_str(), maxTime );
-                printf("%s: Min GUP/s     = %.9lf\n", getMotifName().c_str(), Gupdates / maxTime);
-                printf("%s: Max GUP/s     = %.9lf\n", getMotifName().c_str(), Gupdates / minTime );
+                printf("%s:GUpdates  = %.9lf\n", getMotifName().c_str(), Gupdates ); 
+                printf("%s:MinTime      = %.9lf\n", getMotifName().c_str(), minTime );
+                printf("%s:MaxTime      = %.9lf\n", getMotifName().c_str(), maxTime );
+                printf("%s:MinGUP/s     = %.9lf\n", getMotifName().c_str(), Gupdates / maxTime);
+                printf("%s:MaxGUP/s     = %.9lf\n", getMotifName().c_str(), Gupdates / minTime );
 
             }
 
@@ -237,6 +244,7 @@ public:
     unsigned int m_randSeed;
 #endif
 
+    int m_computeTime;
     bool m_randAddr;
 	bool m_backed;
 	bool m_printTotals;
