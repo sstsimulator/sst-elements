@@ -297,7 +297,7 @@ void Nic::Shmem::putv( NicShmemPutvCmdEvent* event, int id )
 
 void Nic::Shmem::getv( NicShmemGetvCmdEvent* event, int id )
 {
-    m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"core+%d far=%" PRIx64" len=%lu\n", id, event->getFarAddr(), event->getLength() );
+    m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"core=%d far=%" PRIx64" len=%lu\n", id, event->getFarAddr(), event->getLength() );
 
     NicShmemValueRespEvent::Callback callback = event->callback;
     ShmemGetvSendEntry* entry = new ShmemGetvSendEntry( id, event, 
@@ -728,8 +728,7 @@ void Nic::Shmem::checkWaitOps( int core, Hermes::Vaddr addr, size_t length )
         if ( op->inRange( addr, length ) && op->checkOp( m_dbg, core ) ) {
 			
         	m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"op valid, notify\n");
-			m_nic.schedCallback( op->callback(), m_nic2HostDelay_ns );
-			//m_nic.schedCallback( op->callback() );
+			m_nic.schedCallback( op->callback() );
             delete op; 
             iter = m_pendingOps[core].erase(iter);
         } else {
