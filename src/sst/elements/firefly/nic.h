@@ -282,7 +282,15 @@ public:
     void init( unsigned int phase );
     int getNodeId() { return m_myNodeId; }
     int getNum_vNics() { return m_num_vNics; }
-    void printStatus(Output &out) {}
+    void printStatus(Output &out) {
+        out.output("NIC %d: start time=%zu\n", m_myNodeId, (size_t) getCurrentSimTimeNano() );
+        out.output("NIC %d: Received packets: %d\n", m_myNodeId, m_recvMachine->getNumReceivedPkts());
+        out.output("NIC %d: Sent packets:     %d\n", m_myNodeId, m_sentPkts);
+        m_simpleMemoryModel->printStatus( out, m_myNodeId );
+        out.output("NIC %d: done\n", m_myNodeId );
+    }
+
+    int m_sentPkts;
 
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );

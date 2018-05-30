@@ -1,5 +1,6 @@
 
 import sys,getopt
+import pprint
 
 import sst
 from sst.merlin import *
@@ -332,6 +333,8 @@ hermesParams['hermesParams.verboseLevel'] = debug
 hermesParams['hermesParams.nicParams.verboseLevel'] = debug
 hermesParams['hermesParams.functionSM.verboseLevel'] = debug
 hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
+hermesParams['hermesParams.ctrlMsg.pqs.verboseLevel'] = debug 
+hermesParams['hermesParams.ctrlMsg.pqs.verboseMask'] = 1
 emberParams['verbose'] = emberVerbose
 hermesParams['hermesParams.numNodes'] = topoInfo.getNumNodes() 
 
@@ -398,6 +401,9 @@ sst.merlin._params.update( topoInfo.getNetworkParams() )
 epParams = {} 
 epParams.update(emberParams)
 epParams.update(hermesParams)
+
+#pprint.pprint( networkParams, width=1)
+#pprint.pprint( nicParams, width=1)
 
 
 loadInfo = LoadInfo( nicParams, epParams, numNodes, numCores, topoInfo.getNumNodes(), model )

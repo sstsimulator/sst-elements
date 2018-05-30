@@ -72,7 +72,8 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
 }
 void Nic::SendMachine::streamFini( SendEntryBase* entry ) 
 {
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "%p pid=%d\n",entry,m_id);
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "%p sendMachine=%d pid=%d\n",entry,m_id, entry->local_vNic());
+    ++m_numSent;
     if ( m_I_manage ) {
         m_sendQ.pop_front();
         if ( ! m_sendQ.empty() )  {
@@ -84,7 +85,7 @@ void Nic::SendMachine::streamFini( SendEntryBase* entry )
     }
 
     if ( entry->shouldDelete() ) {
-        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "%p delete SendEntry entry, pid=%d\n",entry, entry->local_vNic());
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "%p delete SendEntry entry, pid=%d\n",entry, entry->local_vNic());
         delete entry;
     }
 }
@@ -123,10 +124,8 @@ void Nic::SendMachine::InQ::ready2( FireflyNetworkEvent* ev, int dest, Callback 
 {
     m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "pass packet to OutQ numBytes=%lu\n", ev->bufSize() );
     --m_numPending;
-    m_outQ->enque( ev, dest );
-    if ( callback ) {
-        callback();
-    }
+    m_outQ->enque( ev, dest, callback );
+
     if ( m_callback ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "wakeup send machine\n");
         m_callback( );
@@ -152,9 +151,9 @@ void Nic::SendMachine::InQ::processPending( )
     }
 }
 
-void Nic::SendMachine::OutQ::enque( FireflyNetworkEvent* ev, int dest )
+void Nic::SendMachine::OutQ::enque( FireflyNetworkEvent* ev, int dest, Callback callback )
 {
     m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "size=%lu\n", m_queue.size());
-    m_queue.push_back( std::make_pair(ev,dest) );
+    m_queue.push_back( Entry( std::make_pair(ev,dest), callback ) );
     m_nic.notifyHavePkt(m_id);
 }
