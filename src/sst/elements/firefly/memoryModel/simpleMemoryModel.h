@@ -106,14 +106,21 @@ class SimpleMemoryModel : SubComponent {
 		int numWalkers = params.find<int>( "numWalkers", 1 );
 		int numTlbSlots = params.find<int>( "numTlbSlots", 1 );
         int nicToHostMTU = params.find<int>( "nicToHostMTU", 256 );
+        bool useHostCache = params.find<bool>( "useHostCache", true );
 
 		m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
-		m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
-	    m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "HostCache" );
+        if ( useHostCache ) {
+assert(0);
+		    m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
+	        m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "HostCache" );
+        } else {
+	        m_muxUnit = new MuxUnit( *this, m_dbg, id, m_memUnit, "HostCache" );
+        }
 
 		m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, busNumLinks, busLatency,
                                                                 TLP_overhead, DLL_bytes, hostCacheLineSize, widgetSlots );
 
+	    MuxUnit* muxUnit = new MuxUnit( *this, m_dbg, id, m_busBridgeUnit, "Nic" );
 		
         m_sharedTlb = new SharedTlb( *this, m_dbg, id, tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers );
 		
@@ -130,26 +137,14 @@ class SimpleMemoryModel : SubComponent {
 
             SharedTlbUnit* tlb = new SharedTlbUnit( *this, m_dbg, id, unitName.str().c_str(), m_sharedTlb, 
 					new LoadUnit( *this, m_dbg, id,
-						m_busBridgeUnit,
+                        muxUnit,
 						nicNumLoadSlots, unitName.str().c_str() ),
 
 					new StoreUnit( *this, m_dbg, id,
-						m_busBridgeUnit,
+                        muxUnit,
 						nicNumStoreSlots, unitName.str().c_str() ),
                         numTlbSlots, numTlbSlots 
                         );
-#if 0
-            Tlb* tlb = new Tlb( *this, m_dbg, id, unitName.str().c_str(), 
-					new LoadUnit( *this, m_dbg, id,
-						m_busBridgeUnit,
-						nicNumLoadSlots, unitName.str().c_str() ),
-
-					new StoreUnit( *this, m_dbg, id,
-						m_busBridgeUnit,
-						nicNumStoreSlots, unitName.str().c_str() ),
-                        tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers, numTlbSlots, numTlbSlots 
-                        );
-#endif
 
 			m_threads.push_back( 
 				new Thread( *this, unitName.str(), m_dbg, id, nicToHostMTU, tlb, tlb )	
