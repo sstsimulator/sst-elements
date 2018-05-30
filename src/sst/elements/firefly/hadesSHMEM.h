@@ -57,6 +57,7 @@ class HadesSHMEM : public Shmem::Interface
         {"verboseMask","Sets the debug mask",""},
         {"enterLat_ns","Sets the latency of entering a SHMEM call","" },
         {"returnLat_ns","Sets the latency of returning from a SHMEM call","" },
+        {"blockingReturnLat_ns","Sets the latency of returning from a SHMEM call that blocked on response","" },
     )
 
     typedef std::function<void()> Callback;
@@ -266,6 +267,7 @@ class HadesSHMEM : public Shmem::Interface
 	void delayReturn( Shmem::Callback callback, SimTime_t delay = 0 );
 
     void handleToDriver(SST::Event* e) {
+        dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
         DelayEvent* event = static_cast<DelayEvent*>(e);
 		if ( DelayEvent::One == event->type ) {
         	event->m_callback1();
@@ -286,6 +288,7 @@ class HadesSHMEM : public Shmem::Interface
 
 	SimTime_t m_returnLat_ns;
 	SimTime_t m_enterLat_ns;
+    SimTime_t m_blockingReturnLat_ns;
 
     ShmemCommon*    m_common;
     ShmemBarrier*   m_barrier;

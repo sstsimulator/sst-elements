@@ -47,10 +47,10 @@ bool Nic::RecvMachine::Ctx::processStdPkt( FireflyNetworkEvent* ev ) {
 
     StreamBase* stream;
     if ( ev->isHdr() ) {
-        assert ( m_streamMap.find(srcKey) == m_streamMap.end() ); 
 
         stream = newStream( ev );
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"new stream %p %s\n",stream, ev->isTail()? "single packet stream":"");
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"new stream %p %s\n",stream, ev->isTail()? "single packet stream":"");
+        assert ( m_streamMap.find(srcKey) == m_streamMap.end() ); 
 
         if ( ! ev->isTail() ) { 
             m_streamMap[srcKey] = stream;
@@ -62,16 +62,18 @@ bool Nic::RecvMachine::Ctx::processStdPkt( FireflyNetworkEvent* ev ) {
         stream = m_streamMap[srcKey]; 
 
         if ( ev->isTail() ) { 
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"tail packet %p\n",stream );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"tail packet %p\n",stream );
             m_streamMap.erase(srcKey); 
+        } else {
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"body packet %p\n",stream );
         }
     }
 
     if ( stream->isBlocked() ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"stream is blocked %p\n",stream );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"stream is blocked %p\n",stream );
         stream->setWakeup( 
             [=]() {
-                m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"processStdPkt",1,NIC_DBG_RECV_CTX,"stream is unblocked %p\n",stream );
+                m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"processStdPkt",2,NIC_DBG_RECV_CTX,"stream is unblocked %p\n",stream );
                 stream->processPkt( ev );
                 m_rm.checkNetworkForData(); 
             }
