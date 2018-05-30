@@ -26,18 +26,6 @@ namespace Ember {
 
 template< class TYPE >
 class EmberShmemRing2Generator : public EmberShmemGenerator {
-public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
-        EmberShmemRing2Generator,
-        "ember",
-        "ShmemRing2Motif",
-        SST_ELI_ELEMENT_VERSION(1,0,0),
-        "SHMEM ring",
-        "SST::Ember::EmberGenerator"
-    )
-
-    SST_ELI_DOCUMENT_PARAMS(
-    )
 
 public:
 	EmberShmemRing2Generator(SST::Component* owner, Params& params) :
@@ -119,6 +107,27 @@ public:
     int m_my_pe;
     int m_num_pes;
 };
+
+class EmberShmemRing2IntGenerator : public EmberShmemRing2Generator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemRing2IntGenerator,
+        "ember",
+        "ShmemRing2IntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM ring2 int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemRing2IntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemRing2Generator(owner,  params) { }
+};
+
 }
 }
 
