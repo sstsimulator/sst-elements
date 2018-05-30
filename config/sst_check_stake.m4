@@ -29,7 +29,7 @@ AC_DEFUN([SST_CHECK_STAKE],
   AC_LANG_POP([C++])
 
   AC_CHECK_LIB([riscv], [_ZN5sim_t3runEv],
-    [STAKE_LIB="-lriscv -lfesvr"], [sst_check_stake_happy="no"])
+      [STAKE_LIB="-lriscv -lfesvr -lsoftfloat"], [sst_check_stake_happy="no"], [-lfesvr -lsoftfloat])
 
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"

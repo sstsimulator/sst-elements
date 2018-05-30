@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -52,6 +52,7 @@ CacheAction L1CoherenceController::handleEviction(CacheLine* wbCacheLine, string
         wbCacheLine->setEventsWaitingForLock(true);
         return STALL;
     }
+
     recordEvictionState(state);
     switch(state) {
         case I:
@@ -60,16 +61,19 @@ CacheAction L1CoherenceController::handleEviction(CacheLine* wbCacheLine, string
             if (!silentEvictClean_) sendWriteback(Command::PutS, wbCacheLine, false, origRqstr);
             if (expectWritebackAck_) mshr_->insertWriteback(wbCacheLine->getBaseAddr());
             wbCacheLine->setState(I);
+            wbCacheLine->atomicEnd(); // All bets are off if this line is LL and evicted...later SC should fail
             return DONE;
         case E:
             if (!silentEvictClean_) sendWriteback(Command::PutE, wbCacheLine, false, origRqstr);
             if (expectWritebackAck_) mshr_->insertWriteback(wbCacheLine->getBaseAddr());
 	    wbCacheLine->setState(I);
+            wbCacheLine->atomicEnd();
 	    return DONE;
         case M:
 	    sendWriteback(Command::PutM, wbCacheLine, true, origRqstr);
             if (expectWritebackAck_) mshr_->insertWriteback(wbCacheLine->getBaseAddr());
             wbCacheLine->setState(I);
+            wbCacheLine->atomicEnd();
 	    return DONE;
         case IS:
         case IM:
@@ -159,19 +163,20 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
         return STALL;
     }
 
-    cacheLine->atomicEnd();
-
     Command cmd = event->getCmd();
     switch (cmd) {
         case Command::Inv: 
+            cacheLine->atomicEnd();
             return handleInv(event, cacheLine, replay);
         case Command::Fetch:
             return handleFetch(event, cacheLine, replay);
         case Command::FetchInv:
+            cacheLine->atomicEnd();
             return handleFetchInv(event, cacheLine, replay);
         case Command::FetchInvX:
             return handleFetchInvX(event, cacheLine, replay);
         case Command::ForceInv:
+            cacheLine->atomicEnd();
             return handleForceInv(event, cacheLine, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized invalidation: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
@@ -197,7 +202,10 @@ CacheAction L1CoherenceController::handleResponse(MemEvent * respEvent, CacheLin
         case Command::FlushLineResp:
             recordStateEventCount(respEvent->getCmd(), cacheLine ? cacheLine->getState() : I);
             if (cacheLine && cacheLine->getState() == S_B) cacheLine->setState(S);
-            else if (cacheLine && cacheLine->getState() == I_B) cacheLine->setState(I);
+            else if (cacheLine && cacheLine->getState() == I_B) {
+                cacheLine->setState(I);
+                cacheLine->atomicEnd();
+            }
             sendFlushResponse(reqEvent, respEvent->success(), timestamp_, true);
             break;
         default:
@@ -297,6 +305,8 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
         cacheLine->setState(M);
     }
 
+    bool atomic = cacheLine->isAtomic();
+
     switch (state) {
         case I:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
@@ -315,12 +325,14 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
         case M:
             if (cmd == Command::GetX) {
                 /* L1s write back immediately */
-                if (!event->isStoreConditional() || cacheLine->isAtomic()) {
+                if (!event->isStoreConditional() | atomic) {
                     cacheLine->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
                     
                     if (is_debug_addr(cacheLine->getBaseAddr())) {
                         printData(cacheLine->getData(), true);
                     }
+                    
+                    cacheLine->atomicEnd(); // Any write (SC or regular) invalidates the LLSC link
                 }
                 /* Handle GetX as unlock (store-unlock) */
                 if (event->queryFlag(MemEvent::F_LOCKED)) {
@@ -335,8 +347,13 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
                 cacheLine->incLock(); 
             }
             
-            if (event->isStoreConditional()) sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp(), cacheLine->isAtomic());
-            else sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
+            /* Send response */
+            if (event->isStoreConditional()) {
+                sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp(), atomic);
+            } else {
+                sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
+            }
+
             cacheLine->setTimestamp(sendTime-1);
 
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
@@ -412,6 +429,8 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
     origRequest->setMemFlags(responseEvent->getMemFlags());
     
     uint64_t sendTime = 0;
+    bool atomic = cacheLine->isAtomic();
+
     switch (state) {
         case IS:
             cacheLine->setData(responseEvent->getPayload(), 0);
@@ -439,13 +458,14 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
         case SM:
             cacheLine->setState(M);
             if (origRequest->getCmd() == Command::GetX) {
-                if (!origRequest->isStoreConditional() || cacheLine->isAtomic()) {
+                if (!origRequest->isStoreConditional() ||atomic) {
                     cacheLine->setData(origRequest->getPayload(), origRequest->getAddr() - origRequest->getBaseAddr());
                     
                     if (is_debug_addr(cacheLine->getBaseAddr())) {
                         printData(cacheLine->getData(), true);
                     }
-                
+
+                    cacheLine->atomicEnd(); // No longer atomic after this write
                 }
                 /* Handle GetX as unlock (store-unlock) */
                 if (origRequest->queryFlag(MemEvent::F_LOCKED)) {
@@ -460,7 +480,7 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
                 cacheLine->incLock(); 
             }
             
-            if (origRequest->isStoreConditional()) sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp(), cacheLine->isAtomic());
+            if (origRequest->isStoreConditional()) sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp(), atomic);
             else sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime-1);
             

@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -73,6 +73,7 @@ class ArielCPU : public SST::Component {
         {"clock", "Clock rate at which events are generated and processed", "1GHz"},
         {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
         {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
+        {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"},
         {"opal_enabled", "If enabled, MLM allocation hints will be communicated to the centralized memory manager", "0"})
 
     SST_ELI_DOCUMENT_PORTS(

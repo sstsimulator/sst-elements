@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,4 +17,8 @@
 
 void ariel_enable() {
 	printf("ARIEL: ENABLE called in Ariel API.\n");
+}
+
+void ariel_fence() {
+      printf("ARIEL: FENCE called in Ariel API.\n");
 }
