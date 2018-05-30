@@ -94,7 +94,7 @@ class RecvMachine {
             FireflyNetworkEvent* ev = getNetworkEvent( m_vc );
             if ( ev ) {
                 m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"packet available\n");
-                m_nic.schedCallback( std::bind( &Nic::RecvMachine::processPkt, this, ev ), 0);
+                m_nic.schedCallback( std::bind( &Nic::RecvMachine::processPkt, this, ev ));
             } else {
                 m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"network idle\n");
                 setNotify();
