@@ -35,6 +35,7 @@ netBW = ''
 netPktSize = '' 
 netTopo = ''
 netShape = ''
+netHostsPerRtr = 1
 netInspect = ''
 rtrArb = ''
 
@@ -55,7 +56,8 @@ params = {
 'network': [],
 'nic': [],
 'ember': [],
-'hermes': []
+'hermes': [],
+'merlin': [],
 } 
 
 motifAPI='HadesMP'
@@ -69,7 +71,7 @@ motifDefaults = {
 
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
+    opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=","hostsPerRtr=",
 		"simConfig=","platParams=",",debug=","platform=","numNodes=",
 		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
@@ -85,6 +87,8 @@ except getopt.GetoptError as err:
 for o, a in opts:
     if o in ("--shape"):
         netShape = a
+    elif o in ("--hostsPerRtr"):
+        netHostsPerRtr = int(a)
     elif o in ("--platform"):
         platform = a
     elif o in ("--numCores"):
@@ -144,7 +148,7 @@ for o, a in opts:
     elif o in ("--platParams"):
         platParams = a
     elif o in ("--param"):
-        key,value = a.split(":")
+        key,value = a.split(":",1)
         params[key] += [value]  
     elif o in ("--useSimpleMemoryModel"):
 		useSimpleMemoryModel=True
@@ -226,7 +230,7 @@ if "" == netShape:
 
 if "torus" == netTopo:
 
-	topoInfo = TorusInfo(netShape)
+	topoInfo = TorusInfo(netShape, netHostsPerRtr)
 	topo = topoTorus()
 
 elif "fattree" == netTopo:
@@ -234,15 +238,20 @@ elif "fattree" == netTopo:
 	topoInfo = FattreeInfo(netShape)
 	topo = topoFatTree()
 
-elif "dragonfly" == netTopo:
+elif "dragonfly" == netTopo or "dragonfly2" == netTopo:
 		
 	topoInfo = DragonFlyInfo(netShape)
 	topo = topoDragonFly()
 
-elif "dragonfly2" == netTopo:
+elif "dragonflyLegacy" == netTopo:
 
-	topoInfo = DragonFly2Info(netShape)
-	topo = topoDragonFly2()
+	topoInfo = DragonFlyLegacyInfo(netShape)
+	topo = topoDragonFlyLegacy()
+
+elif "hyperx" == netTopo:
+
+	topoInfo = HyperXInfo(netShape, netHostsPerRtr)
+	topo = topoHyperX()
 
 else:
 	sys.exit("how did we get here")
@@ -375,6 +384,15 @@ for a in params['hermes']:
         print "set hermesParams {}={}".format( key, value )
     hermesParams[key] = value
 
+for a in params['merlin']:
+    key, value = a.split("=")
+    if key in sst.merlin._params:
+        print "override hermesParams {}={} with {}".format( key, sst.merlin._params[key], value )
+    else:
+        print "set merlin {}={}".format( key, value )
+    sst.merlin._params[key] = value
+
+
 nicParams["packetSize"] =	networkParams['packetSize']
 nicParams["link_bw"] = networkParams['link_bw']
 sst.merlin._params["link_lat"] = networkParams['link_lat']
@@ -396,7 +414,8 @@ if rtrArb:
 print "EMBER: network: BW={0} pktSize={1} flitSize={2}".format(
         networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize'])
 
-sst.merlin._params.update( topoInfo.getNetworkParams() )
+if len(params['merlin']) == 0:
+    sst.merlin._params.update( topoInfo.getNetworkParams() )
 
 epParams = {} 
 epParams.update(emberParams)
@@ -404,6 +423,7 @@ epParams.update(hermesParams)
 
 #pprint.pprint( networkParams, width=1)
 #pprint.pprint( nicParams, width=1)
+#pprint.pprint( sst.merlin._params, width=1)
 
 
 loadInfo = LoadInfo( nicParams, epParams, numNodes, numCores, topoInfo.getNumNodes(), model )
