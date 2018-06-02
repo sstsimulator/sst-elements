@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,6 +17,7 @@
 #ifndef COMPONENTS_FIREFLY_HADESMP_H
 #define COMPONENTS_FIREFLY_HADESMP_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/params.h>
 
 #include "sst/elements/hermes/msgapi.h"
@@ -30,6 +31,25 @@ namespace Firefly {
 
 class HadesMP : public MP::Interface 
 {
+  public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        HadesMP,
+        "firefly",
+        "hadesMP",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+    SST_ELI_DOCUMENT_PARAMS(
+        {"verboseLevel", "Sets the output verbosity of the component", "1"},
+        {"verboseMask", "Sets the output mask of the component", "1"},
+        {"defaultEnterLatency","Sets the default function enter latency","30000"},
+        {"defaultReturnLatency","Sets the default function return latency","30000"},
+        {"nodeId", "internal", ""},
+        {"enterLatency","internal",""},
+        {"returnLatency","internal",""},
+        {"defaultModule","Sets the default function module","firefly"},
+    ) 
   public:
     HadesMP(Component*, Params&);
     ~HadesMP() {}

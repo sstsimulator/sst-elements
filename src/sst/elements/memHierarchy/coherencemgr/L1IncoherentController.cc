@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -65,10 +65,12 @@ CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, strin
                 sendWriteback(Command::PutE, wbCacheLine, origRqstr);
             }
             wbCacheLine->setState(I);
+            wbCacheLine->atomicEnd();
             return DONE;
         case M:
             sendWriteback(Command::PutM, wbCacheLine, origRqstr);
             wbCacheLine->setState(I);
+            wbCacheLine->atomicEnd();
             return DONE;
         case IS:
         case IM:
@@ -147,7 +149,10 @@ CacheAction L1IncoherentController::handleResponse(MemEvent * respEvent, CacheLi
         case Command::FlushLineResp:
             recordStateEventCount(respEvent->getCmd(), cacheLine ? cacheLine->getState() : I);
             if (cacheLine && cacheLine->getState() == S_B) cacheLine->setState(E);
-            else if (cacheLine && cacheLine->getState() == I_B) cacheLine->setState(I);
+            else if (cacheLine && cacheLine->getState() == I_B){
+                cacheLine->setState(I);
+                cacheLine->atomicEnd();
+            }
             sendFlushResponse(reqEvent, respEvent->success(), timestamp_, true);
             break;
         default:
@@ -216,6 +221,8 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
     
     uint64_t sendTime = 0;
 
+    bool atomic = cacheLine->isAtomic();
+
     recordStateEventCount(event->getCmd(), state);
     switch (state) {
         case I:
@@ -228,9 +235,10 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
         case M:
             if (cmd == Command::GetX) {
                 /* L1s write back immediately */
-                if (!event->isStoreConditional() || cacheLine->isAtomic()) {
+                if (!event->isStoreConditional() ||atomic) {
                     cacheLine->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
                 }
+                cacheLine->atomicEnd();
                 /* Handle GetX as unlock (store-unlock) */
                 if (event->queryFlag(MemEvent::F_LOCKED)) {
             	    if (!cacheLine->isLocked()) {  // Sanity check - can't unlock an already unlocked line 
@@ -244,7 +252,7 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
                 cacheLine->incLock(); 
             }
             
-            if (event->isStoreConditional()) sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp(), cacheLine->isAtomic());
+            if (event->isStoreConditional()) sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp(), atomic);
             else sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
 

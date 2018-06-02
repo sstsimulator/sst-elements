@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -200,20 +200,20 @@ class MemBackendConvertor : public SubComponent {
     bool setupMemReq( MemEvent* ev ) {
         if ( Command::FlushLine == ev->getCmd() || Command::FlushLineInv == ev->getCmd() ) {
             // TODO optimize if this becomes a problem, it is slow
-            std::set<MemEvent*, memEventCmp> dependsOn;
+            std::set<SST::Event::id_type> dependsOn;
             for (std::deque<BaseReq*>::iterator it = m_requestQueue.begin(); it != m_requestQueue.end(); it++) {
                 if (!(*it)->isMemEv())
                     continue;
                 MemReq * mr = static_cast<MemReq*>(*it);
                 if (mr->baseAddr() == ev->getBaseAddr()) {
                     MemEvent * req = mr->getMemEvent();
-                    dependsOn.insert(req);
-                    if (m_dependentRequests.find(req) == m_dependentRequests.end()) {
+                    dependsOn.insert(req->getID());
+                    if (m_dependentRequests.find(req->getID()) == m_dependentRequests.end()) {
                         std::set<MemEvent*, memEventCmp> flushSet;
                         flushSet.insert(ev);
-                        m_dependentRequests.insert(std::make_pair(req, flushSet));
+                        m_dependentRequests.insert(std::make_pair(req->getID(), flushSet));
                     } else {
-                        (m_dependentRequests.find(req)->second).insert(ev);
+                        (m_dependentRequests.find(req->getID())->second).insert(ev);
                     }
                 }
             }
@@ -288,8 +288,8 @@ class MemBackendConvertor : public SubComponent {
     PendingRequests         m_pendingRequests;
     uint32_t                m_frontendRequestWidth;
 
-    std::map<MemEvent*, std::set<MemEvent*, memEventCmp> > m_waitingFlushes; // Set of request events for each flush
-    std::map<MemEvent*, std::set<MemEvent*, memEventCmp> > m_dependentRequests; // Reverse map, set of flushes for each request ID, for faster lookup
+    std::map<MemEvent*, std::set<SST::Event::id_type> > m_waitingFlushes; // Set of request IDs for each flush
+    std::map<SST::Event::id_type, std::set<MemEvent*, memEventCmp> > m_dependentRequests; // Reverse map, set of flushes for each request ID, for faster lookup
 
     Statistic<uint64_t>* stat_GetSLatency;
     Statistic<uint64_t>* stat_GetSXLatency;

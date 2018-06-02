@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,6 +24,57 @@ namespace SST {
 namespace Ember {
 
 class EmberCMTCRGenerator : public EmberMessagePassingGenerator {
+
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberCMTCRGenerator,
+        "ember",
+        "CMTCRMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Performs all-to-all communication using Crystal Router",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {   "arg.iterations",   "Sets the number of data exchanges to perform", "1"},
+        {   "arg.elementsize",  "Sets the number of gridpoints per element", "10"},
+        {   "arg.variables",    "Sets the number of physical quantities for which derivatives are calculated", "1"},
+        {   "arg.mx",           "Sets the number of elements per processor in x dim",   "10"},
+        {   "arg.my",           "Sets the number of elements per processor in y dim",   "10"},
+        {   "arg.mz",           "Sets the number of elements per processor in z dim",   "10"},
+        {   "arg.px",           "Sets the size of the processors in the machine in x_dim", "4"},
+        {   "arg.py",           "Sets the size of the processors in the machine in y_dim", "4"},
+        {   "arg.pz",           "Sets the size of the processors in the machine in z_dim", "4"},
+        {   "arg.threads",          "Sets the number of MPI threads per processor", "1"},
+        {   "arg.processorflops",   "Sets the processor flops for compute time estimation", "4"},
+        {    "arg.processorfreq",    "Sets the processor frequency for compute time estimation", "2.5"},
+        {   "arg.nsComputeMean",    "Sets the mean compute time per processor", "1000"},
+        {   "arg.nsComputeStddev",  "Sets the stddev in compute time per processor", "50"},
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "time-Init", "Time spent in Init event",          "ns",  0},
+        { "time-Finalize", "Time spent in Finalize event",  "ns", 0},
+        { "time-Rank", "Time spent in Rank event",          "ns", 0},
+        { "time-Size", "Time spent in Size event",          "ns", 0},
+        { "time-Send", "Time spent in Recv event",          "ns", 0},
+        { "time-Recv", "Time spent in Recv event",          "ns", 0},
+        { "time-Irecv", "Time spent in Irecv event",        "ns", 0},
+        { "time-Isend", "Time spent in Isend event",        "ns", 0},
+        { "time-Wait", "Time spent in Wait event",          "ns", 0},
+        { "time-Waitall", "Time spent in Waitall event",    "ns", 0},
+        { "time-Waitany", "Time spent in Waitany event",    "ns", 0},
+        { "time-Compute", "Time spent in Compute event",    "ns", 0},
+        { "time-Barrier", "Time spent in Barrier event",    "ns", 0},
+        { "time-Alltoallv", "Time spent in Alltoallv event", "ns", 0},
+        { "time-Alltoall", "Time spent in Alltoall event",  "ns", 0},
+        { "time-Allreduce", "Time spent in Allreduce event", "ns", 0},
+        { "time-Reduce", "Time spent in Reduce event",      "ns", 0},
+        { "time-Bcast", "Time spent in Bcast event",        "ns", 0},
+        { "time-Gettime", "Time spent in Gettime event",    "ns", 0},
+        { "time-Commsplit", "Time spent in Commsplit event", "ns", 0},
+        { "time-Commcreate", "Time spent in Commcreate event", "ns", 0},
+    )
 
 public:
 	EmberCMTCRGenerator(SST::Component* owner, Params& params);

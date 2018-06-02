@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2014, Sandia Corporation
+// Copyright (c) 2014, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -140,10 +140,4 @@ bool cpu::clock( Cycle_t current )
   return false;
 }
 
-extern "C" {
-	Component* create_cpu( SST::ComponentId_t id,  SST::Params& params )
-	{
-		return new cpu( id, params );
-	}
-}
 

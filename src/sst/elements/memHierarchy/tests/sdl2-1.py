@@ -4,6 +4,7 @@ import sst
 DEBUG_L1 = 0
 DEBUG_L2 = 0
 DEBUG_MEM = 0
+verbose = 2
 
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
@@ -15,37 +16,40 @@ comp_cpu.addParams({
 })
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
-      "access_latency_cycles" : "4",
-      "cache_frequency" : "2 Ghz",
-      "replacement_policy" : "lru",
-      "coherence_protocol" : "MSI",
-      "associativity" : "4",
-      "cache_line_size" : "64",
-      "cache_size" : "2 KB",
-      "L1" : "1",
-      "debug" : DEBUG_L1,
-      "debug_level" : "10"
+    "access_latency_cycles" : "4",
+    "cache_frequency" : "2 Ghz",
+    "replacement_policy" : "lru",
+    "coherence_protocol" : "MSI",
+    "associativity" : "4",
+    "cache_line_size" : "64",
+    "cache_size" : "2 KiB",
+    "L1" : "1",
+    "verbose" : verbose,
+    "debug" : DEBUG_L1,
+    "debug_level" : "10"
 })
 comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 comp_l2cache.addParams({
-      "access_latency_cycles" : "10",
-      "cache_frequency" : "2 Ghz",
-      "replacement_policy" : "lru",
-      "coherence_protocol" : "MSI",
-      "associativity" : "8",
-      "cache_line_size" : "64",
-      "cache_size" : "16 KB",
-      "debug" : DEBUG_L2,
-      "debug_level" : "10"
+    "access_latency_cycles" : "10",
+    "cache_frequency" : "2 Ghz",
+    "replacement_policy" : "lru",
+    "coherence_protocol" : "MSI",
+    "associativity" : "8",
+    "cache_line_size" : "64",
+    "cache_size" : "16 KiB",
+    "verbose" : verbose,
+    "debug" : DEBUG_L2,
+    "debug_level" : "10"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "coherence_protocol" : "MSI",
-      "backend.access_time" : "100 ns",
-      "clock" : "1GHz",
-      "backend.mem_size" : "512MiB",
-      "debug" : DEBUG_MEM,
-      "debug_level" : "10"
+    "coherence_protocol" : "MSI",
+    "backend.access_time" : "100 ns",
+    "clock" : "1GHz",
+    "backend.mem_size" : "512MiB",
+    "verbose" : verbose,
+    "debug" : DEBUG_MEM,
+    "debug_level" : "10"
 })
 
 # Enable statistics

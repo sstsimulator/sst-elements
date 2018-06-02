@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,26 +23,26 @@ namespace SST {
 namespace ArielComponent {
 
 enum ArielEventType {
-	READ_ADDRESS,
-	WRITE_ADDRESS,
-	START_DMA_TRANSFER,
-	WAIT_ON_DMA_TRANSFER,
-	CORE_EXIT,
-	NOOP,
-	MALLOC,
-	MMAP,
-	FREE,
-	SWITCH_POOL,
-	FLUSH,
-	FENCE
+    READ_ADDRESS,
+    WRITE_ADDRESS,
+    START_DMA_TRANSFER,
+    WAIT_ON_DMA_TRANSFER,
+    CORE_EXIT,
+    NOOP,
+    MALLOC,
+    MMAP,
+    FREE,
+    SWITCH_POOL,
+    FLUSH,
+    FENCE
 };
 
 class ArielEvent {
 
-	public:
-		ArielEvent();
-		virtual ~ArielEvent();
-		virtual ArielEventType getEventType() const = 0;
+    public:
+        ArielEvent();
+        virtual ~ArielEvent();
+        virtual ArielEventType getEventType() const = 0;
 
 };
 

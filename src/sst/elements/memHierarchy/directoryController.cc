@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright(c) 2013-2017, Sandia Corporation
+// Copyright(c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -48,17 +48,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
    
 
     // Detect deprecated parameters and warn/fatal
-    // Currently deprecated - direct_mem_link, network_num_vc, statistics
+    // Currently deprecated - network_num_vc
     bool found;
-    out.init("", 1, 0, Output::STDOUT);
-    params.find<int>("statistics", 0, found);
-    if (found) {
-        out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sst-info to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
-    }
-    params.find<int>("direct_mem_link", 0, found);
-    if (found) {
-        out.output("%s, ** Found deprecated parameter: direct_mem_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
-    }
+    out.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
     params.find<int>("network_num_vc", 0, found);
     if (found) {
         out.output("%s, ** Found deprecated parameter: network_num_vc ** MemHierarchy does not use multiple virtual channels. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
@@ -152,55 +144,63 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
         out.output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size' in params. Change your input file to remove this notice.\n", getName().c_str());
 
-    char *node_buffer1 = (char*) malloc(sizeof(char) * 256);
-    char *node_buffer2 = (char*) malloc(sizeof(char) * 256);
-    char *node_buffer3 = (char*) malloc(sizeof(char) * 256);
-    sprintf(node_buffer1, "%" PRIu32, params.find<uint32_t>("node", 0));
-    sprintf(node_buffer2, "%" PRIu32, params.find<uint32_t>("shared_memory", 0));
-    sprintf(node_buffer3, "%" PRIu32, params.find<uint32_t>("local_memory_size", 0));
+    Params nicParams = params.find_prefix_params("memNIC.");
 
-        Params nicParams = params.find_prefix_params("memNIC.");
+    nicParams.insert("group", "3", false);
+    int cl = nicParams.find<int>("group");
+    nicParams.insert("sources", std::to_string(cl - 1), false);
+    nicParams.insert("destinations", std::to_string(cl + 1), false);
+
+    // Opal
+    std::string node = params.find<std::string>("node", "0");
+    std::string shmem = params.find<std::string>("shared_memory", "0");
+    std::string localsize = params.find<std::string>("local_memory_size", "0");
+    nicParams.insert("node", node);
+    nicParams.insert("shared_memory", shmem);
+    nicParams.insert("local_memory_size", localsize);
+
+    // Determine which ports are connected
+    unsigned int portCount = 1;
+    if (isPortConnected("network_ack")) portCount++;
+    if (isPortConnected("network_fwd")) portCount++;
+    if (isPortConnected("network_data")) portCount++;
+    if (portCount == 4) {
+        nicParams.insert("req.port", "network");
+        nicParams.insert("ack.port", "network_ack");
+        nicParams.insert("fwd.port", "network_fwd");
+        nicParams.insert("data.port", "network_data");
+        network = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
+    } else {
         nicParams.insert("port", "network");
-        nicParams.insert("node", node_buffer1);
-        nicParams.insert("shared_memory", node_buffer2);
-        nicParams.insert("local_memory_size", node_buffer3);
-
-        nicParams.insert("group", "3", false);
-        int cl = nicParams.find<int>("group");
-        nicParams.insert("sources", std::to_string(cl - 1), false);
-        nicParams.insert("destinations", std::to_string(cl + 1), false);
+        network = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+    }
         
-        network = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
-        network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+    network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
     
-        if (isPortConnected("memory")) {
-            Params memParams = params.find_prefix_params("memlink.");
-            memParams.insert("port", "memory");
-            memParams.insert("node", node_buffer1);
-            memParams.insert("shared_memory", node_buffer2);
-            memParams.insert("local_memory_size", node_buffer3);
-            memParams.insert("latency", "1ns");
-            memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);
-            memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);
-            memParams.insert("interleave_size", ilSize, false);
-            memParams.insert("interleave_step", ilStep, false);
-            memLink = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, memParams));
-            memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-            if (!memLink) {
-                dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
-            }
-            memoryName = "";
-        } else {
-            memoryName  = params.find<std::string>("net_memory_name", "");
-            if (memoryName == "") 
-                dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller. If you did not intend to connect to memory over the network, please connect memory to the 'memory' port and ignore this parameter.\n", getName().c_str());
-            memLink = NULL;
-
+    if (isPortConnected("memory")) {
+        Params memParams = params.find_prefix_params("memlink.");
+        memParams.insert("port", "memory");
+        memParams.insert("node", node);
+        memParams.insert("shared_memory", shmem);
+        memParams.insert("local_memory_size", localsize);
+        memParams.insert("latency", "1ns");
+        memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);
+        memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);
+        memParams.insert("interleave_size", ilSize, false);
+        memParams.insert("interleave_step", ilStep, false);
+        memLink = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, memParams));
+        memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        if (!memLink) {
+            dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
         }
+        memoryName = "";
+    } else {
+        memoryName  = params.find<std::string>("net_memory_name", "");
+        if (memoryName == "") 
+            dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller. If you did not intend to connect to memory over the network, please connect memory to the 'memory' port and ignore this parameter.\n", getName().c_str());
+        memLink = NULL;
 
-    free(node_buffer1);
-    free(node_buffer2);
-    free(node_buffer3);
+    }
 
     clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
     defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
@@ -257,7 +257,7 @@ DirectoryController::~DirectoryController(){
     directory.clear();
     
     while(workQueue.size()){
-        MemEvent *front = workQueue.front();
+        MemEvent *front = workQueue.front().first;
         delete front;
         workQueue.pop_front();
     }
@@ -294,7 +294,7 @@ void DirectoryController::handlePacket(SST::Event *event){
             || ev->getCmd() == Command::ForceInv || ev->getCmd() == Command::FetchInv || ev->getCmd() == Command::AckPut) {
         handleMemoryResponse(event);
     } else {
-        workQueue.push_back(ev);
+        workQueue.push_back(std::make_pair(ev,false));
     }
 }
 
@@ -462,9 +462,10 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
     int requestsThisCycle = 0;
     while(!workQueue.empty()) {
         requestsThisCycle++;
-        MemEvent *event = workQueue.front();
+        MemEvent *event = workQueue.front().first;
+        bool replay = workQueue.front().second;
         workQueue.erase(workQueue.begin());
-	processPacket(event, false);
+	processPacket(event, replay);
         if (requestsThisCycle == maxRequestsPerCycle) {
             break;
         }
@@ -485,8 +486,8 @@ void DirectoryController::processPacket(MemEvent * ev, bool replay) {
     }
     
     if(! isRequestAddressValid(ev->getAddr()) ) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                getName().c_str(), ev->getBaseAddr(), CommandString[(int)ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Event: %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     Command cmd = ev->getCmd();
@@ -530,7 +531,7 @@ void DirectoryController::processPacket(MemEvent * ev, bool replay) {
             handleBackInv(ev);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1 , "%s, Error: Received unrecognized request: %s.  Time = %" PRIu64 "ns\n",
+            dbg.fatal(CALL_INFO, -1 , "%s, Error: Received unrecognized request: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 }
@@ -613,7 +614,7 @@ void DirectoryController::handleGetS(MemEvent * ev, bool replay) {
             issueFetch(ev, entry, Command::FetchInvX);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "Directory %s received GetS but state is %s\n", getName().c_str(), StateString[state]);
+            dbg.fatal(CALL_INFO, -1, "Directory %s received GetS but state is %s. Event: %s\n", getName().c_str(), StateString[state], ev->getVerboseString().c_str());
     }
 }
 
@@ -683,7 +684,7 @@ void DirectoryController::handleGetX(MemEvent * ev, bool replay) {
             issueFetch(ev, entry, Command::FetchInv);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "Directory %s received %s but state is %s\n", getName().c_str(), CommandString[(int)ev->getCmd()], StateString[state]);
+            dbg.fatal(CALL_INFO, -1, "Directory %s received %s but state is %s. Event: %s\n", getName().c_str(), CommandString[(int)ev->getCmd()], StateString[state], ev->getVerboseString().c_str());
     }
 }
 
@@ -790,8 +791,8 @@ void DirectoryController::handlePutE(MemEvent * ev) {
             postRequestProcessing(ev, entry, false);  // profile & delete ev
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutE but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    getName().c_str(), StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutE but state is %s. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 }
 
@@ -802,8 +803,8 @@ void DirectoryController::handlePutM(MemEvent * ev) {
     
     /* Error checking */
     if (!((uint32_t)entry->getOwner() == node_name_to_id(ev->getSrc()))) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: received PutM from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                getName().c_str(), ev->getBaseAddr(), CommandString[(int)ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+	dbg.fatal(CALL_INFO, -1, "%s, Error: received PutM from a node who does not own the block. Event: %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     if (!(entry->isCached())) {
@@ -846,8 +847,8 @@ void DirectoryController::handlePutM(MemEvent * ev) {
             handleFetchResp(ev, false);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutM but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles.\n",
-                    getName().c_str(), StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano(), timestamp);
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutM but state is %s. Event: %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles.\n",
+                    getName().c_str(), StateString[state], ev->getVerboseString().c_str(), getCurrentSimTimeNano(), timestamp);
     }
 }
 
@@ -950,8 +951,8 @@ void DirectoryController::handleFlushLine(MemEvent * ev) {
             } else if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received FlushLine but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    getName().c_str(), StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received FlushLine but state is %s. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 }
 
@@ -1059,8 +1060,8 @@ void DirectoryController::handleFlushLineInv(MemEvent * ev) {
             } else if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) mshrNACKRequest(ev);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received FlushLineInv but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    getName().c_str(), StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received FlushLineInv but state is %s. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 }
 
@@ -1076,8 +1077,8 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
     
     /* Error checking */
     if (!((uint32_t)entry->getOwner() == node_name_to_id(ev->getSrc()))) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: received FetchResp from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles\n",
-                getName().c_str(), ev->getBaseAddr(), CommandString[(int)ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano(), timestamp);
+	dbg.fatal(CALL_INFO, -1, "%s, Error: received FetchResp from a node who does not own the block. Event: %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles\n",
+                getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano(), timestamp);
     }
    
     /* Profile response */
@@ -1117,8 +1118,8 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
             }
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received %s but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles\n",
-                    getName().c_str(), CommandString[(int)ev->getCmd()], StateString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano(), timestamp);
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received %s but state is %s. Event: %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles\n",
+                    getName().c_str(), CommandString[(int)ev->getCmd()], StateString[state], ev->getVerboseString().c_str(), getCurrentSimTimeNano(), timestamp);
     }   
     respEv->setPayload(ev->getPayload());
     profileResponseSent(respEv);
@@ -1414,7 +1415,8 @@ void DirectoryController::handleDataResponse(MemEvent * ev) {
             entry->clearSharers();  // Case SM: new owner was a sharer
             break;
         default:
-            dbg.fatal(CALL_INFO,1,"Directory %s received Get Response for addr 0x%" PRIx64 " but state is %s\n", getName().c_str(), ev->getBaseAddr(), StateString[state]);
+            dbg.fatal(CALL_INFO,1,"Directory %s received Get Response for addr 0x%" PRIx64 " but state is %s. Event: %s\n", 
+                    getName().c_str(), ev->getBaseAddr(), StateString[state], ev->getVerboseString().c_str());
     }
 
     respEv->setSize(cacheLineSize);
@@ -1477,7 +1479,8 @@ void DirectoryController::handleDirEntryMemoryResponse(MemEvent * ev) {
             entry->setState(M);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "Directory Controller %s: DirEntry response received for addr 0x%" PRIx64 " but state is %s\n", getName().c_str(), entry->getBaseAddr(), StateString[st]);
+            dbg.fatal(CALL_INFO, -1, "Directory Controller %s: DirEntry response received for addr 0x%" PRIx64 " but state is %s. Event: %s\n", 
+                    getName().c_str(), entry->getBaseAddr(), StateString[st], ev->getVerboseString().c_str());
     }
     MemEvent * reqEv = mshr->lookupFront(dirAddr);
     processPacket(reqEv, true);
@@ -1593,8 +1596,8 @@ void DirectoryController::printStatus(Output &statusOut) {
     statusOut.output("MemHierarchy::DirectoryController %s\n", getName().c_str());
     statusOut.output("  Cached entries:  %zu\n", entryCacheSize);
     statusOut.output("  Requests waiting to be handled:  %zu\n", workQueue.size());
-    for(std::list<MemEvent*>::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i){
-        statusOut.output("    %s\n", (*i)->getVerboseString().c_str());
+    for(std::list<std::pair<MemEvent*,bool> >::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i){
+        statusOut.output("    %s, %s\n", i->first->getVerboseString().c_str(), i->second ? "replay" : "new");
     }
     
     if (mshr) {
@@ -1620,7 +1623,8 @@ void DirectoryController::printStatus(Output &statusOut) {
 }
 
 void DirectoryController::emergencyShutdown() {
-    printStatus(out);
+    if (out.getVerboseLevel() > 1)
+        printStatus(out);
 }
 
 
@@ -1774,8 +1778,8 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event, Comma
     MemEvent *ev       = new MemEvent(this, data_event->getBaseAddr(), data_event->getBaseAddr(), wbCmd, cacheLineSize);
 
     if(data_event->getPayload().size() != cacheLineSize) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: Writing back data request but payload does not match cache line size of %uB. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, Size = %zu. Time = %" PRIu64 "ns\n",
-                getName().c_str(), cacheLineSize, ev->getBaseAddr(), CommandString[(int)ev->getCmd()], ev->getSrc().c_str(), ev->getPayload().size(), getCurrentSimTimeNano());
+	dbg.fatal(CALL_INFO, -1, "%s, Error: Writing back data request but payload does not match cache line size of %uB. Event: %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), cacheLineSize, ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     ev->setSize(data_event->getPayload().size());
@@ -1820,7 +1824,7 @@ void DirectoryController::replayWaitingEvents(Addr addr) {
 
             if (is_debug_addr(addr)) dbg.debug(_L5_, "\tReactivating event. %s\n", ev->getBriefString().c_str());
             
-            workQueue.insert(workQueue.begin(), ev);
+            workQueue.insert(workQueue.begin(), std::make_pair(ev,true));
         }
     }
 }

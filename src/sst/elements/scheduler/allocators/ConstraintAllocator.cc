@@ -1,9 +1,9 @@
 
-// Copyright 2011-2017 Sandia Corporation. Under the terms                          
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.             
+// Copyright 2011-2018 NTESS. Under the terms                          
+// of Contract DE-NA0003525 with NTESS, the U.S.             
 // Government retains certain rights in this software.                         
 //                                                                             
-// Copyright (c) 2011-2017, Sandia Corporation                                      
+// Copyright (c) 2011-2018, NTESS                                      
 // All rights reserved.                                                        
 //                                                                             
 // Portions are copyright of other developers:

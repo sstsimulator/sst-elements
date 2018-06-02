@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,12 +16,25 @@
 #ifndef _H_THORNHILL_MEMORY_HEAP
 #define _H_THORNHILL_MEMORY_HEAP
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/component.h>
 
 namespace SST {
 namespace Thornhill {
 
 class MemoryHeap : public Component {
+  public:
+    SST_ELI_REGISTER_COMPONENT(
+        MemoryHeap,
+        "thornhill",
+        "MemoryHeap",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+    SST_ELI_DOCUMENT_PORTS(
+        {"detailed%(num_ports)d", "Port connected to Memory Heap client", {}},
+    )
 
   public:
     MemoryHeap( ComponentId_t id, Params& params );

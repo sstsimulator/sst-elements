@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,15 +28,18 @@ Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, Ctx* ctx,
 
     ev->bufPop(sizeof(MsgHdr) + sizeof(m_shmemHdr) );
 
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"srcNode=%d srcPid=%d\n", m_srcNode, m_srcPid );
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"core=%d %s srcNode=%d srcCore=%d this=%p\n",
+            m_myPid, m_shmemHdr.getOpStr().c_str(), ev->getSrcNode(),m_srcPid, this);
 }
 
 void Nic::RecvMachine::ShmemStream::processPktHdr( FireflyNetworkEvent* ev ) {
     m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"srcNode=%d srcPid=%d %s\n", 
             m_srcNode, m_srcPid, m_shmemHdr.getOpStr().c_str() );
+    SimTime_t latency = m_shmemHdr.op == ShmemMsgHdr::Ack ? 0 : m_ctx->nic().getShmemRxDelay_ns();
     m_ctx->nic().schedCallback( 
         std::bind( &Nic::RecvMachine::ShmemStream::processOp, this, ev ), 
-        m_ctx->nic().getShmemRxDelay_ns() );
+        latency );
+        //m_ctx->nic().getShmemRxDelay_ns() );
 }
 
 void Nic::RecvMachine::ShmemStream::processOp( FireflyNetworkEvent* ev ) 
@@ -46,6 +49,9 @@ void Nic::RecvMachine::ShmemStream::processOp( FireflyNetworkEvent* ev )
     } else {
         m_unit = m_ctx->allocRecvUnit();
     }
+
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"core=%d %s srcNode=%d srcCore=%d\n",
+            m_myPid, m_shmemHdr.getOpStr().c_str(), ev->getSrcNode(),m_srcPid);
 
     switch ( m_shmemHdr.op ) { 
         
@@ -78,7 +84,7 @@ void Nic::RecvMachine::ShmemStream::processOp( FireflyNetworkEvent* ev )
         break;
 
       case ShmemMsgHdr::Ack: 
-        processAck( m_shmemHdr, ev, m_myPid );
+        processAck( m_shmemHdr, ev, m_myPid, m_srcPid );
         break;
 
       default:
@@ -87,9 +93,8 @@ void Nic::RecvMachine::ShmemStream::processOp( FireflyNetworkEvent* ev )
     }
 }
 
-void Nic::RecvMachine::ShmemStream::processAck( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int pid )
+void Nic::RecvMachine::ShmemStream::processAck( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int pid, int srcPid  )
 {
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"srcNode=%d\n",ev->getSrcNode());
 
     m_ctx->nic().shmemDecPending( pid );
     m_ctx->deleteStream(this);
@@ -189,6 +194,7 @@ void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetwork
         local += got;
     }
 
+    size_t localLen=local.getLength();
 	m_matched_len = hdr.length;
 
 	Hermes::Vaddr tmpAddr = addr.getSimVAddr(); 
@@ -196,7 +202,7 @@ void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetwork
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore, 
 		[=]() {
 			m_dbg.debug(CALL_INFO_LAMBDA, "processAdd",1,NIC_DBG_RECV_STREAM,"checkWaitOps\n");
-			m_ctx->checkWaitOps( local_pid, tmpAddr, local.getLength() );
+			m_ctx->checkWaitOps( local_pid, tmpAddr, localLen );
 		}
 	) ); 
 
@@ -231,12 +237,13 @@ void Nic::RecvMachine::ShmemStream::processFadd( ShmemMsgHdr& hdr, FireflyNetwor
         local += got;
     }
 
+    size_t localLen=local.getLength();
 	Hermes::Vaddr tmpAddr = addr.getSimVAddr();
 
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusLoad ) );
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore,
 		[=]() {
-			m_ctx->checkWaitOps( local_pid, tmpAddr, local.getLength() );
+			m_ctx->checkWaitOps( local_pid, tmpAddr, localLen );
 		}
 	) ); 
 
@@ -301,9 +308,10 @@ void Nic::RecvMachine::ShmemStream::processCswap( ShmemMsgHdr& hdr, FireflyNetwo
     Hermes::Value cond( (Hermes::Value::Type) hdr.dataType, ev->bufPtr() );
 
 	memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusLoad ) );
+    size_t localLen=local.getLength();
 
     if ( local == cond ) {
-        memOps->push_back( MemOp( addr.getSimVAddr(), local.getLength(), MemOp::Op::BusStore ) );
+        memOps->push_back( MemOp( addr.getSimVAddr(), localLen, MemOp::Op::BusStore ) );
         local = swap;
     }
 

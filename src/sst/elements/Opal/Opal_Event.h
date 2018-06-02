@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -78,14 +78,13 @@ namespace SST{ namespace OpalComponent{
 
 			void setNodeId(int id) { nodeId = id; }
 			int getNodeId() { return nodeId; }
-			
+
 			void setLinkId(int id) { linkId = id; }
 			int getLinkId() { return linkId; }
 			
 			int hint;
 			int fileID;
 			void setResp(long long int add, long long int padd, int sz) { address = add; paddress = padd; size = sz;}
-			void setResp(long long int add, long long int padd, int sz, int n) { address = add; paddress = padd; size = sz; nodeId = n;}
 			long long int getAddress() { return address; }
 			long long int getPaddress() { return paddress; }
 
@@ -104,3 +103,4 @@ namespace SST{ namespace OpalComponent{
 }}
 
 #endif
+

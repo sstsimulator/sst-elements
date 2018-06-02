@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -401,5 +401,24 @@ void CoherenceController::setupLowerStatus(bool isLastCoherenceLevel, bool expec
         
 }
 
+/**************************************/
+/*********** Debug support ************/
+/**************************************/
+ 
+void CoherenceController::printStatus(Output& out) {
+    out.output("  Begin MemHierarchy::CoherenceController %s\n", getName().c_str());
+    
+    out.output("    Events waiting in outgoingEventQueue: %zu\n", outgoingEventQueue_.size());
+    for (list<Response>::iterator it = outgoingEventQueue_.begin(); it!= outgoingEventQueue_.end(); it++) {
+        out.output("      Time: %" PRIu64 ", Event: %s\n", (*it).deliveryTime, (*it).event->getVerboseString().c_str());
+    }
+    
+    out.output("    Events waiting in outgoingEventQueueUp_: %zu\n", outgoingEventQueueUp_.size());
+    for (list<Response>::iterator it = outgoingEventQueueUp_.begin(); it!= outgoingEventQueueUp_.end(); it++) {
+        out.output("      Time: %" PRIu64 ", Event: %s\n", (*it).deliveryTime, (*it).event->getVerboseString().c_str());
+    }
+   
+    out.output("  End MemHierarchy::CoherenceController\n");
+}
 
    

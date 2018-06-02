@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -220,6 +220,9 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     std::string inspector_config = params.find<std::string>("network_inspectors", "");
     split(inspector_config,",",inspector_names);
 
+    bool oql_track_port = params.find<bool>("oql_track_port","false");
+    bool oql_track_remote = params.find<bool>("oql_track_remote","false");
+    
     params.enableVerify(false);
     for ( int i = 0; i < num_ports; i++ ) {
         in_port_busy[i] = 0;
@@ -245,7 +248,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
                                    getLogicalGroupParam(params,topo,i,"input_buf_size"),
                                    getLogicalGroupParam(params,topo,i,"output_buf_size"),
                                    inspector_names,
-								   std::stof(getLogicalGroupParam(params,topo,i,"dlink_thresh", "-1")));
+								   std::stof(getLogicalGroupParam(params,topo,i,"dlink_thresh", "-1")),
+                                   oql_track_port,oql_track_remote);
         
     }
     params.enableVerify(true);
@@ -637,16 +641,19 @@ hr_router::init_vcs()
 
     vc_heads = new internal_router_event*[num_ports*num_vcs];
     xbar_in_credits = new int[num_ports*num_vcs];
+    output_queue_lengths = new int[num_ports*num_vcs];
     for ( int i = 0; i < num_ports*num_vcs; i++ ) {
         vc_heads[i] = NULL;
         xbar_in_credits[i] = 0;
+        output_queue_lengths[i] = 0;
     }
     
     for ( int i = 0; i < num_ports; i++ ) {
-        ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs]);
-    }    
+        ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],&output_queue_lengths[i*num_vcs]);
+    }
 
     topo->setOutputBufferCreditArray(xbar_in_credits, num_vcs);
+    topo->setOutputQueueLengthsArray(output_queue_lengths, num_vcs);
 
     // Now that we have the number of VCs we can finish initializing
     // arbitration logic

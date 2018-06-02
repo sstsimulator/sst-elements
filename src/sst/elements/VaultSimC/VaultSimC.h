@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -19,6 +19,7 @@
 
 #include <sst/core/event.h>
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/core/output.h>
 
@@ -45,6 +46,32 @@ using namespace PHXSim;
 class VaultSimC : public Component {
 
 public: // functions
+
+    SST_ELI_REGISTER_COMPONENT(
+                               VaultSimC,
+                               "VaultSimC",
+                               "VaultSimC",
+                               SST_ELI_ELEMENT_VERSION(1,0,0),
+                               "A memory vault in a stacked memory",
+                               COMPONENT_CATEGORY_MEMORY)
+
+    SST_ELI_DOCUMENT_PARAMS(
+                            {"clock",  "Vault Clock Rate.", "1.0 Ghz"},
+                            {"numVaults2",         "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
+                            {"VaultID",            "Vault Unique ID (Unique to cube)."},
+                            {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+#if !(HAVE_LIBPHX == 1)
+                            {"delay", "Static vault delay", "40ns"}
+#endif /* HAVE_LIBPHX */
+                            )
+
+    SST_ELI_DOCUMENT_PORTS(
+                           {"bus", "Link to the logic layer", {"MemEvent",""}},
+                            )
+                           
+    SST_ELI_DOCUMENT_STATISTICS(
+                                { "Mem_Outstanding", "Number of memory requests outstanding each cycle", "reqs/cycle", 1}
+                            )
 
     VaultSimC( ComponentId_t id, Params& params );
     int Finish();

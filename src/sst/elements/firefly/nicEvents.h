@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -54,6 +54,7 @@ class NicCmdBaseEvent : public Event {
 
     NicCmdBaseEvent( Type type ) : Event(), base_type(type) {}
 
+    virtual int getPid() { return -1; } 
     NotSerializable(NicCmdBaseEvent)
 };
 
@@ -131,6 +132,7 @@ class NicShmemSendCmdEvent : public NicShmemCmdEvent {
         NicShmemCmdEvent( type ), vnic(vnic), node(node) {}
 
     virtual ~NicShmemSendCmdEvent() {}
+    virtual int getPid() { return vnic; } 
     int getVnic() { return vnic; }
     int getNode() { return node; }
     virtual Hermes::Vaddr getMyAddr()  { assert(0); } 
@@ -357,7 +359,7 @@ class NicShmemOpCmdEvent : public NicShmemCmdEvent {
         NicShmemCmdEvent( Wait ), addr(addr), op(op), value(value), callback(callback) {}
 
     Hermes::Vaddr getAddr()  { return addr; } 
-    virtual int getNode() { return -2; }
+    virtual int getNode() { return -1; }
 
     Hermes::Shmem::WaitOp op;
     Hermes::Vaddr   addr;

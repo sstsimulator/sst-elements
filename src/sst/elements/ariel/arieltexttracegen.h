@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,8 +17,11 @@
 #ifndef _H_SST_ARIEL_TEXT_TRACE_GEN
 #define _H_SST_ARIEL_TEXT_TRACE_GEN
 
-#include <sst/core/params.h>
 #include <climits>
+
+#include <sst/core/params.h>
+#include <sst/core/elementinfo.h>
+
 #include "arieltracegen.h"
 
 namespace SST {
@@ -26,45 +29,25 @@ namespace ArielComponent {
 
 class ArielTextTraceGenerator : public ArielTraceGenerator {
 
-public:
-	ArielTextTraceGenerator(Component* owner, Params& params) :
-		ArielTraceGenerator() {
+    public:
+        SST_ELI_REGISTER_MODULE(ArielTextTraceGenerator, "ariel", "TextTraceGenerator", SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Provides tracing to text file capabilities", "SST::ArielComponent::ArielTraceGenerator")
 
-		tracePrefix = params.find<std::string>("trace_prefix", "ariel-core");
-		coreID = 0;
-	}
+        SST_ELI_DOCUMENT_PARAMS( { "trace_prefix", "Sets the prefix for the trace file", "ariel-core-" } )
 
-	~ArielTextTraceGenerator() {
-		fclose(textFile);
-	}
+        ArielTextTraceGenerator(Component* owner, Params& params);
 
-	void publishEntry(const uint64_t picoS,
-                const uint64_t physAddr,
-		const uint32_t reqLength,
-                const ArielTraceEntryOperation op) {
+        ~ArielTextTraceGenerator();
 
-		fprintf(textFile, "%" PRIu64 " %s %" PRIu64 " %" PRIu32 "\n",
-			picoS,
-			(op == READ) ? "R" : "W",
-			physAddr,
-			reqLength);
-	}
+        void publishEntry(const uint64_t picoS, const uint64_t physAddr,
+                const uint32_t reqLength, const ArielTraceEntryOperation op);
 
-	void setCoreID(const uint32_t core) {
-		coreID = core;
+        void setCoreID(const uint32_t core);
 
-		char* tracePath = (char*) malloc(sizeof(char) * PATH_MAX);
-		sprintf(tracePath, "%s-%" PRIu32 ".trace", tracePrefix.c_str(), core);
-
-		textFile = fopen(tracePath, "wt");
-
-		free(tracePath);
-	}
-
-private:
-	FILE* textFile;
-	std::string tracePrefix;
-	uint32_t coreID;
+    private:
+        FILE* textFile;
+        std::string tracePrefix;
+        uint32_t coreID;
 
 };
 

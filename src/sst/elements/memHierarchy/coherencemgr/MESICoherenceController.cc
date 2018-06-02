@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -1459,7 +1459,7 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
             if (!inclusive_ && cacheLine->getState() != S) { // Transfer E/M permission
                 cacheLine->setOwner(origRequest->getSrc());
                 sendTime = sendResponseUp(origRequest, Command::GetXResp, &responseEvent->getPayload(), state == M, true, cacheLine->getTimestamp());
-            } else if (protocol_ && cacheLine->getState() != S) { // Send exclusive response
+            } else if (protocol_ && cacheLine->getState() != S && mshr_->lookup(responseEvent->getBaseAddr()).size() == 1) { // Send exclusive response unless another request is waiting
                 cacheLine->setOwner(origRequest->getSrc());
                 sendTime = sendResponseUp(origRequest, Command::GetXResp, &responseEvent->getPayload(), true, cacheLine->getTimestamp());
             } else { // Default shared response

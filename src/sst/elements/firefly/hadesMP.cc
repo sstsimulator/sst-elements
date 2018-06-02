@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -124,7 +124,7 @@ void HadesMP::reduce(const Hermes::MemAddr& mydata,
 {
     dbg().debug(CALL_INFO,1,1,"in=%p out=%p count=%d dtype=%d \n",
                 &mydata,&result,count,dtype);
-    functionSM().start( FunctionSM::Reduce, retFunc,
+    functionSM().start( FunctionSM::Allreduce, retFunc,
         new CollectiveStartEvent(mydata, result, count, 
                         dtype, op, root, group, 
                             CollectiveStartEvent::Reduce) );
@@ -139,7 +139,7 @@ void HadesMP::bcast(const Hermes::MemAddr& mydata, uint32_t count,
 
 	Hermes::MemAddr addr(1,NULL);
 
-    functionSM().start( FunctionSM::Reduce, retFunc,
+    functionSM().start( FunctionSM::Allreduce, retFunc,
         new CollectiveStartEvent(mydata, addr, count, 
                         dtype, NOP, root, group, 
                             CollectiveStartEvent::Bcast) );
@@ -163,7 +163,7 @@ void HadesMP::allgatherv(
 {
     dbg().debug(CALL_INFO,1,1,"sendbuf=%p recvbuf=%p sendcnt=%d "
                     "recvcntPtr=%p\n", &sendbuf,&recvbuf,sendcnt,recvcnt);
-    functionSM().start( FunctionSM::Allgatherv, retFunc,
+    functionSM().start( FunctionSM::Allgather, retFunc,
         new GatherStartEvent( sendbuf, sendcnt, sendtype,
             recvbuf, recvcnt, displs, recvtype, group ) );
 }
@@ -173,7 +173,7 @@ void HadesMP::gather( const Hermes::MemAddr& sendbuf, uint32_t sendcnt, PayloadD
         RankID root, Communicator group, Functor* retFunc)
 {
     dbg().debug(CALL_INFO,1,1,"\n");
-    functionSM().start( FunctionSM::Gather, retFunc,
+    functionSM().start( FunctionSM::Gatherv, retFunc,
         new GatherStartEvent(sendbuf, sendcnt, sendtype,
             recvbuf, recvcnt, recvtype, root, group ) );
 }
@@ -197,7 +197,7 @@ void HadesMP::alltoall(
 {
     dbg().debug(CALL_INFO,1,1,"sendbuf=%p recvbuf=%p sendcnt=%d "
                         "recvcnt=%d\n", &sendbuf,&recvbuf,sendcnt,recvcnt);
-    functionSM().start( FunctionSM::Alltoall, retFunc,
+    functionSM().start( FunctionSM::Alltoallv, retFunc,
         new AlltoallStartEvent( sendbuf,sendcnt, sendtype, recvbuf,
                                     recvcnt, recvtype, group) );
 }

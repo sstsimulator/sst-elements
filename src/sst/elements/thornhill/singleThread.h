@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,6 +16,7 @@
 #ifndef _H_THORNHILL_SINGLE_THREAD
 #define _H_THORNHILL_SINGLE_THREAD
 
+#include <sst/core/elementinfo.h>
 #include "detailedCompute.h"
 
 namespace SST {
@@ -23,6 +24,15 @@ namespace Thornhill {
 
 class SingleThread : public DetailedCompute {
 
+  public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        SingleThread,
+        "thornhill",
+        "SingleThread",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
 	struct Entry {
       Entry( std::function<int()>& _finiHandler ) : finiHandler( _finiHandler ) {}
     	std::function<int()> finiHandler; 

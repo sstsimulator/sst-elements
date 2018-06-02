@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -19,6 +19,7 @@
 
 #include <math.h>
 #include <sstream>
+#include <sst/core/elementinfo.h>
 #include <sst/core/module.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
@@ -50,6 +51,88 @@ namespace Firefly {
 
 class Nic : public SST::Component  {
 
+  public:
+    SST_ELI_REGISTER_COMPONENT(
+        Nic,
+        "firefly",
+        "nic",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        COMPONENT_CATEGORY_SYSTEM
+        )
+    SST_ELI_DOCUMENT_PARAMS(
+        { "nid", "node id on network", "-1"},
+        { "verboseLevel", "Sets the output verbosity of the component", "0"},
+        { "verboseMask", "Sets the output mask of the component", "-1"},
+        { "nic2host_lat", "Sets the latency over the Host to NIC bus", "150ns"},
+        { "rxMatchDelay_ns", "Sets the delay for a receive match", "100"},
+        { "txDelay_ns", "Sets the delay for a send", "100"},
+        { "hostReadDelay_ns", "Sets the delay for a read from the host", "200"},
+        { "shmemRxDelay_ns", "Sets the delay for a SHMEM receive operation", "0"},
+        { "num_vNics", "Sets number of cores", "1"},
+        { "tracedPkt", "packet to trace", "-1"},
+        { "tracedNode", "node to trace", "-1"},
+        { "numShmemCmdSlots", "Sets the size of the Host to NIC SHMEM command queue", "32"},
+        { "maxSendMachineQsize", "Sets the number of pending memory operations", "1"},
+        { "maxRecvMachineQsize", "Sets the number of pending memory operations", "1"},
+        { "shmemSendAlignment", "Sets the send stream transfer alignment", "64"},
+        { "numSendMachines", "Sets the number of send machines", "1"},
+        { "numRecvNicUnits", "Sets the number of receive units", "1"},
+        { "packetOverhead", "Sets the overhead of a network packet", "0"},
+        { "packetSize", "Sets the size of the network packet in bytes", "64"},
+        { "input_buf_size", "Sets the buffer size of the link connected to the router", "128"},
+        { "output_buf_size", "Sets the buffer size of the link connected to the router", "128"},
+        { "link_bw", "Sets the bandwidth of link connected to the router", "500Mhz"},
+        { "module", "Sets the link control module", "merlin.linkcontrol"},
+        { "rtrPortName", "Port connected to the router", "rtr"},
+        { "corePortName", "Port connected to the core", "core"},
+
+        { "useSimpleMemoryModel", "If set to 1 use the simple memory model", "0"},
+
+        { "dmaBW_GBs", "set the one way DMA bandwidth", "100"},
+        { "dmaContentionMult", "set the DMA contention mult", "100"},
+
+        { "simpleMemoryModel.verboseLevel","Sets the verbosity level of output","0"},
+        { "simpleMemoryModel.verboseMask","Set the output mask","-1"},
+
+        { "simpleMemoryModel.memReadLat_ns","Sets the latency for a memory read","150"},
+        { "simpleMemoryModel.memWriteLat_ns","Sets the latency for a memory write","150"},
+        { "simpleMemoryModel.memNumSlots","Sets the max number of outstanding memory operations","10"},
+
+        { "simpleMemoryModel.nicNumLoadSlots","Sets the max number of outstanding loads for units on the NIC","32"},
+        { "simpleMemoryModel.nicNumStoreSlots","Sets the max number of outstanding stores for the units on the NIC","32"},
+        { "simpleMemoryModel.hostNumLoadSlots","Sets the max number of outstanding loads for the units on the Host","32"},
+        { "simpleMemoryModel.hostNumStoreSlots","Sets the max number of outstanding stores for the units on the Host","32"},
+
+        { "simpleMemoryModel.busBandwidth_Gbs","Sets the Host to NIC bus link bandwidth","7.8"},
+        { "simpleMemoryModel.busNumLinks","Sets the number of Host to NIC bus links","16"},
+        { "simpleMemoryModel.busLatency","Set the Host to NIC bus overhead","0"},
+        { "simpleMemoryModel.DLL_bytes","Sets the number of bytes of overhead for a packet at the data link level","16"},
+        { "simpleMemoryModel.TLP_overhead","Sets the number of bytes of overhead for a packet at the transaction level","30"},
+        { "simpleMemoryModel.nicToHostMTU","Sets the size the MTU between the Host and NIC","256"},
+        { "simpleMemoryModel.widgetSlots","Set the depth of queues between the Host to NIC bus and the cache","64"},
+
+        { "simpleMemoryModel.hostCacheUnitSize","Sets the number of slots in the Host cache","32"},
+        { "simpleMemoryModel.hostCacheNumMSHR","Sets the max number of outstanding request to memory","10"},
+        { "simpleMemoryModel.hostCacheLineSize","Sets the cache line size","64"},
+
+
+        { "simpleMemoryModel.tlbPageSize","Sets the TLB page size","2097152"},
+        { "simpleMemoryModel.tlbSize","Sets the number of slots in the TLB","0"},
+        { "simpleMemoryModel.tlbMissLat_ns","Sets the latency for a TLB miss","0"},
+        { "simpleMemoryModel.numWalkers","Sets the number of outsanding TLB misses","1"},
+        { "simpleMemoryModel.numTlbSlots","Sets the number of requests the TLB will queue","1"},
+    )
+
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr", "Port connected to the router", {}},
+        {"read", "Port connected to the detailed model", {}},
+        {"write", "Port connected to the detailed model", {}},
+        {"core%(num_vNics)d", "Ports connected to the network driver", {}},
+    ) 
+
+  private:
     typedef unsigned RespKey_t;
 	class LinkControlWidget {
 
@@ -149,11 +232,9 @@ class Nic : public SST::Component  {
     class SelfEvent : public SST::Event {
       public:
 
-		enum { Callback, Entry, Event } type;
+		enum { Callback, Event } type;
         typedef std::function<void()> Callback_t;
 
-        SelfEvent( void* entry) : 
-            type(Entry), entry(entry) {}
         SelfEvent( Callback_t callback ) :
             type(Callback), callback( callback) {}
         SelfEvent( SST::Event* ev,  int linkNum  ) :
@@ -201,7 +282,15 @@ public:
     void init( unsigned int phase );
     int getNodeId() { return m_myNodeId; }
     int getNum_vNics() { return m_num_vNics; }
-    void printStatus(Output &out) {}
+    void printStatus(Output &out) {
+        out.output("NIC %d: start time=%zu\n", m_myNodeId, (size_t) getCurrentSimTimeNano() );
+        out.output("NIC %d: Received packets: %d\n", m_myNodeId, m_recvMachine->getNumReceivedPkts());
+        out.output("NIC %d: Sent packets:     %d\n", m_myNodeId, m_sentPkts);
+        m_simpleMemoryModel->printStatus( out, m_myNodeId );
+        out.output("NIC %d: done\n", m_myNodeId );
+    }
+
+    int m_sentPkts;
 
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
@@ -224,8 +313,7 @@ public:
     typedef uint64_t DestKey;
     static DestKey getDestKey(int node, int pid) { return (DestKey) node << 32 | pid; }
 
-    std::vector< std::unordered_set< DestKey > > m_sendEntryInProgress;
-    std::list<SendEntryBase*> m_sendEntryQ;
+    std::vector< std::pair< bool, std::deque<  std::pair< SimTime_t, SendEntryBase*> > > > m_sendEntryQ;
 
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
