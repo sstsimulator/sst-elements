@@ -257,8 +257,11 @@ void ArielCore::stall() {
 
 void ArielCore::fence(){
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core: %" PRIu32 " FENCE:  Current pending transaction count: %" PRIu32 " (%" PRIu32 ")\n", coreID, pending_transaction_count, maxPendingTransactions));
-    isFenced = true;
-    isStalled = true;
+
+    if( pending_transaction_count > 0 ) {
+        isFenced = true;
+        isStalled = true;
+    }
 }
 
 void ArielCore::unfence()
