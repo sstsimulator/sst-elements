@@ -325,7 +325,7 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
         case M:
             if (cmd == Command::GetX) {
                 /* L1s write back immediately */
-                if (!event->isStoreConditional() | atomic) {
+                if (!event->isStoreConditional() || atomic) {
                     cacheLine->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
                     
                     if (is_debug_addr(cacheLine->getBaseAddr())) {
