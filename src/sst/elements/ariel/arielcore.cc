@@ -717,6 +717,7 @@ void ArielCore::handleFlushEvent(ArielFlushEvent *flEv) {
 
     const uint64_t physAddr = memmgr->translateAddress(virtualAddress);
     commitFlushEvent(physAddr, virtualAddress, (uint32_t) readLength);
+    statFlushRequests->addData(1);
 }
 
 void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
@@ -726,6 +727,7 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
     fence();
     // Possibility B:
     // commitFenceEvent();
+    statFenceRequests->addData(1);
 }
 
 void ArielCore::printCoreStatistics() {
