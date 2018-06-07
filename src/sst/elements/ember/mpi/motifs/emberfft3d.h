@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,6 +23,55 @@ namespace SST {
 namespace Ember {
 
 class EmberFFT3DGenerator : public EmberMessagePassingGenerator {
+
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberFFT3DGenerator,
+        "ember",
+        "FFT3DMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Models an FFT",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+        { "arg.iterations", "Sets the number of ping pong operations to perform",   "1"},
+        { "arg.nx",         "Sets the size of a block in X", "8" },
+        { "arg.ny",         "Sets the size of a block in Y", "8" },
+        { "arg.nz",         "Sets the size of a block in Z", "8" },
+        { "arg.npRow",      "Sets the number of rows in the PE decomposition", "0" },
+        { "arg.nsPerElement",  "", "" },
+        { "arg.fwd_fft1",  "", "" },
+        { "arg.fwd_fft2",  "", "" },
+        { "arg.fwd_fft3",  "", "" },
+        { "arg.bwd_fft1",  "", "" },
+        { "arg.bwd_fft2",  "", "" },
+        { "arg.bwd_fft3",  "", "" },
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "time-Init", "Time spent in Init event",          "ns",  0},
+        { "time-Finalize", "Time spent in Finalize event",  "ns", 0},
+        { "time-Rank", "Time spent in Rank event",          "ns", 0},
+        { "time-Size", "Time spent in Size event",          "ns", 0},
+        { "time-Send", "Time spent in Recv event",          "ns", 0},
+        { "time-Recv", "Time spent in Recv event",          "ns", 0},
+        { "time-Irecv", "Time spent in Irecv event",        "ns", 0},
+        { "time-Isend", "Time spent in Isend event",        "ns", 0},
+        { "time-Wait", "Time spent in Wait event",          "ns", 0},
+        { "time-Waitall", "Time spent in Waitall event",    "ns", 0},
+        { "time-Waitany", "Time spent in Waitany event",    "ns", 0},
+        { "time-Compute", "Time spent in Compute event",    "ns", 0},
+        { "time-Barrier", "Time spent in Barrier event",    "ns", 0},
+        { "time-Alltoallv", "Time spent in Alltoallv event", "ns", 0},
+        { "time-Alltoall", "Time spent in Alltoall event",  "ns", 0},
+        { "time-Allreduce", "Time spent in Allreduce event", "ns", 0},
+        { "time-Reduce", "Time spent in Reduce event",      "ns", 0},
+        { "time-Bcast", "Time spent in Bcast event",        "ns", 0},
+        { "time-Gettime", "Time spent in Gettime event",    "ns", 0},
+        { "time-Commsplit", "Time spent in Commsplit event", "ns", 0},
+        { "time-Commcreate", "Time spent in Commcreate event", "ns", 0},
+    )
 
 public:
 	EmberFFT3DGenerator(SST::Component* owner, Params& params);

@@ -7,12 +7,12 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmiranda.la
 
 libmiranda_la_SOURCES = \
-	miranda.cc \
 	mirandaEvent.h \
 	mirandaGenerator.h \
 	mirandaCPU.cc \
 	mirandaCPU.h	\
 	mirandaMemMgr.h \
+	mirandaIncGen.cc \
 	generators/singlestream.h \
 	generators/singlestream.cc \
 	generators/randomgen.h \

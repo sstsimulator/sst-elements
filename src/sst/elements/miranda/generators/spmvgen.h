@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -126,6 +126,30 @@ public:
 
 	void completed() {}
 
+	SST_ELI_REGISTER_SUBCOMPONENT(
+                SPMVGenerator,
+                "miranda",
+                "SPMVGenerator",
+                SST_ELI_ELEMENT_VERSION(1,0,0),
+		"Creates a diagonal matrix access pattern",
+                "SST::Miranda::RequestGenerator"
+        )
+
+	SST_ELI_DOCUMENT_PARAMS(
+		{ "matrix_nx",	"Sets the horizontal dimension of the matrix", "10" },
+    		{ "matrix_ny",      "Sets the vertical dimension of the matrix (the number of rows)", "10" },
+    		{ "element_width",  "Sets the width of one matrix element, typically 8 for a double", "8" },
+    		{ "lhs_start_addr", "Sets the start address of the LHS vector", "0" },
+    		{ "rhs_start_addr", "Sets the start address of the RHS vector", "80" },
+    		{ "local_row_start", "Sets the row at which this generator will start processing", "0" },
+    		{ "local_row_end",  "Sets the end at which rows will be processed by this generator", "10" },
+    		{ "ordinal_width",  "Sets the width of ordinals (indices) in the matrix, typically 4 or 8", "8"},
+    		{ "matrix_row_indices_start_addr", "Sets the row indices start address for the matrix", "0" },
+    		{ "matrix_col_indices_start_addr", "Sets the col indices start address for the matrix", "0" },
+    		{ "matrix_element_start_addr", "Sets the start address of the elements array", "0" },
+    		{ "iterations",     "Sets the number of repeats to perform" },
+    		{ "matrix_nnz_per_row", "Sets the number of non-zero elements per row", "9" }
+        )
 private:
 	Output*  out;
 

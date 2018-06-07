@@ -64,11 +64,8 @@ comp_memory.addParams({
       "clock" : "1GHz",
       "backend.mem_size" : "512MiB",
       "backend.access_time" : "100 ns",
-      "backend.configFile" : "/Users/afrodri/Public/ramulator-afrodri/configs/DDR3-config.cfg",
+      "backend.configFile" : "ramulator-ddr3.cfg",
       "backend" : "memHierarchy.ramulator",
-      #"backend.system_ini" : "system.ini",
-      #"backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
-      #"backend" : "memHierarchy.dramsim"
 })
 
 # Enable statistics

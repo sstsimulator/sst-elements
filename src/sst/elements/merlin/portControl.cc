@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -47,7 +47,7 @@ PortControl::send(internal_router_event* ev, int vc)
 {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "send start:" << std::endl;
+        // std::cout << "send start:" << std::endl;
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
@@ -55,6 +55,15 @@ PortControl::send(internal_router_event* ev, int vc)
 	// if ( xbar_in_credits[vc] < ev->getFlitCount() ) return false;
     
 	xbar_in_credits[vc] -= ev->getFlitCount();
+    if ( oql_track_port ) {
+        int flits = ev->getFlitCount();
+        for ( int i = 0; i < num_vcs; ++i ) {
+            output_queue_lengths[i] += flits;
+        }
+    }
+    else {
+        output_queue_lengths[vc] += ev->getFlitCount();
+    }
 	ev->setVC(vc);
 
 	output_buf[vc].push(ev);
@@ -66,7 +75,7 @@ PortControl::send(internal_router_event* ev, int vc)
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "send end:" << std::endl;
+        // std::cout << "send end:" << std::endl;
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
@@ -85,7 +94,7 @@ PortControl::recv(int vc)
 {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "recv start:" << std::endl;
+        // std::cout << "recv start:" << std::endl;
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
@@ -116,7 +125,7 @@ PortControl::recv(int vc)
     
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "recv start:" << std::endl;
+        // std::cout << "recv start:" << std::endl;
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
@@ -134,7 +143,7 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
                          SimTime_t output_latency_cycles, std::string output_latency_timebase,
                          const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size,
                          std::vector<std::string>& inspector_names,
-						 const float dlink_thresh) :
+						 const float dlink_thresh, bool oql_track_port, bool oql_track_remote) :
     rtr_id(rtr_id),
     num_vcs(-1),
     link_bw(link_bw),
@@ -153,6 +162,8 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
 	dlink_thresh(dlink_thresh),
 	sai_port_disabled(false),
 	ongoing_transmit(false),
+    oql_track_port(oql_track_port),
+    oql_track_remote(oql_track_remote),
     is_idle(true),
 	is_active(false),
     waiting(true),
@@ -254,7 +265,7 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
 
 
 void
-PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_credits_in)
+PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_credits_in, int* output_queue_lengths_in)
 {
     vc_heads = vc_heads_in;
     // If the port is not connected, we still need to initialize
@@ -267,7 +278,8 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
     }
     num_vcs = vcs;
     xbar_in_credits = xbar_in_credits_in;
-
+    output_queue_lengths = output_queue_lengths_in;
+    
     // Input and output buffers
     input_buf = new port_queue_t[vcs];
     output_buf = new port_queue_t[vcs];
@@ -420,12 +432,14 @@ PortControl::init(unsigned int phase) {
         init_ev->ua_value = link_bw;
         port_link->sendInitData(init_ev);
         
+        // std::cout << "FLIT - isHostPort(" << port_number << "): " << topo->isHostPort(port_number) << std::endl;
         // If this is a host port, send the endpoint ID to the LinkControl
         if ( topo->isHostPort(port_number) ) {
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_FLIT_SIZE;
             init_ev->ua_value = flit_size;
             port_link->sendInitData(init_ev);
+            // std::cout << "FLIT_SIZE: " << flit_size.toStringBestSI() << std::endl;
         
             RtrInitEvent* ev = new RtrInitEvent();
             ev->command = RtrInitEvent::REPORT_ID;
@@ -680,7 +694,19 @@ PortControl::handle_input_n2r(Event* ev)
     {
 	    credit_event* ce = static_cast<credit_event*>(ev);
 	    port_out_credits[ce->vc] += ce->credits;
-	    delete ce;
+
+        if ( oql_track_remote ) {
+            if ( oql_track_port ) {
+                for ( int i = 0; i < num_vcs; ++i ) {
+                    output_queue_lengths[i] -= ce->credits;
+                }
+            }
+            else {
+                output_queue_lengths[ce->vc] -= ce->credits;
+            }
+        }
+
+        delete ce;
         
 	    // If we're waiting, we need to send a wakeup event to the
 	    // output queues
@@ -754,7 +780,7 @@ PortControl::handle_input_r2r(Event* ev)
 {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "handle_input_r2r start:" << std::endl;
+        // std::cout << "handle_input_r2r start:" << std::endl;
         ev->print("  ", Simulation::getSimulation()->getSimulationOutput());
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
@@ -924,7 +950,17 @@ PortControl::handle_output_r2r(Event* ev) {
 	    // Need to return credits to the output buffer
 	    int size = send_event->getFlitCount();
 	    xbar_in_credits[vc_to_send] += size;
-	    
+        if ( !oql_track_remote ) {
+            if ( oql_track_port ) {
+                for ( int i = 0; i < num_vcs; ++i ) {
+                    output_queue_lengths[i] -= size;
+                }
+            }
+            else {
+                output_queue_lengths[vc_to_send] -= size;
+            }
+        }
+        
 	    // Send an event to wake up again after this packet is sent.
 	    output_timing->send(size,NULL); 
 	    
@@ -1081,7 +1117,17 @@ PortControl::handle_output_n2r(Event* ev) {
 	    // Need to return credits to the output buffer
 	    int size = send_event->getFlitCount();
 	    xbar_in_credits[vc_to_send] += size;
-	    
+        if ( !oql_track_remote ) {
+            if ( oql_track_port ) {
+                for ( int i = 0; i < num_vcs; ++i ) {
+                    output_queue_lengths[i] -= size;
+                }
+            }
+            else {
+                output_queue_lengths[vc_to_send] -= size;
+            }
+        }
+        
 	    // Send an event to wake up again after this packet is sent.
 	    output_timing->send(size,NULL); 
 	    

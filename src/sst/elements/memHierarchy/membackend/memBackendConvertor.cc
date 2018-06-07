@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -200,22 +200,23 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
             doResponseStat( event->getCmd(), latency );
 
             if (!flags) flags = event->getFlags();
+            SST::Event::id_type evID = event->getID();
             sendResponse(event->getID(), flags); // Needs to occur before a flush is completed since flush is dependent
 
             // TODO clock responses
             // Check for flushes that are waiting on this event to finish
-            if (m_dependentRequests.find(event) != m_dependentRequests.end()) {
-                std::set<MemEvent*, memEventCmp> flushes = m_dependentRequests.find(event)->second;
+            if (m_dependentRequests.find(evID) != m_dependentRequests.end()) {
+                std::set<MemEvent*, memEventCmp> flushes = m_dependentRequests.find(evID)->second;
 
                 for (std::set<MemEvent*, memEventCmp>::iterator it = flushes.begin(); it != flushes.end(); it++) {
-                    (m_waitingFlushes.find(*it)->second).erase(event);
+                    (m_waitingFlushes.find(*it)->second).erase(evID);
                     if ((m_waitingFlushes.find(*it)->second).empty()) {
                         MemEvent * flush = *it;
                         sendResponse(flush->getID(), (flush->getFlags() | MemEvent::F_SUCCESS));
                         m_waitingFlushes.erase(flush);
                     }
                 }
-                m_dependentRequests.erase(event);
+                m_dependentRequests.erase(evID);
             }
             delete req;
         }

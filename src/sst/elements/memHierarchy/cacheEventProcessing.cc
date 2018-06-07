@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -287,6 +287,8 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             if (mshr_->isHit(baseAddr) && canStall) {
                 // Drop local prefetches if there are outstanding requests for the same address NOTE this includes replacements/inv/etc.
                 if (event->isPrefetch() && event->getRqstr() == this->getName()) {
+                    if (is_debug_addr(baseAddr))
+                        d_->debug(_L6_, "Drop prefetch: cache hit\n");
                     statPrefetchDrop->addData(1);
                     delete event;
                     break;
@@ -500,7 +502,6 @@ void Cache::setup() {
             info.name = upperLevelCacheNames_[i];
             info.addr = 0;
             info.id = 0;
-            info.node = node;
             info.region.setDefault();
             srcNames.insert(info);
         }
@@ -525,7 +526,6 @@ void Cache::setup() {
             info.name = lowerLevelCacheNames_[i];
             info.addr = 0;
             info.id = 0;
-            info.node = node;
             info.region.setDefault();
             info.region.interleaveStep = ilStep;
             info.region.interleaveSize = ilSize;

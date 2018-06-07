@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,7 +22,7 @@ using namespace SST::Firefly;
 
 Nic::RecvMachine::MsgStream::MsgStream( Output& output, Ctx* ctx,
         int srcNode, int srcPid, int destPid, FireflyNetworkEvent* ev ) : 
-    StreamBase(output,ctx,srcNode,srcPid,destPid)
+    StreamBase(output,ctx,srcNode,srcPid,destPid), m_blocked(false)
 {
     m_unit = m_ctx->allocRecvUnit();
     m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"%p\n",this);
@@ -37,23 +37,14 @@ Nic::RecvMachine::MsgStream::MsgStream( Output& output, Ctx* ctx,
 
     m_recvEntry = static_cast<DmaRecvEntry *>( m_ctx->findRecv( m_srcNode, m_srcPid, hdr, matchHdr ) );
 
+    Callback callback;
     if ( NULL== m_recvEntry ) {
-        m_ctx->nic().schedCallback( 
-            std::bind( &Nic::RecvMachine::StreamBase::needRecv, this, ev ),
-            m_ctx->getRxMatchDelay()
-        );
+        callback =  std::bind( &Nic::RecvMachine::StreamBase::needRecv, this, ev );
+    } else {
+        m_blocked = true;
+        ev->bufPop( sizeof(MsgHdr) + sizeof(MatchMsgHdr) );
+        ev->clearHdr();
+        callback = std::bind( &Nic::RecvMachine::MsgStream::processFirstPkt, this, ev );
     }
-}
-
-void Nic::RecvMachine::MsgStream::processPktHdr( FireflyNetworkEvent* ev ) {
-
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"Msg Operation srcNode=%d tag=%#x length=%d\n",
-                            m_srcNode,m_matched_tag,m_matched_len);
-
-    ev->bufPop( sizeof(MsgHdr) + sizeof(MatchMsgHdr) );
-    ev->clearHdr();
-    m_ctx->nic().schedCallback(
-        std::bind( &Nic::RecvMachine::StreamBase::processPkt, this, ev ),
-        m_ctx->getRxMatchDelay() 
-    );
+    m_ctx->nic().schedCallback( callback,  m_ctx->getRxMatchDelay() );
 }

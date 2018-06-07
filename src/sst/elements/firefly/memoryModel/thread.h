@@ -1,3 +1,17 @@
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2018, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 class Work {
 
@@ -61,7 +75,7 @@ class Work {
 
     void print( Output& dbg, const char* prefix ) {
         for ( unsigned i = 0; i < m_ops->size(); i++ ) {
-           dbg.verbosePrefix(prefix,CALL_INFO,1,THREAD_MASK,"%s %#" PRIx64 " %lu\n",(*m_ops)[i].getName(), (*m_ops)[i].addr, (*m_ops)[i].length );
+           dbg.verbosePrefix(prefix,CALL_INFO,2,THREAD_MASK,"%s %#" PRIx64 " %lu\n",(*m_ops)[i].getName(), (*m_ops)[i].addr, (*m_ops)[i].length );
         }
     }
     int m_workNum;
@@ -77,9 +91,11 @@ class Work {
 
 class Thread : public UnitBase {
 
+    std::string m_name;
+
   public:	  
      Thread( SimpleMemoryModel& model, std::string name, Output& output, int id, int accessSize, Unit* load, Unit* store ) : 
-			m_model(model), m_dbg(output), m_loadUnit(load), m_storeUnit(store),
+			m_model(model), m_name(name), m_dbg(output), m_id(id), m_loadUnit(load), m_storeUnit(store), 
 			m_maxAccessSize( accessSize ), m_nextOp(NULL), m_waitingOnOp(NULL), m_blocked(false), m_curWorkNum(0),m_lastDelete(0)
 	{
 		m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name +"::@p():@l ";
@@ -91,6 +107,23 @@ class Thread : public UnitBase {
         if ( m_loadUnit != m_storeUnit ) {
             delete m_storeUnit;
         }
+    }
+
+    void printStatus( Output& out, int id ) {
+        out.output( "NIC %d: %s cur=%d last=%d blocked=%d %p %p\n",id, m_name.c_str(), m_curWorkNum, m_lastDelete, m_blocked, m_nextOp, m_waitingOnOp );
+        if ( m_workQ.size() ) {
+            out.output( "NIC %d: %s work.size=%zu\n", id, m_name.c_str(), m_workQ.size() );
+            std::deque<Work*>::iterator iter = m_workQ.begin();
+
+            for ( ; iter != m_workQ.end(); ++iter) {
+                (*iter)->print(out,"");
+            } 
+        }
+        if ( m_OOOwork.size() ) {
+            out.output( "NIC %d: %s OOOwork.size: %zu \n", id, m_name.c_str(), m_OOOwork.size() );
+        }
+        m_loadUnit->printStatus( out, id );
+        m_storeUnit->printStatus( out, id );
     }
 
     bool isIdle() {
@@ -177,12 +210,14 @@ class Thread : public UnitBase {
           case MemOp::HostStore:
           case MemOp::BusStore:
           case MemOp::BusDmaToHost:
+            addr |= (uint64_t) pid << 56;
             m_blocked = m_storeUnit->storeCB( this, new MemReq( addr, length, pid ), callback );
             break;
 
           case MemOp::HostLoad:
           case MemOp::BusLoad:
           case MemOp::BusDmaFromHost:
+            addr |= (uint64_t) pid << 56;
             m_blocked = m_loadUnit->load( this, new MemReq( addr, length, pid ), callback );
             break;
 
@@ -221,25 +256,28 @@ class Thread : public UnitBase {
 
     void opCallback( Work* work, MemOp* op, bool deleteWork ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"opPtr=%p %s waitingOnOp=%p\n",op,op->getName(),m_waitingOnOp);
-
         op->decPending();
 
         if ( op->canBeRetired() ) {
             if ( work->m_workNum  == m_lastDelete ) {
+                while ( ! work->m_pendingCallbacks.empty() ) {
+                    work->m_pendingCallbacks.front()();
+                    work->m_pendingCallbacks.pop_front();
+                }
                 if ( op->callback ) {
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"do op callback\n");
                     op->callback();
                 }
 
                 if ( deleteWork ) {
-                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete work %p %d\n",work, work->m_workNum);
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete work=%p %d\n",work, work->m_workNum);
                     delete work;
                     ++m_lastDelete;
                     while ( ! m_OOOwork.empty() ) {
-                        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"check OOO, looking for %d\n",m_lastDelete);
+                        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"check OOO, looking for %d\n",m_lastDelete);
                         if ( m_OOOwork.find( m_lastDelete ) != m_OOOwork.end() ) {
                             work = m_OOOwork[ m_lastDelete ];
-                            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"retire OOO work %p\n",m_OOOwork[m_lastDelete]);
+                            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete OOO work %p\n",m_OOOwork[m_lastDelete]);
                             while ( ! work->m_pendingCallbacks.empty() ) {
                                 work->m_pendingCallbacks.front()();
                                 work->m_pendingCallbacks.pop_front();
@@ -253,7 +291,9 @@ class Thread : public UnitBase {
                 }
             } else {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"OOO work %p %d\n",work,work->m_workNum);
-                m_OOOwork[work->m_workNum] = work;
+                if ( deleteWork ) {
+                    m_OOOwork[work->m_workNum] = work;
+                }
                 if ( op->callback ) {
                     work->m_pendingCallbacks.push_back(op->callback);
                 }
@@ -285,6 +325,7 @@ class Thread : public UnitBase {
     int 		        m_maxAccessSize;
     int                 m_curWorkNum;
     int                 m_lastDelete;
+    int                 m_id;
     std::map<int,Work*> m_OOOwork;
 };
 

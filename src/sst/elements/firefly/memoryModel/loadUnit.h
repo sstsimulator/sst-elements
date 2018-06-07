@@ -1,5 +1,17 @@
-    
-
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2018, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 class LoadUnit : public Unit {
 	struct Entry { 
@@ -15,6 +27,11 @@ class LoadUnit : public Unit {
 			m_blockedSrc(NULL) , m_numPending(0), m_name(name)
 	{
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "LoadUnit::@p():@l ";
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"maxPending=%d\n",m_qSize);
+    }
+
+    void printStatus( Output& out, int id ) {
+        out.output("NIC %d: %s pending=%d\n",id, m_name.c_str(), m_numPending );
     }
 
 	std::string& name() { return m_name; }
@@ -34,7 +51,7 @@ class LoadUnit : public Unit {
 		}
 
        	if ( m_numPending == m_qSize  ) {
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"blocking src\n");
+			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,LOAD_MASK,"blocking src\n");
             m_blockedSrc = src;
             return true;
         } else {
@@ -46,7 +63,7 @@ class LoadUnit : public Unit {
 	void process() {
 		assert( ! m_pendingQ.empty() );
         Entry& entry = m_pendingQ.front();
-     	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",entry.req->addr,entry.req->length,m_pendingQ.size() );
+     	m_dbg.verbosePrefix(prefix(),CALL_INFO,3,LOAD_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",entry.req->addr,entry.req->length,m_pendingQ.size() );
 
         assert( m_blocked == false );
         m_scheduled = false;
@@ -60,22 +77,22 @@ class LoadUnit : public Unit {
 
                 SimTime_t latency = m_model.getCurrentSimTimeNano() - issueTime;
 
-        		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"latency=%" PRIu64 " addr=%#" PRIx64 " length=%lu pending=%lu\n",
+        		m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",1,LOAD_MASK," complete, latency=%" PRIu64 " addr=%#" PRIx64 " length=%lu pending=%lu\n",
 													latency,addr,length,m_pendingQ.size() );
 
 				--m_numPending;
 				if ( entry.callback ) {
-					m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"tell src load is complete\n");
+					m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",3,LOAD_MASK,"tell src load is complete\n");
 					m_model.schedCallback( 0, entry.callback );
 				}
 
         		if ( m_blockedSrc ) {
-					m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"unblock src\n");
+					m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",2,LOAD_MASK,"unblock src\n");
 					m_model.schedResume( 0, m_blockedSrc, this );
             		m_blockedSrc = NULL;
         		}
 
-        		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"%s\n",m_blocked? "blocked" : "not blocked");
+        		m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",3,LOAD_MASK,"%s\n",m_blocked? "blocked" : "not blocked");
 
         		if ( ! m_blocked && ! m_scheduled && ! m_pendingQ.empty() ) {
             		m_model.schedCallback( 0, std::bind( &LoadUnit::process, this ) );
@@ -83,13 +100,13 @@ class LoadUnit : public Unit {
         		}
 			}
 		);
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"%s\n",m_blocked? "blocked" : " not blocked");
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,3,LOAD_MASK,"%s\n",m_blocked? "blocked" : " not blocked");
 		assert( ! m_pendingQ.empty() );
        	m_pendingQ.pop_front();
 	}
 
     void resume( UnitBase* src = NULL ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"pending=%lu\n",m_pendingQ.size());
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,3,LOAD_MASK,"pending=%lu\n",m_pendingQ.size());
 
         assert( m_blocked == true );
         m_blocked = false;

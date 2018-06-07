@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2017 Sandia Corporation. Under the terms
-# of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+# Copyright 2009-2018 NTESS. Under the terms
+# of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2017, Sandia Corporation
+# Copyright (c) 2009-2018, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -321,6 +321,126 @@ class topoMesh(Topo):
                 port = port+1
 
 
+class topoHyperX(Topo):
+    def __init__(self):
+        Topo.__init__(self)
+        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "hyperx:shape", "hyperx:width", "hyperx:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoOptKeys = ["xbar_arb"]
+    def getName(self):
+        return "HyperX"
+    def prepParams(self):
+#        if "xbar_arb" not in _params:
+#            _params["xbar_arb"] = "merlin.xbar_arb_lru"
+        self.nd = int(_params["num_dims"])
+        peers = 1
+        radix = 0
+        self.dims = []
+        self.dimwidths = []
+        if not "hyperx:shape" in _params:
+            for x in xrange(self.nd):
+                print "Dim %d size:"%x
+                ds = int(raw_input())
+                self.dims.append(ds);
+            _params["hyperx:shape"] = self.formatShape(self.dims)
+        else:
+            self.dims = [int(x) for x in _params["hyperx:shape"].split('x')]
+        if not "hyperx:width" in _params:
+            for x in xrange(self.nd):
+                print "Dim %d width (# of links in this dimension):" % x
+                dw = int(raw_input())
+                self.dimwidths.append(dw)
+            _params["hyperx:width"] = self.formatShape(self.dimwidths)
+        else:
+            self.dimwidths = [int(x) for x in _params["hyperx:width"].split('x')]
+
+        local_ports = int(_params["hyperx:local_ports"])
+        radix = local_ports
+        for x in xrange(self.nd):
+            radix += (self.dimwidths[x] * (self.dims[x]-1))
+
+        for x in self.dims:
+            peers = peers * x
+        peers = peers * local_ports
+
+        _params["num_peers"] = peers
+        _params["num_dims"] = self.nd
+        _params["topology"] = _params["topology"] = "merlin.hyperx"
+        _params["debug"] = debug
+        _params["num_ports"] = _params["router_radix"] = radix
+        _params["num_vns"] = 2
+        _params["hyperx:local_ports"] = local_ports
+
+    def formatShape(self, arr):
+        return 'x'.join([str(x) for x in arr])
+
+    def build(self):
+        def idToLoc(rtr_id):
+            foo = list()
+            for i in xrange(self.nd-1, 0, -1):
+                div = 1
+                for j in range(0, i):
+                    div = div * self.dims[j]
+                value = (rtr_id / div)
+                foo.append(value)
+                rtr_id = rtr_id - (value * div)
+            foo.append(rtr_id)
+            foo.reverse()
+            return foo
+
+
+        num_routers = _params["num_peers"] / _params["hyperx:local_ports"]
+        links = dict()
+        def getLink(name1, name2, num):
+            # Sort name1 and name2 so order doesn't matter
+            if str(name1) < str(name2):
+                name = "link.%s:%s:%d"%(name1, name2, num)
+            else:
+                name = "link.%s:%s:%d"%(name2, name1, num)
+            if name not in links:
+                links[name] = sst.Link(name)
+            #print "Getting link with name: %s"%name
+            return links[name]
+
+        # loop through the routers to hook up links
+        for i in xrange(num_routers):
+            # set up 'mydims'
+            mydims = idToLoc(i)
+            mylocstr = self.formatShape(mydims)
+
+            #print "Creating router %s (%d)"%(mylocstr,i)
+            
+            rtr = sst.Component("rtr.%s"%mylocstr, "merlin.hr_router")
+            rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
+            rtr.addParam("id", i)
+
+            port = 0
+            # Connect to all routers that only differ in one location index
+            for dim in xrange(self.nd):
+                theirdims = mydims[:]
+
+                # We have links to every other router in each dimension
+                for router in xrange(self.dims[dim]):
+                    if router != mydims[dim]: # no link to ourselves
+                        theirdims[dim] = router
+                        theirlocstr = self.formatShape(theirdims)
+                        # Hook up "width" number of links for this dimension
+                        for num in xrange(self.dimwidths[dim]):
+                            rtr.addLink(getLink(mylocstr, theirlocstr, num), "port%d"%port, _params["link_lat"])
+                            #print "Wired up port %d"%port
+                            port = port + 1
+                    
+
+            for n in xrange(_params["hyperx:local_ports"]):
+                nodeID = int(_params["hyperx:local_ports"]) * i + n
+                ep = self._getEndPoint(nodeID).build(nodeID, {})
+                if ep:
+                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    if self.bundleEndpoints:
+                       nicLink.setNoCut()
+                    nicLink.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
+                port = port+1
+
+
 
 
 
@@ -510,11 +630,15 @@ class topoFatTree(Topo):
 
 
 
+
 class topoDragonFly(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
-        self.topoOptKeys = ["xbar_arb","link_bw:host","link_bw:group","link_bw:global","input_latency:host","input_latency:group","input_latency:global","output_latency:host","output_latency:group","output_latency:global","input_buf_size:host","input_buf_size:group","input_buf_size:global","output_buf_size:host","output_buf_size:group","output_buf_size:global",]
+        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","dragonfly:intergroup_links","input_latency","output_latency","input_buf_size","output_buf_size","dragonfly:global_route_mode"]
+        self.topoOptKeys = ["xbar_arb","link_bw:host","link_bw:group","link_bw:global","input_latency:host","input_latency:group","input_latency:global","output_latency:host","output_latency:group","output_latency:global","input_buf_size:host","input_buf_size:group","input_buf_size:global","output_buf_size:host","output_buf_size:group","output_buf_size:global"]
+        self.global_link_map = None
+        self.global_routes = "absolute"
+
     def getName(self):
         return "Dragonfly"
 
@@ -522,6 +646,168 @@ class topoDragonFly(Topo):
 #        if "xbar_arb" not in _params:
 #            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         _params["topology"] = "merlin.dragonfly"
+        _params["debug"] = debug
+        _params["num_vns"] = 1
+#        _params["router_radix"] = int(_params["router_radix"])
+        _params["dragonfly:hosts_per_router"] = int(_params["dragonfly:hosts_per_router"])
+        _params["dragonfly:routers_per_group"] = int(_params["dragonfly:routers_per_group"])
+        _params["dragonfly:intergroup_links"] = int(_params["dragonfly:intergroup_links"])
+        _params["dragonfly:num_groups"] = int(_params["dragonfly:num_groups"])
+        _params["num_peers"] = _params["dragonfly:hosts_per_router"] * _params["dragonfly:routers_per_group"] * _params["dragonfly:num_groups"]
+        _params["dragonfly:global_route_mode"] = self.global_routes
+
+
+        self.total_intergroup_links = (_params["dragonfly:num_groups"] - 1) * _params["dragonfly:intergroup_links"]
+        _params["dragonfly:intergroup_per_router"] = int((self.total_intergroup_links + _params["dragonfly:routers_per_group"] - 1 ) / _params["dragonfly:routers_per_group"])
+        self.empty_ports = _params["dragonfly:intergroup_per_router"] * _params["dragonfly:routers_per_group"] - self.total_intergroup_links
+        
+        _params["router_radix"] = _params["dragonfly:routers_per_group"]-1 + _params["dragonfly:hosts_per_router"] + _params["dragonfly:intergroup_per_router"]
+        _params["num_ports"] = int(_params["router_radix"])
+
+        if _params["dragonfly:num_groups"] > 2:
+            foo = _params["dragonfly:algorithm"]
+            self.topoKeys.append("dragonfly:algorithm")
+
+    def setGlobalLinkMap(self, glm):
+        self.global_link_map = glm
+            
+    def setRoutingModeAbsolute(self):
+        self.global_routes = "absolute"
+
+    def setRoutingModeRelative(self):
+        self.global_routes = "relative"
+        
+    def build(self):
+        links = dict()
+
+        #####################
+        def getLink(name):
+            if name not in links:
+                links[name] = sst.Link(name)
+            return links[name]
+        #####################
+
+        rpg = _params["dragonfly:routers_per_group"]
+        ng = _params["dragonfly:num_groups"] - 1 # don't count my group
+        igpr = _params["dragonfly:intergroup_per_router"]
+            
+        if self.global_link_map is None:
+            # Need to define global link map
+
+            self.global_link_map = [-1 for i in range(igpr * rpg)]
+            
+            # Links will be mapped in linear order, but we will
+            # potentially skip one port per router, depending on the
+            # parameters.  The variable self.empty_ports tells us how
+            # many routers will have one global port empty.
+            count = 0
+            start_skip = rpg - self.empty_ports
+            for i in xrange(0,rpg):
+                # Determine if we skip last port for this router
+                end = igpr
+                if i >= start_skip:
+                    end = end - 1
+                for j in xrange(0,end):
+                    self.global_link_map[i*igpr+j] = count;
+                    count = count + 1
+
+        #print "Global link map array"
+        #print self.global_link_map
+
+        # End set global link map with default
+            
+
+        # g is group number
+        # r is router number with group
+        # p is port number relative to start of global ports
+
+        def getGlobalLink(g, r, p):
+            # Look into global link map to get the dest group and link
+            # number to that group
+            raw_dest = self.global_link_map[r * igpr + p];
+            if raw_dest == -1:
+                return None
+            
+            # Turn raw_dest into dest_grp and link_num
+            link_num = raw_dest / ng;
+            dest_grp = raw_dest - link_num * ng
+
+            if ( self.global_routes == "absolute" ):
+                # Compute dest group ignoring my own group id, for a
+                # dest_grp >= g, we need to add 1 to get the right group
+                if dest_grp >= g:
+                    dest_grp = dest_grp + 1
+            elif ( self.global_routes == "relative"):
+                # For relative, add current group to dest_grp + 1 and
+                # do modulo of num_groups to get actual group
+                dest_grp = (dest_grp + g + 1) % (ng+1)
+            #else:
+                # should never happen
+                
+            src = min(dest_grp, g)
+            dest = max(dest_grp, g)
+
+            #getLink("link:g%dg%dr%d"%(g, src, dst)), "port%d"%port, _params["link_lat"])
+            return getLink("link:g%dg%dr%d"%(src,dest,link_num))
+
+        #########################    
+
+            
+        router_num = 0
+        nic_num = 0
+        # GROUPS
+        for g in xrange(_params["dragonfly:num_groups"]):
+
+            # GROUP ROUTERS
+            for r in xrange(_params["dragonfly:routers_per_group"]):
+                rtr = sst.Component("rtr:G%dR%d"%(g, r), "merlin.hr_router")
+                rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
+                rtr.addParam("id", router_num)
+                if router_num == 0:
+                    # Need to send in the global_port_map
+                    #map_str = str(self.global_link_map).strip('[]')
+                    #rtr.addParam("dragonfly:global_link_map",map_str)
+                    rtr.addParam("dragonfly:global_link_map",self.global_link_map)
+                    
+                port = 0
+                for p in xrange(_params["dragonfly:hosts_per_router"]):
+                    ep = self._getEndPoint(nic_num).build(nic_num, {})
+                    if ep:
+                        link = sst.Link("link:g%dr%dh%d"%(g, r, p))
+                        if self.bundleEndpoints:
+                            link.setNoCut()
+                        link.connect(ep, (rtr, "port%d"%port, _params["link_lat"]) )
+                    nic_num = nic_num + 1
+                    port = port + 1
+
+                for p in xrange(_params["dragonfly:routers_per_group"]):
+                    if p != r:
+                        src = min(p,r)
+                        dst = max(p,r)
+                        rtr.addLink(getLink("link:g%dr%dr%d"%(g, src, dst)), "port%d"%port, _params["link_lat"])
+                        port = port + 1
+                
+                for p in xrange(_params["dragonfly:intergroup_per_router"]):
+                    link = getGlobalLink(g,r,p)
+                    if link is not None:
+                        rtr.addLink(link,"port%d"%port, _params["link_lat"])
+                    port = port +1
+
+                router_num = router_num +1
+
+
+class topoDragonFlyLegacy(Topo):
+    def __init__(self):
+        Topo.__init__(self)
+        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoOptKeys = ["xbar_arb","link_bw:host","link_bw:group","link_bw:global","input_latency:host","input_latency:group","input_latency:global","output_latency:host","output_latency:group","output_latency:global","input_buf_size:host","input_buf_size:group","input_buf_size:global","output_buf_size:host","output_buf_size:group","output_buf_size:global",]
+    def getName(self):
+        return "DragonflyLegacy"
+
+    def prepParams(self):
+#        if "xbar_arb" not in _params:
+#            _params["xbar_arb"] = "merlin.xbar_arb_lru"
+        _params["topology"] = "merlin.dragonfly_legacy"
         _params["debug"] = debug
         _params["num_vns"] = 1
         _params["router_radix"] = int(_params["router_radix"])
@@ -834,6 +1120,67 @@ class BisectionEndPoint(EndPoint):
     def enableAllStatistics(self,interval):
         self.enableAllStats = True;
         self.statInterval = interval;
+
+
+class Pt2ptEndPoint(EndPoint):
+    def __init__(self):
+        EndPoint.__init__(self)
+        #self.enableAllStats = False;
+        #self.statInterval = "0"
+        self.epKeys.extend(["link_bw", "packet_size", "packets_to_send", "buffer_size", "src", "dest"])
+        self.epOptKeys.extend(["linkcontrol"])
+
+    def getName(self):
+        return "pt2pt Test End Point"
+
+    def prepParams(self):
+        #if "checkerboard" not in _params:
+        #    _params["checkerboard"] = "1"
+        pass
+        
+    def build(self, nID, extraKeys):
+        nic = sst.Component("pt2ptNic.%d"%nID, "merlin.pt2pt_test")
+        nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
+        nic.addParams(_params.subset(extraKeys))
+        nic.addParam("id", nID)
+        if self.enableAllStats:
+            nic.enableAllStatistics({"type":"sst.AccumulatorStatistic", "rate":self.statInterval})
+        return (nic, "rtr", _params["link_lat"])
+        #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
+
+    def enableAllStatistics(self,interval):
+        self.enableAllStats = True;
+        self.statInterval = interval;
+
+
+class OfferedLoadEndPoint(EndPoint):
+    def __init__(self):
+        EndPoint.__init__(self)
+        #self.enableAllStats = False;
+        #self.statInterval = "0"
+        self.epKeys.extend(["offered_load", "num_peers", "link_bw", "message_size", "buffer_size", "pattern"])
+        self.epOptKeys.extend(["linkcontrol"])
+
+    def getName(self):
+        return "Offered Load End Point"
+
+    def prepParams(self):
+        pass
+        
+    def build(self, nID, extraKeys):
+        nic = sst.Component("offered_load.%d"%nID, "merlin.offered_load")
+        nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
+        nic.addParams(_params.subset(extraKeys))
+        nic.addParam("id", nID)
+        if self.enableAllStats:
+            nic.enableAllStatistics({"type":"sst.AccumulatorStatistic", "rate":self.statInterval})
+        return (nic, "rtr", _params["link_lat"])
+        #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
+
+    def enableAllStatistics(self,interval):
+        self.enableAllStats = True;
+        self.statInterval = interval;
+
 
 
 class ShiftEndPoint(EndPoint):

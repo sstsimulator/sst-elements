@@ -1,4 +1,17 @@
-
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2018, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 struct WidgetEntry {
     WidgetEntry( int cacheLineSize, MemReq* req, SimTime_t issueTime, Callback callback = NULL  ) : curAccess( 0 ), 
@@ -97,23 +110,23 @@ class BusLoadWidget : public Unit {
 
 				SimTime_t latency = m_model.getCurrentSimTimeNano() - entry.issueTime;
 				--m_numPending;
-				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " complete, latency=%" PRIu64 "\n",
+				m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " complete, latency=%" PRIu64 "\n",
                         entry.addr,latency);
 				if ( entry.callback ) {
-	                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"tell src load is complete\n");
+	                m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",1,BUS_WIDGET_MASK,"tell src load is complete\n");
                    	m_model.schedCallback( 0, entry.callback );		
 				}
 
                	if ( m_blockedSrc ) {
-                   	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"unblock src\n");
+                   	m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",1,BUS_WIDGET_MASK,"unblock src\n");
                    	m_model.schedResume( 0, m_blockedSrc, this );
                    	m_blockedSrc = NULL;
                	}
 
-               	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"%s\n",m_blocked? "blocked" : "not blocked");
+               	m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",1,BUS_WIDGET_MASK,"%s\n",m_blocked? "blocked" : "not blocked");
 
                	if ( ! m_blocked && ! m_scheduled && ! m_pendingQ.empty() ) {
-           			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
+           			m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",1,BUS_WIDGET_MASK,"schedule process()\n");
                    	m_model.schedCallback( 0, std::bind( &BusLoadWidget::process, this ) );
                    	m_scheduled = true;
                	}
@@ -123,10 +136,10 @@ class BusLoadWidget : public Unit {
 		} else {
 			callback = [=](){
 
-               	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"%s\n",m_blocked? "blocked" : "not blocked");
+               	m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",1,BUS_WIDGET_MASK,"%s\n",m_blocked? "blocked" : "not blocked");
 
                	if ( ! m_blocked && ! m_scheduled && ! m_pendingQ.empty() ) {
-           			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
+           			m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",1,BUS_WIDGET_MASK,"schedule process()\n");
                    	m_model.schedCallback( 0, std::bind( &BusLoadWidget::process, this ) );
                    	m_scheduled = true;
                	}

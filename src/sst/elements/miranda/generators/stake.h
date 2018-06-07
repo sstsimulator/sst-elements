@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -51,6 +51,29 @@ public:
         void StakeRequest(uint64_t addr, uint32_t RegLen,
                           bool Read, bool Write, bool Atomic, bool Custom,
                           uint32_t Code );
+
+	SST_ELI_REGISTER_SUBCOMPONENT(
+                Stake,
+                "miranda",
+                "Stake",
+                SST_ELI_ELEMENT_VERSION(1,0,0),
+		"Instantiates a RISC-V Spike instance to drive memory traffic",
+               	"SST::Miranda::RequestGenerator"
+       	)
+
+       	SST_ELI_DOCUMENT_PARAMS(
+		{ "verbose",          "Sets the verbosity output of the generator", "0" },
+    		{ "cores",            "Sets the number of cores in the spike instance", "1" },
+    		{ "mem_size",         "Sets the RISC-V Spike memory subsystem size", "2048" },
+    		{ "log",              "Generate a log of the execution", "0" },
+    		{ "isa",              "Set the respective RISC-V ISA", "RV64IMAFDC" },
+    		{ "pc",               "Override the default ELF entry point", "0x80000000"},
+    		{ "proxy_kernel",     "Set the default proxy kernel", "pk"},
+    		{ "bin",              "Set the RISC-V ELF binary", "NULL"},
+    		{ "args",             "Set the RISC-V binary arguments", "NULL"},
+    		{ "extension",        "Specify the RoCC extension", "NULL" },
+    		{ "extlib",           "Shared library to load", "NULL" }
+        )
 
 private:
         bool done;          // holds the completion code of the sim

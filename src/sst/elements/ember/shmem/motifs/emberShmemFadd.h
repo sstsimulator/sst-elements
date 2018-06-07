@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -101,6 +101,86 @@ public:
     int m_phase;
     int m_my_pe;
     int m_num_pes;
+};
+
+class EmberShmemFaddIntGenerator : public EmberShmemFaddGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemFaddIntGenerator,
+        "ember",
+        "ShmemFaddIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM fadd int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemFaddIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemFaddGenerator(owner,  params) { }
+};
+
+class EmberShmemFaddLongGenerator : public EmberShmemFaddGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemFaddLongGenerator,
+        "ember",
+        "ShmemFaddLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM fadd long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemFaddLongGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemFaddGenerator(owner,  params) { }
+};
+
+class EmberShmemFaddDoubleGenerator : public EmberShmemFaddGenerator<double> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemFaddDoubleGenerator,
+        "ember",
+        "ShmemFaddDoubleMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM fadd double",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemFaddDoubleGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemFaddGenerator(owner,  params) { }
+};
+
+class EmberShmemFaddFloatGenerator : public EmberShmemFaddGenerator<float> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemFaddFloatGenerator,
+        "ember",
+        "ShmemFaddFloatMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM fadd float",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemFaddFloatGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemFaddGenerator(owner,  params) { }
 };
 
 }

@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -64,7 +64,7 @@ public:
             {"associativity",           "(int) Associativity of the cache. In set associative mode, this is the number of ways."},
             {"access_latency_cycles",   "(int) Latency (in cycles) to access the cache data array. This latency is paid by cache hits and coherence requests that need to return data."},
             {"L1",                      "(bool) Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]", "false"},
-            {"node",					"Node number in multinode evnironment"},
+            {"node",			"(uint) Node number in multinode evnironment"},
             /* Not required */
             {"cache_line_size",         "(uint) Size of a cache line (aka cache block) in bytes.", "64"},
             {"hash_function",           "(int) 0 - none (default), 1 - linear, 2 - XOR", "0"},
@@ -92,31 +92,30 @@ public:
             {"maxRequestDelay",         "(uint) Set an error timeout if memory requests take longer than this in ns (0: disable)", "0"},
             {"snoop_l1_invalidations",  "(bool) Forward invalidations from L1s to processors. Options: 0[off], 1[on]", "false"},
             {"debug",                   "(uint) Where to send output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
-            {"debug_level",             "(uint) Output/debug verbosity level. Between 0 (no output) and 10 (everything). 1-3 gives warnings/info; 4-10 gives debug.", "1"},
+            {"debug_level",             "(uint) Debugging level: 0 to 10. Must configure sst-core with '--enable-debug'. 1=info, 2-10=debug output", "0"},
             {"debug_addr",              "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},
+            {"verbose",                 "(uint) Output verbosity for warnings/errors. 0[fatal error only], 1[warnings], 2[full state dump on fatal error]","1"},
+            {"cache_line_size",         "(uint) Size of a cache line [aka cache block] in bytes.", "64"},
             {"force_noncacheable_reqs", "(bool) Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "false"},
             {"min_packet_size",         "(string) Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
             {"banks",                   "(uint) Number of cache banks: One access per bank per cycle. Use '0' to simulate no bank limits (only limits on bandwidth then are max_requests_per_cycle and *_link_width", "0"},
             /* Old parameters - deprecated or moved */
-            {"LL",                          "DEPRECATED - Now auto-detected during init."}, // Remove 8.0
-            {"LLC",                         "DEPRECATED - Now auto-detected by configure."}, // Remove 8.0
-            {"lower_is_noninclusive",       "DEPRECATED - Now auto-detected during init."}, // Remove 8.0
-            {"statistics",                  "DEPRECATED - Use Statistics API to get statistics for caches."}, // Remove 8.0
-            {"stat_group_ids",              "DEPRECATED - Use Statistics API to get statistics for caches."},  // Remove 8.0
-            {"network_num_vc",              "DEPRECATED - Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"}, // Remove 8.0
-            {"directory_at_next_level",     "DEPRECATED - Now auto-detected by configure."}, // Remove 8.0
-            {"bottom_network",              "DEPRECATED - Now auto-detected by configure."}, // Remove 8.0
-            {"top_network",                 "DEPRECATED - Now auto-detected by configure."}, // Remove 8.0
             {"network_address",             "DEPRECATED - Now auto-detected by link control."}, // Remove 9.0
             {"network_bw",                  "MOVED - Now a member of the MemNIC subcomponent.", "80GiB/s"}, // Remove 9.0
             {"network_input_buffer_size",   "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}, // Remove 9.0
             {"network_output_buffer_size",  "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}) // Remove 9.0
   
     SST_ELI_DOCUMENT_PORTS(
-            {"low_network_0",   "Port connected to lower level caches (closer to main memory)", {"memHierarchy.MemEventBase"} },
-            {"high_network_0",  "Port connected to higher level caches (closer to CPU)",        {"memHierarchy.MemEventBase"} },
-            {"directory",       "Network link port to directory",                               {"memHierarchy.MemRtrEvent"} },
-            {"cache",           "Network link port to cache",                                   {"memHierarchy.MemRtrEvent"} })
+            {"low_network_0",   "Port connected to lower level caches (closer to main memory)",                     {"memHierarchy.MemEventBase"} },
+            {"high_network_0",  "Port connected to higher level caches (closer to CPU)",                            {"memHierarchy.MemEventBase"} },
+            {"directory",       "Network link port to directory; doubles as request network port for split networks", {"memHierarchy.MemRtrEvent"} },
+            {"directory_ack",   "For split networks, response/ack network port to directory",                       {"memHierarchy.MemRtrEvent"} },
+            {"directory_fwd",   "For split networks, forward request network port to directory",                    {"memHierarchy.MemRtrEvent"} },
+            {"directory_data",  "For split networks, data network port to directory",                               {"memHierarchy.MemRtrEvent"} },
+            {"cache",           "Network link port to cache; doubles as request network port for split networks",   {"memHierarchy.MemRtrEvent"} },
+            {"cache_ack",       "For split networks, response/ack network port to cache",                           {"memHierarchy.MemRtrEvent"} },
+            {"cache_fwd",       "For split networks, forward request network port to cache",                        {"memHierarchy.MemRtrEvent"} },
+            {"cache_data",      "For split networks, data network port to cache",                                   {"memHierarchy.MemRtrEvent"} })
 
     SST_ELI_DOCUMENT_STATISTICS(
             /* Cache hits and misses */
@@ -346,7 +345,6 @@ private:
     int                     maxOutstandingPrefetch_;
     SimTime_t               prefetchDelay_;
     int                     maxRequestsPerCycle_;
-    uint32_t				node;
 
     /* Cache structures */
     CacheArray*             cacheArray_;

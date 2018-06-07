@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -15,6 +15,8 @@
 
 #ifndef COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 #define COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
+
+#define CALL_INFO_LAMBDA     __LINE__, __FILE__
 
 class SimpleMemoryModel : SubComponent {
 
@@ -29,6 +31,7 @@ class SimpleMemoryModel : SubComponent {
 #define BUS_BRIDGE_MASK 1<<8
 #define TLB_MASK        1<<9
 #define SM_MASK        1<<10
+#define SHARED_TLB_MASK 1<<11
  public:
 
 #include "memOp.h"
@@ -39,9 +42,11 @@ class SimpleMemoryModel : SubComponent {
 
 #include "cache.h"
 #include "memReq.h"
+#include "sharedTlb.h"
 #include "unit.h"
 #include "thread.h"
 #include "tlbUnit.h"
+#include "sharedTlbUnit.h"
 #include "nicUnit.h"
 #include "busBridgeUnit.h"
 #include "loadUnit.h"
@@ -67,34 +72,33 @@ class SimpleMemoryModel : SubComponent {
 	enum NIC_Thread { Send, Recv };
 
     SimpleMemoryModel( Component* comp, Params& params, int id, int numCores, int numNicUnits ) : 
-		SubComponent( comp ), m_numNicThreads(numNicUnits)
+		SubComponent( comp ), m_numNicThreads(numNicUnits), m_hostCacheUnit(NULL)
 	{
     	char buffer[100];
     	snprintf(buffer,100,"@t:%d:SimpleMemoryModel::@p():@l ",id);
 
     	m_dbg.init(buffer, params.find<uint32_t>("verboseLevel",0), params.find<uint32_t>("verboseMask",-1), Output::STDOUT);
 
-		int hostCacheUnitSize = params.find<int>( "hostCacheUnitSize", 32 );
 		int memReadLat_ns = params.find<int>( "memReadLat_ns", 150 );
 		int memWriteLat_ns = params.find<int>( "memWriteLat_ns", 150 );
 		int memNumSlots = params.find<int>( "memNumSlots", 10 );
 
-		int nicCacheUnitSize = params.find<int>( "nicCacheUnitSize", 32 );
 		int nicNumLoadSlots = params.find<int>( "nicNumLoadSlots", 32 );
 		int nicNumStoreSlots = params.find<int>( "nicNumStoreSlots", 32 );
 		int hostNumLoadSlots = params.find<int>( "hostNumLoadSlots", 32 );
 		int hostNumStoreSlots = params.find<int>( "hostNumStoreSlots", 32 );
+
 		double busBandwidth = params.find<double>("busBandwidth_Gbs", 7.8 );
 		int busNumLinks = params.find<double>("busNumLinks", 16 );
 		int busLatency = params.find<double>("busLatency", 0 );
-
-		int hostCacheNumMSHR = params.find<int>( "hostCacheNumMSHR", 10 );
-		int hostCacheLineSize = params.find<int>( "hostCacheLineSize", 64 );
-		int nicCacheLineSize = params.find<int>( "nicCacheLineSize", 256 );
-		int widgetSlots = params.find<int>( "widgetSlots", 64 );
-
 		int DLL_bytes = params.find<int>( "DLL_bytes", 16 );
 		int TLP_overhead = params.find<int>( "TLP_overhead", 30 );
+
+		int hostCacheUnitSize = params.find<int>( "hostCacheUnitSize", 32 );
+		int hostCacheNumMSHR = params.find<int>( "hostCacheNumMSHR", 10 );
+		int hostCacheLineSize = params.find<int>( "hostCacheLineSize", 64 );
+		int widgetSlots = params.find<int>( "widgetSlots", 64 );
+
 
 		int tlbPageSize = params.find<int>( "tlbPageSize", 1024*1024*4 );
 		int tlbSize = params.find<int>( "tlbSize", 0 );
@@ -102,15 +106,22 @@ class SimpleMemoryModel : SubComponent {
 		int numWalkers = params.find<int>( "numWalkers", 1 );
 		int numTlbSlots = params.find<int>( "numTlbSlots", 1 );
         int nicToHostMTU = params.find<int>( "nicToHostMTU", 256 );
+        bool useHostCache = params.find<bool>( "useHostCache", true );
 
 		m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
-		m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
-	    m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "HostCache" );
+        if ( useHostCache ) {
+		    m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
+	        m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "HostCache" );
+        } else {
+	        m_muxUnit = new MuxUnit( *this, m_dbg, id, m_memUnit, "HostCache" );
+        }
 
 		m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, busNumLinks, busLatency,
                                                                 TLP_overhead, DLL_bytes, hostCacheLineSize, widgetSlots );
 
-		//m_nicCacheUnit = new CacheUnit( *this, m_dbg, id, m_busBridgeUnit, nicCacheUnitSize, nicCacheLineSize, 10, "Nic" );
+	    MuxUnit* muxUnit = new MuxUnit( *this, m_dbg, id, m_busBridgeUnit, "Nic" );
+		
+        m_sharedTlb = new SharedTlb( *this, m_dbg, id, tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers );
 		
 		m_nicUnit = new NicUnit( *this, m_dbg, id );
 
@@ -123,15 +134,15 @@ class SimpleMemoryModel : SubComponent {
 			unitName.clear();
 			unitName << "Nic" << i;
 
-            Tlb* tlb = new Tlb( *this, m_dbg, id, unitName.str().c_str(), 
+            SharedTlbUnit* tlb = new SharedTlbUnit( *this, m_dbg, id, unitName.str().c_str(), m_sharedTlb, 
 					new LoadUnit( *this, m_dbg, id,
-						m_busBridgeUnit,
+                        muxUnit,
 						nicNumLoadSlots, unitName.str().c_str() ),
 
 					new StoreUnit( *this, m_dbg, id,
-						m_busBridgeUnit,
+                        muxUnit,
 						nicNumStoreSlots, unitName.str().c_str() ),
-                        tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers, numTlbSlots, numTlbSlots 
+                        numTlbSlots, numTlbSlots 
                         );
 
 			m_threads.push_back( 
@@ -159,7 +170,10 @@ class SimpleMemoryModel : SubComponent {
 	}
 
     virtual ~SimpleMemoryModel() {
-        delete m_hostCacheUnit;
+        m_sharedTlb->printStats();
+        if ( m_hostCacheUnit ) {
+            delete m_hostCacheUnit;
+        }
         for ( unsigned i = 0; i < m_threads.size(); i++ ) {
             delete m_threads[i];
         }
@@ -224,6 +238,13 @@ class SimpleMemoryModel : SubComponent {
 	NicUnit& nicUnit() { return *m_nicUnit; }
 	BusBridgeUnit& busUnit() { return *m_busBridgeUnit; }
 
+    void printStatus( Output& out, int id ) {
+        for ( unsigned i = 0; i < m_threads.size(); i++ ) {
+            m_threads[i]->printStatus( out, id ); 
+        }
+    }
+
+
   private:
 
 	Link* m_selfLink;
@@ -234,6 +255,7 @@ class SimpleMemoryModel : SubComponent {
 	BusBridgeUnit*  m_busBridgeUnit;
 	NicUnit* 		m_nicUnit;
 	CacheUnit* 		m_nicCacheUnit;
+    SharedTlb*      m_sharedTlb;
 
 	std::vector<Thread*> m_threads;
 

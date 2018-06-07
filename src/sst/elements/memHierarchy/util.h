@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -31,18 +31,16 @@ using namespace std;
 namespace SST {
 namespace MemHierarchy {
 
-enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
-#define _ERROR_ CALL_INFO,ERROR,0
-#define _WARNING_ CALL_INFO,WARNING,0
-#define _INFO_ CALL_INFO,INFO,0
-#define _L3_ CALL_INFO,L3,0     //Important messages:  incoming requests, state changes, etc
-#define _L4_ CALL_INFO,L4,0     //Important messages:  send request, forward request, send response
-#define _L5_ CALL_INFO,L5,0     //
-#define _L6_ CALL_INFO,L6,0     //BottomCC messages
-#define _L7_ CALL_INFO,L7,0     //TopCC messages
-#define _L8_ CALL_INFO,L8,0     //Atomics
-#define _L9_ CALL_INFO,L9,0     //MSHR messages
-#define _L10_ CALL_INFO,L10,0   //Directory controller, Bus, Memory Controller
+#define _INFO_ CALL_INFO,1,0
+#define _L2_ CALL_INFO,2,0     //Important messages:  incoming requests, state changes, etc
+#define _L3_ CALL_INFO,3,0     //Important messages:  incoming requests, state changes, etc
+#define _L4_ CALL_INFO,4,0     //Important messages:  send request, forward request, send response
+#define _L5_ CALL_INFO,5,0     //
+#define _L6_ CALL_INFO,6,0     //BottomCC messages
+#define _L7_ CALL_INFO,7,0     //TopCC messages
+#define _L8_ CALL_INFO,8,0     //Atomics
+#define _L9_ CALL_INFO,9,0     //MSHR messages
+#define _L10_ CALL_INFO,10,0   //Directory controller, Bus, Memory Controller
 
 const unsigned int kibi = 1024;
 const unsigned int mebi = kibi * 1024;

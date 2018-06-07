@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -46,7 +46,7 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
             {"commFreq",                "(int) How often to do a memory operation."},
             {"memSize",                 "(uint) Size of physical memory."},
-            {"verbose",                 "(uint) Determine how verbose the output from the CPU is", "0"},
+            {"verbose",                 "(uint) Determine how verbose the output from the CPU is", "1"},
             {"clock",                   "(string) Clock frequency", "1GHz"},
             {"rngseed",                 "(int) Set a seed for the random generation of addresses", "7"},
             {"lineSize",                "(uint) Size of a cache line - used for flushes", "64"},
@@ -67,10 +67,10 @@ public:
     trivialCPU(SST::ComponentId_t id, SST::Params& params);
     void init();
     void finish() {
-    	out.output("TrivialCPU %s Finished after %" PRIu64 " issued reads, %" PRIu64 " returned (%" PRIu64 " clocks)\n",
+    	out.verbose(CALL_INFO, 1, 0, "TrivialCPU %s Finished after %" PRIu64 " issued reads, %" PRIu64 " returned (%" PRIu64 " clocks)\n",
     		getName().c_str(), num_reads_issued, num_reads_returned, clock_ticks);
     	if ( noncacheableReads || noncacheableWrites )
-	    out.output("\t%zu Noncacheable Reads\n\t%zu Noncacheable Writes\n", noncacheableReads, noncacheableWrites);
+	    out.verbose(CALL_INFO, 1, 0, "\t%zu Noncacheable Reads\n\t%zu Noncacheable Writes\n", noncacheableReads, noncacheableWrites);
 
     	//out.output("Number of Pending Requests per Cycle (Binned by 2 Requests)\n");
     	//for(uint64_t i = requestsPendingCycle->getBinStart(); i < requestsPendingCycle->getBinEnd(); i += requestsPendingCycle->getBinWidth()) {
@@ -89,7 +89,6 @@ private:
     virtual bool clockTic( SST::Cycle_t );
 
     Output out;
-    bool verbose;
     int numLS;
     int commFreq;
     bool do_write;
@@ -99,7 +98,7 @@ private:
     uint64_t maxOutstanding;
     uint32_t maxReqsPerIssue;
     uint64_t num_reads_issued, num_reads_returned;
-    uint64_t noncacheableRangeStart, noncacheableRangeEnd;
+    uint64_t noncacheableRangeStart, noncacheableRangeEnd, noncacheableSize;
     uint64_t clock_ticks;
     size_t noncacheableReads, noncacheableWrites;
     Statistic<uint64_t>* requestsPendingCycle;

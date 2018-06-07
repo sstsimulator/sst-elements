@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,9 +34,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     uint32_t z_seed = params.find<uint32_t>("rngseed", 7);
     rng.restart(z_seed, 13);
 
-    out.init("", 0, 0, Output::STDOUT);
-
-    verbose = params.find<bool>("verbose", false);
+    out.init("", params.find<unsigned int>("verbose", 1), 0, Output::STDOUT);
 
     commFreq = params.find<int>("commFreq", -1);
     if (commFreq < 0) {
@@ -61,7 +59,8 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 
     noncacheableRangeStart = params.find<uint64_t>("noncacheableRangeStart", 0);
     noncacheableRangeEnd = params.find<uint64_t>("noncacheableRangeEnd", 0);
-    
+    noncacheableSize = noncacheableRangeEnd - noncacheableRangeStart;
+
     maxReqsPerIssue = params.find<uint32_t>("reqsPerIssue", 1);
     if (maxReqsPerIssue < 1) {
         out.fatal(CALL_INFO, -1, "TrivialCPU cannot issue less than one request at a time...fix your input deck\n");
@@ -109,10 +108,8 @@ void trivialCPU::handleEvent(Interfaces::SimpleMem::Request *req)
     } else {
         SimTime_t et = getCurrentSimTime() - i->second;
         requests.erase(i);
-        if (verbose) {
-            out.output("%s: Received Request with command %d (addr 0x%" PRIx64 ") [Time: %" PRIu64 "] [%zu outstanding requests]\n",
+        out.verbose(CALL_INFO, 2, 0, "%s: Received Request with command %d (addr 0x%" PRIx64 ") [Time: %" PRIu64 "] [%zu outstanding requests]\n",
                     getName().c_str(), req->cmd, req->addr, et, requests.size());
-        }
         num_reads_returned++;
     }
 
@@ -154,13 +151,18 @@ bool trivialCPU::clockTic( Cycle_t )
                 } else if (do_flush && 2 == instNum) {
                     cmd = Interfaces::SimpleMem::Request::FlushLine;
                     size = lineSize;
-                    addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeStart;
+                    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
+                    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
+                        addr += noncacheableRangeEnd;
                     addr = addr - (addr % lineSize);
                     cmdString = "FlushLine";
                 } else if (do_flush && 3 == instNum) {
                     cmd = Interfaces::SimpleMem::Request::FlushLineInv;
                     size = lineSize;
-                    addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeStart;
+                    addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeEnd;
+                    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
+                    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
+                        addr += noncacheableRangeEnd;
                     addr = addr - (addr % lineSize);
                     cmdString = "FlushLineInv";
                 } else {
@@ -186,8 +188,7 @@ bool trivialCPU::clockTic( Cycle_t )
 		memory->sendRequest(req);
 		requests[req->id] =  getCurrentSimTime();
                 
-                if (verbose)
-		    out.output("%s: %d Issued %s%s for address 0x%" PRIx64 "\n",
+		out.verbose(CALL_INFO, 2, 0, "%s: %d Issued %s%s for address 0x%" PRIx64 "\n",
                             getName().c_str(), numLS, noncacheable ? "Noncacheable " : "" , cmdString.c_str(), addr);
 		
                 num_reads_issued++;
@@ -199,7 +200,7 @@ bool trivialCPU::clockTic( Cycle_t )
 
     // Check whether to end the simulation
     if ( 0 == numLS && requests.empty() ) {
-        out.output("TrivialCPU: Test Completed Successfuly\n");
+        out.verbose(CALL_INFO, 1, 0, "TrivialCPU: Test Completed Successfuly\n");
         primaryComponentOKToEndSim();
         return true;    // Turn our clock off while we wait for any other CPUs to end
     }

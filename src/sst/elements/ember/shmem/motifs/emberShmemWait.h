@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -90,6 +90,46 @@ public:
     int m_phase;
     int m_my_pe;
     int m_n_pes;
+};
+
+class EmberShmemWaitIntGenerator : public EmberShmemWaitGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemWaitIntGenerator,
+        "ember",
+        "ShmemWaitIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM wait int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemWaitIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemWaitGenerator(owner,  params) { }
+};
+
+class EmberShmemWaitLongGenerator : public EmberShmemWaitGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemWaitLongGenerator,
+        "ember",
+        "ShmemWaitLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM wait long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemWaitLongGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemWaitGenerator(owner,  params) { }
 };
 
 }
