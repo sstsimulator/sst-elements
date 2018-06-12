@@ -62,6 +62,8 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     statWriteRequestSizes = own->registerStatistic<uint64_t>( "write_request_sizes", subID );
     statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests", subID );
     statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests", subID );
+    statFlushRequests = own->registerStatistic<uint64_t>( "flush_requests", subID);
+    statFenceRequests = own->registerStatistic<uint64_t>( "fence_requests", subID);
     statNoopCount     = own->registerStatistic<uint64_t>( "no_ops", subID );
     statInstructionCount = own->registerStatistic<uint64_t>( "instruction_count", subID );
     statCycles = own->registerStatistic<uint64_t>( "cycles", subID );
@@ -213,6 +215,7 @@ void ArielCore::commitFlushEvent(const uint64_t address,
         pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
 
         cacheLink->sendRequest(req);
+    	statFlushRequests->addData(1);
     }
 }
 
@@ -724,6 +727,7 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
     fence();
     // Possibility B:
     // commitFenceEvent();
+    statFenceRequests->addData(1);
 }
 
 void ArielCore::printCoreStatistics() {

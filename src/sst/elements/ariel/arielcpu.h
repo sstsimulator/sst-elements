@@ -89,6 +89,8 @@ class ArielCPU : public SST::Component {
         { "split_read_requests",  "Statistic counts number of split read requests (requests which come from multiple lines)", "requests", 1},
         { "split_write_requests", "Statistic counts number of split write requests (requests which are split over multiple lines)", "requests", 1},
         { "no_ops",               "Statistic counts instructions which do not execute a memory operation", "instructions", 1},
+	{ "flush_requests",       "Statistic counts instructions which perform flushes", "requests", 1},
+	{ "fence_requests",       "Statistic counts instructions which perform fences", "requests", 1},
         { "instruction_count",    "Statistic for counting instructions", "instructions", 1 },
         { "max_insts", "Maximum number of instructions reached by a thread",	"instructions", 0},
         { "fp_dp_ins",            "Statistic for counting DP-floating point instructions", "instructions", 1 },
