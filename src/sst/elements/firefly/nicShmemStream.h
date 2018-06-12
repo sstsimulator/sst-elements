@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,7 +22,7 @@ class ShmemStream : public StreamBase {
     void processPktHdr( FireflyNetworkEvent* ev );
   private:
     void processOp( FireflyNetworkEvent* ev );
-    void processAck( ShmemMsgHdr&, FireflyNetworkEvent*, int );
+    void processAck( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     void processPut( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     void processGetResp( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     void processGet( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );

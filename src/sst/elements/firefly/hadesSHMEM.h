@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -57,6 +57,7 @@ class HadesSHMEM : public Shmem::Interface
         {"verboseMask","Sets the debug mask",""},
         {"enterLat_ns","Sets the latency of entering a SHMEM call","" },
         {"returnLat_ns","Sets the latency of returning from a SHMEM call","" },
+        {"blockingReturnLat_ns","Sets the latency of returning from a SHMEM call that blocked on response","" },
     )
 
     typedef std::function<void()> Callback;
@@ -266,6 +267,7 @@ class HadesSHMEM : public Shmem::Interface
 	void delayReturn( Shmem::Callback callback, SimTime_t delay = 0 );
 
     void handleToDriver(SST::Event* e) {
+        dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
         DelayEvent* event = static_cast<DelayEvent*>(e);
 		if ( DelayEvent::One == event->type ) {
         	event->m_callback1();
@@ -286,6 +288,7 @@ class HadesSHMEM : public Shmem::Interface
 
 	SimTime_t m_returnLat_ns;
 	SimTime_t m_enterLat_ns;
+    SimTime_t m_blockingReturnLat_ns;
 
     ShmemCommon*    m_common;
     ShmemBarrier*   m_barrier;

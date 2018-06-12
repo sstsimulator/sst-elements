@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -33,10 +33,12 @@ ProcessQueuesState::ProcessQueuesState( Component* owner, Params& params ) :
         m_numRecvLooped(0),
         m_missedInt( false ),
         m_intCtx(NULL),
-		m_simVAddrs(NULL)
+		m_simVAddrs(NULL),
+        m_numSent(0),
+        m_numRecv(0)
 {
-    int level = params.find<uint32_t>("verboseLevel",0);
-    int mask = params.find<int32_t>("verboseMask",-1);
+    int level = params.find<uint32_t>("pqs.verboseLevel",0);
+    int mask = params.find<int32_t>("pqs.verboseMask",-1);
 
     m_dbg.init("", level, mask, Output::STDOUT );
 
@@ -88,8 +90,8 @@ void ProcessQueuesState::setVars( VirtNic* nic, Info* info, MemoryBase* mem,
 }
 
 void ProcessQueuesState:: finish() {
-    dbg().debug(CALL_INFO,1,0,"pstdRcvQ=%lu recvdMsgQ=%lu loopResp=%lu funcStack=%lu\n",
-    m_pstdRcvQ.size(), m_recvdMsgQ.size(), m_loopResp.size(), m_funcStack.size() );
+    dbg().debug(CALL_INFO,1,1,"pstdRcvQ=%lu recvdMsgQ=%lu loopResp=%lu funcStack=%lu sent=%d recv=%d\n",
+    m_pstdRcvQ.size(), m_recvdMsgQ.size(), m_loopResp.size(), m_funcStack.size(), m_numSent, m_numRecv+m_recvdMsgQ.size() );
 }
 
 void ProcessQueuesState::enterInit( bool haveGlobalMemHeap )
@@ -129,7 +131,7 @@ void ProcessQueuesState::enterSend( _CommReq* req, uint64_t exitDelay )
 {
     m_exitDelay = exitDelay;
     req->setSrcRank( getMyRank( req ) );
-    dbg().debug(CALL_INFO,1,1,"req=%p delay=%" PRIu64 " destRank=%d\n", req, exitDelay, 
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_APP_SIDE,"req=%p delay=%" PRIu64 " destRank=%d\n", req, exitDelay, 
 				req->getDestRank() );
 
     uint64_t delay = txDelay( req->getLength() );
@@ -191,13 +193,14 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
     nid_t nid = calcNid( req, req->getDestRank() );
 
     if ( length <= shortMsgLength() ) {
-        dbg().debug(CALL_INFO,1,1,"Short %lu bytes dest %#x\n",length,nid); 
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"Short %lu bytes dest %#x\n",length,nid); 
         vec.insert( vec.begin() + 1, req->ioVec().begin(), 
                                         req->ioVec().end() );
         req->setDone( sendReqFiniDelay( length ) );
+        ++m_numSent;
 
     } else {
-        dbg().debug(CALL_INFO,1,1,"sending long message %lu bytes\n",length); 
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"sending long message %lu bytes\n",length); 
         req->hdr().key = genGetKey();
 
         GetInfo* info = new GetInfo;
@@ -237,7 +240,7 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
 
 void ProcessQueuesState::processSendLoop( _CommReq* req )
 {
-    dbg().debug(CALL_INFO,2,2,"key=%p\n", req);
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"key=%p\n", req);
 
     IoVec hdrVec;
     hdrVec.len = sizeof( req->hdr() );
@@ -260,7 +263,7 @@ void ProcessQueuesState::processSendLoop( _CommReq* req )
 
 void ProcessQueuesState::enterRecv( _CommReq* req, uint64_t exitDelay )
 {
-    dbg().debug(CALL_INFO,1,1,"req=%p$ delay=%" PRIu64 " rank=%d\n", req, exitDelay, req->hdr().rank );
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_APP_SIDE,"req=%p$ delay=%" PRIu64 " rank=%d\n", req, exitDelay, req->hdr().rank );
     m_exitDelay = exitDelay;
 
     if ( m_postedShortBuffers.size() < MaxPostedShortBuffers ) {
@@ -294,7 +297,7 @@ void ProcessQueuesState::enterRecv( _CommReq* req, uint64_t exitDelay )
 
 void ProcessQueuesState::processRecv_0( _CommReq* req )
 {
-    dbg().debug(CALL_INFO,1,1,"\n");
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"\n");
 
     m_mem->pin(
         std::bind( &ProcessQueuesState::processRecv_1, this, req ),
@@ -313,7 +316,7 @@ void ProcessQueuesState::processRecv_1( _CommReq* req )
 
 void ProcessQueuesState::enterMakeProgress(  uint64_t exitDelay  )
 {
-    dbg().debug(CALL_INFO,1,1,"num pstd %lu, num short %lu\n",
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_APP_SIDE,"num pstd %lu, num short %lu\n",
                             m_pstdRcvQ.size(), m_recvdMsgQ.size() );
 
     m_exitDelay = exitDelay;
@@ -329,8 +332,8 @@ void ProcessQueuesState::enterMakeProgress(  uint64_t exitDelay  )
 
 void ProcessQueuesState::processMakeProgress( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
-    dbg().debug(CALL_INFO,1,1,"num pstd %lu, num short %lu\n",
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"num pstd %lu, num short %lu\n",
                             m_pstdRcvQ.size(), m_recvdMsgQ.size() );
     WaitCtx* ctx = static_cast<WaitCtx*>( stack->back() );
 
@@ -344,7 +347,7 @@ void ProcessQueuesState::processMakeProgress( Stack* stack )
 
 void ProcessQueuesState::enterWait( WaitReq* req, uint64_t exitDelay  )
 {
-    dbg().debug(CALL_INFO,1,1,"num pstd %lu, num short %lu\n",
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_APP_SIDE,"num pstd %lu, num short %lu\n",
                             m_pstdRcvQ.size(), m_recvdMsgQ.size() );
 
     m_exitDelay = exitDelay;
@@ -360,8 +363,8 @@ void ProcessQueuesState::enterWait( WaitReq* req, uint64_t exitDelay  )
 
 void ProcessQueuesState::processWait_0( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
-    dbg().debug(CALL_INFO,1,1,"num pstd %lu, num short %lu\n",
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"num pstd %lu, num short %lu\n",
                             m_pstdRcvQ.size(), m_recvdMsgQ.size() );
     WaitCtx* ctx = static_cast<WaitCtx*>( stack->back() );
 
@@ -380,7 +383,7 @@ void ProcessQueuesState::processWait_0( Stack* stack )
 
 void ProcessQueuesState::processWaitCtx_0( WaitCtx* ctx, _CommReq* req )
 {
-    dbg().debug(CALL_INFO,1,1,"\n");
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"\n");
     schedCallback( 
         std::bind( &ProcessQueuesState::processWaitCtx_1, this, ctx, req ),
         req->getFiniDelay()
@@ -391,7 +394,7 @@ void ProcessQueuesState::processWaitCtx_1( WaitCtx* ctx, _CommReq* req )
 {
     size_t   length = req->getLength(); 
 
-    dbg().debug(CALL_INFO,1,1,"\n");
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"\n");
 
     if ( length > shortMsgLength() ) {
         // this is a hack, to get point to point latencies to match Chama
@@ -415,7 +418,7 @@ void ProcessQueuesState::processWaitCtx_1( WaitCtx* ctx, _CommReq* req )
 void ProcessQueuesState::processWaitCtx_2( WaitCtx* ctx )
 {
     _CommReq* req = ctx->req->getFiniReq();
-    dbg().debug(CALL_INFO,1,1,"\n");
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"\n");
 
     if ( req ) {
         processWaitCtx_0( ctx, req ); 
@@ -429,8 +432,8 @@ void ProcessQueuesState::processWaitCtx_2( WaitCtx* ctx )
 
 void ProcessQueuesState::processQueues( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,1,"shortMsgV.size=%lu\n", m_recvdMsgQ.size() );
-    dbg().debug(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_Q,"shortMsgV.size=%lu\n", m_recvdMsgQ.size() );
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size()); 
 
     // this does not cost time
     while ( m_needRecv ) {
@@ -477,7 +480,7 @@ void ProcessQueuesState::processQueues( Stack* stack )
 
 void ProcessQueuesState::processQueues0( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,1,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
             stack->size(), m_recvdMsgQ.size() ); 
     
     delete stack->back();
@@ -487,7 +490,7 @@ void ProcessQueuesState::processQueues0( Stack* stack )
 
 void ProcessQueuesState::processShortList_0( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,1,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
             stack->size(), m_recvdMsgQ.size() ); 
 
     ProcessShortListCtx* ctx = new ProcessShortListCtx( m_recvdMsgQ );
@@ -499,7 +502,7 @@ void ProcessQueuesState::processShortList_0( Stack* stack )
 
 void ProcessQueuesState::processShortList_1( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,1,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
                         stack->size(), m_recvdMsgQ.size() ); 
 
     ProcessShortListCtx* ctx = 
@@ -518,7 +521,7 @@ void ProcessQueuesState::processShortList_2( Stack* stack )
 {
     ProcessShortListCtx* ctx = 
                         static_cast<ProcessShortListCtx*>( stack->back() );
-    dbg().debug(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size()); 
 
     if ( ctx->req ) {
         schedCallback( 
@@ -534,7 +537,7 @@ void ProcessQueuesState::processShortList_2( Stack* stack )
 
 void ProcessQueuesState::processShortList_3( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size()); 
 
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack->back());
 
@@ -547,7 +550,7 @@ void ProcessQueuesState::processShortList_3( Stack* stack )
     if ( length <= shortMsgLength() || 
                             dynamic_cast<LoopReq*>( ctx->msg() ) ) 
     {
-        dbg().debug(CALL_INFO,2,1,"copyIoVec() short|loop message\n");
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"copyIoVec() short|loop message\n");
 
         copyIoVec( req->ioVec(), ctx->ioVec(), length );
 
@@ -566,7 +569,7 @@ void ProcessQueuesState::processShortList_4( Stack* stack )
 {
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack->back());
 
-    dbg().debug(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size()); 
 
     _CommReq* req = ctx->req;
 
@@ -574,17 +577,19 @@ void ProcessQueuesState::processShortList_4( Stack* stack )
 
     LoopReq* loopReq;
     if ( ( loopReq = dynamic_cast<LoopReq*>( ctx->msg() ) ) ) {
-        dbg().debug(CALL_INFO,1,2,"loop message key=%p srcCore=%d "
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"loop message key=%p srcCore=%d "
             "srcRank=%d\n", loopReq->key, loopReq->srcCore, ctx->hdr().rank);
         req->setDone();
+        ++m_numRecv;
         loopSendResp( loopReq->srcCore , loopReq->key );
 
     } else if ( length <= shortMsgLength() ) { 
-        dbg().debug(CALL_INFO,1,1,"short\n");
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"short\n");
         req->setDone( recvReqFiniDelay( length ) );
+        ++m_numRecv;
     } else {
 
-        dbg().debug(CALL_INFO,1,1,"long\n");
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"long\n");
         VoidFunction* callback = new VoidFunction;
         *callback = std::bind( &ProcessQueuesState::getFini,this, req );
 
@@ -604,10 +609,10 @@ void ProcessQueuesState::processShortList_5( Stack* stack )
 {
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack->back());
 
-    dbg().debug(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size()); 
 
     if ( ctx->isDone() ) {
-        dbg().debug(CALL_INFO,2,1,"return up the stack\n");
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"return up the stack\n");
 
 		if ( ! ctx->msgQempty() ) {
 			m_recvdMsgQ.insert( m_recvdMsgQ.begin(), ctx->getMsgQ().begin(),
@@ -617,7 +622,7 @@ void ProcessQueuesState::processShortList_5( Stack* stack )
         stack->pop_back();
         schedCallback( stack->back()->getCallback() );
     } else {
-        dbg().debug(CALL_INFO,1,1,"work on next Msg\n");
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"work on next Msg\n");
 
         processShortList_1( stack );
     }
@@ -625,15 +630,16 @@ void ProcessQueuesState::processShortList_5( Stack* stack )
 
 void ProcessQueuesState::processLoopResp( LoopResp* resp )
 {
-    dbg().debug(CALL_INFO,1,2,"srcCore=%d\n",resp->srcCore );
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"srcCore=%d\n",resp->srcCore );
     _CommReq* req = (_CommReq*)resp->key;  
+    ++m_numSent;
     req->setDone();
     delete resp;
 }
 
 void ProcessQueuesState::getFini( _CommReq* req )
 {
-    dbg().debug(CALL_INFO,1,1,"\n");
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_CB,"\n");
     m_longGetFiniQ.push_back( req );
 
     runInterruptCtx();
@@ -642,7 +648,7 @@ void ProcessQueuesState::getFini( _CommReq* req )
 void ProcessQueuesState::dmaRecvFiniGI( GetInfo* info, uint64_t simVAddr, nid_t nid, 
                                             uint32_t tag, size_t length )
 {
-    dbg().debug(CALL_INFO,1,1,"nid=%d tag=%#x length=%lu\n",
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_CB,"nid=%d tag=%#x length=%lu\n",
                                                     nid, tag, length );
     assert( ( tag & LongAckKey ) == LongAckKey );
     m_simVAddrs->free( simVAddr );
@@ -657,9 +663,9 @@ void ProcessQueuesState::dmaRecvFiniGI( GetInfo* info, uint64_t simVAddr, nid_t 
 void ProcessQueuesState::dmaRecvFiniSRB( ShortRecvBuffer* buf, nid_t nid,
                                             uint32_t tag, size_t length )
 {
-    dbg().debug(CALL_INFO,1,1,"ShortMsgQ nid=%#x tag=%#x length=%lu\n",
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_CB,"ShortMsgQ nid=%#x tag=%#x length=%lu\n",
                                                     nid, tag, length );
-    dbg().debug(CALL_INFO,1,1,"ShortMsgQ rank=%d tag=%#" PRIx64 " count=%d "
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_CB,"ShortMsgQ rank=%d tag=%#" PRIx64 " count=%d "
                             "dtypeSize=%d\n", buf->hdr.rank, buf->hdr.tag,
                             buf->hdr.count, buf->hdr.dtypeSize );
 
@@ -669,17 +675,17 @@ void ProcessQueuesState::dmaRecvFiniSRB( ShortRecvBuffer* buf, nid_t nid,
 
     runInterruptCtx();
     m_postedShortBuffers.erase(buf);
-    dbg().debug(CALL_INFO,1,1,"num postedShortRecvBuffers %lu\n",
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_CB,"num postedShortRecvBuffers %lu\n",
                                         m_postedShortBuffers.size());
 }
 
 void ProcessQueuesState::enableInt( FuncCtxBase* ctx,
 	void (ProcessQueuesState::*funcPtr)( Stack* ) )
 {
-  	dbg().debug(CALL_INFO,2,1,"ctx=%p\n",ctx);
+  	dbg().debug(CALL_INFO,1,DBG_MSK_PQS_INT,"ctx=%p\n",ctx);
 	assert( m_funcStack.empty() );
     if ( m_intCtx ) {
-  	    dbg().debug(CALL_INFO,2,1,"already have a return ctx\n");
+  	    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_INT,"already have a return ctx\n");
         return; 
     }
 
@@ -695,7 +701,7 @@ void ProcessQueuesState::enableInt( FuncCtxBase* ctx,
 void ProcessQueuesState::runInterruptCtx( )
 {
 	if ( ! m_intCtx || ! m_intStack.empty() ) {
-    	dbg().debug(CALL_INFO,2,1,"missed interrupt\n");
+    	dbg().debug(CALL_INFO,1,DBG_MSK_PQS_INT,"missed interrupt\n");
         m_missedInt = true;
 		return;
 	} 
@@ -706,6 +712,7 @@ void ProcessQueuesState::runInterruptCtx( )
 
     m_intStack.push_back( ctx );
 
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_INT,"call processQueues\n" );
 	processQueues( &m_intStack );
 }
 
@@ -715,7 +722,7 @@ void ProcessQueuesState::leaveInterruptCtx( Stack* stack )
 	delete stack->back();
 	stack->pop_back();
 
-    dbg().debug(CALL_INFO,2,1,"\n" );
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_INT,"\n" );
 
 	VoidFunction callback = m_intCtx->getCallback();
 
@@ -731,7 +738,7 @@ void ProcessQueuesState::leaveInterruptCtx( Stack* stack )
 
 void ProcessQueuesState::pioSendFiniVoid( void* hdr, uint64_t simVAddr )
 {
-    dbg().debug(CALL_INFO,1,1,"hdr=%p\n", hdr );
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_CB,"hdr=%p\n", hdr );
     if ( hdr ) {
         free( hdr );
     }
@@ -740,7 +747,7 @@ void ProcessQueuesState::pioSendFiniVoid( void* hdr, uint64_t simVAddr )
 
 void ProcessQueuesState::pioSendFiniCtrlHdr( CtrlHdr* hdr, uint64_t simVAddr )
 {
-    dbg().debug(CALL_INFO,1,1,"MsgHdr, Ack sent key=%#x\n", hdr->key);
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_CB,"MsgHdr, Ack sent key=%#x\n", hdr->key);
 	m_simVAddrs->free(simVAddr);
     delete hdr;
     runInterruptCtx();
@@ -749,7 +756,7 @@ void ProcessQueuesState::pioSendFiniCtrlHdr( CtrlHdr* hdr, uint64_t simVAddr )
 void ProcessQueuesState::processLongGetFini( Stack* stack, _CommReq* req )
 {
     ProcessLongGetFiniCtx* ctx = new ProcessLongGetFiniCtx( req );
-    dbg().debug(CALL_INFO,1,1,"\n");
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_CB,"\n");
 
     stack->push_back( ctx );
 
@@ -763,11 +770,12 @@ void ProcessQueuesState::processLongGetFini0( Stack* stack )
 {
     _CommReq* req = static_cast<ProcessLongGetFiniCtx*>(stack->back())->req;
 
-    dbg().debug(CALL_INFO,1,1,"\n");
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_CB,"\n");
     
     delete stack->back();
     stack->pop_back();
-
+  
+    ++m_numRecv;
     req->setDone( recvReqFiniDelay( req->getLength() ) );
 
     IoVec hdrVec;   
@@ -783,7 +791,7 @@ void ProcessQueuesState::processLongGetFini0( Stack* stack )
     std::vector<IoVec> vec;
     vec.insert( vec.begin(), hdrVec );
 
-    dbg().debug(CALL_INFO,1,1,"send long msg Ack to nid=%d key=%#x\n", 
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_CB,"send long msg Ack to nid=%d key=%#x\n", 
                                                 req->m_ackNid, req->m_ackKey );
 
     m_nic->pioSend( req->m_ackNid, req->m_ackKey, vec, callback );
@@ -794,7 +802,8 @@ void ProcessQueuesState::processLongGetFini0( Stack* stack )
 
 void ProcessQueuesState::processLongAck( GetInfo* info )
 {
-    dbg().debug(CALL_INFO,1,1,"acked\n");
+    ++m_numSent;
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"acked\n");
     info->req->setDone( sendReqFiniDelay( info->req->getLength() ) );
     delete info;
     return;
@@ -802,7 +811,7 @@ void ProcessQueuesState::processLongAck( GetInfo* info )
 
 void ProcessQueuesState::needRecv( int nid, size_t length )
 {
-    dbg().debug(CALL_INFO,1,1,"nid=%d length=%lu\n",nid,length);
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_NEED_RECV,"nid=%d length=%lu\n",nid,length);
 
     ++m_needRecv;
     runInterruptCtx();
@@ -810,7 +819,7 @@ void ProcessQueuesState::needRecv( int nid, size_t length )
 
 void ProcessQueuesState::loopHandler( int srcCore, void* key )
 {
-    dbg().debug(CALL_INFO,1,2,"resp: srcCore=%d key=%p \n",srcCore,key);
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_CB,"resp: srcCore=%d key=%p \n",srcCore,key);
 
     m_loopResp.push_back( new LoopResp( srcCore, key ) );
 
@@ -822,7 +831,7 @@ void ProcessQueuesState::loopHandler( int srcCore, std::vector<IoVec>& vec, void
         
     MatchHdr* hdr = (MatchHdr*) vec[0].addr.getBacking();
 
-    dbg().debug(CALL_INFO,1,2,"req: srcCore=%d key=%p vec.size()=%lu srcRank=%d\n",
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_CB,"req: srcCore=%d key=%p vec.size()=%lu srcRank=%d\n",
                                                     srcCore, key, vec.size(), hdr->rank);
 
     ++m_numRecvLooped;
@@ -835,7 +844,7 @@ void ProcessQueuesState::loopHandler( int srcCore, std::vector<IoVec>& vec, void
 _CommReq* ProcessQueuesState::searchPostedRecv( MatchHdr& hdr, int& count )
 {
     _CommReq* req = NULL;
-    dbg().debug(CALL_INFO,1,1,"posted size %lu\n",m_pstdRcvQ.size());
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"posted size %lu\n",m_pstdRcvQ.size());
 
     std::deque< _CommReq* >:: iterator iter = m_pstdRcvQ.begin();
     for ( ; iter != m_pstdRcvQ.end(); ++iter ) {
@@ -849,7 +858,7 @@ _CommReq* ProcessQueuesState::searchPostedRecv( MatchHdr& hdr, int& count )
         m_pstdRcvQ.erase(iter);
         break;
     }
-    dbg().debug(CALL_INFO,2,1,"req=%p\n",req);
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"req=%p\n",req);
 
     return req;
 }
@@ -857,42 +866,42 @@ _CommReq* ProcessQueuesState::searchPostedRecv( MatchHdr& hdr, int& count )
 bool ProcessQueuesState::checkMatchHdr( MatchHdr& hdr, MatchHdr& wantHdr,
                                     uint64_t ignore )
 {
-    dbg().debug(CALL_INFO,1,1,"posted tag %#" PRIx64 ", msg tag %#" PRIx64 "\n", wantHdr.tag, hdr.tag );
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"posted tag %#" PRIx64 ", msg tag %#" PRIx64 "\n", wantHdr.tag, hdr.tag );
     if ( ( AnyTag != wantHdr.tag ) && 
             ( ( wantHdr.tag & ~ignore) != ( hdr.tag & ~ignore ) ) ) {
         return false;
     }
 
-    dbg().debug(CALL_INFO,1,1,"want rank %d %d\n", wantHdr.rank, hdr.rank );
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"want rank %d %d\n", wantHdr.rank, hdr.rank );
     if ( ( MP::AnySrc != wantHdr.rank ) && ( wantHdr.rank != hdr.rank ) ) {
         return false;
     }
 
-    dbg().debug(CALL_INFO,1,1,"want group %d %d\n", wantHdr.group,hdr.group);
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"want group %d %d\n", wantHdr.group,hdr.group);
     if ( wantHdr.group != hdr.group ) {
         return false;
     }
 
-    dbg().debug(CALL_INFO,1,1,"want count %d %d\n", wantHdr.count,
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"want count %d %d\n", wantHdr.count,
                                     hdr.count);
     if ( wantHdr.count !=  hdr.count ) {
         return false;
     }
 
-    dbg().debug(CALL_INFO,1,1,"want dtypeSize %d %d\n", wantHdr.dtypeSize,
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"want dtypeSize %d %d\n", wantHdr.dtypeSize,
                                     hdr.dtypeSize);
     if ( wantHdr.dtypeSize !=  hdr.dtypeSize ) {
         return false;
     }
 
-    dbg().debug(CALL_INFO,1,1,"matched\n");
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_Q,"matched\n");
     return true;
 }
 
 void ProcessQueuesState::copyIoVec( 
                 std::vector<IoVec>& dst, std::vector<IoVec>& src, size_t len )
 {
-    dbg().debug(CALL_INFO,1,1,"dst.size()=%lu src.size()=%lu wantLen=%lu\n",
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"dst.size()=%lu src.size()=%lu wantLen=%lu\n",
                                     dst.size(), src.size(), len );
 
     size_t copied = 0;
@@ -900,10 +909,10 @@ void ProcessQueuesState::copyIoVec(
     for ( unsigned int i=0; i < src.size() && copied < len; i++ ) 
     {
         assert( rV < dst.size() );
-        dbg().debug(CALL_INFO,3,1,"src[%d].len %lu\n", i, src[i].len);
+        dbg().debug(CALL_INFO,3,DBG_MSK_PQS_Q,"src[%d].len %lu\n", i, src[i].len);
 
         for ( unsigned int j=0; j < src[i].len && copied < len ; j++ ) {
-            dbg().debug(CALL_INFO,3,1,"copied=%lu rV=%lu rP=%lu\n",
+            dbg().debug(CALL_INFO,3,DBG_MSK_PQS_Q,"copied=%lu rV=%lu rP=%lu\n",
                                                         copied,rV,rP);
 
             if ( dst[rV].addr.getBacking() && src[i].addr.getBacking() ) {
@@ -937,28 +946,28 @@ void ProcessQueuesState::postShortRecvBuffer( )
     // save this info so we can cleanup in the destructor 
     m_postedShortBuffers[buf ] = callback;
 
-    dbg().debug(CALL_INFO,1,1,"num postedShortRecvBuffers %lu\n",
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_POST_SHORT,"num postedShortRecvBuffers %lu\n",
                                         m_postedShortBuffers.size());
     m_nic->dmaRecv( -1, ShortMsgQ, buf->ioVec, callback ); 
 }
 
 void ProcessQueuesState::loopSendReq( std::vector<IoVec>& vec, int core, void* key )
 {
-    m_dbg.debug(CALL_INFO,1,1,"dest core=%d key=%p\n",core,key);
+    m_dbg.debug(CALL_INFO,2,DBG_MSK_PQS_LOOP,"dest core=%d key=%p\n",core,key);
 
     m_loopLink->send(0, new LoopBackEvent( vec, core, key ) );
 }
 
 void ProcessQueuesState::loopSendResp( int core, void* key )
 {
-    m_dbg.debug(CALL_INFO,1,1,"dest core=%d key=%p\n",core,key);
+    m_dbg.debug(CALL_INFO,2,DBG_MSK_PQS_LOOP,"dest core=%d key=%p\n",core,key);
     m_loopLink->send(0, new LoopBackEvent( core, key ) );
 }
 
 void ProcessQueuesState::loopHandler( Event* ev )
 {
     LoopBackEvent* event = static_cast< LoopBackEvent* >(ev);
-    m_dbg.debug(CALL_INFO,1,1,"%s key=%p\n",
+    m_dbg.debug(CALL_INFO,1,DBG_MSK_PQS_LOOP,"%s key=%p\n",
         event->vec.empty() ? "Response" : "Request", event->key);
 
     if ( event->vec.empty() ) {
@@ -973,7 +982,7 @@ void ProcessQueuesState::delayHandler( SST::Event* e )
 {
     DelayEvent* event = static_cast<DelayEvent*>(e);
 
-    m_dbg.debug(CALL_INFO,2,1,"execute callback\n");
+    m_dbg.debug(CALL_INFO,1,DBG_MSK_PQS_CB,"execute callback\n");
 
     event->callback();
     delete e;

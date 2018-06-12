@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -73,8 +73,9 @@ class ArielCPU : public SST::Component {
         {"clock", "Clock rate at which events are generated and processed", "1GHz"},
         {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
         {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
+        {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"},
         {"opal_enabled", "If enabled, MLM allocation hints will be communicated to the centralized memory manager", "0"},
-        {"opal_latency", "latency to communicate to the centralized memory manager", "32ps"})
+	{"opal_latency", "latency to communicate to the centralized memory manager", "32ps"})
 
     SST_ELI_DOCUMENT_PORTS(
         {"cache_link_%(corecount)d", "Each core's link to its cache", {}},
@@ -89,6 +90,8 @@ class ArielCPU : public SST::Component {
         { "split_read_requests",  "Statistic counts number of split read requests (requests which come from multiple lines)", "requests", 1},
         { "split_write_requests", "Statistic counts number of split write requests (requests which are split over multiple lines)", "requests", 1},
         { "no_ops",               "Statistic counts instructions which do not execute a memory operation", "instructions", 1},
+	{ "flush_requests",       "Statistic counts instructions which perform flushes", "requests", 1},
+	{ "fence_requests",       "Statistic counts instructions which perform fences", "requests", 1},
         { "instruction_count",    "Statistic for counting instructions", "instructions", 1 },
         { "max_insts", "Maximum number of instructions reached by a thread",	"instructions", 0},
         { "fp_dp_ins",            "Statistic for counting DP-floating point instructions", "instructions", 1 },

@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,12 +34,13 @@ namespace Ember {
 template < class TYPE, int VAL >
 class EmberShmemAtomicIncBaseGenerator : public EmberShmemGenerator {
 
-    enum { Add, Fadd, Putv } m_op;
+    enum { Add, Fadd, Putv, Getv } m_op;
     std::string m_opStr;
 public:
 	EmberShmemAtomicIncBaseGenerator(SST::Component* owner, Params& params, std::string name) :
 		EmberShmemGenerator(owner, params, name ), m_phase(-3), m_one(1)
 	{ 
+        m_computeTime = params.find<int>("arg.computeTime", 50 );
         m_dataSize = params.find<int>("arg.dataSize", 32*1024*1024 );
 		m_updates = params.find<int>("arg.updates", 4096);
 		m_iterations = params.find<int>("arg.iterations", 1);
@@ -51,6 +52,8 @@ public:
             m_op = Fadd;
         } else if ( m_opStr.compare("putv") == 0 ) {
             m_op = Putv;
+        } else if ( m_opStr.compare("getv") == 0 ) {
+            m_op = Getv;
         } else {
             assert(0);
         }
@@ -59,6 +62,7 @@ public:
 		m_backed = params.find<bool>("arg.backed", false);
 		m_outLoop = params.find<int>("arg.outLoop", 1);
 		m_num_nodes = params.find<int>("arg.numNodes", -1);
+		m_randAddr = params.find<int>("arg.randAddr", 1);
 		m_times.resize(m_outLoop);
         
         m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
@@ -106,9 +110,16 @@ public:
 			enQ_getTime( evQ, &m_startTime );
 
 		} else if ( m_phase < m_iterations * m_updates ) {
-            int dest = calcDestPe(); 
 
-			Hermes::MemAddr addr = m_dest.offset<TYPE>( genRand() % m_dataSize );
+            int dest = calcDestPe(); 
+            
+			Hermes::MemAddr addr;
+            if ( m_randAddr ) {
+			    addr = m_dest.offset<TYPE>( genRand() % m_dataSize );
+            } else {
+                addr = m_dest.offset<TYPE>( 0 );
+            }
+            enQ_compute( evQ, m_computeTime );
 	
 			switch ( m_op ) { 
               case Fadd:
@@ -119,6 +130,9 @@ public:
                 break;
               case Putv:
                 enQ_putv( evQ, addr, &m_one, dest );
+                break;
+              case Getv:
+                enQ_getv( evQ, &m_one, addr, dest );
                 break;
 			}
             if ( m_phase + 1 == m_iterations * m_updates ) {
@@ -136,6 +150,9 @@ public:
 			}
 
 			if ( m_outLoop > 0 ) {
+			    if ( m_backed ) {
+				    bzero( &m_dest.at<TYPE>(0), sizeof(TYPE) * m_dataSize);
+			    }
 				m_phase = -1;
             } else {
 				++m_phase;
@@ -163,11 +180,11 @@ public:
 					}
 				} 
 
-                printf("%s: GUpdates  = %.9lf\n", getMotifName().c_str(), Gupdates ); 
-                printf("%s: Min Time      = %.9lf\n", getMotifName().c_str(), minTime );
-                printf("%s: Max Time      = %.9lf\n", getMotifName().c_str(), maxTime );
-                printf("%s: Min GUP/s     = %.9lf\n", getMotifName().c_str(), Gupdates / maxTime);
-                printf("%s: Max GUP/s     = %.9lf\n", getMotifName().c_str(), Gupdates / minTime );
+                printf("%s:GUpdates  = %.9lf\n", getMotifName().c_str(), Gupdates ); 
+                printf("%s:MinTime      = %.9lf\n", getMotifName().c_str(), minTime );
+                printf("%s:MaxTime      = %.9lf\n", getMotifName().c_str(), maxTime );
+                printf("%s:MinGUP/s     = %.9lf\n", getMotifName().c_str(), Gupdates / maxTime);
+                printf("%s:MaxGUP/s     = %.9lf\n", getMotifName().c_str(), Gupdates / minTime );
 
             }
 
@@ -227,6 +244,8 @@ public:
     unsigned int m_randSeed;
 #endif
 
+    int m_computeTime;
+    bool m_randAddr;
 	bool m_backed;
 	bool m_printTotals;
 	TYPE m_one;
@@ -289,8 +308,13 @@ private:
         if( this->m_my_pe == this->m_num_pes - 1 ) {
             pe = this->genRand() % (this->m_num_pes - 1);
         } else {
+
             int pecountHS = this->m_num_pes + this->m_hotMult;
             pe = this->genRand() % pecountHS;
+
+            while( pe == this->m_my_pe ) {
+                pe = this->genRand() % pecountHS;
+            } 
 
             // If we generate a PE higher than we have
             // clamp ourselves to the highest PE
@@ -335,7 +359,7 @@ public:
     )
 public:
 	EmberShmemNSAtomicIncIntGenerator(SST::Component* owner, Params& params) :
-	    EmberShmemAtomicIncGenerator(owner, params, "ShmemHSAtomicIncInt") { } 
+	    EmberShmemAtomicIncGenerator(owner, params, "ShmemNSAtomicIncInt") { } 
 };
 
 class EmberShmemHotAtomicIncIntGenerator : public EmberShmemAtomicIncGenerator<int, 2> {

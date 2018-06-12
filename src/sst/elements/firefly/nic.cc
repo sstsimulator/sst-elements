@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -40,7 +40,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_getKey(10),
     m_simpleMemoryModel(NULL),
     m_respKey(1),
-    m_curNetworkSrc(-1)
+    m_curNetworkSrc(-1),
+    m_sentPkts(0)
 {
     m_myNodeId = params.find<int>("nid", -1);
     assert( m_myNodeId != -1 );
@@ -69,6 +70,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
+    SimTime_t shmemSendSetupLat =  params.find<SimTime_t>( "shmemSendSetupLat", 100 ) ;
     int numShmemCmdSlots =    params.find<int>( "numShmemCmdSlots", 32 );
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
     int maxRecvMachineQsize = params.find<int>( "maxRecvMachineQsize", 1 );
@@ -79,10 +81,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
     }    
     ++numSendMachines;
 
+    int numRecvNicUnits = params.find<int>( "numRecvNicUnits", 1 );
     m_unitPool = new UnitPool( 
         m_dbg,
         params.find<std::string>( "nicAllocationPolicy", "RoundRobin" ), 
-        params.find<int>( "numRecvNicUnits", 1 ),
+        numRecvNicUnits,
         numSendMachines,
         1,
         m_num_vNics
@@ -99,7 +102,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
         assert(0);
     }
 
-    int minPktPayload = 64;
+    int minPktPayload = 32;
     assert( ( packetSizeInBytes - packetOverhead ) >= minPktPayload );
 
 	UnitAlgebra input_buf_size = params.find<SST::UnitAlgebra>("input_buf_size" );
@@ -157,18 +160,19 @@ Nic::Nic(ComponentId_t id, Params &params) :
         m_sendEntryQ[i].first = false;
     }
 
-    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
+    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns(), shmemSendSetupLat );
 
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
         smmParams.insert( "busLatency",  std::to_string(m_nic2host_lat_ns), false );
         m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics, m_unitPool->getTotal() );
     }
-
+    
     m_recvMachine = new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
-                rxMatchDelay, hostReadDelay, maxRecvMachineQsize );
+                rxMatchDelay, hostReadDelay, maxRecvMachineQsize, 
+                params.find<>( "maxActiveRecvStreams", 1024*1024) );
 
     m_sendMachineV.resize(numSendMachines);
     for ( int i = 0; i < numSendMachines - 1; i++ ) {
@@ -230,10 +234,14 @@ Nic::~Nic()
 	delete m_shmem;
 	delete m_linkControl;
 
+    int numRcvd = m_recvMachine->getNumReceived();
+    int numSent=0;
 	delete m_recvMachine;
     for ( int i = 0; i <  m_sendMachineV.size(); i++ ) {
+        numSent += m_sendMachineV[i]->getNumSent();
 		delete m_sendMachineV[i];
 	}
+    m_dbg.debug(CALL_INFO,1,1,"                                                             finish numSent=%d numRcvd=%d\n",numSent,numRcvd);
 
 	if ( m_recvNotifyFunctor ) delete m_recvNotifyFunctor;
 	if ( m_sendNotifyFunctor ) delete m_sendNotifyFunctor;
@@ -415,7 +423,7 @@ void Nic::regMemRgn( NicCmdEvent *e, int vNicNum )
 
 void Nic::qSendEntry( SendEntryBase* entry ) {
 
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "myPid=%d destNode=%d destPid=%d size=%zu %s\n",
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "myPid=%d destNode=%d destPid=%d size=%zu %s\n",
                     entry->local_vNic(), entry->dest(), entry->dst_vNic(), entry->totalBytes(),
                     entry->isCtrl() ? "Ctrl" : entry->isAck() ? "Ack" : "Std");
 
@@ -443,7 +451,7 @@ void Nic::qSendEntry( SendEntryBase* entry ) {
 void Nic::notifySendDone( SendMachine* mach, SendEntryBase* entry  ) {
 
     int pid = entry->local_vNic();
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"machine=%d pid=%d\n", mach->getId(), pid );
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"machine=%d pid=%d\n", mach->getId(), pid );
 
     m_sendEntryQ[pid].first = false;
 
@@ -452,7 +460,7 @@ void Nic::notifySendDone( SendMachine* mach, SendEntryBase* entry  ) {
 
     for ( unsigned i = 0; i < m_sendEntryQ.size(); i++ ) {
 
-        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"check pid=%d size=%zu\n", i, m_sendEntryQ[i].second.size( ));
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"check pid=%d size=%zu\n", i, m_sendEntryQ[i].second.size( ));
 
         if ( ! m_sendEntryQ[i].first && 
                 ! m_sendEntryQ[i].second.empty() && m_sendEntryQ[i].second.front( ).first < cur ) {
@@ -461,12 +469,12 @@ void Nic::notifySendDone( SendMachine* mach, SendEntryBase* entry  ) {
     }
 
     if ( next > -1 ) {
-        m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"run pid=%d \n", next);
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"run pid=%d \n", next);
         m_sendEntryQ[next].first = false;
         mach->run(m_sendEntryQ[ next ].second.front().second );
         m_sendEntryQ[ next ].second.pop_front();
     } else {
-        m_sendMachineQ.push_back(mach);        
+        m_sendMachineQ.push_back(mach);
     }
 }
 
@@ -514,6 +522,7 @@ void Nic::sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc )
     FireflyNetworkEvent* ev = entry.first;
     assert( ev->bufSize() );
 
+    ++m_sentPkts;
     SimpleNetwork::Request* req = new SimpleNetwork::Request();
     req->dest = IdToNet( entry.second );
     req->src = IdToNet( m_myNodeId );
@@ -528,8 +537,10 @@ void Nic::sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc )
         ++m_packetId;
     }
     m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_NETWORK,
-                    "dst=%" PRIu64 " sending event with %zu bytes packetId=%" PRIu64 "\n",req->dest,
-                                                        ev->bufSize(), (uint64_t)m_packetId);
+                    "dst=%" PRIu64 " sending event with %zu bytes packetId=%" PRIu64 " %s %s\n",req->dest,
+                                                    ev->bufSize(), (uint64_t)m_packetId, 
+                                                    ev->isHdr() ? "Hdr":"", 
+                                                    ev->isTail() ? "Tail":"" );
     bool sent = m_linkControl->send( req, vc );
     assert( sent );
 }

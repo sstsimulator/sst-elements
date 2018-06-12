@@ -6,7 +6,7 @@
 AC_INIT([SST Elements Library], [-dev], [sst@sandia.gov])
 
 AC_PREREQ([2.59])
-AC_COPYRIGHT([Copyright Sandia National Laboratories, 2004-2017])
+AC_COPYRIGHT([Copyright Sandia National Laboratories, 2004-2018])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config])

@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -46,6 +46,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     memmgr = memMgr;
 
     opal_enabled = false;
+    writePayloads = params.find<int>("writepayloadtrace") == 0 ? false : true;
 
     coreQ = new std::queue<ArielEvent*>();
     pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
@@ -60,6 +61,8 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     statWriteRequestSizes = own->registerStatistic<uint64_t>( "write_request_sizes", subID );
     statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests", subID );
     statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests", subID );
+    statFlushRequests = own->registerStatistic<uint64_t>( "flush_requests", subID);
+    statFenceRequests = own->registerStatistic<uint64_t>( "fence_requests", subID);
     statNoopCount     = own->registerStatistic<uint64_t>( "no_ops", subID );
     statInstructionCount = own->registerStatistic<uint64_t>( "instruction_count", subID );
     statCycles = own->registerStatistic<uint64_t>( "cycles", subID );
@@ -159,13 +162,30 @@ void ArielCore::commitReadEvent(const uint64_t address,
 }
 
 void ArielCore::commitWriteEvent(const uint64_t address,
-            const uint64_t virtAddress, const uint32_t length) {
+            const uint64_t virtAddress, const uint32_t length, const uint8_t* payload) {
 
     if(length > 0) {
         SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, address, length);
         req->setVirtualAddress(virtAddress);
 
-        // TODO BJM:  DO we need to fill in dummy data?
+		if( writePayloads ) {
+			if(verbosity >= 16) {
+				char* buffer = new char[64];
+				std::string payloadString = "";
+				
+				for(int i = 0; i < length; ++i) {
+					sprintf(buffer, "0x%X ", payload[i]);
+					payloadString.append(buffer);
+				}
+				
+				delete buffer;
+				
+				output->verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s }\n",
+					length, payloadString.c_str());
+			}
+		
+			req->setPayload( (uint8_t*) payload, length );
+		}
 
         pending_transaction_count++;
         pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
@@ -194,6 +214,7 @@ void ArielCore::commitFlushEvent(const uint64_t address,
         pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
 
         cacheLink->sendRequest(req);
+    	statFlushRequests->addData(1);
     }
 }
 
@@ -269,8 +290,11 @@ void ArielCore::stall() {
 
 void ArielCore::fence(){
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core: %" PRIu32 " FENCE:  Current pending transaction count: %" PRIu32 " (%" PRIu32 ")\n", coreID, pending_transaction_count, maxPendingTransactions));
-    isFenced = true;
-    isStalled = true;
+
+    if( pending_transaction_count > 0 ) {
+        isFenced = true;
+        isStalled = true;
+    }
 }
 
 void ArielCore::unfence()
@@ -331,8 +355,8 @@ void ArielCore::createFreeEvent(uint64_t vAddr) {
     ARIEL_CORE_VERBOSE(2, output->verbose(CALL_INFO, 2, 0, "Generated a free event for virtual address=%" PRIu64 "\n", vAddr));
 }
 
-void ArielCore::createWriteEvent(uint64_t address, uint32_t length) {
-    ArielWriteEvent* ev = new ArielWriteEvent(address, length);
+void ArielCore::createWriteEvent(uint64_t address, uint32_t length, const uint8_t* payload) {
+    ArielWriteEvent* ev = new ArielWriteEvent(address, length, payload);
     coreQ->push(ev);
 
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a WRITE event, addr=%" PRIu64 ", length=%" PRIu32 "\n", address, length));
@@ -446,7 +470,7 @@ bool ArielCore::refillQueue() {
                                     break;
 
                             case ARIEL_PERFORM_WRITE:
-                                    createWriteEvent(ac.inst.addr, ac.inst.size);
+                                    createWriteEvent(ac.inst.addr, ac.inst.size, &ac.inst.payload[0]);
                                     break;
 
                             case ARIEL_END_INSTRUCTION:
@@ -619,7 +643,12 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
         ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing write, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n",
                             coreID, writeAddress, writeLength, physAddr));
 
-        commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength);
+		if( writePayloads ) {
+			uint8_t* payloadPtr = wEv->getPayload();
+        	commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, payloadPtr);
+        } else {
+        	commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, NULL);
+        }
     } else {
         ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
                             coreID, writeAddress, writeLength));
@@ -654,8 +683,15 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
             }*/
         }
 
-        commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize);
-        commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize);
+		if( writePayloads ) {
+			uint8_t* payloadPtr = wEv->getPayload();
+		
+        	commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize, payloadPtr);
+        	commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize, &payloadPtr[leftSize]);
+        } else {
+        	commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize, NULL);
+        	commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize, NULL);
+        }
         statSplitWriteRequests->addData(1);
     }
 
@@ -721,6 +757,7 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
     fence();
     // Possibility B:
     // commitFenceEvent();
+    statFenceRequests->addData(1);
 }
 
 void ArielCore::printCoreStatistics() {
