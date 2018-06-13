@@ -20,6 +20,13 @@ class SendMachine {
 
         class OutQ {
             typedef std::function<void()> Callback;
+
+            struct Entry  {
+                Entry( std::pair< FireflyNetworkEvent*, int> data,  Callback callback = NULL ) : data(data), callback(callback) {}
+                std::pair< FireflyNetworkEvent*, int>  data;
+                Callback callback;
+            };
+
             std::string m_prefix;
             const char* prefix() { return m_prefix.c_str(); }
           public:
@@ -31,7 +38,7 @@ class SendMachine {
                 m_prefix = "@t:"+ std::to_string(nic.getNodeId()) +":Nic::SendMachine" + std::to_string(myId) + "::OutQ::@p():@l ";
             }
 
-            void enque( FireflyNetworkEvent* ev, int dest );
+            void enque( FireflyNetworkEvent* ev, int dest, Callback );
 
             bool isFull() { 
                 return m_queue.size() == m_maxQsize; 
@@ -47,7 +54,7 @@ class SendMachine {
                 return m_queue.empty();
             }
             std::pair< FireflyNetworkEvent*, int>& front() {
-                return m_queue.front();
+                return  m_queue.front().data;
             }
             void pop() {
                 if ( m_wakeUpCallback ) {
@@ -55,7 +62,12 @@ class SendMachine {
                     m_nic.schedCallback( m_wakeUpCallback, 0);
                     m_wakeUpCallback = NULL;
                 }
-                return m_queue.pop_front();
+             
+                if ( m_queue.front().callback ) {
+                     m_queue.front().callback(); 
+                }
+
+                m_queue.pop_front();
             }
 
           private:
@@ -66,7 +78,8 @@ class SendMachine {
             int         m_maxQsize;
             Callback    m_wakeUpCallback;
 
-            std::deque< std::pair< FireflyNetworkEvent*, int> > m_queue;
+            //std::deque< std::pair< FireflyNetworkEvent*, int> > m_queue;
+            std::deque< Entry > m_queue;
         };
 
         class InQ {
@@ -124,7 +137,7 @@ class SendMachine {
         SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask, int myId,
               int packetSizeInBytes, int pktOverhead, int maxQsize, int unit, bool flag = false ) :
             m_nic(nic), m_id(myId), m_packetSizeInBytes( packetSizeInBytes - pktOverhead ), 
-            m_unit(unit), m_pktOverhead(pktOverhead), m_activeEntry(NULL), m_I_manage( flag )
+            m_unit(unit), m_pktOverhead(pktOverhead), m_activeEntry(NULL), m_I_manage( flag ), m_numSent(0)
         {
             char buffer[100];
             snprintf(buffer,100,"@t:%d:Nic::SendMachine%d::@p():@l ",nodeId,myId);
@@ -136,19 +149,21 @@ class SendMachine {
 
         ~SendMachine() { }
 
+        int getNumSent() { return m_numSent; }
+
         bool isBusy() {
             return m_activeEntry;
         }       
 
         void run( SendEntryBase* entry ) {
-            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "new stream\n");
+            m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "new stream\n");
             assert( ! m_I_manage );
             m_activeEntry = entry;
             streamInit( entry );
         }
 
         void qSendEntry( SendEntryBase* entry ) {
-            m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "new stream\n");
+            m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "new stream\n");
             assert( m_I_manage );
             m_sendQ.push_back( entry );
             if ( m_sendQ.size() == 1 ) {
@@ -158,7 +173,7 @@ class SendMachine {
 
         int getId() { return m_id; }
         bool netPktQ_empty() { return m_outQ->empty(); }
-        void netPktQ_pop() { return m_outQ->pop(); }
+        void netPktQ_pop() { m_outQ->pop(); }
         std::pair< FireflyNetworkEvent*, int>& netPktQ_front() { return m_outQ->front(); }
 
       private:
@@ -178,4 +193,6 @@ class SendMachine {
         bool    m_I_manage;
         SendEntryBase* m_activeEntry;
         std::deque< SendEntryBase* > m_sendQ;
+
+        int m_numSent;
 };

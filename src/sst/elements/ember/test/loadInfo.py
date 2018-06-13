@@ -228,7 +228,7 @@ class LoadInfo:
 		numNodes = calcMaxNode( nidList ) 
 		if numNodes > self.numNics:
 			sys.exit('Error: Requested max nodes ' + str(numNodes) +\
-				 ' is greater than available nodes ' + str(self.numNodes) ) 
+				 ' is greater than available nodes ' + str(self.numNics) ) 
 
 		params.update( self.epParams )
 		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statNodes, nidList, motifLogNodes, detailedModel ) # added motifLogNodes here

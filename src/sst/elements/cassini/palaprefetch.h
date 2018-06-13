@@ -65,7 +65,7 @@ class PalaPrefetcher : public SST::MemHierarchy::CacheListener
                 "cassini",
                 "PalaPrefetcher",
                 SST_ELI_ELEMENT_VERSION(1,0,0),
-                "Prefetcher",
+                "Stride Prefetcher [Palacharla 1994]",
                 "SST::Cassini::CacheListener"
         )
 

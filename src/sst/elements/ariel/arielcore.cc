@@ -62,6 +62,8 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     statWriteRequestSizes = own->registerStatistic<uint64_t>( "write_request_sizes", subID );
     statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests", subID );
     statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests", subID );
+    statFlushRequests = own->registerStatistic<uint64_t>( "flush_requests", subID);
+    statFenceRequests = own->registerStatistic<uint64_t>( "fence_requests", subID);
     statNoopCount     = own->registerStatistic<uint64_t>( "no_ops", subID );
     statInstructionCount = own->registerStatistic<uint64_t>( "instruction_count", subID );
     statCycles = own->registerStatistic<uint64_t>( "cycles", subID );
@@ -213,6 +215,7 @@ void ArielCore::commitFlushEvent(const uint64_t address,
         pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
 
         cacheLink->sendRequest(req);
+    	statFlushRequests->addData(1);
     }
 }
 
@@ -257,8 +260,11 @@ void ArielCore::stall() {
 
 void ArielCore::fence(){
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core: %" PRIu32 " FENCE:  Current pending transaction count: %" PRIu32 " (%" PRIu32 ")\n", coreID, pending_transaction_count, maxPendingTransactions));
-    isFenced = true;
-    isStalled = true;
+
+    if( pending_transaction_count > 0 ) {
+        isFenced = true;
+        isStalled = true;
+    }
 }
 
 void ArielCore::unfence()
@@ -721,6 +727,7 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
     fence();
     // Possibility B:
     // commitFenceEvent();
+    statFenceRequests->addData(1);
 }
 
 void ArielCore::printCoreStatistics() {

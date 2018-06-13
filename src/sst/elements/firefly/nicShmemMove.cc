@@ -107,6 +107,7 @@ bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std
 
 	size_t tmpOffset = m_addr + m_offset;
 	int tmpCore = m_core;
+
 	vec.push_back( MemOp( m_addr + m_offset, length, MemOp::Op::BusDmaToHost, 
 		[=] () {
 			m_shmem->checkWaitOps( tmpCore, tmpOffset, length );
