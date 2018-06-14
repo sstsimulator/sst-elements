@@ -38,7 +38,7 @@ class ArielWriteEvent : public ArielEvent {
         }
 
         ~ArielWriteEvent() {
-        	delete payload;
+        	delete[] payload;
         }
 
         ArielEventType getEventType() const {
