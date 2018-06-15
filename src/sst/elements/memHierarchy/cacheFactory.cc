@@ -380,8 +380,7 @@ void Cache::configureLinks(Params &params) {
         nicParams.find<std::string>("interleave_step", "", found);
         if (!found) nicParams.insert("interleave_step", std::to_string(interleaveStep) + "B");
         
-        if (isPortConnected("directory_ack") && isPortConnected("directory_fwd") && isPortConnected("directory_data") &&
-                isPortConnected("cache_ack") && isPortConnected("cache_fwd") && isPortConnected("cache_data")) {
+        if (isPortConnected("directory_ack") && isPortConnected("directory_fwd") && isPortConnected("directory_data")) {
             nicParams.find<std::string>("req.port", "", found);
             if (!found) nicParams.insert("req.port", "directory");
             nicParams.find<std::string>("ack.port", "", found);
