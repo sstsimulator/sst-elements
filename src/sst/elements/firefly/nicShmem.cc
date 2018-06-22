@@ -81,7 +81,7 @@ void Nic::Shmem::handleEvent( NicShmemCmdEvent* event, int id )
                 [=]() {
                     hostPutv( static_cast<NicShmemPutvCmdEvent*>(event), id );
                 }, 
-                0 );
+                20 );
         } else {
             handleNicEvent( event, id );
         }        
