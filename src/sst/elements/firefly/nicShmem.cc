@@ -81,7 +81,7 @@ void Nic::Shmem::handleEvent( NicShmemCmdEvent* event, int id )
                 [=]() {
                     hostPutv( static_cast<NicShmemPutvCmdEvent*>(event), id );
                 }, 
-                20 );
+                0 );
         } else {
             handleNicEvent( event, id );
         }        
@@ -261,7 +261,7 @@ void Nic::Shmem::put( NicShmemPutCmdEvent* event, int id )
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"pendingRemoteOps=%s\n",tmp.str().c_str());
 
     NicShmemRespEvent::Callback callback = static_cast< NicShmemPutCmdEvent*>(event)->getCallback();
-    ShmemPutSendEntry* entry = new ShmemPutbSendEntry( id, event, getBacking( id, event->getMyAddr(), event->getLength() ),
+    ShmemPutSendEntry* entry = new ShmemPutbSendEntry( id, m_nic.getSendStreamNum(id), event, getBacking( id, event->getMyAddr(), event->getLength() ),
 					[=]() {
                         m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"put",1,NIC_DBG_SHMEM,"finished\n");
                         if ( event->isBlocking() ) {
@@ -285,7 +285,7 @@ void Nic::Shmem::putv( NicShmemPutvCmdEvent* event, int id )
     tmp << m_pendingRemoteOps[id].second;
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"pendingRemoteOps=%s\n",tmp.str().c_str());
 
-    ShmemPutSendEntry* entry = new ShmemPutvSendEntry( id, event, 
+    ShmemPutSendEntry* entry = new ShmemPutvSendEntry( id, m_nic.getSendStreamNum(id), event, 
 					[=]() {
 						incFreeCmdSlots();
 					} 
@@ -300,7 +300,7 @@ void Nic::Shmem::getv( NicShmemGetvCmdEvent* event, int id )
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"core=%d far=%" PRIx64" len=%lu\n", id, event->getFarAddr(), event->getLength() );
 
     NicShmemValueRespEvent::Callback callback = event->callback;
-    ShmemGetvSendEntry* entry = new ShmemGetvSendEntry( id, event, 
+    ShmemGetvSendEntry* entry = new ShmemGetvSendEntry( id, m_nic.getSendStreamNum(id), event, 
             [=](Hermes::Value& value) {
                 m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"getv",1,NIC_DBG_SHMEM,"finished\n");
                 m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), callback, value );
@@ -321,7 +321,7 @@ void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"pendingRemoteOps=%s\n",tmp.str().c_str());
 
     NicShmemRespEvent::Callback callback = event->getCallback();
-    ShmemGetbSendEntry* entry = new ShmemGetbSendEntry( id, event, 
+    ShmemGetbSendEntry* entry = new ShmemGetbSendEntry( id, m_nic.getSendStreamNum(id), event, 
             [=]() {
                 m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"get",1,NIC_DBG_SHMEM,"finished\n");
                 if ( event->isBlocking() ) {
@@ -347,7 +347,7 @@ void Nic::Shmem::add( NicShmemAddCmdEvent* event, int id )
     tmp << m_pendingRemoteOps[id].second;
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"pendingRemoteOps=%s\n",tmp.str().c_str());
 
-    ShmemAddSendEntry* entry = new ShmemAddSendEntry( id, event,
+    ShmemAddSendEntry* entry = new ShmemAddSendEntry( id, m_nic.getSendStreamNum(id), event,
 					[=]() {
 						incFreeCmdSlots();
 					} 
@@ -362,7 +362,7 @@ void Nic::Shmem::fadd( NicShmemFaddCmdEvent* event, int id )
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"core=%d far=%" PRIx64" len=%lu\n", id, event->getFarAddr(), event->getLength() );
 
     NicShmemValueRespEvent::Callback callback = event->callback;
-    ShmemFaddSendEntry* entry = new ShmemFaddSendEntry( id, event, 
+    ShmemFaddSendEntry* entry = new ShmemFaddSendEntry( id, m_nic.getSendStreamNum(id), event, 
             [=](Hermes::Value& value) {
                 m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"fadd",1,NIC_DBG_SHMEM,"finished\n");
                 m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), callback, value );
@@ -379,7 +379,7 @@ void Nic::Shmem::cswap( NicShmemCswapCmdEvent* event, int id )
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"core+%d far=%" PRIx64" len=%lu\n", id, event->getFarAddr(), event->getLength() );
 
     NicShmemValueRespEvent::Callback callback = event->callback;
-    ShmemCswapSendEntry* entry = new ShmemCswapSendEntry( id, event, 
+    ShmemCswapSendEntry* entry = new ShmemCswapSendEntry( id, m_nic.getSendStreamNum(id), event, 
             [=](Hermes::Value& value) {
                 m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"cswap",1,NIC_DBG_SHMEM,"finished\n");
                 m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), callback, value );
@@ -396,7 +396,7 @@ void Nic::Shmem::swap( NicShmemSwapCmdEvent* event, int id )
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"core=%d far=%" PRIx64" len=%lu\n", id, event->getFarAddr(), event->getLength() );
 
     NicShmemValueRespEvent::Callback callback = event->callback;
-    ShmemSwapSendEntry* entry = new ShmemSwapSendEntry( id, event, 
+    ShmemSwapSendEntry* entry = new ShmemSwapSendEntry( id, m_nic.getSendStreamNum(id), event, 
             [=](Hermes::Value& value) {
                 m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"swap",1,NIC_DBG_SHMEM,"finished\n");
                 m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), callback, value );
