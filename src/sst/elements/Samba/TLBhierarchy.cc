@@ -56,7 +56,8 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 
 	hold = 0;  // Hold is set to 1 by the page table walker due to fault or shootdown, note that since we don't execute page fault handler or TLB shootdown routine on the core, we just stall TLB hierarchy to emulate the performance effect
 
-	shootdown = 0;  // Hold is set to 1 by the page table walker due to shootdown
+	shootdown = 0;  // is set to 1 by the page table walker due to shootdown
+	own_shootdown = 0;  // is set to 1 by the page table walker due to shootdown from this core
 
 	std::string LEVEL = std::to_string(1);
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
