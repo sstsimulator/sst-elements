@@ -49,6 +49,8 @@ namespace Firefly {
 #define NIC_DBG_RECV_MOVE    1<<9
 #define NIC_DBG_LINK_CTRL    1<<10
 
+#define STREAM_NUM_SIZE 12
+
 class Nic : public SST::Component  {
 
   public:
@@ -411,6 +413,16 @@ public:
     SST::Interfaces::SimpleNetwork::Handler<Nic>* m_sendNotifyFunctor;
     LinkControlWidget* m_linkRecvWidget;
     LinkControlWidget* m_linkSendWidget;
+
+	std::vector< int >		m_sendStreamNum;
+
+	int getSendStreamNum( int pid ) {
+		unsigned int val = m_sendStreamNum[pid]++;
+		
+		m_sendStreamNum[pid] &= (( 1 <<  STREAM_NUM_SIZE ) - 1 ); 
+		m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"pid=%d stream=%d next=%d\n",pid,val, m_sendStreamNum[pid] );
+		return val;
+	}
 
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
