@@ -32,6 +32,10 @@ using namespace SST::SambaComponent;
 class TLB 
 {
 
+	SST::Component *Owner;
+
+	int coreId;
+
 	int level; // This indicates the level of the TLB Unit
 
 	int perfect; // This indidicates if the TLB is perfect or not, perfect is used to measure performance overhead over an ideal TLB hierarchy
@@ -42,7 +46,9 @@ class TLB
 
 	int * assoc; // This represents the associativiety
 
-	long long int *** tags; // This will hold the tags
+	Address_t *** tags; // This will hold the tags
+
+	bool ***valid; //This will hold the status of the tags
 
 	int *** lru; // This will hold the lru positions
 
@@ -52,8 +58,8 @@ class TLB
 
 	std::map<long long int, int> SIZE_LOOKUP; // This structure checks if a size is supported inside the structure, and its index structure
 
-	std::map< long long int, std::map< SST::Event *, int>> SAME_MISS; // This tracks the misses for the same location and deduplicates them
-	std::map<long long int, int> PENDING_MISS; // This tracks the addresses of the current master misses (other contained misses are tracked in SAME_MISS)
+	std::map< Address_t, std::map< SST::Event *, int>> SAME_MISS; // This tracks the misses for the same location and deduplicates them
+	std::map<Address_t, int> PENDING_MISS; // This tracks the addresses of the current master misses (other contained misses are tracked in SAME_MISS)
 
 	int  * sets; //stores the number of sets
 
@@ -103,15 +109,18 @@ class TLB
 	TLB(int tlb_id, TLB * Next_level,int level, SST::Component * owner, SST::Params& params);
 	TLB(int tlb_id, PageTableWalker * Next_level, int level, SST::Component * owner, SST::Params& params);
 	// Does the translation and updating the statistics of miss/hit
-	long long int translate(long long int vadd);
+	Address_t translate(Address_t vadd);
 
 	void finish(){}
 
+	// Invalidate TLB entry
+	void invalidate(Address_t vadd);
+
 	// Find if it exists
-	bool check_hit(long long int vadd, int struct_id);
+	bool check_hit(Address_t vadd, int struct_id);
 
 	// To insert the translaiton
-	int find_victim_way(long long int vadd, int struct_id);
+	int find_victim_way(Address_t vadd, int struct_id);
 
 	void setServiceBack( std::vector<SST::Event *> * x) { service_back = x;}
 
@@ -121,18 +130,20 @@ class TLB
 
 	std::map<SST::Event *, long long int> * getPushedBackSize(){return & pushed_back_size;}
 
-	void update_lru(long long int vaddr, int struct_id);
+	void update_lru(Address_t vaddr, int struct_id);
 
 
 	Statistic<uint64_t>* statTLBHits;
 
 	Statistic<uint64_t>* statTLBMisses;
 
+	Statistic<uint64_t>* statTLBShootdowns;
+
 
 	int getHits(){return hits;}
 	int getMisses(){return misses;}
 
-	void insert_way(long long int vaddr, int way, int struct_id);
+	void insert_way(Address_t vaddr, int way, int struct_id);
 
 	// This one is to push a request to this structure
 	void push_request(SST::Event * x) { not_serviced.push_back(x);}

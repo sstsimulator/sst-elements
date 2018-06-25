@@ -183,8 +183,11 @@ After initialization
  mmu0.total_waiting.0 : Accumulator : Sum.u64 = 5036569; SumSQ.u64 = 1365708695; Count.u64 = 20000; Min.u64 = 1; Max.u64 = 430; 
  mmu0.tlb_hits.Core0_L3 : Accumulator : Sum.u64 = 154; SumSQ.u64 = 154; Count.u64 = 154; Min.u64 = 1; Max.u64 = 1; 
  mmu0.tlb_misses.Core0_L3 : Accumulator : Sum.u64 = 9730; SumSQ.u64 = 9730; Count.u64 = 9730; Min.u64 = 1; Max.u64 = 1; 
+ mmu0.tlb_shootdown.Core0_L3 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  mmu0.tlb_hits.Core0_L2 : Accumulator : Sum.u64 = 442; SumSQ.u64 = 442; Count.u64 = 442; Min.u64 = 1; Max.u64 = 1; 
  mmu0.tlb_misses.Core0_L2 : Accumulator : Sum.u64 = 9884; SumSQ.u64 = 9884; Count.u64 = 9884; Min.u64 = 1; Max.u64 = 1; 
+ mmu0.tlb_shootdown.Core0_L2 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  mmu0.tlb_hits.Core0_L1 : Accumulator : Sum.u64 = 9674; SumSQ.u64 = 9674; Count.u64 = 9674; Min.u64 = 1; Max.u64 = 1; 
  mmu0.tlb_misses.Core0_L1 : Accumulator : Sum.u64 = 10326; SumSQ.u64 = 10326; Count.u64 = 10326; Min.u64 = 1; Max.u64 = 1; 
+ mmu0.tlb_shootdown.Core0_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
 Simulation is complete, simulated time: 133.137 us

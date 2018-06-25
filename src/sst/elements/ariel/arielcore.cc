@@ -14,7 +14,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <../Opal/Opal_Event.h>
 #include "arielcore.h"
 
 using namespace SST::OpalComponent;
@@ -239,6 +238,37 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
     }
 
     delete event;
+}
+
+void ArielCore::ISR_Opal(OpalEvent *ev) {
+
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling opal event.\n", coreID));
+
+	switch(ev->getType())
+	{
+	case SST::OpalComponent::EventType::SHOOTDOWN:
+		//maxIssuePerCycle=0; // This will stall the core by not executing anything
+		isStalled = true;
+		break;
+
+	case SST::OpalComponent::EventType::SDACK:
+		//maxIssuePerCycle=storeMaxIssuePerCycle; // restore necessary information
+		isStalled = false;
+		break;
+
+	default:
+		output->fatal(CALL_INFO, -4, "Opal event response to core: %" PRIu32 " was not valid.\n", coreID);
+	}
+
+}
+
+void ArielCore::handleInterruptEvent(SST::Event *event) {
+
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " is interrupted.\n", coreID));
+
+	// for now only Opal can interrupt
+	OpalEvent * ev =  dynamic_cast<OpalComponent::OpalEvent*> (event);
+	ISR_Opal(ev);
 }
 
 void ArielCore::finishCore() {
@@ -675,9 +705,9 @@ void ArielCore::handleMmapEvent(ArielMmapEvent* aEv) {
 
     if(opal_enabled) {
         OpalEvent * tse = new OpalEvent(OpalComponent::EventType::MMAP);
-        tse->hint = aEv->getAllocationLevel();
-        tse->fileID = aEv->getFileID();
-        std::cout<<"Before sending to Opal.. file ID is : "<<tse->fileID<<std::endl;
+        tse->setHint(aEv->getAllocationLevel());
+        tse->setFileId(aEv->getFileID());
+        std::cout<<"Before sending to Opal.. file ID is : "<<tse->getFileId()<<std::endl;
         // length should be in multiple of page size
         tse->setResp(aEv->getVirtualAddress(), 0, aEv->getAllocationLength() );
         OpalLink->send(tse);
@@ -692,7 +722,7 @@ void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
     // If Opal is enabled, make sure you pass these requests to it
     if(opal_enabled) {
         OpalEvent * tse = new OpalEvent(OpalComponent::EventType::HINT);
-        tse->hint = aEv->getAllocationLevel();
+        tse->setHint(aEv->getAllocationLevel());
         tse->setResp(aEv->getVirtualAddress(), 0, aEv->getAllocationLength() );
         OpalLink->send(tse);
     }

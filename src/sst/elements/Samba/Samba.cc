@@ -33,7 +33,7 @@ using namespace SST::SambaComponent;
 
 Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
-	CR3 = -1;
+	//CR3 = -1;
 
 	core_count = (uint32_t) params.find<uint32_t>("corecount", 1);
 
@@ -90,7 +90,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		SST::Link * link3;
 
 		if(self==0)
-			link3 = configureLink(link_buffer3, "30ps", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
+			link3 = configureLink(link_buffer3, new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
 		else
 			link3 = configureSelfLink(link_buffer3, std::to_string(page_walk_latency)+ "ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
 
@@ -103,7 +103,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 		if(emulate_faults==1)
 		{
-			link4 = configureLink(link_buffer4, "30ps", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvOpal));
+			link4 = configureLink(link_buffer4, new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvOpal));
 			ptw_to_opal[i] = link4;
 			TLB[i]->setOpalLink(link4);
 
@@ -112,7 +112,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 			event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::handleEvent));
 
 			TLB[i]->getPTW()->setEventChannel(event_link);
-			TLB[i]->setPageTablePointers(&CR3, &PGD, &PUD, &PMD, &PTE, &MAPPED_PAGE_SIZE1GB, &MAPPED_PAGE_SIZE2MB, &MAPPED_PAGE_SIZE4KB);
+			TLB[i]->setPageTablePointers(&CR3, &PGD, &PUD, &PMD, &PTE, &MAPPED_PAGE_SIZE1GB, &MAPPED_PAGE_SIZE2MB, &MAPPED_PAGE_SIZE4KB, &PENDING_PAGE_FAULTS, &PENDING_SHOOTDOWN_EVENTS);
 
 		}
 

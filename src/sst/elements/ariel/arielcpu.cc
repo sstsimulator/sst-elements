@@ -392,7 +392,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
         if(opal_enabled) {
             sprintf(link_buffer, "opal_link_%" PRIu32, i);
-            cpu_to_opal_links[i] = configureLink(link_buffer);
+            cpu_to_opal_links[i] = configureLink(link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleInterruptEvent));
             cpu_cores[i]->setOpalLink(cpu_to_opal_links[i]);
             cpu_cores[i]->setOpal();
         }

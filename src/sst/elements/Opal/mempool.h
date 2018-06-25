@@ -24,11 +24,14 @@
 
 #include "Opal_Event.h"
 
-typedef struct mpr{
-	long long int pAddress;
-	int num_frames;
-	int frame_size;
-}MemPoolResponse;
+typedef struct reqresponse {
+	uint64_t address;
+	int pages;
+	int page_migration;
+	int status;
+
+}REQRESPONSE;
+
 
 // This defines a physical frame of size 4KB by default
 class Frame{
@@ -38,10 +41,10 @@ class Frame{
 		Frame() { starting_address = 0; metadata = 0;}
 
 		// Constructor with paramteres
-		Frame(long long int st, long long int md) { starting_address = st; metadata = 0;}
+		Frame(uint64_t st, uint64_t md) { starting_address = st; metadata = 0;}
 
 		// The starting address of the frame
-		long long int starting_address;
+		uint64_t starting_address;
 
 		// This will be used to store information about current allocation
 		int metadata;
@@ -61,22 +64,22 @@ class Pool{
 		void finish() {}
 
 		// The size of the memory pool in KBs
-		long long int size; 
+		uint32_t size;
 
 		// The starting address of the memory pool
-		long long int start;
+		uint64_t start;
 
 		// Allocate N contigiuous frames, returns the starting address if successfull, or -1 if it fails!
-		MemPoolResponse allocate_frame(int N);
+		REQRESPONSE allocate_frame(int N);
 
 		// Allocate 'size' contigiuous memory, returns a structure with starting address and number of frames allocated
-		MemPoolResponse allocate_frames(int size);
+		REQRESPONSE allocate_frames(int pages);
 
 		// Freeing N frames starting from Address X, this will return -1 if we find that these frames were not allocated
-		int deallocate_frame(long long int X, int N);
+		REQRESPONSE deallocate_frame(uint64_t X, int N);
 
 		// Deallocate 'size' contigiuous memory starting from physical address 'starting_pAddress', returns a structure which indicates success or not
-		MemPoolResponse deallocate_frames(int size, long long int starting_pAddress);
+		REQRESPONSE deallocate_frames(int size, uint64_t starting_pAddress);
 
 		// Current number of free frames
 		int freeframes() { return freelist.size(); }
@@ -88,7 +91,7 @@ class Pool{
 		int num_frames;
 
 		//real size of the memory pool
-		long long int real_size;
+		uint32_t real_size;
 
 		//number of free frames
 		int available_frames;
@@ -101,15 +104,13 @@ class Pool{
 
 		SST::OpalComponent::MemTech get_memPool_tech() { return memTech; }
 
-		void set_localMemID(int id) { localMemID = id; }
+		void setMemID(int id) { poolId = id; }
 
-		int get_localMemID(int id) { return localMemID; }
-
-		void set_sharedMemID(int id) { sharedMemID = id; }
-
-		int get_sharedMemID(int id) { return sharedMemID; }
+		int getMemID() { return poolId; }
 
 		void build_mem();
+
+		void profileStats(int stat, int value);
 
 	private:
 
@@ -117,11 +118,8 @@ class Pool{
 
 		Output *output;
 
-		//local memory pool id
-		int localMemID;
-
-		//shared memory pool id
-		int sharedMemID;
+		//memory pool id
+		int poolId;
 
 		//shared or local
 		SST::OpalComponent::MemType memType;
@@ -133,9 +131,13 @@ class Pool{
 		std::list<Frame*> freelist;
 
 		// The list of allocated frames --- the key is the starting physical address
-		std::map<long long int, Frame*> alloclist;
+		std::map<uint64_t, Frame*> alloclist;
 
 		Statistic<uint64_t>* memUsage;
+		Statistic<uint64_t>* mappedMemory;
+		Statistic<uint64_t>* unmappedMemory;
+		Statistic<uint64_t>* tlbShootdowns;
+		Statistic<uint64_t>* tlbShootdownDelay;
 
 };
 
