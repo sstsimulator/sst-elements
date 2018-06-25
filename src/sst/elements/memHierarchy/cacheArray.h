@@ -89,6 +89,8 @@ public:
         
         uint64_t            lastSendTimestamp_; // Use to force sequential timing for subsequent accesses to the line
 
+        bool                wasPrefetch_;   // Track prefetch success rates
+
         /* L1 specific */
         unsigned int userLock_;
         bool LLSCAtomic_;
@@ -114,6 +116,8 @@ public:
             owner_.clear();
             
             lastSendTimestamp_      = 0;
+
+            wasPrefetch_ = false;
 
             /* Dir specific */
             dataLine_ = NULL;
@@ -204,6 +208,11 @@ public:
         void setTimestamp(uint64_t timestamp) { lastSendTimestamp_ = timestamp; }
         /** Getter for timestamp field */
         uint64_t getTimestamp() { return lastSendTimestamp_; }
+
+        /** Setter for prefetch field */
+        void setPrefetch(bool prefetch) { wasPrefetch_ = prefetch; }
+        /** Getter for prefetch field */
+        bool getPrefetch() { return wasPrefetch_; }
 
         /****** L1 specific fields ******/
         
