@@ -156,6 +156,7 @@ libember_la_SOURCES = \
 	shmem/emberShmemGen.cc \
 	shmem/emberShmemGen.h \
 	shmem/emberShmemGetEv.h \
+	shmem/emberShmemGetNBI.h \
 	shmem/emberShmemGetVEv.h \
 	shmem/emberShmemInitEv.h \
 	shmem/emberShmemMallocEv.h \
