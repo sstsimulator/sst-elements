@@ -261,7 +261,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     strcpy(execute_args[arg-1], ariel_tool.c_str());
     execute_args[arg++] = const_cast<char*>("-w");
 
-	if( params.find<int>("writepayloadtrace") == 0 ) {
+    if( params.find<int>("writepayloadtrace") == 0 ) {
     	execute_args[arg++] = const_cast<char*>("0");
     } else {
     	execute_args[arg++] = const_cast<char*>("1");
