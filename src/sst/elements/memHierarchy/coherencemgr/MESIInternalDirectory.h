@@ -264,7 +264,7 @@ public:
         {"latency_GetSX_SM",        "Latency for read-exclusive misses in S state", "cycles", 1},
         {"latency_GetSX_M",         "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1},
         /* Track what happens to prefetched blocks */
-        {"prefetch_hit",            "Prefetched block had a subsequent hit (useful prefetch)", "count", 2},
+        {"prefetch_useful",         "Prefetched block had a subsequent hit (useful prefetch)", "count", 2},
         {"prefetch_evict",          "Prefetched block was evicted/flushed before being accessed", "count", 2},
         {"prefetch_inv",            "Prefetched block was invalidated before being accessed", "count", 2},
         {"prefetch_coherence_miss", "Prefetched block incurred a coherence miss (upgrade) on its first access", "count", 2},
@@ -438,12 +438,15 @@ public:
         stat_eventSent_AckPut           = registerStatistic<uint64_t>("eventSent_AckPut");
         stat_eventSent_NACK_up          = registerStatistic<uint64_t>("eventSent_NACK_up");
         
-        statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
-        statPrefetchInv = registerStatistic<uint64_t>("prefetch_inv");
-        statPrefetchHit = registerStatistic<uint64_t>("prefetch_hit");
-        statPrefetchUpgradeMiss = registerStatistic<uint64_t>("prefetch_upgrade_miss");
-        statPrefetchRedundant = registerStatistic<uint64_t>("prefetch_redundant");
-    
+        /* Prefetch statistics */
+        if (!params.find<std::string>("prefetcher", "").empty()) {
+            statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
+            statPrefetchInv = registerStatistic<uint64_t>("prefetch_inv");
+            statPrefetchHit = registerStatistic<uint64_t>("prefetch_useful");
+            statPrefetchUpgradeMiss = registerStatistic<uint64_t>("prefetch_coherence_miss");
+            statPrefetchRedundant = registerStatistic<uint64_t>("prefetch_redundant");
+        }
+
         /* MESI-specific statistics (as opposed to MSI) */
         if (protocol_) {
             stat_evict_EInv =   registerStatistic<uint64_t>("evict_EInv");

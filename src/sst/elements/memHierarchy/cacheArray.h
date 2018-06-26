@@ -295,7 +295,6 @@ public:
         delete hash_;
     }
 
-    vector<CacheLine *> lines_;
     void setSliceAware(unsigned int numSlices) {
         slices_ = numSlices;
     }
@@ -327,6 +326,7 @@ protected:
     bool            sharersAware_;
     unsigned int    slices_;    // Both slices are banks_ are banks; slices_ are external to this cache array, banks_ are internal
     unsigned int    banks_;
+    vector<CacheLine *> lines_; // The actual cache
 
     CacheArray(Output* dbg, unsigned int numLines, unsigned int associativity, unsigned int lineSize,
                ReplacementMgr* replacementMgr, HashFunction* hash, bool sharersAware, bool cache) : dbg_(dbg), 

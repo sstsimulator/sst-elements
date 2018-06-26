@@ -139,8 +139,7 @@ public:
             {"MSHR_occupancy",          "Number of events in MSHR each cycle", "events", 1},
             {"Bank_conflicts",          "Total number of bank conflicts detected", "count", 1},
             {"Prefetch_requests",       "Number of prefetches received from prefetcher at this cache", "events", 1},
-            {"Prefetch_hits",           "Number of prefetches that were cancelled due to cache or MSHR hit", "events", 1},
-            {"Prefetch_drops",          "Number of prefetches that were cancelled because the cache was too busy or too many prefetches were outstanding", "events", 1},
+            {"Prefetch_drops",          "Number of prefetches that were cancelled. Reasons: too many prefetches outstanding, cache can't handle prefetch this cycle, currently handling another event for the address.", "events", 1},
             /* Coherence events - break down GetS between S/E */
             {"SharedReadResponse",      "Coherence: Received shared response to a GetS request", "count", 2},
             {"ExclusiveReadResponse",   "Coherence: Received exclusive response to a GetS request", "count", 2},
@@ -431,7 +430,6 @@ private:
 
     // Prefetch statistics
     Statistic<uint64_t>* statPrefetchRequest;
-    Statistic<uint64_t>* statPrefetchHit;
     Statistic<uint64_t>* statPrefetchDrop;
 };
 
