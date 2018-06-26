@@ -182,7 +182,7 @@ void Stake::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
         }
 
         spike = new sim_t(isa.c_str(), cores, false, (reg_t)(pc),
-                          mems, htif_args, hartids, 2 );
+                          mems, htif_args, hartids, 2, 0, false );
 
         // setup the pre-runtime parameters
         spike->set_debug(false);
