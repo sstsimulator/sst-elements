@@ -15,6 +15,7 @@ comp_cpu0.addParams({
       "do_write" : "1",
       "num_loadstore" : "10000",
       "memSize" : "0x100000",
+      "verbose" : 0
 })
 comp_c0_l1cache = sst.Component("c0.l1cache", "memHierarchy.Cache")
 comp_c0_l1cache.addParams({
@@ -35,6 +36,7 @@ comp_cpu1.addParams({
       "do_write" : "1",
       "num_loadstore" : "1000",
       "memSize" : "0x100000",
+      "verbose" : 0
 })
 comp_c1_l1cache = sst.Component("c1.l1cache", "memHierarchy.Cache")
 comp_c1_l1cache.addParams({
@@ -70,6 +72,7 @@ comp_cpu2.addParams({
       "do_write" : "1",
       "num_loadstore" : "1000",
       "memSize" : "0x100000",
+      "verbose" : 0
 })
 comp_c2_l1cache = sst.Component("c2.l1cache", "memHierarchy.Cache")
 comp_c2_l1cache.addParams({
@@ -90,6 +93,7 @@ comp_cpu3.addParams({
       "do_write" : "1",
       "num_loadstore" : "1000",
       "memSize" : "0x100000",
+      "verbose" : 0
 })
 comp_c3_l1cache = sst.Component("c3.l1cache", "memHierarchy.Cache")
 comp_c3_l1cache.addParams({

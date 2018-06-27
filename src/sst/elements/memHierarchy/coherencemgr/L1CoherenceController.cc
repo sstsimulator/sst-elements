@@ -62,17 +62,29 @@ CacheAction L1CoherenceController::handleEviction(CacheLine* wbCacheLine, string
             if (expectWritebackAck_) mshr_->insertWriteback(wbCacheLine->getBaseAddr());
             wbCacheLine->setState(I);
             wbCacheLine->atomicEnd(); // All bets are off if this line is LL and evicted...later SC should fail
+            if (wbCacheLine->getPrefetch()) {
+                statPrefetchEvict->addData(1);
+                wbCacheLine->setPrefetch(false);
+            }
             return DONE;
         case E:
             if (!silentEvictClean_) sendWriteback(Command::PutE, wbCacheLine, false, origRqstr);
             if (expectWritebackAck_) mshr_->insertWriteback(wbCacheLine->getBaseAddr());
 	    wbCacheLine->setState(I);
+            if (wbCacheLine->getPrefetch()) {
+                statPrefetchEvict->addData(1);
+                wbCacheLine->setPrefetch(false);
+            }
             wbCacheLine->atomicEnd();
 	    return DONE;
         case M:
 	    sendWriteback(Command::PutM, wbCacheLine, true, origRqstr);
             if (expectWritebackAck_) mshr_->insertWriteback(wbCacheLine->getBaseAddr());
             wbCacheLine->setState(I);
+            if (wbCacheLine->getPrefetch()) {
+                statPrefetchEvict->addData(1);
+                wbCacheLine->setPrefetch(false);
+            }
             wbCacheLine->atomicEnd();
 	    return DONE;
         case IS:
@@ -260,7 +272,7 @@ CacheAction L1CoherenceController::handleGetSRequest(MemEvent* event, CacheLine*
     State state = cacheLine->getState();
     vector<uint8_t>* data = cacheLine->getData();
     
-    bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == parent->getName()));
+    bool localPrefetch = event->isPrefetch() && (event->getRqstr() == parent->getName());
     recordStateEventCount(event->getCmd(), state);
     uint64_t sendTime = 0;
     switch (state) {
@@ -274,7 +286,14 @@ CacheAction L1CoherenceController::handleGetSRequest(MemEvent* event, CacheLine*
         case E:
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) return DONE;
+            if (localPrefetch) {
+                statPrefetchRedundant->addData(1);  // This prefetch was an immediate hit
+                return DONE;
+            }
+            if (cacheLine->getPrefetch()) {
+                statPrefetchHit->addData(1);
+                cacheLine->setPrefetch(false);
+            }
             if (event->isLoadLink()) cacheLine->atomicStart();
             sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime-1);
@@ -318,11 +337,19 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
             sendTime = forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), cacheLine->getTimestamp(), NULL);
             cacheLine->setState(SM);
+            if (cacheLine->getPrefetch()) {
+                statPrefetchUpgradeMiss->addData(1);
+                cacheLine->setPrefetch(false);
+            }
             cacheLine->setTimestamp(sendTime);
             return STALL;
         case E:
             cacheLine->setState(M);
         case M:
+            if (cacheLine->getPrefetch()) {
+                statPrefetchHit->addData(1);
+                cacheLine->setPrefetch(false);
+            }
             if (cmd == Command::GetX) {
                 /* L1s write back immediately */
                 if (!event->isStoreConditional() || atomic) {
@@ -408,6 +435,11 @@ CacheAction L1CoherenceController::handleFlushLineInvRequest(MemEvent * event, C
         sendFlushResponse(event, false, cacheLine->getTimestamp(), replay);
         return DONE;
     }
+    
+    if (cacheLine && cacheLine->getPrefetch()) {
+        statPrefetchEvict->addData(1);
+        cacheLine->setPrefetch(false);
+    }
 
     forwardFlushLine(event->getBaseAddr(), Command::FlushLineInv, event->getRqstr(), cacheLine);
     if (cacheLine != NULL) cacheLine->setState(I_B);
@@ -420,7 +452,7 @@ CacheAction L1CoherenceController::handleFlushLineInvRequest(MemEvent * event, C
  */
 void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest){
     
-    bool shouldRespond = !(origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName()));
+    bool localPrefetch = origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName());
     
     State state = cacheLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);
@@ -443,7 +475,10 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
             else if (protocol_ && responseEvent->getCmd() == Command::GetXResp) cacheLine->setState(E);
             else cacheLine->setState(S);
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) break;
+            if (localPrefetch) {
+                cacheLine->setPrefetch(true);
+                break;
+            }
             if (origRequest->isLoadLink()) cacheLine->atomicStart();
             sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime-1);
@@ -497,6 +532,11 @@ CacheAction L1CoherenceController::handleInv(MemEvent* event, CacheLine* cacheLi
     State state = cacheLine->getState();
     recordStateEventCount(event->getCmd(), state);
 
+    if (cacheLine->getPrefetch()) {
+        statPrefetchInv->addData(1);
+        cacheLine->setPrefetch(false);
+    }
+
     switch(state) {
         case I:
         case IS:
@@ -526,6 +566,11 @@ CacheAction L1CoherenceController::handleInv(MemEvent* event, CacheLine* cacheLi
 CacheAction L1CoherenceController::handleForceInv(MemEvent * event, CacheLine * cacheLine, bool replay) {
     State state = cacheLine->getState();
     recordStateEventCount(event->getCmd(), state);
+
+    if (cacheLine->getPrefetch()) {
+        statPrefetchInv->addData(1);
+        cacheLine->setPrefetch(false);
+    }
 
     switch(state) {
         case I:
@@ -559,6 +604,11 @@ CacheAction L1CoherenceController::handleFetchInv(MemEvent * event, CacheLine * 
     State state = cacheLine->getState();
     recordStateEventCount(event->getCmd(), state);
     
+    if (cacheLine->getPrefetch()) {
+        statPrefetchInv->addData(1);
+        cacheLine->setPrefetch(false);
+    }
+
     switch (state) {
         case I:
         case IS:

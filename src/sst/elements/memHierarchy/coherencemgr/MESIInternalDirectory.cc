@@ -70,6 +70,10 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
         case I:
             return DONE;
         case S:
+            if (replacementLine->getPrefetch()) {
+                replacementLine->setPrefetch(false);
+                statPrefetchEvict->addData(1);
+            }
             if (replacementLine->numSharers() > 0 && !fromDataCache) {
                 if (isCached || collision) invalidateAllSharers(replacementLine, parent->getName(), false);
                 else invalidateAllSharersAndFetch(replacementLine, parent->getName(), false);    // Fetch needed for PutS
@@ -84,6 +88,10 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
             if (expectWritebackAck_) mshr_->insertWriteback(wbBaseAddr);
             return DONE;
         case E:
+            if (replacementLine->getPrefetch()) {
+                replacementLine->setPrefetch(false);
+                statPrefetchEvict->addData(1);
+            }
             if (replacementLine->numSharers() > 0 && !fromDataCache) { // May or may not be cached
                 if (isCached || collision) invalidateAllSharers(replacementLine, parent->getName(), false);
                 else invalidateAllSharersAndFetch(replacementLine, parent->getName(), false);
@@ -105,6 +113,10 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
                 return DONE;
             }
         case M:
+            if (replacementLine->getPrefetch()) {
+                replacementLine->setPrefetch(false);
+                statPrefetchEvict->addData(1);
+            }
             if (replacementLine->numSharers() > 0 && !fromDataCache) {
                 if (isCached || collision) invalidateAllSharers(replacementLine, parent->getName(), false);
                 else invalidateAllSharersAndFetch(replacementLine, parent->getName(), false);
@@ -351,7 +363,7 @@ int MESIInternalDirectory::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine
 CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine* dirLine, bool replay) {
     State state = dirLine->getState();
     
-    bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == parent->getName()));
+    bool localPrefetch = event->isPrefetch() && (event->getRqstr() == parent->getName());
     recordStateEventCount(event->getCmd(), state);    
     bool isCached = dirLine->getDataLine() != NULL;
     uint64_t sendTime = 0;
@@ -364,7 +376,15 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
             return STALL;
         case S:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) return DONE;
+            if (localPrefetch) {
+                statPrefetchRedundant->addData(1);
+                return DONE;
+            }
+            if (dirLine->getPrefetch()) { /* Since prefetch gets unset if data replaced, we shouldn't have an issue with isCached=false */
+                dirLine->setPrefetch(false);
+                statPrefetchHit->addData(1);
+            }
+            
             if (isCached) {
                 dirLine->addSharer(event->getSrc());
                 sendTime = sendResponseUp(event, dirLine->getDataLine()->getData(), replay, dirLine->getTimestamp());
@@ -378,7 +398,14 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
         case E:
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) return DONE;
+            if (localPrefetch) {
+                statPrefetchRedundant->addData(1);
+                return DONE;
+            }
+            if (dirLine->getPrefetch()) {
+                dirLine->setPrefetch(false);
+                statPrefetchHit->addData(1);
+            }
             if (dirLine->ownerExists()) {
                 sendFetchInvX(dirLine, event->getRqstr(), replay);
                 mshr_->incrementAcksNeeded(event->getBaseAddr());
@@ -442,6 +469,10 @@ CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine*
             return STALL;
         case S:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
+            if (dirLine->getPrefetch()) {
+                dirLine->setPrefetch(false);
+                statPrefetchUpgradeMiss->addData(1);
+            }
             sendTime = forwardMessage(event, dirLine->getBaseAddr(), lineSize_, dirLine->getTimestamp(), &event->getPayload());
             if (invalidateSharersExceptRequestor(dirLine, event->getSrc(), event->getRqstr(), replay, false)) {
                 dirLine->setState(SM_Inv);
@@ -454,6 +485,10 @@ CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine*
             dirLine->setState(M);
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
+            if (dirLine->getPrefetch()) {
+                dirLine->setPrefetch(false);
+                statPrefetchHit->addData(1);
+            }
 
             if (invalidateSharersExceptRequestor(dirLine, event->getSrc(), event->getRqstr(), replay, !isCached)) {
                 dirLine->setState(M_Inv);
@@ -928,6 +963,7 @@ CacheAction MESIInternalDirectory::handleFlushLineInvRequest(MemEvent * event, C
             }
         }
     }
+
     CacheAction reqEventAction; // What to do with the reqEvent
     uint64_t sendTime = 0;
     // Handle flush at local level
@@ -936,6 +972,11 @@ CacheAction MESIInternalDirectory::handleFlushLineInvRequest(MemEvent * event, C
             if (reqEvent != NULL) return STALL;
             break;
         case S:
+            if (dirLine->getPrefetch()) {
+                dirLine->setPrefetch(false);
+                statPrefetchEvict->addData(1);
+            }
+
             if (dirLine->isSharer(event->getSrc())) dirLine->removeSharer(event->getSrc());
             if (dirLine->numSharers() > 0) {
                 invalidateAllSharers(dirLine, event->getRqstr(), replay);
@@ -945,6 +986,11 @@ CacheAction MESIInternalDirectory::handleFlushLineInvRequest(MemEvent * event, C
             break;
         case E:
         case M:
+            if (dirLine->getPrefetch()) {
+                dirLine->setPrefetch(false);
+                statPrefetchEvict->addData(1);
+            }
+
             if (dirLine->isSharer(event->getSrc())) dirLine->removeSharer(event->getSrc());
             if (dirLine->ownerExists()) {
                 sendFetchInv(dirLine, event->getRqstr(), replay);
@@ -1150,6 +1196,10 @@ CacheAction MESIInternalDirectory::handleFlushLineInvRequest(MemEvent * event, C
             } else return STALL;
         case M_InvX:
         case E_InvX:
+            if (dirLine->getPrefetch()) {
+                dirLine->setPrefetch(false);
+                statPrefetchEvict->addData(1);
+            }
             if (dirLine->getOwner() == event->getSrc()) {
                 mshr_->decrementAcksNeeded(event->getBaseAddr());
                 dirLine->clearOwner();
@@ -1202,6 +1252,11 @@ CacheAction MESIInternalDirectory::handleInv(MemEvent* event, CacheLine* dirLine
     State state = dirLine->getState();
     recordStateEventCount(event->getCmd(), state);    
     
+    if (dirLine->getPrefetch()) {
+        dirLine->setPrefetch(false);
+        statPrefetchInv->addData(1);
+    }
+
     switch(state) {
         case I_B:   // Already forwarded our flush
             return DONE;
@@ -1270,6 +1325,11 @@ CacheAction MESIInternalDirectory::handleForceInv(MemEvent * event, CacheLine * 
     
     bool isCached = dirLine->getDataLine() != NULL;
     
+    if (dirLine->getPrefetch()) {
+        dirLine->setPrefetch(false);
+        statPrefetchInv->addData(1);
+    }
+
     /* Handle mshr collisions with replacements - treat as having already occured, however AckPut needs to get returned */
     while (collisionEvent && collisionEvent->isWriteback()) {
         if (dirLine->isSharer(collisionEvent->getSrc())) dirLine->removeSharer(collisionEvent->getSrc());
@@ -1400,6 +1460,11 @@ CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * 
     State state = dirLine->getState();
     recordStateEventCount(event->getCmd(), state);    
     
+    if (dirLine->getPrefetch()) {
+        dirLine->setPrefetch(false);
+        statPrefetchInv->addData(1);
+    }
+
     bool isCached = dirLine->getDataLine() != NULL;
     bool collision = false;
     // If colliding event is a replacement, treat the replacement as if it had aleady occured/raced with an earlier FetchInv
@@ -1622,7 +1687,7 @@ CacheAction MESIInternalDirectory::handleDataResponse(MemEvent* responseEvent, C
     
     origRequest->setMemFlags(responseEvent->getMemFlags());
 
-    bool shouldRespond = !(origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName()));
+    bool localPrefetch = origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName());
     bool isCached = dirLine->getDataLine() != NULL;
     uint64_t sendTime = 0;
     switch (state) {
@@ -1631,7 +1696,10 @@ CacheAction MESIInternalDirectory::handleDataResponse(MemEvent* responseEvent, C
             else dirLine->setState(S);
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
             if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), 0);
-            if (!shouldRespond) return DONE;
+            if (localPrefetch) {
+                dirLine->setPrefetch(true);
+                return DONE;
+            }
             if (dirLine->getState() == E) {
                 dirLine->setOwner(origRequest->getSrc());
                 sendTime = sendResponseUp(origRequest, Command::GetXResp, &responseEvent->getPayload(), true, dirLine->getTimestamp());

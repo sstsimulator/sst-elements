@@ -57,10 +57,18 @@ CacheAction IncoherentController::handleEviction(CacheLine* wbCacheLine, string 
                 sendWriteback(Command::PutE, wbCacheLine, origRqstr);
             }
             wbCacheLine->setState(I);
+            if (wbCacheLine->getPrefetch()) {
+                wbCacheLine->setPrefetch(false);
+                statPrefetchEvict->addData(1);
+            }
             return DONE;
         case M:
             sendWriteback(Command::PutM, wbCacheLine, origRqstr);
             wbCacheLine->setState(I);
+            if (wbCacheLine->getPrefetch()) {
+                wbCacheLine->setPrefetch(false);
+                statPrefetchEvict->addData(1);
+            }
             return DONE;
         case IS:
         case IM:
@@ -206,7 +214,7 @@ CacheAction IncoherentController::handleGetSRequest(MemEvent* event, CacheLine* 
     vector<uint8_t>* data = cacheLine->getData();
     if (is_debug_event(event)) printData(cacheLine->getData(), false);
 
-    bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == parent->getName()));
+    bool localPrefetch = event->isPrefetch() && (event->getRqstr() == parent->getName());
     recordStateEventCount(event->getCmd(), state);
 
     uint64_t sendTime = 0;
@@ -223,7 +231,14 @@ CacheAction IncoherentController::handleGetSRequest(MemEvent* event, CacheLine* 
         case E:
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) return DONE;
+            if (localPrefetch) {
+                statPrefetchRedundant->addData(1);
+                return DONE;
+            }
+            if (cacheLine->getPrefetch()) {
+                statPrefetchHit->addData(1);
+                cacheLine->setPrefetch(false);
+            }
             sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             return DONE;
@@ -261,7 +276,12 @@ CacheAction IncoherentController::handleGetXRequest(MemEvent* event, CacheLine* 
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
             sendTime = sendResponseUp(event, cacheLine->getData(), replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
-            
+           
+            if (cacheLine->getPrefetch()) {
+                cacheLine->setPrefetch(false);
+                statPrefetchHit->addData(1);
+            }
+
             if (is_debug_event(event)) printData(cacheLine->getData(), false);
             
             return DONE;
@@ -302,6 +322,7 @@ CacheAction IncoherentController::handlePutMRequest(MemEvent* event, CacheLine* 
                 
                 if (is_debug_event(event)) printData(cacheLine->getData(), true);
             }
+
             break;
         default:
 	    debug->fatal(CALL_INFO, -1, "%s, Error: Received PutM/E but cache state is not handled. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
@@ -315,14 +336,14 @@ CacheAction IncoherentController::handleFlushLineRequest(MemEvent * event, Cache
     State state = cacheLine ? cacheLine->getState() : I;
     recordStateEventCount(event->getCmd(), state);
     
-     if (reqEvent != NULL) return STALL;
+    if (reqEvent != NULL) return STALL;
     
     forwardFlushLine(event->getBaseAddr(), event->getRqstr(), cacheLine, Command::FlushLine);
+
     if (cacheLine && state != I) cacheLine->setState(S_B);
     else if (cacheLine) cacheLine->setState(I_B);
     event->setInProgress(true);
     return STALL;   // wait for response
-
 }
 
 
@@ -333,6 +354,12 @@ CacheAction IncoherentController::handleFlushLineInvRequest(MemEvent * event, Ca
     if (reqEvent != NULL) return STALL;
 
     forwardFlushLine(event->getBaseAddr(), event->getRqstr(), cacheLine, Command::FlushLineInv);
+    
+    if (cacheLine && cacheLine->getPrefetch()) {
+        cacheLine->setPrefetch(false);
+        statPrefetchEvict->addData(1);
+    }
+
     if (cacheLine) cacheLine->setState(I_B);
     event->setInProgress(true);
     return STALL;   // wait for response
@@ -355,13 +382,16 @@ CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, Ca
     State state = cacheLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);
     
-    bool shouldRespond = !(origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName()));
+    bool localPrefetch = origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName());
     uint64_t sendTime = 0;
     switch (state) {
         case IS:
             cacheLine->setState(E);
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) return DONE;
+            if (localPrefetch) {
+                cacheLine->setPrefetch(true);
+                return DONE;    
+            }
             sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             if (is_debug_event(responseEvent)) printData(cacheLine->getData(), false);
