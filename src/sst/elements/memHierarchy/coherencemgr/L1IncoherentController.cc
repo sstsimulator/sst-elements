@@ -330,7 +330,7 @@ CacheAction L1IncoherentController::handleFlushLineInvRequest(MemEvent * event, 
 
     forwardFlushLine(event->getBaseAddr(), Command::FlushLineInv, event->getRqstr(), cacheLine);
     
-    if (cacheLine->getPrefetch()) {
+    if (cacheLine && cacheLine->getPrefetch()) {
         cacheLine->setPrefetch(false);
         statPrefetchEvict->addData(1);
     }

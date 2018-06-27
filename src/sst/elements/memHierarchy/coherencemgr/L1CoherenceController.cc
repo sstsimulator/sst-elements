@@ -436,7 +436,7 @@ CacheAction L1CoherenceController::handleFlushLineInvRequest(MemEvent * event, C
         return DONE;
     }
     
-    if (cacheLine->getPrefetch()) {
+    if (cacheLine && cacheLine->getPrefetch()) {
         statPrefetchEvict->addData(1);
         cacheLine->setPrefetch(false);
     }

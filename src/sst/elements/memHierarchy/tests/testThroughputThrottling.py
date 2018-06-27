@@ -73,7 +73,7 @@ for x in range(cores):
         "mshr_num_entries" : 8,
         "request_link_width" : "128B",
         "response_link_width" : "128B",
-        "min_packet_size" : "10B", # control message size
+        "memNIC.min_packet_size" : "10B", # control message size
         # Prefetch parameters
         "prefetcher" : "cassini.NextBlockPrefetcher",
         "drop_prefetch_mshr_level" : 5, # Drop prefetch when total misses > 5
@@ -107,7 +107,7 @@ for x in range(caches):
         "mshr_num_entries" : 8,
         "request_link_width" : "128B", # Accept up to 128B of requests each cycle
         "response_link_width" : "256B", # Accept up to 256B of responses each cycle
-        "min_packet_size" : "4B", # control message size
+        "memNIC.min_packet_size" : "4B", # control message size
         # Distributed cache parameters
         "num_cache_slices" : caches,
         "slice_allocation_policy" : "rr", # Round-robin

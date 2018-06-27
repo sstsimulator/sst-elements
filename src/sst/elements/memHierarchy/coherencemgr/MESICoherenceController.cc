@@ -689,13 +689,13 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
             }
             cacheLine->setData(event->getPayload(), 0);
         }
+    
+        if (cacheLine->getPrefetch()) {
+            statPrefetchEvict->addData(1);
+            cacheLine->setPrefetch(false);
+        }
     }
             
-    if (cacheLine->getPrefetch()) {
-        statPrefetchEvict->addData(1);
-        cacheLine->setPrefetch(false);
-    }
-    
     CacheAction reqEventAction;
     uint64_t sendTime = 0;
     // Handle flush at local level

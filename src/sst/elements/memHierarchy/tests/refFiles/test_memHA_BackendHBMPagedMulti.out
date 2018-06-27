@@ -1,11 +1,6 @@
 n0.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 n1.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 l3cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 5 cycles.
-TrivialCPU: Test Completed Successfuly
-TrivialCPU: Test Completed Successfuly
-TrivialCPU: Test Completed Successfuly
-TrivialCPU: Test Completed Successfuly
-TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (457795 clocks)
 fast_t_pages: 1024
 Channel 0 statistics
  Total Return Transactions: 1672 (53504 bytes) aggregate average bandwidth 0.534GB/s
@@ -31,9 +26,6 @@ Channel 6 statistics
 Channel 7 statistics
  Total Return Transactions: 1713 (54816 bytes) aggregate average bandwidth 0.548GB/s
  Rank 0 -  Reads: 1556 (49792 bytes) Writes: 60900175 (1948805600 bytes)
-TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (467578 clocks)
-TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (466426 clocks)
-TrivialCPU cpu0 Finished after 10000 issued reads, 10000 returned (1693234 clocks)
  c0.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 20533; SumSQ.u64 = 20533; Count.u64 = 20533; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 4799; SumSQ.u64 = 4799; Count.u64 = 4799; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
