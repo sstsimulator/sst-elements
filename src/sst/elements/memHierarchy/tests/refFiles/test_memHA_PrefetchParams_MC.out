@@ -208,7 +208,7 @@ Completed @ 4403 ns
  l1cache0.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache0.prefetch_evict : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  l1cache0.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache0.preftch_useful : Accumulator : Sum.u64 = 110; SumSQ.u64 = 110; Count.u64 = 110; Min.u64 = 1; Max.u64 = 1; 
+ l1cache0.prefetch_useful : Accumulator : Sum.u64 = 110; SumSQ.u64 = 110; Count.u64 = 110; Min.u64 = 1; Max.u64 = 1; 
  l1cache0.prefetch_coherence_miss : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; Min.u64 = 1; Max.u64 = 1; 
  l1cache0.prefetch_redundant : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; Min.u64 = 1; Max.u64 = 1; 
  l1cache0.stateEvent_GetS_E : Accumulator : Sum.u64 = 91; SumSQ.u64 = 91; Count.u64 = 91; Min.u64 = 1; Max.u64 = 1; 
@@ -601,7 +601,7 @@ Completed @ 4403 ns
  l1cache1.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache1.prefetch_evict : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  l1cache1.prefetch_inv : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
- l1cache1.preftch_useful : Accumulator : Sum.u64 = 111; SumSQ.u64 = 111; Count.u64 = 111; Min.u64 = 1; Max.u64 = 1; 
+ l1cache1.prefetch_useful : Accumulator : Sum.u64 = 111; SumSQ.u64 = 111; Count.u64 = 111; Min.u64 = 1; Max.u64 = 1; 
  l1cache1.prefetch_coherence_miss : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
  l1cache1.prefetch_redundant : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
  l1cache1.stateEvent_GetS_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -994,7 +994,7 @@ Completed @ 4403 ns
  l1cache2.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache2.prefetch_evict : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
  l1cache2.prefetch_inv : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
- l1cache2.preftch_useful : Accumulator : Sum.u64 = 111; SumSQ.u64 = 111; Count.u64 = 111; Min.u64 = 1; Max.u64 = 1; 
+ l1cache2.prefetch_useful : Accumulator : Sum.u64 = 111; SumSQ.u64 = 111; Count.u64 = 111; Min.u64 = 1; Max.u64 = 1; 
  l1cache2.prefetch_coherence_miss : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; Min.u64 = 1; Max.u64 = 1; 
  l1cache2.prefetch_redundant : Accumulator : Sum.u64 = 11; SumSQ.u64 = 11; Count.u64 = 11; Min.u64 = 1; Max.u64 = 1; 
  l1cache2.stateEvent_GetS_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1387,7 +1387,7 @@ Completed @ 4403 ns
  l1cache3.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache3.prefetch_evict : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
  l1cache3.prefetch_inv : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
- l1cache3.preftch_useful : Accumulator : Sum.u64 = 119; SumSQ.u64 = 119; Count.u64 = 119; Min.u64 = 1; Max.u64 = 1; 
+ l1cache3.prefetch_useful : Accumulator : Sum.u64 = 119; SumSQ.u64 = 119; Count.u64 = 119; Min.u64 = 1; Max.u64 = 1; 
  l1cache3.prefetch_coherence_miss : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; Min.u64 = 1; Max.u64 = 1; 
  l1cache3.prefetch_redundant : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l1cache3.stateEvent_GetS_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1780,7 +1780,7 @@ Completed @ 4403 ns
  l1cache4.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache4.prefetch_evict : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  l1cache4.prefetch_inv : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; Min.u64 = 1; Max.u64 = 1; 
- l1cache4.preftch_useful : Accumulator : Sum.u64 = 105; SumSQ.u64 = 105; Count.u64 = 105; Min.u64 = 1; Max.u64 = 1; 
+ l1cache4.prefetch_useful : Accumulator : Sum.u64 = 105; SumSQ.u64 = 105; Count.u64 = 105; Min.u64 = 1; Max.u64 = 1; 
  l1cache4.prefetch_coherence_miss : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; Min.u64 = 1; Max.u64 = 1; 
  l1cache4.prefetch_redundant : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l1cache4.stateEvent_GetS_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2173,7 +2173,7 @@ Completed @ 4403 ns
  l1cache5.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache5.prefetch_evict : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
  l1cache5.prefetch_inv : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; Min.u64 = 1; Max.u64 = 1; 
- l1cache5.preftch_useful : Accumulator : Sum.u64 = 113; SumSQ.u64 = 113; Count.u64 = 113; Min.u64 = 1; Max.u64 = 1; 
+ l1cache5.prefetch_useful : Accumulator : Sum.u64 = 113; SumSQ.u64 = 113; Count.u64 = 113; Min.u64 = 1; Max.u64 = 1; 
  l1cache5.prefetch_coherence_miss : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l1cache5.prefetch_redundant : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l1cache5.stateEvent_GetS_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
