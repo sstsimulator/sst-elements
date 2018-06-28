@@ -33,7 +33,7 @@ AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheList
     std::string cutoff_s = params.find<std::string>("addr_cutoff", "16GiB");
     UnitAlgebra cutoff_u(cutoff_s);
     cutoff = cutoff_u.getRoundedValue();
-    
+
     rdHisto = registerStatistic<Addr>("histogram_reads");
     wrHisto = registerStatistic<Addr>("histogram_writes");
 
@@ -45,9 +45,9 @@ void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {
     const NotifyResultType notifyResType = notify.getResultType();
     //const Addr addr = notify.getPhysicalAddress();
     const Addr vaddr = notify.getVirtualAddress();
-    
+
     if(notifyResType != MISS || vaddr >= cutoff) return;
-    
+
     // // Remove the offset within a bin
     // Addr baseAddr = vaddr & binMask;
     switch (notifyType) {
@@ -63,5 +63,5 @@ void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {
 }
 
 void AddrHistogrammer::registerResponseCallback(Event::HandlerBase *handler) {
-	registeredCallbacks.push_back(handler);
+    registeredCallbacks.push_back(handler);
 }
