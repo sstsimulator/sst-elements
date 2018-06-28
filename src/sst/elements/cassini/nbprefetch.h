@@ -36,40 +36,40 @@ namespace SST {
 namespace Cassini {
 
 class NextBlockPrefetcher : public SST::MemHierarchy::CacheListener {
-    public:
-	NextBlockPrefetcher(Component* owner, Params& params);
-        ~NextBlockPrefetcher();
+public:
+    NextBlockPrefetcher(Component* owner, Params& params);
+    ~NextBlockPrefetcher();
 
-	void notifyAccess(const CacheListenerNotification& notify);
-	void registerResponseCallback(Event::HandlerBase *handler);
-	void printStats(Output& out);
+    void notifyAccess(const CacheListenerNotification& notify);
+    void registerResponseCallback(Event::HandlerBase *handler);
+    void printStats(Output& out);
 
-	SST_ELI_REGISTER_SUBCOMPONENT(
-		NextBlockPrefetcher,
-		"cassini",
-		"NextBlockPrefetcher",
-		SST_ELI_ELEMENT_VERSION(1,0,0),
-		"Next Block Prefetcher",
-		"SST::Cassini::CacheListener"
-	)
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        NextBlockPrefetcher,
+        "cassini",
+        "NextBlockPrefetcher",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Next Block Prefetcher",
+        "SST::Cassini::CacheListener"
+    )
 
-	SST_ELI_DOCUMENT_PARAMS(
-		{ "cache_line_size", "Size of the cache line the prefetcher is attached to", "64" }
-	)
+    SST_ELI_DOCUMENT_PARAMS(
+        { "cache_line_size", "Size of the cache line the prefetcher is attached to", "64" }
+    )
 
-	SST_ELI_DOCUMENT_STATISTICS(
-		{ "prefetches_issued", "Number of prefetch requests issued", "prefetches", 1 },
-		{ "miss_events_processed", "Number of cache misses received", "misses", 2 },
-		{ "hit_events_processed", "Number of cache hits received", "hits", 2 }
-	)
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "prefetches_issued", "Number of prefetch requests issued", "prefetches", 1 },
+        { "miss_events_processed", "Number of cache misses received", "misses", 2 },
+        { "hit_events_processed", "Number of cache hits received", "hits", 2 }
+    )
 
-    private:
-	std::vector<Event::HandlerBase*> registeredCallbacks;
-	uint64_t blockSize;
+private:
+    std::vector<Event::HandlerBase*> registeredCallbacks;
+    uint64_t blockSize;
 
-	Statistic<uint64_t>* statPrefetchEventsIssued;
-	Statistic<uint64_t>* statMissEventsProcessed;
-	Statistic<uint64_t>* statHitEventsProcessed;
+    Statistic<uint64_t>* statPrefetchEventsIssued;
+    Statistic<uint64_t>* statMissEventsProcessed;
+    Statistic<uint64_t>* statHitEventsProcessed;
 
 };
 
