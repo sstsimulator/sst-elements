@@ -72,6 +72,12 @@ ArielMemoryManagerMalloc::ArielMemoryManagerMalloc(SST::Component* owner, Params
             output->verbose(CALL_INFO, 1, 0, "Populating page tables for level %" PRIu32 " from %s...\n", i, popFilePath.c_str());
             populatePageTable(popFilePath, pageTables[i], freePages[i], pageSizes[i]);
         }
+
+        /* Register statistics per pool */
+        sprintf(level_buffer, "mempool_%" PRIu32, i);
+        statBytesAlloc.push_back(registerStatistic<uint64_t>("bytes_allocated_in_pool", level_buffer));
+        statBytesFree.push_back(registerStatistic<uint64_t>("bytes_freed_from_pool", level_buffer));
+        statDemandAllocs.push_back(registerStatistic<uint64_t>("demand_page_allocs", level_buffer));
     }
 
     free(level_buffer);
@@ -114,6 +120,7 @@ void ArielMemoryManagerMalloc::allocate(const uint64_t size, const uint32_t leve
     uint64_t roundedSize = size;
     uint64_t remainder = size % pageSize;
 
+
     // We will do all of our allocation based on whole pages, inefficient maybe but much
     // simpler to implement and debug
     if(remainder > 0) {
@@ -122,6 +129,8 @@ void ArielMemoryManagerMalloc::allocate(const uint64_t size, const uint32_t leve
 
     output->verbose(CALL_INFO, 4, 0, "Request rounded to %" PRIu64 " bytes\n",
         roundedSize);
+    
+    statDemandAllocs[level]->addData(roundedSize/pageSize);
 
     uint64_t nextVirtPage = virtualAddress;
     for(uint64_t bytesLeft = 0; bytesLeft < roundedSize; bytesLeft += pageSize) {
@@ -208,7 +217,8 @@ bool ArielMemoryManagerMalloc::allocateMalloc(const uint64_t size, const uint32_
 
     // Record malloc
     mallocInformation.insert(std::make_pair(virtualAddress, mallocInfo(size, level, virtualPages)));
-
+    
+    statBytesAlloc[level]->addData(size);
     return true;
 }
 
@@ -219,6 +229,8 @@ void ArielMemoryManagerMalloc::freeMalloc(const uint64_t virtualAddress) {
     // Lookup VA in mallocInformation
     std::map<uint64_t, mallocInfo>::iterator it = mallocInformation.find(virtualAddress);
     if (it == mallocInformation.end()) return;
+    
+    statBytesFree[it->second.level]->addData(it->second.size);
 
     // Free each VA in mallocInformation from mallocTranslations & mallocPrimaryVAMap TODO fix so that mapping stays but address is available for future mallocs
     std::unordered_set<uint64_t>* myKeys = (it->second.VAKeys);
@@ -341,14 +353,14 @@ void ArielMemoryManagerMalloc::printStats() {
     output->output("Page Table Sizes:\n");
 
     for(uint32_t i = 0; i < memoryLevels; ++i) {
-        output->output("- Map entries at level %" PRIu32 "         %" PRIu32 "\n",
+        output->output("- Demand map entries at level %" PRIu32 "         %" PRIu32 "\n",
             i, (uint32_t) pageTables[i]->size());
     }
 
     output->output("Page Table Coverages:\n");
 
     for(uint32_t i = 0; i < memoryLevels; ++i) {
-        output->output("- Bytes at level %" PRIu32 "              %" PRIu64 "\n",
+        output->output("- Demand bytes at level %" PRIu32 "              %" PRIu64 "\n",
             i, ((uint64_t) pageTables[i]->size()) * ((uint64_t) pageSizes[i]));
     }
 }
