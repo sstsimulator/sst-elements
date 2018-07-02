@@ -156,7 +156,6 @@ libember_la_SOURCES = \
 	shmem/emberShmemGen.cc \
 	shmem/emberShmemGen.h \
 	shmem/emberShmemGetEv.h \
-	shmem/emberShmemGetNBI.h \
 	shmem/emberShmemGetVEv.h \
 	shmem/emberShmemInitEv.h \
 	shmem/emberShmemMallocEv.h \
@@ -179,6 +178,7 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemFadd.h \
 	shmem/motifs/emberShmemFcollect.h \
 	shmem/motifs/emberShmemGet.h \
+	shmem/motifs/emberShmemGetNBI.h \
 	shmem/motifs/emberShmemGetv.h \
 	shmem/motifs/emberShmemPut.h \
 	shmem/motifs/emberShmemPutv.h \
