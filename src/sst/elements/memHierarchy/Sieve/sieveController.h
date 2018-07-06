@@ -30,6 +30,7 @@
 #include <unordered_map>
 
 #include "sst/elements/memHierarchy/cacheArray.h"
+#include "sst/elements/memHierarchy/cacheListener.h"
 #include "sst/elements/memHierarchy/replacementManager.h"
 #include "sst/elements/memHierarchy/util.h"
 #include "sst/elements/ariel/arielalloctrackev.h"
@@ -116,6 +117,9 @@ private:
     /** Function to find and configure links */
     void configureLinks();
 
+    /** Function to configure profiler, if any */
+    void createProfiler(const Params &params);
+
     /** Handler for incoming link events.  */
     void processEvent(SST::Event* event);
     /** Handler for incoming allocation events.  */
@@ -130,6 +134,7 @@ private:
     vector<SST::Link*>  cpuLinks_;
     uint32_t            cpuLinkCount_;
     vector<SST::Link*>  allocLinks_;
+    CacheListener*      listener_;
 
     /* Statistics */
     Statistic<uint64_t>* statReadHits;
