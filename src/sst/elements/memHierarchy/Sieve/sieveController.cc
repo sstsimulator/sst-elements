@@ -131,7 +131,20 @@ void Sieve::processEvent(SST::Event* ev) {
         cacheArray_->replace(baseAddr, line);
         line->setState(M);
 
-        recordMiss(event->getVirtualAddress(), (cmd == Command::GetS));
+        bool isRead = (cmd == Command::GetS);
+        recordMiss(event->getVirtualAddress(), isRead);
+
+        // notify profiler, if any
+        if (listener_) {
+            CacheListenerNotification notify(event->getBaseAddr(), 
+                                             event->getVirtualAddress(),
+                                             event->getInstructionPointer(), 
+                                             event->getSize(), 
+                                             isRead ? READ : WRITE,
+                                             MISS);
+            listener_->notifyAccess(notify);
+        }
+
     } else {
         if (cmd == Command::GetS) statReadHits->addData(1);
         else statWriteHits->addData(1);

@@ -76,6 +76,9 @@ Sieve::Sieve(ComponentId_t id, Params &params) : Component(id) {
     // optional link for allocation / free tracking
     configureLinks();
 
+    /* Load profiler, if any */
+    createProfiler(params);
+
     /* Register statistics */
     statReadHits    = registerStatistic<uint64_t>("ReadHits");
     statReadMisses  = registerStatistic<uint64_t>("ReadMisses");
@@ -112,4 +115,17 @@ void Sieve::configureLinks() {
     }
 }
 
-    }}
+void Sieve::createProfiler(const Params &params) {
+    string profiler = params.find<std::string>("profiler", "");
+
+    if (profiler.empty()) {
+	listener_ = 0;
+    } else {
+	Params profilerParams = params.find_prefix_params("profiler." );
+        listener_ = dynamic_cast<CacheListener*>(loadSubComponent(profiler, this, profilerParams));        
+    }
+
+}
+
+
+    }} // end namespaces
