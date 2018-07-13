@@ -53,7 +53,8 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        { "addr_cutoff", "Addresses above this cutoff won't be recorded", "1TB" }
+                            { "addr_cutoff", "Addresses above this cutoff won't be recorded", "1TB" },
+                            { "virtual_addr", "Record virtual addresses (1) or physical (0)", 0}
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -63,6 +64,7 @@ public:
 
 private:
     std::vector<Event::HandlerBase*> registeredCallbacks;
+    bool captureVirtual; 
     Addr cutoff; // Don't bin addresses above the cutoff. Helps avoid creating
                 //  histogram entries for the vast address range between the
                 //  heap and the stack.
