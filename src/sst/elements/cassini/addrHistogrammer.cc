@@ -34,6 +34,8 @@ AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheList
     UnitAlgebra cutoff_u(cutoff_s);
     cutoff = cutoff_u.getRoundedValue();
 
+    captureVirtual = params.find<bool>("virtual_addr", "0");
+
     rdHisto = registerStatistic<Addr>("histogram_reads");
     wrHisto = registerStatistic<Addr>("histogram_writes");
 
@@ -43,8 +45,14 @@ AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheList
 void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {
     const NotifyAccessType notifyType = notify.getAccessType();
     const NotifyResultType notifyResType = notify.getResultType();
-    //const Addr addr = notify.getPhysicalAddress();
-    const Addr vaddr = notify.getVirtualAddress();
+
+    Addr vaddr;
+    if (captureVirtual) {
+        vaddr = notify.getVirtualAddress();
+    } else {
+        vaddr = notify.getPhysicalAddress();
+    }
+
 
     if(notifyResType != MISS || vaddr >= cutoff) return;
 

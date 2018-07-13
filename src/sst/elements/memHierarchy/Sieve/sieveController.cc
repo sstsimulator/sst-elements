@@ -205,6 +205,11 @@ void Sieve::outputStats(int marker) {
     // create new file
     Output* output_file = new Output("",0,0,SST::Output::FILE, fileName.str());
 
+    // have the listener (if any) output stats
+    if (listener_) {
+        listener_->printStats(*output_file);
+    }
+
     // print out all the allocations and how often they were touched
     output_file->output(CALL_INFO, "#Printing allocation memory accesses (mallocID, reads, writes):\n");
     vector<uint64_t> entriesToErase;
