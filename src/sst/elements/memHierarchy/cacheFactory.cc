@@ -158,6 +158,7 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceParams.insert("request_link_width", params.find<std::string>("request_link_width", "0B"));
     coherenceParams.insert("response_link_width", params.find<std::string>("response_link_width", "0B"));
     coherenceParams.insert("min_packet_size", params.find<std::string>("min_packet_size", "8B"));
+    coherenceParams.insert("prefetcher", params.find<std::string>("prefetcher", ""));
 
     if (!L1_) {
         if (protocol_ != CoherenceProtocol::NONE) {
@@ -380,8 +381,7 @@ void Cache::configureLinks(Params &params) {
         nicParams.find<std::string>("interleave_step", "", found);
         if (!found) nicParams.insert("interleave_step", std::to_string(interleaveStep) + "B");
         
-        if (isPortConnected("directory_ack") && isPortConnected("directory_fwd") && isPortConnected("directory_data") &&
-                isPortConnected("cache_ack") && isPortConnected("cache_fwd") && isPortConnected("cache_data")) {
+        if (isPortConnected("directory_ack") && isPortConnected("directory_fwd") && isPortConnected("directory_data")) {
             nicParams.find<std::string>("req.port", "", found);
             if (!found) nicParams.insert("req.port", "directory");
             nicParams.find<std::string>("ack.port", "", found);
@@ -425,7 +425,6 @@ void Cache::createPrefetcher(Params &params, int mshrSize) {
         listener_ = dynamic_cast<CacheListener*>(loadSubComponent(prefetcher, this, prefetcherParams));
         
         statPrefetchRequest         = registerStatistic<uint64_t>("Prefetch_requests");
-        statPrefetchHit             = registerStatistic<uint64_t>("Prefetch_hits");
         statPrefetchDrop            = registerStatistic<uint64_t>("Prefetch_drops");
     }
 

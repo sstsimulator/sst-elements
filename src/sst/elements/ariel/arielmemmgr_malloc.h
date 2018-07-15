@@ -40,15 +40,18 @@ class ArielMemoryManagerMalloc : public ArielMemoryManager {
         SST_ELI_REGISTER_SUBCOMPONENT(ArielMemoryManagerMalloc, "ariel", "MemoryManagerMalloc", SST_ELI_ELEMENT_VERSION(1,0,0),
                 "MLM memory manager which supports malloc/free in different memory pools", "SST::ArielComponent::ArielMemoryManager")
 
-#define MEMMGR_MALLOC_ELI_PARAMS ARIEL_ELI_MEMMGR_PARAMS,\
+#define ARIEL_MEMMGR_MALLOC_ELI_PARAMS ARIEL_ELI_MEMMGR_PARAMS,\
             {"memorylevels",    "Number of memory levels in the system", "1"},\
             {"defaultlevel",    "Default memory level", "0"},\
             {"pagesize%(memorylevels)d", "Page size for memory Level x", "4096"},\
             {"pagecount%(memorylevels)d", "Page count for memory Level x", "131072"},\
             {"page_populate_%(memorylevels)d", "Pre-populate/partially pre-populate a page table for a level in memory, this is the file to read in.", ""}
-
-        SST_ELI_DOCUMENT_PARAMS( MEMMGR_MALLOC_ELI_PARAMS )
-        SST_ELI_DOCUMENT_STATISTICS( ARIEL_ELI_MEMMGR_STATS )
+#define ARIEL_MEMMGR_MALLOC_ELI_STATS ARIEL_ELI_MEMMGR_STATS, \
+            { "bytes_allocated_in_pool", "Number of bytes allocated explicitly to memory pool <SubId>. Count is # of allocations", "bytes", 3 }, \
+            { "bytes_freed_from_pool",     "Number of bytes freed explicitly from memory pool <SubId>. Count is # of frees", "bytes", 3}, \
+            { "demand_page_allocs",      "Number of on-demand page allocations in memory pool <SubId>", "count", 3}
+        SST_ELI_DOCUMENT_PARAMS( ARIEL_MEMMGR_MALLOC_ELI_PARAMS )
+        SST_ELI_DOCUMENT_STATISTICS( ARIEL_MEMMGR_MALLOC_ELI_STATS )
 
 
         /* ArielMemoryManagerMalloc */
@@ -86,6 +89,10 @@ class ArielMemoryManagerMalloc : public ArielMemoryManager {
         std::deque<uint64_t>** freePages;
         std::unordered_map<uint64_t, uint64_t>** pageAllocations;
         std::unordered_map<uint64_t, uint64_t>** pageTables;
+
+        std::vector<Statistic<uint64_t>* > statBytesAlloc;
+        std::vector<Statistic<uint64_t>* > statBytesFree;
+        std::vector<Statistic<uint64_t>* > statDemandAllocs;
 };
 
 }

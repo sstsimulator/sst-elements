@@ -52,6 +52,7 @@
 
 #include "ariel_shmem.h"
 #include "arieltracegen.h"
+#include <sst/elements/Opal/Opal_Event.h>
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -104,6 +105,9 @@ class ArielCore {
         void handleFlushEvent(ArielFlushEvent *flEv);
         void handleFenceEvent(ArielFenceEvent *fEv);
 
+        // interrupt handlers
+        void handleInterruptEvent(SST::Event *event);
+        void ISR_Opal(SST::OpalComponent::OpalEvent *ev);
         void setOpal() { opal_enabled = true; }
         void setOpalLink(Link * opallink);
 
@@ -175,8 +179,7 @@ class ArielCore {
         Statistic<uint64_t>* statFPSPScalarIns;
         Statistic<uint64_t>* statFPSPOps;
 
-
-        uint64_t pending_transaction_count;
+        uint32_t pending_transaction_count;
 
 };
 

@@ -116,7 +116,7 @@ void Nic::RecvMachine::ShmemStream::processPut( ShmemMsgHdr& hdr, FireflyNetwork
                             (Hermes::Value::Type) hdr.dataType );
     } 
 
-	m_sendEntry = new ShmemAckSendEntry( local_pid, ev->getSrcNode(), dest_pid );
+	m_sendEntry = new ShmemAckSendEntry( local_pid, m_ctx->nic().getSendStreamNum(local_pid), ev->getSrcNode(), dest_pid );
 
 	m_matched_len = hdr.length;
 
@@ -168,7 +168,7 @@ void Nic::RecvMachine::ShmemStream::processGet( ShmemMsgHdr& hdr, FireflyNetwork
 
     m_ctx->calcNicMemDelay( m_unit, memOps, 
 			[=]() {
-    			m_ctx->runSend(0, new ShmemPut2SendEntry( local_pid, srcNode, dest_pid, backing, 
+    			m_ctx->runSend(0, new ShmemPut2SendEntry( local_pid, m_ctx->nic().getSendStreamNum(local_pid), srcNode, dest_pid, backing, 
                 	hdr.length, hdr.respKey, simVaddr ) );
                 m_ctx->deleteStream( this );  
 			}
@@ -210,7 +210,7 @@ void Nic::RecvMachine::ShmemStream::processAdd( ShmemMsgHdr& hdr, FireflyNetwork
    	m_ctx->calcNicMemDelay( m_unit, memOps,
 			[=]() {
 				m_dbg.debug(CALL_INFO_LAMBDA, "processAdd",1,NIC_DBG_RECV_STREAM,"send Ack to %d\n",srcNode);
-				m_sendEntry = new ShmemAckSendEntry( local_pid, srcNode, dest_pid );
+				m_sendEntry = new ShmemAckSendEntry( local_pid, m_ctx->nic().getSendStreamNum(local_pid), srcNode, dest_pid );
                 m_ctx->deleteStream(this);
 			}
 		);
@@ -250,7 +250,7 @@ void Nic::RecvMachine::ShmemStream::processFadd( ShmemMsgHdr& hdr, FireflyNetwor
     int srcNode = ev->getSrcNode();
    	m_ctx->calcNicMemDelay( m_unit, memOps, 
 			[=]() {
-    			m_ctx->runSend( 0, new ShmemPut2SendEntry( local_pid, srcNode, dest_pid, save, hdr.respKey ) );
+    			m_ctx->runSend( 0, new ShmemPut2SendEntry( local_pid, m_ctx->nic().getSendStreamNum(local_pid), srcNode, dest_pid, save, hdr.respKey ) );
                 m_ctx->deleteStream( this ); 
 			}
 	);	
@@ -281,7 +281,7 @@ void Nic::RecvMachine::ShmemStream::processSwap( ShmemMsgHdr& hdr, FireflyNetwor
     int srcNode = ev->getSrcNode();
    	m_ctx->calcNicMemDelay( m_unit, memOps,
 			[=]() {
-    			m_ctx->runSend( 0, new ShmemPut2SendEntry( local_pid, srcNode, dest_pid, save, hdr.respKey ) );
+    			m_ctx->runSend( 0, new ShmemPut2SendEntry( local_pid, m_ctx->nic().getSendStreamNum(local_pid), srcNode, dest_pid, save, hdr.respKey ) );
                 m_ctx->deleteStream( this );
 			}	
 	);
@@ -318,7 +318,7 @@ void Nic::RecvMachine::ShmemStream::processCswap( ShmemMsgHdr& hdr, FireflyNetwo
     int srcNode = ev->getSrcNode();
    	m_ctx->calcNicMemDelay( m_unit, memOps,
 		    [=]() {
-    			m_ctx->runSend( 0, new ShmemPut2SendEntry( local_pid, srcNode, dest_pid, save, hdr.respKey ) );
+    			m_ctx->runSend( 0, new ShmemPut2SendEntry( local_pid, m_ctx->nic().getSendStreamNum(local_pid), srcNode, dest_pid, save, hdr.respKey ) );
                 m_ctx->deleteStream( this );  
 			}
 	);

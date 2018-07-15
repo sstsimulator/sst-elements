@@ -28,6 +28,7 @@
 #include "shmem/motifs/emberShmemWaitUntil.h"
 #include "shmem/motifs/emberShmemPut.h"
 #include "shmem/motifs/emberShmemGet.h"
+#include "shmem/motifs/emberShmemGetNBI.h"
 #include "shmem/motifs/emberShmemPutv.h"
 #include "shmem/motifs/emberShmemGetv.h"
 #include "shmem/motifs/emberShmemFadd.h"

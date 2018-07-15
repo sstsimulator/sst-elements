@@ -16,7 +16,7 @@
 
 class ShmemSendEntryBase: public SendEntryBase {
   public:
-    ShmemSendEntryBase( int local_vNic ) : SendEntryBase( local_vNic ) { }
+    ShmemSendEntryBase( int local_vNic, int streamNum ) : SendEntryBase( local_vNic, streamNum ) { }
     ~ShmemSendEntryBase() { }
     
     MsgHdr::Op getOp() { return MsgHdr::Shmem; }
@@ -28,8 +28,8 @@ class ShmemSendEntryBase: public SendEntryBase {
 
 class ShmemCmdSendEntry: public ShmemSendEntryBase {
   public:
-    ShmemCmdSendEntry( int local_vNic, NicShmemSendCmdEvent* event) : 
-        ShmemSendEntryBase( local_vNic ), m_event( event ) { }
+    ShmemCmdSendEntry( int local_vNic, int streamNum, NicShmemSendCmdEvent* event) : 
+        ShmemSendEntryBase( local_vNic, streamNum ), m_event( event ) { }
     int dst_vNic() { return m_event->getVnic(); }
     int dest() { return m_event->getNode(); }
   protected:
@@ -38,8 +38,8 @@ class ShmemCmdSendEntry: public ShmemSendEntryBase {
 
 class ShmemAckSendEntry: public ShmemSendEntryBase {
   public:
-    ShmemAckSendEntry( int local_vNic, int dest_node, int dest_vNic  ) :
-        ShmemSendEntryBase( local_vNic ), m_dest_node(dest_node), m_dest_vNic(dest_vNic)
+    ShmemAckSendEntry( int local_vNic, int streamNum, int dest_node, int dest_vNic  ) :
+        ShmemSendEntryBase( local_vNic, streamNum ), m_dest_node(dest_node), m_dest_vNic(dest_vNic)
     { 
         m_hdr.op = ShmemMsgHdr::Ack; 
         m_isAck = true;
@@ -58,8 +58,8 @@ class ShmemAckSendEntry: public ShmemSendEntryBase {
 
 class ShmemRespSendEntry: public ShmemCmdSendEntry {
   public:
-    ShmemRespSendEntry( int local_vNic, NicShmemSendCmdEvent* event ) : 
-        ShmemCmdSendEntry( local_vNic, event )
+    ShmemRespSendEntry( int local_vNic, int streamNum, NicShmemSendCmdEvent* event ) : 
+        ShmemCmdSendEntry( local_vNic, streamNum, event )
     {
         m_hdr.vaddr = m_event->getFarAddr();
         m_hdr.length = m_event->getLength(); 
@@ -81,8 +81,8 @@ class ShmemGetvSendEntry: public ShmemRespSendEntry {
   public:
     typedef std::function<void(Hermes::Value&)> Callback;
 
-    ShmemGetvSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback  ) :
-        ShmemRespSendEntry( local_vNic, event ), m_callback(callback)
+    ShmemGetvSendEntry( int local_vNic, int streamNum, NicShmemSendCmdEvent* event, Callback callback  ) :
+        ShmemRespSendEntry( local_vNic, streamNum, event ), m_callback(callback)
     { 
         m_hdr.op = ShmemMsgHdr::Get; 
     }
@@ -96,8 +96,8 @@ class ShmemFaddSendEntry: public ShmemRespSendEntry {
   public:
     typedef std::function<void(Hermes::Value&)> Callback;
 
-    ShmemFaddSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback  ) :
-        ShmemRespSendEntry( local_vNic, event ), m_callback(callback)
+    ShmemFaddSendEntry( int local_vNic, int streamNum, NicShmemSendCmdEvent* event, Callback callback  ) :
+        ShmemRespSendEntry( local_vNic, streamNum, event ), m_callback(callback)
     { 
         m_shmemMove = new ShmemSendMoveValue( event->getValue() );
         m_hdr.op = ShmemMsgHdr::Fadd; 
@@ -119,8 +119,8 @@ class ShmemFaddSendEntry: public ShmemRespSendEntry {
 class ShmemSwapSendEntry: public ShmemRespSendEntry {
   public:
     typedef std::function<void(Hermes::Value&)> Callback;
-    ShmemSwapSendEntry( int local_vNic, NicShmemSwapCmdEvent* event, Callback callback  ) :
-        ShmemRespSendEntry( local_vNic, event ), m_callback(callback)
+    ShmemSwapSendEntry( int local_vNic, int streamNum, NicShmemSwapCmdEvent* event, Callback callback  ) :
+        ShmemRespSendEntry( local_vNic, streamNum, event ), m_callback(callback)
     {
         m_shmemMove = new ShmemSendMoveValue( event->getValue() );
         m_hdr.op = ShmemMsgHdr::Swap; 
@@ -142,8 +142,8 @@ class ShmemSwapSendEntry: public ShmemRespSendEntry {
 class ShmemCswapSendEntry: public ShmemRespSendEntry {
   public:
     typedef std::function<void(Hermes::Value&)> Callback;
-    ShmemCswapSendEntry( int local_vNic, NicShmemCswapCmdEvent* event, Callback callback  ) :
-        ShmemRespSendEntry( local_vNic, event ), m_callback(callback)
+    ShmemCswapSendEntry( int local_vNic, int streamNum, NicShmemCswapCmdEvent* event, Callback callback  ) :
+        ShmemRespSendEntry( local_vNic, streamNum, event ), m_callback(callback)
     {
         m_shmemMove = new ShmemSendMove2Value( event->getValue(), event->getCond() );
         m_hdr.op = ShmemMsgHdr::Cswap; 
@@ -166,8 +166,8 @@ class ShmemGetbSendEntry: public ShmemRespSendEntry {
   public:
     typedef std::function<void()> Callback;
 
-    ShmemGetbSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback ) : 
-        ShmemRespSendEntry( local_vNic, event ), m_callback(callback) 
+    ShmemGetbSendEntry( int local_vNic, int streamNum, NicShmemSendCmdEvent* event, Callback callback ) : 
+        ShmemRespSendEntry( local_vNic, streamNum, event ), m_callback(callback) 
     { 
         m_hdr.op = ShmemMsgHdr::Get; 
     }
@@ -179,9 +179,9 @@ class ShmemGetbSendEntry: public ShmemRespSendEntry {
 class ShmemPutSendEntry: public ShmemCmdSendEntry  {
   public:
     typedef std::function<void()> Callback;
-    ShmemPutSendEntry( int local_vNic, NicShmemSendCmdEvent* event,
+    ShmemPutSendEntry( int local_vNic, int streamNum, NicShmemSendCmdEvent* event,
                                                 Callback callback ) : 
-        ShmemCmdSendEntry( local_vNic, event ),
+        ShmemCmdSendEntry( local_vNic, streamNum, event ),
         m_callback(callback)
     {
         m_hdr.op = ShmemMsgHdr::Put; 
@@ -212,9 +212,9 @@ class ShmemPutSendEntry: public ShmemCmdSendEntry  {
 
 class ShmemPutbSendEntry: public ShmemPutSendEntry  {
   public:
-    ShmemPutbSendEntry( int local_vNic, NicShmemSendCmdEvent* event, void* backing,
+    ShmemPutbSendEntry( int local_vNic, int streamNum, NicShmemSendCmdEvent* event, void* backing,
                                                 Callback callback ) : 
-        ShmemPutSendEntry( local_vNic, event, callback )
+        ShmemPutSendEntry( local_vNic, streamNum, event, callback )
     {
         m_shmemMove = new ShmemSendMoveMem( backing, event->getLength(), event->getMyAddr() );
     }
@@ -224,9 +224,9 @@ class ShmemPutbSendEntry: public ShmemPutSendEntry  {
 
 class ShmemPutvSendEntry: public ShmemPutSendEntry  {
   public:
-    ShmemPutvSendEntry( int local_vNic, NicShmemSendCmdEvent* event,
+    ShmemPutvSendEntry( int local_vNic, int streamNum, NicShmemSendCmdEvent* event,
                                                 Callback callback ) : 
-        ShmemPutSendEntry( local_vNic, event, callback )
+        ShmemPutSendEntry( local_vNic, streamNum, event, callback )
     {
         m_shmemMove = new ShmemSendMoveValue( event->getValue() );
     }
@@ -235,9 +235,9 @@ class ShmemPutvSendEntry: public ShmemPutSendEntry  {
 
 class ShmemAddSendEntry: public ShmemPutvSendEntry {
   public:
-    ShmemAddSendEntry( int local_vNic, NicShmemSendCmdEvent* event, Callback callback ) :
+    ShmemAddSendEntry( int local_vNic, int streamNum, NicShmemSendCmdEvent* event, Callback callback ) :
 
-        ShmemPutvSendEntry( local_vNic, event, callback )
+        ShmemPutvSendEntry( local_vNic, streamNum, event, callback )
     { 
         m_hdr.op = ShmemMsgHdr::Add; 
         m_hdr.dataType = event->getDataType();
@@ -246,9 +246,9 @@ class ShmemAddSendEntry: public ShmemPutvSendEntry {
 
 class ShmemPut2SendEntry: public ShmemSendEntryBase  {
   public:
-    ShmemPut2SendEntry( int local_vNic, int destNode, int dest_vNic,
+    ShmemPut2SendEntry( int local_vNic, int streamNum, int destNode, int dest_vNic,
             void* ptr, size_t length, uint64_t key, Hermes::Vaddr addr ) :
-        ShmemSendEntryBase( local_vNic ),
+        ShmemSendEntryBase( local_vNic, streamNum ),
         m_node( destNode ),
         m_vnic(dest_vNic),
         m_value(NULL)
@@ -256,9 +256,9 @@ class ShmemPut2SendEntry: public ShmemSendEntryBase  {
         init( length, key );
         m_shmemMove = new ShmemSendMoveMem( ptr, length, addr );
     }
-    ShmemPut2SendEntry( int local_vNic, int destNode, int dest_vNic,
+    ShmemPut2SendEntry( int local_vNic, int streamNum, int destNode, int dest_vNic,
             Hermes::Value* value, uint64_t key ) :
-        ShmemSendEntryBase( local_vNic ),
+        ShmemSendEntryBase( local_vNic, streamNum ),
         m_node( destNode ),
         m_vnic(dest_vNic),
         m_value(value) 

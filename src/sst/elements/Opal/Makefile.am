@@ -24,13 +24,13 @@ libOpal_la_LDFLAGS = \
 libOpal_la_LIBADD = \
 	$(SST_SYSTEMC_LIB)
 
-
-EXTRA_DIST = \
-	tests/gupsgen_2RANKS.py \
-	tests/gupsgen_fastNVM.py \
-	tests/gupsgen.py \
-	tests/stencil3dbench_messier.py \
-	tests/streambench_messier.py
+# 
+# EXTRA_DIST = \
+# 	tests/gupsgen_2RANKS.py \
+# 	tests/gupsgen_fastNVM.py \
+# 	tests/gupsgen.py \
+# 	tests/stencil3dbench_messier.py \
+#	tests/streambench_messier.py
 
 #noinst_PROGRAMS = infogather
 #infogather_SOURCES = infogather.cc

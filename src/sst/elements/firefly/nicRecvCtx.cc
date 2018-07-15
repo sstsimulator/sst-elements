@@ -22,8 +22,8 @@ using namespace SST::Firefly;
 
 bool Nic::RecvMachine::Ctx::processPkt( FireflyNetworkEvent* ev ) {
 
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"got a network pkt from node=%d pid=%d for pid=%d\n",
-                        ev->getSrcNode(),ev->getSrcPid(), m_pid );
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"got a network pkt from node=%d pid=%d stream=%d for pid=%d\n",
+                        ev->getSrcNode(),ev->getSrcPid(), ev->getSrcStream(), m_pid );
 
     if ( ev->isCtrl() ) {
         return processCtrlPkt( ev );
@@ -43,7 +43,7 @@ bool Nic::RecvMachine::Ctx::processCtrlPkt( FireflyNetworkEvent* ev ) {
 
 bool Nic::RecvMachine::Ctx::processStdPkt( FireflyNetworkEvent* ev ) {
     bool blocked = false;
-    SrcKey srcKey = getSrcKey( ev->getSrcNode(), ev->getSrcPid() );
+    SrcKey srcKey = getSrcKey( ev->getSrcNode(), ev->getSrcPid(), ev->getSrcStream() );
 
     StreamBase* stream;
     if ( ev->isHdr() ) {
@@ -155,7 +155,7 @@ Nic::SendEntryBase* Nic::RecvMachine::Ctx::findGet( int srcNode, int srcPid, Rdm
 
     m_memRgnM.erase(rdmaHdr.rgnNum);
 
-    return new PutOrgnEntry( m_pid, srcNode, srcPid, rdmaHdr.respKey, entry );
+    return new PutOrgnEntry( m_pid, nic().getSendStreamNum(m_pid), srcNode, srcPid, rdmaHdr.respKey, entry );
 }
 
 Nic::DmaRecvEntry* Nic::RecvMachine::Ctx::findPut( int srcNode, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )

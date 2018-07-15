@@ -156,7 +156,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_0.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
  l1cache_0.prefetches_canceled_by_history : Accumulator : Sum.u64 = 31; SumSQ.u64 = 31; Count.u64 = 31; Min.u64 = 1; Max.u64 = 1; 
  l1cache_0.Prefetch_requests : Accumulator : Sum.u64 = 180; SumSQ.u64 = 180; Count.u64 = 180; Min.u64 = 1; Max.u64 = 1; 
- l1cache_0.Prefetch_hits : Accumulator : Sum.u64 = 34; SumSQ.u64 = 34; Count.u64 = 34; Min.u64 = 1; Max.u64 = 1; 
  l1cache_0.Prefetch_drops : Accumulator : Sum.u64 = 50; SumSQ.u64 = 50; Count.u64 = 50; Min.u64 = 1; Max.u64 = 1; 
  l1cache_0.TotalEventsReceived : Accumulator : Sum.u64 = 1201; SumSQ.u64 = 1201; Count.u64 = 1201; Min.u64 = 1; Max.u64 = 1; 
  l1cache_0.TotalEventsReplayed : Accumulator : Sum.u64 = 308; SumSQ.u64 = 308; Count.u64 = 308; Min.u64 = 1; Max.u64 = 1; 
@@ -283,6 +282,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_0.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_0.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_0.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_0.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_0.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_0.prefetch_useful : Accumulator : Sum.u64 = 92; SumSQ.u64 = 92; Count.u64 = 92; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_0.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_0.prefetch_redundant : Accumulator : Sum.u64 = 34; SumSQ.u64 = 34; Count.u64 = 34; Min.u64 = 1; Max.u64 = 1; 
  l1cache_0.stateEvent_GetS_E : Accumulator : Sum.u64 = 438; SumSQ.u64 = 438; Count.u64 = 438; Min.u64 = 1; Max.u64 = 1; 
  l1cache_0.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_0.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -295,7 +299,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_0.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 31; SumSQ.u64 = 31; Count.u64 = 31; Min.u64 = 1; Max.u64 = 1; 
  l2cache_0.prefetches_canceled_by_history : Accumulator : Sum.u64 = 138; SumSQ.u64 = 138; Count.u64 = 138; Min.u64 = 1; Max.u64 = 1; 
  l2cache_0.Prefetch_requests : Accumulator : Sum.u64 = 227; SumSQ.u64 = 227; Count.u64 = 227; Min.u64 = 1; Max.u64 = 1; 
- l2cache_0.Prefetch_hits : Accumulator : Sum.u64 = 21; SumSQ.u64 = 21; Count.u64 = 21; Min.u64 = 1; Max.u64 = 1; 
  l2cache_0.Prefetch_drops : Accumulator : Sum.u64 = 90; SumSQ.u64 = 90; Count.u64 = 90; Min.u64 = 1; Max.u64 = 1; 
  l2cache_0.packet_latency : Accumulator : Sum.u64 = 460; SumSQ.u64 = 460; Count.u64 = 637; Min.u64 = 0; Max.u64 = 1; 
  l2cache_0.send_bit_count : Accumulator : Sum.u64 = 42816; SumSQ.u64 = 3919872; Count.u64 = 637; Min.u64 = 64; Max.u64 = 576; 
@@ -490,6 +493,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_0.eventSent_FetchInvX : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; Min.u64 = 1; Max.u64 = 1; 
  l2cache_0.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_0.eventSent_NACK_up : Accumulator : Sum.u64 = 77; SumSQ.u64 = 77; Count.u64 = 77; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_0.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_0.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_0.prefetch_useful : Accumulator : Sum.u64 = 111; SumSQ.u64 = 111; Count.u64 = 111; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_0.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_0.prefetch_redundant : Accumulator : Sum.u64 = 21; SumSQ.u64 = 21; Count.u64 = 21; Min.u64 = 1; Max.u64 = 1; 
  l2cache_0.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_0.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_0.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -560,7 +568,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_1.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  l1cache_1.prefetches_canceled_by_history : Accumulator : Sum.u64 = 48; SumSQ.u64 = 48; Count.u64 = 48; Min.u64 = 1; Max.u64 = 1; 
  l1cache_1.Prefetch_requests : Accumulator : Sum.u64 = 234; SumSQ.u64 = 234; Count.u64 = 234; Min.u64 = 1; Max.u64 = 1; 
- l1cache_1.Prefetch_hits : Accumulator : Sum.u64 = 40; SumSQ.u64 = 40; Count.u64 = 40; Min.u64 = 1; Max.u64 = 1; 
  l1cache_1.Prefetch_drops : Accumulator : Sum.u64 = 74; SumSQ.u64 = 74; Count.u64 = 74; Min.u64 = 1; Max.u64 = 1; 
  l1cache_1.TotalEventsReceived : Accumulator : Sum.u64 = 1494; SumSQ.u64 = 1494; Count.u64 = 1494; Min.u64 = 1; Max.u64 = 1; 
  l1cache_1.TotalEventsReplayed : Accumulator : Sum.u64 = 495; SumSQ.u64 = 495; Count.u64 = 495; Min.u64 = 1; Max.u64 = 1; 
@@ -687,6 +694,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_1.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_1.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_1.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_1.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_1.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_1.prefetch_useful : Accumulator : Sum.u64 = 119; SumSQ.u64 = 119; Count.u64 = 119; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_1.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_1.prefetch_redundant : Accumulator : Sum.u64 = 40; SumSQ.u64 = 40; Count.u64 = 40; Min.u64 = 1; Max.u64 = 1; 
  l1cache_1.stateEvent_GetS_E : Accumulator : Sum.u64 = 780; SumSQ.u64 = 780; Count.u64 = 780; Min.u64 = 1; Max.u64 = 1; 
  l1cache_1.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_1.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -699,7 +711,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_1.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 53; SumSQ.u64 = 53; Count.u64 = 53; Min.u64 = 1; Max.u64 = 1; 
  l2cache_1.prefetches_canceled_by_history : Accumulator : Sum.u64 = 121; SumSQ.u64 = 121; Count.u64 = 121; Min.u64 = 1; Max.u64 = 1; 
  l2cache_1.Prefetch_requests : Accumulator : Sum.u64 = 195; SumSQ.u64 = 195; Count.u64 = 195; Min.u64 = 1; Max.u64 = 1; 
- l2cache_1.Prefetch_hits : Accumulator : Sum.u64 = 30; SumSQ.u64 = 30; Count.u64 = 30; Min.u64 = 1; Max.u64 = 1; 
  l2cache_1.Prefetch_drops : Accumulator : Sum.u64 = 28; SumSQ.u64 = 28; Count.u64 = 28; Min.u64 = 1; Max.u64 = 1; 
  l2cache_1.packet_latency : Accumulator : Sum.u64 = 583; SumSQ.u64 = 583; Count.u64 = 794; Min.u64 = 0; Max.u64 = 1; 
  l2cache_1.send_bit_count : Accumulator : Sum.u64 = 55424; SumSQ.u64 = 6201344; Count.u64 = 794; Min.u64 = 64; Max.u64 = 576; 
@@ -894,6 +905,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_1.eventSent_FetchInvX : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l2cache_1.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_1.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_1.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_1.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_1.prefetch_useful : Accumulator : Sum.u64 = 135; SumSQ.u64 = 135; Count.u64 = 135; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_1.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_1.prefetch_redundant : Accumulator : Sum.u64 = 30; SumSQ.u64 = 30; Count.u64 = 30; Min.u64 = 1; Max.u64 = 1; 
  l2cache_1.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_1.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_1.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -964,7 +980,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_2.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l1cache_2.prefetches_canceled_by_history : Accumulator : Sum.u64 = 31; SumSQ.u64 = 31; Count.u64 = 31; Min.u64 = 1; Max.u64 = 1; 
  l1cache_2.Prefetch_requests : Accumulator : Sum.u64 = 179; SumSQ.u64 = 179; Count.u64 = 179; Min.u64 = 1; Max.u64 = 1; 
- l1cache_2.Prefetch_hits : Accumulator : Sum.u64 = 31; SumSQ.u64 = 31; Count.u64 = 31; Min.u64 = 1; Max.u64 = 1; 
  l1cache_2.Prefetch_drops : Accumulator : Sum.u64 = 50; SumSQ.u64 = 50; Count.u64 = 50; Min.u64 = 1; Max.u64 = 1; 
  l1cache_2.TotalEventsReceived : Accumulator : Sum.u64 = 1243; SumSQ.u64 = 1243; Count.u64 = 1243; Min.u64 = 1; Max.u64 = 1; 
  l1cache_2.TotalEventsReplayed : Accumulator : Sum.u64 = 325; SumSQ.u64 = 325; Count.u64 = 325; Min.u64 = 1; Max.u64 = 1; 
@@ -1091,6 +1106,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_2.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_2.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_2.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_2.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_2.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_2.prefetch_useful : Accumulator : Sum.u64 = 96; SumSQ.u64 = 96; Count.u64 = 96; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_2.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_2.prefetch_redundant : Accumulator : Sum.u64 = 31; SumSQ.u64 = 31; Count.u64 = 31; Min.u64 = 1; Max.u64 = 1; 
  l1cache_2.stateEvent_GetS_E : Accumulator : Sum.u64 = 436; SumSQ.u64 = 436; Count.u64 = 436; Min.u64 = 1; Max.u64 = 1; 
  l1cache_2.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_2.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1103,7 +1123,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_2.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 43; SumSQ.u64 = 43; Count.u64 = 43; Min.u64 = 1; Max.u64 = 1; 
  l2cache_2.prefetches_canceled_by_history : Accumulator : Sum.u64 = 138; SumSQ.u64 = 138; Count.u64 = 138; Min.u64 = 1; Max.u64 = 1; 
  l2cache_2.Prefetch_requests : Accumulator : Sum.u64 = 223; SumSQ.u64 = 223; Count.u64 = 223; Min.u64 = 1; Max.u64 = 1; 
- l2cache_2.Prefetch_hits : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; Min.u64 = 1; Max.u64 = 1; 
  l2cache_2.Prefetch_drops : Accumulator : Sum.u64 = 82; SumSQ.u64 = 82; Count.u64 = 82; Min.u64 = 1; Max.u64 = 1; 
  l2cache_2.packet_latency : Accumulator : Sum.u64 = 495; SumSQ.u64 = 495; Count.u64 = 641; Min.u64 = 0; Max.u64 = 1; 
  l2cache_2.send_bit_count : Accumulator : Sum.u64 = 44096; SumSQ.u64 = 4591616; Count.u64 = 641; Min.u64 = 64; Max.u64 = 576; 
@@ -1298,6 +1317,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_2.eventSent_FetchInvX : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
  l2cache_2.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_2.eventSent_NACK_up : Accumulator : Sum.u64 = 119; SumSQ.u64 = 119; Count.u64 = 119; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_2.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_2.prefetch_inv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_2.prefetch_useful : Accumulator : Sum.u64 = 110; SumSQ.u64 = 110; Count.u64 = 110; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_2.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_2.prefetch_redundant : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; Min.u64 = 1; Max.u64 = 1; 
  l2cache_2.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_2.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_2.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1368,7 +1392,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_3.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
  l1cache_3.prefetches_canceled_by_history : Accumulator : Sum.u64 = 56; SumSQ.u64 = 56; Count.u64 = 56; Min.u64 = 1; Max.u64 = 1; 
  l1cache_3.Prefetch_requests : Accumulator : Sum.u64 = 224; SumSQ.u64 = 224; Count.u64 = 224; Min.u64 = 1; Max.u64 = 1; 
- l1cache_3.Prefetch_hits : Accumulator : Sum.u64 = 39; SumSQ.u64 = 39; Count.u64 = 39; Min.u64 = 1; Max.u64 = 1; 
  l1cache_3.Prefetch_drops : Accumulator : Sum.u64 = 52; SumSQ.u64 = 52; Count.u64 = 52; Min.u64 = 1; Max.u64 = 1; 
  l1cache_3.TotalEventsReceived : Accumulator : Sum.u64 = 1485; SumSQ.u64 = 1485; Count.u64 = 1485; Min.u64 = 1; Max.u64 = 1; 
  l1cache_3.TotalEventsReplayed : Accumulator : Sum.u64 = 538; SumSQ.u64 = 538; Count.u64 = 538; Min.u64 = 1; Max.u64 = 1; 
@@ -1495,6 +1518,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_3.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_3.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_3.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_3.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_3.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_3.prefetch_useful : Accumulator : Sum.u64 = 130; SumSQ.u64 = 130; Count.u64 = 130; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_3.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_3.prefetch_redundant : Accumulator : Sum.u64 = 39; SumSQ.u64 = 39; Count.u64 = 39; Min.u64 = 1; Max.u64 = 1; 
  l1cache_3.stateEvent_GetS_E : Accumulator : Sum.u64 = 791; SumSQ.u64 = 791; Count.u64 = 791; Min.u64 = 1; Max.u64 = 1; 
  l1cache_3.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_3.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1507,7 +1535,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_3.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 34; SumSQ.u64 = 34; Count.u64 = 34; Min.u64 = 1; Max.u64 = 1; 
  l2cache_3.prefetches_canceled_by_history : Accumulator : Sum.u64 = 104; SumSQ.u64 = 104; Count.u64 = 104; Min.u64 = 1; Max.u64 = 1; 
  l2cache_3.Prefetch_requests : Accumulator : Sum.u64 = 187; SumSQ.u64 = 187; Count.u64 = 187; Min.u64 = 1; Max.u64 = 1; 
- l2cache_3.Prefetch_hits : Accumulator : Sum.u64 = 20; SumSQ.u64 = 20; Count.u64 = 20; Min.u64 = 1; Max.u64 = 1; 
  l2cache_3.Prefetch_drops : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
  l2cache_3.packet_latency : Accumulator : Sum.u64 = 582; SumSQ.u64 = 582; Count.u64 = 798; Min.u64 = 0; Max.u64 = 1; 
  l2cache_3.send_bit_count : Accumulator : Sum.u64 = 55168; SumSQ.u64 = 5890048; Count.u64 = 798; Min.u64 = 64; Max.u64 = 576; 
@@ -1702,6 +1729,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_3.eventSent_FetchInvX : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l2cache_3.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_3.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_3.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_3.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_3.prefetch_useful : Accumulator : Sum.u64 = 129; SumSQ.u64 = 129; Count.u64 = 129; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_3.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_3.prefetch_redundant : Accumulator : Sum.u64 = 20; SumSQ.u64 = 20; Count.u64 = 20; Min.u64 = 1; Max.u64 = 1; 
  l2cache_3.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_3.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_3.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1772,7 +1804,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_4.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l1cache_4.prefetches_canceled_by_history : Accumulator : Sum.u64 = 38; SumSQ.u64 = 38; Count.u64 = 38; Min.u64 = 1; Max.u64 = 1; 
  l1cache_4.Prefetch_requests : Accumulator : Sum.u64 = 174; SumSQ.u64 = 174; Count.u64 = 174; Min.u64 = 1; Max.u64 = 1; 
- l1cache_4.Prefetch_hits : Accumulator : Sum.u64 = 35; SumSQ.u64 = 35; Count.u64 = 35; Min.u64 = 1; Max.u64 = 1; 
  l1cache_4.Prefetch_drops : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 49; Min.u64 = 1; Max.u64 = 1; 
  l1cache_4.TotalEventsReceived : Accumulator : Sum.u64 = 1210; SumSQ.u64 = 1210; Count.u64 = 1210; Min.u64 = 1; Max.u64 = 1; 
  l1cache_4.TotalEventsReplayed : Accumulator : Sum.u64 = 331; SumSQ.u64 = 331; Count.u64 = 331; Min.u64 = 1; Max.u64 = 1; 
@@ -1899,6 +1930,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_4.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_4.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_4.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_4.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_4.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_4.prefetch_useful : Accumulator : Sum.u64 = 88; SumSQ.u64 = 88; Count.u64 = 88; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_4.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_4.prefetch_redundant : Accumulator : Sum.u64 = 35; SumSQ.u64 = 35; Count.u64 = 35; Min.u64 = 1; Max.u64 = 1; 
  l1cache_4.stateEvent_GetS_E : Accumulator : Sum.u64 = 435; SumSQ.u64 = 435; Count.u64 = 435; Min.u64 = 1; Max.u64 = 1; 
  l1cache_4.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_4.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1911,7 +1947,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_4.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 59; SumSQ.u64 = 59; Count.u64 = 59; Min.u64 = 1; Max.u64 = 1; 
  l2cache_4.prefetches_canceled_by_history : Accumulator : Sum.u64 = 144; SumSQ.u64 = 144; Count.u64 = 144; Min.u64 = 1; Max.u64 = 1; 
  l2cache_4.Prefetch_requests : Accumulator : Sum.u64 = 222; SumSQ.u64 = 222; Count.u64 = 222; Min.u64 = 1; Max.u64 = 1; 
- l2cache_4.Prefetch_hits : Accumulator : Sum.u64 = 28; SumSQ.u64 = 28; Count.u64 = 28; Min.u64 = 1; Max.u64 = 1; 
  l2cache_4.Prefetch_drops : Accumulator : Sum.u64 = 86; SumSQ.u64 = 86; Count.u64 = 86; Min.u64 = 1; Max.u64 = 1; 
  l2cache_4.packet_latency : Accumulator : Sum.u64 = 436; SumSQ.u64 = 436; Count.u64 = 639; Min.u64 = 0; Max.u64 = 1; 
  l2cache_4.send_bit_count : Accumulator : Sum.u64 = 44992; SumSQ.u64 = 5238784; Count.u64 = 639; Min.u64 = 64; Max.u64 = 576; 
@@ -2106,6 +2141,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_4.eventSent_FetchInvX : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l2cache_4.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_4.eventSent_NACK_up : Accumulator : Sum.u64 = 90; SumSQ.u64 = 90; Count.u64 = 90; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_4.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_4.prefetch_inv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_4.prefetch_useful : Accumulator : Sum.u64 = 104; SumSQ.u64 = 104; Count.u64 = 104; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_4.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_4.prefetch_redundant : Accumulator : Sum.u64 = 28; SumSQ.u64 = 28; Count.u64 = 28; Min.u64 = 1; Max.u64 = 1; 
  l2cache_4.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_4.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_4.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2176,7 +2216,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_5.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; Min.u64 = 1; Max.u64 = 1; 
  l1cache_5.prefetches_canceled_by_history : Accumulator : Sum.u64 = 47; SumSQ.u64 = 47; Count.u64 = 47; Min.u64 = 1; Max.u64 = 1; 
  l1cache_5.Prefetch_requests : Accumulator : Sum.u64 = 234; SumSQ.u64 = 234; Count.u64 = 234; Min.u64 = 1; Max.u64 = 1; 
- l1cache_5.Prefetch_hits : Accumulator : Sum.u64 = 37; SumSQ.u64 = 37; Count.u64 = 37; Min.u64 = 1; Max.u64 = 1; 
  l1cache_5.Prefetch_drops : Accumulator : Sum.u64 = 72; SumSQ.u64 = 72; Count.u64 = 72; Min.u64 = 1; Max.u64 = 1; 
  l1cache_5.TotalEventsReceived : Accumulator : Sum.u64 = 1496; SumSQ.u64 = 1496; Count.u64 = 1496; Min.u64 = 1; Max.u64 = 1; 
  l1cache_5.TotalEventsReplayed : Accumulator : Sum.u64 = 494; SumSQ.u64 = 494; Count.u64 = 494; Min.u64 = 1; Max.u64 = 1; 
@@ -2303,6 +2342,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_5.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_5.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_5.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_5.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_5.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_5.prefetch_useful : Accumulator : Sum.u64 = 123; SumSQ.u64 = 123; Count.u64 = 123; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_5.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_5.prefetch_redundant : Accumulator : Sum.u64 = 37; SumSQ.u64 = 37; Count.u64 = 37; Min.u64 = 1; Max.u64 = 1; 
  l1cache_5.stateEvent_GetS_E : Accumulator : Sum.u64 = 781; SumSQ.u64 = 781; Count.u64 = 781; Min.u64 = 1; Max.u64 = 1; 
  l1cache_5.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_5.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2315,7 +2359,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_5.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; Min.u64 = 1; Max.u64 = 1; 
  l2cache_5.prefetches_canceled_by_history : Accumulator : Sum.u64 = 108; SumSQ.u64 = 108; Count.u64 = 108; Min.u64 = 1; Max.u64 = 1; 
  l2cache_5.Prefetch_requests : Accumulator : Sum.u64 = 198; SumSQ.u64 = 198; Count.u64 = 198; Min.u64 = 1; Max.u64 = 1; 
- l2cache_5.Prefetch_hits : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; Min.u64 = 1; Max.u64 = 1; 
  l2cache_5.Prefetch_drops : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
  l2cache_5.packet_latency : Accumulator : Sum.u64 = 575; SumSQ.u64 = 575; Count.u64 = 793; Min.u64 = 0; Max.u64 = 1; 
  l2cache_5.send_bit_count : Accumulator : Sum.u64 = 52800; SumSQ.u64 = 4558848; Count.u64 = 793; Min.u64 = 64; Max.u64 = 576; 
@@ -2510,6 +2553,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_5.eventSent_FetchInvX : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; Min.u64 = 1; Max.u64 = 1; 
  l2cache_5.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_5.eventSent_NACK_up : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_5.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_5.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_5.prefetch_useful : Accumulator : Sum.u64 = 135; SumSQ.u64 = 135; Count.u64 = 135; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_5.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_5.prefetch_redundant : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; Min.u64 = 1; Max.u64 = 1; 
  l2cache_5.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_5.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_5.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2580,7 +2628,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_6.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l1cache_6.prefetches_canceled_by_history : Accumulator : Sum.u64 = 35; SumSQ.u64 = 35; Count.u64 = 35; Min.u64 = 1; Max.u64 = 1; 
  l1cache_6.Prefetch_requests : Accumulator : Sum.u64 = 177; SumSQ.u64 = 177; Count.u64 = 177; Min.u64 = 1; Max.u64 = 1; 
- l1cache_6.Prefetch_hits : Accumulator : Sum.u64 = 37; SumSQ.u64 = 37; Count.u64 = 37; Min.u64 = 1; Max.u64 = 1; 
  l1cache_6.Prefetch_drops : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 49; Min.u64 = 1; Max.u64 = 1; 
  l1cache_6.TotalEventsReceived : Accumulator : Sum.u64 = 1225; SumSQ.u64 = 1225; Count.u64 = 1225; Min.u64 = 1; Max.u64 = 1; 
  l1cache_6.TotalEventsReplayed : Accumulator : Sum.u64 = 313; SumSQ.u64 = 313; Count.u64 = 313; Min.u64 = 1; Max.u64 = 1; 
@@ -2707,6 +2754,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_6.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_6.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_6.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_6.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_6.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_6.prefetch_useful : Accumulator : Sum.u64 = 89; SumSQ.u64 = 89; Count.u64 = 89; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_6.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_6.prefetch_redundant : Accumulator : Sum.u64 = 37; SumSQ.u64 = 37; Count.u64 = 37; Min.u64 = 1; Max.u64 = 1; 
  l1cache_6.stateEvent_GetS_E : Accumulator : Sum.u64 = 435; SumSQ.u64 = 435; Count.u64 = 435; Min.u64 = 1; Max.u64 = 1; 
  l1cache_6.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_6.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2719,7 +2771,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_6.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 49; Min.u64 = 1; Max.u64 = 1; 
  l2cache_6.prefetches_canceled_by_history : Accumulator : Sum.u64 = 145; SumSQ.u64 = 145; Count.u64 = 145; Min.u64 = 1; Max.u64 = 1; 
  l2cache_6.Prefetch_requests : Accumulator : Sum.u64 = 229; SumSQ.u64 = 229; Count.u64 = 229; Min.u64 = 1; Max.u64 = 1; 
- l2cache_6.Prefetch_hits : Accumulator : Sum.u64 = 31; SumSQ.u64 = 31; Count.u64 = 31; Min.u64 = 1; Max.u64 = 1; 
  l2cache_6.Prefetch_drops : Accumulator : Sum.u64 = 82; SumSQ.u64 = 82; Count.u64 = 82; Min.u64 = 1; Max.u64 = 1; 
  l2cache_6.packet_latency : Accumulator : Sum.u64 = 460; SumSQ.u64 = 460; Count.u64 = 645; Min.u64 = 0; Max.u64 = 1; 
  l2cache_6.send_bit_count : Accumulator : Sum.u64 = 45888; SumSQ.u64 = 5591040; Count.u64 = 645; Min.u64 = 64; Max.u64 = 576; 
@@ -2914,6 +2965,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_6.eventSent_FetchInvX : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l2cache_6.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_6.eventSent_NACK_up : Accumulator : Sum.u64 = 99; SumSQ.u64 = 99; Count.u64 = 99; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_6.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_6.prefetch_inv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_6.prefetch_useful : Accumulator : Sum.u64 = 109; SumSQ.u64 = 109; Count.u64 = 109; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_6.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_6.prefetch_redundant : Accumulator : Sum.u64 = 31; SumSQ.u64 = 31; Count.u64 = 31; Min.u64 = 1; Max.u64 = 1; 
  l2cache_6.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_6.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_6.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2984,7 +3040,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_7.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; Min.u64 = 1; Max.u64 = 1; 
  l1cache_7.prefetches_canceled_by_history : Accumulator : Sum.u64 = 53; SumSQ.u64 = 53; Count.u64 = 53; Min.u64 = 1; Max.u64 = 1; 
  l1cache_7.Prefetch_requests : Accumulator : Sum.u64 = 229; SumSQ.u64 = 229; Count.u64 = 229; Min.u64 = 1; Max.u64 = 1; 
- l1cache_7.Prefetch_hits : Accumulator : Sum.u64 = 39; SumSQ.u64 = 39; Count.u64 = 39; Min.u64 = 1; Max.u64 = 1; 
  l1cache_7.Prefetch_drops : Accumulator : Sum.u64 = 67; SumSQ.u64 = 67; Count.u64 = 67; Min.u64 = 1; Max.u64 = 1; 
  l1cache_7.TotalEventsReceived : Accumulator : Sum.u64 = 1492; SumSQ.u64 = 1492; Count.u64 = 1492; Min.u64 = 1; Max.u64 = 1; 
  l1cache_7.TotalEventsReplayed : Accumulator : Sum.u64 = 503; SumSQ.u64 = 503; Count.u64 = 503; Min.u64 = 1; Max.u64 = 1; 
@@ -3111,6 +3166,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_7.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_7.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_7.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_7.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_7.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_7.prefetch_useful : Accumulator : Sum.u64 = 120; SumSQ.u64 = 120; Count.u64 = 120; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_7.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_7.prefetch_redundant : Accumulator : Sum.u64 = 39; SumSQ.u64 = 39; Count.u64 = 39; Min.u64 = 1; Max.u64 = 1; 
  l1cache_7.stateEvent_GetS_E : Accumulator : Sum.u64 = 781; SumSQ.u64 = 781; Count.u64 = 781; Min.u64 = 1; Max.u64 = 1; 
  l1cache_7.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_7.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3123,7 +3183,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_7.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 32; SumSQ.u64 = 32; Count.u64 = 32; Min.u64 = 1; Max.u64 = 1; 
  l2cache_7.prefetches_canceled_by_history : Accumulator : Sum.u64 = 115; SumSQ.u64 = 115; Count.u64 = 115; Min.u64 = 1; Max.u64 = 1; 
  l2cache_7.Prefetch_requests : Accumulator : Sum.u64 = 200; SumSQ.u64 = 200; Count.u64 = 200; Min.u64 = 1; Max.u64 = 1; 
- l2cache_7.Prefetch_hits : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; Min.u64 = 1; Max.u64 = 1; 
  l2cache_7.Prefetch_drops : Accumulator : Sum.u64 = 30; SumSQ.u64 = 30; Count.u64 = 30; Min.u64 = 1; Max.u64 = 1; 
  l2cache_7.packet_latency : Accumulator : Sum.u64 = 569; SumSQ.u64 = 569; Count.u64 = 800; Min.u64 = 0; Max.u64 = 1; 
  l2cache_7.send_bit_count : Accumulator : Sum.u64 = 56320; SumSQ.u64 = 6553600; Count.u64 = 800; Min.u64 = 64; Max.u64 = 576; 
@@ -3318,6 +3377,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_7.eventSent_FetchInvX : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  l2cache_7.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_7.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_7.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_7.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_7.prefetch_useful : Accumulator : Sum.u64 = 140; SumSQ.u64 = 140; Count.u64 = 140; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_7.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_7.prefetch_redundant : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; Min.u64 = 1; Max.u64 = 1; 
  l2cache_7.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_7.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_7.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3388,7 +3452,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_8.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
  l1cache_8.prefetches_canceled_by_history : Accumulator : Sum.u64 = 31; SumSQ.u64 = 31; Count.u64 = 31; Min.u64 = 1; Max.u64 = 1; 
  l1cache_8.Prefetch_requests : Accumulator : Sum.u64 = 180; SumSQ.u64 = 180; Count.u64 = 180; Min.u64 = 1; Max.u64 = 1; 
- l1cache_8.Prefetch_hits : Accumulator : Sum.u64 = 32; SumSQ.u64 = 32; Count.u64 = 32; Min.u64 = 1; Max.u64 = 1; 
  l1cache_8.Prefetch_drops : Accumulator : Sum.u64 = 55; SumSQ.u64 = 55; Count.u64 = 55; Min.u64 = 1; Max.u64 = 1; 
  l1cache_8.TotalEventsReceived : Accumulator : Sum.u64 = 1227; SumSQ.u64 = 1227; Count.u64 = 1227; Min.u64 = 1; Max.u64 = 1; 
  l1cache_8.TotalEventsReplayed : Accumulator : Sum.u64 = 315; SumSQ.u64 = 315; Count.u64 = 315; Min.u64 = 1; Max.u64 = 1; 
@@ -3515,6 +3578,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_8.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_8.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_8.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_8.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_8.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_8.prefetch_useful : Accumulator : Sum.u64 = 91; SumSQ.u64 = 91; Count.u64 = 91; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_8.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_8.prefetch_redundant : Accumulator : Sum.u64 = 32; SumSQ.u64 = 32; Count.u64 = 32; Min.u64 = 1; Max.u64 = 1; 
  l1cache_8.stateEvent_GetS_E : Accumulator : Sum.u64 = 435; SumSQ.u64 = 435; Count.u64 = 435; Min.u64 = 1; Max.u64 = 1; 
  l1cache_8.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_8.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3527,7 +3595,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_8.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 55; SumSQ.u64 = 55; Count.u64 = 55; Min.u64 = 1; Max.u64 = 1; 
  l2cache_8.prefetches_canceled_by_history : Accumulator : Sum.u64 = 148; SumSQ.u64 = 148; Count.u64 = 148; Min.u64 = 1; Max.u64 = 1; 
  l2cache_8.Prefetch_requests : Accumulator : Sum.u64 = 220; SumSQ.u64 = 220; Count.u64 = 220; Min.u64 = 1; Max.u64 = 1; 
- l2cache_8.Prefetch_hits : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; Min.u64 = 1; Max.u64 = 1; 
  l2cache_8.Prefetch_drops : Accumulator : Sum.u64 = 83; SumSQ.u64 = 83; Count.u64 = 83; Min.u64 = 1; Max.u64 = 1; 
  l2cache_8.packet_latency : Accumulator : Sum.u64 = 466; SumSQ.u64 = 466; Count.u64 = 639; Min.u64 = 0; Max.u64 = 1; 
  l2cache_8.send_bit_count : Accumulator : Sum.u64 = 44992; SumSQ.u64 = 5238784; Count.u64 = 639; Min.u64 = 64; Max.u64 = 576; 
@@ -3722,6 +3789,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_8.eventSent_FetchInvX : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l2cache_8.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_8.eventSent_NACK_up : Accumulator : Sum.u64 = 101; SumSQ.u64 = 101; Count.u64 = 101; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_8.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_8.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_8.prefetch_useful : Accumulator : Sum.u64 = 107; SumSQ.u64 = 107; Count.u64 = 107; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_8.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_8.prefetch_redundant : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; Min.u64 = 1; Max.u64 = 1; 
  l2cache_8.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_8.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_8.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3792,7 +3864,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_9.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; Min.u64 = 1; Max.u64 = 1; 
  l1cache_9.prefetches_canceled_by_history : Accumulator : Sum.u64 = 47; SumSQ.u64 = 47; Count.u64 = 47; Min.u64 = 1; Max.u64 = 1; 
  l1cache_9.Prefetch_requests : Accumulator : Sum.u64 = 236; SumSQ.u64 = 236; Count.u64 = 236; Min.u64 = 1; Max.u64 = 1; 
- l1cache_9.Prefetch_hits : Accumulator : Sum.u64 = 48; SumSQ.u64 = 48; Count.u64 = 48; Min.u64 = 1; Max.u64 = 1; 
  l1cache_9.Prefetch_drops : Accumulator : Sum.u64 = 70; SumSQ.u64 = 70; Count.u64 = 70; Min.u64 = 1; Max.u64 = 1; 
  l1cache_9.TotalEventsReceived : Accumulator : Sum.u64 = 1495; SumSQ.u64 = 1495; Count.u64 = 1495; Min.u64 = 1; Max.u64 = 1; 
  l1cache_9.TotalEventsReplayed : Accumulator : Sum.u64 = 543; SumSQ.u64 = 543; Count.u64 = 543; Min.u64 = 1; Max.u64 = 1; 
@@ -3919,6 +3990,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_9.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_9.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_9.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_9.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_9.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_9.prefetch_useful : Accumulator : Sum.u64 = 116; SumSQ.u64 = 116; Count.u64 = 116; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_9.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_9.prefetch_redundant : Accumulator : Sum.u64 = 48; SumSQ.u64 = 48; Count.u64 = 48; Min.u64 = 1; Max.u64 = 1; 
  l1cache_9.stateEvent_GetS_E : Accumulator : Sum.u64 = 784; SumSQ.u64 = 784; Count.u64 = 784; Min.u64 = 1; Max.u64 = 1; 
  l1cache_9.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_9.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3931,7 +4007,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_9.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 30; SumSQ.u64 = 30; Count.u64 = 30; Min.u64 = 1; Max.u64 = 1; 
  l2cache_9.prefetches_canceled_by_history : Accumulator : Sum.u64 = 106; SumSQ.u64 = 106; Count.u64 = 106; Min.u64 = 1; Max.u64 = 1; 
  l2cache_9.Prefetch_requests : Accumulator : Sum.u64 = 201; SumSQ.u64 = 201; Count.u64 = 201; Min.u64 = 1; Max.u64 = 1; 
- l2cache_9.Prefetch_hits : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 
  l2cache_9.Prefetch_drops : Accumulator : Sum.u64 = 43; SumSQ.u64 = 43; Count.u64 = 43; Min.u64 = 1; Max.u64 = 1; 
  l2cache_9.packet_latency : Accumulator : Sum.u64 = 599; SumSQ.u64 = 599; Count.u64 = 796; Min.u64 = 0; Max.u64 = 1; 
  l2cache_9.send_bit_count : Accumulator : Sum.u64 = 54528; SumSQ.u64 = 5554176; Count.u64 = 796; Min.u64 = 64; Max.u64 = 576; 
@@ -4126,6 +4201,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_9.eventSent_FetchInvX : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; Min.u64 = 1; Max.u64 = 1; 
  l2cache_9.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_9.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_9.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_9.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_9.prefetch_useful : Accumulator : Sum.u64 = 131; SumSQ.u64 = 131; Count.u64 = 131; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_9.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_9.prefetch_redundant : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 
  l2cache_9.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_9.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_9.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -4196,7 +4276,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_10.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  l1cache_10.prefetches_canceled_by_history : Accumulator : Sum.u64 = 24; SumSQ.u64 = 24; Count.u64 = 24; Min.u64 = 1; Max.u64 = 1; 
  l1cache_10.Prefetch_requests : Accumulator : Sum.u64 = 187; SumSQ.u64 = 187; Count.u64 = 187; Min.u64 = 1; Max.u64 = 1; 
- l1cache_10.Prefetch_hits : Accumulator : Sum.u64 = 37; SumSQ.u64 = 37; Count.u64 = 37; Min.u64 = 1; Max.u64 = 1; 
  l1cache_10.Prefetch_drops : Accumulator : Sum.u64 = 55; SumSQ.u64 = 55; Count.u64 = 55; Min.u64 = 1; Max.u64 = 1; 
  l1cache_10.TotalEventsReceived : Accumulator : Sum.u64 = 1203; SumSQ.u64 = 1203; Count.u64 = 1203; Min.u64 = 1; Max.u64 = 1; 
  l1cache_10.TotalEventsReplayed : Accumulator : Sum.u64 = 310; SumSQ.u64 = 310; Count.u64 = 310; Min.u64 = 1; Max.u64 = 1; 
@@ -4323,6 +4402,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_10.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_10.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_10.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_10.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_10.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_10.prefetch_useful : Accumulator : Sum.u64 = 93; SumSQ.u64 = 93; Count.u64 = 93; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_10.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_10.prefetch_redundant : Accumulator : Sum.u64 = 37; SumSQ.u64 = 37; Count.u64 = 37; Min.u64 = 1; Max.u64 = 1; 
  l1cache_10.stateEvent_GetS_E : Accumulator : Sum.u64 = 439; SumSQ.u64 = 439; Count.u64 = 439; Min.u64 = 1; Max.u64 = 1; 
  l1cache_10.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_10.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -4335,7 +4419,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_10.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 42; SumSQ.u64 = 42; Count.u64 = 42; Min.u64 = 1; Max.u64 = 1; 
  l2cache_10.prefetches_canceled_by_history : Accumulator : Sum.u64 = 140; SumSQ.u64 = 140; Count.u64 = 140; Min.u64 = 1; Max.u64 = 1; 
  l2cache_10.Prefetch_requests : Accumulator : Sum.u64 = 226; SumSQ.u64 = 226; Count.u64 = 226; Min.u64 = 1; Max.u64 = 1; 
- l2cache_10.Prefetch_hits : Accumulator : Sum.u64 = 27; SumSQ.u64 = 27; Count.u64 = 27; Min.u64 = 1; Max.u64 = 1; 
  l2cache_10.Prefetch_drops : Accumulator : Sum.u64 = 81; SumSQ.u64 = 81; Count.u64 = 81; Min.u64 = 1; Max.u64 = 1; 
  l2cache_10.packet_latency : Accumulator : Sum.u64 = 493; SumSQ.u64 = 493; Count.u64 = 639; Min.u64 = 0; Max.u64 = 1; 
  l2cache_10.send_bit_count : Accumulator : Sum.u64 = 45504; SumSQ.u64 = 5566464; Count.u64 = 639; Min.u64 = 64; Max.u64 = 576; 
@@ -4530,6 +4613,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_10.eventSent_FetchInvX : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l2cache_10.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_10.eventSent_NACK_up : Accumulator : Sum.u64 = 67; SumSQ.u64 = 67; Count.u64 = 67; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_10.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_10.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_10.prefetch_useful : Accumulator : Sum.u64 = 116; SumSQ.u64 = 116; Count.u64 = 116; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_10.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_10.prefetch_redundant : Accumulator : Sum.u64 = 27; SumSQ.u64 = 27; Count.u64 = 27; Min.u64 = 1; Max.u64 = 1; 
  l2cache_10.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_10.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_10.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -4600,7 +4688,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_11.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  l1cache_11.prefetches_canceled_by_history : Accumulator : Sum.u64 = 51; SumSQ.u64 = 51; Count.u64 = 51; Min.u64 = 1; Max.u64 = 1; 
  l1cache_11.Prefetch_requests : Accumulator : Sum.u64 = 231; SumSQ.u64 = 231; Count.u64 = 231; Min.u64 = 1; Max.u64 = 1; 
- l1cache_11.Prefetch_hits : Accumulator : Sum.u64 = 45; SumSQ.u64 = 45; Count.u64 = 45; Min.u64 = 1; Max.u64 = 1; 
  l1cache_11.Prefetch_drops : Accumulator : Sum.u64 = 63; SumSQ.u64 = 63; Count.u64 = 63; Min.u64 = 1; Max.u64 = 1; 
  l1cache_11.TotalEventsReceived : Accumulator : Sum.u64 = 1491; SumSQ.u64 = 1491; Count.u64 = 1491; Min.u64 = 1; Max.u64 = 1; 
  l1cache_11.TotalEventsReplayed : Accumulator : Sum.u64 = 524; SumSQ.u64 = 524; Count.u64 = 524; Min.u64 = 1; Max.u64 = 1; 
@@ -4727,6 +4814,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_11.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_11.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_11.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_11.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_11.prefetch_inv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_11.prefetch_useful : Accumulator : Sum.u64 = 120; SumSQ.u64 = 120; Count.u64 = 120; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_11.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_11.prefetch_redundant : Accumulator : Sum.u64 = 45; SumSQ.u64 = 45; Count.u64 = 45; Min.u64 = 1; Max.u64 = 1; 
  l1cache_11.stateEvent_GetS_E : Accumulator : Sum.u64 = 787; SumSQ.u64 = 787; Count.u64 = 787; Min.u64 = 1; Max.u64 = 1; 
  l1cache_11.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_11.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -4739,7 +4831,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_11.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 40; SumSQ.u64 = 40; Count.u64 = 40; Min.u64 = 1; Max.u64 = 1; 
  l2cache_11.prefetches_canceled_by_history : Accumulator : Sum.u64 = 125; SumSQ.u64 = 125; Count.u64 = 125; Min.u64 = 1; Max.u64 = 1; 
  l2cache_11.Prefetch_requests : Accumulator : Sum.u64 = 188; SumSQ.u64 = 188; Count.u64 = 188; Min.u64 = 1; Max.u64 = 1; 
- l2cache_11.Prefetch_hits : Accumulator : Sum.u64 = 19; SumSQ.u64 = 19; Count.u64 = 19; Min.u64 = 1; Max.u64 = 1; 
  l2cache_11.Prefetch_drops : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; Min.u64 = 1; Max.u64 = 1; 
  l2cache_11.packet_latency : Accumulator : Sum.u64 = 567; SumSQ.u64 = 567; Count.u64 = 801; Min.u64 = 0; Max.u64 = 1; 
  l2cache_11.send_bit_count : Accumulator : Sum.u64 = 54848; SumSQ.u64 = 5574656; Count.u64 = 801; Min.u64 = 64; Max.u64 = 576; 
@@ -4934,6 +5025,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_11.eventSent_FetchInvX : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
  l2cache_11.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_11.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_11.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_11.prefetch_inv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_11.prefetch_useful : Accumulator : Sum.u64 = 136; SumSQ.u64 = 136; Count.u64 = 136; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_11.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_11.prefetch_redundant : Accumulator : Sum.u64 = 19; SumSQ.u64 = 19; Count.u64 = 19; Min.u64 = 1; Max.u64 = 1; 
  l2cache_11.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_11.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_11.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -5004,7 +5100,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_12.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; Min.u64 = 1; Max.u64 = 1; 
  l1cache_12.prefetches_canceled_by_history : Accumulator : Sum.u64 = 23; SumSQ.u64 = 23; Count.u64 = 23; Min.u64 = 1; Max.u64 = 1; 
  l1cache_12.Prefetch_requests : Accumulator : Sum.u64 = 187; SumSQ.u64 = 187; Count.u64 = 187; Min.u64 = 1; Max.u64 = 1; 
- l1cache_12.Prefetch_hits : Accumulator : Sum.u64 = 35; SumSQ.u64 = 35; Count.u64 = 35; Min.u64 = 1; Max.u64 = 1; 
  l1cache_12.Prefetch_drops : Accumulator : Sum.u64 = 53; SumSQ.u64 = 53; Count.u64 = 53; Min.u64 = 1; Max.u64 = 1; 
  l1cache_12.TotalEventsReceived : Accumulator : Sum.u64 = 1214; SumSQ.u64 = 1214; Count.u64 = 1214; Min.u64 = 1; Max.u64 = 1; 
  l1cache_12.TotalEventsReplayed : Accumulator : Sum.u64 = 317; SumSQ.u64 = 317; Count.u64 = 317; Min.u64 = 1; Max.u64 = 1; 
@@ -5131,6 +5226,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_12.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_12.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_12.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_12.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_12.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_12.prefetch_useful : Accumulator : Sum.u64 = 95; SumSQ.u64 = 95; Count.u64 = 95; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_12.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_12.prefetch_redundant : Accumulator : Sum.u64 = 35; SumSQ.u64 = 35; Count.u64 = 35; Min.u64 = 1; Max.u64 = 1; 
  l1cache_12.stateEvent_GetS_E : Accumulator : Sum.u64 = 442; SumSQ.u64 = 442; Count.u64 = 442; Min.u64 = 1; Max.u64 = 1; 
  l1cache_12.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_12.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -5143,7 +5243,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_12.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 30; SumSQ.u64 = 30; Count.u64 = 30; Min.u64 = 1; Max.u64 = 1; 
  l2cache_12.prefetches_canceled_by_history : Accumulator : Sum.u64 = 135; SumSQ.u64 = 135; Count.u64 = 135; Min.u64 = 1; Max.u64 = 1; 
  l2cache_12.Prefetch_requests : Accumulator : Sum.u64 = 223; SumSQ.u64 = 223; Count.u64 = 223; Min.u64 = 1; Max.u64 = 1; 
- l2cache_12.Prefetch_hits : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 
  l2cache_12.Prefetch_drops : Accumulator : Sum.u64 = 88; SumSQ.u64 = 88; Count.u64 = 88; Min.u64 = 1; Max.u64 = 1; 
  l2cache_12.packet_latency : Accumulator : Sum.u64 = 482; SumSQ.u64 = 482; Count.u64 = 639; Min.u64 = 0; Max.u64 = 1; 
  l2cache_12.send_bit_count : Accumulator : Sum.u64 = 45504; SumSQ.u64 = 5566464; Count.u64 = 639; Min.u64 = 64; Max.u64 = 576; 
@@ -5338,6 +5437,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_12.eventSent_FetchInvX : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l2cache_12.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_12.eventSent_NACK_up : Accumulator : Sum.u64 = 78; SumSQ.u64 = 78; Count.u64 = 78; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_12.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_12.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_12.prefetch_useful : Accumulator : Sum.u64 = 111; SumSQ.u64 = 111; Count.u64 = 111; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_12.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_12.prefetch_redundant : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 
  l2cache_12.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_12.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_12.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -5408,7 +5512,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_13.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l1cache_13.prefetches_canceled_by_history : Accumulator : Sum.u64 = 53; SumSQ.u64 = 53; Count.u64 = 53; Min.u64 = 1; Max.u64 = 1; 
  l1cache_13.Prefetch_requests : Accumulator : Sum.u64 = 227; SumSQ.u64 = 227; Count.u64 = 227; Min.u64 = 1; Max.u64 = 1; 
- l1cache_13.Prefetch_hits : Accumulator : Sum.u64 = 37; SumSQ.u64 = 37; Count.u64 = 37; Min.u64 = 1; Max.u64 = 1; 
  l1cache_13.Prefetch_drops : Accumulator : Sum.u64 = 57; SumSQ.u64 = 57; Count.u64 = 57; Min.u64 = 1; Max.u64 = 1; 
  l1cache_13.TotalEventsReceived : Accumulator : Sum.u64 = 1485; SumSQ.u64 = 1485; Count.u64 = 1485; Min.u64 = 1; Max.u64 = 1; 
  l1cache_13.TotalEventsReplayed : Accumulator : Sum.u64 = 505; SumSQ.u64 = 505; Count.u64 = 505; Min.u64 = 1; Max.u64 = 1; 
@@ -5535,6 +5638,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_13.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_13.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_13.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_13.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_13.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_13.prefetch_useful : Accumulator : Sum.u64 = 130; SumSQ.u64 = 130; Count.u64 = 130; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_13.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_13.prefetch_redundant : Accumulator : Sum.u64 = 37; SumSQ.u64 = 37; Count.u64 = 37; Min.u64 = 1; Max.u64 = 1; 
  l1cache_13.stateEvent_GetS_E : Accumulator : Sum.u64 = 788; SumSQ.u64 = 788; Count.u64 = 788; Min.u64 = 1; Max.u64 = 1; 
  l1cache_13.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_13.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -5547,7 +5655,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_13.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 44; SumSQ.u64 = 44; Count.u64 = 44; Min.u64 = 1; Max.u64 = 1; 
  l2cache_13.prefetches_canceled_by_history : Accumulator : Sum.u64 = 123; SumSQ.u64 = 123; Count.u64 = 123; Min.u64 = 1; Max.u64 = 1; 
  l2cache_13.Prefetch_requests : Accumulator : Sum.u64 = 180; SumSQ.u64 = 180; Count.u64 = 180; Min.u64 = 1; Max.u64 = 1; 
- l2cache_13.Prefetch_hits : Accumulator : Sum.u64 = 23; SumSQ.u64 = 23; Count.u64 = 23; Min.u64 = 1; Max.u64 = 1; 
  l2cache_13.Prefetch_drops : Accumulator : Sum.u64 = 28; SumSQ.u64 = 28; Count.u64 = 28; Min.u64 = 1; Max.u64 = 1; 
  l2cache_13.packet_latency : Accumulator : Sum.u64 = 568; SumSQ.u64 = 568; Count.u64 = 797; Min.u64 = 0; Max.u64 = 1; 
  l2cache_13.send_bit_count : Accumulator : Sum.u64 = 54144; SumSQ.u64 = 5234688; Count.u64 = 798; Min.u64 = 64; Max.u64 = 576; 
@@ -5742,6 +5849,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_13.eventSent_FetchInvX : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
  l2cache_13.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_13.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_13.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_13.prefetch_inv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_13.prefetch_useful : Accumulator : Sum.u64 = 123; SumSQ.u64 = 123; Count.u64 = 123; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_13.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_13.prefetch_redundant : Accumulator : Sum.u64 = 23; SumSQ.u64 = 23; Count.u64 = 23; Min.u64 = 1; Max.u64 = 1; 
  l2cache_13.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_13.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_13.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -5812,7 +5924,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_14.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  l1cache_14.prefetches_canceled_by_history : Accumulator : Sum.u64 = 30; SumSQ.u64 = 30; Count.u64 = 30; Min.u64 = 1; Max.u64 = 1; 
  l1cache_14.Prefetch_requests : Accumulator : Sum.u64 = 180; SumSQ.u64 = 180; Count.u64 = 180; Min.u64 = 1; Max.u64 = 1; 
- l1cache_14.Prefetch_hits : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
  l1cache_14.Prefetch_drops : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 49; Min.u64 = 1; Max.u64 = 1; 
  l1cache_14.TotalEventsReceived : Accumulator : Sum.u64 = 1235; SumSQ.u64 = 1235; Count.u64 = 1235; Min.u64 = 1; Max.u64 = 1; 
  l1cache_14.TotalEventsReplayed : Accumulator : Sum.u64 = 315; SumSQ.u64 = 315; Count.u64 = 315; Min.u64 = 1; Max.u64 = 1; 
@@ -5939,6 +6050,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_14.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_14.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_14.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_14.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_14.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_14.prefetch_useful : Accumulator : Sum.u64 = 96; SumSQ.u64 = 96; Count.u64 = 96; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_14.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_14.prefetch_redundant : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
  l1cache_14.stateEvent_GetS_E : Accumulator : Sum.u64 = 439; SumSQ.u64 = 439; Count.u64 = 439; Min.u64 = 1; Max.u64 = 1; 
  l1cache_14.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_14.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -5951,7 +6067,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_14.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 30; SumSQ.u64 = 30; Count.u64 = 30; Min.u64 = 1; Max.u64 = 1; 
  l2cache_14.prefetches_canceled_by_history : Accumulator : Sum.u64 = 132; SumSQ.u64 = 132; Count.u64 = 132; Min.u64 = 1; Max.u64 = 1; 
  l2cache_14.Prefetch_requests : Accumulator : Sum.u64 = 227; SumSQ.u64 = 227; Count.u64 = 227; Min.u64 = 1; Max.u64 = 1; 
- l2cache_14.Prefetch_hits : Accumulator : Sum.u64 = 28; SumSQ.u64 = 28; Count.u64 = 28; Min.u64 = 1; Max.u64 = 1; 
  l2cache_14.Prefetch_drops : Accumulator : Sum.u64 = 79; SumSQ.u64 = 79; Count.u64 = 79; Min.u64 = 1; Max.u64 = 1; 
  l2cache_14.packet_latency : Accumulator : Sum.u64 = 490; SumSQ.u64 = 490; Count.u64 = 641; Min.u64 = 0; Max.u64 = 1; 
  l2cache_14.send_bit_count : Accumulator : Sum.u64 = 45632; SumSQ.u64 = 5574656; Count.u64 = 641; Min.u64 = 64; Max.u64 = 576; 
@@ -6146,6 +6261,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_14.eventSent_FetchInvX : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l2cache_14.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_14.eventSent_NACK_up : Accumulator : Sum.u64 = 106; SumSQ.u64 = 106; Count.u64 = 106; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_14.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_14.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_14.prefetch_useful : Accumulator : Sum.u64 = 116; SumSQ.u64 = 116; Count.u64 = 116; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_14.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_14.prefetch_redundant : Accumulator : Sum.u64 = 28; SumSQ.u64 = 28; Count.u64 = 28; Min.u64 = 1; Max.u64 = 1; 
  l2cache_14.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_14.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_14.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -6216,7 +6336,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_15.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  l1cache_15.prefetches_canceled_by_history : Accumulator : Sum.u64 = 55; SumSQ.u64 = 55; Count.u64 = 55; Min.u64 = 1; Max.u64 = 1; 
  l1cache_15.Prefetch_requests : Accumulator : Sum.u64 = 226; SumSQ.u64 = 226; Count.u64 = 226; Min.u64 = 1; Max.u64 = 1; 
- l1cache_15.Prefetch_hits : Accumulator : Sum.u64 = 41; SumSQ.u64 = 41; Count.u64 = 41; Min.u64 = 1; Max.u64 = 1; 
  l1cache_15.Prefetch_drops : Accumulator : Sum.u64 = 61; SumSQ.u64 = 61; Count.u64 = 61; Min.u64 = 1; Max.u64 = 1; 
  l1cache_15.TotalEventsReceived : Accumulator : Sum.u64 = 1485; SumSQ.u64 = 1485; Count.u64 = 1485; Min.u64 = 1; Max.u64 = 1; 
  l1cache_15.TotalEventsReplayed : Accumulator : Sum.u64 = 544; SumSQ.u64 = 544; Count.u64 = 544; Min.u64 = 1; Max.u64 = 1; 
@@ -6343,6 +6462,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_15.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_15.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_15.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_15.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_15.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_15.prefetch_useful : Accumulator : Sum.u64 = 123; SumSQ.u64 = 123; Count.u64 = 123; Min.u64 = 1; Max.u64 = 1; 
+ l1cache_15.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache_15.prefetch_redundant : Accumulator : Sum.u64 = 41; SumSQ.u64 = 41; Count.u64 = 41; Min.u64 = 1; Max.u64 = 1; 
  l1cache_15.stateEvent_GetS_E : Accumulator : Sum.u64 = 786; SumSQ.u64 = 786; Count.u64 = 786; Min.u64 = 1; Max.u64 = 1; 
  l1cache_15.stateEvent_GetX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_15.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -6355,7 +6479,6 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_15.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 50; SumSQ.u64 = 50; Count.u64 = 50; Min.u64 = 1; Max.u64 = 1; 
  l2cache_15.prefetches_canceled_by_history : Accumulator : Sum.u64 = 115; SumSQ.u64 = 115; Count.u64 = 115; Min.u64 = 1; Max.u64 = 1; 
  l2cache_15.Prefetch_requests : Accumulator : Sum.u64 = 192; SumSQ.u64 = 192; Count.u64 = 192; Min.u64 = 1; Max.u64 = 1; 
- l2cache_15.Prefetch_hits : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
  l2cache_15.Prefetch_drops : Accumulator : Sum.u64 = 32; SumSQ.u64 = 32; Count.u64 = 32; Min.u64 = 1; Max.u64 = 1; 
  l2cache_15.packet_latency : Accumulator : Sum.u64 = 594; SumSQ.u64 = 594; Count.u64 = 800; Min.u64 = 0; Max.u64 = 1; 
  l2cache_15.send_bit_count : Accumulator : Sum.u64 = 55808; SumSQ.u64 = 6225920; Count.u64 = 800; Min.u64 = 64; Max.u64 = 576; 
@@ -6550,6 +6673,11 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_15.eventSent_FetchInvX : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l2cache_15.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_15.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_15.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_15.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_15.prefetch_useful : Accumulator : Sum.u64 = 119; SumSQ.u64 = 119; Count.u64 = 119; Min.u64 = 1; Max.u64 = 1; 
+ l2cache_15.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_15.prefetch_redundant : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
  l2cache_15.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_15.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_15.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

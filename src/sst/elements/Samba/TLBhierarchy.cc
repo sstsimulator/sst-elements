@@ -48,16 +48,52 @@ TLBhierarchy::TLBhierarchy(int tlb_id, SST::Component * owner)
 TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Params& params)
 {
 
+	output = new SST::Output("OpalComponent[@f:@l:@p] ", 1, 0, SST::Output::STDOUT);
+
 	levels = Levels;
 	Owner = owner;
 	coreID=tlb_id;
 
 	hold = 0;  // Hold is set to 1 by the page table walker due to fault or shootdown, note that since we don't execute page fault handler or TLB shootdown routine on the core, we just stall TLB hierarchy to emulate the performance effect
 
+	shootdown = 0;  // is set to 1 by the page table walker due to shootdown
+	own_shootdown = 0;  // is set to 1 by the page table walker due to shootdown from this core
+
 	std::string LEVEL = std::to_string(1);
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
 
 	emulate_faults  = ((uint32_t) params.find<uint32_t>("emulate_faults", 0));
+
+	page_migration  = ((uint32_t) params.find<uint32_t>("page_migration", 0));
+
+	if(page_migration)
+	{
+		int pageMigPolicy  = ((uint32_t) params.find<uint32_t>("page_migration_policy", 0));
+		if(pageMigPolicy == 0)
+			page_migration_policy = PageMigrationType::NONE;
+		else if(pageMigPolicy == 1)
+			page_migration_policy = PageMigrationType::FTP;
+
+		bool found;
+		std::string mem_size = ((std::string) params.find<std::string>("memory", "", found));
+		if (!found) output->fatal(CALL_INFO, -1, "%s, Param not specified: memory_size\n", Owner->getName().c_str());
+
+		trim(mem_size);
+		size_t pos;
+		std::string checkstring = "kKmMgGtTpP";
+		if ((pos = mem_size.find_first_of(checkstring)) != std::string::npos) {
+			pos++;
+			if (pos < mem_size.length() && mem_size[pos] == 'B') {
+				mem_size.insert(pos, "i");
+			}
+		}
+		UnitAlgebra ua(mem_size);
+		memory_size = ua.getRoundedValue();
+		//std::cout<< Owner->getName().c_str() << " Core: " << coreID << std::hex << " Memory size: " << memory_size << std::endl;
+
+	}
+
+	max_shootdown_width = ((uint32_t) params.find<uint32_t>("max_shootdown_width", 4));
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
 	sprintf(subID, "%" PRIu32, coreID);
@@ -87,6 +123,8 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 	PTW->setServiceBack(TLB_CACHE[levels]->getPushedBack());
 	PTW->setServiceBackSize(TLB_CACHE[levels]->getPushedBackSize());
 	PTW->setHold(&hold);
+	PTW->setShootDownEvents(&shootdown,&own_shootdown,&invalid_addrs);
+	PTW->setPageMigration(&page_migration,&page_migration_policy);
 
 	TLB_CACHE[1]->setServiceBack(&mem_reqs);
 	TLB_CACHE[1]->setServiceBackSize(&mem_reqs_sizes);
@@ -110,7 +148,7 @@ TLBhierarchy::TLBhierarchy(ComponentId_t id, Params& params, int tlb_id)
 
 
 // For now, implement to return a dummy address
-long long int TLBhierarchy::translate(long long int VA) { return 0;}
+Address_t TLBhierarchy::translate(Address_t VA) { return 0;}
 
 
 void TLBhierarchy::handleEvent_CACHE( SST::Event * ev )
@@ -133,6 +171,34 @@ void TLBhierarchy::handleEvent_CPU(SST::Event* event)
 
 bool TLBhierarchy::tick(SST::Cycle_t x)
 {
+	if(shootdown || own_shootdown)
+	{
+		int dispatched = 0;
+		Address_t addr;
+
+		while(!invalid_addrs.empty()){
+
+			if(dispatched >= max_shootdown_width)
+				return false;
+
+			addr = invalid_addrs.front();
+
+			for(int level = levels; level >= 1; level--)
+				TLB_CACHE[level]->invalidate(addr);
+
+			PTW->invalidate(addr);
+
+			invalid_addrs.pop_front();
+
+			if(invalid_addrs.empty())
+				PTW->sendShootdownAck();
+
+			dispatched++;
+		}
+
+		return false;
+	}
+
 	if(hold==1) // If the page table walker is suggesting to hold, the TLBhierarchy will stop processing any events
 	{
 		PTW->tick(x);
@@ -148,7 +214,7 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 
 	curr_time = x;
 	// Step 1, check if not empty, then propogate it to L1 cache
-	while(!mem_reqs.empty())
+	while(!mem_reqs.empty() && !shootdown && !hold)
 	{
 		SST::Event * event= mem_reqs.back();
 
@@ -160,20 +226,30 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 			continue;
 		}
 
-		uint64_t time_diff = (uint64_t ) x - time_tracker[event];
-		time_tracker.erase(event);
-		total_waiting->addData(time_diff);
-		
 		// Here we override the physical address provided by ariel memory manage by the one provided by Opal
 		if(emulate_faults)
 		{
-			long long int vaddr = ((MemEvent*) event)->getVirtualAddress();
+			Address_t vaddr = ((MemEvent*) event)->getVirtualAddress();
 			if((*PTE).find(vaddr/4096)==(*PTE).end())
 				std::cout<<"Error: That page has never been mapped:  " << vaddr / 4096 << std::endl;
 
 			((MemEvent*) event)->setAddr((((*PTE)[vaddr / 4096] + vaddr % 4096) / 64) * 64);
 			((MemEvent*) event)->setBaseAddr((((*PTE)[vaddr / 4096] + vaddr % 4096) / 64) * 64);
+
+			if(page_migration && page_migration_policy == PageMigrationType::FTP) {
+				//std::cout<< Owner->getName().c_str() << " Core: " << coreID << " vaddress: " << std::hex << vaddr << " paddress: " << (*PTE)[vaddr / 4096] << " Memory size: " << memory_size << std::endl;
+				if((*PTE)[vaddr / 4096] >= memory_size) {
+					PTW->initaitePageMigration(vaddr, (*PTE)[vaddr / 4096]);
+					return false;
+				}
+			}
+
 		}
+
+		uint64_t time_diff = (uint64_t ) x - time_tracker[event];
+		time_tracker.erase(event);
+		total_waiting->addData(time_diff);
+
 		to_cache->send(event);
 
 		// We remove the size of that translation, we might for future versions use the translation size to obtain statistics

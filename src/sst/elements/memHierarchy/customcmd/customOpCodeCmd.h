@@ -36,6 +36,8 @@ public:
     CustomOpCodeCmdInfo(SST::Event::id_type id, std::string rqstr, Addr addr, uint32_t opc, uint32_t flags = 0) :
         CustomCmdInfo(id, rqstr, flags), addr_(addr), custOpc_(opc) { }
 
+    virtual ~CustomOpCodeCmdInfo() = default;
+
     /* String-ify for debug */
     virtual std::string getString() {
         std::ostringstream str;

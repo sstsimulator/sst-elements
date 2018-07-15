@@ -4,7 +4,6 @@ Completed @ 11127977 ns
  l1cache.miss_events_processed : Accumulator : Sum.u64 = 6250; SumSQ.u64 = 6250; Count.u64 = 6250; Min.u64 = 1; Max.u64 = 1; 
  l1cache.hit_events_processed : Accumulator : Sum.u64 = 100000; SumSQ.u64 = 100000; Count.u64 = 100000; Min.u64 = 1; Max.u64 = 1; 
  l1cache.Prefetch_requests : Accumulator : Sum.u64 = 6250; SumSQ.u64 = 6250; Count.u64 = 6250; Min.u64 = 1; Max.u64 = 1; 
- l1cache.Prefetch_hits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.Prefetch_drops : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 118750; SumSQ.u64 = 118750; Count.u64 = 118750; Min.u64 = 1; Max.u64 = 1; 
  l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 51431; SumSQ.u64 = 51431; Count.u64 = 51431; Min.u64 = 1; Max.u64 = 1; 
@@ -131,6 +130,11 @@ Completed @ 11127977 ns
  l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.prefetch_useful : Accumulator : Sum.u64 = 6250; SumSQ.u64 = 6250; Count.u64 = 6250; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.prefetch_redundant : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_GetS_E : Accumulator : Sum.u64 = 57765; SumSQ.u64 = 57765; Count.u64 = 57765; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_GetX_E : Accumulator : Sum.u64 = 6552; SumSQ.u64 = 6552; Count.u64 = 6552; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

@@ -66,11 +66,19 @@ CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, strin
             }
             wbCacheLine->setState(I);
             wbCacheLine->atomicEnd();
+            if (wbCacheLine->getPrefetch()) {
+                statPrefetchEvict->addData(1);
+                wbCacheLine->setPrefetch(false);
+            }
             return DONE;
         case M:
             sendWriteback(Command::PutM, wbCacheLine, origRqstr);
             wbCacheLine->setState(I);
             wbCacheLine->atomicEnd();
+            if (wbCacheLine->getPrefetch()) {
+                statPrefetchEvict->addData(1);
+                wbCacheLine->setPrefetch(false);
+            }
             return DONE;
         case IS:
         case IM:
@@ -182,7 +190,7 @@ CacheAction L1IncoherentController::handleGetSRequest(MemEvent* event, CacheLine
     State state = cacheLine->getState();
     vector<uint8_t>* data = cacheLine->getData();
     
-    bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == parent->getName()));
+    bool localPrefetch = event->isPrefetch() && (event->getRqstr() == parent->getName());
     recordStateEventCount(event->getCmd(), state);
     
     uint64_t sendTime = 0;
@@ -196,7 +204,14 @@ CacheAction L1IncoherentController::handleGetSRequest(MemEvent* event, CacheLine
         case E:
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) return DONE;
+            if (localPrefetch) {
+                statPrefetchRedundant->addData(1);
+                return DONE;
+            }
+            if (cacheLine->getPrefetch()) {
+                cacheLine->setPrefetch(false);
+                statPrefetchHit->addData(1);
+            }
             if (event->isLoadLink()) cacheLine->atomicStart();
             sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
@@ -233,6 +248,10 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
         case E:
             cacheLine->setState(M);
         case M:
+            if (cacheLine->getPrefetch()) {
+                cacheLine->setPrefetch(false);
+                statPrefetchHit->addData(1);
+            }
             if (cmd == Command::GetX) {
                 /* L1s write back immediately */
                 if (!event->isStoreConditional() ||atomic) {
@@ -285,7 +304,7 @@ CacheAction L1IncoherentController::handleFlushLineRequest(MemEvent * event, Cac
     }
     
     forwardFlushLine(event->getBaseAddr(), Command::FlushLine, event->getRqstr(), cacheLine);
-    
+            
     if (cacheLine != NULL && state != I) cacheLine->setState(S_B);
     else if (cacheLine != NULL) cacheLine->setState(I_B);
     return STALL;   // wait for response
@@ -310,6 +329,12 @@ CacheAction L1IncoherentController::handleFlushLineInvRequest(MemEvent * event, 
     }
 
     forwardFlushLine(event->getBaseAddr(), Command::FlushLineInv, event->getRqstr(), cacheLine);
+    
+    if (cacheLine && cacheLine->getPrefetch()) {
+        cacheLine->setPrefetch(false);
+        statPrefetchEvict->addData(1);
+    }
+    
     if (cacheLine != NULL) cacheLine->setState(I_B);
     return STALL;   // wait for response
 }
@@ -318,7 +343,7 @@ CacheAction L1IncoherentController::handleFlushLineInvRequest(MemEvent * event, 
 void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest){
     
     cacheLine->setData(responseEvent->getPayload(), 0);
-    bool shouldRespond = !(origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName()));
+    bool localPrefetch = origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName());
     
     State state = cacheLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);
@@ -330,7 +355,10 @@ void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLi
         case IS:
             cacheLine->setState(E);
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) break;
+            if (localPrefetch) {
+                cacheLine->setPrefetch(true);
+                break;
+            }
             if (origRequest->isLoadLink()) cacheLine->atomicStart();
             sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);

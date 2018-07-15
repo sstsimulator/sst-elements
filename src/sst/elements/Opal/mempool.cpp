@@ -29,9 +29,9 @@ Pool::Pool(SST::Component* own, Params params, SST::OpalComponent::MemType mem_t
 
 	output = new SST::Output("OpalMemPool[@f:@l:@p] ", 16, 0, SST::Output::STDOUT);
 
-	size = params.find<long long int>("size", 0); // in KB's
+	size = params.find<uint32_t>("size", 0); // in KB's
 
-	start = params.find<long long int>("start", 0);
+	start = params.find<uint64_t>("start", 0);
 
 	frsize = params.find<int>("frame_size", 4); //4KB frame size
 
@@ -39,13 +39,20 @@ Pool::Pool(SST::Component* own, Params params, SST::OpalComponent::MemType mem_t
 	sprintf(subID, "%" PRIu32, id);
 
 	memType = mem_type;
+
+	poolId = id;
+
 	if(memType == SST::OpalComponent::MemType::LOCAL) {
-		localMemID = id;
 		memUsage = own->registerStatistic<uint64_t>( "local_mem_usage", subID );
+		mappedMemory = own->registerStatistic<uint64_t>( "local_mem_mapped", subID );
+		unmappedMemory = own->registerStatistic<uint64_t>( "local_mem_unmapped", subID );
+		tlbShootdowns = own->registerStatistic<uint64_t>( "tlb_shootdowns", subID );
+		tlbShootdownDelay = own->registerStatistic<uint64_t>( "tlb_shootdown_delay", subID );
 	}
 	else {
-		sharedMemID = id;
 		memUsage = own->registerStatistic<uint64_t>( "shared_mem_usage", subID );
+		mappedMemory = own->registerStatistic<uint64_t>( "shared_mem_mapped", subID );
+		unmappedMemory = own->registerStatistic<uint64_t>( "shared_mem_unmapped", subID );
 	}
 
 	free(subID);
@@ -79,7 +86,7 @@ void Pool::build_mem()
 	real_size = num_frames * frsize;
 
 	for(i=0; i< num_frames; i++) {
-		frame = new Frame(((long long int) i*frsize*1024) + start, 0);
+		frame = new Frame(((uint64_t) i*frsize*1024) + start, 0);
 		freelist.push_back(frame);
 	}
 
@@ -89,17 +96,18 @@ void Pool::build_mem()
 
 }
 
-MemPoolResponse Pool::allocate_frames(int _size)
+REQRESPONSE Pool::allocate_frames(int pages)
 {
 
-	MemPoolResponse mpr;
-	int frames = ceil(_size/(frsize*1024));
-	std::list<Frame*> frames_allocated;
+	REQRESPONSE response;
+	response.status =0;
 
-	if(available_frames < frames) {
-		mpr.pAddress = -1;
-		return mpr;
+	if(available_frames < pages) {
+		return response;
 	}
+
+	int frames = pages;
+	std::list<Frame*> frames_allocated;
 
 	// Fixme: Shuffle memory to make continuous memory available
 	while(frames) {
@@ -112,7 +120,6 @@ MemPoolResponse Pool::allocate_frames(int _size)
 				frames_allocated.pop_front();
 				available_frames++;
 			}
-			mpr.pAddress = -1;
 			break;
 		}
 		else
@@ -128,45 +135,42 @@ MemPoolResponse Pool::allocate_frames(int _size)
 	}
 
 	if(!frames_allocated.empty()) {
-		mpr.pAddress = ((Frame *)frames_allocated.front())->starting_address;
-		mpr.num_frames = ceil(_size/(frsize*1024));
-		mpr.frame_size = frsize;
-		memUsage->addData(mpr.num_frames);
-
+		response.address = (frames_allocated.front())->starting_address;
+		response.pages = pages;
+		response.status = 1;
 	}
-	else
-		mpr.pAddress = -1;
 
-	return mpr;
+	return response;
 
 }
 
 // Allocate N contigiuous frames, returns the starting address if successfull, or -1 if it fails!
-MemPoolResponse Pool::allocate_frame(int N)
+REQRESPONSE Pool::allocate_frame(int N)
 {
 
-	MemPoolResponse mpr;
+	REQRESPONSE response;
+	response.status = 0;
+
+
 	// Make sure we have free frames first
-	if(freelist.empty()) {
-		mpr.pAddress = -1;
-		return mpr;
-	}
+	if(freelist.empty())
+		return response;
+
 	// For now, we will assume you can only allocate 1 frame, TODO: We will implemenet a buddy-allocator style that enables allocating contigous physical spaces
-	if(N>1) {
-		mpr.pAddress = -1;
-		return mpr;
-	}
+	if(N>1)
+		return response;
+
 	else
 	{
 		// Simply, pop the first free frame and assign it
 		Frame * temp = freelist.front();
 		freelist.pop_front();
 		alloclist[temp->starting_address] = temp;
-		memUsage->addData(1);
-		mpr.pAddress = temp->starting_address;
-		mpr.frame_size = frsize;
-		mpr.num_frames = 1;
-		return mpr;
+		available_frames--;
+		response.address = temp->starting_address;
+		response.pages = 1;
+		response.status = 1;
+		return response;
 
 	}
 
@@ -175,20 +179,18 @@ MemPoolResponse Pool::allocate_frame(int N)
 /* Deallocate 'size' contigiuous memory of type 'memType' starting from physical address 'starting_pAddress',
  * returns a structure which indicates whether the memory is successfully deallocated or not
  */
-MemPoolResponse Pool::deallocate_frames(int _size, long long int starting_pAddress)
+REQRESPONSE Pool::deallocate_frames(int pages, uint64_t starting_pAddress)
 {
 
-	MemPoolResponse mpr;
-	int frames = ceil(_size/frsize);
-	long long int pAddress = starting_pAddress;
+	REQRESPONSE response;
+	int frames = pages;
+	uint64_t pAddress = starting_pAddress;
 	uint64_t frame_number;
-
-	mpr.frame_size = frsize;
 
 	while(frames) {
 
 		// If we can find the frame to be free in the allocated list
-		std::map<long long int, Frame*>::iterator it;
+		std::map<uint64_t, Frame*>::iterator it;
 		it = alloclist.find(pAddress);
 		if (it != alloclist.end())
 		{
@@ -200,29 +202,32 @@ MemPoolResponse Pool::deallocate_frames(int _size, long long int starting_pAddre
 		}
 		else
 		{
-			mpr.pAddress = pAddress; //physical address of the frame which failed to deallocate.
-			mpr.num_frames = frames; //This indicates number of frames that are not deallocated.
-			return mpr;
+			response.address = pAddress; //physical address of the frame which failed to deallocate.
+			response.pages = frames; //This indicates number of frames that are not deallocated.
+			response.status = 0;
+			return response;
 		}
 
 		frame_number = (pAddress - start) / frsize * 1024;
-		pAddress += ((long long int) (frame_number+1)*frsize*1024) + start; //to get the next frame physical address
+		pAddress += ((uint64_t) (frame_number+1)*frsize*1024) + start; //to get the next frame physical address
 		frames--;
 	}
 
-	mpr.pAddress = -1; //successfully deallocated
-	mpr.num_frames = frames;
-	return mpr;
+	response.status = 1; //successfully deallocated
+	return response;
 }
 
 // Freeing N frames starting from Address X, this will return -1 if we find that these frames were not allocated
-int Pool::deallocate_frame(long long int X, int N)
+REQRESPONSE Pool::deallocate_frame(uint64_t X, int N)
 {
+
+	REQRESPONSE response;
+	response.status = 0;
 
 
 	// For now, we will assume you can free only 1 frame, TODO: We will implemenet a buddy-allocator style that enables allocating and freeing contigous physical spaces
-	if(N>=1)
-		return -1;
+	if(N>1)
+		return response;
 	else
 	{
 		// If we can find the frame to be free in the allocated list
@@ -232,15 +237,39 @@ int Pool::deallocate_frame(long long int X, int N)
 			Frame * temp = alloclist[X];
 			freelist.push_back(temp);
 			alloclist.erase(X);
-
+			available_frames++;
+			response.status = 1;
 		}
 		else // Means we couldn't find an allocated frame that is being unmapped
-			return -1;
+			response.status = 0;
 
 	}
 
-	return 0;
+	return response;
 }
 
+void Pool::profileStats(int stat, int value)
+{
+	switch(stat){
+	case 0:
+		memUsage->addData(value);
+		break;
+	case 1:
+		mappedMemory->addData(value);
+		break;
+	case 2:
+		unmappedMemory->addData(value);
+		break;
+	case 3:
+		tlbShootdowns->addData(value);
+		break;
+	case 4:
+		tlbShootdownDelay->addData(value);
+		break;
+	//default:
+		//own->output->fatal(CALL_INFO, -1, "%s, Error - Unknown statistic\n", own->getName().c_str());
+	}
+
+}
 
 

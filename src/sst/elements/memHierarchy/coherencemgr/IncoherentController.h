@@ -104,7 +104,11 @@ public:
         {"latency_GetX_M",          "Latency for write misses that find the block owned by another cache in M state", "cycles", 1},
         {"latency_GetSX_IM",        "Latency for read-exclusive misses in I state", "cycles", 1},
         {"latency_GetSX_SM",        "Latency for read-exclusive misses in S state", "cycles", 1},
-        {"latency_GetSX_M",         "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1})
+        {"latency_GetSX_M",         "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1},
+        /* Track what happens to prefetched blocks */
+        {"prefetch_useful",         "Prefetched block had a subsequent hit (useful prefetch)", "count", 2},
+        {"prefetch_evict",          "Prefetched block was evicted/flushed before being accessed", "count", 2},
+        {"prefetch_redundant",      "Prefetch issued for a block that was already in cache", "count", 2})
 
 /* Class definition */
     /** Constructor for IncoherentController. */
@@ -168,6 +172,12 @@ public:
         stat_eventSent_GetXResp         = registerStatistic<uint64_t>("eventSent_GetXResp");
         stat_eventSent_FlushLineResp    = registerStatistic<uint64_t>("eventSent_FlushLineResp");
         stat_eventSent_NACK_up          = registerStatistic<uint64_t>("eventSent_NACK_up");
+        
+        if (!params.find<std::string>("prefetcher", "").empty()) {
+            statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
+            statPrefetchHit = registerStatistic<uint64_t>("prefetch_useful");
+            statPrefetchRedundant = registerStatistic<uint64_t>("prefetch_redundant");
+        }
     }
 
     ~IncoherentController() {}

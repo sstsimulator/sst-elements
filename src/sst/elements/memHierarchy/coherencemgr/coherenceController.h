@@ -200,6 +200,7 @@ protected:
     Statistic<uint64_t>* stat_evict_IB;
     Statistic<uint64_t>* stat_evict_SB;
 
+    /* Latency statistics */
     Statistic<uint64_t>* stat_latency_GetS_IS;
     Statistic<uint64_t>* stat_latency_GetS_M;
     Statistic<uint64_t>* stat_latency_GetX_IM;
@@ -209,6 +210,12 @@ protected:
     Statistic<uint64_t>* stat_latency_GetSX_SM;
     Statistic<uint64_t>* stat_latency_GetSX_M;     
 
+    /* Prefetch statistics */
+    Statistic<uint64_t>* statPrefetchEvict;
+    Statistic<uint64_t>* statPrefetchInv;
+    Statistic<uint64_t>* statPrefetchRedundant;
+    Statistic<uint64_t>* statPrefetchUpgradeMiss;
+    Statistic<uint64_t>* statPrefetchHit;
 private:
     MemLinkBase * linkUp_;
     MemLinkBase * linkDown_;

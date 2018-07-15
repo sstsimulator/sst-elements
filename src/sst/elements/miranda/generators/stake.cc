@@ -54,14 +54,14 @@ Stake::Stake( Component* owner, Params& params ) :
           out->fatal(CALL_INFO, -1, "Failed to specify the RISC-V binary" );
         }
 
-        out->verbose(CALL_INFO, 1, 0, "RISC-V Cores = %" PRIu32 "\n", cores );
+        out->verbose(CALL_INFO, 1, 0, "RISC-V Cores = %" PRIu64 "\n", cores );
         out->verbose(CALL_INFO, 1, 0, "Starting PC = 0x%" PRIx64 "\n", pc );
         out->verbose(CALL_INFO, 1, 0, "ISA = %s\n", isa.c_str() );
         if( ext.length() > 0 ){
-          out->verbose(CALL_INFO, 1, 0, "RoCC Extension = %s\n", ext );
+          out->verbose(CALL_INFO, 1, 0, "RoCC Extension = %s\n", ext.c_str() );
         }
         if( extlib.length() > 0 ){
-          out->verbose(CALL_INFO, 1, 0, "External Library = %s\n", extlib );
+          out->verbose(CALL_INFO, 1, 0, "External Library = %s\n", extlib.c_str() );
         }
 
         done = false;
@@ -182,7 +182,7 @@ void Stake::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
         }
 
         spike = new sim_t(isa.c_str(), cores, false, (reg_t)(pc),
-                          mems, htif_args, hartids, 2 );
+                          mems, htif_args, hartids, 2, 0, false );
 
         // setup the pre-runtime parameters
         spike->set_debug(false);

@@ -44,7 +44,6 @@ After initialization
  l1cache.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 128; SumSQ.u64 = 128; Count.u64 = 128; Min.u64 = 1; Max.u64 = 1; 
  l1cache.prefetches_canceled_by_history : Accumulator : Sum.u64 = 2195; SumSQ.u64 = 2195; Count.u64 = 2195; Min.u64 = 1; Max.u64 = 1; 
  l1cache.Prefetch_requests : Accumulator : Sum.u64 = 5327; SumSQ.u64 = 5327; Count.u64 = 5327; Min.u64 = 1; Max.u64 = 1; 
- l1cache.Prefetch_hits : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  l1cache.Prefetch_drops : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 40740; SumSQ.u64 = 40740; Count.u64 = 40740; Min.u64 = 1; Max.u64 = 1; 
  l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
@@ -171,6 +170,11 @@ After initialization
  l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.prefetch_evict : Accumulator : Sum.u64 = 5279; SumSQ.u64 = 5279; Count.u64 = 5279; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.prefetch_useful : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.prefetch_redundant : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_GetS_E : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_GetX_E : Accumulator : Sum.u64 = 9909; SumSQ.u64 = 9909; Count.u64 = 9909; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_GetSX_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -183,8 +187,11 @@ After initialization
  mmu0.total_waiting.0 : Accumulator : Sum.u64 = 5036569; SumSQ.u64 = 1365708695; Count.u64 = 20000; Min.u64 = 1; Max.u64 = 430; 
  mmu0.tlb_hits.Core0_L3 : Accumulator : Sum.u64 = 154; SumSQ.u64 = 154; Count.u64 = 154; Min.u64 = 1; Max.u64 = 1; 
  mmu0.tlb_misses.Core0_L3 : Accumulator : Sum.u64 = 9730; SumSQ.u64 = 9730; Count.u64 = 9730; Min.u64 = 1; Max.u64 = 1; 
+ mmu0.tlb_shootdown.Core0_L3 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  mmu0.tlb_hits.Core0_L2 : Accumulator : Sum.u64 = 442; SumSQ.u64 = 442; Count.u64 = 442; Min.u64 = 1; Max.u64 = 1; 
  mmu0.tlb_misses.Core0_L2 : Accumulator : Sum.u64 = 9884; SumSQ.u64 = 9884; Count.u64 = 9884; Min.u64 = 1; Max.u64 = 1; 
+ mmu0.tlb_shootdown.Core0_L2 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  mmu0.tlb_hits.Core0_L1 : Accumulator : Sum.u64 = 9674; SumSQ.u64 = 9674; Count.u64 = 9674; Min.u64 = 1; Max.u64 = 1; 
  mmu0.tlb_misses.Core0_L1 : Accumulator : Sum.u64 = 10326; SumSQ.u64 = 10326; Count.u64 = 10326; Min.u64 = 1; Max.u64 = 1; 
+ mmu0.tlb_shootdown.Core0_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
 Simulation is complete, simulated time: 133.137 us

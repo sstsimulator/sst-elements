@@ -14,7 +14,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <../Opal/Opal_Event.h>
 #include "arielcore.h"
 
 using namespace SST::OpalComponent;
@@ -104,12 +103,12 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 }
 
 ArielCore::~ArielCore() {
-    //	delete statReadRequests;
-    //	delete statWriteRequests;
-    //	delete statSplitReadRequests;
-    //	delete statSplitWriteRequests;
-    //	delete statNoopCount;
-    //	delete statInstructionCount;
+    //delete statReadRequests;
+    //delete statWriteRequests;
+    //delete statSplitReadRequests;
+    //delete statSplitWriteRequests;
+    //delete statNoopCount;
+    //delete statInstructionCount;
 
     if(NULL != cacheLink) {
         delete cacheLink;
@@ -163,36 +162,35 @@ void ArielCore::commitReadEvent(const uint64_t address,
 }
 
 void ArielCore::commitWriteEvent(const uint64_t address,
-            const uint64_t virtAddress, const uint32_t length, const uint8_t* payload) {
+        const uint64_t virtAddress, const uint32_t length, const uint8_t* payload) {
 
     if(length > 0) {
         SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, address, length);
         req->setVirtualAddress(virtAddress);
 
-		if( writePayloads ) {
-			if(verbosity >= 16) {
-				char* buffer = new char[64];
-				std::string payloadString = "";
-				
-				for(int i = 0; i < length; ++i) {
-					sprintf(buffer, "0x%X ", payload[i]);
-					payloadString.append(buffer);
-				}
-				
-				delete buffer;
-				
-				output->verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s }\n",
-					length, payloadString.c_str());
-			}
-		
-			req->setPayload( (uint8_t*) payload, length );
-		}
+        if( writePayloads ) {
+            if(verbosity >= 16) {
+                char* buffer = new char[64];
+                std::string payloadString = "";
+    
+                for(int i = 0; i < length; ++i) {
+                    sprintf(buffer, "0x%X ", payload[i]);
+                    payloadString.append(buffer);
+                }
+    
+                delete[] buffer;
+                
+                output->verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s }\n",
+                        length, payloadString.c_str());
+            }
+            req->setPayload( (uint8_t*) payload, length );
+        }
 
         pending_transaction_count++;
         pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
 
         if(enableTracing) {
-                printTraceEntry(false, (const uint64_t) req->addrs[0], (const uint32_t) length);
+            printTraceEntry(false, (const uint64_t) req->addrs[0], (const uint32_t) length);
         }
 
         // Actually send the event to the cache
@@ -215,7 +213,7 @@ void ArielCore::commitFlushEvent(const uint64_t address,
         pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
 
         cacheLink->sendRequest(req);
-    	statFlushRequests->addData(1);
+        statFlushRequests->addData(1);
     }
 }
 
@@ -239,6 +237,37 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
     }
 
     delete event;
+}
+
+void ArielCore::ISR_Opal(OpalEvent *ev) {
+
+    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling opal event.\n", coreID));
+
+    switch(ev->getType())
+    {
+        case SST::OpalComponent::EventType::SHOOTDOWN:
+            //maxIssuePerCycle=0; // This will stall the core by not executing anything
+            isStalled = true;
+            break;
+
+        case SST::OpalComponent::EventType::SDACK:
+            //maxIssuePerCycle=storeMaxIssuePerCycle; // restore necessary information
+            isStalled = false;
+            break;
+
+        default:
+            output->fatal(CALL_INFO, -4, "Opal event response to core: %" PRIu32 " was not valid.\n", coreID);
+    }
+
+}
+
+void ArielCore::handleInterruptEvent(SST::Event *event) {
+
+    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " is interrupted.\n", coreID));
+
+    // for now only Opal can interrupt
+    OpalEvent * ev =  dynamic_cast<OpalComponent::OpalEvent*> (event);
+    ISR_Opal(ev);
 }
 
 void ArielCore::finishCore() {
@@ -562,7 +591,7 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
                             coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr));
 
         if(perform_checks > 0) {
-        /*	if( (leftSize + rightSize) != readLength ) {
+        /*  if( (leftSize + rightSize) != readLength ) {
                     output->fatal(CALL_INFO, -4, "Core %" PRIu32 " read request for address %" PRIu64 ", length=%" PRIu64 ", split into left address=%" PRIu64 ", left size=%" PRIu64 ", right address=%" PRIu64 ", right size=%" PRIu64 " does not equal read length (cache line of length %" PRIu64 ")\n",
                                 coreID, readAddress, readLength, leftAddr, leftSize, rightAddr, rightSize, cacheLineSize);
                 }*/
@@ -613,11 +642,11 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
         ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing write, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n",
                             coreID, writeAddress, writeLength, physAddr));
 
-		if( writePayloads ) {
-			uint8_t* payloadPtr = wEv->getPayload();
-        	commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, payloadPtr);
+        if( writePayloads ) {
+            uint8_t* payloadPtr = wEv->getPayload();
+            commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, payloadPtr);
         } else {
-        	commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, NULL);
+            commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, NULL);
         }
     } else {
         ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
@@ -637,7 +666,7 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
                             coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr));
 
         if(perform_checks > 0) {
-            /*	if( (leftSize + rightSize) != writeLength ) {
+            /* if( (leftSize + rightSize) != writeLength ) {
                 output->fatal(CALL_INFO, -4, "Core %" PRIu32 " write request for address %" PRIu64 ", length=%" PRIu64 ", split into left address=%" PRIu64 ", left size=%" PRIu64 ", right address=%" PRIu64 ", right size=%" PRIu64 " does not equal write length (cache line of length %" PRIu64 ")\n",
                             coreID, writeAddress, writeLength, leftAddr, leftSize, rightAddr, rightSize, cacheLineSize);
             }*/
@@ -653,14 +682,14 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
             }*/
         }
 
-		if( writePayloads ) {
-			uint8_t* payloadPtr = wEv->getPayload();
-		
-        	commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize, payloadPtr);
-        	commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize, &payloadPtr[leftSize]);
+        if( writePayloads ) {
+            uint8_t* payloadPtr = wEv->getPayload();
+            
+            commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize, payloadPtr);
+            commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize, &payloadPtr[leftSize]);
         } else {
-        	commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize, NULL);
-        	commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize, NULL);
+            commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize, NULL);
+            commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize, NULL);
         }
         statSplitWriteRequests->addData(1);
     }
@@ -675,9 +704,9 @@ void ArielCore::handleMmapEvent(ArielMmapEvent* aEv) {
 
     if(opal_enabled) {
         OpalEvent * tse = new OpalEvent(OpalComponent::EventType::MMAP);
-        tse->hint = aEv->getAllocationLevel();
-        tse->fileID = aEv->getFileID();
-        std::cout<<"Before sending to Opal.. file ID is : "<<tse->fileID<<std::endl;
+        tse->setHint(aEv->getAllocationLevel());
+        tse->setFileId(aEv->getFileID());
+        std::cout<<"Before sending to Opal.. file ID is : "<<tse->getFileId()<<std::endl;
         // length should be in multiple of page size
         tse->setResp(aEv->getVirtualAddress(), 0, aEv->getAllocationLength() );
         OpalLink->send(tse);
@@ -692,7 +721,7 @@ void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
     // If Opal is enabled, make sure you pass these requests to it
     if(opal_enabled) {
         OpalEvent * tse = new OpalEvent(OpalComponent::EventType::HINT);
-        tse->hint = aEv->getAllocationLevel();
+        tse->setHint(aEv->getAllocationLevel());
         tse->setResp(aEv->getVirtualAddress(), 0, aEv->getAllocationLength() );
         OpalLink->send(tse);
     }
@@ -769,7 +798,7 @@ bool ArielCore::processNextEvent() {
         case READ_ADDRESS:
                 ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is READ_ADDRESS\n", coreID));
 
-                //		if(pendingTransactions->size() < maxPendingTransactions) {
+                //  if(pendingTransactions->size() < maxPendingTransactions) {
                 if(pending_transaction_count < maxPendingTransactions) {
                     ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Found a read event, fewer pending transactions than permitted so will process...\n"));
                     statInstructionCount->addData(1);
@@ -785,7 +814,7 @@ bool ArielCore::processNextEvent() {
         case WRITE_ADDRESS:
                 ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is WRITE_ADDRESS\n", coreID));
 
-                //		if(pendingTransactions->size() < maxPendingTransactions) {
+                //  if(pendingTransactions->size() < maxPendingTransactions) {
                 if(pending_transaction_count < maxPendingTransactions) {
                     ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Found a write event, fewer pending transactions than permitted so will process...\n"));
                     statInstructionCount->addData(1);

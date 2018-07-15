@@ -64,6 +64,10 @@ PageTableWalker::PageTableWalker(int Page_size, int Assoc, PageTableWalker * Nex
 PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int level, SST::Component * owner, SST::Params& params)
 {
 
+	output = new SST::Output("OpalComponent[@f:@l:@p] ", 1, 0, SST::Output::STDOUT);
+
+	coreId = tlb_id;
+
 	fault_level = 0;
 
 	std::string LEVEL = std::to_string(level);
@@ -107,17 +111,18 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 
 	size = new int[sizes]; 
 	assoc = new int[sizes];
-	page_size = new long long int[sizes];
+	page_size = new uint64_t[sizes];
 	sets = new int[sizes];
-	tags = new long long int**[sizes];
+	tags = new Address_t**[sizes];
+	valid = new bool**[sizes];
 	lru = new int **[sizes];
 
 
 	// page table offsets
 	page_size[0] = 1024*4;
 	page_size[1] = 512*1024*4;
-	page_size[2] = (long long int) 512*512*1024*4;
-	page_size[3] = (long long int) 512*512*512*1024*4;
+	page_size[2] = (uint64_t) 512*512*1024*4;
+	page_size[3] = (uint64_t) 512*512*512*1024*4;
 
 	for(int i=0; i < sizes; i++)
 	{
@@ -138,17 +143,21 @@ PageTableWalker::PageTableWalker(int tlb_id, PageTableWalker * Next_level, int l
 	for(int id=0; id< sizes; id++)
 	{
 
-		tags[id] = new long long int*[sets[id]];
+		tags[id] = new Address_t*[sets[id]];
+
+		valid[id] = new bool*[sets[id]];
 
 		lru[id] = new int*[sets[id]];
 
 		for(int i=0; i < sets[id]; i++)
 		{
-			tags[id][i]=new long long int[assoc[id]];
+			tags[id][i]=new Address_t[assoc[id]];
+			valid[id][i]=new bool[assoc[id]];
 			lru[id][i]=new int[assoc[id]];
 			for(int j=0; j<assoc[id];j++)
 			{
-				tags[id][i][j]=-1;
+				tags[id][i][j]=0;
+				valid[id][i][j]=false;
 				lru[id][i][j]=j;
 			}
 		}
@@ -185,22 +194,28 @@ void PageTableWalker::handleEvent( SST::Event* e )
 
 		// Send request to Opal starting from the first unmapped level (L4/CR3 if first fault in system)
 
-		//		std::cout<<"Received a page fault "<<std::endl;
 		OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
 
-		if((*CR3) == -1)
-			fault_level = 0;
+		//if((*CR3) == -1)
+		if(!cr3_init)
+			fault_level = 4;
 		else if((*PGD).find(temp_ptr->getAddress()/page_size[3]) == (*PGD).end())
-			fault_level = 1;
+			fault_level = 3;
 		else if((*PUD).find(temp_ptr->getAddress()/page_size[2]) == (*PUD).end())
 			fault_level = 2;
 		else if((*PMD).find(temp_ptr->getAddress()/page_size[1]) == (*PMD).end())
-			fault_level = 3;
+			fault_level = 1;
 		else if((*PTE).find(temp_ptr->getAddress()/page_size[0]) == (*PTE).end())
-			fault_level = 4;
+			fault_level = 0;
+		else
+			output->fatal(CALL_INFO, -1, "MMU: DANGER!!\n");
 
+		if(!cr3_init)
+			tse->setResp(stall_addr,0,4096);
+		else
+			tse->setResp(stall_addr/page_size[fault_level],0,4096);
 
-		tse->setResp(temp_ptr->getAddress(),0,4096);
+		tse->setFaultLevel(fault_level);
 		to_opal->send(10, tse);
 
 
@@ -215,62 +230,91 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		// Update the page tables to reflect new page table entries/tables, then issue a new opal request to build next level
 
 		// For now, just assume only the page will be mappe and requested from Opal
-		if(fault_level == 0)
+		if(fault_level == 4)
 		{
 			// We are building the first page in the page table!
+			//std::cout << Owner->getName().c_str() << " Core: " << coreId << " CR3 address: " << std::hex << temp_ptr->getPaddress() << std::endl;
+			cr3_init = 1;
 			(*CR3) = temp_ptr->getPaddress();
-			fault_level++;
+			fault_level--;
 			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
-			tse->setResp(temp_ptr->getAddress(),0,4096);
+			tse->setResp(stall_addr/page_size[fault_level],0,4096);
+			tse->setFaultLevel(fault_level);
 			to_opal->send(10, tse);
 
 		}
-		else if(fault_level == 1)
+		else if(fault_level == 3)
 		{
-			(*PGD)[temp_ptr->getAddress()/page_size[3]] = temp_ptr->getPaddress();
-			fault_level++;
+			//std::cout << Owner->getName().c_str() << " Core: " << coreId << " PGD stall_addr: " << stall_addr << " vaddress: " << std::hex << temp_ptr->getAddress() << " paddress: " << temp_ptr->getPaddress() << std::endl;
+			(*PGD)[stall_addr/page_size[3]] = temp_ptr->getPaddress();
+			fault_level--;
 			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
-			tse->setResp(temp_ptr->getAddress(),0,4096);
+			tse->setResp(stall_addr/page_size[fault_level],0,4096);
+			tse->setFaultLevel(fault_level);
 			to_opal->send(10, tse);
 
 		}
 		else if(fault_level == 2)
 		{
-			(*PUD)[temp_ptr->getAddress()/page_size[2]] = temp_ptr->getPaddress();
-			fault_level++;
-			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
-			//(*MAPPED_PAGE_SIZE1GB)[temp_ptr->getAddress()/page_size[2]] = 0;
-			tse->setResp(temp_ptr->getAddress(),0,4096);
-			to_opal->send(10, tse);
+			//std::cout << Owner->getName().c_str() << " Core: " << coreId << " PUD stall_addr: " << stall_addr << " vaddress: " << std::hex << temp_ptr->getAddress() << " paddress: " << temp_ptr->getPaddress() << std::endl;
+			(*PUD)[stall_addr/page_size[2]] = temp_ptr->getPaddress();
+			//if(temp_ptr->getSize() == page_size[2]) {
+			//	(*MAPPED_PAGE_SIZE1GB)[temp_ptr->getAddress()/page_size[2]] = 0;
+			//	fault_level = 0;
+			//	stall = false;
+			//	*hold = 0;
+
+			//} else {
+				fault_level--;
+				OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+				tse->setResp(stall_addr/page_size[fault_level],0,4096);
+				tse->setFaultLevel(fault_level);
+				to_opal->send(10, tse);
+
+			//}
 
 		}
 
-		else if(fault_level == 3)
+		else if(fault_level == 1)
 		{
-			(*PMD)[temp_ptr->getAddress()/page_size[1]] = temp_ptr->getPaddress();
-			//(*MAPPED_PAGE_SIZE2MB)[temp_ptr->getAddress()/page_size[1]] = 0;
-			fault_level++;
-			OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
-			tse->setResp(temp_ptr->getAddress(),0,4096);
-			to_opal->send(10, tse);
+			//std::cout << Owner->getName().c_str() << " Core: " << coreId << " PMD stall_addr: " << stall_addr << " vaddress: " << std::hex << temp_ptr->getAddress() << " paddress: " << temp_ptr->getPaddress() << std::endl;
+			(*PMD)[stall_addr/page_size[1]] = temp_ptr->getPaddress();
+			//if(temp_ptr->getSize() == page_size[1]) {
+			//	(*MAPPED_PAGE_SIZE2MB)[temp_ptr->getAddress()/page_size[1]] = 0;
+			//	fault_level = 0;
+			//	stall = false;
+			//	*hold = 0;
+
+			//} else {
+				fault_level--;
+				OpalEvent * tse = new OpalEvent(OpalComponent::EventType::REQUEST);
+				tse->setResp(stall_addr/page_size[fault_level],0,4096);
+				tse->setFaultLevel(fault_level);
+				to_opal->send(10, tse);
+
+			//}
 
 		}
-		else if(fault_level == 4)
+		else if(fault_level == 0)
 		{
-			stall = false;
-			*hold = 0;
-			(*PTE)[temp_ptr->getAddress()/page_size[0]] = temp_ptr->getPaddress();
-
-			(*MAPPED_PAGE_SIZE4KB)[temp_ptr->getAddress()/page_size[0]] = 0;
-
-			fault_level = 0;
-
+			//std::cout << Owner->getName().c_str() << " Core: " << coreId << " PTE stall_addr: " << stall_addr << " vaddress: " << std::hex << temp_ptr->getAddress() << " paddress: " << temp_ptr->getPaddress() << std::endl;
+			(*PTE)[stall_addr/page_size[0]] = temp_ptr->getPaddress();
+			(*MAPPED_PAGE_SIZE4KB)[stall_addr/page_size[0]] = 0;
+			(*PENDING_PAGE_FAULTS).erase(stall_addr/page_size[0]);
 		}
 
 		delete temp_ptr;
+
 	}
+	else if(temp_ptr->getType() == EventType::SHOOTDOWN)
+	{
+		//std::cout << Owner->getName().c_str() << " Core ID: " << coreId << " Shootdown event: vaddress: " << std::hex << temp_ptr->getAddress() << " paddress: " << temp_ptr->getPaddress() << std::endl;
+		OpalEvent * tse = new OpalEvent(OpalComponent::EventType::SHOOTDOWN);
+		tse->setResp(temp_ptr->getAddress(),temp_ptr->getPaddress(),4096);
+		tse->setFaultLevel(0);
+		to_opal->send(10, tse);
 
-
+	}
 }
 
 
@@ -279,17 +323,79 @@ void PageTableWalker::handleEvent( SST::Event* e )
 void PageTableWalker::recvOpal(SST::Event * event)
 {
 
+	OpalEvent * ev =  dynamic_cast<OpalComponent::OpalEvent*> (event);
 
-	OpalEvent * temp_ptr =  dynamic_cast<OpalComponent::OpalEvent*> (event);
+	switch(ev->getType()) {
+	case SST::OpalComponent::EventType::RESPONSE:
+	{
+		SambaEvent * tse = new SambaEvent(EventType::OPAL_RESPONSE);
+		tse->setResp(ev->getAddress(), ev->getPaddress(),4096);
+		s_EventChan->send(10, tse);
+	}
+	break;
 
-	// Whenever we receve request from Opal, we just create event that will be handled by handleEvent
-	SambaEvent * tse = new SambaEvent(EventType::OPAL_RESPONSE);
-	tse->setResp(temp_ptr->getAddress(), temp_ptr->getPaddress(),4096);
-	//std::cerr << "Receviced Virtual addres: " << std::hex << temp_ptr->getAddress() << " Physical address: " << std::hex << temp_ptr->getAddress() << " size: " << temp_ptr->getSize() << std::endl;
-	s_EventChan->send(10, tse);
+	case SST::OpalComponent::EventType::INVALIDADDR:
+	{
+		*shootdown = 1;
+		shootdownId = ev->getShootdownId();
 
-	//std::cout<<"Received a pack from Opal link serving fault for Vaddress "<<temp_ptr->getAddress()/4096<<" With a frame at: "<<temp_ptr->getPaddress()<<std::endl;
-	delete temp_ptr;
+		Address_t newPaddress = ev->getPaddress();
+		Address_t vaddress = ev->getAddress();
+		int faultLevel = ev->getFaultLevel();
+
+		// update physical address. get the level to update
+		// only by core 0
+		if(0 == coreId) {
+			if(faultLevel == 4 ) {
+				//std::cout << Owner->getName().c_str() << " Core ID: " << coreId << " Invalidate CR3 address: " << std::hex << vaddress << " old paddress: " << *CR3 << " new paddress: " << newPaddress << std::endl;
+				*CR3 = newPaddress;
+			}
+			else if(faultLevel == 3) {
+				if((*PGD).find(vaddress) != (*PGD).end()) {
+					//std::cout << Owner->getName().c_str() << " Core ID: " << coreId << " Invalidate PGD address: " << std::hex << vaddress << " old paddress: " << (*PGD)[vaddress] << " new paddress: " << newPaddress << std::endl;
+					(*PGD)[vaddress] = newPaddress;
+				}
+				else
+					output->fatal(CALL_INFO, -1, "MMU: Shootdown invalidation error!!\n");
+			}
+			else if(faultLevel == 2) {
+				if((*PUD).find(vaddress) != (*PUD).end()){
+					//std::cout << Owner->getName().c_str() << " Core ID: " << coreId << " Invalidate PUD address: " << std::hex << vaddress << " old paddress: " << (*PUD)[vaddress] << " new paddress: " << newPaddress << std::endl;
+					(*PUD)[vaddress] = newPaddress;
+				}
+			}
+			else if(faultLevel == 1) {
+				if((*PMD).find(vaddress) != (*PMD).end()) {
+					//std::cout << Owner->getName().c_str() << " Core ID: " << coreId << " Invalidate PMD address: " << std::hex << vaddress << " old paddress: " << (*PMD)[vaddress] << " new paddress: " << newPaddress << std::endl;
+					(*PMD)[vaddress] = newPaddress;
+				}
+			}
+			else if(faultLevel == 0) {
+				if((*PTE).find(vaddress) != (*PTE).end()) {
+					//std::cout << Owner->getName().c_str() << " Core ID: " << coreId << " Invalidate PTE address: " << std::hex << vaddress << " old paddress: " << (*PTE)[vaddress] << " new paddress: " << newPaddress << std::endl;
+					(*PTE)[vaddress] = newPaddress;
+				}
+			}
+			else
+				output->fatal(CALL_INFO, -1, "MMU: IVALIDATION DANGER!!\n");
+		}
+		// store the address to be invalidated
+		buffer.push_back(ev->getAddress());
+
+	}
+	break;
+
+	case SST::OpalComponent::EventType::SHOOTDOWN:
+	{
+		invalid_addrs->splice(invalid_addrs->begin(), buffer);
+	}
+	break;
+
+	default:
+		output->fatal(CALL_INFO, -1, "PTW unknown request from opal\n");
+	}
+
+	delete ev;
 
 }
 
@@ -308,7 +414,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 	insert_way(WID_Add[pw_id], find_victim_way(WID_Add[pw_id], WSR_COUNT[pw_id]), WSR_COUNT[pw_id]);
 
-	long long int addr = WID_Add[pw_id];
+	Address_t addr = WID_Add[pw_id];
 
 	WSR_READY[pw_id]=true;
 
@@ -326,13 +432,13 @@ void PageTableWalker::recvResp(SST::Event * event)
 	{
 
 
-		long long int dummy_add = rand()%10000000;
+		Address_t dummy_add = rand()%10000000;
 
 		// Time to use actual page table addresses if we have page tables
 		if(emulate_faults)
 		{
 
-			long long int page_table_start = 0;
+			Address_t page_table_start = 0;
 			if(WSR_COUNT[pw_id]==4)
 				page_table_start = (*PGD)[addr/page_size[3]];
 			else if(WSR_COUNT[pw_id]==3)
@@ -345,7 +451,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 			dummy_add = page_table_start + (addr/page_size[WSR_COUNT[pw_id]-1])%512;
 
 		}
-		uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
+		Address_t dummy_base_add = dummy_add & ~(line_size - 1);
 		MemEvent *e = new MemEvent(Owner, dummy_add, dummy_base_add, Command::GetS);
 		SST::Event * ev = e;
 
@@ -365,22 +471,28 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 
 	currTime = x;
-	// The actual dipatching process... here we take a request and place it in the right queue based on being miss or hit and the number of pending misses
-	std::vector<SST::Event *>::iterator st_1,en_1;
-	st_1 = not_serviced.begin();
-	en_1 = not_serviced.end();
-
 
 	// In case we are currently servicing a page fault, just return until this is dealt with
 	if(stall && emulate_faults)
 	{
 
+		//std::cout<< Owner->getName().c_str() << " Core: " << coreId << " stalled with stall address: " << stall_addr << std::endl;
+		if((*PENDING_PAGE_FAULTS).find(stall_addr/page_size[0])==(*PENDING_PAGE_FAULTS).end()) {
+			stall = false;
+			*hold = 0;
+		}
+
 		return false;
 	}
 
 
+	// The actual dipatching process... here we take a request and place it in the right queue based on being miss or hit and the number of pending misses
+	std::vector<SST::Event *>::iterator st_1,en_1;
+	st_1 = not_serviced.begin();
+	en_1 = not_serviced.end();
+
 	int dispatched=0;
-	for(;st_1!=not_serviced.end(); st_1++)
+	for(;st_1!=not_serviced.end() && !(*shootdown); st_1++)
 	{
 		dispatched++;
 
@@ -389,7 +501,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 			break;
 
 		SST::Event * ev = *st_1; 
-		uint64_t addr = ((MemEvent*) ev)->getVirtualAddress();
+		Address_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
 		// A sneak-peak if the access is going to cause a page fault
 		if(emulate_faults==1)
@@ -401,10 +513,16 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 			if(fault)
 			{
-				SambaEvent * tse = new SambaEvent(EventType::PAGE_FAULT);
-				//	std::cout<<"Fault at address "<<addr<<std::endl;
-				tse->setResp(addr,0,4096);
-				s_EventChan->send(10, tse);
+				stall_addr = addr;
+				if((*PENDING_PAGE_FAULTS).find(addr/page_size[0])==(*PENDING_PAGE_FAULTS).end()) {
+					(*PENDING_PAGE_FAULTS)[addr/page_size[0]] = 0;
+					SambaEvent * tse = new SambaEvent(EventType::PAGE_FAULT);
+					//std::cout<< Owner->getName().c_str() << " Core id: " << coreId << " Fault at address "<<addr<<std::endl;
+					tse->setResp(addr,0,4096);
+					s_EventChan->send(10, tse);
+
+				}
+
 				stall = true;
 				*hold = 1;
 //				(*MAPPED_PAGE_SIZE4KB)[addr/page_size[0]] = 0; // FIXME: Hack to avoid propogating faulting VA through all events, only for initial testing
@@ -465,7 +583,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 					WID_EV[++mmu_id] = (*st_1);
 
-					long long int dummy_add = rand()%10000000;
+					Address_t dummy_add = rand()%10000000;
 
 					// Use actual page table base to start the walking if we have real page tables
 					if(emulate_faults)
@@ -473,7 +591,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 						dummy_add = (*CR3) + (addr/page_size[2])%512;
 					}
 
-					uint64_t dummy_base_add = dummy_add & ~(line_size - 1);
+					Address_t dummy_base_add = dummy_add & ~(line_size - 1);
 					MemEvent *e = new MemEvent(Owner, dummy_add, dummy_base_add, Command::GetS);
 					SST::Event * ev = e;
 
@@ -531,7 +649,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 		{
 
 
-			uint64_t addr = ((MemEvent*) st->first)->getVirtualAddress();
+			Address_t addr = ((MemEvent*) st->first)->getVirtualAddress();
 
 
 			// Double checking that we actually still don't have it inserted
@@ -597,28 +715,90 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 }
 
 
+void PageTableWalker::initaitePageMigration(Address_t vaddress, Address_t paddress)
+{
 
-void PageTableWalker::insert_way(long long int vaddr, int way, int struct_id)
+	/*
+	 * Check if any shootdon request with same address is pending.
+	 * If No, send a TLB shootdown request to Opal and stall
+	 * If Yes, Just stall.
+	 */
+	//std::cout << Owner->getName().c_str() << " Core ID: " << coreId << " sending TLB shootdown with address: " << std::hex << vaddress << " new paddress: " << paddress << std::endl;
+	stall_addr = vaddress;
+	if((*PENDING_SHOOTDOWN_EVENTS).find(vaddress/page_size[0]) == (*PENDING_SHOOTDOWN_EVENTS).end()) {
+		(*PENDING_SHOOTDOWN_EVENTS)[vaddress/page_size[0]] = 0;
+		(*PENDING_PAGE_FAULTS)[vaddress/page_size[0]] = 0;		//add to pending page faults list
+		(*MAPPED_PAGE_SIZE4KB).erase(vaddress/page_size[0]); 	//unmap the page
+		SambaEvent * tse = new SambaEvent(EventType::SHOOTDOWN);
+		tse->setResp(vaddress/page_size[0],paddress,4096);
+		s_EventChan->send(10, tse);
+	}
+
+	*own_shootdown = 1;
+	//std::cout << Owner->getName().c_str() << " Core ID: " << coreId << " stall address " << std::hex << stall_addr << " vaddress index "<< vaddress/page_size[0] << std::endl;
+
+}
+
+void PageTableWalker::insert_way(Address_t vaddr, int way, int struct_id)
 {
 
 	int set=abs_int_Samba((vaddr/page_size[struct_id])%sets[struct_id]);
 	tags[struct_id][set][way]=vaddr/page_size[struct_id];
-
+	valid[struct_id][set][way]=true;
 
 }
 
 
 // Does the translation and updating the statistics of miss/hit
-long long int PageTableWalker::translate(long long int vadd)
+Address_t PageTableWalker::translate(Address_t vadd)
 {
 	return 1;
 
 }
 
 
+// Invalidate TLB entries
+void PageTableWalker::invalidate(Address_t vadd)
+{
+
+	for(int id=0; id<sizes; id++)
+	{
+		int set= abs_int_Samba((vadd*page_size[0]/page_size[id])%sets[id]);
+		for(int i=0; i<assoc[id]; i++) {
+			if(tags[id][set][i]==vadd*page_size[0]/page_size[id] && valid[id][set][i]) {
+				valid[id][set][i] = false;
+				break;
+			}
+		}
+	}
+
+	if(*page_migration && *page_migration_policy == PageMigrationType::FTP) {
+		if(vadd == stall_addr/page_size[0] && *own_shootdown) {
+			//std::cout << Owner->getName().c_str() << " Core ID: " << coreId << " own_shootdown: stall_address: " << std::hex << stall_addr << " vaddress index " << vadd << std::endl;
+			*own_shootdown = 0;
+			(*MAPPED_PAGE_SIZE4KB)[vadd] = 0;
+			(*PENDING_PAGE_FAULTS).erase(vadd);
+			(*PENDING_SHOOTDOWN_EVENTS).erase(vadd);
+
+		}
+	}
+
+}
+
+
+// done with shootdown, send shootdown ack
+void PageTableWalker::sendShootdownAck()
+{
+	OpalEvent * tse = new OpalEvent(OpalComponent::EventType::SDACK);
+	tse->setShootdownId(shootdownId);
+	to_opal->send(10, tse);
+	*shootdown = 0;
+}
+
+
 
 // Find if it exists
-bool PageTableWalker::check_hit(long long int vadd, int struct_id)
+bool PageTableWalker::check_hit(Address_t vadd, int struct_id)
 {
 
 
@@ -626,13 +806,13 @@ bool PageTableWalker::check_hit(long long int vadd, int struct_id)
 
 	for(int i=0; i<assoc[struct_id];i++)
 		if(tags[struct_id][set][i]==vadd/page_size[struct_id])
-			return true;
+			return valid[struct_id][set][i];
 
 	return false;
 }
 
 // To insert the translaiton
-int PageTableWalker::find_victim_way(long long int vadd, int struct_id)
+int PageTableWalker::find_victim_way(Address_t vadd, int struct_id)
 {
 
 	int set= abs_int_Samba((vadd/page_size[struct_id])%sets[struct_id]);
@@ -646,7 +826,7 @@ int PageTableWalker::find_victim_way(long long int vadd, int struct_id)
 }
 
 // This function updates the LRU policy for a given address
-void PageTableWalker::update_lru(long long int vaddr, int struct_id)
+void PageTableWalker::update_lru(Address_t vaddr, int struct_id)
 {
 
 	int lru_place=assoc[struct_id]-1;

@@ -36,38 +36,40 @@ namespace SST {
 namespace Cassini {
 
 class AddrHistogrammer : public SST::MemHierarchy::CacheListener {
-    public:
-	AddrHistogrammer(Component*, Params& params);
-        ~AddrHistogrammer() {};
+public:
+    AddrHistogrammer(Component*, Params& params);
+    ~AddrHistogrammer() {};
 
-	void notifyAccess(const CacheListenerNotification& notify);
-	void registerResponseCallback(Event::HandlerBase *handler);
+    void notifyAccess(const CacheListenerNotification& notify);
+    void registerResponseCallback(Event::HandlerBase *handler);
 
-	SST_ELI_REGISTER_SUBCOMPONENT(
-		AddrHistogrammer,
-                "cassini",
-                "AddrHistogrammer",
-                SST_ELI_ELEMENT_VERSION(1,0,0),
-                "Address access histogram generator",
-                "SST::Cassini::CacheListener"
-        )
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        AddrHistogrammer,
+            "cassini",
+            "AddrHistogrammer",
+            SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Address access histogram generator",
+            "SST::Cassini::CacheListener"
+    )
 
-	SST_ELI_DOCUMENT_PARAMS(
-		{ "addr_cutoff", "Addresses above this cutoff won't be recorded", "1TB" }
-        )
+    SST_ELI_DOCUMENT_PARAMS(
+                            { "addr_cutoff", "Addresses above this cutoff won't be recorded", "1TB" },
+                            { "virtual_addr", "Record virtual addresses (1) or physical (0)", 0}
+    )
 
-        SST_ELI_DOCUMENT_STATISTICS(
-		{ "histogram_reads", "Histogram of page read counts", "counts", 1 },
-		{ "histogram_writes", "Histogram of page write counts", "counts", 1 }
-        )
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "histogram_reads", "Histogram of page read counts", "counts", 1 },
+        { "histogram_writes", "Histogram of page write counts", "counts", 1 }
+    )
 
-    private:
-	std::vector<Event::HandlerBase*> registeredCallbacks;
-	Addr cutoff; // Don't bin addresses above the cutoff. Helps avoid creating
-	             //  histogram entries for the vast address range between the
-	             //  heap and the stack.
-        Statistic<Addr>* rdHisto;
-        Statistic<Addr>* wrHisto;
+private:
+    std::vector<Event::HandlerBase*> registeredCallbacks;
+    bool captureVirtual; 
+    Addr cutoff; // Don't bin addresses above the cutoff. Helps avoid creating
+                //  histogram entries for the vast address range between the
+                //  heap and the stack.
+    Statistic<Addr>* rdHisto;
+    Statistic<Addr>* wrHisto;
 };
 
 }

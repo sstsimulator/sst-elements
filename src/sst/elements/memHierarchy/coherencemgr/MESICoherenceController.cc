@@ -70,6 +70,10 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
         case I:
             return DONE;
         case S:
+            if (wbCacheLine->getPrefetch()) {
+                wbCacheLine->setPrefetch(false);
+                statPrefetchEvict->addData(1);
+            }
             if (!inclusive_ && wbCacheLine->numSharers() > 0) {
                 wbCacheLine->setState(I);
                 return DONE;
@@ -87,6 +91,10 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
             wbCacheLine->setState(I);    // wait for ack
 	    return DONE;
         case E:
+            if (wbCacheLine->getPrefetch()) {
+                wbCacheLine->setPrefetch(false);
+                statPrefetchEvict->addData(1);
+            }
             if (!inclusive_ && wbCacheLine->ownerExists()) {
                 wbCacheLine->setState(I);
                 return DONE;
@@ -113,6 +121,10 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
 	    wbCacheLine->setState(I);    // wait for ack
 	    return DONE;
         case M:
+            if (wbCacheLine->getPrefetch()) {
+                wbCacheLine->setPrefetch(false);
+                statPrefetchEvict->addData(1);
+            }
             if (!inclusive_ && wbCacheLine->ownerExists()) {
                 wbCacheLine->setState(I);
                 return DONE;
@@ -127,7 +139,6 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
             }
             if (wbCacheLine->ownerExists()) {
                 sendFetchInv(wbCacheLine, parent->getName(), false);
-    /* Event/State combinations - Count how many times an event was seen in particular state */
                 mshr_->incrementAcksNeeded(wbBaseAddr);
                 wbCacheLine->setState(MI);
                 
@@ -387,7 +398,7 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
     if (is_debug_event(event)) printData(cacheLine->getData(), false);
     
     uint64_t sendTime = 0;
-    bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == parent->getName()));
+    bool localPrefetch = event->isPrefetch() && (event->getRqstr() == parent->getName());
     recordStateEventCount(event->getCmd(), state);
     switch (state) {
         case I:
@@ -398,7 +409,14 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
             return STALL;
         case S:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) return DONE;
+            if (localPrefetch) {
+                statPrefetchRedundant->addData(1);
+                return DONE;
+            }
+            if (cacheLine->getPrefetch()) {
+                statPrefetchHit->addData(1);
+                cacheLine->setPrefetch(false);
+            }
             cacheLine->addSharer(event->getSrc());
             sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
@@ -406,7 +424,14 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
         case E:
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) return DONE;
+            if (localPrefetch) {
+                statPrefetchRedundant->addData(1);
+                return DONE;
+            }
+            if (cacheLine->getPrefetch()) {
+                statPrefetchHit->addData(1);
+                cacheLine->setPrefetch(false);
+            }
             
             // For Non-inclusive caches, we will deallocate this block so E/M permission needs to transfer!
             // Alternately could write back
@@ -471,6 +496,12 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
             return STALL;
         case S:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
+            
+            if (cacheLine->getPrefetch()) {
+                statPrefetchUpgradeMiss->addData(1);
+                cacheLine->setPrefetch(false);
+            }
+            
             sendTime = forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), cacheLine->getTimestamp(), NULL);
             if (invalidateSharersExceptRequestor(cacheLine, event->getSrc(), event->getRqstr(), replay)) {
                 cacheLine->setState(SM_Inv);
@@ -478,11 +509,16 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
                 cacheLine->setState(SM);
                 cacheLine->setTimestamp(sendTime);
             }
+            
             return STALL;
         case E:
             cacheLine->setState(M);
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
+            if (cacheLine->getPrefetch()) {
+                statPrefetchHit->addData(1);
+                cacheLine->setPrefetch(false);
+            }
 
             if (!cacheLine->isShareless()) {
                 if (invalidateSharersExceptRequestor(cacheLine, event->getSrc(), event->getRqstr(), replay)) {
@@ -653,8 +689,13 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
             }
             cacheLine->setData(event->getPayload(), 0);
         }
-    }
     
+        if (cacheLine->getPrefetch()) {
+            statPrefetchEvict->addData(1);
+            cacheLine->setPrefetch(false);
+        }
+    }
+            
     CacheAction reqEventAction;
     uint64_t sendTime = 0;
     // Handle flush at local level
@@ -1124,6 +1165,11 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
 CacheAction MESIController::handleInv(MemEvent* event, CacheLine* cacheLine, bool replay) {
     State state = cacheLine->getState();
     recordStateEventCount(event->getCmd(), state);
+    
+    if (cacheLine->getPrefetch()) {
+        statPrefetchInv->addData(1);
+        cacheLine->setPrefetch(false);
+    }
 
     switch(state) {
         case I:     
@@ -1175,6 +1221,11 @@ CacheAction MESIController::handleForceInv(MemEvent * event, CacheLine * cacheLi
     State state = cacheLine->getState();
     recordStateEventCount(event->getCmd(), state);
 
+    if (cacheLine->getPrefetch()) {
+        statPrefetchInv->addData(1);
+        cacheLine->setPrefetch(false);
+    }
+    
     switch(state) {
         case I:
         case IS:
@@ -1254,6 +1305,11 @@ CacheAction MESIController::handleForceInv(MemEvent * event, CacheLine * cacheLi
 CacheAction MESIController::handleFetchInv(MemEvent * event, CacheLine * cacheLine, MemEvent * collisionEvent, bool replay) {
     State state = cacheLine->getState();
     recordStateEventCount(event->getCmd(), state);
+    
+    if (cacheLine->getPrefetch()) {
+        statPrefetchInv->addData(1);
+        cacheLine->setPrefetch(false);
+    }
     
     switch (state) {
         case I:
@@ -1440,7 +1496,7 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
     State state = cacheLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);
     
-    bool shouldRespond = !(origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName()));
+    bool localPrefetch = origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName());
     
     uint64_t sendTime = 0;
     
@@ -1454,7 +1510,10 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
             else if (protocol_ && responseEvent->getCmd() == Command::GetXResp) cacheLine->setState(E);
             else cacheLine->setState(S);
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) return DONE;
+            if (localPrefetch) {
+                cacheLine->setPrefetch(true);
+                return DONE;     
+            }
             
             if (!inclusive_ && cacheLine->getState() != S) { // Transfer E/M permission
                 cacheLine->setOwner(origRequest->getSrc());

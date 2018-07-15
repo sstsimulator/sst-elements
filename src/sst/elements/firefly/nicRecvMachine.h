@@ -21,7 +21,22 @@ class RecvMachine {
         
     typedef uint64_t SrcKey;
     typedef std::function<void()> Callback;
-    static SrcKey getSrcKey(int srcNode, int srcPid) { return (SrcKey) srcNode << 32 | srcPid; }
+
+    static SrcKey getSrcKey(int srcNode, int srcPid, int srcStream) { 
+		union Key {
+			uint64_t value;
+			struct x {
+				uint16_t pid : 12;
+				uint16_t stream : STREAM_NUM_SIZE;
+				uint32_t nid : 20;
+			} x;
+		} tmp;
+
+		tmp.x.pid = srcPid;
+		tmp.x.nid = srcNode;
+		tmp.x.stream = srcStream;
+		return tmp.value; 
+	}
 
     #include "nicRecvStream.h"
     #include "nicRecvCtx.h"
