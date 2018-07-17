@@ -126,6 +126,7 @@ class ShmemGetvRespRecvEntry : public ShmemGetRespRecvEntry {
         m_shmemMove = new ShmemRecvMoveValue( m_value );
     }
 
+    size_t totalBytes( ) { return m_shmemMove->totalBytes(); }
     virtual void notify( int src_vNic, int src_node, int tag, size_t length ) {
         static_cast<ShmemGetvSendEntry*>(m_entry)->callback( m_value );
     }
@@ -147,6 +148,7 @@ class ShmemGetbRespRecvEntry : public ShmemGetRespRecvEntry {
         m_shmemMove = new ShmemRecvMoveMem( backing, length, shmem, core, cmd->getMyAddr() );
     }
 
+    size_t totalBytes( ) { return m_shmemMove->totalBytes(); }
     virtual void notify( int src_vNic, int src_node, int tag, size_t length ) {
         static_cast<ShmemGetbSendEntry*>(m_entry)->callback( );
     }
