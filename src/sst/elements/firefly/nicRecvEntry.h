@@ -83,6 +83,7 @@ class ShmemRecvEntry : public RecvEntryBase {
 
     void notify( int src_vNic, int src_node, int tag, size_t length ) {}
 
+    size_t totalBytes( ) { return m_shmemMove->totalBytes(); }
     std::vector<IoVec>& ioVec() { assert(0); }
 
     bool copyIn( Output& dbg, FireflyNetworkEvent& ev, std::vector<MemOp>& vec ) {
@@ -104,6 +105,7 @@ class ShmemGetRespRecvEntry : public RecvEntryBase {
         delete m_entry;
     }
 
+    size_t totalBytes( ) { return m_shmemMove->totalBytes(); }
     std::vector<IoVec>& ioVec() { assert(0); }
 
     bool copyIn( Output& dbg, FireflyNetworkEvent& ev, std::vector<MemOp>& vec ) {

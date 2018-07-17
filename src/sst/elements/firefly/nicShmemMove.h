@@ -63,6 +63,7 @@ class ShmemRecvMoveValue : public ShmemRecvMove {
 
     bool copyIn( Output& dbg, FireflyNetworkEvent&, std::vector<MemOp>& );
     bool isDone() { return m_offset == m_value.getLength(); }
+    size_t totalBytes() { return m_value.getLength(); }
 
   private:
     Hermes::Value&  m_value;
