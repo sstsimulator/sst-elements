@@ -17,6 +17,8 @@
 #ifndef _H_EMBER_OTF2_READER
 #define _H_EMBER_OTF2_READER
 
+#include <unordered_map>
+
 #include "mpi/embermpigen.h"
 #include "otf2/otf2.h"
 
@@ -67,20 +69,65 @@ public:
 	        { "time-Commcreate", "Time spent in Commcreate event", "ns", 0},
     	)
 
+	void setCurrentTime( const OTF2_TimeStamp t ) {
+		verbose( CALL_INFO, 4, 0, "Setting current timestamp to %" PRIu64 "\n", t );
+
+		currentTime = t;
+	}
+
+	OTF2_TimeStamp getCurrentTime() {
+		return currentTime;
+	}
+
+	std::queue<EmberEvent*>* getEventQueue() {
+		return eventQ;
+	}
+
+	void setEventQueue( std::queue<EmberEvent*>* newQ ) {
+		eventQ = newQ;
+	}
+
+	std::unordered_map<uint64_t, MessageRequest*>& getRequestMap() {
+		return requestMap;
+	}
+
+	void printRequestMap() {
+		verbose(CALL_INFO, 4, 0, "Request Map on Rank: %" PRIu32 " contains: %" PRIu64 " entries.\n",
+			static_cast<uint32_t>(rank()), static_cast<uint64_t>(requestMap.size()) );
+
+		for( auto reqItr = requestMap.begin() ; reqItr != requestMap.end(); reqItr++ ) {
+			verbose(CALL_INFO, 4, 0, "Request: %20" PRIu64 "\n", reqItr->first );
+		}
+	}
+
+	PayloadDataType extractDataTypeFromAttributeList( OTF2_AttributeList* attr ) {
+		uint32_t attributeCount = OTF2_AttributeList_GetNumberOfElements(attr);
+		verbose( CALL_INFO, 16, 0, "Attribute list on rank: %" PRIu32 " contains %" PRIu32 " attributes\n",
+			static_cast<uint32_t>(rank()), attributeCount );
+
+		return DOUBLE;
+	}
+
 private:
 	OTF2_DefReader* traceLocalDefReader;
 	OTF2_GlobalDefReader* traceGlobalDefReader;
 	OTF2_GlobalEvtReader* traceGlobalEvtReader;
+	OTF2_GlobalEvtReaderCallbacks* traceGlobalEvtCallbacks;
 	OTF2_DefReaderCallbacks* traceLocalCallbacks;
 	OTF2_EvtReaderCallbacks* traceLocalEvtCallbacks;
      	OTF2_Reader* traceReader;
 	OTF2_EvtReader* traceEvtReader;
+
+	OTF2_TimeStamp currentTime;
 
 	std::vector<uint64_t> traceLocations;
 	uint64_t traceLocationCount;
 	uint64_t currentLocation;
 
 	bool traceOpenedDefFiles;
+
+	std::queue<EmberEvent*>* eventQ;
+	std::unordered_map<uint64_t, MessageRequest*> requestMap;
 };
 
 }

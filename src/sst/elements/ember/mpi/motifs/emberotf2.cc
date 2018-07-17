@@ -25,33 +25,77 @@
 
 using namespace SST::Ember;
 
-static OTF2_CallbackCode EmberOTF2EnterRegion( OTF2_LocationRef location,
+static OTF2_CallbackCode EmberOTF2StartProgram(
+	OTF2_LocationRef locationID,
+	OTF2_TimeStamp time,
+	void *userData,
+	OTF2_AttributeList *attributeList,
+	OTF2_StringRef programName,
+	uint32_t numberOfArguments,
+	const OTF2_StringRef *programArguments) {
+
+	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
+	gen->setCurrentTime( time );
+
+	return OTF2_CALLBACK_SUCCESS;
+}
+
+static OTF2_CallbackCode EmberOTF2EndProgram(
+	OTF2_LocationRef locationID,
+	OTF2_TimeStamp time,
+	void *userData,
+	OTF2_AttributeList *attributeList,
+	int64_t exitStatus
+	) {
+
+	return OTF2_CALLBACK_SUCCESS;
+}
+
+static OTF2_CallbackCode EmberOTF2EnterRegion( 
+	OTF2_LocationRef location,
 	OTF2_TimeStamp time, 
-	uint64_t eventPosition,
 	void* userData,
 	OTF2_AttributeList* attributes,
 	OTF2_RegionRef region ) {
+
+	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
+
+	if( gen->getCurrentTime() == 0 ) {
+		gen->setCurrentTime( time );
+	}
+
+//	gen->incrementRegion();
 
 	printf("EVENT LOCATION: %d ENTER REGION\n", (int) location );
 
 	return OTF2_CALLBACK_SUCCESS;
 }
 
-static OTF2_CallbackCode EmberOTF2ExitRegion( OTF2_LocationRef location,
+static OTF2_CallbackCode EmberOTF2LeaveRegion(
+	OTF2_LocationRef location,
 	OTF2_TimeStamp time,
-	uint64_t eventPosition,
 	void* userData,
 	OTF2_AttributeList* attributes,
 	OTF2_RegionRef regon ) {
 
-	printf("EVENT LOCATION %d EXIT REGION\n", (int) location );
+	printf("EVENT LOCATION %d LEAVE REGION\n", (int) location );
+
+	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
+//	gen->decrementRegion();
+
+//	if( gen->getCurrentRegionCount() == 0 ) {
+		OTF2_TimeStamp timeDiff = time - gen->getCurrentTime();
+		gen->verbose( CALL_INFO, 4, 0, "Time-Difference: %" PRIu64 "\n", timeDiff );
+
+		gen->setCurrentTime( time );
+//	}
 
 	return OTF2_CALLBACK_SUCCESS;
 }
 
-static OTF2_CallbackCode EmberOTF2MPISend( OTF2_LocationRef location,
+static OTF2_CallbackCode EmberOTF2MPISend(
+	OTF2_LocationRef location,
 	OTF2_TimeStamp time,
-	uint64_t eventPosition,
 	void* userData,
 	OTF2_AttributeList* attributes,
 	uint32_t receiver,
@@ -59,10 +103,131 @@ static OTF2_CallbackCode EmberOTF2MPISend( OTF2_LocationRef location,
 	uint32_t tag,
 	uint64_t msgLen) {
 
-	printf("MPI-SEND: to: %" PRIu32 ", tag=%" PRIu32 ", len=%" PRIu64 "\n",
-		receiver, tag, msgLen);
+	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
+	gen->enQ_send( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), receiver, tag, GroupWorld );
 
 	return OTF2_CALLBACK_SUCCESS;
+}
+
+static OTF2_CallbackCode EmberOTF2MPIISend(
+       	OTF2_LocationRef location,
+        OTF2_TimeStamp time,
+        void* userData,
+        OTF2_AttributeList* attributes,
+        uint32_t receiver,
+        OTF2_CommRef communicator,
+        uint32_t tag,
+        uint64_t msgLen,
+	uint64_t reqID) {
+
+	MessageRequest* newReq = new MessageRequest();
+
+	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
+	gen->enQ_isend( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), receiver, tag, GroupWorld, newReq );
+
+	gen->getRequestMap().insert( std::pair<uint64_t, MessageRequest*>( reqID, newReq ) );
+
+        return OTF2_CALLBACK_SUCCESS;
+}
+
+static OTF2_CallbackCode EmberOTF2MPIISendComplete(
+	OTF2_LocationRef location,
+       	OTF2_TimeStamp time,
+       	void* userData,
+       	OTF2_AttributeList* attributes,
+	uint64_t reqID) {
+
+	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
+	gen->verbose( CALL_INFO, 4, 0, "Trace::ISendComplete, reqID=%" PRIu64 "\n", reqID );
+
+	auto checkReq = gen->getRequestMap().find(reqID);
+
+	if( checkReq == gen->getRequestMap().end() ) {
+		gen->printRequestMap();
+		gen->fatal( CALL_INFO, -1, "Error: search for request ID %" PRIu64 " did not find a request.\n",
+			reqID);
+	}
+
+	gen->enQ_wait( *(gen->getEventQueue()), checkReq->second, NULL );
+	gen->getRequestMap().erase( checkReq );
+
+	return OTF2_CALLBACK_SUCCESS;
+}
+
+static OTF2_CallbackCode EmberOTF2MPIIRecvRequest(
+	OTF2_LocationRef location,
+        OTF2_TimeStamp time,
+        void* userData,
+        OTF2_AttributeList* attributes,
+        uint64_t reqID) {
+
+/*
+	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
+	gen->verbose( CALL_INFO, 4, 0, "Trace::IRecvRequest, reqID=%" PRIu64 "\n", reqID );
+
+	auto checkReq = gen->getRequestMap().find(reqID);
+
+	if( checkReq == gen->getRequestMap().end() ) {
+		gen->printRequestMap();
+		gen->fatal( CALL_INFO, -1, "Error: search for request ID %" PRIu64 " did not find a request.\n",
+			reqID);
+	}
+
+	gen->enQ_wait( *(gen->getEventQueue()), checkReq->second, NULL );
+	gen->getRequestMap().erase( checkReq );
+*/
+        return OTF2_CALLBACK_SUCCESS;
+}
+
+static OTF2_CallbackCode EmberOTF2MPIRecv(
+	OTF2_LocationRef location,
+        OTF2_TimeStamp time,
+        void* userData,
+        OTF2_AttributeList* attributes,
+        uint32_t sender,
+        OTF2_CommRef communicator,
+        uint32_t tag,
+        uint64_t msgLen) {
+
+       	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
+	gen->verbose( CALL_INFO, 4, 0, "Trace::Recv sender=%" PRIu32 ", tag=%" PRIu32 ", len=%" PRIu64 "\n",
+		sender, tag, msgLen);
+
+        gen->enQ_recv( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), sender, tag, GroupWorld );
+
+	return OTF2_CALLBACK_SUCCESS;
+}
+
+static OTF2_CallbackCode EmberOTF2MPIIRecv(
+	OTF2_LocationRef location,
+        OTF2_TimeStamp time,
+        void* userData,
+        OTF2_AttributeList* attributes,
+        uint32_t sender,
+        OTF2_CommRef communicator,
+        uint32_t tag,
+        uint64_t msgLen,
+	uint64_t reqID) {
+
+/*
+       	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
+	gen->verbose( CALL_INFO, 4, 0, "Trace::IRecv sender=%" PRIu32 ", tag=%" PRIu32 ", len=%" PRIu64 ", reqID=%" PRIu64 "\n",
+		sender, tag, msgLen, reqID);
+
+	MessageRequest* newReq = new MessageRequest();
+
+        gen->enQ_irecv( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), sender, tag, GroupWorld, newReq );
+
+        gen->getRequestMap().insert( std::pair<uint64_t, MessageRequest*>( reqID, newReq ) );	
+*/
+
+       	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
+	gen->verbose( CALL_INFO, 4, 0, "Trace::Recv sender=%" PRIu32 ", tag=%" PRIu32 ", len=%" PRIu64 "\n",
+		sender, tag, msgLen);
+
+        gen->enQ_recv( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), sender, tag, GroupWorld );
+
+        return OTF2_CALLBACK_SUCCESS;
 }
 
 static OTF2_CallbackCode EmberOTF2RegisterLocation( void* userData,
@@ -78,7 +243,7 @@ static OTF2_CallbackCode EmberOTF2RegisterLocation( void* userData,
 
 EmberOTF2Generator::EmberOTF2Generator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params, "OTF2"),
-	traceLocationCount(0), currentLocation(0)
+	traceLocationCount(0), currentLocation(0), currentTime(0)
 {
 	std::string tracePrefix = params.find<std::string>("arg.tracePrefix", "");
 
@@ -209,39 +374,29 @@ EmberOTF2Generator::EmberOTF2Generator(SST::Component* owner, Params& params) :
 		OTF2_Reader_CloseDefFiles( traceReader );
 	}
 
-/*
-	verbose(CALL_INFO, 1, 0, "Read %" PRIu64 " local definitions.\n", localDefs);
-	traceEvtReader = OTF2_Reader_GetEvtReader( traceReader, static_cast<OTF2_LocationRef>(rank()) );
+	verbose( CALL_INFO, 1, 0, "Registering callbacks...\n" );
 
-	if( NULL == traceEvtReader ) {
-		fatal( CALL_INFO, -1, "Error: unable to successfully create a local event reader. Call returned NULL.\n" );
-	}
+	traceGlobalEvtCallbacks = OTF2_GlobalEvtReaderCallbacks_New();
 
-	traceLocalEvtCallbacks = OTF2_EvtReaderCallbacks_New();
-
-	if( OTF2_SUCCESS != OTF2_EvtReaderCallbacks_SetEnterCallback( traceLocalEvtCallbacks, EmberOTF2EnterRegion ) ) {
-		fatal( CALL_INFO, -1, "Unable to register callback for enter region.\n" );
-	}
-
-	if( OTF2_SUCCESS != OTF2_EvtReaderCallbacks_SetLeaveCallback( traceLocalEvtCallbacks, EmberOTF2ExitRegion ) ) {
-		fatal( CALL_INFO, -1, "Unable to register callback for leave region.\n" );
-	}
-
-	if( OTF2_SUCCESS != OTF2_EvtReaderCallbacks_SetMpiSendCallback( traceLocalEvtCallbacks, EmberOTF2MPISend ) ) {
-		fatal( CALL_INFO, -1, "Unable to register callback for MPI_Send\n");
-	}
-
-	if( OTF2_SUCCESS != OTF2_EvtReader_SetCallbacks( traceEvtReader, traceLocalEvtCallbacks, NULL ) ) {
-		fatal( CALL_INFO, -1, "Unable to register callbacks connected to trace reader on rank %" PRIu64 "\n", rank() );
-	}
-
-	verbose( CALL_INFO, 2, 0, "Successfully initialized OTF2 reader for rank %" PRIu64 ".\n", static_cast<uint64_t>(rank()) );
-*/
+	OTF2_GlobalEvtReaderCallbacks_SetProgramBeginCallback( traceGlobalEvtCallbacks, EmberOTF2StartProgram );
+	OTF2_GlobalEvtReaderCallbacks_SetProgramEndCallback( traceGlobalEvtCallbacks, EmberOTF2EndProgram );
+	OTF2_GlobalEvtReaderCallbacks_SetMpiSendCallback( traceGlobalEvtCallbacks, EmberOTF2MPISend );
+	OTF2_GlobalEvtReaderCallbacks_SetMpiRecvCallback( traceGlobalEvtCallbacks, EmberOTF2MPIRecv );
+	OTF2_GlobalEvtReaderCallbacks_SetMpiIsendCallback( traceGlobalEvtCallbacks, EmberOTF2MPIISend );
+	OTF2_GlobalEvtReaderCallbacks_SetMpiIrecvCallback( traceGlobalEvtCallbacks, EmberOTF2MPIIRecv );
+	OTF2_GlobalEvtReaderCallbacks_SetMpiIrecvRequestCallback( traceGlobalEvtCallbacks, EmberOTF2MPIIRecvRequest );
+	OTF2_GlobalEvtReaderCallbacks_SetMpiIsendCompleteCallback( traceGlobalEvtCallbacks, EmberOTF2MPIISendComplete );
+	OTF2_GlobalEvtReaderCallbacks_SetEnterCallback( traceGlobalEvtCallbacks, EmberOTF2EnterRegion );
+	OTF2_GlobalEvtReaderCallbacks_SetLeaveCallback( traceGlobalEvtCallbacks, EmberOTF2LeaveRegion );
 
 	traceGlobalEvtReader = OTF2_Reader_GetGlobalEvtReader( traceReader );
+
+	OTF2_GlobalEvtReader_SetCallbacks( traceGlobalEvtReader, traceGlobalEvtCallbacks, this );
 }
 
 bool EmberOTF2Generator::generate( std::queue<EmberEvent*>& evQ ) {
+	setEventQueue( &evQ );
+
 	uint64_t eventsRead = 0;
 
 //	OTF2_Reader_ReadAllGlobalEvents( traceReader, traceGlobalEvtReader, &eventsRead );
