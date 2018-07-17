@@ -64,10 +64,6 @@ static OTF2_CallbackCode EmberOTF2EnterRegion(
 		gen->setCurrentTime( time );
 	}
 
-//	gen->incrementRegion();
-
-	printf("EVENT LOCATION: %d ENTER REGION\n", (int) location );
-
 	return OTF2_CALLBACK_SUCCESS;
 }
 
@@ -78,17 +74,11 @@ static OTF2_CallbackCode EmberOTF2LeaveRegion(
 	OTF2_AttributeList* attributes,
 	OTF2_RegionRef regon ) {
 
-	printf("EVENT LOCATION %d LEAVE REGION\n", (int) location );
-
 	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
-//	gen->decrementRegion();
 
-//	if( gen->getCurrentRegionCount() == 0 ) {
-		OTF2_TimeStamp timeDiff = time - gen->getCurrentTime();
-		gen->verbose( CALL_INFO, 4, 0, "Time-Difference: %" PRIu64 "\n", timeDiff );
-
-		gen->setCurrentTime( time );
-//	}
+	OTF2_TimeStamp timeDiff = time - gen->getCurrentTime();
+	gen->verbose( CALL_INFO, 4, 0, "Time-Difference: %" PRIu64 "\n", timeDiff );
+	gen->setCurrentTime( time );
 
 	return OTF2_CALLBACK_SUCCESS;
 }
@@ -228,6 +218,63 @@ static OTF2_CallbackCode EmberOTF2MPIIRecv(
         gen->enQ_recv( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), sender, tag, GroupWorld );
 
         return OTF2_CALLBACK_SUCCESS;
+}
+
+static OTF2_CallbackCode EmberOTF2MPICollectiveBegin(
+		OTF2_LocationRef location,
+		OTF2_TimeStamp time,
+		void* userData,
+		OTF2_AttributeList* attributes) {
+
+	return OTF2_CALLBACK_SUCCESS;
+}
+
+static OTF2_CallbackCode EmberOTF2MPICollectiveEnd(
+		OTF2_LocationRef location,
+		OTF2_TimeStamp time,
+		void *userData,
+		OTF2_AttributeList *attributeList,
+		OTF2_CollectiveOp collectiveOp,
+		OTF2_CommRef communicator,
+		uint32_t root,
+		uint64_t sizeSent,
+		uint64_t sizeReceived) {
+
+	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
+	gen->verbose( CALL_INFO, 4, 0, "Trace::CollectiveEnd (Triggers Start in Ember) from Root=%" PRIu32 "\n",
+		root );
+
+	switch( collectiveOp ) {
+	case OTF2_COLLECTIVE_OP_BARRIER:
+		gen->verbose( CALL_INFO, 4, 0, "Trace::Barrier\n");
+		gen->enQ_barrier( *(gen->getEventQueue()), GroupWorld );
+		break;
+
+	case OTF2_COLLECTIVE_OP_BCAST:
+		gen->verbose( CALL_INFO, 4, 0, "Trace::Bcast, Root=%" PRIu32 ", Size=%" PRIu64 "\n", root, sizeSent );
+		gen->enQ_bcast( *(gen->getEventQueue()), 0, sizeSent, CHAR, static_cast<int>(root),
+			GroupWorld);
+		break;
+
+	case OTF2_COLLECTIVE_OP_ALLREDUCE:
+		gen->verbose( CALL_INFO, 4, 0, "Trace::Allreduce, Root=%" PRIu32 ", Size=%" PRIu64 "\n",
+			root, sizeSent);
+		gen->enQ_allreduce( *(gen->getEventQueue()), 0, 0, sizeSent, CHAR, SUM, GroupWorld );
+		break;
+
+	case OTF2_COLLECTIVE_OP_REDUCE:
+		gen->verbose( CALL_INFO, 4, 0, "Trace::Reduce, Root=%" PRIu32 ", Size=%" PRIu64 "\n",
+			root, sizeSent);
+		gen->enQ_reduce( *(gen->getEventQueue()), 0, 0, sizeSent, CHAR, SUM, static_cast<int>(root),
+			GroupWorld);
+		break;
+
+	default:
+		gen->verbose( CALL_INFO, 16, 0, "Not supported collective operation, set to ignore event.\n" );
+		break;
+	}
+
+	return OTF2_CALLBACK_SUCCESS;
 }
 
 static OTF2_CallbackCode EmberOTF2RegisterLocation( void* userData,
@@ -388,6 +435,7 @@ EmberOTF2Generator::EmberOTF2Generator(SST::Component* owner, Params& params) :
 	OTF2_GlobalEvtReaderCallbacks_SetMpiIsendCompleteCallback( traceGlobalEvtCallbacks, EmberOTF2MPIISendComplete );
 	OTF2_GlobalEvtReaderCallbacks_SetEnterCallback( traceGlobalEvtCallbacks, EmberOTF2EnterRegion );
 	OTF2_GlobalEvtReaderCallbacks_SetLeaveCallback( traceGlobalEvtCallbacks, EmberOTF2LeaveRegion );
+	OTF2_GlobalEvtReaderCallbacks_SetMpiCollectiveEndCallback( traceGlobalEvtCallbacks, EmberOTF2MPICollectiveEnd );
 
 	traceGlobalEvtReader = OTF2_Reader_GetGlobalEvtReader( traceReader );
 

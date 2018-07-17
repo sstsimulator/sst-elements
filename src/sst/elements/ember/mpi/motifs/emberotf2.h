@@ -105,7 +105,7 @@ public:
 		verbose( CALL_INFO, 16, 0, "Attribute list on rank: %" PRIu32 " contains %" PRIu32 " attributes\n",
 			static_cast<uint32_t>(rank()), attributeCount );
 
-		return DOUBLE;
+		return CHAR;
 	}
 
 private:
