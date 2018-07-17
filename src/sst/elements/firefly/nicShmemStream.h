@@ -18,8 +18,20 @@ class ShmemStream : public StreamBase {
 
     ShmemStream( Output&, Ctx*, int srcNode, int srcPid, int destPid, FireflyNetworkEvent* );
 
+    bool isBlocked() {
+        return  StreamBase::isBlocked() || m_blocked;
+    }
   protected:
-    void processPktHdr( FireflyNetworkEvent* ev );
+    void processFirstPkt( FireflyNetworkEvent* ev ) {
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"\n");
+        m_blocked = false;
+        m_ctx->schedCallback( m_wakeupCallback );
+        m_wakeupCallback = NULL;
+    }
+    void processPktHdr( FireflyNetworkEvent* ev ) {
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"\n");
+        processOp(ev);
+    }
   private:
     void processOp( FireflyNetworkEvent* ev );
     void processAck( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
@@ -31,4 +43,5 @@ class ShmemStream : public StreamBase {
     void processCswap( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     void processSwap( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     ShmemMsgHdr m_shmemHdr;
+    bool m_blocked;
 };
