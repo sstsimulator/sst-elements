@@ -71,7 +71,6 @@ class EmberGenerator : public SubComponent {
     }
     EmberLib* getLib(std::string name );
 
-  protected:
 
     Output& getOutput() { return *m_output; }
     void verbose(uint32_t line, const char* file, const char* func,
