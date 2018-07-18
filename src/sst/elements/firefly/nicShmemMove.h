@@ -18,6 +18,7 @@ class ShmemRecvMove {
     virtual ~ShmemRecvMove() {}
     virtual bool copyIn( Output& dbg, FireflyNetworkEvent&, std::vector<MemOp>& ) = 0;
     virtual bool isDone() = 0;
+    virtual size_t totalBytes() { assert(0); }
 };
 
 class ShmemRecvMoveMem : public ShmemRecvMove {
@@ -28,6 +29,7 @@ class ShmemRecvMoveMem : public ShmemRecvMove {
 
     virtual bool copyIn( Output& dbg, FireflyNetworkEvent&, std::vector<MemOp>& );
     bool isDone() { return m_offset == m_length; }
+    size_t totalBytes() { return m_length; }
 
   protected:
     uint8_t*  m_ptr;
@@ -61,6 +63,7 @@ class ShmemRecvMoveValue : public ShmemRecvMove {
 
     bool copyIn( Output& dbg, FireflyNetworkEvent&, std::vector<MemOp>& );
     bool isDone() { return m_offset == m_value.getLength(); }
+    size_t totalBytes() { return m_value.getLength(); }
 
   private:
     Hermes::Value&  m_value;
