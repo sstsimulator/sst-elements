@@ -184,19 +184,21 @@ void Nic::Shmem::handleNicEvent2( NicShmemCmdEvent* event, int id )
     	m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"busy core=%d %s\n",id,event->getTypeStr().c_str()); 
 		m_cmdQ.push_back( std::make_pair(event,id) );
 	} else {
+   		m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"start busy core=%d %s\n",id,event->getTypeStr().c_str()); 
 		m_engineBusy = true;
 		m_nic.schedCallback( 
+
 			[=](){
-    			m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"ready core=%d %s\n",id,event->getTypeStr().c_str()); 
-				if ( m_cmdQ.empty() ) {
-					m_engineBusy = false;
-				} else {
-					handleNicEvent3( m_cmdQ.front().first, m_cmdQ.front().second ); 
+    			m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"handleNicEvent2",1,NIC_DBG_SHMEM,"ready core=%d %s\n",id,event->getTypeStr().c_str()); 
+				m_engineBusy = false;
+				if ( ! m_cmdQ.empty() ) {
+					handleNicEvent2( m_cmdQ.front().first, m_cmdQ.front().second ); 
 					m_cmdQ.pop_front();
 				}
 			},
 			15
 		);
+
 		handleNicEvent3( event, id ); 
 	}
 }
