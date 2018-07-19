@@ -171,15 +171,39 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
          [=]() {
             m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"handleNicEvent",1,NIC_DBG_SHMEM,"latency=%" PRIu64 "\n", 
                             m_nic.getCurrentSimTimeNano() - start);
-            handleEvent2( event, id );
+            handleNicEvent2( event, id );
         }
      ) );
 
     m_nic.calcHostMemDelay(id, vec, [=]() { });
 }
 
-void Nic::Shmem::handleEvent2( NicShmemCmdEvent* event, int id )
+void Nic::Shmem::handleNicEvent2( NicShmemCmdEvent* event, int id )
 {
+	if ( m_engineBusy ) {
+    	m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"busy core=%d %s\n",id,event->getTypeStr().c_str()); 
+		m_cmdQ.push_back( std::make_pair(event,id) );
+	} else {
+		m_engineBusy = true;
+		m_nic.schedCallback( 
+			[=](){
+    			m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"ready core=%d %s\n",id,event->getTypeStr().c_str()); 
+				if ( m_cmdQ.empty() ) {
+					m_engineBusy = false;
+				} else {
+					handleNicEvent3( m_cmdQ.front().first, m_cmdQ.front().second ); 
+					m_cmdQ.pop_front();
+				}
+			},
+			15
+		);
+		handleNicEvent3( event, id ); 
+	}
+}
+
+void Nic::Shmem::handleNicEvent3( NicShmemCmdEvent* event, int id )
+{
+
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"core=%d %s\n",id,event->getTypeStr().c_str()); 
     switch (event->type) {
 

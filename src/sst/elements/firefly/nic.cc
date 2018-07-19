@@ -280,7 +280,7 @@ void Nic::handleVnicEvent( Event* ev, int id )
         break;
 
       case NicCmdBaseEvent::Shmem:
-        m_shmem->handleEvent( static_cast<NicShmemCmdEvent*>(event), id );
+		m_shmem->handleEvent( static_cast<NicShmemCmdEvent*>(event), id );
 		break;
 
 	  default:
@@ -340,7 +340,7 @@ void Nic::handleVnicEvent2( Event* ev, int id )
         handleMsgEvent( static_cast<NicCmdEvent*>(event), id );
         break;
     case NicCmdBaseEvent::Shmem:
-        m_shmem->handleEvent2( static_cast<NicShmemCmdEvent*>(event), id );
+        m_shmem->handleNicEvent2( static_cast<NicShmemCmdEvent*>(event), id );
         break;
     default:
         assert(0);
