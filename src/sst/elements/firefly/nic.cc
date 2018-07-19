@@ -162,7 +162,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			params.find<std::string>("corePortName","core") ) );
     }
 
-    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns(), shmemSendSetupLat );
+	Params shmemParams = params.find_prefix_params( "shmem." ); 
+    m_shmem = new Shmem( *this, shmemParams, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
 
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );

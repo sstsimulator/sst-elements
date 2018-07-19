@@ -36,69 +36,14 @@ void Nic::Shmem::handleEvent( NicShmemCmdEvent* event, int id )
         break;
 
     case NicShmemCmdEvent::Fadd:
-        if ( event->getNode() == m_nic.getNodeId() )  {
-			m_nic.schedCallback( 
-                [=]() {
-                    hostFadd( static_cast<NicShmemFaddCmdEvent*>(event), id );
-                },
-                1600 );
-        } else {
-            handleNicEvent( event, id );
-        }        
-        break;
-
-
     case NicShmemCmdEvent::Add:
-        if ( event->getNode() == m_nic.getNodeId() )  {
-			m_nic.schedCallback( 
-                [=]() {
-                    hostAdd( static_cast<NicShmemAddCmdEvent*>(event), id );
-                },
-                40 );
-        } else {
-			m_nic.schedCallback( 
-                [=]() {
-                    handleNicEvent( event, id );
-                },
-                m_sendSetupLatency );
-        }        
-        break;
-
-    // operations that could take place in either the NIC or Host 
     case NicShmemCmdEvent::Put:
-        if ( event->getNode() == m_nic.getNodeId() )  {
-            hostPut( static_cast<NicShmemPutCmdEvent*>(event), id );
-        } else {
-            handleNicEvent( event, id );
-        }        
-        break;
-
-        
     case NicShmemCmdEvent::Putv:
-        if ( event->getNode() == m_nic.getNodeId() )  {
-
-			m_nic.schedCallback( 
-                [=]() {
-                    hostPutv( static_cast<NicShmemPutvCmdEvent*>(event), id );
-                }, 
-                20 );
-        } else {
-            handleNicEvent( event, id );
-        }        
-        break;
-
     case NicShmemCmdEvent::Get:
-        if ( event->getNode() == m_nic.getNodeId() )  {
-            hostGet( static_cast<NicShmemGetCmdEvent*>(event), id );
-        } else {
-            handleNicEvent( event, id );
-        }        
-        break;
-
     case NicShmemCmdEvent::Getv:
 
         if ( event->getNode() == m_nic.getNodeId() )  {
-            hostGetv( static_cast<NicShmemGetvCmdEvent*>(event), id );
+			handleHostEvent( event, id );
         } else {
             handleNicEvent( event, id );
         }        
@@ -114,6 +59,59 @@ void Nic::Shmem::handleEvent( NicShmemCmdEvent* event, int id )
     }
 }
 
+void Nic::Shmem::handleHostEvent( NicShmemCmdEvent* event, int id )
+{
+	if ( m_hostBusy ) {
+    	m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"busy core=%d %s\n",id,event->getTypeStr().c_str()); 
+		m_hostCmdQ.push_back( std::make_pair(event,id) );
+	} else {
+   		m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"start busy core=%d %s\n",id,event->getTypeStr().c_str()); 
+		m_hostBusy = true;
+		m_nic.schedCallback( 
+			[=](){
+    			m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"handleNicEvent2",1,NIC_DBG_SHMEM,"ready core=%d %s\n",id,event->getTypeStr().c_str()); 
+				m_hostBusy = false;
+				if ( ! m_hostCmdQ.empty() ) {
+					handleHostEvent( m_hostCmdQ.front().first, m_hostCmdQ.front().second ); 
+					m_hostCmdQ.pop_front();
+				}
+			},
+			m_hostCmdLatency	
+		);
+
+		handleHostEvent2( event, id ); 
+	}
+}
+
+void Nic::Shmem::handleHostEvent2( NicShmemCmdEvent* event, int id )
+{
+
+	switch( event->type ) {
+    case NicShmemCmdEvent::Fadd:
+        hostFadd( static_cast<NicShmemFaddCmdEvent*>(event), id );
+                //1600 );
+		break;
+    case NicShmemCmdEvent::Add:
+    	hostAdd( static_cast<NicShmemAddCmdEvent*>(event), id );
+                //40 );
+		break;
+    case NicShmemCmdEvent::Put:
+        hostPut( static_cast<NicShmemPutCmdEvent*>(event), id );
+		break;
+    case NicShmemCmdEvent::Putv:
+        hostPutv( static_cast<NicShmemPutvCmdEvent*>(event), id );
+                //20 );
+		break;
+    case NicShmemCmdEvent::Get:
+        hostGet( static_cast<NicShmemGetCmdEvent*>(event), id );
+		break;
+    case NicShmemCmdEvent::Getv:
+        hostGetv( static_cast<NicShmemGetvCmdEvent*>(event), id );
+		break;
+	default:
+		assert(0);
+	}
+}
 void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
 {
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"core=%d `%s` targetNode=%d targetCore=%d freeCmdSlots=%d\n",
@@ -196,7 +194,7 @@ void Nic::Shmem::handleNicEvent2( NicShmemCmdEvent* event, int id )
 					m_cmdQ.pop_front();
 				}
 			},
-			15
+			m_nicCmdLatency	
 		);
 
 		handleNicEvent3( event, id ); 
