@@ -86,6 +86,9 @@ private:
     std::string rqstr_;
     Addr remoteMemStart_;
     bool allNoncache_;
+
+    bool initDone_;
+    std::queue<MemEventInit*> initSendQueue_;
 };
 
 }
