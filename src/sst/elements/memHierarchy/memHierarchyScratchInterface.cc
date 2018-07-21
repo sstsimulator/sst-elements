@@ -39,6 +39,8 @@ MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::Component *comp,
     if (!size.hasUnits("B"))
         output.fatal(CALL_INFO, -1, "Invalid param (%s): scratchpad_size - must have units of 'B'. SI units ok. You specified '%s'\n", getName().c_str(), size.toString().c_str());
     remoteMemStart_ = size.getRoundedValue();
+
+    initDone_ = false;
 }
 
 
@@ -56,15 +58,26 @@ void MemHierarchyScratchInterface::init(unsigned int phase) {
                 baseAddrMask_ = ~(memEventC->getLineSize() - 1);
                 rqstr_ = memEventC->getSrc();
                 allNoncache_ = (Endpoint::Scratchpad == memEventC->getType());
+                initDone_ = true;
             }
         }
         delete ev;
+    }
+
+    if (initDone_) {
+        while (!initSendQueue_.empty()) {
+            link_->sendInitData(initSendQueue_.front());
+            initSendQueue_.pop();
+        }
     }
 }
 
 void MemHierarchyScratchInterface::sendInitData(SimpleMem::Request *req) {
     MemEventInit * event = new MemEventInit(getName(), Command::GetX, req->addrs[0], req->data);
-    link_->sendInitData(event);
+    if (initDone_)
+        link_->sendInitData(event);
+    else 
+        initSendQueue_.push(event);
 }
 
 

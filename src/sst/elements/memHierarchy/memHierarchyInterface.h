@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <map>
+#include <queue>
 
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
@@ -28,6 +29,7 @@
 #include <sst/core/elementinfo.h>
 #include <sst/core/output.h>
 
+#include "sst/elements/memHierarchy/memEventBase.h"
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/customcmd/customCmdEvent.h"
 
@@ -74,6 +76,10 @@ protected:
     std::string rqstr_;
     std::map<MemEventBase::id_type, Interfaces::SimpleMem::Request*> requests_;
     SST::Link*  link_;
+    
+    bool initDone_;
+    std::queue<MemEventInit*> initSendQueue_;
+
 
 private:
 
