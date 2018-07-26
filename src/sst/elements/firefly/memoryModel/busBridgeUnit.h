@@ -152,7 +152,7 @@ class BusBridgeUnit : public Unit {
 					
 					entry->xmit = m_unit.m_model.getCurrentSimTimeNano();
                     SimTime_t now = m_unit.m_model.getCurrentSimTimeNano();
-                    m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu delay=%" PRIu64 " Time=%" PRIu64 "\n",
+                    m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu delay=%" PRIu64 " latency=%" PRIu64 "\n",
                                     entry,entry->addr, entry->length, delay, now - entry->qd );
 					m_unit.m_model.schedCallback( delay, std::bind( &Bus::reqArrived, this, entry ) );
 				}
@@ -167,7 +167,7 @@ class BusBridgeUnit : public Unit {
 			
 	void processResp( Entry* entry ) {
 		SimTime_t now = m_model.getCurrentSimTimeNano();
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu Time=%" PRIu64"\n",
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu latency=%" PRIu64"\n",
                 entry,entry->addr, entry->length, now - entry->qd );
 		m_reqBus.addDLL( numDLLbytes() );
 		if ( entry->callback ) { 
@@ -188,7 +188,7 @@ class BusBridgeUnit : public Unit {
 	void processReq( Entry* entry ) {
 
 		SimTime_t now = m_model.getCurrentSimTimeNano();
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"entry=%p qdTime=%" PRIu64 " xmitTime=%" PRIu64 "\n",
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"entry=%p qd_latency=%" PRIu64 " xmit_latency=%" PRIu64 "\n",
                     entry, entry->xmit - entry->qd, now - entry->xmit);
         SimTime_t issueTime = m_model.getCurrentSimTimeNano();
 

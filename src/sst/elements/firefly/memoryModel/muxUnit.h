@@ -16,11 +16,12 @@
 	class MuxUnit : public Unit {
 		struct Entry {
 			enum Op { Load, Store } op;
-			Entry( Op op, UnitBase* src, MemReq* req, Callback callback=NULL ) : 
-				op(op), src(src), req(req), callback(callback) {}
+			Entry( Op op, UnitBase* src, MemReq* req, uint64_t start, Callback callback=NULL ) : 
+				op(op), src(src), req(req), start(start), callback(callback) {}
 			UnitBase* src;
 			MemReq* req;
 			Callback callback;
+			uint64_t start;
 		};
 
 	  public:
@@ -41,7 +42,7 @@
 				}
 			} else {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
-				m_blockedQ.push_back( Entry( Entry::Store, src, req ) );	
+				m_blockedQ.push_back( Entry( Entry::Store, src, req, m_model.getCurrentSimTimeNano() ) );	
 				return true;
 			}
 		}
@@ -50,8 +51,14 @@
         bool load( UnitBase* src, MemReq* req, Callback callback ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"%s addr=%#" PRIx64 " length=%lu\n",src->name().c_str(), req->addr,req->length);
 
+			uint64_t now = m_model.getCurrentSimTimeNano();
 			if ( ! m_blockedSrc && ! m_scheduled ) {
-				if ( m_unit->load( this, req, callback ) ) {
+				if ( m_unit->load( this, req, [=]() {
+							m_dbg.verbosePrefix( prefix(), CALL_INFO_LAMBDA, "load",1,MUX_MASK, "load done latency=%" PRIu64 "\n",
+												m_model.getCurrentSimTimeNano() - now );  
+							callback();
+					} ) ) 
+				{
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
 					m_blockedSrc = src;
 					return true;
@@ -60,7 +67,7 @@
 				}
 			} else {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
-				m_blockedQ.push_back( Entry( Entry::Load, src, req, callback ) );	
+				m_blockedQ.push_back( Entry( Entry::Load, src, req, m_model.getCurrentSimTimeNano(), callback ) );	
 				return true;
 			}
 		}
@@ -71,9 +78,16 @@
 			assert( ! m_blockedQ.empty() );
 			Entry& entry = m_blockedQ.front();
 
+			Callback callback =  entry.callback;
 			bool blocked = false;
+			uint64_t now = entry.start;
 			if ( Entry::Load == entry.op ) {
-				blocked = m_unit->load( this, entry.req, entry.callback );
+				blocked = m_unit->load( this, entry.req, 
+						[=](){
+								m_dbg.verbosePrefix( prefix(), CALL_INFO_LAMBDA, "processQ",1,MUX_MASK, "load done latency=%" PRIu64 "\n",
+										m_model.getCurrentSimTimeNano() - now );  
+								callback();
+							} );
 			} else {
 				blocked = m_unit->store( this, entry.req );
 			}	

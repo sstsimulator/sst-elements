@@ -222,13 +222,13 @@ class HadesSHMEM : public Shmem::Interface
     virtual void getv2(Hermes::Value&, Hermes::Vaddr src, int pe, Shmem::Callback);
     virtual void get_nbi(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
     virtual void get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
-    virtual void get2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback);
+    virtual void get2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback, SimTime_t delay);
 
     virtual void putv(Hermes::Vaddr dest, Hermes::Value&, int pe, Shmem::Callback);
     virtual void putv2(Hermes::Vaddr dest, Hermes::Value&, int pe, Shmem::Callback);
     virtual void put_nbi(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
     virtual void put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
-    virtual void put2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback);
+    virtual void put2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback, SimTime_t delay);
 
     virtual void putOp(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, 
             Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);

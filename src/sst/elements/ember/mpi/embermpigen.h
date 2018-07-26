@@ -114,8 +114,6 @@ public:
 	~EmberMessagePassingGenerator();
     virtual void completed( const SST::Output*, uint64_t time );
 
-protected:
-
 	void getPosition( int32_t rank, int32_t px, int32_t py, int32_t pz, 
 					int32_t* myX, int32_t* myY, int32_t* myZ );	
 	void getPosition( int32_t rank, int32_t px, int32_t py,

@@ -34,8 +34,8 @@ void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int numBytes, FireflyNetworkEv
         len = left;
     } 
 
-    dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"pktSpace=%lu dataLeft=%lu xferSize=%lu\n",
-                bufSpace, left, len  );
+    dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"pktSpace=%lu dataLeft=%lu xferSize=%lu addr=%" PRIx64 "\n",
+                bufSpace, left, len, m_addr + m_offset  );
 
 	vec.push_back( MemOp( m_addr + m_offset, len, MemOp::Op::BusDmaFromHost ));
 

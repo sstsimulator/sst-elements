@@ -22,7 +22,7 @@ using namespace SST::Firefly;
 
 Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, Ctx* ctx,
         int srcNode, int srcPid, int destPid, FireflyNetworkEvent* ev) : 
-    StreamBase(output, ctx, srcNode, srcPid, destPid )
+    StreamBase(output, ctx, srcNode, srcPid, destPid ), m_blocked(true)
 {
     m_shmemHdr = *(ShmemMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
 
@@ -30,16 +30,11 @@ Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, Ctx* ctx,
 
     m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"core=%d %s srcNode=%d srcCore=%d this=%p\n",
             m_myPid, m_shmemHdr.getOpStr().c_str(), ev->getSrcNode(),m_srcPid, this);
-}
 
-void Nic::RecvMachine::ShmemStream::processPktHdr( FireflyNetworkEvent* ev ) {
-    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"srcNode=%d srcPid=%d %s\n", 
-            m_srcNode, m_srcPid, m_shmemHdr.getOpStr().c_str() );
-    SimTime_t latency = m_shmemHdr.op == ShmemMsgHdr::Ack ? 0 : m_ctx->nic().getShmemRxDelay_ns();
-    m_ctx->nic().schedCallback( 
-        std::bind( &Nic::RecvMachine::ShmemStream::processOp, this, ev ), 
-        latency );
-        //m_ctx->nic().getShmemRxDelay_ns() );
+    if ( m_shmemHdr.op != ShmemMsgHdr::Ack  ) {
+        m_ctx->nic().schedCallback( std::bind( &Nic::RecvMachine::ShmemStream::processFirstPkt, this, ev ),  
+            m_ctx->nic().getShmemRxDelay_ns() );
+    }
 }
 
 void Nic::RecvMachine::ShmemStream::processOp( FireflyNetworkEvent* ev ) 
@@ -95,7 +90,6 @@ void Nic::RecvMachine::ShmemStream::processOp( FireflyNetworkEvent* ev )
 
 void Nic::RecvMachine::ShmemStream::processAck( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int pid, int srcPid  )
 {
-
     m_ctx->nic().shmemDecPending( pid );
     m_ctx->deleteStream(this);
 
