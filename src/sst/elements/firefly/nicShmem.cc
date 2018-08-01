@@ -69,7 +69,7 @@ void Nic::Shmem::handleHostEvent( NicShmemCmdEvent* event, int id )
 		m_hostBusy = true;
 		m_nic.schedCallback( 
 			[=](){
-    			m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"handleNicEvent2",1,NIC_DBG_SHMEM,"ready core=%d %s\n",id,event->getTypeStr().c_str()); 
+    			m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"handleHostEvent",1,NIC_DBG_SHMEM,"ready core=%d %s\n",id,event->getTypeStr().c_str());
 				m_hostBusy = false;
 				if ( ! m_hostCmdQ.empty() ) {
 					handleHostEvent( m_hostCmdQ.front().first, m_hostCmdQ.front().second ); 
@@ -594,7 +594,6 @@ void Nic::Shmem::hostAdd( NicShmemAddCmdEvent* event, int id )
     		delete event;
 		}
 	);
-
 }
 
 void Nic::Shmem::hostFadd( NicShmemFaddCmdEvent* event, int id )
