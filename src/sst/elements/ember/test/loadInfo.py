@@ -293,7 +293,6 @@ class LoadInfo:
 
 			ranksPerNode = self.numCores 
 			nidList = []
-
 			while len(cmdList):
 				if "-" != cmdList[0][0]:
 					break
@@ -328,6 +327,11 @@ class LoadInfo:
 
 	def parseCmd(self, motifPrefix, motifSuffix, cmdList, cmdNum ):
 		motif = {} 
+
+		tmp = cmdList[0].split('.')
+		if  len(tmp) == 2:
+			motifPrefix = tmp[0] + '.'
+			cmdList[0] = tmp[1]
 
 		tmp = 'motif' + str(cmdNum) + '.name'
 		motif[ tmp ] = motifPrefix + cmdList[0] + motifSuffix
