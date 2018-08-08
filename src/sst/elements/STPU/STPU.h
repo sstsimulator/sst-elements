@@ -31,9 +31,11 @@
 
 #include <sst/core/interfaces/simpleMem.h>
 #include "../memHierarchy/memEvent.h"
+#include "stpu_lib.h"
+#include "neuron.h"
 
 namespace SST {
-namespace MemHierarchy {
+namespace STPUComponent {
 
 class STPU : public SST::Component {
 public:
@@ -43,7 +45,8 @@ public:
 
     SST_ELI_DOCUMENT_PARAMS(
             {"verbose",                 "(uint) Determine how verbose the output from the CPU is", "0"},
-            {"clock",                   "(string) Clock frequency", "1GHz"}
+            {"clock",                   "(string) Clock frequency", "1GHz"},
+            {"neurons",                  "(uint) number of neurons", "32"}
                             )
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to memory", { "memHierarchy.MemEventBase" } } )
@@ -64,6 +67,9 @@ private:
 
     Output out;
     Interfaces::SimpleMem * memory;
+    uint numNeurons;
+
+    neuron *neurons;
 
     std::map<uint64_t, SimTime_t> requests;
 

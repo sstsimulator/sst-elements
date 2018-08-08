@@ -22,8 +22,8 @@
 #include "../memHierarchy/memEvent.h"
 
 using namespace SST;
-using namespace SST::MemHierarchy;
-
+//using namespace SST::MemHierarchy;
+using namespace SST::STPUComponent;
 
 STPU::STPU(ComponentId_t id, Params& params) :
     Component(id)
@@ -32,7 +32,10 @@ STPU::STPU(ComponentId_t id, Params& params) :
     out.init("STPU:@p:@l: ", outputLevel, 0, Output::STDOUT);
 
     // get parameters
-    
+    numNeurons = params.find<int>("neurons", 32);
+    if (numNeurons <= 0) {
+        out.fatal(CALL_INFO, -1,"number of neurons invalid\n");
+    }    
 
     // tell the simulator not to end without us
     registerAsPrimaryComponent();

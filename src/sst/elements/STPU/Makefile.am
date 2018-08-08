@@ -8,6 +8,8 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libSTPU.la
 libSTPU_la_SOURCES = \
+	stpu_lib.h \
+	neuron.h \
 	STPU.cc \
 	STPU.h
 
