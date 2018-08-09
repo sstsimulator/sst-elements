@@ -29,11 +29,11 @@ public:
     void configure(const Neuron_Loader_Types::T_NctFl &in) {
         config = in;
     }
-    void deliverSpike(float str, int when) {
+    void deliverSpike(float str, uint when) {
         temporalBuffer[when] += str;
     }
     // performs Leaky Integrate and Fire. Returns true if fired.
-    bool lif(const int now) {
+    bool lif(const uint now) {
         // Leak
         value -= config.NrnLkg;
 
@@ -52,7 +52,7 @@ private:
     Neuron_Loader_Types::T_NctFl config;
     float value;
     // temporal buffer
-    typedef map<const int, float> tBuf_t;
+    typedef map<const uint, float> tBuf_t;
     tBuf_t temporalBuffer;
 
     // get any current spike values
