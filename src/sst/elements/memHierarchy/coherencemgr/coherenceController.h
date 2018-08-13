@@ -110,7 +110,7 @@ public:
     /***** Setup and initialization functions *****/
 
     /* Initialize variables that tell this coherence controller how to interact with the cache below it */
-    void setupLowerStatus(bool isLastLevel, bool isNoninclusive, bool isDir);
+    void setupLowerStatus(bool silentEvict, bool isLastLevel, bool isNoninclusive, bool isDir);
 
     /* Setup pointers to other subcomponents/cache structures */
     void setCacheListener(CacheListener* ptr) { listener_ = ptr; }

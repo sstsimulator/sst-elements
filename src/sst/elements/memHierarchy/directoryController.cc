@@ -1912,10 +1912,10 @@ void DirectoryController::init(unsigned int phase) {
         }
         // Tell memory we're here
         if (memLink) {
-            memLink->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, cacheLineSize));
+            memLink->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, cacheLineSize, true));
         }
         // Announce to network we're here
-        network->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, cacheLineSize));
+        network->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, cacheLineSize, true));
     }
 
     /* Pass data on to memory */
