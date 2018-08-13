@@ -142,14 +142,14 @@ public:
         }
 
         /** Getter for size. Constant field - no setter */
-        unsigned int getSize() { return size_; }
+        unsigned int getSize() const { return size_; }
         /** Getter for index. Constant field - no setter */
         int getIndex() { return index_; }
 
         /** Setter for line address */
         void setBaseAddr(Addr addr) { baseAddr_ = addr; }
         /** Getter for line address */
-        Addr getBaseAddr() { return baseAddr_; }
+        Addr getBaseAddr() const { return baseAddr_; }
 
         /** Setter for line state */
         virtual void setState(State state) { 

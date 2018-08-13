@@ -17,7 +17,7 @@
 // Author: Jagan Jayaraj (derived from Cassini prefetcher modules written by Si Hammond)
 
 #include "sst_config.h"
-#include "addrHistogrammer.h"
+#include "cacheLineTrack.h"
 
 #include <stdint.h>
 
@@ -29,12 +29,10 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Cassini;
 
-AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheListener(owner, params) {
+cacheLineTrack::cacheLineTrack(Component* owner, Params& params) : CacheListener(owner, params) {
     std::string cutoff_s = params.find<std::string>("addr_cutoff", "16GiB");
     UnitAlgebra cutoff_u(cutoff_s);
     cutoff = cutoff_u.getRoundedValue();
-
-    captureVirtual = params.find<bool>("virtual_addr", 0);
 
     rdHisto = registerStatistic<Addr>("histogram_reads");
     wrHisto = registerStatistic<Addr>("histogram_writes");
@@ -42,36 +40,27 @@ AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheList
 }
 
 
-void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {
+void cacheLineTrack::notifyAccess(const CacheListenerNotification& notify) {
     const NotifyAccessType notifyType = notify.getAccessType();
     const NotifyResultType notifyResType = notify.getResultType();
 
-    Addr vaddr;
-    if (captureVirtual) {
-        vaddr = notify.getVirtualAddress();
-    } else {
-        vaddr = notify.getPhysicalAddress();
-    }
+    Addr addr = notify.getTargetAddress();
 
+    //if(notifyResType == MISS || addr >= cutoff) return;
 
-    if(notifyType == EVICT || notifyResType != MISS || vaddr >= cutoff) return;
-
-    // // Remove the offset within a bin
-    // Addr baseAddr = vaddr & binMask;
     switch (notifyType) {
-      case READ:
-        // Add to the read histogram
-        rdHisto->addData(vaddr);
+    case READ:
+        printf("R %llx\n", addr);
         return;
-      case WRITE:
-        // Add to the write hitogram
-        wrHisto->addData(vaddr);
+    case WRITE:
+        printf("W %llx\n", addr);
         return;
     case EVICT:
+        printf("E %llx\n", addr);
         return;
     }
 }
 
-void AddrHistogrammer::registerResponseCallback(Event::HandlerBase *handler) {
+void cacheLineTrack::registerResponseCallback(Event::HandlerBase *handler) {
     registeredCallbacks.push_back(handler);
 }

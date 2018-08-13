@@ -136,7 +136,8 @@ void Sieve::processEvent(SST::Event* ev) {
 
         // notify profiler, if any
         if (listener_) {
-            CacheListenerNotification notify(event->getBaseAddr(), 
+            CacheListenerNotification notify(event->getAddr(),
+                                             event->getBaseAddr(), 
                                              event->getVirtualAddress(),
                                              event->getInstructionPointer(), 
                                              event->getSize(), 

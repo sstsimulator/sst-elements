@@ -356,6 +356,7 @@ bool Cache::allocateLine(MemEvent * event, Addr baseAddr) {
             return false;
         }
         
+        notifyListenerOfEvict(event, replacementLine);
         CacheAction action = coherenceMgr_->handleEviction(replacementLine, this->getName(), false);
         if (action == STALL) {
             mshr_->insertPointer(replacementLine->getBaseAddr(), event->getBaseAddr());
@@ -383,6 +384,7 @@ bool Cache::allocateCacheLine(MemEvent* event, Addr baseAddr) {
             return false;
         }
         
+        notifyListenerOfEvict(event, replacementLine);
         CacheAction action = coherenceMgr_->handleEviction(replacementLine, this->getName(), false);
         if (action == STALL) {
             mshr_->insertPointer(replacementLine->getBaseAddr(), event->getBaseAddr());
@@ -415,6 +417,7 @@ bool Cache::allocateDirCacheLine(MemEvent * event, Addr baseAddr, CacheLine * di
             mshr_->insertPointer(replacementDirLine->getBaseAddr(), baseAddr);
             return false;
         }
+        // should listener be informed?
         coherenceMgr_->handleEviction(replacementDirLine, this->getName(), true);
     }
 
@@ -422,6 +425,18 @@ bool Cache::allocateDirCacheLine(MemEvent * event, Addr baseAddr, CacheLine * di
     return true;
 }
 
+
+void Cache::notifyListenerOfEvict(const MemEvent *event, 
+                                  const CacheLine *replaceLine) {
+    if (listener_) {
+        CacheListenerNotification notify(replaceLine->getBaseAddr(), 
+                                         replaceLine->getBaseAddr(), 
+                                         0,
+                                         event->getInstructionPointer(),
+                                         replaceLine->getSize(), EVICT, NA);
+        listener_->notifyAccess(notify);
+    }
+}
 
 
 /* -------------------------------------------------------------------------------------

@@ -234,6 +234,9 @@ private:
     inline bool allocateCacheLine(MemEvent *event, Addr baseAddr);
     inline bool allocateDirCacheLine(MemEvent *event, Addr baseAddr, CacheLine * dirLine, bool noStall);
 
+    /** Notify any listers that an eviction has occured */
+    void notifyListenerOfEvict(const MemEvent *event, const CacheLine *replaceLine);
+
     /** Function attempts to send all responses for previous events that 'blocked' due to an outstanding request.
         If response blocks cache line the remaining responses go to MSHR till new outstanding request finishes  */
     inline void activatePrevEvents(Addr baseAddr);
