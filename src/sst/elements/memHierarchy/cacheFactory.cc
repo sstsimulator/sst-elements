@@ -143,6 +143,7 @@ void Cache::createCoherenceManager(Params &params) {
     std::string inclusive = (type_ == "inclusive") ? "true" : "false";
     std::string protocol = (protocol_ == CoherenceProtocol::MESI) ? "true" : "false";
     isLL = true;
+    silentEvict = true;
     lowerIsNoninclusive = false;
     expectWritebackAcks = false;
     Params coherenceParams;
@@ -442,46 +443,48 @@ void Cache::createPrefetcher(Params &params, int mshrSize) {
 
 
 int Cache::createMSHR(Params &params) {
+    bool found;
+    uint64_t defaultMshrLatency = 1;
     int mshrSize = params.find<int>("mshr_num_entries", -1);           //number of entries
-    mshrLatency_ = params.find<uint64_t>("mshr_latency_cycles", 0);
+    mshrLatency_ = params.find<uint64_t>("mshr_latency_cycles", defaultMshrLatency, found);
     
     if (mshrSize == -1) mshrSize = HUGE_MSHR; // Set in mshr.h
     if (mshrSize < 2) out_->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
     
     mshr_ = new MSHR(d_, mshrSize, this->getName(), DEBUG_ADDR);
     
-    if (mshrLatency_ > 0) return mshrSize;
+    if (mshrLatency_ > 0 && found) return mshrSize;
     
     if (L1_) {
         mshrLatency_ = 1;
-        return mshrSize;
+    } else {
+        // Otherwise if mshrLatency isn't set or is 0, intrapolate from cache latency
+        uint64 N = 200; // max cache latency supported by the intrapolation method
+        int y[N];
+
+        /* L2 */
+        y[0] = 0;
+        y[1] = 1;
+        for(uint64 idx = 2;  idx < 12; idx++) y[idx] = 2;
+        for(uint64 idx = 12; idx < 16; idx++) y[idx] = 3;
+        for(uint64 idx = 16; idx < 26; idx++) y[idx] = 5;
+
+        /* L3 */
+        for(uint64 idx = 26; idx < 46; idx++) y[idx] = 19;
+        for(uint64 idx = 46; idx < 68; idx++) y[idx] = 26;
+        for(uint64 idx = 68; idx < N;  idx++) y[idx] = 32;
+    
+        if (accessLatency_ > N) {
+            out_->fatal(CALL_INFO, -1, "%s, Error: cannot intrapolate MSHR latency if cache latency > 200. Set 'mshr_latency_cycles' or reduce cache latency. Cache latency: %" PRIu64 "\n", 
+                    getName().c_str(), accessLatency_);
+        }
+        mshrLatency_ = y[accessLatency_];
     }
-   
-    // Otherwise if mshrLatency isn't set or is 0, intrapolate from cache latency
-    uint64 N = 200; // max cache latency supported by the intrapolation method
-    int y[N];
 
-    /* L2 */
-    y[0] = 0;
-    y[1] = 1;
-    for(uint64 idx = 2;  idx < 12; idx++) y[idx] = 2;
-    for(uint64 idx = 12; idx < 16; idx++) y[idx] = 3;
-    for(uint64 idx = 16; idx < 26; idx++) y[idx] = 5;
-
-    
-    /* L3 */
-    for(uint64 idx = 26; idx < 46; idx++) y[idx] = 19;
-    for(uint64 idx = 46; idx < 68; idx++) y[idx] = 26;
-    for(uint64 idx = 68; idx < N;  idx++) y[idx] = 32;
-    
-    if (accessLatency_ > N) {
-        out_->fatal(CALL_INFO, -1, "%s, Error: cannot intrapolate MSHR latency if cache latency > 200. Set 'mshr_latency_cycles' or reduce cache latency. Cache latency: %" PRIu64 "\n", getName().c_str(), accessLatency_);
+    if (mshrLatency_ != defaultMshrLatency) {
+        Output out("", 1, 0, Output::STDOUT);
+        out.verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %" PRIu64 " cycles.\n", getName().c_str(), mshrLatency_);
     }
-    mshrLatency_ = y[accessLatency_];
-
-    Output out("", 1, 0, Output::STDOUT);
-    out.verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %" PRIu64 " cycles.\n", getName().c_str(), mshrLatency_);
-    
     return mshrSize;
 }
 
