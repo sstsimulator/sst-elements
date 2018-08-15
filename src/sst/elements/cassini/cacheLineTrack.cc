@@ -29,15 +29,36 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Cassini;
 
+static const int tab64[64] = {
+    63,  0, 58,  1, 59, 47, 53,  2,
+    60, 39, 48, 27, 54, 33, 42,  3,
+    61, 51, 37, 40, 49, 18, 28, 20,
+    55, 30, 34, 11, 43, 14, 22,  4,
+    62, 57, 46, 52, 38, 26, 32, 41,
+    50, 36, 17, 19, 29, 10, 13, 21,
+    56, 45, 25, 31, 35, 16,  9, 12,
+    44, 24, 15,  8, 23,  7,  6,  5};
+
+static int log2_64(uint64_t value)
+{
+    value |= value >> 1;
+    value |= value >> 2;
+    value |= value >> 4;
+    value |= value >> 8;
+    value |= value >> 16;
+    value |= value >> 32;
+    return tab64[((uint64_t)((value - (value >> 1))*0x07EDD5E59A4E28C2)) >> 58];
+}
+
 cacheLineTrack::cacheLineTrack(Component* owner, Params& params) : CacheListener(owner, params) {
     std::string cutoff_s = params.find<std::string>("addr_cutoff", "16GiB");
     UnitAlgebra cutoff_u(cutoff_s);
     cutoff = cutoff_u.getRoundedValue();
 
-    rdHisto = registerStatistic<Addr>("histogram_reads");
-    wrHisto = registerStatistic<Addr>("histogram_writes");
-    useHisto = registerStatistic<uint>("histogram_word_accesses");
-    ageHisto = registerStatistic<SimTime_t>("histogram_age");
+    rdHisto = registerStatistic<Addr>("hist_reads_log2");
+    wrHisto = registerStatistic<Addr>("hist_writes_log2");
+    useHisto = registerStatistic<uint>("hist_word_accesses");
+    ageHisto = registerStatistic<SimTime_t>("hist_age_log2");
 
 }
 
@@ -58,7 +79,6 @@ void cacheLineTrack::notifyAccess(const CacheListenerNotification& notify) {
     case READ:
     case WRITE:
         {
-            printf("R/W %llx\n", addr);
             auto iter = cacheLines.find(cacheAddr);
             if (iter == cacheLines.end()) {
                 // insert a new one
@@ -79,19 +99,17 @@ void cacheLineTrack::notifyAccess(const CacheListenerNotification& notify) {
         }
         break;
     case EVICT:
-        printf("E %llx\n", addr);
         // find the cacheline record
         {
             auto iter = cacheLines.find(cacheAddr);
             if (iter != cacheLines.end()) {
                 // record it
-                rdHisto->addData(iter->second.reads);
-                wrHisto->addData(iter->second.writes);
+                rdHisto->addData(log2_64(iter->second.reads));
+                wrHisto->addData(log2_64(iter->second.writes));
                 SimTime_t now = getSimulation()->getCurrentSimCycle();
-                ageHisto->addData(now - iter->second.entered);
+                ageHisto->addData(log2_64(now - iter->second.entered));
                 uint touched = iter->second.touched.count();
                 useHisto->addData(touched);
-                printf(" t %d\n", touched);
                 //delete it
                 cacheLines.erase(iter);
             } else {

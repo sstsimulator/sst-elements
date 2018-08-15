@@ -66,10 +66,10 @@ public:
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
-        { "histogram_reads", "Histogram of cacheline reads before eviction", "counts", 1 },
-        { "histogram_writes", "Histogram of cacheline write before eviction", "counts", 1 },
-        { "histogram_age", "Histogram of cacheline ages before eviction", "counts", 1 },
-        { "histogram_word_accesses", "Histogram of cacheline words accessed before eviction", "counts", 1 }
+        { "hist_reads_log2", "Histogram of log2(cacheline reads before eviction)", "counts", 1 },
+        { "hist_writes_log2", "Histogram of log2(cacheline write before eviction)", "counts", 1 },
+        { "hist_age_log2", "Histogram of log2(cacheline ages before eviction)", "counts", 1 },
+        { "hist_word_accesses", "Histogram of cacheline words accessed before eviction", "counts", 1 }
     )
 
 private:

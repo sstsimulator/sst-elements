@@ -163,5 +163,40 @@ for x in range(memories):
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-sst.enableAllStatisticsForAllComponents()
+
+sst.enableStatisticForComponentType("memHierarchy.Cache",
+                                    "hist_reads_log2",
+                                        {"type":"sst.HistogramStatistic",
+                                         "minvalue" : "0",
+                                         "numbins"  : "30", 
+                                         "binwidth" : "1",
+                                         "includeoutofbounds" : "1"
+                                         })
+
+sst.enableStatisticForComponentType("memHierarchy.Cache",
+                                    "hist_writes_log2",
+                                        {"type":"sst.HistogramStatistic",
+                                         "minvalue" : "0",
+                                         "numbins"  : "30", 
+                                         "binwidth" : "1",
+                                         "includeoutofbounds" : "1"
+                                         })
+
+sst.enableStatisticForComponentType("memHierarchy.Cache",
+                                    "hist_age_log2",
+                                        {"type":"sst.HistogramStatistic",
+                                         "minvalue" : "0",
+                                         "numbins"  : "32", 
+                                         "binwidth" : "1",
+                                         "includeoutofbounds" : "1"
+                                         })
+
+sst.enableStatisticForComponentType("memHierarchy.Cache",
+                                    "hist_word_accesses",
+                                        {"type":"sst.HistogramStatistic",
+                                         "minvalue" : "0",
+                                         "numbins"  : "9", 
+                                         "binwidth" : "1",
+                                         "includeoutofbounds" : "1"
+                                         })
 
