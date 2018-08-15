@@ -17,6 +17,8 @@
 #ifndef _H_SST_ADDR_HISTOGRAMMER
 #define _H_SST_ADDR_HISTOGRAMMER
 
+#include <bitset>
+
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
