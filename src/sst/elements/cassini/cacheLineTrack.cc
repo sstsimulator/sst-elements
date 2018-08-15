@@ -36,6 +36,8 @@ cacheLineTrack::cacheLineTrack(Component* owner, Params& params) : CacheListener
 
     rdHisto = registerStatistic<Addr>("histogram_reads");
     wrHisto = registerStatistic<Addr>("histogram_writes");
+    useHisto = registerStatistic<uint>("histogram_word_accesses");
+    ageHisto = registerStatistic<SimTime_t>("histogram_age");
 
 }
 
@@ -44,20 +46,62 @@ void cacheLineTrack::notifyAccess(const CacheListenerNotification& notify) {
     const NotifyAccessType notifyType = notify.getAccessType();
     const NotifyResultType notifyResType = notify.getResultType();
 
-    Addr addr = notify.getTargetAddress();
+    Addr addr = notify.getTargetAddress(); // target address
+    Addr cacheAddr = notify.getPhysicalAddress(); // cacheline (base) address
 
-    //if(notifyResType == MISS || addr >= cutoff) return;
+    // if get a MISS notification, do we get a HIT later?
+    if(addr >= cutoff) return;
+
+    // size
 
     switch (notifyType) {
     case READ:
-        printf("R %llx\n", addr);
-        return;
     case WRITE:
-        printf("W %llx\n", addr);
-        return;
+        {
+            printf("R/W %llx\n", addr);
+            auto iter = cacheLines.find(cacheAddr);
+            if (iter == cacheLines.end()) {
+                // insert a new one
+                SimTime_t now = getSimulation()->getCurrentSimCycle();
+                iter = (cacheLines.insert({cacheAddr, lineTrack(now)})).first;
+            } 
+            // update
+            if (notify.getSize() > 8) {
+                printf("Not sure what to do here. access size > 8\n");
+            }
+            Addr offset = (addr - cacheAddr) / 8;
+            iter->second.touched[offset] = 1;
+            if (notifyType == READ) {
+                iter->second.reads++;
+            } else {
+                iter->second.writes++;
+            }   
+        }
+        break;
     case EVICT:
         printf("E %llx\n", addr);
-        return;
+        // find the cacheline record
+        {
+            auto iter = cacheLines.find(cacheAddr);
+            if (iter != cacheLines.end()) {
+                // record it
+                rdHisto->addData(iter->second.reads);
+                wrHisto->addData(iter->second.writes);
+                SimTime_t now = getSimulation()->getCurrentSimCycle();
+                ageHisto->addData(now - iter->second.entered);
+                uint touched = iter->second.touched.count();
+                useHisto->addData(touched);
+                printf(" t %d\n", touched);
+                //delete it
+                cacheLines.erase(iter);
+            } else {
+                // couldn't find record?
+                printf("Not sure what to do here. Couldn't find record\n");
+            }
+        } 
+        break;
+    default:
+        printf("Invalid notify Type\n");
     }
 }
 

@@ -317,7 +317,6 @@ void CoherenceController::notifyListenerOfAccess(MemEvent * event, NotifyAccessT
     if (!event->isPrefetch()) {
         CacheListenerNotification notify(event->getAddr(), event->getBaseAddr(), event->getVirtualAddress(),
                 event->getInstructionPointer(), event->getSize(), accessT, resultT);
-        printf("x %llx %llx\n", event->getAddr(), event->getBaseAddr());
         listener_->notifyAccess(notify);
     }
 }

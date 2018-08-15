@@ -35,6 +35,15 @@ using namespace std;
 namespace SST {
 namespace Cassini {
 
+struct lineTrack {
+    bitset<8> touched; // currently hardcoded for 64B (8-word) lines
+    SimTime_t entered; // when the line entered the cache
+    uint64_t reads;
+    uint64_t writes;
+
+    lineTrack(SimTime_t now) : touched(0), entered(now), reads(0), writes(0) {;}
+};
+
 class cacheLineTrack : public SST::MemHierarchy::CacheListener {
 public:
     cacheLineTrack(Component*, Params& params);
@@ -59,10 +68,13 @@ public:
     SST_ELI_DOCUMENT_STATISTICS(
         { "histogram_reads", "Histogram of cacheline reads before eviction", "counts", 1 },
         { "histogram_writes", "Histogram of cacheline write before eviction", "counts", 1 },
-        { "histogram_word_accesses", "Histogram of cacheline word accesses before eviction", "counts", 1 }
+        { "histogram_age", "Histogram of cacheline ages before eviction", "counts", 1 },
+        { "histogram_word_accesses", "Histogram of cacheline words accessed before eviction", "counts", 1 }
     )
 
 private:
+    typedef unordered_map<Addr, lineTrack> cacheTrack_t;
+    cacheTrack_t cacheLines;
     std::vector<Event::HandlerBase*> registeredCallbacks;
     bool captureVirtual; 
     Addr cutoff; // Don't bin addresses above the cutoff. Helps avoid creating
@@ -70,6 +82,8 @@ private:
                 //  heap and the stack.
     Statistic<Addr>* rdHisto;
     Statistic<Addr>* wrHisto;
+    Statistic<uint>* useHisto;
+    Statistic<SimTime_t>* ageHisto;
 };
 
 }
