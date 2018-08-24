@@ -33,7 +33,7 @@
 #include "sst/elements/memHierarchy/cacheListener.h"
 #include "sst/elements/memHierarchy/replacementManager.h"
 #include "sst/elements/memHierarchy/util.h"
-#include "sst/elements/ariel/arielalloctrackev.h"
+#include "sst/elements/memHierarchy/Sieve/alloctrackev.h"
 
 
 namespace SST { namespace MemHierarchy {
@@ -59,7 +59,7 @@ public:
 
     SST_ELI_DOCUMENT_PORTS(
             {"cpu_link_%(port)d", "Ports connected to the CPUs", {"memHierarchy.MemEventBase"}},
-            {"alloc_link_%(port)d", "Ports connected to the CPUs' allocation/free notification ports", {"ariel.arielAllocTrackEvent"}} )
+            {"alloc_link_%(port)d", "Ports connected to the CPUs' allocation/free notification ports", {"memHierarchy.AllocTrackEvent"}} )
 
     SST_ELI_DOCUMENT_STATISTICS(
             {"ReadHits",    "Number of read requests that hit in the sieve", "count", 1},

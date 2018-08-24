@@ -45,9 +45,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     int verbosity = params.find<int>("verbose", 0);
     output = new SST::Output("ArielComponent[@f:@l:@p] ", verbosity, 0, SST::Output::STDOUT);
 
-    // see if we should send allocation events out on links
-    useAllocTracker = params.find<int>("alloctracker", 0);
-
     output->verbose(CALL_INFO, 1, 0, "Creating Ariel component...\n");
 
     core_count = (uint32_t) params.find<uint32_t>("corecount", 1);
@@ -129,22 +126,20 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 /** End memory manager subcomponent parameter translation */
 
     std::string memorymanager = params.find<std::string>("memmgr", "ariel.MemoryManagerSimple");
-    if (!memorymanager.empty()) {
+    // Attempt to laod as a named subcomponent first
+    if (NULL != (memmgr = dynamic_cast<ArielMemoryManager*>(loadNamedSubComponent("memmgr")))) {
+        output->verbose(CALL_INFO, 1, 0, "Loaded memory manager: %s\n", memmgr->getName().c_str());
+    } else {
         // Warn about memory levels and the selected memory manager if needed
         if (memorymanager == "ariel.MemoryManagerSimple" && memLevels > 1) {
             output->verbose(CALL_INFO, 1, 0, "Warning - the default 'ariel.MemoryManagerSimple' does not support multiple memory levels. Configuring anyways but memorylevels will be 1.\n");
             params.insert("memmgr.memorylevels", "1", true);
-        } else if (memorymanager == "ariel.MemoryManagerMalloc" && memLevels == 1) {
-            output->verbose(CALL_INFO, 1, 0, "Warning - 'ariel.MemoryManagerMalloc' should only be used if memLevels > 1. Reverting to 'ariel.MemoryManagerSimple'\n");
-            memorymanager = "ariel.MemoryManagerSimple";
         }
 
-        output->verbose(CALL_INFO, 1, 0, "Loading memory manger: %s\n", memorymanager.c_str());
+        output->verbose(CALL_INFO, 1, 0, "Loading memory manager: %s\n", memorymanager.c_str());
         Params mmParams = params.find_prefix_params("memmgr.");
         memmgr = dynamic_cast<ArielMemoryManager*>( loadSubComponent(memorymanager, this, mmParams));
         if (NULL == memmgr) output->fatal(CALL_INFO, -1, "Failed to load memory manager: %s\n", memorymanager.c_str());
-    } else {
-        output->fatal(CALL_INFO, -1, "Failed to load memory manager: no manager specified. Please set the 'memmgr' parameter in your input deck\n");
     }
 
     output->verbose(CALL_INFO, 1, 0, "Memory manager construction is completed.\n");
@@ -153,12 +148,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     uint32_t maxCoreQueueLen     = (uint32_t) params.find<uint32_t>("maxcorequeue", 64);
     uint32_t maxPendingTransCore = (uint32_t) params.find<uint32_t>("maxtranscore", 16);
     uint64_t cacheLineSize       = (uint64_t) params.find<uint32_t>("cachelinesize", 64);
-    int op_e = (uint32_t) params.find<uint32_t>("opal_enabled", 0);
 
-    if(op_e == 1)
-        opal_enabled = true;
-    else
-        opal_enabled = false;
 
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -189,10 +179,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     uint32_t pin_startup_mode = (uint32_t) params.find<uint32_t>("arielmode", 2);
     uint32_t intercept_mem_allocations = (uint32_t) params.find<uint32_t>("arielinterceptcalls", 0);
 
-    // Always enable allocation interception if using opal...
-    if (opal_enabled)
-        intercept_mem_allocations = 1;
-
     switch(intercept_mem_allocations) {
     case 0:
         output->verbose(CALL_INFO, 1, 0, "Interception and instrumentation of multi-level memory and malloc/free calls is DISABLED.\n");
@@ -220,7 +206,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     appLauncher = params.find<std::string>("launcher", PINTOOL_EXECUTABLE);
 
     const uint32_t launch_param_count = (uint32_t) params.find<uint32_t>("launchparamcount", 0);
-    const uint32_t pin_arg_count = 29 + launch_param_count;
+    const uint32_t pin_arg_count = 30 + launch_param_count;
 
     execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
@@ -236,6 +222,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-pause_tool");
     execute_args[arg++] = const_cast<char*>("15");
 #endif
+    execute_args[arg++] = const_cast<char*>("-ifeellucky");
     execute_args[arg++] = const_cast<char*>("-follow_execv");
 
     char* param_name_buffer = (char*) malloc(sizeof(char) * 512);
@@ -350,20 +337,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     output->verbose(CALL_INFO, 1, 0, "Creating core to cache links...\n");
     cpu_to_cache_links = (SimpleMem**) malloc( sizeof(SimpleMem*) * core_count );
 
-    if (useAllocTracker) {
-        output->verbose(CALL_INFO, 1, 0, "Creating core to allocate tracker links...\n");
-        cpu_to_alloc_tracker_links = (Link**) malloc( sizeof(Link*) * core_count );
-    } else {
-        cpu_to_alloc_tracker_links = 0;
-    }
-
-
-    if(opal_enabled) {
-        output->verbose(CALL_INFO, 1, 0, "Creating core to Opal links...\n");
-        cpu_to_opal_links = (Link**) malloc( sizeof(Link*) * core_count );
-    }
-
-
     output->verbose(CALL_INFO, 1, 0, "Creating processor cores and cache links...\n");
     cpu_cores = (ArielCore**) malloc( sizeof(ArielCore*) * core_count );
 
@@ -381,21 +354,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         // Set max number of instructions
         cpu_cores[i]->setMaxInsts(max_insts);
 
-        // optionally wire up links to allocate trackers (e.g. memSieve)
-        if (useAllocTracker) {
-            sprintf(link_buffer, "alloc_link_%" PRIu32, i);
-            cpu_to_alloc_tracker_links[i] = configureLink(link_buffer);
-            cpu_cores[i]->setCacheLink(cpu_to_cache_links[i], cpu_to_alloc_tracker_links[i]);
-        } else {
-            cpu_cores[i]->setCacheLink(cpu_to_cache_links[i], 0);
-        }
-
-        if(opal_enabled) {
-            sprintf(link_buffer, "opal_link_%" PRIu32, i);
-            cpu_to_opal_links[i] = configureLink(link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleInterruptEvent));
-            cpu_cores[i]->setOpalLink(cpu_to_opal_links[i]);
-            cpu_cores[i]->setOpal();
-        }
+        cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
     }
 
     free(link_buffer);

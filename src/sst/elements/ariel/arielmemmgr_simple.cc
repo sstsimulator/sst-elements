@@ -21,7 +21,7 @@
 using namespace SST::ArielComponent;
 
 ArielMemoryManagerSimple::ArielMemoryManagerSimple(SST::Component* owner, Params& params) : 
-            ArielMemoryManager(owner, params) {
+            ArielMemoryManagerCache(owner, params) {
     
     pageSize = (uint64_t) params.find<uint64_t>("pagesize0", 4096);
     output->verbose(CALL_INFO, 2, 0, "Page size is %" PRIu64 "\n", pageSize);

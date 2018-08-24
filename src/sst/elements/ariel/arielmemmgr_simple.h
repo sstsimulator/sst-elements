@@ -21,7 +21,7 @@
 #include <sst/core/output.h>
 #include <sst/core/elementinfo.h>
 
-#include "arielmemmgr.h"
+#include "arielmemmgr_cache.h"
 
 #include <stdint.h>
 #include <deque>
@@ -33,20 +33,20 @@ using namespace SST;
 namespace SST {
 namespace ArielComponent {
 
-class ArielMemoryManagerSimple : public ArielMemoryManager {
+class ArielMemoryManagerSimple : public ArielMemoryManagerCache {
 
     public:
         /* SST ELI */
         SST_ELI_REGISTER_SUBCOMPONENT(ArielMemoryManagerSimple, "ariel", "MemoryManagerSimple", SST_ELI_ELEMENT_VERSION(1,0,0),
                 "Simple allocate-on-first touch memory manager", "SST::ArielComponent::ArielMemoryManager")
 
-#define MEMMGR_SIMPLE_ELI_PARAMS ARIEL_ELI_MEMMGR_PARAMS,\
+#define MEMMGR_SIMPLE_ELI_PARAMS ARIEL_ELI_MEMMGR_CACHE_PARAMS,\
             {"pagesize0", "Page size", "4096"},\
             {"pagecount0", "Page count", "131072"},\
-            {"page_populate_0", "Pre-populate/partially pre-poulate the page table, this is the file to read in.", ""}
+            {"page_populate_0", "Pre-populate/partially pre-populate the page table, this is the file to read in.", ""}
 
         SST_ELI_DOCUMENT_PARAMS( MEMMGR_SIMPLE_ELI_PARAMS )
-        SST_ELI_DOCUMENT_STATISTICS( ARIEL_ELI_MEMMGR_STATS )
+        SST_ELI_DOCUMENT_STATISTICS( ARIEL_ELI_MEMMGR_CACHE_STATS )
 
         /* ArielMemoryManagerSimple */
         ArielMemoryManagerSimple(SST::Component* owner, Params& params);

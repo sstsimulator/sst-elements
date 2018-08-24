@@ -21,7 +21,7 @@
 #include <sst/core/output.h>
 #include <sst/core/elementinfo.h>
 
-#include "arielmemmgr.h"
+#include "arielmemmgr_cache.h"
 
 #include <stdint.h>
 #include <deque>
@@ -33,20 +33,20 @@ using namespace SST;
 namespace SST {
 namespace ArielComponent {
 
-class ArielMemoryManagerMalloc : public ArielMemoryManager {
+class ArielMemoryManagerMalloc : public ArielMemoryManagerCache {
 
     public:
         /* SST ELI */
         SST_ELI_REGISTER_SUBCOMPONENT(ArielMemoryManagerMalloc, "ariel", "MemoryManagerMalloc", SST_ELI_ELEMENT_VERSION(1,0,0),
                 "MLM memory manager which supports malloc/free in different memory pools", "SST::ArielComponent::ArielMemoryManager")
 
-#define ARIEL_MEMMGR_MALLOC_ELI_PARAMS ARIEL_ELI_MEMMGR_PARAMS,\
+#define ARIEL_MEMMGR_MALLOC_ELI_PARAMS ARIEL_ELI_MEMMGR_CACHE_PARAMS,\
             {"memorylevels",    "Number of memory levels in the system", "1"},\
             {"defaultlevel",    "Default memory level", "0"},\
             {"pagesize%(memorylevels)d", "Page size for memory Level x", "4096"},\
             {"pagecount%(memorylevels)d", "Page count for memory Level x", "131072"},\
             {"page_populate_%(memorylevels)d", "Pre-populate/partially pre-populate a page table for a level in memory, this is the file to read in.", ""}
-#define ARIEL_MEMMGR_MALLOC_ELI_STATS ARIEL_ELI_MEMMGR_STATS, \
+#define ARIEL_MEMMGR_MALLOC_ELI_STATS ARIEL_ELI_MEMMGR_CACHE_STATS, \
             { "bytes_allocated_in_pool", "Number of bytes allocated explicitly to memory pool <SubId>. Count is # of allocations", "bytes", 3 }, \
             { "bytes_freed_from_pool",     "Number of bytes freed explicitly from memory pool <SubId>. Count is # of frees", "bytes", 3}, \
             { "demand_page_allocs",      "Number of on-demand page allocations in memory pool <SubId>", "count", 3}
@@ -65,7 +65,7 @@ class ArielMemoryManagerMalloc : public ArielMemoryManager {
         void printStats();
 
         void freeMalloc(const uint64_t vAddr);
-        bool allocateMalloc(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
+        bool allocateMalloc(const uint64_t size, const uint32_t level, const uint64_t virtualAddress, const uint64_t instructionPointer, const uint32_t thread);
         
     private:
         void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);

@@ -64,10 +64,10 @@ BroadcastShim::BroadcastShim(ComponentId_t id, Params &params) : Component(id) {
 
 
 void BroadcastShim::processCoreEvent(SST::Event* ev) {
-    ArielComponent::arielAllocTrackEvent* event = dynamic_cast<ArielComponent::arielAllocTrackEvent*>(ev);
+    AllocTrackEvent* event = dynamic_cast<AllocTrackEvent*>(ev);
     
     for (std::vector<Link*>::iterator it = sieveAllocLinks_.begin(); it != sieveAllocLinks_.end(); it++) {
-        (*it)->send(new ArielComponent::arielAllocTrackEvent(*event));
+        (*it)->send(new AllocTrackEvent(*event));
     }
     
     delete event;

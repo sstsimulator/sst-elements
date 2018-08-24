@@ -47,7 +47,6 @@ class ArielCPU : public SST::Component {
     SST_ELI_DOCUMENT_PARAMS(
         {"verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
         {"profilefunctions", "Profile functions for Ariel execution, 0 = none, >0 = enable", "0" },
-        {"alloctracker", "Use an allocation tracker (e.g. memSieve)", "0"},
         {"corecount", "Number of CPU cores to emulate", "1"},
         {"checkaddresses", "Verify that addresses are valid with respect to cache lines", "0"},
         {"maxissuepercycle", "Maximum number of requests to issue per cycle, per core", "1"},
@@ -73,14 +72,9 @@ class ArielCPU : public SST::Component {
         {"clock", "Clock rate at which events are generated and processed", "1GHz"},
         {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
         {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
-        {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"},
-        {"opal_enabled", "If enabled, MLM allocation hints will be communicated to the centralized memory manager", "0"},
-	{"opal_latency", "latency to communicate to the centralized memory manager", "32ps"})
+        {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"})
 
-    SST_ELI_DOCUMENT_PORTS(
-        {"cache_link_%(corecount)d", "Each core's link to its cache", {}},
-        {"alloc_link_%(corecount)d", "Each core's link to an allocation tracker (e.g. memSieve)", {"ariel.arielAllocTrackEvent"}},
-        {"opal_link_%(corecount)d", "Each core's link to a centralized memory manager (Opal)", {}})
+    SST_ELI_DOCUMENT_PORTS( {"cache_link_%(corecount)d", "Each core's link to its cache", {}} )
     
     SST_ELI_DOCUMENT_STATISTICS(
         { "read_requests",        "Statistic counts number of read requests", "requests", 1},   // Name, Desc, Enable Level 
@@ -105,6 +99,8 @@ class ArielCPU : public SST::Component {
         { "cycles",               "Statistic for counting cycles of the Ariel core.", "cycles", 1 },
         { "active_cycles",        "Statistic for counting active cycles (cycles not idle) of the Ariel core.", "cycles", 1 })
         
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( { "memmgr", "Which memory manager to use", "SST::Ariel::ArielMemoryManager" } )
+   
         /* Ariel class */
         ArielCPU(ComponentId_t id, Params& params);
         ~ArielCPU();
@@ -120,18 +116,13 @@ class ArielCPU : public SST::Component {
         ArielMemoryManager* memmgr;
         ArielCore** cpu_cores;
         Interfaces::SimpleMem** cpu_to_cache_links;
-        SST::Link **cpu_to_alloc_tracker_links;
-
-        SST::Link **cpu_to_opal_links;
 
         pid_t child_pid;
 
         uint32_t core_count;
         ArielTunnel* tunnel;
         bool stopTicking;
-        bool opal_enabled;
         std::string appLauncher;
-        bool useAllocTracker;
 
         char **execute_args;
         std::map<std::string, std::string> execute_env;

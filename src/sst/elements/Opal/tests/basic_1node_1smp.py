@@ -31,21 +31,28 @@ ariel.addParams({
     "maxtranscore": 16,
     "pipetimeout" : 0,
     "corecount" : cores/2,
-    "memmgr.memorylevels" : 1,
-    "memmgr.pagecount0" : num_pages,
-    "memmgr.pagesize0" : page_size * 1024,
-    "memmgr.defaultlevel" : 0,
     "arielmode" : 0,
     "appargcount" : 0,
     "max_insts" : 10000,
-    "opal_enabled": 1,
-    "opal_latency": "30ps",
     "executable" : "./app/opal_test",
     "node" : 0,
 })
+
+memmgr = ariel.setSubComponent("memmgr", "ariel.MemoryManagerOpal")
+memmgr.addParams({
+    "opal_latency": "30ps"
+})
+
+translator = memmgr.setSubComponent("translator", "ariel.MemoryManagerSimple")
+translator.addParams({
+    "memorylevels" : 1,
+    "pagecount0" : num_pages,
+    "pagesize0" : page_size * 1024,
+    "defaultlevel" : 0,
+})
+
+
 ariel.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
-
-
 
 mmu = sst.Component("mmu", "Samba")
 mmu.addParams({
@@ -207,7 +214,7 @@ for next_core in range(cores):
 
 	if next_core < cores/2:
         	arielMMULink.connect((ariel, "cache_link_%d"%next_core, "300ps"), (mmu, "cpu_to_mmu%d"%next_core, "300ps"))
-		ArielOpalLink.connect((ariel, "opal_link_%d"%next_core, "300ps"), (opal, "requestLink%d"%(2*next_core), "300ps"))
+		ArielOpalLink.connect((memmgr, "opal_link_%d"%next_core, "300ps"), (opal, "requestLink%d"%(2*next_core), "300ps"))
 		MMUCacheLink.connect((mmu, "mmu_to_cache%d"%next_core, "300ps"), (l1, "high_network_0", "300ps"))
 		PTWOpalLink.connect( (mmu, "ptw_to_opal%d"%next_core, "300ps"), (opal, "requestLink%d"%(2*next_core + 1), "300ps") )
 	else:
