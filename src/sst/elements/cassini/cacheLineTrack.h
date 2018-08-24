@@ -71,7 +71,8 @@ public:
         { "hist_reads_log2", "Histogram of log2(cacheline reads before eviction)", "counts", 1 },
         { "hist_writes_log2", "Histogram of log2(cacheline write before eviction)", "counts", 1 },
         { "hist_age_log2", "Histogram of log2(cacheline ages before eviction)", "counts", 1 },
-        { "hist_word_accesses", "Histogram of cacheline words accessed before eviction", "counts", 1 }
+        { "hist_word_accesses", "Histogram of cacheline words accessed before eviction", "counts", 1 },
+        { "evicts", "Number of evictions seen", "counts", 1 }
     )
 
 private:
@@ -86,6 +87,7 @@ private:
     Statistic<Addr>* wrHisto;
     Statistic<uint>* useHisto;
     Statistic<SimTime_t>* ageHisto;
+    Statistic<uint>* evicts;
 };
 
 }

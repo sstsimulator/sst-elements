@@ -59,6 +59,7 @@ cacheLineTrack::cacheLineTrack(Component* owner, Params& params) : CacheListener
     wrHisto = registerStatistic<Addr>("hist_writes_log2");
     useHisto = registerStatistic<uint>("hist_word_accesses");
     ageHisto = registerStatistic<SimTime_t>("hist_age_log2");
+    evicts = registerStatistic<uint>("evicts");
 
 }
 
@@ -87,7 +88,7 @@ void cacheLineTrack::notifyAccess(const CacheListenerNotification& notify) {
             } 
             // update
             if (notify.getSize() > 8) {
-                printf("Not sure what to do here. access size > 8\n");
+	      //printf("Not sure what to do here. access size > 8, %d\n", notify.getSize());
             }
             Addr offset = (addr - cacheAddr) / 8;
             iter->second.touched[offset] = 1;
@@ -110,6 +111,7 @@ void cacheLineTrack::notifyAccess(const CacheListenerNotification& notify) {
                 ageHisto->addData(log2_64(now - iter->second.entered));
                 uint touched = iter->second.touched.count();
                 useHisto->addData(touched);
+		evicts->addData(1);
                 //delete it
                 cacheLines.erase(iter);
             } else {
