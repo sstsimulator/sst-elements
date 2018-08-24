@@ -47,7 +47,7 @@ MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::Component *comp,
 void MemHierarchyScratchInterface::init(unsigned int phase) {
     if (!phase) {
         // Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0));
+        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0, false));
     }
 
     while (SST::Event * ev = link_->recvInitData()) {

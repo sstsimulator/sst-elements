@@ -51,6 +51,24 @@ CoherentMemController::CoherentMemController(ComponentId_t id, Params &params) :
     timestamp_ = 0;
 }
 
+/**
+ * Init
+ */
+void CoherentMemController::init(unsigned int phase) {
+    link_->init(phase);
+    
+    region_ = link_->getRegion(); // This can change during init, but should stabilize before we start receiving init data
+    
+    /* Inherit region from our source(s) */
+    if (!phase) {
+        /* Announce our presence on link */
+        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), true));
+    }
+
+    while (MemEventInit *ev = link_->recvInitData()) {
+        processInitEvent(ev);
+    }
+}
 
 /*
  * After init we know line size so initialize cacheStatus_

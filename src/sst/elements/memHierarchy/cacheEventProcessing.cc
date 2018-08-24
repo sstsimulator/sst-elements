@@ -416,7 +416,7 @@ void Cache::init(unsigned int phase) {
         linkDown_->init(phase);
 
         if (!phase)
-            linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize()));
+            linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize(), true));
 
         /*  */
         while(MemEventInit *event = linkDown_->recvInitData()) {
@@ -429,6 +429,9 @@ void Cache::init(unsigned int phase) {
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(event);
                 if (eventC->getType() != Endpoint::Memory) { // All other types do coherence
                     isLL = false;
+                }
+                if (eventC->getTracksPresence() || !isLL) {
+                    silentEvict = false;
                 }
                 if (!eventC->getInclusive()) {
                     lowerIsNoninclusive = true; // TODO better checking if multiple caches below us
@@ -447,8 +450,8 @@ void Cache::init(unsigned int phase) {
     
     if (!phase) {
         // MemEventInit: Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
-        linkUp_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize()));
-        linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize()));
+        linkUp_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize(), true));
+        linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize(), true));
     }
 
     while (MemEventInit * memEvent = linkUp_->recvInitData()) {
@@ -473,6 +476,9 @@ void Cache::init(unsigned int phase) {
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);
                 if (eventC->getType() != Endpoint::Memory) { // All other types to coherence
                     isLL = false;
+                }
+                if (eventC->getTracksPresence() || !isLL) {
+                    silentEvict = false;
                 }
                 if (!eventC->getInclusive()) {
                     lowerIsNoninclusive = true; // TODO better checking if multiple caches below us
@@ -541,7 +547,7 @@ void Cache::setup() {
     linkUp_->setup();
     if (linkUp_ != linkDown_) linkDown_->setup();
 
-    coherenceMgr_->setupLowerStatus(isLL, expectWritebackAcks, lowerIsNoninclusive);
+    coherenceMgr_->setupLowerStatus(silentEvict, isLL, expectWritebackAcks, lowerIsNoninclusive);
 }
 
 

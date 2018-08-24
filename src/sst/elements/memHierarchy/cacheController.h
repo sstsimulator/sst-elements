@@ -382,6 +382,7 @@ private:
     bool                    isLL;
     bool                    lowerIsNoninclusive;
     bool                    expectWritebackAcks;
+    bool                    silentEvict;
 
     /* Performance enhancement: turn clocks off when idle */
     bool                    clockIsOn_;                 // Tell us whether clock is on or off
