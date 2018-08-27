@@ -77,7 +77,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
-    SimTime_t shmemSendSetupLat =  params.find<SimTime_t>( "shmemSendSetupLat", 100 ) ;
     int numShmemCmdSlots =    params.find<int>( "numShmemCmdSlots", 32 );
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
     int maxRecvMachineQsize = params.find<int>( "maxRecvMachineQsize", 1 );

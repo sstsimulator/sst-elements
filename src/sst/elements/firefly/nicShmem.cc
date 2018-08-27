@@ -129,6 +129,7 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
 		--m_freeCmdSlots;	
         m_nic.getVirtNic(id)->notifyShmem( 0, static_cast< NicShmemAddCmdEvent*>(event)->getCallback() );
 		break;
+
       case NicShmemCmdEvent::Putv:
         incPending(id);
 		--m_freeCmdSlots;	
@@ -509,15 +510,11 @@ void Nic::Shmem::hostPutv( NicShmemPutvCmdEvent* event, int id )
    	vec->push_back( MemOp( event->getFarAddr(), event->getLength(), MemOp::Op::HostStore ));
 
     SimTime_t start = m_nic.getCurrentSimTimeNano();
-	m_nic.calcHostMemDelay(id, vec, 
-		[=]() {	
-            m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"hostPutv",1,NIC_DBG_SHMEM,"core=%d finished latency=%" PRIu64 "\n",id,
-                m_nic.getCurrentSimTimeNano()-start);
-    		m_nic.getVirtNic(id)->notifyShmem( 0, event->getCallback() );
-    		delete event;
-		}
-	);
 
+    // this will add pressure to the memory model 
+    m_nic.calcHostMemDelay(id, vec, [=](){} );
+   	m_nic.getVirtNic(id)->notifyShmem( 0, event->getCallback() );
+   	delete event;
 }
 
 void Nic::Shmem::hostGetv( NicShmemGetvCmdEvent* event, int id )
@@ -584,17 +581,10 @@ void Nic::Shmem::hostAdd( NicShmemAddCmdEvent* event, int id )
 
     SimTime_t start = m_nic.getCurrentSimTimeNano();
 
-	m_nic.calcHostMemDelay( id, vec, 
-		[=]() {
-            m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"hostAdd",1,NIC_DBG_SHMEM,"core=%d finished latency=%" PRIu64 "\n",id,
-                m_nic.getCurrentSimTimeNano()-start);
-            //decPending( id );
-            //incFreeCmdSlots();
-            m_nic.getVirtNic(id)->notifyShmem( 0, event->getCallback() );
-    		delete event;
-		}
-	);
-
+    // this will add pressure to the memory model 
+    m_nic.calcHostMemDelay( id, vec, [=](){} );
+    m_nic.getVirtNic(id)->notifyShmem( 0, event->getCallback() );
+    delete event;
 }
 
 void Nic::Shmem::hostFadd( NicShmemFaddCmdEvent* event, int id )

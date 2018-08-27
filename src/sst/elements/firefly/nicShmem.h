@@ -184,13 +184,11 @@ private:
     std::vector<std::vector< std::pair<Hermes::MemAddr, size_t> > > m_regMem;
 	SimTime_t m_nic2HostDelay_ns;
 	SimTime_t m_host2NicDelay_ns;
-    SimTime_t m_sendSetupLatency;
 
 	std::deque< std::pair< NicShmemCmdEvent*, int > > m_cmdQ;
 	bool m_engineBusy;
 	std::deque< std::pair< NicShmemCmdEvent*, int > > m_hostCmdQ;
 	bool m_hostBusy;
-	int m_nicCmdLatency;
-	int m_hostCmdLatency;
-
+	SimTime_t m_nicCmdLatency;
+	SimTime_t m_hostCmdLatency;
 };
