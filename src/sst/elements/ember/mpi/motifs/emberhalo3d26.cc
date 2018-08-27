@@ -42,20 +42,18 @@ EmberHalo3D26Generator::EmberHalo3D26Generator(SST::Component* owner, Params& pa
 	uint64_t nsCompute = 0;
 	if ( params.contains("arg.computetime") ) {
 		nsCompute  = (uint64_t) params.find<uint64_t>("arg.computetime");
-#ifdef HAVE_STDCXX_LAMBDAS
-		compute_the_time = [ nsCompute ] { return nsCompute; };
-#else
 		compute_the_time = nsCompute;
-#endif
 	} else {
 		uint64_t total_flops       = total_grid_points * ((uint64_t) items_per_cell) * ((uint64_t) flops_per_cell);
-#ifdef HAVE_STDCXX_LAMBDAS
-		compute_the_time = [ this, total_flops ] {
-			return (uint64_t) ( (double) total_flops / ( nodePerf().getFlops() / 1000000000.0 ) );
-		};
-#else
-		compute_the_time = (double) total_flops / nodePerf().getFlops();
-#endif
+		double pe_flops = params.find<double>("arg.peflops", 1000000000);
+
+		const double NANO_SECONDS = 1000000000;
+		compute_the_time =   ( ( (double) total_flops / pe_flops ) * NANO_SECONDS );
+
+        if(0 == rank()) {
+			output("Halo3D: total_flops: %" PRIu64 "\n", total_flops);
+			output("Halo3D: peFlops:     %lf\n", pe_flops);
+		}
 	}
 
 	nsCopyTime = (uint32_t) params.find("arg.copytime", 0);
@@ -134,7 +132,7 @@ EmberHalo3D26Generator::EmberHalo3D26Generator(SST::Component* owner, Params& pa
         if(0 == rank()) {
 		output("Halo3D processor decomposition solution: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", peX, peY, peZ);
 		output("Halo3D problem size: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", nx, ny, nz);
-		output("Halo3D compute time: %" PRIu64 " ns\n", nsCompute);
+		output("Halo3D compute time: %" PRIu64 " ns\n", compute_the_time );
 		output("Halo3D copy time:    %" PRIu32 " ns\n", nsCopyTime);
 		output("Halo3D iterations:   %" PRIu32 "\n", iterations);
 		output("Halo3D items/cell:   %" PRIu32 "\n", items_per_cell);
