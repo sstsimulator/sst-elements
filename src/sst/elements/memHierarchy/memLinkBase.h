@@ -51,8 +51,8 @@ public:
     { "addr_range_end",     "(uint) Set by parent component. Highest address handled by the parent.", "uint64_t-1"},\
     { "interleave_size",    "(string) Set by parent component. Size of interleaved chunks.", "0B"},\
     { "interleave_step",    "(string) Set by parent component. Distance between interleaved chunks.", "0B"},\
-    { "node",    			"Node number in multinode environment", "0"},\
-    { "shared_memory",    	"Shared meory enable flag", "0"},\
+    { "node",    	    "Node number in multinode environment", "0"},\
+    { "shared_memory",      "Shared meory enable flag", "0"},\
     { "local_memory_size",  "Local memory size to mask local memory addresses", "0"}
 
 

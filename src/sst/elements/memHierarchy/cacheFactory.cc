@@ -241,26 +241,13 @@ void Cache::configureLinks(Params &params) {
     if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
         out_->output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size'. Change your input file to remove this notice.\n", getName().c_str());
 
-    std::string opalNode = params.find<std::string>("node", "0");
-    std::string opalShMem = params.find<std::string>("shared_memory", "0");
-    std::string opalSize = params.find<std::string>("local_memory_size", "0");
-
     Params nicParams = params.find_prefix_params("memNIC." );
-    nicParams.insert("node", opalNode);
-    nicParams.insert("shared_memory", opalShMem);
-    nicParams.insert("local_memory_size", opalSize);
 
     Params memlink = params.find_prefix_params("memlink.");
     memlink.insert("port", "low_network_0");
-    memlink.insert("node", opalNode);
-    memlink.insert("shared_memory", opalShMem);
-    memlink.insert("local_memory_size", opalSize);
     
     Params cpulink = params.find_prefix_params("cpulink.");
     cpulink.insert("port", "high_network_0");
-    cpulink.insert("node", opalNode);
-    cpulink.insert("shared_memory", opalShMem);
-    cpulink.insert("local_memory_size", opalSize);
 
     /* Finally configure the links */
     if (highNetExists && lowNetExists) {

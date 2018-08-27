@@ -151,14 +151,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     nicParams.insert("sources", std::to_string(cl - 1), false);
     nicParams.insert("destinations", std::to_string(cl + 1), false);
 
-    // Opal
-    std::string node = params.find<std::string>("node", "0");
-    std::string shmem = params.find<std::string>("shared_memory", "0");
-    std::string localsize = params.find<std::string>("local_memory_size", "0");
-    nicParams.insert("node", node);
-    nicParams.insert("shared_memory", shmem);
-    nicParams.insert("local_memory_size", localsize);
-
     // Determine which ports are connected
     unsigned int portCount = 1;
     if (isPortConnected("network_ack")) portCount++;
@@ -180,9 +172,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (isPortConnected("memory")) {
         Params memParams = params.find_prefix_params("memlink.");
         memParams.insert("port", "memory");
-        memParams.insert("node", node);
-        memParams.insert("shared_memory", shmem);
-        memParams.insert("local_memory_size", localsize);
         memParams.insert("latency", "1ns");
         memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);
         memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);

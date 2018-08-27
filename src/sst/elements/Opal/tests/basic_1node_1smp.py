@@ -38,7 +38,7 @@ ariel.addParams({
     "node" : 0,
 })
 
-memmgr = ariel.setSubComponent("memmgr", "ariel.MemoryManagerOpal")
+memmgr = ariel.setSubComponent("memmgr", "Opal.MemoryManagerOpal")
 memmgr.addParams({
     "opal_latency": "30ps"
 })
@@ -141,8 +141,8 @@ l1_params = {
        	"L1": 1,
         "verbose": 30,
         "maxRequestDelay" : "1000000",
-	"shared_memory": shared_memory,
-	"node": 0,
+	"memlink.shared_memory": shared_memory,
+	"memlink.node": 0,
 }
 
 l2_params = {
@@ -152,8 +152,8 @@ l2_params = {
         "access_latency_cycles": 6,
         "mshr_num_entries" : 16,
 	"memNIC.network_bw": "96GiB/s",
-	"shared_memory": shared_memory,
-	"node": 0,
+	"memNIC.shared_memory": shared_memory,
+	"memNIC.node": 0,
 }
 
 l3_params = {
@@ -165,8 +165,8 @@ l3_params = {
       	"memNIC.network_bw": "96GiB/s",
         "num_cache_slices" : 1,
       	"slice_allocation_policy" : "rr",
-	"shared_memory": shared_memory,
-	"node": 0,
+	"memNIC.shared_memory": shared_memory,
+	"memNIC.node": 0,
 }
 
 
@@ -263,8 +263,8 @@ mem.addParams({
 	"backend.channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
 	"backend.channel.rank.bank.transactionQ" : "memHierarchy.fifoTransactionQ",
 	"backend.channel.rank.bank.pagePolicy.close" : 1,
-	"shared_memory": 1,
-	"node": 0,
+	"cpulink.shared_memory": 1,
+	"cpulink.node": 0,
 })
 
 dc = sst.Component("dc", "memHierarchy.DirectoryController")
@@ -276,8 +276,8 @@ dc.addParams({
 	"memNIC.addr_range_start" : 0,
 	"memNIC.addr_range_end" : (local_memory_capacity*1024*1024)-1,
 	"memNIC.interleave_size": "0B",
-	"shared_memory": shared_memory,
-	"node": 0
+	"memNIC.shared_memory": shared_memory,
+	"memNIC.node": 0
 })
 
 memLink = sst.Link("mem_link")
