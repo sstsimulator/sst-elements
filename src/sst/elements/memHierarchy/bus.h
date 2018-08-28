@@ -36,7 +36,7 @@ namespace SST { namespace MemHierarchy {
 
 class BusEvent;
 
-/* 
+/*
  *  Component: memHierarchy.Bus
  *
  *  Connects one or more upper level components to one or more lower level components
@@ -68,55 +68,53 @@ public:
     typedef MemEvent::id_type key_t;
     static const key_t ANY_KEY;
     static const char BUS_INFO_STR[];
-    
-	Bus(SST::ComponentId_t id, SST::Params& params);
-	virtual void init(unsigned int phase);
+
+    Bus(SST::ComponentId_t id, SST::Params& params);
+    virtual void init(unsigned int phase);
 
 private:
 
     /** Adds event to the incoming event queue.  Reregisters clock if needed */
-	void processIncomingEvent(SST::Event *ev);
-    
+    void processIncomingEvent(SST::Event *ev);
+
     /** Send event to a single destination */
     void sendSingleEvent(SST::Event *ev);
-    
+
     /** Broadcast event to all ports */
     void broadcastEvent(SST::Event *ev);
-    
+
     /**  Clock Handler */
     bool clockTick(Cycle_t);
-    
+
     /** Configure Bus objects with the appropriate parameters */
     void configureParameters(SST::Params&);
     void configureLinks();
-    
+
     void mapNodeEntry(const std::string&, LinkId_t);
     LinkId_t lookupNode(const std::string&);
 
 
     Output                          dbg_;
     std::set<Addr>                  DEBUG_ADDR;
-    int                             numHighNetPorts_,
-                                    numLowNetPorts_,
-//                                    numHighNetPortsX_,
-//                                    numLowNetPortsX_,
-                                    broadcast_,
-                                    latency_,
-                                    fanout_,
-                                    idleMax_,
-                                    idleCount_;
+    int                             numHighNetPorts_;
+    int                             numLowNetPorts_;
+    uint64_t                        idleCount_;
+    uint64_t                        latency_;
+    uint64_t                        idleMax_;
+    bool                            fanout_;
+    bool                            broadcast_;
     bool                            busOn_;
     Clock::Handler<Bus>*            clockHandler_;
     TimeConverter*                  defaultTimeBase_;
-    
+
     std::string                     busFrequency_;
     std::string                     bus_latency_cycles_;
-	std::vector<SST::Link*>         highNetPorts_;
-	std::vector<SST::Link*>         lowNetPorts_;
-	std::map<string, LinkId_t>      nameMap_;
+    std::vector<SST::Link*>         highNetPorts_;
+    std::vector<SST::Link*>         lowNetPorts_;
+    std::map<string, LinkId_t>      nameMap_;
     std::map<LinkId_t, SST::Link*>  linkIdMap_;
     std::queue<SST::Event*>         eventQueue_;
-    
+
 };
 
 }}
