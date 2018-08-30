@@ -130,10 +130,10 @@ comp_l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64KiB",
       "debug" : "0",
-      "network_address" : "1",
-      "network_bw" : "40GB/s",
-      "input_buffer_size" : "2KiB",
-      "output_buffer_size" : "2KiB",
+      "memNIC.network_address" : "1",
+      "memNIC.network_bw" : "40GB/s",
+      "memNIC.input_buffer_size" : "2KiB",
+      "memNIC.output_buffer_size" : "2KiB",
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams({
@@ -152,19 +152,19 @@ comp_dirctrl.addParams({
       "coherence_protocol" : "MESI",
       "debug" : "0",
       "entry_cache_size" : "16384",
-      "addr_range_end" : "0x1F000000",
-      "addr_range_start" : "0x0",
-      "network_address" : "0",
-      "network_bw" : "40GB/s",
-      "input_buffer_size" : "2KiB",
-      "output_buffer_size" : "2KiB",
+      "memNIC.addr_range_end" : "0x1F000000",
+      "memNIC.addr_range_start" : "0x0",
+      "memNIC.network_address" : "0",
+      "memNIC.network_bw" : "40GB/s",
+      "memNIC.input_buffer_size" : "2KiB",
+      "memNIC.output_buffer_size" : "2KiB",
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
     "backend.mem_size" : "512MiB",
     "clock" : "500MHz",
     "max_requests_per_cycle" : 50,
-    "do_not_back" : 1,
+    "backing" : "none",
     "backend" : "memHierarchy.reorderByRow",
     "backend.max_issue_per_cycle" : 2,
     "backend.reorder_limit" : "20",

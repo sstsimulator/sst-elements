@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -299,9 +299,9 @@ int main(int argc, char* argv[]) {
 		}
 
 		char whiteBlock[3];
-		whiteBlock[0] = 255;
-		whiteBlock[1] = 255;
-		whiteBlock[2] = 255;
+		whiteBlock[0] = (char)255;
+		whiteBlock[1] = (char)255;
+		whiteBlock[2] = (char)255;
 
 		char commBlock[3];
 

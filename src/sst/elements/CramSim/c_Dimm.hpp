@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -31,29 +31,40 @@
 
 #include <vector>
 #include <queue>
+#include <stdlib.h>
 
 // SST includes
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
 // local includes
-#include "c_BankCommand.hpp"
+//#include "c_BankCommand.hpp"
 #include "c_Bank.hpp"
 
 namespace SST {
 namespace n_Bank {
+
+  class c_BankCommand;
+
+  // holds all the statistics pointers for the banks
+  class c_BankStatistics {
+  public:
+    Statistic<uint64_t>* s_bankACTsRecvd;
+    Statistic<uint64_t>* s_bankREADsRecvd;
+    Statistic<uint64_t>* s_bankWRITEsRecvd;
+    Statistic<uint64_t>* s_bankPREsRecvd;
+    
+    Statistic<uint64_t>* s_bankRowHits;
+    Statistic<uint64_t>* s_totalRowHits;
+  };
+  
 class c_Dimm: public SST::Component {
 public:
 
 	c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params);
 	~c_Dimm();
 
-	void finish(){
-		std::cout << "Deleting DIMM" << std::endl;
-		for (unsigned l_i = 0; l_i != m_banks.size(); ++l_i) {
-			// m_banks.at(l_i)->finish();
-		}
-	}
+	void finish();
 private:
 	c_Dimm(); // for serialization only
 	c_Dimm(const c_Dimm&); // do not implement
@@ -63,30 +74,72 @@ private:
 
 	// BankReceiver <-> CmdUnit Handlers
 	void handleInCmdUnitReqPtrEvent(SST::Event *ev); // receive a cmd req from CmdUnit
-	void handleOutCmdUnitResPtrEvent(SST::Event *ev); // we do not need this function for functionality
-
-	// BankReceiver <-> CmdUnit Links
-	SST::Link* m_inCmdUnitReqPtrLink; // incoming cmdunit req ptr
-	SST::Link* m_outCmdUnitResPtrLink; // outgoing cmdunit res ptr
+	void printQueues();
 
 	void sendResponse();
 	void sendToBank(c_BankCommand* x_bankCommandPtr);
+	void updateDynamicEnergy(c_BankCommand* x_bankCommandPtr);
+	void updateBackgroundEnergy();
 
-	void printQueues();
+	// Links
+	SST::Link* m_ctrlLink;
 
-	// internal microarcitecture params
-	unsigned m_thisCycleReceivedCmds;
+	// Clock Handler
+	Clock::HandlerBase *m_clockHandler;
 
-	// params for bank structure
+	// params
+	int k_numChannels;
+	int k_numPChannelsPerChannel;
 	int k_numRanksPerChannel;
 	int k_numBankGroupsPerRank;
 	int k_numBanksPerBankGroup;
+	int k_numDevices;
+
+	bool k_boolPowerCalc;
+	int k_IDD0;
+	int k_IDD2P;
+	int k_IDD2N;
+	int k_IDD3N;
+	int k_IDD4W;
+	int k_IDD4R;
+	int k_IDD5;
+	int k_nRAS;
+	int k_nRP;
+	int k_nRFC;
+	int k_nBL;
+	float k_VDD;
+
 	int m_numBanks;
+	int m_numRanks;
 
-
+    SimTime_t m_simCycle;
 	std::vector<c_Bank*> m_banks;
 
 	std::vector<c_BankCommand*> m_cmdResQ;
+
+	// Statistics
+	Statistic<uint64_t>* s_actCmdsRecvd;
+	Statistic<uint64_t>* s_readCmdsRecvd;
+    Statistic<uint64_t>* s_readACmdsRecvd;
+	Statistic<uint64_t>* s_writeCmdsRecvd;
+	Statistic<uint64_t>* s_writeACmdsRecvd;
+	Statistic<uint64_t>* s_preCmdsRecvd;
+	Statistic<uint64_t>* s_refCmdsRecvd;
+
+	std::vector<uint64_t> m_actCmdsRecvd;
+	std::vector<uint64_t> m_readCmdsRecvd;
+    std::vector<uint64_t> m_readACmdsRecvd;
+	std::vector<uint64_t> m_writeCmdsRecvd;
+	std::vector<uint64_t> m_writeACmdsRecvd;
+	std::vector<uint64_t> m_preCmdsRecvd;
+	std::vector<uint64_t> m_refCmdsRecvd;
+	std::vector<double> m_backgroundEnergy;
+	std::vector<double> m_readEnergy;
+	std::vector<double> m_writeEnergy;
+	std::vector<double> m_refreshEnergy;
+	std::vector<double> m_actpreEnergy;
+
+  std::vector<c_BankStatistics*> m_bankStatsVec;
 };
 }
 }

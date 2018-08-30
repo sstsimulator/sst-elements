@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -19,6 +19,7 @@
 #ifndef COMPONENTS_MERLIN_LINKCONTROL_H
 #define COMPONENTS_MERLIN_LINKCONTROL_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/unitAlgebra.h>
 
@@ -45,6 +46,29 @@ typedef std::queue<RtrEvent*> network_queue_t;
 // more than one link_control (and thus link to router).
 class LinkControl : public SST::Interfaces::SimpleNetwork {
 
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        LinkControl,
+        "merlin",
+        "linkcontrol",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Link Control module for building Merlin-enabled NICs",
+        "SST::Interfaces::SimpleNetwork")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"checkerboard",     "Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
+        {"checkerboard_alg", "Algorithm to use to spead traffic across checkerboarded VNs [deterministic | roundrobin]", "deterministic" }
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "packet_latency",     "Histogram of latencies for received packets", "latency", 1},
+        { "send_bit_count",     "Count number of bits sent on link", "bits", 1},
+        { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
+        { "idle_time",          "Number of (in unites of core timebas) that port was idle", "time spent idle", 1},
+    )
+
+    
 private:
     // Link to router
     Link* rtr_link;
@@ -136,6 +160,7 @@ public:
                     const UnitAlgebra& out_buf_size);
     void setup();
     void init(unsigned int phase);
+    void complete(unsigned int phase);
     void finish();
 
     // Returns true if there is space in the output buffer and false
@@ -157,6 +182,9 @@ public:
     void sendInitData(SST::Interfaces::SimpleNetwork::Request* ev);
     SST::Interfaces::SimpleNetwork::Request* recvInitData();
 
+    void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev);
+    SST::Interfaces::SimpleNetwork::Request* recvUntimedData();
+
     // const PacketStats& getPacketStats(void) const { return stats; }
 
     inline void setNotifyOnReceive(HandlerBase* functor) { receiveFunctor = functor; }
@@ -173,7 +201,6 @@ private:
     void handle_input(Event* ev);
     void handle_output(Event* ev);
 
-    
     
 };
 

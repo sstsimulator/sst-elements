@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2016, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,15 +39,9 @@ class ProtocolAPI;
         NAME(MakeProgress)   \
         NAME(Barrier)   \
         NAME(Allreduce)   \
-        NAME(Reduce)   \
         NAME(Allgather)   \
-        NAME(Allgatherv)   \
-        NAME(Gather)   \
         NAME(Gatherv)   \
-        NAME(Alltoall)   \
         NAME(Alltoallv)   \
-        NAME(Irecv)   \
-        NAME(Isend)   \
         NAME(Send)   \
         NAME(Recv)   \
         NAME(Wait)   \
@@ -69,6 +63,8 @@ class FunctionSM  {
     static const char *m_functionName[];
 
   public:
+    typedef std::function<void()> Callback;
+
     enum FunctionEnum{
         FOREACH_FUNCTION(GENERATE_ENUM)
     };
@@ -79,8 +75,10 @@ class FunctionSM  {
     ~FunctionSM();
     void printStatus( Output& );
 
+    Link* getRetLink() { return m_toMeLink; } 
     void setup( Info* );
     void start(int type, MP::Functor* retFunc,  SST::Event* );
+    void start(int type, Callback,  SST::Event* );
     void enter( );
 
   private:
@@ -95,6 +93,7 @@ class FunctionSM  {
     std::vector<FunctionSMInterface*>  m_smV; 
     FunctionSMInterface*    m_sm; 
     MP::Functor*    m_retFunc;
+    Callback        m_callback;
 
     SST::Link*          m_fromDriverLink;    
     SST::Link*          m_toDriverLink;    

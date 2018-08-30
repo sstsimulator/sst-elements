@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -37,6 +37,7 @@
 
 #include "TLBhierarchy.h"
 #include "PageTableWalker.h"
+#include <sst/elements/memHierarchy/memEventBase.h>
 
 //#include "arielcore.h"
 
@@ -49,10 +50,27 @@ namespace SST {
 			public:
 
 				Samba(SST::ComponentId_t id, SST::Params& params); 
-				void setup()  { };
+				void init(unsigned int phase);
+                                void setup()  { };
 				void finish() {for(int i=0; i<(int) core_count; i++) TLB[i]->finish();};
 				void handleEvent(SST::Event* event) {};
 				bool tick(SST::Cycle_t x);
+
+				// Following are the page table components of the application running on the Ariel instance that owns this Samba unit
+				// Note, the application might be multi-threaded, however, all threads will share the sambe page table components below
+
+				Address_t CR3;
+				std::map<Address_t, Address_t> PGD;
+				std::map<Address_t, Address_t> PUD;
+				std::map<Address_t, Address_t> PMD;
+				std::map<Address_t, Address_t> PTE;
+				std::map<Address_t,int>  MAPPED_PAGE_SIZE4KB;
+				std::map<Address_t,int>  MAPPED_PAGE_SIZE2MB;
+				std::map<Address_t,int>  MAPPED_PAGE_SIZE1GB;
+
+				std::map<Address_t,int> PENDING_PAGE_FAULTS;
+				std::map<Address_t,int> PENDING_SHOOTDOWN_EVENTS;
+
 
 			private:
 				Samba();  // for serialization only
@@ -60,15 +78,20 @@ namespace SST {
 				void operator=(const Samba&); // do not implement
 
 				int create_pinchild(char* prog_binary, char** arg_list){return 0;}
-
+				
+	    		        SST::Link * event_link; // Note that this is a self-link for events
 
 				SST::Link ** cpu_to_mmu;
 
 				TLBhierarchy ** TLB;
 
+				int emulate_faults; // This indicates if Opal is used or not
+				
 				SST::Link ** mmu_to_cache;
 
 				SST::Link ** ptw_to_mem;
+
+				SST::Link ** ptw_to_opal;
 			
 				long long int max_inst;
 				char* named_pipe;
@@ -81,7 +104,7 @@ namespace SST {
 				SST::Link** Samba_link;
 
 
-				Statistic<long long int>* statReadRequests;
+				Statistic<uint64_t>* statReadRequests;
 
 
 		};

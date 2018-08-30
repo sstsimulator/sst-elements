@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,7 +34,15 @@ using SST::Interfaces::SimpleNetwork;
 
 class MemNetBridge : public SST::Merlin::Bridge::Translator {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(MemNetBridge, "memHierarchy", "MemNetBridge", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Merlin::Bridge::Translator for memory network bridging", "SST::Merlin::Bridge::Translator")
 
+    SST_ELI_DOCUMENT_PARAMS(
+            {"debug",       "(int) Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+            {"debug_level", "(int) Debugging level. Between 0 and 10", "0"} )
+
+/* Begin class definition */
     MemNetBridge(SST::Component *comp, SST::Params &params);
     ~MemNetBridge();
     void init(unsigned int);

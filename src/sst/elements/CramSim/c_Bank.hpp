@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,17 +40,19 @@
 #include <sst/core/link.h>
 
 // CramSim includes
-#include "c_BankCommand.hpp"
+//#include "c_BankCommand.hpp"
 
 namespace SST {
 namespace n_Bank {
 
+  class c_BankCommand;
+  class c_BankStatistics;
 
 class c_Bank {
 public:
 
 	//FIXME: Will this need a reference to the c_Dimm's link?
-	c_Bank(SST::Params& x_params);
+	c_Bank(SST::Params& x_params,unsigned x_bankid);
 	~c_Bank();
 
 	void print();
@@ -159,6 +161,10 @@ public:
 		return (k_nBL);
 	}
 
+  unsigned getBankNum() const {return m_bankNum;}
+	void setBankNum(unsigned x_bankNum){m_bankNum=x_bankNum;}
+  void acceptStatistics(c_BankStatistics *x_bankStats);
+  
 private:
 	c_Bank(); // for serialization only
 	c_Bank(const c_Bank&); // do not implement
@@ -221,6 +227,11 @@ private:
 	unsigned m_READCmdsSent;
 	unsigned m_WRITECmdsSent;
 	unsigned m_PRECmdsSent;
+
+        uint32_t m_prevOpenRow;
+
+  // Statistics
+  c_BankStatistics *m_bankStats;
 };
 } // n_Bank
 } // namespace SST

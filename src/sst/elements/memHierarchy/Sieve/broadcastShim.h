@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,12 +23,13 @@
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
 
 
-#include "../util.h"
-#include "../../ariel/arielalloctrackev.h"
+#include "sst/elements/memHierarchy/util.h"
+#include "sst/elements/ariel/arielalloctrackev.h"
 
 
 namespace SST { namespace MemHierarchy {
@@ -38,7 +39,15 @@ using namespace std;
 
 class BroadcastShim : public SST::Component {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_COMPONENT(BroadcastShim, "memHierarchy", "BroadcastShim", SST_ELI_ELEMENT_VERSION(1,0,0), 
+            "Used to connect a processor to multiple sieves (e.g., for private/semi-private last-level cache modeling)", COMPONENT_CATEGORY_MEMORY)
 
+    SST_ELI_DOCUMENT_PORTS(
+            {"cpu_alloc_link_%(port)d", "Link to CPU's allocation port", {"ariel.arielAllocTrackEvent"}},
+            {"sieve_alloc_link_%(port)d", "Link to sieve's allocation port", {"ariel.arielAllocTrackEvent"}} )
+
+/* Begin class definiton */
     /** Constructor */
     BroadcastShim(ComponentId_t id, Params &params);
     

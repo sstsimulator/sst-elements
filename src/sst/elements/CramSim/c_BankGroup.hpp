@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,29 +39,16 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
-// local includes
-#include "c_Rank.hpp"
-#include "c_BankInfo.hpp"
-#include "c_BankCommand.hpp"
-
 namespace SST {
 namespace n_Bank {
 
 class c_BankInfo;
 class c_Rank;
+class c_BankCommand;
 
 class c_BankGroup {
 public:
 
-	// friend std::ostream& operator<<(std::ostream& x_stream,
-	// 		const c_BankGroup& x_bankGroup) {
-	// 	x_stream<<"Bank Group:"<<std::endl;
-	// 	  for(unsigned l_i=0; l_i<x_bankGroup.m_bankPtrs.size(); ++l_i) {
-	// 	    x_stream<<(x_bankGroup.m_bankPtrs.at(l_i))<<std::endl;
-	// 	  }
-	//
-	// 	  return x_stream;
-	// }
 
         c_BankGroup(std::map<std::string, unsigned>* x_bankParams, unsigned x_Id);
 	virtual ~c_BankGroup();
@@ -72,9 +59,10 @@ public:
 	unsigned getNumBanks() const;
         unsigned getBankGroupId() const;
 	std::vector<c_BankInfo*> getBankPtrs() const;
+	c_Rank* getRankPtr() const;
 
 	void updateOtherBanksNextCommandCycles(c_BankInfo* x_initBankPtr,
-			c_BankCommand* x_cmdPtr);
+			c_BankCommand* x_cmdPtr, SimTime_t x_cycle);
 
 private:
         unsigned m_bankGroupId;

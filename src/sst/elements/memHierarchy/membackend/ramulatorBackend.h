@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,7 +17,7 @@
 #ifndef _H_SST_MEMH_RAMULATOR_BACKEND
 #define _H_SST_MEMH_RAMULATOR_BACKEND
 
-#include "membackend/memBackend.h"
+#include "sst/elements/memHierarchy/membackend/memBackend.h"
 
 #include "Gem5Wrapper.h"
 
@@ -31,16 +31,30 @@ namespace MemHierarchy {
 
 class ramulatorMemory : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(ramulatorMemory, "memHierarchy", "ramulator", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Ramulator-driven memory timings", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"verbose",     "Sets the verbosity of the backend output", "0"},
+            {"configFile",  "Name of the Ramulator Device config file", NULL} )
+
+/* Begin class definition */
     ramulatorMemory(Component *comp, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
     //virtual bool issueRequest(DRAMReq *req);
-    virtual void clock();
+    virtual bool clock(Cycle_t cycle);
     virtual void finish();
 
 protected:
     ramulator::Gem5Wrapper *memSystem;
     std::function<void(ramulator::Request&)> callBackFunc;
+
+    // Track outstanding requests
     std::map<uint64_t, std::deque<ReqId> > dramReqs;
+    std::set<ReqId> writes;
+
     void ramulatorDone(ramulator::Request& req);
 };
 

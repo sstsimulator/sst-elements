@@ -1,13 +1,14 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+//
 
 
 /* Author: Amro Awad
@@ -52,7 +53,7 @@ namespace SST {
 		class Messier : public SST::Component {
 			public:
 
-				Messier(SST::ComponentId_t id, SST::Params& params); 
+				Messier( SST::ComponentId_t id, SST::Params& params); 
 				void setup()  { };
 				void finish() {DIMM->finish();};
 				void handleEvent(SST::Event* event) {};
@@ -68,8 +69,9 @@ namespace SST {
 
 				int create_pinchild(char* prog_binary, char** arg_list){return 0;}
 
-
 				SST::Link * m_memChan; 
+
+				SST::Link * event_link; // Note that this is a self-link for events
 
 				NVM_PARAMS * nvm_params;
 				NVM_DIMM * DIMM;

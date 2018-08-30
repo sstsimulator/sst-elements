@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -41,12 +41,14 @@
 
 // local includes
 #include "c_BankInfo.hpp"
-#include "c_BankCommand.hpp"
+//#include "c_BankCommand.hpp"
 
 namespace SST {
 namespace n_Bank {
 
 class c_Rank;
+class c_BankCommand;
+  
 class c_Channel {
 public:
 
@@ -61,21 +63,25 @@ public:
 	}
 
 	c_Channel(std::map<std::string, unsigned>* x_bankParams);
+	c_Channel(std::map<std::string, unsigned>* x_bankParams, unsigned x_chId);
+
 	virtual ~c_Channel();
 
 	void acceptRank(c_Rank* x_rankPtr);
 
 	unsigned getNumBanks() const;
 	unsigned getNumRanks() const;
+	unsigned getChannelId() const;
 
 	std::vector<c_BankInfo*> getBankPtrs() const;
 
 	void updateOtherBanksNextCommandCycles(c_Rank* x_initRankPtr,
-			c_BankCommand* x_cmdPtr);
+			c_BankCommand* x_cmdPtr, SimTime_t x_cycle);
 
 private:
 	std::vector<c_Rank*> m_rankPtrs;
 	std::map<std::string, unsigned>* m_bankParams;
+	unsigned m_chId;
 
 };
 

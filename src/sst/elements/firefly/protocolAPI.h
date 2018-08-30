@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2016, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -31,12 +31,13 @@ class ProtocolAPI : public SST::SubComponent
 
     ProtocolAPI( Component* parent ) : SubComponent( parent ) {}
     virtual ~ProtocolAPI() {}
+#if 0
     virtual void printStatus( Output& ) {}
     virtual void setup() {};
     virtual void finish() {};
-    virtual void init( Info*, VirtNic*, Thornhill::MemoryHeapLink* ) = 0;  
+#endif
+    virtual void setVars( Info*, VirtNic*, Thornhill::MemoryHeapLink*, Link* ) = 0;  
     virtual std::string name() = 0;
-    virtual void setRetLink(SST::Link* link) { assert(0); } 
 };
 
 }

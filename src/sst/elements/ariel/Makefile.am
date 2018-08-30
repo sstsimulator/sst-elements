@@ -1,7 +1,7 @@
 
 AM_CPPFLAGS = \
-        $(BOOST_CPPFLAGS) \
         $(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/src \
         $(PINTOOL_CPPFLAGS)
 
 if HAVE_SET_PTRACER
@@ -11,7 +11,6 @@ endif
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libariel.la
 libariel_la_SOURCES = \
-	libariel.cc \
 	arielcpu.cc \
 	arielcpu.h \
 	arielcore.cc \
@@ -23,6 +22,8 @@ libariel_la_SOURCES = \
 	arielmemmgr_malloc.h \
 	arielreadev.h \
 	arielexitev.h \
+	arielfenceev.h \
+	arielflushev.h \
 	arielwriteev.h \
 	arielevent.cc \
 	arielevent.h \
@@ -35,12 +36,11 @@ libariel_la_SOURCES = \
 	ariel_shmem.h \
 	arieltracegen.h \
 	arieltexttracegen.h \
-	arielgzbintracegen.h
+	arieltexttracegen.cc
 
 EXTRA_DIST = \
 	frontend/simple/fesimple.cc \
 	frontend/simple/examples/multicore.py \
-	frontend/simple/examples/stream/Makefile \
 	frontend/simple/examples/stream/Makefile \
 	frontend/simple/examples/stream/ariel_ivb.py \
 	frontend/simple/examples/stream/ariel_snb.py \
@@ -48,10 +48,22 @@ EXTRA_DIST = \
 	frontend/simple/examples/stream/runstreamSt.py \
 	frontend/simple/examples/stream/runstreamNB.py \
 	frontend/simple/examples/stream/memHstream.py \
-	frontend/simple/examples/stream/stream.c
+	frontend/simple/examples/stream/ariel_snb_mlm.py \
+	frontend/simple/examples/stream/malloc.txt \
+	frontend/simple/examples/stream/stream.c \
+	frontend/simple/examples/stream/stream_malloc.c
+
 
 libariel_la_LDFLAGS = -module -avoid-version
 libariel_la_LIBADD = $(SHM_LIB)
+
+if USE_LIBZ
+libariel_la_LDFLAGS += $(LIBZ_LDFLAGS)
+libariel_la_LIBADD += $(LIBZ_LIB)
+AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
+libariel_la_SOURCES += arielgzbintracegen.h arielgzbintracegen.cc
+endif
+
 libariel_la_CPPFLAGS = \
 	-DARIEL_TRACE_LIB=$(libdir)/sst \
         -DARIEL_TOOL_DIR="$(libexecdir)" \
@@ -65,13 +77,13 @@ nobase_sst_HEADERS = \
 
 libexec_PROGRAMS =
 
+
 if SST_COMPILE_OSX
 
 all-local: frontend/simple/fesimple.cc
 	$(CXX) -O3 -shared \
 	$(CXXFLAGS) \
 	$(CPPFLAGS) \
-	$(BOOST_CPPFLAGS) \
 	$(LIBZ_CPPFLAGS) \
 	-DBIGARRAY_MULTIPLIER=1 \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
@@ -105,7 +117,6 @@ all-local:
 	-fomit-frame-pointer \
 	$(CXXFLAGS) \
 	$(CPPFLAGS) \
-	$(BOOST_CPPFLAGS) \
 	$(LIBZ_CPPFLAGS) \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
 	-I./ \

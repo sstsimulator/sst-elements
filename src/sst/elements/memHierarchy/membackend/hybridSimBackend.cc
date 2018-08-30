@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -54,8 +54,9 @@ bool HybridSimMemory::issueRequest( ReqId reqId, Addr addr, bool isWrite, unsign
 
 
 
-void HybridSimMemory::clock(){
+bool HybridSimMemory::clock(Cycle_t cycle){
     memSystem->update();
+    return false;
 }
 
 
@@ -71,7 +72,7 @@ void HybridSimMemory::hybridSimDone(unsigned int id, uint64_t addr, uint64_t clo
 #ifdef __SST_DEBUG_OUTPUT__
     output->debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", addr, reqs.size());
 #endif
-    assert(reqs.size());
+    if (reqs.size() == 0) output->fatal(CALL_INFO, -1, "Error: reqs.size() is 0 at DRAMSimMemory done\n");
     ReqId req = reqs.front();
     reqs.pop_front();
     if(reqs.size() == 0)

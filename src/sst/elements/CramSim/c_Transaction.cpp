@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,19 +27,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+
 #include "c_Transaction.hpp"
+#include "c_BankCommand.hpp"
+#include "c_AddressHasher.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
 
-c_Transaction::c_Transaction(unsigned x_seqNum, e_TransactionType x_txnMnemonic,
-		unsigned x_addr, unsigned x_dataWidth) :
+c_Transaction::c_Transaction(ulong x_seqNum, e_TransactionType x_txnMnemonic,
+			     ulong x_addr, unsigned x_dataWidth) :
 		m_seqNum(x_seqNum), m_txnMnemonic(x_txnMnemonic), m_addr(x_addr), m_isResponseReady(
 				false), m_numWaitingCommands(0), m_dataWidth(x_dataWidth), m_processed(
 				false) {
+       
+	m_hasHashedAddr= false;
 
-	m_txnToString[e_TransactionType::READ] = "READ";
-	m_txnToString[e_TransactionType::WRITE] = "WRITE";
 }
 
 void c_Transaction::setWaitingCommands(const unsigned x_numWaitingCommands) {
@@ -55,12 +59,16 @@ c_Transaction::~c_Transaction() {
 	// delete the list of commands that this transaction translates into
 }
 
-unsigned c_Transaction::getAddress() const {
+ulong c_Transaction::getAddress() const {
 	return (m_addr);
 }
 
 std::string c_Transaction::getTransactionString() const {
-	return (m_txnToString.find(m_txnMnemonic)->second);
+	if(m_txnMnemonic==e_TransactionType::READ)
+		return "READ";
+	else
+		return "WRITE";
+	//return (m_txnToString.find(m_txnMnemonic)->second);
 }
 
 e_TransactionType c_Transaction::getTransactionMnemonic() const {
@@ -75,14 +83,18 @@ bool c_Transaction::isResponseReady() {
 	return (m_isResponseReady);
 }
 
-//std::ostream& operator<< (std::ostream& x_stream, const c_Transaction& x_transaction)
-//{
-//  x_stream<<x_transaction.getTransactionString()<<", seqNum: "<<std::dec<<x_transaction.m_seqNum<<", address: "<<std::hex<<x_transaction.getAddress()<<std::dec<<", dataWidth = "<<x_transaction.m_dataWidth<<", m_numWaitingCommands = "<<std::dec<<x_transaction.m_numWaitingCommands<<", isProcessed = "<<std::boolalpha<<x_transaction.m_processed<<", isResponseReady = "<<std::boolalpha<<x_transaction.m_isResponseReady;
-//  return (x_stream);
-//}
+ulong c_Transaction::getSeqNum() const {
+	return (m_seqNum);
+}
+
+bool c_Transaction::matchesCmdSeqNum(ulong x_seqNum) {
+  return(std::find(m_cmdSeqNumList.begin(), m_cmdSeqNumList.end(), x_seqNum)
+	 != m_cmdSeqNumList.end());
+}
 
 void c_Transaction::addCommandPtr(c_BankCommand* x_cmdPtr) {
-	m_cmdPtrList.push_back(x_cmdPtr);
+  //m_cmdPtrList.push_back(x_cmdPtr);
+  m_cmdSeqNumList.push_back(x_cmdPtr->getSeqNum());
 }
 
 unsigned c_Transaction::getDataWidth() const {
@@ -100,11 +112,43 @@ void c_Transaction::isProcessed(bool x_processed) {
 //
 // FIXME: print function should be actually be overloaded in operator<< but for some reason operator overloading does not working when creating the library, so for now we will have the print function.
 void c_Transaction::print() const {
-	std::cout << getTransactionString() << ", seqNum: " << std::dec << m_seqNum
-			<< ", address: " << std::hex << getAddress() << std::dec
-			<< ", dataWidth = " << m_dataWidth << ", m_numWaitingCommands = "
-			<< std::dec << m_numWaitingCommands << ", isProcessed = "
-			<< std::boolalpha << m_processed << ", isResponseReady = "
-			<< std::boolalpha << m_isResponseReady;
+  std::cout << this << " " << getTransactionString() << ", seqNum: " << std::dec << m_seqNum
+	    << ", address: 0x" << std::hex << getAddress() << std::dec
+	    << ", dataWidth = " << m_dataWidth << ", m_numWaitingCommands = "
+	    << std::dec << m_numWaitingCommands << ", isProcessed = "
+	    << std::boolalpha << m_processed << ", isResponseReady = "
+	    << std::boolalpha << m_isResponseReady <<std::endl;
 }
 
+
+void c_Transaction::print(SST::Output *x_output, const std::string x_prefix, SimTime_t x_cycle) const {
+	x_output->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %llu addr:0x%lx CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
+				  x_cycle,
+				  getTransactionString().c_str(),
+					m_seqNum,
+							m_addr,
+				  getHashedAddress().getChannel(),
+				  getHashedAddress().getPChannel(),
+				  getHashedAddress().getRank(),
+				  getHashedAddress().getBankGroup(),
+				  getHashedAddress().getBank(),
+				  getHashedAddress().getRow(),
+				  getHashedAddress().getCol(),
+				  getHashedAddress().getBankId()
+	);
+}
+
+void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
+{
+  ser & m_seqNum;
+  ser & m_txnMnemonic;
+  ser & m_addr;
+  //ser & m_txnToString;
+    
+  ser & m_isResponseReady;
+  ser & m_numWaitingCommands;
+  ser & m_dataWidth;
+  ser & m_processed;
+	ser & m_hasHashedAddr;
+
+}

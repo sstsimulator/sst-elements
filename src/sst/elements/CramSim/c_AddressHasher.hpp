@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,38 +29,71 @@
 #ifndef c_ADDRESSHASHER_HPP
 #define c_ADDRESSHASHER_HPP
 
+// sst includes
+#include <sst/core/component.h>
+#include <sst/core/link.h>
+#include <sst/core/params.h>
+#include <sst/core/subcomponent.h>
+
 #include <memory>
 #include <map>
 
 // local includes
-#include "c_BankCommand.hpp"
+//#include "c_BankCommand.hpp"
+#include "c_HashedAddress.hpp"
+#include "c_Controller.hpp"
+
 
 //<! This class holds information about global simulation state
 //<! any object in the simulator can access this class
 
-class c_AddressHasher {
+typedef unsigned long ulong;
+namespace SST {
+    namespace n_Bank {
+        class c_Controller;
 
-public:
-	static c_AddressHasher* getInstance();
+        class c_AddressHasher : public SubComponent {
 
-	unsigned getBankFromAddress(const unsigned x_address,
-			const unsigned x_numBanks);
-	unsigned getBankFromAddress1(const unsigned x_address,
-			const unsigned x_numBanks);
-	unsigned getBankFromAddress2(const unsigned x_address,
-			const unsigned x_numBytesPerTransaction,
-			const unsigned x_numChannels, const unsigned x_numBanks);
-	unsigned getRowFromAddress(const unsigned x_address,
-			const unsigned x_numBytesPerTransaction, const unsigned x_numRows,
-			const unsigned x_numCols, const unsigned x_numChannels,
-			const unsigned x_numBanks);
-private:
-	static c_AddressHasher* m_instance; //<! shared_ptr to instance of this class
+        public:
+            // Below is for calling in generic locations to obtain a pointer to the singleton instance
+            c_AddressHasher(Component *comp, Params &params);
 
-	c_AddressHasher(const c_AddressHasher&)=delete;
-	void operator=(const c_AddressHasher&)=delete;
-	void construct();
+            static c_AddressHasher *getInstance();
 
-};
+            static c_AddressHasher *
+            getInstance(Params &x_params); // This reads the parameters and constructs the hash function
+
+            void fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address);
+
+        private:
+
+            c_AddressHasher() = delete;
+
+            c_AddressHasher(const c_AddressHasher &) = delete;
+
+            void operator=(const c_AddressHasher &)= delete;
+
+            c_AddressHasher(Params &x_params);
+            ulong getAddressForBankId(const unsigned x_bankId);
+
+            c_Controller* m_owner;
+            unsigned k_pNumChannels;
+            unsigned k_pNumRanks;
+            unsigned k_pNumBankGroups;
+            unsigned k_pNumBanks;
+            unsigned k_pNumRows;
+            unsigned k_pNumCols;
+            unsigned k_pBurstSize;
+            unsigned k_pNumPseudoChannels;
+
+            std::string k_addressMapStr = "rlbRBh";
+            std::map<std::string, std::vector<uint> > m_bitPositions;
+            std::map<std::string, uint> m_structureSizes;  // Used for checking that params agree
+
+            // regex replacement stuff
+            void parsePattern(std::string *x_inStr, std::pair<std::string, uint> *x_outPair);
+        };
+    }
+}
 
 #endif // c_ADDRESSHASHER_HPP

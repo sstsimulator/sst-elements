@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -15,6 +15,8 @@
 
 
 #include <sst_config.h>
+
+#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
 
 #include "sst/core/element.h"
 #include "sst/core/component.h"
@@ -62,14 +64,17 @@ static const ElementInfoParam Samba_params[] = {
     {"latency_L%(levels)d", "the access latency in cycles for this level of memory","1"},
     {"parallel_mode_L%(levels)d", "this is for the corner case of having a one cycle overlap with accessing cache","0"},
     {"page_walk_latency", "Each page table walk latency in nanoseconds", "50"},
-    {"self_connected", "Determines if the page walkers are acutally connected to memory hierarcy or just add fixed latency (self-connected)", "0"},
+    {"self_connected", "Determines if the page walkers are acutally connected to memory hierarchy or just add fixed latency (self-connected)", "0"},
+    {"emulate_faults", "This indicates if the page faults should be emulated through requesting pages from Opal", "0"},
+    {"opal_latency", "latency to communicate to the centralized memory manager", "32ps"},
     {NULL, NULL, NULL},
 };
 
 
 
 static const ElementInfoPort Samba_ports[] = {
-    {"cpu_to_mmu%(corecount)d", "Each Samba link to its core", NULL},
+    {"cpu_to_mmu%(corecount)d", "Each Samba has link to its core", NULL},
+    {"ptw_to_opal%(corecount)d", "Each Samba has link to page fault handler (memory manager)", NULL},
     {"mmu_to_cache%(corecount)d", "Each Samba to its corresponding cache", NULL},
     {"ptw_to_mem%(corecount)d", "Each TLB hierarchy has a link to the memory for page walking", NULL},
     {"alloc_link_%(corecount)d", "Each core's link to an allocation tracker (e.g. memSieve)", NULL},

@@ -13,6 +13,7 @@ coreclock = "2.4GHz"
 uncoreclock = "1.4GHz"
 coherence = "MESI"
 network_bw = "60GB/s"
+verbose = 2
 
 # Create merlin network - this is just simple single router
 comp_network = sst.Component("network", "merlin.hr_router")
@@ -53,6 +54,7 @@ for x in range(cores):
         "cache_size" : "2KiB",  # super tiny for lots of traffic
         "associativity" : 2,
         "L1" : 1,
+        "verbose" : verbose,
     })
 
     comp_l2cache = sst.Component("l2cache" + str(x), "memHierarchy.Cache")
@@ -67,11 +69,12 @@ for x in range(cores):
         "associativity" : 4,
         "max_requests_per_cycle" : 1,
         "mshr_num_entries" : 8,
+        "verbose" : verbose,
         # MemNIC parameters
-        "network_bw" : network_bw,
-        "network_address" : x,
-        "network_input_buffer_size" : "2KiB",
-        "network_output_buffer_size" : "2KiB",
+        "memNIC.network_bw" : network_bw,
+        "memNIC.network_address" : x,
+        "memNIC.network_input_buffer_size" : "2KiB",
+        "memNIC.network_output_buffer_size" : "2KiB",
     })
 
     cpu_l1_link = sst.Link("link_cpu_cache_" + str(x))
@@ -95,15 +98,16 @@ for x in range(caches):
         "cache_size" : "1MiB",
         "associativity" : 32,
         "mshr_num_entries" : 8,
+        "verbose" : verbose,
         # Distributed cache parameters
         "num_cache_slices" : caches,
         "slice_allocation_policy" : "rr", # Round-robin
         "slice_id" : x,
         # MemNIC parameters
-        "network_bw" : network_bw,
-        "network_address" : x + cores,
-        "network_input_buffer_size" : "2KiB",
-        "network_output_buffer_size" : "2KiB",
+        "memNIC.network_bw" : network_bw,
+        "memNIC.network_address" : x + cores,
+        "memNIC.network_input_buffer_size" : "2KiB",
+        "memNIC.network_output_buffer_size" : "2KiB",
     })
 
     portid = x + cores
@@ -117,22 +121,24 @@ for x in range(memories):
         "coherence_protocol" : coherence,
         "entry_cache_size" : 32768,
         "mshr_num_entries" : 16,
+        "verbose" : verbose,
         # MemNIC parameters
-        "interleave_size" : "64B",    # Interleave at line granularity between memories
-        "interleave_step" : str(memories * 64) + "B",
-        "network_bw" : network_bw,
-        "addr_range_start" : x*64,
-        "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
-        "network_address" : x + caches + cores,
-        "network_input_buffer_size" : "2KiB",
-        "network_output_buffer_size" : "2KiB",
+        "memNIC.interleave_size" : "64B",    # Interleave at line granularity between memories
+        "memNIC.interleave_step" : str(memories * 64) + "B",
+        "memNIC.network_bw" : network_bw,
+        "memNIC.addr_range_start" : x*64,
+        "memNIC.addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
+        "memNIC.network_address" : x + caches + cores,
+        "memNIC.network_input_buffer_size" : "2KiB",
+        "memNIC.network_output_buffer_size" : "2KiB",
     })
 
     comp_memory = sst.Component("memory" + str(x), "memHierarchy.MemController")
     comp_memory.addParams({
         "clock" : "500MHz",
         "max_requests_per_cycle" : 2,
-        "do_not_back" : 1,
+        "backing" : "none",
+        "verbose" : verbose,
         # Backend parameters
         "backend" : "memHierarchy.simpleDRAM",
         "backend.mem_size" : "512MiB",

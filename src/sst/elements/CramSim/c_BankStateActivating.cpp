@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -58,35 +58,32 @@ c_BankStateActivating::~c_BankStateActivating() {
 // handle the command based state changes in function handleCommand( ... )
 // handle automatic state changes in function update( ... )
 
-void c_BankStateActivating::handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr) {
+void c_BankStateActivating::handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
 	std::cout << __PRETTY_FUNCTION__
 			<< " ERROR: should not receive a command in this state. This is a transitory state."
 			<< std::endl;
 }
 
-void c_BankStateActivating::clockTic(c_BankInfo* x_bank) {
+void c_BankStateActivating::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 
 	if (0 < m_timer) {
 		--m_timer;
-		// std::cout << "@@" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle()
-		// 		<< ": m_timer = " << m_timer << std::endl;
 
 	} else {
-		//std::cout << __PRETTY_FUNCTION__ << " timer expired" << std::endl;
-
 		auto l_p = new c_BankStateActive(m_bankParams); // create pointer to the next state
 		assert(e_BankCommandType::ACT == m_prevCommandPtr->getCommandMnemonic()); // only cmd allowed to flow through to BankStateActive is ACT
-		l_p->enter(x_bank, this, m_prevCommandPtr);
+		l_p->enter(x_bank, this, m_prevCommandPtr, x_cycle);
 	}
 }
 
 void c_BankStateActivating::enter(c_BankInfo* x_bank,
-		c_BankState* x_prevState, c_BankCommand* x_cmdPtr) {
+		c_BankState* x_prevState, c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 	//std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
 
 	// set timer for auto precharge countdown used in the pseudo-open page policy
 	x_bank->setAutoPreTimer(m_bankParams->at("nRAS"));
+	x_bank->setRowOpen();
+	x_bank->setOpenRowNum(x_cmdPtr->getHashedAddress()->getRow());
 
 	// Being in the activating state does not make an ACT cmd response ready.
 	// Therefore it is forwarded to BankStateActive

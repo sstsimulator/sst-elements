@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -37,16 +37,15 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) :
     if ( NULL == commandLink ) dbg.fatal(CALL_INFO, 1, "Missing cmdLink\n");
 
     if ( !isPortConnected("netLink") ) dbg.fatal(CALL_INFO, 1, "Missing netLink\n");
-
+/*
     MemNIC::ComponentInfo myInfo;
     myInfo.link_port = "netLink";
     myInfo.link_bandwidth = "1GiB/s";
 	myInfo.num_vcs = params.find<int>("network_num_vc", 1);
     myInfo.name = getName();
-    myInfo.network_addr = params.find<int>("netAddr");
     myInfo.type = MemNIC::TypeDMAEngine;
     networkLink = new MemNIC(this, &dbg, -1, myInfo);
-
+*/
     blocksize = 0;
 }
 
@@ -62,7 +61,7 @@ void DMAEngine::setup(void)
     networkLink->setup();
     bool blocksizeSet = false;
 
-    const std::vector<MemNIC::PeerInfo_t> &peers = networkLink->getPeerInfo();
+/*    const std::vector<MemNIC::PeerInfo_t> &peers = networkLink->getPeerInfo();
     for ( std::vector<MemNIC::PeerInfo_t>::const_iterator i = peers.begin() ; i != peers.end() ; ++i ) {
         switch (i->first.type) {
         case MemNIC::TypeDirectoryCtrl:
@@ -77,7 +76,7 @@ void DMAEngine::setup(void)
         }
     }
 
-    networkLink->clearPeerInfo();
+    networkLink->clearPeerInfo();*/
 }
 
 
@@ -100,14 +99,14 @@ bool DMAEngine::clock(Cycle_t cycle)
      * If new command, check overlap, and delay if needed, otherwise process
      */
 
-    networkLink->clock();
+    //networkLink->clock();
 
-    MemEvent *me = NULL;
+    MemEventBase *me = NULL;
     SST::Event *se = NULL;
 
-    while ( NULL != (me = networkLink->recv()) ) {
+//    while ( NULL != (me = networkLink->recv()) ) {
         /* Process network packet */
-        Request* req = findRequest(me->getResponseToID());
+/*        Request* req = findRequest(me->getResponseToID());
 #ifdef __SST_DEBUG_OUTPUT__
         if ( NULL == req ) {
             dbg.debug(_L10_, "Received Packet for which we have no response ID waiting.  ID received: (%" PRIx64 ", %d)\n", me->getResponseToID().first, me->getResponseToID().second);
@@ -115,7 +114,7 @@ bool DMAEngine::clock(Cycle_t cycle)
 #endif
         processPacket(req, me);
     }
-
+*/
 
     while ( NULL != (se = commandLink->recv()) ) {
         /* Process new commands */
@@ -172,7 +171,7 @@ void DMAEngine::startRequest(Request *req)
 }
 
 
-void DMAEngine::processPacket(Request *req, MemEvent *ev)
+void DMAEngine::processPacket(Request *req, MemEventBase *ev)
 {
     assert(0);
     /*  Needs to be updated with current MemHierarchy Commands/States, MemHierarchyInterface
@@ -225,7 +224,7 @@ bool DMAEngine::findOverlap(Addr a1, size_t s1, Addr a2, size_t s2) const
 }
 
 
-DMAEngine::Request* DMAEngine::findRequest(MemEvent::id_type id)
+DMAEngine::Request* DMAEngine::findRequest(SST::Event::id_type id)
 {
     for ( std::set<Request*>::iterator i = activeRequests.begin() ; i != activeRequests.end() ; ++i ) {
         Request *req = (*i);

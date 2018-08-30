@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -20,6 +20,7 @@
 #define COMPONENTS_MERLIN_TEST_ROUTE_TEST_H
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -36,6 +37,27 @@ namespace Merlin {
 
 class route_test : public Component {
 
+public:
+
+    SST_ELI_REGISTER_COMPONENT(
+        route_test,
+        "merlin",
+        "route_test",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Simple NIC to test routing.",
+        COMPONENT_CATEGORY_NETWORK)
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"id",        "Network ID of endpoint."},
+        {"num_peers", "Total number of endpoints in network."},
+        {"link_bw",   "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."}
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
+    )
+
+    
 private:
 
     int id;

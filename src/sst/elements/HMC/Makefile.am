@@ -1,5 +1,4 @@
 AM_CPPFLAGS = -Wall \
-	$(BOOST_CPPFLAGS) \
 	$(MPIT_CPPFLAGS) 
 
 AM_LDFLAGS = -lm 
@@ -15,7 +14,6 @@ libHMC_la_SOURCES = HMC.cc \
 libHMC_la_CPPFLAGS = \
 	$(MICRON_HMCSIM_CPPFLAGS) \
 	$(SST_CXX0X_FLAGS) -fPIC -Wall \
-	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS)
 
 libHMC_la_LDFLAGS = \
@@ -30,7 +28,6 @@ libHMC_la_LIBADD = \
 #infogather_SOURCES = infogather.cc
 #infogather_CPPFLAGS = -I/usr/local/systemc-2.3/include \
 #											-std=c++11 -fPIC -Wall \
-#											$(BOOST_CPPFLAGS) \
 #											$(MPI_CPPFLAGS) 
 #infogather_LDFLAGS =  -L/usr/local/systemc-2.3/lib-linux64/ -lsystemc \
 #											-lhmcsim \

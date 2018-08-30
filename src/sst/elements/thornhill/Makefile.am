@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
+AM_CPPFLAGS = $(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
 compdir = $(pkglibdir)

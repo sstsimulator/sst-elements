@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -131,21 +131,34 @@ void Sieve::processEvent(SST::Event* ev) {
         cacheArray_->replace(baseAddr, line);
         line->setState(M);
 
-        recordMiss(event->getVirtualAddress(), (cmd == GetS));
+        bool isRead = (cmd == Command::GetS);
+        recordMiss(event->getVirtualAddress(), isRead);
+
+        // notify profiler, if any
+        if (listener_) {
+            CacheListenerNotification notify(event->getBaseAddr(), 
+                                             event->getVirtualAddress(),
+                                             event->getInstructionPointer(), 
+                                             event->getSize(), 
+                                             isRead ? READ : WRITE,
+                                             MISS);
+            listener_->notifyAccess(notify);
+        }
+
     } else {
-        if (cmd == GetS) statReadHits->addData(1);
+        if (cmd == Command::GetS) statReadHits->addData(1);
         else statWriteHits->addData(1);
     }
 
     // Debug output. Ifdef this for even better performance
 #ifdef __SST_DEBUG_OUTPUT__
     output_->debug(_L4_, "%s, Src = %s, Cmd = %s, BaseAddr = %" PRIx64 ", Addr = %" PRIx64 ", VA = %" PRIx64 ", PC = %" PRIx64 ", Size = %d: %s\n",
-            getName().c_str(), event->getSrc().c_str(), CommandString[cmd], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getSize(), miss ? "MISS" : "HIT");
+            getName().c_str(), event->getSrc().c_str(), CommandString[(int)cmd], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getSize(), miss ? "MISS" : "HIT");
     if (miss) output_->debug(_L5_, "%s, Replaced address %" PRIx64 "\n", getName().c_str(), replacementAddr);
 #endif
 
     MemEvent * responseEvent;
-    if (cmd == GetS) {
+    if (cmd == Command::GetS) {
         responseEvent = event->makeResponse(S);
     } else {
         responseEvent = event->makeResponse(M);
@@ -191,6 +204,11 @@ void Sieve::outputStats(int marker) {
 
     // create new file
     Output* output_file = new Output("",0,0,SST::Output::FILE, fileName.str());
+
+    // have the listener (if any) output stats
+    if (listener_) {
+        listener_->printStats(*output_file);
+    }
 
     // print out all the allocations and how often they were touched
     output_file->output(CALL_INFO, "#Printing allocation memory accesses (mallocID, reads, writes):\n");

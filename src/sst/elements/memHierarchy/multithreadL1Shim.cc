@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright(c) 2013-2016, Sandia Corporation
+// Copyright(c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -31,11 +31,11 @@ MultiThreadL1::MultiThreadL1(ComponentId_t id, Params &params) : Component(id) {
     
     int debugLevel = params.find<int>("debug_level", 0);
     debug.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
-    int dAddr = params.find<int>("debug_addr", -1);
-    DEBUG_ADDR = (Addr) dAddr;
-    if (dAddr == -1) DEBUG_ALL = true;
-    else DEBUG_ALL = false;
-
+    
+    std::vector<Addr> addrArr;
+    params.find_array<Addr>("debug_addr", addrArr);
+    for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++) 
+        DEBUG_ADDR.insert(*it);
 
     /* Setup clock */
     clockHandler = new Clock::Handler<MultiThreadL1>(this, &MultiThreadL1::tick);
@@ -79,14 +79,14 @@ MultiThreadL1::~MultiThreadL1() {
 }
 
 void MultiThreadL1::handleRequest(SST::Event * ev, unsigned int threadid) {
-    MemEvent *event = static_cast<MemEvent*>(ev);
+    MemEventBase *event = static_cast<MemEventBase*>(ev);
     if (!clockOn) enableClock();
     threadRequestMap.insert(std::make_pair(event->getID(), threadid));
     requestQueue.push(event);
 }
 
 void MultiThreadL1::handleResponse(SST::Event * ev) {
-    MemEvent *event = static_cast<MemEvent*>(ev);
+    MemEventBase *event = static_cast<MemEventBase*>(ev);
     if (!clockOn) enableClock();
     responseQueue.push(event);
 }
@@ -107,7 +107,7 @@ bool MultiThreadL1::tick(SST::Cycle_t cycle) {
     
     /* Drain response queue */
     while (!responseQueue.empty() && sendcount > 0) {
-        MemEvent * event = responseQueue.front();
+        MemEventBase * event = responseQueue.front();
         responseQueue.pop();
         
         unsigned int linkid = threadRequestMap.find(event->getResponseToID())->second;
@@ -145,25 +145,25 @@ void MultiThreadL1::finish() {}
 void MultiThreadL1::init(unsigned int phase) {
     SST::Event * ev;
 
-    if (!phase) {
-        for (int i = 0; i < threadLinks.size(); i++) {
-            threadLinks[i]->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
-        }
-    }
-
     // Pass CPU events to memory hierarchy, generally these are memory initialization
     for (int i = 0; i < threadLinks.size(); i++) {
-        while (ev = threadLinks[i]->recvInitData()) {
-            MemEvent * memEvent = dynamic_cast<MemEvent*>(ev);
+        while ((ev = threadLinks[i]->recvInitData()) != NULL) {
+            MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
             if (memEvent) {
-                cacheLink->sendInitData(new MemEvent(*memEvent));
+                cacheLink->sendInitData(memEvent->clone());
             }
-            delete memEvent;
+            delete ev;
         }
     }
     
-    // Nothing important flows this way
-    while (ev = cacheLink->recvInitData()) {
+    // Broadcast L1 events to connected CPUs
+    while ((ev = cacheLink->recvInitData()) != NULL) {
+        MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
+        if (memEvent) {
+            for (int i = 0; i < threadLinks.size(); i++) {
+                threadLinks[i]->sendInitData(memEvent->clone());
+            }
+        }
         delete ev;
     }
 }

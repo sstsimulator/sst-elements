@@ -1,6 +1,12 @@
 # Automatically generated SST Python input
 import sst
 
+DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_L3 = 0
+DEBUG_DIR = 0
+DEBUG_MEM = 0
+
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
@@ -19,7 +25,8 @@ comp_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1,
+      "debug_level" : 10,
 })
 comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 comp_l2cache.addParams({
@@ -30,7 +37,8 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "debug" : "0"
+      "debug" : DEBUG_L2,
+      "debug_level" : 10,
 })
 comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
 comp_l3cache.addParams({
@@ -41,9 +49,12 @@ comp_l3cache.addParams({
       "associativity" : "16",
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
-      "debug" : "0",
-      "network_address" : "1",
-      "network_bw" : "25GB/s",
+      "debug" : DEBUG_L3,
+      "debug_level" : 10,
+      #"memNIC.debug" : 1,
+      #"memNIC.debug_level" : 10,
+      "memNIC.network_address" : "1",
+      "memNIC.network_bw" : "25GB/s",
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams({
@@ -59,18 +70,21 @@ comp_chiprtr.addParams({
 comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
       "coherence_protocol" : "MSI",
-      #"debug" : "1",
+      "debug" : DEBUG_DIR,
       "debug_level" : "10",
-      "network_address" : "0",
       "entry_cache_size" : "16384",
-      "network_bw" : "25GB/s",
-      "addr_range_end" : "0x1F000000",
-      "addr_range_start" : "0x0"
+      "memNIC.network_address" : "0",
+      "memNIC.network_bw" : "25GB/s",
+      "memNIC.addr_range_end" : "0x1F000000",
+      "memNIC.addr_range_start" : "0x0",
+      #"memNIC.debug" : 1,
+      #"memNIC.debug_level" : 10,
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "0",
+      "debug" : DEBUG_MEM,
+      "debug_level" : 10,
       "backend.access_time" : "100 ns",
       "clock" : "1GHz",
       "backend.mem_size" : "512MiB"

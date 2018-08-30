@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,7 +17,7 @@
 #ifndef _H_SST_MEMH_REQUEST_REORDER_ROW_BACKEND
 #define _H_SST_MEMH_REQUEST_REORDER_ROW_BACKEND
 
-#include "membackend/memBackend.h"
+#include "sst/elements/memHierarchy/membackend/memBackend.h"
 #include <list>
 #include <vector>
 
@@ -26,12 +26,27 @@ namespace MemHierarchy {
 
 class RequestReorderRow : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(RequestReorderRow, "memHierarchy", "reorderByRow", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Request re-orderer, groups requests by row", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"verbose",                     "Sets the verbosity of the backend output", "0"},
+            {"max_issue_per_cycle",         "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
+            {"banks",                       "Number of banks", "8"},
+            {"bank_interleave_granularity", "Granularity of interleaving in bytes (B), generally a cache line. Must be a power of 2.", "64B"},
+            {"row_size",                    "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
+            {"reorder_limit",               "Maximum number of request to reorder to a rwo before changing rows.", "1"},
+            {"backend",                     "Backend memory system.", "memHierarchy.simpleDRAM"} )
+
+/* Begin class definition */
     RequestReorderRow();
     RequestReorderRow(Component *comp, Params &params);
 	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void setup();
     void finish();
-    void clock();
+    bool clock(Cycle_t cycle);
     virtual const std::string& getClockFreq() { return backend->getClockFreq(); }
 
 private:

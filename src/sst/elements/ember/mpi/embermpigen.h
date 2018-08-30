@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,12 +16,11 @@
 #ifndef _H_EMBER_MPI_GENERATOR
 #define _H_EMBER_MPI_GENERATOR
 
-#include <sst/core/stats/histo/histo.h>
-
 #include <queue>
 
 #include "embergen.h"
 
+#include <sst/core/elementinfo.h>
 #include <sst/elements/hermes/msgapi.h>
 
 #include "emberMPIEvent.h"
@@ -114,8 +113,6 @@ public:
 	EmberMessagePassingGenerator( Component* owner, Params& params, std::string name = "" );
 	~EmberMessagePassingGenerator();
     virtual void completed( const SST::Output*, uint64_t time );
-
-protected:
 
 	void getPosition( int32_t rank, int32_t px, int32_t py, int32_t pz, 
 					int32_t* myX, int32_t* myY, int32_t* myZ );	
@@ -289,9 +286,7 @@ void EmberMessagePassingGenerator::enQ_send( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag,
     Communicator group)
 {
-	Hermes::MemAddr addr;
-	addr.simVAddr = 0;
-	addr.backing = memAddr(payload);
+	Hermes::MemAddr addr( memAddr(payload) );
 
 	enQ_send( q, addr, count, dtype, dest, tag, group );
 }
@@ -322,9 +317,7 @@ void EmberMessagePassingGenerator::enQ_isend( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, 
     Communicator group, MessageRequest* req )
 {
-	Hermes::MemAddr addr;
-	addr.simVAddr = 0;
-	addr.backing = memAddr(payload);
+	Hermes::MemAddr addr( memAddr(payload) );
 	enQ_isend(q,addr,count,dtype,dest,tag,group,req);
 }
 void EmberMessagePassingGenerator::enQ_isend( Queue& q, 
@@ -355,9 +348,7 @@ void EmberMessagePassingGenerator::enQ_recv( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag,
     Communicator group, MessageResponse* resp )
 {
-	Hermes::MemAddr addr;
-	addr.simVAddr = 0;
-	addr.backing = memAddr(payload);
+	Hermes::MemAddr addr( memAddr(payload) );
 	enQ_recv( q, addr, count, dtype, src, tag, group, resp );
 }
 void EmberMessagePassingGenerator::enQ_recv( Queue& q,
@@ -380,9 +371,7 @@ void EmberMessagePassingGenerator::enQ_irecv( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID source, uint32_t tag,
     Communicator group, MessageRequest* req )
 {
-	Hermes::MemAddr addr;
-	addr.simVAddr = 0;
-	addr.backing = memAddr(payload);
+	Hermes::MemAddr addr( memAddr(payload) );
 	enQ_irecv( q, addr, count, dtype, source, tag, group, req );
 }
 
@@ -445,12 +434,8 @@ void EmberMessagePassingGenerator::enQ_allreduce( Queue& q, Addr _mydata,
     Addr _result, uint32_t count, PayloadDataType dtype, ReductionOperation op,
     Communicator group )
 {
-	Hermes::MemAddr mydata;
-	mydata.simVAddr = 0;
-	mydata.backing = memAddr( _mydata );
-	Hermes::MemAddr result;
-	result.simVAddr = 0;
-	result.backing = memAddr( _result );
+	Hermes::MemAddr mydata( memAddr( _mydata ) );
+	Hermes::MemAddr result( memAddr( _result ) );
 	enQ_allreduce( q, mydata, result, count, dtype, op, group );
 }
 	
@@ -468,12 +453,8 @@ void EmberMessagePassingGenerator::enQ_reduce( Queue& q, Addr _mydata,
     Addr _result, uint32_t count, PayloadDataType dtype, ReductionOperation op,
     int root, Communicator group )
 {
-	Hermes::MemAddr mydata;
-	mydata.simVAddr = 0;
-	mydata.backing = memAddr( _mydata );
-	Hermes::MemAddr result;
-	result.simVAddr = 0;
-	result.backing = memAddr( _result );
+	Hermes::MemAddr mydata( memAddr( _mydata ) );
+	Hermes::MemAddr result( memAddr( _result ) );
 	enQ_reduce( q, mydata, result, count, dtype, op, root, group );
 }
 
@@ -490,9 +471,7 @@ void EmberMessagePassingGenerator::enQ_reduce( Queue& q,
 void EmberMessagePassingGenerator::enQ_bcast( Queue& q, Addr mydata,
     uint32_t count, PayloadDataType dtype, int root, Communicator group )
 {
-	Hermes::MemAddr addr;
-	addr.simVAddr = 0;
-	addr.backing = memAddr(mydata);
+	Hermes::MemAddr addr( memAddr(mydata) );
 	enQ_bcast( q, addr, count, dtype, root, group );
 }
 void EmberMessagePassingGenerator::enQ_bcast( Queue& q, 
@@ -508,12 +487,8 @@ void EmberMessagePassingGenerator::enQ_alltoall( Queue& q,
         Addr _recvData, int recvCnts, PayloadDataType recvdtype,
         Communicator group )
 {
-	Hermes::MemAddr sendData;
-	sendData.simVAddr = 0;
-	sendData.backing = memAddr( _sendData );
-	Hermes::MemAddr recvData;
-	recvData.simVAddr = 0;
-	recvData.backing = memAddr( _recvData );
+	Hermes::MemAddr sendData( memAddr( _sendData ) );
+	Hermes::MemAddr recvData( memAddr( _recvData ) );
 	enQ_alltoall( q, sendData, sendCnts, senddtype,
 				recvData, recvCnts, recvdtype, group );
 }
@@ -533,12 +508,8 @@ void EmberMessagePassingGenerator::enQ_alltoallv( Queue& q,
         Addr _recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
         Communicator group )
 {
-	Hermes::MemAddr sendData;
-	sendData.simVAddr = 0;
-	sendData.backing = memAddr( _sendData );
-	Hermes::MemAddr recvData;
-	recvData.simVAddr = 0;
-	recvData.backing = memAddr( _recvData );
+	Hermes::MemAddr sendData( memAddr( _sendData ) );
+	Hermes::MemAddr recvData( memAddr( _recvData ) );
 	enQ_alltoallv( q, sendData, sendCnts, sendDsp, senddtype,
 					  recvData, recvCnts, recvDsp, recvdtype, group );
 }

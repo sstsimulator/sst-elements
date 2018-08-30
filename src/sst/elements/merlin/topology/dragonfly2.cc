@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -28,24 +28,24 @@ using namespace SST::Merlin;
 
 
 void
-RouteToGroup::init(SharedRegion* sr, size_t g, size_t r)
+RouteToGroup2::init(SharedRegion* sr, size_t g, size_t r)
 {
     region = sr;
-    data = sr->getPtr<const RouterPortPair*>();
+    data = sr->getPtr<const RouterPortPair2*>();
     groups = g;
     routes = r;
     
 }
 
-const RouterPortPair&
-RouteToGroup::getRouterPortPair(int group, int route_number)
+const RouterPortPair2&
+RouteToGroup2::getRouterPortPair(int group, int route_number)
 {
-    // data = static_cast<RouterPortPair*>(region->getRawPtr());
+    // data = static_cast<RouterPortPair2*>(region->getRawPtr());
     return data[group*routes + route_number];
 }
 
 void
-RouteToGroup::setRouterPortPair(int group, int route_number, const RouterPortPair& pair) {
+RouteToGroup2::setRouterPortPair(int group, int route_number, const RouterPortPair2& pair) {
     // output.output("%d, %d, %d, %d\n",group,route_number,pair.router,pair.port);
     region->modifyArray(group*routes+route_number,pair);
 }
@@ -104,7 +104,7 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
     
     // Get a shared region
     SharedRegion* sr = Simulation::getSharedRegionManager()->getGlobalSharedRegion("dragonfly:group_to_global_port",
-                                                                                  ((params.g-1) * params.n) * sizeof(RouterPortPair),
+                                                                                  ((params.g-1) * params.n) * sizeof(RouterPortPair2),
                                                                                    new SharedRegionMerger());
     // Set up the RouteToGroup object
     group_to_global_port.init(sr, params.g, params.n);
@@ -122,7 +122,7 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
         int router = i / params.h;
         int port = (i % params.h) + params.p + params.a - 1;
         
-        RouterPortPair rpp;
+        RouterPortPair2 rpp;
         rpp.router = router;
         rpp.port = port;
         group_to_global_port.setRouterPortPair(group, route_num, rpp);
@@ -239,23 +239,6 @@ void topo_dragonfly2::route(int port, int vc, internal_router_event* ev)
         }
     }
 
-    // /* Minimal Route */
-    // if ( td_ev->dest.group != group_id ) {
-    //     if ( td_ev->dest.mid_group != group_id ) {
-    //         next_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice);
-    //     } else {
-    //         next_port = port_for_group(td_ev->dest.group, td_ev->global_slice);
-    //     }
-    // } else if ( td_ev->dest.router != router_id ) {
-    //     next_port = port_for_router(td_ev->dest.router);
-    // } else {
-    //     next_port = td_ev->dest.host;
-    // }
-
-    // if ( td_ev->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
-    //     output.output("TRACE(%d): route()\n",
-    //                   td_ev->getTraceID());
-    // }
 
     output.verbose(CALL_INFO, 1, 1, "%u:%u, Recv: %d/%d  Setting Next Port/VC:  %u/%u\n", group_id, router_id, port, vc, next_port, td_ev->getVC());
     td_ev->setNextPort(next_port);
@@ -487,13 +470,29 @@ void topo_dragonfly2::routeInitData(int port, internal_router_event* ev, std::ve
 
         if ( broadcast_to_groups ) {
             for ( int p = 0; p < (int)(params.g - 1); p++ ) {
-                const RouterPortPair& pair = group_to_global_port.getRouterPortPair(p,0);
+                const RouterPortPair2& pair = group_to_global_port.getRouterPortPair(p,0);
                 if ( pair.router == router_id ) outPorts.push_back((int)(pair.port));
             }
         }
     } else {
-        route(port, 0, ev);
-        outPorts.push_back(ev->getNextPort());
+        //Not all data structures used for routing during run are
+        //initialized yet, so we need to just do a quick minimal
+        //routing scheme for init.
+        // route(port, 0, ev);
+
+        // TraceFunction(CALL_INFO);
+        // Minimal Route
+        int next_port;
+        if ( td_ev->dest.group != group_id ) {
+            next_port = port_for_group(td_ev->dest.group, td_ev->global_slice);
+        }
+        else if ( td_ev->dest.router != router_id ) {
+            next_port = port_for_router(td_ev->dest.router);
+        }
+        else {
+            next_port = td_ev->dest.host;
+        }
+        outPorts.push_back(next_port);
     }
 
 }
@@ -592,7 +591,7 @@ uint32_t topo_dragonfly2::port_for_group(uint32_t group, uint32_t slice, int id)
         break;
     }
 
-    const RouterPortPair& pair = group_to_global_port.getRouterPortPair(group,slice);
+    const RouterPortPair2& pair = group_to_global_port.getRouterPortPair(group,slice);
 
     if ( pair.router == router_id ) {
         return pair.port;

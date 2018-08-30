@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -35,6 +35,7 @@
 #include "c_BankState.hpp"
 #include "c_BankInfo.hpp"
 #include "c_BankCommand.hpp"
+#include "c_Transaction.hpp"
 #include "c_BankStateWriteA.hpp"
 #include "c_BankStatePrecharge.hpp"
 
@@ -58,21 +59,21 @@ c_BankStateWriteA::~c_BankStateWriteA() {
 // handle automatic state changes in function update( ... )
 
 void c_BankStateWriteA::handleCommand(c_BankInfo* x_bank,
-		c_BankCommand* x_bankCommandPtr) {
+		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
 	// std::cout << __PRETTY_FUNCTION__
 	// 		<< "ERROR: Bank commands are irrelevant in the current state ... exiting simulation"
 	// 		<< std::endl;
 }
 
-void c_BankStateWriteA::clockTic(c_BankInfo* x_bank) {
+void c_BankStateWriteA::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 
 	if (0 < m_timerEnter) {
 		--m_timerEnter;
 	} else {
 		if (0 == m_timerExit) {
-			unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+			SimTime_t l_time = x_cycle;
 			x_bank->setLastCommandCycle(e_BankCommandType::WRITEA, l_time);
-			unsigned l_nextCycle = std::max(
+			SimTime_t l_nextCycle = std::max(
 					x_bank->getNextCommandCycle(e_BankCommandType::ACT)
 							+ m_bankParams->at("nRAS"),
 					x_bank->getLastCommandCycle(e_BankCommandType::WRITEA)
@@ -88,13 +89,13 @@ void c_BankStateWriteA::clockTic(c_BankInfo* x_bank) {
 			--m_timerExit;
 		} else {
 			if (nullptr != m_nextStatePtr)
-				m_nextStatePtr->enter(x_bank, this, nullptr);
+				m_nextStatePtr->enter(x_bank, this, nullptr,x_cycle);
 		}
 	}
 }
 
 void c_BankStateWriteA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-		c_BankCommand* x_cmdPtr) {
+		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 //	 std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
 
 	// Being in the WriteA state does not make a READA cmd response ready.
@@ -103,11 +104,6 @@ void c_BankStateWriteA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_prevCommandPtr = x_cmdPtr;
 	if (nullptr != m_prevCommandPtr) {
 		m_prevCommandPtr->setResponseReady();
-		const unsigned l_cmdsLeft =
-				m_prevCommandPtr->getTransaction()->getWaitingCommands() - 1;
-		m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
-		if (l_cmdsLeft == 0)
-			m_prevCommandPtr->getTransaction()->setResponseReady();
 
 		switch (m_prevCommandPtr->getCommandMnemonic()) {
 		case e_BankCommandType::WRITEA:
@@ -122,13 +118,8 @@ void c_BankStateWriteA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 		m_prevCommandPtr = nullptr;
 	}
 
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = x_cycle;
 
-//	m_timerExit = std::max(
-//			std::max(x_bank->getNextCommandCycle(e_BankCommandType::WRITEA),
-//					x_bank->getNextCommandCycle(e_BankCommandType::WRITEA)),
-//			l_time + m_bankParams->at("nCWL") + m_bankParams->at("nBL")
-//					+ m_bankParams->at("nWR") - 2) - l_time;
 
 	x_bank->setLastCommandCycle(e_BankCommandType::WRITEA,l_time);
 

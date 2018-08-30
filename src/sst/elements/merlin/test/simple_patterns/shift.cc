@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -17,7 +17,6 @@
 
 #include <unistd.h>
 
-#include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
@@ -136,12 +135,12 @@ public:
     ShiftEvent(int seq) : seq(seq)
     {}
 
-    Event* clone(void)
+    Event* clone(void) override
     {
         return new ShiftEvent(*this);
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & seq;
     }

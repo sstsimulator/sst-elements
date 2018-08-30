@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,16 +20,19 @@
 #include <sst/core/event.h>
 #include <sst/core/statapi/statbase.h>
 #include <sst/elements/hermes/msgapi.h>
+#include <sst/elements/hermes/shmemapi.h>
 
 namespace SST {
 namespace Ember {
 
 typedef Hermes::MP::Functor FOO;
+typedef Hermes::Callback Callback;
 
 #undef FOREACH_ENUM
 #define FOREACH_ENUM(NAME) \
     NAME( Issue ) \
     NAME( IssueFunctor ) \
+    NAME( IssueCallback ) \
     NAME( Complete ) \
 
 #define GENERATE_ENUM(ENUM) ENUM,
@@ -59,7 +62,15 @@ public:
 
     virtual void issue( uint64_t time, FOO* = NULL ) {
         if ( m_output ) {
-            m_output->verbose(CALL_INFO, 3, 0, "%s\n",getName().c_str());
+            m_output->debug(CALL_INFO, 3, 0, "%s\n",getName().c_str());
+        }
+        m_issueTime = time;
+        m_state = Complete;
+    }
+
+    virtual void issue( uint64_t time, Callback ) {
+        if ( m_output ) {
+            m_output->debug(CALL_INFO, 3, 0, "%s\n",getName().c_str());
         }
         m_issueTime = time;
         m_state = Complete;
@@ -68,7 +79,7 @@ public:
     virtual bool complete( uint64_t time, int retval = 0 ) {
 
         if ( m_output ) {
-            m_output->verbose(CALL_INFO, 3, 0, "%s\n",getName().c_str());
+            m_output->debug(CALL_INFO, 3, 0, "%s\n",getName().c_str());
         }
         
         if ( m_evStat ) {
@@ -78,7 +89,7 @@ public:
     }
 
     virtual uint64_t completeDelayNS() {
-        m_output->verbose(CALL_INFO, 2, 0, "delay=%" PRIu64 " ns\n",
+        m_output->debug(CALL_INFO, 2, 0, "delay=%" PRIu64 " ns\n",
                                                 m_completeDelayNS);
         return m_completeDelayNS;
     }

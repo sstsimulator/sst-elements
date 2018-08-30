@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,7 +18,7 @@
 #define _H_SST_MEM_H_REQUEST_GEN
 
 #include <stdint.h>
-//#include <sst/core/module.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
@@ -31,10 +31,12 @@ namespace Miranda {
 typedef enum {
 	READ,
 	WRITE,
-	REQ_FENCE
+	REQ_FENCE,
+        CUSTOM,
+        OPCOUNT
 } ReqOperation;
 
-static uint64_t nextGeneratorRequestID = 0;
+static std::atomic<uint64_t> nextGeneratorRequestID(0);
 
 class GeneratorRequest {
 public:
@@ -173,7 +175,7 @@ private:
 
 class MemoryOpRequest : public GeneratorRequest {
 public:
-	MemoryOpRequest(const uint64_t cAddr,
+        MemoryOpRequest(const uint64_t cAddr,
 		const uint64_t cLength,
 		const ReqOperation cOpType) :
 		GeneratorRequest(),
@@ -182,6 +184,7 @@ public:
 	ReqOperation getOperation() const { return op; }
 	bool isRead() const { return op == READ; }
 	bool isWrite() const { return op == WRITE; }
+        bool isCustom() const { return op == CUSTOM; }
 	uint64_t getAddress() const { return addr; }
 	uint64_t getLength() const { return length; }
 
@@ -189,6 +192,21 @@ protected:
 	uint64_t addr;
 	uint64_t length;
 	ReqOperation op;
+};
+
+class CustomOpRequest : public MemoryOpRequest {
+public:
+    CustomOpRequest(const uint64_t cAddr,
+            const uint64_t cLength,
+            const uint32_t cOpcode) :
+        MemoryOpRequest(cAddr, cLength, CUSTOM) {
+            opcode = cOpcode;
+        }
+    ~CustomOpRequest() {}
+    uint32_t getOpcode() const { return opcode; }
+
+protected:
+    uint32_t opcode;
 };
 
 class FenceOpRequest : public GeneratorRequest {

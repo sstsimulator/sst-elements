@@ -7,10 +7,10 @@ import sst
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
-	"verbose" : 1,
+	"verbose" : 0,
 	"clock" : "2GHz",
 	"generator" : "miranda.Stencil3DBenchGenerator",
-	"generatorParams.verbose" : 1,
+	"generatorParams.verbose" : 0,
 	"generatorParams.nx" : 30,
 	"generatorParams.ny" : 20,
 	"generatorParams.nz" : 10,

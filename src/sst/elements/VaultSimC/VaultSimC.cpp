@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016 Sandia Corporation
+// Copyright (c) 2009-2018 NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -93,18 +93,18 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
 
     // setup backing store
     size_t memSize = MEMSIZE;
-    memBuffer = (uint8_t*)mmap(NULL, memSize, PROT_READ|PROT_WRITE, 
+    /*memBuffer = (uint8_t*)mmap(NULL, memSize, PROT_READ|PROT_WRITE, 
                                MAP_PRIVATE|MAP_ANON, -1, 0);
     if ( !memBuffer ) {
         dbg.fatal(CALL_INFO, -1, "Unable to MMAP backing store for Memory\n");
     }
-
+*/
     memOutStat = registerStatistic<uint64_t>("Mem_Outstanding","1");
 }
 
     int VaultSimC::Finish() 
 {
-    munmap(memBuffer, MEMSIZE);
+    //munmap(memBuffer, MEMSIZE);
 
     return 0;
 }
@@ -122,10 +122,10 @@ void VaultSimC::init(unsigned int phase)
                 uint32_t chunkSize = (1 << VAULT_SHIFT);
                 if (me->getSize() > chunkSize)
                     dbg.fatal(CALL_INFO, -1, "vault got too large init\n");
-                for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
+                /*for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
                     memBuffer[getInternalAddress(me->getAddr() + i)] =
                         me->getPayload()[i];
-                }
+                }*/
             } else {
                 dbg.fatal(CALL_INFO, -1, "vault got bad init command\n");
             }
@@ -287,11 +287,4 @@ bool VaultSimC::clock( Cycle_t current ) {
 
 #endif /* HAVE_LIBPHX */
 
-
-extern "C" {
-    VaultSimC* VaultSimCAllocComponent( SST::ComponentId_t id,  SST::Params& params )
-    {
-        return new VaultSimC( id, params );
-    }
-}
 

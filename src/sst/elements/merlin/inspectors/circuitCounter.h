@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,21 +16,35 @@
 #ifndef COMPONENTS_MERLIN_CIRCUITCOUNTER_H
 #define COMPONENTS_MERLIN_CIRCUITCOUNTER_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 #include <sst/core/threadsafe.h>
 
-using namespace std;
+namespace SST {
 using namespace SST::Interfaces;
+namespace Merlin {
 
 class CircNetworkInspector : public SimpleNetwork::NetworkInspector {
-private:
-    typedef pair<SimpleNetwork::nid_t, SimpleNetwork::nid_t> SDPair;
-    typedef set<SDPair> pairSet_t;
-    pairSet_t *uniquePaths;
-    string outFileName;
 
-    typedef map<string, pairSet_t*> setMap_t;
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        CircNetworkInspector,
+        "merlin",
+        "circuit_network_inspector",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Used to count the number of network circuits (as in 'circuit switched' circuits)",
+        "SST::Interfaces::SimpleNetwork:NetworkInspector")
+    
+
+private:
+    typedef std::pair<SimpleNetwork::nid_t, SimpleNetwork::nid_t> SDPair;
+    typedef std::set<SDPair> pairSet_t;
+    pairSet_t *uniquePaths;
+    std::string outFileName;
+
+    typedef std::map<std::string, pairSet_t*> setMap_t;
     // Map which makes sure that all the inspectors on one router use
     // the same pairSet. This structure can be accessed by multiple
     // threads during intiailize, so it needs to be protected.
@@ -39,10 +53,15 @@ private:
 public:
     CircNetworkInspector(SST::Component* parent, SST::Params &params);
 
-    void initialize(string id);
+    void initialize(std::string id);
     void finish();
 
     void inspectNetworkData(SimpleNetwork::Request* req);
+
+
 };
 
+
+} // namespace Merlin
+} // namespace SST
 #endif

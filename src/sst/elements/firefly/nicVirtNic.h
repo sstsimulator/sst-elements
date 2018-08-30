@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,29 +39,45 @@ class VirtNic {
             }
         }
 
+		void send( SST::Event * event ) {
+			m_toCoreLink->send( 149, event );
+		}
+
+		void sendShmem( SimTime_t delay, SST::Event * event ) {
+			m_toCoreLink->send( delay , event );
+		}
+
+
         Link* m_toCoreLink;
         int id;
         void notifyRecvDmaDone( int src_vNic, int src, int tag, size_t len,
                                                             void* key ) {
-            m_toCoreLink->send(0,
-                new NicRespEvent( NicRespEvent::DmaRecv, src_vNic,
+            send( new NicRespEvent( NicRespEvent::DmaRecv, src_vNic,
                         src, tag, len, key ) );
         }
-        void notifyNeedRecv( int src_vNic, int src, int tag, size_t len ) {
-            m_toCoreLink->send(0,
-                new NicRespEvent( NicRespEvent::NeedRecv, src_vNic,
-                        src, tag, len ) );
+        void notifyNeedRecv( int src_vNic, int src, size_t len ) {
+            send( new NicRespEvent( NicRespEvent::NeedRecv, src_vNic,
+                        src, 0, len ) );
         }
         void notifySendDmaDone( void* key ) {
-            m_toCoreLink->send(0,new NicRespEvent( NicRespEvent::DmaSend, key));
+            send( new NicRespEvent( NicRespEvent::DmaSend, key));
         }
         void notifySendPioDone( void* key ) {
-            m_toCoreLink->send(0,new NicRespEvent( NicRespEvent::PioSend, key));
+            send( new NicRespEvent( NicRespEvent::PioSend, key));
         }
         void notifyPutDone( void* key ) {
-            m_toCoreLink->send(0, new NicRespEvent( NicRespEvent::Put, key ));
+            send( new NicRespEvent( NicRespEvent::Put, key ));
         }
         void notifyGetDone( void* key ) {
-            m_toCoreLink->send(0, new NicRespEvent( NicRespEvent::Get, key ));
+            send( new NicRespEvent( NicRespEvent::Get, key ));
+        }
+
+
+        void notifyShmem( SimTime_t delay, NicShmemRespEvent::Callback callback ) {
+            sendShmem( delay, new NicShmemRespEvent( callback ));
+        }
+
+        void notifyShmem( SimTime_t delay, NicShmemValueRespEvent::Callback callback, Hermes::Value& value ) {
+            sendShmem( delay, new NicShmemValueRespEvent( callback, value ));
         }
     };

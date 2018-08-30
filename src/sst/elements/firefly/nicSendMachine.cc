@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -21,15 +21,7 @@ using namespace SST;
 using namespace SST::Firefly;
 using namespace SST::Interfaces;
 
-Nic::SendMachine::~SendMachine() 
-{
-    while ( ! m_sendQ.empty() ) {
-        delete m_sendQ.front();
-        m_sendQ.pop_front();
-    }
-}
-
-void Nic::SendMachine::state_0( SendEntry* entry )
+void Nic::SendMachine::streamInit( SendEntryBase* entry )
 {
     MsgHdr hdr;
 
@@ -37,173 +29,136 @@ void Nic::SendMachine::state_0( SendEntry* entry )
     ++m_msgCount;
 #endif
     hdr.op= entry->getOp();
-    hdr.tag = entry->tag();
-    hdr.len = entry->totalBytes();
-    hdr.dst_vNicId = entry->dst_vNic();
-    hdr.src_vNicId = entry->local_vNic(); 
 
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"Send: "
-					"%d: setup hdr, src_vNic=%d, send dstNid=%d "
-                    "dst_vNic=%d tag=%#x bytes=%lu\n", m_vc,
-                    hdr.src_vNicId, entry->node(), 
-                    hdr.dst_vNicId, hdr.tag, entry->totalBytes() ) ;
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,
+        "%p setup hdr, srcPid=%d, srcStream=%d destNode=%d dstPid=%d bytes=%lu\n", entry,
+        entry->local_vNic(), entry->streamNum(), entry->dest(), entry->dst_vNic(), entry->totalBytes() ) ;
 
-    FireflyNetworkEvent* ev = new FireflyNetworkEvent;
-    ev->bufAppend( &hdr, sizeof(hdr) );
-
-    m_nic.schedCallback( 
-        std::bind( &Nic::SendMachine::state_1, this, entry, ev ), 
-        m_txDelay 
-    );
-}
-
-void Nic::SendMachine::state_1( SendEntry* entry, FireflyNetworkEvent* ev ) 
-{
-    if ( ! canSend( m_packetSizeInBytes ) ) {
-        m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"Send: "
-					"%d: send busy\n",m_vc);
-        setCanSendCallback( 
-            std::bind( &Nic::SendMachine::state_1, this, entry, ev ) 
-        );
-        return;
+    FireflyNetworkEvent* ev = new FireflyNetworkEvent(m_pktOverhead );
+    ev->setDestPid( entry->dst_vNic() );
+    ev->setSrcPid( entry->local_vNic() ); 
+    ev->setHdr();
+    ev->setSrcStream( entry->streamNum() );
+    entry->m_start = m_nic.getCurrentSimTimeNano();
+    if ( entry->isCtrl() || entry->isAck() ) {
+        ev->setCtrl();
     } 
 
-	std::vector< DmaVec > vec; 
+    ev->bufAppend( &hdr, sizeof(hdr) );
+    ev->bufAppend( entry->hdr(), entry->hdrSize() );
 
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"Send: "
-					"%d: copyOut\n",m_vc);
-    copyOut( m_dbg, *ev, *entry, vec ); 
+    m_nic.schedCallback( std::bind( &Nic::SendMachine::getPayload, this, entry, ev ), entry->txDelay() );
+}
 
-
-    m_nic.dmaRead( vec,
-		std::bind( &Nic::SendMachine::state_2, this, entry, ev )
-    ); 
-	// don't put code after this, the callback may be called serially
-}    
-
-void Nic::SendMachine::state_2( SendEntry* entry, FireflyNetworkEvent *ev ) 
+void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev ) 
 {
-    assert( ev->bufSize() );
-
-    SimpleNetwork::Request* req = new SimpleNetwork::Request();
-    req->dest = m_nic.IdToNet( entry->node() );
-    req->src = m_nic.IdToNet( m_nic.m_myNodeId );
-    req->size_in_bits = ev->bufSize() * 8;
-    req->vn = 0;
-    req->givePayload( ev );
-
-    if ( (m_nic.m_tracedPkt == m_packetId || m_nic.m_tracedPkt == -2) 
-                    && m_nic.m_tracedNode ==  m_nic.getNodeId() ) 
-    {
-        req->setTraceType( SimpleNetwork::Request::FULL );
-        req->setTraceID( m_packetId );
-    }
-    ++m_packetId;
-    m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"Send: "
-					"%d: dst=%" PRIu64 " sending event with %zu bytes\n",m_vc,req->dest,
-                                                        ev->bufSize());
-    bool sent = m_nic.m_linkControl->send( req, m_vc );
-    assert( sent );
-
-    if ( entry->isDone() ) {
-        m_dbg.verbose(CALL_INFO,1,NIC_DBG_SEND_MACHINE,"Send: "
-					"%d: send entry done\n",m_vc);
-        entry->notify();
-        delete entry;
-
-        if ( ! canSend( m_packetSizeInBytes ) ) {
-            m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"Send: "
-					"%d: send busy\n",m_vc);
-            setCanSendCallback( 
-                std::bind( &Nic::SendMachine::state_3, this ) 
-            );
+    int pid = entry->local_vNic(); 
+    ev->setDestPid( entry->dst_vNic() );
+    ev->setSrcPid( pid );
+    ev->setSrcStream( entry->streamNum() );
+    if ( ! m_inQ->isFull() ) {
+	    std::vector< MemOp >* vec = new std::vector< MemOp >; 
+        entry->copyOut( m_dbg, m_packetSizeInBytes, *ev, *vec ); 
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "enque load from host, %lu bytes\n",ev->bufSize());
+        if ( entry->isDone() ) {
+            ev->setTail();
+            m_inQ->enque( m_unit, pid, vec, ev, entry->dest(), std::bind( &Nic::SendMachine::streamFini, this, entry ) );
         } else {
-            state_3();
+            m_inQ->enque( m_unit, pid, vec, ev, entry->dest() );
+            m_nic.schedCallback( std::bind( &Nic::SendMachine::getPayload, this, entry, new FireflyNetworkEvent(m_pktOverhead) ), 0);
         }
 
     } else {
-        if ( ! canSend( m_packetSizeInBytes ) ) {
-            m_dbg.verbose(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"Send: "
-					"%d: send busy\n",m_vc);
-            setCanSendCallback( 
-                std::bind( &Nic::SendMachine::state_1, this, 
-                                        entry, new FireflyNetworkEvent ) 
-            );
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "blocked by host\n");
+        m_inQ->wakeMeUp( std::bind( &Nic::SendMachine::getPayload, this, entry, ev ) );
+    }
+}
+void Nic::SendMachine::streamFini( SendEntryBase* entry ) 
+{
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "%p sendMachine=%d pid=%d bytes=%zu latency=%" PRIu64 "\n",entry,m_id, entry->local_vNic(),
+            entry->totalBytes(), m_nic.getCurrentSimTimeNano() - entry->m_start);
+
+    ++m_numSent;
+    if ( m_I_manage ) {
+        m_sendQ.pop_front();
+        if ( ! m_sendQ.empty() )  {
+            streamInit( m_sendQ.front() );
+        }
+    } else {
+        m_activeEntry = NULL;
+        m_nic.notifySendDone( this, entry );
+    }
+
+    if ( entry->shouldDelete() ) {
+        m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "%p delete SendEntry entry, pid=%d\n",entry, entry->local_vNic());
+        delete entry;
+    }
+}
+
+void  Nic::SendMachine::InQ::enque( int unit, int pid, std::vector< MemOp >* vec,
+            FireflyNetworkEvent* ev, int dest, Callback callback )
+{
+    ++m_numPending;
+
+    m_dbg.verbosePrefix(prefix(), CALL_INFO,2,NIC_DBG_SEND_MACHINE, "get timing for packet %" PRIu64 " size=%lu numPending=%d\n",
+                 m_pktNum,ev->bufSize(), m_numPending);
+
+    m_nic.dmaRead( unit, pid, vec,
+		std::bind( &Nic::SendMachine::InQ::ready, this,  ev, dest, callback, m_pktNum++ )
+    ); 
+	// don't put code after this, the callback may be called serially
+}
+
+void Nic::SendMachine::InQ::ready( FireflyNetworkEvent* ev, int dest, Callback callback, uint64_t pktNum )
+{
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "packet %" PRIu64 " is ready, expected=%" PRIu64 "\n",pktNum,m_expectedPkt);
+    assert(pktNum == m_expectedPkt++);
+
+    if ( m_pendingQ.empty() && ! m_outQ->isFull() ) {
+        ready2( ev, dest, callback );
+    } else  {
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "blocked by OutQ\n");
+        m_pendingQ.push_back( Entry( ev, dest,callback,pktNum ) );
+        if ( 1 == m_pendingQ.size() )  {
+            m_outQ->wakeMeUp( std::bind( &Nic::SendMachine::InQ::processPending, this ) );
+        }
+    }
+}
+
+void Nic::SendMachine::InQ::ready2( FireflyNetworkEvent* ev, int dest, Callback callback )
+{
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "pass packet to OutQ numBytes=%lu\n", ev->bufSize() );
+    --m_numPending;
+    m_outQ->enque( ev, dest, callback );
+
+    if ( m_callback ) {
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "wakeup send machine\n");
+        m_callback( );
+        m_callback = NULL;
+    }
+}
+
+void Nic::SendMachine::InQ::processPending( )
+{
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "size=%lu\n", m_pendingQ.size());
+    Entry& entry = m_pendingQ.front();
+    ready2( entry.ev, entry.dest, entry.callback );
+
+    m_pendingQ.pop_front();
+    if ( ! m_pendingQ.empty() ) {
+        if ( ! m_outQ->isFull() ) {
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "schedule next\n");
+            m_nic.schedCallback( std::bind( &Nic::SendMachine::InQ::processPending, this ) );
         } else {
-            state_1( entry, new FireflyNetworkEvent );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "schedule wakeup\n");
+            m_outQ->wakeMeUp( std::bind( &Nic::SendMachine::InQ::processPending, this ) );
         }
     }
-}    
+}
 
-void Nic::SendMachine::copyOut( Output& dbg,
-                FireflyNetworkEvent& event, Nic::Entry& entry, 
-				std::vector<DmaVec>& vec  )
+void Nic::SendMachine::OutQ::enque( FireflyNetworkEvent* ev, int dest, Callback callback )
 {
-    dbg.verbose(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"Send: "
-					"%d: ioVec.size()=%lu\n", m_vc, entry.ioVec().size() );
-
-    for ( ; entry.currentVec < entry.ioVec().size() &&
-                event.bufSize() <  m_packetSizeInBytes;
-                entry.currentVec++, entry.currentPos = 0 ) {
-
-        dbg.verbose(CALL_INFO,3,1,"vec[%lu].len %lu\n",entry.currentVec,
-                    entry.ioVec()[entry.currentVec].len );
-
-        if ( entry.ioVec()[entry.currentVec].len ) {
-            size_t toLen = m_packetSizeInBytes - event.bufSize();
-            size_t fromLen = entry.ioVec()[entry.currentVec].len -
-                                                        entry.currentPos;
-
-            size_t len = toLen < fromLen ? toLen : fromLen;
-
-            dbg.verbose(CALL_INFO,3,1,"toBufSpace=%lu fromAvail=%lu, "
-                            "memcpy len=%lu\n", toLen,fromLen,len);
-
-            const char* from = 
-                    (const char*) entry.ioVec()[entry.currentVec].addr.backing + 
-                                                        entry.currentPos;
-			DmaVec tmp;
-			tmp.addr = entry.ioVec()[entry.currentVec].addr.simVAddr +
-                                                        entry.currentPos;
-			tmp.length = len; 
-			vec.push_back(tmp);
-
-            if ( entry.ioVec()[entry.currentVec].addr.backing) {
-                event.bufAppend( from, len );
-            } else {
-                event.bufAppend( NULL, len );
-            }
-
-            entry.currentPos += len;
-            if ( event.bufSize() == m_packetSizeInBytes &&
-                    entry.currentPos != entry.ioVec()[entry.currentVec].len ) {
-                break;
-            }
-        }
-    }
-    dbg.verbose(CALL_INFO,3,1,"currentVec=%lu, currentPos=%lu\n",
-                entry.currentVec, entry.currentPos);
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "size=%lu\n", m_queue.size());
+    m_queue.push_back( Entry( std::make_pair(ev,dest), callback ) );
+    m_nic.notifyHavePkt(m_id);
 }
-
-void Nic::SendMachine::printStatus( Output& out ) {
-#ifdef NIC_SEND_DEBUG
-    if ( ! m_nic.m_linkControl->spaceToSend( m_vc, packetSizeInBits() ) ) {
-        out.output("%lu: %d: SendMachine `%s` msgCount=%d runCount=%d "
-                    "can send %d\n",
-                Simulation::getSimulation()->getCurrentSimCycle(),
-                m_nic.m_myNodeId,state(m_state),m_msgCount,m_runCount,
-                m_nic.m_linkControl->spaceToSend( m_vc, packetSizeInBits() ));
-    }
-#endif
-}
-
-#if 0
-static void print( Output& dbg, char* buf, int len )
-{
-    std::string tmp;
-    dbg.verbose(CALL_INFO,4,1,"addr=%p len=%d\n",buf,len);
-    for ( int i = 0; i < len; i++ ) {
-        dbg.verbose(CALL_INFO,3,1,"%#03x\n",(unsigned char)buf[i]);
-    }
-}
-#endif

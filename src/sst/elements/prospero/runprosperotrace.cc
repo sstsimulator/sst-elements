@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
 	sprintf(toolPath, "%s/prosperotrace.so", PROSPERO_STRINGIZE(PROSPERO_TOOL_DIR));
 #endif
 
-	appParams.push_back(const_cast<char*>(PROSPERO_STRINGIZE(PINTOOL_EXECUTABLE)));
+	appParams.push_back(const_cast<char*>(PINTOOL_EXECUTABLE));
 	appParams.push_back(pinToolMarker);
 	appParams.push_back(toolPath);
 
@@ -234,7 +234,7 @@ int main(int argc, char* argv[]) {
 
 		printf("\n");
 
-		int executeRC = execvp(PROSPERO_STRINGIZE(PINTOOL_EXECUTABLE), &execParams[0]);
+		int executeRC = execvp(PINTOOL_EXECUTABLE, &execParams[0]);
 		printf("Executing application returns %d.\n", executeRC);
 	}
 

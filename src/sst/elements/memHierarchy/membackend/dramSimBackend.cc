@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -64,8 +64,9 @@ bool DRAMSimMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned ){
 
 
 
-void DRAMSimMemory::clock(){
+bool DRAMSimMemory::clock(Cycle_t cycle){
     memSystem->update();
+    return false;
 }
 
 
@@ -81,7 +82,7 @@ void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcy
 #ifdef __SST_DEBUG_OUTPUT__
     output->debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
 #endif
-    assert(reqs.size());
+    if (reqs.size() == 0) output->fatal(CALL_INFO, -1, "Error: reqs.size() is 0 at DRAMSimMemory done\n");
     ReqId reqId = reqs.front();
     reqs.pop_front();
     if(0 == reqs.size())

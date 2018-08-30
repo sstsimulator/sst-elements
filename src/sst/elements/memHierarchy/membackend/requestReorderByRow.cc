@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -88,7 +88,7 @@ bool RequestReorderRow::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned
  * Issue as many requests as we can up to requestsPerCycle
  * by searching up to searchWindowSize requests
  */
-void RequestReorderRow::clock() {
+bool RequestReorderRow::clock(Cycle_t cycle) {
     
     if (!requestQueue.empty()) {
         
@@ -146,7 +146,8 @@ void RequestReorderRow::clock() {
         }
     } 
 
-    backend->clock();
+    bool unclock = backend->clock(cycle);
+    return false;
 }
 
 

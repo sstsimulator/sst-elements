@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,18 +17,28 @@
 #ifndef _H_SST_MEMH_SIMPLE_MEM_BACKEND
 #define _H_SST_MEMH_SIMPLE_MEM_BACKEND
 
-#include "membackend/memBackend.h"
+#include "sst/elements/memHierarchy/membackend/memBackend.h"
 
 namespace SST {
 namespace MemHierarchy {
 
 class SimpleMemory : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(SimpleMemory, "memHierarchy", "simpleMem", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Basic constant-access-time memory timing model", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"access_time", "(string) Constant latency of memory operations. With units (SI ok).", "100ns"} )
+
+/* Begin class definition */
     SimpleMemory();
     SimpleMemory(Component *comp, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual int32_t getMaxReqPerCycle() { return 1; }
-    
+    virtual bool isClocked() { return false; }    
+
 public:
     class MemCtrlEvent : public SST::Event {
     public:
@@ -41,7 +51,7 @@ public:
         MemCtrlEvent() {} // For Serialization only
         
     public:
-        void serialize_order(SST::Core::Serialization::serializer &ser) {
+        void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
             ser & reqId;  // Cannot serialize pointers unless they are a serializable object
        }

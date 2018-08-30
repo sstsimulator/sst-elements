@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,28 +16,47 @@
 #ifndef _MSHR_H_
 #define _MSHR_H_
 
-#include <boost/assert.hpp>
 #include <map>
+#include <string>
+#include <sstream>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 
-#include <memEvent.h>
-#include <util.h>
-#include <boost/assert.hpp>
-#include <string>
-#include <sstream>
-#include <boost/variant.hpp>
+#include "sst/elements/memHierarchy/memEvent.h"
+#include "sst/elements/memHierarchy/util.h"
 
 namespace SST { namespace MemHierarchy {
 
 using namespace std;
 
+// Specific version of variant class to replace boost::variant
+
+class AddrEventVariant {
+    union {
+        Addr addr;
+        MemEvent* event;
+    } data;
+    bool _isAddr;
+    
+public:
+    AddrEventVariant(Addr a) {data.addr = a; _isAddr = true; }
+    AddrEventVariant(MemEvent* ev) {data.event = ev; _isAddr = false; }
+
+    Addr getAddr() const { return data.addr; }
+    MemEvent* getEvent() const { return data.event; }
+
+    bool isAddr() const { return _isAddr; }
+    bool isEvent() const { return !_isAddr; }
+    
+};
+
 /* MSHRs hold both events and pointers to events (e.g., the address of an event to replay when the current event resolves) */
 struct mshrType {
-    boost::variant<Addr, MemEvent*> elem;
+    AddrEventVariant elem;
+    // boost::variant<Addr, MemEvent*> elem;
     MemEvent * event;
     mshrType(MemEvent* ev) : elem(ev), event(ev) {}
     mshrType(Addr addr) : elem(addr) {}
@@ -49,7 +68,7 @@ struct mshrType {
 struct mshrEntry {
     vector<mshrType> mshrQueue; // Events and pointers to events for this address
     uint32_t        acksNeeded; // Acks needed for request at top of queue. Here instead of at cacheline for non-inclusive caches
-    vector<uint8_t> tempData;   // Temporary holding place for response data during replay of request events (for non-inclusive caches)
+    vector<uint8_t> dataBuffer;   // Temporary holding place for response data during replay of request events (for non-inclusive caches)
 };
 
 typedef map<Addr, mshrEntry >   mshrTable;
@@ -63,7 +82,7 @@ class MSHR {
 public:
         
     // used externally
-    MSHR(Output* dbg, int maxSize, string cacheName, bool debugAll, Addr debugAddr);                                     
+    MSHR(Output* dbg, int maxSize, string cacheName, std::set<Addr> debugAddr);
     bool exists(Addr baseAddr);                             
     vector<mshrType>* getAll(Addr);                       
     
@@ -90,19 +109,22 @@ public:
 
     // Bookkeeping getters/setters
     int getAcksNeeded(Addr baseAddr);
-    void setAcksNeeded(Addr baseAddr, int acksNeeded);
+    void setAcksNeeded(Addr baseAddr, int acksNeeded, MemEvent * event = nullptr);
     void incrementAcksNeeded(Addr baseAddr);
     void decrementAcksNeeded(Addr baseAddr);
-    vector<uint8_t> * getTempData(Addr baseAddr);
-    void setTempData(Addr baseAddr, vector<uint8_t>& data);
-    void clearTempData(Addr baseAddr);
+    vector<uint8_t> * getDataBuffer(Addr baseAddr);
+    void setDataBuffer(Addr baseAddr, vector<uint8_t>& data);
+    void clearDataBuffer(Addr baseAddr);
+    bool isDataBufferValid(Addr baseAddr);
 
     // used internally
     bool insert(Addr baseAddr, mshrType entry);         // internal
     bool insert(Addr keyAddr, Addr ptrAddr);         // internal
     bool insertInv(Addr baseAddr, mshrType entry, bool inProgress);         // internal
     bool removeElement(Addr baseAddr, mshrType entry);  // internal
-    
+
+    // debug
+    void printStatus(Output& out);
 
     // unimplemented or unused functions
     void printEntry(Addr baseAddr);                         // not implemented
@@ -119,8 +141,7 @@ private:
     int maxSize_;
     int prefetchCount_;
     string ownerName_;
-    bool DEBUG_ALL;
-    Addr DEBUG_ADDR;
+    std::set<Addr> DEBUG_ADDR;
 };
 }}
 #endif

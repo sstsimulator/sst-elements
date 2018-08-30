@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -36,6 +36,7 @@
 #include "c_BankStateRefresh.hpp"
 #include "c_BankState.hpp"
 #include "c_BankCommand.hpp"
+#include "c_Transaction.hpp"
 #include "c_BankInfo.hpp"
 #include "c_BankStateIdle.hpp"
 
@@ -58,7 +59,7 @@ c_BankStateRefresh::~c_BankStateRefresh() {
 
 // this function is called by the c_Bank that contains this state
 void c_BankStateRefresh::handleCommand(c_BankInfo* x_bank,
-		c_BankCommand* x_bankCommandPtr) {
+		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
 	std::cout << __PRETTY_FUNCTION__
 			<< " ERROR: should not receive a command in this state. This is a transitory state."
 			<< std::endl;
@@ -70,13 +71,10 @@ std::list<e_BankCommandType> c_BankStateRefresh::getAllowedCommands() {
 }
 
 // call this function every clock cycle
-void c_BankStateRefresh::clockTic(c_BankInfo* x_bank) {
-	if (1 < m_timer) {
+void c_BankStateRefresh::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
+	if (0 < m_timer) {
 		--m_timer;
 
-		// std::cout << "@@" << std::dec
-		// 		<< Simulation::getSimulation()->getCurrentSimCycle()
-		// 		<< ": m_timer = " << m_timer << std::endl;
 	} else {
 
 		auto l_p = new c_BankStateIdle(m_bankParams); // create pointer to the next state
@@ -84,39 +82,31 @@ void c_BankStateRefresh::clockTic(c_BankInfo* x_bank) {
 				e_BankCommandType::REF == m_prevCommandPtr->getCommandMnemonic());
 		// only cmd allowed to flow through to BankStateActive is ACT
 
-//		std::cout << "@@" << std::dec
-//				<< Simulation::getSimulation()->getCurrentSimCycle()
-//				<< ": m_timer = " << m_timer << std::endl;
-//		std::cout << __PRETTY_FUNCTION__ << " timer expired" << std::endl;
-//		std::cout << " for command ";
-//		m_prevCommandPtr->print();
-//		std::cout << std::endl;
-
 		m_prevCommandPtr->setResponseReady();
 
-		l_p->enter(x_bank, this, m_receivedCommandPtr);
+		l_p->enter(x_bank, this, m_receivedCommandPtr,x_cycle);
 	}
 }
 
 // call this function after receiving a command
 void c_BankStateRefresh::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-		c_BankCommand* x_cmdPtr) {
-//	 std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
+		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 
 	// Being in the refresh state does not make a REF cmd response ready.
 	// Therefore it is forwarded to BankStateIdle
 	m_prevCommandPtr = x_cmdPtr;
 	m_receivedCommandPtr = nullptr;
-	m_timer = m_bankParams->at("nRFC");
+	m_timer = m_bankParams->at("nRFC")-2;
 
 	m_allowedCommands.clear();
 	// this state should not have any allowed bank commands
 	// this is a transitory state
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = x_cycle;
 	x_bank->setNextCommandCycle(e_BankCommandType::REF,
 			std::max(
 					x_bank->getNextCommandCycle(e_BankCommandType::REF)
-							+ m_bankParams->at("nREFI"), l_time));
+							+ m_bankParams->at("nREFI")-1,
+					l_time + m_bankParams->at("nREFI"))-1);
 
 	x_bank->changeState(this);
 	if (nullptr != x_prevState)

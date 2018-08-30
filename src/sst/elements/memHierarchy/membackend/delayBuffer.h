@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,7 +17,7 @@
 #ifndef _H_SST_MEMH_DELAY_BUFFER
 #define _H_SST_MEMH_DELAY_BUFFER
 
-#include "membackend/memBackend.h"
+#include "sst/elements/memHierarchy/membackend/memBackend.h"
 #include <queue>
 
 namespace SST {
@@ -25,14 +25,26 @@ namespace MemHierarchy {
 
 class DelayBuffer : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(DelayBuffer, "memHierarchy", "DelayBuffer", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Delays requests by a specified time", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"verbose", "Sets the verbosity of the backend output", "0"},
+            {"backend", "Backend memory system", "memHierarchy.simpleMem"},
+            {"request_delay", "Constant delay to be added to requests with units (e.g., 1us)", "0ns"} )
+
+/* Begin class definition */
     DelayBuffer();
     DelayBuffer(Component *comp, Params &params);
 	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void handleNextRequest(SST::Event * ev);
     void setup();
     void finish();
-    void clock();
+    virtual bool clock(Cycle_t cycle);
     virtual const std::string& getClockFreq() { return backend->getClockFreq(); }
+    virtual bool isClocked() { return backend->isClocked(); }
 
 private:
     void handleMemReponse( ReqId id ) {

@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -19,8 +19,7 @@
 #ifndef COMPONENTS_MERLIN_GENERATORS_TRAFFICEGEN_H
 #define COMPONENTS_MERLIN_GENERATORS_TRAFFICEGEN_H
 
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/binomial_distribution.hpp>
+#include <cstdlib>
 
 #include <sst/core/rng/mersenne.h>
 #include <sst/core/rng/gaussian.h>
@@ -29,11 +28,13 @@
 #include <sst/core/rng/uniform.h>
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 
+#include "sst/elements/merlin/merlin.h"
 #include "sst/elements/merlin/linkControl.h"
 
 #define ENABLE_FINISH_HACK 0
@@ -44,6 +45,65 @@ namespace Merlin {
 class LinkControl;
 
 class TrafficGen : public Component {
+
+public:
+
+    SST_ELI_REGISTER_COMPONENT(
+        TrafficGen,
+        "merlin",
+        "trafficgen",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Pattern-based traffic generator.",
+        COMPONENT_CATEGORY_NETWORK)
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"id",                                    "Network ID of endpoint."},
+        {"num_peers",                             "Total number of endpoints in network."},
+        {"num_vns",                               "Number of requested virtual networks."},
+        {"link_bw",                               "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
+        {"topology",                              "Name of the topology subcomponent that should be loaded to control routing."},
+        {"buffer_length",                         "Length of input and output buffers.","1kB"},
+        {"packets_to_send",                       "Number of packets to send in the test.","1000"},
+        {"packet_size",                           "Packet size specified in either b or B (can include SI prefix).","5"},
+        {"delay_between_packets",                 "","0"},
+        {"message_rate",                          "","1GHz"},
+        {"PacketDest:pattern",                    "Address pattern to be used (NearestNeighbor, Uniform, HotSpot, Normal, Binomial)",NULL},
+        {"PacketDest:Seed",                       "Sets the seed of the RNG", "11" },
+        {"PacketDest:RangeMax",                   "Minumum address to send packets.","0"},
+        {"PacketDest:RangeMin",                   "Maximum address to send packets.","INT_MAX"},
+        {"PacketDest:NearestNeighbor:3DSize",     "For Nearest Neighbors, the 3D size \"x y z\" of the mesh", ""},
+        {"PacketDest:HotSpot:target",             "For HotSpot, which node is the target", ""},
+        {"PacketDest:HotSpot:targetProbability",  "For HotSpot, with what probability is the target targeted", ""},
+        {"PacketDest:Normal:Mean",                "In a normal distribution, the mean", ""},
+        {"PacketDest:Normal:Sigma",               "In a normal distribution, the mean variance", ""},
+        {"PacketDest:Binomial:Mean",              "In a binomial distribution, the mean", ""},
+        {"PacketDest:Binomial:Sigma",             "In a binomial distribution, the variance", ""},
+        {"PacketSize:pattern",                    "Address pattern to be used (Uniform, HotSpot, Normal, Binomial)",NULL},
+        {"PacketSize:Seed",                       "Sets the seed of the RNG", "11" },
+        {"PacketSize:RangeMax",                   "Minumum size of packets.","0"},
+        {"PacketSize:RangeMin",                   "Maximum size of packets.","INT_MAX"},
+        {"PacketSize:HotSpot:target",             "For HotSpot, the target packet size", ""},
+        {"PacketSize:HotSpot:targetProbability",  "For HotSpot, with what probability is the target targeted", ""},
+        {"PacketSize:Normal:Mean",                "In a normal distribution, the mean", ""},
+        {"PacketSize:Normal:Sigma",               "In a normal distribution, the mean variance", "1.0"},
+        {"PacketSize:Binomial:Mean",              "In a binomial distribution, the mean", ""},
+        {"PacketSize:Binomial:Sigma",             "In a binomial distribution, the variance", "0.5"},
+        {"PacketDelay:pattern",                   "Address pattern to be used (Uniform, HotSpot, Normal, Binomial)",NULL},
+        {"PacketDelay:Seed",                      "Sets the seed of the RNG", "11" },
+        {"PacketDelay:RangeMax",                  "Minumum delay between packets.","0"},
+        {"PacketDelay:RangeMin",                  "Maximum delay between packets.","INT_MAX"},
+        {"PacketDelay:HotSpot:target",            "For HotSpot, the target packet delay", ""},
+        {"PacketDelay:HotSpot:targetProbability", "For HotSpot, with what probability is the target targeted", ""},
+        {"PacketDelay:Normal:Mean",               "In a normal distribution, the mean", ""},
+        {"PacketDelay:Normal:Sigma",              "In a normal distribution, the mean variance", "1.0"},
+        {"PacketDelay:Binomial:Mean",             "In a binomial distribution, the mean", ""},
+        {"PacketDelay:Binomial:Sigma",            "In a binomial distribution, the variance", "0.5"}
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
+    )
+
 
 private:
 
@@ -60,7 +120,7 @@ private:
         virtual int getNextValue(void) = 0;
         virtual void seed(uint32_t val) = 0;
     };
-
+    
     class NearestNeighbor : public Generator {
         Generator *dist;
         int *neighbors;
@@ -88,8 +148,8 @@ private:
                     "Unsure how to deal with %d neighbors\n", numNeighbors);
             }
         }
-
-	int getNextValue(void)
+        
+        int getNextValue(void)
         {
             int neighbor = dist->getNextValue();
             return neighbors[neighbor];
@@ -196,7 +256,7 @@ private:
 
         void seed(uint32_t val)
         {
-	    gen = new MersenneRNG((unsigned int) val);
+            gen = new MersenneRNG((unsigned int) val);
         }
     };
 
@@ -209,8 +269,8 @@ private:
     public:
         NormalDist(int min, int max, double mean, double stddev) : minValue(min), maxValue(max)
         {
-	    gen = new MersenneRNG();
-	    dist = new SSTGaussianDistribution(mean, stddev);
+            gen = new MersenneRNG();
+            dist = new SSTGaussianDistribution(mean, stddev);
         }
 
 	~NormalDist() {
@@ -228,26 +288,25 @@ private:
 
         void seed(uint32_t val)
         {
-	    gen = new MersenneRNG((unsigned int) val);
+            gen = new MersenneRNG((unsigned int) val);
         }
     };
 
     class BinomialDist : public Generator {
-        boost::random::mt19937 gen;
-        boost::random::binomial_distribution<> dist;
         int minValue;
     public:
         BinomialDist(int min, int max, int trials, float probability) : minValue(min)
         {
-            dist = boost::random::binomial_distribution<>(trials, probability);
+            merlin_abort.fatal(CALL_INFO, -1, "BinomialDist is not currently supported\n");
         }
         virtual int getNextValue(void)
         {
-            return dist(gen) + minValue;
+            // return dist(gen) + minValue;
+            return 0;
         }
         virtual void seed(uint32_t val)
         {
-            gen.seed(val);
+            // gen.seed(val);
         }
     };
 

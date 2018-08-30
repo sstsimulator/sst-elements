@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,6 +34,7 @@
 #include "emberconstdistrib.h"
 #include "embercomputeev.h"
 #include "emberdetailedcomputeev.h"
+#include "libs/emberLib.h"
 
 namespace SST {
 namespace Ember {
@@ -65,11 +66,11 @@ class EmberGenerator : public SubComponent {
 
     virtual bool primary( ) { return true; }
 
-   virtual std::string getComputeModelName() {
-       return "";
-   }
+    virtual std::string getComputeModelName() {
+        return "";
+    }
+    EmberLib* getLib(std::string name );
 
-  protected:
 
     Output& getOutput() { return *m_output; }
     void verbose(uint32_t line, const char* file, const char* func,
@@ -154,7 +155,7 @@ void EmberGenerator::enQ_detailedCompute( Queue& q, std::string name,
 void EmberGenerator::enQ_memAlloc( Queue& q, Hermes::MemAddr* addr, size_t length )
 {
     assert( m_memHeapLink );
-    addr->backing = memAlloc(length);
+    addr->setBacking( memAlloc(length) );
     q.push( new EmberMemAllocEvent( *m_memHeapLink, &getOutput(), addr, length  ) );
 }
 

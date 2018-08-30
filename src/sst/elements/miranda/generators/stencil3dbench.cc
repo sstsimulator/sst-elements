@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -95,10 +95,11 @@ void Stencil3DBenchGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q
 				MemoryOpRequest* read_z = new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY + 1, currentZ + 1), datawidth, READ);
 				MemoryOpRequest* read_zz = new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY + 1, currentZ + 1), datawidth, READ);
 
-				MemoryOpRequest* write_a = new MemoryOpRequest( (nX * nY * nZ * datawidth) +
-					                            datawidth * convertPositionToIndex(curX    , curY    , currentZ    ), datawidth, WRITE);
 
-				write_a->addDependency(read_a->getRequestID());
+                                MemoryOpRequest* write_a = new MemoryOpRequest( (nX * nY * nZ * datawidth) +
+                                        datawidth * convertPositionToIndex(curX    , curY    , currentZ    ), datawidth, WRITE);
+				
+                                write_a->addDependency(read_a->getRequestID());
 				write_a->addDependency(read_b->getRequestID());
 				write_a->addDependency(read_c->getRequestID());
 				write_a->addDependency(read_d->getRequestID());

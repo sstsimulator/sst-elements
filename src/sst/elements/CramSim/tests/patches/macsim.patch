@@ -1,0 +1,129 @@
+diff --git libmacsimComponent.cc libmacsimComponent.cc
+index 589f1d0..ec84d15 100644
+--- libmacsimComponent.cc
++++ libmacsimComponent.cc
+@@ -1,6 +1,6 @@
+ #include <sst_config.h>
+ 
+-#include "sst/core/serialization.h"
++//#include "sst/core/serialization.h"
+ #include "sst/core/element.h"
+ #include "sst/core/component.h"
+ 
+diff --git macsimComponent.cpp macsimComponent.cpp
+index f546b6a..c20c2f0 100644
+--- macsimComponent.cpp
++++ macsimComponent.cpp
+@@ -3,7 +3,7 @@
+ #include <stdint.h>
+ 
+ #include <sst_config.h>
+-#include <sst/core/serialization/element.h>
++//#include <sst/core/serialization/element.h>
+ #include <sst/core/element.h>
+ #include <sst/core/simulation.h>
+ #include <sst/core/params.h>
+@@ -32,37 +32,37 @@ macsimComponent::macsimComponent(ComponentId_t id, Params& params) : Component(i
+ {
+   m_dbg = new Output();
+ 
+-  int debug_level = params.find_integer("debug_level", DebugLevel::ERROR);
++  int debug_level = params.find<int>("debug_level", DebugLevel::ERROR);
+   if (debug_level < DebugLevel::ERROR || debug_level > DebugLevel::L6) 
+     m_dbg->fatal(CALL_INFO, -1, "Debugging level must be between 0 and 9. \n");
+ 
+-  m_debug_addr = (uint64_t)params.find_integer("debug_addr", -1);
++  m_debug_addr = (uint64_t)params.find<uint64_t>("debug_addr", -1);
+   if (m_debug_addr == -1)
+     m_debug_all = true;
+ 
+   string prefix = "[" + getName() + "] ";
+-  m_dbg->init(prefix, debug_level, 0, (Output::output_location_t)params.find_integer("debug", Output::NONE));
++  m_dbg->init(prefix, debug_level, 0, (Output::output_location_t)params.find<int>("debug", Output::NONE));
+   MSC_DEBUG("------- Initializing -------\n");
+ 
+-  if (params.find("param_file") == params.end())
++  if (params.find<std::string>("param_file").empty())
+     m_dbg->fatal(CALL_INFO, -1, "Couldn't find params.in file\n");
+-  if (params.find("trace_file") == params.end()) 
++  if (params.find<std::string>("trace_file").empty())
+     m_dbg->fatal(CALL_INFO, -1, "Couldn't find trace_file_list file\n");
+-  if (params.find("output_dir") == params.end()) 
++  if (params.find<std::string>("output_dir").empty())
+     m_dbg->fatal(CALL_INFO, -1, "Couldn't find statistics output directory parameter");
+ 
+-  m_param_file = string(params["param_file"]);
+-  m_trace_file = string(params["trace_file"]);
+-  m_output_dir = string(params["output_dir"]);
++  m_param_file = params.find<std::string>("param_file");
++  m_trace_file =  params.find<std::string>("trace_file");
++  m_output_dir = params.find<std::string>("output_dir");
+ 
+-  if (params.find("command_line") != params.end()) 
+-    m_command_line = string(params["command_line"]);
++  if (!params.find<std::string>("command_line").empty())
++    m_command_line = params.find<std::string>("command_line");
+ 
+-  m_ptx_core = params.find_integer("ptx_core", 0);
+-  m_num_link = params.find_integer("num_link", 1);
++  m_ptx_core = params.find<int>("ptx_core", 0);
++  m_num_link = params.find<int>("num_link", 1);
+   configureLinks(params);
+ 
+-  m_cube_connected = params.find_integer("cube_connected", 0);
++  m_cube_connected = params.find<int>("cube_connected", 0);
+   if (m_cube_connected) {
+     m_cube_link = dynamic_cast<Interfaces::SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
+     if (!m_cube_link) m_dbg->fatal(CALL_INFO, -1, "Unable to load Module as memory\n");
+@@ -71,10 +71,10 @@ macsimComponent::macsimComponent(ComponentId_t id, Params& params) : Component(i
+     m_cube_link = NULL;
+   }
+ 
+-  string clock_freq = params.find_string("frequency", "1GHz");
++  string clock_freq = params.find<std::string>("frequency", "1GHz");
+   registerClock(clock_freq, new Clock::Handler<macsimComponent>(this, &macsimComponent::ticReceived));
+ 
+-  m_mem_size = params.find_integer("mem_size", 1*1024*1024*1024);
++  m_mem_size = params.find<int>("mem_size", 1*1024*1024*1024);
+   MSC_DEBUG("Size of memory address space: 0x%" PRIx64 "\n", m_mem_size);
+ 
+   registerAsPrimaryComponent();
+@@ -86,7 +86,7 @@ macsimComponent::macsimComponent(ComponentId_t id, Params& params) : Component(i
+   // When MASTER mode, MacSim begins execution right away.
+   // When SLAVE mode, MacSim awaits trigger event to arrive, which will cause MacSim to begin execution of a specified kernel.
+   //   Upon completion, MacSim will return an event to another SST component.
+-  m_operation_mode = params.find_integer("operation_mode", MASTER);
++  m_operation_mode = params.find<int>("operation_mode", MASTER);
+   if (m_operation_mode == MASTER) {
+     m_triggered = true;
+     m_ipc_link = NULL;
+diff --git macsimEvent.h macsimEvent.h
+index 64b443d..51c208d 100644
+--- macsimEvent.h
++++ macsimEvent.h
+@@ -1,5 +1,6 @@
+ #ifndef MACSIM_EVENT_H
+ #define MACSIM_EVENT_H
++#include <sst/core/event.h>
+ 
+ namespace SST { namespace MacSim {
+ 
+@@ -13,9 +14,17 @@ class MacSimEvent : public SST::Event {
+     MacSimEventType getType() { return m_type; }
+     void setType(MacSimEventType type) { m_type = type; }
+ 
+-  private:
++     private:
+     MacSimEventType m_type;
+ 
++    public:
++    void serialize_order(SST::Core::Serialization::serializer &ser) {
++        Event::serialize_order(ser);
++        ser & m_type;
++    }
++
++    ImplementSerializable(SST::MacSim::MacSimEvent);
++
+ }; // class MacSimEvent
+ }}
+ #endif //MACSIM_EVENT_H

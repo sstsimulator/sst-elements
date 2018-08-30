@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2016, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,23 +25,22 @@ void CommCreateFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     CommCreateStartEvent* event = static_cast< CommCreateStartEvent* >(e);
     assert( event );
     
-    m_dbg.verbose(CALL_INFO,1,0,"oldGroup=%d\n", event->oldComm );
-    m_dbg.verbose(CALL_INFO,1,0,"nRaks=%lu\n", 
-                event->nRanks );
+    m_dbg.debug(CALL_INFO,1,0,"oldGroup=%d\n", event->oldComm );
+    m_dbg.debug(CALL_INFO,1,0,"nRaks=%lu\n", event->nRanks );
 
-    Group* oldGrp = m_info->getGroup( event->oldComm);
+    Group* oldGrp = m_info->getGroup( event->oldComm );
     assert(oldGrp);
 
     uint32_t cnt = oldGrp->getSize();
 
-    m_dbg.verbose(CALL_INFO,1,0,"old grpSize=%d\n", cnt );
+    m_dbg.debug(CALL_INFO,1,0,"old grpSize=%d\n", cnt );
 
     *event->newComm = m_info->newGroup(); 
     Group* newGroup = m_info->getGroup( *event->newComm );
     assert( newGroup );
 
     for ( size_t i = 0; i < event->nRanks; i++ ) {
-        m_dbg.verbose(CALL_INFO,1,0,"i=%lu %d \n", i, event->ranks[i] );
+        m_dbg.debug(CALL_INFO,1,0,"i=%lu %d \n", i, event->ranks[i] );
 
         newGroup->initMapping( i, oldGrp->getMapping( event->ranks[i]), 1 ); 
 
@@ -50,16 +49,19 @@ void CommCreateFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
         }
 
     }  
-    delete event;
 
-    BarrierStartEvent* tmp = new BarrierStartEvent( MP::GroupWorld  );
+    m_dbg.debug(CALL_INFO,1,0,"newGroup=%d size=%d\n", *event->newComm, newGroup->getSize() );
+
+    BarrierStartEvent* tmp = new BarrierStartEvent( event->oldComm  );
+
+    delete event;
 
     BarrierFuncSM::handleStartEvent(static_cast<SST::Event*>(tmp), retval );
 }
 
 void CommCreateFuncSM::handleEnterEvent( Retval& retval )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
     BarrierFuncSM::handleEnterEvent( retval );
 
 }

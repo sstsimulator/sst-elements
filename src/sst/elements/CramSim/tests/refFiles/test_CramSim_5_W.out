@@ -1,5 +1,6 @@
 Config file: ddr4_verimem.cfg
-Trace file: tests/sst-CramSim-trace_verimem_5_W.trc
+Trace file: traces/sst-CramSim-trace_verimem_5_W.trc
+Address map string: _r_l_R_B_b_h_
 Attaching Channel0 to Rank0
 Attaching Channel0 to Rank1
 Deleting DIMM

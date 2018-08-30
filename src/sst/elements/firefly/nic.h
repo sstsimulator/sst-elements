@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2016, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,385 +17,212 @@
 #ifndef COMPONENTS_FIREFLY_NIC_H 
 #define COMPONENTS_FIREFLY_NIC_H 
 
+#include <math.h>
 #include <sstream>
+#include <sst/core/elementinfo.h>
 #include <sst/core/module.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 #include <sst/core/link.h>
 
+#include "sst/elements/hermes/shmemapi.h"
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
+#include "memoryModel/simpleMemoryModel.h"
+
+#define CALL_INFO_LAMBDA     __LINE__, __FILE__
 
 namespace SST {
 namespace Firefly {
+
+#include "nicEvents.h"
 
 #define NIC_DBG_DMA_ARBITRATE 1<<1
 #define NIC_DBG_DETAILED_MEM 1<<2
 #define NIC_DBG_SEND_MACHINE 1<<3
 #define NIC_DBG_RECV_MACHINE 1<<4
+#define NIC_DBG_SHMEM        1<<5 
+#define NIC_DBG_SEND_NETWORK 1<<6
+#define NIC_DBG_RECV_CTX     1<<7
+#define NIC_DBG_RECV_STREAM  1<<8
+#define NIC_DBG_RECV_MOVE    1<<9
+#define NIC_DBG_LINK_CTRL    1<<10
 
-typedef std::function<void()> Callback;
-
-class NicInitEvent : public Event {
-
-  public:
-    int node;
-    int vNic;
-    int num_vNics;
-
-	NicInitEvent() :
-		Event() {}
-
-    NicInitEvent( int _node, int _vNic, int _num_vNics ) :
-        Event(),
-        node( _node ),
-        vNic( _vNic ),
-        num_vNics( _num_vNics )
-    {
-    }
-
-public:	
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
-        Event::serialize_order(ser);
-        ser & node;
-        ser & vNic;
-        ser & num_vNics;
-    }
-    
-    ImplementSerializable(SST::Firefly::NicInitEvent);     
-};
-
-class NicCmdEvent : public Event {
-
-  public:
-    enum Type { PioSend, DmaSend, DmaRecv, Put, Get, RegMemRgn } type;
-    int  node;
-	int dst_vNic;
-    int tag;
-    std::vector<IoVec> iovec;
-    void* key;
-
-    NicCmdEvent( Type _type, int _vNic, int _node, int _tag,
-            std::vector<IoVec>& _vec, void* _key ) :
-        Event(),
-        type( _type ),
-        node( _node ),
-		dst_vNic( _vNic ),  
-        tag( _tag ),
-        iovec( _vec ),
-        key( _key )
-    {
-    }
-
-    NotSerializable(NicCmdEvent)
-};
-
-class NicRespEvent : public Event {
-
-  public:
-    enum Type { PioSend, DmaSend, DmaRecv, Put, Get, NeedRecv } type;
-    int src_vNic;
-    int node;
-    int tag;
-    int len;
-    void* key;
-
-    NicRespEvent( Type _type, int _vNic, int _node, int _tag,
-            int _len, void* _key ) :
-        Event(),
-        type( _type ),
-        src_vNic( _vNic ),
-        node( _node ),
-        tag( _tag ),
-        len( _len ),
-        key( _key )
-    {
-    }
-
-    NicRespEvent( Type _type, int _vNic, int _node, int _tag,
-            int _len ) :
-        Event(),
-        type( _type ),
-        src_vNic( _vNic ),
-        node( _node ),
-        tag( _tag ),
-        len( _len )
-    {
-    }
-
-    NicRespEvent( Type _type, void* _key ) :
-        Event(),
-        type( _type ),
-        key( _key )
-    {
-    }
-
-    NotSerializable(NicRespEvent)
-};
+#define STREAM_NUM_SIZE 12
 
 class Nic : public SST::Component  {
 
   public:
+    SST_ELI_REGISTER_COMPONENT(
+        Nic,
+        "firefly",
+        "nic",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        COMPONENT_CATEGORY_SYSTEM
+        )
+    SST_ELI_DOCUMENT_PARAMS(
+        { "nid", "node id on network", "-1"},
+        { "verboseLevel", "Sets the output verbosity of the component", "0"},
+        { "verboseMask", "Sets the output mask of the component", "-1"},
+        { "nic2host_lat", "Sets the latency over the Host to NIC bus", "150ns"},
+        { "rxMatchDelay_ns", "Sets the delay for a receive match", "100"},
+        { "txDelay_ns", "Sets the delay for a send", "100"},
+        { "hostReadDelay_ns", "Sets the delay for a read from the host", "200"},
+        { "shmemRxDelay_ns", "Sets the delay for a SHMEM receive operation", "0"},
+        { "num_vNics", "Sets number of cores", "1"},
+        { "tracedPkt", "packet to trace", "-1"},
+        { "tracedNode", "node to trace", "-1"},
+        { "numShmemCmdSlots", "Sets the size of the Host to NIC SHMEM command queue", "32"},
+        { "maxSendMachineQsize", "Sets the number of pending memory operations", "1"},
+        { "maxRecvMachineQsize", "Sets the number of pending memory operations", "1"},
+        { "shmemSendAlignment", "Sets the send stream transfer alignment", "64"},
+        { "numSendMachines", "Sets the number of send machines", "1"},
+        { "numRecvNicUnits", "Sets the number of receive units", "1"},
+        { "packetOverhead", "Sets the overhead of a network packet", "0"},
+        { "packetSize", "Sets the size of the network packet in bytes", "64"},
+        { "input_buf_size", "Sets the buffer size of the link connected to the router", "128"},
+        { "output_buf_size", "Sets the buffer size of the link connected to the router", "128"},
+        { "link_bw", "Sets the bandwidth of link connected to the router", "500Mhz"},
+        { "module", "Sets the link control module", "merlin.linkcontrol"},
+        { "rtrPortName", "Port connected to the router", "rtr"},
+        { "corePortName", "Port connected to the core", "core"},
+
+        { "useSimpleMemoryModel", "If set to 1 use the simple memory model", "0"},
+
+        { "dmaBW_GBs", "set the one way DMA bandwidth", "100"},
+        { "dmaContentionMult", "set the DMA contention mult", "100"},
+
+        { "simpleMemoryModel.verboseLevel","Sets the verbosity level of output","0"},
+        { "simpleMemoryModel.verboseMask","Set the output mask","-1"},
+
+        { "simpleMemoryModel.memReadLat_ns","Sets the latency for a memory read","150"},
+        { "simpleMemoryModel.memWriteLat_ns","Sets the latency for a memory write","150"},
+        { "simpleMemoryModel.memNumSlots","Sets the max number of outstanding memory operations","10"},
+
+        { "simpleMemoryModel.nicNumLoadSlots","Sets the max number of outstanding loads for units on the NIC","32"},
+        { "simpleMemoryModel.nicNumStoreSlots","Sets the max number of outstanding stores for the units on the NIC","32"},
+        { "simpleMemoryModel.hostNumLoadSlots","Sets the max number of outstanding loads for the units on the Host","32"},
+        { "simpleMemoryModel.hostNumStoreSlots","Sets the max number of outstanding stores for the units on the Host","32"},
+
+        { "simpleMemoryModel.busBandwidth_Gbs","Sets the Host to NIC bus link bandwidth","7.8"},
+        { "simpleMemoryModel.busNumLinks","Sets the number of Host to NIC bus links","16"},
+        { "simpleMemoryModel.busLatency","Set the Host to NIC bus overhead","0"},
+        { "simpleMemoryModel.DLL_bytes","Sets the number of bytes of overhead for a packet at the data link level","16"},
+        { "simpleMemoryModel.TLP_overhead","Sets the number of bytes of overhead for a packet at the transaction level","30"},
+        { "simpleMemoryModel.nicToHostMTU","Sets the size the MTU between the Host and NIC","256"},
+        { "simpleMemoryModel.widgetSlots","Set the depth of queues between the Host to NIC bus and the cache","64"},
+
+        { "simpleMemoryModel.hostCacheUnitSize","Sets the number of slots in the Host cache","32"},
+        { "simpleMemoryModel.hostCacheNumMSHR","Sets the max number of outstanding request to memory","10"},
+        { "simpleMemoryModel.hostCacheLineSize","Sets the cache line size","64"},
+
+
+        { "simpleMemoryModel.tlbPageSize","Sets the TLB page size","2097152"},
+        { "simpleMemoryModel.tlbSize","Sets the number of slots in the TLB","0"},
+        { "simpleMemoryModel.tlbMissLat_ns","Sets the latency for a TLB miss","0"},
+        { "simpleMemoryModel.numWalkers","Sets the number of outsanding TLB misses","1"},
+        { "simpleMemoryModel.numTlbSlots","Sets the number of requests the TLB will queue","1"},
+    )
+
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr", "Port connected to the router", {}},
+        {"read", "Port connected to the detailed model", {}},
+        {"write", "Port connected to the detailed model", {}},
+        {"core%(num_vNics)d", "Ports connected to the network driver", {}},
+    ) 
+
+  private:
+    typedef unsigned RespKey_t;
+	class LinkControlWidget {
+
+        typedef std::function<void()> Callback;
+	  public:
+		LinkControlWidget( Output& output, Callback callback ) : m_dbg(output), m_notifiers(1,NULL), m_num(0), m_callback(callback) {
+		}
+
+		inline bool notify( int vn ) {
+        	m_dbg.debug(CALL_INFO,1,NIC_DBG_LINK_CTRL,"Widget vn=%d\n",vn);
+			if ( m_notifiers[vn] ) {
+       			m_dbg.debug(CALL_INFO,1,NIC_DBG_LINK_CTRL,"Widget call notifier, number still installed %d\n", m_num -1);
+				m_notifiers[vn]();
+				m_notifiers[vn] = NULL;
+				--m_num;
+			}
+
+			return m_num > 0; 
+		}
+
+		inline void setNotify( std::function<void()> notifier, int vn ) {
+        	m_dbg.debug(CALL_INFO,1, NIC_DBG_LINK_CTRL,"Widget vn=%d, number now installed %d\n",vn,m_num+1);
+			if ( m_num == 0 ) {
+                m_callback();
+			}
+			assert( m_notifiers[vn] == NULL );
+			m_notifiers[vn] = notifier;
+			++m_num;
+		}
+
+	  private:
+        Callback m_callback;
+        Output& m_dbg;
+		int m_num;
+		std::vector< std::function<void()> > m_notifiers;
+	};
+
+  public:
+
     typedef uint32_t NodeId;
     static const NodeId AnyId = -1;
 
+	typedef SimpleMemoryModel::MemOp MemOp;
+
   private:
 
-    struct MsgHdr {
-        enum Op { Msg, Rdma } op;
+    struct __attribute__ ((packed)) MsgHdr {
+        enum Op : unsigned char { Msg, Rdma, Shmem } op;
+    };
+
+    struct __attribute__ ((packed)) MatchMsgHdr {
         size_t len;
         int    tag;
-        unsigned short    dst_vNicId;
-        unsigned short    src_vNicId;
     };
 
-    class Entry;
-    class SelfEvent : public SST::Event {
-      public:
+    struct __attribute__ ((packed)) ShmemMsgHdr {
+        ShmemMsgHdr() : op2(0) {}
+        uint64_t vaddr;
+        uint32_t length;
+        enum Op { Ack, Put, Get, GetResp, Add, Fadd, Swap, Cswap };
+        unsigned char op : 3; 
+        unsigned char op2 : 3; 
+        unsigned char dataType : 3;
+        uint32_t respKey : 24;
 
-        SelfEvent( Entry* entry) : 
-            entry(entry), callback(NULL) {}
-        SelfEvent( Callback _callback ) :
-            entry(NULL), callback( _callback) {}
-        
-        Entry*              entry;
-        Callback            callback;
-        
-        NotSerializable(SelfEvent)
-    };
-
-    #include "nicVirtNic.h" 
-
-    class MemRgnEntry {
-      public:
-        MemRgnEntry( int _vNicNum, std::vector<IoVec>& iovec ) : 
-            m_vNicNum( _vNicNum ),
-            m_iovec( iovec )
-        { }
-
-        std::vector<IoVec>& iovec() { return m_iovec; } 
-        int vNicNum() { return m_vNicNum; }
-
-      private:
-        int          m_vNicNum;
-        std::vector<IoVec>  m_iovec;
-        
-    };
-
-    template < class TRetval = void  >
-    class NotifyFunctorBase {
-    public:
-        virtual TRetval operator()() = 0;
-        virtual ~NotifyFunctorBase() {}
-    };
-
-    template < class T1, class A1, class TRetval = void >
-    class NotifyFunctor_1 : public NotifyFunctorBase< TRetval > {
-      private:
-        T1* m_obj;
-        TRetval ( T1::*m_fptr )( A1 );
-        A1 m_a1;
-
-      public:
-        NotifyFunctor_1( T1* obj, TRetval (T1::*fptr)(A1), A1 a1 ) :
-            m_obj( obj ),
-            m_fptr( fptr ), 
-            m_a1( a1 )
-        {}
-
-        virtual TRetval operator()( ) {
-            return (*m_obj.*m_fptr)( m_a1  );
-        }
-    };
-
-    template < class T1, class A1, class A2, class TRetval = void >
-    class NotifyFunctor_2 : public NotifyFunctorBase< TRetval > {
-      private:
-        T1* m_obj;
-        TRetval ( T1::*m_fptr )( A1, A2 );
-        A1 m_a1;
-        A2 m_a2;
-
-      public:
-        NotifyFunctor_2( T1* obj, TRetval (T1::*fptr)(A1,A2), A1 a1, A2 a2 ) :
-            m_obj( obj ),
-            m_fptr( fptr ), 
-            m_a1( a1 ),
-            m_a2( a2 )
-        {}
-
-        virtual TRetval operator()( ) {
-            return (*m_obj.*m_fptr)( m_a1, m_a2  );
-        }
-    };
-
-    template < class T1, class A1, class A2, class A3, class A4, class A5, 
-                    class A6, class TRetval = void >
-    class NotifyFunctor_6 : public NotifyFunctorBase< TRetval > {
-      private:
-        T1* m_obj;
-        TRetval ( T1::*m_fptr )( A1, A2, A3, A4, A5, A6 );
-        A1 m_a1;
-        A2 m_a2;
-        A3 m_a3;
-        A4 m_a4;
-        A5 m_a5;
-        A6 m_a6; 
-
-      public:
-        NotifyFunctor_6( T1* obj, TRetval (T1::*fptr)(A1, A2, A3, A4, A5, A6 ),
-                 A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6 ) :
-            m_obj( obj ),
-            m_fptr( fptr ), 
-            m_a1( a1 ),
-            m_a2( a2 ),
-            m_a3( a3 ),
-            m_a4( a4 ),
-            m_a5( a5 ),
-            m_a6( a6 )
-        {}
-
-        virtual TRetval operator()( ) {
-            return (*m_obj.*m_fptr)( m_a1, m_a2, m_a3, m_a4, m_a5, m_a6  );
-        }
-    };
-
-    class Entry {
-      public:
-        Entry( int local_vNic, NicCmdEvent* cmd = NULL ) :
-            currentVec(0),
-            currentPos(0),
-            currentLen(0),
-            m_cmdEvent( cmd ),
-            m_local_vNic( local_vNic ),
-            m_ioVec( NULL ),
-            m_notifyFunctor( NULL )
-        {
-        }
-        virtual ~Entry() { 
-            if ( m_cmdEvent ) delete m_cmdEvent; 
-            if ( m_notifyFunctor ) delete m_notifyFunctor;
-        }
-
-        int local_vNic()   { return m_local_vNic; }
-
-        std::vector<IoVec>& ioVec() { 
-            assert(m_ioVec);
-            return *m_ioVec; 
-        }
-
-        size_t totalBytes() {
-            assert(m_ioVec);
-            size_t bytes = 0;
-            for ( unsigned int i = 0; i < m_ioVec->size(); i++ ) {
-                bytes += m_ioVec->at(i).len; 
-            } 
-            return bytes;
-        }
-
-        size_t      currentVec;
-        size_t      currentPos;  
-        size_t      currentLen; 
-        virtual void* key() { 
-            assert( m_cmdEvent );
-            return m_cmdEvent->key; 
-        }
-
-        virtual int node() {
-            assert( m_cmdEvent );
-            return m_cmdEvent->node;
-        }
-        void setNotifier( NotifyFunctorBase<>* notifier) {
-            m_notifyFunctor = notifier;
-        }
-        void notify() {
-            if ( m_notifyFunctor ) {
-                (*m_notifyFunctor)(); 
+        std::string getOpStr( ) {
+            switch(op){
+            case Ack:
+                return "Ack";
+            case Put:
+                return "Put";
+            case Get:
+                return "Get";
+            case GetResp:
+                return "GetResp";
+            case Add:
+                return "Add";
+            case Fadd:
+                return "Fadd";
+            case Swap:
+                return "Swap";
+            case Cswap:
+                return "Cswap";
+            default:
+                assert(0);
             }
         }
-        bool isDone() {
-            return ( currentVec == ioVec().size() );
-        }
-        
-      protected:
-        NicCmdEvent*        m_cmdEvent;
-        int                 m_local_vNic;
-        std::vector<IoVec>* m_ioVec;
-
-      private:
-        NotifyFunctorBase<>* m_notifyFunctor;
     };
-
-    class SendEntry: public Entry {
-      public:
-
-        SendEntry( int local_vNic, NicCmdEvent* cmd = NULL ) : 
-            Entry( local_vNic, cmd )
-        {
-            m_ioVec = &m_cmdEvent->iovec;
-        }
-
-        virtual ~SendEntry() {
-        }
-
-        virtual MsgHdr::Op getOp() {
-            return MsgHdr::Msg;
-        }
-
-        virtual int tag()       { return m_cmdEvent->tag; }
-        virtual int dst_vNic( ) { return m_cmdEvent->dst_vNic; } 
-        virtual int type()      { return m_cmdEvent->type; }
-    };
-
-    class RecvEntry: public Entry {
-
-      public:
-        RecvEntry( int local_vNic, NicCmdEvent* cmd = NULL ) : 
-            Entry( local_vNic, cmd) 
-        {
-            if ( cmd ) {
-                m_ioVec = &cmd->iovec;  
-            }
-        }
-        virtual ~RecvEntry() {
-        }
-
-        void setMatchInfo( int src, MsgHdr& hdr ) { 
-            m_matchSrc = src;
-            m_matchHdr = hdr; 
-        } 
-
-        int match_src()    { return m_matchSrc; }
-        virtual int match_tag()    { return m_matchHdr.tag; }  
-        virtual size_t match_len() { return m_matchHdr.len; }  
-        int src_vNic()     { return m_matchHdr.src_vNicId; }
-
-      private:
-        int                 m_matchSrc;
-        MsgHdr              m_matchHdr;
-    };
-
-    class PutRecvEntry : public RecvEntry {
-      public:
-        PutRecvEntry( int local_vNic, std::vector<IoVec>* ioVec ) :
-            RecvEntry( local_vNic ),
-            m_recvVec(*ioVec)
-        {
-            m_ioVec = &m_recvVec;
-        }
-
-        virtual ~PutRecvEntry() {
-        }
-
-        int match_tag() { return -1; }
-        size_t match_len() { return totalBytes(); }
-
-      private:
-//        void* m_key;
-        std::vector<IoVec> m_recvVec;
-    };
-
     struct RdmaMsgHdr {
         enum { Put, Get, GetResp } op;
         uint16_t    rgnNum;
@@ -403,211 +230,98 @@ class Nic : public SST::Component  {
         uint32_t    offset;
     };
 
-    class GetOrgnEntry : public SendEntry {
+    class EntryBase;
+    class SelfEvent : public SST::Event {
       public:
-        GetOrgnEntry( int local_vNic, NicCmdEvent* cmd, int respKey ) :
-            SendEntry( local_vNic, cmd ),
-            m_rdmaVec( 1 ) 
-        { 
-            m_hdr.respKey = respKey;
-            m_hdr.rgnNum = cmd->tag; 
-            m_hdr.offset = -1;
-            m_hdr.op = RdmaMsgHdr::Get;
-            m_rdmaVec[0].addr.simVAddr = 100;
-            m_rdmaVec[0].addr.backing = &m_hdr;
-            m_rdmaVec[0].len = sizeof( m_hdr );
-            m_ioVec = &m_rdmaVec;
-        }
 
-        virtual ~GetOrgnEntry() {
-        }
+		enum { Callback, Event } type;
+        typedef std::function<void()> Callback_t;
 
-        virtual MsgHdr::Op getOp() {
-            return MsgHdr::Rdma;
-        }
+        SelfEvent( Callback_t callback ) :
+            type(Callback), callback( callback) {}
+        SelfEvent( SST::Event* ev,  int linkNum  ) :
+            type(Event), event( ev), linkNum(linkNum) {}
         
-      private:
-        RdmaMsgHdr          m_hdr;
-        std::vector<IoVec>  m_rdmaVec; 
+        void*              entry;
+        Callback_t         callback;
+		SST::Event*        event;
+		int				   linkNum;
+        
+        NotSerializable(SelfEvent)
     };
 
-    class PutOrgnEntry : public SendEntry {
+    class MemRgnEntry {
       public:
-        PutOrgnEntry( int local_vNic, int dst_node,int dst_vNic,
-                int respKey, MemRgnEntry* memRgn ) :
-            SendEntry( local_vNic ),
-            m_dst_node( dst_node ),
-            m_dst_vNic( dst_vNic ), 
-            m_memRgn( memRgn )
-        {
-            m_putVec.resize(1);
-            m_hdr.respKey = respKey;
-            m_hdr.op = RdmaMsgHdr::GetResp;
-            m_putVec[0].addr.simVAddr = 101;
-            m_putVec[0].addr.backing = &m_hdr;
-            m_putVec[0].len = sizeof(m_hdr);
-            for ( unsigned int i = 0; i < memRgn->iovec().size(); i++ ) {
-                m_putVec.push_back( memRgn->iovec()[i] );
-            }
+        MemRgnEntry( std::vector<IoVec>& iovec ) : 
+            m_iovec( iovec )
+        { }
 
-            m_ioVec = &m_putVec;
-        }
-        ~PutOrgnEntry() {
-            delete m_memRgn;
-        }
-
-        virtual MsgHdr::Op getOp() {
-            return MsgHdr::Rdma;
-        }
-        virtual int tag() { return -1; }
-        virtual int dst_vNic() { return m_dst_vNic; }
-        virtual int node() { return m_dst_node; }
-        virtual int type() { return NicCmdEvent::Put; }
+        std::vector<IoVec>& iovec() { return m_iovec; } 
 
       private:
-        int                 m_dst_node;
-        int                 m_dst_vNic;
-        MemRgnEntry*        m_memRgn;
-        RdmaMsgHdr          m_hdr;
-        std::vector<IoVec>  m_putVec;
+        std::vector<IoVec>  m_iovec;
+        
     };
 
-	struct DmaVec {
-		uint64_t addr;
-		size_t   length;
-	};
-
+    #include "nicVirtNic.h" 
+    #include "nicShmem.h"
+    #include "nicShmemMove.h" 
+    #include "nicEntryBase.h"
+    #include "nicSendEntry.h"
+    #include "nicShmemSendEntry.h" 
+    #include "nicRecvEntry.h"
     #include "nicSendMachine.h"
     #include "nicRecvMachine.h"
     #include "nicArbitrateDMA.h"
+    #include "nicUnitPool.h"
 
 public:
 
+    typedef std::function<void()> Callback;
     Nic(ComponentId_t, Params& );
     ~Nic();
 
     void init( unsigned int phase );
     int getNodeId() { return m_myNodeId; }
     int getNum_vNics() { return m_num_vNics; }
-    void printStatus(Output &out);
+    void printStatus(Output &out) {
+        out.output("NIC %d: start time=%zu\n", m_myNodeId, (size_t) getCurrentSimTimeNano() );
+        out.output("NIC %d: Received packets: %d\n", m_myNodeId, m_recvMachine->getNumReceivedPkts());
+        out.output("NIC %d: Sent packets:     %d\n", m_myNodeId, m_sentPkts);
+        m_simpleMemoryModel->printStatus( out, m_myNodeId );
+        out.output("NIC %d: done\n", m_myNodeId );
+    }
+
+    int m_sentPkts;
 
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
-            std::vector<DmaVec>& vec, std::string op, Callback callback ) {
+            std::vector<MemOp>& vec, std::string op, Callback callback );
 
-        std::deque< std::pair< std::string, SST::Params> > gens;
-        m_dbg.verbose(CALL_INFO,1,NIC_DBG_DETAILED_MEM,
-						"%s %zu vectors\n", op.c_str(), vec.size());
+    void dmaRead( int unit, int pid, std::vector<MemOp>* vec, Callback callback );
+    void dmaWrite( int unit, int pid, std::vector<MemOp>* vec, Callback callback );
 
-		for ( unsigned i = 0; i < vec.size(); i++ ) {
-
-			Params params;
-			std::stringstream tmp;
-
-			if ( 0 == vec[i].addr ) {
-				m_dbg.fatal(CALL_INFO,-1,"Invalid addr %" PRIx64 "\n", vec[i].addr);	
-			}
-			if ( vec[i].addr < 0x100 ) {
-				m_dbg.output(CALL_INFO,"Warn addr %" PRIx64 " ignored\n", vec[i].addr);	
-				i++;
-				continue;	
-			}
-
-			if ( 0 == vec[i].length ) {
-				i++;
-				m_dbg.verbose(CALL_INFO,-1,NIC_DBG_DETAILED_MEM,
-						"skip 0 length vector addr=0x%" PRIx64 "\n",vec[i].addr);
-				continue;	
-			}
-
-			int opWidth = 8;
-			m_dbg.verbose(CALL_INFO,1,NIC_DBG_DETAILED_MEM,
-				"addr=0x%" PRIx64 " length=%zu\n",
-				vec[i].addr,vec[i].length);
-			size_t count = vec[i].length / opWidth;
-			count += vec[i].length % opWidth ? 1 : 0;
-			tmp << count; 
-			params.insert( "count", tmp.str() );		
-
-			tmp.str( std::string() ); tmp.clear();
-			tmp << opWidth;
-			params.insert( "length", tmp.str() );		
-
-			tmp.str( std::string() ); tmp.clear();
-			tmp << vec[i].addr;
-			params.insert( "startat", tmp.str() );		
-
-			tmp.str( std::string() ); tmp.clear();
-			tmp << 0x100000000;
-			params.insert( "max_address", tmp.str() );		
-
-			params.insert( "memOp", op );		
-            #if 0 
-			params.insert( "generatorParams.verbose", "1" );		
-			params.insert( "verbose", "5" );		
-            #endif
-			
-        	gens.push_back( std::make_pair( "miranda.SingleStreamGenerator", params ) );
-		}
-
-		if ( gens.empty() ) {
-			schedCallback( callback, 0 );
-		} else {
-	    	std::function<int()> foo = [=](){
-           		callback( );
-				return 0;
-			};
-			detailed->start( gens, foo );	
-		}
-		
-	}
-
-    void dmaRead( std::vector<DmaVec>& vec, Callback callback ) {
-
-		if ( m_useDetailedCompute && m_detailedCompute[0] ) {
-			
-			detailedMemOp( m_detailedCompute[0], vec, "Read", callback );
-
-		} else {
-			size_t len = 0;	
-			for ( unsigned i = 0; i < vec.size(); i++ ) {
-				len += vec[i].length;
-			} 
-        	m_arbitrateDMA->canIRead( callback, len );
-		}
-    }
-
-    void dmaWrite( std::vector<DmaVec>& vec, Callback callback ) {
-
-		if ( m_useDetailedCompute && m_detailedCompute[1] ) {
-			
-			detailedMemOp( m_detailedCompute[1], vec, "Write", callback );
-
-		} else {
-			size_t len = 0;	
-			for ( unsigned i = 0; i < vec.size(); i++ ) {
-				len += vec[i].length;
-			} 
-        	m_arbitrateDMA->canIWrite( callback, len );
-		}
-    }
-
-    void schedCallback(  Callback callback, uint64_t delay = 0 ) {
+    void schedCallback( Callback callback, uint64_t delay = 0 ) {
         schedEvent( new SelfEvent( callback ), delay);
     }
 
-    void setNotifyOnSend( int vc ) {
-        assert( ! m_sendNotify[vc] ); 
-        m_sendNotify[vc] = true;
-        ++m_sendNotifyCnt;
-        m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
+    VirtNic* getVirtNic( int id ) {
+        return m_vNicV[id];
     }
-
-    std::vector<bool> m_sendNotify;
-    int m_sendNotifyCnt;
+	void shmemDecPending( int core ) {
+		m_shmem->decPending( core );
+	}
 
   private:
+    typedef uint64_t DestKey;
+    static DestKey getDestKey(int node, int pid) { return (DestKey) node << 32 | pid; }
+
+    std::deque<  std::pair< SimTime_t, SendEntryBase*> >   m_sendEntryQ;
+
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
+    void handleVnicEvent2( Event*, int );
+    void handleMsgEvent( NicCmdEvent* event, int id );
+    void handleShmemEvent( NicShmemCmdEvent* event, int id );
     void dmaSend( NicCmdEvent*, int );
     void pioSend( NicCmdEvent*, int );
     void dmaRecv( NicCmdEvent*, int );
@@ -616,7 +330,23 @@ public:
     void regMemRgn( NicCmdEvent*, int );
     void processNetworkEvent( FireflyNetworkEvent* );
 
-    void schedEvent( SelfEvent* event, int delay = 0 ) {
+    Hermes::MemAddr findShmem( int core, Hermes::Vaddr  addr, size_t length );
+
+	SimTime_t getShmemRxDelay_ns() {
+		return m_shmemRxDelay_ns; 
+	}
+
+	SimTime_t calcDelay_ns( SST::UnitAlgebra val ) {
+		if ( val.hasUnits("ns") ) {
+			return val.getValue().toDouble()* 1000000000;
+		}
+		assert(0);
+	}
+	SimTime_t getDelay_ns( ) {
+		return m_nic2host_lat_ns - m_nic2host_base_lat_ns;
+	}
+
+    void schedEvent( SelfEvent* event, SimTime_t delay = 0 ) {
         m_selfLink->send( delay, event );
     }
 
@@ -633,21 +363,19 @@ public:
         m_vNicV[vNic]->notifyRecvDmaDone( src_vNic, src, tag, len, key );
     }
 
-    void notifyNeedRecv( int vNic, int src_vNic, int src, int tag,
-                                                    size_t length ) {
-    	m_dbg.verbose(CALL_INFO,2,1,"src_vNic=%d src=%d tag=%#x len=%lu\n",
-                                            src_vNic,src,tag,length);
+    void notifyNeedRecv( int pid, int srcNode, int srcPid, size_t length ) {
+    	m_dbg.debug(CALL_INFO,2,1,"srcNode=%d srcPid=%d len=%lu\n", srcNode, srcPid, length);
 
-        m_vNicV[vNic]->notifyNeedRecv( src_vNic, src, tag, length );
+        m_vNicV[pid]->notifyNeedRecv( srcPid, srcNode, length );
     }
 
     void notifyPutDone( int vNic, void* key ) {
-        m_dbg.verbose(CALL_INFO,2,1,"%p\n",key);
+        m_dbg.debug(CALL_INFO,2,1,"%p\n",key);
         assert(0);
     }
 
-    void notifyGetDone( int vNic, void* key ) {
-        m_dbg.verbose(CALL_INFO,2,1,"%p\n",key);
+    void notifyGetDone( int vNic, int, int, int, size_t, void* key ) {
+        m_dbg.debug(CALL_INFO,2,1,"%p\n",key);
         m_vNicV[vNic]->notifyGetDone( key );
     }
 
@@ -655,37 +383,134 @@ public:
         return ++m_getKey;
     }
 
+    bool sendNotify(int vc)
+    {
+        m_dbg.debug(CALL_INFO,2,1,"network can send on vc=%d\n",vc);
+        return m_linkSendWidget->notify( vc );
+    }
+
+
+    bool recvNotify(int vc)
+    {
+        m_dbg.debug(CALL_INFO,2,1,"network event available vc=%d\n",vc);
+        return m_linkRecvWidget->notify( vc );
+    }
+
     int NetToId( int x ) { return x; }
     int IdToNet( int x ) { return x; }
 
-    std::vector<SendMachine> m_sendMachine;
-    RecvMachine m_recvMachine;
+    std::vector<SendMachine*>   m_sendMachineV;
+    std::deque<SendMachine*>    m_sendMachineQ;
+    RecvMachine* m_recvMachine;
     ArbitrateDMA* m_arbitrateDMA;
 
-    std::vector< std::map< int, MemRgnEntry* > > m_memRgnM;
-    std::map< int, PutRecvEntry* > m_getOrgnM;
- 
     int                     m_myNodeId;
     int                     m_num_vNics;
     SST::Link*              m_selfLink;
 
-    // the interface to to Merlin
-    // Merlin::LinkControl*                m_linkControl;
-    // Merlin::LinkControl::Handler<Nic> * m_recvNotifyFunctor;
-    // Merlin::LinkControl::Handler<Nic> * m_sendNotifyFunctor;
     SST::Interfaces::SimpleNetwork*     m_linkControl;
     SST::Interfaces::SimpleNetwork::Handler<Nic>* m_recvNotifyFunctor;
     SST::Interfaces::SimpleNetwork::Handler<Nic>* m_sendNotifyFunctor;
-    bool sendNotify(int);
-    bool recvNotify(int);
+    LinkControlWidget* m_linkRecvWidget;
+    LinkControlWidget* m_linkSendWidget;
+
+	std::vector< int >		m_sendStreamNum;
+
+	int getSendStreamNum( int pid ) {
+		unsigned int val = m_sendStreamNum[pid]++;
+		
+		m_sendStreamNum[pid] &= (( 1 <<  STREAM_NUM_SIZE ) - 1 ); 
+		m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"pid=%d stream=%d next=%d\n",pid,val, m_sendStreamNum[pid] );
+		return val;
+	}
 
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
     std::vector<Thornhill::DetailedCompute*> m_detailedCompute;
 	bool m_useDetailedCompute;
+    Shmem* m_shmem;
+	SimTime_t m_nic2host_lat_ns;
+	SimTime_t m_nic2host_base_lat_ns;
+	SimTime_t m_shmemRxDelay_ns; 
 
+    UnitPool* m_unitPool;
+
+    void feedTheNetwork( );
+    void sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc );
+    void notifySendDone( SendMachine* mach, SendEntryBase* entry );
+
+    void qSendEntry( SendEntryBase* entry );
+
+    void notifyHavePkt( int id ) {
+        m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_NETWORK,"id=%d current src=%d\n",id, m_curNetworkSrc);
+        if ( -1 == m_curNetworkSrc ) {
+            m_curNetworkSrc = id;
+            feedTheNetwork();
+        }
+    }
+
+    void calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
+        if( m_simpleMemoryModel ) {
+        	m_simpleMemoryModel->schedHostCallback( core, ops, callback );
+        } else {
+			schedCallback(callback);
+			delete ops;
+		}
+    }
+
+    int allocNicAckUnit() {
+        return m_unitPool->allocAckUnit();
+    }
+
+    int allocNicSendUnit() {
+        return m_unitPool->allocSendUnit();
+    }
+
+    int allocNicRecvUnit( int pid ) {
+        return m_unitPool->allocRecvUnit( pid );
+    }
+
+    void calcNicMemDelay( int unit, int pid, std::vector< MemOp>* ops, std::function<void()> callback ) {
+        if( m_simpleMemoryModel ) {
+        	m_simpleMemoryModel->schedNicCallback( unit, pid, ops, callback );
+        } else {
+        	for ( unsigned i = 0;  i <  ops->size(); i++ ) {
+            	assert( (*ops)[i].callback == NULL );
+        	}
+			schedCallback(callback);
+			delete ops;
+		}
+	}
+
+    RespKey_t m_respKey;
+    RespKey_t genRespKey( void* ptr ) {
+        assert( m_respKeyMap.find(m_respKey) == m_respKeyMap.end() );
+        RespKey_t key = m_respKey++;
+        m_respKeyMap[key] = ptr;  
+        m_respKey &= 0xffffff;
+        if ( 0 == m_respKey ) {
+            ++m_respKey;
+        }
+        m_dbg.debug(CALL_INFO,2,1,"map[%#x]=%p nextkey=%#x\n",key-1,ptr,m_respKey);
+        return key;
+    }
+    void* getRespKeyValue( RespKey_t key ) {
+        void* value = m_respKeyMap[key];
+        m_dbg.debug(CALL_INFO,2,1,"map[%#x]=%p\n",key,value);
+        m_respKeyMap.erase(key);
+        return value; 
+    }
+
+    std::unordered_map<RespKey_t,void*> m_respKeyMap;
+
+    SimpleMemoryModel*  m_simpleMemoryModel;
+    std::deque<int> m_availNicUnits;
     uint16_t m_getKey;
-  public:
+    int m_curNetworkSrc;
+    int m_txDelay;
+
+    static int  MaxPayload;
+    static int  m_packetId;
 	int m_tracedPkt;
 	int m_tracedNode;
 }; 

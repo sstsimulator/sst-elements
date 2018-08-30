@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,6 +21,8 @@
 #include <sst/core/interprocess/ipctunnel.h>
 #include "ariel_inst_class.h"
 
+#define ARIEL_MAX_PAYLOAD_SIZE 64
+
 namespace SST {
 namespace ArielComponent {
 
@@ -33,10 +35,15 @@ enum ArielShmemCmd_t {
     ARIEL_START_INSTRUCTION = 32,
     ARIEL_END_INSTRUCTION = 64,
     ARIEL_ISSUE_TLM_MAP = 80,
+    ARIEL_ISSUE_TLM_MMAP = 81,
+    ARIEL_ISSUE_TLM_MUNMAP = 82,
+    ARIEL_ISSUE_TLM_FENCE = 83,
     ARIEL_ISSUE_TLM_FREE = 100,
     ARIEL_SWITCH_POOL = 110,
     ARIEL_NOOP = 128,
     ARIEL_OUTPUT_STATS = 140,
+    ARIEL_FLUSHLINE_INSTRUCTION = 154,
+    ARIEL_FENCE_INSTRUCTION = 155,
 };
 
 struct ArielCommand {
@@ -47,13 +54,29 @@ struct ArielCommand {
             uint32_t size;
             uint64_t addr;
             uint32_t instClass;
-	    uint32_t simdElemCount;
+            uint32_t simdElemCount;
+	    	uint8_t  payload[ARIEL_MAX_PAYLOAD_SIZE];
         } inst;
         struct {
             uint64_t vaddr;
             uint64_t alloc_len;
             uint32_t alloc_level;
         } mlm_map;
+            struct {
+            uint64_t vaddr;
+            uint64_t alloc_len;
+            uint32_t alloc_level;
+            uint32_t fileID;
+        } mlm_mmap;
+            struct {
+            uint64_t vaddr;
+            uint64_t alloc_len;
+            uint32_t alloc_level;
+            uint32_t fileID;
+        } mlm_munmap;
+        struct{
+            uint64_t vaddr;
+        } mlm_fence;
         struct {
             uint64_t vaddr;
         } mlm_free;
@@ -65,6 +88,9 @@ struct ArielCommand {
             uint64_t dest;
             uint32_t len;
         } dma_start;
+        struct {
+            uint64_t vaddr;
+        } flushline;
     };
 };
 
@@ -87,8 +113,7 @@ public:
      * Create a new Ariel Tunnel
      */
     ArielTunnel(uint32_t comp_id, size_t numCores, size_t bufferSize) :
-        SST::Core::Interprocess::IPCTunnel<ArielSharedData, ArielCommand>(comp_id, numCores, bufferSize)
-    {
+        SST::Core::Interprocess::IPCTunnel<ArielSharedData, ArielCommand>(comp_id, numCores, bufferSize) {
         sharedData->numCores = numCores;
         sharedData->simTime = 0;
         sharedData->cycles = 0;
@@ -100,20 +125,17 @@ public:
      * Attach to an existing Ariel Tunnel (Created in another process
      */
     ArielTunnel(const std::string &region_name) :
-        SST::Core::Interprocess::IPCTunnel<ArielSharedData, ArielCommand>(region_name)
-    {
+        SST::Core::Interprocess::IPCTunnel<ArielSharedData, ArielCommand>(region_name) {
         /* Ideally, this would be done atomically, but we'll only have 1 child */
         sharedData->child_attached++;
     }
 
-    void waitForChild(void)
-    {
+    void waitForChild(void) {
         while ( sharedData->child_attached == 0 ) ;
     }
 
     /** Update the current simulation cycle count in the SharedData region */
-    void updateTime(uint64_t newTime)
-    {
+    void updateTime(uint64_t newTime) {
         sharedData->simTime = newTime;
     }
 

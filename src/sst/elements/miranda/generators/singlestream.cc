@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,8 +29,10 @@ SingleStreamGenerator::SingleStreamGenerator( Component* owner, Params& params )
 
 	issueCount = params.find<uint64_t>("count", 1000);
 	reqLength  = params.find<uint64_t>("length", 8);
-	nextAddr   = params.find<uint64_t>("startat", 0);
+	startAddr  = params.find<uint64_t>("startat", 0);
 	maxAddr    = params.find<uint64_t>("max_address", 524288);
+
+	nextAddr   = startAddr;
 
 	std::string op = params.find<std::string>( "memOp", "Read" );	
 	if ( ! op.compare( "Read" ) ) {
@@ -59,6 +61,8 @@ void SingleStreamGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) 
 
 	// What is the next address?
 	nextAddr = (nextAddr + reqLength) % maxAddr;
+	if( nextAddr == 0 )
+		nextAddr = startAddr;
 
 	issueCount--;
 }

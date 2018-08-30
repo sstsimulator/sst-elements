@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2016, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,6 +16,7 @@
 
 #include <sst_config.h>
 
+#include <cmath>
 #include <string.h>
 
 
@@ -44,7 +45,7 @@ void AllgatherFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_size = m_info->getGroup(m_event->group)->getSize();
 
     int numStages = ceil( log2(m_size) );
-    m_dbg.verbose(CALL_INFO,1,0,"numStages=%d rank=%d size=%d\n",
+    m_dbg.debug(CALL_INFO,1,0,"numStages=%d rank=%d size=%d\n",
                                         numStages, m_rank, m_size );
     
     m_recvReqV.resize( numStages );
@@ -72,9 +73,9 @@ bool AllgatherFuncSM::setup( Retval& retval )
 
         src = m_info->getGroup(m_event->group)->getMapping( calcSrc( m_setupState.offset ) );
 
-        m_dbg.verbose(CALL_INFO,1,0,"post recv for ready msg from %d\n", src);
-		addr.simVAddr = 1;
-		addr.backing = NULL;
+        m_dbg.debug(CALL_INFO,1,0,"post recv for ready msg from %d\n", src);
+		addr.setSimVAddr( 1 );
+		addr.setBacking( NULL );
         proto()->irecv( addr, 0, src, genTag(), &m_recvReq );
         m_setupState.state = SetupState::PostStageRecv;
         return false;
@@ -84,7 +85,7 @@ bool AllgatherFuncSM::setup( Retval& retval )
         src = m_info->getGroup(m_event->group)->getMapping( calcSrc( m_setupState.offset ) );
         m_dest[m_setupState.stage] = mod(m_rank + m_setupState.offset, m_size);
 
-        m_dbg.verbose(CALL_INFO,1,0,"setup stage %d, src %d, dest %d\n",
+        m_dbg.debug(CALL_INFO,1,0,"setup stage %d, src %d, dest %d\n",
                    m_setupState.stage, src, 
 					m_info->getGroup(m_event->group)->getMapping( m_dest[m_setupState.stage] ) ); 
 
@@ -100,7 +101,7 @@ bool AllgatherFuncSM::setup( Retval& retval )
             m_sendStartChunk[m_setupState.stage] = 
                mod( ( m_rank + 1) + m_setupState.offset, m_size );
         }
-        m_dbg.verbose(CALL_INFO,1,0," 2^stage %d, sendStart %d, recvStart %d "
+        m_dbg.debug(CALL_INFO,1,0," 2^stage %d, sendStart %d, recvStart %d "
                     "numChunks %d\n", m_setupState.offset, 
                     m_sendStartChunk[ m_setupState.stage], 
                     recvStartChunk, m_numChunks[m_setupState.stage] );
@@ -120,13 +121,13 @@ bool AllgatherFuncSM::setup( Retval& retval )
 
       case SetupState::SendStartMsg:
 
-        memcpy( chunkPtr(m_rank), m_event->sendbuf.backing, chunkSize(m_rank) );
+        memcpy( chunkPtr(m_rank), m_event->sendbuf.getBacking(), chunkSize(m_rank) );
 
-        m_dbg.verbose(CALL_INFO,1,0,"send ready message to %d\n",
+        m_dbg.debug(CALL_INFO,1,0,"send ready message to %d\n",
 						m_info->getGroup(m_event->group)->getMapping(m_dest[0]));
 		
-		addr.simVAddr = 1;
-		addr.backing = NULL;
+		addr.setSimVAddr( 1 );
+		addr.setBacking( NULL );
         proto()->send( addr, 0, m_info->getGroup(m_event->group)->getMapping( m_dest[0] ), genTag() );
     }
     return true;
@@ -135,7 +136,7 @@ bool AllgatherFuncSM::setup( Retval& retval )
 void AllgatherFuncSM::handleEnterEvent( Retval& retval )
 {
     std::vector<IoVec> ioVec;
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n", stateName(m_state).c_str());
+    m_dbg.debug(CALL_INFO,1,0,"%s\n", stateName(m_state).c_str());
 
     switch( m_state ) {
     case Setup:
@@ -145,7 +146,7 @@ void AllgatherFuncSM::handleEnterEvent( Retval& retval )
         return;
 
     case WaitForStartMsg:
-        m_dbg.verbose(CALL_INFO,1,0,"wait for Start message to arrive\n");
+        m_dbg.debug(CALL_INFO,1,0,"wait for Start message to arrive\n");
         proto()->wait( &m_recvReq );
         m_state = SendData;
         return;
@@ -154,7 +155,7 @@ void AllgatherFuncSM::handleEnterEvent( Retval& retval )
         initIoVec( ioVec, m_sendStartChunk[m_currentStage],
                             m_numChunks[m_currentStage] );
 
-        m_dbg.verbose(CALL_INFO,1,0,"send stage %d, dest %d\n",
+        m_dbg.debug(CALL_INFO,1,0,"send stage %d, dest %d\n",
                         m_currentStage,m_info->getGroup(m_event->group)->getMapping(m_dest[m_currentStage]) );
         proto()->sendv( ioVec, m_info->getGroup(m_event->group)->getMapping(m_dest[m_currentStage]), 
                genTag() + m_currentStage + 1 );
@@ -162,7 +163,7 @@ void AllgatherFuncSM::handleEnterEvent( Retval& retval )
         return;
 
     case WaitRecvData:
-        m_dbg.verbose(CALL_INFO,1,0,"wait stage %d\n", m_currentStage);
+        m_dbg.debug(CALL_INFO,1,0,"wait stage %d\n", m_currentStage);
         proto()->wait( &m_recvReqV[m_currentStage] );
         ++m_currentStage;
         if ( m_currentStage < m_dest.size() ) {
@@ -173,7 +174,7 @@ void AllgatherFuncSM::handleEnterEvent( Retval& retval )
         return;
 
     case Exit:
-        m_dbg.verbose(CALL_INFO,1,0,"leave\n");
+        m_dbg.debug(CALL_INFO,1,0,"leave\n");
         retval.setExit( 0 );
         delete m_event;
         m_event = NULL;
@@ -187,36 +188,36 @@ void AllgatherFuncSM::initIoVec( std::vector<IoVec>& ioVec,
     int nextChunk = ( currentChunk + 1 ) % m_size; 
     int countDown = numChunks;
 
-    m_dbg.verbose(CALL_INFO,2,0,"startChunk=%d numChunks=%d\n",
+    m_dbg.debug(CALL_INFO,2,0,"startChunk=%d numChunks=%d\n",
                                             startChunk,numChunks);
 
     while ( countDown ) {  
         --countDown;
         IoVec jjj;
-		jjj.addr.simVAddr = 1;
-        jjj.addr.backing = chunkPtr( currentChunk ); 
+		jjj.addr.setSimVAddr( 1 );
+        jjj.addr.setBacking( chunkPtr( currentChunk ) ); 
         jjj.len = chunkSize( currentChunk );
         
-        m_dbg.verbose(CALL_INFO,2,0,"currentChunk=%d ptr=%p len=%lu\n",
-                    currentChunk, jjj.addr.backing, jjj.len);
+        m_dbg.debug(CALL_INFO,2,0,"currentChunk=%d ptr=%p len=%lu\n",
+                    currentChunk, jjj.addr.getBacking(), jjj.len);
     
         while ( countDown &&
-                (unsigned char*) jjj.addr.backing + jjj.len == chunkPtr( nextChunk ) )
+                (unsigned char*) jjj.addr.getBacking() + jjj.len == chunkPtr( nextChunk ) )
         {
             jjj.len += chunkSize( nextChunk );
-            m_dbg.verbose(CALL_INFO,2,0,"len=%lu\n", jjj.len );
+            m_dbg.debug(CALL_INFO,2,0,"len=%lu\n", jjj.len );
             currentChunk = nextChunk;
             nextChunk = ( currentChunk + 1 ) % m_size; 
             --countDown;
         }
         if ( 0 == countDown || 
-                (unsigned char*) jjj.addr.backing + jjj.len != chunkPtr( nextChunk ) )
+                (unsigned char*) jjj.addr.getBacking() + jjj.len != chunkPtr( nextChunk ) )
         {
 
             ioVec.push_back( jjj );
-            m_dbg.verbose(CALL_INFO,2,0,"ioVec[%lu] ptr=%p len=%lu\n",
+            m_dbg.debug(CALL_INFO,2,0,"ioVec[%lu] ptr=%p len=%lu\n",
                                 ioVec.size()-1,
-                                ioVec[ioVec.size()-1].addr.backing,
+                                ioVec[ioVec.size()-1].addr.getBacking(),
                                 ioVec[ioVec.size()-1].len); 
         }
         currentChunk = nextChunk;

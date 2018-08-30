@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -19,6 +19,7 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY2_H
 #define COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY2_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
@@ -35,37 +36,61 @@ namespace Merlin {
 
 class topo_dragonfly2_event;
 
-struct RouterPortPair {
+struct RouterPortPair2 {
     uint16_t router;
     uint16_t port;
 
-    RouterPortPair(int router, int port) :
+    RouterPortPair2(int router, int port) :
         router(router),
         port(port)
         {}
 
-    RouterPortPair() {}
+    RouterPortPair2() {}
 };
 
-class RouteToGroup {
+class RouteToGroup2 {
 private:
-    const RouterPortPair* data;
+    const RouterPortPair2* data;
     SharedRegion* region;
     size_t groups;
     size_t routes;
     
     
 public:
-    RouteToGroup() {}
+    RouteToGroup2() {}
 
     void init(SharedRegion* sr, size_t g, size_t r);
 
-    const RouterPortPair& getRouterPortPair(int group, int route_number);
+    const RouterPortPair2& getRouterPortPair(int group, int route_number);
 
-    void setRouterPortPair(int group, int route_number, const RouterPortPair& pair);
+    void setRouterPortPair(int group, int route_number, const RouterPortPair2& pair);
 };
 
+
 class topo_dragonfly2: public Topology {
+
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        topo_dragonfly2,
+        "merlin",
+        "dragonfly2",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Dragonfly2 topology object.  Implements a dragonfly with a single all to all pattern within the group.",
+        "SST::Merlin::Topology")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"dragonfly:hosts_per_router",      "Number of hosts connected to each router."},
+        {"dragonfly:routers_per_group",     "Number of links used to connect to routers in same group."},
+        {"dragonfly:intergroup_per_router", "Number of links per router connected to other groups."},
+        {"dragonfly:intergroup_links",      "Number of links between each pair of groups."},
+        {"dragonfly:num_groups",            "Number of groups in network."},
+        {"dragonfly:algorithm",             "Routing algorithm to use [minmal (default) | valiant].", "minimal"},
+        {"dragonfly:adaptive_threshold",    "Threshold to use when make adaptive routing decisions.", "2.0"},
+        {"dragonfly:global_link_map",       "Array specifying connectivity of global links in each dragonfly group."},
+        {"dragonfly:global_route_mode",     "Mode for intepreting global link map [absolute (default) | relative].","absolute"},
+    )
+
     /* Assumed connectivity of each router:
      * ports [0, p-1]:      Hosts
      * ports [p, p+a-2]:    Intra-group
@@ -87,7 +112,7 @@ class topo_dragonfly2: public Topology {
         ADAPTIVE_LOCAL
     };
 
-    RouteToGroup group_to_global_port;
+    RouteToGroup2 group_to_global_port;
     
     struct dgnfly2Params params;
     RouteAlgo algorithm;
@@ -136,7 +161,6 @@ private:
     uint32_t port_for_router(uint32_t router);
     uint32_t port_for_group(uint32_t group, uint32_t global_slice, int id = -1);
 
-	Statistic<uint64_t>* reroute_count;
 };
 
 
@@ -151,15 +175,17 @@ public:
     uint16_t global_slice_shadow;
 
     topo_dragonfly2_event() { }
-    topo_dragonfly2_event(const topo_dragonfly2::dgnfly2Addr &dest) : dest(dest) {}
+    topo_dragonfly2_event(const topo_dragonfly2::dgnfly2Addr &dest) :
+        dest(dest), global_slice(0)
+        {}
     ~topo_dragonfly2_event() { }
 
-    virtual internal_router_event *clone(void)
+    virtual internal_router_event *clone(void) override
     {
         return new topo_dragonfly2_event(*this);
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
         ser & src_group;
         ser & dest.group;

@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -45,7 +45,7 @@ c_BankInfo::c_BankInfo() :
 		m_bankState(new c_BankStateIdle(nullptr)) {
 
 	reset();
-	m_bankState->enter(this, nullptr, nullptr);
+	m_bankState->enter(this, nullptr, nullptr,0);
 }
 
 c_BankInfo::c_BankInfo(std::map<std::string, unsigned>* x_bankParams,
@@ -55,7 +55,7 @@ c_BankInfo::c_BankInfo(std::map<std::string, unsigned>* x_bankParams,
                 m_autoPrechargeTimer(0) {
 
 	reset();
-	m_bankState->enter(this, nullptr, nullptr);
+	m_bankState->enter(this, nullptr, nullptr,0);
 
 }
 c_BankInfo::~c_BankInfo() {
@@ -133,27 +133,23 @@ void c_BankInfo::reset() {
 }
 
 void c_BankInfo::handleCommand(c_BankCommand* x_bankCommandPtr,
-		unsigned x_simCycle) {
+                               SimTime_t x_simCycle) {
 	assert(
 			m_nextCommandCycleMap.end() != m_nextCommandCycleMap.find(x_bankCommandPtr->getCommandMnemonic()));
 	assert(
 			x_simCycle >= m_nextCommandCycleMap[x_bankCommandPtr->getCommandMnemonic()]);
 
-	m_bankState->handleCommand(this, x_bankCommandPtr);
-	m_bankGroupPtr->updateOtherBanksNextCommandCycles(this, x_bankCommandPtr);
+
+	m_bankState->handleCommand(this, x_bankCommandPtr,x_simCycle);
+	m_bankGroupPtr->updateOtherBanksNextCommandCycles(this, x_bankCommandPtr, x_simCycle);
 }
 
-void c_BankInfo::clockTic() {
+void c_BankInfo::clockTic(SimTime_t x_cycle) {
 	if (0 < m_autoPrechargeTimer)
 		--m_autoPrechargeTimer;
 
-	m_bankState->clockTic(this);
+	m_bankState->clockTic(this, x_cycle);
 
-	//TODO: Delete. For testing only
-	// std::cout << " m_nextCommandCycleMap:" << std::endl;
-	// for (std::map<e_BankCommandType, unsigned>::const_iterator it = m_nextCommandCycleMap.cbegin(); it != m_nextCommandCycleMap.cend(); ++it){
-	// 	std::cout << m_cmdToString.find(it->first)->second << " - " << std::dec << it->second << std::endl;
-	// }
 }
 
 std::list<e_BankCommandType> c_BankInfo::getAllowedCommands() {
@@ -161,16 +157,16 @@ std::list<e_BankCommandType> c_BankInfo::getAllowedCommands() {
 }
 
 bool c_BankInfo::isCommandAllowed(c_BankCommand* x_cmdPtr,
-		unsigned x_simCycle) {
+                                  SimTime_t x_simCycle) {
 	bool l_canAccept = false;
 	assert(nullptr != m_bankState);
 
 	if (m_bankState->isCommandAllowed(x_cmdPtr, this)) {
-		assert(
-				m_nextCommandCycleMap.find(x_cmdPtr->getCommandMnemonic()) != m_nextCommandCycleMap.end());
-		if (m_nextCommandCycleMap.find(x_cmdPtr->getCommandMnemonic())->second
-				<= x_simCycle)
+		assert(m_nextCommandCycleMap.find(x_cmdPtr->getCommandMnemonic()) != m_nextCommandCycleMap.end());
+		if (m_nextCommandCycleMap.find(x_cmdPtr->getCommandMnemonic())->second <= x_simCycle)
 			l_canAccept = true;
+
+
 	}
 
 	return l_canAccept;
@@ -182,23 +178,23 @@ void c_BankInfo::changeState(c_BankState* x_newState) {
 }
 
 void c_BankInfo::setNextCommandCycle(const e_BankCommandType x_cmd,
-		const unsigned x_cycle) {
+		const SimTime_t x_cycle) {
 	assert(m_nextCommandCycleMap.end() != m_nextCommandCycleMap.find(x_cmd));
 	m_nextCommandCycleMap[x_cmd] = x_cycle;
 }
 
-unsigned c_BankInfo::getNextCommandCycle(e_BankCommandType x_cmd) {
+SimTime_t c_BankInfo::getNextCommandCycle(e_BankCommandType x_cmd) {
 	assert(m_nextCommandCycleMap.end() != m_nextCommandCycleMap.find(x_cmd));
 	return (m_nextCommandCycleMap[x_cmd]);
 }
 
 void c_BankInfo::setLastCommandCycle(e_BankCommandType x_cmd,
-		unsigned x_lastCycle) {
+                                     SimTime_t x_lastCycle) {
 	assert(m_lastCommandCycleMap.end() != m_lastCommandCycleMap.find(x_cmd));
 	m_lastCommandCycleMap[x_cmd] = x_lastCycle;
 }
 
-unsigned c_BankInfo::getLastCommandCycle(e_BankCommandType x_cmd) {
+SimTime_t c_BankInfo::getLastCommandCycle(e_BankCommandType x_cmd) {
 	assert(m_lastCommandCycleMap.end() != m_lastCommandCycleMap.find(x_cmd));
 	return m_lastCommandCycleMap[x_cmd];
 }

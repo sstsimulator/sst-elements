@@ -3,13 +3,11 @@
 #
 
 AM_CPPFLAGS = \
-	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) 
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsimpleElementExample.la
 libsimpleElementExample_la_SOURCES = \
-	simpleElementExample.cc \
 	simpleComponent.h \
 	simpleComponent.cc \
 	simpleComponentEvent.h \
@@ -25,7 +23,11 @@ libsimpleElementExample_la_SOURCES = \
 	simpleMessageGeneratorComponent.h \
 	simpleMessageGeneratorComponent.cc \
 	simpleLookupTableComponent.h \
-	simpleLookupTableComponent.cc
+	simpleLookupTableComponent.cc \
+	simpleSubComponent.h \
+	simpleSubComponent.cc \
+	simpleModule.h \
+	simpleModule.cc
 
 EXTRA_DIST = \
     README \
@@ -40,7 +42,9 @@ EXTRA_DIST = \
     tests/test_simpleRNGComponent_marsaglia.py \
     tests/test_simpleRNGComponent_xorshift.py \
     tests/test_simpleStatisticsComponent.py \
-    tests/test_simpleMessageGeneratorComponent.py
+    tests/test_simpleMessageGeneratorComponent.py \
+    tests/test_simpleSubComponent.py \
+    tests/test_simpleSubComponent_2.py
 
 libsimpleElementExample_la_LDFLAGS = -module -avoid-version
 

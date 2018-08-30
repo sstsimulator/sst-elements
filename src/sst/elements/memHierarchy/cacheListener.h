@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -26,8 +26,9 @@
 #include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/subcomponent.h>
+#include <sst/core/warnmacros.h>
 
-#include "memEvent.h"
+#include "sst/elements/memHierarchy/memEvent.h"
 
 using namespace SST;
 
@@ -66,11 +67,11 @@ private:
 class CacheListener : public SubComponent {
 public:
 
-    CacheListener(Component* owner, Params& params) : SubComponent(owner) {}
+    CacheListener(Component* owner, Params& UNUSED(params)) : SubComponent(owner) {}
     virtual ~CacheListener() {}
 
-    virtual void printStats(Output &out) {}
-    virtual void notifyAccess(const CacheListenerNotification& notify) {}
+    virtual void printStats(Output &UNUSED(out)) {}
+    virtual void notifyAccess(const CacheListenerNotification& UNUSED(notify)) {}
     virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }
 };
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -27,6 +27,13 @@ class PagePolicy : public SST::SubComponent {
 
 class SimplePagePolicy : public PagePolicy {
   public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(SimplePagePolicy, "memHierarchy", "simplePagePolicy", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "static page open or close policy", "SST::MemHierarchy::PagePolicy")
+    
+    SST_ELI_DOCUMENT_PARAMS( {"close", "Whether to use a closed (true) or open (false) page policy", "true"} )
+
+/* Begin class definition */
     SimplePagePolicy( Component* owner, Params& params ) : PagePolicy( owner, params )  {
         m_close = params.find<bool>("close", true);
     }
@@ -40,6 +47,13 @@ class SimplePagePolicy : public PagePolicy {
 
 class TimeoutPagePolicy : public PagePolicy {
   public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(TimeoutPagePolicy, "memHierarchy", "timeoutPagePolicy", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "timeout based page open or close policy", "SST::MemHierarchy::PagePolicy")
+    
+    SST_ELI_DOCUMENT_PARAMS( {"timeoutCycles", "Timeout (close page) after this many cycles", "5"} )
+
+/* Begin class definition */
     TimeoutPagePolicy( Component* owner, Params& params ) : PagePolicy( owner, params ),
         m_numCyclesLeft(0), m_lastCycle(-2) { 
         m_cycles = params.find<SimTime_t>("timeoutCycles", 5);

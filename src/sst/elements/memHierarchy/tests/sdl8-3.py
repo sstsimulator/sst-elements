@@ -1,6 +1,18 @@
 # Automatically generated SST Python input
 import sst
 
+DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_L3 = 0
+DEBUG_DIR = 0
+DEBUG_MEM = 0
+DEBUG_CORE0 = 0
+DEBUG_CORE1 = 0
+DEBUG_CORE2 = 0
+DEBUG_CORE3 = 0
+DEBUG_NODE0 = 0
+DEBUG_NODE1 = 0
+
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
 comp_cpu0.addParams({
@@ -20,7 +32,8 @@ comp_c0_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1 | DEBUG_CORE0 | DEBUG_NODE0,
+      "debug_level" : 10,
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({
@@ -40,7 +53,8 @@ comp_c1_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1 | DEBUG_CORE1 | DEBUG_NODE0,
+      "debug_level" : 10,
 })
 comp_n0_bus = sst.Component("n0.bus", "memHierarchy.Bus")
 comp_n0_bus.addParams({
@@ -55,7 +69,8 @@ comp_n0_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "debug" : "0"
+      "debug" : DEBUG_L2 | DEBUG_NODE0,
+      "debug_level" : 10,
 })
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
 comp_cpu2.addParams({
@@ -75,7 +90,8 @@ comp_c2_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1 | DEBUG_CORE2 | DEBUG_NODE1,
+      "debug_level" : 10,
 })
 comp_cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
 comp_cpu3.addParams({
@@ -95,7 +111,8 @@ comp_c3_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1 | DEBUG_CORE3 | DEBUG_NODE1,
+      "debug_level" : 10,
 })
 comp_n1_bus = sst.Component("n1.bus", "memHierarchy.Bus")
 comp_n1_bus.addParams({
@@ -110,7 +127,8 @@ comp_n1_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "debug" : "0"
+      "debug" : DEBUG_L2 | DEBUG_NODE1,
+      "debug_level" : 10,
 })
 comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
 comp_n2_bus.addParams({
@@ -125,9 +143,10 @@ comp_l3cache.addParams({
       "associativity" : "16",
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
-      "debug" : "0",
-      "network_address" : "1",
-      "network_bw" : "25GB/s",
+      "debug" : DEBUG_L3,
+      "debug_level" : 10,
+      "memNIC.network_address" : "1",
+      "memNIC.network_bw" : "25GB/s",
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams({
@@ -143,17 +162,18 @@ comp_chiprtr.addParams({
 comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
       "coherence_protocol" : "MSI",
-      "debug" : "0",
-      "network_address" : "0",
+      "debug" : DEBUG_DIR,
+      "debug_level" : 10,
+      "memNIC.network_address" : "0",
       "entry_cache_size" : "32768",
-      "network_bw" : "25GB/s",
-      "addr_range_end" : "0x1F000000",
-      "addr_range_start" : "0x0"
+      "memNIC.network_bw" : "25GB/s",
+      "memNIC.addr_range_end" : "0x1F000000",
+      "memNIC.addr_range_start" : "0x0"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "coherence_protocol" : "MSI",
-      "debug" : "0",
+      "debug" : DEBUG_MEM,
+      "debug_level" : 10,
       "backend.access_time" : "100 ns",
       "backend.mem_size" : "512MiB",
       "clock" : "1GHz",

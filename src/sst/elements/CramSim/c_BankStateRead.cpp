@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -35,6 +35,7 @@
 
 #include "c_BankState.hpp"
 #include "c_BankCommand.hpp"
+#include "c_Transaction.hpp"
 #include "c_BankStateActive.hpp"
 #include "c_BankStatePrecharge.hpp"
 #include "c_BankStateRead.hpp"
@@ -49,7 +50,6 @@ using namespace SST::n_Bank;
 c_BankStateRead::c_BankStateRead(std::map<std::string, unsigned>* x_bankParams) :
 		m_receivedCommandPtr(nullptr) {
 
-	// std::cout << std::endl << __PRETTY_FUNCTION__ << std::endl;
 	m_currentState = e_BankState::READ;
 	m_bankParams = x_bankParams;
 }
@@ -60,11 +60,10 @@ c_BankStateRead::~c_BankStateRead() {
 }
 
 void c_BankStateRead::handleCommand(c_BankInfo* x_bank,
-		c_BankCommand* x_bankCommandPtr) {
+		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
 
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = x_cycle;
 
-//	std::cout << "@ " << l_time << __PRETTY_FUNCTION__ << std::endl;
 
 	if (nullptr == m_receivedCommandPtr) {
 		m_receivedCommandPtr = x_bankCommandPtr;
@@ -97,24 +96,12 @@ void c_BankStateRead::handleCommand(c_BankInfo* x_bank,
 			break;
 		}
 
-//		std::cout << std::endl << "@" << std::dec
-//				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//				<< __PRETTY_FUNCTION__ << std::endl;
-//		m_receivedCommandPtr->print();
-//		std::cout << std::endl;
-
 	}
 }
 
-void c_BankStateRead::clockTic(c_BankInfo* x_bank) {
+void c_BankStateRead::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 
-//	std::cout << std::endl << "@" << std::dec
-//			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//			<< __PRETTY_FUNCTION__ << std::endl;
-//	std::cout << "m_timer = " << m_timer << ", m_timerExit = " << m_timerExit
-//			<< std::endl;
-
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = x_cycle;
 
 	if (0 < m_timer) {
 		--m_timer;
@@ -175,18 +162,15 @@ void c_BankStateRead::clockTic(c_BankInfo* x_bank) {
 			} else {
 				if ((nullptr != m_nextStatePtr)
 						&& (m_receivedCommandPtr != nullptr))
-					m_nextStatePtr->enter(x_bank, this, m_receivedCommandPtr);
+					m_nextStatePtr->enter(x_bank, this, m_receivedCommandPtr,x_cycle);
 			}
 		}
 	}
 }
 
 void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-		c_BankCommand* x_cmdPtr) {
+		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 
-//	std::cout << std::endl << "@" << std::dec
-//			<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//			<< __PRETTY_FUNCTION__ << std::endl;
 
 	m_timerExit = 0;
 	m_nextStatePtr = nullptr;
@@ -194,17 +178,6 @@ void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	m_prevCommandPtr = x_cmdPtr;
 	if (nullptr != m_prevCommandPtr) {
 		m_prevCommandPtr->setResponseReady();
-		const unsigned l_cmdsLeft =
-				m_prevCommandPtr->getTransaction()->getWaitingCommands() - 1;
-		m_prevCommandPtr->getTransaction()->setWaitingCommands(l_cmdsLeft);
-		if (l_cmdsLeft == 0)
-			m_prevCommandPtr->getTransaction()->setResponseReady();
-
-//		std::cout << std::endl << "@" << std::dec
-//				<< Simulation::getSimulation()->getCurrentSimCycle() << ": "
-//				<< __PRETTY_FUNCTION__ << " setting command to response ready: "<< std::endl;
-//		m_prevCommandPtr->print();
-//		std::cout << std::endl;
 
 		switch (m_prevCommandPtr->getCommandMnemonic()) {
 		case e_BankCommandType::WRITE:
@@ -213,7 +186,7 @@ void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 			break;
 		case e_BankCommandType::READ:
 			m_timer = std::max(m_bankParams->at("nCCD_L"),
-					m_bankParams->at("nBL"));
+					m_bankParams->at("nBL"))-1;
 			break;
 		case e_BankCommandType::ACT:
 			m_timer = 0;
@@ -229,16 +202,7 @@ void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 
 	m_receivedCommandPtr = nullptr;
 
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
-
-// FIXME: add condition for modeling closed row or open row
-//
-//	m_timerExit = std::max(
-//			std::max(x_bank->getNextCommandCycle(e_BankCommandType::WRITEA),
-//					x_bank->getNextCommandCycle(e_BankCommandType::WRITEA)),
-//			l_time + m_bankParams->at("nCWL")
-//					+ m_bankParams->at("nBL") + m_bankParams->at("nWR") - 2)
-//			- l_time;
+	SimTime_t l_time = x_cycle;
 
 	m_allowedCommands.clear();
 	m_allowedCommands.push_back(e_BankCommandType::READ);

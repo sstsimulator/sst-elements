@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -14,8 +14,8 @@
 // distribution.
 
 
-#ifndef _H_EMBER_MPI_EVENT
-#define _H_EMBER_MPI_EVENT
+#ifndef _H_EMBER_SHMEM_EVENT
+#define _H_EMBER_SHMEM_EVENT
 
 #include "emberevent.h" 
 
@@ -24,19 +24,22 @@ using namespace Hermes;
 namespace SST {
 namespace Ember {
 
-class EmberMPIEvent : public EmberEvent {
+typedef Statistic<uint32_t> EmberEventTimeStatistic;
+
+class EmberShmemEvent : public EmberEvent {
 
   public:
 
-    EmberMPIEvent( MessageInterface& api, Output* output, Histo* histo = NULL):
-        EmberEvent( output, histo ), m_api( api )
+    EmberShmemEvent( Shmem::Interface& api, Output* output, 
+            EmberEventTimeStatistic* stat = NULL ):
+        EmberEvent( output, stat ), m_api( api )
     {
-        m_state = IssueFunctor;
+        m_state = IssueCallback;
     }
 
   protected:
 
-    MessageInterface&   m_api;
+    Shmem::Interface&   m_api;
 
   private:
 };

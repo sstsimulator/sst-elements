@@ -1,8 +1,8 @@
-// Copyright 2009-2015 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2015, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -38,11 +38,11 @@ public:
 
     void issue( uint64_t time, FOO* functor ) {
 
-        m_output->verbose(CALL_INFO, 2, 0, "length=%zu\n", m_length );
+        m_output->debug(CALL_INFO, 2, 0, "length=%zu\n", m_length );
         EmberEvent::issue( time );
     
         std::function<void(uint64_t)> callback = [=](uint64_t value){
-			m_addr->simVAddr = value;
+			m_addr->setSimVAddr( value );
             (*functor)(0);
             return 0;
         };
@@ -51,7 +51,8 @@ public:
     }
 
 protected:
-    Thornhill::MemoryHeapLink&  m_api; Hermes::MemAddr* 	m_addr;
+    Thornhill::MemoryHeapLink&  m_api; 
+    Hermes::MemAddr* 	m_addr;
 	size_t  			m_length;
 
 };

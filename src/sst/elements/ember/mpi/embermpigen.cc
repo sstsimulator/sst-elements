@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -14,6 +14,7 @@
 // distribution.
 
 #include <sst_config.h>
+#include <climits>
 #include <sst/core/component.h>
 
 #include "embermpigen.h"
@@ -58,7 +59,7 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
     }
 
     Params mapParams = params.find_prefix_params("rankmap.");
-    string rankMapModule = params.find<std::string>("rankmapper", "ember.LinearMap");
+    std::string rankMapModule = params.find<std::string>("rankmapper", "ember.LinearMap");
     //string rankMapModule = params.find<std::string>("rankmapper", "ember.CustomMap"); //NetworkSim
     //std::cout << "rankMapModule is: " << rankMapModule.c_str() << std::endl; //NetworkSim
     //std::cout << "In mpigen: " << params.find_string("_jobId", "-1").c_str() << " Name:" << name.c_str() << std::endl; //NetworkSim

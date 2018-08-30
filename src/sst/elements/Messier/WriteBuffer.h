@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -10,6 +10,8 @@
 // distribution.
 //
 
+
+//
 /* Author: Amro Awad
  * E-mail: aawad@sandia.gov
  */
@@ -35,7 +37,7 @@ class NVM_WRITE_BUFFER
 { 
 
 	// This determines the size in number of entries
-	int max_size;
+	unsigned int max_size;
 
 	// scheduling mode: this can be used to optimize writing to NVMs, cache lines within the same rowbuffer are prioritized to be written together
 	int sched_mode;
@@ -43,8 +45,11 @@ class NVM_WRITE_BUFFER
 	// flush threshold percentage; this determines at what percentage of max number of entries triggers flushing the write buffer: e.g., 50% means when we have 50% of the size entries, we should attempt flushing
 	int flush_th;
 
+	// This indicates the low threshold, where the controller will bring down the number of entries to, whenever it reaches the high threshold
+	int flush_th_low;
+
 	// the current number of entries
-	int curr_entries;
+	unsigned int curr_entries;
 
 	// This tracks them in order
 	std::list<NVM_Request *> mem_reqs;
@@ -55,19 +60,28 @@ class NVM_WRITE_BUFFER
 
 	int entry_size; // this determines the granularity of the write requests, ideally this should be similar to cache line size
 
+	bool still_flushing; // This indicates that the controller is still trying to bring down the entries to low threshold
+
 	public:
 
+	
+
 	// Constructor
-	NVM_WRITE_BUFFER(int Size, int Sched_mode, int Entry_size, int Flush_th){ max_size = Size; sched_mode = Sched_mode; flush_th = Flush_th; entry_size = Entry_size; curr_entries = 0;}
+	NVM_WRITE_BUFFER(int Size, int Sched_mode, int Entry_size, int Flush_th, int low_th){ flush_th_low = low_th; max_size = Size; sched_mode = Sched_mode; flush_th = Flush_th; entry_size = Entry_size; still_flushing=false; curr_entries = 0;}
 
 	// This checks if the writebuffer is in the flush mode (entries exceed threshold)
 	bool flush();
+
+	// Get the list size
+	int ListSize() { return mem_reqs.size();}
 
 	// Check if empty
 	bool empty() { if (curr_entries == 0) return true; else return false;}
 	// Get the current size
 	int getSize(){ return curr_entries;}
 
+	// Tells you if larger than the low threshold;
+	
 	// Check if full or not
 	bool full() { if(curr_entries == max_size) return true; else return false;}
 
@@ -81,6 +95,11 @@ class NVM_WRITE_BUFFER
 	NVM_Request * pop_entry();
 
 	NVM_Request * getFront() { return mem_reqs.front();}
+
+	void erase_entry(NVM_Request *);	
+
+	std::list<NVM_Request *> getList() { return mem_reqs;}
+
 
 };
 }}

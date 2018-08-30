@@ -161,6 +161,7 @@ class EmberEP( EndPoint ):
             ep.addParams( {'hermesParams.netId': nodeID } )
             ep.addParams( {'hermesParams.netMapId': calcNetMapId( nodeID, self.nidList ) } ) 
             ep.addParams( {'hermesParams.netMapSize': self.numNids } ) 
+            ep.addParams( {'hermesParams.coreId': x } ) 
 
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) +
                                             "_Link"  )
@@ -170,8 +171,10 @@ class EmberEP( EndPoint ):
                                             "_Link"  )
             loopLink.setNoCut() 
 
-            ep.addLink(nicLink, "nic", self.nicParams["nic2host_lat"] )
-            nic.addLink(nicLink, "core" + str(x), self.nicParams["nic2host_lat"] )
+            #ep.addLink(nicLink, "nic", self.nicParams["nic2host_lat"] )
+            #nic.addLink(nicLink, "core" + str(x), self.nicParams["nic2host_lat"] )
+            ep.addLink(nicLink, "nic", "1ns" )
+            nic.addLink(nicLink, "core" + str(x), "1ns" )
 
             ep.addLink(loopLink, "loop", "1ns")
             loopBack.addLink(loopLink, "core" + str(x), "1ns")
@@ -225,7 +228,7 @@ class LoadInfo:
 		numNodes = calcMaxNode( nidList ) 
 		if numNodes > self.numNics:
 			sys.exit('Error: Requested max nodes ' + str(numNodes) +\
-				 ' is greater than available nodes ' + str(self.numNodes) ) 
+				 ' is greater than available nodes ' + str(self.numNics) ) 
 
 		params.update( self.epParams )
 		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statNodes, nidList, motifLogNodes, detailedModel ) # added motifLogNodes here
@@ -247,18 +250,25 @@ class LoadInfo:
 
 		tmp = []
 		nidlist=''
+		api=''
+    
 		for item in stage1:
 			tag,str = item.split(' ', 1)
 				
 			if tag == '[JOB_ID]':	
+				api = '' 
 				tmp.append([])
 				tmp[-1].append( str )
+			elif tag == '[API]':	
+				api = str
 			elif tag == '[NID_LIST]':	
 				nidlist = str
 				tmp[-1].append( [] )  
 			elif tag == '[MOTIF]':	
 				tmp[-1][-1].append( dict.copy(defaultParams) )  
 				tmp[-1][-1][-1]['cmd'] = '-nidList=' + nidlist + ' ' + str 
+				if api :
+				    tmp[-1][-1][-1]['api'] = api
 		return tmp 
 		
 	def initFile(self, defaultParams, fileName, statNodeList ):
@@ -283,7 +293,6 @@ class LoadInfo:
 
 			ranksPerNode = self.numCores 
 			nidList = []
-
 			while len(cmdList):
 				if "-" != cmdList[0][0]:
 					break
@@ -318,6 +327,11 @@ class LoadInfo:
 
 	def parseCmd(self, motifPrefix, motifSuffix, cmdList, cmdNum ):
 		motif = {} 
+
+		tmp = cmdList[0].split('.')
+		if  len(tmp) == 2:
+			motifPrefix = tmp[0] + '.'
+			cmdList[0] = tmp[1]
 
 		tmp = 'motif' + str(cmdNum) + '.name'
 		motif[ tmp ] = motifPrefix + cmdList[0] + motifSuffix

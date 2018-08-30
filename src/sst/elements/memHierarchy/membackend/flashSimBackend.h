@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,7 +17,7 @@
 #ifndef _H_SST_MEMH_FLASH_DIMM_SIM_BACKEND
 #define _H_SST_MEMH_FLASH_DIMM_SIM_BACKEND
 
-#include "membackend/memBackend.h"
+#include "sst/elements/memHierarchy/membackend/memBackend.h"
 
 #ifdef DEBUG
 #define OLD_DEBUG DEBUG
@@ -36,9 +36,21 @@ namespace MemHierarchy {
 
 class FlashDIMMSimMemory : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(FlashDIMMSimMemory, "memHierarchy", "FlashDIMMSim", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Backend interface to FlashDIMM simulator for memory timings", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"device_ini",          "Name of HybridSim Device config file", ""},
+            {"verbose",             "Sets the verbosity of the backend output", "0"},
+            {"trace",               "Sets the name of a file to record trace output", ""},
+            {"max_pending_reqs",    "Sets the maximum number of requests that can be outstanding", "32" } )
+
+/* Begin class definition */
     FlashDIMMSimMemory(Component *comp, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
-    void clock();
+    virtual bool clock(Cycle_t cycle);
     void finish();
 
 private:

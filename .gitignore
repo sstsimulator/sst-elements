@@ -6,6 +6,7 @@
 .libs/
 .deps/
 .dirstamp
+.ignore
 Makefile.in
 Makefile
 aclocal.m4

@@ -3,14 +3,14 @@
 #
 
 # Set Version of SST Elements Library
-AC_INIT([SST Elements Library], [6.0.0], [sst@sandia.gov])
+AC_INIT([SST Elements Library], [-dev], [sst@sandia.gov])
 
 AC_PREREQ([2.59])
-AC_COPYRIGHT([Copyright Sandia National Laboratories, 2004-2016])
+AC_COPYRIGHT([Copyright Sandia National Laboratories, 2004-2018])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config])
-AM_INIT_AUTOMAKE([1.9.6 foreign dist-bzip2 subdir-objects no-define tar-ustar])
+AM_INIT_AUTOMAKE([1.9.6 foreign dist-bzip2 subdir-objects no-define tar-pax])
 
 # If Automake supports silent rules, enable them.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
@@ -47,18 +47,34 @@ SST_CHECK_OSX()
 
 SST_ELEMENT_CONFIG_OUTPUT()
 
-AC_MSG_CHECKING([for SST-Elements Git Head SHA and Commit Count])
+# Compile flags come from SST-Core, add or remove extra warnings 
+# depending on the use-picky flag 
+SST_CHECK_PICKY
+AS_IF([test "x$use_picky" = "xyes"],
+      [WARNFLAGS="-Wall -Wextra"],
+      [WARNFLAGS=""])
+CFLAGS="$CFLAGS $WARNFLAGS"
+CXXFLAGS="$CXXFLAGS $WARNFLAGS"
+      
+AC_MSG_CHECKING([for SST-Elements Git Branch, Head SHA and Commit Count])
 if test -d ".git" ; then
+    SSTELEMENTS_GIT_BRANCH=`git rev-parse --abbrev-ref HEAD`
+    AC_MSG_RESULT([${SSTELEMENTS_GIT_BRANCH}])
     SSTELEMENTS_GIT_HEADSHA=`git rev-parse HEAD`
     AC_MSG_RESULT([${SSTELEMENTS_GIT_HEADSHA}])
 	SSTELEMENTS_GIT_COMMITCOUNT=`git rev-list HEAD | wc -l | sed -e 's/^ *//g'`
 	AC_MSG_RESULT([${SSTELEMENTS_GIT_COMMITCOUNT}])
 else
+    SSTELEMENTS_GIT_BRANCH="N/A"
+    AC_MSG_RESULT([${SSTELEMENTS_GIT_BRANCH}])
     SSTELEMENTS_GIT_HEADSHA="${PACKAGE_VERSION}"
     AC_MSG_RESULT([${SSTELEMENTS_GIT_HEADSHA}])
 	SSTELEMENTS_GIT_COMMITCOUNT="0"
 	AC_MSG_RESULT([${SSTELEMENTS_GIT_COMMITCOUNT}])
 fi
+
+AC_SUBST(SSTELEMENTS_GIT_BRANCH)
+AC_DEFINE_UNQUOTED([SSTELEMENTS_GIT_BRANCH], ["$SSTELEMENTS_GIT_BRANCH"], [SST-Elements Git Branch])
 
 AC_SUBST(SSTELEMENTS_GIT_HEADSHA)
 AC_DEFINE_UNQUOTED([SSTELEMENTS_GIT_HEADSHA], ["$SSTELEMENTS_GIT_HEADSHA"], [SST-Elements Git Head SHA])
@@ -88,10 +104,11 @@ echo "Build Environment:"
 echo ""
 printf "%38s : %s\n" "SST-Elements Version" "$PACKAGE_VERSION"
 if test "x$SSTELEMENTS_GIT_HEADSHA" != "x$PACKAGE_VERSION"; then
+printf "%38s : %s\n" "Git Branch" "$SSTELEMENTS_GIT_BRANCH"
 printf "%38s : %s\n" "Git HEAD SHA" "$SSTELEMENTS_GIT_HEADSHA"
 printf "%38s : %s\n" "Branch Commit Count" "$SSTELEMENTS_GIT_COMMITCOUNT"
 else 
-printf "%38s : %s\n" "Release Package" "For SST-Elements $PACKAGE_VERSION"
+printf "%38s : %s\n" "Version" "SST-Elements $PACKAGE_VERSION"
 fi
 printf "%38s : %s\n" "SST-Elements Prefix" "$prefix"
 printf "%38s : %s\n" "SST-Core Prefix" "$SST_PREFIX"

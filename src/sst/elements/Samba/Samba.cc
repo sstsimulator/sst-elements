@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -33,9 +33,13 @@ using namespace SST::SambaComponent;
 
 Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
+	//CR3 = -1;
+
 	core_count = (uint32_t) params.find<uint32_t>("corecount", 1);
 
 	int self = (uint32_t) params.find<uint32_t>("self_connected", 0);
+
+	int emulate_faults = (uint32_t) params.find<uint32_t>("emulate_faults", 0);
 
 	int levels = (uint32_t) params.find<uint32_t>("levels", 1);
 
@@ -51,6 +55,8 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	ptw_to_mem = (SST::Link **) malloc( sizeof(SST::Link *) * core_count );
 
+	ptw_to_opal = (SST::Link **) malloc( sizeof(SST::Link *) * core_count );
+
 
 	char* link_buffer = (char*) malloc(sizeof(char) * 256);
 
@@ -58,7 +64,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	char* link_buffer3 = (char*) malloc(sizeof(char) * 256);
 
-
+	char* link_buffer4 = (char*) malloc(sizeof(char) * 256);
 
 	std::cout<<"Before initialization "<<std::endl;
 	for(uint32_t i = 0; i < core_count; ++i) {
@@ -84,11 +90,31 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		SST::Link * link3;
 
 		if(self==0)
-			link3 = configureLink(link_buffer3, "30ps", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
+			link3 = configureLink(link_buffer3, new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
 		else
 			link3 = configureSelfLink(link_buffer3, std::to_string(page_walk_latency)+ "ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
 
 		ptw_to_mem[i] = link3;
+
+
+		sprintf(link_buffer4, "ptw_to_opal%" PRIu32, i);
+		SST::Link * link4;
+
+
+		if(emulate_faults==1)
+		{
+			link4 = configureLink(link_buffer4, new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvOpal));
+			ptw_to_opal[i] = link4;
+			TLB[i]->setOpalLink(link4);
+
+			sprintf(link_buffer, "event_bus%" PRIu32, i);
+
+			event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::handleEvent));
+
+			TLB[i]->getPTW()->setEventChannel(event_link);
+			TLB[i]->setPageTablePointers(&CR3, &PGD, &PUD, &PMD, &PTE, &MAPPED_PAGE_SIZE1GB, &MAPPED_PAGE_SIZE2MB, &MAPPED_PAGE_SIZE4KB, &PENDING_PAGE_FAULTS, &PENDING_SHOOTDOWN_EVENTS);
+
+		}
 
 		TLB[i]->setPTWLink(link3); // We make a connection from the TLB hierarchy to the memory hierarchy, for page table walking purposes
 		TLB[i]->setCacheLink(mmu_to_cache[i]);
@@ -119,6 +145,30 @@ Samba::Samba() : Component(-1)
 	// 
 }
 
+
+void Samba::init(unsigned int phase) {
+
+	/* 
+	 * CPU may send init events to memory, pass them through, 
+	 * also pass memory events to CPU
+	 */
+	for (uint32_t i = 0; i < core_count; i++) {
+		SST::Event * ev;
+		while ((ev = cpu_to_mmu[i]->recvInitData())) {
+			mmu_to_cache[i]->sendInitData(ev);
+		}
+
+		while ((ev = mmu_to_cache[i]->recvInitData())) {
+			SST::MemHierarchy::MemEventInit * mEv = dynamic_cast<SST::MemHierarchy::MemEventInit*>(ev);
+			if (mEv && mEv->getInitCmd() == SST::MemHierarchy::MemEventInit::InitCommand::Coherence) {
+				SST::MemHierarchy::MemEventInitCoherence * mEvC = static_cast<SST::MemHierarchy::MemEventInitCoherence*>(mEv);
+				TLB[i]->setLineSize(mEvC->getLineSize()); 
+			}
+			cpu_to_mmu[i]->sendInitData(ev);
+		}
+	}
+
+}
 
 
 bool Samba::tick(SST::Cycle_t x)

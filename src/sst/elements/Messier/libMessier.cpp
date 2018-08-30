@@ -1,18 +1,18 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
-//
-// Portions are copyright of other developers:
-// See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+//
 
+
+// Author: Amro Awad (E-mail aawad@sandia.gov)
+//
 #include <sst_config.h>
 #include "sst/core/element.h"
 #include <Messier.h>
@@ -51,8 +51,24 @@ static const ElementInfoParam Messier_params[] = {
     {"num_devices", "The number of NVM-Chip devices", "8"},
     {"num_ranks", "The number of ranks", "1"},
     {"num_banks", "The number of banks on each rank", "16"},
+    {"cache_enabled", "If internal cache is enabled or not", "0"},
+    {"modulo", "If internal modulo scheduling is enabled or not", "0"},
+    {"modulo_unit", "The unit of module, if N, this means for each N reads, we service a write", "4"},
+    {"cache_persistent", "There is enough power to write-back the cache", "0"},
+    {"cache_latency", "The cache latency", "0"},
+    {"cache_size", "The cache size in KBs", "0"},
+    {"cache_bs", "The cache block size", "0"},
+    {"cache_assoc", "The cache associativity", "0"},
     {"row_buffer_size", "The row buffer size in bytes", "8192"},
     {"flush_th", "This determines the percentage of max number of entries in write buffer that triggers flushing it", "50"},
+    {"flush_th_low", "This determines the percentage of the low threshold number of entries", "30"},
+    {"max_writes", "This determines the maximum number of concurrent writes at NVM chips (not including those on buffer", "1"}, 
+    {"cacheline_interleaving", "This determines if cacheline interleaving is used (1) or bank interleaving (0) ", "1"}, 
+    {"adaptive_writes", "This indicates that the writes flushing mode: 0 means naive interleaving", "0"},
+    {"write_cancel", "This indicates that the write cancellation optimization: 0 means not enabled", "0"},
+    {"write_cancel_th", "This indicates that the write cancellation threshold: 0 means dynamic", "0"},
+    {"group_size", "This indicates the number of banks in each group, to be locked when draining", "0"},
+    {"lock_period", "This indicates the period of locking a group in cycles", "10000"},
     { NULL, NULL }
 };
 
@@ -60,6 +76,7 @@ static const ElementInfoStatistic Messier_statistics[] = {
     { "reads", "Determine the number of reads", "reads", 1},
     { "writes", "Determine the number of writes", "writes", 1},
     { "avg_time", "The average time spent on each read request", "cycles", 3},
+    { "histogram_idle", "The histogram of cycles length while controller is idle", "cycles",1},
     { NULL, NULL, NULL, 0 }
 };
 

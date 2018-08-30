@@ -9,12 +9,12 @@ DEBUG = True if sys.argv[1] == "1" else False
 
 def run_verimem(config_file, trace_file):
     # set the command
-    sstCmd = "sst --lib-path=.libs/ tests/test_txntrace4.py --model-options=\""
-    sstParams = "--configfile=" + config_file + " --tracefile=" + trace_file + "\""
+    sstCmd = "sst --lib-path=.libs/ tests/test_txntrace.py --model-options=\""
+    sstParams = "--configfile=" + config_file + " traceFile=" + trace_file + "\""
 
     osCmd = sstCmd + sstParams
 
-    sstParams_openbank = "--configfile=" + config_file_openbank + " --tracefile=" + trace_file + "\""
+    sstParams_openbank = "--configfile=" + config_file_openbank + " traceFile=" + trace_file + "\""
     osCmd_openbank = sstCmd + sstParams_openbank
     
     print osCmd
@@ -43,8 +43,8 @@ def run_verimem(config_file, trace_file):
 
 def run_verimem_openbank(config_file, trace_file):
     # set the command
-    sstCmd = "sst --lib-path=.libs/ tests/test_txntrace4.py --model-options=\""
-    sstParams_openbank = "--configfile=" + config_file_openbank + " --tracefile=" + trace_file + "\""
+    sstCmd = "sst --lib-path=.libs/ tests/test_txntrace.py --model-options=\""
+    sstParams_openbank = "--configfile=" + config_file_openbank + " traceFile=" + trace_file + "\""
     osCmd_openbank = sstCmd + sstParams_openbank
     
     print osCmd_openbank
@@ -75,7 +75,7 @@ def run_suite1(params):
     results = ""
 
     #*** READS ONLY ***
-    totalTxns = run_verimem(params["config_file"], "traces/trace_verimem_1_R.trc")
+    totalTxns = run_verimem(params["config_file"], "traces/sst-CramSim-trace_verimem_1_R.trc")
 
     expected_Timing = max(params["nRC"],
         (params["nRCD"] + params["nRTP"] + params["nRP"]),
@@ -95,7 +95,7 @@ def run_suite1(params):
         results += "[x] Suite 1 - Reads only\n"
 
     #*** WRITES ONLY ***
-    totalTxns = run_verimem(params["config_file"], "traces/trace_verimem_1_W.trc")
+    totalTxns = run_verimem(params["config_file"], "traces/sst-CramSim-trace_verimem_1_W.trc")
 
     expected_Timing = max((params["nRCD"] + params["nCWL"] + (params["nBL"]) + params["nWR"] + params["nRP"]),
         params["nRC"],
@@ -115,7 +115,7 @@ def run_suite1(params):
         results += "[x] Suite 1 - Writes only\n"
 
     #*** READS & WRITES ***
-    totalTxns = run_verimem(params["config_file"], "traces/trace_verimem_1_RW.trc")
+    totalTxns = run_verimem(params["config_file"], "traces/sst-CramSim-trace_verimem_1_RW.trc")
 
     first_timing_option = (params["nRAS"] + params["nRP"] + params["nRCD"] + params["nCWL"] + (params["nBL"] / 2) + params["nWR"] + params["nRP"]) / 2
     expected_Timing = max(first_timing_option,
@@ -138,14 +138,14 @@ def run_suite1(params):
 
 
 #Trace Suites 2 and 3 do not offer different insights for this sim from Suite 1
-# sst --lib-path=.libs/ tests/test_txntrace4.py --model-options="--configfile=ddr4_verimem_openbank.cfg --tracefile=traces/trace_verimem_2_W.trc"
+# sst --lib-path=.libs/ tests/test_txntrace.py --model-options="--configfile=ddr4_verimem_openbank.cfg traceFile=traces/sst-CramSim-trace_verimem_2_W.trc"
 
 #Trace Suite 2
 def run_suite2(params):
     results = ""
 
     #*** READS ONLY ***
-    totalTxns = run_verimem_openbank(params["config_file"], "traces/trace_verimem_2_R.trc")
+    totalTxns = run_verimem_openbank(params["config_file"], "traces/sst-CramSim-trace_verimem_2_R.trc")
 
     expected_Timing = max(params["nRC"],
         (params["nRCD"] + params["nRTP"] + params["nRP"]),
@@ -165,7 +165,7 @@ def run_suite2(params):
         results += "[x] Suite 2 - Reads only\n"
 
     #*** WRITES ONLY ***
-    totalTxns = run_verimem(params["config_file"], "traces/trace_verimem_2_W.trc")
+    totalTxns = run_verimem(params["config_file"], "traces/sst-CramSim-trace_verimem_2_W.trc")
 
     expected_Timing = max((params["nRCD"] + params["nCWL"] + (params["nBL"]) + params["nWR"] + params["nRP"]),
         params["nRC"],
@@ -193,7 +193,7 @@ def run_suite4(params):
     results = ""
 
     #*** READS ONLY ***
-    totalTxns = run_verimem(params["config_file"], "traces/trace_verimem_4_R.trc")
+    totalTxns = run_verimem(params["config_file"], "traces/sst-CramSim-trace_verimem_4_R.trc")
 
     expected_Timing = max((params["nRC"] / 4),
         ((params["nRCD"] + params["nRTP"] + params["nRP"]) / 4),
@@ -213,7 +213,7 @@ def run_suite4(params):
         results += "[x] Suite 4 - Reads only\n"
 
     #*** WRITES ONLY ***
-    totalTxns = run_verimem(params["config_file"], "traces/trace_verimem_4_W.trc")
+    totalTxns = run_verimem(params["config_file"], "traces/sst-CramSim-trace_verimem_4_W.trc")
 
     expected_Timing = max(( (params["nRCD"] + params["nCWL"] + (params["nBL"] / 2) + params["nWR"] + params["nRP"]) / 4),
      (params["nRC"] / 4),
@@ -241,7 +241,7 @@ def run_suite5(params):
     results = ""
 
     #*** READS ONLY ***
-    totalTxns = run_verimem(params["config_file"], "traces/trace_verimem_5_R.trc")
+    totalTxns = run_verimem(params["config_file"], "traces/sst-CramSim-trace_verimem_5_R.trc")
 
     expected_Timing = max((params["nRC"] / params["num_banks"]), ((params["nRCD"] + params["nRTP"] + params["nRP"]) / params["num_banks"]), (params["nFAW"] /4), params["nRRD_S"], params["nCCD_S"])
     timing = params["stopAtCycle"] / totalTxns
@@ -257,7 +257,7 @@ def run_suite5(params):
         results += "[x] Suite 5 - Reads only\n"
 
     #*** WRITES ONLY ***
-    totalTxns = run_verimem(params["config_file"], "traces/trace_verimem_5_W.trc")
+    totalTxns = run_verimem(params["config_file"], "traces/sst-CramSim-trace_verimem_5_W.trc")
 
     expected_Timing = max( ( (params["nRCD"] + params["nCWL"] + (params["nBL"] / 2) + params["nWR"] + params["nRP"]) / params["num_banks"]),
                             (params["nRC"] / params["num_banks"]),
@@ -285,7 +285,7 @@ def run_suite6(params):
     results = ""
 
     #*** READS ONLY ***
-    totalTxns = run_verimem(params["config_file"], "traces/trace_verimem_6_R.trc")
+    totalTxns = run_verimem(params["config_file"], "traces/sst-CramSim-trace_verimem_6_R.trc")
 
     expected_Timing = max((params["nFAW"] /4),
         params["nRRD_S"],
@@ -305,7 +305,7 @@ def run_suite6(params):
         results += "[x] Suite 6 - Reads only\n"
 
     #*** WRITES ONLY ***
-    totalTxns = run_verimem(params["config_file"], "traces/trace_verimem_6_W.trc")
+    totalTxns = run_verimem(params["config_file"], "traces/sst-CramSim-trace_verimem_6_W.trc")
 
     expected_Timing = max((params["nFAW"] /4),
         params["nRRD_S"],
@@ -334,11 +334,11 @@ def santize_params(params):
 
     return_params["stopAtCycle"] = int(params["stopAtCycle"].replace("ns\n", ""))
 
-    channelsPerDimm = int(params["numChannelsPerDimm"].replace("\n", ""))
+    channels = int(params["numChannels"].replace("\n", ""))
     ranksPerChannel = int(params["numRanksPerChannel"].replace("\n", ""))
     bankGroupsPerRank = int(params["numBankGroupsPerRank"].replace("\n", ""))
     banksPerBankGroup = int(params["numBanksPerBankGroup"].replace("\n", ""))
-    return_params["num_banks"] = channelsPerDimm * ranksPerChannel * bankGroupsPerRank * banksPerBankGroup
+    return_params["num_banks"] = channels * ranksPerChannel * bankGroupsPerRank * banksPerBankGroup
 
     return_params["nRC"] = int(params["nRC"].replace("\n", ""))
     return_params["nRRD"] = int(params["nRRD"].replace("\n", ""))

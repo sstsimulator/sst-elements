@@ -3,7 +3,6 @@
 #
 
 AM_CPPFLAGS = \
-	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
@@ -11,7 +10,7 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libhermes.la
 libhermes_la_SOURCES = \
 	msgapi.h \
-	hermes.cc \
+	miscapi.h \
 	hermes.h \
 	functor.h \
 	shmemapi.h

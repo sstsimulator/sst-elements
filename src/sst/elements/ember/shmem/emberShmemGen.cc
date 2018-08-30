@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,16 +21,10 @@
 using namespace SST;
 using namespace SST::Ember;
 
-const char* EmberShmemGenerator::m_eventName[] = {
-    FOREACH_ENUM(GENERATE_STRING)
-};
-
 EmberShmemGenerator::EmberShmemGenerator( 
-            Component* owner, Params& params) :
-    EmberGenerator(owner, params), 
-    m_printStats( 0 )
+            Component* owner, Params& params, std::string name) :
+    EmberGenerator(owner, params, name )
 {
-    m_printStats = (uint32_t) (params.find("printStats", 0));
 }
 
 EmberShmemGenerator::~EmberShmemGenerator()

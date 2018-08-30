@@ -3,13 +3,11 @@
 #
 
 AM_CPPFLAGS = \
-	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) 
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsimpleSimulation.la
 libsimpleSimulation_la_SOURCES = \
-	simpleSimulation.cc \
 	simpleCarWash.h \
 	simpleCarWash.cc
 	

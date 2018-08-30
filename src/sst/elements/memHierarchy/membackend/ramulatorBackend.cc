@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -38,7 +38,7 @@ ramulatorMemory::ramulatorMemory(Component *comp, Params &params) :
     
     configs.set_core_num(1); // ?
 
-    memSystem = new Gem5Wrapper(configs,64); // default cache line to 64 byte
+    memSystem = new Gem5Wrapper(configs, m_reqWidth); // default cache line to 64 byte 
 
     output->output(CALL_INFO, "Instantiated Ramulator from config file %s\n", ramulatorCfg.c_str());
 }
@@ -46,22 +46,35 @@ ramulatorMemory::ramulatorMemory(Component *comp, Params &params) :
 bool ramulatorMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes){
     ramulator::Request::Type type = (isWrite) 
         ? (ramulator::Request::Type::WRITE) : (ramulator::Request::Type::READ);
-
+    
     ramulator::Request request(addr, 
                                type,
                                callBackFunc, 
                                0);  /* context or core ID. ? */
-    bool ok = memSystem->send(request);
-    if(!ok) return false;
 
+    bool ok = memSystem->send(request);
+#ifdef __SST_DEBUG_OUTPUT__
+    output->debug(_L10_, "RamulatorBackend: Attempting to issue %s request for %" PRIx64 ". Accepted: %d\n", (isWrite ? "WRITE" : "READ"), addr, ok);
+#endif
+    if(!ok) return false;
+    
     // save this DRAM Request
-    dramReqs[addr].push_back(reqId); 
+    if (isWrite)
+        writes.insert(reqId);
+    else
+        dramReqs[addr].push_back(reqId); 
 
     return ok;
 }
 
-void ramulatorMemory::clock(){
+bool ramulatorMemory::clock(Cycle_t cycle){
     memSystem->tick();
+    // Ack writes since ramulator won't
+    while (!writes.empty()) {
+        handleMemResponse(*writes.begin());
+        writes.erase(writes.begin());
+    }
+    return false;
 }
 
 void ramulatorMemory::finish(){
@@ -74,9 +87,12 @@ void ramulatorMemory::ramulatorDone(ramulator::Request& ramReq) {
     std::deque<ReqId> &reqs = dramReqs[addr];
 
 #ifdef __SST_DEBUG_OUTPUT__
-    output->debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
+    output->debug(_L10_, "RamulatorBackend: Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
 #endif
-    assert(reqs.size());
+    // Clean up dramReqs
+    if (reqs.size() < 1)
+        output->fatal(CALL_INFO, -1, "RamulatorBackend: Error - ramulatorDone called but dramReqs[addr] is empty. Addr: %" PRIx64 "\n", (Addr)addr);
+
     ReqId req = reqs.front();
     reqs.pop_front();
     if(0 == reqs.size())

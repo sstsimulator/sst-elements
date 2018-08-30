@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2016, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -37,13 +37,14 @@ void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     assert( NULL == m_event );
     m_event = static_cast< AlltoallStartEvent* >(e);
 
-    m_dbg.verbose(CALL_INFO,1,0,"Start size=%d\n",m_size);
 
     ++m_seq;
     m_count = 1;
     m_state = PostRecv;
     m_size = m_info->getGroup( m_event->group )->getSize();
     m_rank = m_info->getGroup( m_event->group )->getMyRank();
+
+    m_dbg.debug(CALL_INFO,1,0,"Start size=%d\n",m_size);
 
     void* recv = recvChunkPtr(m_rank);
     void* send = sendChunkPtr(m_rank);
@@ -62,7 +63,7 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
       case PostRecv:
 
         if ( m_count == m_size ) {
-            m_dbg.verbose(CALL_INFO,1,0,"leave\n");
+            m_dbg.debug(CALL_INFO,1,0,"leave\n");
             retval.setExit(0);
             delete m_event;
             m_event = NULL;
@@ -70,11 +71,11 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
         }
         rank = mod((long) m_rank - m_count, m_size);
 
-        m_dbg.verbose(CALL_INFO,1,0,"count=%d irecv src=%d\n", 
+        m_dbg.debug(CALL_INFO,1,0,"count=%d irecv src=%d\n", 
                                                         m_count, rank );
 
-		addr.simVAddr = 1; 
-		addr.backing = recvChunkPtr(rank); 
+		addr.setSimVAddr( 1 ); 
+		addr.setBacking( recvChunkPtr(rank) );
         proto()->irecv( addr, recvChunkSize(rank), 
                         rank, genTag(), m_event->group, &m_recvReq ); 
         m_state = Send;
@@ -83,19 +84,19 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
       case Send:
         rank = mod((long) m_rank + m_count, m_size);
 
-        m_dbg.verbose(CALL_INFO,1,0,"count=%d send dest=%d\n", 
+        m_dbg.debug(CALL_INFO,1,0,"count=%d send dest=%d\n", 
                                                         m_count, rank );
 
 		
-		addr.simVAddr = 1; 
-		addr.backing = sendChunkPtr(rank); 
+		addr.setSimVAddr( 1 ); 
+		addr.setBacking( sendChunkPtr(rank) ); 
         proto()->send( addr, sendChunkSize(rank), 
                                             rank, genTag(), m_event->group ); 
         m_state = WaitRecv;
         break;
 
       case WaitRecv:
-        m_dbg.verbose(CALL_INFO,1,0,"count=%d wait\n", m_count );
+        m_dbg.debug(CALL_INFO,1,0,"count=%d wait\n", m_count );
         proto()->wait( &m_recvReq );
         ++m_count;
         m_state = PostRecv;

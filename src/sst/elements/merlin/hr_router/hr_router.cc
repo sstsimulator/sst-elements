@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -13,9 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 #include <sst_config.h>
-#include "hr_router.h"
+#include "hr_router/hr_router.h"
 
-#include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
@@ -221,6 +220,9 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     std::string inspector_config = params.find<std::string>("network_inspectors", "");
     split(inspector_config,",",inspector_names);
 
+    bool oql_track_port = params.find<bool>("oql_track_port","false");
+    bool oql_track_remote = params.find<bool>("oql_track_remote","false");
+    
     params.enableVerify(false);
     for ( int i = 0; i < num_ports; i++ ) {
         in_port_busy[i] = 0;
@@ -246,7 +248,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
                                    getLogicalGroupParam(params,topo,i,"input_buf_size"),
                                    getLogicalGroupParam(params,topo,i,"output_buf_size"),
                                    inspector_names,
-								   std::stof(getLogicalGroupParam(params,topo,i,"dlink_thresh", "-1")));
+								   std::stof(getLogicalGroupParam(params,topo,i,"dlink_thresh", "-1")),
+                                   oql_track_port,oql_track_remote);
         
     }
     params.enableVerify(true);
@@ -368,18 +371,27 @@ bool
 hr_router::clock_handler(Cycle_t cycle)
 {
     // If there are no events in the input queues, then we can remove
-    // ourselves from the clock queue.
+    // ourselves from the clock queue, as long as the arbitration unit
+    // says it's okay.
     if ( get_vcs_with_data() == 0 ) {
 #if VERIFY_DECLOCKING
         if ( clocking ) {
-            setRequestNotifyOnEvent(true);
-            unclocked_cycle = cycle;
-            clocking = false;
+            if ( arb->isOkayToPauseClock() ) {
+                setRequestNotifyOnEvent(true);
+                unclocked_cycle = cycle;
+                clocking = false;
+            }
         }
 #else
-        setRequestNotifyOnEvent(true);
-        unclocked_cycle = cycle;
-        return true;
+        if ( arb->isOkayToPauseClock() ) {
+            setRequestNotifyOnEvent(true);
+            unclocked_cycle = cycle;
+            return true;
+        }
+        else {
+            return false;
+        }
+    
 #endif
     }
     // Loop through all the events at the heads of the queues and call
@@ -484,12 +496,12 @@ hr_router::init(unsigned int phase)
                  */
                 switch ( topo->getPortState(*j) ) {
                 case Topology::R2N:
-                    ports[*j]->sendInitData(ire->getEncapsulatedEvent()->clone());
+                    ports[*j]->sendUntimedData(ire->getEncapsulatedEvent()->clone());
                     break;
                 case Topology::R2R: {
                     internal_router_event *new_ire = ire->clone();
                     new_ire->setEncapsulatedEvent(ire->getEncapsulatedEvent()->clone());
-                    ports[*j]->sendInitData(new_ire);
+                    ports[*j]->sendUntimedData(new_ire);
                     break;
                 }
                 default:
@@ -501,7 +513,7 @@ hr_router::init(unsigned int phase)
     }
 
     
-    // Alsways do the above.  A few specific things to do during init
+    // Always do the above.  A few specific things to do during init
 
     // After phase 1, all the PortControl blocks will have reported
     // the requested VNs.  Now we need to translate this to the number
@@ -516,6 +528,43 @@ hr_router::init(unsigned int phase)
         init_vcs();
     }
 
+}
+
+void
+hr_router::complete(unsigned int phase)
+{
+    for ( int i = 0; i < num_ports; i++ ) {
+        // std::cout << "Calling init on port: " << i << ", in phase " << phase << std::endl;
+        ports[i]->complete(phase);
+        Event *ev = NULL;
+        while ( (ev = ports[i]->recvInitData()) != NULL ) {
+            internal_router_event *ire = dynamic_cast<internal_router_event*>(ev);
+            if ( ire == NULL ) {
+                ire = topo->process_InitData_input(static_cast<RtrEvent*>(ev));
+            }
+            std::vector<int> outPorts;
+            topo->routeInitData(i, ire, outPorts);
+            for ( std::vector<int>::iterator j = outPorts.begin() ; j != outPorts.end() ; ++j ) {
+                /* Little tricky here.  Need to clone both the event, and the
+                 * encapsulated event.
+                 */
+                switch ( topo->getPortState(*j) ) {
+                case Topology::R2N:
+                    ports[*j]->sendUntimedData(ire->getEncapsulatedEvent()->clone());
+                    break;
+                case Topology::R2R: {
+                    internal_router_event *new_ire = ire->clone();
+                    new_ire->setEncapsulatedEvent(ire->getEncapsulatedEvent()->clone());
+                    ports[*j]->sendUntimedData(new_ire);
+                    break;
+                }
+                default:
+                    break;
+                }
+            }
+            delete ire;
+        }
+    }    
 }
 
 void
@@ -592,16 +641,19 @@ hr_router::init_vcs()
 
     vc_heads = new internal_router_event*[num_ports*num_vcs];
     xbar_in_credits = new int[num_ports*num_vcs];
+    output_queue_lengths = new int[num_ports*num_vcs];
     for ( int i = 0; i < num_ports*num_vcs; i++ ) {
         vc_heads[i] = NULL;
         xbar_in_credits[i] = 0;
+        output_queue_lengths[i] = 0;
     }
     
     for ( int i = 0; i < num_ports; i++ ) {
-        ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs]);
-    }    
+        ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],&output_queue_lengths[i*num_vcs]);
+    }
 
     topo->setOutputBufferCreditArray(xbar_in_credits, num_vcs);
+    topo->setOutputQueueLengthsArray(output_queue_lengths, num_vcs);
 
     // Now that we have the number of VCs we can finish initializing
     // arbitration logic

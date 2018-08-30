@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,30 +26,29 @@ namespace ArielComponent {
 
 class ArielReadEvent : public ArielEvent {
 
-	public:
-		ArielReadEvent(uint64_t rAddr, uint32_t length) :
-			readAddress(rAddr), readLength(length) {
-		}
+    public:
+        ArielReadEvent(uint64_t rAddr, uint32_t length) :
+                readAddress(rAddr), readLength(length) {
+        }
 
-		~ArielReadEvent() {
+        ~ArielReadEvent() {
+        }
 
-		}
+        ArielEventType getEventType() const {
+                return READ_ADDRESS;
+        }
 
-		ArielEventType getEventType() const {
-			return READ_ADDRESS;
-		}
+        uint64_t getAddress() const {
+                return readAddress;
+        }
 
-		uint64_t getAddress() const {
-			return readAddress;
-		}
+        uint32_t getLength() const {
+                return readLength;
+        }
 
-		uint32_t getLength() const {
-			return readLength;
-		}
-
-	private:
-		const uint64_t readAddress;
-		const uint32_t readLength;
+    private:
+        const uint64_t readAddress;
+        const uint32_t readLength;
 
 };
 

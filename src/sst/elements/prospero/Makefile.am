@@ -1,6 +1,5 @@
 
 AM_CPPFLAGS = \
-        $(BOOST_CPPFLAGS) \
         $(MPI_CPPFLAGS) \
         -DPROSPERO_TOOL_DIR="$(libexecdir)"
 
@@ -8,7 +7,6 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libprospero.la 
 
 libprospero_la_SOURCES = \
-	libprospero.cc \
         proscpu.h \
         proscpu.cc \
 	prosreader.h \
@@ -59,7 +57,6 @@ if SST_COMPILE_OSX
 all-local: tracetool/sstmemtrace.cc
 	$(CXX) -O3 -shared \
 	$(CPPFLAGS) \
-	$(BOOST_CPPFLAGS) \
 	$(LIBZ_CPPFLAGS) \
 	-DBIGARRAY_MULTIPLIER=1 \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
@@ -89,7 +86,6 @@ all-local: tracetool/sstmemtrace.cc
 	-fPIC -O3 \
 	-fomit-frame-pointer \
 	$(CPPFLAGS) \
-	$(BOOST_CPPFLAGS) \
 	$(LIBZ_CPPFLAGS) \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
 	-I$(PINTOOL_DIR)/source/include/pin \

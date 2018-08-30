@@ -1,0 +1,17 @@
+diff --git src/sst/core/configGraph.cc src/sst/core/configGraph.cc
+index 0eb0a2c..44f0d1f 100644
+--- src/sst/core/configGraph.cc
++++ src/sst/core/configGraph.cc
+@@ -426,9 +426,11 @@ ConfigGraph::checkForStructuralErrors()
+                     if (!Factory::getFactory()->isPortNameValid(ccomp->type, link.port[j]) ) {
+                         // For now this is not a fatal error
+                         // found_error = true;
+-                        output.fatal(CALL_INFO, 1, "ERROR:  Attempling to connect to unknown port: %s, "
++                        /*output.fatal(CALL_INFO, 1, "ERROR:  Attempling to connect to unknown port: %s, "
+                                       "in component %s of type %s.\n",
+                                       link.port[j].c_str(), ccomp->name.c_str(), ccomp->type.c_str());
++                                      */
++                        output.output("Attempling to connect to unknown port\n");
+                         count--;
+                     }
+                 }

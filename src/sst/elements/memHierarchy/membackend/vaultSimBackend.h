@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,19 +17,32 @@
 #ifndef _H_SST_MEMH_VAULT_SIM_BACKEND
 #define _H_SST_MEMH_VAULT_SIM_BACKEND
 
-#include "membackend/memBackend.h"
+#include "sst/elements/memHierarchy/membackend/memBackend.h"
 
 namespace SST {
 namespace MemHierarchy {
 
-class VaultSimMemory : public HMCMemBackend {
+class VaultSimMemory : public FlagMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(VaultSimMemory, "memHierarchy", "vaultsim", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Backend to interface with VaultSimC, a generic vaulted memory model", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"access_time", "Link latency for the link to the VaultSim memory model. With units (SI ok).", "100ns"} )
+
+    SST_ELI_DOCUMENT_PORTS( {"cube_link", "Link to VaultSim.", {"VaultSimC.MemRespEvent", "VaultSimC.MemReqEvent"} } )
+
+/* Begin class definition */
     VaultSimMemory(Component *comp, Params &params);
-	virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes );
+    virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes );
+    virtual bool isClocked() { return false; }
+
 private:
     void handleCubeEvent(SST::Event *event);
 
-	std::set<ReqId> outToCubes;
+    std::set<ReqId> outToCubes;
     SST::Link *cube_link;
 };
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,22 +26,22 @@ namespace ArielComponent {
 
 class ArielSwitchPoolEvent : public ArielEvent {
 
-	public:
-		ArielSwitchPoolEvent(uint32_t newPool) : pool(newPool) {
-		}
+    public:
+        ArielSwitchPoolEvent(uint32_t newPool) : pool(newPool) {
+        }
 
-		~ArielSwitchPoolEvent() {}
+        ~ArielSwitchPoolEvent() {}
 
-		ArielEventType getEventType() const {
-			return SWITCH_POOL;
-		};
+        ArielEventType getEventType() const {
+                return SWITCH_POOL;
+        };
 
-		uint32_t getPool() const {
-			return pool;
-		}
+        uint32_t getPool() const {
+                return pool;
+        }
 
-	private:
-		const uint32_t pool;
+    private:
+        const uint32_t pool;
 
 };
 

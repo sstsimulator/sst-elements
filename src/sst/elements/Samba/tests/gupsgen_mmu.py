@@ -33,7 +33,6 @@ comp_l1cache.addParams({
       "prefetcher" : "cassini.StridePrefetcher",
       "L1" : "1",
       "cache_size" : "8KB",
-      "do_not_back" : 1
 })
 
 # Enable statistics outputs
@@ -117,7 +116,7 @@ arielMMULink = sst.Link("cpu_mmu_link_" + str(next_core_id))
 
 #ptw_to_mem.connect((mmu, "ptw_to_mem0","100ps"), (mmu, "ptw_to_mem0","100ps"))
 
-link_cpu_mmu_link.connect( (comp_cpu, "cache_link", "0ps"), (mmu, "cpu_to_mmu0", "0ps") )
+link_cpu_mmu_link.connect( (comp_cpu, "cache_link", "50ps"), (mmu, "cpu_to_mmu0", "50ps") )
 link_cpu_mmu_link.setNoCut()
 
 link_mmu_cache_link.connect( (mmu, "mmu_to_cache0", "50ps"), (comp_l1cache, "high_network_0", "50ps") )

@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -71,7 +71,7 @@ bool EmberDetailedStreamGenerator::generate( std::queue<EmberEvent*>& evQ)
 		return false;
 	}
 
-	verbose( CALL_INFO, 2, 1, "streambuff=%" PRIx64 "\n",m_streamBuf.simVAddr);
+	verbose( CALL_INFO, 2, 1, "streambuff=%" PRIx64 "\n",m_streamBuf.getSimVAddr());
 
     enQ_getTime( evQ, &m_startTime[0] );
     Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
@@ -105,7 +105,7 @@ void EmberDetailedStreamGenerator::computeDetailedCopy( std::queue<EmberEvent*>&
     params.insert("request_count", tmp.str() );
 
 	tmp.str( std::string() ); tmp.clear();
-	tmp << m_streamBuf.simVAddr;
+	tmp << m_streamBuf.getSimVAddr();
     params.insert("read_start_address", tmp.str() );
 
 	tmp.str( std::string() ); tmp.clear();
@@ -138,7 +138,7 @@ void EmberDetailedStreamGenerator::computeDetailedTriad( std::queue<EmberEvent*>
     params.insert("n", tmp.str() );
 
 	tmp.str( std::string() ); tmp.clear();
-	tmp << m_streamBuf.simVAddr;
+	tmp << m_streamBuf.getSimVAddr();
     params.insert("start_a", tmp.str() );
 
 	tmp.str( std::string() ); tmp.clear();

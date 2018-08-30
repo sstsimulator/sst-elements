@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -66,7 +66,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
   	primaryComponentDoNotEndSim();
 
 	output->verbose(CALL_INFO, 1, 0, "Configuring Prospero cache connection...\n");
-	cache_link = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
+	cache_link = dynamic_cast<SimpleMem*>(loadSubComponent("memHierarchy.memInterface", this, params));
   	cache_link->initialize("cache_link", new SimpleMem::Handler<ProsperoComponent>(this,
 		&ProsperoComponent::handleResponse) );
 	output->verbose(CALL_INFO, 1, 0, "Configuration of memory interface completed.\n");
@@ -100,6 +100,10 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 ProsperoComponent::~ProsperoComponent() {
 	delete memMgr;
 	delete output;
+}
+
+void ProsperoComponent::init(unsigned int phase) {
+    cache_link->init(phase);
 }
 
 void ProsperoComponent::finish() {

@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,6 +17,7 @@
 #ifndef COMPONENTS_MERLIN_REORDERLINKCONTROL_H
 #define COMPONENTS_MERLIN_REORDERLINKCONTROL_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/unitAlgebra.h>
 
@@ -37,6 +38,7 @@ namespace Merlin {
 
 // Need our own version of Request to add a sequence number
 class ReorderRequest : public SST::Interfaces::SimpleNetwork::Request {
+
 public:
     uint32_t seq;
 
@@ -76,7 +78,7 @@ public:
 
     typedef std::priority_queue<ReorderRequest*, std::vector<ReorderRequest*>, Priority> PriorityQueue;
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         SST::Interfaces::SimpleNetwork::Request::serialize_order(ser);
         ser & seq;
     }
@@ -112,6 +114,20 @@ struct ReorderInfo {
 // functionality working.
 class ReorderLinkControl : public SST::Interfaces::SimpleNetwork {
 public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        ReorderLinkControl,
+        "merlin",
+        "reorderlinkcontrol",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Link Control module that can handle out of order packet arrival. Events are sequenced and order is reconstructed on receive.",
+        "SST::Interfaces::SimpleNetwork")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"rlc:networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"}
+    )
+
+    
     typedef std::queue<SST::Interfaces::SimpleNetwork::Request*> request_queue_t;
     
 private:
@@ -182,8 +198,6 @@ public:
 private:
 
     bool handle_event(int vn);
-    
-    
 };
 
 }

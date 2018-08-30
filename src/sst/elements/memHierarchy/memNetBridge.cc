@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -66,8 +66,8 @@ SimpleNetwork::Request* MemNetBridge::initTranslate(SimpleNetwork::Request *req,
     Event *payload = req->inspectPayload();
     MemNIC::InitMemRtrEvent *imre = dynamic_cast<MemNIC::InitMemRtrEvent*>(payload);
     if ( imre ) {
-        networks[fromNet].map[imre->name] = imre->address;
-        imre->address = getAddrForNetwork(fromNet^1);
+        networks[fromNet].map[imre->info.name] = imre->info.addr;
+        imre->info.addr = getAddrForNetwork(fromNet^1);
     } else if ( req->dest != SimpleNetwork::INIT_BROADCAST_ADDR ) {
         /* TODO */
         dbg.fatal(CALL_INFO, 1, "I should't crash here.   This is a TODO\n");
@@ -91,9 +91,9 @@ SimpleNetwork::Request* MemNetBridge::translate(SimpleNetwork::Request *req, uin
         tgt = getAddrFor(outNet, mre->event->getDst());
     } else {
         MemNIC::InitMemRtrEvent *imre = static_cast<MemNIC::InitMemRtrEvent*>(mre);
-        imre->address = getAddrForNetwork(fromNet^1);
+        imre->info.addr = getAddrForNetwork(fromNet^1);
         /* IMRE's don't have a specific destination - They are broadcast. */
-        tgt = (outNet.imreMap[imre->name]++) % outNet.map.size();
+        tgt = (outNet.imreMap[imre->info.name]++) % outNet.map.size();
     }
 
     req->src  = getAddrForNetwork(fromNet^1);

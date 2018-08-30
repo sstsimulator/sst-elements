@@ -130,8 +130,8 @@ comp_l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "debug" : "0",
-      "network_address" : "1",
-      "network_bw" : "25GB/s",
+      "memNIC.network_address" : "1",
+      "memNIC.network_bw" : "25GB/s",
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams({
@@ -148,11 +148,11 @@ comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
       "coherence_protocol" : "MESI",
       "debug" : "0",
-      "network_address" : "0",
+      "memNIC.network_address" : "0",
       "entry_cache_size" : "32768",
-      "network_bw" : "25GB/s",
-      "addr_range_end" : "0x1F000000",
-      "addr_range_start" : "0x0"
+      "memNIC.network_bw" : "25GB/s",
+      "memNIC.addr_range_end" : "0x1F000000",
+      "memNIC.addr_range_start" : "0x0"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
@@ -160,7 +160,7 @@ comp_memory.addParams({
     "backend" : "memHierarchy.simpleDRAM",
     "clock" : "1GHz",
     "max_requests_per_cycle" : 1,
-    "do_not_back" : 1,
+    "backing" : "none",
     "backend.tCAS" : 3, # 11@800MHz roughly coverted to 200MHz
     "backend.tRCD" : 3,
     "backend.tRP" : 3,

@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2016, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,16 +24,24 @@ namespace Firefly {
 class BarrierFuncSM :  public CollectiveTreeFuncSM 
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        BarrierFuncSM,
+        "firefly",
+        "Barrier",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
+  public:
     BarrierFuncSM( SST::Params& params ) : CollectiveTreeFuncSM( params ) {}
 
     virtual void handleStartEvent( SST::Event* e, Retval& retval ) {
         BarrierStartEvent* event = static_cast<BarrierStartEvent*>( e );
 
-		Hermes::MemAddr addr;
-		addr.simVAddr = 1;
-		addr.backing = NULL;
+		Hermes::MemAddr addr(1,NULL);
         CollectiveStartEvent* tmp = new CollectiveStartEvent( addr, addr, 0,
-                MP::CHAR, MP::MAX, 0, MP::GroupWorld, 
+                MP::CHAR, MP::MAX, 0, event->group, 
                                 CollectiveStartEvent::Allreduce );
 
         delete event;

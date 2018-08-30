@@ -3,20 +3,18 @@
 #
 
 AM_CPPFLAGS = \
-	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcassini.la
 libcassini_la_SOURCES = \
-	cassini.cc \
 	strideprefetch.cc \
 	strideprefetch.h \
+	palaprefetch.h \
+	palaprefetch.cc \
 	nbprefetch.cc \
 	nbprefetch.h \
-	simpletlb.h \
-	simpletlb.cc \
 	pageentry.h \
 	pageentry.cc \
 	addrHistogrammer.cc \

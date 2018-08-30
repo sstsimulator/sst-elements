@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,7 +17,7 @@
 #ifndef _H_SST_MEMH_HYBRIDSIM_BACKEND
 #define _H_SST_MEMH_HYBRIDSIM_BACKEND
 
-#include "membackend/memBackend.h"
+#include "sst/elements/memHierarchy/membackend/memBackend.h"
 
 #ifdef DEBUG
 #define OLD_DEBUG DEBUG
@@ -36,9 +36,20 @@ namespace MemHierarchy {
 
 class HybridSimMemory : public SimpleMemBackend {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(HybridSimMemory, "memHierarchy", "hybridsim", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "HybridSim-driven memory timings", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
+            /* Own parameters */
+            {"verbose", "Sets the verbosity of the backend output", "0"},
+            {"device_ini", "Name of the HybridSim Device config file", NULL},
+            {"system_ini", "Name of the HybridSim Device system file", NULL} )
+
+/* Begin class definition */
     HybridSimMemory(Component *comp, Params &params);
     bool issueRequest( ReqId, Addr, bool, unsigned );
-    void clock();
+    bool clock(Cycle_t cycle);
     void finish();
 private:
     void hybridSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);

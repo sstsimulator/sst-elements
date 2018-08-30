@@ -35,7 +35,7 @@ l1cache.addParams({
 memory = sst.Component("memory", "memHierarchy.MemController")
 memory.addParams({
         "coherence_protocol" : "MSI",
-        "access_time" : "10ns",
+        "backend.access_time" : "10ns",
         "backend.mem_size" : "2048MiB",
         "clock" : "1GHz",
         "use_dramsim" : "0",
@@ -48,3 +48,32 @@ cpu_cache_link.connect( (ariel, "cache_link_0", "50ps"), (l1cache, "high_network
 
 memory_link = sst.Link("mem_bus_link")
 memory_link.connect( (l1cache, "low_network_0", "50ps"), (memory, "direct_link", "50ps") )
+
+
+# Set the Statistic Load Level; Statistics with Enable Levels (set in
+# elementInfoStatistic) lower or equal to the load can be enabled (default = 0)
+sst.setStatisticLoadLevel(5)
+
+# Set the desired Statistic Output (sst.statOutputConsole is default)
+sst.setStatisticOutput("sst.statOutputConsole")
+#sst.setStatisticOutput("sst.statOutputTXT", {"filepath" : "./TestOutput.txt"
+#                                            })
+#sst.setStatisticOutput("sst.statOutputCSV", {"filepath" : "./TestOutput.csv",
+#                                                         "separator" : ", "
+#                                            })
+
+# Enable Individual Statistics for the Component with output at end of sim
+# Statistic defaults to Accumulator
+ariel.enableStatistics([
+      "cycles",
+      "active_cycles",
+      "instruction_count",
+      "read_requests",
+      "write_requests"
+])
+
+l1cache.enableStatistics([
+      "CacheHits",
+      "CacheMisses"
+])
+

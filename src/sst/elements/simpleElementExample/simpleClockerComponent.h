@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,6 +17,7 @@
 #define _SIMPLECLOCKERCOMPONENT_H
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 
 namespace SST {
 namespace SimpleClockerComponent {
@@ -24,6 +25,34 @@ namespace SimpleClockerComponent {
 class simpleClockerComponent : public SST::Component 
 {
 public:
+
+    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_COMPONENT(
+        simpleClockerComponent,
+        "simpleElementExample",
+        "simpleClockerComponent",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Clock Benchmark Component",
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        { "clock",      "Clock frequency", "1GHz" },
+        { "clockcount", "Number of clock ticks to execute", "100000"}
+    )
+
+    // Optional since there is nothing to document
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    // Optional since there is nothing to document
+    SST_ELI_DOCUMENT_PORTS(
+    )
+    
+    // Optional since there is nothing to document
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
+
     simpleClockerComponent(SST::ComponentId_t id, SST::Params& params);
     void setup()  { }
     void finish() { }
@@ -50,7 +79,6 @@ private:
     
     std::string clock_frequency_str;
     int clock_count;
-    
 };
 
 } // namespace SimpleClockerComponent

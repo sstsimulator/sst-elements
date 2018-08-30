@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2016, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -66,13 +66,11 @@ FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj,
     m_toMeLink = obj->configureSelfLink("ToMe", "1 ns",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleEnterEvent));
     assert( m_toMeLink );
-
-    m_proto->setRetLink( m_toMeLink );
 }
 
 FunctionSM::~FunctionSM()
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
     for ( unsigned int i=0; i < m_smV.size(); i++ ) {
         delete m_smV[i];
     }
@@ -121,7 +119,7 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
         module = defaultParams.find<std::string>("module");
     }
 
-    m_dbg.verbose(CALL_INFO,3,0,"func=`%s` module=`%s`\n",
+    m_dbg.debug(CALL_INFO,3,0,"func=`%s` module=`%s`\n",
                             name.c_str(),module.c_str());
 
     if ( params.find<std::string>("name").empty() ) {
@@ -155,8 +153,19 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
 
 void FunctionSM::enter( )
 {
-    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name().c_str());
+    m_dbg.debug(CALL_INFO,3,0,"%s\n",m_sm->name().c_str());
     m_toMeLink->send( NULL );
+}
+
+void FunctionSM::start(int type, Callback callback,  SST::Event* e)
+{
+    assert( e );
+    m_retFunc = NULL;
+    m_callback = callback;
+    assert( ! m_sm );
+    m_sm = m_smV[ type ];
+    m_dbg.debug(CALL_INFO,3,0,"%s enter\n",m_sm->name().c_str());
+    m_fromDriverLink->send( m_sm->enterLatency(), e );
 }
 
 void FunctionSM::start( int type, MP::Functor* retFunc, SST::Event* e )
@@ -165,7 +174,7 @@ void FunctionSM::start( int type, MP::Functor* retFunc, SST::Event* e )
     m_retFunc = retFunc;
     assert( ! m_sm );
     m_sm = m_smV[ type ];
-    m_dbg.verbose(CALL_INFO,3,0,"%s enter\n",m_sm->name().c_str());
+    m_dbg.debug(CALL_INFO,3,0,"%s enter\n",m_sm->name().c_str());
     m_fromDriverLink->send( m_sm->enterLatency(), e );
 }
 
@@ -174,7 +183,7 @@ void FunctionSM::handleStartEvent( SST::Event* e )
     Retval retval;
     assert( e );
     assert( m_sm );
-    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name().c_str());
+    m_dbg.debug(CALL_INFO,3,0,"%s\n",m_sm->name().c_str());
     m_sm->handleStartEvent( e, retval );
     processRetval( retval );
 }
@@ -183,7 +192,7 @@ void FunctionSM::handleStartEvent( SST::Event* e )
 void FunctionSM::handleEnterEvent( SST::Event* e )
 {
     assert( m_sm );
-    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name().c_str());
+    m_dbg.debug(CALL_INFO,3,0,"%s\n",m_sm->name().c_str());
     Retval retval;
     m_sm->handleEnterEvent( retval );
     processRetval( retval );
@@ -192,11 +201,15 @@ void FunctionSM::handleEnterEvent( SST::Event* e )
 void FunctionSM::processRetval(  Retval& retval )
 {
     if ( retval.isExit() ) {
-        m_dbg.verbose(CALL_INFO,3,0,"Exit %" PRIu64 "\n", retval.value() );
-        DriverEvent* x = new DriverEvent( m_retFunc, retval.value() );
-        m_toDriverLink->send( m_sm->returnLatency(), x ); 
+        m_dbg.debug(CALL_INFO,3,0,"Exit %" PRIu64 "\n", retval.value() );
+        if ( m_retFunc ) {
+            DriverEvent* x = new DriverEvent( m_retFunc, retval.value() );
+            m_toDriverLink->send( m_sm->returnLatency(), x ); 
+        } else {
+            m_callback();
+        }
     } else if ( retval.isDelay() ) {
-        m_dbg.verbose(CALL_INFO,3,0,"Delay %" PRIu64 "\n", retval.value() );
+        m_dbg.debug(CALL_INFO,3,0,"Delay %" PRIu64 "\n", retval.value() );
         m_toMeLink->send( retval.value(), NULL ); 
     } else {
     }
@@ -205,7 +218,7 @@ void FunctionSM::processRetval(  Retval& retval )
 void FunctionSM::handleToDriver( Event* e )
 {
     assert( e );
-    m_dbg.verbose(CALL_INFO,3,0," returning\n");
+    m_dbg.debug(CALL_INFO,3,0," returning\n");
     DriverEvent* event = static_cast<DriverEvent*>(e);
     if ( (*event->retFunc)( event->retval ) ) {
         delete event->retFunc;

@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2016, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,20 +22,37 @@
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
-#include "memEvent.h"
-#include "util.h"
+
+#include "sst/elements/memHierarchy/memEventBase.h"
+#include "sst/elements/memHierarchy/util.h"
 
 using namespace std;
 
 namespace SST { namespace MemHierarchy {
 
 class MultiThreadL1 : public Component {
-
 public:
-    
+/* Element Library Info */
+    SST_ELI_REGISTER_COMPONENT(MultiThreadL1, "memHierarchy", "multithreadL1", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Layer to connect multiple CPUs to a single L1 as if multiple hardware threads", COMPONENT_CATEGORY_MEMORY)
+
+    SST_ELI_DOCUMENT_PARAMS(
+            {"clock",               "(string) Clock frequency or period with units (Hz or s; SI units OK).", NULL},
+            {"requests_per_cycle",  "(uint) Number of requests to forward to L1 each cycle (for all threads combined). 0 indicates unlimited", "0"},
+            {"responses_per_cycle", "(uint) Number of responses to forward to threads each cycle (for all threads combined). 0 indicates unlimited", "0"},
+            {"debug",               "(uint) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+            {"debug_level",         "(uint) Debug verbosity level. Between 0 and 10", "0"},
+            {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""} )
+      
+    SST_ELI_DOCUMENT_PORTS(           
+          {"cache", "Link to L1 cache", {"memHierarchy.MemEventBase"} },
+          {"thread%(port)d", "Links to threads/cores", {"memHierarchy.MemEventBase"} } )
+
+/* Begin class definition */
     /** Constructor & destructor */
     MultiThreadL1(ComponentId_t id, Params &params);
     ~MultiThreadL1();
@@ -58,8 +75,7 @@ private:
     /** Output and debug */
     Output debug;
     Output output;
-    bool DEBUG_ALL;
-    Addr DEBUG_ADDR;
+    std::set<Addr> DEBUG_ADDR;
 
     /** Links */
     SST::Link * cacheLink;
@@ -72,13 +88,13 @@ private:
     TimeConverter* clock;
 
     /** Track outstanding requests for routing responses correctly */
-    std::map< MemEvent::id_type, unsigned int > threadRequestMap;
+    std::map<Event::id_type, unsigned int> threadRequestMap;
 
     /** Throughput control */
     uint64_t requestsPerCycle;
     uint64_t responsesPerCycle;
-    std::queue<MemEvent*> requestQueue;
-    std::queue<MemEvent*> responseQueue;
+    std::queue<MemEventBase*> requestQueue;
+    std::queue<MemEventBase*> responseQueue;
     
     inline void enableClock();
 };

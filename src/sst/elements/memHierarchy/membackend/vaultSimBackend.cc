@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,7 +24,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::VaultSim;
 
-VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : HMCMemBackend(comp, params){
+VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : FlagMemBackend(comp, params){
     std::string access_time = params.find<std::string>("access_time", "100 ns");
     cube_link = comp->configureLink( "cube_link", access_time,
             new Event::Handler<VaultSimMemory>(this, &VaultSimMemory::handleCubeEvent));

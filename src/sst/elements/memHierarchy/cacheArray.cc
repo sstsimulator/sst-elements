@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -43,7 +43,7 @@ SetAssociativeArray::~SetAssociativeArray() {
 
 CacheArray::CacheLine* SetAssociativeArray::lookup(const Addr baseAddr, bool update) {
     Addr lineAddr = toLineAddr(baseAddr);
-    int set = hash_->hash(0, lineAddr) & setMask_;
+    int set = hash_->hash(0, lineAddr) % numSets_;
     int setBegin = set * associativity_;
     int setEnd = setBegin + associativity_;
    
@@ -63,7 +63,7 @@ CacheArray::CacheLine* SetAssociativeArray::findReplacementCandidate(const Addr 
 
 unsigned int SetAssociativeArray::preReplace(const Addr baseAddr) {
     Addr lineAddr   = toLineAddr(baseAddr);
-    int set         = hash_->hash(0, lineAddr) & setMask_;
+    int set         = hash_->hash(0, lineAddr) % numSets_;
     int setBegin    = set * associativity_;
     
     for (unsigned int id = 0; id < associativity_; id++) {
@@ -97,7 +97,6 @@ DualSetAssociativeArray::DualSetAssociativeArray(Output* dbg, unsigned int lineS
         cacheAssociativity_ = cacheAssociativity;
         cacheReplacementMgr_ = cacheRp;
         cacheNumSets_   = cacheNumLines_ / cacheAssociativity_;
-        cacheSetMask_   = cacheNumSets_ - 1;
         dataLines_.resize(cacheNumLines_);
         for (unsigned int i = 0; i < cacheNumLines_; i++) {
             dataLines_[i] = new DataLine(lineSize_, i, dbg_);
@@ -114,7 +113,7 @@ DualSetAssociativeArray::DualSetAssociativeArray(Output* dbg, unsigned int lineS
 
 CacheArray::CacheLine* DualSetAssociativeArray::lookup(const Addr baseAddr, bool update) {
     Addr lineAddr = toLineAddr(baseAddr);
-    int set = hash_->hash(0, lineAddr) & setMask_;
+    int set = hash_->hash(0, lineAddr) % numSets_;
     int setBegin = set * associativity_;
     int setEnd = setBegin + associativity_;
    
@@ -150,7 +149,7 @@ CacheArray::CacheLine * DualSetAssociativeArray::findReplacementCandidate(const 
 
 unsigned int DualSetAssociativeArray::preReplaceDir(const Addr baseAddr) {
     Addr lineAddr   = toLineAddr(baseAddr);
-    int set         = hash_->hash(0, lineAddr) & setMask_;
+    int set         = hash_->hash(0, lineAddr) % numSets_;
     int setBegin    = set * associativity_;
     
     for (unsigned int id = 0; id < associativity_; id++) {
@@ -186,7 +185,7 @@ void DualSetAssociativeArray::replace(const Addr baseAddr, CacheArray::CacheLine
 
 unsigned int DualSetAssociativeArray::preReplaceCache(const Addr baseAddr) {
     Addr lineAddr   = toLineAddr(baseAddr);
-    int set         = hash_->hash(0, lineAddr) & cacheSetMask_;
+    int set         = hash_->hash(0, lineAddr) % cacheNumSets_;
     int setBegin    = set * cacheAssociativity_;
     
     for (unsigned int id = 0; id < cacheAssociativity_; id++) {
@@ -215,14 +214,12 @@ void CacheArray::printConfiguration() {
     dbg_->debug(_INFO_, "Sets: %d \n", numSets_);
     dbg_->debug(_INFO_, "Lines: %d \n", numLines_);
     dbg_->debug(_INFO_, "Line size: %d \n", lineSize_);
-    dbg_->debug(_INFO_, "Set mask: %d \n", setMask_);
     dbg_->debug(_INFO_, "Associativity: %i \n\n", associativity_);
 }
 
 void CacheArray::errorChecking() {
     if(0 == numLines_ || 0 == numSets_)     dbg_->fatal(CALL_INFO, -1, "Cache size and/or number of sets not greater than zero. Number of lines = %d, Number of sets = %d.\n", numLines_, numSets_);
     // TODO relax this, use mod instead of setmask_
-    if(!isPowerOfTwo(numSets_))             dbg_->fatal(CALL_INFO, -1, "Number of sets is not a power of two. Number of sets = %d.\n", numSets_);
     if((numSets_ * associativity_) != numLines_) dbg_->fatal(CALL_INFO, -1, "Wrong configuration.  Make sure numSets * associativity = Size/cacheLineSize. Number of sets = %d, Associtaivity = %d, Number of lines = %d.\n", numSets_, associativity_, numLines_);
     if(associativity_ < 1)                  dbg_->fatal(CALL_INFO, -1, "Associativity has to be greater than zero. Associativity = %d\n", associativity_);
 }

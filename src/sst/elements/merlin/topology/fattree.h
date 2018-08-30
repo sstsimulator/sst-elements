@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -19,6 +19,7 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_FATTREE_H
 #define COMPONENTS_MERLIN_TOPOLOGY_FATTREE_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
@@ -30,6 +31,23 @@ namespace Merlin {
 
 class topo_fattree: public Topology {
 
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        topo_fattree,
+        "merlin",
+        "fattree",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Fattree topology object",
+        "SST::Merlin::Topology")
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"fattree:shape",               "Shape of the fattree"},
+        {"fattree:routing_alg",         "Routing algorithm to use. [deterministic | adaptive]","deterministic"},
+        {"fattree:adaptive_threshold",  "Threshold used to determine if a packet will adaptively route."}
+    )
+
+    
 private:
     int rtr_level;
     int level_id;

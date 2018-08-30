@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -68,20 +68,21 @@ bool TimingDRAM::issueRequest( ReqId id, Addr addr, bool isWrite, unsigned numBy
     bool ret = m_channels[chan].issue(m_cycle, id, addr, isWrite, numBytes );
 
     if ( ret ) { 
-        output->verbose(CALL_INFO, 2, DBG_MASK, "chan=%d reqId=%d addr=%#lx\n",chan,id,addr);
+        output->verbose(CALL_INFO, 2, DBG_MASK, "chan=%d reqId=%" PRIu64 " addr=%#" PRIx64 "\n",chan,id,addr);
     } else {
-        output->verbose(CALL_INFO, 5, DBG_MASK, "chan=%d reqId=%d addr=%#lx failed\n",chan,id,addr);
+        output->verbose(CALL_INFO, 5, DBG_MASK, "chan=%d reqId=%" PRIu64 " addr=%#" PRIx64 " failed\n",chan,id,addr);
     }
     return ret;
 }
 
-void TimingDRAM::clock()
+bool TimingDRAM::clock(Cycle_t cycle)
 {
-    output->verbose(CALL_INFO, 5, DBG_MASK, "cycle %lu\n",m_cycle);
+    output->verbose(CALL_INFO, 5, DBG_MASK, "cycle %" PRIu64 "\n",m_cycle);
     for ( unsigned i = 0; i < m_channels.size(); i++ ) {
         m_channels[i].clock(m_cycle);
     }
     ++m_cycle;
+    return false;
 }
 
 //==================================================================================
@@ -98,6 +99,8 @@ TimingDRAM::Channel::Channel( Component* comp, TimingDRAM* mem, Params& params, 
     unsigned numRanks = params.find<unsigned>("numRanks", 1);
     m_maxPendingTrans = params.find<unsigned>("transaction_Q_size", 32);
 
+    m_pendingCount = 0;
+    
     m_mapper->setNumRanks( numRanks );
 
     if ( m_printConfig ) {
@@ -114,7 +117,7 @@ TimingDRAM::Channel::Channel( Component* comp, TimingDRAM* mem, Params& params, 
 
 void TimingDRAM::Channel::clock( SimTime_t cycle )
 {
-    m_output->verbosePrefix(prefix(),CALL_INFO, 5, DBG_MASK, "cycle %lu\n",cycle);
+    m_output->verbosePrefix(prefix(),CALL_INFO, 5, DBG_MASK, "cycle %" PRIu64 "\n",cycle);
 
     std::list<Cmd*>::iterator iter = m_issuedCmds.begin();
 
@@ -122,8 +125,12 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
         if ( (*iter)->isDone(cycle) ) {
             Cmd* cmd = (*iter);
 
-            m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "cycle=%lu retire %s for rank=%d bank=%d row=%d\n",
+            m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "cycle=%" PRIu64 " retire %s for rank=%d bank=%d row=%d\n",
                     cycle, cmd->getName().c_str(), cmd->getRank(), cmd->getBank(), cmd->getRow());
+
+            if (cmd->getTrans() != nullptr) {
+                m_retiredTrans.push(cmd->getTrans());
+            }
 
             delete (*iter);
             iter = m_issuedCmds.erase(iter); 
@@ -132,18 +139,19 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
         }
     }
  
-    if ( ! m_pendingTrans.empty() && m_pendingTrans.front()->isRetired() ) {
-        m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "send response\n");
+    if ( ! m_retiredTrans.empty() ) {
+        m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "send response: reqId=%" PRIu64 " bank=%d addr=%#" PRIx64 ", createTime=%" PRIu64 "\n", m_retiredTrans.front()->id, m_retiredTrans.front()->bank, m_retiredTrans.front()->addr, m_retiredTrans.front()->createTime);
 
-        m_mem->handleResponse( m_pendingTrans.front()->id );
-        delete m_pendingTrans.front();
+        m_mem->handleResponse( m_retiredTrans.front()->id );
+        delete m_retiredTrans.front();
 
-        m_pendingTrans.pop_front();
+        m_retiredTrans.pop();
+        m_pendingCount--;
     }
 
     Cmd* cmd = popCmd( cycle, m_dataBusAvailCycle );
     if ( cmd ) {
-        m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "cycle=%lu issue %s for rank=%d bank=%d row=%d\n",
+        m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "cycle=%" PRIu64 " issue %s for rank=%d bank=%d row=%d\n",
                     cycle, cmd->getName().c_str(), cmd->getRank(), cmd->getBank(), cmd->getRow());
 
         m_dataBusAvailCycle = cmd->issue();  
@@ -266,7 +274,7 @@ TimingDRAM::Bank::Bank( Component* comp, Params& params, unsigned mc, unsigned c
 
 TimingDRAM::Cmd* TimingDRAM::Bank::popCmd( SimTime_t cycle, SimTime_t dataBusAvailCycle )
 {
-    m_output->verbosePrefix(prefix(),CALL_INFO, 4, DBG_MASK, "numCmds=%lu\n", m_cmdQ.size() );
+    m_output->verbosePrefix(prefix(),CALL_INFO, 4, DBG_MASK, "numCmds=%zu\n", m_cmdQ.size() );
     update( cycle );
 
     Cmd* cmd = NULL;
@@ -293,8 +301,8 @@ void TimingDRAM::Bank::update( SimTime_t current )
         return;
     }
 
-    m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "addr=%#lx current row=%d trans row=%d\n",
-            trans->addr, m_row, trans->row );
+    m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "addr=%#" PRIx64 " current row=%d trans row=%d, time=%" PRIu64 "\n",
+            trans->addr, m_row, trans->row, trans->createTime );
 
     Cmd* cmd;
 

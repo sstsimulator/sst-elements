@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -14,22 +14,20 @@
 // distribution.
 
 /*
- * File:   cacheArray.h
  * Author: Caesar De la Paz III
- * Email:  caesar.sst@gmail.com
  */
 
 #ifndef CACHEARRAY_H
 #define CACHEARRAY_H
 
 #include <vector>
-#include <cstdlib>
-#include <bitset>
-#include "hash.h"
-#include "memEvent.h"
-#include "sst/core/output.h"
-#include "util.h"
-#include "replacementManager.h"
+
+#include <sst/core/output.h>
+
+#include "sst/elements/memHierarchy/memTypes.h"
+#include "sst/elements/memHierarchy/hash.h"
+#include "sst/elements/memHierarchy/util.h"
+#include "sst/elements/memHierarchy/replacementManager.h"
 
 using namespace std;
 
@@ -60,13 +58,11 @@ public:
         // Data getter/setter
         vector<uint8_t>* getData() { return &data_; }
 
-        void setData(vector<uint8_t> data, MemEvent* ev) {
-            if (ev->getPayloadSize() == size_) data_ = data;
-            else {
-                Addr offset = ev->getAddr() - ev->getBaseAddr();
-                for(uint32_t i = 0; i < ev->getPayloadSize() ; i++ ) {
-                    data_[offset + i] = ev->getPayload()[i];
-                }
+        void setData(vector<uint8_t> data, uint32_t offset) {
+            std::copy(data.begin(), data.end(), data_.begin() + offset);
+            if (data.size() + offset > size_) { // TODO can we remove this check somehow?
+                dbg_->fatal(CALL_INFO, -1, "Error: Cacheline write exceeds line size. Size: %" PRIu32 ", Offset: %" PRIu32 ", Write size: %zu\n",
+                        size_, offset, data.size());
             }
         }
 
@@ -92,6 +88,8 @@ public:
         std::string         owner_;
         
         uint64_t            lastSendTimestamp_; // Use to force sequential timing for subsequent accesses to the line
+
+        bool                wasPrefetch_;   // Track prefetch success rates
 
         /* L1 specific */
         unsigned int userLock_;
@@ -119,6 +117,8 @@ public:
             
             lastSendTimestamp_      = 0;
 
+            wasPrefetch_ = false;
+
             /* Dir specific */
             dataLine_ = NULL;
 
@@ -128,6 +128,18 @@ public:
             LLSCAtomic_             = false;
         }
 
+        std::string getString() {
+            std::ostringstream str;
+            str << std::hex << "0x" << baseAddr_;
+            str << " State: " << StateString[state_];
+            str << " Sharers: [";
+            for (std::set<std::string>::iterator it = sharers_.begin(); it != sharers_.end(); it++) {
+                if (it != sharers_.begin()) str << ",";
+                str << *it;
+            }
+            str << "] Owner: " << owner_;
+            return str.str();
+        }
 
         /** Getter for size. Constant field - no setter */
         unsigned int getSize() { return size_; }
@@ -197,6 +209,11 @@ public:
         /** Getter for timestamp field */
         uint64_t getTimestamp() { return lastSendTimestamp_; }
 
+        /** Setter for prefetch field */
+        void setPrefetch(bool prefetch) { wasPrefetch_ = prefetch; }
+        /** Getter for prefetch field */
+        bool getPrefetch() { return wasPrefetch_; }
+
         /****** L1 specific fields ******/
         
         /** Bulk setter for atomic fields - clear fields
@@ -232,13 +249,11 @@ public:
         vector<uint8_t>* getData() { return &data_; }
 
         /** Setter for cache line data - write only specified bits*/
-        void setData(vector<uint8_t> data, MemEvent* memEvent) {
-            if (memEvent->getPayloadSize() == size_) data_ = data;
-            else {
-                Addr offset = memEvent->getAddr() - baseAddr_;
-                for(uint32_t i = 0; i < memEvent->getPayloadSize() ; i++ ) {
-                    data_[offset + i] = memEvent->getPayload()[i];
-                }
+        void setData(vector<uint8_t> data, uint32_t offset) {
+            std::copy(data.begin(), data.end(), data_.begin() + offset);
+            if (data.size() + offset > size_) { // TODO can we remove this check somehow?
+                dbg_->fatal(CALL_INFO, -1, "Error: Cacheline write exceeds line size. Size: %" PRIu32 ", Offset: %" PRIu32 ", Write size: %zu\n",
+                        size_, offset, data.size());
             }
         }
 
@@ -269,6 +284,9 @@ public:
     /** Drop block offset bits (ie. log2(lineSize) */
     Addr toLineAddr(Addr addr) { return (Addr) ((addr >> lineOffset_) / slices_); }
     
+    /** Return bank num */
+    Addr getBank(Addr addr) { return (toLineAddr(addr) % banks_); }
+
     /** Destructor - Delete all cache line objects */
     virtual ~CacheArray() {
         for (unsigned int i = 0; i < lines_.size(); i++)
@@ -277,9 +295,18 @@ public:
         delete hash_;
     }
 
-    vector<CacheLine *> lines_;
     void setSliceAware(unsigned int numSlices) {
         slices_ = numSlices;
+    }
+
+    void setBanked(unsigned int numBanks) {
+        banks_ = numBanks;
+    }
+
+    void printCacheArray(Output &out) {
+        for (unsigned int i = 0; i < numLines_; i++) {
+            out.output("   %u %s\n", i, lines_[i]->getString().c_str());
+        }
     }
 
 private:
@@ -293,12 +320,13 @@ protected:
     unsigned int    numLines_;
     unsigned int    associativity_;
     unsigned int    lineSize_;
-    unsigned int    setMask_;
     unsigned int    lineOffset_;
     ReplacementMgr* replacementMgr_;
     HashFunction*   hash_;
     bool            sharersAware_;
-    unsigned int    slices_;
+    unsigned int    slices_;    // Both slices are banks_ are banks; slices_ are external to this cache array, banks_ are internal
+    unsigned int    banks_;
+    vector<CacheLine *> lines_; // The actual cache
 
     CacheArray(Output* dbg, unsigned int numLines, unsigned int associativity, unsigned int lineSize,
                ReplacementMgr* replacementMgr, HashFunction* hash, bool sharersAware, bool cache) : dbg_(dbg), 
@@ -306,10 +334,10 @@ protected:
                replacementMgr_(replacementMgr), hash_(hash) {
         dbg_->debug(_INFO_,"--------------------------- Initializing [Set Associative Cache Array]... \n");
         numSets_    = numLines_ / associativity_;
-        setMask_    = numSets_ - 1;
         lineOffset_ = log2Of(lineSize_);
         lines_.resize(numLines_);
         slices_ = 1;
+        banks_ = 1;
 
         for (unsigned int i = 0; i < numLines_; i++) {
             lines_[i] = new CacheLine(lineSize_, i, dbg_, cache);
@@ -377,7 +405,6 @@ private:
     unsigned int    cacheNumSets_;
     unsigned int    cacheNumLines_;
     unsigned int    cacheAssociativity_;
-    unsigned int    cacheSetMask_;
 
 };
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,30 +26,41 @@ namespace ArielComponent {
 
 class ArielWriteEvent : public ArielEvent {
 
-	public:
-		ArielWriteEvent(uint64_t wAddr, uint32_t length) :
-			writeAddress(wAddr), writeLength(length) {
-		}
+    public:
+        ArielWriteEvent(uint64_t wAddr, uint32_t length, const uint8_t* payloadData) :
+                writeAddress(wAddr), writeLength(length) {
+                
+                payload = new uint8_t[length];
+                
+                for( int i = 0; i < length; ++i ) {
+                	payload[i] = payloadData[i];
+                }
+        }
 
-		~ArielWriteEvent() {
+        ~ArielWriteEvent() {
+        	delete[] payload;
+        }
 
-		}
+        ArielEventType getEventType() const {
+                return WRITE_ADDRESS;
+        }
 
-		ArielEventType getEventType() const {
-			return WRITE_ADDRESS;
-		}
+        uint64_t getAddress() const {
+                return writeAddress;
+        }
 
-		uint64_t getAddress() const {
-			return writeAddress;
-		}
+        uint32_t getLength() const {
+                return writeLength;
+        }
+        
+        uint8_t* getPayload() const {
+        		return payload;
+        }
 
-		uint32_t getLength() const {
-			return writeLength;
-		}
-
-	private:
-		const uint64_t writeAddress;
-		const uint32_t writeLength;
+    private:
+        const uint64_t writeAddress;
+        const uint32_t writeLength;
+              uint8_t* payload;
 
 };
 

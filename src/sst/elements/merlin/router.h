@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -90,7 +90,7 @@ public:
 
     inline RtrEventType getType() const { return type; }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & type;
     }    
@@ -133,7 +133,7 @@ public:
     inline void setInjectionTime(SimTime_t time) {injectionTime = time;}
     // inline void setTraceID(int id) {traceID = id;}
     // inline void setTraceType(TraceType type) {trace = type;}
-    virtual RtrEvent* clone(void) {
+    virtual RtrEvent* clone(void)  override {
         RtrEvent *ret = new RtrEvent(*this);
         ret->request = this->request->clone();
         return ret;
@@ -146,13 +146,13 @@ public:
     inline void setSizeInFlits(int size ) {size_in_flits = size; }
     inline int getSizeInFlits() { return size_in_flits; }
 
-    virtual void print(const std::string& header, Output &out) const {
+    virtual void print(const std::string& header, Output &out) const  override {
         out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %lld, dest = %lld\n",
                    header.c_str(), getDeliveryTime(), getPriority(), request->src, request->dest);
         if ( request->inspectPayload() != NULL) request->inspectPayload()->print("  -> ", out);
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseRtrEvent::serialize_order(ser);
         ser & request;
         ser & size_in_flits;
@@ -188,12 +188,12 @@ public:
     inline void setSizeInFlits(int size) { size_in_flits = size; }
     inline int getSizeInFlits() { return size_in_flits; }
 
-    virtual void print(const std::string& header, Output &out) const {
+    virtual void print(const std::string& header, Output &out) const  override {
         out.output("%s TopologyEvent to be delivered at %" PRIu64 " with priority %d\n",
                 header.c_str(), getDeliveryTime(), getPriority());
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseRtrEvent::serialize_order(ser);
         ser & size_in_flits;
     }
@@ -216,12 +216,12 @@ public:
 	credits(credits)
     {}
 
-    virtual void print(const std::string& header, Output &out) const {
+    virtual void print(const std::string& header, Output &out) const  override {
         out.output("%s credit_event to be delivered at %" PRIu64 " with priority %d\n",
                 header.c_str(), getDeliveryTime(), getPriority());
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseRtrEvent::serialize_order(ser);
         ser & vc;
         ser & credits;
@@ -249,14 +249,14 @@ public:
         BaseRtrEvent(BaseRtrEvent::INITIALIZATION)
     {}
 
-    virtual void print(const std::string& header, Output &out) const {
+    virtual void print(const std::string& header, Output &out) const  override {
         out.output("%s RtrInitEvent to be delivered at %" PRIu64 " with priority %d\n",
                 header.c_str(), getDeliveryTime(), getPriority());
         out.output("%s     command: %d, int_value = %d, ua_value = %s\n",
                    header.c_str(), command, int_value, ua_value.toStringBestSI().c_str());
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseRtrEvent::serialize_order(ser);
         ser & command;
         ser & int_value;
@@ -289,7 +289,7 @@ public:
         if ( encap_ev != NULL ) delete encap_ev;
     }
 
-    virtual internal_router_event* clone(void)
+    virtual internal_router_event* clone(void) override
     {
         return new internal_router_event(*this);
     };
@@ -320,13 +320,13 @@ public:
     inline SST::Interfaces::SimpleNetwork::Request::TraceType getTraceType() {return encap_ev->getTraceType();}
     inline int getTraceID() {return encap_ev->getTraceID();}
 
-    virtual void print(const std::string& header, Output &out) const {
+    virtual void print(const std::string& header, Output &out) const  override {
         out.output("%s internal_router_event to be delivered at %" PRIu64 " with priority %d.  src = %d, dest = %d\n",
                    header.c_str(), getDeliveryTime(), getPriority(), getSrc(), getDest());
         if ( encap_ev != NULL ) encap_ev->print(header + std::string("-> "),out);
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseRtrEvent::serialize_order(ser);
         ser & next_port;
         ser & next_vc;
@@ -371,6 +371,7 @@ public:
     // version will ignore it.  If topology needs the information, it
     // will need to overload function to store it.
     virtual void setOutputBufferCreditArray(int const* array, int vcs) {};
+    virtual void setOutputQueueLengthsArray(int const* array, int vcs) {};
 	
     // When TopologyEvents arrive, they are sent directly to the
     // topology object for the router
@@ -395,6 +396,7 @@ public:
     virtual void arbitrate(PortControl** ports, int* port_busy, int* out_port_busy, int* progress_vc) = 0;
 #endif
     virtual void setPorts(int num_ports, int num_vcs) = 0;
+    virtual bool isOkayToPauseClock() { return true; }
     virtual void reportSkippedCycles(Cycle_t cycles) {};
     virtual void dumpState(std::ostream& stream) {};
 	

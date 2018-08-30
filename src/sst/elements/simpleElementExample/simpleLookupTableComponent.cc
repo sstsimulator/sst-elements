@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,10 +29,10 @@
 namespace SST {
 namespace SimpleElementExample {
 
-SimpleLookupTableComponent::SimpleLookupTableComponent(SST::ComponentId_t id, SST::Params &params) : Component(id)
+simpleLookupTableComponent::simpleLookupTableComponent(SST::ComponentId_t id, SST::Params &params) : Component(id)
 {
     char buffer[128] = {0};
-    snprintf(buffer, 128, "LookupTableComponent %3lu  [@t]  ", id);
+    snprintf(buffer, 128, "LookupTableComponent %3llu  [@t]  ", id);
     out.init(buffer, 0, 0, Output::STDOUT);
 
     const std::string & fname = params.find<std::string>("filename", "");
@@ -62,33 +62,33 @@ SimpleLookupTableComponent::SimpleLookupTableComponent(SST::ComponentId_t id, SS
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
-    registerClock("1GHz", new Clock::Handler<SimpleLookupTableComponent>(this, &SimpleLookupTableComponent::tick));
+    registerClock("1GHz", new Clock::Handler<simpleLookupTableComponent>(this, &simpleLookupTableComponent::tick));
 }
 
 
-SimpleLookupTableComponent::~SimpleLookupTableComponent()
+simpleLookupTableComponent::~simpleLookupTableComponent()
 {
     sregion->shutdown();
 }
 
 
-void SimpleLookupTableComponent::init(unsigned int phase)
+void simpleLookupTableComponent::init(unsigned int phase)
 {
 }
 
 
-void SimpleLookupTableComponent::setup()
+void simpleLookupTableComponent::setup()
 {
     table = sregion->getPtr<const uint8_t*>();
 }
 
 
-void SimpleLookupTableComponent::finish()
+void simpleLookupTableComponent::finish()
 {
 }
 
 
-bool SimpleLookupTableComponent::tick(SST::Cycle_t)
+bool simpleLookupTableComponent::tick(SST::Cycle_t)
 {
     bool done = false;
     static const size_t nPerRow = 8;

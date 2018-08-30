@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -42,6 +42,11 @@ struct Transaction {
 
 class TransactionQ : public SST::SubComponent {
   public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(TransactionQ, "memHierarchy", "fifoTransactionQ", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "fifo transaction queue", "SST::MemHierarchy::TransactionQ")
+
+/* Begin class definition */
     TransactionQ( Component* owner, Params& params ) : SubComponent( owner)  {}
 
     virtual void push( Transaction* trans ) {
@@ -64,7 +69,13 @@ class TransactionQ : public SST::SubComponent {
 class ReorderTransactionQ : public TransactionQ {
 
   public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(ReorderTransactionQ, "memHierarchy", "reorderTransactionQ", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "reorder transaction queue", "SST::MemHierarchy::TransactionQ")
 
+    SST_ELI_DOCUMENT_PARAMS( {"windowCycles", "Reorder window in cycles", "10" } )
+
+/* Begin class definition */
     ReorderTransactionQ( Component* owner, Params& params ) : TransactionQ( owner, params ) {
         windowCycles = params.find<unsigned int>("windowCycles", 10);
     }

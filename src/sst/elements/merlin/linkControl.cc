@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2016, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -132,28 +132,6 @@ void LinkControl::setup()
     }
 }
 
-// void LinkControl::init(unsigned int phase)
-// {
-//     if ( phase == 0 ) {
-//         // Need to send the available credits to the other side
-//         for ( int i = 0; i < num_vns; i++ ) {
-//             rtr_link->sendInitData(new credit_event(i,in_ret_credits[i]));
-//             in_ret_credits[i] = 0;
-//         }
-//     }
-//     // Need to recv the credits send from the other side
-//     Event* ev;
-//     while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
-//         credit_event* ce = dynamic_cast<credit_event*>(ev);
-//         if ( ce != NULL ) {
-//             rtr_credits[ce->vc] += ce->credits;
-//             delete ev;
-//         } else {
-//             init_events.push_back(ev);
-//         }
-//     }
-// }
-
 void LinkControl::init(unsigned int phase)
 {
     Event* ev;
@@ -165,13 +143,13 @@ void LinkControl::init(unsigned int phase)
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_BW;
             init_ev->ua_value = link_bw;
-            rtr_link->sendInitData(init_ev);
+            rtr_link->sendUntimedData(init_ev);
 
             // In phase zero, send the number of VNs
             RtrInitEvent* ev = new RtrInitEvent();
             ev->command = RtrInitEvent::REQUEST_VNS;
             ev->int_value = total_vns;
-            rtr_link->sendInitData(ev);
+            rtr_link->sendUntimedData(ev);
         }
         break;
     case 1:
@@ -229,7 +207,7 @@ void LinkControl::init(unsigned int phase)
         
         // Need to send available credits to other side of link
         for ( int i = 0; i < total_vns; i++ ) {
-            rtr_link->sendInitData(new credit_event(i,in_ret_credits[i]));
+            rtr_link->sendUntimedData(new credit_event(i,in_ret_credits[i]));
             in_ret_credits[i] = 0;
         }
         network_initialized = true;
@@ -267,6 +245,29 @@ void LinkControl::init(unsigned int phase)
     // Need to start the timer for links that never send data
     idle_start = Simulation::getSimulation()->getCurrentSimCycle();
     is_idle = true;
+}
+
+void LinkControl::complete(unsigned int phase)
+{
+    // For all other phases, look for credit events, any other
+    // events get passed up to containing component by adding them
+    // to init_events queue
+    Event* ev;
+    RtrInitEvent* init_ev;
+    while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
+        BaseRtrEvent* bev = static_cast<BaseRtrEvent*>(ev);
+        switch (bev->getType()) {
+        case BaseRtrEvent::PACKET:
+            init_events.push_back(static_cast<RtrEvent*>(ev));
+            break;
+        default:
+            // This shouldn't happen.  Only RtrEvents (PACKET
+            // types) should not be handled in the LinkControl
+            // object.
+            merlin_abort_full.fatal(CALL_INFO, 1, "Reached state where a non-RtrEvent was not handled.");
+            break;
+        }
+    }
 }
 
 
@@ -393,12 +394,12 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     return ret;
 }
 
-void LinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req)
+void LinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
 {
-    rtr_link->sendInitData(new RtrEvent(req));
+    rtr_link->sendUntimedData(new RtrEvent(req));
 }
 
-SST::Interfaces::SimpleNetwork::Request* LinkControl::recvInitData()
+SST::Interfaces::SimpleNetwork::Request* LinkControl::recvUntimedData()
 {
     if ( init_events.size() ) {
         RtrEvent *ev = init_events.front();
@@ -412,6 +413,13 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recvInitData()
     }
 }
 
+void LinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req) {
+    sendUntimedData(req);
+}
+
+SST::Interfaces::SimpleNetwork::Request* LinkControl::recvInitData() {
+    return recvUntimedData();
+}
 
 
 void LinkControl::handle_input(Event* ev)

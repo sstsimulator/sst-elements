@@ -1,8 +1,8 @@
-// Copyright 2013-2015 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2015, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -48,6 +48,19 @@ class HeapAddrs {
 	typedef std::set< Entry* > EntrySet;
 
   public:
+
+	~HeapAddrs() {
+		EntrySet::iterator iter = m_free.begin();
+		for ( ; iter != m_free.end(); ++iter ) {
+			delete *iter;
+		}	
+		EntryMap::iterator iter2 = m_used.begin();
+		for ( ; iter2 != m_used.end(); ++iter2 ) {
+			delete iter2->second;
+		}	
+		delete m_head;
+		delete m_tail;
+	}
 
 	HeapAddrs( uint64_t start, size_t length ) {
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -42,7 +42,6 @@ class c_BankStateRead;
 class c_BankStateReadA;
 class c_BankStateWrite;
 class c_BankStateWriteA;
-//class c_BankStatePrecharge;
 
 class c_BankStateActive: public c_BankState {
 
@@ -51,11 +50,11 @@ public:
 	c_BankStateActive(std::map<std::string, unsigned>* x_bankParams);
 	~c_BankStateActive();
 
-	virtual void handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr);
+	virtual void handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr, SimTime_t x_simCycle);
 
-	virtual void clockTic(c_BankInfo* x_bank);
+	virtual void clockTic(c_BankInfo* x_bank, SimTime_t x_simCycle);
 
-	virtual void enter(c_BankInfo* x_bank, c_BankState* x_prevState, c_BankCommand* x_cmdPtr);
+	virtual void enter(c_BankInfo* x_bank, c_BankState* x_prevState, c_BankCommand* x_cmdPtr, SimTime_t x_simCycle);
 
 	virtual std::list<e_BankCommandType> getAllowedCommands();
 
@@ -68,7 +67,7 @@ private:
 	c_BankCommand* m_receivedCommandPtr; //<! pointer to command received after entering this state
 	c_BankCommand* m_prevCommandPtr;
 	c_BankState* m_nextStatePtr;
-	unsigned m_timer;
+	SimTime_t m_timer;
 
 };
 } // namespace n_Bank

@@ -1,0 +1,13 @@
+# This is little-endian (MSB first)
+# key
+# C - channel/MC
+# R - rank
+# B - bankGroup
+# b - bank
+# r - row
+# l - column
+# h - cacheline
+#
+# This map matches the default present in ddr4.cfg for CramSim
+#
+r:15  l:11  R:1 B:2  b:2  h:5

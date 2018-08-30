@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -14,24 +14,23 @@
 #include "emberunstructured.h"
 #include "../../embercustommap.h"
 
-
 using namespace SST::Ember;
 
 EmberUnstructuredGenerator::EmberUnstructuredGenerator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params, "Unstructured"), 
 	m_loopIndex(0)
 {
-	graphFile  = params.find_string("arg.graphfile", "-1");
+	graphFile  = params.find<std::string>("arg.graphfile", "-1");
 	if(graphFile.compare("-1") == 0)
 		fatal(CALL_INFO, -1, "Communication graph file must be specified for unstructured motifs!\n");
 
-	p_size  = (uint32_t) params.find_integer("arg.p_size", 10000);
-	items_per_cell = (uint32_t) params.find_integer("arg.fields_per_cell", 1);
-	sizeof_cell = (uint32_t) params.find_integer("arg.datatype_width", 8);
-	iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-	nsCompute  = (uint64_t) params.find_integer("arg.computetime", 0);
+	p_size  = (uint32_t) params.find<uint32_t>("arg.p_size", 10000);
+	items_per_cell = (uint32_t) params.find<uint32_t>("arg.fields_per_cell", 1);
+	sizeof_cell = (uint32_t) params.find<uint32_t>("arg.datatype_width", 8);
+	iterations = (uint32_t) params.find<uint32_t>("arg.iterations", 1);
+	nsCompute  = (uint64_t) params.find<uint64_t>("arg.computetime", 0);
 
-    jobId        = (int) params.find_integer("_jobId"); //NetworkSim
+    jobId        = (int) params.find<int>("_jobId"); //NetworkSim
 	configure();
 }
 
@@ -189,7 +188,7 @@ std::vector<std::map<int,int> >* EmberUnstructuredGenerator::readCommFile(std::s
 {
     //read matrix
 	MatrixMarketReader2D<int> reader = MatrixMarketReader2D<int>();
-	vector<int*>* dataVec = reader.readMatrix(fileName.c_str(), true); //current version ignores edge weights
+    std::vector<int*>* dataVec = reader.readMatrix(fileName.c_str(), true); //current version ignores edge weights
 
     //NetworkSim
     if(dataVec == NULL)
@@ -219,13 +218,13 @@ std::vector<std::map<int,int> >* EmberUnstructuredGenerator::readCommFile(std::s
 }
 
 template <class T>
-vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignoreValues)
+std::vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignoreValues)
 {
     //TODO: make this function faster by reading the file all at once
     //TODO: print the errors inside this function instead of returning NULL
 
     //open file
-    ifstream inputFile;
+    std::ifstream inputFile;
     inputFile.open( fileName, std::fstream::in );
     if(!inputFile.is_open()){
         return NULL;
@@ -233,7 +232,7 @@ vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignor
     }
 
     //read header
-    string fType, object, format, field, symmetry;
+    std::string fType, object, format, field, symmetry;
     if( !(inputFile >> fType >> object >> format >> field >> symmetry) ){
         return NULL;
         //fatal(CALL_INFO, -1, "Cannot read matrix market file: %s\n", fileName);
@@ -275,10 +274,10 @@ vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignor
     }
 
     //read data
-    vector<T*>* outVector = new vector<T*>();
+    std::vector<T*>* outVector = new std::vector<T*>();
     T* tempData;
     double ignoredDummy;
-    string line;
+    std::string line;
 
     if(format.compare("coordinate") == 0){
         inputFile >> numLines;
@@ -287,7 +286,7 @@ vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignor
             tempData = new T[3];
             if(ignoreValues){
                 getline(inputFile, line);
-                stringstream is(line);
+                std::stringstream is(line);
                 is >> tempData[0] >> tempData[1] >> ignoredDummy;
                 tempData[2] = 1;
             } else {

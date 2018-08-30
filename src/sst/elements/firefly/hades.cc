@@ -1,8 +1,8 @@
-// Copyright 2013-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2016, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,6 +21,7 @@
 #include <sst/core/params.h>
 #include <sst/core/link.h>
 
+#include "hadesMisc.h"
 #include "sst/elements/thornhill/detailedCompute.h"
 
 #include <stdlib.h>
@@ -48,7 +49,16 @@ Hades::Hades( Component* owner, Params& params ) :
         params.find<uint32_t>("verboseMask",0),
         Output::STDOUT );
 
-    Params tmpParams = params.find_prefix_params("nicParams." );
+    Params tmpParams = params.find_prefix_params("ctrlMsg.");
+    m_proto = dynamic_cast<ProtocolAPI*>(owner->loadSubComponent(
+                                    "firefly.CtrlMsgProto", owner, tmpParams ) );
+
+    Params funcParams = params.find_prefix_params("functionSM.");
+
+    m_numNodes = params.find<int>("numNodes",0); 
+    m_functionSM = new FunctionSM( funcParams, owner, m_proto );
+
+    tmpParams = params.find_prefix_params("nicParams." );
 
     std::string moduleName = params.find<std::string>("nicModule"); 
 
@@ -110,7 +120,7 @@ Hades::Hades( Component* owner, Params& params ) :
         	netMapId = netId; 
     	}
 
-    	m_dbg.verbose(CALL_INFO,1,2,"netId=%d netMapId=%d netMapSize=%d\n",
+    	m_dbg.debug(CALL_INFO,1,2,"netId=%d netMapId=%d netMapSize=%d\n",
             netId, netMapId, m_netMapSize );
 
         m_netMapName = params.find<std::string>( "netMapName" );
@@ -118,7 +128,11 @@ Hades::Hades( Component* owner, Params& params ) :
 
         m_sreg = getGlobalSharedRegion( m_netMapName,
                     m_netMapSize*sizeof(int), new SharedRegionMerger());
-        m_sreg->modifyArray( netMapId, netId );
+
+        if ( 0 == params.find<int>("coreId",0) ) {
+            m_sreg->modifyArray( netMapId, netId );
+        }
+
         m_sreg->publish();
 	}
 }
@@ -126,11 +140,17 @@ Hades::Hades( Component* owner, Params& params ) :
 Hades::~Hades()
 {
     if ( m_virtNic ) delete m_virtNic;
+    delete m_proto;
+    delete m_functionSM;
+}
+void Hades::finish(  )
+{
+    m_proto->finish();
 }
 
 void Hades::_componentSetup()
 {
-    m_dbg.verbose(CALL_INFO,1,1,"nodeId %d numCores %d, coreNum %d\n",
+    m_dbg.debug(CALL_INFO,1,1,"nodeId %d numCores %d, coreNum %d\n",
       m_virtNic->getNodeId(), m_virtNic->getNumCores(), m_virtNic->getCoreId());
 
 	if ( m_netMapSize > 0 ) {
@@ -144,43 +164,38 @@ void Hades::_componentSetup()
 
     	for ( int i =0; i < group->getSize(); i++ ) {
         	if ( nid == group->getMapping( i ) ) {
-           		m_dbg.verbose(CALL_INFO,1,2,"rank %d -> nid %d\n", i, nid );
+           		m_dbg.debug(CALL_INFO,1,2,"rank %d -> nid %d\n", i, nid );
             	group->setMyRank( i );
             	break;
         	} 
 		}
 
-    	m_dbg.verbose(CALL_INFO,1,2,"nid %d, numRanks %u, myRank %u \n",
+    	m_dbg.debug(CALL_INFO,1,2,"nid %d, numRanks %u, myRank %u \n",
 								nid, group->getSize(),group->getMyRank() );
 	}
 
     char buffer[100];
     snprintf(buffer,100,"@t:%#x:%d:Hades::@p():@l ",
-                                    m_virtNic->getNodeId(), getNid());
+                                    m_virtNic->getNodeId(), getRank());
     m_dbg.setPrefix(buffer);
+
+    m_proto->setVars( getInfo(), getNic(), getMemHeapLink(), m_functionSM->getRetLink() );
+    m_functionSM->setup(getInfo() );
 }
 
 void Hades::_componentInit(unsigned int phase )
 {
     m_virtNic->init( phase );
-
-
 }
 
-int Hades::getNumNids()
+int Hades::getNodeNum() 
 {
-    int size = -1;
-	Group* group = m_info.getGroup(MP::GroupWorld);
-	if ( group ) { 
-    	size = group->getSize();
-	}
-    m_dbg.verbose(CALL_INFO,1,1,"size=%d\n",size);
-    return size;
+    return m_virtNic->getRealNodeId();
 }
 
-int Hades::getNid() 
+int Hades::getRank() 
 {
     int rank = m_info.worldRank();
-    m_dbg.verbose(CALL_INFO,1,1,"rank=%d\n",rank);
+    m_dbg.debug(CALL_INFO,1,1,"rank=%d\n",rank);
     return rank;
 }

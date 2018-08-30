@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -433,8 +433,8 @@ bool pagedMultiMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned 
     }
 }
 
-void pagedMultiMemory::clock(){
-    DRAMSimMemory::clock();
+bool pagedMultiMemory::clock(Cycle_t cycle){
+    DRAMSimMemory::clock(cycle);
 
     // put things in the DRAM 
     while (!dramQ.empty()) {
@@ -446,6 +446,7 @@ void pagedMultiMemory::clock(){
             break;
         }
     }
+    return false;
 }
 
 
@@ -467,7 +468,7 @@ void pagedMultiMemory::printAccStats() {
 }
 
 void pagedMultiMemory::finish(){
-    printf("fast_t_pages: %lu\n", pageMap.size());
+    printf("fast_t_pages: %zu\n", pageMap.size());
     
     tPages->addData(pageMap.size());
 

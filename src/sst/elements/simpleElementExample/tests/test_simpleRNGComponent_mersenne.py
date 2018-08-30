@@ -10,6 +10,7 @@ comp_clocker0 = sst.Component("clocker0", "simpleElementExample.simpleRNGCompone
 comp_clocker0.addParams({
       "count" : """100000""",
       "seed" : """1447""",
+      "verbose" : "1",
       "rng" : """mersenne"""
 })
 

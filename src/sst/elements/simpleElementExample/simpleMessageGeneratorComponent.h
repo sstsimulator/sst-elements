@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,6 +17,7 @@
 #define _SIMPLEMESSAGEGENERATORCOMPONENT_H
 
 #include "sst/core/component.h"
+#include <sst/core/elementinfo.h>
 #include "sst/core/link.h"
 
 namespace SST {
@@ -25,6 +26,36 @@ namespace SimpleMessageGeneratorComponent {
 class simpleMessageGeneratorComponent : public SST::Component 
 {
 public:
+
+    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_COMPONENT(
+        simpleMessageGeneratorComponent,
+        "simpleElementExample",
+        "simpleMessageGeneratorComponent",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Messaging rate benchmark component",
+        COMPONENT_CATEGORY_NETWORK
+    )
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        { "printStats", "Prints the statistics from the component", "0"},
+        { "clock", "Sets the clock for the message generator", "1GHz" },
+        { "sendcount", "Sets the number of sends in the simulation.", "1000" },
+        { "outputinfo", "Sets the level of output information", "1" }
+    )
+
+    // Optional since there is nothing to document
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        { "remoteComponent", "Sets the link for the message component, message components talk to each other exchanging simple messages", { "simpleMessageGeneratorComponent.simpleMessage", "" } }
+    )
+
+    // Optional since there is nothing to document
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    )
+
     simpleMessageGeneratorComponent(SST::ComponentId_t id, SST::Params& params);
     void setup()  { }
     void finish() 

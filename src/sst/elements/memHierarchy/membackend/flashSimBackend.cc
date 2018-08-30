@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -66,8 +66,9 @@ bool FlashDIMMSimMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigne
     return true;
 }
 
-void FlashDIMMSimMemory::clock() {
+bool FlashDIMMSimMemory::clock(Cycle_t cycle) {
     memSystem->update();
+    return false;
 }
 
 void FlashDIMMSimMemory::finish() {
@@ -80,7 +81,7 @@ void FlashDIMMSimMemory::FlashDIMMSimDone(unsigned int id, uint64_t addr, uint64
     output->verbose(CALL_INFO, 4, 0, "Backend retiring request for address %" PRIx64 ", Reqs: %" PRIu64 "\n",
 		(Addr) addr, (uint64_t) reqs.size());
 
-    assert(reqs.size());
+    if (reqs.size() == 0) output->fatal(CALL_INFO, -1, "Error: reqs.size() is 0 at DRAMSimMemory done\n");
     ReqId req = reqs.front();
     reqs.pop_front();
     if(0 == reqs.size())

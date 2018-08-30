@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,8 +18,8 @@
 #define _H_SST_MEMH_PAGEDMULTI_BACKEND
 
 #include <queue>
-#include "membackend/dramSimBackend.h"
-#include "sst/core/rng/sstrng.h"
+#include "sst/elements/memHierarchy/membackend/dramSimBackend.h"
+#include <sst/core/rng/sstrng.h>
 
 #ifdef DEBUG
 #define OLD_DEBUG DEBUG
@@ -147,9 +147,38 @@ struct pageInfo {
 
 class pagedMultiMemory : public DRAMSimMemory {
 public:
+/* Element Library Info */
+    SST_ELI_REGISTER_SUBCOMPONENT(pagedMultiMemory, "memHierarchy", "pagedMulti", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "DRAMSim-driven memory timings with a fixed timing multi-levle memory using paging", "SST::MemHierarchy::MemBackend")
+    
+    SST_ELI_DOCUMENT_PARAMS( DRAMSIM_ELI_PARAMS,
+            /* Own parameters */
+            {"collect_stats",       "Name of DRAMSim Device system file", "0"},
+            {"transfer_delay",      "Time (in ns) to transfer page to fast mem", "250"},
+            {"dramBackpressure",    "Don't issue page swaps if DRAM is too busy", "1"},
+            {"threshold",           "Threshold (touches/quantum)", "4"},
+            {"scan_threshold",      "scan Threshold (for SC strategies)", "4"},
+            {"seed",                "RNG Seed", "1447"},
+            {"page_add_strategy",   "Page Addition Strategy", "T"},
+            {"page_replace_strategy",      "Page Replacement Strategy", "FIFO"},
+            {"access_time",         "Constant time memory access for \"fast\" memory", "35ns"},
+            {"max_fast_pages",      "Number of \"fast\" (constant time) pages", "256"},
+            {"page_shift",          "Size of page (2^x bytes)", "12"},
+            {"quantum",             "time period for when page access counts is shifted", "5ms"},
+            {"accStatsPrefix",      "File name for acces pattern statistics",""} )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+            {"fast_hits", "Number of accesses that 'hit' a fast page", "count", 1},
+            {"fast_swaps", "Number of pages swapped between 'fast' and 'slow' memory", "count", 1},
+            {"fast_acc", "Number of total accesses to the memory backend", "count", 1},
+            {"t_pages", "Number of total pages", "count", 1},
+            {"cant_swap", "Number of times a page could not be swapped in because no victim page could be found because all candidates were swapping", "count", 1},
+            {"swap_delays", "Number of an access is delayed because the page is swapping", "count", 1} )
+
+/* Begin class definition */
     pagedMultiMemory(Component *comp, Params &params);
 	virtual bool issueRequest(ReqId, Addr, bool, unsigned );
-    virtual void clock();
+    virtual bool clock(Cycle_t cycle);
     virtual void finish();
 
 private:
@@ -164,7 +193,7 @@ private:
         Addr addr;
         bool isWrite;
         unsigned numBytes;
-		void serialize_order(SST::Core::Serialization::serializer &ser) {
+		void serialize_order(SST::Core::Serialization::serializer &ser)  override {
 			ser & id;
 			ser & addr;
 			ser & isWrite;
@@ -242,7 +271,7 @@ public:
         MemCtrlEvent() {} // For Serialization only
         
     public:
-        void serialize_order(SST::Core::Serialization::serializer &ser) {
+        void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
             ser & req;  // Cannot serialize pointers unless they are a serializable object
         }

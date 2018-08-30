@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -19,127 +19,16 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
-#include "sst/core/element.h"
+#include <sst/core/element.h>
+#include <sst/core/warnmacros.h>
 
+#include "sst/elements/memHierarchy/util.h"
+#include "sst/elements/memHierarchy/memEventBase.h"
+#include "sst/elements/memHierarchy/memTypes.h"
 
 namespace SST { namespace MemHierarchy {
 
 using namespace std;
-typedef uint64_t Addr;
-
-/*
- *  Command types
- *  Not all coherence protocols use all types
- */
-#define X_TYPES \
-    X(NULLCMD)          /* Dummy command */\
-    /* Requests */ \
-    X(GetS)             /* Read:  Request to get cache line in S state */\
-    X(GetX)             /* Write: Request to get cache line in M state */\
-    X(GetSEx)           /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
-                        /*        GetSEx sets the LOCK, GetX removes the LOCK  */\
-    X(FlushLine)        /* Request to flush a cache line */\
-    X(FlushLineInv)     /* Request to flush and invalidate a cache line */\
-    X(FlushAll)         /* Request to flush entire cache - similar to wbinvd */\
-    /* Request Responses */\
-    X(GetSResp)         /* Response to a GetS request */\
-    X(GetXResp)         /* Response to a GetX request */\
-    X(FlushLineResp)    /* Response to FlushLine request */\
-    X(FlushAllResp)     /* Response to FlushAll request */\
-    /* Writebacks, these commands also serve as invalidation acknowledgments */\
-    X(PutS)             /* Clean replacement from S->I:      Remove sharer */\
-    X(PutM)             /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
-    X(PutE)             /* Clean replacement from E->I:      Remove owner but don't writeback data */\
-    /* Invalidates - sent by caches or directory controller */\
-    X(Inv)              /* Other write request:  Invalidate cache line */\
-    /* Invalidates - sent by directory controller */\
-    X(Fetch)            /* Other read request to sharer:  Get data but don't invalidate cache line */\
-    X(FetchInv)         /* Other write request to owner:  Invalidate cache line */\
-    X(FetchInvX)        /* Other read request to owner:   Downgrade cache line to O/S (Remove exclusivity) */\
-    X(FetchResp)        /* response to a Fetch, FetchInv or FetchInvX request */\
-    X(FetchXResp)       /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
-    /* Others */\
-    X(NACK)             /* NACK response to a message */\
-    X(AckInv)           /* Acknowledgement response to an invalidation request */\
-    X(AckPut)           /* Acknowledgement response to a replacement (Put*) request */\
-    X(LAST_CMD)
-
-/** Valid commands for the MemEvent */
-typedef enum {
-#define X(x) x,
-    X_TYPES
-#undef X
-} Command;
-
-/** Array of the stringify'd version of the MemEvent Commands.  Useful for printing. */
-static const char* CommandString[] __attribute__((unused)) = {
-#define X(x) #x ,
-    X_TYPES
-#undef X
-};
-
-// statistics for the network memory inspector
-static const ElementInfoStatistic networkMemoryInspector_statistics[] = {
-#define X(x) { #x, #x, "memEvents", 1},
-    X_TYPES
-#undef X
-    { NULL, NULL, NULL, 0 }
-};
-
-#undef X_TYPES
-
-
-/* Coherence states 
- * Not all protocols use all states 
- */
-#define STATE_TYPES \
-    X(NP)    /* Invalid */\
-    X(I)    /* Invalid */\
-    X(S)    /* Shared */\
-    X(E)    /* Exclusive, clean */\
-    X(O)    /* Owned, dirty */\
-    X(M)    /* Exclusive, dirty */\
-    X(IS)   /* Invalid, have issued read request */\
-    X(IM)   /* Invalid, have issued write request */\
-    X(SM)   /* Shared, have issued upgrade request */\
-    X(OM)   /* Owned, have issued upgrade request */\
-    X(I_d)  /* I, waiting for dir entry from memory */\
-    X(S_d)  /* S, waiting for dir entry from memory */\
-    X(M_d)  /* M, waiting for dir entry from memory */\
-    X(M_Inv)    /* M, waiting for FetchResp from owner */\
-    X(M_InvX)   /* M, waiting for FetchXResp from owner */\
-    X(E_Inv)    /* E, waiting for FetchResp from owner */\
-    X(E_InvX)   /* E, waiting for FetchXResp from owner */\
-    X(S_D)      /* S, waiting for data from memory for another GetS request */\
-    X(E_D)      /* E with sharers, waiting for data from memory for another GetS request */\
-    X(M_D)      /* M with sharers, waiting for data from memory for another GetS request */\
-    X(SM_D)     /* SM, waiting for data from memory for another GetS request */\
-    X(S_Inv)    /* S, waiting for Invalidation acks from sharers */\
-    X(SM_Inv)   /* SM, waiting for Invalidation acks from sharers */\
-    X(MI) \
-    X(EI) \
-    X(SI) \
-    X(S_B)      /* S, blocked while waiting for a response (currently used for flushes) */\
-    X(I_B)      /* I, blocked while waiting for a response (currently used for flushes) */\
-    X(SB_Inv)   /* Was in S_B, got an Inv, resolving Inv first */\
-    X(NULLST)
-
-typedef enum {
-#define X(x) x,
-    STATE_TYPES
-#undef X
-} State;
-
-/** Array of the stringify'd version of the MemEvent Commands.  Useful for printing. */
-static const char* StateString[] __attribute__((unused)) = {
-#define X(x) #x ,
-    STATE_TYPES
-#undef X
-};
-
-#undef STATE_TYPES
-
-static const std::string NONE = "None";
 
 /**
  * Interface Event used to represent Memory-based communication.
@@ -150,110 +39,79 @@ static const std::string NONE = "None";
  * The command list includes the needed commands to execute cache coherence protocols
  * as well as standard reads and writes to memory.
  */
-class MemEvent : public SST::Event  {
+class MemEvent : public MemEventBase  {
 public:
-    static const uint32_t F_LOCKED        = 0x00000001;  /* Used in a Read-Lock, Write-Unlock atomicity scheme */
-    static const uint32_t F_NONCACHEABLE  = 0x00000010;  /* Used to specify that this memory event should not be cached */
-    static const uint32_t F_LLSC          = 0x00000100;  /* Load Link / Store Conditional */
-    static const uint32_t F_SUCCESS       = 0x00001000;  /* Indicates a successful response (used for flushes, TODO use for LLSC) */
-
-    typedef std::vector<uint8_t> dataVec;       /** Data Payload type */
-
+    
     /** Creates a new MemEvent - Generic */
-    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd) : SST::Event() {
-        initialize(src->getName(), addr, baseAddr, cmd, src->getCurrentSimTimeNano());
+    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd) : MemEventBase(src->getName(), cmd) {
+        initialize();
+        addr_ = addr;
+        baseAddr_ = baseAddr;
+        initTime_ = src->getCurrentSimTimeNano();
     }
 
     /** MemEvent constructor - Reads */
-    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) : SST::Event() {
-        initialize(src->getName(), addr, baseAddr, cmd, src->getCurrentSimTimeNano(), size);
+    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) : MemEventBase(src->getName(), cmd) {
+        initialize();
+        addr_ = addr;
+        baseAddr_ = baseAddr;
+        initTime_ = src->getCurrentSimTimeNano();
+        size_ = size;
     }
 
     /** MemEvent constructor - Writes */
-    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) : SST::Event() {
-        initialize(src->getName(), addr, baseAddr, cmd, src->getCurrentSimTimeNano(), data);
+    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) : MemEventBase(src->getName(), cmd) {
+        initialize();
+        addr_ = addr;
+        baseAddr_ = baseAddr;
+        initTime_ = src->getCurrentSimTimeNano();
+        setPayload(data); // Also sets size_ field
     }
 
     /** Create a new MemEvent instance, pre-configured to act as a NACK response */
     MemEvent* makeNACKResponse(MemEvent* NACKedEvent, SimTime_t timeInNano) {
         MemEvent *me      = new MemEvent(*this);
-        me->responseToID_ = eventID_;
-        me->dst_          = src_;
+        me->setResponse(this);
         me->NACKedEvent_  = NACKedEvent;
-        me->cmd_          = NACK;
+        me->cmd_          = Command::NACK;
         me->initTime_     = timeInNano;
-        me->rqstr_        = rqstr_;
         me->instPtr_      = instPtr_;
         me->vAddr_        = vAddr_;
         return me;
     }
 
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse() {
+    MemEvent* makeResponse() override {
         MemEvent *me      = new MemEvent(*this);
-        me->cmd_          = commandResponse(cmd_);
-        me->responseToID_ = eventID_;
-        me->dst_          = src_;
-        me->src_          = dst_;
-        me->rqstr_        = rqstr_;
+        me->setResponse(this);
         me->prefetch_     = prefetch_;
         me->instPtr_      = instPtr_;
         me->vAddr_        = vAddr_;
-        me->memFlags_     = memFlags_;
         return me;
     }
 
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(State state) {
+    MemEvent* makeResponse(State UNUSED(state)) {
         MemEvent *me = makeResponse();
-        me->setGrantedState(state);
         return me;
     }
 
-    void initialize(std::string name, Addr addr, Addr baseAddr, Command cmd, SimTime_t timeInNano) {
-        initialize();
-        src_  = name;
-        addr_ = addr;
-        baseAddr_ = baseAddr;
-        cmd_  = cmd;
-        initTime_ = timeInNano;
-     }
-
-     void initialize(std::string name, Addr addr, Addr baseAddr, Command cmd, SimTime_t timeInNano, uint32_t size) {
-        initialize();
-        src_      = name;
-        addr_     = addr;
-        baseAddr_ = baseAddr;
-        cmd_      = cmd;
-        size_     = size;
-        initTime_ = timeInNano;
-     }
-
-    void initialize(std::string name, Addr addr, Addr baseAddr, Command cmd, SimTime_t timeInNano, std::vector<uint8_t>& data) {
-        initialize();
-        src_        = name;
-        addr_       = addr;
-        baseAddr_   = baseAddr;
-        cmd_        = cmd;
-        initTime_   = timeInNano;
-        setPayload(data);
+    /** Generate a new MemEvent, pre-populated as a response
+     * with a non-default response cmd
+     */
+    MemEvent* makeResponse(Command cmd) {
+        MemEvent *me = makeResponse();
+        me->setCmd(cmd);
+        return me;
     }
 
     void initialize() {
         addr_               = 0;
-        cmd_                = NULLCMD;
-        eventID_            = generateUniqueId();
-        responseToID_       = NO_ID;
         baseAddr_           = 0;
-        dst_                = NONE;
-        src_                = NONE;
-        rqstr_              = NONE;
+        addrGlobal_         = true;
         size_               = 0;
-        flags_              = 0;
-        memFlags_           = 0;
         prefetch_           = false;
-        grantedState_       = NULLST;
-        NACKedEvent_        = NULL;
+        NACKedEvent_        = nullptr;
         retries_            = 0;
         blocked_            = false;
         initTime_           = 0;
@@ -266,20 +124,21 @@ public:
 
     /** return the original event that caused a NACK */
     MemEvent* getNACKedEvent() { return NACKedEvent_; }
-    /** @return  Unique ID of this MemEvent */
-    id_type getID(void) const { return eventID_; }
-    /** @return  Unique ID of the MemEvent that this is a response to */
-    id_type getResponseToID(void) const { return responseToID_; }
-    /** @return  Command of this MemEvent */
-    Command getCmd(void) const { return cmd_; }
-    /** Sets the Command of this MemEvent */
-    void setCmd(Command newcmd) { cmd_ = newcmd; }
+    
     /** @return  the target Address of this MemEvent */
     Addr getAddr(void) const { return addr_; }
     /** Sets the target Address of this MemEvent */
     void setAddr(Addr addr) { addr_ = addr; }
+    
     /** Sets the Base Address of this MemEvent */
     void setBaseAddr(Addr baseAddr) { baseAddr_ = baseAddr; }
+    /** Return the BaseAddr */
+    Addr getBaseAddr() { return baseAddr_; }
+
+    /** Sets whether the address is global (T) or local (F) */
+    void setAddrGlobal(bool global) { addrGlobal_ = global; }
+    /** Return whether address is global (T) or local (F) */
+    bool isAddrGlobal() { return addrGlobal_; }
 
     /** Sets the virtual address of this MemEvent */
     void setVirtualAddress(Addr newVA) { vAddr_ = newVA; }
@@ -309,40 +168,17 @@ public:
     bool inProgress() { return inProgress_; }
     void setInProgress(bool value) { inProgress_ = value; }
 
-    void setLoadLink() { setFlag(MemEvent::F_LLSC); }
-    bool isLoadLink() { return cmd_ == GetS && queryFlag(MemEvent::F_LLSC); }
+    void setLoadLink() { setFlag(MemEventBase::F_LLSC); }
+    bool isLoadLink() { return cmd_ == Command::GetS && queryFlag(MemEventBase::F_LLSC); }
     
-    void setStoreConditional() { setFlag(MemEvent::F_LLSC); }
-    bool isStoreConditional() { return cmd_ == GetX && queryFlag(MemEvent::F_LLSC); }
+    void setStoreConditional() { setFlag(MemEventBase::F_LLSC); }
+    bool isStoreConditional() { return cmd_ == Command::GetX && queryFlag(MemEventBase::F_LLSC); }
     
-    void setSuccess(bool b) { b ? setFlag(MemEvent::F_SUCCESS) : clearFlag(MemEvent::F_SUCCESS); }
-    bool success() { return queryFlag(MemEvent::F_SUCCESS); }
+    void setSuccess(bool b) { b ? setFlag(MemEventBase::F_SUCCESS) : clearFlag(MemEventBase::F_SUCCESS); }
+    bool success() { return queryFlag(MemEventBase::F_SUCCESS); }
 
-    bool isHighNetEvent() {
-        if (cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx || isWriteback() || cmd_ == FlushLine || cmd_ == FlushLineInv || cmd_ == FlushAll) {
-            return true;
-        }
-        return false;
-    }
-    
-   bool isLowNetEvent() {
-        if (cmd_ == Inv || cmd_ == FetchInv || cmd_ == FetchInvX || cmd_ == Fetch) {
-            return true;
-        }
-        return false;
-    }
-    
-    bool isWriteback() {
-        if (cmd_ == PutS || cmd_ == PutM ||
-           cmd_ == PutE ) {
-            return true;
-        }
-        return false;
-    
-    }
-    
-    bool fromHighNetNACK() { return isLowNetEvent();}
-    bool fromLowNetNACK() { return isHighNetEvent();}
+    bool fromHighNetNACK()  { return !CommandCPUSide[(int)cmd_];}
+    bool fromLowNetNACK()   { return CommandCPUSide[(int)cmd_];}
 
     /** @return  the data payload. */
     dataVec& getPayload(void) {
@@ -372,115 +208,71 @@ public:
         }
     }
 
-    uint32_t getPayloadSize() {
-        return payload_.size();
+    void setZeroPayload(uint32_t size) {
+        setSize(size);
+        payload_.clear();
+        payload_.resize(size, 0);
     }
 
-    /** Sets the Granted State */
-    void setGrantedState(State state) { grantedState_ = state;}
-    /** Return the Granted State */
-    State getGrantedState() { return grantedState_; }
+    size_t getPayloadSize() override {
+        return payload_.size();
+    }
 
     /** Sets that this is a prefetch command */
     void setPrefetchFlag(bool prefetch) { prefetch_ = prefetch;}
     /** Returns true if this is a prefetch command */
     bool isPrefetch() { return prefetch_; }
     
-    /** Returns true if this is a Data Request */
-    static bool isDataRequest(Command cmd) { return (cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == FetchInv || cmd == FetchInvX || cmd == Fetch); }
-    bool isDataRequest(void) const { return MemEvent::isDataRequest(cmd_); }
-    /** Returns true if this is of cpu type */
-    static bool isCPURequest(Command cmd) { return (cmd == GetS || cmd == GetX || cmd == GetSEx);}
-    bool isCPURequest(void) const { return MemEvent::isCPURequest(cmd_); }
+// Information about command types
+    /** Returns true if this is a request that needs to access the data array (Get/Put/Flush) */
+    bool isDataRequest(void) const { return CommandClassArr[(int)cmd_] == CommandClass::Request; }
     /** Returns true if this is of response type */
-    static bool isResponse(Command cmd) { return (cmd == GetSResp || cmd == GetXResp || cmd == FlushLineResp);}
-    bool isResponse(void) const { return MemEvent::isResponse(cmd_); }
-    /** Returns true if this is a 'writeback' command type */
-    static bool isWriteback(Command cmd) { return (cmd == PutM || cmd == PutE || cmd == PutS); }
-    bool isWriteback(void) const { return MemEvent::isWriteback(cmd_); }
-   
+    bool isResponse(void) const { return BasicCommandClassArr[(int)cmd_] == BasicCommandClass::Response; }
+    /** Returns true if this is a writeback */
+    bool isWriteback(void) const { return CommandWriteback[(int)cmd_]; }
+    /** Returns true if this is a CPU-side event (i.e., sent from CPU side of hierarchy) */
+    bool isCPUSideEvent(void) const { return CommandCPUSide[(int)cmd_]; }
 
-    
+
     void setDirty(bool status) { dirty_ = status; }
     bool getDirty() { return dirty_; }
 
-    /** @return the source string - who sent this MemEvent */
-    const std::string& getSrc(void) const { return src_; }
-    /** Sets the source string - who sent this MemEvent */
-    void setSrc(const std::string& src) { src_ = src; }
-    /** @return the destination string - who receives this MemEvent */
-    const std::string& getDst(void) const { return dst_; }
-    /** Sets the destination string - who received this MemEvent */
-    void setDst(const std::string& dst) { dst_ = dst; }
-    /** @return the requestor string - whose original request caused this MemEvent */
-    const std::string& getRqstr(void) const { return rqstr_; }
-    /** Sets the requestor string - whose original request caused this MemEvent */
-    void setRqstr(const std::string& rqstr) { rqstr_ = rqstr; }
+    virtual MemEvent* clone(void) override {
+        return new MemEvent(*this);
+    }
 
-    /** @returns the state of all flags for this MemEvent */
-    uint32_t getFlags(void) const { return flags_; }
-    /** Sets the specified flag.
-     * @param[in] flag  Should be one of the flags beginning with F_,
-     *                  defined in MemEvent */
-    void setFlag(uint32_t flag) { flags_ = flags_ | flag; }
-    /** Clears the speficied flag.
-     * @param[in] flag  Should be one of the flags beginning with F_,
-     *                  defined in MemEvent */
-    void clearFlag(uint32_t flag) { flags_ = flags_ & (~flag); }
-    /** Clears all flags */
-    void clearFlags(void) { flags_ = 0; }
-    /** Check to see if a flag is set.
-     * @param[in] flag  Should be one of the flags beginning with F_,
-     *                  defined in MemEvent
-     * @returns TRUE if the flag is set, FALSE otherwise
-     */
-    bool queryFlag(uint32_t flag) const { return flags_ & flag; };
-    /** Sets the entire flag state */
-    void setFlags(uint32_t flags) { flags_ = flags; }
+    virtual std::string getVerboseString() override {
+        std::ostringstream str;
+        str << std::hex << " Addr: 0x" << addr_ << " BaseAddr: 0x" << baseAddr_;
+        str << (addrGlobal_ ? " (Global)" : " (Local)");
+        str << " VA: 0x" << vAddr_ << " IP: 0x" << instPtr_;
+        str << std::dec << " Size: " << size_;
+        str << " Prefetch: " << (prefetch_ ? "true" : "false");
+        return MemEventBase::getVerboseString() + str.str();
+    }
 
-    void setMemFlags(uint32_t flags) { memFlags_ = flags; }
-    uint32_t getMemFlags() { return memFlags_; }
-
-    /** Return the BaseAddr */
-    Addr getBaseAddr() { return baseAddr_; }
+    virtual std::string getBriefString() override {
+        std::ostringstream str;
+        str << " Addr: 0x" << std::hex << addr_ << " BaseAddr: 0x" << baseAddr_ << std::dec << " Size: " << size_;
+        return MemEventBase::getBriefString() + str.str();
+    }
     
-    /** Return the command that is the Response to the input command */
-    static Command commandResponse(Command cmd) {
-        switch(cmd) {
-            case GetS:
-            case GetSEx:
-                return GetSResp;
-            case GetX:
-                return GetXResp;
-            case FetchInv:
-            case Fetch:
-                return FetchResp;
-            case FetchInvX:
-                return FetchXResp;
-            case FlushLine:
-            case FlushLineInv:
-                return FlushLineResp;
-            default:
-                return NULLCMD;
-        }
+    virtual bool doDebug(std::set<Addr> &addr) override {
+        return (addr.find(baseAddr_) != addr.end());
+    }
+
+    virtual Addr getRoutingAddress() override {
+        return baseAddr_;
     }
 
 private:
-    id_type         eventID_;           // Unique ID for this event
-    id_type         responseToID_;      // For responses, holds the ID to which this event matches
-    uint32_t        flags_;             // Any flags (atomic, noncacheabel, etc.)
-    uint32_t        memFlags_;          // Memory flags - ignored by caches except to be copied through. Faciliates processor-memory communication
     uint32_t        size_;              // Size in bytes that are being requested
     Addr            addr_;              // Address
     Addr            baseAddr_;          // Base (line) address
-    string          src_;               // Source ID
-    string          dst_;               // Destination ID
-    string          rqstr_;             // Cache that originated this request
-    Command         cmd_;               // Command
+    bool            addrGlobal_;        // Whether address is a local or global address 
     MemEvent*       NACKedEvent_;       // For a NACK, pointer to the NACKed event
     int             retries_;           // For NACKed events, how many times a retry has been sent
     dataVec         payload_;           // Data
-    State           grantedState_;      // For data responses, the cohrence state that the request is granted in
     bool            prefetch_;          // Whether this request came from a prefetcher
     bool            blocked_;           // Whether this request blocked for another pending request (for profiling) TODO move to mshrs
     SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts TODO move to mshrs
@@ -489,26 +281,18 @@ private:
     Addr 	    vAddr_;             // Virtual address associated with the request
     bool            inProgress_;        // Whether this request is currently being handled, if in MSHR TODO move to mshrs
 
-    MemEvent() {} // For serialization only
+    MemEvent() : MemEventBase() {} // For serialization only
 
 public:
-    void serialize_order(SST::Core::Serialization::serializer &ser) {
-        Event::serialize_order(ser);
-        ser & eventID_;
-        ser & responseToID_;
-        ser & flags_;
-        ser & memFlags_;
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+        MemEventBase::serialize_order(ser);
         ser & size_;
         ser & addr_;
         ser & baseAddr_;
-        ser & src_;
-        ser & dst_;
-        ser & rqstr_;
-        ser & cmd_;
+        ser & addrGlobal_;
         ser & NACKedEvent_;
         ser & retries_;
         ser & payload_;
-        ser & grantedState_;
         ser & prefetch_;
         ser & blocked_;
         ser & initTime_;

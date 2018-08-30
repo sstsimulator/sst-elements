@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -33,53 +33,85 @@
 #include <map>
 #include <string>
 
+//sst includes
+
+#include <sst/core/component.h>
+#include <sst/core/serialization/serializable.h>
+#include "output.h"
+
 //local includes
-#include "c_Transaction.hpp"
+//#include "c_Transaction.hpp"
+#include "c_HashedAddress.hpp"
+
+typedef unsigned long ulong;
 
 namespace SST {
 namespace n_Bank {
+
+class c_Transaction;
 
 enum class e_BankCommandType {
 	ERR, ACT, READ, READA, WRITE, WRITEA, PRE, PREA, REF, PDX, PDE
 };
 
-class c_BankCommand {
+class c_BankCommand : public SST::Core::Serialization::serializable {
 
 private:
 
-	unsigned m_seqNum;
-	unsigned m_addr;
+	uint64_t m_seqNum;
+	ulong    m_addr;
 	unsigned m_row;
+	unsigned m_bankId;
+	std::vector<unsigned> m_bankIdVec;
 	e_BankCommandType m_cmdMnemonic;
 	std::map<e_BankCommandType, std::string> m_cmdToString;
 	bool m_isResponseReady;
-	c_Transaction* m_transactionPtr; //<! ptr to the c_Transaction that this c_BankCommand is part of
+        bool m_isRefreshType; // REF and PRE commands treated specially for printing cmd trace
+	c_HashedAddress m_hashedAddr;
 
 public:
 
 	//    friend std::ostream& operator<< (std::ostream& x_stream, const c_BankCommand& x_bankCommand);
 
 	explicit c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
-			unsigned x_addr);
+			       ulong x_addr);
+        c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
+		      ulong x_addr, unsigned x_bankId); // only to be used for Refresh commands!
+        c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
+		      ulong x_addr, const c_HashedAddress &x_hashedAddr, std::vector<unsigned> &x_bankIdVec); // only to be used for Refresh commands!
+        c_BankCommand(unsigned x_seqNum, e_BankCommandType x_cmdType,
+		      ulong x_addr, const c_HashedAddress &x_hashedAddr);
+        c_BankCommand() {} // required for ImplementSerializable
 
 	c_BankCommand(c_BankCommand&) = delete;
 	c_BankCommand(c_BankCommand&&) = delete;
 	c_BankCommand& operator=(c_BankCommand) = delete;
 
-	void print() const;
+	void print(SST::Output *, SimTime_t x_cycle) const;
+	void print(SST::Output *x_debugOutput,const std::string x_prefix, SimTime_t x_cycle) const;
+	void print(SimTime_t x_cycle) const;
 
-	inline void setRow(unsigned x_row) {
-		m_row = x_row;
+        const c_HashedAddress *getHashedAddress() const {
+	  return (&m_hashedAddr);
 	}
 
-	inline unsigned getRow() const {
-		return (m_row);
+        inline unsigned getBankId() const {
+	  return (m_bankId);
 	}
 
+        inline std::vector<unsigned>& getBankIdVec() {
+	  return(m_bankIdVec);
+	}
+  
 	inline bool isResponseReady() const
 	{
 		return (m_isResponseReady);
 	}
+
+        inline bool isRefreshType() const
+        {
+	  return (m_isRefreshType);
+        }
 
 	inline void setResponseReady()
 	{
@@ -93,23 +125,24 @@ public:
 
 	e_BankCommandType getCommandMnemonic() const;
 
-	unsigned getAddress() const; //<! returns the address accessed by this command
+	bool isColCommand()
+	{
+		return ((m_cmdMnemonic == e_BankCommandType::READ)
+				|| (m_cmdMnemonic == e_BankCommandType::READA)
+				|| (m_cmdMnemonic == e_BankCommandType::WRITE)
+				|| (m_cmdMnemonic == e_BankCommandType::WRITEA));
+	}
+
+	ulong getAddress() const; //<! returns the address accessed by this command
 	std::string getCommandString() const;//<! returns the mnemonic of command
 
-	void acceptTransaction(c_Transaction* x_transaction);
+        void serialize_order(SST::Core::Serialization::serializer &ser) override ;
+  
+        ImplementSerializable(c_BankCommand);
 
-	c_Transaction* getTransaction() const;
+}; // class c_BankCommand
 
-	// FIXME: implement operator<<
-	//    friend inline std::ostream& operator<< (
-	//        std::ostream&        x_stream,
-	//        const c_BankCommand& x_bankCommand
-	//    )
-	//    {
-	//        x_stream<<"[CMD: "<<x_bankCommand.getCommandString()<<", SEQNUM: "<<std::dec<<x_bankCommand.getSeqNum()<<" , ADDR: "<<std::hex<<x_bankCommand.getAddress()<<" , isResponseReady: "<<std::boolalpha<<x_bankCommand.isResponseReady()<<"]";
-	//        return x_stream;
-	//    }
+} // namespace n_Bank
 
-};}
-}
+} // namespace SST
 #endif // C_BANKCOMMAND_HPP

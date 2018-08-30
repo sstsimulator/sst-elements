@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,25 +18,27 @@
 #define _H_SST_ARIEL_TRACE_GEN
 
 #include <sst/core/module.h>
+#include <sst/core/elementinfo.h>
 
 namespace SST {
 namespace ArielComponent {
 
 typedef enum {
-	READ,
-	WRITE
+    READ,
+    WRITE
 } ArielTraceEntryOperation;
 
 class ArielTraceGenerator : public Module {
 
-public:
-	ArielTraceGenerator() {}
-	~ArielTraceGenerator() {}
-	virtual void publishEntry(const uint64_t picoS,
-		const uint64_t physAddr,
-		const uint32_t reqLength,
-		const ArielTraceEntryOperation op) = 0;
-	virtual void setCoreID(uint32_t coreID) = 0;
+    public:
+        ArielTraceGenerator() {}
+        ~ArielTraceGenerator() {}
+
+        virtual void publishEntry(const uint64_t picoS,
+                const uint64_t physAddr,
+                const uint32_t reqLength,
+                const ArielTraceEntryOperation op) = 0;
+        virtual void setCoreID(uint32_t coreID) = 0;
 
 };
 

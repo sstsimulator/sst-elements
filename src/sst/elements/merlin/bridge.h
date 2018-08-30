@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -19,6 +19,7 @@
 
 
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/interfaces/simpleNetwork.h>
@@ -33,6 +34,35 @@ using SST::Interfaces::SimpleNetwork;
 
 class Bridge : public SST::Component {
 public:
+
+    SST_ELI_REGISTER_COMPONENT(
+        Bridge,
+        "merlin",
+        "Bridge",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Bridge between two memory networks.",
+        COMPONENT_CATEGORY_NETWORK)
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"translator",                "Translator backend.  Inherit from SST::Merlin::Bridge::Translator.", NULL},
+        {"debug",                     "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+        {"debug_level",               "Debugging level: 0 to 10", "0"},
+        {"network_bw",                "The network link bandwidth.", "80GiB/s"},
+        {"network_input_buffer_size", "Size of the network's input buffer.", "1KiB"},
+        {"network_output_buffer_size","Size of the network;s output buffer.", "1KiB"}
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        {"pkts_received_net0",           "Total number of packets recived on NIC0", "count", 1},
+        {"pkts_received_net1",           "Total number of packets recived on NIC1", "count", 1},
+        {"pkts_sent_net0",           "Total number of packets sent on NIC0", "count", 1},
+        {"pkts_sent_net1",           "Total number of packets sent on NIC1", "count", 1},
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"network0",     "Network Link",  {} },
+        {"network1",     "Network Link",  {} },
+    )
 
     Bridge(SST::ComponentId_t id, SST::Params &params);
     ~Bridge();
@@ -93,6 +123,7 @@ private:
     void configureNIC(uint8_t nic, SST::Params &params);
     bool handleIncoming(int vn, uint8_t nic);
     bool spaceAvailable(int vn, uint8_t nic);
+
 };
 
 }}

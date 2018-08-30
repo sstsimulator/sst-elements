@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -36,9 +36,11 @@
 #include "c_BankStateIdle.hpp"
 #include "c_BankState.hpp"
 #include "c_BankCommand.hpp"
+#include "c_Transaction.hpp"
 #include "c_BankInfo.hpp"
 #include "c_BankStateActivating.hpp"
 #include "c_BankStateRefresh.hpp"
+#include "c_BankStatePrecharge.hpp"
 
 using namespace SST;
 using namespace SST::n_Bank;
@@ -56,12 +58,9 @@ c_BankStateIdle::~c_BankStateIdle() {
 }
 
 // this function is called by the c_Bank that contains this state
-void c_BankStateIdle::handleCommand(c_BankInfo* x_bank,
-		c_BankCommand* x_bankCommandPtr) {
-	// std::cout << "Entered c_BankStateIdle::handleCommand() received command "
-	// 		<< std::endl;
-	SimTime_t l_time =
-			Simulation::getSimulation()->getCurrentSimCycle();
+void c_BankStateIdle::handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr,SimTime_t x_cycle) {
+	SimTime_t l_time = x_cycle;
+
 	switch (x_bankCommandPtr->getCommandMnemonic()) {
 	case e_BankCommandType::ACT:
 		x_bank->setLastCommandCycle(e_BankCommandType::ACT, l_time);
@@ -69,6 +68,9 @@ void c_BankStateIdle::handleCommand(c_BankInfo* x_bank,
 	case e_BankCommandType::REF:
 		x_bank->setLastCommandCycle(e_BankCommandType::REF, l_time);
 		break;
+		case e_BankCommandType::PRE:
+			x_bank->setLastCommandCycle(e_BankCommandType::PRE, l_time);
+			break;
 	default:
 	    break;
 	}
@@ -85,50 +87,39 @@ std::list<e_BankCommandType> c_BankStateIdle::getAllowedCommands() {
 }
 
 // call this function every clock cycle
-void c_BankStateIdle::clockTic(c_BankInfo* x_bank) {
-	if (2 < m_timer) {
+void c_BankStateIdle::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
+
+	SimTime_t l_time = x_cycle;
+	
+        if (2 < m_timer) {
 		--m_timer;
 	} else {
 		--m_timer;
 		if (1 == m_timer) {
 			if (m_prevCommandPtr) {
 				m_prevCommandPtr->setResponseReady();
-				const unsigned l_cmdsLeft =
-						m_prevCommandPtr->getTransaction()->getWaitingCommands()
-								- 1;
-				m_prevCommandPtr->getTransaction()->setWaitingCommands(
-						l_cmdsLeft);
-
-				if (l_cmdsLeft == 0)
-					m_prevCommandPtr->getTransaction()->setResponseReady();
 
 			}
 		} else {
 			if (m_receivedCommandPtr) {
-				// std::cout << "@@" << std::dec
-				// 		<< l_time
-				// 		<< ": now can process command response in IDLE state"
-				// 		<< std::endl;
-
-				SimTime_t l_time =
-						Simulation::getSimulation()->getCurrentSimCycle();
 				c_BankState* l_p = nullptr;
 				switch (m_receivedCommandPtr->getCommandMnemonic()) {
 				case e_BankCommandType::ACT:
 					l_p = new c_BankStateActivating(m_bankParams);
-//					x_bank->setLastCommandCycle(e_BankCommandType::ACT, l_time);
 					break;
 				case e_BankCommandType::REF:
 					l_p = new c_BankStateRefresh(m_bankParams);
-//					x_bank->setLastCommandCycle(e_BankCommandType::REF, l_time);
 					break;
+					case e_BankCommandType::PRE:
+						l_p = new c_BankStatePrecharge(m_bankParams);
+						break;
 				default:
 				break;
 				}
 
 				assert(nullptr != m_receivedCommandPtr);
 				// make sure we have a command
-				l_p->enter(x_bank, this, m_receivedCommandPtr);
+				l_p->enter(x_bank, this, m_receivedCommandPtr,l_time);
 			}
 		}
 	}
@@ -136,22 +127,20 @@ void c_BankStateIdle::clockTic(c_BankInfo* x_bank) {
 
 // call this function after receiving a command
 void c_BankStateIdle::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
-		c_BankCommand* x_cmdPtr) {
+		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 
-//	std::cout << "@@" << std::dec
-//			<< Simulation::getSimulation()->getCurrentSimCycle()
-//			<< ": m_timer = " << m_timer << std::endl;
-//	std::cout << "Entering " << __PRETTY_FUNCTION__ << std::endl;
 
+	x_bank->resetRowOpen();
 	m_prevCommandPtr = x_cmdPtr;
 
 	m_receivedCommandPtr = nullptr;
 
-	unsigned l_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t l_time = x_cycle;
 
 	m_allowedCommands.clear();
 	m_allowedCommands.push_back(e_BankCommandType::ACT);
 	m_allowedCommands.push_back(e_BankCommandType::REF);
+	m_allowedCommands.push_back(e_BankCommandType::PRE);
 
 	x_bank->setNextCommandCycle(e_BankCommandType::ACT,
 			std::max(x_bank->getNextCommandCycle(e_BankCommandType::ACT),
@@ -160,6 +149,10 @@ void c_BankStateIdle::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 	x_bank->setNextCommandCycle(e_BankCommandType::REF,
 			std::max(x_bank->getNextCommandCycle(e_BankCommandType::REF),
 					l_time));
+
+	x_bank->setNextCommandCycle(e_BankCommandType::PRE,
+								std::max(x_bank->getNextCommandCycle(e_BankCommandType::PRE),
+										 l_time));
 
 	x_bank->changeState(this);
 

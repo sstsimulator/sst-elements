@@ -1,8 +1,8 @@
-// Copyright 2009-2016 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -50,12 +50,12 @@ public:
 	c_BankStateWrite(std::map<std::string, unsigned>* x_bankParams);
 	~c_BankStateWrite();
 
-	virtual void handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr);
+	virtual void handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle);
 
-	virtual void clockTic(c_BankInfo* x_bank);
+	virtual void clockTic(c_BankInfo* x_bank, SimTime_t x_cycle);
 
 	virtual void enter(c_BankInfo* x_bank,
-			c_BankState* x_prevState, c_BankCommand* x_cmdPtr);
+			c_BankState* x_prevState, c_BankCommand* x_cmdPtr,SimTime_t x_cycle);
 
 	virtual std::list<e_BankCommandType> getAllowedCommands();
 
@@ -63,8 +63,8 @@ public:
 			c_BankInfo* x_bankPtr);
 
 private:
-	unsigned m_timer; // counts down to 0
-	unsigned m_timerExit; // counts down to 0 during state exit
+	SimTime_t m_timer; // counts down to 0
+	SimTime_t m_timerExit; // counts down to 0 during state exit
 
 	std::list<e_BankCommandType> m_allowedCommands;
 	c_BankCommand* m_receivedCommandPtr;
