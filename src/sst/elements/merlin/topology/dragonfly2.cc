@@ -20,11 +20,11 @@
 
 #include "dragonfly2.h"
 
-#include <iostream>
 #include <stdlib.h>
 #include <sstream>
 
 using namespace SST::Merlin;
+
 
 
 void
@@ -66,9 +66,6 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
     params.h = (uint32_t)p.find<int>("dragonfly:intergroup_per_router");
     params.g = (uint32_t)p.find<int>("dragonfly:num_groups");
     params.n = (uint32_t)p.find<int>("dragonfly:intergroup_links");
-
-	// Register statistics
-	reroute_count = this->registerStatistic<uint64_t>("reroute_count"); 
 
     std::string global_route_mode_s = p.find<std::string>("dragonfly:global_route_mode","absolute");
     if ( global_route_mode_s == "absolute" ) global_route_mode = ABSOLUTE;
@@ -288,7 +285,6 @@ void topo_dragonfly2::reroute(int port, int vc, internal_router_event* ev)
     // giving us a total of 4 routes we are looking at.  For packets
     // which came in adaptively on global links, look at two direct
     // routes and chose between the.
-	reroute_count->addData(1);
     int direct_slice1 = td_ev->global_slice_shadow;
     // int direct_slice2 = td_ev->global_slice;
     int direct_slice2 = (td_ev->global_slice_shadow + 1) % params.n;
