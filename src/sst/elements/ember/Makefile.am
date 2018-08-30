@@ -105,6 +105,8 @@ libember_la_SOURCES = \
 	mpi/motifs/emberreduce.h \
 	mpi/motifs/emberhalo3d.h \
 	mpi/motifs/emberhalo3d.cc \
+	mpi/motifs/emberlqcd.h \
+	mpi/motifs/emberlqcd.cc \
 	mpi/motifs/emberhalo3dsv.h \
 	mpi/motifs/emberhalo3dsv.cc \
 	mpi/motifs/emberhalo3d26.h \

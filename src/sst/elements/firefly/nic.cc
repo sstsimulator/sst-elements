@@ -77,7 +77,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
-    SimTime_t shmemSendSetupLat =  params.find<SimTime_t>( "shmemSendSetupLat", 100 ) ;
     int numShmemCmdSlots =    params.find<int>( "numShmemCmdSlots", 32 );
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
     int maxRecvMachineQsize = params.find<int>( "maxRecvMachineQsize", 1 );
@@ -162,7 +161,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			params.find<std::string>("corePortName","core") ) );
     }
 
-    m_shmem = new Shmem( *this, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns(), shmemSendSetupLat );
+	Params shmemParams = params.find_prefix_params( "shmem." ); 
+    m_shmem = new Shmem( *this, shmemParams, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
 
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
@@ -280,7 +280,7 @@ void Nic::handleVnicEvent( Event* ev, int id )
         break;
 
       case NicCmdBaseEvent::Shmem:
-        m_shmem->handleEvent( static_cast<NicShmemCmdEvent*>(event), id );
+		m_shmem->handleEvent( static_cast<NicShmemCmdEvent*>(event), id );
 		break;
 
 	  default:
@@ -340,7 +340,7 @@ void Nic::handleVnicEvent2( Event* ev, int id )
         handleMsgEvent( static_cast<NicCmdEvent*>(event), id );
         break;
     case NicCmdBaseEvent::Shmem:
-        m_shmem->handleEvent2( static_cast<NicShmemCmdEvent*>(event), id );
+        m_shmem->handleNicEvent2( static_cast<NicShmemCmdEvent*>(event), id );
         break;
     default:
         assert(0);
