@@ -19,7 +19,17 @@
 
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
-#include <cxxabi.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <sys/types.h>
+       #include <unistd.h>
+       #include <sys/syscall.h>   /* For SYS_xxx definitions */
+
+extern pid_t gettid(void) {
+	return(syscall(SYS_gettid));
+}
+
+
 
 namespace SST {
 namespace Ember {
@@ -48,7 +58,7 @@ public:
         m_nFAMnodes     = params.find<int>("arg.nFAMnodes", 0);
 		m_nFAMnodeBytes = (size_t) params.find<SST::UnitAlgebra>("arg.nFAMnodeBytes").getRoundedValue(); 
 		m_blockSize	    = params.find<int>("arg.blockSize", 4096);
-		m_vectorSize    = params.find<int>("arg.vectorSize", (m_nFAMnodes * m_nFAMnodeBytes) / sizeof(int)); 
+		m_vectorSize    = params.find<size_t>("arg.vectorSize", (m_nFAMnodes * m_nFAMnodeBytes) / sizeof(int)); 
 		m_getLoop       = params.find<int>("arg.getLoop", 1);
 		
 		assert( m_vectorSize * sizeof(int) <= m_nFAMnodes * m_nFAMnodeBytes );
@@ -64,7 +74,7 @@ public:
 
 	EmberMiscLib* m_miscLib;
 	int m_numBlocksPerFAMnode;
-	int m_vectorSize;
+	size_t m_vectorSize;
 	size_t m_nFAMnodeBytes;
 	int m_nFAMnodes;
 	int m_nComputeNodes;
@@ -114,8 +124,10 @@ public:
 					m_phase = Wait;
 				} else {
 					tmp = "compute";
-				   	bufSize = m_vectorSize * sizeof(int);
+				   	//bufSize = m_vectorSize * sizeof(int);
+				   	bufSize = 1024*1024*16;
 					m_phase = Work;
+printf("%d %s\n",gettid(), tmp.c_str());
 				}
 
 				if ( m_node_num == 0 || m_node_num == m_nFAMnodes ) {
@@ -157,14 +169,17 @@ public:
 			//printf("pe=%d curBlock=%d srcPe=%d srcBLock=%d\n",m_my_pe,m_curBlock,srcPe,srcBlock);
 
     		Hermes::MemAddr m_src = m_mem.offset<unsigned char>( 4096 * srcBlock );
-    		Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( 4096 * m_curBlock );
+    		//Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( 4096 * m_curBlock );
+    		Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( 4096 * (m_curBlock % 4096)  );
 
         	enQ_get_nbi( evQ, 
                     m_dest,
                     m_src, 
 					m_blockSize,
 					srcPe );
+
 			++m_curBlock;
+			m_curBlock %= 4096;
 		}
 
         enQ_quiet( evQ );
