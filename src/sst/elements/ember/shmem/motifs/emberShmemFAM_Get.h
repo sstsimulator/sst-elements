@@ -60,6 +60,7 @@ public:
 		m_blockSize	    = params.find<int>("arg.blockSize", 4096);
 		m_vectorSize    = params.find<size_t>("arg.vectorSize", (m_nFAMnodes * m_nFAMnodeBytes) / sizeof(int)); 
 		m_getLoop       = params.find<int>("arg.getLoop", 1);
+		m_partitionSize = (size_t) params.find<SST::UnitAlgebra>("arg.partitionSize","16MiB").getRoundedValue(); 
 		
 		assert( m_vectorSize * sizeof(int) <= m_nFAMnodes * m_nFAMnodeBytes );
 		assert( m_nFAMnodes );
@@ -67,13 +68,16 @@ public:
 
 		m_numBlocks = (m_vectorSize*sizeof(int))/m_blockSize;
 		m_numBlocksPerFAMnode = m_numBlocks/m_nFAMnodes;
+		m_numBlocksPerPartition = m_partitionSize/m_blockSize;
 
         m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
         assert(m_miscLib);
 	}
 
 	EmberMiscLib* m_miscLib;
+	int m_numBlocksPerPartition;
 	int m_numBlocksPerFAMnode;
+	size_t m_partitionSize;
 	size_t m_vectorSize;
 	size_t m_nFAMnodeBytes;
 	int m_nFAMnodes;
@@ -124,10 +128,9 @@ public:
 					m_phase = Wait;
 				} else {
 					tmp = "compute";
-				   	//bufSize = m_vectorSize * sizeof(int);
-				   	bufSize = 1024*1024*16;
+				   	bufSize = m_partitionSize;
 					m_phase = Work;
-printf("%d %s\n",gettid(), tmp.c_str());
+					printf("compute node thread %d\n",gettid());
 				}
 
 				if ( m_node_num == 0 || m_node_num == m_nFAMnodes ) {
@@ -142,7 +145,6 @@ printf("%d %s\n",gettid(), tmp.c_str());
 
         case Work:
 			
-			//printf("pe=%d call work curBlock=%d\n",m_my_pe,m_curBlock);
 			if ( ! work( evQ ) ) {
 				m_phase = Wait;
 			}
@@ -168,9 +170,16 @@ printf("%d %s\n",gettid(), tmp.c_str());
 
 			//printf("pe=%d curBlock=%d srcPe=%d srcBLock=%d\n",m_my_pe,m_curBlock,srcPe,srcBlock);
 
+			if ( srcBlock >= 512 ) {
+				printf("src=%d cur=%d\n",srcBlock,m_curBlock);
+				exit(-1);
+			}
+			if ( (m_curBlock % m_numBlocksPerPartition) >= 4096 ) {
+				printf("dest=%d cur=%d\n",(m_curBlock % m_numBlocksPerPartition),m_curBlock);
+				exit(-1);
+			}
     		Hermes::MemAddr m_src = m_mem.offset<unsigned char>( 4096 * srcBlock );
-    		//Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( 4096 * m_curBlock );
-    		Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( 4096 * (m_curBlock % 4096)  );
+    		Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( 4096 * (m_curBlock % m_numBlocksPerPartition)  );
 
         	enQ_get_nbi( evQ, 
                     m_dest,
@@ -179,7 +188,6 @@ printf("%d %s\n",gettid(), tmp.c_str());
 					srcPe );
 
 			++m_curBlock;
-			m_curBlock %= 4096;
 		}
 
         enQ_quiet( evQ );
@@ -187,12 +195,10 @@ printf("%d %s\n",gettid(), tmp.c_str());
 	}
 
 	int calcSrcBlock( int block ) {
-		return block / m_numBlocksPerFAMnode;
-		//return block % m_numBlocksPerFAMnode;
+		return block / m_nFAMnodes;
 	}
 
 	int calcBlockOwner( int block ) {
-		//return block / m_numBlocksPerFAMnode;
 		return block % m_nFAMnodes;
 	}
 
