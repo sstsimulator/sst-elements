@@ -130,7 +130,7 @@ public:
 					tmp = "compute";
 				   	bufSize = m_partitionSize;
 					m_phase = Work;
-					printf("compute node thread %d\n",gettid());
+					printf("pe=%d compute node %d thread %d\n",m_my_pe, m_node_num, gettid());
 				}
 
 				if ( m_node_num == 0 || m_node_num == m_nFAMnodes ) {
