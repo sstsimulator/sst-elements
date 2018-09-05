@@ -191,7 +191,7 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemWait.h \
 	shmem/motifs/emberShmemWaitUntil.h \
 	shmem/motifs/emberShmemAtomicInc.h \
-	shmem/motifs/emberShmemFAM_get.h \
+	shmem/motifs/emberShmemFAM_Get.h \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc
 
