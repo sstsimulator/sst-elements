@@ -51,7 +51,7 @@ MemNICFour::MemNICFour(Component * parent, Params &params) : MemNICBase(parent, 
         std::string linkInbufSize = params.find<std::string>(pref[i] + ".network_input_buffer_size", "1KiB");
         std::string linkOutbufSize = params.find<std::string>(pref[i] + ".network_output_buffer_size", "1KiB");
 
-        link_control[i] = (SimpleNetwork*)parent->loadSubComponent(params.find<std::string>(pref[i] + ".linkcontrol", "kingsley.linkcontrol"), parent, params); 
+        link_control[i] = (SimpleNetwork*)loadSubComponent(params.find<std::string>(pref[i] + ".linkcontrol", "kingsley.linkcontrol"), params); 
         // But link control doesn't use params so manually initialize
         link_control[i]->initialize(linkName, UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
     

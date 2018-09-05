@@ -43,7 +43,7 @@ ScratchBackendConvertor::ScratchBackendConvertor(Component *comp, Params& params
     // extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
 
-    m_backend = dynamic_cast<MemBackend*>( comp->loadSubComponent( backendName, comp, backendParams ) );
+    m_backend = dynamic_cast<MemBackend*>( loadSubComponent( backendName, backendParams ) );
 
     using std::placeholders::_1;
     m_backend->setGetRequestorHandler( std::bind( &ScratchBackendConvertor::getRequestor, this, _1 )  );
@@ -120,7 +120,7 @@ bool ScratchBackendConvertor::doResponse( ReqId reqId, SST::Event::id_type & res
     bool sendResponse = false;
 
     if ( m_pendingRequests.find( id ) == m_pendingRequests.end() ) {
-        m_dbg.fatal(CALL_INFO, -1, "%s, memory request not found\n", parent->getName().c_str());
+        m_dbg.fatal(CALL_INFO, -1, "%s, memory request not found\n", getName().c_str());
     }
 
     MemReq* req = m_pendingRequests[id];

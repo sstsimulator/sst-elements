@@ -156,7 +156,7 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
             return STALL;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: State is invalid during eviction: %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), StateString[state], wbCacheLine->getBaseAddr(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], wbCacheLine->getBaseAddr(), getCurrentSimTimeNano());
     }
     return STALL; // Eliminate compiler warning
 }
@@ -178,7 +178,7 @@ CacheAction MESIController::handleRequest(MemEvent* event, CacheLine* cacheLine,
             return handleGetXRequest(event, cacheLine, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request. Event = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return STALL;    // Eliminate compiler warning
 }
@@ -202,7 +202,7 @@ CacheAction MESIController::handleReplacement(MemEvent* event, CacheLine* cacheL
             return handleFlushLineRequest(event, cacheLine, reqEvent, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request. Event = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -253,7 +253,7 @@ CacheAction MESIController::handleInvalidationRequest(MemEvent * event, CacheLin
             return handleForceInv(event, cacheLine, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized invalidation. Event = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return STALL; // eliminate compiler warning
 }
@@ -285,7 +285,7 @@ CacheAction MESIController::handleResponse(MemEvent * respEvent, CacheLine * cac
             return DONE;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), respEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), respEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -336,7 +336,7 @@ bool MESIController::isRetryNeeded(MemEvent* event, CacheLine* cacheLine) {
             return true;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: NACKed event is unrecognized. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return true;
 }
@@ -465,7 +465,7 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
             return DONE;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
 
     }
     return STALL;    // eliminate compiler warning
@@ -544,7 +544,7 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
             return STALL;   // retried this request too soon because we were checking for waiting invalidations
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     /* Event/State combinations - Count how many times an event was seen in particular state */
     }
     return STALL; // Eliminate compiler warning
@@ -640,7 +640,7 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
                     return handleFetchInv(reqEvent, cacheLine, NULL, true);
                 } else if (!inclusive_) { // Need to forward dirty/M so we don't lose that info
                     debug->fatal(CALL_INFO, -1, "%s, Error: Handling not implemented because state not expected: noninclusive cache, state = %s, request = %s. Time = %" PRIu64 " ns\n",
-                            parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                            getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
                 } else {
                     cacheLine->addSharer(reqEvent->getSrc());
                     sendTime = sendResponseUp(reqEvent, cacheLine->getData(), (event->getDirty()), cacheLine->getTimestamp());
@@ -651,7 +651,7 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
             } else return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     forwardFlushLine(event->getBaseAddr(), event->getRqstr(), cacheLine, Command::FlushLine);
@@ -772,7 +772,7 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
                     return STALL; // Waiting for GetXResp
                 }
                 debug->fatal(CALL_INFO, -1, "%s, Error: Received event in state SM_Inv but case does not match an implemented handler. Event = %s, OrigEvent = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                        getName().c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
             }
             return STALL;
         case EI:
@@ -855,7 +855,7 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
             } else return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     forwardFlushLine(event->getBaseAddr(), event->getRqstr(), cacheLine, Command::FlushLineInv);
@@ -891,7 +891,7 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
                 }
             } else {
                 debug->fatal(CALL_INFO, -1, "%s, Error: Received PutS for an unallocated line but reqEvent cmd is unhandled. Event = %s. ReqEvent = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                        getName().c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
             }
         }
         line->setData(event->getPayload(), 0);
@@ -1018,7 +1018,7 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
             }
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return IGNORE;   // eliminate compiler warning
 }
@@ -1045,7 +1045,7 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
                 return IGNORE;
             } else {
                 debug->fatal(CALL_INFO, -1, "%s, Error: Received event for an unallocated line but conflicting event's command is unhandled. Event = %s. Conflicting event = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                        getName().c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
             }
         } else if (cacheLine->getState() == I) {
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
@@ -1148,7 +1148,7 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
             break;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -1206,7 +1206,7 @@ CacheAction MESIController::handleInv(MemEvent* event, CacheLine* cacheLine, boo
             return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return STALL;
 }
@@ -1290,7 +1290,7 @@ CacheAction MESIController::handleForceInv(MemEvent * event, CacheLine * cacheLi
             return BLOCK;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return STALL;
 }
@@ -1388,7 +1388,7 @@ CacheAction MESIController::handleFetchInv(MemEvent * event, CacheLine * cacheLi
             return BLOCK;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     sendResponseDown(event, cacheLine, (state == M), replay);
     cacheLine->setState(I);
@@ -1437,7 +1437,7 @@ CacheAction MESIController::handleFetchInvX(MemEvent * event, CacheLine * cacheL
             return BLOCK;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     sendResponseDown(event, cacheLine, (state == M), replay);
     cacheLine->setState(S);
@@ -1471,7 +1471,7 @@ CacheAction MESIController::handleFetch(MemEvent * event, CacheLine * cacheLine,
             return BLOCK;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return DONE; // Eliminate compiler warning
 }
@@ -1551,7 +1551,7 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
             return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return DONE; // Eliminate compiler warning
 }
@@ -1581,10 +1581,10 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
             // Sanity check that this is a non-inclusive cache!
             if (inclusive_) {
                 debug->fatal(CALL_INFO, -1, "%s, Error: Inclusive cache received a FetchResp for a non-cached address. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
             } else if (action != DONE) {
                 debug->fatal(CALL_INFO, -1, "%s, Error: Non-inclusive cache received a FetchResp for a non-cached address and is waiting for more acks. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
             }
             sendResponseDownFromMSHR(responseEvent, reqEvent, responseEvent->getDirty());
             break;
@@ -1647,7 +1647,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 } else cacheLine->setState(E);
                 if (action != DONE) { // Sanity check...
                     debug->fatal(CALL_INFO, -1, "%s, Error: Received a FetchResp to a FlushLineInv but still waiting on more acks. Event = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano()); 
+                        getName().c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano()); 
                 }
                 action = handleFlushLineInvRequest(reqEvent, cacheLine, NULL, true);
                 break;
@@ -1700,7 +1700,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 cacheLine->setState(M);
                 if (action != DONE) { // Sanity check...
                     debug->fatal(CALL_INFO, -1, "%s, Error: Received a FetchResp to a FlushLineInv but still waiting on more acks. Event = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano()); 
+                        getName().c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano()); 
                 }
                 action = handleFlushLineInvRequest(reqEvent, cacheLine, NULL, true);
                 break;
@@ -1721,7 +1721,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
             break;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return action;
 }
@@ -1868,13 +1868,13 @@ CacheAction MESIController::handleAckInv(MemEvent * ack, CacheLine * line, MemEv
                     action = handleFlushLineRequest(reqEvent, line, NULL, true);
                 } else {
                    debug->fatal(CALL_INFO, -1, "%s, Error: Received AckInv in M_InvX, but reqEvent is unhandled. Event = %s. reqEvent = %s. Time = %" PRIu64 "ns\n",
-                           parent->getName().c_str(), ack->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                           getName().c_str(), ack->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
                 }
             }
             return action;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], ack->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], ack->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return action;    // eliminate compiler warning
 }

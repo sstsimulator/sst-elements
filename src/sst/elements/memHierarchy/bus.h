@@ -98,8 +98,6 @@ private:
     std::set<Addr>                  DEBUG_ADDR;
     int                             numHighNetPorts_,
                                     numLowNetPorts_,
-//                                    numHighNetPortsX_,
-//                                    numLowNetPortsX_,
                                     broadcast_,
                                     latency_,
                                     fanout_,
@@ -111,9 +109,9 @@ private:
     
     std::string                     busFrequency_;
     std::string                     bus_latency_cycles_;
-	std::vector<SST::Link*>         highNetPorts_;
-	std::vector<SST::Link*>         lowNetPorts_;
-	std::map<string, LinkId_t>      nameMap_;
+    std::vector<SST::Link*>         highNetPorts_;
+    std::vector<SST::Link*>         lowNetPorts_;
+    std::map<string, LinkId_t>      nameMap_;
     std::map<LinkId_t, SST::Link*>  linkIdMap_;
     std::queue<SST::Event*>         eventQueue_;
     

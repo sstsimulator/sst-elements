@@ -95,7 +95,7 @@ CacheAction L1CoherenceController::handleEviction(CacheLine* wbCacheLine, string
             return STALL;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: State is invalid during eviction: %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), StateString[state], wbCacheLine->getBaseAddr(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], wbCacheLine->getBaseAddr(), getCurrentSimTimeNano());
     }
     return STALL; // Eliminate compiler warning
 }
@@ -117,7 +117,7 @@ CacheAction L1CoherenceController::handleRequest(MemEvent* event, CacheLine* cac
             return handleGetXRequest(event, cacheLine, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return STALL;    // Eliminate compiler warning
 }
@@ -134,7 +134,7 @@ CacheAction L1CoherenceController::handleReplacement(MemEvent* event, CacheLine*
             return handleFlushLineRequest(event, cacheLine, reqEvent, replay);
     } else {
         debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
-                parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return IGNORE;
 }
@@ -192,7 +192,7 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
             return handleForceInv(event, cacheLine, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized invalidation: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return STALL; // eliminate compiler warning
 }
@@ -222,7 +222,7 @@ CacheAction L1CoherenceController::handleResponse(MemEvent * respEvent, CacheLin
             break;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[(int)cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -249,7 +249,7 @@ bool L1CoherenceController::isRetryNeeded(MemEvent * event, CacheLine * cacheLin
             return true;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: NACKed event is unrecognized: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64"ns\n",
-                    parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return true;
 }
@@ -300,7 +300,7 @@ CacheAction L1CoherenceController::handleGetSRequest(MemEvent* event, CacheLine*
             return DONE;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns.\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return STALL;    // eliminate compiler warning
 }
@@ -365,7 +365,7 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
                 if (event->queryFlag(MemEvent::F_LOCKED)) {
             	    if (!cacheLine->isLocked()) {  // Sanity check - can't unlock an already unlocked line 
                         debug->fatal(CALL_INFO, -1, "%s, Error: Unlock request to an already unlocked cache line. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
-                                parent->getName().c_str(), event->getBaseAddr(), getCurrentSimTimeNano());
+                                getName().c_str(), event->getBaseAddr(), getCurrentSimTimeNano());
    	            }
                     cacheLine->decLock();
                 }
@@ -387,7 +387,7 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
             return DONE;
          default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received %s int unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[(int)cmd], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)cmd], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return STALL; // Eliminate compiler warning
 }
@@ -506,7 +506,7 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
                 if (origRequest->queryFlag(MemEvent::F_LOCKED)) {
             	    if (!cacheLine->isLocked()) {  // Sanity check - can't unlock an already unlocked line 
                         debug->fatal(CALL_INFO, -1, "%s, Error: Unlock request to an already unlocked cache line. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
-                                parent->getName().c_str(), origRequest->getBaseAddr(), getCurrentSimTimeNano());
+                                getName().c_str(), origRequest->getBaseAddr(), getCurrentSimTimeNano());
    	            }
                     cacheLine->decLock();
                 }
@@ -523,7 +523,7 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
             break;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Response received but state is not handled. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], 
+                    getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], 
                     responseEvent->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
 }
@@ -557,7 +557,7 @@ CacheAction L1CoherenceController::handleInv(MemEvent* event, CacheLine* cacheLi
             return IGNORE;  // don't retry waiting flush
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an invalidation in an unhandled state: %s. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return STALL;
 }
@@ -594,7 +594,7 @@ CacheAction L1CoherenceController::handleForceInv(MemEvent * event, CacheLine * 
             return IGNORE; // don't retry waiting flush
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received a ForceInv in an unhandled state: %s. Addr = 0x%" PRIu64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return STALL;
 }
@@ -631,7 +631,7 @@ CacheAction L1CoherenceController::handleFetchInv(MemEvent * event, CacheLine * 
             return IGNORE; // don't retry waiting flush
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Received FetchInv but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                        parent->getName().c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());    
+                        getName().c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());    
 
     }
     return STALL;
@@ -656,7 +656,7 @@ CacheAction L1CoherenceController::handleFetchInvX(MemEvent * event, CacheLine *
             return DONE;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Received FetchInvX but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+                    getName().c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return STALL;
 }
@@ -679,7 +679,7 @@ CacheAction L1CoherenceController::handleFetch(MemEvent * event, CacheLine * cac
             return DONE;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Received Fetch but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+                    getName().c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return STALL;
 }

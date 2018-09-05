@@ -80,7 +80,7 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
                 replacementLine->setState(SI);
                 return STALL;
             }
-            if (!isCached && !collision) debug->fatal(CALL_INFO, -1, "%s (dir), Error: evicting uncached block with no sharers. Addr = 0x%" PRIx64 ", State = %s\n", parent->getName().c_str(), replacementLine->getBaseAddr(), StateString[state]);
+            if (!isCached && !collision) debug->fatal(CALL_INFO, -1, "%s (dir), Error: evicting uncached block with no sharers. Addr = 0x%" PRIx64 ", State = %s\n", getName().c_str(), replacementLine->getBaseAddr(), StateString[state]);
             if (fromDataCache && replacementLine->numSharers() > 0) return DONE; // lazy deallocation - we don't need to do anything if the block exists elsewhere
             if (isCached) sendWritebackFromCache(Command::PutS, replacementLine, origRqstr);
             else sendWritebackFromMSHR(Command::PutS, replacementLine, origRqstr, mshr_->getDataBuffer(wbBaseAddr));
@@ -104,7 +104,7 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
                 return STALL;
             } else { // Must be cached
                 if (!isCached && !collision) 
-                    debug->fatal(CALL_INFO, -1, "%s (dir), Error: evicting uncached block with no sharers or owner. Addr = 0x%" PRIx64 ", State = %s\n", parent->getName().c_str(), replacementLine->getBaseAddr(), StateString[state]);
+                    debug->fatal(CALL_INFO, -1, "%s (dir), Error: evicting uncached block with no sharers or owner. Addr = 0x%" PRIx64 ", State = %s\n", getName().c_str(), replacementLine->getBaseAddr(), StateString[state]);
                 if (fromDataCache && (replacementLine->numSharers() > 0 || replacementLine->ownerExists())) return DONE; // lazy deallocation - we don't need to do anything if the block exists elsewhere
                 if (isCached) sendWritebackFromCache(Command::PutE, replacementLine, origRqstr);
                 else sendWritebackFromMSHR(Command::PutE, replacementLine, origRqstr, mshr_->getDataBuffer(wbBaseAddr));
@@ -129,7 +129,7 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
                 return STALL;
             } else {
                 if (!isCached && !collision) 
-                    debug->fatal(CALL_INFO, -1, "%s (dir), Error: evicting uncached block with no sharers or owner. Addr = 0x%" PRIx64 ", State = %s\n", parent->getName().c_str(), replacementLine->getBaseAddr(), StateString[state]);
+                    debug->fatal(CALL_INFO, -1, "%s (dir), Error: evicting uncached block with no sharers or owner. Addr = 0x%" PRIx64 ", State = %s\n", getName().c_str(), replacementLine->getBaseAddr(), StateString[state]);
                 if (fromDataCache && (replacementLine->numSharers() > 0 || replacementLine->ownerExists())) return DONE; // lazy deallocation - we don't need to do anything if the block exists elsewhere
                 if (isCached) sendWritebackFromCache(Command::PutM, replacementLine, origRqstr);
                 else sendWritebackFromMSHR(Command::PutM, replacementLine, origRqstr, mshr_->getDataBuffer(wbBaseAddr));
@@ -148,7 +148,7 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
             return STALL;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s (dir), Error: State is invalid during eviction: %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), StateString[state], replacementLine->getBaseAddr(), getCurrentSimTimeNano());
+                    getName().c_str(), StateString[state], replacementLine->getBaseAddr(), getCurrentSimTimeNano());
     }
     return STALL; // Eliminate compiler warning
 }
@@ -165,7 +165,7 @@ CacheAction MESIInternalDirectory::handleRequest(MemEvent * event, CacheLine * d
             return handleGetXRequest(event, dirLine, replay);
         default:
             debug->fatal(CALL_INFO, -1, "%s (dir), Errror: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return STALL; // Eliminate compiler warning
 
@@ -189,7 +189,7 @@ CacheAction MESIInternalDirectory::handleReplacement(MemEvent* event, CacheLine*
             return handleFlushLineRequest(event, dirLine, reqEvent, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received an unrecognized replacement: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     
     return DONE;    // Eliminate compiler warning
@@ -230,7 +230,7 @@ CacheAction MESIInternalDirectory::handleInvalidationRequest(MemEvent * event, C
             return handleForceInv(event, dirLine, replay, collisionEvent);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received an unrecognized invalidation: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return STALL; // eliminate compiler warning
 }
@@ -266,7 +266,7 @@ CacheAction MESIInternalDirectory::handleResponse(MemEvent * respEvent, CacheLin
             return DONE;
         default:
             debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[(int)cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return DONE;    // Eliminate compiler warning
 }
@@ -302,7 +302,7 @@ bool MESIInternalDirectory::isRetryNeeded(MemEvent * event, CacheLine * dirLine)
             return true;
         default:
             debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received NACK for unrecognized event: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return true;
 }
@@ -432,7 +432,7 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
             }
         default:
             debug->fatal(CALL_INFO,-1,"%s (dir), Error: Handling a GetS request but coherence state is not valid and stable. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), 
+                    getName().c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), 
                     StateString[state], getCurrentSimTimeNano());
 
     }
@@ -511,7 +511,7 @@ CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine*
             return STALL;   // retried this request too soon (TODO fix so we don't even attempt retry)!
         default:
             debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received %s int unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[(int)cmd], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)cmd], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return STALL; // Eliminate compiler warning
 }
@@ -595,7 +595,7 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
                 if (is_debug_event(event)) printData(&event->getPayload(), false);
             } else {
                 debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
+                        getName().c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
             }
             return DONE;
         case E_Inv:
@@ -627,7 +627,7 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
                 if (is_debug_event(event)) printData(&event->getPayload(), false);
             } else {
                 debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
+                        getName().c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
             }
             return DONE;
         case E_InvX: // PutS raced with Fetch from FetchInvX
@@ -641,7 +641,7 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
                 }
             } else {
                 debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
+                        getName().c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
             }
             return DONE;
         case M_Inv: // PutS raced with AckInv from GetX, PutS raced with AckInv from FetchInv
@@ -681,7 +681,7 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
                 if (is_debug_event(event)) printData(&event->getPayload(), false);
             } else {
                 debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
+                        getName().c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
             }
             return DONE;
         case SM_Inv:
@@ -712,7 +712,7 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
             return DONE;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received PutS in unhandled state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(),
+                    getName().c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(),
                     StateString[state], getCurrentSimTimeNano());
     }
     return action; // eliminate compiler warning
@@ -823,7 +823,7 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
             return DONE;
         default:
     	    debug->fatal(CALL_INFO, -1, "%s, Error: Updating data but cache is not in E or M state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+                    getName().c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -925,7 +925,7 @@ CacheAction MESIInternalDirectory::handleFlushLineRequest(MemEvent * event, Cach
             } else return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received %s in unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[(int)event->getCmd()], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)event->getCmd()], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
 
     forwardFlushLine(event, dirLine, dirLine && dirLine->getState() == M, Command::FlushLine);
@@ -1055,7 +1055,7 @@ CacheAction MESIInternalDirectory::handleFlushLineInvRequest(MemEvent * event, C
                     if (is_debug_event(event)) printData(&event->getPayload(), false);
                 } else {
                     debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received FlushLineInv in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                            parent->getName().c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
+                            getName().c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
                 }
                 return DONE;
             }
@@ -1100,7 +1100,7 @@ CacheAction MESIInternalDirectory::handleFlushLineInvRequest(MemEvent * event, C
                     return STALL; // Waiting for GetXResp
                 }
                 debug->fatal(CALL_INFO, -1, "%s, Error: Received %s in state SM_Inv but case does not match an implemented handler. Addr = 0x%" PRIx64 ", Src = %s, OrigEvent = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), CommandString[(int)reqEvent->getCmd()], getCurrentSimTimeNano());
+                        getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), CommandString[(int)reqEvent->getCmd()], getCurrentSimTimeNano());
             }
             return STALL;
         case MI:
@@ -1233,7 +1233,7 @@ CacheAction MESIInternalDirectory::handleFlushLineInvRequest(MemEvent * event, C
             } else return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received %s in unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), CommandString[(int)event->getCmd()], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)event->getCmd()], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
 
     forwardFlushLine(event, dirLine, dirLine && dirLine->getState() == M, Command::FlushLineInv);
@@ -1308,7 +1308,7 @@ CacheAction MESIInternalDirectory::handleInv(MemEvent* event, CacheLine* dirLine
             return STALL;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received an invalidation in an unhandled state: %s. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+                    getName().c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return STALL;
 }
@@ -1444,7 +1444,7 @@ CacheAction MESIInternalDirectory::handleFetch(MemEvent * event, CacheLine * dir
             return BLOCK; // Block while current request completes
         default:
             debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received Fetch but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                        parent->getName().c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+                        getName().c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return STALL; // Eliminate compiler warning
 }
@@ -1493,8 +1493,9 @@ CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * 
                 dirLine->setState(S_Inv);
                 return STALL;
             }
-            if (dirLine->getDataLine() == NULL && !collision) debug->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
-                    parent->getName().c_str(), event->getAddr(), StateString[state]);
+            if (dirLine->getDataLine() == NULL && !collision) 
+                debug->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
+                        getName().c_str(), event->getAddr(), StateString[state]);
             sendResponseDown(event, dirLine, collision ? mshr_->getDataBuffer(dirLine->getBaseAddr()) : dirLine->getDataLine()->getData(), false, replay);
             dirLine->setState(I);
             return DONE;
@@ -1505,8 +1506,9 @@ CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * 
                 dirLine->setState(SM_Inv);
                 return STALL;
             }
-            if (dirLine->getDataLine() == NULL) debug->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
-                    parent->getName().c_str(), event->getAddr(), StateString[state]);
+            if (dirLine->getDataLine() == NULL) 
+                debug->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
+                        getName().c_str(), event->getAddr(), StateString[state]);
             sendResponseDown(event, dirLine, collision ? mshr_->getDataBuffer(dirLine->getBaseAddr()) : dirLine->getDataLine()->getData(), false, replay);
             dirLine->setState(IM);
             return DONE;
@@ -1532,8 +1534,9 @@ CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * 
                 dirLine->setState(E_Inv);
                 return STALL;
             }
-            if (dirLine->getDataLine() == NULL && !collision) debug->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
-                    parent->getName().c_str(), event->getAddr(), StateString[state]);
+            if (dirLine->getDataLine() == NULL && !collision) 
+                debug->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
+                        getName().c_str(), event->getAddr(), StateString[state]);
             sendResponseDown(event, dirLine, collision ? mshr_->getDataBuffer(dirLine->getBaseAddr()) : dirLine->getDataLine()->getData(), false, replay);
             dirLine->setState(I);
             return DONE;
@@ -1550,8 +1553,9 @@ CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * 
                 dirLine->setState(M_Inv);
                 return STALL;
             }
-            if (dirLine->getDataLine() == NULL && !collision) debug->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
-                    parent->getName().c_str(), event->getAddr(), StateString[state]);
+            if (dirLine->getDataLine() == NULL && !collision) 
+                debug->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
+                        getName().c_str(), event->getAddr(), StateString[state]);
             sendResponseDown(event, dirLine, collision ? mshr_->getDataBuffer(dirLine->getBaseAddr()) : dirLine->getDataLine()->getData(), true, replay);
             dirLine->setState(I);
             return DONE;
@@ -1573,7 +1577,7 @@ CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * 
             return BLOCK;
         default:
             debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received FetchInv but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                        parent->getName().c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+                        getName().c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -1669,7 +1673,7 @@ CacheAction MESIInternalDirectory::handleFetchInvX(MemEvent * event, CacheLine *
             return BLOCK;
         default:
             debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received FetchInvX but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                        parent->getName().c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+                        getName().c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -1727,7 +1731,7 @@ CacheAction MESIInternalDirectory::handleDataResponse(MemEvent* responseEvent, C
             return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s (dir), Error: Response received but state is not handled. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], 
+                    getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], 
                     responseEvent->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return DONE; // Eliminate compiler warning
@@ -1765,7 +1769,7 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
                 if (is_debug_event(responseEvent)) printData(&responseEvent->getPayload(), false);
             } else {
                 debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received FetchResp in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], responseEvent->getBaseAddr(), getCurrentSimTimeNano());
+                        getName().c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], responseEvent->getBaseAddr(), getCurrentSimTimeNano());
             }
             break;
         case SI:
@@ -1843,7 +1847,7 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
                     else dirLine->setState(E);
                     if (action != DONE) { // Sanity check...
                         debug->fatal(CALL_INFO, -1, "%s, Error: Received a FetchResp to a FlushLineInv but still waiting on more acks. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                            parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], responseEvent->getSrc().c_str(), getCurrentSimTimeNano()); 
+                            getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], responseEvent->getSrc().c_str(), getCurrentSimTimeNano()); 
                     }
                     action = handleFlushLineInvRequest(reqEvent, dirLine, NULL, true);
                 } else {
@@ -1865,7 +1869,7 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
 
         default:
             debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received a FetchResp and state is unhandled. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], 
+                    getName().c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], 
                     responseEvent->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
     }
     return action;
@@ -1965,7 +1969,7 @@ CacheAction MESIInternalDirectory::handleAckInv(MemEvent * ack, CacheLine * dirL
             }
         default:
             debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received AckInv in unhandled state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), ack->getBaseAddr(), CommandString[(int)ack->getCmd()], ack->getSrc().c_str(), 
+                    getName().c_str(), ack->getBaseAddr(), CommandString[(int)ack->getCmd()], ack->getSrc().c_str(), 
                     StateString[state], getCurrentSimTimeNano());
 
     }
