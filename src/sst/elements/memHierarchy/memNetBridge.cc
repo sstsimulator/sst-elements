@@ -29,7 +29,7 @@ MemNetBridge::MemNetBridge(SST::Component *comp, SST::Params &params) :
     Bridge::Translator(comp, params)
 {
     int debugLevel = params.find<int>("debug_level", 0);
-    dbg.init("@t:Bridge::@p():@l " + comp->getName() + ": ",
+    dbg.init("@t:Bridge::@p():@l " + getName() + ": ",
             debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 }
 

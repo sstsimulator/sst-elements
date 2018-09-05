@@ -43,7 +43,7 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
     // extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
 
-    m_backend = dynamic_cast<MemBackend*>( comp->loadSubComponent( backendName, comp, backendParams ) );
+    m_backend = dynamic_cast<MemBackend*>( loadSubComponent( backendName, backendParams ) );
 
     using std::placeholders::_1;
     m_backend->setGetRequestorHandler( std::bind( &MemBackendConvertor::getRequestor, this, _1 )  );

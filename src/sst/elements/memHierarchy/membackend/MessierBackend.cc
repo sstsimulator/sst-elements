@@ -31,7 +31,7 @@ using namespace SST::MemHierarchy;
 
 Messier::Messier(Component *comp, Params &params) : SimpleMemBackend(comp,params){
 	std::string access_time = "1ns"; //params.find<std::string>("access_time", "1 ns");
-	nvm_link = comp->configureLink( "cube_link", access_time,
+	nvm_link = configureLink( "cube_link", access_time,
 			new Event::Handler<Messier>(this, &Messier::handleMessierResp));
 
 //	using std::placeholders::_1;

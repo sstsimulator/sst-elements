@@ -36,20 +36,20 @@ RequestReorderRow::RequestReorderRow(Component *comp, Params &params) : SimpleMe
 
     // Check parameters
     if (banks == 0) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): banks - must be at least 1. You specified '0'.\n", comp->getName().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): banks - must be at least 1. You specified '0'.\n", getName().c_str());
     }
     if (!(rowSize.hasUnits("B"))) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must have units of 'B' (bytes). You specified %s.\n", comp->getName().c_str(), rowSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must have units of 'B' (bytes). You specified %s.\n", getName().c_str(), rowSize.toString().c_str());
     }
     if (!isPowerOfTwo(rowSize.getRoundedValue())) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must be a power of two. You specified %s.\n", comp->getName().c_str(), rowSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must be a power of two. You specified %s.\n", getName().c_str(), rowSize.toString().c_str());
     }
     if (maxReqsPerRow == 0) maxReqsPerRow = 1;
     if (!(requestSize.hasUnits("B"))) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): bank_interleave_granularity - must have units of 'B' (bytes). You specified '%s'.\n", comp->getName().c_str(), requestSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): bank_interleave_granularity - must have units of 'B' (bytes). You specified '%s'.\n", getName().c_str(), requestSize.toString().c_str());
     }
     if (!isPowerOfTwo(requestSize.getRoundedValue())) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): bank_interleave_granularity - must be a power of two. You specified '%s'.\n", comp->getName().c_str(), requestSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): bank_interleave_granularity - must be a power of two. You specified '%s'.\n", getName().c_str(), requestSize.toString().c_str());
     }
 
     // Create our backend & copy 'mem_size' through for now

@@ -42,7 +42,7 @@ TimingDRAM::TimingDRAM(Component *comp, Params &params) : SimpleMemBackend(comp,
 
     if ( ! m_mapper ) {
         output->fatal(CALL_INFO, -1, "Invalid param(%s): addrMapper,  '%s'.\n", 
-            comp->getName().c_str(), addrMapper.c_str());
+            getName().c_str(), addrMapper.c_str());
     }
 
     int numChannels = params.find<int>("channels", 1);
