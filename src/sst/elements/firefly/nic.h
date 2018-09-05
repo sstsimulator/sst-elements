@@ -29,6 +29,7 @@
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
+#include "memoryModel/trivalMemoryModel.h"
 #include "memoryModel/simpleMemoryModel.h"
 
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
@@ -177,7 +178,7 @@ class Nic : public SST::Component  {
     typedef uint32_t NodeId;
     static const NodeId AnyId = -1;
 
-	typedef SimpleMemoryModel::MemOp MemOp;
+	typedef MemoryModel::MemOp MemOp;
 
   private:
 
@@ -288,7 +289,7 @@ public:
         out.output("NIC %d: start time=%zu\n", m_myNodeId, (size_t) getCurrentSimTimeNano() );
         out.output("NIC %d: Received packets: %d\n", m_myNodeId, m_recvMachine->getNumReceivedPkts());
         out.output("NIC %d: Sent packets:     %d\n", m_myNodeId, m_sentPkts);
-        m_simpleMemoryModel->printStatus( out, m_myNodeId );
+        m_memoryModel->printStatus( out, m_myNodeId );
         out.output("NIC %d: done\n", m_myNodeId );
     }
 
@@ -450,8 +451,8 @@ public:
     }
 
     void calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
-        if( m_simpleMemoryModel ) {
-        	m_simpleMemoryModel->schedHostCallback( core, ops, callback );
+        if( m_memoryModel ) {
+        	m_memoryModel->schedHostCallback( core, ops, callback );
         } else {
 			schedCallback(callback);
 			delete ops;
@@ -471,8 +472,8 @@ public:
     }
 
     void calcNicMemDelay( int unit, int pid, std::vector< MemOp>* ops, std::function<void()> callback ) {
-        if( m_simpleMemoryModel ) {
-        	m_simpleMemoryModel->schedNicCallback( unit, pid, ops, callback );
+        if( m_memoryModel ) {
+        	m_memoryModel->schedNicCallback( unit, pid, ops, callback );
         } else {
         	for ( unsigned i = 0;  i <  ops->size(); i++ ) {
             	assert( (*ops)[i].callback == NULL );
@@ -500,10 +501,49 @@ public:
         m_respKeyMap.erase(key);
         return value; 
     }
+	bool findNid( int nid, std::string nidList ) {
+
+		//printf("%s() %d %s\n",__func__,nid,nidList.c_str());
+
+		if ( 0 == nidList.compare( "all" ) ) {
+			return true;
+		}
+
+		size_t pos = 0;
+		size_t end = 0;
+		do {
+			end = nidList.find( ",", pos );
+			if ( end == std::string::npos ) {
+				end = nidList.length();
+			}
+			std::string tmp = nidList.substr(pos,end-pos);
+			//printf("pos=%d end=%d '%s'\n",pos,end,tmp.c_str() );
+
+			if ( tmp.length() == 1 ) {
+				int val = atoi( tmp.c_str() ); 
+				//printf("nid=%d val=%d\n",nid, val);
+				if ( nid == val ) {
+					return true;
+				}
+			} else {
+				size_t dash = tmp.find( "-" );
+				int first = atoi(tmp.substr(0,dash).c_str()) ; 
+				int last = atoi(tmp.substr(dash+1).c_str());
+				//printf("nid=%d first=%d last=%d\n",nid, first,last);
+				if ( nid >= first && nid <= last ) {
+					return true;
+				}
+			}
+
+			pos = end + 1;
+		} while ( end < nidList.length() );
+
+		return false;
+	}	
 
     std::unordered_map<RespKey_t,void*> m_respKeyMap;
 
-    SimpleMemoryModel*  m_simpleMemoryModel;
+    MemoryModel*  m_memoryModel;
     std::deque<int> m_availNicUnits;
     uint16_t m_getKey;
     int m_curNetworkSrc;

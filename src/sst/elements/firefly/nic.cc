@@ -38,7 +38,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_detailedCompute( 2, NULL ),
     m_useDetailedCompute(false),
     m_getKey(10),
-    m_simpleMemoryModel(NULL),
+    m_memoryModel(NULL),
     m_nic2host_base_lat_ns(0),
     m_respKey(1),
     m_curNetworkSrc(-1),
@@ -167,7 +167,28 @@ Nic::Nic(ComponentId_t id, Params &params) :
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
         smmParams.insert( "busLatency",  std::to_string(m_nic2host_lat_ns), false );
-        m_simpleMemoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics, m_unitPool->getTotal() );
+
+		std::string useCache = smmParams.find<std::string>("useHostCache","all");
+		std::string useBus = smmParams.find<std::string>("useBusBridge","all");
+
+		if ( findNid( m_myNodeId, useCache ) ) {
+        	smmParams.insert( "useHostCache",  "1", true );
+		} else {
+        	smmParams.insert( "useHostCache",  "0", true );
+		}
+		if ( findNid( m_myNodeId, useBus ) ) {
+        	smmParams.insert( "useBusBridge",  "1", true );
+		} else {
+        	smmParams.insert( "useBusBridge",  "0", true );
+		}
+        m_memoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics, m_unitPool->getTotal() );
+    }
+    if ( params.find<int>( "useTrivialMemoryModel", 0 ) ) {
+		if ( m_memoryModel ) {
+			m_dbg.fatal(CALL_INFO,0,"can't used TrivialMemoryModel, memoryModel already configured\n" );
+		}
+        Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
+    	m_memoryModel = new TrivialMemoryModel( this, smmParams );
     }
     
     m_recvMachine = new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 
@@ -230,8 +251,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
 Nic::~Nic()
 {
-    if ( m_simpleMemoryModel ) {
-        delete m_simpleMemoryModel;
+    if ( m_memoryModel ) {
+        delete m_memoryModel;
     }  
 	delete m_shmem;
 	delete m_linkControl;
@@ -601,7 +622,7 @@ void Nic::detailedMemOp( Thornhill::DetailedCompute* detailed,
 
 void Nic::dmaRead( int unit, int pid, std::vector<MemOp>* vec, Callback callback ) {
 
-    if ( m_simpleMemoryModel ) {
+    if ( m_memoryModel ) {
         calcNicMemDelay( unit, pid, vec, callback );
     } else {
 		for ( unsigned i = 0;  i <  vec->size(); i++ ) {
@@ -625,7 +646,7 @@ void Nic::dmaRead( int unit, int pid, std::vector<MemOp>* vec, Callback callback
 
 void Nic::dmaWrite( int unit, int pid, std::vector<MemOp>* vec, Callback callback ) {
 
-    if ( m_simpleMemoryModel ) {
+    if ( m_memoryModel ) {
        	calcNicMemDelay( unit, pid, vec, callback );
     } else { 
 		for ( unsigned i = 0;  i <  vec->size(); i++ ) {
