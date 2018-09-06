@@ -29,7 +29,7 @@
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
-#include "memoryModel/trivalMemoryModel.h"
+#include "memoryModel/trivialMemoryModel.h"
 #include "memoryModel/simpleMemoryModel.h"
 
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
