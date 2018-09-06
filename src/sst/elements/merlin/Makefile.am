@@ -66,9 +66,10 @@ libmerlin_la_SOURCES = \
 	inspectors/circuitCounter.cc \
 	inspectors/testInspector.cc \
 	inspectors/testInspector.h \
-	pymodule.h \
-	pymodule.c \
-	pymerlin.py
+	pymerlin.py \
+	pymerlin-core.py \
+	pymerlin-endpoint.py \
+	topology/pymerlin-topology.py
 
 EXTRA_DIST = \
 	tests/dragon_128_test.py \
@@ -86,7 +87,7 @@ nobase_sst_HEADERS = \
 
 libmerlin_la_LDFLAGS = -module -avoid-version $(PYTHON_LDFLAGS)
 
-BUILT_SOURCES = pymerlin.inc
+BUILT_SOURCES = pymerlin.inc pymerlin-core.inc pymerlin-endpoint.inc topology/pymerlin-topology.inc
 
 # This sed script converts 'od' output to a comma-separated list of byte-
 # values, suitable for #include'ing into an array definition.
@@ -105,3 +106,6 @@ clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
 	-rm -rf pymerlin.inc
+	-rm -rf pymerlin-core.inc
+	-rm -rf pymerlin-endpoint.inc
+	-rm -rf topology/pymerlin-topology.inc

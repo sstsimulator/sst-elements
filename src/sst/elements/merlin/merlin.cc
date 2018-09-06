@@ -38,12 +38,29 @@ char pymerlin[] = {
 #include "pymerlin.inc"
     0x00};
 
+char pymerlin_core[] = {
+#include "pymerlin-core.inc"
+    0x00};
+
+char pymerlin_topology[] = {
+#include "topology/pymerlin-topology.inc"
+    0x00};
+
+char pymerlin_endpoint[] = {
+#include "pymerlin-endpoint.inc"
+    0x00};
+
+
+
 class MerlinPyModule : public SSTElementPythonModule {
 public:
     MerlinPyModule(std::string library) :
         SSTElementPythonModule(library)
     {
         addPrimaryModule(pymerlin);
+        addSubModule("core",pymerlin_core);
+        addSubModule("topology",pymerlin_topology);
+        addSubModule("endpoint",pymerlin_endpoint);
     }
 
     SST_ELI_REGISTER_PYTHON_MODULE(
