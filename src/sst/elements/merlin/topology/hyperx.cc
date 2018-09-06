@@ -17,6 +17,8 @@
 
 #include "sst/core/rng/xorshift.h"
 
+#include "sst/elements/merlin/merlin.h"
+
 #include <algorithm>
 #include <stdlib.h>
 
@@ -27,7 +29,6 @@ using namespace SST::Merlin;
 topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     Topology(comp)
 {
-
     // Get the various parameters
     router_id = params.find<int>("id",-1);
     if ( router_id == -1 ) {
@@ -36,6 +37,7 @@ topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     std::string shape;
     shape = params.find<std::string>("hyperx:shape");
     if ( !shape.compare("") ) {
+        merlin_abort.fatal(CALL_INFO,-1,"topo_hyperx: hyperx:shape must be specified");
     }
 
     // Need to parse the shape string to get the number of dimensions
