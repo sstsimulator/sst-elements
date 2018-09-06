@@ -352,6 +352,7 @@ void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
                 if ( event->isBlocking() ) {
                     m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), callback );
                 } else {
+                    m_nic.shmemDecPending( id );
                     incFreeCmdSlots();
                 }
             } 
