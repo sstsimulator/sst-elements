@@ -200,6 +200,52 @@ void Cache::createCoherenceManager(Params &params) {
  *      directory                       : connected to a network talking to a cache above and a directory below (single network connection)
  */
 void Cache::configureLinks(Params &params) {
+
+    // If one named sub component is used, assume they both are named subcomponents!
+    linkUp_ = dynamic_cast<MemLinkBase*>(loadNamedSubComponent("cpulink"));
+    linkDown_ = dynamic_cast<MemLinkBase*>(loadNamedSubComponent("memlink"));
+    if (linkUp_ != nullptr || linkDown_ != nullptr) {
+        if (linkUp_ == nullptr)
+            linkUp_ = linkDown_;
+        if (linkDown_ == nullptr)
+            linkDown_ = linkUp_;
+
+        // Check for cache slices and assign the NIC an appropriate region -> overrides the given one
+        int cacheSliceCount         = params.find<int>("num_cache_slices", 1);
+        int sliceID                 = params.find<int>("slice_id", 0);
+        string sliceAllocPolicy     = params.find<std::string>("slice_allocation_policy", "rr");
+        if (cacheSliceCount == 1) sliceID = 0;
+        else if (cacheSliceCount > 1) {
+            if (sliceID >= cacheSliceCount) out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_id - should be between 0 and num_cache_slices-1. You specified %d.\n",
+                    getName().c_str(), sliceID);
+            if (sliceAllocPolicy != "rr") out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified '%s'.\n",
+                    getName().c_str(), sliceAllocPolicy.c_str());
+        } else {
+            d2_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %d.\n", 
+                    getName().c_str(), cacheSliceCount);
+        }
+
+        if (cacheSliceCount > 1) {
+            MemRegion region;
+            region.setDefault();
+            int lineSize = params.find<int>("cache_line_size", 64);
+            if (sliceAllocPolicy == "rr") {
+                region.start = sliceID*lineSize;
+                region.interleaveSize = lineSize;
+                region.interleaveStep = cacheSliceCount*lineSize;
+            }
+            cacheArray_->setSliceAware(cacheSliceCount);
+            linkUp_->setRegion(region);
+            linkDown_->setRegion(region);
+        }
+
+        clockLink_ = linkDown_->isClocked();
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+         
+        return;
+    }
+
     bool highNetExists  = false;    // high_network_0 is connected -> direct link toward CPU (to bus or directly to other component)
     bool lowCacheExists = false;    // cache is connected -> direct link towards memory to cache
     bool lowDirExists   = false;    // directory is connected -> network link towards memory to directory
@@ -268,21 +314,9 @@ void Cache::configureLinks(Params &params) {
         nicParams.find<std::string>("group", "", found);
         if (!found) nicParams.insert("group", "1");
         
-        if (isPortConnected("cache_ack") && isPortConnected("cache_fwd") && isPortConnected("cache_data")) {
-            nicParams.find<std::string>("req.port", "", found);
-            if (!found) nicParams.insert("req.port", "cache");
-            nicParams.find<std::string>("ack.port", "", found);
-            if (!found) nicParams.insert("ack.port", "cache_ack");
-            nicParams.find<std::string>("fwd.port", "", found);
-            if (!found) nicParams.insert("fwd.port", "cache_fwd");
-            nicParams.find<std::string>("data.port", "", found);
-            if (!found) nicParams.insert("data.port", "cache_data");
-            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
-        } else {
-            nicParams.find<std::string>("port", "", found);
-            if (!found) nicParams.insert("port", "cache");
-            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
-        }
+        nicParams.find<std::string>("port", "", found);
+        if (!found) nicParams.insert("port", "cache");
+        linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
 
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         
@@ -298,21 +332,10 @@ void Cache::configureLinks(Params &params) {
         nicParams.find<std::string>("group", "", found);
         if (!found) nicParams.insert("group", "2");
         
-        if (isPortConnected("directory_ack") && isPortConnected("directory_fwd") && isPortConnected("directory_data")) {
-            nicParams.find<std::string>("req.port", "", found);
-            if (!found) nicParams.insert("req.port", "directory");
-            nicParams.find<std::string>("ack.port", "", found);
-            if (!found) nicParams.insert("ack.port", "directory_ack");
-            nicParams.find<std::string>("fwd.port", "", found);
-            if (!found) nicParams.insert("fwd.port", "directory_fwd");
-            nicParams.find<std::string>("data.port", "", found);
-            if (!found) nicParams.insert("data.port", "directory_data");
-            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
-        } else { 
-            nicParams.find<std::string>("port", "", found);
-            if (!found) nicParams.insert("port", "directory");
-            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
-        }
+        nicParams.find<std::string>("port", "", found);
+        if (!found) nicParams.insert("port", "directory");
+        linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+        
         // Configure low link
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
@@ -346,45 +369,31 @@ void Cache::configureLinks(Params &params) {
             d2_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %d.\n", 
                     getName().c_str(), cacheSliceCount);
         }
-        uint64_t addrRangeStart = 0;
-        uint64_t addrRangeEnd = (uint64_t) - 1;
-        uint64_t interleaveSize = 0;
-        uint64_t interleaveStep = 0;
+
+        MemRegion region;
+        region.setDefault();
         if (cacheSliceCount > 1) {
             int lineSize = params.find<int>("cache_line_size", 64);
             if (sliceAllocPolicy == "rr") {
-                addrRangeStart = sliceID*lineSize;
-                interleaveSize = lineSize;
-                interleaveStep = cacheSliceCount*lineSize;
+                region.start = sliceID*lineSize;
+                region.interleaveSize = lineSize;
+                region.interleaveStep = cacheSliceCount*lineSize;
             }
             cacheArray_->setSliceAware(cacheSliceCount);
         }
         // Set region parameters
-        nicParams.find<std::string>("addr_range_start", "", found);
-        if (!found) nicParams.insert("addr_range_start", std::to_string(addrRangeStart));
-        nicParams.find<std::string>("addr_range_end", "", found);
-        if (!found) nicParams.insert("addr_range_end", std::to_string(addrRangeEnd));
-        nicParams.find<std::string>("interleave_size", "", found);
-        if (!found) nicParams.insert("interleave_size", std::to_string(interleaveSize) + "B");
-        nicParams.find<std::string>("interleave_step", "", found);
-        if (!found) nicParams.insert("interleave_step", std::to_string(interleaveStep) + "B");
+        region.start = nicParams.find<uint64_t>("addr_range_start", region.start);
+        region.end = nicParams.find<uint64_t>("addr_range_end", region.end);
+        UnitAlgebra ilSize(nicParams.find<std::string>("interleave_size", std::to_string(region.interleaveSize) + "B"));
+        UnitAlgebra ilStep(nicParams.find<std::string>("interleave_step", std::to_string(region.interleaveStep) + "B"));
+        region.interleaveSize = ilSize.getRoundedValue();
+        region.interleaveStep = ilStep.getRoundedValue();
+
+        nicParams.find<std::string>("port", "", found);
+        if (!found) nicParams.insert("port", "directory");
+        linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
         
-        if (isPortConnected("directory_ack") && isPortConnected("directory_fwd") && isPortConnected("directory_data")) {
-            nicParams.find<std::string>("req.port", "", found);
-            if (!found) nicParams.insert("req.port", "directory");
-            nicParams.find<std::string>("ack.port", "", found);
-            if (!found) nicParams.insert("ack.port", "directory_ack");
-            nicParams.find<std::string>("fwd.port", "", found);
-            if (!found) nicParams.insert("fwd.port", "directory_fwd");
-            nicParams.find<std::string>("data.port", "", found);
-            if (!found) nicParams.insert("data.port", "directory_data");
-            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
-        } else { 
-            nicParams.find<std::string>("port", "", found);
-            if (!found) nicParams.insert("port", "directory");
-            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
-        }
-        
+        linkDown_->setRegion(region);
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
         // Configure high link

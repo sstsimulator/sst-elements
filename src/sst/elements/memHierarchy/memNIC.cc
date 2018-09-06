@@ -43,7 +43,7 @@ MemNICBase::MemNICBase(Component * parent, Params &params) : MemLinkBase(parent,
     bool found;
     info.id = params.find<uint32_t>("group", 0, found);
     if (!found) {
-        dbg.fatal(CALL_INFO, -1, "Param not specified(%s): group - group ID (or hierarchy level) for this NIC's component.\n", getName().c_str());
+        dbg.fatal(CALL_INFO, -1, "Param not specified(%s): group - group ID (or hierarchy level on the network) for this NIC's component.\n Example: all L2s are group 1, directories are group 2, and memories (on network) are group 3\n", getName().c_str());
     }
     std::stringstream sources, destinations;
     sources.str(params.find<std::string>("sources", ""));
@@ -134,7 +134,7 @@ void MemNICBase::nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned 
              *      src is a src/dst?
              */
             if (ev->getInitCmd() == MemEventInit::InitCommand::Region) {
-                if (ev->getDst() == getName()) {
+                if (ev->getDst() == info.name) {
                     MemEventInitRegion * rEv = static_cast<MemEventInitRegion*>(ev);
                     if (rEv->getSetRegion() && acceptRegion) {
                         info.region = rEv->getRegion();
@@ -145,7 +145,7 @@ void MemNICBase::nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned 
                 delete mre;
             } else if (
                     (ev->getCmd() == Command::NULLCMD && (isSource(mre->event->getSrc()) || isDest(mre->event->getSrc()))) 
-                    || ev->getDst() == getName()) {
+                    || ev->getDst() == info.name) {
                 dbg.debug(_L10_, "\tInserting in initQueue\n");
                 initQueue.push(mre);
             }
@@ -193,10 +193,7 @@ uint64_t MemNICBase::lookupNetworkAddress(const std::string & dst) const {
 MemNIC::MemNIC(Component * parent, Params &params) : MemNICBase(parent, params) {
     
     // Get network parameters and create link control
-    std::string linkName = params.find<std::string>("port", "");
-    if (linkName == "") 
-        dbg.fatal(CALL_INFO, -1, "Param not specified(%s): port - the name of the port that the MemNIC is attached to. This should be set internally by components creating the memNIC.\n",
-                getName().c_str());
+    std::string linkName = params.find<std::string>("port", "port");
 
     // Error checking for much of this is done by the link control
     bool found;
@@ -205,7 +202,7 @@ MemNIC::MemNIC(Component * parent, Params &params) : MemNICBase(parent, params) 
     std::string linkInbufSize = params.find<std::string>("network_input_buffer_size", "1KiB");
     std::string linkOutbufSize = params.find<std::string>("network_output_buffer_size", "1KiB");
 
-    link_control = (SimpleNetwork*)parent->loadSubComponent("merlin.linkcontrol", parent, params); // But link control doesn't use params so manually initialize
+    link_control = (SimpleNetwork*)loadSubComponent("merlin.linkcontrol", params); // But link control doesn't use params so manually initialize
     link_control->initialize(linkName, UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
 
     // Packet size

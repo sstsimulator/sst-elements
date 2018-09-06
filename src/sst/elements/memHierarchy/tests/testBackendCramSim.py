@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 
 
@@ -82,7 +81,6 @@ g_params = setup_config_params()
 
 
 # Define SST core options
-sst.setProgramOption("timebase", "1ps")
 #sst.setProgramOption("stopAtCycle", "11000us")
 
 
@@ -211,7 +209,6 @@ comp_l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "debug" : "0",
-      "network_address" : "1",
       "network_bw" : "25GB/s",
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
@@ -229,7 +226,6 @@ comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
       "coherence_protocol" : "MSI",
       "debug" : "0",
-      "network_address" : "0",
       "entry_cache_size" : "32768",
       "network_bw" : "25GB/s",
       "addr_range_end" : "0x1F000000",
@@ -326,5 +322,3 @@ memHLink.connect( (comp_memhBridge, "memLink", g_params["clockCycle"]), (comp_co
 # Controller <-> Dimm
 cmdLink = sst.Link("cmdLink_1")
 cmdLink.connect( (comp_controller0, "memLink", g_params["clockCycle"]), (comp_dimm0, "ctrlLink", g_params["clockCycle"]) )
-
-# End of generated output.

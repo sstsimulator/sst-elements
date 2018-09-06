@@ -17,17 +17,21 @@ bus.addParams({ "bus_frequency" : "2Ghz" })
 
 l3cache = sst.Component("l3cache", "memHierarchy.Cache")
 l3cache.addParams({
-      "access_latency_cycles" : "30",
-      "mshr_latency_cycles" : 3,
-      "cache_frequency" : "2Ghz",
-      "replacement_policy" : "lru",
-      "coherence_protocol" : "MESI",
-      "associativity" : "16",
-      "cache_line_size" : "64",
-      "cache_size" : "64 KB",
-      "debug" : "0",
-      "memNIC.network_address" : "1",
-      "memNIC.network_bw" : "25GB/s",
+    "access_latency_cycles" : "30",
+    "mshr_latency_cycles" : 3,
+    "cache_frequency" : "2Ghz",
+    "replacement_policy" : "lru",
+    "coherence_protocol" : "MESI",
+    "associativity" : "16",
+    "cache_line_size" : "64",
+    "cache_size" : "64 KB",
+    "debug" : "0",
+})
+l3_clink = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+l3_mlink = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+l3_mlink.addParams({
+    "group" : 1,
+    "network_bw" : "25GB/s",
 })
 
 for i in range(0,8):
@@ -86,15 +90,19 @@ comp_chiprtr.addParams({
       "id" : "0",
       "topology" : "merlin.singlerouter"
 })
-comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
-comp_dirctrl.addParams({
+dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
+dirctrl.addParams({
       "coherence_protocol" : "MESI",
       "debug" : "0",
-      "memNIC.network_address" : "0",
       "entry_cache_size" : "32768",
-      "memNIC.network_bw" : "25GB/s",
-      "memNIC.addr_range_end" : "0x1F000000",
-      "memNIC.addr_range_start" : "0x0"
+})
+dir_clink = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dir_mlink = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
+dir_clink.addParams({
+    "group" : 2,
+    "network_bw" : "25GB/s",
+    "addr_range_end" : "0x1F000000",
+    "addr_range_start" : "0x0"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
@@ -124,14 +132,14 @@ comp_memory.addParams({
 
 # Do lower memory hierarchy links
 link_bus_l3 = sst.Link("link_bus_l3")
-link_bus_l3.connect( (bus, "low_network_0", "500ps"), (l3cache, "high_network_0", "500ps") )
+link_bus_l3.connect( (bus, "low_network_0", "500ps"), (l3_clink, "port", "500ps") )
 
 link_l3_net = sst.Link("link_l3_net")
-link_l3_net.connect( (l3cache, "directory", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
+link_l3_net.connect( (l3_mlink, "port", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
 link_dir_net = sst.Link("link_dir_net")
-link_dir_net.connect( (comp_chiprtr, "port0", "2000ps"), (comp_dirctrl, "network", "2000ps") )
+link_dir_net.connect( (comp_chiprtr, "port0", "2000ps"), (dir_clink, "port", "2000ps") )
 link_dir_mem = sst.Link("link_dir_mem")
-link_dir_mem.connect( (comp_dirctrl, "memory", "10000ps"), (comp_memory, "direct_link", "10000ps") )
+link_dir_mem.connect( (dir_mlink, "port", "10000ps"), (comp_memory, "direct_link", "10000ps") )
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)

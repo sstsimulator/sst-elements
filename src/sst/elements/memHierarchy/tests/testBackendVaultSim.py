@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 
 # Define SST core options
@@ -129,8 +128,12 @@ comp_l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "debug" : "0",
-      "memNIC.network_address" : "1",
-      "memNIC.network_bw" : "25GB/s",
+})
+l3_clink = comp_l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+l3_mlink = comp_l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+l3_mlink.addParams({
+    "group" : 1,
+    "network_bw" : "25GB/s",
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams({
@@ -145,13 +148,17 @@ comp_chiprtr.addParams({
 })
 comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
-      "coherence_protocol" : "MSI",
-      "debug" : "0",
-      "memNIC.network_address" : "0",
-      "entry_cache_size" : "32768",
-      "memNIC.network_bw" : "25GB/s",
-      "memNIC.addr_range_end" : "0x1F000000",
-      "memNIC.addr_range_start" : "0x0"
+    "coherence_protocol" : "MSI",
+    "debug" : "0",
+    "entry_cache_size" : "32768",
+})
+dir_clink = comp_dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dir_mlink = comp_dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
+dir_clink.addParams({
+    "group" : 2,
+    "network_bw" : "25GB/s",
+    "addr_range_end" : "0x1F000000",
+    "addr_range_start" : "0x0"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
@@ -263,13 +270,13 @@ link_bus_n1L2cache.connect( (comp_n1_bus, "low_network_0", "10000ps"), (comp_n1_
 link_n1L2cache_bus = sst.Link("link_n1L2cache_bus")
 link_n1L2cache_bus.connect( (comp_n1_l2cache, "low_network_0", "10000ps"), (comp_n2_bus, "high_network_1", "10000ps") )
 link_bus_l3cache = sst.Link("link_bus_l3cache")
-link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "10000ps"), (comp_l3cache, "high_network_0", "10000ps") )
+link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "10000ps"), (l3_clink, "port", "10000ps") )
 link_cache_net_0 = sst.Link("link_cache_net_0")
-link_cache_net_0.connect( (comp_l3cache, "directory", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
+link_cache_net_0.connect( (l3_mlink, "port", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
 link_dir_net_0 = sst.Link("link_dir_net_0")
-link_dir_net_0.connect( (comp_chiprtr, "port0", "2000ps"), (comp_dirctrl, "network", "2000ps") )
+link_dir_net_0.connect( (comp_chiprtr, "port0", "2000ps"), (dir_clink, "port", "2000ps") )
 link_dir_mem_link = sst.Link("link_dir_mem_link")
-link_dir_mem_link.connect( (comp_dirctrl, "memory", "10000ps"), (comp_memory, "direct_link", "10000ps") )
+link_dir_mem_link.connect( (dir_mlink, "port", "10000ps"), (comp_memory, "direct_link", "10000ps") )
 link_dir_cube_link = sst.Link("link_dir_cube_link")
 link_dir_cube_link.connect( (comp_memory, "cube_link", "2ns"), (comp_logic_layer, "toCPU", "2ns") )
 link_logic_v0 = sst.Link("link_logic_v0")
@@ -288,4 +295,3 @@ link_logic_v6 = sst.Link("link_logic_v6")
 link_logic_v6.connect( (comp_logic_layer, "bus_6", "500ps"), (comp_vault6, "bus", "500ps") )
 link_logic_v7 = sst.Link("link_logic_v7")
 link_logic_v7.connect( (comp_logic_layer, "bus_7", "500ps"), (comp_vault7, "bus", "500ps") )
-# End of generated output.

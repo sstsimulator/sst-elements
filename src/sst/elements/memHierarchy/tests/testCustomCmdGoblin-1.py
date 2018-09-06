@@ -3,7 +3,6 @@ import sst
 debug = 0
 
 # Define SST core options
-sst.setProgramOption("timebase", "1ps")
 sst.setProgramOption("stopAtCycle", "0 ns")
 
 # Define the simulation components

@@ -25,6 +25,11 @@ comp_l1cache.addParams({
     "L1" : "1",
     "cache_size" : "2KiB"
 })
+
+
+l1cache_mport = comp_l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
+l1cache_cport = comp_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
     "coherence_protocol" : "MSI",
@@ -44,7 +49,7 @@ sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
-link_cpu_cache_link.connect( (comp_cpu, "mem_link", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
+link_cpu_cache_link.connect( (comp_cpu, "mem_link", "1000ps"), (l1cache_cport, "port", "1000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memory, "direct_link", "50ps") )
+link_mem_bus_link.connect( (l1cache_mport, "port", "50ps"), (comp_memory, "direct_link", "50ps") )
 # End of generated output.

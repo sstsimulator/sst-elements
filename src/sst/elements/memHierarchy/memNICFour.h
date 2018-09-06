@@ -42,22 +42,18 @@ public:
         { "data.network_input_buffer_size", "(string) Data network. Size of input buffer", "1KiB"},\
         { "data.network_output_buffer_size","(string) data network. Size of output buffer", "1KiB"},\
         { "data.min_packet_size",           "(string) Data network. Size of a packet without a payload (e.g., control message size)", "8B"},\
-        { "data.port",                      "(string) Data network. Set by parent component. Name of port this NIC sits on.", ""}, \
         { "req.network_bw",                 "(string) Req network. Network bandwidth", "80GiB/s" },\
         { "req.network_input_buffer_size",  "(string) Req network. Size of input buffer", "1KiB"},\
         { "req.network_output_buffer_size", "(string) Req network. Size of output buffer", "1KiB"},\
         { "req.min_packet_size",            "(string) Req network. Size of a packet without a payload (e.g., control message size)", "8B"},\
-        { "req.port",                       "(string) Req network. Set by parent component. Name of port this NIC sits on.", ""}, \
         { "ack.network_bw",                 "(string) Ack network. Network bandwidth", "80GiB/s" },\
         { "ack.network_input_buffer_size",  "(string) Ack network. Size of input buffer", "1KiB"},\
         { "ack.network_output_buffer_size", "(string) Ack network. Size of output buffer", "1KiB"},\
         { "ack.min_packet_size",            "(string) Ack network. Size of a packet without a payload (e.g., control message size)", "8B"},\
-        { "ack.port",                       "(string) Ack network. Set by parent component. Name of port this NIC sits on.", ""}, \
         { "fwd.network_bw",                 "(string) Fwd network. Network bandwidth", "80GiB/s" },\
         { "fwd.network_input_buffer_size",  "(string) Fwd network. Size of input buffer", "1KiB"},\
         { "fwd.network_output_buffer_size", "(string) Fwd network. Size of output buffer", "1KiB"},\
         { "fwd.min_packet_size",            "(string) Fwd network. Size of a packet without a payload (e.g., control message size)", "8B"},\
-        { "fwd.port",                       "(string) Fwd network. Set by parent component. Name of port this NIC sits on.", ""},\
         { "clock",                          "(string) Units for latency statistics", "1GHz"}
 
     
@@ -65,6 +61,13 @@ public:
             "Memory-oriented network interface for split networks", "SST::MemLinkBase")
 
     SST_ELI_DOCUMENT_PARAMS( MEMNICFOUR_ELI_PARAMS )
+
+    SST_ELI_DOCUMENT_PORTS( 
+            {"req",     "Port for request messages",            { "memHierarchy.MemRtrEvent" } },
+            {"data",    "Port for data messages",               { "memHierarchy.MemRtrEvent" } },
+            {"ack",     "Port for response/ack messages",       { "memHierarchy.MemRtrEvent" } },
+            {"fwd",     "Port for forwarded request messages",  { "memHierarchy.MemRtrEvent" } } )
+            
 
     SST_ELI_DOCUMENT_STATISTICS(
             { "data_events", "Number of events received on data network", "count", 1},
@@ -89,6 +92,7 @@ public:
     ~MemNICFour() { }
 
     /* Functions called by parent for handling events */
+    virtual bool isClocked() { return true; }
     bool clock();
     void send(MemEventBase * ev);
     bool recvNotifyReq(int);

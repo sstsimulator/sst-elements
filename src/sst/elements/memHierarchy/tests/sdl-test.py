@@ -17,8 +17,6 @@ DEBUG_CORE7 = 0
 DEBUG_NODE0 = 0
 DEBUG_NODE1 = 0
 
-DEBUG_LEVEL = 10
-
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
 comp_cpu0.addParams({
@@ -39,9 +37,9 @@ comp_c0_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : DEBUG_L1 | DEBUG_CORE0 | DEBUG_NODE0,
-      "debug_level" : DEBUG_LEVEL
+      "debug" : DEBUG_L1 | DEBUG_CORE0 | DEBUG_NODE0
 })
+
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({
       "num_loadstore" : "1000",
@@ -235,11 +233,11 @@ comp_l3cache.addParams({
       "debug" : DEBUG_L3,
       "debug_level" : "3",
 })
-l3_cport = comp_l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l3_mport = comp_l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
-l3_mport.addParams({
-    "network_bw" : "25GB/s",
-    "group" : 2,
+l3cache_cport = comp_l3cache.setSubComponent("cpulink", "memHierarchy.MemLink");
+l3cache_mport = comp_l3cache.setSubComponent("memlink", "memHierarchy.MemNIC");
+l3cache_mport.addParams({
+    "network_bw" : "256GB/s",
+    "group" : 1,
 })
 
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
@@ -259,27 +257,25 @@ comp_dirctrl.addParams({
       "debug" : DEBUG_DIR,
       "debug_level" : 10,
       "entry_cache_size" : "8192",
+      "backing_store_size" : "0x1000000",
 })
-
-dir_mport = comp_dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
-
-dir_cport = comp_dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dir_cport = comp_dirctrl.setSubComponent("cpulink", "memHierarchy.MemLink");
 dir_cport.addParams({
-    "network_bw" : "25GB/s",
-    "addr_range_start" : "0x0",
-    "addr_range_end" : "0x1F000000",
-    "group" : 3,
+      "network_bw" : "25GB/s",
+      "addr_range_start" : "0x0",
+      "addr_range_end" : "0x1F000000"
 })
+
+dir_mport = comp_dirctrl.setSubComponent("memlink", "memHierarchy.MemLink");
 
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "debug" : DEBUG_MEM,
-      "backend.access_time" : "100 ns",
-      "clock" : "1GHz",
-      "backend.mem_size" : "512MiB"
+    "debug" : DEBUG_MEM,
+    "debug_level" : 10,  
+    "backend.access_time" : "100 ns",
+    "clock" : "1GHz",
+    "backend.mem_size" : "512MiB"
 })
-
-mem_cport = comp_memory.setSubComponent("cpulink", "memHierarchy.MemLink")
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)
@@ -331,11 +327,11 @@ link_n1bus_l2cache.connect( (comp_n1_bus, "low_network_0", "10000ps"), (comp_n1_
 link_n1l2cache_bus = sst.Link("link_n1l2cache_bus")
 link_n1l2cache_bus.connect( (comp_n1_l2cache, "low_network_0", "10000ps"), (comp_n2_bus, "high_network_1", "10000ps") )
 link_n2bus_l3cache = sst.Link("link_n2bus_l3cache")
-link_n2bus_l3cache.connect( (comp_n2_bus, "low_network_0", "10000ps"), (l3_cport, "port", "10000ps") )
+link_n2bus_l3cache.connect( (comp_n2_bus, "low_network_0", "10000ps"), (l3cache_cport, "port", "10000ps") )
 link_cache_net_0 = sst.Link("link_cache_net_0")
-link_cache_net_0.connect( (l3_mport, "port", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
+link_cache_net_0.connect( (l3cache_mport, "port", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
 link_dir_net_0 = sst.Link("link_dir_net_0")
 link_dir_net_0.connect( (comp_chiprtr, "port0", "2000ps"), (dir_cport, "port", "2000ps") )
 link_dir_mem_link = sst.Link("link_dir_mem_link")
-link_dir_mem_link.connect( (dir_mport, "port", "10000ps"), (mem_cport, "port", "10000ps") )
+link_dir_mem_link.connect( (dir_mport, "port", "10000ps"), (comp_memory, "direct_link", "10000ps") )
 # End of generated output.

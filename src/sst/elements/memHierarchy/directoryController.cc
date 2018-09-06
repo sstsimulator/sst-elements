@@ -69,21 +69,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     
     entryCacheMaxSize = params.find<size_t>("entry_cache_size", 32768);
     entryCacheSize = 0;
-    std::string net_bw = params.find<std::string>("network_bw", "80GiB/s");
 
-    // These are technically nic params and we're borrowing them
-    addrRangeStart  = params.find<uint64_t>("addr_range_start", 0, found);
-    if (!found) addrRangeStart = params.find<uint64_t>("memNIC.addr_range_start", 0, found);
-    if (!found) addrRangeStart = params.find<uint64_t>("memlink.addr_range_start", 0, found);
-    addrRangeEnd    = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
-    if (!found) addrRangeEnd = params.find<uint64_t>("memNIC.addr_range_end", (uint64_t) - 1, found);
-    if (!found) addrRangeEnd = params.find<uint64_t>("memlink.addr_range_end", (uint64_t) - 1, found);
-    string ilSize   = params.find<std::string>("interleave_size", "0B", found);
-    if (!found) ilSize = params.find<std::string>("memNIC.interleave_size", "0B", found);
-    if (!found) ilSize = params.find<std::string>("memlink.interleave_size", "0B", found);
-    string ilStep   = params.find<std::string>("interleave_step", "0B", found);
-    if (!found) ilStep = params.find<std::string>("memNIC.interleave_step", "0B", found);
-    if (!found) ilStep = params.find<std::string>("memlink.interleave_step", "0B", found);
+    // Configure our links
+    configureLinks(params);
 
     memOffset       = params.find<uint64_t>("mem_addr_start", 0);
     string protstr  = params.find<std::string>("coherence_protocol", "MESI");
@@ -97,7 +85,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (mshrSize < 1) dbg.fatal(CALL_INFO, -1, "Invalid param(%s): mshr_num_entries - must be at least 1 or else -1 to indicate a very large MSHR\n", getName().c_str());
     mshr                = new MSHR(&dbg, mshrSize, this->getName(), DEBUG_ADDR); 
     
-    if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
     numTargets = 0;
 	
     /* Check parameter validity */
@@ -108,88 +95,19 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     /* Check interleaveSize & Step
      * Both must be specified in B (SI units ok)
      * Both must be divisible by the cache line size */
-    fixByteUnits(ilSize);
-    fixByteUnits(ilStep);
-    interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
-    interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
-    if (!UnitAlgebra(ilSize).hasUnits("B") || interleaveSize % cacheLineSize != 0) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this to '1', change it to '1KiB'. You specified %s\n",
-                getName().c_str(), ilSize.c_str());
+    if (region.interleaveSize % cacheLineSize != 0) {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size (from memory link subcomponent) or cache_line_size - interleave_size must be a multiple of cache_line_size. You specified interleave = %" PRIu64 " B and line = %" PRIu64 " B\n",
+                getName().c_str(), region.interleaveSize, cacheLineSize);
     }
-    if (!UnitAlgebra(ilStep).hasUnits("B") || interleaveStep % cacheLineSize != 0) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK) and must also be a multiple of cache_line_size. This definition has CHANGED. Example: If you used to set this to '4', change it to '4KiB'. You specified %s\n",
-                getName().c_str(), ilStep.c_str());
+    if (region.interleaveStep % cacheLineSize != 0) {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step (from memory link subcomponent) or cache_line_size - interleave_step must be a multiple of cache_line_size. You specified interleave = %" PRIu64 " B and line = %" PRIu64 " B\n",
+                getName().c_str(), region.interleaveStep, cacheLineSize);
     }
 
     /* Get latencies */
     accessLatency   = params.find<uint64_t>("access_latency_cycles", 0);
     mshrLatency     = params.find<uint64_t>("mshr_latency_cycles", 0);
-
-    /* Set up links/network to cache & memory */
-    /* First, fixup nic parameters and warn that we're doing it */
-    if (fixupParam(params, "network_bw", "memNIC.network_bw"))
-        out.output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "network_input_buffer_size", "memNIC.network_input_buffer_size"))
-        out.output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))
-        out.output(CALL_INFO, "Note (%s): Changed 'network_output_buffer_size' to 'memNIC.network_output_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "addr_range_start", "memNIC.addr_range_start"))
-        out.output(CALL_INFO, "Note (%s): Changed 'addr_range_start' to 'memNIC.addr_range_start' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "addr_range_end", "memNIC.addr_range_end"))
-        out.output(CALL_INFO, "Note (%s): Changed 'addr_range_end' to 'memNIC.addr_range_end' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "interleave_size", "memNIC.interleave_size"))
-        out.output(CALL_INFO, "Note (%s): Changed 'interleave_size' to 'memNIC.interleave_size' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "interleave_step", "memNIC.interleave_step"))
-        out.output(CALL_INFO, "Note (%s): Changed 'interleave_step' to 'memNIC.interleave_step' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
-        out.output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size' in params. Change your input file to remove this notice.\n", getName().c_str());
-
-    Params nicParams = params.find_prefix_params("memNIC.");
-
-    nicParams.insert("group", "3", false);
-    int cl = nicParams.find<int>("group");
-    nicParams.insert("sources", std::to_string(cl - 1), false);
-    nicParams.insert("destinations", std::to_string(cl + 1), false);
-
-    // Determine which ports are connected
-    unsigned int portCount = 1;
-    if (isPortConnected("network_ack")) portCount++;
-    if (isPortConnected("network_fwd")) portCount++;
-    if (isPortConnected("network_data")) portCount++;
-    if (portCount == 4) {
-        nicParams.insert("req.port", "network");
-        nicParams.insert("ack.port", "network_ack");
-        nicParams.insert("fwd.port", "network_fwd");
-        nicParams.insert("data.port", "network_data");
-        network = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
-    } else {
-        nicParams.insert("port", "network");
-        network = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
-    }
-        
-    network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
     
-    if (isPortConnected("memory")) {
-        Params memParams = params.find_prefix_params("memlink.");
-        memParams.insert("port", "memory");
-        memParams.insert("latency", "1ns");
-        memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);
-        memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);
-        memParams.insert("interleave_size", ilSize, false);
-        memParams.insert("interleave_step", ilStep, false);
-        memLink = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, memParams));
-        memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-        if (!memLink) {
-            dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
-        }
-        memoryName = "";
-    } else {
-        memoryName  = params.find<std::string>("net_memory_name", "");
-        if (memoryName == "") 
-            dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller. If you did not intend to connect to memory over the network, please connect memory to the 'memory' port and ignore this parameter.\n", getName().c_str());
-        memLink = NULL;
-
-    }
 
     clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
     defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
@@ -236,6 +154,89 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_CustomReceived             = registerStatistic<uint64_t>("requests_received_custom");
 
 }
+
+void DirectoryController::configureLinks(Params &params) {
+    cacheport = dynamic_cast<MemLinkBase*>(loadNamedSubComponent("cpulink"));
+    memport = dynamic_cast<MemLinkBase*>(loadNamedSubComponent("memlink"));
+    if (cacheport || memport) {
+        if (cacheport == nullptr) cacheport = memport;
+        if (memport == nullptr) memport = cacheport;
+
+        cacheport->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        memport->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        
+        memoryName  = params.find<std::string>("net_memory_name", ""); // Only used for memories over a network
+        
+        region = cacheport->getRegion();
+        MemRegion defRegion;
+        defRegion.setDefault();
+        if (memport->getRegion() == defRegion) {
+            memport->setRegion(region);
+        }
+
+        return;
+    }
+
+    // Otherwise do it manually...
+    
+    /* Set up links/network to cache & memory */
+    /* First, fixup nic parameters and warn that we're doing it */
+    if (fixupParam(params, "network_bw", "memNIC.network_bw"))
+        out.output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
+    if (fixupParam(params, "network_input_buffer_size", "memNIC.network_input_buffer_size"))
+        out.output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+    if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))
+        out.output(CALL_INFO, "Note (%s): Changed 'network_output_buffer_size' to 'memNIC.network_output_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+    if (fixupParam(params, "addr_range_start", "memNIC.addr_range_start"))
+        out.output(CALL_INFO, "Note (%s): Changed 'addr_range_start' to 'memNIC.addr_range_start' in params. Change your input file to remove this notice.\n", getName().c_str());
+    if (fixupParam(params, "addr_range_end", "memNIC.addr_range_end"))
+        out.output(CALL_INFO, "Note (%s): Changed 'addr_range_end' to 'memNIC.addr_range_end' in params. Change your input file to remove this notice.\n", getName().c_str());
+    if (fixupParam(params, "interleave_size", "memNIC.interleave_size"))
+        out.output(CALL_INFO, "Note (%s): Changed 'interleave_size' to 'memNIC.interleave_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+    if (fixupParam(params, "interleave_step", "memNIC.interleave_step"))
+        out.output(CALL_INFO, "Note (%s): Changed 'interleave_step' to 'memNIC.interleave_step' in params. Change your input file to remove this notice.\n", getName().c_str());
+    if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
+        out.output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+
+    Params nicParams = params.find_prefix_params("memNIC.");
+    nicParams.insert("group", "3", false);
+    int cl = nicParams.find<int>("group");
+    nicParams.insert("sources", std::to_string(cl - 1), false);
+    nicParams.insert("destinations", std::to_string(cl + 1), false);
+
+
+    nicParams.insert("port", "network");
+    cacheport = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+        
+    cacheport->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+    
+    region = cacheport->getRegion();
+
+    if (isPortConnected("memory")) {
+        Params memParams = params.find_prefix_params("memlink.");
+        memParams.insert("port", "memory");
+        memParams.insert("latency", "1ns");
+        memParams.insert("addr_range_start", std::to_string(region.start), false);
+        memParams.insert("addr_range_end", std::to_string(region.end), false);
+        memParams.insert("interleave_size", std::to_string(region.interleaveSize) + "B", false);
+        memParams.insert("interleave_step", std::to_string(region.interleaveStep) + "B", false);
+        
+        memport = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, memParams));
+        memport->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        if (!memport) {
+            dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
+        }
+        memoryName = "";
+    } else {
+        memoryName  = params.find<std::string>("net_memory_name", "");
+        if (memoryName == "") 
+            dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller. If you did not intend to connect to memory over the network, please connect memory to the 'memory' port and ignore this parameter.\n", getName().c_str());
+        memport = cacheport;
+
+    }
+
+}
+
 
 
 
@@ -427,7 +428,7 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
                     getCurrentSimTimeNano(), getName().c_str(), ev->getBriefString().c_str());
         }
 
-        network->send(ev);
+        cacheport->send(ev);
         netMsgQueue.erase(netMsgQueue.begin());
     }
 
@@ -441,11 +442,11 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
                     getCurrentSimTimeNano(), getName().c_str(), ev->getBriefString().c_str());
         }
         
-        sendEventToMem(ev);
+        memport->send(ev);
         memMsgQueue.erase(memMsgQueue.begin());
     }
 
-    bool netIdle = network->clock();
+    bool netIdle = cacheport->clock();
     bool empty = workQueue.empty() && netMsgQueue.empty() && memMsgQueue.empty();
 
     int requestsThisCycle = 0;
@@ -474,7 +475,7 @@ void DirectoryController::processPacket(MemEvent * ev, bool replay) {
         cout << flush;
     }
     
-    if(! isRequestAddressValid(ev->getAddr()) ) {
+    if(! memport->isRequestAddressValid(ev->getAddr()) ) {
 	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Event: %s. Time = %" PRIu64 "ns\n",
                 getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
@@ -538,7 +539,7 @@ void DirectoryController::handleNoncacheableRequest(MemEventBase * ev) {
     ev->setSrc(getName());
     ev->setDst(memoryName);
         
-    sendEventToMem(ev);
+    memport->send(ev);
     return;
 }
 
@@ -1337,7 +1338,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
             noncacheMemReqs.erase(ev->getResponseToID());
             profileResponseSent(ev);
             
-            network->send(ev);
+            cacheport->send(ev);
 
             return;
         }
@@ -1594,14 +1595,14 @@ void DirectoryController::printStatus(Output &statusOut) {
         mshr->printStatus(statusOut);
     }
     
-    if (network) {
-        statusOut.output("  NIC Status: ");
-        network->printStatus(statusOut);
+    if (cacheport) {
+        statusOut.output("  Cache Link Status: ");
+        cacheport->printStatus(statusOut);
     }
 
-    if (memLink) {
+    if (memport && memport != cacheport) {
         statusOut.output("  Memory Link Status: ");
-        memLink->printStatus(statusOut);
+        memport->printStatus(statusOut);
     }
 
     statusOut.output("  Directory entries:\n");
@@ -1823,31 +1824,6 @@ void DirectoryController::sendEventToCaches(MemEventBase *ev, uint64_t deliveryT
 }
 
 
-void DirectoryController::sendEventToMem(MemEventBase *ev) {
-    if (memLink) memLink->send(ev);
-    else network->send(ev);
-}
-
-
-bool DirectoryController::isRequestAddressValid(Addr addr){
-    if (!memLink) return network->isRequestAddressValid(addr);
-    else return memLink->isRequestAddressValid(addr);
-
-    if(0 == interleaveSize) {
-        return (addr >= addrRangeStart && addr < addrRangeEnd);
-    } else {
-        if (addr < addrRangeStart) return false;
-        if (addr >= addrRangeEnd) return false;
-
-        addr        = addr - addrRangeStart;
-        Addr offset = addr % interleaveStep;
-        
-        if (offset >= interleaveSize) return false;
-        return true;
-    }
-
-}
-
 void DirectoryController::turnClockOn() {
     clockOn = true;
     timestamp = reregisterClock(defaultTimeBase, clockHandler);
@@ -1883,32 +1859,29 @@ const char* DirectoryController::printDirectoryEntryStatus(Addr baseAddr){
 
 void DirectoryController::init(unsigned int phase) {
     
-    network->init(phase);
-    if (memLink) memLink->init(phase);
+    // Initialize ports
+    cacheport->init(phase);
+    if (memport != cacheport) 
+        memport->init(phase);
 
 
     // Must happen after network init or merlin croaks
     // InitData: Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
     if (!phase) {
         // Push our region to memory (backward compatibility)
-        if (!memLink) {
-            MemEventInitRegion * reg = new MemEventInitRegion(getName(), network->getRegion(), true);
-            reg->setDst(memoryName);
-            network->sendInitData(reg);
-        } else {
-            MemEventInitRegion * reg = new MemEventInitRegion(getName(), memLink->getRegion(), true);
-            memLink->sendInitData(reg);
+        MemEventInitRegion * reg = new MemEventInitRegion(getName(), cacheport->getRegion(), true);
+        reg->setDst(memoryName);
+        memport->sendInitData(reg);
+        
+        // Tell memory & caches that we exist
+        if (memport != cacheport) {
+            memport->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, cacheLineSize, true));
         }
-        // Tell memory we're here
-        if (memLink) {
-            memLink->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, cacheLineSize, true));
-        }
-        // Announce to network we're here
-        network->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, cacheLineSize, true));
+        cacheport->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, cacheLineSize, true));
     }
 
     /* Pass data on to memory */
-    while(MemEventInit *ev = network->recvInitData()){
+    while(MemEventInit *ev = cacheport->recvInitData()){
         if (ev->getCmd() == Command::NULLCMD) {
             dbg.debug(_L10_, "%s received init event: %s\n",
                 getName().c_str(), ev->getVerboseString().c_str());
@@ -1921,19 +1894,15 @@ void DirectoryController::init(unsigned int phase) {
         } else {
     
             /* Check that memory name is valid - really only need to do this once, but since it's init, whatever */
-            if (!memLink && !network->isDest(memoryName)) {
+            if (memport != cacheport && !cacheport->isDest(memoryName)) {
                 dbg.fatal(CALL_INFO,-1,"%s, Invalid param: net_memory_name - must name a valid memory component in the system. You specified: %s\n",getName().c_str(), memoryName.c_str());
             }
             
             dbg.debug(_L10_, "Found Init Info for address 0x%" PRIx64 "\n", ev->getAddr());
-            if (isRequestAddressValid(ev->getAddr())){
+            if (memport->isRequestAddressValid(ev->getAddr())){
                 dbg.debug(_L10_, "Sending Init Data for address 0x%" PRIx64 " to memory\n", ev->getAddr());
                 ev->setDst(memoryName);
-                if (memLink) {
-                    memLink->sendInitData(ev);
-                } else {
-                    network->sendInitData(ev);
-                }
+                memport->sendInitData(ev);
             } else 
                 delete ev;
         
@@ -1941,35 +1910,33 @@ void DirectoryController::init(unsigned int phase) {
 
     }
 
-    SST::Event * ev;
-    if (memLink) {
-        while ((ev = memLink->recvInitData())) {
-            MemEventInit * initEv = dynamic_cast<MemEventInit*>(ev);
-            if (initEv && initEv->getCmd() == Command::NULLCMD) {
-                dbg.debug(_L10_, "%s received init event: %s\n",
-                        getName().c_str(), initEv->getVerboseString().c_str());
+    while (MemEventInit * ev = memport->recvInitData()) {
+        if (ev->getCmd() == Command::NULLCMD) {
+            dbg.debug(_L10_, "%s received init event: %s\n",
+                    getName().c_str(), ev->getVerboseString().c_str());
             
-            }
-            delete ev;
         }
+        delete ev;
     }
 }
 
 
 
 void DirectoryController::finish(void){
-    network->finish();
+    cacheport->finish();
 }
 
 
 
 void DirectoryController::setup(void){
-    network->setup();
+    cacheport->setup();
     
-    numTargets = network->getSources()->size();
+    numTargets = cacheport->getSources()->size();
     
     if(0 == numTargets) dbg.fatal(CALL_INFO,-1,"%s, Error: Did not find any caches during init\n",getName().c_str());
 
     entrySize = (numTargets+1)/8 +1;
+    dbg.debug(_L10_, "%s memport region: %s\n", getName().c_str(), memport->getRegion().toString().c_str());
+    dbg.debug(_L10_, "%s cacheport region: %s\n", getName().c_str(), cacheport->getRegion().toString().c_str());
 }
 

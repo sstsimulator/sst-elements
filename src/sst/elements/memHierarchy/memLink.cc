@@ -26,10 +26,14 @@ MemLink::MemLink(Component * parent, Params &params) : MemLinkBase(parent, param
     
     // Configure link
     std::string latency = params.find<std::string>("latency", "50ps");
-    std::string port = params.find<std::string>("port", "");
+    std::string port = params.find<std::string>("port", "port");
 
     link = configureLink(port, latency, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
    
+    if (!link) {
+        dbg.fatal(CALL_INFO, -1, "%s MemLink: Unable to configure link on port '%s'\n", getName().c_str(), port.c_str());
+    }
+
     dbg.debug(_L10_, "%s memLink info is: Name: %s, addr: %" PRIu64 ", id: %" PRIu32 "\n",
             getName().c_str(), info.name.c_str(), info.addr, info.id);
 
@@ -38,7 +42,7 @@ MemLink::MemLink(Component * parent, Params &params) : MemLinkBase(parent, param
 /* init function */
 void MemLink::init(unsigned int phase) {
     if (!phase) {
-        MemEventInitRegion * ev = new MemEventInitRegion(getName(), info.region, false);
+        MemEventInitRegion * ev = new MemEventInitRegion(info.name, info.region, false);
         dbg.debug(_L10_, "%s sending region init message: %s\n", getName().c_str(), ev->getVerboseString().c_str());
         link->sendInitData(ev);
     }
@@ -55,10 +59,7 @@ void MemLink::init(unsigned int phase) {
                 epInfo.name = mEvRegion->getSrc();
                 epInfo.addr = 0;
                 epInfo.id = 0;
-                epInfo.node = node;
                 epInfo.region = mEvRegion->getRegion();
-                //sourceEndpointInfo.insert(epInfo);
-                //destEndpointInfo.insert(epInfo);
                 addSource(epInfo);
                 addDest(epInfo);
 

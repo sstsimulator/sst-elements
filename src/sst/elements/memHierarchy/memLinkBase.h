@@ -43,26 +43,23 @@ class MemLinkBase : public SST::SubComponent {
 
 public:
 
-#define MEMLINKBASE_ELI_PARAMS { "debug",              "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},\
+#define MEMLINKBASE_ELI_PARAMS { "debug", "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},\
     { "debug_level",        "(int) Debug verbosity level. Between 0 and 10", "0"},\
     { "debug_addr",         "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},\
     { "accept_region",      "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},\
     { "addr_range_start",   "(uint) Set by parent component. Lowest address handled by the parent.", "0"},\
     { "addr_range_end",     "(uint) Set by parent component. Highest address handled by the parent.", "uint64_t-1"},\
     { "interleave_size",    "(string) Set by parent component. Size of interleaved chunks.", "0B"},\
-    { "interleave_step",    "(string) Set by parent component. Distance between interleaved chunks.", "0B"},\
-    { "node",    	    "Node number in multinode environment", "0"},\
-    { "shared_memory",      "Shared meory enable flag", "0"},\
-    { "local_memory_size",  "Local memory size to mask local memory addresses", "0"}
+    { "interleave_step",    "(string) Set by parent component. Distance between interleaved chunks.", "0B"}
 
 
     // Struct identifying an endpoint
     struct EndpointInfo {
-        std::string name;
-        uint64_t addr;
-        uint32_t id;
-        uint32_t node;
-        MemRegion region;
+        std::string name;   /* Component name (in SST configuration script) */
+        uint64_t addr;      /* Component address */
+        uint32_t id;        /* Which memory level or group this component belongs to - for determining which components are sources or destinations */
+        uint32_t node;      /* Node ID (only used in multi-node configurations) */
+        MemRegion region;   /* Address region associated with this component */
 
         bool operator<(const EndpointInfo &o) const {
             if (region != o.region)
@@ -91,7 +88,6 @@ public:
         uint64_t addrEnd = params.find<uint64_t>("addr_range_end", (uint64_t) - 1);
         string ilSize = params.find<std::string>("interleave_size", "0B");
         string ilStep = params.find<std::string>("interleave_step", "0B");
-        node = params.find<uint32_t>("node", 0);
 
         // Ensure SI units are power-2 not power-10 - for backward compability
         fixByteUnits(ilSize);
@@ -111,17 +107,13 @@ public:
         info.region.end = addrEnd;
         info.region.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
         info.region.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
-        info.name = getName();
+        info.name = comp->getName();
         info.addr = 0;
         info.id = 0;
-        info.node = node;
+        info.node = 0;
 
         // Check whether we should accept a region push by someone else
         acceptRegion = params.find<bool>("accept_region", false);
-
-        // Check whether we should accept shared memory addresses or not
-        sharedMemEnabled = params.find<bool>("shared_memory", false);
-        localMemSize = params.find<uint64_t>("local_memory_size", 0);
     }
     
     /* Destructor */
@@ -129,6 +121,7 @@ public:
 
     /* Initialization functions for parent */
     virtual void setRecvHandler(Event::HandlerBase * handler) { recvHandler = handler; }
+    virtual bool isClocked() { return false; }
     virtual void init(unsigned int UNUSED(phase)) { }
     virtual void finish() { }
     virtual void setup() { 
@@ -167,15 +160,6 @@ public:
             if (it->region.contains(addr)) return it->name;
         }
 
-        if(sharedMemEnabled) {
-            if(localMemSize) {
-        	Addr tempAddr = addr & (localMemSize-1);
-                for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
-        	    if(it->region.contains(tempAddr)) return it->name;
-        	}
-            }
-	}
-
         /* Build error string */
         stringstream error;
         error << getName() + " (MemLinkBase) cannot find a destination for address " << addr << endl;
@@ -196,15 +180,9 @@ public:
     void setSources(std::set<EndpointInfo>& srcs) { sourceEndpointInfo = srcs; }
     void setDests(std::set<EndpointInfo>& dsts) { destEndpointInfo = dsts; }
     
-    void addSource(EndpointInfo info) { sourceEndpointInfo.insert(info); }
-    void addDest(EndpointInfo dstInfo) {
-    	if(sharedMemEnabled) {
-    		if (info.node == dstInfo.node || dstInfo.node == 9999) // node 9999 is treated as shared memory components
-    			destEndpointInfo.insert(dstInfo);
-    	} else {
-    		destEndpointInfo.insert(dstInfo);
-    	}
-
+    virtual void addSource(EndpointInfo info) { sourceEndpointInfo.insert(info); }
+    virtual void addDest(EndpointInfo dstInfo) {
+    	destEndpointInfo.insert(dstInfo);
     }
     
     virtual bool isDest(std::string UNUSED(str)) { return true; } // Anything we get on this link is valid for a dest 
@@ -212,6 +190,9 @@ public:
 
     MemRegion getRegion() { return info.region; }
     void setRegion(MemRegion region) { info.region = region; }
+
+    EndpointInfo getEndpointInfo() { return info; }
+    void setEndpointInfo(EndpointInfo i) { info = i; }
 
 protected:
     
@@ -222,11 +203,6 @@ protected:
     // Local EndpointInfo
     EndpointInfo info;
     bool acceptRegion; // Accept a region push from a source
-
-    // Used to calculate shared memory destination
-    bool sharedMemEnabled;
-    uint64_t localMemSize;
-    uint32_t node;
 
     // Other parameters
     std::unordered_set<uint32_t> sourceIDs, destIDs; // IDs which this endpoint cares about

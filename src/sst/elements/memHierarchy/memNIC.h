@@ -165,7 +165,7 @@ public:
 
     
     SST_ELI_REGISTER_SUBCOMPONENT(MemNIC, "memHierarchy", "MemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Memory-oriented network interface", "SST::MemLinkBase")
+            "Memory-oriented network interface", "SST::MemHierarchy::MemLinkBase")
 
     SST_ELI_DOCUMENT_PARAMS( MEMNIC_ELI_PARAMS )
 
@@ -179,6 +179,7 @@ public:
     ~MemNIC() { }
 
     /* Functions called by parent for handling events */
+    virtual bool isClocked() { return true; } // Tell parent to trigger our clock
     bool clock();
     void send(MemEventBase * ev);
     MemEventBase * recv();

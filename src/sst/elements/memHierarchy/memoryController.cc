@@ -138,39 +138,32 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     free(nextListenerParams);
 
 
-    if (isPortConnected("direct_link")) {
-        Params linkParams = params.find_prefix_params("cpulink.");
-        linkParams.insert("port", "direct_link");
-        linkParams.insert("latency", link_lat, false);
-        linkParams.insert("accept_region", "1", false);
-        link_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, linkParams));
-        link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
-        clockLink_ = false;
-    } else {
-
-        if (!isPortConnected("network")) {
-            out.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
-        }
-
-        Params nicParams = params.find_prefix_params("memNIC.");
-        
-        nicParams.insert("group", "4", false);
-        nicParams.insert("accept_region", "1", false);
-
-        if (isPortConnected("network_ack") && isPortConnected("network_fwd") && isPortConnected("network_data")) {
-            nicParams.insert("req.port", "network");
-            nicParams.insert("ack.port", "network_ack");
-            nicParams.insert("fwd.port", "network_fwd");
-            nicParams.insert("data.port", "network_data");
-            link_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams)); 
+    if (nullptr == (link_ = dynamic_cast<MemLinkBase*>(loadNamedSubComponent("cpulink")))) {
+    
+        if (isPortConnected("direct_link")) {
+            Params linkParams = params.find_prefix_params("cpulink.");
+            linkParams.insert("port", "direct_link");
+            linkParams.insert("latency", link_lat, false);
+            linkParams.insert("accept_region", "1", false);
+            link_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, linkParams));
         } else {
+
+            if (!isPortConnected("network")) {
+                out.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
+            }
+
+            Params nicParams = params.find_prefix_params("memNIC.");
+        
+            nicParams.insert("group", "4", false);
+            nicParams.insert("accept_region", "1", false);
+
             nicParams.insert("port", "network");
             link_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams)); 
         }
-
-        link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
-        clockLink_ = true;
     }
+    
+    clockLink_ = link_->isClocked();
+    link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
     
     region_ = link_->getRegion();
     privateMemOffset_ = 0;

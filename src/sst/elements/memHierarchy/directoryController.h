@@ -77,10 +77,7 @@ public:
 
     SST_ELI_DOCUMENT_PORTS(
             {"memory",      "Link to memory controller", { "memHierarchy.MemEventBase" } },
-            {"network",     "Link to network; doubles as request network for split networks", { "memHierarchy.MemRtrEvent" } },
-            {"network_ack", "For split networks, link to response/ack network",     { "memHierarchy.MemRtrEvent" } },
-            {"network_fwd", "For split networks, link to forward request network",  { "memHierarchy.MemRtrEvent" } },
-            {"network_data","For split networks, link to data network",             { "memHierarchy.MemRtrEvent" } })
+            {"network",     "Link to network", { "memHierarchy.MemRtrEvent" } })
 
     SST_ELI_DOCUMENT_STATISTICS(
             {"replacement_request_latency",     "Total latency in ns of all replacement (put*) requests handled",       "nanoseconds",  1},
@@ -112,6 +109,10 @@ public:
             {"responses_sent_GetSResp",         "Number of GetSResp (data response to GetS or GetSX) responses sent to LLCs",       "responses",    1},
             {"responses_sent_GetXResp",         "Number of GetXResp (data response to GetX) responses sent to LLCs",                "responses",    1},
             {"MSHR_occupancy",                  "Number of events in MSHR each cycle",                                  "events",       1} )
+    
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            {"cpulink", "CPU-side link manager; for single-link directories use this one only", "SST::MemHierarchy::MemLinkBase"},
+            {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"})
 
 /* Begin class definition */
 private:
@@ -128,10 +129,7 @@ private:
     uint32_t    cacheLineSize;
 
     /* Range of addresses supported by this directory */
-    Addr        addrRangeStart;
-    Addr        addrRangeEnd;
-    Addr        interleaveSize;
-    Addr        interleaveStep;
+    MemRegion   region;
     Addr        memOffset; // Stack addresses if multiple DCs handle the same memory
     
     CoherenceProtocol protocol;
@@ -203,13 +201,16 @@ private:
     std::map<MemEvent::id_type, std::string> noncacheMemReqs;
 
     /* Network connections */
-    MemLinkBase*    memLink;
-    MemLinkBase*    network;
+    MemLinkBase*    memport;    /* Port to memory */
+    MemLinkBase*    cacheport;  /* Port to caches and/or memory */
     string          memoryName; // if connected to mem via network, this should be the name of the memory we own - param is memory_name
     
     std::multimap<uint64_t,MemEventBase*>   netMsgQueue;
     std::multimap<uint64_t,MemEventBase*>   memMsgQueue;
     
+    /** Helper for configuring links */
+    void configureLinks(Params &params);
+
     /** Find directory entry by base address */
     DirEntry* getDirEntry(Addr target);
 	
@@ -310,15 +311,9 @@ private:
     /** Sends MemEvent to a target */
     void sendEventToCaches(MemEventBase *ev, uint64_t deliveryTime);
     
-    /** Sends MemEventBase to a memory */
-    inline void sendEventToMem(MemEventBase *ev);
-
     /** Writes data packet to Memory. Returns the MemEvent ID of the data written to memory */
     MemEvent::id_type writebackData(MemEvent *data_event, Command wbCmd);
 
-    /** Determines if request is valid in terms of address ranges */
-    bool isRequestAddressValid(Addr addr);
-    
     /** Print directory controller status */
     const char* printDirectoryEntryStatus(Addr addr);
 

@@ -105,16 +105,10 @@ public:
             {"network_output_buffer_size",  "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}) // Remove 9.0
   
     SST_ELI_DOCUMENT_PORTS(
-            {"low_network_0",   "Port connected to lower level caches (closer to main memory)",                     {"memHierarchy.MemEventBase"} },
-            {"high_network_0",  "Port connected to higher level caches (closer to CPU)",                            {"memHierarchy.MemEventBase"} },
-            {"directory",       "Network link port to directory; doubles as request network port for split networks", {"memHierarchy.MemRtrEvent"} },
-            {"directory_ack",   "For split networks, response/ack network port to directory",                       {"memHierarchy.MemRtrEvent"} },
-            {"directory_fwd",   "For split networks, forward request network port to directory",                    {"memHierarchy.MemRtrEvent"} },
-            {"directory_data",  "For split networks, data network port to directory",                               {"memHierarchy.MemRtrEvent"} },
-            {"cache",           "Network link port to cache; doubles as request network port for split networks",   {"memHierarchy.MemRtrEvent"} },
-            {"cache_ack",       "For split networks, response/ack network port to cache",                           {"memHierarchy.MemRtrEvent"} },
-            {"cache_fwd",       "For split networks, forward request network port to cache",                        {"memHierarchy.MemRtrEvent"} },
-            {"cache_data",      "For split networks, data network port to cache",                                   {"memHierarchy.MemRtrEvent"} })
+            {"low_network_0",   "Port connected to lower level caches (closer to main memory)", {"memHierarchy.MemEventBase"} },
+            {"high_network_0",  "Port connected to higher level caches (closer to CPU)",        {"memHierarchy.MemEventBase"} },
+            {"directory",       "Network link port to directory",                               {"memHierarchy.MemRtrEvent"} },
+            {"cache",           "Network link port to cache",                                   {"memHierarchy.MemRtrEvent"} })
 
     SST_ELI_DOCUMENT_STATISTICS(
             /* Cache hits and misses */
@@ -155,6 +149,10 @@ public:
             {"FetchInvX_recv",          "Event received: FetchInvX", "count", 2},
             {"Inv_recv",                "Event received: Inv", "count", 2},
             {"NACK_recv",               "Event: NACK received", "count", 2})
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            {"cpulink", "CPU-side link manager; for single-link caches use this one only", "SST::MemHierarchy::MemLinkBase"},
+            {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"})
 
 /* Class definition */ 
     typedef CacheArray::CacheLine           CacheLine;

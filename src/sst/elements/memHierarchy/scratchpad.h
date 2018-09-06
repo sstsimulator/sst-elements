@@ -51,7 +51,7 @@ public:
             {"backing_size_unit",   "(string) For 'malloc' backing stores, malloc granularity", "1MiB"},\
             {"memory_addr_offset",  "(uint) Amount to offset remote addresses by. Default is 'size' so that remote memory addresses start at 0", "size"},
             {"response_per_cycle",  "(uint) Maximum number of responses to return to processor each cycle. 0 is unlimited", "0"},
-            {"backendConvertor",    "(string) Backend convertor to use for the scratchpad", "memHierarchy.scratchpadBackendConvertor"},
+            {"backendConvertor",    "(string) Backend convertor to use for the scratchpad", "memHierarchy.simpleMemScratchpadBackendConvertor"},
             {"debug",               "(uint) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
             {"debug_level",         "(uint) Debug verbosity level. Between 0 and 10", "0"} )
             
@@ -69,6 +69,13 @@ public:
             {"request_received_scratch_put",    "Number of scratchpad Puts received from CPU (copy from scratch to memory)", "count", 1},
             {"request_issued_scratch_read",     "Number of scratchpad reads issued to scratchpad", "count", 1},
             {"request_issued_scratch_write",    "Number of scratchpad writes issued to scratchpad", "count", 1} )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            {"cpulink", "Link manager to cpu/cache on the cpu side", "SST::MemHierarchy::MemLinkBase" },
+            {"memlink", "Link manager to cache/memory on the memory side", "SST::MemHierarchy::MemLinkBase" },
+            {"backendConvertor", "Backend convertor to use for the scratchpad memory model", "SST::MemHierarchy::ScratchpadBackendConvertor"})
+
+            
 
 /* Begin class defintion */
     Scratchpad(ComponentId_t id, Params &params);

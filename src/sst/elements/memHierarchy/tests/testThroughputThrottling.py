@@ -73,25 +73,29 @@ for x in range(cores):
         "mshr_num_entries" : 8,
         "request_link_width" : "128B",
         "response_link_width" : "128B",
-        "memNIC.min_packet_size" : "10B", # control message size
         # Prefetch parameters
         "prefetcher" : "cassini.NextBlockPrefetcher",
         "drop_prefetch_mshr_level" : 5, # Drop prefetch when total misses > 5
-        # MemNIC parameters
-        "memNIC.network_bw" : network_bw,
-        "memNIC.network_address" : x,
-        "memNIC.network_input_buffer_size" : "2KiB",
-        "memNIC.network_output_buffer_size" : "2KiB",
+    })
+
+    l2cache_clink = comp_l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+    l2cache_mlink = comp_l2cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+    l2cache_mlink.addParams({
+        "min_packet_size" : "10B", # control message size
+        "network_bw" : network_bw,
+        "network_input_buffer_size" : "2KiB",
+        "network_output_buffer_size" : "2KiB",
+        "group" : 1
     })
 
     cpu_l1_link = sst.Link("link_cpu_cache_" + str(x))
     cpu_l1_link.connect ( (comp_cpu, "mem_link", "500ps"), (comp_l1cache, "high_network_0", "500ps") )
     
     l1_l2_link = sst.Link("link_l1_l2_" + str(x))
-    l1_l2_link.connect( (comp_l1cache, "low_network_0", "100ps"), (comp_l2cache, "high_network_0", "100ps") )
+    l1_l2_link.connect( (comp_l1cache, "low_network_0", "100ps"), (l2cache_clink, "port", "100ps") )
 
     l2_network_link = sst.Link("link_l2_network_" + str(x))
-    l2_network_link.connect( (comp_l2cache, "cache", "100ps"), (comp_network, "port" + str(x), "100ps") )
+    l2_network_link.connect( (l2cache_mlink, "port", "100ps"), (comp_network, "port" + str(x), "100ps") )
 
 for x in range(caches):
     comp_l3cache = sst.Component("l3cache" + str(x), "memHierarchy.Cache")
@@ -107,21 +111,27 @@ for x in range(caches):
         "mshr_num_entries" : 8,
         "request_link_width" : "128B", # Accept up to 128B of requests each cycle
         "response_link_width" : "256B", # Accept up to 256B of responses each cycle
-        "memNIC.min_packet_size" : "4B", # control message size
         # Distributed cache parameters
         "num_cache_slices" : caches,
         "slice_allocation_policy" : "rr", # Round-robin
         "slice_id" : x,
-        # MemNIC parameters
-        "memNIC.network_bw" : network_bw,
-        "memNIC.network_address" : x + cores,
-        "memNIC.network_input_buffer_size" : "2KiB",
-        "memNIC.network_output_buffer_size" : "2KiB",
+    })
+
+    l3cache_link = comp_l3cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    l3cache_link.addParams({
+        "group" : 2,
+        "min_packet_size" : "4B", # control message size
+        "network_bw" : network_bw,
+        "network_input_buffer_size" : "2KiB",
+        "network_output_buffer_size" : "2KiB",
+        "addr_range_start" : x * 64,
+        "interleave_size" : "64B",
+        "interleave_step" : str(64 * caches) + "B"
     })
 
     portid = x + cores
     l3_network_link = sst.Link("link_l3_network_" + str(x))
-    l3_network_link.connect( (comp_l3cache, "directory", "100ps"), (comp_network, "port" + str(portid), "100ps") )
+    l3_network_link.connect( (l3cache_link, "port", "100ps"), (comp_network, "port" + str(portid), "100ps") )
 
 for x in range(memories):
     comp_directory = sst.Component("directory" + str(x), "memHierarchy.DirectoryController")
@@ -129,16 +139,20 @@ for x in range(memories):
         "clock" : uncoreclock,
         "coherence_protocol" : coherence,
         "entry_cache_size" : 32768,
-        "mshr_num_entries" : 16,
-        # MemNIC parameters
-        "memNIC.interleave_size" : "64B",    # Interleave at line granularity between memories
-        "memNIC.interleave_step" : str(memories * 64) + "B",
-        "memNIC.network_bw" : network_bw,
-        "memNIC.addr_range_start" : x*64,
-        "memNIC.addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
-        "memNIC.network_address" : x + caches + cores,
-        "memNIC.network_input_buffer_size" : "2KiB",
-        "memNIC.network_output_buffer_size" : "2KiB",
+        "mshr_num_entries" : 16
+    })
+
+    dir_clink = comp_directory.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    dir_mlink = comp_directory.setSubComponent("memlink", "memHierarchy.MemLink")
+    dir_clink.addParams({
+        "group" : 3,
+        "interleave_size" : "64B",    # Interleave at line granularity between memories
+        "interleave_step" : str(memories * 64) + "B",
+        "network_bw" : network_bw,
+        "addr_range_start" : x*64,
+        "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
+        "network_input_buffer_size" : "2KiB",
+        "network_output_buffer_size" : "2KiB",
     })
 
     comp_memory = sst.Component("memory" + str(x), "memHierarchy.MemController")
@@ -157,12 +171,14 @@ for x in range(memories):
         "backend.row_policy" : "closed",
     })
 
+    mem_link = comp_memory.setSubComponent("cpulink", "memHierarchy.MemLink")
+
     portid = x + caches + cores
     link_directory_network = sst.Link("link_directory_network_" + str(x))
-    link_directory_network.connect( (comp_directory, "network", "100ps"), (comp_network, "port" + str(portid), "100ps") )
+    link_directory_network.connect( (dir_clink, "port", "100ps"), (comp_network, "port" + str(portid), "100ps") )
     
     link_directory_memory_network = sst.Link("link_directory_memory_" + str(x))
-    link_directory_memory_network.connect( (comp_directory, "memory", "400ps"), (comp_memory, "direct_link", "400ps") )
+    link_directory_memory_network.connect( (dir_mlink, "port", "400ps"), (mem_link, "port", "400ps") )
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)

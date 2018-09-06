@@ -79,9 +79,12 @@ comp_l2_0.addParams({
     "cache_line_size" : 64,
     "associativity" : 8,
     "replacement_policy" : "mru",
-    "memNIC.network_address" : 0,
-    "memNIC.network_bw" : "80GiB/s",
-    "memNIC.group" : 1,
+})
+l2_0_clink = comp_l2_0.setSubComponent("cpulink", "memHierarchy.MemLink")
+l2_0_mlink = comp_l2_0.setSubComponent("memlink", "memHierarchy.MemNIC")
+l2_0_mlink.addParams({
+    "network_bw" : "80GiB/s",
+    "group" : 1,
 })
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.ScratchCPU")
 comp_cpu2.addParams({
@@ -147,9 +150,12 @@ comp_l2_1.addParams({
     "cache_line_size" : 64,
     "associativity" : 8,
     "replacement_policy" : "nmru",
-    "memNIC.network_address" : 1,
-    "memNIC.network_bw" : "80GiB/s",
-    "memNIC.group" : 1,
+})
+l2_1_clink = comp_l2_1.setSubComponent("cpulink", "memHierarchy.MemLink")
+l2_1_mlink = comp_l2_1.setSubComponent("memlink", "memHierarchy.MemNIC")
+l2_1_mlink.addParams({
+    "network_bw" : "80GiB/s",
+    "group" : 1,
 })
 comp_dir = sst.Component("dir", "memHierarchy.DirectoryController")
 comp_dir.addParams({
@@ -158,11 +164,13 @@ comp_dir.addParams({
     "debug_addr" : "[0x1340]",
     "entry_cache_size" : 1024,
     "coherence_protocol" : "MESI",
-    "memNIC.network_address" : 2,
-    "memNIC.network_bw" : "80GiB/s",
-    "memNIC.addr_range_start" : 0,
-    "memNIC.group" : 2,
     "net_memory_name" : "scratch"
+})
+dir_link = comp_dir.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dir_link.addParams({
+    "network_bw" : "80GiB/s",
+    "addr_range_start" : 0,
+    "group" : 2,
 })
 comp_scratch = sst.Component("scratch", "memHierarchy.Scratchpad")
 comp_scratch.addParams({
@@ -177,9 +185,11 @@ comp_scratch.addParams({
     "backendConvertor" : "memHierarchy.simpleMemScratchBackendConvertor",
     "backendConvertor.backend" : "memHierarchy.simpleMem",
     "backendConvertor.backend.access_time" : "10ns",
-    "memNIC.network_bw" : "50GB/s",
-    "memNIC.network_address" : 3,
-    "memNIC.group" : 3,
+})
+scr_link = comp_scratch.setSubComponent("cpulink", "memHierarchy.MemNIC")
+scr_link.addParams({
+    "network_bw" : "50GB/s",
+    "group" : 3,
 })
 comp_net = sst.Component("network", "merlin.hr_router")
 comp_net.addParams({
@@ -195,20 +205,22 @@ comp_net.addParams({
 
 comp_memory0 = sst.Component("memory0", "memHierarchy.MemController")
 comp_memory0.addParams({
-      #"debug" : "1",
-      #"debug_level" : 10,
-      "backing" : "none",
-      "clock" : "1GHz",
-      #"backendConvertor.debug_location" : 1,
-      #"backendConvertor.debug_level" : 10,
-      "backend.access_time" : "50ns",
-      "backend.mem_size" : "512MiB",
-      "memNIC.network_bw" : "50GB/s",
-      "memNIC.network_address" : 4,
-      "memNIC.addr_range_start" : 0,
-      "memNIC.interleave_size" : "128B",
-      "memNIC.interleave_step" : "256B",
-      "memNIC.group" : 4,
+    #"debug" : "1",
+    #"debug_level" : 10,
+    "backing" : "none",
+    "clock" : "1GHz",
+    #"backendConvertor.debug_location" : 1,
+    #"backendConvertor.debug_level" : 10,
+    "backend.access_time" : "50ns",
+    "backend.mem_size" : "512MiB",
+})
+mem0_link = comp_memory0.setSubComponent("cpulink", "memHierarchy.MemNIC")
+mem0_link.addParams({
+      "network_bw" : "50GB/s",
+      "addr_range_start" : 0,
+      "interleave_size" : "128B",
+      "interleave_step" : "256B",
+      "group" : 4,
 })
 comp_memory1 = sst.Component("memory1", "memHierarchy.MemController")
 comp_memory1.addParams({
@@ -218,12 +230,14 @@ comp_memory1.addParams({
       "backend.access_time" : "50ns",
       "clock" : "1GHz",
       "backend.mem_size" : "512MiB",
-      "memNIC.network_bw" : "50GB/s",
-      "memNIC.network_address" : 5,
-      "memNIC.addr_range_start" : 128,
-      "memNIC.interleave_size" : "128B",
-      "memNIC.interleave_step" : "256B",
-      "memNIC.group" : 4,
+})
+mem1_link = comp_memory1.setSubComponent("cpulink", "memHierarchy.MemNIC")
+mem1_link.addParams({
+      "network_bw" : "50GB/s",
+      "addr_range_start" : 128,
+      "interleave_size" : "128B",
+      "interleave_step" : "256B",
+      "group" : 4,
 })
 
 comp_bus_0 = sst.Component("bus_0", "memHierarchy.Bus")
@@ -272,26 +286,26 @@ link_cpu3_bus = sst.Link("link_cpu3_bus")
 link_cpu3_bus.connect( (comp_l1_3, "low_network_0", "100ps"), (comp_bus_1, "high_network_1", "100ps") )
 
 link_bus_l2_0 = sst.Link("link_bus_l2_0")
-link_bus_l2_0.connect( (comp_bus_0, "low_network_0", "100ps"), (comp_l2_0, "high_network_0", "100ps") )
+link_bus_l2_0.connect( (comp_bus_0, "low_network_0", "100ps"), (l2_0_clink, "port", "100ps") )
 
 link_bus_l2_1 = sst.Link("link_bus_l2_1")
-link_bus_l2_1.connect( (comp_bus_1, "low_network_0", "100ps"), (comp_l2_1, "high_network_0", "100ps") )
+link_bus_l2_1.connect( (comp_bus_1, "low_network_0", "100ps"), (l2_1_clink, "port", "100ps") )
 
 link_l2_net0 = sst.Link("link_l2_net_0")
-link_l2_net0.connect( (comp_l2_0, "directory", "100ps"), (comp_net, "port0", "100ps") )
+link_l2_net0.connect( (l2_0_mlink, "port", "100ps"), (comp_net, "port0", "100ps") )
 
 link_l2_net1 = sst.Link("link_l2_net_1")
-link_l2_net1.connect( (comp_l2_1, "directory", "100ps"), (comp_net, "port1", "100ps") )
+link_l2_net1.connect( (l2_1_mlink, "port", "100ps"), (comp_net, "port1", "100ps") )
 
 link_dir_net = sst.Link("link_dir_net")
-link_dir_net.connect( (comp_dir, "network", "100ps"), (comp_net, "port2", "100ps") )
+link_dir_net.connect( (dir_link, "port", "100ps"), (comp_net, "port2", "100ps") )
 
 link_scratch_net = sst.Link("link_scratch_net")
-link_scratch_net.connect( (comp_scratch, "network", "100ps"), (comp_net, "port3", "100ps") )
+link_scratch_net.connect( (scr_link, "port", "100ps"), (comp_net, "port3", "100ps") )
 
 link_mem0_net = sst.Link("link_mem0_net")
-link_mem0_net.connect( (comp_memory0, "network", "100ps"), (comp_net, "port4", "100ps") )
+link_mem0_net.connect( (mem0_link, "port", "100ps"), (comp_net, "port4", "100ps") )
 
 link_mem1_net = sst.Link("link_mem1_net")
-link_mem1_net.connect( (comp_memory1, "network", "100ps"), (comp_net, "port5", "100ps") )
+link_mem1_net.connect( (mem1_link, "port", "100ps"), (comp_net, "port5", "100ps") )
 # End of generated output.

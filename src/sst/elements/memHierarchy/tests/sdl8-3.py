@@ -145,7 +145,6 @@ comp_l3cache.addParams({
       "cache_size" : "64 KB",
       "debug" : DEBUG_L3,
       "debug_level" : 10,
-      "memNIC.network_address" : "1",
       "memNIC.network_bw" : "25GB/s",
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
@@ -164,7 +163,6 @@ comp_dirctrl.addParams({
       "coherence_protocol" : "MSI",
       "debug" : DEBUG_DIR,
       "debug_level" : 10,
-      "memNIC.network_address" : "0",
       "entry_cache_size" : "32768",
       "memNIC.network_bw" : "25GB/s",
       "memNIC.addr_range_end" : "0x1F000000",

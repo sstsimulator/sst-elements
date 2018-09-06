@@ -50,9 +50,11 @@ public:
     /* Define params, inherit from base class */
 #define MEMLINK_ELI_PARAMS MEMLINKBASE_ELI_PARAMS, \
     { "latency",            "(string) Link latency. Prefix 'cpulink' for up-link towards CPU or 'memlink' for down-link towards memory", "50ps"},\
-    { "port",               "(string) Set by parent component. Name of port this memLink sits on.", ""}
+    { "port",               "(string) Set by parent component. Name of port this memLink sits on.", "port"}
 
     SST_ELI_DOCUMENT_PARAMS( { MEMLINK_ELI_PARAMS }  )
+
+    SST_ELI_DOCUMENT_PORTS( { "port", "Port to another memory component", {"memHierarchy.MemEventBase"} } )
 
 /* Begin class definition */
     class MemEventLinkInit : public MemEventBase {

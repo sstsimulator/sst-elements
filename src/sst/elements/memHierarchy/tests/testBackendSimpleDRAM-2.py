@@ -125,8 +125,8 @@ comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
 comp_n2_bus.addParams({
       "bus_frequency" : "2 Ghz"
 })
-comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
-comp_l3cache.addParams({
+l3cache = sst.Component("l3cache", "memHierarchy.Cache")
+l3cache.addParams({
       "access_latency_cycles" : "100",
       "cache_frequency" : "2 Ghz",
       "replacement_policy" : "lru",
@@ -135,10 +135,14 @@ comp_l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "debug" : "0",
-      "memNIC.network_address" : "1",
-      "memNIC.network_bw" : "25GB/s",
-#      "memNIC.debug" : 1,
-      "memNIC.debug_level" : 10,
+})
+l3_clink = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+l3_mlink = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+l3_mlink.addParams({
+    "group" : 1,
+    "network_bw" : "25GB/s",
+#   "debug" : 1,
+    "debug_level" : 10,
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams({
@@ -151,23 +155,26 @@ comp_chiprtr.addParams({
       "id" : "0",
       "topology" : "merlin.singlerouter"
 })
-comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
-comp_dirctrl.addParams({
+dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
+dirctrl.addParams({
       "coherence_protocol" : "MESI",
       "debug" : "0",
-      "memNIC.network_address" : "0",
       "entry_cache_size" : "32768",
-      "memNIC.network_bw" : "25GB/s",
-      "memNIC.network_input_buffer_size" : "2KiB",
-      "memNIC.network_output_buffer_size" : "2KiB",
-      "memNIC.addr_range_end" : "0x1F000000",
-      "memNIC.addr_range_start" : "0x0",
       "net_memory_name" : "memory",
-#      "memNIC.debug" : 1,
-      "memNIC.debug_level" : 10,
 })
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
+dir_link = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dir_link.addParams({
+    "group" : 2,
+    "network_bw" : "25GB/s",
+    "network_input_buffer_size" : "2KiB",
+    "network_output_buffer_size" : "2KiB",
+    "addr_range_end" : "0x1F000000",
+    "addr_range_start" : "0x0",
+#   "debug" : 1,
+    "debug_level" : 10,
+})
+memory = sst.Component("memory", "memHierarchy.MemController")
+memory.addParams({
     "backend.mem_size" : "512MiB",
     "backend" : "memHierarchy.simpleDRAM",
     "clock" : "1GHz",
@@ -179,12 +186,15 @@ comp_memory.addParams({
     "backend.cycle_time" : "5ns",
     "backend.row_size" : "8KiB",
     "backend.row_policy" : "closed",
-#    "memNIC.debug" : 1,
-    "memNIC.debug_level" : 10,
-    "memNIC.network_address" : "2",
-    "memNIC.network_bw" : "25GB/s",
-    "memNIC.network_input_buffer_size" : "2KiB",
-    "memNIC.network_output_buffer_size" : "2KiB",
+})
+mem_link = memory.setSubComponent("cpulink", "memHierarchy.MemNIC")
+mem_link.addParams({
+    "group" : 3,
+#    "debug" : 1,
+    "debug_level" : 10,
+    "network_bw" : "25GB/s",
+    "network_input_buffer_size" : "2KiB",
+    "network_output_buffer_size" : "2KiB",
 })
 
 # Enable statistics
@@ -222,11 +232,10 @@ link_bus_n1L2cache.connect( (comp_n1_bus, "low_network_0", "10000ps"), (comp_n1_
 link_n1L2cache_bus = sst.Link("link_n1L2cache_bus")
 link_n1L2cache_bus.connect( (comp_n1_l2cache, "low_network_0", "10000ps"), (comp_n2_bus, "high_network_1", "10000ps") )
 link_bus_l3cache = sst.Link("link_bus_l3cache")
-link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "10000ps"), (comp_l3cache, "high_network_0", "10000ps") )
+link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "10000ps"), (l3_clink, "port", "10000ps") )
 link_cache_net_0 = sst.Link("link_cache_net_0")
-link_cache_net_0.connect( (comp_l3cache, "directory", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
+link_cache_net_0.connect( (l3_mlink, "port", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
 link_dir_net_0 = sst.Link("link_dir_net_0")
-link_dir_net_0.connect( (comp_chiprtr, "port0", "2000ps"), (comp_dirctrl, "network", "2000ps") )
+link_dir_net_0.connect( (comp_chiprtr, "port0", "2000ps"), (dir_link, "port", "2000ps") )
 link_mem_net_0 = sst.Link("link_mem_net_0")
-link_mem_net_0.connect( (comp_chiprtr, "port2", "2000ps"), (comp_memory, "network", "2000ps") )
-# End of generated output.
+link_mem_net_0.connect( (comp_chiprtr, "port2", "2000ps"), (mem_link, "port", "2000ps") )

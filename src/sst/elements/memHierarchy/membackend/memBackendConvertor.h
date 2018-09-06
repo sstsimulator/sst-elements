@@ -57,6 +57,7 @@ class MemBackendConvertor : public SubComponent {
             { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },\
             { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 }
 
+#define MEMBACKENDCONVERTOR_ELI_SLOTS { "backend", "Backend memory model to use for timing.", "SST::MemHierarchy::MemBackend"}
 
     typedef uint64_t ReqId;
 

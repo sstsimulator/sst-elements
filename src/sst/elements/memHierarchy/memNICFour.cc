@@ -39,12 +39,6 @@ MemNICFour::MemNICFour(Component * parent, Params &params) : MemNICBase(parent, 
     std::array<std::string,4> pref = {"req", "ack", "fwd", "data"};
 
     for (int i = 0; i < 4; i++) {
-        std::string linkName = params.find<std::string>(pref[i] + ".port", "");
-        
-        if (linkName == "") 
-            dbg.fatal(CALL_INFO, -1, "Param not specified(%s): %s.port - the name of the port that the MemNIC's %s network is attached to. This should be set internally by components creating the memNIC.\n",
-                    getName().c_str(), pref[i].c_str(), pref[i].c_str());
-
         // Error checking for much of this is done by the link control
         std::string linkBandwidth = params.find<std::string>(pref[i] + ".network_bw", "80GiB/s");
         int num_vcs = 1; // MemNIC does not use VCs
@@ -53,7 +47,7 @@ MemNICFour::MemNICFour(Component * parent, Params &params) : MemNICBase(parent, 
 
         link_control[i] = (SimpleNetwork*)loadSubComponent(params.find<std::string>(pref[i] + ".linkcontrol", "kingsley.linkcontrol"), params); 
         // But link control doesn't use params so manually initialize
-        link_control[i]->initialize(linkName, UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
+        link_control[i]->initialize(pref[i], UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
     
         // Packet size
         UnitAlgebra packetSize = UnitAlgebra(params.find<std::string>(pref[i] + ".min_packet_size", "8B"));

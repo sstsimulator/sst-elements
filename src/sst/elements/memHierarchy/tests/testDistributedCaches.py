@@ -50,19 +50,22 @@ for x in range(cores):
         "cache_size" : "2KiB",  # super tiny for lots of traffic
         "associativity" : 2,
         "L1" : 1,
-        # MemNIC parameters
-        "memNIC.network_bw" : network_bw,
-        "memNIC.network_address" : x,
         # Debug parameters
         "debug" : DEBUG_L1,
         "debug_level" : 10,
     })
+    l1_clink = comp_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+    l1_mlink = comp_l1cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+    l1_mlink.addParams({
+        "group" : 1,
+        "network_bw" : network_bw,
+    })
 
     cpu_l1_link = sst.Link("link_cpu_cache_" + str(x))
-    cpu_l1_link.connect ( (comp_cpu, "mem_link", "500ps"), (comp_l1cache, "high_network_0", "500ps") )
+    cpu_l1_link.connect ( (comp_cpu, "mem_link", "500ps"), (l1_clink, "port", "500ps") )
 
     l1_network_link = sst.Link("link_l1_network_" + str(x))
-    l1_network_link.connect( (comp_l1cache, "cache", "100ps"), (comp_network, "port" + str(x), "100ps") )
+    l1_network_link.connect( (l1_mlink, "port", "100ps"), (comp_network, "port" + str(x), "100ps") )
 
 for x in range(caches):
     comp_l2cache = sst.Component("l2cache" + str(x), "memHierarchy.Cache")
@@ -77,19 +80,20 @@ for x in range(caches):
         "num_cache_slices" : caches,
         "slice_allocation_policy" : "rr", # Round-robin
         "slice_id" : x,
-        # MemNIC parameters
-        "memNIC.network_bw" : network_bw,
-        "memNIC.network_address" : x + cores,
-        "memNIC.network_input_buffer_size" : "2KiB",
-        "memNIC.network_output_buffer_size" : "2KiB",
         # Debug parameters
         "debug" : DEBUG_L2,
         "debug_level" : 10,
     })
-
+    l2_link = comp_l2cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    l2_link.addParams({
+        "group" : 2,
+        "network_bw" : network_bw,
+        "network_input_buffer_size" : "2KiB",
+        "network_output_buffer_size" : "2KiB",
+    })
     portid = x + cores
     l2_network_link = sst.Link("link_l2_network_" + str(x))
-    l2_network_link.connect( (comp_l2cache, "directory", "100ps"), (comp_network, "port" + str(portid), "100ps") )
+    l2_network_link.connect( (l2_link, "port", "100ps"), (comp_network, "port" + str(portid), "100ps") )
 
 for x in range(memories):
     comp_directory = sst.Component("directory" + str(x), "memHierarchy.DirectoryController")
@@ -98,20 +102,22 @@ for x in range(memories):
         "coherence_protocol" : coherence,
         "entry_cache_size" : 32768,
         "net_memory_name" : "memory" + str(x),
-        # MemNIC parameters
-        "memNIC.interleave_size" : "64B",    # Interleave at line granularity between memories
-        "memNIC.interleave_step" : str(memories * 64) + "B",
-        "memNIC.network_bw" : network_bw,
-        "memNIC.addr_range_start" : x*64,
-        "memNIC.addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
-        "memNIC.network_address" : x + caches + cores,
-        "memNIC.network_input_buffer_size" : "2KiB",
-        "memNIC.network_output_buffer_size" : "2KiB",
-        #"memNIC.debug" : 1,
-        #"memNIC.debug_level" : 10,
         # Debug parameters
         "debug" : DEBUG_DIR,
         "debug_level" : 10,
+    })
+    dir_link = comp_directory.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    dir_link.addParams({
+        "group" : 3,
+        "interleave_size" : "64B",    # Interleave at line granularity between memories
+        "interleave_step" : str(memories * 64) + "B",
+        "network_bw" : network_bw,
+        "addr_range_start" : x*64,
+        "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
+        "network_input_buffer_size" : "2KiB",
+        "network_output_buffer_size" : "2KiB",
+        #"debug" : 1,
+        #"debug_level" : 10,
     })
 
     comp_memory = sst.Component("memory" + str(x), "memHierarchy.MemController")
@@ -128,25 +134,27 @@ for x in range(memories):
         "backend.cycle_time" : "3ns",
         "backend.row_size" : "4KiB",
         "backend.row_policy" : "closed",
-        # MemNIC parameters
-        "memNIC.network_address" : x + caches + cores + memories,
-        "memNIC.network_bw" : network_bw,
-        "memNIC.network_input_buffer_size" : "2KiB",
-        "memNIC.network_output_buffer_size" : "2KiB",
-#        "memNIC.debug" : 1,
-        "memNIC.debug_level" : 10,
         # Debug parameters
         "debug" : DEBUG_MEM,
         "debug_level" : 10,
     })
-
+    mem_link = comp_memory.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    mem_link.addParams({
+        "group" : 4,
+        "network_bw" : network_bw,
+        "network_input_buffer_size" : "2KiB",
+        "network_output_buffer_size" : "2KiB",
+#        "debug" : 1,
+        "debug_level" : 10,
+    })
+    
     portid = x + caches + cores
     link_directory_network = sst.Link("link_directory_network_" + str(x))
-    link_directory_network.connect( (comp_directory, "network", "100ps"), (comp_network, "port" + str(portid), "100ps") )
+    link_directory_network.connect( (dir_link, "port", "100ps"), (comp_network, "port" + str(portid), "100ps") )
     
     portid = x + caches + cores + memories
     link_memory_network = sst.Link("link_memory_network_" + str(x))
-    link_memory_network.connect( (comp_memory, "network", "100ps",), (comp_network, "port" + str(portid), "100ps") )
+    link_memory_network.connect( (mem_link, "port", "100ps",), (comp_network, "port" + str(portid), "100ps") )
 
 
 # Enable statistics
