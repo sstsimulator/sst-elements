@@ -96,6 +96,33 @@ MemEventInit * MemLink::recvInitData() {
     return me;
 }
 
+/* MemLinks don't have a concept of separate sources & destinations */
+void MemLink::setSources(std::set<EndpointInfo>& srcs) {    remotes = srcs;     }
+void MemLink::setDests(std::set<EndpointInfo>& dests) {     remotes = dests;    }
+
+void MemLink::addSource(EndpointInfo info) { remotes.insert(info); }
+void MemLink::addDest(EndpointInfo info) { remotes.insert(info); }
+
+bool MemLink::isDest(std::string UNUSED(str)) { return true; }
+bool MemLink::isSource(std::string UNUSED(str)) { return true; }
+
+std::set<MemLinkBase::EndpointInfo>* MemLink::getSources() { return &remotes; }
+std::set<MemLinkBase::EndpointInfo>* MemLink::getDests() { return &remotes; }
+
+std::string MemLink::findTargetDestination(Addr addr) {
+    for (std::set<EndpointInfo>::const_iterator it = remotes.begin(); it != remotes.end(); it++) {
+        if (it->region.contains(addr)) return it->name;
+    }
+
+    stringstream error;
+    error << getName() + " (MemLink) cannot find a destination for address " << addr << endl;
+    error << "Known destinations: " << endl;
+    for (std::set<EndpointInfo>::const_iterator it = remotes.begin(); it != remotes.end(); it++) {
+        error << it->name << " " << it->region.toString() << endl;
+    }
+    dbg.fatal(CALL_INFO, -1, "%s", error.str().c_str());
+    return "";
+}
 
 /**
  * send event on link

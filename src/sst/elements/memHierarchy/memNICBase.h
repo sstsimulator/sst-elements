@@ -86,14 +86,6 @@ class MemNICBase : public MemLinkBase {
         /* Destructor */
         ~MemNICBase() { }
 
-        virtual uint64_t lookupNetworkAddress(const std::string &dst) const {
-            std::unordered_map<std::string,uint64_t>::const_iterator it = networkAddressMap.find(dst);
-            if (it == networkAddressMap.end()) {
-                dbg.fatal(CALL_INFO, -1, "%s (MemNICBase), Network address for destination '%s' not found in networkAddressMap.\n", getName().c_str(), dst.c_str());
-            }
-            return it->second;
-        }
-
         // Router events 
         class MemRtrEvent : public SST::Event {
             public:
@@ -154,7 +146,7 @@ class MemNICBase : public MemLinkBase {
         };
 
         // Init functions
-        void sendInitData(MemEventInit * ev) {
+        virtual void sendInitData(MemEventInit * ev) {
             MemRtrEvent * mre = new MemRtrEvent(ev);
             SST::Interfaces::SimpleNetwork::Request* req = new SST::Interfaces::SimpleNetwork::Request();
             req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
@@ -162,7 +154,7 @@ class MemNICBase : public MemLinkBase {
             initSendQueue.push(req);
         }
         
-        MemEventInit* recvInitData() {
+        virtual MemEventInit* recvInitData() {
             if (initQueue.size()) {
                 MemRtrEvent * mre = initQueue.front();
                 initQueue.pop();
@@ -173,14 +165,14 @@ class MemNICBase : public MemLinkBase {
             return nullptr;
         }
 
-        bool isSource(std::string str) { /* Note this is only used during init so doesn't need to be fast */
+        virtual bool isSource(std::string str) { /* Note this is only used during init so doesn't need to be fast */
             for (std::set<EndpointInfo>::iterator it = sourceEndpointInfo.begin(); it != sourceEndpointInfo.end(); it++) {
                 if (it->name == str) return true;   
             }
             return false;
         }
 
-        bool isDest(std::string str) { /* Note this is only used during init so doesn't need to be fast */
+        virtual bool isDest(std::string str) { /* Note this is only used during init so doesn't need to be fast */
             for (std::set<EndpointInfo>::iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
                 if (it->name == str) return true;   
             }
@@ -188,9 +180,33 @@ class MemNICBase : public MemLinkBase {
         }
     
         virtual bool isClocked() { return true; } // Tell parent to trigger our clock
+        
+        virtual void addSource(EndpointInfo info) { sourceEndpointInfo.insert(info); }
+        virtual void addDest(EndpointInfo info) { destEndpointInfo.insert(info); }
+
+        virtual void setSources(std::set<EndpointInfo>& srcs) { sourceEndpointInfo = srcs; }
+        virtual void setDests(std::set<EndpointInfo>& dests) { destEndpointInfo = dests; }
+
+        virtual std::set<EndpointInfo>* getSources() { return &sourceEndpointInfo; }
+        virtual std::set<EndpointInfo>* getDests() { return &destEndpointInfo; }
+
+        virtual std::string findTargetDestination(Addr addr) {
+            for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+                if (it->region.contains(addr)) return it->name;
+            }
+
+            stringstream error;
+            error << getName() + " (MemNICBase) cannot find a destination for address " << addr << endl;
+            error << "Known destinations: " << endl;
+            for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+                error << it->name << " " << it->region.toString() << endl;
+            }
+            dbg.fatal(CALL_INFO, -1, "%s", error.str().c_str());
+            return "";
+        }
 
     protected:
-        void nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned int phase) {
+        virtual void nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned int phase) {
             bool networkReady = linkcontrol->isNetworkInitialized();
     
             // After we've set up network and exchanged params, drain the send queue
@@ -267,11 +283,22 @@ class MemNICBase : public MemLinkBase {
             }
         }
 
+        virtual uint64_t lookupNetworkAddress(const std::string &dst) const {
+            std::unordered_map<std::string,uint64_t>::const_iterator it = networkAddressMap.find(dst);
+            if (it == networkAddressMap.end()) {
+                dbg.fatal(CALL_INFO, -1, "%s (MemNICBase), Network address for destination '%s' not found in networkAddressMap.\n", getName().c_str(), dst.c_str());
+            }
+            return it->second;
+        }
+
+        /*** Data Members ***/
         bool initMsgSent;
 
         // Data structures
         std::unordered_map<std::string,uint64_t> networkAddressMap; // Map of name -> address for each network endpoint
-        
+        std::set<EndpointInfo> sourceEndpointInfo;
+        std::set<EndpointInfo> destEndpointInfo;
+
         // Init queues
         std::queue<MemRtrEvent*> initQueue; // Queue for received init events
         std::queue<SST::Interfaces::SimpleNetwork::Request*> initSendQueue; // Queue of events waiting to be sent after network (linkcontrol) initializes

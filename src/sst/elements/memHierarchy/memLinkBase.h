@@ -45,11 +45,11 @@ public:
 #define MEMLINKBASE_ELI_PARAMS { "debug", "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},\
     { "debug_level",        "(int) Debug verbosity level. Between 0 and 10", "0"},\
     { "debug_addr",         "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},\
-    { "accept_region",      "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "0"},\
-    { "addr_range_start",   "(uint) Set by parent component. Lowest address handled by the parent.", "0"},\
-    { "addr_range_end",     "(uint) Set by parent component. Highest address handled by the parent.", "uint64_t-1"},\
-    { "interleave_size",    "(string) Set by parent component. Size of interleaved chunks.", "0B"},\
-    { "interleave_step",    "(string) Set by parent component. Distance between interleaved chunks.", "0B"}
+    { "accept_region",      "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memoryController. Provides backward compatibility for address translation between memory controller and directory.", "0"},\
+    { "addr_range_start",   "(uint) Lowest address handled by the parent.", "0"},\
+    { "addr_range_end",     "(uint) Highest address handled by the parent.", "uint64_t-1"},\
+    { "interleave_size",    "(string) Size of interleaved chunks.", "0B"},\
+    { "interleave_step",    "(string) Distance between interleaved chunks.", "0B"}
 
 
     // Struct identifying an endpoint
@@ -123,16 +123,7 @@ public:
     virtual bool isClocked() { return false; }
     virtual void init(unsigned int UNUSED(phase)) { }
     virtual void finish() { }
-    virtual void setup() { 
-#ifdef __SST_DEBUG_OUTPUT__
-        stringstream srcs;
-        srcs << getName() + " (MemLinkBase) sources are: ";
-        for (std::set<EndpointInfo>::iterator it = sourceEndpointInfo.begin(); it != sourceEndpointInfo.end(); it++) {
-            srcs << it->name << " ";
-        }
-        dbg.debug(_L10_, "%s\n", srcs.str().c_str());
-#endif
-    }
+    virtual void setup() { }
 
     /* Debug - triggered by output.fatal() or SIGUSR2 */
     virtual void printStatus(Output &out) {
@@ -153,38 +144,22 @@ public:
     void recvNotify(SST::Event * ev) { (*recvHandler)(ev); }
 
     /* Functions for managing communication according to address */
-    virtual std::string findTargetDestination(Addr addr) {
-    	for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
-            if (it->region.contains(addr)) return it->name;
-        }
-
-        /* Build error string */
-        stringstream error;
-        error << getName() + " (MemLinkBase) cannot find a destination for address " << addr << endl;
-        error << "Known destination regions: " << endl;
-        for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
-            error << it->name << " " << it->region.toString() << endl;
-        }
-        dbg.fatal(CALL_INFO, -1, "%s", error.str().c_str());
-        return "";
-    }
+    virtual std::string findTargetDestination(Addr addr) =0;
 
     virtual bool isRequestAddressValid(Addr addr) { return info.region.contains(addr); }
 
     /* Functions for managing source/destination information */
-    std::set<EndpointInfo> * getSources() { return &sourceEndpointInfo; }
-    std::set<EndpointInfo> * getDests() { return &destEndpointInfo; }
+    virtual std::set<EndpointInfo> * getSources() =0;
+    virtual std::set<EndpointInfo> * getDests() =0;
     
-    void setSources(std::set<EndpointInfo>& srcs) { sourceEndpointInfo = srcs; }
-    void setDests(std::set<EndpointInfo>& dsts) { destEndpointInfo = dsts; }
+    virtual void setSources(std::set<EndpointInfo>& srcs) =0;
+    virtual void setDests(std::set<EndpointInfo>& dsts) =0;
     
-    virtual void addSource(EndpointInfo info) { sourceEndpointInfo.insert(info); }
-    virtual void addDest(EndpointInfo dstInfo) {
-    	destEndpointInfo.insert(dstInfo);
-    }
+    virtual void addSource(EndpointInfo info) =0;
+    virtual void addDest(EndpointInfo dstInfo) =0;
     
-    virtual bool isDest(std::string UNUSED(str)) { return true; } // Anything we get on this link is valid for a dest 
-    virtual bool isSource(std::string UNUSED(str)) { return true; } // Anything we get on this link is valid for a source
+    virtual bool isDest(std::string UNUSED(str)) =0;
+    virtual bool isSource(std::string UNUSED(str)) =0;
 
     MemRegion getRegion() { return info.region; }
     void setRegion(MemRegion region) { info.region = region; }
@@ -206,8 +181,6 @@ protected:
     SST::Event::HandlerBase * recvHandler; // Event handler to call when an event is received
 
     // Data structures
-    std::set<EndpointInfo> sourceEndpointInfo;  // endpoint info for each source network endpoint
-    std::set<EndpointInfo> destEndpointInfo;    // endpoint info for each destination network endpoint
     std::queue<MemEventInit*> initReceiveQ;     // queue for messages received during init
 };
 

@@ -97,6 +97,17 @@ public:
     /* Initialization functions for parent */
     virtual void init(unsigned int phase);
 
+    /* Remote endpoint info management */
+    virtual void setSources(std::set<EndpointInfo>& srcs);
+    virtual void setDests(std::set<EndpointInfo>& dests);
+    virtual void addSource(EndpointInfo info);
+    virtual void addDest(EndpointInfo info);
+    virtual std::set<EndpointInfo>* getSources();
+    virtual std::set<EndpointInfo>* getDests();
+    virtual bool isDest(std::string UNUSED(str));
+    virtual bool isSource(std::string UNUSED(str));
+    virtual std::string findTargetDestination(Addr addr);
+
     /* Send and receive functions for MemLink */
     virtual void sendInitData(MemEventInit * ev);
     virtual MemEventInit* recvInitData();
@@ -112,6 +123,9 @@ protected:
     
     // Link
     SST::Link* link;
+
+    // Data structures
+    std::set<EndpointInfo> remotes;
 };
 
 } //namespace memHierarchy
