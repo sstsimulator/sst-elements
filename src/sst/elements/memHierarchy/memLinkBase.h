@@ -28,7 +28,6 @@
 #include <sst/core/warnmacros.h>
 
 #include "sst/elements/memHierarchy/memEventBase.h"
-#include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/util.h"
 #include "sst/elements/memHierarchy/memTypes.h"
 
@@ -149,7 +148,6 @@ public:
      * Extra functions for MemLink derivatives 
      */
     virtual bool clock() { return true; } // No clock
-    virtual uint64_t lookupNetworkAddress(const std::string &UNUSED(dst)) const { return 0; } // No network address
 
     // Link call back for incoming events
     void recvNotify(SST::Event * ev) { (*recvHandler)(ev); }
@@ -203,9 +201,6 @@ protected:
     // Local EndpointInfo
     EndpointInfo info;
     bool acceptRegion; // Accept a region push from a source
-
-    // Other parameters
-    std::unordered_set<uint32_t> sourceIDs, destIDs; // IDs which this endpoint cares about
 
     // Handlers 
     SST::Event::HandlerBase * recvHandler; // Event handler to call when an event is received

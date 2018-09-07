@@ -63,8 +63,9 @@ libmemHierarchy_la_SOURCES = \
 	memLinkBase.h \
 	memLink.h \
 	memLink.cc \
-	memNIC.h \
+	memNICBase.h \
 	memNIC.cc \
+	memNIC.h \
 	memNICFour.h \
 	memNICFour.cc \
 	customcmd/customCmdEvent.h \
@@ -191,7 +192,8 @@ sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \
 	memEventBase.h \
 	memEvent.h \
-	memNIC.h \
+	memNICBase.h \
+	memNIC.h
 	memNICFour.h \
 	memLink.h \
 	memLinkBase.h \
