@@ -169,7 +169,9 @@ public:
 
     SST_ELI_DOCUMENT_PARAMS( MEMNIC_ELI_PARAMS )
 
-    SST_ELI_DOCUMENT_PORTS( {"port", "Link to network", { "memHierarchy.MemRtrEvent" } } )
+#define MEMNIC_ELI_PORTS {"port", "Link to network", { "memHierarchy.MemRtrEvent" } }
+
+    SST_ELI_DOCUMENT_PORTS( MEMNIC_ELI_PORTS )
 
 /* Begin class definition */    
     /* Constructor */

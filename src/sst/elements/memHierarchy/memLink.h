@@ -54,7 +54,8 @@ public:
 
     SST_ELI_DOCUMENT_PARAMS( { MEMLINK_ELI_PARAMS }  )
 
-    SST_ELI_DOCUMENT_PORTS( { "port", "Port to another memory component", {"memHierarchy.MemEventBase"} } )
+#define MEMLINK_ELI_PORTS { "port", "Port to another memory component", {"memHierarchy.MemEventBase"} } 
+    SST_ELI_DOCUMENT_PORTS( MEMLINK_ELI_PORTS )
 
 /* Begin class definition */
     class MemEventLinkInit : public MemEventBase {
