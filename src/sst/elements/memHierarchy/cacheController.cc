@@ -356,7 +356,6 @@ bool Cache::allocateLine(MemEvent * event, Addr baseAddr) {
             return false;
         }
         
-        notifyListenerOfEvict(event, replacementLine);
         CacheAction action = coherenceMgr_->handleEviction(replacementLine, this->getName(), false);
         if (action == STALL) {
             mshr_->insertPointer(replacementLine->getBaseAddr(), event->getBaseAddr());
@@ -365,6 +364,7 @@ bool Cache::allocateLine(MemEvent * event, Addr baseAddr) {
     }
 
     /* OK to replace line */
+    notifyListenerOfEvict(event, replacementLine);
     cacheArray_->replace(baseAddr, replacementLine);
     return true;
 }
@@ -384,7 +384,6 @@ bool Cache::allocateCacheLine(MemEvent* event, Addr baseAddr) {
             return false;
         }
         
-        notifyListenerOfEvict(event, replacementLine);
         CacheAction action = coherenceMgr_->handleEviction(replacementLine, this->getName(), false);
         if (action == STALL) {
             mshr_->insertPointer(replacementLine->getBaseAddr(), event->getBaseAddr());
@@ -393,6 +392,7 @@ bool Cache::allocateCacheLine(MemEvent* event, Addr baseAddr) {
     }
     
     /* OK to replace line  */
+    notifyListenerOfEvict(event, replacementLine);
     cacheArray_->replace(baseAddr, replacementLine);
     return true;
 }
