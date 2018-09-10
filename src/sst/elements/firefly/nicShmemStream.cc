@@ -134,10 +134,6 @@ void Nic::RecvMachine::ShmemStream::processGetResp( ShmemMsgHdr& hdr, FireflyNet
 
         Hermes::MemAddr memAddr = m_ctx->findShmem( local_pid, addr, hdr.length ); 
 
-        if ( ! static_cast<NicShmemGetCmdEvent*>(entry->getCmd())->isBlocking() ) {
-	        m_ctx->nic().shmemDecPending( local_pid );
-        }
-
         m_recvEntry = new ShmemGetbRespRecvEntry( m_ctx->getShmem(), local_pid, hdr.length, static_cast<ShmemGetbSendEntry*>(entry), 
                 memAddr.getBacking() );
     }
