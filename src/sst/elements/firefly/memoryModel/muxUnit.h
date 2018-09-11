@@ -24,10 +24,15 @@
 			uint64_t start;
 		};
 
+		std::string m_name;
+
 	  public:
+
 		MuxUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* unit, std::string name ) : Unit( model, dbg), m_unit(unit), m_blockedSrc(NULL), m_scheduled(false)  {
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "MuxUnit::@p():@l ";
 		}
+
+		std::string& name() { return m_name; }
 
         bool store( UnitBase* src, MemReq* req ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"%s addr=%#" PRIx64 " length=%lu\n",src->name().c_str(), req->addr,req->length);

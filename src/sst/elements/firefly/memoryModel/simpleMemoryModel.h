@@ -16,9 +16,12 @@
 #ifndef COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 #define COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 
+#include "memoryModel/memoryModel.h"
+
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
 
-class SimpleMemoryModel : SubComponent {
+
+class SimpleMemoryModel : public MemoryModel {
 
 
 #define BUS_WIDGET_MASK 1<<1
@@ -34,11 +37,7 @@ class SimpleMemoryModel : SubComponent {
 #define SHARED_TLB_MASK 1<<11
  public:
 
-#include "memOp.h"
 
- private:
-
-   typedef std::function<void()> Callback;
 
 #include "cache.h"
 #include "memReq.h"
@@ -72,7 +71,7 @@ class SimpleMemoryModel : SubComponent {
 	enum NIC_Thread { Send, Recv };
 
     SimpleMemoryModel( Component* comp, Params& params, int id, int numCores, int numNicUnits ) : 
-		SubComponent( comp ), m_numNicThreads(numNicUnits), m_hostCacheUnit(NULL)
+		MemoryModel( comp ), m_numNicThreads(numNicUnits), m_hostCacheUnit(NULL), m_busBridgeUnit(NULL)
 	{
     	char buffer[100];
     	snprintf(buffer,100,"@t:%d:SimpleMemoryModel::@p():@l ",id);
@@ -107,19 +106,30 @@ class SimpleMemoryModel : SubComponent {
 		int numTlbSlots = params.find<int>( "numTlbSlots", 1 );
         int nicToHostMTU = params.find<int>( "nicToHostMTU", 256 );
         bool useHostCache = params.find<bool>( "useHostCache", true );
+        bool useBusBridge = params.find<bool>( "useBusBridge", true );
 
 		m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
+
+		MuxUnit* nicMuxUnit;
         if ( useHostCache ) {
+			//printf("node %d using host cache\n",id);
 		    m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
 	        m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "HostCache" );
         } else {
 	        m_muxUnit = new MuxUnit( *this, m_dbg, id, m_memUnit, "HostCache" );
         }
 
-		m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, busNumLinks, busLatency,
-                                                                TLP_overhead, DLL_bytes, hostCacheLineSize, widgetSlots );
 
-	    MuxUnit* muxUnit = new MuxUnit( *this, m_dbg, id, m_busBridgeUnit, "Nic" );
+        if ( useBusBridge ) {
+
+			//printf("node %d using bus\n",id);
+			m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, busNumLinks, busLatency,
+                                                                TLP_overhead, DLL_bytes, hostCacheLineSize, widgetSlots );
+	    	nicMuxUnit = new MuxUnit( *this, m_dbg, id, m_busBridgeUnit, "Nic" );
+
+		} else {
+	    	nicMuxUnit = m_muxUnit;
+		}
 		
         m_sharedTlb = new SharedTlb( *this, m_dbg, id, tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers );
 		
@@ -136,11 +146,11 @@ class SimpleMemoryModel : SubComponent {
 
             SharedTlbUnit* tlb = new SharedTlbUnit( *this, m_dbg, id, unitName.str().c_str(), m_sharedTlb, 
 					new LoadUnit( *this, m_dbg, id,
-                        muxUnit,
+                        nicMuxUnit,
 						nicNumLoadSlots, unitName.str().c_str() ),
 
 					new StoreUnit( *this, m_dbg, id,
-                        muxUnit,
+                        nicMuxUnit,
 						nicNumStoreSlots, unitName.str().c_str() ),
                         numTlbSlots, numTlbSlots 
                         );
@@ -236,7 +246,15 @@ class SimpleMemoryModel : SubComponent {
 	}
 
 	NicUnit& nicUnit() { return *m_nicUnit; }
-	BusBridgeUnit& busUnit() { return *m_busBridgeUnit; }
+
+	bool busUnitWrite( UnitBase* src, MemReq* req, Callback callback ) {
+		if ( m_busBridgeUnit ) {
+			return m_busBridgeUnit->write( src, req, callback );
+		} else {
+			schedCallback( 0, callback );
+			return false;
+		}
+	}
 
     void printStatus( Output& out, int id ) {
         for ( unsigned i = 0; i < m_threads.size(); i++ ) {
