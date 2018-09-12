@@ -127,6 +127,13 @@ class Nic : public SST::Component  {
         { "simpleMemoryModel.numTlbSlots","Sets the number of requests the TLB will queue","1"},
     )
 
+   SST_ELI_DOCUMENT_STATISTICS(
+        { "sentByteCount",  "number of bytes sent on network", "bytes", 1},
+        { "rcvdByteCount",  "number of bytes received from network", "bytes", 1},
+        { "sentPkts",     	"number of packets sent on network", "packets", 1},
+        { "rcvdPkts",       "number of packets received from network", "packets", 1},
+        { "networkStall",   "number of picoseconds the outbound network port was blocked", "latency", 1},
+    )
 
     SST_ELI_DOCUMENT_PORTS(
         {"rtr", "Port connected to the router", {}},
@@ -287,13 +294,15 @@ public:
     int getNum_vNics() { return m_num_vNics; }
     void printStatus(Output &out) {
         out.output("NIC %d: start time=%zu\n", m_myNodeId, (size_t) getCurrentSimTimeNano() );
-        out.output("NIC %d: Received packets: %d\n", m_myNodeId, m_recvMachine->getNumReceivedPkts());
-        out.output("NIC %d: Sent packets:     %d\n", m_myNodeId, m_sentPkts);
         m_memoryModel->printStatus( out, m_myNodeId );
         out.output("NIC %d: done\n", m_myNodeId );
     }
 
-    int m_sentPkts;
+	Statistic<uint64_t>* m_sentByteCount;
+	Statistic<uint64_t>* m_rcvdByteCount;
+	Statistic<uint64_t>* m_sentPkts;
+	Statistic<uint64_t>* m_rcvdPkts;
+	Statistic<uint64_t>* m_networkStall;
 
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
@@ -553,6 +562,8 @@ public:
     static int  m_packetId;
 	int m_tracedPkt;
 	int m_tracedNode;
+	SimTime_t m_netStallTime;
+	SimTime_t m_predNetIdleTime;
 }; 
 
 } // namesapce Firefly 

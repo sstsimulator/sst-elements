@@ -42,7 +42,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_nic2host_base_lat_ns(0),
     m_respKey(1),
     m_curNetworkSrc(-1),
-    m_sentPkts(0)
+	m_netStallTime(0),
+	m_predNetIdleTime(0)
 {
     m_myNodeId = params.find<int>("nid", -1);
     assert( m_myNodeId != -1 );
@@ -247,6 +248,17 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
 	    m_useDetailedCompute = params.find<bool>("useDetailed", false );
     }
+
+	m_sentByteCount = registerStatistic<uint64_t>("sentByteCount");
+	m_rcvdByteCount = registerStatistic<uint64_t>("rcvdByteCount");
+	m_sentPkts = registerStatistic<uint64_t>("sentPkts");
+	m_rcvdPkts = registerStatistic<uint64_t>("rcvdPkts");
+	m_networkStall = registerStatistic<uint64_t>("networkStall");
+
+    Statistic<uint64_t>* m_sentByteCount;
+    Statistic<uint64_t>* m_rcvdByteCount;
+    Statistic<uint64_t>* m_sentPkts;
+    Statistic<uint64_t>* m_rcvdPkts;
 }
 
 Nic::~Nic()
@@ -501,8 +513,15 @@ void Nic::feedTheNetwork( )
 
                 std::pair< FireflyNetworkEvent*, int>& pkt = m_sendMachineV[m_curNetworkSrc]->netPktQ_front();
                 bool ret = m_linkControl->spaceToSend( vc, pkt.first->calcPayloadSizeInBits() );
+				SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
                 if ( ! ret ) {
-                    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"blocking on network\n");
+
+					if( curTime > m_predNetIdleTime ) {
+						if ( 0 == m_netStallTime ) {
+							m_netStallTime = curTime;
+						}
+					}
+                    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"blocking on network predNetIdleTime=%zu\n", m_predNetIdleTime );
                     schedCallback(
                         [=](){
                             m_linkSendWidget->setNotify( std::bind(&Nic::feedTheNetwork, this ), vc);
@@ -511,7 +530,26 @@ void Nic::feedTheNetwork( )
 
                     return;
                 } else {
+
+					if ( m_netStallTime ) {
+                    	m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"stallTime=%lu latency=%lu\n",
+									m_netStallTime, curTime -  m_netStallTime);
+						m_networkStall->addData( curTime - m_netStallTime );
+						m_netStallTime = 0;
+					}
+
+					uint64_t bytesPerSec = m_linkControl->getLinkBW().getRoundedValue()/8;
+					SimTime_t latPS = ( (double) pkt.first->payloadSize() / (double) bytesPerSec ) * 1000000000000; 
+
+					if ( curTime > m_predNetIdleTime ) {
+						m_predNetIdleTime = curTime;
+					}
+					m_predNetIdleTime += latPS;
+
+                   	m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"predNetIdleTime=%lu\n",m_predNetIdleTime );
+
                     sendPkt( pkt, vc );
+
                     m_sendMachineV[m_curNetworkSrc]->netPktQ_pop();
                     sentPkt = true;
                 }
@@ -528,7 +566,9 @@ void Nic::sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc )
     FireflyNetworkEvent* ev = entry.first;
     assert( ev->bufSize() );
 
-    ++m_sentPkts;
+    m_sentPkts->addData(1);
+
+
     SimpleNetwork::Request* req = new SimpleNetwork::Request();
     req->dest = IdToNet( entry.second );
     req->src = IdToNet( m_myNodeId );
@@ -547,6 +587,9 @@ void Nic::sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc )
                                                     ev->bufSize(), (uint64_t)m_packetId, 
                                                     ev->isHdr() ? "Hdr":"", 
                                                     ev->isTail() ? "Tail":"" );
+
+	m_sentByteCount->addData( ev->payloadSize() );
+
     bool sent = m_linkControl->send( req, vc );
     assert( sent );
 }
