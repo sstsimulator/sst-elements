@@ -39,28 +39,31 @@ NextBlockPrefetcher::NextBlockPrefetcher(Component* owner, Params& params) : Cac
 NextBlockPrefetcher::~NextBlockPrefetcher() {}
 
 void NextBlockPrefetcher::notifyAccess(const CacheListenerNotification& notify) {
+    const NotifyAccessType notifyType = notify.getAccessType();
     const NotifyResultType notifyResType = notify.getResultType();
     const Addr addr = notify.getPhysicalAddress();
 
-    if(notifyResType == MISS) {
-        statMissEventsProcessed->addData(1);
-
-        Addr nextBlockAddr = (addr - (addr % blockSize)) + blockSize;
-        std::vector<Event::HandlerBase*>::iterator callbackItr;
-        statPrefetchEventsIssued->addData(1);
-
-        // Cycle over each registered call back and notify them that we want to issue a prefetch request
-        for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
+    if (notifyType == READ || notifyType == WRITE) { // ignore evicts
+        if(notifyResType == MISS) {
+            statMissEventsProcessed->addData(1);
+            
+            Addr nextBlockAddr = (addr - (addr % blockSize)) + blockSize;
+            std::vector<Event::HandlerBase*>::iterator callbackItr;
+            statPrefetchEventsIssued->addData(1);
+            
+            // Cycle over each registered call back and notify them that we want to issue a prefetch request
+            for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
                 // Create a new read request, we cannot issue a write because the data will get
                 // overwritten and corrupt memory (even if we really do want to do a write)
-                    MemEvent* newEv = new MemEvent(parent, nextBlockAddr, nextBlockAddr, Command::GetS);
-                    newEv->setSrc("Prefetcher");
-                    newEv->setSize(blockSize);
-                    newEv->setPrefetchFlag(true);
+                MemEvent* newEv = new MemEvent(parent, nextBlockAddr, nextBlockAddr, Command::GetS);
+                newEv->setSrc("Prefetcher");
+                newEv->setSize(blockSize);
+                newEv->setPrefetchFlag(true);
                 (*(*callbackItr))(newEv);
+            }
+        } else {
+            statHitEventsProcessed->addData(1);
         }
-    } else {
-        statHitEventsProcessed->addData(1);
     }
 }
 
