@@ -2203,7 +2203,6 @@ void MESIInternalDirectory::sendResponseDownFromMSHR(MemEvent * event, bool dirt
 void MESIInternalDirectory::sendAckInv(MemEvent * event) {
     MemEvent * ack = event->makeResponse();
     ack->setCmd(Command::AckInv); // Just in case this wasn't an Inv/ForceInv/etc.
-    ack->setDst(getDestination(event->getBaseAddr()));
     
     uint64_t deliveryTime = timestamp_ + tagLatency_;
     Response resp = {ack, deliveryTime, packetHeaderBytes};
@@ -2228,7 +2227,6 @@ void MESIInternalDirectory::sendWritebackAck(MemEvent * event) {
 
 void MESIInternalDirectory::sendWritebackFromCache(Command cmd, CacheLine * dirLine, string rqstr) {
     MemEvent * writeback = new MemEvent(parent, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd);
-    writeback->setDst(getDestination(dirLine->getBaseAddr()));
     writeback->setSize(dirLine->getSize());
     if (cmd == Command::PutM || writebackCleanBlocks_) {
         writeback->setPayload(*(dirLine->getDataLine()->getData()));
@@ -2246,7 +2244,6 @@ void MESIInternalDirectory::sendWritebackFromCache(Command cmd, CacheLine * dirL
 
 void MESIInternalDirectory::sendWritebackFromMSHR(Command cmd, CacheLine * dirLine, string rqstr, vector<uint8_t> * data) {
     MemEvent * writeback = new MemEvent(parent, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd);
-    writeback->setDst(getDestination(dirLine->getBaseAddr()));
     writeback->setSize(dirLine->getSize());
     if (cmd == Command::PutM || writebackCleanBlocks_) {
         writeback->setPayload(*data);
@@ -2279,7 +2276,6 @@ void MESIInternalDirectory::sendFlushResponse(MemEvent * requestEvent, bool succ
  */
 void MESIInternalDirectory::forwardFlushLine(MemEvent * origFlush, CacheLine * dirLine, bool dirty, Command cmd) {
     MemEvent * flush = new MemEvent(parent, origFlush->getBaseAddr(), origFlush->getBaseAddr(), cmd);
-    flush->setDst(getDestination(origFlush->getBaseAddr()));
     flush->setRqstr(origFlush->getRqstr());
     flush->setSize(lineSize_);
     uint64_t latency = tagLatency_;

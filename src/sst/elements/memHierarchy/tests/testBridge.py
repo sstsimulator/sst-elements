@@ -61,7 +61,7 @@ def buildCPU(num, network):
         "associativity" : 4,
         "cache_line_size": 64,
         "L1": 1,
-        "network_bw" : netBW,
+        "memNIC.network_bw" : netBW,
         })
 
     cpuLink = sst.Link("cpu-cache-%d"%num)
@@ -79,7 +79,7 @@ def buildMem(num, network):
         "debug": debug,
         "debug_level" : debug_level,
         "backend" : "memHierarchy.simpleMem",
-        "backend.mem_size" : 1,
+        "backend.mem_size" : "1MiB",
         "clock" : "1GHz"
         })
 
@@ -89,9 +89,9 @@ def buildMem(num, network):
         "debug_level" : debug_level,
         "entry_cache_size": 256*1024*1024, #Entry cache size of mem/blocksize
         "clock": "1GHz",
-        "network_bw": netBW,
-        "addr_range_start" : num * (mem_size / num_mem),
-        "addr_range_end" : (num+1) * (mem_size / num_mem) -1,
+        "memNIC.network_bw": netBW,
+        "memNIC.addr_range_start" : num * (mem_size / num_mem),
+        "memNIC.addr_range_end" : (num+1) * (mem_size / num_mem) -1,
         })
 
     memLink = sst.Link("MemDir_%d"%num)

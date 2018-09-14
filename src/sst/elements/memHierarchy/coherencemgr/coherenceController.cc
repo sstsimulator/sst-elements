@@ -172,8 +172,6 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, Addr baseAddr, un
 
     if (data == NULL) forwardEvent->setPayload(0, NULL);
 
-    forwardEvent->setSrc(parent->getName());
-    forwardEvent->setDst(linkDown_->findTargetDestination(baseAddr));
     forwardEvent->setSize(requestSize);
 
     if (data != NULL) forwardEvent->setPayload(*data);
@@ -195,16 +193,12 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, Addr baseAddr, un
 }
 
 uint64_t CoherenceController::forwardTowardsMem(MemEventBase * event) {
-    event->setSrc(parent->getName());
-    event->setDst(linkDown_->findTargetDestination(event->getRoutingAddress()));
-
     Response fwdReq = {event, timestamp_ + 1, packetHeaderBytes + event->getPayloadSize()};
     addToOutgoingQueue(fwdReq);
     return timestamp_ + 1;
 }
 
 uint64_t CoherenceController::forwardTowardsCPU(MemEventBase * event, std::string dst) {
-    event->setSrc(parent->getName());
     event->setDst(dst);
 
     Response fwdReq = {event, timestamp_ + 1, packetHeaderBytes + event->getPayloadSize()};
@@ -212,6 +206,10 @@ uint64_t CoherenceController::forwardTowardsCPU(MemEventBase * event, std::strin
     return timestamp_ + 1;
 }
 
+/* 
+ * This function assumes that there is only one 'source'
+ * TODO perhaps this is dangerous -> fix?
+ */
 std::string CoherenceController::getSrc() {
     return linkUp_->getSources()->begin()->name;
 }
@@ -239,7 +237,8 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
                 break;
             }
         }
-
+        
+        outgoingEvent->setSrc(parent->getName());
         outgoingEvent->setDst(linkDown_->findTargetDestination(outgoingEvent->getRoutingAddress()));
 
         if (is_debug_event(outgoingEvent)) {
@@ -265,6 +264,8 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
                 break;
             }
         }
+    
+        outgoingEvent->setSrc(parent->getName());
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",

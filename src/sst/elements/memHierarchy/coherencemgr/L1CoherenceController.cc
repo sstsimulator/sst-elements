@@ -798,7 +798,6 @@ uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, std::vector<uin
  */
 void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string origRqstr) {
     MemEvent* writeback = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
-    writeback->setDst(getDestination(cacheLine->getBaseAddr()));
     writeback->setSize(cacheLine->getSize());
     uint64_t latency = tagLatency_;
     if (dirty || writebackCleanBlocks_) {
@@ -835,7 +834,6 @@ void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, boo
 void L1CoherenceController::sendAckInv(MemEvent * request, CacheLine * cacheLine) {
     MemEvent* ack = request->makeResponse();
     ack->setCmd(Command::AckInv);
-    ack->setDst(getDestination(ack->getBaseAddr()));
     ack->setSize(lineSize_);
     
     uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
@@ -850,7 +848,6 @@ void L1CoherenceController::sendAckInv(MemEvent * request, CacheLine * cacheLine
 
 void L1CoherenceController::forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine) {
     MemEvent * flush = new MemEvent(parent, baseAddr, baseAddr, cmd);
-    flush->setDst(getDestination(baseAddr));
     flush->setRqstr(origRqstr);
     flush->setSize(lineSize_);
     uint64_t latency = tagLatency_;

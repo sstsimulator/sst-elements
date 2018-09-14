@@ -181,12 +181,6 @@ class MemNICBase : public MemLinkBase {
     
         virtual bool isClocked() { return true; } // Tell parent to trigger our clock
         
-        virtual void addSource(EndpointInfo info) { sourceEndpointInfo.insert(info); }
-        virtual void addDest(EndpointInfo info) { destEndpointInfo.insert(info); }
-
-        virtual void setSources(std::set<EndpointInfo>& srcs) { sourceEndpointInfo = srcs; }
-        virtual void setDests(std::set<EndpointInfo>& dests) { destEndpointInfo = dests; }
-
         virtual std::set<EndpointInfo>* getSources() { return &sourceEndpointInfo; }
         virtual std::set<EndpointInfo>* getDests() { return &destEndpointInfo; }
 
@@ -206,6 +200,9 @@ class MemNICBase : public MemLinkBase {
         }
 
     protected:
+        virtual void addSource(EndpointInfo info) { sourceEndpointInfo.insert(info); }
+        virtual void addDest(EndpointInfo info) { destEndpointInfo.insert(info); }
+
         virtual void nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned int phase) {
             bool networkReady = linkcontrol->isNetworkInitialized();
     

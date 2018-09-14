@@ -98,10 +98,6 @@ public:
     virtual void init(unsigned int phase);
 
     /* Remote endpoint info management */
-    virtual void setSources(std::set<EndpointInfo>& srcs);
-    virtual void setDests(std::set<EndpointInfo>& dests);
-    virtual void addSource(EndpointInfo info);
-    virtual void addDest(EndpointInfo info);
     virtual std::set<EndpointInfo>* getSources();
     virtual std::set<EndpointInfo>* getDests();
     virtual bool isDest(std::string UNUSED(str));
@@ -120,6 +116,7 @@ public:
     }
 
 protected:
+    void addRemote(EndpointInfo info);
     
     // Link
     SST::Link* link;

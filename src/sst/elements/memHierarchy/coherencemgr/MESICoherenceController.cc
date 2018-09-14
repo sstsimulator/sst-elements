@@ -2018,7 +2018,6 @@ void MESIController::sendForceInv(CacheLine * cacheLine, string rqstr, bool repl
  */
 void MESIController::forwardMessageUp(MemEvent* event) {
     MemEvent * forwardEvent = new MemEvent(*event);
-    forwardEvent->setSrc(parent->getName());
     forwardEvent->setDst(getSrc());
     
     uint64_t deliveryTime = timestamp_ + tagLatency_;
@@ -2080,7 +2079,6 @@ void MESIController::sendResponseDownFromMSHR(MemEvent * respEvent, MemEvent * r
  */
 void MESIController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string rqstr) {
     MemEvent* newCommandEvent = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
-    newCommandEvent->setDst(getDestination(cacheLine->getBaseAddr()));
     newCommandEvent->setSize(cacheLine->getSize());
     bool hasData = false;
     if (dirty || writebackCleanBlocks_) {
@@ -2128,7 +2126,6 @@ void MESIController::sendWritebackAck(MemEvent * event) {
 void MESIController::sendAckInv(MemEvent * inv) {
     MemEvent * ack = inv->makeResponse(); // Use make response to get IDs set right
     ack->setCmd(Command::AckInv); // Just in case it wasn't an Inv we're responding to
-    ack->setDst(getDestination(inv->getBaseAddr()));
     ack->setSize(lineSize_); // Number of bytes invalidated
 
     uint64_t deliveryTime = timestamp_ + tagLatency_;
@@ -2144,7 +2141,6 @@ void MESIController::sendAckInv(MemEvent * inv) {
  */
 void MESIController::forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine, Command cmd) {
     MemEvent * flush = new MemEvent(parent, baseAddr, baseAddr, cmd);
-    flush->setDst(getDestination(baseAddr));
     flush->setRqstr(origRqstr);
     flush->setSize(lineSize_);
     uint64_t latency = tagLatency_;

@@ -455,7 +455,6 @@ uint64_t L1IncoherentController::sendResponseUp(MemEvent * event, std::vector<ui
  */
 void L1IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr){
     MemEvent* writeback = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
-    writeback->setDst(getDestination(cacheLine->getBaseAddr()));
     writeback->setSize(cacheLine->getSize());
     if (cmd == Command::PutM || writebackCleanBlocks_) {
         writeback->setPayload(*cacheLine->getData());
@@ -474,7 +473,6 @@ void L1IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, st
 
 void L1IncoherentController::forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine) {
     MemEvent * flush = new MemEvent(parent, baseAddr, baseAddr, cmd);
-    flush->setDst(getDestination(baseAddr));
     flush->setRqstr(origRqstr);
     flush->setSize(lineSize_);
     uint64_t latency = tagLatency_;

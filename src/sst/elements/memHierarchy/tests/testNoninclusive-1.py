@@ -67,7 +67,7 @@ for x in range(cores):
 
     l2_clink = comp_l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
     l2_mlink = comp_l2cache.setSubComponent("memlink", "memHierarchy.MemNIC")
-    l2_mlink.addParam({
+    l2_mlink.addParams({
         "group" : 1,
         "network_bw" : network_bw,
         "network_input_buffer_size" : "2KiB",
@@ -99,6 +99,7 @@ for x in range(caches):
         "slice_id" : x,
     })
     l3_link = comp_l3cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    l3_link.addParams({
         "network_bw" : network_bw,
         "network_input_buffer_size" : "2KiB",
         "network_output_buffer_size" : "2KiB",
@@ -152,10 +153,10 @@ for x in range(memories):
 
     portid = x + caches + cores
     link_directory_network = sst.Link("link_directory_network_" + str(x))
-    link_directory_network.connect( (comp_directory, "network", "100ps"), (comp_network, "port" + str(portid), "100ps") )
+    link_directory_network.connect( (dir_clink, "port", "100ps"), (comp_network, "port" + str(portid), "100ps") )
     
     link_directory_memory_network = sst.Link("link_directory_memory_" + str(x))
-    link_directory_memory_network.connect( (comp_directory, "memory", "400ps"), (comp_memory, "direct_link", "400ps") )
+    link_directory_memory_network.connect( (dir_mlink, "port", "400ps"), (comp_memory, "direct_link", "400ps") )
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)

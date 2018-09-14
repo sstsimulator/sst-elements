@@ -46,8 +46,16 @@ MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::Component *comp,
 
 void MemHierarchyScratchInterface::init(unsigned int phase) {
     if (!phase) {
+        MemRegion region;
+        region.start = 0;
+        region.end = (uint64_t) - 1;
+        region.interleaveStep = 0;
+        region.interleaveSize = 0;
+        link_->sendInitData(new MemEventInitRegion(parent->getName(), region, false));
+
         // Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
         link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0, false));
+
     }
 
     while (SST::Event * ev = link_->recvInitData()) {

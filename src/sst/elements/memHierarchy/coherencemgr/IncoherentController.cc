@@ -1,4 +1,4 @@
-// Copyright 2009-2018 NTESS. Under the terms
+/ Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
@@ -422,7 +422,6 @@ CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, Ca
  */
 void IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr){
     MemEvent* newCommandEvent = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
-    newCommandEvent->setDst(getDestination(cacheLine->getBaseAddr()));
     newCommandEvent->setSize(cacheLine->getSize());
     if (cmd == Command::PutM || writebackCleanBlocks_) {
         newCommandEvent->setPayload(*cacheLine->getData());
@@ -445,7 +444,6 @@ void IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, stri
  */
 void IncoherentController::forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine, Command cmd) {
     MemEvent * flush = new MemEvent(parent, baseAddr, baseAddr, cmd);
-    flush->setDst(getDestination(baseAddr));
     flush->setRqstr(origRqstr);
     flush->setSize(lineSize_);
     uint64_t latency = tagLatency_;

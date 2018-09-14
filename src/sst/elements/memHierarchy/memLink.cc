@@ -54,14 +54,14 @@ void MemLink::init(unsigned int phase) {
             if (mEv->getInitCmd() == MemEventInit::InitCommand::Region) {
                 MemEventInitRegion * mEvRegion = static_cast<MemEventInitRegion*>(mEv);
                 dbg.debug(_L10_, "%s received init message: %s\n", getName().c_str(), mEvRegion->getVerboseString().c_str());
-            
+                
+
                 EndpointInfo epInfo;
                 epInfo.name = mEvRegion->getSrc();
                 epInfo.addr = 0;
                 epInfo.id = 0;
                 epInfo.region = mEvRegion->getRegion();
-                addSource(epInfo);
-                addDest(epInfo);
+                addRemote(epInfo);
 
                 if (mEvRegion->getSetRegion() && acceptRegion) {
                     dbg.debug(_L10_, "\tUpdating local region\n");
@@ -96,12 +96,7 @@ MemEventInit * MemLink::recvInitData() {
     return me;
 }
 
-/* MemLinks don't have a concept of separate sources & destinations */
-void MemLink::setSources(std::set<EndpointInfo>& srcs) {    remotes = srcs;     }
-void MemLink::setDests(std::set<EndpointInfo>& dests) {     remotes = dests;    }
-
-void MemLink::addSource(EndpointInfo info) { remotes.insert(info); }
-void MemLink::addDest(EndpointInfo info) { remotes.insert(info); }
+void MemLink::addRemote(EndpointInfo info) { remotes.insert(info); }
 
 bool MemLink::isDest(std::string UNUSED(str)) { return true; }
 bool MemLink::isSource(std::string UNUSED(str)) { return true; }

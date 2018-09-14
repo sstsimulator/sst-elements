@@ -152,20 +152,14 @@ public:
     virtual std::set<EndpointInfo> * getSources() =0;
     virtual std::set<EndpointInfo> * getDests() =0;
     
-    virtual void setSources(std::set<EndpointInfo>& srcs) =0;
-    virtual void setDests(std::set<EndpointInfo>& dsts) =0;
-    
-    virtual void addSource(EndpointInfo info) =0;
-    virtual void addDest(EndpointInfo dstInfo) =0;
-    
     virtual bool isDest(std::string UNUSED(str)) =0;
-    virtual bool isSource(std::string UNUSED(str)) =0;
+    virtual bool isSource(std::string UNUSED(str)) =0;  // Not used outside memLinkBase
 
     MemRegion getRegion() { return info.region; }
     void setRegion(MemRegion region) { info.region = region; }
 
-    EndpointInfo getEndpointInfo() { return info; }
-    void setEndpointInfo(EndpointInfo i) { info = i; }
+    EndpointInfo getEndpointInfo() { return info; }     // Not used outside memLinkBase
+    void setEndpointInfo(EndpointInfo i) { info = i; }  // Not used outside memLinkBase
 
 protected:
     
