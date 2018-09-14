@@ -61,7 +61,6 @@ comp_scratch0.addParams({
     "backendConvertor.backend" : "memHierarchy.simpleMem",
     "backendConvertor.backend.access_time" : "10ns",
     "memNIC.network_bw" : "50GB/s",
-    "memNIC.network_address" : 0
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.ScratchCPU")
 comp_cpu1.addParams({
@@ -115,7 +114,6 @@ comp_scratch1.addParams({
     "backendConvertor.backend" : "memHierarchy.simpleMem",
     "backendConvertor.backend.access_time" : "10ns",
     "memNIC.network_bw" : "50GB/s",
-    "memNIC.network_address" : 1
 })
 comp_net = sst.Component("network", "merlin.hr_router")
 comp_net.addParams({
@@ -140,7 +138,6 @@ comp_memory0.addParams({
       "backend.access_time" : "50ns",
       "backend.mem_size" : "512MiB",
       "memNIC.network_bw" : "50GB/s",
-      "memNIC.network_address" : 2,
       "memNIC.addr_range_start" : 0,
       "memNIC.interleave_size" : "128B",
       "memNIC.interleave_step" : "256B",
@@ -154,7 +151,6 @@ comp_memory1.addParams({
       "clock" : "1GHz",
       "backend.mem_size" : "512MiB",
       "memNIC.network_bw" : "50GB/s",
-      "memNIC.network_address" : 3,
       "memNIC.addr_range_start" : 128,
       "memNIC.interleave_size" : "128B",
       "memNIC.interleave_step" : "256B"

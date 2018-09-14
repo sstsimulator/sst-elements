@@ -75,48 +75,50 @@ def genMemHierarchy(cores):
 
    memory = sst.Component("memory", "memHierarchy.MemController")
    memory.addParams({
-       "range_start"           : "0",
-       "coherence_protocol"    : coherenceProtocol,
-       "debug"                 : memDebug,
-       "clock"                 : "1Ghz",
-      "backend.access_time" : "100 ns",
-      "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
-      "backend.system_ini" : "system.ini",
-      "backend.mem_size" : "512MiB",
-       "request_width"         : cacheLineSize,
-       "backend"               : "memHierarchy.dramsim",
-       "device_ini"            : "DDR3_micron_32M_8B_x4_sg125.ini",
-       "system_ini"            : "system.ini"
+        "range_start"           : "0",
+        "coherence_protocol"    : coherenceProtocol,
+        "debug"                 : memDebug,
+        "clock"                 : "1Ghz",
+        "verbose"               : 2,
+        "backend.device_ini"    : "DDR3_micron_32M_8B_x4_sg125.ini",
+        "backend.system_ini"    : "system.ini",
+        "backend.mem_size"      : "512MiB",
+        "request_width"         : cacheLineSize,
+        "backend"               : "memHierarchy.dramsim",
+        "device_ini"            : "DDR3_micron_32M_8B_x4_sg125.ini",
+        "system_ini"            : "system.ini"
    })
 
    for core in range (cores):
        l1 = sst.Component("l1cache_%d"%core, "memHierarchy.Cache")
        l1.addParams({
-           "cache_frequency"       : cacheFrequency,
-           "cache_size"            : "32KB",
-           "cache_line_size"       : cacheLineSize,
-           "associativity"         : "8",
-           "access_latency_cycles" : "4",
-           "coherence_protocol"    : coherenceProtocol,
-           "replacement_policy"    : rplPolicy,
-           "L1"                    : "1",
-           "debug"                 : memDebug,  
-           "debug_level"           : memDebugLevel, 
+            "cache_frequency"       : cacheFrequency,
+            "cache_size"            : "32KB",
+            "cache_line_size"       : cacheLineSize,
+            "associativity"         : "8",
+            "access_latency_cycles" : "4",
+            "coherence_protocol"    : coherenceProtocol,
+            "replacement_policy"    : rplPolicy,
+            "L1"                    : "1",
+            "debug"                 : memDebug,  
+            "debug_level"           : memDebugLevel, 
+            "verbose"               : 2,
        })
 
        l2 = sst.Component("l2cache_%d"%core, "memHierarchy.Cache")
        l2.addParams({
-           "cache_frequency"       : cacheFrequency,
-           "cache_size"            : "256 KB",
-           "cache_line_size"       : cacheLineSize,
-           "associativity"         : "8",
-           "access_latency_cycles" : "10",
-           "coherence_protocol"    : coherenceProtocol,
-           "replacement_policy"    : rplPolicy,
-           "L1"                    : "0",
-           "debug"                 : memDebug,  
-           "debug_level"           : memDebugLevel, 
-           "mshr_num_entries"      : "16",
+            "cache_frequency"       : cacheFrequency,
+            "cache_size"            : "256 KB",
+            "cache_line_size"       : cacheLineSize,
+            "associativity"         : "8",
+            "access_latency_cycles" : "10",
+            "coherence_protocol"    : coherenceProtocol,
+            "replacement_policy"    : rplPolicy,
+            "L1"                    : "0",
+            "debug"                 : memDebug,  
+            "debug_level"           : memDebugLevel, 
+            "verbose"               : 2,
+            "mshr_num_entries"      : "16",
        })
        
        ## SST Links
@@ -131,17 +133,18 @@ def genMemHierarchy(cores):
 
    l3 = sst.Component("L3cache", "memHierarchy.Cache")
    l3.addParams({
-       "cache_frequency"       : cacheFrequency,
-       "cache_size"            : "8 MB",
-       "cache_line_size"       : cacheLineSize,
-       "associativity"         : "8",
-       "access_latency_cycles" : "20",
-       "coherence_protocol"    : coherenceProtocol,
-       "replacement_policy"    : rplPolicy,
-       "L1"                    : "0",
-       "debug"                 : memDebug,  
-       "debug_level"           : memDebugLevel, 
-       "mshr_num_entries"      : "16",
+        "cache_frequency"       : cacheFrequency,
+        "cache_size"            : "8 MB",
+        "cache_line_size"       : cacheLineSize,
+        "associativity"         : "8",
+        "access_latency_cycles" : "20",
+        "coherence_protocol"    : coherenceProtocol,
+        "replacement_policy"    : rplPolicy,
+        "L1"                    : "0",
+        "debug"                 : memDebug,  
+        "debug_level"           : memDebugLevel, 
+        "mshr_num_entries"      : "16",
+        "verbose"               : 2,
    })
 
    # Bus to L3 and L3 <-> MM
