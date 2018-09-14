@@ -57,7 +57,6 @@ class RecvMachine {
             m_numActiveStreams( 0 ),
             m_maxActiveStreams( maxActiveStreams ),
             m_blockedPkt(NULL),
-            m_receivedPkts(0),
             m_numMsgRcvd(0)
         { 
             char buffer[100];
@@ -97,7 +96,6 @@ class RecvMachine {
                 m_blockedPkt = NULL;
             }
         }
-        int getNumReceivedPkts() { return m_receivedPkts; }
 
     protected:
         Nic&        m_nic;
@@ -168,13 +166,15 @@ class RecvMachine {
         FireflyNetworkEvent* getNetworkEvent(int vc ) {
             SST::Interfaces::SimpleNetwork::Request* req =
                 m_nic.m_linkControl->recv(vc);
-            ++m_receivedPkts;
+
+			m_nic.m_rcvdPkts->addData(1);
             if ( req ) {
                 Event* payload = req->takePayload();
                 if ( NULL == payload ) return NULL;
                 FireflyNetworkEvent* event =
                     static_cast<FireflyNetworkEvent*>(payload);
                 event->setSrcNode( m_nic.NetToId( req->src ) );
+				m_nic.m_rcvdByteCount->addData( event->payloadSize() );
                 delete req;
                 if ( ! event->isCtrl() && event->isHdr() ) {
                     ++m_numMsgRcvd;

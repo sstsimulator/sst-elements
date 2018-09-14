@@ -30,6 +30,11 @@ using namespace SST::Cassini;
 
 void PalaPrefetcher::notifyAccess(const CacheListenerNotification& notify)
 {
+    const NotifyAccessType notifyType = notify.getAccessType();
+
+    if (notifyType == EVICT)  // ignore evictions
+        return;
+
     const NotifyResultType notifyResType = notify.getResultType();
     const Addr addr = notify.getPhysicalAddress();
 

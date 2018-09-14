@@ -94,7 +94,9 @@ public:
             ret = true;
             if ( m_my_pe != 0 ) {
 				double time = m_stopTime-m_startTime;
-                printf("%d:%s: count=%d, %.3lf ns \n",m_my_pe, getMotifName().c_str(), m_count,time/(double)m_count);
+				size_t bytes = m_count * m_nelems * sizeof(TYPE);
+                printf("%d:%s: count=%d, %.3lf ns, %zu bytes, %.3lf GB/s \n",m_my_pe, getMotifName().c_str(), 
+						m_count,time/(double)m_count, bytes, (double) bytes/ time );
             }
         }
         ++m_phase;

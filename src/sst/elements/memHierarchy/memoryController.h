@@ -107,7 +107,8 @@ protected:
 
     void notifyListeners( MemEvent* ev ) {
         if (  ! listeners_.empty()) {
-            CacheListenerNotification notify(ev->getAddr(), ev->getVirtualAddress(), 
+            // AFR: should this pass the base Addr?
+            CacheListenerNotification notify(ev->getAddr(), ev->getAddr(), ev->getVirtualAddress(), 
                         ev->getInstructionPointer(), ev->getSize(), READ, HIT);
 
             for (unsigned long int i = 0; i < listeners_.size(); ++i) {

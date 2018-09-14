@@ -657,6 +657,7 @@ void HadesSHMEM::cswap2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value
 
 void HadesSHMEM::add( Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::Callback callback)
 {
+    dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 "\n",addr);
 	delayEnter(
 			[=]() {
                 Hermes::Value _value = value;
@@ -673,7 +674,7 @@ void HadesSHMEM::add2( Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::
 
     m_os->getNic()->shmemAdd( calcNetPE(pe), addr, value, 
                 [=]( ) {
-                    this->dbg().debug(CALL_INFO_LAMBDA,"add2",1,SHMEM_BASE,"returning\n");
+                    this->dbg().debug(CALL_INFO_LAMBDA,"add2",1,SHMEM_BASE,"addr=%#" PRIx64 " returning\n", addr );
 
                     this->delayReturn( callback );
                 }

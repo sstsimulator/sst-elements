@@ -93,7 +93,9 @@ libfirefly_la_SOURCES = \
 	shmem/fcollect.h \
 	shmem/reduction.cc \
 	shmem/reduction.h \
+	memoryModel/memoryModel.h \
 	memoryModel/simpleMemoryModel.h \
+	memoryModel/trivialMemoryModel.h \
 	memoryModel/busBridgeUnit.h \
 	memoryModel/busWidget.h \
 	memoryModel/cacheList.h \

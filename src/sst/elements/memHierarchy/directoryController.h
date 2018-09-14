@@ -49,7 +49,7 @@ public:
     SST_ELI_REGISTER_COMPONENT(DirectoryController, "memHierarchy", "DirectoryController", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Coherence directory, MSI or MESI", COMPONENT_CATEGORY_MEMORY)
 
-    SST_ELI_DOCUMENT_PARAMS( 
+    SST_ELI_DOCUMENT_PARAMS(
             {"clock",                   "Clock rate of controller.", "1GHz"},
             {"entry_cache_size",        "Size (in # of entries) the controller will cache.", "0"},
             {"debug",                   "Where to send debug output. 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
@@ -109,7 +109,7 @@ public:
             {"responses_sent_GetSResp",         "Number of GetSResp (data response to GetS or GetSX) responses sent to LLCs",       "responses",    1},
             {"responses_sent_GetXResp",         "Number of GetXResp (data response to GetX) responses sent to LLCs",                "responses",    1},
             {"MSHR_occupancy",                  "Number of events in MSHR each cycle",                                  "events",       1} )
-    
+
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"cpulink", "CPU-side link manager; for single-link directories use this one only", "SST::MemHierarchy::MemLinkBase"},
             {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"})
@@ -131,17 +131,17 @@ private:
     /* Range of addresses supported by this directory */
     MemRegion   region;
     Addr        memOffset; // Stack addresses if multiple DCs handle the same memory
-    
+
     CoherenceProtocol protocol;
     bool waitWBAck;
 
     /* MSHRs */
     MSHR*       mshr;
-    
+
     /* Directory cache */
-    size_t      entryCacheMaxSize;
-    size_t      entryCacheSize;
-    
+    uint64_t    entryCacheMaxSize;
+    uint64_t    entryCacheSize;
+
     /* Timestamp & latencies */
     uint64_t    timestamp;
     uint64_t    accessLatency;
@@ -193,7 +193,7 @@ private:
     std::unordered_map<Addr,DirEntry*>      directory;
     std::map<std::string,uint32_t>          node_lookup;
     std::vector<std::string>                nodeid_to_name;
-    
+
     /* Queue of packets to work on */
     std::list<std::pair<MemEvent*,bool> >   workQueue;
     std::map<MemEvent::id_type, Addr>       memReqs;
@@ -204,19 +204,19 @@ private:
     MemLinkBase*    memport;    /* Port to memory */
     MemLinkBase*    cacheport;  /* Port to caches and/or memory */
     string          memoryName; // if connected to mem via network, this should be the name of the memory we own - param is memory_name
-    
+
     std::multimap<uint64_t,MemEventBase*>   netMsgQueue;
     std::multimap<uint64_t,MemEventBase*>   memMsgQueue;
-    
+
     /** Helper for configuring links */
     void configureLinks(Params &params);
 
     /** Find directory entry by base address */
     DirEntry* getDirEntry(Addr target);
-	
+
     /** Handle incoming GetS request */
     void handleGetS(MemEvent * ev, bool replay);
-    
+
     /** Handle incoming GetX/GetSX request */
     void handleGetX(MemEvent * ev, bool replay);
 
@@ -237,13 +237,13 @@ private:
 
     /** Handle incoming AckInv */
     void handleAckInv(MemEvent * ev);
-    
+
     /** Handle incoming NACK */
     void handleNACK(MemEvent * ev);
 
     /** Handle incoming FlushLine */
     void handleFlushLine(MemEvent * ev);
-    
+
     /** Handle incoming FlushLineInv */
     void handleFlushLineInv(MemEvent * ev);
 
@@ -255,12 +255,12 @@ private:
 
     /** Identify and issue invalidates to sharers */
     void issueInvalidates(MemEvent * ev, DirEntry * entry, Command cmd);
-    
+
     void issueFetch(MemEvent * ev, DirEntry * entry, Command cmd);
 
     /** Send invalidate to a specific sharer */
     void sendInvalidate(int target, MemEvent * reqEv, DirEntry* entry, Command cmd);
-    
+
     /** Send AckPut to a replacing cache */
     void sendAckPut(MemEvent * event);
 
@@ -290,12 +290,12 @@ private:
 
     /** Find link id by name.  Create map entry if not found */
     uint32_t node_id(const std::string &name);
-    
+
     /** Find link id by name. */
     uint32_t node_name_to_id(const std::string &name);
 
-    /** Determines if directory controller has exceeded the max number of entries.  If so it 'deletes' entry (not really) 
-        and sends the entry to main memory.  In reality the entry is always kept in DirController but this writeback 
+    /** Determines if directory controller has exceeded the max number of entries.  If so it 'deletes' entry (not really)
+        and sends the entry to main memory.  In reality the entry is always kept in DirController but this writeback
         of entries is done to get performance stimation */
     void updateCache(DirEntry *entry);
 
@@ -307,10 +307,10 @@ private:
 
     /** Send entry to main memory. No payload is actually sent for reasons described in 'updateCacheEntry'. */
     void sendEntryToMemory(DirEntry *entry);
-	
+
     /** Sends MemEvent to a target */
     void sendEventToCaches(MemEventBase *ev, uint64_t deliveryTime);
-    
+
     /** Writes data packet to Memory. Returns the MemEvent ID of the data written to memory */
     MemEvent::id_type writebackData(MemEvent *data_event, Command wbCmd);
 
@@ -345,7 +345,7 @@ private:
 	std::vector<bool>   sharers;        // set of sharers for block
         int                 owner;          // owner of block
         Output * dbg;
-	
+
         DirEntry(Addr bsAddr, uint32_t bitlength, Output * d){
             clearEntry();
             baseAddr     = bsAddr;
@@ -385,7 +385,7 @@ private:
         bool isCached() {
             return cached;
         }
-        
+
         void setCached(bool cache) {
             cached = cache;
         }
@@ -397,7 +397,7 @@ private:
         void setToSteadyState(){
             lastRequest = DirEntry::NO_LAST_REQUEST;
         }
-        
+
         uint32_t getSharerCount(void) {
             uint32_t count = 0;
             for (uint32_t i = 0; i < sharers.size(); i++) {
@@ -410,11 +410,11 @@ private:
             for (uint32_t i = 0; i < sharers.size(); i++)
                 sharers[i] = false;
         }
-        
+
         void addSharer(int id){
             sharers[id]= true;
         }
-        
+
         bool isSharer(int id) {
             return sharers[id];
         }
@@ -425,11 +425,11 @@ private:
             }
             sharers[id]= false;
         }
-        
+
         int getOwner(void) {
             return owner;
         }
-        
+
         void setOwner(int id) {
             owner = id;
         }
@@ -445,7 +445,7 @@ private:
         void decrementWaitingAcks() {
             waitingAcks--;
         }
-            
+
         uint32_t getWaitingAcks() {
             return waitingAcks;
         }
@@ -465,23 +465,23 @@ public:
     void setup(void);
     void init(unsigned int phase);
     void finish(void);
-    
+
     /** Debug - triggered by output.fatal() or SIGUSR2 */
     virtual void printStatus(Output &out);
     virtual void emergencyShutdown();
-    
-    /** Function handles responses from Main Memory.  
+
+    /** Function handles responses from Main Memory.
         "Advances" the state of the directory entry */
     void handleMemoryResponse(SST::Event *event);
 
-    /** Event received from higher level caches.  
+    /** Event received from higher level caches.
         Insert to work queue so that it is process in the upcoming clock tick */
     void handlePacket(SST::Event *event);
-	
-    /** Handler that gets called by clock tick.  
+
+    /** Handler that gets called by clock tick.
         Function redirects request according to their type. */
     void processPacket(MemEvent *ev, bool replay);
-	
+
     /** Clock handler */
     bool clock(SST::Cycle_t cycle);
 

@@ -105,6 +105,8 @@ libember_la_SOURCES = \
 	mpi/motifs/emberreduce.h \
 	mpi/motifs/emberhalo3d.h \
 	mpi/motifs/emberhalo3d.cc \
+	mpi/motifs/emberlqcd.h \
+	mpi/motifs/emberlqcd.cc \
 	mpi/motifs/emberhalo3dsv.h \
 	mpi/motifs/emberhalo3dsv.cc \
 	mpi/motifs/emberhalo3d26.h \
@@ -191,6 +193,7 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemWait.h \
 	shmem/motifs/emberShmemWaitUntil.h \
 	shmem/motifs/emberShmemAtomicInc.h \
+	shmem/motifs/emberShmemFAM_Get.h \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc
 
