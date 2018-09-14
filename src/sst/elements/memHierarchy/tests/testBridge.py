@@ -62,7 +62,6 @@ def buildCPU(num, network):
         "cache_line_size": 64,
         "L1": 1,
         "network_bw" : netBW,
-        "network_address" : netPort,
         })
 
     cpuLink = sst.Link("cpu-cache-%d"%num)
@@ -93,7 +92,6 @@ def buildMem(num, network):
         "network_bw": netBW,
         "addr_range_start" : num * (mem_size / num_mem),
         "addr_range_end" : (num+1) * (mem_size / num_mem) -1,
-        "network_address" : netPort,
         })
 
     memLink = sst.Link("MemDir_%d"%num)

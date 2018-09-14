@@ -52,7 +52,6 @@ for x in range(cores):
         "L1" : 1,
         # MemNIC parameters
         "memNIC.network_bw" : network_bw,
-        "memNIC.network_address" : x,
         # Debug parameters
         "debug" : DEBUG_L1,
         "debug_level" : 10,
@@ -79,7 +78,6 @@ for x in range(caches):
         "slice_id" : x,
         # MemNIC parameters
         "memNIC.network_bw" : network_bw,
-        "memNIC.network_address" : x + cores,
         "memNIC.network_input_buffer_size" : "2KiB",
         "memNIC.network_output_buffer_size" : "2KiB",
         # Debug parameters
@@ -104,7 +102,6 @@ for x in range(memories):
         "memNIC.network_bw" : network_bw,
         "memNIC.addr_range_start" : x*64,
         "memNIC.addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
-        "memNIC.network_address" : x + caches + cores,
         "memNIC.network_input_buffer_size" : "2KiB",
         "memNIC.network_output_buffer_size" : "2KiB",
         #"memNIC.debug" : 1,
@@ -129,7 +126,6 @@ for x in range(memories):
         "backend.row_size" : "4KiB",
         "backend.row_policy" : "closed",
         # MemNIC parameters
-        "memNIC.network_address" : x + caches + cores + memories,
         "memNIC.network_bw" : network_bw,
         "memNIC.network_input_buffer_size" : "2KiB",
         "memNIC.network_output_buffer_size" : "2KiB",
