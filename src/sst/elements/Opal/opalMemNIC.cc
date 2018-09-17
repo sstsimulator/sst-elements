@@ -22,7 +22,7 @@ using namespace SST::Opal;
 /* Constructor */
 OpalMemNIC::OpalMemNIC(Component * parent, Params &params) : SST::MemHierarchy::MemNICBase(parent, params) {
 
-    info.node = params.find<uint32_t>("node", 0);
+    node = params.find<uint32_t>("node", 0);
     enable = params.find<bool>("shared_memory", true);
     localMemSize = params.find<uint64_t>("local_memory_size", 0);
 
@@ -73,12 +73,23 @@ void OpalMemNIC::send(MemHierarchy::MemEventBase * ev) {
 }
 
 
-/* Override addDest to grab based on node IDs */
-void OpalMemNIC::addDest(MemHierarchy::MemLinkBase::EndpointInfo dstInfo) {
-    if (enable && (info.node == dstInfo.node || dstInfo.node == 9999)) {
-        destEndpointInfo.insert(dstInfo);
-    } else {
-        MemNICBase::addDest(dstInfo);
+/* Add 'node' to InitMemRtrEvent */
+MemHierarchy::MemNICBase::InitMemRtrEvent * OpalMemNIC::createInitMemRtrEvent() {
+    return new OpalInitMemRtrEvent(info, node);
+}
+
+void OpalMemNIC::processInitMemRtrEvent(MemHierarchy::MemNICBase::InitMemRtrEvent * ev) {
+    OpalInitMemRtrEvent* imre = static_cast<OpalInitMemRtrEvent*>(ev);
+    if (sourceIDs.find(imre->info.id) != sourceIDs.end()) { // From one of our source groups
+        addSource(imre->info);
+    } else if (destIDs.find(imre->info.id) != destIDs.end()) {  // From one of our dest groups
+        // Filter by node if sharedmem is enabled
+        if (enable) {
+            if (imre->node == node || imre->node == 9999)
+                addDest(imre->info);
+        } else {
+            addDest(imre->info);
+        }
     }
 }
 

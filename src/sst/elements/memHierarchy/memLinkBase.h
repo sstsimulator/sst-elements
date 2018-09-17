@@ -57,7 +57,6 @@ public:
         std::string name;   /* Component name (in SST configuration script) */
         uint64_t addr;      /* Component address */
         uint32_t id;        /* Which memory level or group this component belongs to - for determining which components are sources or destinations */
-        uint32_t node;      /* Node ID (only used in multi-node configurations) */
         MemRegion region;   /* Address region associated with this component */
 
         bool operator<(const EndpointInfo &o) const {
@@ -109,7 +108,6 @@ public:
         info.name = comp->getName();
         info.addr = 0;
         info.id = 0;
-        info.node = 0;
 
         // Check whether we should accept a region push by someone else
         acceptRegion = params.find<bool>("accept_region", false);

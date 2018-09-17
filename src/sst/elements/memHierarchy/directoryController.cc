@@ -1681,16 +1681,15 @@ void DirectoryController::forwardFlushRequest(MemEvent * event) {
 }
 
 uint32_t DirectoryController::node_id(const std::string &name){
-	uint32_t id;
-	std::map<std::string, uint32_t>::iterator i = node_lookup.find(name);
-	if(node_lookup.end() == i){
-		node_lookup[name] = id = targetCount++;
+    uint32_t id;
+    std::map<std::string, uint32_t>::iterator i = node_lookup.find(name);
+    if(node_lookup.end() == i){
+	node_lookup[name] = id = targetCount++;
         nodeid_to_name.resize(targetCount);
         nodeid_to_name[id] = name;
-	}
-    else id = i->second;
-
-	return id;
+    } else 
+        id = i->second;
+    return id;
 }
 
 

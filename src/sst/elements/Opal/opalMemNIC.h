@@ -56,7 +56,34 @@ public:
     
     /* Destructor */
     ~OpalMemNIC() { }
-    
+
+    /* Specialized init mem rtr event to specify node */
+    class OpalInitMemRtrEvent : public MemHierarchy::MemNICBase::InitMemRtrEvent {
+        public:
+            uint32_t node;
+            
+            OpalInitMemRtrEvent() {}
+            OpalInitMemRtrEvent(EndpointInfo info, uint32_t node) : InitMemRtrEvent(info), node(node) { }
+
+            virtual Event* clone(void) override {
+                OpalInitMemRtrEvent * imre = new OpalInitMemRtrEvent(*this);
+                if (this->event != nullptr)
+                    imre->event = this->event->clone();
+                else
+                    imre->event = nullptr;
+                return imre;
+            }
+
+            virtual bool hasClientData() const override { return false; }
+
+            void serialize_order(SST::Core::Serialization::serializer &ser) override {
+                InitMemRtrEvent::serialize_order(ser);
+                ser & node;
+            }
+
+            ImplementSerializable(SST::Opal::OpalMemNIC::OpalInitMemRtrEvent);
+    };
+
     bool clock();
     void send(MemHierarchy::MemEventBase *ev);
 
@@ -67,11 +94,15 @@ public:
     void setup() { link_control->setup(); MemLinkBase::setup(); }
     
     virtual std::string findTargetDestination(MemHierarchy::Addr addr);
-    virtual void addDest(MemHierarchy::MemLinkBase::EndpointInfo info);
+
+protected:
+    virtual MemHierarchy::MemNICBase::InitMemRtrEvent* createInitMemRtrEvent(); 
+    virtual void processInitMemRtrEvent(MemHierarchy::MemNICBase::InitMemRtrEvent* ev);
 
 private:
     bool enable;
     uint64_t localMemSize;
+    uint32_t node;
 
     size_t packetHeaderBytes;
     SST::Interfaces::SimpleNetwork * link_control;

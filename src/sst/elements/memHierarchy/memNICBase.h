@@ -135,7 +135,6 @@ class MemNICBase : public MemLinkBase {
                     ser & info.name;
                     ser & info.addr;
                     ser & info.id;
-                    ser & info.node;
                     ser & info.region.start;
                     ser & info.region.end;
                     ser & info.region.interleaveSize;
@@ -203,6 +202,23 @@ class MemNICBase : public MemLinkBase {
         virtual void addSource(EndpointInfo info) { sourceEndpointInfo.insert(info); }
         virtual void addDest(EndpointInfo info) { destEndpointInfo.insert(info); }
 
+        virtual InitMemRtrEvent* createInitMemRtrEvent() {
+            return new InitMemRtrEvent(info);
+        }
+
+        virtual void processInitMemRtrEvent(InitMemRtrEvent* imre) {
+            dbg.debug(_L10_, "%s (memNICBase) received imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
+                    getName().c_str(), imre->info.name.c_str(), imre->info.addr, imre->info.id, imre->info.region.start, imre->info.region.end, imre->info.region.interleaveSize, imre->info.region.interleaveStep);
+
+            if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
+            	addSource(imre->info);
+                dbg.debug(_L10_, "\tAdding to sourceEndpointInfo. %zu sources found\n", sourceEndpointInfo.size());
+            } else if (destIDs.find(imre->info.id) != destIDs.end()) {
+    	        addDest(imre->info);
+                dbg.debug(_L10_, "\tAdding to destEndpointInfo. %zu destinations found\n", destEndpointInfo.size());
+            }
+        }
+
         /* NIC initialization so that subclasses don't have to do this. Subclasses should call this during init() */
         virtual void nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned int phase) {
             bool networkReady = linkcontrol->isNetworkInitialized();
@@ -218,7 +234,8 @@ class MemNICBase : public MemLinkBase {
             // On first init round, send our region out to all others
             if (networkReady && !initMsgSent) {
                 info.addr = linkcontrol->getEndpointID();
-                InitMemRtrEvent *ev = new InitMemRtrEvent(info);
+                InitMemRtrEvent * ev = createInitMemRtrEvent();
+
                 SST::Interfaces::SimpleNetwork::Request * req = new SST::Interfaces::SimpleNetwork::Request();
                 req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
                 req->src = info.addr;
@@ -238,17 +255,7 @@ class MemNICBase : public MemLinkBase {
                 if (imre) {
                     // Record name->address map for all other endpoints
                     networkAddressMap.insert(std::make_pair(imre->info.name, imre->info.addr));
-            
-                    dbg.debug(_L10_, "%s (memNICBase) received imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
-                            getName().c_str(), imre->info.name.c_str(), imre->info.addr, imre->info.id, imre->info.region.start, imre->info.region.end, imre->info.region.interleaveSize, imre->info.region.interleaveStep);
-
-                    if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
-                    	addSource(imre->info);
-                        dbg.debug(_L10_, "\tAdding to sourceEndpointInfo. %zu sources found\n", sourceEndpointInfo.size());
-                    } else if (destIDs.find(imre->info.id) != destIDs.end()) {
-            	        addDest(imre->info);
-                        dbg.debug(_L10_, "\tAdding to destEndpointInfo. %zu destinations found\n", destEndpointInfo.size());
-                    }
+                    processInitMemRtrEvent(imre);
                     delete imre;
                 } else {
                     MemRtrEvent * mre = static_cast<MemRtrEvent*>(payload);
