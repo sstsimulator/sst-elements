@@ -85,40 +85,15 @@ public:
 /* Begin class definition */    
 
     enum NetType { REQ, ACK, FWD, DATA };
-    /* Constructor */
-    MemNICFour(Component * comp, Params &params);
-    
-    /* Destructor */
-    ~MemNICFour() { }
-
-    /* Functions called by parent for handling events */
-    virtual bool isClocked() { return true; }
-    bool clock();
-    void send(MemEventBase * ev);
-    bool recvNotifyReq(int);
-    bool recvNotifyAck(int);
-    bool recvNotifyFwd(int);
-    bool recvNotifyData(int);
-    void doRecv(SST::Interfaces::SimpleNetwork::Request* req, NetType net);
-
-    /* Helper functions */
-    size_t getSizeInBits(MemEventBase * ev, NetType net);
-
-    /* Initialization and finish */
-    void init(unsigned int phase);
-    void finish() { 
-        for (int i = 0; i < 4; i++)
-            link_control[i]->finish();
-    }
-    void setup();
     
     // Router events
     class OrderedMemRtrEvent : public MemNICBase::MemRtrEvent {
         public:
+            uint64_t src;
             unsigned int tag;
 
             OrderedMemRtrEvent() : MemRtrEvent() { }
-            OrderedMemRtrEvent(MemEventBase * ev, unsigned int t) : MemRtrEvent(ev), tag(t) { }
+            OrderedMemRtrEvent(MemEventBase * ev, uint64_t s, unsigned int t) : MemRtrEvent(ev), src(s), tag(t) { }
 
             virtual Event* clone(void) override {
                 OrderedMemRtrEvent * omre = new OrderedMemRtrEvent(*this);
@@ -133,12 +108,40 @@ public:
 
             void serialize_order(SST::Core::Serialization::serializer &ser) override {
                 MemRtrEvent::serialize_order(ser);
+                ser & src;
                 ser & tag;
             }
 
             ImplementSerializable(SST::MemHierarchy::MemNICFour::OrderedMemRtrEvent);
     };
 
+    /* Constructor */
+    MemNICFour(Component * comp, Params &params);
+    
+    /* Destructor */
+    ~MemNICFour() { }
+
+    /* Functions called by parent for handling events */
+    virtual bool isClocked() { return true; }
+    bool clock();
+    void send(MemEventBase * ev);
+    bool recvNotifyReq(int);
+    bool recvNotifyAck(int);
+    bool recvNotifyFwd(int);
+    bool recvNotifyData(int);
+    void processRecv(OrderedMemRtrEvent * req, NetType net);
+
+    /* Helper functions */
+    size_t getSizeInBits(MemEventBase * ev, NetType net);
+
+    /* Initialization and finish */
+    void init(unsigned int phase);
+    void finish() { 
+        for (int i = 0; i < 4; i++)
+            link_control[i]->finish();
+    }
+    void setup();
+    
     /* Debug support */
     void printStatus(Output& out);
 

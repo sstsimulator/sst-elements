@@ -50,12 +50,7 @@ MemNICFour::MemNICFour(Component * parent, Params &params) : MemNICBase(parent, 
         link_control[i]->initialize(pref[i], UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
     
         // Packet size
-        UnitAlgebra packetSize = UnitAlgebra(params.find<std::string>(pref[i] + ".min_packet_size", "8B"));
-        if (!packetSize.hasUnits("B"))
-            dbg.fatal(CALL_INFO, -1, "Invalid param(%s): %s.min_packet_size - must have units of bytes (B). SI units OK. You specified '%s'\n.",
-                    getName().c_str(), pref[i].c_str(), packetSize.toString().c_str());
-
-        packetHeaderBytes[i] = packetSize.getRoundedValue();
+        packetHeaderBytes[i] = extractPacketHeaderSize(params, pref[i] + ".min_packet_size");
     }
     
     // Set link control to call recvNotify on event receive
@@ -114,40 +109,15 @@ void MemNICFour::setup() {
 bool MemNICFour::clock() {
     if (sendQueue[REQ].empty() && sendQueue[ACK].empty() && sendQueue[FWD].empty() && sendQueue[DATA].empty() && recvQueue.empty()) return true;
 
-    // Attempt send on the control network
+    // Attempt to drain network queues
     for (int i = 0; i < 4; i++) {
-        while (!sendQueue[i].empty()) {
-            SimpleNetwork::Request *head = sendQueue[i].front();
-/* Debug info - record before we attempt send so that if send destroys anything we have it */
-#ifdef __SST_DEBUG_OUTPUT__
-            MemEventBase * ev = (static_cast<MemRtrEvent*>(head->inspectPayload()))->event;
-            std::string debugEvStr;
-            uint64_t dst = head->dest;
-            bool doDebug = false;
-            if (ev) { 
-                debugEvStr = ev->getBriefString();
-                doDebug = is_debug_event(ev);
-            }
-#endif
-            if (link_control[i]->spaceToSend(0, head->size_in_bits) && link_control[i]->send(head, 0)) {
-#ifdef __SST_DEBUG_OUTPUT__
-                if (!debugEvStr.empty() && doDebug) {
-                    dbg.debug(_L9_, "%s (memNIC), Sending message %s to dst addr %" PRIu64 " on link control %s\n",
-                            getName().c_str(), debugEvStr.c_str(), dst, (i == REQ) ? "req" : "data");
-                }
-#endif
-                sendQueue[i].pop();
-            } else {
-                break;
-            }
-        }
+        drainQueue(&(sendQueue[i]), link_control[i]);
     }
 
     if (!recvQueue.empty()) {
         recvNotify(recvQueue.front());
         recvQueue.pop();
     }
-    
 
     return false;
 }
@@ -169,7 +139,7 @@ void MemNICFour::send(MemEventBase *ev) {
     unsigned int tag = sendTags[req->dest];
     sendTags[req->dest]++;
 
-    OrderedMemRtrEvent * omre = new OrderedMemRtrEvent(ev, tag);
+    OrderedMemRtrEvent * omre = new OrderedMemRtrEvent(ev, info.addr, tag);
     
     req->size_in_bits = getSizeInBits(ev, net);
     req->givePayload(omre);
@@ -191,60 +161,57 @@ void MemNICFour::send(MemEventBase *ev) {
  * Return whether event can be received
  */
 bool MemNICFour::recvNotifyReq(int) {
-    SimpleNetwork::Request * req = link_control[REQ]->recv(0);
-    doRecv(req, REQ);
+    OrderedMemRtrEvent * omre = static_cast<OrderedMemRtrEvent*>(doRecv(link_control[REQ]));
+    processRecv(omre, REQ);
     return true;
 }
 bool MemNICFour::recvNotifyAck(int) {
-    SimpleNetwork::Request * req = link_control[ACK]->recv(0);
-    doRecv(req, ACK);
+    OrderedMemRtrEvent * omre = static_cast<OrderedMemRtrEvent*>(doRecv(link_control[ACK]));
+    processRecv(omre, ACK);
     return true;
 }
 bool MemNICFour::recvNotifyFwd(int) {
-    SimpleNetwork::Request * req = link_control[FWD]->recv(0);
-    doRecv(req, FWD);
+    OrderedMemRtrEvent * omre = static_cast<OrderedMemRtrEvent*>(doRecv(link_control[FWD]));
+    processRecv(omre, FWD);
     return true;
 }
 bool MemNICFour::recvNotifyData(int) {
-    SimpleNetwork::Request * req = link_control[DATA]->recv(0);
-    doRecv(req, DATA);
+    OrderedMemRtrEvent * omre = static_cast<OrderedMemRtrEvent*>(doRecv(link_control[DATA]));
+    processRecv(omre, DATA);
     return true;
 }
 
-void MemNICFour::doRecv(SimpleNetwork::Request * req, NetType net) {
-    uint64_t src = req->src;
-    OrderedMemRtrEvent * mre = processRecv(req); // Return the splitmemrtrevent if we have one
-                
-    if (mre != nullptr) {
+void MemNICFour::processRecv(OrderedMemRtrEvent * omre, NetType net) {
+    if (omre != nullptr) {
         dbg.debug(_L3_, "%s, memNIC received a message: <%" PRIu64 ", %u>\n",
-                getName().c_str(), src, mre->tag);
+                getName().c_str(), omre->src, omre->tag);
 
-        stat_oooDepthSrc->addData(orderBuffer[src].size());
+        stat_oooDepthSrc->addData(orderBuffer[omre->src].size());
         stat_oooDepth->addData(totalOOO);
-        if (mre->tag == recvTags[src]) { // Got the tag we were expecting
+        if (omre->tag == recvTags[omre->src]) { // Got the tag we were expecting
             stat_oooEvent[net]->addData(0); // Count total number of events received
-            recvTags[src]++;
+            recvTags[omre->src]++;
             
             if (recvQueue.empty())
-                recvNotify(mre);
+                recvNotify(omre);
             else {
                 // Still push one message for every receive...
-                recvQueue.push(mre);
+                recvQueue.push(omre);
                 recvNotify(recvQueue.front());
                 recvQueue.pop();
             }
 
-            while (orderBuffer[src].find(recvTags[src]) != orderBuffer[src].end()) {
+            while (orderBuffer[omre->src].find(recvTags[omre->src]) != orderBuffer[omre->src].end()) {
                 totalOOO--;
-                recvQueue.push(orderBuffer[src][recvTags[src]].first);
-                stat_orderLatency->addData(getCurrentSimTime() - orderBuffer[src][recvTags[src]].second);
-                orderBuffer[src].erase(recvTags[src]);
-                recvTags[src]++;
+                recvQueue.push(orderBuffer[omre->src][recvTags[omre->src]].first);
+                stat_orderLatency->addData(getCurrentSimTime() - orderBuffer[omre->src][recvTags[omre->src]].second);
+                orderBuffer[omre->src].erase(recvTags[omre->src]);
+                recvTags[omre->src]++;
             }
         } else {
             totalOOO++;
             stat_oooEvent[net]->addData(1); // Count number of out of order events received
-            orderBuffer[src][mre->tag] = std::make_pair(mre,getCurrentSimTime());
+            orderBuffer[omre->src][omre->tag] = std::make_pair(omre,getCurrentSimTime());
         }
     }
 }
@@ -264,34 +231,6 @@ void MemNICFour::recvNotify(OrderedMemRtrEvent* mre) {
     (*recvHandler)(me);
 }
 
-MemNICFour::OrderedMemRtrEvent* MemNICFour::processRecv(SimpleNetwork::Request * req) {
-    if (req != nullptr) {
-        MemRtrEvent * mre = static_cast<MemRtrEvent*>(req->takePayload());
-        delete req;
-        
-        if (mre->hasClientData()) {
-            OrderedMemRtrEvent * smre = static_cast<OrderedMemRtrEvent*>(mre);
-            if (smre->event != nullptr) {
-                MemEventBase * ev = static_cast<MemEventBase*>(smre->event);
-                ev->setDeliveryLink(smre->getLinkId(), NULL);
-            }
-            return smre;
-        } else {
-            InitMemRtrEvent *imre = static_cast<InitMemRtrEvent*>(mre);
-            if (networkAddressMap.find(imre->info.name) == networkAddressMap.end()) {
-                dbg.fatal(CALL_INFO, -1, "%s (MemNIC), received information about previously unknown endpoint. This case is not handled. Endpoint name: %s\n",
-                        getName().c_str(), imre->info.name.c_str());
-            }
-            if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
-                sourceEndpointInfo.insert(imre->info);
-            } else if (destIDs.find(imre->info.id) != destIDs.end()) {
-                destEndpointInfo.insert(imre->info);
-            }
-            delete imre;
-        }
-    } 
-    return nullptr;
-}
 
 /** Helper functions **/
 /* Calculate size in bits of an event */

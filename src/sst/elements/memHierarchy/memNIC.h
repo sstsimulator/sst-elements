@@ -75,7 +75,6 @@ public:
     /* Functions called by parent for handling events */
     bool clock();
     void send(MemEventBase * ev);
-    MemEventBase * recv();
     
     /* Callback to notify when link_control receives a message */
     bool recvNotify(int);

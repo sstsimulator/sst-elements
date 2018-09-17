@@ -203,6 +203,7 @@ class MemNICBase : public MemLinkBase {
         virtual void addSource(EndpointInfo info) { sourceEndpointInfo.insert(info); }
         virtual void addDest(EndpointInfo info) { destEndpointInfo.insert(info); }
 
+        /* NIC initialization so that subclasses don't have to do this. Subclasses should call this during init() */
         virtual void nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned int phase) {
             bool networkReady = linkcontrol->isNetworkInitialized();
     
@@ -280,12 +281,79 @@ class MemNICBase : public MemLinkBase {
             }
         }
 
+        // Lookup the network address for a given endpoint
         virtual uint64_t lookupNetworkAddress(const std::string &dst) const {
             std::unordered_map<std::string,uint64_t>::const_iterator it = networkAddressMap.find(dst);
             if (it == networkAddressMap.end()) {
                 dbg.fatal(CALL_INFO, -1, "%s (MemNICBase), Network address for destination '%s' not found in networkAddressMap.\n", getName().c_str(), dst.c_str());
             }
             return it->second;
+        }
+
+        /*
+         *  Some helper functions to avoid needing to repeat code everywhere
+         */
+
+        // Get a packet header size parameter & error check it
+        size_t extractPacketHeaderSize(Params &params, std::string pname, std::string defsize = "8B") {
+            UnitAlgebra size = UnitAlgebra(params.find<std::string>(pname, defsize));
+            if (!size.hasUnits("B"))
+                dbg.fatal(CALL_INFO, -1, "Invalid param(%s): %s - must have units of bytes (B). SI units OK. You specified '%s'\n.",
+                        getName().c_str(), pname.c_str(), size.toString().c_str());
+            return size.getRoundedValue();
+        }
+
+        // Drain a send queue
+        void drainQueue(std::queue<SST::Interfaces::SimpleNetwork::Request*>* queue, SST::Interfaces::SimpleNetwork * linkcontrol) {
+            while (!queue->empty()) {
+                SST::Interfaces::SimpleNetwork::Request * head = queue->front();
+#ifdef __SST_DEBUG_OUTPUT__
+                MemEventBase * ev = (static_cast<MemRtrEvent*>(head->inspectPayload()))->event;
+                std::string debugEvStr;
+                uint64_t dst = head->dest;
+                bool doDebug = false;
+                if (ev) {
+                    debugEvStr = ev->getBriefString();
+                    doDebug = is_debug_event(ev);
+                }
+#endif
+                if (linkcontrol->spaceToSend(0, head->size_in_bits) && linkcontrol->send(head, 0)) {
+#ifdef __SST_DEBUG_OUTPUT__
+                    if (!debugEvStr.empty() && doDebug) {
+                        dbg.debug(_L9_, "%s (memNICBase), Sending message %s to dst addr %" PRIu64 "\n",
+                                getName().c_str(), debugEvStr.c_str(), dst);
+                    }
+#endif
+                    queue->pop();
+                } else {
+                    break;
+                }
+            }
+        }
+
+        MemRtrEvent* doRecv(SST::Interfaces::SimpleNetwork * linkcontrol) {
+            SST::Interfaces::SimpleNetwork::Request * req = linkcontrol->recv(0);
+            if (req != nullptr) {
+                MemRtrEvent * mre = static_cast<MemRtrEvent*>(req->takePayload());
+                delete req;
+
+                if (mre->hasClientData()) {
+                    return mre;
+                } else {
+                    InitMemRtrEvent * imre = static_cast<InitMemRtrEvent*>(mre);
+                    if (networkAddressMap.find(imre->info.name) == networkAddressMap.end()) {
+                        dbg.fatal(CALL_INFO, -1, "%s received information about previously unknown endpoint. This case is not handled. Endpoint name: %s\n",
+                                getName().c_str(), imre->info.name.c_str());
+                    }
+                    if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
+                        addSource(imre->info);
+                    } else if (destIDs.find(imre->info.id) != destIDs.end()) {
+                        addDest(imre->info);
+                    }
+                    delete imre;
+                }
+            }
+            return nullptr;
         }
 
         /*** Data Members ***/
@@ -302,7 +370,6 @@ class MemNICBase : public MemLinkBase {
     
         // Other parameters
         std::unordered_set<uint32_t> sourceIDs, destIDs; // IDs which this endpoint cares about
-
 };
 
 } //namespace memHierarchy
