@@ -22,6 +22,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+#include <sst/core/elementinfo.h>
 
 #include "Job.h"
 
@@ -46,6 +47,16 @@ namespace SST {
 
         class linkBuilder : public SST::Component {
             public:
+
+                SST_ELI_REGISTER_COMPONENT(
+                    linkBuilder,
+                    "scheduler",
+                    "linkBuilder",
+                    SST_ELI_ELEMENT_VERSION(1,0,0),
+                    "Node Graph Link Modifier",
+                    COMPONENT_CATEGORY_UNCATEGORIZED
+                )
+
                 linkBuilder(SST::ComponentId_t id, SST::Params & params);
                 void connectGraph(Job* job);
                 void disconnectGraph(Job* job);

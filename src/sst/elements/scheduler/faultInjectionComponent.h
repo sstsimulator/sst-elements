@@ -21,6 +21,7 @@
 
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <sst/core/elementinfo.h>
 
 namespace SST{
 	class Event;
@@ -32,6 +33,34 @@ namespace SST{
 
 		class faultInjectionComponent : public SST::Component{
 			public:
+
+                SST_ELI_REGISTER_COMPONENT(
+                    faultInjectionComponent,
+                    "scheduler",
+                    "faultInjectionComponent",
+                    SST_ELI_ELEMENT_VERSION(1,0,0),
+                    "Generates and injects failures from a flatfile",
+                    COMPONENT_CATEGORY_UNCATEGORIZED
+                )
+
+                SST_ELI_DOCUMENT_PARAMS(
+                    { "faultInjectionFilename",
+                        "File to use for fault injections",
+                        NULL
+                    },
+                    { "injectionFrequency",
+                        "Frequency with which injections occur",
+                        NULL
+                    }
+                )
+
+                SST_ELI_DOCUMENT_PORTS(
+                    {"faultInjector",
+                     "Causes nodes to fail",
+                     {"faultActivationEvents"}
+                    }
+                )
+
 				faultInjectionComponent();
 				faultInjectionComponent( SST::ComponentId_t id, SST::Params& params );
 				~faultInjectionComponent();
