@@ -143,14 +143,23 @@ class SimpleMemoryModel : public MemoryModel {
 			unitName.str("");
 			unitName.clear();
 			unitName << "Nic" << i;
+            Unit* load;
+            Unit* store;
+            if ( useBusBridge ) {
+                load = nicMuxUnit;
+                store = nicMuxUnit;
+            } else {
+                store = new BusStoreWidget( *this, m_dbg, id, nicMuxUnit, hostCacheLineSize, widgetSlots, 0 );
+                load = new BusLoadWidget( *this, m_dbg, id, nicMuxUnit, hostCacheLineSize, widgetSlots, 0 );
+            }
 
             SharedTlbUnit* tlb = new SharedTlbUnit( *this, m_dbg, id, unitName.str().c_str(), m_sharedTlb, 
 					new LoadUnit( *this, m_dbg, id,
-                        nicMuxUnit,
+                        load,
 						nicNumLoadSlots, unitName.str().c_str() ),
 
 					new StoreUnit( *this, m_dbg, id,
-                        nicMuxUnit,
+                        store,
 						nicNumStoreSlots, unitName.str().c_str() ),
                         numTlbSlots, numTlbSlots 
                         );
