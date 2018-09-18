@@ -133,6 +133,9 @@ class Nic : public SST::Component  {
         { "sentPkts",     	"number of packets sent on network", "packets", 1},
         { "rcvdPkts",       "number of packets received from network", "packets", 1},
         { "networkStall",   "number of picoseconds the outbound network port was blocked", "latency", 1},
+        { "hostStall",      "number of nanoseconds the host blocked inbound network packets", "latency", 1},
+        { "blockedRecvStream",      "number of picoseconds the receive stream is blocked", "latency", 1},
+        { "recvStreamPending",   "number of pending receive stream memory operations", "depth", 1},
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -303,6 +306,9 @@ public:
 	Statistic<uint64_t>* m_sentPkts;
 	Statistic<uint64_t>* m_rcvdPkts;
 	Statistic<uint64_t>* m_networkStall;
+	Statistic<uint64_t>* m_hostStall;
+	Statistic<uint64_t>* m_blockedRecvStream;
+	Statistic<uint64_t>* m_recvStreamPending;
 
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
@@ -423,6 +429,8 @@ public:
     SST::Interfaces::SimpleNetwork::Handler<Nic>* m_sendNotifyFunctor;
     LinkControlWidget* m_linkRecvWidget;
     LinkControlWidget* m_linkSendWidget;
+
+	uint64_t m_linkBytesPerSec;
 
 	std::vector< int >		m_sendStreamNum;
 
@@ -562,7 +570,6 @@ public:
     static int  m_packetId;
 	int m_tracedPkt;
 	int m_tracedNode;
-	SimTime_t m_netStallTime;
 	SimTime_t m_predNetIdleTime;
 }; 
 
