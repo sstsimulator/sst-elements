@@ -42,7 +42,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_nic2host_base_lat_ns(0),
     m_respKey(1),
     m_curNetworkSrc(-1),
-	m_netStallTime(0),
 	m_predNetIdleTime(0)
 {
     m_myNodeId = params.find<int>("nid", -1);
@@ -115,6 +114,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
 	UnitAlgebra input_buf_size = params.find<SST::UnitAlgebra>("input_buf_size" );
 	UnitAlgebra output_buf_size = params.find<SST::UnitAlgebra>("output_buf_size" );
 	UnitAlgebra link_bw = params.find<SST::UnitAlgebra>("link_bw" );
+
+	m_linkBytesPerSec = link_bw.getRoundedValue()/8;
 
     m_dbg.verbose(CALL_INFO,1,1,"id=%d input_buf_size=%s output_buf_size=%s link_bw=%s "
 			"packetSize=%d\n", m_myNodeId, 
@@ -249,11 +250,14 @@ Nic::Nic(ComponentId_t id, Params &params) :
 	    m_useDetailedCompute = params.find<bool>("useDetailed", false );
     }
 
-	m_sentByteCount = registerStatistic<uint64_t>("sentByteCount");
-	m_rcvdByteCount = registerStatistic<uint64_t>("rcvdByteCount");
-	m_sentPkts = registerStatistic<uint64_t>("sentPkts");
-	m_rcvdPkts = registerStatistic<uint64_t>("rcvdPkts");
-	m_networkStall = registerStatistic<uint64_t>("networkStall");
+	m_sentByteCount =     registerStatistic<uint64_t>("sentByteCount");
+	m_rcvdByteCount =     registerStatistic<uint64_t>("rcvdByteCount");
+	m_sentPkts = 	      registerStatistic<uint64_t>("sentPkts");
+	m_rcvdPkts =          registerStatistic<uint64_t>("rcvdPkts");
+	m_networkStall =      registerStatistic<uint64_t>("networkStall");
+	m_hostStall =         registerStatistic<uint64_t>("hostStall");
+	m_blockedRecvStream = registerStatistic<uint64_t>("blockedRecvStream");
+	m_recvStreamPending = registerStatistic<uint64_t>("recvStreamPending");
 
     Statistic<uint64_t>* m_sentByteCount;
     Statistic<uint64_t>* m_rcvdByteCount;
@@ -513,33 +517,29 @@ void Nic::feedTheNetwork( )
 
                 std::pair< FireflyNetworkEvent*, int>& pkt = m_sendMachineV[m_curNetworkSrc]->netPktQ_front();
                 bool ret = m_linkControl->spaceToSend( vc, pkt.first->calcPayloadSizeInBits() );
-				SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
                 if ( ! ret ) {
 
-					if( curTime > m_predNetIdleTime ) {
-						if ( 0 == m_netStallTime ) {
-							m_netStallTime = curTime;
-						}
-					}
-                    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"blocking on network predNetIdleTime=%zu\n", m_predNetIdleTime );
+                    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"blocking on network\n" );
                     schedCallback(
                         [=](){
-                            m_linkSendWidget->setNotify( std::bind(&Nic::feedTheNetwork, this ), vc);
+                            m_linkSendWidget->setNotify( [=]() {
+								SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
+								if ( curTime > m_predNetIdleTime ) {
+									m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"network stalled latency=%lu\n",
+										curTime -  m_predNetIdleTime);
+									printf("outgoing link stalled %lu\n",curTime - m_predNetIdleTime);
+									m_networkStall->addData( curTime - m_predNetIdleTime );
+								}
+								feedTheNetwork();
+							}, vc);
                         }
                     ,0 );
 
                     return;
                 } else {
 
-					if ( m_netStallTime ) {
-                    	m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"stallTime=%lu latency=%lu\n",
-									m_netStallTime, curTime -  m_netStallTime);
-						m_networkStall->addData( curTime - m_netStallTime );
-						m_netStallTime = 0;
-					}
-
-					uint64_t bytesPerSec = m_linkControl->getLinkBW().getRoundedValue()/8;
-					SimTime_t latPS = ( (double) pkt.first->payloadSize() / (double) bytesPerSec ) * 1000000000000; 
+					SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
+					SimTime_t latPS = ( (double) pkt.first->payloadSize() / (double) m_linkBytesPerSec ) * 1000000000000; 
 
 					if ( curTime > m_predNetIdleTime ) {
 						m_predNetIdleTime = curTime;
