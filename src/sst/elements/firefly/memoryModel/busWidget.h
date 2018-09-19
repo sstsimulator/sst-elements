@@ -186,10 +186,15 @@ class BusStoreWidget : public Unit {
     }
 
     std::string& name() { return m_name; } 
+
     bool store( UnitBase* src, MemReq* req ) {
+		return storeCB( src, req );
+	}
+
+    bool storeCB( UnitBase* src, MemReq* req, Callback callback = NULL ) {
 		assert( NULL == m_blockedSrc );
 
-		WidgetEntry* entry = new WidgetEntry( m_width, req, 0 );
+		WidgetEntry* entry = new WidgetEntry( m_width, req, 0, callback );
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu entry=%p\n",req->addr,req->length, entry);
 		delete req;
 
@@ -233,6 +238,9 @@ class BusStoreWidget : public Unit {
 		if ( entry.isDone() ) {
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"entry done entry=%p\n", &entry);
 			--m_numPending;
+			if ( entry.callback ) {
+           		m_model.schedCallback( 0, entry.callback );		
+			}
 			delete m_pendingQ.front();
 			m_pendingQ.pop_front();
         	if ( m_blockedSrc ) {
