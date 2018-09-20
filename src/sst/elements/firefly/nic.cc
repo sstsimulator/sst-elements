@@ -256,8 +256,9 @@ Nic::Nic(ComponentId_t id, Params &params) :
 	m_rcvdPkts =          registerStatistic<uint64_t>("rcvdPkts");
 	m_networkStall =      registerStatistic<uint64_t>("networkStall");
 	m_hostStall =         registerStatistic<uint64_t>("hostStall");
-	m_blockedRecvStream = registerStatistic<uint64_t>("blockedRecvStream");
+
 	m_recvStreamPending = registerStatistic<uint64_t>("recvStreamPending");
+	m_sendStreamPending = registerStatistic<uint64_t>("sendStreamPending");
 
     Statistic<uint64_t>* m_sentByteCount;
     Statistic<uint64_t>* m_rcvdByteCount;

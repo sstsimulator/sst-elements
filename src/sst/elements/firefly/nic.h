@@ -134,8 +134,9 @@ class Nic : public SST::Component  {
         { "rcvdPkts",       "number of packets received from network", "packets", 1},
         { "networkStall",   "number of picoseconds the outbound network port was blocked", "latency", 1},
         { "hostStall",      "number of nanoseconds the host blocked inbound network packets", "latency", 1},
-        { "blockedRecvStream",      "number of picoseconds the receive stream is blocked", "latency", 1},
+
         { "recvStreamPending",   "number of pending receive stream memory operations", "depth", 1},
+        { "sendStreamPending",   "number of pending send stream memory operations", "depth", 1},
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -307,8 +308,8 @@ public:
 	Statistic<uint64_t>* m_rcvdPkts;
 	Statistic<uint64_t>* m_networkStall;
 	Statistic<uint64_t>* m_hostStall;
-	Statistic<uint64_t>* m_blockedRecvStream;
 	Statistic<uint64_t>* m_recvStreamPending;
+	Statistic<uint64_t>* m_sendStreamPending;
 
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
