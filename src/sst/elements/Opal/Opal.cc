@@ -435,7 +435,7 @@ REQRESPONSE Opal::allocateFromReservedMemory(int node, uint64_t reserved_vAddres
 	}
 	else
 	{
-		output->fatal(CALL_INFO, -1, "Opal: address :%lld requested with fileId:%d has no space left\n", vAddress, fileID);
+		output->fatal(CALL_INFO, -1, "Opal: address :%lu requested with fileId:%d has no space left\n", vAddress, fileID);
 	}
 
 	return response;
@@ -519,7 +519,7 @@ void Opal::migratePages(int node, int coreId, int pages)
 	std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > lm_pages = nodeInfo[node]->getPagesToMigrate(pages);
 
 	// get shared memory pages
-	int sharedMemPoolId;
+	int sharedMemPoolId = 0;
 	std::list<uint64_t> sm_pages;
 	for(uint32_t i = 0; i<num_shared_mempools; i++) {
 
@@ -556,7 +556,7 @@ void Opal::migratePages(int node, int coreId, int pages)
 
 
 	// error checking
-	if( (uint32_t)lm_pages.size() != pages && (uint32_t)sm_pages.size() != pages)
+	if( (uint32_t)lm_pages.size() != (uint32_t)pages && (uint32_t)sm_pages.size() != (uint32_t)pages)
 		output->fatal(CALL_INFO, -1, "Opal: This should not happen\n");
 
 	// swap
