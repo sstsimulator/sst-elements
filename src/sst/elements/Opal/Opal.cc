@@ -435,7 +435,7 @@ REQRESPONSE Opal::allocateFromReservedMemory(int node, uint64_t reserved_vAddres
 	}
 	else
 	{
-		output->fatal(CALL_INFO, -1, "Opal: address :%lu requested with fileId:%d has no space left\n", vAddress, fileID);
+		output->fatal(CALL_INFO, -1, "Opal: address :%" PRIu64 "llu requested with fileId:%d has no space left\n", vAddress, fileID);
 	}
 
 	return response;
