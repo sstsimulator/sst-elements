@@ -48,6 +48,26 @@ namespace SST {
         class c_TxnScheduler: public SubComponent{
         public:
 
+            SST_ELI_REGISTER_SUBCOMPONENT(
+                c_TxnScheduler,
+                "CramSim",
+                "c_TxnScheduler",
+                SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Transaction Scheduler",
+                "SST::CramSim::Controller::TxnScheduler"
+            )
+
+            SST_ELI_DOCUMENT_PARAMS(
+                {"txnSchedulingPolicy", "Transaction scheduling policy", NULL},
+                {"numTxnQEntries", "The number of transaction queue entries", NULL},
+            )
+
+            SST_ELI_DOCUMENT_PORTS(
+            )
+
+            SST_ELI_DOCUMENT_STATISTICS(
+            )
+
             c_TxnScheduler(SST::Component *comp, SST::Params &x_params);
             ~c_TxnScheduler();
 
