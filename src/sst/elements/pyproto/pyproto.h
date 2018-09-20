@@ -21,6 +21,8 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/event.h>
+#include <sst/core/elementinfo.h>
+
 
 extern "C" struct PyEvent_t;
 extern "C" struct PyProto_t;
@@ -55,6 +57,20 @@ public:
 class PyProto : public SST::Component
 {
 public:
+
+    SST_ELI_REGISTER_COMPONENT(
+        PyProto,
+        "pyproto",
+        "PyProto",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Python Prototyping Component",
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"port%d", "Link to another object", {}}
+    )
+
     PyProto(SST::ComponentId_t id, SST::Params& params);
     ~PyProto();
 
