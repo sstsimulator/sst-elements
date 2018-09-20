@@ -356,7 +356,7 @@ REQRESPONSE Opal::allocateLocalMemory(int node, int coreId, uint64_t vAddress, i
 	else {
 		OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Local Memory is drained out\n", node));
 
-		if(nodeInfo[node]->page_migration && !nodeInfo[node]->memoryAllocationPolicy || 4 == fault_level) {
+		if((nodeInfo[node]->page_migration && !nodeInfo[node]->memoryAllocationPolicy) || 4 == fault_level) {
 			if(4 == fault_level)
 				std::cerr << getName().c_str() << " migrating a page to allocate memory for node " << node << " core " << coreId << " CR3" << std::endl;
 
