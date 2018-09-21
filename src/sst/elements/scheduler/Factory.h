@@ -20,7 +20,10 @@
 #ifndef SST_SCHEDULER_FACTORY_H__
 #define SST_SCHEDULER_FACTORY_H__
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wuser-defined-warnings"
 #include "sst/core/element.h"
+#pragma clang diagnostic pop
 #include <string>
 #include <vector>
 

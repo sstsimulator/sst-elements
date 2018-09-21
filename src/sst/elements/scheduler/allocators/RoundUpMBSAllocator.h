@@ -23,9 +23,12 @@
 #ifndef __ROUNDUPMBSALLOCATOR_H__
 #define __ROUNDUPMBSALLOCATOR_H__
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wuser-defined-warnings"
 #include <vector>
 #include <string>
 #include <map>
+#pragma clang diagnostic pop
 
 #include "GranularMBSAllocator.h" 
 
