@@ -127,8 +127,9 @@ void STPU::init(unsigned int phase) {
                 new SimpleMem::Request(SimpleMem::Request::Write, reqAddr,
                                        sizeof(T_Wme));
             req->data.resize(sizeof(T_Wme));
-            req->data[0] = 0 & 0xff; // Synaptic Str upper
-            req->data[1] = 125 & 0xff; // Synaptic Str lower
+            uint32_t str = 1250;
+            req->data[0] = (str>>8) & 0xff; // Synaptic Str upper
+            req->data[1] = (str) & 0xff; // Synaptic Str lower
             req->data[2] = 0 & 0xff; // temp offset upper
             req->data[3] = 1 & 0xff; // temp offset lower
             req->data[4] = (targ>>8) & 0xff; // address upper
@@ -176,10 +177,8 @@ void STPU::handleEvent(Interfaces::SimpleMem::Request * req)
         requests.erase(i);
         // handle event
         STS* requestor = i->second;
-        printf("req1 %p\n", req);
         requestor->returnRequest(req);
     }
-    delete req;
 }
 
 void STPU::deliver(float val, int targetN, int time) {
@@ -193,6 +192,7 @@ void STPU::deliver(float val, int targetN, int time) {
 }
 
 void STPU::readMem(Interfaces::SimpleMem::Request *req, STS *requestor) {
+    printf("Read Mem %p %d\n", req, req->cmd);
     // send the request
     memory->sendRequest(req);
     // record who it came from

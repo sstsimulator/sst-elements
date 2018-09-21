@@ -46,21 +46,19 @@ void STS::advance(uint now) {
         // get the request
         SST::Interfaces::SimpleMem::Request *req = incomingReqs.front();
 
-        printf(" req %p: %d %p %" PRIu32 "\n", req, req->cmd, (void*)req->addr, req->size);
-        printf(" req %u\n", req->data.size());
+        assert(req->cmd == SST::Interfaces::SimpleMem::Request::ReadResp);
 
         // deliver the spike
         auto &data = req->data;
-        printf("1\n");
         uint16_t strength = (req->data[0]<<8) + req->data[1];
-        printf("2\n");
         uint16_t tempOffset = (data[2]<<8) + data[3];
-        printf("3\n");
         uint16_t target = (data[4]<<8) + data[5];
-        printf("  stpu deliver str%u to %u @ %u\n", strength, target, tempOffset);
+        printf("  stpu deliver str%u to %u @ %u\n", strength, target, tempOffset+now);
         mySTPU->deliver(strength, target, tempOffset+now);
+        numSpikes--;
 
         incomingReqs.pop();
+        delete req;
     }
 }
 
