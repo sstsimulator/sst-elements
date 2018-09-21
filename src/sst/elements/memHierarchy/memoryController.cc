@@ -571,6 +571,9 @@ void MemController::printStatus(Output &statusOut) {
 }
 
 void MemController::emergencyShutdown() {
-    if (out.getVerboseLevel() > 1)
+    if (out.getVerboseLevel() > 1) {
+        if (out.getOutputLocation() == Output::STDOUT)
+            out.setOutputLocation(Output::STDERR);
         printStatus(out);
+    }
 }
