@@ -767,7 +767,10 @@ void Cache::printStatus(Output &out) {
 }
 
 void Cache::emergencyShutdown() {
-    if (out_->getVerboseLevel() > 1)
+    if (out_->getVerboseLevel() > 1) {
+        if (out_->getOutputLocation() == Output::STDOUT)
+            out_->setOutputLocation(Output::STDERR);
         printStatus(*out_);
+    }
 }
 
