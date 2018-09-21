@@ -25,7 +25,10 @@
 
 #include <vector>
 #include <string>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wuser-defined-warnings"
 #include <map>
+#pragma clang diagnostic pop
 
 #include "Allocator.h" 
 #include "MBSAllocInfo.h" //necessary due to virtual class

@@ -17,9 +17,12 @@
 #define SST_SCHEDULER__STATEFULSCHEDULER_H__
 
 //#include <functional>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wuser-defined-warnings"
 #include <map>
 #include <set>
 #include <string>
+#pragma clang diagnostic pop
 
 #include "Scheduler.h"
 
