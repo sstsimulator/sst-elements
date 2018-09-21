@@ -14,7 +14,10 @@
 // distribution.
 
 #include <sst_config.h>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-register"
 #include <Python.h>
+#pragma clang diagnostic pop
 
 #include <sst/core/params.h>
 
