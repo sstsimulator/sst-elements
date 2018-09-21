@@ -59,8 +59,12 @@ public:
 
     /* Begin class definiton */
     STPU(SST::ComponentId_t id, SST::Params& params);
-    void init();
     void finish() {;}
+
+public:
+    void deliver(float val, int targetN, int time);
+    neuron* getNeuron(int n) {return &neurons[n];}
+    void readMem(Interfaces::SimpleMem::Request *req, STS *requestor);
 
 private:
     STPU();  // for serialization only
@@ -70,7 +74,6 @@ private:
     
     void handleEvent( SST::Interfaces::SimpleMem::Request * req );
     virtual bool clockTic( SST::Cycle_t );
-    void deliver(float val, int targetN, int time);
     bool deliverBWPs();
     void assignSTS();
     void processFire();
@@ -95,7 +98,7 @@ private:
     BWPBuf_t BWPs;
 
     std::deque<uint> firedNeurons;
-    std::map<uint64_t, SimTime_t> requests;
+    std::map<uint64_t, STS*> requests;
 
     TimeConverter *clockTC;
     Clock::HandlerBase *clockHandler;

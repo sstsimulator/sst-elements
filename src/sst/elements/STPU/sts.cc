@@ -1,0 +1,66 @@
+// Copyright 2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2018, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
+#include <sst_config.h>
+#include "sts.h"
+#include "STPU.h"
+
+using namespace SST;
+using namespace SST::STPUComponent;
+
+void STS::assign(int neuronNum) {
+    const neuron *spiker = mySTPU->getNeuron(neuronNum);
+    numSpikes = spiker->getWMLLen();
+    uint64_t listAddr = spiker->getWMLAddr();
+
+    // for each link, request the WML structure
+    for (int i = 0; i < numSpikes; ++i) {
+        using namespace Interfaces;
+        using namespace White_Matter_Types;
+        SimpleMem::Request *req = 
+            new SimpleMem::Request(SimpleMem::Request::Read, listAddr, sizeof(T_Wme));
+        mySTPU->readMem(req, this);
+        listAddr += sizeof(T_Wme);
+    }
+}
+
+bool STS::isFree() {
+    return (numSpikes == 0);
+}
+
+void STS::advance(uint now) {
+#warning should throttle
+    while (incomingReqs.empty() == false) {
+        // get the request
+        SST::Interfaces::SimpleMem::Request *req = incomingReqs.front();
+
+        printf(" req %p: %d %p %" PRIu32 "\n", req, req->cmd, (void*)req->addr, req->size);
+        printf(" req %u\n", req->data.size());
+
+        // deliver the spike
+        auto &data = req->data;
+        printf("1\n");
+        uint16_t strength = (req->data[0]<<8) + req->data[1];
+        printf("2\n");
+        uint16_t tempOffset = (data[2]<<8) + data[3];
+        printf("3\n");
+        uint16_t target = (data[4]<<8) + data[5];
+        printf("  stpu deliver str%u to %u @ %u\n", strength, target, tempOffset);
+        mySTPU->deliver(strength, target, tempOffset+now);
+
+        incomingReqs.pop();
+    }
+}
+

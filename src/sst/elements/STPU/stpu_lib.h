@@ -50,11 +50,12 @@ namespace Neuron_Loader_Types {
 namespace White_Matter_Types {
 
   // White Matter Entry (WME) Format
+  // AFR: Changed to uint16
   typedef struct {
-    int SynStr; // Synaptic Strength
-    int TmpOff; // Temporal Offset
-    int SubAdr; // Sub-Address
-    int Valid;  // Valid Flag
+    uint16_t SynStr; // Synaptic Strength
+    uint16_t TmpOff; // Temporal Offset
+    uint16_t SubAdr; // Sub-Address
+    uint16_t Valid;  // Valid Flag
   } T_Wme;
 
 } // White_Matter_Types

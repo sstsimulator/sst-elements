@@ -19,6 +19,7 @@
 #include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
+#include <sst/core/rng/marsaglia.h>
 #include "../memHierarchy/memEvent.h"
 
 using namespace SST;
@@ -74,12 +75,21 @@ STPU::STPU() : Component(-1)
 }
 
 
-void STPU::init() {
+void STPU::init(unsigned int phase) {
     using namespace Neuron_Loader_Types;
+    using namespace White_Matter_Types;
     
+    // init memory
+    memory->init(phase);
+    
+    // Everything below we only do once
+    if (phase != 0) {
+        return;
+    }
+
     // create STS units
     for(int i = 0; i < STSParallelism; ++i) {
-        STSUnits.push_back(STS());
+        STSUnits.push_back(STS(this));
     }
 
     // initialize neurons
@@ -100,10 +110,42 @@ void STPU::init() {
     for (int nrn_num=24;nrn_num<=31;nrn_num++)
         neurons[nrn_num].configure((T_NctFl){1500,-2.0,0.0});
 
+    // <Should read these in>
+    // White matter list
+    SST::RNG::MarsagliaRNG rng(1,13);
+    uint64_t startAddr = 0x10000;
+    for (int n = 0; n < numNeurons; ++n) {
+        using namespace Interfaces;
+        // each neuron connects to 3 random neurons
+        neurons[n].setWML(startAddr,3);
+        for (int nn=0; nn<3; ++nn) {
+
+            uint16_t targ = rng.generateNextUInt32() % numNeurons;
+
+            uint64_t reqAddr = startAddr+nn*sizeof(T_Wme);
+            SimpleMem::Request *req = 
+                new SimpleMem::Request(SimpleMem::Request::Write, reqAddr,
+                                       sizeof(T_Wme));
+            req->data.resize(sizeof(T_Wme));
+            req->data[0] = 0 & 0xff; // Synaptic Str upper
+            req->data[1] = 125 & 0xff; // Synaptic Str lower
+            req->data[2] = 0 & 0xff; // temp offset upper
+            req->data[3] = 1 & 0xff; // temp offset lower
+            req->data[4] = (targ>>8) & 0xff; // address upper
+            req->data[5] = (targ) & 0xff; // address lower
+            req->data[6] = 0; // valid
+            req->data[7] = 0; // valid
+            printf("Writing n%d to targ%d at %p\n", n, targ, (void*)reqAddr);
+            memory->sendInitData(req);
+        }
+        assert(sizeof(T_Wme) == 8);
+        startAddr += 3 * sizeof(T_Wme);
+    }
+
     // brain wave pulses
     int bwpl_len = 16;
     Ctrl_And_Stat_Types::T_BwpFl* bwpl = (Ctrl_And_Stat_Types::T_BwpFl*)calloc(bwpl_len,sizeof(Ctrl_And_Stat_Types::T_BwpFl));
-    bwpl[0]  = (Ctrl_And_Stat_Types::T_BwpFl){1,0,0};
+    bwpl[0]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,0,0};
     bwpl[1]  = (Ctrl_And_Stat_Types::T_BwpFl){1,0,1};
     bwpl[2]  = (Ctrl_And_Stat_Types::T_BwpFl){1,0,2};
     bwpl[3]  = (Ctrl_And_Stat_Types::T_BwpFl){1,0,3};
@@ -124,29 +166,37 @@ void STPU::init() {
     }
 }
 
-void STPU::init(unsigned int phase)
-{
-    memory->init(phase);
-}
-
+// handle incoming memory
 void STPU::handleEvent(Interfaces::SimpleMem::Request * req)
 {
-    std::map<uint64_t, SimTime_t>::iterator i = requests.find(req->id);
+    std::map<uint64_t, STS*>::iterator i = requests.find(req->id);
     if (i == requests.end()) {
 	out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->id);
     } else {
         requests.erase(i);
         // handle event
+        STS* requestor = i->second;
+        printf("req1 %p\n", req);
+        requestor->returnRequest(req);
     }
     delete req;
 }
 
 void STPU::deliver(float val, int targetN, int time) {
+#warning should really throttle this in some way
     if(targetN < numNeurons) {
         neurons[targetN].deliverSpike(val, time);
+        printf("deliver %f to %d @ %d\n", val, targetN, time);
     } else {
         out.fatal(CALL_INFO, -1,"Invalid Neuron Address\n");
     }
+}
+
+void STPU::readMem(Interfaces::SimpleMem::Request *req, STS *requestor) {
+    // send the request
+    memory->sendRequest(req);
+    // record who it came from
+    requests.insert(std::make_pair(req->id, requestor));
 }
 
 // returns true if no more to deliver
@@ -211,7 +261,7 @@ void STPU::processFire() {
         
         // process neuron firings into activations
         for(auto &e: STSUnits) {
-            e.advance();
+            e.advance(now);
             bool unitDone = e.isFree();
             allSpikesDelivered &= unitDone;
         }
@@ -244,8 +294,8 @@ bool STPU::clockTic( Cycle_t )
         processFire();
         break;
     case LIF:
-        now++;
         lifAll();
+        now++;
         state = PROCESS_FIRE;
         printf("%lu neurons fired\n", firedNeurons.size());        
         break;

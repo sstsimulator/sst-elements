@@ -16,17 +16,31 @@
 #ifndef _STS_H
 #define _STS_H
 
+#include <queue>
+
+#include <sst/core/interfaces/simpleMem.h>
+
 namespace SST {
 namespace STPUComponent {
+
+//foward decl
+class STPU;
+class Request;
 
 //  A Spike Transfer Structure engine - transforms a given spike by
 //  performing a look up and delivering spikes
 class STS {
-
+    STPU *mySTPU;
+    int numSpikes; // number of spikes yet to deliver
+    std::queue<SST::Interfaces::SimpleMem::Request *> incomingReqs;
 public:
+    STS(STPU *parent) : mySTPU(parent), numSpikes(0) {;}
     bool isFree();
-    void assign(uint);
-    void advance();
+    void assign(int);
+    void advance(uint);
+    void returnRequest(SST::Interfaces::SimpleMem::Request *req) {
+        incomingReqs.push(req);
+    }
 };
 
 }
