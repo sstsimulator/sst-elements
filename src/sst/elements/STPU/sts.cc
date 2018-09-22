@@ -53,7 +53,7 @@ void STS::advance(uint now) {
         uint16_t strength = (req->data[0]<<8) + req->data[1];
         uint16_t tempOffset = (data[2]<<8) + data[3];
         uint16_t target = (data[4]<<8) + data[5];
-        printf("  stpu deliver str%u to %u @ %u\n", strength, target, tempOffset+now);
+        //printf("  stpu deliver str%u to %u @ %u\n", strength, target, tempOffset+now);
         mySTPU->deliver(strength, target, tempOffset+now);
         numSpikes--;
 

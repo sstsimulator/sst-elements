@@ -38,6 +38,12 @@ public:
         // Leak
         value -= config.NrnLkg;
 
+        // Bound?
+        #warning is this right?
+        if (value < config.NrnMin) {
+            value = 0;
+        }
+
         // Integrate
         value += getCurrentSpikes(now);
 
@@ -71,7 +77,7 @@ private:
         if (i != temporalBuffer.end()) {
             float val = i->second;
             temporalBuffer.erase(i);
-            printf(" got current spike %f @ %d\n", val, now);
+            //printf(" got current spike %f @ %d\n", val, now);
             return val;
         } else {
             return 0;

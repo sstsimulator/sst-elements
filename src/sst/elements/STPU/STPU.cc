@@ -95,8 +95,11 @@ void STPU::init(unsigned int phase) {
     // initialize neurons
     neurons = new neuron[numNeurons];
 
+    SST::RNG::MarsagliaRNG rng(1,13);
+
     // <should read these in>
     // neurons
+#if 0 
     for (int nrn_num=0;nrn_num<=8;nrn_num++)
         neurons[nrn_num].configure((T_NctFl){1000,-2.0,0.0});
     for (int nrn_num=9;nrn_num<=11;nrn_num++)
@@ -109,50 +112,86 @@ void STPU::init(unsigned int phase) {
         neurons[nrn_num].configure((T_NctFl){ 500,-2.0,0.0});
     for (int nrn_num=24;nrn_num<=31;nrn_num++)
         neurons[nrn_num].configure((T_NctFl){1500,-2.0,0.0});
+#else
+    for (int nrn_num=0;nrn_num<=numNeurons;nrn_num++) {
+        uint16_t trig = rng.generateNextUInt32() % 100 + 350;
+        neurons[nrn_num].configure((T_NctFl){float(trig),0.0,float(trig/10.)});
+    }
+#endif
 
     // <Should read these in>
     // White matter list
-    SST::RNG::MarsagliaRNG rng(1,13);
     uint64_t startAddr = 0x10000;
     for (int n = 0; n < numNeurons; ++n) {
         using namespace Interfaces;
-        // each neuron connects to 3 random neurons
-        neurons[n].setWML(startAddr,3);
-        for (int nn=0; nn<3; ++nn) {
+        // most neurons connect to 1-4, 1% connect to 15
+        uint16_t roll = rng.generateNextUInt32() % 100;
+        uint numCon = 1;
+        bool local = 1;
+        if (roll == 0) {
+            numCon = 15;
+            if (rng.generateNextUInt32() % 100) local = 0;
+        } else {
+            numCon = 1 + (rng.generateNextUInt32() % 4);
+            local = 1;
+        }
 
-            uint16_t targ = rng.generateNextUInt32() % numNeurons;
+
+        neurons[n].setWML(startAddr,numCon);
+        for (int nn=0; nn<numCon; ++nn) {
+
+            uint16_t targ;
+            if (local) {
+                int diff = (rng.generateNextUInt32() % 10);
+                targ = n + diff;
+            } else {
+                int diff = (rng.generateNextUInt32() % 50);
+                targ = n + diff;
+            }
+            if (targ == n) {
+                targ = n+1;
+            }
+            //targ %= numNeurons;
+            if (targ >= numNeurons)
+                targ = 0;
 
             uint64_t reqAddr = startAddr+nn*sizeof(T_Wme);
             SimpleMem::Request *req = 
                 new SimpleMem::Request(SimpleMem::Request::Write, reqAddr,
                                        sizeof(T_Wme));
             req->data.resize(sizeof(T_Wme));
-            uint32_t str = 1250;
+            uint32_t str = 300+(rng.generateNextUInt32() % 700);
+            if (targ == 0) str = 1;
+            uint32_t tmpOff = 2 + (rng.generateNextUInt32() % 12);
+            if (!local) {
+                tmpOff /= 2;
+            }
             req->data[0] = (str>>8) & 0xff; // Synaptic Str upper
             req->data[1] = (str) & 0xff; // Synaptic Str lower
-            req->data[2] = 0 & 0xff; // temp offset upper
-            req->data[3] = 1 & 0xff; // temp offset lower
+            req->data[2] = (tmpOff>>8) & 0xff; // temp offset upper
+            req->data[3] = (tmpOff) & 0xff; // temp offset lower
             req->data[4] = (targ>>8) & 0xff; // address upper
             req->data[5] = (targ) & 0xff; // address lower
             req->data[6] = 0; // valid
             req->data[7] = 0; // valid
-            printf("Writing n%d to targ%d at %p\n", n, targ, (void*)reqAddr);
+            //printf("Writing n%d to targ%d at %p\n", n, targ, (void*)reqAddr);
             memory->sendInitData(req);
         }
         assert(sizeof(T_Wme) == 8);
-        startAddr += 3 * sizeof(T_Wme);
+        startAddr += numCon * sizeof(T_Wme);
     }
 
     // brain wave pulses
+#if 0
     int bwpl_len = 16;
     Ctrl_And_Stat_Types::T_BwpFl* bwpl = (Ctrl_And_Stat_Types::T_BwpFl*)calloc(bwpl_len,sizeof(Ctrl_And_Stat_Types::T_BwpFl));
     bwpl[0]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,0,0};
-    bwpl[1]  = (Ctrl_And_Stat_Types::T_BwpFl){1,0,1};
-    bwpl[2]  = (Ctrl_And_Stat_Types::T_BwpFl){1,0,2};
-    bwpl[3]  = (Ctrl_And_Stat_Types::T_BwpFl){1,0,3};
-    bwpl[4]  = (Ctrl_And_Stat_Types::T_BwpFl){1,4,0};
-    bwpl[5]  = (Ctrl_And_Stat_Types::T_BwpFl){1,4,1};
-    bwpl[6]  = (Ctrl_And_Stat_Types::T_BwpFl){1,4,2};
+    bwpl[1]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,0,1};
+    bwpl[2]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,0,2};
+    bwpl[3]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,0,3};
+    bwpl[4]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,4,0};
+    bwpl[5]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,4,1};
+    bwpl[6]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,4,2};
     bwpl[7]  = (Ctrl_And_Stat_Types::T_BwpFl){1,4,3};
     bwpl[8]  = (Ctrl_And_Stat_Types::T_BwpFl){1,0,4};
     bwpl[9]  = (Ctrl_And_Stat_Types::T_BwpFl){1,0,5};
@@ -162,6 +201,14 @@ void STPU::init(unsigned int phase) {
     bwpl[13] = (Ctrl_And_Stat_Types::T_BwpFl){1,4,5};
     bwpl[14] = (Ctrl_And_Stat_Types::T_BwpFl){1,4,6};
     bwpl[15] = (Ctrl_And_Stat_Types::T_BwpFl){1,4,7};
+#else
+    int bwpl_len = 2;
+    Ctrl_And_Stat_Types::T_BwpFl* bwpl = (Ctrl_And_Stat_Types::T_BwpFl*)calloc(bwpl_len,sizeof(Ctrl_And_Stat_Types::T_BwpFl));
+    for (int i = 0; i < bwpl_len; ++i) {
+        int targ = rng.generateNextUInt32() % numNeurons;
+        bwpl[i]  = (Ctrl_And_Stat_Types::T_BwpFl){2001,targ,i*61};
+    }
+#endif
     for (int i = 0; i < bwpl_len; ++i) {
         BWPs.insert(std::pair<uint,Ctrl_And_Stat_Types::T_BwpFl>(bwpl[i].TmpSft, bwpl[i]));
     }
@@ -185,14 +232,14 @@ void STPU::deliver(float val, int targetN, int time) {
 #warning should really throttle this in some way
     if(targetN < numNeurons) {
         neurons[targetN].deliverSpike(val, time);
-        printf("deliver %f to %d @ %d\n", val, targetN, time);
+        //printf("deliver %f to %d @ %d\n", val, targetN, time);
     } else {
         out.fatal(CALL_INFO, -1,"Invalid Neuron Address\n");
     }
 }
 
 void STPU::readMem(Interfaces::SimpleMem::Request *req, STS *requestor) {
-    printf("Read Mem %p %d\n", req, req->cmd);
+    //printf("Read Mem %p %d\n", req, req->cmd);
     // send the request
     memory->sendRequest(req);
     // record who it came from
@@ -208,6 +255,7 @@ bool STPU::deliverBWPs() {
         if (i != BWPs.end()) {
             // deliver it
             const Ctrl_And_Stat_Types::T_BwpFl &pulse = i->second;
+            printf("BWP st%.1f to %d\n", pulse.InpValFl, pulse.InpNrn);
             deliver(pulse.InpValFl, pulse.InpNrn, pulse.TmpSft);
             BWPs.erase(i);
         } else {
@@ -225,24 +273,17 @@ bool STPU::deliverBWPs() {
 
 // find a free STS unit to assign the spike to
 void STPU::assignSTS() {
-    int tries = STSDispatch;
+    int remainDispatches = STSDispatch;
 
-    while(tries > 0 && !firedNeurons.empty()) {
-        // try to find a free unit
-        int freeSTS = STSParallelism;
-        for(auto &e: STSUnits) {
-            if (e.isFree()) {
-                e.assign(firedNeurons.front());
-                firedNeurons.pop_front();
-            } else {
-                freeSTS--;
-            }
-        }
-        if (0 == freeSTS) {
-            // nothing free
-            return;
-        }
-        tries--;
+    // try to find a free unit
+    for(auto &e: STSUnits) {
+        if (firedNeurons.empty()) return;
+        if (e.isFree()) {
+            e.assign(firedNeurons.front());
+            firedNeurons.pop_front();
+            remainDispatches--;
+        } 
+        if (remainDispatches == 0) return;
     }
 }
 
@@ -258,7 +299,7 @@ void STPU::processFire() {
     if (BWPDone) {
         // assign firings to STSs
         assignSTS();
-        
+
         // process neuron firings into activations
         for(auto &e: STSUnits) {
             e.advance(now);
@@ -278,6 +319,7 @@ void STPU::lifAll() {
     for (uint n = 0; n < numNeurons; ++n) {
         bool fired = neurons[n].lif(now);
         if (fired) {
+            //printf(" %d fired\n", n);
             firedNeurons.push_back(n);
         }
     }
@@ -297,7 +339,11 @@ bool STPU::clockTic( Cycle_t )
         lifAll();
         now++;
         state = PROCESS_FIRE;
-        printf("%lu neurons fired\n", firedNeurons.size());        
+        if ((now & 0x3f) == 0)
+            printf("%lu neurons fired @ %d\n", firedNeurons.size(), now);
+        if (firedNeurons.size() == 0 && now > 100) {
+            primaryComponentOKToEndSim();
+        }
         break;
     default:
         out.fatal(CALL_INFO, -1,"Invalid STPU state\n");

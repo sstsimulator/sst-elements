@@ -4,10 +4,11 @@ import sst
 comp_stpu = sst.Component("STPU", "STPU.STPU")
 comp_stpu.addParams({
     "verbose" : 1,
+    "neurons" : 1000,
     "clock" : "1GHz",
     "BWPperTic" : 1,
-    "STSDispatch" : 1,
-    "STSParallelism" : 1
+    "STSDispatch" : 32,
+    "STSParallelism" : 32
 })
 
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
