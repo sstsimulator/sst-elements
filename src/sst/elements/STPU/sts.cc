@@ -27,6 +27,7 @@ void STS::assign(int neuronNum) {
 
     // for each link, request the WML structure
     for (int i = 0; i < numSpikes; ++i) {
+#warning should throttle
         using namespace Interfaces;
         using namespace White_Matter_Types;
         SimpleMem::Request *req = 

@@ -49,6 +49,10 @@ STPU::STPU(ComponentId_t id, Params& params) :
     if (BWPpTic <= 0) {
         out.fatal(CALL_INFO, -1,"STSParallelism invalid\n");
     }    
+    maxOutMem = params.find<int>("MaxOutMem", STSParallelism);
+    if (BWPpTic <= 0) {
+        out.fatal(CALL_INFO, -1,"MaxOutMem invalid\n");
+    }    
 
 
 
@@ -89,7 +93,7 @@ void STPU::init(unsigned int phase) {
 
     // create STS units
     for(int i = 0; i < STSParallelism; ++i) {
-        STSUnits.push_back(STS(this));
+        STSUnits.push_back(STS(this,i));
     }
 
     // initialize neurons
@@ -224,10 +228,11 @@ void STPU::handleEvent(Interfaces::SimpleMem::Request * req)
     if (i == requests.end()) {
 	out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->id);
     } else {
-        requests.erase(i);
         // handle event
         STS* requestor = i->second;
         requestor->returnRequest(req);
+        // clean up
+        requests.erase(i);
     }
 }
 
@@ -245,7 +250,9 @@ void STPU::deliver(float val, int targetN, int time) {
 void STPU::readMem(Interfaces::SimpleMem::Request *req, STS *requestor) {
     //printf("Read Mem %p %d\n", req, req->cmd);
     // send the request
-    memory->sendRequest(req);
+    //memory->sendRequest(req);
+    // queue the request to send later
+    outgoingReqs.push(req);
     // record who it came from
     requests.insert(std::make_pair(req->id, requestor));
 }
@@ -331,6 +338,17 @@ void STPU::lifAll() {
 
 bool STPU::clockTic( Cycle_t )
 {
+    // send some outgoing mem reqs
+    int maxOut = maxOutMem;
+    if((!outgoingReqs.empty()) && (now & 0x3f) == 0) {
+        printf(" outRqst Q %d\n", outgoingReqs.size());
+    }
+    while(!outgoingReqs.empty() && maxOut > 0) {
+        memory->sendRequest(outgoingReqs.front());
+        outgoingReqs.pop();
+        maxOut--;
+    }
+
 
     switch(state) {
     case IDLE:

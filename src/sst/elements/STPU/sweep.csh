@@ -6,7 +6,10 @@ foreach c (${1})
         set fileN = test-${c}K-${s}.out
         echo "running $fileN"
         rm -f $fileN
-        time sst ./test.py -- -c $c -s $s >& $fileN &
+        time sst ./test.py -- -n 2500 -c $c -s $s >& $fileN &
+        sleep 1
     end
+    wait
+    echo "done cache = ${c}K"
 end
 

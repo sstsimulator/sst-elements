@@ -31,10 +31,11 @@ class Request;
 //  performing a look up and delivering spikes
 class STS {
     STPU *mySTPU;
+    int stsID;
     int numSpikes; // number of spikes yet to deliver
     std::queue<SST::Interfaces::SimpleMem::Request *> incomingReqs;
 public:
-    STS(STPU *parent) : mySTPU(parent), numSpikes(0) {;}
+    STS(STPU *parent, int n) : mySTPU(parent), stsID(n), numSpikes(0) {;}
     bool isFree();
     void assign(int);
     void advance(uint);

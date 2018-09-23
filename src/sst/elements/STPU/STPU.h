@@ -52,6 +52,7 @@ public:
             {"BWPperTic",               "Max # of Brain Wave Pulses which can be delivered each clock cycle","2"},
             {"STSDispatch",               "Max # spikes that can be dispatched to the STS in a clock cycle","2"},
             {"STSParallelism",               "Max # spikes the STS can process in parallelism ","2"},
+            {"MaxOutMem", "Maximum # of outgoing memory requests per cycle","STSParallelism"},
             {"neurons",                  "(uint) number of neurons", "32"}
                             )
 
@@ -91,9 +92,11 @@ private:
     uint BWPpTic;
     uint STSDispatch;
     uint STSParallelism;
+    uint maxOutMem;
     uint now;
     uint numFirings;
     uint numDeliveries;
+    queue<SST::Interfaces::SimpleMem::Request *> outgoingReqs;
 
     neuron *neurons;
     vector<STS> STSUnits;
