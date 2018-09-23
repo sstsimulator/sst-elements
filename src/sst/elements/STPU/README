@@ -15,3 +15,4 @@ TODO:
 Set Neuron values as (variable precision) ints or floats
 time delay for output consoldiation?
 statistics
+switch to output, rm printf()s

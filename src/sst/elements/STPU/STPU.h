@@ -59,7 +59,10 @@ public:
 
     /* Begin class definiton */
     STPU(SST::ComponentId_t id, SST::Params& params);
-    void finish() {;}
+    void finish() {
+        printf("Completed %d neuron firings\n", numFirings);
+        printf("Completed %d spike deliveries\n", numDeliveries);
+    }
 
 public:
     void deliver(float val, int targetN, int time);
@@ -89,6 +92,8 @@ private:
     uint STSDispatch;
     uint STSParallelism;
     uint now;
+    uint numFirings;
+    uint numDeliveries;
 
     neuron *neurons;
     vector<STS> STSUnits;

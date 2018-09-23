@@ -27,7 +27,7 @@ using namespace SST;
 using namespace SST::STPUComponent;
 
 STPU::STPU(ComponentId_t id, Params& params) :
-    Component(id), state(IDLE), now(0)
+    Component(id), state(IDLE), now(0), numFirings(0), numDeliveries(0)
 {
     uint32_t outputLevel = params.find<uint32_t>("verbose", 0);
     out.init("STPU:@p:@l: ", outputLevel, 0, Output::STDOUT);
@@ -122,6 +122,7 @@ void STPU::init(unsigned int phase) {
     // <Should read these in>
     // White matter list
     uint64_t startAddr = 0x10000;
+    int countLinks = 0;
     for (int n = 0; n < numNeurons; ++n) {
         using namespace Interfaces;
         // most neurons connect to 1-4, 1% connect to 15
@@ -136,7 +137,7 @@ void STPU::init(unsigned int phase) {
             local = 1;
         }
 
-
+        countLinks += numCon;
         neurons[n].setWML(startAddr,numCon);
         for (int nn=0; nn<numCon; ++nn) {
 
@@ -180,6 +181,8 @@ void STPU::init(unsigned int phase) {
         assert(sizeof(T_Wme) == 8);
         startAddr += numCon * sizeof(T_Wme);
     }
+
+    printf("Constructed %d neurons with %d links\n", numNeurons, countLinks);
 
     // brain wave pulses
 #if 0
@@ -230,6 +233,7 @@ void STPU::handleEvent(Interfaces::SimpleMem::Request * req)
 
 void STPU::deliver(float val, int targetN, int time) {
 #warning should really throttle this in some way
+    numDeliveries++;
     if(targetN < numNeurons) {
         neurons[targetN].deliverSpike(val, time);
         //printf("deliver %f to %d @ %d\n", val, targetN, time);
@@ -339,6 +343,7 @@ bool STPU::clockTic( Cycle_t )
         lifAll();
         now++;
         state = PROCESS_FIRE;
+        numFirings += firedNeurons.size();
         if ((now & 0x3f) == 0)
             printf("%lu neurons fired @ %d\n", firedNeurons.size(), now);
         if (firedNeurons.size() == 0 && now > 100) {

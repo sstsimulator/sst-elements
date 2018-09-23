@@ -1,29 +1,40 @@
 import sst
+import os
+from optparse import OptionParser
+
+# options
+op = OptionParser()
+op.add_option("-n", "--neurons", action="store", type="int", dest="neurons", default=5000)
+# cache size in KiB
+op.add_option("-c", "--cacheSz", action="store", type="int", dest="cacheSz", default=2)
+#sts dispatch & parallelism
+op.add_option("-s", "--STS", action="store", type="int", dest="sts", default=4)
+(options, args) = op.parse_args()
 
 # Define the simulation components
 comp_stpu = sst.Component("STPU", "STPU.STPU")
 comp_stpu.addParams({
     "verbose" : 1,
-    "neurons" : 1000,
+    "neurons" : options.neurons,
     "clock" : "1GHz",
     "BWPperTic" : 1,
-    "STSDispatch" : 32,
-    "STSParallelism" : 32
+    "STSDispatch" : options.sts,
+    "STSParallelism" : options.sts
 })
 
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
-    "access_latency_cycles" : "4",
-    "cache_frequency" : "2 Ghz",
+    "access_latency_cycles" : "1",
+    "cache_frequency" : "1 Ghz",
     "replacement_policy" : "lru",
     "coherence_protocol" : "MSI",
     "associativity" : "4",
     "cache_line_size" : "64",
     #"debug" : "1",
     #"debug_level" : "10",
-    "verbose" : 1,
+    "verbose" : 0,
     "L1" : "1",
-    "cache_size" : "2KiB"
+    "cache_size" : "%dKiB"%options.cacheSz
 })
 
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
@@ -31,7 +42,7 @@ comp_memory.addParams({
       "debug" : 1,
       "coherence_protocol" : "MSI",
       "debug_level" : 10,
-      "backend.access_time" : "100 ns",
+      "backend.access_time" : "200 ns",
       "backing" : "malloc", 
       "clock" : "1GHz",
       "backend.mem_size" : "512MiB"
