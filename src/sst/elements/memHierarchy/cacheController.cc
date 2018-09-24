@@ -771,6 +771,14 @@ void Cache::emergencyShutdown() {
         if (out_->getOutputLocation() == Output::STDOUT)
             out_->setOutputLocation(Output::STDERR);
         printStatus(*out_);
+        if (linkUp_ && linkUp_ != linkDown_) {
+            out_->output("  Checking for unreceived events on up link: \n");
+            linkUp_->emergencyShutdownDebug(*out_);
+            out_->output("  Checking for unreceived events on down link: \n");
+        } else {
+            out_->output("  Checking for unreceived events on link: \n");
+        }
+        linkDown_->emergencyShutdownDebug(*out_);
     }
 }
 
