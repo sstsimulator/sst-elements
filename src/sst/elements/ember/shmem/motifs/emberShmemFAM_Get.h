@@ -25,11 +25,6 @@
 #include "rng/xorshift.h"
 
 #include <unistd.h>
-#include <sys/syscall.h>   /* For SYS_xxx definitions */
-
-extern pid_t gettid(void) {
-	return(syscall(SYS_gettid));
-}
 
 namespace SST {
 namespace Ember {
@@ -129,7 +124,7 @@ public:
 				printf("number of pes:           %d\n",	m_num_pes );
 				printf("block size:              %d\n",	m_blockSize );
 				printf("number of blocks:        %d\n",	m_numBlocks );
-				printf("vector num elements:     %d\n",	m_vectorSize );
+				printf("vector num elements:     %zu\n",	m_vectorSize );
 				if ( m_rng ) {
 					printf("using random:        %d\n",	m_maxDelay );
 				}
@@ -153,7 +148,7 @@ public:
 				}
 
 				if ( bufSize ) {
-					printf("physNode=%d is %s node %d thread %d\n",m_node_num, tmp.c_str(), calcVirtNum(m_node_num), gettid());
+					printf("physNode=%d is %s node %d\n",m_node_num, tmp.c_str(), calcVirtNum(m_node_num) );
             		enQ_malloc( evQ, &m_mem, bufSize );
 				}
 			}
