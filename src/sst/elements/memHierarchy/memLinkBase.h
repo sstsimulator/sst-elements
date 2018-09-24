@@ -146,6 +146,8 @@ public:
     virtual void printStatus(Output &out) {
         out.output("  MemHierarchy::MemLinkBase: No status given\n");
     }
+    
+    virtual void emergencyShutdownDebug(Output &out) { }
 
     /* Send and receive functions for MemLink */
     virtual void sendInitData(MemEventInit * ev) =0;

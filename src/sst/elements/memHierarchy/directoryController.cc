@@ -1627,6 +1627,8 @@ void DirectoryController::emergencyShutdown() {
         if (out.getOutputLocation() == Output::STDOUT)
             out.setOutputLocation(Output::STDERR);
         printStatus(out);
+        out.output("   Checking for unreceived events on network link:\n");
+        network->emergencyShutdownDebug(out);
     }
 }
 
