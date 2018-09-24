@@ -269,7 +269,7 @@ void EmberLQCDGenerator::configure()
     odd_sites_on_node = sites_on_node/2;
     if(0 == rank()) {
 		output("LQCD problem size: x%" PRIu32 "y%" PRIu32 "z%" PRIu32 "t%" PRIu32"\n", nx, ny, nz, nt);
-		output("LQCD gather num_elements (1st and Naik): % " PRIu64  " % " PRIu64 "\n", nx*ny*nz*9, nx*ny*nz*27);
+		output("LQCD gather num_elements (1st and Naik): %" PRIu64  " %" PRIu64 "\n", (uint64_t) nx*ny*nz*9, (uint64_t) nx*ny*nz*27);
         if (nsCompute != 0) output("LQCD compute time per segment: %" PRIu64 " ns\n", nsCompute);
         else output("LQCD compute time resid: %" PRIu64 " mmvs4d: %" PRIu64 " ns\n", compute_nseconds_resid, compute_nseconds_mmvs4d);
 		output("LQCD iterations: %" PRIu32 "\n", iterations);
@@ -405,7 +405,7 @@ bool EmberLQCDGenerator::generate( std::queue<EmberEvent*>& evQ )
         }
         
         // Wait on positive gathers (8 total)
-	    verbose(CALL_INFO, 1, 0, "Rank: %" PRIu32 ", +Messages to wait on: %" PRId32  "\n", rank(), pos_requests.size());
+	    verbose(CALL_INFO, 1, 0, "Rank: %" PRIu32 ", +Messages to wait on: %zu\n", rank(), pos_requests.size());
         for(uint32_t i = 0; i < pos_requests.size(); ++i) {
             enQ_wait( evQ, pos_requests[i]);
         }
@@ -422,7 +422,7 @@ bool EmberLQCDGenerator::generate( std::queue<EmberEvent*>& evQ )
         //output("Rank %" PRIu32 ", Compute end: %" PRIu64 "\n", rank(), Simulation::getSimulation()->getCurrentSimCycle());
         
         //Wait on negative gathers (8 total)
-	    verbose(CALL_INFO, 1, 0, "Rank: %" PRIu32 ", -Messages to wait on: %" PRId32  "\n", rank(), neg_requests.size());
+	    verbose(CALL_INFO, 1, 0, "Rank: %" PRIu32 ", -Messages to wait on: %zu\n", rank(), neg_requests.size());
         for(uint32_t i = 0; i < neg_requests.size(); ++i) {
             enQ_wait( evQ, neg_requests[i]);
         }
