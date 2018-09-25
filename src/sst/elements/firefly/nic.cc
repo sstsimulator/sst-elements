@@ -526,9 +526,8 @@ void Nic::feedTheNetwork( )
                             m_linkSendWidget->setNotify( [=]() {
 								SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
 								if ( curTime > m_predNetIdleTime ) {
-									m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"network stalled latency=%lu\n",
+									m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"network stalled latency=%lld\n",
 										curTime -  m_predNetIdleTime);
-									printf("outgoing link stalled %lu\n",curTime - m_predNetIdleTime);
 									m_networkStall->addData( curTime - m_predNetIdleTime );
 								}
 								feedTheNetwork();
@@ -547,7 +546,7 @@ void Nic::feedTheNetwork( )
 					}
 					m_predNetIdleTime += latPS;
 
-                   	m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"predNetIdleTime=%lu\n",m_predNetIdleTime );
+                   	m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"predNetIdleTime=%lld\n",m_predNetIdleTime );
 
                     sendPkt( pkt, vc );
 
