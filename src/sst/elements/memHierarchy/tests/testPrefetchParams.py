@@ -77,7 +77,6 @@ for x in range(cores):
         "drop_prefetch_mshr_level" : 5, # Drop prefetch when total misses > 5
         # MemNIC parameters
         "memNIC.network_bw" : network_bw,
-        "memNIC.network_address" : x,
         "memNIC.network_input_buffer_size" : "2KiB",
         "memNIC.network_output_buffer_size" : "2KiB",
     })
@@ -109,7 +108,6 @@ for x in range(caches):
         "slice_id" : x,
         # MemNIC parameters
         "memNIC.network_bw" : network_bw,
-        "memNIC.network_address" : x + cores,
         "memNIC.network_input_buffer_size" : "2KiB",
         "memNIC.network_output_buffer_size" : "2KiB",
     })
@@ -131,7 +129,6 @@ for x in range(memories):
         "memNIC.network_bw" : network_bw,
         "memNIC.addr_range_start" : x*64,
         "memNIC.addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
-        "memNIC.network_address" : x + caches + cores,
         "memNIC.network_input_buffer_size" : "2KiB",
         "memNIC.network_output_buffer_size" : "2KiB",
     })

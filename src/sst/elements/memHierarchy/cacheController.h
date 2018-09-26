@@ -56,7 +56,7 @@ class Cache : public SST::Component {
 public:
 /* Element Library Info */
     SST_ELI_REGISTER_COMPONENT(Cache, "memHierarchy", "Cache", SST_ELI_ELEMENT_VERSION(1,0,0), "Cache controller", COMPONENT_CATEGORY_MEMORY)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
             /* Required */
             {"cache_frequency",         "(string) Clock frequency or period with units (Hz or s; SI units OK). For L1s, this is usually the same as the CPU's frequency.", NULL},
@@ -78,9 +78,9 @@ public:
             {"noninclusive_directory_entries", "(uint) Number of entries in the directory. Must be at least 1 if the non-inclusive directory exists.", "0"},
             {"noninclusive_directory_associativity", "(uint) For a set-associative directory, number of ways.", "1"},
             {"mshr_num_entries",        "(int) Number of MSHR entries. Not valid for L1s because L1 MSHRs assumed to be sized for the CPU's load/store queue. Setting this to -1 will create a very large MSHR.", "-1"},
-            {"tag_access_latency_cycles", 
+            {"tag_access_latency_cycles",
                 "(uint) Latency (in cycles) to access tag portion only of cache. Paid by misses and coherence requests that don't need data. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
-            {"mshr_latency_cycles",     
+            {"mshr_latency_cycles",
                 "(uint) Latency (in cycles) to process responses in the cache and replay requests. Paid on the return/response path for misses instead of access_latency_cycles. If not specified, simple intrapolation is used based on the cache access latency", "1"},
             {"prefetcher",              "(string) Name of prefetcher subcomponent", ""},
             {"prefetch_delay_cycles",   "(uint) Delay prefetches from prefetcher by this number of cycles.", "1"},
@@ -104,7 +104,7 @@ public:
             {"network_bw",                  "MOVED - Now a member of the MemNIC subcomponent.", "80GiB/s"}, // Remove 9.0
             {"network_input_buffer_size",   "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}, // Remove 9.0
             {"network_output_buffer_size",  "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}) // Remove 9.0
-  
+
     SST_ELI_DOCUMENT_PORTS(
             {"low_network_0",   "Port connected to lower level caches (closer to main memory)",                     {"memHierarchy.MemEventBase"} },
             {"high_network_0",  "Port connected to higher level caches (closer to CPU)",                            {"memHierarchy.MemEventBase"} },
@@ -157,7 +157,7 @@ public:
             {"Inv_recv",                "Event received: Inv", "count", 2},
             {"NACK_recv",               "Event: NACK received", "count", 2})
 
-/* Class definition */ 
+/* Class definition */
     typedef CacheArray::CacheLine           CacheLine;
     typedef CacheArray::DataLine            DataLine;
     typedef map<Addr, mshrEntry>            mshrTable;
@@ -165,14 +165,14 @@ public:
     typedef uint64_t                        uint64;
 
     friend class InstructionStream;
-    
+
     /** Constructor for Cache Component */
     Cache(ComponentId_t id, Params &params);
-    
+
     virtual void init(unsigned int);
     virtual void setup(void);
     virtual void finish(void);
-    
+
     /** Computes the 'Base Address' of the requests.  The base address point the first address of the cache line */
     Addr toBaseAddr(Addr addr){
         return (addr) & ~(cacheArray_->getLineSize() - 1);
@@ -195,44 +195,47 @@ private:
 
     /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
     void processIncomingEvent(SST::Event *event);
-    
+
     /** Process an incoming event that is not meant for the cache */
     void processNoncacheable(MemEventBase* event);
-    
+
     /** Process the oldest incoming event */
     bool processEvent(MemEventBase* event, bool mshrHit);
-    
+
     /** Configure this component's links */
     void configureLinks(Params &params);
-    
+
     /** Handler for incoming prefetching events. */
     void handlePrefetchEvent(SST::Event *event);
-    
+
     /** Self-Event prefetch handler for this component */
     void processPrefetchEvent(SST::Event *event);
-    
+
     /** Function processes incomming access requests from HiLv$ or the CPU
         It appropriately redirects requests to Top and/or Bottom controllers.  */
     void processCacheRequest(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit);
     void processCacheReplacement(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit);
     void processCacheFlush(MemEvent * event, Addr baseAddr, bool mshrHit);
 
-    /** Function processes incomming invalidate messages.  Redirects message 
+    /** Function processes incomming invalidate messages.  Redirects message
         to Top and Bottom controllers appropriately  */
     void processCacheInvalidate(MemEvent *event, Addr baseAddr, bool mshrHit);
 
-    /** Function processes incomming GetS/GetX responses.  
+    /** Function processes incomming GetS/GetX responses.
         Redirects message to Top Controller */
     void processCacheResponse(MemEvent* ackEvent, Addr baseAddr);
-    
+
     void processFetchResp(MemEvent* event, Addr baseAddr);
 
     /** Find replacement for the current request.  If the replacement candidate is
-        valid then a writeback is needed.  If replacemenent candidate is transitioning, we 
+        valid then a writeback is needed.  If replacemenent candidate is transitioning, we
         need to wait (stall) until the replacement is in a 'stable' state */
     inline bool allocateLine(MemEvent *event, Addr baseAddr);
     inline bool allocateCacheLine(MemEvent *event, Addr baseAddr);
     inline bool allocateDirCacheLine(MemEvent *event, Addr baseAddr, CacheLine * dirLine, bool noStall);
+
+    /** Notify any listers that an eviction has occured */
+    void notifyListenerOfEvict(const MemEvent *event, const CacheLine *replaceLine);
 
     /** Function attempts to send all responses for previous events that 'blocked' due to an outstanding request.
         If response blocks cache line the remaining responses go to MSHR till new outstanding request finishes  */
@@ -244,7 +247,7 @@ private:
     inline bool activatePrevEvent(MemEvent* event, vector<mshrType>& entries, Addr addr, vector<mshrType>::iterator it, int i);
 
     inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool mshrHit);
-    
+
     inline void postReplacementProcessing(MemEvent* event, CacheAction action, bool mshrHit);
 
     /** If cache line was user-locked, then events might be waiting for lock to be released
@@ -256,31 +259,31 @@ private:
 
     /** Insert to MSHR wrapper */
     inline bool insertToMSHR(Addr baseAddr, MemEvent* event);
-    
+
     /** Try to insert request to MSHR.  If not sucessful, function send a NACK to requestor */
     bool processRequestInMSHR(Addr baseAddr, MemEvent* event);
     bool processInvRequestInMSHR(Addr baseAddr, MemEvent* event, bool inProgress);
-    
+
     /** Determines what CC will send the NACK. */
     void sendNACK(MemEvent* event);
 
-    /** In charge of processng incoming NACK.  
+    /** In charge of processng incoming NACK.
         Currently, it simply retries event */
     void processIncomingNACK(MemEvent* _origReqEvent);
-    
-    
+
+
     /** Verify that input parameters are valid */
     void errorChecking();
-    
+
     /** Print input members/parameters */
     void pMembers();
-    
+
     /** Update the latency stats */
     void recordLatency(MemEvent * event);
 
     /** Get the front element of a MSHR entry */
     MemEvent* getOrigReq(const vector<mshrType> entries);
-   
+
     /** Print cache line for debugging */
     void printLine(Addr addr);
 
@@ -288,13 +291,13 @@ private:
     uint64 getTimestamp(){ return timestamp_; }
 
     /** Find the appropriate MSHR lookup latency cycles in case the user did not provide
-        any parameter values for this type of latency.  This function intrapolates from 
+        any parameter values for this type of latency.  This function intrapolates from
         numbers gather by other papers/results */
     void intrapolateMSHRLatency();
 
     void profileEvent(MemEvent* event, Command cmd, bool replay, bool canStall);
 
-    /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough, 
+    /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough,
          the clock gets deregistered from TimeVortx and reregistered only when an event is received */
     bool clockTick(Cycle_t time);
     void turnClockOn();
@@ -340,8 +343,8 @@ private:
     uint64_t                accessLatency_;
     uint64_t                tagLatency_;
     uint64_t                mshrLatency_;
-    int                     dropPrefetchLevel_;
-    int                     maxOutstandingPrefetch_;
+    uint64_t                dropPrefetchLevel_;
+    uint64_t                maxOutstandingPrefetch_;
     SimTime_t               prefetchDelay_;
     int                     maxRequestsPerCycle_;
 
@@ -356,19 +359,19 @@ private:
     CoherenceController*    coherenceMgr_;
     Clock::Handler<Cache>*  clockHandler_;
     TimeConverter*          defaultTimeBase_;
-    
+
     /* Debug and output */
     Output*                 out_;
     Output*                 d_;
     Output*                 d2_;
     std::set<Addr>          DEBUG_ADDR;
-    
+
     /* Variables */
     vector<string>          lowerLevelCacheNames_;
     vector<string>          upperLevelCacheNames_;
     uint64_t                timestamp_;
     int                     requestsThisCycle_;
-    std::map<SST::Event::id_type, std::string> responseDst_; 
+    std::map<SST::Event::id_type, std::string> responseDst_;
     std::queue<MemEventBase*>       requestBuffer_;                 // Buffer requests that can't be processed due to port limits
     std::vector< std::queue<MemEventBase*> > bankConflictBuffer_;   // Buffer requests that have bank conflicts
     std::map<MemEvent*,uint64>      startTimeList_;
@@ -379,6 +382,7 @@ private:
     bool                    isLL;
     bool                    lowerIsNoninclusive;
     bool                    expectWritebackAcks;
+    bool                    silentEvict;
 
     /* Performance enhancement: turn clocks off when idle */
     bool                    clockIsOn_;                 // Tell us whether clock is on or off
@@ -388,8 +392,8 @@ private:
     bool                    maxWaitWakeupExists_;       // Whether a timeout wakeup exists
     bool                    clockLink_; // Whether link actually needs clock() called or not
 
-    /* 
-     * Statistics API stats 
+    /*
+     * Statistics API stats
      */
     // Cache hits
     Statistic<uint64_t>* statCacheHits;
@@ -437,95 +441,95 @@ private:
 /*  Implementation Details
     The coherence protocol implemented by MemHierarchy's 'Cache' component is a directory-based intra-node MESI/MSI coherency
     similar to modern processors like Intel sandy bridge and ARM CCI.  Intra-node Directory-based protocols.
-    The class "Directory Controller" implements directory-based inter-node coherence and needs to 
+    The class "Directory Controller" implements directory-based inter-node coherence and needs to
     be used along "Merlin", our interconnet network simulator (Contact Scott Hemmert about Merlin).
- 
+
     The Cache class serves as the main cache controller.  It is in charge or handling incoming
     SST-based events (cacheEventProcessing.cc) and forwarding the requests to the other system's
     subcomponents:
-        - Cache Array:  Class in charge keeping track of all the cache lines in the cache.  The 
+        - Cache Array:  Class in charge keeping track of all the cache lines in the cache.  The
         Cache Line inner class stores the data and state related to a particular cache line.
- 
-        - Replacement Manager:  Class handles work related to the replacement policy of the cache.  
+
+        - Replacement Manager:  Class handles work related to the replacement policy of the cache.
         Similar to Cache Array, this class is OO-based so different replacement policies are simply
-        subclasses of the main based abstrac class (ReplacementMgr), therefore they need to implement 
-        certain functions in order for them to work properly. Implemented policies are: least-recently-used (lru), 
+        subclasses of the main based abstrac class (ReplacementMgr), therefore they need to implement
+        certain functions in order for them to work properly. Implemented policies are: least-recently-used (lru),
         least-frequently-used (lfu), most-recently-used (mru), random, and not-most-recently-used (nmru).
- 
+
         - Hash:  Class implements common hashing functions.  These functions are used by the Cache Array
         class.  For instance, a typical set associative array uses a simple hash function, whereas
         skewed associate and ZCaches use more advanced hashing functions.
- 
+
         - MSHR:  Class that represents a hardware Miss Status Handling Register (or Miss Status Holding
         Register).  Noncacheable requests use a separate MSHR for simplicity.
 
-        The MSHR is a map of <addr, vector<UNION(event, addr pointer)> >. 
-        Why a UNION(event, addr pointer)?  Upon receiving a miss request, all cache line replacement candidates 
-        might be in transition, regardless of the replacement policy and associativity used.  
+        The MSHR is a map of <addr, vector<UNION(event, addr pointer)> >.
+        Why a UNION(event, addr pointer)?  Upon receiving a miss request, all cache line replacement candidates
+        might be in transition, regardless of the replacement policy and associativity used.
         In this case the MSHR stores a pointer in the MSHR entry.  When a replacement candidate is NO longer in
-	transition, the MSHR looks at the pointer and 'replays' the previously blocked request, which is  
+	transition, the MSHR looks at the pointer and 'replays' the previously blocked request, which is
 	stored in another MSHR entry (different address).
-        
+
         Example:
             MSHR    Addr   Requests
                      A     #1, #2, pointer to B, #4
                      B     #3
-                     
+
             In the above example, Request #3 (addr B) wanted to replace a cache line from Addr A.  Since
             the cache line containing A was in transition, a pointer is stored in the "A"-key MSHR entry.
-            When A finishes (Request #1), then request #2, request #3 (from B), and request #4 are replayed 
+            When A finishes (Request #1), then request #2, request #3 (from B), and request #4 are replayed
             (as long as none of them further get blocked again for some reason).
- 
+
     The cache itself is a "blocking" cache, which is the  type most often found in hardware.  A blocking
     cache does not respond to requests if the cache line is in transition.  Instead, it stores
     pending requests in the MSHR.  The MSHR is in charge of "replaying" pending requests once
-    the cache line is in a stable state. 
+    the cache line is in a stable state.
 
     Coherence-related algorithms are handled by coherenceControllers. Implemented algorithms include an L1 MESI or MSI protocol,
-    and incoherent L1 protocol, a lower-level (farther from CPU) cache MESI/MSI protocol for inclusive or exclusive caches, a lower-level 
+    and incoherent L1 protocol, a lower-level (farther from CPU) cache MESI/MSI protocol for inclusive or exclusive caches, a lower-level
     cache+directory MESI/MSI protocol for exclusive caches with an inclusive directory, and an incoherent lower-level cache protocol.
     The incoherent caches maintain present/not-present information and write back dirty blocks but make no attempt to track or resolve
     coherence conflicts (e.g., two caches CAN have independent copies of the same block and both be modifying their copies). For this reason,
     processors that rely on "correct" data from memHierarchy are not likely to work with incoherent caches.
-    
+
     Prefetchers are part of SST's Cassini element, not part of MemHierarchy.  Prefetchers can be used along
-    any level cache except for exclusive caches without an accompanying directory. Such caches are not able to determine whether a cache above them 
+    any level cache except for exclusive caches without an accompanying directory. Such caches are not able to determine whether a cache above them
     (closer to the CPU) has a block and thus may prefetch blocks that are already present in their hierarchy. The lower-level caches are not designed
     to deal with this. Prefetch also does not currently work alongside shared, sliced caches as prefetches generated at one cache are not neccessarily
     for blocks mapped to that cache.
- 
+
     Key notes:
-        - The cache supports hardware "locking" (GetSX command), and atomics-based requests (LLSC, GetS with 
+        - The cache supports hardware "locking" (GetSX command), and atomics-based requests (LLSC, GetS with
         LLSC flag on).  For LLSC atomics, the flag "LLSC_Resp" is set when a store (GetX) was successful.
-        
+
         - In case an L1's cache line is "LOCKED" (L2+ are never locked), the L1 is in charge of "replying" any
-        events that might have been blocked due to that LOCK. These 'replayed' events should be invalidates, for 
+        events that might have been blocked due to that LOCK. These 'replayed' events should be invalidates, for
         obvious reasons.
-        
+
         - Access_latency_cycles determines the number of cycles it typically takes to complete a request, while
         MSHR_hit_latency determines the number of cycles is takes to respond to events that were pending in the MSHR.
         For instance, upon receiving a miss request, the cache takes access_latency to send that request to memory.
         Once a responce comes from Memory (or LwLvl caches), the MSHR is looked up and it takes "MSHR_hit_latency" to
         send that request to the higher level caches, instead of taking another "access_latency" cycles which would
         normally take quite longer.
-        
-        - To avoid deadlock, at least one MSHR is always reserved for requests from lower levels (e.g., Invs). 
+
+        - To avoid deadlock, at least one MSHR is always reserved for requests from lower levels (e.g., Invs).
         Therefore, each cache requires a minimum of two MSHRs (one for sending, one for receiving).
 
         - A "Bus" component is only needed between two caches when there is more than one higher level cache.
           Eg.  L1  L1 <-- bus --> L2.  When a single L1 connects directly to an L2, no bus is needed.
-    
-        - An L1 cache handles as many requests as are sent by the CPU per cycle.  
-         
-        - Use a 'no wrapping' editor to view MH files, as many comments are on the 'side' and fall off the window 
+
+        - An L1 cache handles as many requests as are sent by the CPU per cycle.
+
+        - Use a 'no wrapping' editor to view MH files, as many comments are on the 'side' and fall off the window
 
 
     Latencies
-        - access_latency_cycles - Time to access the cache data array. Assumed to be longer than or equal to tag_access_latency_cycles so that a 
+        - access_latency_cycles - Time to access the cache data array. Assumed to be longer than or equal to tag_access_latency_cycles so that a
                                 miss pays the lesser of the two and a hit the greater. This latency is paid by cache hits and coherence requests that need to return data.
         - tag_access_latency_cycles - Time to access the cache tag array. This latency is paid by caches misses and by coherence requests like invalidations which don't need to touch the data array.
         - mshr_latency_cycles - Time to access the mshrs - used instead of the tag_access_latency and/or access_latency_cycles for replayed events and MSHR hits.
-        
+
         Examples:
         L1 miss + L2 hit: L1 tag_access_latency_cycles + L2 access_latency_cycles + L1 mshr_latency_cycles + (any transit time over buses/network/etc.)
         L1 hit: access_latency_cycles
@@ -534,8 +538,8 @@ private:
 
 
         Other notes:
-            Accesses to a single address are serialized in time by their access latency. So for a cache with a 4 cycle access, 
-            if requests A and B for the same block are received at cycles 1 and 2 respectively, A will return at 5 and B will return at 9. 
+            Accesses to a single address are serialized in time by their access latency. So for a cache with a 4 cycle access,
+            if requests A and B for the same block are received at cycles 1 and 2 respectively, A will return at 5 and B will return at 9.
 */
 
 

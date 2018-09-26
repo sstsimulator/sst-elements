@@ -38,23 +38,23 @@ using namespace SST::MemHierarchy;
  * Implementation notes:
  *  SimpleDRAM relies on external (memController or other backend) request limiting. SimpleDRAM will block banks but will accept multiple requests per cycle if they don't have a bank conflict.
  *  SimpleDRAM assumes transfer granularity is a cache line -> this can be changed by changing 'cache_line_size_in_bytes'
- *  SimpleDRAM does not model bus contention back to the controller -> possible for multiple requests to return in the same cycle 
+ *  SimpleDRAM does not model bus contention back to the controller -> possible for multiple requests to return in the same cycle
  *
  *  TODO
  *   * Randomize bank bits?
  *   * Decide whether to consider tRAS
  *   * Allow multiple ranks?
  */
- 
+
 
 SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp, params){
 
     // Get parameters
-    tCAS = params.find<unsigned int>("tCAS", 9);
-    tRCD = params.find<unsigned int>("tRCD", 9);
-    tRP = params.find<unsigned int>("tRP", 9);
+    tCAS = params.find<uint64_t>("tCAS", 9);
+    tRCD = params.find<uint64_t>("tRCD", 9);
+    tRP = params.find<uint64_t>("tRP", 9);
     std::string cycTime = params.find<std::string>("cycle_time", "4ns");
-    int banks = params.find<int>("banks", 8);
+    uint64_t banks = params.find<uint64_t>("banks", 8);
     UnitAlgebra lineSize(params.find<std::string>("bank_interleave_granularity", "64B"));
     UnitAlgebra rowSize(params.find<std::string>("row_size", "8KiB"));
     bool found = false;
@@ -68,13 +68,13 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp,
     if (policyStr != "closed" && policyStr != "open") {
         output->fatal(CALL_INFO, -1, "Invalid param(%s): row_policy - must be 'closed' or 'open'. You specified '%s'.\n", comp->getName().c_str(), policyStr.c_str());
     }
-    
+
     if (policyStr == "closed") policy = RowPolicy::CLOSED;
     else policy = RowPolicy::OPEN;
 
     // banks needs to be a power of 2 -> use to set bank mask
     if (!isPowerOfTwo(banks)) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): banks - must be a power of two. You specified %d.\n", comp->getName().c_str(), banks);    
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): banks - must be a power of two. You specified %" PRIu64 ".\n", comp->getName().c_str(), banks);
     }
     bankMask = banks - 1;
 
@@ -106,7 +106,7 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp,
 
     // Self link for timing requests
     self_link = comp->configureSelfLink("Self", cycTime, new Event::Handler<SimpleDRAM>(this, &SimpleDRAM::handleSelfEvent));
-   
+
     // Some statistics
     statRowHit = registerStatistic<uint64_t>("row_already_open");
     statRowMissNoRP = registerStatistic<uint64_t>("no_row_open");
@@ -141,16 +141,16 @@ bool SimpleDRAM::issueRequest( ReqId reqId, Addr addr, bool isWrite, unsigned nu
     int row = addr >> rowOffset;
 
 #ifdef __SST_DEBUG_OUTPUT__
-    output->debug(_L10_, "SimpleDRAM (%s) received request for address %" PRIx64 " which maps to bank: %d, row: %d. Bank status: %s, open row is %d\n", 
+    output->debug(_L10_, "SimpleDRAM (%s) received request for address %" PRIx64 " which maps to bank: %d, row: %d. Bank status: %s, open row is %d\n",
            parent->getName().c_str(), addr, bank, row, (busy[bank] ? "busy" : "idle"), openRow[bank]);
 #endif
-    
+
     // If bank is busy -> return false;
     if (busy[bank]) return false;
 
     int latency = tCAS;
     if (openRow[bank] != row) {
-        latency += tRCD; 
+        latency += tRCD;
         if (openRow[bank] != -1) {
             latency += tRP;
             statRowMissRP->addData(1);
@@ -163,6 +163,6 @@ bool SimpleDRAM::issueRequest( ReqId reqId, Addr addr, bool isWrite, unsigned nu
     }
     busy[bank] = true;
     self_link->send(latency, new MemCtrlEvent( bank, reqId ));
-    
+
     return true;
 }

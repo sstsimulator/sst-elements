@@ -1,10 +1,10 @@
 // Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2018, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -51,24 +51,24 @@ CoherenceController::CoherenceController(Component * comp, Params &params) : Sub
     mshrLatency_ = params.find<uint64_t>("mshr_latency_cycles", 1); /* cacheFactory is currently checking/setting this for us */
 
     /* Get line size - already error checked by cacheFactory */
-    lineSize_ = params.find<unsigned int>("cache_line_size", 64, found);
+    lineSize_ = params.find<uint64_t>("cache_line_size", 64, found);
 
     /* Get throughput parameters */
     UnitAlgebra packetSize = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
     UnitAlgebra downLinkBW = UnitAlgebra(params.find<std::string>("request_link_width", "0B"));
     UnitAlgebra upLinkBW = UnitAlgebra(params.find<std::string>("response_link_width", "0B"));
 
-    if (!packetSize.hasUnits("B")) 
+    if (!packetSize.hasUnits("B"))
         output->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B), SI units OK. Ex: '8B'. You specified '%s'\n", parent->getName().c_str(), packetSize.toString().c_str());
-    if (!downLinkBW.hasUnits("B")) 
+    if (!downLinkBW.hasUnits("B"))
         output->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", parent->getName().c_str(), downLinkBW.toString().c_str());
-    if (!upLinkBW.hasUnits("B")) 
+    if (!upLinkBW.hasUnits("B"))
         output->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", parent->getName().c_str(), upLinkBW.toString().c_str());
-    
+
     maxBytesUp = upLinkBW.getRoundedValue();
     maxBytesDown = downLinkBW.getRoundedValue();
     packetHeaderBytes = packetSize.getRoundedValue();
-    
+
     /* Initialize variables */
     timestamp_ = 0;
 
@@ -82,7 +82,7 @@ CoherenceController::CoherenceController(Component * comp, Params &params) : Sub
     stat_evict_IB =     registerStatistic<uint64_t>("evict_IB");
     stat_evict_SB =     registerStatistic<uint64_t>("evict_SB");
 
-    // TODO should these be here or part of cache controller? 
+    // TODO should these be here or part of cache controller?
     stat_latency_GetS_IS =      registerStatistic<uint64_t>("latency_GetS_IS");
     stat_latency_GetS_M =       registerStatistic<uint64_t>("latency_GetS_M");
     stat_latency_GetX_IM =      registerStatistic<uint64_t>("latency_GetX_IM");
@@ -102,10 +102,10 @@ CoherenceController::CoherenceController(Component * comp, Params &params) : Sub
 /* Send a NACK in response to a request. Could be virtual if needed. */
 void CoherenceController::sendNACK(MemEvent * event, bool up, SimTime_t timeInNano) {
     MemEvent *NACKevent = event->makeNACKResponse(event, timeInNano);
-    
+
     uint64_t deliveryTime = timestamp_ + tagLatency_;
     Response resp = {NACKevent, deliveryTime, packetHeaderBytes};
-        
+
     if (up) addToOutgoingQueueUp(resp);
     else addToOutgoingQueue(resp);
 
@@ -113,12 +113,12 @@ void CoherenceController::sendNACK(MemEvent * event, bool up, SimTime_t timeInNa
 }
 
 
-    
+
 /* Send response towards the CPU. L1s need to implement their own to split out the requested block */
 uint64_t CoherenceController::sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic) {
     return sendResponseUp(event, CommandResponse[(int)event->getCmd()], data, false, replay, baseTime, atomic);
 }
-   
+
 
 /* Send response towards the CPU. L1s need to implement their own to split out the requested block */
 uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool atomic) {
@@ -127,29 +127,29 @@ uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vect
     responseEvent->setSize(event->getSize());
     if (data != NULL) responseEvent->setPayload(*data);
     responseEvent->setDirty(dirty);
-    
+
     if (baseTime < timestamp_) baseTime = timestamp_;
     uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : accessLatency_);
     Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize() };
     addToOutgoingQueueUp(resp);
-    
-    if (is_debug_event(event)) debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Payload Bytes = %zu\n", 
+
+    if (is_debug_event(event)) debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Payload Bytes = %zu\n",
             deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getPayloadSize());
 
     return deliveryTime;
 }
-    
+
 /* Send response towards the CPU. L1s need to implement their own to split out the requested block */
 uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic) {
     return sendResponseUp(event, cmd, data, false, replay, baseTime, atomic);
 }
-    
+
 
 /* Resend an event that was NACKed
  * Add backoff latency to avoid too much traffic
  */
 void CoherenceController::resendEvent(MemEvent * event, bool up) {
-    // Calculate backoff    
+    // Calculate backoff
     int retries = event->getRetries();
     if (retries > 10) retries = 10;
     uint64_t backoff = ( 0x1 << retries);
@@ -162,16 +162,16 @@ void CoherenceController::resendEvent(MemEvent * event, bool up) {
 
     if (is_debug_event(event)) debug->debug(_L3_,"Sending request: %s\n", event->getBriefString().c_str());
 }
-  
+
 
 /* Forward a message to a lower level (towards memory) in the hierarchy */
 uint64_t CoherenceController::forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data) {
     /* Create event to be forwarded */
     MemEvent* forwardEvent;
     forwardEvent = new MemEvent(*event);
-    
+
     if (data == NULL) forwardEvent->setPayload(0, NULL);
-    
+
     forwardEvent->setSrc(parent->getName());
     forwardEvent->setDst(linkDown_->findTargetDestination(baseAddr));
     forwardEvent->setSize(requestSize);
@@ -184,13 +184,13 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, Addr baseAddr, un
     if (event->queryFlag(MemEvent::F_NONCACHEABLE)) {
         forwardEvent->setFlag(MemEvent::F_NONCACHEABLE);
         deliveryTime = timestamp_ + mshrLatency_;
-    } else deliveryTime = baseTime + tagLatency_; 
-    
+    } else deliveryTime = baseTime + tagLatency_;
+
     Response fwdReq = {forwardEvent, deliveryTime, packetHeaderBytes + forwardEvent->getPayloadSize() };
     addToOutgoingQueue(fwdReq);
 
-    if (is_debug_event(event)) debug->debug(_L3_,"Forwarding request at cycle = %" PRIu64 "\n", deliveryTime);        
-    
+    if (is_debug_event(event)) debug->debug(_L3_,"Forwarding request at cycle = %" PRIu64 "\n", deliveryTime);
+
     return deliveryTime;
 }
 
@@ -211,7 +211,7 @@ uint64_t CoherenceController::forwardTowardsCPU(MemEventBase * event, std::strin
     addToOutgoingQueueUp(fwdReq);
     return timestamp_ + 1;
 }
-    
+
 std::string CoherenceController::getSrc() {
     return linkUp_->getSources()->begin()->name;
 }
@@ -239,14 +239,14 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
                 break;
             }
         }
-        
+
         outgoingEvent->setDst(linkDown_->findTargetDestination(outgoingEvent->getRoutingAddress()));
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
                     parent->getName().c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
         }
-        
+
         linkDown_->send(outgoingEvent);
         outgoingEventQueue_.pop_front();
 
@@ -270,7 +270,7 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
                     parent->getName().c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
         }
-        
+
         linkUp_->send(outgoingEvent);
         outgoingEventQueueUp_.pop_front();
     }
@@ -315,7 +315,7 @@ void CoherenceController::addToOutgoingQueueUp(Response& resp) {
 /* Call back to listener */
 void CoherenceController::notifyListenerOfAccess(MemEvent * event, NotifyAccessType accessT, NotifyResultType resultT) {
     if (!event->isPrefetch()) {
-        CacheListenerNotification notify(event->getBaseAddr(), event->getVirtualAddress(),
+        CacheListenerNotification notify(event->getAddr(), event->getBaseAddr(), event->getVirtualAddress(),
                 event->getInstructionPointer(), event->getSize(), accessT, resultT);
         listener_->notifyAccess(notify);
     }
@@ -389,8 +389,8 @@ void CoherenceController::recordEvictionState(State state) {
 
 
 /* Setup variables controlling interactions with other memory levels */
-void CoherenceController::setupLowerStatus(bool isLastCoherenceLevel, bool expectWritebackAck, bool lowerIsNoninclusive) {
-    silentEvictClean_ = isLastCoherenceLevel; // Level below us doesn't do coherence so just drop clean blocks
+void CoherenceController::setupLowerStatus(bool silentEvict, bool isLastCoherenceLevel, bool expectWritebackAck, bool lowerIsNoninclusive) {
+    silentEvictClean_ = silentEvict; // Level below us doesn't track block presence so just drop clean blocks
     lastLevel_ = isLastCoherenceLevel;
     expectWritebackAck_ = expectWritebackAck; // Level below us will send writeback acks so wait for it
     writebackCleanBlocks_ = lowerIsNoninclusive; // Attach a payload to clean writebacks if the lower level might not have data
@@ -398,27 +398,27 @@ void CoherenceController::setupLowerStatus(bool isLastCoherenceLevel, bool expec
     //silentEvictClean_       = isLastCoherenceLevel; // Silently evict clean blocks if there's just a memory below us
     //expectWritebackAck_     = !isLastCoherenceLevel && (lowerIsDirectory || lowerIsNoninclusive);  // Expect writeback ack if there's a dir below us or a non-inclusive cache
     //writebackCleanBlocks_   = lowerIsNoninclusive;  // Writeback clean data if lower is non-inclusive - otherwise control message only
-        
+
 }
 
 /**************************************/
 /*********** Debug support ************/
 /**************************************/
- 
+
 void CoherenceController::printStatus(Output& out) {
     out.output("  Begin MemHierarchy::CoherenceController %s\n", getName().c_str());
-    
+
     out.output("    Events waiting in outgoingEventQueue: %zu\n", outgoingEventQueue_.size());
     for (list<Response>::iterator it = outgoingEventQueue_.begin(); it!= outgoingEventQueue_.end(); it++) {
         out.output("      Time: %" PRIu64 ", Event: %s\n", (*it).deliveryTime, (*it).event->getVerboseString().c_str());
     }
-    
+
     out.output("    Events waiting in outgoingEventQueueUp_: %zu\n", outgoingEventQueueUp_.size());
     for (list<Response>::iterator it = outgoingEventQueueUp_.begin(); it!= outgoingEventQueueUp_.end(); it++) {
         out.output("      Time: %" PRIu64 ", Event: %s\n", (*it).deliveryTime, (*it).event->getVerboseString().c_str());
     }
-   
+
     out.output("  End MemHierarchy::CoherenceController\n");
 }
 
-   
+

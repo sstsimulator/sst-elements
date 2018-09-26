@@ -357,3 +357,11 @@ void MemNIC::printStatus(Output &out) {
     out.output("  End MemHierarchy::MemNIC\n");
 }
 
+void MemNIC::emergencyShutdownDebug(Output &out) {
+    out.output(" Draining link control...\n");
+    MemEventBase * me = recv();
+    while (me != nullptr) {
+        out.output("      Undelivered message: %s\n", me->getVerboseString().c_str());
+        me = recv();
+    }
+}

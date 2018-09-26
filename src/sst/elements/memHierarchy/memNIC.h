@@ -125,7 +125,7 @@ class MemNICBase : public MemLinkBase {
             }
             return false;
         }
-
+    
     protected:
         void nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned int phase);
         bool initMsgSent;
@@ -196,6 +196,7 @@ public:
 
     /* Debug */
     void printStatus(Output &out);
+    void emergencyShutdownDebug(Output &out);
 
 private:
 

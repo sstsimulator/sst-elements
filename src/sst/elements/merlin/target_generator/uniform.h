@@ -67,7 +67,7 @@ public:
     }
     
     void initialize(int id, int num_peers) {
-        gen = new MersenneRNG(13);
+        gen = new MersenneRNG(id);
 
         if ( min == -1 ) min = 0;
         if ( max == -1 ) max = num_peers;

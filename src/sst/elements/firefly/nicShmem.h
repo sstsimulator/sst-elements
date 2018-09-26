@@ -81,10 +81,9 @@ class Shmem {
 		
 	const char* prefix() { return m_prefix.c_str(); }
   public:
-    Shmem( Nic& nic, int id, int numVnics, Output& output, int numCmdSlots, SimTime_t nic2HostDelay_ns, SimTime_t host2NicDelay_ns,
-                SimTime_t sendSetupLatency ) : 
+    Shmem( Nic& nic, Params& params, int id, int numVnics, Output& output, int numCmdSlots, SimTime_t nic2HostDelay_ns, SimTime_t host2NicDelay_ns ) : 
 		m_nic( nic ), m_dbg(output), m_one( (long) 1 ), m_freeCmdSlots( numCmdSlots ),
-    	m_nic2HostDelay_ns(nic2HostDelay_ns), m_host2NicDelay_ns(host2NicDelay_ns), m_sendSetupLatency( sendSetupLatency )
+    	m_nic2HostDelay_ns(nic2HostDelay_ns), m_host2NicDelay_ns(host2NicDelay_ns), m_engineBusy(false),m_hostBusy(false)
     {
         m_prefix = "@t:" + std::to_string(id) + ":Nic::Shmem::@p():@l ";
         m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"this=%p\n",this );
@@ -92,14 +91,18 @@ class Shmem {
 		m_regMem.resize( numVnics ); 
 		m_pendingOps.resize( numVnics );
 		m_pendingRemoteOps.resize( numVnics );
+		m_nicCmdLatency =    params.find<int>( "nicCmdLatency", 10 );
+		m_hostCmdLatency =   params.find<int>( "hostCmdLatency", 10 );
 	}
     ~Shmem() {
         m_regMem.clear();
     }
 	void handleEvent( NicShmemCmdEvent* event, int id );
 	void handleHostEvent( NicShmemCmdEvent* event, int id );
+	void handleHostEvent2( NicShmemCmdEvent* event, int id );
 	void handleNicEvent( NicShmemCmdEvent* event, int id );
-	void handleEvent2( NicShmemCmdEvent* event, int id );
+	void handleNicEvent2( NicShmemCmdEvent* event, int id );
+	void handleNicEvent3( NicShmemCmdEvent* event, int id );
 	long getPending( int core ) {
 		return  m_pendingRemoteOps[core].second.get<long>();
     }
@@ -181,5 +184,11 @@ private:
     std::vector<std::vector< std::pair<Hermes::MemAddr, size_t> > > m_regMem;
 	SimTime_t m_nic2HostDelay_ns;
 	SimTime_t m_host2NicDelay_ns;
-    SimTime_t m_sendSetupLatency;
+
+	std::deque< std::pair< NicShmemCmdEvent*, int > > m_cmdQ;
+	bool m_engineBusy;
+	std::deque< std::pair< NicShmemCmdEvent*, int > > m_hostCmdQ;
+	bool m_hostBusy;
+	SimTime_t m_nicCmdLatency;
+	SimTime_t m_hostCmdLatency;
 };

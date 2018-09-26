@@ -22,5 +22,5 @@ SimpleModuleExample::SimpleModuleExample(SST::Params& params) {
 }
 
 void SimpleModuleExample::printName() {
-	printf("Name: %d\n", modName.c_str());
+	printf("Name: %s\n", modName.c_str());
 }

@@ -54,10 +54,13 @@ public:
 
     /* Event handling */
     void handleMemResponse(SST::Event::id_type id, uint32_t flags);
+    
+    /* Component API */
+    virtual void init(unsigned int phase);
+    virtual void setup();
 
 protected:
     virtual void processInitEvent(MemEventInit* ev);
-    virtual void setup();
     
     virtual void handleEvent(SST::Event * event);
 

@@ -196,7 +196,7 @@ class Thread : public UnitBase {
             break;
 
 		  case MemOp::HostBusWrite:
-            m_blocked = m_model.busUnit().write( this, new MemReq( addr, length ), callback );
+            m_blocked = m_model.busUnitWrite( this, new MemReq( addr, length ), callback );
 		    break;
 
           case MemOp::LocalLoad:

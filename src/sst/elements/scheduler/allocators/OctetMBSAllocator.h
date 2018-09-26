@@ -23,9 +23,12 @@
 #ifndef SST_SCHEDULER__OCTETMBSALLOCATOR_H__
 #define SST_SCHEDULER__OCTETMBSALLOCATOR_H__
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wuser-defined-warnings"
 #include <set>
 #include <string>
 #include <vector>
+#pragma clang diagnostic pop
 
 #include "MBSAllocator.h"
 

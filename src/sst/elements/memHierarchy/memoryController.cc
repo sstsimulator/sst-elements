@@ -425,7 +425,7 @@ void MemController::init(unsigned int phase) {
     /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth()));
+        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
     }
 
     while (MemEventInit *ev = link_->recvInitData()) {
@@ -571,6 +571,15 @@ void MemController::printStatus(Output &statusOut) {
 }
 
 void MemController::emergencyShutdown() {
-    if (out.getVerboseLevel() > 1)
+    if (out.getVerboseLevel() > 1) {
+        if (out.getOutputLocation() == Output::STDOUT)
+            out.setOutputLocation(Output::STDERR);
+        
         printStatus(out);
+        
+        if (link_) {
+            out.output("  Checking for unreceived events on link: \n");
+            link_->emergencyShutdownDebug(out);
+        }
+    }
 }

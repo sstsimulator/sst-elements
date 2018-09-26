@@ -364,6 +364,7 @@ bool Cache::allocateLine(MemEvent * event, Addr baseAddr) {
     }
 
     /* OK to replace line */
+    notifyListenerOfEvict(event, replacementLine);
     cacheArray_->replace(baseAddr, replacementLine);
     return true;
 }
@@ -391,6 +392,7 @@ bool Cache::allocateCacheLine(MemEvent* event, Addr baseAddr) {
     }
     
     /* OK to replace line  */
+    notifyListenerOfEvict(event, replacementLine);
     cacheArray_->replace(baseAddr, replacementLine);
     return true;
 }
@@ -415,6 +417,7 @@ bool Cache::allocateDirCacheLine(MemEvent * event, Addr baseAddr, CacheLine * di
             mshr_->insertPointer(replacementDirLine->getBaseAddr(), baseAddr);
             return false;
         }
+        // should listener be informed?
         coherenceMgr_->handleEviction(replacementDirLine, this->getName(), true);
     }
 
@@ -422,6 +425,18 @@ bool Cache::allocateDirCacheLine(MemEvent * event, Addr baseAddr, CacheLine * di
     return true;
 }
 
+
+void Cache::notifyListenerOfEvict(const MemEvent *event, 
+                                  const CacheLine *replaceLine) {
+    if (listener_) {
+        CacheListenerNotification notify(replaceLine->getBaseAddr(), 
+                                         replaceLine->getBaseAddr(), 
+                                         0,
+                                         event->getInstructionPointer(),
+                                         replaceLine->getSize(), EVICT, NA);
+        listener_->notifyAccess(notify);
+    }
+}
 
 
 /* -------------------------------------------------------------------------------------
@@ -752,7 +767,18 @@ void Cache::printStatus(Output &out) {
 }
 
 void Cache::emergencyShutdown() {
-    if (out_->getVerboseLevel() > 1)
+    if (out_->getVerboseLevel() > 1) {
+        if (out_->getOutputLocation() == Output::STDOUT)
+            out_->setOutputLocation(Output::STDERR);
         printStatus(*out_);
+        if (linkUp_ && linkUp_ != linkDown_) {
+            out_->output("  Checking for unreceived events on up link: \n");
+            linkUp_->emergencyShutdownDebug(*out_);
+            out_->output("  Checking for unreceived events on down link: \n");
+        } else {
+            out_->output("  Checking for unreceived events on link: \n");
+        }
+        linkDown_->emergencyShutdownDebug(*out_);
+    }
 }
 
