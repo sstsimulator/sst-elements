@@ -56,6 +56,7 @@ class BusLoadWidget : public Unit {
 			m_blocked(false), m_scheduled(false), m_blockedSrc(NULL) , m_numPending(0), m_name("BusLoadWidget")
     {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::BusLoadWidget::@p():@l ";
+        m_pendingQdepthStat = model.registerStatistic<uint64_t>("bus_load_widget_pending_Q_depth");
     }
     std::string& name() { return m_name; } 
 
@@ -67,6 +68,7 @@ class BusLoadWidget : public Unit {
 		delete req;
 
         ++m_numPending;
+		m_pendingQdepthStat->addData( m_numPending );
         m_model.schedCallback( m_latency, std::bind( &BusLoadWidget::load2, this, entry, m_numPending ) );
 
         if ( m_numPending == m_qSize  ) {
@@ -172,6 +174,8 @@ class BusLoadWidget : public Unit {
     int   m_width;
     UnitBase* m_blockedSrc;
 	std::deque<WidgetEntry *> m_pendingQ;
+
+    Statistic<uint64_t>* m_pendingQdepthStat;
 };
 
 
@@ -183,6 +187,7 @@ class BusStoreWidget : public Unit {
         m_blocked(false), m_blockedSrc(NULL), m_scheduled(false), m_numPending(0), m_name( "BusStoreWidget" )
     {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::BusStoreWidget::@p():@l ";
+        m_pendingQdepthStat = model.registerStatistic<uint64_t>("bus_store_widget_pending_Q_depth");
     }
 
     std::string& name() { return m_name; } 
@@ -199,6 +204,7 @@ class BusStoreWidget : public Unit {
 		delete req;
 
         ++m_numPending;
+		m_pendingQdepthStat->addData( m_numPending );
         m_model.schedCallback( m_latency, std::bind( &BusStoreWidget::store2, this, entry, m_numPending ) );
 
         if ( m_numPending == m_qSize  ) {
@@ -276,4 +282,6 @@ class BusStoreWidget : public Unit {
     int   m_width;
     UnitBase* m_blockedSrc;
 	std::deque<WidgetEntry*> m_pendingQ;
+
+    Statistic<uint64_t>* m_pendingQdepthStat;
 };
