@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include "pin.H"
 #include <time.h>
+#include <sys/time.h>
 #include <string.h>
 #include <sstream>
 #include <fcntl.h>
@@ -105,6 +106,13 @@ std::vector< std::set<ADDRINT> > instPtrsList;
 UINT32 overridePool;
 bool shouldOverride;
 bool writeTrace;
+
+// For gettimeofday/get_clocktime overrides:
+struct timeval offset_tv;
+#if !defined(__APPLE__)
+struct timespec offset_tp_mono;
+struct timespec offset_tp_real;
+#endif
 
 // For mlm stuff
 // Map each location ID to the set of repeats that should go to fast mem
@@ -578,26 +586,106 @@ VOID InstrumentInstruction(INS ins, VOID *v)
     }
 }
 
+/* Intercept ariel_enable() in application & start simulating instructions */
 void mapped_ariel_enable()
 {
-    fprintf(stderr, "ARIEL: Enabling memory and instruction tracing from program control.\n");
+
+    // Note
+    // By adding clock offset calculation, this function now has visible side-effects when called more than once
+    // In most cases won't matter -> ariel_enable() called once or close together in time so offsets will stabilize quickly
+    // In some cases could cause a big jump in time in the middle of simulation -> ariel_enable() left in app but mode is always-on
+    // So, update ariel_enable & offsets in lock & don't update if already enabled
+
+    /* LOCK */
+    THREADID thr = PIN_ThreadId();
+    PIN_GetLock(&mainLock, thr);
+    
+    if (enable_output) {
+        PIN_ReleaseLock(&mainLock);
+        return;
+    }
+    
+    // Setup timers to count start time + elapsed simulated time
+    struct timeval tvsim;
+    gettimeofday(&offset_tv, nullptr);
+    tunnel->getTime(&tvsim);
+    offset_tv.tv_sec -= tvsim.tv_sec;
+    offset_tv.tv_usec -= tvsim.tv_usec;
+#if ! defined(__APPLE__)
+    struct timespec tpsim;
+    clock_gettime(CLOCK_MONOTONIC, &offset_tp_mono);
+    clock_gettime(CLOCK_REALTIME, &offset_tp_real);
+    tunnel->getTimeNs(&tpsim);
+    offset_tp_mono.tv_sec -= tpsim.tv_sec;
+    offset_tp_mono.tv_nsec -= tpsim.tv_nsec;
+    offset_tp_real.tv_sec -= tpsim.tv_sec;
+    offset_tp_real.tv_nsec -= tpsim.tv_nsec;
+#endif
+    /* ENABLE */
+    enable_output = true;
+
+    /* UNLOCK */
+    PIN_ReleaseLock(&mainLock);
+
+    fprintf(stderr, "ARIEL: Enabling memory and instruction tracing from program control at simulated Ariel cycle %" PRIu64 ".\n",
+            tunnel->getCycles());
     fflush(stdout);
     fflush(stderr);
-    enable_output = true;
 }
 
+/* Return the current cycle count from Ariel */
 uint64_t mapped_ariel_cycles()
 {
     return tunnel->getCycles();
 }
 
+/* 
+ * Override gettimeofday to return simulated time
+ * If ariel_enable is false, returns system gettimeofday value
+ * If ariel_enable is true, returns system gettimeofday when ariel was enabled + elapsed simulated time since ariel was enabled
+ */
 int mapped_gettimeofday(struct timeval *tp, void *tzp)
 {
-    if ( tp == NULL ) { errno = EINVAL ; return -1; }
+    // Return 'real' time if simulation not enabled
+    if (!enable_output) {
+       return gettimeofday(tp, NULL);
+    }
 
+    if ( tp == NULL ) { errno = EINVAL ; return -1; }
     tunnel->getTime(tp);
+    tp->tv_sec += offset_tv.tv_sec;
+    tp->tv_usec += offset_tv.tv_usec;
     return 0;
 }
+
+/*
+ * Override clock_gettime to return simulated time
+ * If ariel_enable is false, returns actual clock_gettime value
+ * If ariel_enable is true, returns elapsed simulated time since ariel was enabled + clock_gettime(CLOCK_MONOTONIC) from
+ * when ariel was enabled
+ */
+#if ! defined(__APPLE__)
+int mapped_clockgettime(clockid_t clock, struct timespec *tp)
+{
+    if (!enable_output)
+        return clock_gettime(clock, tp);
+
+    if (tp == NULL) { errno = EINVAL; return -1; }
+    tunnel->getTimeNs(tp);
+
+    // Only offset these two clocks -> TODO the others
+    if (clock == CLOCK_MONOTONIC) {
+        tp->tv_sec += offset_tp_mono.tv_sec;
+        tp->tv_nsec += offset_tp_mono.tv_nsec;
+    } else if (clock == CLOCK_REALTIME) {
+        tp->tv_sec += offset_tp_real.tv_sec;
+        tp->tv_nsec += offset_tp_real.tv_nsec;
+    }
+    
+    return 0;
+}
+#endif
+
 
 void mapped_ariel_output_stats()
 {
@@ -617,15 +705,6 @@ void mapped_ariel_output_stats_buoy(uint64_t marker)
     ac.instPtr = (uint64_t) marker; //user the instruction pointer slot to send the marker number
     tunnel->writeMessage(thr, ac);
 }
-
-#if ! defined(__APPLE__)
-int mapped_clockgettime(clockid_t clock, struct timespec *tp)
-{
-    if (tp == NULL) { errno = EINVAL; return -1; }
-    tunnel->getTimeNs(tp);
-    return 0;
-}
-#endif
 
 void mapped_ariel_flushline(void *virtualAddress)
 {
@@ -1220,6 +1299,14 @@ int main(int argc, char *argv[])
         fprintf(stderr, "ARIEL: Initial mode will be to enable profiling unless ariel_enable function is located\n");
         enable_output = true;
     }
+
+    /* If not using ariel_enable, then gettimeofday/clock_gettime always return simulated time */
+    offset_tv.tv_sec = 0;
+    offset_tv.tv_usec = 0;
+    offset_tp_mono.tv_sec = 0;
+    offset_tp_mono.tv_nsec = 0;
+    offset_tp_real.tv_sec = 0;
+    offset_tp_real.tv_nsec = 0;
 
     INS_AddInstrumentFunction(InstrumentInstruction, 0);
     RTN_AddInstrumentFunction(InstrumentRoutine, 0);
