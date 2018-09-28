@@ -20,6 +20,8 @@
             Unit( model, dbg ), m_pending(0), m_readLat_ns(readLat_ns), m_writeLat_ns(writeLat_ns), m_numSlots(numSlots)
         {
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::MemUnit::@p():@l ";
+			m_latency = model.registerStatistic<uint64_t>("mem_blocked_time");
+
         }
 
         bool store( UnitBase* src, MemReq* req ) {
@@ -53,6 +55,7 @@
 
 				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"blocking src\n");
                 m_blocked.push_back( XXX( delay, op, req, src, callback, m_model.getCurrentSimTimeNano() ) );
+				m_blockedTime = m_model.getCurrentSimTimeNano();
                 return true;
             }
 
@@ -77,6 +80,10 @@
 
                     if ( ! m_blocked.empty() ) {
 		
+						SimTime_t latency = m_model.getCurrentSimTimeNano() - m_blockedTime;
+						if ( latency ) {
+							m_latency->addData( latency );
+						}
                         XXX& xxx = m_blocked.front( );
                         work( xxx.delay, xxx.op, xxx.memReq, xxx.src, xxx.qTime, xxx.callback );
                 		m_model.schedResume( 0, xxx.src, (UnitBase*) ( xxx.op == Read ? "R" : "W" ) );
@@ -87,6 +94,8 @@
 			return false;
         }
 
+		SimTime_t m_blockedTime;
+        Statistic<uint64_t>* m_latency;
         std::deque< XXX > m_blocked;
         int m_pending;
         int m_numSlots;

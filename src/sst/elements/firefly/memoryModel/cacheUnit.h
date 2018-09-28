@@ -32,24 +32,15 @@
         CacheUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* memory, int cacheSize, int cacheLineSize, int numMSHR, std::string name ) :
             Unit( model, dbg ),  m_memory(memory), m_numPending(0), m_blockedSrc(NULL), m_numMSHR(numMSHR), m_scheduled(false),
 			m_cacheLineSize(cacheLineSize), m_qSize(numMSHR), m_numIssuedLoads(0),
-            m_cache( cacheSize ), m_hitCnt(0), m_total(0), m_blockedOnStore(false), m_blockedOnLoad(false)
+            m_cache( cacheSize ), m_blockedOnStore(false), m_blockedOnLoad(false)
 		{
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "CacheUnit::@p():@l ";
             stats = std::to_string(id) + ":SimpleMemoryModel::" + name + "CacheUnit:: ";
 
+       		m_hitCnt = model.registerStatistic<uint64_t>(name + "_cache_hits");
+       		m_totalCnt = model.registerStatistic<uint64_t>(name + "_cache_total");
 			assert( m_numMSHR <= cacheSize );
         }
-        ~CacheUnit() {
-#if 0
-            if ( m_total ) {
-                m_dbg.output("%s total requests %" PRIu64 " %f percent hits\n",
-                            stats.c_str(), m_total, (float)m_hitCnt/(float)m_total);
-            }
-#endif
-        }
-
-        uint64_t m_hitCnt;
-        uint64_t m_total; 
 
         bool m_blockedOnStore;
         bool m_blockedOnLoad;
@@ -61,6 +52,8 @@
 		bool m_scheduled;
 		UnitBase* m_blockedSrc; 
 		std::deque<Entry*> m_blockedQ;
+    	Statistic<uint64_t>* m_hitCnt;
+    	Statistic<uint64_t>* m_totalCnt;
 
         bool store( UnitBase* src, MemReq* req ) {
             //m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
@@ -126,23 +119,24 @@
             }
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"%s addr=%#" PRIx64 "\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
             m_scheduled = false;
-            ++m_total;
             if ( m_cache.isValid( entry->req->addr ) ) { 
+				m_totalCnt->addData(1);
            	    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"done, hit %s addr=%#" PRIx64 "\n",
                                                 entry->op == Entry::Load?"Load":"Store",entry->req->addr);
-                ++m_hitCnt;
+				m_hitCnt->addData(1);
 				hit( entry );
 			} else if ( isPending(entry->req->addr ) ) {
+				m_totalCnt->addData(1);
 				m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"pending addr=%#" PRIx64 "\n",entry->req->addr);
            		m_pendingMap[entry->req->addr].push_back( entry );
 			} else {
 
 				if ( ! blocked() && ( m_blockedQ.empty() || flag ) ) {
+					m_totalCnt->addData(1);
        	            m_pendingMap[entry->req->addr];
 					miss( entry );
 				} else {
                     assert( ! flag );
-                    --m_total;
                     return true;
 				}
 			}
