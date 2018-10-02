@@ -1304,9 +1304,11 @@ int main(int argc, char *argv[])
     offset_tv.tv_sec = 0;
     offset_tv.tv_usec = 0;
     offset_tp_mono.tv_sec = 0;
+#if ! defined(__APPLE__)
     offset_tp_mono.tv_nsec = 0;
     offset_tp_real.tv_sec = 0;
     offset_tp_real.tv_nsec = 0;
+#endif
 
     INS_AddInstrumentFunction(InstrumentInstruction, 0);
     RTN_AddInstrumentFunction(InstrumentRoutine, 0);
