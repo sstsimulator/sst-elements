@@ -4,7 +4,7 @@ from optparse import OptionParser
 
 # options
 op = OptionParser()
-op.add_option("-n", "--neurons", action="store", type="int", dest="neurons", default=5000)
+op.add_option("-n", "--neurons", action="store", type="int", dest="neurons", default=500)
 # cache size in KiB
 op.add_option("-c", "--cacheSz", action="store", type="int", dest="cacheSz", default=2)
 #sts dispatch & parallelism
