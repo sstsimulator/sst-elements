@@ -32,7 +32,7 @@ class BusBridgeUnit : public Unit {
   public:
     BusBridgeUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, double bandwidth, int numLinks,
                 int latency, int TLP_overhead, int dll_bytes, int cacheLineSize, int widgetSlots ) :
-        Unit( model, dbg ), m_cache(cache), m_bandwidth_GB( bandwidth ), m_numLinks(numLinks), m_blocked(2,NULL),
+        Unit( model, dbg ), m_cache(cache), m_bandwidth_GB( bandwidth ), m_numLinks(numLinks), m_blocked(2,{NULL,0}),
         m_TLP_overhead(TLP_overhead), m_DLL_bytes(dll_bytes), m_cacheLineSize( cacheLineSize ), m_latency(latency),
 		m_reqBus(*this,id, "Req", true, std::bind(&BusBridgeUnit::processReq,this,std::placeholders::_1 ) ), 
 		m_respBus(*this,id, "Resp", false,std::bind(&BusBridgeUnit::processResp,this,std::placeholders::_1 ) ) 
@@ -40,20 +40,29 @@ class BusBridgeUnit : public Unit {
 		m_loadWidget = new BusLoadWidget( model, dbg, id, cache, cacheLineSize, widgetSlots, latency );
 		m_storeWidget = new BusStoreWidget( model, dbg, id, cache, cacheLineSize, widgetSlots, latency );
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::BusBridgeUnit::@p():@l ";
+		m_blocked_ns = model.registerStatistic<uint64_t>("bus_blocked_ns");
     }
 
     void resume( UnitBase* unit = 0 ) {
 		if ( unit == m_loadWidget ) {
         	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"load\n");
-			if ( m_blocked[0] ) { 
-				m_model.schedResume( 0, m_blocked[0] );
-				m_blocked[0] = NULL;
+			if ( m_blocked[0].src ) { 
+				m_model.schedResume( 0, m_blocked[0].src );
+				m_blocked[0].src = NULL;
+               	SimTime_t latency = m_model.getCurrentSimTimeNano() - m_blocked[0].time;
+                if ( latency ) {
+                    m_blocked_ns->addData( latency );
+                }
 			}
 		} else {
         	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"store\n" );
-			if ( m_blocked[1] ) { 
-				m_model.schedResume( 0, m_blocked[1] );
-				m_blocked[1] = NULL;
+			if ( m_blocked[1].src ) { 
+				m_model.schedResume( 0, m_blocked[1].src );
+				m_blocked[1].src = NULL;
+               	SimTime_t latency = m_model.getCurrentSimTimeNano() - m_blocked[1].time;
+                if ( latency ) {
+                    m_blocked_ns->addData( latency );
+                }
 			}
 		} 
     }
@@ -206,14 +215,16 @@ class BusBridgeUnit : public Unit {
 					m_respBus.addReq( entry );
 				}) ) 
 			{
-				m_blocked[0] = entry->src;
+				m_blocked[0].src = entry->src;
+				m_blocked[0].time = m_model.getCurrentSimTimeNano();
 			} else {
 				resumeSrc = entry->src;
 			}
 			
 		} else {
 			if ( m_storeWidget->store( this, entry->req ) ) {
-				m_blocked[1] = entry->src;
+				m_blocked[1].src = entry->src;
+				m_blocked[1].time = m_model.getCurrentSimTimeNano();
 			} else {
 				resumeSrc = entry->src;
 			}
@@ -247,7 +258,11 @@ class BusBridgeUnit : public Unit {
 
 	Bus m_reqBus;
 	Bus m_respBus;
-	std::vector<UnitBase*> m_blocked;
+	struct BlockedInfo {
+		UnitBase* src;
+		SimTime_t time;
+	};
+	std::vector<BlockedInfo> m_blocked;
 
 	Unit* m_cache;
 	Unit* m_loadWidget;
@@ -258,4 +273,5 @@ class BusBridgeUnit : public Unit {
 	int m_numLinks;
     int m_cacheLineSize;
 	double m_bandwidth_GB;
+    Statistic<uint64_t>* m_blocked_ns;
 };

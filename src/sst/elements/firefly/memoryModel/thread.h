@@ -94,13 +94,15 @@ class Thread : public UnitBase {
     std::string m_name;
 
   public:	  
-     Thread( SimpleMemoryModel& model, std::string name, Output& output, int id, int accessSize, Unit* load, Unit* store ) : 
+     Thread( SimpleMemoryModel& model, std::string name, Output& output, int id, int thread_id , int accessSize, Unit* load, Unit* store ) : 
 			m_model(model), m_name(name), m_dbg(output), m_id(id), m_loadUnit(load), m_storeUnit(store), 
 			m_maxAccessSize( accessSize ), m_nextOp(NULL), m_waitingOnOp(NULL), m_blocked(false), m_curWorkNum(0),m_lastDelete(0)
 	{
 		m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name +"::@p():@l ";
         m_dbg.verbosePrefix( prefix(), CALL_INFO,1,THREAD_MASK,"this=%p\n",this );
+		m_workQdepth = model.registerStatistic<uint64_t>(name + "_thread_work_Q_depth",std::to_string(thread_id));
 	}
+
 
     ~Thread() {
         delete m_loadUnit;
@@ -137,6 +139,7 @@ class Thread : public UnitBase {
 		m_workQ.push_back( work ); 
 
         work->print(m_dbg,prefix());
+		m_workQdepth->addData( m_workQ.size() );
 
 		if ( ! m_blocked && ! m_nextOp ) {
 			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"prime pump\n");		
@@ -327,5 +330,6 @@ class Thread : public UnitBase {
     int                 m_lastDelete;
     int                 m_id;
     std::map<int,Work*> m_OOOwork;
+	Statistic<uint64_t>* m_workQdepth;
 };
 

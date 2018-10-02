@@ -183,7 +183,22 @@ Nic::Nic(ComponentId_t id, Params &params) :
 		} else {
         	smmParams.insert( "useBusBridge",  "0", true );
 		}
-        m_memoryModel = new SimpleMemoryModel( this, smmParams, m_myNodeId, m_num_vNics, m_unitPool->getTotal() );
+        
+        std::stringstream tmp;
+		tmp << m_myNodeId;
+		smmParams.insert( "id", tmp.str(), true );
+
+
+        tmp.str( std::string() ); tmp.clear();
+
+		tmp << m_num_vNics;
+		smmParams.insert( "numCores", tmp.str(), true );
+        tmp.str( std::string() ); tmp.clear();
+
+		tmp << m_unitPool->getTotal();
+		smmParams.insert( "numNicUnits", tmp.str(), true );
+
+        m_memoryModel = dynamic_cast<MemoryModel*>(loadSubComponent( "firefly.SimpleMemory",this, smmParams ));
     }
     if ( params.find<int>( "useTrivialMemoryModel", 0 ) ) {
 		if ( m_memoryModel ) {

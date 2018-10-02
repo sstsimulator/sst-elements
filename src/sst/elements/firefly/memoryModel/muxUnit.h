@@ -30,6 +30,8 @@
 
 		MuxUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* unit, std::string name ) : Unit( model, dbg), m_unit(unit), m_blockedSrc(NULL), m_scheduled(false)  {
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "MuxUnit::@p():@l ";
+
+			m_blocked_ns = model.registerStatistic<uint64_t>(name + "_mux_blocked_ns");
 		}
 
 		std::string& name() { return m_name; }
@@ -41,6 +43,7 @@
 
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
 					m_blockedSrc = src;
+					m_blockedTime_ns = m_model.getCurrentSimTimeNano();
 					return true;
 				} else { 
 					return false; 
@@ -66,6 +69,7 @@
 				{
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
 					m_blockedSrc = src;
+					m_blockedTime_ns = m_model.getCurrentSimTimeNano();
 					return true;
 				} else { 
 					return false; 
@@ -116,6 +120,10 @@
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"unblocking\n");
 				m_model.schedResume( 0, m_blockedSrc );
 				m_blockedSrc = NULL;
+				SimTime_t latency = m_model.getCurrentSimTimeNano() - m_blockedTime_ns; 
+				if ( latency ) {
+					m_blocked_ns->addData( latency );
+				}
 			}
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,2,MUX_MASK,"scheduled=%d numBlocked=%zu\n",m_scheduled, m_blockedQ.size());
 
@@ -129,4 +137,6 @@
 		Unit* m_unit;
 		std::deque<Entry> m_blockedQ;
         bool m_scheduled;
+		Statistic<uint64_t>* m_blocked_ns;
+		SimTime_t m_blockedTime_ns;
 	};

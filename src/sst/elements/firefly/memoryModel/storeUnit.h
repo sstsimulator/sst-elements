@@ -16,23 +16,25 @@
 class StoreUnit : public Unit {
 	std::string m_name;
   public:
-    StoreUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* cache, int numSlots, std::string name ) :
+    StoreUnit( SimpleMemoryModel& model, Output& dbg, int id, int thread_id, Unit* cache, int numSlots, std::string name ) :
         Unit( model, dbg ), m_qSize(numSlots), m_cache(cache), m_blocked(false), m_blockedSrc(NULL), m_scheduled(false), m_name(name) {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::"+ name + "StoreUnit::@p():@l ";
-    }
 
+        std::stringstream tmp;
+        tmp << "_" << name << "_" << id << "_"<< thread_id;
+        m_name = tmp.str();
+
+        m_pendingQdepth = model.registerStatistic<uint64_t>(name + "_store_pending_Q_depth",std::to_string(thread_id));
+    }
 
 	std::string& name() { return m_name; }
 
-    void printStatus( Output& out, int id ) {
-        out.output("NIC %d: %s pending=%zu\n",id, m_name.c_str(), m_pendingQ.size() );
-    }
     bool storeCB( UnitBase* src, MemReq* req, Callback callback = NULL ) {
-
 
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",req->addr,req->length,m_pendingQ.size());
 		assert( NULL == m_blockedSrc );
 		m_pendingQ.push_back( std::make_pair(req, callback) );
+		m_pendingQdepth->addData( m_pendingQ.size() );
 
 		if ( m_pendingQ.size() < m_qSize + 1) {
 			if ( ! m_blocked && ! m_scheduled ) {
@@ -95,4 +97,5 @@ class StoreUnit : public Unit {
     int     m_qSize;
 
     std::deque< std::pair<MemReq*,Callback> >       m_pendingQ;
+	Statistic<uint64_t>* m_pendingQdepth;
 };
