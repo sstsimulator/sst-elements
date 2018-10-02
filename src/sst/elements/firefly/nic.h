@@ -29,6 +29,7 @@
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
+#include "memoryModel/trivialMemoryModel.h"
 #include "memoryModel/simpleMemoryModel.h"
 
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
@@ -126,6 +127,17 @@ class Nic : public SST::Component  {
         { "simpleMemoryModel.numTlbSlots","Sets the number of requests the TLB will queue","1"},
     )
 
+   SST_ELI_DOCUMENT_STATISTICS(
+        { "sentByteCount",  "number of bytes sent on network", "bytes", 1},
+        { "rcvdByteCount",  "number of bytes received from network", "bytes", 1},
+        { "sentPkts",     	"number of packets sent on network", "packets", 1},
+        { "rcvdPkts",       "number of packets received from network", "packets", 1},
+        { "networkStall",   "number of picoseconds the outbound network port was blocked", "latency", 1},
+        { "hostStall",      "number of nanoseconds the host blocked inbound network packets", "latency", 1},
+
+        { "recvStreamPending",   "number of pending receive stream memory operations", "depth", 1},
+        { "sendStreamPending",   "number of pending send stream memory operations", "depth", 1},
+    )
 
     SST_ELI_DOCUMENT_PORTS(
         {"rtr", "Port connected to the router", {}},
@@ -177,7 +189,7 @@ class Nic : public SST::Component  {
     typedef uint32_t NodeId;
     static const NodeId AnyId = -1;
 
-	typedef SimpleMemoryModel::MemOp MemOp;
+	typedef MemoryModel::MemOp MemOp;
 
   private:
 
@@ -286,13 +298,18 @@ public:
     int getNum_vNics() { return m_num_vNics; }
     void printStatus(Output &out) {
         out.output("NIC %d: start time=%zu\n", m_myNodeId, (size_t) getCurrentSimTimeNano() );
-        out.output("NIC %d: Received packets: %d\n", m_myNodeId, m_recvMachine->getNumReceivedPkts());
-        out.output("NIC %d: Sent packets:     %d\n", m_myNodeId, m_sentPkts);
-        m_simpleMemoryModel->printStatus( out, m_myNodeId );
+        m_memoryModel->printStatus( out, m_myNodeId );
         out.output("NIC %d: done\n", m_myNodeId );
     }
 
-    int m_sentPkts;
+	Statistic<uint64_t>* m_sentByteCount;
+	Statistic<uint64_t>* m_rcvdByteCount;
+	Statistic<uint64_t>* m_sentPkts;
+	Statistic<uint64_t>* m_rcvdPkts;
+	Statistic<uint64_t>* m_networkStall;
+	Statistic<uint64_t>* m_hostStall;
+	Statistic<uint64_t>* m_recvStreamPending;
+	Statistic<uint64_t>* m_sendStreamPending;
 
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
@@ -315,7 +332,7 @@ public:
     typedef uint64_t DestKey;
     static DestKey getDestKey(int node, int pid) { return (DestKey) node << 32 | pid; }
 
-    std::vector< std::pair< bool, std::deque<  std::pair< SimTime_t, SendEntryBase*> > > > m_sendEntryQ;
+    std::deque<  std::pair< SimTime_t, SendEntryBase*> >   m_sendEntryQ;
 
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
@@ -414,6 +431,8 @@ public:
     LinkControlWidget* m_linkRecvWidget;
     LinkControlWidget* m_linkSendWidget;
 
+	uint64_t m_linkBytesPerSec;
+
 	std::vector< int >		m_sendStreamNum;
 
 	int getSendStreamNum( int pid ) {
@@ -450,8 +469,8 @@ public:
     }
 
     void calcHostMemDelay( int core, std::vector< MemOp>* ops, std::function<void()> callback  ) {
-        if( m_simpleMemoryModel ) {
-        	m_simpleMemoryModel->schedHostCallback( core, ops, callback );
+        if( m_memoryModel ) {
+        	m_memoryModel->schedHostCallback( core, ops, callback );
         } else {
 			schedCallback(callback);
 			delete ops;
@@ -471,8 +490,8 @@ public:
     }
 
     void calcNicMemDelay( int unit, int pid, std::vector< MemOp>* ops, std::function<void()> callback ) {
-        if( m_simpleMemoryModel ) {
-        	m_simpleMemoryModel->schedNicCallback( unit, pid, ops, callback );
+        if( m_memoryModel ) {
+        	m_memoryModel->schedNicCallback( unit, pid, ops, callback );
         } else {
         	for ( unsigned i = 0;  i <  ops->size(); i++ ) {
             	assert( (*ops)[i].callback == NULL );
@@ -500,10 +519,49 @@ public:
         m_respKeyMap.erase(key);
         return value; 
     }
+	bool findNid( int nid, std::string nidList ) {
+
+		//printf("%s() %d %s\n",__func__,nid,nidList.c_str());
+
+		if ( 0 == nidList.compare( "all" ) ) {
+			return true;
+		}
+
+		size_t pos = 0;
+		size_t end = 0;
+		do {
+			end = nidList.find( ",", pos );
+			if ( end == std::string::npos ) {
+				end = nidList.length();
+			}
+			std::string tmp = nidList.substr(pos,end-pos);
+			//printf("pos=%d end=%d '%s'\n",pos,end,tmp.c_str() );
+
+			if ( tmp.length() == 1 ) {
+				int val = atoi( tmp.c_str() ); 
+				//printf("nid=%d val=%d\n",nid, val);
+				if ( nid == val ) {
+					return true;
+				}
+			} else {
+				size_t dash = tmp.find( "-" );
+				int first = atoi(tmp.substr(0,dash).c_str()) ; 
+				int last = atoi(tmp.substr(dash+1).c_str());
+				//printf("nid=%d first=%d last=%d\n",nid, first,last);
+				if ( nid >= first && nid <= last ) {
+					return true;
+				}
+			}
+
+			pos = end + 1;
+		} while ( end < nidList.length() );
+
+		return false;
+	}	
 
     std::unordered_map<RespKey_t,void*> m_respKeyMap;
 
-    SimpleMemoryModel*  m_simpleMemoryModel;
+    MemoryModel*  m_memoryModel;
     std::deque<int> m_availNicUnits;
     uint16_t m_getKey;
     int m_curNetworkSrc;
@@ -513,6 +571,7 @@ public:
     static int  m_packetId;
 	int m_tracedPkt;
 	int m_tracedNode;
+	SimTime_t m_predNetIdleTime;
 }; 
 
 } // namesapce Firefly 

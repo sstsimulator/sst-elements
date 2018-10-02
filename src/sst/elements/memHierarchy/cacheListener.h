@@ -37,18 +37,22 @@ class Output;
 
 namespace MemHierarchy {
 
-enum NotifyAccessType{ READ, WRITE };
-enum NotifyResultType{ HIT, MISS };
+    enum NotifyAccessType{ READ, WRITE, EVICT };
+    enum NotifyResultType{ HIT, MISS, NA };
 
 class CacheListenerNotification {
 public:
-	CacheListenerNotification(const Addr pAddr, const Addr vAddr,
-		const Addr iPtr, const uint32_t reqSize,
-		NotifyAccessType accessT,
-		NotifyResultType resultT) :
-		size(reqSize), physAddr(pAddr), virtAddr(vAddr), instPtr(iPtr),
-		access(accessT), result(resultT) {}
+    CacheListenerNotification(const Addr tAddr, const Addr pAddr, const Addr vAddr,
+                              const Addr iPtr, const uint32_t reqSize,
+                              NotifyAccessType accessT,
+                              NotifyResultType resultT) :
+        size(reqSize), targAddr(tAddr), physAddr(pAddr), virtAddr(vAddr), instPtr(iPtr),
+        access(accessT), result(resultT) {}
 
+    /** the target address is the underlying address from the
+        LOAD/STORE, not the baseAddr (which is usually he cache line
+        address). For an evict they are the same. */
+        Addr getTargetAddress() const {return targAddr;}
 	Addr getPhysicalAddress() const { return physAddr; }
 	Addr getVirtualAddress() const { return virtAddr; }
 	Addr getInstructionPointer() const { return instPtr; }
@@ -57,6 +61,7 @@ public:
 	uint32_t getSize() const { return size; }
 private:
 	uint32_t size;
+        Addr targAddr;
 	Addr physAddr;
 	Addr virtAddr;
 	Addr instPtr;

@@ -27,7 +27,7 @@ public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT(SimpleDRAM, "memHierarchy", "simpleDRAM", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Simplified timing model for DRAM", "SST::MemHierarchy::MemBackend")
-    
+
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
             {"verbose",     "(uint) Sets the verbosity of the backend output", "0" },
@@ -61,16 +61,16 @@ private:
 
     int * openRow;
     bool * busy;
-   
+
     // Mapping parameters
-    unsigned int lineOffset;
-    unsigned int rowOffset;
-    unsigned int bankMask;
+    uint64_t lineOffset;
+    uint64_t rowOffset;
+    uint64_t bankMask;
 
     // Time parameters
-    unsigned int tCAS;
-    unsigned int tRCD;
-    unsigned int tRP;
+    uint64_t tCAS;
+    uint64_t tRCD;
+    uint64_t tRP;
 
     RowPolicy policy;
 
@@ -80,22 +80,22 @@ private:
 
 public:
     class MemCtrlEvent : public SST::Event {
-	public:
+    public:
         MemCtrlEvent(int bank, ReqId reqId ) : SST::Event(), bank(bank), close(false), reqId(reqId) { }
         MemCtrlEvent(int bank ) : SST::Event(), bank(bank), close(true) { }
-        
+
         int bank;
-		bool close;
+        bool close;
         ReqId reqId;
     private:
         MemCtrlEvent() {} // For Serialization only
-    
+
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
             ser & reqId;  // Cannot serialize pointers unless they are a serializable object
             ser & bank;
-			ser & close;
+            ser & close;
         }
         ImplementSerializable(SST::MemHierarchy::SimpleDRAM::MemCtrlEvent);
     };

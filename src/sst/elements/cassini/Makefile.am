@@ -18,7 +18,9 @@ libcassini_la_SOURCES = \
 	pageentry.h \
 	pageentry.cc \
 	addrHistogrammer.cc \
-	addrHistogrammer.h
+	addrHistogrammer.h \
+	cacheLineTrack.cc \
+	cacheLineTrack.h
 
 EXTRA_DIST = \
 	tests/streamcpu-nbp.py \

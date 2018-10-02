@@ -34,7 +34,7 @@ AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheList
     UnitAlgebra cutoff_u(cutoff_s);
     cutoff = cutoff_u.getRoundedValue();
 
-    captureVirtual = params.find<bool>("virtual_addr", "0");
+    captureVirtual = params.find<bool>("virtual_addr", 0);
 
     rdHisto = registerStatistic<Addr>("histogram_reads");
     wrHisto = registerStatistic<Addr>("histogram_writes");
@@ -54,7 +54,7 @@ void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {
     }
 
 
-    if(notifyResType != MISS || vaddr >= cutoff) return;
+    if(notifyType == EVICT || notifyResType != MISS || vaddr >= cutoff) return;
 
     // // Remove the offset within a bin
     // Addr baseAddr = vaddr & binMask;
@@ -66,6 +66,8 @@ void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {
       case WRITE:
         // Add to the write hitogram
         wrHisto->addData(vaddr);
+        return;
+    case EVICT:
         return;
     }
 }

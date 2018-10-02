@@ -32,6 +32,7 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &param
 { 
     output.init("", 1, 0, Output::STDOUT);
     rqstr_ = "";
+    initDone_ = false;
 }
 
 
@@ -45,7 +46,7 @@ void MemHierarchyInterface::init(unsigned int phase) {
         region.interleaveSize = 0;
         link_->sendInitData(new MemEventInitRegion(parent->getName(), region, false));
 
-        MemEventInitCoherence * event = new MemEventInitCoherence(parent->getName(), Endpoint::CPU, false, false, 0);
+        MemEventInitCoherence * event = new MemEventInitCoherence(parent->getName(), Endpoint::CPU, false, false, 0, false);
         link_->sendInitData(event);
 
     }
@@ -58,17 +59,28 @@ void MemHierarchyInterface::init(unsigned int phase) {
                 if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                     MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
                     baseAddrMask_ = ~(memEventC->getLineSize() - 1);
+                    initDone_ = true;
                 }
             }
         }
         delete ev;
+    }
+
+    if (initDone_) { // Drain send queue
+        while (!initSendQueue_.empty()) {
+            link_->sendInitData(initSendQueue_.front());
+            initSendQueue_.pop();
+        }
     }
     
 }
 
 void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
     MemEventInit *me = new MemEventInit(getName(), Command::GetX, req->addrs[0], req->data);
-    link_->sendInitData(me);
+    if (initDone_)
+        link_->sendInitData(me);
+    else
+        initSendQueue_.push(me);
 }
 
 

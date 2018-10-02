@@ -26,7 +26,7 @@ l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "debug" : "0",
-      "memNIC.network_address" : "1",
+      "verbose" : 2,
       "memNIC.network_bw" : "25GB/s",
 })
 
@@ -48,6 +48,7 @@ for i in range(0,8):
         "cache_line_size" : "64",
         "cache_size" : "4 KB",
         "L1" : "1",
+        "verbose" : 2,
         "debug" : "0"
         })
 
@@ -61,6 +62,7 @@ for i in range(0,8):
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
+      "verbose" : 2,
       "debug" : "0"
     })
 
@@ -88,16 +90,17 @@ comp_chiprtr.addParams({
 })
 comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
-      "coherence_protocol" : "MESI",
-      "debug" : "0",
-      "memNIC.network_address" : "0",
-      "entry_cache_size" : "32768",
-      "memNIC.network_bw" : "25GB/s",
-      "memNIC.addr_range_end" : "0x1F000000",
-      "memNIC.addr_range_start" : "0x0"
+    "coherence_protocol" : "MESI",
+    "debug" : "0",
+    "verbose" : 2,
+    "entry_cache_size" : "32768",
+    "memNIC.network_bw" : "25GB/s",
+    "memNIC.addr_range_end" : "0x1F000000",
+    "memNIC.addr_range_start" : "0x0"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
+    "verbose" : 2,
     "backing" : "none",
     "backend" : "memHierarchy.timingDRAM",
     "backend.id" : 0,

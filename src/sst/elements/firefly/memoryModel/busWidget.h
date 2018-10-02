@@ -186,11 +186,16 @@ class BusStoreWidget : public Unit {
     }
 
     std::string& name() { return m_name; } 
+
     bool store( UnitBase* src, MemReq* req ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
+		return storeCB( src, req );
+	}
+
+    bool storeCB( UnitBase* src, MemReq* req, Callback callback = NULL ) {
 		assert( NULL == m_blockedSrc );
 
-		WidgetEntry* entry = new WidgetEntry( m_width, req, 0 );
+		WidgetEntry* entry = new WidgetEntry( m_width, req, 0, callback );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu entry=%p\n",req->addr,req->length, entry);
 		delete req;
 
         ++m_numPending;
@@ -210,7 +215,7 @@ class BusStoreWidget : public Unit {
 		m_pendingQ.push_back( entry );
         if ( m_numPending < m_qSize + 1) {
             if ( ! m_blocked && ! m_scheduled ) {
-           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
+           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process() entry=%p\n", entry);
                 m_model.schedCallback( 0, std::bind( &BusStoreWidget::process, this ) );
                 m_scheduled = true;
             }
@@ -227,12 +232,15 @@ class BusStoreWidget : public Unit {
 		MemReq* req = new MemReq( entry.getAddr(), m_width );
 		entry.inc();
 		
-		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu entry=%p\n",req->addr,req->length,&entry);
         m_blocked = m_cache->store( this, req );
 
 		if ( entry.isDone() ) {
-           	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"entry done\n");
+           	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"entry done entry=%p\n", &entry);
 			--m_numPending;
+			if ( entry.callback ) {
+           		m_model.schedCallback( 0, entry.callback );		
+			}
 			delete m_pendingQ.front();
 			m_pendingQ.pop_front();
         	if ( m_blockedSrc ) {

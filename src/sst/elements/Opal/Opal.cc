@@ -356,7 +356,7 @@ REQRESPONSE Opal::allocateLocalMemory(int node, int coreId, uint64_t vAddress, i
 	else {
 		OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Local Memory is drained out\n", node));
 
-		if(nodeInfo[node]->page_migration && !nodeInfo[node]->memoryAllocationPolicy || 4 == fault_level) {
+		if((nodeInfo[node]->page_migration && !nodeInfo[node]->memoryAllocationPolicy) || 4 == fault_level) {
 			if(4 == fault_level)
 				std::cerr << getName().c_str() << " migrating a page to allocate memory for node " << node << " core " << coreId << " CR3" << std::endl;
 
@@ -435,7 +435,7 @@ REQRESPONSE Opal::allocateFromReservedMemory(int node, uint64_t reserved_vAddres
 	}
 	else
 	{
-		output->fatal(CALL_INFO, -1, "Opal: address :%lld requested with fileId:%d has no space left\n", vAddress, fileID);
+		output->fatal(CALL_INFO, -1, "Opal: address :%" PRIu64 "llu requested with fileId:%d has no space left\n", vAddress, fileID);
 	}
 
 	return response;
@@ -519,7 +519,7 @@ void Opal::migratePages(int node, int coreId, int pages)
 	std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > lm_pages = nodeInfo[node]->getPagesToMigrate(pages);
 
 	// get shared memory pages
-	int sharedMemPoolId;
+	int sharedMemPoolId = 0;
 	std::list<uint64_t> sm_pages;
 	for(uint32_t i = 0; i<num_shared_mempools; i++) {
 
@@ -556,7 +556,7 @@ void Opal::migratePages(int node, int coreId, int pages)
 
 
 	// error checking
-	if( (uint32_t)lm_pages.size() != pages && (uint32_t)sm_pages.size() != pages)
+	if( (uint32_t)lm_pages.size() != (uint32_t)pages && (uint32_t)sm_pages.size() != (uint32_t)pages)
 		output->fatal(CALL_INFO, -1, "Opal: This should not happen\n");
 
 	// swap

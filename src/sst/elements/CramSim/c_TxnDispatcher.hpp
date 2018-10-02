@@ -32,6 +32,7 @@
 //SST includes
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <sst/core/elementinfo.h>
 #include "c_Transaction.hpp"
 #include "c_TxnReqEvent.hpp"
 #include "c_TxnResEvent.hpp"
@@ -41,6 +42,26 @@ namespace SST{
 
          class c_TxnDispatcher : public SST::Component {
          public:
+
+             SST_ELI_REGISTER_COMPONENT(
+                c_TxnDispatcher,
+                "CramSim",
+                "c_TxnDispatcher",
+                SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Transaction dispatcher",
+                COMPONENT_CATEGORY_UNCATEGORIZED
+            )
+
+            SST_ELI_DOCUMENT_PARAMS(
+                {"numLanes", "Total number of lanes", NULL},
+                {"laneIdxPosition", "Bit posiiton of the lane index in the address.. [End:Start]", NULL},
+            )
+
+            SST_ELI_DOCUMENT_PORTS(
+                { "txnGen", "link to/from a transaction generator", {"MemEvent"} },
+                { "lane_%(lanes)d", "link to/from lanes",  {"MemEvent"} },
+            )
+
              c_TxnDispatcher( ComponentId_t id, Params& params);
              ~c_TxnDispatcher();
 

@@ -1,10 +1,10 @@
 // Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2018, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -65,21 +65,21 @@ bool Bus::clockTick(Cycle_t time) {
 
     if (!eventQueue_.empty()) {
         SST::Event* event = eventQueue_.front();
-        
+
         if (broadcast_) broadcastEvent(event);
         else sendSingleEvent(event);
-        
+
         eventQueue_.pop();
         idleCount_ = 0;
     } else if (busOn_) idleCount_++;
-    
-    
+
+
     if (idleCount_ > idleMax_) {
         busOn_ = false;
         idleCount_ = 0;
         return true;
     }
-    
+
     return false;
 }
 
@@ -93,12 +93,12 @@ void Bus::broadcastEvent(SST::Event* ev) {
         if (highNetPorts_[i] == srcLink) continue;
         highNetPorts_[i]->send(memEvent->clone());
     }
-    
+
     for (int i = 0; i < numLowNetPorts_; i++) {
         if (lowNetPorts_[i] == srcLink) continue;
         lowNetPorts_[i]->send(memEvent->clone());
     }
-    
+
     delete memEvent;
 }
 
@@ -125,7 +125,7 @@ void Bus::sendSingleEvent(SST::Event* ev) {
     }
 #endif
     dstLink->send(forwardEvent);
-    
+
     delete event;
 }
 
@@ -163,7 +163,7 @@ void Bus::configureLinks() {
         numHighNetPorts_++;
         linkname = linkprefix + std::to_string(numHighNetPorts_);
     }
-   
+
     linkprefix = "low_network_";
     linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
@@ -174,14 +174,14 @@ void Bus::configureLinks() {
         numLowNetPorts_++;
         linkname = linkprefix + std::to_string(numLowNetPorts_);
     }
-    
+
     if (numLowNetPorts_ < 1 || numHighNetPorts_ < 1) dbg_.fatal(CALL_INFO, -1,"couldn't find number of Ports (numPorts)\n");
 
 }
 
 void Bus::configureParameters(SST::Params& params) {
     int debugLevel = params.find<int>("debug_level", 0);
-    
+
     dbg_.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)     dbg_.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
 
@@ -189,18 +189,18 @@ void Bus::configureParameters(SST::Params& params) {
     params.find_array<Addr>("debug_addr", addrArr);
     for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++)
         DEBUG_ADDR.insert(*it);
-    
+
     numHighNetPorts_  = 0;
     numLowNetPorts_   = 0;
-    
-    latency_      = params.find<int>("bus_latency_cycles", 1);
-    idleMax_      = params.find<int>("idle_max", 6);
+
+    latency_      = params.find<uint64_t>("bus_latency_cycles", 1);
+    idleMax_      = params.find<uint64_t>("idle_max", 6);
     busFrequency_ = params.find<std::string>("bus_frequency", "Invalid");
-    broadcast_    = params.find<int>("broadcast", 0);
-    fanout_       = params.find<int>("fanout", 0);  /* TODO:  Fanout: Only send messages to lower level caches */
+    broadcast_    = params.find<bool>("broadcast", 0);
+    fanout_       = params.find<bool>("fanout", 0);  /* TODO:  Fanout: Only send messages to lower level caches */
 
     if (busFrequency_ == "Invalid") dbg_.fatal(CALL_INFO, -1, "Bus Frequency was not specified\n");
-    
+
      /* Multiply Frequency times two.  This is because an SST Bus components has
         2 SST Links (highNEt & LowNet) and thus it takes a least 2 cycles for any
         transaction (a real bus should be allowed to have 1 cycle latency).  To overcome
@@ -209,7 +209,7 @@ void Bus::configureParameters(SST::Params& params) {
     UnitAlgebra uA = UnitAlgebra(busFrequency_);
     uA = uA * 2;
     busFrequency_ = uA.toString();
-    
+
     clockHandler_ = new Clock::Handler<Bus>(this, &Bus::clockTick);
     defaultTimeBase_ = registerClock(busFrequency_, clockHandler_);
 }
@@ -234,7 +234,7 @@ void Bus::init(unsigned int phase) {
             delete memEvent;
         }
     }
-    
+
     for (int i = 0; i < numLowNetPorts_; i++) {
         while ((ev = lowNetPorts_[i]->recvInitData())) {
             MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);

@@ -2,7 +2,8 @@
 AM_CPPFLAGS = \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src/sst/elements/ember/sirius/include \
-	-I$(top_srcdir)/src
+	-I$(top_srcdir)/src \
+	$(OTF2_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libember.la
@@ -104,6 +105,8 @@ libember_la_SOURCES = \
 	mpi/motifs/emberreduce.h \
 	mpi/motifs/emberhalo3d.h \
 	mpi/motifs/emberhalo3d.cc \
+	mpi/motifs/emberlqcd.h \
+	mpi/motifs/emberlqcd.cc \
 	mpi/motifs/emberhalo3dsv.h \
 	mpi/motifs/emberhalo3dsv.cc \
 	mpi/motifs/emberhalo3d26.h \
@@ -190,6 +193,7 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemWait.h \
 	shmem/motifs/emberShmemWaitUntil.h \
 	shmem/motifs/emberShmemAtomicInc.h \
+	shmem/motifs/emberShmemFAM_Get.h \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc
 
@@ -218,3 +222,15 @@ libember_la_SOURCES += \
 	embermpicxtgen.h \
 	embermpicxtgen.cc
 endif
+
+if EMBER_HAVE_OTF2
+libember_la_SOURCES += \
+	mpi/motifs/emberotf2.h \
+	mpi/motifs/emberotf2.cc
+
+libember_la_LIBADD = \
+	$(OTF2_LDFLAGS) \
+	$(OTF2_LIBS)
+
+endif
+

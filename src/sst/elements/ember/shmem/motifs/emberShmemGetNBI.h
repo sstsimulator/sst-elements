@@ -58,12 +58,11 @@ public:
             }
 			assert( 2 == m_num_pes );
             m_other_pe = (m_my_pe + 1) % m_num_pes;
-            enQ_malloc( evQ, &m_src, m_nelems * sizeof(TYPE) * 2);
+            enQ_malloc( evQ, &m_src, m_nelems * sizeof(TYPE));
+            enQ_malloc( evQ, &m_dest, m_nelems * sizeof(TYPE));
             break;
 
         case 2:
-
-            m_dest = m_src.offset<TYPE>(m_nelems );
 
             for ( int i = 0; i < m_nelems; i++ ) {
                 m_src.at<TYPE>(i) = m_my_pe + i;
@@ -73,8 +72,9 @@ public:
 
             enQ_barrier_all( evQ );
             enQ_getTime( evQ, &m_startTime );
-	    	if ( m_my_pe == 1 ) { 
+	    	if ( m_my_pe == 0 ) { 
 				++m_phase;
+                enQ_barrier_all( evQ );
 			}
             break;
 
@@ -86,14 +86,17 @@ public:
 	        } else {
                 enQ_quiet( evQ );
                 enQ_getTime( evQ, &m_stopTime );
+                enQ_barrier_all( evQ );
 			}
             break;
 
         case 4:
             ret = true;
-            if ( 0 == m_my_pe ) {
+            if ( m_my_pe != 0 ) {
 				double time = m_stopTime-m_startTime;
-                printf("%d:%s: count=%d, %.3lf ns \n",m_my_pe, getMotifName().c_str(), m_count,time/(double)m_count);
+				size_t bytes = m_count * m_nelems * sizeof(TYPE);
+                printf("%d:%s: count=%d, %.3lf ns, %zu bytes, %.3lf GB/s \n",m_my_pe, getMotifName().c_str(), 
+						m_count,time/(double)m_count, bytes, (double) bytes/ time );
             }
         }
         ++m_phase;

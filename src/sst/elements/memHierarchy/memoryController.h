@@ -51,7 +51,7 @@ public:
             {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},\
             {"listenercount",       "(uint) Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},\
             {"listener%(listenercount)d", "(string) Loads a listener module into the controller", ""},\
-            {"backing",             "(string) Type of backing store to use. Options: 'none' - no backing store (only use if simulation does not require correct memory values), 'malloc', or 'mmap'", "malloc"},\
+            {"backing",             "(string) Type of backing store to use. Options: 'none' - no backing store (only use if simulation does not require correct memory values), 'malloc', or 'mmap'", "mmap"},\
             {"backing_size_unit",   "(string) For 'malloc' backing stores, malloc granularity", "1MiB"},\
             {"memory_file",         "(string) Optional backing-store file to pre-load memory, or store resulting state", "N/A"},\
             {"addr_range_start",    "(uint) Lowest address handled by this memory.", "0"},\
@@ -110,7 +110,8 @@ protected:
 
     void notifyListeners( MemEvent* ev ) {
         if (  ! listeners_.empty()) {
-            CacheListenerNotification notify(ev->getAddr(), ev->getVirtualAddress(), 
+            // AFR: should this pass the base Addr?
+            CacheListenerNotification notify(ev->getAddr(), ev->getAddr(), ev->getVirtualAddress(), 
                         ev->getInstructionPointer(), ev->getSize(), READ, HIT);
 
             for (unsigned long int i = 0; i < listeners_.size(); ++i) {

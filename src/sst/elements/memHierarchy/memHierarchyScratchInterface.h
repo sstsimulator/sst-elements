@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <map>
+#include <queue>
 
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
@@ -28,6 +29,7 @@
 #include <sst/core/elementinfo.h>
 #include <sst/core/output.h>
 
+#include "sst/elements/memHierarchy/memEventBase.h"
 #include "sst/elements/memHierarchy/moveEvent.h"
 #include "sst/elements/memHierarchy/memEvent.h"
 
@@ -86,6 +88,9 @@ private:
     std::string rqstr_;
     Addr remoteMemStart_;
     bool allNoncache_;
+
+    bool initDone_;
+    std::queue<MemEventInit*> initSendQueue_;
 };
 
 }

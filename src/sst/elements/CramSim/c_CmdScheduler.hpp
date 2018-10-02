@@ -42,6 +42,26 @@ namespace SST{
 
         class c_CmdScheduler : public SubComponent{
         public:
+
+            SST_ELI_REGISTER_SUBCOMPONENT(
+                c_CmdScheduler,
+                "CramSim",
+                "c_CmdScheduler",
+                SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Command Scheduler",
+                "SST::CramSim::Controller::CmdScheduler"
+            )
+
+            SST_ELI_DOCUMENT_PARAMS(
+                {"numCmdQEntries", "The number of entries in command scheduler's command queue"},
+            )
+
+            SST_ELI_DOCUMENT_PORTS(
+            )
+
+            SST_ELI_DOCUMENT_STATISTICS(
+            )
+
             c_CmdScheduler(Component *comp, Params &x_params);
             ~c_CmdScheduler();
 

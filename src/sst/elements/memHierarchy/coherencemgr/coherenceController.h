@@ -1,10 +1,10 @@
 // Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2018, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -56,7 +56,7 @@ public:
 
     /* Handle an eviction */
     virtual CacheAction handleEviction(CacheLine * line, string rqstr, bool fromDataCache=false) =0;
-    
+
     /* Handle a response - AckInv, GetSResp, etc. */
     virtual CacheAction handleResponse(MemEvent * event, CacheLine * line, MemEvent * request) =0;
 
@@ -66,7 +66,7 @@ public:
     /* Update timestamp in lockstep with parent */
     void updateTimestamp(uint64_t newTS) { timestamp_ = newTS; }
 
-    
+
     /***** Functions for sending events *****/
 
     /* Send a NACK event. Used by child classes and cache controller */
@@ -80,7 +80,7 @@ public:
 
     /* Send a response event up (towards CPU). L1s need to implement their own to split out requested bytes. */
     uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic=false);
-    
+
     /* Send a response event up (towards CPU). L1s need to implement their own to split out requested bytes. */
     uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool atomic=false);
 
@@ -96,13 +96,13 @@ public:
 
     /* Return the name of the source for this cache */
     std::string getSrc();
-    
+
     /* Return the destination for a given address - for sliced/distributed caches */
     std::string getDestination(Addr addr) { return linkDown_->findTargetDestination(addr); }
-    
+
 
     /***** Manage outgoing event queuest *****/
-    
+
     /* Send commands when their timestamp expires. Return whether queue is empty or not. */
     virtual bool sendOutgoingCommands(SimTime_t curTime);
 
@@ -110,7 +110,7 @@ public:
     /***** Setup and initialization functions *****/
 
     /* Initialize variables that tell this coherence controller how to interact with the cache below it */
-    void setupLowerStatus(bool isLastLevel, bool isNoninclusive, bool isDir);
+    void setupLowerStatus(bool silentEvict, bool isLastLevel, bool isNoninclusive, bool isDir);
 
     /* Setup pointers to other subcomponents/cache structures */
     void setCacheListener(CacheListener* ptr) { listener_ = ptr; }
@@ -129,7 +129,7 @@ public:
     virtual void recordLatency(Command cmd, State state, uint64_t latency);
     virtual void recordEventSentUp(Command cmd) =0;
     virtual void recordEventSentDown(Command cmd) =0;
-    
+
     /**** Debug support *****/
     void printStatus(Output& out);
 
@@ -143,7 +143,7 @@ protected:
     /* Pointers to other subcomponents and cache structures */
     CacheListener*  listener_;
     MSHR *          mshr_;              // Pointer to cache's MSHR, coherence controllers are responsible for managing writeback acks
-   
+
     /* Latency and timing related parameters */
     uint64_t        timestamp_;         // Local timestamp (cycles)
     uint64_t        accessLatency_;     // Cache access latency
@@ -153,7 +153,7 @@ protected:
     /* Outgoing event queues - events are stalled here to account for access latencies */
     list<Response> outgoingEventQueue_;
     list<Response> outgoingEventQueueUp_;
-    
+
     /* Debug control */
     std::set<Addr>  DEBUG_ADDR;
 
@@ -168,7 +168,7 @@ protected:
     bool            lastLevel_;             // Whether we are the lowest coherence level and should not send coherence messages down
 
     /* General parameters and structures */
-    unsigned int lineSize_;
+    uint64_t lineSize_;
 
     /* Throughput control TODO move these to a port manager */
     uint64_t maxBytesUp;
@@ -208,7 +208,7 @@ protected:
     Statistic<uint64_t>* stat_latency_GetX_M;
     Statistic<uint64_t>* stat_latency_GetSX_IM;
     Statistic<uint64_t>* stat_latency_GetSX_SM;
-    Statistic<uint64_t>* stat_latency_GetSX_M;     
+    Statistic<uint64_t>* stat_latency_GetSX_M;
 
     /* Prefetch statistics */
     Statistic<uint64_t>* statPrefetchEvict;

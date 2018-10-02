@@ -30,12 +30,17 @@ Nic::RecvMachine::StreamBase::StreamBase(Output& output, Ctx* ctx, int srcNode, 
 }
 
 Nic::RecvMachine::StreamBase::~StreamBase() {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_STREAM,"this=%p latency=%" PRIu64 "\n",this,
-                                            m_ctx->nic().getCurrentSimTimeNano()-m_start);
+
+    size_t totalBytes = 0;
     if ( m_recvEntry ) {
         m_recvEntry->notify( m_srcPid, m_srcNode, m_matched_tag, m_matched_len );
+        totalBytes = m_recvEntry->totalBytes();
         delete m_recvEntry;
     }
+
+    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_STREAM,"this=%p bytes=%zu latency=%" PRIu64 "\n",this,
+                                            totalBytes, m_ctx->nic().getCurrentSimTimeNano()-m_start);
+
     if ( m_sendEntry ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_STREAM,"core=%d targetNode=%d targetCore=%d\n",
                 getMyPid(), m_sendEntry->dest(), m_sendEntry->dst_vNic() );
@@ -61,6 +66,8 @@ void Nic::RecvMachine::StreamBase::processPktBody( FireflyNetworkEvent* ev  ) {
     assert(m_numPending < m_ctx->getMaxQsize() );
     ++m_numPending;
 
+	m_ctx->nic().m_recvStreamPending->addData( m_numPending );
+
     std::vector< MemOp >* vec = new std::vector< MemOp >;
     bool ret = getRecvEntry()->copyIn( m_dbg, *ev, *vec );
 
@@ -85,7 +92,6 @@ void Nic::RecvMachine::StreamBase::ready( bool finished, uint64_t pktNum ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM, "this stream is done\n");
         m_ctx->deleteStream( this );
     }
-
     if ( m_wakeupCallback ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_STREAM, "wakeup recv machine\n");
         m_wakeupCallback( );

@@ -143,12 +143,12 @@ public:
     /** Sets the virtual address of this MemEvent */
     void setVirtualAddress(Addr newVA) { vAddr_ = newVA; }
     /** Gets the virtual address of this MemEvent */
-    uint64_t getVirtualAddress() { return vAddr_; }
+    uint64_t getVirtualAddress() const { return vAddr_; }
 
     /** Sets the instruction pointer of that caused this MemEvent */
     void setInstructionPointer(Addr newIP) { instPtr_ = newIP; }
     /** Get the instruction pointer of that caused this MemEvent */
-    uint64_t getInstructionPointer() { return instPtr_; }
+    uint64_t getInstructionPointer() const { return instPtr_; }
 
     /** Returns the time (in nanoseconds) when this event was created */
     SimTime_t getInitializationTime(void) const { return initTime_; }

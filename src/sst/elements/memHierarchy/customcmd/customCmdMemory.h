@@ -35,6 +35,8 @@ public:
     
     CustomCmdInfo(SST::Event::id_type id, std::string rqstr, uint32_t flags = 0 ) :
       id_(id), flags_(flags), rqstr_(rqstr) { }
+
+    virtual ~CustomCmdInfo() = default;
     
     /* String-ify info for debug */
     virtual std::string getString() { 
