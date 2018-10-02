@@ -6,20 +6,20 @@ AM_CPPFLAGS = \
 	$(MPI_CPPFLAGS) 
 
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = libSTPU.la
-libSTPU_la_SOURCES = \
-	stpu_lib.h \
+comp_LTLIBRARIES = libGNA.la
+libGNA_la_SOURCES = \
+	gna_lib.h \
 	neuron.h \
 	sts.h \
 	sts.cc \
-	STPU.cc \
-	STPU.h
+	GNA.cc \
+	GNA.h
 
 EXTRA_DIST = \
     README 
 
 
-libSTPU_la_LDFLAGS = -module -avoid-version
+libGNA_la_LDFLAGS = -module -avoid-version
 
 ##########################################################################
 ##########################################################################

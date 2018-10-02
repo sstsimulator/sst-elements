@@ -17,10 +17,10 @@
 #define _NEURON_H
 
 #include <map>
-#include "stpu_lib.h"
+#include "gna_lib.h"
 
 namespace SST {
-namespace STPUComponent {
+namespace GNAComponent {
 
 using namespace std;
 
@@ -39,7 +39,7 @@ public:
         value -= config.NrnLkg;
 
         // Bound?
-        #warning is this right?
+        // AFR: is this right?
         if (value < config.NrnMin) {
             value = 0;
         }

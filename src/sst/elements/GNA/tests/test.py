@@ -14,8 +14,8 @@ op.add_option("-m", "--memOut", action="store", type="int", dest="memOut", defau
 (options, args) = op.parse_args()
 
 # Define the simulation components
-comp_stpu = sst.Component("STPU", "STPU.STPU")
-comp_stpu.addParams({
+comp_gna = sst.Component("GNA", "GNA.GNA")
+comp_gna.addParams({
     "verbose" : 1,
     "neurons" : options.neurons,
     "clock" : "1GHz",
@@ -58,8 +58,8 @@ sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
 
 
 # Define the simulation links
-link_stpu_cache = sst.Link("link_stpu_mem")
-link_stpu_cache.connect( (comp_stpu, "mem_link", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
+link_gna_cache = sst.Link("link_gna_mem")
+link_gna_cache.connect( (comp_gna, "mem_link", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
 link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memory, "direct_link", "50ps") )
 

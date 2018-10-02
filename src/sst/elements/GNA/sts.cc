@@ -15,24 +15,24 @@
 
 #include <sst_config.h>
 #include "sts.h"
-#include "STPU.h"
+#include "GNA.h"
 
 using namespace SST;
-using namespace SST::STPUComponent;
+using namespace SST::GNAComponent;
 
 void STS::assign(int neuronNum) {
-    const neuron *spiker = mySTPU->getNeuron(neuronNum);
+    const neuron *spiker = myGNA->getNeuron(neuronNum);
     numSpikes = spiker->getWMLLen();
     uint64_t listAddr = spiker->getWMLAddr();
 
     // for each link, request the WML structure
     for (int i = 0; i < numSpikes; ++i) {
-#warning should throttle
+        // AFR: should throttle
         using namespace Interfaces;
         using namespace White_Matter_Types;
         SimpleMem::Request *req = 
             new SimpleMem::Request(SimpleMem::Request::Read, listAddr, sizeof(T_Wme));
-        mySTPU->readMem(req, this);
+        myGNA->readMem(req, this);
         listAddr += sizeof(T_Wme);
     }
 }
@@ -42,7 +42,7 @@ bool STS::isFree() {
 }
 
 void STS::advance(uint now) {
-#warning should throttle
+    // AFR: should throttle
     while (incomingReqs.empty() == false) {
         // get the request
         SST::Interfaces::SimpleMem::Request *req = incomingReqs.front();
@@ -54,8 +54,8 @@ void STS::advance(uint now) {
         uint16_t strength = (req->data[0]<<8) + req->data[1];
         uint16_t tempOffset = (data[2]<<8) + data[3];
         uint16_t target = (data[4]<<8) + data[5];
-        //printf("  stpu deliver str%u to %u @ %u\n", strength, target, tempOffset+now);
-        mySTPU->deliver(strength, target, tempOffset+now);
+        //printf("  gna deliver str%u to %u @ %u\n", strength, target, tempOffset+now);
+        myGNA->deliver(strength, target, tempOffset+now);
         numSpikes--;
 
         incomingReqs.pop();

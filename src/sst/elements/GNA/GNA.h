@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _STPU_H
-#define _STPU_H
+#ifndef _GNA_H
+#define _GNA_H
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -32,18 +32,18 @@
 
 #include <sst/core/interfaces/simpleMem.h>
 #include "../memHierarchy/memEvent.h"
-#include "stpu_lib.h"
+#include "gna_lib.h"
 #include "neuron.h"
 #include "sts.h"
 
 namespace SST {
-namespace STPUComponent {
+namespace GNAComponent {
 
 
-class STPU : public SST::Component {
+class GNA : public SST::Component {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_COMPONENT(STPU, "STPU", "STPU", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_COMPONENT(GNA, "GNA", "GNA", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Spiking Temportal Processing Unit", COMPONENT_CATEGORY_PROCESSOR)
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -59,7 +59,7 @@ public:
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to memory", { "memHierarchy.MemEventBase" } } )
 
     /* Begin class definiton */
-    STPU(SST::ComponentId_t id, SST::Params& params);
+    GNA(SST::ComponentId_t id, SST::Params& params);
     void finish() {
         printf("Completed %d neuron firings\n", numFirings);
         printf("Completed %d spike deliveries\n", numDeliveries);
@@ -76,9 +76,9 @@ public:
     }
 
 private:
-    STPU();  // for serialization only
-    STPU(const STPU&); // do not implement
-    void operator=(const STPU&); // do not implement
+    GNA();  // for serialization only
+    GNA(const GNA&); // do not implement
+    void operator=(const GNA&); // do not implement
     void init(unsigned int phase);
     
     void handleEvent( SST::Interfaces::SimpleMem::Request * req );
@@ -88,8 +88,8 @@ private:
     void processFire();
     void lifAll();
 
-    typedef enum {IDLE, PROCESS_FIRE, LIF, LAST_STATE} stpuState_t;
-    stpuState_t state;
+    typedef enum {IDLE, PROCESS_FIRE, LIF, LAST_STATE} gnaState_t;
+    gnaState_t state;
 
     Output out;
     Interfaces::SimpleMem * memory;
@@ -120,4 +120,4 @@ private:
 
 }
 }
-#endif /* _STPU_H */
+#endif /* _GNA_H */

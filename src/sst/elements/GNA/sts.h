@@ -27,21 +27,21 @@
 #include <sst/core/interfaces/simpleMem.h>
 
 namespace SST {
-namespace STPUComponent {
+namespace GNAComponent {
 
 //foward decl
-class STPU;
+class GNA;
 class Request;
 
 //  A Spike Transfer Structure engine - transforms a given spike by
 //  performing a look up and delivering spikes
 class STS {
-    STPU *mySTPU;
+    GNA *myGNA;
     int stsID;
     int numSpikes; // number of spikes yet to deliver
     std::queue<SST::Interfaces::SimpleMem::Request *> incomingReqs;
 public:
-    STS(STPU *parent, int n) : mySTPU(parent), stsID(n), numSpikes(0) {;}
+    STS(GNA *parent, int n) : myGNA(parent), stsID(n), numSpikes(0) {;}
     bool isFree();
     void assign(int);
     void advance(uint);

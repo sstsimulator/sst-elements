@@ -14,7 +14,7 @@
 // distribution.
 
 #include <sst_config.h>
-#include "STPU.h"
+#include "GNA.h"
 
 #include <sst/core/element.h>
 #include <sst/core/params.h>
@@ -24,13 +24,13 @@
 
 using namespace SST;
 //using namespace SST::MemHierarchy;
-using namespace SST::STPUComponent;
+using namespace SST::GNAComponent;
 
-STPU::STPU(ComponentId_t id, Params& params) :
+GNA::GNA(ComponentId_t id, Params& params) :
     Component(id), state(IDLE), now(0), numFirings(0), numDeliveries(0)
 {
     uint32_t outputLevel = params.find<uint32_t>("verbose", 0);
-    out.init("STPU:@p:@l: ", outputLevel, 0, Output::STDOUT);
+    out.init("GNA:@p:@l: ", outputLevel, 0, Output::STDOUT);
 
     // get parameters
     numNeurons = params.find<int>("neurons", 32);
@@ -65,21 +65,21 @@ STPU::STPU(ComponentId_t id, Params& params) :
     if (!memory) {
         out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
     }
-    memory->initialize("mem_link", new Interfaces::SimpleMem::Handler<STPU> (this, &STPU::handleEvent));
+    memory->initialize("mem_link", new Interfaces::SimpleMem::Handler<GNA> (this, &GNA::handleEvent));
 
     //set our clock
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
-    clockHandler = new Clock::Handler<STPU>(this, &STPU::clockTic);
+    clockHandler = new Clock::Handler<GNA>(this, &GNA::clockTic);
     clockTC = registerClock(clockFreq, clockHandler);
 }
 
-STPU::STPU() : Component(-1)
+GNA::GNA() : Component(-1)
 {
 	// for serialization only
 }
 
 
-void STPU::init(unsigned int phase) {
+void GNA::init(unsigned int phase) {
     using namespace Neuron_Loader_Types;
     using namespace White_Matter_Types;
     
@@ -222,7 +222,7 @@ void STPU::init(unsigned int phase) {
 }
 
 // handle incoming memory
-void STPU::handleEvent(Interfaces::SimpleMem::Request * req)
+void GNA::handleEvent(Interfaces::SimpleMem::Request * req)
 {
     std::map<uint64_t, STS*>::iterator i = requests.find(req->id);
     if (i == requests.end()) {
@@ -236,8 +236,8 @@ void STPU::handleEvent(Interfaces::SimpleMem::Request * req)
     }
 }
 
-void STPU::deliver(float val, int targetN, int time) {
-#warning should really throttle this in some way
+void GNA::deliver(float val, int targetN, int time) {
+    // AFR: should really throttle this in some way
     numDeliveries++;
     if(targetN < numNeurons) {
         neurons[targetN].deliverSpike(val, time);
@@ -248,7 +248,7 @@ void STPU::deliver(float val, int targetN, int time) {
 }
 
 // returns true if no more to deliver
-bool STPU::deliverBWPs() {
+bool GNA::deliverBWPs() {
     int tries = BWPpTic;
 
     while (tries > 0) {
@@ -273,7 +273,7 @@ bool STPU::deliverBWPs() {
 }
 
 // find a free STS unit to assign the spike to
-void STPU::assignSTS() {
+void GNA::assignSTS() {
     int remainDispatches = STSDispatch;
 
     // try to find a free unit
@@ -288,7 +288,7 @@ void STPU::assignSTS() {
     }
 }
 
-void STPU::processFire() {
+void GNA::processFire() {
     // has to: deliver incoming brain wave pulses, assign neuron
     // firings to lookup units (spike transfer structures), process
     // neuron firings into activations
@@ -316,7 +316,7 @@ void STPU::processFire() {
 }
 
 // run LIF on all neurons
-void STPU::lifAll() {
+void GNA::lifAll() {
     for (uint n = 0; n < numNeurons; ++n) {
         bool fired = neurons[n].lif(now);
         if (fired) {
@@ -326,7 +326,7 @@ void STPU::lifAll() {
     }
 }
 
-bool STPU::clockTic( Cycle_t )
+bool GNA::clockTic( Cycle_t )
 {
     // send some outgoing mem reqs
     int maxOut = maxOutMem;
@@ -359,7 +359,7 @@ bool STPU::clockTic( Cycle_t )
         }
         break;
     default:
-        out.fatal(CALL_INFO, -1,"Invalid STPU state\n");
+        out.fatal(CALL_INFO, -1,"Invalid GNA state\n");
     }
 
     // return false so we keep going
