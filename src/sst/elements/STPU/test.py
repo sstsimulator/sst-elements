@@ -9,6 +9,8 @@ op.add_option("-n", "--neurons", action="store", type="int", dest="neurons", def
 op.add_option("-c", "--cacheSz", action="store", type="int", dest="cacheSz", default=2)
 #sts dispatch & parallelism
 op.add_option("-s", "--STS", action="store", type="int", dest="sts", default=4)
+# max memory out
+op.add_option("-m", "--memOut", action="store", type="int", dest="memOut", default=4)
 (options, args) = op.parse_args()
 
 # Define the simulation components
@@ -19,7 +21,8 @@ comp_stpu.addParams({
     "clock" : "1GHz",
     "BWPperTic" : 1,
     "STSDispatch" : options.sts,
-    "STSParallelism" : options.sts
+    "STSParallelism" : options.sts,
+    "MaxOutMem" : options.memOut 
 })
 
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
@@ -51,7 +54,7 @@ comp_memory.addParams({
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-#sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
+sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
 
 
 # Define the simulation links

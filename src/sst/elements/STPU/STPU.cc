@@ -247,16 +247,6 @@ void STPU::deliver(float val, int targetN, int time) {
     }
 }
 
-void STPU::readMem(Interfaces::SimpleMem::Request *req, STS *requestor) {
-    //printf("Read Mem %p %d\n", req, req->cmd);
-    // send the request
-    //memory->sendRequest(req);
-    // queue the request to send later
-    outgoingReqs.push(req);
-    // record who it came from
-    requests.insert(std::make_pair(req->id, requestor));
-}
-
 // returns true if no more to deliver
 bool STPU::deliverBWPs() {
     int tries = BWPpTic;
@@ -340,9 +330,9 @@ bool STPU::clockTic( Cycle_t )
 {
     // send some outgoing mem reqs
     int maxOut = maxOutMem;
-    if((!outgoingReqs.empty()) && (now & 0x3f) == 0) {
-        printf(" outRqst Q %d\n", outgoingReqs.size());
-    }
+    //if((!outgoingReqs.empty()) && (now & 0x3f) == 0) {
+    //    printf(" outRqst Q %d\n", outgoingReqs.size());
+    //}
     while(!outgoingReqs.empty() && maxOut > 0) {
         memory->sendRequest(outgoingReqs.front());
         outgoingReqs.pop();

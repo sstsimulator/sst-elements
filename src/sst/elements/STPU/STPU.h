@@ -68,7 +68,12 @@ public:
 public:
     void deliver(float val, int targetN, int time);
     neuron* getNeuron(int n) {return &neurons[n];}
-    void readMem(Interfaces::SimpleMem::Request *req, STS *requestor);
+    void readMem(Interfaces::SimpleMem::Request *req, STS *requestor) {
+        // queue the request to send later
+        outgoingReqs.push(req);
+        // record who it came from
+        requests.insert(std::make_pair(req->id, requestor));
+    }
 
 private:
     STPU();  // for serialization only

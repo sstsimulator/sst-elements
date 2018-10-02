@@ -16,6 +16,12 @@
 #ifndef _STS_H
 #define _STS_H
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
+#include <vector>
+
 #include <queue>
 
 #include <sst/core/interfaces/simpleMem.h>

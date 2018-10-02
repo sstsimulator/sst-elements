@@ -1,12 +1,12 @@
 #!/bin/tcsh
 
-#foreach c (1 4 16 64)
+#foreach c (16 32 64 128)
 foreach c (${1})
-    foreach s (32 128 512 2048)
+    foreach s (32 64 128 256)
         set fileN = test-${c}K-${s}.out
         echo "running $fileN"
         rm -f $fileN
-        time sst ./test.py -- -n 2500 -c $c -s $s -m $s >& $fileN &
+        time sst ./test.py -- -n 20000 -c $c -s $s -m 32 >& $fileN &
         sleep 1
     end
     wait

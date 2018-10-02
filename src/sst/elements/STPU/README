@@ -14,5 +14,6 @@
 TODO:
 Set Neuron values as (variable precision) ints or floats
 time delay for output consoldiation?
-statistics
+statistics (request q size)
 switch to output, rm printf()s
+make sure maxOutMem works
