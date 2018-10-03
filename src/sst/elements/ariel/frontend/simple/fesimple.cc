@@ -1303,8 +1303,8 @@ int main(int argc, char *argv[])
     /* If not using ariel_enable, then gettimeofday/clock_gettime always return simulated time */
     offset_tv.tv_sec = 0;
     offset_tv.tv_usec = 0;
-    offset_tp_mono.tv_sec = 0;
 #if ! defined(__APPLE__)
+    offset_tp_mono.tv_sec = 0;
     offset_tp_mono.tv_nsec = 0;
     offset_tp_real.tv_sec = 0;
     offset_tp_real.tv_nsec = 0;
