@@ -117,7 +117,7 @@ void GNA::init(unsigned int phase) {
     for (int nrn_num=24;nrn_num<=31;nrn_num++)
         neurons[nrn_num].configure((T_NctFl){1500,-2.0,0.0});
 #else
-    for (int nrn_num=0;nrn_num<=numNeurons;nrn_num++) {
+    for (int nrn_num=0;nrn_num<numNeurons;nrn_num++) {
         uint16_t trig = rng.generateNextUInt32() % 100 + 350;
         neurons[nrn_num].configure((T_NctFl){float(trig),0.0,float(trig/10.)});
     }
