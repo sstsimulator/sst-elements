@@ -7,6 +7,7 @@ netConfig = {
 networkParams = {
     "packetSize" : "2048B",
     "link_bw" : "4GB/s",
+    "xbar_bw" : "4GB/s",
     "link_lat" : "40ns",
     "input_latency" : "50ns",
     "output_latency" : "50ns",

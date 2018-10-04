@@ -397,7 +397,7 @@ nicParams["packetSize"] =	networkParams['packetSize']
 nicParams["link_bw"] = networkParams['link_bw']
 sst.merlin._params["link_lat"] = networkParams['link_lat']
 sst.merlin._params["link_bw"] = networkParams['link_bw']   
-sst.merlin._params["xbar_bw"] = networkParams['link_bw'] 
+sst.merlin._params["xbar_bw"] = networkParams['xbar_bw'] 
 sst.merlin._params["flit_size"] = networkParams['flitSize'] 
 sst.merlin._params["input_latency"] = networkParams['input_latency'] 
 sst.merlin._params["output_latency"] = networkParams['output_latency'] 
@@ -441,6 +441,9 @@ else:
 		loadInfo.initWork( workList, statNodeList )
 	else:
 		sys.exit("Error: need a loadFile or cmdLine")
+
+if topo.getName() == "Fat Tree":
+	topo.keepEndPointsWithRouter()
 
 topo.prepParams()
 
