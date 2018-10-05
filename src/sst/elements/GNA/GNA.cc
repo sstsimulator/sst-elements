@@ -20,7 +20,7 @@
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/rng/marsaglia.h>
-#include "../memHierarchy/memEvent.h"
+#include <sst/elements/memHierarchy/memEvent.h>
 
 using namespace SST;
 //using namespace SST::MemHierarchy;

@@ -31,7 +31,7 @@
 #include <sst/core/elementinfo.h>
 
 #include <sst/core/interfaces/simpleMem.h>
-#include "../memHierarchy/memEvent.h"
+#include <sst/elements/memHierarchy/memEvent.h>
 #include "gna_lib.h"
 #include "neuron.h"
 #include "sts.h"
