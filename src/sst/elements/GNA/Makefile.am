@@ -17,7 +17,9 @@ libGNA_la_SOURCES = \
 	GNA.h
 
 EXTRA_DIST = \
-    README 
+	tests/test.py \
+	tests/test.ref.out \
+	README 
 
 
 libGNA_la_LDFLAGS = -module -avoid-version
