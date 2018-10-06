@@ -95,6 +95,7 @@ public:
 	int m_getLoop;
 	int m_stride;
 	int m_maxDelay;
+	int m_blockOffset;
 	SST::RNG::XORShiftRNG* m_rng;
 
     bool generate( std::queue<EmberEvent*>& evQ) 
@@ -146,10 +147,11 @@ public:
 					tmp = "idle";
 					m_phase = Wait;
 				}
+				m_blockOffset = calcComputeNum( m_node_num );
 
 				if ( bufSize ) {
-					printf("physNode=%d is %s node %d\n",m_node_num, tmp.c_str(), calcVirtNum(m_node_num) );
-            		enQ_malloc( evQ, &m_mem, bufSize );
+					//printf("physNode=%d is %s node %d\n",m_node_num, tmp.c_str(), calcVirtNum(m_node_num) );
+ 					enQ_malloc( evQ, &m_mem, bufSize );
 				}
 			}
 
@@ -160,6 +162,7 @@ public:
 			
 			if ( ! work( evQ ) ) {
 				m_phase = Wait;
+				enQ_quiet( evQ );
 			}
 			break;
 
@@ -242,8 +245,9 @@ public:
 
 		for ( int i = 0; i < m_getLoop && m_curBlock < m_numBlocks; i++ ) {
 
-			int srcPe = calcBlockOwner( m_curBlock );
-			int srcBlock = calcSrcBlock( m_curBlock );
+			int foo = (m_curBlock + m_blockOffset) % m_numBlocks; 
+			int srcPe = calcBlockOwner( foo );
+			int srcBlock = calcSrcBlock( foo );
 
 			if ( m_rng ) {
 				int delay = m_rng->generateNextUInt32();
@@ -272,7 +276,6 @@ public:
 			++m_curBlock;
 		}
 
-        enQ_quiet( evQ );
 		return m_curBlock < m_numBlocks;
 	}
 
