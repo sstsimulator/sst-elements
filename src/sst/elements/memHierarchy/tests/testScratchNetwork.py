@@ -24,6 +24,7 @@ comp_scratch0 = sst.Component("scratch0", "memHierarchy.Scratchpad")
 comp_scratch0.addParams({
     "debug" : DEBUG_SCRATCH | DEBUG_CORE0,
     "debug_level" : 5,
+    "verbose" : 2,
     "clock" : "2GHz",
     "size" : "1KiB",
     "scratch_line_size" : 64,
@@ -57,6 +58,7 @@ comp_scratch1 = sst.Component("scratch1", "memHierarchy.Scratchpad")
 comp_scratch1.addParams({
     "debug" : DEBUG_SCRATCH | DEBUG_CORE1,
     "debug_level" : 5,
+    "verbose" : 2,
     "clock" : "2GHz",
     "size" : "1KiB",
     "scratch_line_size" : 64,

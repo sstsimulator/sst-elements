@@ -17,7 +17,10 @@
 #define SST_SCHEDULER_TASKCOMMINFO_H__
 
 #include <cstddef>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wuser-defined-warnings"
 #include <map>
+#pragma clang diagnostic pop
 #include <vector>
 
 namespace SST {

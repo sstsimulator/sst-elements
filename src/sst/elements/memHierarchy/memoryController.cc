@@ -553,6 +553,15 @@ void MemController::printStatus(Output &statusOut) {
 }
 
 void MemController::emergencyShutdown() {
-    if (out.getVerboseLevel() > 1)
+    if (out.getVerboseLevel() > 1) {
+        if (out.getOutputLocation() == Output::STDOUT)
+            out.setOutputLocation(Output::STDERR);
+        
         printStatus(out);
+        
+        if (link_) {
+            out.output("  Checking for unreceived events on link: \n");
+            link_->emergencyShutdownDebug(out);
+        }
+    }
 }

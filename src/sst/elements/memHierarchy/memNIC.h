@@ -89,6 +89,7 @@ public:
 
     /* Debug */
     void printStatus(Output &out);
+    void emergencyShutdownDebug(Output &out);
 
 private:
 

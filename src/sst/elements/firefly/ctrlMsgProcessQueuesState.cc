@@ -90,7 +90,7 @@ void ProcessQueuesState::setVars( VirtNic* nic, Info* info, MemoryBase* mem,
 }
 
 void ProcessQueuesState:: finish() {
-    dbg().debug(CALL_INFO,1,1,"pstdRcvQ=%lu recvdMsgQ=%lu loopResp=%lu funcStack=%lu sent=%d recv=%d\n",
+    dbg().debug(CALL_INFO,1,1,"pstdRcvQ=%lu recvdMsgQ=%lu loopResp=%lu funcStack=%lu sent=%d recv=%zu\n",
     m_pstdRcvQ.size(), m_recvdMsgQ.size(), m_loopResp.size(), m_funcStack.size(), m_numSent, m_numRecv+m_recvdMsgQ.size() );
 }
 

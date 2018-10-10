@@ -58,6 +58,33 @@ class c_TxnConverter: public SubComponent{
 
 public:
 
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        c_TxnConverter,
+        "CramSim",
+        "c_TxnConverter",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Transaction Converter",
+        "SST::CramSim::Controller::TxnConverter"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+		{"relCommandWidth", "Relative width of each command", NULL},
+		{"bankPolicy", "Select which bank policy to model", NULL},
+		{"boolUseReadA", "Whether to use READ or READA Cmds", NULL},
+		{"boolUseWriteA", "Whether to use WRITE or WRITEA Cmds", NULL},
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        {"readTxnsRecvd", "Number of read transactions received", "reads", 1}, // Name, Desc, Units, Enable Level
+        {"writeTxnsRecvd", "Number of write transactions received", "writes", 1},
+        {"totalTxnsRecvd", "Number of write transactions received", "transactions", 1},
+        {"reqQueueSize", "Total size of the request queue over time", "transactions", 1},
+        {"resQueueSize", "Total size of the response queue over time", "transactions", 1},
+    )
+
 	c_TxnConverter(SST::Component * comp, SST::Params& x_params);
 	~c_TxnConverter();
 

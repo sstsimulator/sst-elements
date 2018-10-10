@@ -34,6 +34,7 @@
 // SST includes
 #include <sst/core/link.h>
 #include <sst/core/component.h>
+#include <sst/core/elementinfo.h>
 #include "c_AddressHasher.hpp"
 #include "c_DeviceDriver.hpp"
 #include "c_TxnConverter.hpp"
@@ -53,6 +54,29 @@ namespace SST {
         class c_Controller : public SST::Component {
 
         public:
+
+            SST_ELI_REGISTER_COMPONENT(
+                c_Controller,
+                "CramSim",
+                "c_Controller",
+                SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Memory Controller",
+                COMPONENT_CATEGORY_UNCATEGORIZED
+            )
+
+            SST_ELI_DOCUMENT_PARAMS(
+                {"AddrMapper", "address hasher", "CramSim.c_AddressHasher"},
+                {"TxnScheduler", "Transaction Scheduler", "CramSim.c_TxnScheduler"},
+                {"TxnConverter", "Transaction Converter", "CramSim.c_TxnConverter"},
+                {"CmdScheduler", "Command Scheduler", "CramSim.c_CmdScheduler"},
+                {"DeviceDriver", "device driver", "CramSim.c_DeviceDriver"},
+            )
+
+            SST_ELI_DOCUMENT_PORTS(
+                {"txngenLink", "link to txn generator / txn dispatcher", {"c_txnGenReqEvent"} },
+                {"memLink", "link to memory", {"c_DeviceResEvent"} },
+            )
+
             c_Controller(SST::ComponentId_t id, SST::Params &params);
             ~c_Controller();
 

@@ -29,6 +29,7 @@ comp_l1_0 = sst.Component("l1_0", "memHierarchy.Cache")
 comp_l1_0.addParams({
     "debug" : debugL1 | debugCore0,
     "debug_level" : 9,
+    "verbose" : 2,
     "cache_frequency" : core_clock,
     "cache_size" : "4KiB",
     "access_latency_cycles" : 1,
@@ -57,6 +58,7 @@ comp_l1_1 = sst.Component("l1_1", "memHierarchy.Cache")
 comp_l1_1.addParams({
     "debug" : debugL1 | debugCore0,
     "debug_level" : 9,
+    "verbose" : 2,
     "cache_frequency" : core_clock,
     "cache_size" : "4KiB",
     "access_latency_cycles" : 1,
@@ -72,6 +74,7 @@ comp_l2_0.addParams({
     "debug" : debugL2 | debugCore0,
     "debug_level" : 10,
     "debug_addr" : "[0x1340]",
+    "verbose" : 2,
     "cache_frequency" : core_clock,
     "cache_size" : "16KiB",
     "access_latency_cycles" : 5,
@@ -103,6 +106,7 @@ comp_l1_2 = sst.Component("l1_2", "memHierarchy.Cache")
 comp_l1_2.addParams({
     "debug" : debugL1 | debugCore1,
     "debug_level" : 9,
+    "verbose" : 2,
     "cache_frequency" : core_clock,
     "cache_size" : "4KiB",
     "access_latency_cycles" : 4,
@@ -129,6 +133,7 @@ comp_l1_3 = sst.Component("l1_3", "memHierarchy.Cache")
 comp_l1_3.addParams({
     "debug" : debugL1 | debugCore1,
     "debug_level" : 9,
+    "verbose" : 2,
     "cache_frequency" : core_clock,
     "cache_size" : "4KiB",
     "access_latency_cycles" : 4,
@@ -143,6 +148,7 @@ comp_l2_1.addParams({
     "debug" : debugL2 | debugCore1,
     "debug_level" : 10,
     "debug_addr" : "[0x1340]",
+    "verbose" : 2,
     "cache_frequency" : core_clock,
     "cache_size" : "16KiB",
     "access_latency_cycles" : 5,
@@ -162,6 +168,7 @@ comp_dir.addParams({
     "debug" : debugDir | debugCore0 | debugCore1,
     "debug_level" : 10,
     "debug_addr" : "[0x1340]",
+    "verbose" : 2,
     "entry_cache_size" : 1024,
     "coherence_protocol" : "MESI",
     "net_memory_name" : "scratch"
@@ -177,6 +184,7 @@ comp_scratch.addParams({
     "debug" : debugScratch | debugCore0 | debugCore1,
     "debug_level" : 10,
     "debug_addr" : "[0x1340]",
+    "verbose" : 2,
     "clock" : core_clock,
     "size" : "64KiB",
     "scratch_line_size" : 64,
@@ -229,6 +237,7 @@ comp_memory1.addParams({
       "backing" : "none",
       "backend.access_time" : "50ns",
       "clock" : "1GHz",
+      "verbose" : 2,
       "backend.mem_size" : "512MiB",
 })
 mem1_link = comp_memory1.setSubComponent("cpulink", "memHierarchy.MemNIC")

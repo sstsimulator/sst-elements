@@ -16,12 +16,52 @@
 #ifndef COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 #define COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 
+#include <sst/core/elementinfo.h>
 #include "memoryModel/memoryModel.h"
 
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
 
 
 class SimpleMemoryModel : public MemoryModel {
+
+public:
+   SST_ELI_REGISTER_SUBCOMPONENT(
+        SimpleMemoryModel,
+        "firefly",
+        "SimpleMemory",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+	    {"id",             "ID of the router."},
+	    {"numCores",       "number of memory operation units for the host.","0"},
+	    {"numNicUnits",    "number of memory operation units for the nic.","0"},
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "nic_thread_work_Q_depth",           "number of entries in queue", "entries", 1},
+        { "host_thread_work_Q_depth",          "number of entries in queue", "entries", 1},
+        { "nic_thread_load_latency",           "latency to complete", "nanoseconds", 1},
+        { "nic_thread_load_pending_Q_depth",   "number of entries in queue", "entries", 1},
+        { "nic_thread_store_pending_Q_depth",  "number of entries in queue", "entries", 1},
+
+        { "host_thread_load_latency",          "latency to complete", "nanoseconds", 1},
+        { "host_thread_load_pending_Q_depth",  "number of entries in queue", "entries", 1},
+        { "host_thread_store_pending_Q_depth", "number of entries in queue", "entries", 1},
+        { "hostCache_mux_blocked_ns",          "latency blocked", "nanoseconds", 1},
+        { "nic_mux_blocked_ns",                "latency blocked", "nanoseconds", 1},
+        { "bus_blocked_ns",                    "latency blocked", "nanoseconds", 1},
+        { "bus_load_widget_pending_Q_depth",   "number of entries in queue", "entries", 1},
+        { "bus_store_widget_pending_Q_depth",  "number of entries in queue", "entries", 1},
+
+        { "nic_TLB_hits",                      "number of TLB hits", "count", 1},
+        { "nic_TLB_total",                     "total number of TLB requests", "count", 1},
+        { "host_cache_hits",                   "number of TLB hits", "count", 1},
+        { "host_cache_total",                  "total number of TLB requests", "count", 1},
+        { "mem_blocked_time",                  "time memory requests were blocked", "nanseconds", 1},
+	)
 
 
 #define BUS_WIDGET_MASK 1<<1
@@ -35,9 +75,6 @@ class SimpleMemoryModel : public MemoryModel {
 #define TLB_MASK        1<<9
 #define SM_MASK        1<<10
 #define SHARED_TLB_MASK 1<<11
- public:
-
-
 
 #include "cache.h"
 #include "memReq.h"
@@ -52,6 +89,7 @@ class SimpleMemoryModel : public MemoryModel {
 #include "storeUnit.h"
 #include "memUnit.h"
 #include "cacheUnit.h"
+
 
     class SelfEvent : public SST::Event {
       public:
@@ -70,9 +108,14 @@ class SimpleMemoryModel : public MemoryModel {
   public:
 	enum NIC_Thread { Send, Recv };
 
-    SimpleMemoryModel( Component* comp, Params& params, int id, int numCores, int numNicUnits ) : 
-		MemoryModel( comp ), m_numNicThreads(numNicUnits), m_hostCacheUnit(NULL), m_busBridgeUnit(NULL)
+    SimpleMemoryModel( Component* comp, Params& params ) :
+		MemoryModel( comp ), m_hostCacheUnit(NULL), m_busBridgeUnit(NULL)
 	{
+		int id = params.find<int32_t>( "id", -1 );
+		assert( id > -1 );
+		int numCores = params.find<uint32_t>("numCores",0);
+		m_numNicThreads = params.find<uint32_t>("numNicUnits",0);
+
     	char buffer[100];
     	snprintf(buffer,100,"@t:%d:SimpleMemoryModel::@p():@l ",id);
 
@@ -112,20 +155,17 @@ class SimpleMemoryModel : public MemoryModel {
 
 		MuxUnit* nicMuxUnit;
         if ( useHostCache ) {
-			//printf("node %d using host cache\n",id);
-		    m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "Host" );
-	        m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "HostCache" );
+		    m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "host" );
+	        m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "hostCache" );
         } else {
-	        m_muxUnit = new MuxUnit( *this, m_dbg, id, m_memUnit, "HostCache" );
+	        m_muxUnit = new MuxUnit( *this, m_dbg, id, m_memUnit, "hostCache" );
         }
-
 
         if ( useBusBridge ) {
 
-			//printf("node %d using bus\n",id);
 			m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, busNumLinks, busLatency,
                                                                 TLP_overhead, DLL_bytes, hostCacheLineSize, widgetSlots );
-	    	nicMuxUnit = new MuxUnit( *this, m_dbg, id, m_busBridgeUnit, "Nic" );
+	    	nicMuxUnit = new MuxUnit( *this, m_dbg, id, m_busBridgeUnit, "nic" );
 
 		} else {
 	    	nicMuxUnit = m_muxUnit;
@@ -136,41 +176,30 @@ class SimpleMemoryModel : public MemoryModel {
 		m_nicUnit = new NicUnit( *this, m_dbg, id );
 
 		std::stringstream tlbName;
-		std::stringstream unitName;
 		std::stringstream threadName; 
 		for ( int i = 0; i < m_numNicThreads; i++ ) {
 		
-			unitName.str("");
-			unitName.clear();
-			unitName << "Nic" << i;
-
-            SharedTlbUnit* tlb = new SharedTlbUnit( *this, m_dbg, id, unitName.str().c_str(), m_sharedTlb, 
-					new LoadUnit( *this, m_dbg, id,
+            SharedTlbUnit* tlb = new SharedTlbUnit( *this, m_dbg, id, "nic_thread", m_sharedTlb, 
+					new LoadUnit( *this, m_dbg, id, i,
                         nicMuxUnit,
-						nicNumLoadSlots, unitName.str().c_str() ),
+						nicNumLoadSlots, "nic_thread" ),
 
-					new StoreUnit( *this, m_dbg, id,
+					new StoreUnit( *this, m_dbg, id, i,
                         nicMuxUnit,
-						nicNumStoreSlots, unitName.str().c_str() ),
+						nicNumStoreSlots, "nic_thread" ),
                         numTlbSlots, numTlbSlots 
                         );
 
 			m_threads.push_back( 
-				new Thread( *this, unitName.str(), m_dbg, id, nicToHostMTU, tlb, tlb )	
+				new Thread( *this, "nic", m_dbg, id, i, nicToHostMTU, tlb, tlb )	
  			); 
 		}
 		for ( int i = 0; i < numCores; i++ ) {
-			threadName.str("");
-			threadName.clear();
-			threadName << "HostThread" << i;
-			unitName.str("");
-			unitName.clear();
-			unitName << "Host" << i;
 
 			m_threads.push_back( 
-				new Thread( *this, threadName.str(), m_dbg, id, 64,
-						new LoadUnit( *this, m_dbg, id, m_muxUnit, hostNumLoadSlots, unitName.str().c_str() ),
-						new StoreUnit( *this, m_dbg, id, m_muxUnit, hostNumStoreSlots, unitName.str().c_str() ) 
+				new Thread( *this, "host", m_dbg, id, i, 64,
+						new LoadUnit( *this, m_dbg, id, i, m_muxUnit, hostNumLoadSlots, "host_thread" ),
+						new StoreUnit( *this, m_dbg, id, i, m_muxUnit, hostNumStoreSlots, "host_thread" ) 
 				) 
 			);
 		}
@@ -180,7 +209,6 @@ class SimpleMemoryModel : public MemoryModel {
 	}
 
     virtual ~SimpleMemoryModel() {
-        m_sharedTlb->printStats();
         if ( m_hostCacheUnit ) {
             delete m_hostCacheUnit;
         }

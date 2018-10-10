@@ -74,7 +74,7 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp,
 
     // banks needs to be a power of 2 -> use to set bank mask
     if (!isPowerOfTwo(banks)) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): banks - must be a power of two. You specified %d.\n", getName().c_str(), banks);
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): banks - must be a power of two. You specified %" PRIu64 ".\n", getName().c_str(), banks);
     }
     bankMask = banks - 1;
 

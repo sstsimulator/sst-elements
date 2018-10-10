@@ -361,12 +361,12 @@ void Cache::configureLinks(Params &params) {
         string sliceAllocPolicy     = params.find<std::string>("slice_allocation_policy", "rr");
         if (cacheSliceCount == 1) sliceID = 0;
         else if (cacheSliceCount > 1) {
-            if (sliceID >= cacheSliceCount) out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_id - should be between 0 and num_cache_slices-1. You specified %d.\n",
+            if (sliceID >= cacheSliceCount) out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_id - should be between 0 and num_cache_slices-1. You specified %" PRIu64 ".\n",
                     getName().c_str(), sliceID);
             if (sliceAllocPolicy != "rr") out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified '%s'.\n",
                     getName().c_str(), sliceAllocPolicy.c_str());
         } else {
-            d2_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %d.\n",
+            d2_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %" PRIu64 ".\n",
                     getName().c_str(), cacheSliceCount);
         }
 
@@ -514,8 +514,9 @@ CacheArray* Cache::createCacheArray(Params &params) {
     uint64_t cacheSize = ua.getRoundedValue();
 
     if (lineSize > cacheSize)
-        out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%u'\n", getName().c_str(), sizeStr.c_str(), lineSize);
-    if (!isPowerOfTwo(lineSize)) out_->fatal(CALL_INFO, -1, "%s, cache_line_size - must be a power of 2. You specified '%u'.\n", getName().c_str(), lineSize);
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%" PRIu64 "'\n", 
+                getName().c_str(), sizeStr.c_str(), lineSize);
+    if (!isPowerOfTwo(lineSize)) out_->fatal(CALL_INFO, -1, "%s, cache_line_size - must be a power of 2. You specified '%" PRIu64 "'.\n", getName().c_str(), lineSize);
 
     uint64_t lines = cacheSize / lineSize;
 

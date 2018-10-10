@@ -66,6 +66,8 @@ void Nic::RecvMachine::StreamBase::processPktBody( FireflyNetworkEvent* ev  ) {
     assert(m_numPending < m_ctx->getMaxQsize() );
     ++m_numPending;
 
+	m_ctx->nic().m_recvStreamPending->addData( m_numPending );
+
     std::vector< MemOp >* vec = new std::vector< MemOp >;
     bool ret = getRecvEntry()->copyIn( m_dbg, *ev, *vec );
 

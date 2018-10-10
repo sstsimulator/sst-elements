@@ -23,6 +23,7 @@
 //SST includes
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <sst/core/elementinfo.h>
 
 //local includes
 #include "c_Transaction.hpp"
@@ -92,6 +93,37 @@ namespace SST {
 
         class c_TxnGen: public c_TxnGenBase{
         public:
+
+            SST_ELI_REGISTER_COMPONENT(
+                c_TxnGen,
+                "CramSim",
+                "c_TxnGen",
+                SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Test Txn Generator",
+                COMPONENT_CATEGORY_UNCATEGORIZED
+            )
+
+            SST_ELI_DOCUMENT_PARAMS(
+                {"maxOutstandingReqs", "Maximum number of the outstanding requests", NULL},
+                {"numTxnPerCycle", "The number of transactions generated per cycle", NULL},
+                {"readWriteRatio", "Ratio of read txn's to generate : write txn's to generate", NULL},
+            )
+
+            SST_ELI_DOCUMENT_PORTS(
+                { "memLink", "link to memory-side components (txn dispatcher or controller)", {"c_TxnReqEvent", "c_TxnResEvent"} },
+            )
+
+            SST_ELI_DOCUMENT_STATISTICS(
+              {"readTxnsSent", "Number of read transactions sent", "reads", 1}, // Name, Desc, Units, Enable Level
+              {"writeTxnsSent", "Number of write transactions sent", "writes", 1}, // Name, Desc, Units, Enable Level
+              {"readTxnsCompleted", "Number of read transactions completed", "reads", 1}, // Name, Desc, Units, Enable Level
+              {"writeTxnsCompleted", "Number of write transactions completed", "writes", 1},
+              {"txnsPerCycle", "Transactions Per Cycle", "Txns/Cycle", 1},
+              {"readTxnsLatency", "Average latency of read transactions", "cycles", 1},
+              {"writeTxnsLatency", "Average latency of write transactions", "cycles", 1},
+              {"txnsLatency", "Average latency of (read/write) transactions", "cycles", 1},
+            )
+
             c_TxnGen (SST::ComponentId_t x_id, SST::Params& x_params);
         private:
             enum e_TxnMode{

@@ -99,6 +99,7 @@ void  Nic::SendMachine::InQ::enque( int unit, int pid, std::vector< MemOp >* vec
             FireflyNetworkEvent* ev, int dest, Callback callback )
 {
     ++m_numPending;
+	m_nic.m_sendStreamPending->addData( m_numPending );
 
     m_dbg.verbosePrefix(prefix(), CALL_INFO,2,NIC_DBG_SEND_MACHINE, "get timing for packet %" PRIu64 " size=%lu numPending=%d\n",
                  m_pktNum,ev->bufSize(), m_numPending);

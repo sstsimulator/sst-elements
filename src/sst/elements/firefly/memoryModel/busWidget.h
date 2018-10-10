@@ -56,6 +56,7 @@ class BusLoadWidget : public Unit {
 			m_blocked(false), m_scheduled(false), m_blockedSrc(NULL) , m_numPending(0), m_name("BusLoadWidget")
     {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::BusLoadWidget::@p():@l ";
+        m_pendingQdepthStat = model.registerStatistic<uint64_t>("bus_load_widget_pending_Q_depth");
     }
     std::string& name() { return m_name; } 
 
@@ -67,6 +68,7 @@ class BusLoadWidget : public Unit {
 		delete req;
 
         ++m_numPending;
+		m_pendingQdepthStat->addData( m_numPending );
         m_model.schedCallback( m_latency, std::bind( &BusLoadWidget::load2, this, entry, m_numPending ) );
 
         if ( m_numPending == m_qSize  ) {
@@ -172,6 +174,8 @@ class BusLoadWidget : public Unit {
     int   m_width;
     UnitBase* m_blockedSrc;
 	std::deque<WidgetEntry *> m_pendingQ;
+
+    Statistic<uint64_t>* m_pendingQdepthStat;
 };
 
 
@@ -183,17 +187,24 @@ class BusStoreWidget : public Unit {
         m_blocked(false), m_blockedSrc(NULL), m_scheduled(false), m_numPending(0), m_name( "BusStoreWidget" )
     {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::BusStoreWidget::@p():@l ";
+        m_pendingQdepthStat = model.registerStatistic<uint64_t>("bus_store_widget_pending_Q_depth");
     }
 
     std::string& name() { return m_name; } 
+
     bool store( UnitBase* src, MemReq* req ) {
+		return storeCB( src, req );
+	}
+
+    bool storeCB( UnitBase* src, MemReq* req, Callback callback = NULL ) {
 		assert( NULL == m_blockedSrc );
 
-		WidgetEntry* entry = new WidgetEntry( m_width, req, 0 );
+		WidgetEntry* entry = new WidgetEntry( m_width, req, 0, callback );
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu entry=%p\n",req->addr,req->length, entry);
 		delete req;
 
         ++m_numPending;
+		m_pendingQdepthStat->addData( m_numPending );
         m_model.schedCallback( m_latency, std::bind( &BusStoreWidget::store2, this, entry, m_numPending ) );
 
         if ( m_numPending == m_qSize  ) {
@@ -233,6 +244,9 @@ class BusStoreWidget : public Unit {
 		if ( entry.isDone() ) {
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"entry done entry=%p\n", &entry);
 			--m_numPending;
+			if ( entry.callback ) {
+           		m_model.schedCallback( 0, entry.callback );		
+			}
 			delete m_pendingQ.front();
 			m_pendingQ.pop_front();
         	if ( m_blockedSrc ) {
@@ -268,4 +282,6 @@ class BusStoreWidget : public Unit {
     int   m_width;
     UnitBase* m_blockedSrc;
 	std::deque<WidgetEntry*> m_pendingQ;
+
+    Statistic<uint64_t>* m_pendingQdepthStat;
 };

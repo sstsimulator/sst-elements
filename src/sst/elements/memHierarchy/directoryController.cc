@@ -1583,7 +1583,7 @@ void DirectoryController::mshrNACKRequest(MemEvent* ev, bool mem) {
 
 void DirectoryController::printStatus(Output &statusOut) {
     statusOut.output("MemHierarchy::DirectoryController %s\n", getName().c_str());
-    statusOut.output("  Cached entries:  %zu\n", entryCacheSize);
+    statusOut.output("  Cached entries: %" PRIu64 "\n", entryCacheSize);
     statusOut.output("  Requests waiting to be handled:  %zu\n", workQueue.size());
     for(std::list<std::pair<MemEvent*,bool> >::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i){
         statusOut.output("    %s, %s\n", i->first->getVerboseString().c_str(), i->second ? "replay" : "new");
@@ -1612,8 +1612,13 @@ void DirectoryController::printStatus(Output &statusOut) {
 }
 
 void DirectoryController::emergencyShutdown() {
-    if (out.getVerboseLevel() > 1)
+    if (out.getVerboseLevel() > 1) {
+        if (out.getOutputLocation() == Output::STDOUT)
+            out.setOutputLocation(Output::STDERR);
         printStatus(out);
+        out.output("   Checking for unreceived events on network link:\n");
+        network->emergencyShutdownDebug(out);
+    }
 }
 
 

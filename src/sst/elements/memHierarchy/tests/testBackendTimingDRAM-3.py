@@ -26,6 +26,7 @@ l3cache.addParams({
     "cache_line_size" : "64",
     "cache_size" : "64 KB",
     "debug" : "0",
+    "verbose" : 2,
 })
 l3_clink = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l3_mlink = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
@@ -52,6 +53,7 @@ for i in range(0,8):
         "cache_line_size" : "64",
         "cache_size" : "4 KB",
         "L1" : "1",
+        "verbose" : 2,
         "debug" : "0"
         })
 
@@ -65,6 +67,7 @@ for i in range(0,8):
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
+      "verbose" : 2,
       "debug" : "0"
     })
 
@@ -94,6 +97,7 @@ dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 dirctrl.addParams({
       "coherence_protocol" : "MESI",
       "debug" : "0",
+      "verbose" : 2,
       "entry_cache_size" : "32768",
 })
 dir_clink = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
@@ -108,6 +112,7 @@ comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
     "backing" : "none",
     "backend" : "memHierarchy.timingDRAM",
+    "verbose" : 2,
     "backend.id" : 0,
     "backend.addrMapper" : "memHierarchy.sandyBridgeAddrMapper",
     "backend.addrMapper.interleave_size" : "64B",

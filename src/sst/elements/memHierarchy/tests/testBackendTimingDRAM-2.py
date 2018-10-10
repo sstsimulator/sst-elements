@@ -26,6 +26,7 @@ l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "debug" : "0",
+      "verbose" : 2,
 })
 l3_clink = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l3_mlink = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
@@ -52,20 +53,22 @@ for i in range(0,8):
         "cache_line_size" : "64",
         "cache_size" : "4 KB",
         "L1" : "1",
+        "verbose" : 2,
         "debug" : "0"
         })
 
     l2cache = sst.Component("c" + str(i) + ".l2cache", "memHierarchy.Cache")
     l2cache.addParams({
-      "access_latency_cycles" : "9",
-      "mshr_latency_cycles" : 2,
-      "cache_frequency" : "2Ghz",
-      "replacement_policy" : "lru",
-      "coherence_protocol" : "MESI",
-      "associativity" : "8",
-      "cache_line_size" : "64",
-      "cache_size" : "32 KB",
-      "debug" : "0"
+        "access_latency_cycles" : "9",
+        "mshr_latency_cycles" : 2,
+        "cache_frequency" : "2Ghz",
+        "replacement_policy" : "lru",
+        "coherence_protocol" : "MESI",
+        "associativity" : "8",
+        "cache_line_size" : "64",
+        "cache_size" : "32 KB",
+        "verbose" : 2,
+        "debug" : "0"
     })
 
     # Connect
@@ -95,6 +98,7 @@ dirctrl.addParams({
       "coherence_protocol" : "MESI",
       "debug" : "0",
       "entry_cache_size" : "32768",
+      "verbose" : 2,
 })
 dir_clink = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dir_mlink = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
@@ -126,6 +130,7 @@ comp_memory.addParams({
     "backend.channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
     "backend.channel.rank.bank.transactionQ" : "memHierarchy.reorderTransactionQ",
     "backend.channel.rank.bank.pagePolicy.close" : 1,
+    "verbose" : 2,
     "debug" : 0,
     "debug_level" : 5
 })

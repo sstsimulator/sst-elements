@@ -107,7 +107,7 @@ namespace SST{ namespace OpalComponent{
 			void setHint(int x) { hint = x; }
 			int getHint() { return hint; }
 
-			void serialize_order(SST::Core::Serialization::serializer &ser) {
+			void serialize_order(SST::Core::Serialization::serializer &ser) override{
 				Event::serialize_order(ser);
 				ser & ev;
 				ser & address;

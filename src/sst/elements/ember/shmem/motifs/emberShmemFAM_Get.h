@@ -25,11 +25,6 @@
 #include "rng/xorshift.h"
 
 #include <unistd.h>
-#include <sys/syscall.h>   /* For SYS_xxx definitions */
-
-extern pid_t gettid(void) {
-	return(syscall(SYS_gettid));
-}
 
 namespace SST {
 namespace Ember {
@@ -100,6 +95,7 @@ public:
 	int m_getLoop;
 	int m_stride;
 	int m_maxDelay;
+	int m_blockOffset;
 	SST::RNG::XORShiftRNG* m_rng;
 
     bool generate( std::queue<EmberEvent*>& evQ) 
@@ -129,7 +125,7 @@ public:
 				printf("number of pes:           %d\n",	m_num_pes );
 				printf("block size:              %d\n",	m_blockSize );
 				printf("number of blocks:        %d\n",	m_numBlocks );
-				printf("vector num elements:     %d\n",	m_vectorSize );
+				printf("vector num elements:     %zu\n",	m_vectorSize );
 				if ( m_rng ) {
 					printf("using random:        %d\n",	m_maxDelay );
 				}
@@ -151,10 +147,11 @@ public:
 					tmp = "idle";
 					m_phase = Wait;
 				}
+				m_blockOffset = calcComputeNum( m_node_num );
 
 				if ( bufSize ) {
-					printf("physNode=%d is %s node %d thread %d\n",m_node_num, tmp.c_str(), calcVirtNum(m_node_num), gettid());
-            		enQ_malloc( evQ, &m_mem, bufSize );
+					//printf("physNode=%d is %s node %d\n",m_node_num, tmp.c_str(), calcVirtNum(m_node_num) );
+ 					enQ_malloc( evQ, &m_mem, bufSize );
 				}
 			}
 
@@ -165,6 +162,7 @@ public:
 			
 			if ( ! work( evQ ) ) {
 				m_phase = Wait;
+				enQ_quiet( evQ );
 			}
 			break;
 
@@ -247,8 +245,9 @@ public:
 
 		for ( int i = 0; i < m_getLoop && m_curBlock < m_numBlocks; i++ ) {
 
-			int srcPe = calcBlockOwner( m_curBlock );
-			int srcBlock = calcSrcBlock( m_curBlock );
+			int foo = (m_curBlock + m_blockOffset) % m_numBlocks; 
+			int srcPe = calcBlockOwner( foo );
+			int srcBlock = calcSrcBlock( foo );
 
 			if ( m_rng ) {
 				int delay = m_rng->generateNextUInt32();
@@ -277,7 +276,6 @@ public:
 			++m_curBlock;
 		}
 
-        enQ_quiet( evQ );
 		return m_curBlock < m_numBlocks;
 	}
 
