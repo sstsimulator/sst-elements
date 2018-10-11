@@ -63,7 +63,7 @@ void Nic::Shmem::handleHostEvent( NicShmemCmdEvent* event, int id )
 {
 	if ( m_hostBusy ) {
     	m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"busy core=%d %s\n",id,event->getTypeStr().c_str()); 
-		m_hostCmdQ.push_back( std::make_pair(event,id) );
+		m_hostCmdQ.push( std::make_pair(event,id) );
 	} else {
    		m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"start busy core=%d %s\n",id,event->getTypeStr().c_str()); 
 		m_hostBusy = true;
@@ -73,7 +73,7 @@ void Nic::Shmem::handleHostEvent( NicShmemCmdEvent* event, int id )
 				m_hostBusy = false;
 				if ( ! m_hostCmdQ.empty() ) {
 					handleHostEvent( m_hostCmdQ.front().first, m_hostCmdQ.front().second ); 
-					m_hostCmdQ.pop_front();
+					m_hostCmdQ.pop();
 				}
 			},
 			m_hostCmdLatency	
@@ -119,7 +119,7 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
 
 	if( m_freeCmdSlots == 0 ) {
         m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"sendIsBusy\n");
-		m_pendingCmds.push_back( std::make_pair(event,id ) );
+		m_pendingCmds.push( std::make_pair(event,id ) );
 		return;
 	}
 
@@ -181,7 +181,7 @@ void Nic::Shmem::handleNicEvent2( NicShmemCmdEvent* event, int id )
 {
 	if ( m_engineBusy ) {
     	m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"busy core=%d %s\n",id,event->getTypeStr().c_str()); 
-		m_cmdQ.push_back( std::make_pair(event,id) );
+		m_cmdQ.push( std::make_pair(event,id) );
 	} else {
    		m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"start busy core=%d %s\n",id,event->getTypeStr().c_str()); 
 		m_engineBusy = true;
@@ -192,7 +192,7 @@ void Nic::Shmem::handleNicEvent2( NicShmemCmdEvent* event, int id )
 				m_engineBusy = false;
 				if ( ! m_cmdQ.empty() ) {
 					handleNicEvent2( m_cmdQ.front().first, m_cmdQ.front().second ); 
-					m_cmdQ.pop_front();
+					m_cmdQ.pop();
 				}
 			},
 			m_nicCmdLatency	
