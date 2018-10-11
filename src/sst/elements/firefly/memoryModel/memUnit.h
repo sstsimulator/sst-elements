@@ -29,41 +29,50 @@
             return work( m_writeLat_ns, Write, req, src, m_model.getCurrentSimTimeNano() );
         }
 
-        bool load( UnitBase* src, MemReq* req, Callback callback ) {
+        bool load( UnitBase* src, MemReq* req, Callback* callback ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
             return work( m_readLat_ns, Read, req, src, m_model.getCurrentSimTimeNano(), callback );
         }
 
       private:
 
-        struct XXX {
+        struct Entry {
 
-            XXX( SimTime_t delay, Op op, MemReq* memReq, UnitBase* src, Callback callback, SimTime_t qTime ) :
-                delay(delay), op(op), memReq(memReq), src(src), callback( callback ), qTime(qTime)
-            { }
+            void init( SimTime_t _delay, Op _op, MemReq* _memReq, UnitBase* _src, Callback* _callback, SimTime_t _qTime ) { 
+                delay = _delay;
+				op = _op;
+				memReq = _memReq;
+				src = _src;
+				callback = _callback;
+				qTime = _qTime;
+            }
             SimTime_t delay;
             Op op;
 			MemReq* memReq;
             UnitBase* src;
-			Callback callback;
+			Callback* callback;
             SimTime_t qTime;
         };
 
-        bool work( SimTime_t delay, Op op, MemReq* req,  UnitBase* src, SimTime_t qTime, Callback callback = NULL ) {
+		ThingHeap< Entry> m_entryHeap;
+
+        bool work( SimTime_t delay, Op op, MemReq* req,  UnitBase* src, SimTime_t qTime, Callback* callback = NULL ) {
 
             if ( m_pending == m_numSlots ) {
 
 				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"blocking src\n");
-                m_blocked.push_back( XXX( delay, op, req, src, callback, m_model.getCurrentSimTimeNano() ) );
+				Entry* entry = m_entryHeap.alloc();
+				entry->init( delay, op, req, src, callback, m_model.getCurrentSimTimeNano() ); 
+                m_blocked.push( entry );
 				m_blockedTime = m_model.getCurrentSimTimeNano();
                 return true;
             }
 
             ++m_pending;
             SimTime_t issueTime = m_model.getCurrentSimTimeNano();
-
-            m_model.schedCallback( delay,
-                [=]()
+		
+			Callback* cb = m_model.cbAlloc();
+            *cb = [=]()
                 {
                     --m_pending;
 
@@ -76,7 +85,7 @@
                         m_model.schedCallback( 0, callback);
                     }
 
-					delete req;
+					m_model.memReqFree( req );
 
                     if ( ! m_blocked.empty() ) {
 		
@@ -84,19 +93,23 @@
 						if ( latency ) {
 							m_latency->addData( latency );
 						}
-                        XXX& xxx = m_blocked.front( );
-                        work( xxx.delay, xxx.op, xxx.memReq, xxx.src, xxx.qTime, xxx.callback );
-                		m_model.schedResume( 0, xxx.src, (UnitBase*) ( xxx.op == Read ? "R" : "W" ) );
-                        m_blocked.pop_front();
+                        Entry* entry = m_blocked.front( );
+                        m_blocked.pop();
+
+                        work( entry->delay, entry->op, entry->memReq, entry->src, entry->qTime, entry->callback );
+                		m_model.schedResume( 0, entry->src, (UnitBase*) ( entry->op == Read ? "R" : "W" ) );
+						m_entryHeap.free(entry);
                     }
-                }
-            );
+                };
+
+            m_model.schedCallback( delay, cb ); 
+
 			return false;
         }
 
 		SimTime_t m_blockedTime;
         Statistic<uint64_t>* m_latency;
-        std::deque< XXX > m_blocked;
+        std::queue< Entry* > m_blocked;
         int m_pending;
         int m_numSlots;
         int m_readLat_ns;

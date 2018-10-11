@@ -23,8 +23,7 @@ template< class T >
         class List {
 
             struct Item {
-                Item( ) {}
-                Item( T value ) : value(value) { }
+                void init( T _value ) { value = _value; }
                 T value;
                 Item* prev;
                 Item* next;
@@ -49,7 +48,7 @@ template< class T >
 				while ( cur != &m_tail ) { 
 					Item* tmp = cur;
 					cur = tmp->next;
-					delete tmp;	
+					m_itemHeap.free(tmp);
 				}
 			}
 
@@ -59,11 +58,12 @@ template< class T >
                 Item* tmp = m_head.next;
                 myPrintf("%s() ptr=%p value=%#" PRIx64 "\n",__func__,tmp,tmp->value);
                 unlink( tmp );
-                delete tmp;
+				m_itemHeap.free(tmp);
             }
 
             void push_back( Hermes::Vaddr addr ) {
-				Item* x = new Item( addr );
+				Item* x = m_itemHeap.alloc();
+				x->init(addr);
                 myPrintf("%s() ptr=%p %#" PRIx64 "\n",__func__,x,addr);
                 push_back( x ); 
             }
@@ -88,6 +88,8 @@ template< class T >
             Entry end() { return m_tail.prev; }
 
           private:
+
+			ThingHeap< Item > m_itemHeap; 
 
             void unlink( Entry e ) {
                 myPrintf("%s() ptr=%p value=%#" PRIx64 "\n",__func__,e,e->value);

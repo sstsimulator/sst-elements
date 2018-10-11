@@ -15,9 +15,9 @@
 
 class LoadUnit : public Unit {
 	struct Entry { 
-		Entry( MemReq* req, Callback callback, SimTime_t time ) : req(req), callback(callback), postTime(time) {}
+		Entry( MemReq* req, Callback* callback, SimTime_t time ) : req(req), callback(callback), postTime(time) {}
 		MemReq* req;
-		Callback callback;
+		Callback* callback;
 		SimTime_t postTime; 
 	};
 
@@ -41,17 +41,19 @@ class LoadUnit : public Unit {
 
 	std::string& name() { return m_name; }
 
-    bool load( UnitBase* src, MemReq* req, Callback callback ) {
+    bool load( UnitBase* src, MemReq* req, Callback* callback ) {
 
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",req->addr, req->length, m_pendingQ.size() );
 
-		m_pendingQ.push_back( Entry( req, callback, m_model.getCurrentSimTimeNano() ) );
+		m_pendingQ.push( Entry( req, callback, m_model.getCurrentSimTimeNano() ) );
 		++m_numPending; 
 		m_pendingQdepth->addData( m_numPending );
 
         if ( m_numPending <= m_qSize ) {
             if ( ! m_blocked && ! m_scheduled ) {
-                m_model.schedCallback( 0, std::bind( &LoadUnit::process, this ) );
+				Callback* cb = m_model.cbAlloc();
+				*cb = std::bind( &LoadUnit::process, this );
+                m_model.schedCallback( 0, cb );
                 m_scheduled = true;
             }
 		}
@@ -79,8 +81,8 @@ class LoadUnit : public Unit {
 		Hermes::Vaddr addr = entry.req->addr;
 		size_t length = entry.req->length;
 		SimTime_t postTime = entry.postTime;
-       	m_blocked = m_cache->load( this, entry.req,  
-			[=]() {
+		Callback* cb = m_model.cbAlloc();
+		*cb = [=]() {
 
 				SimTime_t currentTime = m_model.getCurrentSimTimeNano();
                 SimTime_t latency = currentTime - issueTime;
@@ -106,14 +108,16 @@ class LoadUnit : public Unit {
         		m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",3,LOAD_MASK,"%s\n",m_blocked? "blocked" : "not blocked");
 
         		if ( ! m_blocked && ! m_scheduled && ! m_pendingQ.empty() ) {
-            		m_model.schedCallback( 0, std::bind( &LoadUnit::process, this ) );
+					Callback* cb = m_model.cbAlloc();	
+					*cb = std::bind( &LoadUnit::process, this );
+            		m_model.schedCallback( 0, cb );
             		m_scheduled = true;
         		}
-			}
-		);
+			};
+       	m_blocked = m_cache->load( this, entry.req, cb );
         m_dbg.verbosePrefix(prefix(),CALL_INFO,3,LOAD_MASK,"%s\n",m_blocked? "blocked" : " not blocked");
 		assert( ! m_pendingQ.empty() );
-       	m_pendingQ.pop_front();
+       	m_pendingQ.pop();
 	}
 
     void resume( UnitBase* src = NULL ) {
@@ -133,7 +137,7 @@ class LoadUnit : public Unit {
 
 
     Unit*  m_cache;
-    std::deque<Entry> m_pendingQ;
+    std::queue<Entry> m_pendingQ;
     int m_qSize;
 	Statistic<uint64_t>* m_pendingQdepth;
 	Statistic<uint64_t>* m_latency;

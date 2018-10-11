@@ -52,9 +52,9 @@
       public:
         Unit( SimpleMemoryModel& model, Output& dbg ) : m_model( model ), m_dbg(dbg) {}
 
-        virtual bool load( UnitBase* src, MemReq*, Callback callback ) { assert(0); }
+        virtual bool load( UnitBase* src, MemReq*, Callback* callback ) { assert(0); }
         virtual bool store( UnitBase* src, MemReq* ) { assert(0); }
-        virtual bool storeCB( UnitBase* src, MemReq*, Callback callback = NULL ) { assert(0); }
+        virtual bool storeCB( UnitBase* src, MemReq*, Callback* callback = NULL ) { assert(0); }
 
       protected:
         const char* prefix() { return m_prefix.c_str(); }
