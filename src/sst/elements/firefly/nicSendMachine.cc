@@ -80,7 +80,7 @@ void Nic::SendMachine::streamFini( SendEntryBase* entry )
 
     ++m_numSent;
     if ( m_I_manage ) {
-        m_sendQ.pop_front();
+        m_sendQ.pop();
         if ( ! m_sendQ.empty() )  {
             streamInit( m_sendQ.front() );
         }
@@ -119,7 +119,7 @@ void Nic::SendMachine::InQ::ready( FireflyNetworkEvent* ev, int dest, Callback c
         ready2( ev, dest, callback );
     } else  {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "blocked by OutQ\n");
-        m_pendingQ.push_back( Entry( ev, dest,callback,pktNum ) );
+        m_pendingQ.push( Entry( ev, dest,callback,pktNum ) );
         if ( 1 == m_pendingQ.size() )  {
             m_outQ->wakeMeUp( std::bind( &Nic::SendMachine::InQ::processPending, this ) );
         }
@@ -145,7 +145,7 @@ void Nic::SendMachine::InQ::processPending( )
     Entry& entry = m_pendingQ.front();
     ready2( entry.ev, entry.dest, entry.callback );
 
-    m_pendingQ.pop_front();
+    m_pendingQ.pop();
     if ( ! m_pendingQ.empty() ) {
         if ( ! m_outQ->isFull() ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "schedule next\n");
@@ -160,6 +160,6 @@ void Nic::SendMachine::InQ::processPending( )
 void Nic::SendMachine::OutQ::enque( FireflyNetworkEvent* ev, int dest, Callback callback )
 {
     m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "size=%lu\n", m_queue.size());
-    m_queue.push_back( Entry( std::make_pair(ev,dest), callback ) );
+    m_queue.push( Entry( std::make_pair(ev,dest), callback ) );
     m_nic.notifyHavePkt(m_id);
 }

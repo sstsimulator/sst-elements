@@ -220,7 +220,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1), 
                 i, packetSizeInBytes, packetOverhead, maxSendMachineQsize, allocNicSendUnit(), false );
-        m_sendMachineQ.push_back( sm  ); 
+        m_sendMachineQ.push( sm  ); 
         m_sendMachineV[i] = sm;
     }
     
@@ -496,9 +496,9 @@ void Nic::qSendEntry( SendEntryBase* entry ) {
         if ( ! m_sendMachineQ.empty() ) {
             assert( m_sendEntryQ.empty() );
             m_sendMachineQ.front()->run( entry );
-            m_sendMachineQ.pop_front();         
+            m_sendMachineQ.pop();         
         } else {
-            m_sendEntryQ.push_back(std::make_pair( getCurrentSimTimeNano(), entry ) );
+            m_sendEntryQ.push(std::make_pair( getCurrentSimTimeNano(), entry ) );
         }        
     }
 }
@@ -509,10 +509,10 @@ void Nic::notifySendDone( SendMachine* mach, SendEntryBase* entry  ) {
     m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE,"machine=%d pid=%d\n", mach->getId(), pid );
 
     if ( m_sendEntryQ.empty() ) {
-        m_sendMachineQ.push_back(mach);
+        m_sendMachineQ.push(mach);
     } else {
         mach->run(m_sendEntryQ.front().second );
-        m_sendEntryQ.pop_front();
+        m_sendEntryQ.pop();
     }
 }
 

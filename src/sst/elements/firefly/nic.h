@@ -19,6 +19,7 @@
 
 #include <math.h>
 #include <sstream>
+#include <queue>
 #include <sst/core/elementinfo.h>
 #include <sst/core/module.h>
 #include <sst/core/component.h>
@@ -332,7 +333,7 @@ public:
     typedef uint64_t DestKey;
     static DestKey getDestKey(int node, int pid) { return (DestKey) node << 32 | pid; }
 
-    std::deque<  std::pair< SimTime_t, SendEntryBase*> >   m_sendEntryQ;
+    std::queue<  std::pair< SimTime_t, SendEntryBase*> >   m_sendEntryQ;
 
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
@@ -417,7 +418,7 @@ public:
     int IdToNet( int x ) { return x; }
 
     std::vector<SendMachine*>   m_sendMachineV;
-    std::deque<SendMachine*>    m_sendMachineQ;
+    std::queue<SendMachine*>    m_sendMachineQ;
     RecvMachine* m_recvMachine;
     ArbitrateDMA* m_arbitrateDMA;
 
@@ -562,7 +563,7 @@ public:
     std::unordered_map<RespKey_t,void*> m_respKeyMap;
 
     MemoryModel*  m_memoryModel;
-    std::deque<int> m_availNicUnits;
+    std::queue<int> m_availNicUnits;
     uint16_t m_getKey;
     int m_curNetworkSrc;
     int m_txDelay;
