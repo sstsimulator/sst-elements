@@ -96,7 +96,6 @@
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,MUX_MASK,"\n");
 			assert( ! m_blockedQ.empty() );
 			Entry* entry = m_blockedQ.front();
-			m_blockedQ.pop();
 
 			Callback* callback =  entry->callback;
 			bool blocked = false;
@@ -126,6 +125,7 @@
 			} else {
 				m_blockedSrc = entry->src;
 			}
+			m_blockedQ.pop();
 			m_entryHeap.free(entry);
 		}
 
