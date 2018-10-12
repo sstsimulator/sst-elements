@@ -67,7 +67,7 @@ class SendMachine {
                      m_queue.front().callback(); 
                 }
 
-                m_queue.pop_front();
+                m_queue.pop();
             }
 
           private:
@@ -78,8 +78,8 @@ class SendMachine {
             int         m_maxQsize;
             Callback    m_wakeUpCallback;
 
-            //std::deque< std::pair< FireflyNetworkEvent*, int> > m_queue;
-            std::deque< Entry > m_queue;
+            //std::queue< std::pair< FireflyNetworkEvent*, int> > m_queue;
+            std::queue< Entry > m_queue;
         };
 
         class InQ {
@@ -129,7 +129,7 @@ class SendMachine {
             int         m_maxQsize;
             uint64_t    m_pktNum;
             uint64_t    m_expectedPkt;
-            std::deque<Entry> m_pendingQ;
+            std::queue<Entry> m_pendingQ;
         };
 
       public:
@@ -165,7 +165,7 @@ class SendMachine {
         void qSendEntry( SendEntryBase* entry ) {
             m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "new stream\n");
             assert( m_I_manage );
-            m_sendQ.push_back( entry );
+            m_sendQ.push( entry );
             if ( m_sendQ.size() == 1 ) {
                 streamInit( entry );
             }
@@ -192,7 +192,7 @@ class SendMachine {
         int     m_pktOverhead;
         bool    m_I_manage;
         SendEntryBase* m_activeEntry;
-        std::deque< SendEntryBase* > m_sendQ;
+        std::queue< SendEntryBase* > m_sendQ;
 
         int m_numSent;
 };
