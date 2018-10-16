@@ -19,6 +19,7 @@
 #include <sst/core/elementinfo.h>
 #include "memoryModel/memoryModel.h"
 
+#include <queue>
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
 
 
@@ -76,6 +77,37 @@ public:
 #define SM_MASK        1<<10
 #define SHARED_TLB_MASK 1<<11
 
+template < class T> 
+class ThingHeap {
+
+  public:
+
+	ThingHeap() : m_pos(0), m_heap(256) {
+	}
+
+	T* alloc() {
+		T* ev;
+		if ( m_pos > 0 ) {
+			ev = m_heap[--m_pos];
+		} else {
+			ev = new T;
+		}
+		return ev;
+	}
+
+	void free( T* ev ) {
+		if ( m_pos == m_heap.size() ) {
+			m_heap.resize( m_heap.size() + 256 );	
+		}
+		m_heap[m_pos++] = ev;
+	}
+
+  private:
+	std::vector<T*> m_heap;
+	int m_pos;
+};
+
+
 #include "cache.h"
 #include "memReq.h"
 #include "sharedTlb.h"
@@ -93,10 +125,11 @@ public:
 
     class SelfEvent : public SST::Event {
       public:
-        SelfEvent( int slot, Work* work = NULL ) : callback(NULL), unit(NULL), slot(slot), work(work) {}
-        SelfEvent( Callback callback ) : callback(callback), unit(NULL), work(NULL) {}
-        SelfEvent( UnitBase* unit, UnitBase* srcUnit = NULL ) : callback(NULL), unit(unit), srcUnit(srcUnit), work(NULL) {}
-		Callback callback;
+        void init( int _slot, Work* _work = NULL ) { callback = NULL;  unit = NULL; slot = _slot; work = _work; }
+        void init( Callback* _callback ) { callback= _callback; unit = NULL; work = NULL; }
+        void init( UnitBase* _unit, UnitBase* _srcUnit = NULL ) { callback = NULL; unit = _unit; srcUnit = _srcUnit; work = NULL; }
+
+		Callback* callback;
 		UnitBase* unit;
 		UnitBase* srcUnit;
 		int slot;
@@ -217,11 +250,33 @@ public:
         }
     }
 
-	void schedCallback( SimTime_t delay, Callback callback ){
-		m_selfLink->send( delay , new SelfEvent( callback ) );
+	ThingHeap<SelfEvent> m_eventHeap;
+	ThingHeap<MemReq>    m_memReqHeap;
+	ThingHeap<Callback>   m_cbHeap;
+
+	Callback* cbAlloc() {
+		return m_cbHeap.alloc();
+	}
+	void cbFree( Callback* cb ) {
+		m_cbHeap.free(cb);
+	}
+
+	MemReq* memReqAlloc() {
+		return m_memReqHeap.alloc();
+	}
+	void memReqFree( MemReq* req ) {
+		m_memReqHeap.free(req);
+	}
+
+	void schedCallback( SimTime_t delay, Callback* callback ){
+		SelfEvent* ev = m_eventHeap.alloc( );	
+		ev->init( callback );
+		m_selfLink->send( delay , ev );
 	}
 	void schedResume( SimTime_t delay, UnitBase* unit, UnitBase* srcUnit = NULL ){
-		m_selfLink->send( delay , new SelfEvent( unit, srcUnit ) );
+		SelfEvent* ev = m_eventHeap.alloc( );	
+		ev->init( unit, srcUnit );
+		m_selfLink->send( delay , ev );
 	}
 
 	void handleSelfEvent( Event* ev ) {
@@ -230,7 +285,8 @@ public:
 		SelfEvent* event = static_cast<SelfEvent*>(ev); 
 		if ( event->callback ) {
 			m_dbg.debug(CALL_INFO,3,SM_MASK,"callback\n");
-			event->callback();
+			(*event->callback)();
+			cbFree( event->callback );
 		} else if ( event->unit ) {
 			m_dbg.debug(CALL_INFO,3,SM_MASK,"resume %p\n",event->srcUnit);
 			if ( event->srcUnit ) {
@@ -244,14 +300,16 @@ public:
 
 			assert(0);
 		}
-		delete event;
+		m_eventHeap.free( event );
 	};
 
 	void addWork( int slot, Work* work ) {
 		// we send an event to ourselves to break the call chain, we will eventually call a 
 		// callback provided by the caller of this function, this call back may re-enter here 
 		if ( m_threads[slot]->isIdle() ) {
-		    m_selfLink->send( 0 , new SelfEvent( slot, work ) );
+			SelfEvent* ev = m_eventHeap.alloc();
+			ev->init( slot, work );
+		    m_selfLink->send( 0 , ev );
         } else {
 		    m_threads[slot]->addWork( work );
         }
@@ -275,7 +333,7 @@ public:
 
 	NicUnit& nicUnit() { return *m_nicUnit; }
 
-	bool busUnitWrite( UnitBase* src, MemReq* req, Callback callback ) {
+	bool busUnitWrite( UnitBase* src, MemReq* req, Callback* callback ) {
 		if ( m_busBridgeUnit ) {
 			return m_busBridgeUnit->write( src, req, callback );
 		} else {

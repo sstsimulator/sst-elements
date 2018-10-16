@@ -52,16 +52,18 @@ public:
             if ( m_pendingMap.find(pageAddr) != m_pendingMap.end() ) {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Pending: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
                     req->addr, physAddr, pageAddr );
-                m_pendingMap[pageAddr].push_back( std::make_pair( req, callback ) );
+                m_pendingMap[pageAddr].push( std::make_pair( req, callback ) );
             } else {
                 if ( m_numLookups < m_maxNumLookups ) {
                     ++m_numLookups;
                     m_pendingMap[pageAddr];
-                    m_model.schedCallback( m_tlbMissLat_ns, std::bind( &SharedTlb::resolved, this, req, callback )); 
+					MemoryModel::Callback* cb =  m_model.cbAlloc();
+					*cb = std::bind( &SharedTlb::resolved, this, req, callback ); 
+                    m_model.schedCallback( m_tlbMissLat_ns, cb ); 
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Schedule: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
                         req->addr, physAddr, pageAddr );
                 } else {
-                    m_pendingLookups.push_back( std::make_pair( req, callback ) );
+                    m_pendingLookups.push( std::make_pair( req, callback ) );
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Blocked: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
                         req->addr, physAddr, pageAddr );
                 }
@@ -73,7 +75,7 @@ public:
 
 private:
 
-    std::deque< std::pair< MemReq*, Callback > > m_pendingLookups;
+    std::queue< std::pair< MemReq*, Callback > > m_pendingLookups;
     int m_cacheSize;
     int m_numLookups;
     int m_maxNumLookups;
@@ -92,7 +94,7 @@ private:
         while( ! m_pendingMap[pageAddr].empty() ) {
                              
             m_pendingMap[pageAddr].front().second( m_pendingMap[pageAddr].front().first, physAddr );
-            m_pendingMap[pageAddr].pop_front();
+            m_pendingMap[pageAddr].pop();
          }
          m_pendingMap.erase(pageAddr);
 
@@ -103,18 +105,20 @@ private:
             
             uint64_t pageAddr = processPageAddr(req); 
 
-            m_pendingLookups.pop_front();
+            m_pendingLookups.pop();
 
             if ( m_cache.isValid( pageAddr )  ) {
                 callback( req, processPhysAddr(req) );
             } else if ( m_pendingMap.find(pageAddr) != m_pendingMap.end() ) {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Pending: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
                         req->addr, physAddr, pageAddr );
-                m_pendingMap[pageAddr].push_back( std::make_pair( req, callback ) );
+                m_pendingMap[pageAddr].push( std::make_pair( req, callback ) );
             } else {
                 ++m_numLookups;
                 m_pendingMap[pageAddr];
-                m_model.schedCallback( m_tlbMissLat_ns, std::bind( &SharedTlb::resolved, this, req, callback )); 
+				MemoryModel::Callback* cb = m_model.cbAlloc();
+				*cb = std::bind( &SharedTlb::resolved, this, req, callback ); 
+                m_model.schedCallback( m_tlbMissLat_ns, cb );
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Schedule: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
                 req->addr, physAddr, pageAddr );
                 break;
@@ -133,7 +137,7 @@ private:
         return addr & m_pageMask;
     }
 
-    std::unordered_map< uint64_t, std::deque< std::pair< MemReq*, Callback > > > m_pendingMap;
+    std::unordered_map< uint64_t, std::queue< std::pair< MemReq*, Callback > > > m_pendingMap;
     SimpleMemoryModel& m_model;
     Output& m_dbg;
     int m_tlbMissLat_ns;

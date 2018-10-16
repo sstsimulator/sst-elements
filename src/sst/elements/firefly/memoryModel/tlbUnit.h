@@ -19,9 +19,9 @@ class Tlb : public Unit {
 
     struct Entry {
         enum Type { Load, Store } type;
-        Entry( MemReq* req, Callback callback, Type type  ) : req(req), callback(callback), type(type) {} 
+        Entry( MemReq* req, Callback* callback, Type type  ) : req(req), callback(callback), type(type) {} 
         MemReq* req;
-        Callback callback;
+        Callback* callback;
     };
     
   public:
@@ -72,7 +72,7 @@ class Tlb : public Unit {
             m_storeBlocked = false;
             while( ! m_storeBlocked && ! m_readyStores.empty() ) {
                 m_storeBlocked = passUpStore( m_readyStores.front() );
-                m_readyStores.pop_front();
+                m_readyStores.pop();
             }
         }
 
@@ -82,12 +82,12 @@ class Tlb : public Unit {
             m_loadBlocked= false;
             while( ! m_loadBlocked && ! m_readyLoads.empty() ) {
                 m_loadBlocked = passUpLoad( m_readyLoads.front() );
-                m_readyLoads.pop_front();
+                m_readyLoads.pop();
             }
         }
     }
 
-    bool storeCB( UnitBase* src, MemReq* req, Callback callback ) {
+    bool storeCB( UnitBase* src, MemReq* req, Callback* callback ) {
 
         req->addr |= (uint64_t) req->pid << 56; 
         Hermes::Vaddr addr = getPageAddr(req->addr);
@@ -95,7 +95,7 @@ class Tlb : public Unit {
 
         if ( lookup( req->pid, addr ) ) {
             if ( m_storeBlocked ) {
-                m_readyStores.push_back( new Entry( req, callback, Entry::Store ) );
+                m_readyStores.push( new Entry( req, callback, Entry::Store ) );
                 ++m_numPendingStores;
             } else {
                 m_storeBlocked = m_store->storeCB( this, req, callback );
@@ -114,14 +114,14 @@ class Tlb : public Unit {
         }
     }
 
-    bool load( UnitBase* src, MemReq* req, Callback callback ) {
+    bool load( UnitBase* src, MemReq* req, Callback* callback ) {
         req->addr |= (uint64_t) req->pid << 56; 
         Hermes::Vaddr addr = getPageAddr(req->addr);
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"%#" PRIx64 " %#" PRIx64 "\n", addr, req->addr );
 
         if ( lookup( req->pid, addr ) ) {
             if ( m_loadBlocked ) {
-                m_readyLoads.push_back( new Entry( req, callback, Entry::Load ) );
+                m_readyLoads.push( new Entry( req, callback, Entry::Load ) );
                 ++m_numPendingLoads;
             } else {
                 m_loadBlocked = m_load->load( this, req, callback );
@@ -144,7 +144,7 @@ class Tlb : public Unit {
 
     void tlbMiss( Entry* entry ) {
         if ( tlbMiss2( entry ) ) {
-            m_blockedByTLB.push_back(entry);
+            m_blockedByTLB.push(entry);
         }
     }
 
@@ -155,11 +155,11 @@ class Tlb : public Unit {
         bool retval = false;
         if ( m_pendingWalkList.find(addr) != m_pendingWalkList.end() ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"add pending, page addr=%#" PRIx64 "\n",addr);
-            m_pendingWalkList[addr].push_back(entry);
+            m_pendingWalkList[addr].push(entry);
         } else if ( m_pendingWalks < m_numWalkers ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"walk, page addr=%#" PRIx64 "\n",addr);
             walk( entry->req->pid, addr, std::bind(&Tlb::processMissComplete, this, addr ) );
-            m_pendingWalkList[addr].push_back(entry);
+            m_pendingWalkList[addr].push(entry);
             ++m_pendingWalks;
         } else {
             retval = true;
@@ -172,7 +172,7 @@ class Tlb : public Unit {
             if ( tlbMiss2( m_blockedByTLB.front() ) ) {
                 break;
             } else {
-                m_blockedByTLB.pop_front();
+                m_blockedByTLB.pop();
             }
         }
     }
@@ -184,18 +184,18 @@ class Tlb : public Unit {
         while ( ! m_pendingWalkList[addr].empty() ) {
 
             Entry* entry = m_pendingWalkList[addr].front();
-            m_pendingWalkList[addr].pop_front();
+            m_pendingWalkList[addr].pop();
 
             if ( entry->type == Entry::Store ) {
                 if ( m_storeBlocked ) {
-                    m_readyStores.push_back( entry );
+                    m_readyStores.push( entry );
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"store blocked, page addr=%#" PRIx64 "\n",addr);
                 } else {
                     m_storeBlocked = passUpStore( entry );
                 }
             } else {
                 if ( m_loadBlocked ) {
-                    m_readyLoads.push_back( entry );
+                    m_readyLoads.push( entry );
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"load blocked, page addr=%#" PRIx64 "\n",addr);
                 } else {
                     m_loadBlocked = passUpLoad( entry );
@@ -237,12 +237,12 @@ class Tlb : public Unit {
     void walk( int pid, uint64_t addr, Callback callback ) {
         Hermes::Vaddr evictAddr = m_cache.evict();
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"pid=%d addr=%#" PRIx64 " evictAddr=%#" PRIx64 "\n",pid, addr, evictAddr );
-        m_model.schedCallback( m_tlbMissLat_ns, 
-            [=](){               
-                m_cache.insert( addr );
-                callback();
-            }
-        );
+		Callback* cb = m_model.cbAlloc();
+		*cb = [=](){               
+                		m_cache.insert( addr );
+                		callback();
+            		};
+        m_model.schedCallback( m_tlbMissLat_ns,cb );
     }
 
     bool lookup( int pid, uint64_t addr  ) {
@@ -293,10 +293,10 @@ class Tlb : public Unit {
     UnitBase* m_blockedLoadSrc;
 
     int m_pendingWalks;
-    std::deque<Entry*> m_readyLoads;
-    std::deque<Entry*> m_blockedByTLB;
-    std::deque<Entry*> m_readyStores;
-    std::unordered_map< Hermes::Vaddr, std::deque<Entry*> > m_pendingWalkList;
+    std::queue<Entry*> m_readyLoads;
+    std::queue<Entry*> m_blockedByTLB;
+    std::queue<Entry*> m_readyStores;
+    std::unordered_map< Hermes::Vaddr, std::queue<Entry*> > m_pendingWalkList;
 
     int                 m_curPid;
     uint64_t            m_pageMask;
