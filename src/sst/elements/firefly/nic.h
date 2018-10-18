@@ -276,6 +276,41 @@ class Nic : public SST::Component  {
         
     };
 
+	class Priority {
+
+ 	  public:
+    	Priority( SimTime_t p1, int p2 ) :  m_p1(p1), m_p2(p2) {}
+
+    	SimTime_t p1() const { return m_p1; }
+    	int p2() const { return m_p2; }
+      private:
+    	SimTime_t m_p1;
+    	int m_p2;
+	};
+
+	class Compare {
+  	  public:
+    	bool operator()( Priority* lhs, Priority* rhs ) {
+        	if ( lhs->p1() < rhs->p1() ) {
+            	return false;
+        	} else if ( lhs->p1() > rhs->p1() ) {
+            	return true;
+        	} else {
+            	return lhs->p2() > rhs->p2();
+        	}
+    	}
+	};
+
+	template <class T>
+	class PriorityEntry : public Priority {
+	  public:
+    	PriorityEntry( int p1, int p2, T data ) : Priority( p1, p2), m_data(data) {}
+    	T data() const { return m_data; }
+  	  private:
+    	T   m_data;
+	};
+
+
     #include "nicVirtNic.h" 
     #include "nicShmem.h"
     #include "nicShmemMove.h" 
@@ -417,6 +452,18 @@ public:
     int NetToId( int x ) { return x; }
     int IdToNet( int x ) { return x; }
 
+struct X {
+	X( Callback callback, FireflyNetworkEvent* pkt, int dest) : callback(callback), pkt(pkt), dest(dest) {}  
+
+	Callback			 callback;
+	FireflyNetworkEvent* pkt; 
+	int                  dest;
+};
+
+	typedef PriorityEntry<X*> PriorityX;
+
+	std::priority_queue< PriorityX*,std::vector<PriorityX*>, Compare > m_sendPQ;
+
     std::vector<SendMachine*>   m_sendMachineV;
     std::queue<SendMachine*>    m_sendMachineQ;
     RecvMachine* m_recvMachine;
@@ -456,15 +503,15 @@ public:
     UnitPool* m_unitPool;
 
     void feedTheNetwork( );
-    void sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc );
+    void sendPkt( FireflyNetworkEvent*, int dest, int vc );
     void notifySendDone( SendMachine* mach, SendEntryBase* entry );
 
     void qSendEntry( SendEntryBase* entry );
 
-    void notifyHavePkt( int id ) {
-        m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_NETWORK,"id=%d current src=%d\n",id, m_curNetworkSrc);
-        if ( -1 == m_curNetworkSrc ) {
-            m_curNetworkSrc = id;
+    void notifyHavePkt( PriorityX* px ) {
+        m_sendPQ.push( px );
+		
+        if ( 1 == m_sendPQ.size() ) {
             feedTheNetwork();
         }
     }
@@ -565,7 +612,6 @@ public:
     MemoryModel*  m_memoryModel;
     std::queue<int> m_availNicUnits;
     uint16_t m_getKey;
-    int m_curNetworkSrc;
     int m_txDelay;
 
     static int  MaxPayload;

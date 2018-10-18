@@ -159,7 +159,17 @@ void Nic::SendMachine::InQ::processPending( )
 
 void Nic::SendMachine::OutQ::enque( FireflyNetworkEvent* ev, int dest, Callback callback )
 {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "size=%lu\n", m_queue.size());
-    m_queue.push( Entry( std::make_pair(ev,dest), callback ) );
-    m_nic.notifyHavePkt(m_id);
+	SimTime_t now = Simulation::getSimulation()->getCurrentSimCycle();
+	if ( now > m_lastEnq ) {
+		m_lastEnq = now;
+		m_enqCnt = 0;
+	}
+	++m_enqCnt;
+
+	PriorityX* px = new PriorityX( m_lastEnq, m_enqCnt, new X( std::bind( &Nic::SendMachine::OutQ::pop, this, callback ), ev, dest ) );
+
+	++m_qCnt;
+	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "qCnt=%lu priority=%lu.%d\n", m_qCnt, m_lastEnq, m_enqCnt);
+
+	m_nic.notifyHavePkt( px );	
 }
