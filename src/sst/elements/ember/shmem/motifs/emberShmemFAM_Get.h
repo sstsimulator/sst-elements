@@ -168,14 +168,16 @@ public:
 
         case Wait:
             enQ_barrier_all( evQ );
-            enQ_barrier_all( evQ );
 			m_phase = Fini;
             break;
 
         case Fini:
-			break;
+			if ( m_node_num == 0 ) {
+				printf("Finished\n");
+			}
+			return true;
         }
-        return m_phase == Fini;
+        return false;
 	}
 
 	bool isStride( int node_num, int which ) {

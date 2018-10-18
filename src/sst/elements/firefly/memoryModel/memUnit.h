@@ -54,6 +54,15 @@
             SimTime_t qTime;
         };
 
+		struct LambdaData {
+			SimTime_t issueTime;
+			SimTime_t qTime;
+			Callback* callback;
+			MemReq*   req;	
+			Op	      op;
+		};
+
+		ThingHeap< LambdaData> m_ldHeap;
 		ThingHeap< Entry> m_entryHeap;
 
         bool work( SimTime_t delay, Op op, MemReq* req,  UnitBase* src, SimTime_t qTime, Callback* callback = NULL ) {
@@ -69,23 +78,30 @@
             }
 
             ++m_pending;
-            SimTime_t issueTime = m_model.getCurrentSimTimeNano();
 		
 			Callback* cb = m_model.cbAlloc();
-            *cb = [=]()
+
+			LambdaData* ld = m_ldHeap.alloc();
+            ld->issueTime  = m_model.getCurrentSimTimeNano();
+			ld->op = op;
+			ld->callback = callback;
+			ld->qTime = qTime;
+			ld->req = req;
+
+            *cb = [this,ld]()
                 {
                     --m_pending;
 
-                    SimTime_t latency = m_model.getCurrentSimTimeNano() - issueTime;
+                    SimTime_t latency = m_model.getCurrentSimTimeNano() - ld->issueTime;
 
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"%s complete latency=%" PRIu64 " qLatency=%" PRIu64 " addr=%#" PRIx64 " length=%lu\n",
-                                                        op == Read ? "Read":"Write" ,latency, issueTime-qTime, req->addr, req->length);
+                                                        ld->op == Read ? "Read":"Write" ,latency, ld->issueTime-ld->qTime, ld->req->addr, ld->req->length);
 
-                    if ( callback ) {
-                        m_model.schedCallback( 0, callback);
+                    if ( ld->callback ) {
+                        m_model.schedCallback( 0, ld->callback);
                     }
 
-					m_model.memReqFree( req );
+					m_model.memReqFree( ld->req );
 
                     if ( ! m_blocked.empty() ) {
 		
@@ -100,6 +116,7 @@
                 		m_model.schedResume( 0, entry->src, (UnitBase*) ( entry->op == Read ? "R" : "W" ) );
 						m_entryHeap.free(entry);
                     }
+					m_ldHeap.free(ld);
                 };
 
             m_model.schedCallback( delay, cb ); 
