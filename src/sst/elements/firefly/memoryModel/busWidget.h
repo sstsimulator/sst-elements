@@ -14,12 +14,9 @@
 // distribution.
 
 struct WidgetEntry {
-    void init( int cacheLineSize, MemReq* req, SimTime_t _issueTime, Callback* _callback = NULL  )
-	{
-		curAccess = 0; 
-		size = cacheLineSize;
-		issueTime = _issueTime;
-		callback = _callback;
+    WidgetEntry( int cacheLineSize, MemReq* req, SimTime_t issueTime, Callback* callback = NULL  ) : curAccess( 0 ),
+            size(cacheLineSize ), issueTime(issueTime), callback(callback)
+    {
 		addr = req->addr;
  		uint64_t mask = cacheLineSize - 1; 
 		numAccess = req->length / cacheLineSize;
@@ -67,8 +64,7 @@ class BusLoadWidget : public Unit {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu pending=%d\n",
                         req->addr, req->length, m_numPending );
 
-        WidgetEntry* entry = m_widgetHeap.alloc();
-		entry->init( m_width, req, m_model.getCurrentSimTimeNano(), callback );
+        WidgetEntry* entry = new WidgetEntry( m_width, req, 0, callback );
 		m_model.memReqFree( req );
 
         ++m_numPending;
@@ -144,7 +140,7 @@ class BusLoadWidget : public Unit {
                    	m_scheduled = true;
                	}
 			}; 
-			m_widgetHeap.free( m_pendingQ.front() );
+			delete m_pendingQ.front();
 			m_pendingQ.pop();
 		} else {
 			*callback = [=](){
@@ -180,7 +176,6 @@ class BusLoadWidget : public Unit {
         }
     }
   private:
-	ThingHeap<WidgetEntry> m_widgetHeap; 
 
     int m_latency;
 	int m_numPending;
@@ -216,8 +211,7 @@ class BusStoreWidget : public Unit {
     bool storeCB( UnitBase* src, MemReq* req, Callback* callback = NULL ) {
 		assert( NULL == m_blockedSrc );
 
-		WidgetEntry* entry = m_widgetHeap.alloc();
-		entry->init( m_width, req, 0, callback );
+		WidgetEntry* entry = new WidgetEntry( m_width, req, m_model.getCurrentSimTimeNano(), callback );
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu entry=%p\n",req->addr,req->length, entry);
 		m_model.memReqFree( req );
 
@@ -270,7 +264,7 @@ class BusStoreWidget : public Unit {
 			if ( entry.callback ) {
            		m_model.schedCallback( 0, entry.callback );		
 			}
-			m_widgetHeap.free( m_pendingQ.front() );
+			delete m_pendingQ.front();
 			m_pendingQ.pop();
         	if ( m_blockedSrc ) {
             	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"unblock src\n");
@@ -298,7 +292,6 @@ class BusStoreWidget : public Unit {
     }
 
   private:
-	ThingHeap<WidgetEntry> m_widgetHeap; 
     int m_numPending;
     int m_latency;
 	int m_qSize;
