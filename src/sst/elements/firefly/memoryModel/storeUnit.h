@@ -38,7 +38,7 @@ class StoreUnit : public Unit {
 
 		if ( m_pendingQ.size() < m_qSize + 1) {
 			if ( ! m_blocked && ! m_scheduled ) {
-				Callback* cb = m_model.cbAlloc();
+				Callback* cb = new Callback;
 				*cb = std::bind( &StoreUnit::process, this ); 
 				m_model.schedCallback( 0, cb );
 				m_scheduled = true;
@@ -76,7 +76,7 @@ class StoreUnit : public Unit {
 		}
 
 		if ( ! m_blocked && ! m_pendingQ.empty() ) {
-			Callback* cb = m_model.cbAlloc();
+			Callback* cb = new Callback;
 			*cb = std::bind( &StoreUnit::process, this ); 
 			m_model.schedCallback( 0, cb );
 			m_scheduled = true;

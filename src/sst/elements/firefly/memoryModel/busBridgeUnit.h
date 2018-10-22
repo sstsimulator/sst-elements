@@ -141,7 +141,7 @@ class BusBridgeUnit : public Unit {
 					m_pendingDLLQ.pop();
 
 					busy = true;
-					Callback* cb = m_unit.m_model.cbAlloc();	
+					Callback* cb = new Callback;
 					*cb = std::bind( &Bus::reqArrived, this, (Entry*) NULL );
 					m_unit.m_model.schedCallback( delay, cb );
 				} else if ( ! m_pendingReqQ.empty() ) {
@@ -165,7 +165,7 @@ class BusBridgeUnit : public Unit {
                     SimTime_t now = m_unit.m_model.getCurrentSimTimeNano();
                     m_unit.m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu delay=%" PRIu64 " latency=%" PRIu64 "\n",
                                     entry,entry->addr, entry->length, delay, now - entry->qd );
-					Callback* cb = m_unit.m_model.cbAlloc();
+					Callback* cb = new Callback;
 					*cb = std::bind( &Bus::reqArrived, this, entry );
 					m_unit.m_model.schedCallback( delay, cb );
 				}
@@ -192,7 +192,7 @@ class BusBridgeUnit : public Unit {
 				m_model.schedResume( 0, entry->src );
 			}
 			entry->src->decPendingWrites();
-            m_model.memReqFree( entry->req );
+            delete entry->req;
 		}
 
 		delete entry;
@@ -212,7 +212,7 @@ class BusBridgeUnit : public Unit {
 		if ( entry->callback ) {
 			Hermes::Vaddr addr = entry->req->addr;
             size_t length = entry->req->length;
-			Callback* cb = m_model.cbAlloc();
+			Callback* cb = new Callback;
 			*cb = [=]() {
        				m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"processReq",1,BUS_BRIDGE_MASK,"load done entry=%p addr=%#" PRIx64 " length=%lu latency=%" PRIu64 "\n",
 									entry, addr, length, m_model.getCurrentSimTimeNano() - now );

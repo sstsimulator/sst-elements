@@ -61,7 +61,7 @@
 
             ++m_pending;
 		
-			Callback* cb = m_model.cbAlloc();
+			Callback* cb = new Callback;
 
             SimTime_t issueTime  = m_model.getCurrentSimTimeNano();
 
@@ -78,7 +78,7 @@
                         m_model.schedCallback( 0, callback);
                     }
 
-					m_model.memReqFree( req );
+					delete req;
 
                     if ( ! m_blocked.empty() ) {
 		

@@ -63,12 +63,12 @@
 			if ( ! m_blockedSrc && ! m_scheduled ) {
 
 
-				Callback* cb = m_model.cbAlloc(); 
+				Callback* cb = new Callback;
 				*cb = [=]() {
 								m_dbg.verbosePrefix( prefix(), CALL_INFO_LAMBDA, "load",1,MUX_MASK, "load done latency=%" PRIu64 "\n",
 												m_model.getCurrentSimTimeNano() - now );  
 								(*callback)();
-								m_model.cbFree(callback);
+								delete callback;
 							}; 
 				if ( m_unit->load( this, req, cb ) ) {
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
@@ -95,12 +95,12 @@
 			bool blocked = false;
 			uint64_t now = entry.start;
 			if ( Entry::Load == entry.op ) {
-				Callback* cb = m_model.cbAlloc();
+				Callback* cb = new Callback;
 				*cb = [=](){
 								m_dbg.verbosePrefix( prefix(), CALL_INFO_LAMBDA, "processQ",1,MUX_MASK, "load done latency=%" PRIu64 "\n",
 										m_model.getCurrentSimTimeNano() - now );  
 								(*callback)();
-								m_model.cbFree(callback);
+								delete callback;
 						   }; 
 				blocked = m_unit->load( this, entry.req, cb );
 			} else {
@@ -112,7 +112,7 @@
 				m_model.schedResume( 0, entry.src  );
 				if ( m_blockedQ.size() > 1 ) {
                     m_scheduled = true;
-					Callback* cb = m_model.cbAlloc();
+					Callback* cb = new Callback;
 					*cb = std::bind( &MuxUnit::processQ, this );
 					m_model.schedCallback( 0, cb );
 				}

@@ -154,7 +154,7 @@
 				m_model.schedCallback( 0, entry->callback );
 			}
 			if ( entry->req ) {
-				m_model.memReqFree( entry->req );
+				delete entry->req;
 			}
 			delete entry;
 		}
@@ -168,7 +168,7 @@
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"addr=%#" PRIx64 "\n",entry->req->addr);
 
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"%p\n",entry);
-			Callback* cb = m_model.cbAlloc();
+			Callback* cb = new Callback;
 			*cb = std::bind(&CacheUnit::loadDone, this, entry, entry->req->addr, m_model.getCurrentSimTimeNano() ); 
 		    m_blockedOnLoad = m_memory->load( this, entry->req, cb );
                             
@@ -186,8 +186,7 @@
 
 			Hermes::Vaddr evictAddr = m_cache.evict();
 
-			MemReq* req = m_model.memReqAlloc();
-			req->init( evictAddr, m_cacheLineSize );
+			MemReq* req = new MemReq( evictAddr, m_cacheLineSize );
 			m_blockedOnStore = m_memory->store( this, req );
 
 			if ( entry->callback ) {
@@ -202,7 +201,7 @@
 						m_model.schedCallback( 0, m_pendingMap[addr]->front()->callback );
 					}
 					if ( m_pendingMap[addr]->front()->req ) {
-						m_model.memReqFree( m_pendingMap[addr]->front()->req );
+						delete m_pendingMap[addr]->front()->req;
 					}
 					delete m_pendingMap[addr]->front();
 					m_pendingMap[addr]->pop();
@@ -211,7 +210,7 @@
 			}
 			m_pendingMap.erase( addr );
 			if ( entry->req ) {
-				m_model.memReqFree( entry->req );
+				delete entry->req;
 			}
 			delete entry;
 
@@ -230,7 +229,7 @@
                 Entry* entry = m_blockedQ.front();
                 m_blockedQ.pop();
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"scheduled checkHit\n");
-				Callback* cb = m_model.cbAlloc();
+				Callback* cb = new Callback;
 				*cb = std::bind( &CacheUnit::checkHit2, this, entry, true );
             	m_model.schedCallback( 0, cb );
 				m_scheduled = true;
