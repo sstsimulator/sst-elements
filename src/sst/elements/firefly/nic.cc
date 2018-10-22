@@ -41,7 +41,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_memoryModel(NULL),
     m_nic2host_base_lat_ns(0),
     m_respKey(1),
-    m_curNetworkSrc(-1),
 	m_predNetIdleTime(0)
 {
     m_myNodeId = params.find<int>("nid", -1);
@@ -522,70 +521,61 @@ void Nic::feedTheNetwork( )
 
     int vc = 0;
 
-    assert( m_curNetworkSrc >=0  );
-    bool sentPkt;
-    do {
-        sentPkt = false;
-        for ( unsigned i = 0; i < m_sendMachineV.size(); i++ ) {
+	while ( ! m_sendPQ.empty() ) {
 
-            m_dbg.debug(CALL_INFO,4,NIC_DBG_SEND_NETWORK,"checking network src %d\n", m_curNetworkSrc);
-            if ( ! m_sendMachineV[m_curNetworkSrc]->netPktQ_empty() ) {
+		PriorityX* entry = m_sendPQ.top();
+		X& x = *entry->data();
+					
+		bool ret = m_linkControl->spaceToSend( vc, x.pkt->calcPayloadSizeInBits() );
+		if ( ! ret ) {
 
-                std::pair< FireflyNetworkEvent*, int>& pkt = m_sendMachineV[m_curNetworkSrc]->netPktQ_front();
-                bool ret = m_linkControl->spaceToSend( vc, pkt.first->calcPayloadSizeInBits() );
-                if ( ! ret ) {
+			m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"blocking on network\n" );
+            schedCallback(
+                [=](){
+                    m_linkSendWidget->setNotify( [=]() {
+						SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
+						if ( curTime > m_predNetIdleTime ) {
+							m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"network stalled latency=%lld\n",
+								curTime -  m_predNetIdleTime);
+							m_networkStall->addData( curTime - m_predNetIdleTime );
+						}
+						feedTheNetwork();
+					}, vc);
+				} ,0 );
 
-                    m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"blocking on network\n" );
-                    schedCallback(
-                        [=](){
-                            m_linkSendWidget->setNotify( [=]() {
-								SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
-								if ( curTime > m_predNetIdleTime ) {
-									m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"network stalled latency=%lld\n",
-										curTime -  m_predNetIdleTime);
-									m_networkStall->addData( curTime - m_predNetIdleTime );
-								}
-								feedTheNetwork();
-							}, vc);
-                        }
-                    ,0 );
+			return;
+		} else {
 
-                    return;
-                } else {
+			SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
+			SimTime_t latPS = ( (double) x.pkt->payloadSize() / (double) m_linkBytesPerSec ) * 1000000000000; 
 
-					SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
-					SimTime_t latPS = ( (double) pkt.first->payloadSize() / (double) m_linkBytesPerSec ) * 1000000000000; 
+			if ( curTime > m_predNetIdleTime ) {
+				m_predNetIdleTime = curTime;
+			}
+			m_predNetIdleTime += latPS;
 
-					if ( curTime > m_predNetIdleTime ) {
-						m_predNetIdleTime = curTime;
-					}
-					m_predNetIdleTime += latPS;
+			m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"predNetIdleTime=%lld\n",m_predNetIdleTime );
 
-                   	m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"predNetIdleTime=%lld\n",m_predNetIdleTime );
+			sendPkt( x.pkt, x.dest, vc );
 
-                    sendPkt( pkt, vc );
+			x.callback();
 
-                    m_sendMachineV[m_curNetworkSrc]->netPktQ_pop();
-                    sentPkt = true;
-                }
-            }
-            ++m_curNetworkSrc;
-            m_curNetworkSrc %= m_sendMachineV.size();
-        }
-    } while( sentPkt );
-    m_curNetworkSrc = -1;
+			delete &x;
+			delete entry;
+			m_sendPQ.pop();
+		}
+	}
 }
 
-void Nic::sendPkt( std::pair< FireflyNetworkEvent*, int>& entry, int vc )
+void Nic::sendPkt( FireflyNetworkEvent* ev, int dest, int vc )
 {
-    FireflyNetworkEvent* ev = entry.first;
     assert( ev->bufSize() );
 
     m_sentPkts->addData(1);
 
 
     SimpleNetwork::Request* req = new SimpleNetwork::Request();
-    req->dest = IdToNet( entry.second );
+    req->dest = IdToNet( dest );
     req->src = IdToNet( m_myNodeId );
     req->size_in_bits = ev->calcPayloadSizeInBits();
     req->vn = 0;
