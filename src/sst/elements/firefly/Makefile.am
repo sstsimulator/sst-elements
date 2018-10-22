@@ -94,7 +94,6 @@ libfirefly_la_SOURCES = \
 	shmem/reduction.cc \
 	shmem/reduction.h \
 	memoryModel/memoryModel.h \
-	memoryModel/simpleMemoryModel.cc \
 	memoryModel/simpleMemoryModel.h \
 	memoryModel/trivialMemoryModel.h \
 	memoryModel/busBridgeUnit.h \
