@@ -105,8 +105,8 @@ public:
 		Callback* callback;
 		UnitBase* unit;
 		UnitBase* srcUnit;
-		int slot;
 		Work* work;
+		int slot;
 
         NotSerializable(SelfEvent)
     };
@@ -224,22 +224,6 @@ public:
     }
 
 	ThingHeap<SelfEvent> m_eventHeap;
-	ThingHeap<MemReq>    m_memReqHeap;
-	ThingHeap<Callback>   m_cbHeap;
-
-	Callback* cbAlloc() {
-		return m_cbHeap.alloc();
-	}
-	void cbFree( Callback* cb ) {
-		m_cbHeap.free(cb);
-	}
-
-	MemReq* memReqAlloc() {
-		return m_memReqHeap.alloc();
-	}
-	void memReqFree( MemReq* req ) {
-		m_memReqHeap.free(req);
-	}
 
 	void schedCallback( SimTime_t delay, Callback* callback ){
 		SelfEvent* ev = m_eventHeap.alloc( );	
@@ -259,7 +243,7 @@ public:
 		if ( event->callback ) {
 			m_dbg.debug(CALL_INFO,3,SM_MASK,"callback\n");
 			(*event->callback)();
-			cbFree( event->callback );
+			delete event->callback;
 		} else if ( event->unit ) {
 			m_dbg.debug(CALL_INFO,3,SM_MASK,"resume %p\n",event->srcUnit);
 			if ( event->srcUnit ) {

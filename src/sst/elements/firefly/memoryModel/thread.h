@@ -191,7 +191,7 @@ class Thread : public UnitBase {
         
         // note that "work" will be a valid  ptr for all of the issues of the last Op 
         // because we don't know which one will complete last
-    	Callback* callback = m_model.cbAlloc();
+    	Callback* callback = new Callback;
 		*callback = std::bind(&Thread::opCallback,this, work, op, deleteWork );
 
         switch( op->getOp() ) {
@@ -200,49 +200,29 @@ class Thread : public UnitBase {
             break;
 
 		  case MemOp::HostBusWrite:
-		  	{
-			MemReq* req = m_model.memReqAlloc();
-			req->init( addr, length );
-            m_blocked = m_model.busUnitWrite( this, req, callback );
-		  	}
+            m_blocked = m_model.busUnitWrite( this, new MemReq( addr, length ), callback );
 		    break;
 
           case MemOp::LocalLoad:
-		  	{
-			MemReq* req = m_model.memReqAlloc();
-			req->init( 0, 0 );
-            m_blocked = m_model.nicUnit().load( this, req, callback );
-			}
+			m_blocked = m_model.nicUnit().load( this, new MemReq( 0, 0), callback );
             break;
 
           case MemOp::LocalStore:
-		  	{
-			MemReq* req = m_model.memReqAlloc();
-			req->init( 0, 0 );
-            m_blocked = m_model.nicUnit().storeCB( this, req, callback );
-			}
+			m_blocked = m_model.nicUnit().storeCB( this, new MemReq( 0, 0), callback );
             break;
 
           case MemOp::HostStore:
           case MemOp::BusStore:
           case MemOp::BusDmaToHost:
             addr |= (uint64_t) pid << 56;
-		  	{
-			MemReq* req = m_model.memReqAlloc();
-			req->init( addr, length, pid );
-            m_blocked = m_storeUnit->storeCB( this, req, callback );
-			}
+			m_blocked = m_storeUnit->storeCB( this, new MemReq( addr, length, pid ), callback );
             break;
 
           case MemOp::HostLoad:
           case MemOp::BusLoad:
           case MemOp::BusDmaFromHost:
             addr |= (uint64_t) pid << 56;
-		  	{
-			MemReq* req = m_model.memReqAlloc();
-			req->init( addr, length, pid );
-            m_blocked = m_loadUnit->load( this, req, callback );
-			}
+			m_blocked = m_loadUnit->load( this, new MemReq( addr, length, pid ), callback );
             break;
 
           default:
@@ -274,7 +254,7 @@ class Thread : public UnitBase {
             // the OP callback will also be called
 		} else if ( m_nextOp && ! m_waitingOnOp ) { 
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"schedule process()\n");
-			Callback* cb = m_model.cbAlloc();
+			Callback* cb = new Callback;
 			*cb = std::bind(&Thread::process, this, m_nextOp ); 
 		    m_model.schedCallback( 0, cb );
         }

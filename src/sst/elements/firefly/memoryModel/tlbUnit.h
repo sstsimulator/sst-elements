@@ -237,7 +237,7 @@ class Tlb : public Unit {
     void walk( int pid, uint64_t addr, Callback callback ) {
         Hermes::Vaddr evictAddr = m_cache.evict();
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"pid=%d addr=%#" PRIx64 " evictAddr=%#" PRIx64 "\n",pid, addr, evictAddr );
-		Callback* cb = m_model.cbAlloc();
+		Callback* cb = new Callback;
 		*cb = [=](){               
                 		m_cache.insert( addr );
                 		callback();
