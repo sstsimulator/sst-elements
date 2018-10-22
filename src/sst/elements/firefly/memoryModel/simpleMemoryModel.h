@@ -16,10 +16,14 @@
 #ifndef COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 #define COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 
+#include <math.h>
 #include <sst/core/elementinfo.h>
+#include "ioVec.h"
 #include "memoryModel/memoryModel.h"
 
 #include <queue>
+#include "../thingHeap.h"
+
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
 
 
@@ -76,37 +80,6 @@ public:
 #define TLB_MASK        1<<9
 #define SM_MASK        1<<10
 #define SHARED_TLB_MASK 1<<11
-
-template < class T> 
-class ThingHeap {
-
-  public:
-
-	ThingHeap() : m_pos(0), m_heap(256) {
-	}
-
-	T* alloc() {
-		T* ev;
-		if ( m_pos > 0 ) {
-			ev = m_heap[--m_pos];
-		} else {
-			ev = new T;
-		}
-		return ev;
-	}
-
-	void free( T* ev ) {
-		if ( m_pos == m_heap.size() ) {
-			m_heap.resize( m_heap.size() + 256 );	
-		}
-		m_heap[m_pos++] = ev;
-	}
-
-  private:
-	std::vector<T*> m_heap;
-	int m_pos;
-};
-
 
 #include "cache.h"
 #include "memReq.h"

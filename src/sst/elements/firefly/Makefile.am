@@ -94,6 +94,7 @@ libfirefly_la_SOURCES = \
 	shmem/reduction.cc \
 	shmem/reduction.h \
 	memoryModel/memoryModel.h \
+	memoryModel/simpleMemoryModel.cc \
 	memoryModel/simpleMemoryModel.h \
 	memoryModel/trivialMemoryModel.h \
 	memoryModel/busBridgeUnit.h \
@@ -106,11 +107,11 @@ libfirefly_la_SOURCES = \
 	memoryModel/memUnit.h \
 	memoryModel/muxUnit.h \
 	memoryModel/nicUnit.h \
-        memoryModel/nWayCache.h \
+	memoryModel/nWayCache.h \
 	memoryModel/storeUnit.h \
 	memoryModel/tlbUnit.h \
-        memoryModel/sharedTlb.h \
-        memoryModel/sharedTlbUnit.h \
+	memoryModel/sharedTlb.h \
+	memoryModel/sharedTlbUnit.h \
 	memoryModel/thread.h \
 	memoryModel/cache.h \
 	memoryModel/unit.h \
@@ -147,6 +148,7 @@ libfirefly_la_SOURCES = \
 	nicShmemStream.h \
 	nicVirtNic.h \
 	nicUnitPool.h \
+	thingHeap.h \
 	nodePerf.h
 
 libfirefly_la_LDFLAGS = -module -avoid-version
