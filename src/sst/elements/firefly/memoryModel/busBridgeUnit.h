@@ -18,13 +18,8 @@
 class BusBridgeUnit : public Unit {
 
 	struct Entry {
-        void init( UnitBase* _src, MemReq* _req, Callback* _callback = NULL ) {
-			src = _src; 
-			req = _req;
-			callback = _callback;
-			addr = _req->addr;
-			length = _req->length;
-		}
+		Entry( UnitBase* src, MemReq* req, Callback* callback = NULL ) : src(src), req(req), callback(callback),
+                addr(req->addr), length(req->length) {}
         MemReq* req;
         Callback* callback;
 		UnitBase* src;
@@ -48,7 +43,6 @@ class BusBridgeUnit : public Unit {
 		m_blocked_ns = model.registerStatistic<uint64_t>("bus_blocked_ns");
     }
 
-	ThingHeap<Entry> m_entryHeap;
     void resume( UnitBase* unit = 0 ) {
 		if ( unit == m_loadWidget ) {
         	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"load\n");
@@ -75,8 +69,7 @@ class BusBridgeUnit : public Unit {
 
     bool load( UnitBase* src, MemReq* req, Callback* callback  ) {
 		
-		Entry* entry = m_entryHeap.alloc();
-		entry->init( src, req, callback );
+		Entry* entry = new Entry( src, req, callback );
 		entry->qd = m_model.getCurrentSimTimeNano();
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"src=%p entry=%p addr=%#" PRIx64 " length=%lu\n",src, entry,req->addr,req->length);
         //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
@@ -85,8 +78,7 @@ class BusBridgeUnit : public Unit {
 	}
 
     bool write( UnitBase* src, MemReq* req, Callback* callback ) {
-		Entry* entry = m_entryHeap.alloc();
-		entry->init( src, req, callback );
+		Entry* entry = new Entry( src, req, callback );
 		entry->qd = m_model.getCurrentSimTimeNano();
 		src->incPendingWrites();
 		m_respBus.addReq( entry );
@@ -98,8 +90,7 @@ class BusBridgeUnit : public Unit {
 
     bool store( UnitBase* src, MemReq* req ) {
 
-		Entry* entry = m_entryHeap.alloc();
-		entry->init( src, req );
+		Entry* entry = new Entry( src, req );
 		entry->qd = m_model.getCurrentSimTimeNano();
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"entry=%p addr=%#" PRIx64 " length=%lu\n",entry,req->addr,req->length);
         //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
@@ -204,7 +195,7 @@ class BusBridgeUnit : public Unit {
             m_model.memReqFree( entry->req );
 		}
 
-		m_entryHeap.free( entry );
+		delete entry;
 	}
 
 	void processReq( Entry* entry ) {
@@ -244,7 +235,7 @@ class BusBridgeUnit : public Unit {
 			}
 
 			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_BRIDGE_MASK,"delete store entry=%p\n",entry);
-			m_entryHeap.free( entry );
+			delete entry;
 		}
 
 		if ( resumeSrc ) {
