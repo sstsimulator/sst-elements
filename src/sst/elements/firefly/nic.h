@@ -575,6 +575,10 @@ struct X {
 			return true;
 		}
 
+		if ( nidList.empty() ) {
+			return false;
+		}
+
 		size_t pos = 0;
 		size_t end = 0;
 		do {
