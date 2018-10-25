@@ -57,7 +57,7 @@ public:
                 if ( m_numLookups < m_maxNumLookups ) {
                     ++m_numLookups;
                     m_pendingMap[pageAddr];
-					MemoryModel::Callback* cb =  m_model.cbAlloc();
+					MemoryModel::Callback* cb =  new MemoryModel::Callback;
 					*cb = std::bind( &SharedTlb::resolved, this, req, callback ); 
                     m_model.schedCallback( m_tlbMissLat_ns, cb ); 
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Schedule: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
@@ -116,7 +116,7 @@ private:
             } else {
                 ++m_numLookups;
                 m_pendingMap[pageAddr];
-				MemoryModel::Callback* cb = m_model.cbAlloc();
+				MemoryModel::Callback* cb = new MemoryModel::Callback;
 				*cb = std::bind( &SharedTlb::resolved, this, req, callback ); 
                 m_model.schedCallback( m_tlbMissLat_ns, cb );
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Schedule: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 

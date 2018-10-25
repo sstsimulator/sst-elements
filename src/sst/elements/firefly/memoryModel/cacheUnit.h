@@ -19,8 +19,8 @@
 
 		struct Entry {
 			enum Op { Load, Store } op;
-			void init( Op _op, UnitBase* _src, MemReq* _req, SimTime_t _time, Callback* _callback=NULL ) {
-				op = _op; src = _src; req = _req; time = _time; callback = _callback; }
+            Entry( Op op, UnitBase* src, MemReq* req, SimTime_t time, Callback* callback=NULL ) :
+                op(op), src(src), req(req), time(time), callback(callback) {}
 			UnitBase* src;
 			Callback* callback;
 			MemReq* req;
@@ -54,23 +54,16 @@
     	Statistic<uint64_t>* m_hitCnt;
     	Statistic<uint64_t>* m_totalCnt;
 
-		ThingHeap<Entry> m_entryHeap;
         bool store( UnitBase* src, MemReq* req ) {
             //m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
-
-            //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
-            Entry* entry = m_entryHeap.alloc();
-			entry->init( Entry::Store, src, req, m_model.getCurrentSimTimeNano()  ) ; 
-			return addEntry( entry );
+			//assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
+			return addEntry( new Entry( Entry::Store, src, req, m_model.getCurrentSimTimeNano()  ) );
 		}
 
         bool load( UnitBase* src, MemReq* req, Callback* callback ) {
             //m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
-
             //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
-            Entry* entry = m_entryHeap.alloc();
-			entry->init( Entry::Load, src, req, m_model.getCurrentSimTimeNano(), callback ) ; 
-			return addEntry( entry );
+			return addEntry( new Entry( Entry::Load, src, req, m_model.getCurrentSimTimeNano(), callback ) );
 		}
 
 		void resume( UnitBase* src = NULL ) {
@@ -161,9 +154,9 @@
 				m_model.schedCallback( 0, entry->callback );
 			}
 			if ( entry->req ) {
-				m_model.memReqFree( entry->req );
+				delete entry->req;
 			}
-			m_entryHeap.free( entry );
+			delete entry;
 		}
 
 		bool blocked() {
@@ -175,7 +168,7 @@
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"addr=%#" PRIx64 "\n",entry->req->addr);
 
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"%p\n",entry);
-			Callback* cb = m_model.cbAlloc();
+			Callback* cb = new Callback;
 			*cb = std::bind(&CacheUnit::loadDone, this, entry, entry->req->addr, m_model.getCurrentSimTimeNano() ); 
 		    m_blockedOnLoad = m_memory->load( this, entry->req, cb );
                             
@@ -193,8 +186,7 @@
 
 			Hermes::Vaddr evictAddr = m_cache.evict();
 
-			MemReq* req = m_model.memReqAlloc();
-			req->init( evictAddr, m_cacheLineSize );
+			MemReq* req = new MemReq( evictAddr, m_cacheLineSize );
 			m_blockedOnStore = m_memory->store( this, req );
 
 			if ( entry->callback ) {
@@ -209,18 +201,18 @@
 						m_model.schedCallback( 0, m_pendingMap[addr]->front()->callback );
 					}
 					if ( m_pendingMap[addr]->front()->req ) {
-						m_model.memReqFree( m_pendingMap[addr]->front()->req );
+						delete m_pendingMap[addr]->front()->req;
 					}
-					m_entryHeap.free( m_pendingMap[addr]->front() );
+					delete m_pendingMap[addr]->front();
 					m_pendingMap[addr]->pop();
 				}
 				m_qHeap.free( m_pendingMap[addr] );
 			}
 			m_pendingMap.erase( addr );
 			if ( entry->req ) {
-				m_model.memReqFree( entry->req );
+				delete entry->req;
 			}
-            m_entryHeap.free( entry );
+			delete entry;
 
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"insert addr=%#" PRIx64 "\n",addr);
 			m_cache.insert( addr );
@@ -237,7 +229,7 @@
                 Entry* entry = m_blockedQ.front();
                 m_blockedQ.pop();
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"scheduled checkHit\n");
-				Callback* cb = m_model.cbAlloc();
+				Callback* cb = new Callback;
 				*cb = std::bind( &CacheUnit::checkHit2, this, entry, true );
             	m_model.schedCallback( 0, cb );
 				m_scheduled = true;

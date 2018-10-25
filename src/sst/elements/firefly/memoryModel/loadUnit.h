@@ -51,7 +51,7 @@ class LoadUnit : public Unit {
 
         if ( m_numPending <= m_qSize ) {
             if ( ! m_blocked && ! m_scheduled ) {
-				Callback* cb = m_model.cbAlloc();
+				Callback* cb = new Callback;
 				*cb = std::bind( &LoadUnit::process, this );
                 m_model.schedCallback( 0, cb );
                 m_scheduled = true;
@@ -81,7 +81,7 @@ class LoadUnit : public Unit {
 		Hermes::Vaddr addr = entry.req->addr;
 		size_t length = entry.req->length;
 		SimTime_t postTime = entry.postTime;
-		Callback* cb = m_model.cbAlloc();
+		Callback* cb = new Callback;
 		*cb = [=]() {
 
 				SimTime_t currentTime = m_model.getCurrentSimTimeNano();
@@ -108,7 +108,7 @@ class LoadUnit : public Unit {
         		m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",3,LOAD_MASK,"%s\n",m_blocked? "blocked" : "not blocked");
 
         		if ( ! m_blocked && ! m_scheduled && ! m_pendingQ.empty() ) {
-					Callback* cb = m_model.cbAlloc();	
+					Callback* cb = new Callback;
 					*cb = std::bind( &LoadUnit::process, this );
             		m_model.schedCallback( 0, cb );
             		m_scheduled = true;

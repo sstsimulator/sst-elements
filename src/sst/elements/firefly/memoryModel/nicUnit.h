@@ -23,14 +23,14 @@
             m_dbg.verbosePrefix(prefix(), CALL_INFO,1,1,"\n");
             m_model.schedCallback( 0, callback );
 
-			m_model.memReqFree( req );
+			delete req;
 			return false;
         }
         bool load( UnitBase* src, MemReq* req, Callback* callback ) {
             m_dbg.verbosePrefix(prefix(), CALL_INFO,1,1,"\n");
 
             m_model.schedCallback( 0, callback );
-			m_model.memReqFree( req );
+			delete req;
 			return false;
         }
       private:

@@ -16,10 +16,14 @@
 #ifndef COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 #define COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 
+#include <math.h>
 #include <sst/core/elementinfo.h>
+#include "ioVec.h"
 #include "memoryModel/memoryModel.h"
 
 #include <queue>
+#include "../thingHeap.h"
+
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
 
 
@@ -77,37 +81,6 @@ public:
 #define SM_MASK        1<<10
 #define SHARED_TLB_MASK 1<<11
 
-template < class T> 
-class ThingHeap {
-
-  public:
-
-	ThingHeap() : m_pos(0), m_heap(256) {
-	}
-
-	T* alloc() {
-		T* ev;
-		if ( m_pos > 0 ) {
-			ev = m_heap[--m_pos];
-		} else {
-			ev = new T;
-		}
-		return ev;
-	}
-
-	void free( T* ev ) {
-		if ( m_pos == m_heap.size() ) {
-			m_heap.resize( m_heap.size() + 256 );	
-		}
-		m_heap[m_pos++] = ev;
-	}
-
-  private:
-	std::vector<T*> m_heap;
-	int m_pos;
-};
-
-
 #include "cache.h"
 #include "memReq.h"
 #include "sharedTlb.h"
@@ -132,8 +105,8 @@ class ThingHeap {
 		Callback* callback;
 		UnitBase* unit;
 		UnitBase* srcUnit;
-		int slot;
 		Work* work;
+		int slot;
 
         NotSerializable(SelfEvent)
     };
@@ -251,22 +224,6 @@ class ThingHeap {
     }
 
 	ThingHeap<SelfEvent> m_eventHeap;
-	ThingHeap<MemReq>    m_memReqHeap;
-	ThingHeap<Callback>   m_cbHeap;
-
-	Callback* cbAlloc() {
-		return m_cbHeap.alloc();
-	}
-	void cbFree( Callback* cb ) {
-		m_cbHeap.free(cb);
-	}
-
-	MemReq* memReqAlloc() {
-		return m_memReqHeap.alloc();
-	}
-	void memReqFree( MemReq* req ) {
-		m_memReqHeap.free(req);
-	}
 
 	void schedCallback( SimTime_t delay, Callback* callback ){
 		SelfEvent* ev = m_eventHeap.alloc( );	
@@ -286,7 +243,7 @@ class ThingHeap {
 		if ( event->callback ) {
 			m_dbg.debug(CALL_INFO,3,SM_MASK,"callback\n");
 			(*event->callback)();
-			cbFree( event->callback );
+			delete event->callback;
 		} else if ( event->unit ) {
 			m_dbg.debug(CALL_INFO,3,SM_MASK,"resume %p\n",event->srcUnit);
 			if ( event->srcUnit ) {

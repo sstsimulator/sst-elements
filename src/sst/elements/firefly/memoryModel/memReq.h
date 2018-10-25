@@ -14,11 +14,8 @@
 // distribution.
 
 struct MemReq {
-    void init( Hermes::Vaddr _addr, size_t _length, int _pid = -1) {
-		addr = _addr;
-		length = _length;
-		pid = _pid; 
-	}
+    MemReq( Hermes::Vaddr addr, size_t length, int pid = -1) :
+        addr(addr), length(length), pid(pid) {}
 
 	Hermes::Vaddr addr;
 	size_t length;
