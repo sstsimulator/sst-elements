@@ -44,11 +44,7 @@ bool Nic::EntryBase::copyIn( Output& dbg,
             size_t fromLen = event.bufSize();
             size_t len = toLen < fromLen ? toLen : fromLen;
 
-            MemOp tmp;
-            tmp.length = len;
-            tmp.addr = ioVec()[currentVec()].addr.getSimVAddr() +
-                                                    currentPos();
-            vec.push_back( tmp );
+            vec.push_back( MemOp( ioVec()[currentVec()].addr.getSimVAddr() + currentPos(), len, MemOp::Op::BusDmaToHost ) );
 
             char* toPtr = (char*) ioVec()[currentVec()].addr.getBacking() +
                                                         currentPos();
@@ -109,10 +105,8 @@ void Nic::EntryBase::copyOut( Output& dbg, int numBytes,
 
             const char* from =
                     (const char*) ioVec()[currentVec()].addr.getBacking() + currentPos();
-            MemOp tmp;
-            tmp.addr = ioVec()[currentVec()].addr.getSimVAddr() + currentPos();
-            tmp.length = len;
-            vec.push_back(tmp);
+
+            vec.push_back( MemOp( ioVec()[currentVec()].addr.getSimVAddr() + currentPos(), len, MemOp::Op::BusDmaFromHost ) );
 
             if ( ioVec()[currentVec()].addr.getBacking()) {
                 event.bufAppend( from, len );
