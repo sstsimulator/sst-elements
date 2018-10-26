@@ -122,7 +122,10 @@ class GetOrgnEntry : public MsgSendEntry {
 
     bool isDone()      { return true; }
     void copyOut( Output& dbg, int numBytes,
-                FireflyNetworkEvent& event, std::vector<MemOp>& vec ) {}; 
+                FireflyNetworkEvent& event, std::vector<MemOp>& vec ) 
+	{
+		vec.push_back( MemOp( 0, numBytes, MemOp::Op::LocalLoad ) );
+	}; 
 
     size_t totalBytes(){ return sizeof( m_hdr ); }
     MsgHdr::Op getOp() { return MsgHdr::Rdma; }
