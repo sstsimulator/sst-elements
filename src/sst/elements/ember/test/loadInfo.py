@@ -1,35 +1,50 @@
-
+import pprint
+import sys 
 from loadUtils import *
 from EmberEP import *
+#from loadFileParse import *
 
-class LoadInfo:
-
-	def __init__(self, nicParams, epParams, numNodes, numCores, numNics, detailedModel = None ):
+class PartInfo:
+	def __init__(self, nicParams, epParams, numNodes, numCores, detailedModel = None ):
 		self.nicParams = nicParams
 		self.epParams = epParams
 		self.numNodes = int(numNodes)
 		self.numCores = int(numCores)
-		self.numNics = int(numNics)
 		self.detailedModel = detailedModel
+		self.endpoint = None 
 		self.nicParams["num_vNics"] = numCores
-		self.map = []
-		nullMotif = [{
-			'cmd' : "-nidList=Null Null",
-			'printStats' : 0,
-			'api': "",
-			'spyplotmode': 0
-		}]
 
-		self.nullEP, nidlist = self.foo( -1, self.readWorkList( nullMotif ), [] )
+        def setEndpoint( self, endpoint ):
+                self.endpoint = endpoint
+        
+        
+class LoadInfo:
+
+        def __init__(self,numNics, baseNicParams, defaultEmberParams):
+		self.numNics = int(numNics)
+		nullMotif = {
+                        'motif0.api': '',
+			'motif0.name' : 'ember.NullMotif',
+			'motif0.printStats' : 0,
+			'motif0.spyplotmode': 0
+                        }
+
+                self.parts = {} 
+		self.nullEP = EmberEP( -1 , defaultEmberParams, baseNicParams, nullMotif, 1,1,[],'Null',[],None)
 		self.nullEP.prepParams()
 
-	def foo( self, jobId, x, statNodes, detailedModel = None ):
-		nidList, ranksPerNode, params = x
+	def addPart(self, nodeList, nicParams, epParams, numCores, detailedModel = None ):
+                self.parts[nodeList] = PartInfo( nicParams, epParams, calcNetMapSize(nodeList), numCores, detailedModel );
+
+	def createEP( self, jobId, nidList, ranksPerNode, motifs, statNodes, detailedModel = None ):
 		
+                epParams = self.parts[nidList].epParams
+                nicParams = self.parts[nidList].nicParams
+                numCores = self.parts[nidList].numCores
 		# In order to pass the motifLog parameter to only desired nodes of a job
 		# Here we choose the first node in the nidList
 		motifLogNodes = []
-		if (nidList != 'Null' and 'motifLog' in self.epParams):
+                if (nidList != 'Null' and 'motifLog' in epParams):
 			tempnidList = nidList
 			if '-' in tempnidList:
 				tempnidList = tempnidList.split('-')
@@ -43,59 +58,14 @@ class LoadInfo:
 			sys.exit('Error: Requested max nodes ' + str(numNodes) +\
 				 ' is greater than available nodes ' + str(self.numNics) ) 
 
-		params.update( self.epParams )
-		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statNodes, nidList, motifLogNodes, detailedModel ) # added motifLogNodes here
+		ep = EmberEP( jobId, epParams, nicParams, motifs, numCores, ranksPerNode, statNodes, nidList, motifLogNodes, detailedModel ) # added motifLogNodes here
 
 		ep.prepParams()
-		return (ep, nidList)
+		return ep
 
-	def getWorkListFromFile( self, filename, defaultParams ):
-		stage1 = []
-		for line in open(filename, 'r'):
-			line = line.strip()
-			if line:
-				if line[:1] == '[':
-					stage1.append(line)
-				elif line[:1] == '#':
-					continue;
-				else:
-					stage1[-1] += ' ' + line
-
-		tmp = []
-		nidlist=''
-		api=''
-    
-		for item in stage1:
-			tag,str = item.split(' ', 1)
-				
-			if tag == '[JOB_ID]':	
-				api = '' 
-				tmp.append([])
-				tmp[-1].append( str )
-			elif tag == '[API]':	
-				api = str
-			elif tag == '[NID_LIST]':	
-				nidlist = str
-				tmp[-1].append( [] )  
-			elif tag == '[MOTIF]':	
-				tmp[-1][-1].append( dict.copy(defaultParams) )  
-				tmp[-1][-1][-1]['cmd'] = '-nidList=' + nidlist + ' ' + str 
-				if api :
-				    tmp[-1][-1][-1]['api'] = api
-		return tmp 
-		
-	def initFile(self, defaultParams, fileName, statNodeList ):
-		work = self.getWorkListFromFile( fileName, defaultParams  )
-		for item in work:
-			jobid, motifs = item
-			self.map.append( self.foo( jobid, self.readWorkList( motifs ), statNodeList, self.detailedModel ) )
-
-		self.verifyLoadInfo()
-
-	def initWork(self, workList, statNodes ):
+	def initWork(self, nidList, workList, statNodes ):
 		for jobid, work in workList:
-			self.map.append( self.foo( jobid, self.readWorkList( work ), statNodes, self.detailedModel ) )
-		self.verifyLoadInfo()
+			self.parts[nidList].setEndpoint( self.createEP( jobid, nidList, self.parts[nidList].numCores, self.readWorkList( work ), statNodes, self.parts[nidList].detailedModel ) )
 
 	def readWorkList(self, workList ):
 		tmp = {}
@@ -104,31 +74,6 @@ class LoadInfo:
 			cmdList = work['cmd'].split()
 			del work['cmd']
 
-			ranksPerNode = self.numCores 
-			nidList = []
-			while len(cmdList):
-				if "-" != cmdList[0][0]:
-					break
-
-				o, a = cmdList.pop(0).split("=")
-
-				if "-ranksPerNode" == o:
-					ranksPerNode = int(a)
-				elif "-nidList" == o:
-					nidList = a
-				else:
-					sys.exit("bad argument")	
-
-			if 0 == len(nidList):
-				nidList = "0-" + str(self.numNodes-1) 
-			
-			if "Null" != cmdList[0]:
-				print "EMBER: Job: -nidList={0} -ranksPerNode={1} {2}".format( nidList, ranksPerNode, cmdList )
-
-			if  ranksPerNode > self.numCores:
-				sys.exit("Error: " + str(ranksPerNode) + " ranksPerNode is greater than "+
-						str(self.numCores) + " coresPerNode")
-
 			motif = self.parseCmd( "ember.", "Motif", cmdList, i )
 
 			for x in work.items():
@@ -136,7 +81,7 @@ class LoadInfo:
 
 			tmp.update( motif )
 
-		return ( nidList, ranksPerNode, tmp )
+		return tmp
 
 	def parseCmd(self, motifPrefix, motifSuffix, cmdList, cmdNum ):
 		motif = {} 
@@ -156,12 +101,6 @@ class LoadInfo:
 
 		return motif
 
-	def verifyLoadInfo(self):
-		#print "verifyLoadInfo", "numNodes", self.numNodes, "numCores", self.numCores
-		#for ep,nidList in self.map:
-			#print nidList
-		return True
-
 	def inRange( self, nid, start, end ):
 		if nid >= start:
 			if nid <= end:
@@ -169,7 +108,8 @@ class LoadInfo:
 		return False
 
 	def setNode(self,nodeId):
-		for ep, nidList in self.map:
+		for nidList, part in self.parts.items():
+                        ep = part.endpoint
 			x = nidList.split(',')
 			for y in x:	
 				tmp = y.split('-')
