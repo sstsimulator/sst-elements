@@ -2,7 +2,6 @@ import pprint
 import sys 
 from loadUtils import *
 from EmberEP import *
-#from loadFileParse import *
 
 class PartInfo:
 	def __init__(self, nicParams, epParams, numNodes, numCores, detailedModel = None ):
