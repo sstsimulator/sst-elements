@@ -64,13 +64,15 @@ class LoadInfo:
 
 	def initWork(self, nidList, workList, statNodes ):
 		for jobid, work in workList:
-			self.parts[nidList].setEndpoint( self.createEP( jobid, nidList, self.parts[nidList].numCores, self.readWorkList( work ), statNodes, self.parts[nidList].detailedModel ) )
+			self.parts[nidList].setEndpoint( self.createEP( jobid, nidList, self.parts[nidList].numCores, self.readWorkList( jobid, nidList, work ), statNodes, self.parts[nidList].detailedModel ) )
 
-	def readWorkList(self, workList ):
+	def readWorkList(self, jobid, nidList, workList ):
 		tmp = {}
 		tmp['motif_count'] = len(workList) 
 		for i, work in enumerate( workList ) :
 			cmdList = work['cmd'].split()
+
+			print "EMBER: Job={} nidList=\'{}\' Motif=\'{}\'".format( jobid, nidList, ' '.join(cmdList) )
 			del work['cmd']
 
 			motif = self.parseCmd( "ember.", "Motif", cmdList, i )
