@@ -208,6 +208,8 @@ EXTRA_DIST = \
 	test/emberLoad.py \
 	test/exaParams.py \
 	test/loadInfo.py \
+	test/EmberEP.py \
+	test/loadFileParse.py \
 	test/CrossProduct.py \
 	test/networkConfig.py \
 	test/Tester.py \
