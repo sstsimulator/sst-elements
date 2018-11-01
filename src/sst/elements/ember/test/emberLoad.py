@@ -6,6 +6,7 @@ from sst.merlin import *
 from loadInfo import *
 from networkConfig import *
 from loadFileParse import *
+from paramUtils import *
 
 debug    = 0
 emberVerbose = 0
@@ -262,7 +263,7 @@ else:
 if int(numNodes) == 0:
     numNodes = int(topoInfo.getNumNodes())
 
-nidList='0-' + str(numNodes-1)
+nidList='0-' + str(int(numNodes)-1)
 
 if int(numNodes) > int(topoInfo.getNumNodes()):
     sys.exit("need more nodes want " + str(numNodes) + ", have " + str(topoInfo.getNumNodes()))
@@ -436,19 +437,26 @@ baseNicParams = {
 loadInfo = LoadInfo( topoInfo.getNumNodes(), baseNicParams, epParams)
 
 if len(loadFile) > 0:
-    for jobid, nidlist, motifs in ParseLoadFile( loadFile ):
+    for jobid, nidlist, params, api, motifs in ParseLoadFile( loadFile ):
 
         workList = []
         workFlow = []
 
+        myNicParams = copy.deepcopy(nicParams)
+        myEpParams = copy.deepcopy(epParams)
+
+        updateParams( params, sst.merlin._params, myNicParams, myEpParams )
+
         for motif in motifs:
             tmp = dict.copy( motifDefaults )
+            if len(api):
+                tmp['api'] = api
             tmp['cmd'] = motif
             workFlow.append( tmp )
 
 	workList.append( [jobid, workFlow] )
 
-        loadInfo.addPart( nidlist, copy.deepcopy(nicParams), copy.deepcopy(epParams), numCores,  model )
+        loadInfo.addPart( nidlist, myNicParams, myEpParams, numCores,  model )
         loadInfo.initWork( nidlist, workList, statNodeList )
 
 elif len(workList) > 0:
