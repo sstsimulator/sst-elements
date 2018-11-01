@@ -64,6 +64,11 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     m_detailedCompute = m_os->getDetailedCompute();
     m_memHeapLink = m_os->getMemHeapLink();
 
+    Params famMapperParams = params.find_prefix_params( "famAddrMapper." );
+    if ( famMapperParams.size() ) {
+        m_famAddrMapper = dynamic_cast<FamAddrMapper*>( loadModule( famMapperParams.find<std::string>("name"), famMapperParams ) );
+    }
+
     std::string motifLogFile = params.find<std::string>("motifLog", "");
     if("" != motifLogFile) {
         std::ostringstream logPrefix;
