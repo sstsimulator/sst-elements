@@ -166,7 +166,7 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
     }
     SimTime_t start = m_nic.getCurrentSimTimeNano();
     std::vector<MemOp>* vec = new std::vector<MemOp>;
-    vec->push_back( MemOp( 0, 16, MemOp::Op::HostBusWrite,
+    vec->push_back( MemOp( -1, 16, MemOp::Op::HostBusWrite,
          [=]() {
             m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"handleNicEvent",1,NIC_DBG_SHMEM,"latency=%" PRIu64 "\n", 
                             m_nic.getCurrentSimTimeNano() - start);
