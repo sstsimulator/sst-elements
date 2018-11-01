@@ -154,8 +154,29 @@ public:
 		int numWalkers = params.find<int>( "numWalkers", 1 );
 		int numTlbSlots = params.find<int>( "numTlbSlots", 1 );
         int nicToHostMTU = params.find<int>( "nicToHostMTU", 256 );
-        bool useHostCache = params.find<bool>( "useHostCache", true );
-        bool useBusBridge = params.find<bool>( "useBusBridge", true );
+		std::string tmp = params.find<std::string>( "useHostCache", "yes" );
+		bool useHostCache;
+		if ( 0 == tmp.compare("yes" ) ) {
+			useHostCache = true;
+		} else if ( 0 == tmp.compare("no" ) ) {
+			useHostCache = false;
+		} else {
+			m_dbg.fatal(CALL_INFO,0,"unknown value for parameter useHostCache '%s'\n",tmp.c_str()); 
+		}
+
+		bool useBusBridge;
+		tmp = params.find<std::string>( "useBusBridge", "yes" );
+		if ( 0 == tmp.compare("yes" ) ) {
+			useBusBridge = true;
+		} else if ( 0 == tmp.compare("no" ) ) {
+			useBusBridge = false;
+		} else {
+			m_dbg.fatal(CALL_INFO,0,"unknown value for parameter useBusBridge '%s'\n",tmp.c_str()); 
+		}
+
+		if ( 0 == params.find<std::string>( "printConfig", "no" ).compare("yes" ) ) {
+			m_dbg.output("Node id=%d is using SimpleMemoryModel, useBusBridge=%d, useHostCache=%d\n", id, useBusBridge, useHostCache);
+		}
 
 		m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
 
@@ -176,7 +197,7 @@ public:
 		} else {
 	    	nicMuxUnit = m_muxUnit;
 		}
-		
+
         m_sharedTlb = new SharedTlb( *this, m_dbg, id, tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers );
 		
 		m_nicUnit = new NicUnit( *this, m_dbg, id );
