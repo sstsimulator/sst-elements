@@ -277,11 +277,18 @@ class HadesSHMEM : public Shmem::Interface
         delete e;
     }
 
-    int calcNetPE( int pe ) {
-        return m_os->getInfo()->getGroup( MP::GroupWorld )->getMapping( pe ) ;
+    int calcNetPE( uint32_t pe ) {
+		int tmp;
+		if ( pe & 1 << 31 ) {
+			pe &= ~(1<<31);
+			tmp =m_os->getInfo()->getGroup( MP::GroupMachine )->getMapping( pe ) ;
+		} else {
+			tmp =m_os->getInfo()->getGroup( MP::GroupWorld )->getMapping( pe ) ;
+		}
+		dbg().debug(CALL_INFO,1,SHMEM_BASE,"%d -> %d\n",pe,tmp);
+        return  tmp;
     }
 
-    FunctionSM& functionSM() { return m_os->getFunctionSM(); }
     SST::Link*      m_selfLink;
 
     Heap* m_heap;
