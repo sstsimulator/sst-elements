@@ -135,6 +135,8 @@ Hades::Hades( Component* owner, Params& params ) :
 
         m_sreg->publish();
 	}
+	Group* group = m_info.getGroup( m_info.newGroup( MP::GroupMachine, Info::Identity ) );
+	group->initMapping(  m_numNodes );
 }
 
 Hades::~Hades()
