@@ -1,17 +1,11 @@
 
-import sys,getopt
-import pprint
+import sys,getopt,copy,pprint,random
 
 import sst
 from sst.merlin import *
-
-import loadInfo
 from loadInfo import *
-
-import networkConfig 
 from networkConfig import *
-
-import random 
+from loadFileParse import *
 
 debug    = 0
 emberVerbose = 0
@@ -27,6 +21,7 @@ workList = []
 workFlow = []
 numCores = 1
 numNodes = 0
+nidList = ''
 
 platform = 'default'
 
@@ -158,6 +153,9 @@ for o, a in opts:
 if 1 == len(sys.argv):
 	simConfig = 'defaultSim'
 
+if len(loadFile) > 0 and  len(workList) > 0:
+	sys.exit("Error: can't specify both loadFile and cmdLine");
+
 if simConfig:
 	try:
 		config = __import__( simConfig, fromlist=[''] )
@@ -263,6 +261,8 @@ else:
 
 if int(numNodes) == 0:
     numNodes = int(topoInfo.getNumNodes())
+
+nidList='0-' + str(numNodes-1)
 
 if int(numNodes) > int(topoInfo.getNumNodes()):
     sys.exit("need more nodes want " + str(numNodes) + ", have " + str(topoInfo.getNumNodes()))
@@ -425,22 +425,37 @@ epParams.update(hermesParams)
 #pprint.pprint( nicParams, width=1)
 #pprint.pprint( sst.merlin._params, width=1)
 
+baseNicParams = {
+    "packetSize" : networkParams['packetSize'],
+    "link_bw" : networkParams['link_bw'],
+    "input_buf_size" : networkParams['input_buf_size'],
+    "output_buf_size" : networkParams['output_buf_size'],
+    "module" : nicParams['module']
+}
 
-loadInfo = LoadInfo( nicParams, epParams, numNodes, numCores, topoInfo.getNumNodes(), model )
+loadInfo = LoadInfo( topoInfo.getNumNodes(), baseNicParams, epParams)
 
 if len(loadFile) > 0:
-	if len(workList) > 0:
-		sys.exit("Error: can't specify both loadFile and cmdLine");
+    for jobid, nidlist, motifs in ParseLoadFile( loadFile ):
 
-	loadInfo.initFile( motifDefaults, loadFile, statNodeList )
+        workList = []
+        workFlow = []
+
+        for motif in motifs:
+            tmp = dict.copy( motifDefaults )
+            tmp['cmd'] = motif
+            workFlow.append( tmp )
+
+	workList.append( [jobid, workFlow] )
+
+        loadInfo.addPart( nidlist, copy.deepcopy(nicParams), copy.deepcopy(epParams), numCores,  model )
+        loadInfo.initWork( nidlist, workList, statNodeList )
+
+elif len(workList) > 0:
+    loadInfo.addPart( nidList, nicParams, epParams, numCores,  model )
+    loadInfo.initWork( nidList, workList, statNodeList )
 else:
-	if len(workList) > 0:
-		if len(loadFile) > 0:
-			sys.exit("Error: can't specify both loadFile and cmdLine");
-
-		loadInfo.initWork( workList, statNodeList )
-	else:
-		sys.exit("Error: need a loadFile or cmdLine")
+    sys.exit("Error: need a loadFile or cmdLine")
 
 if topo.getName() == "Fat Tree":
 	topo.keepEndPointsWithRouter()

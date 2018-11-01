@@ -2,7 +2,7 @@ EMBER: platform: default
 EMBER: network: topology=torus shape=4x4x4
 EMBER: numNodes=64 numNics=64
 EMBER: network: BW=4GB/s pktSize=2048B flitSize=8B
-EMBER: Job: -nidList=0-63 -ranksPerNode=1 ['Init']
-EMBER: Job: -nidList=0-63 -ranksPerNode=1 ['Sweep3D', 'nx=30', 'ny=30', 'nz=30', 'computetime=140', 'pex=4', 'pey=16', 'pez=0', 'kba=10']
-EMBER: Job: -nidList=0-63 -ranksPerNode=1 ['Fini']
+EMBER: Job=0 nidList='0-63' Motif='Init'
+EMBER: Job=0 nidList='0-63' Motif='Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10'
+EMBER: Job=0 nidList='0-63' Motif='Fini'
 Simulation is complete, simulated time: 4.08782 ms
