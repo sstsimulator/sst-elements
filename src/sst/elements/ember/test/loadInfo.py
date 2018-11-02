@@ -72,7 +72,10 @@ class LoadInfo:
 		for i, work in enumerate( workList ) :
 			cmdList = work['cmd'].split()
 
-			print "EMBER: Job={} nidList=\'{}\' Motif=\'{}\'".format( jobid, nidList, ' '.join(cmdList) )
+			tmpList = nidList[:10]
+			if len(nidList) > 10:
+				tmpList = tmpList + '...'
+			print "EMBER: Job={} nidList=\'{}\' Motif=\'{}\'".format( jobid, tmpList, ' '.join(cmdList) )
 			del work['cmd']
 
 			motif = self.parseCmd( "ember.", "Motif", cmdList, i )

@@ -1,0 +1,53 @@
+# This file must be ordered
+#
+# [JOB_ID]
+# [NID_LIST]
+# [MOTIF_API]
+# [PARAM]
+# [MOTIF]
+# [MOTIF]
+#
+# keywords must be left justified and not contain white space
+# all characters between keywords will be considered part of the leading keyword 
+# you can have multiple MOTIF keywords for a given JOB_ID 
+# you can have multiple jobs
+# two jobs can not have the same NID 
+
+[JOB_ID] 10 
+[NID_LIST] generateNidList=generateNidListInterval(1,80,2) 
+[MOTIF_API]  HadesSHMEM
+[PARAM] nic:verboseLevel=0
+[PARAM] nic:verboseMask=-1
+[PARAM] nic:useSimpleMemoryModel=1
+[PARAM] nic:simpleMemoryModel.useBusBridge=yes
+[PARAM] nic:simpleMemoryModel.useHostCache=yes
+[PARAM] nic:simpleMemoryModel.printConfig=no
+[PARAM] ember:firefly.hadesSHMEM.verboseLevel=0
+[PARAM] ember:firefly.hadesSHMEM.verboseMask=-1
+[PARAM] ember:verbose=0
+[PARAM] ember:famAddrMapper.name=ember.RR_FamAddrMapper
+[PARAM] ember:famAddrMapper.bytesPerNode=32KiB
+[PARAM] ember:famAddrMapper.numNodes=100
+[PARAM] ember:famAddrMapper.start=0
+[PARAM] ember:famAddrMapper.interval=2
+
+[MOTIF] ShmemFAM_Get2 totalBytes=3200KiB getLoop=200 backed=no
+
+[JOB_ID] 11
+[NID_LIST] generateNidList=generateNidListInterval(0,100,2) 
+[PARAM] nic:verboseLevel=0
+[PARAM] nic:verboseMask=-1
+[PARAM] nic:printConfig=no
+[PARAM] nic:useSimpleMemoryModel=1
+[PARAM] nic:simpleMemoryModel.verboseLevel=0
+[PARAM] nic:simpleMemoryModel.verboseMask=-1
+[PARAM] nic:simpleMemoryModel.useHostCache=no
+[PARAM] nic:simpleMemoryModel.useBusBridge=no
+[PARAM] nic:simpleMemoryModel.printConfig=no
+[PARAM] nic:FAM_memSize=32KiB
+[PARAM] nic:FAM_backed=no
+[MOTIF] Null
+
+[JOB_ID] 12
+[NID_LIST] generateNidList=generateNidListInterval(161,20,2) 
+[MOTIF] Null

@@ -26,7 +26,7 @@ namespace Firefly {
 
 class Info {
   public:
-    Info() : m_currentGroupID(0) {}
+    Info() : m_currentGroupID(MP::GroupWorld+1) {}
 	~Info() {
     	std::map<MP::Communicator, Group*>::iterator iter; 
 		for ( iter = m_groupMap.begin(); iter != m_groupMap.end(); ++iter ) {

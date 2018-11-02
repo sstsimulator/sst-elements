@@ -1,4 +1,6 @@
-import pprint
+import pprint,sys
+
+
 class ParseLoadFile:
     def __init__( self, filename ):
         self.fp = open(filename, 'r')
@@ -13,18 +15,42 @@ class ParseLoadFile:
             if key == '[JOB_ID]':
                 self.stuff = self.stuff + [{ 'jobid': int(value) }]
                 self.stuff[-1]['motifs'] = [] 
+                self.stuff[-1]['motif_api'] = '' 
+                self.stuff[-1]['params'] = {} 
             elif key == '[NID_LIST]':
-                self.stuff[-1]['nid_list'] = value.strip()
+                value = ''.join(value.split())
+                if value[0].isdigit():
+                    self.stuff[-1]['nid_list'] = value.strip()
+                else:
+                    left,right = value.split('=') 
+                    if left == 'generateNidList':
+                        self.stuff[-1]['nid_list'] = self.generateNidList( right ) 
+                    else:
+                        sys.exit('ERROR: invalid NID_LIST {}'.format(value))
+
+            elif key == '[PARAM]':
+                key,value = value.strip().split('=')
+                self.stuff[-1]['params'][key] = value 
+            elif key == '[MOTIF_API]':
+                self.stuff[-1]['motif_api'] = value.strip()
             elif key == '[MOTIF]':
                 self.stuff[-1]['motifs'] = self.stuff[-1]['motifs'] + [value] 
             else:
-                sys.exit('foobar')
+                sys.exit('ERROR: unknown key {}'.format(key))
 
         self.fp.close() 
-        #pprint.pprint(self.stuff)
 
     def __iter__(self):
             return self
+
+    def generateNidList( self, generator ):
+        name,args = generator.split('(',1)
+        try:
+            module = __import__( name, fromlist=[''] )
+        except:
+            sys.exit('Failed: could not import nidlist generator `{0}`'.format(name) )
+
+        return module.generate( args.split(')',1)[0] ) 
 
     def next(self):
 
@@ -33,9 +59,11 @@ class ParseLoadFile:
         else :
             jobid = self.stuff[0]['jobid'] 
             nidlist = self.stuff[0]['nid_list']
+            params = self.stuff[0]['params']
+            motif_api = self.stuff[0]['motif_api']
             motifs = self.stuff[0]['motifs']
             self.stuff.pop(0)
-            return jobid, nidlist, motifs 
+            return jobid, nidlist, params, motif_api, motifs 
             
 
     def getKeyValue( self ):

@@ -333,11 +333,11 @@ class MemAddr {
     }
 
     template< class TYPE >
-    uint64_t getSimVAddr( size_t offset = 0 ) {
+    uint64_t getSimVAddr( size_t offset = 0 ) const {
         return simVAddr + offset * sizeof( TYPE );
     }
 
-    uint64_t getSimVAddr( size_t offset = 0) {
+    uint64_t getSimVAddr( size_t offset = 0) const {
         return simVAddr + offset;
     }
 
@@ -345,7 +345,7 @@ class MemAddr {
         simVAddr = addr;
     }
 
-    void* getBacking( size_t offset = 0 ) {
+    void* getBacking( size_t offset = 0 ) const {
 	   	void* ptr = NULL;
 		if ( backing ) {
         	ptr =  (uint8_t*) backing + offset;
