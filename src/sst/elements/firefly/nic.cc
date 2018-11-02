@@ -54,6 +54,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
         params.find<uint32_t>("verboseMask",-1), 
         Output::STDOUT);
 
+    bool printConfig = ( 0 == params.find<std::string>( "printConfig", "no" ).compare("yes" ) );
+
 	// The link between the NIC and HOST historically provided the latency of crossing a bus such as PCI
 	// hence it was configured at wire up with a value like 150ns. The NIC has since taken on some HOST functionality
 	// so the latency has been dropped to 1ns. The bus latency must still be added for some messages so the 
@@ -167,7 +169,9 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_shmem = new Shmem( *this, shmemParams, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
 	size_t FAM_memSizeBytes = params.find<SST::UnitAlgebra>("FAM_memSize" ).getRoundedValue();
 	if ( FAM_memSizeBytes ) {
-		m_dbg.output("Node id=%d: register FAM memory %zu bytes\n", m_myNodeId, FAM_memSizeBytes);
+		if ( printConfig ) {
+			m_dbg.output("Node id=%d: register FAM memory %zu bytes\n", m_myNodeId, FAM_memSizeBytes);
+		}
 
 		void* backing = NULL;
 		if ( 0 == params.find<std::string>("FAM_backed", "yes" ).compare("yes") ) {
