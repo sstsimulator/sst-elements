@@ -39,7 +39,7 @@ class RR_FamAddrMapper : public FamAddrMapper {
 
 		m_totalBlocks = m_numNodes * m_bytesPerNode/m_blockSize;
 
-		printf("numNodes=%d bytesPerNode=%zu blockSize=%d m_startNode=%d interval=%d\n",m_numNodes, m_bytesPerNode, m_blockSize, m_start, m_interval );
+		//printf("numNodes=%d bytesPerNode=%zu blockSize=%d m_startNode=%d interval=%d\n",m_numNodes, m_bytesPerNode, m_blockSize, m_start, m_interval );
 	}
 
 	virtual void getAddr( Output& output, uint64_t globalOffset, int& node, uint64_t& localOffset ) {
