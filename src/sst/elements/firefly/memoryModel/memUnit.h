@@ -89,7 +89,7 @@
 						Entry& entry = m_blocked.front( );
 
                         work( entry.delay, entry.op, entry.memReq, entry.src, entry.qTime, entry.callback );
-                		m_model.schedResume( 0, entry.src, (UnitBase*) ( entry.op == Read ? "R" : "W" ) );
+                		m_model.schedResume( 0, entry.src );
 						m_blocked.pop();
                     }
                 };
