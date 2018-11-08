@@ -34,6 +34,7 @@ libember_la_SOURCES = \
 	embermotiflog.h \
 	embermotiflog.cc \
 	embermemoryev.h \
+	emberFamAddrMapper.h \
 	libs/emberLib.h \
 	libs/misc.h \
 	libs/miscEvents/emberGetNodeNumEvent.h \
@@ -213,6 +214,14 @@ EXTRA_DIST = \
 	test/loadFileParse.py \
 	test/CrossProduct.py \
 	test/networkConfig.py \
+	test/generateNidListInterval.py \
+	test/generateNidListRange.py \
+	test/loadFAM \
+	test/loadFAM200 \
+	test/loadFAM2048 \
+	test/loadFileParse.py \
+	test/loadUtils.py \
+	test/paramUtils.py \
 	test/Tester.py \
 	test/defaultSim.py \
 	test/defaultParams.py \
