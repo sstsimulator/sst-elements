@@ -32,6 +32,7 @@ using namespace std::placeholders;
 int Nic::MaxPayload = (int)((1L<<32) - 1);
 int Nic::m_packetId = 0;
 int Nic::ShmemSendMove::m_alignment = 64;
+int Nic::EntryBase::m_alignment = 64;
 
 Nic::Nic(ComponentId_t id, Params &params) :
     Component( id ),
@@ -83,6 +84,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
     int maxRecvMachineQsize = params.find<int>( "maxRecvMachineQsize", 1 );
     Nic::ShmemSendMove::m_alignment = params.find<int>("shmemSendAlignment",64);
+    Nic::EntryBase::m_alignment = params.find<int>("messageSendAlignment",64);
     int numSendMachines = params.find<int>( "numSendMachines",1);
     if ( numSendMachines < 1 ) {
         m_dbg.fatal(CALL_INFO,-1,"Error: numSendMachines must be greater than 1, requested %d\n",numSendMachines);
