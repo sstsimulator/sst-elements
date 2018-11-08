@@ -248,6 +248,57 @@ processors returned.
 nearestamap - Described below among task mappers
 spectralamap - Described below among task mappers
 
+dfly* - these allocators starting with 'dfly' are published allocation policies 
+that are designed specifically for systems in dragonfly topology.
+
+dflyhybrid - This is the Level-Spread policy for dragonfly systems which spreads 
+jobs within the smallest network level that a given job can fit in at the time 
+of its allocation. If a job fits within the available nodes that are connected
+to a single router, it selects the router with the largest number of idle nodes 
+and allocates the job there. If a job cannot fit within a single router but fits 
+within the available nodes in a single group, it selects the most idle group 
+and allocates the job there. To further reduce load imbalance on local links in 
+this group, it selects nodes connected to different routers in a round-robin 
+manner. If a job cannot fit within a single group, it spreads the job throughout 
+the entire network, where it selects nodes in different groups in a round-robin 
+manner.
+
+dflyjokanovic - This is the policy proposed by Jokanovic et al. and adapted to
+dragonfly systems. This policy places a virtual boundary dividing the machine 
+into two partitions. When allocating a job whose size is smaller than the number 
+of nodes per group, the policy allocates the job to a group in the first 
+partition that has enough idle nodes. When allocating larger jobs, the policy 
+places the job in the second partition, starting from the last nodes.
+
+dflyrdr - This is the Random Routers policy for dragonfly systems. It randomly 
+selects a router and then selects idle nodes connected to that router following 
+the label order, and repeats this step as necessary.
+
+dflyrdg - This is the Random Group policy for dragonfly systems. It randomly 
+chooses a group and selects the nodes in that group following the label order, 
+and repeats this step as necessary.
+
+dflyrrn - This is the Round Robin Nodes policy for dragonfly systems. It starts 
+from the first group, selects the first idle node following the label order in 
+that group, then moves to the next group and repeats the same process as 
+necessary.
+
+dflyrrr - This is the Round Robin Routers policy for dragonfly systems. It 
+starts from the first group, chooses the first available router following the 
+label order and selects the idle nodes connected to that router following the 
+label order. It then moves to the next group and repeats the same process as 
+necessary.
+
+dflyslurm - This is the Slurm's allocation policy for dragonfly systems, 
+implemented in the Slurm Workload Manager. It first attempts to allocate a 
+job to the nodes connected to a single router. The first available router 
+with a sufficient number of idle nodes is chosen, and the nodes connected
+to that router are allocated following the label order. If there are no 
+routers with a sufficient number of idle nodes, it searches for the router 
+with the fewest number of idle nodes and selects the idle nodes connected to
+that router following the label order, and repeats this step as necessary.
+
+
         Task Mappers: 
 
 - simple: maps the tasks to the allocated nodes with given order
