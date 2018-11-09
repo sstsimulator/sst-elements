@@ -390,7 +390,8 @@ private:
     SimTime_t               checkMaxWaitInterval_;      // Check for timeouts on this interval - when clock is on
     UnitAlgebra             maxWaitWakeupDelay_;        // Set wakeup event to check timeout on this interval - when clock is off
     bool                    maxWaitWakeupExists_;       // Whether a timeout wakeup exists
-    bool                    clockLink_; // Whether link actually needs clock() called or not
+    bool                    clockUpLink_; // Whether link actually needs clock() called or not
+    bool                    clockDownLink_; // Whether link actually needs clock() called or not
 
     /*
      * Statistics API stats

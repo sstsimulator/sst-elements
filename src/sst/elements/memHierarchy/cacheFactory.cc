@@ -198,6 +198,7 @@ void Cache::createCoherenceManager(Params &params) {
  *      high_network_0 & cache          : connected to core/cache/bus above and network talking to a cache below
  *      high_network_0 & directory      : connected to core/cache/bus above and network talking to a directory below
  *      directory                       : connected to a network talking to a cache above and a directory below (single network connection)
+ *      cache & low_network_0           : connected to network above talking to a cache and core/cache/bus below
  */
 void Cache::configureLinks(Params &params) {
     bool highNetExists  = false;    // high_network_0 is connected -> direct link toward CPU (to bus or directly to other component)
@@ -222,11 +223,8 @@ void Cache::configureLinks(Params &params) {
             out_->fatal(CALL_INFO,-1,"%s, Error: multiple connected high ports detected. Use the 'Bus' component to connect multiple entities to port 'high_network_0' (e.g., connect 2 L1s to a bus and connect the bus to the L2)\n",
                     getName().c_str());
     } else {
-        if (!lowDirExists)
+        if (!lowCacheExists && !lowDirExists)
             out_->fatal(CALL_INFO,-1,"%s, Error: no connected ports detected. Valid ports are high_network_0, cache, directory, and low_network_n\n",
-                    getName().c_str());
-        if (lowCacheExists || lowNetExists)
-            out_->fatal(CALL_INFO,-1,"%s, Error: no connected high ports detected. Please connect a bus/cache/core on port 'high_network_0'\n",
                     getName().c_str());
     }
 
@@ -272,7 +270,7 @@ void Cache::configureLinks(Params &params) {
 
         linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        clockLink_ = false; /* Currently only linkDown_ may need to be clocked */
+        clockUpLink_ = clockDownLink_ = false;
 
     } else if (highNetExists && lowCacheExists) {
 
@@ -302,7 +300,38 @@ void Cache::configureLinks(Params &params) {
         // Configure high link
         linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
+        clockDownLink_ = true;
+        clockUpLink_ = false;
+
+    } else if (lowCacheExists && lowNetExists) { // "lowCache" is really "highCache" now
+        d_->debug(_INFO_,"Configuring cache with a network link to a cache above and a direct link below\n");
+
+        nicParams.find<std::string>("group", "", found);
+        if (!found) nicParams.insert("group", "1");
+
+        if (isPortConnected("cache_ack") && isPortConnected("cache_fwd") && isPortConnected("cache_data")) {
+            nicParams.find<std::string>("req.port", "", found);
+            if (!found) nicParams.insert("req.port", "cache");
+            nicParams.find<std::string>("ack.port", "", found);
+            if (!found) nicParams.insert("ack.port", "cache_ack");
+            nicParams.find<std::string>("fwd.port", "", found);
+            if (!found) nicParams.insert("fwd.port", "cache_fwd");
+            nicParams.find<std::string>("data.port", "", found);
+            if (!found) nicParams.insert("data.port", "cache_data");
+            linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
+        } else {
+            nicParams.find<std::string>("port", "", found);
+            if (!found) nicParams.insert("port", "cache");
+            linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+        }
+
+        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+
+        // Configure high link
+        linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, memlink));
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        clockUpLink_ = true;
+        clockDownLink_ = false;
 
     } else if (highNetExists && lowDirExists) {
 
@@ -332,7 +361,8 @@ void Cache::configureLinks(Params &params) {
         // Configure high link
         linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
+        clockDownLink_ = true;
+        clockUpLink_ = false;
 
     } else {    // lowDirExists
 
@@ -404,7 +434,8 @@ void Cache::configureLinks(Params &params) {
 
         // Configure high link
         linkUp_ = linkDown_;
-        clockLink_ = true; /* Currently only linkDown_ may need to be clocked */
+        clockDownLink_ = true;
+        clockUpLink_ = false;
     }
 
 }
