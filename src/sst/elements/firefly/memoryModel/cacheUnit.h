@@ -42,6 +42,9 @@
        		m_totalCnt = model.registerStatistic<uint64_t>(name + "_cache_total");
 			assert( m_numMSHR <= cacheSize );
         }
+		~CacheUnit() {
+			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"numPending=%d,  \n",m_numPending);
+		}
 
         bool m_blockedOnMemUnit;;
 		int m_numIssuedLoads;
@@ -111,6 +114,7 @@
             }
         }
 		void checkHitRetry( ) {
+            m_scheduled = false;
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"\n");
 			while ( ! blocked() && ! m_blockedQ.empty() ) {
 				Entry* entry = m_blockedQ.front();	
@@ -125,7 +129,6 @@
            	    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"retry\n");
             }
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"%s addr=%#" PRIx64 "\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
-            m_scheduled = false;
             if ( m_cache.isValid( entry->req->addr ) ) { 
 				m_totalCnt->addData(1);
            	    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"done, hit %s addr=%#" PRIx64 "\n",
