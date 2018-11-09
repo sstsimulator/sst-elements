@@ -586,8 +586,14 @@ bool Cache::clockTick(Cycle_t time) {
     timestamp_++;
     bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
         
-    bool nicIdle = true;
-    if (clockLink_) nicIdle = linkDown_->clock();
+    bool upIdle = true;
+    bool downIdle = true;
+    if (clockUpLink_) {
+        upIdle = linkUp_->clock();
+    }
+    if (clockDownLink_) {
+        downIdle = linkDown_->clock();
+    }
 
     if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
         
@@ -635,7 +641,7 @@ bool Cache::clockTick(Cycle_t time) {
         requestBuffer_.swap(tmpBuffer);
     }
     // Disable lower-level cache clocks if they're idle
-    if (queuesEmpty && nicIdle && clockIsOn_ && !conflicts) {
+    if (queuesEmpty && upIdle && downIdle && clockIsOn_ && !conflicts) {
         turnClockOff();
         return true;
     }
