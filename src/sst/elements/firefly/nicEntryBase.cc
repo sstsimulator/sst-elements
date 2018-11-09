@@ -86,8 +86,10 @@ void Nic::EntryBase::copyOut( Output& dbg, int numBytes,
     dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"Send: "
                     "ioVec.size()=%lu\n", ioVec().size() );
 
-    size_t bufSpace = numBytes - event.bufSize();
-    numBytes = (bufSpace / m_alignment ) * m_alignment;
+    if ( m_alignment > 1) {
+        size_t bufSpace = numBytes - event.bufSize();
+        numBytes = (bufSpace / m_alignment ) * m_alignment;
+    }
 
     for ( ; currentVec() < ioVec().size() &&
                 event.bufSize() <  numBytes;
