@@ -48,3 +48,4 @@
 #include "shmem/motifs/emberShmemAtomicInc.h"
 #include "shmem/motifs/emberShmemFAM_Get.h"
 #include "shmem/motifs/emberShmemFAM_Get2.h"
+#include "shmem/motifs/emberShmemFAM_RandGet.h"

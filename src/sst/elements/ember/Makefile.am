@@ -196,6 +196,7 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemAtomicInc.h \
 	shmem/motifs/emberShmemFAM_Get.h \
 	shmem/motifs/emberShmemFAM_Get2.h \
+	shmem/motifs/emberShmemFAM_RandGet.h \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc
 
