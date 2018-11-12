@@ -14,6 +14,7 @@
 # two jobs can not have the same NID 
 
 [JOB_ID] 10 
+# 80 nodes started at network node 1, with an interval of 2
 [NID_LIST] generateNidList=generateNidListInterval(1,80,2) 
 [MOTIF_API]  HadesSHMEM
 [PARAM] nic:verboseLevel=0
@@ -25,15 +26,23 @@
 [PARAM] ember:firefly.hadesSHMEM.verboseLevel=0
 [PARAM] ember:firefly.hadesSHMEM.verboseMask=-1
 [PARAM] ember:verbose=0
+# use the Round Robin mapper 
 [PARAM] ember:famAddrMapper.name=ember.RR_FamAddrMapper
-[PARAM] ember:famAddrMapper.bytesPerNode=32KiB
+# every FAM nodes has X bytes, this number has to match the FAM_memSize of the FAM node
+[PARAM] ember:famAddrMapper.bytesPerNode=2MiB
+# number of FAM nodes
 [PARAM] ember:famAddrMapper.numNodes=100
+# FAM nodes start at 0
 [PARAM] ember:famAddrMapper.start=0
+# FAM nodes have and interval of 2
 [PARAM] ember:famAddrMapper.interval=2
 
-[MOTIF] ShmemFAM_Get2 totalBytes=3200KiB getLoop=200 backed=no
+# randomly get a block for the total number of blocks, totalBytes should be the number
+# of FAM nodes * memory per FAM node 
+[MOTIF] ShmemFAM_RandGet totalBytes=200MiB getLoop=200 backed=no
 
 [JOB_ID] 11
+# 100 FAM nodes starting at network node 0, with an interval of 2
 [NID_LIST] generateNidList=generateNidListInterval(0,100,2) 
 [PARAM] nic:verboseLevel=0
 [PARAM] nic:verboseMask=-1
@@ -44,10 +53,12 @@
 [PARAM] nic:simpleMemoryModel.useHostCache=no
 [PARAM] nic:simpleMemoryModel.useBusBridge=no
 [PARAM] nic:simpleMemoryModel.printConfig=no
-[PARAM] nic:FAM_memSize=32KiB
+# how much memory does the FAM node have
+[PARAM] nic:FAM_memSize=2MiB
 [PARAM] nic:FAM_backed=no
 [MOTIF] Null
 
 [JOB_ID] 12
+# idle nodes
 [NID_LIST] generateNidList=generateNidListInterval(161,20,2) 
 [MOTIF] Null
