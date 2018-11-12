@@ -144,8 +144,8 @@ public:
 
 		for ( int i = 0; i < m_getLoop && m_curBlock < m_numBlocks; i++ ) {
 
-			int foo = (m_curBlock + m_blockOffset) % m_numBlocks; 
-			uint64_t offset = foo * m_blockSize;
+			int block = (m_curBlock + m_blockOffset) % m_numBlocks; 
+			uint64_t offset = block * m_blockSize;
 
 			if ( m_rng ) {
 				int delay = m_rng->generateNextUInt32();
