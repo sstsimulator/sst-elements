@@ -51,7 +51,9 @@ public:
 	{ 
 		m_totalBytes = (size_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue(); 
 		m_getLoop       = params.find<int>("arg.getLoop", 1);
+#if 0
 		m_maxDelay      = params.find<int>("arg.maxDelay",20);
+#endif
 		m_blockSize	    = params.find<int>("arg.blockSize", 4096);
 		m_partitionSize = (size_t) params.find<SST::UnitAlgebra>("arg.partitionSize","16MiB").getRoundedValue();
 		m_backed	    = (bool) ( 0 == params.find<std::string>("arg.backed", "yes").compare("yes") );
@@ -93,9 +95,11 @@ public:
 				printf("block size:              %d\n",	m_blockSize );
 				printf("number of blocks:        %d\n",	m_numBlocks );
 				printf("loop:                    %d\n",	m_getLoop );
+#if 0
 				if ( m_rng ) {
 					printf("using random:        %d\n",	m_maxDelay );
 				}
+#endif
 			}
 			enQ_malloc( evQ, &m_mem, m_numBlocksPerPartition * m_blockSize, m_backed );
 			m_phase = Work;
@@ -169,7 +173,9 @@ public:
 	int m_numBlocksPerPartition;
 	int m_partitionSize;
 	int m_blockSize;
+#if 0
 	int m_maxDelay;
+#endif
 	int m_blockOffset;
 	int m_getLoop;
 	size_t m_totalBytes;
