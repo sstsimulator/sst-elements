@@ -217,8 +217,10 @@ EXTRA_DIST = \
 	test/networkConfig.py \
 	test/generateNidListInterval.py \
 	test/generateNidListRange.py \
+	test/generateNidListRandom.py \
 	test/loadFAM \
 	test/loadFAM200 \
+	test/loadFAM200rand \
 	test/loadFAM2048 \
 	test/loadFileParse.py \
 	test/loadUtils.py \
@@ -228,7 +230,8 @@ EXTRA_DIST = \
 	test/defaultParams.py \
 	test/chamaOpenIBParams.py \
 	test/chamaPSMParams.py \
-	test/bgqParams.py
+	test/bgqParams.py \
+	test/runFAMloadfile
 
 if USE_EMBER_CONTEXTS
 libember_la_SOURCES += \

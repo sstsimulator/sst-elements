@@ -30,7 +30,10 @@ class ParseLoadFile:
 
             elif key == '[PARAM]':
                 key,value = value.strip().split('=')
-                self.stuff[-1]['params'][key] = value 
+                if key == 'ember:famAddrMapper.nidList' and value[0:len('generateNidList')] == 'generateNidList':
+                    self.stuff[-1]['params'][key] = self.generateNidList( value ) 
+                else:
+                	self.stuff[-1]['params'][key] = value 
             elif key == '[MOTIF_API]':
                 self.stuff[-1]['motif_api'] = value.strip()
             elif key == '[MOTIF]':
