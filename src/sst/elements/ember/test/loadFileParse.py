@@ -26,7 +26,7 @@ class ParseLoadFile:
                     if left == 'generateNidList':
                         self.stuff[-1]['nid_list'] = self.generateNidList( right ) 
                     else:
-                        sys.exit('ERROR: invalid NID_LIST {}'.format(value))
+                        sys.exit('ERROR: invalid NID_LIST {0}'.format(value))
 
             elif key == '[PARAM]':
                 key,value = value.strip().split('=')
@@ -39,7 +39,7 @@ class ParseLoadFile:
             elif key == '[MOTIF]':
                 self.stuff[-1]['motifs'] = self.stuff[-1]['motifs'] + [value] 
             else:
-                sys.exit('ERROR: unknown key {}'.format(key))
+                sys.exit('ERROR: unknown key {0}'.format(key))
 
         self.fp.close() 
 
