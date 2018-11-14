@@ -356,41 +356,41 @@ if emberrankmapper:
 for a in params['network']:
     key, value = a.split("=")
     if key in networkParams:
-        print "override networkParams {}={} with {}".format( key, networkParams[key], value )
+        print "override networkParams {0}={1} with {2}".format( key, networkParams[key], value )
     else:
-        print "set networkParams {}={}".format( key, value )
+        print "set networkParams {0}={1}".format( key, value )
     networkParams[key] = value
 
 for a in params['nic']:
     key, value = a.split("=")
     if key in nicParams:
-        print "override nicParams {}={} with {}".format( key, nicParams[key], value )
+        print "override nicParams {0}={1} with {2}".format( key, nicParams[key], value )
     else:
-        print "set nicParams {}={}".format( key, value )
+        print "set nicParams {0}={1}".format( key, value )
     nicParams[key] = value
 
 for a in params['ember']:
     key, value = a.split("=")
     if key in emberParams:
-        print "override emberParams {}={} with {}".format( key, emberParams[key], value )
+        print "override emberParams {0}={1} with {2}".format( key, emberParams[key], value )
     else:
-        print "set emberParams {}={}".format( key, value )
+        print "set emberParams {0}={1}".format( key, value )
     emberParams[key] = value
 
 for a in params['hermes']:
     key, value = a.split("=")
     if key in hermesParams:
-        print "override hermesParams {}={} with {}".format( key, hermesParams[key], value )
+        print "override hermesParams {0}={1} with {2}".format( key, hermesParams[key], value )
     else:
-        print "set hermesParams {}={}".format( key, value )
+        print "set hermesParams {0}={1}".format( key, value )
     hermesParams[key] = value
 
 for a in params['merlin']:
     key, value = a.split("=")
     if key in sst.merlin._params:
-        print "override hermesParams {}={} with {}".format( key, sst.merlin._params[key], value )
+        print "override hermesParams {0}={1} with {2}".format( key, sst.merlin._params[key], value )
     else:
-        print "set merlin {}={}".format( key, value )
+        print "set merlin {0}={1}".format( key, value )
     sst.merlin._params[key] = value
 
 

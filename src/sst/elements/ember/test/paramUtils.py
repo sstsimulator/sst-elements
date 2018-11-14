@@ -3,10 +3,10 @@ import sys
 def updateDict( name, params, key, value ):
     if key in params:
         if str(value) != str(params[key]):
-            print "override {} {}={} with {}".format( name, key, params[key], value )
+            print "override {0} {1}={2} with {3}".format( name, key, params[key], value )
             params[ key ] = value 
     else:
-        print "set {} {}={}".format( name, key, value )
+        print "set {0} {1}={2}".format( name, key, value )
         params[ key ] = value 
 
 def updateParams( params, merlinParams, nicParams, emberParams ):
@@ -20,5 +20,5 @@ def updateParams( params, merlinParams, nicParams, emberParams ):
         elif prefix == 'merlin':
             updateDict( 'merlinParams', merlinParams, suffix, value ) 
         else:
-            sys.exit('ERROR: unknown dictionary {}'.format(prefix))
+            sys.exit('ERROR: unknown dictionary {0}'.format(prefix))
 

@@ -75,7 +75,7 @@ class LoadInfo:
 			tmpList = nidList[:10]
 			if len(nidList) > 10:
 				tmpList = tmpList + '...'
-			print "EMBER: Job={} nidList=\'{}\' Motif=\'{}\'".format( jobid, tmpList, ' '.join(cmdList) )
+			print "EMBER: Job={0} nidList=\'{1}\' Motif=\'{2}\'".format( jobid, tmpList, ' '.join(cmdList) )
 			del work['cmd']
 
 			motif = self.parseCmd( "ember.", "Motif", cmdList, i )

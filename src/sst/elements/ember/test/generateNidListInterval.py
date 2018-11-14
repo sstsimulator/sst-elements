@@ -9,6 +9,6 @@ def generate( args ):
         ret = ret + str(node)
         if i + 1 < length:
             ret = ret + ',' 
-    #print( 'generate( {}, {}, {} ) = \'{}\'').format( start, length, interval, ret )
+    #print( 'generate( {0}, {1}, {2} ) = \'{3}\'').format( start, length, interval, ret )
 
     return ret
