@@ -39,7 +39,7 @@
 
 # randomly get a block for the total number of blocks, totalBytes should be the number
 # of FAM nodes * memory per FAM node 
-[MOTIF] ShmemFAM_RandGet totalBytes=200MiB getLoop=200 backed=no
+[MOTIF] ShmemFAM_Get2 totalBytes=200MiB getLoop=200 backed=no
 
 [JOB_ID] 11
 # 100 nodes randomly placed out 200 nodes,
