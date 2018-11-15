@@ -82,7 +82,6 @@ class RandomNode_FamAddrMapper : public FamAddrMapper {
 
 		nidList += ',';
 
-		//printf("%s \n",nidList.c_str());
 		m_nodeMap.reserve( m_numNodes );
 		int pos = 0;
 

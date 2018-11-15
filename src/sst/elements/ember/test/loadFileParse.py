@@ -1,9 +1,25 @@
-import pprint,sys
+import sys
 
+class Buffer:
+	def __init__(self):
+		self.buffer = ''
+		self.offset = 0
+	def write( self, data ):
+		self.buffer += data
+	def readline( self ):
+		end = self.offset
+		while end < len(self.buffer) and self.buffer[end] != '\n':
+			end += 1	
+		start = self.offset
+		self.offset = end + 1
+		return self.buffer[start:self.offset]
 
 class ParseLoadFile:
+
     def __init__( self, filename ):
         self.fp = open(filename, 'r')
+        self.buffer = Buffer()
+        self.preprocess()
         self.lastLine = self.getline()
 
         self.stuff = [] 
@@ -31,9 +47,9 @@ class ParseLoadFile:
             elif key == '[PARAM]':
                 key,value = value.strip().split('=')
                 if key == 'ember:famAddrMapper.nidList' and value[0:len('generateNidList')] == 'generateNidList':
-                    self.stuff[-1]['params'][key] = self.generateNidList( value ) 
+                    self.stuff[-1]['params'][key] = self.generateNidList( value )
                 else:
-                	self.stuff[-1]['params'][key] = value 
+                    self.stuff[-1]['params'][key] = value
             elif key == '[MOTIF_API]':
                 self.stuff[-1]['motif_api'] = value.strip()
             elif key == '[MOTIF]':
@@ -67,7 +83,34 @@ class ParseLoadFile:
             motifs = self.stuff[0]['motifs']
             self.stuff.pop(0)
             return jobid, nidlist, params, motif_api, motifs 
-            
+
+    def substitute( self, line, variables ):
+        retval = ''
+        line = line.replace('}','{')
+        line = line.split('{')
+        for x in line:
+            if x in variables:
+                retval += variables[x]
+            else:
+                retval += x
+
+        return retval
+
+    def preprocess( self ):
+		vars = {}
+		while True:
+			line = self.fp.readline()
+			if len(line) > 0:
+				if line[0] != '#' and not line.isspace():
+					if line[0:len('[VAR]')] == '[VAR]':
+						tag, rem = line.split(' ',1);
+						var,value = rem.split('=');
+						vars[var] = value.rstrip()
+					else:
+						self.buffer.write( self.substitute(line,vars) )
+			else:
+				return
+
 
     def getKeyValue( self ):
 
@@ -102,8 +145,7 @@ class ParseLoadFile:
 
     def getline(self):
         while True:
-            line = self.fp.readline()
-
+            line = self.buffer.readline()
             if len(line) > 0:
                 if not line.isspace() and line[0] != '#': 
                     return line
