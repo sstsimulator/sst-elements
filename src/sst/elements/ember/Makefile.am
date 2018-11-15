@@ -219,7 +219,7 @@ EXTRA_DIST = \
 	test/generateNidListRange.py \
 	test/generateNidListRandom.py \
 	test/loadFAM \
-	test/loadFAMvar \
+	test/loadFAMvars \
 	test/loadFAM200 \
 	test/loadFAM200rand \
 	test/loadFAM2048 \
