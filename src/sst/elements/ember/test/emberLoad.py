@@ -444,7 +444,8 @@ if len(loadFile) > 0:
 
         myNicParams = copy.deepcopy(nicParams)
         myEpParams = copy.deepcopy(epParams)
-
+        myNidList = copy.deepcopy(nidList)
+ 
         updateParams( params, sst.merlin._params, myNicParams, myEpParams )
 
         for motif in motifs:
@@ -456,8 +457,8 @@ if len(loadFile) > 0:
 
 	workList.append( [jobid, workFlow] )
 
-        loadInfo.addPart( nidlist, myNicParams, myEpParams, numCores,  model )
-        loadInfo.initWork( nidlist, workList, statNodeList )
+        loadInfo.addPart( myNidlist, myNicParams, myEpParams, numCores,  model )
+        loadInfo.initWork( myNidlist, workList, statNodeList )
 
 elif len(workList) > 0:
     loadInfo.addPart( nidList, nicParams, epParams, numCores,  model )
