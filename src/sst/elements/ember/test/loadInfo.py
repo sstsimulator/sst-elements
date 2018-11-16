@@ -2,6 +2,7 @@ import pprint
 import sys 
 from loadUtils import *
 from EmberEP import *
+from paramUtils import *
 
 class PartInfo:
 	def __init__(self, nicParams, epParams, numNodes, numCores, detailedModel = None ):
@@ -72,10 +73,7 @@ class LoadInfo:
 		for i, work in enumerate( workList ) :
 			cmdList = work['cmd'].split()
 
-			tmpList = nidList[:10]
-			if len(nidList) > 10:
-				tmpList = tmpList + '...'
-			print "EMBER: Job={} nidList=\'{}\' Motif=\'{}\'".format( jobid, tmpList, ' '.join(cmdList) )
+			print "EMBER: Job={} nidList=\'{}\' Motif=\'{}\'".format( jobid, truncate(nidList), ' '.join(cmdList) )
 			del work['cmd']
 
 			motif = self.parseCmd( "ember.", "Motif", cmdList, i )
