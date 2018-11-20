@@ -227,6 +227,10 @@ void Cache::configureLinks(Params &params) {
             out_->fatal(CALL_INFO,-1,"%s, Error: no connected ports detected. Valid ports are high_network_0, cache, directory, and low_network_n\n",
                     getName().c_str());
     }
+    region_.start = 0;
+    region_.end = (uint64_t) - 1;
+    region_.interleaveSize = 0;
+    region_.interleaveStep = 0;
 
     // Fix up parameters for creating NIC - eventually we'll stop doing this
     bool found;
@@ -271,6 +275,9 @@ void Cache::configureLinks(Params &params) {
         linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockUpLink_ = clockDownLink_ = false;
+        /* Region given to each should be identical so doesn't matter which we pull but force them to be identical */
+        region_ = linkDown_->getRegion();
+        linkUp_->setRegion(region_);
 
     } else if (highNetExists && lowCacheExists) {
 
@@ -302,6 +309,9 @@ void Cache::configureLinks(Params &params) {
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
+        
+        region_ = linkDown_->getRegion();
+        linkUp_->setRegion(region_);
 
     } else if (lowCacheExists && lowNetExists) { // "lowCache" is really "highCache" now
         d_->debug(_INFO_,"Configuring cache with a network link to a cache above and a direct link below\n");
@@ -332,6 +342,10 @@ void Cache::configureLinks(Params &params) {
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockUpLink_ = true;
         clockDownLink_ = false;
+        
+        /* Pull region off network link, really we should have the same region on both and it should be a cache property not link property... */
+        region_ = linkUp_->getRegion();
+        linkDown_->setRegion(region_);
 
     } else if (highNetExists && lowDirExists) {
 
@@ -363,6 +377,9 @@ void Cache::configureLinks(Params &params) {
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
+        
+        region_ = linkDown_->getRegion();
+        linkUp_->setRegion(region_);
 
     } else {    // lowDirExists
 
@@ -402,7 +419,6 @@ void Cache::configureLinks(Params &params) {
                 interleaveSize = lineSize;
                 interleaveStep = cacheSliceCount*lineSize;
             }
-            cacheArray_->setSliceAware(cacheSliceCount);
         }
         // Set region parameters
         nicParams.find<std::string>("addr_range_start", "", found);
@@ -436,7 +452,12 @@ void Cache::configureLinks(Params &params) {
         linkUp_ = linkDown_;
         clockDownLink_ = true;
         clockUpLink_ = false;
+        
+        region_ = linkDown_->getRegion();
+        linkUp_->setRegion(region_);
     }
+   
+    cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
 
 }
 
