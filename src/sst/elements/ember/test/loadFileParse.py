@@ -44,6 +44,8 @@ class ParseLoadFile:
                     else:
                         sys.exit('ERROR: invalid NID_LIST {0}'.format(value))
 
+            elif key == '[NUM_CORES]':
+                self.stuff[-1]['num_cores'] = value.strip()
             elif key == '[PARAM]':
                 key,value = value.strip().split('=')
                 if key == 'ember:famAddrMapper.nidList' and value[0:len('generateNidList')] == 'generateNidList':
@@ -78,11 +80,14 @@ class ParseLoadFile:
         else :
             jobid = self.stuff[0]['jobid'] 
             nidlist = self.stuff[0]['nid_list']
+            numCores = 1
+            if 'num_cores' in self.stuff[0]:
+                numCores = self.stuff[0]['num_cores']
             params = self.stuff[0]['params']
             motif_api = self.stuff[0]['motif_api']
             motifs = self.stuff[0]['motifs']
             self.stuff.pop(0)
-            return jobid, nidlist, params, motif_api, motifs 
+            return jobid, nidlist, numCores, params, motif_api, motifs 
 
     def substitute( self, line, variables ):
         retval = ''
