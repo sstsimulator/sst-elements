@@ -7,8 +7,6 @@ def generate( args ):
     start = int(args[1])
     length = int(args[2])
 
-    ret = '' 
-
     random.seed( 0xf00dbeef )
     nids = random.sample( xrange( totalNodes ), totalNodes)
 
