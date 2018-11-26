@@ -377,6 +377,7 @@ private:
     std::map<MemEvent*,uint64>      startTimeList_;
     std::map<MemEvent*,int>         missTypeList_;
     std::vector<bool>               bankStatus_;    // TODO change if we want multiported banks
+    MemRegion                       region_; // Memory region handled by this cache
 
     // These parameters are for the coherence controller and are detected during init
     bool                    isLL;
