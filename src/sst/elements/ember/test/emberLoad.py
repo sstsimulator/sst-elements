@@ -437,14 +437,15 @@ baseNicParams = {
 loadInfo = LoadInfo( topoInfo.getNumNodes(), baseNicParams, epParams)
 
 if len(loadFile) > 0:
-    for jobid, nidlist, params, api, motifs in ParseLoadFile( loadFile ):
+    for jobid, nidlist, numCores, params, api, motifs in ParseLoadFile( loadFile ):
 
         workList = []
         workFlow = []
 
         myNicParams = copy.deepcopy(nicParams)
         myEpParams = copy.deepcopy(epParams)
-        myNidList = copy.deepcopy(nidList)
+        myNidList = copy.deepcopy(nidlist)
+
  
         updateParams( params, sst.merlin._params, myNicParams, myEpParams )
 

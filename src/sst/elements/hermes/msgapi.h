@@ -67,8 +67,7 @@ typedef Arg_FunctorBase< int, bool > Functor;
 
 static const uint32_t AnyTag = -1;
 static const uint32_t AnySrc = -1;
-static const Communicator GroupMachine = 0;
-static const Communicator GroupWorld = 1;
+static const Communicator GroupWorld = 0;
 
 enum Retval {
     SUCCESS,

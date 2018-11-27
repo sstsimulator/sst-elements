@@ -280,8 +280,7 @@ class HadesSHMEM : public Shmem::Interface
     int calcNetPE( uint32_t pe ) {
 		int tmp;
 		if ( pe & 1 << 31 ) {
-			pe &= ~(1<<31);
-			tmp =m_os->getInfo()->getGroup( MP::GroupMachine )->getMapping( pe ) ;
+			tmp = pe;
 		} else {
 			tmp =m_os->getInfo()->getGroup( MP::GroupWorld )->getMapping( pe ) ;
 		}

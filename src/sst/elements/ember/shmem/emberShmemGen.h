@@ -105,6 +105,8 @@ protected:
     inline void enQ_fam_create_region( Queue&, std::string groupName, uint64_t size, Fam_Region_Descriptor& rd );
     inline void enQ_fam_create_region( Queue&, Fam_Region_Descriptor rd );
 	inline void enQ_fam_get_nonblocking( Queue&, Hermes::MemAddr, Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes );
+	template <class TYPE>
+	inline void enQ_fam_add( Queue&, uint64_t offset, TYPE* );
 
 #define declareOp( type, op) \
     inline void enQ_##type##_##op##_to_all( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, int nelmes, \
@@ -194,10 +196,26 @@ void EmberShmemGenerator::enQ_fam_get_nonblocking( Queue& q, Hermes::MemAddr des
 	m_famAddrMapper->getAddr( getOutput(), offset, node, localOffset );
 
     verbose(CALL_INFO,2,0,"node=%" PRIx32 " localOffset=0x%" PRIx64 "\n", node, localOffset );
-    verbose(CALL_INFO,2,0,"0x%" PRIx64" %p\n", dest.getSimVAddr(), dest.getBacking() );
 
    	Hermes::MemAddr src( localOffset, NULL );
 	enQ_get_nbi( q, dest, src, nbytes , node );
+}
+
+template <class TYPE>
+void EmberShmemGenerator::enQ_fam_add( Queue& q, uint64_t offset, TYPE* value )
+{
+    verbose(CALL_INFO,2,0,"\n");
+
+	assert( m_famAddrMapper );
+	uint64_t localOffset;
+	int 	 node;
+	m_famAddrMapper->getAddr( getOutput(), offset, node, localOffset );
+
+   	Hermes::MemAddr target( localOffset, NULL );
+
+    verbose(CALL_INFO,2,0,"node=%" PRIx32 " localOffset=0x%" PRIx64 "\n", node, localOffset );
+
+	enQ_add(q, target, value, node);
 }
 
 static inline Hermes::Shmem::Interface* shmem_cast( Hermes::Interface *in )
