@@ -44,7 +44,9 @@ public:
 		m_updates = params.find<int>("arg.updates", 4096);
 		m_iterations = params.find<int>("arg.iterations", 1);
 		m_hotMult = params.find<int>("arg.hotMult", 1);
+		m_pageSize = params.find<int>("arg.pageSize", 4096);
         
+		m_numPages = m_dataSize/m_pageSize;
 		m_printTotals = params.find<bool>("arg.printTotals", false);
 		m_outLoop = params.find<int>("arg.outLoop", 1);
 		m_times.resize(m_outLoop);
@@ -161,12 +163,12 @@ public:
  protected:
 
 	uint64_t genAddr() {
-		if ( m_hotMult > 1 ) {
-			uint64_t addr = genRand() % (m_dataSize + m_hotMult);
-			if ( addr >= m_dataSize) {
-				addr = m_dataSize - 1;
+		if ( m_hotMult > 0 ) {
+			uint64_t page = genRand() % (m_numPages + m_hotMult);
+			if ( page >= m_numPages) {
+				page = m_numPages - 1;
 			}
-			return addr;
+			return page * m_pageSize + ( genRand( ) & (m_pageSize - 1) );
 		} else {
 			return genRand() % m_dataSize;
 		}
@@ -199,6 +201,8 @@ public:
     unsigned int m_randSeed;
 #endif
 
+	uint64_t m_numPages;
+	int m_pageSize;
     int m_computeTime;
 	bool m_printTotals;
 	TYPE m_one;
