@@ -518,29 +518,6 @@ void Cache::setup() {
         out_->fatal(CALL_INFO, -1,"%s did not find any sources\n", getName().c_str());
 
     names = linkDown_->getDests();
-    if (names->empty()) {
-        std::set<MemLinkBase::EndpointInfo> dstNames;
-        if (lowerLevelCacheNames_.empty()) lowerLevelCacheNames_.push_back(""); // TODO is this a carry over from the old init or is it needed to avoid segfaults still?
-        uint64_t ilStep = 0;
-        uint64_t ilSize = 0;
-        if (lowerLevelCacheNames_.size() > 1) { // RR slice addressing
-            ilStep = cacheArray_->getLineSize() * lowerLevelCacheNames_.size();
-            ilSize = cacheArray_->getLineSize();
-        }
-        for (int i = 0; i < lowerLevelCacheNames_.size(); i++) {
-            MemLinkBase::EndpointInfo info;
-            info.name = lowerLevelCacheNames_[i];
-            info.addr = 0;
-            info.id = 0;
-            info.region.setDefault();
-            info.region.interleaveStep = ilStep;
-            info.region.interleaveSize = ilSize;
-            dstNames.insert(info);
-        }
-        linkDown_->setDests(dstNames);
-    }
-
-    names = linkDown_->getDests();
     if (names->empty())
         out_->fatal(CALL_INFO, -1, "%s did not find any destinations\n", getName().c_str());
 

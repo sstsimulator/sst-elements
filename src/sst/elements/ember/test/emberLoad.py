@@ -445,6 +445,7 @@ if len(loadFile) > 0:
         myNicParams = copy.deepcopy(nicParams)
         myEpParams = copy.deepcopy(epParams)
         myNidList = copy.deepcopy(nidlist)
+
  
         updateParams( params, sst.merlin._params, myNicParams, myEpParams )
 
