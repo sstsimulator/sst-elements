@@ -44,16 +44,31 @@ class TorusInfo(TopoInfo):
 		return retval
 
 class HyperXInfo(TopoInfo):
-    def __init__( self, shape, local_ports ):
 
+    def __init__( self, param1, param2=None ):
+		self.params = {}
+		if param2:
+			self.initV1( param1, param2 )
+		else:
+			self.initV2( param1 )
+
+    def initV1( self, shape, local_ports ):
         width = 1
-
-        self.params = {}
         self.params["num_dims"] = self.calcNumDim(shape)
         self.params["hyperx:shape"] = shape
         self.params["hyperx:width"] = self.calcWidth(shape,width)
         self.params["hyperx:local_ports"] = local_ports
         self.numNodes = self.calcNumNodes( shape ) * local_ports
+
+    def initV2( self, params ):
+        local_ports = params["local_ports"]
+        shape = params['shape']
+        self.params["hyperx:shape"] = shape
+        self.params["hyperx:width"] = params['width']
+        self.params["num_dims"] = params['num_dims']
+        self.params["hyperx:local_ports"] = local_ports
+        self.params["hyperx:algorithm"] = params['algorithm']
+        self.numNodes = self.calcNumNodes( shape ) * int(local_ports)
 
     def getNetworkParams(self):
         return self.params
@@ -126,9 +141,15 @@ class DragonFlyLegacyInfo(TopoInfo):
 		return self.numNodes 
 
 class DragonFlyInfo(TopoInfo):
-	def __init__( self, shape ):
-		lcl, nRtrs, glbl, nGrp = shape.split(':')
+	def __init__( self, param ):
 		self.params = {}
+		if type( param ) == dict:
+			self.initV2( param )  
+		else:
+			self.initV1( param )  
+
+	def initV1( self, shape ):
+		lcl, nRtrs, glbl, nGrp = shape.split(':')
 		hostsPerGroup = int(nRtrs) * int(lcl)
 		self.params["dragonfly:shape"] = "" 
 		self.params["dragonfly:hosts_per_router"] = lcl
@@ -138,6 +159,18 @@ class DragonFlyInfo(TopoInfo):
 		self.params["dragonfly:algorithm"] =  "minimal" 
 
 		self.numNodes = int(nGrp) * hostsPerGroup
+
+	def initV2( self, params ):
+		numGroups = params['num_groups']
+		rtrsPerGroup = params['routers_per_group']
+		hostsPerRtr = params['hosts_per_router']
+		self.numNodes = int(rtrsPerGroup) * int(hostsPerRtr) * int(numGroups)
+
+		self.params["dragonfly:hosts_per_router"] = hostsPerRtr
+		self.params["dragonfly:routers_per_group"] = rtrsPerGroup
+		self.params["dragonfly:intergroup_links"] = params['intergroup_links']
+		self.params["dragonfly:num_groups"] =  numGroups
+		self.params["dragonfly:algorithm"] =  params['algorithm']
                 
 	def getNetworkParams(self):
 		return self.params
