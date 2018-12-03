@@ -219,6 +219,7 @@ EXTRA_DIST = \
 	test/generateNidListInterval.py \
 	test/generateNidListRange.py \
 	test/generateNidListRandom.py \
+	test/generateNidListGroup.py \
 	test/loadFAM \
 	test/loadFAMvars \
 	test/loadFAM200 \
