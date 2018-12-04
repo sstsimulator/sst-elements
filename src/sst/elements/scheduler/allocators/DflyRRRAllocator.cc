@@ -50,7 +50,7 @@ AllocInfo* DflyRRRAllocator::allocate(Job* j)
         std::set<int> occupiedNodes;
         const int jobSize = ai->getNodesNeeded();
         const int nodesPerGroup = dMach.nodesPerRouter * dMach.routersPerGroup;
-        std::cout << "jobSize = " << jobSize << ", allocation, ";
+        //std::cout << "jobSize = " << jobSize << ", allocation, ";
         int groupID = 0;
         int i = 0;
         while (i < jobSize) {
@@ -86,7 +86,7 @@ AllocInfo* DflyRRRAllocator::allocate(Job* j)
                 if ( dMach.isFree(nodeID) && occupiedNodes.find(nodeID) == occupiedNodes.end() ) {
                     ai->nodeIndices[i] = nodeID;
                     occupiedNodes.insert(nodeID);
-                    std::cout << nodeID << " ";
+                    //std::cout << nodeID << " ";
                     ++i;
                     if (i == jobSize) {
                         break;
@@ -101,7 +101,7 @@ AllocInfo* DflyRRRAllocator::allocate(Job* j)
                 groupID = 0;
             }
         }
-        std::cout << endl;
+        //std::cout << endl;
         return ai;
     }
     return NULL;
