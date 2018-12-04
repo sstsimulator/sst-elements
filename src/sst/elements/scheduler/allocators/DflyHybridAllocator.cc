@@ -62,7 +62,7 @@ AllocInfo* DflyHybridAllocator::allocate(Job* j)
         //This set keeps track of allocated nodes in the current allocation.
         std::set<int> occupiedNodes;
         const int jobSize = ai->getNodesNeeded();
-        std::cout << "jobSize=" << jobSize << ", ";
+        //std::cout << "jobSize=" << jobSize << ", ";
         if (jobSize <= dMach.nodesPerRouter) {
             //find the router with the most free nodes.
             int BestRouter = -1;
@@ -90,7 +90,7 @@ AllocInfo* DflyHybridAllocator::allocate(Job* j)
                     if ( dMach.isFree(nodeID) && occupiedNodes.find(nodeID) == occupiedNodes.end() ) {
                         ai->nodeIndices[i] = nodeID;
                         occupiedNodes.insert(nodeID);
-                        std::cout << nodeID << " ";
+                        //std::cout << nodeID << " ";
                         ++i;
                         ++nodeID;
                     }
@@ -98,8 +98,8 @@ AllocInfo* DflyHybridAllocator::allocate(Job* j)
                         ++nodeID;
                     }
                 }
-                std::cout << ",inRouter";
-                std::cout << endl;
+                //std::cout << ",inRouter";
+                //std::cout << endl;
                 return ai;
             }
         }
@@ -132,7 +132,7 @@ AllocInfo* DflyHybridAllocator::allocate(Job* j)
                         if ( dMach.isFree(nodeID) && occupiedNodes.find(nodeID) == occupiedNodes.end() ) {
                             ai->nodeIndices[i] = nodeID;
                             occupiedNodes.insert(nodeID);
-                            std::cout << nodeID << " ";
+                            //std::cout << nodeID << " ";
                             //change router.
                             if (routerID < (BestGroup + 1) * dMach.routersPerGroup - 1) {
                                 ++routerID;
@@ -162,8 +162,8 @@ AllocInfo* DflyHybridAllocator::allocate(Job* j)
                         }
                     }
                 }
-                std::cout << ",inGroup";
-                std::cout << endl;
+                //std::cout << ",inGroup";
+                //std::cout << endl;
                 return ai;
             }
         }
@@ -177,7 +177,7 @@ AllocInfo* DflyHybridAllocator::allocate(Job* j)
                 if ( dMach.isFree(nodeID) && occupiedNodes.find(nodeID) == occupiedNodes.end() ) {
                     ai->nodeIndices[i] = nodeID;
                     occupiedNodes.insert(nodeID);
-                    std::cout << nodeID << " ";
+                    //std::cout << nodeID << " ";
                     //change group.
                     if (groupID < dMach.numGroups - 1) {
                         ++groupID;
@@ -206,8 +206,8 @@ AllocInfo* DflyHybridAllocator::allocate(Job* j)
                 }
             }
         }
-        std::cout << ",spread";
-        std::cout << endl;
+        //std::cout << ",spread";
+        //std::cout << endl;
         return ai;
     }
     return NULL;
