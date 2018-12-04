@@ -1,5 +1,5 @@
 
-import sys,getopt,copy,pprint,random
+import sys,getopt,copy,pprint,random,os
 
 import sst
 from sst.merlin import *
@@ -65,6 +65,7 @@ motifDefaults = {
 	'api': motifAPI, 
 }
 
+sys.path.append( os.getcwd() + '/paramFiles' )
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=","hostsPerRtr=",
@@ -221,7 +222,9 @@ if "" == netTopo:
 	else:
 		sys.exit("What topo? [torus|fattree|dragonfly]")
 
+usePlatNetConfig = False
 if "" == netShape:
+	usePlatNetConfig = True 
 	if platNetConfig['shape']:
 		netShape = platNetConfig['shape']
 	else:
@@ -239,7 +242,10 @@ elif "fattree" == netTopo:
 
 elif "dragonfly" == netTopo or "dragonfly2" == netTopo:
 		
-	topoInfo = DragonFlyInfo(netShape)
+	if usePlatNetConfig:
+		topoInfo = DragonFlyInfo(platNetConfig)
+	else:
+		topoInfo = DragonFlyInfo(netShape)
 	topo = topoDragonFly()
 
 elif "dragonflyLegacy" == netTopo:
@@ -249,7 +255,11 @@ elif "dragonflyLegacy" == netTopo:
 
 elif "hyperx" == netTopo:
 
-	topoInfo = HyperXInfo(netShape, netHostsPerRtr)
+	if usePlatNetConfig:
+		topoInfo = HyperXInfo(platNetConfig)
+	else:
+		topoInfo = HyperXInfo(netShape, netHostsPerRtr)
+
 	topo = topoHyperX()
 
 else:
