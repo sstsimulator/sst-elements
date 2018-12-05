@@ -21,16 +21,19 @@
         {
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::MemUnit::@p():@l ";
 			m_latency = model.registerStatistic<uint64_t>("mem_blocked_time");
-
+			m_loads = model.registerStatistic<uint64_t>("mem_num_loads");
+			m_stores = model.registerStatistic<uint64_t>("mem_num_stores");
         }
 
         bool store( UnitBase* src, MemReq* req ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr, req->length);
+			m_stores->addData( 1 );
             return work( m_writeLat_ns, Write, req, src, m_model.getCurrentSimTimeNano() );
         }
 
         bool load( UnitBase* src, MemReq* req, Callback* callback ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
+			m_loads->addData( 1 );
             return work( m_readLat_ns, Read, req, src, m_model.getCurrentSimTimeNano(), callback );
         }
 
@@ -101,6 +104,8 @@
 
 		SimTime_t m_blockedTime;
         Statistic<uint64_t>* m_latency;
+        Statistic<uint64_t>* m_loads;
+        Statistic<uint64_t>* m_stores;
         std::queue< Entry > m_blocked;
         int m_pending;
         int m_numSlots;
